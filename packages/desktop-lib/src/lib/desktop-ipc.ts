@@ -1,4 +1,9 @@
-import { IActivityWatchEventResult, TimerActionTypeEnum, TimerSyncStateEnum } from '@gauzy/contracts';
+import {
+	DesktopSetupConfig,
+	IActivityWatchEventResult,
+	TimerActionTypeEnum,
+	TimerSyncStateEnum
+} from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
@@ -61,7 +66,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.removeAllListeners('set_project_task');
 	removeAllHandlers();
 
-	ipcMain.handle('START_SERVER', async (event, arg) => {
+	ipcMain.handle('START_SERVER', async (event, arg: DesktopSetupConfig) => {
 		log.info('Handle Start Server');
 		try {
 			const baseUrl = arg.serverUrl
@@ -911,9 +916,7 @@ export function ipcTimer(
 			ipcMain.once('setting_window_ready', () => {
 				appWindowManager.settingShow('goto_top_menu');
 			});
-			await appWindowManager.loadSetting(
-				windowPath.timeTrackerUi
-			);
+			await appWindowManager.loadSetting(windowPath.timeTrackerUi);
 		} else {
 			appWindowManager.settingShow('goto_top_menu');
 		}
@@ -1151,14 +1154,14 @@ export function ipcTimer(
 		const setting = LocalStore.getStore('appSetting');
 		const auth = LocalStore.getStore('auth');
 		if (setting?.alwaysOn && auth?.employeeId) {
-			await appWindowManager.initAlwaysOnWindow(windowPath.timeTrackerUi);
-			appWindowManager.alwaysOnWindow.show?.();
+			const alwaysOnWindow = await appWindowManager.initAlwaysOnWindow(windowPath.timeTrackerUi);
+			alwaysOnWindow?.show();
 		}
 	});
 
 	ipcMain.on('hide_ao', (event, arg) => {
 		if (appWindowManager.alwaysOnWindow) {
-			appWindowManager.alwaysOnWindow.browserWindow?.close?.();
+			appWindowManager.alwaysOnWindow.close();
 		}
 	});
 

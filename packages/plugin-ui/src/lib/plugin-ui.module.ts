@@ -1,25 +1,91 @@
 import {
 	EnvironmentInjector,
 	inject,
+	InjectionToken,
 	Injector,
 	ModuleWithProviders,
 	NgModule,
 	OnDestroy,
 	provideAppInitializer,
-	runInInjectionContext
+	runInInjectionContext,
+	Type
 } from '@angular/core';
 import { getPluginUiConfig } from './plugin-ui.loader';
 import {
 	PLUGIN_ACTIVATION_PREDICATE,
 	PLUGIN_DEFINITION,
 	PLUGIN_OPTIONS,
+	flattenPlugins,
 	orderPluginsByDependencies,
 	PluginUiDefinition
 } from './plugin-ui.types';
 import { PluginUiLifecycleMethods } from './plugin-ui.interface';
-import { getUIPluginModulesWithDefinitions, hasPluginUiLifecycleMethod } from './plugin-ui.helper';
-import { PageExtensionRegistryService } from './plugin-extension/extension-registry.service';
+import {
+	getUIPluginModulesWithDefinitions,
+	hasPluginUiLifecycleMethod,
+	IDeclarativeNavBuilder,
+	IDeclarativePageRouteRegistry,
+	IDeclarativePageTabRegistry,
+	IPluginTranslateService,
+	IPluginPermissionChecker,
+	IPluginFeatureChecker,
+	PLUGIN_NAV_BUILDER,
+	PLUGIN_ROUTE_REGISTRY,
+	PLUGIN_TAB_REGISTRY,
+	PLUGIN_TRANSLATE_SERVICE,
+	PLUGIN_PERMISSION_CHECKER,
+	PLUGIN_FEATURE_CHECKER
+} from './plugin-ui.helper';
+import { PageExtensionRegistryService } from './plugin-extension/page-extension-registry.service';
 import { PluginUiRegistryService } from './plugin-ui-registry.service';
+import { PluginHealthService } from './plugin-health.service';
+import { validatePluginDependencies, logDependencyValidation } from './plugin-dependency-graph';
+import { checkVersionCompatibility } from './plugin-version-compat';
+
+/**
+ * Service bindings for `PluginUiModule.init()`.
+ *
+ * Each key maps to an Angular service class that will be bound to the
+ * corresponding internal InjectionToken via `useExisting`. All fields
+ * are optional — omit any service you don't need.
+ */
+export interface PluginUiServices {
+	/** Nav-menu builder (bound to PLUGIN_NAV_BUILDER). */
+	navBuilder?: Type<IDeclarativeNavBuilder>;
+	/** Page-route registry (bound to PLUGIN_ROUTE_REGISTRY). */
+	routeRegistry?: Type<IDeclarativePageRouteRegistry>;
+	/** Page-tab registry (bound to PLUGIN_TAB_REGISTRY). */
+	tabRegistry?: Type<IDeclarativePageTabRegistry>;
+	/** Translate service for plugin translations (bound to PLUGIN_TRANSLATE_SERVICE). */
+	translateService?: Type<IPluginTranslateService>;
+	/** Permission checker for extension visibility (bound to PLUGIN_PERMISSION_CHECKER). */
+	permissionChecker?: Type<IPluginPermissionChecker>;
+	/** Feature flag checker for extension visibility (bound to PLUGIN_FEATURE_CHECKER). */
+	featureChecker?: Type<IPluginFeatureChecker>;
+}
+
+/** Maps PluginUiServices keys to their InjectionTokens. */
+const SERVICE_TOKEN_MAP: Record<keyof PluginUiServices, InjectionToken<any>> = {
+	navBuilder: PLUGIN_NAV_BUILDER,
+	routeRegistry: PLUGIN_ROUTE_REGISTRY,
+	tabRegistry: PLUGIN_TAB_REGISTRY,
+	translateService: PLUGIN_TRANSLATE_SERVICE,
+	permissionChecker: PLUGIN_PERMISSION_CHECKER,
+	featureChecker: PLUGIN_FEATURE_CHECKER
+};
+
+/**
+ * Converts a `PluginUiServices` object into an array of `useExisting` providers.
+ * Only services that are defined (non-nullish) produce a provider.
+ */
+function buildServiceProviders(
+	services?: PluginUiServices
+): Array<{ provide: InjectionToken<any>; useExisting: Type<any> }> {
+	if (!services) return [];
+	return (Object.keys(services) as Array<keyof PluginUiServices>)
+		.filter((key) => services[key] != null)
+		.map((key) => ({ provide: SERVICE_TOKEN_MAP[key], useExisting: services[key]! }));
+}
 
 /**
  * Angular module responsible for managing UI plugin lifecycles.
@@ -34,9 +100,13 @@ export class PluginUiModule implements OnDestroy {
 	private readonly _envInjector = inject(EnvironmentInjector);
 	private readonly _registry = inject(PluginUiRegistryService);
 	private readonly _extRegistry = inject(PageExtensionRegistryService);
+	private readonly _health = inject(PluginHealthService);
 
 	/** Plugin instances and definitions created during app initializer. Stored so lifecycle methods can be called on destroy. */
 	private readonly _plugins: Array<{ instance: any; definition: PluginUiDefinition }> = [];
+
+	/** Definitions of bootstrap-only plugins (no NgModule). Tracked separately for extension cleanup on destroy. */
+	private readonly _declarativePluginDefs: PluginUiDefinition[] = [];
 
 	/**
 	 * Configure the PluginUiModule.
@@ -44,11 +114,26 @@ export class PluginUiModule implements OnDestroy {
 	 * Returns a `ModuleWithProviders` that registers an app initializer
 	 * (via `provideAppInitializer`) which creates and bootstraps all
 	 * plugin instances at startup.
+	 *
+	 * Pass `services` to enable `defineDeclarativePlugin()` — the provided
+	 * service classes are bound to the internal InjectionTokens used by the
+	 * auto-generated `bootstrap` callbacks.
+	 *
+	 * @example
+	 * ```ts
+	 * PluginUiModule.init({
+	 *   navBuilder: NavMenuBuilderService,
+	 *   routeRegistry: PageRouteRegistryService,
+	 *   tabRegistry: PageTabRegistryService,
+	 *   translateService: TranslateService,
+	 * })
+	 * ```
 	 */
-	static init(): ModuleWithProviders<PluginUiModule> {
+	static init(services?: PluginUiServices): ModuleWithProviders<PluginUiModule> {
 		return {
 			ngModule: PluginUiModule,
 			providers: [
+				...buildServiceProviders(services),
 				provideAppInitializer(() => {
 					const pluginModule = inject(PluginUiModule);
 					return pluginModule.bootstrapPlugins();
@@ -80,9 +165,17 @@ export class PluginUiModule implements OnDestroy {
 		}).catch((e: unknown) => {
 			console.error('[PluginUiModule] Error during plugin destroy', e);
 		});
+
 		// Plugins without ngOnPluginDestroy: deregister extensions immediately (no async hook to wait for).
 		for (const { instance, definition } of this._plugins) {
 			if (!hasPluginUiLifecycleMethod(instance, 'ngOnPluginDestroy') && definition?.extensions?.length) {
+				this._extRegistry.deregisterByPlugin(definition.id);
+			}
+		}
+
+		// Deregister extensions registered by bootstrap-only (declarative) plugins.
+		for (const definition of this._declarativePluginDefs) {
+			if (definition.extensions?.length) {
 				this._extRegistry.deregisterByPlugin(definition.id);
 			}
 		}
@@ -98,6 +191,32 @@ export class PluginUiModule implements OnDestroy {
 	 * correctly.
 	 */
 	async bootstrapPlugins(): Promise<void> {
+		// ── Validate dependency graph and version compatibility ──
+		try {
+			const config = getPluginUiConfig();
+			const allFlat = flattenPlugins(config.plugins);
+
+			// Dependency graph validation (cycles, missing deps, duplicates)
+			const depResult = validatePluginDependencies(allFlat);
+			if (!depResult.valid) {
+				logDependencyValidation(depResult);
+			}
+
+			// Version compatibility check (peerPlugins)
+			const verResult = checkVersionCompatibility(allFlat);
+			if (!verResult.compatible) {
+				for (const issue of verResult.issues) {
+					if (issue.severity === 'error') {
+						console.error(`[PluginUiModule] [${issue.pluginId}] ${issue.message}`);
+					} else {
+						console.warn(`[PluginUiModule] [${issue.pluginId}] ${issue.message}`);
+					}
+				}
+			}
+		} catch (e) {
+			// Config not available yet — skip validation
+		}
+
 		const plugins = await this.createPluginInstances();
 		this._plugins.push(...plugins);
 
@@ -105,9 +224,51 @@ export class PluginUiModule implements OnDestroy {
 			this._registry.register(instance);
 		}
 
+		// Invoke ngOnPluginBootstrap for all plugins
 		await this.invokeLifecycleMethod('ngOnPluginBootstrap');
 
+		// Invoke ngOnPluginAfterBootstrap for all plugins
 		await this.invokeLifecycleMethod('ngOnPluginAfterBootstrap');
+
+		// Record boot end *after* all lifecycle hooks complete so bootTimeMs
+		// reflects the full bootstrap cost, not just instantiation.
+		for (const { definition } of plugins) {
+			this._health.recordBootEnd(definition.id);
+		}
+
+		// Handle bootstrap-only plugins (no module/loadModule — pure declarative registrations)
+		await this.bootstrapDeclarativePlugins();
+
+		// Preload plugins with loadStrategy: 'preload' (fire-and-forget after bootstrap)
+		this.preloadPlugins();
+	}
+
+	/**
+	 * Fires off background module loads for plugins with `loadStrategy: 'preload'`.
+	 * Does not block bootstrap — errors are logged but not thrown.
+	 */
+	private preloadPlugins(): void {
+		try {
+			const config = getPluginUiConfig();
+			const allFlat = flattenPlugins(config.plugins);
+			const preloadable = allFlat.filter((p) => p.loadStrategy === 'preload' && p.loadModule);
+
+			if (preloadable.length === 0) return;
+
+			console.log(`[PluginUiModule] Preloading ${preloadable.length} plugin(s)…`);
+
+			for (const plugin of preloadable) {
+				plugin.loadModule!()
+					.then(() => {
+						console.log(`[PluginUiModule] Preloaded '${plugin.id}'`);
+					})
+					.catch((err: unknown) => {
+						console.warn(`[PluginUiModule] Failed to preload '${plugin.id}':`, err);
+					});
+			}
+		} catch {
+			// Config not available — skip preloading
+		}
 	}
 
 	// ─── Private helpers ─────────────────────────────────────────
@@ -153,14 +314,19 @@ export class PluginUiModule implements OnDestroy {
 								return false;
 							}
 						})
-				  );
+					);
 		const filtered = orderedPlugins.filter((_, i) => oks[i]);
 
 		const plugins: Array<{ instance: any; definition: PluginUiDefinition }> = [];
 		for (const { definition, module: mod, loadModule } of filtered) {
 			try {
+				this._health.recordBootStart(definition.id);
 				const resolvedModule = mod ?? (loadModule ? await loadModule() : null);
-				if (!resolvedModule) continue;
+				if (!resolvedModule) {
+					// Clean up orphaned boot-start entry since this plugin has no module to bootstrap
+					this._health.reset(definition.id);
+					continue;
+				}
 
 				const options = definition.options ?? {};
 				const childInjector = Injector.create({
@@ -175,9 +341,59 @@ export class PluginUiModule implements OnDestroy {
 			} catch (e: any) {
 				const trace = typeof e?.stack === 'string' ? e.stack : undefined;
 				console.error(`Error creating UI plugin [${definition.id}]`, trace, e);
+				this._health.recordError(definition.id, e);
 			}
 		}
 		return plugins;
+	}
+
+	/**
+	 * Runs the `bootstrap` callback for plugins that declare it without an Angular NgModule.
+	 * These are lightweight, declarative-only plugins (routes, tabs, navMenu, extensions).
+	 * Respects PLUGIN_ACTIVATION_PREDICATE, so they can be gated by feature flags / permissions.
+	 */
+	private async bootstrapDeclarativePlugins(): Promise<void> {
+		const config = getPluginUiConfig();
+		const allFlat = flattenPlugins(config.plugins);
+
+		// Warn about plugins that define both bootstrap and module/loadModule — bootstrap is ignored in that case.
+		for (const p of allFlat) {
+			if (p.bootstrap && (p.module || p.loadModule)) {
+				console.warn(
+					`[PluginUiModule] Plugin [${p.id}] defines both "bootstrap" and "module"/"loadModule". ` +
+						`"bootstrap" is ignored — remove it or remove the module reference.`
+				);
+			}
+		}
+
+		const bootstrapOnly = allFlat.filter((p) => !!p.bootstrap && !p.module && !p.loadModule);
+		const ordered = orderPluginsByDependencies(bootstrapOnly);
+		const predicate = this._envInjector.get(PLUGIN_ACTIVATION_PREDICATE, null);
+
+		for (const definition of ordered) {
+			try {
+				if (predicate) {
+					let active: boolean;
+					try {
+						const result = predicate(definition);
+						active = typeof result === 'boolean' ? result : await result;
+					} catch {
+						active = false;
+					}
+					if (!active) continue;
+				}
+
+				this._health.recordBootStart(definition.id);
+				const result = runInInjectionContext(this._envInjector, () => definition.bootstrap!(this._envInjector));
+				if (result instanceof Promise) await result;
+				this._declarativePluginDefs.push(definition);
+				this._health.recordBootEnd(definition.id);
+			} catch (e: any) {
+				const trace = typeof e?.stack === 'string' ? e.stack : undefined;
+				console.error(`[PluginUiModule] Error in bootstrap for plugin [${definition.id}]`, trace, e);
+				this._health.recordError(definition.id, e);
+			}
+		}
 	}
 
 	/**

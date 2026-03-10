@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import {
 	NbAlertModule,
 	NbBadgeModule,
@@ -31,18 +32,14 @@ import {
 	NbTooltipModule,
 	NbUserModule
 } from '@nebular/theme';
-import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TablerIconsModule } from '@gauzy/ui-core/icons';
 
 import { InfiniteScrollDirective } from '../../directives/infinite-scroll.directive';
 
 import { PipeModule } from '../../time-tracker/pipes/pipe.module';
-import { PendingInstallationEffects } from './component/+state/pending-installation.effect';
 import { PendingInstallationQuery } from './component/+state/pending-installation.query';
 import { PendingInstallationStore } from './component/+state/pending-installation.store';
-import { PluginEffects } from './component/+state/plugin.effect';
 import { PluginQuery } from './component/+state/plugin.query';
 import { PluginStore } from './component/+state/plugin.store';
 import { AddPluginComponent } from './component/add-plugin/add-plugin.component';
@@ -51,17 +48,7 @@ import { PluginLayoutComponent } from './component/plugin-layout/plugin-layout.c
 import { PluginListComponent } from './component/plugin-list/plugin-list.component';
 import { PluginStatusComponent } from './component/plugin-list/plugin-status/plugin-status.component';
 import { PluginUpdateComponent } from './component/plugin-list/plugin-update/plugin-update.component';
-import { AvailableUsersEffects } from './component/plugin-marketplace/+state/effects/available-users.effects';
-import { PluginInstallationEffects } from './component/plugin-marketplace/+state/effects/plugin-installation.effect';
-import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/effects/plugin-marketplace.effect';
-import { PluginPlanComparisonEffects } from './component/plugin-marketplace/+state/effects/plugin-plan-comparison.effect';
-import { PluginPlanEffects } from './component/plugin-marketplace/+state/effects/plugin-plan.effect';
-import { PluginSettingsEffects } from './component/plugin-marketplace/+state/effects/plugin-settings.effects';
-import { PluginSourceEffects } from './component/plugin-marketplace/+state/effects/plugin-source.effect';
-import { PluginSubscriptionAccessEffects } from './component/plugin-marketplace/+state/effects/plugin-subscription-access.effects';
-import { PluginSubscriptionEffects } from './component/plugin-marketplace/+state/effects/plugin-subscription.effect';
-import { PluginUserAssignmentEffects } from './component/plugin-marketplace/+state/effects/plugin-user-assignment.effects';
-import { PluginVersionEffects } from './component/plugin-marketplace/+state/effects/plugin-version.effect';
+
 import { UserManagementFacade } from './component/plugin-marketplace/+state/facades/user-management.facade';
 import { PluginSubscriptionAccessFacade } from './component/plugin-marketplace/+state/plugin-subscription-access.facade';
 import { PluginSubscriptionFacade } from './component/plugin-marketplace/+state/plugin-subscription.facade';
@@ -128,9 +115,7 @@ import { UserSubscribedPluginsService } from './services/user-subscribed-plugins
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 // Shared subscription components and services
 import { ElectronService } from '../../electron/services';
-import { PluginCategoryEffects } from './component/plugin-marketplace/+state/effects/plugin-category.effect';
-import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
-import { PluginUploadIntentEffects } from './component/plugin-marketplace/+state/effects/plugin-upload-intent.effect';
+
 import { PluginPlanQuery } from './component/plugin-marketplace/+state/queries/plugin-plan.query';
 import { PluginUploadIntentQuery } from './component/plugin-marketplace/+state/queries/plugin-upload-intent.query';
 import { PluginPlanStore } from './component/plugin-marketplace/+state/stores/plugin-plan.store';
@@ -265,25 +250,6 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 		// Plan selection services
 		PlanFormatterService,
 		PlanComparisonService,
-		provideEffectsManager(),
-		provideEffects(
-			PluginEffects,
-			PluginInstallationEffects,
-			PluginMarketplaceEffects,
-			PluginVersionEffects,
-			PluginSourceEffects,
-			PluginUserAssignmentEffects,
-			PluginSettingsEffects,
-			PluginSubscriptionEffects,
-			PluginPlanEffects,
-			PluginPlanComparisonEffects,
-			PluginSubscriptionAccessEffects,
-			AvailableUsersEffects,
-			PluginToggleEffects,
-			PluginCategoryEffects,
-			PluginUploadIntentEffects,
-			PendingInstallationEffects
-		),
 		PluginQuery,
 		PluginStore,
 		PluginPlanStore,

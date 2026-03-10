@@ -3,7 +3,8 @@ name: Deploy to Fly Demo
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Demo']
-    branches: [fly]
+    branches:
+      - fly
     types:
       - completed
 

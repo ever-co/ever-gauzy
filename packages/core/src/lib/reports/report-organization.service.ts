@@ -1,16 +1,19 @@
-import { BadRequestException, Injectable, } from '@nestjs/common';
 import { IOrganization, IReport, UpdateReportMenuInput } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '../core/crud';
+import { BadRequestException, Injectable, } from '@nestjs/common';
 import { RequestContext } from '../core/context';
+import { TenantAwareCrudService } from '../core/crud';
+import { MultiORMEnum } from '../core/utils';
 import { ReportOrganization } from './report-organization.entity';
-import { TypeOrmReportRepository } from './repository/type-orm-report.repository';
-import { TypeOrmReportOrganizationRepository } from './repository/type-orm-report-organization.repository';
 import { MikroOrmReportOrganizationRepository } from './repository/mikro-orm-report-organization.repository';
+import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
+import { TypeOrmReportOrganizationRepository } from './repository/type-orm-report-organization.repository';
+import { TypeOrmReportRepository } from './repository/type-orm-report.repository';
 
 @Injectable()
 export class ReportOrganizationService extends TenantAwareCrudService<ReportOrganization> {
     constructor(
         private readonly typeOrmReportRepository: TypeOrmReportRepository,
+        private readonly mikroOrmReportRepository: MikroOrmReportRepository,
         private readonly typeOrmReportOrganizationRepository: TypeOrmReportOrganizationRepository,
         private readonly mikroOrmReportOrganizationRepository: MikroOrmReportOrganizationRepository,
     ) {
@@ -57,7 +60,16 @@ export class ReportOrganizationService extends TenantAwareCrudService<ReportOrga
             const { id: organizationId, tenantId } = input;
 
             // Fetch reports from the database
-            const reports: IReport[] = await this.typeOrmReportRepository.find();
+            let reports: IReport[];
+            switch (this.ormType) {
+                case MultiORMEnum.MikroORM:
+                    reports = await this.mikroOrmReportRepository.findAll();
+                    break;
+                case MultiORMEnum.TypeORM:
+                default:
+                    reports = await this.typeOrmReportRepository.find();
+                    break;
+            }
 
             // Create ReportOrganization instances based on fetched reports
             const reportOrganizations: ReportOrganization[] = reports.map((report: IReport) =>
@@ -70,7 +82,17 @@ export class ReportOrganizationService extends TenantAwareCrudService<ReportOrga
             );
 
             // Save the created ReportOrganization instances to the database
-            return await this.typeOrmReportOrganizationRepository.save(reportOrganizations);
+            switch (this.ormType) {
+                case MultiORMEnum.MikroORM: {
+                    const em = this.mikroOrmReportOrganizationRepository.getEntityManager();
+                    reportOrganizations.forEach((ro) => em.persist(ro));
+                    await em.flush();
+                    return reportOrganizations;
+                }
+                case MultiORMEnum.TypeORM:
+                default:
+                    return await this.typeOrmReportOrganizationRepository.save(reportOrganizations);
+            }
         } catch (error) {
             console.log(`Error occurred while attempting bulk creation of organization reports: ${error?.message}`);
             // Throw InternalServerErrorException if an error occurs

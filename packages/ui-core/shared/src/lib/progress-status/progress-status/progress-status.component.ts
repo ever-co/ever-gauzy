@@ -3,10 +3,10 @@ import { progressStatus } from '@gauzy/ui-core/common';
 import { NbComponentOrCustomStatus } from '@nebular/theme';
 
 @Component({
-    selector: 'ngx-progress-status',
-    templateUrl: './progress-status.component.html',
-    styleUrls: ['./progress-status.component.scss'],
-    standalone: false
+	selector: 'ngx-progress-status',
+	templateUrl: './progress-status.component.html',
+	styleUrls: ['./progress-status.component.scss'],
+	standalone: false
 })
 export class ProgressStatusComponent implements OnInit {
 	progressStatus = progressStatus;
@@ -14,11 +14,11 @@ export class ProgressStatusComponent implements OnInit {
 	/*
 	 * Getter & Setter for Percentage
 	 */
-	private _percentage: any;
-	get percentage(): boolean {
+	private _percentage: number;
+	get percentage(): number {
 		return this._percentage;
 	}
-	@Input() set percentage(value: boolean) {
+	@Input() set percentage(value: number) {
 		this._percentage = value;
 	}
 

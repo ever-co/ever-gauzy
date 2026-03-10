@@ -18,3 +18,4 @@ describe('TimeReportsComponent', () => {
 		expect(component).toBeTruthy();
 	});
 });
+

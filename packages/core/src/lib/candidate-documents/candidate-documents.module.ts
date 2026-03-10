@@ -6,6 +6,7 @@ import { CandidateDocument } from './candidate-documents.entity';
 import { CandidateDocumentsService } from './candidate-documents.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmCandidateDocumentRepository } from './repository/type-orm-candidate-document.repository';
+import { MikroOrmCandidateDocumentRepository } from './repository/mikro-orm-candidate-document.repository';
 
 @Module({
 	imports: [
@@ -14,6 +15,6 @@ import { TypeOrmCandidateDocumentRepository } from './repository/type-orm-candid
 		RolePermissionModule
 	],
 	controllers: [CandidateDocumentsController],
-	providers: [CandidateDocumentsService, TypeOrmCandidateDocumentRepository]
+	providers: [CandidateDocumentsService, TypeOrmCandidateDocumentRepository, MikroOrmCandidateDocumentRepository]
 })
 export class CandidateDocumentsModule {}

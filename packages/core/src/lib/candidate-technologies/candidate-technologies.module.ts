@@ -8,6 +8,7 @@ import { CandidateTechnologiesService } from './candidate-technologies.service';
 import { CommandHandlers } from './commands/handlers';
 import { CandidateTechnologies } from './../core/entities/internal';
 import { TypeOrmCandidateTechnologiesRepository } from './repository/type-orm-candidate-technologies.repository';
+import { MikroOrmCandidateTechnologiesRepository } from './repository/mikro-orm-candidate-technologies.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,7 @@ import { TypeOrmCandidateTechnologiesRepository } from './repository/type-orm-ca
 		CqrsModule
 	],
 	controllers: [CandidateTechnologiesController],
-	providers: [CandidateTechnologiesService, TypeOrmCandidateTechnologiesRepository, ...CommandHandlers],
+	providers: [CandidateTechnologiesService, TypeOrmCandidateTechnologiesRepository, MikroOrmCandidateTechnologiesRepository, ...CommandHandlers],
 	exports: [CandidateTechnologiesService]
 })
 export class CandidateTechnologiesModule {}

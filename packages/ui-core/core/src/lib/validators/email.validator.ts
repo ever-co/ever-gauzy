@@ -1,6 +1,6 @@
 import { AbstractControl, ValidatorFn } from '@angular/forms';
 import { isEmpty } from '@gauzy/ui-core/common';
-import { patterns } from './regex-patterns.const';
+import { patterns } from '@gauzy/constants';
 
 export class EmailValidator {
 	/**

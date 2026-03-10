@@ -18,3 +18,4 @@ describe('ClientBudgetsReportComponent', () => {
 		expect(component).toBeTruthy();
 	});
 });
+

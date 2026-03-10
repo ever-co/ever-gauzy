@@ -6,6 +6,7 @@ import { OrganizationAwardController } from './organization-award.controller';
 import { OrganizationAwardService } from './organization-award.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmOrganizationAwardRepository } from './repository/type-orm-organization-award.repository';
+import { MikroOrmOrganizationAwardRepository } from './repository/mikro-orm-organization-award.repository';
 
 @Module({
 	imports: [
@@ -14,6 +15,6 @@ import { TypeOrmOrganizationAwardRepository } from './repository/type-orm-organi
 		RolePermissionModule
 	],
 	controllers: [OrganizationAwardController],
-	providers: [OrganizationAwardService, TypeOrmOrganizationAwardRepository]
+	providers: [OrganizationAwardService, TypeOrmOrganizationAwardRepository, MikroOrmOrganizationAwardRepository]
 })
 export class OrganizationAwardModule {}

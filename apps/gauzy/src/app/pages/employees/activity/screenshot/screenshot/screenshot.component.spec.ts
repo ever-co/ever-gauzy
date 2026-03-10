@@ -1,14 +1,14 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ScreenshotComponent } from './screenshot.component';
 describe('ScreenshotComponent', () => {
 	let component: ScreenshotComponent;
 	let fixture: ComponentFixture<ScreenshotComponent>;
-	beforeEach(async(() => {
-		TestBed.configureTestingModule({
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
 			declarations: [ScreenshotComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
-	}));
+	});
 	beforeEach(() => {
 		fixture = TestBed.createComponent(ScreenshotComponent);
 		component = fixture.componentInstance;

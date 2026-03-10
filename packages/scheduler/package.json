@@ -1,0 +1,21 @@
+{
+	"name": "@gauzy/scheduler",
+	"version": "0.1.0",
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"dependencies": {
+		"@nestjs/bullmq": "^11.0.4",
+		"@nestjs/common": "^11.1.14",
+		"@nestjs/core": "^11.1.14",
+		"@nestjs/schedule": "^6.1.1",
+		"bullmq": "^5.70.1",
+		"cron": "^4.3.3",
+		"tslib": "^2.3.0"
+	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"typescript": "^5.9.3"
+	}
+}

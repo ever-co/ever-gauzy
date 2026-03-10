@@ -181,6 +181,10 @@ export const environment: IEnvironment = {
 		apiKey: process.env.GAUZY_ACTIVEPIECES_API_KEY
 	},
 
+	sim: {
+		apiKey: process.env.GAUZY_SIM_API_KEY
+	},
+
 	sentry: {
 		dsn: process.env.SENTRY_DSN
 	},

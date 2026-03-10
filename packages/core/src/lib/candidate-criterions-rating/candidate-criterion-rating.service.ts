@@ -39,7 +39,7 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 	 * Fetch criterions by feedback ID.
 	 */
 	async getCriterionsByFeedbackId(feedbackId: ID): Promise<CandidateCriterionsRating[]> {
-		return this.typeOrmRepository.find({
+		return this.find({
 			where: { feedbackId }
 		});
 	}

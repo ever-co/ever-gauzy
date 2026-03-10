@@ -8,6 +8,7 @@ import { ApprovalPolicyService } from './approval-policy.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmApprovalPolicyRepository } from './repository/type-orm-approval-policy.repository';
+import { MikroOrmApprovalPolicyRepository } from './repository/mikro-orm-approval-policy.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,7 @@ import { TypeOrmApprovalPolicyRepository } from './repository/type-orm-approval-
 		CqrsModule
 	],
 	controllers: [ApprovalPolicyController],
-	providers: [ApprovalPolicyService, TypeOrmApprovalPolicyRepository, ...CommandHandlers],
+	providers: [ApprovalPolicyService, TypeOrmApprovalPolicyRepository, MikroOrmApprovalPolicyRepository, ...CommandHandlers],
 	exports: [ApprovalPolicyService]
 })
 export class ApprovalPolicyModule {}

@@ -10,6 +10,7 @@ import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmAvailabilitySlotRepository } from './repository/type-orm-availability-slot.repository';
+import { MikroOrmAvailabilitySlotRepository } from './repository/mikro-orm-availability-slot.repository';
 
 @Module({
 	imports: [
@@ -21,6 +22,6 @@ import { TypeOrmAvailabilitySlotRepository } from './repository/type-orm-availab
 		RolePermissionModule
 	],
 	controllers: [AvailabilitySlotsController],
-	providers: [AvailabilitySlotsService, TypeOrmAvailabilitySlotRepository, ...CommandHandlers]
+	providers: [AvailabilitySlotsService, TypeOrmAvailabilitySlotRepository, MikroOrmAvailabilitySlotRepository, ...CommandHandlers]
 })
 export class AvailabilitySlotsModule {}

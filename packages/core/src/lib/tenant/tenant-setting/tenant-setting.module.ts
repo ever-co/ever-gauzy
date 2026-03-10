@@ -8,6 +8,7 @@ import { TenantSetting } from './tenant-setting.entity';
 import { TenantSettingService } from './tenant-setting.service';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmTenantSettingRepository } from './repository/type-orm-tenant-setting.repository';
+import { MikroOrmTenantSettingRepository } from './repository/mikro-orm-tenant-setting.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,7 @@ import { TypeOrmTenantSettingRepository } from './repository/type-orm-tenant-set
 		CqrsModule
 	],
 	controllers: [TenantSettingController],
-	providers: [TenantSettingService, TypeOrmTenantSettingRepository, ...CommandHandlers],
-	exports: [TenantSettingService, TypeOrmTenantSettingRepository]
+	providers: [TenantSettingService, TypeOrmTenantSettingRepository, MikroOrmTenantSettingRepository, ...CommandHandlers],
+	exports: [TenantSettingService, TypeOrmTenantSettingRepository, MikroOrmTenantSettingRepository]
 })
 export class TenantSettingModule {}

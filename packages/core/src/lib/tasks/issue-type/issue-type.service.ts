@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, SelectQueryBuilder } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
@@ -12,14 +12,17 @@ import {
 	ITenant
 } from '@gauzy/contracts';
 import { IssueType } from './issue-type.entity';
-import { TaskStatusPrioritySizeService } from './../task-status-priority-size.service';
+import { TaskMetadataService } from './../task-metadata.service';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './default-global-issue-types';
 import { RequestContext } from './../../core/context';
+import { MultiORMEnum } from './../../core/utils';
 import { MikroOrmIssueTypeRepository } from './repository/mikro-orm-issue-type.repository';
 import { TypeOrmIssueTypeRepository } from './repository/type-orm-issue-type.repository';
 
 @Injectable()
-export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
+export class IssueTypeService extends TaskMetadataService<IssueType> {
+	readonly logger = new Logger(IssueTypeService.name);
+
 	constructor(
 		readonly typeOrmIssueTypeRepository: TypeOrmIssueTypeRepository,
 		readonly mikroOrmIssueTypeRepository: MikroOrmIssueTypeRepository,
@@ -49,73 +52,97 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	 */
 	public async fetchAll(params: IIssueTypeFindInput): Promise<IPagination<IIssueType>> {
 		try {
-			/**
-			 * Find at least one record or get global records
-			 */
-			const cqb = this.typeOrmIssueTypeRepository.createQueryBuilder(this.tableName);
-			cqb.where((qb: SelectQueryBuilder<IssueType>) => {
-				this.getFilterQuery(qb, params);
-			});
-			await cqb.getOneOrFail();
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					// Check at least one record exists with given params
+					const checkWhere = this.buildIssueTypeFilter(params);
+					const exists = await this.mikroOrmRepository.findOne(checkWhere as any);
+					if (!exists) {
+						return await this.getDefaultEntities();
+					}
 
-			/**
-			 * Find task issue types for given params
-			 */
-			const query = this.typeOrmIssueTypeRepository.createQueryBuilder(this.tableName);
-			query.where((qb: SelectQueryBuilder<IssueType>) => {
-				this.getFilterQuery(qb, params);
-			});
-			const [items, total] = await query.getManyAndCount();
-			return { items, total };
+					const [items, total] = await this.mikroOrmRepository.findAndCount(checkWhere as any);
+					return { items: items.map((e) => this.serialize(e)) as IIssueType[], total };
+				}
+				case MultiORMEnum.TypeORM:
+				default: {
+					/**
+					 * Find at least one record or get global records
+					 */
+					const cqb = this.typeOrmIssueTypeRepository.createQueryBuilder(this.tableName);
+					cqb.where((qb: SelectQueryBuilder<IssueType>) => {
+						this.getFilterQuery(qb, params);
+					});
+					await cqb.getOneOrFail();
+
+					/**
+					 * Find task issue types for given params
+					 */
+					const query = this.typeOrmIssueTypeRepository.createQueryBuilder(this.tableName);
+					query.where((qb: SelectQueryBuilder<IssueType>) => {
+						this.getFilterQuery(qb, params);
+					});
+					const [items, total] = await query.getManyAndCount();
+					return { items, total };
+				}
+			}
 		} catch (error) {
-			console.log('Invalid request parameter: Some required parameters are missing or incorrect', error);
+			this.logger.error('Invalid request parameter: Some required parameters are missing or incorrect', error);
 			return await this.getDefaultEntities();
 		}
 	}
 
 	/**
-	 * Create or fetch issue types for a list of tenants.
+	 * Build a MikroORM-compatible filter object from IIssueTypeFindInput params.
+	 */
+	private buildIssueTypeFilter(params: IIssueTypeFindInput): Record<string, any> {
+		const where: Record<string, any> = {};
+		if ((params as any).tenantId) where.tenantId = (params as any).tenantId;
+		if ((params as any).organizationId) where.organizationId = (params as any).organizationId;
+		if ((params as any).organizationTeamId) where.organizationTeamId = (params as any).organizationTeamId;
+		if ((params as any).projectId) where.projectId = (params as any).projectId;
+		return where;
+	}
+
+	/**
+	 * Create issue types for a list of tenants using DEFAULT_GLOBAL_ISSUE_TYPES.
 	 *
 	 * @param tenants The list of tenants.
-	 * @returns A promise resolving to an array of created or fetched issue types.
+	 * @returns A promise resolving to an array of created issue types.
 	 */
 	async bulkCreateTenantsIssueTypes(tenants: ITenant[]): Promise<IIssueType[]> {
 		try {
-			// Fetch existing issue types
-			const { items = [], total } = await super.fetchAll({});
+			if (!tenants?.length) {
+				return [];
+			}
 
-			// Define default issue types
-			const defaultIssueTypes = DEFAULT_GLOBAL_ISSUE_TYPES.map((issueType: IIssueType) => ({
-				...issueType,
-				icon: `ever-icons/${issueType.icon}`,
-				isSystem: false
-			}));
+			/**
+			 * Cartesian product of tenants and default global issue types.
+			 */
+			const issueTypes: IssueType[] = tenants.flatMap((tenant: ITenant) =>
+				DEFAULT_GLOBAL_ISSUE_TYPES.map(
+					(issueType: IIssueType) =>
+						new IssueType({
+							name: issueType.name,
+							value: issueType.value,
+							description: issueType.description,
+							icon: `ever-icons/${issueType.icon}`,
+							color: issueType.color,
+							imageId: issueType.imageId ?? null,
+							isDefault: issueType.isDefault,
+							tenant,
+							isSystem: false
+						})
+				)
+			);
 
-			// Function to generate issue types based on a source array
-			const generateIssueTypes = (source: IIssueType[]) =>
-				tenants.flatMap((tenant) =>
-					source.map(({ name, value, description, icon, color, isDefault, imageId = null }: IIssueType) => ({
-						name,
-						value,
-						description,
-						icon,
-						color,
-						imageId,
-						tenant,
-						isDefault,
-						isSystem: false
-					}))
-				);
-
-			// Generate the array of issue types based on existing or default values
-			const issueTypes: IIssueType[] =
-				total > 0 ? generateIssueTypes(items) : generateIssueTypes(defaultIssueTypes);
-
-			// Save the created or fetched issue types to the repository and return the result.
-			return await this.saveMany(issueTypes);
+			/**
+			 * Use saveManyWithoutEnrichment to preserve each entity's specific tenantId.
+			 */
+			return await this.saveManyWithoutEnrichment(issueTypes);
 		} catch (error) {
 			throw new BadRequestException(
-				'Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.',
+				'Failed to create issue types for the specified tenants.',
 				error
 			);
 		}
@@ -147,7 +174,12 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 						isSystem: false
 					})
 			);
-			return await this.saveMany(issueTypes);
+
+			/**
+			 * Save statuses without tenant enrichment to preserve
+			 * the original tenantId assigned to each entity.
+			 */
+			return await this.saveManyWithoutEnrichment(issueTypes);
 		} catch (error) {
 			throw new BadRequestException(
 				'Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.',
@@ -171,20 +203,17 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			// Fetch items based on tenant and organizationId
 			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
-			const entitiesToCreate = items.map((item: IIssueType) => {
-				const { name, value, description, icon, color, imageId, isDefault } = item;
-				return {
-					...entity,
-					name,
-					value,
-					description,
-					icon,
-					color,
-					imageId,
-					isDefault,
-					isSystem: false
-				};
-			});
+			const entitiesToCreate = items.map((item: IIssueType) => ({
+				...entity,
+				name: item.name,
+				value: item.value,
+				description: item.description,
+				icon: item.icon,
+				color: item.color,
+				imageId: item.imageId,
+				isDefault: item.isDefault,
+				isSystem: false
+			}));
 			return await this.createMany(entitiesToCreate);
 		} catch (error) {
 			// If an error occurs, throw an HttpException with a more specific message.

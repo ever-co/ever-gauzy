@@ -13,7 +13,9 @@
       "Bash(yarn list:*)",
       "Bash(ls:*)",
       "Bash(done)",
-      "Bash(xargs -I {} sh -c 'echo \"\"=== {} ===\"\" && head -20 {}')"
+      "Bash(xargs -I {} sh -c 'echo \"\"=== {} ===\"\" && head -20 {}')",
+      "Bash(yarn nx build:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

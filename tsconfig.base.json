@@ -1,20 +1,21 @@
 {
-    "compileOnSave": false,
-    "compilerOptions": {
-        "rootDir": ".",
-        "sourceMap": true,
-        "declaration": false,
-        "moduleResolution": "node",
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "importHelpers": true,
-        "target": "ES2022",
-        "module": "commonjs",
-        "lib": ["es2020", "dom", "es2018", "esnext.array", "ES2022"],
-        "skipLibCheck": true,
-        "skipDefaultLibCheck": true,
-        "baseUrl": ".",
-        "incremental": true
-    },
-    "exclude": ["coverage/**/*", "dist/**/*", "node_modules", "tmp"]
+	"compileOnSave": false,
+	"compilerOptions": {
+		"rootDir": ".",
+		"sourceMap": true,
+		"declaration": false,
+		"moduleResolution": "node",
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"importHelpers": true,
+		"target": "ES2022",
+		"module": "commonjs",
+		"lib": ["es2020", "dom", "es2018", "esnext.array", "ES2022"],
+		"skipLibCheck": true,
+		"skipDefaultLibCheck": true,
+		"baseUrl": ".",
+		"incremental": true,
+		"jsx": "react-jsx"
+	},
+	"exclude": ["coverage/**/*", "dist/**/*", "node_modules", "tmp"]
 }

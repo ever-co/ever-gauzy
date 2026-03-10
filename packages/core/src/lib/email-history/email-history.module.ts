@@ -9,6 +9,7 @@ import { EmailHistoryService } from './email-history.service';
 import { CommandHandlers } from './commands/handler';
 import { EmailSendModule } from './../email-send/email-send.module';
 import { TypeOrmEmailHistoryRepository } from './repository/type-orm-email-history.repository';
+import { MikroOrmEmailHistoryRepository } from './repository/mikro-orm-email-history.repository';
 
 @Module({
 	imports: [
@@ -19,7 +20,7 @@ import { TypeOrmEmailHistoryRepository } from './repository/type-orm-email-histo
 		CqrsModule
 	],
 	controllers: [EmailHistoryController],
-	providers: [EmailHistoryService, TypeOrmEmailHistoryRepository, ...CommandHandlers],
-	exports: [EmailHistoryService, TypeOrmEmailHistoryRepository]
+	providers: [EmailHistoryService, TypeOrmEmailHistoryRepository, MikroOrmEmailHistoryRepository, ...CommandHandlers],
+	exports: [EmailHistoryService, TypeOrmEmailHistoryRepository, MikroOrmEmailHistoryRepository]
 })
 export class EmailHistoryModule {}

@@ -11,6 +11,7 @@ import { TimeSheetController } from './timesheet.controller';
 import { TimeSheetService } from './timesheet.service';
 import { Timesheet } from './timesheet.entity';
 import { TypeOrmTimesheetRepository } from './repository/type-orm-timesheet.repository';
+import { MikroOrmTimesheetRepository } from './repository/mikro-orm-timesheet.repository';
 
 @Module({
 	controllers: [TimeSheetController],
@@ -23,7 +24,7 @@ import { TypeOrmTimesheetRepository } from './repository/type-orm-timesheet.repo
 		TimeSlotModule,
 		EmployeeModule
 	],
-	providers: [TimeSheetService, TypeOrmTimesheetRepository, ...CommandHandlers],
-	exports: [TimeSheetService, TypeOrmTimesheetRepository]
+	providers: [TimeSheetService, TypeOrmTimesheetRepository, MikroOrmTimesheetRepository, ...CommandHandlers],
+	exports: [TimeSheetService, TypeOrmTimesheetRepository, MikroOrmTimesheetRepository]
 })
 export class TimesheetModule {}

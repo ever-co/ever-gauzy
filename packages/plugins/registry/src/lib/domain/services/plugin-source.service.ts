@@ -1,4 +1,4 @@
-import { TenantAwareCrudService } from '@gauzy/core';
+import { TenantAwareCrudService, MultiORMEnum } from '@gauzy/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { PluginSource } from '../entities/plugin-source.entity';
@@ -15,8 +15,18 @@ export class PluginSourceService extends TenantAwareCrudService<PluginSource> {
 		super(typeOrmPluginSourceRepository, mikroOrmPluginSourceRepository);
 	}
 
-	public saveSources(sources: PluginSource[]): Promise<IPluginSource[]> {
-		return this.typeOrmPluginSourceRepository.save(sources);
+	public async saveSources(sources: PluginSource[]): Promise<IPluginSource[]> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const em = this.mikroOrmPluginSourceRepository.getEntityManager();
+				sources.forEach((s) => em.persist(s));
+				await em.flush();
+				return sources;
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return this.typeOrmPluginSourceRepository.save(sources);
+		}
 	}
 
 	/**

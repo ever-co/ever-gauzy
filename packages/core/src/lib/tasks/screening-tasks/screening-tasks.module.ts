@@ -10,6 +10,7 @@ import { ScreeningTasksService } from './screening-tasks.service';
 import { ScreeningTasksController } from './screening-tasks.controller';
 import { ScreeningTask } from './screening-task.entity';
 import { TypeOrmScreeningTaskRepository } from './repository/type-orm-screening-task.repository';
+import { MikroOrmScreeningTaskRepository } from './repository/mikro-orm-screening-task.repository';
 
 @Module({
 	imports: [
@@ -20,7 +21,7 @@ import { TypeOrmScreeningTaskRepository } from './repository/type-orm-screening-
 		TaskModule,
 		CqrsModule
 	],
-	providers: [ScreeningTasksService, TypeOrmScreeningTaskRepository, ...CommandHandlers],
+	providers: [ScreeningTasksService, TypeOrmScreeningTaskRepository, MikroOrmScreeningTaskRepository, ...CommandHandlers],
 	controllers: [ScreeningTasksController],
 	exports: []
 })

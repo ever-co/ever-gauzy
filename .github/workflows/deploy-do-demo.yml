@@ -3,7 +3,8 @@ name: Deploy to DigitalOcean Demo
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Demo']
-    branches: [develop]
+    branches:
+      - develop
     types:
       - completed
 
@@ -57,6 +58,15 @@ jobs:
           OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: '${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}'
           OTEL_EXPORTER_OTLP_HEADERS: '${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}'
           FEATURE_OPEN_STATS: '${{ vars.FEATURE_OPEN_STATS }}'
+          ALLOWED_ORIGINS: '${{ secrets.ALLOWED_ORIGINS }}'
+          CLOUDINARY_API_KEY: '${{ secrets.CLOUDINARY_API_KEY }}'
+          CLOUDINARY_CLOUD_NAME: '${{ secrets.CLOUDINARY_CLOUD_NAME }}'
+          CHATWOOT_SDK_TOKEN: '${{ secrets.CHATWOOT_SDK_TOKEN }}'
+          GOOGLE_MAPS_API_KEY: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
+          WORKER_DEFAULT_QUEUE: '${{ secrets.WORKER_DEFAULT_QUEUE }}'
+          WORKER_QUEUE_ENABLED: '${{ secrets.WORKER_QUEUE_ENABLED }}'
+          WORKER_SCHEDULER_ENABLED: '${{ secrets.WORKER_SCHEDULER_ENABLED }}'
+          WORKER_TIMEZONE: '${{ secrets.WORKER_TIMEZONE }}'
 
       # we need this step because for now we just use :latest tag
       # note: for production we will use different strategy later
@@ -64,3 +74,4 @@ jobs:
         run: |
           kubectl --context do-sfo2-k8s-gauzy rollout restart deployment/gauzy-demo-api
           kubectl --context do-sfo2-k8s-gauzy rollout restart deployment/gauzy-demo-webapp
+          kubectl --context do-sfo2-k8s-gauzy rollout restart deployment/gauzy-demo-worker

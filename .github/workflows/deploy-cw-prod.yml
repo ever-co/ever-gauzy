@@ -3,7 +3,8 @@ name: Deploy to CoreWeave Prod
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Prod']
-    branches: [cw]
+    branches:
+      - cw
     types:
       - completed
 
@@ -91,9 +92,12 @@ jobs:
           JWT_SECRET: '${{ secrets.JWT_SECRET }}'
           JWT_REFRESH_TOKEN_SECRET: '${{ secrets.JWT_REFRESH_TOKEN_SECRET }}'
           JWT_REFRESH_TOKEN_EXPIRATION_TIME: '${{ secrets.JWT_REFRESH_TOKEN_EXPIRATION_TIME }}'
+          ALLOWED_ORIGINS: '${{ secrets.ALLOWED_ORIGINS }}'
           CLOUDINARY_API_KEY: '${{ secrets.CLOUDINARY_API_KEY }}'
           CLOUDINARY_API_SECRET: '${{ secrets.CLOUDINARY_API_SECRET }}'
           CLOUDINARY_CLOUD_NAME: '${{ secrets.CLOUDINARY_CLOUD_NAME }}'
+          CHATWOOT_SDK_TOKEN: '${{ secrets.CHATWOOT_SDK_TOKEN }}'
+          GOOGLE_MAPS_API_KEY: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
           MAIL_FROM_ADDRESS: '${{ secrets.MAIL_FROM_ADDRESS }}'
           MAIL_HOST: '${{ secrets.MAIL_HOST }}'
           MAIL_PORT: '${{ secrets.MAIL_PORT }}'

@@ -388,10 +388,10 @@ import { TypeOrmUserOrganizationRepository } from '../../user-organization/repos
 import { MikroOrmUserRepository } from '../../user/repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from '../../user/repository/type-orm-user.repository';
 import { MikroOrmWarehouseProductVariantRepository } from '../../warehouse/repository/mikro-orm-warehouse-product-variant.repository';
-import { MikroOrmWarehouseProductRepository } from '../../warehouse/repository/mikro-orm-warehouse-product.repository ';
+import { MikroOrmWarehouseProductRepository } from '../../warehouse/repository/mikro-orm-warehouse-product.repository';
 import { MikroOrmWarehouseRepository } from '../../warehouse/repository/mikro-orm-warehouse.repository';
 import { TypeOrmWarehouseProductVariantRepository } from '../../warehouse/repository/type-orm-warehouse-product-variant.repository';
-import { TypeOrmWarehouseProductRepository } from '../../warehouse/repository/type-orm-warehouse-product.repository ';
+import { TypeOrmWarehouseProductRepository } from '../../warehouse/repository/type-orm-warehouse-product.repository';
 import { TypeOrmWarehouseRepository } from '../../warehouse/repository/type-orm-warehouse.repository';
 import { TypeOrmTagTypeRepository } from '../../tag-type/repository/type-orm-tag-type.repository';
 import { TypeOrmTenantRepository } from '../../tenant/repository/type-orm-tenant.repository';

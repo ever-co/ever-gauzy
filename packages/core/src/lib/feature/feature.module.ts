@@ -10,7 +10,9 @@ import { FeatureOrganizationService } from './feature-organization.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmFeatureRepository } from './repository/type-orm-feature.repository';
+import { MikroOrmFeatureRepository } from './repository/mikro-orm-feature.repository';
 import { TypeOrmFeatureOrganizationRepository } from './repository/type-orm-feature-organization.repository';
+import { MikroOrmFeatureOrganizationRepository } from './repository/mikro-orm-feature-organization.repository';
 
 @Module({
 	imports: [
@@ -24,7 +26,9 @@ import { TypeOrmFeatureOrganizationRepository } from './repository/type-orm-feat
 		FeatureService,
 		FeatureOrganizationService,
 		TypeOrmFeatureRepository,
+		MikroOrmFeatureRepository,
 		TypeOrmFeatureOrganizationRepository,
+		MikroOrmFeatureOrganizationRepository,
 		...CommandHandlers
 	],
 	exports: [FeatureService, FeatureOrganizationService]

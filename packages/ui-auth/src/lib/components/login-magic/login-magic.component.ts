@@ -6,19 +6,22 @@ import { catchError, filter, tap } from 'rxjs/operators';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@gauzy/ui-config';
+import { ALPHA_NUMERIC_CODE_LENGTH, patterns } from '@gauzy/constants';
 import { AuthService, ErrorHandlingService } from '@gauzy/ui-core/core';
-import { patterns } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-login-magic',
-    templateUrl: './login-magic.component.html',
-    styleUrls: ['./login-magic.component.scss'],
-    standalone: false
+	selector: 'ngx-login-magic',
+	templateUrl: './login-magic.component.html',
+	styleUrls: ['./login-magic.component.scss'],
+	standalone: false
 })
 export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	public countdown: number;
 	private timer: Subscription;
+
+	// Code length constant exposed for templates
+	public readonly codeLength = ALPHA_NUMERIC_CODE_LENGTH;
 
 	public isLoading: boolean = false;
 	public isCodeSent: boolean = false;
@@ -38,7 +41,14 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			email: [null, Validators.compose([Validators.required, Validators.pattern(patterns.email)])],
-			code: [null, Validators.compose([Validators.required, Validators.minLength(6), Validators.maxLength(6)])]
+			code: [
+				null,
+				Validators.compose([
+					Validators.required,
+					Validators.minLength(ALPHA_NUMERIC_CODE_LENGTH),
+					Validators.maxLength(ALPHA_NUMERIC_CODE_LENGTH)
+				])
+			]
 		});
 	}
 

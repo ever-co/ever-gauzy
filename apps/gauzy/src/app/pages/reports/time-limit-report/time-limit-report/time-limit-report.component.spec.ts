@@ -18,3 +18,4 @@ describe('TimeLimitReportComponent', () => {
 		expect(component).toBeTruthy();
 	});
 });
+

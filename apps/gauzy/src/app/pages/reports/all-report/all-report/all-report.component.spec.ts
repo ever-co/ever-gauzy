@@ -18,3 +18,4 @@ describe('AllReportComponent', () => {
 		expect(component).toBeTruthy();
 	});
 });
+

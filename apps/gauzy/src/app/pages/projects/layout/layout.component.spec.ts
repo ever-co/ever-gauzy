@@ -1,14 +1,14 @@
-import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProjectLayoutComponent } from './layout.component';
 describe('ProjectLayoutComponent', () => {
 	let component: ProjectLayoutComponent;
 	let fixture: ComponentFixture<ProjectLayoutComponent>;
-	beforeEach(waitForAsync(() => {
-		TestBed.configureTestingModule({
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
 			declarations: [ProjectLayoutComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
-	}));
+	});
 	beforeEach(() => {
 		fixture = TestBed.createComponent(ProjectLayoutComponent);
 		component = fixture.componentInstance;

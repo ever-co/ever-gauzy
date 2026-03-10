@@ -3,7 +3,8 @@ name: Deploy MCP Auth to DigitalOcean Stage
 on:
   workflow_run:
     workflows: ['Build and Publish Gauzy MCP Auth Image Stage']
-    branches: [stage]
+    branches:
+      - stage
     types:
       - completed
 

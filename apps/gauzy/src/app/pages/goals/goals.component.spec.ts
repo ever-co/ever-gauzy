@@ -1,14 +1,14 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GoalsComponent } from './goals.component';
 describe('GoalsComponent', () => {
 	let component: GoalsComponent;
 	let fixture: ComponentFixture<GoalsComponent>;
-	beforeEach(async(() => {
-		TestBed.configureTestingModule({
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
 			declarations: [GoalsComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
-	}));
+	});
 	beforeEach(() => {
 		fixture = TestBed.createComponent(GoalsComponent);
 		component = fixture.componentInstance;

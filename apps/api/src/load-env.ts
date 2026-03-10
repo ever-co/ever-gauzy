@@ -33,9 +33,9 @@ export function loadEnv(): void {
 
 	console.log(`API Environment Paths: .env -> ${envPaths.env}, .env.local -> ${envPaths.envLocal}`);
 
-	// Load .env file with override
-	loadEnvFile(envPaths.env, { override: true });
+	// Load .env file as defaults (does not override existing variables)
+	loadEnvFile(envPaths.env);
 
-	// Load .env.local file without overriding existing variables
-	loadEnvFile(envPaths.envLocal);
+	// Load .env.local file with override (takes highest priority)
+	loadEnvFile(envPaths.envLocal, { override: true });
 }

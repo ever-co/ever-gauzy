@@ -9,6 +9,7 @@ import { PublicTeamService } from './public-team.service';
 import { QueryHandlers } from './queries/handlers';
 import { TimerModule } from '../../time-tracking/timer/timer.module';
 import { TypeOrmOrganizationTeamRepository } from '../../organization-team/repository/type-orm-organization-team.repository';
+import { MikroOrmOrganizationTeamRepository } from '../../organization-team/repository/mikro-orm-organization-team.repository';
 
 @Module({
 	imports: [
@@ -19,6 +20,6 @@ import { TypeOrmOrganizationTeamRepository } from '../../organization-team/repos
 		TimerModule
 	],
 	controllers: [PublicTeamController],
-	providers: [PublicTeamService, TypeOrmOrganizationTeamRepository, ...QueryHandlers]
+	providers: [PublicTeamService, TypeOrmOrganizationTeamRepository, MikroOrmOrganizationTeamRepository, ...QueryHandlers]
 })
 export class PublicTeamModule {}
