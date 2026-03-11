@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { catchError, forkJoin, from, map, of, switchMap, tap } from 'rxjs';
+import { catchError, forkJoin, from, map, mergeMap, Observable, of, switchMap, timeout } from 'rxjs';
 import { PluginElectronService } from './plugin-electron.service';
 import { PluginSubscriptionAccessService } from './plugin-subscription-access.service';
 
@@ -29,7 +29,7 @@ export class PluginAccessSyncService {
 	 * Should be called after authentication is established.
 	 * @returns Observable that completes after sync is done
 	 */
-	public syncActivePlugins() {
+	public syncActivePlugins(): Observable<void> {
 		if (!this.pluginElectronService.isDesktop) {
 			return of(void 0);
 		}
@@ -45,10 +45,12 @@ export class PluginAccessSyncService {
 					.filter((plugin) => !!plugin.marketplaceId)
 					.map((plugin) =>
 						this.accessService.checkAccess(plugin.marketplaceId).pipe(
+							timeout(5000),
 							map((access) => ({ plugin, hasAccess: access.hasAccess })),
-							catchError(() => {
-								// If access check fails (network error etc.), keep plugin active
-								return of({ plugin, hasAccess: true });
+							catchError((error) => {
+								// If access check times out, treat as revoked; other errors keep plugin active
+								const hasAccess = error?.name !== 'TimeoutError';
+								return of({ plugin, hasAccess });
 							})
 						)
 					);
@@ -58,17 +60,22 @@ export class PluginAccessSyncService {
 				}
 
 				return forkJoin(checks$).pipe(
-					tap((results) => {
-						for (const { plugin, hasAccess } of results) {
-							if (!hasAccess) {
-								console.info(`Access revoked for plugin "${plugin.name}" — deactivating locally`);
-								this.pluginElectronService.deactivate(plugin);
-								// Also mark as tenant-disabled in local DB to prevent re-activation on restart
-								this.pluginElectronService.updateTenantEnabled(plugin.marketplaceId, false);
-							}
+					mergeMap((results) => {
+						const revoked = results.filter(({ hasAccess }) => !hasAccess);
+						if (revoked.length === 0) {
+							return of(void 0);
 						}
-					}),
-					map(() => void 0)
+
+						const deactivations$ = revoked.map(({ plugin }) => {
+							console.info(`Access revoked for plugin "${plugin.name}" — deactivating locally`);
+							this.pluginElectronService.deactivate(plugin);
+							return from(this.pluginElectronService.updateTenantEnabled(plugin.marketplaceId, false)).pipe(
+								catchError(() => of(void 0))
+							);
+						});
+
+						return forkJoin(deactivations$).pipe(map(() => void 0));
+					})
 				);
 			})
 		);

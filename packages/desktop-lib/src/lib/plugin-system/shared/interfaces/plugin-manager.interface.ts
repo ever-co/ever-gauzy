@@ -9,11 +9,11 @@ export interface IPluginManager {
 	downloadPlugin(config: any): Promise<IPluginMetadata>;
 	activatePlugin(name: string): Promise<void>;
 	deactivatePlugin(name: string): Promise<void>;
-	completeInstallation(marketplaceId: string, installationId: string): Promise<void>;
+	completeInstallation(marketplaceId: ID, installationId: string): Promise<void>;
 	uninstallPlugin(input: IPluginMetadataFindOne): Promise<ID>;
 	getAllPlugins(): Promise<IPluginMetadata[]>;
 	getOnePlugin(name: string): Promise<IPluginMetadata>;
 	getMenuPlugins(): MenuItemConstructorOptions[];
 	checkInstallation(marketplaceId: ID): Promise<IPluginMetadata>;
-	updateTenantEnabled(marketplaceId: string, tenantEnabled: boolean): Promise<void>;
+	updateTenantEnabled(marketplaceId: ID, tenantEnabled: boolean): Promise<void>;
 }

@@ -12,11 +12,18 @@ import { Store } from '../../../../../services';
 import { PaginationComponent } from '../../../../../time-tracker/pagination/pagination.component';
 
 import { AsyncPipe } from '@angular/common';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
 import { AssignActionCellComponent } from './render/assign-action/assign-action-cell.component';
 import { UserCellComponent } from './render/user-cell/user-cell.component';
 import { PluginAssignedUsersTableService } from './services/plugin-assigned-users-table.service';
+
+/** Row data representing a user toggle action */
+export interface PluginUserRow {
+	userId?: string;
+	newState: boolean;
+	[key: string]: unknown;
+}
 
 export interface PluginUserManagementDialogData {
 	plugin: IPlugin;
@@ -76,10 +83,13 @@ export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnD
 	public readonly assignedUsersSource = new LocalDataSource([]);
 
 	// Smart table settings
-	public availableUsersSettings: any;
-	public assignedUsersSettings: any;
+	public availableUsersSettings: Record<string, unknown>;
+	public assignedUsersSettings: Record<string, unknown>;
 
 	public submitting = false;
+
+	// Total assigned count for template binding
+	public totalCount$: Observable<number>;
 
 	constructor(
 		@Inject(NB_DIALOG_CONFIG) public data: PluginUserManagementDialogData,
@@ -88,7 +98,8 @@ export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnD
 		private readonly formBuilder: FormBuilder,
 		private readonly facade: UserManagementFacade,
 		private readonly store: Store,
-		private readonly assignedUsersTableService: PluginAssignedUsersTableService
+		private readonly assignedUsersTableService: PluginAssignedUsersTableService,
+		private readonly translateService: TranslateService
 	) {
 		this.plugin = this.data.plugin;
 		this.subscriptionId = this.data.subscriptionId;
@@ -144,6 +155,9 @@ export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnD
 
 		// Selected count for badge/button text
 		this.selectedCount$ = this.facade.selectedUsers$.pipe(map((users) => users.length));
+
+		// Total assigned count (initialized once, not recreated per change-detection)
+		this.totalCount$ = this.facade.assignedUsers$.pipe(map((assignments) => assignments.length));
 	}
 
 	/**
@@ -184,7 +198,7 @@ export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnD
 			},
 			hideSubHeader: true,
 			actions: false,
-			noDataMessage: 'No users available to assign',
+				noDataMessage: this.translateService.instant('PLUGIN.USER_MANAGEMENT.NO_USERS_AVAILABLE'),
 			pager: {
 				display: false,
 				perPage: 10,
@@ -209,30 +223,24 @@ export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnD
 		);
 
 		combineLatest([filteredAvailableUsers$, this.facade.selectedUserIds$])
-			.pipe(
-				tap(([users, selectedIds]) => {
-					const rows = users.map((user) => ({
-						...user,
-						_user: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-						selected: selectedIds.includes(user.id)
-					}));
-					this.availableUsersSource.load(rows);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+			.pipe(untilDestroyed(this))
+			.subscribe(([users, selectedIds]) => {
+				const rows = users.map((user) => ({
+					...user,
+					_user: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+					selected: selectedIds.includes(user.id)
+				}));
+				this.availableUsersSource.load(rows);
+			});
 
 		// Assigned users: delegate row mapping to shared service
 		this.facade.assignedUsers$
-			.pipe(
-				tap((assignments) => {
-					this.assignedUsersSource.load(
-						assignments.map((a) => this.assignedUsersTableService.mapAssignmentToRow(a))
-					);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+			.pipe(untilDestroyed(this))
+			.subscribe((assignments) => {
+				this.assignedUsersSource.load(
+					assignments.map((a) => this.assignedUsersTableService.mapAssignmentToRow(a))
+				);
+			});
 	}
 
 	/**
@@ -353,9 +361,9 @@ export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnD
 	 * Toggle user access to the plugin (enable / disable)
 	 * @param rowData - Row data including userId and newState
 	 */
-	public onToggleUserAccess(rowData: any): void {
+	public onToggleUserAccess(rowData: PluginUserRow): void {
 		const pluginTenantId = this.facade.currentPluginTenantId;
-		if (!pluginTenantId) return;
+		if (!pluginTenantId || !rowData.userId) return;
 		if (rowData.newState) {
 			this.facade.enableUser(pluginTenantId, rowData.userId);
 		} else {
@@ -473,7 +481,7 @@ export class PluginUserManagementComponent implements OnInit, AfterViewInit, OnD
 	 * Get assigned users total count observable
 	 */
 	public getTotalAssignedCount(): Observable<number> {
-		return this.facade.assignedUsers$.pipe(map((assignments) => assignments.length));
+		return this.totalCount$;
 	}
 
 	// ============================================================================

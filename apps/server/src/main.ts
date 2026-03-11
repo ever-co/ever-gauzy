@@ -18,6 +18,7 @@ import {
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
+	providePluginsEffects,
 	Store
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
@@ -55,6 +56,7 @@ if (environment.SENTRY_DSN) {
 bootstrapApplication(AppComponent, {
 	providers: [
 		provideEffectsManager(),
+		providePluginsEffects(),
 		provideZoneChangeDetection(),
 		importProvidersFrom(
 			NbDialogModule.forRoot(),

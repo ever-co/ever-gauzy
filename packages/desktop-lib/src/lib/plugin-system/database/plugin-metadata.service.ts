@@ -12,6 +12,13 @@ import {
 export class PluginMetadataService {
 	private readonly db: IDatabaseProvider = ProviderFactory.instance;
 
+	/**
+	 * Apply a user-scoped filter: matches rows where userId is NULL (global) or equals the given userId.
+	 */
+	private applyUserFilter(builder: import('knex').Knex.QueryBuilder, userId: string): import('knex').Knex.QueryBuilder {
+		return builder.whereNull('userId').orWhere('userId', userId);
+	}
+
 	public async create(input: IPluginMetadataCreate): Promise<void> {
 		await this.db.connection<IPluginMetadataCreate>(TABLE_PLUGINS).insert(input);
 	}
@@ -43,9 +50,7 @@ export class PluginMetadataService {
 		return this.db
 			.connection<IPluginMetadataPersistance>(TABLE_PLUGINS)
 			.select('*')
-			.where((builder) => {
-				builder.whereNull('userId').orWhere('userId', userId);
-			});
+			.where((builder) => this.applyUserFilter(builder, userId));
 	}
 
 	public async findActivatedForUser(userId: string): Promise<IPluginMetadataPersistance[]> {
@@ -53,9 +58,7 @@ export class PluginMetadataService {
 			.connection<IPluginMetadataPersistance>(TABLE_PLUGINS)
 			.select('*')
 			.where('isActivate', true)
-			.where((builder) => {
-				builder.whereNull('userId').orWhere('userId', userId);
-			});
+			.where((builder) => this.applyUserFilter(builder, userId));
 	}
 
 	public async updateTenantEnabled(marketplaceId: string, tenantEnabled: boolean): Promise<void> {

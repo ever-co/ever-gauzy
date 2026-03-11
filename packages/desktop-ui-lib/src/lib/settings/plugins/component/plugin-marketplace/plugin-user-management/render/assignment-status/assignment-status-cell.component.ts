@@ -1,12 +1,30 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { NbIconModule } from '@nebular/theme';
+
+/** Row data expected by AssignmentStatusCellComponent */
+export interface AssignmentStatusRow {
+	isActive?: boolean;
+	[key: string]: unknown;
+}
 
 @Component({
 	selector: 'lib-assignment-status-cell',
 	template: `
-		<span class="status-pill" [class.active]="isActive" [class.disabled]="!isActive">
-			<nb-icon [icon]="isActive ? 'checkmark-circle-2-outline' : 'close-circle-outline'" class="status-icon"></nb-icon>
-			<span class="status-text">{{ label }}</span>
+		<span
+			class="status-pill"
+			[class.active]="isActive()"
+			[class.disabled]="!isActive()"
+			role="status"
+			aria-live="polite"
+			[attr.aria-label]="label() + (isActive() ? ' active' : ' inactive')"
+			[attr.aria-disabled]="!isActive()"
+		>
+			<nb-icon
+				[icon]="isActive() ? 'checkmark-circle-2-outline' : 'close-circle-outline'"
+				class="status-icon"
+				aria-hidden="true"
+			></nb-icon>
+			<span class="status-text">{{ label() }}</span>
 		</span>
 	`,
 	styles: [`
@@ -15,7 +33,7 @@ import { NbIconModule } from '@nebular/theme';
 			align-items: center;
 			gap: 0.375rem;
 			padding: 0.25rem 0.625rem;
-			border-radius: 1rem;
+			border-radius: calc(var(--border-radius) * 2);
 			font-size: 0.75rem;
 			font-weight: 600;
 			text-transform: uppercase;
@@ -39,17 +57,15 @@ import { NbIconModule } from '@nebular/theme';
 	imports: [NbIconModule]
 })
 export class AssignmentStatusCellComponent {
-	public rowData: any;
+	private readonly _rowData = signal<AssignmentStatusRow | undefined>(undefined);
 
-	get isActive(): boolean {
-		return !!this.rowData?.isActive;
+	set rowData(value: AssignmentStatusRow) {
+		this._rowData.set(value);
 	}
 
-	get status(): string {
-		return this.isActive ? 'success' : 'danger';
-	}
+	readonly isActive = computed(() => !!this._rowData()?.isActive);
 
-	get label(): string {
-		return this.isActive ? 'Active' : 'Disabled';
-	}
+	readonly status = computed(() => this.isActive() ? 'success' : 'danger');
+
+	readonly label = computed(() => this.isActive() ? 'Active' : 'Disabled');
 }

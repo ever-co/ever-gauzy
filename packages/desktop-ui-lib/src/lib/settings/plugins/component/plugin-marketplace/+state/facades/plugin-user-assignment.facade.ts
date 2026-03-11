@@ -590,13 +590,13 @@ export class PluginUserAssignmentFacade {
 	// ============================================================================
 
 	/** Enable (allow) a single user's access to the plugin tenant. */
-	enableUser(pluginTenantId: ID, userId: string): void {
-		this.allowUsersToPluginTenant(pluginTenantId, [userId]);
+	enableUser(pluginTenantId: ID, userId: string, reason?: string): void {
+		this.allowUsersToPluginTenant(pluginTenantId, [userId], reason);
 	}
 
 	/** Disable (deny/revoke) a single user's access to the plugin tenant. */
-	disableUser(pluginTenantId: ID, userId: string): void {
-		this.denyUsersFromPluginTenant(pluginTenantId, [userId]);
+	disableUser(pluginTenantId: ID, userId: string, reason?: string): void {
+		this.denyUsersFromPluginTenant(pluginTenantId, [userId], reason);
 	}
 
 	/** Unassign a single user from the plugin tenant (remove entirely). */

@@ -1,28 +1,38 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { NbUserModule } from '@nebular/theme';
+
+/** Row data expected by UserCellComponent */
+export interface UserCellRow {
+	firstName?: string;
+	lastName?: string;
+	email?: string;
+	imageUrl?: string;
+	[key: string]: unknown;
+}
 
 @Component({
 	selector: 'lib-user-cell',
 	template: `
-		<nb-user [picture]="picture" [name]="name" [title]="email" size="small"></nb-user>
+		<nb-user [picture]="picture()" [name]="name()" [title]="email()" size="small"></nb-user>
 	`,
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [NbUserModule]
 })
 export class UserCellComponent {
-	public rowData: any;
+	private readonly _rowData = signal<UserCellRow | undefined>(undefined);
 
-	get name(): string {
-		const first = this.rowData?.firstName || '';
-		const last = this.rowData?.lastName || '';
+	set rowData(value: UserCellRow) {
+		this._rowData.set(value);
+	}
+
+	readonly name = computed(() => {
+		const data = this._rowData();
+		const first = data?.firstName || '';
+		const last = data?.lastName || '';
 		return `${first} ${last}`.trim() || 'Unknown User';
-	}
+	});
 
-	get email(): string {
-		return this.rowData?.email || '';
-	}
+	readonly email = computed(() => this._rowData()?.email || '');
 
-	get picture(): string {
-		return this.rowData?.imageUrl || '/assets/images/avatars/default-avatar.png';
-	}
+	readonly picture = computed(() => this._rowData()?.imageUrl || '/assets/images/avatars/default-avatar.png');
 }

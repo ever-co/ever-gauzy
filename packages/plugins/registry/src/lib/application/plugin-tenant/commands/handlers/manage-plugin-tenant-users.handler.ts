@@ -161,9 +161,13 @@ export class ManagePluginTenantUsersCommandHandler implements ICommandHandler<Ma
 		}
 
 		// Fetch with full relations
-		const {record: result } = await this.pluginTenantService.findOneOrFailByIdString(pluginTenantId, {
+		const {record: result, success: resultSuccess } = await this.pluginTenantService.findOneOrFailByIdString(pluginTenantId, {
 			relations: ['plugin', 'allowedUsers', 'deniedUsers', 'allowedRoles']
 		});
+
+		if (!resultSuccess) {
+			throw new NotFoundException(`Plugin tenant with ID "${pluginTenantId}" not found after update`);
+		}
 
 		this.logger.log(`${operation} operation completed: ${message}`);
 

@@ -1,9 +1,9 @@
 import { AsyncPipe } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { IPlugin } from '@gauzy/contracts';
-import { NbAlertModule, NbBadgeModule, NbButtonModule, NbDialogService, NbIconModule, NbSpinnerModule, NbToggleModule, NbTooltipModule } from '@nebular/theme';
+import { NbAlertModule, NbBadgeModule, NbButtonGroupModule, NbButtonModule, NbDialogService, NbIconModule, NbSpinnerModule, NbToggleModule, NbTooltipModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Angular2SmartTableModule, LocalDataSource } from 'angular2-smart-table';
 import { distinctUntilChanged, filter, Observable, switchMap, take, tap } from 'rxjs';
 import {
@@ -16,6 +16,13 @@ import { PluginUserAssignment } from '../../../+state/stores/plugin-user-assignm
 import { AlertComponent } from '../../../../../../../dialogs/alert/alert.component';
 import { PaginationComponent } from '../../../../../../../time-tracker/pagination/pagination.component';
 import { PluginAssignedUsersTableService } from '../../../plugin-user-management/services/plugin-assigned-users-table.service';
+
+/** Row data representing a user toggle action */
+export interface PluginUserRow {
+	userId?: string;
+	newState: boolean;
+	[key: string]: unknown;
+}
 
 /**
  * User Management Tab Component
@@ -46,7 +53,7 @@ import { PluginAssignedUsersTableService } from '../../../plugin-user-management
     styleUrls: ['./user-management-tab.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-		NbIconModule, NbButtonModule, NbAlertModule, NbSpinnerModule, NbBadgeModule, NbTooltipModule, NbToggleModule,
+		NbIconModule, NbButtonModule, NbButtonGroupModule, NbAlertModule, NbSpinnerModule, NbBadgeModule, NbTooltipModule, NbToggleModule,
 		Angular2SmartTableModule, PaginationComponent,
 		AsyncPipe, TranslatePipe
 	]
@@ -100,19 +107,24 @@ export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDest
 
 	// Smart table
 	public readonly assignedUsersSource = new LocalDataSource([]);
-	public assignedUsersSettings: any;
+	public assignedUsersSettings: Record<string, unknown>;
+
+	// ============================================================================
+	// DEPENDENCY INJECTION
+	// ============================================================================
+
+	private readonly marketplaceQuery = inject(PluginMarketplaceQuery);
+	private readonly accessFacade = inject(PluginSubscriptionAccessFacade);
+	private readonly userAssignmentFacade = inject(PluginUserAssignmentFacade);
+	private readonly assignedUsersTableService = inject(PluginAssignedUsersTableService);
+	private readonly dialogService = inject(NbDialogService);
+	private readonly translateService = inject(TranslateService);
 
 	// ============================================================================
 	// CONSTRUCTOR & LIFECYCLE
 	// ============================================================================
 
-	constructor(
-		private readonly marketplaceQuery: PluginMarketplaceQuery,
-		private readonly accessFacade: PluginSubscriptionAccessFacade,
-		private readonly userAssignmentFacade: PluginUserAssignmentFacade,
-		private readonly assignedUsersTableService: PluginAssignedUsersTableService,
-		private readonly dialogService: NbDialogService
-	) {
+	constructor() {
 		// Initialize observables
 		this.plugin$ = this.marketplaceQuery.plugin$;
 		this.viewModel$ = this.userAssignmentFacade.viewModel$;
@@ -197,8 +209,6 @@ export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDest
 	 * @param plugin - The plugin that changed
 	 */
 	private handlePluginChange(plugin: IPlugin): void {
-		console.log('Plugin changed in user-management-tab, loading users for plugin:', plugin.id);
-
 		// Clear previous assignments first to avoid showing stale data
 		this.userAssignmentFacade.clearAssignments();
 
@@ -230,9 +240,9 @@ export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDest
 	/**
 	 * Toggle user access to the plugin (enable / disable)
 	 */
-	onToggleUserAccess(rowData: any): void {
+	onToggleUserAccess(rowData: PluginUserRow): void {
 		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
-		if (!pluginTenantId) return;
+		if (!pluginTenantId || !rowData.userId) return;
 		if (rowData.newState) {
 			this.userAssignmentFacade.enableUser(pluginTenantId, rowData.userId);
 		} else {
@@ -332,7 +342,7 @@ export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDest
 				context: {
 					data: {
 						title: 'PLUGIN.USER_MANAGEMENT.UNASSIGN_USER',
-						message: `Are you sure you want to remove ${userName} from this plugin? They will lose all access.`,
+						message: this.translateService.instant('PLUGIN.USER_MANAGEMENT.UNASSIGN_USER_CONFIRM', { userName }),
 						status: 'danger',
 						confirmText: 'PLUGIN.USER_MANAGEMENT.UNASSIGN',
 						dismissText: 'BUTTONS.CANCEL'

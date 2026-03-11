@@ -26,6 +26,7 @@ import {
 	LoggerService,
 	NgxDesktopThemeModule,
 	OrganizationInterceptor,
+	providePluginsEffects,
 	RefreshTokenInterceptor,
 	ServerConnectionService,
 	ServerErrorInterceptor,
@@ -78,6 +79,7 @@ if (environment.SENTRY_DSN) {
 bootstrapApplication(AppComponent, {
 	providers: [
 		provideEffectsManager(),
+		providePluginsEffects(),
 		provideZoneChangeDetection(),
 		importProvidersFrom(
 			BrowserModule,

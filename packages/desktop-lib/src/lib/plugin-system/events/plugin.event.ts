@@ -86,7 +86,7 @@ class ElectronPluginListener {
 
 		ipcMain.handle(
 			PluginHandlerChannel.UPDATE_TENANT_ENABLED,
-			async (_, { marketplaceId, tenantEnabled }: { marketplaceId: string; tenantEnabled: boolean }) => {
+			async (_, { marketplaceId, tenantEnabled }: { marketplaceId: ID; tenantEnabled: boolean }) => {
 				try {
 					await this.pluginManager.updateTenantEnabled(marketplaceId, tenantEnabled);
 					return { success: true };

@@ -1,19 +1,31 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+
+/** Row data expected by AssignmentDateCellComponent */
+export interface AssignmentDateRow {
+	assignedAt?: string | Date;
+	createdAt?: string | Date;
+	[key: string]: unknown;
+}
 
 @Component({
 	selector: 'lib-assignment-date-cell',
-	template: `{{ date | date: 'mediumDate' }}`,
+	template: `{{ date() | date: 'mediumDate' }}`,
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [DatePipe]
 })
 export class AssignmentDateCellComponent {
-	public rowData: any;
+	private readonly _rowData = signal<AssignmentDateRow | undefined>(undefined);
 
-	get date(): Date | null {
-		const raw = this.rowData?.assignedAt || this.rowData?.createdAt;
-		if (!raw) return null;
-		const d = new Date(raw);
-		return isNaN(d.getTime()) ? null : d;
+	set rowData(value: AssignmentDateRow) {
+		this._rowData.set(value);
 	}
+
+	readonly date = computed(() => {
+		const data = this._rowData();
+		const raw = data?.assignedAt || data?.createdAt;
+		if (!raw) return null;
+		const d = new Date(raw as string);
+		return isNaN(d.getTime()) ? null : d;
+	});
 }

@@ -1,19 +1,25 @@
 import { Injectable } from '@angular/core';
+import { IUser } from '@gauzy/contracts';
 import { Cell } from 'angular2-smart-table';
 import { Observable } from 'rxjs';
 import { PluginUserAssignment } from '../../+state/stores/plugin-user-assignment.store';
-import { AccessToggleCellComponent } from '../render/access-toggle/access-toggle-cell.component';
+import { AccessToggleCellComponent, AccessToggleRow } from '../render/access-toggle/access-toggle-cell.component';
 import { AssignmentDateCellComponent } from '../render/assignment-date/assignment-date-cell.component';
 import { AssignmentStatusCellComponent } from '../render/assignment-status/assignment-status-cell.component';
-import { UnassignActionCellComponent } from '../render/unassign-action/unassign-action-cell.component';
+import { UnassignActionCellComponent, UnassignRowData } from '../render/unassign-action/unassign-action-cell.component';
 import { UserCellComponent } from '../render/user-cell/user-cell.component';
 
 /** Operator that limits a subscription lifetime to the host component. */
 export type PipeUntilDestroyed = <T>(source: Observable<T>) => Observable<T>;
 
+/** Row data representing a user toggle action from the assigned-users table */
+export interface AssignedUserRow extends AccessToggleRow {
+	newState: boolean;
+}
+
 /** Callbacks wired from the assigned-users table to the host component. */
 export interface AssignedUsersTableHandlers {
-	onToggle: (rowData: any) => void;
+	onToggle: (rowData: AssignedUserRow) => void;
 	onUnassign: (assignment: PluginUserAssignment) => void;
 	pipeUntilDestroyed: PipeUntilDestroyed;
 }
@@ -88,7 +94,7 @@ export class PluginAssignedUsersTableService {
 					componentInitFunction: (instance: UnassignActionCellComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						pipeUntilDestroyed(instance.unassign).subscribe((a) =>
-							onUnassign(a as PluginUserAssignment)
+							onUnassign(this.adaptRowToAssignment(a))
 						);
 					}
 				}
@@ -97,6 +103,24 @@ export class PluginAssignedUsersTableService {
 			actions: false,
 			noDataMessage: 'No users assigned to this plugin',
 			pager: { display: false, perPage: 10, page: 1 }
+		};
+	}
+
+	/**
+	 * Adapt a flat table row back to a PluginUserAssignment domain object.
+	 * The row contains all assignment fields (spread via mapAssignmentToRow),
+	 * but the component emits the looser UnassignRowData type.
+	 */
+	private adaptRowToAssignment(row: UnassignRowData): PluginUserAssignment {
+		return {
+			id: row['id'] as string,
+			userId: row.userId ?? '',
+			pluginSubscriptionId: row['pluginSubscriptionId'] as string,
+			assignedAt: row['assignedAt'] as Date,
+			assignedBy: row['assignedBy'] as string,
+			isActive: row['isActive'] as boolean,
+			reason: row['reason'] as string | undefined,
+			user: row['user'] as IUser | undefined
 		};
 	}
 

@@ -192,7 +192,7 @@ export class PluginEffects {
 					tap(() => this.action$.dispatch(PluginActions.refresh())),
 					catchError((error) => {
 						this.toastrService.error(
-							error?.message || 'Failed to sync plugin access'
+							error?.error?.message || error?.message || 'Failed to sync plugin access'
 						);
 						return EMPTY;
 					})

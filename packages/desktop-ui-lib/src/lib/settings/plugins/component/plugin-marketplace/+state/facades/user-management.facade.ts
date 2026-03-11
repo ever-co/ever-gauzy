@@ -514,6 +514,7 @@ export class UserManagementFacade {
 	 * @param userIds - Array of user identifiers
 	 */
 	enableAllUsers(pluginTenantId: ID, userIds: string[]): void {
+		if (!userIds || userIds.length === 0) return;
 		this.actions.dispatch(
 			PluginUserAssignmentActions.allowUsersToPluginTenant({
 				pluginTenantId,
@@ -528,6 +529,7 @@ export class UserManagementFacade {
 	 * @param userIds - Array of user identifiers
 	 */
 	disableAllUsers(pluginTenantId: ID, userIds: string[]): void {
+		if (!userIds || userIds.length === 0) return;
 		this.actions.dispatch(
 			PluginUserAssignmentActions.denyUsersFromPluginTenant({
 				pluginTenantId,

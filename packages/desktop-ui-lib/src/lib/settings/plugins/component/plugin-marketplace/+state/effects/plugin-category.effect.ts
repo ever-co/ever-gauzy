@@ -4,7 +4,7 @@ import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
-import { EMPTY, catchError, exhaustMap, filter, finalize, forkJoin, map, switchMap, take, tap } from 'rxjs';
+import { EMPTY, catchError, exhaustMap, filter, finalize, forkJoin, map, of, switchMap, take, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
 import { PluginCategoryService } from '../../../../services/plugin-category.service';
 import { CreateCategoryDialogComponent } from '../../plugin-marketplace-item/create-category-dialog/create-category-dialog.component';
@@ -381,20 +381,39 @@ export class PluginCategoryEffects {
 				this.pluginCategoryStore.setUpdating(true);
 				this.toastrService.info('Updating categories...');
 			}),
-			switchMap(({ updates }) =>
-				forkJoin(updates.map(({ id, updates }) => this.pluginCategoryService.patch(id, updates))).pipe(
-					tap(() => {
-						this.pluginCategoryStore.bulkUpdateCategories(updates);
-						this.toastrService.success('Categories updated successfully');
+			switchMap(({ updates }) => {
+				if (!updates || updates.length === 0) {
+					this.pluginCategoryStore.setUpdating(false);
+					return EMPTY;
+				}
+				return forkJoin(
+					updates.map(({ id, updates: itemUpdates }) =>
+						this.pluginCategoryService.patch(id, itemUpdates).pipe(
+							map((result) => ({ id, success: true as const, result })),
+							catchError((error) => of({ id, success: false as const, error }))
+						)
+					)
+				).pipe(
+					tap((results) => {
+						const succeeded = results.filter((r) => r.success);
+						const failed = results.filter((r) => !r.success);
+						if (succeeded.length > 0) {
+							this.pluginCategoryStore.bulkUpdateCategories(
+								updates.filter((u) => succeeded.some((s) => s.id === u.id))
+							);
+						}
+						if (failed.length > 0) {
+							const failedIds = failed.map((f) => f.id).join(', ');
+							this.toastrService.error(`Failed to update categories: ${failedIds}`);
+							this.pluginCategoryStore.setError(`Failed to update categories: ${failedIds}`);
+						}
+						if (succeeded.length > 0 && failed.length === 0) {
+							this.toastrService.success('Categories updated successfully');
+						}
 					}),
-					finalize(() => this.pluginCategoryStore.setUpdating(false)),
-					catchError((error) => {
-						this.pluginCategoryStore.setError(error.message || 'Failed to bulk update categories');
-						this.toastrService.error(error.message || 'Failed to update categories');
-						return EMPTY;
-					})
-				)
-			)
+					finalize(() => this.pluginCategoryStore.setUpdating(false))
+				);
+			})
 		)
 	);
 
@@ -407,17 +426,30 @@ export class PluginCategoryEffects {
 				this.toastrService.info('Deleting categories...');
 			}),
 			switchMap(({ ids }) =>
-				forkJoin(ids.map((id) => this.pluginCategoryService.delete(id))).pipe(
-					tap(() => {
-						this.pluginCategoryStore.bulkDeleteCategories(ids);
-						this.toastrService.success('Categories deleted successfully');
+				forkJoin(
+					ids.map((id) =>
+						this.pluginCategoryService.delete(id).pipe(
+							map(() => ({ id, success: true as const })),
+							catchError((error) => of({ id, success: false as const, error }))
+						)
+					)
+				).pipe(
+					tap((results) => {
+						const successIds = results.filter((r) => r.success).map((r) => r.id);
+						const failed = results.filter((r) => !r.success);
+						if (successIds.length > 0) {
+							this.pluginCategoryStore.bulkDeleteCategories(successIds);
+						}
+						if (failed.length > 0) {
+							const failedIds = failed.map((f) => f.id).join(', ');
+							this.toastrService.error(`Failed to delete categories: ${failedIds}`);
+							this.pluginCategoryStore.setError(`Failed to delete categories: ${failedIds}`);
+						}
+						if (successIds.length > 0 && failed.length === 0) {
+							this.toastrService.success('Categories deleted successfully');
+						}
 					}),
-					finalize(() => this.pluginCategoryStore.setDeleting(false)),
-					catchError((error) => {
-						this.pluginCategoryStore.setError(error.message || 'Failed to bulk delete categories');
-						this.toastrService.error(error.message || 'Failed to delete categories');
-						return EMPTY;
-					})
+					finalize(() => this.pluginCategoryStore.setDeleting(false))
 				)
 			)
 		)

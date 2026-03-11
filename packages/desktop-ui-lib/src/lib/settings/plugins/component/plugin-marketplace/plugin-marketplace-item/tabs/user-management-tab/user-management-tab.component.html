@@ -1,6 +1,9 @@
 <!-- User Management Tab Template -->
 <!-- Uses reactive programming with async pipe and proper null-safety -->
-@let plugin = plugin$ | async; @let viewModel = viewModel$ | async; @let canAssign = canAssign$ | async; @if (plugin && viewModel) {
+@let plugin = plugin$ | async;
+@let viewModel = viewModel$ | async;
+@let canAssign = canAssign$ | async;
+@if (plugin && viewModel) {
 <div class="user-management-tab-content">
 	<!-- Header Section -->
 	<div class="header-section mb-4">
@@ -80,7 +83,9 @@
 	<!-- Loading State -->
 	@if (viewModel.loading) {
 	<div class="loading-state">
-		<nb-spinner size="medium"></nb-spinner>
+		<nb-skeleton shape="rectangle" size="large" width="100%"></nb-skeleton>
+		<nb-skeleton shape="rectangle" size="medium" width="80%"></nb-skeleton>
+		<nb-skeleton shape="rectangle" size="medium" width="60%"></nb-skeleton>
 		<span class="loading-text">{{ 'SM_TABLE.LOADING' | translate }}</span>
 	</div>
 	} @else if (viewModel.isEmpty) {
@@ -114,7 +119,9 @@
 
 		<!-- Bulk Access Controls -->
 		@if (viewModel.hasAssignments) {
-		@let enabling = enabling$ | async; @let disabling = disabling$ | async; @let unassigning = unassigning$ | async;
+		@let enabling = enabling$ | async;
+		@let disabling = disabling$ | async;
+		@let unassigning = unassigning$ | async;
 		<div class="bulk-actions mb-3">
 			<span class="bulk-actions-label">{{ 'PLUGIN.USER_MANAGEMENT.ORGANIZATION_ACCESS' | translate }}:</span>
 			<button

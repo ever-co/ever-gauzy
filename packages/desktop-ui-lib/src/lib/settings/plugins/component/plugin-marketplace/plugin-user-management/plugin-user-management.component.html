@@ -1,7 +1,7 @@
 <!-- Loading state -->
 @let loading = loading$ | async;
 <!-- Total Assigned Count -->
-@let totalCount = getTotalAssignedCount() | async;
+@let totalCount = totalCount$ | async;
 <!-- Selected Count -->
 @let selectedCount = selectedCount$ | async;
 <!-- Derived State -->
@@ -46,9 +46,11 @@
 					</form>
 
 					<!-- Available Users Table -->
-					@if(loadingAvailableUsers$ | async) {
+				@if(loadingAvailableUsers$ | async) {
 					<div class="loading-state">
-						<nb-spinner size="medium"></nb-spinner>
+						<nb-skeleton shape="rectangle" size="large" width="100%"></nb-skeleton>
+						<nb-skeleton shape="rectangle" size="medium" width="80%"></nb-skeleton>
+						<nb-skeleton shape="rectangle" size="medium" width="60%"></nb-skeleton>
 						<span class="loading-text">{{ 'SM_TABLE.LOADING' | translate }}</span>
 					</div>
 					} @else {
@@ -129,7 +131,9 @@
 					}
 					@if(loading) {
 					<div class="loading-state">
-						<nb-spinner size="medium"></nb-spinner>
+						<nb-skeleton shape="rectangle" size="large" width="100%"></nb-skeleton>
+						<nb-skeleton shape="rectangle" size="medium" width="80%"></nb-skeleton>
+						<nb-skeleton shape="rectangle" size="medium" width="60%"></nb-skeleton>
 						<span class="loading-text">{{ 'SM_TABLE.LOADING' | translate }}</span>
 					</div>
 					} @else if (!isAssignedAvailable) {
