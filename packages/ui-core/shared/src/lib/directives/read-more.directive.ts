@@ -27,7 +27,7 @@ export class ReadMoreDirective implements AfterViewInit, OnChanges {
 	ngAfterViewInit(): void {
 		if (!this.elementChange) return;
 
-		this.text = this.elementChange.innerHTML ?? '';
+		this.text = this.elementChange.textContent ?? '';
 		this.updateView();
 	}
 
@@ -62,7 +62,7 @@ export class ReadMoreDirective implements AfterViewInit, OnChanges {
 		if (!this.text || !this.elementChange) return;
 
 		if (this.text.length <= this.maxLength) {
-			this.elementChange.innerHTML = this.text;
+			this.elementChange.textContent =this.text;
 			this.hideToggle = true;
 			this.toggleVisibility(false);
 			return;
@@ -74,7 +74,7 @@ export class ReadMoreDirective implements AfterViewInit, OnChanges {
 			? this.text.substring(0, this.maxLength) + '...'
 			: this.text;
 
-		this.elementChange.innerHTML = displayText;
+		this.elementChange.textContent =displayText;
 
 		this.toggleVisibility(true);
 	}
