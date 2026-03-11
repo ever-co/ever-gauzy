@@ -1,117 +1,86 @@
-import {
-	Directive,
-	Input,
-	ElementRef,
-	AfterViewInit,
-	OnChanges,
-	HostListener,
-	inject
-} from '@angular/core';
+import { Directive, Input, ElementRef, AfterViewInit, OnChanges } from '@angular/core';
 
 @Directive({
 	selector: '[readMore]',
 	standalone: true
 })
 export class ReadMoreDirective implements AfterViewInit, OnChanges {
-	private readonly el = inject<ElementRef<HTMLElement>>(ElementRef);
-	private text = '';
-	private isCollapsed = true;
-	private hideToggle = true;
+	@Input('readMore-length') private maxLength: number;
+	@Input('readMore-element') private elementChange: HTMLElement;
 
-	@Input('readMore') set maxLength(value: number) {
-		if (value > 0) {
-			this._maxLength = value;
+	private currentText: string;
+	private hideToggle: boolean = true;
+	private text: string;
+	private isCollapsed: boolean = true;
+
+	constructor(private el: ElementRef) {}
+
+	/**
+	 * @inheritDoc
+	 */
+	public ngAfterViewInit() {
+		this.text = this.elementChange.innerHTML;
+
+		this.toggleView();
+		if (!this.hideToggle) {
+			this.el.nativeElement.classList.remove('hidden');
+		} else {
+			this.el.nativeElement.classList.add('hidden');
+		}
+		this.el.nativeElement.addEventListener('click', (event: MouseEvent) => {
+			event.preventDefault();
+			this.toggleView();
+		});
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public ngOnChanges() {
+		if (this.text) {
+			this.toggleView();
 		}
 	}
-	get maxLength(): number {
-		return this._maxLength;
-	}
-	private _maxLength = 100;
-
-	@Input() readMoreText = 'Read More';
-	@Input() readLessText = 'Read Less';
-	@Input() elementChange!: HTMLElement;
-
 	/**
-	 * Angular lifecycle hook
+	 * Toogle view - full text or not
 	 */
-	ngAfterViewInit(): void {
-		if (!this.elementChange) return;
-
-		this.text = this.elementChange.textContent ?? '';
-		this.updateView();
-	}
-
-	/**
-	 * Angular lifecycle hook
-	 */
-	ngOnChanges(): void {
-		this.text = this.elementChange?.textContent ?? '';
-		this.isCollapsed = true;
-		this.updateView();
-	}
-
-	/**
-	 * Handle click using Angular instead of addEventListener
-	 */
-	@HostListener('click', ['$event'])
-	onClick(event: MouseEvent): void {
-		const target = event.target as HTMLElement;
-		if (this.hideToggle || !target.closest('.more, .less')) {
+	private toggleView(): void {
+		if (this.text.length <= this.maxLength) {
+			this.el.nativeElement.querySelector('.more').style.display = 'none';
+			this.el.nativeElement.querySelector('.less').style.display = 'none';
 			return;
 		}
-		event.preventDefault();
-
+		this.determineView();
 		this.isCollapsed = !this.isCollapsed;
-		this.updateView();
+		if (this.isCollapsed) {
+			this.el.nativeElement.querySelector('.more').style.display = 'none';
+			this.el.nativeElement.querySelector('.less').style.display = 'inherit';
+		} else {
+			this.el.nativeElement.querySelector('.more').style.display = 'inherit';
+			this.el.nativeElement.querySelector('.less').style.display = 'none';
+		}
 	}
 
 	/**
-	 * Update view based on collapse state
+	 * Determine view
 	 */
-	private updateView(): void {
-		if (!this.elementChange) return;
-		if (!this.text) {
-			this.elementChange.textContent = '';
-			this.hideToggle = true;
-			this.toggleVisibility(false);
-			return;
-		}
+	private determineView(): void {
+		const _elementChange = this.elementChange; //document.getElementById(this.elementChange.id);
 
 		if (this.text.length <= this.maxLength) {
-			this.elementChange.textContent = this.text;
+			this.currentText = this.text;
+			_elementChange.innerHTML = this.currentText;
+			this.isCollapsed = false;
 			this.hideToggle = true;
-			this.toggleVisibility(false);
 			return;
 		}
-
 		this.hideToggle = false;
-
-		const displayText = this.isCollapsed
-			? this.text.substring(0, this.maxLength) + '...'
-			: this.text;
-
-		this.elementChange.textContent = displayText;
-
-		this.toggleVisibility(true);
-	}
-
-	/**
-	 * Toggle more/less buttons
-	 */
-	private toggleVisibility(show: boolean): void {
-		const more = this.el.nativeElement.querySelector('.more');
-		const less = this.el.nativeElement.querySelector('.less');
-
-		if (!more || !less) return;
-
-		if (!show) {
-			more.setAttribute('style', 'display:none');
-			less.setAttribute('style', 'display:none');
-			return;
+		if (this.isCollapsed === true) {
+			this.currentText = this.text.substring(0, this.maxLength) + '...';
+			_elementChange.innerHTML = this.currentText;
+		} else if (this.isCollapsed === false) {
+			this.currentText = this.text;
+			_elementChange.innerHTML = this.currentText;
 		}
-
-		more.setAttribute('style', this.isCollapsed ? 'display:inherit' : 'display:none');
-		less.setAttribute('style', this.isCollapsed ? 'display:none' : 'display:inherit');
 	}
 }
