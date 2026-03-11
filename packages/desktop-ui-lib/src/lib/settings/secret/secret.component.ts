@@ -60,8 +60,4 @@ export class SecretComponent implements OnInit {
 	public onUpdate(): void {
 		this.update.emit(this.config);
 	}
-
-	public save(event: string): void {
-		this.electronService.ipcRenderer.send('save_encrypted_file', event);
-	}
 }
