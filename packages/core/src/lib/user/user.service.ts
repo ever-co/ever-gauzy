@@ -753,7 +753,8 @@ export class UserService extends TenantAwareCrudService<User> {
 		}
 
 		const users = await this.find({
-			where: { id: In(userIds) }
+			where: { id: In(userIds) },
+			relations: { image: true }
 		});
 
 		return new Map(users.map((user) => [user.id, user]));
