@@ -35,7 +35,7 @@ export class ReadMoreDirective implements AfterViewInit, OnChanges {
 	 * Angular lifecycle hook
 	 */
 	ngOnChanges(): void {
-		this.text = this.elementChange?.textContent ?? '';
+		this.text = this.elementChange?.innerHTML ?? '';
 		this.isCollapsed = true;
 		this.updateView();
 	}

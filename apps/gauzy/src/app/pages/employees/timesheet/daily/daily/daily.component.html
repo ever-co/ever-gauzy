@@ -62,7 +62,7 @@
 				@if (logs$ | async; as timeLogs) {
 					@if (timeLogs.length > 0) {
 						<div class="content" style="cursor: pointer">
-							`@for` (log of timeLogs; track log.id; let last = $last) {
+							@for (log of timeLogs; track log.id; let last = $last) {
 								<div
 									[class.border-bottom]="!last"
 									[class.selected]="log?.isSelected"
