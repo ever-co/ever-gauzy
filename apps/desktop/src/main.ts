@@ -10,18 +10,7 @@ import {
 import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
-import * as Sentry from '@sentry/angular';
 import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
-import {
-	NbDatepickerModule,
-	NbDialogModule,
-	NbDialogService,
-	NbIconLibraries,
-	NbMenuModule,
-	NbSidebarModule,
-	NbThemeModule,
-	NbToastrModule
-} from '@nebular/theme';
 import {
 	ActivityWatchInterceptor,
 	APIInterceptor,
@@ -37,17 +26,30 @@ import {
 	LoggerService,
 	NgxDesktopThemeModule,
 	OrganizationInterceptor,
+	providePluginsEffects,
 	RefreshTokenInterceptor,
+	ServerConnectionService,
 	ServerErrorInterceptor,
 	Store,
 	TenantInterceptor,
 	TimeoutInterceptor,
-	TokenInterceptor,
-	ServerConnectionService
+	TokenInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { provideI18n } from '@gauzy/ui-core/i18n';
 import { TablerIconsModule } from '@gauzy/ui-core/icons';
+import {
+	NbDatepickerModule,
+	NbDialogModule,
+	NbDialogService,
+	NbIconLibraries,
+	NbMenuModule,
+	NbSidebarModule,
+	NbThemeModule,
+	NbToastrModule
+} from '@nebular/theme';
+import { provideEffectsManager } from '@ngneat/effects-ng';
+import * as Sentry from '@sentry/angular';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { AppService } from './app/app.service';
@@ -76,6 +78,8 @@ if (environment.SENTRY_DSN) {
 
 bootstrapApplication(AppComponent, {
 	providers: [
+		provideEffectsManager(),
+		providePluginsEffects(),
 		provideZoneChangeDetection(),
 		importProvidersFrom(
 			BrowserModule,
