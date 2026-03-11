@@ -189,6 +189,7 @@
 			<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
 				@if (isCheckboxSelected() && contextMenus?.length > 0) {
 					<button
+						type="button"
 						outline
 						nbButton
 						status="primary"
@@ -206,6 +207,7 @@
 		</ng-template>
 		@if (selectedItem) {
 			<button
+				type="button"
 				nbButton
 				status="basic"
 				class="action secondary"
@@ -219,6 +221,7 @@
 			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME">
 				<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MODIFY_TIME">
 					<button
+						type="button"
 						nbButton
 						status="basic"
 						class="action primary"
@@ -234,6 +237,7 @@
 			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
 				<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
 					<button
+						type="button"
 						nbButton
 						status="basic"
 						size="small"
@@ -243,6 +247,7 @@
 						[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
 						(confirm)="onDeleteConfirm(selectedItem)"
 						[nbTooltip]="'TIMESHEET.DELETE' | translate"
+						[attr.aria-label]="'TIMESHEET.DELETE' | translate"
 					>
 						<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 					</button>
@@ -254,7 +259,7 @@
 <ng-template #visibleButtons>
 	<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
 		<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MANUAL_TIME">
-			<button class="action" size="small" nbButton status="success" (click)="openAdd()">
+			<button type="button" class="action" size="small" nbButton status="success" (click)="openAdd()">
 				<nb-icon icon="plus-outline"></nb-icon>
 				{{ 'TIMESHEET.ADD_TIME' | translate }}
 			</button>

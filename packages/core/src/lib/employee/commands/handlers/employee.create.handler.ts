@@ -33,10 +33,7 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 	 * @throws SomeAppropriateException if an error occurs during the process.
 	 */
 	public async execute(command: EmployeeCreateCommand): Promise<IEmployee> {
-		const {
-			input,
-			originUrl = environment.clientBaseUrl
-		} = command;
+		const { input, originUrl = environment.clientBaseUrl } = command;
 		const languageCode = command.languageCode || LanguagesEnum.ENGLISH;
 		const { organizationId } = input;
 
@@ -90,9 +87,9 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 					user: existingUser,
 					organizationId,
 					organization: { id: organizationId },
-					allowManualTime: input.allowManualTime ?? isUserAdmin,
-					allowModifyTime: input.allowModifyTime ?? isUserAdmin,
-					allowDeleteTime: input.allowDeleteTime ?? isUserAdmin
+					allowManualTime: isUserAdmin,
+					allowModifyTime: isUserAdmin,
+					allowDeleteTime: isUserAdmin
 				});
 
 				// Assign organization to the existing user
