@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import * as moment from 'moment';
@@ -55,6 +55,7 @@ const ormType: MultiORM = getORMType();
 
 @Injectable()
 export class StatisticService {
+	private readonly logger = new Logger(StatisticService.name);
 	protected ormType: MultiORM = ormType;
 
 	constructor(
@@ -743,9 +744,14 @@ export class StatisticService {
 						member.todayTime = dayTimeSlots[member.id];
 
 						const user = userMap.get(member.user_id);
+						if (!user) {
+							this.logger.warn(
+								`User not found for member id=${member.id}, user_id=${member.user_id}. findUsersByIds returned no match.`
+							);
+						}
 						member.user = {
-							name: user?.name,
-							imageUrl: user?.imageUrl
+							name: user?.name ?? null,
+							imageUrl: user?.imageUrl ?? null
 						};
 						delete member.user_id;
 
@@ -1027,9 +1033,14 @@ export class StatisticService {
 						member.todayTime = dayTimeSlots[member.id];
 
 						const user = userMap.get(member.user_id);
+						if (!user) {
+							this.logger.warn(
+								`User not found for member id=${member.id}, user_id=${member.user_id}. findUsersByIds returned no match.`
+							);
+						}
 						member.user = {
-							name: user?.name,
-							imageUrl: user?.imageUrl
+							name: user?.name ?? null,
+							imageUrl: user?.imageUrl ?? null
 						};
 						delete member.user_id;
 
@@ -2462,11 +2473,15 @@ export class StatisticService {
 				// Reshape user data and fetch time slots for each employee
 				for (const employee of employees) {
 					const user = userMap.get(employee.user_id);
-
+					if (!user) {
+						this.logger.warn(
+							`User not found for employee id=${employee.id}, user_id=${employee.user_id}. findUsersByIds returned no match.`
+						);
+					}
 					employee.user = {
-						imageUrl: user?.imageUrl,
-						name: user?.name
-					};
+						name: user?.name ?? null,
+						imageUrl: user?.imageUrl ?? null
+					}
 					delete employee.user_id;
 
 					// Fetch up to 9 recent time slots per employee with screenshots
@@ -2571,10 +2586,14 @@ export class StatisticService {
 				for (const employee of employees) {
 					const { id: employeeId } = employee;
 					const user = userMap.get(employee.user_id);
-
+					if (!user) {
+						this.logger.warn(
+							`User not found for employee id=${employee.id}, user_id=${employee.user_id}. findUsersByIds returned no match.`
+						);
+					}
 					employee.user = {
-						imageUrl: user?.imageUrl,
-						name: user?.name
+						name: user?.name ?? null,
+						imageUrl: user?.imageUrl ?? null
 					};
 					delete employee.user_id;
 
