@@ -33,8 +33,11 @@ export const createDefaultEmployees = async (
 		const billRateValue = faker.number.int({ min: 15, max: 40 });
 		const minimumBillingRate = faker.number.int({ min: 5, max: billRateValue - 1 });
 
-		// Determine if user has administrative privileges
-		const isAdmin = [RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN].includes(user.role?.name as RolesEnum);
+		// Determine if user has administrative privileges.
+		// user.role is set in-memory by the seed functions (generateRandomUser / seedDefaultEmployeeUsers)
+		// before insertUsers is called, so it is always populated here.
+		const roleName = user.role?.name as RolesEnum;
+		const isAdmin = !!roleName && [RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN].includes(roleName);
 
 		return new Employee({
 			organization,
@@ -91,8 +94,10 @@ export const createRandomEmployees = async (
 
 			// Map each user to a new random employee entity
 			const employees = users.map((user) => {
-				// Determine if user has administrative privileges
-				const isAdmin = [RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN].includes(user.role?.name as RolesEnum);
+				// Determine if user has administrative privileges.
+				// user.role is set in-memory by seedRandomUsers / createRandomSuperAdminUsers.
+				const roleName = user.role?.name as RolesEnum;
+				const isAdmin = !!roleName && [RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN].includes(roleName);
 
 				const employee = new Employee({
 					organization,

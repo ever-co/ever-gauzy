@@ -70,8 +70,11 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 	 * @returns A boolean indicating if the user is authorized.
 	 */
 	private _isAuthorized(organization: IOrganization, user: IUser): boolean {
-		const permissionKey = camelcase(this.permission as string);
-		return !!organization[permissionKey] && (!user.employee || !!user.employee[permissionKey]);
+		const permissions = Array.isArray(this.permission) ? this.permission : [this.permission];
+		return permissions.some((p) => {
+			const key = camelcase(p);
+			return !!organization[key] && (!user.employee || !!user.employee[key]);
+		});
 	}
 
 	/**
