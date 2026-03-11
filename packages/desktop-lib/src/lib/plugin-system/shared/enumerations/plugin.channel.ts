@@ -16,5 +16,5 @@ export enum PluginHandlerChannel {
 	GET_ONE = 'plugins::getOne',
 	LAZY_LOADER = 'plugins::lazy-loader',
 	GET_OS = 'plugins::get-os',
-	UPDATE_TENANT_ENABLED = 'plugin::update-tenant-enabled'
+	UPDATE_TENANT_ENABLED = 'plugins::update-tenant-enabled'
 }

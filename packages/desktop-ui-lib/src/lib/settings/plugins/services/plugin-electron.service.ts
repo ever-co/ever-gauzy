@@ -159,7 +159,7 @@ export class PluginElectronService {
 	 */
 	public async updateTenantEnabled(marketplaceId: string, tenantEnabled: boolean): Promise<void> {
 		if (!this.isDesktop) return;
-		await this.electronService.ipcRenderer.invoke('plugin::update-tenant-enabled', {
+		await this.electronService.ipcRenderer.invoke('plugins::update-tenant-enabled', {
 			marketplaceId,
 			tenantEnabled
 		});
