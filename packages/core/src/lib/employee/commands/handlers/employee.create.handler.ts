@@ -90,9 +90,9 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 					user: existingUser,
 					organizationId,
 					organization: { id: organizationId },
-					allowManualTime: isUserAdmin,
-					allowModifyTime: isUserAdmin,
-					allowDeleteTime: isUserAdmin
+					allowManualTime: input.allowManualTime ?? isUserAdmin,
+					allowModifyTime: input.allowModifyTime ?? isUserAdmin,
+					allowDeleteTime: input.allowDeleteTime ?? isUserAdmin
 				});
 
 				// Assign organization to the existing user
