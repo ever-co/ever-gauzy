@@ -2608,6 +2608,8 @@ export class StatisticService {
 					query.andWhere(p(`"${query.alias}"."startedAt" BETWEEN :start AND :end`), { start, end });
 
 					// Filter joined timeLogs by date range
+					query.andWhere(p(`"timeLogs"."tenantId" = :tenantId`), { tenantId });
+					query.andWhere(p(`"timeLogs"."organizationId" = :organizationId`), { organizationId });
 					query.andWhere(p(`"timeLogs"."startedAt" BETWEEN :start AND :end`), { start, end });
 
 					if (isNotEmpty(projectIds)) {
