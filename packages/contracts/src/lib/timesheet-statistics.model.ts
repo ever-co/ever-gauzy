@@ -12,6 +12,7 @@ export interface IGetTimeSlotStatistics extends ITimeLogFilters {
 }
 
 export interface ITimeSlotStatistics extends IEmployee {
+	user_id?: string;
 	user_name?: string;
 	startedAt?: Date;
 	user_image_url?: string;

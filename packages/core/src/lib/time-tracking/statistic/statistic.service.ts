@@ -2477,18 +2477,18 @@ export class StatisticService {
 					.limit(3)) as unknown as ITimeSlotStatistics[];
 
 				// Batch-load User entities with image relation so subscribers resolve fresh URLs
-				const employeeUserIds = employees.map((e: any) => e.user_id).filter(Boolean);
+				const employeeUserIds = employees.map((e) => e.user_id).filter(Boolean);
 				const userMap = await this._userService.findUsersByIds(employeeUserIds);
 
 				// Reshape user data and fetch time slots for each employee
-				for (const employee of employees as ITimeSlotStatistics[]) {
+				for (const employee of employees) {
 					const user = userMap.get(employee.user_id);
 
 					employee.user = {
 						imageUrl: user?.imageUrl,
 						name: user?.name
 					};
-					delete (employee as any).user_id;
+					delete employee.user_id;
 
 					// Fetch up to 9 recent time slots per employee with screenshots
 					const timeSlotRows = await knex('time_slot')
@@ -2584,11 +2584,11 @@ export class StatisticService {
 				employees = await query.getRawMany();
 
 				// Batch-load User entities with image relation so subscribers resolve fresh URLs
-				const employeeUserIds = employees.map((e: any) => e.user_id).filter(Boolean);
+				const employeeUserIds = employees.map((e) => e.user_id).filter(Boolean);
 				const userMap = await this._userService.findUsersByIds(employeeUserIds);
 
 				// Reshape user data and fetch time slots for each employee
-				for (const employee of employees as ITimeSlotStatistics[]) {
+				for (const employee of employees) {
 					const { id: employeeId } = employee;
 					const user = userMap.get(employee.user_id);
 
@@ -2596,7 +2596,7 @@ export class StatisticService {
 						imageUrl: user?.imageUrl,
 						name: user?.name
 					};
-					delete (employee as any).user_id;
+					delete employee.user_id;
 
 					const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
 					query.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
