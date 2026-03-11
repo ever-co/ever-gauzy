@@ -30,6 +30,7 @@ import { LanguageModule } from '../../language/language.module';
 		NbTooltipModule,
 		NbSpinnerModule,
 		LanguageModule,
+		TranslateModule,
 		SecretComponent,
 	],
 	providers: [],
