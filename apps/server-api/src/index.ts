@@ -305,13 +305,11 @@ const runServer = async () => {
 		const uiPort = serverConfig.uiPort;
 
 		// Instantiate API and UI servers
-		await desktopServer.start({
-			api: path.join(__dirname, 'api/main.js') },
+		await desktopServer.start(
 			{
-				...envVal,
-				JWT_SECRET: environment.JWT_SECRET,
-				JWT_REFRESH_TOKEN_SECRET: environment.JWT_REFRESH_TOKEN_SECRET
+				api: path.join(__dirname, 'api/main.js')
 			},
+			envVal,
 			serverWindow,
 			signal,
 			uiPort
@@ -344,7 +342,9 @@ const getEnvApi = () => {
 		}),
 		DEBUG: 'true',
 		API_PORT: String(config.port),
-		...addsConfig
+		...addsConfig,
+		JWT_SECRET: config.secret?.jwt,
+		JWT_REFRESH_TOKEN_SECRET: config.secret?.refresh_token
 	};
 };
 

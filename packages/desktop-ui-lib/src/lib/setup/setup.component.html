@@ -459,7 +459,16 @@
 									(update)="onChangeProxyConfig($event)"
 								></gauzy-ssl>
 							</div>
+
 							} @if (connectivity.integrated) {
+							<div class="col-10 text-center margin-setting-content col-center">
+								<gauzy-secret
+									class="text-center"
+									[config]="secretConfig"
+									(update)="onChangeSecretConfig($event)"
+								>
+								</gauzy-secret>
+							</div>
 							<div class="col-6 text-center margin-setting-content col-center">
 								<div class="row">
 									<div class="col-5">
