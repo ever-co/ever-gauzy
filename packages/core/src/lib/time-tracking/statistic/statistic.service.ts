@@ -2808,7 +2808,7 @@ export class StatisticService {
 		if (isNotEmpty(activityLevel)) {
 			const startLevel = activityLevel.start * 6; // Start level for activity level in seconds
 			const endLevel = activityLevel.end * 6; // End level for activity level in seconds
-			qb.andWhere(`time_slot.overall BETWEEN :startLevel AND :endLevel`, { startLevel, endLevel });
+			qb.andWhere(p(`time_slot.overall BETWEEN :startLevel AND :endLevel`), { startLevel, endLevel });
 		}
 
 		// Apply log type filter if present
