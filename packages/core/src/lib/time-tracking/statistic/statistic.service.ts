@@ -34,7 +34,6 @@ import {
 	isSqlite
 } from '@gauzy/config';
 import {
-	concateUserNameExpression,
 	getActivityDurationQueryString,
 	getDurationQueryString,
 	getTotalDurationQueryString
@@ -540,26 +539,15 @@ export class StatisticService {
 	 * @returns
 	 */
 	async getMembers(request: IGetMembersStatistics): Promise<IMembersStatistics[]> {
-		// Destructure properties from the request with default values where necessary
-		let {
-			organizationId,
-			startDate,
-			endDate,
-			todayStart,
-			todayEnd,
-			employeeIds = [],
-			projectIds = [],
-			teamIds = []
-		} = request || {};
+		const { organizationId, startDate, endDate, todayStart, todayEnd } = request;
+		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
 
-		// Retrieves the database type from the configuration service.
 		const dbType = this.configService.dbConnectionOptions.type;
-		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
+		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 
-		// Get the start and end date for the weekly statistics
 		const { start: weeklyStart, end: weeklyEnd } = getDateRangeFormat(
-			moment.utc(startDate || moment().startOf('week')),
-			moment.utc(endDate || moment().endOf('week'))
+			moment.utc(startDate ?? moment().startOf('week')),
+			moment.utc(endDate ?? moment().endOf('week'))
 		);
 
 		// Filter employeeIds based on permissions and manager access
@@ -576,8 +564,7 @@ export class StatisticService {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				// MikroORM: Use Knex for all 4 complex queries
-				const knex = (this.mikroOrmTimeLogRepository as any).getKnex();
-				const userNameExpr = concateUserNameExpression(dbType);
+				const knex = this.mikroOrmTimeLogRepository.getKnex();
 				const totalDurationExpr = getTotalDurationQueryString(dbType, 'timeLogs');
 				const durationQueryStr = getDurationQueryString(dbType, 'timeLogs', 'time_slot');
 
@@ -589,8 +576,7 @@ export class StatisticService {
 					.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id')
 					.select([
 						'employee.id as id',
-						knex.raw(`${userNameExpr} as user_name`),
-						'user.imageUrl as user_image_url',
+						'user.id as user_id',
 						knex.raw(`${totalDurationExpr} as duration`),
 						'employee.isOnline as isOnline',
 						'employee.isAway as isAway'
@@ -612,14 +598,12 @@ export class StatisticService {
 					empQb = empQb.whereIn('timeLogs.organizationTeamId', teamIds);
 				}
 
-				empQb = empQb
+				employees = (await empQb
 					.groupBy('employee.id')
 					.groupBy('employee.isOnline')
 					.groupBy('employee.isAway')
 					.groupBy('user.id')
-					.orderBy('duration', 'DESC');
-
-				employees = await empQb;
+					.orderBy('duration', 'DESC')) as unknown as IMembersStatistics[];
 
 				if (employees.length > 0) {
 					const memberIds = pluck(employees, 'id');
@@ -748,19 +732,22 @@ export class StatisticService {
 									? p('DayOfWeek("timeLogs"."startedAt") - 1')
 									: '0';
 
+					// Batch-load User entities so subscribers resolve fresh presigned URLs
+					const memberUserIds = employees.map((e: any) => e.user_id).filter(Boolean);
+					const userMap = await this._userService.findUsersByIds(memberUserIds);
+
 					for (let index = 0; index < employees.length; index++) {
 						const member = employees[index] as any;
 
 						member.weekTime = weekTimeSlots[member.id];
 						member.todayTime = dayTimeSlots[member.id];
 
+						const user = userMap.get(member.user_id);
 						member.user = {
-							name: member.user_name,
-							imageUrl: member.user_image_url
+							name: user?.name,
+							imageUrl: user?.imageUrl
 						};
-
-						delete member.user_name;
-						delete member.user_image_url;
+						delete member.user_id;
 
 						let weekHoursQb = knex('employee as emp')
 							.innerJoin('time_log as timeLogs', 'emp.id', 'timeLogs.employeeId')
@@ -802,11 +789,8 @@ export class StatisticService {
 
 				employees = await query
 					.select(p(`"${query.alias}".id`))
-					// Builds a SELECT statement for the "user_name" column based on the database type.
-					.addSelect(p(`${concateUserNameExpression(dbType)}`), 'user_name')
-					.addSelect(p(`"user"."imageUrl"`), 'user_image_url')
+					.addSelect(p(`"user"."id"`), 'user_id')
 					.addSelect(getTotalDurationQueryString(dbType, 'timeLogs'), `duration`)
-					// Add isOnline and isAway from the employee table
 					.addSelect(p(`"${query.alias}"."isOnline"`), 'isOnline')
 					.addSelect(p(`"${query.alias}"."isAway"`), 'isAway')
 					.innerJoin(`${query.alias}.user`, 'user')
@@ -895,10 +879,7 @@ export class StatisticService {
 								});
 								qb.andWhere(
 									p(`"${weekTimeQuery.alias}"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`),
-									{
-										weeklyStart,
-										weeklyEnd
-									}
+									{ weeklyStart, weeklyEnd }
 								);
 								/**
 								 * If Employee Selected
@@ -907,17 +888,13 @@ export class StatisticService {
 									qb.andWhere(p(`"${weekTimeQuery.alias}"."employeeId" IN(:...employeeIds)`), {
 										employeeIds
 									});
-									qb.andWhere(p(`"timeLogs"."employeeId" IN(:...employeeIds)`), {
-										employeeIds
-									});
+									qb.andWhere(p(`"timeLogs"."employeeId" IN(:...employeeIds)`), { employeeIds });
 								}
 								/**
 								 * If Project Selected
 								 */
 								if (isNotEmpty(projectIds)) {
-									qb.andWhere(p(`"timeLogs"."projectId" IN(:...projectIds)`), {
-										projectIds
-									});
+									qb.andWhere(p(`"timeLogs"."projectId" IN(:...projectIds)`), { projectIds });
 								}
 								if (isNotEmpty(teamIds)) {
 									qb.andWhere(p(`"timeLogs"."organizationTeamId" IN (:...teamIds)`), { teamIds });
@@ -934,12 +911,14 @@ export class StatisticService {
 						const weekPercentage =
 							(reduce(pluck(values, 'overall'), ArraySum, 0) * 100) /
 							reduce(pluck(values, 'duration'), ArraySum, 0);
+
 						return {
 							employeeId,
 							duration: weekDuration,
 							overall: weekPercentage
 						};
 					});
+
 					weekTimeSlots = chain(weekTimeSlots)
 						.map((weekTimeSlot: any) => {
 							if (weekTimeSlot && weekTimeSlot.overall) {
@@ -1037,19 +1016,22 @@ export class StatisticService {
 						.indexBy('employeeId')
 						.value();
 
+					// Batch-load User entities so subscribers resolve fresh presigned URLs
+					const memberUserIds = employees.map((e: any) => e.user_id).filter(Boolean);
+					const userMap = await this._userService.findUsersByIds(memberUserIds);
+
 					for (let index = 0; index < employees.length; index++) {
-						const member = employees[index];
+						const member = employees[index] as any;
 
 						member.weekTime = weekTimeSlots[member.id];
 						member.todayTime = dayTimeSlots[member.id];
 
+						const user = userMap.get(member.user_id);
 						member.user = {
-							name: member.user_name,
-							imageUrl: member.user_image_url
+							name: user?.name,
+							imageUrl: user?.imageUrl
 						};
-
-						delete member.user_name;
-						delete member.user_image_url;
+						delete member.user_id;
 
 						const weekHoursQuery = this.typeOrmEmployeeRepository.createQueryBuilder();
 						weekHoursQuery
@@ -2014,8 +1996,6 @@ export class StatisticService {
 	 * @returns
 	 */
 	async manualTimes(request: IGetManualTimesStatistics): Promise<IManualTimesStatistics[]> {
-		console.time('Get Manual Time Log');
-
 		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
 
@@ -2175,7 +2155,6 @@ export class StatisticService {
 			}
 		}
 
-		console.timeEnd('Get Manual Time Log');
 		return timeLogs || [];
 	}
 

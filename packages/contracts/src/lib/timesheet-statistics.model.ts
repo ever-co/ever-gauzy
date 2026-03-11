@@ -78,6 +78,7 @@ export interface IGetMembersStatistics extends ITimeLogFilters, ITimeLogTodayFil
 
 export interface IMembersStatistics {
 	id?: string;
+	user_id?: string;
 	user_name?: string;
 	user_image_url?: string;
 	weekHours?: Array<{ duration: number; day: number }>;
