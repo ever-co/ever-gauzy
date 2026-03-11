@@ -118,7 +118,7 @@
 		</div>
 
 		<!-- Bulk Access Controls -->
-		@if (viewModel.hasAssignments) {
+		@if (viewModel.hasAssignments && canAssign) {
 		@let enabling = enabling$ | async;
 		@let disabling = disabling$ | async;
 		@let unassigning = unassigning$ | async;
