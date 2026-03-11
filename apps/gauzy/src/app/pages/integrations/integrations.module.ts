@@ -48,7 +48,8 @@ import { IntegrationLayoutComponent } from './layout/layout.component';
 			useFactory: (provider: PageRouteRegistryService) => createIntegrationsRoutes(provider),
 			deps: [PageRouteRegistryService],
 			multi: true
-		}
+		},
+		providePluginsEffects()
 	]
 })
 export class IntegrationsModule {
@@ -136,7 +137,6 @@ export class IntegrationsModule {
 			data: { selectors: false },
 			location: 'integrations-sections',
 			path: 'plugins',
-			providers: [providePluginsEffects()],
 			loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
 		});
 
