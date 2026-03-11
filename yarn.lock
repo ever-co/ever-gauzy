@@ -39100,9 +39100,9 @@ sequelize-pool@^7.1.0:
   integrity sha512-G9c0qlIWQSK29pR/5U2JF5dDQeqqHRragoyahj/Nx4KOOQ3CPPfzxnfqFPCSB7x5UgjOgnZ61nSxz+fjDpRlJg==
 
 sequelize@^6.29.0:
-  version "6.37.7"
-  resolved "https://registry.yarnpkg.com/sequelize/-/sequelize-6.37.7.tgz#55a6f8555ae76c1fbd4bce76b2ac5fcc0a1e6eb6"
-  integrity sha512-mCnh83zuz7kQxxJirtFD7q6Huy6liPanI67BSlbzSYgVNl5eXVdE2CN1FuAeZwG1SNpGsNRCV+bJAVVnykZAFA==
+  version "6.37.8"
+  resolved "https://registry.yarnpkg.com/sequelize/-/sequelize-6.37.8.tgz#70e62c9e682a2009005093104591e59ec2d0ed2c"
+  integrity sha512-HJ0IQFqcTsTiqbEgiuioYFMSD00TP6Cz7zoTti+zVVBwVe9fEhev9cH6WnM3XU31+ABS356durAb99ZuOthnKw==
   dependencies:
     "@types/debug" "^4.1.8"
     "@types/validator" "^13.7.17"
