@@ -13,8 +13,21 @@
 	"prettier.useEditorConfig": true,
 	"eslint.format.enable": true,
 	"editor.tabSize": 4,
+	"editor.tabSize": 4,
 	"editor.insertSpaces": false,
 	"editor.detectIndentation": true,
+	"[css]": {
+		"editor.insertSpaces": true,
+		"editor.tabSize": 2
+	},
+	"[scss]": {
+		"editor.insertSpaces": true,
+		"editor.tabSize": 2
+	},
+	"[yaml]": {
+		"editor.insertSpaces": true,
+		"editor.tabSize": 2
+	},
 	"files.insertFinalNewline": true,
 	"files.trimFinalNewlines": true,
 	"files.trimTrailingWhitespace": true,
