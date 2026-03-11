@@ -41,7 +41,7 @@ import {
 } from './statistic.helper';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
-import { TimeLog, TimeSlot } from './../../core/entities/internal';
+import { TimeLog } from './../../core/entities/internal';
 import { MultiORMEnum, getDateRangeFormat, getORMType } from './../../core/utils';
 import { UserService } from '../../user/user.service';
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
@@ -2488,6 +2488,7 @@ export class StatisticService {
 						imageUrl: user?.imageUrl,
 						name: user?.name
 					};
+					delete (employee as any).user_id;
 
 					// Fetch up to 9 recent time slots per employee with screenshots
 					const timeSlotRows = await knex('time_slot')
@@ -2595,6 +2596,7 @@ export class StatisticService {
 						imageUrl: user?.imageUrl,
 						name: user?.name
 					};
+					delete (employee as any).user_id;
 
 					const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
 					query.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
