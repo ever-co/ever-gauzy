@@ -18,7 +18,18 @@ export class ReadMoreDirective implements AfterViewInit, OnChanges {
 	private isCollapsed = true;
 	private hideToggle = true;
 
-	@Input() maxLength = 100;
+	@Input('readMore') set maxLength(value: number) {
+		if (value > 0) {
+			this._maxLength = value;
+		}
+	}
+	get maxLength(): number {
+		return this._maxLength;
+	}
+	private _maxLength = 100;
+
+	@Input() readMoreText = 'Read More';
+	@Input() readLessText = 'Read Less';
 	@Input() elementChange!: HTMLElement;
 
 	/**
