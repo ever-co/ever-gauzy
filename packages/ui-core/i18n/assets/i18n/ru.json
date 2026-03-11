@@ -4290,10 +4290,10 @@
 			"TITLE_SERVER_API": "Мастер установки сервера API Ever Gauzy",
 			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App предоставляет полный функционал Gauzy Platform, доступный непосредственно на вашем настольном компьютере или ноутбуке. Кроме того, он позволяет отслеживать рабочее время, записывать активность и получать напоминания/уведомления об отслеживании.",
 			"UNABLE_TO_CONNECT": "Не удается подключиться к серверу. Пожалуйста, проверьте ваш API хост или подключение к интернету.",
-			"JWT_SECRET": "Jwt Secret",
-			"JWT_SECRET_PLACEHOLDER": "Enter a secret key for JWT",
-			"JWT_REFRESH_TOKEN_SECRET": "Jwt Refresh Token Secret",
-			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "Enter a secret key for JWT refresh token"
+			"JWT_SECRET": "Секрет JWT",
+			"JWT_SECRET_PLACEHOLDER": "Введите секретный ключ для JWT",
+			"JWT_REFRESH_TOKEN_SECRET": "Секрет для refresh-токена JWT",
+			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "Введите секретный ключ для refresh-токена JWT"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Захват экрана",

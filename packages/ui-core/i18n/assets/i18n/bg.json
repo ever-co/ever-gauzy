@@ -4320,10 +4320,10 @@
 			"TITLE_SERVER_API": "Съветник за инсталиране на Ever Gauzy API сървър",
 			"LABEL_SERVER_API": "Приложението Ever Gauzy API Server Desktop предоставя пълната функционалност на платформата Gauzy, достъпна директно на вашия настолен компютър или лаптоп. Освен това позволява проследяване на работното време, записване на дейността и възможност за получаване на напомняния/известия за проследяване",
 			"UNABLE_TO_CONNECT": "Не може да се осъществи връзка със сървъра. Моля, проверете вашия API хост или интернет връзка.",
-			"JWT_SECRET": "Jwt Secret",
-			"JWT_SECRET_PLACEHOLDER": "Enter a secret key for JWT",
-			"JWT_REFRESH_TOKEN_SECRET": "Jwt Refresh Token Secret",
-			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "Enter a secret key for JWT refresh token"
+			"JWT_SECRET": "JWT тайна",
+			"JWT_SECRET_PLACEHOLDER": "Въведете таен ключ за JWT",
+			"JWT_REFRESH_TOKEN_SECRET": "JWT тайна за refresh токен",
+			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "Въведете таен ключ за JWT refresh токен"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Захващане на екран",

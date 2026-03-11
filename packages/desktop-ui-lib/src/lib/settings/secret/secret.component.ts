@@ -31,7 +31,13 @@ export class SecretComponent implements OnInit {
 	ngOnInit(): void {
 		this.electronService.ipcRenderer.on('app_setting', (event, { config }) =>
 			this.ngZone.run(async () => {
-				this.config = config?.secret
+				if (config?.secret) {
+					this.config = {
+						secret: {
+							...config.secret
+						}
+					};
+				}
 			})
 		);
 	}

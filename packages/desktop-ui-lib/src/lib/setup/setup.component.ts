@@ -620,7 +620,7 @@ export class SetupComponent implements OnInit, OnDestroy {
 
 	public onChangeSecretConfig(config: IDesktopSecret) {
 		this.electronService.ipcRenderer.send('update_server_config', {
-			secret: config
+			secret: config.secret
 		});
 	}
 }

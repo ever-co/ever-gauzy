@@ -4272,10 +4272,10 @@
 			"TITLE_SERVER_API": "Ever Gauzy API 服务器安装向导",
 			"LABEL_SERVER_API": "Ever Gauzy API Server 桌面应用程序提供 Gauzy 平台的全部功能，可直接在您的台式计算机或笔记本电脑上使用。此外，它还允许跟踪工作时间、活动记录以及接收跟踪提醒/通知的功能。",
 			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection.",
-			"JWT_SECRET": "Jwt Secret",
-			"JWT_SECRET_PLACEHOLDER": "Enter a secret key for JWT",
-			"JWT_REFRESH_TOKEN_SECRET": "Jwt Refresh Token Secret",
-			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "Enter a secret key for JWT refresh token"
+			"JWT_SECRET": "JWT 密钥",
+			"JWT_SECRET_PLACEHOLDER": "请输入 JWT 的密钥",
+			"JWT_REFRESH_TOKEN_SECRET": "JWT 刷新令牌密钥",
+			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "请输入 JWT 刷新令牌的密钥"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "屏幕捕获",

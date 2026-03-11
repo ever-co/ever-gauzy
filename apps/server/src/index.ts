@@ -356,7 +356,7 @@ const getEnvApi = () => {
 		API_PORT: String(config.port),
 		...addsConfig,
 		JWT_SECRET: config.secret?.jwt,
-		REFRESH_TOKEN_SECRET: config.secret?.refresh_token
+		JWT_REFRESH_TOKEN_SECRET: config.secret?.refresh_token
 	};
 };
 

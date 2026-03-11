@@ -4284,10 +4284,10 @@
 			"TITLE_SERVER_API": "אשף התקנת שרת API של Ever Gauzy",
 			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App מספקת את הפונקציונליות המלאה של פלטפורמת Gauzy הזמינה ישירות במחשב השולחני או במחשב הנייד שלך. בנוסף, הוא מאפשר מעקב אחר זמן עבודה, רישום פעילות ויכולת לקבל תזכורות/הודעות מעקב.",
 			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection.",
-			"JWT_SECRET": "Jwt Secret",
-			"JWT_SECRET_PLACEHOLDER": "Enter a secret key for JWT",
-			"JWT_REFRESH_TOKEN_SECRET": "Jwt Refresh Token Secret",
-			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "Enter a secret key for JWT refresh token"
+			"JWT_SECRET": "סוד JWT",
+			"JWT_SECRET_PLACEHOLDER": "הזן מפתח סודי עבור JWT",
+			"JWT_REFRESH_TOKEN_SECRET": "סוד טוקן הרענון של JWT",
+			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "הזן מפתח סודי עבור טוקן הרענון של JWT"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "לכידת מסך",
