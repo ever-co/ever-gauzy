@@ -1,14 +1,24 @@
 import { AsyncPipe } from '@angular/common';
 import { AfterViewInit, ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { IPlugin } from '@gauzy/contracts';
-import { NbAlertModule, NbBadgeModule, NbButtonGroupModule, NbButtonModule, NbDialogService, NbIconModule, NbSpinnerModule, NbToggleModule, NbTooltipModule } from '@nebular/theme';
+import {
+	NbAlertModule,
+	NbBadgeModule,
+	NbButtonGroupModule,
+	NbButtonModule,
+	NbDialogService,
+	NbIconModule,
+	NbSpinnerModule,
+	NbToggleModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Angular2SmartTableModule, LocalDataSource } from 'angular2-smart-table';
 import { distinctUntilChanged, filter, Observable, switchMap, take, tap } from 'rxjs';
 import {
-    PluginUserAssignmentFacade,
-    UserManagementViewModel
+	PluginUserAssignmentFacade,
+	UserManagementViewModel
 } from '../../../+state/facades/plugin-user-assignment.facade';
 import { PluginSubscriptionAccessFacade } from '../../../+state/plugin-subscription-access.facade';
 import { PluginMarketplaceQuery } from '../../../+state/queries/plugin-marketplace.query';
@@ -48,14 +58,23 @@ export interface PluginUserRow {
  */
 @UntilDestroy()
 @Component({
-    selector: 'gauzy-plugin-user-management-tab',
-    templateUrl: './user-management-tab.component.html',
-    styleUrls: ['./user-management-tab.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-		NbIconModule, NbButtonModule, NbButtonGroupModule, NbAlertModule, NbSpinnerModule, NbBadgeModule, NbTooltipModule, NbToggleModule,
-		Angular2SmartTableModule, PaginationComponent,
-		AsyncPipe, TranslatePipe
+	selector: 'gauzy-plugin-user-management-tab',
+	templateUrl: './user-management-tab.component.html',
+	styleUrls: ['./user-management-tab.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [
+		NbIconModule,
+		NbButtonModule,
+		NbButtonGroupModule,
+		NbAlertModule,
+		NbSpinnerModule,
+		NbBadgeModule,
+		NbTooltipModule,
+		NbToggleModule,
+		Angular2SmartTableModule,
+		PaginationComponent,
+		AsyncPipe,
+		TranslatePipe
 	]
 })
 export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -342,18 +361,16 @@ export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDest
 				context: {
 					data: {
 						title: 'PLUGIN.USER_MANAGEMENT.UNASSIGN_USER',
-						message: this.translateService.instant('PLUGIN.USER_MANAGEMENT.UNASSIGN_USER_CONFIRM', { userName }),
+						message: this.translateService.instant('PLUGIN.USER_MANAGEMENT.UNASSIGN_USER_CONFIRM', {
+							userName
+						}),
 						status: 'danger',
 						confirmText: 'PLUGIN.USER_MANAGEMENT.UNASSIGN',
 						dismissText: 'BUTTONS.CANCEL'
 					}
 				}
 			})
-			.onClose.pipe(
-				filter(Boolean),
-				take(1),
-				untilDestroyed(this)
-			)
+			.onClose.pipe(filter(Boolean), take(1), untilDestroyed(this))
 			.subscribe(() => {
 				this.userAssignmentFacade.unassignUserFromTenant(
 					pluginTenantId,

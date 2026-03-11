@@ -48,9 +48,7 @@
 					<!-- Available Users Table -->
 				@if(loadingAvailableUsers$ | async) {
 					<div class="loading-state">
-						<nb-skeleton shape="rectangle" size="large" width="100%"></nb-skeleton>
-						<nb-skeleton shape="rectangle" size="medium" width="80%"></nb-skeleton>
-						<nb-skeleton shape="rectangle" size="medium" width="60%"></nb-skeleton>
+						<nb-spinner size="medium"></nb-spinner>
 						<span class="loading-text">{{ 'SM_TABLE.LOADING' | translate }}</span>
 					</div>
 					} @else {
@@ -131,9 +129,7 @@
 					}
 					@if(loading) {
 					<div class="loading-state">
-						<nb-skeleton shape="rectangle" size="large" width="100%"></nb-skeleton>
-						<nb-skeleton shape="rectangle" size="medium" width="80%"></nb-skeleton>
-						<nb-skeleton shape="rectangle" size="medium" width="60%"></nb-skeleton>
+						<nb-spinner size="medium"></nb-spinner>
 						<span class="loading-text">{{ 'SM_TABLE.LOADING' | translate }}</span>
 					</div>
 					} @else if (!isAssignedAvailable) {
