@@ -738,4 +738,24 @@ export class UserService extends TenantAwareCrudService<User> {
 			throw new ForbiddenException(error?.message);
 		}
 	}
+
+	/**
+	 * Batch-load users by IDs. The eager `image` relation automatically triggers
+	 * ImageAssetSubscriber and UserSubscriber afterEntityLoad hooks,
+	 * resolving fresh presigned URLs for user profile images.
+	 *
+	 * @param userIds - Array of user IDs to load.
+	 * @returns A Map of user ID to User entity (with fresh imageUrl).
+	 */
+	async findUsersByIds(userIds: ID[]): Promise<Map<ID, IUser>> {
+		if (!userIds.length) {
+			return new Map();
+		}
+
+		const users = await this.find({
+			where: { id: In(userIds) }
+		});
+
+		return new Map(users.map((user) => [user.id, user]));
+	}
 }
