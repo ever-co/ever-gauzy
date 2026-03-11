@@ -59,10 +59,10 @@
 				</div>
 			</div>
 			<div [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary" class="custom-body">
-				@if (logs$ | async) {
-					@if (logs?.length > 0) {
+				`@if` (logs$ | async; as timeLogs) {
+					`@if` (timeLogs.length > 0) {
 						<div class="content" style="cursor: pointer">
-							@for (log of logs; track log.id; let last = $last) {
+							`@for` (log of timeLogs; track log.id; let last = $last) {
 								<div
 									[class.border-bottom]="!last"
 									[class.selected]="log?.isSelected"
