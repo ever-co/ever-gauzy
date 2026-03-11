@@ -347,6 +347,8 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 		process.env.API_PORT = setupConfig.port ? String(setupConfig.port) : String(environment.API_DEFAULT_PORT);
 		process.env.API_HOST = '0.0.0.0';
 		process.env.API_BASE_URL = `http://127.0.0.1:${setupConfig.port || environment.API_DEFAULT_PORT}`;
+		process.env.JWT_SECRET = setupConfig.secret?.jwt;
+		process.env.JWT_REFRESH_TOKEN_SECRET = setupConfig.secret?.refresh_token;
 
 		console.log('Setting additional environment variables...', process.env.API_PORT);
 		console.log('Setting additional environment variables...', process.env.API_HOST);
@@ -359,7 +361,7 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 			await server.start(
 				{ api: path.join(__dirname, 'api/main.js') },
 				process.env,
-				appWindowManager.setupWindow,
+				appWindowManager.setupWindow ?? timeTrackerWindow,
 				signal
 			);
 		} catch (error) {
@@ -585,17 +587,8 @@ app.on('ready', async () => {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
 
 		if (configs && configs.isSetup) {
-			if (!configs.serverConfigConnected && !configs?.isLocalServer) {
-				await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
-				appWindowManager.setupWindow?.show();
-				closeSplashScreen();
-				appWindowManager.setupWindow?.webContents?.send?.('setup-data', {
-					...configs
-				});
-			} else {
-				setGlobalVariable(configs);
-				await startServer(configs);
-			}
+			setGlobalVariable(configs);
+			await startServer(configs);
 		} else {
 			await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
 			appWindowManager.setupWindow?.show?.();

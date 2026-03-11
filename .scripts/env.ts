@@ -155,6 +155,8 @@ export type Env = Readonly<{
 	AGENT_APP_WELCOME_CONTENT: string;
 	AGENT_POOL_ACTIVITY_INTERVAL: number;
 	GAUZY_DESKTOP_TRAY_ICON: string;
+	DESKTOP_JWT_SECRET: string;
+	DESKTOP_JWT_REFRESH_TOKEN_SECRET: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -400,6 +402,12 @@ export const env: Env = cleanEnv(
 		}),
 		GAUZY_DESKTOP_TRAY_ICON: str({
 			default: 'assets/icons/default-tray-icon.png'
+		}),
+		DESKTOP_JWT_SECRET: str({
+			default: 'secretKey'
+		}),
+		DESKTOP_JWT_REFRESH_TOKEN_SECRET: str({
+			default: 'refreshTokenSecretKey'
 		})
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
