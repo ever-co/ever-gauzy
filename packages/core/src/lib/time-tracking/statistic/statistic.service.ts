@@ -2539,7 +2539,8 @@ export class StatisticService {
 				query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 				query.andWhere(p(`"${query.alias}"."startedAt" BETWEEN :start AND :end`), { start, end });
 
-				// Filter by time_slot date range
+				query.andWhere(p(`"time_slot"."tenantId" = :tenantId`), { tenantId });
+				query.andWhere(p(`"time_slot"."organizationId" = :organizationId`), { organizationId });
 				query.andWhere(p(`"time_slot"."startedAt" BETWEEN :start AND :end`), { start, end });
 
 				// Optional filters
