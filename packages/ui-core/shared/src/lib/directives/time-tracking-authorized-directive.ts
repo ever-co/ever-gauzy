@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Directive, Input, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Directive, inject, Input, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
 import { filter, tap, map, switchMap, distinctUntilChanged } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import camelcase from 'camelcase';
@@ -6,7 +6,7 @@ import { IOrganization, IUser } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Directive({
 	selector: '[ngxTimeTrackingAuthorized]',
 	standalone: true
@@ -32,12 +32,10 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 
 	@Input() permissionElse: TemplateRef<any>;
 
-	constructor(
-		private readonly _templateRef: TemplateRef<any>,
-		private readonly _viewContainer: ViewContainerRef,
-		private readonly _cdr: ChangeDetectorRef,
-		private readonly _store: Store
-	) {}
+	private readonly _templateRef = inject(TemplateRef<any>);
+	private readonly _viewContainer = inject(ViewContainerRef);
+	private readonly _cdr = inject(ChangeDetectorRef);
+	private readonly _store = inject(Store);
 
 	ngOnInit(): void {
 		this._store.selectedOrganization$
@@ -47,18 +45,7 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 				switchMap((organization: IOrganization) =>
 					this._store.user$.pipe(
 						filter((user: IUser) => !!user),
-						map((user: IUser) => {
-							// Determine permission based on employee existence
-							const hasPermission = user.employee
-								? camelcase(this.permission) in organization &&
-									organization[camelcase(this.permission)] &&
-									camelcase(this.permission) in user.employee &&
-									user.employee[camelcase(this.permission)]
-								: camelcase(this.permission) in organization &&
-									organization[camelcase(this.permission)];
-
-							return hasPermission;
-						}),
+						map((user: IUser) => this._isAuthorized(organization, user)),
 						distinctUntilChanged() // Only emit when permission status changes
 					)
 				),
@@ -73,6 +60,18 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Determines if the user has the required permission within the organization.
+	 *
+	 * @param organization - The selected organization.
+	 * @param user - The current user.
+	 * @returns A boolean indicating if the user is authorized.
+	 */
+	private _isAuthorized(organization: IOrganization, user: IUser): boolean {
+		const permissionKey = camelcase(this.permission as string);
+		return !!organization[permissionKey] && (!user.employee || !!user.employee[permissionKey]);
 	}
 
 	/**

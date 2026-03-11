@@ -1,10 +1,12 @@
-import { Directive, Input, ElementRef, AfterViewInit, OnChanges } from '@angular/core';
+import { Directive, Input, ElementRef, AfterViewInit, OnChanges, inject } from '@angular/core';
 
 @Directive({
 	selector: '[readMore]',
 	standalone: true
 })
 export class ReadMoreDirective implements AfterViewInit, OnChanges {
+	private el = inject(ElementRef);
+
 	@Input('readMore-length') private maxLength: number;
 	@Input('readMore-element') private elementChange: HTMLElement;
 
@@ -12,8 +14,6 @@ export class ReadMoreDirective implements AfterViewInit, OnChanges {
 	private hideToggle: boolean = true;
 	private text: string;
 	private isCollapsed: boolean = true;
-
-	constructor(private el: ElementRef) {}
 
 	/**
 	 * @inheritDoc
