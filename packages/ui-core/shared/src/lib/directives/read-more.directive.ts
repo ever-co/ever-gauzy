@@ -59,7 +59,13 @@ export class ReadMoreDirective implements AfterViewInit, OnChanges {
 	 * Update view based on collapse state
 	 */
 	private updateView(): void {
-		if (!this.text || !this.elementChange) return;
+		if (!this.elementChange) return;
+		if (!this.text) {
+			this.elementChange.textContent = '';
+			this.hideToggle = true;
+			this.toggleVisibility(false);
+			return;
+		}
 
 		if (this.text.length <= this.maxLength) {
 			this.elementChange.textContent = this.text;
