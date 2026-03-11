@@ -34,7 +34,7 @@ import { SetupService } from './setup.service';
 import { FormsModule } from '@angular/forms';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { SslComponent } from '../settings/ssl/ssl.component';
-import { SecretComponet } from '../settings/secret/secret.component';
+import { SecretComponent } from '../settings/secret/secret.component';
 import { UpperCasePipe } from '@angular/common';
 
 @Component({
@@ -55,7 +55,7 @@ import { UpperCasePipe } from '@angular/common';
 		SpinnerButtonDirective,
 		NbInputModule,
 		SslComponent,
-		SecretComponet,
+		SecretComponent,
 		NbFormFieldModule,
 		NbProgressBarModule,
 		UpperCasePipe,

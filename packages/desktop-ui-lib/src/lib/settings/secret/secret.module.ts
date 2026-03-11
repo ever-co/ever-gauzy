@@ -12,7 +12,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
-import { SecretComponet } from './secret.component';
+import { SecretComponent } from './secret.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { LanguageModule } from '../../language/language.module';
 
@@ -30,10 +30,9 @@ import { LanguageModule } from '../../language/language.module';
 		NbTooltipModule,
 		NbSpinnerModule,
 		LanguageModule,
-		TranslateModule,
-		SecretComponet
+		SecretComponent,
 	],
 	providers: [],
-	exports: [SecretComponet]
+	exports: [SecretComponent]
 })
 export class SecretModule { }

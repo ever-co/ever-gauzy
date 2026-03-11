@@ -12,7 +12,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     styleUrls: ['./secret.component.scss'],
     imports: [NbCardModule, NbToggleModule, FormsModule, NbIconModule, NbTooltipModule, NbInputModule, NbButtonModule, TranslatePipe]
 })
-export class SecretComponet implements OnInit {
+export class SecretComponent implements OnInit {
 	private _config: BehaviorSubject<IDesktopSecret>;
 
 	@Output()
