@@ -43,14 +43,17 @@ export class ReadMoreDirective implements AfterViewInit, OnChanges {
 	/**
 	 * Handle click using Angular instead of addEventListener
 	 */
-	@HostListener('click', ['$event'])
+	`@HostListener`('click', ['$event'])
 	onClick(event: MouseEvent): void {
+		const target = event.target as HTMLElement;
+		if (this.hideToggle || !target.closest('.more, .less')) {
+			return;
+		}
 		event.preventDefault();
-
-		if (this.hideToggle) return;
 
 		this.isCollapsed = !this.isCollapsed;
 		this.updateView();
+	}
 	}
 
 	/**
