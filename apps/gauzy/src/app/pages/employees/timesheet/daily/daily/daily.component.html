@@ -64,10 +64,15 @@
 						<div class="content" style="cursor: pointer">
 							@for (log of timeLogs; track log.id; let last = $last) {
 								<div
+									tabindex="0"
+									role="button"
+									[attr.aria-pressed]="log?.isSelected"
 									[class.border-bottom]="!last"
 									[class.selected]="log?.isSelected"
 									class="row m-0 py-3 align-items-center"
 									(click)="userRowSelect(log)"
+									(keydown.enter)="userRowSelect(log)"
+									(keydown.space)="$event.preventDefault(); userRowSelect(log)"
 								>
 									<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
 										<ng-template
