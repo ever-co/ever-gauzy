@@ -191,10 +191,18 @@ const HTTP_INTERCEPTOR_PROVIDERS = [
 		GoogleMapsLoaderService,
 		provideAppInitializer(() => inject(GoogleMapsLoaderService).load(environment.GOOGLE_MAPS_API_KEY)),
 
+		// Loads feature toggle definitions and stores them for the app.
 		FeatureService,
-		provideAppInitializer(() => {
-			const initializerFn = featureToggleLoaderFactory(inject(FeatureService), inject(Store));
-			return initializerFn();
+		provideAppInitializer(async () => {
+			const featureService = inject(FeatureService);
+			const store = inject(Store);
+
+			try {
+				const features = await featureService.getFeatureToggleDefinition();
+				store.featureToggles = features || [];
+			} catch (error) {
+				console.error('Failed to load feature toggle definitions:', error);
+			}
 		}),
 
 		// Runs core app initialization (user session, tenant, permissions, etc.).
@@ -261,22 +269,4 @@ export class AppModule {
 
 		this._i18nService.setAvailableLanguages(validatedLanguages);
 	}
-}
-
-/**
- * Creates a function that loads the feature toggle definitions using the provided FeatureService and stores them in the provided Store.
- *
- * @param {FeatureService} provider - The FeatureService instance used to load the feature toggle definitions.
- * @param {Store} store - The Store instance used to store the loaded feature toggle definitions.
- * @return {Function} A function that loads the feature toggle definitions by calling the provider's getFeatureToggleDefinition method and storing the result in the store.
- */
-export function featureToggleLoaderFactory(provider: FeatureService, store: Store): Function {
-	return () =>
-		provider
-			.getFeatureToggleDefinition()
-			.then((features: IFeatureToggle[]) => {
-				store.featureToggles = features || [];
-				return features;
-			})
-			.catch(() => {});
 }
