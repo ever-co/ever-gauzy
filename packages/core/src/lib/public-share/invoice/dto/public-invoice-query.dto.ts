@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform, TransformFnParams } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { IsEnum, IsOptional } from 'class-validator';
+import { parseRelationsString } from './../../../shared/dto';
 
 /**
  * Allowed relations for the public invoice endpoint.
@@ -29,24 +30,7 @@ export enum PublicInvoiceRelationEnum {
 export class PublicInvoiceQueryDTO {
 	@ApiPropertyOptional({ type: () => String, enum: PublicInvoiceRelationEnum })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => {
-		if (value === undefined || value === null) {
-			return [];
-		}
-		if (typeof value === 'string') {
-			return value
-				.split(',')
-				.map((element) => element.trim())
-				.filter((element) => element.length > 0);
-		}
-		if (Array.isArray(value)) {
-			return value
-				.filter((element): element is string => typeof element === 'string')
-				.map((element) => element.trim())
-				.filter((element) => element.length > 0);
-		}
-		return [];
-	})
+	@Transform(parseRelationsString)
 	@IsEnum(PublicInvoiceRelationEnum, { each: true })
 	readonly relations: string[] = [];
 }
