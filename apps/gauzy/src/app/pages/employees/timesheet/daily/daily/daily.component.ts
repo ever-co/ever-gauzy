@@ -73,10 +73,10 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	};
 
 	constructor(
-		readonly translateService: TranslateService,
-		protected readonly store: Store,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		protected readonly timeZoneService: TimeZoneService
+		translateService: TranslateService,
+		store: Store,
+		dateRangePickerBuilderService: DateRangePickerBuilderService,
+		timeZoneService: TimeZoneService
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
