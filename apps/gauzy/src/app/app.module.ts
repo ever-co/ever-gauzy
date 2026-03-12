@@ -180,40 +180,30 @@ const HTTP_INTERCEPTOR_PROVIDERS = [
 		// ─── HTTP Interceptors ────────────────────────────────────────────────────────
 		...HTTP_INTERCEPTOR_PROVIDERS,
 
+		// ─── App Initializers ─────────────────────────────────────────────────────────
+		// Verifies the API server is reachable before the app renders.
 		ServerConnectionService,
-		provideAppInitializer(() => {
-			const initializerFn = serverConnectionFactory(
-				inject(ServerConnectionService),
-				inject(Store),
-				inject(Router)
-			);
-			return initializerFn();
-		}),
+		provideAppInitializer(() =>
+			serverConnectionFactory(inject(ServerConnectionService), inject(Store), inject(Router))()
+		),
+
+		// Loads the Google Maps JavaScript API key during bootstrap.
 		GoogleMapsLoaderService,
-		provideAppInitializer(() => {
-			const initializerFn = googleMapsLoaderFactory(inject(GoogleMapsLoaderService));
-			return initializerFn();
-		}),
+		provideAppInitializer(() => inject(GoogleMapsLoaderService).load(environment.GOOGLE_MAPS_API_KEY)),
+
 		FeatureService,
 		provideAppInitializer(() => {
 			const initializerFn = featureToggleLoaderFactory(inject(FeatureService), inject(Store));
 			return initializerFn();
 		}),
-		AppInitService,
-		provideAppInitializer(() => {
-			const initializerFn = initializeApp(inject(AppInitService));
-			return initializerFn();
-		}),
 
-		provideAppInitializer(() => {
-			const workspaceSyncService = inject(WorkspaceSyncService);
-			workspaceSyncService.isSupported();
-			return Promise.resolve();
-		}),
-		{
-			provide: ErrorHandler,
-			useClass: SentryErrorHandler
-		},
+		// Runs core app initialization (user session, tenant, permissions, etc.).
+		AppInitService,
+		provideAppInitializer(() => inject(AppInitService).init()),
+
+		// Checks whether cross-tab workspace sync (BroadcastChannel) is supported.
+		provideAppInitializer(() => void inject(WorkspaceSyncService).isSupported()),
+
 		// ─── Services ─────────────────────────────────────────────────────────────────
 		// Guards that protect app-level routes requiring authenticated/authorized access.
 		AppModuleGuard,
@@ -271,26 +261,6 @@ export class AppModule {
 
 		this._i18nService.setAvailableLanguages(validatedLanguages);
 	}
-}
-
-/**
- * Creates a function that initializes the app by calling the `init` method of the provided `AppInitService`.
- *
- * @param {AppInitService} provider - The `AppInitService` instance to initialize the app.
- * @return {() => Promise<void>} A function that returns a `Promise` that resolves when the app initialization is complete.
- */
-export function initializeApp(provider: AppInitService): () => Promise<void> {
-	return () => provider.init();
-}
-
-/**
- * Creates a function that loads the Google Maps API key using the provided GoogleMapsLoaderService.
- *
- * @param {GoogleMapsLoaderService} provider - The GoogleMapsLoaderService instance used to load the API key.
- * @return {Function} A function that loads the Google Maps API key by calling the provider's load method with the environment's Google Maps API key.
- */
-export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService): Function {
-	return () => provider.load(environment.GOOGLE_MAPS_API_KEY);
 }
 
 /**
