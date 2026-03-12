@@ -8,7 +8,7 @@ import { PageRouteRegistryService } from '@gauzy/ui-core/core';
  * @param _pageRouteRegistryService
  * @returns
  */
-export const createTimesheetRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Route[] => [
+export const getTimesheetRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Route[] => [
 	{
 		path: '',
 		component: TimesheetLayoutComponent,

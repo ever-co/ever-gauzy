@@ -1,11 +1,12 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NbRouteTab, NbLayoutModule, NbRouteTabsetModule } from '@nebular/theme';
+import { NbLayoutModule, NbRouteTab, NbRouteTabsetModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
-import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
-import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PendingInstallationActions } from '../+state/pending-installation.action';
+import { PluginActions } from '../+state/plugin.action';
+import { PluginElectronService } from '../../services/plugin-electron.service';
 
 @Component({
     selector: 'ngx-plugin-layout',
@@ -35,6 +36,9 @@ export class PluginLayoutComponent implements OnInit, OnDestroy {
 
 		// Check pending installations
 		this.checkPendingInstallations();
+
+		// Sync local plugin activation with backend access control
+		this.actions.dispatch(PluginActions.syncAccess());
 	}
 
 	ngOnDestroy() {

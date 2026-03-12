@@ -14,12 +14,22 @@ export interface IPluginMetadata {
 export type IPluginMetadataCreate = IPluginMetadata & {
 	isActivate?: boolean;
 	pathname: string;
+	userId?: string;
+	tenantEnabled?: boolean;
 };
 
 export type IPluginMetadataUpdate = Partial<
 	Pick<
 		IPluginMetadataCreate,
-		'isActivate' | 'name' | 'version' | 'description' | 'logo' | 'marketplaceId' | 'versionId' | 'installationId'
+		| 'isActivate'
+		| 'name'
+		| 'version'
+		| 'description'
+		| 'logo'
+		| 'marketplaceId'
+		| 'versionId'
+		| 'installationId'
+		| 'tenantEnabled'
 	> & {
 		id?: string;
 	}

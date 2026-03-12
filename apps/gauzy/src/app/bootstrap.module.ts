@@ -1,20 +1,21 @@
 import { inject, NgModule, OnDestroy, provideZoneChangeDetection } from '@angular/core';
-import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import {
-	PLUGIN_UI_CONFIG,
-	getPluginUiConfig,
-	PluginUiModule,
-	PluginUiRegistryService,
-	TranslateAdapterService,
-	PermissionAdapterService,
 	FeatureAdapterService,
+	getPluginUiConfig,
+	PermissionAdapterService,
 	PLUGIN_APP_STORE,
 	PLUGIN_TRANSLATE_DELEGATE,
-	PLUGIN_TRANSLATE_STORE_DELEGATE
+	PLUGIN_TRANSLATE_STORE_DELEGATE,
+	PLUGIN_UI_CONFIG,
+	PluginUiModule,
+	PluginUiRegistryService,
+	TranslateAdapterService
 } from '@gauzy/plugin-ui';
 import { NavMenuBuilderService, PageRouteRegistryService, PageTabRegistryService, Store } from '@gauzy/ui-core/core';
-import { AppModule } from './app.module';
+import { provideEffectsManager } from '@ngneat/effects-ng';
+import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { AppComponent } from './app.component';
+import { AppModule } from './app.module';
 
 /**
  * Root-level bootstrap module for the Gauzy UI application.
@@ -60,6 +61,7 @@ import { AppComponent } from './app.component';
 			provide: PLUGIN_TRANSLATE_STORE_DELEGATE,
 			useExisting: TranslateStore
 		},
+		provideEffectsManager(),
 		provideZoneChangeDetection({ eventCoalescing: true })
 	],
 	bootstrap: [AppComponent]

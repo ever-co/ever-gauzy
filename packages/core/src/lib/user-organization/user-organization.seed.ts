@@ -52,7 +52,10 @@ export const createRandomUsersOrganizations = async (
 					usersOrganizations.push(userOrganization);
 				}
 			}
-			organizationUsersMap.set(organization, employees);
+			// Include all user types (superAdmins + admins + employees) so that
+			// createRandomEmployees can detect admin roles and set allowManualTime /
+			// allowModifyTime / allowDeleteTime correctly.
+			organizationUsersMap.set(organization, users);
 		}
 	}
 	await insertUserOrganization(dataSource, usersOrganizations);

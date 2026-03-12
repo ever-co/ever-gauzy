@@ -5,7 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { DynamicTabsModule, SharedModule } from '@gauzy/ui-core/shared';
 import { TimesheetLayoutComponent } from './layout/layout.component';
-import { createTimesheetRoutes } from './timesheet.routes';
+import { getTimesheetRoutes } from './timesheet.routes';
 
 @NgModule({
 	imports: [RouterModule.forChild([]), NbCardModule, TranslateModule.forChild(), SharedModule, DynamicTabsModule],
@@ -14,7 +14,8 @@ import { createTimesheetRoutes } from './timesheet.routes';
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (service: PageRouteRegistryService) => createTimesheetRoutes(service),
+			useFactory: (pageRouteRegistryService: PageRouteRegistryService) =>
+				getTimesheetRoutes(pageRouteRegistryService),
 			deps: [PageRouteRegistryService],
 			multi: true
 		}

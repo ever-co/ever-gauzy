@@ -142,4 +142,26 @@ export class PluginElectronService {
 		}
 		return this.electronService.ipcRenderer.invoke('plugins::get-os');
 	}
+
+	/**
+	 * Get all locally active plugins (isActivate === true)
+	 */
+	public async getActivePlugins(): Promise<IPlugin[]> {
+		if (!this.isDesktop) {
+			return [];
+		}
+		const all = await this.plugins;
+		return all.filter((p) => p.isActivate);
+	}
+
+	/**
+	 * Update the tenantEnabled flag in local database
+	 */
+	public async updateTenantEnabled(marketplaceId: string, tenantEnabled: boolean): Promise<void> {
+		if (!this.isDesktop) return;
+		await this.electronService.ipcRenderer.invoke('plugins::update-tenant-enabled', {
+			marketplaceId,
+			tenantEnabled
+		});
+	}
 }

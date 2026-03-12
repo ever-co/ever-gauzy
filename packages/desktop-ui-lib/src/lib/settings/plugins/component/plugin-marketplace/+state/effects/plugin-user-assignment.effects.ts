@@ -56,7 +56,7 @@ export class PluginUserAssignmentEffects {
 					return this.pluginUserAssignmentService.getPluginTenantByPluginId(pluginId).pipe(
 						switchMap((pluginTenant) =>
 							this.pluginUserAssignmentService
-								.getPluginTenantUsers(pluginTenant.id, 'allowed', currentTake, currentSkip)
+								.getPluginTenantUsers(pluginTenant.id, 'all', currentTake, currentSkip)
 								.pipe(
 									map((response) =>
 										PluginUserAssignmentActions.loadAssignmentsSuccess({
@@ -116,7 +116,7 @@ export class PluginUserAssignmentEffects {
 					return this.pluginUserAssignmentService.getPluginTenantByPluginId(pluginId).pipe(
 						switchMap((pluginTenant) =>
 							this.pluginUserAssignmentService
-								.getPluginTenantUsers(pluginTenant.id, 'allowed', take, skip)
+								.getPluginTenantUsers(pluginTenant.id, 'all', take, skip)
 								.pipe(
 									map((response) =>
 										PluginUserAssignmentActions.loadMoreAssignmentsSuccess({
@@ -165,7 +165,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.assignUsers),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ assigning: true })),
 				switchMap(({ pluginId, userIds, reason }) =>
 					// First, get or create the plugin tenant
 					this.pluginUserAssignmentService.getPluginTenantByPluginId(pluginId).pipe(
@@ -211,7 +211,7 @@ export class PluginUserAssignmentEffects {
 							this.toastrService.error(errorMessage);
 							return of(PluginUserAssignmentActions.assignUsersFailure({ error: errorMessage }));
 						}),
-						finalize(() => this.store.setLoading(false))
+						finalize(() => this.store.setOperation({ assigning: false }))
 					)
 				)
 			);
@@ -221,20 +221,20 @@ export class PluginUserAssignmentEffects {
 
 	/**
 	 * Unassign user effect
-	 * Uses plugin tenant-based removal from allowed users list
+	 * Uses plugin tenant-based unassign to remove from both allowed and denied lists
 	 */
 	unassignUser$ = createEffect(
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.unassignUser),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ unassigning: true })),
 				switchMap(({ pluginId, userId }) =>
 					// First, get the plugin tenant
 					this.pluginUserAssignmentService.getPluginTenantByPluginId(pluginId).pipe(
 						switchMap((pluginTenant) =>
-							// Then remove the user from allowed list
+							// Then unassign the user (remove from both allowed and denied lists)
 							this.pluginUserAssignmentService
-								.removeAllowedUsersFromPluginTenant(
+								.unassignUsersFromPluginTenant(
 									pluginTenant.id,
 									[userId],
 									'User unassigned by administrator'
@@ -251,7 +251,7 @@ export class PluginUserAssignmentEffects {
 										// Reload plugin tenant users to reflect changes
 										return PluginUserAssignmentActions.loadPluginTenantUsers({
 											pluginTenantId: pluginTenant.id,
-											type: 'allowed'
+											type: 'all'
 										});
 									}),
 									catchError((error) => {
@@ -274,7 +274,7 @@ export class PluginUserAssignmentEffects {
 							this.toastrService.error(errorMessage);
 							return of(PluginUserAssignmentActions.unassignUserFailure({ error: errorMessage }));
 						}),
-						finalize(() => this.store.setLoading(false))
+						finalize(() => this.store.setOperation({ unassigning: false }))
 					)
 				)
 			);
@@ -480,8 +480,8 @@ export class PluginUserAssignmentEffects {
 	// ============================================================================
 
 	/**
-	 * Load allowed users for a plugin effect
-	 * Resolves plugin tenant ID first, then loads allowed users
+	 * Load users for a plugin effect
+	 * Resolves plugin tenant ID first, then loads all users (allowed + denied)
 	 * This is the main entry point for components that only know the plugin ID
 	 */
 	loadAllowedUsersForPlugin$ = createEffect(
@@ -493,9 +493,9 @@ export class PluginUserAssignmentEffects {
 					// First get the plugin tenant ID
 					return this.pluginUserAssignmentService.getPluginTenantByPluginId(pluginId).pipe(
 						switchMap((pluginTenant) =>
-							// Then load the users from that plugin tenant
+							// Then load all users (allowed + denied) from that plugin tenant
 							this.pluginUserAssignmentService
-								.getPluginTenantUsers(pluginTenant.id, 'allowed', take, skip, searchTerm)
+								.getPluginTenantUsers(pluginTenant.id, 'all', take, skip, searchTerm)
 								.pipe(
 									map((response) =>
 										PluginUserAssignmentActions.loadAllowedUsersForPluginSuccess({
@@ -556,7 +556,7 @@ export class PluginUserAssignmentEffects {
 
 	/**
 	 * Load plugin tenant users effect
-	 * Handles loading allowed/denied users for a plugin tenant
+	 * Handles loading all users (allowed + denied) for a plugin tenant
 	 */
 	loadPluginTenantUsers$ = createEffect(
 		() => {
@@ -565,7 +565,7 @@ export class PluginUserAssignmentEffects {
 				tap(() => this.store.setLoading(true)),
 				switchMap(({ pluginTenantId, take, skip, searchTerm }) =>
 					this.pluginUserAssignmentService
-						.getPluginTenantUsers(pluginTenantId, 'allowed', take, skip, searchTerm)
+						.getPluginTenantUsers(pluginTenantId, 'all', take, skip, searchTerm)
 						.pipe(
 							map((response) =>
 								PluginUserAssignmentActions.loadPluginTenantUsersSuccess({
@@ -625,7 +625,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.allowUsersToPluginTenant),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ enabling: true })),
 				switchMap(({ pluginTenantId, userIds, reason }) =>
 					this.pluginUserAssignmentService.allowUsersToPluginTenant(pluginTenantId, userIds, reason).pipe(
 						map((response) =>
@@ -640,7 +640,7 @@ export class PluginUserAssignmentEffects {
 								PluginUserAssignmentActions.allowUsersToPluginTenantFailure({ error: errorMessage })
 							);
 						}),
-						finalize(() => this.store.setLoading(false))
+						finalize(() => this.store.setOperation({ enabling: false }))
 					)
 				)
 			);
@@ -655,7 +655,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.denyUsersFromPluginTenant),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ disabling: true })),
 				switchMap(({ pluginTenantId, userIds, reason }) =>
 					this.pluginUserAssignmentService.denyUsersFromPluginTenant(pluginTenantId, userIds, reason).pipe(
 						map((response) =>
@@ -670,7 +670,7 @@ export class PluginUserAssignmentEffects {
 								PluginUserAssignmentActions.denyUsersFromPluginTenantFailure({ error: errorMessage })
 							);
 						}),
-						finalize(() => this.store.setLoading(false))
+						finalize(() => this.store.setOperation({ disabling: false }))
 					)
 				)
 			);
@@ -685,7 +685,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.removeAllowedUsersFromPluginTenant),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ removingAllowed: true })),
 				switchMap(({ pluginTenantId, userIds, reason }) =>
 					this.pluginUserAssignmentService
 						.removeAllowedUsersFromPluginTenant(pluginTenantId, userIds, reason)
@@ -705,7 +705,7 @@ export class PluginUserAssignmentEffects {
 									})
 								);
 							}),
-							finalize(() => this.store.setLoading(false))
+							finalize(() => this.store.setOperation({ removingAllowed: false }))
 						)
 				)
 			);
@@ -720,7 +720,7 @@ export class PluginUserAssignmentEffects {
 		() => {
 			return this.actions$.pipe(
 				ofType(PluginUserAssignmentActions.removeDeniedUsersFromPluginTenant),
-				tap(() => this.store.setLoading(true)),
+				tap(() => this.store.setOperation({ removingDenied: true })),
 				switchMap(({ pluginTenantId, userIds, reason }) =>
 					this.pluginUserAssignmentService
 						.removeDeniedUsersFromPluginTenant(pluginTenantId, userIds, reason)
@@ -740,7 +740,43 @@ export class PluginUserAssignmentEffects {
 									})
 								);
 							}),
-							finalize(() => this.store.setLoading(false))
+							finalize(() => this.store.setOperation({ removingDenied: false }))
+						)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	/**
+	 * Unassign users from plugin tenant effect
+	 * Removes users from both allowed and denied lists completely
+	 */
+	unassignUsersFromPluginTenant$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.unassignUsersFromPluginTenant),
+				tap(() => this.store.setOperation({ unassigning: true })),
+				switchMap(({ pluginTenantId, userIds, reason }) =>
+					this.pluginUserAssignmentService
+						.unassignUsersFromPluginTenant(pluginTenantId, userIds, reason)
+						.pipe(
+							map((response) =>
+								PluginUserAssignmentActions.unassignUsersFromPluginTenantSuccess({
+									message: response.message,
+									affectedUserIds: response.affectedUserIds
+								})
+							),
+							catchError((error) => {
+								const errorMessage =
+									error.error?.message || error.message || 'Failed to unassign users';
+								return of(
+									PluginUserAssignmentActions.unassignUsersFromPluginTenantFailure({
+										error: errorMessage
+									})
+								);
+							}),
+							finalize(() => this.store.setOperation({ unassigning: false }))
 						)
 				)
 			);
@@ -758,11 +794,66 @@ export class PluginUserAssignmentEffects {
 					PluginUserAssignmentActions.allowUsersToPluginTenantSuccess,
 					PluginUserAssignmentActions.denyUsersFromPluginTenantSuccess,
 					PluginUserAssignmentActions.removeAllowedUsersFromPluginTenantSuccess,
-					PluginUserAssignmentActions.removeDeniedUsersFromPluginTenantSuccess
+					PluginUserAssignmentActions.removeDeniedUsersFromPluginTenantSuccess,
+					PluginUserAssignmentActions.unassignUsersFromPluginTenantSuccess
 				),
 				tap((action) => {
 					const message = (action as any).message || 'Operation completed successfully';
 					this.toastrService.success(message);
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	/**
+	 * Optimistic update: mark affected users as allowed (active) in the local store.
+	 * Avoids reloading the entire table from the server after a single-user or bulk allow.
+	 */
+	handleAllowUsersSuccess$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.allowUsersToPluginTenantSuccess),
+				tap(({ affectedUserIds }) => {
+					if (affectedUserIds?.length) {
+						this.store.updateAssignmentsByUserIds(affectedUserIds, { isActive: true });
+					}
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	/**
+	 * Optimistic update: mark affected users as denied (inactive) in the local store.
+	 * Avoids reloading the entire table from the server after a single-user or bulk deny.
+	 */
+	handleDenyUsersSuccess$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.denyUsersFromPluginTenantSuccess),
+				tap(({ affectedUserIds }) => {
+					if (affectedUserIds?.length) {
+						this.store.updateAssignmentsByUserIds(affectedUserIds, { isActive: false });
+					}
+				})
+			);
+		},
+		{ dispatch: false }
+	);
+
+	/**
+	 * Optimistic update: remove unassigned users from the local store.
+	 * Avoids reloading the entire table from the server after an unassign operation.
+	 */
+	handleUnassignUsersSuccess$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.unassignUsersFromPluginTenantSuccess),
+				tap(({ affectedUserIds }) => {
+					if (affectedUserIds?.length) {
+						this.store.removeAssignmentsByUserIds(affectedUserIds);
+					}
 				})
 			);
 		},
@@ -780,7 +871,10 @@ export class PluginUserAssignmentEffects {
 					PluginUserAssignmentActions.allowUsersToPluginTenantFailure,
 					PluginUserAssignmentActions.denyUsersFromPluginTenantFailure,
 					PluginUserAssignmentActions.removeAllowedUsersFromPluginTenantFailure,
-					PluginUserAssignmentActions.removeDeniedUsersFromPluginTenantFailure
+					PluginUserAssignmentActions.removeDeniedUsersFromPluginTenantFailure,
+					PluginUserAssignmentActions.unassignUsersFromPluginTenantFailure,
+					PluginUserAssignmentActions.enablePluginTenantFailure,
+					PluginUserAssignmentActions.disablePluginTenantFailure
 				),
 				tap(({ error }) => {
 					this.store.setErrorMessage(error);
@@ -790,5 +884,77 @@ export class PluginUserAssignmentEffects {
 			);
 		},
 		{ dispatch: false }
+	);
+
+	// ============================================================================
+	// PLUGIN TENANT ENABLE/DISABLE EFFECTS
+	// ============================================================================
+
+	/**
+	 * Enable a plugin tenant, making it available for use
+	 */
+	enablePluginTenant$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.enablePluginTenant),
+				tap(() => this.store.setOperation({ togglingTenant: true })),
+				switchMap(({ pluginTenantId }) =>
+					this.pluginUserAssignmentService.enablePluginTenant(pluginTenantId).pipe(
+						map((response) => {
+							this.toastrService.success(
+								this.translateService.instant('PLUGIN.USER_MANAGEMENT.SUCCESS.PLUGIN_ENABLED')
+							);
+							return PluginUserAssignmentActions.enablePluginTenantSuccess({
+								id: response.id,
+								enabled: response.enabled
+							});
+						}),
+						catchError((error) => {
+							const errorMessage =
+								error.error?.message || error.message || 'Failed to enable plugin tenant';
+							return of(
+								PluginUserAssignmentActions.enablePluginTenantFailure({ error: errorMessage })
+							);
+						}),
+						finalize(() => this.store.setOperation({ togglingTenant: false }))
+					)
+				)
+			);
+		},
+		{ dispatch: true }
+	);
+
+	/**
+	 * Disable a plugin tenant, making it unavailable for use
+	 */
+	disablePluginTenant$ = createEffect(
+		() => {
+			return this.actions$.pipe(
+				ofType(PluginUserAssignmentActions.disablePluginTenant),
+				tap(() => this.store.setOperation({ togglingTenant: true })),
+				switchMap(({ pluginTenantId }) =>
+					this.pluginUserAssignmentService.disablePluginTenant(pluginTenantId).pipe(
+						map((response) => {
+							this.toastrService.success(
+								this.translateService.instant('PLUGIN.USER_MANAGEMENT.SUCCESS.PLUGIN_DISABLED')
+							);
+							return PluginUserAssignmentActions.disablePluginTenantSuccess({
+								id: response.id,
+								enabled: response.enabled
+							});
+						}),
+						catchError((error) => {
+							const errorMessage =
+								error.error?.message || error.message || 'Failed to disable plugin tenant';
+							return of(
+								PluginUserAssignmentActions.disablePluginTenantFailure({ error: errorMessage })
+							);
+						}),
+						finalize(() => this.store.setOperation({ togglingTenant: false }))
+					)
+				)
+			);
+		},
+		{ dispatch: true }
 	);
 }

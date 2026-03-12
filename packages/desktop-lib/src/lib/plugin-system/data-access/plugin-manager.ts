@@ -2,8 +2,8 @@ import { ID } from '@gauzy/contracts';
 import { logger } from '@gauzy/desktop-core';
 import { app, MenuItemConstructorOptions } from 'electron';
 import { existsSync } from 'node:fs';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import { PluginMetadataService } from '../database/plugin-metadata.service';
 import { PluginEventManager } from '../events/plugin-event.manager';
 import { IPlugin, IPluginManager, IPluginMetadata, IPluginMetadataFindOne, PluginDownloadContextType } from '../shared';
@@ -174,6 +174,12 @@ export class PluginManager implements IPluginManager {
 			const plugin = await lazyLoader(path.join(metadata.pathname, metadata.main));
 			this.plugins.set(metadata.name, plugin);
 
+			// Skip activation for tenant-disabled plugins
+			if (metadata.tenantEnabled === false) {
+				logger.info(`Plugin ${metadata.name} is tenant-disabled, skipping activation`);
+				continue;
+			}
+
 			if (metadata.isActivate) {
 				await this.activatePlugin(metadata.name);
 			}
@@ -191,6 +197,10 @@ export class PluginManager implements IPluginManager {
 
 	public checkInstallation(marketplaceId: ID): Promise<IPluginMetadata> {
 		return this.pluginMetadataService.findOne({ marketplaceId });
+	}
+
+	public async updateTenantEnabled(marketplaceId: string, tenantEnabled: boolean): Promise<void> {
+		await this.pluginMetadataService.updateTenantEnabled(marketplaceId, tenantEnabled);
 	}
 
 	public async initializePlugins(): Promise<void> {

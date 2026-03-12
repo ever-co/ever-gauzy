@@ -5,6 +5,7 @@ import {
 	IFeatureOrganization,
 	IFeatureOrganizationUpdateInput,
 	IFeatureOrganizationFindInput,
+	IFeatureToggle,
 	IPagination
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
@@ -16,8 +17,8 @@ export class FeatureService {
 
 	constructor(private http: HttpClient) {}
 
-	getFeatureToggleDefinition() {
-		return firstValueFrom(this.http.get(`${this.API_URL}/definition`));
+	getFeatureToggleDefinition(): Promise<IFeatureToggle[]> {
+		return firstValueFrom(this.http.get<IFeatureToggle[]>(`${this.API_URL}/definition`));
 	}
 
 	getParentFeatures(relations?: string[]): Observable<IPagination<IFeature>> {

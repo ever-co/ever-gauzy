@@ -876,7 +876,10 @@
 		"Démarrer",
 		"Neue",
 		"viewports",
-		"sidemenu"
+		"sidemenu",
+		"ptdu",
+		"ptau",
+		"Centralises"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { EMPTY, Observable, from, map, switchMap } from 'rxjs';
+import { EMPTY, Observable, from, map, switchMap, throwError } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { IPlugin } from '../../services/plugin-loader.service';
+import { PluginSubscriptionAccessService } from '../../services/plugin-subscription-access.service';
 import { PluginService } from '../../services/plugin.service';
 import { IInstallationCommand } from '../interfaces';
 
@@ -35,7 +36,8 @@ export class ActivatePluginCommand
 {
 	constructor(
 		private readonly pluginService: PluginService,
-		private readonly pluginElectronService: PluginElectronService
+		private readonly pluginElectronService: PluginElectronService,
+		private readonly accessService: PluginSubscriptionAccessService
 	) {}
 
 	/**
@@ -44,20 +46,27 @@ export class ActivatePluginCommand
 	public execute(params: IActivatePluginCommandParams): Observable<IActivatePluginCommandResult> {
 		const { marketplaceId, installationId } = params;
 
-		// First validate with server
-		return this.pluginService.activate(marketplaceId, installationId).pipe(
-			switchMap(() => from(this.pluginElectronService.checkInstallation(marketplaceId))),
-			switchMap((plugin) => {
-				// Activate locally
-				this.pluginElectronService.activate(plugin);
+		// Gate: verify user has access before proceeding with activation
+		return this.accessService.checkAccess(marketplaceId).pipe(
+			switchMap((access) => {
+				if (!access.hasAccess) {
+					return throwError(() => new Error('You do not have access to activate this plugin'));
+				}
 
-				// Monitor activation progress
-				return this.pluginElectronService.progress<void, IPlugin>().pipe(
-					map(({ data, message }) => ({
-						success: true,
-						plugin: data || plugin,
-						message
-					}))
+				// Validate with server then activate locally
+				return this.pluginService.activate(marketplaceId, installationId).pipe(
+					switchMap(() => from(this.pluginElectronService.checkInstallation(marketplaceId))),
+					switchMap((plugin) => {
+						this.pluginElectronService.activate(plugin);
+
+						return this.pluginElectronService.progress<void, IPlugin>().pipe(
+							map(({ data, message }) => ({
+								success: true,
+								plugin: data || plugin,
+								message
+							}))
+						);
+					})
 				);
 			})
 		);

@@ -1,13 +1,13 @@
 // Some of the code is modified from https://github.com/akveo/ngx-admin/blob/master/src/app/app.module.ts,
 // that licensed under the MIT License and Copyright (c) 2017 akveo.com.
 
-import { VERSION } from '@angular/core';
 import { APP_BASE_HREF } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { NgModule, ErrorHandler, VERSION, inject, provideAppInitializer } from '@angular/core';
 import { ExtraOptions, Router, RouterModule } from '@angular/router';
+import { OVERLAY_DEFAULT_CONFIG } from '@angular/cdk/overlay';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule, ErrorHandler, inject, provideAppInitializer } from '@angular/core';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import {
 	NbChatModule,
@@ -30,10 +30,12 @@ import { ColorPickerService } from 'ngx-color-picker';
 // Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/
 import * as Sentry from '@sentry/angular';
 import * as moment from 'moment';
-import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
-import { UiCoreModule } from '@gauzy/ui-core';
+import { LanguagesEnum } from '@gauzy/contracts';
 import { getPluginUiConfig } from '@gauzy/plugin-ui';
+import { PostHogModule } from '@gauzy/plugin-posthog-ui';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
+import { UiCoreModule } from '@gauzy/ui-core';
+import { CommonModule } from '@gauzy/ui-core/common';
 import {
 	APIInterceptor,
 	AppInitService,
@@ -51,8 +53,6 @@ import {
 	TokenInterceptor,
 	WorkspaceSyncService
 } from '@gauzy/ui-core/core';
-import { PostHogModule } from '@gauzy/plugin-posthog-ui';
-import { CommonModule } from '@gauzy/ui-core/common';
 import { I18nModule, I18nService } from '@gauzy/ui-core/i18n';
 import { SharedModule, TimeTrackerModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
@@ -125,7 +125,6 @@ const FEATURE_MODULES = [
 	TimeTrackerModule.forRoot(),
 	I18nModule.forRoot()
 ];
-
 @NgModule({
 	declarations: [AppComponent],
 	exports: [AppComponent],
@@ -138,102 +137,100 @@ const FEATURE_MODULES = [
 		...THIRD_PARTY_MODULES
 	],
 	providers: [
-		{
-			provide: Sentry.TraceService,
-			deps: [Router]
-		},
+		// ─── Configuration Tokens ────────────────────────────────────────────────────
+		// Sets the base href for all router links and location strategies.
 		{ provide: APP_BASE_HREF, useValue: '/' },
-		{
-			provide: ErrorHandler,
-			useClass: SentryErrorHandler
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: APIInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: HubstaffTokenInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: TokenInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: LanguageInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: TenantInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: AuthRefreshInterceptor,
-			multi: true
-		},
+
+		// Exposes the full environment config to the DI tree via the GAUZY_ENV token.
+		{ provide: GAUZY_ENV, useValue: environment },
+
+		// Angular CDK 21 enables the Popover API for overlays by default (top layer), which causes
+		// Nebular dialogs to render above toasts. Disabling it restores z-index-based stacking.
+		{ provide: OVERLAY_DEFAULT_CONFIG, useValue: { usePopover: false } },
+
+		// ─── Error Handling & Tracing ─────────────────────────────────────────────────
+		// Routes unhandled errors to Sentry instead of the default console handler.
+		{ provide: ErrorHandler, useClass: SentryErrorHandler },
+
+		// Required by @sentry/angular to instrument Angular router navigation events.
+		{ provide: Sentry.TraceService, deps: [Router] },
+
+		// ─── HTTP Interceptors ────────────────────────────────────────────────────────
+		// Prepends the API base URL and common headers to every outgoing HTTP request.
+		{ provide: HTTP_INTERCEPTORS, useClass: APIInterceptor, multi: true },
+
+		// Attaches Hubstaff OAuth tokens to requests targeting the Hubstaff integration.
+		{ provide: HTTP_INTERCEPTORS, useClass: HubstaffTokenInterceptor, multi: true },
+
+		// Attaches the JWT access token to authenticated API requests.
+		{ provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
+
+		// Injects the active UI language into the Accept-Language request header.
+		{ provide: HTTP_INTERCEPTORS, useClass: LanguageInterceptor, multi: true },
+
+		// Injects the active tenant ID into requests that require tenant scoping.
+		{ provide: HTTP_INTERCEPTORS, useClass: TenantInterceptor, multi: true },
+
+		// Silently refreshes the JWT access token when a 401 response is received.
+		{ provide: HTTP_INTERCEPTORS, useClass: AuthRefreshInterceptor, multi: true },
+
+		// ─── App Initializers ─────────────────────────────────────────────────────────
+		// Verifies the API server is reachable before the app renders.
 		ServerConnectionService,
-		provideAppInitializer(() => {
-			const initializerFn = serverConnectionFactory(
-				inject(ServerConnectionService),
-				inject(Store),
-				inject(Router)
-			);
-			return initializerFn();
-		}),
+		provideAppInitializer(() =>
+			serverConnectionFactory(inject(ServerConnectionService), inject(Store), inject(Router))()
+		),
+
+		// Loads the Google Maps JavaScript API key during bootstrap.
 		GoogleMapsLoaderService,
-		provideAppInitializer(() => {
-			const initializerFn = googleMapsLoaderFactory(inject(GoogleMapsLoaderService));
-			return initializerFn();
-		}),
+		provideAppInitializer(() => inject(GoogleMapsLoaderService).load(environment.GOOGLE_MAPS_API_KEY)),
+
+		// Loads feature toggle definitions and stores them for the app.
 		FeatureService,
-		provideAppInitializer(() => {
-			const initializerFn = featureToggleLoaderFactory(inject(FeatureService), inject(Store));
-			return initializerFn();
+		provideAppInitializer(async () => {
+			const featureService = inject(FeatureService);
+			const store = inject(Store);
+
+			try {
+				const features = await featureService.getFeatureToggleDefinition();
+				store.featureToggles = features || [];
+			} catch (error) {
+				console.error('Failed to load feature toggle definitions:', error);
+			}
 		}),
+
+		// Runs core app initialization (user session, tenant, permissions, etc.).
 		AppInitService,
+		provideAppInitializer(() => inject(AppInitService).init()),
+
+		// Checks whether cross-tab workspace sync (BroadcastChannel) is supported.
+		WorkspaceSyncService,
 		provideAppInitializer(() => {
-			const initializerFn = initializeApp(inject(AppInitService));
-			return initializerFn();
+			inject(WorkspaceSyncService).isSupported();
 		}),
 
-		provideAppInitializer(() => {
-			const workspaceSyncService = inject(WorkspaceSyncService);
-
-			workspaceSyncService.isSupported();
-
-			return Promise.resolve();
-		}),
-		{
-			provide: ErrorHandler,
-			useClass: SentryErrorHandler
-		},
+		// ─── Services ─────────────────────────────────────────────────────────────────
+		// Guards that protect app-level routes requiring authenticated/authorized access.
 		AppModuleGuard,
+
+		// Provides the ngx-color-picker singleton for use across the application.
 		ColorPickerService,
+
+		// Provides the ngx-cookie-service singleton for reading and writing browser cookies.
 		CookieService,
-		{
-			provide: GAUZY_ENV,
-			useValue: environment
-		},
+
+		// ─── Framework Providers ──────────────────────────────────────────────────────
+		// Configures HttpClient to pick up class-based HTTP_INTERCEPTORS from DI.
 		provideHttpClient(withInterceptorsFromDi()),
+
+		// Registers all Chart.js defaults so ng2-charts charts render without manual imports.
 		provideCharts(withDefaultRegisterables())
 	]
 })
 export class AppModule {
-	/**
-	 * Constructor for the AppModule class.
-	 *
-	 * Initializes the _i18nService with all available languages.
-	 * Sets Monday as the start of the week for the English locale in Moment.js.
-	 *
-	 * @param {I18nTranslateService} _i18nService - The I18nTranslateService instance.
-	 */
-	constructor(readonly _i18nService: I18nService) {
+	private readonly _i18nService = inject(I18nService);
+
+	constructor() {
 		console.log(`Angular Version: ${VERSION.full}`);
 
 		// Initialize UI languages and Update Locale
@@ -269,42 +266,4 @@ export class AppModule {
 
 		this._i18nService.setAvailableLanguages(validatedLanguages);
 	}
-}
-
-/**
- * Creates a function that initializes the app by calling the `init` method of the provided `AppInitService`.
- *
- * @param {AppInitService} provider - The `AppInitService` instance to initialize the app.
- * @return {() => Promise<void>} A function that returns a `Promise` that resolves when the app initialization is complete.
- */
-export function initializeApp(provider: AppInitService): () => Promise<void> {
-	return () => provider.init();
-}
-
-/**
- * Creates a function that loads the Google Maps API key using the provided GoogleMapsLoaderService.
- *
- * @param {GoogleMapsLoaderService} provider - The GoogleMapsLoaderService instance used to load the API key.
- * @return {Function} A function that loads the Google Maps API key by calling the provider's load method with the environment's Google Maps API key.
- */
-export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService): Function {
-	return () => provider.load(environment.GOOGLE_MAPS_API_KEY);
-}
-
-/**
- * Creates a function that loads the feature toggle definitions using the provided FeatureService and stores them in the provided Store.
- *
- * @param {FeatureService} provider - The FeatureService instance used to load the feature toggle definitions.
- * @param {Store} store - The Store instance used to store the loaded feature toggle definitions.
- * @return {Function} A function that loads the feature toggle definitions by calling the provider's getFeatureToggleDefinition method and storing the result in the store.
- */
-export function featureToggleLoaderFactory(provider: FeatureService, store: Store): Function {
-	return () =>
-		provider
-			.getFeatureToggleDefinition()
-			.then((features: IFeatureToggle[]) => {
-				store.featureToggles = features || [];
-				return features;
-			})
-			.catch(() => {});
 }
