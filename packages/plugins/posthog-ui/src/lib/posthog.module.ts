@@ -1,4 +1,4 @@
-import { NgModule, ModuleWithProviders, APP_INITIALIZER } from '@angular/core';
+import { NgModule, ModuleWithProviders, inject, provideAppInitializer } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { PostHogTrackDirective } from './directives/posthog-track.directive';
@@ -38,12 +38,11 @@ export class PostHogModule {
 					useValue: config.debug || false
 				},
 				// Initialize PostHog during app startup
-				{
-					provide: APP_INITIALIZER,
-					useFactory: initializePostHogFactory,
-					deps: [PostHogServiceManager, POSTHOG_CONFIG],
-					multi: true
-				},
+				provideAppInitializer(() => {
+					const manager = inject(PostHogServiceManager);
+					const config = inject(POSTHOG_CONFIG);
+					return initializePostHogFactory(manager, config)();
+				}),
 				// Conditionally add HTTP interceptor for error tracking
 				...(config.options?.capture_exceptions !== false
 					? [
