@@ -5,8 +5,8 @@
 		size="small"
 		status="basic"
 		class="switch-button ml-1 mr-1"
-		[class.primary]="componentLayoutStyle === layoutStyles.CARDS_GRID"
-		[class.basic]="componentLayoutStyle !== layoutStyles.CARDS_GRID"
+		[class.primary]="componentLayoutStyle() === layoutStyles.CARDS_GRID"
+		[class.basic]="componentLayoutStyle() !== layoutStyles.CARDS_GRID"
 		[nbTooltip]="'SETTINGS_MENU.CARDS_GRID' | translate"
 		(click)="changeLayout(layoutStyles.CARDS_GRID)"
 	>
@@ -18,8 +18,8 @@
 		size="small"
 		status="basic"
 		class="switch-button ml-1 mr-1"
-		[class.primary]="componentLayoutStyle === layoutStyles.TABLE"
-		[class.basic]="componentLayoutStyle !== layoutStyles.CARDS_GRID"
+		[class.primary]="componentLayoutStyle() === layoutStyles.TABLE"
+		[class.basic]="componentLayoutStyle() !== layoutStyles.TABLE"
 		[nbTooltip]="'SETTINGS_MENU.TABLE' | translate"
 		(click)="changeLayout(layoutStyles.TABLE)"
 	>
