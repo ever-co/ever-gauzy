@@ -2,14 +2,10 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } fro
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { ComponentEnum } from '@gauzy/ui-core/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject, input } from '@angular/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
-import { ComponentEnum } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 
-`@UntilDestroy`()
-`@Component`({
+@UntilDestroy()
+@Component({
 	selector: 'ga-layout-selector',
 	templateUrl: './layout-selector.component.html',
 	styleUrls: ['./layout-selector.component.scss'],
