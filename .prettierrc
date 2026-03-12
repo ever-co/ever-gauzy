@@ -8,6 +8,7 @@
 	"trailingComma": "none",
 	"quoteProps": "as-needed",
 	"endOfLine": "lf",
+	"proseWrap": "preserve",
 	"overrides": [
 		{
 			"files": "*.{scss,css}",
