@@ -73,8 +73,9 @@ jobs:
             echo "registry=https://packages.ever.co/" >> .npmrc
             echo "always-auth=true" >> .npmrc
             echo 'registry "https://packages.ever.co/"' >> .yarnrc
-            sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
-            sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
+            sed -i.bak 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
+            sed -i.bak 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
+            rm -f yarn.lock.bak
           fi
 
       - name: Install Yarn dependencies
@@ -186,8 +187,9 @@ jobs:
             echo "registry=https://packages.ever.co/" >> .npmrc
             echo "always-auth=true" >> .npmrc
             echo 'registry "https://packages.ever.co/"' >> .yarnrc
-            sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
-            sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
+            sed -i.bak 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
+            sed -i.bak 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
+            rm -f yarn.lock.bak
           fi
 
       - name: Install Yarn dependencies
@@ -286,8 +288,9 @@ jobs:
             echo "registry=https://packages.ever.co/" >> .npmrc
             echo "always-auth=true" >> .npmrc
             echo 'registry "https://packages.ever.co/"' >> .yarnrc
-            sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
-            sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
+            sed -i.bak 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
+            sed -i.bak 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
+            rm -f yarn.lock.bak
           fi
 
       - name: Install Yarn dependencies
@@ -417,8 +420,9 @@ jobs:
             echo "registry=https://packages.ever.co/" >> .npmrc
             echo "always-auth=true" >> .npmrc
             echo 'registry "https://packages.ever.co/"' >> .yarnrc
-            sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
-            sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
+            sed -i.bak 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
+            sed -i.bak 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
+            rm -f yarn.lock.bak
           fi
 
       - name: Install Yarn dependencies
@@ -596,8 +600,9 @@ jobs:
             echo "registry=https://packages.ever.co/" >> .npmrc
             echo "always-auth=true" >> .npmrc
             echo 'registry "https://packages.ever.co/"' >> .yarnrc
-            sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
-            sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
+            sed -i.bak 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
+            sed -i.bak 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
+            rm -f yarn.lock.bak
           fi
 
       - name: Install Yarn dependencies
