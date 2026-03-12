@@ -31,7 +31,9 @@ export class FindEstimateEmailQueryDTO implements IEstimateEmailFindInput {
 
 	@ApiPropertyOptional({ type: () => String, enum: EstimateEmailRelationEnum })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => (value ? value.map((element: string) => element.trim()) : []))
+	@Transform(({ value }: TransformFnParams) =>
+		value ? (Array.isArray(value) ? value : [value]).map((element: string) => element.trim()) : []
+	)
 	@IsEnum(EstimateEmailRelationEnum, { each: true })
 	readonly relations: string[] = [];
 }

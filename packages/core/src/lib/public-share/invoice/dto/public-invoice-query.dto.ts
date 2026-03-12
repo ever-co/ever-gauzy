@@ -29,7 +29,7 @@ export enum PublicInvoiceRelationEnum {
 export class PublicInvoiceQueryDTO {
 	@ApiPropertyOptional({ type: () => String, enum: PublicInvoiceRelationEnum })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => (value ? value.map((element: string) => element.trim()) : []))
+	@Transform(({ value }: TransformFnParams) => (value ? (Array.isArray(value) ? value : [value]).map((element: string) => element.trim()) : []))
 	@IsEnum(PublicInvoiceRelationEnum, { each: true })
 	readonly relations: string[] = [];
 }
