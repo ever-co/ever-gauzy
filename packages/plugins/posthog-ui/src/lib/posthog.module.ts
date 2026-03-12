@@ -40,7 +40,7 @@ export class PostHogModule {
 				// Initialize PostHog during app startup
 				provideAppInitializer(() => {
 					const manager = inject(PostHogServiceManager);
-					const config = inject(POSTHOG_CONFIG);
+				const posthogConfig = inject(POSTHOG_CONFIG);
 					return initializePostHogFactory(manager, config)();
 				}),
 				// Conditionally add HTTP interceptor for error tracking
