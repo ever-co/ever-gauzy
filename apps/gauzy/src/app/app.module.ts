@@ -125,28 +125,6 @@ const FEATURE_MODULES = [
 	TimeTrackerModule.forRoot(),
 	I18nModule.forRoot()
 ];
-
-// HTTP Interceptors
-const HTTP_INTERCEPTOR_PROVIDERS = [
-	// Prepends the API base URL and common headers to every outgoing HTTP request.
-	{ provide: HTTP_INTERCEPTORS, useClass: APIInterceptor, multi: true },
-
-	// Attaches Hubstaff OAuth tokens to requests targeting the Hubstaff integration.
-	{ provide: HTTP_INTERCEPTORS, useClass: HubstaffTokenInterceptor, multi: true },
-
-	// Attaches the JWT access token to authenticated API requests.
-	{ provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
-
-	// Injects the active UI language into the Accept-Language request header.
-	{ provide: HTTP_INTERCEPTORS, useClass: LanguageInterceptor, multi: true },
-
-	// Injects the active tenant ID into requests that require tenant scoping.
-	{ provide: HTTP_INTERCEPTORS, useClass: TenantInterceptor, multi: true },
-
-	// Silently refreshes the JWT access token when a 401 response is received.
-	{ provide: HTTP_INTERCEPTORS, useClass: AuthRefreshInterceptor, multi: true }
-];
-
 @NgModule({
 	declarations: [AppComponent],
 	exports: [AppComponent],
@@ -178,7 +156,23 @@ const HTTP_INTERCEPTOR_PROVIDERS = [
 		{ provide: Sentry.TraceService, deps: [Router] },
 
 		// ─── HTTP Interceptors ────────────────────────────────────────────────────────
-		...HTTP_INTERCEPTOR_PROVIDERS,
+		// Prepends the API base URL and common headers to every outgoing HTTP request.
+		{ provide: HTTP_INTERCEPTORS, useClass: APIInterceptor, multi: true },
+
+		// Attaches Hubstaff OAuth tokens to requests targeting the Hubstaff integration.
+		{ provide: HTTP_INTERCEPTORS, useClass: HubstaffTokenInterceptor, multi: true },
+
+		// Attaches the JWT access token to authenticated API requests.
+		{ provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
+
+		// Injects the active UI language into the Accept-Language request header.
+		{ provide: HTTP_INTERCEPTORS, useClass: LanguageInterceptor, multi: true },
+
+		// Injects the active tenant ID into requests that require tenant scoping.
+		{ provide: HTTP_INTERCEPTORS, useClass: TenantInterceptor, multi: true },
+
+		// Silently refreshes the JWT access token when a 401 response is received.
+		{ provide: HTTP_INTERCEPTORS, useClass: AuthRefreshInterceptor, multi: true },
 
 		// ─── App Initializers ─────────────────────────────────────────────────────────
 		// Verifies the API server is reachable before the app renders.
@@ -210,6 +204,7 @@ const HTTP_INTERCEPTOR_PROVIDERS = [
 		provideAppInitializer(() => inject(AppInitService).init()),
 
 		// Checks whether cross-tab workspace sync (BroadcastChannel) is supported.
+		WorkspaceSyncService,
 		provideAppInitializer(() => {
 			inject(WorkspaceSyncService).isSupported();
 		}),
