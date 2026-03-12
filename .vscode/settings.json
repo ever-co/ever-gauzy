@@ -1,20 +1,38 @@
 {
-	"cSpell.userWords": [],
 	"cSpell.enabled": true,
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"typescript.enablePromptUseWorkspaceTsdk": true,
 	"npm.packageManager": "yarn",
-	"prettier.trailingComma": "none",
-	"prettier.singleQuote": true,
 	"editor.formatOnSave": true,
-	"eslint.format.enable": true,
-	"editor.tabSize": 4,
-	"files.insertFinalNewline": true,
-	"files.trimFinalNewlines": true,
-	"files.trimTrailingWhitespace": true,
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
 	"editor.codeActionsOnSave": {
 		"source.fixAll": "explicit"
 	},
+	"prettier.requireConfig": true,
+	"prettier.configPath": ".prettierrc",
+	"prettier.useEditorConfig": true,
+	"eslint.format.enable": true,
+	"editor.tabSize": 4,
+	"editor.insertSpaces": false,
+	"editor.detectIndentation": false,
+	"[markdown]": {
+		"files.trimTrailingWhitespace": false
+	},
+	"[css]": {
+		"editor.insertSpaces": true,
+		"editor.tabSize": 2
+	},
+	"[scss]": {
+		"editor.insertSpaces": true,
+		"editor.tabSize": 2
+	},
+	"[yaml]": {
+		"editor.insertSpaces": true,
+		"editor.tabSize": 2
+	},
+	"files.insertFinalNewline": true,
+	"files.trimFinalNewlines": true,
+	"files.trimTrailingWhitespace": true,
 	"vsicons.presets.angular": true,
 	"deepscan.enable": true,
 	"files.exclude": {

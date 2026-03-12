@@ -10,6 +10,8 @@
 		"esbenp.prettier-vscode",
 		"firsttris.vscode-jest-runner",
 		"vscode-icons-team.vscode-icons",
-		"github.copilot"
+		"github.copilot",
+		"EditorConfig.EditorConfig",
+		"stylelint.vscode-stylelint"
 	]
 }

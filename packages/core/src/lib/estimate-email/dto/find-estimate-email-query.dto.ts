@@ -1,7 +1,8 @@
 import { IEstimateEmailFindInput } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform, TransformFnParams } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { parseRelationsString } from './../../shared/dto';
 
 /**
  * Allowed relations for the estimate-email validation endpoint.
@@ -31,7 +32,7 @@ export class FindEstimateEmailQueryDTO implements IEstimateEmailFindInput {
 
 	@ApiPropertyOptional({ type: () => String, enum: EstimateEmailRelationEnum })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => (value ? value.map((element: string) => element.trim()) : []))
+	@Transform(parseRelationsString)
 	@IsEnum(EstimateEmailRelationEnum, { each: true })
 	readonly relations: string[] = [];
 }
