@@ -30,7 +30,7 @@ import { ColorPickerService } from 'ngx-color-picker';
 // Reference: https://docs.sentry.io/platforms/javascript/migration/v8-to-v9/
 import * as Sentry from '@sentry/angular';
 import * as moment from 'moment';
-import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
+import { LanguagesEnum } from '@gauzy/contracts';
 import { getPluginUiConfig } from '@gauzy/plugin-ui';
 import { PostHogModule } from '@gauzy/plugin-posthog-ui';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
