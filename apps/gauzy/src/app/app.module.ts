@@ -210,7 +210,9 @@ const HTTP_INTERCEPTOR_PROVIDERS = [
 		provideAppInitializer(() => inject(AppInitService).init()),
 
 		// Checks whether cross-tab workspace sync (BroadcastChannel) is supported.
-		provideAppInitializer(() => void inject(WorkspaceSyncService).isSupported()),
+		provideAppInitializer(() => {
+			inject(WorkspaceSyncService).isSupported();
+		}),
 
 		// ─── Services ─────────────────────────────────────────────────────────────────
 		// Guards that protect app-level routes requiring authenticated/authorized access.
