@@ -41,6 +41,7 @@ const DEFAULT_JOBS_PLUGINS: PluginUiDefinition[] = [
  * plugins: [
  *   JobsPlugin.init({
  *     plugins: [
+ *       JobProposalPlugin,
  *       JobEmployeePlugin,
  *       JobSearchPlugin,
  *       JobMatchingPlugin,
@@ -52,9 +53,18 @@ const DEFAULT_JOBS_PLUGINS: PluginUiDefinition[] = [
  */
 export const JobsPlugin: JobsPluginDefinition = {
 	id: 'jobs',
+
+	// ── Versioning & Compatibility ────────────────────────────────
+	version: '1.0.0',
+
+	// ── Location & Module ────────────────────────────────────────
 	location: JOBS_SECTIONS_LOCATION,
 	module: JobsModule,
+
+	// ── Routes ───────────────────────────────────────────────────
 	routes: [JOBS_PAGE_ROUTE as PluginRouteInput],
+
+	// ── Navigation ───────────────────────────────────────────────
 	navMenu: [
 		{
 			type: 'config' as const,
@@ -72,7 +82,11 @@ export const JobsPlugin: JobsPluginDefinition = {
 			before: 'employees'
 		}
 	],
+
+	// ── Access Control ───────────────────────────────────────────
 	featureKey: FeatureEnum.FEATURE_JOB,
+
+	// ── Child Plugins ────────────────────────────────────────────
 	plugins: DEFAULT_JOBS_PLUGINS,
 
 	/**

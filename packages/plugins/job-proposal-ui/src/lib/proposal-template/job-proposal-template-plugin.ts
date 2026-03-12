@@ -14,6 +14,7 @@ import { JOB_PROPOSAL_TEMPLATE_PAGE_ROUTE } from './job-proposal-template.routes
  * plugins: [
  *   JobsPlugin.init({
  *     plugins: [
+ *       JobProposalPlugin,
  *       JobEmployeePlugin,
  *       JobSearchPlugin,
  *       JobMatchingPlugin,
@@ -24,9 +25,18 @@ import { JOB_PROPOSAL_TEMPLATE_PAGE_ROUTE } from './job-proposal-template.routes
  * ```
  */
 export const JobProposalTemplatePlugin: PluginUiDefinition = {
+	// ── Versioning & Compatibility ────────────────────────────────
+	version: '1.0.0',
+
 	id: 'job-proposal-template',
+
+	// ── Location & Module ────────────────────────────────────────
 	location: 'jobs-sections',
 	module: JobProposalTemplateModule,
+
+	// ── Access Control ───────────────────────────────────────────
 	permissionKeys: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW],
+
+	// ── Routes ───────────────────────────────────────────────────
 	routes: [JOB_PROPOSAL_TEMPLATE_PAGE_ROUTE as PluginRouteInput]
 };

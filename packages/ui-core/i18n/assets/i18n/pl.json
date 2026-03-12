@@ -178,7 +178,8 @@
 		"RECOVER": "Przywróć",
 		"ADD_MORE_SOURCES": "Dodaj więcej źródeł",
 		"REMOVE_FROM_FAVORITES": "Usuń z ulubionych",
-		"ADD_TO_FAVORITES": "Dodaj do ulubionych"
+		"ADD_TO_FAVORITES": "Dodaj do ulubionych",
+		"UNSELECT_ALL": "Odznacz wszystko"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1486,6 +1487,92 @@
 				"SUCCESS": {
 					"CONNECTION_CREATED": "Połączenie ActivePieces utworzone pomyślnie"
 				}
+			}
+		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "Integracja przepływów pracy SIM AI",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "Wprowadź klucz API SIM AI, aby połączyć swoje konto. Klucz API znajdziesz w panelu SIM na sim.ai.",
+				"NEXT": "Połącz",
+				"HINT": "Twój klucz API jest bezpiecznie przechowywany i używany do uwierzytelniania wykonań przepływów pracy.",
+				"ERRORS": {
+					"INVALID_FORM": "Proszę poprawnie wypełnić wszystkie wymagane pola",
+					"SAVE_SETTINGS": "Nie udało się zapisać ustawień",
+					"ORGANIZATION_NOT_FOUND": "Nie znaleziono organizacji",
+					"CHECK_REMEMBER_STATE": "Nie udało się sprawdzić zapamiętanego stanu"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Integracja SIM AI skonfigurowana pomyślnie"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Ustawienia SIM AI",
+				"SUBTITLE": "Skonfiguruj ustawienia integracji SIM AI",
+				"API_KEY": "Klucz API",
+				"API_KEY_PLACEHOLDER": "Wprowadź klucz API SIM AI"
+			},
+			"EXECUTIONS": {
+				"TITLE": "Historia wykonań",
+				"NO_EXECUTIONS": "Nie znaleziono wykonań przepływów pracy. Uruchom przepływ pracy z zakładki Przepływy pracy, aby zobaczyć wyniki tutaj.",
+				"WORKFLOW_ID": "ID przepływu pracy",
+				"WORKFLOW_ID_PLACEHOLDER": "Filtruj według ID przepływu pracy",
+				"EXECUTION_ID": "ID wykonania",
+				"STATUS": "Status",
+				"TRIGGERED_BY": "Uruchomione przez",
+				"DURATION": "Czas trwania",
+				"CREATED": "Utworzono",
+				"LOADING": "Ładowanie historii wykonań...",
+				"LOAD": "Szukaj",
+				"ALL_STATUSES": "Wszystkie statusy",
+				"SHOWING": "Wyświetlanie",
+				"OF": "z",
+				"PREVIOUS_PAGE": "Poprzednia strona",
+				"NEXT_PAGE": "Następna strona"
+			},
+			"WORKFLOWS": {
+				"TITLE": "Przepływy pracy",
+				"VALIDATE_TITLE": "Zweryfikuj przepływ pracy",
+				"EXECUTE_TITLE": "Wykonaj przepływ pracy",
+				"JOB_STATUS_TITLE": "Status zadania asynchronicznego",
+				"WORKFLOW_ID": "ID przepływu pracy",
+				"WORKFLOW_ID_PLACEHOLDER": "Wprowadź ID przepływu pracy SIM",
+				"VALIDATE": "Zweryfikuj",
+				"DEPLOYED": "Przepływ pracy jest wdrożony i gotowy do wykonania.",
+				"NOT_DEPLOYED": "Przepływ pracy nie jest wdrożony lub nie został znaleziony.",
+				"EXECUTE": "Wykonaj",
+				"ASYNC": "Asynchroniczny",
+				"TIMEOUT": "Limit czasu (ms)",
+				"INPUT": "Dane wejściowe (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "Podaj dane wejściowe przepływu pracy jako prawidłowy JSON. Te dane zostaną przekazane do Twojego przepływu pracy SIM.",
+				"RESULT": "Wynik wykonania",
+				"TASK_ID": "ID zadania",
+				"TASK_ID_PLACEHOLDER": "Wprowadź ID zadania asynchronicznego",
+				"CHECK_STATUS": "Sprawdź status",
+				"JOB_RESULT": "Status zadania",
+				"INVALID_JSON": "Nieprawidłowe dane wejściowe JSON",
+				"EXECUTION_FAILED": "Wykonanie nie powiodło się"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Wyzwalacze zdarzeń",
+				"ADD_TITLE": "Dodaj wyzwalacz zdarzenia",
+				"ACTIVE_TITLE": "Aktywne wyzwalacze zdarzeń",
+				"DESCRIPTION": "Skonfiguruj automatyczne wyzwalacze przepływów pracy. Gdy wystąpi zdarzenie platformy, przypisany przepływ pracy SIM zostanie wykonany automatycznie.",
+				"EVENT": "Zdarzenie",
+				"SELECT_EVENT": "Wybierz zdarzenie",
+				"WORKFLOW_ID": "ID przepływu pracy",
+				"WORKFLOW_ID_PLACEHOLDER": "Wprowadź ID przepływu pracy SIM do uruchomienia",
+				"ADD": "Dodaj",
+				"REMOVE": "Usuń przypisanie",
+				"NO_MAPPINGS": "Brak skonfigurowanych wyzwalaczy zdarzeń. Dodaj przypisanie powyżej, aby automatycznie uruchamiać przepływy pracy SIM ze zdarzeń platformy.",
+				"LOADING": "Ładowanie wyzwalaczy zdarzeń...",
+				"MAPPING_SAVED": "Przypisanie wyzwalacza zdarzenia zostało pomyślnie zapisane.",
+				"MAPPING_REMOVED": "Przypisanie wyzwalacza zdarzenia zostało pomyślnie usunięte.",
+				"SAVE_FAILED": "Nie udało się zapisać przypisania wyzwalacza zdarzenia.",
+				"REMOVE_FAILED": "Nie udało się usunąć przypisania wyzwalacza zdarzenia.",
+				"LOAD_FAILED": "Nie udało się załadować wyzwalaczy zdarzeń."
 			}
 		},
 		"COMING_SOON": "Niedługo będzie dostępne",
@@ -4183,7 +4270,11 @@
 			"UI_HOSTNAME": "Nazwa hosta interfejsu użytkownika / Adres IP",
 			"TITLE_SERVER_API": "Kreator instalacji serwera API Ever Gauzy",
 			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App zapewnia pełną funkcjonalność platformy Gauzy dostępną bezpośrednio na komputerze stacjonarnym lub laptopie. Ponadto umożliwia śledzenie czasu pracy, rejestrowanie aktywności i możliwość otrzymywania przypomnień/powiadomień o śledzeniu.",
-			"UNABLE_TO_CONNECT": "Impossibile connettersi al server. Controlla il tuo host API o la connessione internet."
+			"UNABLE_TO_CONNECT": "Impossibile connettersi al server. Controlla il tuo host API o la connessione internet.",
+			"JWT_SECRET": "Sekret JWT",
+			"JWT_SECRET_PLACEHOLDER": "Wprowadź klucz tajny dla JWT",
+			"JWT_REFRESH_TOKEN_SECRET": "Sekret tokenu odświeżającego JWT",
+			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "Wprowadź klucz tajny dla tokenu odświeżającego JWT"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Zrzut ekranu",
@@ -4574,7 +4665,8 @@
 		"VISITED_DATES": "Odwiedzone daty",
 		"NO_SCREENSHOT": "Brak zrzutu ekranu",
 		"NO_SCREENSHOTS": "Brak zrzutów ekranu",
-		"NO_RECORD_FOUND": "Nie znaleziono żadnych rekordów. Proszę wybrać zakres daty, pracownika lub projekt"
+		"NO_RECORD_FOUND": "Nie znaleziono żadnych rekordów. Proszę wybrać zakres dat, pracownika lub projekt",
+		"SCREEN_SELECTED": "Liczba wybranych ekranów: {{ count }}"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

@@ -232,12 +232,7 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 
 		// Navigate to the 'auth/magic-sign-in' route with email and code in state (not URL)
 		// This prevents the code from being visible in browser history or URL bar
-		await this._router.navigate(['auth/magic-sign-in'], {
-			state: {
-				email,
-				code
-			}
-		});
+		await this._router.navigate(['auth/magic-sign-in'], { state: { email, code } });
 
 		this.isLoading = false;
 		this._cdr.markForCheck();

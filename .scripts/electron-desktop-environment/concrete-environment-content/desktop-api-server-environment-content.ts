@@ -29,7 +29,9 @@ export class DesktopApiServerEnvironmentContent implements IContentGenerator {
 			IS_DESKTOP_TIMER: ${false},
 			IS_DESKTOP: ${false},
 			IS_SERVER: ${true},
-			IS_SERVER_API: ${true}
+			IS_SERVER_API: ${true},
+			JWT_SECRET: '${variable.DESKTOP_JWT_SECRET || ''}',
+			JWT_REFRESH_TOKEN_SECRET: '${variable.DESKTOP_JWT_REFRESH_TOKEN_SECRET || ''}'
 		`;
 	}
 }

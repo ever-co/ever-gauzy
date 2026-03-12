@@ -106,13 +106,13 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 
 		for (const userId of userIds) {
 			// Find child subscription
-			const childSubscription = await this.findOneByWhereOptions({
+			const {record: childSubscription, success} = await this.findOneOrFailByWhereOptions({
 				parentId: parentSubscriptionId,
 				subscriberId: userId,
 				status: In([PluginSubscriptionStatus.ACTIVE, PluginSubscriptionStatus.PENDING])
 			});
 
-			if (childSubscription) {
+			if (success) {
 				// Update status to cancelled/revoked
 				const updated = await this.update(childSubscription.id, {
 					status: PluginSubscriptionStatus.CANCELLED,
@@ -122,8 +122,8 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 
 				if (updated) {
 					// Fetch the updated subscription and manually update metadata
-					const updatedSubscription = await this.findOneByIdString(childSubscription.id);
-					if (updatedSubscription) {
+					const {record: updatedSubscription, success} = await this.findOneOrFailByIdString(childSubscription.id);
+					if (success) {
 						// Update metadata separately if needed
 						updatedSubscription.metadata = {
 							...updatedSubscription.metadata,

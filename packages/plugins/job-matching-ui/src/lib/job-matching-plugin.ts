@@ -15,6 +15,7 @@ import { JOB_MATCHING_PAGE_ROUTE } from './job-matching.routes';
  * plugins: [
  *   JobsPlugin.init({
  *     plugins: [
+ *       JobProposalPlugin,
  *       JobEmployeePlugin,
  *       JobSearchPlugin,
  *       JobMatchingPlugin,
@@ -26,8 +27,17 @@ import { JOB_MATCHING_PAGE_ROUTE } from './job-matching.routes';
  */
 export const JobMatchingPlugin: PluginUiDefinition = {
 	id: 'job-matching',
+
+	// ── Versioning & Compatibility ────────────────────────────────
+	version: '1.0.0',
+
+	// ── Location & Module ────────────────────────────────────────
 	location: 'jobs-sections',
 	module: JobMatchingModule,
+
+	// ── Access Control ───────────────────────────────────────────
 	permissionKeys: [PermissionsEnum.ORG_JOB_MATCHING_VIEW],
+
+	// ── Routes ───────────────────────────────────────────────────
 	routes: [JOB_MATCHING_PAGE_ROUTE as PluginRouteInput]
 };

@@ -1,12 +1,12 @@
 import { logger } from '@gauzy/desktop-core';
 import { createAboutWindow } from '@gauzy/desktop-window';
 import { BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, shell } from 'electron';
+import { AppWindowManager } from './app-window-manager';
 import { LocalStore } from './desktop-store';
 import { TimerService } from './offline';
 import { PluginManager } from './plugin-system/data-access/plugin-manager';
 import { PluginEventManager } from './plugin-system/events/plugin-event.manager';
 import { TranslateService } from './translation';
-import { AppWindowManager } from './app-window-manager';
 
 export class AppMenu {
 	public menu: MenuItemConstructorOptions[] = [];
@@ -267,11 +267,14 @@ export class AppMenu {
 	public get pluginMenu(): MenuItemConstructorOptions {
 		// Retrieve submenu items from the plugin manager
 		const pluginSubmenu = this.pluginManager.getMenuPlugins();
+		const { employeeId = null, isLogout = false } = LocalStore.getStore('auth') || {};
+		const visible = !!employeeId && !isLogout;
 
 		// Return the plugin menu structure
 		return {
 			id: 'plugin-menu',
 			label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'),
+			visible,
 			submenu: [
 				{
 					label: TranslateService.instant('TIMER_TRACKER.MENU.INSTALL_PLUGIN'),

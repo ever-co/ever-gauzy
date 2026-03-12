@@ -178,7 +178,8 @@
 		"RECOVER": "Wiederherstellen",
 		"ADD_MORE_SOURCES": "Weitere Quellen hinzufügen",
 		"REMOVE_FROM_FAVORITES": "Aus Favoriten entfernen",
-		"ADD_TO_FAVORITES": "Zu Favoriten hinzufügen"
+		"ADD_TO_FAVORITES": "Zu Favoriten hinzufügen",
+		"UNSELECT_ALL": "Alle abwählen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1487,6 +1488,92 @@
 				"SUCCESS": {
 					"CONNECTION_CREATED": "Activepieces-Verbindung erfolgreich erstellt"
 				}
+			}
+		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "SIM AI Workflow-Integration",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "Geben Sie Ihren SIM AI API-Schlüssel ein, um Ihr Konto zu verbinden. Sie finden Ihren API-Schlüssel in Ihrem SIM-Dashboard unter sim.ai.",
+				"NEXT": "Verbinden",
+				"HINT": "Ihr API-Schlüssel wird sicher gespeichert und zur Authentifizierung von Workflow-Ausführungen verwendet.",
+				"ERRORS": {
+					"INVALID_FORM": "Bitte füllen Sie alle Pflichtfelder korrekt aus",
+					"SAVE_SETTINGS": "Fehler beim Speichern der Einstellungen",
+					"ORGANIZATION_NOT_FOUND": "Organisation nicht gefunden",
+					"CHECK_REMEMBER_STATE": "Fehler bei der Überprüfung des gespeicherten Status"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "SIM AI-Integration erfolgreich konfiguriert"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "SIM AI-Einstellungen",
+				"SUBTITLE": "Konfigurieren Sie Ihre SIM AI-Integrationseinstellungen",
+				"API_KEY": "API-Schlüssel",
+				"API_KEY_PLACEHOLDER": "Geben Sie Ihren SIM AI API-Schlüssel ein"
+			},
+			"EXECUTIONS": {
+				"TITLE": "Ausführungsverlauf",
+				"NO_EXECUTIONS": "Keine Workflow-Ausführungen gefunden. Führen Sie einen Workflow über den Workflows-Tab aus, um hier Ergebnisse zu sehen.",
+				"WORKFLOW_ID": "Workflow-ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Nach Workflow-ID filtern",
+				"EXECUTION_ID": "Ausführungs-ID",
+				"STATUS": "Status",
+				"TRIGGERED_BY": "Ausgelöst von",
+				"DURATION": "Dauer",
+				"CREATED": "Erstellt",
+				"LOADING": "Ausführungsverlauf wird geladen...",
+				"LOAD": "Suchen",
+				"ALL_STATUSES": "Alle Status",
+				"SHOWING": "Anzeige",
+				"OF": "von",
+				"PREVIOUS_PAGE": "Vorherige Seite",
+				"NEXT_PAGE": "Nächste Seite"
+			},
+			"WORKFLOWS": {
+				"TITLE": "Workflows",
+				"VALIDATE_TITLE": "Workflow validieren",
+				"EXECUTE_TITLE": "Workflow ausführen",
+				"JOB_STATUS_TITLE": "Asynchroner Aufgabenstatus",
+				"WORKFLOW_ID": "Workflow-ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Geben Sie Ihre SIM Workflow-ID ein",
+				"VALIDATE": "Validieren",
+				"DEPLOYED": "Workflow ist bereitgestellt und bereit zur Ausführung.",
+				"NOT_DEPLOYED": "Workflow ist nicht bereitgestellt oder nicht gefunden.",
+				"EXECUTE": "Ausführen",
+				"ASYNC": "Asynchron",
+				"TIMEOUT": "Zeitüberschreitung (ms)",
+				"INPUT": "Eingabe (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "Geben Sie die Workflow-Eingabe als gültiges JSON an. Diese Daten werden an Ihren SIM-Workflow übergeben.",
+				"RESULT": "Ausführungsergebnis",
+				"TASK_ID": "Aufgaben-ID",
+				"TASK_ID_PLACEHOLDER": "Geben Sie die asynchrone Aufgaben-ID ein",
+				"CHECK_STATUS": "Status prüfen",
+				"JOB_RESULT": "Aufgabenstatus",
+				"INVALID_JSON": "Ungültige JSON-Eingabe",
+				"EXECUTION_FAILED": "Ausführung fehlgeschlagen"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Ereignisauslöser",
+				"ADD_TITLE": "Ereignisauslöser hinzufügen",
+				"ACTIVE_TITLE": "Aktive Ereignisauslöser",
+				"DESCRIPTION": "Konfigurieren Sie automatische Workflow-Auslöser. Wenn ein Plattformereignis eintritt, wird der zugeordnete SIM-Workflow automatisch ausgeführt.",
+				"EVENT": "Ereignis",
+				"SELECT_EVENT": "Ereignis auswählen",
+				"WORKFLOW_ID": "Workflow-ID",
+				"WORKFLOW_ID_PLACEHOLDER": "SIM-Workflow-ID zum Auslösen eingeben",
+				"ADD": "Hinzufügen",
+				"REMOVE": "Zuordnung entfernen",
+				"NO_MAPPINGS": "Keine Ereignisauslöser konfiguriert. Fügen Sie oben eine Zuordnung hinzu, um SIM-Workflows automatisch durch Plattformereignisse auszulösen.",
+				"LOADING": "Ereignisauslöser werden geladen...",
+				"MAPPING_SAVED": "Ereignisauslöser-Zuordnung erfolgreich gespeichert.",
+				"MAPPING_REMOVED": "Ereignisauslöser-Zuordnung erfolgreich entfernt.",
+				"SAVE_FAILED": "Fehler beim Speichern der Ereignisauslöser-Zuordnung.",
+				"REMOVE_FAILED": "Fehler beim Entfernen der Ereignisauslöser-Zuordnung.",
+				"LOAD_FAILED": "Fehler beim Laden der Ereignisauslöser."
 			}
 		},
 		"COMING_SOON": "Demnächst verfügbar.",
@@ -4180,7 +4267,11 @@
 			"UI_HOSTNAME": "UI Hostname / IP-Adresse",
 			"TITLE_SERVER_API": "Ever Gauzy API Server Installation Wizard",
 			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App giver den fulde funktionalitet af Gauzy Platform tilgængelig direkte på din stationære computer eller en bærbar computer. Derudover tillader det sporing af arbejdstid, aktivitetsregistrering og mulighed for at modtage sporingspåmindelser/notifikationer.",
-			"UNABLE_TO_CONNECT": "Verbindung zum Server nicht möglich. Bitte überprüfen Sie Ihren API-Host oder Ihre Internetverbindung."
+			"UNABLE_TO_CONNECT": "Verbindung zum Server nicht möglich. Bitte überprüfen Sie Ihren API-Host oder Ihre Internetverbindung.",
+			"JWT_SECRET": "JWT-Geheimnis",
+			"JWT_SECRET_PLACEHOLDER": "Geben Sie einen geheimen Schlüssel für JWT ein",
+			"JWT_REFRESH_TOKEN_SECRET": "JWT-Refresh-Token-Geheimnis",
+			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "Geben Sie einen geheimen Schlüssel für das JWT-Refresh-Token ein"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Bildschirmaufnahme",
@@ -4571,7 +4662,8 @@
 		"VISITED_DATES": "Besuchte Daten",
 		"NO_SCREENSHOT": "Kein Screenshot",
 		"NO_SCREENSHOTS": "Keine Screenshots",
-		"NO_RECORD_FOUND": "Keine Einträge gefunden. Bitte wählen Sie einen Datumsbereich, einen Mitarbeiter oder ein Projekt aus."
+		"NO_RECORD_FOUND": "Keine Einträge gefunden. Bitte wählen Sie einen Datumsbereich, einen Mitarbeiter oder ein Projekt aus.",
+		"SCREEN_SELECTED": "{{ count }} Bildschirm(e) ausgewählt"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Lass uns deine erste Organisation erstellen",

@@ -593,6 +593,31 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
+	 * Invalidates the magic sign-in code for all users matching the given email and code.
+	 * Called after a successful workspace sign-in to prevent code reuse.
+	 *
+	 * @param email - The email address used for the sign-in.
+	 * @param code  - The magic code that was consumed.
+	 * @returns A promise that resolves when the invalidation write completes.
+	 */
+	async invalidateMagicCode(email: string, code: string): Promise<void> {
+		// Common criteria and payload shared by both ORM adapters
+		const where = { email, code };
+		const update = { code: null, codeExpireAt: null };
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmUserRepository.nativeUpdate(where, update);
+				break;
+			case MultiORMEnum.TypeORM:
+				await this.typeOrmUserRepository.update(where, update);
+				break;
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+	}
+
+	/**
 	 * Get user if refresh token matches
 	 *
 	 * @param refreshToken
@@ -712,5 +737,26 @@ export class UserService extends TenantAwareCrudService<User> {
 		} catch (error) {
 			throw new ForbiddenException(error?.message);
 		}
+	}
+
+	/**
+	 * Batch-load users by IDs. The eager `image` relation automatically triggers
+	 * ImageAssetSubscriber and UserSubscriber afterEntityLoad hooks,
+	 * resolving fresh presigned URLs for user profile images.
+	 *
+	 * @param userIds - Array of user IDs to load.
+	 * @returns A Map of user ID to User entity (with fresh imageUrl).
+	 */
+	async findUsersByIds(userIds: ID[]): Promise<Map<ID, IUser>> {
+		if (!userIds.length) {
+			return new Map();
+		}
+
+		const users = await this.find({
+			where: { id: In(userIds) },
+			relations: { image: true }
+		});
+
+		return new Map(users.map((user) => [user.id, user]));
 	}
 }

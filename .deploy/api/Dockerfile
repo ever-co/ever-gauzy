@@ -6,6 +6,7 @@ ARG API_BASE_URL
 ARG CLIENT_BASE_URL
 ARG API_HOST
 ARG API_PORT
+ARG ALLOWED_ORIGINS
 ARG CLOUD_PROVIDER
 ARG SENTRY_DSN
 ARG SENTRY_HTTP_TRACING_ENABLED
@@ -183,13 +184,17 @@ COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 ARG VERDACCIO_TOKEN
 RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
-    echo "registry=https://packages.ever.co/" >> .npmrc; \
+    echo "registry=https://packages.ever.co/" >> .npmrc && \
+    echo "always-auth=true" >> .npmrc && \
+    echo 'registry "https://packages.ever.co/"' >> .yarnrc && \
+    sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
+    sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual && yarn cache clean
 
-# Remove .npmrc so the auth token is not copied to downstream stages
-RUN rm -f .npmrc
+# Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
+RUN rm -f .npmrc .yarnrc
 
 FROM node:24.14.0-alpine3.23 AS prodDependencies
 
@@ -259,13 +264,17 @@ COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 ARG VERDACCIO_TOKEN
 RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
-    echo "registry=https://packages.ever.co/" >> .npmrc; \
+    echo "registry=https://packages.ever.co/" >> .npmrc && \
+    echo "always-auth=true" >> .npmrc && \
+    echo 'registry "https://packages.ever.co/"' >> .yarnrc && \
+    sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
+    sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && yarn postinstall.manual && yarn cache clean
 
-# Remove .npmrc so the auth token is not copied to downstream stages
-RUN rm -f .npmrc
+# Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
+RUN rm -f .npmrc .yarnrc
 
 # We remove Angular modules as it's not used in APIs
 RUN rm -r node_modules/@angular
@@ -408,6 +417,7 @@ ENV API_PORT=${API_PORT:-3000}
 
 ENV API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
 ENV CLIENT_BASE_URL=${CLIENT_BASE_URL:-http://localhost:4200}
+ENV ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
 ENV SENTRY_DSN=${SENTRY_DSN}
 ENV SENTRY_HTTP_TRACING_ENABLED=${SENTRY_HTTP_TRACING_ENABLED:-false}
 ENV SENTRY_PROFILING_ENABLED=${SENTRY_PROFILING_ENABLED:-false}

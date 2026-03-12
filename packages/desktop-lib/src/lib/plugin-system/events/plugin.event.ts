@@ -1,7 +1,7 @@
 import { ID, PluginOSArch, PluginOSType } from '@gauzy/contracts';
 import { logger } from '@gauzy/desktop-core';
 import { ipcMain, IpcMainEvent } from 'electron';
-import * as os from 'os';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import { TranslateService } from '../../translation';
 import { PluginManager } from '../data-access/plugin-manager';
@@ -83,6 +83,19 @@ class ElectronPluginListener {
 				arch: archMap[arch] || PluginOSArch.X64
 			};
 		});
+
+		ipcMain.handle(
+			PluginHandlerChannel.UPDATE_TENANT_ENABLED,
+			async (_, { marketplaceId, tenantEnabled }: { marketplaceId: ID; tenantEnabled: boolean }) => {
+				try {
+					await this.pluginManager.updateTenantEnabled(marketplaceId, tenantEnabled);
+					return { success: true };
+				} catch (error) {
+					logger.error('Failed to update tenant enabled:', error);
+					return { success: false, error: error?.message ?? String(error) };
+				}
+			}
+		);
 
 		ipcMain.handle(PluginHandlerChannel.LAZY_LOADER, async (_, pathname) => {
 			try {
