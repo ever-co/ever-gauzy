@@ -18,7 +18,7 @@ import { provideTranslateHttpLoader, HttpLoaderOptions, DEFAULT_HTTP_LOADER_OPTI
  *   TranslateService → TranslateLoader → HttpClient → LanguageInterceptor → TranslateService
  *
  * Instead, set the fallback/default language imperatively after bootstrap
- * (e.g. via `translateService.setFallbackLang()` or an `APP_INITIALIZER`).
+ * (e.g. via `translateService.setFallbackLang()` or a `provideAppInitializer`).
  * Only pass `lang`/`fallbackLang` here if your app has NO such interceptors.
  */
 export interface I18nProviderOptions {

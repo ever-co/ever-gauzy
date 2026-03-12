@@ -1,13 +1,13 @@
 // Some of the code is modified from https://github.com/akveo/ngx-admin/blob/master/src/app/app.module.ts,
 // that licensed under the MIT License and Copyright (c) 2017 akveo.com.
 
-import { VERSION } from '@angular/core';
 import { APP_BASE_HREF } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { NgModule, ErrorHandler, VERSION, inject, provideAppInitializer } from '@angular/core';
 import { ExtraOptions, Router, RouterModule } from '@angular/router';
+import { OVERLAY_DEFAULT_CONFIG } from '@angular/cdk/overlay';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule, ErrorHandler, inject, provideAppInitializer } from '@angular/core';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import {
 	NbChatModule,
@@ -31,9 +31,11 @@ import { ColorPickerService } from 'ngx-color-picker';
 import * as Sentry from '@sentry/angular';
 import * as moment from 'moment';
 import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
-import { UiCoreModule } from '@gauzy/ui-core';
 import { getPluginUiConfig } from '@gauzy/plugin-ui';
+import { PostHogModule } from '@gauzy/plugin-posthog-ui';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
+import { UiCoreModule } from '@gauzy/ui-core';
+import { CommonModule } from '@gauzy/ui-core/common';
 import {
 	APIInterceptor,
 	AppInitService,
@@ -51,8 +53,6 @@ import {
 	TokenInterceptor,
 	WorkspaceSyncService
 } from '@gauzy/ui-core/core';
-import { PostHogModule } from '@gauzy/plugin-posthog-ui';
-import { CommonModule } from '@gauzy/ui-core/common';
 import { I18nModule, I18nService } from '@gauzy/ui-core/i18n';
 import { SharedModule, TimeTrackerModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
@@ -126,6 +126,27 @@ const FEATURE_MODULES = [
 	I18nModule.forRoot()
 ];
 
+// HTTP Interceptors
+const HTTP_INTERCEPTOR_PROVIDERS = [
+	// Prepends the API base URL and common headers to every outgoing HTTP request.
+	{ provide: HTTP_INTERCEPTORS, useClass: APIInterceptor, multi: true },
+
+	// Attaches Hubstaff OAuth tokens to requests targeting the Hubstaff integration.
+	{ provide: HTTP_INTERCEPTORS, useClass: HubstaffTokenInterceptor, multi: true },
+
+	// Attaches the JWT access token to authenticated API requests.
+	{ provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
+
+	// Injects the active UI language into the Accept-Language request header.
+	{ provide: HTTP_INTERCEPTORS, useClass: LanguageInterceptor, multi: true },
+
+	// Injects the active tenant ID into requests that require tenant scoping.
+	{ provide: HTTP_INTERCEPTORS, useClass: TenantInterceptor, multi: true },
+
+	// Silently refreshes the JWT access token when a 401 response is received.
+	{ provide: HTTP_INTERCEPTORS, useClass: AuthRefreshInterceptor, multi: true }
+];
+
 @NgModule({
 	declarations: [AppComponent],
 	exports: [AppComponent],
@@ -138,45 +159,27 @@ const FEATURE_MODULES = [
 		...THIRD_PARTY_MODULES
 	],
 	providers: [
-		{
-			provide: Sentry.TraceService,
-			deps: [Router]
-		},
+		// ─── Configuration Tokens ────────────────────────────────────────────────────
+		// Sets the base href for all router links and location strategies.
 		{ provide: APP_BASE_HREF, useValue: '/' },
-		{
-			provide: ErrorHandler,
-			useClass: SentryErrorHandler
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: APIInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: HubstaffTokenInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: TokenInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: LanguageInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: TenantInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: AuthRefreshInterceptor,
-			multi: true
-		},
+
+		// Exposes the full environment config to the DI tree via the GAUZY_ENV token.
+		{ provide: GAUZY_ENV, useValue: environment },
+
+		// Angular CDK 21 enables the Popover API for overlays by default (top layer), which causes
+		// Nebular dialogs to render above toasts. Disabling it restores z-index-based stacking.
+		{ provide: OVERLAY_DEFAULT_CONFIG, useValue: { usePopover: false } },
+
+		// ─── Error Handling & Tracing ─────────────────────────────────────────────────
+		// Routes unhandled errors to Sentry instead of the default console handler.
+		{ provide: ErrorHandler, useClass: SentryErrorHandler },
+
+		// Required by @sentry/angular to instrument Angular router navigation events.
+		{ provide: Sentry.TraceService, deps: [Router] },
+
+		// ─── HTTP Interceptors ────────────────────────────────────────────────────────
+		...HTTP_INTERCEPTOR_PROVIDERS,
+
 		ServerConnectionService,
 		provideAppInitializer(() => {
 			const initializerFn = serverConnectionFactory(
@@ -204,36 +207,35 @@ const FEATURE_MODULES = [
 
 		provideAppInitializer(() => {
 			const workspaceSyncService = inject(WorkspaceSyncService);
-
 			workspaceSyncService.isSupported();
-
 			return Promise.resolve();
 		}),
 		{
 			provide: ErrorHandler,
 			useClass: SentryErrorHandler
 		},
+		// ─── Services ─────────────────────────────────────────────────────────────────
+		// Guards that protect app-level routes requiring authenticated/authorized access.
 		AppModuleGuard,
+
+		// Provides the ngx-color-picker singleton for use across the application.
 		ColorPickerService,
+
+		// Provides the ngx-cookie-service singleton for reading and writing browser cookies.
 		CookieService,
-		{
-			provide: GAUZY_ENV,
-			useValue: environment
-		},
+
+		// ─── Framework Providers ──────────────────────────────────────────────────────
+		// Configures HttpClient to pick up class-based HTTP_INTERCEPTORS from DI.
 		provideHttpClient(withInterceptorsFromDi()),
+
+		// Registers all Chart.js defaults so ng2-charts charts render without manual imports.
 		provideCharts(withDefaultRegisterables())
 	]
 })
 export class AppModule {
-	/**
-	 * Constructor for the AppModule class.
-	 *
-	 * Initializes the _i18nService with all available languages.
-	 * Sets Monday as the start of the week for the English locale in Moment.js.
-	 *
-	 * @param {I18nTranslateService} _i18nService - The I18nTranslateService instance.
-	 */
-	constructor(readonly _i18nService: I18nService) {
+	private readonly _i18nService = inject(I18nService);
+
+	constructor() {
 		console.log(`Angular Version: ${VERSION.full}`);
 
 		// Initialize UI languages and Update Locale
