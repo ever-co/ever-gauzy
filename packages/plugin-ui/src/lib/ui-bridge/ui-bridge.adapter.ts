@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, makeEnvironmentProviders, type EnvironmentProviders } from '@angular/core';
+import { inject, makeEnvironmentProviders, provideAppInitializer, type EnvironmentProviders } from '@angular/core';
 import { UiBridge, UiBridgeConfig, UiBridgeMountOptions, UiBridgeMountResult } from './ui-bridge.interface';
 import { UiBridgeRegistryService } from './ui-bridge-registry.service';
 
@@ -104,16 +104,10 @@ export function isUiBridgeLike(obj: unknown): obj is UiBridgeLike {
  */
 export function provideBridge(bridgeOrFactory: UiBridgeLike | (() => UiBridgeLike)): EnvironmentProviders {
 	return makeEnvironmentProviders([
-		{
-			provide: APP_INITIALIZER,
-			useFactory: (registry: UiBridgeRegistryService) => {
-				return () => {
-					const bridge = typeof bridgeOrFactory === 'function' ? bridgeOrFactory() : bridgeOrFactory;
-					registry.register(adaptBridge(bridge));
-				};
-			},
-			deps: [UiBridgeRegistryService],
-			multi: true
-		}
+		provideAppInitializer(() => {
+			const registry = inject(UiBridgeRegistryService);
+			const bridge = typeof bridgeOrFactory === 'function' ? bridgeOrFactory() : bridgeOrFactory;
+			registry.register(adaptBridge(bridge));
+		})
 	]);
 }
