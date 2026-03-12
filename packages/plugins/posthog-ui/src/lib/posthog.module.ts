@@ -38,11 +38,11 @@ export class PostHogModule {
 					useValue: config.debug || false
 				},
 				// Initialize PostHog during app startup
-				provideAppInitializer(() => {
-					const manager = inject(PostHogServiceManager);
-				const posthogConfig = inject(POSTHOG_CONFIG);
-					return initializePostHogFactory(manager, config)();
-				}),
+provideAppInitializer(() => {
+    const manager = inject(PostHogServiceManager);
+    const posthogConfig = inject(POSTHOG_CONFIG);
+    return initializePostHogFactory(manager, posthogConfig)();
+}),
 				// Conditionally add HTTP interceptor for error tracking
 				...(config.options?.capture_exceptions !== false
 					? [
