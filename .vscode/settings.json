@@ -14,7 +14,10 @@
 	"eslint.format.enable": true,
 	"editor.tabSize": 4,
 	"editor.insertSpaces": false,
-	"editor.detectIndentation": true,
+	"editor.detectIndentation": false,
+	"[markdown]": {
+		"files.trimTrailingWhitespace": false
+	},
 	"[css]": {
 		"editor.insertSpaces": true,
 		"editor.tabSize": 2
