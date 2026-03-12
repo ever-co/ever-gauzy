@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { EmployeeModule } from './../../employee/employee.module';
+import { UserModule } from './../../user/user.module';
 import { OrganizationProjectModule } from './../../organization-project/organization-project.module';
 import { StatisticController } from './statistic.controller';
 import { StatisticService } from './statistic.service';
@@ -17,6 +18,7 @@ import { RolePermissionModule } from '../../role-permission/role-permission.modu
 		TaskModule,
 		TimeSlotModule,
 		EmployeeModule,
+		UserModule,
 		ActivityModule,
 		TimeLogModule,
 	],

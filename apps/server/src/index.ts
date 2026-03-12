@@ -354,7 +354,9 @@ const getEnvApi = () => {
 		}),
 		DEBUG: process.env.NODE_ENV !== 'production' ? 'true' : 'false',
 		API_PORT: String(config.port),
-		...addsConfig
+		...addsConfig,
+		JWT_SECRET: config.secret?.jwt,
+		JWT_REFRESH_TOKEN_SECRET: config.secret?.refresh_token
 	};
 };
 

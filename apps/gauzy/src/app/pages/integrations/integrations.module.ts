@@ -1,6 +1,6 @@
 import { Inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
-import { PluginsModule } from '@gauzy/desktop-ui-lib';
+import { PluginsModule, providePluginsEffects } from '@gauzy/desktop-ui-lib';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { SharedModule, SmartDataViewLayoutModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import {
@@ -48,7 +48,8 @@ import { IntegrationLayoutComponent } from './layout/layout.component';
 			useFactory: (provider: PageRouteRegistryService) => createIntegrationsRoutes(provider),
 			deps: [PageRouteRegistryService],
 			multi: true
-		}
+		},
+		providePluginsEffects()
 	]
 })
 export class IntegrationsModule {

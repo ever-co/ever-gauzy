@@ -16,7 +16,7 @@ import { provideTranslateHttpLoader } from './translate-http-loader';
  * during DI initialization, which triggers an `NG0200` circular dependency in apps
  * that have HTTP interceptors depending on `TranslateService` (e.g. `LanguageInterceptor`).
  * Instead, set the fallback/default language imperatively after bootstrap
- * (e.g. via `translateService.setFallbackLang()` or an `APP_INITIALIZER`).
+ * (e.g. via `translateService.setFallbackLang()` or a `provideAppInitializer`).
  *
  * Usage:
  *
