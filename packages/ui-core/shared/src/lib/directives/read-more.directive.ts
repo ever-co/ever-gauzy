@@ -42,7 +42,7 @@ export class ReadMoreDirective implements AfterViewInit, OnChanges {
 		}
 	}
 	/**
-	 * Toogle view - full text or not
+	 * Toggle view - full text or not
 	 */
 	private toggleView(): void {
 		if (this.text.length <= this.maxLength) {
