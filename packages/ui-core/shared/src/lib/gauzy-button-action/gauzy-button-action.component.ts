@@ -19,8 +19,8 @@ export class GauzyButtonActionComponent {
 	readonly componentName = input<ComponentEnum>();
 
 	/** Template reference for the primary action button. */
-	readonly buttonTemplate = input<TemplateRef<any>>();
+	readonly buttonTemplate = input<TemplateRef<unknown>>();
 
 	/** Template reference for the visible-state button. */
-	readonly buttonTemplateVisible = input<TemplateRef<any>>();
+	readonly buttonTemplateVisible = input<TemplateRef<unknown>>();
 }
