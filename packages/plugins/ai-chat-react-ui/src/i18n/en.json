@@ -1,0 +1,17 @@
+{
+	"AI_CHAT": {
+		"TITLE": "AI Assistant",
+		"PLACEHOLDER": "Type a message…",
+		"SEND": "Send",
+		"STOP": "Stop",
+		"THINKING": "Thinking…",
+		"EMPTY_STATE": "Start a conversation with the AI assistant.",
+		"ERROR": "Something went wrong. Please try again.",
+		"COLLAPSE": "Close chat",
+		"EXPAND": "Open AI Chat",
+		"NEW_CHAT": "New conversation",
+		"WELCOME_TITLE": "Hi! I'm your AI Assistant",
+		"WELCOME_SUBTITLE": "Ask me anything about your workspace, tasks, or projects.",
+		"POWERED_BY": "Powered by AI"
+	}
+}

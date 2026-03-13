@@ -1,0 +1,16 @@
+{
+	"$schema": "../../../node_modules/ng-packagr/ng-package.schema.json",
+	"dest": "../../../dist/packages/plugins/ai-chat-react-ui",
+	"lib": {
+		"entryFile": "src/index.ts"
+	},
+	"allowedNonPeerDependencies": [
+		"@ai-sdk/react",
+		"@gauzy/contracts",
+		"@gauzy/plugin-ui",
+		"@gauzy/ui-core",
+		"@gauzy/ui-react",
+		"@gauzy/ui-react-components",
+		"tslib"
+	]
+}

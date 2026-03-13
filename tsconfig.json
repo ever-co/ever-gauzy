@@ -66,6 +66,9 @@
 			"@gauzy/plugin-dashboard-time-track-react-ui": [
 				"./packages/plugins/dashboard-time-track-react-ui/src/index.ts"
 			],
+			"@gauzy/plugin-ai-chat-react-ui": [
+				"./packages/plugins/ai-chat-react-ui/src/index.ts"
+			],
 			"@gauzy/ui-react": ["./packages/ui-react/src/index.ts"],
 			"@gauzy/ui-react-components": ["./packages/ui-react-components/src/index.ts"],
 			"@gauzy/mcp-server": ["./packages/mcp-server/src/index.ts"],
