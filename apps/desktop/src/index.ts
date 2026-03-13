@@ -348,7 +348,7 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 		process.env.API_HOST = '0.0.0.0';
 		process.env.API_BASE_URL = `http://127.0.0.1:${setupConfig.port || environment.API_DEFAULT_PORT}`;
 
-		if (!setupConfig.secret?.jwt || !setupConfig.secret?.refresh_token) {
+		if (!setupConfig.secret || !setupConfig.secret.jwt || !setupConfig.secret.refresh_token) {
 			throw new AppError('MAINSTRSERVER', new Error('JWT secrets are required for local server startup'));
 		}
 		process.env.JWT_SECRET = setupConfig.secret.jwt;
