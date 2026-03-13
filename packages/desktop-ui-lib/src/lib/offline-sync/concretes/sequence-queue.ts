@@ -1,5 +1,5 @@
 import { ITimeSlot, TimerSyncStateEnum, TimerActionTypeEnum } from '@gauzy/contracts';
-import { asapScheduler, concatMap, defer, of, repeat, timer as synchronizer } from 'rxjs';
+import { concatMap, defer, of, repeat, timer as synchronizer } from 'rxjs';
 import { BACKGROUND_SYNC_OFFLINE_INTERVAL } from '../../constants/app.constants';
 import { ElectronService } from '../../electron/services';
 import { ErrorHandlerService, Store } from '../../services';
@@ -33,7 +33,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 
 	public async synchronize({ timer, intervals }: ISequence): Promise<void> {
 		try {
-			console.log('🛠 - Preprocessing time slot');
+			console.log('🛠 - Preprocessing time slot', timer);
 			const params = {
 				note: timer.note,
 				organizationContactId: timer.organizationContactId,
@@ -118,8 +118,24 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 							}
 						});
 					} else if (currentTimeLog.id && timer.stoppedAt) {
+						/* The server already force-stopped this timelog (via ScheduleTimeLogEntriesCommand).
+						 Only include startedAt when it genuinely differs from the server value.
+						 Sending an identical startedAt still triggers removeConflictingTimeSlots
+						 on the server, which can discard timeslots shared with an adjacent session
+						that falls in the same 10-minute window (overlap scenario).
+						*/
+						const localStartedAt = timer.startedAt
+							? new Date(timer.startedAt).getTime()
+							: null;
+						const serverStartedAt = currentTimeLog.startedAt
+							? new Date(currentTimeLog.startedAt).getTime()
+							: null;
+						const startedAtChanged =
+							localStartedAt !== null &&
+							serverStartedAt !== null &&
+							Math.abs(localStartedAt - serverStartedAt) > 1000;
 						latest = await this._timeTrackerService.updateTimeLog(timer.timelogId, {
-							startedAt: timer.startedAt || currentTimeLog.startedAt,
+							...(startedAtChanged ? { startedAt: timer.startedAt } : {}),
 							stoppedAt: timer.stoppedAt,
 							description: timer.description,
 							projectId: timer.projectId,
@@ -152,23 +168,26 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 
 			const status = await this._timeTrackerStatusService.status();
 
-			asapScheduler.schedule(async () => {
-				try {
-					await this._electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
-						lastTimer: latest
-							? latest
-							: {
-									...timer,
-									id: status?.lastLog?.id
-							  },
-						...timer
-					});
-					console.log('⏱ - local database updated');
-				} catch (error) {
-					console.error('🚨 - Error updating local database', error);
-					this._errorHandlerService.handleError(error);
-				}
-			});
+			/* Await directly instead of using asapScheduler (fire-and-forget).
+			  The asapScheduler deferral allowed the next queue item to start processing
+			  before this item's local DB update completed, causing out-of-order writes
+			  that corrupted syncDuration and timeslotId for concurrent offline sessions.
+			*/
+			try {
+				await this._electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
+					lastTimer: latest
+						? latest
+						: {
+								...timer,
+								id: status?.lastLog?.id
+						  },
+					...timer
+				});
+				console.log('⏱ - local database updated');
+			} catch (error) {
+				console.error('🚨 - Error updating local database', error);
+				this._errorHandlerService.handleError(error);
+			}
 		} catch (error) {
 			console.error('🚨 - Error processing time slot queue', error);
 			this._timeSlotQueueService.viewQueueStateUpdater = {

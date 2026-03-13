@@ -528,14 +528,24 @@ export class TimeTrackerService {
 	updateTimeLog(timeLogId: string, payload: Partial<ITimeLog>) {
 		const TIMEOUT = 15000;
 		const API_URL = `${API_PREFIX}/timesheet/time-log/${timeLogId}`;
+
+		// Guard: a null organizationId causes the server to silently move the timelog to a
+		// null-org timesheet, making it invisible in the dashboard without any error or deletion.
+		if (!this._store.organizationId || !this._store.tenantId) {
+			const msg = `updateTimeLog aborted for ${timeLogId}: organizationId or tenantId is null in store`;
+			this._loggerService.log.warn(msg);
+			throw new Error(msg);
+		}
+
 		const timeLogPayload: Partial<ITimeLog> = {
-			startedAt: moment(payload.startedAt).utc().toDate(),
+			...(payload.startedAt ? { startedAt: moment(payload.startedAt).utc().toDate() } : {}),
 			stoppedAt: moment(payload.stoppedAt).utc().toDate(),
 			isBillable: true,
 			logType: TimeLogType.TRACKED,
 			source: TimeLogSourceEnum.DESKTOP,
 			tenantId: this._store.tenantId,
 			organizationId: this._store.organizationId,
+			organizationContactId: payload.organizationContactId,
 			employeeId: this._store.user?.employee?.id,
 			...(payload.description ? { description: payload.description } : {}),
 			...(payload.taskId ? { taskId: payload.taskId } : {}),
@@ -551,6 +561,15 @@ export class TimeTrackerService {
 	addTimeLog(payload: Partial<ITimeLog>) {
 		const TIMEOUT = 15000;
 		const API_URL = `${API_PREFIX}/timesheet/time-log`;
+
+		// Guard: a null organizationId causes the server to silently move the timelog to a
+		// null-org timesheet, making it invisible in the dashboard without any error or deletion.
+		if (!this._store.organizationId || !this._store.tenantId) {
+			const msg = `addTimeLog aborted: organizationId or tenantId is null in store`;
+			this._loggerService.log.warn(msg);
+			throw new Error(msg);
+		}
+
 		const timeLogPayload: Partial<ITimeLog> = {
 			startedAt: moment(payload.startedAt).utc().toDate(),
 			stoppedAt: moment(payload.stoppedAt).utc().toDate(),
@@ -558,6 +577,7 @@ export class TimeTrackerService {
 			logType: TimeLogType.TRACKED,
 			source: TimeLogSourceEnum.DESKTOP,
 			tenantId: this._store.tenantId,
+			organizationContactId: payload.organizationContactId,
 			organizationId: this._store.organizationId,
 			employeeId: this._store.user?.employee?.id,
 			...(payload.description ? { description: payload.description } : {}),
