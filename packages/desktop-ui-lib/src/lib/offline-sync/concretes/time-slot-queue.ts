@@ -13,7 +13,8 @@ export class TimeSlotQueue extends OfflineQueue<ITimeSlot> {
 		private _timeTrackerService: TimeTrackerService,
 		private _timeSlotQueueService: TimeSlotQueueService,
 		private _electronService: ElectronService,
-		private _store: Store
+		private _store: Store,
+		private _timeLogId?: string
 	) {
 		super();
 		this.state = new BlockedTimeSlotState(this);
@@ -26,6 +27,7 @@ export class TimeSlotQueue extends OfflineQueue<ITimeSlot> {
 			recordedAt: interval.startedAt,
 			organizationId: this._store.organizationId,
 			tenantId: this._store.tenantId,
+			...(this._timeLogId ? { timeLogId: this._timeLogId } : {})
 		});
 		console.log('backup', activities);
 		const timeSlotId = activities.id;
