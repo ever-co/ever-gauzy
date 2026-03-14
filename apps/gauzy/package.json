@@ -29,7 +29,7 @@
 		"@angular/animations": "21.0.7",
 		"@angular/cdk": "21.0.6",
 		"@angular/common": "21.0.7",
-		"@angular/core": "21.0.7",
+		"@angular/core": "21.2.4",
 		"@angular/forms": "21.0.7",
 		"@angular/language-service": "21.0.7",
 		"@angular/material": "21.0.6",
