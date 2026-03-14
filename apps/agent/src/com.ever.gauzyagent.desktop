@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Gauzy Agent
+Comment=Desktop time tracking and activity monitoring agent
+Exec=gauzy-agent %U
+Icon=com.ever.gauzyagent
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Development;Office;ProjectManagement;
+Keywords=time;tracking;productivity;monitoring;timesheet;
+StartupWMClass=Gauzy Agent
+MimeType=x-scheme-handler/gauzy;

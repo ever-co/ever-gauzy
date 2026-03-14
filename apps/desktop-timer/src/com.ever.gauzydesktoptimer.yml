@@ -1,0 +1,60 @@
+app-id: com.ever.gauzydesktoptimer
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+base: org.electronjs.Electron2.BaseApp
+base-version: '24.08'
+
+command: gauzy-desktop-timer
+separate-locales: false
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --system-talk-name=org.freedesktop.portal.Inhibit
+  - --system-talk-name=org.freedesktop.NetworkManager
+  - --system-talk-name=org.freedesktop.UPower
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+
+modules:
+  - name: gauzy-desktop-timer
+    buildsystem: simple
+    build-commands:
+      - ar x gauzy-desktop-timer.deb
+      - tar xf data.tar.xz
+      - mkdir -p /app/lib/gauzy-desktop-timer
+      - cp -r "opt/Gauzy Desktop Timer"/* /app/lib/gauzy-desktop-timer/
+      - if [ -f "/app/lib/gauzy-desktop-timer/Gauzy Desktop Timer" ]; then mv "/app/lib/gauzy-desktop-timer/Gauzy Desktop Timer" /app/lib/gauzy-desktop-timer/gauzy-desktop-timer; fi
+      - install -Dm755 gauzy-desktop-timer.sh /app/bin/gauzy-desktop-timer
+      - install -Dm644 com.ever.gauzydesktoptimer.desktop /app/share/applications/com.ever.gauzydesktoptimer.desktop
+      - install -Dm644 com.ever.gauzydesktoptimer.metainfo.xml /app/share/metainfo/com.ever.gauzydesktoptimer.metainfo.xml
+
+      - install -Dm644 icons/16x16.png /app/share/icons/hicolor/16x16/apps/com.ever.gauzydesktoptimer.png
+      - install -Dm644 icons/32x32.png /app/share/icons/hicolor/32x32/apps/com.ever.gauzydesktoptimer.png
+      - install -Dm644 icons/64x64.png /app/share/icons/hicolor/64x64/apps/com.ever.gauzydesktoptimer.png
+      - install -Dm644 icons/128x128.png /app/share/icons/hicolor/128x128/apps/com.ever.gauzydesktoptimer.png
+      - install -Dm644 icons/256x256.png /app/share/icons/hicolor/256x256/apps/com.ever.gauzydesktoptimer.png
+      - install -Dm644 icons/512x512.png /app/share/icons/hicolor/512x512/apps/com.ever.gauzydesktoptimer.png
+    sources:
+      - type: script
+        dest-filename: gauzy-desktop-timer.sh
+        commands:
+          - export TMPDIR="$XDG_RUNTIME_DIR/app/$FLATPAK_ID"
+          - /app/lib/gauzy-desktop-timer/gauzy-desktop-timer --no-sandbox --ozone-platform=x11
+
+      - type: file
+        path: com.ever.gauzydesktoptimer.desktop
+
+      - type: file
+        path: com.ever.gauzydesktoptimer.metainfo.xml
+
+      - type: dir
+        path: icons/linux
+        dest: icons
+
+      - type: file
+        url: https://github.com/ever-co/ever-gauzy-desktop-timer/releases/download/v50.0.1/gauzy-desktop-timer-amd64-50.0.1.deb
+        dest-filename: gauzy-desktop-timer.deb
+        sha256: '397c76435021a89f26ed023843bd3b4928b01d29b82bed96ecaa261fb239bb18'
