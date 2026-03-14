@@ -6,3 +6,4 @@ export { PlaygroundChatMessage, type PlaygroundChatMessageProps } from './Playgr
 export { PlaygroundChatInput, type PlaygroundChatInputProps } from './PlaygroundChatInput';
 export { ModelSelector, type ModelSelectorProps, type ModelOption } from './ModelSelector';
 export { SettingsControl, type SettingsControlProps } from './SettingsControl';
+export { PlaygroundChatSidebar } from './PlaygroundChatSidebar';

@@ -1,7 +1,7 @@
 import { Component, inject, viewChild, afterNextRender, DestroyRef, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
-import { LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
+import { ChatSidebarService, LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
 import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.service';
@@ -24,6 +24,7 @@ export class OneColumnLayoutComponent {
 	private readonly windowModeBlockScrollService = inject(WindowModeBlockScrollService);
 	private readonly store = inject(Store);
 	public readonly navigationBuilderService = inject(NavigationBuilderService);
+	public readonly chatSidebarService = inject(ChatSidebarService);
 	private readonly sidebarService = inject(NbSidebarService);
 	private readonly layoutService = inject(LayoutService);
 	private readonly themeLanguageSelectorService = inject(ThemeLanguageSelectorService);

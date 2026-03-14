@@ -1,4 +1,4 @@
-import { Injector, InjectionToken, Type } from '@angular/core';
+import { EnvironmentProviders, Injector, InjectionToken, Provider, Type } from '@angular/core';
 import type { PageExtensionDefinition } from './plugin-extension/page-extension-slot.types';
 import type { UiBridgeFramework } from './ui-bridge/ui-bridge.interface';
 
@@ -346,6 +346,22 @@ export interface PluginUiDefinition {
 	 * Only meaningful when `loadModule` is set.
 	 */
 	loadStrategy?: 'eager' | 'lazy' | 'preload';
+
+	/**
+	 * Angular providers to register when the plugin bootstraps.
+	 *
+	 * Providers are instantiated in the root `EnvironmentInjector` context
+	 * during plugin bootstrap. Use for registering services, environment
+	 * initializers, or other DI tokens without a full NgModule.
+	 *
+	 * Works with both `defineDeclarativePlugin` and hand-written `bootstrap`.
+	 *
+	 * @example
+	 * ```ts
+	 * providers: [provideAiChatPlaygroundSidebar()]
+	 * ```
+	 */
+	providers?: Array<Provider | EnvironmentProviders>;
 }
 
 // ─── Plugin Settings Types ──────────────────────────────────────────────────

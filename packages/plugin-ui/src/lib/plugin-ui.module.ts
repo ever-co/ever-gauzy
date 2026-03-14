@@ -1,4 +1,5 @@
 import {
+	createEnvironmentInjector,
 	EnvironmentInjector,
 	inject,
 	InjectionToken,
@@ -384,7 +385,13 @@ export class PluginUiModule implements OnDestroy {
 				}
 
 				this._health.recordBootStart(definition.id);
-				const result = runInInjectionContext(this._envInjector, () => definition.bootstrap!(this._envInjector));
+
+				// Create a child EnvironmentInjector with plugin providers (if any)
+				const pluginInjector = definition.providers?.length
+					? createEnvironmentInjector(definition.providers, this._envInjector)
+					: this._envInjector;
+
+				const result = runInInjectionContext(pluginInjector, () => definition.bootstrap!(pluginInjector));
 				if (result instanceof Promise) await result;
 				this._declarativePluginDefs.push(definition);
 				this._health.recordBootEnd(definition.id);
