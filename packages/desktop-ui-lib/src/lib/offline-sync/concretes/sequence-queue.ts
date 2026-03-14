@@ -33,7 +33,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 
 	public async synchronize({ timer, intervals }: ISequence): Promise<void> {
 		try {
-			console.log('🛠 - Preprocessing time slot', timer);
+			console.log('🛠 - Preprocessing time slot');
 			const params = {
 				note: timer.note,
 				organizationContactId: timer.organizationContactId,
