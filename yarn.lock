@@ -30678,9 +30678,9 @@ lockfile@1.0.4:
     signal-exit "^3.0.2"
 
 locutus@^2.0.11, locutus@^3.0.0:
-  version "3.0.10"
-  resolved "https://registry.yarnpkg.com/locutus/-/locutus-3.0.10.tgz#725fa08fb8498bfc17d059fbbd267887368a9931"
-  integrity sha512-F/C16ccWteU0TDnxZ+eqsBh0DoL86EGamIoK8QXr6oHiEpp3UdX1epQaAykb9bBJ1sFOGkBVoDSDSJp8BlVtNA==
+  version "3.0.14"
+  resolved "https://registry.yarnpkg.com/locutus/-/locutus-3.0.14.tgz#f7acd279aba68f9d7c9b087c403ebbfadc4307a3"
+  integrity sha512-3R3vCGG8DetSYJCkpleF9nYZlThmxfkXsl1R+a7En3pWwY/zRqwsyEa3618nr7N0Esx9F3N625moWVU4OboynA==
 
 lodash-es@^4.17.15, lodash-es@^4.17.21:
   version "4.17.23"
