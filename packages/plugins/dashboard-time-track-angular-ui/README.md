@@ -10,7 +10,7 @@ The `dashboard-time-track-angular-ui` plugin extracts the time-tracking dashboar
 
 - **Decoupled Architecture**: Moves legacy time-tracking logic into a standalone library.
 - **Lazy Loading**: Integrated with `defineDeclarativePlugin` for on-demand loading.
-- **Dynamic Routing**: Registers the `time-tracking` route under the `page-sections` location.
+- **Dynamic Routing**: Registers the `time-tracking` route under the `dashboard-sections` location.
 - **Dashboard Integration**: Automatically adds a "Time Tracking" tab to the Gauzy dashboard tabset.
 - **I18n Support**: Full localization support for 13+ languages.
 - **Permissions**: Respects `ADMIN_DASHBOARD_VIEW` and `TIME_TRACKING_DASHBOARD` permissions.
