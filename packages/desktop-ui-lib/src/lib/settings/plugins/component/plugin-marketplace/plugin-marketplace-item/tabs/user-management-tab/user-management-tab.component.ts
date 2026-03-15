@@ -1,7 +1,21 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
-import { IPlugin, IUser } from '@gauzy/contracts';
+import { AsyncPipe } from '@angular/common';
+import { AfterViewInit, ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { IPlugin } from '@gauzy/contracts';
+import {
+	NbAlertModule,
+	NbBadgeModule,
+	NbButtonGroupModule,
+	NbButtonModule,
+	NbDialogService,
+	NbIconModule,
+	NbSpinnerModule,
+	NbToggleModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChanged, filter, Observable } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { Angular2SmartTableModule, LocalDataSource } from 'angular2-smart-table';
+import { distinctUntilChanged, filter, Observable, switchMap, take, tap } from 'rxjs';
 import {
 	PluginUserAssignmentFacade,
 	UserManagementViewModel
@@ -9,10 +23,16 @@ import {
 import { PluginSubscriptionAccessFacade } from '../../../+state/plugin-subscription-access.facade';
 import { PluginMarketplaceQuery } from '../../../+state/queries/plugin-marketplace.query';
 import { PluginUserAssignment } from '../../../+state/stores/plugin-user-assignment.store';
-import { NbIconModule, NbButtonModule, NbAlertModule, NbSpinnerModule, NbUserModule, NbBadgeModule, NbTooltipModule } from '@nebular/theme';
-import { InfiniteScrollDirective } from '../../../../../../../directives/infinite-scroll.directive';
-import { AsyncPipe, DatePipe } from '@angular/common';
-import { TranslatePipe } from '@ngx-translate/core';
+import { AlertComponent } from '../../../../../../../dialogs/alert/alert.component';
+import { PaginationComponent } from '../../../../../../../time-tracker/pagination/pagination.component';
+import { PluginAssignedUsersTableService } from '../../../plugin-user-management/services/plugin-assigned-users-table.service';
+
+/** Row data representing a user toggle action */
+export interface PluginUserRow {
+	userId?: string;
+	newState: boolean;
+	[key: string]: unknown;
+}
 
 /**
  * User Management Tab Component
@@ -38,13 +58,26 @@ import { TranslatePipe } from '@ngx-translate/core';
  */
 @UntilDestroy()
 @Component({
-    selector: 'gauzy-plugin-user-management-tab',
-    templateUrl: './user-management-tab.component.html',
-    styleUrls: ['./user-management-tab.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NbIconModule, NbButtonModule, NbAlertModule, NbSpinnerModule, InfiniteScrollDirective, NbUserModule, NbBadgeModule, NbTooltipModule, AsyncPipe, DatePipe, TranslatePipe]
+	selector: 'gauzy-plugin-user-management-tab',
+	templateUrl: './user-management-tab.component.html',
+	styleUrls: ['./user-management-tab.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [
+		NbIconModule,
+		NbButtonModule,
+		NbButtonGroupModule,
+		NbAlertModule,
+		NbSpinnerModule,
+		NbBadgeModule,
+		NbTooltipModule,
+		NbToggleModule,
+		Angular2SmartTableModule,
+		PaginationComponent,
+		AsyncPipe,
+		TranslatePipe
+	]
 })
-export class UserManagementTabComponent implements OnInit, OnDestroy {
+export class UserManagementTabComponent implements OnInit, AfterViewInit, OnDestroy {
 	// ============================================================================
 	// PUBLIC OBSERVABLES - Exposed to template
 	// ============================================================================
@@ -76,16 +109,6 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	readonly loading$: Observable<boolean>;
 
 	/**
-	 * Loading more state (for infinite scroll)
-	 */
-	readonly loadingMore$: Observable<boolean>;
-
-	/**
-	 * Has more data to load
-	 */
-	readonly hasMore$: Observable<boolean>;
-
-	/**
 	 * Error state
 	 */
 	readonly error$: Observable<string | null>;
@@ -95,30 +118,43 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	 */
 	readonly assignedUsers$: Observable<PluginUserAssignment[]>;
 
-	/**
-	 * Current plugin tenant ID from facade
-	 */
-	readonly currentPluginTenantId$: Observable<string | null>;
+	// Granular operation state observables (for per-button spinners)
+	readonly enabling$: Observable<boolean>;
+	readonly disabling$: Observable<boolean>;
+	readonly unassigning$: Observable<boolean>;
+	readonly assigning$: Observable<boolean>;
+
+	// Smart table
+	public readonly assignedUsersSource = new LocalDataSource([]);
+	public assignedUsersSettings: Record<string, unknown>;
+
+	// ============================================================================
+	// DEPENDENCY INJECTION
+	// ============================================================================
+
+	private readonly marketplaceQuery = inject(PluginMarketplaceQuery);
+	private readonly accessFacade = inject(PluginSubscriptionAccessFacade);
+	private readonly userAssignmentFacade = inject(PluginUserAssignmentFacade);
+	private readonly assignedUsersTableService = inject(PluginAssignedUsersTableService);
+	private readonly dialogService = inject(NbDialogService);
+	private readonly translateService = inject(TranslateService);
 
 	// ============================================================================
 	// CONSTRUCTOR & LIFECYCLE
 	// ============================================================================
 
-	constructor(
-		private readonly marketplaceQuery: PluginMarketplaceQuery,
-		private readonly accessFacade: PluginSubscriptionAccessFacade,
-		private readonly userAssignmentFacade: PluginUserAssignmentFacade
-	) {
+	constructor() {
 		// Initialize observables
 		this.plugin$ = this.marketplaceQuery.plugin$;
 		this.viewModel$ = this.userAssignmentFacade.viewModel$;
 		this.activeUsersCount$ = this.userAssignmentFacade.activeUsersCount$;
 		this.loading$ = this.userAssignmentFacade.loading$;
-		this.loadingMore$ = this.userAssignmentFacade.loadingMore$;
-		this.hasMore$ = this.userAssignmentFacade.hasMore$;
 		this.error$ = this.userAssignmentFacade.error$;
 		this.assignedUsers$ = this.userAssignmentFacade.assignments$;
-		this.currentPluginTenantId$ = this.userAssignmentFacade.currentPluginTenantId$;
+		this.enabling$ = this.userAssignmentFacade.enabling$;
+		this.disabling$ = this.userAssignmentFacade.disabling$;
+		this.unassigning$ = this.userAssignmentFacade.unassigning$;
+		this.assigning$ = this.userAssignmentFacade.assigning$;
 	}
 
 	/**
@@ -126,7 +162,12 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	 * Sets up reactive data streams and loads initial data
 	 */
 	ngOnInit(): void {
+		this.buildSmartTableSettings();
 		this.initializeDataStreams();
+	}
+
+	ngAfterViewInit(): void {
+		this.bindSourcesToStreams();
 	}
 
 	/**
@@ -142,6 +183,27 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	// ============================================================================
 	// PRIVATE METHODS - Initialization
 	// ============================================================================
+
+	private buildSmartTableSettings(): void {
+		this.assignedUsersSettings = this.assignedUsersTableService.buildSettings({
+			onToggle: (rowData) => this.onToggleUserAccess(rowData),
+			onUnassign: (assignment) => this.onUnassignUser(assignment),
+			pipeUntilDestroyed: (obs) => obs.pipe(untilDestroyed(this))
+		});
+	}
+
+	private bindSourcesToStreams(): void {
+		this.userAssignmentFacade.assignments$
+			.pipe(
+				tap((assignments) => {
+					this.assignedUsersSource.load(
+						assignments.map((a) => this.assignedUsersTableService.mapAssignmentToRow(a))
+					);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	/**
 	 * Initialize reactive data streams
@@ -162,17 +224,15 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 
 	/**
 	 * Handle plugin change event
-	 * Loads allowed users from plugin tenant and updates permission checks
+	 * Loads all users (allowed + denied) from plugin tenant and updates permission checks
 	 * @param plugin - The plugin that changed
 	 */
 	private handlePluginChange(plugin: IPlugin): void {
-		console.log('Plugin changed in user-management-tab, loading allowed users for plugin:', plugin.id);
-
 		// Clear previous assignments first to avoid showing stale data
 		this.userAssignmentFacade.clearAssignments();
 
-		// Load allowed users for this plugin (facade handles plugin tenant resolution internally)
-		this.userAssignmentFacade.loadAllowedUsersForPlugin(plugin.id, 'allowed');
+		// Load all users for this plugin (allowed + denied/disabled)
+		this.userAssignmentFacade.loadAllowedUsersForPlugin(plugin.id, 'all');
 
 		// Update canAssign observable
 		this.canAssign$ = this.accessFacade.canAssign$(plugin.id);
@@ -197,8 +257,89 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Handle user unassignment (remove from allowed users)
-	 * Removes user from the plugin tenant's allowed users list
+	 * Toggle user access to the plugin (enable / disable)
+	 */
+	onToggleUserAccess(rowData: PluginUserRow): void {
+		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
+		if (!pluginTenantId || !rowData.userId) return;
+		if (rowData.newState) {
+			this.userAssignmentFacade.enableUser(pluginTenantId, rowData.userId);
+		} else {
+			this.userAssignmentFacade.disableUser(pluginTenantId, rowData.userId);
+		}
+	}
+
+	/**
+	 * Enable access for all assigned users
+	 */
+	onEnableAllUsers(): void {
+		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
+		if (!pluginTenantId) return;
+
+		this.dialogService
+			.open(AlertComponent, {
+				context: {
+					data: {
+						title: 'PLUGIN.USER_MANAGEMENT.ENABLE_ALL',
+						message: 'PLUGIN.USER_MANAGEMENT.ENABLE_ALL_CONFIRM',
+						status: 'success',
+						confirmText: 'PLUGIN.USER_MANAGEMENT.ENABLE_ALL',
+						dismissText: 'BUTTONS.CANCEL'
+					}
+				}
+			})
+			.onClose.pipe(
+				filter(Boolean),
+				take(1),
+				switchMap(() => this.userAssignmentFacade.assignments$.pipe(take(1))),
+				untilDestroyed(this)
+			)
+			.subscribe((assignments) => {
+				// Only target currently disabled (denied/revoked) users
+				const userIds = assignments.filter((a) => !a.isActive).map((a) => a.userId);
+				if (userIds.length > 0) {
+					this.userAssignmentFacade.enableAllUsers(pluginTenantId, userIds);
+				}
+			});
+	}
+
+	/**
+	 * Disable access for all assigned users
+	 */
+	onDisableAllUsers(): void {
+		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
+		if (!pluginTenantId) return;
+
+		this.dialogService
+			.open(AlertComponent, {
+				context: {
+					data: {
+						title: 'PLUGIN.USER_MANAGEMENT.DISABLE_ALL',
+						message: 'PLUGIN.USER_MANAGEMENT.DISABLE_ALL_CONFIRM',
+						status: 'danger',
+						confirmText: 'PLUGIN.USER_MANAGEMENT.DISABLE_ALL',
+						dismissText: 'BUTTONS.CANCEL'
+					}
+				}
+			})
+			.onClose.pipe(
+				filter(Boolean),
+				take(1),
+				switchMap(() => this.userAssignmentFacade.assignments$.pipe(take(1))),
+				untilDestroyed(this)
+			)
+			.subscribe((assignments) => {
+				// Only target currently active (allowed) users
+				const userIds = assignments.filter((a) => a.isActive).map((a) => a.userId);
+				if (userIds.length > 0) {
+					this.userAssignmentFacade.disableAllUsers(pluginTenantId, userIds);
+				}
+			});
+	}
+
+	/**
+	 * Handle user unassignment (remove from both allowed and denied lists completely)
+	 * Completely removes the user's association with the plugin.
 	 * @param assignment - The assignment to remove
 	 */
 	onUnassignUser(assignment: PluginUserAssignment): void {
@@ -213,14 +354,30 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 			return;
 		}
 
-		console.log('Removing user:', assignment.userId, 'from allowed users list');
+		const userName = this.getUserDisplayName(assignment);
 
-		// Remove from allowed users using plugin tenant
-		this.userAssignmentFacade.removeAllowedUsersFromPluginTenant(
-			pluginTenantId,
-			[assignment.userId],
-			'Removed by user'
-		);
+		this.dialogService
+			.open(AlertComponent, {
+				context: {
+					data: {
+						title: 'PLUGIN.USER_MANAGEMENT.UNASSIGN_USER',
+						message: this.translateService.instant('PLUGIN.USER_MANAGEMENT.UNASSIGN_USER_CONFIRM', {
+							userName
+						}),
+						status: 'danger',
+						confirmText: 'PLUGIN.USER_MANAGEMENT.UNASSIGN',
+						dismissText: 'BUTTONS.CANCEL'
+					}
+				}
+			})
+			.onClose.pipe(filter(Boolean), take(1), untilDestroyed(this))
+			.subscribe(() => {
+				this.userAssignmentFacade.unassignUserFromTenant(
+					pluginTenantId,
+					assignment.userId,
+					'Unassigned by administrator'
+				);
+			});
 	}
 
 	// ============================================================================
@@ -228,78 +385,16 @@ export class UserManagementTabComponent implements OnInit, OnDestroy {
 	// ============================================================================
 
 	/**
-	 * Get display name for user from assignment
-	 * Formats user's full name or falls back to email
-	 * @param assignment - Plugin user assignment
-	 * @returns Formatted display name
+	 * Get display name for user from assignment (used externally)
 	 */
 	getUserDisplayName(assignment: PluginUserAssignment): string {
 		return this.userAssignmentFacade.getUserDisplayName(assignment);
 	}
 
 	/**
-	 * Get avatar URL for user
-	 * Returns user's image URL or default avatar
-	 * @param user - User object from assignment
-	 * @returns Avatar URL
+	 * Clear error state
 	 */
-	getUserAvatar(user: IUser | PluginUserAssignment['user']): string {
-		if (!user) {
-			return '/assets/images/avatars/default-avatar.png';
-		}
-		return user.imageUrl || '/assets/images/avatars/default-avatar.png';
-	}
-
-	/**
-	 * Get formatted assignment date
-	 * Returns null if no valid date is available
-	 * @param assignment - Plugin user assignment
-	 * @returns Date object for formatting in template, or null if invalid
-	 */
-	getAssignmentDate(assignment: PluginUserAssignment): Date | null {
-		return this.userAssignmentFacade.getAssignmentDate(assignment);
-	}
-
-	/**
-	 * Track by function for ngFor optimization
-	 * Helps Angular track items for efficient DOM updates
-	 * @param index - Item index
-	 * @param assignment - Plugin user assignment
-	 * @returns Unique identifier for assignment
-	 */
-	trackByAssignmentId(index: number, assignment: PluginUserAssignment): string {
-		return assignment?.id || `${index}`;
-	}
-
-	/**
-	 * Check if assignment is active
-	 * @param assignment - Plugin user assignment
-	 * @returns True if assignment is active
-	 */
-	isActive(assignment: PluginUserAssignment): boolean {
-		return this.userAssignmentFacade.isAssignmentActive(assignment);
-	}
-
-	/**
-	 * Get status badge configuration
-	 * @param assignment - Plugin user assignment
-	 * @returns Badge status and text configuration
-	 */
-	getStatusBadge(assignment: PluginUserAssignment): { status: string; text: string } {
-		return this.userAssignmentFacade.getStatusBadge(assignment);
-	}
-
-	/**
-	 * Load more assignments for infinite scroll
-	 */
-	onLoadMore(): void {
-		const pluginTenantId = this.userAssignmentFacade.currentPluginTenantId;
-		if (!pluginTenantId) {
-			console.warn('Cannot load more: plugin tenant ID not found');
-			return;
-		}
-
-		// TODO: Implement proper pagination with skip/take
-		this.userAssignmentFacade.loadPluginTenantUsers(pluginTenantId, 'allowed');
+	clearError(): void {
+		this.userAssignmentFacade.clearError();
 	}
 }

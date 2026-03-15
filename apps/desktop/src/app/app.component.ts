@@ -34,6 +34,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	ngOnInit(): void {
 		this._electronService.ipcRenderer.send('app_is_init');
 		this._isInitialized = true;
+		this.tokenRefreshService.start();
 	}
 
 	ngAfterViewInit(): void {

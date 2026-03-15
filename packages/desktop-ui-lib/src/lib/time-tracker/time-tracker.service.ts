@@ -53,6 +53,72 @@ export class TimeTrackerService {
 	userId = '';
 	employeeId = '';
 
+	/**
+	 * Promise-chain mutex that serializes timer state mutations.
+	 * toggleApiStart / toggleApiStop / updateTimeLog / addTimeLog all funnel
+	 * through _timerMutex so no two of them can run concurrently.  Without this
+	 * guard, an offline-sync stop and an online session start can reach the server
+	 * simultaneously, causing stopPreviousRunningTimers to override stoppedAt and
+	 * trigger cascade deletion of adjacent timelogs.
+	 */
+	private _timerMutex: Promise<unknown> = Promise.resolve();
+
+	/**
+	 * Failsafe timeout for a single enqueued operation.
+	 * Set to 2× the HTTP layer timeout so legitimate slow requests are never
+	 * killed early, while a genuinely hung call still releases the chain.
+	 */
+	private static readonly _OP_TIMEOUT_MS = 120_000;
+
+	/**
+	 * Enqueue a timer API operation onto the serialization chain.
+	 *
+	 * Guarantees:
+	 *  - Operations execute one at a time, in call order.
+	 *  - A per-operation timeout (_OP_TIMEOUT_MS) releases the chain if the
+	 *    underlying HTTP call never settles, preventing a permanent deadlock.
+	 *  - Errors thrown by `fn` propagate to the caller unchanged; the mutex
+	 *    chain itself never gets stuck regardless of failures.
+	 *
+	 * @param label  Short human-readable name logged at start / end / error.
+	 * @param fn     Factory that returns the Promise to await.
+	 */
+	private _serialized<T>(label: string, fn: () => Promise<T>): Promise<T> {
+		const result: Promise<T> = this._timerMutex.then(async () => {
+			this._loggerService.info(`[TimerMutex] ▶ ${label}`);
+
+			let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+			const timeoutRace = new Promise<never>((_, reject) => {
+				timeoutId = setTimeout(
+					() =>
+						reject(
+							new Error(
+								`[TimerMutex] "${label}" timed out after ${TimeTrackerService._OP_TIMEOUT_MS}ms — mutex released`
+							)
+						),
+					TimeTrackerService._OP_TIMEOUT_MS
+				);
+			});
+
+			try {
+				return await Promise.race([fn(), timeoutRace]);
+			} catch (error) {
+				this._loggerService.error(`[TimerMutex] ✖ ${label}`, error);
+				throw error;
+			} finally {
+				clearTimeout(timeoutId);
+				this._loggerService.info(`[TimerMutex] ■ ${label} done`);
+			}
+		});
+
+		// Absorb rejection on the mutex chain so the next queued operation is
+		// never blocked by the failure of a previous one.  The caller receives
+		// the real rejection via `result`.
+		this._timerMutex = result.catch(() => {});
+		return result;
+	}
+
 	constructor(
 		private readonly http: HttpClient,
 		private readonly _clientCacheService: ClientCacheService,
@@ -469,7 +535,7 @@ export class TimeTrackerService {
 			organizationTeamId: values.organizationTeamId
 		};
 		this._loggerService.log.info(`Toggle Start Timer Request: ${moment().format()}`, body);
-		return firstValueFrom(this.http.post(`${API_PREFIX}/timesheet/timer/start`, { ...body }, options));
+		return this._serialized('toggleApiStart', () => firstValueFrom(this.http.post(`${API_PREFIX}/timesheet/timer/start`, { ...body }, options)));
 	}
 
 	toggleApiStop(values) {
@@ -516,26 +582,38 @@ export class TimeTrackerService {
 		// Log request details
 		this._loggerService.info<any>(`Toggle Stop Timer Request: ${moment().format()}`, body);
 
-		// Perform the API call
-		try {
-			return firstValueFrom(this.http.post<ITimeLog>(API_URL, body, options));
-		} catch (error) {
-			this._loggerService.error<any>(`Error stopping timer: ${moment().format()}`, { error, requestBody: body });
-			throw error;
-		}
+		return this._serialized('toggleApiStop', () => {
+			try {
+				return firstValueFrom(this.http.post<ITimeLog>(API_URL, body, options));
+			} catch (error) {
+				this._loggerService.error<any>(`Error stopping timer: ${moment().format()}`, { error, requestBody: body });
+				throw error;
+			}
+		});
 	}
 
 	updateTimeLog(timeLogId: string, payload: Partial<ITimeLog>) {
 		const TIMEOUT = 15000;
 		const API_URL = `${API_PREFIX}/timesheet/time-log/${timeLogId}`;
+
+		// Guard: a null organizationId causes the server to silently move the timelog to a
+		// null-org timesheet, making it invisible in the dashboard without any error or deletion.
+		if (!this._store.organizationId || !this._store.tenantId) {
+			const msg = `updateTimeLog aborted for ${timeLogId}: organizationId or tenantId is null in store`;
+			this._loggerService.log.warn(msg);
+			throw new Error(msg);
+		}
+
 		const timeLogPayload: Partial<ITimeLog> = {
-			startedAt: moment(payload.startedAt).utc().toDate(),
+			...(payload.startedAt ? { startedAt: moment(payload.startedAt).utc().toDate() } : {}),
 			stoppedAt: moment(payload.stoppedAt).utc().toDate(),
+			...(payload.isRunning !== undefined ? { isRunning: payload.isRunning } : {}),
 			isBillable: true,
 			logType: TimeLogType.TRACKED,
 			source: TimeLogSourceEnum.DESKTOP,
 			tenantId: this._store.tenantId,
 			organizationId: this._store.organizationId,
+			organizationContactId: payload.organizationContactId,
 			employeeId: this._store.user?.employee?.id,
 			...(payload.description ? { description: payload.description } : {}),
 			...(payload.taskId ? { taskId: payload.taskId } : {}),
@@ -545,12 +623,21 @@ export class TimeTrackerService {
 			headers: new HttpHeaders({ timeout: TIMEOUT.toString() })
 		};
 		this._loggerService.log.info(`Update Time Log Request: ${timeLogId} ${moment().format()}`, timeLogPayload);
-		return firstValueFrom(this.http.put<ITimeLog>(API_URL, timeLogPayload, options));
+		return this._serialized(`updateTimeLog:${timeLogId}`, () => firstValueFrom(this.http.put<ITimeLog>(API_URL, timeLogPayload, options)));
 	}
 
 	addTimeLog(payload: Partial<ITimeLog>) {
 		const TIMEOUT = 15000;
 		const API_URL = `${API_PREFIX}/timesheet/time-log`;
+
+		// Guard: a null organizationId causes the server to silently move the timelog to a
+		// null-org timesheet, making it invisible in the dashboard without any error or deletion.
+		if (!this._store.organizationId || !this._store.tenantId) {
+			const msg = `addTimeLog aborted: organizationId or tenantId is null in store`;
+			this._loggerService.log.warn(msg);
+			throw new Error(msg);
+		}
+
 		const timeLogPayload: Partial<ITimeLog> = {
 			startedAt: moment(payload.startedAt).utc().toDate(),
 			stoppedAt: moment(payload.stoppedAt).utc().toDate(),
@@ -558,6 +645,7 @@ export class TimeTrackerService {
 			logType: TimeLogType.TRACKED,
 			source: TimeLogSourceEnum.DESKTOP,
 			tenantId: this._store.tenantId,
+			organizationContactId: payload.organizationContactId,
 			organizationId: this._store.organizationId,
 			employeeId: this._store.user?.employee?.id,
 			...(payload.description ? { description: payload.description } : {}),
@@ -569,7 +657,7 @@ export class TimeTrackerService {
 			headers: new HttpHeaders({ timeout: TIMEOUT.toString() })
 		};
 		this._loggerService.log.info(`Add Time Log Request: ${moment().format()}`, timeLogPayload);
-		return firstValueFrom(this.http.post<ITimeLog>(API_URL, timeLogPayload, options));
+		return this._serialized('addTimeLog', () => firstValueFrom(this.http.post<ITimeLog>(API_URL, timeLogPayload, options)));
 	}
 
 	deleteTimeSlot(values) {

@@ -178,7 +178,8 @@
 		"RECOVER": "Recuperar",
 		"ADD_MORE_SOURCES": "Añadir más fuentes",
 		"REMOVE_FROM_FAVORITES": "Quitar de favoritos",
-		"ADD_TO_FAVORITES": "Agregar a favoritos"
+		"ADD_TO_FAVORITES": "Agregar a favoritos",
+		"UNSELECT_ALL": "Deseleccionar todo"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1489,6 +1490,92 @@
 				"SUCCESS": {
 					"CONNECTION_CREATED": "Conexión de ActivePieces creada con éxito"
 				}
+			}
+		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "Integración de flujos de trabajo SIM AI",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "Ingrese su clave API de SIM AI para conectar su cuenta. Puede encontrar su clave API en su panel de SIM en sim.ai.",
+				"NEXT": "Conectar",
+				"HINT": "Su clave API se almacena de forma segura y se utiliza para autenticar las ejecuciones de flujos de trabajo.",
+				"ERRORS": {
+					"INVALID_FORM": "Por favor complete todos los campos obligatorios correctamente",
+					"SAVE_SETTINGS": "Error al guardar la configuración",
+					"ORGANIZATION_NOT_FOUND": "Organización no encontrada",
+					"CHECK_REMEMBER_STATE": "Error al verificar el estado recordado"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Integración SIM AI configurada exitosamente"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Configuración de SIM AI",
+				"SUBTITLE": "Configure los ajustes de su integración SIM AI",
+				"API_KEY": "Clave API",
+				"API_KEY_PLACEHOLDER": "Ingrese su clave API de SIM AI"
+			},
+			"EXECUTIONS": {
+				"TITLE": "Historial de ejecución",
+				"NO_EXECUTIONS": "No se encontraron ejecuciones de flujos de trabajo. Ejecute un flujo de trabajo desde la pestaña Flujos de trabajo para ver los resultados aquí.",
+				"WORKFLOW_ID": "ID del flujo de trabajo",
+				"WORKFLOW_ID_PLACEHOLDER": "Filtrar por ID de flujo de trabajo",
+				"EXECUTION_ID": "ID de ejecución",
+				"STATUS": "Estado",
+				"TRIGGERED_BY": "Activado por",
+				"DURATION": "Duración",
+				"CREATED": "Creado",
+				"LOADING": "Cargando historial de ejecución...",
+				"LOAD": "Buscar",
+				"ALL_STATUSES": "Todos los estados",
+				"SHOWING": "Mostrando",
+				"OF": "de",
+				"PREVIOUS_PAGE": "Página anterior",
+				"NEXT_PAGE": "Página siguiente"
+			},
+			"WORKFLOWS": {
+				"TITLE": "Flujos de trabajo",
+				"VALIDATE_TITLE": "Validar flujo de trabajo",
+				"EXECUTE_TITLE": "Ejecutar flujo de trabajo",
+				"JOB_STATUS_TITLE": "Estado de tarea asíncrona",
+				"WORKFLOW_ID": "ID del flujo de trabajo",
+				"WORKFLOW_ID_PLACEHOLDER": "Ingrese el ID de su flujo de trabajo SIM",
+				"VALIDATE": "Validar",
+				"DEPLOYED": "El flujo de trabajo está desplegado y listo para ejecutar.",
+				"NOT_DEPLOYED": "El flujo de trabajo no está desplegado o no se encontró.",
+				"EXECUTE": "Ejecutar",
+				"ASYNC": "Asíncrono",
+				"TIMEOUT": "Tiempo de espera (ms)",
+				"INPUT": "Entrada (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "Proporcione la entrada del flujo de trabajo como JSON válido. Estos datos se pasarán a su flujo de trabajo SIM.",
+				"RESULT": "Resultado de la ejecución",
+				"TASK_ID": "ID de tarea",
+				"TASK_ID_PLACEHOLDER": "Ingrese el ID de la tarea asíncrona",
+				"CHECK_STATUS": "Verificar estado",
+				"JOB_RESULT": "Estado de la tarea",
+				"INVALID_JSON": "Entrada JSON inválida",
+				"EXECUTION_FAILED": "La ejecución falló"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Disparadores de eventos",
+				"ADD_TITLE": "Agregar disparador de evento",
+				"ACTIVE_TITLE": "Disparadores de eventos activos",
+				"DESCRIPTION": "Configure disparadores automáticos de flujos de trabajo. Cuando ocurra un evento de la plataforma, el flujo de trabajo SIM asignado se ejecutará automáticamente.",
+				"EVENT": "Evento",
+				"SELECT_EVENT": "Seleccionar un evento",
+				"WORKFLOW_ID": "ID del flujo de trabajo",
+				"WORKFLOW_ID_PLACEHOLDER": "Ingrese el ID del flujo de trabajo SIM a disparar",
+				"ADD": "Agregar",
+				"REMOVE": "Eliminar asignación",
+				"NO_MAPPINGS": "No hay disparadores de eventos configurados. Agregue una asignación arriba para disparar automáticamente flujos de trabajo SIM desde eventos de la plataforma.",
+				"LOADING": "Cargando disparadores de eventos...",
+				"MAPPING_SAVED": "Asignación de disparador de evento guardada exitosamente.",
+				"MAPPING_REMOVED": "Asignación de disparador de evento eliminada exitosamente.",
+				"SAVE_FAILED": "Error al guardar la asignación del disparador de evento.",
+				"REMOVE_FAILED": "Error al eliminar la asignación del disparador de evento.",
+				"LOAD_FAILED": "Error al cargar los disparadores de eventos."
 			}
 		},
 		"COMING_SOON": "Próximamente",
@@ -4186,7 +4273,11 @@
 			"UI_HOSTNAME": "Nombre de host de IU / Dirección IP",
 			"TITLE_SERVER_API": "Asistente de instalación del servidor API de Ever Gauzy",
 			"LABEL_SERVER_API": "La aplicación de escritorio Ever Gauzy API Server proporciona la funcionalidad completa de la plataforma Gauzy disponible directamente en su computadora de escritorio o portátil. Además, permite realizar un seguimiento del tiempo de trabajo, registrar actividades y recibir recordatorios/notificaciones de seguimiento.",
-			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
+			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection.",
+			"JWT_SECRET": "Secreto JWT",
+			"JWT_SECRET_PLACEHOLDER": "Introduzca una clave secreta para JWT",
+			"JWT_REFRESH_TOKEN_SECRET": "Secreto del token de actualización JWT",
+			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "Introduzca una clave secreta para el token de actualización JWT"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Captura de pantalla",
@@ -4577,7 +4668,8 @@
 		"VISITED_DATES": "Fechas visitadas",
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Capturas de pantalla",
-		"NO_RECORD_FOUND": "No se encontraron registros. Por favor, seleccione un rango de fechas, empleado o proyecto."
+		"NO_RECORD_FOUND": "No se encontraron registros. Por favor, seleccione un rango de fechas, empleado o proyecto.",
+		"SCREEN_SELECTED": "{{ count }} Pantalla(s) seleccionada(s)"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Vamos a crear tu primera organización",

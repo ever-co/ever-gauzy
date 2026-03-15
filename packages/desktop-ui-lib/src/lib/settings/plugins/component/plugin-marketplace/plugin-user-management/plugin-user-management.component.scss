@@ -114,216 +114,54 @@
   }
 }
 
-.selected-users {
-  padding: 1rem;
-  background: linear-gradient(135deg, var(--gauzy-card-2) 0%, var(--gauzy-card-1) 100%);
-  border-radius: calc(var(--border-radius) * 1.2);
-  border: 1px solid var(--border-basic-color-3);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-
-  .selected-users-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-
-    .selected-user-chip {
-      display: flex;
-      align-items: center;
-      background: var(--gauzy-card-1);
-      border: 1px solid var(--border-basic-color-4);
-      border-radius: calc(var(--border-radius) * 1.5);
-      padding: 0.5rem 0.75rem;
-      gap: 0.75rem;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
-      }
-
-      .remove-btn {
-        padding: 0.25rem;
-        min-height: auto;
-        min-width: auto;
-        border-radius: 50%;
-        transition: all 0.2s ease;
-
-        &:hover {
-          transform: scale(1.1);
-          background: var(--color-danger-default);
-          color: white;
-        }
-      }
-    }
-  }
-}
-
-.available-users,
+.assign-users-section,
 .current-assignments-section {
-  .users-list,
-  .assignments-list {
-    max-height: 350px;
-    overflow-y: auto;
-    border: 1px solid var(--border-basic-color-3);
-    border-radius: calc(var(--border-radius) * 1.2);
-    padding: 0.75rem;
+  .bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
     background: var(--gauzy-card-2);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+    border-radius: calc(var(--border-radius) * 1.2);
+    border: 1px solid var(--border-basic-color-3);
 
-    /* Custom scrollbar */
-    &::-webkit-scrollbar {
-      width: 8px;
+    .bulk-actions-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--gauzy-text-color-2);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      flex: 1;
     }
+  }
 
-    &::-webkit-scrollbar-track {
-      background: var(--gauzy-card-1);
-      border-radius: 4px;
-    }
+  .custom-table {
+    background: var(--gauzy-card-2);
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem;
+    border-radius: calc(var(--border-radius) * 1.5);
+    box-shadow: var(--gauzy-shadow);
+    overflow: hidden;
 
-    &::-webkit-scrollbar-thumb {
-      background: var(--border-basic-color-4);
-      border-radius: 4px;
+    .table-scroll-container {
+      overflow-x: auto;
+      overflow-y: auto;
+      max-height: 320px;
+      border-radius: calc(var(--border-radius));
 
-      &:hover {
-        background: var(--color-primary-default);
-      }
-    }
-
-    .user-item,
-    .assignment-item {
-      display: flex;
-      align-items: center;
-      padding: 1rem;
-      cursor: pointer;
-      border-radius: calc(var(--border-radius) * 1.2);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      background: var(--gauzy-card-1);
-      border: 1px solid transparent;
-      margin-bottom: 0.5rem;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      &:hover {
-        background: var(--gauzy-card-2);
-        transform: translateX(4px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      }
-
-      &.selected {
-        background: linear-gradient(
-          135deg,
-          rgba(var(--color-primary-default), 0.15) 0%,
-          rgba(var(--color-primary-default), 0.08) 100%
-        );
-        border: 1px solid var(--color-primary-default);
-        box-shadow: 0 2px 8px rgba(var(--color-primary-default), 0.2);
+      ::ng-deep angular2-smart-table {
+        width: 100%;
       }
     }
 
-    .user-item {
-      justify-content: space-between;
-
-      .user-actions {
-        display: flex;
-        align-items: center;
-
-        nb-icon {
-          font-size: 1.5rem;
-          transition: transform 0.2s ease;
-        }
-
-        &:hover nb-icon {
-          transform: scale(1.1);
-        }
-      }
-    }
-
-    .assignment-item {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 0.75rem;
-
-      @media (min-width: 576px) {
-        flex-direction: row;
-        align-items: center;
-      }
-
-      .assignment-user {
-        flex: 1;
-      }
-
-      .assignment-details {
-        flex: 2;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-
-        .assignment-meta {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-
-          @media (min-width: 768px) {
-            flex-direction: row;
-            gap: 1.25rem;
-          }
-
-          .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.75rem;
-            color: var(--gauzy-text-color-2);
-            font-weight: 500;
-            padding: 0.375rem 0.75rem;
-            background: var(--gauzy-card-2);
-            border-radius: calc(var(--border-radius) * 1.5);
-
-            nb-icon {
-              font-size: 1rem;
-              color: var(--color-primary-default);
-              flex-shrink: 0;
-            }
-          }
-        }
-
-        .assignment-status {
-          align-self: flex-start;
-
-          nb-badge {
-            border-radius: calc(var(--border-radius) * 2);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          }
-        }
-      }
-
-      .assignment-actions {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-
-        .unassign-btn {
-          border-radius: calc(var(--border-radius) * 2);
-          transition: all 0.2s ease;
-
-          &:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(255, 61, 113, 0.3);
-          }
-        }
-      }
+    .pagination-container {
+      margin-top: 0.5rem;
     }
   }
 }
 
-.loading-state,
-.empty-state {
+.loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -333,75 +171,17 @@
   background: var(--gauzy-card-2);
   border-radius: calc(var(--border-radius) * 1.2);
 
-  .loading-text,
-  .empty-text {
+  .loading-text {
     margin-top: 1rem;
     color: var(--gauzy-text-color-1);
     font-weight: 600;
     font-size: 1rem;
   }
-
-  .empty-icon {
-    font-size: 4rem;
-    color: var(--color-primary-default);
-    opacity: 0.5;
-    animation: pulse 2s ease-in-out infinite;
-  }
-
-  .empty-hint {
-    color: var(--gauzy-text-color-2);
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
-  }
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 0.8;
-  }
-}
-
-.loading-more-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.25rem;
-  gap: 0.75rem;
-  background: var(--gauzy-card-2);
-  border-radius: var(--border-radius);
-  margin-top: 0.5rem;
-
-  .loading-text {
-    color: var(--gauzy-text-color-2);
-    font-size: 0.875rem;
-    font-weight: 500;
-  }
-}
-
-.end-of-list {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  border-top: 2px dashed var(--border-basic-color-3);
-  margin-top: 0.75rem;
-
-  .text-hint {
-    color: var(--gauzy-text-color-2);
-    font-size: 0.75rem;
-    font-style: italic;
-    font-weight: 500;
-  }
 }
 
 .assignment-form {
   border-top: 2px solid var(--border-basic-color-3);
-  padding-top: 1.5rem;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   background: var(--gauzy-card-2);
   padding: 1.5rem;
   border-radius: calc(var(--border-radius) * 1.2);
@@ -459,17 +239,6 @@
   .plugin-user-management {
     max-width: 100%;
     max-height: 95vh;
-
-    .selected-users-list {
-      .selected-user-chip {
-        font-size: 0.75rem;
-      }
-    }
-
-    .users-list,
-    .assignments-list {
-      max-height: 250px;
-    }
   }
 }
 
@@ -516,4 +285,31 @@
 
 [nbButton] {
   border-radius: calc(var(--border-radius) * 1.2) !important;
+}
+
+// Inline empty state for current assignments tab
+.empty-state-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: var(--gauzy-card-2);
+  border-radius: calc(var(--border-radius) * 1.2);
+  border: 2px dashed var(--border-basic-color-3);
+
+  .empty-icon {
+    font-size: 2.5rem;
+    color: var(--gauzy-text-color-2);
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  .empty-text {
+    font-size: 0.9375rem;
+    color: var(--gauzy-text-color-2);
+    margin: 0;
+    font-weight: 500;
+  }
 }

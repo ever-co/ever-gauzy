@@ -13,4 +13,6 @@ export interface IDesktopEnvironment extends Env {
 	IS_DESKTOP: boolean;
 	IS_SERVER: boolean;
 	IS_SERVER_API: boolean;
+	DESKTOP_JWT_SECRET: string;
+	DESKTOP_JWT_REFRESH_TOKEN_SECRET: string;
 }

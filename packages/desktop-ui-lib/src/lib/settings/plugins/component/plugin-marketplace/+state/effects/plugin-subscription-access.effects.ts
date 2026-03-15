@@ -2,11 +2,11 @@
 // Handles side effects for subscription access operations
 
 import { Injectable } from '@angular/core';
-import { ToastrService } from '@gauzy/ui-core/core/src/lib/services/notification/toastr.service';
 import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
 import { catchError, map, of, switchMap, tap } from 'rxjs';
+import { ToastrNotificationService } from '../../../../../../services';
 import { PluginSubscriptionAccessService } from '../../../../services/plugin-subscription-access.service';
 import {
 	PluginUserManagementComponent,
@@ -24,7 +24,7 @@ export class PluginSubscriptionAccessEffects {
 		private readonly actions$: Actions,
 		private readonly subscriptionAccessService: PluginSubscriptionAccessService,
 		private readonly subscriptionAccessStore: PluginSubscriptionAccessStore,
-		private readonly toastrService: ToastrService,
+		private readonly toastrService: ToastrNotificationService,
 		private readonly dialogService: NbDialogService,
 		private readonly marketplaceQuery: PluginMarketplaceQuery
 	) {}
@@ -133,7 +133,7 @@ export class PluginSubscriptionAccessEffects {
 		actions$.pipe(
 			ofType(PluginSubscriptionAccessActions.assignUsersSuccess),
 			tap(({ message }) => {
-				this.toastrService.success(message, 'Users Assigned');
+				this.toastrService.success(message ?? 'Users Assigned');
 				// Close dialog if open
 				this.subscriptionAccessStore.setAssignmentDialog(false);
 			})
@@ -184,7 +184,7 @@ export class PluginSubscriptionAccessEffects {
 		actions$.pipe(
 			ofType(PluginSubscriptionAccessActions.revokeUsersSuccess),
 			tap(({ message }) => {
-				this.toastrService.success(message, 'Users Revoked');
+				this.toastrService.success(message ?? 'Users Revoked');
 				// Close dialog if open
 				this.subscriptionAccessStore.setRevocationDialog(false);
 			})
@@ -375,7 +375,7 @@ export class PluginSubscriptionAccessEffects {
 				PluginSubscriptionAccessActions.bulkCheckAccessFailure
 			),
 			tap(({ error }) => {
-				this.toastrService.error(error, 'Access Error');
+				this.toastrService.error(error ?? 'Access Error');
 			})
 		)
 	);

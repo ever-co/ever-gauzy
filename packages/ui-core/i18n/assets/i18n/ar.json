@@ -178,7 +178,8 @@
 		"RECOVER": "استعادة",
 		"ADD_MORE_SOURCES": "إضافة مصدر آخر",
 		"REMOVE_FROM_FAVORITES": "إزالة من المفضلة",
-		"ADD_TO_FAVORITES": "إضافة إلى المفضلة"
+		"ADD_TO_FAVORITES": "إضافة إلى المفضلة",
+		"UNSELECT_ALL": "إلغاء تحديد الكل"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1486,6 +1487,92 @@
 				"SUCCESS": {
 					"CONNECTION_CREATED": "تم إنشاء اتصال ActivePieces بنجاح"
 				}
+			}
+		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "تكامل سير عمل SIM AI",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "أدخل مفتاح API الخاص بـ SIM AI لربط حسابك. يمكنك العثور على مفتاح API في لوحة تحكم SIM على sim.ai.",
+				"NEXT": "اتصال",
+				"HINT": "يتم تخزين مفتاح API الخاص بك بأمان ويُستخدم لمصادقة تنفيذ سير العمل.",
+				"ERRORS": {
+					"INVALID_FORM": "يرجى ملء جميع الحقول المطلوبة بشكل صحيح",
+					"SAVE_SETTINGS": "فشل حفظ الإعدادات",
+					"ORGANIZATION_NOT_FOUND": "المنظمة غير موجودة",
+					"CHECK_REMEMBER_STATE": "فشل التحقق من الحالة المحفوظة"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "تم تكوين تكامل SIM AI بنجاح"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "إعدادات SIM AI",
+				"SUBTITLE": "قم بتكوين إعدادات تكامل SIM AI",
+				"API_KEY": "مفتاح API",
+				"API_KEY_PLACEHOLDER": "أدخل مفتاح API الخاص بـ SIM AI"
+			},
+			"EXECUTIONS": {
+				"TITLE": "سجل التنفيذ",
+				"NO_EXECUTIONS": "لم يتم العثور على عمليات تنفيذ سير عمل. قم بتنفيذ سير عمل من علامة التبويب سير العمل لرؤية النتائج هنا.",
+				"WORKFLOW_ID": "معرف سير العمل",
+				"WORKFLOW_ID_PLACEHOLDER": "تصفية حسب معرف سير العمل",
+				"EXECUTION_ID": "معرف التنفيذ",
+				"STATUS": "الحالة",
+				"TRIGGERED_BY": "تم التشغيل بواسطة",
+				"DURATION": "المدة",
+				"CREATED": "تاريخ الإنشاء",
+				"LOADING": "جارٍ تحميل سجل التنفيذ...",
+				"LOAD": "بحث",
+				"ALL_STATUSES": "جميع الحالات",
+				"SHOWING": "عرض",
+				"OF": "من",
+				"PREVIOUS_PAGE": "الصفحة السابقة",
+				"NEXT_PAGE": "الصفحة التالية"
+			},
+			"WORKFLOWS": {
+				"TITLE": "سير العمل",
+				"VALIDATE_TITLE": "التحقق من سير العمل",
+				"EXECUTE_TITLE": "تنفيذ سير العمل",
+				"JOB_STATUS_TITLE": "حالة المهمة غير المتزامنة",
+				"WORKFLOW_ID": "معرف سير العمل",
+				"WORKFLOW_ID_PLACEHOLDER": "أدخل معرف سير عمل SIM",
+				"VALIDATE": "تحقق",
+				"DEPLOYED": "سير العمل منشور وجاهز للتنفيذ.",
+				"NOT_DEPLOYED": "سير العمل غير منشور أو غير موجود.",
+				"EXECUTE": "تنفيذ",
+				"ASYNC": "غير متزامن",
+				"TIMEOUT": "مهلة (مللي ثانية)",
+				"INPUT": "إدخال (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "قدم إدخال سير العمل بتنسيق JSON صالح. سيتم تمرير هذه البيانات إلى سير عمل SIM الخاص بك.",
+				"RESULT": "نتيجة التنفيذ",
+				"TASK_ID": "معرف المهمة",
+				"TASK_ID_PLACEHOLDER": "أدخل معرف المهمة غير المتزامنة",
+				"CHECK_STATUS": "التحقق من الحالة",
+				"JOB_RESULT": "حالة المهمة",
+				"INVALID_JSON": "إدخال JSON غير صالح",
+				"EXECUTION_FAILED": "فشل التنفيذ"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "مشغلات الأحداث",
+				"ADD_TITLE": "إضافة مشغل حدث",
+				"ACTIVE_TITLE": "مشغلات الأحداث النشطة",
+				"DESCRIPTION": "تكوين مشغلات سير العمل التلقائية. عند حدوث حدث في المنصة، سيتم تنفيذ سير عمل SIM المعين تلقائياً.",
+				"EVENT": "الحدث",
+				"SELECT_EVENT": "اختر حدثاً",
+				"WORKFLOW_ID": "معرف سير العمل",
+				"WORKFLOW_ID_PLACEHOLDER": "أدخل معرف سير عمل SIM للتشغيل",
+				"ADD": "إضافة",
+				"REMOVE": "إزالة الربط",
+				"NO_MAPPINGS": "لم يتم تكوين مشغلات أحداث. أضف ربطاً أعلاه لتشغيل سير عمل SIM تلقائياً من أحداث المنصة.",
+				"LOADING": "جاري تحميل مشغلات الأحداث...",
+				"MAPPING_SAVED": "تم حفظ ربط مشغل الحدث بنجاح.",
+				"MAPPING_REMOVED": "تم إزالة ربط مشغل الحدث بنجاح.",
+				"SAVE_FAILED": "فشل في حفظ ربط مشغل الحدث.",
+				"REMOVE_FAILED": "فشل في إزالة ربط مشغل الحدث.",
+				"LOAD_FAILED": "فشل في تحميل مشغلات الأحداث."
 			}
 		},
 		"COMING_SOON": "قريبًا",
@@ -4169,7 +4256,11 @@
 			"UI_HOSTNAME": "اسم المضيف أو عنوان IP واجهة المستخدم (UI)",
 			"TITLE_SERVER_API": "معالج تثبيت خادم API الخاص بـ Ever Gauzy",
 			"LABEL_SERVER_API": "يوفر تطبيق سطح المكتب Ever Gauzy API Server الوظائف الكاملة لمنصة Gauzy المتوفرة مباشرة على جهاز الكمبيوتر المكتبي أو الكمبيوتر المحمول. بالإضافة إلى ذلك، فهو يسمح بتتبع وقت العمل وتسجيل النشاط والقدرة على تلقي تذكيرات/إشعارات التتبع",
-			"UNABLE_TO_CONNECT": "غير قادر على الاتصال بالخادم. يرجى التحقق من مضيف API أو اتصال الإنترنت الخاص بك."
+			"UNABLE_TO_CONNECT": "غير قادر على الاتصال بالخادم. يرجى التحقق من مضيف API أو اتصال الإنترنت الخاص بك.",
+			"JWT_SECRET": "سر JWT",
+			"JWT_SECRET_PLACEHOLDER": "أدخل مفتاحاً سرياً لـ JWT",
+			"JWT_REFRESH_TOKEN_SECRET": "سر رمز تحديث JWT",
+			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "أدخل مفتاحاً سرياً لرمز تحديث JWT"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "التقاط الشاشة",
@@ -4560,7 +4651,8 @@
 		"VISITED_DATES": "تواريخ الزيارة",
 		"NO_SCREENSHOT": "لا توجد لقطة شاشة",
 		"NO_SCREENSHOTS": "لا توجد لقطات شاشة",
-		"NO_RECORD_FOUND": "لم يتم العثور على سجلات. يرجى تحديد نطاق التاريخ، الموظف، أو المشروع."
+		"NO_RECORD_FOUND": "لم يتم العثور على سجلات. يرجى تحديد نطاق التاريخ، الموظف، أو المشروع.",
+		"SCREEN_SELECTED": "{{ count }} شاشة محددة"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "لنقم بإنشاء مؤسستك الأولى",

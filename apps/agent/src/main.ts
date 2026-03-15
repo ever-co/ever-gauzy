@@ -1,6 +1,5 @@
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {
-	APP_INITIALIZER,
 	ErrorHandler,
 	enableProdMode,
 	importProvidersFrom,
@@ -181,12 +180,10 @@ bootstrapApplication(AppComponent, {
 			provide: Sentry.TraceService,
 			deps: [Router]
 		},
-		{
-			provide: APP_INITIALIZER,
-			useFactory: () => () => {},
-			deps: [Sentry.TraceService],
-			multi: true
-		},
+		// Ensure Sentry TraceService is instantiated during app initialization.
+		provideAppInitializer(() => {
+			inject(Sentry.TraceService);
+		}),
 		{ provide: DEFAULT_TIMEOUT, useValue: 80000 },
 		{
 			provide: GAUZY_ENV,

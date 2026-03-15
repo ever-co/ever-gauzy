@@ -10,11 +10,12 @@ export enum TimerSyncStateEnum {
 	FAILED = 'failed'
 }
 
-export interface DesktopSetupConfig {
+export interface DesktopSetupConfig extends IDesktopSecret {
 	port?: string;
 	portUi?: string;
 	host?: string;
 	protocol?: string;
+	isSetup?: boolean;
 	serverUrl?: string;
 	isLocalServer?: boolean;
 	postgres?: {
@@ -40,4 +41,11 @@ export interface DesktopSetupConfig {
 		};
 	};
 	autoStart?: boolean;
+}
+
+export interface IDesktopSecret {
+	secret: {
+		jwt: string;
+		refresh_token: string;
+	}
 }

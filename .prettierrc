@@ -7,17 +7,18 @@
 	"arrowParens": "always",
 	"trailingComma": "none",
 	"quoteProps": "as-needed",
-	"trimTrailingWhitespace": true,
+	"endOfLine": "lf",
+	"proseWrap": "preserve",
 	"overrides": [
 		{
-			"files": "*.scss",
+			"files": "*.{scss,css}",
 			"options": {
 				"useTabs": false,
 				"tabWidth": 2
 			}
 		},
 		{
-			"files": "*.yml",
+			"files": "*.{yml,yaml}",
 			"options": {
 				"useTabs": false,
 				"tabWidth": 2

@@ -8,7 +8,8 @@ export enum PluginTenantUserOperationType {
 	ALLOW = 'allow',
 	DENY = 'deny',
 	REMOVE_ALLOWED = 'remove-allowed',
-	REMOVE_DENIED = 'remove-denied'
+	REMOVE_DENIED = 'remove-denied',
+	UNASSIGN = 'unassign'
 }
 
 /**
@@ -29,7 +30,7 @@ export class ManagePluginTenantUsersDTO {
 		description: 'Operation to perform: allow, deny, remove-allowed, remove-denied'
 	})
 	@IsEnum(PluginTenantUserOperationType, {
-		message: 'Operation must be one of: allow, deny, remove-allowed, remove-denied'
+		message: 'Operation must be one of: allow, deny, remove-allowed, remove-denied, unassign'
 	})
 	@IsNotEmpty({ message: 'Operation is required' })
 	operation: PluginTenantUserOperationType;

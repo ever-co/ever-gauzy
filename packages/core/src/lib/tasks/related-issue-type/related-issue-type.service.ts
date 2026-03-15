@@ -10,7 +10,7 @@ import {
 	ITaskRelatedIssueTypeFindInput
 } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
-import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
+import { TaskMetadataService } from '../task-metadata.service';
 import { MultiORMEnum } from '../../core/utils';
 import { RequestContext } from '../../core/context';
 import { TaskRelatedIssueType } from './related-issue-type.entity';
@@ -18,7 +18,7 @@ import { TypeOrmTaskRelatedIssueTypeRepository } from './repository/type-orm-rel
 import { MikroOrmTaskRelatedIssueTypeRepository } from './repository/mikro-orm-related-issue-type.repository';
 
 @Injectable()
-export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<TaskRelatedIssueType> {
+export class TaskRelatedIssueTypeService extends TaskMetadataService<TaskRelatedIssueType> {
 	constructor(
 		readonly typeOrmTaskRelatedIssueTypeRepository: TypeOrmTaskRelatedIssueTypeRepository,
 		readonly mikroOrmTaskRelatedIssueTypeRepository: MikroOrmTaskRelatedIssueTypeRepository,
@@ -68,22 +68,26 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 	}
 
 	/**
-	 * Create bulk statuses for specific organization
+	 * Create bulk related issue types for a specific organization.
 	 *
-	 * @param organization
+	 * This method retrieves issue types for the tenant and creates
+	 * organization-specific related issue types from them.
+	 *
+	 * @param organization The organization for which related issue types will be created.
+	 * @returns Promise resolving to created related issue types.
 	 */
-	async bulkCreateOrganizationRelatedIssueTypes(
-		organization: IOrganization
-	): Promise<ITaskRelatedIssueType[] & TaskRelatedIssueType[]> {
-		try {
-			const statuses: ITaskRelatedIssueType[] = [];
+	async bulkCreateOrganizationRelatedIssueTypes(organization: IOrganization): Promise<ITaskRelatedIssueType[]> {
+		const tenantId = RequestContext.currentTenantId() ?? organization.tenantId;
 
-			const tenantId = RequestContext.currentTenantId();
-			const { items = [] } = await super.fetchAll({ tenantId });
+		const { items = [] } = await super.fetchAll({ tenantId });
 
-			for (const item of items) {
-				const { tenantId, name, value, description, icon, color } = item;
-				const status = new TaskRelatedIssueType({
+		if (!items.length) {
+			return [];
+		}
+
+		const relatedIssueTypes: TaskRelatedIssueType[] = items.map(
+			({ tenantId, name, value, description, icon, color }) =>
+				new TaskRelatedIssueType({
 					tenantId,
 					name,
 					value,
@@ -92,45 +96,36 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 					color,
 					organization,
 					isSystem: false
-				});
-				statuses.push(status);
-			}
-			return (await this.saveMany(statuses)) as ITaskRelatedIssueType[] & TaskRelatedIssueType[];
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+				})
+		);
+
+		return await this.saveMany(relatedIssueTypes);
 	}
 
 	/**
-	 * Create bulk statuses for specific organization entity
+	 * Create bulk related issue types for a specific organization entity.
 	 *
-	 * @param entity
-	 * @returns
+	 * @param entity Base entity input to use as a template for each related issue type.
+	 * @returns A promise that resolves to an array of created related issue types.
 	 */
 	async createBulkRelatedIssueTypesByEntity(
 		entity: Partial<ITaskRelatedIssueTypeCreateInput>
 	): Promise<ITaskRelatedIssueType[]> {
-		try {
-			const { organizationId } = entity;
-			const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
+		const organizationId = entity.organizationId;
 
-			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
+		const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
-			const entitiesToCreate = items.map((item) => {
-				const { name, value, description, icon, color } = item;
-				return {
-					...entity,
-					name,
-					value,
-					description,
-					icon,
-					color,
-					isSystem: false
-				};
-			});
-			return await this.createMany(entitiesToCreate);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		const relatedIssueTypes = items.map((item) => ({
+			...entity,
+			name: item.name,
+			value: item.value,
+			description: item.description,
+			icon: item.icon,
+			color: item.color,
+			isSystem: false
+		}));
+
+		return await this.createMany(relatedIssueTypes);
 	}
 }
