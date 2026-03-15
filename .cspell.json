@@ -908,6 +908,7 @@
 		"**/vscode-extension/**",
 		"package-lock.json",
 		"yarn.lock",
+		"**/i18n/*.json",
 		"**/assets/i18n/*.json",
 		"**/migrations/**",
 		"packages/**/*.seed.json",

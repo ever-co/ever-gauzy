@@ -599,8 +599,7 @@
 												[employee]="member"
 												size="sm"
 												class="avatar-dashboard"
-											>
-											</ngx-avatar>
+											></ngx-avatar>
 										</div>
 										<div class="col-3 text-center">
 											<div class="activity">
@@ -671,7 +670,9 @@
 		<div class="category">
 			<div class="view">
 				{{ 'TIMESHEET.VIEW_WIDGETS' | translate }}
-				<button type="button" class="manage-widget undo" (click)="undo()" nbButton><i class="fas fa-undo"></i>Undo</button>
+				<button type="button" class="manage-widget undo" (click)="undo()" nbButton>
+					<i class="fas fa-undo"></i>Undo
+				</button>
 			</div>
 			@for (widget of widgets; track widget.position) {
 				<div (click)="updateWidgetVisibility(widget)" class="title">

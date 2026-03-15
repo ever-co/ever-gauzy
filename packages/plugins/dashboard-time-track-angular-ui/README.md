@@ -20,6 +20,7 @@ The `dashboard-time-track-angular-ui` plugin extracts the time-tracking dashboar
 ### Building
 
 To build the library, run:
+
 ```bash
 yarn nx build plugin-dashboard-time-track-angular-ui
 ```
@@ -27,6 +28,7 @@ yarn nx build plugin-dashboard-time-track-angular-ui
 ### Testing
 
 To run unit tests:
+
 ```bash
 yarn nx test plugin-dashboard-time-track-angular-ui
 ```
@@ -34,6 +36,7 @@ yarn nx test plugin-dashboard-time-track-angular-ui
 ### Linting
 
 To run ESLint:
+
 ```bash
 yarn nx lint plugin-dashboard-time-track-angular-ui
 ```
