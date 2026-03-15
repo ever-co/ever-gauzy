@@ -1,10 +1,10 @@
 {
 	"BUTTONS": {
-		"MANAGE_WIDGET": "Manage widgets",
-		"AUTO_REFRESH": "Auto Refresh",
-		"REFRESH": "Refresh",
-		"VIEW_ALL": "View All",
-		"VIEW_REPORT": "View Report"
+		"MANAGE_WIDGET": "ניהול ווידג'טים",
+		"AUTO_REFRESH": "רענון אוטומטי",
+		"REFRESH": "רענן",
+		"VIEW_ALL": "הצג הכל",
+		"VIEW_REPORT": "הצג דוח"
 	},
 	"TIMESHEET": {
 		"TIME_TRACKING": "מעקב זמן",
