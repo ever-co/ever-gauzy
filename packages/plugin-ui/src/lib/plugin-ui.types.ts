@@ -326,7 +326,7 @@ export interface PluginUiDefinition {
 	 * @example
 	 * ```ts
 	 * defineDeclarativePlugin('analytics-charts', {
-	 *   version: '1.0.0',
+	 *   version: '0.1.0',
 	 *   peerPlugins: {
 	 *     'analytics-core': '^1.0.0',
 	 *     'data-export': '*'

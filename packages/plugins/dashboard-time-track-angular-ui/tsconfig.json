@@ -1,4 +1,5 @@
 {
+	"extends": "../../../tsconfig.json",
 	"compilerOptions": {
 		"target": "es2022",
 		"useDefineForClassFields": false,
@@ -21,7 +22,6 @@
 			"path": "./tsconfig.spec.json"
 		}
 	],
-	"extends": "../../../tsconfig.json",
 	"angularCompilerOptions": {
 		"enableI18nLegacyMessageIdFormat": false,
 		"strictInjectionParameters": true,
