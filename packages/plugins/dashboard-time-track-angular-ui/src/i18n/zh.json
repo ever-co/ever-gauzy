@@ -53,6 +53,9 @@
 		"THIS_WEEK": "本周",
 		"OVER_PERIOD": "在这段时间内",
 		"VIEW_WIDGETS": "查看小工具",
-		"VIEW_WINDOWS": "查看窗口"
+		"VIEW_WINDOWS": "查看窗口",
+		"DAILY": "每日",
+		"WEEKLY": "每周",
+		"MONTHLY": "每月"
 	}
 }

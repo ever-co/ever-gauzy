@@ -53,6 +53,9 @@
 		"THIS_WEEK": "השבוע",
 		"OVER_PERIOD": "למשך התקופה",
 		"VIEW_WIDGETS": "צפה בווידג'טים",
-		"VIEW_WINDOWS": "צפה בחלונות"
+		"VIEW_WINDOWS": "צפה בחלונות",
+		"DAILY": "יומי",
+		"WEEKLY": "שבועי",
+		"MONTHLY": "חודשי"
 	}
 }

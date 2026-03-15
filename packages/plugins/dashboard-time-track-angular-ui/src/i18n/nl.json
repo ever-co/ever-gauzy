@@ -53,6 +53,9 @@
 		"THIS_WEEK": "Deze week",
 		"OVER_PERIOD": "Gedurende de periode",
 		"VIEW_WIDGETS": "Bekijk widgets",
-		"VIEW_WINDOWS": "Vensters bekijken"
+		"VIEW_WINDOWS": "Vensters bekijken",
+		"DAILY": "Dagelijks",
+		"WEEKLY": "Wekelijks",
+		"MONTHLY": "Maandelijks"
 	}
 }

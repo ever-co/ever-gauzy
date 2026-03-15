@@ -53,6 +53,9 @@
 		"THIS_WEEK": "Эта неделя",
 		"OVER_PERIOD": "За период",
 		"VIEW_WIDGETS": "Просмотр виджетов",
-		"VIEW_WINDOWS": "Просмотр окон"
+		"VIEW_WINDOWS": "Просмотр окон",
+		"DAILY": "Ежедневно",
+		"WEEKLY": "Еженедельно",
+		"MONTHLY": "Ежемесячно"
 	}
 }

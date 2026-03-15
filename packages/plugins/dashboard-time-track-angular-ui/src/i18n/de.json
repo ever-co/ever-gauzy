@@ -53,6 +53,9 @@
 		"THIS_WEEK": "Diese Woche",
 		"OVER_PERIOD": "Im Laufe der Zeit",
 		"VIEW_WIDGETS": "Ansicht Widgets",
-		"VIEW_WINDOWS": "Fenster anzeigen"
+		"VIEW_WINDOWS": "Fenster anzeigen",
+		"DAILY": "Täglich",
+		"WEEKLY": "Wöchentlich",
+		"MONTHLY": "Monatlich"
 	}
 }
