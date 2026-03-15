@@ -55,7 +55,7 @@ export const JobsPlugin: JobsPluginDefinition = {
 	id: 'jobs',
 
 	// ── Versioning & Compatibility ────────────────────────────────
-	version: '1.0.0',
+	version: '0.1.0',
 
 	// ── Location & Module ────────────────────────────────────────
 	location: JOBS_SECTIONS_LOCATION,

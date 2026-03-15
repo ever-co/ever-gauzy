@@ -63,6 +63,9 @@
 			"@gauzy/plugin-videos-ui": ["./packages/plugins/videos-ui/src/index.ts"],
 			"@gauzy/plugin-camshot": ["./packages/plugins/camshot/src/index.ts"],
 			"@gauzy/plugin-soundshot": ["./packages/plugins/soundshot/src/index.ts"],
+			"@gauzy/plugin-dashboard-time-track-angular-ui": [
+				"./packages/plugins/dashboard-time-track-angular-ui/src/index.ts"
+			],
 			"@gauzy/plugin-dashboard-time-track-react-ui": [
 				"./packages/plugins/dashboard-time-track-react-ui/src/index.ts"
 			],
