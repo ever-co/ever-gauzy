@@ -1,6 +1,6 @@
 # Changelog for @gauzy/plugin-dashboard-time-track-react-ui
 
-## [0.1.0] - 2026-03-15
+## [Unreleased]
 
 ### Added
 
@@ -10,4 +10,3 @@
 - Integrated `DashboardRefreshedEvent` and `WidgetVisibilityChangedEvent` for real-time updates.
 - Added auto-generated settings UI for toggling widget visibility.
 - Registered `react-time-tracking` route and tab under `dashboard-page`.
-

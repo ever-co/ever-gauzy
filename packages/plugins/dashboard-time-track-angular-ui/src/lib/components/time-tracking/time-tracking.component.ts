@@ -682,7 +682,7 @@ export class TimeTrackingComponent
 				widgetsTitles[5] = 'TIMESHEET.ACTIVITY_FOR_DAY';
 				break;
 			default:
-				widgetsTitles[4] = 'TIMESHEET.WORKED_THIS_WEEK';
+				widgetsTitles[4] = this.isCurrentWeek() ? 'TIMESHEET.WORKED_THIS_WEEK' : 'TIMESHEET.WORKED_FOR_WEEK';
 				widgetsTitles[5] = 'TIMESHEET.ACTIVITY_FOR_WEEK';
 				break;
 		}
