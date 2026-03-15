@@ -86,7 +86,7 @@ enum Windows {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-time-tracking-dashboard',
+	selector: 'gz-time-tracking-dashboard',
 	templateUrl: './time-tracking.component.html',
 	styleUrls: ['./time-tracking.component.scss'],
 	standalone: false
@@ -257,10 +257,6 @@ export class TimeTrackingComponent
 		this._changeRef.detectChanges();
 	}
 
-	/**
-	 *
-	 * @returns
-	 */
 	async getStatistics() {
 		if (!this.organization) {
 			return;
@@ -276,11 +272,6 @@ export class TimeTrackingComponent
 		]);
 	}
 
-	/**
-	 * Prepare Unique Payloads
-	 *
-	 * @returns
-	 */
 	preparePayloads() {
 		if (!this.organization) {
 			return;
@@ -314,11 +305,6 @@ export class TimeTrackingComponent
 		this.payloads$.next(request);
 	}
 
-	/**
-	 * Sets the auto refresh functionality.
-	 *
-	 * @param value - Determines if auto refresh should be enabled.
-	 */
 	setAutoRefresh(value: boolean) {
 		if (this.autoRefresh$) {
 			this.autoRefresh$.unsubscribe();
@@ -334,11 +320,6 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * Fetches the time slots statistics.
-	 *
-	 * @returns Promise<void>
-	 */
 	async getTimeSlots(): Promise<void> {
 		if (this._isWindowHidden(Windows.RECENT_ACTIVITIES)) return;
 
@@ -353,11 +334,6 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * Fetches the counts statistics.
-	 *
-	 * @returns Promise<void>
-	 */
 	async getCounts(): Promise<void> {
 		if (this._isAllWidgetsHidden()) return;
 
@@ -372,11 +348,6 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * Fetches the activities statistics.
-	 *
-	 * @returns Promise<void>
-	 */
 	async getActivities(): Promise<void> {
 		if (this._isWindowHidden(Windows.APPS_URLS)) return;
 
@@ -396,11 +367,6 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * Fetches the projects statistics.
-	 *
-	 * @returns Promise<void>
-	 */
 	async getProjects(): Promise<void> {
 		if (this._isWindowHidden(Windows.PROJECTS)) return;
 
@@ -415,36 +381,22 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * Fetches the tasks statistics.
-	 *
-	 * @returns Promise<void>
-	 */
 	async getTasks(): Promise<void> {
 		if (this._isWindowHidden(Windows.TASKS)) return;
 
-		// Set loading state to true
 		this.tasksLoading = true;
 
 		try {
 			const request: IGetTasksStatistics = this.payloads$.getValue();
 			const take = 5;
-
-			// Fetch tasks statistics
 			this.tasks = await this._timesheetStatisticsService.getTasksStatistics({ ...request, take });
 		} catch (error) {
 			this._toastrService.error(error.message || 'An error occurred while fetching tasks.');
 		} finally {
-			// Set loading state to false
 			this.tasksLoading = false;
 		}
 	}
 
-	/**
-	 * Fetches the manual times statistics.
-	 *
-	 * @returns Promise<void>
-	 */
 	async getManualTimes(): Promise<void> {
 		if (this._isWindowHidden(Windows.MANUAL_TIMES)) return;
 
@@ -459,11 +411,6 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * Fetches the members statistics.
-	 *
-	 * @returns Promise<void>
-	 */
 	async getMembers(): Promise<void> {
 		if (
 			!(await this._ngxPermissionsService.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) ||
@@ -506,9 +453,6 @@ export class TimeTrackingComponent
 		this._galleryService.clearGallery();
 	}
 
-	/**
-	 *
-	 */
 	get period() {
 		if (!this.selectedDateRange) {
 			return;
@@ -525,9 +469,6 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * Get selected date range period
-	 */
 	get selectedPeriod(): RangePeriod {
 		if (!this.selectedDateRange) {
 			return;
@@ -547,9 +488,6 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * GET header title accordingly selected date range
-	 */
 	get headerTitle() {
 		if (!this.selectedDateRange) {
 			return this.getTranslation('TIMESHEET.WEEKLY');
@@ -568,11 +506,6 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * If, selected date range are in current week
-	 *
-	 * @returns
-	 */
 	isCurrentWeek() {
 		if (!this.selectedDateRange) {
 			return;
@@ -584,9 +517,6 @@ export class TimeTrackingComponent
 		);
 	}
 
-	/**
-	 * If, selected date range are more than a days
-	 */
 	isMoreThanDays(): boolean {
 		if (!this.selectedDateRange) {
 			return;
@@ -598,9 +528,6 @@ export class TimeTrackingComponent
 		return false;
 	}
 
-	/**
-	 * If, selected date range are more than a week
-	 */
 	isMoreThanWeek(): boolean {
 		if (!this.selectedDateRange) {
 			return;
@@ -612,11 +539,6 @@ export class TimeTrackingComponent
 		return false;
 	}
 
-	/**
-	 * Redirect to screenshots page for specific employee
-	 *
-	 * @param employee
-	 */
 	async redirectToScreenshots(employee: IEmployee) {
 		if (!employee.id) {
 			return;
@@ -645,9 +567,6 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * Redirect to Task dashboard page
-	 */
 	public redirectToTask() {
 		try {
 			this._router.navigate(['pages/tasks/dashboard']);
@@ -656,9 +575,6 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * Redirect to Manual Time Report
-	 */
 	public redirectToManualTimeReport() {
 		try {
 			const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
@@ -673,9 +589,6 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * Redirect to App & URL Activity Report
-	 */
 	public redirectToAppUrlReport() {
 		try {
 			const { startDate, endDate } = this.selectedDateRange as IDateRangePicker;
@@ -690,45 +603,29 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * Load the count of employees for the organization.
-	 */
 	private async loadEmployeesCount() {
-		// If employee is already loaded or organization is not defined, return
 		if (this.employee || !this.organization) {
 			return;
 		}
 
-		// Extract organization and tenant IDs
 		const { id: organizationId, tenantId } = this.organization;
-
-		// Retrieve the count of employees for the organization
 		const count$ = this._employeesService.getCount({ organizationId, tenantId });
 
-		// Subscribe to the count observable, updating employeesCount when count is received
 		count$
 			.pipe(
-				// Update employees count when count is received
 				tap((count: number) => (this.employeesCount = count)),
-				// Unsubscribe from the observable when component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	/**
-	 * Load the count of projects for the organization.
-	 */
 	private async loadProjectsCount() {
 		if (!this.organization) {
 			return;
 		}
 
 		try {
-			// Extract organization and tenant IDs
 			const { id: organizationId, tenantId } = this.organization;
-
-			// Retrieve the count of projects for the organization
 			this.projectCount = await this._projectService.getCount({
 				organizationId,
 				tenantId
@@ -738,9 +635,6 @@ export class TimeTrackingComponent
 		}
 	}
 
-	/**
-	 * Hide Project Worked Block, If project selected from header
-	 */
 	get hideProjectBlock() {
 		const hide = this.projectIds.filter(Boolean).length;
 		if (hide) {
@@ -750,9 +644,6 @@ export class TimeTrackingComponent
 		return hide;
 	}
 
-	/**
-	 * Hide Employee Worked Block, If employee selected from header
-	 */
 	get hideEmployeeBlock() {
 		const hide = this.employeeIds.filter(Boolean).length;
 		if (hide) {
@@ -763,12 +654,7 @@ export class TimeTrackingComponent
 		}
 		return hide;
 	}
-	/**
-	 * The order of titles in array depend to order of templates
-	 * @param position default position of widget or window
-	 * @param isWidget define if it's widget or not
-	 * @returns not translated title
-	 */
+
 	public titleMapper(position: number, isWidget: boolean = true): string {
 		const widgetsTitles: string[] = [
 			'TIMESHEET.MEMBERS_WORKED',
@@ -796,7 +682,7 @@ export class TimeTrackingComponent
 				widgetsTitles[5] = 'TIMESHEET.ACTIVITY_FOR_DAY';
 				break;
 			default:
-				widgetsTitles[4] = this.isCurrentWeek() ? 'TIMESHEET.WORKED_THIS_WEEK' : 'TIMESHEET.WORKED_FOR_WEEK';
+				widgetsTitles[4] = 'TIMESHEET.WORKED_THIS_WEEK';
 				widgetsTitles[5] = 'TIMESHEET.ACTIVITY_FOR_WEEK';
 				break;
 		}
@@ -874,20 +760,10 @@ export class TimeTrackingComponent
 		return window.hide;
 	}
 
-	/**
-	 * Handles the event when the time format is changed.
-	 *
-	 * @param timeFormat The new time format.
-	 */
 	timeFormatChanged(timeFormat: TimeFormatEnum): void {
 		this.filters.timeFormat = timeFormat;
 	}
 
-	/**
-	 * Handles the event when the time zone is changed.
-	 *
-	 * @param timeZone The new time zone.
-	 */
 	timeZoneChanged(timeZone: string): void {
 		this.filters.timeZone = timeZone;
 	}
