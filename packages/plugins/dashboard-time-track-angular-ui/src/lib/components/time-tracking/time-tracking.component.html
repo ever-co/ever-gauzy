@@ -671,7 +671,7 @@
 		<div class="category">
 			<div class="view">
 				{{ 'TIMESHEET.VIEW_WIDGETS' | translate }}
-				<button class="manage-widget undo" (click)="undo()" nbButton><i class="fas fa-undo"></i>Undo</button>
+				<button type="button" class="manage-widget undo" (click)="undo()" nbButton><i class="fas fa-undo"></i>Undo</button>
 			</div>
 			@for (widget of widgets; track widget.position) {
 				<div (click)="updateWidgetVisibility(widget)" class="title">
@@ -686,7 +686,7 @@
 		<div class="category">
 			<div class="view">
 				{{ 'TIMESHEET.VIEW_WINDOWS' | translate }}
-				<button class="manage-widget undo" (click)="undo(true)" nbButton>
+				<button type="button" class="manage-widget undo" (click)="undo(true)" nbButton>
 					<i class="fas fa-undo"></i>Undo
 				</button>
 			</div>

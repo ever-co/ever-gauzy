@@ -43,6 +43,7 @@ yarn nx lint plugin-dashboard-time-track-angular-ui
 Add the plugin to your `plugin-ui.config.ts` (usually located in `apps/gauzy/src/app/@plugins/plugin-ui.config.ts` or similar):
 
 ```typescript
+import { PluginUiConfig } from '@gauzy/plugin-ui';
 import { DashboardTimeTrackAngularUiPlugin } from '@gauzy/plugin-dashboard-time-track-angular-ui';
 
 export const uiPluginConfig: PluginUiConfig = {

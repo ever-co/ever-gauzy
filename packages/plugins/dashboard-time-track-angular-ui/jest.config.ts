@@ -1,7 +1,7 @@
 export default {
 	displayName: 'plugin-dashboard-time-track-angular-ui',
 	preset: '../../../jest.preset.js',
-	setupFilesAfterSetup: ['<rootDir>/src/test-setup.ts'],
+	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
 	coverageDirectory: '../../../coverage/packages/plugins/dashboard-time-track-angular-ui',
 	transform: {
 		'^.+\\.(ts|mjs|js|html)$': [
