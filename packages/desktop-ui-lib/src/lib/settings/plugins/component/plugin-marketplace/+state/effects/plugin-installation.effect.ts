@@ -256,15 +256,14 @@ export class PluginInstallationEffects {
 							if (pluginId) {
 								this.pluginInstallationStore.setDownloading(pluginId, false);
 							}
-						}),
-						catchError((error) => {
-							const pluginId = config?.['marketplaceId'];
-							// For local installs, clear the unique loading key directly here
-							// so the placeholder is not stuck in the store on failure.
+							// Clear localInstallId here so that switchMap cancellation
 							const localInstallId = config?.['_localInstallId'] as string | undefined;
 							if (localInstallId) {
 								this.pluginInstallationStore.setInstalling(localInstallId, false);
 							}
+						}),
+						catchError((error) => {
+							const pluginId = config?.['marketplaceId'];
 							return of(
 								PluginInstallationActions.downloadFailed(error?.message || 'Download failed', pluginId)
 							);
