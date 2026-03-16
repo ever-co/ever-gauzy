@@ -14,7 +14,7 @@ export class PluginInstallationActions {
 	public static startDownload = createAction('[Plugin Installation] Start Download', <T>(config: T) => ({ config }));
 	public static downloadCompleted = createAction(
 		'[Plugin Installation] Download Completed',
-		(plugin: IPlugin, message?: string) => ({ plugin, message })
+		(plugin: IPlugin, contextType?: string, message?: string) => ({ plugin, contextType, message })
 	);
 	public static downloadFailed = createAction('[Plugin Installation] Download Failed', (error: string, pluginId?: string) => ({
 		error,
@@ -52,7 +52,7 @@ export class PluginInstallationActions {
 	// Step 4: Activation
 	public static startActivation = createAction(
 		'[Plugin Installation] Start Activation',
-		(installationId: string, marketplaceId: string) => ({ installationId, marketplaceId })
+		(installationId: string | null, marketplaceId: string | null, name?: string) => ({ installationId, marketplaceId, name })
 	);
 	public static activationCompleted = createAction(
 		'[Plugin Installation] Activation Completed',

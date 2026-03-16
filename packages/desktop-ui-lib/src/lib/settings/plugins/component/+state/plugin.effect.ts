@@ -77,6 +77,21 @@ export class PluginEffects {
 			ofType(PluginActions.activate),
 			tap(() => this.pluginStore.update({ activating: true })),
 			switchMap(({ plugin }) => {
+				// Local plugin — no marketplace, no access check, no server call
+				if (!plugin.marketplaceId) {
+					this.pluginElectronService.activate(plugin);
+					return this.pluginElectronService
+						.progress((message) => this.toastrService.info(message))
+						.pipe(
+							tap((res) => this.handleProgress(res)),
+							finalize(() => this.pluginStore.update({ activating: false })),
+							catchError((error) => {
+								this.toastrService.error(error);
+								return EMPTY;
+							})
+						);
+				}
+
 				// Gate: verify user has access before activation
 				return this.accessService.checkAccess(plugin.marketplaceId).pipe(
 					switchMap((access) => {
@@ -127,6 +142,21 @@ export class PluginEffects {
 			ofType(PluginActions.deactivate),
 			tap(() => this.pluginStore.update({ deactivating: true })),
 			switchMap(({ plugin }) => {
+				// Local plugin — no marketplace, no server call needed
+				if (!plugin.marketplaceId) {
+					this.pluginElectronService.deactivate(plugin);
+					return this.pluginElectronService
+						.progress((message) => this.toastrService.info(message))
+						.pipe(
+							tap((res) => this.handleProgress(res)),
+							finalize(() => this.pluginStore.update({ deactivating: false })),
+							catchError((error) => {
+								this.toastrService.error(error);
+								return EMPTY;
+							})
+						);
+				}
+
 				// First check with server-side to validate plugin can be deactivated
 				return this.pluginService.deactivate(plugin.marketplaceId, plugin.installationId).pipe(
 					switchMap(() => {
