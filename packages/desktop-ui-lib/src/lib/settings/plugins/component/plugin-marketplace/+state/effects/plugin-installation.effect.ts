@@ -304,6 +304,10 @@ export class PluginInstallationEffects {
 							localInstallId
 						);
 					}
+					// Clear the local install loading key before dispatching failure
+					if (localInstallId) {
+						this.pluginInstallationStore.setInstalling(localInstallId, false);
+					}
 					return PluginInstallationActions.downloadFailed(
 						this.translateService.instant('PLUGIN.TOASTR.ERROR.INVALID_PLUGIN_DATA')
 					);
