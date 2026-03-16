@@ -1,6 +1,7 @@
 import { logger } from '@gauzy/desktop-core';
-import { createReadStream } from 'fs';
+import { createReadStream, createWriteStream } from 'fs';
 import * as fs from 'fs/promises';
+import { finished } from 'node:stream/promises';
 import * as path from 'path';
 import * as unzipper from 'unzipper';
 import { ILocalDownloadConfig, IPluginDownloadResponse, IPluginDownloadStrategy } from '../../shared';
@@ -9,6 +10,9 @@ import { LoadPluginDialog } from '../dialog/load-plugin.dialog';
 export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 	private static readonly MAX_RETRIES = 3;
 	private static readonly RETRY_DELAY_MS = 1000;
+	private static readonly MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB per file
+	private static readonly MAX_TOTAL_SIZE = 1024 * 1024 * 1024; // 1GB total extraction limit
+	private static readonly MANIFEST_FILENAME = 'manifest.json';
 
 	/**
 	 * Downloads and installs a plugin from a local zip file
@@ -19,26 +23,37 @@ export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 	async execute<T>(config: T): Promise<IPluginDownloadResponse> {
 		const { pluginPath } = config as ILocalDownloadConfig;
 		let zipFilePath: string | null = null;
+		const tempExtractPath = path.join(pluginPath, `.temp-extract-${Date.now()}`);
 
 		try {
 			zipFilePath = await this.getZipFilePathFromUser();
 			await this.validateZipFile(zipFilePath);
 
-			const fileName = path.basename(zipFilePath);
-			const tempDirPath = await this.unzip(zipFilePath, pluginPath);
-			const pluginDir = path.join(tempDirPath, fileName.replace(/\.zip$/i, ''));
+			await this.unzip(zipFilePath, tempExtractPath);
+
+			const pluginDir = await this.findPluginDirectory(tempExtractPath, path.basename(zipFilePath));
+			if (!pluginDir) {
+				throw new Error('Could not find plugin directory in the selected zip');
+			}
 
 			const metadata = await this.readAndValidateManifest(pluginDir);
 			const pathDirname = await this.createUniquePluginDirectory(pluginPath, pluginDir, metadata.name);
 
 			await this.cleanupZipFile(zipFilePath);
 
+			// Clean up temp extraction directory (plugin was already moved out)
+			try {
+				await fs.rm(tempExtractPath, { recursive: true, force: true });
+			} catch (cleanupError) {
+				logger.warn(`Failed to cleanup temp extraction directory: ${tempExtractPath}`);
+			}
+
 			return { pathDirname, metadata };
 		} catch (error) {
 			logger.error(`Plugin installation failed: ${error.message}`);
 
 			// Cleanup any partially created files
-			await this.cleanupOnError(zipFilePath);
+			await this.cleanupOnError(zipFilePath, tempExtractPath);
 			throw error;
 		}
 	}
@@ -66,26 +81,167 @@ export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 		}
 	}
 
-	private async unzip(filePath: string, extractDir: string): Promise<string> {
+	/**
+	 * Validates that a file path is safe and doesn't attempt path traversal (Zip Slip prevention)
+	 */
+	private isSafePath(rootDir: string, entryPath: string): boolean {
+		if (!entryPath) return false;
+
+		const normalizedEntry = entryPath.replaceAll('\\', '/');
+
+		// Reject Unix-style absolute paths
+		if (normalizedEntry === '/' || normalizedEntry.startsWith('/')) return false;
+
+		// Reject Windows absolute paths and drive letters
+		if (path.isAbsolute(entryPath)) return false;
+		if (/^[a-zA-Z]:/.test(normalizedEntry)) return false;
+
+		// Resolve and verify the target stays within rootDir
+		const resolvedRoot = path.resolve(rootDir);
+		const resolvedTarget = path.resolve(rootDir, entryPath);
+
+		if (resolvedTarget === resolvedRoot) return false;
+		if (!resolvedTarget.startsWith(resolvedRoot + path.sep)) return false;
+
+		return true;
+	}
+
+	private async unzip(filePath: string, extractDir: string): Promise<void> {
 		try {
 			await fs.mkdir(extractDir, { recursive: true });
+			let totalSize = 0;
 
 			await new Promise<void>((resolve, reject) => {
+				const pendingWrites: Promise<void>[] = [];
+
 				createReadStream(filePath)
-					.pipe(unzipper.Extract({ path: extractDir }))
-					.on('close', resolve)
+					.pipe(unzipper.Parse())
+					.on('entry', (entry: any) => {
+						const { path: entryPath, type, size } = entry;
+
+						// Security: Zip Slip prevention
+						if (!this.isSafePath(extractDir, entryPath)) {
+							logger.warn(`Unsafe archive entry skipped: ${entryPath}`);
+							return entry.autodrain();
+						}
+
+						// Security: per-file size limit
+						if (size > LocalDownloadStrategy.MAX_FILE_SIZE) {
+							logger.warn(`Archive entry too large (${size} bytes): ${entryPath}`);
+							return entry.autodrain();
+						}
+
+						// Security: total extraction size limit
+						totalSize += size;
+						if (totalSize > LocalDownloadStrategy.MAX_TOTAL_SIZE) {
+							return reject(
+								new Error(
+									`Total extraction size exceeded (${LocalDownloadStrategy.MAX_TOTAL_SIZE} bytes)`
+								)
+							);
+						}
+
+						const resolvedPath = path.resolve(extractDir, entryPath);
+
+						if (type === 'Directory') {
+							pendingWrites.push(
+								fs.mkdir(resolvedPath, { recursive: true }).then(() => entry.autodrain())
+							);
+							return;
+						}
+
+						// File extraction with cleanup on failure
+						pendingWrites.push(
+							(async () => {
+								let writeStream: ReturnType<typeof createWriteStream> | null = null;
+								try {
+									await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
+									writeStream = createWriteStream(resolvedPath);
+									entry.pipe(writeStream);
+									await finished(writeStream);
+								} catch (err) {
+									if (!entry.destroyed) entry.destroy();
+									if (writeStream && !writeStream.destroyed) writeStream.destroy();
+									try {
+										await fs.unlink(resolvedPath);
+									} catch {}
+									throw err;
+								}
+							})()
+						);
+					})
+					.on('close', async () => {
+						try {
+							await Promise.all(pendingWrites);
+							resolve();
+						} catch (err) {
+							reject(err);
+						}
+					})
 					.on('error', reject);
 			});
 
-			logger.info('File unzipped successfully');
-			return extractDir;
+			logger.info(`File unzipped successfully (total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB)`);
 		} catch (error) {
 			throw new Error(`Failed to unzip file: ${error.message}`);
 		}
 	}
 
+	private async findPluginDirectory(basePath: string, zipFileName: string): Promise<string | null> {
+		try {
+			// Try the expected directory name first (zip filename without extension)
+			const expectedDir = path.join(basePath, zipFileName.replace(/\.zip$/i, ''));
+			try {
+				await fs.access(expectedDir);
+				return expectedDir;
+			} catch {
+				// Fall back to searching for manifest.json
+				return await this.searchForManifest(basePath);
+			}
+		} catch (error) {
+			logger.error(`Error finding plugin directory: ${error.message}`);
+			return null;
+		}
+	}
+
+	private async searchForManifest(startPath: string): Promise<string | null> {
+		const results: string[] = [];
+
+		const search = async (currentDir: string, depth: number): Promise<boolean> => {
+			if (depth > 3) return false;
+
+			try {
+				const files = await fs.readdir(currentDir);
+
+				for (const file of files) {
+					const fullPath = path.join(currentDir, file);
+					const stat = await fs.stat(fullPath);
+
+					if (stat.isDirectory()) {
+						const found = await search(fullPath, depth + 1);
+						if (found) return true;
+					} else if (file === LocalDownloadStrategy.MANIFEST_FILENAME) {
+						results.push(fullPath);
+						return true;
+					}
+				}
+			} catch (error) {
+				logger.warn(`Error searching directory ${currentDir}: ${error.message}`);
+			}
+			return false;
+		};
+
+		await search(startPath, 0);
+
+		if (results.length === 0) {
+			throw new Error(`No ${LocalDownloadStrategy.MANIFEST_FILENAME} found in the zip file`);
+		}
+
+		return path.dirname(results[0]);
+	}
+
 	private async readAndValidateManifest(pluginDir: string): Promise<any> {
-		const manifestPath = path.join(pluginDir, 'manifest.json');
+		const manifestPath = path.join(pluginDir, LocalDownloadStrategy.MANIFEST_FILENAME);
 
 		try {
 			const manifestContent = await fs.readFile(manifestPath, { encoding: 'utf8' });
@@ -133,10 +289,17 @@ export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 		}
 	}
 
-	private async cleanupOnError(zipFilePath: string | null): Promise<void> {
+	private async cleanupOnError(zipFilePath: string | null, tempExtractPath?: string): Promise<void> {
 		try {
 			if (zipFilePath) {
 				await this.cleanupZipFile(zipFilePath);
+			}
+			if (tempExtractPath) {
+				try {
+					await fs.rm(tempExtractPath, { recursive: true, force: true });
+				} catch (error) {
+					logger.warn(`Failed to cleanup temp extraction directory: ${tempExtractPath}`);
+				}
 			}
 		} catch (cleanupError) {
 			logger.warn(`Cleanup failed: ${cleanupError.message}`);
