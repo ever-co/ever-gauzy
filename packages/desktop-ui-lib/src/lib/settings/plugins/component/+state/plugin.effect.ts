@@ -78,8 +78,8 @@ export class PluginEffects {
 			ofType(PluginActions.activate),
 			tap(() => this.pluginStore.update({ activating: true })),
 			switchMap(({ plugin }) => {
-				// Local plugin — no marketplace, no access check, no server call
-				if (!plugin.marketplaceId) {
+				// Local plugin — no marketplace, no access check, no server call.
+				if (!plugin.marketplaceId && !plugin.installationId) {
 					return this.handleLocalPluginFlow(plugin, 'activate');
 				}
 
@@ -133,8 +133,9 @@ export class PluginEffects {
 			ofType(PluginActions.deactivate),
 			tap(() => this.pluginStore.update({ deactivating: true })),
 			switchMap(({ plugin }) => {
-				// Local plugin — no marketplace, no server call needed
-				if (!plugin.marketplaceId) {
+				// Local plugin — no marketplace, no server call needed.
+				// Both fields must be absent (see activate$ comment).
+				if (!plugin.marketplaceId && !plugin.installationId) {
 					return this.handleLocalPluginFlow(plugin, 'deactivate');
 				}
 
