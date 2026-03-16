@@ -9,7 +9,7 @@ export interface IPluginManager {
 	downloadPlugin(config: any): Promise<IPluginMetadata>;
 	activatePlugin(name: string): Promise<void>;
 	deactivatePlugin(name: string): Promise<void>;
-	completeInstallation(marketplaceId: ID | null, installationId: string): Promise<void>;
+	completeInstallation(marketplaceId: ID | null, installationId: string, name?: string): Promise<void>;
 	uninstallPlugin(input: IPluginMetadataFindOne): Promise<ID>;
 	getAllPlugins(): Promise<IPluginMetadata[]>;
 	getOnePlugin(name: string): Promise<IPluginMetadata>;

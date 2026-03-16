@@ -86,15 +86,20 @@ export class PluginManager implements IPluginManager {
 		}
 	}
 
-	// Update plugin marketplace metadata (marketplaceId is the record identifier for buildQuery)
-	public async completeInstallation(marketplaceId: string | null, installationId: string): Promise<void> {
-		if (!marketplaceId) {
+	// Update plugin marketplace metadata; falls back to plugin name for locally installed plugins
+	public async completeInstallation(marketplaceId: string | null, installationId: string, name?: string): Promise<void> {
+		if (!marketplaceId && !name) {
 			logger.warn(
-				`completeInstallation: marketplaceId is required to identify the record; skipping update for installationId: ${installationId}`
+				`completeInstallation: either marketplaceId or name is required to identify the record; skipping update for installationId: ${installationId}`
 			);
 			return;
 		}
-		const updateData: IPluginMetadataUpdate = { marketplaceId, installationId };
+		const updateData: IPluginMetadataUpdate = { installationId };
+		if (marketplaceId) {
+			updateData.marketplaceId = marketplaceId;
+		} else {
+			updateData.name = name;
+		}
 		await this.pluginMetadataService.update(updateData);
 	}
 
