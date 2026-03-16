@@ -879,7 +879,8 @@
 		"sidemenu",
 		"ptdu",
 		"ptau",
-		"Centralises"
+		"Centralises",
+		"Dispatchable"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

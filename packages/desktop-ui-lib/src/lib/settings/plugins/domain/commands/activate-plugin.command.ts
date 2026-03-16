@@ -8,10 +8,13 @@ import { IInstallationCommand } from '../interfaces';
 
 /**
  * Parameters for activate plugin command
+ * marketplaceId can be null for local/direct installations
  */
 export interface IActivatePluginCommandParams {
-	marketplaceId: string;
+	marketplaceId: string | null;
 	installationId?: string;
+	/** Plugin name, used to look up locally installed plugins when marketplaceId is absent */
+	name?: string;
 }
 
 /**
@@ -42,11 +45,55 @@ export class ActivatePluginCommand
 
 	/**
 	 * Executes the activate plugin command
+	 * For local installations (marketplaceId is null), skip server validation and access checks
 	 */
 	public execute(params: IActivatePluginCommandParams): Observable<IActivatePluginCommandResult> {
-		const { marketplaceId, installationId } = params;
+		const { marketplaceId, installationId, name } = params;
 
-		// Gate: verify user has access before proceeding with activation
+		// For local installations, skip marketplace-specific checks
+		if (!marketplaceId) {
+			// name is the only reliable look-up key for local plugins.
+			// installationId is a backend DB record ID, not a marketplaceId, so it
+			// cannot be passed to checkInstallation (which expects a marketplaceId).
+			if (!name) {
+				return throwError(
+					() =>
+						new Error(
+							'Cannot activate plugin: plugin name must be provided for local installations.'
+						)
+				);
+			}
+			// Direct local activation without server validation.
+			return from(this.pluginElectronService.plugin(name)).pipe(
+				switchMap((plugin) => {
+					// Guard against null/undefined plugin before proceeding.
+					if (!plugin) {
+						return throwError(() => new Error('Plugin not found'));
+					}
+					// SECURITY GUARD: Even though the caller did not supply a marketplaceId,
+					if (plugin?.marketplaceId) {
+						return throwError(
+							() =>
+								new Error(
+									'This plugin is registered in the marketplace and must be activated through the marketplace.'
+								)
+						);
+					}
+
+					this.pluginElectronService.activate(plugin);
+
+					return this.pluginElectronService.progress<void, IPlugin>().pipe(
+						map(({ data, message }) => ({
+							success: true,
+							plugin: data || plugin,
+							message
+						}))
+					);
+				})
+			);
+		}
+
+		// For marketplace installations, verify access and validate with server
 		return this.accessService.checkAccess(marketplaceId).pipe(
 			switchMap((access) => {
 				if (!access.hasAccess) {
