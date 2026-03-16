@@ -9,6 +9,37 @@ import { LoadPluginDialog } from '../dialog/load-plugin.dialog';
 
 export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 	private static readonly MAX_RETRIES = 3;
+
+	/**
+	 * Resolve an archive entry path against a base extraction directory and ensure
+	 * it does not escape the base (Zip Slip protection).
+	 */
+	private static safeExtractPath(baseDir: string, entryPath: string): string | null {
+		// Resolve the candidate path against the base directory.
+		const resolved = path.resolve(baseDir, entryPath);
+
+		// Normalize base directory and ensure it ends with a path separator so
+		// that "/tmp/base2" does not match "/tmp/base".
+		const normalizedBase = path.resolve(baseDir);
+		const baseWithSep =
+			normalizedBase.endsWith(path.sep) ? normalizedBase : normalizedBase + path.sep;
+
+		// On Windows, comparisons are case-insensitive for paths.
+		if (process.platform === 'win32') {
+			const resolvedLower = resolved.toLowerCase();
+			const baseLower = baseWithSep.toLowerCase();
+			if (resolvedLower === normalizedBase.toLowerCase() || resolvedLower.startsWith(baseLower)) {
+				return resolved;
+			}
+		} else {
+			if (resolved === normalizedBase || resolved.startsWith(baseWithSep)) {
+				return resolved;
+			}
+		}
+
+		// Path would escape the base directory; treat as unsafe.
+		return null;
+	}
 	private static readonly RETRY_DELAY_MS = 1000;
 	private static readonly MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB per file
 	private static readonly MAX_TOTAL_SIZE = 1024 * 1024 * 1024; // 1GB total extraction limit
@@ -120,18 +151,17 @@ export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 						const { path: entryPath, type } = entry;
 
 						// Security: Zip Slip prevention
-						if (!this.isSafePath(extractDir, entryPath)) {
+						const safePath = LocalDownloadStrategy.safeExtractPath(extractDir, entryPath);
+						if (!safePath) {
 							logger.warn(`Unsafe archive entry skipped: ${entryPath}`);
 							return entry.autodrain();
 						}
-
-						const resolvedPath = path.resolve(extractDir, entryPath);
 
 						if (type === 'Directory') {
 							// Autodrain synchronously first to avoid backpressure,
 							// then push only the mkdir promise.
 							entry.autodrain();
-							pendingWrites.push(fs.mkdir(resolvedPath, { recursive: true }).then(() => void 0));
+							pendingWrites.push(fs.mkdir(safePath, { recursive: true }).then(() => void 0));
 							return;
 						}
 
@@ -144,8 +174,8 @@ export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 								let bytesWritten = 0;
 								let limitReached = false;
 								try {
-									await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
-									writeStream = createWriteStream(resolvedPath);
+									await fs.mkdir(path.dirname(safePath), { recursive: true });
+									writeStream = createWriteStream(safePath);
 
 									// Attach counter before piping so every chunk is measured.
 									entry.on('data', (chunk: Buffer) => {
@@ -189,7 +219,7 @@ export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 										if (writeStream) entry.unpipe(writeStream);
 										if (writeStream && !writeStream.writableEnded) writeStream.destroy(err);
 										try {
-											await fs.unlink(resolvedPath);
+											await fs.unlink(safePath);
 										} catch {}
 									}
 									throw err;
