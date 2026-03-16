@@ -8,10 +8,13 @@ import { IInstallationCommand } from '../interfaces';
 
 /**
  * Parameters for activate plugin command
+ * marketplaceId can be null for local/direct installations
  */
 export interface IActivatePluginCommandParams {
-	marketplaceId: string;
+	marketplaceId: string | null;
 	installationId?: string;
+	/** Plugin name, used to look up locally installed plugins when marketplaceId is absent */
+	name?: string;
 }
 
 /**
@@ -42,11 +45,45 @@ export class ActivatePluginCommand
 
 	/**
 	 * Executes the activate plugin command
+	 * For local installations (marketplaceId is null), skip server validation and access checks
 	 */
 	public execute(params: IActivatePluginCommandParams): Observable<IActivatePluginCommandResult> {
-		const { marketplaceId, installationId } = params;
+		const { marketplaceId, installationId, name } = params;
 
-		// Gate: verify user has access before proceeding with activation
+		// For local installations, skip marketplace-specific checks
+		if (!marketplaceId) {
+			// Direct local activation without server validation.
+			// Look up by name (reliable unique key for local plugins) when available;
+			// fall back to checkInstallation only for marketplace plugins with a known installationId.
+			const pluginLookup = name
+				? from(this.pluginElectronService.plugin(name))
+				: from(this.pluginElectronService.checkInstallation(installationId));
+			return pluginLookup.pipe(
+				switchMap((plugin) => {
+					// SECURITY GUARD: Even though the caller did not supply a marketplaceId,
+					if (plugin?.marketplaceId) {
+						return throwError(
+							() =>
+								new Error(
+									'This plugin is registered in the marketplace and must be activated through the marketplace.'
+								)
+						);
+					}
+
+					this.pluginElectronService.activate(plugin);
+
+					return this.pluginElectronService.progress<void, IPlugin>().pipe(
+						map(({ data, message }) => ({
+							success: true,
+							plugin: data || plugin,
+							message
+						}))
+					);
+				})
+			);
+		}
+
+		// For marketplace installations, verify access and validate with server
 		return this.accessService.checkAccess(marketplaceId).pipe(
 			switchMap((access) => {
 				if (!access.hasAccess) {
