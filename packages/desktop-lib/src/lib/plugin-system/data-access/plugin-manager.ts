@@ -26,7 +26,7 @@ export class PluginManager implements IPluginManager {
 		return this.instance;
 	}
 
-	public async downloadPlugin<U extends { contextType: PluginDownloadContextType; marketplaceId: ID; versionId: ID }>(
+	public async downloadPlugin<U extends { contextType: PluginDownloadContextType; marketplaceId?: ID; versionId?: ID }>(
 		config: U
 	): Promise<IPluginMetadata> {
 		logger.info(`Downloading plugin...`);
@@ -39,7 +39,11 @@ export class PluginManager implements IPluginManager {
 		} else {
 			/* Install plugin */
 			await this.installPlugin(
-				{ ...metadata, marketplaceId: config.marketplaceId, versionId: config.versionId },
+				{ 
+					...metadata, 
+					marketplaceId: config.marketplaceId || null, 
+					versionId: config.versionId || null 
+				},
 				pathDirname
 			);
 		}
@@ -83,11 +87,13 @@ export class PluginManager implements IPluginManager {
 	}
 
 	// Update plugin marketplace metadata
-	public async completeInstallation(marketplaceId: string, installationId: string): Promise<void> {
-		await this.pluginMetadataService.update({
-			marketplaceId,
-			installationId
-		});
+	// For local installations, marketplaceId may be null
+	public async completeInstallation(marketplaceId: string | null, installationId: string): Promise<void> {
+		const updateData: any = { installationId };
+		if (marketplaceId) {
+			updateData.marketplaceId = marketplaceId;
+		}
+		await this.pluginMetadataService.update(updateData);
 	}
 
 	public async installPlugin(pluginMetadata: IPluginMetadata, pluginDir: string): Promise<void> {
