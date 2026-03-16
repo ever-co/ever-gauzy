@@ -13,10 +13,49 @@ export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 	/**
 	 * Resolve an archive entry path against a base extraction directory and ensure
 	 * it does not escape the base (Zip Slip protection).
+	 *
+	 * This method rejects:
+	 * - empty/whitespace-only paths
+	 * - absolute or UNC paths
+	 * - paths that contain any ".." segments
+	 * - paths that, after resolution, are outside the base directory
 	 */
 	private static safeExtractPath(baseDir: string, entryPath: string): string | null {
+		// Basic sanity checks.
+		if (!entryPath || !entryPath.trim()) {
+			return null;
+		}
+
+		// Archive entries typically use POSIX-style separators, so normalize on "/"
+		// when looking for traversal segments, regardless of host OS.
+		const normalizedEntryPath = entryPath.replace(/\\/g, '/');
+
+		// Reject any absolute/UNC-like paths outright.
+		if (path.isAbsolute(normalizedEntryPath)) {
+			return null;
+		}
+		if (process.platform === 'win32') {
+			// UNC paths such as \\server\share or //server/share
+			if (
+				normalizedEntryPath.startsWith('\\\\') ||
+				normalizedEntryPath.startsWith('//')
+			) {
+				return null;
+			}
+			// Patterns like "c:/" or "c:\" (drive-absolute) should also be rejected.
+			if (/^[a-zA-Z]:[\\/]/.test(normalizedEntryPath)) {
+				return null;
+			}
+		}
+
+		// Reject any path that contains a ".." segment after normalization.
+		const segments = normalizedEntryPath.split('/');
+		if (segments.some((segment) => segment === '..')) {
+			return null;
+		}
+
 		// Resolve the candidate path against the base directory.
-		const resolved = path.resolve(baseDir, entryPath);
+		const resolved = path.resolve(baseDir, normalizedEntryPath);
 
 		// Normalize base directory and ensure it ends with a path separator so
 		// that "/tmp/base2" does not match "/tmp/base".
