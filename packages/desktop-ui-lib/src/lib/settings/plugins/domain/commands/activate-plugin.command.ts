@@ -52,7 +52,7 @@ export class ActivatePluginCommand
 
 		// For local installations, skip marketplace-specific checks
 		if (!marketplaceId) {
-			// Issue 10: Ensure at least one identifier is available before constructing the lookup.
+			// Ensure at least one identifier is available before constructing the lookup.
 			if (!name && !installationId) {
 				return throwError(
 					() =>
@@ -69,7 +69,7 @@ export class ActivatePluginCommand
 				: from(this.pluginElectronService.checkInstallation(installationId));
 			return pluginLookup.pipe(
 				switchMap((plugin) => {
-					// Issue 9: Guard against null/undefined plugin before proceeding.
+					// Guard against null/undefined plugin before proceeding.
 					if (!plugin) {
 						return throwError(() => new Error('Plugin not found'));
 					}

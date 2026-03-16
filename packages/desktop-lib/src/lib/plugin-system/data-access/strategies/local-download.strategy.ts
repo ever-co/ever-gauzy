@@ -128,14 +128,14 @@ export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 						const resolvedPath = path.resolve(extractDir, entryPath);
 
 						if (type === 'Directory') {
-							// Issue 4: autodrain synchronously first to avoid backpressure,
+							// Autodrain synchronously first to avoid backpressure,
 							// then push only the mkdir promise.
 							entry.autodrain();
 							pendingWrites.push(fs.mkdir(resolvedPath, { recursive: true }).then(() => void 0));
 							return;
 						}
 
-						// Issue 2: File extraction with actual byte-count enforcement.
+						// File extraction with actual byte-count enforcement.
 						// `entry.size` from ZIP metadata may be 0 or the compressed size,
 						// so we count bytes via data events instead.
 						pendingWrites.push(
@@ -184,7 +184,7 @@ export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 									await finished(writeStream);
 								} catch (err) {
 									if (!limitReached) {
-										// Issue 3: unpipe entry from writeStream and destroy writeStream
+										// Unpipe entry from writeStream and destroy writeStream
 										// properly so the error propagates and the pipe is cleaned up.
 										if (writeStream) entry.unpipe(writeStream);
 										if (writeStream && !writeStream.writableEnded) writeStream.destroy(err);
