@@ -52,6 +52,15 @@ export class ActivatePluginCommand
 
 		// For local installations, skip marketplace-specific checks
 		if (!marketplaceId) {
+			// Issue 10: Ensure at least one identifier is available before constructing the lookup.
+			if (!name && !installationId) {
+				return throwError(
+					() =>
+						new Error(
+							'Cannot activate plugin: either plugin name or installationId must be provided.'
+						)
+				);
+			}
 			// Direct local activation without server validation.
 			// Look up by name (reliable unique key for local plugins) when available;
 			// fall back to checkInstallation only for marketplace plugins with a known installationId.
@@ -60,6 +69,10 @@ export class ActivatePluginCommand
 				: from(this.pluginElectronService.checkInstallation(installationId));
 			return pluginLookup.pipe(
 				switchMap((plugin) => {
+					// Issue 9: Guard against null/undefined plugin before proceeding.
+					if (!plugin) {
+						return throwError(() => new Error('Plugin not found'));
+					}
 					// SECURITY GUARD: Even though the caller did not supply a marketplaceId,
 					if (plugin?.marketplaceId) {
 						return throwError(

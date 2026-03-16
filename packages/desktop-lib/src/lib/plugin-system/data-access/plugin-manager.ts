@@ -6,7 +6,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { PluginMetadataService } from '../database/plugin-metadata.service';
 import { PluginEventManager } from '../events/plugin-event.manager';
-import { IPlugin, IPluginManager, IPluginMetadata, IPluginMetadataFindOne, PluginDownloadContextType } from '../shared';
+import { IPlugin, IPluginManager, IPluginMetadata, IPluginMetadataFindOne, IPluginMetadataUpdate, PluginDownloadContextType } from '../shared';
 import { lazyLoader } from '../shared/lazy-loader';
 import { DownloadContextFactory } from './download-context.factory';
 
@@ -39,10 +39,10 @@ export class PluginManager implements IPluginManager {
 		} else {
 			/* Install plugin */
 			await this.installPlugin(
-				{ 
-					...metadata, 
-					marketplaceId: config.marketplaceId || null, 
-					versionId: config.versionId || null 
+				{
+					...metadata,
+					marketplaceId: config.marketplaceId || null,
+					versionId: config.versionId || null
 				},
 				pathDirname
 			);
@@ -86,13 +86,15 @@ export class PluginManager implements IPluginManager {
 		}
 	}
 
-	// Update plugin marketplace metadata
-	// For local installations, marketplaceId may be null
+	// Update plugin marketplace metadata (marketplaceId is the record identifier for buildQuery)
 	public async completeInstallation(marketplaceId: string | null, installationId: string): Promise<void> {
-		const updateData: any = { installationId };
-		if (marketplaceId) {
-			updateData.marketplaceId = marketplaceId;
+		if (!marketplaceId) {
+			logger.warn(
+				`completeInstallation: marketplaceId is required to identify the record; skipping update for installationId: ${installationId}`
+			);
+			return;
 		}
+		const updateData: IPluginMetadataUpdate = { marketplaceId, installationId };
 		await this.pluginMetadataService.update(updateData);
 	}
 

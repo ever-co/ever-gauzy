@@ -207,8 +207,11 @@ export class PluginInstallationEffects {
 						this.pluginInstallationStore.setInstalling(pluginId, true);
 						this.pluginInstallationStore.setErrorMessage(pluginId, null);
 					} else {
-						// Track loading state for local/direct installs using a placeholder key
-						this.pluginInstallationStore.setInstalling('local', true);
+						// Generate a unique ID per local install to avoid key collisions
+						// for concurrent local installations.
+						const localInstallId = crypto.randomUUID();
+						(config as Record<string, unknown>)['_localInstallId'] = localInstallId;
+						this.pluginInstallationStore.setInstalling(localInstallId, true);
 					}
 					// Dispatch download start action to trigger download effect
 					return PluginInstallationActions.startDownload(config);
@@ -241,7 +244,12 @@ export class PluginInstallationEffects {
 							);
 						}),
 						map(({ plugin, message }) =>
-							PluginInstallationActions.downloadCompleted(plugin, config?.['contextType'], message)
+							PluginInstallationActions.downloadCompleted(
+								plugin,
+								message,
+								config?.['contextType'],
+								config?.['_localInstallId'] as string | undefined
+							)
 						),
 						finalize(() => {
 							const pluginId = config?.['marketplaceId'];
@@ -251,6 +259,12 @@ export class PluginInstallationEffects {
 						}),
 						catchError((error) => {
 							const pluginId = config?.['marketplaceId'];
+							// For local installs, clear the unique loading key directly here
+							// so the placeholder is not stuck in the store on failure.
+							const localInstallId = config?.['_localInstallId'] as string | undefined;
+							if (localInstallId) {
+								this.pluginInstallationStore.setInstalling(localInstallId, false);
+							}
 							return of(
 								PluginInstallationActions.downloadFailed(error?.message || 'Download failed', pluginId)
 							);
@@ -272,7 +286,7 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.downloadCompleted),
-				map(({ plugin, contextType }) => {
+				map(({ plugin, contextType, localInstallId }) => {
 					const { marketplaceId: pluginId, versionId } = plugin || {};
 					// For marketplace plugins, proceed with server installation
 					if (pluginId && versionId) {
@@ -283,7 +297,12 @@ export class PluginInstallationEffects {
 					// All three conditions together prevent marketplace plugins from bypassing
 					// access checks through the local installation path.
 					if (contextType === 'local' && !pluginId && plugin?.name) {
-						return PluginInstallationActions.startActivation(plugin.installationId || null, null, plugin.name);
+						return PluginInstallationActions.startActivation(
+							plugin.installationId || null,
+							null,
+							plugin.name,
+							localInstallId
+						);
 					}
 					return PluginInstallationActions.downloadFailed(
 						this.translateService.instant('PLUGIN.TOASTR.ERROR.INVALID_PLUGIN_DATA')
@@ -434,14 +453,16 @@ export class PluginInstallationEffects {
 						this.pluginInstallationStore.setActivating(marketplaceId, true);
 					}
 				}),
-				switchMap(({ installationId, marketplaceId, name }) => {
+				switchMap(({ installationId, marketplaceId, name, localInstallId }) => {
 					return this.activateCommand.execute({ marketplaceId, installationId, name }).pipe(
 						tap(({ message }) => {
 							this.toastrService.success(
 								message || this.translateService.instant('PLUGIN.TOASTR.SUCCESS.ACTIVATION_COMPLETED')
 							);
 						}),
-						map(({ plugin, message }) => PluginInstallationActions.activationCompleted(plugin, message)),
+						map(({ plugin, message }) =>
+							PluginInstallationActions.activationCompleted(plugin, message, localInstallId)
+						),
 						finalize(() => {
 							if (marketplaceId) {
 								this.pluginInstallationStore.setActivating(marketplaceId, false);
@@ -452,7 +473,8 @@ export class PluginInstallationEffects {
 							of(
 								PluginInstallationActions.activationFailed(
 									error?.message || 'Activation failed',
-									marketplaceId
+									marketplaceId,
+									localInstallId
 								)
 							)
 						)
@@ -472,18 +494,22 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.activationCompleted),
-				concatMap(({ plugin: { marketplaceId } }) => {
+				concatMap(({ plugin: { marketplaceId }, localInstallId }) => {
 					this.handleSuccess('Installation done', marketplaceId);
-					const actions: any[] = [
+					type DispatchableAction =
+						| ReturnType<typeof PluginActions.selectPlugin>
+						| ReturnType<typeof PluginActions.refresh>
+						| ReturnType<typeof PluginToggleActions.toggle>;
+					const actions: DispatchableAction[] = [
 						PluginActions.selectPlugin(null),
 						PluginActions.refresh()
 					];
 					// Only toggle for marketplace plugins
 					if (marketplaceId) {
 						actions.unshift(PluginToggleActions.toggle({ pluginId: marketplaceId, enabled: true }));
-					} else {
-						// Clear local install loading state on successful completion
-						this.pluginInstallationStore.setInstalling('local', false);
+					} else if (localInstallId) {
+						// Clear the unique local install loading key generated at install start
+						this.pluginInstallationStore.setInstalling(localInstallId, false);
 					}
 					return actions;
 				})
@@ -505,10 +531,9 @@ export class PluginInstallationEffects {
 						this.pluginInstallationStore.setInstalling(pluginId, false);
 						this.pluginInstallationStore.setDownloading(pluginId, false);
 						this.pluginInstallationStore.setErrorMessage(pluginId, error);
-					} else {
-						// Clear local install loading state on failure
-						this.pluginInstallationStore.setInstalling('local', false);
 					}
+					// For local installs the unique loading key is cleared directly in the
+					// downloadPlugin$ catchError, so no additional cleanup is needed here.
 					this.toastrService.error(
 						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.DOWNLOAD_FAILED')
 					);
@@ -594,14 +619,14 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.activationFailed),
-				concatMap(({ error, pluginId }) => {
+				concatMap(({ error, pluginId, localInstallId }) => {
 					if (pluginId) {
 						this.pluginInstallationStore.setInstalling(pluginId, false);
 						this.pluginInstallationStore.setActivating(pluginId, false);
 						this.pluginInstallationStore.setErrorMessage(pluginId, error);
-					} else {
-						// Clear local install loading state on activation failure
-						this.pluginInstallationStore.setInstalling('local', false);
+					} else if (localInstallId) {
+						// Clear the unique local install loading key on activation failure
+						this.pluginInstallationStore.setInstalling(localInstallId, false);
 					}
 					this.toastrService.error(
 						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.ACTIVATION_FAILED')

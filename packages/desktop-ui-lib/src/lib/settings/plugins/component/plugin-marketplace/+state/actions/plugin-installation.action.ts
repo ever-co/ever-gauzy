@@ -14,7 +14,12 @@ export class PluginInstallationActions {
 	public static startDownload = createAction('[Plugin Installation] Start Download', <T>(config: T) => ({ config }));
 	public static downloadCompleted = createAction(
 		'[Plugin Installation] Download Completed',
-		(plugin: IPlugin, contextType?: string, message?: string) => ({ plugin, contextType, message })
+		(plugin: IPlugin, message?: string, contextType?: string, localInstallId?: string) => ({
+			plugin,
+			message,
+			contextType,
+			localInstallId
+		})
 	);
 	public static downloadFailed = createAction('[Plugin Installation] Download Failed', (error: string, pluginId?: string) => ({
 		error,
@@ -52,16 +57,21 @@ export class PluginInstallationActions {
 	// Step 4: Activation
 	public static startActivation = createAction(
 		'[Plugin Installation] Start Activation',
-		(installationId: string | null, marketplaceId: string | null, name?: string) => ({ installationId, marketplaceId, name })
+		(installationId: string | null, marketplaceId: string | null, name?: string, localInstallId?: string) => ({
+			installationId,
+			marketplaceId,
+			name,
+			localInstallId
+		})
 	);
 	public static activationCompleted = createAction(
 		'[Plugin Installation] Activation Completed',
-		(plugin: IPlugin, message?: string) => ({ plugin, message })
+		(plugin: IPlugin, message?: string, localInstallId?: string) => ({ plugin, message, localInstallId })
 	);
-	public static activationFailed = createAction('[Plugin Installation] Activation Failed', (error: string, pluginId?: string) => ({
-		error,
-		pluginId
-	}));
+	public static activationFailed = createAction(
+		'[Plugin Installation] Activation Failed',
+		(error: string, pluginId?: string, localInstallId?: string) => ({ error, pluginId, localInstallId })
+	);
 
 	// Cleanup
 	public static clearError = createAction('[Plugin Installation] Clear Error', (pluginId?: string) => ({ pluginId }));

@@ -117,7 +117,7 @@ export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 				createReadStream(filePath)
 					.pipe(unzipper.Parse())
 					.on('entry', (entry: any) => {
-						const { path: entryPath, type, size } = entry;
+						const { path: entryPath, type } = entry;
 
 						// Security: Zip Slip prevention
 						if (!this.isSafePath(extractDir, entryPath)) {
@@ -125,46 +125,73 @@ export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 							return entry.autodrain();
 						}
 
-						// Security: per-file size limit
-						if (size > LocalDownloadStrategy.MAX_FILE_SIZE) {
-							logger.warn(`Archive entry too large (${size} bytes): ${entryPath}`);
-							return entry.autodrain();
-						}
-
-						// Security: total extraction size limit
-						totalSize += size;
-						if (totalSize > LocalDownloadStrategy.MAX_TOTAL_SIZE) {
-							return reject(
-								new Error(
-									`Total extraction size exceeded (${LocalDownloadStrategy.MAX_TOTAL_SIZE} bytes)`
-								)
-							);
-						}
-
 						const resolvedPath = path.resolve(extractDir, entryPath);
 
 						if (type === 'Directory') {
-							pendingWrites.push(
-								fs.mkdir(resolvedPath, { recursive: true }).then(() => entry.autodrain())
-							);
+							// Issue 4: autodrain synchronously first to avoid backpressure,
+							// then push only the mkdir promise.
+							entry.autodrain();
+							pendingWrites.push(fs.mkdir(resolvedPath, { recursive: true }).then(() => void 0));
 							return;
 						}
 
-						// File extraction with cleanup on failure
+						// Issue 2: File extraction with actual byte-count enforcement.
+						// `entry.size` from ZIP metadata may be 0 or the compressed size,
+						// so we count bytes via data events instead.
 						pendingWrites.push(
 							(async () => {
 								let writeStream: ReturnType<typeof createWriteStream> | null = null;
+								let bytesWritten = 0;
+								let limitReached = false;
 								try {
 									await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
 									writeStream = createWriteStream(resolvedPath);
+
+									// Attach counter before piping so every chunk is measured.
+									entry.on('data', (chunk: Buffer) => {
+										if (limitReached) return;
+										bytesWritten += chunk.length;
+										totalSize += chunk.length;
+
+										if (bytesWritten > LocalDownloadStrategy.MAX_FILE_SIZE) {
+											limitReached = true;
+											logger.warn(`File size limit exceeded (actual bytes): ${entryPath}`);
+											entry.unpipe(writeStream);
+											if (writeStream && !writeStream.writableEnded) writeStream.destroy();
+											reject(
+												new Error(
+													`File too large: ${entryPath} exceeds ${LocalDownloadStrategy.MAX_FILE_SIZE} bytes`
+												)
+											);
+											return;
+										}
+
+										if (totalSize > LocalDownloadStrategy.MAX_TOTAL_SIZE) {
+											limitReached = true;
+											logger.warn(`Total extraction size exceeded at: ${entryPath}`);
+											entry.unpipe(writeStream);
+											if (writeStream && !writeStream.writableEnded) writeStream.destroy();
+											reject(
+												new Error(
+													`Total extraction size exceeded (${LocalDownloadStrategy.MAX_TOTAL_SIZE} bytes)`
+												)
+											);
+											return;
+										}
+									});
+
 									entry.pipe(writeStream);
 									await finished(writeStream);
 								} catch (err) {
-									if (!entry.destroyed) entry.destroy();
-									if (writeStream && !writeStream.destroyed) writeStream.destroy();
-									try {
-										await fs.unlink(resolvedPath);
-									} catch {}
+									if (!limitReached) {
+										// Issue 3: unpipe entry from writeStream and destroy writeStream
+										// properly so the error propagates and the pipe is cleaned up.
+										if (writeStream) entry.unpipe(writeStream);
+										if (writeStream && !writeStream.writableEnded) writeStream.destroy(err);
+										try {
+											await fs.unlink(resolvedPath);
+										} catch {}
+									}
 									throw err;
 								}
 							})()
