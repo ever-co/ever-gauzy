@@ -54,6 +54,7 @@
 		"@fullcalendar/moment-timezone": "^6.1.20",
 		"@fullcalendar/timegrid": "^6.1.20",
 		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/plugin-dashboard-time-track-angular-ui": "^0.1.0",
 		"@gauzy/plugin-dashboard-time-track-react-ui": "^0.1.0",
 		"@gauzy/plugin-job-employee-ui": "^0.1.0",
 		"@gauzy/plugin-jobs-ui": "^0.1.0",
