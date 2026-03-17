@@ -956,7 +956,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	public async restartApp(): Promise<void> {
 		this._isRestart$.next(true);
 		if (!this.isServer && !this.authSetting.isLogout) {
-			await firstValueFrom(this._authStrategy.logout());
+			await firstValueFrom(this._authStrategy.logout(true));
 			this.currentUser$.next(null);
 			localStorage.clear();
 		}

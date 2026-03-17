@@ -51,7 +51,7 @@ import {
 	asyncScheduler,
 	BehaviorSubject,
 	concatMap,
-	debounceTime,
+	delay,
 	exhaustMap,
 	filter,
 	from,
@@ -2415,11 +2415,20 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this._isLockSyncProcess = true;
 
 		try {
-			// Resolve promise and debounce to avoid rapid calls
 			return await lastValueFrom(
 				from(this.toggleStart(false)).pipe(
-					debounceTime(200),
-					concatMap(() => (callback ? from(callback()) : of(null))), // Safely execute callback
+					concatMap(async () => {
+						// toggleStart(false) leaves isProcessingEnabled=true and a block timer
+						// running for BLOCK_DELAY (10s). We must clear both before calling
+						// toggleStart(true), otherwise the start will be silently rejected.
+						if (this.timerSubscription) {
+							this.timerSubscription.unsubscribe();
+							this.timerSubscription = null;
+						}
+						this.isProcessingEnabled = false;
+						return callback ? await callback() : null;
+					}),
+					delay(200), // Brief pause between stop→start for IPC/OS settling
 					concatMap(async (callbackResult) => {
 						await this.toggleStart(true); // Restart process
 						return callbackResult; // Return the callback result
