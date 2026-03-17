@@ -23,6 +23,7 @@ export interface IPackage {
 		asarUnpack: string[];
 		directories: { buildResources: string; output: string };
 		publish: { channel?: string }[];
+		protocols?: { name: string; schemes: string[]; role: string }[];
 		mac: {
 			category: string;
 			icon: string;
