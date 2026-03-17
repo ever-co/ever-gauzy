@@ -309,14 +309,16 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 					);
 				} else {
 					console.log('Update Synced Timer Offline');
-					await timerService.update(
-						new Timer({
-							id: arg.id,
-							...(arg.startedAt && {
-								startedAt: new Date(arg.startedAt)
+					if (arg.startedAt) {
+						await timerService.update(
+							new Timer({
+								id: arg.id,
+								...(arg.startedAt && {
+									startedAt: new Date(arg.startedAt)
+								})
 							})
-						})
-					);
+						);
+					}
 				}
 			} else {
 				console.log('No arg.id found');
