@@ -391,12 +391,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	 * timer fires naturally (e.g. during a restart sequence).
 	 */
 	private _resetProcessingLock(): void {
+		this._cancelBlockDelayTimer();
+		this.isProcessingEnabled = false;
+		this.loading = false;
+	}
+
+	/**
+	 * Cancel only the pending BLOCK_DELAY auto-unblock timer without touching
+	 * isProcessingEnabled or loading. Use this when the restart path needs to
+	 * prevent the timer from firing mid-callback while still keeping the
+	 * processing guard active until the restart is ready to proceed.
+	 */
+	private _cancelBlockDelayTimer(): void {
 		if (this.timerSubscription) {
 			this.timerSubscription.unsubscribe();
 			this.timerSubscription = null;
 		}
-		this.isProcessingEnabled = false;
-		this.loading = false;
 	}
 
 	private countDuration(count, isForcedSync?: boolean): void {
@@ -2432,15 +2442,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			return await lastValueFrom(
 				from(this.toggleStart(false)).pipe(
 					concatMap(async () => {
-						// Keep the processing lock held while the callback runs so no
-						// external toggleStart() call can interleave during this window.
+						// Cancel the BLOCK_DELAY auto-unblock timer immediately so it
+						// cannot fire and clear isProcessingEnabled mid-callback.
+						// isProcessingEnabled intentionally stays true here — it keeps
+						// the guard up while the (potentially long) callback runs.
+						this._cancelBlockDelayTimer();
 						return callback ? await callback() : null;
 					}),
 					delay(200), // Brief pause between stop→start for IPC/OS settling
 					concatMap(async (callbackResult) => {
-						// Release the lock only now, immediately before re-starting, so
-						// toggleStart(true) sees a clean state and isProcessingEnabled
-						// never has a gap where another caller could sneak in.
+						// Full lock release immediately before re-starting: clears
+						// isProcessingEnabled and loading so toggleStart(true) sees a
+						// clean state with no interleaving window.
 						this._resetProcessingLock();
 						await this.toggleStart(true); // Restart process
 						return callbackResult; // Return the callback result
