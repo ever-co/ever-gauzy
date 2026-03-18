@@ -26,6 +26,7 @@ export class DesktopEnvironmentContent implements IContentGenerator {
 			REPO_OWNER: '${variable.DESKTOP_APP_REPO_OWNER || variable.REPO_OWNER}',
 			WELCOME_TITLE: '${variable.DESKTOP_APP_WELCOME_TITLE || variable.WELCOME_TITLE || ''}',
 			WELCOME_CONTENT: '${variable.DESKTOP_APP_WELCOME_CONTENT || variable.WELCOME_CONTENT || ''}',
+			PROTOCOL: '${variable.DESKTOP_APP_PROTOCOL || variable.PROTOCOL || 'gauzy-desktop'}',
 			IS_DESKTOP_TIMER: ${false},
 			IS_DESKTOP: ${true},
 			IS_SERVER: ${false},

@@ -217,7 +217,7 @@ export class PluginInstallationEffects {
 						forceInstall: 'true'
 					});
 
-					const deepLinkUrl = `gauzy://install-plugin?${params.toString()}`;
+					const deepLinkUrl = `${this.environmentService.protocol}://install-plugin?${params.toString()}`;
 
 					const anchor = this.document.createElement('a');
 					anchor.href = deepLinkUrl;

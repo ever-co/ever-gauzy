@@ -6,16 +6,16 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 import {
-	app,
-	BrowserWindow,
-	ipcMain,
-	Menu,
-	MenuItemConstructorOptions,
-	nativeImage,
-	nativeTheme,
-	screen,
-	shell,
-	Tray
+    app,
+    BrowserWindow,
+    ipcMain,
+    Menu,
+    MenuItemConstructorOptions,
+    nativeImage,
+    nativeTheme,
+    screen,
+    shell,
+    Tray
 } from 'electron';
 import * as path from 'node:path';
 
@@ -31,30 +31,31 @@ console.log('Server Node Modules Path', path.join(__dirname, 'node_modules'));
 
 import * as remoteMain from '@electron/remote/main';
 import {
-	AppError,
-	AppMenu,
-	AppWindowManager,
-	DesktopDialog,
-	DesktopServer,
-	DesktopThemeListener,
-	DesktopUpdater,
-	DialogErrorHandler,
-	DialogOpenFile,
-	DialogStopServerExitConfirmation,
-	ErrorEventManager,
-	ErrorReport,
-	ErrorReportRepository,
-	ILocalServer,
-	IPathWindow,
-	IServerConfig,
-	LocalStore,
-	ReadWriteFile,
-	ReverseProxy,
-	ReverseUiProxy,
-	ServerConfig,
-	setupAkitaStorageHandler,
-	TranslateLoader,
-	TranslateService
+    AppError,
+    AppMenu,
+    AppWindowManager,
+    DesktopDialog,
+    DesktopServer,
+    DesktopThemeListener,
+    DesktopUpdater,
+    DialogErrorHandler,
+    DialogOpenFile,
+    DialogStopServerExitConfirmation,
+    ErrorEventManager,
+    ErrorReport,
+    ErrorReportRepository,
+    ILocalServer,
+    IPathWindow,
+    IServerConfig,
+    LocalStore,
+    ProtocolRouter,
+    ReadWriteFile,
+    ReverseProxy,
+    ReverseUiProxy,
+    ServerConfig,
+    setupAkitaStorageHandler,
+    TranslateLoader,
+    TranslateService
 } from '@gauzy/desktop-lib';
 import { createAboutWindow, createServerWindow, SplashScreen } from '@gauzy/desktop-window';
 import * as Sentry from '@sentry/electron/main';
@@ -155,6 +156,52 @@ if (process.platform === 'win32') {
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
+
+// Register custom protocol for deep linking
+const appProtocol = process.env.PROTOCOL || 'gauzy-server';
+if (process.defaultApp) {
+	if (process.argv.length >= 2) {
+		app.setAsDefaultProtocolClient(appProtocol, process.execPath, [path.resolve(process.argv[1])]);
+	}
+} else {
+	app.setAsDefaultProtocolClient(appProtocol);
+}
+
+// Deep-link protocol router — registered with all supported action handlers.
+const protocolRouter = ProtocolRouter.getInstance();
+
+// Instance detection
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+	console.log('Another instance is already running, quitting...');
+	app.quit();
+} else {
+	app.on('second-instance', (event, commandLine) => {
+		console.log('Another instance is already running...');
+
+		// Handle deep link from second instance
+		const url = commandLine.find((arg) => arg.startsWith(`${appProtocol}://`));
+		if (url) {
+			console.log('Deep link received from second instance:', url);
+			protocolRouter.route(url);
+		}
+
+		// if someone tried to run a second instance, we should focus our window
+		const mainWindow = serverWindow || setupWindow;
+		if (mainWindow) {
+			if (mainWindow.isMinimized()) mainWindow.restore();
+			mainWindow.focus();
+		}
+	});
+
+	// Handle deep links on macOS
+	app.on('open-url', (event, url) => {
+		event.preventDefault();
+		console.log('Deep link received (macOS):', url);
+		protocolRouter.route(url);
+	});
+}
 
 // Set unlimited listeners
 ipcMain.setMaxListeners(0);

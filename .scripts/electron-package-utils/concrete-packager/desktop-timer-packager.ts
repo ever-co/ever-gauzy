@@ -13,19 +13,20 @@ export class DesktopTimerPackager extends BasePackager {
 			env.DESKTOP_TIMER_APP_DESCRIPTION || pkg.build.productName;
 		pkg.build.linux.executableName =
 			env.DESKTOP_TIMER_APP_NAME || pkg.build.linux.executableName;
+		const protocol = env.DESKTOP_TIMER_APP_PROTOCOL || 'gauzy-timer';
 		pkg.build.protocols = [
 			{
-				name: "Gauzy Protocol",
-				schemes: ["gauzy"],
+				name: `${protocol} Protocol`,
+				schemes: [protocol],
 				role: "Editor"
 			}
 		];
 		pkg.build.mac.extendInfo = {
 			...pkg.build.mac.extendInfo,
-			 CFBundleURLTypes: [
+			CFBundleURLTypes: [
 				{
-					CFBundleURLName: "Gauzy Protocol",
-					CFBundleURLSchemes: ["gauzy"],
+					CFBundleURLName: `${protocol} Protocol`,
+					CFBundleURLSchemes: [protocol],
 					CFBundleTypeRole: "Editor"
 				}
 			]

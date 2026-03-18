@@ -1,16 +1,20 @@
-import { Injectable, Optional } from '@angular/core';
+import { Inject, Injectable, Optional } from '@angular/core';
 import { IPlugin, PluginType } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
+import { GAUZY_ENV } from '../../../constants';
 import { ToastrNotificationService } from '../../../services/toastr-notification.service';
 import { PluginElectronService } from './plugin-electron.service';
+
 
 @Injectable({ providedIn: 'root' })
 export class PluginEnvironmentService {
 	constructor(
 		private readonly translateService: TranslateService,
 		private readonly toastrService: ToastrNotificationService,
+		@Inject(GAUZY_ENV)
+		private readonly env: any,
 		@Optional()
-		private readonly pluginElectronService?: PluginElectronService
+		private readonly pluginElectronService?: PluginElectronService,
 	) {}
 
 	/** Determine if running inside the Electron desktop shell */
@@ -82,5 +86,29 @@ export class PluginEnvironmentService {
 
 	public notifyEnvironmentMismatch(plugin: IPlugin): void {
 		this.toastrService.warn(this.getEnvironmentMismatchWarning(plugin));
+	}
+
+	public get protocol(): string {
+		return this.env.PROTOCOL;
+	}
+
+	public get isDesktopTimerApp(): boolean {
+		return this.env.IS_DESKTOP_TIMER;
+	}
+
+	public get isDesktopApp(): boolean {
+		return this.env.IS_DESKTOP;
+	}
+
+	public get isServerApp(): boolean {
+		return this.env.IS_SERVER;
+	}
+
+	public get isServerApiApp(): boolean {
+		return this.env.IS_SERVER_API;
+	}
+
+	public get isAgentApp(): boolean {
+		return this.env.IS_AGENT;
 	}
 }

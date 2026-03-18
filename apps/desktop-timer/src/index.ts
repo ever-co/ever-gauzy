@@ -127,12 +127,13 @@ LocalStore.setFilePath({
 });
 
 // Register custom protocol for deep linking
+const appProtocol = process.env.PROTOCOL || 'gauzy-timer';
 if (process.defaultApp) {
 	if (process.argv.length >= 2) {
-		app.setAsDefaultProtocolClient('gauzy', process.execPath, [path.resolve(process.argv[1])]);
+		app.setAsDefaultProtocolClient(appProtocol, process.execPath, [path.resolve(process.argv[1])]);
 	}
 } else {
-	app.setAsDefaultProtocolClient('gauzy');
+	app.setAsDefaultProtocolClient(appProtocol);
 }
 
 // Deep-link protocol router — registered with all supported action handlers.
@@ -148,7 +149,7 @@ if (!gotTheLock) {
 		console.log('Another instance is already running...');
 
 		// Handle deep link from second instance
-		const url = commandLine.find((arg) => arg.startsWith('gauzy://'));
+		const url = commandLine.find((arg) => arg.startsWith(`${appProtocol}://`));
 		if (url) {
 			console.log('Deep link received from second instance:', url);
 			protocolRouter.route(url);
@@ -483,7 +484,7 @@ app.on('ready', async () => {
 
 	// Check for deep link in command line args (Windows first-launch).
 	if (process.platform === 'win32') {
-		const deepLinkArg = process.argv.find((arg) => arg.startsWith('gauzy://'));
+		const deepLinkArg = process.argv.find((arg) => arg.startsWith(`${appProtocol}://`));
 		if (deepLinkArg) {
 			log.info('Deep link found in command line:', deepLinkArg);
 			await protocolRouter.route(deepLinkArg);

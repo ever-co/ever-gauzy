@@ -2,7 +2,7 @@
 // We are using dotenv (.env) for consistency with other Platform projects
 // This is Angular app and all settings will be loaded into the client browser!
 
-import { existsSync, mkdirSync, writeFile, unlinkSync } from 'fs';
+import { existsSync, mkdirSync, unlinkSync, writeFile } from 'fs';
 import * as path from 'path';
 import { argv } from 'yargs';
 import { env } from './env';
@@ -176,6 +176,7 @@ if (!isDocker) {
 		DESKTOP_TIMER_APP_REPO_OWNER: '${env.DESKTOP_TIMER_APP_REPO_OWNER}',
 		DESKTOP_TIMER_APP_WELCOME_TITLE: '${env.DESKTOP_TIMER_APP_WELCOME_TITLE}',
 		DESKTOP_TIMER_APP_WELCOME_CONTENT: '${env.DESKTOP_TIMER_APP_WELCOME_CONTENT}',
+		DESKTOP_TIMER_APP_PROTOCOL: '${env.DESKTOP_TIMER_APP_PROTOCOL}',
 
 		DESKTOP_APP_NAME: '${env.DESKTOP_APP_NAME}',
 		DESKTOP_APP_DESCRIPTION: '${env.DESKTOP_APP_DESCRIPTION}',
@@ -331,6 +332,7 @@ if (!isDocker) {
 		DESKTOP_TIMER_APP_REPO_OWNER: '${env.DESKTOP_TIMER_APP_REPO_OWNER}',
 		DESKTOP_TIMER_APP_WELCOME_TITLE: '${env.DESKTOP_TIMER_APP_WELCOME_TITLE}',
 		DESKTOP_TIMER_APP_WELCOME_CONTENT: '${env.DESKTOP_TIMER_APP_WELCOME_CONTENT}',
+		DESKTOP_TIMER_APP_PROTOCOL: '${env.DESKTOP_TIMER_APP_PROTOCOL}',
 
 		DESKTOP_APP_NAME: '${env.DESKTOP_APP_NAME}',
 		DESKTOP_APP_DESCRIPTION: '${env.DESKTOP_APP_DESCRIPTION}',

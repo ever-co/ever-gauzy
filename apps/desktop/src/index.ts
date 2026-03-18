@@ -33,7 +33,9 @@ import {
 	ErrorEventManager,
 	ErrorReport,
 	ErrorReportRepository,
+	InstallPluginHandler,
 	LocalStore,
+	ProtocolRouter,
 	ProviderFactory,
 	TranslateLoader,
 	TranslateService,
@@ -55,11 +57,11 @@ import {
 	setLaunchPathAndLoad
 } from '@gauzy/desktop-window';
 
+import { DesktopSetupConfig } from '@gauzy/contracts';
 import * as Sentry from '@sentry/electron/main';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
-import { DesktopSetupConfig } from '@gauzy/contracts';
 
 /**
  * Describes the configuration for building the Gauzy API base URL.
@@ -174,6 +176,19 @@ LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
 
+// Register custom protocol for deep linking
+const appProtocol = process.env.PROTOCOL || 'gauzy-desktop';
+if (process.defaultApp) {
+	if (process.argv.length >= 2) {
+		app.setAsDefaultProtocolClient(appProtocol, process.execPath, [path.resolve(process.argv[1])]);
+	}
+} else {
+	app.setAsDefaultProtocolClient(appProtocol);
+}
+
+// Deep-link protocol router — registered with all supported action handlers.
+const protocolRouter = ProtocolRouter.getInstance();
+
 // Set unlimited listeners
 ipcMain.setMaxListeners(0);
 
@@ -261,20 +276,40 @@ if (!gotTheLock) {
 	console.log('Another instance is already running, quitting...');
 	app.quit();
 } else {
-	app.on('second-instance', () => {
+	app.on('second-instance', (event, commandLine) => {
 		console.log('Another instance is already running...');
+
+		// Handle deep link from second instance
+		const url = commandLine.find((arg) => arg.startsWith(`${appProtocol}://`));
+		if (url) {
+			console.log('Deep link received from second instance:', url);
+			protocolRouter.route(url);
+		}
+
 		// if someone tried to run a second instance, we should focus our window and show warning message.
 		if (gauzyWindow) {
 			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
 			gauzyWindow.focus();
-			dialog.showMessageBoxSync(gauzyWindow, {
-				type: 'warning',
-				title: process.env.DESCRIPTION,
-				message: 'You already have a running instance'
-			});
+			if (!url) {
+				dialog.showMessageBoxSync(gauzyWindow, {
+					type: 'warning',
+					title: process.env.DESCRIPTION,
+					message: 'You already have a running instance'
+				});
+			}
 		}
 	});
+
+	// Handle deep links on macOS
+	app.on('open-url', (event, url) => {
+		event.preventDefault();
+		console.log('Deep link received (macOS):', url);
+		protocolRouter.route(url);
+	});
 }
+
+// Configure the protocol router with all supported deep-link action handlers.
+protocolRouter.register(new InstallPluginHandler(pathWindow.timeTrackerUi));
 
 function setGlobalVariable(setupConfig: {
 	host?: string;
