@@ -313,9 +313,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 						await timerService.update(
 							new Timer({
 								id: arg.id,
-								...(arg.startedAt && {
-									startedAt: new Date(arg.startedAt)
-								})
+								startedAt: new Date(arg.startedAt)
 							})
 						);
 					}

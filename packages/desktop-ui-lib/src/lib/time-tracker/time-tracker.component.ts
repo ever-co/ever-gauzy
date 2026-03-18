@@ -385,6 +385,20 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
+	/**
+	 * Cancel the BLOCK_DELAY lock that toggleStart arms after every stop.
+	 * Must be called whenever the lock needs to be force-released before the
+	 * timer fires naturally (e.g. during a restart sequence).
+	 */
+	private _resetProcessingLock(): void {
+		if (this.timerSubscription) {
+			this.timerSubscription.unsubscribe();
+			this.timerSubscription = null;
+		}
+		this.isProcessingEnabled = false;
+		this.loading = false;
+	}
+
 	private countDuration(count, isForcedSync?: boolean): void {
 		if (!this.start || isForcedSync) {
 			this._lastTotalWorkedToday$.next(count.todayDuration);
@@ -2418,14 +2432,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			return await lastValueFrom(
 				from(this.toggleStart(false)).pipe(
 					concatMap(async () => {
-						// toggleStart(false) leaves isProcessingEnabled=true and a block timer
-						// running for BLOCK_DELAY (10s). We must clear both before calling
-						// toggleStart(true), otherwise the start will be silently rejected.
-						if (this.timerSubscription) {
-							this.timerSubscription.unsubscribe();
-							this.timerSubscription = null;
-						}
-						this.isProcessingEnabled = false;
+						// toggleStart(false) arms a BLOCK_DELAY lock. Release it via the
+						// shared helper so all lock fields stay in sync in one place.
+						this._resetProcessingLock();
 						return callback ? await callback() : null;
 					}),
 					delay(200), // Brief pause between stop→start for IPC/OS settling
