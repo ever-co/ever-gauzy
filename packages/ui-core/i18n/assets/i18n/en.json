@@ -5369,6 +5369,8 @@
 		"DOWNLOADS": "downloads",
 		"FREE": "Free",
 		"NO_DESCRIPTION": "No description available",
+		"INSTALL_IN_DESKTOP": "Install in {{ appName }}",
+		"INSTALL_IN_DESKTOP_TOOLTIP": "Install this plugin in your {{ appName }} desktop application",
 		"PENDING_INSTALLATION": {
 			"TITLE": "Pending Plugin Installation",
 			"DESCRIPTION": "The following plugins are waiting to be installed",
