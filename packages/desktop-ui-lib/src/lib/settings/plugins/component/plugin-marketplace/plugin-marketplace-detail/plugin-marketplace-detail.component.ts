@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IPlugin, PluginStatus, PluginSubscriptionType } from '@gauzy/contracts';
-import { NbMenuItem, NbMenuService, NbBadgeModule, NbTooltipModule, NbIconModule, NbButtonModule, NbContextMenuModule, NbToggleModule } from '@nebular/theme';
+import { NbBadgeModule, NbButtonModule, NbContextMenuModule, NbIconModule, NbMenuItem, NbMenuService, NbToggleModule, NbTooltipModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs';
 import { PluginSettingsActions, PluginSubscriptionActions } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
@@ -15,13 +15,14 @@ import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { PluginToggleQuery } from '../+state/queries/plugin-toggle.query';
-import { Store } from '../../../../../services';
+import { Store, ToastrNotificationService } from '../../../../../services';
+import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 
-import { AsyncPipe, DecimalPipe, TitleCasePipe, CurrencyPipe, DatePipe } from '@angular/common';
-import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
+import { AsyncPipe, CurrencyPipe, DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { ReadMoreDirective } from '../../../../../directives/read-more.directive';
+import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
 
 @UntilDestroy()
 @Component({
@@ -47,6 +48,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		private readonly utils: PluginMarketplaceUtilsService,
 		private readonly store: Store,
 		private readonly menuService: NbMenuService,
+		private readonly toastrService: ToastrNotificationService,
+		private readonly pluginElectronService: PluginElectronService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery,
 		public readonly toggleQuery: PluginToggleQuery,
@@ -283,5 +286,51 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	 */
 	public getEnvironmentMismatchTooltip(): string {
 		return this.environmentService.getEnvironmentMismatchWarning(this.plugin);
+	}
+
+	/**
+	 * Check if running in desktop app
+	 */
+	public isDesktopApp(): boolean {
+		return this.pluginElectronService.isDesktop;
+	}
+
+	/**
+	 * Trigger plugin installation in desktop app via deep link
+	 * Creates a gauzy:// protocol URL that opens the desktop app and triggers installation
+	 */
+	public installInDesktop(): void {
+		if (!this.plugin?.id) {
+			this.toastrService.error('Plugin ID not available');
+			return;
+		}
+
+		// Get the latest version ID if available
+		const versionId = this.plugin.version?.id || '';
+
+		// Build query string with properly encoded parameters
+		const params = new URLSearchParams({
+			pluginId: this.plugin.id,
+			versionId,
+			forceInstall: 'true'
+		});
+
+		// Create deep link URL for desktop installation
+		const deepLinkUrl = `gauzy://install-plugin?${params.toString()}`;
+
+		// Use a hidden anchor element to open the custom protocol URL,
+		// since window.location.href rejects non-http(s) schemes in some browsers.
+		const anchor = document.createElement('a');
+		anchor.href = deepLinkUrl;
+		anchor.style.display = 'none';
+		document.body.appendChild(anchor);
+
+		console.log('Opening desktop app with URL:', deepLinkUrl);
+		anchor.click();
+		document.body.removeChild(anchor);
+
+		this.toastrService.success(
+			this.translate.instant('PLUGIN.TOASTR.OPENING_DESKTOP_APP')
+		);
 	}
 }

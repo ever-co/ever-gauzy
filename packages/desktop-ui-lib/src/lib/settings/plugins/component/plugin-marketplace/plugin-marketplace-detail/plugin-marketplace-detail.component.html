@@ -275,6 +275,21 @@
 							}
 						</span>
 					</nb-toggle>
+					<!-- Web-to-Desktop Installation Button -->
+					@if(!isDesktopApp() && !installed) {
+					<button
+						nbButton
+						size="small"
+						status="info"
+						outline
+						class="desktop-install-btn"
+						(click)="installInDesktop()"
+						[nbTooltip]="'PLUGIN.INSTALL_IN_DESKTOP_TOOLTIP' | translate"
+					>
+						<nb-icon icon="monitor-outline"></nb-icon>
+						{{ 'PLUGIN.INSTALL_IN_DESKTOP' | translate }}
+					</button>
+					}
 				</div>
 			</div>
 			}
