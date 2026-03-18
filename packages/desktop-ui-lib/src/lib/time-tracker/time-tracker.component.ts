@@ -2432,13 +2432,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			return await lastValueFrom(
 				from(this.toggleStart(false)).pipe(
 					concatMap(async () => {
-						// toggleStart(false) arms a BLOCK_DELAY lock. Release it via the
-						// shared helper so all lock fields stay in sync in one place.
-						this._resetProcessingLock();
+						// Keep the processing lock held while the callback runs so no
+						// external toggleStart() call can interleave during this window.
 						return callback ? await callback() : null;
 					}),
 					delay(200), // Brief pause between stop→start for IPC/OS settling
 					concatMap(async (callbackResult) => {
+						// Release the lock only now, immediately before re-starting, so
+						// toggleStart(true) sees a clean state and isProcessingEnabled
+						// never has a gap where another caller could sneak in.
+						this._resetProcessingLock();
 						await this.toggleStart(true); // Restart process
 						return callbackResult; // Return the callback result
 					}),
