@@ -1,6 +1,6 @@
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, inject, NgModule, provideEnvironmentInitializer } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TablerIconsModule } from '@gauzy/ui-core/icons';
@@ -133,6 +133,7 @@ import { SourceContainerComponent } from './shared/ui/source-container/source-co
 // Shared subscription components and services
 import { ElectronService } from '../../electron/services';
 
+import { PluginDeepLinkEffects } from './component/plugin-marketplace/+state/effects/plugin-deep-link.effect';
 import { PluginPlanQuery } from './component/plugin-marketplace/+state/queries/plugin-plan.query';
 import { PluginUploadIntentQuery } from './component/plugin-marketplace/+state/queries/plugin-upload-intent.query';
 import { PluginPlanStore } from './component/plugin-marketplace/+state/stores/plugin-plan.store';
@@ -153,6 +154,7 @@ import {
 	SubscriptionStatusService
 } from './component/plugin-marketplace/shared';
 import { UploadSelectionComponent } from './component/upload-selection/upload-selection.component';
+import { PluginDeepLinkService } from './services/plugin-deep-link.service';
 
 @NgModule({
 	imports: [
@@ -296,6 +298,7 @@ export class PluginsModule {}
 
 export const providePluginsEffects = () => provideEffects(
 	PluginEffects,
+	PluginDeepLinkEffects,
 	PluginInstallationEffects,
 	PluginMarketplaceEffects,
 	PluginVersionEffects,
@@ -312,3 +315,7 @@ export const providePluginsEffects = () => provideEffects(
 	PluginUploadIntentEffects,
 	PendingInstallationEffects
 );
+
+export const providePluginInitializers = () => provideEnvironmentInitializer(() => {
+	inject(PluginDeepLinkService);
+})
