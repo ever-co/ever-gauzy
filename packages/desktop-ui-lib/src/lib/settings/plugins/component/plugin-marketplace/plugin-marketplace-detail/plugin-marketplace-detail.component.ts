@@ -15,7 +15,7 @@ import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { PluginToggleQuery } from '../+state/queries/plugin-toggle.query';
-import { Store, ToastrNotificationService } from '../../../../../services';
+import { Store } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
@@ -48,11 +48,10 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		private readonly utils: PluginMarketplaceUtilsService,
 		private readonly store: Store,
 		private readonly menuService: NbMenuService,
-		private readonly toastrService: ToastrNotificationService,
-		private readonly pluginElectronService: PluginElectronService,
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery,
 		public readonly toggleQuery: PluginToggleQuery,
+		private readonly pluginElectronService: PluginElectronService,
 		private readonly environmentService: PluginEnvironmentService
 	) {}
 
@@ -296,41 +295,10 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	/**
-	 * Trigger plugin installation in desktop app via deep link
-	 * Creates a gauzy:// protocol URL that opens the desktop app and triggers installation
+	 * Dispatch web-to-desktop installation via the gauzy:// deep link protocol.
+	 * The actual deep link logic is handled by PluginInstallationEffects.installFromWeb$.
 	 */
-	public installInDesktop(): void {
-		if (!this.plugin?.id) {
-			this.toastrService.error('Plugin ID not available');
-			return;
-		}
-
-		// Get the latest version ID if available
-		const versionId = this.plugin.version?.id || '';
-
-		// Build query string with properly encoded parameters
-		const params = new URLSearchParams({
-			pluginId: this.plugin.id,
-			versionId,
-			forceInstall: 'true'
-		});
-
-		// Create deep link URL for desktop installation
-		const deepLinkUrl = `gauzy://install-plugin?${params.toString()}`;
-
-		// Use a hidden anchor element to open the custom protocol URL,
-		// since window.location.href rejects non-http(s) schemes in some browsers.
-		const anchor = document.createElement('a');
-		anchor.href = deepLinkUrl;
-		anchor.style.display = 'none';
-		document.body.appendChild(anchor);
-
-		console.log('Opening desktop app with URL:', deepLinkUrl);
-		anchor.click();
-		document.body.removeChild(anchor);
-
-		this.toastrService.success(
-			this.translate.instant('PLUGIN.TOASTR.OPENING_DESKTOP_APP')
-		);
+	public installFromWeb(): void {
+		this.action.dispatch(PluginMarketplaceActions.installFromWeb(this.plugin));
 	}
 }

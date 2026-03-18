@@ -37,6 +37,11 @@ export class PluginEnvironmentService {
 			return false;
 		}
 
+		// First check if it's a desktop plugin and we're in the desktop environment, which also allows deep-link installation from web
+		if(this.canUseDeepLink(plugin)) {
+			return true;
+		}
+
 		switch (plugin.type) {
 			case PluginType.DESKTOP:
 				return this.isDesktop();
@@ -47,6 +52,10 @@ export class PluginEnvironmentService {
 			default:
 				return true;
 		}
+	}
+
+	public canUseDeepLink(plugin: IPlugin): boolean {
+		return this.isWeb() && plugin?.type === PluginType.DESKTOP;
 	}
 
 	/** Translation key describing the environment mismatch for the plugin type */

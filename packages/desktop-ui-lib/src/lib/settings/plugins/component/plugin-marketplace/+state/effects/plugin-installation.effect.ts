@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Inject, Injectable } from '@angular/core';
 import { ID, IPluginSource, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
@@ -59,7 +60,8 @@ export class PluginInstallationEffects {
 		private readonly completeInstallCommand: CompleteInstallationCommand,
 		private readonly activateCommand: ActivatePluginCommand,
 		private readonly dialogService: NbDialogService,
-		private readonly installationValidationChainBuilder: InstallationValidationChainBuilder
+		private readonly installationValidationChainBuilder: InstallationValidationChainBuilder,
+		@Inject(DOCUMENT) private readonly document: Document
 	) {}
 
 	/**
@@ -92,6 +94,10 @@ export class PluginInstallationEffects {
 									PluginSubscriptionActions.openSubscriptionManagement(plugin),
 									PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false })
 								);
+							}
+
+							if(this.environmentService.canUseDeepLink(plugin)) {
+								return of(PluginMarketplaceActions.installFromWeb(plugin));
 							}
 
 							// Environment validation at effect level (web/mobile/desktop)
@@ -190,6 +196,42 @@ export class PluginInstallationEffects {
 				map(({ plugin }) => PluginMarketplaceActions.install(plugin, true))
 			),
 		{ dispatch: true }
+	);
+
+	/**
+	 * Handles web-to-desktop installation via the gauzy:// deep link protocol.
+	 * Constructs a protocol URL and opens it through a hidden anchor element so
+	 * that browsers which block non-http(s) assignments to `window.location` still
+	 * honour the custom scheme.
+	 */
+	installFromWeb$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginMarketplaceActions.installFromWeb),
+				tap(({ plugin }) => {
+					const versionId = plugin.version?.id ?? '';
+
+					const params = new URLSearchParams({
+						pluginId: plugin.id,
+						versionId,
+						forceInstall: 'true'
+					});
+
+					const deepLinkUrl = `gauzy://install-plugin?${params.toString()}`;
+
+					const anchor = this.document.createElement('a');
+					anchor.href = deepLinkUrl;
+					anchor.style.display = 'none';
+					this.document.body.appendChild(anchor);
+					anchor.click();
+					anchor.remove();
+
+					this.toastrService.success(
+						this.translateService.instant('PLUGIN.TOASTR.OPENING_DESKTOP_APP')
+					);
+				})
+			),
+		{ dispatch: false }
 	);
 
 	/**

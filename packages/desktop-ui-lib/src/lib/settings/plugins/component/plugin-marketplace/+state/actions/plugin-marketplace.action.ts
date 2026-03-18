@@ -46,6 +46,12 @@ export class PluginMarketplaceActions {
 		plugin
 	}));
 
+	// Web-to-desktop installation via deep link (gauzy:// protocol)
+	public static readonly installFromWeb = createAction(
+		'[Plugin Marketplace] Install From Web',
+		(plugin: IPlugin) => ({ plugin })
+	);
+
 	public static readonly uninstall = createAction(
 		'[Plugin Marketplace] Uninstall Plugin',
 		(pluginId: ID, installationId: ID, reason?: string) => ({
