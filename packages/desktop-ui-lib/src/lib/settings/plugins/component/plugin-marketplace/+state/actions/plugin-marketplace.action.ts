@@ -20,6 +20,9 @@ export class PluginMarketplaceActions {
 		id,
 		params
 	}));
+	public static readonly getOneSuccess = createAction('[Plugin Marketplace] Get One Success', (plugin: IPlugin) => ({
+		plugin
+	}));
 	public static readonly update = createAction('[Plugin Marketplace] Update', (plugin: IPlugin) => ({
 		plugin
 	}));
