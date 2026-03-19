@@ -51,7 +51,7 @@ import {
 	asyncScheduler,
 	BehaviorSubject,
 	concatMap,
-	debounceTime,
+	delay,
 	exhaustMap,
 	filter,
 	from,
@@ -382,6 +382,30 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			} catch (error) {
 				this._errorHandlerService.handleError(error);
 			}
+		}
+	}
+
+	/**
+	 * Cancel the BLOCK_DELAY lock that toggleStart arms after every stop.
+	 * Must be called whenever the lock needs to be force-released before the
+	 * timer fires naturally (e.g. during a restart sequence).
+	 */
+	private _resetProcessingLock(): void {
+		this._cancelBlockDelayTimer();
+		this.isProcessingEnabled = false;
+		this.loading = false;
+	}
+
+	/**
+	 * Cancel only the pending BLOCK_DELAY auto-unblock timer without touching
+	 * isProcessingEnabled or loading. Use this when the restart path needs to
+	 * prevent the timer from firing mid-callback while still keeping the
+	 * processing guard active until the restart is ready to proceed.
+	 */
+	private _cancelBlockDelayTimer(): void {
+		if (this.timerSubscription) {
+			this.timerSubscription.unsubscribe();
+			this.timerSubscription = null;
 		}
 	}
 
@@ -2415,12 +2439,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this._isLockSyncProcess = true;
 
 		try {
-			// Resolve promise and debounce to avoid rapid calls
 			return await lastValueFrom(
 				from(this.toggleStart(false)).pipe(
-					debounceTime(200),
-					concatMap(() => (callback ? from(callback()) : of(null))), // Safely execute callback
+					concatMap(async () => {
+						// Cancel the BLOCK_DELAY auto-unblock timer immediately so it
+						// cannot fire and clear isProcessingEnabled mid-callback.
+						// isProcessingEnabled intentionally stays true here — it keeps
+						// the guard up while the (potentially long) callback runs.
+						this._cancelBlockDelayTimer();
+						return callback ? await callback() : null;
+					}),
+					delay(200), // Brief pause between stop→start for IPC/OS settling
 					concatMap(async (callbackResult) => {
+						// Full lock release immediately before re-starting: clears
+						// isProcessingEnabled and loading so toggleStart(true) sees a
+						// clean state with no interleaving window.
+						this._resetProcessingLock();
 						await this.toggleStart(true); // Restart process
 						return callbackResult; // Return the callback result
 					}),
