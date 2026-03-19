@@ -36,7 +36,7 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 
 	constructor(
 		readonly pluginInstallationStore: PluginInstallationStore,
-		readonly pluginMarkeplaceQuery: PluginMarketplaceQuery,
+		readonly pluginMarketplaceQuery: PluginMarketplaceQuery,
 		readonly pluginElectronService: PluginElectronService,
 		readonly pluginQuery: PluginQuery
 	) {
@@ -107,8 +107,8 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 	public installed$(pluginId: ID): Observable<boolean> {
 		if (!this.pluginElectronService.isDesktop) {
 			return combineLatest([
-				this.pluginMarkeplaceQuery.plugins$,
-				this.pluginMarkeplaceQuery.plugin$
+				this.pluginMarketplaceQuery.plugins$,
+				this.pluginMarketplaceQuery.plugin$
 			]).pipe(
 				map(([plugins, plugin]) => {
 					const isCurrentPlugin = plugin?.id === pluginId && plugin?.installed;
