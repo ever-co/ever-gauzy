@@ -193,7 +193,8 @@
 		"ADD_TO_FAVORITES": "Add to favorites",
 		"DONE": "Done",
 		"SKIP": "Skip",
-		"UNSELECT_ALL": "Deselect All"
+		"UNSELECT_ALL": "Deselect All",
+		"OPEN": "Open"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -5369,6 +5370,8 @@
 		"DOWNLOADS": "downloads",
 		"FREE": "Free",
 		"NO_DESCRIPTION": "No description available",
+		"INSTALL_IN_DESKTOP": "Install in {{ appName }}",
+		"INSTALL_IN_DESKTOP_TOOLTIP": "Install this plugin in your preferred desktop application",
 		"PENDING_INSTALLATION": {
 			"TITLE": "Pending Plugin Installation",
 			"DESCRIPTION": "The following plugins are waiting to be installed",
@@ -5714,6 +5717,20 @@
 				"VALIDATION": {
 					"REQUIRED": "Authentication token is required"
 				}
+			},
+			"APP_SELECTOR": {
+				"TITLE": "Open in Desktop App",
+				"SUBTITLE": "Choose which desktop application to use for installation",
+				"DESKTOP": "Gauzy Desktop",
+				"DESKTOP_DESC": "Full-featured desktop application with all Gauzy capabilities",
+				"TIMER": "Gauzy Timer",
+				"TIMER_DESC": "Lightweight time tracking application",
+				"SERVER": "Gauzy Server",
+				"SERVER_DESC": "Self-hosted Gauzy server application",
+				"API_SERVER": "Gauzy API Server",
+				"API_SERVER_DESC": "Standalone API server for Gauzy services",
+				"AGENT": "Gauzy Agent",
+				"AGENT_DESC": "Background agent for monitoring and automation"
 			}
 		},
 		"TOASTR": {
@@ -5764,7 +5781,8 @@
 				"DOWNLOAD_COMPLETED": "Download completed",
 				"SERVER_INSTALLATION_COMPLETED": "Server installation completed",
 				"ACTIVATING": "Activating plugin...",
-				"REVERTING_INSTALLATION": "Reverting installation..."
+				"REVERTING_INSTALLATION": "Reverting installation...",
+				"DEEP_LINK_OPENED": "Desktop app opened. Complete the installation there."
 			},
 			"ERROR": {
 				"VERSION": {
@@ -5791,7 +5809,8 @@
 				"COMPLETE_INSTALLATION": "Failed to complete installation"
 			},
 			"WARNING": {
-				"PLUGIN_NOT_FOUND": "Plugin not found: {{name}}"
+				"PLUGIN_NOT_FOUND": "Plugin not found: {{name}}",
+				"DEEP_LINK_FAILED": "Could not open the desktop app. Please make sure it is installed and try again."
 			}
 		},
 		"BUTTONS": {

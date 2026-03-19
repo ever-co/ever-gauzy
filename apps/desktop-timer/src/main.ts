@@ -26,6 +26,7 @@ import {
 	LoggerService,
 	NgxDesktopThemeModule,
 	OrganizationInterceptor,
+	providePluginInitializers,
 	providePluginsEffects,
 	RefreshTokenInterceptor,
 	ServerConnectionService,
@@ -74,6 +75,7 @@ bootstrapApplication(AppComponent, {
 	providers: [
 		provideEffectsManager(),
 		providePluginsEffects(),
+		providePluginInitializers(),
 		provideZoneChangeDetection(),
 		importProvidersFrom(
 			BrowserModule,

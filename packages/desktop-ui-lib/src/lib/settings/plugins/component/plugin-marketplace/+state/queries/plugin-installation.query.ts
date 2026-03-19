@@ -1,15 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Query } from '@datorama/akita';
-import { map, Observable } from 'rxjs';
+import { combineLatest, distinctUntilChanged, map, Observable } from 'rxjs';
 
 import { ID } from '@gauzy/contracts';
 import { PluginQuery } from '../../../+state/plugin.query';
+import { PluginElectronService } from '../../../../services/plugin-electron.service';
 import { IPlugin } from '../../../../services/plugin-loader.service';
 import {
 	IPendingInstallation,
 	IPluginInstallationState,
 	PluginInstallationStore
 } from '../stores/plugin-installation.store';
+import { PluginMarketplaceQuery } from './plugin-marketplace.query';
 
 @Injectable({ providedIn: 'root' })
 export class PluginInstallationQuery extends Query<IPluginInstallationState> {
@@ -32,7 +34,12 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 		);
 	});
 
-	constructor(readonly pluginInstallationStore: PluginInstallationStore, readonly pluginQuery: PluginQuery) {
+	constructor(
+		readonly pluginInstallationStore: PluginInstallationStore,
+		readonly pluginMarketplaceQuery: PluginMarketplaceQuery,
+		readonly pluginElectronService: PluginElectronService,
+		readonly pluginQuery: PluginQuery
+	) {
 		super(pluginInstallationStore);
 	}
 
@@ -98,10 +105,22 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 	}
 
 	public installed$(pluginId: ID): Observable<boolean> {
+		if (!this.pluginElectronService.isDesktop) {
+			return combineLatest([
+				this.pluginMarketplaceQuery.plugins$,
+				this.pluginMarketplaceQuery.plugin$
+			]).pipe(
+				map(([plugins, plugin]) => {
+					const isCurrentPlugin = plugin?.id === pluginId && plugin?.installed;
+					return isCurrentPlugin || plugins.some((p) => p.id === pluginId && p.installed);
+				}),
+				distinctUntilChanged()
+			);
+		}
+
 		return this.pluginQuery.plugins$.pipe(
-			map((plugins: IPlugin[]) => {
-				return plugins.some((p) => p.marketplaceId === pluginId);
-			})
+			map((plugins: IPlugin[]) => plugins.some((p) => p.marketplaceId === pluginId)),
+			distinctUntilChanged()
 		);
 	}
 

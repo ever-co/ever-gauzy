@@ -882,7 +882,9 @@
 		"ptdu",
 		"ptau",
 		"Centralises",
-		"Dispatchable"
+		"Dispatchable",
+		"retriable",
+		"Reentrancy"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

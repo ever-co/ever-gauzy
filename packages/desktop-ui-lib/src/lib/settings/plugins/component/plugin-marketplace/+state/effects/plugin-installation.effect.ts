@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Inject, Injectable } from '@angular/core';
 import { ID, IPluginSource, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
@@ -12,11 +13,14 @@ import {
 	exhaustMap,
 	finalize,
 	from,
+	fromEvent,
 	map,
 	of,
+	race,
 	switchMap,
 	take,
-	tap
+	tap,
+	timer
 } from 'rxjs';
 import { PluginActions } from '../../../+state/plugin.action';
 import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
@@ -30,6 +34,7 @@ import {
 import { PluginElectronService } from '../../../../services/plugin-electron.service';
 import { PluginEnvironmentService } from '../../../../services/plugin-environment.service';
 import { PluginService } from '../../../../services/plugin.service';
+import { DialogAppSelectorComponent } from '../../plugin-marketplace-item/dialog-app-selector/dialog-app-selector.component';
 import { DialogInstallationValidationComponent } from '../../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
 import { InstallationValidationChainBuilder } from '../../services';
 import { PluginInstallationActions } from '../actions/plugin-installation.action';
@@ -59,7 +64,8 @@ export class PluginInstallationEffects {
 		private readonly completeInstallCommand: CompleteInstallationCommand,
 		private readonly activateCommand: ActivatePluginCommand,
 		private readonly dialogService: NbDialogService,
-		private readonly installationValidationChainBuilder: InstallationValidationChainBuilder
+		private readonly installationValidationChainBuilder: InstallationValidationChainBuilder,
+		@Inject(DOCUMENT) private readonly document: Document
 	) {}
 
 	/**
@@ -92,6 +98,10 @@ export class PluginInstallationEffects {
 									PluginSubscriptionActions.openSubscriptionManagement(plugin),
 									PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false })
 								);
+							}
+
+							if (this.environmentService.canUseDeepLink(plugin)) {
+								return of(PluginMarketplaceActions.installFromWeb(plugin));
 							}
 
 							// Environment validation at effect level (web/mobile/desktop)
@@ -191,6 +201,88 @@ export class PluginInstallationEffects {
 			),
 		{ dispatch: true }
 	);
+
+	/**
+	 * Handles web-to-desktop installation via the gauzy:// deep link protocol.
+	 *
+	 * Flow:
+	 * 1. Open app-selector dialog listing all supported desktop apps
+	 * 2. If user cancels, do nothing
+	 * 3. Construct a deep-link URL using the chosen app's protocol
+	 * 4. Open it via a hidden anchor so browser-blocked scheme navigation still work
+	 */
+	installFromWeb$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginMarketplaceActions.installFromWeb),
+				exhaustMap(({ plugin }) =>
+					this.openAppSelectorDialog().pipe(
+						switchMap((protocol) => {
+							if (!protocol) {
+								return of(PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false }));
+							}
+							const versionId = plugin.version?.id ?? '';
+							const params = new URLSearchParams({
+								pluginId: plugin.id,
+								versionId,
+								forceInstall: 'true'
+							});
+
+							const deepLinkUrl = `${protocol}://install-plugin?${params.toString()}`;
+
+							const anchor = this.document.createElement('a');
+							anchor.href = deepLinkUrl;
+							anchor.style.display = 'none';
+							this.document.body.appendChild(anchor);
+
+							// Observe whether the OS handled the protocol by watching for a
+							// window blur event (the desktop app steals focus) within 2.5 s.
+							const win = this.document.defaultView;
+							const appOpened$ = win
+								? fromEvent<Event>(win, 'blur').pipe(
+										take(1),
+										map(() => true)
+								  )
+								: EMPTY;
+							const timeout$ = timer(2500).pipe(map(() => false));
+
+							anchor.click();
+							anchor.remove();
+
+							// inside the desktop app, so the web UI must reflect uninstalled state.
+							return race(appOpened$, timeout$).pipe(
+								map((appOpened) => {
+									if (appOpened) {
+										this.toastrService.info(
+											this.translateService.instant(
+												'PLUGIN.TOASTR.INFO.DEEP_LINK_OPENED'
+											)
+										);
+									} else {
+										this.toastrService.warn(
+											this.translateService.instant(
+												'PLUGIN.TOASTR.WARNING.DEEP_LINK_FAILED'
+											)
+										);
+									}
+									return PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false });
+								})
+							);
+						})
+					)
+				)
+			),
+		{ dispatch: true }
+	);
+
+	/**
+	 * Opens the app-selector dialog and returns the chosen protocol string, or null if dismissed.
+	 */
+	private openAppSelectorDialog(): Observable<string | null> {
+		return this.dialogService
+			.open(DialogAppSelectorComponent, { backdropClass: 'backdrop-blur' })
+			.onClose.pipe(take(1));
+	}
 
 	/**
 	 * Main installation orchestrator
@@ -503,10 +595,7 @@ export class PluginInstallationEffects {
 						| ReturnType<typeof PluginActions.selectPlugin>
 						| ReturnType<typeof PluginActions.refresh>
 						| ReturnType<typeof PluginToggleActions.toggle>;
-					const actions: DispatchableAction[] = [
-						PluginActions.selectPlugin(null),
-						PluginActions.refresh()
-					];
+					const actions: DispatchableAction[] = [PluginActions.selectPlugin(null), PluginActions.refresh()];
 					// Only toggle for marketplace plugins
 					if (marketplaceId) {
 						actions.unshift(PluginToggleActions.toggle({ pluginId: marketplaceId, enabled: true }));
@@ -546,7 +635,7 @@ export class PluginInstallationEffects {
 									pluginId,
 									enabled: false
 								})
-						  )
+							)
 						: EMPTY;
 				})
 			),
@@ -578,7 +667,7 @@ export class PluginInstallationEffects {
 									pluginId,
 									enabled: false
 								})
-						  )
+							)
 						: EMPTY;
 				})
 			),
@@ -608,7 +697,7 @@ export class PluginInstallationEffects {
 									pluginId,
 									enabled: false
 								})
-						  )
+							)
 						: EMPTY;
 				})
 			),
@@ -641,7 +730,7 @@ export class PluginInstallationEffects {
 									pluginId,
 									enabled: false
 								})
-						  )
+							)
 						: EMPTY;
 				})
 			),
