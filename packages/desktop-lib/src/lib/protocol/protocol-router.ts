@@ -19,10 +19,11 @@ export class ProtocolRouter {
 	private readonly handlers: IProtocolHandler[] = [];
 
 	/**
-	 * URL stored when a handler threw during processing (e.g. target window
-	 * not yet initialized).  Retried on the next `processPending()` call.
+	 * FIFO queue of URLs that failed routing (e.g. target window not yet
+	 * initialized).  Each entry is retried in order on the next
+	 * `processPending()` call; a URL is removed only after it succeeds.
 	 */
-	private _pendingUrl: string | null = null;
+	private _pendingUrls: string[] = [];
 
 	/** Returns the application-wide singleton instance. */
 	static getInstance(): ProtocolRouter {
@@ -74,29 +75,45 @@ export class ProtocolRouter {
 			await handler.handle(parsed);
 		} catch (error) {
 			log.error('[ProtocolRouter] Error during routing — queuing as pending:', error);
-			this._pendingUrl = rawUrl;
+			this._pendingUrls.push(rawUrl);
 		}
 	}
 
 	/**
-	 * Retries the pending URL (if any) that was stored after a previous
-	 * routing failure.  Call this once the application is fully initialized.
+	 * Retries all queued URLs in FIFO order.  A URL is dequeued only after it
+	 * is processed successfully; if it fails again it remains at the front of
+	 * the queue so the next `processPending()` call can retry it.
+	 *
+	 * Call this once the application is fully initialized.
 	 */
 	async processPending(): Promise<void> {
-		if (!this._pendingUrl) {
-			return;
+		while (this._pendingUrls.length > 0) {
+			const url = this._pendingUrls[0];
+			log.info('[ProtocolRouter] Retrying pending deep link:', url);
+
+			try {
+				const parsed = new URL(url);
+				const action = this.extractAction(parsed);
+				const handler = this.handlers.find((h) => h.canHandle(action));
+
+				if (!handler) {
+					log.warn('[ProtocolRouter] No handler for pending action — discarding:', action);
+					this._pendingUrls.shift();
+					continue;
+				}
+
+				await handler.handle(parsed);
+				this._pendingUrls.shift();
+			} catch (error) {
+				log.error('[ProtocolRouter] Retry failed — keeping in queue:', error);
+				break;
+			}
 		}
-
-		const url = this._pendingUrl;
-		this._pendingUrl = null;
-
-		log.info('[ProtocolRouter] Retrying pending deep link:', url);
-		await this.route(url);
 	}
 
-	/** `true` when there is a URL waiting to be retried. */
+	/** `true` when there is at least one URL waiting to be retried. */
 	get hasPending(): boolean {
-		return this._pendingUrl !== null;
+		return this._pendingUrls.length > 0;
 	}
 
 	/**
