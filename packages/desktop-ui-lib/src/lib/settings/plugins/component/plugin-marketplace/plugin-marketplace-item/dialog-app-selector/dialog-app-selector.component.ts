@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -16,39 +17,6 @@ export interface IAppOption {
 	icon: string;
 }
 
-export const DESKTOP_APP_OPTIONS: IAppOption[] = [
-	{
-		labelKey: 'PLUGIN.DIALOG.APP_SELECTOR.DESKTOP',
-		descriptionKey: 'PLUGIN.DIALOG.APP_SELECTOR.DESKTOP_DESC',
-		protocol: 'gauzy-desktop',
-		icon: 'monitor-outline'
-	},
-	{
-		labelKey: 'PLUGIN.DIALOG.APP_SELECTOR.TIMER',
-		descriptionKey: 'PLUGIN.DIALOG.APP_SELECTOR.TIMER_DESC',
-		protocol: 'gauzy-timer',
-		icon: 'clock-outline'
-	},
-	{
-		labelKey: 'PLUGIN.DIALOG.APP_SELECTOR.SERVER',
-		descriptionKey: 'PLUGIN.DIALOG.APP_SELECTOR.SERVER_DESC',
-		protocol: 'gauzy-server',
-		icon: 'hard-drive-outline'
-	},
-	{
-		labelKey: 'PLUGIN.DIALOG.APP_SELECTOR.API_SERVER',
-		descriptionKey: 'PLUGIN.DIALOG.APP_SELECTOR.API_SERVER_DESC',
-		protocol: 'gauzy-api-server',
-		icon: 'code-outline'
-	},
-	{
-		labelKey: 'PLUGIN.DIALOG.APP_SELECTOR.AGENT',
-		descriptionKey: 'PLUGIN.DIALOG.APP_SELECTOR.AGENT_DESC',
-		protocol: 'gauzy-agent',
-		icon: 'person-outline'
-	}
-];
-
 @Component({
 	selector: 'lib-dialog-app-selector',
 	templateUrl: './dialog-app-selector.component.html',
@@ -57,7 +25,41 @@ export const DESKTOP_APP_OPTIONS: IAppOption[] = [
 	imports: [NbCardModule, NbIconModule, NbButtonModule, NbRadioModule, NbTooltipModule, TranslatePipe]
 })
 export class DialogAppSelectorComponent {
-	public readonly apps: IAppOption[] = DESKTOP_APP_OPTIONS;
+	private readonly env = inject<Environment>(GAUZY_ENV, { optional: true });
+
+	public readonly apps: IAppOption[] = [
+		{
+			labelKey: 'PLUGIN.DIALOG.APP_SELECTOR.DESKTOP',
+			descriptionKey: 'PLUGIN.DIALOG.APP_SELECTOR.DESKTOP_DESC',
+			protocol: this.env?.DESKTOP_APP_PROTOCOL ?? 'gauzy-desktop',
+			icon: 'monitor-outline'
+		},
+		{
+			labelKey: 'PLUGIN.DIALOG.APP_SELECTOR.TIMER',
+			descriptionKey: 'PLUGIN.DIALOG.APP_SELECTOR.TIMER_DESC',
+			protocol: this.env?.DESKTOP_TIMER_APP_PROTOCOL ?? 'gauzy-timer',
+			icon: 'clock-outline'
+		},
+		{
+			labelKey: 'PLUGIN.DIALOG.APP_SELECTOR.SERVER',
+			descriptionKey: 'PLUGIN.DIALOG.APP_SELECTOR.SERVER_DESC',
+			protocol: this.env?.DESKTOP_SERVER_APP_PROTOCOL ?? 'gauzy-server',
+			icon: 'hard-drive-outline'
+		},
+		{
+			labelKey: 'PLUGIN.DIALOG.APP_SELECTOR.API_SERVER',
+			descriptionKey: 'PLUGIN.DIALOG.APP_SELECTOR.API_SERVER_DESC',
+			protocol: this.env?.DESKTOP_API_SERVER_APP_PROTOCOL ?? 'gauzy-api-server',
+			icon: 'code-outline'
+		},
+		{
+			labelKey: 'PLUGIN.DIALOG.APP_SELECTOR.AGENT',
+			descriptionKey: 'PLUGIN.DIALOG.APP_SELECTOR.AGENT_DESC',
+			protocol: this.env?.AGENT_APP_PROTOCOL ?? 'gauzy-agent',
+			icon: 'person-outline'
+		}
+	];
+
 	public readonly selectedProtocol = signal<string | null>(null);
 
 	constructor(private readonly dialogRef: NbDialogRef<DialogAppSelectorComponent>) {}
