@@ -299,6 +299,6 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	 * The actual deep link logic is handled by PluginInstallationEffects.installFromWeb$.
 	 */
 	public installFromWeb(): void {
-		this.action.dispatch(PluginMarketplaceActions.installFromWeb(this.plugin));
+		this.action.dispatch(PluginMarketplaceActions.install(this.plugin));
 	}
 }

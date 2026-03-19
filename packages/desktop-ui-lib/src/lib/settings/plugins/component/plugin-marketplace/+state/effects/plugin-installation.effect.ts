@@ -31,6 +31,7 @@ import {
 import { PluginElectronService } from '../../../../services/plugin-electron.service';
 import { PluginEnvironmentService } from '../../../../services/plugin-environment.service';
 import { PluginService } from '../../../../services/plugin.service';
+import { DialogAppSelectorComponent } from '../../plugin-marketplace-item/dialog-app-selector/dialog-app-selector.component';
 import { DialogInstallationValidationComponent } from '../../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
 import { InstallationValidationChainBuilder } from '../../services';
 import { PluginInstallationActions } from '../actions/plugin-installation.action';
@@ -96,7 +97,7 @@ export class PluginInstallationEffects {
 								);
 							}
 
-							if(this.environmentService.canUseDeepLink(plugin)) {
+							if (this.environmentService.canUseDeepLink(plugin)) {
 								return of(PluginMarketplaceActions.installFromWeb(plugin));
 							}
 
@@ -200,39 +201,55 @@ export class PluginInstallationEffects {
 
 	/**
 	 * Handles web-to-desktop installation via the gauzy:// deep link protocol.
-	 * Constructs a protocol URL and opens it through a hidden anchor element so
-	 * that browsers which block non-http(s) assignments to `window.location` still
-	 * honour the custom scheme.
+	 *
+	 * Flow:
+	 * 1. Open app-selector dialog listing all supported desktop apps
+	 * 2. If user cancels, do nothing
+	 * 3. Construct a deep-link URL using the chosen app's protocol
+	 * 4. Open it via a hidden anchor so browser-blocked scheme navigations still work
 	 */
 	installFromWeb$ = createEffect(
 		() =>
 			this.action$.pipe(
 				ofType(PluginMarketplaceActions.installFromWeb),
-				tap(({ plugin }) => {
-					const versionId = plugin.version?.id ?? '';
+				exhaustMap(({ plugin }) =>
+					this.openAppSelectorDialog().pipe(
+						switchMap((protocol) => {
+							if (!protocol) {
+								return of(PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false }));
+							}
+							const versionId = plugin.version?.id ?? '';
+							const params = new URLSearchParams({
+								pluginId: plugin.id,
+								versionId,
+								forceInstall: 'true'
+							});
 
-					const params = new URLSearchParams({
-						pluginId: plugin.id,
-						versionId,
-						forceInstall: 'true'
-					});
+							const deepLinkUrl = `${protocol}://install-plugin?${params.toString()}`;
 
-					const deepLinkUrl = `${this.environmentService.protocol}://install-plugin?${params.toString()}`;
+							const anchor = this.document.createElement('a');
+							anchor.href = deepLinkUrl;
+							anchor.style.display = 'none';
+							this.document.body.appendChild(anchor);
+							anchor.click();
+							anchor.remove();
 
-					const anchor = this.document.createElement('a');
-					anchor.href = deepLinkUrl;
-					anchor.style.display = 'none';
-					this.document.body.appendChild(anchor);
-					anchor.click();
-					anchor.remove();
-
-					this.toastrService.success(
-						this.translateService.instant('PLUGIN.TOASTR.OPENING_DESKTOP_APP')
-					);
-				})
+							return EMPTY;
+						})
+					)
+				)
 			),
-		{ dispatch: false }
+		{ dispatch: true }
 	);
+
+	/**
+	 * Opens the app-selector dialog and returns the chosen protocol string, or null if dismissed.
+	 */
+	private openAppSelectorDialog(): Observable<string | null> {
+		return this.dialogService
+			.open(DialogAppSelectorComponent, { backdropClass: 'backdrop-blur' })
+			.onClose.pipe(take(1));
+	}
 
 	/**
 	 * Main installation orchestrator
@@ -545,10 +562,7 @@ export class PluginInstallationEffects {
 						| ReturnType<typeof PluginActions.selectPlugin>
 						| ReturnType<typeof PluginActions.refresh>
 						| ReturnType<typeof PluginToggleActions.toggle>;
-					const actions: DispatchableAction[] = [
-						PluginActions.selectPlugin(null),
-						PluginActions.refresh()
-					];
+					const actions: DispatchableAction[] = [PluginActions.selectPlugin(null), PluginActions.refresh()];
 					// Only toggle for marketplace plugins
 					if (marketplaceId) {
 						actions.unshift(PluginToggleActions.toggle({ pluginId: marketplaceId, enabled: true }));
@@ -588,7 +602,7 @@ export class PluginInstallationEffects {
 									pluginId,
 									enabled: false
 								})
-						  )
+							)
 						: EMPTY;
 				})
 			),
@@ -620,7 +634,7 @@ export class PluginInstallationEffects {
 									pluginId,
 									enabled: false
 								})
-						  )
+							)
 						: EMPTY;
 				})
 			),
@@ -650,7 +664,7 @@ export class PluginInstallationEffects {
 									pluginId,
 									enabled: false
 								})
-						  )
+							)
 						: EMPTY;
 				})
 			),
@@ -683,7 +697,7 @@ export class PluginInstallationEffects {
 									pluginId,
 									enabled: false
 								})
-						  )
+							)
 						: EMPTY;
 				})
 			),

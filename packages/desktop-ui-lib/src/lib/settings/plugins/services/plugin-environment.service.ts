@@ -1,21 +1,16 @@
-import { Inject, Injectable, Optional } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { IPlugin, PluginType } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { GAUZY_ENV } from '../../../constants';
 import { ToastrNotificationService } from '../../../services/toastr-notification.service';
 import { PluginElectronService } from './plugin-electron.service';
 
-
 @Injectable({ providedIn: 'root' })
 export class PluginEnvironmentService {
-	constructor(
-		private readonly translateService: TranslateService,
-		private readonly toastrService: ToastrNotificationService,
-		@Inject(GAUZY_ENV)
-		private readonly env: any,
-		@Optional()
-		private readonly pluginElectronService?: PluginElectronService,
-	) {}
+	private readonly translateService = inject(TranslateService);
+	private readonly toastrService = inject(ToastrNotificationService);
+	private readonly env = inject(GAUZY_ENV, { optional: true });
+	private readonly pluginElectronService = inject(PluginElectronService, { optional: true });
 
 	/** Determine if running inside the Electron desktop shell */
 	public isDesktop(): boolean {
@@ -42,7 +37,7 @@ export class PluginEnvironmentService {
 		}
 
 		// First check if it's a desktop plugin and we're in the desktop environment, which also allows deep-link installation from web
-		if(this.canUseDeepLink(plugin)) {
+		if (this.canUseDeepLink(plugin)) {
 			return true;
 		}
 

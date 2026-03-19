@@ -5,32 +5,32 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import {
-	NbAlertModule,
-	NbBadgeModule,
-	NbButtonGroupModule,
-	NbButtonModule,
-	NbCardModule,
-	NbCheckboxModule,
-	NbContextMenuModule,
-	NbDatepickerModule,
-	NbDialogModule,
-	NbFormFieldModule,
-	NbIconModule,
-	NbInfiniteListDirective,
-	NbInputModule,
-	NbLayoutModule,
-	NbListModule,
-	NbPopoverModule,
-	NbRadioModule,
-	NbRouteTabsetModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbStepperModule,
-	NbTabsetModule,
-	NbTagModule,
-	NbToggleModule,
-	NbTooltipModule,
-	NbUserModule
+    NbAlertModule,
+    NbBadgeModule,
+    NbButtonGroupModule,
+    NbButtonModule,
+    NbCardModule,
+    NbCheckboxModule,
+    NbContextMenuModule,
+    NbDatepickerModule,
+    NbDialogModule,
+    NbFormFieldModule,
+    NbIconModule,
+    NbInfiniteListDirective,
+    NbInputModule,
+    NbLayoutModule,
+    NbListModule,
+    NbPopoverModule,
+    NbRadioModule,
+    NbRouteTabsetModule,
+    NbSelectModule,
+    NbSpinnerModule,
+    NbStepperModule,
+    NbTabsetModule,
+    NbTagModule,
+    NbToggleModule,
+    NbTooltipModule,
+    NbUserModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
@@ -84,6 +84,7 @@ import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace
 import { PluginMarketplaceFilterComponent } from './component/plugin-marketplace/plugin-marketplace-filter/plugin-marketplace-filter.component';
 import { CategorySelectorComponent } from './component/plugin-marketplace/plugin-marketplace-item/category-selector/category-selector.component';
 import { CreateCategoryDialogComponent } from './component/plugin-marketplace/plugin-marketplace-item/create-category-dialog/create-category-dialog.component';
+import { DialogAppSelectorComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-app-selector/dialog-app-selector.component';
 import { DialogCreateSourceComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-source/dialog-create-source.component';
 import { DialogCreateVersionComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-version/dialog-create-version.component';
 import { DialogInstallationValidationComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
@@ -142,16 +143,16 @@ import { OverviewTabModule } from './component/plugin-marketplace/plugin-marketp
 import { UserManagementTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/user-management-tab/user-management-tab.module';
 import { PluginSubscriptionHierarchyComponent } from './component/plugin-marketplace/plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import {
-	BillingContactSectionComponent,
-	BillingCycleSectionComponent,
-	CardDetailsSectionComponent,
-	PaymentMethodSectionComponent,
-	SubscriptionBillingFormComponent,
-	SubscriptionConsentSectionComponent,
-	SubscriptionFormService,
-	SubscriptionPlanService,
-	SubscriptionStatusBadgeComponent,
-	SubscriptionStatusService
+    BillingContactSectionComponent,
+    BillingCycleSectionComponent,
+    CardDetailsSectionComponent,
+    PaymentMethodSectionComponent,
+    SubscriptionBillingFormComponent,
+    SubscriptionConsentSectionComponent,
+    SubscriptionFormService,
+    SubscriptionPlanService,
+    SubscriptionStatusBadgeComponent,
+    SubscriptionStatusService
 } from './component/plugin-marketplace/shared';
 import { UploadSelectionComponent } from './component/upload-selection/upload-selection.component';
 import { PluginDeepLinkService } from './services/plugin-deep-link.service';
@@ -232,6 +233,7 @@ import { PluginDeepLinkService } from './services/plugin-deep-link.service';
 		CategorySelectorComponent,
 		CreateCategoryDialogComponent,
 		DialogInstallationValidationComponent,
+		DialogAppSelectorComponent,
 		DialogSubscriptionPlanCreatorComponent,
 		CdnFormComponent,
 		GauzyFormComponent,
