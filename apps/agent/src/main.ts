@@ -37,7 +37,9 @@ import {
 	Store,
 	TenantInterceptor,
 	TimeoutInterceptor,
-	TokenInterceptor
+	TokenInterceptor,
+	providePluginInitializers,
+	providePluginsEffects
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { provideI18n } from '@gauzy/ui-core/i18n';
@@ -84,6 +86,8 @@ if (environment.SENTRY_DSN) {
 bootstrapApplication(AppComponent, {
 	providers: [
 		provideZoneChangeDetection(),
+		providePluginsEffects(),
+		providePluginInitializers(),
 		importProvidersFrom(
 			NbLayoutModule,
 			AuthModule,
