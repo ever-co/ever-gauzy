@@ -10,7 +10,7 @@ export class AuthenticationHandler {
 		private configStore: IConfigStore,
 		private windowService: IWindowService,
 		private config: any
-	) {}
+	) { }
 
 	async handleAuthSuccess(arg: any): Promise<void> {
 		console.log('Auth Success');
@@ -56,9 +56,9 @@ export class AuthenticationHandler {
 		});
 	}
 
-	async handleLogout(): Promise<void> {
+	async handleLogout(isRestart?: boolean): Promise<void> {
 		await this.stopTimerIfRunning();
-		this.closeWindows();
+		this.closeWindows(isRestart);
 		await this.clearUserData();
 	}
 
@@ -82,9 +82,11 @@ export class AuthenticationHandler {
 		}
 	}
 
-	private closeWindows(): void {
+	private closeWindows(isRestart?: boolean): void {
 		const appWindowManager = AppWindowManager.getInstance();
-		appWindowManager.settingWindow?.close?.();
+		if (!isRestart) {
+			appWindowManager.settingWindow?.close?.();
+		}
 		appWindowManager.alwaysOnWindow?.browserWindow?.close?.();
 	}
 

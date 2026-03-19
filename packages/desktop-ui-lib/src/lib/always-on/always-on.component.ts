@@ -41,7 +41,7 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 	public isTrackingEnabled: boolean = true;
 	public running = false;
 	public isBillable = true;
-	private readonly COMPACT_MODE_WIDTH = 60;
+	private readonly COMPACT_MODE_WIDTH = 270;
 
 	play = faPlay;
 	pause = faPause;
@@ -132,7 +132,7 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 	}
 
 	changeExpandMode(width: number) {
-		if (width > this.COMPACT_MODE_WIDTH) {
+		if (width >= this.COMPACT_MODE_WIDTH) {
 			this.isExpandMode = true;
 		} else {
 			this.isExpandMode = false;

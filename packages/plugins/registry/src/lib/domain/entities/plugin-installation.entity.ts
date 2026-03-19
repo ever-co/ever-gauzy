@@ -164,6 +164,7 @@ export class PluginInstallation extends TenantOrganizationBaseEntity implements 
 	public markAsInstalled(): void {
 		this.status = PluginInstallationStatus.INSTALLED;
 		this.installedAt = new Date();
+		this.uninstalledAt = null;
 	}
 
 	/**

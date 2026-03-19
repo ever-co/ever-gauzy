@@ -1,6 +1,6 @@
+import { env } from '../../env';
 import { IPackage } from '../interfaces/i-package';
 import { BasePackager } from './base-packager';
-import { env } from '../../env';
 
 export class ServerPackager extends BasePackager {
 	public prepare(pkg: IPackage): IPackage {
@@ -13,6 +13,7 @@ export class ServerPackager extends BasePackager {
 			env.DESKTOP_SERVER_APP_DESCRIPTION || pkg.build.productName;
 		pkg.build.linux.executableName =
 			env.DESKTOP_SERVER_APP_NAME || pkg.build.linux.executableName;
-		return pkg;
+		const protocol = env.DESKTOP_SERVER_APP_PROTOCOL || 'gauzy-server';
+		return this.registerProtocol(pkg, protocol);
 	}
 }

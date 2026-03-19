@@ -26,6 +26,7 @@ export class DesktopTimerEnvironmentContent implements IContentGenerator {
 			REPO_OWNER: '${variable.DESKTOP_TIMER_APP_REPO_OWNER || variable.REPO_OWNER}',
 			WELCOME_TITLE: '${variable.DESKTOP_TIMER_APP_WELCOME_TITLE || variable.WELCOME_TITLE || ''}',
 			WELCOME_CONTENT: '${variable.DESKTOP_TIMER_APP_WELCOME_CONTENT || variable.WELCOME_CONTENT || ''}',
+			PROTOCOL: '${variable.DESKTOP_TIMER_APP_PROTOCOL || variable.PROTOCOL || 'gauzy-timer'}',
 			IS_DESKTOP_TIMER: ${true},
 			IS_DESKTOP: ${false},
 			IS_SERVER: ${false},

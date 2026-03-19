@@ -178,13 +178,13 @@ class ElectronPluginListener {
 
 	private async syncMarketplaceInstallationId(
 		event: IpcMainEvent,
-		{ marketplaceId, installationId }: { marketplaceId: string; installationId: string }
+		{ marketplaceId, installationId, name }: { marketplaceId: string | null; installationId: string; name?: string }
 	): Promise<void> {
 		event.reply(PluginChannel.STATUS, {
 			status: 'inProgress',
 			message: 'Updating Plugin Marketplace Installation ID...'
 		});
-		await this.pluginManager.completeInstallation(marketplaceId, installationId);
+		await this.pluginManager.completeInstallation(marketplaceId, installationId, name);
 		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Installation completed' });
 	}
 
