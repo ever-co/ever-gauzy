@@ -21,6 +21,8 @@ export class DesktopTimerPackager extends BasePackager {
 				role: "Editor"
 			}
 		];
+
+		// macOS: register URL scheme via CFBundleURLTypes
 		pkg.build.mac.extendInfo = {
 			...pkg.build.mac.extendInfo,
 			CFBundleURLTypes: [
@@ -30,7 +32,19 @@ export class DesktopTimerPackager extends BasePackager {
 					CFBundleTypeRole: "Editor"
 				}
 			]
-		}
+		};
+
+		// Linux: register protocol handler via MIME type
+		pkg.build.linux.mimeTypes = [
+			...(pkg.build.linux.mimeTypes || []),
+			`x-scheme-handler/${protocol}`
+		];
+
+		// Windows (NSIS): register protocol handler
+		pkg.build.nsis = {
+			...pkg.build.nsis,
+			perMachine: true
+		};
 		return pkg;
 	}
 }

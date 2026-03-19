@@ -49,6 +49,7 @@ export interface IPackage {
 			artifactName: string;
 			synopsis: string;
 			category: string;
+			mimeTypes?: string[];
 		};
 		nsis: {
 			oneClick: boolean;
