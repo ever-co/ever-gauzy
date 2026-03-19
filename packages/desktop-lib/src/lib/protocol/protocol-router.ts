@@ -23,7 +23,10 @@ export class ProtocolRouter {
 	 * initialized).  Each entry is retried in order on the next
 	 * `processPending()` call; a URL is removed only after it succeeds.
 	 */
-	private _pendingUrls: string[] = [];
+	private readonly _pendingUrls: string[] = [];
+
+	/** Reentrancy guard — prevents concurrent `processPending()` loops. */
+	private _processingPending = false;
 
 	/** Returns the application-wide singleton instance. */
 	static getInstance(): ProtocolRouter {
@@ -54,24 +57,35 @@ export class ProtocolRouter {
 	 * `rawUrl` is stored internally so it can be retried later via
 	 * `processPending()`.
 	 *
+	 * Non-retriable failures (invalid URL, no registered handler) are logged
+	 * and discarded — they are never queued.
+	 *
 	 * @param rawUrl The raw `gauzy://…` string received from the OS.
 	 */
 	async route(rawUrl: string): Promise<void> {
+		log.info('[ProtocolRouter] Routing deep link:', rawUrl);
+
+		// Non-retriable: a malformed URL can never succeed on retry.
+		let parsed: URL;
 		try {
-			log.info('[ProtocolRouter] Routing deep link:', rawUrl);
+			parsed = new URL(rawUrl);
+		} catch (error) {
+			log.error('[ProtocolRouter] Invalid URL — discarding:', rawUrl, error);
+			return;
+		}
 
-			const parsed = new URL(rawUrl);
-			const action = this.extractAction(parsed);
+		const action = this.extractAction(parsed);
+		log.info('[ProtocolRouter] Resolved action:', action);
 
-			log.info('[ProtocolRouter] Resolved action:', action);
+		// Non-retriable: no handler will appear for an unknown action on retry.
+		const handler = this.handlers.find((h) => h.canHandle(action));
+		if (!handler) {
+			log.warn('[ProtocolRouter] No handler registered for action:', action);
+			return;
+		}
 
-			const handler = this.handlers.find((h) => h.canHandle(action));
-
-			if (!handler) {
-				log.warn('[ProtocolRouter] No handler registered for action:', action);
-				return;
-			}
-
+		// Transient failure (e.g. target window not yet ready) — safe to retry.
+		try {
 			await handler.handle(parsed);
 		} catch (error) {
 			log.error('[ProtocolRouter] Error during routing — queuing as pending:', error);
@@ -84,15 +98,32 @@ export class ProtocolRouter {
 	 * is processed successfully; if it fails again it remains at the front of
 	 * the queue so the next `processPending()` call can retry it.
 	 *
+	 * Concurrent invocations are ignored — only one loop mutates the queue at
+	 * a time.  Non-retriable entries (invalid URL, no handler) are discarded
+	 * rather than stalling the queue.
+	 *
 	 * Call this once the application is fully initialized.
 	 */
 	async processPending(): Promise<void> {
-		while (this._pendingUrls.length > 0) {
-			const url = this._pendingUrls[0];
-			log.info('[ProtocolRouter] Retrying pending deep link:', url);
+		if (this._processingPending) {
+			return;
+		}
+		this._processingPending = true;
+		try {
+			while (this._pendingUrls.length > 0) {
+				const url = this._pendingUrls[0];
+				log.info('[ProtocolRouter] Retrying pending deep link:', url);
 
-			try {
-				const parsed = new URL(url);
+				// Non-retriable: discard and continue rather than stalling the queue.
+				let parsed: URL;
+				try {
+					parsed = new URL(url);
+				} catch (error) {
+					log.warn('[ProtocolRouter] Invalid URL in pending queue — discarding:', url, error);
+					this._pendingUrls.shift();
+					continue;
+				}
+
 				const action = this.extractAction(parsed);
 				const handler = this.handlers.find((h) => h.canHandle(action));
 
@@ -102,12 +133,16 @@ export class ProtocolRouter {
 					continue;
 				}
 
-				await handler.handle(parsed);
-				this._pendingUrls.shift();
-			} catch (error) {
-				log.error('[ProtocolRouter] Retry failed — keeping in queue:', error);
-				break;
+				try {
+					await handler.handle(parsed);
+					this._pendingUrls.shift();
+				} catch (error) {
+					log.error('[ProtocolRouter] Retry failed — keeping in queue:', error);
+					break;
+				}
 			}
+		} finally {
+			this._processingPending = false;
 		}
 	}
 
