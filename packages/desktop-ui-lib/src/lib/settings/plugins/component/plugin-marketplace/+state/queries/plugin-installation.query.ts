@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Query } from '@datorama/akita';
-import { map, Observable } from 'rxjs';
+import { combineLatest, distinctUntilChanged, map, Observable } from 'rxjs';
 
 import { ID } from '@gauzy/contracts';
 import { PluginQuery } from '../../../+state/plugin.query';
@@ -106,17 +106,21 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 
 	public installed$(pluginId: ID): Observable<boolean> {
 		if (!this.pluginElectronService.isDesktop) {
-			return this.pluginMarkeplaceQuery.plugins$.pipe(
-				map((plugins) => {
-					return plugins.some((p) => p.id === pluginId && p.installed);
-				})
+			return combineLatest([
+				this.pluginMarkeplaceQuery.plugins$,
+				this.pluginMarkeplaceQuery.plugin$
+			]).pipe(
+				map(([plugins, plugin]) => {
+					const isCurrentPlugin = plugin?.id === pluginId && plugin?.installed;
+					return isCurrentPlugin || plugins.some((p) => p.id === pluginId && p.installed);
+				}),
+				distinctUntilChanged()
 			);
 		}
 
 		return this.pluginQuery.plugins$.pipe(
-			map((plugins: IPlugin[]) => {
-				return plugins.some((p) => p.marketplaceId === pluginId);
-			})
+			map((plugins: IPlugin[]) => plugins.some((p) => p.marketplaceId === pluginId)),
+			distinctUntilChanged()
 		);
 	}
 
