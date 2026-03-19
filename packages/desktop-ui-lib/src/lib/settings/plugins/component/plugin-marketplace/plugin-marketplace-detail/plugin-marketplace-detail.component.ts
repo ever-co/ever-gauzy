@@ -5,7 +5,7 @@ import { NbBadgeModule, NbButtonModule, NbContextMenuModule, NbIconModule, NbMen
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { filter, tap } from 'rxjs';
+import { filter, map, tap } from 'rxjs';
 import { PluginSettingsActions, PluginSubscriptionActions } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
@@ -69,6 +69,12 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		this.installationQuery
 			.installed$(this.plugin.id)
 			.pipe(
+				map((installed) => {
+					if(this.environmentService.isDesktop()) {
+						return installed;
+					}
+					return this.plugin.installed;
+				}),
 				tap((enabled) =>
 					this.action.dispatch(PluginToggleActions.toggle({ pluginId: this.plugin.id, enabled }))
 				),
