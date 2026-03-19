@@ -14,37 +14,6 @@ export class DesktopTimerPackager extends BasePackager {
 		pkg.build.linux.executableName =
 			env.DESKTOP_TIMER_APP_NAME || pkg.build.linux.executableName;
 		const protocol = env.DESKTOP_TIMER_APP_PROTOCOL || 'gauzy-timer';
-		pkg.build.protocols = [
-			{
-				name: `${protocol} Protocol`,
-				schemes: [protocol],
-				role: "Editor"
-			}
-		];
-
-		// macOS: register URL scheme via CFBundleURLTypes
-		pkg.build.mac.extendInfo = {
-			...pkg.build.mac.extendInfo,
-			CFBundleURLTypes: [
-				{
-					CFBundleURLName: `${protocol} Protocol`,
-					CFBundleURLSchemes: [protocol],
-					CFBundleTypeRole: "Editor"
-				}
-			]
-		};
-
-		// Linux: register protocol handler via MIME type
-		pkg.build.linux.mimeTypes = [
-			...(pkg.build.linux.mimeTypes || []),
-			`x-scheme-handler/${protocol}`
-		];
-
-		// Windows (NSIS): register protocol handler
-		pkg.build.nsis = {
-			...pkg.build.nsis,
-			perMachine: true
-		};
-		return pkg;
+		return this.registerProtocol(pkg, protocol);
 	}
 }
