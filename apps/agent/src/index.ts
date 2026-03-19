@@ -1,5 +1,5 @@
 import { logger as log } from '@gauzy/desktop-core';
-import { LocalStore, ProtocolRouter, setupAkitaStorageHandler } from '@gauzy/desktop-lib';
+import { InstallPluginHandler, LocalStore, ProtocolRouter, setupAkitaStorageHandler } from '@gauzy/desktop-lib';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import { environment } from './environments/environment';
@@ -62,6 +62,9 @@ if (!gotTheLock) {
 if (process.platform === 'win32') {
 	app.setAppUserModelId(process.env.APP_ID);
 }
+
+// Configure the protocol router with all supported deep-link action handlers.
+protocolRouter.register(new InstallPluginHandler(path.join(__dirname, './index.html')));
 
 // Setup storage handler for Akita state management
 setupAkitaStorageHandler();

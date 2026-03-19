@@ -6,16 +6,16 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 import {
-    app,
-    BrowserWindow,
-    ipcMain,
-    Menu,
-    MenuItemConstructorOptions,
-    nativeImage,
-    nativeTheme,
-    screen,
-    shell,
-    Tray
+	app,
+	BrowserWindow,
+	ipcMain,
+	Menu,
+	MenuItemConstructorOptions,
+	nativeImage,
+	nativeTheme,
+	screen,
+	shell,
+	Tray
 } from 'electron';
 import * as path from 'node:path';
 
@@ -31,31 +31,32 @@ console.log('Server Node Modules Path', path.join(__dirname, 'node_modules'));
 
 import * as remoteMain from '@electron/remote/main';
 import {
-    AppError,
-    AppMenu,
-    AppWindowManager,
-    DesktopDialog,
-    DesktopServer,
-    DesktopThemeListener,
-    DesktopUpdater,
-    DialogErrorHandler,
-    DialogOpenFile,
-    DialogStopServerExitConfirmation,
-    ErrorEventManager,
-    ErrorReport,
-    ErrorReportRepository,
-    ILocalServer,
-    IPathWindow,
-    IServerConfig,
-    LocalStore,
-    ProtocolRouter,
-    ReadWriteFile,
-    ReverseProxy,
-    ReverseUiProxy,
-    ServerConfig,
-    setupAkitaStorageHandler,
-    TranslateLoader,
-    TranslateService
+	AppError,
+	AppMenu,
+	AppWindowManager,
+	DesktopDialog,
+	DesktopServer,
+	DesktopThemeListener,
+	DesktopUpdater,
+	DialogErrorHandler,
+	DialogOpenFile,
+	DialogStopServerExitConfirmation,
+	ErrorEventManager,
+	ErrorReport,
+	ErrorReportRepository,
+	ILocalServer,
+	InstallPluginHandler,
+	IPathWindow,
+	IServerConfig,
+	LocalStore,
+	ProtocolRouter,
+	ReadWriteFile,
+	ReverseProxy,
+	ReverseUiProxy,
+	ServerConfig,
+	setupAkitaStorageHandler,
+	TranslateLoader,
+	TranslateService
 } from '@gauzy/desktop-lib';
 import { createAboutWindow, createServerWindow, SplashScreen } from '@gauzy/desktop-window';
 import * as Sentry from '@sentry/electron/main';
@@ -202,6 +203,9 @@ if (!gotTheLock) {
 		protocolRouter.route(url);
 	});
 }
+
+// Configure the protocol router with all supported deep-link action handlers.
+protocolRouter.register(new InstallPluginHandler(pathWindow.timeTrackerUi));
 
 // Set unlimited listeners
 ipcMain.setMaxListeners(0);

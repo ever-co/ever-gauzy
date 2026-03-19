@@ -45,6 +45,7 @@ import {
 	ErrorReport,
 	ErrorReportRepository,
 	ILocalServer,
+	InstallPluginHandler,
 	IPathWindow,
 	IServerConfig,
 	LocalStore,
@@ -191,6 +192,9 @@ if (!gotTheLock) {
 		protocolRouter.route(url);
 	});
 }
+
+// Configure the protocol router with all supported deep-link action handlers.
+protocolRouter.register(new InstallPluginHandler(pathWindow.timeTrackerUi));
 
 // Set unlimited listeners
 ipcMain.setMaxListeners(0);
