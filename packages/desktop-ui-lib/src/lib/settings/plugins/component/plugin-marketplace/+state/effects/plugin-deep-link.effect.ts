@@ -26,7 +26,7 @@ export class PluginDeepLinkEffects {
 	private readonly toastrService = inject(ToastrNotificationService);
 	private readonly translateService = inject(TranslateService);
 	private readonly action$ = inject(Actions);
-	private readonly pluginMarketpalceQuery = inject(PluginMarketplaceQuery);
+	private readonly pluginMarketplaceQuery = inject(PluginMarketplaceQuery);
 
 	/**
 	 * Continuously listens for `deep-link-install-plugin` IPC events sent by the
@@ -47,7 +47,7 @@ export class PluginDeepLinkEffects {
 			this.action$.pipe(
 				ofType(PluginDeepLinkActions.install),
 				switchMap(({ pluginId, versionId, forceInstall }) =>
-					this.pluginMarketpalceQuery.plugins$.pipe(
+					this.pluginMarketplaceQuery.plugins$.pipe(
 						take(1),
 						switchMap((plugins) => {
 							const plugin = plugins.find((p) => p.id === pluginId);
@@ -67,7 +67,7 @@ export class PluginDeepLinkEffects {
 								return of(PluginMarketplaceActions.install(plugin, true));
 							} else {
 								// Review before install path: navigate to plugin detail and show informational toastr
-								this.router.navigate(['/', 'plugings', 'marketplace', plugin.id]);
+								this.router.navigate(['/', 'plugins', 'marketplace', plugin.id]);
 								this.toastrService.info(
 									this.translateService.instant('PLUGIN.DEEP_LINK.REVIEW_AND_INSTALL', {
 										name: plugin.name

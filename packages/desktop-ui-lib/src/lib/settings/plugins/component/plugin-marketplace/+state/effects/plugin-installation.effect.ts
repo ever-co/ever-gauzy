@@ -206,7 +206,7 @@ export class PluginInstallationEffects {
 	 * 1. Open app-selector dialog listing all supported desktop apps
 	 * 2. If user cancels, do nothing
 	 * 3. Construct a deep-link URL using the chosen app's protocol
-	 * 4. Open it via a hidden anchor so browser-blocked scheme navigations still work
+	 * 4. Open it via a hidden anchor so browser-blocked scheme navigation still work
 	 */
 	installFromWeb$ = createEffect(
 		() =>

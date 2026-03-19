@@ -20,7 +20,7 @@ export class ProtocolRouter {
 
 	/**
 	 * URL stored when a handler threw during processing (e.g. target window
-	 * not yet initialised).  Retried on the next `processPending()` call.
+	 * not yet initialized).  Retried on the next `processPending()` call.
 	 */
 	private _pendingUrl: string | null = null;
 
@@ -80,7 +80,7 @@ export class ProtocolRouter {
 
 	/**
 	 * Retries the pending URL (if any) that was stored after a previous
-	 * routing failure.  Call this once the application is fully initialised.
+	 * routing failure.  Call this once the application is fully initialized.
 	 */
 	async processPending(): Promise<void> {
 		if (!this._pendingUrl) {
@@ -106,7 +106,7 @@ export class ProtocolRouter {
 	 *  - `gauzy://install-plugin?foo=bar`  → `"install-plugin"`
 	 *  - `gauzy:////install-plugin`        → `"install-plugin"`
 	 *
-	 * Centralised here (DRY) — previously this logic was inlined inside the
+	 * Centralized here (DRY) — previously this logic was inlined inside the
 	 * `handleDeepLink` function.
 	 */
 	private extractAction(url: URL): string {
