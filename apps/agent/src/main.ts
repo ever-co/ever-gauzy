@@ -56,6 +56,7 @@ import {
 	NbToastrModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { provideEffectsManager } from '@ngneat/effects-ng';
 import * as Sentry from '@sentry/angular';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
@@ -86,6 +87,7 @@ if (environment.SENTRY_DSN) {
 bootstrapApplication(AppComponent, {
 	providers: [
 		provideZoneChangeDetection(),
+		provideEffectsManager(),
 		providePluginsEffects(),
 		providePluginInitializers(),
 		importProvidersFrom(
