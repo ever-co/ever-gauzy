@@ -13,11 +13,14 @@ import {
 	exhaustMap,
 	finalize,
 	from,
+	fromEvent,
 	map,
 	of,
+	race,
 	switchMap,
 	take,
-	tap
+	tap,
+	timer
 } from 'rxjs';
 import { PluginActions } from '../../../+state/plugin.action';
 import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
@@ -231,10 +234,40 @@ export class PluginInstallationEffects {
 							anchor.href = deepLinkUrl;
 							anchor.style.display = 'none';
 							this.document.body.appendChild(anchor);
+
+							// Observe whether the OS handled the protocol by watching for a
+							// window blur event (the desktop app steals focus) within 2.5 s.
+							const win = this.document.defaultView;
+							const appOpened$ = win
+								? fromEvent<Event>(win, 'blur').pipe(
+										take(1),
+										map(() => true)
+								  )
+								: EMPTY;
+							const timeout$ = timer(2500).pipe(map(() => false));
+
 							anchor.click();
 							anchor.remove();
 
-							return EMPTY;
+							// inside the desktop app, so the web UI must reflect uninstalled state.
+							return race(appOpened$, timeout$).pipe(
+								map((appOpened) => {
+									if (appOpened) {
+										this.toastrService.info(
+											this.translateService.instant(
+												'PLUGIN.TOASTR.INFO.DEEP_LINK_OPENED'
+											)
+										);
+									} else {
+										this.toastrService.warn(
+											this.translateService.instant(
+												'PLUGIN.TOASTR.WARNING.DEEP_LINK_FAILED'
+											)
+										);
+									}
+									return PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false });
+								})
+							);
 						})
 					)
 				)

@@ -5781,7 +5781,8 @@
 				"DOWNLOAD_COMPLETED": "Download completed",
 				"SERVER_INSTALLATION_COMPLETED": "Server installation completed",
 				"ACTIVATING": "Activating plugin...",
-				"REVERTING_INSTALLATION": "Reverting installation..."
+				"REVERTING_INSTALLATION": "Reverting installation...",
+				"DEEP_LINK_OPENED": "Desktop app opened. Complete the installation there."
 			},
 			"ERROR": {
 				"VERSION": {
@@ -5808,7 +5809,8 @@
 				"COMPLETE_INSTALLATION": "Failed to complete installation"
 			},
 			"WARNING": {
-				"PLUGIN_NOT_FOUND": "Plugin not found: {{name}}"
+				"PLUGIN_NOT_FOUND": "Plugin not found: {{name}}",
+				"DEEP_LINK_FAILED": "Could not open the desktop app. Please make sure it is installed and try again."
 			}
 		},
 		"BUTTONS": {
