@@ -50,7 +50,15 @@ export class PluginDeepLinkEffects {
 					this.pluginMarketplaceQuery.plugins$.pipe(
 						take(1),
 						switchMap((plugins) => {
-							const plugin = plugins.find((p) => p.id === pluginId);
+							const plugin = plugins.find((p) => {
+								if (p.id !== pluginId) return false;
+
+								if (versionId) {
+									return p.version?.id === versionId || p.versions.some((v) => v.id === versionId);
+								}
+
+								return true; // match plugin by id only
+							});
 							if (!plugin) {
 								return this.pluginService.getOne(pluginId, {
 									where: {
@@ -63,8 +71,14 @@ export class PluginDeepLinkEffects {
 							return of(plugin);
 						}),
 						switchMap((plugin) => {
+							if (!plugin) {
+								this.toastrService.error(
+									this.translateService.instant('PLUGIN.DEEP_LINK.PLUGIN_NOT_FOUND')
+								);
+								return EMPTY;
+							}
 							if (forceInstall) {
-								return of(PluginMarketplaceActions.install(plugin, true));
+								return of(PluginMarketplaceActions.install(plugin, false));
 							} else {
 								// Review before install path: navigate to plugin detail and show informational toastr
 								this.router.navigate(['/', 'plugins', 'marketplace', plugin.id]);
