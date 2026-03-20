@@ -88,7 +88,7 @@ export class PlaneIntegrationService {
 	 * Retrieve the current Plane integration settings for the tenant.
 	 * API key and secret are NOT returned (security).
 	 */
-	async getSettings(organizationId?: string): Promise<{
+	async getSettings(_organizationId?: string): Promise<{
 		integrationTenantId: ID;
 		planeWebUrl: string;
 		planeAdminUrl: string;
