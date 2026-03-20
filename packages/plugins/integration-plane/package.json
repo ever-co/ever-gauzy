@@ -1,0 +1,70 @@
+{
+	"name": "@gauzy/plugin-integration-plane",
+	"version": "0.0.1",
+	"description": "Ever Gauzy Platform plugin for integration with Plane Project management tool.",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/integration-plane"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-integration-plane",
+		"lib:build:prod": "yarn nx build plugin-integration-plane",
+		"lib:watch": "yarn nx build plugin-integration-plane --watch"
+	},
+	"dependencies": {
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/config": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/utils": "^0.1.0",
+		"@ever-gauzy/plugin-integration-plane-api": "^0.0.4",
+		"@ever-gauzy/plugin-integration-plane-models": "^0.0.4",
+		"class-validator": "^0.14.2",
+		"class-transformer": "^0.5.1",
+		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
+		"@nestjs/cqrs": "^11.0.3",
+		"@nestjs/swagger": "^11.2.6",
+		"axios": "^1.13.5",
+		"express": "^5.2.1",
+		"moment": "^2.30.1",
+		"rxjs": "^7.8.2",
+		"tslib": "^2.3.0",
+		"typeorm": "^0.3.28"
+
+	},
+	"devDependencies": {
+		"@types/express": "^5.0.1",
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"typescript": "^5.9.3"
+	},
+	"keywords": [
+		"Plane",
+		"plane",
+		"integration",
+		"project management",
+		"API key",
+		"plugin"
+	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}
