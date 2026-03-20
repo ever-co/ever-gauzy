@@ -201,6 +201,17 @@ export class PlaneIntegrationService {
 		const tenantId = RequestContext.currentTenantId() ?? undefined;
 		const integrationTenant = await this.findIntegrationTenantOrFail(tenantId);
 
+		// Delete the old API key before generating a new one (generateApiKey rejects duplicates per tenant)
+		const settings = integrationTenant.settings || [];
+		const oldApiKeySetting = settings.find((s) => s.settingsName === PlaneSettingName.PLANE_API_KEY_ID);
+		if (oldApiKeySetting?.settingsValue) {
+			try {
+				await this.tenantApiKeyService.delete({ apiKey: oldApiKeySetting.settingsValue });
+			} catch (error: unknown) {
+				this.logger.warn(`Failed to delete old API key during regeneration: ${error instanceof Error ? error.message : String(error)}`);
+			}
+		}
+
 		// Generate a new API key/secret pair
 		const apiKeyResponse = await this.tenantApiKeyService.generateApiKey({
 			name: 'Plane Integration',
@@ -208,10 +219,8 @@ export class PlaneIntegrationService {
 		});
 
 		// Update the PLANE_API_KEY_ID setting
-		const settings = integrationTenant.settings || [];
-		const apiKeySetting = settings.find((s) => s.settingsName === PlaneSettingName.PLANE_API_KEY_ID);
-		if (apiKeySetting) {
-			apiKeySetting.settingsValue = apiKeyResponse.apiKey;
+		if (oldApiKeySetting) {
+			oldApiKeySetting.settingsValue = apiKeyResponse.apiKey;
 		} else {
 			settings.push({
 				settingsName: PlaneSettingName.PLANE_API_KEY_ID,
@@ -331,20 +340,22 @@ export class PlaneIntegrationService {
 	 * Find or create the base Integration record for Plane.
 	 */
 	private async findOrCreateBaseIntegration() {
-		try {
-			return await this.integrationService.findOneByOptions({
-				where: { provider: 'Plane' }
-			});
-		} catch {
-			return await this.integrationService.create({
-				name: 'Plane',
-				provider: 'Plane',
-				imgSrc: 'assets/integrations/plane.svg',
-				isComingSoon: false,
-				isPaid: false,
-				order: 100
-			});
+		const existing = await this.integrationService.findOneByOptions({
+			where: { provider: 'Plane' }
+		}).catch(() => null);
+
+		if (existing) {
+			return existing;
 		}
+
+		return await this.integrationService.create({
+			name: 'Plane',
+			provider: 'Plane',
+			imgSrc: 'assets/integrations/plane.svg',
+			isComingSoon: false,
+			isPaid: false,
+			order: 100
+		});
 	}
 
 	/**

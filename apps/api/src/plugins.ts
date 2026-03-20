@@ -61,7 +61,7 @@ export const plugins = [
 	IntegrationJiraPlugin,
 	// Indicates the inclusion or intention to use the IntegrationUpworkPlugin in the codebase.
 	IntegrationUpworkPlugin,
-	// Indicates the inclusion or intention to use the IntegrationOlanePlugin in the codebase.
+	// Indicates the inclusion or intention to use the IntegrationPlanePlugin in the codebase.
 	IntegrationPlanePlugin,
 	// Indicates the inclusion or intention to use the IntegrationSimPlugin in the codebase.
 	IntegrationSimPlugin,

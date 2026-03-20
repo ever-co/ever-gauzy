@@ -1,4 +1,7 @@
-const baseConfig = require('../../../.eslintrc.json');
+const { FlatCompat } = require('@eslint/eslintrc');
+
+const compat = new FlatCompat({ baseDirectory: __dirname });
+const baseConfig = compat.config(require('../../../.eslintrc.json'));
 
 module.exports = [
 	...baseConfig,

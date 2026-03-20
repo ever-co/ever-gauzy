@@ -46,7 +46,6 @@
 		"rxjs": "^7.8.2",
 		"tslib": "^2.3.0",
 		"typeorm": "^0.3.28"
-
 	},
 	"devDependencies": {
 		"@types/express": "^5.0.1",

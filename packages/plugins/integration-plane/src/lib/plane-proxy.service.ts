@@ -1,3 +1,4 @@
+import * as http from 'http';
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { mountPlaneProxy, MountPlaneProxyResult } from '@ever-gauzy/plugin-integration-plane-api';
@@ -30,36 +31,14 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 			this.proxyResult = mountPlaneProxy(httpServer, {
 				prefix: '/api/plane',
 
-				/**
-				 * Extract tenant ID from the incoming request.
-				 * Checks X-TENANT-ID header first, then falls back to Origin-based resolution.
-				 */
-				extractTenantId: (req) => {
-					// Try explicit header first
-					const tenantIdHeader = req.headers['x-tenant-id'];
-					if (tenantIdHeader) {
-						return Array.isArray(tenantIdHeader) ? tenantIdHeader[0] : tenantIdHeader;
-					}
-
-					// Fall back to tenant-id cookie if present
-					const cookieHeader = req.headers['cookie'];
-					if (cookieHeader) {
-						const match = cookieHeader.match(/tenant-id=([^;]+)/);
-						if (match) {
-							return match[1];
-						}
-					}
-
-					return undefined;
-				},
+				extractTenantId: (req) => this.extractTenantIdFromRequest(req),
 
 				/**
 				 * Resolve the tenant's Plane configuration from the database.
 				 * Called on cache miss only.
 				 */
 				resolveConfig: async (req) => {
-					const tenantIdHeader = req.headers['x-tenant-id'];
-					const tenantId = Array.isArray(tenantIdHeader) ? tenantIdHeader[0] : tenantIdHeader;
+					const tenantId = this.extractTenantIdFromRequest(req);
 
 					if (!tenantId) {
 						throw new Error('Cannot resolve Plane config: no tenant ID in request');
@@ -101,5 +80,28 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 			await this.proxyResult.shutdown();
 			this.logger.log('Plane proxy shut down');
 		}
+	}
+
+	/**
+	 * Extract tenant ID from the incoming request.
+	 * Checks X-TENANT-ID header first, then falls back to tenant-id cookie.
+	 */
+	private extractTenantIdFromRequest(req: http.IncomingMessage): string | undefined {
+		// Try explicit header first
+		const tenantIdHeader = req.headers['x-tenant-id'];
+		if (tenantIdHeader) {
+			return Array.isArray(tenantIdHeader) ? tenantIdHeader[0] : tenantIdHeader;
+		}
+
+		// Fall back to tenant-id cookie if present
+		const cookieHeader = req.headers['cookie'];
+		if (cookieHeader) {
+			const match = cookieHeader.match(/tenant-id=([^;]+)/);
+			if (match) {
+				return match[1];
+			}
+		}
+
+		return undefined;
 	}
 }

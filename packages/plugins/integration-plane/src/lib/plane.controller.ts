@@ -10,7 +10,6 @@ import {
 	HttpCode,
 	HttpStatus,
 	UseGuards,
-	Logger
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
@@ -25,8 +24,6 @@ import { UpdatePlaneSettingsDto } from './dto/update-plane-settings.dto';
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/integration/plane')
 export class PlaneController {
-	private readonly logger = new Logger(PlaneController.name);
-
 	constructor(private readonly planeIntegrationService: PlaneIntegrationService) {}
 
 	/**
@@ -95,6 +92,7 @@ export class PlaneController {
 	 */
 	@Post('/regenerate-key')
 	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
+	@HttpCode(HttpStatus.OK)
 	@ApiOperation({ summary: 'Regenerate Plane integration API key and secret.' })
 	@ApiResponse({ status: 200, description: 'API key regenerated successfully.' })
 	@ApiResponse({ status: 404, description: 'Plane integration not configured.' })

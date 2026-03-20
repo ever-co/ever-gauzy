@@ -110,7 +110,7 @@ export const PROJECT_MANAGE_DEFAULT_INTEGRATIONS = [
 	{
 		name: IntegrationEnum.PLANE,
 		imgSrc: 'plane.svg',
-		isComingSoon: true,
+		isComingSoon: false,
 		integrationTypesMap: <string[]>[IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.PROJECT_MANAGEMENT],
 		order: 11,
 		redirectUrl: sluggable(IntegrationEnum.PLANE),

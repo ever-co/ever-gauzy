@@ -11,7 +11,7 @@ export class ConfigurePlaneIntegrationDto {
 	})
 	@IsNotEmpty()
 	@IsString()
-	@IsUrl({ require_tld: false })
+	@IsUrl({ require_tld: false, require_protocol: true })
 	readonly planeWebUrl!: string;
 
 	@ApiPropertyOptional({
@@ -20,7 +20,7 @@ export class ConfigurePlaneIntegrationDto {
 	})
 	@IsOptional()
 	@IsString()
-	@IsUrl({ require_tld: false })
+	@IsUrl({ require_tld: false, require_protocol: true })
 	readonly planeAdminUrl?: string;
 
 	@ApiPropertyOptional({
@@ -29,6 +29,6 @@ export class ConfigurePlaneIntegrationDto {
 	})
 	@IsOptional()
 	@IsString()
-	@IsUrl({ require_tld: false })
+	@IsUrl({ require_tld: false, require_protocol: true })
 	readonly planeSpaceUrl?: string;
 }
