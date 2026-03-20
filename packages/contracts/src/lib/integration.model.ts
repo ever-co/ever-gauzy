@@ -141,7 +141,8 @@ export enum IntegrationEnum {
 	MakeCom = 'MakeCom',
 	ZAPIER = 'Zapier',
 	ACTIVE_PIECES = 'ActivePieces',
-	SIM = 'Sim'
+	SIM = 'Sim',
+	PLANE = 'Plane'
 }
 
 export enum IntegrationEntity {

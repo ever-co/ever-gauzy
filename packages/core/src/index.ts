@@ -73,6 +73,8 @@ export {
 	IntegrationTenantService, IntegrationTenantUpdateOrCreateCommand
 } from './lib/integration-tenant';
 
+export { TenantApiKeyModule, TenantApiKeyService } from './lib/tenant-api-key';
+
 export { CustomTrackingModule, CustomTrackingService } from './lib/time-tracking/custom-tracking';
 export { ScreenshotCreateCommand, ScreenshotModule, ScreenshotService } from './lib/time-tracking/screenshot';
 export { TimeLogCreateCommand, TimeLogModule, TimeLogService } from './lib/time-tracking/time-log';

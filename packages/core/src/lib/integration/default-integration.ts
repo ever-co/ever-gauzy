@@ -106,6 +106,15 @@ export const PROJECT_MANAGE_DEFAULT_INTEGRATIONS = [
 		order: 5,
 		redirectUrl: sluggable(IntegrationEnum.JIRA),
 		provider: IntegrationEnum.JIRA
+	},
+	{
+		name: IntegrationEnum.PLANE,
+		imgSrc: 'plane.svg',
+		isComingSoon: true,
+		integrationTypesMap: <string[]>[IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.PROJECT_MANAGEMENT],
+		order: 11,
+		redirectUrl: sluggable(IntegrationEnum.PLANE),
+		provider: IntegrationEnum.PLANE
 	}
 ];
 
