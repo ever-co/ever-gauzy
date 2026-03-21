@@ -4439,7 +4439,15 @@
 			"INACTIVITY_HANDLER": "Inactiviteitshandler",
 			"WANT_LOGOUT": "Weet je zeker dat je wilt uitloggen?",
 			"ERROR_HANDLER": "Foutafhandeling",
-			"ERROR_OCCURRED": "Er is een fout opgetreden"
+			"ERROR_OCCURRED": "Er is een fout opgetreden",
+			"DB_CLEANUP_TITLE": "Lokale Database — Versiewijziging Gedetecteerd",
+			"DB_CLEANUP_MESSAGE": "Er is een nieuwe versie van de app gedetecteerd.",
+			"DB_CLEANUP_DETAIL": "Uw lokale database is aangemaakt door een oudere versie van de applicatie. Wilt u deze verwijderen zodat een nieuwe database kan worden aangemaakt, of de bestaande behouden?\n\nOpmerking: Het verwijderen van de database zal alle lokaal opgeslagen gegevens wissen.",
+			"DB_CLEANUP_REMOVE": "Database Verwijderen",
+			"DB_CLEANUP_KEEP": "Behouden",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Niet-gesynchroniseerde Gegevens Gedetecteerd",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Waarschuwing: Mogelijk Gegevensverlies",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "Uw lokale database bevat {{ timers }} niet-gesynchroniseerde timersessie(s) en {{ intervals }} niet-gesynchroniseerde tijdslot(en).\n\nAls u de database nu verwijdert, gaat deze bijgehouden tijd permanent verloren.\n\nWe raden aan de database te behouden, zodat de gegevens normaal kunnen synchroniseren zodra de app is gestart."
 		},
 		"NO_LIMIT": "∞ Geen Limiet",
 		"TASK": "Taak",

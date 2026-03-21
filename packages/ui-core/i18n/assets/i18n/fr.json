@@ -4430,7 +4430,15 @@
 			"INACTIVITY_HANDLER": "Gestionnaire d'inactivité",
 			"WANT_LOGOUT": "Êtes-vous sûr(e) de vouloir vous déconnecter ?",
 			"ERROR_HANDLER": "Gestionnaire d'erreurs",
-			"ERROR_OCCURRED": "Erreur survenue"
+			"ERROR_OCCURRED": "Erreur survenue",
+			"DB_CLEANUP_TITLE": "Base de Données Locale — Changement de Version Détecté",
+			"DB_CLEANUP_MESSAGE": "Une nouvelle version de l'application a été détectée.",
+			"DB_CLEANUP_DETAIL": "Votre base de données locale a été créée par une ancienne version de l'application. Souhaitez-vous la supprimer afin qu'une nouvelle base de données puisse être créée, ou conserver celle existante ?\n\nRemarque : La suppression de la base de données effacera toutes les données mises en cache localement.",
+			"DB_CLEANUP_REMOVE": "Supprimer la Base de Données",
+			"DB_CLEANUP_KEEP": "Conserver",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Données Non Synchronisées Détectées",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Avertissement : Perte de Données Possible",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "Votre base de données locale contient {{ timers }} session(s) de minuterie et {{ intervals }} créneau(x) horaire(s) non synchronisés.\n\nSi vous supprimez la base de données maintenant, ce temps suivi sera définitivement perdu.\n\nNous vous recommandons de conserver la base de données afin que les données puissent se synchroniser normalement une fois l'application démarrée."
 		},
 		"NO_LIMIT": "∞ Sans limite",
 		"TASK": "Tâche",

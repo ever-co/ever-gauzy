@@ -4439,7 +4439,15 @@
 			"INACTIVITY_HANDLER": "Manipulador de Inatividade",
 			"WANT_LOGOUT": "Você tem certeza de que deseja sair?",
 			"ERROR_HANDLER": "Manipulador de Erros",
-			"ERROR_OCCURRED": "Erro Ocorrido"
+			"ERROR_OCCURRED": "Erro Ocorrido",
+			"DB_CLEANUP_TITLE": "Banco de Dados Local — Mudança de Versão Detectada",
+			"DB_CLEANUP_MESSAGE": "Uma nova versão do aplicativo foi detectada.",
+			"DB_CLEANUP_DETAIL": "O seu banco de dados local foi criado por uma versão mais antiga do aplicativo. Deseja removê-lo para permitir a criação de um novo banco de dados, ou manter o existente?\n\nNota: A remoção do banco de dados apagará todos os dados armazenados localmente.",
+			"DB_CLEANUP_REMOVE": "Remover Banco de Dados",
+			"DB_CLEANUP_KEEP": "Manter",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Dados Não Sincronizados Detectados",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Aviso: Possível Perda de Dados",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "O seu banco de dados local contém {{ timers }} sessão(ões) de temporizador e {{ intervals }} intervalo(s) de tempo não sincronizados.\n\nSe você remover o banco de dados agora, este tempo rastreado será perdido permanentemente.\n\nRecomendamos manter o banco de dados para que os dados possam ser sincronizados normalmente assim que o aplicativo for iniciado."
 		},
 		"NO_LIMIT": "∞ Sem Limite",
 		"TASK": "Tarefa",

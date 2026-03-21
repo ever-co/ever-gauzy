@@ -4438,7 +4438,15 @@
 			"INACTIVITY_HANDLER": "Obsługa braku aktywności",
 			"WANT_LOGOUT": "Czy na pewno chcesz się wylogować?",
 			"ERROR_HANDLER": "Obsługa błędów",
-			"ERROR_OCCURRED": "Wystąpił błąd"
+			"ERROR_OCCURRED": "Wystąpił błąd",
+			"DB_CLEANUP_TITLE": "Lokalna Baza Danych — Wykryto Zmianę Wersji",
+			"DB_CLEANUP_MESSAGE": "Wykryto nową wersję aplikacji.",
+			"DB_CLEANUP_DETAIL": "Twoja lokalna baza danych została utworzona przez starszą wersję aplikacji. Czy chcesz ją usunąć, aby możliwe było stworzenie nowej bazy danych, czy zachować istniejącą?\n\nUwaga: Usunięcie bazy danych spowoduje trwałe usunięcie wszystkich lokalnie przechowywanych danych.",
+			"DB_CLEANUP_REMOVE": "Usuń Bazę Danych",
+			"DB_CLEANUP_KEEP": "Zachowaj",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Wykryto Niesynchronizowane Dane",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Ostrzeżenie: Możliwa Utrata Danych",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "Twoja lokalna baza danych zawiera {{ timers }} niesynchronizowaną(e) sesję(e) timera i {{ intervals }} niesynchronizowany(ch) slot(ów) czasowych.\n\nJeśli usuniesz bazę danych teraz, ten śledzony czas zostanie bezpowrotnie utracony.\n\nZalecamy zachowanie bazy danych, aby dane mogły się normalnie zsynchronizować po uruchomieniu aplikacji."
 		},
 		"NO_LIMIT": "∞ Bez ograniczeń",
 		"TASK": "Zadanie",

@@ -4435,7 +4435,15 @@
 			"INACTIVITY_HANDLER": "Inaktivitätsverwalter",
 			"WANT_LOGOUT": "Bist du sicher, dass du dich abmelden möchtest?",
 			"ERROR_HANDLER": "Fehlerbehandlung",
-			"ERROR_OCCURRED": "Fehler aufgetreten"
+			"ERROR_OCCURRED": "Fehler aufgetreten",
+			"DB_CLEANUP_TITLE": "Lokale Datenbank — Versionsänderung erkannt",
+			"DB_CLEANUP_MESSAGE": "Eine neue Version der App wurde erkannt.",
+			"DB_CLEANUP_DETAIL": "Ihre lokale Datenbank wurde von einer älteren Version der Anwendung erstellt. Möchten Sie sie entfernen, damit eine neue Datenbank erstellt werden kann, oder die vorhandene behalten?\n\nHinweis: Das Entfernen der Datenbank löscht alle lokal zwischengespeicherten Daten.",
+			"DB_CLEANUP_REMOVE": "Datenbank entfernen",
+			"DB_CLEANUP_KEEP": "Behalten",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Nicht synchronisierte Daten erkannt",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Warnung: Möglicher Datenverlust",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "Ihre lokale Datenbank enthält {{ timers }} nicht synchronisierte Timer-Sitzung(en) und {{ intervals }} nicht synchronisierte Zeitfenster.\n\nWenn Sie die Datenbank jetzt entfernen, geht diese erfasste Zeit dauerhaft verloren.\n\nWir empfehlen, die Datenbank zu behalten, damit die Daten nach dem Start der App normal synchronisiert werden können."
 		},
 		"NO_LIMIT": "∞ Keine Grenze",
 		"TASK": "Aufgabe",

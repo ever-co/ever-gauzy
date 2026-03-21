@@ -45,7 +45,8 @@ import {
 	ipcTimer,
 	removeMainListener,
 	removeTimerListener,
-	setupAkitaStorageHandler
+	setupAkitaStorageHandler,
+	handleDesktopStartup
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
@@ -586,6 +587,12 @@ function initialApplicationMenu() {
 	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 }
 
+function setAppVersion() {
+	LocalStore.updateConfigSetting({
+		version: app.getVersion()
+	});
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -613,6 +620,8 @@ app.on('ready', async () => {
 	}
 
 	await launchSplashScreen();
+	await handleDesktopStartup();
+	setAppVersion();
 	await initialDatabase();
 	initialApplicationMenu();
 	try {

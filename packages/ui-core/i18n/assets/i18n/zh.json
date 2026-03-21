@@ -4439,7 +4439,15 @@
 			"INACTIVITY_HANDLER": "不活动处理程序",
 			"WANT_LOGOUT": "您确定要注销吗？",
 			"ERROR_HANDLER": "错误处理器",
-			"ERROR_OCCURRED": "发生错误"
+			"ERROR_OCCURRED": "发生错误",
+			"DB_CLEANUP_TITLE": "本地数据库 — 检测到版本变更",
+			"DB_CLEANUP_MESSAGE": "检测到应用程序新版本。",
+			"DB_CLEANUP_DETAIL": "您的本地数据库由旧版本的应用程序创建。您希望将其删除以创建新的数据库，还是保留现有数据库？\n\n注意：删除数据库将会清除所有本地存储的数据。",
+			"DB_CLEANUP_REMOVE": "删除数据库",
+			"DB_CLEANUP_KEEP": "保留",
+			"DB_CLEANUP_UNSYNCED_TITLE": "检测到未同步数据",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "警告：可能丢失数据",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "您的本地数据库包含 {{ timers }} 个未同步的计时器会话和 {{ intervals }} 个未同步的时间段。\n\n如果您现在删除数据库，这些追踪时间记录将永久丢失。\n\n我们建议保留数据库，以便应用启动后数据可以正常同步。"
 		},
 		"NO_LIMIT": "∞ 无限制 (wúxiànzhì)",
 		"TASK": "任务",
