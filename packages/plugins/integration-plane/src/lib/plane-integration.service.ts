@@ -36,6 +36,7 @@ export class PlaneIntegrationService {
 		organizationId?: string
 	): Promise<{ integrationTenantId: ID; apiKey: string; apiSecret: string }> {
 		const tenantId = RequestContext.currentTenantId() ?? undefined;
+		organizationId = organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
 
 		// Check if a Plane integration already exists for this tenant
 		if (tenantId) {
@@ -351,10 +352,11 @@ export class PlaneIntegrationService {
 		return await this.integrationService.create({
 			name: 'Plane',
 			provider: 'Plane',
-			imgSrc: 'assets/integrations/plane.svg',
+			imgSrc: 'integrations/plane.svg',
 			isComingSoon: false,
 			isPaid: false,
-			order: 100
+			redirectUrl: 'plane',
+			order: 11
 		});
 	}
 
