@@ -3,8 +3,8 @@ import * as path from 'node:path';
 
 export class IconManager {
 	constructor(
-		private tray: Tray,
-		private iconPath: string
+		private readonly tray: Tray,
+		private readonly iconPath: string
 	) { };
 
 	updateIcon(iconState: 'start' | 'stop'): void {
@@ -16,7 +16,7 @@ export class IconManager {
 			iconPathFull = path.join(iconDir, 'icon_gray.png');
 		}
 		const nativeIcon = nativeImage.createFromPath(iconPathFull);
-		nativeIcon.resize({ width: 16, height: 16 });
-		this.tray.setImage(nativeIcon);
+		const resizedIcon = nativeIcon.resize({ width: 16, height: 16 });
+		this.tray.setImage(resizedIcon);
 	}
 }
