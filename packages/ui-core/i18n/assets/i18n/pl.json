@@ -1575,6 +1575,27 @@
 				"LOAD_FAILED": "Nie udało się załadować wyzwalaczy zdarzeń."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Integracja zarządzania projektami Plane",
+			"WEB_URL": "URL Web Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "URL Admin Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "URL Space Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Wprowadź adresy URL, pod którymi hostowana jest Twoja instancja Plane. URL Web jest wymagany. URL Admin i Space są opcjonalne.",
+			"REGENERATE_KEY": "Regeneruj",
+			"REGENERATE_KEY_LABEL": "Klucz API i Sekret",
+			"API_KEY_DIALOG": {
+				"TITLE": "Poświadczenia API",
+				"WARNING": "Skopiuj te poświadczenia teraz. Sekret API nie zostanie ponownie wyświetlony.",
+				"API_KEY": "Klucz API",
+				"API_SECRET": "Sekret API",
+				"COPY": "Kopiuj",
+				"COPIED": "Skopiowano!"
+			}
+		},
 		"COMING_SOON": "Niedługo będzie dostępne",
 		"RE_INTEGRATE": "Ponowna integracja",
 		"SETTINGS": "Ustawienia",

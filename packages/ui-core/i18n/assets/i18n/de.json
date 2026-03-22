@@ -1576,6 +1576,27 @@
 				"LOAD_FAILED": "Fehler beim Laden der Ereignisauslöser."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Plane Projektmanagement-Integration",
+			"WEB_URL": "Plane Web-URL",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "Plane Admin-URL",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "Plane Space-URL",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Geben Sie die URLs ein, unter denen Ihre Plane-Instanz gehostet wird. Die Web-URL ist erforderlich. Admin- und Space-URLs sind optional.",
+			"REGENERATE_KEY": "Neu generieren",
+			"REGENERATE_KEY_LABEL": "API-Schlüssel und Geheimnis",
+			"API_KEY_DIALOG": {
+				"TITLE": "API-Zugangsdaten",
+				"WARNING": "Kopieren Sie diese Zugangsdaten jetzt. Das API-Geheimnis wird nicht erneut angezeigt.",
+				"API_KEY": "API-Schlüssel",
+				"API_SECRET": "API-Geheimnis",
+				"COPY": "Kopieren",
+				"COPIED": "Kopiert!"
+			}
+		},
 		"COMING_SOON": "Demnächst verfügbar.",
 		"RE_INTEGRATE": "Wieder integrieren",
 		"SETTINGS": "Einstellungen",

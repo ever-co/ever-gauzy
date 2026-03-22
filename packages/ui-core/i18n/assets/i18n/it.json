@@ -1576,6 +1576,27 @@
 				"LOAD_FAILED": "Impossibile caricare i trigger degli eventi."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Integrazione gestione progetti Plane",
+			"WEB_URL": "URL Web di Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "URL Admin di Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "URL Space di Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Inserisci gli URL dove è ospitata la tua istanza Plane. L'URL Web è obbligatorio. Gli URL Admin e Space sono opzionali.",
+			"REGENERATE_KEY": "Rigenera",
+			"REGENERATE_KEY_LABEL": "Chiave API e Segreto",
+			"API_KEY_DIALOG": {
+				"TITLE": "Credenziali API",
+				"WARNING": "Copia queste credenziali ora. Il segreto API non verrà mostrato di nuovo.",
+				"API_KEY": "Chiave API",
+				"API_SECRET": "Segreto API",
+				"COPY": "Copia",
+				"COPIED": "Copiato!"
+			}
+		},
 		"COMING_SOON": "Prossimamente",
 		"RE_INTEGRATE": "Reintegrare",
 		"SETTINGS": "Impostazioni",

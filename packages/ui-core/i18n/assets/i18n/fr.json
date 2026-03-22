@@ -1577,6 +1577,27 @@
 				"LOAD_FAILED": "Échec du chargement des déclencheurs d'événements."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Intégration de gestion de projet Plane",
+			"WEB_URL": "URL Web de Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "URL Admin de Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "URL Space de Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Entrez les URL où votre instance Plane est hébergée. L'URL Web est obligatoire. Les URL Admin et Space sont optionnelles.",
+			"REGENERATE_KEY": "Régénérer",
+			"REGENERATE_KEY_LABEL": "Clé API et Secret",
+			"API_KEY_DIALOG": {
+				"TITLE": "Identifiants API",
+				"WARNING": "Copiez ces identifiants maintenant. Le secret API ne sera plus affiché.",
+				"API_KEY": "Clé API",
+				"API_SECRET": "Secret API",
+				"COPY": "Copier",
+				"COPIED": "Copié !"
+			}
+		},
 		"COMING_SOON": "Bientôt disponible",
 		"RE_INTEGRATE": "Réintégrer",
 		"SETTINGS": "Paramètres",

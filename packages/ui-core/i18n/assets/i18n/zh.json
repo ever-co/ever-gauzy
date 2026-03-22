@@ -1576,6 +1576,27 @@
 				"LOAD_FAILED": "加载事件触发器失败。"
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Plane 项目管理集成",
+			"WEB_URL": "Plane Web URL",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "Plane 管理员 URL",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "Plane Space URL",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "输入您的 Plane 实例托管的 URL。Web URL 为必填项。管理员和 Space URL 为可选项。",
+			"REGENERATE_KEY": "重新生成",
+			"REGENERATE_KEY_LABEL": "API 密钥和密钥",
+			"API_KEY_DIALOG": {
+				"TITLE": "API 凭据",
+				"WARNING": "请立即复制这些凭据。API 密钥将不会再次显示。",
+				"API_KEY": "API 密钥",
+				"API_SECRET": "API 密钥",
+				"COPY": "复制",
+				"COPIED": "已复制！"
+			}
+		},
 		"COMING_SOON": "即将推出",
 		"RE_INTEGRATE": "重新整合",
 		"SETTINGS": "设置",
