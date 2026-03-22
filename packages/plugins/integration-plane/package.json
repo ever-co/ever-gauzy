@@ -1,6 +1,6 @@
 {
 	"name": "@gauzy/plugin-integration-plane",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "Ever Gauzy Platform plugin for integration with Plane, An AI-native Project management tool",
 	"author": {
 		"name": "Ever Co. LTD",

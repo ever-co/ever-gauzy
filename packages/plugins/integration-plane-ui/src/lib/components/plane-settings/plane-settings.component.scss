@@ -1,0 +1,36 @@
+.header-actions {
+	display: flex;
+	gap: 8px;
+}
+
+.button-group {
+	display: flex;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+.actions-section {
+	margin-top: 16px;
+}
+
+button {
+	box-shadow: var(--gauzy-shadow);
+	border: none !important;
+}
+
+.spin {
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+:host {
+
+	nb-card,
+	nb-card-body {
+		background-color: var(--gauzy-card-2);
+	}
+}

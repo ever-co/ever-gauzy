@@ -1,0 +1,134 @@
+<nb-card class="card-scroll">
+	<nb-card-header class="d-flex align-items-center justify-content-between">
+		<div class="d-flex align-items-center">
+			<ngx-back-navigation></ngx-back-navigation>
+			<h5 class="mb-0">{{ 'INTEGRATIONS.PLANE_PAGE.TITLE' | translate }}</h5>
+		</div>
+		<div class="header-actions">
+			@if (!isEditing()) {
+				<button
+					nbButton
+					size="small"
+					status="basic"
+					outline
+					(click)="toggleEdit()"
+					nbTooltip="{{ 'BUTTONS.EDIT' | translate }}"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+				</button>
+			}
+			<button
+				nbButton
+				size="small"
+				status="danger"
+				outline
+				(click)="removeIntegration()"
+				[disabled]="loading()"
+				nbTooltip="{{ 'BUTTONS.DELETE' | translate }}"
+			>
+				<nb-icon icon="trash-2-outline"></nb-icon>
+			</button>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body>
+		@if (loading()) {
+			<div class="text-center p-4">
+				<nb-icon icon="loader-outline" class="spin"></nb-icon>
+			</div>
+		} @else {
+			<form class="col-xl-6 col-12" [formGroup]="form" (ngSubmit)="saveSettings()">
+				<div class="form-group">
+					<label class="label" for="planeWebUrl">
+						{{ 'INTEGRATIONS.PLANE_PAGE.WEB_URL' | translate }} *
+					</label>
+					<input
+						fullWidth
+						id="planeWebUrl"
+						formControlName="planeWebUrl"
+						type="url"
+						nbInput
+						[readonly]="!isEditing()"
+						[placeholder]="'INTEGRATIONS.PLANE_PAGE.WEB_URL_PLACEHOLDER' | translate"
+					/>
+				</div>
+				<div class="form-group">
+					<label class="label" for="planeAdminUrl">
+						{{ 'INTEGRATIONS.PLANE_PAGE.ADMIN_URL' | translate }}
+					</label>
+					<input
+						fullWidth
+						id="planeAdminUrl"
+						formControlName="planeAdminUrl"
+						type="url"
+						nbInput
+						[readonly]="!isEditing()"
+						[placeholder]="'INTEGRATIONS.PLANE_PAGE.ADMIN_URL_PLACEHOLDER' | translate"
+					/>
+				</div>
+				<div class="form-group">
+					<label class="label" for="planeSpaceUrl">
+						{{ 'INTEGRATIONS.PLANE_PAGE.SPACE_URL' | translate }}
+					</label>
+					<input
+						fullWidth
+						id="planeSpaceUrl"
+						formControlName="planeSpaceUrl"
+						type="url"
+						nbInput
+						[readonly]="!isEditing()"
+						[placeholder]="'INTEGRATIONS.PLANE_PAGE.SPACE_URL_PLACEHOLDER' | translate"
+					/>
+				</div>
+
+				@if (isEditing()) {
+					<div class="button-group">
+						<button
+							nbButton
+							status="primary"
+							type="submit"
+							[disabled]="form.invalid || saving()"
+							size="small"
+							outline
+						>
+							@if (saving()) {
+								<nb-icon icon="loader-outline"></nb-icon>
+							}
+							{{ 'BUTTONS.SAVE' | translate }}
+						</button>
+						<button
+							nbButton
+							status="basic"
+							type="button"
+							size="small"
+							outline
+							(click)="toggleEdit()"
+						>
+							{{ 'BUTTONS.CANCEL' | translate }}
+						</button>
+					</div>
+				}
+			</form>
+
+			@if (!isEditing()) {
+				<div class="actions-section col-xl-6 col-12">
+					<hr />
+					<div class="d-flex align-items-center justify-content-between">
+						<span class="label">{{ 'INTEGRATIONS.PLANE_PAGE.REGENERATE_KEY_LABEL' | translate }}</span>
+						<button
+							nbButton
+							status="warning"
+							size="small"
+							outline
+							(click)="regenerateKey()"
+							[disabled]="loading()"
+						>
+							<nb-icon icon="refresh-outline"></nb-icon>
+							{{ 'INTEGRATIONS.PLANE_PAGE.REGENERATE_KEY' | translate }}
+						</button>
+					</div>
+				</div>
+			}
+		}
+	</nb-card-body>
+</nb-card>
