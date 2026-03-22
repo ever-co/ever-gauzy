@@ -54,8 +54,14 @@ export class UserService implements IUserService<UserTO> {
 
 	public async remove(): Promise<void> {
 		try {
+			const currentUser = await this._userDAO.current();
+			if (!currentUser) {
+				console.warn('WARN[USER_SERVICE]: no current user to remove');
+				return;
+			}
 			await this._userDAO.delete();
 		} catch (error) {
+			console.error('ERROR[USER_SERVICE]:', error);
 			throw new AppError('USER_SERVICE', error);
 		}
 	}

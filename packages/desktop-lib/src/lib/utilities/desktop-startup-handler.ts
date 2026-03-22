@@ -6,29 +6,37 @@ import { TranslateService } from '../translation';
 
 const DB_FILENAME = 'gauzy.sqlite3';
 
-export async function handleDesktopStartup(): Promise<void> {
+export async function handleDesktopStartup(): Promise<number> {
 	const configs = LocalStore.getStore('configs');
 	if (!configs) {
-		return;
+		return 1;
 	}
 
 	if (app.getVersion() !== configs?.version && !configs?.afterUpdate) {
 		const isDbExists = localDatabaseExists();
 		if (isDbExists) {
-			await showPopup();
+			const buttonResponse = await showPopup();
+			return buttonResponse;
 		}
-		return;
+		return 1;
 	}
 }
 
-export function removeOldDatabase(): void {
+export async function removeOldDatabase(): Promise<void> {
 	try {
 		const dbPath = path.join(app.getPath('userData'), DB_FILENAME);
 		if (fs.existsSync(dbPath)) {
+			// Destroy active db connections before deleting the file 
+			// otherwise we hit 'attempt to write a readonly database'
+			const { ProviderFactory } = await import('../offline/databases');
+			if (ProviderFactory.instance) {
+				await ProviderFactory.instance.kill();
+			}
+
 			fs.unlinkSync(dbPath);
 
 			// Clear user authentication and project state from electron-store
-			// so that the frontend Angular app boots into a clean logged-out 
+			// so that the frontend Angular app boots into a clean logged-out
 			// state, matching the now-empty local database.
 			LocalStore.updateAuthSetting({
 				token: null,
@@ -95,20 +103,24 @@ export async function countUnsyncedData(): Promise<{ timers: number; intervals: 
  * Button index 0 → Remove Database
  * Button index 1 → Keep It
  */
-export async function showPopup(): Promise<void> {
+export async function showPopup(): Promise<number> {
 	const { timers, intervals } = await countUnsyncedData();
 	const hasUnsyncedData = timers > 0 || intervals > 0;
 
-	const titleKey = hasUnsyncedData
-		? 'TIMER_TRACKER.DIALOG.DB_CLEANUP_UNSYNCED_TITLE'
-		: 'TIMER_TRACKER.DIALOG.DB_CLEANUP_TITLE';
+	// Always use the primary title and message so the context (app version update) is never lost.
+	const titleKey = 'TIMER_TRACKER.DIALOG.DB_CLEANUP_TITLE';
+	const messageKey = 'TIMER_TRACKER.DIALOG.DB_CLEANUP_MESSAGE';
 
-	const messageKey = hasUnsyncedData
-		? 'TIMER_TRACKER.DIALOG.DB_CLEANUP_UNSYNCED_MESSAGE'
-		: 'TIMER_TRACKER.DIALOG.DB_CLEANUP_MESSAGE';
+	let countsText = '';
+	if (hasUnsyncedData) {
+		const parts = [];
+		if (timers > 0) parts.push(TranslateService.instant('TIMER_TRACKER.DIALOG.UNSYNCED_TIMERS_COUNT', { count: timers }));
+		if (intervals > 0) parts.push(TranslateService.instant('TIMER_TRACKER.DIALOG.UNSYNCED_INTERVALS_COUNT', { count: intervals }));
+		countsText = parts.join(' ' + TranslateService.instant('TIMER_TRACKER.DIALOG.AND_JOIN') + ' ');
+	}
 
 	const detail = hasUnsyncedData
-		? TranslateService.instant('TIMER_TRACKER.DIALOG.DB_CLEANUP_UNSYNCED_DETAIL', { timers, intervals })
+		? TranslateService.instant('TIMER_TRACKER.DIALOG.DB_CLEANUP_UNSYNCED_DETAIL', { countsText })
 		: TranslateService.instant('TIMER_TRACKER.DIALOG.DB_CLEANUP_DETAIL');
 
 	const { response } = await dialog.showMessageBox({
@@ -126,7 +138,8 @@ export async function showPopup(): Promise<void> {
 	});
 
 	if (response === 0) {
-		removeOldDatabase();
+		await removeOldDatabase();
 	}
+	return response;
 }
 
