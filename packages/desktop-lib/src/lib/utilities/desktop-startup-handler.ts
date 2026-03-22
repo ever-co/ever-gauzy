@@ -26,6 +26,27 @@ export function removeOldDatabase(): void {
 		const dbPath = path.join(app.getPath('userData'), DB_FILENAME);
 		if (fs.existsSync(dbPath)) {
 			fs.unlinkSync(dbPath);
+
+			// Clear user authentication and project state from electron-store
+			// so that the frontend Angular app boots into a clean logged-out 
+			// state, matching the now-empty local database.
+			LocalStore.updateAuthSetting({
+				token: null,
+				employeeId: null,
+				organizationId: null,
+				userId: null,
+				tenantId: null,
+				refreshToken: null,
+				isLogout: true,
+			});
+
+			LocalStore.updateConfigProject({
+				projectId: null,
+				taskId: null,
+				note: null,
+				organizationContactId: null,
+				organizationTeamId: null,
+			});
 		}
 	} catch (err) {
 		console.error('[DesktopStartupHandler] Failed to remove old local database:', err);

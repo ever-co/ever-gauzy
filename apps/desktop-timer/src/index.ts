@@ -4,7 +4,7 @@ import { environment } from './environments/environment';
 Object.assign(process.env, environment);
 // Import logging for electron and override default console logging
 import * as remoteMain from '@electron/remote/main';
-import { logger as log, store } from '@gauzy/desktop-core';
+import { IConfig, logger as log, store } from '@gauzy/desktop-core';
 import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
@@ -433,9 +433,10 @@ async function setupUpdater() {
 	}
 }
 
-function setAppVersion() {
+function setAppVersion(configs: IConfig) {
+	configs.version = app.getVersion();
 	LocalStore.updateConfigSetting({
-		version: app.getVersion()
+		...configs
 	});
 }
 
@@ -462,7 +463,7 @@ app.on('ready', async () => {
 	// default global
 	setGlobalVariable(configs || {});
 	await handleDesktopStartup();
-	setAppVersion();
+	setAppVersion(configs);
 	await launchSplashScreen();
 	await setupDatabase();
 	initialAppMenu();
