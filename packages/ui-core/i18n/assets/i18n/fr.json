@@ -4439,6 +4439,7 @@
 			"DB_CLEANUP_UNSYNCED_TITLE": "Données Non Synchronisées Détectées",
 			"DB_CLEANUP_UNSYNCED_MESSAGE": "Avertissement : Perte de Données Possible",
 			"DB_CLEANUP_UNSYNCED_DETAIL": "Vous avez {{countsText}}. La suppression de la base de données effacera DÉFINITIVEMENT ces données hors ligne. En cas de doute, cliquez sur 'Conserver'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "Nous n'avons pas pu déterminer si vous avez des données hors ligne non synchronisées. La suppression de la base de données risque d'effacer DÉFINITIVEMENT des données non sauvegardées. En cas de doute, cliquez sur 'Conserver'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
 			"AND_JOIN": "and"

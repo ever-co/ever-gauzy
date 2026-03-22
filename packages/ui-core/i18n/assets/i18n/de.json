@@ -4444,6 +4444,7 @@
 			"DB_CLEANUP_UNSYNCED_TITLE": "Nicht synchronisierte Daten erkannt",
 			"DB_CLEANUP_UNSYNCED_MESSAGE": "Warnung: Möglicher Datenverlust",
 			"DB_CLEANUP_UNSYNCED_DETAIL": "Sie haben {{countsText}}. Das Entfernen der Datenbank wird diese Offline-Daten UNWIDERRUFLICH löschen. Wenn Sie unsicher sind, klicken Sie auf 'Behalten'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "Wir konnten nicht feststellen, ob Sie nicht synchronisierte Offline-Daten haben. Das Entfernen der Datenbank kann ungespeicherte Arbeit UNWIDERRUFLICH löschen. Wenn Sie unsicher sind, klicken Sie auf 'Behalten'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
 			"AND_JOIN": "and"

@@ -790,6 +790,7 @@
 			"DB_CLEANUP_UNSYNCED_TITLE": "Unsynced Data Detected",
 			"DB_CLEANUP_UNSYNCED_MESSAGE": "Warning: Data Loss Possible",
 			"DB_CLEANUP_UNSYNCED_DETAIL": "Your local database contains {{ timers }} unsynced timer session(s) and {{ intervals }} unsynced time slot(s).\n\nIf you remove the database now, this tracked time will be permanently lost.\n\nWe recommend keeping the database so the data can sync normally once the app starts.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "We could not determine whether you have unsynced offline data. Removing the database may PERMANENTLY erase unsaved work. If you are unsure, click 'Keep It'.",
 			"DROP_FILE": "crwdns3800:0crwdne3800:0",
 			"NO_DROP_FILE": "crwdns11195:0crwdne11195:0",
 			"BROWSE": "crwdns3802:0crwdne3802:0",

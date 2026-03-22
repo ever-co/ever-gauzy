@@ -4447,7 +4447,8 @@
 			"DB_CLEANUP_KEEP": "保留",
 			"DB_CLEANUP_UNSYNCED_TITLE": "检测到未同步数据",
 			"DB_CLEANUP_UNSYNCED_MESSAGE": "警告：可能丢失数据",
-			"DB_CLEANUP_UNSYNCED_DETAIL": "您有 {{countsText}}。删除数据库将永久清除这些离线数据。如果您不确定，请点击“保留”。",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "您有 {{countsText}}。删除数据库将永久清除这些离线数据。如果您不确定，请点击\u201c保留\u201d。",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "我们无法确定您是否有未同步的离线数据。删除数据库可能会永久清除未保存的工作。如果您不确定，请点击\u201c保留\u201d。",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
 			"AND_JOIN": "and"

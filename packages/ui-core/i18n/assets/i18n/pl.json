@@ -4447,6 +4447,7 @@
 			"DB_CLEANUP_UNSYNCED_TITLE": "Wykryto Niesynchronizowane Dane",
 			"DB_CLEANUP_UNSYNCED_MESSAGE": "Ostrzeżenie: Możliwa Utrata Danych",
 			"DB_CLEANUP_UNSYNCED_DETAIL": "Masz {{countsText}}. Usunięcie bazy danych TRWALE usunie te dane offline. Jeśli nie jesteś pewien, kliknij 'Zachowaj'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "Nie udało się ustalić, czy masz niezynchronizowane dane offline. Usunięcie bazy danych może TRWALE usunąć niezapisaną pracę. Jeśli nie jesteś pewien, kliknij 'Zachowaj'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
 			"AND_JOIN": "and"

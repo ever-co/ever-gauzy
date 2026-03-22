@@ -4433,6 +4433,7 @@
 			"DB_CLEANUP_UNSYNCED_TITLE": "تم اكتشاف بيانات غير متزامنة",
 			"DB_CLEANUP_UNSYNCED_MESSAGE": "تحذير: احتمال فقدان البيانات",
 			"DB_CLEANUP_UNSYNCED_DETAIL": "لديك {{countsText}}. ستؤدي إزالة قاعدة البيانات إلى حذف هذه البيانات غير المتصلة بالإنترنت بشكل نهائي. إذا كنت غير متأكد، انقر على 'الاحتفاظ بها'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "تعذّر علينا تحديد ما إذا كانت لديك بيانات غير متزامنة. قد تؤدي إزالة قاعدة البيانات إلى حذف عمل غير محفوظ بشكل دائم. إذا كنت غير متأكد، انقر على 'الاحتفاظ بها'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
 			"AND_JOIN": "and"

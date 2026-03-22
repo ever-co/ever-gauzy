@@ -4460,6 +4460,7 @@
 			"DB_CLEANUP_UNSYNCED_TITLE": "זוהו נתונים לא מסונכרנים",
 			"DB_CLEANUP_UNSYNCED_MESSAGE": "אזהרה: אובדן נתונים אפשרי",
 			"DB_CLEANUP_UNSYNCED_DETAIL": "יש לך {{countsText}}. הסרת בסיס הנתונים תמחק לצמיתא את הנתונים הלא מקווננתים. אם אינך בטוח, לחץ על 'שמור'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "לא הצלחנו לקבוע אם יש לך נתונים לא מסונכרנים. הסרת בסיס הנתונים עלולה למחוק לצמיתא עבודה שלא נשמרה. אם אינך בטוח, לחץ על 'שמור'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
 			"AND_JOIN": "and"

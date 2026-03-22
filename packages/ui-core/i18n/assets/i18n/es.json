@@ -4450,6 +4450,7 @@
 			"DB_CLEANUP_UNSYNCED_TITLE": "Datos No Sincronizados Detectados",
 			"DB_CLEANUP_UNSYNCED_MESSAGE": "Advertencia: Posible Pérdida de Datos",
 			"DB_CLEANUP_UNSYNCED_DETAIL": "Tiene {{countsText}}. Eliminar la base de datos borrará PERMANENTEMENTE estos datos sin conexión. Si no está seguro, haga clic en 'Conservar'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "No pudimos determinar si tiene datos sin conexión sin sincronizar. Eliminar la base de datos puede borrar PERMANENTEMENTE trabajo no guardado. Si no está seguro, haga clic en 'Conservar'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
 			"AND_JOIN": "and"

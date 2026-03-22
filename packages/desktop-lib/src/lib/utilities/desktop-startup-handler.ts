@@ -124,7 +124,9 @@ export async function showPopup(): Promise<number> {
 		countsText = parts.join(' ' + TranslateService.instant('TIMER_TRACKER.DIALOG.AND_JOIN') + ' ');
 	}
 
-	const detail = hasUnsyncedData
+	const detail = isUnknown
+		? TranslateService.instant('TIMER_TRACKER.DIALOG.DB_CLEANUP_UNKNOWN_DETAIL')
+		: hasUnsyncedData
 		? TranslateService.instant('TIMER_TRACKER.DIALOG.DB_CLEANUP_UNSYNCED_DETAIL', { countsText })
 		: TranslateService.instant('TIMER_TRACKER.DIALOG.DB_CLEANUP_DETAIL');
 

@@ -4448,6 +4448,7 @@
 			"DB_CLEANUP_UNSYNCED_TITLE": "Dados Não Sincronizados Detectados",
 			"DB_CLEANUP_UNSYNCED_MESSAGE": "Aviso: Possível Perda de Dados",
 			"DB_CLEANUP_UNSYNCED_DETAIL": "Você tem {{countsText}}. Remover o banco de dados irá PERMANENTEMENTE apagar esses dados offline. Se não tiver certeza, clique em 'Manter'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "Não foi possível determinar se você tem dados offline não sincronizados. Remover o banco de dados pode PERMANENTEMENTE apagar trabalho não salvo. Se não tiver certeza, clique em 'Manter'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
 			"AND_JOIN": "and"

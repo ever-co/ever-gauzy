@@ -4496,6 +4496,7 @@
 			"DB_CLEANUP_UNSYNCED_TITLE": "Открити са несинхронизирани данни",
 			"DB_CLEANUP_UNSYNCED_MESSAGE": "Внимание: Възможна загуба на данни",
 			"DB_CLEANUP_UNSYNCED_DETAIL": "Имате {{countsText}}. Премахването на базата данни ще ИЗТРИЕ ОКОНЧАТЕЛНО тези офлайн данни. Ако не сте сигурни, кликнете върху 'Запазване'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "Не можахме да определим дали имате несинхронизирани офлайн данни. Премахването на базата данни може ОКОНЧАТЕЛНО да изтрие незапазена работа. Ако не сте сигурни, кликнете върху 'Запазване'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
 			"AND_JOIN": "and"

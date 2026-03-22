@@ -4595,6 +4595,7 @@
 			"DB_CLEANUP_UNSYNCED_TITLE": "Unsynced Data Detected",
 			"DB_CLEANUP_UNSYNCED_MESSAGE": "Warning: Data Loss Possible",
 			"DB_CLEANUP_UNSYNCED_DETAIL": "You have {{countsText}}. Removing the database will PERMANENTLY erase this offline data. If you are unsure, click 'Keep It'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "We could not determine whether you have unsynced offline data. Removing the database may PERMANENTLY erase unsaved work. If you are unsure, click 'Keep It'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
 			"AND_JOIN": "and"
