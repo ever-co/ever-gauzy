@@ -893,15 +893,3 @@ nativeTheme.on('updated', () => {
 		isStopped: !appSetting.timerStarted
 	});
 });
-
-process.on('unhandledRejection', (reason, promise) => {
-	console.log('Unhandled Rejection at:', promise, 'reason:', reason);
-})
-
-process.on('uncaughtException', (error) => {
-	console.error('Uncaught Exception:', error);
-})
-
-process.on('beforeExit', (code) => {
-	console.log('Process beforeExit event with code:', code);
-});

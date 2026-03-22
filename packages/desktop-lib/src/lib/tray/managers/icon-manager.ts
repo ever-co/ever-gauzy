@@ -8,11 +8,12 @@ export class IconManager {
 	) { };
 
 	updateIcon(iconState: 'start' | 'stop'): void {
+		const iconDir = path.dirname(this.iconPath);
 		let iconPathFull: string;
 		if (iconState === 'start') {
-			iconPathFull = path.join(this.iconPath, 'icon.png');
+			iconPathFull = path.join(iconDir, 'icon.png');
 		} else {
-			iconPathFull = path.join(this.iconPath, 'icon_gray.png');
+			iconPathFull = path.join(iconDir, 'icon_gray.png');
 		}
 		const nativeIcon = nativeImage.createFromPath(iconPathFull);
 		nativeIcon.resize({ width: 16, height: 16 });

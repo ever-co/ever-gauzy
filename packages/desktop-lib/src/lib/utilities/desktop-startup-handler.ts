@@ -74,7 +74,9 @@ export function localDatabaseExists(): boolean {
  * Counts unsynced rows in the local SQLite database.
  * Returns { timers: number, intervals: number } where each value is the
  * count of rows that have NOT yet been uploaded to the server.
- * Returns zero counts on any error (e.g., DB not yet initialized).
+ * Returns { timers: -1, intervals: -1 } as a sentinel when the query fails
+ * (e.g., DB not yet initialized or schema error) so callers can treat the
+ * risk level as unknown rather than falsely reporting zero unsynced rows.
  */
 export async function countUnsyncedData(): Promise<{ timers: number; intervals: number }> {
 	try {
@@ -90,7 +92,7 @@ export async function countUnsyncedData(): Promise<{ timers: number; intervals: 
 		};
 	} catch (err) {
 		console.warn('[DesktopStartupHandler] Could not query unsynced data count:', err);
-		return { timers: 0, intervals: 0 };
+		return { timers: -1, intervals: -1 };
 	}
 }
 
@@ -105,14 +107,17 @@ export async function countUnsyncedData(): Promise<{ timers: number; intervals: 
  */
 export async function showPopup(): Promise<number> {
 	const { timers, intervals } = await countUnsyncedData();
-	const hasUnsyncedData = timers > 0 || intervals > 0;
+	// Treat negative sentinel values (-1) as unknown risk — show the stronger
+	// warning dialog rather than falsely signalling a safe-to-delete state.
+	const isUnknown = timers < 0 || intervals < 0;
+	const hasUnsyncedData = isUnknown || timers > 0 || intervals > 0;
 
 	// Always use the primary title and message so the context (app version update) is never lost.
 	const titleKey = 'TIMER_TRACKER.DIALOG.DB_CLEANUP_TITLE';
 	const messageKey = 'TIMER_TRACKER.DIALOG.DB_CLEANUP_MESSAGE';
 
 	let countsText = '';
-	if (hasUnsyncedData) {
+	if (hasUnsyncedData && !isUnknown) {
 		const parts = [];
 		if (timers > 0) parts.push(TranslateService.instant('TIMER_TRACKER.DIALOG.UNSYNCED_TIMERS_COUNT', { count: timers }));
 		if (intervals > 0) parts.push(TranslateService.instant('TIMER_TRACKER.DIALOG.UNSYNCED_INTERVALS_COUNT', { count: intervals }));

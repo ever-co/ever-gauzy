@@ -620,8 +620,20 @@ app.on('ready', async () => {
 	}
 
 	await launchSplashScreen();
-	await handleDesktopStartup();
+	// buttonResponse:
+	// 0: User clicked "Remove Database"
+	// 1: User clicked "Keep It"
+	// undefined: No popup was shown (e.g. fresh install or no version change)
+	const buttonResponse = await handleDesktopStartup();
 	setAppVersion();
+	if (buttonResponse === 0) {
+		// The user chose to remove the local database.
+		// Relaunch the app so it boots into a clean state after the DB
+		// has been wiped — do not proceed with the normal startup sequence.
+		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+		app.exit(0);
+		return;
+	}
 	await initialDatabase();
 	initialApplicationMenu();
 	try {
