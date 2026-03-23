@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from 'chalk';
 import { IntegrationTypeEnum } from "@gauzy/contracts";
-import { DEFAULT_INTEGRATIONS, DEFAULT_SYSTEM_INTEGRATIONS, DEFAULT_AI_INTEGRATIONS } from "../../integration/default-integration";
+import { DEFAULT_INTEGRATIONS } from "../../integration/default-integration";
 import { IntegrationsUtils } from "../../integration/utils";
 import { DatabaseTypeEnum } from "@gauzy/config";
 
@@ -43,11 +43,7 @@ export class SeedNewIntegrationsAndIntegrationTypes1774291434025 implements Migr
     * @param queryRunner
     */
     public async sqlitePostgresUpsert(queryRunner: QueryRunner): Promise<any> {
-        console.log(chalk.yellow(this.name + ' start running!'));
-
         await IntegrationsUtils.upsertIntegrationTypes(queryRunner, [IntegrationTypeEnum.AUTOMATION_TOOLS, IntegrationTypeEnum.AI_AGENTS]);
-        await IntegrationsUtils.upsertIntegrationsAndIntegrationTypes(queryRunner, DEFAULT_SYSTEM_INTEGRATIONS);
-        await IntegrationsUtils.upsertIntegrationsAndIntegrationTypes(queryRunner, DEFAULT_AI_INTEGRATIONS);
         await IntegrationsUtils.upsertIntegrationsAndIntegrationTypes(queryRunner, DEFAULT_INTEGRATIONS);
     }
 
