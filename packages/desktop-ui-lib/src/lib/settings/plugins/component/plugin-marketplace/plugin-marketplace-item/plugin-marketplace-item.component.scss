@@ -48,7 +48,7 @@
     font-weight: 600;
     margin-bottom: 1rem;
     color: var(--gauzy-text-color-1);
-    border-bottom: 1px solid nb-theme(border-basic-color-3);
+    border-bottom: 1px solid var(--border-basic-color-3);
     padding-bottom: 0.5rem;
   }
 }
@@ -106,7 +106,7 @@
       }
 
       a {
-        color: nb-theme(color-primary-default);
+        color: var(--color-primary-default);
         text-decoration: none;
 
         &:hover {
@@ -477,7 +477,7 @@ nb-tag-list {
 
           &.code-like {
             font-family: monospace;
-            background-color: #f7f9fc;
+            background-color: var(--background-basic-color-2);
             padding: 0.5rem;
             border-radius: 4px;
             font-size: 0.875rem;

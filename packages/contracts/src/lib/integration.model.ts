@@ -44,6 +44,17 @@ export interface IIntegrationViewModel {
 	isComingSoon?: boolean;
 }
 
+export interface IIntegrationGroupTypeOption {
+	id: ID;
+	name: string;
+}
+
+export interface IIntegrationGroup {
+	groupName: string;
+	order: number;
+	integrationTypes: IIntegrationGroupTypeOption[];
+}
+
 export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityModel, IRelationIntegration {
 	name: IntegrationEnum;
 	lastSyncedAt?: Date;

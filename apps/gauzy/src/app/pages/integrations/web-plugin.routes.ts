@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { PluginUploadResolver } from '@gauzy/desktop-ui-lib';
+import { PluginUploadResolver, PLUGIN_ROUTE_SELECTORS } from '@gauzy/desktop-ui-lib';
 
 /**
  * Web-app-specific plugin routes.
@@ -25,26 +25,14 @@ export const webPluginRoutes: Routes = [
 						(m) => m.PluginBuiltinComponent
 					),
 				data: {
-					selectors: {
-						date: false,
-						employee: false,
-						project: false,
-						team: false,
-						datePicker: false
-					}
-				},
+					selectors: PLUGIN_ROUTE_SELECTORS
+				}
 			},
 			{
 				title: 'Marketplace',
 				path: 'marketplace',
 				data: {
-					selectors: {
-						date: false,
-						employee: false,
-						project: false,
-						team: false,
-						datePicker: false
-					}
+					selectors: PLUGIN_ROUTE_SELECTORS
 				},
 				loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.pluginMarketplaceRoutes),
 				resolve: { isUploadAvailable: PluginUploadResolver }

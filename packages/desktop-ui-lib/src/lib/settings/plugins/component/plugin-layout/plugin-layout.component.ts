@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbRouteTab, NbRouteTabsetModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
@@ -10,24 +10,22 @@ import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PLUGIN_SHOW_BUILTIN } from './plugin-show-builtin.token';
 
 @Component({
-    selector: 'ngx-plugin-layout',
-    templateUrl: './plugin-layout.component.html',
-    styleUrls: ['./plugin-layout.component.scss'],
-    imports: [NbRouteTabsetModule]
+	selector: 'ngx-plugin-layout',
+	templateUrl: './plugin-layout.component.html',
+	styleUrls: ['./plugin-layout.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [NbRouteTabsetModule]
 })
 export class PluginLayoutComponent implements OnInit, OnDestroy {
 	private readonly actions = inject(Actions);
 	private readonly showBuiltin = inject(PLUGIN_SHOW_BUILTIN);
+	private readonly translateService = inject(TranslateService);
+	private readonly route = inject(ActivatedRoute);
+	private readonly router = inject(Router);
+	private readonly pluginElectronService = inject(PluginElectronService);
 
 	public tabs: NbRouteTab[] = [];
 	private destroy$ = new Subject<void>();
-
-	constructor(
-		private readonly translateService: TranslateService,
-		private readonly route: ActivatedRoute,
-		private readonly router: Router,
-		private readonly pluginElectronService: PluginElectronService
-	) {}
 
 	ngOnInit() {
 		this.updateTabs();

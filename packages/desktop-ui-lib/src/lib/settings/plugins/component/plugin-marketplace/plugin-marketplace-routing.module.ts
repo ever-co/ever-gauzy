@@ -1,12 +1,5 @@
 import { Routes } from '@angular/router';
-
-const selectors = {
-	date: false,
-	employee: false,
-	project: false,
-	team: false,
-	datePicker: false
-};
+import { PLUGIN_ROUTE_SELECTORS } from '../../plugin-route-selectors';
 
 export const pluginMarketplaceRoutes: Routes = [
 	{
@@ -16,7 +9,7 @@ export const pluginMarketplaceRoutes: Routes = [
 	},
 	{
 		path: ':id/versions',
-		data: { selectors },
+		data: { selectors: PLUGIN_ROUTE_SELECTORS },
 		loadComponent: () =>
 			import('./plugin-marketplace-item/version-history/version-history.component').then(
 				(m) => m.VersionHistoryComponent
@@ -24,7 +17,7 @@ export const pluginMarketplaceRoutes: Routes = [
 	},
 	{
 		path: ':id',
-		data: { selectors },
+		data: { selectors: PLUGIN_ROUTE_SELECTORS },
 		loadComponent: () =>
 			import('./plugin-marketplace-item/plugin-marketplace-item.component').then(
 				(m) => m.PluginMarketplaceItemComponent
@@ -37,6 +30,7 @@ export const pluginMarketplaceRoutes: Routes = [
 			},
 			{
 				path: 'overview',
+				data: { selectors: PLUGIN_ROUTE_SELECTORS },
 				loadComponent: () =>
 					import('./plugin-marketplace-item/tabs/overview-tab/overview-tab.component').then(
 						(m) => m.OverviewTabComponent
@@ -44,6 +38,7 @@ export const pluginMarketplaceRoutes: Routes = [
 			},
 			{
 				path: 'source-code',
+				data: { selectors: PLUGIN_ROUTE_SELECTORS },
 				loadComponent: () =>
 					import('./plugin-marketplace-item/tabs/source-code-tab/source-code-tab.component').then(
 						(m) => m.SourceCodeTabComponent
@@ -51,6 +46,7 @@ export const pluginMarketplaceRoutes: Routes = [
 			},
 			{
 				path: 'user-management',
+				data: { selectors: PLUGIN_ROUTE_SELECTORS },
 				loadComponent: () =>
 					import('./plugin-marketplace-item/tabs/user-management-tab/user-management-tab.component').then(
 						(m) => m.UserManagementTabComponent
@@ -58,6 +54,7 @@ export const pluginMarketplaceRoutes: Routes = [
 			},
 			{
 				path: 'settings',
+				data: { selectors: PLUGIN_ROUTE_SELECTORS },
 				loadComponent: () =>
 					import('./plugin-marketplace-item/tabs/settings-tab/settings-tab.component').then(
 						(m) => m.SettingsTabComponent

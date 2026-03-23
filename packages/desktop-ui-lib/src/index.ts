@@ -43,6 +43,7 @@ export * from './lib/settings/plugins/component/plugin-marketplace/+state';
 export * from './lib/settings/plugins/component/plugin-marketplace/plugin-marketplace-routing.module';
 export * from './lib/settings/plugins/component/plugin-marketplace/plugin-marketplace.component';
 export * from './lib/settings/plugins/plugin-routing.module';
+export * from './lib/settings/plugins/plugin-route-selectors';
 export * from './lib/settings/plugins/plugins.module';
 export * from './lib/settings/plugins/services/resolvers';
 export * from './lib/settings/settings.component';

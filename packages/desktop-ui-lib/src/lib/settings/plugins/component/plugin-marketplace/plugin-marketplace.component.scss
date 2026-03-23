@@ -98,11 +98,11 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--gauzy-shadow);
 
     nb-icon {
       font-size: 1.5rem;
-      color: white;
+      color: var(--text-control-color);
     }
 
     @media (max-width: 768px) {
@@ -280,9 +280,7 @@
 
   .upload-fab {
     background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-primary-600) 100%);
-    box-shadow:
-      0 6px 20px rgba(0, 0, 0, 0.2),
-      0 0 0 0 rgba(var(--color-primary-default), 0.4);
+    box-shadow: var(--gauzy-shadow);
     border-radius: 50%;
     width: 64px;
     height: 64px;
@@ -297,7 +295,7 @@
 
     nb-icon {
       font-size: 28px;
-      color: white;
+      color: var(--text-control-color);
     }
 
     .upload-progress {
