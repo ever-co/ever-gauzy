@@ -1665,6 +1665,7 @@
 			}
 		},
 		"COMING_SOON": "Coming soon",
+		"PAID_LABEL": "Paid",
 		"RE_INTEGRATE": "Re-integrate",
 		"SETTINGS": "Settings",
 		"SELECT_GROUPS": "Select Groups",
@@ -5661,6 +5662,11 @@
 			"UPLOADED_FILE": "Uploaded File",
 			"UNKNOWN_SOURCE": "Unknown Source"
 		},
+		"BUILTIN": {
+			"TITLE": "Built-in Integrations",
+			"SUBTITLE": "Native integrations included with Gauzy — click to configure.",
+			"DESKTOP_NOTICE": "These integrations are configured via the Gauzy web app. Open the web app to manage them."
+		},
 		"MARKETPLACE": {
 			"UPLOAD": "Upload New Plugin",
 			"OFFLINE": "You are currently offline/disconnected ⛓️‍💔",
@@ -5674,6 +5680,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Discover",
+			"MARKETPLACE": "Marketplace",
+			"BUILTIN": "Built-in",
 			"INSTALLED": "Installed",
 			"VERSION_HISTORY": "Version History"
 		},
