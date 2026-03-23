@@ -884,7 +884,8 @@
 		"Centralises",
 		"Dispatchable",
 		"retriable",
-		"Reentrancy"
+		"Reentrancy",
+		"Unsynced"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

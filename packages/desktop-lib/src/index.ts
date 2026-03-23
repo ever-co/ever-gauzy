@@ -26,3 +26,4 @@ export * from './lib/states';
 export * from './lib/strategies';
 export * from './lib/translation';
 export * from './lib/update-server/desktop-local-update-server';
+export * from './lib/utilities/desktop-startup-handler';
