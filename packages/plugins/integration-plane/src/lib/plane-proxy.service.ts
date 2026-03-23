@@ -1,4 +1,4 @@
-import * as http from 'http';
+import * as http from 'node:http';
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { mountPlaneProxy, MountPlaneProxyResult } from '@ever-gauzy/plugin-integration-plane-api';
@@ -96,9 +96,9 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 		// Fall back to tenant-id cookie if present
 		const cookieHeader = req.headers['cookie'];
 		if (cookieHeader) {
-			const match = cookieHeader.match(/tenant-id=([^;]+)/);
+			const match = cookieHeader.match(/(?:^|;\s*)tenant-id=([^;]+)/);
 			if (match) {
-				return match[1];
+				return decodeURIComponent(match[1]);
 			}
 		}
 

@@ -9,8 +9,8 @@ import { NbDialogRef } from '@nebular/theme';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlaneApiKeyDialogComponent {
-	apiKey: string;
-	apiSecret: string;
+	apiKey = '';
+	apiSecret = '';
 
 	readonly apiKeyCopied = signal(false);
 	readonly apiSecretCopied = signal(false);
@@ -36,12 +36,14 @@ export class PlaneApiKeyDialogComponent {
 			textarea.style.opacity = '0';
 			document.body.appendChild(textarea);
 			textarea.select();
-			document.execCommand('copy');
+			const success = document.execCommand('copy');
 			document.body.removeChild(textarea);
-			if (field === 'key') {
-				this.apiKeyCopied.set(true);
-			} else {
-				this.apiSecretCopied.set(true);
+			if (success) {
+				if (field === 'key') {
+					this.apiKeyCopied.set(true);
+				} else {
+					this.apiSecretCopied.set(true);
+				}
 			}
 		}
 	}

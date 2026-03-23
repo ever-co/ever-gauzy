@@ -1,4 +1,5 @@
 import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Location } from '@angular/common';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -23,6 +24,7 @@ const URL_PATTERN = /^https?:\/\/.+/;
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlaneAuthorizeComponent extends TranslationBaseComponent implements OnInit {
+	private readonly _location = inject(Location);
 	private readonly _activatedRoute = inject(ActivatedRoute);
 	private readonly _router = inject(Router);
 	private readonly _store = inject(Store);
@@ -86,6 +88,10 @@ export class PlaneAuthorizeComponent extends TranslationBaseComponent implements
 					console.error('Failed to check Plane integration state:', error);
 				}
 			});
+	}
+
+	goBack(): void {
+		this._location.back();
 	}
 
 	/**

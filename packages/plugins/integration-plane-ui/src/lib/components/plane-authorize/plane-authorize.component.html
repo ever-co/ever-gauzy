@@ -1,7 +1,9 @@
 <nb-card class="card-scroll">
 	<nb-card-header class="d-flex">
-		<ngx-back-navigation></ngx-back-navigation>
-		<h5>{{ 'INTEGRATIONS.PLANE_PAGE.TITLE' | translate }}</h5>
+		<button (click)="goBack()" nbButton status="primary" type="button" size="small" outline>
+			<nb-icon icon="arrow-back-outline"></nb-icon>
+		</button>
+		<h5 class="ml-4">{{ 'INTEGRATIONS.PLANE_PAGE.TITLE' | translate }}</h5>
 	</nb-card-header>
 
 	<nb-card-body>
@@ -16,6 +18,7 @@
 					formControlName="planeWebUrl"
 					type="url"
 					nbInput
+					required
 					autocomplete="url"
 					[placeholder]="'INTEGRATIONS.PLANE_PAGE.WEB_URL_PLACEHOLDER' | translate"
 				/>

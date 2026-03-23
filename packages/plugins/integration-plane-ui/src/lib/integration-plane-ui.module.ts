@@ -1,4 +1,6 @@
 import { inject, NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, ROUTES } from '@angular/router';
 import {
 	NbButtonModule,
@@ -17,21 +19,11 @@ import {
 	PLUGIN_DEFINITION
 } from '@gauzy/plugin-ui';
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { SharedModule } from '@gauzy/ui-core/shared';
 import { PlaneApiKeyDialogComponent } from './components/api-key-dialog/api-key-dialog.component';
 import { PlaneAuthorizeComponent } from './components/plane-authorize/plane-authorize.component';
 import { PlaneSettingsComponent } from './components/plane-settings/plane-settings.component';
 import { IntegrationPlaneLayoutComponent } from './integration-plane.layout.component';
 import { getPlaneRoutes } from './integration-plane.routes';
-
-const NB_MODULES = [
-	NbButtonModule,
-	NbCardModule,
-	NbDialogModule.forChild(),
-	NbIconModule,
-	NbInputModule,
-	NbTooltipModule
-];
 
 @NgModule({
 	declarations: [
@@ -41,10 +33,16 @@ const NB_MODULES = [
 		PlaneSettingsComponent
 	],
 	imports: [
-		...NB_MODULES,
+		CommonModule,
+		ReactiveFormsModule,
 		RouterModule.forChild([]),
 		TranslateModule.forChild(),
-		SharedModule
+		NbButtonModule,
+		NbCardModule,
+		NbDialogModule.forChild(),
+		NbIconModule,
+		NbInputModule,
+		NbTooltipModule
 	],
 	providers: [
 		{

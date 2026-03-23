@@ -1,8 +1,10 @@
 <nb-card class="card-scroll">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
 		<div class="d-flex align-items-center">
-			<ngx-back-navigation></ngx-back-navigation>
-			<h5 class="mb-0">{{ 'INTEGRATIONS.PLANE_PAGE.TITLE' | translate }}</h5>
+			<button (click)="goBack()" nbButton status="primary" type="button" size="small" outline>
+				<nb-icon icon="arrow-back-outline"></nb-icon>
+			</button>
+			<h5 class="mb-0 ml-4">{{ 'INTEGRATIONS.PLANE_PAGE.TITLE' | translate }}</h5>
 		</div>
 		<div class="header-actions">
 			@if (!isEditing()) {
@@ -23,7 +25,7 @@
 				status="danger"
 				outline
 				(click)="removeIntegration()"
-				[disabled]="loading()"
+				[disabled]="loading() || saving()"
 				nbTooltip="{{ 'BUTTONS.DELETE' | translate }}"
 			>
 				<nb-icon icon="trash-2-outline"></nb-icon>
@@ -48,6 +50,7 @@
 						formControlName="planeWebUrl"
 						type="url"
 						nbInput
+						required
 						[readonly]="!isEditing()"
 						[placeholder]="'INTEGRATIONS.PLANE_PAGE.WEB_URL_PLACEHOLDER' | translate"
 					/>

@@ -29,7 +29,7 @@ export class IntegrationPlaneLayoutComponent implements OnInit {
 	private initializeUiLanguagesAndLocale() {
 		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
 			distinctUntilChange(),
-			filter((lang: string | LanguagesEnum) => !!lang),
+			filter((lang: string | LanguagesEnum) => !!lang && Object.values(LanguagesEnum).includes(lang as LanguagesEnum)),
 			tap((lang: string | LanguagesEnum) => {
 				this._translateService.use(lang);
 			}),

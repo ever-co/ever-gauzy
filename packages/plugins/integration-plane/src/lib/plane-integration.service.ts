@@ -68,13 +68,24 @@ export class PlaneIntegrationService {
 		];
 
 		// Create the IntegrationTenant record with cascaded settings
-		const integrationTenant = await this.integrationTenantService.create({
-			name: IntegrationEnum.PLANE,
-			integration: integration ?? undefined,
-			tenantId,
-			organizationId,
-			settings: settings as IIntegrationSetting[]
-		});
+		let integrationTenant: IIntegrationTenant;
+		try {
+			integrationTenant = await this.integrationTenantService.create({
+				name: IntegrationEnum.PLANE,
+				integration: integration ?? undefined,
+				tenantId,
+				organizationId,
+				settings: settings as IIntegrationSetting[]
+			});
+		} catch (error) {
+			// Rollback: delete the generated API key if tenant creation fails
+			try {
+				await this.tenantApiKeyService.delete({ apiKey: apiKeyResponse.apiKey });
+			} catch (rollbackError: unknown) {
+				this.logger.warn(`Failed to rollback API key after setup failure: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`);
+			}
+			throw error;
+		}
 
 		this.logger.log(`Plane integration configured for tenant ${tenantId}`);
 
@@ -175,12 +186,24 @@ export class PlaneIntegrationService {
 			throw new HttpException('Integration tenant ID mismatch.', HttpStatus.BAD_REQUEST);
 		}
 
+		// Revoke the API key before removing the integration
+		const settings = integrationTenant.settings || [];
+		const apiKeySetting = settings.find((s) => s.settingsName === PlaneSettingName.PLANE_API_KEY_ID);
+		if (apiKeySetting?.settingsValue) {
+			try {
+				await this.tenantApiKeyService.delete({ apiKey: apiKeySetting.settingsValue });
+				this.logger.log(`API key revoked for tenant ${tenantId}`);
+			} catch (error: unknown) {
+				this.logger.warn(`Failed to revoke API key during removal: ${error instanceof Error ? error.message : String(error)}`);
+			}
+		}
+
 		// Soft-delete by marking as archived and inactive
 		integrationTenant.isActive = false;
 		integrationTenant.isArchived = true;
 
 		// Disable the integration in settings
-		const enabledSetting = (integrationTenant.settings || []).find(
+		const enabledSetting = settings.find(
 			(s) => s.settingsName === PlaneSettingName.IS_ENABLED
 		);
 		if (enabledSetting) {
@@ -318,8 +341,13 @@ export class PlaneIntegrationService {
 				},
 				relations: ['settings']
 			});
-		} catch {
-			return null;
+		} catch (error: unknown) {
+			// Only treat "not found" as null; re-throw unexpected errors
+			const message = error instanceof Error ? error.message : String(error);
+			if (message.includes('not found') || message.includes('Not Found') || message.includes('does not exist')) {
+				return null;
+			}
+			throw error;
 		}
 	}
 

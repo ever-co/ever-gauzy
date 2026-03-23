@@ -1,4 +1,5 @@
 import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Location } from '@angular/common';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
@@ -22,6 +23,7 @@ const URL_PATTERN = /^https?:\/\/.+/;
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlaneSettingsComponent extends TranslationBaseComponent implements OnInit {
+	private readonly _location = inject(Location);
 	private readonly _activatedRoute = inject(ActivatedRoute);
 	private readonly _router = inject(Router);
 	private readonly _store = inject(Store);
@@ -79,6 +81,10 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 			});
 	}
 
+	goBack(): void {
+		this._location.back();
+	}
+
 	/**
 	 * Toggle edit mode.
 	 */
@@ -126,11 +132,15 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 	}
 
 	/**
-	 * Remove the Plane integration.
+	 * Remove the Plane integration after user confirmation.
 	 */
 	removeIntegration(): void {
 		const tenantId = this.integrationTenantId();
 		if (!tenantId) return;
+
+		if (!window.confirm(this.translateService.instant('INTEGRATIONS.PLANE_PAGE.CONFIRM_DELETE'))) {
+			return;
+		}
 
 		this.loading.set(true);
 		this._planeService
@@ -148,11 +158,15 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 	}
 
 	/**
-	 * Regenerate API key.
+	 * Regenerate API key after user confirmation.
 	 */
 	regenerateKey(): void {
 		const organizationId = this.organization()?.id;
 		if (!organizationId) return;
+
+		if (!window.confirm(this.translateService.instant('INTEGRATIONS.PLANE_PAGE.CONFIRM_REGENERATE'))) {
+			return;
+		}
 
 		this.loading.set(true);
 		this._planeService
