@@ -5719,10 +5719,10 @@
     slugify "^1.6.6"
     uuid "^11.1.0"
 
-"@ever-gauzy/plugin-integration-plane-models@^0.0.4", "@ever-gauzy/plugin-integration-plane-models@^0.1.0":
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/@ever-gauzy/plugin-integration-plane-models/-/plugin-integration-plane-models-0.0.4.tgz#4fc27588ff24929993dcb8d2c5bb55d5e1be847c"
-  integrity sha512-0BfSkvYQMJPiU0ewqFjzCp4K+pAgdtYy2G/Cv852//BxtBHLpZq+4OGElmLFJtd/AWDosEcq8CdTg65QIl4BLw==
+"@ever-gauzy/plugin-integration-plane-models@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@ever-gauzy/plugin-integration-plane-models/-/plugin-integration-plane-models-0.1.0.tgz#b4ea066cf8c41996b553a6776b05c3cd9d1b9090"
+  integrity sha512-jSuhbJQRKBB5ZpM+DPbbMW/L41u035pzfXv8hxWnXTJ33m5/XryoS3Zqw2WMs3KlPOTq63iCRyKfxWgsvuWEsQ==
 
 "@faker-js/faker@^10.3.0":
   version "10.3.0"

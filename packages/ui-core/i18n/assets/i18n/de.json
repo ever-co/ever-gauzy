@@ -1588,6 +1588,8 @@
 			"SETUP_INFO": "Geben Sie die URLs ein, unter denen Ihre Plane-Instanz gehostet wird. Die Web-URL ist erforderlich. Admin- und Space-URLs sind optional.",
 			"REGENERATE_KEY": "Neu generieren",
 			"REGENERATE_KEY_LABEL": "API-Schlüssel und Geheimnis",
+			"CONFIRM_DELETE": "Sind Sie sicher, dass Sie diese Plane-Integration entfernen möchten? Der API-Schlüssel wird widerrufen.",
+			"CONFIRM_REGENERATE": "Sind Sie sicher, dass Sie den API-Schlüssel neu generieren möchten? Der aktuelle Schlüssel wird ungültig.",
 			"API_KEY_DIALOG": {
 				"TITLE": "API-Zugangsdaten",
 				"WARNING": "Kopieren Sie diese Zugangsdaten jetzt. Das API-Geheimnis wird nicht erneut angezeigt.",

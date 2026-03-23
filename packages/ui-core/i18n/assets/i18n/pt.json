@@ -1588,6 +1588,8 @@
 			"SETUP_INFO": "Insira as URLs onde sua instância do Plane está hospedada. A URL Web é obrigatória. As URLs de Admin e Space são opcionais.",
 			"REGENERATE_KEY": "Regenerar",
 			"REGENERATE_KEY_LABEL": "Chave API e Segredo",
+			"CONFIRM_DELETE": "Tem certeza de que deseja remover esta integração do Plane? A chave API será revogada.",
+			"CONFIRM_REGENERATE": "Tem certeza de que deseja regenerar a chave API? A chave atual será invalidada.",
 			"API_KEY_DIALOG": {
 				"TITLE": "Credenciais da API",
 				"WARNING": "Copie estas credenciais agora. O segredo da API não será exibido novamente.",

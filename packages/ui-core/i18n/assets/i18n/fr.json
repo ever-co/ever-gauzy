@@ -1589,6 +1589,8 @@
 			"SETUP_INFO": "Entrez les URL où votre instance Plane est hébergée. L'URL Web est obligatoire. Les URL Admin et Space sont optionnelles.",
 			"REGENERATE_KEY": "Régénérer",
 			"REGENERATE_KEY_LABEL": "Clé API et Secret",
+			"CONFIRM_DELETE": "Êtes-vous sûr de vouloir supprimer cette intégration Plane ? La clé API sera révoquée.",
+			"CONFIRM_REGENERATE": "Êtes-vous sûr de vouloir régénérer la clé API ? La clé actuelle sera invalidée.",
 			"API_KEY_DIALOG": {
 				"TITLE": "Identifiants API",
 				"WARNING": "Copiez ces identifiants maintenant. Le secret API ne sera plus affiché.",

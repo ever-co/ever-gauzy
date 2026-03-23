@@ -16,6 +16,7 @@ export interface IPlaneSettingsResponse {
 	planeAdminUrl: string;
 	planeSpaceUrl: string;
 	isEnabled: boolean;
+	hasApiKey: boolean;
 }
 
 export interface IPlaneStatusResponse {

@@ -1587,6 +1587,8 @@
 			"SETUP_INFO": "Wprowadź adresy URL, pod którymi hostowana jest Twoja instancja Plane. URL Web jest wymagany. URL Admin i Space są opcjonalne.",
 			"REGENERATE_KEY": "Regeneruj",
 			"REGENERATE_KEY_LABEL": "Klucz API i Sekret",
+			"CONFIRM_DELETE": "Czy na pewno chcesz usunąć tę integrację Plane? Klucz API zostanie unieważniony.",
+			"CONFIRM_REGENERATE": "Czy na pewno chcesz wygenerować ponownie klucz API? Bieżący klucz zostanie unieważniony.",
 			"API_KEY_DIALOG": {
 				"TITLE": "Poświadczenia API",
 				"WARNING": "Skopiuj te poświadczenia teraz. Sekret API nie zostanie ponownie wyświetlony.",

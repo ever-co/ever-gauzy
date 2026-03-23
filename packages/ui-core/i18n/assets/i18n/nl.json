@@ -1588,6 +1588,8 @@
 			"SETUP_INFO": "Voer de URL's in waar uw Plane-instantie wordt gehost. De Web-URL is vereist. Admin- en Space-URL's zijn optioneel.",
 			"REGENERATE_KEY": "Opnieuw genereren",
 			"REGENERATE_KEY_LABEL": "API-sleutel en Geheim",
+			"CONFIRM_DELETE": "Weet u zeker dat u deze Plane-integratie wilt verwijderen? De API-sleutel wordt ingetrokken.",
+			"CONFIRM_REGENERATE": "Weet u zeker dat u de API-sleutel opnieuw wilt genereren? De huidige sleutel wordt ongeldig.",
 			"API_KEY_DIALOG": {
 				"TITLE": "API-referenties",
 				"WARNING": "Kopieer deze referenties nu. Het API-geheim wordt niet opnieuw weergegeven.",

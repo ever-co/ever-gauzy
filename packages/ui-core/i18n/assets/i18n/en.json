@@ -1675,6 +1675,8 @@
 			"SETUP_INFO": "Enter the URLs where your Plane instance is hosted. The Web URL is required. Admin and Space URLs are optional.",
 			"REGENERATE_KEY": "Regenerate",
 			"REGENERATE_KEY_LABEL": "API Key & Secret",
+			"CONFIRM_DELETE": "Are you sure you want to remove this Plane integration? This will revoke the API key.",
+			"CONFIRM_REGENERATE": "Are you sure you want to regenerate the API key? The current key will be invalidated.",
 			"API_KEY_DIALOG": {
 				"TITLE": "API Credentials",
 				"WARNING": "Copy these credentials now. The API secret will not be shown again.",
