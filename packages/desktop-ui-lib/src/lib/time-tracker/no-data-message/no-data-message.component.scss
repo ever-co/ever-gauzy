@@ -4,6 +4,7 @@
     overflow-y: hidden;
     background-color: nb-theme(gauzy-card-1) !important;
     height: 100% !important;
+    flex: 1;
     margin: 0;
 }
 
@@ -28,5 +29,9 @@ p {
 }
 
 :host {
+    display: flex;
+    flex-direction: column;
     height: 100%;
+    flex: 1;
+    min-height: 0;
 }
