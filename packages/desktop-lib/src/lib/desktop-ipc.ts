@@ -309,14 +309,14 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 					);
 				} else {
 					console.log('Update Synced Timer Offline');
-					await timerService.update(
-						new Timer({
-							id: arg.id,
-							...(arg.startedAt && {
+					if (arg.startedAt) {
+						await timerService.update(
+							new Timer({
+								id: arg.id,
 								startedAt: new Date(arg.startedAt)
 							})
-						})
-					);
+						);
+					}
 				}
 			} else {
 				console.log('No arg.id found');
@@ -1410,7 +1410,8 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 
 	const logout = async () => {
 		await userService.remove();
-		timeTrackerWindow.webContents.send('__logout__');
+		// Explicitly pass `false` to prevent the Angular app from triggering an unwanted restart.
+		timeTrackerWindow.webContents.send('__logout__', false);
 		LocalStore.updateAuthSetting({ isLogout: true });
 	};
 

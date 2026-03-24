@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IPlugin, PluginStatus, PluginSubscriptionType } from '@gauzy/contracts';
-import { NbMenuItem, NbMenuService, NbBadgeModule, NbTooltipModule, NbIconModule, NbButtonModule, NbContextMenuModule, NbToggleModule } from '@nebular/theme';
+import { NbBadgeModule, NbButtonModule, NbContextMenuModule, NbIconModule, NbMenuItem, NbMenuService, NbToggleModule, NbTooltipModule } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService, TranslatePipe } from '@ngx-translate/core';
-import { filter, tap } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { filter, map, tap } from 'rxjs';
 import { PluginSettingsActions, PluginSubscriptionActions } from '../+state';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
@@ -16,12 +16,13 @@ import { PluginInstallationQuery } from '../+state/queries/plugin-installation.q
 import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { PluginToggleQuery } from '../+state/queries/plugin-toggle.query';
 import { Store } from '../../../../../services';
+import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { PluginEnvironmentService } from '../../../services/plugin-environment.service';
 import { PluginMarketplaceUtilsService } from '../plugin-marketplace-utils.service';
 
-import { AsyncPipe, DecimalPipe, TitleCasePipe, CurrencyPipe, DatePipe } from '@angular/common';
-import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
+import { AsyncPipe, CurrencyPipe, DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { ReadMoreDirective } from '../../../../../directives/read-more.directive';
+import { SpinnerButtonDirective } from '../../../../../directives/spinner-button.directive';
 
 @UntilDestroy()
 @Component({
@@ -50,6 +51,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		public readonly marketplaceQuery: PluginMarketplaceQuery,
 		public readonly installationQuery: PluginInstallationQuery,
 		public readonly toggleQuery: PluginToggleQuery,
+		private readonly pluginElectronService: PluginElectronService,
 		private readonly environmentService: PluginEnvironmentService
 	) {}
 
@@ -67,6 +69,12 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		this.installationQuery
 			.installed$(this.plugin.id)
 			.pipe(
+				map((installed) => {
+					if(this.environmentService.isDesktop()) {
+						return installed;
+					}
+					return this.plugin.installed;
+				}),
 				tap((enabled) =>
 					this.action.dispatch(PluginToggleActions.toggle({ pluginId: this.plugin.id, enabled }))
 				),
@@ -283,5 +291,20 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	 */
 	public getEnvironmentMismatchTooltip(): string {
 		return this.environmentService.getEnvironmentMismatchWarning(this.plugin);
+	}
+
+	/**
+	 * Check if running in desktop app
+	 */
+	public isDesktopApp(): boolean {
+		return this.pluginElectronService.isDesktop;
+	}
+
+	/**
+	 * Dispatch web-to-desktop installation via the gauzy:// deep link protocol.
+	 * The actual deep link logic is handled by PluginInstallationEffects.installFromWeb$.
+	 */
+	public installFromWeb(): void {
+		this.action.dispatch(PluginMarketplaceActions.install(this.plugin));
 	}
 }

@@ -4,10 +4,10 @@ import { environment } from './environments/environment';
 Object.assign(process.env, environment);
 // Import logging for electron and override default console logging
 import * as remoteMain from '@electron/remote/main';
-import { logger as log, store } from '@gauzy/desktop-core';
+import { IConfig, logger as log, store } from '@gauzy/desktop-core';
 import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
-import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
 import * as path from 'node:path';
 import * as Url from 'node:url';
 import { initSentry } from './sentry';
@@ -40,9 +40,11 @@ import {
 	ErrorEventManager,
 	ErrorReport,
 	ErrorReportRepository,
+	InstallPluginHandler,
 	ipcMainHandler,
 	ipcTimer,
 	LocalStore,
+	ProtocolRouter,
 	ProviderFactory,
 	removeMainListener,
 	removeTimerListener,
@@ -50,7 +52,8 @@ import {
 	TranslateLoader,
 	TranslateService,
 	TrayIconFactory,
-	UIError
+	UIError,
+	handleDesktopStartup
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
@@ -124,24 +127,60 @@ LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
 
+// Register custom protocol for deep linking
+const appProtocol = process.env.PROTOCOL || 'gauzy-timer';
+if (process.defaultApp) {
+	if (process.argv.length >= 2) {
+		app.setAsDefaultProtocolClient(appProtocol, process.execPath, [path.resolve(process.argv[1])]);
+	}
+} else {
+	app.setAsDefaultProtocolClient(appProtocol);
+}
+
+// Deep-link protocol router — registered with all supported action handlers.
+const protocolRouter = ProtocolRouter.getInstance();
+
 // Instance detection
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
 	app.quit();
 } else {
-	app.on('second-instance', () => {
-		// if someone tried to run a second instance, we should only show and focus on current window instance.
+	app.on('second-instance', (event, commandLine, workingDirectory) => {
+		console.log('Another instance is already running...');
+
+		// Handle deep link from second instance
+		const url = commandLine.find((arg) => arg.startsWith(`${appProtocol}://`));
+		if (url) {
+			console.log('Deep link received from second instance:', url);
+			protocolRouter.route(url);
+		}
+
+		// if someone tried to run a second instance, we should focus our window
 		if (gauzyWindow) {
-			// show window if it hides
-			gauzyWindow.show();
-			// restore window if it's minified
-			gauzyWindow.restore();
-			// focus on the main window
+			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
 			gauzyWindow.focus();
+			if (!url) {
+				dialog.showMessageBoxSync(gauzyWindow, {
+					type: 'warning',
+					title: process.env.DESCRIPTION,
+					message: 'You already have a running instance'
+				});
+			}
 		}
 	});
+
+	// Handle deep links on macOS
+	app.on('open-url', (event, url) => {
+		event.preventDefault();
+		console.log('Deep link received (macOS):', url);
+		protocolRouter.route(url);
+	});
 }
+
+// Configure the protocol router with all supported deep-link action handlers.
+// Adding a new action requires only a new IProtocolHandler implementation;
+protocolRouter.register(new InstallPluginHandler(pathWindow.timeTrackerUi));
 
 /* Load translations */
 TranslateLoader.load(__dirname + '/assets/i18n/');
@@ -310,8 +349,8 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 	// Create the tray icon and menu
 	tray = TrayIconFactory.create(environment, pathWindow, path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
 	// Language change
-	TranslateService.onLanguageChange(() =>
-		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false)
+	TranslateService.onLanguageChange(
+		() => new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false)
 	);
 
 	return true;
@@ -330,7 +369,6 @@ async function launchSplashScreen() {
 		splashScreen.browserWindow.on('closed', () => (splashScreen = null));
 		await splashScreen.loadURL();
 		splashScreen.show();
-
 	} catch (error) {
 		console.error(error);
 		throw new AppError('MAINLOADSPLASH', error);
@@ -395,6 +433,44 @@ async function setupUpdater() {
 	}
 }
 
+function setAppVersion(configs: Partial<IConfig>) {
+	if (!configs) {
+		configs = {}
+	}
+	configs.version = app.getVersion();
+	LocalStore.updateConfigSetting({
+		...configs
+	});
+}
+
+async function restartApp(arg?: IConfig) {
+	initializeAppManager();
+	if (arg) {
+		LocalStore.updateConfigSetting(arg);
+	}
+	const configs = LocalStore.getStore('configs');
+	setGlobalVariable(configs);
+	/* Killing the provider. */
+	await provider.kill();
+	/* Creating a database if not exit. */
+	await ProviderFactory.instance.createDatabase();
+	/* Kill all windows */
+	if (appWindowManager.alwaysOnWindow) appWindowManager.alwaysOnWindow.close();
+	if (appWindowManager.settingWindow && !appWindowManager.settingWindow?.isDestroyed()) {
+		appWindowManager.settingWindow?.close();
+	}
+	if (timeTrackerWindow && !timeTrackerWindow.isDestroyed()) {
+		timeTrackerWindow.destroy();
+	}
+	if (serverGauzy) serverGauzy.kill();
+	if (gauzyWindow && !gauzyWindow.isDestroyed()) {
+		gauzyWindow.destroy();
+		gauzyWindow = null;
+	}
+	app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+	app.exit(0);
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -417,6 +493,16 @@ app.on('ready', async () => {
 	new DesktopThemeListener();
 	// default global
 	setGlobalVariable(configs || {});
+	// buttonResponse:
+	// 0: User clicked "Remove Database"
+	// 1: User clicked "Keep It"
+	// undefined: No popup was shown (e.g. fresh install or no version change)
+	const buttonResponse = await handleDesktopStartup();
+	setAppVersion(configs);
+	if (buttonResponse === 0) {
+		await restartApp();
+		return;
+	}
 	await launchSplashScreen();
 	await setupDatabase();
 	initialAppMenu();
@@ -442,6 +528,17 @@ app.on('ready', async () => {
 	await setupUpdater();
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
+	// Retry any deep link that arrived before the app was fully ready.
+	await protocolRouter.processPending();
+
+	// Check for deep link in command line args (Windows first-launch).
+	if (process.platform === 'win32') {
+		const deepLinkArg = process.argv.find((arg) => arg.startsWith(`${appProtocol}://`));
+		if (deepLinkArg) {
+			log.info('Deep link found in command line:', deepLinkArg);
+			await protocolRouter.route(deepLinkArg);
+		}
+	}
 });
 
 app.on('window-all-closed', () => {
@@ -497,30 +594,8 @@ ipcMain.on('restore', () => {
 	gauzyWindow.restore();
 });
 
-ipcMain.on('restart_app', async (event, arg) => {
-	initializeAppManager();
-	LocalStore.updateConfigSetting(arg);
-	const configs = LocalStore.getStore('configs');
-	setGlobalVariable(configs);
-	/* Killing the provider. */
-	await provider.kill();
-	/* Creating a database if not exit. */
-	await ProviderFactory.instance.createDatabase();
-	/* Kill all windows */
-	if (appWindowManager.alwaysOnWindow) appWindowManager.alwaysOnWindow.close();
-	if (appWindowManager.settingWindow && !appWindowManager.settingWindow?.isDestroyed()) {
-		appWindowManager.settingWindow?.close();
-	}
-	if (timeTrackerWindow && !timeTrackerWindow.isDestroyed()) {
-		timeTrackerWindow.destroy();
-	}
-	if (serverGauzy) serverGauzy.kill();
-	if (gauzyWindow && !gauzyWindow.isDestroyed()) {
-		gauzyWindow.destroy();
-		gauzyWindow = null;
-	}
-	app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
-	app.exit(0);
+ipcMain.on('restart_app', async (_, arg) => {
+	await restartApp(arg);
 });
 
 ipcMain.on('save_additional_setting', (event, arg) => {
