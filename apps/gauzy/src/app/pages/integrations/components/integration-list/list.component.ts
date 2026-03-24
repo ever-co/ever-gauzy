@@ -295,9 +295,9 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * Navigate to the "New Integrations" page.
+	 * Navigate to the unified integrations marketplace page.
 	 */
 	navigateToNewIntegrations(): void {
-		this._router.navigate(['/pages/integrations/new']);
+		this._router.navigate(['/pages/integrations/plugins']);
 	}
 }

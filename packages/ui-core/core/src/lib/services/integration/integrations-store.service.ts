@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import {
-	IIntegrationViewModel,
+	IIntegration,
 	IIntegrationFilter,
+	IIntegrationGroup,
+	IIntegrationGroupTypeOption,
 	IntegrationTypeEnum,
 	IntegrationTypeGroupEnum
 } from '@gauzy/contracts';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, of } from 'rxjs';
 import { IntegrationsService } from './integrations.service';
 import { tap, map, distinctUntilChanged, debounceTime, catchError, finalize, mergeMap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -22,11 +24,11 @@ export const InitialFilter: IIntegrationFilter = {
 	providedIn: 'root'
 })
 export class IntegrationsStoreService {
-	private _integrations$: BehaviorSubject<IIntegrationViewModel[]> = new BehaviorSubject([]);
-	public integrations$: Observable<IIntegrationViewModel[]> = this._integrations$.asObservable();
+	private _integrations$: BehaviorSubject<IIntegration[]> = new BehaviorSubject([]);
+	public integrations$: Observable<IIntegration[]> = this._integrations$.asObservable();
 
-	private _integrationGroups$: BehaviorSubject<any[]> = new BehaviorSubject([]);
-	public integrationGroups$: Observable<any[]> = this._integrationGroups$.asObservable();
+	private _integrationGroups$: BehaviorSubject<IIntegrationGroup[]> = new BehaviorSubject([]);
+	public integrationGroups$: Observable<IIntegrationGroup[]> = this._integrationGroups$.asObservable();
 
 	private _isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	public isLoading$: Observable<boolean> = this._isLoading$.asObservable();
@@ -55,12 +57,12 @@ export class IntegrationsStoreService {
 				mergeMap(({ integrationTypeId, searchQuery, filter }) => {
 					return integrationTypeId
 						? this._integrationsService.fetchIntegrations(integrationTypeId, searchQuery, filter)
-						: of([]);
+						: of([] as IIntegration[]);
 				}),
 				tap((integrations) => this._integrations$.next(integrations)),
 				catchError((error) => {
 					this._errorHandlingService.handleError(error);
-					return of([]);
+					return of([] as IIntegration[]);
 				}),
 				untilDestroyed(this)
 			)
@@ -85,7 +87,7 @@ export class IntegrationsStoreService {
 				),
 				catchError((error) => {
 					this._errorHandlingService.handleError(error);
-					return of([]);
+					return EMPTY;
 				}),
 				finalize(() => this._isLoading$.next(false)),
 				untilDestroyed(this)
@@ -93,11 +95,19 @@ export class IntegrationsStoreService {
 			.subscribe();
 	}
 
-	private _mapToDefaultType(integrationGroups) {
+	private _mapToDefaultType(integrationGroups: IIntegrationGroup[]): IIntegrationGroupTypeOption {
 		const featuredGroup = integrationGroups.find(
 			({ groupName }) => groupName === IntegrationTypeGroupEnum.FEATURED
 		);
-		return featuredGroup.integrationTypes.find((item) => item.name === IntegrationTypeEnum.ALL_INTEGRATIONS);
+		const defaultType =
+			featuredGroup?.integrationTypes.find((item) => item.name === IntegrationTypeEnum.ALL_INTEGRATIONS) ??
+			integrationGroups[0]?.integrationTypes[0];
+
+		if (!defaultType) {
+			throw new Error('No integration groups available');
+		}
+
+		return defaultType;
 	}
 
 	setSelectedIntegrationTypeId(integrationTypeId: string) {
