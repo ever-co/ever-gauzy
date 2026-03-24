@@ -1,6 +1,7 @@
 import { Route } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PageRouteRegistryConfig, PermissionsGuard } from '@gauzy/ui-core/core';
+import { PluginRouteInput } from '@gauzy/plugin-ui';
+import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { PlaneAuthorizeComponent } from './components/plane-authorize/plane-authorize.component';
 import { PlaneSettingsComponent } from './components/plane-settings/plane-settings.component';
 import { IntegrationPlaneLayoutComponent } from './integration-plane.layout.component';
@@ -15,7 +16,7 @@ export const INTEGRATION_PLANE_PAGE_LINK = `/pages/integrations/${INTEGRATION_PL
  * Route config for registering the plane integration section at integrations-sections.
  * Used by IntegrationPlanePlugin for declarative route registration.
  */
-export const INTEGRATION_PLANE_PAGE_ROUTE: PageRouteRegistryConfig = {
+export const INTEGRATION_PLANE_PAGE_ROUTE: PluginRouteInput = {
 	location: 'integrations-sections',
 	path: INTEGRATION_PLANE_PATH,
 	loadChildren: () => import('./integration-plane-ui.module').then((m) => m.IntegrationPlaneUiModule),

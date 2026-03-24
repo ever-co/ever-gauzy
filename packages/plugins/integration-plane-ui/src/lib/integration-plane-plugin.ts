@@ -1,5 +1,5 @@
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PluginRouteInput, PluginUiDefinition } from '@gauzy/plugin-ui';
+import { PluginUiDefinition } from '@gauzy/plugin-ui';
 import { IntegrationPlaneUiModule } from './integration-plane-ui.module';
 import { INTEGRATION_PLANE_PAGE_ROUTE } from './integration-plane.routes';
 
@@ -22,5 +22,5 @@ export const IntegrationPlanePlugin: PluginUiDefinition = {
 	permissionKeys: [PermissionsEnum.INTEGRATION_VIEW],
 
 	// ── Routes ───────────────────────────────────────────────────
-	routes: [INTEGRATION_PLANE_PAGE_ROUTE as PluginRouteInput]
+	routes: [INTEGRATION_PLANE_PAGE_ROUTE]
 };

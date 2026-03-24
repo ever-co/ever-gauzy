@@ -44,6 +44,10 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 						throw new Error('Cannot resolve Plane config: no tenant ID in request');
 					}
 
+					// Validate that the header/cookie tenant ID matches the JWT claim
+					// to prevent cross-tenant proxy access via spoofed headers.
+					this.validateTenantFromToken(req, tenantId);
+
 					const config = await this.planeIntegrationService.getConfigForTenant(tenantId);
 
 					if (!config) {
@@ -60,8 +64,10 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 					};
 				},
 
-				// Cache resolved configs for 60 seconds
-				cacheTtl: 60_000
+				// Short TTL to minimize stale-config window after settings changes
+				// or integration removal. MountPlaneProxyResult does not expose
+				// cache invalidation, so a low TTL is the safest mitigation.
+				cacheTtl: 5_000
 			});
 
 			this.logger.log('Plane proxy mounted successfully on /api/plane');
@@ -79,6 +85,48 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 		if (this.proxyResult) {
 			await this.proxyResult.shutdown();
 			this.logger.log('Plane proxy shut down');
+		}
+	}
+
+	/**
+	 * Validate that the tenant ID from the header/cookie matches the JWT token's
+	 * tenantId claim. Prevents cross-tenant proxy access via spoofed headers.
+	 *
+	 * This operates at the raw HTTP level (before NestJS guards), so we decode
+	 * the JWT payload without signature verification — the check is a
+	 * defense-in-depth cross-reference, not the sole auth boundary.
+	 */
+	private validateTenantFromToken(req: http.IncomingMessage, headerTenantId: string): void {
+		const authHeader = req.headers['authorization'];
+		if (!authHeader?.startsWith('Bearer ')) {
+			throw new Error('Plane proxy requires an authenticated request (missing Bearer token)');
+		}
+
+		const token = authHeader.slice(7);
+		const parts = token.split('.');
+		if (parts.length !== 3) {
+			throw new Error('Plane proxy received a malformed Bearer token');
+		}
+
+		try {
+			const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
+			const tokenTenantId = payload.tenantId;
+
+			if (!tokenTenantId) {
+				throw new Error('Bearer token does not contain a tenantId claim');
+			}
+
+			if (tokenTenantId !== headerTenantId) {
+				this.logger.warn(
+					`Cross-tenant proxy access blocked: token tenant ${tokenTenantId} != header tenant ${headerTenantId}`
+				);
+				throw new Error('Tenant ID mismatch: token tenant does not match requested tenant');
+			}
+		} catch (error) {
+			if (error instanceof SyntaxError) {
+				throw new Error('Plane proxy received a Bearer token with an invalid payload');
+			}
+			throw error;
 		}
 	}
 

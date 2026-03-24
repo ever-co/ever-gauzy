@@ -12,8 +12,8 @@ export enum PlaneSettingName {
 	/** Plane public space URL */
 	PLANE_SPACE_URL = 'PLANE_SPACE_URL',
 
-	/** Reference to the TenantApiKey record ID */
-	PLANE_API_KEY_ID = 'PLANE_API_KEY_ID',
+	/** The plain-text API key credential value (not a record ID) */
+	PLANE_API_KEY_VALUE = 'PLANE_API_KEY_VALUE',
 
 	/** Whether the integration is enabled */
 	IS_ENABLED = 'IS_ENABLED'

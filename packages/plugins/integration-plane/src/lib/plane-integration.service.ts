@@ -63,7 +63,7 @@ export class PlaneIntegrationService {
 			{ settingsName: PlaneSettingName.PLANE_WEB_URL, settingsValue: dto.planeWebUrl },
 			{ settingsName: PlaneSettingName.PLANE_ADMIN_URL, settingsValue: dto.planeAdminUrl || '' },
 			{ settingsName: PlaneSettingName.PLANE_SPACE_URL, settingsValue: dto.planeSpaceUrl || '' },
-			{ settingsName: PlaneSettingName.PLANE_API_KEY_ID, settingsValue: apiKeyResponse.apiKey },
+			{ settingsName: PlaneSettingName.PLANE_API_KEY_VALUE, settingsValue: apiKeyResponse.apiKey },
 			{ settingsName: PlaneSettingName.IS_ENABLED, settingsValue: 'true' }
 		];
 
@@ -119,7 +119,7 @@ export class PlaneIntegrationService {
 			planeAdminUrl: settingsMap[PlaneSettingName.PLANE_ADMIN_URL] || '',
 			planeSpaceUrl: settingsMap[PlaneSettingName.PLANE_SPACE_URL] || '',
 			isEnabled: settingsMap[PlaneSettingName.IS_ENABLED] === 'true',
-			hasApiKey: !!settingsMap[PlaneSettingName.PLANE_API_KEY_ID]
+			hasApiKey: !!settingsMap[PlaneSettingName.PLANE_API_KEY_VALUE]
 		};
 	}
 
@@ -188,7 +188,7 @@ export class PlaneIntegrationService {
 
 		// Revoke the API key before removing the integration
 		const settings = integrationTenant.settings || [];
-		const apiKeySetting = settings.find((s) => s.settingsName === PlaneSettingName.PLANE_API_KEY_ID);
+		const apiKeySetting = settings.find((s) => s.settingsName === PlaneSettingName.PLANE_API_KEY_VALUE);
 		if (apiKeySetting?.settingsValue) {
 			try {
 				await this.tenantApiKeyService.delete({ apiKey: apiKeySetting.settingsValue });
@@ -225,37 +225,51 @@ export class PlaneIntegrationService {
 		const tenantId = RequestContext.currentTenantId() ?? undefined;
 		const integrationTenant = await this.findIntegrationTenantOrFail(tenantId);
 
-		// Delete the old API key before generating a new one (generateApiKey rejects duplicates per tenant)
 		const settings = integrationTenant.settings || [];
-		const oldApiKeySetting = settings.find((s) => s.settingsName === PlaneSettingName.PLANE_API_KEY_ID);
-		if (oldApiKeySetting?.settingsValue) {
-			try {
-				await this.tenantApiKeyService.delete({ apiKey: oldApiKeySetting.settingsValue });
-			} catch (error: unknown) {
-				this.logger.warn(`Failed to delete old API key during regeneration: ${error instanceof Error ? error.message : String(error)}`);
-			}
-		}
+		const oldApiKeySetting = settings.find((s) => s.settingsName === PlaneSettingName.PLANE_API_KEY_VALUE);
+		const oldApiKeyValue = oldApiKeySetting?.settingsValue;
 
-		// Generate a new API key/secret pair
+		// Generate the new key first (before deleting the old one) to avoid
+		// an unrecoverable state if save() fails later.
 		const apiKeyResponse = await this.tenantApiKeyService.generateApiKey({
-			name: 'Plane Integration',
+			name: 'Plane Integration (rotate)',
 			tenantId
 		});
 
-		// Update the PLANE_API_KEY_ID setting
+		// Update the setting to point to the new key
 		if (oldApiKeySetting) {
 			oldApiKeySetting.settingsValue = apiKeyResponse.apiKey;
 		} else {
 			settings.push({
-				settingsName: PlaneSettingName.PLANE_API_KEY_ID,
+				settingsName: PlaneSettingName.PLANE_API_KEY_VALUE,
 				settingsValue: apiKeyResponse.apiKey,
 				tenantId,
 				organizationId
 			} as IIntegrationSetting);
 		}
 
+		// Persist the new key reference; rollback if this fails
 		integrationTenant.settings = settings;
-		await this.integrationTenantService.save(integrationTenant);
+		try {
+			await this.integrationTenantService.save(integrationTenant);
+		} catch (error) {
+			// Save failed — delete the newly generated key to avoid orphans
+			try {
+				await this.tenantApiKeyService.delete({ apiKey: apiKeyResponse.apiKey });
+			} catch (rollbackError: unknown) {
+				this.logger.warn(`Failed to rollback new API key after save failure: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`);
+			}
+			throw error;
+		}
+
+		// Only revoke the old key after the new one is safely persisted
+		if (oldApiKeyValue) {
+			try {
+				await this.tenantApiKeyService.delete({ apiKey: oldApiKeyValue });
+			} catch (error: unknown) {
+				this.logger.warn(`Failed to delete old API key during regeneration: ${error instanceof Error ? error.message : String(error)}`);
+			}
+		}
 
 		this.logger.log(`Plane integration API key regenerated for tenant ${tenantId}`);
 
@@ -308,7 +322,7 @@ export class PlaneIntegrationService {
 			return null;
 		}
 
-		const apiKey = settingsMap[PlaneSettingName.PLANE_API_KEY_ID] || '';
+		const apiKey = settingsMap[PlaneSettingName.PLANE_API_KEY_VALUE] || '';
 
 		// The externalBaseApiUrl is the Gauzy API URL for this deployment
 		const gauzyApiBaseUrl = this.configService.get('baseUrl') || 'http://localhost:3000';

@@ -1,10 +1,10 @@
 .hint {
-	margin-bottom: 20px;
+	margin-bottom: 24px;
 }
 
 button {
 	box-shadow: var(--gauzy-shadow);
-	border: none !important;
+	border-radius: calc(var(--border-radius) * 1);
 }
 
 :host {
