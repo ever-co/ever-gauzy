@@ -235,7 +235,7 @@
     "@gauzy/scheduler": "file:../../../dist/packages/scheduler",
     "@gauzy/ui-config": "file:../../../dist/packages/ui-config",
     "@gauzy/utils": "file:../../../dist/packages/utils",
-	"knex": "3.1.0"
+    "knex": "3.1.0"
   },
   "optionalDependencies": {
     "node-linux": "^0.1.12",
