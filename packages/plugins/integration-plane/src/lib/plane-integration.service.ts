@@ -42,15 +42,15 @@ export class PlaneIntegrationService {
 		}
 
 		// Check if a Plane integration already exists for this tenant
-		if (tenantId) {
-			const existing = await this.findIntegrationTenant(tenantId);
-			if (existing) {
-				throw new HttpException(
-					'Plane integration is already configured for this tenant. Use the update endpoint to modify settings.',
-					HttpStatus.CONFLICT
-				);
-			}
+
+		const existing = await this.findIntegrationTenant(tenantId);
+		if (existing) {
+			throw new HttpException(
+				'Plane integration is already configured for this tenant. Use the update endpoint to modify settings.',
+				HttpStatus.CONFLICT
+			);
 		}
+
 
 		// Find or create the base Integration record
 		const integration = await this.findOrCreateBaseIntegration();
