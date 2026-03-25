@@ -78,7 +78,11 @@ export const DEFAULT_AI_INTEGRATIONS = [
 		name: IntegrationEnum.SIM,
 		imgSrc: 'sim.svg',
 		isComingSoon: false,
-		integrationTypesMap: <string[]>[IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.AI_AGENTS, IntegrationTypeEnum.AUTOMATION_TOOLS],
+		integrationTypesMap: <string[]>[
+			IntegrationTypeEnum.ALL_INTEGRATIONS,
+			IntegrationTypeEnum.AI_AGENTS,
+			IntegrationTypeEnum.AUTOMATION_TOOLS
+		],
 		order: 10,
 		redirectUrl: sluggable(IntegrationEnum.SIM),
 		provider: IntegrationEnum.SIM

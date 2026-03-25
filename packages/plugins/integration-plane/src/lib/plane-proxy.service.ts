@@ -33,7 +33,18 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 			this.proxyResult = mountPlaneProxy(httpServer, {
 				prefix: '/api/plane',
 
-				extractTenantId: (req) => this.extractTenantIdFromRequest(req),
+				/**
+				 * Extract tenant ID from every request AND validate the JWT.
+				 * This runs on every request (including cache hits), ensuring
+				 * that authentication is never skipped.
+				 */
+				extractTenantId: (req) => {
+					const tenantId = this.extractTenantIdFromRequest(req);
+					if (tenantId) {
+						this.validateTenantFromToken(req, tenantId);
+					}
+					return tenantId;
+				},
 
 				/**
 				 * Resolve the tenant's Plane configuration from the database.
@@ -45,10 +56,6 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 					if (!tenantId) {
 						throw new Error('Cannot resolve Plane config: no tenant ID in request');
 					}
-
-					// Validate that the header/cookie tenant ID matches the JWT claim
-					// to prevent cross-tenant proxy access via spoofed headers.
-					this.validateTenantFromToken(req, tenantId);
 
 					const config = await this.planeIntegrationService.getConfigForTenant(tenantId);
 

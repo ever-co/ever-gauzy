@@ -1,11 +1,6 @@
 import { HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ID, IntegrationEnum, IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
-import {
-	IntegrationService,
-	IntegrationTenantService,
-	RequestContext,
-	TenantApiKeyService
-} from '@gauzy/core';
+import { IntegrationService, IntegrationTenantService, RequestContext, TenantApiKeyService } from '@gauzy/core';
 import { ConfigService } from '@gauzy/config';
 import { generatePassword, generateSha256Hash } from '@gauzy/utils';
 import { PlaneSettingName } from './plane-setting.enum';
@@ -38,6 +33,13 @@ export class PlaneIntegrationService {
 	): Promise<{ integrationTenantId: ID; apiKey: string; apiSecret: string }> {
 		const tenantId = RequestContext.currentTenantId() ?? undefined;
 		organizationId = organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+
+		if (!tenantId) {
+			throw new HttpException(
+				'Tenant context is required to configure a Plane integration.',
+				HttpStatus.BAD_REQUEST
+			);
+		}
 
 		// Check if a Plane integration already exists for this tenant
 		if (tenantId) {
@@ -83,7 +85,9 @@ export class PlaneIntegrationService {
 			try {
 				await this.tenantApiKeyService.delete({ apiKey: apiKeyResponse.apiKey });
 			} catch (rollbackError: unknown) {
-				this.logger.warn(`Failed to rollback API key after setup failure: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`);
+				this.logger.warn(
+					`Failed to rollback API key after setup failure: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`
+				);
 			}
 			throw error;
 		}
@@ -210,9 +214,7 @@ export class PlaneIntegrationService {
 		integrationTenant.isArchived = true;
 
 		// Disable the integration in settings
-		const enabledSetting = settings.find(
-			(s) => s.settingsName === PlaneSettingName.IS_ENABLED
-		);
+		const enabledSetting = settings.find((s) => s.settingsName === PlaneSettingName.IS_ENABLED);
 		if (enabledSetting) {
 			enabledSetting.settingsValue = 'false';
 		}
@@ -228,9 +230,10 @@ export class PlaneIntegrationService {
 	 * Regenerate API key and secret for the Plane integration.
 	 * The old credentials become invalid.
 	 *
-	 * We bypass TenantApiKeyService.generateApiKey() because it enforces a
-	 * tenant-wide one-key limit (rejects with 409 if any key exists for the
-	 * tenant). Instead we directly delete the old key and create a new one.
+	 * Flow: create new key → persist reference → delete old key.
+	 * We use TenantApiKeyService.create() directly because generateApiKey()
+	 * enforces a tenant-wide one-key limit. Creating first ensures the
+	 * integration is never left keyless if any step fails.
 	 */
 	async regenerateApiKey(organizationId?: string): Promise<{ apiKey: string; apiSecret: string }> {
 		const tenantId = RequestContext.currentTenantId() ?? undefined;
@@ -240,21 +243,7 @@ export class PlaneIntegrationService {
 		const oldApiKeySetting = settings.find((s) => s.settingsName === PlaneSettingName.PLANE_API_KEY_VALUE);
 		const oldApiKeyValue = oldApiKeySetting?.settingsValue;
 
-		// Delete the old TenantApiKey record
-		if (oldApiKeyValue) {
-			try {
-				await this.tenantApiKeyService.delete({ apiKey: oldApiKeyValue } as any);
-			} catch (error: unknown) {
-				if (error instanceof NotFoundException) {
-					this.logger.warn(`Old API key already deleted for tenant ${tenantId}`);
-				} else {
-					throw error;
-				}
-			}
-		}
-
-		// Generate new credentials and create a TenantApiKey record directly
-		// (bypasses generateApiKey's tenant-wide uniqueness guard)
+		// 1. Generate new credentials and create a TenantApiKey record first
 		const apiKey = generatePassword(32);
 		const apiSecret = generatePassword(64);
 		const hashedApiSecret = generateSha256Hash(apiSecret);
@@ -265,7 +254,7 @@ export class PlaneIntegrationService {
 			apiSecret: hashedApiSecret
 		} as any);
 
-		// Update the setting to point to the new key
+		// 2. Update the setting to point to the new key
 		if (oldApiKeySetting) {
 			oldApiKeySetting.settingsValue = tenantApiKey.apiKey;
 		} else {
@@ -277,7 +266,7 @@ export class PlaneIntegrationService {
 			} as IIntegrationSetting);
 		}
 
-		// Persist the new key reference
+		// 3. Persist the new key reference
 		integrationTenant.settings = settings;
 		try {
 			await this.integrationTenantService.save(integrationTenant);
@@ -286,9 +275,26 @@ export class PlaneIntegrationService {
 			try {
 				await this.tenantApiKeyService.delete({ apiKey: tenantApiKey.apiKey } as any);
 			} catch (rollbackError: unknown) {
-				this.logger.warn(`Failed to rollback new API key after save failure: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`);
+				this.logger.warn(
+					`Failed to rollback new API key after save failure: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`
+				);
 			}
 			throw error;
+		}
+
+		// 4. Only delete the old key after the new one is safely persisted
+		if (oldApiKeyValue) {
+			try {
+				await this.tenantApiKeyService.delete({ apiKey: oldApiKeyValue } as any);
+			} catch (error: unknown) {
+				if (error instanceof NotFoundException) {
+					this.logger.warn(`Old API key already deleted for tenant ${tenantId}`);
+				} else {
+					this.logger.warn(
+						`Failed to delete old API key during regeneration: ${error instanceof Error ? error.message : String(error)}`
+					);
+				}
+			}
 		}
 
 		this.logger.log(`Plane integration API key regenerated for tenant ${tenantId}`);
@@ -389,10 +395,7 @@ export class PlaneIntegrationService {
 	private async findIntegrationTenantOrFail(tenantId: ID | undefined): Promise<IIntegrationTenant> {
 		const integrationTenant = await this.findIntegrationTenant(tenantId);
 		if (!integrationTenant) {
-			throw new HttpException(
-				'Plane integration is not configured for this tenant.',
-				HttpStatus.NOT_FOUND
-			);
+			throw new HttpException('Plane integration is not configured for this tenant.', HttpStatus.NOT_FOUND);
 		}
 		return integrationTenant;
 	}

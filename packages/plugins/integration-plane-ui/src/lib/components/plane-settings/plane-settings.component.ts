@@ -103,20 +103,27 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 	 * Save updated settings.
 	 */
 	saveSettings(): void {
-		if (this.form.invalid || this.saving()) return;
+		if (this.saving()) return;
+
+		// Trim URL values before validation to prevent submitting
+		// whitespace-padded strings that passed the pattern check untrimmed.
+		const planeWebUrl = this.form.get('planeWebUrl')?.value?.trim() ?? '';
+		const planeAdminUrl = this.form.get('planeAdminUrl')?.value?.trim() ?? '';
+		const planeSpaceUrl = this.form.get('planeSpaceUrl')?.value?.trim() ?? '';
+
+		this.form.patchValue({ planeWebUrl, planeAdminUrl, planeSpaceUrl });
+
+		if (this.form.invalid) return;
 
 		const organizationId = this.organization()?.id;
-		if (!organizationId) return;
-
-		const planeWebUrl = this.form.get('planeWebUrl')?.value?.trim();
-		const planeAdminUrl = this.form.get('planeAdminUrl')?.value?.trim() || undefined;
-		const planeSpaceUrl = this.form.get('planeSpaceUrl')?.value?.trim() || undefined;
-
-		if (!planeWebUrl) return;
+		if (!organizationId || !planeWebUrl) return;
 
 		this.saving.set(true);
 		this._planeService
-			.updateSettings({ planeWebUrl, planeAdminUrl, planeSpaceUrl }, organizationId)
+			.updateSettings(
+				{ planeWebUrl, planeAdminUrl: planeAdminUrl || undefined, planeSpaceUrl: planeSpaceUrl || undefined },
+				organizationId
+			)
 			.pipe(untilDestroyed(this))
 			.subscribe({
 				next: () => {

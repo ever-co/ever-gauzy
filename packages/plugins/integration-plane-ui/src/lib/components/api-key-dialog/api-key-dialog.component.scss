@@ -1,77 +1,76 @@
 .api-key-dialog {
-	min-width: 480px;
-	max-width: 560px;
-	margin: 0;
-	background-color: rgba(26, 22, 40, 1);
+  min-width: 480px;
+  max-width: 560px;
+  margin: 0;
+  background-color: rgba(26, 22, 40, 1);
 }
 
 .warning-text {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	padding: 10px 14px;
-	border-radius: 6px;
-	background-color: rgba(36, 28, 14, 0.854);
-	font-size: 0.85rem;
-	margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background-color: rgba(36, 28, 14, 0.854);
+  font-size: 0.85rem;
+  margin-bottom: 20px;
 
-	nb-icon {
-		font-size: 1.1rem;
-		flex-shrink: 0;
-	}
+  nb-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
 }
 
 .credential-group {
-	margin-bottom: 16px;
+  margin-bottom: 16px;
 
-	.label {
-		display: block;
-		font-weight: 600;
-		margin-bottom: 6px;
-		font-size: 0.85rem;
-	}
+  .label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+  }
 }
 
 .credential-row {
-	display: flex;
-	align-items: center;
-	border: 1px solid var(--border-basic-color-3, #e4e9f2);
-	border-radius: 8px;
-	padding: 4px 8px;
-	background-color: var(--background-basic-color-2, #f7f9fc);
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-basic-color-3, #e4e9f2);
+  border-radius: 8px;
+  padding: 4px 8px;
+  background-color: var(--background-basic-color-2, #f7f9fc);
 
-	.link-icon {
-		color: var(--text-hint-color, #8f9bb3);
-		margin-right: 8px;
-		flex-shrink: 0;
-	}
+  .link-icon {
+    color: var(--text-hint-color, #8f9bb3);
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
 
-	.credential-input {
-		border: none;
-		background: transparent;
-		font-family: monospace;
-		font-size: 0.9rem;
-		flex: 1;
-		padding: 6px 0;
+  .credential-input {
+    border: none;
+    background: transparent;
+    font-family: monospace;
+    font-size: 0.9rem;
+    flex: 1;
+    padding: 6px 0;
 
-		&:focus {
-			outline: none;
-			box-shadow: none;
-		}
-	}
+    &:focus {
+      outline: none;
+      box-shadow: none;
+    }
+  }
 
-	.copy-btn {
-		flex-shrink: 0;
-		margin-left: 4px;
-	}
+  .copy-btn {
+    flex-shrink: 0;
+    margin-left: 4px;
+  }
 }
 
 :host {
-
-	nb-card,
-	nb-card-body,
-	nb-card-header,
-	nb-card-footer {
-		background-color: rgba(26, 22, 40, 1);
-	}
+  nb-card,
+  nb-card-body,
+  nb-card-header,
+  nb-card-footer {
+    background-color: rgba(26, 22, 40, 1);
+  }
 }

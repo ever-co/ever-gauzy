@@ -98,15 +98,21 @@ export class PlaneAuthorizeComponent extends TranslationBaseComponent implements
 	 * Submit the Plane URLs to configure the integration.
 	 */
 	setupPlane(): void {
-		if (this.form.invalid || this.loading()) return;
+		if (this.loading()) return;
 
-		const planeWebUrl = this.form.get('planeWebUrl')?.value?.trim();
-		const planeAdminUrl = this.form.get('planeAdminUrl')?.value?.trim();
-		const planeSpaceUrl = this.form.get('planeSpaceUrl')?.value?.trim();
+		// Trim URL values before validation to prevent submitting
+		// whitespace-padded strings that passed the pattern check untrimmed.
+		const planeWebUrl = this.form.get('planeWebUrl')?.value?.trim() ?? '';
+		const planeAdminUrl = this.form.get('planeAdminUrl')?.value?.trim() ?? '';
+		const planeSpaceUrl = this.form.get('planeSpaceUrl')?.value?.trim() ?? '';
+
+		this.form.patchValue({ planeWebUrl, planeAdminUrl, planeSpaceUrl });
+
+		if (this.form.invalid) return;
+
 		const organizationId = this.organization()?.id;
 
 		if (!planeWebUrl || !organizationId) {
-			this.loading.set(false);
 			return;
 		}
 

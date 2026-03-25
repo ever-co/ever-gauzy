@@ -1,38 +1,41 @@
 .header-actions {
-	display: flex;
-	gap: 8px;
+  display: flex;
+  gap: 8px;
 }
 
 .button-group {
-	display: flex;
-	gap: 8px;
-	margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
 }
 
 .actions-section {
-	margin-top: 16px;
+  margin-top: 16px;
 }
 
 button {
-	box-shadow: var(--gauzy-shadow);
-	border-radius: calc(var(--border-radius) * 1);
+  box-shadow: var(--gauzy-shadow);
+  border-radius: calc(var(--border-radius) * 1);
 }
 
 .spin {
-	animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-	from { transform: rotate(0deg); }
-	to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 :host {
-
-	nb-card,
-	nb-card-body {
-		background-color: var(--gauzy-card-2);
-	}
+  nb-card,
+  nb-card-body {
+    background-color: var(--gauzy-card-2);
+  }
 
   nb-card {
     border-radius: calc(var(--border-radius) * 1.25);

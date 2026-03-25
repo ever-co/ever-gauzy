@@ -18,8 +18,7 @@ export interface IRelationalIntegrationTenant {
 }
 
 export interface IIntegrationEntitySetting
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalIntegrationTenant {
+	extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
 	entity: IntegrationEntity;
 	sync: boolean;
 	tiedEntities?: IIntegrationEntitySettingTied[];
@@ -63,9 +62,7 @@ export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityM
 }
 
 export interface IIntegrationTenantFindInput
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IBaseRelationsEntityModel,
-		IRelationIntegration {
+	extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, IRelationIntegration {
 	name?: IntegrationEnum;
 }
 
@@ -103,8 +100,7 @@ export interface IIntegrationFilter {
 
 /** */
 export interface IIntegrationMapSyncBase
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalIntegrationTenant {
+	extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
 	sourceId?: IIntegrationMap['sourceId'];
 }
 

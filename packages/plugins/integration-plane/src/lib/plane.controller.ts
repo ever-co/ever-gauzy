@@ -9,11 +9,17 @@ import {
 	Query,
 	HttpCode,
 	HttpStatus,
-	UseGuards,
+	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { Permissions, UUIDValidationPipe, UseValidationPipe, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import {
+	Permissions,
+	UUIDValidationPipe,
+	UseValidationPipe,
+	PermissionGuard,
+	TenantPermissionGuard
+} from '@gauzy/core';
 import { PlaneIntegrationService } from './plane-integration.service';
 import { ConfigurePlaneIntegrationDto } from './dto/configure-plane-integration.dto';
 import { UpdatePlaneSettingsDto } from './dto/update-plane-settings.dto';

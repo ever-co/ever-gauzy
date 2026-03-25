@@ -1,7 +1,14 @@
 <nb-card class="api-key-dialog">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
 		<h6 class="mb-0">{{ 'INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.TITLE' | translate }}</h6>
-		<button nbButton ghost size="small" type="button" (click)="close()" [attr.aria-label]="'BUTTONS.CLOSE' | translate">
+		<button
+			nbButton
+			ghost
+			size="small"
+			type="button"
+			(click)="close()"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+		>
 			<nb-icon icon="close-outline"></nb-icon>
 		</button>
 	</nb-card-header>
@@ -13,17 +20,12 @@
 		</p>
 
 		<div class="credential-group">
-			<label class="label" for="plane-api-key">{{ 'INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.API_KEY' | translate }}</label>
+			<label class="label" for="plane-api-key">{{
+				'INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.API_KEY' | translate
+			}}</label>
 			<div class="credential-row">
 				<nb-icon icon="link-2-outline" class="link-icon"></nb-icon>
-				<input
-					id="plane-api-key"
-					nbInput
-					fullWidth
-					readonly
-					[value]="apiKey"
-					class="credential-input"
-				/>
+				<input id="plane-api-key" nbInput fullWidth readonly [value]="apiKey" class="credential-input" />
 				<button
 					nbButton
 					ghost
@@ -31,8 +33,16 @@
 					type="button"
 					class="copy-btn"
 					(click)="copyToClipboard(apiKey, 'key')"
-					[attr.aria-label]="'INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPY' | translate"
-					[nbTooltip]="apiKeyCopied() ? ('INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPIED' | translate) : ('INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPY' | translate)"
+					[attr.aria-label]="
+						apiKeyCopied()
+							? ('INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPIED' | translate)
+							: ('INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPY' | translate)
+					"
+					[nbTooltip]="
+						apiKeyCopied()
+							? ('INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPIED' | translate)
+							: ('INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPY' | translate)
+					"
 				>
 					@if (apiKeyCopied()) {
 						<nb-icon icon="checkmark-outline" status="success"></nb-icon>
@@ -44,17 +54,12 @@
 		</div>
 
 		<div class="credential-group">
-			<label class="label" for="plane-api-secret">{{ 'INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.API_SECRET' | translate }}</label>
+			<label class="label" for="plane-api-secret">{{
+				'INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.API_SECRET' | translate
+			}}</label>
 			<div class="credential-row">
 				<nb-icon icon="lock-outline" class="link-icon"></nb-icon>
-				<input
-					id="plane-api-secret"
-					nbInput
-					fullWidth
-					readonly
-					[value]="apiSecret"
-					class="credential-input"
-				/>
+				<input id="plane-api-secret" nbInput fullWidth readonly [value]="apiSecret" class="credential-input" />
 				<button
 					nbButton
 					ghost
@@ -62,8 +67,16 @@
 					type="button"
 					class="copy-btn"
 					(click)="copyToClipboard(apiSecret, 'secret')"
-					[attr.aria-label]="'INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPY' | translate"
-					[nbTooltip]="apiSecretCopied() ? ('INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPIED' | translate) : ('INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPY' | translate)"
+					[attr.aria-label]="
+						apiSecretCopied()
+							? ('INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPIED' | translate)
+							: ('INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPY' | translate)
+					"
+					[nbTooltip]="
+						apiSecretCopied()
+							? ('INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPIED' | translate)
+							: ('INTEGRATIONS.PLANE_PAGE.API_KEY_DIALOG.COPY' | translate)
+					"
 				>
 					@if (apiSecretCopied()) {
 						<nb-icon icon="checkmark-outline" status="success"></nb-icon>

@@ -1588,6 +1588,9 @@
 			"SPACE_URL": "URL del espacio de Plane",
 			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
 			"SETUP_INFO": "Ingrese las URL donde está alojada su instancia de Plane. La URL Web es obligatoria. Las URL de Admin y Space son opcionales.",
+			"URL_REQUIRED": "Esta URL es obligatoria.",
+			"URL_INVALID": "Ingrese una URL válida que comience con http:// o https://.",
+			"LOADING": "Cargando configuración...",
 			"REGENERATE_KEY": "Regenerar",
 			"REGENERATE_KEY_LABEL": "Clave API y Secreto",
 			"CONFIRM_DELETE": "¿Está seguro de que desea eliminar esta integración de Plane? La clave API será revocada.",
@@ -1596,7 +1599,7 @@
 				"TITLE": "Credenciales API",
 				"WARNING": "Copie estas credenciales ahora. El secreto API no se mostrará de nuevo.",
 				"API_KEY": "Clave API",
-				"API_SECRET": "Secreto de API",
+				"API_SECRET": "Secreto de la API",
 				"COPY": "Copiar",
 				"COPIED": "¡Copiado!"
 			}

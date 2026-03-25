@@ -1,6 +1,14 @@
 <nb-card class="card-scroll">
 	<nb-card-header class="d-flex">
-		<button (click)="goBack()" nbButton status="primary" type="button" size="small" outline [attr.aria-label]="'BUTTONS.BACK' | translate">
+		<button
+			(click)="goBack()"
+			nbButton
+			status="primary"
+			type="button"
+			size="small"
+			outline
+			[attr.aria-label]="'BUTTONS.BACK' | translate"
+		>
 			<nb-icon icon="arrow-back-outline"></nb-icon>
 		</button>
 		<h5 class="ml-4">{{ 'INTEGRATIONS.PLANE_PAGE.TITLE' | translate }}</h5>
@@ -9,9 +17,7 @@
 	<nb-card-body>
 		<form class="col-xl-6 col-12" [formGroup]="form" (ngSubmit)="setupPlane()">
 			<div class="form-group">
-				<label class="label" for="planeWebUrl">
-					{{ 'INTEGRATIONS.PLANE_PAGE.WEB_URL' | translate }} *
-				</label>
+				<label class="label" for="planeWebUrl"> {{ 'INTEGRATIONS.PLANE_PAGE.WEB_URL' | translate }} * </label>
 				<input
 					fullWidth
 					id="planeWebUrl"
@@ -21,8 +27,30 @@
 					required
 					aria-required="true"
 					autocomplete="url"
+					[attr.aria-invalid]="
+						form.get('planeWebUrl')?.invalid &&
+						(form.get('planeWebUrl')?.touched || form.get('planeWebUrl')?.dirty)
+					"
+					[attr.aria-describedby]="
+						form.get('planeWebUrl')?.invalid &&
+						(form.get('planeWebUrl')?.touched || form.get('planeWebUrl')?.dirty)
+							? 'planeWebUrl-error'
+							: null
+					"
 					[placeholder]="'INTEGRATIONS.PLANE_PAGE.WEB_URL_PLACEHOLDER' | translate"
 				/>
+				@if (
+					form.get('planeWebUrl')?.invalid &&
+					(form.get('planeWebUrl')?.touched || form.get('planeWebUrl')?.dirty)
+				) {
+					<p class="text-danger caption" id="planeWebUrl-error" role="alert">
+						@if (form.get('planeWebUrl')?.errors?.['required']) {
+							{{ 'INTEGRATIONS.PLANE_PAGE.URL_REQUIRED' | translate }}
+						} @else if (form.get('planeWebUrl')?.errors?.['pattern']) {
+							{{ 'INTEGRATIONS.PLANE_PAGE.URL_INVALID' | translate }}
+						}
+					</p>
+				}
 			</div>
 			<div class="form-group">
 				<label class="label" for="planeAdminUrl">
@@ -35,8 +63,26 @@
 					type="url"
 					nbInput
 					autocomplete="url"
+					[attr.aria-invalid]="
+						form.get('planeAdminUrl')?.invalid &&
+						(form.get('planeAdminUrl')?.touched || form.get('planeAdminUrl')?.dirty)
+					"
+					[attr.aria-describedby]="
+						form.get('planeAdminUrl')?.invalid &&
+						(form.get('planeAdminUrl')?.touched || form.get('planeAdminUrl')?.dirty)
+							? 'planeAdminUrl-error'
+							: null
+					"
 					[placeholder]="'INTEGRATIONS.PLANE_PAGE.ADMIN_URL_PLACEHOLDER' | translate"
 				/>
+				@if (
+					form.get('planeAdminUrl')?.invalid &&
+					(form.get('planeAdminUrl')?.touched || form.get('planeAdminUrl')?.dirty)
+				) {
+					<p class="text-danger caption" id="planeAdminUrl-error" role="alert">
+						{{ 'INTEGRATIONS.PLANE_PAGE.URL_INVALID' | translate }}
+					</p>
+				}
 			</div>
 			<div class="form-group">
 				<label class="label" for="planeSpaceUrl">
@@ -49,21 +95,32 @@
 					type="url"
 					nbInput
 					autocomplete="url"
+					[attr.aria-invalid]="
+						form.get('planeSpaceUrl')?.invalid &&
+						(form.get('planeSpaceUrl')?.touched || form.get('planeSpaceUrl')?.dirty)
+					"
+					[attr.aria-describedby]="
+						form.get('planeSpaceUrl')?.invalid &&
+						(form.get('planeSpaceUrl')?.touched || form.get('planeSpaceUrl')?.dirty)
+							? 'planeSpaceUrl-error'
+							: null
+					"
 					[placeholder]="'INTEGRATIONS.PLANE_PAGE.SPACE_URL_PLACEHOLDER' | translate"
 				/>
+				@if (
+					form.get('planeSpaceUrl')?.invalid &&
+					(form.get('planeSpaceUrl')?.touched || form.get('planeSpaceUrl')?.dirty)
+				) {
+					<p class="text-danger caption" id="planeSpaceUrl-error" role="alert">
+						{{ 'INTEGRATIONS.PLANE_PAGE.URL_INVALID' | translate }}
+					</p>
+				}
 			</div>
 			<div class="hint">
 				<nb-icon icon="info-outline"></nb-icon>
 				{{ 'INTEGRATIONS.PLANE_PAGE.SETUP_INFO' | translate }}
 			</div>
-			<button
-				nbButton
-				status="primary"
-				type="submit"
-				[disabled]="form.invalid || loading()"
-				size="small"
-				outline
-			>
+			<button nbButton status="primary" type="submit" [disabled]="form.invalid || loading()" size="small" outline>
 				@if (loading()) {
 					<nb-icon icon="loader-outline"></nb-icon>
 				}
