@@ -1,6 +1,6 @@
 <nb-card class="card-scroll">
 	<nb-card-header class="d-flex">
-		<button (click)="goBack()" nbButton status="primary" type="button" size="small" outline>
+		<button (click)="goBack()" nbButton status="primary" type="button" size="small" outline [attr.aria-label]="'BUTTONS.BACK' | translate">
 			<nb-icon icon="arrow-back-outline"></nb-icon>
 		</button>
 		<h5 class="ml-4">{{ 'INTEGRATIONS.PLANE_PAGE.TITLE' | translate }}</h5>

@@ -4,7 +4,7 @@
 
 button {
 	box-shadow: var(--gauzy-shadow);
-	border-radius: calc(var(--border-radius) * 1);
+	border-radius: var(--border-radius);
 }
 
 :host {

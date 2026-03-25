@@ -1,6 +1,8 @@
 import * as http from 'node:http';
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+import { environment } from '@gauzy/config';
+import { verify } from 'jsonwebtoken';
 import { mountPlaneProxy, MountPlaneProxyResult } from '@ever-gauzy/plugin-integration-plane-api';
 import { PlaneIntegrationService } from './plane-integration.service';
 
@@ -89,12 +91,12 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
-	 * Validate that the tenant ID from the header/cookie matches the JWT token's
-	 * tenantId claim. Prevents cross-tenant proxy access via spoofed headers.
+	 * Validate that the request carries a valid JWT whose tenantId claim
+	 * matches the header/cookie-supplied tenant ID.
 	 *
-	 * This operates at the raw HTTP level (before NestJS guards), so we decode
-	 * the JWT payload without signature verification — the check is a
-	 * defense-in-depth cross-reference, not the sole auth boundary.
+	 * Because the proxy is mounted at the raw HTTP server level (before
+	 * NestJS guards), this is the primary auth check for proxied requests.
+	 * The JWT signature is verified using the application's JWT secret.
 	 */
 	private validateTenantFromToken(req: http.IncomingMessage, headerTenantId: string): void {
 		const authHeader = req.headers['authorization'];
@@ -103,13 +105,14 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		const token = authHeader.slice(7);
-		const parts = token.split('.');
-		if (parts.length !== 3) {
-			throw new Error('Plane proxy received a malformed Bearer token');
+		const jwtSecret = environment.JWT_SECRET;
+
+		if (!jwtSecret) {
+			throw new Error('JWT_SECRET is not configured — cannot verify proxy requests');
 		}
 
 		try {
-			const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
+			const payload = verify(token, jwtSecret) as { tenantId?: string };
 			const tokenTenantId = payload.tenantId;
 
 			if (!tokenTenantId) {
@@ -123,8 +126,11 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 				throw new Error('Tenant ID mismatch: token tenant does not match requested tenant');
 			}
 		} catch (error) {
-			if (error instanceof SyntaxError) {
-				throw new Error('Plane proxy received a Bearer token with an invalid payload');
+			if (error instanceof Error && error.name === 'JsonWebTokenError') {
+				throw new Error('Plane proxy received an invalid or expired Bearer token');
+			}
+			if (error instanceof Error && error.name === 'TokenExpiredError') {
+				throw new Error('Plane proxy received an expired Bearer token');
 			}
 			throw error;
 		}

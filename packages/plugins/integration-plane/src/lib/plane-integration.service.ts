@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ID, IntegrationEnum, IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
 import {
 	IntegrationService,
@@ -7,6 +7,7 @@ import {
 	TenantApiKeyService
 } from '@gauzy/core';
 import { ConfigService } from '@gauzy/config';
+import { generatePassword, generateSha256Hash } from '@gauzy/utils';
 import { PlaneSettingName } from './plane-setting.enum';
 import { ConfigurePlaneIntegrationDto } from './dto/configure-plane-integration.dto';
 import { UpdatePlaneSettingsDto } from './dto/update-plane-settings.dto';
@@ -186,7 +187,9 @@ export class PlaneIntegrationService {
 			throw new HttpException('Integration tenant ID mismatch.', HttpStatus.BAD_REQUEST);
 		}
 
-		// Revoke the API key before removing the integration
+		// Revoke the API key before removing the integration.
+		// Only tolerate "not found" (key already deleted); propagate real failures
+		// so the integration is not archived with a live credential.
 		const settings = integrationTenant.settings || [];
 		const apiKeySetting = settings.find((s) => s.settingsName === PlaneSettingName.PLANE_API_KEY_VALUE);
 		if (apiKeySetting?.settingsValue) {
@@ -194,7 +197,11 @@ export class PlaneIntegrationService {
 				await this.tenantApiKeyService.delete({ apiKey: apiKeySetting.settingsValue });
 				this.logger.log(`API key revoked for tenant ${tenantId}`);
 			} catch (error: unknown) {
-				this.logger.warn(`Failed to revoke API key during removal: ${error instanceof Error ? error.message : String(error)}`);
+				if (error instanceof HttpException && error.getStatus() === HttpStatus.NOT_FOUND) {
+					this.logger.warn(`API key already deleted for tenant ${tenantId}, proceeding with removal`);
+				} else {
+					throw error;
+				}
 			}
 		}
 
@@ -220,6 +227,10 @@ export class PlaneIntegrationService {
 	/**
 	 * Regenerate API key and secret for the Plane integration.
 	 * The old credentials become invalid.
+	 *
+	 * We bypass TenantApiKeyService.generateApiKey() because it enforces a
+	 * tenant-wide one-key limit (rejects with 409 if any key exists for the
+	 * tenant). Instead we directly delete the old key and create a new one.
 	 */
 	async regenerateApiKey(organizationId?: string): Promise<{ apiKey: string; apiSecret: string }> {
 		const tenantId = RequestContext.currentTenantId() ?? undefined;
@@ -229,53 +240,62 @@ export class PlaneIntegrationService {
 		const oldApiKeySetting = settings.find((s) => s.settingsName === PlaneSettingName.PLANE_API_KEY_VALUE);
 		const oldApiKeyValue = oldApiKeySetting?.settingsValue;
 
-		// Generate the new key first (before deleting the old one) to avoid
-		// an unrecoverable state if save() fails later.
-		const apiKeyResponse = await this.tenantApiKeyService.generateApiKey({
-			name: 'Plane Integration (rotate)',
-			tenantId
-		});
+		// Delete the old TenantApiKey record
+		if (oldApiKeyValue) {
+			try {
+				await this.tenantApiKeyService.delete({ apiKey: oldApiKeyValue } as any);
+			} catch (error: unknown) {
+				if (error instanceof NotFoundException) {
+					this.logger.warn(`Old API key already deleted for tenant ${tenantId}`);
+				} else {
+					throw error;
+				}
+			}
+		}
+
+		// Generate new credentials and create a TenantApiKey record directly
+		// (bypasses generateApiKey's tenant-wide uniqueness guard)
+		const apiKey = generatePassword(32);
+		const apiSecret = generatePassword(64);
+		const hashedApiSecret = generateSha256Hash(apiSecret);
+
+		const tenantApiKey = await this.tenantApiKeyService.create({
+			name: 'Plane Integration',
+			apiKey,
+			apiSecret: hashedApiSecret
+		} as any);
 
 		// Update the setting to point to the new key
 		if (oldApiKeySetting) {
-			oldApiKeySetting.settingsValue = apiKeyResponse.apiKey;
+			oldApiKeySetting.settingsValue = tenantApiKey.apiKey;
 		} else {
 			settings.push({
 				settingsName: PlaneSettingName.PLANE_API_KEY_VALUE,
-				settingsValue: apiKeyResponse.apiKey,
+				settingsValue: tenantApiKey.apiKey,
 				tenantId,
 				organizationId
 			} as IIntegrationSetting);
 		}
 
-		// Persist the new key reference; rollback if this fails
+		// Persist the new key reference
 		integrationTenant.settings = settings;
 		try {
 			await this.integrationTenantService.save(integrationTenant);
 		} catch (error) {
 			// Save failed — delete the newly generated key to avoid orphans
 			try {
-				await this.tenantApiKeyService.delete({ apiKey: apiKeyResponse.apiKey });
+				await this.tenantApiKeyService.delete({ apiKey: tenantApiKey.apiKey } as any);
 			} catch (rollbackError: unknown) {
 				this.logger.warn(`Failed to rollback new API key after save failure: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`);
 			}
 			throw error;
 		}
 
-		// Only revoke the old key after the new one is safely persisted
-		if (oldApiKeyValue) {
-			try {
-				await this.tenantApiKeyService.delete({ apiKey: oldApiKeyValue });
-			} catch (error: unknown) {
-				this.logger.warn(`Failed to delete old API key during regeneration: ${error instanceof Error ? error.message : String(error)}`);
-			}
-		}
-
 		this.logger.log(`Plane integration API key regenerated for tenant ${tenantId}`);
 
 		return {
-			apiKey: apiKeyResponse.apiKey,
-			apiSecret: apiKeyResponse.apiSecret
+			apiKey: tenantApiKey.apiKey,
+			apiSecret // Return plain text secret (shown once)
 		};
 	}
 
@@ -356,9 +376,7 @@ export class PlaneIntegrationService {
 				relations: ['settings']
 			});
 		} catch (error: unknown) {
-			// Only treat "not found" as null; re-throw unexpected errors
-			const message = error instanceof Error ? error.message : String(error);
-			if (message.includes('not found') || message.includes('Not Found') || message.includes('does not exist')) {
+			if (error instanceof NotFoundException) {
 				return null;
 			}
 			throw error;
@@ -383,12 +401,17 @@ export class PlaneIntegrationService {
 	 * Find or create the base Integration record for Plane.
 	 */
 	private async findOrCreateBaseIntegration() {
-		const existing = await this.integrationService.findOneByOptions({
-			where: { provider: 'Plane' }
-		}).catch(() => null);
-
-		if (existing) {
-			return existing;
+		try {
+			const existing = await this.integrationService.findOneByOptions({
+				where: { provider: 'Plane' }
+			});
+			if (existing) {
+				return existing;
+			}
+		} catch (error: unknown) {
+			if (!(error instanceof NotFoundException)) {
+				throw error;
+			}
 		}
 
 		return await this.integrationService.create({

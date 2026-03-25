@@ -1585,7 +1585,7 @@
 			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
 			"ADMIN_URL": "URL de Administración de Plane",
 			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
-			"SPACE_URL": "URL de Space de Plane",
+			"SPACE_URL": "URL del espacio de Plane",
 			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
 			"SETUP_INFO": "Ingrese las URL donde está alojada su instancia de Plane. La URL Web es obligatoria. Las URL de Admin y Space son opcionales.",
 			"REGENERATE_KEY": "Regenerar",
@@ -1596,7 +1596,7 @@
 				"TITLE": "Credenciales API",
 				"WARNING": "Copie estas credenciales ahora. El secreto API no se mostrará de nuevo.",
 				"API_KEY": "Clave API",
-				"API_SECRET": "Secreto API",
+				"API_SECRET": "Secreto de API",
 				"COPY": "Copiar",
 				"COPIED": "¡Copiado!"
 			}

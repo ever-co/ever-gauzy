@@ -1,7 +1,7 @@
 <nb-card class="card-scroll">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
 		<div class="d-flex align-items-center">
-			<button (click)="goBack()" nbButton status="primary" type="button" size="small" outline>
+			<button (click)="goBack()" nbButton status="primary" type="button" size="small" outline [attr.aria-label]="'BUTTONS.BACK' | translate">
 				<nb-icon icon="arrow-back-outline"></nb-icon>
 			</button>
 			<h5 class="mb-0 ml-4">{{ 'INTEGRATIONS.PLANE_PAGE.TITLE' | translate }}</h5>
@@ -16,6 +16,7 @@
 					outline
 					(click)="toggleEdit()"
 					nbTooltip="{{ 'BUTTONS.EDIT' | translate }}"
+					[attr.aria-label]="'BUTTONS.EDIT' | translate"
 				>
 					<nb-icon icon="edit-outline"></nb-icon>
 				</button>
@@ -29,6 +30,7 @@
 				(click)="removeIntegration()"
 				[disabled]="loading() || saving()"
 				nbTooltip="{{ 'BUTTONS.DELETE' | translate }}"
+				[attr.aria-label]="'BUTTONS.DELETE' | translate"
 			>
 				<nb-icon icon="trash-2-outline"></nb-icon>
 			</button>

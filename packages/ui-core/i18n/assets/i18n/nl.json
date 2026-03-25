@@ -1587,7 +1587,7 @@
 			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
 			"SETUP_INFO": "Voer de URL's in waar uw Plane-instantie wordt gehost. De Web-URL is vereist. Admin- en Space-URL's zijn optioneel.",
 			"REGENERATE_KEY": "Opnieuw genereren",
-			"REGENERATE_KEY_LABEL": "API-sleutel en geheim",
+			"REGENERATE_KEY_LABEL": "API-sleutel en API-geheim",
 			"CONFIRM_DELETE": "Weet u zeker dat u deze Plane-integratie wilt verwijderen? De API-sleutel wordt ingetrokken.",
 			"CONFIRM_REGENERATE": "Weet u zeker dat u de API-sleutel opnieuw wilt genereren? De huidige sleutel wordt ongeldig.",
 			"API_KEY_DIALOG": {
