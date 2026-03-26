@@ -34,4 +34,6 @@ export interface IOfflineMode {
 	 * Check api connectivity
 	 */
 	connectivity(): Promise<void>;
+
+	forceOffline(): void;
 }

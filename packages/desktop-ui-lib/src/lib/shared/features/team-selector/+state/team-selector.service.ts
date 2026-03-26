@@ -29,6 +29,10 @@ export class TeamSelectorService extends SelectorService<IOrganizationTeam> {
 	public async load(options?: { searchTerm?: string; projectId?: string }): Promise<void> {
 		try {
 			this.teamSelectorStore.setLoading(true);
+			if (this.store.isOffline) {
+				console.warn('Cannot load teams while offline.');
+				return;
+			}
 			const { searchTerm: name } = options || {};
 			const {
 				organizationId,

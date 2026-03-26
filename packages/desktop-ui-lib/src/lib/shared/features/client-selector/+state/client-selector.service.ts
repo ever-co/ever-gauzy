@@ -58,6 +58,11 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 	public async load(options?: { searchTerm?: string }): Promise<void> {
 		try {
 			this.selectorStore.setLoading(true);
+
+			if (this.store.isOffline) {
+				console.warn('Offline mode: Unable to fetch clients from the server.');
+				return;
+			}
 			const { searchTerm: name } = options || {};
 			const {
 				organizationId,

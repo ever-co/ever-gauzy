@@ -71,6 +71,12 @@ export class ProjectSelectorService extends SelectorService<IOrganizationProject
 	}): Promise<void> {
 		try {
 			this.projectSelectorStore.setLoading(true);
+
+			if (this.store.isOffline) {
+				console.log('[ProjectSelector]: Skipped fetching projects because app is offline.');
+				return;
+			}
+
 			const { searchTerm: name } = options || {};
 			const {
 				organizationId,

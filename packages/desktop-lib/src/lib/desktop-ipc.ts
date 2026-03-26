@@ -383,6 +383,14 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		};
 	});
 
+	ipcMain.handle('SET_OFFLINE_MODE', async () => {
+		offlineMode.forceOffline();
+	})
+
+	ipcMain.handle('IS_OFFLINE', async () => {
+		return offlineMode.enabled;
+	});
+
 	pluginListeners();
 }
 
@@ -1062,11 +1070,13 @@ export function ipcTimer(
 
 			timeTrackerWindow.webContents.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
+				isOffline: offlineMode.enabled,
 				timeSlotId: lastTime ? lastTime.timeslotId : null
 			});
 		} catch (error) {
 			log.error('Error on refresh timer', error);
 			timeTrackerWindow.webContents.send('timer_tracker_show', {
+				isOffline: offlineMode.enabled,
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: null
 			});

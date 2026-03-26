@@ -949,7 +949,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('timer_tracker_show', (event, arg) =>
 			this._ngZone.run(async () => {
 				if (!this._store.user?.employee) return;
-				this._isOffline$.next(arg.isOffline ? arg.isOffline : this._isOffline);
+				this._isOffline$.next(typeof arg.isOffline !== 'undefined' ? arg.isOffline : this._isOffline);
 				this._store.host = arg.apiHost;
 				this.apiHost = arg.apiHost;
 				this.argFromMain = arg;
@@ -1977,8 +1977,25 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async setTimerDetails(): Promise<void> {
 		try {
-			const res: any = await this.timeTrackerService.getUserDetail();
-			if (res.employee && res.employee.organization) {
+			let res: any;
+			console.log('Fetching user details with offline mode:', this._isOffline);
+			console.log('Store user details before fetching:', this._store.user);
+			if (!this._isOffline) {
+				try {
+					res = await this.timeTrackerService.getUserDetail();
+					console.log('Fetched user details:', res);
+					if (!this._store.user?.employee?.organization && res?.employee?.organization) {
+						this._store.user = res;
+					}
+				} catch (apiError) {
+					console.log('WARN: setTimerDetails API Error:', apiError, 'Falling back to local store...');
+					res = this._store.user;
+				}
+			} else {
+				res = this._store.user;
+			}
+
+			if (res && res.employee && res.employee.organization) {
 				this.userData = res;
 				if (res.role && res.role.rolePermissions) {
 					this._store.userRolePermissions = res.role.rolePermissions;
