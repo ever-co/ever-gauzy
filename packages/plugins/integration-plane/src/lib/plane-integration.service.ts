@@ -67,6 +67,7 @@ export class PlaneIntegrationService {
 			{ settingsName: PlaneSettingName.PLANE_ADMIN_URL, settingsValue: dto.planeAdminUrl || '' },
 			{ settingsName: PlaneSettingName.PLANE_SPACE_URL, settingsValue: dto.planeSpaceUrl || '' },
 			{ settingsName: PlaneSettingName.PLANE_API_KEY_VALUE, settingsValue: apiKeyResponse.apiKey },
+			{ settingsName: PlaneSettingName.PLANE_API_SECRET_VALUE, settingsValue: apiKeyResponse.apiSecret },
 			{ settingsName: PlaneSettingName.IS_ENABLED, settingsValue: 'true' }
 		];
 
@@ -254,13 +255,25 @@ export class PlaneIntegrationService {
 			apiSecret: hashedApiSecret
 		} as any);
 
-		// 2. Update the setting to point to the new key
+		// 2. Update the settings to point to the new key and secret
 		if (oldApiKeySetting) {
 			oldApiKeySetting.settingsValue = tenantApiKey.apiKey;
 		} else {
 			settings.push({
 				settingsName: PlaneSettingName.PLANE_API_KEY_VALUE,
 				settingsValue: tenantApiKey.apiKey,
+				tenantId,
+				organizationId
+			} as IIntegrationSetting);
+		}
+
+		const oldSecretSetting = settings.find((s) => s.settingsName === PlaneSettingName.PLANE_API_SECRET_VALUE);
+		if (oldSecretSetting) {
+			oldSecretSetting.settingsValue = apiSecret;
+		} else {
+			settings.push({
+				settingsName: PlaneSettingName.PLANE_API_SECRET_VALUE,
+				settingsValue: apiSecret,
 				tenantId,
 				organizationId
 			} as IIntegrationSetting);
@@ -349,14 +362,15 @@ export class PlaneIntegrationService {
 		}
 
 		const apiKey = settingsMap[PlaneSettingName.PLANE_API_KEY_VALUE] || '';
+		const apiSecret = settingsMap[PlaneSettingName.PLANE_API_SECRET_VALUE] || '';
 
-		// The externalBaseApiUrl is the Gauzy API URL for this deployment
+		// The externalBaseApiUrl is the Gauzy API URL including the /api prefix
 		const gauzyApiBaseUrl = this.configService.get('baseUrl') || 'http://localhost:3000';
 
 		return {
-			externalBaseApiUrl: gauzyApiBaseUrl,
+			externalBaseApiUrl: `${gauzyApiBaseUrl}/api`,
 			apiKey,
-			apiSecret: '', // The proxy uses the apiKey for X-APP-ID; the secret is validated server-side
+			apiSecret,
 			clientBaseUrl: settingsMap[PlaneSettingName.PLANE_WEB_URL] || '',
 			clientAdminUrl: settingsMap[PlaneSettingName.PLANE_ADMIN_URL] || '',
 			clientSpaceUrl: settingsMap[PlaneSettingName.PLANE_SPACE_URL] || ''

@@ -6,12 +6,29 @@ import { verify } from 'jsonwebtoken';
 import { mountPlaneProxy, MountPlaneProxyResult } from '@ever-gauzy/plugin-integration-plane-api';
 import { PlaneIntegrationService } from './plane-integration.service';
 
+const PROXY_PREFIX = '/api/plane';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Property attached to the request object to carry the resolved tenant ID
+ * between extractTenantId and resolveConfig callbacks.
+ */
+const REQ_TENANT_ID = '__planeResolvedTenantId';
+
 /**
  * Service responsible for mounting the Plane proxy in-process.
  *
  * Intercepts all `/api/plane/*` requests at the HTTP server level,
  * resolves per-tenant configuration from the database, and delegates
  * to the @ever-gauzy/plugin-integration-plane-api proxy.
+ *
+ * Tenant identification strategy (in priority order):
+ *   1. X-TENANT-ID header (Gauzy internal calls)
+ *   2. tenant-id cookie (Gauzy browser sessions)
+ *   3. UUID segment in URL path — the Plane UI is configured with
+ *      VITE_API_BASE_URL=http://host/api/plane/{tenantId}
+ *      so every request arrives as /api/plane/{tenantId}/auth/email-check etc.
+ *      The UUID is extracted and the path is rewritten before forwarding.
  */
 @Injectable()
 export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
@@ -31,7 +48,7 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 			const httpServer = this.httpAdapterHost.httpAdapter.getHttpServer();
 
 			this.proxyResult = mountPlaneProxy(httpServer, {
-				prefix: '/api/plane',
+				prefix: PROXY_PREFIX,
 
 				/**
 				 * Extract tenant ID from every request AND validate the JWT.
@@ -39,28 +56,44 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 				 * that authentication is never skipped.
 				 */
 				extractTenantId: (req) => {
-					const tenantId = this.extractTenantIdFromRequest(req);
-					if (tenantId) {
-						this.validateTenantFromToken(req, tenantId);
+					// 1. Explicit header / cookie (Gauzy-originated calls)
+					const headerTenantId = this.extractTenantIdFromHeaders(req);
+					if (headerTenantId) {
+						this.validateTenantFromToken(req, headerTenantId);
+						(req as any)[REQ_TENANT_ID] = headerTenantId;
+						return headerTenantId;
 					}
-					return tenantId;
+
+					// 2. UUID in URL path (Plane UI calls)
+					const pathTenantId = this.extractTenantIdFromPath(req);
+					if (pathTenantId) {
+						(req as any)[REQ_TENANT_ID] = pathTenantId;
+						return pathTenantId;
+					}
+
+					return undefined;
 				},
 
 				/**
-				 * Resolve the tenant's Plane configuration from the database.
+				 ** Resolve the tenant's Plane configuration from the database.
 				 * Called on cache miss only.
+				 *
+				 * When no tenant ID is present (public routes like /api/instances/,
+				 * /api/timezones, auth/*), returns a default config so the proxy
+				 * can still forward the request and handle CORS.
 				 */
 				resolveConfig: async (req) => {
-					const tenantId = this.extractTenantIdFromRequest(req);
+					const tenantId: string | undefined = (req as any)[REQ_TENANT_ID];
 
 					if (!tenantId) {
-						throw new Error('Cannot resolve Plane config: no tenant ID in request');
+						return this.getDefaultProxyConfig();
 					}
 
 					const config = await this.planeIntegrationService.getConfigForTenant(tenantId);
 
 					if (!config) {
-						throw new Error(`Plane integration is not configured or disabled for tenant ${tenantId}`);
+						this.logger.warn(`No Plane config for tenant ${tenantId}, using default`);
+						return this.getDefaultProxyConfig();
 					}
 
 					return {
@@ -79,7 +112,7 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 				cacheTtl: 5_000
 			});
 
-			this.logger.log('Plane proxy mounted successfully on /api/plane');
+			this.logger.log('Plane proxy mounted on /api/plane (tenant-in-path enabled)');
 		} catch (error: unknown) {
 			const message = error instanceof Error ? error.message : String(error);
 			const stack = error instanceof Error ? error.stack : undefined;
@@ -98,12 +131,76 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
-	 * Validate that the request carries a valid JWT whose tenantId claim
-	 * matches the header/cookie-supplied tenant ID.
+	 * Default proxy config used when no tenant can be identified.
+	 * Allows public endpoints (/api/instances/, /api/timezones) to work
+	 * and provides CORS origins for Plane UI dev ports.
+	 */
+	private getDefaultProxyConfig() {
+		const baseUrl = environment.baseUrl || 'http://localhost:3000';
+		return {
+			externalBaseApiUrl: `${baseUrl}/api`,
+			apiKey: '',
+			apiSecret: '',
+			clientBaseUrl: process.env['PLANE_CLIENT_BASE_URL'] || 'http://localhost:3001',
+			clientAdminUrl: process.env['PLANE_CLIENT_ADMIN_URL'] || 'http://localhost:3002',
+			clientSpaceUrl: process.env['PLANE_CLIENT_SPACE_URL'] || 'http://localhost:3003'
+		};
+	}
+
+	// ── Tenant ID extraction ──────────────────────────────────────────
+
+	/**
+	 * Extract tenant ID from a UUID segment in the URL path.
 	 *
-	 * Because the proxy is mounted at the raw HTTP server level (before
-	 * NestJS guards), this is the primary auth check for proxied requests.
-	 * The JWT signature is verified using the application's JWT secret.
+	 * Given:  /api/plane/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/auth/email-check
+	 * Result: tenantId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+	 *         req.url rewritten to /api/plane/auth/email-check
+	 */
+	private extractTenantIdFromPath(req: http.IncomingMessage): string | undefined {
+		const url = req.url || '';
+		if (!url.startsWith(PROXY_PREFIX + '/')) return undefined;
+
+		const afterPrefix = url.slice(PROXY_PREFIX.length + 1); // strip "/api/plane/"
+		const slashIdx = afterPrefix.indexOf('/');
+		const firstSegment = slashIdx === -1 ? afterPrefix : afterPrefix.slice(0, slashIdx);
+
+		if (!UUID_RE.test(firstSegment)) return undefined;
+
+		const rest = slashIdx === -1 ? '' : afterPrefix.slice(slashIdx);
+		req.url = PROXY_PREFIX + rest;
+
+		return firstSegment;
+	}
+
+	/**
+	 * Extract tenant ID from X-TENANT-ID header or tenant-id cookie.
+	 */
+	private extractTenantIdFromHeaders(req: http.IncomingMessage): string | undefined {
+		const tenantIdHeader = req.headers['x-tenant-id'];
+		if (tenantIdHeader) {
+			return Array.isArray(tenantIdHeader) ? tenantIdHeader[0] : tenantIdHeader;
+		}
+
+		const cookieHeader = req.headers['cookie'];
+		if (cookieHeader) {
+			const match = cookieHeader.match(/(?:^|;\s*)tenant-id=([^;]+)/);
+			if (match) {
+				return decodeURIComponent(match[1]);
+			}
+		}
+
+		return undefined;
+	}
+
+	// ── JWT validation ────────────────────────────────────────────────
+
+	/**
+	 * Validate that the request carries a valid Gauzy JWT whose tenantId
+	 * claim matches the header/cookie-supplied tenant ID.
+	 *
+	 * Only called for header/cookie-based tenant extraction (Gauzy calls).
+	 * Plane UI calls use the path-based tenant ID and are authenticated
+	 * by the proxy's own cookie-based auth (auth-proxy-plane-token-*).
 	 */
 	private validateTenantFromToken(req: http.IncomingMessage, headerTenantId: string): void {
 		const authHeader = req.headers['authorization'];
@@ -141,28 +238,5 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 			}
 			throw error;
 		}
-	}
-
-	/**
-	 * Extract tenant ID from the incoming request.
-	 * Checks X-TENANT-ID header first, then falls back to tenant-id cookie.
-	 */
-	private extractTenantIdFromRequest(req: http.IncomingMessage): string | undefined {
-		// Try explicit header first
-		const tenantIdHeader = req.headers['x-tenant-id'];
-		if (tenantIdHeader) {
-			return Array.isArray(tenantIdHeader) ? tenantIdHeader[0] : tenantIdHeader;
-		}
-
-		// Fall back to tenant-id cookie if present
-		const cookieHeader = req.headers['cookie'];
-		if (cookieHeader) {
-			const match = cookieHeader.match(/(?:^|;\s*)tenant-id=([^;]+)/);
-			if (match) {
-				return decodeURIComponent(match[1]);
-			}
-		}
-
-		return undefined;
 	}
 }
