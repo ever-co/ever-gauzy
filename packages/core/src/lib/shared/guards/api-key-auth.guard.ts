@@ -27,15 +27,22 @@ export class ApiKeyAuthGuard implements CanActivate {
 		}
 
 		// Proceed with API Key authentication if both are present
-		const isValidKey = await this._tenantApiKeyService.validateApiKeyAndSecret(apiKey, apiSecret);
+		const tenantApiKey = await this._tenantApiKeyService.validateApiKeyAndSecret(apiKey, apiSecret);
 
-		if (!isValidKey) {
+		if (!tenantApiKey) {
 			throw new UnauthorizedException(
 				'Access Denied: The provided X-APP-ID or X-API-KEY is invalid or does not have the required permissions.'
 			);
 		}
 
-		return isValidKey;
+		// Set the tenant ID in the request context (via user object)
+		// This ensures that TenantAwareCrudService methods correctly filter queries by tenant
+		request['user'] = {
+			...request['user'],
+			tenantId: tenantApiKey.tenantId
+		} as any;
+
+		return true;
 	}
 
 	/**
