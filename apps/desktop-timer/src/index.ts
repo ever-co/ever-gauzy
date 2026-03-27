@@ -4,7 +4,7 @@ import { environment } from './environments/environment';
 Object.assign(process.env, environment);
 // Import logging for electron and override default console logging
 import * as remoteMain from '@electron/remote/main';
-import { logger as log, store } from '@gauzy/desktop-core';
+import { IConfig, logger as log, store } from '@gauzy/desktop-core';
 import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
@@ -52,7 +52,8 @@ import {
 	TranslateLoader,
 	TranslateService,
 	TrayIconFactory,
-	UIError
+	UIError,
+	handleDesktopStartup
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
@@ -432,6 +433,44 @@ async function setupUpdater() {
 	}
 }
 
+function setAppVersion(configs: Partial<IConfig>) {
+	if (!configs) {
+		configs = {}
+	}
+	configs.version = app.getVersion();
+	LocalStore.updateConfigSetting({
+		...configs
+	});
+}
+
+async function restartApp(arg?: IConfig) {
+	initializeAppManager();
+	if (arg) {
+		LocalStore.updateConfigSetting(arg);
+	}
+	const configs = LocalStore.getStore('configs');
+	setGlobalVariable(configs);
+	/* Killing the provider. */
+	await provider.kill();
+	/* Creating a database if not exit. */
+	await ProviderFactory.instance.createDatabase();
+	/* Kill all windows */
+	if (appWindowManager.alwaysOnWindow) appWindowManager.alwaysOnWindow.close();
+	if (appWindowManager.settingWindow && !appWindowManager.settingWindow?.isDestroyed()) {
+		appWindowManager.settingWindow?.close();
+	}
+	if (timeTrackerWindow && !timeTrackerWindow.isDestroyed()) {
+		timeTrackerWindow.destroy();
+	}
+	if (serverGauzy) serverGauzy.kill();
+	if (gauzyWindow && !gauzyWindow.isDestroyed()) {
+		gauzyWindow.destroy();
+		gauzyWindow = null;
+	}
+	app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+	app.exit(0);
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -454,6 +493,16 @@ app.on('ready', async () => {
 	new DesktopThemeListener();
 	// default global
 	setGlobalVariable(configs || {});
+	// buttonResponse:
+	// 0: User clicked "Remove Database"
+	// 1: User clicked "Keep It"
+	// undefined: No popup was shown (e.g. fresh install or no version change)
+	const buttonResponse = await handleDesktopStartup();
+	setAppVersion(configs);
+	if (buttonResponse === 0) {
+		await restartApp();
+		return;
+	}
 	await launchSplashScreen();
 	await setupDatabase();
 	initialAppMenu();
@@ -545,30 +594,8 @@ ipcMain.on('restore', () => {
 	gauzyWindow.restore();
 });
 
-ipcMain.on('restart_app', async (event, arg) => {
-	initializeAppManager();
-	LocalStore.updateConfigSetting(arg);
-	const configs = LocalStore.getStore('configs');
-	setGlobalVariable(configs);
-	/* Killing the provider. */
-	await provider.kill();
-	/* Creating a database if not exit. */
-	await ProviderFactory.instance.createDatabase();
-	/* Kill all windows */
-	if (appWindowManager.alwaysOnWindow) appWindowManager.alwaysOnWindow.close();
-	if (appWindowManager.settingWindow && !appWindowManager.settingWindow?.isDestroyed()) {
-		appWindowManager.settingWindow?.close();
-	}
-	if (timeTrackerWindow && !timeTrackerWindow.isDestroyed()) {
-		timeTrackerWindow.destroy();
-	}
-	if (serverGauzy) serverGauzy.kill();
-	if (gauzyWindow && !gauzyWindow.isDestroyed()) {
-		gauzyWindow.destroy();
-		gauzyWindow = null;
-	}
-	app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
-	app.exit(0);
+ipcMain.on('restart_app', async (_, arg) => {
+	await restartApp(arg);
 });
 
 ipcMain.on('save_additional_setting', (event, arg) => {

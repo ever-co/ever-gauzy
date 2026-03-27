@@ -1664,7 +1664,34 @@
 				"LOAD_FAILED": "Failed to load event triggers."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Plane Project Management Integration",
+			"WEB_URL": "Plane Web URL",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "Plane Admin URL",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "Plane Space URL",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Enter the URLs where your Plane instance is hosted. The Web URL is required. Admin and Space URLs are optional.",
+			"URL_REQUIRED": "This URL is required.",
+			"URL_INVALID": "Please enter a valid URL starting with http:// or https://.",
+			"LOADING": "Loading settings...",
+			"REGENERATE_KEY": "Regenerate",
+			"REGENERATE_KEY_LABEL": "API Key & Secret",
+			"CONFIRM_DELETE": "Are you sure you want to remove this Plane integration? This will revoke the API key.",
+			"CONFIRM_REGENERATE": "Are you sure you want to regenerate the API key? The current key will be invalidated.",
+			"API_KEY_DIALOG": {
+				"TITLE": "API Credentials",
+				"WARNING": "Copy these credentials now. The API secret will not be shown again.",
+				"API_KEY": "API Key",
+				"API_SECRET": "API Secret",
+				"COPY": "Copy",
+				"COPIED": "Copied!"
+			}
+		},
 		"COMING_SOON": "Coming soon",
+		"PAID_LABEL": "Paid",
 		"RE_INTEGRATE": "Re-integrate",
 		"SETTINGS": "Settings",
 		"SELECT_GROUPS": "Select Groups",
@@ -4586,7 +4613,19 @@
 			"ERROR_OCCURRED": "Error Occurred",
 			"SELECT_FILE": "Select file",
 			"EXIT_AGENT_LOGIN_CONFIRM": "Oops! You need to log in before you can use the app.",
-			"EXIT_AGENT_PREVENT_CONFIRM": "Oops! You are not allowed to exit. Please contact your account administrator."
+			"EXIT_AGENT_PREVENT_CONFIRM": "Oops! You are not allowed to exit. Please contact your account administrator.",
+			"DB_CLEANUP_TITLE": "Database version is probably outdated",
+			"DB_CLEANUP_MESSAGE": "A new version of the app has been detected. To avoid breaking changes, would you like to wipe the local database to use a fresh one?",
+			"DB_CLEANUP_DETAIL": "Removing the database will wipe locally cached data. Data already synced to the server will safely rest on the Gauzy cloud.",
+			"DB_CLEANUP_REMOVE": "Remove Database",
+			"DB_CLEANUP_KEEP": "Keep It",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Unsynced Data Detected",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Warning: Data Loss Possible",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "You have {{countsText}}. Removing the database will PERMANENTLY erase this offline data. If you are unsure, click 'Keep It'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "We could not determine whether you have unsynced offline data. Removing the database may PERMANENTLY erase unsaved work. If you are unsure, click 'Keep It'.",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
+			"AND_JOIN": "and"
 		},
 		"NO_LIMIT": "∞ No Limit",
 		"TASK": "Task",
@@ -5649,6 +5688,11 @@
 			"UPLOADED_FILE": "Uploaded File",
 			"UNKNOWN_SOURCE": "Unknown Source"
 		},
+		"BUILTIN": {
+			"TITLE": "Built-in Integrations",
+			"SUBTITLE": "Native integrations included with Gauzy — click to configure.",
+			"DESKTOP_NOTICE": "These integrations are configured via the Gauzy web app. Open the web app to manage them."
+		},
 		"MARKETPLACE": {
 			"UPLOAD": "Upload New Plugin",
 			"OFFLINE": "You are currently offline/disconnected ⛓️‍💔",
@@ -5662,6 +5706,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Discover",
+			"MARKETPLACE": "Marketplace",
+			"BUILTIN": "Built-in",
 			"INSTALLED": "Installed",
 			"VERSION_HISTORY": "Version History"
 		},

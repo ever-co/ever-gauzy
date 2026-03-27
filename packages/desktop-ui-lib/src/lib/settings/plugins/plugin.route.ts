@@ -9,12 +9,16 @@ export const routes: Routes = [
 	},
 	{
 		path: 'marketplace',
-		loadChildren: () => import('./component/plugin-marketplace/plugin-marketplace-routing.module').then(m => m.pluginMarketplaceRoutes),
+		loadChildren: () =>
+			import('./component/plugin-marketplace/plugin-marketplace-routing.module').then(
+				(m) => m.pluginMarketplaceRoutes
+			),
 		resolve: { isUploadAvailable: PluginUploadResolver }
 	},
 	{
 		path: 'installed',
-		loadChildren: () => import('./component/plugin-installed-routing.module').then(m => m.pluginInstalledRoutes)
+		loadChildren: () =>
+			import('./component/plugin-installed-routing.module').then((m) => m.pluginInstalledRoutes)
 	},
 	{
 		path: '**',

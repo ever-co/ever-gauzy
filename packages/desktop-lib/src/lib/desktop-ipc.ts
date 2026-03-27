@@ -1410,7 +1410,8 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 
 	const logout = async () => {
 		await userService.remove();
-		timeTrackerWindow.webContents.send('__logout__');
+		// Explicitly pass `false` to prevent the Angular app from triggering an unwanted restart.
+		timeTrackerWindow.webContents.send('__logout__', false);
 		LocalStore.updateAuthSetting({ isLogout: true });
 	};
 

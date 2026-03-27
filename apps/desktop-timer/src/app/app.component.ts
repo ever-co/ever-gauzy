@@ -184,7 +184,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	}
 
 	private handlePostLogout(shouldRestart: boolean): void {
-		if (shouldRestart) {
+		if (shouldRestart === true) {
 			this.electronService.ipcRenderer.send('restart_and_update');
 			return;
 		}

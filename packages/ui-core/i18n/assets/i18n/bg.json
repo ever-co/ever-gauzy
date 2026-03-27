@@ -1644,6 +1644,32 @@
 				"LOAD_FAILED": "Неуспешно зареждане на тригери за събития."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Интеграция за управление на проекти Plane",
+			"WEB_URL": "Уеб URL на Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "Админ URL на Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "Space URL на Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Въведете URL адресите, на които е хоствана вашата Plane инстанция. Уеб URL е задължителен. Админ и Space URL са незадължителни.",
+			"URL_REQUIRED": "Този URL адрес е задължителен.",
+			"URL_INVALID": "Моля, въведете валиден URL адрес, започващ с http:// или https://.",
+			"LOADING": "Зареждане на настройките...",
+			"REGENERATE_KEY": "Регенериране",
+			"REGENERATE_KEY_LABEL": "API ключ и Тайна",
+			"CONFIRM_DELETE": "Сигурни ли сте, че искате да премахнете тази интеграция на Plane? API ключът ще бъде отменен.",
+			"CONFIRM_REGENERATE": "Сигурни ли сте, че искате да регенерирате API ключа? Текущият ключ ще бъде невалиден.",
+			"API_KEY_DIALOG": {
+				"TITLE": "API удостоверения",
+				"WARNING": "Копирайте тези удостоверения сега. API тайната няма да бъде показана отново.",
+				"API_KEY": "API ключ",
+				"API_SECRET": "API тайна",
+				"COPY": "Копиране",
+				"COPIED": "Копирано!"
+			}
+		},
 		"COMING_SOON": "Очаквайте скоро",
 		"RE_INTEGRATE": "Повторно интегриране",
 		"SETTINGS": "Настройки",
@@ -4487,7 +4513,19 @@
 			"INACTIVITY_HANDLER": "Обработчик на неактивност",
 			"WANT_LOGOUT": "Сигурни ли сте, че искате да излезете?",
 			"ERROR_HANDLER": "Управление на грешки",
-			"ERROR_OCCURRED": "Възникна грешка"
+			"ERROR_OCCURRED": "Възникна грешка",
+			"DB_CLEANUP_TITLE": "Версията на базата данни вероятно е остаряла",
+			"DB_CLEANUP_MESSAGE": "Открита е нова версия на приложението. За да избегнете проблеми при надграждане, искате ли да изтриете локалната база данни и да използвате нова?",
+			"DB_CLEANUP_DETAIL": "Премахването на базата данни ще изтрие локално кешираните данни. Данните, вече синхронизирани със сървъра, ще останат в безопасност в облака на Gauzy.",
+			"DB_CLEANUP_REMOVE": "Премахване на Базата Данни",
+			"DB_CLEANUP_KEEP": "Запазване",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Открити са несинхронизирани данни",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Внимание: Възможна загуба на данни",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "Имате {{countsText}}. Премахването на базата данни ще ИЗТРИЕ ОКОНЧАТЕЛНО тези офлайн данни. Ако не сте сигурни, кликнете върху 'Запазване'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "Не можахме да определим дали имате несинхронизирани офлайн данни. Премахването на базата данни може ОКОНЧАТЕЛНО да изтрие незапазена работа. Ако не сте сигурни, кликнете върху 'Запазване'.",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
+			"AND_JOIN": "and"
 		},
 		"NO_LIMIT": "∞ Без лимит",
 		"TASK": "Задача",

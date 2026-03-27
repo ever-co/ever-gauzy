@@ -1578,6 +1578,32 @@
 				"LOAD_FAILED": "Error al cargar los disparadores de eventos."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Integración de gestión de proyectos Plane",
+			"WEB_URL": "URL Web de Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "URL de Administración de Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "URL del espacio de Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Ingrese las URL donde está alojada su instancia de Plane. La URL Web es obligatoria. Las URL de Admin y Space son opcionales.",
+			"URL_REQUIRED": "Esta URL es obligatoria.",
+			"URL_INVALID": "Ingrese una URL válida que comience con http:// o https://.",
+			"LOADING": "Cargando configuración...",
+			"REGENERATE_KEY": "Regenerar",
+			"REGENERATE_KEY_LABEL": "Clave API y Secreto",
+			"CONFIRM_DELETE": "¿Está seguro de que desea eliminar esta integración de Plane? La clave API será revocada.",
+			"CONFIRM_REGENERATE": "¿Está seguro de que desea regenerar la clave API? La clave actual será invalidada.",
+			"API_KEY_DIALOG": {
+				"TITLE": "Credenciales API",
+				"WARNING": "Copie estas credenciales ahora. El secreto API no se mostrará de nuevo.",
+				"API_KEY": "Clave API",
+				"API_SECRET": "Secreto de la API",
+				"COPY": "Copiar",
+				"COPIED": "¡Copiado!"
+			}
+		},
 		"COMING_SOON": "Próximamente",
 		"RE_INTEGRATE": "Reintegrar",
 		"SETTINGS": "Ajustes",
@@ -4441,7 +4467,19 @@
 			"INACTIVITY_HANDLER": "Manejador de inactividad",
 			"WANT_LOGOUT": "¿Estás seguro/a de que quieres cerrar la sesión?",
 			"ERROR_HANDLER": "Manejador de errores",
-			"ERROR_OCCURRED": "Error ocurrido"
+			"ERROR_OCCURRED": "Error ocurrido",
+			"DB_CLEANUP_TITLE": "La versión de la base de datos probablemente está desactualizada",
+			"DB_CLEANUP_MESSAGE": "Se ha detectado una nueva versión de la aplicación. Para evitar problemas de compatibilidad, ¿desea borrar la base de datos local y utilizar una nueva?",
+			"DB_CLEANUP_DETAIL": "Eliminar la base de datos borrará los datos almacenados en caché localmente. Los datos ya sincronizados con el servidor permanecerán seguros en la nube de Gauzy.",
+			"DB_CLEANUP_REMOVE": "Eliminar Base de Datos",
+			"DB_CLEANUP_KEEP": "Conservar",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Datos No Sincronizados Detectados",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Advertencia: Posible Pérdida de Datos",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "Tiene {{countsText}}. Eliminar la base de datos borrará PERMANENTEMENTE estos datos sin conexión. Si no está seguro, haga clic en 'Conservar'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "No pudimos determinar si tiene datos sin conexión sin sincronizar. Eliminar la base de datos puede borrar PERMANENTEMENTE trabajo no guardado. Si no está seguro, haga clic en 'Conservar'.",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
+			"AND_JOIN": "and"
 		},
 		"NO_LIMIT": "∞ Sin límite",
 		"TASK": "Tarea",

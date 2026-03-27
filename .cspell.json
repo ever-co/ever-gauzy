@@ -603,6 +603,7 @@
 		"PROJECTRX",
 		"proto",
 		"proto",
+		"proxied",
 		"psql",
 		"pulumi",
 		"pulumi",
@@ -884,7 +885,8 @@
 		"Centralises",
 		"Dispatchable",
 		"retriable",
-		"Reentrancy"
+		"Reentrancy",
+		"Unsynced"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

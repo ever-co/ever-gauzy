@@ -1,6 +1,6 @@
 import { Inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
-import { PluginsModule, providePluginsEffects } from '@gauzy/desktop-ui-lib';
+import { PLUGIN_SHOW_BUILTIN, PluginsModule, providePluginsEffects } from '@gauzy/desktop-ui-lib';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { SharedModule, SmartDataViewLayoutModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import {
@@ -49,7 +49,8 @@ import { IntegrationLayoutComponent } from './layout/layout.component';
 			deps: [PageRouteRegistryService],
 			multi: true
 		},
-		providePluginsEffects()
+		providePluginsEffects(),
+		{ provide: PLUGIN_SHOW_BUILTIN, useValue: true }
 	]
 })
 export class IntegrationsModule {
@@ -137,7 +138,7 @@ export class IntegrationsModule {
 			data: { selectors: false },
 			location: 'integrations-sections',
 			path: 'plugins',
-			loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.PluginRoutingModule)
+			loadChildren: () => import('./web-plugin.routes').then((m) => m.webPluginRoutes)
 		});
 
 		// Register the routes for activepieces integration

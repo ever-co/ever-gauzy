@@ -1576,6 +1576,32 @@
 				"LOAD_FAILED": "Kan gebeurtenistriggers niet laden."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Plane Projectbeheer Integratie",
+			"WEB_URL": "Plane Web-URL",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "Plane Admin-URL",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "Plane Space-URL",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Voer de URL's in waar uw Plane-instantie wordt gehost. De Web-URL is vereist. Admin- en Space-URL's zijn optioneel.",
+			"URL_REQUIRED": "Deze URL is vereist.",
+			"URL_INVALID": "Voer een geldige URL in die begint met http:// of https://.",
+			"LOADING": "Instellingen laden...",
+			"REGENERATE_KEY": "Opnieuw genereren",
+			"REGENERATE_KEY_LABEL": "API-sleutel en API-geheim",
+			"CONFIRM_DELETE": "Weet u zeker dat u deze Plane-integratie wilt verwijderen? De API-sleutel wordt ingetrokken.",
+			"CONFIRM_REGENERATE": "Weet u zeker dat u de API-sleutel opnieuw wilt genereren? De huidige sleutel wordt ongeldig.",
+			"API_KEY_DIALOG": {
+				"TITLE": "API-referenties",
+				"WARNING": "Kopieer deze referenties nu. Het API-geheim wordt niet opnieuw weergegeven.",
+				"API_KEY": "API-sleutel",
+				"API_SECRET": "API-geheim",
+				"COPY": "Kopiëren",
+				"COPIED": "Gekopieerd!"
+			}
+		},
 		"COMING_SOON": "Binnenkort beschikbaar.",
 		"RE_INTEGRATE": "Re-integreren",
 		"SETTINGS": "Instellingen",
@@ -4439,7 +4465,19 @@
 			"INACTIVITY_HANDLER": "Inactiviteitshandler",
 			"WANT_LOGOUT": "Weet je zeker dat je wilt uitloggen?",
 			"ERROR_HANDLER": "Foutafhandeling",
-			"ERROR_OCCURRED": "Er is een fout opgetreden"
+			"ERROR_OCCURRED": "Er is een fout opgetreden",
+			"DB_CLEANUP_TITLE": "De databaseversie is waarschijnlijk verouderd",
+			"DB_CLEANUP_MESSAGE": "Er is een nieuwe versie van de app gedetecteerd. Om compatibiliteitsproblemen te voorkomen, wilt u de lokale database wissen en een nieuwe gebruiken?",
+			"DB_CLEANUP_DETAIL": "Het verwijderen van de database wist lokaal gecachte gegevens. Gegevens die al met de server zijn gesynchroniseerd, blijven veilig in de Gauzy-cloud.",
+			"DB_CLEANUP_REMOVE": "Database Verwijderen",
+			"DB_CLEANUP_KEEP": "Behouden",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Niet-gesynchroniseerde Gegevens Gedetecteerd",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Waarschuwing: Mogelijk Gegevensverlies",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "U heeft {{countsText}}. Het verwijderen van de database zal deze offline gegevens PERMANENT wissen. Als u het niet zeker weet, klik dan op 'Behouden'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "We konden niet bepalen of u niet-gesynchroniseerde offline gegevens heeft. Het verwijderen van de database kan niet-opgeslagen werk PERMANENT wissen. Als u het niet zeker weet, klik dan op 'Behouden'.",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} niet-gesynchroniseerde timer(s)",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} niet-gesynchroniseerde interval(len)",
+			"AND_JOIN": "en"
 		},
 		"NO_LIMIT": "∞ Geen Limiet",
 		"TASK": "Taak",

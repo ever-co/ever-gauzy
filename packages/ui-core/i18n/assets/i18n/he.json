@@ -1610,6 +1610,32 @@
 				"LOAD_FAILED": "טעינת טריגרים של אירועים נכשלה."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "אינטגרציית ניהול פרויקטים Plane",
+			"WEB_URL": "כתובת אתר Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "כתובת ניהול Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "כתובת Space של Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "הזן את כתובות ה-URL שבהן מתארח מופע ה-Plane שלך. כתובת האתר נדרשת. כתובות הניהול ו-Space הן אופציונליות.",
+			"URL_REQUIRED": "כתובת URL זו נדרשת.",
+			"URL_INVALID": "אנא הזן כתובת URL תקינה המתחילה ב-http:// או https://.",
+			"LOADING": "טוען הגדרות...",
+			"REGENERATE_KEY": "צור מחדש",
+			"REGENERATE_KEY_LABEL": "מפתח API וסוד",
+			"CONFIRM_DELETE": "האם אתה בטוח שברצונך להסיר את שילוב Plane? מפתח ה-API יבוטל.",
+			"CONFIRM_REGENERATE": "האם אתה בטוח שברצונך לחדש את מפתח ה-API? המפתח הנוכחי יהפוך ללא תקף.",
+			"API_KEY_DIALOG": {
+				"TITLE": "אישורי API",
+				"WARNING": "העתק את האישורים האלה עכשיו. סוד ה-API לא יוצג שוב.",
+				"API_KEY": "מפתח API",
+				"API_SECRET": "סוד API",
+				"COPY": "העתק",
+				"COPIED": "הועתק!"
+			}
+		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
 		"SETTINGS": "הגדרות",
@@ -4451,7 +4477,19 @@
 			"STILL_WORKING": "האם אתה עדיין עובד?",
 			"INACTIVITY_HANDLER": "מטפל בחוסר פעילות",
 			"ERROR_HANDLER": "מטפל בשגיאות",
-			"ERROR_OCCURRED": "אירעה שגיאה"
+			"ERROR_OCCURRED": "אירעה שגיאה",
+			"DB_CLEANUP_TITLE": "גרסת בסיס הנתונים קרוב לוודאי ישנה",
+			"DB_CLEANUP_MESSAGE": "זוהתה גרסא חדשה של האפליקציה. כדי להימנע מבעיות תאימות, האם ברצונך למחוק את בסיס הנתונים המקומי ולהתחיל בבסיס נתונים חדש?",
+			"DB_CLEANUP_DETAIL": "הסרת בסיס הנתונים תמחק נתונים שנשמרו במטמון המקומי. נתונים שכבר סונכרנו עם השרת יישמרו בבטחה בענן Gauzy.",
+			"DB_CLEANUP_REMOVE": "הסר מסד נתונים",
+			"DB_CLEANUP_KEEP": "שמור",
+			"DB_CLEANUP_UNSYNCED_TITLE": "זוהו נתונים לא מסונכרנים",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "אזהרה: אובדן נתונים אפשרי",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "יש לך {{countsText}}. הסרת בסיס הנתונים תמחק לצמיתא את הנתונים הלא מקווננתים. אם אינך בטוח, לחץ על 'שמור'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "לא הצלחנו לקבוע אם יש לך נתונים לא מסונכרנים. הסרת בסיס הנתונים עלולה למחוק לצמיתא עבודה שלא נשמרה. אם אינך בטוח, לחץ על 'שמור'.",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
+			"AND_JOIN": "and"
 		},
 		"NO_LIMIT": "∞ אין הגבלה",
 		"TASK": "משימה",
