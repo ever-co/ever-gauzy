@@ -6,7 +6,6 @@ import { catchError, distinctUntilChanged, filter, switchMap, takeUntil, tap } f
 import { GAUZY_ENV } from '../constants';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { ServerConnectionService, Store } from '../services';
-import { ElectronService } from '../electron/services';
 import { NbLayoutModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -22,7 +21,6 @@ export class ServerDownPage implements OnInit, OnDestroy {
 	private redirectUrl: string | null = null;
 
 	constructor(
-		private readonly electronService: ElectronService,
 		private readonly store: Store,
 		private readonly serverConnectionService: ServerConnectionService,
 		private readonly router: Router,

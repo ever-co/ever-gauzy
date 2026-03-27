@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { Store } from './store.service';
+import { ElectronService } from '../electron/services';
 
 interface IConnectionStatus {
 	status: number;
@@ -14,7 +15,11 @@ export class ServerConnectionService {
 	private readonly CONNECTION_ENDPOINT = '/api';
 	private readonly LOCALHOST_URL = 'http://localhost:3000';
 
-	constructor(private readonly httpClient: HttpClient, private readonly store: Store) {}
+	constructor(
+		private readonly httpClient: HttpClient,
+		private readonly store: Store,
+		private readonly _electronService: ElectronService
+	) {}
 
 	/**
 	 * Checks the server connection status
@@ -31,6 +36,10 @@ export class ServerConnectionService {
 		this.logConnectionAttempt(url);
 
 		try {
+			const isOfflineMode = await this._electronService.ipcRenderer.invoke('IS_OFFLINE');
+			if (isOfflineMode) {
+				return this.handleSuccessfulConnection({ status: 200 }, url);
+			}
 			const response = await this.attemptServerConnection(url);
 			return this.handleSuccessfulConnection(response, url);
 		} catch (error) {

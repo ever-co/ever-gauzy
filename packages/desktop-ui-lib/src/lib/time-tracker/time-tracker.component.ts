@@ -1978,12 +1978,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public async setTimerDetails(): Promise<void> {
 		try {
 			let res: any;
-			console.log('Fetching user details with offline mode:', this._isOffline);
-			console.log('Store user details before fetching:', this._store.user);
 			if (!this._isOffline) {
 				try {
 					res = await this.timeTrackerService.getUserDetail();
-					console.log('Fetched user details:', res);
 					if (!this._store.user?.employee?.organization && res?.employee?.organization) {
 						this._store.user = res;
 					}
