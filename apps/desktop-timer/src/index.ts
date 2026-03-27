@@ -472,7 +472,7 @@ async function restartApp(arg?: IConfig) {
 	app.exit(0);
 }
 
-async function checkOfllineMode(configs: IConfig) {
+async function checkOfflineMode(configs: IConfig) {
 	try {
 		if (configs?.serverUrl && configs?.serverConfigConnected) {
 			const offlineModeHandler = DesktopOfflineModeHandler.instance;
@@ -519,7 +519,7 @@ app.on('ready', async () => {
 	await setupDatabase();
 	initialAppMenu();
 	try {
-		await checkOfllineMode(configs);
+		await checkOfflineMode(configs);
 		timeTrackerWindow = await createTimeTrackerWindow(
 			timeTrackerWindow,
 			pathWindow.timeTrackerUi,
