@@ -7,7 +7,9 @@ export { FileStorage, FileStorageFactory, UploadedFileStorage } from './lib/core
 export { LazyFileInterceptor } from './lib/core/interceptors';
 export * from './lib/core/seeds';
 export {
-	ConnectionEntityManager, createMigration, generateMigration,
+	ConnectionEntityManager,
+	createMigration,
+	generateMigration,
 	prepareSQLQuery,
 	revertLastDatabaseMigration,
 	runDatabaseMigrations
@@ -25,15 +27,19 @@ export { UserModule, UserService } from './lib/user';
 
 export * from './lib/organization';
 export {
-	OrganizationContactCreateCommand, OrganizationContactModule,
+	OrganizationContactCreateCommand,
+	OrganizationContactModule,
 	OrganizationContactService
 } from './lib/organization-contact';
 export {
-	OrganizationProjectCreateCommand, OrganizationProjectModule,
-	OrganizationProjectService, OrganizationProjectUpdateCommand
+	OrganizationProjectCreateCommand,
+	OrganizationProjectModule,
+	OrganizationProjectService,
+	OrganizationProjectUpdateCommand
 } from './lib/organization-project';
 export {
-	OrganizationVendorFirstOrCreateCommand, OrganizationVendorModule,
+	OrganizationVendorFirstOrCreateCommand,
+	OrganizationVendorModule,
 	OrganizationVendorService
 } from './lib/organization-vendor';
 
@@ -42,7 +48,8 @@ export { AutomationTaskSyncCommand, TaskCreateCommand, TaskModule, TaskService, 
 
 export { IntegrationModule, IntegrationService } from './lib/integration';
 export {
-	DEFAULT_ENTITY_SETTINGS, IntegrationEntitySettingModule,
+	DEFAULT_ENTITY_SETTINGS,
+	IntegrationEntitySettingModule,
 	IntegrationEntitySettingService
 } from './lib/integration-entity-setting';
 export {
@@ -54,8 +61,10 @@ export {
 	IntegrationMapModule,
 	IntegrationMapService,
 	IntegrationMapSyncActivityCommand,
-	IntegrationMapSyncEntityCommand, IntegrationMapSyncIssueCommand,
-	IntegrationMapSyncLabelCommand, IntegrationMapSyncOrganizationCommand,
+	IntegrationMapSyncEntityCommand,
+	IntegrationMapSyncIssueCommand,
+	IntegrationMapSyncLabelCommand,
+	IntegrationMapSyncOrganizationCommand,
 	IntegrationMapSyncProjectCommand,
 	IntegrationMapSyncScreenshotCommand,
 	IntegrationMapSyncTaskCommand,
@@ -65,22 +74,36 @@ export {
 export {
 	IntegrationSettingCreateCommand,
 	IntegrationSettingGetCommand,
-	IntegrationSettingGetManyCommand, IntegrationSettingModule,
+	IntegrationSettingGetManyCommand,
+	IntegrationSettingModule,
 	IntegrationSettingService
 } from './lib/integration-setting';
 export {
-	IntegrationTenantGetCommand, IntegrationTenantModule,
-	IntegrationTenantService, IntegrationTenantUpdateOrCreateCommand
+	IntegrationTenantGetCommand,
+	IntegrationTenantModule,
+	IntegrationTenantService,
+	IntegrationTenantUpdateOrCreateCommand
 } from './lib/integration-tenant';
+
+export { TenantApiKeyModule, TenantApiKeyService } from './lib/tenant-api-key';
 
 export { CustomTrackingModule, CustomTrackingService } from './lib/time-tracking/custom-tracking';
 export { ScreenshotCreateCommand, ScreenshotModule, ScreenshotService } from './lib/time-tracking/screenshot';
 export { TimeLogCreateCommand, TimeLogModule, TimeLogService } from './lib/time-tracking/time-log';
 export {
-	CreateTimeSlotMinutesCommand, TimeSlotCreateCommand, TimeSlotModule,
+	CreateTimeSlotMinutesCommand,
+	TimeSlotCreateCommand,
+	TimeSlotModule,
 	TimeSlotService
 } from './lib/time-tracking/time-slot';
-export { GetTimerStatusQuery, StartTimerCommand, StopTimerCommand, TimerStartedEvent, TimerStatusUpdatedEvent, TimerStoppedEvent } from './lib/time-tracking/timer';
+export {
+	GetTimerStatusQuery,
+	StartTimerCommand,
+	StopTimerCommand,
+	TimerStartedEvent,
+	TimerStatusUpdatedEvent,
+	TimerStoppedEvent
+} from './lib/time-tracking/timer';
 export { CommandHandlers } from './lib/time-tracking/timer/commands/handlers';
 export { QueryHandlers } from './lib/time-tracking/timer/queries/handlers';
 export { TimerModule } from './lib/time-tracking/timer/timer.module';

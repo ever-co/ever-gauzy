@@ -5,6 +5,7 @@ import { JobProposalPlugin, JobProposalTemplatePlugin } from '@gauzy/plugin-job-
 import { JobSearchPlugin } from '@gauzy/plugin-job-search-ui';
 import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
+import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane-ui';
 import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
 import { DashboardTimeTrackAngularUiPlugin } from '@gauzy/plugin-dashboard-time-track-angular-ui';
 import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
@@ -71,6 +72,7 @@ export const uiPluginConfig: PluginUiConfig = {
 
 		// Integration Plugins
 		IntegrationUpworkPlugin,
+		IntegrationPlanePlugin,
 
 		// Job Plugins
 		JobsPlugin.init({

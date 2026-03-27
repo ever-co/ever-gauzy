@@ -1664,6 +1664,32 @@
 				"LOAD_FAILED": "Failed to load event triggers."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Plane Project Management Integration",
+			"WEB_URL": "Plane Web URL",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "Plane Admin URL",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "Plane Space URL",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Enter the URLs where your Plane instance is hosted. The Web URL is required. Admin and Space URLs are optional.",
+			"URL_REQUIRED": "This URL is required.",
+			"URL_INVALID": "Please enter a valid URL starting with http:// or https://.",
+			"LOADING": "Loading settings...",
+			"REGENERATE_KEY": "Regenerate",
+			"REGENERATE_KEY_LABEL": "API Key & Secret",
+			"CONFIRM_DELETE": "Are you sure you want to remove this Plane integration? This will revoke the API key.",
+			"CONFIRM_REGENERATE": "Are you sure you want to regenerate the API key? The current key will be invalidated.",
+			"API_KEY_DIALOG": {
+				"TITLE": "API Credentials",
+				"WARNING": "Copy these credentials now. The API secret will not be shown again.",
+				"API_KEY": "API Key",
+				"API_SECRET": "API Secret",
+				"COPY": "Copy",
+				"COPIED": "Copied!"
+			}
+		},
 		"COMING_SOON": "Coming soon",
 		"PAID_LABEL": "Paid",
 		"RE_INTEGRATE": "Re-integrate",
