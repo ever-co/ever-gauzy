@@ -899,6 +899,15 @@ ipcMain.handle('set-tray-icon', () => {
 	};
 });
 
+ipcMain.handle('IS_OFFLINE', async () => {
+	const configs: IConfig = LocalStore.getStore('configs');
+	if (configs?.serverConfigConnected) {
+		const offlineMode = DesktopOfflineModeHandler.instance;
+		return offlineMode.enabled;
+	}
+	return false;
+});
+
 ipcMain.on('get-arch', (event) => {
 	event.sender.send('get-arch', process.arch);
 });

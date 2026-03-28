@@ -384,12 +384,9 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.handle('SET_OFFLINE_MODE', async () => {
+		const offlineMode = DesktopOfflineModeHandler.instance;
 		offlineMode.forceOffline();
 	})
-
-	ipcMain.handle('IS_OFFLINE', async () => {
-		return offlineMode.enabled;
-	});
 
 	pluginListeners();
 }
@@ -1282,8 +1279,7 @@ export function removeAllHandlers() {
 		'COLLECT_ACTIVITIES',
 		'START_SERVER',
 		'GET_LAST_CAPTURE',
-		'SET_OFFLINE_MODE',
-		'IS_OFFLINE',
+		'SET_OFFLINE_MODE'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
