@@ -383,6 +383,11 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		};
 	});
 
+	ipcMain.handle('SET_OFFLINE_MODE', async () => {
+		const offlineMode = DesktopOfflineModeHandler.instance;
+		offlineMode.forceOffline();
+	})
+
 	pluginListeners();
 }
 
@@ -1062,11 +1067,13 @@ export function ipcTimer(
 
 			timeTrackerWindow.webContents.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
+				isOffline: offlineMode.enabled,
 				timeSlotId: lastTime ? lastTime.timeslotId : null
 			});
 		} catch (error) {
 			log.error('Error on refresh timer', error);
 			timeTrackerWindow.webContents.send('timer_tracker_show', {
+				isOffline: offlineMode.enabled,
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: null
 			});
@@ -1271,7 +1278,8 @@ export function removeAllHandlers() {
 		'FINISH_SYNCED_TIMER',
 		'COLLECT_ACTIVITIES',
 		'START_SERVER',
-		'GET_LAST_CAPTURE'
+		'GET_LAST_CAPTURE',
+		'SET_OFFLINE_MODE'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

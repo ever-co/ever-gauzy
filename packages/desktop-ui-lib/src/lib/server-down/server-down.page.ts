@@ -43,20 +43,34 @@ export class ServerDownPage implements OnInit, OnDestroy {
 		interval(checkIntervalMs)
 			.pipe(
 				tap(() => console.log('Checking server connection to URL:', url)),
-				switchMap(() =>
-					from(this.serverConnectionService.checkServerConnection(url)).pipe(
+				switchMap(() => {
+					// Determine target URL based on authentication status (token presence)
+					const getTargetUrl = () => {
+						return this.redirectUrl || '/';
+					};
+
+					if (this.store.isOffline && this.store.token) {
+						return from(Promise.resolve(200)).pipe(
+							tap(() => {
+								const targetUrl = getTargetUrl();
+								console.log('Offline mode active, bypassing server down page, navigating to:', targetUrl);
+								this.router.navigateByUrl(targetUrl);
+							})
+						);
+					}
+
+					return from(this.serverConnectionService.checkServerConnection(url)).pipe(
 						distinctUntilChanged(),
 						tap(() => console.log('Server connection status:', this.store.serverConnection)),
 						filter(() => Number(this.store.serverConnection) === 200 || !!this.store.userId),
 						tap(() => {
-							// Navigate to the original URL if available, otherwise go to root
-							const targetUrl = this.redirectUrl || '/';
+							const targetUrl = getTargetUrl();
 							console.log('Connection restored, navigating to:', targetUrl);
 							this.router.navigateByUrl(targetUrl);
 						}),
 						catchError(() => EMPTY) // Silently handle errors to keep the stream alive
-					)
-				),
+					);
+				}),
 				takeUntil(this.destroy$)
 			)
 			.subscribe({

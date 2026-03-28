@@ -46,7 +46,8 @@ import {
 	removeMainListener,
 	removeTimerListener,
 	setupAkitaStorageHandler,
-	handleDesktopStartup
+	handleDesktopStartup,
+    DesktopOfflineModeHandler
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
@@ -63,6 +64,7 @@ import * as Sentry from '@sentry/electron/main';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
+import { IConfig } from '@gauzy/desktop-core';
 
 /**
  * Describes the configuration for building the Gauzy API base URL.
@@ -969,6 +971,15 @@ ipcMain.handle('get-app-path', () => app.getAppPath());
 ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
 ipcMain.on('get-arch', (event) => {
 	event.sender.send('get-arch', process.arch);
+});
+
+ipcMain.handle('IS_OFFLINE', async () => {
+	const configs: IConfig = LocalStore.getStore('configs');
+	if (configs?.serverConfigConnected) {
+		const offlineMode = DesktopOfflineModeHandler.instance;
+		return offlineMode.enabled;
+	}
+	return false;
 });
 
 /**
