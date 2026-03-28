@@ -4,8 +4,7 @@ import { ILanguage } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-core/common';
 import { firstValueFrom, map, shareReplay } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
-import { LanguageCacheService } from '../services';
-import { Store } from '../services';
+import { LanguageCacheService, Store } from '../services';
 
 @Injectable({
 	providedIn: 'root'

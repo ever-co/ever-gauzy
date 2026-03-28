@@ -66,7 +66,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 				switchMap((arg) =>
 					interval(1000).pipe(
 						exhaustMap(() => {
-							console.log('Pinging server...');
 							return from(this.electronService.ipcRenderer.invoke('IS_OFFLINE')).pipe(
 								switchMap((isOfflineMode) => {
 									if (isOfflineMode) {

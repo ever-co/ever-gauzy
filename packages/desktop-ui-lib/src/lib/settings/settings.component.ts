@@ -1053,12 +1053,12 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 					this.currentUser$.next(null);
 					return;
 				}
-				if (!this._store.isOffline) {
+				if (this._store.isOffline) {
+					const usr = this._store.user;
+					this.currentUser$.next(usr);
+				} else {
 					const user = await this.timeTrackerService.getUserDetail();
 					this.currentUser$.next(user);
-				} else {
-					const usr = this._store.user;
-					this.currentUser$.next(usr)
 				}
 
 			} catch (error) {

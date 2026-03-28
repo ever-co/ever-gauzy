@@ -70,7 +70,7 @@ export interface IConfig {
 			cert: string;
 		};
 	};
-	serverConfigConnected?: boolean
+	serverConfigConnected?: boolean;
 }
 
 export interface IAuth {

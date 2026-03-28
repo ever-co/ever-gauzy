@@ -35,11 +35,21 @@ export class ServerConnectionService {
 		const url = this.buildConnectionUrl(endPoint);
 		this.logConnectionAttempt(url);
 
+		// Probe offline state separately — if the IPC call fails for any reason
+		// (handler not yet registered, bridge not ready, etc.), fall through to
+		// the real HTTP check rather than short-circuiting with a false error.
+		let isOfflineMode = false;
 		try {
-			const isOfflineMode = await this._electronService.ipcRenderer.invoke('IS_OFFLINE');
-			if (isOfflineMode) {
-				return this.handleSuccessfulConnection({ status: 200 }, url);
-			}
+			isOfflineMode = await this._electronService.ipcRenderer.invoke('IS_OFFLINE');
+		} catch (ipcError) {
+			console.warn('IS_OFFLINE IPC probe failed, falling back to HTTP check:', ipcError);
+		}
+
+		if (isOfflineMode) {
+			return this.handleSuccessfulConnection({ status: 200 }, url);
+		}
+
+		try {
 			const response = await this.attemptServerConnection(url);
 			return this.handleSuccessfulConnection(response, url);
 		} catch (error) {

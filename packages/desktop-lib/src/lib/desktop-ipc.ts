@@ -1281,7 +1281,9 @@ export function removeAllHandlers() {
 		'FINISH_SYNCED_TIMER',
 		'COLLECT_ACTIVITIES',
 		'START_SERVER',
-		'GET_LAST_CAPTURE'
+		'GET_LAST_CAPTURE',
+		'SET_OFFLINE_MODE',
+		'IS_OFFLINE',
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

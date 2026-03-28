@@ -31,6 +31,7 @@ export class TeamSelectorService extends SelectorService<IOrganizationTeam> {
 			this.teamSelectorStore.setLoading(true);
 			if (this.store.isOffline) {
 				console.warn('Cannot load teams while offline.');
+				this.teamSelectorStore.setLoading(false);
 				return;
 			}
 			const { searchTerm: name } = options || {};

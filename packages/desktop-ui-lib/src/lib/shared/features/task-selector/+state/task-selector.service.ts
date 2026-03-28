@@ -73,6 +73,7 @@ export class TaskSelectorService extends SelectorService<ITask> {
 		try {
 			this.taskSelectorStore.setLoading(true);
 			if (this.store.isOffline) {
+				this.taskSelectorStore.setLoading(false);
 				console.warn('Offline mode: Unable to fetch tasks from the server.');
 				return;
 			}

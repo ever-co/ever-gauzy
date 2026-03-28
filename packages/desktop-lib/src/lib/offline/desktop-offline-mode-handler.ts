@@ -29,7 +29,7 @@ export class DesktopOfflineModeHandler extends EventEmitter implements IOfflineM
 		// Initial server ping timer
 		this._pingTimer = null;
 
-		// Default ping timer interval set to 40 seconds
+		// Default ping timer interval set to 10 seconds
 		this._PING_INTERVAL = 10 * 1000;
 
 		this.on('connection-restored', () => {

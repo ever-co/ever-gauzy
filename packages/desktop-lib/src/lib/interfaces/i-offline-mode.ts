@@ -35,5 +35,9 @@ export interface IOfflineMode {
 	 */
 	connectivity(): Promise<void>;
 
+	/**
+     * Immediately enables offline mode without waiting for connectivity check.
+	 * Used when a hard network error is detected.
+	 */
 	forceOffline(): void;
 }

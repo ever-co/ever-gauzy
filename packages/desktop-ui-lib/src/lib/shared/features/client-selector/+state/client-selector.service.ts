@@ -60,6 +60,7 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 			this.selectorStore.setLoading(true);
 
 			if (this.store.isOffline) {
+				this.selectorStore.setLoading(false);
 				console.warn('Offline mode: Unable to fetch clients from the server.');
 				return;
 			}
