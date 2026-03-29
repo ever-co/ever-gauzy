@@ -1617,6 +1617,32 @@
 				"LOAD_FAILED": "Не удалось загрузить триггеры событий."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Интеграция управления проектами Plane",
+			"WEB_URL": "Веб-URL Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "URL администратора Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "URL Space Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Введите URL-адреса, по которым размещён ваш экземпляр Plane. Веб-URL обязателен. URL администратора и Space необязательны.",
+			"URL_REQUIRED": "Этот URL-адрес обязателен.",
+			"URL_INVALID": "Введите корректный URL-адрес, начинающийся с http:// или https://.",
+			"LOADING": "Загрузка настроек...",
+			"REGENERATE_KEY": "Перегенерировать",
+			"REGENERATE_KEY_LABEL": "API-ключ и Секрет",
+			"CONFIRM_DELETE": "Вы уверены, что хотите удалить эту интеграцию Plane? Ключ API будет отозван.",
+			"CONFIRM_REGENERATE": "Вы уверены, что хотите перегенерировать ключ API? Текущий ключ станет недействительным.",
+			"API_KEY_DIALOG": {
+				"TITLE": "Учётные данные API",
+				"WARNING": "Скопируйте эти учётные данные сейчас. Секрет API больше не будет показан.",
+				"API_KEY": "API-ключ",
+				"API_SECRET": "API-секрет",
+				"COPY": "Копировать",
+				"COPIED": "Скопировано!"
+			}
+		},
 		"COMING_SOON": "Скоро появится",
 		"RE_INTEGRATE": "Переинтегрировать",
 		"SETTINGS": "Настройки",

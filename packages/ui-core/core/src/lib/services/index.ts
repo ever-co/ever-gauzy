@@ -47,6 +47,7 @@ export * from './organizations';
 export * from './payment';
 export * from './permission';
 export * from './pipeline';
+export * from './plane';
 export * from './product';
 export * from './proposal';
 export * from './request-approval';

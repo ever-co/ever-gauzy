@@ -1,0 +1,15 @@
+.hint {
+  margin-bottom: 24px;
+}
+
+button {
+  box-shadow: var(--gauzy-shadow);
+  border-radius: var(--border-radius);
+}
+
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: var(--gauzy-card-2);
+  }
+}
