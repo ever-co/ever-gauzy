@@ -7717,16 +7717,16 @@
     sqlstring-sqlite "0.1.1"
 
 "@mikro-orm/core@^6.6.7":
-  version "6.6.7"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/core/-/core-6.6.7.tgz#6dddc73297c55409149cfe87768ed6aded921a56"
-  integrity sha512-VuL9WK6Z1Op5Lg5FCDOfFeVQdfpCrtEDQXEMHnlb0mRL7WnNz2vUu8AJ96t7iOIxkIBJUXrlzpkaHPdrV9lmkA==
+  version "6.6.10"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/core/-/core-6.6.10.tgz#28ff3bfc98a2c8f4f891684e20affe1ca67438c1"
+  integrity sha512-XdnipWmZ0BG+lzMBv6TykSKGLgBtNwqdJqh4Er+n1kTP0IZmXCtgluzHB66sNXkcYHomuIn2olIVbcVb0m/jDw==
   dependencies:
     dataloader "2.2.3"
-    dotenv "17.2.3"
+    dotenv "17.3.1"
     esprima "4.0.1"
     fs-extra "11.3.3"
     globby "11.1.0"
-    mikro-orm "6.6.7"
+    mikro-orm "6.6.10"
     reflect-metadata "0.2.2"
 
 "@mikro-orm/knex@6.6.7", "@mikro-orm/knex@^6.6.7":
@@ -22740,15 +22740,15 @@ dotenv@17.2.3:
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-17.2.3.tgz#ad995d6997f639b11065f419a22fabf567cdb9a2"
   integrity sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==
 
+dotenv@17.3.1, dotenv@^17.0.0, dotenv@^17.2.4:
+  version "17.3.1"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-17.3.1.tgz#2706f5b0165e45a1503348187b8468f87fe6aae2"
+  integrity sha512-IO8C/dzEb6O3F9/twg6ZLXz164a2fhTnEWb95H23Dm4OuN+92NmEAlTrupP9VW6Jm3sO26tQlqyvyi4CsnY9GA==
+
 dotenv@^16.4.5, dotenv@^16.6.1:
   version "16.6.1"
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.6.1.tgz#773f0e69527a8315c7285d5ee73c4459d20a8020"
   integrity sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==
-
-dotenv@^17.0.0, dotenv@^17.2.4:
-  version "17.3.1"
-  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-17.3.1.tgz#2706f5b0165e45a1503348187b8468f87fe6aae2"
-  integrity sha512-IO8C/dzEb6O3F9/twg6ZLXz164a2fhTnEWb95H23Dm4OuN+92NmEAlTrupP9VW6Jm3sO26tQlqyvyi4CsnY9GA==
 
 dotenv@^8.2.0:
   version "8.6.0"
@@ -31813,10 +31813,10 @@ mikro-orm-soft-delete@^1.0.0-alpha.1:
   resolved "https://registry.yarnpkg.com/mikro-orm-soft-delete/-/mikro-orm-soft-delete-1.0.0-alpha.1.tgz#8912a8a7be00d84b786de7f12b579849ca1f3888"
   integrity sha512-C06kX4hKGcgLleVoZa9oafYaUK4+T7I+R+aDy64HY+sHuYn/H/HZShpZIt4Lg1DUOhyjau6dA3ZuJYiu02Su1g==
 
-mikro-orm@6.6.7:
-  version "6.6.7"
-  resolved "https://registry.yarnpkg.com/mikro-orm/-/mikro-orm-6.6.7.tgz#8c6d6d5b759cffcebe40217fc8fb4e203a9efdd5"
-  integrity sha512-Iw8BC2qMeyqgU6lQS86Ht+yzxjK0DKfmXkGQC2wRzDLYiUQj/CEn5ne8Q+5yIrZdIr/y53KqUNyUWDSup+ZT5w==
+mikro-orm@6.6.10:
+  version "6.6.10"
+  resolved "https://registry.yarnpkg.com/mikro-orm/-/mikro-orm-6.6.10.tgz#22a55f0127b88c6fda23583309a808031dda4d43"
+  integrity sha512-9z+F31IYQx4sDOO+2gtTS9JUz8SxoSrMQte0p300RIzWj+KByBYkpPZLhAToyIkuUCXHf2sGah8HSpExToCm6Q==
 
 miller-rabin@^4.0.0:
   version "4.0.1"
