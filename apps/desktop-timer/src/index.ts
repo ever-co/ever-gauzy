@@ -53,7 +53,8 @@ import {
 	TranslateService,
 	TrayIconFactory,
 	UIError,
-	handleDesktopStartup
+	handleDesktopStartup,
+	DesktopOfflineModeHandler
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
@@ -471,6 +472,17 @@ async function restartApp(arg?: IConfig) {
 	app.exit(0);
 }
 
+async function checkOfflineMode(configs: IConfig) {
+	try {
+		if (configs?.serverUrl && configs?.serverConfigConnected) {
+			const offlineModeHandler = DesktopOfflineModeHandler.instance;
+			await offlineModeHandler.connectivity();
+		}
+	} catch (error) {
+		console.error('Error checking offline mode:', error);
+	}
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -507,6 +519,7 @@ app.on('ready', async () => {
 	await setupDatabase();
 	initialAppMenu();
 	try {
+		await checkOfflineMode(configs);
 		timeTrackerWindow = await createTimeTrackerWindow(
 			timeTrackerWindow,
 			pathWindow.timeTrackerUi,
@@ -658,14 +671,16 @@ ipcMain.on('minimize_on_startup', (event, arg) => {
 });
 
 app.on('activate', () => {
+	const configs = LocalStore.getStore('configs');
 	if (gauzyWindow) {
-		if (LocalStore.getStore('configs').gauzyWindow) {
+		if (configs?.gauzyWindow) {
 			gauzyWindow.show();
 		}
 	} else if (
 		!onWaitingServer &&
-		LocalStore.getStore('configs') &&
-		LocalStore.getStore('configs').isSetup &&
+		configs &&
+		configs.isSetup &&
+		configs.serverConfigConnected &&
 		timeTrackerWindow
 	) {
 		// On macOS, it's common to re-create a window in the app when the
@@ -675,7 +690,9 @@ app.on('activate', () => {
 	} else {
 		if (setupWindow) {
 			setupWindow.show();
-			splashScreen.close();
+			if (!splashScreen?.isDestroyed()) {
+				splashScreen?.close();
+			}
 		}
 	}
 });
@@ -880,6 +897,15 @@ ipcMain.handle('set-tray-icon', () => {
 		activeIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon@2x.png'),
 		grayIcon: path.join(__dirname, 'assets', 'icons', 'tray', 'icon@2x_gray.png')
 	};
+});
+
+ipcMain.handle('IS_OFFLINE', async () => {
+	const configs: IConfig = LocalStore.getStore('configs');
+	if (configs?.serverConfigConnected) {
+		const offlineMode = DesktopOfflineModeHandler.instance;
+		return offlineMode.enabled;
+	}
+	return false;
 });
 
 ipcMain.on('get-arch', (event) => {

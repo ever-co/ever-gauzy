@@ -120,23 +120,23 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 	 *
 	 * @param apiKey - The API Key to validate.
 	 * @param apiSecret - The API Secret to validate.
-	 * @returns A promise resolving to `true` if valid, otherwise `false`.
+	 * @returns A promise resolving to the `TenantApiKey` entity if valid, otherwise `null`.
 	 */
-	async validateApiKeyAndSecret(apiKey: string, apiSecret: string): Promise<boolean> {
+	async validateApiKeyAndSecret(apiKey: string, apiSecret: string): Promise<TenantApiKey | null> {
 		try {
 			// Retrieve the corresponding tenant_api_key record based on the apiKey
 			const tenantApiKey = await this.getApiKey(apiKey);
 
-			// If the API Key is not found or validation fails, return false
+			// If the API Key is not found or validation fails, return null
 			if (!tenantApiKey || !this.validateApiKey(apiSecret, tenantApiKey.apiSecret)) {
 				console.warn(`Unauthorized: Invalid API Key (X-APP-ID) or Secret (X-API-KEY) for API Key`);
-				return false;
+				return null;
 			}
 
-			return true; // Return true if API Key and Secret are valid
+			return tenantApiKey; // Return the tenant API key entity if valid
 		} catch (error) {
 			console.error(`Database Error: Failed to retrieve tenant API key. Reason: ${error.message}`);
-			return false;
+			return null;
 		}
 	}
 

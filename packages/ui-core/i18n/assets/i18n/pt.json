@@ -1576,6 +1576,32 @@
 				"LOAD_FAILED": "Falha ao carregar os gatilhos de eventos."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Integração de gerenciamento de projetos Plane",
+			"WEB_URL": "URL Web do Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "URL de Admin do Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "URL do Space do Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Insira as URLs onde sua instância do Plane está hospedada. A URL Web é obrigatória. As URLs de Admin e Space são opcionais.",
+			"URL_REQUIRED": "Esta URL é obrigatória.",
+			"URL_INVALID": "Insira uma URL válida começando com http:// ou https://.",
+			"LOADING": "Carregando configurações...",
+			"REGENERATE_KEY": "Regenerar",
+			"REGENERATE_KEY_LABEL": "Chave API e Segredo",
+			"CONFIRM_DELETE": "Tem certeza de que deseja remover esta integração do Plane? A chave API será revogada.",
+			"CONFIRM_REGENERATE": "Tem certeza de que deseja regenerar a chave API? A chave atual será invalidada.",
+			"API_KEY_DIALOG": {
+				"TITLE": "Credenciais da API",
+				"WARNING": "Copie estas credenciais agora. O segredo da API não será exibido novamente.",
+				"API_KEY": "Chave API",
+				"API_SECRET": "Segredo API",
+				"COPY": "Copiar",
+				"COPIED": "Copiado!"
+			}
+		},
 		"COMING_SOON": "Em breve",
 		"RE_INTEGRATE": "Reintegrar",
 		"SETTINGS": "Configurações",

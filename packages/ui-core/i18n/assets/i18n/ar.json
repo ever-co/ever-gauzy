@@ -1575,6 +1575,32 @@
 				"LOAD_FAILED": "فشل في تحميل مشغلات الأحداث."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "تكامل إدارة مشاريع Plane",
+			"WEB_URL": "عنوان الويب لـ Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "عنوان المسؤول لـ Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "عنوان Space لـ Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "أدخل عناوين URL حيث يتم استضافة مثيل Plane الخاص بك. عنوان الويب مطلوب. عناوين المسؤول و Space اختيارية.",
+			"URL_REQUIRED": "هذا العنوان مطلوب.",
+			"URL_INVALID": "يرجى إدخال عنوان URL صالح يبدأ بـ http:// أو https://.",
+			"LOADING": "جارٍ تحميل الإعدادات...",
+			"REGENERATE_KEY": "إعادة التوليد",
+			"REGENERATE_KEY_LABEL": "مفتاح API والسر",
+			"CONFIRM_DELETE": "هل أنت متأكد أنك تريد إزالة تكامل Plane هذا؟ سيتم إلغاء مفتاح API.",
+			"CONFIRM_REGENERATE": "هل أنت متأكد أنك تريد إعادة إنشاء مفتاح API؟ سيتم إبطال المفتاح الحالي.",
+			"API_KEY_DIALOG": {
+				"TITLE": "بيانات اعتماد API",
+				"WARNING": "انسخ بيانات الاعتماد هذه الآن. لن يتم عرض سر API مرة أخرى.",
+				"API_KEY": "مفتاح API",
+				"API_SECRET": "سر API",
+				"COPY": "نسخ",
+				"COPIED": "تم النسخ!"
+			}
+		},
 		"COMING_SOON": "قريبًا",
 		"RE_INTEGRATE": "إعادة الاندماج",
 		"SETTINGS": "الإعدادات",

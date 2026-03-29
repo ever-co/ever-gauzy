@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { Store } from './store.service';
+import { ElectronService } from '../electron/services';
 
 interface IConnectionStatus {
 	status: number;
@@ -14,7 +15,11 @@ export class ServerConnectionService {
 	private readonly CONNECTION_ENDPOINT = '/api';
 	private readonly LOCALHOST_URL = 'http://localhost:3000';
 
-	constructor(private readonly httpClient: HttpClient, private readonly store: Store) {}
+	constructor(
+		private readonly httpClient: HttpClient,
+		private readonly store: Store,
+		private readonly _electronService: ElectronService
+	) {}
 
 	/**
 	 * Checks the server connection status
@@ -29,6 +34,20 @@ export class ServerConnectionService {
 
 		const url = this.buildConnectionUrl(endPoint);
 		this.logConnectionAttempt(url);
+
+		// Probe offline state separately — if the IPC call fails for any reason
+		// (handler not yet registered, bridge not ready, etc.), fall through to
+		// the real HTTP check rather than short-circuiting with a false error.
+		let isOfflineMode = false;
+		try {
+			isOfflineMode = await this._electronService.ipcRenderer.invoke('IS_OFFLINE');
+		} catch (ipcError) {
+			console.warn('IS_OFFLINE IPC probe failed, falling back to HTTP check:', ipcError);
+		}
+
+		if (isOfflineMode) {
+			return this.handleSuccessfulConnection({ status: 200 }, url);
+		}
 
 		try {
 			const response = await this.attemptServerConnection(url);

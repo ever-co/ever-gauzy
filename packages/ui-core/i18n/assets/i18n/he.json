@@ -1610,6 +1610,32 @@
 				"LOAD_FAILED": "טעינת טריגרים של אירועים נכשלה."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "אינטגרציית ניהול פרויקטים Plane",
+			"WEB_URL": "כתובת אתר Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "כתובת ניהול Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "כתובת Space של Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "הזן את כתובות ה-URL שבהן מתארח מופע ה-Plane שלך. כתובת האתר נדרשת. כתובות הניהול ו-Space הן אופציונליות.",
+			"URL_REQUIRED": "כתובת URL זו נדרשת.",
+			"URL_INVALID": "אנא הזן כתובת URL תקינה המתחילה ב-http:// או https://.",
+			"LOADING": "טוען הגדרות...",
+			"REGENERATE_KEY": "צור מחדש",
+			"REGENERATE_KEY_LABEL": "מפתח API וסוד",
+			"CONFIRM_DELETE": "האם אתה בטוח שברצונך להסיר את שילוב Plane? מפתח ה-API יבוטל.",
+			"CONFIRM_REGENERATE": "האם אתה בטוח שברצונך לחדש את מפתח ה-API? המפתח הנוכחי יהפוך ללא תקף.",
+			"API_KEY_DIALOG": {
+				"TITLE": "אישורי API",
+				"WARNING": "העתק את האישורים האלה עכשיו. סוד ה-API לא יוצג שוב.",
+				"API_KEY": "מפתח API",
+				"API_SECRET": "סוד API",
+				"COPY": "העתק",
+				"COPIED": "הועתק!"
+			}
+		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
 		"SETTINGS": "הגדרות",
