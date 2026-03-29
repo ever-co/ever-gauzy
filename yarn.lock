@@ -15347,10 +15347,17 @@
   dependencies:
     undici-types "~7.16.0"
 
-"@types/nodemailer@*", "@types/nodemailer@^7.0.2":
+"@types/nodemailer@*":
   version "7.0.9"
   resolved "https://registry.yarnpkg.com/@types/nodemailer/-/nodemailer-7.0.9.tgz#a19e3fa222b21213b481cdbdbc70a06787ea49e8"
   integrity sha512-vI8oF1M+8JvQhsId0Pc38BdUP2evenIIys7c7p+9OZXSPOH5c1dyINP1jT8xQ2xPuBUXmIC87s+91IZMDjH8Ow==
+  dependencies:
+    "@types/node" "*"
+
+"@types/nodemailer@^7.0.11":
+  version "7.0.11"
+  resolved "https://registry.yarnpkg.com/@types/nodemailer/-/nodemailer-7.0.11.tgz#f04f91aac57eb4f2b79600867288bafe61c360d3"
+  integrity sha512-E+U4RzR2dKrx+u3N4DlsmLaDC6mMZOM/TPROxA0UAPiTgI0y4CEFBmZE+coGWTjakDriRsXG368lNk1u9Q0a2g==
   dependencies:
     "@types/node" "*"
 
