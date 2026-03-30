@@ -36,7 +36,7 @@ export const ZAPIER_AUTHORIZATION_URL = `${process.env['API_BASE_URL']}/api/inte
 export const ZAPIER_CALLBACK_URL = `${process.env['API_BASE_URL']}/api/integration/zapier/oauth/callback`;
 
 /** URL for obtaining OAuth access tokens from Gauzy */
-export const ZAPIER_TOKEN_URL = `${process.env['API_BASE_URL']}/api/integration/zapier/token`;
+export const ZAPIER_TOKEN_URL = `${process.env['API_BASE_URL']}/api/integration/zapier/oauth/token`;
 
 /** URL for redirecting users after OAuth authorization */
 export const ZAPIER_REDIRECT_URI = 'https://zapier.com/dashboard/auth/oauth/return/App221848CLIAPI/';

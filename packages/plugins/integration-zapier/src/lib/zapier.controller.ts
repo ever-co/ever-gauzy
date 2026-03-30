@@ -35,9 +35,9 @@ export class ZapierController {
 	constructor(private readonly zapierService: ZapierService) {}
 
 	/**
-	 * Creates a new Zapier integration.
-	 * This method handles the initialization of a new Zapier integration by generating an authorization URL
-	 * for the user to authorize the integration.
+	 * Initialize a new Zapier integration.
+	 * Stores client credentials and returns the authorization URL to redirect
+	 * the admin to Zapier's OAuth consent page.
 	 */
 	@ApiOperation({ summary: 'Initialize a new Zapier integration' })
 	@ApiResponse({
@@ -68,7 +68,7 @@ export class ZapierController {
 			state
 		});
 
-		// Generate authorization URL for user to complete OAuth flow
+		// Generate authorization URL to redirect user to Zapier for OAuth consent
 		const authorizationUrl = this.zapierService.getAuthorizationUrl({
 			clientId: body.client_id,
 			state
@@ -155,116 +155,6 @@ export class ZapierController {
 		throw new InternalServerErrorException(
 			`Failed to fetch Zapier ${endpointType}: ${error instanceof Error ? error.message : 'Unknown error'}`
 		);
-	}
-
-	/**
-	 * OAuth token exchange endpoint
-	 * Exchanges authorization code for access and refresh tokens
-	 */
-	@ApiOperation({ summary: 'Exchange authorization code for tokens' })
-	@ApiResponse({
-		status: 200,
-		description: 'Successfully exchanged code for tokens'
-	})
-	@ApiResponse({
-		status: 400,
-		description: 'Bad request - Invalid parameters'
-	})
-	@Post('/token')
-	async exchangeCodeForToken(
-		@Body()
-		body: {
-			code: string;
-			client_id: string;
-			client_secret: string;
-			redirect_uri: string;
-			grant_type: string;
-			state: string;
-		}
-	) {
-		try {
-			// Add tenant validation to token exchange endpoint
-			const tenantId = RequestContext.currentTenantId();
-			if (!tenantId) {
-				throw new BadRequestException('Tenant ID is required');
-			}
-
-			// Validate required parameters
-			if (!body.code || !body.client_id || !body.client_secret || !body.redirect_uri || !body.state) {
-				throw new BadRequestException('Missing required parameters');
-			}
-
-			if (body.grant_type !== 'authorization_code') {
-				throw new BadRequestException('Invalid grant_type. Must be "authorization_code"');
-			}
-
-			// Validate and delete the state parameter
-			const isValidState = await this.zapierService.validateAndDeleteState(body.state, tenantId);
-			if (!isValidState) {
-				throw new BadRequestException('Invalid or expired state parameter');
-			}
-
-			// Find the integration record using the client_id from the request
-			const integration = await this.zapierService.findIntegrationByClientId(body.client_id);
-			if (!integration.id) {
-				throw new BadRequestException('Invalid integration ID');
-			}
-
-			// Generate new tokens
-			const tokens = await this.zapierService.generateAndStoreNewTokens(integration.id);
-
-			return tokens;
-		} catch (error) {
-			this.logger.error('Failed to exchange code for token', error);
-			if (error instanceof BadRequestException || error instanceof NotFoundException) {
-				throw error;
-			}
-			throw new InternalServerErrorException('Failed to exchange code for token');
-		}
-	}
-
-	/**
-	 * OAuth token refresh endpoint
-	 * Refreshes an expired access token using a refresh token
-	 */
-	@ApiOperation({ summary: 'Refresh access token' })
-	@ApiResponse({
-		status: 200,
-		description: 'Successfully refreshed token'
-	})
-	@ApiResponse({
-		status: 400,
-		description: 'Bad request - Invalid parameters'
-	})
-	@Post('/refresh-token')
-	async refreshAccessToken(
-		@Body() body: { refresh_token: string; client_id: string; client_secret: string; grant_type: string }
-	) {
-		try {
-			// Validate required parameters
-			if (!body.refresh_token || !body.client_id || !body.client_secret) {
-				throw new BadRequestException('Missing required parameters');
-			}
-
-			if (body.grant_type !== 'refresh_token') {
-				throw new BadRequestException('Invalid grant_type. Must be "refresh_token"');
-			}
-
-			// Find integration by client_id and verify refresh token
-			const integration = await this.zapierService.findIntegrationByClientId(body.client_id);
-			const refreshResult = await this.zapierService.refreshTokenByRefreshToken(
-				integration.id ?? '',
-				body.refresh_token
-			);
-
-			return refreshResult;
-		} catch (error) {
-			this.logger.error('Failed to refresh token', error);
-			if (error instanceof BadRequestException || error instanceof NotFoundException) {
-				throw error;
-			}
-			throw new InternalServerErrorException('Failed to refresh token');
-		}
 	}
 
 	/**

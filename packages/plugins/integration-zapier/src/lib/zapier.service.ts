@@ -181,7 +181,7 @@ export class ZapierService {
 				scope: ZAPIER_OAUTH_SCOPES
 			});
 
-			return `${ZAPIER_API_URL}/v2/authorize?${params.toString()}`;
+			return `${ZAPIER_BASE_URL}/oauth/authorize/?${params.toString()}`;
 		} catch (error) {
 			this.logger.error('Error generating Zapier authorization URL:', error);
 			throw new BadRequestException('Failed to generate authorization URL');
@@ -330,55 +330,46 @@ export class ZapierService {
 
 	/**
 	 * Validates the state parameter without deleting it.
-	 * This is used for initial validation before the OAuth flow.
+	 * Searches across all tenants by state value so it works from @Public() endpoints.
 	 *
 	 * @param state The state parameter to validate
-	 * @returns The parsed state data if valid
+	 * @returns The parsed state data if valid (includes tenantId and integrationId)
 	 * @throws {BadRequestException} If state is invalid or expired
 	 */
-	async parseAuthState(state: string): Promise<{ state: string; expiresAt?: string }> {
+	async parseAuthState(
+		state: string
+	): Promise<{ state: string; tenantId?: string; integrationId?: string; expiresAt?: string }> {
 		try {
 			// Basic validation - state should be a non-empty string
 			if (!state || typeof state !== 'string' || state.trim().length === 0) {
 				throw new BadRequestException('Invalid state parameter');
 			}
 
-			const tenantId = RequestContext.currentTenantId();
-			if (!tenantId) {
-				throw new BadRequestException('Tenant ID is required');
-			}
-
-			// Find the integration by current tenant and Zapier provider
-			const integration = await this._integrationService.findOneByOptions({
+			// Search for the state across all tenants by value
+			const stateSettings = await this._integrationSettingService.find({
 				where: {
-					tenantId,
-					name: IntegrationEnum.ZAPIER
-				} as IIntegrationFilter,
-				relations: ['settings']
-			});
-
-			if (!integration) {
-				throw new NotFoundException('Zapier integration not found for current tenant');
-			}
-
-			// Get settings to retrieve state
-			const settings = await this._integrationSettingService.find({
-				where: {
-					integration: { id: integration.id }
+					settingsName: 'state',
+					settingsValue: Like(`%"state":"${state}"%`)
 				}
 			});
 
-			const storedState = settings.find((s) => s.settingsName === 'state')?.settingsValue;
+			// Find the matching state setting
+			const stateSetting = stateSettings.find((s) => {
+				try {
+					const parsed = JSON.parse(s.settingsValue ?? '{}');
+					return parsed.state === state;
+				} catch {
+					return false;
+				}
+			});
 
-			if (!storedState) {
+			if (!stateSetting) {
 				throw new BadRequestException('State not found');
 			}
 
 			try {
-				const parsedState = JSON.parse(storedState);
-				if (parsedState.state !== state) {
-					throw new BadRequestException('Invalid state parameter');
-				}
+				const parsedState = JSON.parse(stateSetting.settingsValue);
+
 				// Check expiration
 				if (parsedState.expiresAt && new Date(parsedState.expiresAt) < new Date()) {
 					throw new BadRequestException('State has expired');
@@ -386,6 +377,9 @@ export class ZapierService {
 
 				return parsedState;
 			} catch (error) {
+				if (error instanceof BadRequestException) {
+					throw error;
+				}
 				throw new BadRequestException('Invalid state format');
 			}
 		} catch (error) {
@@ -420,6 +414,8 @@ export class ZapierService {
 			integrationId,
 			settingsValue: JSON.stringify({
 				state,
+				tenantId,
+				integrationId,
 				expiresAt: expirationTime.toISOString()
 			})
 		});
@@ -512,23 +508,28 @@ export class ZapierService {
 	}
 
 	/**
-	 * Complete the OAuth flow by exchanging the authorization code for tokens
+	 * Complete the OAuth flow by exchanging the authorization code for tokens.
+	 * Accepts tenantId as a parameter so it works from @Public() callback endpoints.
+	 *
+	 * @param code The authorization code from Zapier
+	 * @param state The state parameter for CSRF validation
+	 * @param tenantId The tenant ID (from parsed state or RequestContext)
 	 */
-	async completeOAuthFlow(code: string, state: string): Promise<IIntegrationTenant> {
+	async completeOAuthFlow(code: string, state: string, tenantId?: string): Promise<IIntegrationTenant> {
 		try {
-			// Get current tenant ID from request context
-			const tenantId = RequestContext.currentTenantId();
-			if (!tenantId) {
+			// Use provided tenantId or fall back to request context
+			const resolvedTenantId = tenantId || RequestContext.currentTenantId();
+			if (!resolvedTenantId) {
 				throw new BadRequestException('Tenant ID is required');
 			}
 
 			// Validate and atomically delete the state
-			await this.validateAndDeleteState(state, tenantId);
+			await this.validateAndDeleteState(state, resolvedTenantId);
 
-			// Find the integration by current tenant and Zapier provider
+			// Find the integration by tenant and Zapier provider
 			const integration = await this._integrationService.findOneByOptions({
 				where: {
-					tenantId,
+					tenantId: resolvedTenantId,
 					name: IntegrationEnum.ZAPIER
 				} as IIntegrationFilter,
 				relations: ['settings']
@@ -562,24 +563,23 @@ export class ZapierService {
 				throw new Error('Zapier redirect URI is not configured');
 			}
 
-			// Exchange code for tokens
+			// Exchange code for tokens using application/x-www-form-urlencoded (OAuth2 standard)
+			const tokenParams = new URLSearchParams({
+				client_id,
+				client_secret,
+				code,
+				grant_type: 'authorization_code',
+				redirect_uri
+			});
+
 			const response = await firstValueFrom(
 				this._httpService
-					.post(
-						`${ZAPIER_BASE_URL}/oauth/token/`,
-						{
-							client_id,
-							client_secret,
-							code,
-							grant_type: 'authorization_code',
-							redirect_uri
-						},
-						{
-							headers: {
-								'Content-Type': 'application/json'
-							}
+					.post(`${ZAPIER_BASE_URL}/oauth/token/`, tokenParams.toString(), {
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded',
+							Accept: 'application/json'
 						}
-					)
+					})
 					.pipe(
 						catchError((error: AxiosError) => {
 							this.logger.error(
@@ -592,28 +592,29 @@ export class ZapierService {
 					)
 			);
 
-			// Store the tokens using the existing settings' tenant and organization info
+			// Store the tokens — filter out old token settings first, then add new ones
 			const existingSetting = settings[0];
+			const filteredSettings = settings.filter(
+				(s) => !['access_token', 'refresh_token'].includes(s.settingsName)
+			);
+
 			const updatedSettings = [
-				...settings,
+				...filteredSettings,
 				{
 					settingsName: 'access_token',
 					settingsValue: response.access_token,
-					tenantId: existingSetting?.tenantId || tenantId,
+					tenantId: existingSetting?.tenantId || resolvedTenantId,
 					organizationId: existingSetting?.organizationId,
 					integrationId: integrationTenant.id
 				},
 				{
 					settingsName: 'refresh_token',
 					settingsValue: response.refresh_token,
-					tenantId: existingSetting?.tenantId || tenantId,
+					tenantId: existingSetting?.tenantId || resolvedTenantId,
 					organizationId: existingSetting?.organizationId,
 					integrationId: integrationTenant.id
 				}
-			].filter((setting, index, self) => {
-				// Keep only unique settings by name (avoiding duplicates)
-				return index === self.findIndex((s) => s.settingsName === setting.settingsName);
-			}) as DeepPartial<IIntegrationEntitySetting>;
+			] as DeepPartial<IIntegrationEntitySetting>;
 
 			await this._integrationSettingService.save(updatedSettings);
 
@@ -636,10 +637,13 @@ export class ZapierService {
 	 */
 	async fetchTriggers(token: string): Promise<IZapierEndpoint[]> {
 		try {
-			const response = await this.fetchIntegration<{ triggers: IZapierEndpoint[] }>('triggers', token);
+			const response = await this.fetchIntegration<{ triggers: IZapierEndpoint[] }>(
+				`${ZAPIER_API_URL}/v2/triggers`,
+				token
+			);
 			return response.triggers;
 		} catch (error) {
-			console.error('Failed to fetch Zapier triggers:', error);
+			this.logger.error('Failed to fetch Zapier triggers:', error);
 			throw new Error('Unable to fetch triggers from Zapier');
 		}
 	}
@@ -653,10 +657,13 @@ export class ZapierService {
 	 */
 	async fetchActions(token: string): Promise<IZapierEndpoint[]> {
 		try {
-			const response = await this.fetchIntegration<{ actions: IZapierEndpoint[] }>('actions', token);
+			const response = await this.fetchIntegration<{ actions: IZapierEndpoint[] }>(
+				`${ZAPIER_API_URL}/v2/actions`,
+				token
+			);
 			return response.actions;
 		} catch (error) {
-			console.error('Failed to fetch Zapier actions:', error);
+			this.logger.error('Failed to fetch Zapier actions:', error);
 			throw new Error('Unable to fetch actions from Zapier');
 		}
 	}
@@ -860,6 +867,85 @@ export class ZapierService {
 			}
 			throw new HttpException('Unexpected error refreshing token', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
+	}
+
+	/**
+	 * Store a short-lived authorization code for the OAuth flow.
+	 * The code is single-use and expires in 10 minutes.
+	 *
+	 * @param integrationId The integration ID
+	 * @param code The authorization code
+	 * @param redirectUri The redirect URI used in the authorization request
+	 */
+	async storeAuthCode(integrationId: ID, code: string, redirectUri: string): Promise<void> {
+		const existingSettings = await this._integrationSettingService.find({
+			where: { integration: { id: integrationId } }
+		});
+
+		const tenantId = existingSettings[0]?.tenantId;
+		const organizationId = existingSettings[0]?.organizationId;
+
+		const expirationTime = new Date();
+		expirationTime.setMinutes(expirationTime.getMinutes() + 10);
+
+		await this._integrationSettingService.create({
+			settingsName: 'auth_code',
+			tenantId,
+			organizationId,
+			integrationId,
+			settingsValue: JSON.stringify({
+				code,
+				redirectUri,
+				expiresAt: expirationTime.toISOString()
+			})
+		});
+	}
+
+	/**
+	 * Validate and consume an authorization code (single-use).
+	 *
+	 * @param integrationId The integration ID
+	 * @param code The authorization code to validate
+	 * @param redirectUri The redirect URI to verify against the stored one
+	 * @throws BadRequestException if code is invalid, expired, or redirect_uri mismatch
+	 */
+	async validateAndConsumeAuthCode(integrationId: ID, code: string, redirectUri: string): Promise<void> {
+		const codeSettings = await this._integrationSettingService.find({
+			where: {
+				integration: { id: integrationId },
+				settingsName: 'auth_code'
+			}
+		});
+
+		// Find matching auth code
+		const codeSetting = codeSettings.find((s) => {
+			try {
+				const parsed = JSON.parse(s.settingsValue ?? '{}');
+				return parsed.code === code;
+			} catch {
+				return false;
+			}
+		});
+
+		if (!codeSetting || !codeSetting.id) {
+			throw new BadRequestException('Invalid authorization code');
+		}
+
+		const parsedCode = JSON.parse(codeSetting.settingsValue);
+
+		// Check expiration
+		if (parsedCode.expiresAt && new Date(parsedCode.expiresAt) < new Date()) {
+			await this._integrationSettingService.delete(codeSetting.id);
+			throw new BadRequestException('Authorization code has expired');
+		}
+
+		// Verify redirect_uri matches
+		if (parsedCode.redirectUri && parsedCode.redirectUri !== redirectUri) {
+			throw new BadRequestException('Redirect URI mismatch');
+		}
+
+		// Delete the code (single-use)
+		await this._integrationSettingService.delete(codeSetting.id);
 	}
 
 	/**
