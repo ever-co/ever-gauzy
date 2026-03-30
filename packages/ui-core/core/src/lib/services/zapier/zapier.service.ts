@@ -120,7 +120,7 @@ export class ZapierService {
 		redirect_uri: string;
 		grant_type: string;
 	}): Observable<IZapierOAuthTokenDTO> {
-		return this.http.post<IZapierOAuthTokenDTO>(`${API_PREFIX}/integration/zapier/token`, body);
+		return this.http.post<IZapierOAuthTokenDTO>(`${API_PREFIX}/integration/zapier/oauth/token`, body);
 	}
 
 	/**
@@ -132,7 +132,7 @@ export class ZapierService {
 		client_secret: string;
 		grant_type: string;
 	}): Observable<IZapierOAuthTokenDTO> {
-		return this.http.post<IZapierOAuthTokenDTO>(`${API_PREFIX}/integration/zapier/refresh-token`, body);
+		return this.http.post<IZapierOAuthTokenDTO>(`${API_PREFIX}/integration/zapier/oauth/refresh-token`, body);
 	}
 
 	/**

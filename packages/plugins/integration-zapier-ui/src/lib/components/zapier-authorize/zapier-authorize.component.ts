@@ -125,10 +125,13 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 			organizationId: this.organization.id
 		};
 
+		this.loading = true;
+
 		this._zapierService
 			.initializeIntegration(credentials)
 			.pipe(
 				tap((response: { authorizationUrl: string }) => {
+					// Redirect to Zapier's OAuth consent page
 					window.location.href = response.authorizationUrl;
 				}),
 				catchError((error) => {
