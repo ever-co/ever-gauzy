@@ -177,7 +177,8 @@
 		"RECOVER": "שחזר",
 		"ADD_MORE_SOURCES": "הוסף מקורות נוספים",
 		"REMOVE_FROM_FAVORITES": "הסר מהמועדפים",
-		"ADD_TO_FAVORITES": "הוסף למועדפים"
+		"ADD_TO_FAVORITES": "הוסף למועדפים",
+		"UNSELECT_ALL": "בטל בחירת הכל"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1521,6 +1522,118 @@
 				"SUCCESS": {
 					"CONNECTION_CREATED": "חיבור ActivePieces נוצר בהצלחה"
 				}
+			}
+		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "שילוב תהליכי עבודה של SIM AI",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "הזן את מפתח ה-API של SIM AI כדי לחבר את החשבון שלך. תוכל למצוא את מפתח ה-API שלך בלוח הבקרה של SIM באתר sim.ai.",
+				"NEXT": "התחבר",
+				"HINT": "מפתח ה-API שלך מאוחסן בצורה מאובטחת ומשמש לאימות הרצות תהליכי עבודה.",
+				"ERRORS": {
+					"INVALID_FORM": "אנא מלא את כל השדות הנדרשים בצורה נכונה",
+					"SAVE_SETTINGS": "שמירת ההגדרות נכשלה",
+					"ORGANIZATION_NOT_FOUND": "הארגון לא נמצא",
+					"CHECK_REMEMBER_STATE": "בדיקת המצב השמור נכשלה"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "שילוב SIM AI הוגדר בהצלחה"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "הגדרות SIM AI",
+				"SUBTITLE": "הגדר את הגדרות השילוב של SIM AI",
+				"API_KEY": "מפתח API",
+				"API_KEY_PLACEHOLDER": "הזן את מפתח ה-API של SIM AI"
+			},
+			"EXECUTIONS": {
+				"TITLE": "היסטוריית הרצות",
+				"NO_EXECUTIONS": "לא נמצאו הרצות תהליכי עבודה. הרץ תהליך עבודה מלשונית תהליכי העבודה כדי לראות תוצאות כאן.",
+				"WORKFLOW_ID": "מזהה תהליך עבודה",
+				"WORKFLOW_ID_PLACEHOLDER": "סנן לפי מזהה תהליך עבודה",
+				"EXECUTION_ID": "מזהה הרצה",
+				"STATUS": "סטטוס",
+				"TRIGGERED_BY": "הופעל על ידי",
+				"DURATION": "משך",
+				"CREATED": "נוצר",
+				"LOADING": "טוען היסטוריית הרצות...",
+				"LOAD": "חיפוש",
+				"ALL_STATUSES": "כל הסטטוסים",
+				"SHOWING": "מציג",
+				"OF": "מתוך",
+				"PREVIOUS_PAGE": "עמוד קודם",
+				"NEXT_PAGE": "עמוד הבא"
+			},
+			"WORKFLOWS": {
+				"TITLE": "תהליכי עבודה",
+				"VALIDATE_TITLE": "אימות תהליך עבודה",
+				"EXECUTE_TITLE": "הרצת תהליך עבודה",
+				"JOB_STATUS_TITLE": "סטטוס משימה אסינכרונית",
+				"WORKFLOW_ID": "מזהה תהליך עבודה",
+				"WORKFLOW_ID_PLACEHOLDER": "הזן את מזהה תהליך העבודה של SIM",
+				"VALIDATE": "אמת",
+				"DEPLOYED": "תהליך העבודה פרוס ומוכן להרצה.",
+				"NOT_DEPLOYED": "תהליך העבודה אינו פרוס או לא נמצא.",
+				"EXECUTE": "הרץ",
+				"ASYNC": "אסינכרוני",
+				"TIMEOUT": "זמן קצוב (מילישניות)",
+				"INPUT": "קלט (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "ספק קלט לתהליך העבודה כ-JSON תקין. נתונים אלה יועברו לתהליך העבודה של SIM.",
+				"RESULT": "תוצאת ההרצה",
+				"TASK_ID": "מזהה משימה",
+				"TASK_ID_PLACEHOLDER": "הזן את מזהה המשימה האסינכרונית",
+				"CHECK_STATUS": "בדוק סטטוס",
+				"JOB_RESULT": "סטטוס המשימה",
+				"INVALID_JSON": "קלט JSON לא תקין",
+				"EXECUTION_FAILED": "ההרצה נכשלה"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "טריגרים של אירועים",
+				"ADD_TITLE": "הוספת טריגר אירוע",
+				"ACTIVE_TITLE": "טריגרים פעילים של אירועים",
+				"DESCRIPTION": "הגדר טריגרים אוטומטיים לזרימות עבודה. כאשר מתרחש אירוע בפלטפורמה, זרימת העבודה המשויכת של SIM תופעל אוטומטית.",
+				"EVENT": "אירוע",
+				"SELECT_EVENT": "בחר אירוע",
+				"WORKFLOW_ID": "מזהה זרימת עבודה",
+				"WORKFLOW_ID_PLACEHOLDER": "הזן את מזהה זרימת העבודה של SIM להפעלה",
+				"ADD": "הוספה",
+				"REMOVE": "הסרת שיוך",
+				"NO_MAPPINGS": "לא הוגדרו טריגרים של אירועים. הוסף שיוך למעלה כדי להפעיל אוטומטית זרימות עבודה של SIM מאירועי הפלטפורמה.",
+				"LOADING": "טוען טריגרים של אירועים...",
+				"MAPPING_SAVED": "שיוך טריגר האירוע נשמר בהצלחה.",
+				"MAPPING_REMOVED": "שיוך טריגר האירוע הוסר בהצלחה.",
+				"SAVE_FAILED": "שמירת שיוך טריגר האירוע נכשלה.",
+				"REMOVE_FAILED": "הסרת שיוך טריגר האירוע נכשלה.",
+				"LOAD_FAILED": "טעינת טריגרים של אירועים נכשלה."
+			}
+		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "אינטגרציית ניהול פרויקטים Plane",
+			"WEB_URL": "כתובת אתר Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "כתובת ניהול Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "כתובת Space של Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "הזן את כתובות ה-URL שבהן מתארח מופע ה-Plane שלך. כתובת האתר נדרשת. כתובות הניהול ו-Space הן אופציונליות.",
+			"URL_REQUIRED": "כתובת URL זו נדרשת.",
+			"URL_INVALID": "אנא הזן כתובת URL תקינה המתחילה ב-http:// או https://.",
+			"LOADING": "טוען הגדרות...",
+			"REGENERATE_KEY": "צור מחדש",
+			"REGENERATE_KEY_LABEL": "מפתח API וסוד",
+			"CONFIRM_DELETE": "האם אתה בטוח שברצונך להסיר את שילוב Plane? מפתח ה-API יבוטל.",
+			"CONFIRM_REGENERATE": "האם אתה בטוח שברצונך לחדש את מפתח ה-API? המפתח הנוכחי יהפוך ללא תקף.",
+			"API_KEY_DIALOG": {
+				"TITLE": "אישורי API",
+				"WARNING": "העתק את האישורים האלה עכשיו. סוד ה-API לא יוצג שוב.",
+				"API_KEY": "מפתח API",
+				"API_SECRET": "סוד API",
+				"COPY": "העתק",
+				"COPIED": "הועתק!"
 			}
 		},
 		"COMING_SOON": "Coming soon",
@@ -4196,7 +4309,11 @@
 			"UI_HOSTNAME": "שם מארח יישום ממשק משתמש / כתובת IP",
 			"TITLE_SERVER_API": "אשף התקנת שרת API של Ever Gauzy",
 			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App מספקת את הפונקציונליות המלאה של פלטפורמת Gauzy הזמינה ישירות במחשב השולחני או במחשב הנייד שלך. בנוסף, הוא מאפשר מעקב אחר זמן עבודה, רישום פעילות ויכולת לקבל תזכורות/הודעות מעקב.",
-			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
+			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection.",
+			"JWT_SECRET": "סוד JWT",
+			"JWT_SECRET_PLACEHOLDER": "הזן מפתח סודי עבור JWT",
+			"JWT_REFRESH_TOKEN_SECRET": "סוד טוקן הרענון של JWT",
+			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "הזן מפתח סודי עבור טוקן הרענון של JWT"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "לכידת מסך",
@@ -4360,7 +4477,19 @@
 			"STILL_WORKING": "האם אתה עדיין עובד?",
 			"INACTIVITY_HANDLER": "מטפל בחוסר פעילות",
 			"ERROR_HANDLER": "מטפל בשגיאות",
-			"ERROR_OCCURRED": "אירעה שגיאה"
+			"ERROR_OCCURRED": "אירעה שגיאה",
+			"DB_CLEANUP_TITLE": "גרסת בסיס הנתונים קרוב לוודאי ישנה",
+			"DB_CLEANUP_MESSAGE": "זוהתה גרסא חדשה של האפליקציה. כדי להימנע מבעיות תאימות, האם ברצונך למחוק את בסיס הנתונים המקומי ולהתחיל בבסיס נתונים חדש?",
+			"DB_CLEANUP_DETAIL": "הסרת בסיס הנתונים תמחק נתונים שנשמרו במטמון המקומי. נתונים שכבר סונכרנו עם השרת יישמרו בבטחה בענן Gauzy.",
+			"DB_CLEANUP_REMOVE": "הסר מסד נתונים",
+			"DB_CLEANUP_KEEP": "שמור",
+			"DB_CLEANUP_UNSYNCED_TITLE": "זוהו נתונים לא מסונכרנים",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "אזהרה: אובדן נתונים אפשרי",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "יש לך {{countsText}}. הסרת בסיס הנתונים תמחק לצמיתא את הנתונים הלא מקווננתים. אם אינך בטוח, לחץ על 'שמור'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "לא הצלחנו לקבוע אם יש לך נתונים לא מסונכרנים. הסרת בסיס הנתונים עלולה למחוק לצמיתא עבודה שלא נשמרה. אם אינך בטוח, לחץ על 'שמור'.",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
+			"AND_JOIN": "and"
 		},
 		"NO_LIMIT": "∞ אין הגבלה",
 		"TASK": "משימה",
@@ -4587,7 +4716,8 @@
 		"VISITED_DATES": "Visited Dates",
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
-		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project."
+		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
+		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "בואו ניצור את הארגון הראשון שלכם",

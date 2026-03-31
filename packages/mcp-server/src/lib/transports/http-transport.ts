@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import { Server } from 'node:http';
 import { McpTransportConfig } from '../common/config';
+import { environment } from '../environments/environment';
 import { sessionManager, sessionMiddleware, UserContext } from '../session';
 import { PROTOCOL_VERSION } from '../config';
 import { ExtendedMcpServer, ToolDescriptor } from '../mcp-server';
@@ -328,6 +329,16 @@ export class HttpTransport {
 				this.authorizationMiddleware.createProtectedResourceMetadataMiddleware()
 			);
 		}
+
+		// Root endpoint
+		this.app.get('/', (req, res) => {
+			res.json({
+				name: environment.mcpAppName,
+				id: environment.appId,
+				status: 'running',
+				timestamp: new Date().toISOString()
+			});
+		});
 
 		// Health check endpoint (no session required)
 		this.app.get('/health', (req, res) => {

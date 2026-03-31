@@ -39,10 +39,8 @@ spec:
                 - name: gauzy-demo-mcp
                   securityContext:
                       allowPrivilegeEscalation: false
-                      readOnlyRootFilesystem: true
-                      runAsNonRoot: true
-                      capabilities:
-                          drop: ['ALL']
+                      readOnlyRootFilesystem: false
+                      runAsNonRoot: false
                   image: registry.digitalocean.com/ever/gauzy-mcp-demo:latest
                   env:
                       - name: NODE_ENV

@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { CurrenciesEnum, IEmployee, IOrganization, ITenant, IUser, PayPeriodEnum } from '@gauzy/contracts';
+import { CurrenciesEnum, IEmployee, IOrganization, ITenant, IUser, PayPeriodEnum, RolesEnum } from '@gauzy/contracts';
 import { faker } from '@faker-js/faker';
 import { environment as env } from '@gauzy/config';
 import { Employee } from './../core/entities/internal';
@@ -33,6 +33,12 @@ export const createDefaultEmployees = async (
 		const billRateValue = faker.number.int({ min: 15, max: 40 });
 		const minimumBillingRate = faker.number.int({ min: 5, max: billRateValue - 1 });
 
+		// Determine if user has administrative privileges.
+		// user.role is set in-memory by the seed functions (generateRandomUser / seedDefaultEmployeeUsers)
+		// before insertUsers is called, so it is always populated here.
+		const roleName = user.role?.name as RolesEnum;
+		const isAdmin = !!roleName && [RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN].includes(roleName);
+
 		return new Employee({
 			organization,
 			tenant,
@@ -44,7 +50,10 @@ export const createDefaultEmployees = async (
 			billRateValue,
 			billRateCurrency: currency as CurrenciesEnum,
 			minimumBillingRate,
-			reWeeklyLimit: faker.number.int({ min: 10, max: 40 })
+			reWeeklyLimit: faker.number.int({ min: 10, max: 40 }),
+			allowManualTime: isAdmin,
+			allowModifyTime: isAdmin,
+			allowDeleteTime: isAdmin
 		});
 	});
 
@@ -85,6 +94,11 @@ export const createRandomEmployees = async (
 
 			// Map each user to a new random employee entity
 			const employees = users.map((user) => {
+				// Determine if user has administrative privileges.
+				// user.role is set in-memory by seedRandomUsers / createRandomSuperAdminUsers.
+				const roleName = user.role?.name as RolesEnum;
+				const isAdmin = !!roleName && [RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN].includes(roleName);
+
 				const employee = new Employee({
 					organization,
 					tenant,
@@ -95,7 +109,10 @@ export const createRandomEmployees = async (
 					billRateValue: faker.number.int({ min: 15, max: 40 }),
 					billRateCurrency: (organization.currency || env.defaultCurrency) as CurrenciesEnum,
 					reWeeklyLimit: faker.number.int({ min: 10, max: 40 }),
-					endWork: null
+					endWork: null,
+					allowManualTime: isAdmin,
+					allowModifyTime: isAdmin,
+					allowDeleteTime: isAdmin
 				});
 				return employee;
 			});
@@ -133,10 +150,7 @@ const parseDate = (dateString?: string): Date | null => {
 /**
  * Fetches default employees for the given tenant.
  */
-export const getDefaultEmployees = async (
-	dataSource: DataSource,
-	tenant: ITenant
-): Promise<IEmployee[]> => {
+export const getDefaultEmployees = async (dataSource: DataSource, tenant: ITenant): Promise<IEmployee[]> => {
 	// Get the default organization for the given tenant
 	const organization = await getDefaultOrganization(dataSource, tenant);
 

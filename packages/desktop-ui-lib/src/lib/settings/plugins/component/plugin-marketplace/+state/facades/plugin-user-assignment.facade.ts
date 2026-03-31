@@ -4,7 +4,7 @@ import { Actions } from '@ngneat/effects-ng';
 import { combineLatest, map, Observable } from 'rxjs';
 import { PluginUserAssignmentActions } from '../actions/plugin-user-assignment.actions';
 import { PluginUserAssignmentQuery } from '../queries/plugin-user-assignment.query';
-import { PluginUserAssignment, PluginUserAssignmentStore } from '../stores/plugin-user-assignment.store';
+import { PluginUserAssignment, PluginUserAssignmentStore, PluginUserOperationState } from '../stores/plugin-user-assignment.store';
 
 /**
  * View Model for User Management Tab
@@ -13,8 +13,10 @@ import { PluginUserAssignment, PluginUserAssignmentStore } from '../stores/plugi
 export interface UserManagementViewModel {
 	assignments: PluginUserAssignment[];
 	activeAssignmentsCount: number;
+	disabledAssignmentsCount: number;
 	totalAssignmentsCount: number;
 	loading: boolean;
+	operations: PluginUserOperationState;
 	error: string | null;
 	hasError: boolean;
 	hasAssignments: boolean;
@@ -99,22 +101,55 @@ export class PluginUserAssignmentFacade {
 		return this.query.getActiveAssignments();
 	}
 
+	// ============================================================================
+	// OPERATION STATE SELECTORS (granular — no global loading flag for mutations)
+	// ============================================================================
+
+	/** True while an allow / enable call is in-flight. */
+	get enabling$(): Observable<boolean> { return this.query.enabling$; }
+
+	/** True while a deny / revoke call is in-flight. */
+	get disabling$(): Observable<boolean> { return this.query.disabling$; }
+
+	/** True while an unassign call is in-flight. */
+	get unassigning$(): Observable<boolean> { return this.query.unassigning$; }
+
+	/** True while an assign (add) call is in-flight. */
+	get assigning$(): Observable<boolean> { return this.query.assigning$; }
+
+	/** True while a remove-from-allowed call is in-flight. */
+	get removingAllowed$(): Observable<boolean> { return this.query.removingAllowed$; }
+
+	/** True while a remove-from-denied call is in-flight. */
+	get removingDenied$(): Observable<boolean> { return this.query.removingDenied$; }
+
+	/** True while a plugin-tenant enable/disable call is in-flight. */
+	get togglingTenant$(): Observable<boolean> { return this.query.togglingTenant$; }
+
+	/** True when any mutation operation is in-flight (for disabling action bar holistically). */
+	get anyOperationInProgress$(): Observable<boolean> { return this.query.anyOperationInProgress$; }
+
 	/**
 	 * Get complete view model for user management
 	 * Combines multiple state slices into a single view model
 	 */
 	get viewModel$(): Observable<UserManagementViewModel> {
-		return combineLatest([this.query.assignments$, this.query.loading$, this.query.error$]).pipe(
-			map(([assignments, loading, error]) => ({
-				assignments,
-				activeAssignmentsCount: assignments.filter((a) => a.isActive).length,
-				totalAssignmentsCount: assignments.length,
-				loading,
-				error,
-				hasError: !!error,
-				hasAssignments: assignments.length > 0,
-				isEmpty: assignments.length === 0 && !loading
-			}))
+		return combineLatest([this.query.assignments$, this.query.loading$, this.query.error$, this.query.operations$]).pipe(
+			map(([assignments, loading, error, operations]) => {
+				const activeCount = assignments.filter((a) => a.isActive).length;
+				return {
+					assignments,
+					activeAssignmentsCount: activeCount,
+					disabledAssignmentsCount: assignments.length - activeCount,
+					totalAssignmentsCount: assignments.length,
+					loading,
+					operations,
+					error,
+					hasError: !!error,
+					hasAssignments: assignments.length > 0,
+					isEmpty: assignments.length === 0 && !loading
+				};
+			})
 		);
 	}
 
@@ -388,12 +423,13 @@ export class PluginUserAssignmentFacade {
 
 	/**
 	 * Get assignment status badge configuration
+	 * Active (allowed) = success, Disabled (denied/revoked) = danger
 	 * @param assignment - Plugin user assignment
 	 */
 	getStatusBadge(assignment: PluginUserAssignment): { status: string; text: string } {
 		return {
-			status: assignment.isActive ? 'success' : 'warning',
-			text: assignment.isActive ? 'PLUGIN.USER_MANAGEMENT.ACTIVE' : 'PLUGIN.USER_MANAGEMENT.INACTIVE'
+			status: assignment.isActive ? 'success' : 'danger',
+			text: assignment.isActive ? 'PLUGIN.USER_MANAGEMENT.ACTIVE' : 'PLUGIN.USER_MANAGEMENT.DISABLED'
 		};
 	}
 
@@ -530,5 +566,51 @@ export class PluginUserAssignmentFacade {
 				reason
 			})
 		);
+	}
+
+	/**
+	 * Unassign users from a plugin tenant (remove from both allowed and denied lists)
+	 * This completely removes the user's association with the plugin.
+	 * @param pluginTenantId - Plugin tenant identifier
+	 * @param userIds - Array of user IDs to unassign
+	 * @param reason - Optional reason for the operation
+	 */
+	unassignUsersFromPluginTenant(pluginTenantId: ID, userIds: string[], reason?: string): void {
+		this.actions.dispatch(
+			PluginUserAssignmentActions.unassignUsersFromPluginTenant({
+				pluginTenantId,
+				userIds,
+				reason
+			})
+		);
+	}
+
+	// ============================================================================
+	// CONVENIENCE WRAPPERS — symmetric API with UserManagementFacade
+	// ============================================================================
+
+	/** Enable (allow) a single user's access to the plugin tenant. */
+	enableUser(pluginTenantId: ID, userId: string, reason?: string): void {
+		this.allowUsersToPluginTenant(pluginTenantId, [userId], reason);
+	}
+
+	/** Disable (deny/revoke) a single user's access to the plugin tenant. */
+	disableUser(pluginTenantId: ID, userId: string, reason?: string): void {
+		this.denyUsersFromPluginTenant(pluginTenantId, [userId], reason);
+	}
+
+	/** Unassign a single user from the plugin tenant (remove entirely). */
+	unassignUserFromTenant(pluginTenantId: ID, userId: string, reason?: string): void {
+		this.unassignUsersFromPluginTenant(pluginTenantId, [userId], reason);
+	}
+
+	/** Enable (allow) all listed users' access to the plugin tenant. */
+	enableAllUsers(pluginTenantId: ID, userIds: string[]): void {
+		this.allowUsersToPluginTenant(pluginTenantId, userIds);
+	}
+
+	/** Disable (deny/revoke) all listed users' access to the plugin tenant. */
+	disableAllUsers(pluginTenantId: ID, userIds: string[]): void {
+		this.denyUsersFromPluginTenant(pluginTenantId, userIds);
 	}
 }

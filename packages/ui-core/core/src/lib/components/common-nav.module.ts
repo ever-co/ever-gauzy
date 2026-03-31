@@ -5,13 +5,30 @@ import { NbAccordionModule, NbButtonModule, NbTooltipModule } from '@nebular/the
 import { BaseNavMenuComponent } from './base-nav-menu/base-nav-menu.component';
 import { MainNavMenuComponent } from './main-nav-menu/main-nav-menu.component';
 import { SettingsNavMenuComponent } from './settings-nav-menu/settings-nav-menu.component';
-import { MenuItemComponent, SidebarMenuComponent, ChildrenMenuItemComponent, TooltipDirective } from './sidebar-menu';
+import { MenuItemComponent, SidebarMenuComponent, ChildrenMenuItemComponent } from './sidebar-menu';
+import { TooltipDirective } from '../directives/tooltip.directive';
 
-const COMPONENTS = [BaseNavMenuComponent, MainNavMenuComponent, SidebarMenuComponent, SettingsNavMenuComponent];
+// Components that are standalone
+const STANDALONE_COMPONENTS = [
+	BaseNavMenuComponent,
+	MainNavMenuComponent,
+	SidebarMenuComponent,
+	MenuItemComponent,
+	ChildrenMenuItemComponent,
+	SettingsNavMenuComponent
+];
 
 @NgModule({
-	imports: [CommonModule, NbAccordionModule, NbTooltipModule, NbButtonModule, NgxPermissionsModule.forChild()],
-	declarations: [...COMPONENTS, MenuItemComponent, ChildrenMenuItemComponent, TooltipDirective],
-	exports: [...COMPONENTS]
+	imports: [
+		CommonModule,
+		NbAccordionModule,
+		NbTooltipModule,
+		NbButtonModule,
+		NgxPermissionsModule.forChild(),
+		TooltipDirective,
+		...STANDALONE_COMPONENTS
+	],
+	declarations: [],
+	exports: [...STANDALONE_COMPONENTS, TooltipDirective]
 })
 export class CommonNavModule {}

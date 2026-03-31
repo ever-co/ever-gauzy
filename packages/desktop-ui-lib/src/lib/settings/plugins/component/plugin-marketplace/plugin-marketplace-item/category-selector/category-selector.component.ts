@@ -6,8 +6,8 @@ import { distinctUntilChanged, tap } from 'rxjs';
 import { PluginCategoryActions } from '../../+state/actions/plugin-category.action';
 import { PluginCategoryQuery } from '../../+state/queries/plugin-category.query';
 
-import { NbIconModule } from '@nebular/theme';
 import { AsyncPipe } from '@angular/common';
+import { NbIconModule } from '@nebular/theme';
 import { SelectComponent } from '../../../../../../shared/components/ui/select/select.component';
 
 @UntilDestroy({ checkProperties: true })

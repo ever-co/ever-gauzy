@@ -49,12 +49,8 @@ export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	private readonly _integrationEntitySettingServiceStoreService = inject(IntegrationEntitySettingServiceStoreService);
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
-	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION as unknown as any, { optional: true }) as
-		| PluginUiDefinition
-		| null;
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true }) as PluginUiDefinition | null;
 	private readonly _destroy$ = new Subject<void>();
-
-	constructor() {}
 
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
@@ -98,17 +94,17 @@ export class JobMatchingModule implements IOnPluginUiBootstrap, IOnPluginUiDestr
 	 */
 	private _subscribeToJobMatchingEntity(): void {
 		this._integrationEntitySettingServiceStoreService.jobMatchingEntity$
-				.pipe(
-					catchError((error) => {
-						this._log.error('Error in job matching entity subscription', error);
-						return of({ currentValue: { sync: false, isActive: false } });
-					}),
-					map(({ currentValue }) => !!currentValue?.sync && !!currentValue?.isActive),
-					distinctUntilChange(),
-					takeUntil(this._destroy$),
-					tap((isActive: boolean) => (isActive ? this._addNavMenuItem() : this._removeNavMenuItem()))
-				)
-				.subscribe()
+			.pipe(
+				catchError((error) => {
+					this._log.error('Error in job matching entity subscription', error);
+					return of({ currentValue: { sync: false, isActive: false } });
+				}),
+				map(({ currentValue }) => !!currentValue?.sync && !!currentValue?.isActive),
+				distinctUntilChange(),
+				takeUntil(this._destroy$),
+				tap((isActive: boolean) => (isActive ? this._addNavMenuItem() : this._removeNavMenuItem()))
+			)
+			.subscribe();
 	}
 
 	/**

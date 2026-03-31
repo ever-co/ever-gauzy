@@ -1,0 +1,31 @@
+{
+	"name": "ui-react-components",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/ui-react-components/src",
+	"projectType": "library",
+	"tags": [],
+	"implicitDependencies": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/ui-react-components",
+				"main": "packages/ui-react-components/src/index.ts",
+				"tsConfig": "packages/ui-react-components/tsconfig.lib.json",
+				"assets": ["packages/ui-react-components/*.md"]
+			},
+			"dependsOn": ["^build"]
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/ui-react-components/jest.config.ts"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

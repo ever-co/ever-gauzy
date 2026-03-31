@@ -16,7 +16,7 @@ import { NavMenuBuilderService } from '../services/nav-builder';
  *     addNavMenuSection({
  *         id: 'reports',
  *         label: 'Reports',
- *         menuCategory: 'settings', // Optional, can be 'main', 'settings', or 'accordion'
+ *         menuCategory: 'settings', // Optional, can be 'main', 'settings', or 'workspace'
  *         items: [
  *             {
  *                 id: 'report1',
@@ -34,19 +34,14 @@ import { NavMenuBuilderService } from '../services/nav-builder';
  *
  * @returns The provider configuration.
  */
-export function addNavMenuSection(
-    config: NavMenuSectionItem,
-    before?: string
-): EnvironmentProviders {
-    return provideAppInitializer(() => {
-        const initializerFn = (
-            (navBuilderService: NavMenuBuilderService) => () => {
-                navBuilderService.addNavMenuSection(config, before);
-            }
-        )(inject(NavMenuBuilderService));
+export function addNavMenuSection(config: NavMenuSectionItem, before?: string): EnvironmentProviders {
+	return provideAppInitializer(() => {
+		const initializerFn = ((navBuilderService: NavMenuBuilderService) => () => {
+			navBuilderService.addNavMenuSection(config, before);
+		})(inject(NavMenuBuilderService));
 
-        return initializerFn();
-    });
+		return initializerFn();
+	});
 }
 
 /**
@@ -70,18 +65,12 @@ export function addNavMenuSection(
  *
  * @returns The provider configuration.
  */
-export function addNavMenuItem(
-    config: NavMenuSectionItem,
-    sectionId: string,
-    before?: string
-): EnvironmentProviders {
-    return provideAppInitializer(() => {
-        const initializerFn = (
-            (navBuilderService: NavMenuBuilderService) => () => {
-                navBuilderService.addNavMenuItem(config, sectionId, before);
-            }
-        )(inject(NavMenuBuilderService));
+export function addNavMenuItem(config: NavMenuSectionItem, sectionId: string, before?: string): EnvironmentProviders {
+	return provideAppInitializer(() => {
+		const initializerFn = ((navBuilderService: NavMenuBuilderService) => () => {
+			navBuilderService.addNavMenuItem(config, sectionId, before);
+		})(inject(NavMenuBuilderService));
 
-        return initializerFn();
-    });
+		return initializerFn();
+	});
 }

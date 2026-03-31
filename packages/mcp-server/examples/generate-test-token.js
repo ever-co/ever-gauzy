@@ -4,6 +4,32 @@
  * This script generates JWT tokens for testing OAuth 2.0 authorization
  * in development environment.
  *
+ * Before using these tokens, register an OAuth client via the /oauth/register endpoint:
+ *
+ *   # Register a public client (no secret required):
+ *   curl -X POST http://localhost:3001/oauth/register \
+ *     -H "Content-Type: application/json" \
+ *     -d '{
+ *       "client_name": "My Public App",
+ *       "client_type": "public",
+ *       "redirect_uris": ["http://localhost:3001/callback"],
+ *       "grant_types": ["authorization_code", "refresh_token"],
+ *       "response_types": ["code"],
+ *       "scope": "mcp.read mcp.write"
+ *     }'
+ *
+ *   # Register a confidential client (secret generated in response):
+ *   curl -X POST http://localhost:3001/oauth/register \
+ *     -H "Content-Type: application/json" \
+ *     -d '{
+ *       "client_name": "My Server App",
+ *       "client_type": "confidential",
+ *       "redirect_uris": ["https://myapp.example.com/callback"],
+ *       "grant_types": ["authorization_code", "refresh_token"],
+ *       "response_types": ["code"],
+ *       "scope": "mcp.read mcp.write mcp.admin"
+ *     }'
+ *
  * Usage: node generate-test-token.js
  */
 
@@ -32,7 +58,7 @@ function generateTestJWT(payload = {}, secret = (process.env.MCP_AUTH_JWT_SECRET
         iss: 'gauzy-dev-auth',           // Issuer
         aud: 'http://localhost:3001/sse',    // Audience (your MCP server)
         sub: 'test-user-123',            // Subject (user ID)
-        client_id: 'test-client',        // OAuth client ID
+        client_id: 'my-registered-client',   // OAuth client ID (must be registered first)
         scope: 'mcp.read mcp.write',     // Granted scopes
         iat: now,                        // Issued at
         exp: now + 3600,                 // Expires in 1 hour
@@ -63,11 +89,13 @@ function generateTestJWT(payload = {}, secret = (process.env.MCP_AUTH_JWT_SECRET
 }
 
 // Generate test tokens
-console.log('🔑 Test JWT Tokens for MCP OAuth 2.0 Development\n');
+console.log('Test JWT Tokens for MCP OAuth 2.0 Development\n');
+console.log('NOTE: You must first register an OAuth client via POST /oauth/register');
+console.log('      See the comments at the top of this file for examples.\n');
 
 // Valid token with required scopes
 const validToken = generateTestJWT();
-console.log('✅ Valid Token (mcp.read, mcp.write):');
+console.log('Valid Token (mcp.read, mcp.write):');
 console.log(validToken);
 console.log('\nAuthorization header:\nAuthorization: Bearer ' + validToken + '\n');
 console.log();
@@ -76,7 +104,7 @@ console.log();
 const insufficientScopesToken = generateTestJWT({
     scope: 'read:basic'
 });
-console.log('❌ Insufficient Scopes Token (read:basic):');
+console.log('Insufficient Scopes Token (read:basic):');
 console.log(insufficientScopesToken);
 console.log();
 
@@ -84,7 +112,7 @@ console.log();
 const expiredToken = generateTestJWT({
     exp: Math.floor(Date.now() / 1000) - 3600 // Expired 1 hour ago
 });
-console.log('⏰ Expired Token:');
+console.log('Expired Token:');
 console.log(expiredToken);
 console.log();
 
@@ -92,7 +120,7 @@ console.log();
 const wrongAudienceToken = generateTestJWT({
     aud: 'https://other-service.com'
 });
-console.log('🎯 Wrong Audience Token:');
+console.log('Wrong Audience Token:');
 console.log(wrongAudienceToken);
 console.log();
 
@@ -102,18 +130,19 @@ const adminToken = generateTestJWT({
     scope: 'mcp.read mcp.write mcp.admin',
     role: 'admin'
 });
-console.log('👑 Admin Token (all scopes):');
+console.log('Admin Token (all scopes):');
 console.log(adminToken);
 console.log();
 
-console.log('📋 Usage Instructions:');
+console.log('Usage Instructions:');
 console.log('1. Start your MCP server: yarn nx serve mcp');
-console.log('2. Copy any token above');
-console.log('3. Use in Postman Authorization header: Bearer <token>');
-console.log('4. Test different endpoints to see authorization in action');
+console.log('2. Register an OAuth client via POST /oauth/register (see examples above)');
+console.log('3. Copy any token above');
+console.log('4. Use in Postman Authorization header: Bearer <token>');
+console.log('5. Test different endpoints to see authorization in action');
 
 // Decode and display the valid token payload for reference
 const payloadB64 = validToken.split('.')[1];
 const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
-console.log('\n📄 Valid Token Payload:');
+console.log('\nValid Token Payload:');
 console.log(JSON.stringify(payload, null, 2));

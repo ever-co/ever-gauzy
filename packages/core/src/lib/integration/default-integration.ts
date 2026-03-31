@@ -73,6 +73,19 @@ export const DEFAULT_AI_INTEGRATIONS = [
 		order: 3,
 		redirectUrl: sluggable(IntegrationEnum.GAUZY_AI),
 		provider: IntegrationEnum.GAUZY_AI
+	},
+	{
+		name: IntegrationEnum.SIM,
+		imgSrc: 'sim.svg',
+		isComingSoon: false,
+		integrationTypesMap: <string[]>[
+			IntegrationTypeEnum.ALL_INTEGRATIONS,
+			IntegrationTypeEnum.AI_AGENTS,
+			IntegrationTypeEnum.AUTOMATION_TOOLS
+		],
+		order: 10,
+		redirectUrl: sluggable(IntegrationEnum.SIM),
+		provider: IntegrationEnum.SIM
 	}
 ];
 
@@ -97,6 +110,15 @@ export const PROJECT_MANAGE_DEFAULT_INTEGRATIONS = [
 		order: 5,
 		redirectUrl: sluggable(IntegrationEnum.JIRA),
 		provider: IntegrationEnum.JIRA
+	},
+	{
+		name: IntegrationEnum.PLANE,
+		imgSrc: 'plane.svg',
+		isComingSoon: false,
+		integrationTypesMap: <string[]>[IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.PROJECT_MANAGEMENT],
+		order: 11,
+		redirectUrl: sluggable(IntegrationEnum.PLANE),
+		provider: IntegrationEnum.PLANE
 	}
 ];
 

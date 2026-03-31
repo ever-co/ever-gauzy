@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
 import { SchedulerModule } from '@gauzy/scheduler';
+import { Module } from '@nestjs/common';
 import { WorkerLifecycleJob } from './jobs/worker-lifecycle.job';
 import { WorkerLifecycleProcessor } from './processors/worker-lifecycle.processor';
 import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED } from './worker.constants';

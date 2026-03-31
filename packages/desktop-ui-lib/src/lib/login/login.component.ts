@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { NavigationExtras, Router, RouterLink } from '@angular/router';
 import { HttpStatus, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
@@ -14,7 +14,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe } from '@ngx-translate/core';
 import { catchError, EMPTY, finalize, tap } from 'rxjs';
-import { AuthService } from '../auth';
+import { AuthService, AuthStrategy } from '../auth';
 import { GAUZY_ENV } from '../constants';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { ElectronService } from '../electron/services';
@@ -46,7 +46,7 @@ import { SocialLinksComponent } from './shared/ui/social-links/social-links.comp
 		TranslatePipe
 	]
 })
-export class NgxLoginComponent extends NbLoginComponent implements OnInit {
+export class NgxLoginComponent extends NbLoginComponent implements OnInit, OnDestroy {
 	@ViewChild('form')
 	public form: NgForm;
 	public showPassword = false;
@@ -58,6 +58,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		public readonly cdr: ChangeDetectorRef,
 		public readonly _router: Router,
 		private readonly authService: AuthService,
+		private readonly authStrategy: AuthStrategy,
 		private readonly errorHandlingService: ErrorHandlerService,
 		@Inject(NB_AUTH_OPTIONS)
 		options: any,
@@ -72,6 +73,14 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		if (this.isAgent) {
 			this.user.rememberMe = true;
 		}
+		this.electronService.ipcRenderer.once('gauzy_auth_success', async (_, message) => {
+			this.authStrategy.storeAuthenticationData(message);
+			await this._router.navigate(['/']);
+		});
+	}
+
+	ngOnDestroy(): void {
+		this.electronService.ipcRenderer.removeAllListeners('gauzy_auth_success');
 	}
 
 	public override login(): void {

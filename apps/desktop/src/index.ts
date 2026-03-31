@@ -33,7 +33,9 @@ import {
 	ErrorEventManager,
 	ErrorReport,
 	ErrorReportRepository,
+	InstallPluginHandler,
 	LocalStore,
+	ProtocolRouter,
 	ProviderFactory,
 	TranslateLoader,
 	TranslateService,
@@ -43,7 +45,9 @@ import {
 	ipcTimer,
 	removeMainListener,
 	removeTimerListener,
-	setupAkitaStorageHandler
+	setupAkitaStorageHandler,
+	handleDesktopStartup,
+    DesktopOfflineModeHandler
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
@@ -51,13 +55,16 @@ import {
 	SplashScreen,
 	createGauzyWindow,
 	createSettingsWindow,
-	createTimeTrackerWindow
+	createTimeTrackerWindow,
+	setLaunchPathAndLoad
 } from '@gauzy/desktop-window';
 
+import { DesktopSetupConfig } from '@gauzy/contracts';
 import * as Sentry from '@sentry/electron/main';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
+import { IConfig } from '@gauzy/desktop-core';
 
 /**
  * Describes the configuration for building the Gauzy API base URL.
@@ -172,6 +179,19 @@ LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
 
+// Register custom protocol for deep linking
+const appProtocol = process.env.PROTOCOL || 'gauzy-desktop';
+if (process.defaultApp) {
+	if (process.argv.length >= 2) {
+		app.setAsDefaultProtocolClient(appProtocol, process.execPath, [path.resolve(process.argv[1])]);
+	}
+} else {
+	app.setAsDefaultProtocolClient(appProtocol);
+}
+
+// Deep-link protocol router — registered with all supported action handlers.
+const protocolRouter = ProtocolRouter.getInstance();
+
 // Set unlimited listeners
 ipcMain.setMaxListeners(0);
 
@@ -259,57 +279,92 @@ if (!gotTheLock) {
 	console.log('Another instance is already running, quitting...');
 	app.quit();
 } else {
-	app.on('second-instance', () => {
+	app.on('second-instance', (event, commandLine) => {
 		console.log('Another instance is already running...');
+
+		// Handle deep link from second instance
+		const url = commandLine.find((arg) => arg.startsWith(`${appProtocol}://`));
+		if (url) {
+			console.log('Deep link received from second instance:', url);
+			protocolRouter.route(url);
+		}
+
 		// if someone tried to run a second instance, we should focus our window and show warning message.
 		if (gauzyWindow) {
 			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
 			gauzyWindow.focus();
-			dialog.showMessageBoxSync(gauzyWindow, {
-				type: 'warning',
-				title: process.env.DESCRIPTION,
-				message: 'You already have a running instance'
-			});
+			if (!url) {
+				dialog.showMessageBoxSync(gauzyWindow, {
+					type: 'warning',
+					title: process.env.DESCRIPTION,
+					message: 'You already have a running instance'
+				});
+			}
 		}
+	});
+
+	// Handle deep links on macOS
+	app.on('open-url', (event, url) => {
+		event.preventDefault();
+		console.log('Deep link received (macOS):', url);
+		protocolRouter.route(url);
 	});
 }
 
-async function startServer(value, restart = false) {
-	console.log('Starting the Server...');
+// Configure the protocol router with all supported deep-link action handlers.
+protocolRouter.register(new InstallPluginHandler(pathWindow.timeTrackerUi));
 
+function setGlobalVariable(setupConfig: {
+	host?: string;
+	port?: string;
+	protocol?: string;
+	isLocalServer?: boolean;
+	serverUrl?: string;
+}) {
 	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(value),
-		IS_INTEGRATED_DESKTOP: value.isLocalServer
+		API_BASE_URL: getApiBaseUrl({
+			host: setupConfig.host,
+			port: setupConfig.port ? Number(setupConfig.port) : environment.API_DEFAULT_PORT,
+			protocol: setupConfig.protocol,
+			serverUrl: setupConfig.serverUrl
+		}),
+		IS_INTEGRATED_DESKTOP: setupConfig.isLocalServer
 	};
+}
+
+async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
+	console.log('Starting the Server...', setupConfig);
+
+	setGlobalVariable(setupConfig);
 
 	process.env.IS_ELECTRON = 'true';
 	if (process.resourcesPath) {
 		process.env.ELECTRON_RESOURCES_PATH = process.resourcesPath;
 	}
 
-	if (value.db === 'sqlite') {
+	if (setupConfig.db === 'sqlite') {
 		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'sqlite';
-	} else if (value.db === 'better-sqlite' || value.db === 'better-sqlite3') {
+	} else if (setupConfig.db === 'better-sqlite' || setupConfig.db === 'better-sqlite3') {
 		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'better-sqlite3';
 	} else {
 		process.env.DB_TYPE = 'postgres';
-		process.env.DB_HOST = value['postgres']?.dbHost;
-		process.env.DB_PORT = value['postgres']?.dbPort;
-		process.env.DB_NAME = value['postgres']?.dbName;
-		process.env.DB_USER = value['postgres']?.dbUsername;
-		process.env.DB_PASS = value['postgres']?.dbPassword;
+		process.env.DB_HOST = setupConfig['postgres']?.dbHost;
+		process.env.DB_PORT = setupConfig['postgres']?.dbPort;
+		process.env.DB_NAME = setupConfig['postgres']?.dbName;
+		process.env.DB_USER = setupConfig['postgres']?.dbUsername;
+		process.env.DB_PASS = setupConfig['postgres']?.dbPassword;
 	}
 
 	try {
 		const config: any = {
-			...value,
+			...setupConfig,
 			isSetup: true
 		};
 		const aw = {
-			host: value.awHost,
-			isAw: value.aw
+			host: setupConfig.awHost,
+			isAw: setupConfig.aw
 		};
 		store.set({
 			configs: config,
@@ -325,11 +380,17 @@ async function startServer(value, restart = false) {
 		throw new AppError('MAINSTRSERVER', error);
 	}
 
-	if (value.isLocalServer) {
-		console.log(`Starting local server on port ${value.port || environment.API_DEFAULT_PORT}`);
-		process.env.API_PORT = value.port || environment.API_DEFAULT_PORT;
+	if (setupConfig.isLocalServer) {
+		console.log(`Starting local server on port ${setupConfig.port || environment.API_DEFAULT_PORT}`);
+		process.env.API_PORT = setupConfig.port ? String(setupConfig.port) : String(environment.API_DEFAULT_PORT);
 		process.env.API_HOST = '0.0.0.0';
-		process.env.API_BASE_URL = `http://127.0.0.1:${value.port || environment.API_DEFAULT_PORT}`;
+		process.env.API_BASE_URL = `http://127.0.0.1:${setupConfig.port || environment.API_DEFAULT_PORT}`;
+
+		if (!setupConfig.secret || !setupConfig.secret.jwt || !setupConfig.secret.refresh_token) {
+			throw new AppError('MAINSTRSERVER', new Error('JWT secrets are required for local server startup'));
+		}
+		process.env.JWT_SECRET = setupConfig.secret.jwt;
+		process.env.JWT_REFRESH_TOKEN_SECRET = setupConfig.secret.refresh_token;
 
 		console.log('Setting additional environment variables...', process.env.API_PORT);
 		console.log('Setting additional environment variables...', process.env.API_HOST);
@@ -342,7 +403,7 @@ async function startServer(value, restart = false) {
 			await server.start(
 				{ api: path.join(__dirname, 'api/main.js') },
 				process.env,
-				appWindowManager.setupWindow,
+				appWindowManager.setupWindow ?? timeTrackerWindow,
 				signal
 			);
 		} catch (error) {
@@ -351,15 +412,43 @@ async function startServer(value, restart = false) {
 		}
 	}
 
+	/* ping server before launch the ui */
+	ipcMain.on('app_is_init', () => {
+		if (!isAlreadyRun && setupConfig && !restart) {
+			onWaitingServer = true;
+			timeTrackerWindow?.webContents?.send?.('server_ping', {
+				host: getApiBaseUrl({
+					host: setupConfig.host,
+					port: setupConfig.port ? Number(setupConfig.port) : environment.API_DEFAULT_PORT,
+					protocol: setupConfig.protocol,
+					serverUrl: setupConfig.serverUrl
+				})
+			});
+		} else {
+			timeTrackerWindow.webContents.send('ready_to_show_renderer');
+		}
+	});
+
 	/* create main window */
 	try {
-		gauzyWindow = await createGauzyWindow(
-			gauzyWindow,
-			serve,
-			{ ...environment, gauzyWindow: value.gauzyWindow },
-			pathWindow.gauzyWindow,
-			pathWindow.preloadPath
-		);
+		/* create window */
+		await setLaunchPathAndLoad(timeTrackerWindow, pathWindow.timeTrackerUi, '/time-tracker');
+		if (setupConfig.gauzyWindow) {
+			timeTrackerWindow.hide();
+		} else {
+			timeTrackerWindow.show();
+		}
+		if (setupConfig.gauzyWindow) {
+			gauzyWindow = await createGauzyWindow(
+				gauzyWindow,
+				serve,
+				{ ...environment, gauzyWindow: setupConfig.gauzyWindow },
+				pathWindow.gauzyWindow,
+				pathWindow.preloadPath
+			);
+		} else {
+			gauzyWindow = timeTrackerWindow;
+		}
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}
@@ -380,16 +469,6 @@ async function startServer(value, restart = false) {
 
 	TranslateService.onLanguageChange(() => {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
-	});
-
-	/* ping server before launch the ui */
-	ipcMain.on('app_is_init', () => {
-		if (!isAlreadyRun && value && !restart) {
-			onWaitingServer = true;
-			appWindowManager.setupWindow?.webContents?.send?.('server_ping', {
-				host: getApiBaseUrl(value)
-			});
-		}
 	});
 
 	return true;
@@ -419,10 +498,7 @@ function setEnvAdditional() {
 			process.env[key] = additionalConfig[key];
 		}
 	});
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(config),
-		IS_INTEGRATED_DESKTOP: config.isLocalServer
-	};
+	setGlobalVariable(config);
 }
 
 /**
@@ -467,6 +543,58 @@ const closeSplashScreen = () => {
 	}
 };
 
+async function launchSplashScreen() {
+	try {
+		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
+		await splashScreen.loadURL();
+
+		splashScreen.show();
+	} catch (error) {
+		throw new AppError('MAINWININIT', error);
+	}
+}
+
+async function initialDatabase() {
+	if (['sqlite', 'better-sqlite', 'better-sqlite3'].includes(provider.dialect)) {
+		try {
+			const res = await knex.raw(`pragma journal_mode = WAL;`);
+			console.log(res);
+		} catch (error) {
+			console.log('ERROR', error);
+		}
+	}
+
+	try {
+		await provider.createDatabase();
+		await provider.migrate();
+	} catch (error) {
+		console.error('ERROR: Occurred while database migration:' + error);
+		throw new AppError('MAINDB', error);
+	}
+}
+
+function initialApplicationMenu() {
+	const menu: MenuItemConstructorOptions[] = [
+		{
+			label: app.getName(),
+			submenu: [
+				{ role: 'about', label: TranslateService.instant('MENU.ABOUT') },
+				{ type: 'separator' },
+				{ type: 'separator' },
+				{ role: 'quit', label: TranslateService.instant('BUTTONS.EXIT') }
+			]
+		}
+	];
+
+	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
+}
+
+function setAppVersion() {
+	LocalStore.updateConfigSetting({
+		version: app.getVersion()
+	});
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -489,77 +617,40 @@ app.on('ready', async () => {
 	}
 
 	// default global
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(configs || {}),
-		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
-	};
-
-	try {
-		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
-		await splashScreen.loadURL();
-
-		splashScreen.show();
-	} catch (error) {
-		throw new AppError('MAINWININIT', error);
+	if (configs) {
+		setGlobalVariable(configs);
 	}
 
-	if (['sqlite', 'better-sqlite', 'better-sqlite3'].includes(provider.dialect)) {
-		try {
-			const res = await knex.raw(`pragma journal_mode = WAL;`);
-			console.log(res);
-		} catch (error) {
-			console.log('ERROR', error);
-		}
+	await launchSplashScreen();
+	// buttonResponse:
+	// 0: User clicked "Remove Database"
+	// 1: User clicked "Keep It"
+	// undefined: No popup was shown (e.g. fresh install or no version change)
+	const buttonResponse = await handleDesktopStartup();
+	setAppVersion();
+	if (buttonResponse === 0) {
+		// The user chose to remove the local database.
+		// Relaunch the app so it boots into a clean state after the DB
+		// has been wiped — do not proceed with the normal startup sequence.
+		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+		app.exit(0);
+		return;
 	}
-
+	await initialDatabase();
+	initialApplicationMenu();
 	try {
-		await provider.createDatabase();
-		await provider.migrate();
-	} catch (error) {
-		console.error('ERROR: Occurred while database migration:' + error);
-		throw new AppError('MAINDB', error);
-	}
-
-	const menu: MenuItemConstructorOptions[] = [
-		{
-			label: app.getName(),
-			submenu: [
-				{ role: 'about', label: TranslateService.instant('MENU.ABOUT') },
-				{ type: 'separator' },
-				{ type: 'separator' },
-				{ role: 'quit', label: TranslateService.instant('BUTTONS.EXIT') }
-			]
-		}
-	];
-
-	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
-
-	try {
-		/* create window */
 		timeTrackerWindow = await createTimeTrackerWindow(
 			timeTrackerWindow,
 			pathWindow.timeTrackerUi,
-			pathWindow.preloadPath
+			pathWindow.preloadPath,
+			false
 		);
-
 		/* Set Menu */
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
 
 		if (configs && configs.isSetup) {
-			if (!configs.serverConfigConnected && !configs?.isLocalServer) {
-				await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
-				appWindowManager.setupWindow?.show();
-				closeSplashScreen();
-				appWindowManager.setupWindow?.webContents?.send?.('setup-data', {
-					...configs
-				});
-			} else {
-				global.variableGlobal = {
-					API_BASE_URL: getApiBaseUrl(configs),
-					IS_INTEGRATED_DESKTOP: configs.isLocalServer
-				};
-				await startServer(configs);
-			}
+			setGlobalVariable(configs);
+			await startServer(configs);
 		} else {
 			await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
 			appWindowManager.setupWindow?.show?.();
@@ -644,8 +735,6 @@ ipcMain.on('server_is_ready', async () => {
 			alwaysOn
 		);
 
-		timeTrackerWindow.webContents.send('ready_to_show_renderer');
-
 		isAlreadyRun = true;
 	}
 });
@@ -673,10 +762,7 @@ ipcMain.on('restart_app', async (event, arg) => {
 		LocalStore.updateConfigSetting(arg);
 		isAlreadyRun = false;
 		const configs = LocalStore.getStore('configs');
-		global.variableGlobal = {
-			API_BASE_URL: getApiBaseUrl(configs),
-			IS_INTEGRATED_DESKTOP: configs.isLocalServer
-		};
+		setGlobalVariable(configs);
 		await server.stop();
 		closeAllWindows();
 	} catch (error) {
@@ -885,6 +971,15 @@ ipcMain.handle('get-app-path', () => app.getAppPath());
 ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
 ipcMain.on('get-arch', (event) => {
 	event.sender.send('get-arch', process.arch);
+});
+
+ipcMain.handle('IS_OFFLINE', async () => {
+	const configs: IConfig = LocalStore.getStore('configs');
+	if (configs?.serverConfigConnected) {
+		const offlineMode = DesktopOfflineModeHandler.instance;
+		return offlineMode.enabled;
+	}
+	return false;
 });
 
 /**

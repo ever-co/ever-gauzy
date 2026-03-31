@@ -5,17 +5,17 @@ import { ICustomSmtp, IOrganization, IUser, PermissionsEnum, SMTPSecureEnum } fr
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, pairwise, tap } from 'rxjs/operators';
+import { patterns } from '@gauzy/constants';
 import { Store } from '@gauzy/ui-core/core';
 import { CustomSmtpService, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FormHelpers } from '../forms/helpers';
-import { patterns } from '../regex/regex-patterns.const';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    templateUrl: './smtp.component.html',
-    styleUrls: ['./smtp.component.scss'],
-    standalone: false
+	templateUrl: './smtp.component.html',
+	styleUrls: ['./smtp.component.scss'],
+	standalone: false
 })
 export class SMTPComponent extends TranslationBaseComponent implements OnInit, OnChanges, AfterViewInit {
 	@ViewChild('formDirective') formDirective: FormGroupDirective;
@@ -129,7 +129,7 @@ export class SMTPComponent extends TranslationBaseComponent implements OnInit, O
 				...(this.organization && this.isOrganization
 					? {
 							organizationId: this.organization.id
-					  }
+						}
 					: {})
 			})
 			.then((setting) => {

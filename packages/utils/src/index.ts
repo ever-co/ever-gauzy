@@ -13,6 +13,7 @@ export * from './lib/deduplicate';
 export * from './lib/deep-clone';
 export * from './lib/deep-merge';
 export * from './lib/ensure-http-prefix';
+export * from './lib/env-parser';
 export * from './lib/extract-name-from-email';
 export * from './lib/generate-encryption-key';
 export * from './lib/generate-sha256-hash';

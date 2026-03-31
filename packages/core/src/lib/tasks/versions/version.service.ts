@@ -11,7 +11,7 @@ import {
 	ITenant
 } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
-import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
+import { TaskMetadataService } from '../task-metadata.service';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
 import { TaskVersion } from './version.entity';
@@ -20,7 +20,7 @@ import { MikroOrmTaskVersionRepository } from './repository/mikro-orm-task-versi
 import { TypeOrmTaskVersionRepository } from './repository/type-orm-task-version.repository';
 
 @Injectable()
-export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersion> {
+export class TaskVersionService extends TaskMetadataService<TaskVersion> {
 	constructor(
 		readonly typeOrmTaskVersionRepository: TypeOrmTaskVersionRepository,
 		readonly mikroOrmTaskVersionRepository: MikroOrmTaskVersionRepository,
@@ -70,89 +70,80 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 	}
 
 	/**
-	 * Create bulk versions for specific tenants
+	 * Creates default task versions for multiple tenants.
 	 *
-	 * @param tenants '
+	 * @param tenants Array of tenants for which task versions should be created.
+	 * @returns Promise resolving to an array of created task versions.
 	 */
-	async bulkCreateTenantsVersions(tenants: ITenant[]): Promise<ITaskVersion[] & TaskVersion[]> {
-		const versions: ITaskVersion[] = [];
-		for (const tenant of tenants) {
-			for (const version of DEFAULT_GLOBAL_VERSIONS) {
-				versions.push(
+	async bulkCreateTenantsVersions(tenants: ITenant[]): Promise<TaskVersion[]> {
+		if (!tenants?.length) {
+			return [];
+		}
+
+		const versions: TaskVersion[] = tenants.flatMap((tenant: ITenant) =>
+			DEFAULT_GLOBAL_VERSIONS.map(
+				(version) =>
 					new TaskVersion({
 						...version,
 						icon: `ever-icons/${version.icon}`,
 						isSystem: false,
 						tenant
 					})
-				);
-			}
-		}
+			)
+		);
+
+		return await this.saveManyWithoutEnrichment(versions);
+	}
+
+	/**
+	 * Creates default task versions for a specific organization.
+	 *
+	 * @param organization The organization for which task versions will be created.
+	 * @returns A promise that resolves to an array of created task versions.
+	 */
+	async bulkCreateOrganizationVersions(organization: IOrganization): Promise<ITaskVersion[] & TaskVersion[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const { items = [] } = await super.fetchAll({ tenantId });
+
+		const versions = items.map(
+			(item) =>
+				new TaskVersion({
+					tenantId: item.tenantId,
+					name: item.name,
+					value: item.value,
+					description: item.description,
+					icon: item.icon,
+					color: item.color,
+					organization,
+					isSystem: false
+				})
+		);
+
 		return (await this.saveMany(versions)) as ITaskVersion[] & TaskVersion[];
 	}
 
 	/**
-	 * Create bulk versions for specific organization
+	 * Creates bulk task versions for a specific organization entity.
 	 *
-	 * @param organization
-	 */
-	async bulkCreateOrganizationVersions(organization: IOrganization): Promise<ITaskVersion[] & TaskVersion[]> {
-		try {
-			const tenantId = RequestContext.currentTenantId();
-			const { items = [] } = await super.fetchAll({ tenantId });
-
-			const versions: ITaskVersion[] = [];
-			for (const item of items) {
-				const { tenantId, name, value, description, icon, color } = item;
-				const version = new TaskVersion({
-					tenantId,
-					name,
-					value,
-					description,
-					icon,
-					color,
-					organization,
-					isSystem: false
-				});
-				versions.push(version);
-			}
-			return (await this.saveMany(versions)) as ITaskVersion[] & TaskVersion[];
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
-	}
-
-	/**
-	 * Create bulk versions for specific organization entity
-	 *
-	 * @param entity
-	 * @returns
+	 * @param entity Base entity input to use as a template for each version.
+	 * @returns A promise that resolves to an array of created task versions.
 	 */
 	async createBulkVersionsByEntity(entity: Partial<ITaskVersionCreateInput>): Promise<ITaskVersion[]> {
-		try {
-			const { organizationId } = entity;
-			const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
+		const organizationId = entity.organizationId;
 
-			const { items = [] } = await this.fetchAll({
-				tenantId,
-				organizationId
-			});
+		const { items = [] } = await this.fetchAll({ tenantId, organizationId });
 
-			const entitiesToCreate = items.map((item) => {
-				const { name, value, description, icon, color } = item;
-				return {
-					...entity,
-					name,
-					value,
-					description,
-					icon,
-					color,
-					isSystem: false
-				};
-			});
-			return await this.createMany(entitiesToCreate);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		const versions = items.map((item) => ({
+			...entity,
+			name: item.name,
+			value: item.value,
+			description: item.description,
+			icon: item.icon,
+			color: item.color,
+			isSystem: false
+		}));
+
+		return await this.createMany(versions);
 	}
 }

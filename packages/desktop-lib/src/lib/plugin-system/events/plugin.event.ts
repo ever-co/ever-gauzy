@@ -1,7 +1,7 @@
 import { ID, PluginOSArch, PluginOSType } from '@gauzy/contracts';
 import { logger } from '@gauzy/desktop-core';
 import { ipcMain, IpcMainEvent } from 'electron';
-import * as os from 'os';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import { TranslateService } from '../../translation';
 import { PluginManager } from '../data-access/plugin-manager';
@@ -84,6 +84,19 @@ class ElectronPluginListener {
 			};
 		});
 
+		ipcMain.handle(
+			PluginHandlerChannel.UPDATE_TENANT_ENABLED,
+			async (_, { marketplaceId, tenantEnabled }: { marketplaceId: ID; tenantEnabled: boolean }) => {
+				try {
+					await this.pluginManager.updateTenantEnabled(marketplaceId, tenantEnabled);
+					return { success: true };
+				} catch (error) {
+					logger.error('Failed to update tenant enabled:', error);
+					return { success: false, error: error?.message ?? String(error) };
+				}
+			}
+		);
+
 		ipcMain.handle(PluginHandlerChannel.LAZY_LOADER, async (_, pathname) => {
 			try {
 				// Ensure the plugin path is absolute
@@ -165,13 +178,13 @@ class ElectronPluginListener {
 
 	private async syncMarketplaceInstallationId(
 		event: IpcMainEvent,
-		{ marketplaceId, installationId }: { marketplaceId: string; installationId: string }
+		{ marketplaceId, installationId, name }: { marketplaceId: string | null; installationId: string; name?: string }
 	): Promise<void> {
 		event.reply(PluginChannel.STATUS, {
 			status: 'inProgress',
 			message: 'Updating Plugin Marketplace Installation ID...'
 		});
-		await this.pluginManager.completeInstallation(marketplaceId, installationId);
+		await this.pluginManager.completeInstallation(marketplaceId, installationId, name);
 		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Installation completed' });
 	}
 

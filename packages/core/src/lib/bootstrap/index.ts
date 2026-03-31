@@ -133,7 +133,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	}
 
 	app.enableCors({
-		origin: validOrigins || '*',
+		origin: validOrigins ? createCorsOriginCallback(validOrigins) : '*',
 		credentials: !!validOrigins, // Only enable credentials when origins are explicitly specified
 		methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'].join(','),
 		allowedHeaders: [
@@ -170,7 +170,11 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		helmet({
 			contentSecurityPolicy: isProduction
 				? undefined // use Helmet's strict default CSP in production
-				: false // disable CSP in dev/stage so Swagger/Scalar inline scripts work
+				: false, // disable CSP in dev/stage so Swagger/Scalar inline scripts work
+			crossOriginResourcePolicy: isProduction
+        		? { policy: 'same-origin' }  // Strict in prod — resources come from S3 or other storage anyway
+        		: { policy: 'cross-origin' }, // Relaxed in dev/stage — resources served from API
+    		crossOriginEmbedderPolicy: isProduction // strict in production, relaxed in dev/stage for Electron/desktop
 		})
 	);
 
@@ -253,6 +257,26 @@ function handleUncaughtException(error: Error) {
  */
 function handleUnhandledRejection(reason: any, promise: Promise<any>) {
 	console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+}
+
+/**
+ * Creates a CORS origin callback that validates request origins against a list of allowed origins.
+ *
+ * @param allowedOrigins - Array of allowed origin strings.
+ * @returns A CORS origin callback function.
+ */
+function createCorsOriginCallback(allowedOrigins: string[]) {
+	return (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+		// Allow requests with no origin (e.g. server-to-server, curl, mobile apps)
+		if (!origin || allowedOrigins.includes(origin)) {
+			callback(null, true);
+		} else {
+			// Suppress CORS headers without triggering Express error handler (avoids 500).
+			// The browser will block the request with a standard CORS error on the client side.
+			console.warn(`[CORS] Blocked request from origin: ${origin}`);
+			callback(null, false);
+		}
+	};
 }
 
 /**

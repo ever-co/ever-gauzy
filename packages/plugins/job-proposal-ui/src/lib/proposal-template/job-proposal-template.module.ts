@@ -51,11 +51,7 @@ export class JobProposalTemplateModule implements IOnPluginUiBootstrap, IOnPlugi
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _store = inject(Store);
-	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION as unknown as any, { optional: true }) as
-		| PluginUiDefinition
-		| null;
-
-	constructor() {}
+	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true }) as PluginUiDefinition | null;
 
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 

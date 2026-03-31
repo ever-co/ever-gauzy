@@ -9,7 +9,7 @@ import {
 	OnDestroy
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { DesktopSetupConfig, IProxyConfig } from '@gauzy/contracts';
+import { DesktopSetupConfig, IDesktopSecret, IProxyConfig } from '@gauzy/contracts';
 import {
 	NbDialogService,
 	NbLayoutModule,
@@ -34,6 +34,7 @@ import { SetupService } from './setup.service';
 import { FormsModule } from '@angular/forms';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { SslComponent } from '../settings/ssl/ssl.component';
+import { SecretComponent } from '../settings/secret/secret.component';
 import { UpperCasePipe } from '@angular/common';
 
 @Component({
@@ -54,6 +55,7 @@ import { UpperCasePipe } from '@angular/common';
 		SpinnerButtonDirective,
 		NbInputModule,
 		SslComponent,
+		SecretComponent,
 		NbFormFieldModule,
 		NbProgressBarModule,
 		UpperCasePipe,
@@ -203,6 +205,13 @@ export class SetupComponent implements OnInit, OnDestroy {
 		secure: true,
 		enable: false
 	};
+
+	secretConfig: IDesktopSecret = {
+		secret: {
+			jwt: this._environment.JWT_SECRET,
+			refresh_token: this._environment.JWT_REFRESH_TOKEN_SECRET
+		}
+	}
 
 	showPassword = false;
 
@@ -375,28 +384,35 @@ export class SetupComponent implements OnInit, OnDestroy {
 		if (this.connectivity.integrated) {
 			this.onProgress = true;
 		}
-		const gauzyConfig: DesktopSetupConfig  = {
+		const gauzyConfig: DesktopSetupConfig = {
 			...this.getServerConfig(),
 			...this.getDataBaseConfig(),
 			...this.getThirdPartyConfig(),
-			...this.getFeature()
+			...this.getFeature(),
+			...this.secretConfig,
+			isSetup: true
 		};
 		await this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE', this.languageSelector.preferredLanguage);
 
-		try {
-			let isStarted = false;
-			if (this.isServer) {
-				this.electronService.ipcRenderer.send('start_server', gauzyConfig);
-				isStarted = true;
-			} else {
-				isStarted = await this.electronService.ipcRenderer.invoke('START_SERVER', gauzyConfig);
-			}
-			if (isStarted && !gauzyConfig.isLocalServer) {
+		if (this.isServer || this.isServerApi) {
+			this.electronService.ipcRenderer.send('start_server', gauzyConfig);
+			if (!gauzyConfig.isLocalServer) {
 				this.electronService.ipcRenderer.send('app_is_init');
 			}
-		} catch (error) {
-			this._errorHandlerService.handleError(error);
+			this.isSaving = false;
+			return;
 		}
+
+		if (gauzyConfig.isLocalServer) {
+			const isStarted = await this.electronService.ipcRenderer.invoke('START_SERVER', gauzyConfig);
+			if (isStarted) {
+				this.electronService.ipcRenderer.send('restart_app', gauzyConfig);
+			}
+			this.isSaving = false;
+			return;
+		}
+
+		this.electronService.ipcRenderer.send('restart_app', gauzyConfig);
 		this.isSaving = false;
 	}
 
@@ -599,6 +615,12 @@ export class SetupComponent implements OnInit, OnDestroy {
 	public onChangeProxyConfig(config: IProxyConfig) {
 		this.electronService.ipcRenderer.send('update_server_config', {
 			secureProxy: config
+		});
+	}
+
+	public onChangeSecretConfig(config: IDesktopSecret) {
+		this.electronService.ipcRenderer.send('update_server_config', {
+			secret: config.secret
 		});
 	}
 }

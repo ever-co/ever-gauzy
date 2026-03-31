@@ -1,5 +1,6 @@
 import { NbResetPasswordComponent } from '@nebular/auth';
 import { Component } from '@angular/core';
+import { patterns } from '@gauzy/constants';
 
 @Component({
     selector: 'ngx-reset-password',
@@ -10,4 +11,5 @@ import { Component } from '@angular/core';
 export class NgxResetPasswordComponent extends NbResetPasswordComponent {
 	public showPassword: boolean = false;
 	public showConfirmPassword: boolean = false;
+	public strongPasswordPattern = patterns.strongPassword;
 }

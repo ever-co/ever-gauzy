@@ -1,25 +1,15 @@
 <div class="actions-container">
 	<div class="transition-container">
-		<div
-			[class.transition]="!isDisable"
-			[class.show]="!isDisable"
-			[class.transition]="!!isDisable"
-			[class.hide]="!!isDisable"
-		>
-			<span
-				[class.transition]="!isDisable"
-				[class.show]="!isDisable"
-				[class.transition]="!!isDisable"
-				[class.show-button]="!!isDisable"
-			>
-				<ng-content select="[buttonTemplateVisible]"></ng-content>
-				<ng-container [ngTemplateOutlet]="buttonTemplateVisible"></ng-container>
+		<div class="transition" [class.show]="!isDisable()" [class.hide]="isDisable()">
+			<span class="transition" [class.show]="!isDisable()" [class.show-button]="isDisable()">
+				<ng-content select="[buttonTemplateVisible]" />
+				<ng-container [ngTemplateOutlet]="buttonTemplateVisible()" />
 			</span>
-			<ng-container [ngTemplateOutlet]="buttonTemplate"></ng-container>
-			<ng-content select="[buttonTemplate]"></ng-content>
+			<ng-container [ngTemplateOutlet]="buttonTemplate()" />
+			<ng-content select="[buttonTemplate]" />
 		</div>
 	</div>
-	@if (hasLayoutSelector) {
-		<ga-layout-selector [componentName]="componentName"></ga-layout-selector>
+	@if (hasLayoutSelector()) {
+		<ga-layout-selector [componentName]="componentName()" />
 	}
 </div>

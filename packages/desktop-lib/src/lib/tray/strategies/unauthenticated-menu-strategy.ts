@@ -4,7 +4,6 @@ import {
 	CheckUpdateCommand,
 	ExitAppCommand,
 	OpenMainWindowCommand,
-	OpenPluginsCommand,
 	OpenSettingsCommand,
 	OpenTimerCommand
 } from '../commands';
@@ -41,8 +40,8 @@ export class UnauthenticatedMenuStrategy implements IMenuStrategy {
 			menu.push(
 				new MenuItemBuilder()
 					.withId('3')
-					.withLabel(this.translationService.instant('TIMER_TRACKER.MENU.OPEN_TIMER'))
-					.withAccelerator('CmdOrCtrl+O')
+					.withLabel(this.translationService.instant('LOGIN_PAGE.TITLE'))
+					.withAccelerator('CmdOrCtrl+L')
 					.withCommand(new OpenTimerCommand(this.windowService))
 					.build()
 			);
@@ -55,16 +54,6 @@ export class UnauthenticatedMenuStrategy implements IMenuStrategy {
 				.withLabel(this.translationService.instant('TIMER_TRACKER.SETUP.SETTING'))
 				.withAccelerator('CmdOrCtrl+,')
 				.withCommand(new OpenSettingsCommand(this.windowPath))
-				.build()
-		);
-
-		// Plugins
-		menu.push(
-			new MenuItemBuilder()
-				.withId('6-0')
-				.withLabel(this.translationService.instant('TIMER_TRACKER.SETTINGS.PLUGINS'))
-				.withAccelerator('CmdOrCtrl+P')
-				.withCommand(new OpenPluginsCommand(this.windowPath))
 				.build()
 		);
 

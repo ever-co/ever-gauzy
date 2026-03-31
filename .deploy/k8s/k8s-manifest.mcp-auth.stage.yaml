@@ -35,10 +35,8 @@ spec:
                 - name: gauzy-stage-mcp
                   securityContext:
                       allowPrivilegeEscalation: false
-                      readOnlyRootFilesystem: true
-                      runAsNonRoot: true
-                      capabilities:
-                          drop: ['ALL']
+                      readOnlyRootFilesystem: false
+                      runAsNonRoot: false
                   image: registry.digitalocean.com/ever/gauzy-mcp-auth-stage:latest
                   env:
                       - name: DB_URI

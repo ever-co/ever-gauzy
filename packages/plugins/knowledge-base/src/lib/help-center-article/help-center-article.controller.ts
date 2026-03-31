@@ -1,6 +1,9 @@
 import { PermissionsEnum, IHelpCenterArticle, ID, IPagination, IHelpCenterArticleFiltering } from '@gauzy/contracts';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Controller, HttpStatus, Post, Body, UseGuards, Get, Param, Delete, HttpCode, Put, Res, Query } from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, UseGuards, Get, Param, Delete, HttpCode, Put, Res, Query, Req } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { CommandBus } from '@nestjs/cqrs';
+import { Response, Request } from 'express';
 import {
 	Permissions,
 	CrudController,
@@ -10,9 +13,6 @@ import {
 	UUIDValidationPipe,
 	BaseQueryDTO
 } from '@gauzy/core';
-import { AuthGuard } from '@nestjs/passport';
-import { CommandBus } from '@nestjs/cqrs';
-import { Response } from 'express';
 import { HelpCenterArticle } from './help-center-article.entity';
 import { HelpCenterArticleService } from './help-center-article.service';
 import { KnowledgeBaseCategoryBulkDeleteCommand } from './commands';
@@ -110,6 +110,24 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 		const binary = await this.helpCenterArticleService.getDescriptionBinary(id);
 		res.setHeader('Content-Type', 'application/octet-stream');
 		res.send(binary ?? new Uint8Array(0));
+	}
+
+	/**
+	 * Upload raw binary description (application/octet-stream).
+	 * Bypasses JSON serialization so Uint8Array is stored correctly in the DB.
+	 */
+	@ApiOperation({ summary: 'Upload binary description (octet-stream)' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Binary saved.' })
+	@HttpCode(HttpStatus.OK)
+	@Put(':id/binary-description')
+	async uploadBinaryDescription(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Req() req: Request
+	): Promise<void> {
+		const binary = await this.helpCenterArticleService.readBinaryStream(req);
+		await this.commandBus.execute(
+			new HelpCenterUpdateArticleCommand(id, { descriptionBinary: new Uint8Array(binary) })
+		);
 	}
 
 	@ApiOperation({

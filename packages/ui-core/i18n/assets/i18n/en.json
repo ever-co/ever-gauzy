@@ -192,7 +192,9 @@
 		"REMOVE_FROM_FAVORITES": "Remove from favorites",
 		"ADD_TO_FAVORITES": "Add to favorites",
 		"DONE": "Done",
-		"SKIP": "Skip"
+		"SKIP": "Skip",
+		"UNSELECT_ALL": "Deselect All",
+		"OPEN": "Open"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1576,7 +1578,120 @@
 				}
 			}
 		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "SIM AI Workflow Integration",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "Enter your SIM AI API key to connect your account. You can find your API key in your SIM dashboard at sim.ai.",
+				"NEXT": "Connect",
+				"HINT": "Your API key is stored securely and used to authenticate workflow executions.",
+				"ERRORS": {
+					"INVALID_FORM": "Please fill all required fields correctly",
+					"SAVE_SETTINGS": "Failed to save settings",
+					"ORGANIZATION_NOT_FOUND": "Organization not found",
+					"CHECK_REMEMBER_STATE": "Failed to check remember state"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "SIM AI integration configured successfully"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "SIM AI Settings",
+				"SUBTITLE": "Configure your SIM AI integration settings",
+				"API_KEY": "API Key",
+				"API_KEY_PLACEHOLDER": "Enter your SIM AI API Key"
+			},
+			"EXECUTIONS": {
+				"TITLE": "Execution History",
+				"NO_EXECUTIONS": "No workflow executions found. Execute a workflow from the Workflows tab to see results here.",
+				"WORKFLOW_ID": "Workflow ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Filter by workflow ID",
+				"EXECUTION_ID": "Execution ID",
+				"STATUS": "Status",
+				"TRIGGERED_BY": "Triggered By",
+				"DURATION": "Duration",
+				"CREATED": "Created",
+				"LOADING": "Loading execution history...",
+				"LOAD": "Search",
+				"ALL_STATUSES": "All Statuses",
+				"SHOWING": "Showing",
+				"OF": "of",
+				"PREVIOUS_PAGE": "Previous page",
+				"NEXT_PAGE": "Next page"
+			},
+			"WORKFLOWS": {
+				"TITLE": "Workflows",
+				"VALIDATE_TITLE": "Validate Workflow",
+				"EXECUTE_TITLE": "Execute Workflow",
+				"JOB_STATUS_TITLE": "Async Job Status",
+				"WORKFLOW_ID": "Workflow ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Enter your SIM workflow ID",
+				"VALIDATE": "Validate",
+				"DEPLOYED": "Workflow is deployed and ready to execute.",
+				"NOT_DEPLOYED": "Workflow is not deployed or not found.",
+				"EXECUTE": "Execute",
+				"ASYNC": "Async",
+				"TIMEOUT": "Timeout (ms)",
+				"INPUT": "Input (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "Provide workflow input as valid JSON. This data will be passed to your SIM workflow.",
+				"RESULT": "Execution Result",
+				"TASK_ID": "Job ID",
+				"TASK_ID_PLACEHOLDER": "Enter the async job ID",
+				"CHECK_STATUS": "Check Status",
+				"JOB_RESULT": "Job Status",
+				"INVALID_JSON": "Invalid JSON input",
+				"EXECUTION_FAILED": "Execution failed"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Event Triggers",
+				"ADD_TITLE": "Add Event Trigger",
+				"ACTIVE_TITLE": "Active Event Triggers",
+				"DESCRIPTION": "Configure automatic workflow triggers. When a platform event occurs, the mapped SIM workflow will execute automatically.",
+				"EVENT": "Event",
+				"SELECT_EVENT": "Select an event",
+				"WORKFLOW_ID": "Workflow ID",
+				"WORKFLOW_ID_PLACEHOLDER": "Enter the SIM workflow ID to trigger",
+				"ADD": "Add",
+				"REMOVE": "Remove mapping",
+				"NO_MAPPINGS": "No event triggers configured. Add a mapping above to automatically trigger SIM workflows from platform events.",
+				"LOADING": "Loading event triggers...",
+				"MAPPING_SAVED": "Event trigger mapping saved successfully.",
+				"MAPPING_REMOVED": "Event trigger mapping removed successfully.",
+				"SAVE_FAILED": "Failed to save event trigger mapping.",
+				"REMOVE_FAILED": "Failed to remove event trigger mapping.",
+				"LOAD_FAILED": "Failed to load event triggers."
+			}
+		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Plane Project Management Integration",
+			"WEB_URL": "Plane Web URL",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "Plane Admin URL",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "Plane Space URL",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Enter the URLs where your Plane instance is hosted. The Web URL is required. Admin and Space URLs are optional.",
+			"URL_REQUIRED": "This URL is required.",
+			"URL_INVALID": "Please enter a valid URL starting with http:// or https://.",
+			"LOADING": "Loading settings...",
+			"REGENERATE_KEY": "Regenerate",
+			"REGENERATE_KEY_LABEL": "API Key & Secret",
+			"CONFIRM_DELETE": "Are you sure you want to remove this Plane integration? This will revoke the API key.",
+			"CONFIRM_REGENERATE": "Are you sure you want to regenerate the API key? The current key will be invalidated.",
+			"API_KEY_DIALOG": {
+				"TITLE": "API Credentials",
+				"WARNING": "Copy these credentials now. The API secret will not be shown again.",
+				"API_KEY": "API Key",
+				"API_SECRET": "API Secret",
+				"COPY": "Copy",
+				"COPIED": "Copied!"
+			}
+		},
 		"COMING_SOON": "Coming soon",
+		"PAID_LABEL": "Paid",
 		"RE_INTEGRATE": "Re-integrate",
 		"SETTINGS": "Settings",
 		"SELECT_GROUPS": "Select Groups",
@@ -4321,7 +4436,11 @@
 			"UI_HOSTNAME": "UI Hostname / IP Address",
 			"TITLE_SERVER_API": "Ever Gauzy API Server Installation Wizard",
 			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App provides the full functionality of the Gauzy Platform available directly on your desktop computer or a laptop. In addition, it allows tracking work time, activity recording, and the ability to receive tracking reminders/notifications.",
-			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
+			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection.",
+			"JWT_SECRET": "Jwt Secret",
+			"JWT_SECRET_PLACEHOLDER": "secret key for JWT",
+			"JWT_REFRESH_TOKEN_SECRET": "Jwt Refresh Token Secret",
+			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "secret key for JWT refresh token"
 		},
 		"SETTINGS": {
 			"INSTALL_FROM_COMPUTER": "Install from your computer",
@@ -4494,7 +4613,19 @@
 			"ERROR_OCCURRED": "Error Occurred",
 			"SELECT_FILE": "Select file",
 			"EXIT_AGENT_LOGIN_CONFIRM": "Oops! You need to log in before you can use the app.",
-			"EXIT_AGENT_PREVENT_CONFIRM": "Oops! You are not allowed to exit. Please contact your account administrator."
+			"EXIT_AGENT_PREVENT_CONFIRM": "Oops! You are not allowed to exit. Please contact your account administrator.",
+			"DB_CLEANUP_TITLE": "Database version is probably outdated",
+			"DB_CLEANUP_MESSAGE": "A new version of the app has been detected. To avoid breaking changes, would you like to wipe the local database to use a fresh one?",
+			"DB_CLEANUP_DETAIL": "Removing the database will wipe locally cached data. Data already synced to the server will safely rest on the Gauzy cloud.",
+			"DB_CLEANUP_REMOVE": "Remove Database",
+			"DB_CLEANUP_KEEP": "Keep It",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Unsynced Data Detected",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Warning: Data Loss Possible",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "You have {{countsText}}. Removing the database will PERMANENTLY erase this offline data. If you are unsure, click 'Keep It'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "We could not determine whether you have unsynced offline data. Removing the database may PERMANENTLY erase unsaved work. If you are unsure, click 'Keep It'.",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
+			"AND_JOIN": "and"
 		},
 		"NO_LIMIT": "∞ No Limit",
 		"TASK": "Task",
@@ -4722,7 +4853,8 @@
 		"VISITED_DATES": "Visited Dates",
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
-		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project."
+		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
+		"SCREEN_SELECTED": "{{ count }} Screen(s) selected"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
@@ -5081,6 +5213,7 @@
 			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
+			"PASSWORD_STRENGTH": "Password must include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.",
 			"CONFIRM_PASSWORD_REQUIRED": "Password confirmation is required!",
 			"PASSWORDS_NOT_MATCH": "Password does not match the confirm password!",
 			"CHECK_BOX_TEXTS": {
@@ -5124,6 +5257,7 @@
 			"EMAIL_REAL_REQUIRED": "Email address should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
+			"PASSWORD_STRENGTH": "Password must include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.",
 			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces.",
 			"CODE_REQUIRED_LENGTH": "Code should contain {{ requiredLength }} characters."
 		},
@@ -5177,7 +5311,8 @@
 			"NEW_PASSWORD_REQUIRED": "New password is required!",
 			"CONFIRM_PASSWORD_REQUIRED": "Password confirmation is required!",
 			"PASSWORDS_NOT_MATCH": "Password does not match with the confirm password!",
-			"PASSWORD_SHOULD_CONTAIN": "New password should contain from {{ minLength }} to {{ maxLength }} characters!"
+			"PASSWORD_SHOULD_CONTAIN": "New password should contain from {{ minLength }} to {{ maxLength }} characters!",
+			"PASSWORD_STRENGTH": "Password must include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character."
 		}
 	},
 	"PAGINATION": {
@@ -5274,6 +5409,8 @@
 		"DOWNLOADS": "downloads",
 		"FREE": "Free",
 		"NO_DESCRIPTION": "No description available",
+		"INSTALL_IN_DESKTOP": "Install in {{ appName }}",
+		"INSTALL_IN_DESKTOP_TOOLTIP": "Install this plugin in your preferred desktop application",
 		"PENDING_INSTALLATION": {
 			"TITLE": "Pending Plugin Installation",
 			"DESCRIPTION": "The following plugins are waiting to be installed",
@@ -5551,6 +5688,11 @@
 			"UPLOADED_FILE": "Uploaded File",
 			"UNKNOWN_SOURCE": "Unknown Source"
 		},
+		"BUILTIN": {
+			"TITLE": "Built-in Integrations",
+			"SUBTITLE": "Native integrations included with Gauzy — click to configure.",
+			"DESKTOP_NOTICE": "These integrations are configured via the Gauzy web app. Open the web app to manage them."
+		},
 		"MARKETPLACE": {
 			"UPLOAD": "Upload New Plugin",
 			"OFFLINE": "You are currently offline/disconnected ⛓️‍💔",
@@ -5564,6 +5706,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Discover",
+			"MARKETPLACE": "Marketplace",
+			"BUILTIN": "Built-in",
 			"INSTALLED": "Installed",
 			"VERSION_HISTORY": "Version History"
 		},
@@ -5619,6 +5763,20 @@
 				"VALIDATION": {
 					"REQUIRED": "Authentication token is required"
 				}
+			},
+			"APP_SELECTOR": {
+				"TITLE": "Open in Desktop App",
+				"SUBTITLE": "Choose which desktop application to use for installation",
+				"DESKTOP": "Gauzy Desktop",
+				"DESKTOP_DESC": "Full-featured desktop application with all Gauzy capabilities",
+				"TIMER": "Gauzy Timer",
+				"TIMER_DESC": "Lightweight time tracking application",
+				"SERVER": "Gauzy Server",
+				"SERVER_DESC": "Self-hosted Gauzy server application",
+				"API_SERVER": "Gauzy API Server",
+				"API_SERVER_DESC": "Standalone API server for Gauzy services",
+				"AGENT": "Gauzy Agent",
+				"AGENT_DESC": "Background agent for monitoring and automation"
 			}
 		},
 		"TOASTR": {
@@ -5669,7 +5827,8 @@
 				"DOWNLOAD_COMPLETED": "Download completed",
 				"SERVER_INSTALLATION_COMPLETED": "Server installation completed",
 				"ACTIVATING": "Activating plugin...",
-				"REVERTING_INSTALLATION": "Reverting installation..."
+				"REVERTING_INSTALLATION": "Reverting installation...",
+				"DEEP_LINK_OPENED": "Desktop app opened. Complete the installation there."
 			},
 			"ERROR": {
 				"VERSION": {
@@ -5696,7 +5855,8 @@
 				"COMPLETE_INSTALLATION": "Failed to complete installation"
 			},
 			"WARNING": {
-				"PLUGIN_NOT_FOUND": "Plugin not found: {{name}}"
+				"PLUGIN_NOT_FOUND": "Plugin not found: {{name}}",
+				"DEEP_LINK_FAILED": "Could not open the desktop app. Please make sure it is installed and try again."
 			}
 		},
 		"BUTTONS": {
@@ -5757,20 +5917,46 @@
 		"USER_MANAGEMENT": {
 			"TITLE": "User Assignment Management",
 			"DESCRIPTION": "Manage user access and assignments for this plugin",
+			"MANAGE_TITLE": "Manage Plugin Users",
+			"MANAGE_SUBTITLE": "Assign and manage user access for this plugin",
 			"TOTAL_ASSIGNED": "Total Assigned",
 			"ACTIVE_USERS": "Active Users",
+			"DISABLED_USERS": "Disabled Users",
+			"ASSIGNED": "Assigned",
 			"ASSIGNED_USERS": "Assigned Users",
 			"ASSIGNED_ON": "Assigned on",
 			"ACTIVE": "Active",
 			"INACTIVE": "Inactive",
-			"UNASSIGN": "Unassign User",
+			"DISABLED": "Disabled",
+			"UNASSIGN": "Unassign",
+			"UNASSIGN_USER": "Unassign User",
+			"UNASSIGN_USER_CONFIRM": "Are you sure you want to remove {{userName}} from this plugin? They will lose all access.",
 			"NO_USERS_ASSIGNED": "No users assigned yet",
 			"NO_USERS_HINT": "Users you assign to this plugin will appear here",
+			"NO_USERS_AVAILABLE": "No users available to assign",
+			"NO_USERS_TITLE": "No Users Assigned",
+			"NO_USERS_DESCRIPTION": "No users have been assigned to this plugin yet. Assign users to grant them access.",
+			"NO_ASSIGNMENTS_YET": "No users have been assigned yet",
 			"END_OF_LIST": "End of list",
+			"ORGANIZATION_ACCESS": "Organization Access",
+			"ASSIGN_TAB": "Assign Users",
+			"ASSIGNMENTS_TAB": "Assignments",
+			"SEARCH_PLACEHOLDER": "Search users by name or email...",
+			"REASON_LABEL": "Reason (optional)",
+			"REASON_PLACEHOLDER": "Enter reason for assignment...",
+			"ASSIGN_COUNT": "Assign {{ count }} User(s)",
+			"ENABLE_ALL": "Enable All",
+			"ENABLE_ALL_TOOLTIP": "Enable access for all assigned users",
+			"ENABLE_ALL_CONFIRM": "Are you sure you want to enable access for all assigned users?",
+			"DISABLE_ALL": "Disable All",
+			"DISABLE_ALL_TOOLTIP": "Disable access for all assigned users",
+			"DISABLE_ALL_CONFIRM": "Are you sure you want to disable access for all assigned users?",
 			"SUCCESS": {
 				"USERS_ASSIGNED": "{{count}} user(s) assigned successfully",
 				"USER_UNASSIGNED": "User unassigned successfully",
-				"BULK_ASSIGNED": "{{count}} user(s) assigned in bulk"
+				"BULK_ASSIGNED": "{{count}} user(s) assigned in bulk",
+				"PLUGIN_ENABLED": "Plugin enabled successfully",
+				"PLUGIN_DISABLED": "Plugin disabled successfully"
 			},
 			"ERROR": {
 				"LOAD_USERS": "Failed to load assigned users",

@@ -341,14 +341,14 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 					);
 				} else {
 					console.log('Update Synced Timer Offline');
-					await getTimerService().update(
-						new Timer({
-							id: arg.id,
-							...(arg.startedAt && {
+					if (arg.startedAt) {
+						await timerService.update(
+							new Timer({
+								id: arg.id,
 								startedAt: new Date(arg.startedAt)
 							})
-						})
-					);
+						);
+					}
 				}
 			} else {
 				console.log('No arg.id found');
@@ -414,6 +414,11 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			timeSlotId: lastCapture?.timeslotId
 		};
 	});
+
+	ipcMain.handle('SET_OFFLINE_MODE', async () => {
+		const offlineMode = DesktopOfflineModeHandler.instance;
+		offlineMode.forceOffline();
+	})
 
 	pluginListeners();
 }
@@ -948,7 +953,7 @@ export function ipcTimer(
 			ipcMain.once('setting_window_ready', () => {
 				getAppWindowManager().settingShow('goto_top_menu');
 			});
-			await getAppWindowManager().loadSetting(windowPath.timeTrackerUi);
+			await appWindowManager.loadSetting(windowPath.timeTrackerUi);
 		} else {
 			getAppWindowManager().settingShow('goto_top_menu');
 		}
@@ -1094,11 +1099,13 @@ export function ipcTimer(
 
 			timeTrackerWindow.webContents.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
+				isOffline: offlineMode.enabled,
 				timeSlotId: lastTime ? lastTime.timeslotId : null
 			});
 		} catch (error) {
 			log.error('Error on refresh timer', error);
 			timeTrackerWindow.webContents.send('timer_tracker_show', {
+				isOffline: offlineMode.enabled,
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: null
 			});
@@ -1186,14 +1193,14 @@ export function ipcTimer(
 		const setting = LocalStore.getStore('appSetting');
 		const auth = LocalStore.getStore('auth');
 		if (setting?.alwaysOn && auth?.employeeId) {
-			await getAppWindowManager().initAlwaysOnWindow(windowPath.timeTrackerUi);
-			getAppWindowManager().alwaysOnWindow.show?.();
+			const alwaysOnWindow = await appWindowManager.initAlwaysOnWindow(windowPath.timeTrackerUi);
+			alwaysOnWindow?.show();
 		}
 	});
 
 	ipcMain.on('hide_ao', (event, arg) => {
-		if (getAppWindowManager().alwaysOnWindow) {
-			getAppWindowManager().alwaysOnWindow.browserWindow?.close?.();
+		if (appWindowManager.alwaysOnWindow) {
+			appWindowManager.alwaysOnWindow.close();
 		}
 	});
 
@@ -1303,7 +1310,8 @@ export function removeAllHandlers() {
 		'FINISH_SYNCED_TIMER',
 		'COLLECT_ACTIVITIES',
 		'START_SERVER',
-		'GET_LAST_CAPTURE'
+		'GET_LAST_CAPTURE',
+		'SET_OFFLINE_MODE'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
@@ -1441,8 +1449,9 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 	const auth = LocalStore.getStore('auth');
 
 	const logout = async () => {
-		await getUserService().remove();
-		timeTrackerWindow.webContents.send('__logout__');
+		await userService.remove();
+		// Explicitly pass `false` to prevent the Angular app from triggering an unwanted restart.
+		timeTrackerWindow.webContents.send('__logout__', false);
 		LocalStore.updateAuthSetting({ isLogout: true });
 	};
 

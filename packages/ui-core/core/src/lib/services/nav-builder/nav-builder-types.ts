@@ -6,7 +6,7 @@ import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
 export type NavMenuBadgeType = 'basic' | 'primary' | 'info' | 'success' | 'warning' | 'danger' | 'control';
 
 // Define the possible menu categories
-export type NavMenuCategory = 'main' | 'settings' | 'accordion';
+export type NavMenuCategory = 'main' | 'settings' | 'workspace';
 
 /**
  * A NavMenuSection is a grouping of links in the main (left-hand side) navigation menu bar.

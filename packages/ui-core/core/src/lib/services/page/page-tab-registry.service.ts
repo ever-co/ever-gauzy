@@ -1,4 +1,4 @@
-import { Inject, Injectable, TemplateRef, Type } from '@angular/core';
+import { inject, Injectable, TemplateRef, Type } from '@angular/core';
 import { PageTabsetPageId } from '../../common/component-registry.types';
 import { IPageTabRegistry, PageTabRegistryConfig } from './page-tab-registry.types';
 import { Store } from '../store/store.service';
@@ -7,6 +7,7 @@ import { Store } from '../store/store.service';
 	providedIn: 'root'
 })
 export class PageTabRegistryService implements IPageTabRegistry {
+	private readonly _store = inject(Store);
 	private logging: boolean = false;
 
 	/**
@@ -15,8 +16,6 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	 * This Map stores arrays of PageTabRegistryConfig objects, keyed by PageTabsetPageId.
 	 */
 	private readonly registry = new Map<PageTabsetPageId, PageTabRegistryConfig[]>();
-
-	constructor(@Inject(Store) private readonly _store: Store) {}
 
 	/**
 	 * Retrieves the current tab registry.

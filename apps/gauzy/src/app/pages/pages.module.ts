@@ -8,12 +8,13 @@ import { ThemeModule } from '@gauzy/ui-core/theme';
 import { PagesComponent } from './pages.component';
 import { PagesRoutingModule } from './pages-routing.module';
 
-const NB_MODULES = [NbMenuModule, NbToastrModule.forRoot(), NbSpinnerModule, NbIconModule];
-
 @NgModule({
 	imports: [
 		CommonModule,
-		...NB_MODULES,
+		NbMenuModule,
+		NbToastrModule,
+		NbSpinnerModule,
+		NbIconModule,
 		NgxFeatureToggleModule,
 		PagesRoutingModule,
 		ThemeModule,

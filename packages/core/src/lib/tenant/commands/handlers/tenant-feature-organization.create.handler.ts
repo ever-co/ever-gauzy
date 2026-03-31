@@ -6,11 +6,10 @@ import { TenantFeatureOrganizationCreateCommand } from '../tenant-feature-organi
 
 @CommandHandler(TenantFeatureOrganizationCreateCommand)
 export class TenantFeatureOrganizationCreateHandler implements ICommandHandler<TenantFeatureOrganizationCreateCommand> {
-
 	constructor(
 		@Inject(forwardRef(() => FeatureOrganizationService))
 		private readonly _featureOrganizationService: FeatureOrganizationService
-	) { }
+	) {}
 
 	/**
 	 * Executes the TenantFeatureOrganizationCreateCommand. This method takes the command,
@@ -21,9 +20,7 @@ export class TenantFeatureOrganizationCreateHandler implements ICommandHandler<T
 	 * @param command An instance of TenantFeatureOrganizationCreateCommand containing tenant and feature organization data.
 	 * @returns A Promise that resolves to an array of IFeatureOrganization, representing the updated or created feature organizations.
 	 */
-	public async execute(
-		command: TenantFeatureOrganizationCreateCommand
-	): Promise<IFeatureOrganization[]> {
+	public async execute(command: TenantFeatureOrganizationCreateCommand): Promise<IFeatureOrganization[]> {
 		const { input } = command;
 		return await this._featureOrganizationService.updateTenantFeatureOrganizations(input);
 	}

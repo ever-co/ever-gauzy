@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ExtraOptions, RouterModule, Routes } from '@angular/router';
-import { authConnectionGuard } from '@gauzy/desktop-ui-lib';
+import { authConnectionGuard, noAuthGuard } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
 	{
@@ -17,6 +17,11 @@ const routes: Routes = [
 		canActivate: [authConnectionGuard],
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.TimeTrackerComponent),
 		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.RecapModule)
+	},
+	{
+		path: 'auth',
+		canActivate: [noAuthGuard],
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.AuthModule)
 	},
 	{
 		path: 'screen-capture',

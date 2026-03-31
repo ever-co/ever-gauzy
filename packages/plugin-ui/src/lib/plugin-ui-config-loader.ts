@@ -19,7 +19,7 @@ export type PluginUiConfigLoader = () => Promise<{ uiPluginConfig: PluginUiConfi
  * TypeScript module or a JSON endpoint), keeping the door open for runtime
  * sources without changing the plugin-ui package.
  *
- * @param configLoader Async function that returns the application's UI config.
+ * @param configuration Async function that returns the application's UI config.
  * @throws If the configuration is structurally invalid.
  *
  * @example
@@ -29,8 +29,8 @@ export type PluginUiConfigLoader = () => Promise<{ uiPluginConfig: PluginUiConfi
  *   .catch((err) => console.error(err));
  * ```
  */
-export async function loadPluginUiConfig(configLoader: PluginUiConfigLoader): Promise<void> {
-	const { uiPluginConfig } = await configLoader();
+export async function loadPluginUiConfig(configuration: PluginUiConfigLoader): Promise<void> {
+	const { uiPluginConfig } = await configuration();
 
 	// ── Validate plugins ────────────────────────────────────
 	if (!uiPluginConfig?.plugins || !Array.isArray(uiPluginConfig.plugins)) {

@@ -148,7 +148,8 @@
 		"@gauzy/contracts": "file:../../../dist/packages/contracts",
 		"@gauzy/utils": "file:../../../dist/packages/utils",
 		"@gauzy/common": "file:../../../dist/packages/common",
-		"@gauzy/constants": "file:../../../dist/packages/constants"
+		"@gauzy/constants": "file:../../../dist/packages/constants",
+		"knex": "3.1.0"
 	},
 	"pkg": {
 		"assets": [],

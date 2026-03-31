@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, AbstractControl } from '@angular/forms';
+import { ALPHA_NUMERIC_CODE_LENGTH } from '@gauzy/constants';
 
 /**
  * Shared component for email and code input form.
@@ -31,6 +32,8 @@ export class EmailCodeFormComponent implements OnInit {
 	@Output() readonly resendCode = new EventEmitter<void>();
 	@Output() readonly submitForm = new EventEmitter<void>();
 	@Output() readonly editEmail = new EventEmitter<void>();
+
+	public readonly codeLength = ALPHA_NUMERIC_CODE_LENGTH;
 
 	ngOnInit(): void {
 		if (!this.form) {

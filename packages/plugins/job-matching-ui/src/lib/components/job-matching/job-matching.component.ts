@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { Observable, combineLatest, map, BehaviorSubject, merge } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,16 +32,26 @@ import { I18nService, TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-job-matching',
-    templateUrl: './job-matching.component.html',
-    styleUrls: ['./job-matching.component.scss'],
-    standalone: false
+	selector: 'ga-job-matching',
+	templateUrl: './job-matching.component.html',
+	styleUrls: ['./job-matching.component.scss'],
+	standalone: false
 })
 export class JobMatchingComponent extends TranslationBaseComponent implements OnInit {
 	public criterionForm = {
 		jobSource: JobPostSourceEnum.UPWORK,
 		jobPresetId: null
 	};
+
+	private readonly _ngxPermissionsService = inject(NgxPermissionsService);
+	private readonly _store = inject(Store);
+	private readonly _i18nService = inject(I18nService);
+	private readonly _jobPresetService = inject(JobPresetService);
+	private readonly _jobSearchOccupationService = inject(JobSearchOccupationService);
+	private readonly _jobSearchCategoryService = inject(JobSearchCategoryService);
+	private readonly _toastrService = inject(ToastrService);
+	private readonly _errorHandlingService = inject(ErrorHandlingService);
+
 	public JobPostSourceEnum = JobPostSourceEnum;
 	public JobPostTypeEnum = JobPostTypeEnum;
 	public jobPresets: IJobPreset[] = [];
@@ -56,18 +66,8 @@ export class JobMatchingComponent extends TranslationBaseComponent implements On
 	public organization: IOrganization;
 	private payloads$: BehaviorSubject<object | null> = new BehaviorSubject(null);
 
-	constructor(
-		readonly translateService: TranslateService,
-		private readonly _ngxPermissionsService: NgxPermissionsService,
-		private readonly _store: Store,
-		private readonly _i18nService: I18nService,
-		private readonly _jobPresetService: JobPresetService,
-		private readonly _jobSearchOccupationService: JobSearchOccupationService,
-		private readonly _jobSearchCategoryService: JobSearchCategoryService,
-		private readonly _toastrService: ToastrService,
-		private readonly _errorHandlingService: ErrorHandlingService
-	) {
-		super(translateService);
+	constructor() {
+		super(inject(TranslateService));
 	}
 
 	ngOnInit(): void {

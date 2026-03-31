@@ -4,6 +4,9 @@ import { loadEnv } from './load-env';
 
 async function bootstrap() {
 	loadEnv();
+	const { registerPluginConfig } = await import('@gauzy/core');
+	await registerPluginConfig({});
+
 	const { AppModule } = await import('./app/app.module');
 
 	const app = await NestFactory.createApplicationContext(AppModule, {

@@ -1,4 +1,5 @@
 import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import { ALPHA_NUMERIC_CODE_LENGTH } from '@gauzy/constants';
 
 export function length(text: string, length: number): boolean {
     return (typeof text === 'string' && typeof length === 'number') && (text.length == length);
@@ -7,11 +8,11 @@ export function length(text: string, length: number): boolean {
 /**
  * Custom length validation decorator.
  *
- * @param length - The expected length of the property.
+ * @param length - The expected length of the property. Defaults to ALPHA_NUMERIC_CODE_LENGTH.
  * @param validationOptions - Options for the validation decorator.
  * @returns {PropertyDecorator} - Decorator function.
  */
-export const CustomLength = (length: number = 6, validationOptions?: ValidationOptions): PropertyDecorator => {
+export const CustomLength = (length: number = ALPHA_NUMERIC_CODE_LENGTH, validationOptions?: ValidationOptions): PropertyDecorator => {
     return (object: any, propertyName: string) => {
         registerDecorator({
             target: object.constructor,

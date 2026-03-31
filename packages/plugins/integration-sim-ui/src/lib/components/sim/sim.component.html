@@ -1,0 +1,32 @@
+<nb-card>
+	<nb-card-header class="d-flex align-items-center justify-content-between">
+		<div class="d-flex align-items-center">
+			<ngx-back-navigation
+				role="button"
+				tabindex="0"
+				(click)="navigateToIntegrations()"
+				(keydown.enter)="navigateToIntegrations()"
+				(keydown.space)="navigateToIntegrations(); $event.preventDefault()"
+			></ngx-back-navigation>
+			<nb-actions size="small" class="ml-2">
+				<nb-action>
+					<h5 class="mb-0">{{ 'INTEGRATIONS.SIM_PAGE.TITLE' | translate }}</h5>
+				</nb-action>
+			</nb-actions>
+		</div>
+		<nb-actions size="small">
+			<nb-action>
+				<nb-icon
+					icon="settings-2-outline"
+					[nbContextMenu]="menus"
+					nbContextMenuTag="sim-settings-context-menu"
+					[attr.aria-label]="'INTEGRATIONS.SIM_PAGE.SETTINGS.TITLE' | translate"
+				></nb-icon>
+			</nb-action>
+		</nb-actions>
+	</nb-card-header>
+
+	<nb-card-body>
+		<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
+	</nb-card-body>
+</nb-card>

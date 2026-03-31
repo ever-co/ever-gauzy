@@ -44,7 +44,7 @@ import {
 	Store
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { patterns } from '../../regex/regex-patterns.const';
+import { patterns } from '@gauzy/constants';
 import { FormHelpers } from '../../forms/helpers';
 import { ckEditorConfig } from '../../ckeditor.config';
 import { ProjectModuleMutationComponent } from '../../project-module/project-module-mutation/project-module-mutation.component';

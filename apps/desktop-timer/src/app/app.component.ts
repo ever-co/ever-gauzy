@@ -65,12 +65,19 @@ export class AppComponent implements OnInit, AfterViewInit {
 			.pipe(
 				switchMap((arg) =>
 					interval(1000).pipe(
-						exhaustMap(() =>
-							from(this.appService.pingServer(arg)).pipe(
-								map(() => 200),
-								catchError((err) => of(err?.status ?? 0))
+						exhaustMap(() => {
+							return from(this.electronService.ipcRenderer.invoke('IS_OFFLINE')).pipe(
+								switchMap((isOfflineMode) => {
+									if (isOfflineMode) {
+										return of(200);
+									}
+									return from(this.appService.pingServer(arg)).pipe(
+										map(() => 200),
+										catchError((err) => of(err?.status ?? 0))
+									);
+								})
 							)
-						),
+						}),
 						tap((status) => {
 							this.store.serverConnection = status;
 						}),
@@ -184,7 +191,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	}
 
 	private handlePostLogout(shouldRestart: boolean): void {
-		if (shouldRestart) {
+		if (shouldRestart === true) {
 			this.electronService.ipcRenderer.send('restart_and_update');
 			return;
 		}

@@ -36,17 +36,20 @@ export class AuthIPCHandler {
 			if (timeTrackerWindow && arg.employeeId) {
 				this.initializeTimeTracker(timeTrackerWindow, arg, appConfig.gauzyWindow);
 			}
+			if (appConfig.gauzyWindow && timeTrackerWindow) {
+				timeTrackerWindow.webContents.send('gauzy_auth_success', arg);
+			}
 
 			event.sender.send('refresh_menu');
 		});
 	}
 
 	private setupLogoutHandlers(): void {
-		ipcMain.handle('FINAL_LOGOUT', async () => {
+		ipcMain.handle('FINAL_LOGOUT', async (_, arg: { isRestart?: boolean }) => {
 			console.log('Final Logout');
 
 			const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
-			await this.performLogout(timeTrackerWindow);
+			await this.performLogout(timeTrackerWindow, arg?.isRestart);
 		});
 
 		ipcMain.on('logout', () => {
@@ -57,7 +60,7 @@ export class AuthIPCHandler {
 		});
 	}
 
-	private async performLogout(timeTrackerWindow: BrowserWindow): Promise<void> {
+	private async performLogout(timeTrackerWindow: BrowserWindow, isRestart?: boolean): Promise<void> {
 		// Clear timer display
 		this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {
 			event: 'updateTimer',
@@ -70,7 +73,7 @@ export class AuthIPCHandler {
 		await this.handleGauzyWindowLogout(timeTrackerWindow);
 		this.closePluginsWindow();
 
-		await this.authHandler.handleLogout();
+		await this.authHandler.handleLogout(isRestart);
 	}
 
 	private updateMenuItems(hasEmployeeId: boolean, timeTrackerEnabled: boolean): void {
@@ -113,7 +116,8 @@ export class AuthIPCHandler {
 	private closePluginsWindow(): void {
 		try {
 			const appWindowManager = AppWindowManager.getInstance();
-			appWindowManager.pluginsWindow?.close?.();
+			const pluginsWindow = appWindowManager.pluginsWindow;
+			if (pluginsWindow) pluginsWindow.close();
 		} catch (error) {
 			console.error('An error occurred while closing plugin window', error);
 		}

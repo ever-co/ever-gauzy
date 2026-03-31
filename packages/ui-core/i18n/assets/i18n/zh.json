@@ -178,7 +178,8 @@
 		"RECOVER": "恢复",
 		"ADD_MORE_SOURCES": "添加更多来源",
 		"REMOVE_FROM_FAVORITES": "从收藏夹中移除",
-		"ADD_TO_FAVORITES": "添加到收藏夹"
+		"ADD_TO_FAVORITES": "添加到收藏夹",
+		"UNSELECT_ALL": "取消全选"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1487,6 +1488,118 @@
 				"SUCCESS": {
 					"CONNECTION_CREATED": "ActivePieces 连接创建成功"
 				}
+			}
+		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "SIM AI 工作流集成",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "输入您的 SIM AI API 密钥以连接您的账户。您可以在 sim.ai 的 SIM 控制面板中找到您的 API 密钥。",
+				"NEXT": "连接",
+				"HINT": "您的 API 密钥将被安全存储，用于验证工作流执行。",
+				"ERRORS": {
+					"INVALID_FORM": "请正确填写所有必填字段",
+					"SAVE_SETTINGS": "保存设置失败",
+					"ORGANIZATION_NOT_FOUND": "未找到组织",
+					"CHECK_REMEMBER_STATE": "检查记忆状态失败"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "SIM AI 集成配置成功"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "SIM AI 设置",
+				"SUBTITLE": "配置您的 SIM AI 集成设置",
+				"API_KEY": "API 密钥",
+				"API_KEY_PLACEHOLDER": "输入您的 SIM AI API 密钥"
+			},
+			"EXECUTIONS": {
+				"TITLE": "执行历史",
+				"NO_EXECUTIONS": "未找到工作流执行记录。从工作流选项卡执行工作流以在此处查看结果。",
+				"WORKFLOW_ID": "工作流 ID",
+				"WORKFLOW_ID_PLACEHOLDER": "按工作流 ID 过滤",
+				"EXECUTION_ID": "执行 ID",
+				"STATUS": "状态",
+				"TRIGGERED_BY": "触发者",
+				"DURATION": "持续时间",
+				"CREATED": "创建时间",
+				"LOADING": "正在加载执行历史...",
+				"LOAD": "搜索",
+				"ALL_STATUSES": "所有状态",
+				"SHOWING": "显示",
+				"OF": "共",
+				"PREVIOUS_PAGE": "上一页",
+				"NEXT_PAGE": "下一页"
+			},
+			"WORKFLOWS": {
+				"TITLE": "工作流",
+				"VALIDATE_TITLE": "验证工作流",
+				"EXECUTE_TITLE": "执行工作流",
+				"JOB_STATUS_TITLE": "异步任务状态",
+				"WORKFLOW_ID": "工作流 ID",
+				"WORKFLOW_ID_PLACEHOLDER": "输入您的 SIM 工作流 ID",
+				"VALIDATE": "验证",
+				"DEPLOYED": "工作流已部署并可执行。",
+				"NOT_DEPLOYED": "工作流未部署或未找到。",
+				"EXECUTE": "执行",
+				"ASYNC": "异步",
+				"TIMEOUT": "超时时间 (ms)",
+				"INPUT": "输入 (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "以有效的 JSON 格式提供工作流输入。这些数据将传递给您的 SIM 工作流。",
+				"RESULT": "执行结果",
+				"TASK_ID": "任务 ID",
+				"TASK_ID_PLACEHOLDER": "输入异步任务 ID",
+				"CHECK_STATUS": "检查状态",
+				"JOB_RESULT": "任务状态",
+				"INVALID_JSON": "无效的 JSON 输入",
+				"EXECUTION_FAILED": "执行失败"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "事件触发器",
+				"ADD_TITLE": "添加事件触发器",
+				"ACTIVE_TITLE": "活跃的事件触发器",
+				"DESCRIPTION": "配置自动工作流触发器。当平台事件发生时，映射的 SIM 工作流将自动执行。",
+				"EVENT": "事件",
+				"SELECT_EVENT": "选择一个事件",
+				"WORKFLOW_ID": "工作流 ID",
+				"WORKFLOW_ID_PLACEHOLDER": "输入要触发的 SIM 工作流 ID",
+				"ADD": "添加",
+				"REMOVE": "移除映射",
+				"NO_MAPPINGS": "未配置事件触发器。在上方添加映射以自动从平台事件触发 SIM 工作流。",
+				"LOADING": "正在加载事件触发器...",
+				"MAPPING_SAVED": "事件触发器映射已成功保存。",
+				"MAPPING_REMOVED": "事件触发器映射已成功移除。",
+				"SAVE_FAILED": "保存事件触发器映射失败。",
+				"REMOVE_FAILED": "移除事件触发器映射失败。",
+				"LOAD_FAILED": "加载事件触发器失败。"
+			}
+		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Plane 项目管理集成",
+			"WEB_URL": "Plane Web URL",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "Plane 管理员 URL",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "Plane Space URL",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "输入您的 Plane 实例托管的 URL。Web URL 为必填项。管理员和 Space URL 为可选项。",
+			"URL_REQUIRED": "此 URL 为必填项。",
+			"URL_INVALID": "请输入以 http:// 或 https:// 开头的有效 URL。",
+			"LOADING": "正在加载设置...",
+			"REGENERATE_KEY": "重新生成",
+			"REGENERATE_KEY_LABEL": "API 密钥和密钥密码",
+			"CONFIRM_DELETE": "您确定要移除此 Plane 集成吗？API 密钥将被撤销。",
+			"CONFIRM_REGENERATE": "您确定要重新生成 API 密钥吗？当前密钥将失效。",
+			"API_KEY_DIALOG": {
+				"TITLE": "API 凭据",
+				"WARNING": "请立即复制这些凭据。API 密钥密码将不会再次显示。",
+				"API_KEY": "API 密钥",
+				"API_SECRET": "API 密钥密码",
+				"COPY": "复制",
+				"COPIED": "已复制！"
 			}
 		},
 		"COMING_SOON": "即将推出",
@@ -4184,7 +4297,11 @@
 			"UI_HOSTNAME": "界面主机名/ IP地址",
 			"TITLE_SERVER_API": "Ever Gauzy API 服务器安装向导",
 			"LABEL_SERVER_API": "Ever Gauzy API Server 桌面应用程序提供 Gauzy 平台的全部功能，可直接在您的台式计算机或笔记本电脑上使用。此外，它还允许跟踪工作时间、活动记录以及接收跟踪提醒/通知的功能。",
-			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
+			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection.",
+			"JWT_SECRET": "JWT 密钥",
+			"JWT_SECRET_PLACEHOLDER": "请输入 JWT 的密钥",
+			"JWT_REFRESH_TOKEN_SECRET": "JWT 刷新令牌密钥",
+			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "请输入 JWT 刷新令牌的密钥"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "屏幕捕获",
@@ -4348,7 +4465,19 @@
 			"INACTIVITY_HANDLER": "不活动处理程序",
 			"WANT_LOGOUT": "您确定要注销吗？",
 			"ERROR_HANDLER": "错误处理器",
-			"ERROR_OCCURRED": "发生错误"
+			"ERROR_OCCURRED": "发生错误",
+			"DB_CLEANUP_TITLE": "数据库版本可能已过时",
+			"DB_CLEANUP_MESSAGE": "检测到应用程序的新版本。为避免兼容性问题，是否希望清除本地数据库并使用新的数据库？",
+			"DB_CLEANUP_DETAIL": "删除数据库将清除本地缓存的数据。已与服务器同步的数据将安全地保留在 Gauzy 云中。",
+			"DB_CLEANUP_REMOVE": "删除数据库",
+			"DB_CLEANUP_KEEP": "保留",
+			"DB_CLEANUP_UNSYNCED_TITLE": "检测到未同步数据",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "警告：可能丢失数据",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "您有 {{countsText}}。删除数据库将永久清除这些离线数据。如果您不确定，请点击\u201c保留\u201d。",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "我们无法确定您是否有未同步的离线数据。删除数据库可能会永久清除未保存的工作。如果您不确定，请点击\u201c保留\u201d。",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
+			"AND_JOIN": "and"
 		},
 		"NO_LIMIT": "∞ 无限制 (wúxiànzhì)",
 		"TASK": "任务",
@@ -4575,7 +4704,8 @@
 		"VISITED_DATES": "访问日期",
 		"NO_SCREENSHOT": "没有屏幕截图",
 		"NO_SCREENSHOTS": "不允许截屏",
-		"NO_RECORD_FOUND": "没有找到记录。请选择日期范围、员工或项目。"
+		"NO_RECORD_FOUND": "没有找到记录。请选择日期范围、员工或项目。",
+		"SCREEN_SELECTED": "{{ count }} 屏幕已选择"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "让我们创建您的第一个组织",

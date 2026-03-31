@@ -1,57 +1,46 @@
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, inject, NgModule, provideEnvironmentInitializer } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import {
-	NbAlertModule,
-	NbBadgeModule,
-	NbButtonGroupModule,
-	NbButtonModule,
-	NbCardModule,
-	NbCheckboxModule,
-	NbContextMenuModule,
-	NbDatepickerModule,
-	NbDialogModule,
-	NbFormFieldModule,
-	NbIconModule,
-	NbInfiniteListDirective,
-	NbInputModule,
-	NbLayoutModule,
-	NbListModule,
-	NbPopoverModule,
-	NbRadioModule,
-	NbRouteTabsetModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbStepperModule,
-	NbTabsetModule,
-	NbTagModule,
-	NbToggleModule,
-	NbTooltipModule,
-	NbUserModule
+    NbAlertModule,
+    NbBadgeModule,
+    NbButtonGroupModule,
+    NbButtonModule,
+    NbCardModule,
+    NbCheckboxModule,
+    NbContextMenuModule,
+    NbDatepickerModule,
+    NbDialogModule,
+    NbFormFieldModule,
+    NbIconModule,
+    NbInfiniteListDirective,
+    NbInputModule,
+    NbLayoutModule,
+    NbListModule,
+    NbPopoverModule,
+    NbRadioModule,
+    NbRouteTabsetModule,
+    NbSelectModule,
+    NbSpinnerModule,
+    NbStepperModule,
+    NbTabsetModule,
+    NbTagModule,
+    NbToggleModule,
+    NbTooltipModule,
+    NbUserModule
 } from '@nebular/theme';
-import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TablerIconsModule } from '@gauzy/ui-core/icons';
 
+import { provideEffects } from '@ngneat/effects-ng';
 import { InfiniteScrollDirective } from '../../directives/infinite-scroll.directive';
-
-import { PipeModule } from '../../time-tracker/pipes/pipe.module';
 import { PendingInstallationEffects } from './component/+state/pending-installation.effect';
-import { PendingInstallationQuery } from './component/+state/pending-installation.query';
-import { PendingInstallationStore } from './component/+state/pending-installation.store';
 import { PluginEffects } from './component/+state/plugin.effect';
-import { PluginQuery } from './component/+state/plugin.query';
-import { PluginStore } from './component/+state/plugin.store';
-import { AddPluginComponent } from './component/add-plugin/add-plugin.component';
-import { PendingInstallationDialogComponent } from './component/pending-installation-dialog/pending-installation-dialog.component';
-import { PluginLayoutComponent } from './component/plugin-layout/plugin-layout.component';
-import { PluginListComponent } from './component/plugin-list/plugin-list.component';
-import { PluginStatusComponent } from './component/plugin-list/plugin-status/plugin-status.component';
-import { PluginUpdateComponent } from './component/plugin-list/plugin-update/plugin-update.component';
 import { AvailableUsersEffects } from './component/plugin-marketplace/+state/effects/available-users.effects';
+import { PluginCategoryEffects } from './component/plugin-marketplace/+state/effects/plugin-category.effect';
 import { PluginInstallationEffects } from './component/plugin-marketplace/+state/effects/plugin-installation.effect';
 import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/effects/plugin-marketplace.effect';
 import { PluginPlanComparisonEffects } from './component/plugin-marketplace/+state/effects/plugin-plan-comparison.effect';
@@ -60,8 +49,23 @@ import { PluginSettingsEffects } from './component/plugin-marketplace/+state/eff
 import { PluginSourceEffects } from './component/plugin-marketplace/+state/effects/plugin-source.effect';
 import { PluginSubscriptionAccessEffects } from './component/plugin-marketplace/+state/effects/plugin-subscription-access.effects';
 import { PluginSubscriptionEffects } from './component/plugin-marketplace/+state/effects/plugin-subscription.effect';
+import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
+import { PluginUploadIntentEffects } from './component/plugin-marketplace/+state/effects/plugin-upload-intent.effect';
 import { PluginUserAssignmentEffects } from './component/plugin-marketplace/+state/effects/plugin-user-assignment.effects';
 import { PluginVersionEffects } from './component/plugin-marketplace/+state/effects/plugin-version.effect';
+
+import { PipeModule } from '../../time-tracker/pipes/pipe.module';
+import { PendingInstallationQuery } from './component/+state/pending-installation.query';
+import { PendingInstallationStore } from './component/+state/pending-installation.store';
+import { PluginQuery } from './component/+state/plugin.query';
+import { PluginStore } from './component/+state/plugin.store';
+import { AddPluginComponent } from './component/add-plugin/add-plugin.component';
+import { PendingInstallationDialogComponent } from './component/pending-installation-dialog/pending-installation-dialog.component';
+import { PluginLayoutComponent } from './component/plugin-layout/plugin-layout.component';
+import { PluginListComponent } from './component/plugin-list/plugin-list.component';
+import { PluginStatusComponent } from './component/plugin-list/plugin-status/plugin-status.component';
+import { PluginUpdateComponent } from './component/plugin-list/plugin-update/plugin-update.component';
+
 import { UserManagementFacade } from './component/plugin-marketplace/+state/facades/user-management.facade';
 import { PluginSubscriptionAccessFacade } from './component/plugin-marketplace/+state/plugin-subscription-access.facade';
 import { PluginSubscriptionFacade } from './component/plugin-marketplace/+state/plugin-subscription.facade';
@@ -80,6 +84,7 @@ import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace
 import { PluginMarketplaceFilterComponent } from './component/plugin-marketplace/plugin-marketplace-filter/plugin-marketplace-filter.component';
 import { CategorySelectorComponent } from './component/plugin-marketplace/plugin-marketplace-item/category-selector/category-selector.component';
 import { CreateCategoryDialogComponent } from './component/plugin-marketplace/plugin-marketplace-item/create-category-dialog/create-category-dialog.component';
+import { DialogAppSelectorComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-app-selector/dialog-app-selector.component';
 import { DialogCreateSourceComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-source/dialog-create-source.component';
 import { DialogCreateVersionComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-version/dialog-create-version.component';
 import { DialogInstallationValidationComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
@@ -128,9 +133,8 @@ import { UserSubscribedPluginsService } from './services/user-subscribed-plugins
 import { SourceContainerComponent } from './shared/ui/source-container/source-container.component';
 // Shared subscription components and services
 import { ElectronService } from '../../electron/services';
-import { PluginCategoryEffects } from './component/plugin-marketplace/+state/effects/plugin-category.effect';
-import { PluginToggleEffects } from './component/plugin-marketplace/+state/effects/plugin-toggle.effects';
-import { PluginUploadIntentEffects } from './component/plugin-marketplace/+state/effects/plugin-upload-intent.effect';
+
+import { PluginDeepLinkEffects } from './component/plugin-marketplace/+state/effects/plugin-deep-link.effect';
 import { PluginPlanQuery } from './component/plugin-marketplace/+state/queries/plugin-plan.query';
 import { PluginUploadIntentQuery } from './component/plugin-marketplace/+state/queries/plugin-upload-intent.query';
 import { PluginPlanStore } from './component/plugin-marketplace/+state/stores/plugin-plan.store';
@@ -139,18 +143,19 @@ import { OverviewTabModule } from './component/plugin-marketplace/plugin-marketp
 import { UserManagementTabModule } from './component/plugin-marketplace/plugin-marketplace-item/tabs/user-management-tab/user-management-tab.module';
 import { PluginSubscriptionHierarchyComponent } from './component/plugin-marketplace/plugin-subscription-hierarchy/plugin-subscription-hierarchy.component';
 import {
-	BillingContactSectionComponent,
-	BillingCycleSectionComponent,
-	CardDetailsSectionComponent,
-	PaymentMethodSectionComponent,
-	SubscriptionBillingFormComponent,
-	SubscriptionConsentSectionComponent,
-	SubscriptionFormService,
-	SubscriptionPlanService,
-	SubscriptionStatusBadgeComponent,
-	SubscriptionStatusService
+    BillingContactSectionComponent,
+    BillingCycleSectionComponent,
+    CardDetailsSectionComponent,
+    PaymentMethodSectionComponent,
+    SubscriptionBillingFormComponent,
+    SubscriptionConsentSectionComponent,
+    SubscriptionFormService,
+    SubscriptionPlanService,
+    SubscriptionStatusBadgeComponent,
+    SubscriptionStatusService
 } from './component/plugin-marketplace/shared';
 import { UploadSelectionComponent } from './component/upload-selection/upload-selection.component';
+import { PluginDeepLinkService } from './services/plugin-deep-link.service';
 
 @NgModule({
 	imports: [
@@ -228,6 +233,7 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 		CategorySelectorComponent,
 		CreateCategoryDialogComponent,
 		DialogInstallationValidationComponent,
+		DialogAppSelectorComponent,
 		DialogSubscriptionPlanCreatorComponent,
 		CdnFormComponent,
 		GauzyFormComponent,
@@ -265,25 +271,6 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 		// Plan selection services
 		PlanFormatterService,
 		PlanComparisonService,
-		provideEffectsManager(),
-		provideEffects(
-			PluginEffects,
-			PluginInstallationEffects,
-			PluginMarketplaceEffects,
-			PluginVersionEffects,
-			PluginSourceEffects,
-			PluginUserAssignmentEffects,
-			PluginSettingsEffects,
-			PluginSubscriptionEffects,
-			PluginPlanEffects,
-			PluginPlanComparisonEffects,
-			PluginSubscriptionAccessEffects,
-			AvailableUsersEffects,
-			PluginToggleEffects,
-			PluginCategoryEffects,
-			PluginUploadIntentEffects,
-			PendingInstallationEffects
-		),
 		PluginQuery,
 		PluginStore,
 		PluginPlanStore,
@@ -310,3 +297,27 @@ import { UploadSelectionComponent } from './component/upload-selection/upload-se
 	schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class PluginsModule {}
+
+export const providePluginsEffects = () => provideEffects(
+	PluginEffects,
+	PluginDeepLinkEffects,
+	PluginInstallationEffects,
+	PluginMarketplaceEffects,
+	PluginVersionEffects,
+	PluginSourceEffects,
+	PluginUserAssignmentEffects,
+	PluginSettingsEffects,
+	PluginSubscriptionEffects,
+	PluginPlanEffects,
+	PluginPlanComparisonEffects,
+	PluginSubscriptionAccessEffects,
+	AvailableUsersEffects,
+	PluginToggleEffects,
+	PluginCategoryEffects,
+	PluginUploadIntentEffects,
+	PendingInstallationEffects
+);
+
+export const providePluginInitializers = () => provideEnvironmentInitializer(() => {
+	inject(PluginDeepLinkService);
+})

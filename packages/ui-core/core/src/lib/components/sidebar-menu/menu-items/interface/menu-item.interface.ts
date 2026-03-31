@@ -1,6 +1,11 @@
 import { NbMenuItem } from '@nebular/theme';
 import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
 
+export interface IMenuItemFocusChangeEvent {
+	children: IMenuItem;
+	parent: IMenuItem;
+}
+
 export interface IMenuItem extends NbMenuItem {
 	id?: string; // Unique identifier for the menu item.
 	class?: string;

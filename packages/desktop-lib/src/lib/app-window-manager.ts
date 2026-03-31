@@ -1,14 +1,14 @@
-import { LocalStore } from './desktop-store';
-import { BrowserWindow } from 'electron';
 import {
+	AlwaysOn,
 	createAboutWindow,
-	createSetupWindow,
 	createImageViewerWindow,
 	createSettingsWindow,
+	createSetupWindow,
 	PluginMarketplaceWindow,
-	AlwaysOn,
 	setLaunchPathAndLoad
 } from '@gauzy/desktop-window';
+import { BrowserWindow } from 'electron';
+import { LocalStore } from './desktop-store';
 import { DesktopUpdater } from './desktop-updater';
 
 enum WindowName {
@@ -34,7 +34,6 @@ export class AppWindowManager {
 	private _preloadPath: string = null;
 
 	private static instance: AppWindowManager;
-	constructor() { };
 
 	get settingWindow(): BrowserWindow {
 		return this._settingWindow;
@@ -52,11 +51,19 @@ export class AppWindowManager {
 		return this._imageView;
 	}
 
-	get pluginsWindow(): PluginMarketplaceWindow {
+	get pluginsWindow(): PluginMarketplaceWindow | null {
+		// Return null if window is destroyed
+		if (this._pluginsWindow?.isDestroyed()) {
+			this._pluginsWindow = null;
+		}
 		return this._pluginsWindow;
 	}
 
-	get alwaysOnWindow(): AlwaysOn {
+	get alwaysOnWindow(): AlwaysOn | null {
+		// Return null if window is destroyed
+		if (this._alwaysOnWindow?.isDestroyed()) {
+			this._alwaysOnWindow = null;
+		}
 		return this._alwaysOnWindow;
 	}
 
@@ -102,43 +109,48 @@ export class AppWindowManager {
 	}
 
 	async initSettingWindow(filePath: string, preloadPath?: string, launch = false): Promise<BrowserWindow> {
-		if (this._settingWindow) {
+		if (this._settingWindow && !this._settingWindow.isDestroyed()) {
 			return this._settingWindow;
 		}
-		this._settingWindow = await createSettingsWindow(this._settingWindow, filePath, this._preloadPath || preloadPath, false, launch);
+
+		this._settingWindow = await createSettingsWindow(
+			this._settingWindow,
+			filePath,
+			this._preloadPath || preloadPath,
+			false,
+			launch
+		);
 		this.eventCloseWindow(this._settingWindow, WindowName.SETTING);
 		return this._settingWindow;
 	}
 
 	async initPluginsWindow(filePath: string, preloadPath?: string): Promise<PluginMarketplaceWindow> {
-		if (!this._pluginsWindow) {
-			this._pluginsWindow = new PluginMarketplaceWindow(filePath, this._preloadPath || preloadPath);
-			await this._pluginsWindow.loadURL();
+		// If window exists and is not destroyed, return it
+		if (this._pluginsWindow && !this._pluginsWindow.isDestroyed()) {
+			return this._pluginsWindow;
 		}
-		this._pluginsWindow.browserWindow.removeAllListeners('close');
-		this._pluginsWindow.browserWindow.on('close', () => {
-			if (!this._pluginsWindow?.browserWindow?.isDestroyed()) {
-				this._pluginsWindow?.browserWindow?.destroy();
-			}
-
-			this._pluginsWindow = null;
-		});
+		// Create new window instance
+		this._pluginsWindow = new PluginMarketplaceWindow(filePath, this._preloadPath || preloadPath);
+		// Handle window close event to clean up reference
+		this._pluginsWindow.browserWindow.on('closed', () => (this._pluginsWindow = null));
+		// Load the window URL
+		await this._pluginsWindow.loadURL();
+		// Return the new window instance
 		return this._pluginsWindow;
 	}
 
 	async initAlwaysOnWindow(filePath: string): Promise<AlwaysOn> {
 		try {
-			if (!this._alwaysOnWindow || this._alwaysOnWindow?.browserWindow?.isDestroyed()) {
-				this._alwaysOnWindow = new AlwaysOn(filePath);
-				await this._alwaysOnWindow.loadURL();
-				this._alwaysOnWindow.browserWindow.removeAllListeners('close');
-				this._alwaysOnWindow.browserWindow.on('close', () => {
-					if (!this._alwaysOnWindow?.browserWindow?.isDestroyed()) {
-						this._alwaysOnWindow?.browserWindow?.destroy();
-					}
-					this._alwaysOnWindow = null;
-				});
+			if (this._alwaysOnWindow && !this._alwaysOnWindow.isDestroyed()) {
+				return this._alwaysOnWindow;
 			}
+			// Create new AlwaysOn window instance
+			this._alwaysOnWindow = new AlwaysOn(filePath);
+			// Handle window close event to clean up reference
+			this._alwaysOnWindow.browserWindow.on('closed', () => (this._alwaysOnWindow = null));
+			// Load the window URL
+			await this._alwaysOnWindow.loadURL();
+			// Return the new window instance
 			return this._alwaysOnWindow;
 		} catch (error) {
 			console.error('Failed to initialize always-on window', error);
@@ -175,9 +187,7 @@ export class AppWindowManager {
 		}
 	}
 
-	settingShow(
-		nav: 'goto_top_menu' | 'goto_update'
-	) {
+	settingShow(nav: 'goto_top_menu' | 'goto_update') {
 		const appSetting = LocalStore.getStore('appSetting');
 		const config = LocalStore.getStore('configs');
 		const auth = LocalStore.getStore('auth');

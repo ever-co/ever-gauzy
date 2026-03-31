@@ -14,4 +14,5 @@ export class PluginActions {
 		plugin
 	}));
 	public static readonly refresh = createAction('[Plugin Installed] Refresh');
+	public static readonly syncAccess = createAction('[Plugin Installed] Sync Access');
 }

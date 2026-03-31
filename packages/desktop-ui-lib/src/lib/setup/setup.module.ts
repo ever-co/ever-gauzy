@@ -24,6 +24,7 @@ import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import { LanguageModule } from '../language/language.module';
 import { SslModule } from '../settings/ssl';
 import { SetupService } from './setup.service';
+import { SecretModule } from '../settings/secret/secret.module';
 
 @NgModule({
 	imports: [
@@ -46,7 +47,8 @@ import { SetupService } from './setup.service';
 		NbDialogModule,
 		LanguageModule.forChild(),
 		SslModule,
-		SetupComponent
+		SetupComponent,
+		SecretModule
 	],
 	exports: [SetupComponent],
 	providers: [SetupService, NbDialogService]

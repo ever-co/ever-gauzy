@@ -2,9 +2,10 @@ import { Injectable } from '@angular/core';
 import { Query } from '@datorama/akita';
 import { map, Observable } from 'rxjs';
 import {
-	PluginUserAssignment,
-	PluginUserAssignmentState,
-	PluginUserAssignmentStore
+    PluginUserAssignment,
+    PluginUserAssignmentState,
+    PluginUserAssignmentStore,
+    PluginUserOperationState
 } from '../stores/plugin-user-assignment.store';
 
 @Injectable({ providedIn: 'root' })
@@ -28,6 +29,20 @@ export class PluginUserAssignmentQuery extends Query<PluginUserAssignmentState> 
 	total$ = this.select((state) => state.pagination.total);
 	hasMore$ = this.select((state) => state.pagination.hasMore);
 
+	// Fine-grained operation loading selectors
+	operations$ = this.select((state) => state.operations);
+	enabling$ = this.select((state) => state.operations.enabling);
+	disabling$ = this.select((state) => state.operations.disabling);
+	unassigning$ = this.select((state) => state.operations.unassigning);
+	assigning$ = this.select((state) => state.operations.assigning);
+	removingAllowed$ = this.select((state) => state.operations.removingAllowed);
+	removingDenied$ = this.select((state) => state.operations.removingDenied);
+	togglingTenant$ = this.select((state) => state.operations.togglingTenant);
+	/** True when any mutation operation is running (for disabling the whole action bar). */
+	anyOperationInProgress$ = this.operations$.pipe(
+		map((ops) => Object.values(ops).some(Boolean))
+	);
+
 	// Computed selectors
 	get assignments(): PluginUserAssignment[] {
 		return this.getValue().assignments;
@@ -39,6 +54,10 @@ export class PluginUserAssignmentQuery extends Query<PluginUserAssignmentState> 
 
 	get error(): string | null {
 		return this.getValue().error;
+	}
+
+	get operations(): PluginUserOperationState {
+		return this.getValue().operations;
 	}
 
 	get selectedPluginId(): string | null {

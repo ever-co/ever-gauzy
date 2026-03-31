@@ -9,7 +9,7 @@
 
   & .header {
     border-bottom: none;
-    padding-top: 30px;
+    padding-top: 24px;
     padding-left: 30px;
     padding-right: 30px;
     width: 100vw;
@@ -32,9 +32,14 @@
       height: auto;
     }
   }
+  // Set --header-height on :root or the nb-card-header element to match the
+  // actual rendered header size. Override per-breakpoint as needed, e.g.:
+  //   @media (max-width: 490px) { :root { --header-height: 0px; } }
+  // The fallback of 70px matches the current desktop header height.
   & .body {
     width: 100vw;
-    height: 100vh;
+    height: 100%;
+    min-height: calc(100vh - var(--header-height, 70px));
     display: flex;
     justify-content: center;
     align-items: center;

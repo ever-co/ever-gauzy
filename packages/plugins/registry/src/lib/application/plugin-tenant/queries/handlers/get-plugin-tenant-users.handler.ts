@@ -72,11 +72,11 @@ export class GetPluginTenantUsersHandler implements IQueryHandler<GetPluginTenan
 				u.email,
 				u."imageUrl",
 				pt."createdAt" AS "assignedAt",
-				'denied'::text AS "accessType",
-			FROM plugin_tenant_allowed_users ptau
-			JOIN "user" u ON u.id = ptau."userId"
-			JOIN "plugin_tenants" pt ON pt.id = ptau."pluginTenantsId"
-			WHERE ptau."pluginTenantsId" = $1 AND u.id <> $2
+				'denied'::text AS "accessType"
+			FROM plugin_tenant_denied_users ptdu
+			JOIN "user" u ON u.id = ptdu."userId"
+			JOIN "plugin_tenants" pt ON pt.id = ptdu."pluginTenantsId"
+			WHERE ptdu."pluginTenantsId" = $1 AND u.id <> $2
 			${searchClause}
 		`;
 

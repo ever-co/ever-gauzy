@@ -257,18 +257,20 @@ class SessionMiddleware {
 			...config,
 		};
 
+		const { trustedProxies, ...rateLimitConfig } = finalConfig;
+
 		return rateLimit({
-			...finalConfig,
+			...rateLimitConfig,
 			keyGenerator: (req: Request) => {
 				// Use session ID if available, otherwise fall back to IP
-				return req.sessionId || this.getClientIP(req, finalConfig.trustedProxies);
+				return req.sessionId || this.getClientIP(req, trustedProxies);
 			},
 			handler: (req: Request, res: Response) => {
-				logger.warn(`Rate limit exceeded for session: ${req.sessionId || 'unknown'} from IP: ${this.getClientIP(req, finalConfig.trustedProxies)}`);
+				logger.warn(`Rate limit exceeded for session: ${req.sessionId || 'unknown'} from IP: ${this.getClientIP(req, trustedProxies)}`);
 				res.status(429).json({
 					error: 'Too Many Requests',
 					message: 'Rate limit exceeded. Please try again later.',
-					retryAfter: Math.round(finalConfig.windowMs / 1000),
+					retryAfter: Math.round(rateLimitConfig.windowMs / 1000),
 				});
 			},
 			standardHeaders: true,

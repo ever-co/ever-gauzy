@@ -44,7 +44,7 @@ import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { ElectronService } from '../electron/services';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { LanguageSelectorComponent } from '../language/language-selector.component';
-import { TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
+import { TimeZoneManager, ToastrNotificationService, ZoneEnum, Store } from '../services';
 import { SetupService } from '../setup/setup.service';
 import { SwitchThemeComponent } from '../theme-selector/switch-theme/switch-theme.component';
 import { ReplacePipe } from '../time-tracker/pipes/replace.pipe';
@@ -518,7 +518,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
 		private readonly _domSanitizer: DomSanitizer,
-		private readonly _languageElectronService: LanguageElectronService
+		private readonly _languageElectronService: LanguageElectronService,
+		private readonly _store: Store
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
@@ -640,12 +641,12 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			this.menus = this.isServer
 				? ['TIMER_TRACKER.SETTINGS.UPDATE', 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS', 'MENU.ABOUT']
 				: [
-						...(allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
-						'TIMER_TRACKER.TIMER',
-						'TIMER_TRACKER.SETTINGS.UPDATE',
-						'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
-						'MENU.ABOUT'
-				  ];
+					...(allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
+					'TIMER_TRACKER.TIMER',
+					'TIMER_TRACKER.SETTINGS.UPDATE',
+					'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
+					'MENU.ABOUT'
+				];
 			const lastMenu =
 				this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
 			this._selectedMenu$.next(lastMenu);
@@ -956,7 +957,9 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	public async restartApp(): Promise<void> {
 		this._isRestart$.next(true);
 		if (!this.isServer && !this.authSetting.isLogout) {
-			await firstValueFrom(this._authStrategy.logout());
+			// isRestart=true prevents the settings window from being closed during logout,
+			// allowing the restart flow to continue using the same window.
+			await firstValueFrom(this._authStrategy.logout(true));
 			this.currentUser$.next(null);
 			localStorage.clear();
 		}
@@ -970,8 +973,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			...this.config
 		};
 		if (this.config.timeTrackerWindow) newConfig.awHost = `http://127.0.0.1:${this.config.awPort}`;
-		this.electronService.ipcRenderer.send('restart_app', newConfig);
 		this.electronService.ipcRenderer.send('save_additional_setting', thConfig);
+		this.electronService.ipcRenderer.send('restart_app', newConfig);
 	}
 
 	portChange(val, type) {
@@ -1050,8 +1053,14 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 					this.currentUser$.next(null);
 					return;
 				}
-				const user = await this.timeTrackerService.getUserDetail();
-				this.currentUser$.next(user);
+				if (this._store.isOffline) {
+					const usr = this._store.user;
+					this.currentUser$.next(usr);
+				} else {
+					const user = await this.timeTrackerService.getUserDetail();
+					this.currentUser$.next(user);
+				}
+
 			} catch (error) {
 				console.log('User Detail error', error);
 			}

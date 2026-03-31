@@ -1,17 +1,17 @@
-import { screen } from 'electron';
 import {
-	IBaseWindow,
 	BaseWindow,
-	WindowManager,
 	DefaultWindow,
+	IBaseWindow,
+	RegisteredWindow,
 	WindowConfig,
-	RegisteredWindow
+	WindowManager
 } from '@gauzy/desktop-core';
+import { screen } from 'electron';
 
 export class AlwaysOn extends BaseWindow implements IBaseWindow {
 	private static WIDTH: number = 60;
 	private static HEIGHT: number = 110;
-	private manager = WindowManager.getInstance();
+	private readonly manager = WindowManager.getInstance();
 
 	constructor(
 		private readonly path?: string,
@@ -48,6 +48,7 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 								webPreferences: {
 									nodeIntegration: false,
 									contextIsolation: true,
+									sandbox: false,
 									webSecurity: false,
 									preload: preloadPath
 								}
@@ -59,16 +60,44 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 		this.browserWindow.setMenuBarVisibility(false);
 		this.manager.register(RegisteredWindow.WIDGET, this);
 		this.manager.overrideSystemContextMenu(this.browserWindow);
+		this.browserWindow.on('close', () => {
+			if (this.isDestroyed()) {
+				return;
+			}
+			this.browserWindow.destroy();
+		});
+
+		this.browserWindow.on('closed', () => {
+			this.manager.unregister(RegisteredWindow.WIDGET);
+		});
 	}
 
-	public show(): void {
+	public override show(): void {
+		if (this.isDestroyed()) {
+			return;
+		}
 		this.onTop();
 		super.show();
 	}
 
-	public hide(): void {
+	public override hide(): void {
 		this.undoOnTop();
 		super.hide();
+	}
+
+	public override close(): void {
+		if (this.isDestroyed()) {
+			return;
+		}
+		this.hide();
+		super.close();
+	}
+
+	public isDestroyed(): boolean {
+		if (!this.browserWindow) {
+			return true;
+		}
+		return this.browserWindow.isDestroyed();
 	}
 
 	private onTop(): void {

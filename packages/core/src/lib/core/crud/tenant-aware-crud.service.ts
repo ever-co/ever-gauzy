@@ -442,6 +442,18 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	}
 
 	/**
+	 * Saves a given entity without automatic tenantId enrichment.
+	 * This is the same as CrudService.save() and is useful for operations
+	 * where the entity might belong to a different tenant.
+	 *
+	 * @param entity The partial entity data.
+	 * @returns The saved entity.
+	 */
+	protected async saveWithoutEnrichment(entity: IPartialEntity<T>): Promise<T> {
+		return await super.save(entity);
+	}
+
+	/**
 	 * Saves multiple entities in a single bulk operation with tenant scoping.
 	 * Enriches all entities with tenantId (same logic as save()).
 	 * More efficient than calling save() in a loop.
@@ -465,6 +477,18 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		}));
 
 		return await super.saveMany(enriched);
+	}
+
+	/**
+	 * Saves multiple entities without automatic tenantId enrichment.
+	 * This is the same as CrudService.saveMany() and is useful for bulk operations
+	 * where entities might belong to different tenants.
+	 *
+	 * @param entities The array of partial entity data.
+	 * @returns The array of saved entities.
+	 */
+	protected async saveManyWithoutEnrichment(entities: IPartialEntity<T>[]): Promise<T[]> {
+		return await super.saveMany(entities);
 	}
 
 	/**

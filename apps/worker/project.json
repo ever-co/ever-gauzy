@@ -3,26 +3,55 @@
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "apps/worker/src",
 	"projectType": "application",
+	"tags": [],
+	"implicitDependencies": ["core"],
+	"generators": {
+		"@nx/nest:library": {
+			"directory": "api",
+			"unitTestRunner": "jest",
+			"linter": "eslint"
+		}
+	},
 	"targets": {
 		"build": {
 			"executor": "@nx/webpack:webpack",
 			"outputs": ["{options.outputPath}"],
-			"defaultConfiguration": "production",
+			"defaultConfiguration": "development",
 			"options": {
 				"target": "node",
-				"compiler": "tsc",
+				"compiler": "swc",
 				"outputPath": "dist/apps/worker",
 				"main": "apps/worker/src/main.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 8,
+				"memoryLimit": 7000,
 				"tsConfig": "apps/worker/tsconfig.app.json",
-				"assets": ["apps/worker/src/assets"],
-				"webpackConfig": "apps/worker/webpack.config.js",
-				"generatePackageJson": true
+				"assets": [
+					"apps/worker/src/assets",
+					{
+						"input": "apps/worker/public",
+						"glob": "**/*",
+						"output": "public"
+					}
+				],
+				"webpackConfig": "apps/worker/config/webpack.config.js"				
 			},
 			"configurations": {
-				"development": {
-					"outputHashing": "none"
+				"development": {					
 				},
-				"production": {}
+				"production": {
+					"optimization": true,
+					"extractLicenses": true,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
 			}
 		},
 		"prune-lockfile": {
@@ -54,6 +83,8 @@
 			"dependsOn": ["build"],
 			"options": {
 				"buildTarget": "worker:build",
+				"inspect": true,
+				"port": 9229,
 				"runBuildTargetDependencies": false
 			},
 			"configurations": {
@@ -64,7 +95,17 @@
 					"buildTarget": "worker:build:production"
 				}
 			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "apps/worker/jest.config.ts"
+			}
+		
 		}
-	},
-	"tags": []
+	}	
 }

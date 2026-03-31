@@ -33,8 +33,6 @@ export class JobsModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true });
 
-	constructor() {}
-
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
 	/** Called by PluginUiModule after the plugin module is instantiated. */

@@ -12,10 +12,10 @@
 
 :host .transition-container {
   overflow-x: hidden;
-  border-radius: nb-theme(button-rectangle-border-radius);
+  border-radius: var(--border-radius);
   span {
     background: var(--gauzy-card-2);
-    border-radius: nb-theme(button-rectangle-border-radius);
+    border-radius: var(--border-radius);
     padding: 2px 4px;
     @include nb-ltr(margin-right, 10px);
     @include nb-rtl(margin-left, 10px);

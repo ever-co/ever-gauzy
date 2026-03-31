@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { faker } from '@faker-js/faker';
 import { IOrganization, IUser, RolesEnum } from '@gauzy/contracts';
@@ -19,6 +19,8 @@ import { OrganizationTaskSettingCreateCommand } from '../../../organization-task
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler implements ICommandHandler<OrganizationCreateCommand> {
+	private readonly logger = new Logger(OrganizationCreateHandler.name);
+
 	constructor(
 		private readonly commandBus: CommandBus,
 		private readonly organizationService: OrganizationService,
@@ -133,8 +135,10 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 				console.log('Error occurred during creation of contact details or updating the organization:', error);
 			}
 
-			// 6. Executes various organization update tasks concurrently.
-			this.executeOrganizationUpdateTasks(organization);
+			// 6. Execute organization update tasks in the background (fire-and-forget).
+			this.executeOrganizationUpdateTasks(organization).catch((error) =>
+				this.logger.error('Unhandled error in execute organization update tasks:', error?.message)
+			);
 
 			// 7. Create Import Records while migrating for relative organization.
 			if (isImporting && sourceId) {
@@ -168,24 +172,22 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 	 */
 	public async executeOrganizationUpdateTasks(organization: Organization): Promise<void> {
 		try {
-			// 1. Create report for relative organization.
-			await this.commandBus.execute(new ReportOrganizationCreateCommand(organization));
-			// 2. Create task statuses for relative organization.
-			await this.commandBus.execute(new OrganizationStatusBulkCreateCommand(organization));
-			// 3. Create task sizes for relative organization.
-			await this.commandBus.execute(new OrganizationTaskSizeBulkCreateCommand(organization));
-			// 4. Create task priorities for relative organization.
-			await this.commandBus.execute(new OrganizationTaskPriorityBulkCreateCommand(organization));
-			// 5. Create issue types for relative organization.
-			await this.commandBus.execute(new OrganizationIssueTypeBulkCreateCommand(organization));
-			// 6. Create task setting for relative organization.
-			await this.commandBus.execute(
-				new OrganizationTaskSettingCreateCommand({
-					organization
-				})
-			);
+			await Promise.all([
+				// 1. Create report for relative organization.
+				this.commandBus.execute(new ReportOrganizationCreateCommand(organization)),
+				// 2. Create task statuses for relative organization.
+				this.commandBus.execute(new OrganizationStatusBulkCreateCommand(organization)),
+				// 3. Create task sizes for relative organization.
+				this.commandBus.execute(new OrganizationTaskSizeBulkCreateCommand(organization)),
+				// 4. Create task priorities for relative organization.
+				this.commandBus.execute(new OrganizationTaskPriorityBulkCreateCommand(organization)),
+				// 5. Create issue types for relative organization.
+				this.commandBus.execute(new OrganizationIssueTypeBulkCreateCommand(organization)),
+				// 6. Create task setting for relative organization.
+				this.commandBus.execute(new OrganizationTaskSettingCreateCommand({ organization }))
+			]);
 		} catch (error) {
-			console.log(error, 'Error occurred while executing organization update tasks:', error.message);
+			this.logger.error('Error occurred while executing organization update tasks:', error?.message);
 		}
 	}
 }

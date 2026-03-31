@@ -2,7 +2,6 @@ import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } fr
 import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
-import { v4 as uuidv4 } from 'uuid';
 import {
 	ID,
 	IOrganization,
@@ -18,7 +17,7 @@ import { isPostgres } from '@gauzy/config';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
 import { IPartialEntity } from '../../core/crud/icrud.service';
-import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
+import { TaskMetadataService } from '../task-metadata.service';
 import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
 import { TASK_STATUSES_TEMPLATES } from './standard-statuses-template';
@@ -26,16 +25,14 @@ import { TypeOrmTaskStatusRepository } from './repository/type-orm-task-status.r
 import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status.repository';
 
 @Injectable()
-export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {
-	// Logger for tracking operations
-	logger = new Logger('TaskStatusService'); // Update with your service name
+export class TaskStatusService extends TaskMetadataService<TaskStatus> {
+	readonly logger = new Logger(TaskStatusService.name);
 
 	constructor(
 		readonly typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
 		readonly mikroOrmTaskStatusRepository: MikroOrmTaskStatusRepository,
 		@InjectConnection() readonly knexConnection: KnexConnection
 	) {
-		console.log(`TaskStatusService initialized. Unique Service ID: ${uuidv4()} `);
 		super(typeOrmTaskStatusRepository, mikroOrmTaskStatusRepository, knexConnection);
 	}
 
@@ -76,7 +73,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			console.log(
+			this.logger.error(
 				'Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.',
 				error
 			);
@@ -100,39 +97,36 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	}
 
 	/**
-	 * Creates bulk task statuses for specific tenants.
+	 * Creates default task statuses for multiple tenants.
 	 *
-	 * @param tenants An array of tenants for whom the task statuses will be created.
-	 * @returns A promise that resolves to an array of created task statuses.
+	 * This method generates a Cartesian product between the provided tenants
+	 * and the DEFAULT_GLOBAL_STATUSES, creating system-independent task statuses
+	 * for each tenant.
+	 *
+	 * @param tenants Array of tenants for which task statuses should be created
+	 * @returns Promise resolving to an array of created task statuses
 	 */
-	async bulkCreateTenantsStatus(tenants: ITenant[]): Promise<ITaskStatus[] & TaskStatus[]> {
-		try {
-			// Initialize an array to store the created task statuses.
-			const statuses: ITaskStatus[] = [];
+	async bulkCreateTenantsStatus(tenants: ITenant[]): Promise<TaskStatus[]> {
+		if (!tenants?.length) {
+			return [];
+		}
 
-			// Iterate over each tenant.
-			for (const tenant of tenants) {
-				// Iterate over each default global status.
-				for (const status of DEFAULT_GLOBAL_STATUSES) {
-					// Create a new TaskStatus instance with modified properties.
-					const newStatus = new TaskStatus({
+		// Generate task statuses for each tenant using default global statuses
+		const statuses: TaskStatus[] = tenants.flatMap((tenant: ITenant) =>
+			DEFAULT_GLOBAL_STATUSES.map(
+				(status) =>
+					new TaskStatus({
 						...status,
 						icon: `ever-icons/${status.icon}`,
 						isSystem: false,
 						tenant
-					});
+					})
+			)
+		);
 
-					// Add the new status to the array.
-					statuses.push(newStatus);
-				}
-			}
-
-			// Save the created task statuses using the repository.
-			return (await this.saveMany(statuses)) as ITaskStatus[] & TaskStatus[];
-		} catch (error) {
-			// If an error occurs during the creation process, log the error.
-			console.error('Error while creating task statuses', error.message);
-		}
+		// Save statuses without tenant enrichment to preserve
+		// the original tenantId assigned to each entity.
+		return await this.saveManyWithoutEnrichment(statuses);
 	}
 
 	/**
@@ -143,49 +137,29 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	 */
 	async bulkCreateOrganizationStatus(organization: IOrganization): Promise<ITaskStatus[] & TaskStatus[]> {
 		try {
-			// Initialize an array to store the created task statuses.
-			const statuses: ITaskStatus[] = [];
-
-			// Get the current tenant ID from the request context.
 			const tenantId = RequestContext.currentTenantId();
-
-			// Find entities by parameters, filtering by tenant ID.
 			const { items = [] } = await super.fetchAll({ tenantId });
 
-			// Initialize an index variable.
-			let index = 0;
+			const statuses = items.map(
+				(item, index) =>
+					new TaskStatus({
+						tenantId: item.tenantId,
+						name: item.name,
+						value: item.value,
+						description: item.description,
+						icon: item.icon,
+						color: item.color,
+						organization,
+						isSystem: false,
+						order: item.order ?? index,
+						isCollapsed: item.isCollapsed
+					})
+			);
 
-			// Iterate over each found entity.
-			for (const item of items) {
-				// Extract relevant properties from the entity.
-				const { tenantId, name, value, description, icon, color, order, isCollapsed } = item;
-
-				// Create a new TaskStatus instance with modified properties.
-				const status = new TaskStatus({
-					tenantId,
-					name,
-					value,
-					description,
-					icon,
-					color,
-					organization,
-					isSystem: false,
-					order: order || index,
-					isCollapsed
-				});
-
-				// Increment the index.
-				index++;
-
-				// Add the new status to the array.
-				statuses.push(status);
-			}
-
-			// Save the created task statuses using the repository.
 			return (await this.saveMany(statuses)) as ITaskStatus[] & TaskStatus[];
 		} catch (error) {
-			// If an error occurs during the creation process, log the error.
-			console.error('Error while creating task statuses for organization', error.message);
+			this.logger.error('Error while creating task statuses for organization', error.message);
+			return [] as any;
 		}
 	}
 
@@ -196,35 +170,28 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	 * @returns A promise that resolves to an array of created task statuses.
 	 */
 	async createBulkStatusesByEntity(entity: Partial<ITaskStatusCreateInput>): Promise<ITaskStatus[]> {
-		// Extract relevant properties from the entity.
-		const { organizationId } = entity;
-		const tenantId = RequestContext.currentTenantId();
-
 		try {
-			// Find entities by parameters, filtering by tenant ID and organization ID.
+			const { organizationId } = entity;
+			const tenantId = RequestContext.currentTenantId();
+
 			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
-			// Map items to entity objects, then bulk create.
-			const entitiesToCreate = items.map((item, index) => {
-				const { name, value, description, icon, color, order, isCollapsed } = item;
-				return {
-					...entity,
-					name,
-					value,
-					description,
-					icon,
-					color,
-					isSystem: false,
-					order: order || index,
-					isCollapsed
-				};
-			});
+			const entities = items.map((item, index) => ({
+				...entity,
+				name: item.name,
+				value: item.value,
+				description: item.description,
+				icon: item.icon,
+				color: item.color,
+				isSystem: false,
+				order: item.order ?? index,
+				isCollapsed: item.isCollapsed
+			}));
 
-			// Bulk create all statuses at once.
-			return await this.createMany(entitiesToCreate);
+			return await this.createMany(entities);
 		} catch (error) {
-			// If an error occurs during the creation process, log the error.
-			console.error('Error while creating task statuses', error);
+			this.logger.error('Error while creating task statuses', error);
+			return [];
 		}
 	}
 

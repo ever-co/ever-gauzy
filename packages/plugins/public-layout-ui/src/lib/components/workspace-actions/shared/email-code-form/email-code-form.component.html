@@ -67,7 +67,7 @@
 			[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.CODE' | translate"
 			[status]="code.dirty ? (code.invalid ? 'danger' : 'success') : 'basic'"
 			[attr.aria-invalid]="code.invalid && code.touched ? true : null"
-			maxlength="6"
+			[attr.maxlength]="codeLength"
 			[attr.autofocus]="isCodeSent ? true : null"
 			autocomplete="one-time-code"
 			inputmode="numeric"
@@ -82,7 +82,7 @@
 			<p class="caption status-danger">
 				{{
 					'LOGIN_PAGE.VALIDATION.CODE_REQUIRED_LENGTH'
-						| translate : { requiredLength: code.errors?.minlength?.requiredLength }
+						| translate : { requiredLength: codeLength }
 				}}
 			</p>
 			}

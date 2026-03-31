@@ -2,10 +2,33 @@ import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
 import { ID, IUser } from '@gauzy/contracts';
 
+/**
+ * Fine-grained operation loading flags.
+ * Each flag maps to one class of mutation so components can show
+ * per-row or per-button spinners without blocking the whole table.
+ */
+export interface PluginUserOperationState {
+	/** True while an allow / enable API call is in-flight. */
+	enabling: boolean;
+	/** True while a deny / revoke API call is in-flight. */
+	disabling: boolean;
+	/** True while an unassign API call is in-flight. */
+	unassigning: boolean;
+	/** True while an assign (add) API call is in-flight. */
+	assigning: boolean;
+	/** True while a remove-from-allowed API call is in-flight. */
+	removingAllowed: boolean;
+	/** True while a remove-from-denied API call is in-flight. */
+	removingDenied: boolean;
+	/** True while a plugin-tenant enable/disable call is in-flight. */
+	togglingTenant: boolean;
+}
+
 export interface PluginUserAssignmentState {
 	assignments: PluginUserAssignment[];
 	loading: boolean;
 	loadingMore: boolean; // For infinite scroll loading state
+	operations: PluginUserOperationState;
 	error: string | null;
 	selectedPluginId: string | null;
 	selectedSubscriptionId: string | null;
@@ -55,11 +78,24 @@ export interface BulkAssignPluginUsersRequest {
 	reason?: string;
 }
 
+function createInitialOperationState(): PluginUserOperationState {
+	return {
+		enabling: false,
+		disabling: false,
+		unassigning: false,
+		assigning: false,
+		removingAllowed: false,
+		removingDenied: false,
+		togglingTenant: false
+	};
+}
+
 function createInitialState(): PluginUserAssignmentState {
 	return {
 		assignments: [],
 		loading: false,
 		loadingMore: false,
+		operations: createInitialOperationState(),
 		error: null,
 		selectedPluginId: null,
 		selectedSubscriptionId: null,
@@ -86,6 +122,18 @@ export class PluginUserAssignmentStore extends Store<PluginUserAssignmentState> 
 
 	setLoadingMore(loadingMore: boolean): void {
 		this.update({ loadingMore });
+	}
+
+	/**
+	 * Patch one or more operation flags without touching any other state.
+	 */
+	setOperation(patch: Partial<PluginUserOperationState>): void {
+		this.update((state) => ({ operations: { ...state.operations, ...patch } }));
+	}
+
+	/** Reset all operation flags to false (e.g., on error or after success). */
+	clearOperations(): void {
+		this.update({ operations: createInitialOperationState() });
 	}
 
 	setErrorMessage(error: string | null): void {
@@ -152,6 +200,34 @@ export class PluginUserAssignmentStore extends Store<PluginUserAssignmentState> 
 			(a) => !(a.userId === userId && a.pluginSubscriptionId === subscriptionId)
 		);
 		this.update({ assignments });
+	}
+
+	/**
+	 * Optimistically update isActive (or other fields) for a set of userIds.
+	 * Used after allow/deny API calls to avoid a full server reload.
+	 */
+	updateAssignmentsByUserIds(userIds: string[], updates: Partial<PluginUserAssignment>): void {
+		const assignments = this.getValue().assignments.map((assignment) =>
+			userIds.includes(assignment.userId) ? { ...assignment, ...updates } : assignment
+		);
+		this.update({ assignments });
+	}
+
+	/**
+	 * Optimistically remove a set of users by userId from the store.
+	 * Used after unassign API calls to avoid a full server reload.
+	 */
+	removeAssignmentsByUserIds(userIds: string[]): void {
+		const current = this.getValue();
+		const assignments = current.assignments.filter((a) => !userIds.includes(a.userId));
+		const removed = current.assignments.length - assignments.length;
+		this.update({
+			assignments,
+			pagination: {
+				...current.pagination,
+				total: Math.max(0, current.pagination.total - removed)
+			}
+		});
 	}
 
 	updateAssignment(id: string, updates: Partial<PluginUserAssignment>): void {

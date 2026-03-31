@@ -76,12 +76,20 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 					// No existing employee found - proceed with creation
 				}
 
+				// Determine if user has administrative privileges
+				const isUserAdmin = [RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN].includes(
+					existingUser.role?.name as RolesEnum
+				);
+
 				// User already exists in this tenant - create only the employee
 				const employee = await this._employeeService.create({
 					...input,
 					user: existingUser,
 					organizationId,
-					organization: { id: organizationId }
+					organization: { id: organizationId },
+					allowManualTime: isUserAdmin,
+					allowModifyTime: isUserAdmin,
+					allowDeleteTime: isUserAdmin
 				});
 
 				// Assign organization to the existing user
@@ -131,14 +139,22 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 			return employee;
 		} else {
 			try {
-				const user = await this._userService.findOneByIdString(input.userId);
+				const user = await this._userService.findOneByIdString(input.userId, {
+					relations: { role: true }
+				});
+
+				// Determine if user has administrative privileges
+				const isUserAdmin = [RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN].includes(user.role?.name as RolesEnum);
 
 				//1. Create employee for specific user
 				return await this._employeeService.create({
 					...input,
 					user,
 					organizationId,
-					organization: { id: organizationId }
+					organization: { id: organizationId },
+					allowManualTime: isUserAdmin,
+					allowModifyTime: isUserAdmin,
+					allowDeleteTime: isUserAdmin
 				});
 			} catch (error) {
 				console.log('Error while creating employee for existing user', error);

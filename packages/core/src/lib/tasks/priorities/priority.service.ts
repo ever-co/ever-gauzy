@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
@@ -13,14 +13,16 @@ import {
 import { isPostgres } from '@gauzy/config';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
-import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
+import { TaskMetadataService } from '../task-metadata.service';
 import { TaskPriority } from './priority.entity';
 import { DEFAULT_GLOBAL_PRIORITIES } from './default-global-priorities';
 import { MikroOrmTaskPriorityRepository } from './repository/mikro-orm-task-priority.repository';
 import { TypeOrmTaskPriorityRepository } from './repository/type-orm-task-priority.repository';
 
 @Injectable()
-export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPriority> {
+export class TaskPriorityService extends TaskMetadataService<TaskPriority> {
+	readonly logger = new Logger(TaskPriorityService.name);
+
 	constructor(
 		readonly typeOrmTaskPriorityRepository: TypeOrmTaskPriorityRepository,
 		readonly mikroOrmTaskPriorityRepository: MikroOrmTaskPriorityRepository,
@@ -37,15 +39,13 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 	 */
 	async delete(id: ITaskPriority['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
-			where: {
-				isSystem: false
-			}
+			where: { isSystem: false }
 		});
 	}
 
 	/**
-	 * GET priorities by filters
-	 * If parameters not match, retrieve global task priorities
+	 * GET priorities by filters.
+	 * If parameters not match, retrieve global task priorities.
 	 *
 	 * @param params
 	 * @returns
@@ -58,10 +58,7 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			console.log(
-				'Failed to retrieve task priorities. Ensure that the provided parameters are valid and complete.',
-				error
-			);
+			this.logger.error('Failed to retrieve task priorities. Ensure that the provided parameters are valid and complete.', error);
 			throw new BadRequestException(
 				'Failed to retrieve task priorities. Ensure that the provided parameters are valid and complete.',
 				error
@@ -70,57 +67,59 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 	}
 
 	/**
-	 * Create bulk task priorities for tenants
+	 * Create bulk task priorities for tenants.
+	 * Uses saveManyWithoutEnrichment to preserve each entity's specific tenantId.
 	 *
-	 * @param tenants '
+	 * @param tenants
 	 */
 	async bulkCreateTenantsTaskPriorities(tenants: ITenant[]): Promise<ITaskPriority[]> {
 		try {
-			const priorities: ITaskPriority[] = [];
-			for (const tenant of tenants) {
-				for (const priority of DEFAULT_GLOBAL_PRIORITIES) {
-					const create = this.typeOrmRepository.create({
-						...priority,
-						icon: `ever-icons/${priority.icon}`,
-						tenant,
-						isSystem: false
-					});
-					priorities.push(create);
-				}
+			if (!tenants?.length) {
+				return [];
 			}
-			return await this.saveMany(priorities);
+
+			const priorities = tenants.flatMap((tenant) =>
+				DEFAULT_GLOBAL_PRIORITIES.map(
+					(priority) =>
+						new TaskPriority({
+							...priority,
+							icon: `ever-icons/${priority.icon}`,
+							tenant,
+							isSystem: false
+						})
+				)
+			);
+
+			return await this.saveManyWithoutEnrichment(priorities);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
 	}
 
 	/**
-	 * Create bulk task priorities for organization
+	 * Create bulk task priorities for organization.
 	 *
 	 * @param organization
 	 */
 	async bulkCreateOrganizationTaskPriorities(organization: IOrganization): Promise<ITaskPriority[]> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-
-			const priorities: ITaskPriority[] = [];
 			const { items = [] } = await super.fetchAll({ tenantId });
 
-			for (const item of items) {
-				const { name, value, description, icon, color } = item;
+			const priorities = items.map(
+				(item) =>
+					new TaskPriority({
+						tenantId,
+						name: item.name,
+						value: item.value,
+						description: item.description,
+						icon: item.icon,
+						color: item.color,
+						organization,
+						isSystem: false
+					})
+			);
 
-				const create = this.typeOrmRepository.create({
-					tenantId,
-					name,
-					value,
-					description,
-					icon,
-					color,
-					organization,
-					isSystem: false
-				});
-				priorities.push(create);
-			}
 			return await this.saveMany(priorities);
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -128,7 +127,7 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 	}
 
 	/**
-	 * Create bulk task priorities for specific organization entity
+	 * Create bulk task priorities for specific organization entity.
 	 *
 	 * @param entity
 	 * @returns
@@ -140,18 +139,16 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 
 			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
-			const entitiesToCreate = items.map((item) => {
-				const { name, value, description, icon, color } = item;
-				return {
-					...entity,
-					name,
-					value,
-					description,
-					icon,
-					color,
-					isSystem: false
-				};
-			});
+			const entitiesToCreate = items.map((item) => ({
+				...entity,
+				name: item.name,
+				value: item.value,
+				description: item.description,
+				icon: item.icon,
+				color: item.color,
+				isSystem: false
+			}));
+
 			return await this.createMany(entitiesToCreate);
 		} catch (error) {
 			throw new BadRequestException(error);

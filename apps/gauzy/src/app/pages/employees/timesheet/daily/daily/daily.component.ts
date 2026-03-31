@@ -1,15 +1,15 @@
 // tslint:disable: nx-enforce-module-boundaries
-import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
-import { filter, map, debounceTime, tap } from 'rxjs/operators';
 import { BehaviorSubject, Observable, catchError, finalize, firstValueFrom, from, of, switchMap } from 'rxjs';
+import { filter, map, debounceTime, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
 import * as moment from 'moment';
 import { IGetTimeLogInput, ITimeLog, PermissionsEnum, ITimeLogFilters, TimeLogSourceEnum } from '@gauzy/contracts';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
@@ -30,12 +30,21 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-daily-timesheet',
-    templateUrl: './daily.component.html',
-    styleUrls: ['./daily.component.scss'],
-    standalone: false
+	selector: 'ngx-daily-timesheet',
+	templateUrl: './daily.component.html',
+	styleUrls: ['./daily.component.scss'],
+	standalone: false
 })
 export class DailyComponent extends BaseSelectorFilterComponent implements AfterViewInit, OnInit, OnDestroy {
+	private readonly _timesheetService = inject(TimesheetService);
+	private readonly _timeTrackerService = inject(TimeTrackerService);
+	private readonly _dialogService = inject(NbDialogService);
+	private readonly _nbMenuService = inject(NbMenuService);
+	private readonly _timesheetFilterService = inject(TimesheetFilterService);
+	private readonly _route = inject(ActivatedRoute);
+	private readonly _toastrService = inject(ToastrService);
+	private readonly _errorHandlingService = inject(ErrorHandlingService);
+
 	public PermissionsEnum = PermissionsEnum; // Enum for permissions.
 	public logs$: Observable<ITimeLog[]>; // Observable for an array of Time Logs.
 	public logs: ITimeLog[] = []; // Array of organization time logs.
@@ -64,25 +73,14 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	};
 
 	constructor(
-		public readonly translateService: TranslateService,
-		private readonly _timesheetService: TimesheetService,
-		private readonly _timeTrackerService: TimeTrackerService,
-		private readonly _dialogService: NbDialogService,
-		private readonly _nbMenuService: NbMenuService,
-		private readonly _timesheetFilterService: TimesheetFilterService,
-		private readonly _route: ActivatedRoute,
-		private readonly _toastrService: ToastrService,
-		private readonly _errorHandlingService: ErrorHandlingService,
-		protected readonly store: Store,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		protected readonly timeZoneService: TimeZoneService
+		translateService: TranslateService,
+		store: Store,
+		dateRangePickerBuilderService: DateRangePickerBuilderService,
+		timeZoneService: TimeZoneService
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
-	/**
-	 *
-	 */
 	ngOnInit() {
 		this._handleSubjectOperationsSubscriber();
 		this._handleUpdateLogSubscriber();
@@ -90,9 +88,6 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 		this._getDailyTimesheetLogs();
 	}
 
-	/**
-	 *
-	 */
 	ngAfterViewInit() {
 		this._createContextMenus();
 		this._applyTranslationOnContextMenu();
@@ -215,16 +210,10 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 		// Get the current payloads value
 		const payloads = this.payloads$.getValue();
 
-		// Invoke the service to fetch time logs with given payloads
-		const api$ = this._timesheetService.getTimeLogs(payloads, [
-			'project',
-			'task',
-			'organizationContact',
-			'employee.user'
-		]);
-
 		// Convert the promise-based API call to an observable
-		return from(api$).pipe(
+		return from(
+			this._timesheetService.getTimeLogs(payloads, ['project', 'task', 'organizationContact', 'employee.user'])
+		).pipe(
 			// Handle API call errors and log them
 			catchError((error) => {
 				console.error('Error while retrieving daily time logs entries', error);
@@ -531,7 +520,6 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	 */
 	private _createContextMenus(): void {
 		const deletePermission = this.store.hasAnyPermission(PermissionsEnum.ALLOW_DELETE_TIME);
-
 		this.contextMenus = deletePermission
 			? [
 					{
@@ -540,7 +528,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 							action: 'DELETE'
 						}
 					}
-			  ]
+				]
 			: [];
 	}
 

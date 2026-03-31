@@ -6,10 +6,7 @@ import { AuthService } from '../../auth.service';
 
 @CommandHandler(WorkspaceSigninVerifyTokenCommand)
 export class WorkspaceSigninVerifyTokenHandler implements ICommandHandler<WorkspaceSigninVerifyTokenCommand> {
-
-	constructor(
-		private readonly authService: AuthService
-	) { }
+	constructor(private readonly authService: AuthService) {}
 
 	public async execute(command: WorkspaceSigninVerifyTokenCommand): Promise<IAuthResponse | null> {
 		try {

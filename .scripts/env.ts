@@ -2,7 +2,7 @@
 // We are using dotenv (.env) for consistency with other Platform projects
 // This is Angular app and all settings will be loaded into the client browser!
 
-import { cleanEnv, str, bool, num } from 'envalid';
+import { bool, cleanEnv, num, str } from 'envalid';
 
 export type Env = Readonly<{
 	production: boolean;
@@ -105,6 +105,7 @@ export type Env = Readonly<{
 	DESKTOP_TIMER_APP_REPO_OWNER: string;
 	DESKTOP_TIMER_APP_WELCOME_TITLE: string;
 	DESKTOP_TIMER_APP_WELCOME_CONTENT: string;
+	DESKTOP_TIMER_APP_PROTOCOL: string;
 
 	DESKTOP_APP_NAME: string;
 	DESKTOP_APP_DESCRIPTION: string;
@@ -113,6 +114,7 @@ export type Env = Readonly<{
 	DESKTOP_APP_REPO_OWNER: string;
 	DESKTOP_APP_WELCOME_TITLE: string;
 	DESKTOP_APP_WELCOME_CONTENT: string;
+	DESKTOP_APP_PROTOCOL: string;
 
 	DESKTOP_SERVER_APP_NAME: string;
 	DESKTOP_SERVER_APP_DESCRIPTION: string;
@@ -121,6 +123,7 @@ export type Env = Readonly<{
 	DESKTOP_SERVER_APP_REPO_OWNER: string;
 	DESKTOP_SERVER_APP_WELCOME_TITLE: string;
 	DESKTOP_SERVER_APP_WELCOME_CONTENT: string;
+	DESKTOP_SERVER_APP_PROTOCOL: string;
 
 	DESKTOP_API_SERVER_APP_NAME: string;
 	DESKTOP_API_SERVER_APP_DESCRIPTION: string;
@@ -129,6 +132,7 @@ export type Env = Readonly<{
 	DESKTOP_API_SERVER_APP_REPO_OWNER: string;
 	DESKTOP_API_SERVER_APP_WELCOME_TITLE: string;
 	DESKTOP_API_SERVER_APP_WELCOME_CONTENT: string;
+	DESKTOP_API_SERVER_APP_PROTOCOL: string;
 	DESKTOP_MCP_SERVER_APP_NAME: string;
 	DESKTOP_MCP_SERVER_APP_DESCRIPTION: string;
 	DESKTOP_MCP_SERVER_APP_ID: string;
@@ -153,8 +157,11 @@ export type Env = Readonly<{
 	AGENT_APP_ID: string;
 	AGENT_APP_WELCOME_TITLE: string;
 	AGENT_APP_WELCOME_CONTENT: string;
+	AGENT_APP_PROTOCOL: string;
 	AGENT_POOL_ACTIVITY_INTERVAL: number;
 	GAUZY_DESKTOP_TRAY_ICON: string;
+	DESKTOP_JWT_SECRET: string;
+	DESKTOP_JWT_REFRESH_TOKEN_SECRET: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -302,6 +309,7 @@ export const env: Env = cleanEnv(
 		DESKTOP_TIMER_APP_REPO_OWNER: str({ default: 'ever-co' }),
 		DESKTOP_TIMER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_TIMER_APP_WELCOME_CONTENT: str({ default: '' }),
+		DESKTOP_TIMER_APP_PROTOCOL: str({ default: 'gauzy-timer' }),
 
 		DESKTOP_APP_NAME: str({
 			default: 'gauzy-desktop'
@@ -318,6 +326,7 @@ export const env: Env = cleanEnv(
 		DESKTOP_APP_REPO_OWNER: str({ default: 'ever-co' }),
 		DESKTOP_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_APP_WELCOME_CONTENT: str({ default: '' }),
+		DESKTOP_APP_PROTOCOL: str({ default: 'gauzy-desktop' }),
 
 		DESKTOP_SERVER_APP_NAME: str({
 			default: 'gauzy-server'
@@ -334,6 +343,7 @@ export const env: Env = cleanEnv(
 		DESKTOP_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
 		DESKTOP_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
+		DESKTOP_SERVER_APP_PROTOCOL: str({ default: 'gauzy-server' }),
 
 		I18N_FILES_URL: str({ default: '' }),
 		AWHost: str({ default: 'http://localhost:5600' }),
@@ -356,6 +366,7 @@ export const env: Env = cleanEnv(
 		DESKTOP_API_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
 		DESKTOP_API_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_API_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
+		DESKTOP_API_SERVER_APP_PROTOCOL: str({ default: 'gauzy-api-server' }),
 		DESKTOP_MCP_SERVER_APP_NAME: str({
 			default: 'gauzy-mcp-server'
 		}),
@@ -395,11 +406,20 @@ export const env: Env = cleanEnv(
 		AGENT_APP_WELCOME_CONTENT: str({
 			default: ''
 		}),
+		AGENT_APP_PROTOCOL: str({
+			default: 'gauzy-agent'
+		}),
 		AGENT_POOL_ACTIVITY_INTERVAL: num({
 			default: 5000
 		}),
 		GAUZY_DESKTOP_TRAY_ICON: str({
 			default: 'assets/icons/default-tray-icon.png'
+		}),
+		DESKTOP_JWT_SECRET: str({
+			default: 'secretKey'
+		}),
+		DESKTOP_JWT_REFRESH_TOKEN_SECRET: str({
+			default: 'refreshTokenSecretKey'
 		})
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }

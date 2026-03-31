@@ -178,7 +178,8 @@
 		"RECOVER": "Recupera",
 		"ADD_MORE_SOURCES": "Aggiungi più fonti",
 		"REMOVE_FROM_FAVORITES": "Rimuovi dai preferiti",
-		"ADD_TO_FAVORITES": "Aggiungi ai preferiti"
+		"ADD_TO_FAVORITES": "Aggiungi ai preferiti",
+		"UNSELECT_ALL": "Deseleziona tutto"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1487,6 +1488,118 @@
 				"SUCCESS": {
 					"CONNECTION_CREATED": "Connessione ActivePieces creata con successo"
 				}
+			}
+		},
+		"SIM_PAGE": {
+			"TITLE": "SIM AI",
+			"SUBTITLE": "Integrazione flussi di lavoro SIM AI",
+			"AUTHORIZE": {
+				"TITLE": "SIM AI",
+				"INFOS": "Inserisci la tua chiave API SIM AI per collegare il tuo account. Puoi trovare la tua chiave API nella dashboard SIM su sim.ai.",
+				"NEXT": "Connetti",
+				"HINT": "La tua chiave API è conservata in modo sicuro e utilizzata per autenticare le esecuzioni dei flussi di lavoro.",
+				"ERRORS": {
+					"INVALID_FORM": "Compila correttamente tutti i campi obbligatori",
+					"SAVE_SETTINGS": "Salvataggio delle impostazioni non riuscito",
+					"ORGANIZATION_NOT_FOUND": "Organizzazione non trovata",
+					"CHECK_REMEMBER_STATE": "Verifica dello stato memorizzato non riuscita"
+				},
+				"SUCCESS": {
+					"SETTINGS_SAVED": "Integrazione SIM AI configurata con successo"
+				}
+			},
+			"SETTINGS": {
+				"TITLE": "Impostazioni SIM AI",
+				"SUBTITLE": "Configura le impostazioni dell'integrazione SIM AI",
+				"API_KEY": "Chiave API",
+				"API_KEY_PLACEHOLDER": "Inserisci la tua chiave API SIM AI"
+			},
+			"EXECUTIONS": {
+				"TITLE": "Cronologia esecuzioni",
+				"NO_EXECUTIONS": "Nessuna esecuzione di flusso di lavoro trovata. Esegui un flusso di lavoro dalla scheda Flussi di lavoro per vedere i risultati qui.",
+				"WORKFLOW_ID": "ID flusso di lavoro",
+				"WORKFLOW_ID_PLACEHOLDER": "Filtra per ID flusso di lavoro",
+				"EXECUTION_ID": "ID esecuzione",
+				"STATUS": "Stato",
+				"TRIGGERED_BY": "Attivato da",
+				"DURATION": "Durata",
+				"CREATED": "Creato",
+				"LOADING": "Caricamento cronologia esecuzioni...",
+				"LOAD": "Cerca",
+				"ALL_STATUSES": "Tutti gli stati",
+				"SHOWING": "Visualizzazione",
+				"OF": "di",
+				"PREVIOUS_PAGE": "Pagina precedente",
+				"NEXT_PAGE": "Pagina successiva"
+			},
+			"WORKFLOWS": {
+				"TITLE": "Flussi di lavoro",
+				"VALIDATE_TITLE": "Valida flusso di lavoro",
+				"EXECUTE_TITLE": "Esegui flusso di lavoro",
+				"JOB_STATUS_TITLE": "Stato attività asincrona",
+				"WORKFLOW_ID": "ID flusso di lavoro",
+				"WORKFLOW_ID_PLACEHOLDER": "Inserisci l'ID del tuo flusso di lavoro SIM",
+				"VALIDATE": "Valida",
+				"DEPLOYED": "Il flusso di lavoro è distribuito e pronto per l'esecuzione.",
+				"NOT_DEPLOYED": "Il flusso di lavoro non è distribuito o non è stato trovato.",
+				"EXECUTE": "Esegui",
+				"ASYNC": "Asincrono",
+				"TIMEOUT": "Timeout (ms)",
+				"INPUT": "Input (JSON)",
+				"INPUT_PLACEHOLDER": "{ \"key\": \"value\" }",
+				"INPUT_HINT": "Fornisci l'input del flusso di lavoro come JSON valido. Questi dati saranno passati al tuo flusso di lavoro SIM.",
+				"RESULT": "Risultato dell'esecuzione",
+				"TASK_ID": "ID attività",
+				"TASK_ID_PLACEHOLDER": "Inserisci l'ID dell'attività asincrona",
+				"CHECK_STATUS": "Controlla stato",
+				"JOB_RESULT": "Stato dell'attività",
+				"INVALID_JSON": "Input JSON non valido",
+				"EXECUTION_FAILED": "Esecuzione non riuscita"
+			},
+			"EVENT_TRIGGERS": {
+				"TITLE": "Trigger degli eventi",
+				"ADD_TITLE": "Aggiungi trigger evento",
+				"ACTIVE_TITLE": "Trigger degli eventi attivi",
+				"DESCRIPTION": "Configura trigger automatici dei flussi di lavoro. Quando si verifica un evento della piattaforma, il flusso di lavoro SIM associato verrà eseguito automaticamente.",
+				"EVENT": "Evento",
+				"SELECT_EVENT": "Seleziona un evento",
+				"WORKFLOW_ID": "ID del flusso di lavoro",
+				"WORKFLOW_ID_PLACEHOLDER": "Inserisci l'ID del flusso di lavoro SIM da attivare",
+				"ADD": "Aggiungi",
+				"REMOVE": "Rimuovi associazione",
+				"NO_MAPPINGS": "Nessun trigger evento configurato. Aggiungi un'associazione sopra per attivare automaticamente i flussi di lavoro SIM dagli eventi della piattaforma.",
+				"LOADING": "Caricamento trigger degli eventi...",
+				"MAPPING_SAVED": "Associazione trigger evento salvata con successo.",
+				"MAPPING_REMOVED": "Associazione trigger evento rimossa con successo.",
+				"SAVE_FAILED": "Impossibile salvare l'associazione del trigger evento.",
+				"REMOVE_FAILED": "Impossibile rimuovere l'associazione del trigger evento.",
+				"LOAD_FAILED": "Impossibile caricare i trigger degli eventi."
+			}
+		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Integrazione gestione progetti Plane",
+			"WEB_URL": "URL Web di Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "URL Admin di Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "URL Space di Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Inserisci gli URL dove è ospitata la tua istanza Plane. L'URL Web è obbligatorio. Gli URL Admin e Space sono opzionali.",
+			"URL_REQUIRED": "Questo URL è obbligatorio.",
+			"URL_INVALID": "Inserisci un URL valido che inizi con http:// o https://.",
+			"LOADING": "Caricamento impostazioni...",
+			"REGENERATE_KEY": "Rigenera",
+			"REGENERATE_KEY_LABEL": "Chiave API e Segreto",
+			"CONFIRM_DELETE": "Sei sicuro di voler rimuovere questa integrazione Plane? La chiave API verrà revocata.",
+			"CONFIRM_REGENERATE": "Sei sicuro di voler rigenerare la chiave API? La chiave attuale verrà invalidata.",
+			"API_KEY_DIALOG": {
+				"TITLE": "Credenziali API",
+				"WARNING": "Copia queste credenziali ora. Il segreto API non verrà mostrato di nuovo.",
+				"API_KEY": "Chiave API",
+				"API_SECRET": "Segreto API",
+				"COPY": "Copia",
+				"COPIED": "Copiato!"
 			}
 		},
 		"COMING_SOON": "Prossimamente",
@@ -4184,7 +4297,11 @@
 			"UI_HOSTNAME": "Nome host dell'interfaccia utente / indirizzo IP",
 			"TITLE_SERVER_API": "Procedura guidata di installazione del server API Ever Gauzy",
 			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App fornisce la piena funzionalità della piattaforma Gauzy disponibile direttamente sul tuo computer desktop o laptop. Inoltre, consente di tracciare il tempo di lavoro, registrare le attività e ricevere promemoria/notifiche di tracciamento.",
-			"UNABLE_TO_CONNECT": "Impossibile connettersi al server. Controlla il tuo host API o la connessione internet."
+			"UNABLE_TO_CONNECT": "Impossibile connettersi al server. Controlla il tuo host API o la connessione internet.",
+			"JWT_SECRET": "Segreto JWT",
+			"JWT_SECRET_PLACEHOLDER": "Inserisci una chiave segreta per JWT",
+			"JWT_REFRESH_TOKEN_SECRET": "Segreto del token di aggiornamento JWT",
+			"JWT_REFRESH_TOKEN_SECRET_PLACEHOLDER": "Inserisci una chiave segreta per il token di aggiornamento JWT"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Cattura dello schermo",
@@ -4348,7 +4465,19 @@
 			"INACTIVITY_HANDLER": "Gestore di inattività",
 			"WANT_LOGOUT": "Sei sicuro/a di voler effettuare il logout?",
 			"ERROR_HANDLER": "Gestore degli errori",
-			"ERROR_OCCURRED": "Errore verificatosi"
+			"ERROR_OCCURRED": "Errore verificatosi",
+			"DB_CLEANUP_TITLE": "La versione del database è probabilmente obsoleta",
+			"DB_CLEANUP_MESSAGE": "È stata rilevata una nuova versione dell'app. Per evitare problemi di compatibilità, si desidera cancellare il database locale e utilizzarne uno nuovo?",
+			"DB_CLEANUP_DETAIL": "La rimozione del database cancellerà i dati memorizzati nella cache locale. I dati già sincronizzati con il server rimarranno al sicuro nel cloud Gauzy.",
+			"DB_CLEANUP_REMOVE": "Rimuovi Database",
+			"DB_CLEANUP_KEEP": "Mantieni",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Dati Non Sincronizzati Rilevati",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Attenzione: Possibile Perdita di Dati",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "Hai {{countsText}}. La rimozione del database cancellerà DEFINITIVAMENTE questi dati offline. In caso di dubbio, fare clic su 'Mantieni'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "Non siamo riusciti a determinare se si dispone di dati offline non sincronizzati. La rimozione del database potrebbe cancellare DEFINITIVAMENTE lavoro non salvato. In caso di dubbio, fare clic su 'Mantieni'.",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} timer/i non sincronizzati",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} intervallo/i non sincronizzato/i",
+			"AND_JOIN": "and"
 		},
 		"NO_LIMIT": "∞ Senza Limiti",
 		"TASK": "Compito",
@@ -4575,7 +4704,8 @@
 		"VISITED_DATES": "Date visitate",
 		"NO_SCREENSHOT": "Nessuna schermata",
 		"NO_SCREENSHOTS": "Nessuna schermata",
-		"NO_RECORD_FOUND": "Nessun record trovato. Seleziona un intervallo di date, un dipendente o un progetto"
+		"NO_RECORD_FOUND": "Nessun record trovato. Seleziona un intervallo di date, un dipendente o un progetto",
+		"SCREEN_SELECTED": "{{ count }} Schermata/e selezionata/e"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Creiamo la tua prima organizzazione",

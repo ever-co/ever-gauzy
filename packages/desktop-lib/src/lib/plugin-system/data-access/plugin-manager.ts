@@ -2,11 +2,11 @@ import { ID } from '@gauzy/contracts';
 import { logger } from '@gauzy/desktop-core';
 import { app, MenuItemConstructorOptions } from 'electron';
 import { existsSync } from 'node:fs';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import { PluginMetadataService } from '../database/plugin-metadata.service';
 import { PluginEventManager } from '../events/plugin-event.manager';
-import { IPlugin, IPluginManager, IPluginMetadata, IPluginMetadataFindOne, PluginDownloadContextType } from '../shared';
+import { IPlugin, IPluginManager, IPluginMetadata, IPluginMetadataFindOne, IPluginMetadataUpdate, PluginDownloadContextType } from '../shared';
 import { lazyLoader } from '../shared/lazy-loader';
 import { DownloadContextFactory } from './download-context.factory';
 
@@ -26,7 +26,7 @@ export class PluginManager implements IPluginManager {
 		return this.instance;
 	}
 
-	public async downloadPlugin<U extends { contextType: PluginDownloadContextType; marketplaceId: ID; versionId: ID }>(
+	public async downloadPlugin<U extends { contextType: PluginDownloadContextType; marketplaceId?: ID; versionId?: ID }>(
 		config: U
 	): Promise<IPluginMetadata> {
 		logger.info(`Downloading plugin...`);
@@ -39,7 +39,11 @@ export class PluginManager implements IPluginManager {
 		} else {
 			/* Install plugin */
 			await this.installPlugin(
-				{ ...metadata, marketplaceId: config.marketplaceId, versionId: config.versionId },
+				{
+					...metadata,
+					marketplaceId: config.marketplaceId || null,
+					versionId: config.versionId || null
+				},
 				pathDirname
 			);
 		}
@@ -82,12 +86,21 @@ export class PluginManager implements IPluginManager {
 		}
 	}
 
-	// Update plugin marketplace metadata
-	public async completeInstallation(marketplaceId: string, installationId: string): Promise<void> {
-		await this.pluginMetadataService.update({
-			marketplaceId,
-			installationId
-		});
+	// Update plugin marketplace metadata; falls back to plugin name for locally installed plugins
+	public async completeInstallation(marketplaceId: string | null, installationId: string, name?: string): Promise<void> {
+		if (!marketplaceId && !name) {
+			logger.warn(
+				`completeInstallation: either marketplaceId or name is required to identify the record; skipping update for installationId: ${installationId}`
+			);
+			return;
+		}
+		const updateData: IPluginMetadataUpdate = { installationId };
+		if (marketplaceId) {
+			updateData.marketplaceId = marketplaceId;
+		} else {
+			updateData.name = name;
+		}
+		await this.pluginMetadataService.update(updateData);
 	}
 
 	public async installPlugin(pluginMetadata: IPluginMetadata, pluginDir: string): Promise<void> {
@@ -174,6 +187,12 @@ export class PluginManager implements IPluginManager {
 			const plugin = await lazyLoader(path.join(metadata.pathname, metadata.main));
 			this.plugins.set(metadata.name, plugin);
 
+			// Skip activation for tenant-disabled plugins
+			if (metadata.tenantEnabled === false) {
+				logger.info(`Plugin ${metadata.name} is tenant-disabled, skipping activation`);
+				continue;
+			}
+
 			if (metadata.isActivate) {
 				await this.activatePlugin(metadata.name);
 			}
@@ -191,6 +210,10 @@ export class PluginManager implements IPluginManager {
 
 	public checkInstallation(marketplaceId: ID): Promise<IPluginMetadata> {
 		return this.pluginMetadataService.findOne({ marketplaceId });
+	}
+
+	public async updateTenantEnabled(marketplaceId: string, tenantEnabled: boolean): Promise<void> {
+		await this.pluginMetadataService.updateTenantEnabled(marketplaceId, tenantEnabled);
 	}
 
 	public async initializePlugins(): Promise<void> {

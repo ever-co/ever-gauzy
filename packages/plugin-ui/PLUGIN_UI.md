@@ -56,26 +56,26 @@ Define routes, nav sections, tabs, and extensions in the plugin definition.
 
 ### Plugin IDs
 
--   Use kebab-case: `job-employee`, `job-search`, `settings-email`
--   Must be unique across all plugins
--   Prefer namespacing: `jobs-employee`, `jobs-matching`
+- Use kebab-case: `job-employee`, `job-search`, `settings-email`
+- Must be unique across all plugins
+- Prefer namespacing: `jobs-employee`, `jobs-matching`
 
 ### Module structure
 
--   Implement `IOnPluginUiBootstrap` and `IOnPluginUiDestroy` for lifecycle hooks
--   Use `applyDeclarativeRegistrations()` in the constructor for routes, nav, tabs, extensions
--   Inject `PLUGIN_DEFINITION` and `PLUGIN_OPTIONS` when you need plugin metadata
+- Implement `IOnPluginUiBootstrap` and `IOnPluginUiDestroy` for lifecycle hooks
+- Use `applyDeclarativeRegistrations()` in the constructor for routes, nav, tabs, extensions
+- Inject `PLUGIN_DEFINITION` and `PLUGIN_OPTIONS` when you need plugin metadata
 
 ### Extension slots
 
-Use `EXTENSION_SLOTS` constants for consistency:
+Use `PAGE_EXTENSION_SLOTS` constants for consistency:
 
--   `EXTENSION_SLOTS.DASHBOARD_WIDGETS` – dashboard widgets
--   `EXTENSION_SLOTS.SETTINGS_TABS` – settings tabs
--   `EXTENSION_SLOTS.INTEGRATIONS_LIST` – integration tiles
--   `EXTENSION_SLOTS.USER_MENU_ITEMS` – user menu dropdown
--   `EXTENSION_SLOTS.HEADER_TOOLBAR` – header actions
--   Tab slots: `DASHBOARD_TABS`, `TIMESHEET_TABS`, `TIME_ACTIVITY_TABS`, `EMPLOYEE_EDIT_TABS`
+- `PAGE_EXTENSION_SLOTS.DASHBOARD_WIDGETS` – dashboard widgets
+- `PAGE_EXTENSION_SLOTS.SETTINGS_TABS` – settings tabs
+- `PAGE_EXTENSION_SLOTS.INTEGRATIONS_LIST` – integration tiles
+- `PAGE_EXTENSION_SLOTS.USER_MENU_ITEMS` – user menu dropdown
+- `PAGE_EXTENSION_SLOTS.HEADER_TOOLBAR` – header actions
+- Tab slots: `DASHBOARD_TABS`, `TIMESHEET_TABS`, `TIME_ACTIVITY_TABS`, `EMPLOYEE_EDIT_TABS`
 
 ---
 
@@ -104,7 +104,7 @@ Register components for named slots; host components render them:
 ```ts
 pageExtensionRegistry.register({
 	id: 'my-widget',
-	slotId: EXTENSION_SLOTS.DASHBOARD_WIDGETS,
+	slotId: PAGE_EXTENSION_SLOTS.DASHBOARD_WIDGETS,
 	component: MyWidgetComponent,
 	order: 10
 });
@@ -117,7 +117,6 @@ Extensions registered via `definition.extensions` are auto-deregistered when the
 ## Lifecycle
 
 1. **Bootstrap** (app init)
-
     - Plugins filtered by `PLUGIN_ACTIVATION_PREDICATE`
     - Ordered by `dependsOn`
     - Modules loaded (sync or via `loadModule`)
@@ -137,22 +136,22 @@ Extensions registered via `definition.extensions` are auto-deregistered when the
 
 ### Types
 
--   `PluginUiDefinition` – plugin config
--   `PluginRouteInput`, `PluginNavSectionInput`, `PluginTabInput` – declarative shapes
--   `ExtensionDefinition`, `EXTENSION_SLOTS` – extension slot system
+- `PluginUiDefinition` – plugin config
+- `PluginRouteInput`, `PluginNavSectionInput`, `PluginTabInput` – declarative shapes
+- `PageExtensionDefinition`, `PAGE_EXTENSION_SLOTS` – extension slot system
 
 ### Tokens
 
--   `PLUGIN_DEFINITION` – current plugin definition
--   `PLUGIN_OPTIONS` – plugin options
--   `PLUGIN_ACTIVATION_PREDICATE` – optional activation filter
+- `PLUGIN_DEFINITION` – current plugin definition
+- `PLUGIN_OPTIONS` – plugin options
+- `PLUGIN_ACTIVATION_PREDICATE` – optional activation filter
 
 ### Services
 
--   `PageExtensionRegistryService` – register/get extensions by slot
--   `PluginUiRegistryService` – tracks plugin instances
+- `PageExtensionRegistryService` – register/get extensions by slot
+- `PluginUiRegistryService` – tracks plugin instances
 
 ### Helpers
 
--   `definePlugin`, `definePluginGroup` – create definitions
--   `applyDeclarativeRegistrations` – apply routes, nav, tabs, extensions
+- `definePlugin`, `definePluginGroup` – create definitions
+- `applyDeclarativeRegistrations` – apply routes, nav, tabs, extensions

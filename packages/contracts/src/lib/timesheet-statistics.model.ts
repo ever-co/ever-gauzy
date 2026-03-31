@@ -12,9 +12,8 @@ export interface IGetTimeSlotStatistics extends ITimeLogFilters {
 }
 
 export interface ITimeSlotStatistics extends IEmployee {
-	user_name?: string;
+	user_id?: string;
 	startedAt?: Date;
-	user_image_url?: string;
 	timeSlots?: ITimeSlot[];
 	user: Pick<IUser, 'name' | 'imageUrl'>;
 }
@@ -44,7 +43,8 @@ export interface IProjectsStatistics extends IOrganizationProject {
 }
 
 export interface IGetTasksStatistics
-	extends ITimeLogFilters,
+	extends
+		ITimeLogFilters,
 		ITimeLogTodayFilters,
 		Pick<IRelationalOrganizationTeam, 'organizationTeamId'>,
 		Pick<IEmployeeEntityInput, 'employeeId'> {
@@ -64,8 +64,10 @@ export interface IGetManualTimesStatistics extends ITimeLogFilters {
 	onlyMe?: boolean;
 }
 
-export interface IManualTimesStatistics
-	extends Pick<ITimeLog, 'id' | 'startedAt' | 'duration' | 'employeeId' | 'employee'> {
+export interface IManualTimesStatistics extends Pick<
+	ITimeLog,
+	'id' | 'startedAt' | 'duration' | 'employeeId' | 'employee'
+> {
 	user?: Pick<IUser, 'name' | 'imageUrl'>;
 	project?: Pick<IOrganizationProject, 'name' | 'imageUrl'>;
 }
@@ -77,8 +79,7 @@ export interface IGetMembersStatistics extends ITimeLogFilters, ITimeLogTodayFil
 
 export interface IMembersStatistics {
 	id?: string;
-	user_name?: string;
-	user_image_url?: string;
+	user_id?: string;
 	weekHours?: Array<{ duration: number; day: number }>;
 	weekTime?: {
 		duration: number;
