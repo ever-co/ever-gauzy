@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@gauzy/config';
 import {
 	IntegrationSettingService,
 	IntegrationService,
@@ -13,7 +14,6 @@ import { IIntegrationEntitySetting, IIntegrationTenant, IntegrationEntity, Integ
 import {
 	IMakeComIntegrationSettings,
 	MakeSettingName,
-	IMakeComCreateIntegration,
 	IIntegrationFilter
 } from './interfaces/make-com.model';
 import { CommandBus } from '@nestjs/cqrs';
@@ -24,6 +24,7 @@ export class MakeComService {
 
 	constructor(
 		private readonly _commandBus: CommandBus,
+		private readonly config: ConfigService,
 		private readonly integrationSettingService: IntegrationSettingService,
 		private readonly integrationTenantService: IntegrationTenantService,
 		private readonly integrationService: IntegrationService
@@ -182,23 +183,27 @@ export class MakeComService {
 
 	/**
 	 * Add Make.com integration settings for the current tenant and organization.
-	 * This method is used to add settings like client ID and client secret.
-	 * It is called when the integration is first set up.
-	 * The integration is automatically enabled (isEnabled = true) when created.
-	 * @param {Object} settings - The settings to add.
+	 * Client credentials (client_id, client_secret) are read from server-side
+	 * environment variables and are never exposed to tenants.
+	 *
 	 * @param {string} [organizationId] - Optional organization ID for organization-level integration
-	 * @returns The created settings.
+	 * @returns The created integration tenant.
 	 */
-	async addIntegrationSettings(
-		settings: IMakeComCreateIntegration,
-		organizationId?: string
-	): Promise<IIntegrationTenant> {
+	async addIntegrationSettings(organizationId?: string): Promise<IIntegrationTenant> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const { client_id, client_secret } = settings;
 
 			if (!tenantId) {
 				throw new NotFoundException('Tenant ID not found in request context');
+			}
+
+			// Read client credentials from server-side config (env vars)
+			const makeComConfig = this.config?.get('makeCom');
+			const client_id = makeComConfig?.clientId;
+			const client_secret = makeComConfig?.clientSecret;
+
+			if (!client_id || !client_secret) {
+				throw new NotFoundException('Make.com OAuth credentials are not configured on the server. Please set GAUZY_MAKE_CLIENT_ID and GAUZY_MAKE_CLIENT_SECRET environment variables.');
 			}
 
 			// Find or create the base integration

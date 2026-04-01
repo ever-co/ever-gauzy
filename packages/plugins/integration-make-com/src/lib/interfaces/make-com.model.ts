@@ -51,10 +51,7 @@ export interface IMakeComAuthConfig {
 	postInstallUrl: string;
 }
 
-export interface IMakeComCreateIntegration extends IBasePerTenantAndOrganizationEntityModel {
-	client_id: string;
-	client_secret: string;
-}
+export interface IMakeComCreateIntegration extends IBasePerTenantAndOrganizationEntityModel {}
 
 export interface IMakeComOAuthCodeExchange {
 	code: string;

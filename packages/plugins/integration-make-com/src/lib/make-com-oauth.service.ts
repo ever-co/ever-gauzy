@@ -26,7 +26,7 @@ import { MakeComService } from './make-com.service';
 @Injectable()
 export class MakeComOAuthService {
 	private readonly logger = new Logger(MakeComOAuthService.name);
-	private pendingStates = new Map<string, { timestamp: number; codeVerifier?: string }>();
+	private pendingStates = new Map<string, { timestamp: number; codeVerifier: string }>();
 	private static readonly STATE_TTL_MS = 10 * 60 * 1000; // 10 min
 
 	constructor(
@@ -40,22 +40,24 @@ export class MakeComOAuthService {
 	) {}
 
 	/**
-	 * Generate a cryptographically secure random code verifier for PKCE
+	 * Generate a cryptographically secure random code verifier for PKCE.
 	 */
 	private generateCodeVerifier(): string {
 		return randomBytes(32).toString('base64url');
 	}
 
 	/**
-	 * Generate code challenge from code verifier using SHA256
+	 * Generate code challenge from code verifier using SHA256.
 	 */
 	private generateCodeChallenge(codeVerifier: string): string {
 		return createHash('sha256').update(codeVerifier).digest('base64url');
 	}
 
 	/**
-	 * Generate the authorization URL for the Make.com OAuth flow with PKCE support.
+	 * Generate the authorization URL for the Make.com OAuth v2 flow with PKCE.
+	 * Make.com requires code_challenge even for confidential clients.
 	 *
+	 * @see https://developers.make.com/api-documentation/authentication/oauth-flow/authorization-code-flow-with-refresh-token-confidential-clients
 	 */
 	getAuthorizationUrl(options?: { state?: string; clientId?: string; organizationId?: string }): string {
 	try {
@@ -72,7 +74,7 @@ export class MakeComOAuthService {
 		// Always generate state internally to ensure consistent format
 		const state = Buffer.from(JSON.stringify({ tenantId, organizationId })).toString('base64url');
 
-		// Generate PKCE parameters
+		// Generate PKCE parameters (required by Make.com OAuth v2)
 		const codeVerifier = this.generateCodeVerifier();
 		const codeChallenge = this.generateCodeChallenge(codeVerifier);
 
@@ -81,7 +83,7 @@ export class MakeComOAuthService {
 		// Prepare scopes according to Make.com documentation
 		const scopes = MAKE_DEFAULT_SCOPES.join(' ');
 
-		// Build authorization URL according to Make.com documentation with PKCE
+		// Build authorization URL per Make.com OAuth v2 documentation
 		const params = new URLSearchParams({
 			client_id: clientId,
 			redirect_uri: redirectUri,
@@ -92,29 +94,18 @@ export class MakeComOAuthService {
 			code_challenge_method: 'S256'
 		});
 
-		return `${MAKE_BASE_URL}/oauth/authorize?${params.toString()}`;
+		return `${MAKE_BASE_URL}/oauth/v2/authorize?${params.toString()}`;
 		} catch (error) {
 			this.logger.error('Error generating Make.com authorization URL:', error);
 			throw error;
 		}
 	}
 
-	async exchangeCodeForToken(code: string, state: string): Promise<IMakeComOAuthTokens> {
+	async exchangeCodeForToken(code: string, state: string, codeVerifier?: string): Promise<IMakeComOAuthTokens> {
 		try {
-			const stateVerification = this.verifyState(state);
-			if (!stateVerification.isValid) {
-				throw new BadRequestException('Invalid state parameter');
-			}
-
 			// Decode the state parameter
 			const decodedState = JSON.parse(Buffer.from(state, 'base64url').toString());
 			const { tenantId, organizationId } = decodedState;
-
-			// Set the tenant context for subsequent operations
-			const currentTenantId = RequestContext.currentTenantId();
-			if (currentTenantId !== tenantId) {
-				throw new BadRequestException('Tenant ID mismatch');
-			}
 
 			// Get client credentials from database
 			const integrationTenant = await this.getIntegrationTenant(tenantId, organizationId);
@@ -125,31 +116,27 @@ export class MakeComOAuthService {
 				throw new BadRequestException('Make.com OAuth credentials are not fully configured');
 			}
 
-			const redirectUri = this.config.get('makeCom').redirectUri;
+			if (!codeVerifier) {
+				throw new BadRequestException('Missing PKCE code verifier for token exchange');
+			}
 
 			// Prepare the request body for Make.com token endpoint with PKCE
 			const tokenRequestParams = new URLSearchParams({
 				grant_type: 'authorization_code',
 				code,
-				redirect_uri: redirectUri,
 				client_id: clientId,
-				client_secret: clientSecret
+				client_secret: clientSecret,
+				code_verifier: codeVerifier
 			});
-
-			// Add code verifier for PKCE if available
-			if (!stateVerification.codeVerifier) {
-				throw new BadRequestException('Missing PKCE code verifier');
-			}
-			tokenRequestParams.append('code_verifier', stateVerification.codeVerifier);
 
 			const headers = {
 				'Content-Type': 'application/x-www-form-urlencoded',
 				'Accept': 'application/json'
 			};
 
-			// Make the token request to Make.com
+			// Make the token request to Make.com OAuth v2 token endpoint
 			const tokenResponse = await firstValueFrom(
-				this.httpService.post(`${MAKE_BASE_URL}/oauth/token`, tokenRequestParams, { headers, timeout: 10000 }).pipe(
+				this.httpService.post(`${MAKE_BASE_URL}/oauth/v2/token`, tokenRequestParams, { headers, timeout: 10000 }).pipe(
 					catchError((error: AxiosError) => {
 						this.logger.error('Error while exchanging code for token:', error.response?.data);
 						throw new HttpException(
@@ -298,7 +285,7 @@ export class MakeComOAuthService {
 	}
 
 	/**
-	 * Verify the state parameter to prevent CSRF attacks and return code verifier for PKCE.
+	 * Verify the state parameter to prevent CSRF attacks and return the PKCE code verifier.
 	 */
 	verifyState(state: string): { isValid: boolean; codeVerifier?: string } {
 		const pendingState = this.pendingStates.get(state);
@@ -314,24 +301,18 @@ export class MakeComOAuthService {
 			this.pendingStates.delete(state);
 			return { isValid: false };
 		}
-		// Valid and used - remove it to free memory and return the code verifier
+		// Valid and used - remove it to free memory, return codeVerifier for token exchange
 		this.pendingStates.delete(state);
 		return { isValid: true, codeVerifier: pendingState.codeVerifier };
 	}
 
 	/**
-	 * Store the state parameter and code verifier for later verification.
+	 * Store the state parameter and PKCE code verifier for later verification.
 	 *
 	 * @param {string} state - The state parameter to store.
 	 * @param {string} codeVerifier - The PKCE code verifier to store.
 	 */
-
-	/**
-	 * TODO: Implement a more robust storage mechanism for state parameters by Q4 2025.
-	 * This is a simple in-memory storage for small scale applications.
-	 * For scalability, we'll consider using cache, Redis for our case as it already exists in the project.
-	 */
-	private storeStateForVerification(state: string, codeVerifier?: string): void {
+	private storeStateForVerification(state: string, codeVerifier: string): void {
 		this.pendingStates.set(state, { timestamp: Date.now(), codeVerifier });
 		this.cleanupExpiredStates();
 	}
@@ -351,68 +332,20 @@ export class MakeComOAuthService {
 	}
 
 	/**
-	 * Handles the callback from Make.com OAuth flow
-	 * This method stores information for future use
+	 * Handles the callback from Make.com OAuth flow.
+	 * Verifies the state parameter and exchanges the authorization code for tokens using PKCE.
 	 */
 	async handleAuthorizationCallback(code: string, state: string): Promise<void> {
 		try {
-			// Decode the state to get context
-			const decodedState = JSON.parse(Buffer.from(state, 'base64').toString());
-			const { organizationId, tenantId } = decodedState;
-
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: {
-					name: IntegrationEnum.MakeCom,
-					tenantId,
-					...(organizationId && { organizationId })
-				},
-				relations: ['settings']
-			});
-
-			if (!integrationTenant) {
-				this.logger.warn(`Integration not found for tenant ${tenantId}`);
-				throw new NotFoundException('Integration not found');
+			// Verify state to prevent CSRF and retrieve the PKCE code verifier
+			const stateVerification = this.verifyState(state);
+			if (!stateVerification.isValid) {
+				throw new BadRequestException('Invalid or expired state parameter');
 			}
 
-			// Store the authorization code
-			// but since Make.com handles the OAuth flow, we just store the fact
-			// that the integration was authorized
-			let authCodeSetting = integrationTenant.settings.find(
-				(setting) => setting.settingsName === MakeSettingName.AUTH_CODE
-			);
-
-			if (authCodeSetting) {
-				authCodeSetting.settingsValue = code;
-			} else {
-				authCodeSetting = await this.integrationSettingService.create({
-					settingsName: MakeSettingName.AUTH_CODE,
-					settingsValue: code,
-					integrationId: integrationTenant.id,
-					tenantId: integrationTenant.tenantId,
-					organizationId: integrationTenant.organizationId
-				});
-			}
-
-			await this.integrationSettingService.save(authCodeSetting);
-
-			// Set integration as enabled
-			let enabledSetting = integrationTenant.settings.find(
-				(setting) => setting.settingsName === MakeSettingName.IS_ENABLED
-			);
-
-			if (enabledSetting) {
-				enabledSetting.settingsValue = 'true';
-			} else {
-				enabledSetting = await this.integrationSettingService.create({
-					settingsName: MakeSettingName.IS_ENABLED,
-					settingsValue: 'true',
-					integrationId: integrationTenant.id,
-					tenantId: integrationTenant.tenantId,
-					organizationId: integrationTenant.organizationId
-				});
-			}
-			await this.integrationSettingService.save(enabledSetting);
-			this.logger.log(`Successfully handled OAuth callback for tenant ${tenantId}`);
+			// Exchange the authorization code for tokens with the PKCE code verifier
+			await this.exchangeCodeForToken(code, state, stateVerification.codeVerifier);
+			this.logger.log('Successfully handled OAuth callback and exchanged code for tokens');
 		} catch (error) {
 			this.logger.error('Error handling Make.com authorization callback:', error);
 			throw error;
@@ -442,8 +375,8 @@ export class MakeComOAuthService {
 			// Get OAuth credentials from the database
 			const { clientId, clientSecret } = await this.makeComService.getOAuthCredentials(integrationId);
 
-			// Get the Make.com token endpoint URL
-			const tokenUrl = `${MAKE_BASE_URL}/oauth/token`;
+			// Get the Make.com OAuth v2 token endpoint URL
+			const tokenUrl = `${MAKE_BASE_URL}/oauth/v2/token`;
 
 			// Create the form data for the token request
 			const formData = new URLSearchParams();
