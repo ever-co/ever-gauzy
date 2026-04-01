@@ -1211,14 +1211,14 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "Ket Zapier Client ID ni",
-			"CLIENT_SECRET": "Ket Zapier Client Secret ni",
-			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Zapier me tiyo ki integration",
+			"CONNECT_TO_ZAPIER": "Kub ki Zapier",
+			"CONNECT_INFO": "Dii gin ame piny me kube akaunt mamegi me Zapier. Ibi nyuto i Zapier me ye kwede integration.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Peko oo pe gonyo ter pa Zapier",
 				"SAVE_SETTINGS": "Peko oo pe gam ter pa Zapier",
 				"INVALID_FORM": "Tim ber iyie pot buk ma mito ni ber",
 				"MISSING_CREDENTIALS": "Peko pe tye lok ma loyo client",
+				"NO_ORGANIZATION": "Tim ber i yer lawoti mukwongo",
 				"NO_ACCESS_TOKEN": "Peke pe tye token ma loyo",
 				"LOAD_WEBHOOKS": "Peko oo pe gonyo webhooks",
 				"DELETE_WEBHOOK": "Peko oo pe junk webhook",

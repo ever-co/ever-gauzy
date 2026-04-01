@@ -1,12 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { tap, catchError, finalize, switchMap } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService, IntegrationsService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { ICreateZapierIntegrationInput, IntegrationEnum, IOrganization } from '@gauzy/contracts';
+import { IntegrationEnum, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@gauzy/ui-core/core';
 
@@ -18,13 +17,10 @@ import { Store } from '@gauzy/ui-core/core';
 	standalone: false
 })
 export class ZapierAuthorizeComponent extends TranslationBaseComponent implements OnInit {
-	public form: FormGroup;
 	public loading = false;
-	public oauthConfig: { clientId: string; redirectUri: string } = null;
 	public organization: IOrganization;
 
 	constructor(
-		private readonly _fb: FormBuilder,
 		private readonly _zapierService: ZapierService,
 		private readonly _toastrService: ToastrService,
 		private readonly _router: Router,
@@ -36,21 +32,12 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 	}
 
 	ngOnInit() {
-		this._initializeForm();
 		this._loadOrganization()
 			.pipe(
 				switchMap(() => this._checkExistingIntegration()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._loadOAuthConfig();
-	}
-
-	private _initializeForm() {
-		this.form = this._fb.group({
-			client_id: ['', [Validators.required]],
-			client_secret: ['', [Validators.required]]
-		});
 	}
 
 	private _loadOrganization() {
@@ -59,21 +46,6 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 				this.organization = organization;
 			})
 		);
-	}
-
-	private _loadOAuthConfig() {
-		this._zapierService
-			.getOAuthConfig()
-			.pipe(
-				tap((config) => {
-					this.oauthConfig = config;
-				}),
-				catchError((error) => {
-					return EMPTY;
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 	}
 
 	private _checkExistingIntegration() {
@@ -104,31 +76,22 @@ export class ZapierAuthorizeComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * Start OAuth authorization flow
+	 * Start OAuth authorization flow.
+	 * No credentials needed — server uses its own env-configured client_id/secret.
 	 */
-	startAuthorization() {
-		if (this.form.invalid) {
+	connectToZapier() {
+		if (!this.organization) {
 			this._toastrService.error(
-				this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.INVALID_FORM'),
+				this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.ERRORS.NO_ORGANIZATION'),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 			return;
 		}
 
-		if (!this.organization) {
-			this.loading = false;
-			return;
-		}
-
-		const credentials: ICreateZapierIntegrationInput = {
-			...this.form.value,
-			organizationId: this.organization.id
-		};
-
 		this.loading = true;
 
 		this._zapierService
-			.initializeIntegration(credentials)
+			.initializeIntegration({ organizationId: this.organization.id })
 			.pipe(
 				tap((response: { authorizationUrl: string }) => {
 					// Redirect to Zapier's OAuth consent page

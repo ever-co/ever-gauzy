@@ -24,7 +24,6 @@ import {
 } from '@gauzy/core';
 import { ZAPIER_API_URL, ZAPIER_BASE_URL, ZAPIER_TOKEN_EXPIRATION_TIME, ZAPIER_OAUTH_SCOPES } from './zapier.config';
 import {
-	ICreateZapierIntegrationInput,
 	IIntegrationFilter,
 	IZapierAccessTokens,
 	IZapierEndpoint,
@@ -422,17 +421,27 @@ export class ZapierService {
 	}
 
 	/**
-	 * Store client credentials for later use in OAuth flow
+	 * Store integration credentials using server-side config.
+	 * Client credentials (client_id, client_secret) are read from environment variables
+	 * and are never exposed to tenants.
 	 */
-	async storeIntegrationCredentials(input: ICreateZapierIntegrationInput): Promise<IIntegrationTenant> {
+	async storeIntegrationCredentials(input: { organizationId: string; state: string }): Promise<IIntegrationTenant> {
 		const tenantId = RequestContext.currentTenantId();
 		if (!tenantId) {
 			throw new BadRequestException('Tenant ID is required');
 		}
-		const { client_id, client_secret, state, organizationId } = input;
+		const { state, organizationId } = input;
 
 		if (!state) {
 			throw new BadRequestException('State parameter is required');
+		}
+
+		// Read client credentials from server-side config (env vars)
+		const client_id = this.config.get('zapier')?.clientId;
+		const client_secret = this.config.get('zapier')?.clientSecret;
+
+		if (!client_id || !client_secret) {
+			throw new BadRequestException('Zapier OAuth credentials are not configured on the server. Please set GAUZY_ZAPIER_CLIENT_ID and GAUZY_ZAPIER_CLIENT_SECRET environment variables.');
 		}
 
 		// Find or create the base integration
@@ -462,7 +471,7 @@ export class ZapierService {
 			};
 		}) as IIntegrationEntitySetting[];
 
-		// Create the integration first
+		// Create the integration with server-side credentials
 		const integration = await this._commandBus.execute(
 			new IntegrationTenantUpdateOrCreateCommand(
 				{

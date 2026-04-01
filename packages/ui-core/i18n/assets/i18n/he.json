@@ -1320,14 +1320,14 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "מזהה לקוח",
-			"CLIENT_SECRET": "סיסמת לקוח",
-			"NEXT_STEP_INFO": "לאחר האישור, תועבר ל-Zapier להשלמת הגדרות האינטגרציה",
+			"CONNECT_TO_ZAPIER": "התחבר ל-Zapier",
+			"CONNECT_INFO": "לחץ על הכפתור למטה כדי לחבר את חשבון ה-Zapier שלך. תועבר ל-Zapier כדי לאשר את האינטגרציה.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "נכשל בטעינת הגדרות Zapier",
 				"SAVE_SETTINGS": "נכשל בשמירת הגדרות Zapier",
 				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
 				"MISSING_CREDENTIALS": "חסרים פרטי גישה של הלקוח",
+				"NO_ORGANIZATION": "אנא בחר ארגון תחילה",
 				"NO_ACCESS_TOKEN": "אין אסימון גישה זמין",
 				"LOAD_WEBHOOKS": "נכשל בטעינת וובחוקים",
 				"DELETE_WEBHOOK": "נכשל במחיקת וובחוק",

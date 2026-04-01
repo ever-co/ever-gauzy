@@ -1316,14 +1316,14 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "ID do Cliente",
-			"CLIENT_SECRET": "Segredo do Cliente",
-			"NEXT_STEP_INFO": "Após a autorização, você será redirecionado para o Zapier para completar a configuração da integração",
+			"CONNECT_TO_ZAPIER": "Conectar ao Zapier",
+			"CONNECT_INFO": "Clique no botão abaixo para conectar sua conta Zapier. Você será redirecionado ao Zapier para autorizar a integração.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Falha ao carregar configurações do Zapier",
 				"SAVE_SETTINGS": "Falha ao salvar configurações do Zapier",
 				"INVALID_FORM": "Por favor, preencha todos os campos obrigatórios",
 				"MISSING_CREDENTIALS": "Credenciais do cliente ausentes",
+				"NO_ORGANIZATION": "Por favor, selecione uma organização primeiro",
 				"NO_ACCESS_TOKEN": "Nenhum token de acesso disponível",
 				"LOAD_WEBHOOKS": "Falha ao carregar webhooks",
 				"DELETE_WEBHOOK": "Falha ao excluir webhook",

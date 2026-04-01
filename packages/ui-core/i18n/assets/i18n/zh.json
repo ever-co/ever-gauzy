@@ -1316,14 +1316,14 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "客户端ID",
-			"CLIENT_SECRET": "客户端密钥",
-			"NEXT_STEP_INFO": "授权后，您将被重定向到Zapier以完成集成设置",
+			"CONNECT_TO_ZAPIER": "连接到 Zapier",
+			"CONNECT_INFO": "点击下方按钮连接您的 Zapier 账户。您将被重定向到 Zapier 以授权集成。",
 			"ERRORS": {
 				"LOAD_SETTINGS": "加载Zapier设置失败",
 				"SAVE_SETTINGS": "保存Zapier设置失败",
 				"INVALID_FORM": "请填写所有必填字段",
 				"MISSING_CREDENTIALS": "缺少客户端凭据",
+				"NO_ORGANIZATION": "请先选择一个组织",
 				"NO_ACCESS_TOKEN": "没有可用的访问令牌",
 				"LOAD_WEBHOOKS": "加载Webhooks失败",
 				"DELETE_WEBHOOK": "删除Webhook失败",

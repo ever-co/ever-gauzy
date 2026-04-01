@@ -1365,14 +1365,14 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "Client ID",
-			"CLIENT_SECRET": "Client Secret",
-			"NEXT_STEP_INFO": "After authorization, you will be redirected to Zapier to complete the integration setup",
+			"CONNECT_TO_ZAPIER": "Connect to Zapier",
+			"CONNECT_INFO": "Click the button below to connect your Zapier account. You will be redirected to Zapier to authorize the integration.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Failed to load Zapier settings",
 				"SAVE_SETTINGS": "Failed to save Zapier settings",
 				"INVALID_FORM": "Please fill in all required fields",
 				"MISSING_CREDENTIALS": "Missing client credentials",
+				"NO_ORGANIZATION": "Please select an organization first",
 				"NO_ACCESS_TOKEN": "No access token available",
 				"LOAD_WEBHOOKS": "Failed to load webhooks",
 				"DELETE_WEBHOOK": "Failed to delete webhook",

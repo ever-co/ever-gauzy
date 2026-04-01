@@ -1316,14 +1316,14 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "Client ID",
-			"CLIENT_SECRET": "Client Geheim",
-			"NEXT_STEP_INFO": "Na autorisatie word je doorgestuurd naar Zapier om de integratie-instellingen te voltooien",
+			"CONNECT_TO_ZAPIER": "Verbinden met Zapier",
+			"CONNECT_INFO": "Klik op de knop hieronder om je Zapier-account te verbinden. Je wordt doorgestuurd naar Zapier om de integratie te autoriseren.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Fout bij het laden van Zapier-instellingen",
 				"SAVE_SETTINGS": "Fout bij het opslaan van Zapier-instellingen",
 				"INVALID_FORM": "Vul alstublieft alle verplichte velden in",
 				"MISSING_CREDENTIALS": "Ontbrekende clientreferenties",
+				"NO_ORGANIZATION": "Selecteer alstublieft eerst een organisatie",
 				"NO_ACCESS_TOKEN": "Geen toegangstoken beschikbaar",
 				"LOAD_WEBHOOKS": "Fout bij het laden van webhooks",
 				"DELETE_WEBHOOK": "Fout bij het verwijderen van webhook",

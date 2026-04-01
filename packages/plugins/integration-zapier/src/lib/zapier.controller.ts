@@ -16,7 +16,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
-import { ICreateZapierIntegrationInput, IZapierEndpoint, IZapierIntegrationSettings } from './zapier.types';
+import { IZapierEndpoint, IZapierIntegrationSettings } from './zapier.types';
 import { randomBytes } from 'node:crypto';
 
 @ApiTags('Zapier Integrations')
@@ -49,30 +49,27 @@ export class ZapierController {
 		description: 'Bad Request - Missing required fields'
 	})
 	@Post('/settings')
-	async initializeIntegration(@Body() body: ICreateZapierIntegrationInput) {
+	async initializeIntegration(@Body() body: { organizationId: string }) {
 		const tenantId = RequestContext.currentTenantId();
 		if (!tenantId) {
 			throw new BadRequestException('Tenant ID is required');
 		}
-		// validate body inputs
-		if (!body.client_id || !body.client_secret) {
-			throw new BadRequestException('Missing required fields');
+
+		if (!body.organizationId) {
+			throw new BadRequestException('Organization ID is required');
 		}
 
 		// Generate state parameter for CSRF protection
 		const state = Buffer.from(randomBytes(32)).toString('base64url');
 
-		// Store the client credentials and state for later use in the callback
+		// Store the integration with server-side credentials and state
 		const integration = await this.zapierService.storeIntegrationCredentials({
-			...body,
+			organizationId: body.organizationId,
 			state
 		});
 
-		// Generate authorization URL to redirect user to Zapier for OAuth consent
-		const authorizationUrl = this.zapierService.getAuthorizationUrl({
-			clientId: body.client_id,
-			state
-		});
+		// Generate authorization URL using server-side client ID
+		const authorizationUrl = this.zapierService.getAuthorizationUrl({ state });
 
 		return {
 			authorizationUrl,

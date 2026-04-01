@@ -1316,14 +1316,14 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "ID Cliente",
-			"CLIENT_SECRET": "Segreto Cliente",
-			"NEXT_STEP_INFO": "Dopo l'autorizzazione, sarai reindirizzato a Zapier per completare la configurazione dell'integrazione",
+			"CONNECT_TO_ZAPIER": "Connetti a Zapier",
+			"CONNECT_INFO": "Clicca il pulsante qui sotto per collegare il tuo account Zapier. Sarai reindirizzato a Zapier per autorizzare l'integrazione.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Impossibile caricare le impostazioni di Zapier",
 				"SAVE_SETTINGS": "Impossibile salvare le impostazioni di Zapier",
 				"INVALID_FORM": "Per favore, compila tutti i campi obbligatori",
 				"MISSING_CREDENTIALS": "Credenziali client mancanti",
+				"NO_ORGANIZATION": "Per favore, seleziona prima un'organizzazione",
 				"NO_ACCESS_TOKEN": "Nessun token di accesso disponibile",
 				"LOAD_WEBHOOKS": "Impossibile caricare i webhook",
 				"DELETE_WEBHOOK": "Impossibile eliminare il webhook",

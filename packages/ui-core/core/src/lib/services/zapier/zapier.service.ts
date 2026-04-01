@@ -5,7 +5,6 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 import {
 	IZapierEndpoint,
 	IZapierOAuthTokenDTO,
-	ICreateZapierIntegrationInput,
 	IZapierWebhook,
 	IZapierCreateWebhookInput,
 	IZapierAuthConfig,
@@ -80,9 +79,10 @@ export class ZapierService {
 	}
 
 	/**
-	 * Initialize a new Zapier integration
+	 * Initialize a new Zapier integration.
+	 * No client credentials needed — server uses its own env-configured credentials.
 	 */
-	initializeIntegration(body: ICreateZapierIntegrationInput): Observable<{
+	initializeIntegration(body: { organizationId: string }): Observable<{
 		authorizationUrl: string;
 		integrationId: string;
 	}> {

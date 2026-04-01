@@ -1315,14 +1315,14 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "معرف العميل",
-			"CLIENT_SECRET": "الرمز السري للعميل",
-			"NEXT_STEP_INFO": "بعد التفويض، سيتم توجيهك إلى Zapier لإكمال إعداد التكامل",
+			"CONNECT_TO_ZAPIER": "الاتصال بـ Zapier",
+			"CONNECT_INFO": "انقر على الزر أدناه لربط حسابك في Zapier. سيتم توجيهك إلى Zapier للتفويض بالتكامل.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "فشل تحميل إعدادات Zapier",
 				"SAVE_SETTINGS": "فشل حفظ إعدادات Zapier",
 				"INVALID_FORM": "يرجى إدخال جميع الحقول المطلوبة",
 				"MISSING_CREDENTIALS": "بيانات الاعتماد للعميل مفقودة",
+				"NO_ORGANIZATION": "يرجى اختيار منظمة أولاً",
 				"NO_ACCESS_TOKEN": "لا يوجد رمز وصول متاح",
 				"LOAD_WEBHOOKS": "فشل تحميل ويب هوكس",
 				"DELETE_WEBHOOK": "فشل حذف ويب هوك",
