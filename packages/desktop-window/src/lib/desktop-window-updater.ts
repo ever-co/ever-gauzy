@@ -84,7 +84,8 @@ const windowSetting = (preloadPath: string): Electron.BrowserWindowConstructorOp
 			nodeIntegration: true,
 			webSecurity: false,
 			devTools: true,
-			contextIsolation: false
+			contextIsolation: false,
+			sandbox: false
 		},
 		width: 700,
 		height: 600,

@@ -46,7 +46,8 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 									nodeIntegration: false,
 									contextIsolation: true,
 									webSecurity: false,
-									preload: preloadPath
+									preload: preloadPath,
+									sandbox: false
 								}
 							}
 						: {})

@@ -91,7 +91,8 @@ const windowSetting = (preloadPath?: string, contextIsolation?: boolean): Electr
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,
-			contextIsolation: false
+			contextIsolation: false,
+			sandbox: false
 		},
 		width: 960,
 		height: 680,

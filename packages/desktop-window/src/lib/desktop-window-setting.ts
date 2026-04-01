@@ -86,7 +86,8 @@ const windowSetting = (preloadPath?: string, contextIsolation?: boolean): Electr
 			nodeIntegration: true,
 			webSecurity: false,
 			devTools: true,
-			contextIsolation: false
+			contextIsolation: false,
+			sandbox: false
 		},
 		width: 1000,
 		height: 800,

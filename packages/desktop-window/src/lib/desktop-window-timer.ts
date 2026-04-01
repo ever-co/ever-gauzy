@@ -103,7 +103,8 @@ const windowSetting = (preloadPath?: string): Electron.BrowserWindowConstructorO
 			nodeIntegration: true,
 			webSecurity: false,
 			contextIsolation: false,
-			zoomFactor: zoomFactor
+			zoomFactor: zoomFactor,
+			sandbox: false
 		},
 		width: width,
 		height: height,

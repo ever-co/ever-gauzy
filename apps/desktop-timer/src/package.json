@@ -208,6 +208,6 @@
 		"@gauzy/desktop-window": "file:../../../dist/packages/desktop-window",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"knex": "3.1.0",
-		"uiohook": "1.5.4"
+		"uiohook-napi": "1.5.4"
 	}
 }
