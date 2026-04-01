@@ -63,8 +63,6 @@ export interface IZapierEndpoint {
 }
 
 export interface ICreateZapierIntegrationInput extends IBasePerTenantAndOrganizationEntityModel {
-	client_id: string;
-	client_secret: string;
 	code?: string;
 	redirect_uri?: string;
 }
