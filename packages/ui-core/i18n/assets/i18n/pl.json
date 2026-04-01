@@ -1296,13 +1296,13 @@
 			"EXECUTIONS": "Wykonania",
 			"HISTORY": "Historia",
 			"SETTINGS": "Ustawienia",
+			"CONNECT_TO_MAKE_COM": "Połącz z Make.com",
+			"CONNECT_INFO": "Kliknij przycisk poniżej, aby połączyć swoje konto Make.com. Zostaniesz przekierowany do Make.com w celu autoryzacji integracji.",
 			"ERRORS": {
 				"INVALID_FORM": "Proszę wypełnić wszystkie wymagane pola",
-				"START_AUTHORIZATION": "Proszę rozpocząć proces autoryzacji"
-			},
-			"CLIENT_ID": "ID Klienta",
-			"CLIENT_SECRET": "Sekret Klienta",
-			"NEXT_STEP_INFO": "Po autoryzacji zostaniesz przekierowany do Make.com, aby dokończyć konfigurację integracji"
+				"START_AUTHORIZATION": "Proszę rozpocząć proces autoryzacji",
+				"NO_ORGANIZATION": "Proszę najpierw wybrać organizację"
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {

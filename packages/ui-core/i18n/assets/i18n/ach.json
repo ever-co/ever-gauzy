@@ -1192,13 +1192,13 @@
 			"EXECUTIONS": "Executions",
 			"HISTORY": "History",
 			"SETTINGS": "Settings",
+			"CONNECT_TO_MAKE_COM": "Kub ki Make.com",
+			"CONNECT_INFO": "Dii gin ame piny me kube akaunt mamegi me Make.com. Ibi nyuto i Make.com me ye kwede integration.",
 			"ERRORS": {
 				"INVALID_FORM": "Tim ber iyie pot buk ma mito ni ber",
-				"START_AUTHORIZATION": "Please start the authorization process"
-			},
-			"CLIENT_ID": "Client Id",
-			"CLIENT_SECRET": "Client Secret",
-			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Make.com me tiyo ki integration"
+				"START_AUTHORIZATION": "Please start the authorization process",
+				"NO_ORGANIZATION": "Tim ber i yer lawoti mukwongo"
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {

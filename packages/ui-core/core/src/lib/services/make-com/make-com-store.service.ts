@@ -12,13 +12,6 @@ export class MakeComStoreService {
 		new BehaviorSubject<IMakeComIntegrationSettings | null>(null);
 	public settings$: Observable<IMakeComIntegrationSettings | null> = this._settings$.asObservable();
 
-	private _oauthConfig$: BehaviorSubject<{ clientId: string; redirectUri: string } | null> = new BehaviorSubject<{
-		clientId: string;
-		redirectUri: string;
-	} | null>(null);
-	public oauthConfig$: Observable<{ clientId: string; redirectUri: string } | null> =
-		this._oauthConfig$.asObservable();
-
 	constructor(private readonly _makeComService: MakeComService) {}
 
 	/**
@@ -54,31 +47,16 @@ export class MakeComStoreService {
 	}
 
 	/**
-	 * Adds or updates Make.com OAuth settings
-	 * @param credentials The OAuth credentials
-	 * @returns An observable of the updated settings
+	 * Initialize Make.com integration.
+	 * No client credentials needed — server uses its own env-configured credentials.
 	 */
-	addOAuthSettings(credentials: { clientId: string; clientSecret: string }): Observable<{
+	initializeIntegration(body: { organizationId: string }): Observable<{
 		authorizationUrl: string;
 		integrationId: string;
 	}> {
-		return this._makeComService.addOAuthSettings(credentials).pipe(
+		return this._makeComService.initializeIntegration(body).pipe(
 			catchError((error) => {
-				console.error('Error adding Make.com OAuth settings:', error);
-				return throwError(() => error);
-			})
-		);
-	}
-
-	/**
-	 * Loads the OAuth configuration
-	 * @returns An observable of the OAuth config
-	 */
-	loadOAuthConfig(): Observable<{ clientId: string; redirectUri: string }> {
-		return this._makeComService.getOAuthConfig().pipe(
-			tap((config) => this._oauthConfig$.next(config)),
-			catchError((error) => {
-				console.error('Error loading Make.com OAuth config:', error);
+				console.error('Error initializing Make.com integration:', error);
 				return throwError(() => error);
 			})
 		);
@@ -93,18 +71,9 @@ export class MakeComStoreService {
 	}
 
 	/**
-	 * Gets the current OAuth configuration without making an API call
-	 * @returns The current OAuth config or null if not loaded
-	 */
-	getCurrentOAuthConfig(): { clientId: string; redirectUri: string } | null {
-		return this._oauthConfig$.getValue();
-	}
-
-	/**
 	 * Clears all stored data
 	 */
 	clearStore(): void {
 		this._settings$.next(null);
-		this._oauthConfig$.next(null);
 	}
 }

@@ -1299,13 +1299,13 @@
 			"EXECUTIONS": "Ejecuciones",
 			"HISTORY": "Historial",
 			"SETTINGS": "Configuración",
+			"CONNECT_TO_MAKE_COM": "Conectar con Make.com",
+			"CONNECT_INFO": "Haga clic en el botón de abajo para conectar su cuenta de Make.com. Será redirigido a Make.com para autorizar la integración.",
 			"ERRORS": {
 				"INVALID_FORM": "Por favor, complete todos los campos requeridos",
-				"START_AUTHORIZATION": "Por favor, inicie el proceso de autorización"
-			},
-			"CLIENT_ID": "ID de Cliente",
-			"CLIENT_SECRET": "Clave Secreta del Cliente",
-			"NEXT_STEP_INFO": "Después de la autorización, será redirigido a Make.com para completar la configuración de la integración"
+				"START_AUTHORIZATION": "Por favor, inicie el proceso de autorización",
+				"NO_ORGANIZATION": "Por favor, seleccione una organización primero"
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {

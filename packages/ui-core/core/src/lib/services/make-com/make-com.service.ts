@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-core/common';
-import { IMakeComIntegrationSettings, IMakeComCreateIntegration, IMakeComOAuthTokenDTO } from '@gauzy/contracts';
+import { IMakeComIntegrationSettings, IMakeComOAuthTokenDTO } from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'
@@ -28,28 +28,17 @@ export class MakeComService {
 	}
 
 	/**
-	 * Add or update Make.com OAuth settings
+	 * Initialize a new Make.com integration.
+	 * No client credentials needed — server uses its own env-configured credentials.
 	 */
-	addOAuthSettings(credentials: IMakeComCreateIntegration): Observable<{
+	initializeIntegration(body: { organizationId: string }): Observable<{
 		authorizationUrl: string;
 		integrationId: string;
 	}> {
 		return this.http.post<{
 			authorizationUrl: string;
 			integrationId: string;
-		}>(`${API_PREFIX}/integration/make-com/oauth-settings`, {
-			client_id: credentials.clientId,
-			client_secret: credentials.clientSecret
-		});
-	}
-
-	/**
-	 * Get Make.com OAuth configuration
-	 */
-	getOAuthConfig(): Observable<{ clientId: string; redirectUri: string }> {
-		return this.http.get<{ clientId: string; redirectUri: string }>(
-			`${API_PREFIX}/integration/make-com/oauth-config`
-		);
+		}>(`${API_PREFIX}/integration/make-com/oauth-settings`, body);
 	}
 
 	/**

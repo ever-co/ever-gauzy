@@ -1297,13 +1297,13 @@
 			"EXECUTIONS": "执行",
 			"HISTORY": "历史",
 			"SETTINGS": "设置",
+			"CONNECT_TO_MAKE_COM": "连接到 Make.com",
+			"CONNECT_INFO": "点击下方按钮连接您的 Make.com 账户。您将被重定向到 Make.com 以授权集成。",
 			"ERRORS": {
 				"INVALID_FORM": "请填写所有必填字段",
-				"START_AUTHORIZATION": "请开始授权过程"
-			},
-			"CLIENT_ID": "客户端ID",
-			"CLIENT_SECRET": "客户端密钥",
-			"NEXT_STEP_INFO": "授权后，您将被重定向到Make.com以完成集成设置"
+				"START_AUTHORIZATION": "请开始授权过程",
+				"NO_ORGANIZATION": "请先选择一个组织"
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {

@@ -1301,13 +1301,13 @@
 			"EXECUTIONS": "מימושים",
 			"HISTORY": "היסטוריה",
 			"SETTINGS": "הגדרות",
+			"CONNECT_TO_MAKE_COM": "התחבר ל-Make.com",
+			"CONNECT_INFO": "לחץ על הכפתור למטה כדי לחבר את חשבון ה-Make.com שלך. תועבר ל-Make.com כדי לאשר את האינטגרציה.",
 			"ERRORS": {
 				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
-				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור"
-			},
-			"CLIENT_ID": "מזהה לקוח",
-			"CLIENT_SECRET": "סיסמת לקוח",
-			"NEXT_STEP_INFO": "לאחר האישור, תועבר ל-Make.com להשלמת הגדרות האינטגרציה"
+				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור",
+				"NO_ORGANIZATION": "אנא בחר ארגון תחילה"
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {

@@ -1296,13 +1296,13 @@
 			"EXECUTIONS": "تنفيذات",
 			"HISTORY": "السجل",
 			"SETTINGS": "الإعدادات",
+			"CONNECT_TO_MAKE_COM": "الاتصال بـ Make.com",
+			"CONNECT_INFO": "انقر على الزر أدناه لربط حسابك في Make.com. سيتم توجيهك إلى Make.com للتفويض بالتكامل.",
 			"ERRORS": {
 				"INVALID_FORM": "يرجى إدخال جميع الحقول المطلوبة",
-				"START_AUTHORIZATION": "يرجى بدء عملية التفويض"
-			},
-			"CLIENT_ID": "معرف العميل",
-			"CLIENT_SECRET": "الرمز السري للعميل",
-			"NEXT_STEP_INFO": "بعد التفويض، سيتم توجيهك إلى Make.com لإكمال إعداد التكامل"
+				"START_AUTHORIZATION": "يرجى بدء عملية التفويض",
+				"NO_ORGANIZATION": "يرجى اختيار منظمة أولاً"
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
