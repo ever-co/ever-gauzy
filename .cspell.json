@@ -890,7 +890,9 @@
 		"freedesktop",
 		"electronjs",
 		"flatpak",
-		"pulseaudio"
+		"pulseaudio",
+		"flathub",
+		"noninteractive"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
