@@ -1,15 +1,18 @@
-import { Controller, Get, Query, Res, HttpException, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Query, Res, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@gauzy/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { Public } from '@gauzy/common';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { MakeComOAuthService } from './make-com-oauth.service';
+import { MAKE_POST_INSTALL_URL } from './make-com.config';
 
 @ApiTags('Make.com OAuth')
 @Public()
 @Controller('/integration/make-com/oauth')
 export class MakeComAuthorizationController {
+	private readonly logger = new Logger(MakeComAuthorizationController.name);
+
 	constructor(private readonly config: ConfigService, private readonly makeComOAuthService: MakeComOAuthService) {}
 
 	/**
@@ -29,6 +32,35 @@ export class MakeComAuthorizationController {
 		return {
 			authorizationUrl: this.makeComOAuthService.getAuthorizationUrl({ state })
 		};
+	}
+
+	/**
+	 * Resolve the post-install redirect URL from config, with fallback to
+	 * the statically resolved constant (which doesn't rely on dotenv-expand).
+	 */
+	private getPostInstallUrl(): string {
+		const fromConfig = this.config.get('makeCom')?.postInstallUrl;
+
+		// Detect unresolved env variable interpolation (e.g. "${CLIENT_BASE_URL}/...")
+		if (fromConfig && !fromConfig.includes('${')) {
+			return fromConfig;
+		}
+
+		return MAKE_POST_INSTALL_URL;
+	}
+
+	/**
+	 * Build a redirect URL by appending query params.
+	 * Handles hash-based Angular routing (e.g. http://host/#/path) by placing
+	 * query params before the hash fragment.
+	 */
+	private buildRedirectUrl(baseUrl: string, params: Record<string, string>): string {
+		const queryString = new URLSearchParams(params).toString();
+		const [urlWithoutHash, hash] = baseUrl.split('#');
+		const separator = urlWithoutHash.includes('?') ? '&' : '?';
+		return hash
+			? `${urlWithoutHash}${separator}${queryString}#${hash}`
+			: `${urlWithoutHash}${separator}${queryString}`;
 	}
 
 	/**
@@ -54,11 +86,8 @@ export class MakeComAuthorizationController {
 		}: { code?: string; state?: string; error?: string; error_description?: string },
 		@Res() response: Response
 	) {
-		// Get the post-installation redirect URL from config
-		const postInstallUrl = this.config.get('makeCom')?.postInstallUrl;
-		if (!postInstallUrl) {
-			throw new HttpException('postInstallUrl not found in config', HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+		const postInstallUrl = this.getPostInstallUrl();
+		this.logger.log(`OAuth callback received. postInstallUrl: ${postInstallUrl}`);
 
 		try {
 			// Handle error from Make.com
@@ -72,30 +101,28 @@ export class MakeComAuthorizationController {
 				throw new BadRequestException('Missing required parameters: code and state');
 			}
 
-			// Process the OAuth callback - store the authorization code and enable the integration
-			// The actual token exchange is handled by Make.com when they call our token endpoint
+			// Process the OAuth callback - verify state and exchange code for tokens
 			await this.makeComOAuthService.handleAuthorizationCallback(code, state);
 
-			// Build successful URL with access token
-			const urlObj = new URL(postInstallUrl);
-			urlObj.searchParams.set('success', 'true');
-			urlObj.searchParams.set('integration', IntegrationEnum.MakeCom);
-			urlObj.searchParams.set('message', 'Integration connected successfully');
+			// Redirect to the application with success params
+			const url = this.buildRedirectUrl(postInstallUrl, {
+				success: 'true',
+				integration: IntegrationEnum.MakeCom,
+				message: 'Integration connected successfully'
+			});
 
-			// Redirect to the application
-			return response.redirect(urlObj.toString());
+			this.logger.log(`OAuth callback successful, redirecting to: ${url}`);
+			return response.redirect(url);
 		} catch (error) {
-			// postInstallUrl is guaranteed to exist here due to earlier check
 			const errorMessage = error.response?.message || error.message || 'Failed to complete OAuth flow';
-			const queryParamsString = new URLSearchParams({
+			this.logger.error(`OAuth callback failed: ${errorMessage}`);
+
+			const url = this.buildRedirectUrl(postInstallUrl, {
 				success: 'false',
 				integration: IntegrationEnum.MakeCom,
 				message: errorMessage
-			}).toString();
+			});
 
-			const urlObj = new URL(postInstallUrl);
-			urlObj.search = queryParamsString;
-			const url = urlObj.toString();
 			return response.redirect(url);
 		}
 	}
