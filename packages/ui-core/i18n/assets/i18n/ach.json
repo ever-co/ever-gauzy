@@ -1189,15 +1189,31 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scenarios",
-			"EXECUTIONS": "Executions",
-			"HISTORY": "History",
+			"WEBHOOKS": "Webhooks",
+			"CONNECTIONS": "Connections",
+			"TEMPLATES": "Templates",
 			"SETTINGS": "Settings",
-			"CONNECT_TO_MAKE_COM": "Kub ki Make.com",
-			"CONNECT_INFO": "Dii gin ame piny me kube akaunt mamegi me Make.com. Ibi nyuto i Make.com me ye kwede integration.",
+			"CONNECT_TO_MAKE_COM": "Connect to Make.com",
+			"CONNECT_INFO": "Click the button below to connect your Make.com account. You will be redirected to Make.com to authorize the integration.",
+			"NO_SCENARIOS": "No scenarios found. Create scenarios in your Make.com dashboard.",
+			"NO_HOOKS": "No webhooks found. Create webhooks in your Make.com dashboard.",
+			"NO_CONNECTIONS": "No connections found. Create connections in your Make.com dashboard.",
+			"NO_TEMPLATES": "No templates found.",
 			"ERRORS": {
-				"INVALID_FORM": "Tim ber iyie pot buk ma mito ni ber",
-				"START_AUTHORIZATION": "Please start the authorization process",
-				"NO_ORGANIZATION": "Tim ber i yer lawoti mukwongo"
+				"INVALID_FORM": "Please fill in all required fields",
+				"START_AUTHORIZATION": "Failed to start the authorization process",
+				"NO_ORGANIZATION": "Please select an organization first",
+				"LOAD_SETTINGS": "Failed to load Make.com settings",
+				"SAVE_SETTINGS": "Failed to save Make.com settings"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Make.com settings saved successfully"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Please authorize with Make.com first. Go to the Settings tab to connect your account.",
+				"ZONE": "Please select your Make.com zone in the Settings tab.",
+				"ORGANIZATION": "Please select your Make.com organization in the Settings tab.",
+				"TEAM": "Please select your Make.com team in the Settings tab."
 			}
 		},
 		"MAKE_COM": {
@@ -1503,7 +1519,17 @@
 		"FILTER_INTEGRATIONS": "crwdns8270:0crwdne8270:0",
 		"SEARCH_INTEGRATIONS": "crwdns8272:0crwdne8272:0",
 		"PAID": "crwdns11205:0crwdne11205:0",
-		"INTEGRATION": "crwdns11207:0crwdne11207:0"
+		"INTEGRATION": "crwdns11207:0crwdne11207:0",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Processing Make.com authorization...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Make.com authorization failed",
+				"INVALID_CALLBACK": "Invalid callback parameters"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Make.com authorization completed successfully"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "crwdns3190:0crwdne3190:0",

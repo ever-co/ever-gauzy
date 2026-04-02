@@ -1297,16 +1297,32 @@
 			"HOURLY": "Hourly"
 		},
 		"MAKE_COM_PAGE": {
-			"SCENARIOS": "סצנות",
-			"EXECUTIONS": "מימושים",
-			"HISTORY": "היסטוריה",
+			"SCENARIOS": "תרחישים",
+			"WEBHOOKS": "Webhooks",
+			"CONNECTIONS": "חיבורים",
+			"TEMPLATES": "תבניות",
 			"SETTINGS": "הגדרות",
 			"CONNECT_TO_MAKE_COM": "התחבר ל-Make.com",
 			"CONNECT_INFO": "לחץ על הכפתור למטה כדי לחבר את חשבון ה-Make.com שלך. תועבר ל-Make.com כדי לאשר את האינטגרציה.",
+			"NO_SCENARIOS": "לא נמצאו תרחישים. צור תרחישים בלוח הבקרה של Make.com.",
+			"NO_HOOKS": "לא נמצאו webhooks. צור webhooks בלוח הבקרה של Make.com.",
+			"NO_CONNECTIONS": "לא נמצאו חיבורים. צור חיבורים בלוח הבקרה של Make.com.",
+			"NO_TEMPLATES": "לא נמצאו תבניות.",
 			"ERRORS": {
 				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
-				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור",
-				"NO_ORGANIZATION": "אנא בחר ארגון תחילה"
+				"START_AUTHORIZATION": "כשל בהתחלת תהליך ההרשאה",
+				"NO_ORGANIZATION": "אנא בחר ארגון תחילה",
+				"LOAD_SETTINGS": "כשל בטעינת הגדרות Make.com",
+				"SAVE_SETTINGS": "כשל בשמירת הגדרות Make.com"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "הגדרות Make.com נשמרו בהצלחה"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "אנא אשר תחילה את Make.com. עבור ללשונית הגדרות כדי לחבר את החשבון שלך.",
+				"ZONE": "אנא בחר את אזור ה-Make.com שלך בלשונית הגדרות.",
+				"ORGANIZATION": "אנא בחר את ארגון ה-Make.com שלך בלשונית הגדרות.",
+				"TEAM": "אנא בחר את צוות ה-Make.com שלך בלשונית הגדרות."
 			}
 		},
 		"MAKE_COM": {
@@ -1653,7 +1669,17 @@
 			"INTEGRATION_ADDED": "Integration '{{provider}}' has been added to '{{organization}}'"
 		},
 		"ENABLED": "Enabled",
-		"DISABLED": "Disabled"
+		"DISABLED": "Disabled",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "מעבד הרשאת Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "הרשאת Make.com נכשלה",
+				"INVALID_CALLBACK": "פרמטרי callback לא חוקיים"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "הרשאת Make.com הושלמה בהצלחה"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",

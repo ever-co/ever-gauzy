@@ -1293,15 +1293,31 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scenariusze",
-			"EXECUTIONS": "Wykonania",
-			"HISTORY": "Historia",
+			"WEBHOOKS": "Webhooki",
+			"CONNECTIONS": "Połączenia",
+			"TEMPLATES": "Szablony",
 			"SETTINGS": "Ustawienia",
 			"CONNECT_TO_MAKE_COM": "Połącz z Make.com",
-			"CONNECT_INFO": "Kliknij przycisk poniżej, aby połączyć swoje konto Make.com. Zostaniesz przekierowany do Make.com w celu autoryzacji integracji.",
+			"CONNECT_INFO": "Kliknij poniższy przycisk, aby połączyć swoje konto Make.com. Zostaniesz przekierowany do Make.com w celu autoryzacji integracji.",
+			"NO_SCENARIOS": "Nie znaleziono scenariuszy. Utwórz scenariusze w panelu Make.com.",
+			"NO_HOOKS": "Nie znaleziono webhooków. Utwórz webhooki w panelu Make.com.",
+			"NO_CONNECTIONS": "Nie znaleziono połączeń. Utwórz połączenia w panelu Make.com.",
+			"NO_TEMPLATES": "Nie znaleziono szablonów.",
 			"ERRORS": {
 				"INVALID_FORM": "Proszę wypełnić wszystkie wymagane pola",
-				"START_AUTHORIZATION": "Proszę rozpocząć proces autoryzacji",
-				"NO_ORGANIZATION": "Proszę najpierw wybrać organizację"
+				"START_AUTHORIZATION": "Nie udało się rozpocząć procesu autoryzacji",
+				"NO_ORGANIZATION": "Proszę najpierw wybrać organizację",
+				"LOAD_SETTINGS": "Nie udało się załadować ustawień Make.com",
+				"SAVE_SETTINGS": "Nie udało się zapisać ustawień Make.com"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Ustawienia Make.com zostały pomyślnie zapisane"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Najpierw autoryzuj Make.com. Przejdź do zakładki Ustawienia, aby połączyć konto.",
+				"ZONE": "Wybierz strefę Make.com w zakładce Ustawienia.",
+				"ORGANIZATION": "Wybierz organizację Make.com w zakładce Ustawienia.",
+				"TEAM": "Wybierz zespół Make.com w zakładce Ustawienia."
 			}
 		},
 		"MAKE_COM": {
@@ -1608,7 +1624,17 @@
 		"FILTER_INTEGRATIONS": "Filtruj integracje",
 		"SEARCH_INTEGRATIONS": "Integracje wyszukiwania",
 		"PAID": "Opłacone",
-		"INTEGRATION": "Integracja"
+		"INTEGRATION": "Integracja",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Przetwarzanie autoryzacji Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Autoryzacja Make.com nie powiodła się",
+				"INVALID_CALLBACK": "Nieprawidłowe parametry wywołania zwrotnego"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Autoryzacja Make.com zakończona pomyślnie"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Rachunkowość",

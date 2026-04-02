@@ -1294,15 +1294,31 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Szenarien",
-			"EXECUTIONS": "Ausführungen",
-			"HISTORY": "Verlauf",
+			"WEBHOOKS": "Webhooks",
+			"CONNECTIONS": "Verbindungen",
+			"TEMPLATES": "Vorlagen",
 			"SETTINGS": "Einstellungen",
 			"CONNECT_TO_MAKE_COM": "Mit Make.com verbinden",
 			"CONNECT_INFO": "Klicken Sie auf die Schaltfläche unten, um Ihr Make.com-Konto zu verbinden. Sie werden zu Make.com weitergeleitet, um die Integration zu autorisieren.",
+			"NO_SCENARIOS": "Keine Szenarien gefunden. Erstellen Sie Szenarien in Ihrem Make.com-Dashboard.",
+			"NO_HOOKS": "Keine Webhooks gefunden. Erstellen Sie Webhooks in Ihrem Make.com-Dashboard.",
+			"NO_CONNECTIONS": "Keine Verbindungen gefunden. Erstellen Sie Verbindungen in Ihrem Make.com-Dashboard.",
+			"NO_TEMPLATES": "Keine Vorlagen gefunden.",
 			"ERRORS": {
-				"INVALID_FORM": "Bitte füllen Sie alle erforderlichen Felder aus",
-				"START_AUTHORIZATION": "Bitte starten Sie den Autorisierungsprozess",
-				"NO_ORGANIZATION": "Bitte wählen Sie zuerst eine Organisation aus"
+				"INVALID_FORM": "Bitte füllen Sie alle Pflichtfelder aus",
+				"START_AUTHORIZATION": "Fehler beim Starten des Autorisierungsprozesses",
+				"NO_ORGANIZATION": "Bitte wählen Sie zuerst eine Organisation aus",
+				"LOAD_SETTINGS": "Fehler beim Laden der Make.com-Einstellungen",
+				"SAVE_SETTINGS": "Fehler beim Speichern der Make.com-Einstellungen"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Make.com-Einstellungen erfolgreich gespeichert"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Bitte autorisieren Sie zuerst Make.com. Gehen Sie zur Registerkarte Einstellungen, um Ihr Konto zu verbinden.",
+				"ZONE": "Bitte wählen Sie Ihre Make.com-Zone in der Registerkarte Einstellungen.",
+				"ORGANIZATION": "Bitte wählen Sie Ihre Make.com-Organisation in der Registerkarte Einstellungen.",
+				"TEAM": "Bitte wählen Sie Ihr Make.com-Team in der Registerkarte Einstellungen."
 			}
 		},
 		"MAKE_COM": {
@@ -1609,7 +1625,17 @@
 		"FILTER_INTEGRATIONS": "Filterintegrationen",
 		"SEARCH_INTEGRATIONS": "Suchen Sie nach Integrationen.",
 		"PAID": "bezahlt",
-		"INTEGRATION": "Integration"
+		"INTEGRATION": "Integration",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Make.com-Autorisierung wird verarbeitet...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Make.com-Autorisierung fehlgeschlagen",
+				"INVALID_CALLBACK": "Ungültige Callback-Parameter"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Make.com-Autorisierung erfolgreich abgeschlossen"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Buchhaltung",

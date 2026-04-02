@@ -1302,15 +1302,31 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Сценарии",
-			"EXECUTIONS": "Выполнения",
-			"HISTORY": "История",
+			"WEBHOOKS": "Вебхуки",
+			"CONNECTIONS": "Подключения",
+			"TEMPLATES": "Шаблоны",
 			"SETTINGS": "Настройки",
 			"CONNECT_TO_MAKE_COM": "Подключиться к Make.com",
-			"CONNECT_INFO": "Нажмите кнопку ниже, чтобы подключить вашу учетную запись Make.com. Вы будете перенаправлены на Make.com для авторизации интеграции.",
+			"CONNECT_INFO": "Нажмите кнопку ниже, чтобы подключить вашу учётную запись Make.com. Вы будете перенаправлены на Make.com для авторизации интеграции.",
+			"NO_SCENARIOS": "Сценарии не найдены. Создайте сценарии в панели управления Make.com.",
+			"NO_HOOKS": "Вебхуки не найдены. Создайте вебхуки в панели управления Make.com.",
+			"NO_CONNECTIONS": "Подключения не найдены. Создайте подключения в панели управления Make.com.",
+			"NO_TEMPLATES": "Шаблоны не найдены.",
 			"ERRORS": {
 				"INVALID_FORM": "Пожалуйста, заполните все обязательные поля",
-				"START_AUTHORIZATION": "Пожалуйста, начните процесс авторизации",
-				"NO_ORGANIZATION": "Пожалуйста, сначала выберите организацию"
+				"START_AUTHORIZATION": "Не удалось начать процесс авторизации",
+				"NO_ORGANIZATION": "Пожалуйста, сначала выберите организацию",
+				"LOAD_SETTINGS": "Не удалось загрузить настройки Make.com",
+				"SAVE_SETTINGS": "Не удалось сохранить настройки Make.com"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Настройки Make.com успешно сохранены"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Сначала авторизуйтесь в Make.com. Перейдите на вкладку Настройки, чтобы подключить аккаунт.",
+				"ZONE": "Выберите зону Make.com на вкладке Настройки.",
+				"ORGANIZATION": "Выберите организацию Make.com на вкладке Настройки.",
+				"TEAM": "Выберите команду Make.com на вкладке Настройки."
 			}
 		},
 		"MAKE_COM": {
@@ -1660,7 +1676,17 @@
 			"INTEGRATION_ADDED": "Интеграция '{{provider}}' добавлена ​​в '{{organization}}'"
 		},
 		"ENABLED": "Enabled",
-		"DISABLED": "Disabled"
+		"DISABLED": "Disabled",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Обработка авторизации Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Авторизация Make.com не удалась",
+				"INVALID_CALLBACK": "Недопустимые параметры обратного вызова"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Авторизация Make.com успешно завершена"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",

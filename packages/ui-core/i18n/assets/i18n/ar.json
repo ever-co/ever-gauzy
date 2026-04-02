@@ -1293,15 +1293,31 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "سيناريوهات",
-			"EXECUTIONS": "تنفيذات",
-			"HISTORY": "السجل",
-			"SETTINGS": "الإعدادات",
+			"WEBHOOKS": "Webhooks",
+			"CONNECTIONS": "اتصالات",
+			"TEMPLATES": "قوالب",
+			"SETTINGS": "إعدادات",
 			"CONNECT_TO_MAKE_COM": "الاتصال بـ Make.com",
-			"CONNECT_INFO": "انقر على الزر أدناه لربط حسابك في Make.com. سيتم توجيهك إلى Make.com للتفويض بالتكامل.",
+			"CONNECT_INFO": "انقر على الزر أدناه لربط حساب Make.com الخاص بك. سيتم إعادة توجيهك إلى Make.com لتفويض التكامل.",
+			"NO_SCENARIOS": "لم يتم العثور على سيناريوهات. أنشئ سيناريوهات في لوحة تحكم Make.com.",
+			"NO_HOOKS": "لم يتم العثور على webhooks. أنشئ webhooks في لوحة تحكم Make.com.",
+			"NO_CONNECTIONS": "لم يتم العثور على اتصالات. أنشئ اتصالات في لوحة تحكم Make.com.",
+			"NO_TEMPLATES": "لم يتم العثور على قوالب.",
 			"ERRORS": {
-				"INVALID_FORM": "يرجى إدخال جميع الحقول المطلوبة",
-				"START_AUTHORIZATION": "يرجى بدء عملية التفويض",
-				"NO_ORGANIZATION": "يرجى اختيار منظمة أولاً"
+				"INVALID_FORM": "يرجى ملء جميع الحقول المطلوبة",
+				"START_AUTHORIZATION": "فشل في بدء عملية التفويض",
+				"NO_ORGANIZATION": "يرجى اختيار منظمة أولاً",
+				"LOAD_SETTINGS": "فشل في تحميل إعدادات Make.com",
+				"SAVE_SETTINGS": "فشل في حفظ إعدادات Make.com"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "تم حفظ إعدادات Make.com بنجاح"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "يرجى تفويض Make.com أولاً. انتقل إلى علامة التبويب الإعدادات لربط حسابك.",
+				"ZONE": "يرجى اختيار منطقة Make.com في علامة التبويب الإعدادات.",
+				"ORGANIZATION": "يرجى اختيار منظمة Make.com في علامة التبويب الإعدادات.",
+				"TEAM": "يرجى اختيار فريق Make.com في علامة التبويب الإعدادات."
 			}
 		},
 		"MAKE_COM": {
@@ -1608,7 +1624,17 @@
 		"FILTER_INTEGRATIONS": "ترشيح التكاملات",
 		"SEARCH_INTEGRATIONS": "البحث في التكاملات",
 		"PAID": "مدفوع",
-		"INTEGRATION": "التكامل"
+		"INTEGRATION": "التكامل",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "جاري معالجة تفويض Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "فشل تفويض Make.com",
+				"INVALID_CALLBACK": "معلمات رد الاتصال غير صالحة"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "تم إكمال تفويض Make.com بنجاح"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "المحاسبة",

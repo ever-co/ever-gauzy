@@ -1296,15 +1296,31 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Escenarios",
-			"EXECUTIONS": "Ejecuciones",
-			"HISTORY": "Historial",
+			"WEBHOOKS": "Webhooks",
+			"CONNECTIONS": "Conexiones",
+			"TEMPLATES": "Plantillas",
 			"SETTINGS": "Configuración",
-			"CONNECT_TO_MAKE_COM": "Conectar con Make.com",
+			"CONNECT_TO_MAKE_COM": "Conectar a Make.com",
 			"CONNECT_INFO": "Haga clic en el botón de abajo para conectar su cuenta de Make.com. Será redirigido a Make.com para autorizar la integración.",
+			"NO_SCENARIOS": "No se encontraron escenarios. Cree escenarios en su panel de Make.com.",
+			"NO_HOOKS": "No se encontraron webhooks. Cree webhooks en su panel de Make.com.",
+			"NO_CONNECTIONS": "No se encontraron conexiones. Cree conexiones en su panel de Make.com.",
+			"NO_TEMPLATES": "No se encontraron plantillas.",
 			"ERRORS": {
-				"INVALID_FORM": "Por favor, complete todos los campos requeridos",
-				"START_AUTHORIZATION": "Por favor, inicie el proceso de autorización",
-				"NO_ORGANIZATION": "Por favor, seleccione una organización primero"
+				"INVALID_FORM": "Por favor complete todos los campos obligatorios",
+				"START_AUTHORIZATION": "Error al iniciar el proceso de autorización",
+				"NO_ORGANIZATION": "Por favor seleccione una organización primero",
+				"LOAD_SETTINGS": "Error al cargar la configuración de Make.com",
+				"SAVE_SETTINGS": "Error al guardar la configuración de Make.com"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Configuración de Make.com guardada con éxito"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Por favor autorice Make.com primero. Vaya a la pestaña Configuración para conectar su cuenta.",
+				"ZONE": "Por favor seleccione su zona de Make.com en la pestaña Configuración.",
+				"ORGANIZATION": "Por favor seleccione su organización de Make.com en la pestaña Configuración.",
+				"TEAM": "Por favor seleccione su equipo de Make.com en la pestaña Configuración."
 			}
 		},
 		"MAKE_COM": {
@@ -1611,7 +1627,17 @@
 		"FILTER_INTEGRATIONS": "Integraciones de filtro",
 		"SEARCH_INTEGRATIONS": "Búsquedas de integraciones",
 		"PAID": "Pagado",
-		"INTEGRATION": "Integración"
+		"INTEGRATION": "Integración",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Procesando autorización de Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "La autorización de Make.com falló",
+				"INVALID_CALLBACK": "Parámetros de devolución de llamada no válidos"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Autorización de Make.com completada con éxito"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Contabilidad",

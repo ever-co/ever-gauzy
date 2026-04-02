@@ -1294,15 +1294,31 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scenario's",
-			"EXECUTIONS": "Uitvoeringen",
-			"HISTORY": "Geschiedenis",
+			"WEBHOOKS": "Webhooks",
+			"CONNECTIONS": "Verbindingen",
+			"TEMPLATES": "Sjablonen",
 			"SETTINGS": "Instellingen",
 			"CONNECT_TO_MAKE_COM": "Verbinden met Make.com",
-			"CONNECT_INFO": "Klik op de knop hieronder om je Make.com-account te verbinden. Je wordt doorgestuurd naar Make.com om de integratie te autoriseren.",
+			"CONNECT_INFO": "Klik op de knop hieronder om uw Make.com-account te verbinden. U wordt doorgestuurd naar Make.com om de integratie te autoriseren.",
+			"NO_SCENARIOS": "Geen scenario's gevonden. Maak scenario's aan in uw Make.com-dashboard.",
+			"NO_HOOKS": "Geen webhooks gevonden. Maak webhooks aan in uw Make.com-dashboard.",
+			"NO_CONNECTIONS": "Geen verbindingen gevonden. Maak verbindingen aan in uw Make.com-dashboard.",
+			"NO_TEMPLATES": "Geen sjablonen gevonden.",
 			"ERRORS": {
-				"INVALID_FORM": "Vul alstublieft alle verplichte velden in",
-				"START_AUTHORIZATION": "Start alstublieft de autorisatieproces",
-				"NO_ORGANIZATION": "Selecteer alstublieft eerst een organisatie"
+				"INVALID_FORM": "Vul alle verplichte velden in",
+				"START_AUTHORIZATION": "Kan het autorisatieproces niet starten",
+				"NO_ORGANIZATION": "Selecteer eerst een organisatie",
+				"LOAD_SETTINGS": "Kan Make.com-instellingen niet laden",
+				"SAVE_SETTINGS": "Kan Make.com-instellingen niet opslaan"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Make.com-instellingen succesvol opgeslagen"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Autoriseer eerst Make.com. Ga naar het tabblad Instellingen om uw account te verbinden.",
+				"ZONE": "Selecteer uw Make.com-zone in het tabblad Instellingen.",
+				"ORGANIZATION": "Selecteer uw Make.com-organisatie in het tabblad Instellingen.",
+				"TEAM": "Selecteer uw Make.com-team in het tabblad Instellingen."
 			}
 		},
 		"MAKE_COM": {
@@ -1609,7 +1625,17 @@
 		"FILTER_INTEGRATIONS": "Filter integraties",
 		"SEARCH_INTEGRATIONS": "Zoekintegraties",
 		"PAID": "Betaald",
-		"INTEGRATION": "Integratie"
+		"INTEGRATION": "Integratie",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Make.com-autorisatie wordt verwerkt...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Make.com-autorisatie mislukt",
+				"INVALID_CALLBACK": "Ongeldige callback-parameters"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Make.com-autorisatie succesvol voltooid"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Boekhouding",

@@ -1326,15 +1326,31 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Сценарии",
-			"EXECUTIONS": "Изпълнения",
-			"HISTORY": "История",
+			"WEBHOOKS": "Уебхукове",
+			"CONNECTIONS": "Връзки",
+			"TEMPLATES": "Шаблони",
 			"SETTINGS": "Настройки",
 			"CONNECT_TO_MAKE_COM": "Свързване с Make.com",
-			"CONNECT_INFO": "Натиснете бутона по-долу, за да свържете вашия акаунт в Make.com. Ще бъдете пренасочени към Make.com за оторизация на интеграцията.",
+			"CONNECT_INFO": "Кликнете бутона по-долу, за да свържете акаунта си в Make.com. Ще бъдете пренасочени към Make.com за оторизация на интеграцията.",
+			"NO_SCENARIOS": "Няма намерени сценарии. Създайте сценарии в таблото на Make.com.",
+			"NO_HOOKS": "Няма намерени уебхукове. Създайте уебхукове в таблото на Make.com.",
+			"NO_CONNECTIONS": "Няма намерени връзки. Създайте връзки в таблото на Make.com.",
+			"NO_TEMPLATES": "Няма намерени шаблони.",
 			"ERRORS": {
 				"INVALID_FORM": "Моля, попълнете всички задължителни полета",
-				"START_AUTHORIZATION": "Моля, започнете процеса на оторизация",
-				"NO_ORGANIZATION": "Моля, първо изберете организация"
+				"START_AUTHORIZATION": "Неуспешно стартиране на процеса на оторизация",
+				"NO_ORGANIZATION": "Моля, първо изберете организация",
+				"LOAD_SETTINGS": "Неуспешно зареждане на настройките на Make.com",
+				"SAVE_SETTINGS": "Неуспешно запазване на настройките на Make.com"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Настройките на Make.com са запазени успешно"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Моля, първо оторизирайте Make.com. Отидете в раздел Настройки, за да свържете акаунта си.",
+				"ZONE": "Моля, изберете вашата зона Make.com в раздел Настройки.",
+				"ORGANIZATION": "Моля, изберете вашата организация Make.com в раздел Настройки.",
+				"TEAM": "Моля, изберете вашия екип Make.com в раздел Настройки."
 			}
 		},
 		"MAKE_COM": {
@@ -1687,7 +1703,17 @@
 			"INTEGRATION_ADDED": "Интеграцията с '{{provider}}' беше добавена към '{{organization}}'"
 		},
 		"ENABLED": "Активирано",
-		"DISABLED": "Деактивирано"
+		"DISABLED": "Деактивирано",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Обработка на оторизацията на Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Оторизацията на Make.com е неуспешна",
+				"INVALID_CALLBACK": "Невалидни параметри за обратно извикване"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Оторизацията на Make.com е завършена успешно"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Счетоводство",

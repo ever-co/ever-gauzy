@@ -1343,15 +1343,31 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scenarios",
-			"EXECUTIONS": "Executions",
-			"HISTORY": "History",
+			"WEBHOOKS": "Webhooks",
+			"CONNECTIONS": "Connections",
+			"TEMPLATES": "Templates",
 			"SETTINGS": "Settings",
 			"CONNECT_TO_MAKE_COM": "Connect to Make.com",
 			"CONNECT_INFO": "Click the button below to connect your Make.com account. You will be redirected to Make.com to authorize the integration.",
+			"NO_SCENARIOS": "No scenarios found. Create scenarios in your Make.com dashboard.",
+			"NO_HOOKS": "No webhooks found. Create webhooks in your Make.com dashboard.",
+			"NO_CONNECTIONS": "No connections found. Create connections in your Make.com dashboard.",
+			"NO_TEMPLATES": "No templates found.",
 			"ERRORS": {
 				"INVALID_FORM": "Please fill in all required fields",
 				"START_AUTHORIZATION": "Failed to start the authorization process",
-				"NO_ORGANIZATION": "Please select an organization first"
+				"NO_ORGANIZATION": "Please select an organization first",
+				"LOAD_SETTINGS": "Failed to load Make.com settings",
+				"SAVE_SETTINGS": "Failed to save Make.com settings"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Make.com settings saved successfully"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Please authorize with Make.com first. Go to the Settings tab to connect your account.",
+				"ZONE": "Please select your Make.com zone in the Settings tab.",
+				"ORGANIZATION": "Please select your Make.com organization in the Settings tab.",
+				"TEAM": "Please select your Make.com team in the Settings tab."
 			}
 		},
 		"MAKE_COM": {
@@ -1709,7 +1725,17 @@
 			"INTEGRATION_ADDED": "Integration '{{provider}}' has been added to '{{organization}}'"
 		},
 		"ENABLED": "Enabled",
-		"DISABLED": "Disabled"
+		"DISABLED": "Disabled",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Processing Make.com authorization...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Make.com authorization failed",
+				"INVALID_CALLBACK": "Invalid callback parameters"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Make.com authorization completed successfully"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",

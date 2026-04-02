@@ -1294,15 +1294,31 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scenari",
-			"EXECUTIONS": "Esecuzioni",
-			"HISTORY": "Cronologia",
+			"WEBHOOKS": "Webhooks",
+			"CONNECTIONS": "Connessioni",
+			"TEMPLATES": "Modelli",
 			"SETTINGS": "Impostazioni",
 			"CONNECT_TO_MAKE_COM": "Connetti a Make.com",
-			"CONNECT_INFO": "Clicca il pulsante qui sotto per collegare il tuo account Make.com. Sarai reindirizzato a Make.com per autorizzare l'integrazione.",
+			"CONNECT_INFO": "Clicca il pulsante qui sotto per collegare il tuo account Make.com. Verrai reindirizzato a Make.com per autorizzare l'integrazione.",
+			"NO_SCENARIOS": "Nessuno scenario trovato. Crea scenari nella tua dashboard Make.com.",
+			"NO_HOOKS": "Nessun webhook trovato. Crea webhook nella tua dashboard Make.com.",
+			"NO_CONNECTIONS": "Nessuna connessione trovata. Crea connessioni nella tua dashboard Make.com.",
+			"NO_TEMPLATES": "Nessun modello trovato.",
 			"ERRORS": {
-				"INVALID_FORM": "Per favore, compila tutti i campi obbligatori",
-				"START_AUTHORIZATION": "Per favore, inizia il processo di autorizzazione",
-				"NO_ORGANIZATION": "Per favore, seleziona prima un'organizzazione"
+				"INVALID_FORM": "Per favore compila tutti i campi obbligatori",
+				"START_AUTHORIZATION": "Impossibile avviare il processo di autorizzazione",
+				"NO_ORGANIZATION": "Per favore seleziona prima un'organizzazione",
+				"LOAD_SETTINGS": "Impossibile caricare le impostazioni di Make.com",
+				"SAVE_SETTINGS": "Impossibile salvare le impostazioni di Make.com"
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Impostazioni di Make.com salvate con successo"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Per favore autorizza prima Make.com. Vai alla scheda Impostazioni per collegare il tuo account.",
+				"ZONE": "Per favore seleziona la tua zona Make.com nella scheda Impostazioni.",
+				"ORGANIZATION": "Per favore seleziona la tua organizzazione Make.com nella scheda Impostazioni.",
+				"TEAM": "Per favore seleziona il tuo team Make.com nella scheda Impostazioni."
 			}
 		},
 		"MAKE_COM": {
@@ -1609,7 +1625,17 @@
 		"FILTER_INTEGRATIONS": "Filtra le integrazioni",
 		"SEARCH_INTEGRATIONS": "Integrazioni di ricerca",
 		"PAID": "Pagato",
-		"INTEGRATION": "Integrazione"
+		"INTEGRATION": "Integrazione",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Elaborazione autorizzazione Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Autorizzazione Make.com fallita",
+				"INVALID_CALLBACK": "Parametri di callback non validi"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Autorizzazione Make.com completata con successo"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Contabilità",
