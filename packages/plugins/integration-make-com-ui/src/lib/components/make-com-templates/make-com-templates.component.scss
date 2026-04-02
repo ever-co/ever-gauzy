@@ -1,0 +1,47 @@
+.templates-container {
+  padding: 0.5rem 0;
+}
+
+.template-card {
+  margin-bottom: 0.5rem;
+
+  nb-card-body {
+    padding: 1rem 1.25rem;
+  }
+}
+
+.template-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+
+  &-info {
+    background-color: var(--color-info-transparent-default);
+    color: var(--color-info-default);
+  }
+}
+
+.package-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  margin-right: 0.25rem;
+  border-radius: 3px;
+  background-color: var(--color-basic-transparent-default);
+  color: var(--color-basic-600);
+}
+
+.empty-icon {
+  font-size: 2rem;
+  color: var(--color-basic-600);
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}

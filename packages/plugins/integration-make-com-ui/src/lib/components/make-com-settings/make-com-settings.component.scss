@@ -6,12 +6,6 @@
     margin-bottom: 0.5rem;
     font-weight: 500;
   }
-
-  .error-message {
-    color: var(--danger-color);
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-  }
 }
 
 .actions {
@@ -22,4 +16,58 @@
   button {
     min-width: 120px;
   }
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  font-weight: 600;
+}
+
+.selector-list {
+  border: 1px solid var(--color-basic-transparent-default-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.selector-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-bottom: 1px solid var(--color-basic-transparent-default-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: var(--color-basic-transparent-hover);
+  }
+
+  &.selected {
+    background-color: var(--color-primary-transparent-hover);
+  }
+}
+
+.setup-complete-card {
+  nb-card-body {
+    font-size: 0.875rem;
+  }
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

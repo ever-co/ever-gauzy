@@ -1,0 +1,86 @@
+<div class="connections-container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6>{{ 'INTEGRATIONS.MAKE_COM_PAGE.CONNECTIONS' | translate }}</h6>
+    <button nbButton size="small" status="basic" (click)="refresh()" [disabled]="loading">
+      <nb-icon icon="refresh-outline"></nb-icon>
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="d-flex justify-content-center py-5">
+      <nb-spinner></nb-spinner>
+    </div>
+  }
+
+  <!-- Setup incomplete -->
+  @if (!loading && setupStatus && !setupStatus.isComplete) {
+    <nb-card accent="warning">
+      <nb-card-body class="text-center py-4">
+        <nb-icon icon="alert-triangle-outline" class="empty-icon mb-2" status="warning"></nb-icon>
+        @if (!setupStatus.hasAccessToken) {
+          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.AUTHORIZE' | translate }}</p>
+        } @else if (!setupStatus.zone) {
+          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.ZONE' | translate }}</p>
+        } @else if (!setupStatus.makeOrganizationId) {
+          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.ORGANIZATION' | translate }}</p>
+        } @else if (!setupStatus.makeTeamId) {
+          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.TEAM' | translate }}</p>
+        }
+      </nb-card-body>
+    </nb-card>
+  }
+
+  @if (!loading && setupStatus?.isComplete && connections.length === 0) {
+    <nb-card accent="info">
+      <nb-card-body class="text-center py-4">
+        <nb-icon icon="swap-outline" class="empty-icon mb-2"></nb-icon>
+        <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.NO_CONNECTIONS' | translate }}</p>
+      </nb-card-body>
+    </nb-card>
+  }
+
+  @if (!loading && setupStatus?.isComplete && connections.length > 0) {
+    <div class="connection-list">
+      @for (conn of connections; track conn.id) {
+        <nb-card class="connection-card mb-2">
+          <nb-card-body class="d-flex align-items-center justify-content-between">
+            <div class="connection-info">
+              <div class="d-flex align-items-center gap-2">
+                <nb-icon icon="swap-outline" status="primary"></nb-icon>
+                <span class="connection-name">{{ conn.name }}</span>
+              </div>
+              @if (conn.accountName) {
+                <small class="text-hint d-block mt-1">Account: {{ conn.accountName }}</small>
+              }
+              @if (conn.accountType) {
+                <small class="text-hint d-block">Type: {{ conn.accountType }}</small>
+              }
+              @if (conn.packageName) {
+                <small class="text-hint d-block">Package: {{ conn.packageName }}</small>
+              }
+              @if (conn.expire) {
+                <small class="text-hint d-block">Expires: {{ conn.expire | date: 'medium' }}</small>
+              }
+            </div>
+            <div class="connection-actions">
+              <button
+                nbButton
+                size="small"
+                status="info"
+                nbTooltip="Test connection"
+                (click)="testConnection(conn)"
+                [disabled]="actionLoading[conn.id]"
+              >
+                @if (actionLoading[conn.id]) {
+                  <nb-icon icon="loader-outline" class="spin"></nb-icon>
+                } @else {
+                  <nb-icon icon="checkmark-circle-outline"></nb-icon>
+                }
+              </button>
+            </div>
+          </nb-card-body>
+        </nb-card>
+      }
+    </div>
+  }
+</div>

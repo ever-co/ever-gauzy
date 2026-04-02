@@ -1,0 +1,106 @@
+<div class="scenarios-container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SCENARIOS' | translate }}</h6>
+    <button nbButton size="small" status="basic" (click)="refresh()" [disabled]="loading">
+      <nb-icon icon="refresh-outline"></nb-icon>
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="d-flex justify-content-center py-5">
+      <nb-spinner></nb-spinner>
+    </div>
+  }
+
+  <!-- Setup incomplete -->
+  @if (!loading && setupStatus && !setupStatus.isComplete) {
+    <nb-card accent="warning">
+      <nb-card-body class="text-center py-4">
+        <nb-icon icon="alert-triangle-outline" class="empty-icon mb-2" status="warning"></nb-icon>
+        @if (!setupStatus.hasAccessToken) {
+          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.AUTHORIZE' | translate }}</p>
+        } @else if (!setupStatus.zone) {
+          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.ZONE' | translate }}</p>
+        } @else if (!setupStatus.makeOrganizationId) {
+          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.ORGANIZATION' | translate }}</p>
+        } @else if (!setupStatus.makeTeamId) {
+          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.TEAM' | translate }}</p>
+        }
+      </nb-card-body>
+    </nb-card>
+  }
+
+  <!-- Empty state -->
+  @if (!loading && setupStatus?.isComplete && scenarios.length === 0) {
+    <nb-card accent="info">
+      <nb-card-body class="text-center py-4">
+        <nb-icon icon="flash-off-outline" class="empty-icon mb-2"></nb-icon>
+        <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.NO_SCENARIOS' | translate }}</p>
+      </nb-card-body>
+    </nb-card>
+  }
+
+  <!-- Scenario list -->
+  @if (!loading && setupStatus?.isComplete && scenarios.length > 0) {
+    <div class="scenario-list">
+      @for (scenario of scenarios; track scenario.id) {
+        <nb-card class="scenario-card mb-2">
+          <nb-card-body class="d-flex align-items-center justify-content-between">
+            <div class="scenario-info">
+              <div class="d-flex align-items-center gap-2">
+                <nb-icon icon="flash-outline" [status]="scenario.isEnabled ? 'success' : 'basic'"></nb-icon>
+                <span class="scenario-name">{{ scenario.name }}</span>
+                @if (scenario.isEnabled) {
+                  <span class="badge badge-success">Active</span>
+                } @else {
+                  <span class="badge badge-basic">Inactive</span>
+                }
+              </div>
+              @if (scenario.description) {
+                <small class="text-hint d-block mt-1">{{ scenario.description }}</small>
+              }
+              @if (scenario.lastEdit) {
+                <small class="text-hint d-block">
+                  Last edited: {{ scenario.lastEdit | date: 'medium' }}
+                </small>
+              }
+              @if (scenario.usedPackages?.length) {
+                <div class="packages mt-1">
+                  @for (pkg of scenario.usedPackages; track pkg) {
+                    <span class="package-tag">{{ pkg }}</span>
+                  }
+                </div>
+              }
+            </div>
+            <div class="scenario-actions d-flex gap-2">
+              <button
+                nbButton
+                size="small"
+                [status]="scenario.isEnabled ? 'warning' : 'success'"
+                [nbTooltip]="scenario.isEnabled ? 'Deactivate' : 'Activate'"
+                (click)="toggleScenario(scenario)"
+                [disabled]="actionLoading[scenario.id]"
+              >
+                @if (actionLoading[scenario.id]) {
+                  <nb-icon icon="loader-outline" class="spin"></nb-icon>
+                } @else {
+                  <nb-icon [icon]="scenario.isEnabled ? 'pause-circle-outline' : 'play-circle-outline'"></nb-icon>
+                }
+              </button>
+              <button
+                nbButton
+                size="small"
+                status="info"
+                nbTooltip="Run once"
+                (click)="runScenario(scenario)"
+                [disabled]="actionLoading[scenario.id]"
+              >
+                <nb-icon icon="arrow-right-outline"></nb-icon>
+              </button>
+            </div>
+          </nb-card-body>
+        </nb-card>
+      }
+    </div>
+  }
+</div>
