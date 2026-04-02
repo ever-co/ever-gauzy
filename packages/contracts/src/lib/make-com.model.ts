@@ -50,3 +50,96 @@ export interface IMakeComOAuthCodeExchange {
 	code: string;
 	state: string; // CSRF protection
 }
+
+// Make.com API Resource Types
+
+export type MakeComZone = 'eu1' | 'eu2' | 'us1' | 'us2';
+
+export const MAKE_COM_ZONES: MakeComZone[] = ['eu1', 'eu2', 'us1', 'us2'];
+
+export interface IMakeComOrganization {
+	id: number;
+	name: string;
+	countryId?: number;
+	timezoneId?: number;
+	license?: string;
+	zone?: string;
+}
+
+export interface IMakeComTeam {
+	id: number;
+	name: string;
+	organizationId: number;
+}
+
+export interface IMakeComConnection {
+	id: number;
+	name: string;
+	accountName?: string;
+	accountLabel?: string;
+	accountType?: string;
+	packageName?: string;
+	expire?: string;
+	metadata?: Record<string, any>;
+	teamId?: number;
+	upgradeable?: boolean;
+	scoped?: boolean;
+	editable?: boolean;
+}
+
+export interface IMakeComScenario {
+	id: number;
+	name: string;
+	teamId: number;
+	hookId?: number;
+	description?: string;
+	folderId?: number;
+	isEnabled?: boolean;
+	isPaused?: boolean;
+	usedPackages?: string[];
+	lastEdit?: string;
+	scheduling?: IMakeComScenarioScheduling;
+	islinked?: boolean;
+	isinvalid?: boolean;
+	islocked?: boolean;
+	createdByUser?: { id: number; name: string; email: string };
+	updatedByUser?: { id: number; name: string; email: string };
+}
+
+export interface IMakeComScenarioScheduling {
+	type: string;
+	interval?: number;
+}
+
+export interface IMakeComHook {
+	id: number;
+	name: string;
+	teamId: number;
+	url?: string;
+	type?: string;
+	typeName?: string;
+	packageName?: string;
+	theme?: string;
+	enabled?: boolean;
+	data?: Record<string, any>;
+	queueCount?: number;
+	queueLimit?: number;
+}
+
+export interface IMakeComTemplate {
+	id: number;
+	name: string;
+	description?: string;
+	usedPackages?: string[];
+	public?: boolean;
+	publishedDate?: string;
+	teamId?: number;
+}
+
+export interface IMakeComSetupStatus {
+	hasAccessToken: boolean;
+	zone: string | null;
+	makeOrganizationId: number | null;
+	makeTeamId: number | null;
+	isComplete: boolean;
+}
