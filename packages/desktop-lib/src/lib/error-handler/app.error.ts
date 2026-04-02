@@ -7,7 +7,6 @@ export class AppError extends BaseError {
 
 	constructor(errorId: string, error: any) {
 		super(String(error?.message || error));
-		console.log('AppError init');
 		this.errorEventManager = ErrorEventManager.instance
 
 		Error.captureStackTrace(this, this.constructor);

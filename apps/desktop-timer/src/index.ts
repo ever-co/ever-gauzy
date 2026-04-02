@@ -744,7 +744,7 @@ app.on('before-quit', async (e) => {
 	} else {
 		// soft download cancellation
 		try {
-			updater.cancel();
+			updater?.cancel();
 		} catch (e) {
 			console.error('ERROR: Occurred while cancel update:' + e);
 			throw new AppError('MAINUPDTABORT', e);

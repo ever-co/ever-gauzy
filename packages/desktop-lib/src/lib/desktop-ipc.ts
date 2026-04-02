@@ -416,8 +416,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.handle('SET_OFFLINE_MODE', async () => {
-		const offlineMode = DesktopOfflineModeHandler.instance;
-		offlineMode.forceOffline();
+		getOfflineMode().forceOffline();
 	});
 
 	pluginListeners();

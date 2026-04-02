@@ -113,7 +113,7 @@
 				"--socket=pulseaudio",
 				"--share=network",
 				"--device=dri",
-				"--filesystem=host",
+				"--filesystem=home",
 				"--talk-name=org.freedesktop.Notifications",
 				"--talk-name=org.kde.StatusNotifierWatcher",
 				"--talk-name=org.freedesktop.portal.Desktop",

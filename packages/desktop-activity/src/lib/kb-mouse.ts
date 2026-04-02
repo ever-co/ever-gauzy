@@ -3,6 +3,8 @@ import { EventEmitter } from 'node:events';
 // Type-only imports — these do NOT load the native binary at parse time.
 import type { UiohookKeyboardEvent, UiohookMouseEvent, UiohookWheelEvent } from 'uiohook-napi';
 
+type UIOhookInstance = typeof import('uiohook-napi')['uIOhook'];
+
 type KeyboardMouseEvent = {
 	keydown: (event: UiohookKeyboardEvent) => void;
 	input: (event: UiohookKeyboardEvent) => void;
@@ -18,9 +20,8 @@ type EventNames = keyof KeyboardMouseEvent;
 
 // Lazy accessor — the native .node binary is loaded only when KeyboardMouse is
 // first instantiated (i.e. after app.ready), not at module parse time.
-function getUIOhook() {
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	return require('uiohook-napi').uIOhook as { on: Function; start: Function; stop: Function };
+function getUIOhook(): UIOhookInstance {
+	return require('uiohook-napi').uIOhook as UIOhookInstance;
 }
 
 export default class KeyboardMouse extends EventEmitter {

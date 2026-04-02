@@ -102,7 +102,7 @@
 				"--socket=pulseaudio",
 				"--share=network",
 				"--device=dri",
-				"--filesystem=host",
+				"--filesystem=home",
 				"--talk-name=org.freedesktop.Notifications",
 				"--talk-name=org.kde.StatusNotifierWatcher",
 				"--talk-name=org.freedesktop.portal.Desktop",
@@ -112,7 +112,6 @@
 				"--env=ELECTRON_ENABLE_LOGGING=1",
 				"--env=ELECTRON_OZONE_PLATFORM_HINT=auto"
 			],
-			"executableArgs": ["--no-sandbox"],
 			"runtime": "org.freedesktop.Platform",
 			"runtimeVersion": "24.08",
 			"sdk": "org.freedesktop.Sdk",
