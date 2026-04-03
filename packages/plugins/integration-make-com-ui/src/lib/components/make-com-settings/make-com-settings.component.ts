@@ -144,7 +144,13 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 						this._loadMakeOrganizations(status.makeOrganizationId, status.makeTeamId);
 					}
 				}),
-				catchError(() => EMPTY),
+				catchError((error) => {
+					this._toastrService.error(
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETTINGS'),
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
+					return EMPTY;
+				}),
 				finalize(() => (this.zoneLoading = false)),
 				untilDestroyed(this)
 			)
@@ -165,6 +171,7 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 					// Reset org & team when zone changes
 					this.selectedMakeOrg = null;
 					this.selectedMakeTeam = null;
+					this.makeOrganizations = [];
 					this.makeTeams = [];
 					this._loadMakeOrganizations();
 				}),
@@ -220,6 +227,7 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 				tap(() => {
 					this.selectedMakeOrg = org;
 					this.selectedMakeTeam = null;
+					this.makeTeams = [];
 					this._toastrService.success(
 						`Organization "${org.name}" selected`,
 						this.getTranslation('TOASTR.TITLE.SUCCESS')

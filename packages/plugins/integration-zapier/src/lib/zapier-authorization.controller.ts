@@ -150,18 +150,15 @@ export class ZapierAuthorizationController {
 
 			// Validate client credentials
 			const integration = await this.zapierService.findIntegrationByClientId(body.client_id);
-			if (!integration.id) {
-				throw new BadRequestException('Invalid client ID');
-			}
 
 			// Validate client secret
-			await this.zapierService.validateClientSecret(integration.id, body.client_secret);
+			await this.zapierService.validateClientSecret(integration.id!, body.client_secret);
 
 			// Validate and consume the authorization code (single-use)
-			await this.zapierService.validateAndConsumeAuthCode(integration.id, body.code, body.redirect_uri);
+			await this.zapierService.validateAndConsumeAuthCode(integration.id!, body.code, body.redirect_uri);
 
 			// Generate new tokens
-			const tokens = await this.zapierService.generateAndStoreNewTokens(integration.id);
+			const tokens = await this.zapierService.generateAndStoreNewTokens(integration.id!);
 
 			return tokens;
 		} catch (error) {
@@ -201,10 +198,15 @@ export class ZapierAuthorizationController {
 				throw new BadRequestException('Invalid grant_type. Must be "refresh_token"');
 			}
 
-			// Find integration by client_id and verify refresh token
+			// Find integration by client_id and validate client secret
 			const integration = await this.zapierService.findIntegrationByClientId(body.client_id);
+			if (!integration.id) {
+				throw new BadRequestException('Invalid client ID');
+			}
+			await this.zapierService.validateClientSecret(integration.id!, body.client_secret);
+
 			const refreshResult = await this.zapierService.refreshTokenByRefreshToken(
-				integration.id ?? '',
+				integration.id,
 				body.refresh_token
 			);
 

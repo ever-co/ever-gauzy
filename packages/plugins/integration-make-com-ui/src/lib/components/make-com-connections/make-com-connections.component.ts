@@ -57,10 +57,14 @@ export class MakeComConnectionsComponent extends TranslationBaseComponent implem
 						this.loading.set(false);
 					}
 				}),
-				catchError(() => {
-					this.setupStatus.set({ hasAccessToken: false, zone: null, makeOrganizationId: null, makeTeamId: null, isComplete: false });
+				catchError((error) => {
+					this.setupStatus.set(null);
 					this.connections.set([]);
 					this.loading.set(false);
+					this._toastrService.error(
+						error?.error?.message || 'Failed to load setup status',
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
 					return EMPTY;
 				}),
 				untilDestroyed(this)

@@ -10,7 +10,8 @@ import {
 	UseGuards,
 	ParseIntPipe,
 	HttpCode,
-	HttpStatus
+	HttpStatus,
+	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { TenantPermissionGuard, PermissionGuard, Permissions } from '@gauzy/core';
@@ -29,8 +30,14 @@ export class MakeComApiController {
 
 	private extractPagination(query: Record<string, any>): IMakeComPaginationParams {
 		const pagination: IMakeComPaginationParams = {};
-		if (query.offset != null) pagination['pg[offset]'] = parseInt(query.offset, 10);
-		if (query.limit != null) pagination['pg[limit]'] = parseInt(query.limit, 10);
+		if (query.offset != null) {
+			const offset = parseInt(query.offset, 10);
+			if (!isNaN(offset)) pagination['pg[offset]'] = offset;
+		}
+		if (query.limit != null) {
+			const limit = parseInt(query.limit, 10);
+			if (!isNaN(limit)) pagination['pg[limit]'] = limit;
+		}
 		if (query.sortBy) pagination['pg[sortBy]'] = query.sortBy;
 		if (query.sortDir) pagination['pg[sortDir]'] = query.sortDir;
 		return pagination;
@@ -71,6 +78,9 @@ export class MakeComApiController {
 	@ApiOperation({ summary: 'Set the Make.com organization ID for this tenant' })
 	@Post('/context/organization')
 	async setMakeOrganization(@Body() body: { makeOrganizationId: number; organizationId?: string }) {
+		if (!body.makeOrganizationId || isNaN(Number(body.makeOrganizationId))) {
+			throw new BadRequestException('A valid makeOrganizationId is required');
+		}
 		await this.makeComApiService.setMakeOrganizationId(body.makeOrganizationId, body.organizationId);
 		return { success: true, makeOrganizationId: body.makeOrganizationId };
 	}
@@ -78,6 +88,9 @@ export class MakeComApiController {
 	@ApiOperation({ summary: 'Set the Make.com team ID for this tenant' })
 	@Post('/context/team')
 	async setMakeTeam(@Body() body: { makeTeamId: number; organizationId?: string }) {
+		if (!body.makeTeamId || isNaN(Number(body.makeTeamId))) {
+			throw new BadRequestException('A valid makeTeamId is required');
+		}
 		await this.makeComApiService.setMakeTeamId(body.makeTeamId, body.organizationId);
 		return { success: true, makeTeamId: body.makeTeamId };
 	}
@@ -111,8 +124,9 @@ export class MakeComApiController {
 		@Query('organizationId') organizationId?: string,
 		@Query() query?: Record<string, any>
 	) {
+		const parsedOrgId = makeOrgId ? parseInt(makeOrgId, 10) : undefined;
 		const teams = await this.makeComApiService.listTeams(
-			makeOrgId ? parseInt(makeOrgId, 10) : undefined,
+			parsedOrgId && !isNaN(parsedOrgId) ? parsedOrgId : undefined,
 			organizationId,
 			this.extractPagination(query)
 		);

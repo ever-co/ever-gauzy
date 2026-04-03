@@ -55,7 +55,7 @@ export class ZapierController {
 			throw new BadRequestException('Tenant ID is required');
 		}
 
-		if (!body.organizationId) {
+		if (!body?.organizationId) {
 			throw new BadRequestException('Organization ID is required');
 		}
 

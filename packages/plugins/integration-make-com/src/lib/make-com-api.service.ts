@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { AxiosError, AxiosRequestConfig } from 'axios';
 import { firstValueFrom, catchError } from 'rxjs';
@@ -147,19 +147,19 @@ export class MakeComApiService {
 			const response = await firstValueFrom(
 				this.httpService.request<T>(config).pipe(
 					catchError((error: AxiosError) => {
-						const status = error.response?.status;
+						const status = error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR;
 						const data = error.response?.data as any;
 						const msg = data?.message || error.message;
 						this.logger.error(`Make.com API ${method} ${path} failed [${status}]: ${msg}`);
-						throw new BadRequestException(`Make.com API error: ${msg}`);
+						throw new HttpException(`Make.com API error: ${msg}`, status);
 					})
 				)
 			);
 			return response.data;
 		} catch (error) {
-			if (error instanceof BadRequestException) throw error;
+			if (error instanceof HttpException) throw error;
 			this.logger.error(`Unexpected error calling Make.com API: ${error.message}`);
-			throw new BadRequestException(`Make.com API error: ${error.message}`);
+			throw new HttpException(`Make.com API error: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -249,7 +249,7 @@ export class MakeComApiService {
 	 */
 	async getSetupStatus(organizationId?: string): Promise<{
 		hasAccessToken: boolean;
-		zone: string | null;
+		zone: MakeComZone | null;
 		makeOrganizationId: number | null;
 		makeTeamId: number | null;
 		isComplete: boolean;
@@ -260,11 +260,14 @@ export class MakeComApiService {
 		const makeOrgId = this.getSettingValue(tenant, MakeSettingName.MAKE_ORGANIZATION_ID);
 		const makeTeamId = this.getSettingValue(tenant, MakeSettingName.MAKE_TEAM_ID);
 
+		const parsedOrgId = makeOrgId ? parseInt(makeOrgId, 10) : null;
+		const parsedTeamId = makeTeamId ? parseInt(makeTeamId, 10) : null;
+
 		return {
 			hasAccessToken: !!accessToken,
-			zone,
-			makeOrganizationId: makeOrgId ? parseInt(makeOrgId, 10) : null,
-			makeTeamId: makeTeamId ? parseInt(makeTeamId, 10) : null,
+			zone: zone as MakeComZone | null,
+			makeOrganizationId: parsedOrgId !== null && !isNaN(parsedOrgId) ? parsedOrgId : null,
+			makeTeamId: parsedTeamId !== null && !isNaN(parsedTeamId) ? parsedTeamId : null,
 			isComplete: !!accessToken && !!zone && !!makeOrgId && !!makeTeamId
 		};
 	}
@@ -277,7 +280,11 @@ export class MakeComApiService {
 		if (!value) {
 			throw new BadRequestException('Make.com organization ID is not configured. Please select an organization first.');
 		}
-		return parseInt(value, 10);
+		const parsed = parseInt(value, 10);
+		if (isNaN(parsed)) {
+			throw new BadRequestException('Invalid Make.com organization ID stored in settings.');
+		}
+		return parsed;
 	}
 
 	/**
@@ -288,7 +295,11 @@ export class MakeComApiService {
 		if (!value) {
 			throw new BadRequestException('Make.com team ID is not configured. Please select a team first.');
 		}
-		return parseInt(value, 10);
+		const parsed = parseInt(value, 10);
+		if (isNaN(parsed)) {
+			throw new BadRequestException('Invalid Make.com team ID stored in settings.');
+		}
+		return parsed;
 	}
 
 	// ─── Organizations ──────────────────────────────────────────────────────

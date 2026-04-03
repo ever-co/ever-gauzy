@@ -2,6 +2,7 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h6>{{ 'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOKS' | translate }}</h6>
     <button
+      type="button"
       nbButton
       size="small"
       status="basic"
@@ -56,25 +57,26 @@
                 <nb-icon icon="link-2-outline" [status]="hook.enabled ? 'success' : 'basic'"></nb-icon>
                 <span class="hook-name">{{ hook.name }}</span>
                 @if (hook.enabled) {
-                  <span class="badge badge-success">Enabled</span>
+                  <span class="badge badge-success">{{ 'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_ENABLED' | translate }}</span>
                 } @else {
-                  <span class="badge badge-basic">Disabled</span>
+                  <span class="badge badge-basic">{{ 'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_DISABLED' | translate }}</span>
                 }
               </div>
               @if (hook.typeName) {
-                <small class="text-hint d-block mt-1">Type: {{ hook.typeName }}</small>
+                <small class="text-hint d-block mt-1">{{ 'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_TYPE' | translate }}: {{ hook.typeName }}</small>
               }
               @if (hook.url) {
                 <small class="text-hint d-block hook-url">{{ hook.url }}</small>
               }
               @if (hook.queueCount != null) {
                 <small class="text-hint d-block">
-                  Queue: {{ hook.queueCount }}@if (hook.queueLimit) { / {{ hook.queueLimit }}}
+                  {{ 'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_QUEUE' | translate }}: {{ hook.queueCount }}@if (hook.queueLimit) { / {{ hook.queueLimit }}}
                 </small>
               }
             </div>
             <div class="hook-actions d-flex gap-2">
               <button
+                type="button"
                 nbButton
                 size="small"
                 [status]="hook.enabled ? 'warning' : 'success'"
@@ -92,6 +94,7 @@
                 }
               </button>
               <button
+                type="button"
                 nbButton
                 size="small"
                 status="info"

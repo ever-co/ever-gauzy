@@ -93,13 +93,14 @@ export class MakeComController {
 			throw new NotFoundException('Tenant ID not found in request context');
 		}
 
-		// Save the integration with server-side credentials
-		const integration = await this.makeComService.addIntegrationSettings(body?.organizationId);
-
-		// Generate authorization URL using server-side client ID
+		// Generate authorization URL first — if this fails (e.g. missing config),
+		// we avoid leaving a partial integration record behind.
 		const authorizationUrl = this.makeComOAuthService.getAuthorizationUrl({
 			organizationId: body?.organizationId
 		});
+
+		// Save the integration with server-side credentials
+		const integration = await this.makeComService.addIntegrationSettings(body?.organizationId);
 
 		return {
 			authorizationUrl,
@@ -149,8 +150,18 @@ export class MakeComController {
 				throw new BadRequestException('Missing required parameters');
 			}
 
-			// Exchange code for tokens
-			const tokenResponse = await this.makeComOAuthService.exchangeCodeForToken(body.code, body.state);
+			// Verify state and retrieve the PKCE code verifier
+			const stateVerification = this.makeComOAuthService.verifyState(body.state);
+			if (!stateVerification.isValid) {
+				throw new BadRequestException('Invalid or expired state parameter');
+			}
+
+			// Exchange code for tokens with the PKCE code verifier
+			const tokenResponse = await this.makeComOAuthService.exchangeCodeForToken(
+				body.code,
+				body.state,
+				stateVerification.codeVerifier
+			);
 
 			// Return the token response in the format expected by Make.com
 			return {

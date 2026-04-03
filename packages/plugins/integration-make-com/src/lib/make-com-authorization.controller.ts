@@ -56,11 +56,17 @@ export class MakeComAuthorizationController {
 	 */
 	private buildRedirectUrl(baseUrl: string, params: Record<string, string>): string {
 		const queryString = new URLSearchParams(params).toString();
-		const [urlWithoutHash, hash] = baseUrl.split('#');
-		const separator = urlWithoutHash.includes('?') ? '&' : '?';
-		return hash
-			? `${urlWithoutHash}${separator}${queryString}#${hash}`
-			: `${urlWithoutHash}${separator}${queryString}`;
+		const hashIndex = baseUrl.indexOf('#');
+		if (hashIndex !== -1) {
+			// Hash-based Angular routing: place query params after the hash route
+			// e.g. http://host/#/path?query instead of http://host?query#/path
+			const beforeHash = baseUrl.substring(0, hashIndex);
+			const hashPart = baseUrl.substring(hashIndex);
+			const separator = hashPart.includes('?') ? '&' : '?';
+			return `${beforeHash}${hashPart}${separator}${queryString}`;
+		}
+		const separator = baseUrl.includes('?') ? '&' : '?';
+		return `${baseUrl}${separator}${queryString}`;
 	}
 
 	/**

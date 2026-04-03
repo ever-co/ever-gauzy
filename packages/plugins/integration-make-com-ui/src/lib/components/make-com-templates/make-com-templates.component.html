@@ -1,7 +1,15 @@
 <div class="templates-container">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h6>{{ 'INTEGRATIONS.MAKE_COM_PAGE.TEMPLATES' | translate }}</h6>
-    <button nbButton size="small" status="basic" (click)="refresh()" [disabled]="loading">
+    <button
+      type="button"
+      nbButton
+      size="small"
+      status="basic"
+      (click)="refresh()"
+      [disabled]="loading"
+      [attr.aria-label]="'BUTTONS.REFRESH' | translate"
+    >
       <nb-icon icon="refresh-outline"></nb-icon>
     </button>
   </div>
@@ -50,7 +58,7 @@
                 <div class="d-flex align-items-center gap-2">
                   <span class="template-name">{{ template.name }}</span>
                   @if (template.public) {
-                    <span class="badge badge-info">Public</span>
+                    <span class="badge badge-info">{{ 'INTEGRATIONS.MAKE_COM_PAGE.TEMPLATE_PUBLIC' | translate }}</span>
                   }
                 </div>
                 @if (template.description) {
@@ -58,7 +66,7 @@
                 }
                 @if (template.publishedDate) {
                   <small class="text-hint d-block">
-                    Published: {{ template.publishedDate | date: 'mediumDate' }}
+                    {{ 'INTEGRATIONS.MAKE_COM_PAGE.TEMPLATE_PUBLISHED' | translate }}: {{ template.publishedDate | date: 'mediumDate' }}
                   </small>
                 }
                 @if (template.usedPackages?.length) {

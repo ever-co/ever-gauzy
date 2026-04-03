@@ -2,6 +2,7 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h6>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SCENARIOS' | translate }}</h6>
     <button
+	type="button"
 	nbButton
 	size="small"
 	status="basic"
@@ -82,6 +83,7 @@
             </div>
             <div class="scenario-actions d-flex gap-2">
               <button
+                type="button"
                 nbButton
                 size="small"
                 [status]="scenario.isEnabled ? 'warning' : 'success'"
@@ -99,6 +101,7 @@
                 }
               </button>
               <button
+                type="button"
                 nbButton
                 size="small"
                 status="info"

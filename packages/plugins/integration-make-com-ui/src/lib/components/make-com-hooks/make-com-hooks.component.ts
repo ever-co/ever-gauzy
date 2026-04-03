@@ -45,9 +45,13 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 						this.loading = false;
 					}
 				}),
-				catchError(() => {
-					this.setupStatus = { hasAccessToken: false, zone: null, makeOrganizationId: null, makeTeamId: null, isComplete: false };
+				catchError((error) => {
+					this.setupStatus = null;
 					this.loading = false;
+					this._toastrService.error(
+						error?.error?.message || 'Failed to load setup status',
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
 					return EMPTY;
 				}),
 				untilDestroyed(this)

@@ -71,8 +71,12 @@ export class MakeComScenariosComponent extends TranslationBaseComponent implemen
 					}
 				}),
 				catchError((error) => {
-					this.setupStatus = { hasAccessToken: false, zone: null, makeOrganizationId: null, makeTeamId: null, isComplete: false };
+					this.setupStatus = null;
 					this.loading = false;
+					this._toastrService.error(
+						error?.error?.message || 'Failed to load setup status',
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
 					return EMPTY;
 				}),
 				untilDestroyed(this)

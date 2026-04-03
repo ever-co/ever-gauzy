@@ -344,11 +344,14 @@ export class ZapierService {
 				throw new BadRequestException('Invalid state parameter');
 			}
 
+			// Escape LIKE metacharacters to prevent unintended pattern matching
+			const escapedState = state.replace(/[%_]/g, '\\$&');
+
 			// Search for the state across all tenants by value
 			const stateSettings = await this._integrationSettingService.find({
 				where: {
 					settingsName: 'state',
-					settingsValue: Like(`%"state":"${state}"%`)
+					settingsValue: Like(`%"state":"${escapedState}"%`)
 				}
 			});
 
@@ -623,7 +626,7 @@ export class ZapierService {
 					organizationId: existingSetting?.organizationId,
 					integrationId: integrationTenant.id
 				}
-			] as DeepPartial<IIntegrationEntitySetting>;
+			] as any;
 
 			await this._integrationSettingService.save(updatedSettings);
 
@@ -684,9 +687,9 @@ export class ZapierService {
 	 * @throws NotFoundException if the token is invalid or no Zapier integration is found.
 	 */
 	async findIntegrationByToken(token: string): Promise<IIntegrationTenant> {
-		// 1) Lookup the access_token setting
+		// 1) Lookup the Gauzy-issued OAuth access token (separate from Zapier API tokens)
 		const setting = await this._integrationSettingService.findOneByWhereOptions({
-			settingsName: 'access_token',
+			settingsName: 'oauth_access_token',
 			settingsValue: token
 		});
 
@@ -784,17 +787,17 @@ export class ZapierService {
 		const tenantId = existingSettings[0]?.tenantId;
 		const organizationId = existingSettings[0]?.organizationId;
 
-		// Prepare token settings
+		// Prepare Gauzy-issued OAuth token settings (distinct from Zapier API tokens)
 		const tokenSettings = [
 			{
-				settingsName: 'access_token',
+				settingsName: 'oauth_access_token',
 				settingsValue: accessToken,
 				tenantId,
 				organizationId,
 				integrationId
 			},
 			{
-				settingsName: 'refresh_token',
+				settingsName: 'oauth_refresh_token',
 				settingsValue: refreshToken,
 				tenantId,
 				organizationId,
@@ -802,9 +805,9 @@ export class ZapierService {
 			}
 		];
 
-		// Remove existing token settings and add new ones
+		// Remove existing Gauzy OAuth token settings and add new ones
 		const filteredExistingSettings = existingSettings.filter(
-			(setting) => !['access_token', 'refresh_token'].includes(setting.settingsName)
+			(setting) => !['oauth_access_token', 'oauth_refresh_token'].includes(setting.settingsName)
 		);
 
 		const allSettings = [...filteredExistingSettings, ...tokenSettings] as DeepPartial<IIntegrationEntitySetting>;
@@ -851,8 +854,8 @@ export class ZapierService {
 				throw new NotFoundException(`No settings found for integration ID ${integrationId}`);
 			}
 
-			// Verify the refresh token matches
-			const storedRefreshToken = settings.find((s) => s.settingsName === 'refresh_token')?.settingsValue;
+			// Verify the Gauzy-issued OAuth refresh token matches
+			const storedRefreshToken = settings.find((s) => s.settingsName === 'oauth_refresh_token')?.settingsValue;
 			if (!storedRefreshToken || storedRefreshToken !== refreshToken) {
 				throw new BadRequestException('Invalid refresh token');
 			}
@@ -893,6 +896,19 @@ export class ZapierService {
 
 		const tenantId = existingSettings[0]?.tenantId;
 		const organizationId = existingSettings[0]?.organizationId;
+
+		// Invalidate any existing auth_code records for this integration
+		const existingAuthCodes = await this._integrationSettingService.find({
+			where: {
+				integration: { id: integrationId },
+				settingsName: 'auth_code'
+			}
+		});
+		for (const existing of existingAuthCodes) {
+			if (existing.id) {
+				await this._integrationSettingService.delete(existing.id);
+			}
+		}
 
 		const expirationTime = new Date();
 		expirationTime.setMinutes(expirationTime.getMinutes() + 10);
@@ -940,7 +956,13 @@ export class ZapierService {
 			throw new BadRequestException('Invalid authorization code');
 		}
 
-		const parsedCode = JSON.parse(codeSetting.settingsValue);
+		let parsedCode: any;
+		try {
+			parsedCode = JSON.parse(codeSetting.settingsValue ?? '{}');
+		} catch {
+			await this._integrationSettingService.delete(codeSetting.id);
+			throw new BadRequestException('Corrupted authorization code data');
+		}
 
 		// Check expiration
 		if (parsedCode.expiresAt && new Date(parsedCode.expiresAt) < new Date()) {

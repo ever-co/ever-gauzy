@@ -138,7 +138,7 @@ export interface IMakeComTemplate {
 
 export interface IMakeComSetupStatus {
 	hasAccessToken: boolean;
-	zone: string | null;
+	zone: MakeComZone | null;
 	makeOrganizationId: number | null;
 	makeTeamId: number | null;
 	isComplete: boolean;

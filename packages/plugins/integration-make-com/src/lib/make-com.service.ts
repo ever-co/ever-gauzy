@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@gauzy/config';
 import {
 	IntegrationSettingService,
@@ -203,7 +203,7 @@ export class MakeComService {
 			const client_secret = makeComConfig?.clientSecret;
 
 			if (!client_id || !client_secret) {
-				throw new NotFoundException('Make.com OAuth credentials are not configured on the server. Please set GAUZY_MAKE_CLIENT_ID and GAUZY_MAKE_CLIENT_SECRET environment variables.');
+				throw new InternalServerErrorException('Make.com OAuth credentials are not configured on the server. Please set GAUZY_MAKE_CLIENT_ID and GAUZY_MAKE_CLIENT_SECRET environment variables.');
 			}
 
 			// Find or create the base integration
