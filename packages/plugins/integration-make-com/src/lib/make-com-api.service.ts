@@ -1,9 +1,9 @@
-import { Injectable, Logger, BadRequestException, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException, HttpException, HttpStatus, UnauthorizedException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { AxiosError, AxiosRequestConfig } from 'axios';
 import { firstValueFrom, catchError } from 'rxjs';
 import { IntegrationEnum } from '@gauzy/contracts';
-import { IntegrationSettingService, IntegrationTenantService, RequestContext } from '@gauzy/core';
+import { IntegrationSettingService, IntegrationTenantService, RequestContext, IntegrationTenant } from '@gauzy/core';
 import { MakeSettingName } from './interfaces/make-com.model';
 import {
 	getMakeApiBaseUrl,
@@ -70,15 +70,15 @@ export class MakeComApiService {
 	/**
 	 * Read a single setting value from the integration tenant.
 	 */
-	private getSettingValue(integrationTenant: any, name: string): string | null {
-		const setting = integrationTenant.settings?.find((s: any) => s.settingsName === name);
+	private getSettingValue(integrationTenant: IntegrationTenant, name: string): string | null {
+		const setting = integrationTenant.settings?.find((s) => s.settingsName === name);
 		return setting?.settingsValue ?? null;
 	}
 
 	/**
 	 * Get the access token, refreshing if expired.
 	 */
-	private async getValidAccessToken(integrationTenant: any): Promise<string> {
+	private async getValidAccessToken(integrationTenant: IntegrationTenant): Promise<string> {
 		const accessToken = this.getSettingValue(integrationTenant, MakeSettingName.ACCESS_TOKEN);
 		const expiresAt = this.getSettingValue(integrationTenant, MakeSettingName.EXPIRES_AT);
 
@@ -109,7 +109,7 @@ export class MakeComApiService {
 	/**
 	 * Resolve the zone API base URL.
 	 */
-	private getZoneBaseUrl(integrationTenant: any): string {
+	private getZoneBaseUrl(integrationTenant: IntegrationTenant): string {
 		const zone = this.getSettingValue(integrationTenant, MakeSettingName.ZONE) as MakeComZone;
 		if (!zone) {
 			throw new BadRequestException(
@@ -125,7 +125,7 @@ export class MakeComApiService {
 	private async request<T>(
 		method: 'GET' | 'POST' | 'PATCH' | 'DELETE' | 'PUT',
 		path: string,
-		integrationTenant: any,
+		integrationTenant: IntegrationTenant,
 		options?: { data?: any; params?: Record<string, any> }
 	): Promise<T> {
 		const baseUrl = this.getZoneBaseUrl(integrationTenant);
@@ -151,6 +151,12 @@ export class MakeComApiService {
 						const data = error.response?.data as any;
 						const msg = data?.message || error.message;
 						this.logger.error(`Make.com API ${method} ${path} failed [${status}]: ${msg}`);
+						if (status === 401) {
+							throw new UnauthorizedException(`Make.com authentication failed: ${msg}`);
+						}
+						if (status === 404) {
+							throw new NotFoundException(`Make.com resource not found: ${msg}`);
+						}
 						throw new HttpException(`Make.com API error: ${msg}`, status);
 					})
 				)
@@ -183,7 +189,7 @@ export class MakeComApiService {
 	 */
 	async setZone(zone: MakeComZone, organizationId?: string): Promise<void> {
 		const tenant = await this.getIntegrationTenant(organizationId);
-		const existing = tenant.settings?.find((s: any) => s.settingsName === MakeSettingName.ZONE);
+		const existing = tenant.settings?.find((s) => s.settingsName === MakeSettingName.ZONE);
 
 		if (existing) {
 			existing.settingsValue = zone;
@@ -211,7 +217,7 @@ export class MakeComApiService {
 	 */
 	async setMakeOrganizationId(makeOrgId: number, organizationId?: string): Promise<void> {
 		const tenant = await this.getIntegrationTenant(organizationId);
-		const existing = tenant.settings?.find((s: any) => s.settingsName === MakeSettingName.MAKE_ORGANIZATION_ID);
+		const existing = tenant.settings?.find((s) => s.settingsName === MakeSettingName.MAKE_ORGANIZATION_ID);
 
 		if (existing) {
 			existing.settingsValue = makeOrgId.toString();
@@ -230,7 +236,7 @@ export class MakeComApiService {
 	 */
 	async setMakeTeamId(makeTeamId: number, organizationId?: string): Promise<void> {
 		const tenant = await this.getIntegrationTenant(organizationId);
-		const existing = tenant.settings?.find((s: any) => s.settingsName === MakeSettingName.MAKE_TEAM_ID);
+		const existing = tenant.settings?.find((s) => s.settingsName === MakeSettingName.MAKE_TEAM_ID);
 
 		if (existing) {
 			existing.settingsValue = makeTeamId.toString();
@@ -275,7 +281,7 @@ export class MakeComApiService {
 	/**
 	 * Read the stored Make.com organization ID.
 	 */
-	private async getMakeOrganizationId(integrationTenant: any): Promise<number> {
+	private async getMakeOrganizationId(integrationTenant: IntegrationTenant): Promise<number> {
 		const value = this.getSettingValue(integrationTenant, MakeSettingName.MAKE_ORGANIZATION_ID);
 		if (!value) {
 			throw new BadRequestException('Make.com organization ID is not configured. Please select an organization first.');
@@ -290,7 +296,7 @@ export class MakeComApiService {
 	/**
 	 * Read the stored Make.com team ID.
 	 */
-	private async getMakeTeamId(integrationTenant: any): Promise<number> {
+	private async getMakeTeamId(integrationTenant: IntegrationTenant): Promise<number> {
 		const value = this.getSettingValue(integrationTenant, MakeSettingName.MAKE_TEAM_ID);
 		if (!value) {
 			throw new BadRequestException('Make.com team ID is not configured. Please select a team first.');

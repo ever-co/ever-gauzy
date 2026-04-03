@@ -107,13 +107,13 @@ export class MakeComOAuthService {
 			const decodedState = JSON.parse(Buffer.from(state, 'base64url').toString());
 			const { tenantId, organizationId } = decodedState;
 
-			// Get client credentials from database
-			const integrationTenant = await this.getIntegrationTenant(tenantId, organizationId);
-			const clientId = await this.getSettingValue(integrationTenant, MakeSettingName.CLIENT_ID);
-			const clientSecret = await this.getSettingValue(integrationTenant, MakeSettingName.CLIENT_SECRET);
+			// Read client credentials from server-side config (env vars) — never from tenant data
+			const makeComConfig = this.config.get('makeCom');
+			const clientId = makeComConfig?.clientId;
+			const clientSecret = makeComConfig?.clientSecret;
 
 			if (!clientId || !clientSecret) {
-				throw new BadRequestException('Make.com OAuth credentials are not fully configured');
+				throw new BadRequestException('Make.com OAuth credentials are not configured on the server');
 			}
 
 			if (!codeVerifier) {
@@ -372,8 +372,14 @@ export class MakeComOAuthService {
 				throw new NotFoundException('Refresh token not found for this integration');
 			}
 
-			// Get OAuth credentials from the database
-			const { clientId, clientSecret } = await this.makeComService.getOAuthCredentials(integrationId);
+			// Read OAuth credentials from server-side config (env vars) — never from tenant data
+			const makeComConfig = this.config.get('makeCom');
+			const clientId = makeComConfig?.clientId;
+			const clientSecret = makeComConfig?.clientSecret;
+
+			if (!clientId || !clientSecret) {
+				throw new BadRequestException('Make.com OAuth credentials are not configured on the server');
+			}
 
 			// Get the Make.com OAuth v2 token endpoint URL
 			const tokenUrl = `${MAKE_BASE_URL}/oauth/v2/token`;

@@ -18,12 +18,12 @@
 .badge {
   font-size: 0.7rem;
   padding: 0.15rem 0.5rem;
-  border-radius: 4px;
+  border-radius: calc(var(--border-radius) * 0.5);
   font-weight: 500;
 
   &-info {
-    background-color: var(--color-info-transparent-default);
-    color: var(--color-info-default);
+    background-color: var(--gauzy-card-2);
+    color: var(--gauzy-text-color-1);
   }
 }
 
@@ -32,9 +32,10 @@
   font-size: 0.7rem;
   padding: 0.1rem 0.4rem;
   margin-right: 0.25rem;
-  border-radius: 3px;
-  background-color: var(--color-basic-transparent-default);
-  color: var(--color-basic-600);
+  border-radius: calc(var(--border-radius) * 0.375);
+  background-color: var(--gauzy-card-2);
+  color: var(--gauzy-text-color-2);
+
 }
 
 .empty-icon {

@@ -19,6 +19,17 @@ export class MakeComTemplatesComponent extends TranslationBaseComponent implemen
 	public loading = false;
 	public setupStatus: IMakeComSetupStatus | null = null;
 
+	public get setupMessageKey(): string | null {
+		if (this.loading) return null;
+		const s = this.setupStatus;
+		if (!s || s.isComplete) return null;
+		if (!s.hasAccessToken) return 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.AUTHORIZE';
+		if (!s.zone) return 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.ZONE';
+		if (!s.makeOrganizationId) return 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.ORGANIZATION';
+		if (!s.makeTeamId) return 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.TEAM';
+		return null;
+	}
+
 	constructor(
 		private readonly _makeComStoreService: MakeComStoreService,
 		private readonly _toastrService: ToastrService,

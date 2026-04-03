@@ -18,22 +18,11 @@
     <div class="d-flex justify-content-center py-5">
       <nb-spinner></nb-spinner>
     </div>
-  }
-
-  <!-- Setup incomplete -->
-  @if (!loading && setupStatus && !setupStatus.isComplete) {
+  } @else if (setupMessageKey) {
     <nb-card accent="warning">
       <nb-card-body class="text-center py-4">
         <nb-icon icon="alert-triangle-outline" class="empty-icon mb-2" status="warning"></nb-icon>
-        @if (!setupStatus.hasAccessToken) {
-          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.AUTHORIZE' | translate }}</p>
-        } @else if (!setupStatus.zone) {
-          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.ZONE' | translate }}</p>
-        } @else if (!setupStatus.makeOrganizationId) {
-          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.ORGANIZATION' | translate }}</p>
-        } @else if (!setupStatus.makeTeamId) {
-          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.TEAM' | translate }}</p>
-        }
+        <p>{{ setupMessageKey | translate }}</p>
       </nb-card-body>
     </nb-card>
   }

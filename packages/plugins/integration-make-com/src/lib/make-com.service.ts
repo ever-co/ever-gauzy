@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, InternalServerErrorException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@gauzy/config';
 import {
 	IntegrationSettingService,
@@ -9,7 +9,6 @@ import {
 	PROJECT_TIED_ENTITIES,
 	IntegrationTenantUpdateOrCreateCommand
 } from '@gauzy/core';
-import { In } from 'typeorm';
 import { IIntegrationEntitySetting, IIntegrationTenant, IntegrationEntity, IntegrationEnum } from '@gauzy/contracts';
 import {
 	IMakeComIntegrationSettings,
@@ -197,12 +196,9 @@ export class MakeComService {
 				throw new NotFoundException('Tenant ID not found in request context');
 			}
 
-			// Read client credentials from server-side config (env vars)
+			// Validate that server-side OAuth credentials are configured (do NOT persist them to tenant)
 			const makeComConfig = this.config?.get('makeCom');
-			const client_id = makeComConfig?.clientId;
-			const client_secret = makeComConfig?.clientSecret;
-
-			if (!client_id || !client_secret) {
+			if (!makeComConfig?.clientId || !makeComConfig?.clientSecret) {
 				throw new InternalServerErrorException('Make.com OAuth credentials are not configured on the server. Please set GAUZY_MAKE_CLIENT_ID and GAUZY_MAKE_CLIENT_SECRET environment variables.');
 			}
 
@@ -254,14 +250,6 @@ export class MakeComService {
 						entitySettings: entitySettings,
 						settings: [
 							{
-								settingsName: MakeSettingName.CLIENT_ID,
-								settingsValue: client_id
-							},
-							{
-								settingsName: MakeSettingName.CLIENT_SECRET,
-								settingsValue: client_secret
-							},
-							{
 								// Automatically enable the integration when it's created
 								settingsName: MakeSettingName.IS_ENABLED,
 								settingsValue: 'true'
@@ -280,145 +268,54 @@ export class MakeComService {
 		}
 	}
 	/**
-	 * Saves OAuth credentials for the Make.com integration.
-	 * This method stores the credentials in the database for persistence across server restarts.
+	 * Validates that the provided OAuth credentials match the server-side
+	 * Make.com OAuth configuration. Server-owned secrets are never written
+	 * to tenant data.
 	 *
-	 * @param {Object} credentials - The OAuth credentials to save.
+	 * @param {Object} credentials - The OAuth credentials to validate.
 	 * @param {string} credentials.clientId - The OAuth client ID.
 	 * @param {string} credentials.clientSecret - The OAuth client secret.
-	 * @returns {Promise<void>} A promise that resolves when the credentials have been saved.
+	 * @returns {boolean} True if credentials match server config.
+	 * @throws {BadRequestException} If credentials don't match server config.
 	 */
-	async saveOAuthCredentials(credentials: { clientId: string; clientSecret: string }): Promise<void> {
-		try {
-			const tenantId = RequestContext.currentTenantId();
-			if (!tenantId) {
-				throw new NotFoundException('Tenant ID not found in request context');
-			}
-
-			// Find the integration for the current tenant
-			const integrationTenant = await this.integrationTenantService.findOneByWhereOptions({
-				name: IntegrationEnum.MakeCom,
-				tenantId
-			});
-
-			if (!integrationTenant) {
-				throw new NotFoundException(`${IntegrationEnum.MakeCom} integration not found for this tenant`);
-			}
-
-			// Define the settings to be saved or updated
-			const settingsToSave = [
-				{
-					settingsName: MakeSettingName.CLIENT_ID,
-					settingsValue: credentials.clientId,
-					integration: integrationTenant
-				},
-				{
-					settingsName: MakeSettingName.CLIENT_SECRET,
-					settingsValue: credentials.clientSecret,
-					integration: integrationTenant
-				}
-			];
-
-			// Use the bulkUpdateOrCreate method to save the settings
-			await this.integrationSettingService.bulkUpdateOrCreate(integrationTenant.id, settingsToSave);
-
-			this.logger.log(`OAuth credentials updated for tenant: ${tenantId}`);
-		} catch (error) {
-			this.logger.error('Error saving Make.com OAuth credentials:', error);
-			throw error;
+	validateOAuthCredentials(credentials: { clientId: string; clientSecret: string }): boolean {
+		const makeComConfig = this.config?.get('makeCom');
+		if (
+			!makeComConfig?.clientId ||
+			!makeComConfig?.clientSecret ||
+			makeComConfig.clientId !== credentials.clientId ||
+			makeComConfig.clientSecret !== credentials.clientSecret
+		) {
+			throw new BadRequestException('OAuth credentials do not match server-side configuration');
 		}
+		return true;
 	}
 
 	/**
-	 * Retrieves the OAuth credentials for the Make.com integration.
+	 * Retrieves the OAuth credentials for the Make.com integration from server-side config.
+	 * Server-owned secrets are never stored in or read from tenant data.
 	 *
-	 * @param {string} integrationId - The ID of the integration to get credentials for.
 	 * @returns {Promise<{clientId: string, clientSecret: string}>} A promise that resolves to the OAuth credentials.
+	 * @throws {BadRequestException} If credentials are not configured on the server.
 	 */
-	async getOAuthCredentials(
-		integrationId: string,
-		organizationId?: string
-	): Promise<{ clientId: string; clientSecret: string }> {
-		try {
-			// Find the integration settings
-			const where: any = {
-				integration: { id: integrationId },
-				settingsName: In([MakeSettingName.CLIENT_ID, MakeSettingName.CLIENT_SECRET])
-			};
-			if (organizationId) {
-				where.organizationId = organizationId;
-			}
-			const settings = await this.integrationSettingService.find({ where });
-
-			if (!settings || settings.length < 2) {
-				throw new NotFoundException(
-					'OAuth credentials not found for this integration missing client_id or client_secret'
-				);
-			}
-
-			// Extract client ID and client secret
-			const clientIdSetting = settings.find((setting) => setting.settingsName === MakeSettingName.CLIENT_ID);
-			const clientSecretSetting = settings.find(
-				(setting) => setting.settingsName === MakeSettingName.CLIENT_SECRET
-			);
-
-			if (!clientIdSetting || !clientSecretSetting) {
-				throw new NotFoundException('OAuth credentials are incomplete for this integration');
-			}
-
-			return {
-				clientId: clientIdSetting.settingsValue,
-				clientSecret: clientSecretSetting.settingsValue
-			};
-		} catch (error) {
-			this.logger.error('Error retrieving Make.com OAuth credentials:', error);
-			throw error;
+	async getOAuthCredentials(): Promise<{ clientId: string; clientSecret: string }> {
+		const makeComConfig = this.config?.get('makeCom');
+		if (!makeComConfig?.clientId || !makeComConfig?.clientSecret) {
+			throw new BadRequestException('Make.com OAuth credentials are not configured on the server');
 		}
+		return {
+			clientId: makeComConfig.clientId,
+			clientSecret: makeComConfig.clientSecret
+		};
 	}
 
 	/**
-	 * Retrieves the OAuth client ID for the Make.com integration.
+	 * Retrieves the OAuth client ID for the Make.com integration from server-side config.
 	 *
-	 * @param {string} [organizationId] - Optional organization ID to filter by organization level
-	 * @returns {Promise<string>} A promise that resolves to the OAuth client ID or null if not found.
+	 * @returns {Promise<string | null>} A promise that resolves to the OAuth client ID or null if not configured.
 	 */
-	async getOAuthClientId(organizationId?: string): Promise<string | null> {
-		try {
-			const tenantId = RequestContext.currentTenantId();
-			if (!tenantId) {
-				throw new NotFoundException('Tenant ID not found in request context');
-			}
-
-			// Build the where clause with tenant and optional organization filter
-			const whereClause: any = {
-				name: IntegrationEnum.MakeCom,
-				tenantId
-			};
-
-			// If organizationId is provided, filter by organization level
-			if (organizationId) {
-				whereClause.organizationId = organizationId;
-			}
-
-			// Find the integration for the current tenant and organization
-			const integrationTenant = await this.integrationTenantService.findOneByOptions({
-				where: whereClause,
-				relations: ['settings']
-			});
-
-			if (!integrationTenant) {
-				return null;
-			}
-
-			// Find the client ID setting
-			const clientIdSetting = integrationTenant.settings.find(
-				(setting) => setting.settingsName === MakeSettingName.CLIENT_ID
-			);
-
-			return clientIdSetting ? clientIdSetting.settingsValue : null;
-		} catch (error) {
-			this.logger.error('Error retrieving Make.com OAuth client ID:', error);
-			throw error;
-		}
+	async getOAuthClientId(): Promise<string | null> {
+		const makeComConfig = this.config?.get('makeCom');
+		return makeComConfig?.clientId ?? null;
 	}
 }

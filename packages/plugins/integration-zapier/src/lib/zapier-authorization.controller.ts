@@ -148,11 +148,11 @@ export class ZapierAuthorizationController {
 				throw new BadRequestException('Invalid grant_type. Must be "authorization_code"');
 			}
 
-			// Validate client credentials
-			const integration = await this.zapierService.findIntegrationByClientId(body.client_id);
+			// Validate client credentials against server-side config (shared across all tenants)
+			this.zapierService.validateServerClientCredentials(body.client_id, body.client_secret);
 
-			// Validate client secret
-			await this.zapierService.validateClientSecret(integration.id!, body.client_secret);
+			// Resolve the correct tenant integration by the Gauzy-issued auth code
+			const integration = await this.zapierService.findIntegrationByAuthCode(body.code);
 
 			// Validate and consume the authorization code (single-use)
 			await this.zapierService.validateAndConsumeAuthCode(integration.id!, body.code, body.redirect_uri);
@@ -198,12 +198,14 @@ export class ZapierAuthorizationController {
 				throw new BadRequestException('Invalid grant_type. Must be "refresh_token"');
 			}
 
-			// Find integration by client_id and validate client secret
-			const integration = await this.zapierService.findIntegrationByClientId(body.client_id);
+			// Validate client credentials against server-side config (shared across all tenants)
+			this.zapierService.validateServerClientCredentials(body.client_id, body.client_secret);
+
+			// Resolve the correct tenant integration by the Gauzy-issued refresh token
+			const integration = await this.zapierService.findIntegrationByGauzyRefreshToken(body.refresh_token);
 			if (!integration.id) {
-				throw new BadRequestException('Invalid client ID');
+				throw new BadRequestException('Invalid refresh token');
 			}
-			await this.zapierService.validateClientSecret(integration.id!, body.client_secret);
 
 			const refreshResult = await this.zapierService.refreshTokenByRefreshToken(
 				integration.id,

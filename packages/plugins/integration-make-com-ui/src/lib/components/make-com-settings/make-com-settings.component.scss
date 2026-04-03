@@ -21,13 +21,13 @@
 .section-title {
   display: flex;
   align-items: center;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
   font-weight: 600;
 }
 
 .selector-list {
   border: 1px solid var(--color-basic-transparent-default-border);
-  border-radius: 4px;
+  border-radius: calc(var(--border-radius) * 1);
   overflow: hidden;
 }
 
@@ -35,7 +35,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.65rem 1rem;
+  padding: 0.5rem 1rem;
   cursor: pointer;
   transition: background-color 0.15s ease;
   border-bottom: 1px solid var(--color-basic-transparent-default-border);

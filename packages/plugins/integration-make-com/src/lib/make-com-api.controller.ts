@@ -126,7 +126,7 @@ export class MakeComApiController {
 	) {
 		const parsedOrgId = makeOrgId ? parseInt(makeOrgId, 10) : undefined;
 		const teams = await this.makeComApiService.listTeams(
-			parsedOrgId && !isNaN(parsedOrgId) ? parsedOrgId : undefined,
+			parsedOrgId ? parsedOrgId : undefined,
 			organizationId,
 			this.extractPagination(query)
 		);

@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { tap, catchError, finalize } from 'rxjs/operators';
-import { EMPTY } from 'rxjs';
+import { tap, catchError, finalize, timeout } from 'rxjs/operators';
+import { EMPTY, TimeoutError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IMakeComIntegrationSettings,
@@ -71,6 +71,7 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 		this._makeComStoreService
 			.loadIntegrationSettings()
 			.pipe(
+				timeout(10_000),
 				tap((settings: IMakeComIntegrationSettings) => {
 					this.settings = settings;
 					this.form.patchValue({
@@ -79,10 +80,11 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 					});
 				}),
 				catchError((error) => {
-					this._toastrService.error(
-						this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETTINGS'),
-						this.getTranslation('TOASTR.TITLE.ERROR')
-					);
+					const message =
+						error instanceof TimeoutError
+							? 'Request timed out. Please try again.'
+							: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETTINGS');
+					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					console.error('Error loading Make.com settings:', error);
 					return EMPTY;
 				}),
@@ -136,19 +138,20 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 		this._makeComStoreService
 			.loadSetupStatus()
 			.pipe(
+				timeout(10_000),
 				tap((status) => {
 					this.selectedZone = status.zone as MakeComZone;
 
 					if (status.zone) {
-						// Load orgs so the user can see the list and we can restore the selection
 						this._loadMakeOrganizations(status.makeOrganizationId, status.makeTeamId);
 					}
 				}),
 				catchError((error) => {
-					this._toastrService.error(
-						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETTINGS'),
-						this.getTranslation('TOASTR.TITLE.ERROR')
-					);
+					const message =
+						error instanceof TimeoutError
+							? 'Request timed out. Please try again.'
+							: error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETTINGS');
+					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					return EMPTY;
 				}),
 				finalize(() => (this.zoneLoading = false)),
@@ -162,13 +165,13 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 		this._makeComStoreService
 			.setZone(zone)
 			.pipe(
+				timeout(10_000),
 				tap(() => {
 					this.selectedZone = zone;
 					this._toastrService.success(
 						`Zone set to ${zone.toUpperCase()}`,
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
-					// Reset org & team when zone changes
 					this.selectedMakeOrg = null;
 					this.selectedMakeTeam = null;
 					this.makeOrganizations = [];
@@ -176,10 +179,9 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 					this._loadMakeOrganizations();
 				}),
 				catchError((error) => {
-					this._toastrService.error(
-						error?.error?.message || 'Failed to set zone',
-						this.getTranslation('TOASTR.TITLE.ERROR')
-					);
+					const message =
+						error instanceof TimeoutError ? 'Request timed out. Please try again.' : error?.error?.message || 'Failed to set zone';
+					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					return EMPTY;
 				}),
 				finalize(() => (this.zoneLoading = false)),
@@ -195,9 +197,9 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 		this._makeComStoreService
 			.loadMakeOrganizations()
 			.pipe(
+				timeout(15_000),
 				tap((orgs) => {
 					this.makeOrganizations = orgs;
-					// Restore previously saved organization selection
 					if (savedOrgId) {
 						const savedOrg = orgs.find((o) => o.id === savedOrgId);
 						if (savedOrg) {
@@ -207,10 +209,11 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 					}
 				}),
 				catchError((error) => {
-					this._toastrService.error(
-						error?.error?.message || 'Failed to load organizations',
-						this.getTranslation('TOASTR.TITLE.ERROR')
-					);
+					const message =
+						error instanceof TimeoutError
+							? 'Request timed out. Please try again.'
+							: error?.error?.message || 'Failed to load organizations';
+					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					return EMPTY;
 				}),
 				finalize(() => (this.orgsLoading = false)),
@@ -224,6 +227,7 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 		this._makeComStoreService
 			.selectMakeOrganization(org)
 			.pipe(
+				timeout(10_000),
 				tap(() => {
 					this.selectedMakeOrg = org;
 					this.selectedMakeTeam = null;
@@ -235,10 +239,11 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 					this._loadMakeTeams(org.id);
 				}),
 				catchError((error) => {
-					this._toastrService.error(
-						error?.error?.message || 'Failed to select organization',
-						this.getTranslation('TOASTR.TITLE.ERROR')
-					);
+					const message =
+						error instanceof TimeoutError
+							? 'Request timed out. Please try again.'
+							: error?.error?.message || 'Failed to select organization';
+					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					return EMPTY;
 				}),
 				finalize(() => (this.orgsLoading = false)),
@@ -254,9 +259,9 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 		this._makeComStoreService
 			.loadMakeTeams(makeOrgId)
 			.pipe(
+				timeout(15_000),
 				tap((teams) => {
 					this.makeTeams = teams;
-					// Restore previously saved team selection
 					if (savedTeamId) {
 						const savedTeam = teams.find((t) => t.id === savedTeamId);
 						if (savedTeam) {
@@ -265,10 +270,11 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 					}
 				}),
 				catchError((error) => {
-					this._toastrService.error(
-						error?.error?.message || 'Failed to load teams',
-						this.getTranslation('TOASTR.TITLE.ERROR')
-					);
+					const message =
+						error instanceof TimeoutError
+							? 'Request timed out. Please try again.'
+							: error?.error?.message || 'Failed to load teams';
+					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					return EMPTY;
 				}),
 				finalize(() => (this.teamsLoading = false)),
@@ -282,6 +288,7 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 		this._makeComStoreService
 			.selectMakeTeam(team)
 			.pipe(
+				timeout(10_000),
 				tap(() => {
 					this.selectedMakeTeam = team;
 					this._toastrService.success(
@@ -290,10 +297,11 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 					);
 				}),
 				catchError((error) => {
-					this._toastrService.error(
-						error?.error?.message || 'Failed to select team',
-						this.getTranslation('TOASTR.TITLE.ERROR')
-					);
+					const message =
+						error instanceof TimeoutError
+							? 'Request timed out. Please try again.'
+							: error?.error?.message || 'Failed to select team';
+					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					return EMPTY;
 				}),
 				finalize(() => (this.teamsLoading = false)),

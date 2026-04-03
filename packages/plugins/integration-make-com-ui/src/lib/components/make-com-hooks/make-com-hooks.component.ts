@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { tap, catchError, finalize, switchMap } from 'rxjs/operators';
-import { EMPTY } from 'rxjs';
+import { tap, catchError, finalize, switchMap, timeout } from 'rxjs/operators';
+import { EMPTY, TimeoutError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { IMakeComHook, IMakeComSetupStatus } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -12,8 +12,7 @@ import { MakeComStoreService, ToastrService } from '@gauzy/ui-core/core';
 	selector: 'ngx-make-com-hooks',
 	templateUrl: './make-com-hooks.component.html',
 	styleUrls: ['./make-com-hooks.component.scss'],
-	standalone: false,
-	changeDetection: ChangeDetectionStrategy.OnPush
+	standalone: false
 })
 export class MakeComHooksComponent extends TranslationBaseComponent implements OnInit {
 	public hooks: IMakeComHook[] = [];
@@ -37,6 +36,7 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 		this._makeComStoreService
 			.loadSetupStatus()
 			.pipe(
+				timeout(10_000),
 				tap((status) => {
 					this.setupStatus = status;
 					if (status.isComplete) {
@@ -48,10 +48,11 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 				catchError((error) => {
 					this.setupStatus = null;
 					this.loading = false;
-					this._toastrService.error(
-						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETUP_STATUS'),
-						this.getTranslation('TOASTR.TITLE.ERROR')
-					);
+					const message =
+						error instanceof TimeoutError
+							? 'Request timed out. Please try again.'
+							: error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETUP_STATUS');
+					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					return EMPTY;
 				}),
 				untilDestroyed(this)
@@ -64,10 +65,13 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 		this._makeComStoreService
 			.loadHooks()
 			.pipe(
+				timeout(15_000),
 				tap((hooks) => (this.hooks = hooks)),
 				catchError((error) => {
 					this._toastrService.error(
-						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_WEBHOOKS'),
+						error instanceof TimeoutError
+							? 'Request timed out. Please try again.'
+							: error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_WEBHOOKS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;

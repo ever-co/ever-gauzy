@@ -45,6 +45,16 @@ import { MakeComTemplatesComponent } from './components/make-com-templates/make-
 								component: MakeComScenariosComponent
 							},
 							{
+								path: 'executions',
+								redirectTo: 'hooks',
+								pathMatch: 'full'
+							},
+							{
+								path: 'history',
+								redirectTo: 'connections',
+								pathMatch: 'full'
+							},
+							{
 								path: 'hooks',
 								component: MakeComHooksComponent
 							},
