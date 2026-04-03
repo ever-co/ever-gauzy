@@ -1303,6 +1303,13 @@
 			"NO_HOOKS": "لم يتم العثور على webhooks. أنشئ webhooks في لوحة تحكم Make.com.",
 			"NO_CONNECTIONS": "لم يتم العثور على اتصالات. أنشئ اتصالات في لوحة تحكم Make.com.",
 			"NO_TEMPLATES": "لم يتم العثور على قوالب.",
+			"TEST_CONNECTION": "اختبار الاتصال",
+			"CONNECTION": {
+				"ACCOUNT": "الحساب: {{value}}",
+				"TYPE": "النوع: {{value}}",
+				"PACKAGE": "الحزمة: {{value}}",
+				"EXPIRES": "ينتهي: {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "يرجى ملء جميع الحقول المطلوبة",
 				"START_AUTHORIZATION": "فشل في بدء عملية التفويض",

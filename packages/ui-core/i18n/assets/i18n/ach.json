@@ -1199,6 +1199,13 @@
 			"NO_HOOKS": "No webhooks found. Create webhooks in your Make.com dashboard.",
 			"NO_CONNECTIONS": "No connections found. Create connections in your Make.com dashboard.",
 			"NO_TEMPLATES": "No templates found.",
+			"TEST_CONNECTION": "Test connection",
+			"CONNECTION": {
+				"ACCOUNT": "Account: {{value}}",
+				"TYPE": "Type: {{value}}",
+				"PACKAGE": "Package: {{value}}",
+				"EXPIRES": "Expires: {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "Please fill in all required fields",
 				"START_AUTHORIZATION": "Failed to start the authorization process",

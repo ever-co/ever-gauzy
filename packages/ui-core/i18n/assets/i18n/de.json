@@ -1304,6 +1304,13 @@
 			"NO_HOOKS": "Keine Webhooks gefunden. Erstellen Sie Webhooks in Ihrem Make.com-Dashboard.",
 			"NO_CONNECTIONS": "Keine Verbindungen gefunden. Erstellen Sie Verbindungen in Ihrem Make.com-Dashboard.",
 			"NO_TEMPLATES": "Keine Vorlagen gefunden.",
+			"TEST_CONNECTION": "Verbindung testen",
+			"CONNECTION": {
+				"ACCOUNT": "Konto: {{value}}",
+				"TYPE": "Typ: {{value}}",
+				"PACKAGE": "Paket: {{value}}",
+				"EXPIRES": "Läuft ab: {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "Bitte füllen Sie alle Pflichtfelder aus",
 				"START_AUTHORIZATION": "Fehler beim Starten des Autorisierungsprozesses",

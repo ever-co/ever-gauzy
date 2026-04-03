@@ -20,6 +20,31 @@ export class MakeComScenariosComponent extends TranslationBaseComponent implemen
 	public actionLoading: Record<number, boolean> = {};
 	public setupStatus: IMakeComSetupStatus | null = null;
 
+	public get setupMessageKey(): string | null {
+		const status = this.setupStatus;
+		if (!status || status.isComplete) {
+			return null;
+		}
+
+		if (!status.hasAccessToken) {
+			return 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.AUTHORIZE';
+		}
+
+		if (!status.zone) {
+			return 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.ZONE';
+		}
+
+		if (!status.makeOrganizationId) {
+			return 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.ORGANIZATION';
+		}
+
+		if (!status.makeTeamId) {
+			return 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.TEAM';
+		}
+
+		return null;
+	}
+
 	constructor(
 		private readonly _makeComStoreService: MakeComStoreService,
 		private readonly _toastrService: ToastrService,

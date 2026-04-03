@@ -1308,6 +1308,13 @@
 			"NO_HOOKS": "לא נמצאו webhooks. צור webhooks בלוח הבקרה של Make.com.",
 			"NO_CONNECTIONS": "לא נמצאו חיבורים. צור חיבורים בלוח הבקרה של Make.com.",
 			"NO_TEMPLATES": "לא נמצאו תבניות.",
+			"TEST_CONNECTION": "בדיקת חיבור",
+			"CONNECTION": {
+				"ACCOUNT": "חשבון: {{value}}",
+				"TYPE": "סוג: {{value}}",
+				"PACKAGE": "חבילה: {{value}}",
+				"EXPIRES": "פג תוקף: {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
 				"START_AUTHORIZATION": "כשל בהתחלת תהליך ההרשאה",

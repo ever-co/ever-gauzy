@@ -1305,6 +1305,13 @@
 			"NO_HOOKS": "Aucun webhook trouvé. Créez des webhooks dans votre tableau de bord Make.com.",
 			"NO_CONNECTIONS": "Aucune connexion trouvée. Créez des connexions dans votre tableau de bord Make.com.",
 			"NO_TEMPLATES": "Aucun modèle trouvé.",
+			"TEST_CONNECTION": "Tester la connexion",
+			"CONNECTION": {
+				"ACCOUNT": "Compte : {{value}}",
+				"TYPE": "Type : {{value}}",
+				"PACKAGE": "Package : {{value}}",
+				"EXPIRES": "Expire : {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "Veuillez remplir tous les champs obligatoires",
 				"START_AUTHORIZATION": "Échec du démarrage du processus d'autorisation",

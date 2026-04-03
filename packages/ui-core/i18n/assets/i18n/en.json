@@ -1344,6 +1344,13 @@
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scenarios",
 			"WEBHOOKS": "Webhooks",
+			"WEBHOOKS_REFRESH": "Refresh webhooks",
+			"WEBHOOK_ENABLE": "Enable webhook",
+			"WEBHOOK_DISABLE": "Disable webhook",
+			"WEBHOOK_PING": "Ping webhook",
+			"SCENARIO_ACTIVE": "Active",
+			"SCENARIO_INACTIVE": "Inactive",
+			"SCENARIO_LAST_EDITED": "Last edited: {{value}}",
 			"CONNECTIONS": "Connections",
 			"TEMPLATES": "Templates",
 			"SETTINGS": "Settings",
@@ -1353,6 +1360,13 @@
 			"NO_HOOKS": "No webhooks found. Create webhooks in your Make.com dashboard.",
 			"NO_CONNECTIONS": "No connections found. Create connections in your Make.com dashboard.",
 			"NO_TEMPLATES": "No templates found.",
+			"TEST_CONNECTION": "Test connection",
+			"CONNECTION": {
+				"ACCOUNT": "Account: {{value}}",
+				"TYPE": "Type: {{value}}",
+				"PACKAGE": "Package: {{value}}",
+				"EXPIRES": "Expires: {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "Please fill in all required fields",
 				"START_AUTHORIZATION": "Failed to start the authorization process",

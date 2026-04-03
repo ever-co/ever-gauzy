@@ -12,7 +12,7 @@ import {
 	HttpCode,
 	HttpStatus
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { TenantPermissionGuard, PermissionGuard, Permissions } from '@gauzy/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { MakeComApiService } from './make-com-api.service';

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap, catchError, finalize, switchMap } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
@@ -12,7 +12,8 @@ import { MakeComStoreService, ToastrService } from '@gauzy/ui-core/core';
 	selector: 'ngx-make-com-hooks',
 	templateUrl: './make-com-hooks.component.html',
 	styleUrls: ['./make-com-hooks.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MakeComHooksComponent extends TranslationBaseComponent implements OnInit {
 	public hooks: IMakeComHook[] = [];
@@ -20,11 +21,10 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 	public actionLoading: Record<number, boolean> = {};
 	public setupStatus: IMakeComSetupStatus | null = null;
 
-	constructor(
-		private readonly _makeComStoreService: MakeComStoreService,
-		private readonly _toastrService: ToastrService,
-		public readonly translateService: TranslateService
-	) {
+	private readonly _makeComStoreService = inject(MakeComStoreService);
+	private readonly _toastrService = inject(ToastrService);
+
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 

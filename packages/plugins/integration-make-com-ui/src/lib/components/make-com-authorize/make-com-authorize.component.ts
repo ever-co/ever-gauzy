@@ -119,7 +119,9 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 				}),
 				untilDestroyed(this)
 			)
-			.subscribe();
+			.subscribe(() => {
+                this.loading = false;
+            });
 	}
 
 	/**

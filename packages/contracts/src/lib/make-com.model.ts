@@ -63,7 +63,7 @@ export interface IMakeComOrganization {
 	countryId?: number;
 	timezoneId?: number;
 	license?: string;
-	zone?: string;
+	zone?: MakeComZone;
 }
 
 export interface IMakeComTeam {
@@ -80,7 +80,7 @@ export interface IMakeComConnection {
 	accountType?: string;
 	packageName?: string;
 	expire?: string;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 	teamId?: number;
 	upgradeable?: boolean;
 	scoped?: boolean;
@@ -121,7 +121,7 @@ export interface IMakeComHook {
 	packageName?: string;
 	theme?: string;
 	enabled?: boolean;
-	data?: Record<string, any>;
+	data?: Record<string, unknown>;
 	queueCount?: number;
 	queueLimit?: number;
 }

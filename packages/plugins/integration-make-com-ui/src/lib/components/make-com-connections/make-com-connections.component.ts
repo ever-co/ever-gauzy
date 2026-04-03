@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap, catchError, finalize } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { IMakeComConnection, IMakeComSetupStatus } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { MakeComStoreService, ToastrService } from '@gauzy/ui-core/core';
@@ -12,20 +14,29 @@ import { MakeComStoreService, ToastrService } from '@gauzy/ui-core/core';
 	selector: 'ngx-make-com-connections',
 	templateUrl: './make-com-connections.component.html',
 	styleUrls: ['./make-com-connections.component.scss'],
-	standalone: false
+	standalone: true,
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [
+		CommonModule,
+		TranslateModule,
+		NbButtonModule,
+		NbCardModule,
+		NbIconModule,
+		NbSpinnerModule,
+		NbTooltipModule
+	]
 })
 export class MakeComConnectionsComponent extends TranslationBaseComponent implements OnInit {
-	public connections: IMakeComConnection[] = [];
-	public loading = false;
-	public actionLoading: Record<number, boolean> = {};
-	public setupStatus: IMakeComSetupStatus | null = null;
+	private readonly _makeComStoreService = inject(MakeComStoreService);
+	private readonly _toastrService = inject(ToastrService);
 
-	constructor(
-		private readonly _makeComStoreService: MakeComStoreService,
-		private readonly _toastrService: ToastrService,
-		public readonly translateService: TranslateService
-	) {
-		super(translateService);
+	public connections = signal<IMakeComConnection[]>([]);
+	public loading = signal(false);
+	public actionLoading = signal<Record<number, boolean>>({});
+	public setupStatus = signal<IMakeComSetupStatus | null>(null);
+
+	constructor() {
+		super();
 	}
 
 	ngOnInit() {
@@ -33,21 +44,23 @@ export class MakeComConnectionsComponent extends TranslationBaseComponent implem
 	}
 
 	private _checkSetupAndLoad() {
-		this.loading = true;
+		this.loading.set(true);
 		this._makeComStoreService
 			.loadSetupStatus()
 			.pipe(
 				tap((status) => {
-					this.setupStatus = status;
+					this.setupStatus.set(status);
 					if (status.isComplete) {
 						this._loadConnections();
 					} else {
-						this.loading = false;
+						this.connections.set([]);
+						this.loading.set(false);
 					}
 				}),
 				catchError(() => {
-					this.setupStatus = { hasAccessToken: false, zone: null, makeOrganizationId: null, makeTeamId: null, isComplete: false };
-					this.loading = false;
+					this.setupStatus.set({ hasAccessToken: false, zone: null, makeOrganizationId: null, makeTeamId: null, isComplete: false });
+					this.connections.set([]);
+					this.loading.set(false);
 					return EMPTY;
 				}),
 				untilDestroyed(this)
@@ -56,26 +69,27 @@ export class MakeComConnectionsComponent extends TranslationBaseComponent implem
 	}
 
 	private _loadConnections() {
-		this.loading = true;
+		this.loading.set(true);
 		this._makeComStoreService
 			.loadConnections()
 			.pipe(
-				tap((connections) => (this.connections = connections)),
+				tap((connections) => this.connections.set(connections)),
 				catchError((error) => {
+					this.connections.set([]);
 					this._toastrService.error(
 						error?.error?.message || 'Failed to load connections',
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;
 				}),
-				finalize(() => (this.loading = false)),
+				finalize(() => this.loading.set(false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	testConnection(connection: IMakeComConnection) {
-		this.actionLoading[connection.id] = true;
+		this.actionLoading.update((prev) => ({ ...prev, [connection.id]: true }));
 		this._makeComStoreService
 			.testConnection(connection.id)
 			.pipe(
@@ -92,7 +106,7 @@ export class MakeComConnectionsComponent extends TranslationBaseComponent implem
 					);
 					return EMPTY;
 				}),
-				finalize(() => (this.actionLoading[connection.id] = false)),
+				finalize(() => this.actionLoading.update((prev) => ({ ...prev, [connection.id]: false }))),
 				untilDestroyed(this)
 			)
 			.subscribe();

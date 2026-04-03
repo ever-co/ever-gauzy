@@ -26,7 +26,6 @@ import { MakeComCallbackComponent } from './components/make-com-callback/make-co
 import { MakeComSettingsComponent } from './components/make-com-settings/make-com-settings.component';
 import { MakeComScenariosComponent } from './components/make-com-scenarios/make-com-scenarios.component';
 import { MakeComHooksComponent } from './components/make-com-hooks/make-com-hooks.component';
-import { MakeComConnectionsComponent } from './components/make-com-connections/make-com-connections.component';
 import { MakeComTemplatesComponent } from './components/make-com-templates/make-com-templates.component';
 
 const NB_MODULES = [
@@ -65,7 +64,6 @@ const NB_MODULES = [
 		MakeComSettingsComponent,
 		MakeComScenariosComponent,
 		MakeComHooksComponent,
-		MakeComConnectionsComponent,
 		MakeComTemplatesComponent
 	]
 })

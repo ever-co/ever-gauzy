@@ -1303,6 +1303,13 @@
 			"NO_HOOKS": "Nie znaleziono webhooków. Utwórz webhooki w panelu Make.com.",
 			"NO_CONNECTIONS": "Nie znaleziono połączeń. Utwórz połączenia w panelu Make.com.",
 			"NO_TEMPLATES": "Nie znaleziono szablonów.",
+			"TEST_CONNECTION": "Testuj połączenie",
+			"CONNECTION": {
+				"ACCOUNT": "Konto: {{value}}",
+				"TYPE": "Typ: {{value}}",
+				"PACKAGE": "Pakiet: {{value}}",
+				"EXPIRES": "Wygasa: {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "Proszę wypełnić wszystkie wymagane pola",
 				"START_AUTHORIZATION": "Nie udało się rozpocząć procesu autoryzacji",

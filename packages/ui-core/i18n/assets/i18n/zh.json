@@ -1304,6 +1304,13 @@
 			"NO_HOOKS": "未找到 Webhooks。在您的 Make.com 仪表板中创建 Webhooks。",
 			"NO_CONNECTIONS": "未找到连接。在您的 Make.com 仪表板中创建连接。",
 			"NO_TEMPLATES": "未找到模板。",
+			"TEST_CONNECTION": "测试连接",
+			"CONNECTION": {
+				"ACCOUNT": "账户：{{value}}",
+				"TYPE": "类型：{{value}}",
+				"PACKAGE": "套餐：{{value}}",
+				"EXPIRES": "过期：{{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "请填写所有必填字段",
 				"START_AUTHORIZATION": "启动授权过程失败",

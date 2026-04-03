@@ -1304,6 +1304,13 @@
 			"NO_HOOKS": "Geen webhooks gevonden. Maak webhooks aan in uw Make.com-dashboard.",
 			"NO_CONNECTIONS": "Geen verbindingen gevonden. Maak verbindingen aan in uw Make.com-dashboard.",
 			"NO_TEMPLATES": "Geen sjablonen gevonden.",
+			"TEST_CONNECTION": "Verbinding testen",
+			"CONNECTION": {
+				"ACCOUNT": "Account: {{value}}",
+				"TYPE": "Type: {{value}}",
+				"PACKAGE": "Pakket: {{value}}",
+				"EXPIRES": "Verloopt: {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "Vul alle verplichte velden in",
 				"START_AUTHORIZATION": "Kan het autorisatieproces niet starten",
