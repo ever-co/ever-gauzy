@@ -1,8 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap, catchError, finalize, switchMap } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
 import { IMakeComScenario, IMakeComSetupStatus } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { MakeComStoreService, ToastrService } from '@gauzy/ui-core/core';
@@ -12,16 +11,20 @@ import { MakeComStoreService, ToastrService } from '@gauzy/ui-core/core';
 	selector: 'ngx-make-com-scenarios',
 	templateUrl: './make-com-scenarios.component.html',
 	styleUrls: ['./make-com-scenarios.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MakeComScenariosComponent extends TranslationBaseComponent implements OnInit {
-	public scenarios: IMakeComScenario[] = [];
-	public loading = false;
-	public actionLoading: Record<number, boolean> = {};
-	public setupStatus: IMakeComSetupStatus | null = null;
+	private readonly _makeComStoreService = inject(MakeComStoreService);
+	private readonly _toastrService = inject(ToastrService);
 
-	public get setupMessageKey(): string | null {
-		const status = this.setupStatus;
+	public scenarios = signal<IMakeComScenario[]>([]);
+	public loading = signal(false);
+	public actionLoading = signal<Record<number, boolean>>({});
+	public setupStatus = signal<IMakeComSetupStatus | null>(null);
+
+	public setupMessageKey = computed<string | null>(() => {
+		const status = this.setupStatus();
 		if (!status || status.isComplete) {
 			return null;
 		}
@@ -43,14 +46,10 @@ export class MakeComScenariosComponent extends TranslationBaseComponent implemen
 		}
 
 		return null;
-	}
+	});
 
-	constructor(
-		private readonly _makeComStoreService: MakeComStoreService,
-		private readonly _toastrService: ToastrService,
-		public readonly translateService: TranslateService
-	) {
-		super(translateService);
+	constructor() {
+		super();
 	}
 
 	ngOnInit() {
@@ -58,23 +57,23 @@ export class MakeComScenariosComponent extends TranslationBaseComponent implemen
 	}
 
 	private _checkSetupAndLoad() {
-		this.loading = true;
+		this.loading.set(true);
 		this._makeComStoreService
 			.loadSetupStatus()
 			.pipe(
 				tap((status) => {
-					this.setupStatus = status;
+					this.setupStatus.set(status);
 					if (status.isComplete) {
 						this._loadScenarios();
 					} else {
-						this.loading = false;
+						this.loading.set(false);
 					}
 				}),
 				catchError((error) => {
-					this.setupStatus = null;
-					this.loading = false;
+					this.setupStatus.set(null);
+					this.loading.set(false);
 					this._toastrService.error(
-						error?.error?.message || 'Failed to load setup status',
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETUP_STATUS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;
@@ -85,26 +84,26 @@ export class MakeComScenariosComponent extends TranslationBaseComponent implemen
 	}
 
 	private _loadScenarios() {
-		this.loading = true;
+		this.loading.set(true);
 		this._makeComStoreService
 			.loadScenarios()
 			.pipe(
-				tap((scenarios) => (this.scenarios = scenarios)),
+				tap((scenarios) => this.scenarios.set(scenarios)),
 				catchError((error) => {
 					this._toastrService.error(
-						error?.error?.message || 'Failed to load scenarios',
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SCENARIOS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;
 				}),
-				finalize(() => (this.loading = false)),
+				finalize(() => this.loading.set(false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	toggleScenario(scenario: IMakeComScenario) {
-		this.actionLoading[scenario.id] = true;
+		this.actionLoading.update((prev) => ({ ...prev, [scenario.id]: true }));
 		const action$ = scenario.isEnabled
 			? this._makeComStoreService.stopScenario(scenario.id)
 			: this._makeComStoreService.startScenario(scenario.id);
@@ -113,44 +112,46 @@ export class MakeComScenariosComponent extends TranslationBaseComponent implemen
 			.pipe(
 				tap(() => {
 					this._toastrService.success(
-						scenario.isEnabled ? 'Scenario deactivated' : 'Scenario activated',
+						scenario.isEnabled
+							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.SCENARIO_DEACTIVATED')
+							: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.SCENARIO_ACTIVATED'),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
 				switchMap(() => this._makeComStoreService.loadScenarios()),
-				tap((scenarios) => (this.scenarios = scenarios)),
+				tap((scenarios) => this.scenarios.set(scenarios)),
 				catchError((error) => {
 					this._toastrService.error(
-						error?.error?.message || 'Failed to toggle scenario',
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.TOGGLE_SCENARIO'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;
 				}),
-				finalize(() => (this.actionLoading[scenario.id] = false)),
+				finalize(() => this.actionLoading.update((prev) => ({ ...prev, [scenario.id]: false }))),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	runScenario(scenario: IMakeComScenario) {
-		this.actionLoading[scenario.id] = true;
+		this.actionLoading.update((prev) => ({ ...prev, [scenario.id]: true }));
 		this._makeComStoreService
 			.runScenario(scenario.id)
 			.pipe(
 				tap(() => {
 					this._toastrService.success(
-						`Scenario "${scenario.name}" executed`,
+						this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.SCENARIO_EXECUTED'),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
 				catchError((error) => {
 					this._toastrService.error(
-						error?.error?.message || 'Failed to run scenario',
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.RUN_SCENARIO'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;
 				}),
-				finalize(() => (this.actionLoading[scenario.id] = false)),
+				finalize(() => this.actionLoading.update((prev) => ({ ...prev, [scenario.id]: false }))),
 				untilDestroyed(this)
 			)
 			.subscribe();

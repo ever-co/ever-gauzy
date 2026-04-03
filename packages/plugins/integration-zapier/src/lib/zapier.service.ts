@@ -344,8 +344,8 @@ export class ZapierService {
 				throw new BadRequestException('Invalid state parameter');
 			}
 
-			// Escape LIKE metacharacters to prevent unintended pattern matching
-			const escapedState = state.replace(/[%_]/g, '\\$&');
+			// Escape LIKE metacharacters (including backslash) to prevent unintended pattern matching
+			const escapedState = state.replace(/\\/g, '\\\\').replace(/[%_]/g, '\\$&');
 
 			// Search for the state across all tenants by value
 			const stateSettings = await this._integrationSettingService.find({

@@ -12,12 +12,12 @@
       <div class="setup-section mb-4">
         <h6 class="section-title">
           <nb-icon icon="globe-outline" class="mr-1"></nb-icon>
-          Make.com Configuration
+          {{ 'INTEGRATIONS.MAKE_COM_PAGE.CONFIGURATION_TITLE' | translate }}
         </h6>
 
         <!-- Zone Selector -->
         <div class="form-group">
-          <label class="label">Zone</label>
+          <label class="label">{{ 'INTEGRATIONS.MAKE_COM_PAGE.ZONE_LABEL' | translate }}</label>
           <div class="d-flex align-items-center gap-2">
             @for (zone of zones; track zone) {
               <button
@@ -35,28 +35,33 @@
             }
           </div>
           <small class="text-hint mt-1 d-block">
-            Select the zone that matches your Make.com account (e.g., us2.make.com)
+            {{ 'INTEGRATIONS.MAKE_COM_PAGE.ZONE_HINT' | translate }}
           </small>
         </div>
 
         <!-- Organization Selector -->
         @if (selectedZone) {
           <div class="form-group">
-            <label class="label">Make.com Organization</label>
+            <label class="label">{{ 'INTEGRATIONS.MAKE_COM_PAGE.ORGANIZATION_LABEL' | translate }}</label>
             @if (orgsLoading) {
               <div class="d-flex align-items-center gap-2 py-1">
                 <nb-icon icon="loader-outline" class="spin"></nb-icon>
-                <small class="text-hint">Loading organizations...</small>
+                <small class="text-hint">{{ 'INTEGRATIONS.MAKE_COM_PAGE.LOADING_ORGANIZATIONS' | translate }}</small>
               </div>
             } @else if (makeOrganizations.length === 0) {
-              <small class="text-hint d-block">No organizations found</small>
+              <small class="text-hint d-block">{{ 'INTEGRATIONS.MAKE_COM_PAGE.NO_ORGANIZATIONS' | translate }}</small>
             } @else {
-              <div class="selector-list">
+              <div class="selector-list" role="listbox" [attr.aria-label]="'INTEGRATIONS.MAKE_COM_PAGE.ORGANIZATION_LABEL' | translate">
                 @for (org of makeOrganizations; track org.id) {
                   <div
+                    role="option"
                     class="selector-item"
                     [class.selected]="selectedMakeOrg?.id === org.id"
+                    [attr.aria-selected]="selectedMakeOrg?.id === org.id"
+                    tabindex="0"
                     (click)="onMakeOrgSelect(org)"
+                    (keydown.enter)="onMakeOrgSelect(org)"
+                    (keydown.space)="$event.preventDefault(); onMakeOrgSelect(org)"
                   >
                     <nb-icon
                       [icon]="selectedMakeOrg?.id === org.id ? 'checkmark-circle-2-outline' : 'radio-button-off-outline'"
@@ -76,21 +81,26 @@
         <!-- Team Selector -->
         @if (selectedMakeOrg) {
           <div class="form-group">
-            <label class="label">Make.com Team</label>
+            <label class="label">{{ 'INTEGRATIONS.MAKE_COM_PAGE.TEAM_LABEL' | translate }}</label>
             @if (teamsLoading) {
               <div class="d-flex align-items-center gap-2 py-1">
                 <nb-icon icon="loader-outline" class="spin"></nb-icon>
-                <small class="text-hint">Loading teams...</small>
+                <small class="text-hint">{{ 'INTEGRATIONS.MAKE_COM_PAGE.LOADING_TEAMS' | translate }}</small>
               </div>
             } @else if (makeTeams.length === 0) {
-              <small class="text-hint d-block">No teams found</small>
+              <small class="text-hint d-block">{{ 'INTEGRATIONS.MAKE_COM_PAGE.NO_TEAMS' | translate }}</small>
             } @else {
-              <div class="selector-list">
+              <div class="selector-list" role="listbox" [attr.aria-label]="'INTEGRATIONS.MAKE_COM_PAGE.TEAM_LABEL' | translate">
                 @for (team of makeTeams; track team.id) {
                   <div
+                    role="option"
                     class="selector-item"
                     [class.selected]="selectedMakeTeam?.id === team.id"
+                    [attr.aria-selected]="selectedMakeTeam?.id === team.id"
+                    tabindex="0"
                     (click)="onMakeTeamSelect(team)"
+                    (keydown.enter)="onMakeTeamSelect(team)"
+                    (keydown.space)="$event.preventDefault(); onMakeTeamSelect(team)"
                   >
                     <nb-icon
                       [icon]="selectedMakeTeam?.id === team.id ? 'checkmark-circle-2-outline' : 'radio-button-off-outline'"
@@ -108,10 +118,7 @@
           <nb-card accent="success" class="setup-complete-card mt-2">
             <nb-card-body class="py-2 d-flex align-items-center gap-2">
               <nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
-              <span>
-                Connected to <strong>{{ selectedMakeOrg.name }}</strong> / <strong>{{ selectedMakeTeam.name }}</strong>
-                on <strong>{{ selectedZone | uppercase }}</strong>
-              </span>
+              <span [innerHTML]="'INTEGRATIONS.MAKE_COM_PAGE.CONNECTED_TO' | translate: { org: selectedMakeOrg.name, team: selectedMakeTeam.name, zone: (selectedZone | uppercase) }"></span>
             </nb-card-body>
           </nb-card>
         }
@@ -123,7 +130,7 @@
       <div class="webhook-section">
         <h6 class="section-title">
           <nb-icon icon="link-2-outline" class="mr-1"></nb-icon>
-          Webhook Settings
+          {{ 'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_SETTINGS_TITLE' | translate }}
         </h6>
 
         <form class="col-xl-6 col-12 px-0" [formGroup]="form" (ngSubmit)="saveSettings()">

@@ -62,7 +62,7 @@ export class MakeComConnectionsComponent extends TranslationBaseComponent implem
 					this.connections.set([]);
 					this.loading.set(false);
 					this._toastrService.error(
-						error?.error?.message || 'Failed to load setup status',
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETUP_STATUS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;
@@ -81,7 +81,7 @@ export class MakeComConnectionsComponent extends TranslationBaseComponent implem
 				catchError((error) => {
 					this.connections.set([]);
 					this._toastrService.error(
-						error?.error?.message || 'Failed to load connections',
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_CONNECTIONS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;
@@ -99,13 +99,13 @@ export class MakeComConnectionsComponent extends TranslationBaseComponent implem
 			.pipe(
 				tap(() => {
 					this._toastrService.success(
-						`Connection "${connection.name}" is valid`,
+						this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.CONNECTION_VALID', { name: connection.name }),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
 				catchError((error) => {
 					this._toastrService.error(
-						error?.error?.message || 'Connection test failed',
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.TEST_CONNECTION'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;

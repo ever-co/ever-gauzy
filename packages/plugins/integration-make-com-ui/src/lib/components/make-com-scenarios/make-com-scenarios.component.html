@@ -7,33 +7,33 @@
 	size="small"
 	status="basic"
 	(click)="refresh()"
-	[disabled]="loading"
+	[disabled]="loading()"
 	[attr.aria-label]="'BUTTONS.REFRESH' | translate"
 	>
       <nb-icon icon="refresh-outline"></nb-icon>
     </button>
   </div>
 
-  @if (loading) {
+  @if (loading()) {
     <div class="d-flex justify-content-center py-5">
       <nb-spinner></nb-spinner>
     </div>
   }
 
   <!-- Setup incomplete -->
-  @if (!loading && setupStatus && !setupStatus.isComplete) {
+  @if (!loading() && setupStatus() && !setupStatus()!.isComplete) {
     <nb-card accent="warning">
       <nb-card-body class="text-center py-4">
         <nb-icon icon="alert-triangle-outline" class="empty-icon mb-2" status="warning"></nb-icon>
-        @if (setupMessageKey) {
-          <p>{{ setupMessageKey | translate }}</p>
+        @if (setupMessageKey()) {
+          <p>{{ setupMessageKey() | translate }}</p>
         }
       </nb-card-body>
     </nb-card>
   }
 
   <!-- Empty state -->
-  @if (!loading && setupStatus?.isComplete && scenarios.length === 0) {
+  @if (!loading() && setupStatus()?.isComplete && scenarios().length === 0) {
     <nb-card accent="info">
       <nb-card-body class="text-center py-4">
         <nb-icon icon="flash-off-outline" class="empty-icon mb-2"></nb-icon>
@@ -43,9 +43,9 @@
   }
 
   <!-- Scenario list -->
-  @if (!loading && setupStatus?.isComplete && scenarios.length > 0) {
+  @if (!loading() && setupStatus()?.isComplete && scenarios().length > 0) {
     <div class="scenario-list">
-      @for (scenario of scenarios; track scenario.id) {
+      @for (scenario of scenarios(); track scenario.id) {
         <nb-card class="scenario-card mb-2">
           <nb-card-body class="d-flex align-items-center justify-content-between">
             <div class="scenario-info">
@@ -89,12 +89,12 @@
                 [status]="scenario.isEnabled ? 'warning' : 'success'"
                 [nbTooltip]="scenario.isEnabled ? ('INTEGRATIONS.MAKE_COM_PAGE.SCENARIO_DISABLE' | translate) : ('INTEGRATIONS.MAKE_COM_PAGE.SCENARIO_ENABLE' | translate)"
                 (click)="toggleScenario(scenario)"
-                [disabled]="actionLoading[scenario.id]"
+                [disabled]="actionLoading()[scenario.id]"
                 [attr.aria-label]="scenario.isEnabled
                   ? ('INTEGRATIONS.MAKE_COM_PAGE.SCENARIO_DISABLE' | translate)
                   : ('INTEGRATIONS.MAKE_COM_PAGE.SCENARIO_ENABLE' | translate)"
               >
-                @if (actionLoading[scenario.id]) {
+                @if (actionLoading()[scenario.id]) {
                   <nb-icon icon="loader-outline" class="spin"></nb-icon>
                 } @else {
                   <nb-icon [icon]="scenario.isEnabled ? 'pause-circle-outline' : 'play-circle-outline'"></nb-icon>
@@ -107,7 +107,7 @@
                 status="info"
                 [nbTooltip]="'INTEGRATIONS.MAKE_COM_PAGE.SCENARIO_RUN_ONCE' | translate"
                 (click)="runScenario(scenario)"
-                [disabled]="actionLoading[scenario.id]"
+                [disabled]="actionLoading()[scenario.id]"
                 [attr.aria-label]="'INTEGRATIONS.MAKE_COM_PAGE.SCENARIO_RUN_ONCE' | translate"
               >
                 <nb-icon icon="arrow-right-outline"></nb-icon>

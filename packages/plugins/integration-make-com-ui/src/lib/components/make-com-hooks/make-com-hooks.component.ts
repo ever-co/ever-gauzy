@@ -49,7 +49,7 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 					this.setupStatus = null;
 					this.loading = false;
 					this._toastrService.error(
-						error?.error?.message || 'Failed to load setup status',
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETUP_STATUS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;
@@ -67,7 +67,7 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 				tap((hooks) => (this.hooks = hooks)),
 				catchError((error) => {
 					this._toastrService.error(
-						error?.error?.message || 'Failed to load webhooks',
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_WEBHOOKS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;
@@ -88,7 +88,9 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 			.pipe(
 				tap(() => {
 					this._toastrService.success(
-						hook.enabled ? 'Webhook disabled' : 'Webhook enabled',
+						hook.enabled
+							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.WEBHOOK_TOGGLED_OFF')
+							: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.WEBHOOK_TOGGLED_ON'),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
@@ -96,7 +98,7 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 				tap((hooks) => (this.hooks = hooks)),
 				catchError((error) => {
 					this._toastrService.error(
-						error?.error?.message || 'Failed to toggle webhook',
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.TOGGLE_WEBHOOK'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;
@@ -114,13 +116,13 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 			.pipe(
 				tap(() => {
 					this._toastrService.success(
-						`Webhook "${hook.name}" pinged successfully`,
+						this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.WEBHOOK_PINGED', { name: hook.name }),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
 				catchError((error) => {
 					this._toastrService.error(
-						error?.error?.message || 'Failed to ping webhook',
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.PING_WEBHOOK'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;

@@ -19,41 +19,41 @@ import { MakeComService } from './make-com.service';
 })
 export class MakeComStoreService {
 	// ─── Setup status state ──────────────────────────────────────────────────
-	private _setupStatus$ = new BehaviorSubject<IMakeComSetupStatus | null>(null);
+	private readonly _setupStatus$ = new BehaviorSubject<IMakeComSetupStatus | null>(null);
 	public setupStatus$ = this._setupStatus$.asObservable();
 
 	// ─── Settings state ─────────────────────────────────────────────────────
-	private _settings$ = new BehaviorSubject<IMakeComIntegrationSettings | null>(null);
+	private readonly _settings$ = new BehaviorSubject<IMakeComIntegrationSettings | null>(null);
 	public settings$ = this._settings$.asObservable();
 
 	// ─── Zone state ─────────────────────────────────────────────────────────
-	private _zone$ = new BehaviorSubject<MakeComZone | null>(null);
+	private readonly _zone$ = new BehaviorSubject<MakeComZone | null>(null);
 	public zone$ = this._zone$.asObservable();
 
 	// ─── Make.com context state ─────────────────────────────────────────────
-	private _makeOrganizations$ = new BehaviorSubject<IMakeComOrganization[]>([]);
+	private readonly _makeOrganizations$ = new BehaviorSubject<IMakeComOrganization[]>([]);
 	public makeOrganizations$ = this._makeOrganizations$.asObservable();
 
-	private _selectedMakeOrganization$ = new BehaviorSubject<IMakeComOrganization | null>(null);
+	private readonly _selectedMakeOrganization$ = new BehaviorSubject<IMakeComOrganization | null>(null);
 	public selectedMakeOrganization$ = this._selectedMakeOrganization$.asObservable();
 
-	private _makeTeams$ = new BehaviorSubject<IMakeComTeam[]>([]);
+	private readonly _makeTeams$ = new BehaviorSubject<IMakeComTeam[]>([]);
 	public makeTeams$ = this._makeTeams$.asObservable();
 
-	private _selectedMakeTeam$ = new BehaviorSubject<IMakeComTeam | null>(null);
+	private readonly _selectedMakeTeam$ = new BehaviorSubject<IMakeComTeam | null>(null);
 	public selectedMakeTeam$ = this._selectedMakeTeam$.asObservable();
 
 	// ─── Resource state ─────────────────────────────────────────────────────
-	private _scenarios$ = new BehaviorSubject<IMakeComScenario[]>([]);
+	private readonly _scenarios$ = new BehaviorSubject<IMakeComScenario[]>([]);
 	public scenarios$ = this._scenarios$.asObservable();
 
-	private _hooks$ = new BehaviorSubject<IMakeComHook[]>([]);
+	private readonly _hooks$ = new BehaviorSubject<IMakeComHook[]>([]);
 	public hooks$ = this._hooks$.asObservable();
 
-	private _connections$ = new BehaviorSubject<IMakeComConnection[]>([]);
+	private readonly _connections$ = new BehaviorSubject<IMakeComConnection[]>([]);
 	public connections$ = this._connections$.asObservable();
 
-	private _templates$ = new BehaviorSubject<IMakeComTemplate[]>([]);
+	private readonly _templates$ = new BehaviorSubject<IMakeComTemplate[]>([]);
 	public templates$ = this._templates$.asObservable();
 
 	constructor(private readonly _makeComService: MakeComService) {}
