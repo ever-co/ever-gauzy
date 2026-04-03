@@ -892,7 +892,8 @@
 		"flatpak",
 		"pulseaudio",
 		"flathub",
-		"noninteractive"
+		"noninteractive",
+		"NEEDRESTART"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
