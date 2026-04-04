@@ -136,14 +136,16 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	 */
 	async getUserProfile(): Promise<void> {
 		try {
-			// Get the user ID from the selected user or fallback to the current user
-			const userId = this.selectedUser?.id || this.user?.id;
-			if (!userId) {
-				throw new Error('User ID is missing.');
-			}
+			const relations = ['tags', 'role'];
+			let user: IUser;
 
-			// Fetch user details with specific relations
-			const user = await this._userService.getUserById(userId, ['tags', 'role']);
+			// If a different user is selected (admin editing another user), use getUserById which requires ORG_USERS_VIEW.
+			// Otherwise load the current user's own profile via /user/me which has no permission restriction.
+			if (this.selectedUser?.id && this.selectedUser.id !== this.user?.id) {
+				user = await this._userService.getUserById(this.selectedUser.id, relations);
+			} else {
+				user = await this._userService.getMe(relations);
+			}
 
 			// Patch the form with the retrieved user data
 			this._patchForm({ ...user });
