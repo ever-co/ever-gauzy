@@ -15,8 +15,7 @@ export class WindowConfig implements IWindowConfig {
 			webPreferences: {
 				nodeIntegration: true,
 				webSecurity: false,
-				contextIsolation: false,
-				sandbox: false
+				contextIsolation: false
 			},
 			title: '',
 			show: false,

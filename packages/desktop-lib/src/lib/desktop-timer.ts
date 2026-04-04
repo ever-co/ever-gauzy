@@ -1,4 +1,11 @@
-import { ActivityType, IActivityWatchCollectEventData, ITimeLog, TimeLogSourceEnum, TimerSyncStateEnum, TimerActionTypeEnum } from '@gauzy/contracts';
+import {
+	ActivityType,
+	IActivityWatchCollectEventData,
+	ITimeLog,
+	TimeLogSourceEnum,
+	TimerSyncStateEnum,
+	TimerActionTypeEnum
+} from '@gauzy/contracts';
 import { app, screen } from 'electron';
 import * as moment from 'moment';
 import { DesktopActiveWindow } from './desktop-active-window';
@@ -21,7 +28,8 @@ import { IOfflineMode } from './interfaces';
 import { DesktopOfflineModeHandler, Timer, TimerService, UserService } from './offline';
 import { logger } from '@gauzy/desktop-core';
 
-const EmbeddedQueue = require('embedded-queue');
+// embedded-queue is required lazily inside processWithQueue() to avoid
+// loading it at module import time (before app.ready).
 
 export default class TimerHandler {
 	// How frequently to collect activities (ms)
@@ -40,7 +48,12 @@ export default class TimerHandler {
 	listener = false;
 	nextScreenshot = 0;
 	queue: any = null;
-	appName = app.getName();
+	// Deferred: app.getName() is unsafe before app.ready — resolved on first access
+	private _appName: string | null = null;
+	get appName(): string {
+		if (!this._appName) this._appName = app.getName();
+		return this._appName;
+	}
 	_eventCounter = new DesktopEventCounter();
 
 	private _activeWindow = new DesktopActiveWindow();
@@ -221,20 +234,23 @@ export default class TimerHandler {
 			})
 		);
 
-		this.intervalUpdateTime = setInterval(async () => {
-			try {
-				console.log('Start Timer Interval Period');
-				await this._activeWindow.updateActivities();
-				console.log('Last Timer Id:', this.lastTimer ? this.lastTimer.id : null);
-				const activities = await this.getAllActivities(knex, this.timeSlotStart);
-				console.log('Activities loaded');
-				timeTrackerWindow.webContents.send('prepare_activities_screenshot', activities);
-				console.log('Timeslot Start Time', this.timeSlotStart);
-				this.timeSlotStart = moment();
-			} catch (error) {
-				console.error('Error on startTimerIntervalPeriod', error);
-			}
-		}, 60 * 1000 * updatePeriod);
+		this.intervalUpdateTime = setInterval(
+			async () => {
+				try {
+					console.log('Start Timer Interval Period');
+					await this._activeWindow.updateActivities();
+					console.log('Last Timer Id:', this.lastTimer ? this.lastTimer.id : null);
+					const activities = await this.getAllActivities(knex, this.timeSlotStart);
+					console.log('Activities loaded');
+					timeTrackerWindow.webContents.send('prepare_activities_screenshot', activities);
+					console.log('Timeslot Start Time', this.timeSlotStart);
+					this.timeSlotStart = moment();
+				} catch (error) {
+					console.error('Error on startTimerIntervalPeriod', error);
+				}
+			},
+			60 * 1000 * updatePeriod
+		);
 	}
 
 	nextTickScreenshot() {
@@ -341,20 +357,20 @@ export default class TimerHandler {
 				.map((item) => {
 					return item.data
 						? {
-							title: item.data.app || item.data.title,
-							date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
-							time: moment(item.timestamp).utc().format('HH:mm:ss'),
-							duration: Math.floor(item.duration),
-							type: item.data.url ? ActivityType.URL : ActivityType.APP,
-							taskId: params.taskId,
-							projectId: params.projectId,
-							organizationContactId: params.organizationContactId,
-							organizationId: params.organizationId,
-							employeeId: params.employeeId,
-							source: TimeLogSourceEnum.DESKTOP,
-							recordedAt: moment(item.timestamp).utc().toDate(),
-							metaData: item.data
-						}
+								title: item.data.app || item.data.title,
+								date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
+								time: moment(item.timestamp).utc().format('HH:mm:ss'),
+								duration: Math.floor(item.duration),
+								type: item.data.url ? ActivityType.URL : ActivityType.APP,
+								taskId: params.taskId,
+								projectId: params.projectId,
+								organizationContactId: params.organizationContactId,
+								organizationId: params.organizationId,
+								employeeId: params.employeeId,
+								source: TimeLogSourceEnum.DESKTOP,
+								recordedAt: moment(item.timestamp).utc().toDate(),
+								metaData: item.data
+							}
 						: null;
 				})
 				.filter((item) => !!item);
@@ -386,9 +402,9 @@ export default class TimerHandler {
 					employeeId: params.employeeId,
 					metaData:
 						this.configs &&
-							(this.configs.db === 'sqlite' ||
-								this.configs.db === 'better-sqlite' ||
-								this.configs.db === 'better-sqlite3')
+						(this.configs.db === 'sqlite' ||
+							this.configs.db === 'better-sqlite' ||
+							this.configs.db === 'better-sqlite3')
 							? JSON.stringify(activityMetadata)
 							: activityMetadata
 				};
@@ -724,7 +740,8 @@ export default class TimerHandler {
 						};
 
 						console.log(
-							`Updating Timer Duration ${JSON.stringify(pUpdate)} - Offline Mode: ${this._offlineMode.enabled
+							`Updating Timer Duration ${JSON.stringify(pUpdate)} - Offline Mode: ${
+								this._offlineMode.enabled
 							}`
 						);
 
@@ -765,6 +782,10 @@ export default class TimerHandler {
 		if (!this.queue) {
 			console.log(`Initializing Queue ${queName}`);
 
+			// Lazy require — deferred from module scope to avoid loading embedded-queue
+			// (and its native dependencies) before app.ready.
+			const EmbeddedQueue = require('embedded-queue');
+
 			this.queue = await EmbeddedQueue.Queue.createQueue({
 				inMemoryOnly: true
 			});
@@ -797,20 +818,25 @@ export default class TimerHandler {
 		console.log(`Job Created for ${queName}`);
 	}
 
-	async updateTimerSyncState(type: TimerActionTypeEnum, data: {
-		state: TimerSyncStateEnum,
-		duration: number,
-		timerId: number
-	}) {
+	async updateTimerSyncState(
+		type: TimerActionTypeEnum,
+		data: {
+			state: TimerSyncStateEnum;
+			duration: number;
+			timerId: number;
+		}
+	) {
 		const lastTimer = await this._timerService.findById({ id: data.timerId });
 		if (!lastTimer) {
 			console.error(`Timer with id ${data.timerId} not found`);
 			return;
 		}
-		await this._timerService.update(new Timer({
-			...lastTimer,
-			...(type === 'startTimer' ? { startSyncState: data.state } : { stopSyncState: data.state }),
-			...(data.duration ? { syncDuration: data.duration } : {})
-		}));
+		await this._timerService.update(
+			new Timer({
+				...lastTimer,
+				...(type === 'startTimer' ? { startSyncState: data.state } : { stopSyncState: data.state }),
+				...(data.duration ? { syncDuration: data.duration } : {})
+			})
+		);
 	}
 }
