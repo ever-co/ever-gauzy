@@ -1577,7 +1577,7 @@ export class AuthService extends SocialAuthService {
 
 				// Check the value of the 'email' variable against certain demo email addresses
 				if (email === demoEmployeeEmail || email === demoAdminEmail) {
-					magicCode = environment.demoCredentialConfig?.employeePassword || DEMO_PASSWORD_LESS_MAGIC_CODE;
+					magicCode = DEMO_PASSWORD_LESS_MAGIC_CODE;
 					isDemoCode = true;
 				}
 			}
