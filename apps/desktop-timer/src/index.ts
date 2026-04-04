@@ -66,30 +66,23 @@ import {
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
+import { Knex } from 'knex';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop-timer
 
-process.env.GAUZY_USER_PATH = app.getPath('userData');
-log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
-
-const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
-log.info(`Sqlite DB path: ${sqlite3filename}`);
-
-const provider = ProviderFactory.instance;
-const knex = provider.connection;
+// Deferred until app.ready — app.getPath('userData'), native DB modules (better-sqlite3),
+// and DesktopUpdater ipcMain registration must not run before Electron is fully initialized.
+let provider: ProviderFactory;
+let knex: Knex;
+let updater: DesktopUpdater;
+let report: ErrorReport;
 
 const exeName = path.basename(process.execPath);
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 const args = process.argv.slice(1);
 const serverGauzy = null;
-const updater = new DesktopUpdater({
-	repository: process.env.REPO_NAME,
-	owner: process.env.REPO_OWNER,
-	typeRelease: 'releases'
-});
-const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER, process.env.REPO_NAME));
 const eventErrorManager = ErrorEventManager.instance;
 args.some((val) => val === '--serve');
 
@@ -491,6 +484,22 @@ async function checkOfflineMode(configs: IConfig) {
 
 app.on('ready', async () => {
 	initializeAppManager();
+
+	// Initialize DB and updater here — safe after app.ready
+	process.env.GAUZY_USER_PATH = app.getPath('userData');
+	log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
+	log.info(`Sqlite DB path: ${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`);
+
+	provider = ProviderFactory.instance;
+	knex = provider.connection;
+
+	updater = new DesktopUpdater({
+		repository: process.env.REPO_NAME,
+		owner: process.env.REPO_OWNER,
+		typeRelease: 'releases'
+	});
+	report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER, process.env.REPO_NAME));
+
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
 
@@ -735,7 +744,7 @@ app.on('before-quit', async (e) => {
 	} else {
 		// soft download cancellation
 		try {
-			updater.cancel();
+			updater?.cancel();
 		} catch (e) {
 			console.error('ERROR: Occurred while cancel update:' + e);
 			throw new AppError('MAINUPDTABORT', e);
