@@ -126,7 +126,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: false
+          NX_NO_CLOUD: true
           NX_DAEMON: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
 
@@ -250,7 +250,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: false
+          NX_NO_CLOUD: true
           NX_DAEMON: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
           SNAPCRAFT_BUILD_ENVIRONMENT: host
@@ -355,7 +355,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: false
+          NX_NO_CLOUD: true
           NX_DAEMON: false
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_APP_PASSWORD: ${{ secrets.APPLE_ID_APP_PASSWORD }}
