@@ -163,7 +163,7 @@ More information about our Server & Desktop Apps:
 -   Setup Gauzy Server with default choices in Setup Wizard and run it.
 -   You can also setup Gauzy Desktop App (can run independently or connect to Gauzy Server) or Gauzy Desktop Timer App (should be connected to Gauzy Server)
 -   You can login with `admin@ever.co` and password `admin` to check Admin functionality if you installed Gauzy Server or Gauzy Desktop App. Note: such an Admin user is not an employee, so you will not be able to track time.
--   You can login with `employee@ever.co` and password `123456` to check Employee-related functionality in Gauzy UI or to run Desktop Timer from an "Employee" perspective (such a user is an Employee and can track time).
+-   You can login with `employee@ever.co` and password `12345678` to check Employee-related functionality in Gauzy UI or to run Desktop Timer from an "Employee" perspective (such a user is an Employee and can track time).
 -   If you install Gauzy Server, it is possible to connect to it using a browser (by default on <http://localhost:4200>) or using Gauzy Desktop Apps (make sure to configure Desktop apps to connect to Gauzy API on <http://127.0.0.1:3000/api> because it's where Gauzy Server API runs by default).
 -   You can read more information about our Desktop Apps on the [Desktop Apps Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps) and our Server at the [Server Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Server).
 
@@ -200,7 +200,7 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 -   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform in basic configuration (e.g. for Demo / explore functionality / quick run) using our prebuilt Docker images. Check `.env.demo.compose` file for different settings (optionally), e.g. DB type. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
 -   Open <http://localhost:4200> in your browser.
 -   Login with email `admin@ever.co` and password: `admin` for Super Admin user.
--   Login with email `employee@ever.co` and password: `123456` for Employee user.
+-   Login with email `employee@ever.co` and password: `12345678` for Employee user.
 -   Enjoy!
 
 #### Production
@@ -248,7 +248,7 @@ Together with Gauzy, the Docker Compose commands described above for Production 
 -   Run both API and UI with a single command: `yarn start`.
 -   Open Gauzy UI on <http://localhost:4200> in your browser (API runs on <http://localhost:3000/api>).
 -   Login with email `admin@ever.co` and password: `admin` for Super Admin user.
--   Login with email `employee@ever.co` and password: `123456` for Employee user.
+-   Login with email `employee@ever.co` and password: `12345678` for Employee user.
 -   Enjoy!
 
 Notes:
