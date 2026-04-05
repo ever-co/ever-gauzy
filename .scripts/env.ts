@@ -224,7 +224,7 @@ export const env: Env = cleanEnv(
 		DEMO_ADMIN_PASSWORD: str({ default: 'admin' }),
 
 		DEMO_EMPLOYEE_EMAIL: str({ default: 'employee@ever.co' }),
-		DEMO_EMPLOYEE_PASSWORD: str({ default: '123456' }),
+		DEMO_EMPLOYEE_PASSWORD: str({ default: '12345678' }),
 
 		CHATWOOT_SDK_TOKEN: str({ default: '' }),
 		CHAT_MESSAGE_GOOGLE_MAP: str({ default: '' }),

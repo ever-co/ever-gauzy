@@ -360,7 +360,7 @@ export const environment: IEnvironment = {
 		adminEmail: process.env.DEMO_ADMIN_EMAIL || `local.admin@ever.co`,
 		adminPassword: process.env.DEMO_ADMIN_PASSWORD || `admin`,
 		employeeEmail: process.env.DEMO_EMPLOYEE_EMAIL || `employee@ever.co`,
-		employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD || `123456`
+		employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD || `12345678`
 	}
 };
 
