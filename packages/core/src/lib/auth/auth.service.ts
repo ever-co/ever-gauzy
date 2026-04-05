@@ -73,6 +73,7 @@ import { TypeOrmUserRepository } from '../user/repository/type-orm-user.reposito
 import { UserService } from '../user/user.service';
 import { RequestContext } from './../core/context';
 import { OrganizationTeam, Tenant, User } from './../core/entities/internal';
+import { Employee } from '../employee/employee.entity';
 import { freshTimestamp, getORMType, MultiORM, MultiORMEnum, parseTypeORMFindToMikroOrm } from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { EmailService } from './../email-send/email.service';
@@ -1311,8 +1312,28 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Retrieve the employee details associated with the user.
-			// Use provided organizationId if available, otherwise fall back to RequestContext
-			const employee = await this.employeeService.findOneByUserId(user.id, organizationId);
+			// Query directly via repository to bypass TenantAwareCrudService which forces RequestContext.currentTenantId().
+			// This ensures correct employee lookup when tenantId differs from RequestContext (e.g. workspace switch).
+			let employee: Employee | null = null;
+			const employeeAccessWhere: Record<string, any> = {
+				userId: user.id,
+				tenantId,
+				isActive: true,
+				isArchived: false,
+				...(organizationId && { organizationId })
+			};
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const parsed = parseTypeORMFindToMikroOrm<Employee>({ where: employeeAccessWhere });
+					employee = (await this.mikroOrmEmployeeRepository.findOne(parsed.where, parsed.mikroOptions)) as Employee;
+					break;
+				}
+				case MultiORMEnum.TypeORM: {
+					employee = await this.typeOrmEmployeeRepository.findOne({ where: employeeAccessWhere });
+					break;
+				}
+			}
 
 			// Create a payload for the JWT token
 			const payload: JwtPayload = {
@@ -2172,8 +2193,25 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException('User does not have access to this workspace');
 			}
 
-			// Retrieve the employee details associated with the user
-			const employee = await this.employeeService.findOneByUserId(user.id);
+			// Retrieve the employee details associated with the user in the TARGET workspace.
+			// We cannot use employeeService.findOneByUserId() here because TenantAwareCrudService
+			// forcefully applies RequestContext.currentUser().tenantId, which is still the OLD workspace
+			// during a switch. Instead, query the repository directly with the explicit target tenantId.
+			let employee: Employee | null = null;
+			const employeeWhere = { userId: user.id, tenantId, isActive: true, isArchived: false };
+			const employeeRelations = { organization: true };
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const parsed = parseTypeORMFindToMikroOrm<Employee>({ where: employeeWhere, relations: employeeRelations });
+					employee = (await this.mikroOrmEmployeeRepository.findOne(parsed.where, parsed.mikroOptions)) as Employee;
+					break;
+				}
+				case MultiORMEnum.TypeORM: {
+					employee = await this.typeOrmEmployeeRepository.findOne({ where: employeeWhere, relations: employeeRelations });
+					break;
+				}
+			}
 
 			// Check if the employee is active and not archived
 			if (employee && (!employee.isActive || employee.isArchived)) {
@@ -2189,8 +2227,22 @@ export class AuthService extends SocialAuthService {
 				this.getJwtRefreshToken(user, organizationId)
 			]);
 
-			// Store the current refresh token with the user
-			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+			// Store the current refresh token with the user.
+			// We cannot use userService.setCurrentRefreshToken() here because TenantAwareCrudService.update()
+			// runs a findOneByWhereOptions guard scoped to RequestContext.currentTenantId() (the OLD workspace),
+			// which won't find a user whose tenantId is the TARGET workspace. Update directly via repository.
+			const hashedRefreshToken = refresh_token
+				? await this.passwordHashService.hash(refresh_token)
+				: refresh_token;
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					await this.mikroOrmUserRepository.nativeUpdate({ id: user.id, tenantId }, { refreshToken: hashedRefreshToken });
+					break;
+				case MultiORMEnum.TypeORM:
+					await this.typeOrmUserRepository.update({ id: user.id, tenantId }, { refreshToken: hashedRefreshToken });
+					break;
+			}
 
 			// Update the last login timestamp
 			await this.userService.setUserLastLoginTimestamp(user.id);

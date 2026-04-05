@@ -144,6 +144,8 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 			'/auth/signin.email.social',
 			'/auth/signup.provider.social',
 			'/auth/signup.link.account',
+			'/auth/switch-workspace',
+			'/auth/switch-organization',
 			'/auth/google',
 			'/auth/google/callback',
 			'/auth/facebook',
