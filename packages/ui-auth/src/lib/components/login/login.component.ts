@@ -20,6 +20,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	isShown = false;
 	RolesEnum = RolesEnum;
 	isDemo: boolean = environment.DEMO;
+	demoEmployeePassword: string = environment.DEMO_EMPLOYEE_PASSWORD;
 	showPassword = false;
 	passwordNoSpaceEdges = patterns.passwordNoSpaceEdges;
 
