@@ -17,7 +17,8 @@ import { MakeComStoreService, ToastrService } from '@gauzy/ui-core/core';
 export class MakeComHooksComponent extends TranslationBaseComponent implements OnInit {
 	public hooks: IMakeComHook[] = [];
 	public loading = false;
-	public actionLoading: Record<number, boolean> = {};
+	public toggleLoading: Record<number, boolean> = {};
+	public pingLoading: Record<number, boolean> = {};
 	public setupStatus: IMakeComSetupStatus | null = null;
 
 	private readonly _makeComStoreService = inject(MakeComStoreService);
@@ -86,7 +87,7 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 	}
 
 	toggleHook(hook: IMakeComHook) {
-		this.actionLoading[hook.id] = true;
+		this.toggleLoading[hook.id] = true;
 		const action$ = hook.enabled
 			? this._makeComStoreService.disableHook(hook.id)
 			: this._makeComStoreService.enableHook(hook.id);
@@ -102,6 +103,11 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 				}),
 				switchMap(() => this._makeComStoreService.loadHooks()),
 				catchError((error) => {
+					// Toggle succeeded but refresh failed — update the local hook state
+					const target = this.hooks.find((h) => h.id === hook.id);
+					if (target) {
+						target.enabled = !hook.enabled;
+					}
 					this._toastrService.error(
 						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_WEBHOOKS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
@@ -117,14 +123,14 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
-				finalize(() => (this.actionLoading[hook.id] = false)),
+				finalize(() => (this.toggleLoading[hook.id] = false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	pingHook(hook: IMakeComHook) {
-		this.actionLoading[hook.id] = true;
+		this.pingLoading[hook.id] = true;
 		this._makeComStoreService
 			.pingHook(hook.id)
 			.pipe(
@@ -141,7 +147,7 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 					);
 					return EMPTY;
 				}),
-				finalize(() => (this.actionLoading[hook.id] = false)),
+				finalize(() => (this.pingLoading[hook.id] = false)),
 				untilDestroyed(this)
 			)
 			.subscribe();

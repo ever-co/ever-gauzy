@@ -82,12 +82,12 @@
                 [status]="hook.enabled ? 'warning' : 'success'"
                 [nbTooltip]="hook.enabled ? ('INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_DISABLE' | translate) : ('INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_ENABLE' | translate)"
                 (click)="toggleHook(hook)"
-                [disabled]="actionLoading[hook.id]"
+                [disabled]="toggleLoading[hook.id] || pingLoading[hook.id]"
                 [attr.aria-label]="hook.enabled
                   ? ('INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_DISABLE' | translate)
                   : ('INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_ENABLE' | translate)"
               >
-                @if (actionLoading[hook.id]) {
+                @if (toggleLoading[hook.id]) {
                   <nb-icon icon="loader-outline" class="spin"></nb-icon>
                 } @else {
                   <nb-icon [icon]="hook.enabled ? 'toggle-right-outline' : 'toggle-left-outline'"></nb-icon>
@@ -100,10 +100,14 @@
                 status="info"
                 [nbTooltip]="'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_PING' | translate"
                 (click)="pingHook(hook)"
-                [disabled]="actionLoading[hook.id]"
+                [disabled]="toggleLoading[hook.id] || pingLoading[hook.id]"
                 [attr.aria-label]="'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_PING' | translate"
               >
-                <nb-icon icon="radio-outline"></nb-icon>
+                @if (pingLoading[hook.id]) {
+                  <nb-icon icon="loader-outline" class="spin"></nb-icon>
+                } @else {
+                  <nb-icon icon="radio-outline"></nb-icon>
+                }
               </button>
             </div>
           </nb-card-body>

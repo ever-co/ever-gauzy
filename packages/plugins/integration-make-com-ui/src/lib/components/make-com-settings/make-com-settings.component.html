@@ -17,8 +17,8 @@
 
         <!-- Zone Selector -->
         <div class="form-group">
-          <label class="label">{{ 'INTEGRATIONS.MAKE_COM_PAGE.ZONE_LABEL' | translate }}</label>
-          <div class="d-flex align-items-center gap-2">
+          <label id="zone-picker-label" class="label">{{ 'INTEGRATIONS.MAKE_COM_PAGE.ZONE_LABEL' | translate }}</label>
+          <div class="d-flex align-items-center gap-2" role="radiogroup" aria-labelledby="zone-picker-label">
             @for (zone of zones; track zone) {
               <button
                 type="button"
@@ -27,6 +27,8 @@
                 size="small"
                 (click)="onZoneChange(zone)"
                 [disabled]="zoneLoading"
+                role="radio"
+                [attr.aria-checked]="selectedZone === zone"
               >
                 {{ zone | uppercase }}
               </button>
@@ -119,7 +121,7 @@
           <nb-card accent="success" class="setup-complete-card mt-2">
             <nb-card-body class="py-2 d-flex align-items-center gap-2">
               <nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
-              <span [innerHTML]="'INTEGRATIONS.MAKE_COM_PAGE.CONNECTED_TO' | translate: { org: selectedMakeOrg.name, team: selectedMakeTeam.name, zone: (selectedZone | uppercase) }"></span>
+              <span class="fw-bold">{{ 'INTEGRATIONS.MAKE_COM_PAGE.CONNECTED_TO' | translate: { org: selectedMakeOrg.name, team: selectedMakeTeam.name, zone: (selectedZone | uppercase) } }}</span>
             </nb-card-body>
           </nb-card>
         }

@@ -53,7 +53,7 @@ export class MakeComAuthorizationController {
 	/**
 	 * Build a redirect URL by appending query params.
 	 * Handles hash-based Angular routing (e.g. http://host/#/path) by placing
-	 * query params before the hash fragment.
+	 * query params within the hash fragment, after the route path.
 	 */
 	private buildRedirectUrl(baseUrl: string, params: Record<string, string>): string {
 		const queryString = new URLSearchParams(params).toString();

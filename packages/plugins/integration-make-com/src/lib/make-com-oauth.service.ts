@@ -65,6 +65,9 @@ export class MakeComOAuthService {
 	async getAuthorizationUrl(options?: { state?: string; clientId?: string; organizationId?: string }): Promise<string> {
 	try {
 		const redirectUri = this.config.get('makeCom').redirectUri;
+		if (!redirectUri) {
+			throw new Error('Make.com redirect URI is not configured');
+		}
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = options?.organizationId;
 
@@ -126,6 +129,9 @@ export class MakeComOAuthService {
 
 			// Prepare the request body for Make.com token endpoint with PKCE
 			const redirectUri = makeComConfig?.redirectUri;
+			if (!redirectUri) {
+				throw new BadRequestException('Make.com redirect URI is not configured on the server');
+			}
 
 			const tokenRequestParams = new URLSearchParams({
 				grant_type: 'authorization_code',
@@ -133,7 +139,7 @@ export class MakeComOAuthService {
 				client_id: clientId,
 				client_secret: clientSecret,
 				code_verifier: codeVerifier,
-				...(redirectUri ? { redirect_uri: redirectUri } : {})
+				redirect_uri: redirectUri
 			});
 
 			const headers = {
@@ -328,9 +334,7 @@ export class MakeComOAuthService {
 	 */
 	private async storeStateForVerification(state: string, codeVerifier: string): Promise<void> {
 		const cacheKey = MakeComOAuthService.STATE_CACHE_KEY_PREFIX + state;
-		// TTL in seconds (cache-manager expects seconds, not milliseconds)
-		const ttlInSeconds = MakeComOAuthService.STATE_TTL_MS / 1000;
-		await this.cacheManager.set(cacheKey, { timestamp: Date.now(), codeVerifier }, ttlInSeconds);
+		await this.cacheManager.set(cacheKey, { timestamp: Date.now(), codeVerifier }, MakeComOAuthService.STATE_TTL_MS);
 	}
 
 	/**

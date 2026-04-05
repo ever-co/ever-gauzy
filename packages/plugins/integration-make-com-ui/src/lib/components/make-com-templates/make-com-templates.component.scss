@@ -17,7 +17,7 @@
 
 .badge {
   font-size: 0.7rem;
-  padding: 0.15rem 0.5rem;
+  padding: 0.25rem 0.5rem;
   border-radius: calc(var(--border-radius) * 0.5);
   font-weight: 500;
 
@@ -30,7 +30,7 @@
 .package-tag {
   display: inline-block;
   font-size: 0.7rem;
-  padding: 0.1rem 0.4rem;
+  padding: 0.25rem 0.5rem;
   margin-right: 0.25rem;
   border-radius: calc(var(--border-radius) * 0.375);
   background-color: var(--gauzy-card-2);

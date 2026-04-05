@@ -217,14 +217,16 @@ export class MakeComApiService {
 				integration: tenant
 			} as any);
 		}
-		// Clear zone-scoped org/team selections when zone changes
-		const existingOrg = tenant.settings?.find((s) => s.settingsName === MakeSettingName.MAKE_ORGANIZATION_ID);
-		if (existingOrg?.id) {
-			await this.integrationSettingService.delete(existingOrg.id);
-		}
-		const existingTeam = tenant.settings?.find((s) => s.settingsName === MakeSettingName.MAKE_TEAM_ID);
-		if (existingTeam?.id) {
-			await this.integrationSettingService.delete(existingTeam.id);
+		// Clear zone-scoped org/team selections only when zone actually changes
+		if (existing?.settingsValue !== zone) {
+			const existingOrg = tenant.settings?.find((s) => s.settingsName === MakeSettingName.MAKE_ORGANIZATION_ID);
+			if (existingOrg?.id) {
+				await this.integrationSettingService.delete(existingOrg.id);
+			}
+			const existingTeam = tenant.settings?.find((s) => s.settingsName === MakeSettingName.MAKE_TEAM_ID);
+			if (existingTeam?.id) {
+				await this.integrationSettingService.delete(existingTeam.id);
+			}
 		}
 
 		this.logger.log(`Make.com zone set to "${zone}" for tenant ${tenant.tenantId}`);

@@ -44,6 +44,7 @@ export class MakeComTemplatesComponent extends TranslationBaseComponent implemen
 
 	private _checkSetupAndLoad() {
 		this.loading = true;
+		this.templates = [];
 		this._makeComStoreService
 			.loadSetupStatus()
 			.pipe(

@@ -176,7 +176,7 @@ export class ZapierService {
 				scope: ZAPIER_OAUTH_SCOPES
 			});
 
-			return `${ZAPIER_BASE_URL}/oauth/authorize/?${params.toString()}`;
+			return `${ZAPIER_API_URL}/v2/authorize?${params.toString()}`;
 		} catch (error) {
 			this.logger.error('Error generating Zapier authorization URL:', error);
 			throw new BadRequestException('Failed to generate authorization URL');
@@ -862,14 +862,12 @@ export class ZapierService {
 			}
 		];
 
-		// Delete ALL existing token settings (both Gauzy OAuth and Zapier API tokens) before saving new ones
-		const allTokenSettingNames = [
+		// Delete only Gauzy OAuth token settings before saving new ones (preserve Zapier API tokens)
+		const oauthTokenSettingNames = [
 			'oauth_access_token',
-			'oauth_refresh_token',
-			'zapier_access_token',
-			'zapier_refresh_token'
+			'oauth_refresh_token'
 		];
-		const staleTokens = existingSettings.filter((setting) => allTokenSettingNames.includes(setting.settingsName));
+		const staleTokens = existingSettings.filter((setting) => oauthTokenSettingNames.includes(setting.settingsName));
 		await Promise.all(
 			staleTokens
 				.map((s) => s.id)
@@ -878,7 +876,7 @@ export class ZapierService {
 		);
 
 		const filteredExistingSettings = existingSettings.filter(
-			(setting) => !allTokenSettingNames.includes(setting.settingsName)
+			(setting) => !oauthTokenSettingNames.includes(setting.settingsName)
 		);
 
 		const allSettings = [...filteredExistingSettings, ...tokenSettings] as DeepPartial<IIntegrationEntitySetting>;
@@ -967,11 +965,12 @@ export class ZapierService {
 				settingsName: 'auth_code'
 			}
 		});
-		for (const existing of existingAuthCodes) {
-			if (existing.id) {
-				await this._integrationSettingService.delete(existing.id);
-			}
-		}
+		await Promise.all(
+			existingAuthCodes
+				.map((s) => s.id)
+				.filter((id): id is string => id != null)
+				.map((id) => this._integrationSettingService.delete(id))
+		);
 
 		let expirationTime = new Date();
 		expirationTime.setMinutes(expirationTime.getMinutes() + 10);
@@ -1043,12 +1042,7 @@ export class ZapierService {
 			throw new BadRequestException('Authorization code has expired');
 		}
 
-		// Verify redirect_uri matches
-		if (parsedCode.redirectUri && parsedCode.redirectUri !== redirectUri) {
-			throw new BadRequestException('Redirect URI mismatch');
-		}
-
-		// Atomic single-use delete: only succeed if no other request already consumed this code.
+		// Atomic single-use delete: consume the code before any further validation to prevent probing.
 		// We match on both id AND the exact settingsValue to detect concurrent consumption.
 		// Use repository.delete() with FindOptionsWhere to ensure both predicates are applied.
 		const result = await this._integrationSettingService.typeOrmIntegrationSettingRepository.delete({
@@ -1059,6 +1053,11 @@ export class ZapierService {
 		if (result.affected !== 1) {
 			// Another concurrent request already consumed this code.
 			throw new BadRequestException('Invalid authorization code');
+		}
+
+		// Verify redirect_uri matches (code already consumed to prevent probing)
+		if (parsedCode.redirectUri && parsedCode.redirectUri !== redirectUri) {
+			throw new BadRequestException('Redirect URI mismatch');
 		}
 	}
 

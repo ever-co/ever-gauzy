@@ -150,7 +150,7 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 					const message =
 						error instanceof TimeoutError
 							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.REQUEST_TIMEOUT')
-							: error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETTINGS');
+							: error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETUP_STATUS');
 					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					console.error('Error loading Make.com setup status:', error);
 					return EMPTY;
