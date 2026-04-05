@@ -3,10 +3,11 @@ import { BaseError } from './base.error';
 import { ErrorEventManager } from './error-event-manager';
 
 export class AppError extends BaseError {
-	private errorEventManager = ErrorEventManager.instance;
+	private errorEventManager: ErrorEventManager;
 
 	constructor(errorId: string, error: any) {
 		super(String(error?.message || error));
+		this.errorEventManager = ErrorEventManager.instance
 
 		Error.captureStackTrace(this, this.constructor);
 

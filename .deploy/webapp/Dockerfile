@@ -212,7 +212,7 @@ ENV DEMO=${DEMO:-false}
 ENV IS_DOCKER=true
 
 # Enable NX Cloud caching for faster builds
-ENV NX_NO_CLOUD=false
+ENV NX_NO_CLOUD=true
 ENV NX_CLOUD_ACCESS_TOKEN=${NX_CLOUD_ACCESS_TOKEN}
 ENV NX_BRANCH=${NX_BRANCH}
 
