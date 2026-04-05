@@ -58,6 +58,7 @@ export class MakeComScenariosComponent extends TranslationBaseComponent implemen
 
 	private _checkSetupAndLoad() {
 		this.loading.set(true);
+		this.scenarios.set([]);
 		this._makeComStoreService
 			.loadSetupStatus()
 			.pipe(
@@ -66,11 +67,13 @@ export class MakeComScenariosComponent extends TranslationBaseComponent implemen
 					if (status.isComplete) {
 						this._loadScenarios();
 					} else {
+						this.scenarios.set([]);
 						this.loading.set(false);
 					}
 				}),
 				catchError((error) => {
 					this.setupStatus.set(null);
+					this.scenarios.set([]);
 					this.loading.set(false);
 					this._toastrService.error(
 						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETUP_STATUS'),
@@ -90,6 +93,7 @@ export class MakeComScenariosComponent extends TranslationBaseComponent implemen
 			.pipe(
 				tap((scenarios) => this.scenarios.set(scenarios)),
 				catchError((error) => {
+					this.scenarios.set([]);
 					this._toastrService.error(
 						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SCENARIOS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
@@ -110,7 +114,9 @@ export class MakeComScenariosComponent extends TranslationBaseComponent implemen
 
 		action$
 			.pipe(
-				tap(() => {
+				switchMap(() => this._makeComStoreService.loadScenarios()),
+				tap((scenarios) => {
+					this.scenarios.set(scenarios);
 					this._toastrService.success(
 						scenario.isEnabled
 							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.SCENARIO_DEACTIVATED')
@@ -118,8 +124,6 @@ export class MakeComScenariosComponent extends TranslationBaseComponent implemen
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
-				switchMap(() => this._makeComStoreService.loadScenarios()),
-				tap((scenarios) => this.scenarios.set(scenarios)),
 				catchError((error) => {
 					this._toastrService.error(
 						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.TOGGLE_SCENARIO'),

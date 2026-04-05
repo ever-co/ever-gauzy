@@ -21,6 +21,7 @@
           <div class="d-flex align-items-center gap-2">
             @for (zone of zones; track zone) {
               <button
+                type="button"
                 nbButton
                 [status]="selectedZone === zone ? 'primary' : 'basic'"
                 size="small"

@@ -17,7 +17,7 @@ import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { TenantPermissionGuard, PermissionGuard, Permissions } from '@gauzy/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { MakeComApiService } from './make-com-api.service';
-import { IMakeComPaginationParams, MAKE_COM_ZONES, MakeComZone } from './interfaces/make-com-api.model';
+import { IMakeComPaginationParams, IMakeComScenarioScheduling, MAKE_COM_ZONES, MakeComZone } from './interfaces/make-com-api.model';
 
 @ApiTags('Make.com API')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -31,12 +31,12 @@ export class MakeComApiController {
 	private extractPagination(query: Record<string, any>): IMakeComPaginationParams {
 		const pagination: IMakeComPaginationParams = {};
 		if (query.offset != null) {
-			const offset = parseInt(query.offset, 10);
-			if (!isNaN(offset)) pagination['pg[offset]'] = offset;
+			const offset = Number.parseInt(query.offset, 10);
+			if (!Number.isNaN(offset)) pagination['pg[offset]'] = offset;
 		}
 		if (query.limit != null) {
-			const limit = parseInt(query.limit, 10);
-			if (!isNaN(limit)) pagination['pg[limit]'] = limit;
+			const limit = Number.parseInt(query.limit, 10);
+			if (!Number.isNaN(limit)) pagination['pg[limit]'] = limit;
 		}
 		if (query.sortBy) pagination['pg[sortBy]'] = query.sortBy;
 		if (query.sortDir) pagination['pg[sortDir]'] = query.sortDir;
@@ -78,7 +78,7 @@ export class MakeComApiController {
 	@ApiOperation({ summary: 'Set the Make.com organization ID for this tenant' })
 	@Post('/context/organization')
 	async setMakeOrganization(@Body() body: { makeOrganizationId: number; organizationId?: string }) {
-		if (!body.makeOrganizationId || isNaN(Number(body.makeOrganizationId))) {
+		if (!body.makeOrganizationId || Number.isNaN(Number(body.makeOrganizationId))) {
 			throw new BadRequestException('A valid makeOrganizationId is required');
 		}
 		await this.makeComApiService.setMakeOrganizationId(body.makeOrganizationId, body.organizationId);
@@ -88,7 +88,7 @@ export class MakeComApiController {
 	@ApiOperation({ summary: 'Set the Make.com team ID for this tenant' })
 	@Post('/context/team')
 	async setMakeTeam(@Body() body: { makeTeamId: number; organizationId?: string }) {
-		if (!body.makeTeamId || isNaN(Number(body.makeTeamId))) {
+		if (!body.makeTeamId || Number.isNaN(Number(body.makeTeamId))) {
 			throw new BadRequestException('A valid makeTeamId is required');
 		}
 		await this.makeComApiService.setMakeTeamId(body.makeTeamId, body.organizationId);
@@ -124,9 +124,10 @@ export class MakeComApiController {
 		@Query('organizationId') organizationId?: string,
 		@Query() query?: Record<string, any>
 	) {
-		const parsedOrgId = makeOrgId ? parseInt(makeOrgId, 10) : undefined;
+		const parsedOrgId = makeOrgId ? Number.parseInt(makeOrgId, 10) : undefined;
+		const validOrgId = parsedOrgId !== undefined && !Number.isNaN(parsedOrgId) ? parsedOrgId : undefined;
 		const teams = await this.makeComApiService.listTeams(
-			parsedOrgId ? parsedOrgId : undefined,
+			validOrgId,
 			organizationId,
 			this.extractPagination(query)
 		);
@@ -154,7 +155,7 @@ export class MakeComApiController {
 		@Query() query?: Record<string, any>
 	) {
 		const connections = await this.makeComApiService.listConnections(
-			teamId ? parseInt(teamId, 10) : undefined,
+			teamId ? Number.parseInt(teamId, 10) : undefined,
 			organizationId,
 			this.extractPagination(query)
 		);
@@ -201,7 +202,7 @@ export class MakeComApiController {
 		@Query() query?: Record<string, any>
 	) {
 		const scenarios = await this.makeComApiService.listScenarios(
-			teamId ? parseInt(teamId, 10) : undefined,
+			teamId ? Number.parseInt(teamId, 10) : undefined,
 			organizationId,
 			this.extractPagination(query)
 		);
@@ -221,7 +222,7 @@ export class MakeComApiController {
 	@ApiOperation({ summary: 'Create a Make.com scenario' })
 	@Post('/scenarios')
 	async createScenario(
-		@Body() body: { teamId: number; name: string; blueprint: string; scheduling: any; folderId?: number },
+		@Body() body: { teamId: number; name: string; blueprint: string; scheduling: IMakeComScenarioScheduling; folderId?: number },
 		@Query('organizationId') organizationId?: string
 	) {
 		const scenario = await this.makeComApiService.createScenario(body, organizationId);
@@ -232,7 +233,7 @@ export class MakeComApiController {
 	@Patch('/scenarios/:id')
 	async updateScenario(
 		@Param('id', ParseIntPipe) id: number,
-		@Body() body: { name?: string; blueprint?: string; scheduling?: any },
+		@Body() body: { name?: string; blueprint?: string; scheduling?: IMakeComScenarioScheduling },
 		@Query('organizationId') organizationId?: string
 	) {
 		const scenario = await this.makeComApiService.updateScenario(id, body, organizationId);
@@ -290,7 +291,7 @@ export class MakeComApiController {
 		@Query() query?: Record<string, any>
 	) {
 		const hooks = await this.makeComApiService.listHooks(
-			teamId ? parseInt(teamId, 10) : undefined,
+			teamId ? Number.parseInt(teamId, 10) : undefined,
 			organizationId,
 			this.extractPagination(query)
 		);
@@ -310,7 +311,7 @@ export class MakeComApiController {
 	@ApiOperation({ summary: 'Create a Make.com hook (webhook)' })
 	@Post('/hooks')
 	async createHook(
-		@Body() body: { teamId: number; name: string; typeName: string; [key: string]: any },
+		@Body() body: { teamId: number; name: string; typeName: string; [key: string]: unknown },
 		@Query('organizationId') organizationId?: string
 	) {
 		const hook = await this.makeComApiService.createHook(body, organizationId);
@@ -378,7 +379,7 @@ export class MakeComApiController {
 		@Query() query?: Record<string, any>
 	) {
 		const templates = await this.makeComApiService.listTemplates(
-			teamId ? parseInt(teamId, 10) : undefined,
+			teamId ? Number.parseInt(teamId, 10) : undefined,
 			organizationId,
 			this.extractPagination(query)
 		);

@@ -82,7 +82,7 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 				catchError((error) => {
 					const message =
 						error instanceof TimeoutError
-							? 'Request timed out. Please try again.'
+							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.REQUEST_TIMEOUT')
 							: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETTINGS');
 					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					console.error('Error loading Make.com settings:', error);
@@ -149,9 +149,10 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 				catchError((error) => {
 					const message =
 						error instanceof TimeoutError
-							? 'Request timed out. Please try again.'
+							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.REQUEST_TIMEOUT')
 							: error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETTINGS');
 					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
+					console.error('Error loading Make.com setup status:', error);
 					return EMPTY;
 				}),
 				finalize(() => (this.zoneLoading = false)),
@@ -169,7 +170,7 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 				tap(() => {
 					this.selectedZone = zone;
 					this._toastrService.success(
-						`Zone set to ${zone.toUpperCase()}`,
+						this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.ZONE_SET', { zone: zone.toUpperCase() }),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 					this.selectedMakeOrg = null;
@@ -180,7 +181,7 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 				}),
 				catchError((error) => {
 					const message =
-						error instanceof TimeoutError ? 'Request timed out. Please try again.' : error?.error?.message || 'Failed to set zone';
+						error instanceof TimeoutError ? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.REQUEST_TIMEOUT') : error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.SET_ZONE');
 					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					return EMPTY;
 				}),
@@ -211,8 +212,8 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 				catchError((error) => {
 					const message =
 						error instanceof TimeoutError
-							? 'Request timed out. Please try again.'
-							: error?.error?.message || 'Failed to load organizations';
+							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.REQUEST_TIMEOUT')
+							: error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_ORGANIZATIONS');
 					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					return EMPTY;
 				}),
@@ -233,7 +234,7 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 					this.selectedMakeTeam = null;
 					this.makeTeams = [];
 					this._toastrService.success(
-						`Organization "${org.name}" selected`,
+						this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.ORGANIZATION_SELECTED', { name: org.name }),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 					this._loadMakeTeams(org.id);
@@ -241,8 +242,8 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 				catchError((error) => {
 					const message =
 						error instanceof TimeoutError
-							? 'Request timed out. Please try again.'
-							: error?.error?.message || 'Failed to select organization';
+							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.REQUEST_TIMEOUT')
+							: error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.SELECT_ORGANIZATION');
 					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					return EMPTY;
 				}),
@@ -272,8 +273,8 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 				catchError((error) => {
 					const message =
 						error instanceof TimeoutError
-							? 'Request timed out. Please try again.'
-							: error?.error?.message || 'Failed to load teams';
+							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.REQUEST_TIMEOUT')
+							: error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_TEAMS');
 					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					return EMPTY;
 				}),
@@ -292,15 +293,15 @@ export class MakeComSettingsComponent extends TranslationBaseComponent implement
 				tap(() => {
 					this.selectedMakeTeam = team;
 					this._toastrService.success(
-						`Team "${team.name}" selected`,
+						this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.TEAM_SELECTED', { name: team.name }),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
 				catchError((error) => {
 					const message =
 						error instanceof TimeoutError
-							? 'Request timed out. Please try again.'
-							: error?.error?.message || 'Failed to select team';
+							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.REQUEST_TIMEOUT')
+							: error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.SELECT_TEAM');
 					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					return EMPTY;
 				}),

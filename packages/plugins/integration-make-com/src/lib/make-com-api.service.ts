@@ -32,6 +32,7 @@ import { MakeComOAuthService } from './make-com-oauth.service';
 @Injectable()
 export class MakeComApiService {
 	private readonly logger = new Logger(MakeComApiService.name);
+	private readonly refreshPromises = new Map<string, Promise<string>>();
 
 	constructor(
 		private readonly httpService: HttpService,
@@ -89,18 +90,33 @@ export class MakeComApiService {
 		// Check if the token is expired or about to expire (30s buffer)
 		if (expiresAt && new Date(expiresAt).getTime() - 30_000 < Date.now()) {
 			this.logger.log('Access token expired or near expiry, refreshing...');
-			await this.makeComOAuthService.refreshToken(integrationTenant.id);
 
-			// Re-read the updated settings
-			const updated = await this.integrationTenantService.findOneByOptions({
-				where: { id: integrationTenant.id },
-				relations: ['settings']
-			});
-			const newToken = this.getSettingValue(updated, MakeSettingName.ACCESS_TOKEN);
-			if (!newToken) {
-				throw new BadRequestException('Failed to refresh Make.com access token');
+			// Serialize refresh per tenant to avoid race conditions with rotating tokens
+			const tenantKey = integrationTenant.id as string;
+			const existing = this.refreshPromises.get(tenantKey);
+			if (existing) {
+				return existing;
 			}
-			return newToken;
+
+			const refreshPromise = (async () => {
+				await this.makeComOAuthService.refreshToken(integrationTenant.id);
+				const updated = await this.integrationTenantService.findOneByOptions({
+					where: { id: integrationTenant.id },
+					relations: ['settings']
+				});
+				const newToken = this.getSettingValue(updated, MakeSettingName.ACCESS_TOKEN);
+				if (!newToken) {
+					throw new BadRequestException('Failed to refresh Make.com access token');
+				}
+				return newToken;
+			})();
+
+			this.refreshPromises.set(tenantKey, refreshPromise);
+			try {
+				return await refreshPromise;
+			} finally {
+				this.refreshPromises.delete(tenantKey);
+			}
 		}
 
 		return accessToken;
@@ -126,7 +142,7 @@ export class MakeComApiService {
 		method: 'GET' | 'POST' | 'PATCH' | 'DELETE' | 'PUT',
 		path: string,
 		integrationTenant: IntegrationTenant,
-		options?: { data?: any; params?: Record<string, any> }
+		options?: { data?: any; params?: Record<string, any>; timeout?: number }
 	): Promise<T> {
 		const baseUrl = this.getZoneBaseUrl(integrationTenant);
 		const accessToken = await this.getValidAccessToken(integrationTenant);
@@ -140,7 +156,7 @@ export class MakeComApiService {
 			},
 			params: options?.params,
 			data: options?.data,
-			timeout: 15_000
+			timeout: options?.timeout ?? 15_000
 		};
 
 		try {
@@ -201,6 +217,16 @@ export class MakeComApiService {
 				integration: tenant
 			} as any);
 		}
+		// Clear zone-scoped org/team selections when zone changes
+		const existingOrg = tenant.settings?.find((s) => s.settingsName === MakeSettingName.MAKE_ORGANIZATION_ID);
+		if (existingOrg?.id) {
+			await this.integrationSettingService.delete(existingOrg.id);
+		}
+		const existingTeam = tenant.settings?.find((s) => s.settingsName === MakeSettingName.MAKE_TEAM_ID);
+		if (existingTeam?.id) {
+			await this.integrationSettingService.delete(existingTeam.id);
+		}
+
 		this.logger.log(`Make.com zone set to "${zone}" for tenant ${tenant.tenantId}`);
 	}
 
@@ -266,14 +292,14 @@ export class MakeComApiService {
 		const makeOrgId = this.getSettingValue(tenant, MakeSettingName.MAKE_ORGANIZATION_ID);
 		const makeTeamId = this.getSettingValue(tenant, MakeSettingName.MAKE_TEAM_ID);
 
-		const parsedOrgId = makeOrgId ? parseInt(makeOrgId, 10) : null;
-		const parsedTeamId = makeTeamId ? parseInt(makeTeamId, 10) : null;
+		const parsedOrgId = makeOrgId ? Number.parseInt(makeOrgId, 10) : null;
+		const parsedTeamId = makeTeamId ? Number.parseInt(makeTeamId, 10) : null;
 
 		return {
 			hasAccessToken: !!accessToken,
 			zone: zone as MakeComZone | null,
-			makeOrganizationId: parsedOrgId !== null && !isNaN(parsedOrgId) ? parsedOrgId : null,
-			makeTeamId: parsedTeamId !== null && !isNaN(parsedTeamId) ? parsedTeamId : null,
+			makeOrganizationId: parsedOrgId !== null && !Number.isNaN(parsedOrgId) ? parsedOrgId : null,
+			makeTeamId: parsedTeamId !== null && !Number.isNaN(parsedTeamId) ? parsedTeamId : null,
 			isComplete: !!accessToken && !!zone && !!makeOrgId && !!makeTeamId
 		};
 	}
@@ -286,8 +312,8 @@ export class MakeComApiService {
 		if (!value) {
 			throw new BadRequestException('Make.com organization ID is not configured. Please select an organization first.');
 		}
-		const parsed = parseInt(value, 10);
-		if (isNaN(parsed)) {
+		const parsed = Number.parseInt(value, 10);
+		if (Number.isNaN(parsed)) {
 			throw new BadRequestException('Invalid Make.com organization ID stored in settings.');
 		}
 		return parsed;
@@ -301,8 +327,8 @@ export class MakeComApiService {
 		if (!value) {
 			throw new BadRequestException('Make.com team ID is not configured. Please select a team first.');
 		}
-		const parsed = parseInt(value, 10);
-		if (isNaN(parsed)) {
+		const parsed = Number.parseInt(value, 10);
+		if (Number.isNaN(parsed)) {
 			throw new BadRequestException('Invalid Make.com team ID stored in settings.');
 		}
 		return parsed;
@@ -507,7 +533,8 @@ export class MakeComApiService {
 		const tenant = await this.getIntegrationTenant(organizationId);
 		return this.request<any>('POST', `/scenarios/${scenarioId}/run`, tenant, {
 			data: options?.data,
-			params: options?.responsive ? { responsive: true } : undefined
+			params: options?.responsive ? { responsive: true } : undefined,
+			timeout: options?.responsive ? 60_000 : undefined
 		});
 	}
 

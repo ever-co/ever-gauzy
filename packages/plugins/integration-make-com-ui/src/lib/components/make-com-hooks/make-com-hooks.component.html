@@ -70,7 +70,7 @@
               }
               @if (hook.queueCount != null) {
                 <small class="text-hint d-block">
-                  {{ 'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_QUEUE' | translate }}: {{ hook.queueCount }}@if (hook.queueLimit) { / {{ hook.queueLimit }}}
+                  {{ 'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_QUEUE' | translate }}: {{ hook.queueCount }}@if (hook.queueLimit != null) { / {{ hook.queueLimit }}}
                 </small>
               }
             </div>

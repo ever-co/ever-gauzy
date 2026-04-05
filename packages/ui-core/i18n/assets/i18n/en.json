@@ -1408,7 +1408,8 @@
 				"SELECT_ORGANIZATION": "Failed to select organization",
 				"LOAD_TEAMS": "Failed to load teams",
 				"SELECT_TEAM": "Failed to select team",
-				"LOAD_TEMPLATES": "Failed to load templates"
+				"LOAD_TEMPLATES": "Failed to load templates",
+				"REQUEST_TIMEOUT": "Request timed out. Please try again."
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Make.com settings saved successfully",

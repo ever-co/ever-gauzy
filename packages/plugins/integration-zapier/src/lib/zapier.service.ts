@@ -90,8 +90,8 @@ export class ZapierService {
 				throw new NotFoundException(`No settings found for integration ID ${integrationId}`);
 			}
 
-			// Extract the Gauzy-issued refresh token
-			const refresh_token = settings.find((s) => s.settingsName === 'zapier_refresh_token')?.settingsValue;
+			// Extract the Gauzy-issued OAuth refresh token
+			const refresh_token = settings.find((s) => s.settingsName === 'oauth_refresh_token')?.settingsValue;
 
 			if (!refresh_token) {
 				this.logger.warn(`Missing refresh token for integration ID ${integrationId}`);
@@ -402,7 +402,7 @@ export class ZapierService {
 		integrationId: string,
 		organizationId?: string
 	): Promise<void> {
-		const expirationTime = new Date();
+		let expirationTime = new Date();
 		expirationTime.setMinutes(expirationTime.getMinutes() + 10); // State expires in 10 minutes
 
 		await this._integrationSettingService.create({
@@ -588,11 +588,23 @@ export class ZapierService {
 					)
 			);
 
-			// Store the tokens — filter out old Zapier token settings first, then add new ones
+			// Store the tokens — delete ALL old token settings (Zapier + Gauzy OAuth) first, then save new ones
 			const existingSetting = settings[0];
-			const filteredSettings = settings.filter(
-				(s) => !['zapier_access_token', 'zapier_refresh_token'].includes(s.settingsName)
+			const allTokenSettingNames = [
+				'zapier_access_token',
+				'zapier_refresh_token',
+				'oauth_access_token',
+				'oauth_refresh_token'
+			];
+			const staleTokens = settings.filter((s) => allTokenSettingNames.includes(s.settingsName));
+			await Promise.all(
+				staleTokens
+					.map((s) => s.id)
+					.filter((id): id is string => id != null)
+					.map((id) => this._integrationSettingService.delete(id))
 			);
+
+			const filteredSettings = settings.filter((s) => !allTokenSettingNames.includes(s.settingsName));
 
 			const updatedSettings = [
 				...filteredSettings,
@@ -850,9 +862,23 @@ export class ZapierService {
 			}
 		];
 
-		// Remove existing Gauzy OAuth token settings and add new ones
+		// Delete ALL existing token settings (both Gauzy OAuth and Zapier API tokens) before saving new ones
+		const allTokenSettingNames = [
+			'oauth_access_token',
+			'oauth_refresh_token',
+			'zapier_access_token',
+			'zapier_refresh_token'
+		];
+		const staleTokens = existingSettings.filter((setting) => allTokenSettingNames.includes(setting.settingsName));
+		await Promise.all(
+			staleTokens
+				.map((s) => s.id)
+				.filter((id): id is string => id != null)
+				.map((id) => this._integrationSettingService.delete(id))
+		);
+
 		const filteredExistingSettings = existingSettings.filter(
-			(setting) => !['oauth_access_token', 'oauth_refresh_token'].includes(setting.settingsName)
+			(setting) => !allTokenSettingNames.includes(setting.settingsName)
 		);
 
 		const allSettings = [...filteredExistingSettings, ...tokenSettings] as DeepPartial<IIntegrationEntitySetting>;
@@ -947,7 +973,7 @@ export class ZapierService {
 			}
 		}
 
-		const expirationTime = new Date();
+		let expirationTime = new Date();
 		expirationTime.setMinutes(expirationTime.getMinutes() + 10);
 
 		await this._integrationSettingService.create({
@@ -999,20 +1025,18 @@ export class ZapierService {
 		try {
 			parsedCode = JSON.parse(codeSetting.settingsValue ?? '{}');
 		} catch {
-			// Corrupted data — attempt cleanup and fail
-			await this._integrationSettingService.delete({
-				id: codeSetting.id,
-				settingsValue: codeSetting.settingsValue
-			} as any);
+			// Corrupted data — cleanup by ID only and fail
+			await this._integrationSettingService.typeOrmIntegrationSettingRepository.delete(codeSetting.id);
 			throw new BadRequestException('Corrupted authorization code data');
 		}
 
 		// Check expiration
 		if (parsedCode.expiresAt && new Date(parsedCode.expiresAt) < new Date()) {
-			const result = await this._integrationSettingService.delete({
+			// Use repository.delete() with FindOptionsWhere for atomic single-use guarantee
+			const result = await this._integrationSettingService.typeOrmIntegrationSettingRepository.delete({
 				id: codeSetting.id,
 				settingsValue: codeSetting.settingsValue
-			} as any);
+			});
 			if (result.affected !== 1) {
 				throw new BadRequestException('Invalid authorization code');
 			}
@@ -1026,10 +1050,11 @@ export class ZapierService {
 
 		// Atomic single-use delete: only succeed if no other request already consumed this code.
 		// We match on both id AND the exact settingsValue to detect concurrent consumption.
-		const result = await this._integrationSettingService.delete({
+		// Use repository.delete() with FindOptionsWhere to ensure both predicates are applied.
+		const result = await this._integrationSettingService.typeOrmIntegrationSettingRepository.delete({
 			id: codeSetting.id,
 			settingsValue: codeSetting.settingsValue
-		} as any);
+		});
 
 		if (result.affected !== 1) {
 			// Another concurrent request already consumed this code.

@@ -29,8 +29,9 @@ export class MakeComAuthorizationController {
 	})
 	@Get('/authorize')
 	async authorize(@Query() { state }: { state?: string }) {
+		const authorizationUrl = await this.makeComOAuthService.getAuthorizationUrl({ state });
 		return {
-			authorizationUrl: this.makeComOAuthService.getAuthorizationUrl({ state })
+			authorizationUrl
 		};
 	}
 

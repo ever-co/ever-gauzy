@@ -59,7 +59,7 @@ export class MakeComTemplatesComponent extends TranslationBaseComponent implemen
 					this.setupStatus = null;
 					this.loading = false;
 					this._toastrService.error(
-						error?.error?.message || 'Failed to load setup status',
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETUP_STATUS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;
@@ -77,7 +77,7 @@ export class MakeComTemplatesComponent extends TranslationBaseComponent implemen
 				tap((templates) => (this.templates = templates)),
 				catchError((error) => {
 					this._toastrService.error(
-						error?.error?.message || 'Failed to load templates',
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_TEMPLATES'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;

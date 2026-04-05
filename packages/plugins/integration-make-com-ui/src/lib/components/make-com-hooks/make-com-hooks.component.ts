@@ -33,6 +33,7 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 
 	private _checkSetupAndLoad() {
 		this.loading = true;
+		this.hooks = [];
 		this._makeComStoreService
 			.loadSetupStatus()
 			.pipe(
@@ -42,6 +43,7 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 					if (status.isComplete) {
 						this._loadHooks();
 					} else {
+						this.hooks = [];
 						this.loading = false;
 					}
 				}),
@@ -50,7 +52,7 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 					this.loading = false;
 					const message =
 						error instanceof TimeoutError
-							? 'Request timed out. Please try again.'
+							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.REQUEST_TIMEOUT')
 							: error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_SETUP_STATUS');
 					this._toastrService.error(message, this.getTranslation('TOASTR.TITLE.ERROR'));
 					return EMPTY;
@@ -68,9 +70,10 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 				timeout(15_000),
 				tap((hooks) => (this.hooks = hooks)),
 				catchError((error) => {
+					this.hooks = [];
 					this._toastrService.error(
 						error instanceof TimeoutError
-							? 'Request timed out. Please try again.'
+							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.REQUEST_TIMEOUT')
 							: error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_WEBHOOKS'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
@@ -90,22 +93,29 @@ export class MakeComHooksComponent extends TranslationBaseComponent implements O
 
 		action$
 			.pipe(
-				tap(() => {
-					this._toastrService.success(
-						hook.enabled
-							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.WEBHOOK_TOGGLED_OFF')
-							: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.WEBHOOK_TOGGLED_ON'),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
-					);
-				}),
-				switchMap(() => this._makeComStoreService.loadHooks()),
-				tap((hooks) => (this.hooks = hooks)),
 				catchError((error) => {
 					this._toastrService.error(
 						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.TOGGLE_WEBHOOK'),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					return EMPTY;
+				}),
+				switchMap(() => this._makeComStoreService.loadHooks()),
+				catchError((error) => {
+					this._toastrService.error(
+						error?.error?.message || this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.LOAD_WEBHOOKS'),
+						this.getTranslation('TOASTR.TITLE.ERROR')
+					);
+					return EMPTY;
+				}),
+				tap((hooks) => {
+					this.hooks = hooks;
+					this._toastrService.success(
+						hook.enabled
+							? this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.WEBHOOK_TOGGLED_OFF')
+							: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SUCCESS.WEBHOOK_TOGGLED_ON'),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
 				}),
 				finalize(() => (this.actionLoading[hook.id] = false)),
 				untilDestroyed(this)

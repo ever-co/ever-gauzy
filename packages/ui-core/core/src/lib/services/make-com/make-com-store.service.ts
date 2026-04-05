@@ -129,7 +129,18 @@ export class MakeComStoreService {
 
 	setZone(zone: MakeComZone, organizationId?: string): Observable<{ success: boolean; zone: MakeComZone }> {
 		return this._makeComService.setZone(zone, organizationId).pipe(
-			tap(() => this._zone$.next(zone)),
+			tap(() => {
+				this._zone$.next(zone);
+				this._setupStatus$.next(null);
+				this._selectedMakeOrganization$.next(null);
+				this._makeOrganizations$.next([]);
+				this._selectedMakeTeam$.next(null);
+				this._makeTeams$.next([]);
+				this._scenarios$.next([]);
+				this._hooks$.next([]);
+				this._connections$.next([]);
+				this._templates$.next([]);
+			}),
 			catchError((error) => {
 				console.error('Error setting Make.com zone:', error);
 				return throwError(() => error);
@@ -155,7 +166,15 @@ export class MakeComStoreService {
 
 	selectMakeOrganization(org: IMakeComOrganization, organizationId?: string): Observable<any> {
 		return this._makeComService.setMakeOrganization(org.id, organizationId).pipe(
-			tap(() => this._selectedMakeOrganization$.next(org)),
+			tap(() => {
+				this._selectedMakeOrganization$.next(org);
+				this._selectedMakeTeam$.next(null);
+				this._makeTeams$.next([]);
+				this._scenarios$.next([]);
+				this._hooks$.next([]);
+				this._connections$.next([]);
+				this._templates$.next([]);
+			}),
 			catchError((error) => {
 				console.error('Error selecting Make.com organization:', error);
 				return throwError(() => error);
@@ -177,7 +196,13 @@ export class MakeComStoreService {
 
 	selectMakeTeam(team: IMakeComTeam, organizationId?: string): Observable<any> {
 		return this._makeComService.setMakeTeam(team.id, organizationId).pipe(
-			tap(() => this._selectedMakeTeam$.next(team)),
+			tap(() => {
+				this._selectedMakeTeam$.next(team);
+				this._scenarios$.next([]);
+				this._hooks$.next([]);
+				this._connections$.next([]);
+				this._templates$.next([]);
+			}),
 			catchError((error) => {
 				console.error('Error selecting Make.com team:', error);
 				return throwError(() => error);

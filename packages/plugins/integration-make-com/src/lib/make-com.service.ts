@@ -268,48 +268,6 @@ export class MakeComService {
 		}
 	}
 	/**
-	 * Validates that the provided OAuth credentials match the server-side
-	 * Make.com OAuth configuration. Server-owned secrets are never written
-	 * to tenant data.
-	 *
-	 * @param {Object} credentials - The OAuth credentials to validate.
-	 * @param {string} credentials.clientId - The OAuth client ID.
-	 * @param {string} credentials.clientSecret - The OAuth client secret.
-	 * @returns {boolean} True if credentials match server config.
-	 * @throws {BadRequestException} If credentials don't match server config.
-	 */
-	validateOAuthCredentials(credentials: { clientId: string; clientSecret: string }): boolean {
-		const makeComConfig = this.config?.get('makeCom');
-		if (
-			!makeComConfig?.clientId ||
-			!makeComConfig?.clientSecret ||
-			makeComConfig.clientId !== credentials.clientId ||
-			makeComConfig.clientSecret !== credentials.clientSecret
-		) {
-			throw new BadRequestException('OAuth credentials do not match server-side configuration');
-		}
-		return true;
-	}
-
-	/**
-	 * Retrieves the OAuth credentials for the Make.com integration from server-side config.
-	 * Server-owned secrets are never stored in or read from tenant data.
-	 *
-	 * @returns {Promise<{clientId: string, clientSecret: string}>} A promise that resolves to the OAuth credentials.
-	 * @throws {BadRequestException} If credentials are not configured on the server.
-	 */
-	async getOAuthCredentials(): Promise<{ clientId: string; clientSecret: string }> {
-		const makeComConfig = this.config?.get('makeCom');
-		if (!makeComConfig?.clientId || !makeComConfig?.clientSecret) {
-			throw new BadRequestException('Make.com OAuth credentials are not configured on the server');
-		}
-		return {
-			clientId: makeComConfig.clientId,
-			clientSecret: makeComConfig.clientSecret
-		};
-	}
-
-	/**
 	 * Retrieves the OAuth client ID for the Make.com integration from server-side config.
 	 *
 	 * @returns {Promise<string | null>} A promise that resolves to the OAuth client ID or null if not configured.

@@ -95,7 +95,7 @@ export class MakeComController {
 
 		// Generate authorization URL first — if this fails (e.g. missing config),
 		// we avoid leaving a partial integration record behind.
-		const authorizationUrl = this.makeComOAuthService.getAuthorizationUrl({
+		const authorizationUrl = await this.makeComOAuthService.getAuthorizationUrl({
 			organizationId: body?.organizationId
 		});
 
@@ -151,7 +151,7 @@ export class MakeComController {
 			}
 
 			// Verify state and retrieve the PKCE code verifier
-			const stateVerification = this.makeComOAuthService.verifyState(body.state);
+			const stateVerification = await this.makeComOAuthService.verifyState(body.state);
 			if (!stateVerification.isValid) {
 				throw new BadRequestException('Invalid or expired state parameter');
 			}

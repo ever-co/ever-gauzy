@@ -1,5 +1,7 @@
-import { Injectable, BadRequestException, Logger, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, HttpException, HttpStatus, NotFoundException, Inject } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { ConfigService } from '@gauzy/config';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError } from 'axios';
@@ -26,8 +28,8 @@ import { MakeComService } from './make-com.service';
 @Injectable()
 export class MakeComOAuthService {
 	private readonly logger = new Logger(MakeComOAuthService.name);
-	private pendingStates = new Map<string, { timestamp: number; codeVerifier: string }>();
 	private static readonly STATE_TTL_MS = 10 * 60 * 1000; // 10 min
+	private static readonly STATE_CACHE_KEY_PREFIX = 'make_com_oauth_state:';
 
 	constructor(
 		private readonly httpService: HttpService,
@@ -36,7 +38,8 @@ export class MakeComOAuthService {
 		private readonly integrationSettingService: IntegrationSettingService,
 		private readonly integrationTenantService: IntegrationTenantService,
 		private readonly integrationService: IntegrationService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache
 	) {}
 
 	/**
@@ -59,7 +62,7 @@ export class MakeComOAuthService {
 	 *
 	 * @see https://developers.make.com/api-documentation/authentication/oauth-flow/authorization-code-flow-with-refresh-token-confidential-clients
 	 */
-	getAuthorizationUrl(options?: { state?: string; clientId?: string; organizationId?: string }): string {
+	async getAuthorizationUrl(options?: { state?: string; clientId?: string; organizationId?: string }): Promise<string> {
 	try {
 		const redirectUri = this.config.get('makeCom').redirectUri;
 		const tenantId = RequestContext.currentTenantId();
@@ -78,7 +81,8 @@ export class MakeComOAuthService {
 		const codeVerifier = this.generateCodeVerifier();
 		const codeChallenge = this.generateCodeChallenge(codeVerifier);
 
-		this.storeStateForVerification(state, codeVerifier);
+		// Store state in Redis for later verification (async to ensure persistence)
+		await this.storeStateForVerification(state, codeVerifier);
 
 		// Prepare scopes according to Make.com documentation
 		const scopes = MAKE_DEFAULT_SCOPES.join(' ');
@@ -121,12 +125,15 @@ export class MakeComOAuthService {
 			}
 
 			// Prepare the request body for Make.com token endpoint with PKCE
+			const redirectUri = makeComConfig?.redirectUri;
+
 			const tokenRequestParams = new URLSearchParams({
 				grant_type: 'authorization_code',
 				code,
 				client_id: clientId,
 				client_secret: clientSecret,
-				code_verifier: codeVerifier
+				code_verifier: codeVerifier,
+				...(redirectUri ? { redirect_uri: redirectUri } : {})
 			});
 
 			const headers = {
@@ -286,49 +293,53 @@ export class MakeComOAuthService {
 
 	/**
 	 * Verify the state parameter to prevent CSRF attacks and return the PKCE code verifier.
+	 * Uses Redis-backed cache for multi-replica support and process restart durability.
 	 */
-	verifyState(state: string): { isValid: boolean; codeVerifier?: string } {
-		const pendingState = this.pendingStates.get(state);
+	async verifyState(state: string): Promise<{ isValid: boolean; codeVerifier?: string }> {
+		const cacheKey = MakeComOAuthService.STATE_CACHE_KEY_PREFIX + state;
+		const pendingState = await this.cacheManager.get<{ timestamp: number; codeVerifier: string }>(cacheKey);
 
 		if (!pendingState) {
 			this.logger.warn(`State ${state} not found in pending states`);
 			return { isValid: false };
 		}
+
+		// State found - delete it immediately to ensure single-use (atomic consumption)
+		await this.cacheManager.del(cacheKey);
+
+		// Check expiration by reading the stored timestamp
 		const now = Date.now();
 		const expirationTime = MakeComOAuthService.STATE_TTL_MS;
 		if (now - pendingState.timestamp > expirationTime) {
 			this.logger.warn(`State ${state} has expired`);
-			this.pendingStates.delete(state);
 			return { isValid: false };
 		}
-		// Valid and used - remove it to free memory, return codeVerifier for token exchange
-		this.pendingStates.delete(state);
+
+		// Valid and not expired - return codeVerifier for token exchange
 		return { isValid: true, codeVerifier: pendingState.codeVerifier };
 	}
 
 	/**
 	 * Store the state parameter and PKCE code verifier for later verification.
+	 * Uses Redis-backed cache with TTL for multi-replica support and process restart durability.
 	 *
 	 * @param {string} state - The state parameter to store.
 	 * @param {string} codeVerifier - The PKCE code verifier to store.
 	 */
-	private storeStateForVerification(state: string, codeVerifier: string): void {
-		this.pendingStates.set(state, { timestamp: Date.now(), codeVerifier });
-		this.cleanupExpiredStates();
+	private async storeStateForVerification(state: string, codeVerifier: string): Promise<void> {
+		const cacheKey = MakeComOAuthService.STATE_CACHE_KEY_PREFIX + state;
+		// TTL in seconds (cache-manager expects seconds, not milliseconds)
+		const ttlInSeconds = MakeComOAuthService.STATE_TTL_MS / 1000;
+		await this.cacheManager.set(cacheKey, { timestamp: Date.now(), codeVerifier }, ttlInSeconds);
 	}
 
 	/**
-	 * Clean up expired state parameters to prevent memory leaks.
+	 * Clean up expired state parameters.
+	 * Note: With Redis-backed cache and TTL, this is no longer needed as Redis handles expiration automatically.
+	 * Kept for backward compatibility but does nothing.
 	 */
 	private cleanupExpiredStates(): void {
-		const now = Date.now();
-		const expirationTime = MakeComOAuthService.STATE_TTL_MS;
-
-		for (const [state, { timestamp }] of this.pendingStates.entries()) {
-			if (now - timestamp > expirationTime) {
-				this.pendingStates.delete(state);
-			}
-		}
+		// Redis TTL handles expiration automatically - no manual cleanup needed
 	}
 
 	/**
@@ -338,7 +349,7 @@ export class MakeComOAuthService {
 	async handleAuthorizationCallback(code: string, state: string): Promise<void> {
 		try {
 			// Verify state to prevent CSRF and retrieve the PKCE code verifier
-			const stateVerification = this.verifyState(state);
+			const stateVerification = await this.verifyState(state);
 			if (!stateVerification.isValid) {
 				throw new BadRequestException('Invalid or expired state parameter');
 			}
