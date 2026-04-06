@@ -1189,16 +1189,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scenarios",
-			"EXECUTIONS": "Executions",
-			"HISTORY": "History",
+			"WEBHOOKS": "Webhooks",
+			"WEBHOOKS_REFRESH": "Refresh webhooks",
+			"WEBHOOK_ENABLE": "Enable webhook",
+			"WEBHOOK_DISABLE": "Disable webhook",
+			"WEBHOOK_PING": "Ping webhook",
+			"SCENARIO_ACTIVE": "Active",
+			"SCENARIO_INACTIVE": "Inactive",
+			"SCENARIO_LAST_EDITED": "Last edited: {{value}}",
+			"SCENARIO_DISABLE": "Disable scenario",
+			"SCENARIO_ENABLE": "Enable scenario",
+			"SCENARIO_RUN_ONCE": "Run scenario once",
+			"WEBHOOK_ENABLED": "Enabled",
+			"WEBHOOK_DISABLED": "Disabled",
+			"WEBHOOK_TYPE": "Type",
+			"WEBHOOK_QUEUE": "Queue",
+			"TEMPLATE_PUBLIC": "Public",
+			"TEMPLATE_PUBLISHED": "Published",
+			"REFRESH_CONNECTIONS": "Refresh connections",
+			"CONFIGURATION_TITLE": "Make.com Configuration",
+			"ZONE_LABEL": "Zone",
+			"ZONE_HINT": "Select the zone that matches your Make.com account (e.g., us2.make.com)",
+			"ORGANIZATION_LABEL": "Make.com Organization",
+			"LOADING_ORGANIZATIONS": "Loading organizations...",
+			"NO_ORGANIZATIONS": "No organizations found",
+			"TEAM_LABEL": "Make.com Team",
+			"LOADING_TEAMS": "Loading teams...",
+			"NO_TEAMS": "No teams found",
+			"CONNECTED_TO": "Connected to {{org}} / {{team}} on {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "Webhook Settings",
+			"CONNECTIONS": "Connections",
+			"TEMPLATES": "Templates",
 			"SETTINGS": "Settings",
-			"ERRORS": {
-				"INVALID_FORM": "Tim ber iyie pot buk ma mito ni ber",
-				"START_AUTHORIZATION": "Please start the authorization process"
+			"CONNECT_TO_MAKE_COM": "Connect to Make.com",
+			"CONNECT_INFO": "Click the button below to connect your Make.com account. You will be redirected to Make.com to authorize the integration.",
+			"NO_SCENARIOS": "No scenarios found. Create scenarios in your Make.com dashboard.",
+			"NO_HOOKS": "No webhooks found. Create webhooks in your Make.com dashboard.",
+			"NO_CONNECTIONS": "No connections found. Create connections in your Make.com dashboard.",
+			"NO_TEMPLATES": "No templates found.",
+			"TEST_CONNECTION": "Test connection",
+			"CONNECTION": {
+				"ACCOUNT": "Account: {{value}}",
+				"TYPE": "Type: {{value}}",
+				"PACKAGE": "Package: {{value}}",
+				"EXPIRES": "Expires: {{value}}"
 			},
-			"CLIENT_ID": "Client Id",
-			"CLIENT_SECRET": "Client Secret",
-			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Make.com me tiyo ki integration"
+			"ERRORS": {
+				"INVALID_FORM": "Please fill in all required fields",
+				"START_AUTHORIZATION": "Failed to start the authorization process",
+				"NO_ORGANIZATION": "Please select an organization first",
+				"LOAD_SETTINGS": "Failed to load Make.com settings",
+				"SAVE_SETTINGS": "Failed to save Make.com settings",
+				"LOAD_SETUP_STATUS": "Failed to load setup status",
+				"LOAD_SCENARIOS": "Failed to load scenarios",
+				"TOGGLE_SCENARIO": "Failed to toggle scenario",
+				"RUN_SCENARIO": "Failed to run scenario",
+				"LOAD_CONNECTIONS": "Failed to load connections",
+				"TEST_CONNECTION": "Failed to test connection",
+				"LOAD_WEBHOOKS": "Failed to load webhooks",
+				"TOGGLE_WEBHOOK": "Failed to toggle webhook",
+				"PING_WEBHOOK": "Failed to ping webhook",
+				"SET_ZONE": "Failed to set zone",
+				"LOAD_ORGANIZATIONS": "Failed to load organizations",
+				"SELECT_ORGANIZATION": "Failed to select organization",
+				"LOAD_TEAMS": "Failed to load teams",
+				"SELECT_TEAM": "Failed to select team",
+				"LOAD_TEMPLATES": "Failed to load templates",
+				"REQUEST_TIMEOUT": "Request timed out. Please try again."
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Make.com settings saved successfully",
+				"SCENARIO_ACTIVATED": "Scenario activated",
+				"SCENARIO_DEACTIVATED": "Scenario deactivated",
+				"SCENARIO_EXECUTED": "Scenario executed",
+				"CONNECTION_VALID": "Connection \"{{name}}\" is valid",
+				"WEBHOOK_TOGGLED_ON": "Webhook enabled",
+				"WEBHOOK_TOGGLED_OFF": "Webhook disabled",
+				"WEBHOOK_PINGED": "Webhook \"{{name}}\" pinged successfully",
+				"ZONE_SET": "Zone set to {{zone}}",
+				"ORGANIZATION_SELECTED": "Organization \"{{name}}\" selected",
+				"TEAM_SELECTED": "Team \"{{name}}\" selected"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Please authorize with Make.com first. Go to the Settings tab to connect your account.",
+				"ZONE": "Please select your Make.com zone in the Settings tab.",
+				"ORGANIZATION": "Please select your Make.com organization in the Settings tab.",
+				"TEAM": "Please select your Make.com team in the Settings tab."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1211,19 +1288,24 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "Ket Zapier Client ID ni",
-			"CLIENT_SECRET": "Ket Zapier Client Secret ni",
-			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Zapier me tiyo ki integration",
+			"CONNECT_TO_ZAPIER": "Kub ki Zapier",
+			"CONNECT_INFO": "Dii gin ame piny me kube akaunt mamegi me Zapier. Ibi nyuto i Zapier me ye kwede integration.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Peko oo pe gonyo ter pa Zapier",
 				"SAVE_SETTINGS": "Peko oo pe gam ter pa Zapier",
 				"INVALID_FORM": "Tim ber iyie pot buk ma mito ni ber",
 				"MISSING_CREDENTIALS": "Peko pe tye lok ma loyo client",
+				"NO_ORGANIZATION": "Tim ber i yer lawoti mukwongo",
 				"NO_ACCESS_TOKEN": "Peke pe tye token ma loyo",
 				"LOAD_WEBHOOKS": "Peko oo pe gonyo webhooks",
 				"DELETE_WEBHOOK": "Peko oo pe junk webhook",
 				"LOAD_ACTIONS": "Peko oo pe gonyo tic",
 				"LOAD_TRIGGERS": "Peko oo pe gonyo lok ma gonyo",
+				"LOAD_ZAPS": "Peko oo pe gonyo zaps",
+				"LOAD_ZAP_TEMPLATES": "Peko oo pe gonyo template pa zap",
+				"CREATE_ZAP": "Peko oo pe create zap",
+				"ZAP_TITLE_REQUIRED": "Tim ber i miyo title me zap manyen",
+				"NO_INTEGRATION_ID": "Pe ki miyo ID me integration pa Zapier",
 				"START_AUTHORIZATION": "Ket cwoki pa authorization ni",
 				"INVALID_CALLBACK": "Peko tye callback ma tye maber",
 				"AUTHORIZATION": "Peko tye authorization ma tye maber",
@@ -1233,6 +1315,7 @@
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Ter pa Zapier ogam ki ber",
 				"DELETE_WEBHOOK": "Webhook ojunk ki ber",
+				"CREATE_ZAP": "Ocreate zap ki ber",
 				"AUTHORIZATION": "Authorization puched ki ber"
 			},
 			"TAB": {
@@ -1275,6 +1358,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "Pe tye webhook ma kigoyo"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "Pe tye zaps",
+				"CREATE": "Lok Zap",
+				"SUBMIT": "Lok",
+				"ADD_STEP": "Med step",
+				"OPEN_EDITOR": "Yab i Zapier",
+				"ENABLED": "Cako",
+				"DISABLED": "Juko",
+				"TITLE_PLACEHOLDER": "Ket title me Zap manyen",
+				"FIELDS": {
+					"TITLE": "Title",
+					"STEPS": "Steps",
+					"STEP": "Step",
+					"STEP_TITLE": "Step title",
+					"ACTION": "Tic",
+					"AUTHENTICATION": "Authentication",
+					"INPUTS": "Inputs (JSON)"
+				}
 			}
 		},
 		"ACTIVEPIECES_PAGE": {
@@ -1503,7 +1606,17 @@
 		"FILTER_INTEGRATIONS": "crwdns8270:0crwdne8270:0",
 		"SEARCH_INTEGRATIONS": "crwdns8272:0crwdne8272:0",
 		"PAID": "crwdns11205:0crwdne11205:0",
-		"INTEGRATION": "crwdns11207:0crwdne11207:0"
+		"INTEGRATION": "crwdns11207:0crwdne11207:0",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Processing Make.com authorization...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Make.com authorization failed",
+				"INVALID_CALLBACK": "Invalid callback parameters"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Make.com authorization completed successfully"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "crwdns3190:0crwdne3190:0",

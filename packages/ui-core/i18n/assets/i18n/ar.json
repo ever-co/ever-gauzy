@@ -1293,16 +1293,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "سيناريوهات",
-			"EXECUTIONS": "تنفيذات",
-			"HISTORY": "السجل",
-			"SETTINGS": "الإعدادات",
-			"ERRORS": {
-				"INVALID_FORM": "يرجى إدخال جميع الحقول المطلوبة",
-				"START_AUTHORIZATION": "يرجى بدء عملية التفويض"
+			"WEBHOOKS": "الويب هوكس",
+			"WEBHOOKS_REFRESH": "تحديث الويب هوكس",
+			"WEBHOOK_ENABLE": "تفعيل الويب هوك",
+			"WEBHOOK_DISABLE": "تعطيل الويب هوك",
+			"WEBHOOK_PING": "اختبار الويب هوك",
+			"SCENARIO_ACTIVE": "نشط",
+			"SCENARIO_INACTIVE": "غير نشط",
+			"SCENARIO_LAST_EDITED": "آخر تعديل: {{value}}",
+			"SCENARIO_DISABLE": "تعطيل السيناريو",
+			"SCENARIO_ENABLE": "تفعيل السيناريو",
+			"SCENARIO_RUN_ONCE": "تشغيل السيناريو مرة واحدة",
+			"WEBHOOK_ENABLED": "مفعّل",
+			"WEBHOOK_DISABLED": "معطّل",
+			"WEBHOOK_TYPE": "النوع",
+			"WEBHOOK_QUEUE": "قائمة الانتظار",
+			"TEMPLATE_PUBLIC": "عام",
+			"TEMPLATE_PUBLISHED": "منشور",
+			"REFRESH_CONNECTIONS": "تحديث الاتصالات",
+			"CONFIGURATION_TITLE": "إعدادات Make.com",
+			"ZONE_LABEL": "المنطقة",
+			"ZONE_HINT": "اختر المنطقة التي تطابق حساب Make.com الخاص بك (مثال: us2.make.com)",
+			"ORGANIZATION_LABEL": "منظمة Make.com",
+			"LOADING_ORGANIZATIONS": "جاري تحميل المنظمات...",
+			"NO_ORGANIZATIONS": "لم يتم العثور على منظمات",
+			"TEAM_LABEL": "فريق Make.com",
+			"LOADING_TEAMS": "جاري تحميل الفرق...",
+			"NO_TEAMS": "لم يتم العثور على فرق",
+			"CONNECTED_TO": "متصل بـ {{org}} / {{team}} على {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "إعدادات الويب هوك",
+			"CONNECTIONS": "اتصالات",
+			"TEMPLATES": "قوالب",
+			"SETTINGS": "إعدادات",
+			"CONNECT_TO_MAKE_COM": "الاتصال بـ Make.com",
+			"CONNECT_INFO": "انقر على الزر أدناه لربط حساب Make.com الخاص بك. سيتم إعادة توجيهك إلى Make.com لتفويض التكامل.",
+			"NO_SCENARIOS": "لم يتم العثور على سيناريوهات. أنشئ سيناريوهات في لوحة تحكم Make.com.",
+			"NO_HOOKS": "لم يتم العثور على webhooks. أنشئ webhooks في لوحة تحكم Make.com.",
+			"NO_CONNECTIONS": "لم يتم العثور على اتصالات. أنشئ اتصالات في لوحة تحكم Make.com.",
+			"NO_TEMPLATES": "لم يتم العثور على قوالب.",
+			"TEST_CONNECTION": "اختبار الاتصال",
+			"CONNECTION": {
+				"ACCOUNT": "الحساب: {{value}}",
+				"TYPE": "النوع: {{value}}",
+				"PACKAGE": "الحزمة: {{value}}",
+				"EXPIRES": "ينتهي: {{value}}"
 			},
-			"CLIENT_ID": "معرف العميل",
-			"CLIENT_SECRET": "الرمز السري للعميل",
-			"NEXT_STEP_INFO": "بعد التفويض، سيتم توجيهك إلى Make.com لإكمال إعداد التكامل"
+			"ERRORS": {
+				"INVALID_FORM": "يرجى ملء جميع الحقول المطلوبة",
+				"START_AUTHORIZATION": "فشل في بدء عملية التفويض",
+				"NO_ORGANIZATION": "يرجى اختيار منظمة أولاً",
+				"LOAD_SETTINGS": "فشل في تحميل إعدادات Make.com",
+				"SAVE_SETTINGS": "فشل في حفظ إعدادات Make.com",
+				"LOAD_SETUP_STATUS": "فشل في تحميل حالة الإعداد",
+				"LOAD_SCENARIOS": "فشل في تحميل السيناريوهات",
+				"TOGGLE_SCENARIO": "فشل في تبديل السيناريو",
+				"RUN_SCENARIO": "فشل في تشغيل السيناريو",
+				"LOAD_CONNECTIONS": "فشل في تحميل الاتصالات",
+				"TEST_CONNECTION": "فشل في اختبار الاتصال",
+				"LOAD_WEBHOOKS": "فشل في تحميل الويب هوكس",
+				"TOGGLE_WEBHOOK": "فشل في تبديل الويب هوك",
+				"PING_WEBHOOK": "فشل في اختبار الويب هوك",
+				"SET_ZONE": "فشل في تعيين المنطقة",
+				"LOAD_ORGANIZATIONS": "فشل في تحميل المنظمات",
+				"SELECT_ORGANIZATION": "فشل في اختيار المنظمة",
+				"LOAD_TEAMS": "فشل في تحميل الفرق",
+				"SELECT_TEAM": "فشل في اختيار الفريق",
+				"LOAD_TEMPLATES": "فشل في تحميل القوالب",
+				"REQUEST_TIMEOUT": "انتهت مهلة الطلب. يرجى المحاولة مرة أخرى."
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "تم حفظ إعدادات Make.com بنجاح",
+				"SCENARIO_ACTIVATED": "تم تفعيل السيناريو",
+				"SCENARIO_DEACTIVATED": "تم تعطيل السيناريو",
+				"SCENARIO_EXECUTED": "تم تنفيذ السيناريو",
+				"CONNECTION_VALID": "الاتصال \"{{name}}\" صالح",
+				"WEBHOOK_TOGGLED_ON": "تم تمكين الويب هوك",
+				"WEBHOOK_TOGGLED_OFF": "تم تعطيل الويب هوك",
+				"WEBHOOK_PINGED": "تم اختبار الويب هوك \"{{name}}\" بنجاح",
+				"ZONE_SET": "تم تعيين المنطقة إلى {{zone}}",
+				"ORGANIZATION_SELECTED": "تم اختيار المنظمة \"{{name}}\"",
+				"TEAM_SELECTED": "تم اختيار الفريق \"{{name}}\""
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "يرجى تفويض Make.com أولاً. انتقل إلى علامة التبويب الإعدادات لربط حسابك.",
+				"ZONE": "يرجى اختيار منطقة Make.com في علامة التبويب الإعدادات.",
+				"ORGANIZATION": "يرجى اختيار منظمة Make.com في علامة التبويب الإعدادات.",
+				"TEAM": "يرجى اختيار فريق Make.com في علامة التبويب الإعدادات."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1315,26 +1392,32 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "معرف العميل",
-			"CLIENT_SECRET": "الرمز السري للعميل",
-			"NEXT_STEP_INFO": "بعد التفويض، سيتم توجيهك إلى Zapier لإكمال إعداد التكامل",
+			"CONNECT_TO_ZAPIER": "الاتصال بـ Zapier",
+			"CONNECT_INFO": "انقر على الزر أدناه لربط حسابك في Zapier. سيتم توجيهك إلى Zapier للتفويض بالتكامل.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "فشل تحميل إعدادات Zapier",
 				"SAVE_SETTINGS": "فشل حفظ إعدادات Zapier",
 				"INVALID_FORM": "يرجى إدخال جميع الحقول المطلوبة",
 				"MISSING_CREDENTIALS": "بيانات الاعتماد للعميل مفقودة",
+				"NO_ORGANIZATION": "يرجى اختيار منظمة أولاً",
 				"NO_ACCESS_TOKEN": "لا يوجد رمز وصول متاح",
 				"LOAD_WEBHOOKS": "فشل تحميل ويب هوكس",
 				"DELETE_WEBHOOK": "فشل حذف ويب هوك",
 				"LOAD_ACTIONS": "فشل تحميل الإجراءات",
 				"LOAD_TRIGGERS": "فشل تحميل المحفزات",
+				"LOAD_ZAPS": "فشل تحميل zaps",
+				"LOAD_ZAP_TEMPLATES": "فشل تحميل قوالب zap",
+				"CREATE_ZAP": "فشل إنشاء zap",
+				"ZAP_TITLE_REQUIRED": "يرجى تقديم عنوان لـ zap الجديد",
+				"NO_INTEGRATION_ID": "لم يتم تقديم معرف تكامل Zapier",
 				"START_AUTHORIZATION": "يرجى بدء عملية التفويض",
 				"INVALID_TOKEN": "تم توفير رمز غير صالح",
 				"TOKEN_NOT_FOUND": "لم يتم العثور على الرمز"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "تم حفظ إعدادات Zapier بنجاح",
-				"DELETE_WEBHOOK": "تم حذف ويب هوك بنجاح"
+				"DELETE_WEBHOOK": "تم حذف ويب هوك بنجاح",
+				"CREATE_ZAP": "تم إنشاء Zap بنجاح"
 			},
 			"TAB": {
 				"TRIGGERS": "المحفزات",
@@ -1376,6 +1459,26 @@
 			"WEBHOOKS": {
 				"TITLE": "ويب هوكس",
 				"NO_WEBHOOKS": "لا يوجد ويب هوكس مضبوط"
+			},
+			"ZAPS": {
+				"TITLE": "زابز",
+				"NO_ZAPS": "لا توجد زابز متاحة",
+				"CREATE": "إنشاء زاب",
+				"SUBMIT": "إنشاء",
+				"ADD_STEP": "إضافة خطوة",
+				"OPEN_EDITOR": "فتح في زابير",
+				"ENABLED": "مفعّل",
+				"DISABLED": "معطّل",
+				"TITLE_PLACEHOLDER": "أدخل عنواناً للزاب الجديد",
+				"FIELDS": {
+					"TITLE": "العنوان",
+					"STEPS": "الخطوات",
+					"STEP": "خطوة",
+					"STEP_TITLE": "عنوان الخطوة",
+					"ACTION": "الإجراء",
+					"AUTHENTICATION": "المصادقة",
+					"INPUTS": "المدخلات (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1608,7 +1711,17 @@
 		"FILTER_INTEGRATIONS": "ترشيح التكاملات",
 		"SEARCH_INTEGRATIONS": "البحث في التكاملات",
 		"PAID": "مدفوع",
-		"INTEGRATION": "التكامل"
+		"INTEGRATION": "التكامل",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "جاري معالجة تفويض Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "فشل تفويض Make.com",
+				"INVALID_CALLBACK": "معلمات رد الاتصال غير صالحة"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "تم إكمال تفويض Make.com بنجاح"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "المحاسبة",

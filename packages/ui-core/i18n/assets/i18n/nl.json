@@ -1294,16 +1294,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scenario's",
-			"EXECUTIONS": "Uitvoeringen",
-			"HISTORY": "Geschiedenis",
+			"WEBHOOKS": "Webhooks",
+			"WEBHOOKS_REFRESH": "Webhooks vernieuwen",
+			"WEBHOOK_ENABLE": "Webhook inschakelen",
+			"WEBHOOK_DISABLE": "Webhook uitschakelen",
+			"WEBHOOK_PING": "Webhook testen",
+			"SCENARIO_ACTIVE": "Actief",
+			"SCENARIO_INACTIVE": "Inactief",
+			"SCENARIO_LAST_EDITED": "Laatst bewerkt: {{value}}",
+			"SCENARIO_DISABLE": "Scenario uitschakelen",
+			"SCENARIO_ENABLE": "Scenario inschakelen",
+			"SCENARIO_RUN_ONCE": "Voer scenario eenmaal uit",
+			"WEBHOOK_ENABLED": "Ingeschakeld",
+			"WEBHOOK_DISABLED": "Uitgeschakeld",
+			"WEBHOOK_TYPE": "Type",
+			"WEBHOOK_QUEUE": "Wachtrij",
+			"TEMPLATE_PUBLIC": "Openbaar",
+			"TEMPLATE_PUBLISHED": "Gepubliceerd",
+			"REFRESH_CONNECTIONS": "Verbindingen vernieuwen",
+			"CONFIGURATION_TITLE": "Make.com-configuratie",
+			"ZONE_LABEL": "Zone",
+			"ZONE_HINT": "Selecteer de zone die overeenkomt met uw Make.com-account (bijv. us2.make.com)",
+			"ORGANIZATION_LABEL": "Make.com-organisatie",
+			"LOADING_ORGANIZATIONS": "Organisaties laden...",
+			"NO_ORGANIZATIONS": "Geen organisaties gevonden",
+			"TEAM_LABEL": "Make.com-team",
+			"LOADING_TEAMS": "Teams laden...",
+			"NO_TEAMS": "Geen teams gevonden",
+			"CONNECTED_TO": "Verbonden met {{org}} / {{team}} op {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "Webhook-instellingen",
+			"CONNECTIONS": "Verbindingen",
+			"TEMPLATES": "Sjablonen",
 			"SETTINGS": "Instellingen",
-			"ERRORS": {
-				"INVALID_FORM": "Vul alstublieft alle verplichte velden in",
-				"START_AUTHORIZATION": "Start alstublieft de autorisatieproces"
+			"CONNECT_TO_MAKE_COM": "Verbinden met Make.com",
+			"CONNECT_INFO": "Klik op de knop hieronder om uw Make.com-account te verbinden. U wordt doorgestuurd naar Make.com om de integratie te autoriseren.",
+			"NO_SCENARIOS": "Geen scenario's gevonden. Maak scenario's aan in uw Make.com-dashboard.",
+			"NO_HOOKS": "Geen webhooks gevonden. Maak webhooks aan in uw Make.com-dashboard.",
+			"NO_CONNECTIONS": "Geen verbindingen gevonden. Maak verbindingen aan in uw Make.com-dashboard.",
+			"NO_TEMPLATES": "Geen sjablonen gevonden.",
+			"TEST_CONNECTION": "Verbinding testen",
+			"CONNECTION": {
+				"ACCOUNT": "Account: {{value}}",
+				"TYPE": "Type: {{value}}",
+				"PACKAGE": "Pakket: {{value}}",
+				"EXPIRES": "Verloopt: {{value}}"
 			},
-			"CLIENT_ID": "Client ID",
-			"CLIENT_SECRET": "Client Geheim",
-			"NEXT_STEP_INFO": "Na autorisatie word je doorgestuurd naar Make.com om de integratie-instellingen te voltooien"
+			"ERRORS": {
+				"INVALID_FORM": "Vul alle verplichte velden in",
+				"START_AUTHORIZATION": "Kan het autorisatieproces niet starten",
+				"NO_ORGANIZATION": "Selecteer eerst een organisatie",
+				"LOAD_SETTINGS": "Kan Make.com-instellingen niet laden",
+				"SAVE_SETTINGS": "Kan Make.com-instellingen niet opslaan",
+				"LOAD_SETUP_STATUS": "Kan installatiestatus niet laden",
+				"LOAD_SCENARIOS": "Kan scenario's niet laden",
+				"TOGGLE_SCENARIO": "Kan scenario niet schakelen",
+				"RUN_SCENARIO": "Kan scenario niet uitvoeren",
+				"LOAD_CONNECTIONS": "Kan verbindingen niet laden",
+				"TEST_CONNECTION": "Kan verbinding niet testen",
+				"LOAD_WEBHOOKS": "Kan webhooks niet laden",
+				"TOGGLE_WEBHOOK": "Kan webhook niet schakelen",
+				"PING_WEBHOOK": "Kan webhook niet testen",
+				"SET_ZONE": "Kan zone niet instellen",
+				"LOAD_ORGANIZATIONS": "Kan organisaties niet laden",
+				"SELECT_ORGANIZATION": "Kan organisatie niet selecteren",
+				"LOAD_TEAMS": "Kan teams niet laden",
+				"SELECT_TEAM": "Kan team niet selecteren",
+				"LOAD_TEMPLATES": "Kan sjablonen niet laden",
+				"REQUEST_TIMEOUT": "Aanvraagtijd verstreken. Probeer het opnieuw."
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Make.com-instellingen succesvol opgeslagen",
+				"SCENARIO_ACTIVATED": "Scenario geactiveerd",
+				"SCENARIO_DEACTIVATED": "Scenario gedeactiveerd",
+				"SCENARIO_EXECUTED": "Scenario uitgevoerd",
+				"CONNECTION_VALID": "Verbinding \"{{name}}\" is geldig",
+				"WEBHOOK_TOGGLED_ON": "Webhook ingeschakeld",
+				"WEBHOOK_TOGGLED_OFF": "Webhook uitgeschakeld",
+				"WEBHOOK_PINGED": "Webhook \"{{name}}\" succesvol getest",
+				"ZONE_SET": "Zone ingesteld op {{zone}}",
+				"ORGANIZATION_SELECTED": "Organisatie \"{{name}}\" geselecteerd",
+				"TEAM_SELECTED": "Team \"{{name}}\" geselecteerd"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Autoriseer eerst Make.com. Ga naar het tabblad Instellingen om uw account te verbinden.",
+				"ZONE": "Selecteer uw Make.com-zone in het tabblad Instellingen.",
+				"ORGANIZATION": "Selecteer uw Make.com-organisatie in het tabblad Instellingen.",
+				"TEAM": "Selecteer uw Make.com-team in het tabblad Instellingen."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1316,26 +1393,32 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "Client ID",
-			"CLIENT_SECRET": "Client Geheim",
-			"NEXT_STEP_INFO": "Na autorisatie word je doorgestuurd naar Zapier om de integratie-instellingen te voltooien",
+			"CONNECT_TO_ZAPIER": "Verbinden met Zapier",
+			"CONNECT_INFO": "Klik op de knop hieronder om je Zapier-account te verbinden. Je wordt doorgestuurd naar Zapier om de integratie te autoriseren.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Fout bij het laden van Zapier-instellingen",
 				"SAVE_SETTINGS": "Fout bij het opslaan van Zapier-instellingen",
 				"INVALID_FORM": "Vul alstublieft alle verplichte velden in",
 				"MISSING_CREDENTIALS": "Ontbrekende clientreferenties",
+				"NO_ORGANIZATION": "Selecteer alstublieft eerst een organisatie",
 				"NO_ACCESS_TOKEN": "Geen toegangstoken beschikbaar",
 				"LOAD_WEBHOOKS": "Fout bij het laden van webhooks",
 				"DELETE_WEBHOOK": "Fout bij het verwijderen van webhook",
 				"LOAD_ACTIONS": "Fout bij het laden van acties",
 				"LOAD_TRIGGERS": "Fout bij het laden van triggers",
+				"LOAD_ZAPS": "Fout bij het laden van zaps",
+				"LOAD_ZAP_TEMPLATES": "Fout bij het laden van zap-sjablonen",
+				"CREATE_ZAP": "Fout bij het maken van zap",
+				"ZAP_TITLE_REQUIRED": "Geef alstublieft een titel voor de nieuwe zap",
+				"NO_INTEGRATION_ID": "Er is geen Zapier-integratie-ID verstrekt",
 				"START_AUTHORIZATION": "Start alstublieft de autorisatieproces",
 				"INVALID_TOKEN": "Ongeldig token verstrekt",
 				"TOKEN_NOT_FOUND": "Token niet gevonden"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier-instellingen succesvol opgeslagen",
-				"DELETE_WEBHOOK": "Webhook succesvol verwijderd"
+				"DELETE_WEBHOOK": "Webhook succesvol verwijderd",
+				"CREATE_ZAP": "Zap succesvol aangemaakt"
 			},
 			"TAB": {
 				"TRIGGERS": "Triggers",
@@ -1377,6 +1460,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "Geen webhooks geconfigureerd"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "Geen zaps beschikbaar",
+				"CREATE": "Zap maken",
+				"SUBMIT": "Maken",
+				"ADD_STEP": "Stap toevoegen",
+				"OPEN_EDITOR": "Openen in Zapier",
+				"ENABLED": "Ingeschakeld",
+				"DISABLED": "Uitgeschakeld",
+				"TITLE_PLACEHOLDER": "Voer een titel in voor de nieuwe Zap",
+				"FIELDS": {
+					"TITLE": "Titel",
+					"STEPS": "Stappen",
+					"STEP": "Stap",
+					"STEP_TITLE": "Stap titel",
+					"ACTION": "Actie",
+					"AUTHENTICATION": "Authenticatie",
+					"INPUTS": "Invoer (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1609,7 +1712,17 @@
 		"FILTER_INTEGRATIONS": "Filter integraties",
 		"SEARCH_INTEGRATIONS": "Zoekintegraties",
 		"PAID": "Betaald",
-		"INTEGRATION": "Integratie"
+		"INTEGRATION": "Integratie",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Make.com-autorisatie wordt verwerkt...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Make.com-autorisatie mislukt",
+				"INVALID_CALLBACK": "Ongeldige callback-parameters"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Make.com-autorisatie succesvol voltooid"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Boekhouding",

@@ -1297,17 +1297,94 @@
 			"HOURLY": "Hourly"
 		},
 		"MAKE_COM_PAGE": {
-			"SCENARIOS": "סצנות",
-			"EXECUTIONS": "מימושים",
-			"HISTORY": "היסטוריה",
+			"SCENARIOS": "תרחישים",
+			"WEBHOOKS": "Webhooks",
+			"WEBHOOKS_REFRESH": "רענן webhooks",
+			"WEBHOOK_ENABLE": "הפעל webhook",
+			"WEBHOOK_DISABLE": "השבת webhook",
+			"WEBHOOK_PING": "בדוק webhook",
+			"SCENARIO_ACTIVE": "פעיל",
+			"SCENARIO_INACTIVE": "לא פעיל",
+			"SCENARIO_LAST_EDITED": "עריכה אחרונה: {{value}}",
+			"SCENARIO_DISABLE": "השבת תרחיש",
+			"SCENARIO_ENABLE": "הפעל תרחיש",
+			"SCENARIO_RUN_ONCE": "הפעל תרחיש פעם אחת",
+			"WEBHOOK_ENABLED": "מופעל",
+			"WEBHOOK_DISABLED": "מושבת",
+			"WEBHOOK_TYPE": "סוג",
+			"WEBHOOK_QUEUE": "תור",
+			"TEMPLATE_PUBLIC": "ציבורי",
+			"TEMPLATE_PUBLISHED": "פורסם",
+			"REFRESH_CONNECTIONS": "רענן חיבורים",
+			"CONFIGURATION_TITLE": "תצורת Make.com",
+			"ZONE_LABEL": "אזור",
+			"ZONE_HINT": "בחר את האזור התואם לחשבון Make.com שלך (למשל us2.make.com)",
+			"ORGANIZATION_LABEL": "ארגון Make.com",
+			"LOADING_ORGANIZATIONS": "טוען ארגונים...",
+			"NO_ORGANIZATIONS": "לא נמצאו ארגונים",
+			"TEAM_LABEL": "צוות Make.com",
+			"LOADING_TEAMS": "טוען צוותים...",
+			"NO_TEAMS": "לא נמצאו צוותים",
+			"CONNECTED_TO": "מחובר ל-{{org}} / {{team}} ב-{{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "הגדרות Webhook",
+			"CONNECTIONS": "חיבורים",
+			"TEMPLATES": "תבניות",
 			"SETTINGS": "הגדרות",
+			"CONNECT_TO_MAKE_COM": "התחבר ל-Make.com",
+			"CONNECT_INFO": "לחץ על הכפתור למטה כדי לחבר את חשבון ה-Make.com שלך. תועבר ל-Make.com כדי לאשר את האינטגרציה.",
+			"NO_SCENARIOS": "לא נמצאו תרחישים. צור תרחישים בלוח הבקרה של Make.com.",
+			"NO_HOOKS": "לא נמצאו webhooks. צור webhooks בלוח הבקרה של Make.com.",
+			"NO_CONNECTIONS": "לא נמצאו חיבורים. צור חיבורים בלוח הבקרה של Make.com.",
+			"NO_TEMPLATES": "לא נמצאו תבניות.",
+			"TEST_CONNECTION": "בדיקת חיבור",
+			"CONNECTION": {
+				"ACCOUNT": "חשבון: {{value}}",
+				"TYPE": "סוג: {{value}}",
+				"PACKAGE": "חבילה: {{value}}",
+				"EXPIRES": "פג תוקף: {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
-				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור"
+				"START_AUTHORIZATION": "כשל בהתחלת תהליך ההרשאה",
+				"NO_ORGANIZATION": "אנא בחר ארגון תחילה",
+				"LOAD_SETTINGS": "כשל בטעינת הגדרות Make.com",
+				"SAVE_SETTINGS": "כשל בשמירת הגדרות Make.com",
+				"LOAD_SETUP_STATUS": "כשל בטעינת סטטוס הגדרה",
+				"LOAD_SCENARIOS": "כשל בטעינת תרחישים",
+				"TOGGLE_SCENARIO": "כשל בהחלפת מצב תרחיש",
+				"RUN_SCENARIO": "כשל בהפעלת תרחיש",
+				"LOAD_CONNECTIONS": "כשל בטעינת חיבורים",
+				"TEST_CONNECTION": "כשל בבדיקת חיבור",
+				"LOAD_WEBHOOKS": "כשל בטעינת webhooks",
+				"TOGGLE_WEBHOOK": "כשל בהחלפת מצב webhook",
+				"PING_WEBHOOK": "כשל בבדיקת webhook",
+				"SET_ZONE": "כשל בהגדרת אזור",
+				"LOAD_ORGANIZATIONS": "כשל בטעינת ארגונים",
+				"SELECT_ORGANIZATION": "כשל בבחירת ארגון",
+				"LOAD_TEAMS": "כשל בטעינת צוותים",
+				"SELECT_TEAM": "כשל בבחירת צוות",
+				"LOAD_TEMPLATES": "כשל בטעינת תבניות",
+				"REQUEST_TIMEOUT": "פסק זמן לבקשה. אנא נסה שוב."
 			},
-			"CLIENT_ID": "מזהה לקוח",
-			"CLIENT_SECRET": "סיסמת לקוח",
-			"NEXT_STEP_INFO": "לאחר האישור, תועבר ל-Make.com להשלמת הגדרות האינטגרציה"
+			"SUCCESS": {
+				"SETTINGS_SAVED": "הגדרות Make.com נשמרו בהצלחה",
+				"SCENARIO_ACTIVATED": "תרחיש הופעל",
+				"SCENARIO_DEACTIVATED": "תרחיש הושבת",
+				"SCENARIO_EXECUTED": "תרחיש בוצע",
+				"CONNECTION_VALID": "החיבור \"{{name}}\" תקין",
+				"WEBHOOK_TOGGLED_ON": "Webhook הופעל",
+				"WEBHOOK_TOGGLED_OFF": "Webhook הושבת",
+				"WEBHOOK_PINGED": "Webhook \"{{name}}\" נבדק בהצלחה",
+				"ZONE_SET": "האזור הוגדר ל-{{zone}}",
+				"ORGANIZATION_SELECTED": "ארגון \"{{name}}\" נבחר",
+				"TEAM_SELECTED": "צוות \"{{name}}\" נבחר"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "אנא אשר תחילה את Make.com. עבור ללשונית הגדרות כדי לחבר את החשבון שלך.",
+				"ZONE": "אנא בחר את אזור ה-Make.com שלך בלשונית הגדרות.",
+				"ORGANIZATION": "אנא בחר את ארגון ה-Make.com שלך בלשונית הגדרות.",
+				"TEAM": "אנא בחר את צוות ה-Make.com שלך בלשונית הגדרות."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1320,26 +1397,32 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "מזהה לקוח",
-			"CLIENT_SECRET": "סיסמת לקוח",
-			"NEXT_STEP_INFO": "לאחר האישור, תועבר ל-Zapier להשלמת הגדרות האינטגרציה",
+			"CONNECT_TO_ZAPIER": "התחבר ל-Zapier",
+			"CONNECT_INFO": "לחץ על הכפתור למטה כדי לחבר את חשבון ה-Zapier שלך. תועבר ל-Zapier כדי לאשר את האינטגרציה.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "נכשל בטעינת הגדרות Zapier",
 				"SAVE_SETTINGS": "נכשל בשמירת הגדרות Zapier",
 				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
-				"MISSING_CREDENTIALS": "חסרים פרטי גישה של הלקוח",
+				"MISSING_CREDENTIALS": "שילוב Zapier לא מוגדר בשרת",
+				"NO_ORGANIZATION": "אנא בחר ארגון תחילה",
 				"NO_ACCESS_TOKEN": "אין אסימון גישה זמין",
 				"LOAD_WEBHOOKS": "נכשל בטעינת וובחוקים",
 				"DELETE_WEBHOOK": "נכשל במחיקת וובחוק",
 				"LOAD_ACTIONS": "נכשל בטעינת פעולות",
 				"LOAD_TRIGGERS": "נכשל בטעינת טריגרים",
+				"LOAD_ZAPS": "כשל בטעינת zaps",
+				"LOAD_ZAP_TEMPLATES": "כשל בטעינת תבניות zap",
+				"CREATE_ZAP": "כשל ביצירת zap",
+				"ZAP_TITLE_REQUIRED": "אנא ספק כותרת ל-zap החדש",
+				"NO_INTEGRATION_ID": "לא סופק מזהה אינטגרציה של Zapier",
 				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור",
 				"INVALID_TOKEN": "אסימון לא תקין סופק",
 				"TOKEN_NOT_FOUND": "אסימון לא נמצא"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "הגדרות Zapier נשמרו בהצלחה",
-				"DELETE_WEBHOOK": "וובחוק נמחק בהצלחה"
+				"DELETE_WEBHOOK": "וובחוק נמחק בהצלחה",
+				"CREATE_ZAP": "Zap נוצר בהצלחה"
 			},
 			"TAB": {
 				"TRIGGERS": "טריגרים",
@@ -1381,6 +1464,26 @@
 			"WEBHOOKS": {
 				"TITLE": "וובחוקים",
 				"NO_WEBHOOKS": "אין וובחוקים מוגדרים"
+			},
+			"ZAPS": {
+				"TITLE": "זאפים",
+				"NO_ZAPS": "אין זאפים זמינים",
+				"CREATE": "צור זאפ",
+				"SUBMIT": "צור",
+				"ADD_STEP": "הוסף שלב",
+				"OPEN_EDITOR": "פתח ב-Zapier",
+				"ENABLED": "מופעל",
+				"DISABLED": "מושבת",
+				"TITLE_PLACEHOLDER": "הזן כותרת לזאפ החדש",
+				"FIELDS": {
+					"TITLE": "כותרת",
+					"STEPS": "שלבים",
+					"STEP": "שלב",
+					"STEP_TITLE": "כותרת שלב",
+					"ACTION": "פעולה",
+					"AUTHENTICATION": "אימות",
+					"INPUTS": "קלטים (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1652,8 +1755,18 @@
 			"INTEGRATION_DISABLED": "'{{provider}}' integration successfully disabled",
 			"INTEGRATION_ADDED": "Integration '{{provider}}' has been added to '{{organization}}'"
 		},
-		"ENABLED": "Enabled",
-		"DISABLED": "Disabled"
+		"ENABLED": "מופעל",
+		"DISABLED": "מושבת",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "מעבד הרשאת Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "הרשאת Make.com נכשלה",
+				"INVALID_CALLBACK": "פרמטרי callback לא חוקיים"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "הרשאת Make.com הושלמה בהצלחה"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -1798,8 +1911,8 @@
 		"END_WORK": "סיום עבודה",
 		"WORK_ENDED": "העבודה הסתיימה",
 		"DELETED": "Deleted",
-		"ENABLED": "Enabled",
-		"DISABLED": "Disabled",
+		"ENABLED": "מופעל",
+		"DISABLED": "מושבת",
 		"RECURRING_EXPENSE": "Employee Recurring Expense",
 		"RECURRING_EXPENSE_EDIT": "Edit the current & all future expenses. There will be no change to any past expense.",
 		"RECURRING_EXPENSE_ADD": "This will add an expense recurring every month.",

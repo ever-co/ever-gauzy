@@ -1295,16 +1295,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scénarios",
-			"EXECUTIONS": "Exécutions",
-			"HISTORY": "Historique",
+			"WEBHOOKS": "Webhooks",
+			"WEBHOOKS_REFRESH": "Actualiser les webhooks",
+			"WEBHOOK_ENABLE": "Activer le webhook",
+			"WEBHOOK_DISABLE": "Désactiver le webhook",
+			"WEBHOOK_PING": "Tester le webhook",
+			"SCENARIO_ACTIVE": "Actif",
+			"SCENARIO_INACTIVE": "Inactif",
+			"SCENARIO_LAST_EDITED": "Dernière modification : {{value}}",
+			"SCENARIO_DISABLE": "Désactiver le scénario",
+			"SCENARIO_ENABLE": "Activer le scénario",
+			"SCENARIO_RUN_ONCE": "Exécuter le scénario une fois",
+			"WEBHOOK_ENABLED": "Activé",
+			"WEBHOOK_DISABLED": "Désactivé",
+			"WEBHOOK_TYPE": "Type",
+			"WEBHOOK_QUEUE": "File d'attente",
+			"TEMPLATE_PUBLIC": "Public",
+			"TEMPLATE_PUBLISHED": "Publié",
+			"REFRESH_CONNECTIONS": "Actualiser les connexions",
+			"CONFIGURATION_TITLE": "Configuration Make.com",
+			"ZONE_LABEL": "Zone",
+			"ZONE_HINT": "Sélectionnez la zone qui correspond à votre compte Make.com (ex. us2.make.com)",
+			"ORGANIZATION_LABEL": "Organisation Make.com",
+			"LOADING_ORGANIZATIONS": "Chargement des organisations...",
+			"NO_ORGANIZATIONS": "Aucune organisation trouvée",
+			"TEAM_LABEL": "Équipe Make.com",
+			"LOADING_TEAMS": "Chargement des équipes...",
+			"NO_TEAMS": "Aucune équipe trouvée",
+			"CONNECTED_TO": "Connecté à {{org}} / {{team}} sur {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "Paramètres Webhook",
+			"CONNECTIONS": "Connexions",
+			"TEMPLATES": "Modèles",
 			"SETTINGS": "Paramètres",
-			"ERRORS": {
-				"INVALID_FORM": "Veuillez remplir tous les champs requis",
-				"START_AUTHORIZATION": "Veuillez démarrer le processus d'autorisation"
+			"CONNECT_TO_MAKE_COM": "Se connecter à Make.com",
+			"CONNECT_INFO": "Cliquez sur le bouton ci-dessous pour connecter votre compte Make.com. Vous serez redirigé vers Make.com pour autoriser l'intégration.",
+			"NO_SCENARIOS": "Aucun scénario trouvé. Créez des scénarios dans votre tableau de bord Make.com.",
+			"NO_HOOKS": "Aucun webhook trouvé. Créez des webhooks dans votre tableau de bord Make.com.",
+			"NO_CONNECTIONS": "Aucune connexion trouvée. Créez des connexions dans votre tableau de bord Make.com.",
+			"NO_TEMPLATES": "Aucun modèle trouvé.",
+			"TEST_CONNECTION": "Tester la connexion",
+			"CONNECTION": {
+				"ACCOUNT": "Compte : {{value}}",
+				"TYPE": "Type : {{value}}",
+				"PACKAGE": "Package : {{value}}",
+				"EXPIRES": "Expire : {{value}}"
 			},
-			"CLIENT_ID": "Identifiant Client",
-			"CLIENT_SECRET": "Clé Secrète Client",
-			"NEXT_STEP_INFO": "Après l'autorisation, vous serez redirigé vers Make.com pour finaliser la configuration de l'intégration"
+			"ERRORS": {
+				"INVALID_FORM": "Veuillez remplir tous les champs obligatoires",
+				"START_AUTHORIZATION": "Échec du démarrage du processus d'autorisation",
+				"NO_ORGANIZATION": "Veuillez d'abord sélectionner une organisation",
+				"LOAD_SETTINGS": "Échec du chargement des paramètres Make.com",
+				"SAVE_SETTINGS": "Échec de la sauvegarde des paramètres Make.com",
+				"LOAD_SETUP_STATUS": "Échec du chargement du statut de configuration",
+				"LOAD_SCENARIOS": "Échec du chargement des scénarios",
+				"TOGGLE_SCENARIO": "Échec de l'activation/désactivation du scénario",
+				"RUN_SCENARIO": "Échec de l'exécution du scénario",
+				"LOAD_CONNECTIONS": "Échec du chargement des connexions",
+				"TEST_CONNECTION": "Échec du test de connexion",
+				"LOAD_WEBHOOKS": "Échec du chargement des webhooks",
+				"TOGGLE_WEBHOOK": "Échec de l'activation/désactivation du webhook",
+				"PING_WEBHOOK": "Échec du test du webhook",
+				"SET_ZONE": "Échec de la définition de la zone",
+				"LOAD_ORGANIZATIONS": "Échec du chargement des organisations",
+				"SELECT_ORGANIZATION": "Échec de la sélection de l'organisation",
+				"LOAD_TEAMS": "Échec du chargement des équipes",
+				"SELECT_TEAM": "Échec de la sélection de l'équipe",
+				"LOAD_TEMPLATES": "Échec du chargement des modèles",
+				"REQUEST_TIMEOUT": "La demande a expiré. Veuillez réessayer."
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Paramètres Make.com enregistrés avec succès",
+				"SCENARIO_ACTIVATED": "Scénario activé",
+				"SCENARIO_DEACTIVATED": "Scénario désactivé",
+				"SCENARIO_EXECUTED": "Scénario exécuté",
+				"CONNECTION_VALID": "La connexion \"{{name}}\" est valide",
+				"WEBHOOK_TOGGLED_ON": "Webhook activé",
+				"WEBHOOK_TOGGLED_OFF": "Webhook désactivé",
+				"WEBHOOK_PINGED": "Webhook \"{{name}}\" testé avec succès",
+				"ZONE_SET": "Zone définie sur {{zone}}",
+				"ORGANIZATION_SELECTED": "Organisation \"{{name}}\" sélectionnée",
+				"TEAM_SELECTED": "Équipe \"{{name}}\" sélectionnée"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Veuillez d'abord autoriser Make.com. Allez dans l'onglet Paramètres pour connecter votre compte.",
+				"ZONE": "Veuillez sélectionner votre zone Make.com dans l'onglet Paramètres.",
+				"ORGANIZATION": "Veuillez sélectionner votre organisation Make.com dans l'onglet Paramètres.",
+				"TEAM": "Veuillez sélectionner votre équipe Make.com dans l'onglet Paramètres."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1317,26 +1394,32 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "Identifiant Client",
-			"CLIENT_SECRET": "Clé Secrète Client",
-			"NEXT_STEP_INFO": "Après l'autorisation, vous serez redirigé vers Zapier pour finaliser la configuration de l'intégration",
+			"CONNECT_TO_ZAPIER": "Se connecter à Zapier",
+			"CONNECT_INFO": "Cliquez sur le bouton ci-dessous pour connecter votre compte Zapier. Vous serez redirigé vers Zapier pour autoriser l'intégration.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Échec du chargement des paramètres Zapier",
 				"SAVE_SETTINGS": "Échec de l'enregistrement des paramètres Zapier",
 				"INVALID_FORM": "Veuillez remplir tous les champs requis",
-				"MISSING_CREDENTIALS": "Identifiants client manquants",
+				"MISSING_CREDENTIALS": "L'intégration Zapier n'est pas configurée sur le serveur",
+				"NO_ORGANIZATION": "Veuillez d'abord sélectionner une organisation",
 				"NO_ACCESS_TOKEN": "Aucun jeton d'accès disponible",
 				"LOAD_WEBHOOKS": "Échec du chargement des webhooks",
 				"DELETE_WEBHOOK": "Échec de la suppression du webhook",
 				"LOAD_ACTIONS": "Échec du chargement des actions",
 				"LOAD_TRIGGERS": "Échec du chargement des déclencheurs",
+				"LOAD_ZAPS": "Échec du chargement des zaps",
+				"LOAD_ZAP_TEMPLATES": "Échec du chargement des modèles de zap",
+				"CREATE_ZAP": "Échec de la création du zap",
+				"ZAP_TITLE_REQUIRED": "Veuillez fournir un titre pour le nouveau zap",
+				"NO_INTEGRATION_ID": "Aucun ID d'intégration Zapier n'a été fourni",
 				"START_AUTHORIZATION": "Veuillez démarrer le processus d'autorisation",
 				"INVALID_TOKEN": "Jeton invalide fourni",
 				"TOKEN_NOT_FOUND": "Jeton non trouvé"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Paramètres Zapier enregistrés avec succès",
-				"DELETE_WEBHOOK": "Webhook supprimé avec succès"
+				"DELETE_WEBHOOK": "Webhook supprimé avec succès",
+				"CREATE_ZAP": "Zap créé avec succès"
 			},
 			"TAB": {
 				"TRIGGERS": "Déclencheurs",
@@ -1378,6 +1461,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "Aucun webhook configuré"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "Aucun zap disponible",
+				"CREATE": "Créer un Zap",
+				"SUBMIT": "Créer",
+				"ADD_STEP": "Ajouter une étape",
+				"OPEN_EDITOR": "Ouvrir dans Zapier",
+				"ENABLED": "Activé",
+				"DISABLED": "Désactivé",
+				"TITLE_PLACEHOLDER": "Entrez un titre pour le nouveau Zap",
+				"FIELDS": {
+					"TITLE": "Titre",
+					"STEPS": "Étapes",
+					"STEP": "Étape",
+					"STEP_TITLE": "Titre de l'étape",
+					"ACTION": "Action",
+					"AUTHENTICATION": "Authentification",
+					"INPUTS": "Entrées (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1610,7 +1713,17 @@
 		"FILTER_INTEGRATIONS": "Intégrations de filtres",
 		"SEARCH_INTEGRATIONS": "Intégrations de recherche",
 		"PAID": "Payé",
-		"INTEGRATION": "Intégration"
+		"INTEGRATION": "Intégration",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Traitement de l'autorisation Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "L'autorisation Make.com a échoué",
+				"INVALID_CALLBACK": "Paramètres de rappel invalides"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Autorisation Make.com terminée avec succès"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Comptabilité",

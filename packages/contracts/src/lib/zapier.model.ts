@@ -62,9 +62,72 @@ export interface IZapierEndpoint {
 	slug: string;
 }
 
+/**
+ * Represents a single step in a Zapier Zap (trigger or action).
+ * See https://docs.zapier.com/powered-by-zapier/api-reference/zaps/create-a-zap
+ */
+export interface IZapierZapStep {
+	/** Fully-qualified action identifier, e.g. "example_core:Vn7xbE60" */
+	action: string;
+	/** Authentication ID to use for this step, or null */
+	authentication?: string | null;
+	/** Input field values for this step */
+	inputs?: Record<string, any> | null;
+	/** Optional user-facing title for this step */
+	title?: string | null;
+}
+
+/**
+ * Links returned alongside a Zap, such as a direct link to the Zap editor.
+ */
+export interface IZapierZapLinks {
+	html_editor?: string;
+}
+
+/**
+ * Represents a Zapier Zap.
+ * See https://docs.zapier.com/powered-by-zapier/api-reference/zaps/get-zaps-[v2]
+ * and https://docs.zapier.com/powered-by-zapier/api-reference/zaps/create-a-zap
+ */
+export interface IZapierZap {
+	type?: 'zap';
+	id: string;
+	title: string;
+	is_enabled?: boolean;
+	last_successful_run_date?: string | null;
+	updated_at?: string;
+	links?: IZapierZapLinks;
+	steps?: IZapierZapStep[];
+
+	// Fields returned by the list endpoint (GET /v2/zaps)
+	state?: string;
+	url?: string;
+	create_time?: string;
+	modified_time?: string;
+}
+
+/**
+ * Input for creating a new Zap via the Zapier Partner API.
+ * See https://docs.zapier.com/powered-by-zapier/api-reference/zaps/create-a-zap
+ */
+export interface IZapierCreateZapInput {
+	title: string;
+	steps: IZapierZapStep[];
+}
+
+/**
+ * Represents a Zapier Zap template.
+ * See https://docs.zapier.com/powered-by-zapier/api-reference/zap-templates/get-zap-templates
+ */
+export interface IZapierZapTemplate {
+	id: string;
+	title: string;
+	description?: string;
+	url?: string;
+	create_url?: string;
+}
+
 export interface ICreateZapierIntegrationInput extends IBasePerTenantAndOrganizationEntityModel {
-	client_id: string;
-	client_secret: string;
 	code?: string;
 	redirect_uri?: string;
 }

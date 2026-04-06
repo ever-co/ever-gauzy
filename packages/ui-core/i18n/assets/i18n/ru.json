@@ -1302,16 +1302,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Сценарии",
-			"EXECUTIONS": "Выполнения",
-			"HISTORY": "История",
+			"WEBHOOKS": "Вебхуки",
+			"WEBHOOKS_REFRESH": "Обновить вебхуки",
+			"WEBHOOK_ENABLE": "Включить вебхук",
+			"WEBHOOK_DISABLE": "Отключить вебхук",
+			"WEBHOOK_PING": "Тестировать вебхук",
+			"SCENARIO_ACTIVE": "Активный",
+			"SCENARIO_INACTIVE": "Неактивный",
+			"SCENARIO_LAST_EDITED": "Последнее редактирование: {{value}}",
+			"SCENARIO_DISABLE": "Отключить сценарий",
+			"SCENARIO_ENABLE": "Включить сценарий",
+			"SCENARIO_RUN_ONCE": "Запустить сценарий один раз",
+			"WEBHOOK_ENABLED": "Включен",
+			"WEBHOOK_DISABLED": "Отключен",
+			"WEBHOOK_TYPE": "Тип",
+			"WEBHOOK_QUEUE": "Очередь",
+			"TEMPLATE_PUBLIC": "Публичный",
+			"TEMPLATE_PUBLISHED": "Опубликованный",
+			"REFRESH_CONNECTIONS": "Обновить подключения",
+			"CONFIGURATION_TITLE": "Конфигурация Make.com",
+			"ZONE_LABEL": "Зона",
+			"ZONE_HINT": "Выберите зону, соответствующую вашей учетной записи Make.com (например, us2.make.com)",
+			"ORGANIZATION_LABEL": "Организация Make.com",
+			"LOADING_ORGANIZATIONS": "Загрузка организаций...",
+			"NO_ORGANIZATIONS": "Организации не найдены",
+			"TEAM_LABEL": "Команда Make.com",
+			"LOADING_TEAMS": "Загрузка команд...",
+			"NO_TEAMS": "Команды не найдены",
+			"CONNECTED_TO": "Подключено к {{org}} / {{team}} на {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "Настройки вебхука",
+			"CONNECTIONS": "Подключения",
+			"TEMPLATES": "Шаблоны",
 			"SETTINGS": "Настройки",
+			"CONNECT_TO_MAKE_COM": "Подключиться к Make.com",
+			"CONNECT_INFO": "Нажмите кнопку ниже, чтобы подключить вашу учётную запись Make.com. Вы будете перенаправлены на Make.com для авторизации интеграции.",
+			"NO_SCENARIOS": "Сценарии не найдены. Создайте сценарии в панели управления Make.com.",
+			"NO_HOOKS": "Вебхуки не найдены. Создайте вебхуки в панели управления Make.com.",
+			"NO_CONNECTIONS": "Подключения не найдены. Создайте подключения в панели управления Make.com.",
+			"NO_TEMPLATES": "Шаблоны не найдены.",
+			"TEST_CONNECTION": "Проверить подключение",
+			"CONNECTION": {
+				"ACCOUNT": "Аккаунт: {{value}}",
+				"TYPE": "Тип: {{value}}",
+				"PACKAGE": "Пакет: {{value}}",
+				"EXPIRES": "Истекает: {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "Пожалуйста, заполните все обязательные поля",
-				"START_AUTHORIZATION": "Пожалуйста, начните процесс авторизации"
+				"START_AUTHORIZATION": "Не удалось начать процесс авторизации",
+				"NO_ORGANIZATION": "Пожалуйста, сначала выберите организацию",
+				"LOAD_SETTINGS": "Не удалось загрузить настройки Make.com",
+				"SAVE_SETTINGS": "Не удалось сохранить настройки Make.com",
+				"LOAD_SETUP_STATUS": "Не удалось загрузить статус настройки",
+				"LOAD_SCENARIOS": "Не удалось загрузить сценарии",
+				"TOGGLE_SCENARIO": "Не удалось переключить сценарий",
+				"RUN_SCENARIO": "Не удалось запустить сценарий",
+				"LOAD_CONNECTIONS": "Не удалось загрузить подключения",
+				"TEST_CONNECTION": "Не удалось проверить подключение",
+				"LOAD_WEBHOOKS": "Не удалось загрузить вебхуки",
+				"TOGGLE_WEBHOOK": "Не удалось переключить вебхук",
+				"PING_WEBHOOK": "Не удалось протестировать вебхук",
+				"SET_ZONE": "Не удалось установить зону",
+				"LOAD_ORGANIZATIONS": "Не удалось загрузить организации",
+				"SELECT_ORGANIZATION": "Не удалось выбрать организацию",
+				"LOAD_TEAMS": "Не удалось загрузить команды",
+				"SELECT_TEAM": "Не удалось выбрать команду",
+				"LOAD_TEMPLATES": "Не удалось загрузить шаблоны",
+				"REQUEST_TIMEOUT": "Время запроса истекло. Пожалуйста, попробуйте снова."
 			},
-			"CLIENT_ID": "ID клиента",
-			"CLIENT_SECRET": "Секрет клиента",
-			"NEXT_STEP_INFO": "После авторизации вы будете перенаправлены на Make.com для завершения настройки интеграции"
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Настройки Make.com успешно сохранены",
+				"SCENARIO_ACTIVATED": "Сценарий активирован",
+				"SCENARIO_DEACTIVATED": "Сценарий деактивирован",
+				"SCENARIO_EXECUTED": "Сценарий выполнен",
+				"CONNECTION_VALID": "Подключение \"{{name}}\" действительно",
+				"WEBHOOK_TOGGLED_ON": "Вебхук включен",
+				"WEBHOOK_TOGGLED_OFF": "Вебхук отключен",
+				"WEBHOOK_PINGED": "Вебхук \"{{name}}\" успешно протестирован",
+				"ZONE_SET": "Зона установлена на {{zone}}",
+				"ORGANIZATION_SELECTED": "Выбрана организация \"{{name}}\"",
+				"TEAM_SELECTED": "Выбрана команда \"{{name}}\""
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Сначала авторизуйтесь в Make.com. Перейдите на вкладку Настройки, чтобы подключить аккаунт.",
+				"ZONE": "Выберите зону Make.com на вкладке Настройки.",
+				"ORGANIZATION": "Выберите организацию Make.com на вкладке Настройки.",
+				"TEAM": "Выберите команду Make.com на вкладке Настройки."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1324,26 +1401,32 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "ID клиента",
-			"CLIENT_SECRET": "Секрет клиента",
-			"NEXT_STEP_INFO": "После авторизации вы будете перенаправлены на Zapier для завершения настройки интеграции",
+			"CONNECT_TO_ZAPIER": "Подключиться к Zapier",
+			"CONNECT_INFO": "Нажмите кнопку ниже, чтобы подключить вашу учетную запись Zapier. Вы будете перенаправлены на Zapier для авторизации интеграции.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Не удалось загрузить настройки Zapier",
 				"SAVE_SETTINGS": "Не удалось сохранить настройки Zapier",
 				"INVALID_FORM": "Пожалуйста, заполните все обязательные поля",
 				"MISSING_CREDENTIALS": "Отсутствуют учетные данные клиента",
+				"NO_ORGANIZATION": "Пожалуйста, сначала выберите организацию",
 				"NO_ACCESS_TOKEN": "Нет доступного токена доступа",
 				"LOAD_WEBHOOKS": "Не удалось загрузить вебхуки",
 				"DELETE_WEBHOOK": "Не удалось удалить вебхук",
 				"LOAD_ACTIONS": "Не удалось загрузить действия",
 				"LOAD_TRIGGERS": "Не удалось загрузить триггеры",
+				"LOAD_ZAPS": "Не удалось загрузить запы",
+				"LOAD_ZAP_TEMPLATES": "Не удалось загрузить шаблоны зап",
+				"CREATE_ZAP": "Не удалось создать зап",
+				"ZAP_TITLE_REQUIRED": "Пожалуйста, укажите название для нового запа",
+				"NO_INTEGRATION_ID": "Не был предоставлен идентификатор интеграции Zapier",
 				"START_AUTHORIZATION": "Пожалуйста, начните процесс авторизации",
 				"INVALID_TOKEN": "Предоставлен недействительный токен",
 				"TOKEN_NOT_FOUND": "Токен не найден"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Настройки Zapier успешно сохранены",
-				"DELETE_WEBHOOK": "Вебхук успешно удален"
+				"DELETE_WEBHOOK": "Вебхук успешно удален",
+				"CREATE_ZAP": "Зап успешно создан"
 			},
 			"TAB": {
 				"TRIGGERS": "Триггеры",
@@ -1385,6 +1468,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Вебхуки",
 				"NO_WEBHOOKS": "Нет настроенных вебхуков"
+			},
+			"ZAPS": {
+				"TITLE": "Запы",
+				"NO_ZAPS": "Нет доступных запов",
+				"CREATE": "Создать Зап",
+				"SUBMIT": "Создать",
+				"ADD_STEP": "Добавить шаг",
+				"OPEN_EDITOR": "Открыть в Zapier",
+				"ENABLED": "Включено",
+				"DISABLED": "Отключено",
+				"TITLE_PLACEHOLDER": "Введите название для нового Запа",
+				"FIELDS": {
+					"TITLE": "Название",
+					"STEPS": "Шаги",
+					"STEP": "Шаг",
+					"STEP_TITLE": "Название шага",
+					"ACTION": "Действие",
+					"AUTHENTICATION": "Аутентификация",
+					"INPUTS": "Входные данные (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1659,8 +1762,18 @@
 			"INTEGRATION_DISABLED": "Интеграция '{{provider}}' успешно отключена",
 			"INTEGRATION_ADDED": "Интеграция '{{provider}}' добавлена ​​в '{{organization}}'"
 		},
-		"ENABLED": "Enabled",
-		"DISABLED": "Disabled"
+		"ENABLED": "Включено",
+		"DISABLED": "Отключено",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Обработка авторизации Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Авторизация Make.com не удалась",
+				"INVALID_CALLBACK": "Недопустимые параметры обратного вызова"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Авторизация Make.com успешно завершена"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",

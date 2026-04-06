@@ -1,0 +1,75 @@
+<div class="templates-container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6>{{ 'INTEGRATIONS.MAKE_COM_PAGE.TEMPLATES' | translate }}</h6>
+    <button
+      type="button"
+      nbButton
+      size="small"
+      status="basic"
+      (click)="refresh()"
+      [disabled]="loading"
+      [attr.aria-label]="'BUTTONS.REFRESH' | translate"
+    >
+      <nb-icon icon="refresh-outline"></nb-icon>
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="d-flex justify-content-center py-5">
+      <nb-spinner></nb-spinner>
+    </div>
+  } @else if (setupMessageKey) {
+    <nb-card accent="warning">
+      <nb-card-body class="text-center py-4">
+        <nb-icon icon="alert-triangle-outline" class="empty-icon mb-2" status="warning"></nb-icon>
+        <p>{{ setupMessageKey | translate }}</p>
+      </nb-card-body>
+    </nb-card>
+  }
+
+  @if (!loading && setupStatus?.isComplete && templates.length === 0) {
+    <nb-card accent="info">
+      <nb-card-body class="text-center py-4">
+        <nb-icon icon="file-text-outline" class="empty-icon mb-2"></nb-icon>
+        <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.NO_TEMPLATES' | translate }}</p>
+      </nb-card-body>
+    </nb-card>
+  }
+
+  @if (!loading && setupStatus?.isComplete && templates.length > 0) {
+    <div class="template-list">
+      @for (template of templates; track template.id) {
+        <nb-card class="template-card mb-2">
+          <nb-card-body>
+            <div class="d-flex align-items-start gap-2">
+              <nb-icon icon="file-text-outline" status="primary" class="mt-1"></nb-icon>
+              <div class="template-info">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="template-name">{{ template.name }}</span>
+                  @if (template.public) {
+                    <span class="badge badge-info">{{ 'INTEGRATIONS.MAKE_COM_PAGE.TEMPLATE_PUBLIC' | translate }}</span>
+                  }
+                </div>
+                @if (template.description) {
+                  <small class="text-hint d-block mt-1">{{ template.description }}</small>
+                }
+                @if (template.publishedDate) {
+                  <small class="text-hint d-block">
+                    {{ 'INTEGRATIONS.MAKE_COM_PAGE.TEMPLATE_PUBLISHED' | translate }}: {{ template.publishedDate | date: 'mediumDate' }}
+                  </small>
+                }
+                @if (template.usedPackages?.length) {
+                  <div class="packages mt-1">
+                    @for (pkg of template.usedPackages; track pkg) {
+                      <span class="package-tag">{{ pkg }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </nb-card-body>
+        </nb-card>
+      }
+    </div>
+  }
+</div>

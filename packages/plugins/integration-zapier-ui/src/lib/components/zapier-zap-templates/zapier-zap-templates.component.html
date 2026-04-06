@@ -1,0 +1,44 @@
+<nb-card>
+  <nb-card-header>
+    <h6>{{ 'INTEGRATIONS.ZAPIER_PAGE.ZAP_TEMPLATES.TITLE' | translate }}</h6>
+  </nb-card-header>
+  <nb-card-body>
+    @if (loading) {
+      <div class="d-flex justify-content-center">
+        <nb-spinner></nb-spinner>
+      </div>
+    }
+    @if (!loading) {
+      <div class="endpoints-list">
+        @for (template of templates; track template.id) {
+          <div class="endpoint-item">
+            <div class="endpoint-info">
+              <h6>{{ template.title }}</h6>
+              <p>{{ template.description }}</p>
+            </div>
+            <div class="endpoint-actions">
+              @if (template.create_url || template.url) {
+                <a
+                  nbButton
+                  status="primary"
+                  size="small"
+                  outline
+                  [href]="template.create_url || template.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ 'INTEGRATIONS.ZAPIER_PAGE.ZAP_TEMPLATES.USE' | translate }}
+                </a>
+              }
+            </div>
+          </div>
+        }
+        @if (templates.length === 0) {
+          <div class="no-data">
+            {{ 'INTEGRATIONS.ZAPIER_PAGE.ZAP_TEMPLATES.NO_TEMPLATES' | translate }}
+          </div>
+        }
+      </div>
+    }
+  </nb-card-body>
+</nb-card>

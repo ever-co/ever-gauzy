@@ -1343,16 +1343,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scenarios",
-			"EXECUTIONS": "Executions",
-			"HISTORY": "History",
+			"WEBHOOKS": "Webhooks",
+			"WEBHOOKS_REFRESH": "Refresh webhooks",
+			"WEBHOOK_ENABLE": "Enable webhook",
+			"WEBHOOK_DISABLE": "Disable webhook",
+			"WEBHOOK_PING": "Ping webhook",
+			"SCENARIO_ACTIVE": "Active",
+			"SCENARIO_INACTIVE": "Inactive",
+			"SCENARIO_LAST_EDITED": "Last edited: {{value}}",
+			"SCENARIO_DISABLE": "Disable scenario",
+			"SCENARIO_ENABLE": "Enable scenario",
+			"SCENARIO_RUN_ONCE": "Run scenario once",
+			"WEBHOOK_ENABLED": "Enabled",
+			"WEBHOOK_DISABLED": "Disabled",
+			"WEBHOOK_TYPE": "Type",
+			"WEBHOOK_QUEUE": "Queue",
+			"TEMPLATE_PUBLIC": "Public",
+			"TEMPLATE_PUBLISHED": "Published",
+			"REFRESH_CONNECTIONS": "Refresh connections",
+			"CONFIGURATION_TITLE": "Make.com Configuration",
+			"ZONE_LABEL": "Zone",
+			"ZONE_HINT": "Select the zone that matches your Make.com account (e.g., us2.make.com)",
+			"ORGANIZATION_LABEL": "Make.com Organization",
+			"LOADING_ORGANIZATIONS": "Loading organizations...",
+			"NO_ORGANIZATIONS": "No organizations found",
+			"TEAM_LABEL": "Make.com Team",
+			"LOADING_TEAMS": "Loading teams...",
+			"NO_TEAMS": "No teams found",
+			"CONNECTED_TO": "Connected to {{org}} / {{team}} on {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "Webhook Settings",
+			"CONNECTIONS": "Connections",
+			"TEMPLATES": "Templates",
 			"SETTINGS": "Settings",
+			"CONNECT_TO_MAKE_COM": "Connect to Make.com",
+			"CONNECT_INFO": "Click the button below to connect your Make.com account. You will be redirected to Make.com to authorize the integration.",
+			"NO_SCENARIOS": "No scenarios found. Create scenarios in your Make.com dashboard.",
+			"NO_HOOKS": "No webhooks found. Create webhooks in your Make.com dashboard.",
+			"NO_CONNECTIONS": "No connections found. Create connections in your Make.com dashboard.",
+			"NO_TEMPLATES": "No templates found.",
+			"TEST_CONNECTION": "Test connection",
+			"CONNECTION": {
+				"ACCOUNT": "Account: {{value}}",
+				"TYPE": "Type: {{value}}",
+				"PACKAGE": "Package: {{value}}",
+				"EXPIRES": "Expires: {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "Please fill in all required fields",
-				"START_AUTHORIZATION": "Please start the authorization process"
+				"START_AUTHORIZATION": "Failed to start the authorization process",
+				"NO_ORGANIZATION": "Please select an organization first",
+				"LOAD_SETTINGS": "Failed to load Make.com settings",
+				"SAVE_SETTINGS": "Failed to save Make.com settings",
+				"LOAD_SETUP_STATUS": "Failed to load setup status",
+				"LOAD_SCENARIOS": "Failed to load scenarios",
+				"TOGGLE_SCENARIO": "Failed to toggle scenario",
+				"RUN_SCENARIO": "Failed to run scenario",
+				"LOAD_CONNECTIONS": "Failed to load connections",
+				"TEST_CONNECTION": "Failed to test connection",
+				"LOAD_WEBHOOKS": "Failed to load webhooks",
+				"TOGGLE_WEBHOOK": "Failed to toggle webhook",
+				"PING_WEBHOOK": "Failed to ping webhook",
+				"SET_ZONE": "Failed to set zone",
+				"LOAD_ORGANIZATIONS": "Failed to load organizations",
+				"SELECT_ORGANIZATION": "Failed to select organization",
+				"LOAD_TEAMS": "Failed to load teams",
+				"SELECT_TEAM": "Failed to select team",
+				"LOAD_TEMPLATES": "Failed to load templates",
+				"REQUEST_TIMEOUT": "Request timed out. Please try again."
 			},
-			"CLIENT_ID": "Client ID",
-			"CLIENT_SECRET": "Client Secret",
-			"NEXT_STEP_INFO": "After authorization, you will be redirected to Make.com to complete the integration setup"
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Make.com settings saved successfully",
+				"SCENARIO_ACTIVATED": "Scenario activated",
+				"SCENARIO_DEACTIVATED": "Scenario deactivated",
+				"SCENARIO_EXECUTED": "Scenario executed",
+				"CONNECTION_VALID": "Connection \"{{name}}\" is valid",
+				"WEBHOOK_TOGGLED_ON": "Webhook enabled",
+				"WEBHOOK_TOGGLED_OFF": "Webhook disabled",
+				"WEBHOOK_PINGED": "Webhook \"{{name}}\" pinged successfully",
+				"ZONE_SET": "Zone set to {{zone}}",
+				"ORGANIZATION_SELECTED": "Organization \"{{name}}\" selected",
+				"TEAM_SELECTED": "Team \"{{name}}\" selected"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Please authorize with Make.com first. Go to the Settings tab to connect your account.",
+				"ZONE": "Please select your Make.com zone in the Settings tab.",
+				"ORGANIZATION": "Please select your Make.com organization in the Settings tab.",
+				"TEAM": "Please select your Make.com team in the Settings tab."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1365,31 +1442,40 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "Client ID",
-			"CLIENT_SECRET": "Client Secret",
-			"NEXT_STEP_INFO": "After authorization, you will be redirected to Zapier to complete the integration setup",
+			"CONNECT_TO_ZAPIER": "Connect to Zapier",
+			"CONNECT_INFO": "Click the button below to connect your Zapier account. You will be redirected to Zapier to authorize the integration.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Failed to load Zapier settings",
 				"SAVE_SETTINGS": "Failed to save Zapier settings",
 				"INVALID_FORM": "Please fill in all required fields",
 				"MISSING_CREDENTIALS": "Missing client credentials",
+				"NO_ORGANIZATION": "Please select an organization first",
 				"NO_ACCESS_TOKEN": "No access token available",
 				"LOAD_WEBHOOKS": "Failed to load webhooks",
 				"DELETE_WEBHOOK": "Failed to delete webhook",
 				"LOAD_ACTIONS": "Failed to load actions",
 				"LOAD_TRIGGERS": "Failed to load triggers",
+				"LOAD_ZAPS": "Failed to load zaps",
+				"LOAD_ZAP_TEMPLATES": "Failed to load zap templates",
+				"CREATE_ZAP": "Failed to create zap",
+				"ZAP_TITLE_REQUIRED": "Please provide a title for the new zap",
+				"INVALID_STEP_INPUTS": "Step {{step}} has invalid JSON in the inputs field",
+				"NO_INTEGRATION_ID": "No Zapier integration ID was provided",
 				"START_AUTHORIZATION": "Please start the authorization process",
 				"INVALID_TOKEN": "Invalid token provided",
 				"TOKEN_NOT_FOUND": "Token not found"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier settings saved successfully",
-				"DELETE_WEBHOOK": "Webhook deleted successfully"
+				"DELETE_WEBHOOK": "Webhook deleted successfully",
+				"CREATE_ZAP": "Zap created successfully"
 			},
 			"TAB": {
 				"TRIGGERS": "Triggers",
 				"ACTIONS": "Actions",
 				"WEBHOOKS": "Webhooks",
+				"ZAPS": "Zaps",
+				"ZAP_TEMPLATES": "Zap Templates",
 				"SETTINGS": "Settings"
 			},
 			"TOOLTIP": {
@@ -1426,6 +1512,31 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "No webhooks configured"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "No zaps available",
+				"CREATE": "Create Zap",
+				"SUBMIT": "Create",
+				"ADD_STEP": "Add step",
+				"OPEN_EDITOR": "Open in Zapier",
+				"ENABLED": "Enabled",
+				"DISABLED": "Disabled",
+				"TITLE_PLACEHOLDER": "Enter a title for the new Zap",
+				"FIELDS": {
+					"TITLE": "Title",
+					"STEPS": "Steps",
+					"STEP": "Step",
+					"STEP_TITLE": "Step title",
+					"ACTION": "Action",
+					"AUTHENTICATION": "Authentication",
+					"INPUTS": "Inputs (JSON)"
+				}
+			},
+			"ZAP_TEMPLATES": {
+				"TITLE": "Zap Templates",
+				"NO_TEMPLATES": "No zap templates available",
+				"USE": "Use Template"
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1709,7 +1820,17 @@
 			"INTEGRATION_ADDED": "Integration '{{provider}}' has been added to '{{organization}}'"
 		},
 		"ENABLED": "Enabled",
-		"DISABLED": "Disabled"
+		"DISABLED": "Disabled",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Processing Make.com authorization...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Make.com authorization failed",
+				"INVALID_CALLBACK": "Invalid callback parameters"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Make.com authorization completed successfully"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
