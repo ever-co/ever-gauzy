@@ -227,6 +227,9 @@ export class ZapierZapsComponent extends TranslationBaseComponent implements OnI
 			return;
 		}
 
+		// Clear cached access token before loading a new integration to prevent
+		// using a stale token from a previous failed token fetch
+		this._accessToken = null;
 		this.loading = true;
 
 		this._zapierService

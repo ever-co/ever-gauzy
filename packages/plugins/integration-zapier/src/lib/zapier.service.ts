@@ -693,6 +693,9 @@ export class ZapierService {
 			return response.zaps ?? [];
 		} catch (error) {
 			this.logger.error('Failed to fetch Zapier zaps:', error);
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new Error('Unable to fetch zaps from Zapier');
 		}
 	}
@@ -783,6 +786,9 @@ export class ZapierService {
 			return response.zap_templates ?? [];
 		} catch (error) {
 			this.logger.error('Failed to fetch Zapier zap templates:', error);
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new Error('Unable to fetch zap templates from Zapier');
 		}
 	}

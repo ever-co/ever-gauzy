@@ -100,7 +100,9 @@ export class ZapierService {
 	 */
 	getTriggers(token: string): Observable<IZapierEndpoint[]> {
 		return this.http.get<IZapierEndpoint[]>(`${API_PREFIX}/integration/zapier/triggers`, {
-			params: { token }
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
 		});
 	}
 
@@ -109,7 +111,9 @@ export class ZapierService {
 	 */
 	getActions(token: string): Observable<IZapierEndpoint[]> {
 		return this.http.get<IZapierEndpoint[]>(`${API_PREFIX}/integration/zapier/actions`, {
-			params: { token }
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
 		});
 	}
 
@@ -118,7 +122,9 @@ export class ZapierService {
 	 */
 	getZaps(token: string): Observable<IZapierZap[]> {
 		return this.http.get<IZapierZap[]>(`${API_PREFIX}/integration/zapier/zaps`, {
-			params: { token }
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
 		});
 	}
 
@@ -127,7 +133,9 @@ export class ZapierService {
 	 */
 	createZap(body: IZapierCreateZapInput, token: string): Observable<IZapierZap> {
 		return this.http.post<IZapierZap>(`${API_PREFIX}/integration/zapier/zaps`, body, {
-			params: { token }
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
 		});
 	}
 
