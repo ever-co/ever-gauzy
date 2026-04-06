@@ -1353,7 +1353,7 @@
 			"TEAM_LABEL": "Make.com Екип",
 			"LOADING_TEAMS": "Зареждане на екипи...",
 			"NO_TEAMS": "Няма намерени екипи",
-			"CONNECTED_TO": "Свързан с <strong>{{org}}</strong> / <strong>{{team}}</strong> в <strong>{{zone}}</strong>",
+			"CONNECTED_TO": "Свързан с {{org}} / {{team}} в {{zone}}",
 			"WEBHOOK_SETTINGS_TITLE": "Настройки на уебхук",
 			"CONNECTIONS": "Връзки",
 			"TEMPLATES": "Шаблони",
@@ -1438,13 +1438,19 @@
 				"DELETE_WEBHOOK": "Неуспешно изтриване на уебхук",
 				"LOAD_ACTIONS": "Неуспешно зареждане на действия",
 				"LOAD_TRIGGERS": "Неуспешно зареждане на тригери",
+				"LOAD_ZAPS": "Неуспешно зареждане на zap-ове",
+				"LOAD_ZAP_TEMPLATES": "Неуспешно зареждане на шаблони за zap",
+				"CREATE_ZAP": "Неуспешно създаване на zap",
+				"ZAP_TITLE_REQUIRED": "Моля, предоставете заглавие за новия zap",
+				"NO_INTEGRATION_ID": "Не е предоставен идентификатор за интеграция на Zapier",
 				"START_AUTHORIZATION": "Моля, започнете процеса на оторизация",
 				"INVALID_TOKEN": "Предоставен е невалиден токен",
 				"TOKEN_NOT_FOUND": "Токенът не е намерен"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Настройките на Zapier са запазени успешно",
-				"DELETE_WEBHOOK": "Уебхукът е изтрит успешно"
+				"DELETE_WEBHOOK": "Уебхукът е изтрит успешно",
+				"CREATE_ZAP": "Zap-ът е създаден успешно"
 			},
 			"TAB": {
 				"TRIGGERS": "Тригери",
@@ -1486,6 +1492,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Уебхукове",
 				"NO_WEBHOOKS": "Няма конфигурирани уебхукове"
+			},
+			"ZAPS": {
+				"TITLE": "Запс",
+				"NO_ZAPS": "Няма налични запс",
+				"CREATE": "Създай Запс",
+				"SUBMIT": "Създай",
+				"ADD_STEP": "Добави стъпка",
+				"OPEN_EDITOR": "Отвори в Zapier",
+				"ENABLED": "Активирано",
+				"DISABLED": "Деактивирано",
+				"TITLE_PLACEHOLDER": "Въведете заглавие за новия Запс",
+				"FIELDS": {
+					"TITLE": "Заглавие",
+					"STEPS": "Стъпки",
+					"STEP": "Стъпка",
+					"STEP_TITLE": "Заглавие на стъпката",
+					"ACTION": "Действие",
+					"AUTHENTICATION": "Удостоверяване",
+					"INPUTS": "Входни данни (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {

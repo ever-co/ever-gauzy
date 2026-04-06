@@ -13,7 +13,7 @@ import {
 	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { IZapierCreateZapInput, IZapierZap, IZapierZapTemplate, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
 import { IZapierEndpoint, IZapierIntegrationSettings } from './zapier.types';
@@ -116,6 +116,80 @@ export class ZapierController {
 			return await this.zapierService.fetchActions(token);
 		} catch (error) {
 			this.handleZapierError(error, 'actions');
+		}
+	}
+
+	/**
+	 * Get Zaps for the authenticated Zapier account.
+	 */
+	@ApiOperation({ summary: 'Get Zapier zaps' })
+	@ApiResponse({
+		status: 200,
+		description: 'Successfully retrieved Zapier zaps'
+	})
+	@ApiResponse({
+		status: 401,
+		description: 'Unauthorized - Invalid or missing authorization token'
+	})
+	@Get('/zaps')
+	async getZaps(@Query('token') token: string): Promise<IZapierZap[]> {
+		try {
+			this.validateToken(token, true);
+			return await this.zapierService.fetchZaps(token);
+		} catch (error) {
+			this.handleZapierError(error, 'zaps');
+		}
+	}
+
+	/**
+	 * Create a new Zap on the authenticated Zapier account.
+	 */
+	@ApiOperation({ summary: 'Create a new Zapier zap' })
+	@ApiResponse({
+		status: 201,
+		description: 'Successfully created Zapier zap'
+	})
+	@ApiResponse({
+		status: 400,
+		description: 'Bad Request - Missing required fields'
+	})
+	@ApiResponse({
+		status: 401,
+		description: 'Unauthorized - Invalid or missing authorization token'
+	})
+	@Post('/zaps')
+	async createZap(
+		@Query('token') token: string,
+		@Body() body: IZapierCreateZapInput
+	): Promise<IZapierZap> {
+		try {
+			this.validateToken(token, true);
+			if (!body?.title || !Array.isArray(body?.steps) || body.steps.length === 0) {
+				throw new BadRequestException('Zap title and at least one step are required');
+			}
+			return await this.zapierService.createZap(body, token);
+		} catch (error) {
+			this.handleZapierError(error, 'zaps');
+		}
+	}
+
+	/**
+	 * Get publicly available Zap templates from Zapier.
+	 * This Zapier endpoint does not require an OAuth access token — it only
+	 * needs the server-configured `client_id`, which is attached in the service.
+	 */
+	@ApiOperation({ summary: 'Get Zapier zap templates (public)' })
+	@ApiResponse({
+		status: 200,
+		description: 'Successfully retrieved Zapier zap templates'
+	})
+	@Get('/zap-templates')
+	async getZapTemplates(@Query('limit') limit?: string): Promise<IZapierZapTemplate[]> {
+		try {
+			const parsedLimit = limit ? Number(limit) : undefined;
+			return await this.zapierService.fetchZapTemplates(parsedLimit);
+		} catch (error) {
+			this.handleZapierError(error, 'zap-templates');
 		}
 	}
 

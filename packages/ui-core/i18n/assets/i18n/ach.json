@@ -1216,7 +1216,7 @@
 			"TEAM_LABEL": "Make.com Team",
 			"LOADING_TEAMS": "Loading teams...",
 			"NO_TEAMS": "No teams found",
-			"CONNECTED_TO": "Connected to <strong>{{org}}</strong> / <strong>{{team}}</strong> on <strong>{{zone}}</strong>",
+			"CONNECTED_TO": "Connected to {{org}} / {{team}} on {{zone}}",
 			"WEBHOOK_SETTINGS_TITLE": "Webhook Settings",
 			"CONNECTIONS": "Connections",
 			"TEMPLATES": "Templates",
@@ -1301,6 +1301,11 @@
 				"DELETE_WEBHOOK": "Peko oo pe junk webhook",
 				"LOAD_ACTIONS": "Peko oo pe gonyo tic",
 				"LOAD_TRIGGERS": "Peko oo pe gonyo lok ma gonyo",
+				"LOAD_ZAPS": "Peko oo pe gonyo zaps",
+				"LOAD_ZAP_TEMPLATES": "Peko oo pe gonyo template pa zap",
+				"CREATE_ZAP": "Peko oo pe create zap",
+				"ZAP_TITLE_REQUIRED": "Tim ber i miyo title me zap manyen",
+				"NO_INTEGRATION_ID": "Pe ki miyo ID me integration pa Zapier",
 				"START_AUTHORIZATION": "Ket cwoki pa authorization ni",
 				"INVALID_CALLBACK": "Peko tye callback ma tye maber",
 				"AUTHORIZATION": "Peko tye authorization ma tye maber",
@@ -1310,6 +1315,7 @@
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Ter pa Zapier ogam ki ber",
 				"DELETE_WEBHOOK": "Webhook ojunk ki ber",
+				"CREATE_ZAP": "Ocreate zap ki ber",
 				"AUTHORIZATION": "Authorization puched ki ber"
 			},
 			"TAB": {
@@ -1352,6 +1358,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "Pe tye webhook ma kigoyo"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "Pe tye zaps",
+				"CREATE": "Lok Zap",
+				"SUBMIT": "Lok",
+				"ADD_STEP": "Med step",
+				"OPEN_EDITOR": "Yab i Zapier",
+				"ENABLED": "Cako",
+				"DISABLED": "Juko",
+				"TITLE_PLACEHOLDER": "Ket title me Zap manyen",
+				"FIELDS": {
+					"TITLE": "Title",
+					"STEPS": "Steps",
+					"STEP": "Step",
+					"STEP_TITLE": "Step title",
+					"ACTION": "Tic",
+					"AUTHENTICATION": "Authentication",
+					"INPUTS": "Inputs (JSON)"
+				}
 			}
 		},
 		"ACTIVEPIECES_PAGE": {

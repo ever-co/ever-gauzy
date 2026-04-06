@@ -1321,7 +1321,7 @@
 			"TEAM_LABEL": "Make.com 团队",
 			"LOADING_TEAMS": "正在加载团队...",
 			"NO_TEAMS": "未找到团队",
-			"CONNECTED_TO": "已连接到 <strong>{{org}}</strong> / <strong>{{team}}</strong> 在 <strong>{{zone}}</strong>",
+			"CONNECTED_TO": "已连接到 {{org}} / {{team}} 在 {{zone}}",
 			"WEBHOOK_SETTINGS_TITLE": "Webhook 设置",
 			"CONNECTIONS": "连接",
 			"TEMPLATES": "模板",
@@ -1406,13 +1406,19 @@
 				"DELETE_WEBHOOK": "删除Webhook失败",
 				"LOAD_ACTIONS": "加载动作失败",
 				"LOAD_TRIGGERS": "加载触发器失败",
+				"LOAD_ZAPS": "加载zaps失败",
+				"LOAD_ZAP_TEMPLATES": "加载zap模板失败",
+				"CREATE_ZAP": "创建zap失败",
+				"ZAP_TITLE_REQUIRED": "请为新zap提供标题",
+				"NO_INTEGRATION_ID": "未提供Zapier集成ID",
 				"START_AUTHORIZATION": "请开始授权过程",
 				"INVALID_TOKEN": "提供的令牌无效",
 				"TOKEN_NOT_FOUND": "未找到令牌"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier设置保存成功",
-				"DELETE_WEBHOOK": "Webhook删除成功"
+				"DELETE_WEBHOOK": "Webhook删除成功",
+				"CREATE_ZAP": "Zap创建成功"
 			},
 			"TAB": {
 				"TRIGGERS": "触发器",
@@ -1454,6 +1460,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "未配置Webhooks"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "没有可用的Zaps",
+				"CREATE": "创建Zap",
+				"SUBMIT": "创建",
+				"ADD_STEP": "添加步骤",
+				"OPEN_EDITOR": "在Zapier中打开",
+				"ENABLED": "已启用",
+				"DISABLED": "已禁用",
+				"TITLE_PLACEHOLDER": "输入新Zap的标题",
+				"FIELDS": {
+					"TITLE": "标题",
+					"STEPS": "步骤",
+					"STEP": "步骤",
+					"STEP_TITLE": "步骤标题",
+					"ACTION": "操作",
+					"AUTHENTICATION": "身份验证",
+					"INPUTS": "输入 (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {

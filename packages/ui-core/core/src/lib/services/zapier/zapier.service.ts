@@ -10,6 +10,9 @@ import {
 	IZapierAuthConfig,
 	IZapierIntegrationSettings,
 	IIntegrationSetting,
+	IZapierZap,
+	IZapierCreateZapInput,
+	IZapierZapTemplate,
 	ID
 } from '@gauzy/contracts';
 
@@ -107,6 +110,39 @@ export class ZapierService {
 	getActions(token: string): Observable<IZapierEndpoint[]> {
 		return this.http.get<IZapierEndpoint[]>(`${API_PREFIX}/integration/zapier/actions`, {
 			params: { token }
+		});
+	}
+
+	/**
+	 * Get Zaps for the authenticated Zapier account
+	 */
+	getZaps(token: string): Observable<IZapierZap[]> {
+		return this.http.get<IZapierZap[]>(`${API_PREFIX}/integration/zapier/zaps`, {
+			params: { token }
+		});
+	}
+
+	/**
+	 * Create a new Zap on the authenticated Zapier account
+	 */
+	createZap(body: IZapierCreateZapInput, token: string): Observable<IZapierZap> {
+		return this.http.post<IZapierZap>(`${API_PREFIX}/integration/zapier/zaps`, body, {
+			params: { token }
+		});
+	}
+
+	/**
+	 * Get publicly available Zap templates.
+	 * Zap templates do not require an OAuth access token — the server attaches
+	 * the configured `client_id` on the way out to Zapier.
+	 */
+	getZapTemplates(limit?: number): Observable<IZapierZapTemplate[]> {
+		const params: Record<string, string> = {};
+		if (limit !== undefined) {
+			params['limit'] = String(limit);
+		}
+		return this.http.get<IZapierZapTemplate[]>(`${API_PREFIX}/integration/zapier/zap-templates`, {
+			params
 		});
 	}
 

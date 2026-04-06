@@ -29,6 +29,7 @@ import {
 	IZapierEndpoint,
 	IZapierIntegrationSettings
 } from './zapier.types';
+import { IZapierCreateZapInput, IZapierZap, IZapierZapTemplate } from '@gauzy/contracts';
 import { randomBytes } from 'node:crypto';
 
 @Injectable()
@@ -673,6 +674,116 @@ export class ZapierService {
 		} catch (error) {
 			this.logger.error('Failed to fetch Zapier actions:', error);
 			throw new Error('Unable to fetch actions from Zapier');
+		}
+	}
+
+	/**
+	 * Fetches the list of Zaps belonging to the authenticated user.
+	 * See https://docs.zapier.com/powered-by-zapier/api-reference/zaps/get-zaps-[v2]
+	 *
+	 * @param {string} token - The access token for authentication with the Zapier API.
+	 * @returns {Promise<IZapierZap[]>} - A promise that resolves to an array of Zaps.
+	 */
+	async fetchZaps(token: string): Promise<IZapierZap[]> {
+		try {
+			const response = await this.fetchIntegration<{ zaps: IZapierZap[] }>(
+				`${ZAPIER_API_URL}/v2/zaps`,
+				token
+			);
+			return response.zaps ?? [];
+		} catch (error) {
+			this.logger.error('Failed to fetch Zapier zaps:', error);
+			throw new Error('Unable to fetch zaps from Zapier');
+		}
+	}
+
+	/**
+	 * Creates a new Zap on behalf of the authenticated user.
+	 * See https://docs.zapier.com/powered-by-zapier/api-reference/zaps/create-a-zap
+	 *
+	 * @param {IZapierCreateZapInput} input - The Zap creation payload (title and steps).
+	 * @param {string} token - The access token for authentication with the Zapier API.
+	 * @returns {Promise<IZapierZap>} - A promise that resolves to the created Zap.
+	 */
+	async createZap(input: IZapierCreateZapInput, token: string): Promise<IZapierZap> {
+		try {
+			const headers = { Authorization: `Bearer ${token}` };
+			return await firstValueFrom(
+				this._httpService.post<IZapierZap>(`${ZAPIER_API_URL}/v2/zaps`, input, { headers }).pipe(
+					catchError((error: AxiosError<any>) => {
+						if (!error.response) {
+							throw new HttpException(
+								{ message: error.message, error },
+								HttpStatus.INTERNAL_SERVER_ERROR
+							);
+						}
+						const response: AxiosResponse<any> = error.response;
+						throw new HttpException({ message: error.message, error }, response.status);
+					}),
+					map((response: AxiosResponse<IZapierZap>) => response.data)
+				)
+			);
+		} catch (error) {
+			this.logger.error('Failed to create Zapier zap:', error);
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new Error('Unable to create zap on Zapier');
+		}
+	}
+
+	/**
+	 * Fetches publicly available Zap templates from Zapier.
+	 * See https://docs.zapier.com/powered-by-zapier/api-reference/zap-templates/get-zap-templates
+	 *
+	 * Zap templates are a public endpoint and do not require an OAuth access token.
+	 * Per the Zapier docs, the endpoint lives at /v1/zap-templates and requires the
+	 * server-configured `client_id` to be passed as a query parameter.
+	 * See https://docs.zapier.com/powered-by-zapier/api-reference/zap-templates/get-zap-templates
+	 *
+	 * @param {number} [limit] - Optional page size to forward to Zapier.
+	 * @returns {Promise<IZapierZapTemplate[]>} - A promise that resolves to an array of Zap templates.
+	 */
+	async fetchZapTemplates(limit?: number): Promise<IZapierZapTemplate[]> {
+		const clientId = this.config.get('zapier')?.clientId;
+		if (!clientId) {
+			throw new BadRequestException(
+				'Zapier client_id is not configured on the server. Please set GAUZY_ZAPIER_CLIENT_ID.'
+			);
+		}
+
+		const params: Record<string, string> = { client_id: clientId };
+		if (limit !== undefined && Number.isFinite(limit)) {
+			params['limit'] = String(limit);
+		}
+
+		try {
+			const response = await firstValueFrom(
+				this._httpService
+					.get<{ zap_templates: IZapierZapTemplate[] }>(`${ZAPIER_API_URL}/v1/zap-templates`, {
+						params
+					})
+					.pipe(
+						catchError((error: AxiosError<any>) => {
+							if (!error.response) {
+								throw new HttpException(
+									{ message: error.message, error },
+									HttpStatus.INTERNAL_SERVER_ERROR
+								);
+							}
+							const response: AxiosResponse<any> = error.response;
+							throw new HttpException({ message: error.message, error }, response.status);
+						}),
+						map(
+							(response: AxiosResponse<{ zap_templates: IZapierZapTemplate[] }>) =>
+								response.data
+						)
+					)
+			);
+			return response.zap_templates ?? [];
+		} catch (error) {
+			this.logger.error('Failed to fetch Zapier zap templates:', error);
+			throw new Error('Unable to fetch zap templates from Zapier');
 		}
 	}
 

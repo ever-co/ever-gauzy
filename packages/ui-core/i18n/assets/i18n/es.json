@@ -1323,7 +1323,7 @@
 			"TEAM_LABEL": "Equipo Make.com",
 			"LOADING_TEAMS": "Cargando equipos...",
 			"NO_TEAMS": "No se encontraron equipos",
-			"CONNECTED_TO": "Conectado a <strong>{{org}}</strong> / <strong>{{team}}</strong> en <strong>{{zone}}</strong>",
+			"CONNECTED_TO": "Conectado a {{org}} / {{team}} en {{zone}}",
 			"WEBHOOK_SETTINGS_TITLE": "Configuración de Webhook",
 			"CONNECTIONS": "Conexiones",
 			"TEMPLATES": "Plantillas",
@@ -1408,13 +1408,19 @@
 				"DELETE_WEBHOOK": "Error al eliminar webhook",
 				"LOAD_ACTIONS": "Error al cargar acciones",
 				"LOAD_TRIGGERS": "Error al cargar disparadores",
+				"LOAD_ZAPS": "Error al cargar zaps",
+				"LOAD_ZAP_TEMPLATES": "Error al cargar plantillas de zap",
+				"CREATE_ZAP": "Error al crear zap",
+				"ZAP_TITLE_REQUIRED": "Por favor, proporcione un título para el nuevo zap",
+				"NO_INTEGRATION_ID": "No se proporcionó ningún ID de integración de Zapier",
 				"START_AUTHORIZATION": "Por favor, inicie el proceso de autorización",
 				"INVALID_TOKEN": "Token inválido proporcionado",
 				"TOKEN_NOT_FOUND": "Token no encontrado"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Configuración de Zapier guardada correctamente",
-				"DELETE_WEBHOOK": "Webhook eliminado correctamente"
+				"DELETE_WEBHOOK": "Webhook eliminado correctamente",
+				"CREATE_ZAP": "Zap creado exitosamente"
 			},
 			"TAB": {
 				"TRIGGERS": "Disparadores",
@@ -1456,6 +1462,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "No hay webhooks configurados"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "No hay zaps disponibles",
+				"CREATE": "Crear Zap",
+				"SUBMIT": "Crear",
+				"ADD_STEP": "Agregar paso",
+				"OPEN_EDITOR": "Abrir en Zapier",
+				"ENABLED": "Habilitado",
+				"DISABLED": "Deshabilitado",
+				"TITLE_PLACEHOLDER": "Ingrese un título para el nuevo Zap",
+				"FIELDS": {
+					"TITLE": "Título",
+					"STEPS": "Pasos",
+					"STEP": "Paso",
+					"STEP_TITLE": "Título del paso",
+					"ACTION": "Acción",
+					"AUTHENTICATION": "Autenticación",
+					"INPUTS": "Entradas (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {

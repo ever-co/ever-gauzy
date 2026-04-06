@@ -1321,7 +1321,7 @@
 			"TEAM_LABEL": "Team Make.com",
 			"LOADING_TEAMS": "Caricamento team...",
 			"NO_TEAMS": "Nessun team trovato",
-			"CONNECTED_TO": "Connesso a <strong>{{org}}</strong> / <strong>{{team}}</strong> su <strong>{{zone}}</strong>",
+			"CONNECTED_TO": "Connesso a {{org}} / {{team}} su {{zone}}",
 			"WEBHOOK_SETTINGS_TITLE": "Impostazioni Webhook",
 			"CONNECTIONS": "Connessioni",
 			"TEMPLATES": "Modelli",
@@ -1347,12 +1347,12 @@
 				"SAVE_SETTINGS": "Impossibile salvare le impostazioni di Make.com",
 				"LOAD_SETUP_STATUS": "Impossibile caricare lo stato di configurazione",
 				"LOAD_SCENARIOS": "Impossibile caricare gli scenari",
-				"TOGGLE_SCENARIO": "Impossibile alternare lo scenario",
+				"TOGGLE_SCENARIO": "Impossibile modificare lo stato dello scenario",
 				"RUN_SCENARIO": "Impossibile eseguire lo scenario",
 				"LOAD_CONNECTIONS": "Impossibile caricare le connessioni",
 				"TEST_CONNECTION": "Impossibile testare la connessione",
 				"LOAD_WEBHOOKS": "Impossibile caricare i webhook",
-				"TOGGLE_WEBHOOK": "Impossibile alternare il webhook",
+				"TOGGLE_WEBHOOK": "Impossibile modificare lo stato del webhook",
 				"PING_WEBHOOK": "Impossibile testare il webhook",
 				"SET_ZONE": "Impossibile impostare la zona",
 				"LOAD_ORGANIZATIONS": "Impossibile caricare le organizzazioni",
@@ -1406,13 +1406,19 @@
 				"DELETE_WEBHOOK": "Impossibile eliminare il webhook",
 				"LOAD_ACTIONS": "Impossibile caricare le azioni",
 				"LOAD_TRIGGERS": "Impossibile caricare i trigger",
+				"LOAD_ZAPS": "Impossibile caricare gli zap",
+				"LOAD_ZAP_TEMPLATES": "Impossibile caricare i modelli di zap",
+				"CREATE_ZAP": "Impossibile creare lo zap",
+				"ZAP_TITLE_REQUIRED": "Si prega di fornire un titolo per il nuovo zap",
+				"NO_INTEGRATION_ID": "Non è stato fornito alcun ID di integrazione Zapier",
 				"START_AUTHORIZATION": "Per favore, inizia il processo di autorizzazione",
 				"INVALID_TOKEN": "Token non valido fornito",
 				"TOKEN_NOT_FOUND": "Token non trovato"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Impostazioni di Zapier salvate con successo",
-				"DELETE_WEBHOOK": "Webhook eliminato con successo"
+				"DELETE_WEBHOOK": "Webhook eliminato con successo",
+				"CREATE_ZAP": "Zap creato con successo"
 			},
 			"TAB": {
 				"TRIGGERS": "Trigger",
@@ -1454,6 +1460,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhook",
 				"NO_WEBHOOKS": "Nessun webhook configurato"
+			},
+			"ZAPS": {
+				"TITLE": "Zap",
+				"NO_ZAPS": "Nessun zap disponibile",
+				"CREATE": "Crea Zap",
+				"SUBMIT": "Crea",
+				"ADD_STEP": "Aggiungi passaggio",
+				"OPEN_EDITOR": "Apri in Zapier",
+				"ENABLED": "Abilitato",
+				"DISABLED": "Disabilitato",
+				"TITLE_PLACEHOLDER": "Inserisci un titolo per il nuovo Zap",
+				"FIELDS": {
+					"TITLE": "Titolo",
+					"STEPS": "Passaggi",
+					"STEP": "Passaggio",
+					"STEP_TITLE": "Titolo passaggio",
+					"ACTION": "Azione",
+					"AUTHENTICATION": "Autenticazione",
+					"INPUTS": "Input (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {

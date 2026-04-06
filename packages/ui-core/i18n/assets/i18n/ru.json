@@ -1329,7 +1329,7 @@
 			"TEAM_LABEL": "Команда Make.com",
 			"LOADING_TEAMS": "Загрузка команд...",
 			"NO_TEAMS": "Команды не найдены",
-			"CONNECTED_TO": "Подключено к <strong>{{org}}</strong> / <strong>{{team}}</strong> на <strong>{{zone}}</strong>",
+			"CONNECTED_TO": "Подключено к {{org}} / {{team}} на {{zone}}",
 			"WEBHOOK_SETTINGS_TITLE": "Настройки вебхука",
 			"CONNECTIONS": "Подключения",
 			"TEMPLATES": "Шаблоны",
@@ -1414,13 +1414,19 @@
 				"DELETE_WEBHOOK": "Не удалось удалить вебхук",
 				"LOAD_ACTIONS": "Не удалось загрузить действия",
 				"LOAD_TRIGGERS": "Не удалось загрузить триггеры",
+				"LOAD_ZAPS": "Не удалось загрузить запы",
+				"LOAD_ZAP_TEMPLATES": "Не удалось загрузить шаблоны зап",
+				"CREATE_ZAP": "Не удалось создать зап",
+				"ZAP_TITLE_REQUIRED": "Пожалуйста, укажите название для нового запа",
+				"NO_INTEGRATION_ID": "Не был предоставлен идентификатор интеграции Zapier",
 				"START_AUTHORIZATION": "Пожалуйста, начните процесс авторизации",
 				"INVALID_TOKEN": "Предоставлен недействительный токен",
 				"TOKEN_NOT_FOUND": "Токен не найден"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Настройки Zapier успешно сохранены",
-				"DELETE_WEBHOOK": "Вебхук успешно удален"
+				"DELETE_WEBHOOK": "Вебхук успешно удален",
+				"CREATE_ZAP": "Зап успешно создан"
 			},
 			"TAB": {
 				"TRIGGERS": "Триггеры",
@@ -1462,6 +1468,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Вебхуки",
 				"NO_WEBHOOKS": "Нет настроенных вебхуков"
+			},
+			"ZAPS": {
+				"TITLE": "Запы",
+				"NO_ZAPS": "Нет доступных запов",
+				"CREATE": "Создать Зап",
+				"SUBMIT": "Создать",
+				"ADD_STEP": "Добавить шаг",
+				"OPEN_EDITOR": "Открыть в Zapier",
+				"ENABLED": "Включено",
+				"DISABLED": "Отключено",
+				"TITLE_PLACEHOLDER": "Введите название для нового Запа",
+				"FIELDS": {
+					"TITLE": "Название",
+					"STEPS": "Шаги",
+					"STEP": "Шаг",
+					"STEP_TITLE": "Название шага",
+					"ACTION": "Действие",
+					"AUTHENTICATION": "Аутентификация",
+					"INPUTS": "Входные данные (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1736,8 +1762,8 @@
 			"INTEGRATION_DISABLED": "Интеграция '{{provider}}' успешно отключена",
 			"INTEGRATION_ADDED": "Интеграция '{{provider}}' добавлена ​​в '{{organization}}'"
 		},
-		"ENABLED": "Enabled",
-		"DISABLED": "Disabled",
+		"ENABLED": "Включено",
+		"DISABLED": "Отключено",
 		"MAKE_PAGE": {
 			"PROCESSING_AUTHORIZATION": "Обработка авторизации Make.com...",
 			"ERRORS": {

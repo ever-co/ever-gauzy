@@ -1325,7 +1325,7 @@
 			"TEAM_LABEL": "צוות Make.com",
 			"LOADING_TEAMS": "טוען צוותים...",
 			"NO_TEAMS": "לא נמצאו צוותים",
-			"CONNECTED_TO": "מחובר ל-<strong>{{org}}</strong> / <strong>{{team}}</strong> ב-<strong>{{zone}}</strong>",
+			"CONNECTED_TO": "מחובר ל-{{org}} / {{team}} ב-{{zone}}",
 			"WEBHOOK_SETTINGS_TITLE": "הגדרות Webhook",
 			"CONNECTIONS": "חיבורים",
 			"TEMPLATES": "תבניות",
@@ -1403,20 +1403,26 @@
 				"LOAD_SETTINGS": "נכשל בטעינת הגדרות Zapier",
 				"SAVE_SETTINGS": "נכשל בשמירת הגדרות Zapier",
 				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
-				"MISSING_CREDENTIALS": "חסרים פרטי גישה של הלקוח",
+				"MISSING_CREDENTIALS": "שילוב Zapier לא מוגדר בשרת",
 				"NO_ORGANIZATION": "אנא בחר ארגון תחילה",
 				"NO_ACCESS_TOKEN": "אין אסימון גישה זמין",
 				"LOAD_WEBHOOKS": "נכשל בטעינת וובחוקים",
 				"DELETE_WEBHOOK": "נכשל במחיקת וובחוק",
 				"LOAD_ACTIONS": "נכשל בטעינת פעולות",
 				"LOAD_TRIGGERS": "נכשל בטעינת טריגרים",
+				"LOAD_ZAPS": "כשל בטעינת zaps",
+				"LOAD_ZAP_TEMPLATES": "כשל בטעינת תבניות zap",
+				"CREATE_ZAP": "כשל ביצירת zap",
+				"ZAP_TITLE_REQUIRED": "אנא ספק כותרת ל-zap החדש",
+				"NO_INTEGRATION_ID": "לא סופק מזהה אינטגרציה של Zapier",
 				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור",
 				"INVALID_TOKEN": "אסימון לא תקין סופק",
 				"TOKEN_NOT_FOUND": "אסימון לא נמצא"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "הגדרות Zapier נשמרו בהצלחה",
-				"DELETE_WEBHOOK": "וובחוק נמחק בהצלחה"
+				"DELETE_WEBHOOK": "וובחוק נמחק בהצלחה",
+				"CREATE_ZAP": "Zap נוצר בהצלחה"
 			},
 			"TAB": {
 				"TRIGGERS": "טריגרים",
@@ -1458,6 +1464,26 @@
 			"WEBHOOKS": {
 				"TITLE": "וובחוקים",
 				"NO_WEBHOOKS": "אין וובחוקים מוגדרים"
+			},
+			"ZAPS": {
+				"TITLE": "זאפים",
+				"NO_ZAPS": "אין זאפים זמינים",
+				"CREATE": "צור זאפ",
+				"SUBMIT": "צור",
+				"ADD_STEP": "הוסף שלב",
+				"OPEN_EDITOR": "פתח ב-Zapier",
+				"ENABLED": "מופעל",
+				"DISABLED": "מושבת",
+				"TITLE_PLACEHOLDER": "הזן כותרת לזאפ החדש",
+				"FIELDS": {
+					"TITLE": "כותרת",
+					"STEPS": "שלבים",
+					"STEP": "שלב",
+					"STEP_TITLE": "כותרת שלב",
+					"ACTION": "פעולה",
+					"AUTHENTICATION": "אימות",
+					"INPUTS": "קלטים (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1729,8 +1755,8 @@
 			"INTEGRATION_DISABLED": "'{{provider}}' integration successfully disabled",
 			"INTEGRATION_ADDED": "Integration '{{provider}}' has been added to '{{organization}}'"
 		},
-		"ENABLED": "Enabled",
-		"DISABLED": "Disabled",
+		"ENABLED": "מופעל",
+		"DISABLED": "מושבת",
 		"MAKE_PAGE": {
 			"PROCESSING_AUTHORIZATION": "מעבד הרשאת Make.com...",
 			"ERRORS": {
@@ -1885,8 +1911,8 @@
 		"END_WORK": "סיום עבודה",
 		"WORK_ENDED": "העבודה הסתיימה",
 		"DELETED": "Deleted",
-		"ENABLED": "Enabled",
-		"DISABLED": "Disabled",
+		"ENABLED": "מופעל",
+		"DISABLED": "מושבת",
 		"RECURRING_EXPENSE": "Employee Recurring Expense",
 		"RECURRING_EXPENSE_EDIT": "Edit the current & all future expenses. There will be no change to any past expense.",
 		"RECURRING_EXPENSE_ADD": "This will add an expense recurring every month.",

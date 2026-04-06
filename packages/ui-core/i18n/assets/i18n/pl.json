@@ -1320,7 +1320,7 @@
 			"TEAM_LABEL": "Zespół Make.com",
 			"LOADING_TEAMS": "Ładowanie zespołów...",
 			"NO_TEAMS": "Nie znaleziono zespołów",
-			"CONNECTED_TO": "Połączony z <strong>{{org}}</strong> / <strong>{{team}}</strong> na <strong>{{zone}}</strong>",
+			"CONNECTED_TO": "Połączony z {{org}} / {{team}} na {{zone}}",
 			"WEBHOOK_SETTINGS_TITLE": "Ustawienia Webhook",
 			"CONNECTIONS": "Połączenia",
 			"TEMPLATES": "Szablony",
@@ -1405,13 +1405,19 @@
 				"DELETE_WEBHOOK": "Nie udało się usunąć webhooka",
 				"LOAD_ACTIONS": "Nie udało się załadować akcji",
 				"LOAD_TRIGGERS": "Nie udało się załadować triggerów",
+				"LOAD_ZAPS": "Nie udało się załadować zapów",
+				"LOAD_ZAP_TEMPLATES": "Nie udało się załadować szablonów zap",
+				"CREATE_ZAP": "Nie udało się utworzyć zapa",
+				"ZAP_TITLE_REQUIRED": "Proszę podać tytuł dla nowego zapa",
+				"NO_INTEGRATION_ID": "Nie podano identyfikatora integracji Zapier",
 				"START_AUTHORIZATION": "Proszę rozpocząć proces autoryzacji",
 				"INVALID_TOKEN": "Podano nieprawidłowy token",
 				"TOKEN_NOT_FOUND": "Token nie został znaleziony"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Ustawienia Zapier zostały pomyślnie zapisane",
-				"DELETE_WEBHOOK": "Webhook został pomyślnie usunięty"
+				"DELETE_WEBHOOK": "Webhook został pomyślnie usunięty",
+				"CREATE_ZAP": "Zap został pomyślnie utworzony"
 			},
 			"TAB": {
 				"TRIGGERS": "Wyzwalacze",
@@ -1453,6 +1459,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooki",
 				"NO_WEBHOOKS": "Brak skonfigurowanych webhooków"
+			},
+			"ZAPS": {
+				"TITLE": "Zapy",
+				"NO_ZAPS": "Brak dostępnych zapów",
+				"CREATE": "Utwórz Zap",
+				"SUBMIT": "Utwórz",
+				"ADD_STEP": "Dodaj krok",
+				"OPEN_EDITOR": "Otwórz w Zapier",
+				"ENABLED": "Włączone",
+				"DISABLED": "Wyłączone",
+				"TITLE_PLACEHOLDER": "Wprowadź tytuł dla nowego Zapa",
+				"FIELDS": {
+					"TITLE": "Tytuł",
+					"STEPS": "Kroki",
+					"STEP": "Krok",
+					"STEP_TITLE": "Tytuł kroku",
+					"ACTION": "Akcja",
+					"AUTHENTICATION": "Uwierzytelnianie",
+					"INPUTS": "Wejścia (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {

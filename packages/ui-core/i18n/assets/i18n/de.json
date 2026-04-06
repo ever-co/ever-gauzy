@@ -1321,7 +1321,7 @@
 			"TEAM_LABEL": "Make.com-Team",
 			"LOADING_TEAMS": "Teams werden geladen...",
 			"NO_TEAMS": "Keine Teams gefunden",
-			"CONNECTED_TO": "Verbunden mit <strong>{{org}}</strong> / <strong>{{team}}</strong> auf <strong>{{zone}}</strong>",
+			"CONNECTED_TO": "Verbunden mit {{org}} / {{team}} auf {{zone}}",
 			"WEBHOOK_SETTINGS_TITLE": "Webhook-Einstellungen",
 			"CONNECTIONS": "Verbindungen",
 			"TEMPLATES": "Vorlagen",
@@ -1406,13 +1406,19 @@
 				"DELETE_WEBHOOK": "Fehler beim Löschen des Webhooks",
 				"LOAD_ACTIONS": "Fehler beim Laden der Aktionen",
 				"LOAD_TRIGGERS": "Fehler beim Laden der Trigger",
+				"LOAD_ZAPS": "Fehler beim Laden der Zaps",
+				"LOAD_ZAP_TEMPLATES": "Fehler beim Laden der Zap-Vorlagen",
+				"CREATE_ZAP": "Fehler beim Erstellen des Zaps",
+				"ZAP_TITLE_REQUIRED": "Bitte geben Sie einen Titel für den neuen Zap an",
+				"NO_INTEGRATION_ID": "Es wurde keine Zapier-Integrations-ID angegeben",
 				"START_AUTHORIZATION": "Bitte starten Sie den Autorisierungsprozess",
 				"INVALID_TOKEN": "Ungültiges Token bereitgestellt",
 				"TOKEN_NOT_FOUND": "Token nicht gefunden"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier-Einstellungen erfolgreich gespeichert",
-				"DELETE_WEBHOOK": "Webhook erfolgreich gelöscht"
+				"DELETE_WEBHOOK": "Webhook erfolgreich gelöscht",
+				"CREATE_ZAP": "Zap erfolgreich erstellt"
 			},
 			"TAB": {
 				"TRIGGERS": "Trigger",
@@ -1454,6 +1460,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "Keine Webhooks konfiguriert"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "Keine Zaps verfügbar",
+				"CREATE": "Zap erstellen",
+				"SUBMIT": "Erstellen",
+				"ADD_STEP": "Schritt hinzufügen",
+				"OPEN_EDITOR": "In Zapier öffnen",
+				"ENABLED": "Aktiviert",
+				"DISABLED": "Deaktiviert",
+				"TITLE_PLACEHOLDER": "Geben Sie einen Titel für den neuen Zap ein",
+				"FIELDS": {
+					"TITLE": "Titel",
+					"STEPS": "Schritte",
+					"STEP": "Schritt",
+					"STEP_TITLE": "Schritttitel",
+					"ACTION": "Aktion",
+					"AUTHENTICATION": "Authentifizierung",
+					"INPUTS": "Eingaben (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {

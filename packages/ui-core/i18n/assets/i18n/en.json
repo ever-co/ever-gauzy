@@ -1370,7 +1370,7 @@
 			"TEAM_LABEL": "Make.com Team",
 			"LOADING_TEAMS": "Loading teams...",
 			"NO_TEAMS": "No teams found",
-			"CONNECTED_TO": "Connected to <strong>{{org}}</strong> / <strong>{{team}}</strong> on <strong>{{zone}}</strong>",
+			"CONNECTED_TO": "Connected to {{org}} / {{team}} on {{zone}}",
 			"WEBHOOK_SETTINGS_TITLE": "Webhook Settings",
 			"CONNECTIONS": "Connections",
 			"TEMPLATES": "Templates",
@@ -1455,18 +1455,27 @@
 				"DELETE_WEBHOOK": "Failed to delete webhook",
 				"LOAD_ACTIONS": "Failed to load actions",
 				"LOAD_TRIGGERS": "Failed to load triggers",
+				"LOAD_ZAPS": "Failed to load zaps",
+				"LOAD_ZAP_TEMPLATES": "Failed to load zap templates",
+				"CREATE_ZAP": "Failed to create zap",
+				"ZAP_TITLE_REQUIRED": "Please provide a title for the new zap",
+				"INVALID_STEP_INPUTS": "Step {{step}} has invalid JSON in the inputs field",
+				"NO_INTEGRATION_ID": "No Zapier integration ID was provided",
 				"START_AUTHORIZATION": "Please start the authorization process",
 				"INVALID_TOKEN": "Invalid token provided",
 				"TOKEN_NOT_FOUND": "Token not found"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier settings saved successfully",
-				"DELETE_WEBHOOK": "Webhook deleted successfully"
+				"DELETE_WEBHOOK": "Webhook deleted successfully",
+				"CREATE_ZAP": "Zap created successfully"
 			},
 			"TAB": {
 				"TRIGGERS": "Triggers",
 				"ACTIONS": "Actions",
 				"WEBHOOKS": "Webhooks",
+				"ZAPS": "Zaps",
+				"ZAP_TEMPLATES": "Zap Templates",
 				"SETTINGS": "Settings"
 			},
 			"TOOLTIP": {
@@ -1503,6 +1512,31 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "No webhooks configured"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "No zaps available",
+				"CREATE": "Create Zap",
+				"SUBMIT": "Create",
+				"ADD_STEP": "Add step",
+				"OPEN_EDITOR": "Open in Zapier",
+				"ENABLED": "Enabled",
+				"DISABLED": "Disabled",
+				"TITLE_PLACEHOLDER": "Enter a title for the new Zap",
+				"FIELDS": {
+					"TITLE": "Title",
+					"STEPS": "Steps",
+					"STEP": "Step",
+					"STEP_TITLE": "Step title",
+					"ACTION": "Action",
+					"AUTHENTICATION": "Authentication",
+					"INPUTS": "Inputs (JSON)"
+				}
+			},
+			"ZAP_TEMPLATES": {
+				"TITLE": "Zap Templates",
+				"NO_TEMPLATES": "No zap templates available",
+				"USE": "Use Template"
 			}
 		},
 		"GAUZY_AI_PAGE": {

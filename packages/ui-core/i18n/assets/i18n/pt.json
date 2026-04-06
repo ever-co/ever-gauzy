@@ -1321,7 +1321,7 @@
 			"TEAM_LABEL": "Equipe Make.com",
 			"LOADING_TEAMS": "Carregando equipes...",
 			"NO_TEAMS": "Nenhuma equipe encontrada",
-			"CONNECTED_TO": "Conectado a <strong>{{org}}</strong> / <strong>{{team}}</strong> em <strong>{{zone}}</strong>",
+			"CONNECTED_TO": "Conectado a {{org}} / {{team}} em {{zone}}",
 			"WEBHOOK_SETTINGS_TITLE": "Configurações do Webhook",
 			"CONNECTIONS": "Conexões",
 			"TEMPLATES": "Modelos",
@@ -1332,7 +1332,7 @@
 			"NO_HOOKS": "Nenhum webhook encontrado. Crie webhooks no seu painel Make.com.",
 			"NO_CONNECTIONS": "Nenhuma conexão encontrada. Crie conexões no seu painel Make.com.",
 			"NO_TEMPLATES": "Nenhum modelo encontrado.",
-			"TEST_CONNECTION": "Testar ligação",
+			"TEST_CONNECTION": "Testar conexão",
 			"CONNECTION": {
 				"ACCOUNT": "Conta: {{value}}",
 				"TYPE": "Tipo: {{value}}",
@@ -1399,20 +1399,26 @@
 				"LOAD_SETTINGS": "Falha ao carregar configurações do Zapier",
 				"SAVE_SETTINGS": "Falha ao salvar configurações do Zapier",
 				"INVALID_FORM": "Por favor, preencha todos os campos obrigatórios",
-				"MISSING_CREDENTIALS": "Credenciais do cliente ausentes",
+				"MISSING_CREDENTIALS": "A integração do Zapier não está configurada no servidor",
 				"NO_ORGANIZATION": "Por favor, selecione uma organização primeiro",
 				"NO_ACCESS_TOKEN": "Nenhum token de acesso disponível",
 				"LOAD_WEBHOOKS": "Falha ao carregar webhooks",
 				"DELETE_WEBHOOK": "Falha ao excluir webhook",
 				"LOAD_ACTIONS": "Falha ao carregar ações",
 				"LOAD_TRIGGERS": "Falha ao carregar gatilhos",
+				"LOAD_ZAPS": "Falha ao carregar zaps",
+				"LOAD_ZAP_TEMPLATES": "Falha ao carregar modelos de zap",
+				"CREATE_ZAP": "Falha ao criar zap",
+				"ZAP_TITLE_REQUIRED": "Por favor, forneça um título para o novo zap",
+				"NO_INTEGRATION_ID": "Nenhum ID de integração do Zapier foi fornecido",
 				"START_AUTHORIZATION": "Por favor, inicie o processo de autorização",
 				"INVALID_TOKEN": "Token inválido fornecido",
 				"TOKEN_NOT_FOUND": "Token não encontrado"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Configurações do Zapier salvas com sucesso",
-				"DELETE_WEBHOOK": "Webhook excluído com sucesso"
+				"DELETE_WEBHOOK": "Webhook excluído com sucesso",
+				"CREATE_ZAP": "Zap criado com sucesso"
 			},
 			"TAB": {
 				"TRIGGERS": "Gatilhos",
@@ -1454,6 +1460,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "Nenhum webhook configurado"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "Nenhum zap disponível",
+				"CREATE": "Criar Zap",
+				"SUBMIT": "Criar",
+				"ADD_STEP": "Adicionar etapa",
+				"OPEN_EDITOR": "Abrir no Zapier",
+				"ENABLED": "Habilitado",
+				"DISABLED": "Desabilitado",
+				"TITLE_PLACEHOLDER": "Insira um título para o novo Zap",
+				"FIELDS": {
+					"TITLE": "Título",
+					"STEPS": "Etapas",
+					"STEP": "Etapa",
+					"STEP_TITLE": "Título da etapa",
+					"ACTION": "Ação",
+					"AUTHENTICATION": "Autenticação",
+					"INPUTS": "Entradas (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {

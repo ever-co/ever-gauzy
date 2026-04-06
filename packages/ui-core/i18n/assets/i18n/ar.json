@@ -1320,7 +1320,7 @@
 			"TEAM_LABEL": "فريق Make.com",
 			"LOADING_TEAMS": "جاري تحميل الفرق...",
 			"NO_TEAMS": "لم يتم العثور على فرق",
-			"CONNECTED_TO": "متصل بـ <strong>{{org}}</strong> / <strong>{{team}}</strong> على <strong>{{zone}}</strong>",
+			"CONNECTED_TO": "متصل بـ {{org}} / {{team}} على {{zone}}",
 			"WEBHOOK_SETTINGS_TITLE": "إعدادات الويب هوك",
 			"CONNECTIONS": "اتصالات",
 			"TEMPLATES": "قوالب",
@@ -1405,13 +1405,19 @@
 				"DELETE_WEBHOOK": "فشل حذف ويب هوك",
 				"LOAD_ACTIONS": "فشل تحميل الإجراءات",
 				"LOAD_TRIGGERS": "فشل تحميل المحفزات",
+				"LOAD_ZAPS": "فشل تحميل zaps",
+				"LOAD_ZAP_TEMPLATES": "فشل تحميل قوالب zap",
+				"CREATE_ZAP": "فشل إنشاء zap",
+				"ZAP_TITLE_REQUIRED": "يرجى تقديم عنوان لـ zap الجديد",
+				"NO_INTEGRATION_ID": "لم يتم تقديم معرف تكامل Zapier",
 				"START_AUTHORIZATION": "يرجى بدء عملية التفويض",
 				"INVALID_TOKEN": "تم توفير رمز غير صالح",
 				"TOKEN_NOT_FOUND": "لم يتم العثور على الرمز"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "تم حفظ إعدادات Zapier بنجاح",
-				"DELETE_WEBHOOK": "تم حذف ويب هوك بنجاح"
+				"DELETE_WEBHOOK": "تم حذف ويب هوك بنجاح",
+				"CREATE_ZAP": "تم إنشاء Zap بنجاح"
 			},
 			"TAB": {
 				"TRIGGERS": "المحفزات",
@@ -1453,6 +1459,26 @@
 			"WEBHOOKS": {
 				"TITLE": "ويب هوكس",
 				"NO_WEBHOOKS": "لا يوجد ويب هوكس مضبوط"
+			},
+			"ZAPS": {
+				"TITLE": "زابز",
+				"NO_ZAPS": "لا توجد زابز متاحة",
+				"CREATE": "إنشاء زاب",
+				"SUBMIT": "إنشاء",
+				"ADD_STEP": "إضافة خطوة",
+				"OPEN_EDITOR": "فتح في زابير",
+				"ENABLED": "مفعّل",
+				"DISABLED": "معطّل",
+				"TITLE_PLACEHOLDER": "أدخل عنواناً للزاب الجديد",
+				"FIELDS": {
+					"TITLE": "العنوان",
+					"STEPS": "الخطوات",
+					"STEP": "خطوة",
+					"STEP_TITLE": "عنوان الخطوة",
+					"ACTION": "الإجراء",
+					"AUTHENTICATION": "المصادقة",
+					"INPUTS": "المدخلات (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {

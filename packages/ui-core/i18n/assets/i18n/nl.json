@@ -1321,7 +1321,7 @@
 			"TEAM_LABEL": "Make.com-team",
 			"LOADING_TEAMS": "Teams laden...",
 			"NO_TEAMS": "Geen teams gevonden",
-			"CONNECTED_TO": "Verbonden met <strong>{{org}}</strong> / <strong>{{team}}</strong> op <strong>{{zone}}</strong>",
+			"CONNECTED_TO": "Verbonden met {{org}} / {{team}} op {{zone}}",
 			"WEBHOOK_SETTINGS_TITLE": "Webhook-instellingen",
 			"CONNECTIONS": "Verbindingen",
 			"TEMPLATES": "Sjablonen",
@@ -1406,13 +1406,19 @@
 				"DELETE_WEBHOOK": "Fout bij het verwijderen van webhook",
 				"LOAD_ACTIONS": "Fout bij het laden van acties",
 				"LOAD_TRIGGERS": "Fout bij het laden van triggers",
+				"LOAD_ZAPS": "Fout bij het laden van zaps",
+				"LOAD_ZAP_TEMPLATES": "Fout bij het laden van zap-sjablonen",
+				"CREATE_ZAP": "Fout bij het maken van zap",
+				"ZAP_TITLE_REQUIRED": "Geef alstublieft een titel voor de nieuwe zap",
+				"NO_INTEGRATION_ID": "Er is geen Zapier-integratie-ID verstrekt",
 				"START_AUTHORIZATION": "Start alstublieft de autorisatieproces",
 				"INVALID_TOKEN": "Ongeldig token verstrekt",
 				"TOKEN_NOT_FOUND": "Token niet gevonden"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier-instellingen succesvol opgeslagen",
-				"DELETE_WEBHOOK": "Webhook succesvol verwijderd"
+				"DELETE_WEBHOOK": "Webhook succesvol verwijderd",
+				"CREATE_ZAP": "Zap succesvol aangemaakt"
 			},
 			"TAB": {
 				"TRIGGERS": "Triggers",
@@ -1454,6 +1460,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "Geen webhooks geconfigureerd"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "Geen zaps beschikbaar",
+				"CREATE": "Zap maken",
+				"SUBMIT": "Maken",
+				"ADD_STEP": "Stap toevoegen",
+				"OPEN_EDITOR": "Openen in Zapier",
+				"ENABLED": "Ingeschakeld",
+				"DISABLED": "Uitgeschakeld",
+				"TITLE_PLACEHOLDER": "Voer een titel in voor de nieuwe Zap",
+				"FIELDS": {
+					"TITLE": "Titel",
+					"STEPS": "Stappen",
+					"STEP": "Stap",
+					"STEP_TITLE": "Stap titel",
+					"ACTION": "Actie",
+					"AUTHENTICATION": "Authenticatie",
+					"INPUTS": "Invoer (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
