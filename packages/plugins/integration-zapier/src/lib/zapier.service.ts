@@ -177,7 +177,7 @@ export class ZapierService {
 				scope: ZAPIER_OAUTH_SCOPES
 			});
 
-			return `${ZAPIER_API_URL}/v2/authorize?${params.toString()}`;
+			return `${ZAPIER_BASE_URL}/oauth/authorize/?${params.toString()}`;
 		} catch (error) {
 			this.logger.error('Error generating Zapier authorization URL:', error);
 			throw new BadRequestException('Failed to generate authorization URL');

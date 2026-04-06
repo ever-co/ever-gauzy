@@ -13,14 +13,18 @@ export const ZAPIER_API_URL = 'https://api.zapier.com';
  * Based on: https://docs.zapier.com/powered-by-zapier/api-reference/authentication
  *
  * Scopes included:
- * - 'zap': Read access to Zaps (view existing Zaps)
+ * - 'zap': Read access to the authenticated user's own Zaps
+ * - 'zap:all': Read access to all Zaps the user can see (including shared)
+ * - 'zap:account:all': Read access to all Zaps across the user's account
  * - 'zap:write': Write access to Zaps (create, update, delete Zaps)
  * - 'authentication': Access to authentication information (manage user auth)
  *
- * These scopes provide full access to the Zapier Workflow API for managing
- * Zaps and user authentication on behalf of the authenticated user.
+ * These scopes cover the Zapier Workflow API endpoints used by this plugin:
+ * GET /v2/zaps, POST /v2/zaps, GET /v2/triggers, GET /v2/actions, and the
+ * user authentication endpoints. The zap templates endpoint (/v1/zap-templates)
+ * is public and does not consume any of these scopes.
  */
-export const ZAPIER_OAUTH_SCOPES = 'zap zap:write authentication';
+export const ZAPIER_OAUTH_SCOPES = 'zap zap:all zap:account:all zap:write authentication';
 
 /**
  * Zapier token expiration time (in seconds)
