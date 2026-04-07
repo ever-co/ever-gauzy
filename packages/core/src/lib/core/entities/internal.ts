@@ -151,6 +151,7 @@ export * from '../../tasks/task.entity';
 export * from '../../tasks/versions/version.entity';
 export * from '../../tasks/views/view.entity';
 export * from '../../tenant-api-key/tenant-api-key.entity';
+export * from '../../auth/oauth-client/oauth-client.entity';
 export * from '../../token/entities/token.entity';
 export * from '../../tenant/tenant-setting/tenant-setting.entity';
 export * from '../../tenant/tenant.entity';

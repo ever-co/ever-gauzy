@@ -95,6 +95,8 @@ import {
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createClient } from 'redis';
 import { EVER_REDIS_CLIENT } from '../redis/redis.module';
+import { OAuthClientService } from './oauth-client/oauth-client.service';
+import { OAuthClient } from './oauth-client/oauth-client.entity';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -129,7 +131,8 @@ export class AuthService extends SocialAuthService {
 		private readonly refreshTokenService: RefreshTokenService,
 		private readonly accessTokenService: AccessTokenService,
 		private readonly typeOrmPasswordResetRepository: TypeOrmPasswordResetRepository,
-		private readonly mikroOrmPasswordResetRepository: MikroOrmPasswordResetRepository
+		private readonly mikroOrmPasswordResetRepository: MikroOrmPasswordResetRepository,
+		private readonly oauthClientService: OAuthClientService
 	) {
 		super();
 	}
@@ -239,23 +242,54 @@ export class AuthService extends SocialAuthService {
 		}
 	}
 
-	private ensureOAuthAppConfigured(): OAuthAppConfig {
-		const config = this.getOAuthAppConfig();
-		if (!config.clientId || !config.clientSecret || !config.redirectUris?.length || !config.codeSecret) {
-			throw new InternalServerErrorException('OAuth app is not configured');
+	/**
+	 * Map an `OAuthClient` registry row → the `OAuthAppConfig` view used
+	 * by the auth pipeline. Carries the `clientSecretHash` (NEVER plaintext)
+	 * because the `/token` exchange validates incoming secrets via
+	 * `OAuthClientService.validateClientSecret` (constant-time scrypt).
+	 */
+	private mapOAuthClientToConfig(client: OAuthClient): OAuthAppConfig {
+		return {
+			clientId: client.clientId,
+			clientSecretHash: client.clientSecretHash ?? null,
+			codeSecret: client.codeSecret,
+			redirectUris: client.redirectUris ?? [],
+			name: client.name,
+			description: client.description ?? null,
+			allowedScopes: client.allowedScopes ?? [],
+			allowedGrantTypes: (client.allowedGrantTypes ?? []) as string[],
+			pkceRequired: client.pkceRequired,
+			accessTokenTtl: client.accessTokenTtl
+		};
+	}
+
+	/**
+	 * Resolve an OAuth client by its public `clientId` from the
+	 * `oauth_clients` registry. Throws `NotFoundException` (mapped to
+	 * `400 invalid_client` by the controller) when the row does not
+	 * exist or is inactive. There is no env-var fallback — every
+	 * third-party app must be registered via `POST /oauth/clients`.
+	 */
+	public async resolveOAuthClient(clientId: string): Promise<OAuthAppConfig> {
+		if (!clientId) {
+			throw new BadRequestException('Invalid client_id');
 		}
-		return config;
+		const client = await this.oauthClientService.findByClientId(clientId);
+		return this.mapOAuthClientToConfig(client);
 	}
 
 	public async createOAuthAppAuthorizationCode(request: OAuthAppAuthorizationRequest): Promise<string> {
-		const config = this.ensureOAuthAppConfigured();
-
-		if (request.clientId !== config.clientId) {
-			throw new BadRequestException('Invalid client_id');
-		}
+		const config = await this.resolveOAuthClient(request.clientId);
 
 		if (!this.isOAuthAppRedirectUriAllowed(request.redirectUri, config)) {
 			throw new BadRequestException('Invalid redirect_uri');
+		}
+
+		if (request.scope && config.allowedScopes && config.allowedScopes.length > 0) {
+			const requested = request.scope.split(/\s+/).filter(Boolean);
+			if (!requested.every((s) => config.allowedScopes!.includes(s))) {
+				throw new BadRequestException('Requested scope is not allowed for this client');
+			}
 		}
 
 		const now = Math.floor(Date.now() / 1000);
@@ -287,15 +321,16 @@ export class AuthService extends SocialAuthService {
 	}
 
 	public async exchangeOAuthAppAuthorizationCode(request: OAuthAppTokenRequest): Promise<OAuthAppTokenResponse> {
-		const config = this.ensureOAuthAppConfigured();
+		const config = await this.resolveOAuthClient(request.clientId);
 
-		if (request.clientId !== config.clientId) {
-			throw new UnauthorizedException('Invalid client credentials');
-		}
-
-		const secretBuf = Buffer.from(request.clientSecret, 'utf8');
-		const expectedBuf = Buffer.from(config.clientSecret, 'utf8');
-		if (secretBuf.length !== expectedBuf.length || !timingSafeEqual(secretBuf, expectedBuf)) {
+		// Validate the presented client_secret against the per-client
+		// scrypt hash from the registry. Public clients (null hash) will
+		// fail here — PKCE for public clients is deferred to a later phase.
+		const secretValid = await this.oauthClientService.validateClientSecret(
+			{ clientSecretHash: config.clientSecretHash } as OAuthClient,
+			request.clientSecret
+		);
+		if (!secretValid) {
 			throw new UnauthorizedException('Invalid client credentials');
 		}
 

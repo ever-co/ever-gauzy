@@ -41,12 +41,6 @@ export class OAuthAppController {
 		@Query() query: OAuthAppAuthorizeQuery,
 		@Res() res: Response
 	) {
-		const config = this.service.getOAuthAppConfig();
-
-		if (!config.clientId || !config.clientSecret || !config.redirectUris?.length || !config.codeSecret) {
-			throw new HttpException('OAuth app is not configured', HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-
 		if (!query.client_id || !query.redirect_uri || !query.response_type) {
 			throw new HttpException('Missing OAuth parameters', HttpStatus.BAD_REQUEST);
 		}
@@ -55,7 +49,13 @@ export class OAuthAppController {
 			throw new HttpException('Unsupported response_type', HttpStatus.BAD_REQUEST);
 		}
 
-		if (query.client_id !== config.clientId) {
+		// Resolve the per-client config from the registry (replaces the
+		// previous single-app env-var check). 404 → 400 invalid_client,
+		// per OAuth 2.0.
+		let config;
+		try {
+			config = await this.service.resolveOAuthClient(query.client_id);
+		} catch {
 			throw new HttpException('Invalid client_id', HttpStatus.BAD_REQUEST);
 		}
 
@@ -93,9 +93,25 @@ export class OAuthAppController {
 			throw new HttpException('Authorization request not found or expired', HttpStatus.NOT_FOUND);
 		}
 
+		// Resolve the client so the consent page can show the real app
+		// name + description ("Activepieces wants to access your account")
+		// instead of an opaque clientId. Failure here is non-fatal — the
+		// frontend can still render with just the clientId.
+		let clientName: string | undefined;
+		let clientDescription: string | null | undefined;
+		try {
+			const config = await this.service.resolveOAuthClient(pending.clientId);
+			clientName = config.name;
+			clientDescription = config.description;
+		} catch {
+			// swallow — consent page degrades gracefully
+		}
+
 		// Return safe info for the consent page (never expose secrets)
 		return {
 			clientId: pending.clientId,
+			clientName,
+			clientDescription,
 			scope: pending.scope,
 			redirectUri: pending.redirectUri
 		};
