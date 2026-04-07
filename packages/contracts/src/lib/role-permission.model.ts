@@ -230,6 +230,9 @@ export enum PermissionsEnum {
 	TENANT_API_KEY_CREATE = 'TENANT_API_KEY_CREATE',
 	TENANT_API_KEY_VIEW = 'TENANT_API_KEY_VIEW',
 	TENANT_API_KEY_DELETE = 'TENANT_API_KEY_DELETE',
+	/** OAuth App Client Registry (multi-app OAuth provider) */
+	OAUTH_CLIENT_VIEW = 'OAUTH_CLIENT_VIEW',
+	OAUTH_CLIENT_EDIT = 'OAUTH_CLIENT_EDIT',
 	/** Employee Availability CRUD Permissions Start */
 	EMPLOYEE_AVAILABILITY_CREATE = 'EMPLOYEE_AVAILABILITY_CREATE',
 	EMPLOYEE_AVAILABILITY_READ = 'EMPLOYEE_AVAILABILITY_READ',
@@ -483,6 +486,9 @@ export const PermissionGroups = {
 		/** Tenant API Key */
 		PermissionsEnum.TENANT_API_KEY_CREATE,
 		PermissionsEnum.TENANT_API_KEY_VIEW,
-		PermissionsEnum.TENANT_API_KEY_DELETE
+		PermissionsEnum.TENANT_API_KEY_DELETE,
+		/** OAuth App Client Registry */
+		PermissionsEnum.OAUTH_CLIENT_VIEW,
+		PermissionsEnum.OAUTH_CLIENT_EDIT
 	]
 };
