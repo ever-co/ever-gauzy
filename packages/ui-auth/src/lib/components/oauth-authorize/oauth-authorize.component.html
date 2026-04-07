@@ -20,10 +20,16 @@
 			<h4>Authorize Application</h4>
 		</nb-card-header>
 		<nb-card-body>
-			<p>An application is requesting access to your Ever Gauzy account.</p>
+			<p>
+				<strong>{{ requestInfo.clientName || requestInfo.clientId }}</strong>
+				is requesting access to your Ever Gauzy account.
+			</p>
+			<p *ngIf="requestInfo.clientDescription" class="client-description">
+				{{ requestInfo.clientDescription }}
+			</p>
 			<div class="request-details">
-				<div class="detail-row">
-					<span class="detail-label">Application:</span>
+				<div class="detail-row" *ngIf="requestInfo.clientName">
+					<span class="detail-label">Client ID:</span>
 					<span class="detail-value">{{ requestInfo.clientId }}</span>
 				</div>
 				<div class="detail-row" *ngIf="requestInfo.scope">
