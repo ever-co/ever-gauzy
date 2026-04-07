@@ -1,0 +1,91 @@
+<nb-card class="oauth-clients-card">
+	<nb-card-header class="header">
+		<div>
+			<h5>{{ 'OAUTH_CLIENTS.TITLE' | translate }}</h5>
+			<p class="subtitle">{{ 'OAUTH_CLIENTS.SUBTITLE' | translate }}</p>
+		</div>
+		<button nbButton status="primary" (click)="openCreateDialog()">
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'OAUTH_CLIENTS.ACTIONS.REGISTER' | translate }}
+		</button>
+	</nb-card-header>
+
+	<nb-card-body>
+		<div *ngIf="loading" class="loading">
+			<nb-spinner status="primary" size="large"></nb-spinner>
+		</div>
+
+		<div *ngIf="!loading && clients.length === 0" class="empty-state">
+			<nb-icon icon="lock-outline"></nb-icon>
+			<p>{{ 'OAUTH_CLIENTS.EMPTY.TITLE' | translate }}</p>
+			<small>{{ 'OAUTH_CLIENTS.EMPTY.HINT' | translate }}</small>
+		</div>
+
+		<table *ngIf="!loading && clients.length > 0" class="oauth-clients-table">
+			<thead>
+				<tr>
+					<th>{{ 'OAUTH_CLIENTS.TABLE.NAME' | translate }}</th>
+					<th>{{ 'OAUTH_CLIENTS.TABLE.CLIENT_ID' | translate }}</th>
+					<th>{{ 'OAUTH_CLIENTS.TABLE.TYPE' | translate }}</th>
+					<th>{{ 'OAUTH_CLIENTS.TABLE.STATUS' | translate }}</th>
+					<th>{{ 'OAUTH_CLIENTS.TABLE.REDIRECT_URIS' | translate }}</th>
+					<th class="actions-col">{{ 'OAUTH_CLIENTS.TABLE.ACTIONS' | translate }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr *ngFor="let client of clients; trackBy: trackById">
+					<td>
+						<div class="client-name">{{ client.name }}</div>
+						<div class="client-description" *ngIf="client.description">{{ client.description }}</div>
+					</td>
+					<td>
+						<code>{{ client.clientId }}</code>
+					</td>
+					<td>{{ client.clientType }}</td>
+					<td>
+						<nb-badge
+							[text]="client.isActive ? ('OAUTH_CLIENTS.STATUS.ACTIVE' | translate) : ('OAUTH_CLIENTS.STATUS.INACTIVE' | translate)"
+							[status]="client.isActive ? 'success' : 'basic'"
+							position="center"
+						></nb-badge>
+					</td>
+					<td>
+						<div *ngFor="let uri of client.redirectUris" class="redirect-uri">{{ uri }}</div>
+					</td>
+					<td class="actions-col">
+						<button
+							nbButton
+							size="small"
+							ghost
+							status="primary"
+							(click)="openEditDialog(client)"
+							[nbTooltip]="'OAUTH_CLIENTS.ACTIONS.EDIT' | translate"
+						>
+							<nb-icon icon="edit-outline"></nb-icon>
+						</button>
+						<button
+							nbButton
+							size="small"
+							ghost
+							status="warning"
+							(click)="rotateSecret(client)"
+							[nbTooltip]="'OAUTH_CLIENTS.ACTIONS.ROTATE_SECRET' | translate"
+						>
+							<nb-icon icon="refresh-outline"></nb-icon>
+						</button>
+						<button
+							nbButton
+							size="small"
+							ghost
+							status="danger"
+							(click)="delete(client)"
+							[nbTooltip]="'OAUTH_CLIENTS.ACTIONS.DELETE' | translate"
+						>
+							<nb-icon icon="trash-2-outline"></nb-icon>
+						</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</nb-card-body>
+</nb-card>

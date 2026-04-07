@@ -1,0 +1,45 @@
+.form-dialog {
+	min-width: 520px;
+	max-width: 640px;
+}
+
+.form-row {
+	margin-bottom: 1rem;
+
+	.label {
+		display: block;
+		font-weight: 600;
+		font-size: 0.8125rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.hint {
+		display: block;
+		color: var(--text-hint-color);
+		margin-top: 0.25rem;
+	}
+
+	&.two-cols {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
+	}
+
+	&.toggle-row {
+		display: flex;
+		align-items: center;
+	}
+}
+
+.array-row {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	margin-bottom: 0.5rem;
+}
+
+.actions {
+	display: flex;
+	gap: 0.5rem;
+	justify-content: flex-end;
+}

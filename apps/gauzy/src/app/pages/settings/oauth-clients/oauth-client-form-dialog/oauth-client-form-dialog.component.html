@@ -1,0 +1,138 @@
+<nb-card class="form-dialog">
+	<nb-card-header>
+		{{
+			(isEdit ? 'OAUTH_CLIENTS.DIALOG.EDIT_TITLE' : 'OAUTH_CLIENTS.DIALOG.CREATE_TITLE')
+				| translate
+		}}
+	</nb-card-header>
+
+	<nb-card-body>
+		<form [formGroup]="form" (ngSubmit)="save()">
+			<div class="form-row">
+				<label class="label">{{ 'OAUTH_CLIENTS.FORM.NAME' | translate }}</label>
+				<input
+					nbInput
+					fullWidth
+					formControlName="name"
+					[placeholder]="'OAUTH_CLIENTS.FORM.NAME_PLACEHOLDER' | translate"
+				/>
+			</div>
+
+			<div class="form-row">
+				<label class="label">{{ 'OAUTH_CLIENTS.FORM.DESCRIPTION' | translate }}</label>
+				<textarea
+					nbInput
+					fullWidth
+					rows="2"
+					formControlName="description"
+					[placeholder]="'OAUTH_CLIENTS.FORM.DESCRIPTION_PLACEHOLDER' | translate"
+				></textarea>
+			</div>
+
+			<div class="form-row">
+				<label class="label">{{ 'OAUTH_CLIENTS.FORM.CLIENT_TYPE' | translate }}</label>
+				<nb-select formControlName="clientType" fullWidth>
+					<nb-option *ngFor="let t of clientTypes" [value]="t">{{ t }}</nb-option>
+				</nb-select>
+				<small class="hint" *ngIf="isEdit">
+					{{ 'OAUTH_CLIENTS.FORM.CLIENT_TYPE_IMMUTABLE' | translate }}
+				</small>
+			</div>
+
+			<div class="form-row" formArrayName="redirectUris">
+				<label class="label">{{ 'OAUTH_CLIENTS.FORM.REDIRECT_URIS' | translate }}</label>
+				<div class="array-row" *ngFor="let _ of redirectUris.controls; let i = index">
+					<input
+						nbInput
+						fullWidth
+						[formControlName]="i"
+						placeholder="https://example.com/oauth/callback"
+					/>
+					<button
+						type="button"
+						nbButton
+						size="small"
+						ghost
+						status="danger"
+						(click)="removeRedirectUri(i)"
+						[disabled]="redirectUris.length <= 1"
+					>
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
+				</div>
+				<button
+					type="button"
+					nbButton
+					size="small"
+					ghost
+					status="primary"
+					(click)="addRedirectUri()"
+				>
+					<nb-icon icon="plus-outline"></nb-icon>
+					{{ 'OAUTH_CLIENTS.FORM.ADD_REDIRECT_URI' | translate }}
+				</button>
+			</div>
+
+			<div class="form-row" formArrayName="allowedScopes">
+				<label class="label">{{ 'OAUTH_CLIENTS.FORM.ALLOWED_SCOPES' | translate }}</label>
+				<div class="array-row" *ngFor="let _ of allowedScopes.controls; let i = index">
+					<input nbInput fullWidth [formControlName]="i" placeholder="read:profile" />
+					<button
+						type="button"
+						nbButton
+						size="small"
+						ghost
+						status="danger"
+						(click)="removeScope(i)"
+					>
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
+				</div>
+				<button
+					type="button"
+					nbButton
+					size="small"
+					ghost
+					status="primary"
+					(click)="addScope()"
+				>
+					<nb-icon icon="plus-outline"></nb-icon>
+					{{ 'OAUTH_CLIENTS.FORM.ADD_SCOPE' | translate }}
+				</button>
+			</div>
+
+			<div class="form-row">
+				<label class="label">{{ 'OAUTH_CLIENTS.FORM.GRANT_TYPES' | translate }}</label>
+				<nb-select formControlName="allowedGrantTypes" multiple fullWidth>
+					<nb-option *ngFor="let g of grantTypes" [value]="g">{{ g }}</nb-option>
+				</nb-select>
+			</div>
+
+			<div class="form-row toggle-row">
+				<nb-toggle formControlName="pkceRequired">
+					{{ 'OAUTH_CLIENTS.FORM.PKCE_REQUIRED' | translate }}
+				</nb-toggle>
+			</div>
+
+			<div class="form-row two-cols">
+				<div>
+					<label class="label">{{ 'OAUTH_CLIENTS.FORM.ACCESS_TTL' | translate }}</label>
+					<input nbInput fullWidth type="number" formControlName="accessTokenTtl" min="60" />
+				</div>
+				<div>
+					<label class="label">{{ 'OAUTH_CLIENTS.FORM.REFRESH_TTL' | translate }}</label>
+					<input nbInput fullWidth type="number" formControlName="refreshTokenTtl" min="60" />
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+
+	<nb-card-footer class="actions">
+		<button nbButton status="basic" (click)="cancel()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button nbButton status="primary" (click)="save()" [disabled]="form.invalid">
+			{{ (isEdit ? 'BUTTONS.SAVE' : 'OAUTH_CLIENTS.ACTIONS.REGISTER') | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>
