@@ -1140,6 +1140,7 @@
 		"PAYMENT_GATEWAYS": "Gateways de pagamento",
 		"SMS_GATEWAYS": "SMS Gateways são serviços que permitem o envio e recebimento de mensagens de texto através de redes de telefonia móvel. Esses gateways atuam como intermediários, conectando diferentes plataformas, como aplicativos de mensagens, sites ou sistemas de software, aos sistemas das operadoras de telefonia móvel. Eles facilitam a comunicação por SMS em grande escala, permitindo que empresas e indivíduos enviem mensagens para diversos destinatários simultaneamente. Os SMS Gateways desempenham um papel crucial nas comunicações empresariais e no marketing, fornecendo uma maneira rápida e eficiente de alcançar um grande público via SMS.",
 		"CUSTOM_SMTP": "SMTP personalizado",
+		"OAUTH_CLIENTS": "Clientes OAuth",
 		"INVENTORY": "Inventário",
 		"SALES": "Vendas",
 		"PAYMENTS": "Pagamentos",
@@ -5593,5 +5594,78 @@
 		"DESCRIPTION": "O servidor {{companySite}} está atualmente inacessível. Isso pode ser devido a manutenção programada ou tempo de inatividade inesperado.",
 		"CONNECTING": "Tentando reconexão automaticamente...",
 		"HINT": "Status: Tentando estabelecer conexão com os servidores {{companySite}}. Código de erro: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "Clientes OAuth",
+		"SUBTITLE": "Registre e gerencie aplicativos de terceiros que podem solicitar acesso ao Ever Gauzy em nome de seus usuários.",
+		"STATUS": {
+			"ACTIVE": "Ativo",
+			"INACTIVE": "Inativo"
+		},
+		"EMPTY": {
+			"TITLE": "Nenhum cliente OAuth registrado ainda.",
+			"HINT": "Clique em \"Registrar aplicativo\" para adicionar sua primeira integração (por exemplo, Activepieces, n8n, Make.com)."
+		},
+		"TABLE": {
+			"NAME": "Nome",
+			"CLIENT_ID": "ID do cliente",
+			"TYPE": "Tipo",
+			"STATUS": "Status",
+			"REDIRECT_URIS": "URIs de redirecionamento",
+			"ACTIONS": "Ações"
+		},
+		"ACTIONS": {
+			"REGISTER": "Registrar aplicativo",
+			"EDIT": "Editar",
+			"ROTATE_SECRET": "Rotacionar segredo",
+			"DELETE": "Revogar"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "Registrar um novo cliente OAuth",
+			"EDIT_TITLE": "Editar cliente OAuth"
+		},
+		"FORM": {
+			"NAME": "Nome do aplicativo",
+			"NAME_PLACEHOLDER": "por exemplo, Activepieces",
+			"DESCRIPTION": "Descrição",
+			"DESCRIPTION_PLACEHOLDER": "Breve descrição exibida na página de consentimento",
+			"CLIENT_TYPE": "Tipo de cliente",
+			"CLIENT_TYPE_IMMUTABLE": "O tipo de cliente não pode ser alterado após a criação.",
+			"REDIRECT_URIS": "URIs de redirecionamento",
+			"ADD_REDIRECT_URI": "Adicionar URI de redirecionamento",
+			"ALLOWED_SCOPES": "Escopos permitidos",
+			"ADD_SCOPE": "Adicionar escopo",
+			"GRANT_TYPES": "Tipos de concessão",
+			"PKCE_REQUIRED": "Exigir PKCE (aplicação diferida)",
+			"ACCESS_TTL": "TTL do token de acesso (segundos)",
+			"REFRESH_TTL": "TTL do token de atualização (segundos)"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Salve seu segredo de cliente",
+			"WARNING": "Esta é a única vez que o segredo do cliente será exibido. Copie-o agora e armazene-o em sua integração de terceiros - a rotação é a única maneira de se recuperar de um segredo perdido.",
+			"CLIENT_ID": "ID do cliente",
+			"CLIENT_SECRET": "Segredo do cliente",
+			"ACKNOWLEDGE": "Copiei e armazenei com segurança o segredo do cliente.",
+			"CLOSE": "Já salvei, fechar",
+			"COPIED_CLIENT_ID": "ID do cliente copiado para a área de transferência",
+			"COPIED_SECRET": "Segredo do cliente copiado para a área de transferência"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "Rotacionar o segredo do cliente para \"{{name}}\"? O segredo anterior parará de funcionar imediatamente para novas trocas de tokens.",
+			"DELETE": "Revogar \"{{name}}\"? Isso impedirá imediatamente que o aplicativo de terceiros obtenha novos tokens."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" registrado",
+			"UPDATED": "Cliente OAuth atualizado",
+			"SECRET_ROTATED": "Segredo do cliente rotacionado",
+			"DELETED": "Cliente OAuth revogado"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Falha ao carregar clientes OAuth",
+			"CREATE_FAILED": "Falha ao registrar cliente OAuth",
+			"UPDATE_FAILED": "Falha ao atualizar cliente OAuth",
+			"ROTATE_FAILED": "Falha ao rotacionar segredo do cliente",
+			"DELETE_FAILED": "Falha ao revogar cliente OAuth"
+		}
 	}
 }

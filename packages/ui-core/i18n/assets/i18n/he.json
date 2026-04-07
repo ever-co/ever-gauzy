@@ -1141,10 +1141,11 @@
 		"TIME_REPORTS": "Time Report",
 		"WEEKLY_TIME_REPORTS": "Weekly Report",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
-		"PAYMENT_GATEWAYS": "Payment Gateways",
-		"SMS_GATEWAYS": "SMS Gateways",
-		"CUSTOM_SMTP": "Custom SMTP",
-		"INVENTORY": "Inventory",
+		"PAYMENT_GATEWAYS": "שערות תשלום",
+		"SMS_GATEWAYS": "שערות SMS",
+		"CUSTOM_SMTP": "SMTP מותאם אישית",
+		"OAUTH_CLIENTS": "לקוחות OAuth",
+		"INVENTORY": "מלאי",
 		"SALES": "Sales",
 		"PAYMENTS": "Payments",
 		"FEATURES": "Features",
@@ -5583,5 +5584,78 @@
 		"DESCRIPTION": "שרת {{companySite}} אינו נגיש כרגע. ייתכן שהסיבה לכך היא תחזוקה מתוכננת או השבתה בלתי צפויה.",
 		"CONNECTING": "מנסה להתחבר מחדש אוטומטית...",
 		"HINT": "סטטוס: מנסה ליצור חיבור לשרתי {{companySite}}. קוד שגיאה: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "לקוחות OAuth",
+		"SUBTITLE": "רשום ונהל אפליקציות צד שלישי שיכולות לבקש גישה ל-Ever Gauzy בשם המשתמשים שלך.",
+		"STATUS": {
+			"ACTIVE": "פעיל",
+			"INACTIVE": "לא פעיל"
+		},
+		"EMPTY": {
+			"TITLE": "אין לקוחות OAuth רשומים עדיין.",
+			"HINT": "לחץ על \"רשום אפליקציה\" כדי להוסיף את האינטגרציה הראשונה שלך (למשל Activepieces, n8n, Make.com)."
+		},
+		"TABLE": {
+			"NAME": "שם",
+			"CLIENT_ID": "מזהה לקוח",
+			"TYPE": "סוג",
+			"STATUS": "סטטוס",
+			"REDIRECT_URIS": "כתובות URI להפניה מחדש",
+			"ACTIONS": "פעולות"
+		},
+		"ACTIONS": {
+			"REGISTER": "רשום אפליקציה",
+			"EDIT": "ערוך",
+			"ROTATE_SECRET": "סובב סוד",
+			"DELETE": "בטל"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "רשום לקוח OAuth חדש",
+			"EDIT_TITLE": "ערוך לקוח OAuth"
+		},
+		"FORM": {
+			"NAME": "שם האפליקציה",
+			"NAME_PLACEHOLDER": "למשל Activepieces",
+			"DESCRIPTION": "תיאור",
+			"DESCRIPTION_PLACEHOLDER": "תיאור קצר המוצג בדף ההסכמה",
+			"CLIENT_TYPE": "סוג לקוח",
+			"CLIENT_TYPE_IMMUTABLE": "לא ניתן לשנות את סוג הלקוח לאחר היצירה.",
+			"REDIRECT_URIS": "כתובות URI להפניה מחדש",
+			"ADD_REDIRECT_URI": "הוסף כתובת URI להפניה מחדש",
+			"ALLOWED_SCOPES": "היקפים מותרים",
+			"ADD_SCOPE": "הוסף היקף",
+			"GRANT_TYPES": "סוגי הענקה",
+			"PKCE_REQUIRED": "דרוש PKCE (אכיפה דחויה)",
+			"ACCESS_TTL": "TTL של אסימון גישה (שניות)",
+			"REFRESH_TTL": "TTL של אסימון רענון (שניות)"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "שמור את הסוד שלך",
+			"WARNING": "זו הפעם היחידה שהסוד יוצג. העתק אותו עכשיו ושמור אותו באינטגרציה של הצד השלישי שלך - סיבוב הוא הדרך היחידה להתאושש מסוד אבוד.",
+			"CLIENT_ID": "מזהה לקוח",
+			"CLIENT_SECRET": "סוד לקוח",
+			"ACKNOWLEDGE": "העתקתי ושמרתי באופן מאובטח את סוד הלקוח.",
+			"CLOSE": "שמרתי, סגור",
+			"COPIED_CLIENT_ID": "מזהה הלקוח הועתק ללוח",
+			"COPIED_SECRET": "סוד הלקוח הועתק ללוח"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "לסובב את סוד הלקוח עבור \"{{name}}\"? הסוד הקודם יפסיק לעבוד מיד עבור החלפות אסימונים חדשות.",
+			"DELETE": "לבטל את \"{{name}}\"? זה ימנע מיד מהאפליקציה של הצד השלישי לקבל אסימונים חדשים."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" נרשם",
+			"UPDATED": "לקוח OAuth עודכן",
+			"SECRET_ROTATED": "סוד הלקוח סובב",
+			"DELETED": "לקוח OAuth בוטל"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "טעינת לקוחות OAuth נכשלה",
+			"CREATE_FAILED": "רישום לקוח OAuth נכשל",
+			"UPDATE_FAILED": "עדכון לקוח OAuth נכשל",
+			"ROTATE_FAILED": "סיבוב סוד הלקוח נכשל",
+			"DELETE_FAILED": "ביטול לקוח OAuth נכשל"
+		}
 	}
 }

@@ -1139,6 +1139,7 @@
 		"PAYMENT_GATEWAYS": "بوابات الدفع",
 		"SMS_GATEWAYS": "بوابات الرسائل القصيرة",
 		"CUSTOM_SMTP": "SMTP مخصص",
+		"OAUTH_CLIENTS": "عملاء OAuth",
 		"INVENTORY": "المخزون",
 		"SALES": "المبيعات",
 		"PAYMENTS": "المدفوعات",
@@ -5572,5 +5573,78 @@
 		"DESCRIPTION": "لا يمكن الوصول إلى خادم {{companySite}} حاليًا. قد يكون هذا بسبب صيانة مجدولة أو توقف غير متوقع.",
 		"CONNECTING": "إعادة محاولة الاتصال تلقائيًا...",
 		"HINT": "الحالة: محاولة الاتصال بخوادم {{companySite}}. رمز الخطأ: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "عملاء OAuth",
+		"SUBTITLE": "تسجيل وإدارة تطبيقات الطرف الثالث التي يمكنها طلب الوصول إلى Ever Gauzy نيابة عن المستخدمين الخاصين بك.",
+		"STATUS": {
+			"ACTIVE": "نشط",
+			"INACTIVE": "غير نشط"
+		},
+		"EMPTY": {
+			"TITLE": "لم يتم تسجيل أي عملاء OAuth حتى الآن.",
+			"HINT": "انقر على \"تسجيل التطبيق\" لإضافة التكامل الأول الخاص بك (مثل Activepieces، n8n، Make.com)."
+		},
+		"TABLE": {
+			"NAME": "الاسم",
+			"CLIENT_ID": "معرف العميل",
+			"TYPE": "النوع",
+			"STATUS": "الحالة",
+			"REDIRECT_URIS": "عناوين URI لإعادة التوجيه",
+			"ACTIONS": "الإجراءات"
+		},
+		"ACTIONS": {
+			"REGISTER": "تسجيل التطبيق",
+			"EDIT": "تحرير",
+			"ROTATE_SECRET": "تدوير السر",
+			"DELETE": "إلغاء"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "تسجيل عميل OAuth جديد",
+			"EDIT_TITLE": "تحرير عميل OAuth"
+		},
+		"FORM": {
+			"NAME": "اسم التطبيق",
+			"NAME_PLACEHOLDER": "مثل Activepieces",
+			"DESCRIPTION": "الوصف",
+			"DESCRIPTION_PLACEHOLDER": "وصف موجز يظهر في صفحة الموافقة",
+			"CLIENT_TYPE": "نوع العميل",
+			"CLIENT_TYPE_IMMUTABLE": "لا يمكن تغيير نوع العميل بعد الإنشاء.",
+			"REDIRECT_URIS": "عناوين URI لإعادة التوجيه",
+			"ADD_REDIRECT_URI": "إضافة عنوان URI لإعادة التوجيه",
+			"ALLOWED_SCOPES": "النطاقات المسموح بها",
+			"ADD_SCOPE": "إضافة نطاق",
+			"GRANT_TYPES": "أنواع المنح",
+			"PKCE_REQUIRED": "طلب PKCE (فرض مؤجل)",
+			"ACCESS_TTL": "عمر رمز الوصول (بالثواني)",
+			"REFRESH_TTL": "عمر رمز التحديث (بالثواني)"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "احفظ سر العميل الخاص بك",
+			"WARNING": "هذه هي المرة الوحيدة التي سيتم فيها عرض سر العميل. انسخه الآن وقم بتخزينه في تكامل الطرف الثالث الخاص بك - الدوران هو الطريقة الوحيدة للاسترداد من فقدان السر.",
+			"CLIENT_ID": "معرف العميل",
+			"CLIENT_SECRET": "سر العميل",
+			"ACKNOWLEDGE": "لقد قمت بالنسخ والتخزين بأمان لسر العميل.",
+			"CLOSE": "لقد حفظته، إغلاق",
+			"COPIED_CLIENT_ID": "تم نسخ معرف العميل إلى الحافظة",
+			"COPIED_SECRET": "تم نسخ سر العميل إلى الحافظة"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "هل تريد تدوير سر العميل لـ \"{{name}}\"؟ سيتوقف السر السابق عن العمل فورًا لتبادل الرموز الجديدة.",
+			"DELETE": "هل تريد إلغاء \"{{name}}\"؟ سيمنع هذا فورًا تطبيق الطرف الثالث من الحصول على رموز جديدة."
+		},
+		"TOASTS": {
+			"CREATED": "تم تسجيل \"{{name}}\"",
+			"UPDATED": "تم تحديث عميل OAuth",
+			"SECRET_ROTATED": "تم تدوير سر العميل",
+			"DELETED": "تم إلغاء عميل OAuth"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "فشل في تحميل عملاء OAuth",
+			"CREATE_FAILED": "فشل في تسجيل عميل OAuth",
+			"UPDATE_FAILED": "فشل في تحديث عميل OAuth",
+			"ROTATE_FAILED": "فشل في تدوير سر العميل",
+			"DELETE_FAILED": "فشل في إلغاء عميل OAuth"
+		}
 	}
 }

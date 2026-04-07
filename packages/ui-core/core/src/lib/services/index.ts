@@ -42,6 +42,7 @@ export * from './nav-builder';
 export * from './navigation';
 export * from './navigation-builder';
 export * from './notification';
+export * from './oauth-client';
 export * from './organization';
 export * from './organizations';
 export * from './payment';

@@ -1140,6 +1140,7 @@
 		"PAYMENT_GATEWAYS": "Betalingsgateways",
 		"SMS_GATEWAYS": "SMS-gateways",
 		"CUSTOM_SMTP": "Aangepaste SMTP",
+		"OAUTH_CLIENTS": "OAuth-clients",
 		"INVENTORY": "Inventaris",
 		"SALES": "Verkoop",
 		"PAYMENTS": "Betalingen",
@@ -5593,5 +5594,78 @@
 		"DESCRIPTION": "De {{companySite}}-server is momenteel niet bereikbaar. Dit kan komen door gepland onderhoud of onverwachte uitval.",
 		"CONNECTING": "Automatisch verbinding opnieuw proberen...",
 		"HINT": "Status: Poging om verbinding te maken met {{companySite}}-servers. Foutcode: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "OAuth-clients",
+		"SUBTITLE": "Registreer en beheer apps van derden die namens uw gebruikers toegang kunnen aanvragen tot Ever Gauzy.",
+		"STATUS": {
+			"ACTIVE": "Actief",
+			"INACTIVE": "Inactief"
+		},
+		"EMPTY": {
+			"TITLE": "Nog geen OAuth-clients geregistreerd.",
+			"HINT": "Klik op \"App registreren\" om uw eerste integratie toe te voegen (bijv. Activepieces, n8n, Make.com)."
+		},
+		"TABLE": {
+			"NAME": "Naam",
+			"CLIENT_ID": "Client-ID",
+			"TYPE": "Type",
+			"STATUS": "Status",
+			"REDIRECT_URIS": "Omleidings-URI's",
+			"ACTIONS": "Acties"
+		},
+		"ACTIONS": {
+			"REGISTER": "App registreren",
+			"EDIT": "Bewerken",
+			"ROTATE_SECRET": "Geheim roteren",
+			"DELETE": "Intrekken"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "Nieuwe OAuth-client registreren",
+			"EDIT_TITLE": "OAuth-client bewerken"
+		},
+		"FORM": {
+			"NAME": "Toepassingsnaam",
+			"NAME_PLACEHOLDER": "bijv. Activepieces",
+			"DESCRIPTION": "Beschrijving",
+			"DESCRIPTION_PLACEHOLDER": "Korte beschrijving die wordt weergegeven op de toestemmingspagina",
+			"CLIENT_TYPE": "Clienttype",
+			"CLIENT_TYPE_IMMUTABLE": "Het clienttype kan niet worden gewijzigd na het aanmaken.",
+			"REDIRECT_URIS": "Omleidings-URI's",
+			"ADD_REDIRECT_URI": "Omleidings-URI toevoegen",
+			"ALLOWED_SCOPES": "Toegestane bereiken",
+			"ADD_SCOPE": "Bereik toevoegen",
+			"GRANT_TYPES": "Verleningstypen",
+			"PKCE_REQUIRED": "PKCE vereist (uitgestelde handhaving)",
+			"ACCESS_TTL": "Access-token-TTL (seconden)",
+			"REFRESH_TTL": "Refresh-token-TTL (seconden)"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Bewaar uw clientgeheim",
+			"WARNING": "Dit is de enige keer dat het clientgeheim wordt weergegeven. Kopieer het nu en bewaar het in uw integratie van derden - rotatie is de enige manier om te herstellen van een verloren geheim.",
+			"CLIENT_ID": "Client-ID",
+			"CLIENT_SECRET": "Clientgeheim",
+			"ACKNOWLEDGE": "Ik heb het clientgeheim gekopieerd en veilig opgeslagen.",
+			"CLOSE": "Ik heb het opgeslagen, sluiten",
+			"COPIED_CLIENT_ID": "Client-ID gekopieerd naar klembord",
+			"COPIED_SECRET": "Clientgeheim gekopieerd naar klembord"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "Het clientgeheim roteren voor \"{{name}}\"? Het vorige geheim werkt onmiddellijk niet meer voor nieuwe token-uitwisselingen.",
+			"DELETE": "\"{{name}}\" intrekken? Dit voorkomt onmiddellijk dat de app van derden nieuwe tokens kan verkrijgen."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" geregistreerd",
+			"UPDATED": "OAuth-client bijgewerkt",
+			"SECRET_ROTATED": "Clientgeheim geroteerd",
+			"DELETED": "OAuth-client ingetrokken"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Kan OAuth-clients niet laden",
+			"CREATE_FAILED": "Kan OAuth-client niet registreren",
+			"UPDATE_FAILED": "Kan OAuth-client niet bijwerken",
+			"ROTATE_FAILED": "Kan clientgeheim niet roteren",
+			"DELETE_FAILED": "Kan OAuth-client niet intrekken"
+		}
 	}
 }

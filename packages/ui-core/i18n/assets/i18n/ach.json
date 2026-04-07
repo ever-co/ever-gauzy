@@ -1050,6 +1050,7 @@
 		"PAYMENT_GATEWAYS": "crwdns3418:0crwdne3418:0",
 		"SMS_GATEWAYS": "crwdns8384:0crwdne8384:0",
 		"CUSTOM_SMTP": "crwdns3420:0crwdne3420:0",
+		"OAUTH_CLIENTS": "crwdns11500:0crwdne11500:0",
 		"INVENTORY": "crwdns3588:0crwdne3588:0",
 		"SALES": "crwdns3536:0crwdne3536:0",
 		"PAYMENTS": "crwdns3538:0crwdne3538:0",
@@ -4599,5 +4600,78 @@
 		"AVAILABLE": "crwdns11243:0crwdne11243:0"
 	},
 	"SERVER_API": "API Server",
-	"SERVER_API_LOG": "API Server Log"
+	"SERVER_API_LOG": "API Server Log",
+	"OAUTH_CLIENTS": {
+		"TITLE": "crwdns11502:0crwdne11502:0",
+		"SUBTITLE": "crwdns11504:0crwdne11504:0",
+		"STATUS": {
+			"ACTIVE": "crwdns11506:0crwdne11506:0",
+			"INACTIVE": "crwdns11508:0crwdne11508:0"
+		},
+		"EMPTY": {
+			"TITLE": "crwdns11510:0crwdne11510:0",
+			"HINT": "crwdns11512:0crwdne11512:0"
+		},
+		"TABLE": {
+			"NAME": "crwdns11514:0crwdne11514:0",
+			"CLIENT_ID": "crwdns11516:0crwdne11516:0",
+			"TYPE": "crwdns11518:0crwdne11518:0",
+			"STATUS": "crwdns11520:0crwdne11520:0",
+			"REDIRECT_URIS": "crwdns11522:0crwdne11522:0",
+			"ACTIONS": "crwdns11524:0crwdne11524:0"
+		},
+		"ACTIONS": {
+			"REGISTER": "crwdns11526:0crwdne11526:0",
+			"EDIT": "crwdns11528:0crwdne11528:0",
+			"ROTATE_SECRET": "crwdns11530:0crwdne11530:0",
+			"DELETE": "crwdns11532:0crwdne11532:0"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "crwdns11534:0crwdne11534:0",
+			"EDIT_TITLE": "crwdns11536:0crwdne11536:0"
+		},
+		"FORM": {
+			"NAME": "crwdns11538:0crwdne11538:0",
+			"NAME_PLACEHOLDER": "crwdns11540:0crwdne11540:0",
+			"DESCRIPTION": "crwdns11542:0crwdne11542:0",
+			"DESCRIPTION_PLACEHOLDER": "crwdns11544:0crwdne11544:0",
+			"CLIENT_TYPE": "crwdns11546:0crwdne11546:0",
+			"CLIENT_TYPE_IMMUTABLE": "crwdns11548:0crwdne11548:0",
+			"REDIRECT_URIS": "crwdns11550:0crwdne11550:0",
+			"ADD_REDIRECT_URI": "crwdns11552:0crwdne11552:0",
+			"ALLOWED_SCOPES": "crwdns11554:0crwdne11554:0",
+			"ADD_SCOPE": "crwdns11556:0crwdne11556:0",
+			"GRANT_TYPES": "crwdns11558:0crwdne11558:0",
+			"PKCE_REQUIRED": "crwdns11560:0crwdne11560:0",
+			"ACCESS_TTL": "crwdns11562:0crwdne11562:0",
+			"REFRESH_TTL": "crwdns11564:0crwdne11564:0"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "crwdns11566:0crwdne11566:0",
+			"WARNING": "crwdns11568:0crwdne11568:0",
+			"CLIENT_ID": "crwdns11570:0crwdne11570:0",
+			"CLIENT_SECRET": "crwdns11572:0crwdne11572:0",
+			"ACKNOWLEDGE": "crwdns11574:0crwdne11574:0",
+			"CLOSE": "crwdns11576:0crwdne11576:0",
+			"COPIED_CLIENT_ID": "crwdns11578:0crwdne11578:0",
+			"COPIED_SECRET": "crwdns11580:0crwdne11580:0"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "crwdns11582:0crwdne11582:0",
+			"DELETE": "crwdns11584:0crwdne11584:0"
+		},
+		"TOASTS": {
+			"CREATED": "crwdns11586:0crwdne11586:0",
+			"UPDATED": "crwdns11588:0crwdne11588:0",
+			"SECRET_ROTATED": "crwdns11590:0crwdne11590:0",
+			"DELETED": "crwdns11592:0crwdne11592:0"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "crwdns11594:0crwdne11594:0",
+			"CREATE_FAILED": "crwdns11596:0crwdne11596:0",
+			"UPDATE_FAILED": "crwdns11598:0crwdne11598:0",
+			"ROTATE_FAILED": "crwdns11600:0crwdne11600:0",
+			"DELETE_FAILED": "crwdns11602:0crwdne11602:0"
+		}
+	}
 }
