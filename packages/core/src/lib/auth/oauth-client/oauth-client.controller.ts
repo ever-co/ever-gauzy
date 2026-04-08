@@ -41,8 +41,6 @@ import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from '../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
-import { BaseQueryDTO } from '../../core/crud';
-import { OAuthClient } from './oauth-client.entity';
 import { OAuthClientService } from './oauth-client.service';
 import {
 	CreateOAuthClientDTO,
@@ -83,14 +81,18 @@ export class OAuthClientController {
 	@ApiResponse({ status: HttpStatus.OK })
 	@Permissions(PermissionsEnum.OAUTH_CLIENT_VIEW)
 	@Get('/')
-	@UseValidationPipe()
 	async findAll(
-		@Query() params: BaseQueryDTO<OAuthClient>
+		@Query('skip') skip?: string,
+		@Query('take') take?: string
 	): Promise<IPagination<OAuthClientResponseDTO>> {
+		// Lightweight pagination — we deliberately avoid `BaseQueryDTO`
+		// here because that DTO chain (via `FindWhereQueryDTO`) marks
+		// `where` as `@IsNotEmpty()`, which would 400 every list call
+		// from the admin UI for no benefit. The registry is small and
+		// always scoped via `listForCurrentTenant`.
 		return this.oauthClientService.listForCurrentTenant({
-			skip: params.skip,
-			take: params.take,
-			order: params.order as any
+			skip: skip !== undefined ? Number.parseInt(skip, 10) : undefined,
+			take: take !== undefined ? Number.parseInt(take, 10) : undefined
 		});
 	}
 
