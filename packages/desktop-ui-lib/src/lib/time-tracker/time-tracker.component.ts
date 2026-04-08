@@ -2350,6 +2350,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			return resImg;
 		} catch (error) {
 			this._loggerService.error(error);
+			this.electronService.ipcRenderer.send('failed_upload_screenshot', {
+				timeslotId: timeSlotId,
+				imagePath: b64img,
+				recordedAt: new Date()
+			});
 		}
 	}
 

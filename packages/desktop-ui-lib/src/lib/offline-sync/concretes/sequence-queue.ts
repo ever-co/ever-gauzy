@@ -120,7 +120,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 						});
 					} else if (currentTimeLog.id && timer.stoppedAt) {
 						latest = await this._timeTrackerService.updateTimeLog(timer.timelogId, {
-							startedAt: timer.startedAt,
+							startedAt: timer.startedAt || currentTimeLog.startedAt,
 							stoppedAt: timer.stoppedAt,
 							description: timer.description,
 							projectId: timer.projectId,
@@ -151,7 +151,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 						});
 					} else if (timer.stoppedAt && !latest.isRunning) {
 						latest = await this._timeTrackerService.updateTimeLog(latest.id, {
-							startedAt: timer.startedAt,
+							startedAt: timer.startedAt || latest.startedAt,
 							stoppedAt: timer.stoppedAt,
 							description: timer.description,
 							projectId: timer.projectId,

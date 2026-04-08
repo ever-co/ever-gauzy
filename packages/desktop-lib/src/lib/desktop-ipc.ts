@@ -36,10 +36,12 @@ import {
 	Interval,
 	IntervalService,
 	IntervalTO,
+	ScreenshotService,
 	Timer,
 	TimerService,
 	TimerTO,
-	UserService
+	UserService,
+	Screenshot
 } from './offline';
 import { pluginListeners } from './plugin-system';
 import { AkitaStorageHandler } from './storage/akita-storage.handler';
@@ -56,6 +58,7 @@ let _intervalService: IntervalService | null = null;
 let _timerService: TimerService | null = null;
 let _windowManager: WindowManager | null = null;
 let _appWindowManager: AppWindowManager | null = null;
+let _screenshotService: ScreenshotService | null = null;
 
 function getTimerHandler(): TimerHandler {
 	if (!_timerHandler) _timerHandler = new TimerHandler();
@@ -84,6 +87,10 @@ function getWindowManager(): WindowManager {
 function getAppWindowManager(): AppWindowManager {
 	if (!_appWindowManager) _appWindowManager = AppWindowManager.getInstance();
 	return _appWindowManager;
+}
+function getScreenshotService(): ScreenshotService {
+	if (!_screenshotService) _screenshotService = new ScreenshotService();
+	return _screenshotService;
 }
 
 export function setupAkitaStorageHandler() {
@@ -182,6 +189,34 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			throw new UIError('400', error, 'IPCSAVESLOT');
 		}
 	});
+
+	ipcMain.on('failed_upload_screenshot', async (_, arg) => {
+		try {
+			console.log('starting save failed image to local', arg);
+			log.info('Failed upload screenshot image');
+			let activityId: number;
+			if (arg.intervalId) {
+				activityId = arg.intervalId;
+			} else {
+				const lastInterval = await getIntervalService().findLastInterval();
+				activityId = lastInterval?.id;
+			}
+			console.log('lastInterval', activityId);
+
+			if (activityId) {
+				const screenshotImage = {
+					timeslotId: arg?.timeSlotId,
+					imagePath: arg?.imagePath,
+					synced: false,
+					activityId,
+					recordedAt: new Date(arg?.recordedAt)
+				}
+				await getScreenshotService().saveAndReturn(new Screenshot(screenshotImage));
+			}
+		} catch (error) {
+			console.error('failed to save failed upload screenshot image');
+		}
+	})
 
 	ipcMain.on('set_project_task', (event, arg) => {
 		event.sender.send('set_project_task_reply', arg);
