@@ -6,7 +6,7 @@
  * clientType is not editable after creation). Closes with the dialog
  * result payload ready to be passed to the HTTP service.
  */
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import {
@@ -21,7 +21,8 @@ import {
 	selector: 'ngx-oauth-client-form-dialog',
 	templateUrl: './oauth-client-form-dialog.component.html',
 	styleUrls: ['./oauth-client-form-dialog.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OAuthClientFormDialogComponent implements OnInit {
 	@Input() client: IOAuthClient | null = null;
@@ -94,8 +95,19 @@ export class OAuthClientFormDialogComponent implements OnInit {
 		}
 
 		const raw = this.form.getRawValue();
-		const redirectUris: string[] = (raw.redirectUris as string[]).map((u) => u.trim()).filter(Boolean);
-		const allowedScopes: string[] = (raw.allowedScopes as string[]).map((s) => s.trim()).filter(Boolean);
+		const redirectUris: string[] = (raw.redirectUris as string[])
+			.map((u) => u.trim())
+			.filter((u) => u.length > 0);
+		const allowedScopes: string[] = (raw.allowedScopes as string[])
+			.map((s) => s.trim())
+			.filter((s) => s.length > 0);
+
+		// Validate that we have at least one redirect URI after trimming
+		if (redirectUris.length === 0) {
+			this.form.get('redirectUris')?.setErrors({ atLeastOneRequired: true });
+			this.form.get('redirectUris')?.markAsTouched();
+			return;
+		}
 
 		if (this.isEdit) {
 			const payload: IOAuthClientUpdateInput = {

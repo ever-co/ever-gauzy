@@ -74,7 +74,7 @@ export class OAuthClientsComponent implements OnInit, OnDestroy {
 			.onClose.pipe(takeUntil(this.destroy$))
 			.subscribe((result) => {
 				if (!result) return;
-				this.service.create(result).subscribe({
+				this.service.create(result).pipe(takeUntil(this.destroy$)).subscribe({
 					next: (created) => {
 						this.toastr.success(
 							this.translate.instant('OAUTH_CLIENTS.TOASTS.CREATED', { name: created.name }),
@@ -99,7 +99,7 @@ export class OAuthClientsComponent implements OnInit, OnDestroy {
 			.onClose.pipe(takeUntil(this.destroy$))
 			.subscribe((result) => {
 				if (!result) return;
-				this.service.update(client.id as ID, result).subscribe({
+				this.service.update(client.id as ID, result).pipe(takeUntil(this.destroy$)).subscribe({
 					next: () => {
 						this.toastr.success(
 							this.translate.instant('OAUTH_CLIENTS.TOASTS.UPDATED'),
@@ -123,7 +123,7 @@ export class OAuthClientsComponent implements OnInit, OnDestroy {
 		);
 		if (!confirmed) return;
 
-		this.service.rotateSecret(client.id as ID).subscribe({
+		this.service.rotateSecret(client.id as ID).pipe(takeUntil(this.destroy$)).subscribe({
 			next: (rotated) => {
 				this.toastr.success(
 					this.translate.instant('OAUTH_CLIENTS.TOASTS.SECRET_ROTATED'),
@@ -146,7 +146,7 @@ export class OAuthClientsComponent implements OnInit, OnDestroy {
 		);
 		if (!confirmed) return;
 
-		this.service.delete(client.id as ID).subscribe({
+		this.service.delete(client.id as ID).pipe(takeUntil(this.destroy$)).subscribe({
 			next: () => {
 				this.toastr.success(
 					this.translate.instant('OAUTH_CLIENTS.TOASTS.DELETED'),

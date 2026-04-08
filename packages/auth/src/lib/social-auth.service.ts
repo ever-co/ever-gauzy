@@ -22,6 +22,9 @@ export interface OAuthAppConfig {
 	allowedGrantTypes: string[];
 	pkceRequired: boolean;
 	accessTokenTtl: number;
+	/** Owning tenant. `null` => global client usable by any tenant. */
+	tenantId?: string | null;
+	clientType?: string;
 }
 
 export interface OAuthAppPendingRequest {

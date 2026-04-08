@@ -24,10 +24,12 @@
  * be rewired to use this service in Section 3.
  */
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Delete,
 	Get,
+	Header,
 	HttpCode,
 	HttpStatus,
 	Param,
@@ -69,6 +71,8 @@ export class OAuthClientController {
 	@Permissions(PermissionsEnum.OAUTH_CLIENT_EDIT)
 	@Post('/')
 	@HttpCode(HttpStatus.CREATED)
+	@Header('Cache-Control', 'no-store')
+	@Header('Pragma', 'no-cache')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async create(@Body() dto: CreateOAuthClientDTO): Promise<OAuthClientWithSecretResponseDTO> {
 		return this.oauthClientService.createClient(dto);
@@ -90,9 +94,21 @@ export class OAuthClientController {
 		// `where` as `@IsNotEmpty()`, which would 400 every list call
 		// from the admin UI for no benefit. The registry is small and
 		// always scoped via `listForCurrentTenant`.
+
+		// Validate pagination params to prevent NaN propagation
+		const parsedSkip = skip !== undefined ? Number.parseInt(skip, 10) : undefined;
+		const parsedTake = take !== undefined ? Number.parseInt(take, 10) : undefined;
+
+		if (parsedSkip !== undefined && (!Number.isFinite(parsedSkip) || parsedSkip < 0)) {
+			throw new BadRequestException('Invalid skip parameter: must be a non-negative integer');
+		}
+		if (parsedTake !== undefined && (!Number.isFinite(parsedTake) || parsedTake < 1)) {
+			throw new BadRequestException('Invalid take parameter: must be a positive integer');
+		}
+
 		return this.oauthClientService.listForCurrentTenant({
-			skip: skip !== undefined ? Number.parseInt(skip, 10) : undefined,
-			take: take !== undefined ? Number.parseInt(take, 10) : undefined
+			skip: parsedSkip,
+			take: parsedTake
 		});
 	}
 
@@ -135,6 +151,8 @@ export class OAuthClientController {
 	@Permissions(PermissionsEnum.OAUTH_CLIENT_EDIT)
 	@Post('/:id/rotate-secret')
 	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@Header('Pragma', 'no-cache')
 	async rotateSecret(
 		@Param('id', UUIDValidationPipe) id: ID
 	): Promise<OAuthClientWithSecretResponseDTO> {

@@ -55,7 +55,13 @@ export class OAuthAppController {
 		let config;
 		try {
 			config = await this.service.resolveOAuthClient(query.client_id);
-		} catch {
+		} catch (error) {
+			// Re-throw HTTP exceptions to preserve proper error semantics
+			
+			// Only convert not-found to invalid_client
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new HttpException('Invalid client_id', HttpStatus.BAD_REQUEST);
 		}
 

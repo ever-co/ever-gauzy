@@ -259,7 +259,9 @@ export class AuthService extends SocialAuthService {
 			allowedScopes: client.allowedScopes ?? [],
 			allowedGrantTypes: (client.allowedGrantTypes ?? []) as string[],
 			pkceRequired: client.pkceRequired,
-			accessTokenTtl: client.accessTokenTtl
+			accessTokenTtl: client.accessTokenTtl,
+			tenantId: client.tenantId ?? null,
+			clientType: client.clientType
 		};
 	}
 
@@ -281,14 +283,36 @@ export class AuthService extends SocialAuthService {
 	public async createOAuthAppAuthorizationCode(request: OAuthAppAuthorizationRequest): Promise<string> {
 		const config = await this.resolveOAuthClient(request.clientId);
 
+		// Verify the client is allowed for the requesting tenant
+		// Global clients (tenantId=null) can be used by any tenant
+		// Tenant-scoped clients can only be used by their owning tenant
+		const requestTenantId = RequestContext.currentTenantId();
+		if (config.tenantId && config.tenantId !== requestTenantId) {
+			throw new BadRequestException('OAuth client is not available for this tenant');
+		}
+
+		// Enforce that the client is allowed to use the authorization_code grant
+		if (config.allowedGrantTypes && config.allowedGrantTypes.length > 0
+			&& !config.allowedGrantTypes.includes('authorization_code')) {
+			throw new BadRequestException('Client is not allowed to use authorization_code grant');
+		}
+
 		if (!this.isOAuthAppRedirectUriAllowed(request.redirectUri, config)) {
 			throw new BadRequestException('Invalid redirect_uri');
 		}
 
-		if (request.scope && config.allowedScopes && config.allowedScopes.length > 0) {
+		// Always validate scopes - even when allowedScopes is empty,
+		// the request should not specify scopes unless they're explicitly allowed
+		if (request.scope) {
 			const requested = request.scope.split(/\s+/).filter(Boolean);
-			if (!requested.every((s) => config.allowedScopes!.includes(s))) {
-				throw new BadRequestException('Requested scope is not allowed for this client');
+			if (requested.length > 0) {
+				// If client has no allowed scopes defined, reject all scope requests
+				if (!config.allowedScopes || config.allowedScopes.length === 0) {
+					throw new BadRequestException('This client does not allow any scopes');
+				}
+				if (!requested.every((s) => config.allowedScopes!.includes(s))) {
+					throw new BadRequestException('Requested scope is not allowed for this client');
+				}
 			}
 		}
 
@@ -327,7 +351,7 @@ export class AuthService extends SocialAuthService {
 		// scrypt hash from the registry. Public clients (null hash) will
 		// fail here — PKCE for public clients is deferred to a later phase.
 		const secretValid = await this.oauthClientService.validateClientSecret(
-			{ clientSecretHash: config.clientSecretHash } as OAuthClient,
+			config.clientSecretHash,
 			request.clientSecret
 		);
 		if (!secretValid) {
@@ -371,7 +395,8 @@ export class AuthService extends SocialAuthService {
 			tenantId: payload.tenantId
 		});
 
-		const expiresIn = Number(environment.JWT_TOKEN_EXPIRATION_TIME) || 86400;
+		// Honor the per-client accessTokenTtl when configured; fall back to the global JWT TTL.
+		const expiresIn = config.accessTokenTtl || Number(environment.JWT_TOKEN_EXPIRATION_TIME) || 86400;
 
 		this.logger.log(
 			`OAuth app token exchanged for userId=${payload.userId}, tenantId=${payload.tenantId}, expiresIn=${expiresIn}s`

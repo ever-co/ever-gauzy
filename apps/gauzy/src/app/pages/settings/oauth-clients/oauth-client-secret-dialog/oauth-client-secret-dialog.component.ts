@@ -6,7 +6,7 @@
  * hash. If the admin closes this dialog without copying, the secret is
  * gone and rotation is the only way to get a new one.
  */
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { IOAuthClientWithSecret } from '@gauzy/contracts';
@@ -15,7 +15,8 @@ import { IOAuthClientWithSecret } from '@gauzy/contracts';
 	selector: 'ngx-oauth-client-secret-dialog',
 	templateUrl: './oauth-client-secret-dialog.component.html',
 	styleUrls: ['./oauth-client-secret-dialog.component.scss'],
-	standalone: false
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OAuthClientSecretDialogComponent {
 	@Input() client!: IOAuthClientWithSecret;
@@ -45,6 +46,11 @@ export class OAuthClientSecretDialogComponent {
 				this.toastr.success(
 					this.translate.instant(successKey),
 					this.translate.instant('TOASTR.TITLE.SUCCESS')
+				);
+			}).catch(() => {
+				this.toastr.danger(
+					this.translate.instant('OAUTH_CLIENTS.SECRET_DIALOG.COPY_FAILED'),
+					this.translate.instant('TOASTR.TITLE.ERROR')
 				);
 			});
 		}

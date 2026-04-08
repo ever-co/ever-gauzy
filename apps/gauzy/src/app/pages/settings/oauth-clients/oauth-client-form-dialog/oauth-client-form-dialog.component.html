@@ -41,12 +41,12 @@
 
 			<div class="form-row" formArrayName="redirectUris">
 				<label class="label">{{ 'OAUTH_CLIENTS.FORM.REDIRECT_URIS' | translate }}</label>
-				<div class="array-row" *ngFor="let _ of redirectUris.controls; let i = index">
+				<div class="array-row" *ngFor="let ctrl of redirectUris.controls; let i = index">
 					<input
 						nbInput
 						fullWidth
 						[formControlName]="i"
-						placeholder="https://example.com/oauth/callback"
+						[placeholder]="'OAUTH_CLIENTS.FORM.REDIRECT_URI_PLACEHOLDER' | translate"
 					/>
 					<button
 						type="button"
@@ -56,6 +56,7 @@
 						status="danger"
 						(click)="removeRedirectUri(i)"
 						[disabled]="redirectUris.length <= 1"
+						[attr.aria-label]="'OAUTH_CLIENTS.FORM.REMOVE_REDIRECT_URI' | translate"
 					>
 						<nb-icon icon="close-outline"></nb-icon>
 					</button>
@@ -67,6 +68,7 @@
 					ghost
 					status="primary"
 					(click)="addRedirectUri()"
+					[attr.aria-label]="'OAUTH_CLIENTS.FORM.ADD_REDIRECT_URI' | translate"
 				>
 					<nb-icon icon="plus-outline"></nb-icon>
 					{{ 'OAUTH_CLIENTS.FORM.ADD_REDIRECT_URI' | translate }}
@@ -75,8 +77,8 @@
 
 			<div class="form-row" formArrayName="allowedScopes">
 				<label class="label">{{ 'OAUTH_CLIENTS.FORM.ALLOWED_SCOPES' | translate }}</label>
-				<div class="array-row" *ngFor="let _ of allowedScopes.controls; let i = index">
-					<input nbInput fullWidth [formControlName]="i" placeholder="read:profile" />
+				<div class="array-row" *ngFor="let ctrl of allowedScopes.controls; let i = index">
+					<input nbInput fullWidth [formControlName]="i" [placeholder]="'OAUTH_CLIENTS.FORM.SCOPE_PLACEHOLDER' | translate" />
 					<button
 						type="button"
 						nbButton
@@ -84,6 +86,7 @@
 						ghost
 						status="danger"
 						(click)="removeScope(i)"
+						[attr.aria-label]="'OAUTH_CLIENTS.FORM.REMOVE_SCOPE' | translate"
 					>
 						<nb-icon icon="close-outline"></nb-icon>
 					</button>
@@ -95,6 +98,7 @@
 					ghost
 					status="primary"
 					(click)="addScope()"
+					[attr.aria-label]="'OAUTH_CLIENTS.FORM.ADD_SCOPE' | translate"
 				>
 					<nb-icon icon="plus-outline"></nb-icon>
 					{{ 'OAUTH_CLIENTS.FORM.ADD_SCOPE' | translate }}

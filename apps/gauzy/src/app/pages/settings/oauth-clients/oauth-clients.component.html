@@ -4,7 +4,7 @@
 			<h5>{{ 'OAUTH_CLIENTS.TITLE' | translate }}</h5>
 			<p class="subtitle">{{ 'OAUTH_CLIENTS.SUBTITLE' | translate }}</p>
 		</div>
-		<button nbButton status="primary" (click)="openCreateDialog()">
+		<button type="button" nbButton status="primary" (click)="openCreateDialog()">
 			<nb-icon icon="plus-outline"></nb-icon>
 			{{ 'OAUTH_CLIENTS.ACTIONS.REGISTER' | translate }}
 		</button>
@@ -54,32 +54,38 @@
 					</td>
 					<td class="actions-col">
 						<button
+							type="button"
 							nbButton
 							size="small"
 							ghost
 							status="primary"
 							(click)="openEditDialog(client)"
 							[nbTooltip]="'OAUTH_CLIENTS.ACTIONS.EDIT' | translate"
+							[attr.aria-label]="'OAUTH_CLIENTS.ACTIONS.EDIT' | translate"
 						>
 							<nb-icon icon="edit-outline"></nb-icon>
 						</button>
 						<button
+							type="button"
 							nbButton
 							size="small"
 							ghost
 							status="warning"
 							(click)="rotateSecret(client)"
 							[nbTooltip]="'OAUTH_CLIENTS.ACTIONS.ROTATE_SECRET' | translate"
+							[attr.aria-label]="'OAUTH_CLIENTS.ACTIONS.ROTATE_SECRET' | translate"
 						>
 							<nb-icon icon="refresh-outline"></nb-icon>
 						</button>
 						<button
+							type="button"
 							nbButton
 							size="small"
 							ghost
 							status="danger"
 							(click)="delete(client)"
 							[nbTooltip]="'OAUTH_CLIENTS.ACTIONS.DELETE' | translate"
+							[attr.aria-label]="'OAUTH_CLIENTS.ACTIONS.DELETE' | translate"
 						>
 							<nb-icon icon="trash-2-outline"></nb-icon>
 						</button>

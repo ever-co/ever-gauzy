@@ -20,8 +20,8 @@
  *   codes inside `AuthService.createOAuthAppAuthorizationCode`.
  */
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { randomBytes } from 'crypto';
-import { FindManyOptions, FindOneOptions, In, IsNull } from 'typeorm';
+import { randomBytes } from 'node:crypto';
+import { FindManyOptions, IsNull } from 'typeorm';
 import { hashPassword, verifyPassword } from '@gauzy/utils';
 import { ID, IPagination, OAuthClientType, OAuthGrantType, RolesEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../../core/crud/tenant-aware-crud.service';
@@ -85,8 +85,15 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 		dto: CreateOAuthClientDTO,
 		options?: { tenantId?: ID | null }
 	): Promise<OAuthClientWithSecretResponseDTO> {
-		const plaintextSecret = this.generateSecret();
-		const clientSecretHash = await hashPassword(plaintextSecret);
+		const clientType = dto.clientType ?? OAuthClientType.CONFIDENTIAL;
+		const isConfidential = clientType === OAuthClientType.CONFIDENTIAL;
+
+		// Only generate secrets for confidential clients
+		// Public clients use PKCE for authentication (deferred enforcement)
+		const plaintextSecret = isConfidential ? this.generateSecret() : null;
+		const clientSecretHash = isConfidential && plaintextSecret
+			? await hashPassword(plaintextSecret)
+			: null;
 		const codeSecret = this.generateSecret();
 		const clientId = this.generateClientId();
 
@@ -95,28 +102,41 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 				? null
 				: (options?.tenantId ?? RequestContext.currentTenantId() ?? null);
 
-		const entity = await super.create({
+		// For global clients (tenantId=null), we must bypass TenantAwareCrudService's automatic
+		// tenant enrichment which would overwrite tenantId with the current tenant context.
+		const entityData = {
 			clientId,
 			clientSecretHash,
 			codeSecret,
 			name: dto.name,
 			description: dto.description ?? null,
-			clientType: dto.clientType ?? OAuthClientType.CONFIDENTIAL,
+			clientType,
 			redirectUris: dto.redirectUris,
 			allowedScopes: dto.allowedScopes ?? [],
 			allowedGrantTypes: dto.allowedGrantTypes ?? [OAuthGrantType.AUTHORIZATION_CODE],
 			pkceRequired: dto.pkceRequired ?? false,
 			accessTokenTtl: dto.accessTokenTtl ?? 86400,
 			refreshTokenTtl: dto.refreshTokenTtl ?? 2592000,
-			tenantId: tenantId ?? undefined,
+			// Preserve an explicit `null` so saveWithoutEnrichment persists a
+			// global (cross-tenant) client; only `undefined` lets
+			// TenantAwareCrudService inject the current tenant.
+			tenantId: tenantId,
 			isActive: true
-		} as Partial<OAuthClient>);
+		} as Partial<OAuthClient>;
+
+		// Use saveWithoutEnrichment for global clients to avoid tenant enrichment
+		const entity = tenantId === null
+			? await this.saveWithoutEnrichment(entityData)
+			: await super.create(entityData);
 
 		this.logger.log(
-			`OAuth client created: id=${entity.id}, clientId=${clientId}, name="${dto.name}", tenantId=${tenantId ?? 'GLOBAL'}`
+			`OAuth client created: id=${entity.id}, clientId=${clientId}, name="${dto.name}", tenantId=${tenantId ?? 'GLOBAL'}, type=${clientType}`
 		);
 
-		return OAuthClientWithSecretResponseDTO.fromEntityWithSecret(entity, plaintextSecret);
+		// For public clients, return a placeholder secret since none was generated
+		const returnSecret = plaintextSecret ?? 'PKCE_REQUIRED';
+
+		return OAuthClientWithSecretResponseDTO.fromEntityWithSecret(entity, returnSecret);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -125,10 +145,15 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 
 	/**
 	 * Public lookup used by the auth pipeline during `/authorize` and
-	 * `/token`. Includes both tenant-scoped clients owned by the current
-	 * tenant AND global (`tenantId = NULL`) clients, and reads the
-	 * `clientSecretHash` + `codeSecret` columns explicitly because they
-	 * are marked `select: false` on the entity.
+	 * `/token`. Includes both tenant-scoped clients AND global (`tenantId = NULL`)
+	 * clients, and reads the `clientSecretHash` + `codeSecret` columns explicitly
+	 * because they are marked `select: false` on the entity.
+	 *
+	 * NOTE: This method intentionally has NO tenant constraint — the auth pipeline
+	 * needs to resolve clients by `clientId` alone. Security is enforced via:
+	 * - `isActive` / `isArchived` checks (inactive clients can't auth)
+	 * - `clientSecret` validation during `/token` exchange
+	 * - PKCE for public clients (when enabled)
 	 *
 	 * Throws `NotFoundException` when the client doesn't exist or is
 	 * inactive — the controller maps this to `400 invalid_client`.
@@ -166,12 +191,20 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 		const tenantId = RequestContext.currentTenantId();
 		const isSuperAdmin = RequestContext.hasRoles([RolesEnum.SUPER_ADMIN]);
 
-		const where: any = options?.where ?? {};
+		const baseWhere: any = options?.where ?? {};
+		// SQL `IN (...)` does not match NULL, so to express
+		// `tenantId = :tenantId OR tenantId IS NULL` we must use the
+		// array-of-conditions form (TypeORM ORs them together).
+		let where: any;
 		if (isSuperAdmin) {
-			// Super admins see this tenant's clients AND global rows
-			where.tenantId = tenantId ? In([tenantId]) : IsNull();
+			where = tenantId
+				? [
+						{ ...baseWhere, tenantId },
+						{ ...baseWhere, tenantId: IsNull() }
+					]
+				: { ...baseWhere, tenantId: IsNull() };
 		} else {
-			where.tenantId = tenantId;
+			where = { ...baseWhere, tenantId };
 		}
 
 		const [items, total] = await this.typeOrmRepository.findAndCount({
@@ -186,7 +219,17 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 	}
 
 	public async findOneSafe(id: ID): Promise<OAuthClientResponseDTO> {
-		const entity = await this.findOneByIdString(id);
+		// For SUPER_ADMINs, check both tenant-scoped and global clients
+		const isSuperAdmin = RequestContext.hasRoles([RolesEnum.SUPER_ADMIN]);
+		let entity: OAuthClient | null;
+
+		if (isSuperAdmin) {
+			// Try direct repository query without tenant enrichment
+			entity = await this.typeOrmRepository.findOne({ where: { id } });
+		} else {
+			entity = await this.findOneByIdString(id);
+		}
+
 		if (!entity) {
 			throw new NotFoundException(`OAuth client not found: ${id}`);
 		}
@@ -198,13 +241,31 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 	// ---------------------------------------------------------------------------
 
 	public async updateClient(id: ID, dto: UpdateOAuthClientDTO): Promise<OAuthClientResponseDTO> {
-		const existing = await this.findOneByIdString(id);
+		// For SUPER_ADMINs, check both tenant-scoped and global clients
+		const isSuperAdmin = RequestContext.hasRoles([RolesEnum.SUPER_ADMIN]);
+		let existing: OAuthClient | null;
+
+		if (isSuperAdmin) {
+			// Bypass tenant enrichment to allow updating global clients
+			existing = await this.typeOrmRepository.findOne({ where: { id } });
+		} else {
+			existing = await this.findOneByIdString(id);
+		}
+
 		if (!existing) {
 			throw new NotFoundException(`OAuth client not found: ${id}`);
 		}
 		await super.update(id, dto as Partial<OAuthClient>);
-		const updated = await this.findOneByIdString(id);
-		return OAuthClientResponseDTO.fromEntity(updated as OAuthClient);
+
+		// Fetch updated with same logic
+		let updated: OAuthClient | null;
+		if (isSuperAdmin) {
+			updated = await this.typeOrmRepository.findOne({ where: { id } });
+		} else {
+			updated = await this.findOneByIdString(id);
+		}
+
+		return OAuthClientResponseDTO.fromEntity(updated);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -232,7 +293,7 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 
 		this.logger.warn(`OAuth client secret rotated: id=${id}, clientId=${existing.clientId}`);
 
-		const refreshed = (await this.findOneByIdString(id)) as OAuthClient;
+		const refreshed = await this.findOneByIdString(id);
 		return OAuthClientWithSecretResponseDTO.fromEntityWithSecret(refreshed, plaintextSecret);
 	}
 
@@ -251,8 +312,7 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 		if (!existing) {
 			throw new NotFoundException(`OAuth client not found: ${id}`);
 		}
-		await super.update(id, { isActive: false } as Partial<OAuthClient>);
-		await this.delete(id);
+		await this.softRemove(id);
 		this.logger.warn(`OAuth client soft-deleted: id=${id}, clientId=${existing.clientId}`);
 	}
 
@@ -269,11 +329,18 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 	 * authenticated via PKCE instead — PKCE enforcement is deferred to a
 	 * later phase, so for now this method returns `false` for public clients
 	 * to fail safe.
+	 *
+	 * @param clientOrHash - Either an OAuthClient entity or just the clientSecretHash string
+	 * @param plainSecret - The plaintext secret to validate
 	 */
-	public async validateClientSecret(client: OAuthClient, plainSecret: string): Promise<boolean> {
-		if (!client?.clientSecretHash || !plainSecret) {
+	public async validateClientSecret(
+		clientOrHash: OAuthClient | string | null,
+		plainSecret: string
+	): Promise<boolean> {
+		const clientSecretHash = typeof clientOrHash === 'string' ? clientOrHash : clientOrHash?.clientSecretHash;
+		if (!clientSecretHash || !plainSecret) {
 			return false;
 		}
-		return verifyPassword(plainSecret, client.clientSecretHash);
+		return verifyPassword(plainSecret, clientSecretHash);
 	}
 }

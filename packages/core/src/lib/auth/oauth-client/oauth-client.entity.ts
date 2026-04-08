@@ -33,11 +33,11 @@ export class OAuthClient extends TenantBaseEntity implements IOAuthClient {
 	 * Public client identifier exposed to third parties.
 	 * Generated as `gauzy_<base64url>` by `OAuthClientService.create`.
 	 */
-	@ApiProperty({ type: String, maxLength: 64 })
+	@ApiProperty({ type: String, maxLength: 100 })
 	@IsString()
-	@MaxLength(64)
+	@MaxLength(100)
 	@ColumnIndex({ unique: true })
-	@MultiORMColumn({ type: 'varchar', length: 64, nullable: false })
+	@MultiORMColumn({ type: 'varchar', length: 100, nullable: false })
 	clientId: string;
 
 	/**
