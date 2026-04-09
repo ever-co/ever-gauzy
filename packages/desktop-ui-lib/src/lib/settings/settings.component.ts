@@ -50,6 +50,7 @@ import { SwitchThemeComponent } from '../theme-selector/switch-theme/switch-them
 import { ReplacePipe } from '../time-tracker/pipes/replace.pipe';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { SslComponent } from './ssl/ssl.component';
+import { PermissionManagerComponent } from '../permission-manager/permission-manager.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -89,7 +90,8 @@ import { SslComponent } from './ssl/ssl.component';
 		LowerCasePipe,
 		TitleCasePipe,
 		TranslatePipe,
-		ReplacePipe
+		ReplacePipe,
+		PermissionManagerComponent
 	]
 })
 export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -645,7 +647,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 					'TIMER_TRACKER.TIMER',
 					'TIMER_TRACKER.SETTINGS.UPDATE',
 					'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
-					'MENU.ABOUT'
+					'MENU.ABOUT',
+					'TIMER_TRACKER.PERMISSIONS.MENU_LABEL'
 				];
 			const lastMenu =
 				this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];

@@ -1,0 +1,125 @@
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.mb-0 {
+  margin-bottom: 0;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+.screenshot-preview {
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  border: 1px solid var(--gauzy-card-3);
+
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+}
+
+.hint-text {
+  font-size: 12px;
+  color: var(--gauzy-text-color-2);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  nb-icon {
+    font-size: 14px;
+  }
+}
+
+// Dialog mode styles — matches alert.component pattern
+.dialog-card {
+  min-width: 380px;
+
+  nb-card-header {
+    display: flex;
+    align-items: center;
+    position: relative;
+
+    .cancel {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: var(--gauzy-text-color-2);
+
+      &:hover {
+        color: var(--gauzy-text-color-1);
+      }
+    }
+
+    .title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+
+  nb-card-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+}
+
+// Spinner animation — same as settings.component.scss
+.icon-spin {
+  animation: rotate 1s linear 0s infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+// Inherit notification card style from settings parent
+:host {
+  .notification {
+    nb-card {
+      border-radius: var(--border-radius);
+    }
+
+    nb-card-body {
+      background-color: var(--gauzy-card-2);
+      border-radius: var(--border-radius);
+    }
+  }
+
+  h4 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--gauzy-text-color-1);
+  }
+
+  h6 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gauzy-text-color-2);
+  }
+
+  p {
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .subtitle-tile {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gauzy-text-color-2);
+  }
+}

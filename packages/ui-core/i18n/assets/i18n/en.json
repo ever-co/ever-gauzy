@@ -4810,6 +4810,28 @@
 			"PLEASE_HOLD": "Please hold...",
 			"SHUTTING_DOWN": "Application is shutting down",
 			"LOGOUT_IN_PROGRESS": "Logout in progress"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "System Permissions",
+			"TITLE": "System Permissions",
+			"DESCRIPTION": "Gauzy requires certain macOS permissions to track your work accurately. Review and manage them here.",
+			"SCREEN_RECORDING": "Screen Recording",
+			"SCREEN_RECORDING_DESC": "Required to capture screenshots automatically during your tracked work sessions.",
+			"STATUS": "Status",
+			"GRANTED": "Granted",
+			"DENIED": "Denied",
+			"NOT_DETERMINED": "Not Set",
+			"RESTRICTED": "Restricted",
+			"OPEN_SYSTEM_SETTINGS": "Open System Settings",
+			"TEST_SCREENSHOT": "Test Screenshot",
+			"SCREENSHOT_PREVIEW": "Screenshot Preview",
+			"RESET_PERMISSION": "Reset & Restart",
+			"RESTARTING": "Restarting in",
+			"DENIED_HINT": "Screen Recording was denied. Click 'Reset & Restart' to reset the permission, or open System Settings to grant it manually.",
+			"DIALOG_TITLE": "Screen Recording Permission Required",
+			"DIALOG_DESC": "Gauzy needs Screen Recording permission to capture screenshots during your work session. Please grant access to continue.",
+			"POLLING_HINT": "This dialog will close automatically once permission is granted.",
+			"START_ANYWAY": "Start Without Screenshot"
 		}
 	},
 	"SERVER": "Server",

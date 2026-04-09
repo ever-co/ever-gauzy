@@ -6,7 +6,7 @@ import {
 } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
-import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
+import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences, shell } from 'electron';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { AppWindowManager } from './app-window-manager';
@@ -452,6 +452,62 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	ipcMain.handle('SET_OFFLINE_MODE', async () => {
 		getOfflineMode().forceOffline();
+	});
+
+	ipcMain.handle('CHECK_MACOS_PERMISSIONS', () => {
+		if (process.platform !== 'darwin') {
+			return { screen: 'granted' };
+		}
+		return {
+			screen: systemPreferences.getMediaAccessStatus('screen') // 'granted'|'denied'|'not-determined'|'restricted'
+		};
+	});
+
+
+	ipcMain.handle('TEST_SCREENSHOT', async () => {
+		if (process.platform === 'darwin' && isScreenUnauthorized()) {
+			return { success: false, reason: 'unauthorized' };
+		}
+		try {
+			const sources = await desktopCapturer.getSources({
+				types: ['screen'],
+				thumbnailSize: { width: 320, height: 200 }
+			});
+			return sources.length > 0
+				? { success: true, thumbnail: sources[0].thumbnail.toDataURL() }
+				: { success: false, reason: 'no_sources' };
+		} catch (err) {
+			return { success: false, reason: err.message };
+		}
+	});
+
+
+	function getAppId() {
+		return 'com.ever.gauzydesktoptimer';
+	}
+
+	ipcMain.handle('RESET_SCREEN_PERMISSION', async () => {
+		if (process.platform !== 'darwin') return { success: true };
+		try {
+			const { execSync } = require('child_process');
+			const bundleId = getAppId();
+			execSync(`tccutil reset ScreenCapture ${bundleId}`);
+			return { success: true };
+		} catch (err) {
+			log.error('Failed to reset TCC permission', err);
+			return { success: false, error: err.message };
+		}
+	});
+
+	ipcMain.handle('OPEN_PRIVACY_SETTINGS', () => {
+		shell.openExternal(
+			'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture'
+		);
+	});
+
+	ipcMain.handle('RELAUNCH_APP', () => {
+		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+		app.exit(0);
 	});
 
 	pluginListeners();

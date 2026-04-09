@@ -1,0 +1,249 @@
+<!-- ─── SETTINGS MODE (embedded in settings page) ───────────────────── -->
+@if (!isDialog) {
+	<div class="row titlebar-space">
+		<div class="col-12">
+			<h4>{{ 'TIMER_TRACKER.PERMISSIONS.TITLE' | translate }}</h4>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-12">
+			<p>{{ 'TIMER_TRACKER.PERMISSIONS.DESCRIPTION' | translate }}</p>
+		</div>
+	</div>
+
+	<!-- Screen Recording Permission -->
+	<div class="row">
+		<div class="col-12">
+			<h6>{{ 'TIMER_TRACKER.PERMISSIONS.SCREEN_RECORDING' | translate }}</h6>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-12">
+			<p>{{ 'TIMER_TRACKER.PERMISSIONS.SCREEN_RECORDING_DESC' | translate }}</p>
+		</div>
+	</div>
+	<div class="row notification">
+		<div class="col-10">
+			<nb-card>
+				<nb-card-body>
+					<!-- Status Row -->
+					<div class="row d-flex align-items-center mb-3">
+						<div class="col-6">
+							<span class="subtitle-tile">
+								{{ 'TIMER_TRACKER.PERMISSIONS.STATUS' | translate }}
+							</span>
+						</div>
+						<div class="col-6 d-flex justify-content-end">
+							<ng-container [ngTemplateOutlet]="statusBadge"
+								[ngTemplateOutletContext]="{ status: status$ | async }">
+							</ng-container>
+						</div>
+					</div>
+
+					<!-- Action Buttons -->
+					<div class="row">
+						<div class="col-12 d-flex flex-wrap gap-2">
+							<button
+								nbButton
+								status="primary"
+								size="small"
+								(click)="openSystemSettings()"
+							>
+								<nb-icon icon="settings-2-outline"></nb-icon>
+								{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_SYSTEM_SETTINGS' | translate }}
+							</button>
+							<button
+								nbButton
+								status="info"
+								size="small"
+								outline
+								(click)="testScreenshot()"
+								[disabled]="testInProgress || (status$ | async) !== 'granted'"
+							>
+								<nb-icon
+									[icon]="testInProgress ? 'loader-outline' : 'camera-outline'"
+									[class.icon-spin]="testInProgress"
+								></nb-icon>
+								{{ 'TIMER_TRACKER.PERMISSIONS.TEST_SCREENSHOT' | translate }}
+							</button>
+							<button
+								nbButton
+								status="warning"
+								size="small"
+								outline
+								(click)="resetAndRelaunch()"
+								[disabled]="resetInProgress || countdown !== null"
+							>
+								<nb-icon
+									[icon]="resetInProgress ? 'loader-outline' : 'refresh-outline'"
+									[class.icon-spin]="resetInProgress"
+								></nb-icon>
+								@if (countdown !== null) {
+									{{ 'TIMER_TRACKER.PERMISSIONS.RESTARTING' | translate }}
+									{{ countdown }}...
+								} @else {
+									{{ 'TIMER_TRACKER.PERMISSIONS.RESET_PERMISSION' | translate }}
+								}
+							</button>
+						</div>
+					</div>
+
+					<!-- Screenshot Preview -->
+					@if (thumbnail) {
+						<div class="row mt-3">
+							<div class="col-12">
+								<p class="subtitle-tile mb-1">
+									{{ 'TIMER_TRACKER.PERMISSIONS.SCREENSHOT_PREVIEW' | translate }}
+								</p>
+								<div class="screenshot-preview">
+									<img [src]="thumbnail" alt="Screenshot preview" />
+								</div>
+							</div>
+						</div>
+					}
+				</nb-card-body>
+			</nb-card>
+		</div>
+	</div>
+
+	<!-- Denied Warning -->
+	@if ((status$ | async) === 'denied') {
+		<div class="row mt-2">
+			<div class="col-10">
+				<nb-card status="warning">
+					<nb-card-body>
+						<div class="d-flex align-items-start gap-2">
+							<nb-icon icon="alert-triangle-outline" status="warning"></nb-icon>
+							<p class="mb-0">
+								{{ 'TIMER_TRACKER.PERMISSIONS.DENIED_HINT' | translate }}
+							</p>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</div>
+	}
+}
+
+<!-- ─── DIALOG MODE (triggered from timer start button) ─────────────── -->
+@if (isDialog) {
+	<nb-card status="warning" class="dialog-card">
+		<nb-card-header class="mb-0">
+			<span class="cancel">
+				<i (click)="cancel()" class="fas fa-times"></i>
+			</span>
+			<div class="d-flex align-items-center gap-2">
+				<nb-icon icon="shield-outline" status="warning"></nb-icon>
+				<h5 class="title mb-0">
+					{{ 'TIMER_TRACKER.PERMISSIONS.DIALOG_TITLE' | translate }}
+				</h5>
+			</div>
+		</nb-card-header>
+
+		<nb-card-body>
+			<p>{{ 'TIMER_TRACKER.PERMISSIONS.DIALOG_DESC' | translate }}</p>
+
+			<!-- Status indicator -->
+			<div class="row notification">
+				<div class="col-12">
+					<nb-card>
+						<nb-card-body>
+							<div class="row d-flex align-items-center">
+								<div class="col-7">
+									<div class="d-flex align-items-center gap-2">
+										<nb-icon icon="monitor-outline"></nb-icon>
+										<span class="subtitle-tile">
+											{{ 'TIMER_TRACKER.PERMISSIONS.SCREEN_RECORDING' | translate }}
+										</span>
+									</div>
+								</div>
+								<div class="col-5 d-flex justify-content-end">
+									<ng-container [ngTemplateOutlet]="statusBadge"
+										[ngTemplateOutletContext]="{ status: status$ | async }">
+									</ng-container>
+								</div>
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</div>
+			</div>
+
+			<!-- Action buttons -->
+			<div class="row mt-3">
+				<div class="col-12 d-flex flex-wrap gap-2">
+					<button
+						nbButton
+						status="primary"
+						size="small"
+						(click)="openSystemSettings()"
+					>
+						<nb-icon icon="settings-2-outline"></nb-icon>
+						{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_SYSTEM_SETTINGS' | translate }}
+					</button>
+					<button
+						nbButton
+						status="warning"
+						size="small"
+						outline
+						(click)="resetAndRelaunch()"
+						[disabled]="resetInProgress || countdown !== null"
+					>
+						<nb-icon
+							[icon]="resetInProgress ? 'loader-outline' : 'refresh-outline'"
+							[class.icon-spin]="resetInProgress"
+						></nb-icon>
+						@if (countdown !== null) {
+							{{ 'TIMER_TRACKER.PERMISSIONS.RESTARTING' | translate }}
+							{{ countdown }}...
+						} @else {
+							{{ 'TIMER_TRACKER.PERMISSIONS.RESET_PERMISSION' | translate }}
+						}
+					</button>
+				</div>
+			</div>
+
+			<!-- Polling hint -->
+			<div class="row mt-3">
+				<div class="col-12">
+					<small class="hint-text">
+						<nb-icon icon="info-outline" status="info"></nb-icon>
+						{{ 'TIMER_TRACKER.PERMISSIONS.POLLING_HINT' | translate }}
+					</small>
+				</div>
+			</div>
+		</nb-card-body>
+
+		<nb-card-footer class="text-right mt-0">
+			<button nbButton outline status="basic" (click)="cancel()">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+			<button nbButton status="warning" (click)="startAnyway()">
+				{{ 'TIMER_TRACKER.PERMISSIONS.START_ANYWAY' | translate }}
+			</button>
+		</nb-card-footer>
+	</nb-card>
+}
+
+<!-- ─── SHARED: Status badge template ───────────────────────────────── -->
+<ng-template #statusBadge let-status="status">
+	@switch (status) {
+		@case ('granted') {
+			<button nbButton status="success" size="tiny" outline disabled>
+				<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+				{{ 'TIMER_TRACKER.PERMISSIONS.GRANTED' | translate }}
+			</button>
+		}
+		@case ('denied') {
+			<button nbButton status="danger" size="tiny" outline disabled>
+				<nb-icon icon="close-circle-outline"></nb-icon>
+				{{ 'TIMER_TRACKER.PERMISSIONS.DENIED' | translate }}
+			</button>
+		}
+		@default {
+			<button nbButton status="warning" size="tiny" outline disabled>
+				<nb-icon icon="question-mark-circle-outline"></nb-icon>
+				{{ 'TIMER_TRACKER.PERMISSIONS.NOT_DETERMINED' | translate }}
+			</button>
+		}
+	}
+</ng-template>
