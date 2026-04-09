@@ -6,7 +6,7 @@
  * hash. If the admin closes this dialog without copying, the secret is
  * gone and rotation is the only way to get a new one.
  */
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { IOAuthClientWithSecret } from '@gauzy/contracts';
@@ -19,14 +19,14 @@ import { IOAuthClientWithSecret } from '@gauzy/contracts';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OAuthClientSecretDialogComponent {
+	// @Input retained (not signal `input()`) because Nebular's dialog
+	// context binds the value via direct instance property assignment.
 	@Input() client!: IOAuthClientWithSecret;
 	acknowledged = false;
 
-	constructor(
-		private readonly dialogRef: NbDialogRef<OAuthClientSecretDialogComponent>,
-		private readonly toastr: NbToastrService,
-		private readonly translate: TranslateService
-	) {}
+	private readonly dialogRef = inject<NbDialogRef<OAuthClientSecretDialogComponent>>(NbDialogRef);
+	private readonly toastr = inject(NbToastrService);
+	private readonly translate = inject(TranslateService);
 
 	copyClientId(): void {
 		this.copyToClipboard(this.client.clientId, 'OAUTH_CLIENTS.SECRET_DIALOG.COPIED_CLIENT_ID');

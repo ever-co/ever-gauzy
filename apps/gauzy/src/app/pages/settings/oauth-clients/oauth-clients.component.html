@@ -39,7 +39,21 @@
 						<div class="client-description" *ngIf="client.description">{{ client.description }}</div>
 					</td>
 					<td>
-						<code>{{ client.clientId }}</code>
+						<div class="client-id-cell">
+							<code>{{ client.clientId }}</code>
+							<button
+								type="button"
+								nbButton
+								size="tiny"
+								ghost
+								status="basic"
+								(click)="copyClientId(client.clientId)"
+								[nbTooltip]="'OAUTH_CLIENTS.ACTIONS.COPY_CLIENT_ID' | translate"
+								[attr.aria-label]="'OAUTH_CLIENTS.ACTIONS.COPY_CLIENT_ID' | translate"
+							>
+								<nb-icon icon="copy-outline"></nb-icon>
+							</button>
+						</div>
 					</td>
 					<td>{{ client.clientType }}</td>
 					<td>

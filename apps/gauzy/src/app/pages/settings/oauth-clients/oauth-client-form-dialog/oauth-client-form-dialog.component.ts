@@ -6,7 +6,7 @@
  * clientType is not editable after creation). Closes with the dialog
  * result payload ready to be passed to the HTTP service.
  */
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import {
@@ -25,16 +25,17 @@ import {
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OAuthClientFormDialogComponent implements OnInit {
+	// Note: kept as @Input() (not signal `input()`) because Nebular's
+	// dialogService passes the value via direct property assignment on the
+	// component instance, which is incompatible with read-only InputSignals.
 	@Input() client: IOAuthClient | null = null;
 
 	form!: FormGroup;
 	readonly clientTypes = Object.values(OAuthClientType);
 	readonly grantTypes = Object.values(OAuthGrantType);
 
-	constructor(
-		private readonly fb: FormBuilder,
-		private readonly dialogRef: NbDialogRef<OAuthClientFormDialogComponent>
-	) {}
+	private readonly fb = inject(FormBuilder);
+	private readonly dialogRef = inject<NbDialogRef<OAuthClientFormDialogComponent>>(NbDialogRef);
 
 	get isEdit(): boolean {
 		return !!this.client;
