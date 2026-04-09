@@ -6276,7 +6276,11 @@
 			"GRANT_TYPES": "Grant types",
 			"PKCE_REQUIRED": "Require PKCE (deferred enforcement)",
 			"ACCESS_TTL": "Access token TTL (seconds)",
-			"REFRESH_TTL": "Refresh token TTL (seconds)"
+			"REFRESH_TTL": "Refresh token TTL (seconds)",
+			"REDIRECT_URI": "Redirect URI {{index}}",
+			"REMOVE_REDIRECT_URI": "Remove redirect URI {{index}}",
+			"ALLOWED_SCOPE": "Allowed scope {{index}}",
+			"REMOVE_SCOPE": "Remove scope {{index}}"
 		},
 		"SECRET_DIALOG": {
 			"TITLE": "Save your client secret",

@@ -11,17 +11,22 @@
 	</nb-card-header>
 
 	<nb-card-body>
-		<div *ngIf="loading" class="loading">
-			<nb-spinner status="primary" size="large"></nb-spinner>
-		</div>
+		@if (loading) {
+			<div class="loading">
+				<nb-spinner status="primary" size="large"></nb-spinner>
+			</div>
+		}
 
-		<div *ngIf="!loading && clients.length === 0" class="empty-state">
-			<nb-icon icon="lock-outline"></nb-icon>
-			<p>{{ 'OAUTH_CLIENTS.EMPTY.TITLE' | translate }}</p>
-			<small>{{ 'OAUTH_CLIENTS.EMPTY.HINT' | translate }}</small>
-		</div>
+		@if (!loading && clients.length === 0) {
+			<div class="empty-state">
+				<nb-icon icon="lock-outline"></nb-icon>
+				<p>{{ 'OAUTH_CLIENTS.EMPTY.TITLE' | translate }}</p>
+				<small>{{ 'OAUTH_CLIENTS.EMPTY.HINT' | translate }}</small>
+			</div>
+		}
 
-		<table *ngIf="!loading && clients.length > 0" class="oauth-clients-table">
+		@if (!loading && clients.length > 0) {
+			<table class="oauth-clients-table">
 			<thead>
 				<tr>
 					<th>{{ 'OAUTH_CLIENTS.TABLE.NAME' | translate }}</th>
@@ -33,11 +38,14 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr *ngFor="let client of clients; trackBy: trackById">
-					<td>
-						<div class="client-name">{{ client.name }}</div>
-						<div class="client-description" *ngIf="client.description">{{ client.description }}</div>
-					</td>
+				@for (client of clients; track trackById($index, client)) {
+					<tr>
+						<td>
+							<div class="client-name">{{ client.name }}</div>
+							@if (client.description) {
+								<div class="client-description">{{ client.description }}</div>
+							}
+						</td>
 					<td>
 						<div class="client-id-cell">
 							<code>{{ client.clientId }}</code>
@@ -64,7 +72,9 @@
 						></nb-badge>
 					</td>
 					<td>
-						<div *ngFor="let uri of client.redirectUris" class="redirect-uri">{{ uri }}</div>
+						@for (uri of client.redirectUris; track uri) {
+							<div class="redirect-uri">{{ uri }}</div>
+						}
 					</td>
 					<td class="actions-col">
 						<button
@@ -104,8 +114,10 @@
 							<nb-icon icon="trash-2-outline"></nb-icon>
 						</button>
 					</td>
-				</tr>
+					</tr>
+				}
 			</tbody>
-		</table>
+			</table>
+		}
 	</nb-card-body>
 </nb-card>
