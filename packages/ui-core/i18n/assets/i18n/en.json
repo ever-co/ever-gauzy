@@ -6255,7 +6255,8 @@
 			"REGISTER": "Register App",
 			"EDIT": "Edit",
 			"ROTATE_SECRET": "Rotate secret",
-			"DELETE": "Revoke"
+			"DELETE": "Revoke",
+			"COPY_CLIENT_ID": "Copy Client ID"
 		},
 		"DIALOG": {
 			"CREATE_TITLE": "Register a new OAuth client",
@@ -6295,14 +6296,16 @@
 			"CREATED": "Registered \"{{name}}\"",
 			"UPDATED": "OAuth client updated",
 			"SECRET_ROTATED": "Client secret rotated",
-			"DELETED": "OAuth client revoked"
+			"DELETED": "OAuth client revoked",
+			"CLIENT_ID_COPIED": "Client ID copied to clipboard"
 		},
 		"ERRORS": {
 			"LOAD_FAILED": "Failed to load OAuth clients",
 			"CREATE_FAILED": "Failed to register OAuth client",
 			"UPDATE_FAILED": "Failed to update OAuth client",
 			"ROTATE_FAILED": "Failed to rotate client secret",
-			"DELETE_FAILED": "Failed to revoke OAuth client"
+			"DELETE_FAILED": "Failed to revoke OAuth client",
+			"COPY_FAILED": "Failed to copy to clipboard"
 		}
 	}
 }

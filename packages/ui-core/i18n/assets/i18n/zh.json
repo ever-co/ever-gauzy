@@ -5636,7 +5636,7 @@
 			"ALLOWED_SCOPES": "允许的作用域",
 			"ADD_SCOPE": "添加作用域",
 			"GRANT_TYPES": "授权类型",
-			"PKCE_REQUIRED": "要求PKCE（延迟执行）",
+			"PKCE_REQUIRED": "要求 PKCE（公共客户端）",
 			"ACCESS_TTL": "访问令牌TTL（秒）",
 			"REFRESH_TTL": "刷新令牌TTL（秒）"
 		},

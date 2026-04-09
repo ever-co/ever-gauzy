@@ -5626,7 +5626,7 @@
 			"ALLOWED_SCOPES": "Portées autorisées",
 			"ADD_SCOPE": "Ajouter une portée",
 			"GRANT_TYPES": "Types d'autorisation",
-			"PKCE_REQUIRED": "Exiger PKCE (application différée)",
+			"PKCE_REQUIRED": "Exiger PKCE (client public)",
 			"ACCESS_TTL": "TTL du jeton d'accès (secondes)",
 			"REFRESH_TTL": "TTL du jeton d'actualisation (secondes)"
 		},
@@ -5647,7 +5647,7 @@
 		"TOASTS": {
 			"CREATED": "\"{{name}}\" enregistré",
 			"UPDATED": "Client OAuth mis à jour",
-			"SECRET_ROTATED": "Secret client tourné",
+			"SECRET_ROTATED": "Secret client renouvelé",
 			"DELETED": "Client OAuth révoqué"
 		},
 		"ERRORS": {

@@ -15,6 +15,7 @@ import {
 	IsOptional,
 	IsString,
 	IsUrl,
+	Max,
 	MaxLength,
 	Min
 } from 'class-validator';
@@ -43,7 +44,18 @@ export class CreateOAuthClientDTO implements IOAuthClientCreateInput {
 	})
 	@IsArray()
 	@ArrayNotEmpty()
-	@IsUrl({ require_tld: false }, { each: true })
+	@IsUrl(
+		{
+			// Restrict OAuth redirect URIs to http/https only — disallow
+			// custom schemes (javascript:, data:, etc.) which are common
+			// open-redirect / token-leak vectors. `require_tld:false` keeps
+			// `http://localhost` working for development.
+			protocols: ['http', 'https'],
+			require_protocol: true,
+			require_tld: false
+		},
+		{ each: true }
+	)
 	redirectUris: string[];
 
 	@ApiPropertyOptional({ type: [String], example: ['profile', 'email'] })
@@ -67,15 +79,19 @@ export class CreateOAuthClientDTO implements IOAuthClientCreateInput {
 	@IsBoolean()
 	pkceRequired?: boolean;
 
-	@ApiPropertyOptional({ type: Number, default: 86400, minimum: 60 })
+	// Cap access tokens at 7 days and refresh tokens at 90 days to prevent
+	// admins from creating effectively-permanent tokens that defeat rotation.
+	@ApiPropertyOptional({ type: Number, default: 86400, minimum: 60, maximum: 86400 * 7 })
 	@IsOptional()
 	@IsInt()
 	@Min(60)
+	@Max(86400 * 7)
 	accessTokenTtl?: number;
 
-	@ApiPropertyOptional({ type: Number, default: 2592000, minimum: 60 })
+	@ApiPropertyOptional({ type: Number, default: 2592000, minimum: 60, maximum: 86400 * 90 })
 	@IsOptional()
 	@IsInt()
 	@Min(60)
+	@Max(86400 * 90)
 	refreshTokenTtl?: number;
 }

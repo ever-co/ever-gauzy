@@ -5597,7 +5597,7 @@
 			"REGISTER": "تسجيل التطبيق",
 			"EDIT": "تحرير",
 			"ROTATE_SECRET": "تدوير السر",
-			"DELETE": "إلغاء"
+			"DELETE": "إلغاء التسجيل"
 		},
 		"DIALOG": {
 			"CREATE_TITLE": "تسجيل عميل OAuth جديد",

@@ -5636,7 +5636,7 @@
 			"ALLOWED_SCOPES": "Ambiti consentiti",
 			"ADD_SCOPE": "Aggiungi ambito",
 			"GRANT_TYPES": "Tipi di concessione",
-			"PKCE_REQUIRED": "Richiedi PKCE (applicazione differita)",
+			"PKCE_REQUIRED": "Richiedi PKCE (client pubblico/nativo)",
 			"ACCESS_TTL": "TTL del token di accesso (secondi)",
 			"REFRESH_TTL": "TTL del token di aggiornamento (secondi)"
 		},

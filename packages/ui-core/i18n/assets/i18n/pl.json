@@ -5634,7 +5634,7 @@
 			"ADD_REDIRECT_URI": "Dodaj URI przekierowania",
 			"ALLOWED_SCOPES": "Dozwolone zakresy",
 			"ADD_SCOPE": "Dodaj zakres",
-			"GRANT_TYPES": "Typy uprawnień",
+			"GRANT_TYPES": "Typy grantów",
 			"PKCE_REQUIRED": "Wymagaj PKCE (odroczone wymuszanie)",
 			"ACCESS_TTL": "TTL tokena dostępu (sekundy)",
 			"REFRESH_TTL": "TTL tokena odświeżania (sekundy)"

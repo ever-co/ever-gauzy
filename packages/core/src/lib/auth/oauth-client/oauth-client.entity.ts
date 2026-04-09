@@ -22,7 +22,7 @@
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ArrayNotEmpty, IsArray, IsBoolean, IsEnum, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { IOAuthClient, OAuthClientType, OAuthGrantType } from '@gauzy/contracts';
 import { ColumnIndex, JsonColumn, MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
 import { TenantBaseEntity } from '../../core/entities/internal';
@@ -102,15 +102,17 @@ export class OAuthClient extends TenantBaseEntity implements IOAuthClient {
 	@MultiORMColumn({ type: 'boolean', default: false })
 	pkceRequired: boolean;
 
-	@ApiProperty({ type: Number, description: 'Access token TTL in seconds (deferred enforcement)' })
+	@ApiProperty({ type: Number, description: 'Access token TTL in seconds (max 7 days)' })
 	@IsInt()
 	@Min(60)
+	@Max(86400 * 7)
 	@MultiORMColumn({ type: 'int', default: 86400 })
 	accessTokenTtl: number;
 
-	@ApiProperty({ type: Number, description: 'Refresh token TTL in seconds (deferred enforcement)' })
+	@ApiProperty({ type: Number, description: 'Refresh token TTL in seconds (max 90 days)' })
 	@IsInt()
 	@Min(60)
+	@Max(86400 * 90)
 	@MultiORMColumn({ type: 'int', default: 2592000 })
 	refreshTokenTtl: number;
 
