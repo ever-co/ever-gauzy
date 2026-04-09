@@ -274,15 +274,22 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	 *
 	 * Uses QueryBuilder directly to avoid TypeORM DISTINCT subquery issues
 	 * when `select: { descriptionBinary: true }` omits the 'id' column.
+	 * Scoped to the current tenant to prevent cross-tenant data access.
 	 *
 	 * @returns Buffer if binary exists, null otherwise
 	 */
 	public async getDescriptionBinary(id: ID): Promise<Buffer | null> {
-		const article = await this.typeOrmHelpCenterArticleRepository
+		const tenantId = RequestContext.currentTenantId();
+		const qb = this.typeOrmHelpCenterArticleRepository
 			.createQueryBuilder('article')
 			.select(['article.id', 'article.descriptionBinary'])
-			.where('article.id = :id', { id })
-			.getOne();
+			.where('article.id = :id', { id });
+
+		if (tenantId) {
+			qb.andWhere('article.tenantId = :tenantId', { tenantId });
+		}
+
+		const article = await qb.getOne();
 		return article?.descriptionBinary ? Buffer.from(article.descriptionBinary) : null;
 	}
 
@@ -294,16 +301,18 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	 * for entity fields typed as Uint8Array, preventing binary data from being persisted
 	 * to PostgreSQL bytea columns.
 	 *
+	 * Scoped to the current tenant to prevent cross-tenant data modification.
+	 *
 	 * @param id - Article ID
-	 * @param fields - Object with descriptionBinary (Buffer), descriptionHtml, descriptionJson
+	 * @param fields - Object with descriptionBinary (Buffer | null to clear), descriptionHtml, descriptionJson
 	 */
 	public async updateDescriptionFields(
 		id: ID,
-		fields: { descriptionBinary?: Buffer; descriptionHtml?: string; descriptionJson?: string }
+		fields: { descriptionBinary?: Buffer | null; descriptionHtml?: string; descriptionJson?: string }
 	): Promise<void> {
 		const setClauses: Record<string, any> = {};
 
-		if (fields.descriptionBinary) {
+		if (fields.descriptionBinary !== undefined) {
 			setClauses.descriptionBinary = fields.descriptionBinary;
 		}
 		if (fields.descriptionHtml !== undefined) {
@@ -317,12 +326,18 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 			return;
 		}
 
-		await this.typeOrmHelpCenterArticleRepository
+		const tenantId = RequestContext.currentTenantId();
+		const qb = this.typeOrmHelpCenterArticleRepository
 			.createQueryBuilder()
 			.update()
 			.set(setClauses)
-			.where('id = :id', { id })
-			.execute();
+			.where('id = :id', { id });
+
+		if (tenantId) {
+			qb.andWhere('"tenantId" = :tenantId', { tenantId });
+		}
+
+		await qb.execute();
 	}
 
 	/**
