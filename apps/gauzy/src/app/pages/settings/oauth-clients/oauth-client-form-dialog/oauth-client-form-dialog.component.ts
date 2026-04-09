@@ -17,6 +17,12 @@ import {
 	OAuthGrantType
 } from '@gauzy/contracts';
 
+// Mirror backend DTO bounds (see CreateOAuthClientDTO):
+// redirect URIs must be http/https, access TTL ≤ 7 days, refresh TTL ≤ 90 days.
+const HTTP_URL_PATTERN = /^https?:\/\/[^\s]+$/i;
+const MAX_ACCESS_TTL = 7 * 24 * 60 * 60;
+const MAX_REFRESH_TTL = 90 * 24 * 60 * 60;
+
 @Component({
 	selector: 'ngx-oauth-client-form-dialog',
 	templateUrl: './oauth-client-form-dialog.component.html',
@@ -56,13 +62,21 @@ export class OAuthClientFormDialogComponent implements OnInit {
 			description: [c?.description ?? '', [Validators.maxLength(500)]],
 			clientType: [c?.clientType ?? OAuthClientType.CONFIDENTIAL, [Validators.required]],
 			redirectUris: this.fb.array(
-				(c?.redirectUris ?? ['']).map((u) => this.fb.control(u, [Validators.required]))
+				(c?.redirectUris ?? ['']).map((u) =>
+					this.fb.control(u, [Validators.required, Validators.pattern(HTTP_URL_PATTERN)])
+				)
 			),
 			allowedScopes: this.fb.array((c?.allowedScopes ?? []).map((s) => this.fb.control(s))),
 			allowedGrantTypes: [c?.allowedGrantTypes ?? [OAuthGrantType.AUTHORIZATION_CODE], [Validators.required]],
 			pkceRequired: [c?.pkceRequired ?? false],
-			accessTokenTtl: [c?.accessTokenTtl ?? 86400, [Validators.required, Validators.min(60)]],
-			refreshTokenTtl: [c?.refreshTokenTtl ?? 2592000, [Validators.required, Validators.min(60)]]
+			accessTokenTtl: [
+				c?.accessTokenTtl ?? 86400,
+				[Validators.required, Validators.min(60), Validators.max(MAX_ACCESS_TTL)]
+			],
+			refreshTokenTtl: [
+				c?.refreshTokenTtl ?? 2592000,
+				[Validators.required, Validators.min(60), Validators.max(MAX_REFRESH_TTL)]
+			]
 		});
 
 		if (this.isEdit) {
@@ -72,7 +86,9 @@ export class OAuthClientFormDialogComponent implements OnInit {
 	}
 
 	addRedirectUri(): void {
-		this.redirectUris.push(this.fb.control('', [Validators.required]));
+		this.redirectUris.push(
+			this.fb.control('', [Validators.required, Validators.pattern(HTTP_URL_PATTERN)])
+		);
 	}
 
 	removeRedirectUri(index: number): void {
@@ -96,6 +112,13 @@ export class OAuthClientFormDialogComponent implements OnInit {
 		}
 
 		const raw = this.form.getRawValue();
+		const name: string = (raw.name as string)?.trim() ?? '';
+		const description: string | null = (raw.description as string)?.trim() || null;
+		if (!name) {
+			this.form.get('name')?.setErrors({ required: true });
+			this.form.get('name')?.markAsTouched();
+			return;
+		}
 		const redirectUris: string[] = (raw.redirectUris as string[])
 			.map((u) => u.trim())
 			.filter((u) => u.length > 0);
@@ -112,8 +135,8 @@ export class OAuthClientFormDialogComponent implements OnInit {
 
 		if (this.isEdit) {
 			const payload: IOAuthClientUpdateInput = {
-				name: raw.name,
-				description: raw.description || null,
+				name,
+				description,
 				redirectUris,
 				allowedScopes,
 				allowedGrantTypes: raw.allowedGrantTypes,
@@ -124,8 +147,8 @@ export class OAuthClientFormDialogComponent implements OnInit {
 			this.dialogRef.close(payload);
 		} else {
 			const payload: IOAuthClientCreateInput = {
-				name: raw.name,
-				description: raw.description || null,
+				name,
+				description,
 				clientType: raw.clientType,
 				redirectUris,
 				allowedScopes,

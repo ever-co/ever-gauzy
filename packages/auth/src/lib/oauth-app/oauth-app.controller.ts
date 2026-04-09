@@ -2,7 +2,7 @@ import { Body, Controller, Get, Header, HttpCode, HttpException, HttpStatus, Log
 import { Response } from 'express';
 import { randomBytes } from 'crypto';
 import { Public } from '@gauzy/common';
-import { OAuthAppPendingRequest, SocialAuthService } from '../social-auth.service';
+import { OAuthAppConfig, OAuthAppPendingRequest, SocialAuthService } from '../social-auth.service';
 
 interface OAuthAppAuthorizeQuery {
 	client_id?: string;
@@ -52,17 +52,29 @@ export class OAuthAppController {
 		// Resolve the per-client config from the registry (replaces the
 		// previous single-app env-var check). 404 → 400 invalid_client,
 		// per OAuth 2.0.
-		let config;
+		let config: OAuthAppConfig;
 		try {
 			config = await this.service.resolveOAuthClient(query.client_id);
-		} catch (error) {
-			// Re-throw HTTP exceptions to preserve proper error semantics
-			
-			// Only convert not-found to invalid_client
-			if (error instanceof HttpException) {
-				throw error;
+		} catch (error: unknown) {
+			// OAuth 2.0: never signal "unknown client" with 404 or echo client_id — that
+			// enables enumeration. Always respond with generic `invalid_client` (400).
+			// Duck-type `getStatus` so a duplicate `@nestjs/common` copy cannot bypass
+			// `instanceof HttpException` while still returning 404 from `NotFoundException`.
+			const status =
+				error &&
+				typeof error === 'object' &&
+				typeof (error as { getStatus?: () => number }).getStatus === 'function'
+					? (error as { getStatus: () => number }).getStatus()
+					: undefined;
+			const isHttp = error instanceof HttpException;
+			const treatAsInvalidClient =
+				status === HttpStatus.NOT_FOUND ||
+				status === HttpStatus.BAD_REQUEST ||
+				!isHttp;
+			if (treatAsInvalidClient) {
+				throw new HttpException('Invalid client_id', HttpStatus.BAD_REQUEST);
 			}
-			throw new HttpException('Invalid client_id', HttpStatus.BAD_REQUEST);
+			throw error;
 		}
 
 		if (!this.service.isOAuthAppRedirectUriAllowed(query.redirect_uri, config)) {

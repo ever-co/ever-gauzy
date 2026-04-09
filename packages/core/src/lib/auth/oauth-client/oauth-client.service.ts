@@ -86,14 +86,20 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 		options?: { tenantId?: ID | null }
 	): Promise<OAuthClientWithSecretResponseDTO> {
 		const clientType = dto.clientType ?? OAuthClientType.CONFIDENTIAL;
-		const isConfidential = clientType === OAuthClientType.CONFIDENTIAL;
 
-		// Only generate secrets for confidential clients
-		// Public clients use PKCE for authentication (deferred enforcement)
-		const plaintextSecret = isConfidential ? this.generateSecret() : null;
-		const clientSecretHash = isConfidential && plaintextSecret
-			? await hashPassword(plaintextSecret)
-			: null;
+		// Public clients require end-to-end PKCE support in the `/token`
+		// flow, which is deferred to a later phase. Registering them now
+		// would produce a row with a null `clientSecretHash` that the token
+		// exchange rejects as unauthorized — i.e. an unusable client.
+		// Block registration until PKCE enforcement lands.
+		if (clientType !== OAuthClientType.CONFIDENTIAL) {
+			throw new BadRequestException(
+				'Only confidential OAuth clients can be registered at this time. Public (PKCE) client support is pending.'
+			);
+		}
+
+		const plaintextSecret = this.generateSecret();
+		const clientSecretHash = await hashPassword(plaintextSecret);
 		const codeSecret = this.generateSecret();
 		const clientId = this.generateClientId();
 
@@ -133,10 +139,7 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 			`OAuth client created: id=${entity.id}, clientId=${clientId}, name="${dto.name}", tenantId=${tenantId ?? 'GLOBAL'}, type=${clientType}`
 		);
 
-		// For public clients, return a placeholder secret since none was generated
-		const returnSecret = plaintextSecret ?? 'PKCE_REQUIRED';
-
-		return OAuthClientWithSecretResponseDTO.fromEntityWithSecret(entity, returnSecret);
+		return OAuthClientWithSecretResponseDTO.fromEntityWithSecret(entity, plaintextSecret);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -174,7 +177,8 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 			.getOne();
 
 		if (!client) {
-			throw new NotFoundException(`OAuth client not found or inactive: ${clientId}`);
+			// Do not echo clientId — public OAuth flows must not distinguish invalid ids
+			throw new NotFoundException('OAuth client not found or inactive');
 		}
 
 		return client;
@@ -218,18 +222,32 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 		};
 	}
 
-	public async findOneSafe(id: ID): Promise<OAuthClientResponseDTO> {
-		// For SUPER_ADMINs, check both tenant-scoped and global clients
+	/**
+	 * Lookup by primary key with the correct tenant boundary for admin
+	 * mutation flows:
+	 *   - Regular ADMINs: own-tenant only (delegates to `findOneByIdString`).
+	 *   - SUPER_ADMINs:   own-tenant OR global (`tenantId IS NULL`).
+	 *
+	 * A SUPER_ADMIN of tenant A must NOT be able to reach another tenant's
+	 * row by UUID, so we cannot query by `id` alone.
+	 */
+	private async findScopedById(id: ID): Promise<OAuthClient | null> {
 		const isSuperAdmin = RequestContext.hasRoles([RolesEnum.SUPER_ADMIN]);
-		let entity: OAuthClient | null;
-
-		if (isSuperAdmin) {
-			// Try direct repository query without tenant enrichment
-			entity = await this.typeOrmRepository.findOne({ where: { id } });
-		} else {
-			entity = await this.findOneByIdString(id);
+		if (!isSuperAdmin) {
+			return this.findOneByIdString(id);
 		}
+		const tenantId = RequestContext.currentTenantId();
+		const where: any = tenantId
+			? [
+					{ id, tenantId },
+					{ id, tenantId: IsNull() }
+				]
+			: { id, tenantId: IsNull() };
+		return this.typeOrmRepository.findOne({ where });
+	}
 
+	public async findOneSafe(id: ID): Promise<OAuthClientResponseDTO> {
+		const entity = await this.findScopedById(id);
 		if (!entity) {
 			throw new NotFoundException(`OAuth client not found: ${id}`);
 		}
@@ -241,30 +259,20 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 	// ---------------------------------------------------------------------------
 
 	public async updateClient(id: ID, dto: UpdateOAuthClientDTO): Promise<OAuthClientResponseDTO> {
-		// For SUPER_ADMINs, check both tenant-scoped and global clients
-		const isSuperAdmin = RequestContext.hasRoles([RolesEnum.SUPER_ADMIN]);
-		let existing: OAuthClient | null;
-
-		if (isSuperAdmin) {
-			// Bypass tenant enrichment to allow updating global clients
-			existing = await this.typeOrmRepository.findOne({ where: { id } });
-		} else {
-			existing = await this.findOneByIdString(id);
-		}
-
+		const existing = await this.findScopedById(id);
 		if (!existing) {
 			throw new NotFoundException(`OAuth client not found: ${id}`);
 		}
-		await super.update(id, dto as Partial<OAuthClient>);
-
-		// Fetch updated with same logic
-		let updated: OAuthClient | null;
-		if (isSuperAdmin) {
-			updated = await this.typeOrmRepository.findOne({ where: { id } });
+		// Global (tenantId=null) rows cannot be updated via `super.update`
+		// because the tenant-aware base service adds a `tenantId` filter;
+		// fall back to a direct repository update for those.
+		if (existing.tenantId === null) {
+			await this.typeOrmRepository.update(id, dto as Partial<OAuthClient>);
 		} else {
-			updated = await this.findOneByIdString(id);
+			await super.update(id, dto as Partial<OAuthClient>);
 		}
 
+		const updated = await this.findScopedById(id);
 		return OAuthClientResponseDTO.fromEntity(updated);
 	}
 
@@ -281,19 +289,32 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 	 * code stays signed by the old per-client HMAC secret.
 	 */
 	public async rotateSecret(id: ID): Promise<OAuthClientWithSecretResponseDTO> {
-		const existing = await this.findOneByIdString(id);
+		const existing = await this.findScopedById(id);
 		if (!existing) {
 			throw new NotFoundException(`OAuth client not found: ${id}`);
+		}
+
+		// Public clients intentionally have no secret — they authenticate via
+		// PKCE. Rotating would overwrite their NULL hash with a real one and
+		// break the public-client security model.
+		if (existing.clientType !== OAuthClientType.CONFIDENTIAL) {
+			throw new BadRequestException(
+				'Secret rotation is only supported for confidential clients; public clients use PKCE.'
+			);
 		}
 
 		const plaintextSecret = this.generateSecret();
 		const clientSecretHash = await hashPassword(plaintextSecret);
 
-		await super.update(id, { clientSecretHash } as Partial<OAuthClient>);
+		if (existing.tenantId === null) {
+			await this.typeOrmRepository.update(id, { clientSecretHash } as Partial<OAuthClient>);
+		} else {
+			await super.update(id, { clientSecretHash } as Partial<OAuthClient>);
+		}
 
 		this.logger.warn(`OAuth client secret rotated: id=${id}, clientId=${existing.clientId}`);
 
-		const refreshed = await this.findOneByIdString(id);
+		const refreshed = await this.findScopedById(id);
 		return OAuthClientWithSecretResponseDTO.fromEntityWithSecret(refreshed, plaintextSecret);
 	}
 
@@ -308,11 +329,17 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 	 * to revoking the third-party app.
 	 */
 	public async softDeleteClient(id: ID): Promise<void> {
-		const existing = await this.findOneByIdString(id);
+		const existing = await this.findScopedById(id);
 		if (!existing) {
 			throw new NotFoundException(`OAuth client not found: ${id}`);
 		}
-		await this.softRemove(id);
+		if (existing.tenantId === null) {
+			// `softRemove` applies tenant filtering; for global clients
+			// (visible to SUPER_ADMINs) fall back to a direct soft-delete.
+			await this.typeOrmRepository.softDelete(id);
+		} else {
+			await this.softRemove(id);
+		}
 		this.logger.warn(`OAuth client soft-deleted: id=${id}, clientId=${existing.clientId}`);
 	}
 

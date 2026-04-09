@@ -6270,8 +6270,10 @@
 			"CLIENT_TYPE": "Client type",
 			"CLIENT_TYPE_IMMUTABLE": "Client type cannot be changed after creation.",
 			"REDIRECT_URIS": "Redirect URIs",
+			"REDIRECT_URI_PLACEHOLDER": "https://your-app.example.com/oauth/callback",
 			"ADD_REDIRECT_URI": "Add redirect URI",
 			"ALLOWED_SCOPES": "Allowed scopes",
+			"SCOPE_PLACEHOLDER": "e.g. offline_access",
 			"ADD_SCOPE": "Add scope",
 			"GRANT_TYPES": "Grant types",
 			"PKCE_REQUIRED": "Require PKCE (deferred enforcement)",
@@ -6290,7 +6292,9 @@
 			"ACKNOWLEDGE": "I have copied and safely stored the client secret.",
 			"CLOSE": "I've saved it, close",
 			"COPIED_CLIENT_ID": "Client ID copied to clipboard",
-			"COPIED_SECRET": "Client secret copied to clipboard"
+			"COPIED_SECRET": "Client secret copied to clipboard",
+			"COPY_CLIENT_ID_ARIA": "Copy client ID",
+			"COPY_SECRET_ARIA": "Copy client secret"
 		},
 		"CONFIRM": {
 			"ROTATE_SECRET": "Rotate the client secret for \"{{name}}\"? The previous secret will stop working immediately for new token exchanges.",

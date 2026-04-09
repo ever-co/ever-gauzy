@@ -123,7 +123,9 @@ export class OAuthClientsComponent implements OnInit, OnDestroy {
 	}
 
 	rotateSecret(client: IOAuthClient): void {
-		this.openConfirmationDialog()
+		this.openConfirmationDialog(
+			this.translate.instant('OAUTH_CLIENTS.CONFIRM.ROTATE_SECRET', { name: client.name })
+		)
 			.pipe(
 				filter((confirmed) => !!confirmed),
 				switchMap(() => this.service.rotateSecret(client.id as ID)),
@@ -147,7 +149,9 @@ export class OAuthClientsComponent implements OnInit, OnDestroy {
 	}
 
 	delete(client: IOAuthClient): void {
-		this.openConfirmationDialog()
+		this.openConfirmationDialog(
+			this.translate.instant('OAUTH_CLIENTS.CONFIRM.DELETE', { name: client.name })
+		)
 			.pipe(
 				filter((confirmed) => !!confirmed),
 				switchMap(() => this.service.delete(client.id as ID)),
@@ -176,8 +180,15 @@ export class OAuthClientsComponent implements OnInit, OnDestroy {
 	 * keeps the entire chain inside one `takeUntil(this.destroy$)` so
 	 * callbacks can't fire on a destroyed component.
 	 */
-	private openConfirmationDialog(): Observable<boolean> {
-		const dialogRef = this.dialogService.open(DeleteConfirmationComponent);
+	private openConfirmationDialog(message: string): Observable<boolean> {
+		// `DeleteConfirmationComponent` renders
+		//   "Are you sure you want to delete {{recordType}} record?"
+		// We repurpose `recordType` as the full action-specific message
+		// and suppress the trailing "record" so rotate/revoke each read
+		// naturally with the client name embedded.
+		const dialogRef = this.dialogService.open(DeleteConfirmationComponent, {
+			context: { recordType: message, isRecord: false }
+		});
 		return dialogRef ? dialogRef.onClose : EMPTY;
 	}
 

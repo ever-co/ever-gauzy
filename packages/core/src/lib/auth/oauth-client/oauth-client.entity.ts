@@ -41,7 +41,8 @@ export class OAuthClient extends TenantBaseEntity implements IOAuthClient {
 	clientId: string;
 
 	/**
-	 * bcrypt-hashed client secret. Null only for `public` clients.
+	 * scrypt-hashed client secret (via `@gauzy/utils` `hashPassword`).
+	 * Null only for `public` clients.
 	 * The plaintext is returned EXACTLY ONCE on creation / rotation
 	 * and is never persisted in plaintext or returned by any read endpoint.
 	 */

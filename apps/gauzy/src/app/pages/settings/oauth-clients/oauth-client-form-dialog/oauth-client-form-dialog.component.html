@@ -155,10 +155,10 @@
 	</nb-card-body>
 
 	<nb-card-footer class="actions">
-		<button nbButton status="basic" (click)="cancel()">
+		<button type="button" nbButton status="basic" (click)="cancel()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button nbButton status="primary" (click)="save()" [disabled]="form.invalid">
+		<button type="button" nbButton status="primary" (click)="save()" [disabled]="form.invalid">
 			{{ (isEdit ? 'BUTTONS.SAVE' : 'OAUTH_CLIENTS.ACTIONS.REGISTER') | translate }}
 		</button>
 	</nb-card-footer>

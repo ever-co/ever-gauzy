@@ -395,8 +395,12 @@ export class AuthService extends SocialAuthService {
 			tenantId: payload.tenantId
 		});
 
-		// Honor the per-client accessTokenTtl when configured; fall back to the global JWT TTL.
-		const expiresIn = config.accessTokenTtl || Number(environment.JWT_TOKEN_EXPIRATION_TIME) || 86400;
+		// Per-client `accessTokenTtl` is configured on the registry row but
+		// `getJwtAccessToken` currently always signs with the global
+		// `JWT_TOKEN_EXPIRATION_TIME`. Reporting the per-client TTL would
+		// mislead clients into premature / late refreshes, so return the
+		// actual JWT lifetime until TTL-aware signing lands.
+		const expiresIn = Number(environment.JWT_TOKEN_EXPIRATION_TIME) || 86400;
 
 		this.logger.log(
 			`OAuth app token exchanged for userId=${payload.userId}, tenantId=${payload.tenantId}, expiresIn=${expiresIn}s`

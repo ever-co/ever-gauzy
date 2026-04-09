@@ -50,10 +50,10 @@
 				</div>
 			</nb-card-body>
 			<nb-card-footer class="actions">
-				<button nbButton status="primary" [disabled]="approving" (click)="approve()">
+				<button type="button" nbButton status="primary" [disabled]="approving" (click)="approve()">
 					{{ approving ? 'Authorizing...' : 'Authorize' }}
 				</button>
-				<button nbButton status="basic" [disabled]="approving" (click)="deny()">
+				<button type="button" nbButton status="basic" [disabled]="approving" (click)="deny()">
 					Deny
 				</button>
 			</nb-card-footer>
