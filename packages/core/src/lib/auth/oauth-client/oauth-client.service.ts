@@ -283,6 +283,9 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 		}
 
 		const updated = await this.findScopedById(id);
+		if (!updated) {
+			throw new NotFoundException(`OAuth client not found after update: ${id}`);
+		}
 		return OAuthClientResponseDTO.fromEntity(updated);
 	}
 
