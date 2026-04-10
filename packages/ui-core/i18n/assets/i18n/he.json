@@ -5608,7 +5608,7 @@
 			"REGISTER": "רשום אפליקציה",
 			"EDIT": "ערוך",
 			"ROTATE_SECRET": "סובב סוד",
-			"DELETE": "בטל"
+			"DELETE": "בטל לקוח"
 		},
 		"DIALOG": {
 			"CREATE_TITLE": "רשום לקוח OAuth חדש",

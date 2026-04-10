@@ -5630,10 +5630,10 @@
 			"REDIRECT_URIS": "Weiterleitungs-URIs",
 			"REDIRECT_URI_PLACEHOLDER": "https://ihre-app.example.com/oauth/callback",
 			"ADD_REDIRECT_URI": "Weiterleitungs-URI hinzufügen",
-			"ALLOWED_SCOPES": "Zulässige Bereiche",
+			"ALLOWED_SCOPES": "Zulässige Scopes",
 			"SCOPE_PLACEHOLDER": "z. B. offline_access",
-			"ADD_SCOPE": "Bereich hinzufügen",
-			"GRANT_TYPES": "Gewährungstypen",
+			"ADD_SCOPE": "Scope hinzufügen",
+			"GRANT_TYPES": "Grant-Typen",
 			"PKCE_REQUIRED": "PKCE erforderlich (verzögerte Durchsetzung)",
 			"ACCESS_TTL": "Access-Token-TTL (Sekunden)",
 			"REFRESH_TTL": "Refresh-Token-TTL (Sekunden)"

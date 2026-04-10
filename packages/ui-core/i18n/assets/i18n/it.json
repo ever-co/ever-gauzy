@@ -5617,7 +5617,7 @@
 		"ACTIONS": {
 			"REGISTER": "Registra applicazione",
 			"EDIT": "Modifica",
-			"ROTATE_SECRET": "Ruota segreto",
+			"ROTATE_SECRET": "Ruota il segreto",
 			"DELETE": "Revoca"
 		},
 		"DIALOG": {

@@ -315,6 +315,9 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 		this.logger.warn(`OAuth client secret rotated: id=${id}, clientId=${existing.clientId}`);
 
 		const refreshed = await this.findScopedById(id);
+		if (!refreshed) {
+			throw new NotFoundException(`OAuth client not found after secret rotation: ${id}`);
+		}
 		return OAuthClientWithSecretResponseDTO.fromEntityWithSecret(refreshed, plaintextSecret);
 	}
 

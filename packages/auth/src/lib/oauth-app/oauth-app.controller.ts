@@ -70,7 +70,7 @@ export class OAuthAppController {
 			const treatAsInvalidClient =
 				status === HttpStatus.NOT_FOUND ||
 				status === HttpStatus.BAD_REQUEST ||
-				!isHttp;
+				(!isHttp && status === undefined);
 			if (treatAsInvalidClient) {
 				throw new HttpException('Invalid client_id', HttpStatus.BAD_REQUEST);
 			}

@@ -7,7 +7,7 @@
  * result payload ready to be passed to the HTTP service.
  */
 import { ChangeDetectionStrategy, Component, Input, OnInit, inject } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import {
 	IOAuthClient,
@@ -23,6 +23,19 @@ const HTTP_URL_PATTERN = /^https?:\/\/[^\s]+$/i;
 const MAX_ACCESS_TTL = 7 * 24 * 60 * 60;
 const MAX_REFRESH_TTL = 90 * 24 * 60 * 60;
 
+/** Typed form model for the OAuth client create/edit dialog. */
+export interface OAuthClientFormModel {
+	name: FormControl<string>;
+	description: FormControl<string | null>;
+	clientType: FormControl<OAuthClientType>;
+	redirectUris: FormArray<FormControl<string>>;
+	allowedScopes: FormArray<FormControl<string>>;
+	allowedGrantTypes: FormControl<OAuthGrantType[]>;
+	pkceRequired: FormControl<boolean>;
+	accessTokenTtl: FormControl<number>;
+	refreshTokenTtl: FormControl<number>;
+}
+
 @Component({
 	selector: 'ngx-oauth-client-form-dialog',
 	templateUrl: './oauth-client-form-dialog.component.html',
@@ -36,7 +49,7 @@ export class OAuthClientFormDialogComponent implements OnInit {
 	// component instance, which is incompatible with read-only InputSignals.
 	@Input() client: IOAuthClient | null = null;
 
-	form!: FormGroup;
+	form!: FormGroup<OAuthClientFormModel>;
 	readonly clientTypes = Object.values(OAuthClientType);
 	readonly grantTypes = Object.values(OAuthGrantType);
 
@@ -47,36 +60,36 @@ export class OAuthClientFormDialogComponent implements OnInit {
 		return !!this.client;
 	}
 
-	get redirectUris(): FormArray {
-		return this.form.get('redirectUris') as FormArray;
+	get redirectUris(): FormArray<FormControl<string>> {
+		return this.form.get('redirectUris') as FormArray<FormControl<string>>;
 	}
 
-	get allowedScopes(): FormArray {
-		return this.form.get('allowedScopes') as FormArray;
+	get allowedScopes(): FormArray<FormControl<string>> {
+		return this.form.get('allowedScopes') as FormArray<FormControl<string>>;
 	}
 
 	ngOnInit(): void {
 		const c = this.client;
-		this.form = this.fb.group({
-			name: [c?.name ?? '', [Validators.required, Validators.maxLength(100)]],
-			description: [c?.description ?? '', [Validators.maxLength(500)]],
-			clientType: [c?.clientType ?? OAuthClientType.CONFIDENTIAL, [Validators.required]],
-			redirectUris: this.fb.array(
+		this.form = this.fb.group<OAuthClientFormModel>({
+			name: this.fb.control(c?.name ?? '', [Validators.required, Validators.maxLength(100)]),
+			description: this.fb.control(c?.description ?? '', [Validators.maxLength(500)]),
+			clientType: this.fb.control(c?.clientType ?? OAuthClientType.CONFIDENTIAL, [Validators.required]),
+			redirectUris: this.fb.array<FormControl<string>>(
 				(c?.redirectUris ?? ['']).map((u) =>
 					this.fb.control(u, [Validators.required, Validators.pattern(HTTP_URL_PATTERN)])
 				)
 			),
-			allowedScopes: this.fb.array((c?.allowedScopes ?? []).map((s) => this.fb.control(s))),
-			allowedGrantTypes: [c?.allowedGrantTypes ?? [OAuthGrantType.AUTHORIZATION_CODE], [Validators.required]],
-			pkceRequired: [c?.pkceRequired ?? false],
-			accessTokenTtl: [
+			allowedScopes: this.fb.array<FormControl<string>>((c?.allowedScopes ?? []).map((s) => this.fb.control(s))),
+			allowedGrantTypes: this.fb.control(c?.allowedGrantTypes ?? [OAuthGrantType.AUTHORIZATION_CODE], [Validators.required]),
+			pkceRequired: this.fb.control(c?.pkceRequired ?? false),
+			accessTokenTtl: this.fb.control(
 				c?.accessTokenTtl ?? 86400,
 				[Validators.required, Validators.min(60), Validators.max(MAX_ACCESS_TTL)]
-			],
-			refreshTokenTtl: [
+			),
+			refreshTokenTtl: this.fb.control(
 				c?.refreshTokenTtl ?? 2592000,
 				[Validators.required, Validators.min(60), Validators.max(MAX_REFRESH_TTL)]
-			]
+			)
 		});
 
 		if (this.isEdit) {
@@ -112,17 +125,17 @@ export class OAuthClientFormDialogComponent implements OnInit {
 		}
 
 		const raw = this.form.getRawValue();
-		const name: string = (raw.name as string)?.trim() ?? '';
-		const description: string | null = (raw.description as string)?.trim() || null;
+		const name = raw.name.trim();
+		const description = raw.description?.trim() || null;
 		if (!name) {
 			this.form.get('name')?.setErrors({ required: true });
 			this.form.get('name')?.markAsTouched();
 			return;
 		}
-		const redirectUris: string[] = (raw.redirectUris as string[])
+		const redirectUris = raw.redirectUris
 			.map((u) => u.trim())
 			.filter((u) => u.length > 0);
-		const allowedScopes: string[] = (raw.allowedScopes as string[])
+		const allowedScopes = raw.allowedScopes
 			.map((s) => s.trim())
 			.filter((s) => s.length > 0);
 

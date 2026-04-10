@@ -194,6 +194,10 @@ export class OAuthClientsComponent implements OnInit, OnDestroy {
 
 	copyClientId(clientId: string): void {
 		if (!navigator?.clipboard?.writeText) {
+			this.toastr.danger(
+				this.translate.instant('OAUTH_CLIENTS.ERRORS.COPY_FAILED'),
+				this.translate.instant('TOASTR.TITLE.ERROR')
+			);
 			return;
 		}
 		navigator.clipboard
