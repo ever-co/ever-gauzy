@@ -64,7 +64,7 @@
 	"devDependencies": {
 		"@types/node": "^24.10.0",
 		"@types/unzipper": "^0.10.9",
-		"electron": "^38.1.2"
+		"electron": "^39.8.5"
 	},
 	"keywords": [
 		"electron",
