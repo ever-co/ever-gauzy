@@ -1186,6 +1186,7 @@
 		"PAYMENT_GATEWAYS": "Payment Gateways",
 		"SMS_GATEWAYS": "SMS Gateways",
 		"CUSTOM_SMTP": "Custom SMTP",
+		"OAUTH_CLIENTS": "OAuth Clients",
 		"INVENTORY": "Inventory",
 		"SALES": "Sales",
 		"PAYMENTS": "Payments",
@@ -6230,5 +6231,89 @@
 		"DESCRIPTION": "The {{companySite}} server is currently unreachable. This may be due to scheduled maintenance or unexpected downtime.",
 		"CONNECTING": "Automatically retrying connection...",
 		"HINT": "Status: Attempting to establish connection to {{companySite}} servers. Error code: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "OAuth Clients",
+		"SUBTITLE": "Register and manage third-party applications that can request access to Ever Gauzy on behalf of your users.",
+		"STATUS": {
+			"ACTIVE": "Active",
+			"INACTIVE": "Inactive"
+		},
+		"EMPTY": {
+			"TITLE": "No OAuth clients registered yet.",
+			"HINT": "Click \"Register App\" to add your first integration (e.g. Activepieces, n8n, Make.com)."
+		},
+		"TABLE": {
+			"NAME": "Name",
+			"CLIENT_ID": "Client ID",
+			"TYPE": "Type",
+			"STATUS": "Status",
+			"REDIRECT_URIS": "Redirect URIs",
+			"ACTIONS": "Actions"
+		},
+		"ACTIONS": {
+			"REGISTER": "Register App",
+			"EDIT": "Edit",
+			"ROTATE_SECRET": "Rotate secret",
+			"DELETE": "Revoke",
+			"COPY_CLIENT_ID": "Copy Client ID"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "Register a new OAuth client",
+			"EDIT_TITLE": "Edit OAuth client"
+		},
+		"FORM": {
+			"NAME": "Application name",
+			"NAME_PLACEHOLDER": "e.g. Activepieces",
+			"DESCRIPTION": "Description",
+			"DESCRIPTION_PLACEHOLDER": "Short description shown on the consent page",
+			"CLIENT_TYPE": "Client type",
+			"CLIENT_TYPE_IMMUTABLE": "Client type cannot be changed after creation.",
+			"REDIRECT_URIS": "Redirect URIs",
+			"REDIRECT_URI_PLACEHOLDER": "https://your-app.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "Add redirect URI",
+			"ALLOWED_SCOPES": "Allowed scopes",
+			"SCOPE_PLACEHOLDER": "e.g. offline_access",
+			"ADD_SCOPE": "Add scope",
+			"GRANT_TYPES": "Grant types",
+			"PKCE_REQUIRED": "Require PKCE (deferred enforcement)",
+			"ACCESS_TTL": "Access token TTL (seconds)",
+			"REFRESH_TTL": "Refresh token TTL (seconds)",
+			"REDIRECT_URI": "Redirect URI {{index}}",
+			"REMOVE_REDIRECT_URI": "Remove redirect URI {{index}}",
+			"ALLOWED_SCOPE": "Allowed scope {{index}}",
+			"REMOVE_SCOPE": "Remove scope {{index}}"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Save your client secret",
+			"WARNING": "This is the only time the client secret will be shown. Copy it now and store it in your third-party integration — rotation is the only way to recover from a lost secret.",
+			"CLIENT_ID": "Client ID",
+			"CLIENT_SECRET": "Client Secret",
+			"ACKNOWLEDGE": "I have copied and safely stored the client secret.",
+			"CLOSE": "I've saved it, close",
+			"COPIED_CLIENT_ID": "Client ID copied to clipboard",
+			"COPIED_SECRET": "Client secret copied to clipboard",
+			"COPY_CLIENT_ID_ARIA": "Copy client ID",
+			"COPY_SECRET_ARIA": "Copy client secret"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "Rotate the client secret for \"{{name}}\"? The previous secret will stop working immediately for new token exchanges.",
+			"DELETE": "Revoke \"{{name}}\"? This will immediately prevent the third-party app from obtaining new tokens."
+		},
+		"TOASTS": {
+			"CREATED": "Registered \"{{name}}\"",
+			"UPDATED": "OAuth client updated",
+			"SECRET_ROTATED": "Client secret rotated",
+			"DELETED": "OAuth client revoked",
+			"CLIENT_ID_COPIED": "Client ID copied to clipboard"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Failed to load OAuth clients",
+			"CREATE_FAILED": "Failed to register OAuth client",
+			"UPDATE_FAILED": "Failed to update OAuth client",
+			"ROTATE_FAILED": "Failed to rotate client secret",
+			"DELETE_FAILED": "Failed to revoke OAuth client",
+			"COPY_FAILED": "Failed to copy to clipboard"
+		}
 	}
 }

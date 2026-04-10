@@ -1140,6 +1140,7 @@
 		"PAYMENT_GATEWAYS": "支付网关",
 		"SMS_GATEWAYS": "短信网关",
 		"CUSTOM_SMTP": "自定义SMTP",
+		"OAUTH_CLIENTS": "OAuth客户端",
 		"INVENTORY": "库存",
 		"SALES": "销售",
 		"PAYMENTS": "支付",
@@ -5593,5 +5594,80 @@
 		"DESCRIPTION": "当前无法访问{{companySite}}服务器。这可能是由于计划维护或意外停机。",
 		"CONNECTING": "正在自动重试连接...",
 		"HINT": "状态：正在尝试连接到{{companySite}}服务器。错误代码：503。"
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "OAuth客户端",
+		"SUBTITLE": "注册和管理可以代表您的用户请求访问Ever Gauzy的第三方应用程序。",
+		"STATUS": {
+			"ACTIVE": "活跃",
+			"INACTIVE": "不活跃"
+		},
+		"EMPTY": {
+			"TITLE": "尚未注册OAuth客户端。",
+			"HINT": "点击\"注册应用程序\"添加您的第一个集成（例如Activepieces、n8n、Make.com）。"
+		},
+		"TABLE": {
+			"NAME": "名称",
+			"CLIENT_ID": "客户端ID",
+			"TYPE": "类型",
+			"STATUS": "状态",
+			"REDIRECT_URIS": "重定向URI",
+			"ACTIONS": "操作"
+		},
+		"ACTIONS": {
+			"REGISTER": "注册应用程序",
+			"EDIT": "编辑",
+			"ROTATE_SECRET": "轮换密钥",
+			"DELETE": "撤销"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "注册新的OAuth客户端",
+			"EDIT_TITLE": "编辑OAuth客户端"
+		},
+		"FORM": {
+			"NAME": "应用程序名称",
+			"NAME_PLACEHOLDER": "例如Activepieces",
+			"DESCRIPTION": "描述",
+			"DESCRIPTION_PLACEHOLDER": "在同意页面显示的简短描述",
+			"CLIENT_TYPE": "客户端类型",
+			"CLIENT_TYPE_IMMUTABLE": "客户端类型在创建后无法更改。",
+			"REDIRECT_URIS": "重定向URI",
+			"REDIRECT_URI_PLACEHOLDER": "https://your-app.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "添加重定向URI",
+			"ALLOWED_SCOPES": "允许的作用域",
+			"SCOPE_PLACEHOLDER": "例如 offline_access",
+			"ADD_SCOPE": "添加作用域",
+			"GRANT_TYPES": "授权类型",
+			"PKCE_REQUIRED": "要求 PKCE（公共客户端）",
+			"ACCESS_TTL": "访问令牌TTL（秒）",
+			"REFRESH_TTL": "刷新令牌TTL（秒）"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "保存您的客户端密钥",
+			"WARNING": "这是唯一一次显示客户端密钥的机会。立即复制并将其存储在您的第三方集成中——轮换是恢复丢失密钥的唯一方法。",
+			"CLIENT_ID": "客户端ID",
+			"CLIENT_SECRET": "客户端密钥",
+			"ACKNOWLEDGE": "我已复制并安全存储了客户端密钥。",
+			"CLOSE": "我已保存，关闭",
+			"COPIED_CLIENT_ID": "客户端ID已复制到剪贴板",
+			"COPIED_SECRET": "客户端密钥已复制到剪贴板"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "轮换\"{{name}}\"的客户端密钥？以前的密钥将立即停止用于新的令牌交换。",
+			"DELETE": "撤销\"{{name}}\"？这将立即阻止第三方应用程序获取新的令牌。"
+		},
+		"TOASTS": {
+			"CREATED": "已注册\"{{name}}\"",
+			"UPDATED": "OAuth客户端已更新",
+			"SECRET_ROTATED": "客户端密钥已轮换",
+			"DELETED": "OAuth客户端已撤销"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "加载OAuth客户端失败",
+			"CREATE_FAILED": "注册OAuth客户端失败",
+			"UPDATE_FAILED": "更新OAuth客户端失败",
+			"ROTATE_FAILED": "轮换客户端密钥失败",
+			"DELETE_FAILED": "撤销OAuth客户端失败"
+		}
 	}
 }

@@ -1141,6 +1141,7 @@
 		"PAYMENT_GATEWAYS": "Passerelles de paiement",
 		"SMS_GATEWAYS": "Passerelles SMS",
 		"CUSTOM_SMTP": "SMTP personnalisé",
+		"OAUTH_CLIENTS": "Clients OAuth",
 		"INVENTORY": "Inventaire",
 		"SALES": "Ventes",
 		"PAYMENTS": "Paiements",
@@ -5583,5 +5584,80 @@
 		"DESCRIPTION": "Le serveur {{companySite}} est actuellement inaccessible. Cela peut être dû à une maintenance planifiée ou à un temps d'arrêt inattendu.",
 		"CONNECTING": "Nouvelle tentative de connexion automatique...",
 		"HINT": "Statut : Tentative de connexion aux serveurs {{companySite}}. Code d'erreur : 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "Clients OAuth",
+		"SUBTITLE": "Enregistrer et gérer des applications tierces qui peuvent demander l'accès à Ever Gauzy au nom de vos utilisateurs.",
+		"STATUS": {
+			"ACTIVE": "Actif",
+			"INACTIVE": "Inactif"
+		},
+		"EMPTY": {
+			"TITLE": "Aucun client OAuth enregistré pour le moment.",
+			"HINT": "Cliquez sur \"Enregistrer une application\" pour ajouter votre première intégration (par ex. Activepieces, n8n, Make.com)."
+		},
+		"TABLE": {
+			"NAME": "Nom",
+			"CLIENT_ID": "ID client",
+			"TYPE": "Type",
+			"STATUS": "Statut",
+			"REDIRECT_URIS": "URI de redirection",
+			"ACTIONS": "Actions"
+		},
+		"ACTIONS": {
+			"REGISTER": "Enregistrer une application",
+			"EDIT": "Modifier",
+			"ROTATE_SECRET": "Rotation du secret",
+			"DELETE": "Révoquer"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "Enregistrer un nouveau client OAuth",
+			"EDIT_TITLE": "Modifier le client OAuth"
+		},
+		"FORM": {
+			"NAME": "Nom de l'application",
+			"NAME_PLACEHOLDER": "par ex. Activepieces",
+			"DESCRIPTION": "Description",
+			"DESCRIPTION_PLACEHOLDER": "Courte description affichée sur la page de consentement",
+			"CLIENT_TYPE": "Type de client",
+			"CLIENT_TYPE_IMMUTABLE": "Le type de client ne peut pas être modifié après la création.",
+			"REDIRECT_URIS": "URI de redirection",
+			"REDIRECT_URI_PLACEHOLDER": "https://votre-app.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "Ajouter un URI de redirection",
+			"ALLOWED_SCOPES": "Portées autorisées",
+			"SCOPE_PLACEHOLDER": "par ex. offline_access",
+			"ADD_SCOPE": "Ajouter une portée",
+			"GRANT_TYPES": "Types d'autorisation",
+			"PKCE_REQUIRED": "Exiger PKCE (client public)",
+			"ACCESS_TTL": "TTL du jeton d'accès (secondes)",
+			"REFRESH_TTL": "TTL du jeton d'actualisation (secondes)"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Enregistrez votre secret client",
+			"WARNING": "C'est la seule fois que le secret client sera affiché. Copiez-le maintenant et stockez-le dans votre intégration tierce - la rotation est le seul moyen de récupérer un secret perdu.",
+			"CLIENT_ID": "ID client",
+			"CLIENT_SECRET": "Secret client",
+			"ACKNOWLEDGE": "J'ai copié et stocké en toute sécurité le secret client.",
+			"CLOSE": "Je l'ai sauvegardé, fermer",
+			"COPIED_CLIENT_ID": "ID client copié dans le presse-papiers",
+			"COPIED_SECRET": "Secret client copié dans le presse-papiers"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "Effectuer la rotation du secret client pour \"{{name}}\" ? L'ancien secret cessera immédiatement de fonctionner pour les nouveaux échanges de jetons.",
+			"DELETE": "Révoquer \"{{name}}\" ? Cela empêchera immédiatement l'application tierce d'obtenir de nouveaux jetons."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" enregistré",
+			"UPDATED": "Client OAuth mis à jour",
+			"SECRET_ROTATED": "Secret client renouvelé",
+			"DELETED": "Client OAuth révoqué"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Échec du chargement des clients OAuth",
+			"CREATE_FAILED": "Échec de l'enregistrement du client OAuth",
+			"UPDATE_FAILED": "Échec de la mise à jour du client OAuth",
+			"ROTATE_FAILED": "Échec de la rotation du secret client",
+			"DELETE_FAILED": "Échec de la révocation du client OAuth"
+		}
 	}
 }

@@ -1140,6 +1140,7 @@
 		"PAYMENT_GATEWAYS": "Zahlungs-Gateways",
 		"SMS_GATEWAYS": "SMS-Gateways",
 		"CUSTOM_SMTP": "Benutzerdefiniertes SMTP",
+		"OAUTH_CLIENTS": "OAuth-Clients",
 		"INVENTORY": "Lagerbestand",
 		"SALES": "Verkauf",
 		"PAYMENTS": "Zahlungen",
@@ -5589,5 +5590,80 @@
 		"DESCRIPTION": "Der {{companySite}}-Server ist derzeit nicht erreichbar. Dies könnte an geplanter Wartung oder unerwarteten Ausfallzeiten liegen.",
 		"CONNECTING": "Verbindung wird automatisch wiederhergestellt...",
 		"HINT": "Status: Versuch, eine Verbindung zu {{companySite}}-Servern herzustellen. Fehlercode: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "OAuth-Clients",
+		"SUBTITLE": "Registrieren und Verwalten von Drittanbieter-Apps, die im Namen Ihrer Benutzer Zugriff auf Ever Gauzy anfordern können.",
+		"STATUS": {
+			"ACTIVE": "Aktiv",
+			"INACTIVE": "Inaktiv"
+		},
+		"EMPTY": {
+			"TITLE": "Noch keine OAuth-Clients registriert.",
+			"HINT": "Klicken Sie auf \"App registrieren\", um Ihre erste Integration hinzuzufügen (z. B. Activepieces, n8n, Make.com)."
+		},
+		"TABLE": {
+			"NAME": "Name",
+			"CLIENT_ID": "Client-ID",
+			"TYPE": "Typ",
+			"STATUS": "Status",
+			"REDIRECT_URIS": "Weiterleitungs-URIs",
+			"ACTIONS": "Aktionen"
+		},
+		"ACTIONS": {
+			"REGISTER": "App registrieren",
+			"EDIT": "Bearbeiten",
+			"ROTATE_SECRET": "Geheimnis rotieren",
+			"DELETE": "Widerrufen"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "Neuen OAuth-Client registrieren",
+			"EDIT_TITLE": "OAuth-Client bearbeiten"
+		},
+		"FORM": {
+			"NAME": "Anwendungsname",
+			"NAME_PLACEHOLDER": "z. B. Activepieces",
+			"DESCRIPTION": "Beschreibung",
+			"DESCRIPTION_PLACEHOLDER": "Kurze Beschreibung, die auf der Zustimmungsseite angezeigt wird",
+			"CLIENT_TYPE": "Client-Typ",
+			"CLIENT_TYPE_IMMUTABLE": "Der Client-Typ kann nach der Erstellung nicht geändert werden.",
+			"REDIRECT_URIS": "Weiterleitungs-URIs",
+			"REDIRECT_URI_PLACEHOLDER": "https://ihre-app.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "Weiterleitungs-URI hinzufügen",
+			"ALLOWED_SCOPES": "Zulässige Scopes",
+			"SCOPE_PLACEHOLDER": "z. B. offline_access",
+			"ADD_SCOPE": "Scope hinzufügen",
+			"GRANT_TYPES": "Grant-Typen",
+			"PKCE_REQUIRED": "PKCE erforderlich (verzögerte Durchsetzung)",
+			"ACCESS_TTL": "Access-Token-TTL (Sekunden)",
+			"REFRESH_TTL": "Refresh-Token-TTL (Sekunden)"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Speichern Sie Ihr Client-Geheimnis",
+			"WARNING": "Dies ist das einzige Mal, dass das Client-Geheimnis angezeigt wird. Kopieren Sie es jetzt und speichern Sie es in Ihrer Drittanbieter-Integration – Rotation ist der einzige Weg, um sich von einem verlorenen Geheimnis zu erholen.",
+			"CLIENT_ID": "Client-ID",
+			"CLIENT_SECRET": "Client-Geheimnis",
+			"ACKNOWLEDGE": "Ich habe das Client-Geheimnis kopiert und sicher gespeichert.",
+			"CLOSE": "Ich habe es gespeichert, schließen",
+			"COPIED_CLIENT_ID": "Client-ID in die Zwischenablage kopiert",
+			"COPIED_SECRET": "Client-Geheimnis in die Zwischenablage kopiert"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "Client-Geheimnis für \"{{name}}\" rotieren? Das vorherige Geheimnis funktioniert sofort nicht mehr für neue Token-Austausche.",
+			"DELETE": "\"{{name}}\" widerrufen? Dies verhindert sofort, dass die Drittanbieter-App neue Token erhält."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" registriert",
+			"UPDATED": "OAuth-Client aktualisiert",
+			"SECRET_ROTATED": "Client-Geheimnis rotiert",
+			"DELETED": "OAuth-Client widerrufen"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "OAuth-Clients konnten nicht geladen werden",
+			"CREATE_FAILED": "OAuth-Client konnte nicht registriert werden",
+			"UPDATE_FAILED": "OAuth-Client konnte nicht aktualisiert werden",
+			"ROTATE_FAILED": "Client-Geheimnis konnte nicht rotiert werden",
+			"DELETE_FAILED": "OAuth-Client konnte nicht widerrufen werden"
+		}
 	}
 }

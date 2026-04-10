@@ -157,6 +157,7 @@ export * from './lib/time-off.model';
 export * from './lib/time-slot-minute.model';
 export * from './lib/timesheet-statistics.model';
 export * from './lib/timesheet.model';
+export * from './lib/oauth-client.model';
 export * from './lib/token.model';
 export * from './lib/translation.model';
 export * from './lib/tree-node.model';

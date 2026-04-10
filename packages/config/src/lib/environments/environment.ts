@@ -167,16 +167,6 @@ export const environment: IEnvironment = {
 		domain: process.env.AUTH0_DOMAIN
 	},
 
-	oauthApp: {
-		clientId: process.env.GAUZY_OAUTH_APP_CLIENT_ID,
-		clientSecret: process.env.GAUZY_OAUTH_APP_CLIENT_SECRET,
-		codeSecret: process.env.GAUZY_OAUTH_APP_CODE_SECRET,
-		redirectUris: (process.env.GAUZY_OAUTH_APP_REDIRECT_URIS ?? '')
-			.split(',')
-			.map((uri) => uri.trim())
-			.filter(Boolean)
-	},
-
 	activepieces: {
 		apiKey: process.env.GAUZY_ACTIVEPIECES_API_KEY
 	},

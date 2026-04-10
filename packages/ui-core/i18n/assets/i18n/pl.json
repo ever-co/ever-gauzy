@@ -1139,6 +1139,7 @@
 		"PAYMENT_GATEWAYS": "Bramki płatności",
 		"SMS_GATEWAYS": "Bramki SMS",
 		"CUSTOM_SMTP": "Niestandardowy SMTP",
+		"OAUTH_CLIENTS": "Klienci OAuth",
 		"INVENTORY": "Inwentarz",
 		"SALES": "Sprzedaż",
 		"PAYMENTS": "Płatności",
@@ -5592,5 +5593,80 @@
 		"DESCRIPTION": "Serwer {{companySite}} jest obecnie niedostępny. Może to być spowodowane planowaną konserwacją lub nieoczekiwanym przestojem.",
 		"CONNECTING": "Automatyczne ponowne łączenie...",
 		"HINT": "Status: Próba nawiązania połączenia z serwerami {{companySite}}. Kod błędu: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "Klienci OAuth",
+		"SUBTITLE": "Rejestruj i zarządzaj aplikacjami stron trzecich, które mogą żądać dostępu do Ever Gauzy w imieniu Twoich użytkowników.",
+		"STATUS": {
+			"ACTIVE": "Aktywny",
+			"INACTIVE": "Nieaktywny"
+		},
+		"EMPTY": {
+			"TITLE": "Brak zarejestrowanych klientów OAuth.",
+			"HINT": "Kliknij \"Zarejestruj aplikację\", aby dodać swoją pierwszą integrację (np. Activepieces, n8n, Make.com)."
+		},
+		"TABLE": {
+			"NAME": "Nazwa",
+			"CLIENT_ID": "ID klienta",
+			"TYPE": "Typ",
+			"STATUS": "Status",
+			"REDIRECT_URIS": "URI przekierowania",
+			"ACTIONS": "Akcje"
+		},
+		"ACTIONS": {
+			"REGISTER": "Zarejestruj aplikację",
+			"EDIT": "Edytuj",
+			"ROTATE_SECRET": "Obróć sekret",
+			"DELETE": "Unieważnij"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "Zarejestruj nowego klienta OAuth",
+			"EDIT_TITLE": "Edytuj klienta OAuth"
+		},
+		"FORM": {
+			"NAME": "Nazwa aplikacji",
+			"NAME_PLACEHOLDER": "np. Activepieces",
+			"DESCRIPTION": "Opis",
+			"DESCRIPTION_PLACEHOLDER": "Krótki opis wyświetlany na stronie zgody",
+			"CLIENT_TYPE": "Typ klienta",
+			"CLIENT_TYPE_IMMUTABLE": "Typ klienta nie może być zmieniony po utworzeniu.",
+			"REDIRECT_URIS": "URI przekierowania",
+			"REDIRECT_URI_PLACEHOLDER": "https://twoja-aplikacja.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "Dodaj URI przekierowania",
+			"ALLOWED_SCOPES": "Dozwolone zakresy",
+			"SCOPE_PLACEHOLDER": "np. offline_access",
+			"ADD_SCOPE": "Dodaj zakres",
+			"GRANT_TYPES": "Typy grantów",
+			"PKCE_REQUIRED": "Wymagaj PKCE (odroczone wymuszanie)",
+			"ACCESS_TTL": "TTL tokena dostępu (sekundy)",
+			"REFRESH_TTL": "TTL tokena odświeżania (sekundy)"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Zapisz swój sekret klienta",
+			"WARNING": "To jedyny raz, gdy sekret klienta zostanie wyświetlony. Skopiuj go teraz i przechowuj w swojej integracji stron trzecich - rotacja to jedyny sposób na odzyskanie utraconego sekretu.",
+			"CLIENT_ID": "ID klienta",
+			"CLIENT_SECRET": "Sekret klienta",
+			"ACKNOWLEDGE": "Skopiowałem i bezpiecznie zapisałem sekret klienta.",
+			"CLOSE": "Zapisałem to, zamknij",
+			"COPIED_CLIENT_ID": "ID klienta skopiowany do schowka",
+			"COPIED_SECRET": "Sekret klienta skopiowany do schowka"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "Obrócić sekret klienta dla \"{{name}}\"? Poprzedni sekret przestanie natychmiast działać dla nowych wymian tokenów.",
+			"DELETE": "Unieważnić \"{{name}}\"? To natychmiast uniemożliwi aplikacji stron trzecich uzyskanie nowych tokenów."
+		},
+		"TOASTS": {
+			"CREATED": "Zarejestrowano \"{{name}}\"",
+			"UPDATED": "Klient OAuth zaktualizowany",
+			"SECRET_ROTATED": "Sekret klienta obrócony",
+			"DELETED": "Klient OAuth unieważniony"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Nie udało się załadować klientów OAuth",
+			"CREATE_FAILED": "Nie udało się zarejestrować klienta OAuth",
+			"UPDATE_FAILED": "Nie udało się zaktualizować klienta OAuth",
+			"ROTATE_FAILED": "Nie udało się obrócić sekretu klienta",
+			"DELETE_FAILED": "Nie udało się unieważnić klienta OAuth"
+		}
 	}
 }

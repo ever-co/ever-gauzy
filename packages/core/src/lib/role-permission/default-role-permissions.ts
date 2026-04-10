@@ -199,6 +199,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.TENANT_API_KEY_CREATE,
 			PermissionsEnum.TENANT_API_KEY_VIEW,
 			PermissionsEnum.TENANT_API_KEY_DELETE,
+			/** OAuth App Client Registry (multi-app OAuth provider) */
+			PermissionsEnum.OAUTH_CLIENT_VIEW,
+			PermissionsEnum.OAUTH_CLIENT_EDIT,
 			/** Employee Availability */
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
@@ -434,6 +437,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.TENANT_API_KEY_CREATE,
 			PermissionsEnum.TENANT_API_KEY_VIEW,
 			PermissionsEnum.TENANT_API_KEY_DELETE,
+			/** OAuth App Client Registry (multi-app OAuth provider) */
+			PermissionsEnum.OAUTH_CLIENT_VIEW,
+			PermissionsEnum.OAUTH_CLIENT_EDIT,
 			/** Employee Availability */
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
 			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
