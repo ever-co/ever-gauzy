@@ -103,10 +103,20 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 		const codeSecret = this.generateSecret();
 		const clientId = this.generateClientId();
 
+		const isSuperAdmin = RequestContext.hasRoles([RolesEnum.SUPER_ADMIN]);
+		const currentTenantId = RequestContext.currentTenantId() ?? null;
+		if (options?.tenantId === null && !isSuperAdmin) {
+			throw new BadRequestException('Only super admins can create global OAuth clients.');
+		}
+
 		const tenantId =
 			options?.tenantId === null
 				? null
-				: (options?.tenantId ?? RequestContext.currentTenantId() ?? null);
+				: (options?.tenantId ?? currentTenantId);
+
+		if (tenantId === null && !isSuperAdmin) {
+			throw new BadRequestException('Tenant context is required to create an OAuth client.');
+		}
 
 		// For global clients (tenantId=null), we must bypass TenantAwareCrudService's automatic
 		// tenant enrichment which would overwrite tenantId with the current tenant context.

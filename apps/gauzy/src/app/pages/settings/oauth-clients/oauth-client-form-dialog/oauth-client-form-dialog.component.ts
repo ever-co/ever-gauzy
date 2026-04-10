@@ -71,22 +71,22 @@ export class OAuthClientFormDialogComponent implements OnInit {
 	ngOnInit(): void {
 		const c = this.client;
 		this.form = this.fb.group<OAuthClientFormModel>({
-			name: this.fb.control(c?.name ?? '', [Validators.required, Validators.maxLength(100)]),
+			name: this.fb.nonNullable.control(c?.name ?? '', [Validators.required, Validators.maxLength(100)]),
 			description: this.fb.control(c?.description ?? '', [Validators.maxLength(500)]),
-			clientType: this.fb.control(c?.clientType ?? OAuthClientType.CONFIDENTIAL, [Validators.required]),
+			clientType: this.fb.nonNullable.control(c?.clientType ?? OAuthClientType.CONFIDENTIAL, [Validators.required]),
 			redirectUris: this.fb.array<FormControl<string>>(
 				(c?.redirectUris ?? ['']).map((u) =>
-					this.fb.control(u, [Validators.required, Validators.pattern(HTTP_URL_PATTERN)])
+					this.fb.nonNullable.control(u, [Validators.required, Validators.pattern(HTTP_URL_PATTERN)])
 				)
 			),
-			allowedScopes: this.fb.array<FormControl<string>>((c?.allowedScopes ?? []).map((s) => this.fb.control(s))),
-			allowedGrantTypes: this.fb.control(c?.allowedGrantTypes ?? [OAuthGrantType.AUTHORIZATION_CODE], [Validators.required]),
-			pkceRequired: this.fb.control(c?.pkceRequired ?? false),
-			accessTokenTtl: this.fb.control(
+			allowedScopes: this.fb.array<FormControl<string>>((c?.allowedScopes ?? []).map((s) => this.fb.nonNullable.control(s))),
+			allowedGrantTypes: this.fb.nonNullable.control(c?.allowedGrantTypes ?? [OAuthGrantType.AUTHORIZATION_CODE], [Validators.required]),
+			pkceRequired: this.fb.nonNullable.control(c?.pkceRequired ?? false),
+			accessTokenTtl: this.fb.nonNullable.control(
 				c?.accessTokenTtl ?? 86400,
 				[Validators.required, Validators.min(60), Validators.max(MAX_ACCESS_TTL)]
 			),
-			refreshTokenTtl: this.fb.control(
+			refreshTokenTtl: this.fb.nonNullable.control(
 				c?.refreshTokenTtl ?? 2592000,
 				[Validators.required, Validators.min(60), Validators.max(MAX_REFRESH_TTL)]
 			)
@@ -100,7 +100,7 @@ export class OAuthClientFormDialogComponent implements OnInit {
 
 	addRedirectUri(): void {
 		this.redirectUris.push(
-			this.fb.control('', [Validators.required, Validators.pattern(HTTP_URL_PATTERN)])
+			this.fb.nonNullable.control('', [Validators.required, Validators.pattern(HTTP_URL_PATTERN)])
 		);
 	}
 
@@ -111,7 +111,7 @@ export class OAuthClientFormDialogComponent implements OnInit {
 	}
 
 	addScope(): void {
-		this.allowedScopes.push(this.fb.control(''));
+		this.allowedScopes.push(this.fb.nonNullable.control(''));
 	}
 
 	removeScope(index: number): void {
