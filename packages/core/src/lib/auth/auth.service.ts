@@ -1255,7 +1255,7 @@ export class AuthService extends SocialAuthService {
 	 * @returns A Promise that resolves to a JWT access token string.
 	 * @throws Throws an UnauthorizedException if the user is not found or if there is an issue in token generation.
 	 */
-	public async getJwtAccessToken(request: Partial<IUser>, organizationId?: ID, metadata?: IAccessTokenMetadata) {
+	public async getJwtAccessToken(request: Partial<IUser>, organizationId?: ID, metadata?: IAccessTokenMetadata, preloadedEmployee?: Employee | null) {
 		const tenantId = request.tenantId || RequestContext.currentTenantId();
 		try {
 			// Validate that the request contains a user ID
@@ -1311,27 +1311,31 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException();
 			}
 
-			// Retrieve the employee details associated with the user.
-			// Query directly via repository to bypass TenantAwareCrudService which forces RequestContext.currentTenantId().
-			// This ensures correct employee lookup when tenantId differs from RequestContext (e.g. workspace switch).
-			let employee: Employee | null = null;
-			const employeeAccessWhere: Record<string, any> = {
-				userId: user.id,
-				tenantId,
-				isActive: true,
-				isArchived: false,
-				...(organizationId && { organizationId })
-			};
+			// Use the pre-loaded employee if provided (e.g. from switchWorkspace) to avoid a redundant DB query.
+			// Otherwise query directly via repository to bypass TenantAwareCrudService which forces RequestContext.currentTenantId().
+			let employee: Employee | null = preloadedEmployee ?? null;
 
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM: {
-					const parsed = parseTypeORMFindToMikroOrm<Employee>({ where: employeeAccessWhere });
-					employee = (await this.mikroOrmEmployeeRepository.findOne(parsed.where, parsed.mikroOptions)) as Employee;
-					break;
-				}
-				case MultiORMEnum.TypeORM: {
-					employee = await this.typeOrmEmployeeRepository.findOne({ where: employeeAccessWhere });
-					break;
+			if (employee === null) {
+				const employeeAccessWhere: Record<string, any> = {
+					userId: user.id,
+					tenantId,
+					isActive: true,
+					isArchived: false,
+					...(organizationId && { organizationId })
+				};
+
+				switch (this.ormType) {
+					case MultiORMEnum.MikroORM: {
+						const parsed = parseTypeORMFindToMikroOrm<Employee>({ where: employeeAccessWhere });
+						employee = (await this.mikroOrmEmployeeRepository.findOne(parsed.where, parsed.mikroOptions)) as Employee;
+						break;
+					}
+					case MultiORMEnum.TypeORM: {
+						employee = await this.typeOrmEmployeeRepository.findOne({ where: employeeAccessWhere });
+						break;
+					}
+					default:
+						throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 				}
 			}
 
@@ -2211,19 +2215,17 @@ export class AuthService extends SocialAuthService {
 					employee = await this.typeOrmEmployeeRepository.findOne({ where: employeeWhere, relations: employeeRelations });
 					break;
 				}
-			}
-
-			// Check if the employee is active and not archived
-			if (employee && (!employee.isActive || employee.isArchived)) {
-				throw new UnauthorizedException('Employee account is not active');
+				default:
+					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 			}
 
 			// Determine organization context for tokens
 			const organizationId = employee?.organizationId || user.lastOrganizationId;
 
-			// Generate new access and refresh tokens for the target workspace
+			// Generate new access and refresh tokens for the target workspace.
+			// Pass the already-loaded employee to getJwtAccessToken to avoid a redundant DB query.
 			const [access_token, refresh_token] = await Promise.all([
-				this.getJwtAccessToken(user, organizationId),
+				this.getJwtAccessToken(user, organizationId, undefined, employee),
 				this.getJwtRefreshToken(user, organizationId)
 			]);
 
