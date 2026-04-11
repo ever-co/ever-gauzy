@@ -89,6 +89,11 @@ const routes: Routes = [
 				loadChildren: () => import('./custom-smtp/custom-smtp.module').then((m) => m.CustomSmtpModule)
 			},
 			{
+				path: 'oauth-clients',
+				loadChildren: () =>
+					import('./oauth-clients/oauth-clients.module').then((m) => m.OAuthClientsModule)
+			},
+			{
 				path: 'file-storage',
 				loadChildren: () => import('./file-storage/file-storage.module').then((m) => m.FileStorageModule)
 			},

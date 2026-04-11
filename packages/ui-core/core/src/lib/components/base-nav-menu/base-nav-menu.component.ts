@@ -1131,6 +1131,16 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						}
 					},
 					{
+						id: 'settings-oauth-clients',
+						title: 'OAuth Clients',
+						icon: 'fas fa-key',
+						link: '/pages/settings/oauth-clients',
+						data: {
+							translationKey: 'MENU.OAUTH_CLIENTS',
+							permissionKeys: [PermissionsEnum.OAUTH_CLIENT_VIEW]
+						}
+					},
+					{
 						id: 'settings-roles-permissions',
 						title: 'Roles & Permissions',
 						link: '/pages/settings/roles-permissions',

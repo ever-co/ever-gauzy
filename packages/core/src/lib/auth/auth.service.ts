@@ -95,6 +95,8 @@ import {
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createClient } from 'redis';
 import { EVER_REDIS_CLIENT } from '../redis/redis.module';
+import { OAuthClientService } from './oauth-client/oauth-client.service';
+import { OAuthClient } from './oauth-client/oauth-client.entity';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -129,7 +131,8 @@ export class AuthService extends SocialAuthService {
 		private readonly refreshTokenService: RefreshTokenService,
 		private readonly accessTokenService: AccessTokenService,
 		private readonly typeOrmPasswordResetRepository: TypeOrmPasswordResetRepository,
-		private readonly mikroOrmPasswordResetRepository: MikroOrmPasswordResetRepository
+		private readonly mikroOrmPasswordResetRepository: MikroOrmPasswordResetRepository,
+		private readonly oauthClientService: OAuthClientService
 	) {
 		super();
 	}
@@ -239,23 +242,78 @@ export class AuthService extends SocialAuthService {
 		}
 	}
 
-	private ensureOAuthAppConfigured(): OAuthAppConfig {
-		const config = this.getOAuthAppConfig();
-		if (!config.clientId || !config.clientSecret || !config.redirectUris?.length || !config.codeSecret) {
-			throw new InternalServerErrorException('OAuth app is not configured');
+	/**
+	 * Map an `OAuthClient` registry row → the `OAuthAppConfig` view used
+	 * by the auth pipeline. Carries the `clientSecretHash` (NEVER plaintext)
+	 * because the `/token` exchange validates incoming secrets via
+	 * `OAuthClientService.validateClientSecret` (constant-time scrypt).
+	 */
+	private mapOAuthClientToConfig(client: OAuthClient): OAuthAppConfig {
+		return {
+			clientId: client.clientId,
+			clientSecretHash: client.clientSecretHash ?? null,
+			codeSecret: client.codeSecret,
+			redirectUris: client.redirectUris ?? [],
+			name: client.name,
+			description: client.description ?? null,
+			allowedScopes: client.allowedScopes ?? [],
+			allowedGrantTypes: (client.allowedGrantTypes ?? []) as string[],
+			pkceRequired: client.pkceRequired,
+			accessTokenTtl: client.accessTokenTtl,
+			tenantId: client.tenantId ?? null,
+			clientType: client.clientType
+		};
+	}
+
+	/**
+	 * Resolve an OAuth client by its public `clientId` from the
+	 * `oauth_clients` registry. Throws `NotFoundException` (mapped to
+	 * `400 invalid_client` by the controller) when the row does not
+	 * exist or is inactive. There is no env-var fallback — every
+	 * third-party app must be registered via `POST /oauth/clients`.
+	 */
+	public async resolveOAuthClient(clientId: string): Promise<OAuthAppConfig> {
+		if (!clientId) {
+			throw new BadRequestException('Invalid client_id');
 		}
-		return config;
+		const client = await this.oauthClientService.findByClientId(clientId);
+		return this.mapOAuthClientToConfig(client);
 	}
 
 	public async createOAuthAppAuthorizationCode(request: OAuthAppAuthorizationRequest): Promise<string> {
-		const config = this.ensureOAuthAppConfigured();
+		const config = await this.resolveOAuthClient(request.clientId);
 
-		if (request.clientId !== config.clientId) {
-			throw new BadRequestException('Invalid client_id');
+		// Verify the client is allowed for the requesting tenant
+		// Global clients (tenantId=null) can be used by any tenant
+		// Tenant-scoped clients can only be used by their owning tenant
+		const requestTenantId = RequestContext.currentTenantId();
+		if (config.tenantId && config.tenantId !== requestTenantId) {
+			throw new BadRequestException('OAuth client is not available for this tenant');
+		}
+
+		// Enforce that the client is allowed to use the authorization_code grant
+		if (config.allowedGrantTypes && config.allowedGrantTypes.length > 0
+			&& !config.allowedGrantTypes.includes('authorization_code')) {
+			throw new BadRequestException('Client is not allowed to use authorization_code grant');
 		}
 
 		if (!this.isOAuthAppRedirectUriAllowed(request.redirectUri, config)) {
 			throw new BadRequestException('Invalid redirect_uri');
+		}
+
+		// Always validate scopes - even when allowedScopes is empty,
+		// the request should not specify scopes unless they're explicitly allowed
+		if (request.scope) {
+			const requested = request.scope.split(/\s+/).filter(Boolean);
+			if (requested.length > 0) {
+				// If client has no allowed scopes defined, reject all scope requests
+				if (!config.allowedScopes || config.allowedScopes.length === 0) {
+					throw new BadRequestException('This client does not allow any scopes');
+				}
+				if (!requested.every((s) => config.allowedScopes!.includes(s))) {
+					throw new BadRequestException('Requested scope is not allowed for this client');
+				}
+			}
 		}
 
 		const now = Math.floor(Date.now() / 1000);
@@ -287,15 +345,16 @@ export class AuthService extends SocialAuthService {
 	}
 
 	public async exchangeOAuthAppAuthorizationCode(request: OAuthAppTokenRequest): Promise<OAuthAppTokenResponse> {
-		const config = this.ensureOAuthAppConfigured();
+		const config = await this.resolveOAuthClient(request.clientId);
 
-		if (request.clientId !== config.clientId) {
-			throw new UnauthorizedException('Invalid client credentials');
-		}
-
-		const secretBuf = Buffer.from(request.clientSecret, 'utf8');
-		const expectedBuf = Buffer.from(config.clientSecret, 'utf8');
-		if (secretBuf.length !== expectedBuf.length || !timingSafeEqual(secretBuf, expectedBuf)) {
+		// Validate the presented client_secret against the per-client
+		// scrypt hash from the registry. Public clients (null hash) will
+		// fail here — PKCE for public clients is deferred to a later phase.
+		const secretValid = await this.oauthClientService.validateClientSecret(
+			config.clientSecretHash,
+			request.clientSecret
+		);
+		if (!secretValid) {
 			throw new UnauthorizedException('Invalid client credentials');
 		}
 
@@ -336,6 +395,11 @@ export class AuthService extends SocialAuthService {
 			tenantId: payload.tenantId
 		});
 
+		// Per-client `accessTokenTtl` is configured on the registry row but
+		// `getJwtAccessToken` currently always signs with the global
+		// `JWT_TOKEN_EXPIRATION_TIME`. Reporting the per-client TTL would
+		// mislead clients into premature / late refreshes, so return the
+		// actual JWT lifetime until TTL-aware signing lands.
 		const expiresIn = Number(environment.JWT_TOKEN_EXPIRATION_TIME) || 86400;
 
 		this.logger.log(
@@ -1602,7 +1666,7 @@ export class AuthService extends SocialAuthService {
 
 				// Check the value of the 'email' variable against certain demo email addresses
 				if (email === demoEmployeeEmail || email === demoAdminEmail) {
-					magicCode = environment.demoCredentialConfig?.employeePassword || DEMO_PASSWORD_LESS_MAGIC_CODE;
+					magicCode = DEMO_PASSWORD_LESS_MAGIC_CODE || environment.demoCredentialConfig?.employeePassword;
 					isDemoCode = true;
 				}
 			}

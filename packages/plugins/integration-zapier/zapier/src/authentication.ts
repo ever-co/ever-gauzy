@@ -7,9 +7,9 @@ const appName = process.env.APP_NAME || 'Gauzy';
 export const authentication = {
 	/** Specifies OAuth2 as the authentication type */
 	type: 'oauth2',
-	/** Configuration for testing the authentication */
+	/** Configuration for testing the authentication — uses Zapier-specific endpoint */
 	test: {
-		url: `${process.env.API_BASE_URL}/api/auth/authenticated`,
+		url: `${process.env.API_BASE_URL}/api/integration/zapier/auth/test`,
 		method: 'GET',
 		headers: {
 			Authorization: 'Bearer {{bundle.authData.access_token}}'
@@ -20,18 +20,17 @@ export const authentication = {
 	connectionLabel: async (z: ZObject, bundle: Bundle) => {
 		try {
 			const response = await z.request({
-				url: `${process.env.API_BASE_URL}/api/user/me`,
+				url: `${process.env.API_BASE_URL}/api/integration/zapier/auth/me`,
 				headers: {
 					Authorization: `Bearer ${bundle.authData.access_token}`
 				}
 			});
-			// Format the connection label with user information
-			const userData = response.data;
-			if (userData?.name) {
-				return `${userData.name} - ${appName}`;
+			const data = response.data;
+			if (data?.name) {
+				return `${data.name} - ${appName}`;
 			}
-			if (userData?.email) {
-				return `${userData.email} - ${appName}`;
+			if (data?.email) {
+				return `${data.email} - ${appName}`;
 			}
 
 			return `${appName} Connection`;
@@ -56,7 +55,7 @@ export const authentication = {
 		/** Configuration for obtaining access token */
 		getAccessToken: {
 			method: 'POST',
-			url: `${process.env.API_BASE_URL}/api/integration/zapier/token`,
+			url: `${process.env.API_BASE_URL}/api/integration/zapier/oauth/token`,
 			body: {
 				code: '{{bundle.inputData.code}}',
 				client_id: '{{process.env.CLIENT_ID}}',
@@ -72,7 +71,7 @@ export const authentication = {
 		/** Configuration for refreshing access token */
 		refreshAccessToken: {
 			method: 'POST',
-			url: `${process.env.API_BASE_URL}/api/integration/zapier/refresh-token`,
+			url: `${process.env.API_BASE_URL}/api/integration/zapier/oauth/refresh-token`,
 			body: {
 				refresh_token: '{{bundle.authData.refresh_token}}',
 				client_id: '{{process.env.CLIENT_ID}}',

@@ -1,0 +1,34 @@
+.connections-container {
+  padding: 0.5rem 0;
+}
+
+.connection-card {
+  margin-bottom: 0.5rem;
+
+  nb-card-body {
+    padding: 1rem 1rem;
+  }
+}
+
+.connection-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.empty-icon {
+  font-size: 2rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

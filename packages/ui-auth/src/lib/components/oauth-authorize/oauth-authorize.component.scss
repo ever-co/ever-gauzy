@@ -12,7 +12,14 @@
 
 .loading-text {
 	margin-top: 1rem;
-	color: var(--text-hint-color);
+	color: var(--gauzy-text-color-2);
+}
+
+.client-description {
+	color: var(--gauzy-text-color-2);
+	font-size: 0.875rem;
+	margin-top: -0.5rem;
+	margin-bottom: 1rem;
 }
 
 .request-details {

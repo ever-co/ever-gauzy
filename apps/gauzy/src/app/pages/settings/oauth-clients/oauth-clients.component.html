@@ -1,0 +1,123 @@
+<nb-card class="oauth-clients-card">
+	<nb-card-header class="header">
+		<div>
+			<h5>{{ 'OAUTH_CLIENTS.TITLE' | translate }}</h5>
+			<p class="subtitle">{{ 'OAUTH_CLIENTS.SUBTITLE' | translate }}</p>
+		</div>
+		<button type="button" nbButton status="primary" (click)="openCreateDialog()">
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'OAUTH_CLIENTS.ACTIONS.REGISTER' | translate }}
+		</button>
+	</nb-card-header>
+
+	<nb-card-body>
+		@if (loading) {
+			<div class="loading">
+				<nb-spinner status="primary" size="large"></nb-spinner>
+			</div>
+		}
+
+		@if (!loading && clients.length === 0) {
+			<div class="empty-state">
+				<nb-icon icon="lock-outline"></nb-icon>
+				<p>{{ 'OAUTH_CLIENTS.EMPTY.TITLE' | translate }}</p>
+				<small>{{ 'OAUTH_CLIENTS.EMPTY.HINT' | translate }}</small>
+			</div>
+		}
+
+		@if (!loading && clients.length > 0) {
+			<table class="oauth-clients-table">
+			<thead>
+				<tr>
+					<th>{{ 'OAUTH_CLIENTS.TABLE.NAME' | translate }}</th>
+					<th>{{ 'OAUTH_CLIENTS.TABLE.CLIENT_ID' | translate }}</th>
+					<th>{{ 'OAUTH_CLIENTS.TABLE.TYPE' | translate }}</th>
+					<th>{{ 'OAUTH_CLIENTS.TABLE.STATUS' | translate }}</th>
+					<th>{{ 'OAUTH_CLIENTS.TABLE.REDIRECT_URIS' | translate }}</th>
+					<th class="actions-col">{{ 'OAUTH_CLIENTS.TABLE.ACTIONS' | translate }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (client of clients; track trackById($index, client)) {
+					<tr>
+						<td>
+							<div class="client-name">{{ client.name }}</div>
+							@if (client.description) {
+								<div class="client-description">{{ client.description }}</div>
+							}
+						</td>
+					<td>
+						<div class="client-id-cell">
+							<code>{{ client.clientId }}</code>
+							<button
+								type="button"
+								nbButton
+								size="tiny"
+								ghost
+								status="basic"
+								(click)="copyClientId(client.clientId)"
+								[nbTooltip]="'OAUTH_CLIENTS.ACTIONS.COPY_CLIENT_ID' | translate"
+								[attr.aria-label]="'OAUTH_CLIENTS.ACTIONS.COPY_CLIENT_ID' | translate"
+							>
+								<nb-icon icon="copy-outline"></nb-icon>
+							</button>
+						</div>
+					</td>
+					<td>{{ client.clientType }}</td>
+					<td>
+						<nb-badge
+							[text]="client.isActive ? ('OAUTH_CLIENTS.STATUS.ACTIVE' | translate) : ('OAUTH_CLIENTS.STATUS.INACTIVE' | translate)"
+							[status]="client.isActive ? 'success' : 'basic'"
+							position="center"
+						></nb-badge>
+					</td>
+					<td>
+						@for (uri of client.redirectUris; track uri) {
+							<div class="redirect-uri">{{ uri }}</div>
+						}
+					</td>
+					<td class="actions-col">
+						<button
+							type="button"
+							nbButton
+							size="small"
+							ghost
+							status="primary"
+							(click)="openEditDialog(client)"
+							[nbTooltip]="'OAUTH_CLIENTS.ACTIONS.EDIT' | translate"
+							[attr.aria-label]="'OAUTH_CLIENTS.ACTIONS.EDIT' | translate"
+						>
+							<nb-icon icon="edit-outline"></nb-icon>
+						</button>
+						<button
+							type="button"
+							nbButton
+							size="small"
+							ghost
+							status="warning"
+							(click)="rotateSecret(client)"
+							[nbTooltip]="'OAUTH_CLIENTS.ACTIONS.ROTATE_SECRET' | translate"
+							[attr.aria-label]="'OAUTH_CLIENTS.ACTIONS.ROTATE_SECRET' | translate"
+						>
+							<nb-icon icon="refresh-outline"></nb-icon>
+						</button>
+						<button
+							type="button"
+							nbButton
+							size="small"
+							ghost
+							status="danger"
+							(click)="delete(client)"
+							[nbTooltip]="'OAUTH_CLIENTS.ACTIONS.DELETE' | translate"
+							[attr.aria-label]="'OAUTH_CLIENTS.ACTIONS.DELETE' | translate"
+						>
+							<nb-icon icon="trash-2-outline"></nb-icon>
+						</button>
+					</td>
+					</tr>
+				}
+			</tbody>
+			</table>
+		}
+	</nb-card-body>
+</nb-card>

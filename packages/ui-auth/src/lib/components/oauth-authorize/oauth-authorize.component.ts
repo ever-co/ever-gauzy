@@ -5,6 +5,8 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 
 interface OAuthRequestInfo {
 	clientId: string;
+	clientName?: string;
+	clientDescription?: string | null;
 	scope?: string;
 	redirectUri: string;
 }

@@ -1140,6 +1140,7 @@
 		"PAYMENT_GATEWAYS": "Gateways de pagamento",
 		"SMS_GATEWAYS": "SMS Gateways são serviços que permitem o envio e recebimento de mensagens de texto através de redes de telefonia móvel. Esses gateways atuam como intermediários, conectando diferentes plataformas, como aplicativos de mensagens, sites ou sistemas de software, aos sistemas das operadoras de telefonia móvel. Eles facilitam a comunicação por SMS em grande escala, permitindo que empresas e indivíduos enviem mensagens para diversos destinatários simultaneamente. Os SMS Gateways desempenham um papel crucial nas comunicações empresariais e no marketing, fornecendo uma maneira rápida e eficiente de alcançar um grande público via SMS.",
 		"CUSTOM_SMTP": "SMTP personalizado",
+		"OAUTH_CLIENTS": "Clientes OAuth",
 		"INVENTORY": "Inventário",
 		"SALES": "Vendas",
 		"PAYMENTS": "Pagamentos",
@@ -1294,16 +1295,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Cenários",
-			"EXECUTIONS": "Execuções",
-			"HISTORY": "História",
+			"WEBHOOKS": "Webhooks",
+			"WEBHOOKS_REFRESH": "Atualizar webhooks",
+			"WEBHOOK_ENABLE": "Ativar webhook",
+			"WEBHOOK_DISABLE": "Desativar webhook",
+			"WEBHOOK_PING": "Testar webhook",
+			"SCENARIO_ACTIVE": "Ativo",
+			"SCENARIO_INACTIVE": "Inativo",
+			"SCENARIO_LAST_EDITED": "Última edição: {{value}}",
+			"SCENARIO_DISABLE": "Desativar cenário",
+			"SCENARIO_ENABLE": "Ativar cenário",
+			"SCENARIO_RUN_ONCE": "Executar cenário uma vez",
+			"WEBHOOK_ENABLED": "Ativado",
+			"WEBHOOK_DISABLED": "Desativado",
+			"WEBHOOK_TYPE": "Tipo",
+			"WEBHOOK_QUEUE": "Fila",
+			"TEMPLATE_PUBLIC": "Público",
+			"TEMPLATE_PUBLISHED": "Publicado",
+			"REFRESH_CONNECTIONS": "Atualizar conexões",
+			"CONFIGURATION_TITLE": "Configuração do Make.com",
+			"ZONE_LABEL": "Zona",
+			"ZONE_HINT": "Selecione a zona que corresponde à sua conta Make.com (ex. us2.make.com)",
+			"ORGANIZATION_LABEL": "Organização Make.com",
+			"LOADING_ORGANIZATIONS": "Carregando organizações...",
+			"NO_ORGANIZATIONS": "Nenhuma organização encontrada",
+			"TEAM_LABEL": "Equipe Make.com",
+			"LOADING_TEAMS": "Carregando equipes...",
+			"NO_TEAMS": "Nenhuma equipe encontrada",
+			"CONNECTED_TO": "Conectado a {{org}} / {{team}} em {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "Configurações do Webhook",
+			"CONNECTIONS": "Conexões",
+			"TEMPLATES": "Modelos",
 			"SETTINGS": "Configurações",
-			"ERRORS": {
-				"INVALID_FORM": "Por favor, preencha todos os campos obrigatórios",
-				"START_AUTHORIZATION": "Por favor, inicie o processo de autorização"
+			"CONNECT_TO_MAKE_COM": "Conectar ao Make.com",
+			"CONNECT_INFO": "Clique no botão abaixo para conectar sua conta Make.com. Você será redirecionado para o Make.com para autorizar a integração.",
+			"NO_SCENARIOS": "Nenhum cenário encontrado. Crie cenários no seu painel Make.com.",
+			"NO_HOOKS": "Nenhum webhook encontrado. Crie webhooks no seu painel Make.com.",
+			"NO_CONNECTIONS": "Nenhuma conexão encontrada. Crie conexões no seu painel Make.com.",
+			"NO_TEMPLATES": "Nenhum modelo encontrado.",
+			"TEST_CONNECTION": "Testar conexão",
+			"CONNECTION": {
+				"ACCOUNT": "Conta: {{value}}",
+				"TYPE": "Tipo: {{value}}",
+				"PACKAGE": "Pacote: {{value}}",
+				"EXPIRES": "Expira: {{value}}"
 			},
-			"CLIENT_ID": "ID do Cliente",
-			"CLIENT_SECRET": "Segredo do Cliente",
-			"NEXT_STEP_INFO": "Após a autorização, você será redirecionado para o Make.com para completar a configuração da integração"
+			"ERRORS": {
+				"INVALID_FORM": "Por favor preencha todos os campos obrigatórios",
+				"START_AUTHORIZATION": "Falha ao iniciar o processo de autorização",
+				"NO_ORGANIZATION": "Por favor selecione uma organização primeiro",
+				"LOAD_SETTINGS": "Falha ao carregar as configurações do Make.com",
+				"SAVE_SETTINGS": "Falha ao salvar as configurações do Make.com",
+				"LOAD_SETUP_STATUS": "Falha ao carregar o status de configuração",
+				"LOAD_SCENARIOS": "Falha ao carregar cenários",
+				"TOGGLE_SCENARIO": "Falha ao alternar cenário",
+				"RUN_SCENARIO": "Falha ao executar cenário",
+				"LOAD_CONNECTIONS": "Falha ao carregar conexões",
+				"TEST_CONNECTION": "Falha ao testar conexão",
+				"LOAD_WEBHOOKS": "Falha ao carregar webhooks",
+				"TOGGLE_WEBHOOK": "Falha ao alternar webhook",
+				"PING_WEBHOOK": "Falha ao testar webhook",
+				"SET_ZONE": "Falha ao definir zona",
+				"LOAD_ORGANIZATIONS": "Falha ao carregar organizações",
+				"SELECT_ORGANIZATION": "Falha ao selecionar organização",
+				"LOAD_TEAMS": "Falha ao carregar equipes",
+				"SELECT_TEAM": "Falha ao selecionar equipe",
+				"LOAD_TEMPLATES": "Falha ao carregar modelos",
+				"REQUEST_TIMEOUT": "A solicitação expirou. Por favor, tente novamente."
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Configurações do Make.com salvas com sucesso",
+				"SCENARIO_ACTIVATED": "Cenário ativado",
+				"SCENARIO_DEACTIVATED": "Cenário desativado",
+				"SCENARIO_EXECUTED": "Cenário executado",
+				"CONNECTION_VALID": "A conexão \"{{name}}\" é válida",
+				"WEBHOOK_TOGGLED_ON": "Webhook ativado",
+				"WEBHOOK_TOGGLED_OFF": "Webhook desativado",
+				"WEBHOOK_PINGED": "Webhook \"{{name}}\" testado com sucesso",
+				"ZONE_SET": "Zona definida como {{zone}}",
+				"ORGANIZATION_SELECTED": "Organização \"{{name}}\" selecionada",
+				"TEAM_SELECTED": "Equipe \"{{name}}\" selecionada"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Por favor autorize o Make.com primeiro. Vá para a aba Configurações para conectar sua conta.",
+				"ZONE": "Por favor selecione sua zona do Make.com na aba Configurações.",
+				"ORGANIZATION": "Por favor selecione sua organização do Make.com na aba Configurações.",
+				"TEAM": "Por favor selecione sua equipe do Make.com na aba Configurações."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1316,26 +1394,32 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "ID do Cliente",
-			"CLIENT_SECRET": "Segredo do Cliente",
-			"NEXT_STEP_INFO": "Após a autorização, você será redirecionado para o Zapier para completar a configuração da integração",
+			"CONNECT_TO_ZAPIER": "Conectar ao Zapier",
+			"CONNECT_INFO": "Clique no botão abaixo para conectar sua conta Zapier. Você será redirecionado ao Zapier para autorizar a integração.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Falha ao carregar configurações do Zapier",
 				"SAVE_SETTINGS": "Falha ao salvar configurações do Zapier",
 				"INVALID_FORM": "Por favor, preencha todos os campos obrigatórios",
-				"MISSING_CREDENTIALS": "Credenciais do cliente ausentes",
+				"MISSING_CREDENTIALS": "A integração do Zapier não está configurada no servidor",
+				"NO_ORGANIZATION": "Por favor, selecione uma organização primeiro",
 				"NO_ACCESS_TOKEN": "Nenhum token de acesso disponível",
 				"LOAD_WEBHOOKS": "Falha ao carregar webhooks",
 				"DELETE_WEBHOOK": "Falha ao excluir webhook",
 				"LOAD_ACTIONS": "Falha ao carregar ações",
 				"LOAD_TRIGGERS": "Falha ao carregar gatilhos",
+				"LOAD_ZAPS": "Falha ao carregar zaps",
+				"LOAD_ZAP_TEMPLATES": "Falha ao carregar modelos de zap",
+				"CREATE_ZAP": "Falha ao criar zap",
+				"ZAP_TITLE_REQUIRED": "Por favor, forneça um título para o novo zap",
+				"NO_INTEGRATION_ID": "Nenhum ID de integração do Zapier foi fornecido",
 				"START_AUTHORIZATION": "Por favor, inicie o processo de autorização",
 				"INVALID_TOKEN": "Token inválido fornecido",
 				"TOKEN_NOT_FOUND": "Token não encontrado"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Configurações do Zapier salvas com sucesso",
-				"DELETE_WEBHOOK": "Webhook excluído com sucesso"
+				"DELETE_WEBHOOK": "Webhook excluído com sucesso",
+				"CREATE_ZAP": "Zap criado com sucesso"
 			},
 			"TAB": {
 				"TRIGGERS": "Gatilhos",
@@ -1377,6 +1461,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "Nenhum webhook configurado"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "Nenhum zap disponível",
+				"CREATE": "Criar Zap",
+				"SUBMIT": "Criar",
+				"ADD_STEP": "Adicionar etapa",
+				"OPEN_EDITOR": "Abrir no Zapier",
+				"ENABLED": "Habilitado",
+				"DISABLED": "Desabilitado",
+				"TITLE_PLACEHOLDER": "Insira um título para o novo Zap",
+				"FIELDS": {
+					"TITLE": "Título",
+					"STEPS": "Etapas",
+					"STEP": "Etapa",
+					"STEP_TITLE": "Título da etapa",
+					"ACTION": "Ação",
+					"AUTHENTICATION": "Autenticação",
+					"INPUTS": "Entradas (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1609,7 +1713,17 @@
 		"FILTER_INTEGRATIONS": "Integrações de filtro",
 		"SEARCH_INTEGRATIONS": "Integrações de busca",
 		"PAID": "Pago",
-		"INTEGRATION": "Integração"
+		"INTEGRATION": "Integração",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Processando autorização do Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Autorização do Make.com falhou",
+				"INVALID_CALLBACK": "Parâmetros de retorno inválidos"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Autorização do Make.com concluída com sucesso"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Contabilidade",
@@ -5480,5 +5594,80 @@
 		"DESCRIPTION": "O servidor {{companySite}} está atualmente inacessível. Isso pode ser devido a manutenção programada ou tempo de inatividade inesperado.",
 		"CONNECTING": "Tentando reconexão automaticamente...",
 		"HINT": "Status: Tentando estabelecer conexão com os servidores {{companySite}}. Código de erro: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "Clientes OAuth",
+		"SUBTITLE": "Registre e gerencie aplicativos de terceiros que podem solicitar acesso ao Ever Gauzy em nome de seus usuários.",
+		"STATUS": {
+			"ACTIVE": "Ativo",
+			"INACTIVE": "Inativo"
+		},
+		"EMPTY": {
+			"TITLE": "Nenhum cliente OAuth registrado ainda.",
+			"HINT": "Clique em \"Registrar aplicativo\" para adicionar sua primeira integração (por exemplo, Activepieces, n8n, Make.com)."
+		},
+		"TABLE": {
+			"NAME": "Nome",
+			"CLIENT_ID": "ID do cliente",
+			"TYPE": "Tipo",
+			"STATUS": "Status",
+			"REDIRECT_URIS": "URIs de redirecionamento",
+			"ACTIONS": "Ações"
+		},
+		"ACTIONS": {
+			"REGISTER": "Registrar aplicativo",
+			"EDIT": "Editar",
+			"ROTATE_SECRET": "Rotacionar segredo",
+			"DELETE": "Revogar"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "Registrar um novo cliente OAuth",
+			"EDIT_TITLE": "Editar cliente OAuth"
+		},
+		"FORM": {
+			"NAME": "Nome do aplicativo",
+			"NAME_PLACEHOLDER": "por exemplo, Activepieces",
+			"DESCRIPTION": "Descrição",
+			"DESCRIPTION_PLACEHOLDER": "Breve descrição exibida na página de consentimento",
+			"CLIENT_TYPE": "Tipo de cliente",
+			"CLIENT_TYPE_IMMUTABLE": "O tipo de cliente não pode ser alterado após a criação.",
+			"REDIRECT_URIS": "URIs de redirecionamento",
+			"REDIRECT_URI_PLACEHOLDER": "https://seu-app.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "Adicionar URI de redirecionamento",
+			"ALLOWED_SCOPES": "Escopos permitidos",
+			"SCOPE_PLACEHOLDER": "por exemplo, offline_access",
+			"ADD_SCOPE": "Adicionar escopo",
+			"GRANT_TYPES": "Tipos de concessão",
+			"PKCE_REQUIRED": "Exigir PKCE (cliente público)",
+			"ACCESS_TTL": "TTL do token de acesso (segundos)",
+			"REFRESH_TTL": "TTL do token de atualização (segundos)"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Salve seu segredo de cliente",
+			"WARNING": "Esta é a única vez que o segredo do cliente será exibido. Copie-o agora e armazene-o em sua integração de terceiros - a rotação é a única maneira de se recuperar de um segredo perdido.",
+			"CLIENT_ID": "ID do cliente",
+			"CLIENT_SECRET": "Segredo do cliente",
+			"ACKNOWLEDGE": "Copiei e armazenei com segurança o segredo do cliente.",
+			"CLOSE": "Já salvei, fechar",
+			"COPIED_CLIENT_ID": "ID do cliente copiado para a área de transferência",
+			"COPIED_SECRET": "Segredo do cliente copiado para a área de transferência"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "Rotacionar o segredo do cliente para \"{{name}}\"? O segredo anterior parará de funcionar imediatamente para novas trocas de tokens.",
+			"DELETE": "Revogar \"{{name}}\"? Isso impedirá imediatamente que o aplicativo de terceiros obtenha novos tokens."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" registrado",
+			"UPDATED": "Cliente OAuth atualizado",
+			"SECRET_ROTATED": "Segredo do cliente rotacionado",
+			"DELETED": "Cliente OAuth revogado"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Falha ao carregar clientes OAuth",
+			"CREATE_FAILED": "Falha ao registrar cliente OAuth",
+			"UPDATE_FAILED": "Falha ao atualizar cliente OAuth",
+			"ROTATE_FAILED": "Falha ao rotacionar segredo do cliente",
+			"DELETE_FAILED": "Falha ao revogar cliente OAuth"
+		}
 	}
 }

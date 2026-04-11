@@ -1169,6 +1169,7 @@
 		"PAYMENT_GATEWAYS": "Платежни Портали",
 		"SMS_GATEWAYS": "SMS Портали",
 		"CUSTOM_SMTP": "Персонализиран SMTP",
+		"OAUTH_CLIENTS": "OAuth клиенти",
 		"INVENTORY": "Инвентар",
 		"SALES": "Продажби",
 		"PAYMENTS": "Плащания",
@@ -1326,16 +1327,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Сценарии",
-			"EXECUTIONS": "Изпълнения",
-			"HISTORY": "История",
+			"WEBHOOKS": "Уебхукове",
+			"WEBHOOKS_REFRESH": "Опресняване на уебхукове",
+			"WEBHOOK_ENABLE": "Активиране на уебхук",
+			"WEBHOOK_DISABLE": "Деактивиране на уебхук",
+			"WEBHOOK_PING": "Тест на уебхук",
+			"SCENARIO_ACTIVE": "Активен",
+			"SCENARIO_INACTIVE": "Неактивен",
+			"SCENARIO_LAST_EDITED": "Последна редакция: {{value}}",
+			"SCENARIO_DISABLE": "Деактивиране на сценарий",
+			"SCENARIO_ENABLE": "Активиране на сценарий",
+			"SCENARIO_RUN_ONCE": "Еднократно изпълнение на сценарий",
+			"WEBHOOK_ENABLED": "Активиран",
+			"WEBHOOK_DISABLED": "Деактивиран",
+			"WEBHOOK_TYPE": "Тип",
+			"WEBHOOK_QUEUE": "Опашка",
+			"TEMPLATE_PUBLIC": "Публичен",
+			"TEMPLATE_PUBLISHED": "Публикуван",
+			"REFRESH_CONNECTIONS": "Опресняване на връзките",
+			"CONFIGURATION_TITLE": "Make.com Конфигурация",
+			"ZONE_LABEL": "Зона",
+			"ZONE_HINT": "Изберете зоната, която съвпада с вашия Make.com акаунт (напр. us2.make.com)",
+			"ORGANIZATION_LABEL": "Make.com Организация",
+			"LOADING_ORGANIZATIONS": "Зареждане на организации...",
+			"NO_ORGANIZATIONS": "Няма намерени организации",
+			"TEAM_LABEL": "Make.com Екип",
+			"LOADING_TEAMS": "Зареждане на екипи...",
+			"NO_TEAMS": "Няма намерени екипи",
+			"CONNECTED_TO": "Свързан с {{org}} / {{team}} в {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "Настройки на уебхук",
+			"CONNECTIONS": "Връзки",
+			"TEMPLATES": "Шаблони",
 			"SETTINGS": "Настройки",
+			"CONNECT_TO_MAKE_COM": "Свързване с Make.com",
+			"CONNECT_INFO": "Кликнете бутона по-долу, за да свържете акаунта си в Make.com. Ще бъдете пренасочени към Make.com за оторизация на интеграцията.",
+			"NO_SCENARIOS": "Няма намерени сценарии. Създайте сценарии в таблото на Make.com.",
+			"NO_HOOKS": "Няма намерени уебхукове. Създайте уебхукове в таблото на Make.com.",
+			"NO_CONNECTIONS": "Няма намерени връзки. Създайте връзки в таблото на Make.com.",
+			"NO_TEMPLATES": "Няма намерени шаблони.",
+			"TEST_CONNECTION": "Тест на връзката",
+			"CONNECTION": {
+				"ACCOUNT": "Акаунт: {{value}}",
+				"TYPE": "Тип: {{value}}",
+				"PACKAGE": "Пакет: {{value}}",
+				"EXPIRES": "Изтича: {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "Моля, попълнете всички задължителни полета",
-				"START_AUTHORIZATION": "Моля, започнете процеса на оторизация"
+				"START_AUTHORIZATION": "Неуспешно стартиране на процеса на оторизация",
+				"NO_ORGANIZATION": "Моля, първо изберете организация",
+				"LOAD_SETTINGS": "Неуспешно зареждане на настройките на Make.com",
+				"SAVE_SETTINGS": "Неуспешно запазване на настройките на Make.com",
+				"LOAD_SETUP_STATUS": "Неуспешно зареждане на състоянието на настройката",
+				"LOAD_SCENARIOS": "Неуспешно зареждане на сценарии",
+				"TOGGLE_SCENARIO": "Неуспешно превключване на сценарий",
+				"RUN_SCENARIO": "Неуспешно изпълнение на сценарий",
+				"LOAD_CONNECTIONS": "Неуспешно зареждане на връзки",
+				"TEST_CONNECTION": "Неуспешно тестване на връзка",
+				"LOAD_WEBHOOKS": "Неуспешно зареждане на уебхукове",
+				"TOGGLE_WEBHOOK": "Неуспешно превключване на уебхук",
+				"PING_WEBHOOK": "Неуспешно тестване на уебхук",
+				"SET_ZONE": "Неуспешно задаване на зона",
+				"LOAD_ORGANIZATIONS": "Неуспешно зареждане на организации",
+				"SELECT_ORGANIZATION": "Неуспешно избиране на организация",
+				"LOAD_TEAMS": "Неуспешно зареждане на екипи",
+				"SELECT_TEAM": "Неуспешно избиране на екип",
+				"LOAD_TEMPLATES": "Неуспешно зареждане на шаблони",
+				"REQUEST_TIMEOUT": "Времето за заявка изтече. Моля, опитайте отново."
 			},
-			"CLIENT_ID": "ID на клиент",
-			"CLIENT_SECRET": "Тайна на клиент",
-			"NEXT_STEP_INFO": "След оторизацията ще бъдете пренасочени към Make.com, за да завършите настройката на интеграцията"
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Настройките на Make.com са запазени успешно",
+				"SCENARIO_ACTIVATED": "Сценарият е активиран",
+				"SCENARIO_DEACTIVATED": "Сценарият е деактивиран",
+				"SCENARIO_EXECUTED": "Сценарият е изпълнен",
+				"CONNECTION_VALID": "Връзката \"{{name}}\" е валидна",
+				"WEBHOOK_TOGGLED_ON": "Уебхукът е активиран",
+				"WEBHOOK_TOGGLED_OFF": "Уебхукът е деактивиран",
+				"WEBHOOK_PINGED": "Уебхук \"{{name}}\" е тестван успешно",
+				"ZONE_SET": "Зоната е зададена на {{zone}}",
+				"ORGANIZATION_SELECTED": "Организация \"{{name}}\" е избрана",
+				"TEAM_SELECTED": "Екип \"{{name}}\" е избран"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Моля, първо оторизирайте Make.com. Отидете в раздел Настройки, за да свържете акаунта си.",
+				"ZONE": "Моля, изберете вашата зона Make.com в раздел Настройки.",
+				"ORGANIZATION": "Моля, изберете вашата организация Make.com в раздел Настройки.",
+				"TEAM": "Моля, изберете вашия екип Make.com в раздел Настройки."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1348,26 +1426,32 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "ID на клиент",
-			"CLIENT_SECRET": "Тайна на клиент",
-			"NEXT_STEP_INFO": "След оторизацията ще бъдете пренасочени към Zapier, за да завършите настройката на интеграцията",
+			"CONNECT_TO_ZAPIER": "Свързване със Zapier",
+			"CONNECT_INFO": "Натиснете бутона по-долу, за да свържете вашия акаунт в Zapier. Ще бъдете пренасочени към Zapier за оторизация на интеграцията.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Неуспешно зареждане на настройките на Zapier",
 				"SAVE_SETTINGS": "Неуспешно запазване на настройките на Zapier",
 				"INVALID_FORM": "Моля, попълнете всички задължителни полета",
 				"MISSING_CREDENTIALS": "Липсват идентификационни данни на клиента",
+				"NO_ORGANIZATION": "Моля, първо изберете организация",
 				"NO_ACCESS_TOKEN": "Няма достъпен токен за достъп",
 				"LOAD_WEBHOOKS": "Неуспешно зареждане на уебхукове",
 				"DELETE_WEBHOOK": "Неуспешно изтриване на уебхук",
 				"LOAD_ACTIONS": "Неуспешно зареждане на действия",
 				"LOAD_TRIGGERS": "Неуспешно зареждане на тригери",
+				"LOAD_ZAPS": "Неуспешно зареждане на zap-ове",
+				"LOAD_ZAP_TEMPLATES": "Неуспешно зареждане на шаблони за zap",
+				"CREATE_ZAP": "Неуспешно създаване на zap",
+				"ZAP_TITLE_REQUIRED": "Моля, предоставете заглавие за новия zap",
+				"NO_INTEGRATION_ID": "Не е предоставен идентификатор за интеграция на Zapier",
 				"START_AUTHORIZATION": "Моля, започнете процеса на оторизация",
 				"INVALID_TOKEN": "Предоставен е невалиден токен",
 				"TOKEN_NOT_FOUND": "Токенът не е намерен"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Настройките на Zapier са запазени успешно",
-				"DELETE_WEBHOOK": "Уебхукът е изтрит успешно"
+				"DELETE_WEBHOOK": "Уебхукът е изтрит успешно",
+				"CREATE_ZAP": "Zap-ът е създаден успешно"
 			},
 			"TAB": {
 				"TRIGGERS": "Тригери",
@@ -1409,6 +1493,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Уебхукове",
 				"NO_WEBHOOKS": "Няма конфигурирани уебхукове"
+			},
+			"ZAPS": {
+				"TITLE": "Запс",
+				"NO_ZAPS": "Няма налични запс",
+				"CREATE": "Създай Запс",
+				"SUBMIT": "Създай",
+				"ADD_STEP": "Добави стъпка",
+				"OPEN_EDITOR": "Отвори в Zapier",
+				"ENABLED": "Активирано",
+				"DISABLED": "Деактивирано",
+				"TITLE_PLACEHOLDER": "Въведете заглавие за новия Запс",
+				"FIELDS": {
+					"TITLE": "Заглавие",
+					"STEPS": "Стъпки",
+					"STEP": "Стъпка",
+					"STEP_TITLE": "Заглавие на стъпката",
+					"ACTION": "Действие",
+					"AUTHENTICATION": "Удостоверяване",
+					"INPUTS": "Входни данни (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1687,7 +1791,17 @@
 			"INTEGRATION_ADDED": "Интеграцията с '{{provider}}' беше добавена към '{{organization}}'"
 		},
 		"ENABLED": "Активирано",
-		"DISABLED": "Деактивирано"
+		"DISABLED": "Деактивирано",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Обработка на оторизацията на Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Оторизацията на Make.com е неуспешна",
+				"INVALID_CALLBACK": "Невалидни параметри за обратно извикване"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Оторизацията на Make.com е завършена успешно"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Счетоводство",
@@ -5507,5 +5621,80 @@
 		"DESCRIPTION": "Сървърът на {{companySite}} в момента е недостъпен. Това може да се дължи на планирана поддръжка или неочакван престой.",
 		"CONNECTING": "Автоматично опит за повторно свързване...",
 		"HINT": "Статус: Опит за установяване на връзка със сървърите на {{companySite}}. Код на грешката: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "OAuth клиенти",
+		"SUBTITLE": "Регистриране и управление на приложения на трети страни, които могат да поискат достъп до Ever Gauzy от името на вашите потребители.",
+		"STATUS": {
+			"ACTIVE": "Активен",
+			"INACTIVE": "Неактивен"
+		},
+		"EMPTY": {
+			"TITLE": "Все още няма регистрирани OAuth клиенти.",
+			"HINT": "Кликнете \"Регистриране на приложение\", за да добавите първата си интеграция (напр. Activepieces, n8n, Make.com)."
+		},
+		"TABLE": {
+			"NAME": "Име",
+			"CLIENT_ID": "Клиентски ID",
+			"TYPE": "Тип",
+			"STATUS": "Статус",
+			"REDIRECT_URIS": "URI за пренасочване",
+			"ACTIONS": "Действия"
+		},
+		"ACTIONS": {
+			"REGISTER": "Регистриране на приложение",
+			"EDIT": "Редактиране",
+			"ROTATE_SECRET": "Ротиране на тайна",
+			"DELETE": "Отмяна"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "Регистриране на нов OAuth клиент",
+			"EDIT_TITLE": "Редактиране на OAuth клиент"
+		},
+		"FORM": {
+			"NAME": "Име на приложението",
+			"NAME_PLACEHOLDER": "напр. Activepieces",
+			"DESCRIPTION": "Описание",
+			"DESCRIPTION_PLACEHOLDER": "Кратко описание, показано на страницата за съгласие",
+			"CLIENT_TYPE": "Тип клиент",
+			"CLIENT_TYPE_IMMUTABLE": "Типът клиент не може да бъде променен след създаване.",
+			"REDIRECT_URIS": "URI за пренасочване",
+			"REDIRECT_URI_PLACEHOLDER": "https://your-app.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "Добавяне на URI за пренасочване",
+			"ALLOWED_SCOPES": "Позволени обхвати",
+			"SCOPE_PLACEHOLDER": "напр. offline_access",
+			"ADD_SCOPE": "Добавяне на обхват",
+			"GRANT_TYPES": "Типове предоставяне",
+			"PKCE_REQUIRED": "Изискване на PKCE (отложено налагане)",
+			"ACCESS_TTL": "TTL на access токен (секунди)",
+			"REFRESH_TTL": "TTL на refresh токен (секунди)"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Запазете клиентската тайна",
+			"WARNING": "Това е единственият път, когато клиентската тайна ще бъде показана. Копирайте я сега и я съхранявайте във вашата интеграция с трета страна – ротацията е единственият начин за възстановяване при загубена тайна.",
+			"CLIENT_ID": "Клиентски ID",
+			"CLIENT_SECRET": "Клиентска тайна",
+			"ACKNOWLEDGE": "Копирах и съхраних безопасно клиентската тайна.",
+			"CLOSE": "Запазих я, затвори",
+			"COPIED_CLIENT_ID": "Клиентският ID е копиран в клипборда",
+			"COPIED_SECRET": "Клиентската тайна е копирана в клипборда"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "Ротиране на клиентската тайна за \"{{name}}\"? Предишната тайна ще спре да работи незабавно за нови обмена на токени.",
+			"DELETE": "Отмяна на \"{{name}}\"? Това ще предотврати незабавно получаването на нови токени от приложението на трета страна."
+		},
+		"TOASTS": {
+			"CREATED": "Регистриран \"{{name}}\"",
+			"UPDATED": "OAuth клиентът е обновен",
+			"SECRET_ROTATED": "Клиентската тайна е ротирана",
+			"DELETED": "OAuth клиентът е отменен"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Неуспешно зареждане на OAuth клиенти",
+			"CREATE_FAILED": "Неуспешно регистриране на OAuth клиент",
+			"UPDATE_FAILED": "Неуспешно обновяване на OAuth клиент",
+			"ROTATE_FAILED": "Неуспешно ротиране на клиентската тайна",
+			"DELETE_FAILED": "Неуспешно отменяне на OAuth клиент"
+		}
 	}
 }
