@@ -47,6 +47,9 @@ import { pluginListeners } from './plugin-system';
 import { AkitaStorageHandler } from './storage/akita-storage.handler';
 import { RemoteTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
+import { ActivityWindow } from '@gauzy/desktop-activity';
+import { title } from 'node:process';
+import { DesktopPermissionHandler } from './utilities/desktop-permission-handler';
 
 // Lazily initialized — construction is deferred until after app.ready to avoid
 // native-module loads (better-sqlite3, uiohook-napi) and Electron API calls
@@ -59,6 +62,7 @@ let _timerService: TimerService | null = null;
 let _windowManager: WindowManager | null = null;
 let _appWindowManager: AppWindowManager | null = null;
 let _screenshotService: ScreenshotService | null = null;
+let _activeWindow: ActivityWindow | null = null;
 
 function getTimerHandler(): TimerHandler {
 	if (!_timerHandler) _timerHandler = new TimerHandler();
@@ -91,6 +95,11 @@ function getAppWindowManager(): AppWindowManager {
 function getScreenshotService(): ScreenshotService {
 	if (!_screenshotService) _screenshotService = new ScreenshotService();
 	return _screenshotService;
+}
+
+function getActiveWindow(): ActivityWindow {
+	if (!_activeWindow) _activeWindow = ActivityWindow.getInstance();
+	return _activeWindow;
 }
 
 export function setupAkitaStorageHandler() {
@@ -456,10 +465,11 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	ipcMain.handle('CHECK_MACOS_PERMISSIONS', () => {
 		if (process.platform !== 'darwin') {
-			return { screen: 'granted' };
+			return { screen: 'granted', accessibility: 'granted' };
 		}
 		return {
-			screen: systemPreferences.getMediaAccessStatus('screen') // 'granted'|'denied'|'not-determined'|'restricted'
+			screen: systemPreferences.getMediaAccessStatus('screen'), // 'granted'|'denied'|'not-determined'|'restricted'
+			accessibility: systemPreferences.isTrustedAccessibilityClient(false) ? 'granted' : 'denied'
 		};
 	});
 
@@ -481,9 +491,34 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		}
 	});
 
+	ipcMain.handle('TEST_GET_ACTIVE_WINDOW', async () => {
+		if (process.platform === 'darwin' && !systemPreferences.isTrustedAccessibilityClient(false)) {
+			return { success: false, reason: 'unauthorized' }
+		}
+		try {
+			const windowList = await getActiveWindow().getActiveWindow({
+				accessibilityPermission: false,
+				screenRecordingPermission: false
+			});
+			return {
+				success: true,
+				window: {
+					title: windowList?.title,
+					appName: windowList?.owner?.name,
+					bundleId: windowList?.owner?.bundleId
+				}
+			}
+		} catch (error) {
+			return {
+				success: false,
+				reason: error.message
+			}
+		}
+	});
+
 
 	function getAppId() {
-		return 'com.ever.gauzydesktoptimer';
+		return 'com.github.Electron';
 	}
 
 	ipcMain.handle('RESET_SCREEN_PERMISSION', async () => {
@@ -492,6 +527,11 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			const { execSync } = require('child_process');
 			const bundleId = getAppId();
 			execSync(`tccutil reset ScreenCapture ${bundleId}`);
+			/* Re adding the app to permission */
+			await desktopCapturer.getSources({
+				types: ['screen'],
+				thumbnailSize: { width: 320, height: 200 }
+			});
 			return { success: true };
 		} catch (err) {
 			log.error('Failed to reset TCC permission', err);
@@ -502,6 +542,29 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.handle('OPEN_PRIVACY_SETTINGS', () => {
 		shell.openExternal(
 			'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture'
+		);
+	});
+
+	ipcMain.handle('RESET_ACCESSIBILITY_PERMISSION', async () => {
+		if (process.platform !== 'darwin') return { success: true };
+		try {
+			const { execSync } = require('child_process');
+			const bundleId = getAppId();
+			execSync(`tccutil reset Accessibility ${bundleId}`);
+			await getActiveWindow().getActiveWindow({
+				screenRecordingPermission: false,
+				accessibilityPermission: true
+			})
+			return { success: true };
+		} catch (err) {
+			log.error('Failed to reset Accessibility TCC permission', err);
+			return { success: false, error: err.message };
+		}
+	});
+
+	ipcMain.handle('OPEN_ACCESSIBILITY_SETTINGS', () => {
+		shell.openExternal(
+			'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'
 		);
 	});
 
@@ -1352,6 +1415,13 @@ export function ipcTimer(
 		} catch (error) {
 			console.error('Failed to update selector:', error);
 		}
+	});
+
+	ipcMain.handle('SHOW_PERMISSION_CONFIRM', () => {
+		const desktopPermissionHandler = DesktopPermissionHandler.getInstance(
+			timeTrackerWindow, windowPath
+		);
+		desktopPermissionHandler.showDialogPermissionCorfirm();
 	});
 }
 

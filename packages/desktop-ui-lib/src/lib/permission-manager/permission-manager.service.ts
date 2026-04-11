@@ -14,9 +14,12 @@ import {
 } from 'rxjs';
 import { ElectronService } from '../electron/services';
 
+type PermissionStatus = 'granted' | 'denied' | 'not-determined' | 'restricted' | 'unknown';
+
 @Injectable({ providedIn: 'root' })
 export class PermissionManagerService {
-    private _status$ = new BehaviorSubject<'granted' | 'denied' | 'not-determined' | 'restricted' | 'unknown'>('unknown');
+    private _status$ = new BehaviorSubject<PermissionStatus>('unknown');
+    private _accessibilityStatus$ = new BehaviorSubject<PermissionStatus>('unknown');
     private _polling$: Subscription | null = null;
 
     public get status$() { return this._status$.asObservable(); }
@@ -24,16 +27,24 @@ export class PermissionManagerService {
         return this._status$.pipe(map(s => s === 'granted'));
     }
 
+    public get accessibilityStatus$() { return this._accessibilityStatus$.asObservable(); }
+    public get isAccessibilityGranted$() {
+        return this._accessibilityStatus$.pipe(map(s => s === 'granted'));
+    }
+
     constructor(private readonly electronService: ElectronService) {}
 
     /** Check once */
     async checkStatus(): Promise<string> {
+		console.log('check status permissions');
         const result = await this.electronService.ipcRenderer.invoke('CHECK_MACOS_PERMISSIONS');
+		console.log('permissions check result', result);
         this._status$.next(result.screen);
+        this._accessibilityStatus$.next(result.accessibility ?? 'unknown');
         return result.screen;
     }
 
-    /** Poll every 2s — auto-stops when granted. Returns observable that emits true when granted */
+    /** Poll every 2s — auto-stops when both permissions granted. Returns observable that emits true when screen is granted */
     startPolling(): Observable<boolean> {
         return interval(2000).pipe(
             switchMap(() => from(this.checkStatus())),
@@ -52,6 +63,12 @@ export class PermissionManagerService {
         return this.electronService.ipcRenderer.invoke('TEST_SCREENSHOT');
     }
 
+	async testGetWindow(): Promise<{ success: boolean; reason?: string; window?: { title?: string; bundleId?: string; appName?: string}}> {
+		return this.electronService.ipcRenderer.invoke('TEST_GET_ACTIVE_WINDOW');
+	}
+
+    // ── Screen Recording ──────────────────────────────────────────────────────
+
     openSystemSettings(): void {
         this.electronService.ipcRenderer.invoke('OPEN_PRIVACY_SETTINGS');
     }
@@ -59,6 +76,18 @@ export class PermissionManagerService {
     async resetPermission(): Promise<{ success: boolean; error?: string }> {
         return this.electronService.ipcRenderer.invoke('RESET_SCREEN_PERMISSION');
     }
+
+    // ── Accessibility ─────────────────────────────────────────────────────────
+
+    openAccessibilitySettings(): void {
+        this.electronService.ipcRenderer.invoke('OPEN_ACCESSIBILITY_SETTINGS');
+    }
+
+    async resetAccessibilityPermission(): Promise<{ success: boolean; error?: string }> {
+        return this.electronService.ipcRenderer.invoke('RESET_ACCESSIBILITY_PERMISSION');
+    }
+
+    // ── Common ────────────────────────────────────────────────────────────────
 
     relaunchApp(): void {
         this.electronService.ipcRenderer.invoke('RELAUNCH_APP');

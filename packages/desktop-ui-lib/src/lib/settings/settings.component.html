@@ -1097,7 +1097,11 @@
 			</div>
 		}
 		@if ((selectedMenu$ | async) === 'TIMER_TRACKER.PERMISSIONS.MENU_LABEL') {
-			<ngx-permission-manager [isDialog]="false"></ngx-permission-manager>
+			<ngx-permission-manager
+				[isDialog]="false"
+				[timerStarted]="appSetting?.timerStarted"
+			>
+			</ngx-permission-manager>
 		}
 		@if ((selectedMenu$ | async) === 'MENU.ABOUT') {
 			<ng-container class="row">

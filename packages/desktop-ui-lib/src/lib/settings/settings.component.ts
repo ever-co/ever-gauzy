@@ -644,11 +644,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				? ['TIMER_TRACKER.SETTINGS.UPDATE', 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS', 'MENU.ABOUT']
 				: [
 					...(allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
+					...(allowScreenshotCapture ? ['TIMER_TRACKER.PERMISSIONS.MENU_LABEL'] : []),
 					'TIMER_TRACKER.TIMER',
 					'TIMER_TRACKER.SETTINGS.UPDATE',
 					'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
-					'MENU.ABOUT',
-					'TIMER_TRACKER.PERMISSIONS.MENU_LABEL'
+					'MENU.ABOUT'
 				];
 			const lastMenu =
 				this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
@@ -759,6 +759,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			}
 			case 'goto_advanced_setting': {
 				this.selectMenu('TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS');
+				break;
+			}
+			case 'goto_permission': {
+				this.selectMenu('TIMER_TRACKER.PERMISSIONS.MENU_LABEL');
 				break;
 			}
 			case 'logout_success': {

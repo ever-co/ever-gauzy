@@ -187,7 +187,7 @@ export class AppWindowManager {
 		}
 	}
 
-	settingShow(nav: 'goto_top_menu' | 'goto_update') {
+	settingShow(nav: 'goto_top_menu' | 'goto_update' | 'goto_permission') {
 		const appSetting = LocalStore.getStore('appSetting');
 		const config = LocalStore.getStore('configs');
 		const auth = LocalStore.getStore('auth');

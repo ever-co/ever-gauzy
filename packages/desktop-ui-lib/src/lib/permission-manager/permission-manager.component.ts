@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, OnDestroy, Optional } from '@angular/core';
 import {
 	AsyncPipe,
+	NgTemplateOutlet
 } from '@angular/common';
 import {
 	NbCardModule,
@@ -12,86 +13,124 @@ import {
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
-	untilDestroyed
+	untilDestroyed, UntilDestroy
 } from '@ngneat/until-destroy';
 import { PermissionManagerService } from './permission-manager.service';
 import { take, filter } from 'rxjs';
+
+@UntilDestroy()
 @Component({
-    selector: 'ngx-permission-manager',
-    templateUrl: './permission-manager.component.html',
-    styleUrls: ['./permission-manager.component.scss'],
-    standalone: true,
-    imports: [
+	selector: 'ngx-permission-manager',
+	templateUrl: './permission-manager.component.html',
+	styleUrls: ['./permission-manager.component.scss'],
+	standalone: true,
+	imports: [
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
 		NbAlertModule,
 		NbSpinnerModule,
 		AsyncPipe,
+		NgTemplateOutlet,
 		TranslatePipe
 	]
 })
 export class PermissionManagerComponent implements OnInit, OnDestroy {
-    /** When true: renders as a dialog with Cancel/Start Anyway buttons */
-    @Input() isDialog = false;
+	/** When true: renders as a dialog with Cancel/Start Anyway buttons */
+	@Input() isDialog = false;
+	@Input() timerStarted = false;
 
-    public status$ = this.permissionService.status$;
-    public isGranted$ = this.permissionService.isGranted$;
-    public thumbnail: string | null = null;
-    public testInProgress = false;
-    public resetInProgress = false;
-    public countdown: number | null = null;
+	// ── Screen Recording ──────────────────────────────────────────────────────
+	public status$ = this.permissionService.status$;
+	public isGranted$ = this.permissionService.isGranted$;
+	public thumbnail: string | null = null;
+	public activeWindow: {
+		title?: string;
+		appName?: string;
+		bundleId?: string;
+	}
+	public testInProgress = false;
+	public resetInProgress = false;
+	public countdown: number | null = null;
 
-    constructor(
-        private readonly permissionService: PermissionManagerService,
-        @Optional() private readonly dialogRef: NbDialogRef<PermissionManagerComponent>
-    ) {}
+	// ── Accessibility ─────────────────────────────────────────────────────────
+	public accessibilityStatus$ = this.permissionService.accessibilityStatus$;
+	public isAccessibilityGranted$ = this.permissionService.isAccessibilityGranted$;
+	public accessibilityResetInProgress = false;
+	public accessibilityCountdown: number | null = null;
 
-    ngOnInit() {
-        // Always check on open
-        this.permissionService.checkStatus();
+	constructor(
+		private readonly permissionService: PermissionManagerService,
+		@Optional() private readonly dialogRef: NbDialogRef<PermissionManagerComponent>
+	) { }
 
-        // Start polling — if granted while open, auto-close dialog
-        this.permissionService.startPolling().pipe(
-            filter(granted => granted && this.isDialog),
-            take(1),
-            untilDestroyed(this)
-        ).subscribe(() => this.dialogRef?.close({ granted: true }));
-    }
+	ngOnInit() {
+		// Always check on open
+		this.permissionService.checkStatus();
 
-    async testScreenshot() {
-        this.testInProgress = true;
-        const result = await this.permissionService.testScreenshot();
-        this.thumbnail = result.success ? result.thumbnail : null;
-        this.testInProgress = false;
-    }
+		// Start polling — if screen recording granted while open, auto-close dialog
+		this.startPolling();
 
-    openSystemSettings() {
-        this.permissionService.openSystemSettings();
-    }
+	}
 
-    async resetAndRelaunch() {
-        this.resetInProgress = true;
-        const result = await this.permissionService.resetPermission();
-        if (result.success) {
-            // Countdown 3s then relaunch
-            this.countdown = 3;
-            const timer = setInterval(() => {
-                this.countdown--;
-                if (this.countdown <= 0) {
-                    clearInterval(timer);
-                    this.permissionService.relaunchApp();
-                }
-            }, 1000);
-        }
-        this.resetInProgress = false;
-    }
+	startPolling() {
+		this.permissionService.startPolling().pipe(
+			filter(granted => granted && this.isDialog),
+			take(1),
+			untilDestroyed(this)
+		).subscribe(() => this.dialogRef?.close({ granted: true }));
+	}
 
-    // Dialog-only actions
-    startAnyway() { this.dialogRef?.close({ startAnyway: true }); }
-    cancel()      { this.dialogRef?.close({ cancelled: true }); }
+	// ── Screen Recording actions ──────────────────────────────────────────────
 
-    ngOnDestroy() {
-        this.permissionService.stopPolling();
-    }
+	async testScreenshot() {
+		this.testInProgress = true;
+		const result = await this.permissionService.testScreenshot();
+		this.thumbnail = result.success ? result.thumbnail : null;
+		this.testInProgress = false;
+	}
+
+	async testGetActiveWindow() {
+		this.testInProgress = true;
+		const result = await this.permissionService.testGetWindow();
+		this.activeWindow = result.success ? result.window ?? null : null;
+		this.testInProgress = false;
+	}
+
+	openSystemSettings() {
+		this.permissionService.openSystemSettings();
+	}
+
+	async resetAndRelaunch() {
+		this.resetInProgress = true;
+		await this.permissionService.resetPermission();
+		this.resetInProgress = false;
+	}
+
+	// ── Accessibility actions ─────────────────────────────────────────────────
+
+	openAccessibilitySettings() {
+		this.permissionService.openAccessibilitySettings();
+	}
+
+	async resetAccessibilityAndRelaunch() {
+		this.accessibilityResetInProgress = true;
+		await this.permissionService.resetAccessibilityPermission();
+		this.accessibilityResetInProgress = false;
+	}
+
+	async relaunchApp() {
+		if (this.timerStarted) {
+			return;
+		}
+		this.permissionService.relaunchApp();
+	}
+
+	// ── Dialog-only actions ───────────────────────────────────────────────────
+	startAnyway() { this.dialogRef?.close({ startAnyway: true }); }
+	cancel() { this.dialogRef?.close({ cancelled: true }); }
+
+	ngOnDestroy() {
+		this.permissionService.stopPolling();
+	}
 }

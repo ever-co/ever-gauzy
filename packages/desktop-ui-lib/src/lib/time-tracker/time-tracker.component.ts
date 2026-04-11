@@ -994,6 +994,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			})
 		);
 
+		this.electronService.ipcRenderer.on('start_timer_anyway', async (_, arg) => {
+			await this.setTimerDetails();
+			await this.toggleStart(true, true, true);
+		});
+
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) =>
 			this._ngZone.run(async () => {
 				// Check if arg is defined and has the quitApp property set to true
@@ -1547,12 +1552,28 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		});
 	}
 
+	async checkPermission() {
+		const permission = await this.electronService.ipcRenderer.invoke('CHECK_MACOS_PERMISSIONS');
+		if (permission?.screen === 'granted') {
+			return true;
+		}
+		await this.electronService.ipcRenderer.invoke('SHOW_PERMISSION_CONFIRM');
+		return false;
+	}
+
 	/*
 		Start/Stop Timer
 		if val is true, we start the timer
 		if val is false, we stop the timer
 	 */
-	async toggleStart(val, onClick = true) {
+	async toggleStart(val: boolean, onClick = true, passed = false) {
+		console.log('val_toggleStart', val, onClick, passed);
+		if (val && onClick && !passed) {
+			const allow = await this.checkPermission();
+			if (!allow) {
+				return;
+			}
+		}
 		// check that user is authorized to track time. If not, we return.
 		if (val && !this.start && !this._passedAllAuthorizations()) return;
 

@@ -127,6 +127,17 @@ export class DesktopActiveWindow extends EventEmitter {
 		}
 	}
 
+	public async triggerAccessibiltyPermission() {
+		try {
+			await this.activityWindow.getActiveWindow({
+				accessibilityPermission: true,
+				screenRecordingPermission: false
+			});
+		} catch (error) {
+			console.error('Failed to get active window');
+		}
+	}
+
 	private get isActivityWatch(): boolean {
 		const project = LocalStore.getStore('project');
 		const setting = LocalStore.getStore('appSetting');

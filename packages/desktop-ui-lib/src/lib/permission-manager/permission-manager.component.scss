@@ -123,3 +123,55 @@
     color: var(--gauzy-text-color-2);
   }
 }
+
+.active-window {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  background: var(--gauzy-card-2);
+  border: 1px solid var(--gauzy-card-3);
+
+  &__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  &__icon {
+    font-size: 16px;
+    color: var(--gauzy-text-color-2);
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gauzy-text-color-2);
+  }
+
+  &__value {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gauzy-text-color-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &--mono {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px;
+      color: var(--gauzy-text-color-2);
+    }
+  }
+}
