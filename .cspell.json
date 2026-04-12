@@ -899,7 +899,8 @@
 		"noninteractive",
 		"NEEDRESTART",
 		"Accessibilty",
-		"tccutil"
+		"tccutil",
+		"systempreferences"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
