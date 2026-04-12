@@ -179,7 +179,9 @@
 		"ADD_MORE_SOURCES": "Weitere Quellen hinzufügen",
 		"REMOVE_FROM_FAVORITES": "Aus Favoriten entfernen",
 		"ADD_TO_FAVORITES": "Zu Favoriten hinzufügen",
-		"UNSELECT_ALL": "Alle abwählen"
+		"UNSELECT_ALL": "Alle abwählen",
+		"START_TIMER_ANYWAY": "Trotzdem starten",
+		"OPEN_SETTING": "Einstellung öffnen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4650,6 +4652,37 @@
 			"PLEASE_HOLD": "Bitte warten...",
 			"SHUTTING_DOWN": "Anwendung wird heruntergefahren",
 			"LOGOUT_IN_PROGRESS": "Abmeldung läuft"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "Systemberechtigungen",
+			"TITLE": "Systemberechtigungen",
+			"DESCRIPTION": "Gauzy benötigt bestimmte macOS-Berechtigungen, um Ihre Arbeit genau zu verfolgen. Überprüfen und verwalten Sie diese hier.",
+			"SCREEN_RECORDING": "Bildschirmaufnahme",
+			"SCREEN_RECORDING_DESC": "Erforderlich, um während Ihrer Arbeitssitzungen automatisch Screenshots zu erstellen.",
+			"STATUS": "Status",
+			"GRANTED": "Erteilt",
+			"DENIED": "Verweigert",
+			"NOT_DETERMINED": "Nicht festgelegt",
+			"RESTRICTED": "Eingeschränkt",
+			"OPEN_SYSTEM_SETTINGS": "Systemeinstellungen öffnen",
+			"TEST_SCREENSHOT": "Screenshot testen",
+			"TEST_GET_ACTIVE_WINDOW": "Zugriff testen",
+			"SCREENSHOT_PREVIEW": "Screenshot-Vorschau",
+			"RESET_PERMISSION": "Zurücksetzen",
+			"RESTARTING": "Neustart in",
+			"DENIED_HINT": "Bildschirmaufnahme wurde verweigert. Klicken Sie auf 'Zurücksetzen', um die Berechtigung zurückzusetzen, oder öffnen Sie die Systemeinstellungen, um sie manuell zu erteilen.",
+			"RELAUNCH": "Neu starten",
+			"RELAUNCH_DESC": "Berechtigung erteilt, aber Bildschirmaufnahme funktioniert noch nicht? Klicken Sie auf Neu starten, um die Änderungen zu übernehmen.",
+			"DIALOG_TITLE": "Berechtigung zur Bildschirmaufnahme erforderlich",
+			"DIALOG_DESC": "Gauzy benötigt die Berechtigung zur Bildschirmaufnahme, um während Ihrer Arbeitssitzung Screenshots zu erstellen. Bitte gewähren Sie den Zugriff, um fortzufahren.",
+			"POLLING_HINT": "Dieser Dialog wird automatisch geschlossen, sobald die Berechtigung erteilt wurde.",
+			"START_ANYWAY": "Ohne Screenshot starten",
+			"ACCESSIBILITY": "Bedienungshilfen",
+			"ACCESSIBILITY_DESC": "Erforderlich, um Tastatur-, Maus- und aktive Fensteraktivitäten während Ihrer Arbeitssitzungen zu verfolgen.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "Bedienungshilfen-Einstellungen",
+			"RESET_ACCESSIBILITY_PERMISSION": "Bedienungshilfen zurücksetzen",
+			"ACCESSIBILITY_DENIED_HINT": "Bedienungshilfen wurden verweigert. Klicken Sie auf 'Bedienungshilfen zurücksetzen', um die Berechtigung zurückzusetzen, oder öffnen Sie die Systemeinstellungen.",
+			"ACTIVE_WINDOW": "Aktives Fenster – Vorschau"
 		}
 	},
 	"SERVER": "Server",
