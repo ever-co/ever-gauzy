@@ -194,7 +194,9 @@
 		"DONE": "Done",
 		"SKIP": "Skip",
 		"UNSELECT_ALL": "Deselect All",
-		"OPEN": "Open"
+		"OPEN": "Open",
+		"START_TIMER_ANYWAY": "Start Anyway",
+		"OPEN_SETTING": "Open Setting"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4746,7 +4748,9 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "We could not determine whether you have unsynced offline data. Removing the database may PERMANENTLY erase unsaved work. If you are unsure, click 'Keep It'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"PERMISSIONS_REQUIRED_MISSING": "Screen Recording Disabled",
+			"PERMISSIONS_REQUIRED_DETAIL": "Screen recording permission has not been granted. Would you like to start the timer without screen capture?"
 		},
 		"NO_LIMIT": "∞ No Limit",
 		"TASK": "Task",

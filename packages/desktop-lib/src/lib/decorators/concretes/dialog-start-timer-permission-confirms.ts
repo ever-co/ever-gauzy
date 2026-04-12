@@ -10,7 +10,7 @@ export class DialogConfirmStartTimerPermission
 		super(dialog);
 		this.options = {
 			...this.options,
-			buttons: [TranslateService.instant('BUTTONS.START_TIMER_ANYWAY'), TranslateService.instant('BUTTONS.PERMISSION_SETTING')],
+			buttons: [TranslateService.instant('BUTTONS.START_TIMER_ANYWAY'), TranslateService.instant('BUTTONS.OPEN_SETTING')],
 			detail: 'Screen record permission not granted, start timer without screen capture'
 		};
 	}

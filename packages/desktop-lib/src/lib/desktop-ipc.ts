@@ -48,7 +48,6 @@ import { AkitaStorageHandler } from './storage/akita-storage.handler';
 import { RemoteTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
 import { ActivityWindow } from '@gauzy/desktop-activity';
-import { title } from 'node:process';
 import { DesktopPermissionHandler } from './utilities/desktop-permission-handler';
 
 // Lazily initialized — construction is deferred until after app.ready to avoid
@@ -133,6 +132,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			log.error(error);
 			return null;
 		}
+	});
+
+	ipcMain.handle('GET_PLATFORM', () => {
+		return process.platform;
 	});
 
 	ipcMain.on('return_time_sheet', async (event, arg) => {
@@ -518,7 +521,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 
 	function getAppId() {
-		return 'com.github.Electron';
+		return process.env.APP_ID || 'com.ever.gauzydesktoptimer';
 	}
 
 	ipcMain.handle('RESET_SCREEN_PERMISSION', async () => {

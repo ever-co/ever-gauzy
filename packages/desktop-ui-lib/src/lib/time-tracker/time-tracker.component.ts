@@ -1568,7 +1568,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	 */
 	async toggleStart(val: boolean, onClick = true, passed = false) {
 		console.log('val_toggleStart', val, onClick, passed);
-		if (val && onClick && !passed) {
+		const platform = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
+		if (val && onClick && !passed && platform === 'darwin') {
 			const allow = await this.checkPermission();
 			if (!allow) {
 				return;

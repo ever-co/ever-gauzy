@@ -34,11 +34,11 @@ export class DesktopPermissionHandler {
 		const dialog = new DialogConfirmStartTimerPermission(
 			new DesktopDialog(
 				process.env.DESCRIPTION,
-				TranslateService.instant('TIMER_TRACKER.DIALOG.READY_INSTALL'),
+				TranslateService.instant('TIMER_TRACKER.DIALOG.PERMISSIONS_REQUIRED_MISSING'),
 				this.timeTrackerWindow
 			)
 		);
-		dialog.options.detail = TranslateService.instant('TIMER_TRACKER.DIALOG.HAS_BEEN_DOWNLOADED');
+		dialog.options.detail = TranslateService.instant('TIMER_TRACKER.DIALOG.PERMISSIONS_REQUIRED_DETAIL');
 		const button = await dialog.show();
 		if (button?.response === 0) {
 			this.timeTrackerWindow.webContents.send('start_timer_anyway');

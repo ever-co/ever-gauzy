@@ -505,6 +505,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	private _isHidden$: BehaviorSubject<boolean>;
 	private _simpleScreenshotNotification$: BehaviorSubject<boolean>;
 	private _timeZoneManager = TimeZoneManager;
+	private platformOS: string;
 
 	constructor(
 		private electronService: ElectronService,
@@ -564,6 +565,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				this.arch = arg;
 			});
 		});
+		this.setPlatform();
 		this.electronService.ipcRenderer.send('get-arch');
 		this.version = this.electronService.remote.app.getVersion();
 		this.isConnectedDatabase$
@@ -588,6 +590,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	async setPlatform() {
+		const platform = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
+		this.platformOS = platform;
 	}
 
 	ngOnDestroy(): void {
@@ -644,7 +651,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				? ['TIMER_TRACKER.SETTINGS.UPDATE', 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS', 'MENU.ABOUT']
 				: [
 					...(allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
-					...(allowScreenshotCapture ? ['TIMER_TRACKER.PERMISSIONS.MENU_LABEL'] : []),
+					...(allowScreenshotCapture && this.platformOS === 'darwin' && this.isDesktopTimer ? ['TIMER_TRACKER.PERMISSIONS.MENU_LABEL'] : []),
 					'TIMER_TRACKER.TIMER',
 					'TIMER_TRACKER.SETTINGS.UPDATE',
 					'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
