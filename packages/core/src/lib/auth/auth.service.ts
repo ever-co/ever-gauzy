@@ -1397,6 +1397,8 @@ export class AuthService extends SocialAuthService {
 					employee = await this.typeOrmEmployeeRepository.findOne({ where: employeeAccessWhere });
 					break;
 				}
+				default:
+					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 			}
 
 			// Create a payload for the JWT token
@@ -2275,11 +2277,8 @@ export class AuthService extends SocialAuthService {
 					employee = await this.typeOrmEmployeeRepository.findOne({ where: employeeWhere, relations: employeeRelations });
 					break;
 				}
-			}
-
-			// Check if the employee is active and not archived
-			if (employee && (!employee.isActive || employee.isArchived)) {
-				throw new UnauthorizedException('Employee account is not active');
+				default:
+					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 			}
 
 			// Determine organization context for tokens
