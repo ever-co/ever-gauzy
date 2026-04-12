@@ -204,11 +204,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	ipcMain.on('failed_upload_screenshot', async (_, arg) => {
 		try {
-			console.log('starting save failed image to local', arg);
 			log.info('Failed upload screenshot image');
 			let activityId: number;
-			if (arg.intervalId) {
-				activityId = arg.intervalId;
+			if (arg?.intervalId) {
+				activityId = arg?.intervalId;
 			} else {
 				const lastInterval = await getIntervalService().findLastInterval();
 				activityId = lastInterval?.id;
