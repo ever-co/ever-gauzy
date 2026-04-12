@@ -27,7 +27,7 @@ export class DesktopPermissionHandler {
 		return DesktopPermissionHandler.instance;
 	}
 
-	async showDialogPermissionCorfirm() {
+	async showDialogPermissionConfirm() {
 		if (this.isShow) {
 			return;
 		}

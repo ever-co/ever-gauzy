@@ -1423,7 +1423,7 @@ export function ipcTimer(
 		const desktopPermissionHandler = DesktopPermissionHandler.getInstance(
 			timeTrackerWindow, windowPath
 		);
-		desktopPermissionHandler.showDialogPermissionCorfirm();
+		desktopPermissionHandler.showDialogPermissionConfirm();
 	});
 }
 
