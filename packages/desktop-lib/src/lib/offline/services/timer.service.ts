@@ -42,8 +42,8 @@ export class TimerService implements ITimerService<TimerTO> {
 		}
 	}
 
-	checkEmptyUpdate(timer: Partial<Timer>) {
-		const keys = Object.keys(timer).filter((key: keyof Timer) => key !== 'id');
+	private checkEmptyUpdate(timer: Partial<Timer>) {
+		const keys = Object.keys(timer.toObject()).filter((key: keyof Timer) => key !== 'id');
 		return keys.length <= 0;
 	}
 

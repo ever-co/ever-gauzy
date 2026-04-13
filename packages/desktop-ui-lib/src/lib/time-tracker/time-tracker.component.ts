@@ -995,8 +995,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('start_timer_anyway', async (_, arg) => {
-			await this.setTimerDetails();
-			await this.toggleStart(true, true, true);
+			this._ngZone.run(async () => {
+				await this.setTimerDetails();
+				await this.toggleStart(true, true, true);
+			})
 		});
 
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) =>
@@ -1567,14 +1569,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if val is false, we stop the timer
 	 */
 	async toggleStart(val: boolean, onClick = true, passed = false) {
-		console.log('val_toggleStart', val, onClick, passed);
-		const platform = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
-		if (val && onClick && !passed && platform === 'darwin') {
-			const allow = await this.checkPermission();
-			if (!allow) {
-				return;
+		try {
+			const platform = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
+			if (val && onClick && !passed && platform === 'darwin') {
+				const allow = await this.checkPermission();
+				if (!allow) {
+					return;
+				}
 			}
+		} catch (error) {
+			this._loggerService.error('Failed to preflight timer start', error);
+			return;
 		}
+
 		// check that user is authorized to track time. If not, we return.
 		if (val && !this.start && !this._passedAllAuthorizations()) return;
 
@@ -2373,7 +2380,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} catch (error) {
 			this._loggerService.error(error);
 			this.electronService.ipcRenderer.send('failed_upload_screenshot', {
-				timeslotId: timeSlotId,
+				timeSlotId,
 				imagePath: b64img,
 				recordedAt: new Date()
 			});

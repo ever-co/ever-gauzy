@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, Optional } from '@angular/core';
+import { Component, input, OnInit, OnDestroy, Optional, ChangeDetectionStrategy } from '@angular/core';
 import {
 	AsyncPipe,
 	NgTemplateOutlet
@@ -24,6 +24,7 @@ import { take, filter } from 'rxjs';
 	templateUrl: './permission-manager.component.html',
 	styleUrls: ['./permission-manager.component.scss'],
 	standalone: true,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		NbCardModule,
 		NbButtonModule,
@@ -37,8 +38,8 @@ import { take, filter } from 'rxjs';
 })
 export class PermissionManagerComponent implements OnInit, OnDestroy {
 	/** When true: renders as a dialog with Cancel/Start Anyway buttons */
-	@Input() isDialog = false;
-	@Input() timerStarted = false;
+	isDialog = input(false);
+	timerStarted = input(false);
 
 	// ── Screen Recording ──────────────────────────────────────────────────────
 	public status$ = this.permissionService.status$;
@@ -48,7 +49,7 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 		title?: string;
 		appName?: string;
 		bundleId?: string;
-	}
+	};
 	public testInProgress = false;
 	public resetInProgress = false;
 	public countdown: number | null = null;
@@ -75,7 +76,7 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 
 	startPolling() {
 		this.permissionService.startPolling().pipe(
-			filter(granted => granted && this.isDialog),
+			filter(granted => granted && this.isDialog()),
 			take(1),
 			untilDestroyed(this)
 		).subscribe(() => this.dialogRef?.close({ granted: true }));
@@ -120,7 +121,7 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 	}
 
 	async relaunchApp() {
-		if (this.timerStarted) {
+		if (this.timerStarted()) {
 			return;
 		}
 		this.permissionService.relaunchApp();

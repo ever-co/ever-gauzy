@@ -1,23 +1,3 @@
-.gap-2 {
-  gap: 0.5rem;
-}
-
-.mb-0 {
-  margin-bottom: 0;
-}
-
-.mb-1 {
-  margin-bottom: 0.25rem;
-}
-
-.mt-2 {
-  margin-top: 0.5rem;
-}
-
-.mt-3 {
-  margin-top: 1rem;
-}
-
 .screenshot-preview {
   border-radius: var(--border-radius);
   overflow: hidden;
@@ -128,7 +108,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
   border-radius: var(--border-radius);
   background: var(--gauzy-card-2);
   border: 1px solid var(--gauzy-card-3);
@@ -136,13 +116,13 @@
   &__row {
     display: flex;
     align-items: flex-start;
-    gap: 0.6rem;
+    gap: 0.5rem;
   }
 
   &__icon {
     font-size: 16px;
     color: var(--gauzy-text-color-2);
-    margin-top: 2px;
+    margin-top: 0.25rem;
     flex-shrink: 0;
   }
 

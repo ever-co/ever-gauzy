@@ -49,6 +49,7 @@ import { RemoteTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
 import { ActivityWindow } from '@gauzy/desktop-activity';
 import { DesktopPermissionHandler } from './utilities/desktop-permission-handler';
+import { runTccutil, getAppId } from './utilities/util';
 
 // Lazily initialized — construction is deferred until after app.ready to avoid
 // native-module loads (better-sqlite3, uiohook-napi) and Electron API calls
@@ -212,11 +213,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 				const lastInterval = await getIntervalService().findLastInterval();
 				activityId = lastInterval?.id;
 			}
-			console.log('lastInterval', activityId);
 
 			if (activityId) {
 				const screenshotImage = {
-					timeslotId: arg?.timeSlotId,
+					timeSlotId: arg?.timeSlotId,
 					imagePath: arg?.imagePath,
 					synced: false,
 					activityId,
@@ -518,17 +518,11 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		}
 	});
 
-
-	function getAppId() {
-		return process.env.APP_ID || 'com.ever.gauzydesktoptimer';
-	}
-
 	ipcMain.handle('RESET_SCREEN_PERMISSION', async () => {
 		if (process.platform !== 'darwin') return { success: true };
 		try {
-			const { execSync } = require('child_process');
 			const bundleId = getAppId();
-			execSync(`tccutil reset ScreenCapture ${bundleId}`);
+			await runTccutil('ScreenCapture', bundleId, 15 * 1000);
 			/* Re adding the app to permission */
 			await desktopCapturer.getSources({
 				types: ['screen'],
@@ -550,9 +544,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.handle('RESET_ACCESSIBILITY_PERMISSION', async () => {
 		if (process.platform !== 'darwin') return { success: true };
 		try {
-			const { execSync } = require('child_process');
 			const bundleId = getAppId();
-			execSync(`tccutil reset Accessibility ${bundleId}`);
+			await runTccutil('Accessibility', bundleId, 15 * 1000);
 			await getActiveWindow().getActiveWindow({
 				screenRecordingPermission: false,
 				accessibilityPermission: true
@@ -1478,7 +1471,16 @@ export function removeAllHandlers() {
 		'COLLECT_ACTIVITIES',
 		'START_SERVER',
 		'GET_LAST_CAPTURE',
-		'SET_OFFLINE_MODE'
+		'SET_OFFLINE_MODE',
+		'CHECK_MACOS_PERMISSIONS',
+		'TEST_SCREENSHOT',
+		'TEST_GET_ACTIVE_WINDOW',
+		'RESET_SCREEN_PERMISSION',
+		'OPEN_PRIVACY_SETTINGS',
+		'RESET_ACCESSIBILITY_PERMISSION',
+		'OPEN_ACCESSIBILITY_SETTINGS',
+		'RELAUNCH_APP',
+		'GET_PLATFORM'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

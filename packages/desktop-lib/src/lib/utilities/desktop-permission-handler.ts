@@ -40,6 +40,7 @@ export class DesktopPermissionHandler {
 		);
 		dialog.options.detail = TranslateService.instant('TIMER_TRACKER.DIALOG.PERMISSIONS_REQUIRED_DETAIL');
 		const button = await dialog.show();
+		this.isShow = true;
 		if (button?.response === 0) {
 			this.timeTrackerWindow.webContents.send('start_timer_anyway');
 		} else {

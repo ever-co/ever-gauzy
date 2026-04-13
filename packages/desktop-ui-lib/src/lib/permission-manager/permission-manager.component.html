@@ -1,5 +1,5 @@
 <!-- ─── SETTINGS MODE (embedded in settings page) ───────────────────── -->
-@if (!isDialog) {
+@if (!isDialog()) {
 	<div class="row titlebar-space">
 		<div class="col-12">
 			<h4>{{ 'TIMER_TRACKER.PERMISSIONS.TITLE' | translate }}</h4>
@@ -72,7 +72,7 @@
 								size="small"
 								outline
 								(click)="resetAndRelaunch()"
-								[disabled]="timerStarted || resetInProgress || countdown !== null"
+								[disabled]="timerStarted() || resetInProgress || countdown !== null"
 							>
 								<nb-icon
 									[icon]="resetInProgress ? 'loader-outline' : 'refresh-outline'"
@@ -182,7 +182,7 @@
 								size="small"
 								outline
 								(click)="resetAccessibilityAndRelaunch()"
-								[disabled]="timerStarted || accessibilityResetInProgress || accessibilityCountdown !== null"
+								[disabled]="timerStarted() || accessibilityResetInProgress || accessibilityCountdown !== null"
 							>
 								<nb-icon
 									[icon]="accessibilityResetInProgress ? 'loader-outline' : 'refresh-outline'"
@@ -269,7 +269,7 @@
 							size="small"
 							outline
 							(click)="relaunchApp()"
-							[disabled]="timerStarted"
+							[disabled]="timerStarted()"
 						>
 							<nb-icon
 								[icon]="resetInProgress ? 'loader-outline' : 'refresh-outline'"
@@ -282,152 +282,6 @@
 			</nb-card>
 		</div>
 	</div>
-}
-
-<!-- ─── DIALOG MODE (triggered from timer start button) ─────────────── -->
-@if (isDialog) {
-	<nb-card status="warning" class="dialog-card">
-		<nb-card-header class="mb-0">
-			<span class="cancel">
-				<i (click)="cancel()" class="fas fa-times"></i>
-			</span>
-			<div class="d-flex align-items-center gap-2">
-				<nb-icon icon="shield-outline" status="warning"></nb-icon>
-				<h5 class="title mb-0">
-					{{ 'TIMER_TRACKER.PERMISSIONS.DIALOG_TITLE' | translate }}
-				</h5>
-			</div>
-		</nb-card-header>
-
-		<nb-card-body>
-			<p>{{ 'TIMER_TRACKER.PERMISSIONS.DIALOG_DESC' | translate }}</p>
-
-			<!-- Status indicators -->
-			<div class="row notification">
-				<div class="col-12">
-					<nb-card>
-						<nb-card-body>
-							<!-- Screen Recording row -->
-							<div class="row d-flex align-items-center mb-2">
-								<div class="col-7">
-									<div class="d-flex align-items-center gap-2">
-										<nb-icon icon="monitor-outline"></nb-icon>
-										<span class="subtitle-tile">
-											{{ 'TIMER_TRACKER.PERMISSIONS.SCREEN_RECORDING' | translate }}
-										</span>
-									</div>
-								</div>
-								<div class="col-5 d-flex justify-content-end">
-									<ng-container [ngTemplateOutlet]="statusBadge"
-										[ngTemplateOutletContext]="{ status: status$ | async }">
-									</ng-container>
-								</div>
-							</div>
-							<!-- Accessibility row -->
-							<div class="row d-flex align-items-center">
-								<div class="col-7">
-									<div class="d-flex align-items-center gap-2">
-										<nb-icon icon="pantone-outline"></nb-icon>
-										<span class="subtitle-tile">
-											{{ 'TIMER_TRACKER.PERMISSIONS.ACCESSIBILITY' | translate }}
-										</span>
-									</div>
-								</div>
-								<div class="col-5 d-flex justify-content-end">
-									<ng-container [ngTemplateOutlet]="statusBadge"
-										[ngTemplateOutletContext]="{ status: accessibilityStatus$ | async }">
-									</ng-container>
-								</div>
-							</div>
-						</nb-card-body>
-					</nb-card>
-				</div>
-			</div>
-
-			<!-- Action buttons -->
-			<div class="row mt-3">
-				<div class="col-12 d-flex flex-wrap gap-2">
-					<!-- Screen Recording -->
-					<button
-						nbButton
-						status="primary"
-						size="small"
-						(click)="openSystemSettings()"
-					>
-						<nb-icon icon="monitor-outline"></nb-icon>
-						{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_SCREEN_SETTINGS' | translate }}
-					</button>
-					<button
-						nbButton
-						status="warning"
-						size="small"
-						outline
-						(click)="resetAndRelaunch()"
-						[disabled]="(timerStarted || resetInProgress || countdown !== null) ? true : null"
-					>
-						<nb-icon
-							[icon]="resetInProgress ? 'loader-outline' : 'refresh-outline'"
-							[class.icon-spin]="resetInProgress"
-						></nb-icon>
-						@if (countdown !== null) {
-							{{ 'TIMER_TRACKER.PERMISSIONS.RESTARTING' | translate }}
-							{{ countdown }}...
-						} @else {
-							{{ 'TIMER_TRACKER.PERMISSIONS.RESET_PERMISSION' | translate }}
-						}
-					</button>
-					<!-- Accessibility -->
-					<button
-						nbButton
-						status="primary"
-						size="small"
-						(click)="openAccessibilitySettings()"
-					>
-						<nb-icon icon="pantone-outline"></nb-icon>
-						{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_ACCESSIBILITY_SETTINGS' | translate }}
-					</button>
-					<button
-						nbButton
-						status="warning"
-						size="small"
-						outline
-						(click)="resetAccessibilityAndRelaunch()"
-						[disabled]="(timerStarted || accessibilityResetInProgress || accessibilityCountdown !== null) ? true : null"
-					>
-						<nb-icon
-							[icon]="accessibilityResetInProgress ? 'loader-outline' : 'refresh-outline'"
-							[class.icon-spin]="accessibilityResetInProgress"
-						></nb-icon>
-						@if (accessibilityCountdown !== null) {
-							{{ 'TIMER_TRACKER.PERMISSIONS.RESTARTING' | translate }}
-							{{ accessibilityCountdown }}...
-						} @else {
-							{{ 'TIMER_TRACKER.PERMISSIONS.RESET_ACCESSIBILITY_PERMISSION' | translate }}
-						}
-					</button>
-				</div>
-			</div>
-
-			<!-- Polling hint -->
-			<div class="row mt-3">
-				<div class="col-12">
-					<small class="hint-text">
-						<nb-icon icon="info-outline" status="info"></nb-icon>
-						{{ 'TIMER_TRACKER.PERMISSIONS.POLLING_HINT' | translate }}
-					</small>
-				</div>
-			</div>
-		</nb-card-body>
-
-		<nb-card-footer class="text-right mt-0">
-			<button nbButton outline status="basic" (click)="cancel()">
-				{{ 'BUTTONS.CANCEL' | translate }}
-			</button>
-			<button nbButton status="warning" (click)="startAnyway()">
-				{{ 'TIMER_TRACKER.PERMISSIONS.START_ANYWAY' | translate }}
-			</button>
-		</nb-card-footer>
-	</nb-card>
 }
 
 <!-- ─── SHARED: Status badge template ───────────────────────────────── -->
