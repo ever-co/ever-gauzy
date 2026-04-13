@@ -179,7 +179,9 @@
 		"ADD_MORE_SOURCES": "Aggiungi più fonti",
 		"REMOVE_FROM_FAVORITES": "Rimuovi dai preferiti",
 		"ADD_TO_FAVORITES": "Aggiungi ai preferiti",
-		"UNSELECT_ALL": "Deseleziona tutto"
+		"UNSELECT_ALL": "Deseleziona tutto",
+		"START_TIMER_ANYWAY": "Avvia comunque",
+		"OPEN_SETTING": "Apri impostazioni"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4655,6 +4657,37 @@
 			"PLEASE_HOLD": "Attendere prego...",
 			"SHUTTING_DOWN": "L'applicazione si sta spegnendo",
 			"LOGOUT_IN_PROGRESS": "Logout in corso"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "Autorizzazioni di sistema",
+			"TITLE": "Autorizzazioni di sistema",
+			"DESCRIPTION": "Gauzy richiede alcune autorizzazioni macOS per tracciare il tuo lavoro con precisione. Consultale e gestiscile qui.",
+			"SCREEN_RECORDING": "Registrazione schermo",
+			"SCREEN_RECORDING_DESC": "Necessario per acquisire automaticamente screenshot durante le sessioni di lavoro tracciate.",
+			"STATUS": "Stato",
+			"GRANTED": "Concesso",
+			"DENIED": "Negato",
+			"NOT_DETERMINED": "Non impostato",
+			"RESTRICTED": "Limitato",
+			"OPEN_SYSTEM_SETTINGS": "Apri Impostazioni di Sistema",
+			"TEST_SCREENSHOT": "Testa screenshot",
+			"TEST_GET_ACTIVE_WINDOW": "Testa accesso",
+			"SCREENSHOT_PREVIEW": "Anteprima screenshot",
+			"RESET_PERMISSION": "Reimposta",
+			"RESTARTING": "Riavvio tra",
+			"DENIED_HINT": "La registrazione dello schermo è stata negata. Fai clic su 'Reimposta' per reimpostare l'autorizzazione, oppure apri Impostazioni di Sistema per concederla manualmente.",
+			"RELAUNCH": "Riavvia",
+			"RELAUNCH_DESC": "Autorizzazione concessa ma non riesci ancora ad acquisire lo schermo? Fai clic su Riavvia per applicare le modifiche.",
+			"DIALOG_TITLE": "Autorizzazione registrazione schermo richiesta",
+			"DIALOG_DESC": "Gauzy ha bisogno dell'autorizzazione per la registrazione dello schermo per acquisire screenshot durante la sessione di lavoro. Concedi l'accesso per continuare.",
+			"POLLING_HINT": "Questa finestra di dialogo si chiuderà automaticamente una volta concessa l'autorizzazione.",
+			"START_ANYWAY": "Inizia senza screenshot",
+			"ACCESSIBILITY": "Accessibilità",
+			"ACCESSIBILITY_DESC": "Necessario per tracciare l'attività di tastiera, mouse e finestra attiva durante le sessioni di lavoro.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "Impostazioni accessibilità",
+			"RESET_ACCESSIBILITY_PERMISSION": "Reimposta accessibilità",
+			"ACCESSIBILITY_DENIED_HINT": "L'accessibilità è stata negata. Fai clic su 'Reimposta accessibilità' per reimpostare l'autorizzazione, oppure apri Impostazioni di Sistema.",
+			"ACTIVE_WINDOW": "Anteprima finestra attiva"
 		}
 	},
 	"SERVER": "Server",

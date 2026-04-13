@@ -179,7 +179,9 @@
 		"ADD_MORE_SOURCES": "Añadir más fuentes",
 		"REMOVE_FROM_FAVORITES": "Quitar de favoritos",
 		"ADD_TO_FAVORITES": "Agregar a favoritos",
-		"UNSELECT_ALL": "Deseleccionar todo"
+		"UNSELECT_ALL": "Deseleccionar todo",
+		"START_TIMER_ANYWAY": "Iniciar de todos modos",
+		"OPEN_SETTING": "Abrir configuración"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4657,6 +4659,37 @@
 			"PLEASE_HOLD": "Por favor, espera...",
 			"SHUTTING_DOWN": "La aplicación se está cerrando",
 			"LOGOUT_IN_PROGRESS": "Cierre de sesión en progreso"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "Permisos del sistema",
+			"TITLE": "Permisos del sistema",
+			"DESCRIPTION": "Gauzy requiere ciertos permisos de macOS para registrar su trabajo con precisión. Revíselos y gestiónelos aquí.",
+			"SCREEN_RECORDING": "Grabación de pantalla",
+			"SCREEN_RECORDING_DESC": "Necesario para capturar capturas de pantalla automáticamente durante sus sesiones de trabajo.",
+			"STATUS": "Estado",
+			"GRANTED": "Concedido",
+			"DENIED": "Denegado",
+			"NOT_DETERMINED": "No establecido",
+			"RESTRICTED": "Restringido",
+			"OPEN_SYSTEM_SETTINGS": "Abrir configuración del sistema",
+			"TEST_SCREENSHOT": "Probar captura de pantalla",
+			"TEST_GET_ACTIVE_WINDOW": "Probar acceso",
+			"SCREENSHOT_PREVIEW": "Vista previa de captura",
+			"RESET_PERMISSION": "Restablecer",
+			"RESTARTING": "Reiniciando en",
+			"DENIED_HINT": "La grabación de pantalla fue denegada. Haga clic en 'Restablecer' para restablecer el permiso, o abra Configuración del sistema para concederlo manualmente.",
+			"RELAUNCH": "Reabrir",
+			"RELAUNCH_DESC": "¿Permiso concedido pero aún no puede capturar su pantalla? Haga clic en Reabrir para aplicar los cambios.",
+			"DIALOG_TITLE": "Se requiere permiso de grabación de pantalla",
+			"DIALOG_DESC": "Gauzy necesita permiso de grabación de pantalla para capturar pantallas durante su sesión de trabajo. Conceda acceso para continuar.",
+			"POLLING_HINT": "Este diálogo se cerrará automáticamente una vez que se conceda el permiso.",
+			"START_ANYWAY": "Iniciar sin captura de pantalla",
+			"ACCESSIBILITY": "Accesibilidad",
+			"ACCESSIBILITY_DESC": "Necesario para rastrear la actividad del teclado, el ratón y la ventana activa durante sus sesiones de trabajo.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "Configuración de accesibilidad",
+			"RESET_ACCESSIBILITY_PERMISSION": "Restablecer accesibilidad",
+			"ACCESSIBILITY_DENIED_HINT": "La accesibilidad fue denegada. Haga clic en 'Restablecer accesibilidad' para restablecer el permiso, o abra Configuración del sistema.",
+			"ACTIVE_WINDOW": "Vista previa de ventana activa"
 		}
 	},
 	"SERVER": "Servidor",

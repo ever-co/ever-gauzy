@@ -179,7 +179,9 @@
 		"ADD_MORE_SOURCES": "Adicionar mais fontes",
 		"REMOVE_FROM_FAVORITES": "Remover dos favoritos",
 		"ADD_TO_FAVORITES": "Adicionar aos favoritos",
-		"UNSELECT_ALL": "Desmarcar tudo"
+		"UNSELECT_ALL": "Desmarcar tudo",
+		"START_TIMER_ANYWAY": "Iniciar mesmo assim",
+		"OPEN_SETTING": "Abrir configuração"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4655,6 +4657,37 @@
 			"PLEASE_HOLD": "Por favor, aguarde...",
 			"SHUTTING_DOWN": "O aplicativo está sendo encerrado",
 			"LOGOUT_IN_PROGRESS": "Encerramento da sessão em andamento"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "Permissões do sistema",
+			"TITLE": "Permissões do sistema",
+			"DESCRIPTION": "O Gauzy requer certas permissões do macOS para acompanhar seu trabalho com precisão. Revise e gerencie-as aqui.",
+			"SCREEN_RECORDING": "Gravação de tela",
+			"SCREEN_RECORDING_DESC": "Necessário para capturar capturas de tela automaticamente durante suas sessões de trabalho.",
+			"STATUS": "Status",
+			"GRANTED": "Concedido",
+			"DENIED": "Negado",
+			"NOT_DETERMINED": "Não definido",
+			"RESTRICTED": "Restrito",
+			"OPEN_SYSTEM_SETTINGS": "Abrir configurações do sistema",
+			"TEST_SCREENSHOT": "Testar captura de tela",
+			"TEST_GET_ACTIVE_WINDOW": "Testar acesso",
+			"SCREENSHOT_PREVIEW": "Pré-visualização da captura",
+			"RESET_PERMISSION": "Redefinir",
+			"RESTARTING": "Reiniciando em",
+			"DENIED_HINT": "A gravação de tela foi negada. Clique em 'Redefinir' para redefinir a permissão, ou abra as Configurações do sistema para concedê-la manualmente.",
+			"RELAUNCH": "Reiniciar",
+			"RELAUNCH_DESC": "Permissão concedida, mas ainda não consegue capturar sua tela? Clique em Reiniciar para aplicar as alterações.",
+			"DIALOG_TITLE": "Permissão de gravação de tela necessária",
+			"DIALOG_DESC": "O Gauzy precisa de permissão de gravação de tela para capturar a tela durante sua sessão de trabalho. Conceda acesso para continuar.",
+			"POLLING_HINT": "Esta caixa de diálogo será fechada automaticamente assim que a permissão for concedida.",
+			"START_ANYWAY": "Iniciar sem captura de tela",
+			"ACCESSIBILITY": "Acessibilidade",
+			"ACCESSIBILITY_DESC": "Necessário para rastrear a atividade do teclado, do mouse e da janela ativa durante suas sessões de trabalho.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "Configurações de acessibilidade",
+			"RESET_ACCESSIBILITY_PERMISSION": "Redefinir acessibilidade",
+			"ACCESSIBILITY_DENIED_HINT": "A acessibilidade foi negada. Clique em 'Redefinir acessibilidade' para redefinir a permissão, ou abra as Configurações do sistema.",
+			"ACTIVE_WINDOW": "Pré-visualização da janela ativa"
 		}
 	},
 	"SERVER": "Servidor",

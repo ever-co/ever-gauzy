@@ -1,0 +1,157 @@
+.screenshot-preview {
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  border: 1px solid var(--gauzy-card-3);
+
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+}
+
+.hint-text {
+  font-size: 12px;
+  color: var(--gauzy-text-color-2);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  nb-icon {
+    font-size: 14px;
+  }
+}
+
+// Dialog mode styles — matches alert.component pattern
+.dialog-card {
+  min-width: 380px;
+
+  nb-card-header {
+    display: flex;
+    align-items: center;
+    position: relative;
+
+    .cancel {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: var(--gauzy-text-color-2);
+
+      &:hover {
+        color: var(--gauzy-text-color-1);
+      }
+    }
+
+    .title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+
+  nb-card-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+}
+
+// Spinner animation — same as settings.component.scss
+.icon-spin {
+  animation: rotate 1s linear 0s infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+// Inherit notification card style from settings parent
+:host {
+  .notification {
+    nb-card {
+      border-radius: var(--border-radius);
+    }
+
+    nb-card-body {
+      background-color: var(--gauzy-card-2);
+      border-radius: var(--border-radius);
+    }
+  }
+
+  h4 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--gauzy-text-color-1);
+  }
+
+  h6 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gauzy-text-color-2);
+  }
+
+  p {
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .subtitle-tile {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gauzy-text-color-2);
+  }
+}
+
+.active-window {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+  background: var(--gauzy-card-2);
+  border: 1px solid var(--gauzy-card-3);
+
+  &__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  &__icon {
+    font-size: 16px;
+    color: var(--gauzy-text-color-2);
+    margin-top: 0.25rem;
+    flex-shrink: 0;
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gauzy-text-color-2);
+  }
+
+  &__value {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gauzy-text-color-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &--mono {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px;
+      color: var(--gauzy-text-color-2);
+    }
+  }
+}

@@ -179,7 +179,9 @@
 		"ADD_MORE_SOURCES": "إضافة مصدر آخر",
 		"REMOVE_FROM_FAVORITES": "إزالة من المفضلة",
 		"ADD_TO_FAVORITES": "إضافة إلى المفضلة",
-		"UNSELECT_ALL": "إلغاء تحديد الكل"
+		"UNSELECT_ALL": "إلغاء تحديد الكل",
+		"START_TIMER_ANYWAY": "البدء على أي حال",
+		"OPEN_SETTING": "فتح الإعدادات"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4640,6 +4642,37 @@
 			"PLEASE_HOLD": "يرجى الانتظار...",
 			"SHUTTING_DOWN": "التطبيق يغلق",
 			"LOGOUT_IN_PROGRESS": "تسجيل الخروج جارٍ"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "أذونات النظام",
+			"TITLE": "أذونات النظام",
+			"DESCRIPTION": "يتطلب Gauzy بعض أذونات macOS لتتبع عملك بدقة. راجعها وأدِرها من هنا.",
+			"SCREEN_RECORDING": "تسجيل الشاشة",
+			"SCREEN_RECORDING_DESC": "مطلوب لالتقاط لقطات الشاشة تلقائيًا خلال جلسات العمل المتتبَّعة.",
+			"STATUS": "الحالة",
+			"GRANTED": "ممنوح",
+			"DENIED": "مرفوض",
+			"NOT_DETERMINED": "غير محدد",
+			"RESTRICTED": "مقيّد",
+			"OPEN_SYSTEM_SETTINGS": "فتح إعدادات النظام",
+			"TEST_SCREENSHOT": "اختبار لقطة الشاشة",
+			"TEST_GET_ACTIVE_WINDOW": "اختبار الوصول",
+			"SCREENSHOT_PREVIEW": "معاينة لقطة الشاشة",
+			"RESET_PERMISSION": "إعادة تعيين",
+			"RESTARTING": "إعادة التشغيل في",
+			"DENIED_HINT": "تم رفض تسجيل الشاشة. انقر على 'إعادة تعيين' لإعادة تعيين الإذن، أو افتح إعدادات النظام لمنحه يدويًا.",
+			"RELAUNCH": "إعادة التشغيل",
+			"RELAUNCH_DESC": "هل منحت الإذن ولا تزال غير قادر على التقاط الشاشة؟ انقر على إعادة التشغيل لتطبيق التغييرات.",
+			"DIALOG_TITLE": "مطلوب إذن تسجيل الشاشة",
+			"DIALOG_DESC": "يحتاج Gauzy إلى إذن تسجيل الشاشة لالتقاط لقطات أثناء جلسة العمل. يرجى منح الوصول للمتابعة.",
+			"POLLING_HINT": "سيُغلق هذا الحوار تلقائيًا بمجرد منح الإذن.",
+			"START_ANYWAY": "البدء بدون لقطة شاشة",
+			"ACCESSIBILITY": "إمكانية الوصول",
+			"ACCESSIBILITY_DESC": "مطلوب لتتبع نشاط لوحة المفاتيح والماوس والنافذة النشطة خلال جلسات العمل.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "إعدادات إمكانية الوصول",
+			"RESET_ACCESSIBILITY_PERMISSION": "إعادة تعيين إمكانية الوصول",
+			"ACCESSIBILITY_DENIED_HINT": "تم رفض إمكانية الوصول. انقر على 'إعادة تعيين إمكانية الوصول' لإعادة تعيين الإذن، أو افتح إعدادات النظام.",
+			"ACTIVE_WINDOW": "معاينة النافذة النشطة"
 		}
 	},
 	"SERVER": "خادم",

@@ -133,7 +133,9 @@
 		"ADD_MODULE": "Yamo Module",
 		"REMOVE_FROM_FAVORITES": "Kwanyo ki i jami me ayera",
 		"ADD_TO_FAVORITES": "Med i jami me ayera",
-		"UNSELECT_ALL": "Unselect All"
+		"UNSELECT_ALL": "Gony ayera weng",
+		"START_TIMER_ANYWAY": "Cak keken",
+		"OPEN_SETTING": "Yam yubo"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4080,7 +4082,38 @@
 		},
 		"VIEW_TIMESHEET": "crwdns7564:0crwdne7564:0",
 		"ADD_TIME": "crwdns7566:0crwdne7566:0",
-		"TODAY": "crwdns7568:0crwdne7568:0"
+		"TODAY": "crwdns7568:0crwdne7568:0",
+		"PERMISSIONS": {
+			"MENU_LABEL": "Twero pa kal",
+			"TITLE": "Twero pa kal",
+			"DESCRIPTION": "Gauzy mito twero mogo pa macOS me nongo tic mamegi ki kare. Nen ki juk ki kwene.",
+			"SCREEN_RECORDING": "Gwoko mony",
+			"SCREEN_RECORDING_DESC": "Mite me cup cal mony ma ityer kare me tic.",
+			"STATUS": "Tic",
+			"GRANTED": "Omiyogi",
+			"DENIED": "Okero",
+			"NOT_DETERMINED": "Peya otweyo",
+			"RESTRICTED": "Omoko",
+			"OPEN_SYSTEM_SETTINGS": "Yam yubo kal",
+			"TEST_SCREENSHOT": "Tem cup mony",
+			"TEST_GET_ACTIVE_WINDOW": "Tem donyo",
+			"SCREENSHOT_PREVIEW": "Nen cup mony",
+			"RESET_PERMISSION": "Cwal odoco",
+			"RESTARTING": "Acako doki i",
+			"DENIED_HINT": "Okero twero me gwoko mony. Dii 'Cwal odoco' me cwal twer odoco, onyo yam yubo kal me miyogi ki cibin.",
+			"RELAUNCH": "Cak doki",
+			"RELAUNCH_DESC": "Omiyogi twero ento pud pe ityer mony? Dii Cak doki me tiyo ki lok manyen.",
+			"DIALOG_TITLE": "Twero me Gwoko Mony Mite",
+			"DIALOG_DESC": "Gauzy mito twero me gwoko mony me cup cal mony kare me tic mamegi. Tim ber imiy twero me acaki.",
+			"POLLING_HINT": "Dirica man boti pore kene ka omiyogi twero.",
+			"START_ANYWAY": "Cak pe ki cup mony",
+			"ACCESSIBILITY": "Twero me Donyo",
+			"ACCESSIBILITY_DESC": "Mite me nongo tic pa keyboard, mouse ki dirica mudoko kare me tic mamegi.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "Yubo Twero me Donyo",
+			"RESET_ACCESSIBILITY_PERMISSION": "Cwal Twero me Donyo Odoco",
+			"ACCESSIBILITY_DENIED_HINT": "Okero twero me donyo. Dii 'Cwal Twero me Donyo Odoco' me cwal twero odoco, onyo yam yubo kal.",
+			"ACTIVE_WINDOW": "Nen Dirica Mudoko"
+		}
 	},
 	"TIMESHEET": {
 		"TODAY": "crwdns4690:0crwdne4690:0",

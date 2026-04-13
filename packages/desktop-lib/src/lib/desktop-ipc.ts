@@ -6,7 +6,7 @@ import {
 } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
-import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
+import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences, shell } from 'electron';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { AppWindowManager } from './app-window-manager';
@@ -36,15 +36,20 @@ import {
 	Interval,
 	IntervalService,
 	IntervalTO,
+	ScreenshotService,
 	Timer,
 	TimerService,
 	TimerTO,
-	UserService
+	UserService,
+	Screenshot
 } from './offline';
 import { pluginListeners } from './plugin-system';
 import { AkitaStorageHandler } from './storage/akita-storage.handler';
 import { RemoteTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
+import { ActivityWindow } from '@gauzy/desktop-activity';
+import { DesktopPermissionHandler } from './utilities/desktop-permission-handler';
+import { runTccutil, getAppId } from './utilities/util';
 
 // Lazily initialized — construction is deferred until after app.ready to avoid
 // native-module loads (better-sqlite3, uiohook-napi) and Electron API calls
@@ -56,6 +61,8 @@ let _intervalService: IntervalService | null = null;
 let _timerService: TimerService | null = null;
 let _windowManager: WindowManager | null = null;
 let _appWindowManager: AppWindowManager | null = null;
+let _screenshotService: ScreenshotService | null = null;
+let _activeWindow: ActivityWindow | null = null;
 
 function getTimerHandler(): TimerHandler {
 	if (!_timerHandler) _timerHandler = new TimerHandler();
@@ -84,6 +91,15 @@ function getWindowManager(): WindowManager {
 function getAppWindowManager(): AppWindowManager {
 	if (!_appWindowManager) _appWindowManager = AppWindowManager.getInstance();
 	return _appWindowManager;
+}
+function getScreenshotService(): ScreenshotService {
+	if (!_screenshotService) _screenshotService = new ScreenshotService();
+	return _screenshotService;
+}
+
+function getActiveWindow(): ActivityWindow {
+	if (!_activeWindow) _activeWindow = ActivityWindow.getInstance();
+	return _activeWindow;
 }
 
 export function setupAkitaStorageHandler() {
@@ -117,6 +133,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			log.error(error);
 			return null;
 		}
+	});
+
+	ipcMain.handle('GET_PLATFORM', () => {
+		return process.platform;
 	});
 
 	ipcMain.on('return_time_sheet', async (event, arg) => {
@@ -182,6 +202,32 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			throw new UIError('400', error, 'IPCSAVESLOT');
 		}
 	});
+
+	ipcMain.on('failed_upload_screenshot', async (_, arg) => {
+		try {
+			log.info('Failed upload screenshot image');
+			let activityId: number;
+			if (arg?.intervalId) {
+				activityId = arg?.intervalId;
+			} else {
+				const lastInterval = await getIntervalService().findLastInterval();
+				activityId = lastInterval?.id;
+			}
+
+			if (activityId) {
+				const screenshotImage = {
+					timeSlotId: arg?.timeSlotId,
+					imagePath: arg?.imagePath,
+					synced: false,
+					activityId,
+					recordedAt: new Date(arg?.recordedAt)
+				}
+				await getScreenshotService().saveAndReturn(new Screenshot(screenshotImage));
+			}
+		} catch (error) {
+			console.error('failed to save failed upload screenshot image');
+		}
+	})
 
 	ipcMain.on('set_project_task', (event, arg) => {
 		event.sender.send('set_project_task_reply', arg);
@@ -417,6 +463,109 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	ipcMain.handle('SET_OFFLINE_MODE', async () => {
 		getOfflineMode().forceOffline();
+	});
+
+	ipcMain.handle('CHECK_MACOS_PERMISSIONS', () => {
+		if (process.platform !== 'darwin') {
+			return { screen: 'granted', accessibility: 'granted' };
+		}
+		return {
+			screen: systemPreferences.getMediaAccessStatus('screen'), // 'granted'|'denied'|'not-determined'|'restricted'
+			accessibility: systemPreferences.isTrustedAccessibilityClient(false) ? 'granted' : 'denied'
+		};
+	});
+
+
+	ipcMain.handle('TEST_SCREENSHOT', async () => {
+		if (process.platform === 'darwin' && isScreenUnauthorized()) {
+			return { success: false, reason: 'unauthorized' };
+		}
+		try {
+			const sources = await desktopCapturer.getSources({
+				types: ['screen'],
+				thumbnailSize: { width: 320, height: 200 }
+			});
+			return sources.length > 0
+				? { success: true, thumbnail: sources[0].thumbnail.toDataURL() }
+				: { success: false, reason: 'no_sources' };
+		} catch (err) {
+			return { success: false, reason: err.message };
+		}
+	});
+
+	ipcMain.handle('TEST_GET_ACTIVE_WINDOW', async () => {
+		if (process.platform === 'darwin' && !systemPreferences.isTrustedAccessibilityClient(false)) {
+			return { success: false, reason: 'unauthorized' }
+		}
+		try {
+			const windowList = await getActiveWindow().getActiveWindow({
+				accessibilityPermission: false,
+				screenRecordingPermission: false
+			});
+			return {
+				success: true,
+				window: {
+					title: windowList?.title,
+					appName: windowList?.owner?.name,
+					bundleId: windowList?.owner?.bundleId
+				}
+			}
+		} catch (error) {
+			return {
+				success: false,
+				reason: error.message
+			}
+		}
+	});
+
+	ipcMain.handle('RESET_SCREEN_PERMISSION', async () => {
+		if (process.platform !== 'darwin') return { success: true };
+		try {
+			const bundleId = getAppId();
+			await runTccutil('ScreenCapture', bundleId, 15 * 1000);
+			/* Re adding the app to permission */
+			await desktopCapturer.getSources({
+				types: ['screen'],
+				thumbnailSize: { width: 320, height: 200 }
+			});
+			return { success: true };
+		} catch (err) {
+			log.error('Failed to reset TCC permission', err);
+			return { success: false, error: err.message };
+		}
+	});
+
+	ipcMain.handle('OPEN_PRIVACY_SETTINGS', () => {
+		shell.openExternal(
+			'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture'
+		);
+	});
+
+	ipcMain.handle('RESET_ACCESSIBILITY_PERMISSION', async () => {
+		if (process.platform !== 'darwin') return { success: true };
+		try {
+			const bundleId = getAppId();
+			await runTccutil('Accessibility', bundleId, 15 * 1000);
+			await getActiveWindow().getActiveWindow({
+				screenRecordingPermission: false,
+				accessibilityPermission: true
+			})
+			return { success: true };
+		} catch (err) {
+			log.error('Failed to reset Accessibility TCC permission', err);
+			return { success: false, error: err.message };
+		}
+	});
+
+	ipcMain.handle('OPEN_ACCESSIBILITY_SETTINGS', () => {
+		shell.openExternal(
+			'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'
+		);
+	});
+
+	ipcMain.handle('RELAUNCH_APP', () => {
+		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+		app.exit(0);
 	});
 
 	pluginListeners();
@@ -1262,6 +1411,13 @@ export function ipcTimer(
 			console.error('Failed to update selector:', error);
 		}
 	});
+
+	ipcMain.handle('SHOW_PERMISSION_CONFIRM', () => {
+		const desktopPermissionHandler = DesktopPermissionHandler.getInstance(
+			timeTrackerWindow, windowPath
+		);
+		desktopPermissionHandler.showDialogPermissionConfirm();
+	});
 }
 
 export function removeMainListener() {
@@ -1315,7 +1471,16 @@ export function removeAllHandlers() {
 		'COLLECT_ACTIVITIES',
 		'START_SERVER',
 		'GET_LAST_CAPTURE',
-		'SET_OFFLINE_MODE'
+		'SET_OFFLINE_MODE',
+		'CHECK_MACOS_PERMISSIONS',
+		'TEST_SCREENSHOT',
+		'TEST_GET_ACTIVE_WINDOW',
+		'RESET_SCREEN_PERMISSION',
+		'OPEN_PRIVACY_SETTINGS',
+		'RESET_ACCESSIBILITY_PERMISSION',
+		'OPEN_ACCESSIBILITY_SETTINGS',
+		'RELAUNCH_APP',
+		'GET_PLATFORM'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

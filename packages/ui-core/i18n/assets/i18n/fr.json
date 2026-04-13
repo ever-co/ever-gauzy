@@ -179,7 +179,9 @@
 		"ADD_MORE_SOURCES": "Ajouter plus de sources",
 		"REMOVE_FROM_FAVORITES": "Retirer des favoris",
 		"ADD_TO_FAVORITES": "Ajouter aux favoris",
-		"UNSELECT_ALL": "Tout désélectionner"
+		"UNSELECT_ALL": "Tout désélectionner",
+		"START_TIMER_ANYWAY": "Démarrer quand même",
+		"OPEN_SETTING": "Ouvrir les paramètres"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4646,6 +4648,37 @@
 			"PLEASE_HOLD": "Veuillez patienter...",
 			"SHUTTING_DOWN": "L'application est en train de s'éteindre",
 			"LOGOUT_IN_PROGRESS": "Déconnexion en cours"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "Autorisations système",
+			"TITLE": "Autorisations système",
+			"DESCRIPTION": "Gauzy nécessite certaines autorisations macOS pour suivre votre travail avec précision. Consultez-les et gérez-les ici.",
+			"SCREEN_RECORDING": "Enregistrement d'écran",
+			"SCREEN_RECORDING_DESC": "Nécessaire pour capturer des captures d'écran automatiquement lors de vos sessions de travail suivies.",
+			"STATUS": "Statut",
+			"GRANTED": "Accordé",
+			"DENIED": "Refusé",
+			"NOT_DETERMINED": "Non défini",
+			"RESTRICTED": "Restreint",
+			"OPEN_SYSTEM_SETTINGS": "Ouvrir les réglages système",
+			"TEST_SCREENSHOT": "Tester une capture d'écran",
+			"TEST_GET_ACTIVE_WINDOW": "Tester l'accès",
+			"SCREENSHOT_PREVIEW": "Aperçu de la capture",
+			"RESET_PERMISSION": "Réinitialiser",
+			"RESTARTING": "Redémarrage dans",
+			"DENIED_HINT": "L'enregistrement d'écran a été refusé. Cliquez sur 'Réinitialiser' pour réinitialiser l'autorisation, ou ouvrez les Réglages système pour l'accorder manuellement.",
+			"RELAUNCH": "Relancer",
+			"RELAUNCH_DESC": "Autorisation accordée mais toujours incapable de capturer votre écran ? Cliquez sur Relancer pour appliquer les modifications.",
+			"DIALOG_TITLE": "Autorisation d'enregistrement d'écran requise",
+			"DIALOG_DESC": "Gauzy a besoin de l'autorisation d'enregistrement d'écran pour capturer des captures lors de votre session de travail. Veuillez accorder l'accès pour continuer.",
+			"POLLING_HINT": "Cette boîte de dialogue se fermera automatiquement une fois l'autorisation accordée.",
+			"START_ANYWAY": "Démarrer sans capture d'écran",
+			"ACCESSIBILITY": "Accessibilité",
+			"ACCESSIBILITY_DESC": "Nécessaire pour suivre l'activité du clavier, de la souris et de la fenêtre active lors de vos sessions de travail.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "Paramètres d'accessibilité",
+			"RESET_ACCESSIBILITY_PERMISSION": "Réinitialiser l'accessibilité",
+			"ACCESSIBILITY_DENIED_HINT": "L'accessibilité a été refusée. Cliquez sur 'Réinitialiser l'accessibilité' pour réinitialiser l'autorisation, ou ouvrez les Réglages système pour l'accorder manuellement.",
+			"ACTIVE_WINDOW": "Aperçu de la fenêtre active"
 		}
 	},
 	"SERVER": "Serveur",

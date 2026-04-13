@@ -178,7 +178,9 @@
 		"ADD_MORE_SOURCES": "הוסף מקורות נוספים",
 		"REMOVE_FROM_FAVORITES": "הסר מהמועדפים",
 		"ADD_TO_FAVORITES": "הוסף למועדפים",
-		"UNSELECT_ALL": "בטל בחירת הכל"
+		"UNSELECT_ALL": "בטל בחירת הכל",
+		"START_TIMER_ANYWAY": "התחל בכל זאת",
+		"OPEN_SETTING": "פתח הגדרות"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4667,6 +4669,37 @@
 			"PLEASE_HOLD": "אנא המתן...",
 			"SHUTTING_DOWN": "היישום נסגר",
 			"LOGOUT_IN_PROGRESS": "התנתקות בתהליך"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "הרשאות מערכת",
+			"TITLE": "הרשאות מערכת",
+			"DESCRIPTION": "Gauzy דורש הרשאות macOS מסוימות כדי לעקוב אחר עבודתך במדויק. סקור אותן ונהל אותן כאן.",
+			"SCREEN_RECORDING": "הקלטת מסך",
+			"SCREEN_RECORDING_DESC": "נדרש לצלם צילומי מסך אוטומטיים במהלך סשני העבודה המעוקבים שלך.",
+			"STATUS": "סטטוס",
+			"GRANTED": "ניתן",
+			"DENIED": "נדחה",
+			"NOT_DETERMINED": "לא נקבע",
+			"RESTRICTED": "מוגבל",
+			"OPEN_SYSTEM_SETTINGS": "פתח הגדרות מערכת",
+			"TEST_SCREENSHOT": "בדוק צילום מסך",
+			"TEST_GET_ACTIVE_WINDOW": "בדוק גישה",
+			"SCREENSHOT_PREVIEW": "תצוגה מקדימה של צילום מסך",
+			"RESET_PERMISSION": "אפס",
+			"RESTARTING": "הפעלה מחדש בעוד",
+			"DENIED_HINT": "הקלטת המסך נדחתה. לחץ על 'אפס' כדי לאפס את ההרשאה, או פתח את הגדרות המערכת כדי להעניק אותה ידנית.",
+			"RELAUNCH": "הפעל מחדש",
+			"RELAUNCH_DESC": "הרשאה ניתנה אך עדיין לא ניתן לצלם את המסך? לחץ על הפעל מחדש כדי להחיל את השינויים.",
+			"DIALOG_TITLE": "נדרשת הרשאה להקלטת מסך",
+			"DIALOG_DESC": "Gauzy זקוק להרשאת הקלטת מסך כדי לצלם מסכים במהלך סשן העבודה שלך. אנא אשר גישה להמשך.",
+			"POLLING_HINT": "תיבת הדו-שיח תיסגר אוטומטית לאחר מתן ההרשאה.",
+			"START_ANYWAY": "התחל ללא צילום מסך",
+			"ACCESSIBILITY": "נגישות",
+			"ACCESSIBILITY_DESC": "נדרש למעקב אחר פעילות מקלדת, עכבר וחלון פעיל במהלך סשני העבודה שלך.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "הגדרות נגישות",
+			"RESET_ACCESSIBILITY_PERMISSION": "אפס נגישות",
+			"ACCESSIBILITY_DENIED_HINT": "הנגישות נדחתה. לחץ על 'אפס נגישות' כדי לאפס את ההרשאה, או פתח את הגדרות המערכת.",
+			"ACTIVE_WINDOW": "תצוגה מקדימה של חלון פעיל"
 		}
 	},
 	"SERVER": "שרת",

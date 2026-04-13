@@ -15,3 +15,4 @@ export * from './concretes/dialog-error-handler';
 export * from './concretes/dialog-open-file';
 export * from './abstracts/base-reverse-proxy';
 export * from './methods/timeout.decorator';
+export * from './concretes/dialog-start-timer-permission-confirms';

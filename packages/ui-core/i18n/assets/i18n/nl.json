@@ -179,7 +179,9 @@
 		"ADD_MORE_SOURCES": "Meer bronnen toevoegen",
 		"REMOVE_FROM_FAVORITES": "Uit favorieten verwijderen",
 		"ADD_TO_FAVORITES": "Aan favorieten toevoegen",
-		"UNSELECT_ALL": "Alles deselecteren"
+		"UNSELECT_ALL": "Alles deselecteren",
+		"START_TIMER_ANYWAY": "Toch starten",
+		"OPEN_SETTING": "Instelling openen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4655,6 +4657,37 @@
 			"PLEASE_HOLD": "Even geduld aub...",
 			"SHUTTING_DOWN": "Applicatie wordt afgesloten",
 			"LOGOUT_IN_PROGRESS": "Uitloggen bezig"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "Systeemmachtigingen",
+			"TITLE": "Systeemmachtigingen",
+			"DESCRIPTION": "Gauzy vereist bepaalde macOS-machtigingen om uw werk nauwkeurig bij te houden. Bekijk en beheer ze hier.",
+			"SCREEN_RECORDING": "Schermopname",
+			"SCREEN_RECORDING_DESC": "Vereist om automatisch schermafbeeldingen te maken tijdens uw bijgehouden werksessies.",
+			"STATUS": "Status",
+			"GRANTED": "Verleend",
+			"DENIED": "Geweigerd",
+			"NOT_DETERMINED": "Niet ingesteld",
+			"RESTRICTED": "Beperkt",
+			"OPEN_SYSTEM_SETTINGS": "Systeeminstellingen openen",
+			"TEST_SCREENSHOT": "Schermafbeelding testen",
+			"TEST_GET_ACTIVE_WINDOW": "Toegang testen",
+			"SCREENSHOT_PREVIEW": "Schermafbeeldingsvoorbeeld",
+			"RESET_PERMISSION": "Opnieuw instellen",
+			"RESTARTING": "Opnieuw opstarten over",
+			"DENIED_HINT": "Schermopname is geweigerd. Klik op 'Opnieuw instellen' om de machtiging opnieuw in te stellen, of open Systeeminstellingen om deze handmatig te verlenen.",
+			"RELAUNCH": "Opnieuw starten",
+			"RELAUNCH_DESC": "Machtiging verleend maar kunt u uw scherm nog steeds niet opnemen? Klik op Opnieuw starten om de wijzigingen toe te passen.",
+			"DIALOG_TITLE": "Machtiging voor schermopname vereist",
+			"DIALOG_DESC": "Gauzy heeft toestemming voor schermopname nodig om schermafbeeldingen te maken tijdens uw werksessie. Verleen toegang om door te gaan.",
+			"POLLING_HINT": "Dit dialoogvenster wordt automatisch gesloten zodra de machtiging is verleend.",
+			"START_ANYWAY": "Starten zonder schermafbeelding",
+			"ACCESSIBILITY": "Toegankelijkheid",
+			"ACCESSIBILITY_DESC": "Vereist om toetsenbord-, muis- en actief vensteractiviteiten bij te houden tijdens uw werksessies.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "Toegankelijkheidsinstellingen",
+			"RESET_ACCESSIBILITY_PERMISSION": "Toegankelijkheid opnieuw instellen",
+			"ACCESSIBILITY_DENIED_HINT": "Toegankelijkheid is geweigerd. Klik op 'Toegankelijkheid opnieuw instellen' om de machtiging opnieuw in te stellen, of open Systeeminstellingen.",
+			"ACTIVE_WINDOW": "Actief vensterweergave"
 		}
 	},
 	"SERVER": "Server",

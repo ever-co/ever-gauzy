@@ -897,7 +897,9 @@
 		"pulseaudio",
 		"flathub",
 		"noninteractive",
-		"NEEDRESTART"
+		"NEEDRESTART",
+		"tccutil",
+		"systempreferences"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

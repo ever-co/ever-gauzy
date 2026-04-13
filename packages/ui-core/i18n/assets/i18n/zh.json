@@ -179,7 +179,9 @@
 		"ADD_MORE_SOURCES": "添加更多来源",
 		"REMOVE_FROM_FAVORITES": "从收藏夹中移除",
 		"ADD_TO_FAVORITES": "添加到收藏夹",
-		"UNSELECT_ALL": "取消全选"
+		"UNSELECT_ALL": "取消全选",
+		"START_TIMER_ANYWAY": "仍然开始",
+		"OPEN_SETTING": "打开设置"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4655,6 +4657,37 @@
 			"PLEASE_HOLD": "请稍等...",
 			"SHUTTING_DOWN": "应用程序正在关闭",
 			"LOGOUT_IN_PROGRESS": "正在注销"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "系统权限",
+			"TITLE": "系统权限",
+			"DESCRIPTION": "Gauzy 需要某些 macOS 权限来准确追踪您的工作。在此查看和管理这些权限。",
+			"SCREEN_RECORDING": "屏幕录制",
+			"SCREEN_RECORDING_DESC": "在您的工作会话期间自动截图所必需的。",
+			"STATUS": "状态",
+			"GRANTED": "已授权",
+			"DENIED": "已拒绝",
+			"NOT_DETERMINED": "未设置",
+			"RESTRICTED": "已限制",
+			"OPEN_SYSTEM_SETTINGS": "打开系统设置",
+			"TEST_SCREENSHOT": "测试截图",
+			"TEST_GET_ACTIVE_WINDOW": "测试访问",
+			"SCREENSHOT_PREVIEW": "截图预览",
+			"RESET_PERMISSION": "重置",
+			"RESTARTING": "正在重启，倒计时",
+			"DENIED_HINT": "屏幕录制已被拒绝。点击'重置'以重置权限，或打开系统设置手动授权。",
+			"RELAUNCH": "重新启动",
+			"RELAUNCH_DESC": "已授权但仍无法捕获屏幕？点击重新启动以应用更改。",
+			"DIALOG_TITLE": "需要屏幕录制权限",
+			"DIALOG_DESC": "Gauzy 需要屏幕录制权限才能在您的工作会话期间截图。请授权以继续。",
+			"POLLING_HINT": "授权后此对话框将自动关闭。",
+			"START_ANYWAY": "不截图直接开始",
+			"ACCESSIBILITY": "辅助功能",
+			"ACCESSIBILITY_DESC": "在您的工作会话期间追踪键盘、鼠标和活动窗口活动所必需的。",
+			"OPEN_ACCESSIBILITY_SETTINGS": "辅助功能设置",
+			"RESET_ACCESSIBILITY_PERMISSION": "重置辅助功能",
+			"ACCESSIBILITY_DENIED_HINT": "辅助功能已被拒绝。点击'重置辅助功能'以重置权限，或打开系统设置手动授权。",
+			"ACTIVE_WINDOW": "活动窗口预览"
 		}
 	},
 	"SERVER": "服务器",

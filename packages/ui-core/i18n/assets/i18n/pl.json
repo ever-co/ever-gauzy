@@ -179,7 +179,9 @@
 		"ADD_MORE_SOURCES": "Dodaj więcej źródeł",
 		"REMOVE_FROM_FAVORITES": "Usuń z ulubionych",
 		"ADD_TO_FAVORITES": "Dodaj do ulubionych",
-		"UNSELECT_ALL": "Odznacz wszystko"
+		"UNSELECT_ALL": "Odznacz wszystko",
+		"START_TIMER_ANYWAY": "Uruchom mimo to",
+		"OPEN_SETTING": "Otwórz ustawienia"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4654,6 +4656,37 @@
 			"PLEASE_HOLD": "Proszę czekać...",
 			"SHUTTING_DOWN": "Aplikacja się zamyka",
 			"LOGOUT_IN_PROGRESS": "Wylogowywanie w toku"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "Uprawnienia systemowe",
+			"TITLE": "Uprawnienia systemowe",
+			"DESCRIPTION": "Gauzy wymaga określonych uprawnień macOS do dokładnego śledzenia Twojej pracy. Przeglądaj je i zarządzaj nimi tutaj.",
+			"SCREEN_RECORDING": "Nagrywanie ekranu",
+			"SCREEN_RECORDING_DESC": "Wymagane do automatycznego wykonywania zrzutów ekranu podczas śledzonych sesji pracy.",
+			"STATUS": "Status",
+			"GRANTED": "Przyznano",
+			"DENIED": "Odmówiono",
+			"NOT_DETERMINED": "Nie ustawiono",
+			"RESTRICTED": "Ograniczone",
+			"OPEN_SYSTEM_SETTINGS": "Otwórz ustawienia systemowe",
+			"TEST_SCREENSHOT": "Testuj zrzut ekranu",
+			"TEST_GET_ACTIVE_WINDOW": "Testuj dostęp",
+			"SCREENSHOT_PREVIEW": "Podgląd zrzutu ekranu",
+			"RESET_PERMISSION": "Zresetuj",
+			"RESTARTING": "Ponowne uruchomienie za",
+			"DENIED_HINT": "Nagrywanie ekranu zostało odmówione. Kliknij 'Zresetuj', aby zresetować uprawnienie, lub otwórz Ustawienia systemowe, aby przyznać je ręcznie.",
+			"RELAUNCH": "Uruchom ponownie",
+			"RELAUNCH_DESC": "Uprawnienie przyznane, ale nadal nie możesz nagrywać ekranu? Kliknij Uruchom ponownie, aby zastosować zmiany.",
+			"DIALOG_TITLE": "Wymagane uprawnienie do nagrywania ekranu",
+			"DIALOG_DESC": "Gauzy potrzebuje uprawnienia do nagrywania ekranu, aby wykonywać zrzuty podczas Twojej sesji pracy. Przyznaj dostęp, aby kontynuować.",
+			"POLLING_HINT": "To okno dialogowe zamknie się automatycznie po przyznaniu uprawnienia.",
+			"START_ANYWAY": "Uruchom bez zrzutu ekranu",
+			"ACCESSIBILITY": "Dostępność",
+			"ACCESSIBILITY_DESC": "Wymagane do śledzenia aktywności klawiatury, myszy i aktywnego okna podczas sesji pracy.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "Ustawienia dostępności",
+			"RESET_ACCESSIBILITY_PERMISSION": "Zresetuj dostępność",
+			"ACCESSIBILITY_DENIED_HINT": "Dostępność została odmówiona. Kliknij 'Zresetuj dostępność', aby zresetować uprawnienie, lub otwórz Ustawienia systemowe.",
+			"ACTIVE_WINDOW": "Podgląd aktywnego okna"
 		}
 	},
 	"SERVER": "Serwer",
