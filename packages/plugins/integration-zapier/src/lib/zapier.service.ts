@@ -31,6 +31,8 @@ import {
 } from './zapier.types';
 import { IZapierCreateZapInput, IZapierZap, IZapierZapTemplate } from '@gauzy/contracts';
 import { randomBytes } from 'node:crypto';
+import { verify } from 'jsonwebtoken';
+import { environment } from '@gauzy/config';
 
 @Injectable()
 export class ZapierService {
@@ -827,6 +829,75 @@ export class ZapierService {
 			...integrationTenant,
 			name: IntegrationEnum.ZAPIER
 		};
+	}
+
+	/**
+	 * Find the Zapier IntegrationTenant for a given tenantId.
+	 *
+	 * @param tenantId - The tenant ID (from JWT)
+	 * @returns The matching IIntegrationTenant
+	 * @throws NotFoundException if no Zapier integration exists for this tenant
+	 */
+	async findIntegrationByTenantId(tenantId: string): Promise<IIntegrationTenant> {
+		const integrationTenant = await this._integrationTenantService.findOneByOptions({
+			where: { tenantId, name: IntegrationEnum.ZAPIER } as IIntegrationFilter,
+			relations: ['settings']
+		});
+
+		if (!integrationTenant) {
+			throw new NotFoundException('Zapier integration not found for this tenant');
+		}
+
+		return {
+			...integrationTenant,
+			name: IntegrationEnum.ZAPIER
+		};
+	}
+
+	/**
+	 * Resolve the Zapier integration from a Bearer token.
+	 * Tries opaque token lookup first (backward compatibility), then
+	 * falls back to JWT verification + tenantId lookup for tokens
+	 * issued by the multi-app OAuth system.
+	 *
+	 * @param token - The Bearer token (opaque or JWT)
+	 * @returns The matching IIntegrationTenant
+	 * @throws NotFoundException if neither lookup succeeds
+	 */
+	async resolveIntegrationFromBearerToken(token: string): Promise<IIntegrationTenant> {
+		// 1) Try opaque token lookup (Zapier-issued tokens)
+		try {
+			return await this.findIntegrationByToken(token);
+		} catch {
+			// Not an opaque Zapier token — try JWT
+		}
+
+		// 2) Try JWT verification (multi-app OAuth tokens)
+		try {
+			const decoded = verify(token, environment.JWT_SECRET!) as { id: string; tenantId: string };
+			if (!decoded?.tenantId) {
+				throw new Error('JWT missing tenantId');
+			}
+			return await this.findIntegrationByTenantId(decoded.tenantId);
+		} catch (error: any) {
+			this.logger.error('Failed to resolve integration from bearer token', error?.message);
+			throw new NotFoundException('Invalid access token');
+		}
+	}
+
+	/**
+	 * Verify a JWT token issued by the multi-app OAuth system.
+	 *
+	 * @param token - The JWT token to verify
+	 * @returns The decoded payload containing id (userId) and tenantId
+	 * @throws UnauthorizedException if the token is invalid or expired
+	 */
+	verifyJwtToken(token: string): { id: string; tenantId: string } {
+		try {
+			return verify(token, environment.JWT_SECRET!) as { id: string; tenantId: string };
+		} catch {
+			throw new BadRequestException('Invalid or expired access token');
+		}
 	}
 
 	/**
