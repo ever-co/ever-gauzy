@@ -50,6 +50,7 @@ import { SwitchThemeComponent } from '../theme-selector/switch-theme/switch-them
 import { ReplacePipe } from '../time-tracker/pipes/replace.pipe';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { SslComponent } from './ssl/ssl.component';
+import { PermissionManagerComponent } from '../permission-manager/permission-manager.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -89,7 +90,8 @@ import { SslComponent } from './ssl/ssl.component';
 		LowerCasePipe,
 		TitleCasePipe,
 		TranslatePipe,
-		ReplacePipe
+		ReplacePipe,
+		PermissionManagerComponent
 	]
 })
 export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -503,6 +505,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	private _isHidden$: BehaviorSubject<boolean>;
 	private _simpleScreenshotNotification$: BehaviorSubject<boolean>;
 	private _timeZoneManager = TimeZoneManager;
+	private platformOS: string;
 
 	constructor(
 		private electronService: ElectronService,
@@ -562,6 +565,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				this.arch = arg;
 			});
 		});
+		this.setPlatform();
 		this.electronService.ipcRenderer.send('get-arch');
 		this.version = this.electronService.remote.app.getVersion();
 		this.isConnectedDatabase$
@@ -586,6 +590,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	async setPlatform() {
+		const platform = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
+		this.platformOS = platform;
 	}
 
 	ngOnDestroy(): void {
@@ -642,6 +651,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				? ['TIMER_TRACKER.SETTINGS.UPDATE', 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS', 'MENU.ABOUT']
 				: [
 					...(allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
+					...(allowScreenshotCapture && this.platformOS === 'darwin' && this.isDesktopTimer ? ['TIMER_TRACKER.PERMISSIONS.MENU_LABEL'] : []),
 					'TIMER_TRACKER.TIMER',
 					'TIMER_TRACKER.SETTINGS.UPDATE',
 					'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
@@ -756,6 +766,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			}
 			case 'goto_advanced_setting': {
 				this.selectMenu('TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS');
+				break;
+			}
+			case 'goto_permission': {
+				this.selectMenu('TIMER_TRACKER.PERMISSIONS.MENU_LABEL');
 				break;
 			}
 			case 'logout_success': {

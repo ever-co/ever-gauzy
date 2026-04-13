@@ -2,7 +2,7 @@ import { Body, Controller, Get, Header, HttpCode, HttpException, HttpStatus, Log
 import { Response } from 'express';
 import { randomBytes } from 'crypto';
 import { Public } from '@gauzy/common';
-import { OAuthAppPendingRequest, SocialAuthService } from '../social-auth.service';
+import { OAuthAppConfig, OAuthAppPendingRequest, SocialAuthService } from '../social-auth.service';
 
 interface OAuthAppAuthorizeQuery {
 	client_id?: string;
@@ -41,12 +41,6 @@ export class OAuthAppController {
 		@Query() query: OAuthAppAuthorizeQuery,
 		@Res() res: Response
 	) {
-		const config = this.service.getOAuthAppConfig();
-
-		if (!config.clientId || !config.clientSecret || !config.redirectUris?.length || !config.codeSecret) {
-			throw new HttpException('OAuth app is not configured', HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-
 		if (!query.client_id || !query.redirect_uri || !query.response_type) {
 			throw new HttpException('Missing OAuth parameters', HttpStatus.BAD_REQUEST);
 		}
@@ -55,8 +49,32 @@ export class OAuthAppController {
 			throw new HttpException('Unsupported response_type', HttpStatus.BAD_REQUEST);
 		}
 
-		if (query.client_id !== config.clientId) {
-			throw new HttpException('Invalid client_id', HttpStatus.BAD_REQUEST);
+		// Resolve the per-client config from the registry (replaces the
+		// previous single-app env-var check). 404 → 400 invalid_client,
+		// per OAuth 2.0.
+		let config: OAuthAppConfig;
+		try {
+			config = await this.service.resolveOAuthClient(query.client_id);
+		} catch (error: unknown) {
+			// OAuth 2.0: never signal "unknown client" with 404 or echo client_id — that
+			// enables enumeration. Always respond with generic `invalid_client` (400).
+			// Duck-type `getStatus` so a duplicate `@nestjs/common` copy cannot bypass
+			// `instanceof HttpException` while still returning 404 from `NotFoundException`.
+			const status =
+				error &&
+				typeof error === 'object' &&
+				typeof (error as { getStatus?: () => number }).getStatus === 'function'
+					? (error as { getStatus: () => number }).getStatus()
+					: undefined;
+			const isHttp = error instanceof HttpException;
+			const treatAsInvalidClient =
+				status === HttpStatus.NOT_FOUND ||
+				status === HttpStatus.BAD_REQUEST ||
+				(!isHttp && status === undefined);
+			if (treatAsInvalidClient) {
+				throw new HttpException('Invalid client_id', HttpStatus.BAD_REQUEST);
+			}
+			throw error;
 		}
 
 		if (!this.service.isOAuthAppRedirectUriAllowed(query.redirect_uri, config)) {
@@ -93,9 +111,25 @@ export class OAuthAppController {
 			throw new HttpException('Authorization request not found or expired', HttpStatus.NOT_FOUND);
 		}
 
+		// Resolve the client so the consent page can show the real app
+		// name + description ("Activepieces wants to access your account")
+		// instead of an opaque clientId. Failure here is non-fatal — the
+		// frontend can still render with just the clientId.
+		let clientName: string | undefined;
+		let clientDescription: string | null | undefined;
+		try {
+			const config = await this.service.resolveOAuthClient(pending.clientId);
+			clientName = config.name;
+			clientDescription = config.description;
+		} catch {
+			// swallow — consent page degrades gracefully
+		}
+
 		// Return safe info for the consent page (never expose secrets)
 		return {
 			clientId: pending.clientId,
+			clientName,
+			clientDescription,
 			scope: pending.scope,
 			redirectUri: pending.redirectUri
 		};

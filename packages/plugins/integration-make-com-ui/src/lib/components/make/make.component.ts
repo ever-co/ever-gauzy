@@ -56,16 +56,10 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 			.subscribe();
 	}
 
-	/**
-	 * Get route for tab navigation
-	 */
 	getRoute(tabName: string) {
 		return `./${tabName}`;
 	}
 
-	/**
-	 * Load tabs for Make.com integration
-	 */
 	private _loadTabs() {
 		this.tabs = [
 			{
@@ -75,16 +69,22 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 				route: this.getRoute('scenarios')
 			},
 			{
-				title: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.EXECUTIONS'),
-				icon: 'activity-outline',
+				title: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.WEBHOOKS'),
+				icon: 'link-2-outline',
 				responsive: true,
-				route: this.getRoute('executions')
+				route: this.getRoute('hooks')
 			},
 			{
-				title: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.HISTORY'),
-				icon: 'clock-outline',
+				title: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.CONNECTIONS'),
+				icon: 'swap-outline',
 				responsive: true,
-				route: this.getRoute('history')
+				route: this.getRoute('connections')
+			},
+			{
+				title: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.TEMPLATES'),
+				icon: 'file-text-outline',
+				responsive: true,
+				route: this.getRoute('templates')
 			},
 			{
 				title: this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.SETTINGS'),
@@ -95,9 +95,6 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 		];
 	}
 
-	/**
-	 * Load menu items for Make.com integration
-	 */
 	private _loadMenus() {
 		this.menus = [
 			{
@@ -113,9 +110,6 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 		];
 	}
 
-	/**
-	 * Load integration settings
-	 */
 	private _loadIntegrationSettings() {
 		if (!this.organization) return;
 
@@ -144,9 +138,6 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 			.subscribe();
 	}
 
-	/**
-	 * Apply translations when language changes
-	 */
 	private _applyTranslationOnTabsActions() {
 		this.translateService.onLangChange
 			.pipe(
@@ -159,9 +150,6 @@ export class MakeComponent extends TranslationBaseComponent implements OnInit, O
 			.subscribe();
 	}
 
-	/**
-	 * Navigate to the "Integrations" page
-	 */
 	navigateToIntegrations(): void {
 		this._router.navigate(['/pages/integrations']);
 	}

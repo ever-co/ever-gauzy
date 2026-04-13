@@ -1,10 +1,9 @@
-import { Controller, Get, Post, Body, UseGuards, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
-import { ConfigService } from '@gauzy/config';
+import { Controller, Get, Post, Body, UseGuards, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TenantPermissionGuard, Permissions, PermissionGuard, RequestContext } from '@gauzy/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { MakeComService } from './make-com.service';
-import { IMakeComCreateIntegration, IMakeComIntegrationSettings } from './interfaces/make-com.model';
+import { IMakeComIntegrationSettings } from './interfaces/make-com.model';
 import { UpdateMakeComSettingsDTO } from './dto';
 import { MakeComOAuthService } from './make-com-oauth.service';
 
@@ -15,8 +14,7 @@ import { MakeComOAuthService } from './make-com-oauth.service';
 export class MakeComController {
 	constructor(
 		private readonly makeComService: MakeComService,
-		private readonly makeComOAuthService: MakeComOAuthService,
-		private readonly config: ConfigService
+		private readonly makeComOAuthService: MakeComOAuthService
 	) {}
 
 	/**
@@ -68,26 +66,25 @@ export class MakeComController {
 	}
 
 	/**
-	 * Updates the Make.com OAuth settings for the current tenant.
-	 *
-	 * @param {UpdateMakeComSettingsDTO} input - The DTO containing the updated Make.com OAuth settings.
-	 * @returns {Promise<IMakeComIntegrationSettings>} A promise that resolves to the updated integration settings.
+	 * Initialize Make.com OAuth integration for the current tenant.
+	 * Client credentials are read from server-side environment variables
+	 * and are never exposed to tenants.
 	 */
-	@ApiOperation({ summary: 'Update Make.com OAuth settings for tenant' })
+	@ApiOperation({ summary: 'Initialize Make.com OAuth integration' })
 	@ApiResponse({
 		status: 200,
-		description: 'Make.com OAuth settings updated successfully'
+		description: 'Make.com OAuth authorization URL generated successfully'
 	})
 	@ApiResponse({
 		status: 400,
-		description: 'Both clientId and clientSecret must be provided together'
+		description: 'Server-side OAuth credentials not configured'
 	})
 	@ApiResponse({
 		status: 404,
 		description: 'Tenant ID not found in request context'
 	})
 	@Post('/oauth-settings')
-	async addOAuthSettings(@Body() input: IMakeComCreateIntegration): Promise<{
+	async initializeIntegration(@Body() body: { organizationId?: string }): Promise<{
 		authorizationUrl: string;
 		integrationId: string;
 	}> {
@@ -96,51 +93,19 @@ export class MakeComController {
 			throw new NotFoundException('Tenant ID not found in request context');
 		}
 
-		// Validate input
-		if (!input.client_id || !input.client_secret) {
-			throw new BadRequestException('Both client_id and client_secret are required');
-		}
-
-		// Save the credentials and create/update integration with encrypted secret
-		const integration = await this.makeComService.addIntegrationSettings({
-			...input,
-			client_secret: input.client_secret
+		// Generate authorization URL first — if this fails (e.g. missing config),
+		// we avoid leaving a partial integration record behind.
+		const authorizationUrl = await this.makeComOAuthService.getAuthorizationUrl({
+			organizationId: body?.organizationId
 		});
 
-		// Generate authorization URL
-		const authorizationUrl = this.makeComOAuthService.getAuthorizationUrl({
-			clientId: input.client_id
-		});
+		// Save the integration with server-side credentials
+		const integration = await this.makeComService.addIntegrationSettings(body?.organizationId);
 
 		return {
 			authorizationUrl,
 			integrationId: integration.id
 		};
-	}
-
-	/**
-	 * Gets the Make.com OAuth configuration for the frontend.
-	 * Note: Client secret is intentionally excluded for security reasons.
-	 */
-	@ApiOperation({ summary: 'Get Make.com OAuth configuration' })
-	@ApiResponse({
-		status: 200,
-		description: 'Retrieved Make.com OAuth configuration'
-	})
-	@Get('/oauth-config')
-	async getOAuthConfig(): Promise<{ clientId: string; redirectUri: string }> {
-		// Get client ID from the database
-		const clientId = await this.makeComService.getOAuthClientId();
-
-		// Get redirect URI from config (this is typically an environment variable)
-		const makeComConfig = this.config.get('makeCom');
-		const redirectUri = makeComConfig?.redirectUri;
-
-		if (!clientId || !redirectUri) {
-			throw new BadRequestException('OAuth configuration is missing required values.');
-		}
-
-		return { clientId, redirectUri };
 	}
 
 	/**
@@ -185,8 +150,18 @@ export class MakeComController {
 				throw new BadRequestException('Missing required parameters');
 			}
 
-			// Exchange code for tokens
-			const tokenResponse = await this.makeComOAuthService.exchangeCodeForToken(body.code, body.state);
+			// Verify state and retrieve the PKCE code verifier
+			const stateVerification = await this.makeComOAuthService.verifyState(body.state);
+			if (!stateVerification.isValid) {
+				throw new BadRequestException('Invalid or expired state parameter');
+			}
+
+			// Exchange code for tokens with the PKCE code verifier
+			const tokenResponse = await this.makeComOAuthService.exchangeCodeForToken(
+				body.code,
+				body.state,
+				stateVerification.codeVerifier
+			);
 
 			// Return the token response in the format expected by Make.com
 			return {

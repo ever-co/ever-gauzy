@@ -329,6 +329,9 @@
 		"iquery",
 		"iqueue",
 		"iremote",
+		"isinvalid",
+		"islinked",
+		"islocked",
 		"ISMTP",
 		"isready",
 		"isready",
@@ -700,6 +703,7 @@
 		"sslmode",
 		"SSSSZ",
 		"stackoverflow",
+		"suberrors",
 		"subquery",
 		"stagecivo",
 		"stagecw",
@@ -893,7 +897,9 @@
 		"pulseaudio",
 		"flathub",
 		"noninteractive",
-		"NEEDRESTART"
+		"NEEDRESTART",
+		"tccutil",
+		"systempreferences"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

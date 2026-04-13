@@ -2,11 +2,29 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService, IEnvironment } from '@gauzy/config';
 import { hashPassword } from '@gauzy/utils';
 
+/**
+ * Resolved view of a single OAuth client used by the auth pipeline.
+ *
+ * Loaded from the `oauth_clients` registry by
+ * `AuthService.resolveOAuthClient`. The plaintext `clientSecret` is NEVER
+ * present here — `/token` validates the presented secret against the
+ * stored `clientSecretHash` via `OAuthClientService.validateClientSecret`
+ * (constant-time scrypt compare).
+ */
 export interface OAuthAppConfig {
 	clientId: string;
-	clientSecret: string;
+	clientSecretHash: string | null;
 	redirectUris: string[];
 	codeSecret: string;
+	name: string;
+	description?: string | null;
+	allowedScopes: string[];
+	allowedGrantTypes: string[];
+	pkceRequired: boolean;
+	accessTokenTtl: number;
+	/** Owning tenant. `null` => global client usable by any tenant. */
+	tenantId?: string | null;
+	clientType?: string;
 }
 
 export interface OAuthAppPendingRequest {
@@ -74,20 +92,22 @@ export class SocialAuthService extends BaseSocialAuth {
 		return this.clientBaseUrl;
 	}
 
-	public getOAuthAppConfig(): OAuthAppConfig {
-		const oauthApp = this.configService.get('oauthApp');
-
-		return {
-			clientId: oauthApp?.clientId ?? '',
-			clientSecret: oauthApp?.clientSecret ?? '',
-			redirectUris: oauthApp?.redirectUris ?? [],
-			codeSecret: oauthApp?.codeSecret ?? ''
-		};
+	/**
+	 * Resolve a single OAuth client by its public `clientId`. The concrete
+	 * subclass (`AuthService`) loads from the `oauth_clients` registry.
+	 * Throws if the client does not exist or is inactive — callers map
+	 * that to `400 invalid_client`.
+	 */
+	public async resolveOAuthClient(_clientId: string): Promise<OAuthAppConfig> {
+		throw new Error('resolveOAuthClient is not implemented');
 	}
 
-	public isOAuthAppRedirectUriAllowed(redirectUri: string, config?: OAuthAppConfig): boolean {
-		const resolved = config ?? this.getOAuthAppConfig();
-		return resolved.redirectUris.includes(redirectUri);
+	/**
+	 * Whether the supplied redirect URI is allow-listed for the given
+	 * resolved OAuth client config. Exact-match, no wildcards.
+	 */
+	public isOAuthAppRedirectUriAllowed(redirectUri: string, config: OAuthAppConfig): boolean {
+		return Array.isArray(config?.redirectUris) && config.redirectUris.includes(redirectUri);
 	}
 
 	/**

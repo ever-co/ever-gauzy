@@ -178,7 +178,9 @@
 		"ADD_MORE_SOURCES": "הוסף מקורות נוספים",
 		"REMOVE_FROM_FAVORITES": "הסר מהמועדפים",
 		"ADD_TO_FAVORITES": "הוסף למועדפים",
-		"UNSELECT_ALL": "בטל בחירת הכל"
+		"UNSELECT_ALL": "בטל בחירת הכל",
+		"START_TIMER_ANYWAY": "התחל בכל זאת",
+		"OPEN_SETTING": "פתח הגדרות"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1141,10 +1143,11 @@
 		"TIME_REPORTS": "Time Report",
 		"WEEKLY_TIME_REPORTS": "Weekly Report",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
-		"PAYMENT_GATEWAYS": "Payment Gateways",
-		"SMS_GATEWAYS": "SMS Gateways",
-		"CUSTOM_SMTP": "Custom SMTP",
-		"INVENTORY": "Inventory",
+		"PAYMENT_GATEWAYS": "שערי תשלום",
+		"SMS_GATEWAYS": "שערי SMS",
+		"CUSTOM_SMTP": "SMTP מותאם אישית",
+		"OAUTH_CLIENTS": "לקוחות OAuth",
+		"INVENTORY": "מלאי",
 		"SALES": "Sales",
 		"PAYMENTS": "Payments",
 		"FEATURES": "Features",
@@ -1297,17 +1300,94 @@
 			"HOURLY": "Hourly"
 		},
 		"MAKE_COM_PAGE": {
-			"SCENARIOS": "סצנות",
-			"EXECUTIONS": "מימושים",
-			"HISTORY": "היסטוריה",
+			"SCENARIOS": "תרחישים",
+			"WEBHOOKS": "Webhooks",
+			"WEBHOOKS_REFRESH": "רענן webhooks",
+			"WEBHOOK_ENABLE": "הפעל webhook",
+			"WEBHOOK_DISABLE": "השבת webhook",
+			"WEBHOOK_PING": "בדוק webhook",
+			"SCENARIO_ACTIVE": "פעיל",
+			"SCENARIO_INACTIVE": "לא פעיל",
+			"SCENARIO_LAST_EDITED": "עריכה אחרונה: {{value}}",
+			"SCENARIO_DISABLE": "השבת תרחיש",
+			"SCENARIO_ENABLE": "הפעל תרחיש",
+			"SCENARIO_RUN_ONCE": "הפעל תרחיש פעם אחת",
+			"WEBHOOK_ENABLED": "מופעל",
+			"WEBHOOK_DISABLED": "מושבת",
+			"WEBHOOK_TYPE": "סוג",
+			"WEBHOOK_QUEUE": "תור",
+			"TEMPLATE_PUBLIC": "ציבורי",
+			"TEMPLATE_PUBLISHED": "פורסם",
+			"REFRESH_CONNECTIONS": "רענן חיבורים",
+			"CONFIGURATION_TITLE": "תצורת Make.com",
+			"ZONE_LABEL": "אזור",
+			"ZONE_HINT": "בחר את האזור התואם לחשבון Make.com שלך (למשל us2.make.com)",
+			"ORGANIZATION_LABEL": "ארגון Make.com",
+			"LOADING_ORGANIZATIONS": "טוען ארגונים...",
+			"NO_ORGANIZATIONS": "לא נמצאו ארגונים",
+			"TEAM_LABEL": "צוות Make.com",
+			"LOADING_TEAMS": "טוען צוותים...",
+			"NO_TEAMS": "לא נמצאו צוותים",
+			"CONNECTED_TO": "מחובר ל-{{org}} / {{team}} ב-{{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "הגדרות Webhook",
+			"CONNECTIONS": "חיבורים",
+			"TEMPLATES": "תבניות",
 			"SETTINGS": "הגדרות",
+			"CONNECT_TO_MAKE_COM": "התחבר ל-Make.com",
+			"CONNECT_INFO": "לחץ על הכפתור למטה כדי לחבר את חשבון ה-Make.com שלך. תועבר ל-Make.com כדי לאשר את האינטגרציה.",
+			"NO_SCENARIOS": "לא נמצאו תרחישים. צור תרחישים בלוח הבקרה של Make.com.",
+			"NO_HOOKS": "לא נמצאו webhooks. צור webhooks בלוח הבקרה של Make.com.",
+			"NO_CONNECTIONS": "לא נמצאו חיבורים. צור חיבורים בלוח הבקרה של Make.com.",
+			"NO_TEMPLATES": "לא נמצאו תבניות.",
+			"TEST_CONNECTION": "בדיקת חיבור",
+			"CONNECTION": {
+				"ACCOUNT": "חשבון: {{value}}",
+				"TYPE": "סוג: {{value}}",
+				"PACKAGE": "חבילה: {{value}}",
+				"EXPIRES": "פג תוקף: {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
-				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור"
+				"START_AUTHORIZATION": "כשל בהתחלת תהליך ההרשאה",
+				"NO_ORGANIZATION": "אנא בחר ארגון תחילה",
+				"LOAD_SETTINGS": "כשל בטעינת הגדרות Make.com",
+				"SAVE_SETTINGS": "כשל בשמירת הגדרות Make.com",
+				"LOAD_SETUP_STATUS": "כשל בטעינת סטטוס הגדרה",
+				"LOAD_SCENARIOS": "כשל בטעינת תרחישים",
+				"TOGGLE_SCENARIO": "כשל בהחלפת מצב תרחיש",
+				"RUN_SCENARIO": "כשל בהפעלת תרחיש",
+				"LOAD_CONNECTIONS": "כשל בטעינת חיבורים",
+				"TEST_CONNECTION": "כשל בבדיקת חיבור",
+				"LOAD_WEBHOOKS": "כשל בטעינת webhooks",
+				"TOGGLE_WEBHOOK": "כשל בהחלפת מצב webhook",
+				"PING_WEBHOOK": "כשל בבדיקת webhook",
+				"SET_ZONE": "כשל בהגדרת אזור",
+				"LOAD_ORGANIZATIONS": "כשל בטעינת ארגונים",
+				"SELECT_ORGANIZATION": "כשל בבחירת ארגון",
+				"LOAD_TEAMS": "כשל בטעינת צוותים",
+				"SELECT_TEAM": "כשל בבחירת צוות",
+				"LOAD_TEMPLATES": "כשל בטעינת תבניות",
+				"REQUEST_TIMEOUT": "פסק זמן לבקשה. אנא נסה שוב."
 			},
-			"CLIENT_ID": "מזהה לקוח",
-			"CLIENT_SECRET": "סיסמת לקוח",
-			"NEXT_STEP_INFO": "לאחר האישור, תועבר ל-Make.com להשלמת הגדרות האינטגרציה"
+			"SUCCESS": {
+				"SETTINGS_SAVED": "הגדרות Make.com נשמרו בהצלחה",
+				"SCENARIO_ACTIVATED": "תרחיש הופעל",
+				"SCENARIO_DEACTIVATED": "תרחיש הושבת",
+				"SCENARIO_EXECUTED": "תרחיש בוצע",
+				"CONNECTION_VALID": "החיבור \"{{name}}\" תקין",
+				"WEBHOOK_TOGGLED_ON": "Webhook הופעל",
+				"WEBHOOK_TOGGLED_OFF": "Webhook הושבת",
+				"WEBHOOK_PINGED": "Webhook \"{{name}}\" נבדק בהצלחה",
+				"ZONE_SET": "האזור הוגדר ל-{{zone}}",
+				"ORGANIZATION_SELECTED": "ארגון \"{{name}}\" נבחר",
+				"TEAM_SELECTED": "צוות \"{{name}}\" נבחר"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "אנא אשר תחילה את Make.com. עבור ללשונית הגדרות כדי לחבר את החשבון שלך.",
+				"ZONE": "אנא בחר את אזור ה-Make.com שלך בלשונית הגדרות.",
+				"ORGANIZATION": "אנא בחר את ארגון ה-Make.com שלך בלשונית הגדרות.",
+				"TEAM": "אנא בחר את צוות ה-Make.com שלך בלשונית הגדרות."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1320,26 +1400,32 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "מזהה לקוח",
-			"CLIENT_SECRET": "סיסמת לקוח",
-			"NEXT_STEP_INFO": "לאחר האישור, תועבר ל-Zapier להשלמת הגדרות האינטגרציה",
+			"CONNECT_TO_ZAPIER": "התחבר ל-Zapier",
+			"CONNECT_INFO": "לחץ על הכפתור למטה כדי לחבר את חשבון ה-Zapier שלך. תועבר ל-Zapier כדי לאשר את האינטגרציה.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "נכשל בטעינת הגדרות Zapier",
 				"SAVE_SETTINGS": "נכשל בשמירת הגדרות Zapier",
 				"INVALID_FORM": "אנא מלא את כל השדות הנדרשים",
-				"MISSING_CREDENTIALS": "חסרים פרטי גישה של הלקוח",
+				"MISSING_CREDENTIALS": "שילוב Zapier לא מוגדר בשרת",
+				"NO_ORGANIZATION": "אנא בחר ארגון תחילה",
 				"NO_ACCESS_TOKEN": "אין אסימון גישה זמין",
 				"LOAD_WEBHOOKS": "נכשל בטעינת וובחוקים",
 				"DELETE_WEBHOOK": "נכשל במחיקת וובחוק",
 				"LOAD_ACTIONS": "נכשל בטעינת פעולות",
 				"LOAD_TRIGGERS": "נכשל בטעינת טריגרים",
+				"LOAD_ZAPS": "כשל בטעינת zaps",
+				"LOAD_ZAP_TEMPLATES": "כשל בטעינת תבניות zap",
+				"CREATE_ZAP": "כשל ביצירת zap",
+				"ZAP_TITLE_REQUIRED": "אנא ספק כותרת ל-zap החדש",
+				"NO_INTEGRATION_ID": "לא סופק מזהה אינטגרציה של Zapier",
 				"START_AUTHORIZATION": "אנא התחיל את תהליך האישור",
 				"INVALID_TOKEN": "אסימון לא תקין סופק",
 				"TOKEN_NOT_FOUND": "אסימון לא נמצא"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "הגדרות Zapier נשמרו בהצלחה",
-				"DELETE_WEBHOOK": "וובחוק נמחק בהצלחה"
+				"DELETE_WEBHOOK": "וובחוק נמחק בהצלחה",
+				"CREATE_ZAP": "Zap נוצר בהצלחה"
 			},
 			"TAB": {
 				"TRIGGERS": "טריגרים",
@@ -1381,6 +1467,26 @@
 			"WEBHOOKS": {
 				"TITLE": "וובחוקים",
 				"NO_WEBHOOKS": "אין וובחוקים מוגדרים"
+			},
+			"ZAPS": {
+				"TITLE": "זאפים",
+				"NO_ZAPS": "אין זאפים זמינים",
+				"CREATE": "צור זאפ",
+				"SUBMIT": "צור",
+				"ADD_STEP": "הוסף שלב",
+				"OPEN_EDITOR": "פתח ב-Zapier",
+				"ENABLED": "מופעל",
+				"DISABLED": "מושבת",
+				"TITLE_PLACEHOLDER": "הזן כותרת לזאפ החדש",
+				"FIELDS": {
+					"TITLE": "כותרת",
+					"STEPS": "שלבים",
+					"STEP": "שלב",
+					"STEP_TITLE": "כותרת שלב",
+					"ACTION": "פעולה",
+					"AUTHENTICATION": "אימות",
+					"INPUTS": "קלטים (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1652,8 +1758,18 @@
 			"INTEGRATION_DISABLED": "'{{provider}}' integration successfully disabled",
 			"INTEGRATION_ADDED": "Integration '{{provider}}' has been added to '{{organization}}'"
 		},
-		"ENABLED": "Enabled",
-		"DISABLED": "Disabled"
+		"ENABLED": "מופעל",
+		"DISABLED": "מושבת",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "מעבד הרשאת Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "הרשאת Make.com נכשלה",
+				"INVALID_CALLBACK": "פרמטרי callback לא חוקיים"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "הרשאת Make.com הושלמה בהצלחה"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -1798,8 +1914,8 @@
 		"END_WORK": "סיום עבודה",
 		"WORK_ENDED": "העבודה הסתיימה",
 		"DELETED": "Deleted",
-		"ENABLED": "Enabled",
-		"DISABLED": "Disabled",
+		"ENABLED": "מופעל",
+		"DISABLED": "מושבת",
 		"RECURRING_EXPENSE": "Employee Recurring Expense",
 		"RECURRING_EXPENSE_EDIT": "Edit the current & all future expenses. There will be no change to any past expense.",
 		"RECURRING_EXPENSE_ADD": "This will add an expense recurring every month.",
@@ -4553,6 +4669,37 @@
 			"PLEASE_HOLD": "אנא המתן...",
 			"SHUTTING_DOWN": "היישום נסגר",
 			"LOGOUT_IN_PROGRESS": "התנתקות בתהליך"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "הרשאות מערכת",
+			"TITLE": "הרשאות מערכת",
+			"DESCRIPTION": "Gauzy דורש הרשאות macOS מסוימות כדי לעקוב אחר עבודתך במדויק. סקור אותן ונהל אותן כאן.",
+			"SCREEN_RECORDING": "הקלטת מסך",
+			"SCREEN_RECORDING_DESC": "נדרש לצלם צילומי מסך אוטומטיים במהלך סשני העבודה המעוקבים שלך.",
+			"STATUS": "סטטוס",
+			"GRANTED": "ניתן",
+			"DENIED": "נדחה",
+			"NOT_DETERMINED": "לא נקבע",
+			"RESTRICTED": "מוגבל",
+			"OPEN_SYSTEM_SETTINGS": "פתח הגדרות מערכת",
+			"TEST_SCREENSHOT": "בדוק צילום מסך",
+			"TEST_GET_ACTIVE_WINDOW": "בדוק גישה",
+			"SCREENSHOT_PREVIEW": "תצוגה מקדימה של צילום מסך",
+			"RESET_PERMISSION": "אפס",
+			"RESTARTING": "הפעלה מחדש בעוד",
+			"DENIED_HINT": "הקלטת המסך נדחתה. לחץ על 'אפס' כדי לאפס את ההרשאה, או פתח את הגדרות המערכת כדי להעניק אותה ידנית.",
+			"RELAUNCH": "הפעל מחדש",
+			"RELAUNCH_DESC": "הרשאה ניתנה אך עדיין לא ניתן לצלם את המסך? לחץ על הפעל מחדש כדי להחיל את השינויים.",
+			"DIALOG_TITLE": "נדרשת הרשאה להקלטת מסך",
+			"DIALOG_DESC": "Gauzy זקוק להרשאת הקלטת מסך כדי לצלם מסכים במהלך סשן העבודה שלך. אנא אשר גישה להמשך.",
+			"POLLING_HINT": "תיבת הדו-שיח תיסגר אוטומטית לאחר מתן ההרשאה.",
+			"START_ANYWAY": "התחל ללא צילום מסך",
+			"ACCESSIBILITY": "נגישות",
+			"ACCESSIBILITY_DESC": "נדרש למעקב אחר פעילות מקלדת, עכבר וחלון פעיל במהלך סשני העבודה שלך.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "הגדרות נגישות",
+			"RESET_ACCESSIBILITY_PERMISSION": "אפס נגישות",
+			"ACCESSIBILITY_DENIED_HINT": "הנגישות נדחתה. לחץ על 'אפס נגישות' כדי לאפס את ההרשאה, או פתח את הגדרות המערכת.",
+			"ACTIVE_WINDOW": "תצוגה מקדימה של חלון פעיל"
 		}
 	},
 	"SERVER": "שרת",
@@ -5470,5 +5617,80 @@
 		"DESCRIPTION": "שרת {{companySite}} אינו נגיש כרגע. ייתכן שהסיבה לכך היא תחזוקה מתוכננת או השבתה בלתי צפויה.",
 		"CONNECTING": "מנסה להתחבר מחדש אוטומטית...",
 		"HINT": "סטטוס: מנסה ליצור חיבור לשרתי {{companySite}}. קוד שגיאה: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "לקוחות OAuth",
+		"SUBTITLE": "רשום ונהל אפליקציות צד שלישי שיכולות לבקש גישה ל-Ever Gauzy בשם המשתמשים שלך.",
+		"STATUS": {
+			"ACTIVE": "פעיל",
+			"INACTIVE": "לא פעיל"
+		},
+		"EMPTY": {
+			"TITLE": "אין לקוחות OAuth רשומים עדיין.",
+			"HINT": "לחץ על \"רשום אפליקציה\" כדי להוסיף את האינטגרציה הראשונה שלך (למשל Activepieces, n8n, Make.com)."
+		},
+		"TABLE": {
+			"NAME": "שם",
+			"CLIENT_ID": "מזהה לקוח",
+			"TYPE": "סוג",
+			"STATUS": "סטטוס",
+			"REDIRECT_URIS": "כתובות URI להפניה מחדש",
+			"ACTIONS": "פעולות"
+		},
+		"ACTIONS": {
+			"REGISTER": "רשום אפליקציה",
+			"EDIT": "ערוך",
+			"ROTATE_SECRET": "סובב סוד",
+			"DELETE": "בטל לקוח"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "רשום לקוח OAuth חדש",
+			"EDIT_TITLE": "ערוך לקוח OAuth"
+		},
+		"FORM": {
+			"NAME": "שם האפליקציה",
+			"NAME_PLACEHOLDER": "למשל Activepieces",
+			"DESCRIPTION": "תיאור",
+			"DESCRIPTION_PLACEHOLDER": "תיאור קצר המוצג בדף ההסכמה",
+			"CLIENT_TYPE": "סוג לקוח",
+			"CLIENT_TYPE_IMMUTABLE": "לא ניתן לשנות את סוג הלקוח לאחר היצירה.",
+			"REDIRECT_URIS": "כתובות URI להפניה מחדש",
+			"REDIRECT_URI_PLACEHOLDER": "https://your-app.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "הוסף כתובת URI להפניה מחדש",
+			"ALLOWED_SCOPES": "היקפים מותרים",
+			"SCOPE_PLACEHOLDER": "למשל offline_access",
+			"ADD_SCOPE": "הוסף היקף",
+			"GRANT_TYPES": "סוגי הענקה",
+			"PKCE_REQUIRED": "דרוש PKCE (אכיפה דחויה)",
+			"ACCESS_TTL": "TTL של אסימון גישה (שניות)",
+			"REFRESH_TTL": "TTL של אסימון רענון (שניות)"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "שמור את הסוד שלך",
+			"WARNING": "זו הפעם היחידה שהסוד יוצג. העתק אותו עכשיו ושמור אותו באינטגרציה של הצד השלישי שלך - סיבוב הוא הדרך היחידה להתאושש מסוד אבוד.",
+			"CLIENT_ID": "מזהה לקוח",
+			"CLIENT_SECRET": "סוד לקוח",
+			"ACKNOWLEDGE": "העתקתי ושמרתי באופן מאובטח את סוד הלקוח.",
+			"CLOSE": "שמרתי, סגור",
+			"COPIED_CLIENT_ID": "מזהה הלקוח הועתק ללוח",
+			"COPIED_SECRET": "סוד הלקוח הועתק ללוח"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "לסובב את סוד הלקוח עבור \"{{name}}\"? הסוד הקודם יפסיק לעבוד מיד עבור החלפות אסימונים חדשות.",
+			"DELETE": "לבטל את \"{{name}}\"? זה ימנע מיד מהאפליקציה של הצד השלישי לקבל אסימונים חדשים."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" נרשם",
+			"UPDATED": "לקוח OAuth עודכן",
+			"SECRET_ROTATED": "סוד הלקוח סובב",
+			"DELETED": "לקוח OAuth בוטל"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "טעינת לקוחות OAuth נכשלה",
+			"CREATE_FAILED": "רישום לקוח OAuth נכשל",
+			"UPDATE_FAILED": "עדכון לקוח OAuth נכשל",
+			"ROTATE_FAILED": "סיבוב סוד הלקוח נכשל",
+			"DELETE_FAILED": "ביטול לקוח OAuth נכשל"
+		}
 	}
 }

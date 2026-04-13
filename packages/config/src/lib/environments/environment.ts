@@ -167,16 +167,6 @@ export const environment: IEnvironment = {
 		domain: process.env.AUTH0_DOMAIN
 	},
 
-	oauthApp: {
-		clientId: process.env.GAUZY_OAUTH_APP_CLIENT_ID,
-		clientSecret: process.env.GAUZY_OAUTH_APP_CLIENT_SECRET,
-		codeSecret: process.env.GAUZY_OAUTH_APP_CODE_SECRET,
-		redirectUris: (process.env.GAUZY_OAUTH_APP_REDIRECT_URIS ?? '')
-			.split(',')
-			.map((uri) => uri.trim())
-			.filter(Boolean)
-	},
-
 	activepieces: {
 		apiKey: process.env.GAUZY_ACTIVEPIECES_API_KEY
 	},
@@ -307,7 +297,7 @@ export const environment: IEnvironment = {
 		adminEmail: process.env.DEMO_ADMIN_EMAIL || `local.admin@ever.co`,
 		adminPassword: process.env.DEMO_ADMIN_PASSWORD || `admin`,
 		employeeEmail: process.env.DEMO_EMPLOYEE_EMAIL || `employee@ever.co`,
-		employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD || `123456`
+		employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD || `12345678`
 	}
 };
 
