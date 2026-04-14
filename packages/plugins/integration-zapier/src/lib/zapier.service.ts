@@ -873,7 +873,7 @@ export class ZapierService {
 
 		// 2) Try JWT verification (multi-app OAuth tokens)
 		try {
-			const decoded = verify(token, environment.JWT_SECRET!) as { id: string; tenantId: string };
+			const decoded = this.verifyJwtToken(token);
 			if (!decoded?.tenantId) {
 				throw new Error('JWT missing tenantId');
 			}
