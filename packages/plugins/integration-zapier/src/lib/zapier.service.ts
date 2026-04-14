@@ -841,23 +841,44 @@ export class ZapierService {
 	 * @throws NotFoundException if no Zapier integration exists for this tenant
 	 */
 	async findIntegrationByTenantId(tenantId: string, organizationId?: string): Promise<IIntegrationTenant> {
-		const integrationTenant = await this._integrationTenantService.findOneByOptions({
+		if (organizationId) {
+			// Scoped lookup — organizationId is known, so the match is unambiguous
+			const integrationTenant = await this._integrationTenantService.findOneByOptions({
+				where: {
+					tenantId,
+					organizationId,
+					name: IntegrationEnum.ZAPIER
+				} as IIntegrationFilter,
+				relations: ['settings']
+			});
+
+			if (!integrationTenant) {
+				throw new NotFoundException('Zapier integration not found for this tenant');
+			}
+
+			return { ...integrationTenant, name: IntegrationEnum.ZAPIER };
+		}
+
+		// No organizationId — fail-closed: only succeed if exactly one Zapier integration exists
+		const { items, total } = await this._integrationTenantService.findAll({
 			where: {
 				tenantId,
-				name: IntegrationEnum.ZAPIER,
-				...(organizationId ? { organizationId } : {})
+				name: IntegrationEnum.ZAPIER
 			} as IIntegrationFilter,
 			relations: ['settings']
 		});
 
-		if (!integrationTenant) {
+		if (total === 0) {
 			throw new NotFoundException('Zapier integration not found for this tenant');
 		}
 
-		return {
-			...integrationTenant,
-			name: IntegrationEnum.ZAPIER
-		};
+		if (total > 1) {
+			throw new BadRequestException(
+				'Multiple Zapier integrations found for this tenant. Token must include organizationId to resolve the correct one.'
+			);
+		}
+
+		return { ...items[0], name: IntegrationEnum.ZAPIER };
 	}
 
 	/**
@@ -886,16 +907,17 @@ export class ZapierService {
 		try {
 			const decoded = this.verifyJwtToken(token);
 			if (!decoded?.tenantId) {
-				throw new Error('JWT missing tenantId');
+				throw new UnauthorizedException('JWT missing tenantId');
 			}
 			return await this.findIntegrationByTenantId(decoded.tenantId, decoded.organizationId);
 		} catch (error: any) {
-			// Re-throw infrastructure errors as-is; only wrap "not found" / auth errors
-			if (!(error instanceof NotFoundException) && !(error instanceof UnauthorizedException)) {
+			// Let known HTTP exceptions (auth, not-found, bad-request) surface with their status code.
+			// Only re-throw unexpected errors (DB failures, etc.) as-is.
+			if (error instanceof HttpException) {
+				this.logger.error('Failed to resolve integration from bearer token', error?.message);
 				throw error;
 			}
-			this.logger.error('Failed to resolve integration from bearer token', error?.message);
-			throw new NotFoundException('Invalid access token');
+			throw error;
 		}
 	}
 
