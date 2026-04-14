@@ -1,10 +1,10 @@
-import { Injectable, BadRequestException, HttpException, HttpStatus, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpException, HttpStatus, NotFoundException, Logger, UnauthorizedException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError, AxiosResponse } from 'axios';
 import { DeepPartial, Like } from 'typeorm';
 import { catchError, firstValueFrom, map } from 'rxjs';
-import { ConfigService } from '@gauzy/config';
+import { ConfigService, environment } from '@gauzy/config';
 import {
 	IIntegrationTenant,
 	IntegrationEnum,
@@ -32,7 +32,6 @@ import {
 import { IZapierCreateZapInput, IZapierZap, IZapierZapTemplate } from '@gauzy/contracts';
 import { randomBytes } from 'node:crypto';
 import { verify } from 'jsonwebtoken';
-import { environment } from '@gauzy/config';
 
 @Injectable()
 export class ZapierService {
@@ -896,7 +895,7 @@ export class ZapierService {
 		try {
 			return verify(token, environment.JWT_SECRET!) as { id: string; tenantId: string };
 		} catch {
-			throw new BadRequestException('Invalid or expired access token');
+			throw new UnauthorizedException('Invalid or expired access token');
 		}
 	}
 

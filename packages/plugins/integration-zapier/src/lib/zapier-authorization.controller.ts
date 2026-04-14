@@ -246,24 +246,12 @@ export class ZapierAuthorizationController {
 
 			const token = authHeader.substring(7); // Strip "Bearer "
 
-			// Try opaque token first (backward compat), then JWT
-			try {
-				const integration = await this.zapierService.findIntegrationByToken(token);
-				return {
-					authenticated: true,
-					integrationId: integration.id,
-					name: IntegrationEnum.ZAPIER
-				};
-			} catch {
-				// Not an opaque token — try JWT
-			}
+			// Resolve integration from opaque token or JWT (multi-app OAuth)
+			const integration = await this.zapierService.resolveIntegrationFromBearerToken(token);
 
-			// Verify JWT from multi-app OAuth
-			const decoded = this.zapierService.verifyJwtToken(token);
 			return {
 				authenticated: true,
-				userId: decoded.id,
-				tenantId: decoded.tenantId,
+				integrationId: integration.id,
 				name: IntegrationEnum.ZAPIER
 			};
 		} catch (error) {
@@ -292,24 +280,13 @@ export class ZapierAuthorizationController {
 
 			const token = authHeader.substring(7);
 
-			// Try opaque token first (backward compat), then JWT
-			try {
-				const integration = await this.zapierService.findIntegrationByToken(token);
-				return {
-					id: integration.id,
-					name: IntegrationEnum.ZAPIER,
-					email: `zapier-integration@${integration.tenantId || 'gauzy'}`
-				};
-			} catch {
-				// Not an opaque token — try JWT
-			}
+			// Resolve integration from opaque token or JWT (multi-app OAuth)
+			const integration = await this.zapierService.resolveIntegrationFromBearerToken(token);
 
-			// Decode JWT from multi-app OAuth
-			const decoded = this.zapierService.verifyJwtToken(token);
 			return {
-				id: decoded.id,
+				id: integration.id,
 				name: IntegrationEnum.ZAPIER,
-				email: `zapier-integration@${decoded.tenantId || 'gauzy'}`
+				email: `zapier-integration@${integration.tenantId || 'gauzy'}`
 			};
 		} catch (error) {
 			this.logger.error('Zapier connection info failed', error);
