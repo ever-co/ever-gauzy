@@ -831,15 +831,22 @@ export class ZapierService {
 	}
 
 	/**
-	 * Find the Zapier IntegrationTenant for a given tenantId.
+	 * Find the Zapier IntegrationTenant for a given tenantId and (optionally) organizationId.
+	 * When organizationId is provided the lookup is scoped to that org, preventing
+	 * ambiguous matches in tenants with multiple organizations.
 	 *
 	 * @param tenantId - The tenant ID (from JWT)
+	 * @param organizationId - The organization ID (from JWT, optional)
 	 * @returns The matching IIntegrationTenant
 	 * @throws NotFoundException if no Zapier integration exists for this tenant
 	 */
-	async findIntegrationByTenantId(tenantId: string): Promise<IIntegrationTenant> {
+	async findIntegrationByTenantId(tenantId: string, organizationId?: string): Promise<IIntegrationTenant> {
 		const integrationTenant = await this._integrationTenantService.findOneByOptions({
-			where: { tenantId, name: IntegrationEnum.ZAPIER } as IIntegrationFilter,
+			where: {
+				tenantId,
+				name: IntegrationEnum.ZAPIER,
+				...(organizationId ? { organizationId } : {})
+			} as IIntegrationFilter,
 			relations: ['settings']
 		});
 
@@ -867,8 +874,12 @@ export class ZapierService {
 		// 1) Try opaque token lookup (Zapier-issued tokens)
 		try {
 			return await this.findIntegrationByToken(token);
-		} catch {
-			// Not an opaque Zapier token — try JWT
+		} catch (error) {
+			// Only fall through to JWT if the token was simply not found.
+			// Re-throw infrastructure errors (DB failures, etc.) immediately.
+			if (!(error instanceof NotFoundException)) {
+				throw error;
+			}
 		}
 
 		// 2) Try JWT verification (multi-app OAuth tokens)
@@ -877,8 +888,12 @@ export class ZapierService {
 			if (!decoded?.tenantId) {
 				throw new Error('JWT missing tenantId');
 			}
-			return await this.findIntegrationByTenantId(decoded.tenantId);
+			return await this.findIntegrationByTenantId(decoded.tenantId, decoded.organizationId);
 		} catch (error: any) {
+			// Re-throw infrastructure errors as-is; only wrap "not found" / auth errors
+			if (!(error instanceof NotFoundException) && !(error instanceof UnauthorizedException)) {
+				throw error;
+			}
 			this.logger.error('Failed to resolve integration from bearer token', error?.message);
 			throw new NotFoundException('Invalid access token');
 		}
@@ -891,9 +906,13 @@ export class ZapierService {
 	 * @returns The decoded payload containing id (userId) and tenantId
 	 * @throws UnauthorizedException if the token is invalid or expired
 	 */
-	verifyJwtToken(token: string): { id: string; tenantId: string } {
+	verifyJwtToken(token: string): { id: string; tenantId: string; organizationId?: string } {
 		try {
-			return verify(token, environment.JWT_SECRET!) as { id: string; tenantId: string };
+			const decoded = verify(token, environment.JWT_SECRET!);
+			if (typeof decoded !== 'object' || !decoded || !('tenantId' in decoded)) {
+				throw new Error('Invalid JWT payload structure');
+			}
+			return decoded as { id: string; tenantId: string; organizationId?: string };
 		} catch {
 			throw new UnauthorizedException('Invalid or expired access token');
 		}
