@@ -246,12 +246,25 @@ export class ZapierAuthorizationController {
 
 			const token = authHeader.substring(7); // Strip "Bearer "
 
-			// Resolve integration from opaque token or JWT (multi-app OAuth)
-			const integration = await this.zapierService.resolveIntegrationFromBearerToken(token);
+			// Try opaque token first (backward compat) — resolves via IntegrationTenant
+			try {
+				const integration = await this.zapierService.resolveIntegrationFromBearerToken(token);
+				return {
+					authenticated: true,
+					integrationId: integration.id,
+					name: IntegrationEnum.ZAPIER
+				};
+			} catch {
+				// No IntegrationTenant yet — fall through to JWT-only verification
+			}
 
+			// Verify the JWT is valid (sufficient for auth test — IntegrationTenant
+			// may not exist yet when Zapier first tests the OAuth connection)
+			const decoded = this.zapierService.verifyJwtToken(token);
 			return {
 				authenticated: true,
-				integrationId: integration.id,
+				userId: decoded.id,
+				tenantId: decoded.tenantId,
 				name: IntegrationEnum.ZAPIER
 			};
 		} catch (error) {
@@ -280,13 +293,25 @@ export class ZapierAuthorizationController {
 
 			const token = authHeader.substring(7);
 
-			// Resolve integration from opaque token or JWT (multi-app OAuth)
-			const integration = await this.zapierService.resolveIntegrationFromBearerToken(token);
+			// Try opaque token first (backward compat) — resolves via IntegrationTenant
+			try {
+				const integration = await this.zapierService.resolveIntegrationFromBearerToken(token);
+				return {
+					id: integration.id,
+					name: IntegrationEnum.ZAPIER,
+					email: `zapier-integration@${integration.tenantId || 'gauzy'}`
+				};
+			} catch {
+				// No IntegrationTenant yet — fall through to JWT-only verification
+			}
 
+			// Verify the JWT is valid (sufficient for connection label —
+			// IntegrationTenant may not exist yet when Zapier first tests the connection)
+			const decoded = this.zapierService.verifyJwtToken(token);
 			return {
-				id: integration.id,
+				id: decoded.id,
 				name: IntegrationEnum.ZAPIER,
-				email: `zapier-integration@${integration.tenantId || 'gauzy'}`
+				email: `zapier-integration@${decoded.tenantId || 'gauzy'}`
 			};
 		} catch (error) {
 			this.logger.error('Zapier connection info failed', error);

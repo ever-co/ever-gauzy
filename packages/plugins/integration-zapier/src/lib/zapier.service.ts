@@ -801,10 +801,14 @@ export class ZapierService {
 	 * @throws NotFoundException if the token is invalid or no Zapier integration is found.
 	 */
 	async findIntegrationByToken(token: string): Promise<IIntegrationTenant> {
-		// 1) Lookup the Gauzy-issued OAuth access token (separate from Zapier API tokens)
-		const setting = await this._integrationSettingService.findOneByWhereOptions({
-			settingsName: 'oauth_access_token',
-			settingsValue: token
+		// 1) Lookup the Gauzy-issued OAuth access token (separate from Zapier API tokens).
+		//    Use the repository directly to bypass tenant-aware scoping, because this
+		//    method is called from @Public() endpoints where no user is in the request context.
+		const setting = await this._integrationSettingService.typeOrmIntegrationSettingRepository.findOne({
+			where: {
+				settingsName: 'oauth_access_token',
+				settingsValue: token
+			}
 		});
 
 		// 2) Ensure we have an integrationId
@@ -914,7 +918,7 @@ export class ZapierService {
 			// Let known HTTP exceptions (auth, not-found, bad-request) surface with their status code.
 			// Only re-throw unexpected errors (DB failures, etc.) as-is.
 			if (error instanceof HttpException) {
-				this.logger.error('Failed to resolve integration from bearer token', error?.message);
+				this.logger.debug('resolveIntegrationFromBearerToken: no integration found — %s', error?.message);
 				throw error;
 			}
 			throw error;
