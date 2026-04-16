@@ -71,7 +71,8 @@ export class ZapierWebhookController {
 		const token = authorization.split(' ')[1];
 
 		try {
-			const integration = await this.zapierService.findIntegrationByToken(token);
+			// Resolve integration from opaque token or JWT (multi-app OAuth)
+			const integration = await this.zapierService.resolveIntegrationFromBearerToken(token);
 
 			if (!integration) {
 				throw new ForbiddenException('Invalid token');
@@ -229,7 +230,8 @@ export class ZapierWebhookController {
 		const token = authorization.split(' ')[1];
 
 		try {
-			const integration = await this.zapierService.findIntegrationByToken(token);
+			// Resolve integration from opaque token or JWT (multi-app OAuth)
+			const integration = await this.zapierService.resolveIntegrationFromBearerToken(token);
 
 			if (!integration) {
 				throw new ForbiddenException('Invalid token');

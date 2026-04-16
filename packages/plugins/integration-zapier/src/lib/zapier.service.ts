@@ -1,10 +1,10 @@
-import { Injectable, BadRequestException, HttpException, HttpStatus, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpException, HttpStatus, NotFoundException, Logger, UnauthorizedException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError, AxiosResponse } from 'axios';
 import { DeepPartial, Like } from 'typeorm';
 import { catchError, firstValueFrom, map } from 'rxjs';
-import { ConfigService } from '@gauzy/config';
+import { ConfigService, environment } from '@gauzy/config';
 import {
 	IIntegrationTenant,
 	IntegrationEnum,
@@ -31,6 +31,7 @@ import {
 } from './zapier.types';
 import { IZapierCreateZapInput, IZapierZap, IZapierZapTemplate } from '@gauzy/contracts';
 import { randomBytes } from 'node:crypto';
+import { verify } from 'jsonwebtoken';
 
 @Injectable()
 export class ZapierService {
@@ -800,10 +801,14 @@ export class ZapierService {
 	 * @throws NotFoundException if the token is invalid or no Zapier integration is found.
 	 */
 	async findIntegrationByToken(token: string): Promise<IIntegrationTenant> {
-		// 1) Lookup the Gauzy-issued OAuth access token (separate from Zapier API tokens)
-		const setting = await this._integrationSettingService.findOneByWhereOptions({
-			settingsName: 'oauth_access_token',
-			settingsValue: token
+		// 1) Lookup the Gauzy-issued OAuth access token (separate from Zapier API tokens).
+		//    Use the repository directly to bypass tenant-aware scoping, because this
+		//    method is called from @Public() endpoints where no user is in the request context.
+		const setting = await this._integrationSettingService.typeOrmIntegrationSettingRepository.findOne({
+			where: {
+				settingsName: 'oauth_access_token',
+				settingsValue: token
+			}
 		});
 
 		// 2) Ensure we have an integrationId
@@ -827,6 +832,116 @@ export class ZapierService {
 			...integrationTenant,
 			name: IntegrationEnum.ZAPIER
 		};
+	}
+
+	/**
+	 * Find the Zapier IntegrationTenant for a given tenantId and (optionally) organizationId.
+	 * When organizationId is provided the lookup is scoped to that org, preventing
+	 * ambiguous matches in tenants with multiple organizations.
+	 *
+	 * @param tenantId - The tenant ID (from JWT)
+	 * @param organizationId - The organization ID (from JWT, optional)
+	 * @returns The matching IIntegrationTenant
+	 * @throws NotFoundException if no Zapier integration exists for this tenant
+	 */
+	async findIntegrationByTenantId(tenantId: string, organizationId?: string): Promise<IIntegrationTenant> {
+		if (organizationId) {
+			// Scoped lookup — organizationId is known, so the match is unambiguous
+			const integrationTenant = await this._integrationTenantService.findOneByOptions({
+				where: {
+					tenantId,
+					organizationId,
+					name: IntegrationEnum.ZAPIER
+				} as IIntegrationFilter,
+				relations: ['settings']
+			});
+
+			if (!integrationTenant) {
+				throw new NotFoundException('Zapier integration not found for this tenant');
+			}
+
+			return { ...integrationTenant, name: IntegrationEnum.ZAPIER };
+		}
+
+		// No organizationId — fail-closed: only succeed if exactly one Zapier integration exists
+		const { items, total } = await this._integrationTenantService.findAll({
+			where: {
+				tenantId,
+				name: IntegrationEnum.ZAPIER
+			} as IIntegrationFilter,
+			relations: ['settings']
+		});
+
+		if (total === 0) {
+			throw new NotFoundException('Zapier integration not found for this tenant');
+		}
+
+		if (total > 1) {
+			throw new BadRequestException(
+				'Multiple Zapier integrations found for this tenant. Token must include organizationId to resolve the correct one.'
+			);
+		}
+
+		return { ...items[0], name: IntegrationEnum.ZAPIER };
+	}
+
+	/**
+	 * Resolve the Zapier integration from a Bearer token.
+	 * Tries opaque token lookup first (backward compatibility), then
+	 * falls back to JWT verification + tenantId lookup for tokens
+	 * issued by the multi-app OAuth system.
+	 *
+	 * @param token - The Bearer token (opaque or JWT)
+	 * @returns The matching IIntegrationTenant
+	 * @throws NotFoundException if neither lookup succeeds
+	 */
+	async resolveIntegrationFromBearerToken(token: string): Promise<IIntegrationTenant> {
+		// 1) Try opaque token lookup (Zapier-issued tokens)
+		try {
+			return await this.findIntegrationByToken(token);
+		} catch (error) {
+			// Only fall through to JWT if the token was simply not found.
+			// Re-throw infrastructure errors (DB failures, etc.) immediately.
+			if (!(error instanceof NotFoundException)) {
+				throw error;
+			}
+		}
+
+		// 2) Try JWT verification (multi-app OAuth tokens)
+		try {
+			const decoded = this.verifyJwtToken(token);
+			if (!decoded?.tenantId) {
+				throw new UnauthorizedException('JWT missing tenantId');
+			}
+			return await this.findIntegrationByTenantId(decoded.tenantId, decoded.organizationId);
+		} catch (error: any) {
+			// Let known HTTP exceptions (auth, not-found, bad-request) surface with their status code.
+			// Only re-throw unexpected errors (DB failures, etc.) as-is.
+			if (error instanceof HttpException) {
+				this.logger.debug('resolveIntegrationFromBearerToken: no integration found — %s', error?.message);
+				throw error;
+			}
+			throw error;
+		}
+	}
+
+	/**
+	 * Verify a JWT token issued by the multi-app OAuth system.
+	 *
+	 * @param token - The JWT token to verify
+	 * @returns The decoded payload containing id (userId) and tenantId
+	 * @throws UnauthorizedException if the token is invalid or expired
+	 */
+	verifyJwtToken(token: string): { id: string; tenantId: string; organizationId?: string } {
+		try {
+			const decoded = verify(token, environment.JWT_SECRET!);
+			if (typeof decoded !== 'object' || !decoded || !('tenantId' in decoded)) {
+				throw new Error('Invalid JWT payload structure');
+			}
+			return decoded as { id: string; tenantId: string; organizationId?: string };
+		} catch {
+			throw new UnauthorizedException('Invalid or expired access token');
+		}
 	}
 
 	/**

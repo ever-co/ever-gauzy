@@ -41,10 +41,14 @@ export const authentication = {
 
 	/** OAuth2 specific configuration */
 	oauth2Config: {
-		/** Configuration for the authorization URL */
+		/**
+		 * Authorization URL — uses the multi-app OAuth provider at
+		 * /api/integration/ever-gauzy/oauth/authorize which redirects to
+		 * the Gauzy consent page where the user logs in and approves access.
+		 */
 		authorizeUrl: {
 			method: 'GET',
-			url: `${process.env.API_BASE_URL}/api/integration/zapier/oauth/authorize`,
+			url: `${process.env.API_BASE_URL}/api/integration/ever-gauzy/oauth/authorize`,
 			params: {
 				client_id: '{{process.env.CLIENT_ID}}',
 				state: '{{bundle.inputData.state}}',
@@ -52,10 +56,13 @@ export const authentication = {
 				response_type: 'code'
 			}
 		},
-		/** Configuration for obtaining access token */
+		/**
+		 * Token exchange — uses the multi-app OAuth token endpoint which
+		 * validates the authorization code and returns a signed JWT.
+		 */
 		getAccessToken: {
 			method: 'POST',
-			url: `${process.env.API_BASE_URL}/api/integration/zapier/oauth/token`,
+			url: `${process.env.API_BASE_URL}/api/integration/ever-gauzy/oauth/token`,
 			body: {
 				code: '{{bundle.inputData.code}}',
 				client_id: '{{process.env.CLIENT_ID}}',
@@ -68,24 +75,13 @@ export const authentication = {
 				Accept: 'application/json'
 			}
 		},
-		/** Configuration for refreshing access token */
-		refreshAccessToken: {
-			method: 'POST',
-			url: `${process.env.API_BASE_URL}/api/integration/zapier/oauth/refresh-token`,
-			body: {
-				refresh_token: '{{bundle.authData.refresh_token}}',
-				client_id: '{{process.env.CLIENT_ID}}',
-				client_secret: '{{process.env.CLIENT_SECRET}}',
-				grant_type: 'refresh_token'
-			},
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded',
-				Accept: 'application/json'
-			}
-		},
 		/** OAuth2 scopes required for the integration */
 		scope: 'zap zap:write authentication',
-		/** Enable automatic token refresh */
-		autoRefresh: true
+		/**
+		 * Disable auto-refresh — the multi-app OAuth system issues long-lived
+		 * JWTs. Configure the Zapier OAuth client's accessTokenTtl for a
+		 * long TTL (e.g. 365 days) to avoid frequent reconnections.
+		 */
+		autoRefresh: false
 	}
 };

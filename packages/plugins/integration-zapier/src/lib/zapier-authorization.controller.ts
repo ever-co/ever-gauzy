@@ -225,6 +225,7 @@ export class ZapierAuthorizationController {
 	/**
 	 * Auth test endpoint — validates a Zapier access token.
 	 * Called by the Zapier CLI app to verify the connection is working.
+	 * Supports both opaque tokens (legacy) and JWT tokens (multi-app OAuth).
 	 */
 	@ApiOperation({ summary: 'Test Zapier authentication' })
 	@ApiResponse({
@@ -244,11 +245,26 @@ export class ZapierAuthorizationController {
 			}
 
 			const token = authHeader.substring(7); // Strip "Bearer "
-			const integration = await this.zapierService.findIntegrationByToken(token);
 
+			// Try opaque token first (backward compat) — resolves via IntegrationTenant
+			try {
+				const integration = await this.zapierService.resolveIntegrationFromBearerToken(token);
+				return {
+					authenticated: true,
+					integrationId: integration.id,
+					name: IntegrationEnum.ZAPIER
+				};
+			} catch {
+				// No IntegrationTenant yet — fall through to JWT-only verification
+			}
+
+			// Verify the JWT is valid (sufficient for auth test — IntegrationTenant
+			// may not exist yet when Zapier first tests the OAuth connection)
+			const decoded = this.zapierService.verifyJwtToken(token);
 			return {
 				authenticated: true,
-				integrationId: integration.id,
+				userId: decoded.id,
+				tenantId: decoded.tenantId,
 				name: IntegrationEnum.ZAPIER
 			};
 		} catch (error) {
@@ -260,6 +276,7 @@ export class ZapierAuthorizationController {
 	/**
 	 * Connection label endpoint — returns integration info for Zapier's UI.
 	 * Called by the Zapier CLI app to display a label for the connected account.
+	 * Supports both opaque tokens (legacy) and JWT tokens (multi-app OAuth).
 	 */
 	@ApiOperation({ summary: 'Get Zapier connection info' })
 	@ApiResponse({
@@ -275,12 +292,26 @@ export class ZapierAuthorizationController {
 			}
 
 			const token = authHeader.substring(7);
-			const integration = await this.zapierService.findIntegrationByToken(token);
 
+			// Try opaque token first (backward compat) — resolves via IntegrationTenant
+			try {
+				const integration = await this.zapierService.resolveIntegrationFromBearerToken(token);
+				return {
+					id: integration.id,
+					name: IntegrationEnum.ZAPIER,
+					email: `zapier-integration@${integration.tenantId || 'gauzy'}`
+				};
+			} catch {
+				// No IntegrationTenant yet — fall through to JWT-only verification
+			}
+
+			// Verify the JWT is valid (sufficient for connection label —
+			// IntegrationTenant may not exist yet when Zapier first tests the connection)
+			const decoded = this.zapierService.verifyJwtToken(token);
 			return {
-				id: integration.id,
+				id: decoded.id,
 				name: IntegrationEnum.ZAPIER,
-				email: `zapier-integration@${integration.tenantId || 'gauzy'}`
+				email: `zapier-integration@${decoded.tenantId || 'gauzy'}`
 			};
 		} catch (error) {
 			this.logger.error('Zapier connection info failed', error);
