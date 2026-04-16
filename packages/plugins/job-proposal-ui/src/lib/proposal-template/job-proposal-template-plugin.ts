@@ -26,7 +26,7 @@ import { JOB_PROPOSAL_TEMPLATE_PAGE_ROUTE } from './job-proposal-template.routes
  */
 export const JobProposalTemplatePlugin: PluginUiDefinition = {
 	// ── Versioning & Compatibility ────────────────────────────────
-	version: '1.0.0',
+	version: '0.1.0',
 
 	id: 'job-proposal-template',
 

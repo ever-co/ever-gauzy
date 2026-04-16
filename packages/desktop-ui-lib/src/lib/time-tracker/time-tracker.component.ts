@@ -51,7 +51,7 @@ import {
 	asyncScheduler,
 	BehaviorSubject,
 	concatMap,
-	debounceTime,
+	delay,
 	exhaustMap,
 	filter,
 	from,
@@ -382,6 +382,30 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			} catch (error) {
 				this._errorHandlerService.handleError(error);
 			}
+		}
+	}
+
+	/**
+	 * Cancel the BLOCK_DELAY lock that toggleStart arms after every stop.
+	 * Must be called whenever the lock needs to be force-released before the
+	 * timer fires naturally (e.g. during a restart sequence).
+	 */
+	private _resetProcessingLock(): void {
+		this._cancelBlockDelayTimer();
+		this.isProcessingEnabled = false;
+		this.loading = false;
+	}
+
+	/**
+	 * Cancel only the pending BLOCK_DELAY auto-unblock timer without touching
+	 * isProcessingEnabled or loading. Use this when the restart path needs to
+	 * prevent the timer from firing mid-callback while still keeping the
+	 * processing guard active until the restart is ready to proceed.
+	 */
+	private _cancelBlockDelayTimer(): void {
+		if (this.timerSubscription) {
+			this.timerSubscription.unsubscribe();
+			this.timerSubscription = null;
 		}
 	}
 
@@ -925,7 +949,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('timer_tracker_show', (event, arg) =>
 			this._ngZone.run(async () => {
 				if (!this._store.user?.employee) return;
-				this._isOffline$.next(arg.isOffline ? arg.isOffline : this._isOffline);
+				this._isOffline$.next(typeof arg.isOffline !== 'undefined' ? arg.isOffline : this._isOffline);
 				this._store.host = arg.apiHost;
 				this.apiHost = arg.apiHost;
 				this.argFromMain = arg;
@@ -969,6 +993,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				await this.toggleStart(true);
 			})
 		);
+
+		this.electronService.ipcRenderer.on('start_timer_anyway', async (_, arg) => {
+			this._ngZone.run(async () => {
+				await this.setTimerDetails();
+				await this.toggleStart(true, true, true);
+			})
+		});
 
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) =>
 			this._ngZone.run(async () => {
@@ -1523,12 +1554,34 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		});
 	}
 
+	async checkPermission() {
+		const permission = await this.electronService.ipcRenderer.invoke('CHECK_MACOS_PERMISSIONS');
+		if (permission?.screen === 'granted') {
+			return true;
+		}
+		await this.electronService.ipcRenderer.invoke('SHOW_PERMISSION_CONFIRM');
+		return false;
+	}
+
 	/*
 		Start/Stop Timer
 		if val is true, we start the timer
 		if val is false, we stop the timer
 	 */
-	async toggleStart(val, onClick = true) {
+	async toggleStart(val: boolean, onClick = true, passed = false) {
+		try {
+			const platform = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
+			if (val && onClick && !passed && platform === 'darwin') {
+				const allow = await this.checkPermission();
+				if (!allow) {
+					return;
+				}
+			}
+		} catch (error) {
+			this._loggerService.error('Failed to preflight timer start', error);
+			return;
+		}
+
 		// check that user is authorized to track time. If not, we return.
 		if (val && !this.start && !this._passedAllAuthorizations()) return;
 
@@ -1953,8 +2006,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async setTimerDetails(): Promise<void> {
 		try {
-			const res: any = await this.timeTrackerService.getUserDetail();
-			if (res.employee && res.employee.organization) {
+			let res: any;
+			if (!this._isOffline) {
+				try {
+					res = await this.timeTrackerService.getUserDetail();
+					if (!this._store.user?.employee?.organization && res?.employee?.organization) {
+						this._store.user = res;
+					}
+				} catch (apiError) {
+					console.log('WARN: setTimerDetails API Error:', apiError, 'Falling back to local store...');
+					res = this._store.user;
+				}
+			} else {
+				res = this._store.user;
+			}
+
+			if (res && res.employee && res.employee.organization) {
 				this.userData = res;
 				if (res.role && res.role.rolePermissions) {
 					this._store.userRolePermissions = res.role.rolePermissions;
@@ -2312,6 +2379,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			return resImg;
 		} catch (error) {
 			this._loggerService.error(error);
+			this.electronService.ipcRenderer.send('failed_upload_screenshot', {
+				timeSlotId,
+				imagePath: b64img,
+				recordedAt: new Date()
+			});
 		}
 	}
 
@@ -2415,12 +2487,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this._isLockSyncProcess = true;
 
 		try {
-			// Resolve promise and debounce to avoid rapid calls
 			return await lastValueFrom(
 				from(this.toggleStart(false)).pipe(
-					debounceTime(200),
-					concatMap(() => (callback ? from(callback()) : of(null))), // Safely execute callback
+					concatMap(async () => {
+						// Cancel the BLOCK_DELAY auto-unblock timer immediately so it
+						// cannot fire and clear isProcessingEnabled mid-callback.
+						// isProcessingEnabled intentionally stays true here — it keeps
+						// the guard up while the (potentially long) callback runs.
+						this._cancelBlockDelayTimer();
+						return callback ? await callback() : null;
+					}),
+					delay(200), // Brief pause between stop→start for IPC/OS settling
 					concatMap(async (callbackResult) => {
+						// Full lock release immediately before re-starting: clears
+						// isProcessingEnabled and loading so toggleStart(true) sees a
+						// clean state with no interleaving window.
+						this._resetProcessingLock();
 						await this.toggleStart(true); // Restart process
 						return callbackResult; // Return the callback result
 					}),

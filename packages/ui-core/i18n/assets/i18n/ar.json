@@ -179,7 +179,9 @@
 		"ADD_MORE_SOURCES": "إضافة مصدر آخر",
 		"REMOVE_FROM_FAVORITES": "إزالة من المفضلة",
 		"ADD_TO_FAVORITES": "إضافة إلى المفضلة",
-		"UNSELECT_ALL": "إلغاء تحديد الكل"
+		"UNSELECT_ALL": "إلغاء تحديد الكل",
+		"START_TIMER_ANYWAY": "البدء على أي حال",
+		"OPEN_SETTING": "فتح الإعدادات"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1139,6 +1141,7 @@
 		"PAYMENT_GATEWAYS": "بوابات الدفع",
 		"SMS_GATEWAYS": "بوابات الرسائل القصيرة",
 		"CUSTOM_SMTP": "SMTP مخصص",
+		"OAUTH_CLIENTS": "عملاء OAuth",
 		"INVENTORY": "المخزون",
 		"SALES": "المبيعات",
 		"PAYMENTS": "المدفوعات",
@@ -1293,16 +1296,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "سيناريوهات",
-			"EXECUTIONS": "تنفيذات",
-			"HISTORY": "السجل",
-			"SETTINGS": "الإعدادات",
-			"ERRORS": {
-				"INVALID_FORM": "يرجى إدخال جميع الحقول المطلوبة",
-				"START_AUTHORIZATION": "يرجى بدء عملية التفويض"
+			"WEBHOOKS": "الويب هوكس",
+			"WEBHOOKS_REFRESH": "تحديث الويب هوكس",
+			"WEBHOOK_ENABLE": "تفعيل الويب هوك",
+			"WEBHOOK_DISABLE": "تعطيل الويب هوك",
+			"WEBHOOK_PING": "اختبار الويب هوك",
+			"SCENARIO_ACTIVE": "نشط",
+			"SCENARIO_INACTIVE": "غير نشط",
+			"SCENARIO_LAST_EDITED": "آخر تعديل: {{value}}",
+			"SCENARIO_DISABLE": "تعطيل السيناريو",
+			"SCENARIO_ENABLE": "تفعيل السيناريو",
+			"SCENARIO_RUN_ONCE": "تشغيل السيناريو مرة واحدة",
+			"WEBHOOK_ENABLED": "مفعّل",
+			"WEBHOOK_DISABLED": "معطّل",
+			"WEBHOOK_TYPE": "النوع",
+			"WEBHOOK_QUEUE": "قائمة الانتظار",
+			"TEMPLATE_PUBLIC": "عام",
+			"TEMPLATE_PUBLISHED": "منشور",
+			"REFRESH_CONNECTIONS": "تحديث الاتصالات",
+			"CONFIGURATION_TITLE": "إعدادات Make.com",
+			"ZONE_LABEL": "المنطقة",
+			"ZONE_HINT": "اختر المنطقة التي تطابق حساب Make.com الخاص بك (مثال: us2.make.com)",
+			"ORGANIZATION_LABEL": "منظمة Make.com",
+			"LOADING_ORGANIZATIONS": "جاري تحميل المنظمات...",
+			"NO_ORGANIZATIONS": "لم يتم العثور على منظمات",
+			"TEAM_LABEL": "فريق Make.com",
+			"LOADING_TEAMS": "جاري تحميل الفرق...",
+			"NO_TEAMS": "لم يتم العثور على فرق",
+			"CONNECTED_TO": "متصل بـ {{org}} / {{team}} على {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "إعدادات الويب هوك",
+			"CONNECTIONS": "اتصالات",
+			"TEMPLATES": "قوالب",
+			"SETTINGS": "إعدادات",
+			"CONNECT_TO_MAKE_COM": "الاتصال بـ Make.com",
+			"CONNECT_INFO": "انقر على الزر أدناه لربط حساب Make.com الخاص بك. سيتم إعادة توجيهك إلى Make.com لتفويض التكامل.",
+			"NO_SCENARIOS": "لم يتم العثور على سيناريوهات. أنشئ سيناريوهات في لوحة تحكم Make.com.",
+			"NO_HOOKS": "لم يتم العثور على webhooks. أنشئ webhooks في لوحة تحكم Make.com.",
+			"NO_CONNECTIONS": "لم يتم العثور على اتصالات. أنشئ اتصالات في لوحة تحكم Make.com.",
+			"NO_TEMPLATES": "لم يتم العثور على قوالب.",
+			"TEST_CONNECTION": "اختبار الاتصال",
+			"CONNECTION": {
+				"ACCOUNT": "الحساب: {{value}}",
+				"TYPE": "النوع: {{value}}",
+				"PACKAGE": "الحزمة: {{value}}",
+				"EXPIRES": "ينتهي: {{value}}"
 			},
-			"CLIENT_ID": "معرف العميل",
-			"CLIENT_SECRET": "الرمز السري للعميل",
-			"NEXT_STEP_INFO": "بعد التفويض، سيتم توجيهك إلى Make.com لإكمال إعداد التكامل"
+			"ERRORS": {
+				"INVALID_FORM": "يرجى ملء جميع الحقول المطلوبة",
+				"START_AUTHORIZATION": "فشل في بدء عملية التفويض",
+				"NO_ORGANIZATION": "يرجى اختيار منظمة أولاً",
+				"LOAD_SETTINGS": "فشل في تحميل إعدادات Make.com",
+				"SAVE_SETTINGS": "فشل في حفظ إعدادات Make.com",
+				"LOAD_SETUP_STATUS": "فشل في تحميل حالة الإعداد",
+				"LOAD_SCENARIOS": "فشل في تحميل السيناريوهات",
+				"TOGGLE_SCENARIO": "فشل في تبديل السيناريو",
+				"RUN_SCENARIO": "فشل في تشغيل السيناريو",
+				"LOAD_CONNECTIONS": "فشل في تحميل الاتصالات",
+				"TEST_CONNECTION": "فشل في اختبار الاتصال",
+				"LOAD_WEBHOOKS": "فشل في تحميل الويب هوكس",
+				"TOGGLE_WEBHOOK": "فشل في تبديل الويب هوك",
+				"PING_WEBHOOK": "فشل في اختبار الويب هوك",
+				"SET_ZONE": "فشل في تعيين المنطقة",
+				"LOAD_ORGANIZATIONS": "فشل في تحميل المنظمات",
+				"SELECT_ORGANIZATION": "فشل في اختيار المنظمة",
+				"LOAD_TEAMS": "فشل في تحميل الفرق",
+				"SELECT_TEAM": "فشل في اختيار الفريق",
+				"LOAD_TEMPLATES": "فشل في تحميل القوالب",
+				"REQUEST_TIMEOUT": "انتهت مهلة الطلب. يرجى المحاولة مرة أخرى."
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "تم حفظ إعدادات Make.com بنجاح",
+				"SCENARIO_ACTIVATED": "تم تفعيل السيناريو",
+				"SCENARIO_DEACTIVATED": "تم تعطيل السيناريو",
+				"SCENARIO_EXECUTED": "تم تنفيذ السيناريو",
+				"CONNECTION_VALID": "الاتصال \"{{name}}\" صالح",
+				"WEBHOOK_TOGGLED_ON": "تم تمكين الويب هوك",
+				"WEBHOOK_TOGGLED_OFF": "تم تعطيل الويب هوك",
+				"WEBHOOK_PINGED": "تم اختبار الويب هوك \"{{name}}\" بنجاح",
+				"ZONE_SET": "تم تعيين المنطقة إلى {{zone}}",
+				"ORGANIZATION_SELECTED": "تم اختيار المنظمة \"{{name}}\"",
+				"TEAM_SELECTED": "تم اختيار الفريق \"{{name}}\""
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "يرجى تفويض Make.com أولاً. انتقل إلى علامة التبويب الإعدادات لربط حسابك.",
+				"ZONE": "يرجى اختيار منطقة Make.com في علامة التبويب الإعدادات.",
+				"ORGANIZATION": "يرجى اختيار منظمة Make.com في علامة التبويب الإعدادات.",
+				"TEAM": "يرجى اختيار فريق Make.com في علامة التبويب الإعدادات."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1315,26 +1395,32 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "معرف العميل",
-			"CLIENT_SECRET": "الرمز السري للعميل",
-			"NEXT_STEP_INFO": "بعد التفويض، سيتم توجيهك إلى Zapier لإكمال إعداد التكامل",
+			"CONNECT_TO_ZAPIER": "الاتصال بـ Zapier",
+			"CONNECT_INFO": "انقر على الزر أدناه لربط حسابك في Zapier. سيتم توجيهك إلى Zapier للتفويض بالتكامل.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "فشل تحميل إعدادات Zapier",
 				"SAVE_SETTINGS": "فشل حفظ إعدادات Zapier",
 				"INVALID_FORM": "يرجى إدخال جميع الحقول المطلوبة",
 				"MISSING_CREDENTIALS": "بيانات الاعتماد للعميل مفقودة",
+				"NO_ORGANIZATION": "يرجى اختيار منظمة أولاً",
 				"NO_ACCESS_TOKEN": "لا يوجد رمز وصول متاح",
 				"LOAD_WEBHOOKS": "فشل تحميل ويب هوكس",
 				"DELETE_WEBHOOK": "فشل حذف ويب هوك",
 				"LOAD_ACTIONS": "فشل تحميل الإجراءات",
 				"LOAD_TRIGGERS": "فشل تحميل المحفزات",
+				"LOAD_ZAPS": "فشل تحميل zaps",
+				"LOAD_ZAP_TEMPLATES": "فشل تحميل قوالب zap",
+				"CREATE_ZAP": "فشل إنشاء zap",
+				"ZAP_TITLE_REQUIRED": "يرجى تقديم عنوان لـ zap الجديد",
+				"NO_INTEGRATION_ID": "لم يتم تقديم معرف تكامل Zapier",
 				"START_AUTHORIZATION": "يرجى بدء عملية التفويض",
 				"INVALID_TOKEN": "تم توفير رمز غير صالح",
 				"TOKEN_NOT_FOUND": "لم يتم العثور على الرمز"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "تم حفظ إعدادات Zapier بنجاح",
-				"DELETE_WEBHOOK": "تم حذف ويب هوك بنجاح"
+				"DELETE_WEBHOOK": "تم حذف ويب هوك بنجاح",
+				"CREATE_ZAP": "تم إنشاء Zap بنجاح"
 			},
 			"TAB": {
 				"TRIGGERS": "المحفزات",
@@ -1376,6 +1462,26 @@
 			"WEBHOOKS": {
 				"TITLE": "ويب هوكس",
 				"NO_WEBHOOKS": "لا يوجد ويب هوكس مضبوط"
+			},
+			"ZAPS": {
+				"TITLE": "زابز",
+				"NO_ZAPS": "لا توجد زابز متاحة",
+				"CREATE": "إنشاء زاب",
+				"SUBMIT": "إنشاء",
+				"ADD_STEP": "إضافة خطوة",
+				"OPEN_EDITOR": "فتح في زابير",
+				"ENABLED": "مفعّل",
+				"DISABLED": "معطّل",
+				"TITLE_PLACEHOLDER": "أدخل عنواناً للزاب الجديد",
+				"FIELDS": {
+					"TITLE": "العنوان",
+					"STEPS": "الخطوات",
+					"STEP": "خطوة",
+					"STEP_TITLE": "عنوان الخطوة",
+					"ACTION": "الإجراء",
+					"AUTHENTICATION": "المصادقة",
+					"INPUTS": "المدخلات (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1575,6 +1681,32 @@
 				"LOAD_FAILED": "فشل في تحميل مشغلات الأحداث."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "تكامل إدارة مشاريع Plane",
+			"WEB_URL": "عنوان الويب لـ Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "عنوان المسؤول لـ Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "عنوان Space لـ Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "أدخل عناوين URL حيث يتم استضافة مثيل Plane الخاص بك. عنوان الويب مطلوب. عناوين المسؤول و Space اختيارية.",
+			"URL_REQUIRED": "هذا العنوان مطلوب.",
+			"URL_INVALID": "يرجى إدخال عنوان URL صالح يبدأ بـ http:// أو https://.",
+			"LOADING": "جارٍ تحميل الإعدادات...",
+			"REGENERATE_KEY": "إعادة التوليد",
+			"REGENERATE_KEY_LABEL": "مفتاح API والسر",
+			"CONFIRM_DELETE": "هل أنت متأكد أنك تريد إزالة تكامل Plane هذا؟ سيتم إلغاء مفتاح API.",
+			"CONFIRM_REGENERATE": "هل أنت متأكد أنك تريد إعادة إنشاء مفتاح API؟ سيتم إبطال المفتاح الحالي.",
+			"API_KEY_DIALOG": {
+				"TITLE": "بيانات اعتماد API",
+				"WARNING": "انسخ بيانات الاعتماد هذه الآن. لن يتم عرض سر API مرة أخرى.",
+				"API_KEY": "مفتاح API",
+				"API_SECRET": "سر API",
+				"COPY": "نسخ",
+				"COPIED": "تم النسخ!"
+			}
+		},
 		"COMING_SOON": "قريبًا",
 		"RE_INTEGRATE": "إعادة الاندماج",
 		"SETTINGS": "الإعدادات",
@@ -1582,7 +1714,17 @@
 		"FILTER_INTEGRATIONS": "ترشيح التكاملات",
 		"SEARCH_INTEGRATIONS": "البحث في التكاملات",
 		"PAID": "مدفوع",
-		"INTEGRATION": "التكامل"
+		"INTEGRATION": "التكامل",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "جاري معالجة تفويض Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "فشل تفويض Make.com",
+				"INVALID_CALLBACK": "معلمات رد الاتصال غير صالحة"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "تم إكمال تفويض Make.com بنجاح"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "المحاسبة",
@@ -4424,7 +4566,19 @@
 			"INACTIVITY_HANDLER": "معالج عدم النشاط",
 			"WANT_LOGOUT": "هل أنت متأكد من رغبتك في تسجيل الخروج؟",
 			"ERROR_HANDLER": "معالج الأخطاء",
-			"ERROR_OCCURRED": "حدث خطأ"
+			"ERROR_OCCURRED": "حدث خطأ",
+			"DB_CLEANUP_TITLE": "إصدار قاعدة البيانات قديم على الأرجح",
+			"DB_CLEANUP_MESSAGE": "تم اكتشاف إصدار جديد من التطبيق. لتجنب أي تغييرات قد تُسبب مشاكل، هل تودّ مسح قاعدة البيانات المحلية واستخدام قاعدة بيانات جديدة؟",
+			"DB_CLEANUP_DETAIL": "ستؤدي إزالة قاعدة البيانات إلى حذف البيانات المخزنة محليًا. البيانات التي تمت مزامنتها بالفعل مع الخادم ستظل محفوظة بأمان على سحابة Gauzy.",
+			"DB_CLEANUP_REMOVE": "إزالة قاعدة البيانات",
+			"DB_CLEANUP_KEEP": "الاحتفاظ بها",
+			"DB_CLEANUP_UNSYNCED_TITLE": "تم اكتشاف بيانات غير متزامنة",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "تحذير: احتمال فقدان البيانات",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "لديك {{countsText}}. ستؤدي إزالة قاعدة البيانات إلى حذف هذه البيانات غير المتصلة بالإنترنت بشكل نهائي. إذا كنت غير متأكد، انقر على 'الاحتفاظ بها'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "تعذّر علينا تحديد ما إذا كانت لديك بيانات غير متزامنة. قد تؤدي إزالة قاعدة البيانات إلى حذف عمل غير محفوظ بشكل دائم. إذا كنت غير متأكد، انقر على 'الاحتفاظ بها'.",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
+			"AND_JOIN": "and"
 		},
 		"NO_LIMIT": "∞ لا حدود",
 		"TASK": "مهمة",
@@ -4488,6 +4642,37 @@
 			"PLEASE_HOLD": "يرجى الانتظار...",
 			"SHUTTING_DOWN": "التطبيق يغلق",
 			"LOGOUT_IN_PROGRESS": "تسجيل الخروج جارٍ"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "أذونات النظام",
+			"TITLE": "أذونات النظام",
+			"DESCRIPTION": "يتطلب Gauzy بعض أذونات macOS لتتبع عملك بدقة. راجعها وأدِرها من هنا.",
+			"SCREEN_RECORDING": "تسجيل الشاشة",
+			"SCREEN_RECORDING_DESC": "مطلوب لالتقاط لقطات الشاشة تلقائيًا خلال جلسات العمل المتتبَّعة.",
+			"STATUS": "الحالة",
+			"GRANTED": "ممنوح",
+			"DENIED": "مرفوض",
+			"NOT_DETERMINED": "غير محدد",
+			"RESTRICTED": "مقيّد",
+			"OPEN_SYSTEM_SETTINGS": "فتح إعدادات النظام",
+			"TEST_SCREENSHOT": "اختبار لقطة الشاشة",
+			"TEST_GET_ACTIVE_WINDOW": "اختبار الوصول",
+			"SCREENSHOT_PREVIEW": "معاينة لقطة الشاشة",
+			"RESET_PERMISSION": "إعادة تعيين",
+			"RESTARTING": "إعادة التشغيل في",
+			"DENIED_HINT": "تم رفض تسجيل الشاشة. انقر على 'إعادة تعيين' لإعادة تعيين الإذن، أو افتح إعدادات النظام لمنحه يدويًا.",
+			"RELAUNCH": "إعادة التشغيل",
+			"RELAUNCH_DESC": "هل منحت الإذن ولا تزال غير قادر على التقاط الشاشة؟ انقر على إعادة التشغيل لتطبيق التغييرات.",
+			"DIALOG_TITLE": "مطلوب إذن تسجيل الشاشة",
+			"DIALOG_DESC": "يحتاج Gauzy إلى إذن تسجيل الشاشة لالتقاط لقطات أثناء جلسة العمل. يرجى منح الوصول للمتابعة.",
+			"POLLING_HINT": "سيُغلق هذا الحوار تلقائيًا بمجرد منح الإذن.",
+			"START_ANYWAY": "البدء بدون لقطة شاشة",
+			"ACCESSIBILITY": "إمكانية الوصول",
+			"ACCESSIBILITY_DESC": "مطلوب لتتبع نشاط لوحة المفاتيح والماوس والنافذة النشطة خلال جلسات العمل.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "إعدادات إمكانية الوصول",
+			"RESET_ACCESSIBILITY_PERMISSION": "إعادة تعيين إمكانية الوصول",
+			"ACCESSIBILITY_DENIED_HINT": "تم رفض إمكانية الوصول. انقر على 'إعادة تعيين إمكانية الوصول' لإعادة تعيين الإذن، أو افتح إعدادات النظام.",
+			"ACTIVE_WINDOW": "معاينة النافذة النشطة"
 		}
 	},
 	"SERVER": "خادم",
@@ -5421,5 +5606,80 @@
 		"DESCRIPTION": "لا يمكن الوصول إلى خادم {{companySite}} حاليًا. قد يكون هذا بسبب صيانة مجدولة أو توقف غير متوقع.",
 		"CONNECTING": "إعادة محاولة الاتصال تلقائيًا...",
 		"HINT": "الحالة: محاولة الاتصال بخوادم {{companySite}}. رمز الخطأ: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "عملاء OAuth",
+		"SUBTITLE": "تسجيل وإدارة تطبيقات الطرف الثالث التي يمكنها طلب الوصول إلى Ever Gauzy نيابة عن المستخدمين الخاصين بك.",
+		"STATUS": {
+			"ACTIVE": "نشط",
+			"INACTIVE": "غير نشط"
+		},
+		"EMPTY": {
+			"TITLE": "لم يتم تسجيل أي عملاء OAuth حتى الآن.",
+			"HINT": "انقر على \"تسجيل التطبيق\" لإضافة التكامل الأول الخاص بك (مثل Activepieces، n8n، Make.com)."
+		},
+		"TABLE": {
+			"NAME": "الاسم",
+			"CLIENT_ID": "معرف العميل",
+			"TYPE": "النوع",
+			"STATUS": "الحالة",
+			"REDIRECT_URIS": "عناوين URI لإعادة التوجيه",
+			"ACTIONS": "الإجراءات"
+		},
+		"ACTIONS": {
+			"REGISTER": "تسجيل التطبيق",
+			"EDIT": "تحرير",
+			"ROTATE_SECRET": "تدوير السر",
+			"DELETE": "إلغاء التسجيل"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "تسجيل عميل OAuth جديد",
+			"EDIT_TITLE": "تحرير عميل OAuth"
+		},
+		"FORM": {
+			"NAME": "اسم التطبيق",
+			"NAME_PLACEHOLDER": "مثل Activepieces",
+			"DESCRIPTION": "الوصف",
+			"DESCRIPTION_PLACEHOLDER": "وصف موجز يظهر في صفحة الموافقة",
+			"CLIENT_TYPE": "نوع العميل",
+			"CLIENT_TYPE_IMMUTABLE": "لا يمكن تغيير نوع العميل بعد الإنشاء.",
+			"REDIRECT_URIS": "عناوين URI لإعادة التوجيه",
+			"REDIRECT_URI_PLACEHOLDER": "https://your-app.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "إضافة عنوان URI لإعادة التوجيه",
+			"ALLOWED_SCOPES": "النطاقات المسموح بها",
+			"SCOPE_PLACEHOLDER": "مثل offline_access",
+			"ADD_SCOPE": "إضافة نطاق",
+			"GRANT_TYPES": "أنواع المنح",
+			"PKCE_REQUIRED": "طلب PKCE (فرض مؤجل)",
+			"ACCESS_TTL": "عمر رمز الوصول (بالثواني)",
+			"REFRESH_TTL": "عمر رمز التحديث (بالثواني)"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "احفظ سر العميل الخاص بك",
+			"WARNING": "هذه هي المرة الوحيدة التي سيتم فيها عرض سر العميل. انسخه الآن وقم بتخزينه في تكامل الطرف الثالث الخاص بك - الدوران هو الطريقة الوحيدة للاسترداد من فقدان السر.",
+			"CLIENT_ID": "معرف العميل",
+			"CLIENT_SECRET": "سر العميل",
+			"ACKNOWLEDGE": "لقد قمت بالنسخ والتخزين بأمان لسر العميل.",
+			"CLOSE": "لقد حفظته، إغلاق",
+			"COPIED_CLIENT_ID": "تم نسخ معرف العميل إلى الحافظة",
+			"COPIED_SECRET": "تم نسخ سر العميل إلى الحافظة"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "هل تريد تدوير سر العميل لـ \"{{name}}\"؟ سيتوقف السر السابق عن العمل فورًا لتبادل الرموز الجديدة.",
+			"DELETE": "هل تريد إلغاء \"{{name}}\"؟ سيمنع هذا فورًا تطبيق الطرف الثالث من الحصول على رموز جديدة."
+		},
+		"TOASTS": {
+			"CREATED": "تم تسجيل \"{{name}}\"",
+			"UPDATED": "تم تحديث عميل OAuth",
+			"SECRET_ROTATED": "تم تدوير سر العميل",
+			"DELETED": "تم إلغاء عميل OAuth"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "فشل في تحميل عملاء OAuth",
+			"CREATE_FAILED": "فشل في تسجيل عميل OAuth",
+			"UPDATE_FAILED": "فشل في تحديث عميل OAuth",
+			"ROTATE_FAILED": "فشل في تدوير سر العميل",
+			"DELETE_FAILED": "فشل في إلغاء عميل OAuth"
+		}
 	}
 }

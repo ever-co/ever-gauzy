@@ -12,7 +12,7 @@ export const IntegrationUpworkPlugin: PluginUiDefinition = {
 	id: 'integration-upwork',
 
 	// ── Versioning & Compatibility ────────────────────────────────
-	version: '1.0.0',
+	version: '0.1.0',
 
 	// ── Location & Module ────────────────────────────────────────
 	location: 'integrations-sections',

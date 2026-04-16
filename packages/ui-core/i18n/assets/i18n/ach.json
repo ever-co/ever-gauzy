@@ -133,7 +133,9 @@
 		"ADD_MODULE": "Yamo Module",
 		"REMOVE_FROM_FAVORITES": "Kwanyo ki i jami me ayera",
 		"ADD_TO_FAVORITES": "Med i jami me ayera",
-		"UNSELECT_ALL": "Unselect All"
+		"UNSELECT_ALL": "Gony ayera weng",
+		"START_TIMER_ANYWAY": "Cak keken",
+		"OPEN_SETTING": "Yam yubo"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -782,6 +784,15 @@
 			"SELECT_FILE": "crwdns3798:0crwdne3798:0",
 			"EXIT_AGENT_LOGIN_CONFIRM": "Oops! You need to log in before you can use the app.",
 			"EXIT_AGENT_PREVENT_CONFIRM": "Oops! You are not allowed to exit. Please contact your account administrator.",
+			"DB_CLEANUP_TITLE": "Local Database — Version Change Detected",
+			"DB_CLEANUP_MESSAGE": "A new version of the app has been detected.",
+			"DB_CLEANUP_DETAIL": "Your local database was created by an older version of the application. Would you like to remove it so a fresh database can be created, or keep the existing one?\n\nNote: Removing the database will clear any locally cached data.",
+			"DB_CLEANUP_REMOVE": "Remove Database",
+			"DB_CLEANUP_KEEP": "Keep It",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Unsynced Data Detected",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Warning: Data Loss Possible",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "Your local database contains {{ timers }} unsynced timer session(s) and {{ intervals }} unsynced time slot(s).\n\nIf you remove the database now, this tracked time will be permanently lost.\n\nWe recommend keeping the database so the data can sync normally once the app starts.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "We could not determine whether you have unsynced offline data. Removing the database may PERMANENTLY erase unsaved work. If you are unsure, click 'Keep It'.",
 			"DROP_FILE": "crwdns3800:0crwdne3800:0",
 			"NO_DROP_FILE": "crwdns11195:0crwdne11195:0",
 			"BROWSE": "crwdns3802:0crwdne3802:0",
@@ -1041,6 +1052,7 @@
 		"PAYMENT_GATEWAYS": "crwdns3418:0crwdne3418:0",
 		"SMS_GATEWAYS": "crwdns8384:0crwdne8384:0",
 		"CUSTOM_SMTP": "crwdns3420:0crwdne3420:0",
+		"OAUTH_CLIENTS": "crwdns11500:0crwdne11500:0",
 		"INVENTORY": "crwdns3588:0crwdne3588:0",
 		"SALES": "crwdns3536:0crwdne3536:0",
 		"PAYMENTS": "crwdns3538:0crwdne3538:0",
@@ -1180,16 +1192,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scenarios",
-			"EXECUTIONS": "Executions",
-			"HISTORY": "History",
+			"WEBHOOKS": "Webhooks",
+			"WEBHOOKS_REFRESH": "Refresh webhooks",
+			"WEBHOOK_ENABLE": "Enable webhook",
+			"WEBHOOK_DISABLE": "Disable webhook",
+			"WEBHOOK_PING": "Ping webhook",
+			"SCENARIO_ACTIVE": "Active",
+			"SCENARIO_INACTIVE": "Inactive",
+			"SCENARIO_LAST_EDITED": "Last edited: {{value}}",
+			"SCENARIO_DISABLE": "Disable scenario",
+			"SCENARIO_ENABLE": "Enable scenario",
+			"SCENARIO_RUN_ONCE": "Run scenario once",
+			"WEBHOOK_ENABLED": "Enabled",
+			"WEBHOOK_DISABLED": "Disabled",
+			"WEBHOOK_TYPE": "Type",
+			"WEBHOOK_QUEUE": "Queue",
+			"TEMPLATE_PUBLIC": "Public",
+			"TEMPLATE_PUBLISHED": "Published",
+			"REFRESH_CONNECTIONS": "Refresh connections",
+			"CONFIGURATION_TITLE": "Make.com Configuration",
+			"ZONE_LABEL": "Zone",
+			"ZONE_HINT": "Select the zone that matches your Make.com account (e.g., us2.make.com)",
+			"ORGANIZATION_LABEL": "Make.com Organization",
+			"LOADING_ORGANIZATIONS": "Loading organizations...",
+			"NO_ORGANIZATIONS": "No organizations found",
+			"TEAM_LABEL": "Make.com Team",
+			"LOADING_TEAMS": "Loading teams...",
+			"NO_TEAMS": "No teams found",
+			"CONNECTED_TO": "Connected to {{org}} / {{team}} on {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "Webhook Settings",
+			"CONNECTIONS": "Connections",
+			"TEMPLATES": "Templates",
 			"SETTINGS": "Settings",
-			"ERRORS": {
-				"INVALID_FORM": "Tim ber iyie pot buk ma mito ni ber",
-				"START_AUTHORIZATION": "Please start the authorization process"
+			"CONNECT_TO_MAKE_COM": "Connect to Make.com",
+			"CONNECT_INFO": "Click the button below to connect your Make.com account. You will be redirected to Make.com to authorize the integration.",
+			"NO_SCENARIOS": "No scenarios found. Create scenarios in your Make.com dashboard.",
+			"NO_HOOKS": "No webhooks found. Create webhooks in your Make.com dashboard.",
+			"NO_CONNECTIONS": "No connections found. Create connections in your Make.com dashboard.",
+			"NO_TEMPLATES": "No templates found.",
+			"TEST_CONNECTION": "Test connection",
+			"CONNECTION": {
+				"ACCOUNT": "Account: {{value}}",
+				"TYPE": "Type: {{value}}",
+				"PACKAGE": "Package: {{value}}",
+				"EXPIRES": "Expires: {{value}}"
 			},
-			"CLIENT_ID": "Client Id",
-			"CLIENT_SECRET": "Client Secret",
-			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Make.com me tiyo ki integration"
+			"ERRORS": {
+				"INVALID_FORM": "Please fill in all required fields",
+				"START_AUTHORIZATION": "Failed to start the authorization process",
+				"NO_ORGANIZATION": "Please select an organization first",
+				"LOAD_SETTINGS": "Failed to load Make.com settings",
+				"SAVE_SETTINGS": "Failed to save Make.com settings",
+				"LOAD_SETUP_STATUS": "Failed to load setup status",
+				"LOAD_SCENARIOS": "Failed to load scenarios",
+				"TOGGLE_SCENARIO": "Failed to toggle scenario",
+				"RUN_SCENARIO": "Failed to run scenario",
+				"LOAD_CONNECTIONS": "Failed to load connections",
+				"TEST_CONNECTION": "Failed to test connection",
+				"LOAD_WEBHOOKS": "Failed to load webhooks",
+				"TOGGLE_WEBHOOK": "Failed to toggle webhook",
+				"PING_WEBHOOK": "Failed to ping webhook",
+				"SET_ZONE": "Failed to set zone",
+				"LOAD_ORGANIZATIONS": "Failed to load organizations",
+				"SELECT_ORGANIZATION": "Failed to select organization",
+				"LOAD_TEAMS": "Failed to load teams",
+				"SELECT_TEAM": "Failed to select team",
+				"LOAD_TEMPLATES": "Failed to load templates",
+				"REQUEST_TIMEOUT": "Request timed out. Please try again."
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Make.com settings saved successfully",
+				"SCENARIO_ACTIVATED": "Scenario activated",
+				"SCENARIO_DEACTIVATED": "Scenario deactivated",
+				"SCENARIO_EXECUTED": "Scenario executed",
+				"CONNECTION_VALID": "Connection \"{{name}}\" is valid",
+				"WEBHOOK_TOGGLED_ON": "Webhook enabled",
+				"WEBHOOK_TOGGLED_OFF": "Webhook disabled",
+				"WEBHOOK_PINGED": "Webhook \"{{name}}\" pinged successfully",
+				"ZONE_SET": "Zone set to {{zone}}",
+				"ORGANIZATION_SELECTED": "Organization \"{{name}}\" selected",
+				"TEAM_SELECTED": "Team \"{{name}}\" selected"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Please authorize with Make.com first. Go to the Settings tab to connect your account.",
+				"ZONE": "Please select your Make.com zone in the Settings tab.",
+				"ORGANIZATION": "Please select your Make.com organization in the Settings tab.",
+				"TEAM": "Please select your Make.com team in the Settings tab."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1202,19 +1291,24 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "Ket Zapier Client ID ni",
-			"CLIENT_SECRET": "Ket Zapier Client Secret ni",
-			"NEXT_STEP_INFO": "I cokke ki authorization, ibi nyuto i Zapier me tiyo ki integration",
+			"CONNECT_TO_ZAPIER": "Kub ki Zapier",
+			"CONNECT_INFO": "Dii gin ame piny me kube akaunt mamegi me Zapier. Ibi nyuto i Zapier me ye kwede integration.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Peko oo pe gonyo ter pa Zapier",
 				"SAVE_SETTINGS": "Peko oo pe gam ter pa Zapier",
 				"INVALID_FORM": "Tim ber iyie pot buk ma mito ni ber",
 				"MISSING_CREDENTIALS": "Peko pe tye lok ma loyo client",
+				"NO_ORGANIZATION": "Tim ber i yer lawoti mukwongo",
 				"NO_ACCESS_TOKEN": "Peke pe tye token ma loyo",
 				"LOAD_WEBHOOKS": "Peko oo pe gonyo webhooks",
 				"DELETE_WEBHOOK": "Peko oo pe junk webhook",
 				"LOAD_ACTIONS": "Peko oo pe gonyo tic",
 				"LOAD_TRIGGERS": "Peko oo pe gonyo lok ma gonyo",
+				"LOAD_ZAPS": "Peko oo pe gonyo zaps",
+				"LOAD_ZAP_TEMPLATES": "Peko oo pe gonyo template pa zap",
+				"CREATE_ZAP": "Peko oo pe create zap",
+				"ZAP_TITLE_REQUIRED": "Tim ber i miyo title me zap manyen",
+				"NO_INTEGRATION_ID": "Pe ki miyo ID me integration pa Zapier",
 				"START_AUTHORIZATION": "Ket cwoki pa authorization ni",
 				"INVALID_CALLBACK": "Peko tye callback ma tye maber",
 				"AUTHORIZATION": "Peko tye authorization ma tye maber",
@@ -1224,6 +1318,7 @@
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Ter pa Zapier ogam ki ber",
 				"DELETE_WEBHOOK": "Webhook ojunk ki ber",
+				"CREATE_ZAP": "Ocreate zap ki ber",
 				"AUTHORIZATION": "Authorization puched ki ber"
 			},
 			"TAB": {
@@ -1266,6 +1361,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "Pe tye webhook ma kigoyo"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "Pe tye zaps",
+				"CREATE": "Lok Zap",
+				"SUBMIT": "Lok",
+				"ADD_STEP": "Med step",
+				"OPEN_EDITOR": "Yab i Zapier",
+				"ENABLED": "Cako",
+				"DISABLED": "Juko",
+				"TITLE_PLACEHOLDER": "Ket title me Zap manyen",
+				"FIELDS": {
+					"TITLE": "Title",
+					"STEPS": "Steps",
+					"STEP": "Step",
+					"STEP_TITLE": "Step title",
+					"ACTION": "Tic",
+					"AUTHENTICATION": "Authentication",
+					"INPUTS": "Inputs (JSON)"
+				}
 			}
 		},
 		"ACTIVEPIECES_PAGE": {
@@ -1461,6 +1576,32 @@
 				"LOAD_FAILED": "Pe olare cano event triggers."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Plane Project Management Integration",
+			"WEB_URL": "Plane Web URL",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "Plane Admin URL",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "Plane Space URL",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Enter the URLs where your Plane instance is hosted. The Web URL is required. Admin and Space URLs are optional.",
+			"URL_REQUIRED": "This URL is required.",
+			"URL_INVALID": "Please enter a valid URL starting with http:// or https://.",
+			"LOADING": "Loading settings...",
+			"REGENERATE_KEY": "Regenerate",
+			"REGENERATE_KEY_LABEL": "API Key and Secret",
+			"CONFIRM_DELETE": "Are you sure you want to remove this Plane integration? This will revoke the API key.",
+			"CONFIRM_REGENERATE": "Are you sure you want to regenerate the API key? The current key will be invalidated.",
+			"API_KEY_DIALOG": {
+				"TITLE": "API Credentials",
+				"WARNING": "Copy these credentials now. The API secret will not be shown again.",
+				"API_KEY": "API Key",
+				"API_SECRET": "API Secret",
+				"COPY": "Copy",
+				"COPIED": "Copied!"
+			}
+		},
 		"COMING_SOON": "crwdns4078:0crwdne4078:0",
 		"RE_INTEGRATE": "crwdns8132:0crwdne8132:0",
 		"SETTINGS": "crwdns8134:0crwdne8134:0",
@@ -1468,7 +1609,17 @@
 		"FILTER_INTEGRATIONS": "crwdns8270:0crwdne8270:0",
 		"SEARCH_INTEGRATIONS": "crwdns8272:0crwdne8272:0",
 		"PAID": "crwdns11205:0crwdne11205:0",
-		"INTEGRATION": "crwdns11207:0crwdne11207:0"
+		"INTEGRATION": "crwdns11207:0crwdne11207:0",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Processing Make.com authorization...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Make.com authorization failed",
+				"INVALID_CALLBACK": "Invalid callback parameters"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Make.com authorization completed successfully"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "crwdns3190:0crwdne3190:0",
@@ -3931,7 +4082,38 @@
 		},
 		"VIEW_TIMESHEET": "crwdns7564:0crwdne7564:0",
 		"ADD_TIME": "crwdns7566:0crwdne7566:0",
-		"TODAY": "crwdns7568:0crwdne7568:0"
+		"TODAY": "crwdns7568:0crwdne7568:0",
+		"PERMISSIONS": {
+			"MENU_LABEL": "Twero pa kal",
+			"TITLE": "Twero pa kal",
+			"DESCRIPTION": "Gauzy mito twero mogo pa macOS me nongo tic mamegi ki kare. Nen ki juk ki kwene.",
+			"SCREEN_RECORDING": "Gwoko mony",
+			"SCREEN_RECORDING_DESC": "Mite me cup cal mony ma ityer kare me tic.",
+			"STATUS": "Tic",
+			"GRANTED": "Omiyogi",
+			"DENIED": "Okero",
+			"NOT_DETERMINED": "Peya otweyo",
+			"RESTRICTED": "Omoko",
+			"OPEN_SYSTEM_SETTINGS": "Yam yubo kal",
+			"TEST_SCREENSHOT": "Tem cup mony",
+			"TEST_GET_ACTIVE_WINDOW": "Tem donyo",
+			"SCREENSHOT_PREVIEW": "Nen cup mony",
+			"RESET_PERMISSION": "Cwal odoco",
+			"RESTARTING": "Acako doki i",
+			"DENIED_HINT": "Okero twero me gwoko mony. Dii 'Cwal odoco' me cwal twer odoco, onyo yam yubo kal me miyogi ki cibin.",
+			"RELAUNCH": "Cak doki",
+			"RELAUNCH_DESC": "Omiyogi twero ento pud pe ityer mony? Dii Cak doki me tiyo ki lok manyen.",
+			"DIALOG_TITLE": "Twero me Gwoko Mony Mite",
+			"DIALOG_DESC": "Gauzy mito twero me gwoko mony me cup cal mony kare me tic mamegi. Tim ber imiy twero me acaki.",
+			"POLLING_HINT": "Dirica man boti pore kene ka omiyogi twero.",
+			"START_ANYWAY": "Cak pe ki cup mony",
+			"ACCESSIBILITY": "Twero me Donyo",
+			"ACCESSIBILITY_DESC": "Mite me nongo tic pa keyboard, mouse ki dirica mudoko kare me tic mamegi.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "Yubo Twero me Donyo",
+			"RESET_ACCESSIBILITY_PERMISSION": "Cwal Twero me Donyo Odoco",
+			"ACCESSIBILITY_DENIED_HINT": "Okero twero me donyo. Dii 'Cwal Twero me Donyo Odoco' me cwal twero odoco, onyo yam yubo kal.",
+			"ACTIVE_WINDOW": "Nen Dirica Mudoko"
+		}
 	},
 	"TIMESHEET": {
 		"TODAY": "crwdns4690:0crwdne4690:0",
@@ -4451,5 +4633,80 @@
 		"AVAILABLE": "crwdns11243:0crwdne11243:0"
 	},
 	"SERVER_API": "API Server",
-	"SERVER_API_LOG": "API Server Log"
+	"SERVER_API_LOG": "API Server Log",
+	"OAUTH_CLIENTS": {
+		"TITLE": "crwdns11502:0crwdne11502:0",
+		"SUBTITLE": "crwdns11504:0crwdne11504:0",
+		"STATUS": {
+			"ACTIVE": "crwdns11506:0crwdne11506:0",
+			"INACTIVE": "crwdns11508:0crwdne11508:0"
+		},
+		"EMPTY": {
+			"TITLE": "crwdns11510:0crwdne11510:0",
+			"HINT": "crwdns11512:0crwdne11512:0"
+		},
+		"TABLE": {
+			"NAME": "crwdns11514:0crwdne11514:0",
+			"CLIENT_ID": "crwdns11516:0crwdne11516:0",
+			"TYPE": "crwdns11518:0crwdne11518:0",
+			"STATUS": "crwdns11520:0crwdne11520:0",
+			"REDIRECT_URIS": "crwdns11522:0crwdne11522:0",
+			"ACTIONS": "crwdns11524:0crwdne11524:0"
+		},
+		"ACTIONS": {
+			"REGISTER": "crwdns11526:0crwdne11526:0",
+			"EDIT": "crwdns11528:0crwdne11528:0",
+			"ROTATE_SECRET": "crwdns11530:0crwdne11530:0",
+			"DELETE": "crwdns11532:0crwdne11532:0"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "crwdns11534:0crwdne11534:0",
+			"EDIT_TITLE": "crwdns11536:0crwdne11536:0"
+		},
+		"FORM": {
+			"NAME": "crwdns11538:0crwdne11538:0",
+			"NAME_PLACEHOLDER": "crwdns11540:0crwdne11540:0",
+			"DESCRIPTION": "crwdns11542:0crwdne11542:0",
+			"DESCRIPTION_PLACEHOLDER": "crwdns11544:0crwdne11544:0",
+			"CLIENT_TYPE": "crwdns11546:0crwdne11546:0",
+			"CLIENT_TYPE_IMMUTABLE": "crwdns11548:0crwdne11548:0",
+			"REDIRECT_URIS": "crwdns11550:0crwdne11550:0",
+			"REDIRECT_URI_PLACEHOLDER": "https://your-app.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "crwdns11552:0crwdne11552:0",
+			"ALLOWED_SCOPES": "crwdns11554:0crwdne11554:0",
+			"SCOPE_PLACEHOLDER": "e.g. offline_access",
+			"ADD_SCOPE": "crwdns11556:0crwdne11556:0",
+			"GRANT_TYPES": "crwdns11558:0crwdne11558:0",
+			"PKCE_REQUIRED": "crwdns11560:0crwdne11560:0",
+			"ACCESS_TTL": "crwdns11562:0crwdne11562:0",
+			"REFRESH_TTL": "crwdns11564:0crwdne11564:0"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "crwdns11566:0crwdne11566:0",
+			"WARNING": "crwdns11568:0crwdne11568:0",
+			"CLIENT_ID": "crwdns11570:0crwdne11570:0",
+			"CLIENT_SECRET": "crwdns11572:0crwdne11572:0",
+			"ACKNOWLEDGE": "crwdns11574:0crwdne11574:0",
+			"CLOSE": "crwdns11576:0crwdne11576:0",
+			"COPIED_CLIENT_ID": "crwdns11578:0crwdne11578:0",
+			"COPIED_SECRET": "crwdns11580:0crwdne11580:0"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "crwdns11582:0crwdne11582:0",
+			"DELETE": "crwdns11584:0crwdne11584:0"
+		},
+		"TOASTS": {
+			"CREATED": "crwdns11586:0crwdne11586:0",
+			"UPDATED": "crwdns11588:0crwdne11588:0",
+			"SECRET_ROTATED": "crwdns11590:0crwdne11590:0",
+			"DELETED": "crwdns11592:0crwdne11592:0"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "crwdns11594:0crwdne11594:0",
+			"CREATE_FAILED": "crwdns11596:0crwdne11596:0",
+			"UPDATE_FAILED": "crwdns11598:0crwdne11598:0",
+			"ROTATE_FAILED": "crwdns11600:0crwdne11600:0",
+			"DELETE_FAILED": "crwdns11602:0crwdne11602:0"
+		}
+	}
 }

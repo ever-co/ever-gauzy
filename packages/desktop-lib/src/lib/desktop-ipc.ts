@@ -6,7 +6,7 @@ import {
 } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
-import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
+import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences, shell } from 'electron';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { AppWindowManager } from './app-window-manager';
@@ -30,29 +30,77 @@ import {
 	ActivityWatchEventManager,
 	ActivityWatchEventTableList
 } from './integrations';
-import { IDesktopEvent, IPowerManager } from './interfaces';
+import { IDesktopEvent, IOfflineMode, IPowerManager } from './interfaces';
 import {
 	DesktopOfflineModeHandler,
 	Interval,
 	IntervalService,
 	IntervalTO,
+	ScreenshotService,
 	Timer,
 	TimerService,
 	TimerTO,
-	UserService
+	UserService,
+	Screenshot
 } from './offline';
 import { pluginListeners } from './plugin-system';
 import { AkitaStorageHandler } from './storage/akita-storage.handler';
 import { RemoteTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
+import { ActivityWindow } from '@gauzy/desktop-activity';
+import { DesktopPermissionHandler } from './utilities/desktop-permission-handler';
+import { runTccutil, getAppId } from './utilities/util';
 
-const timerHandler = new TimerHandler();
-const offlineMode = DesktopOfflineModeHandler.instance;
-const userService = new UserService();
-const intervalService = new IntervalService();
-const timerService = new TimerService();
-const windowManager = WindowManager.getInstance();
-const appWindowManager = AppWindowManager.getInstance();
+// Lazily initialized — construction is deferred until after app.ready to avoid
+// native-module loads (better-sqlite3, uiohook-napi) and Electron API calls
+// (app.getPath, app.getName) that are unsafe or cause hangs before app.ready.
+let _timerHandler: TimerHandler | null = null;
+let _offlineMode: IOfflineMode | null = null;
+let _userService: UserService | null = null;
+let _intervalService: IntervalService | null = null;
+let _timerService: TimerService | null = null;
+let _windowManager: WindowManager | null = null;
+let _appWindowManager: AppWindowManager | null = null;
+let _screenshotService: ScreenshotService | null = null;
+let _activeWindow: ActivityWindow | null = null;
+
+function getTimerHandler(): TimerHandler {
+	if (!_timerHandler) _timerHandler = new TimerHandler();
+	return _timerHandler;
+}
+function getOfflineMode(): IOfflineMode {
+	if (!_offlineMode) _offlineMode = DesktopOfflineModeHandler.instance;
+	return _offlineMode;
+}
+function getUserService(): UserService {
+	if (!_userService) _userService = new UserService();
+	return _userService;
+}
+function getIntervalService(): IntervalService {
+	if (!_intervalService) _intervalService = new IntervalService();
+	return _intervalService;
+}
+function getTimerService(): TimerService {
+	if (!_timerService) _timerService = new TimerService();
+	return _timerService;
+}
+function getWindowManager(): WindowManager {
+	if (!_windowManager) _windowManager = WindowManager.getInstance();
+	return _windowManager;
+}
+function getAppWindowManager(): AppWindowManager {
+	if (!_appWindowManager) _appWindowManager = AppWindowManager.getInstance();
+	return _appWindowManager;
+}
+function getScreenshotService(): ScreenshotService {
+	if (!_screenshotService) _screenshotService = new ScreenshotService();
+	return _screenshotService;
+}
+
+function getActiveWindow(): ActivityWindow {
+	if (!_activeWindow) _activeWindow = ActivityWindow.getInstance();
+	return _activeWindow;
+}
 
 export function setupAkitaStorageHandler() {
 	return new AkitaStorageHandler(new AkitaStorageEngine());
@@ -87,11 +135,15 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		}
 	});
 
+	ipcMain.handle('GET_PLATFORM', () => {
+		return process.platform;
+	});
+
 	ipcMain.on('return_time_sheet', async (event, arg) => {
 		try {
 			log.info('Return Time Sheet');
 
-			await timerHandler.processWithQueue(
+			await getTimerHandler().processWithQueue(
 				`gauzy-queue`,
 				{
 					type: 'update-timer-time-slot',
@@ -113,7 +165,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		try {
 			log.info('Return Toggle API');
 
-			await timerHandler.processWithQueue(
+			await getTimerHandler().processWithQueue(
 				`gauzy-queue`,
 				{
 					type: 'update-timer-time-slot',
@@ -138,9 +190,9 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			interval.screenshots = arg.params.b64Imgs;
 			interval.stoppedAt = new Date();
 			interval.synced = false;
-			interval.timerId = timerHandler.lastTimer?.id;
+			interval.timerId = getTimerHandler().lastTimer?.id;
 
-			await intervalService.create(interval.toObject());
+			await getIntervalService().create(interval.toObject());
 
 			await countIntervalQueue(timeTrackerWindow, false);
 
@@ -150,6 +202,32 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			throw new UIError('400', error, 'IPCSAVESLOT');
 		}
 	});
+
+	ipcMain.on('failed_upload_screenshot', async (_, arg) => {
+		try {
+			log.info('Failed upload screenshot image');
+			let activityId: number;
+			if (arg?.intervalId) {
+				activityId = arg?.intervalId;
+			} else {
+				const lastInterval = await getIntervalService().findLastInterval();
+				activityId = lastInterval?.id;
+			}
+
+			if (activityId) {
+				const screenshotImage = {
+					timeSlotId: arg?.timeSlotId,
+					imagePath: arg?.imagePath,
+					synced: false,
+					activityId,
+					recordedAt: new Date(arg?.recordedAt)
+				}
+				await getScreenshotService().saveAndReturn(new Screenshot(screenshotImage));
+			}
+		} catch (error) {
+			console.error('failed to save failed upload screenshot image');
+		}
+	})
 
 	ipcMain.on('set_project_task', (event, arg) => {
 		event.sender.send('set_project_task_reply', arg);
@@ -165,18 +243,18 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		await checkAuthenticatedUser(timeTrackerWindow);
 
 		try {
-			const lastTime = await timerService.findLastOne();
+			const lastTime = await getTimerService().findLastOne();
 
 			log.info('Last Capture Time (Desktop IPC):', lastTime);
 
-			await offlineMode.connectivity();
+			await getOfflineMode().connectivity();
 
-			log.info('Network state', offlineMode.enabled ? 'Offline' : 'Online');
+			log.info('Network state', getOfflineMode().enabled ? 'Offline' : 'Online');
 
 			event.sender.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: lastTime ? lastTime.timeslotId : null,
-				isOffline: offlineMode.enabled
+				isOffline: getOfflineMode().enabled
 			});
 			await countIntervalQueue(timeTrackerWindow, false);
 			await sequentialSyncQueue(timeTrackerWindow);
@@ -272,7 +350,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		log.info('Update Synced Timer');
 		try {
 			if (!arg.id) {
-				const lastCapture = await timerService.findLastOne();
+				const lastCapture = await getTimerService().findLastOne();
 
 				if (lastCapture && lastCapture.id) {
 					const { id } = lastCapture;
@@ -284,9 +362,9 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			}
 
 			if (arg.id) {
-				if (!offlineMode.enabled) {
+				if (!getOfflineMode().enabled) {
 					console.log('Update Synced Timer Online');
-					await timerService.update(
+					await getTimerService().update(
 						new Timer({
 							id: arg.id,
 							synced: true,
@@ -309,14 +387,14 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 					);
 				} else {
 					console.log('Update Synced Timer Offline');
-					await timerService.update(
-						new Timer({
-							id: arg.id,
-							...(arg.startedAt && {
+					if (arg.startedAt) {
+						await getTimerService().update(
+							new Timer({
+								id: arg.id,
 								startedAt: new Date(arg.startedAt)
 							})
-						})
-					);
+						);
+					}
 				}
 			} else {
 				console.log('No arg.id found');
@@ -338,7 +416,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.handle('COLLECT_ACTIVITIES', async (event, { quitApp }) => {
 		try {
 			log.info('Collect Activities');
-			return await timerHandler.collectAllActivities(knex, quitApp);
+			return await getTimerHandler().collectAllActivities(knex, quitApp);
 		} catch (error) {
 			log.error('Error collecting activities', error);
 			throw new UIError('500', error, 'HANDLE ACTIVITIES');
@@ -350,7 +428,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			log.info('Update Synced');
 			const interval = new Interval(arg);
 			interval.screenshots = [];
-			await intervalService.synced(interval);
+			await getIntervalService().synced(interval);
 			await countIntervalQueue(timeTrackerWindow, true);
 		} catch (error) {
 			log.error('Error on update synced', error);
@@ -361,7 +439,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.handle('FINISH_SYNCED_TIMER', async (event, arg) => {
 		try {
 			log.info('Finish Synced Timer');
-			const total = await intervalService.countNoSynced();
+			const total = await getIntervalService().countNoSynced();
 			await countIntervalQueue(timeTrackerWindow, false);
 			if (total === 0) {
 				isQueueThreadTimerLocked = false;
@@ -377,10 +455,117 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.handle('GET_LAST_CAPTURE', async () => {
-		const lastCapture = await timerService.findLastCapture();
+		const lastCapture = await getTimerService().findLastCapture();
 		return {
 			timeSlotId: lastCapture?.timeslotId
 		};
+	});
+
+	ipcMain.handle('SET_OFFLINE_MODE', async () => {
+		getOfflineMode().forceOffline();
+	});
+
+	ipcMain.handle('CHECK_MACOS_PERMISSIONS', () => {
+		if (process.platform !== 'darwin') {
+			return { screen: 'granted', accessibility: 'granted' };
+		}
+		return {
+			screen: systemPreferences.getMediaAccessStatus('screen'), // 'granted'|'denied'|'not-determined'|'restricted'
+			accessibility: systemPreferences.isTrustedAccessibilityClient(false) ? 'granted' : 'denied'
+		};
+	});
+
+
+	ipcMain.handle('TEST_SCREENSHOT', async () => {
+		if (process.platform === 'darwin' && isScreenUnauthorized()) {
+			return { success: false, reason: 'unauthorized' };
+		}
+		try {
+			const sources = await desktopCapturer.getSources({
+				types: ['screen'],
+				thumbnailSize: { width: 320, height: 200 }
+			});
+			return sources.length > 0
+				? { success: true, thumbnail: sources[0].thumbnail.toDataURL() }
+				: { success: false, reason: 'no_sources' };
+		} catch (err) {
+			return { success: false, reason: err.message };
+		}
+	});
+
+	ipcMain.handle('TEST_GET_ACTIVE_WINDOW', async () => {
+		if (process.platform === 'darwin' && !systemPreferences.isTrustedAccessibilityClient(false)) {
+			return { success: false, reason: 'unauthorized' }
+		}
+		try {
+			const windowList = await getActiveWindow().getActiveWindow({
+				accessibilityPermission: false,
+				screenRecordingPermission: false
+			});
+			return {
+				success: true,
+				window: {
+					title: windowList?.title,
+					appName: windowList?.owner?.name,
+					bundleId: windowList?.owner?.bundleId
+				}
+			}
+		} catch (error) {
+			return {
+				success: false,
+				reason: error.message
+			}
+		}
+	});
+
+	ipcMain.handle('RESET_SCREEN_PERMISSION', async () => {
+		if (process.platform !== 'darwin') return { success: true };
+		try {
+			const bundleId = getAppId();
+			await runTccutil('ScreenCapture', bundleId, 15 * 1000);
+			/* Re adding the app to permission */
+			await desktopCapturer.getSources({
+				types: ['screen'],
+				thumbnailSize: { width: 320, height: 200 }
+			});
+			return { success: true };
+		} catch (err) {
+			log.error('Failed to reset TCC permission', err);
+			return { success: false, error: err.message };
+		}
+	});
+
+	ipcMain.handle('OPEN_PRIVACY_SETTINGS', () => {
+		shell.openExternal(
+			'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture'
+		);
+	});
+
+	ipcMain.handle('RESET_ACCESSIBILITY_PERMISSION', async () => {
+		if (process.platform !== 'darwin') return { success: true };
+		try {
+			const bundleId = getAppId();
+			await runTccutil('Accessibility', bundleId, 15 * 1000);
+			await getActiveWindow().getActiveWindow({
+				screenRecordingPermission: false,
+				accessibilityPermission: true
+			})
+			return { success: true };
+		} catch (err) {
+			log.error('Failed to reset Accessibility TCC permission', err);
+			return { success: false, error: err.message };
+		}
+	});
+
+	ipcMain.handle('OPEN_ACCESSIBILITY_SETTINGS', () => {
+		shell.openExternal(
+			'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'
+		);
+	});
+
+	ipcMain.handle('RELAUNCH_APP', () => {
+		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+		app.exit(0);
 	});
 
 	pluginListeners();
@@ -452,8 +637,8 @@ export function ipcTimer(
 			interval.screenshots = arg.b64Imgs;
 			interval.stoppedAt = new Date();
 			interval.synced = true;
-			interval.timerId = timerHandler.lastTimer?.id;
-			await intervalService.create(interval.toObject());
+			interval.timerId = getTimerHandler().lastTimer?.id;
+			await getIntervalService().create(interval.toObject());
 			await latestScreenshots(timeTrackerWindow);
 		} catch (error) {
 			log.error('Error on create synced interval', error);
@@ -461,26 +646,26 @@ export function ipcTimer(
 		}
 	});
 
-	offlineMode.on('offline', async () => {
+	getOfflineMode().on('offline', async () => {
 		log.info('Offline mode triggered...');
 		const windows = [timeTrackerWindow];
-		if (appWindowManager.alwaysOnWindow?.browserWindow) {
-			windows.unshift(appWindowManager.alwaysOnWindow.browserWindow);
+		if (getAppWindowManager().alwaysOnWindow?.browserWindow) {
+			windows.unshift(getAppWindowManager().alwaysOnWindow.browserWindow);
 		}
 		for (const window of windows) {
-			windowManager.webContents(window)?.send?.('offline-handler', true);
+			getWindowManager().webContents(window)?.send?.('offline-handler', true);
 		}
 	});
 
-	offlineMode.on('connection-restored', async () => {
+	getOfflineMode().on('connection-restored', async () => {
 		log.info('Api connected...');
 		try {
 			const windows = [timeTrackerWindow];
-			if (appWindowManager.alwaysOnWindow?.browserWindow) {
-				windows.unshift(appWindowManager.alwaysOnWindow.browserWindow);
+			if (getAppWindowManager().alwaysOnWindow?.browserWindow) {
+				windows.unshift(getAppWindowManager().alwaysOnWindow.browserWindow);
 			}
 			for (const window of windows) {
-				windowManager.webContents(window)?.send?.('offline-handler', false);
+				getWindowManager().webContents(window)?.send?.('offline-handler', false);
 			}
 			await sequentialSyncQueue(timeTrackerWindow);
 		} catch (error) {
@@ -489,7 +674,7 @@ export function ipcTimer(
 		}
 	});
 
-	offlineMode.trigger();
+	getOfflineMode().trigger();
 
 	ipcMain.handle('START_TIMER', async (event, arg) => {
 		log.info(`Start Timer: ${moment().format()}`);
@@ -522,14 +707,19 @@ export function ipcTimer(
 			});
 
 			// Check API connection before starting
-			await offlineMode.connectivity();
+			await getOfflineMode().connectivity();
 
 			log.info(`API Connection: ${moment().format()}`);
 
 			// Start Timer
-			const timerResponse = await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg?.timeLog);
-			if (appWindowManager?.settingWindow) {
-				appWindowManager.settingWindow.webContents?.send?.('setting_page_ipc', {
+			const timerResponse = await getTimerHandler().startTimer(
+				setupWindow,
+				knex,
+				timeTrackerWindow,
+				arg?.timeLog
+			);
+			if (getAppWindowManager()?.settingWindow) {
+				getAppWindowManager().settingWindow.webContents?.send?.('setting_page_ipc', {
 					type: 'app_setting_update',
 					data: {
 						setting: LocalStore.getStore('appSetting')
@@ -563,7 +753,7 @@ export function ipcTimer(
 		try {
 			log.info(`Delete Time Slot: ${moment().format()}`);
 
-			const count = await intervalService.countNoSynced();
+			const count = await getIntervalService().countNoSynced();
 
 			const notify = new NotificationDesktop();
 
@@ -572,21 +762,21 @@ export function ipcTimer(
 				title: process.env.DESCRIPTION
 			};
 
-			if (typeof intervalId === 'number' && intervalId && count > 0 && offlineMode.enabled) {
-				await intervalService.remove(intervalId);
+			if (typeof intervalId === 'number' && intervalId && count > 0 && getOfflineMode().enabled) {
+				await getIntervalService().remove(intervalId);
 				await countIntervalQueue(timeTrackerWindow, false);
 				await latestScreenshots(timeTrackerWindow);
 				notify.customNotification(notification.message, notification.title);
 			}
 
-			if (!offlineMode.enabled && typeof intervalId === 'string') {
-				await intervalService.removeByRemoteId(intervalId);
-				const lastTimer = await timerService.findLastCapture();
-				const lastInterval = await intervalService.findLastInterval();
+			if (!getOfflineMode().enabled && typeof intervalId === 'string') {
+				await getIntervalService().removeByRemoteId(intervalId);
+				const lastTimer = await getTimerService().findLastCapture();
+				const lastInterval = await getIntervalService().findLastInterval();
 
 				if (lastTimer) {
 					lastTimer.timeslotId = lastInterval.remoteId;
-					await timerService.update(new Timer(lastTimer));
+					await getTimerService().update(new Timer(lastTimer));
 				}
 
 				notify.customNotification(notification.message, notification.title);
@@ -605,7 +795,7 @@ export function ipcTimer(
 		if (!collections.length) return;
 
 		try {
-			await timerHandler.processWithQueue(
+			await getTimerHandler().processWithQueue(
 				`gauzy-queue`,
 				{
 					type: ActivityWatchEventTableList.WINDOW,
@@ -625,7 +815,7 @@ export function ipcTimer(
 		if (!collections.length) return;
 
 		try {
-			await timerHandler.processWithQueue(
+			await getTimerHandler().processWithQueue(
 				`gauzy-queue`,
 				{
 					type: ActivityWatchEventTableList.AFK,
@@ -645,7 +835,7 @@ export function ipcTimer(
 		if (!collections.length) return;
 
 		try {
-			await timerHandler.processWithQueue(
+			await getTimerHandler().processWithQueue(
 				`gauzy-queue`,
 				{
 					type: ActivityWatchEventTableList.FIREFOX,
@@ -665,7 +855,7 @@ export function ipcTimer(
 		if (!collections.length) return;
 
 		try {
-			await timerHandler.processWithQueue(
+			await getTimerHandler().processWithQueue(
 				`gauzy-queue`,
 				{
 					type: ActivityWatchEventTableList.CHROME,
@@ -691,7 +881,7 @@ export function ipcTimer(
 
 	ActivityWatchEventManager.onRemoveLocalData(async (_, value: any) => {
 		try {
-			await timerHandler.processWithQueue(
+			await getTimerHandler().processWithQueue(
 				`gauzy-queue`,
 				{
 					type: 'remove-window-events'
@@ -724,7 +914,7 @@ export function ipcTimer(
 		const collections: IDesktopEvent[] = ActivityWatchEventAdapter.collections(result);
 		if (!collections.length) return;
 		try {
-			await timerHandler.processWithQueue(
+			await getTimerHandler().processWithQueue(
 				`gauzy-queue`,
 				{
 					type: ActivityWatchEventTableList.EDGE,
@@ -741,7 +931,7 @@ export function ipcTimer(
 	ipcMain.on('remove_wakatime_local_data', async (event, arg) => {
 		try {
 			if (arg.idsWakatime && arg.idsWakatime.length > 0) {
-				await timerHandler.processWithQueue(
+				await getTimerHandler().processWithQueue(
 					`gauzy-queue`,
 					{
 						type: 'remove-wakatime-events',
@@ -767,9 +957,9 @@ export function ipcTimer(
 				setTimeout(async () => {
 					log.info('Check API Connection During Stop Timer...');
 
-					await offlineMode.connectivity();
+					await getOfflineMode().connectivity();
 
-					if (offlineMode.enabled) {
+					if (getOfflineMode().enabled) {
 						console.log('Offline Mode: Mark as stopped offline');
 						await markLastTimerAsStoppedOffline();
 						// We may want to show some notification to user that timer might not stop correctly, but not with Error, more like notification popup
@@ -783,11 +973,11 @@ export function ipcTimer(
 			console.log('Continue stopping timer ...');
 
 			// Stop Timer
-			const timerResponse = await timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
+			const timerResponse = await getTimerHandler().stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
 
 			console.log('Timer Stopped ...');
 
-			appWindowManager.settingWindow?.webContents?.send?.('setting_page_ipc', {
+			getAppWindowManager().settingWindow?.webContents?.send?.('setting_page_ipc', {
 				type: 'app_setting_update',
 				data: {
 					setting: LocalStore.getStore('appSetting')
@@ -810,7 +1000,7 @@ export function ipcTimer(
 			const { timeSlotId, timerId } = arg;
 			log.info(`Return To Timeslot Last Timeslot ID: ${timeSlotId} and Timer ID: ${timerId}`);
 			LocalStore.updateAdditionalSetting({ timeSlotId });
-			await timerHandler.processWithQueue(
+			await getTimerHandler().processWithQueue(
 				`gauzy-queue`,
 				{
 					type: 'update-timer-time-slot',
@@ -840,7 +1030,7 @@ export function ipcTimer(
 				timeLogs = _.sortBy(timeLogs, 'recordedAt').reverse();
 
 				const [timeLog] = timeLogs;
-				await timerHandler.createTimer(timeLog);
+				await getTimerHandler().createTimer(timeLog);
 			}
 		} catch (error) {
 			log.error('Error on return time slot', error);
@@ -879,24 +1069,24 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('show_image', async (event, arg) => {
-		if (!appWindowManager.imageView) {
-			await appWindowManager.initImageViewWindow(windowPath.timeTrackerUi);
+		if (!getAppWindowManager().imageView) {
+			await getAppWindowManager().initImageViewWindow(windowPath.timeTrackerUi);
 			ipcMain.once('image_view_ready', () => {
-				appWindowManager.imageView?.webContents?.send?.('show_image', arg);
-				appWindowManager.imageView?.webContents?.send?.('refresh_menu');
+				getAppWindowManager().imageView?.webContents?.send?.('show_image', arg);
+				getAppWindowManager().imageView?.webContents?.send?.('refresh_menu');
 			});
-			await appWindowManager.loadImageView(windowPath.timeTrackerUi);
+			await getAppWindowManager().loadImageView(windowPath.timeTrackerUi);
 		} else {
-			appWindowManager.imageView?.webContents?.send?.('show_image', arg);
-			appWindowManager.imageView?.webContents?.send?.('refresh_menu');
+			getAppWindowManager().imageView?.webContents?.send?.('show_image', arg);
+			getAppWindowManager().imageView?.webContents?.send?.('refresh_menu');
 		}
 
-		appWindowManager.imageView?.show();
+		getAppWindowManager().imageView?.show();
 	});
 
 	ipcMain.on('close_image_view', async () => {
-		await appWindowManager.initImageViewWindow(windowPath.timeTrackerUi);
-		appWindowManager.imageView?.close?.();
+		await getAppWindowManager().initImageViewWindow(windowPath.timeTrackerUi);
+		getAppWindowManager().imageView?.close?.();
 	});
 
 	ipcMain.on('save_temp_screenshot', async (event, arg) => {
@@ -911,16 +1101,16 @@ export function ipcTimer(
 
 	ipcMain.on('open_setting_window', async (event, arg) => {
 		log.info(`Open Setting Window: ${moment().format()}`);
-		if (!appWindowManager.settingWindow) {
-			await appWindowManager.initSettingWindow(windowPath.timeTrackerUi, windowPath.preloadPath, false);
+		if (!getAppWindowManager().settingWindow) {
+			await getAppWindowManager().initSettingWindow(windowPath.timeTrackerUi, windowPath.preloadPath, false);
 			ipcMain.once('setting_window_ready', () => {
-				appWindowManager.settingShow('goto_top_menu');
+				getAppWindowManager().settingShow('goto_top_menu');
 			});
-			await appWindowManager.loadSetting(windowPath.timeTrackerUi);
+			await getAppWindowManager().loadSetting(windowPath.timeTrackerUi);
 		} else {
-			appWindowManager.settingShow('goto_top_menu');
+			getAppWindowManager().settingShow('goto_top_menu');
 		}
-		appWindowManager.settingWindow?.show?.();
+		getAppWindowManager().settingWindow?.show?.();
 	});
 
 	ipcMain.on('switch_aw_option', (event, arg) => {
@@ -943,8 +1133,8 @@ export function ipcTimer(
 
 			LocalStore.updateAuthSetting({ isLogout: true });
 
-			if (appWindowManager?.settingWindow) {
-				appWindowManager.settingWindow.webContents?.send?.('setting_page_ipc', {
+			if (getAppWindowManager()?.settingWindow) {
+				getAppWindowManager().settingWindow.webContents?.send?.('setting_page_ipc', {
 					type: 'logout_success'
 				});
 			}
@@ -977,7 +1167,7 @@ export function ipcTimer(
 			}
 		) => {
 			try {
-				await timerHandler.updateTimerSyncState(arg.actionType, arg.data);
+				await getTimerHandler().updateTimerSyncState(arg.actionType, arg.data);
 			} catch (error) {
 				console.error(`ERROR_UPDATE_SYNC_STATE: ${error}`);
 			}
@@ -1048,7 +1238,7 @@ export function ipcTimer(
 	ipcMain.on('refresh-timer', async (event) => {
 		log.info(`Refresh Timer: ${moment().format()}`);
 		try {
-			const lastTime = await timerService.findLastCapture();
+			const lastTime = await getTimerService().findLastCapture();
 
 			log.info('Last Capture Time Start Tracking Time (Desktop Try):', lastTime);
 
@@ -1062,11 +1252,13 @@ export function ipcTimer(
 
 			timeTrackerWindow.webContents.send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
+				isOffline: getOfflineMode().enabled,
 				timeSlotId: lastTime ? lastTime.timeslotId : null
 			});
 		} catch (error) {
 			log.error('Error on refresh timer', error);
 			timeTrackerWindow.webContents.send('timer_tracker_show', {
+				isOffline: getOfflineMode().enabled,
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: null
 			});
@@ -1084,13 +1276,13 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('update_session', (event, timer: TimerTO) => {
-		timerHandler.timeStart = moment(timer.startedAt);
+		getTimerHandler().timeStart = moment(timer.startedAt);
 	});
 
 	ipcMain.on('remove_current_user', async (event, arg) => {
 		try {
 			log.info(`Remove Current User: ${moment().format()}`);
-			await userService.remove();
+			await getUserService().remove();
 		} catch (error) {
 			log.error('Error on remove current user', error);
 			throw new UIError('500', error, 'IPCRMUSER');
@@ -1099,7 +1291,7 @@ export function ipcTimer(
 
 	ipcMain.on('server-down', async (event, arg) => {
 		// Check api connection
-		await offlineMode.connectivity();
+		await getOfflineMode().connectivity();
 	});
 
 	ipcMain.on('check-interrupted-sequences', async (event, arg) => {
@@ -1138,9 +1330,9 @@ export function ipcTimer(
 
 	TranslateService.onLanguageChange((language: string) => {
 		try {
-			const windows = windowManager.getActives();
+			const windows = getWindowManager().getActives();
 			for (const window of windows) {
-				const webContents = windowManager.webContents(window);
+				const webContents = getWindowManager().webContents(window);
 				if (webContents) {
 					webContents.send('preferred_language_change', language);
 				}
@@ -1154,29 +1346,29 @@ export function ipcTimer(
 		const setting = LocalStore.getStore('appSetting');
 		const auth = LocalStore.getStore('auth');
 		if (setting?.alwaysOn && auth?.employeeId) {
-			const alwaysOnWindow = await appWindowManager.initAlwaysOnWindow(windowPath.timeTrackerUi);
+			const alwaysOnWindow = await getAppWindowManager().initAlwaysOnWindow(windowPath.timeTrackerUi);
 			alwaysOnWindow?.show();
 		}
 	});
 
 	ipcMain.on('hide_ao', (event, arg) => {
-		if (appWindowManager.alwaysOnWindow) {
-			appWindowManager.alwaysOnWindow.close();
+		if (getAppWindowManager().alwaysOnWindow) {
+			getAppWindowManager().alwaysOnWindow.close();
 		}
 	});
 
 	ipcMain.on('change_state_from_ao', async (event, arg) => {
 		const windows = [timeTrackerWindow];
-		if (appWindowManager.alwaysOnWindow?.browserWindow) {
-			windows.unshift(appWindowManager.alwaysOnWindow.browserWindow);
+		if (getAppWindowManager().alwaysOnWindow?.browserWindow) {
+			windows.unshift(getAppWindowManager().alwaysOnWindow.browserWindow);
 		}
 		for (const window of windows) {
-			windowManager.webContents(window)?.send?.('change_state_from_ao', arg);
+			getWindowManager().webContents(window)?.send?.('change_state_from_ao', arg);
 		}
 	});
 
 	ipcMain.on('ao_time_update', (event, arg) => {
-		appWindowManager.alwaysOnWindow?.browserWindow?.webContents?.send?.('ao_time_update', arg);
+		getAppWindowManager().alwaysOnWindow?.browserWindow?.webContents?.send?.('ao_time_update', arg);
 	});
 
 	ipcMain.handle('MARK_AS_STOPPED_OFFLINE', async () => {
@@ -1184,11 +1376,11 @@ export function ipcTimer(
 	});
 
 	ipcMain.handle('CURRENT_TIMER', () => {
-		return timerService.findLastOne();
+		return getTimerService().findLastOne();
 	});
 
 	ipcMain.handle('LAST_SYNCED_INTERVAL', () => {
-		return intervalService.findLastInterval();
+		return getIntervalService().findLastInterval();
 	});
 
 	ipcMain.handle('UPDATE_SELECTOR', async (_, args) => {
@@ -1209,15 +1401,22 @@ export function ipcTimer(
 			LocalStore.updateConfigProject(config);
 
 			// Update last timeslot moment
-			timerHandler.timeSlotStart = moment(startedAt);
+			getTimerHandler().timeSlotStart = moment(startedAt);
 
 			// Update timer with new config
-			await timerService.update(new Timer({ id: timerId, description, startedAt, ...config }));
+			await getTimerService().update(new Timer({ id: timerId, description, startedAt, ...config }));
 
 			console.log('update selector', '✔️ Done');
 		} catch (error) {
 			console.error('Failed to update selector:', error);
 		}
+	});
+
+	ipcMain.handle('SHOW_PERMISSION_CONFIRM', () => {
+		const desktopPermissionHandler = DesktopPermissionHandler.getInstance(
+			timeTrackerWindow, windowPath
+		);
+		desktopPermissionHandler.showDialogPermissionConfirm();
 	});
 }
 
@@ -1271,7 +1470,17 @@ export function removeAllHandlers() {
 		'FINISH_SYNCED_TIMER',
 		'COLLECT_ACTIVITIES',
 		'START_SERVER',
-		'GET_LAST_CAPTURE'
+		'GET_LAST_CAPTURE',
+		'SET_OFFLINE_MODE',
+		'CHECK_MACOS_PERMISSIONS',
+		'TEST_SCREENSHOT',
+		'TEST_GET_ACTIVE_WINDOW',
+		'RESET_SCREEN_PERMISSION',
+		'OPEN_PRIVACY_SETTINGS',
+		'RESET_ACCESSIBILITY_PERMISSION',
+		'OPEN_ACCESSIBILITY_SETTINGS',
+		'RELAUNCH_APP',
+		'GET_PLATFORM'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
@@ -1308,13 +1517,13 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 			return;
 		}
 
-		await offlineMode.connectivity();
+		await getOfflineMode().connectivity();
 
-		if (offlineMode.enabled) return;
+		if (getOfflineMode().enabled) return;
 
 		isQueueThreadTimerLocked = true;
 
-		const sequences = await timerService.findToSynced();
+		const sequences = await getTimerService().findToSynced();
 
 		if (sequences.length > 0) {
 			await countIntervalQueue(window, true);
@@ -1336,7 +1545,7 @@ async function countIntervalQueue(window: BrowserWindow, inProgress: boolean) {
 	if (!window) return;
 
 	try {
-		size = await intervalService.countNoSynced();
+		size = await getIntervalService().countNoSynced();
 		if (size < 1) isQueueThreadTimerLocked = false;
 		log.info('Sending Count Synced Event...', { size, inProgress });
 
@@ -1354,7 +1563,7 @@ async function latestScreenshots(window: BrowserWindow): Promise<void> {
 	try {
 		log.info('Sending Latest Screenshots Event...');
 
-		window.webContents.send('latest_screenshots', await intervalService.screenshots());
+		window.webContents.send('latest_screenshots', await getIntervalService().screenshots());
 	} catch (error) {
 		log.error('Error on latest screenshots', error);
 		throw new UIError('500', error, 'IPCLS');
@@ -1375,13 +1584,13 @@ async function sequentialSyncInterruptionsQueue(window: BrowserWindow) {
 	}
 
 	try {
-		await offlineMode.connectivity();
+		await getOfflineMode().connectivity();
 
-		if (offlineMode.enabled) return;
+		if (getOfflineMode().enabled) return;
 
 		isQueueThreadTimerLocked = true;
 
-		const sequences = await timerService.interruptions();
+		const sequences = await getTimerService().interruptions();
 
 		if (sequences.length > 0) {
 			await countIntervalQueue(window, true);
@@ -1409,8 +1618,9 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 	const auth = LocalStore.getStore('auth');
 
 	const logout = async () => {
-		await userService.remove();
-		timeTrackerWindow.webContents.send('__logout__');
+		await getUserService().remove();
+		// Explicitly pass `false` to prevent the Angular app from triggering an unwanted restart.
+		timeTrackerWindow.webContents.send('__logout__', false);
 		LocalStore.updateAuthSetting({ isLogout: true });
 	};
 
@@ -1425,7 +1635,7 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 			return false;
 		}
 
-		const user = await userService.retrieve();
+		const user = await getUserService().retrieve();
 		log.info('Current User', user);
 
 		// Ensure we have a valid user and matching remoteId
@@ -1450,7 +1660,7 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 export async function markLastTimerAsStoppedOffline(): Promise<void> {
 	try {
 		// Retrieve the last timer if not provided
-		const lastTimer = await timerService.findLastOne();
+		const lastTimer = await getTimerService().findLastOne();
 
 		// Check if a timer was found or provided
 		if (!lastTimer || !lastTimer.id) {
@@ -1458,7 +1668,7 @@ export async function markLastTimerAsStoppedOffline(): Promise<void> {
 		}
 
 		// Update the timer's state to "stopped offline"
-		await timerService.update(new Timer({ ...lastTimer, isStoppedOffline: true }));
+		await getTimerService().update(new Timer({ ...lastTimer, isStoppedOffline: true }));
 	} catch (error) {
 		// Throw a more descriptive error message with context
 		log.error(`Failed to mark the last timer as stopped offline: ${error.message}`);

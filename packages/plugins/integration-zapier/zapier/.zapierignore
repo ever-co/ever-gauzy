@@ -1,0 +1,8 @@
+build
+.cache
+.env
+src
+tsconfig.json
+tsconfig.tsbuildinfo
+*.ts
+!*.d.ts

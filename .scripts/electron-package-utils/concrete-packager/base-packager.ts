@@ -11,4 +11,40 @@ export abstract class BasePackager implements IPackager {
 		});
 		return pkg;
 	}
+
+	protected registerProtocol(pkg: IPackage, protocol: string): IPackage {
+		pkg.build.protocols = [
+			{
+				name: `${protocol} Protocol`,
+				schemes: [protocol],
+				role: 'Editor'
+			}
+		];
+
+		// macOS: register URL scheme via CFBundleURLTypes
+		pkg.build.mac.extendInfo = {
+			...pkg.build.mac.extendInfo,
+			CFBundleURLTypes: [
+				{
+					CFBundleURLName: `${protocol} Protocol`,
+					CFBundleURLSchemes: [protocol],
+					CFBundleTypeRole: 'Editor'
+				}
+			]
+		};
+
+		// Linux: register protocol handler via MIME type
+		pkg.build.linux.mimeTypes = [
+			...(pkg.build.linux.mimeTypes || []),
+			`x-scheme-handler/${protocol}`
+		];
+
+		// Windows (NSIS): register protocol handler
+		pkg.build.nsis = {
+			...pkg.build.nsis,
+			perMachine: true
+		};
+
+		return pkg;
+	}
 }

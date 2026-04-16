@@ -44,12 +44,13 @@ import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { ElectronService } from '../electron/services';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { LanguageSelectorComponent } from '../language/language-selector.component';
-import { TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
+import { TimeZoneManager, ToastrNotificationService, ZoneEnum, Store } from '../services';
 import { SetupService } from '../setup/setup.service';
 import { SwitchThemeComponent } from '../theme-selector/switch-theme/switch-theme.component';
 import { ReplacePipe } from '../time-tracker/pipes/replace.pipe';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { SslComponent } from './ssl/ssl.component';
+import { PermissionManagerComponent } from '../permission-manager/permission-manager.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -89,7 +90,8 @@ import { SslComponent } from './ssl/ssl.component';
 		LowerCasePipe,
 		TitleCasePipe,
 		TranslatePipe,
-		ReplacePipe
+		ReplacePipe,
+		PermissionManagerComponent
 	]
 })
 export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -503,6 +505,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	private _isHidden$: BehaviorSubject<boolean>;
 	private _simpleScreenshotNotification$: BehaviorSubject<boolean>;
 	private _timeZoneManager = TimeZoneManager;
+	private platformOS: string;
 
 	constructor(
 		private electronService: ElectronService,
@@ -518,7 +521,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
 		private readonly _domSanitizer: DomSanitizer,
-		private readonly _languageElectronService: LanguageElectronService
+		private readonly _languageElectronService: LanguageElectronService,
+		private readonly _store: Store
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
@@ -561,6 +565,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				this.arch = arg;
 			});
 		});
+		this.setPlatform();
 		this.electronService.ipcRenderer.send('get-arch');
 		this.version = this.electronService.remote.app.getVersion();
 		this.isConnectedDatabase$
@@ -585,6 +590,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	async setPlatform() {
+		const platform = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
+		this.platformOS = platform;
 	}
 
 	ngOnDestroy(): void {
@@ -640,12 +650,13 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			this.menus = this.isServer
 				? ['TIMER_TRACKER.SETTINGS.UPDATE', 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS', 'MENU.ABOUT']
 				: [
-						...(allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
-						'TIMER_TRACKER.TIMER',
-						'TIMER_TRACKER.SETTINGS.UPDATE',
-						'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
-						'MENU.ABOUT'
-				  ];
+					...(allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
+					...(allowScreenshotCapture && this.platformOS === 'darwin' && this.isDesktopTimer ? ['TIMER_TRACKER.PERMISSIONS.MENU_LABEL'] : []),
+					'TIMER_TRACKER.TIMER',
+					'TIMER_TRACKER.SETTINGS.UPDATE',
+					'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
+					'MENU.ABOUT'
+				];
 			const lastMenu =
 				this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
 			this._selectedMenu$.next(lastMenu);
@@ -755,6 +766,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			}
 			case 'goto_advanced_setting': {
 				this.selectMenu('TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS');
+				break;
+			}
+			case 'goto_permission': {
+				this.selectMenu('TIMER_TRACKER.PERMISSIONS.MENU_LABEL');
 				break;
 			}
 			case 'logout_success': {
@@ -956,7 +971,9 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	public async restartApp(): Promise<void> {
 		this._isRestart$.next(true);
 		if (!this.isServer && !this.authSetting.isLogout) {
-			await firstValueFrom(this._authStrategy.logout());
+			// isRestart=true prevents the settings window from being closed during logout,
+			// allowing the restart flow to continue using the same window.
+			await firstValueFrom(this._authStrategy.logout(true));
 			this.currentUser$.next(null);
 			localStorage.clear();
 		}
@@ -1050,8 +1067,14 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 					this.currentUser$.next(null);
 					return;
 				}
-				const user = await this.timeTrackerService.getUserDetail();
-				this.currentUser$.next(user);
+				if (this._store.isOffline) {
+					const usr = this._store.user;
+					this.currentUser$.next(usr);
+				} else {
+					const user = await this.timeTrackerService.getUserDetail();
+					this.currentUser$.next(user);
+				}
+
 			} catch (error) {
 				console.log('User Detail error', error);
 			}

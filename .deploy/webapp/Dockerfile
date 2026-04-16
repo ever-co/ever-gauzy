@@ -120,6 +120,8 @@ COPY --chown=node:node packages/plugins/integration-make-com-ui/package.json ./p
 COPY --chown=node:node packages/plugins/integration-zapier-ui/package.json ./packages/plugins/integration-zapier-ui/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
+COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
+COPY --chown=node:node packages/plugins/integration-plane-ui/package.json ./packages/plugins/integration-plane-ui/
 COPY --chown=node:node packages/plugins/integration-sim-ui/package.json ./packages/plugins/integration-sim-ui/
 COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-activepieces-ui/package.json ./packages/plugins/integration-activepieces-ui/
@@ -146,6 +148,7 @@ COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/v
 COPY --chown=node:node packages/plugins/camshot/package.json ./packages/plugins/camshot/
 COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
+COPY --chown=node:node packages/plugins/dashboard-time-track-angular-ui/package.json ./packages/plugins/dashboard-time-track-angular-ui/
 COPY --chown=node:node packages/plugins/dashboard-time-track-react-ui/package.json ./packages/plugins/dashboard-time-track-react-ui/
 COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
 COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
@@ -209,7 +212,7 @@ ENV DEMO=${DEMO:-false}
 ENV IS_DOCKER=true
 
 # Enable NX Cloud caching for faster builds
-ENV NX_NO_CLOUD=false
+ENV NX_NO_CLOUD=true
 ENV NX_CLOUD_ACCESS_TOKEN=${NX_CLOUD_ACCESS_TOKEN}
 ENV NX_BRANCH=${NX_BRANCH}
 

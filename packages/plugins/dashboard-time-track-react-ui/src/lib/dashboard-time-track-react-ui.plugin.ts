@@ -17,7 +17,7 @@ import en from '../i18n/en.json';
  *
  * ## Features Demonstrated
  *
- * - **Versioning**: `version: '1.0.0'` — enables compatibility checks
+ * - **Versioning**: `version: '0.1.0'` — enables compatibility checks
  * - **Namespace Isolation**: `translationNamespace: 'REACT_UI'` — prevents i18n key collisions
  * - **Settings**: Dashboard widget visibility toggles with auto-generated UI
  * - **Type-Safe Events**: `DashboardRefreshedEvent` / `WidgetVisibilityChangedEvent` in `dashboard-time-track-react-ui.events.ts`
@@ -36,7 +36,7 @@ import en from '../i18n/en.json';
  */
 export const DashboardTimeTrackReactUiPlugin = defineDeclarativePlugin('dashboard-time-track-react-ui', {
 	// ── Versioning & Compatibility ────────────────────────────────
-	version: '1.0.0',
+	version: '0.1.0',
 
 	// ── Location ─────────────────────────────────────────────────
 	location: 'page-sections',
