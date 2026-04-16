@@ -1,5 +1,5 @@
-import { AuditLog } from "../offline/models";
 import { AuditLogTO } from "../offline/dto";
+import { IPagination, IPaginationResult } from "./i-pagination";
 
 /**
 	* Interface for the Audit Log Service
@@ -7,7 +7,7 @@ import { AuditLogTO } from "../offline/dto";
 	* @template T The type of audit log data being managed
  */
 export interface IAuditLogService<T> {
-	findAuditLogs(log: Partial<T>): Promise<AuditLogTO[]>;
+	findAuditLogs(inputParams: IPagination<T>): Promise<IPaginationResult<AuditLogTO>>;
 	save(log: T): Promise<void>;
 	saveAndReturn(log: T): Promise<AuditLogTO>;
 	update(log: Partial<T>): Promise<void>;

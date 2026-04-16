@@ -1,7 +1,7 @@
-import { IAuditLogService } from "../../interfaces";
+import { IAuditLogService, IPaginationResult, IPagination } from "../../interfaces";
 import { AuditLogDAO } from "../dao";
 import { AuditLogTO } from "../dto";
-import {AppError} from '../../error-handler';
+import { AppError } from '../../error-handler';
 import { AuditLog } from "../models";
 
 export class AuditLogService implements IAuditLogService<AuditLogTO> {
@@ -75,7 +75,21 @@ export class AuditLogService implements IAuditLogService<AuditLogTO> {
 		}
 	}
 
-	public async findAuditLogs(log: Partial<AuditLog>): Promise<AuditLogTO[]> {
-		return [];
+	public async findAuditLogs(log: IPagination<AuditLogTO>): Promise<IPaginationResult<AuditLogTO>> {
+		try {
+			const total = await this._auditLogDao.count(log.filter || {});
+			const data = await this._auditLogDao.findByFilter(log);
+			return {
+				total,
+				data
+			};
+		} catch (error) {
+			console.error('ERROR[AUDIT_LOG_SERVICE]: Failed to find audit logs', error);
+			return {
+				total: 0,
+				data: []
+			};
+		}
+
 	}
 }

@@ -1,4 +1,4 @@
-import { DAO, ITransactionAuditLog, IDatabaseProvider } from '../../interfaces';
+import { DAO, ITransactionAuditLog, IDatabaseProvider, IPagination } from '../../interfaces';
 import { ProviderFactory } from '../databases';
 import { TABLE_NAME_AUDIT_LOG, AuditLogTO } from '../dto';
 import { AuditLogTransaction } from '../transactions';
@@ -14,6 +14,39 @@ export class AuditLogDAO implements DAO<AuditLogTO> {
 
 	public async findAll(): Promise<AuditLogTO[]> {
 		return await this._provider.connection<AuditLogTO>(TABLE_NAME_AUDIT_LOG).select('*');
+	}
+
+	public async findByFilter(paginationFilter: IPagination<AuditLogTO>): Promise<AuditLogTO[]> {
+		const { filter, limit, page } = paginationFilter;
+		const query = this._provider.connection<AuditLogTO>(TABLE_NAME_AUDIT_LOG);
+		if (filter?.logLevel !== undefined && filter?.logLevel !== null) {
+			query.where('logLevel', filter.logLevel);
+		}
+
+		if (filter?.message !== undefined && filter?.message !== null) {
+			query.where('message', 'like', `%${filter.message}%`);
+		}
+
+		const result = await query
+			.select('*')
+			.limit(limit)
+			.offset((page - 1) * limit)
+		return result;
+	}
+
+	public async count(filter: Partial<AuditLogTO>): Promise<number> {
+		const query = this._provider.connection<AuditLogTO>(TABLE_NAME_AUDIT_LOG);
+		if (filter.logLevel !== undefined && filter.logLevel !== null) {
+			query.where('logLevel', filter.logLevel);
+		}
+
+		if (filter.message !== undefined && filter.message !== null) {
+			query.where('message', 'like', `%${filter.message}%`);
+		}
+
+		const result = await query.count({ total: 'id' });
+
+		return Number(result[0]?.total) || 0;
 	}
 
 	public async save(value: AuditLogTO): Promise<void> {
