@@ -6,3 +6,5 @@ export * from './timer.service';
 export * from './kb-mouse-activity.service';
 export * from './audit-queue.service';
 export * from './screenshot.service';
+export * from './sync-data.service';
+export * from './audit-log.service';

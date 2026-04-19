@@ -2,7 +2,9 @@ import {
 	DesktopSetupConfig,
 	IActivityWatchEventResult,
 	TimerActionTypeEnum,
-	TimerSyncStateEnum
+	TimerSyncStateEnum,
+	ISyncRequest,
+	ILogRequest
 } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
@@ -41,7 +43,7 @@ import {
 	TimerService,
 	TimerTO,
 	UserService,
-	Screenshot
+	Screenshot,
 } from './offline';
 import { pluginListeners } from './plugin-system';
 import { AkitaStorageHandler } from './storage/akita-storage.handler';
@@ -50,6 +52,7 @@ import { TranslateService } from './translation';
 import { ActivityWindow } from '@gauzy/desktop-activity';
 import { DesktopPermissionHandler } from './utilities/desktop-permission-handler';
 import { runTccutil, getAppId } from './utilities/util';
+import { AuditLogHandler, ServiceName, SyncStatus, LogLevel } from './audit';
 
 // Lazily initialized — construction is deferred until after app.ready to avoid
 // native-module loads (better-sqlite3, uiohook-napi) and Electron API calls
@@ -63,6 +66,8 @@ let _windowManager: WindowManager | null = null;
 let _appWindowManager: AppWindowManager | null = null;
 let _screenshotService: ScreenshotService | null = null;
 let _activeWindow: ActivityWindow | null = null;
+let _auditLogHandler: AuditLogHandler | null = null;
+
 
 function getTimerHandler(): TimerHandler {
 	if (!_timerHandler) _timerHandler = new TimerHandler();
@@ -100,6 +105,11 @@ function getScreenshotService(): ScreenshotService {
 function getActiveWindow(): ActivityWindow {
 	if (!_activeWindow) _activeWindow = ActivityWindow.getInstance();
 	return _activeWindow;
+}
+
+function getAuditLogHandler(): AuditLogHandler {
+	if (!_auditLogHandler) _auditLogHandler = AuditLogHandler.getInstance();
+	return _auditLogHandler;
 }
 
 export function setupAkitaStorageHandler() {
@@ -566,6 +576,27 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.handle('RELAUNCH_APP', () => {
 		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
 		app.exit(0);
+	});
+
+
+	ipcMain.handle('LOG_SYNC_TASK', async (_, arg: ISyncRequest) => {
+		return getAuditLogHandler().logSync(
+			arg.payload,
+			arg.key,
+			arg.status,
+			arg.response,
+			arg.errorMessage
+		);
+	});
+
+	// Channel 2: Just for the Diary/Log
+	ipcMain.handle('WRITE_AUDIT_LOG', async (_, arg: ILogRequest) => {
+		return getAuditLogHandler().logAudit(
+			arg.logLevel || 'info',
+			arg.serviceName || 'timer',
+			arg.message,
+			arg.syncLogId || null
+		);
 	});
 
 	pluginListeners();
@@ -1480,7 +1511,9 @@ export function removeAllHandlers() {
 		'RESET_ACCESSIBILITY_PERMISSION',
 		'OPEN_ACCESSIBILITY_SETTINGS',
 		'RELAUNCH_APP',
-		'GET_PLATFORM'
+		'GET_PLATFORM',
+		'WRITE_AUDIT_LOG',
+		'QUEUE_SYNC_TASK'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

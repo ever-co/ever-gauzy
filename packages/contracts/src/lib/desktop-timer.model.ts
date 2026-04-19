@@ -49,3 +49,26 @@ export interface IDesktopSecret {
 		refresh_token: string;
 	}
 }
+
+export type TLogLevel = 'info' | 'warn' | 'error';
+export type TServiceName = 'timer' | 'screenshot' | 'timeslot';
+export type TSyncStatus = 'pending' | 'success' | 'failure';
+
+// Define the specific shapes of your two requests
+export interface ISyncRequest {
+    payload: string; // REQUIRED
+    key: string;     // REQUIRED
+    status?: TSyncStatus;
+    response?: string;
+    errorMessage?: string;
+};
+
+export interface ILogRequest {
+    message: string; // REQUIRED
+    logLevel?: TLogLevel;
+    serviceName?: TServiceName;
+	syncLogId?: number;
+};
+
+// Combine them into a union
+export type AuditLogArgs = ISyncRequest | ILogRequest;

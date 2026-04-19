@@ -7,3 +7,4 @@ export * from './kb-mouse-activity-transaction';
 export * from './audit-queue-transaction';
 export * from './screenshot-transaction';
 export * from './audit-log-transaction';
+export * from './sync-data-log-transaction';

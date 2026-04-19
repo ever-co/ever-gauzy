@@ -7,6 +7,6 @@ import { SyncLogTO } from "../offline/dto";
 */
 export interface ISyncDataLogService<T> {
 	saveAndReturn(log: T): Promise<SyncLogTO>;
-	update(log: Partial<T>): Promise<void>;
+	update(id: number, log: Partial<T>): Promise<void>;
 	findById(id: number): Promise<SyncLogTO | null>;
 }
