@@ -1,0 +1,50 @@
+<nb-card>
+	<nb-card-header class="audit-trail-header">
+		<span class="title">Audit Trail</span>
+		<div class="header-actions">
+			<nb-select
+				[(selected)]="selectedStatus"
+				(selectedChange)="onStatusChange($event)"
+				size="small"
+				placeholder="Status"
+			>
+				<nb-option value="all">All</nb-option>
+				<nb-option value="waiting">Waiting</nb-option>
+				<nb-option value="running">Running</nb-option>
+				<nb-option value="succeeded">Succeeded</nb-option>
+				<nb-option value="failed">Failed</nb-option>
+				<nb-option value="cancelled">Cancelled</nb-option>
+			</nb-select>
+			<button
+				nbButton
+				ghost
+				size="small"
+				nbTooltip="Refresh"
+				(click)="loadEntries(selectedStatus)"
+				type="button"
+			>
+				<nb-icon icon="refresh-outline"></nb-icon>
+			</button>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body>
+		<div class="table-scroll-container">
+			@if (isLoading$ | async) {
+				<div class="spinner-overlay" [nbSpinner]="true" nbSpinnerSize="small" nbSpinnerStatus="primary"></div>
+			}
+			@if ((entries$ | async)?.length === 0 && !(isLoading$ | async)) {
+				<div class="empty-state">
+					<nb-icon icon="inbox-outline" status="basic"></nb-icon>
+					<p>No audit trail records found.</p>
+				</div>
+			}
+			<angular2-smart-table
+				[settings]="smartTableSettings"
+				[source]="smartTableSource"
+				[style.cursor]="'pointer'"
+				(userRowSelect)="onRowClick($event)"
+			></angular2-smart-table>
+		</div>
+	</nb-card-body>
+</nb-card>

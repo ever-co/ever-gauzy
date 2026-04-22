@@ -1,4 +1,5 @@
 export * from './lib/agent-dashboard/activity-sync/activity-sync.component';
+export * from './lib/audit-trail/logger.component';
 export * from './lib/agent-dashboard/agent-dashboard-routing.module';
 export * from './lib/agent-dashboard/agent-dashboard.component';
 export * from './lib/agent-dashboard/agent-dashboard.module';

@@ -1,0 +1,103 @@
+nb-card-header.audit-trail-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+
+	.title {
+		font-size: 1rem;
+		font-weight: 600;
+		color: var(--gauzy-text-color-1);
+	}
+
+	.header-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+}
+
+nb-card-body {
+	padding: 0;
+}
+
+.table-scroll-container {
+	position: relative;
+	max-height: calc(100vh - 10rem);
+	overflow: auto;
+}
+
+.spinner-overlay {
+	min-height: 4rem;
+}
+
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 3rem 1rem;
+	color: var(--gauzy-text-color-2);
+
+	nb-icon {
+		font-size: 2.5rem;
+		margin-bottom: 0.75rem;
+	}
+
+	p {
+		margin: 0;
+		font-size: 0.875rem;
+	}
+}
+
+:host {
+	::ng-deep {
+		angular2-smart-table {
+			table {
+				table-layout: fixed;
+				width: 100%;
+			}
+
+			.clickable-row {
+				cursor: pointer;
+				transition: background-color 0.2s ease;
+
+				&:hover {
+					background-color: var(--background-basic-color-2);
+				}
+			}
+
+			.ng2-smart-table {
+				td,
+				th {
+					&:last-child {
+						max-width: 300px;
+						word-wrap: break-word;
+						word-break: break-word;
+						white-space: normal;
+						overflow-wrap: break-word;
+					}
+				}
+			}
+		}
+	}
+}
+
+.waiting {
+	color: var(--color-warning-default, #f1c40f);
+}
+
+.running {
+	color: var(--color-info-default, #4f8cff);
+}
+
+.succeeded {
+	color: var(--color-success-default, #2ecc71);
+}
+
+.failed {
+	color: var(--color-danger-default, #e74c3c);
+}
+
+.cancelled {
+	color: var(--gauzy-text-color-2, #9aa4b2);
+}
