@@ -61,7 +61,7 @@
 		"tslib": "^2.6.2",
 		"typeorm": "^0.3.28",
 		"underscore": "^1.13.8",
-		"uuid": "^13.0.0"
+		"uuid": "^14.0.0"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
