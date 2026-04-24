@@ -9,4 +9,3 @@ export * from './kb-mouse-activity.dto';
 export * from './queue-audit.dto';
 export * from './screenshot.dto';
 export * from './audit-log.dto';
-export * from './sync-data.dto';

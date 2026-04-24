@@ -27,10 +27,14 @@ export class AuditLogDAO implements DAO<AuditLogTO> {
 			query.where('message', 'like', `%${filter.message}%`);
 		}
 
+		const offset = (page) * limit;
+		console.log('AuditLogDAO.findByFilter - filter:', filter, 'limit:', limit, 'page:', page, 'offset:', offset);
+
 		const result = await query
 			.select('*')
+			.orderBy('createdAt', 'desc')
 			.limit(limit)
-			.offset((page - 1) * limit)
+			.offset(offset);
 		return result;
 	}
 

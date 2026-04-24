@@ -50,9 +50,9 @@ export interface IDesktopSecret {
 	}
 }
 
-export type TLogLevel = 'info' | 'warn' | 'error';
-export type TServiceName = 'timer' | 'screenshot' | 'timeslot';
-export type TSyncStatus = 'pending' | 'success' | 'failure';
+export type TLogLevel = 'info' | 'warn' | 'error' | 'all';
+export type TServiceName = 'timer' | 'screenshot' | 'timeslot' | 'all';
+export type TSyncStatus = 'pending' | 'success' | 'failure' | 'all';
 
 // Define the specific shapes of your two requests
 export interface ISyncRequest {
@@ -67,8 +67,22 @@ export interface ILogRequest {
     message: string; // REQUIRED
     logLevel?: TLogLevel;
     serviceName?: TServiceName;
-	syncLogId?: number;
 };
+
+export interface ILogItems {
+	id: number;
+	logLevel: TLogLevel;
+	serviceName: TServiceName;
+	message: string;
+	createdAt: Date;
+}
+
+export interface ILogRequestPage {
+	limit: number;
+	serviceName: TServiceName;
+	page: number;
+	logLevel?: TLogLevel;
+}
 
 // Combine them into a union
 export type AuditLogArgs = ISyncRequest | ILogRequest;

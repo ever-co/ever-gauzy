@@ -49,5 +49,3 @@ export * from './i-screenshot';
 export * from './i-audit-log';
 export * from './i-audit-log-transaction';
 export * from './i-pagination';
-export * from './i-sync-data-log';
-export * from './i-sync-data-log-transaction';

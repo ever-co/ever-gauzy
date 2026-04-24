@@ -101,25 +101,12 @@ export class AuditLogService {
 		});
 	}
 
-	public syncLogFailure(payload: string, key: string, errorMessage: string, response?: string) {
-		return this.syncLog({
-			payload,
-			status: 'success',
-			errorMessage,
-			key,
-			response
+	public getAuditLogs(level: string, service: string, page: number, limit: number): Promise<any> {
+		return this.electronService.invoke('GET_AUDIT_LOGS', {
+			level,
+			service,
+			page,
+			limit
 		});
 	}
-
-	public syncLogPending(payload: string, key: string) {
-		return this.syncLog({
-			payload,
-			key,
-			status: 'pending',
-		});
-	}
-
-
-
-
 }

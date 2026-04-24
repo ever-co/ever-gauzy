@@ -13,6 +13,7 @@ import {
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import {
+    IDeleteScreenshot,
 	IOrganization,
 	IOrganizationTeam,
 	ITask,
@@ -22,7 +23,8 @@ import {
 	PermissionsEnum,
 	TaskStatusEnum,
 	TimerActionTypeEnum,
-	TimerSyncStateEnum
+	TimerSyncStateEnum,
+	IScreenshot
 } from '@gauzy/contracts';
 import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -240,7 +242,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private readonly timeTrackerFormService: TimeTrackerFormService,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly router: Router,
-		private readonly auditLogService: AuditLogService
+		private readonly _auditLogService: AuditLogService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -423,6 +425,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		try {
 			await this.getTimerStatus(this.argFromMain);
 			if (this.timerStatus.running && this.start) {
+				await this._auditLogService.timerAuditLogInfo(`Timer is currently running. Stopping timer before deleting time slot with ID: ${this.selectedTimeSlot.id}`);
 				await this.toggleStart(false);
 			}
 			const res = await this.timeTrackerService.deleteTimeSlot({
@@ -541,11 +544,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								state: TimerSyncStateEnum.SYNCING
 							}
 						});
+						await this._auditLogService.timerAuditLogInfo(`Sending to API timer with ID: ${lastTimer.id} in ${isRemote ? 'remote' : 'local'} mode`);
 						timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
 							: await this.preventDuplicateApiRequest({ ...lastTimer, ...params }, (payload) =>
 									this.timeTrackerService.toggleApiStart(payload)
 							  );
+						if (timelog.id) {
+							await this._auditLogService.timerAuditLogInfo(`Timer Started with timelog id ${timelog.id}`);
+						} else {
+							await this._auditLogService.timerAuditLogError(`Timer Starting failed with response ${JSON.stringify(timelog)}`)
+						}
 						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
 							actionType: TimerActionTypeEnum.START_TIMER,
 							data: {
@@ -562,6 +571,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								state: TimerSyncStateEnum.FAILED
 							}
 						});
+						await this._auditLogService.timerAuditLogError(`Starting timer error with ID: ${lastTimer.id}`);
 						this._loggerService.error(error);
 					}
 				}
@@ -591,10 +601,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 									state: TimerSyncStateEnum.SYNCING
 								}
 							});
+							await this._auditLogService.timerAuditLogInfo(`Sending stop timer to API with ID: ${lastTimer.id}`);
 							// Execute API request to stop timer and store the result in timelog
 							timelog = await this.preventDuplicateApiRequest(requestParams, (payload) =>
 								this.timeTrackerService.toggleApiStop(payload)
 							);
+							if (timelog.id) {
+								await this._auditLogService.timerAuditLogInfo(`Timer stopped with timelogId ${timelog.id} and duration ${timelog.duration} second(s)`);
+							} else {
+								await this._auditLogService.timerAuditLogError(`Timer stopping failed with response ${JSON.stringify(timelog)}`);
+							}
 							await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
 								actionType: TimerActionTypeEnum.STOP_TIMER,
 								data: {
@@ -607,6 +623,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					} catch (error) {
 						// Handle any error during the process
 						lastTimer.isStoppedOffline = true;
+						await this._auditLogService.timerAuditLogError(`Error stop timer to API with ID: ${lastTimer.id}`);
 						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
 							actionType: TimerActionTypeEnum.STOP_TIMER,
 							data: {
@@ -745,6 +762,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						taskId: remoteTimer.lastLog.taskId
 					});
 					if (!this.isProcessingEnabled) {
+						await this._auditLogService.timerAuditLogInfo(`Timer triggerd ${remoteTimer.running ? 'start' : 'stop'} from current server timer status`)
 						await this.toggleStart(remoteTimer.running, false);
 					}
 				}),
@@ -891,13 +909,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						backdropClass: 'backdrop-blur'
 					});
 					return this._dialog.onClose.pipe(
-						mergeMap((selectedOption) => {
+						mergeMap(async (selectedOption) => {
 							if (selectedOption) {
 								switch (option.type) {
 									case this.dialogType.deleteLog.name:
 										return from(this.deleteTimeSlot());
 									case this.dialogType.timeTrackingOption.name:
 										this._isOpenDialog = false;
+										await this._auditLogService.timerAuditLogInfo(`Timer ${this.start ? 'stop' : 'start'} from dialog confirmation`);
 										return from(this.toggleStart(true));
 									default:
 										return of(null);
@@ -905,6 +924,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							} else if (this.start && option.type === this.dialogType.timeTrackingOption.name) {
 								this._isOpenDialog = false;
 								if (this.start) {
+									this._auditLogService.timerAuditLogInfo(`Timer stop from dialog cancellation`);
 									return from(this.toggleStart(false));
 								}
 							}
@@ -992,6 +1012,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(async () => {
 				this._activityWatchViewService.aw$.next(!!arg.aw?.isAw);
 				await this.setTimerDetails();
+				await this._auditLogService.timerAuditLogInfo(`Timer start from tray`);
 				await this.toggleStart(true);
 			})
 		);
@@ -1022,6 +1043,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 				// Check if the start flag is set, and if so, toggle the start state to false
 				if (this.start) {
+					await this._auditLogService.timerAuditLogInfo(`Timer stop from tray`);
 					await this.toggleStart(false);
 				} else {
 					console.log('this.start is false, doing nothing.');
@@ -1041,10 +1063,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this._loggerService.info(`Take Screenshot::`, arg);
 					const screens = [];
 					const thumbSize = this.determineScreenshot(arg.screenSize);
+					await this._auditLogService.screenshotLogInfo(`Requesting screenshot image from electron with dimensions ${thumbSize.width}x${thumbSize.height}`);
 					const sources = await this.electronService.desktopCapturer.getSources({
 						types: ['screen'],
 						thumbnailSize: thumbSize
 					});
+					await this._auditLogService.screenshotLogInfo(`Got screenshot image from electron with dimensions ${thumbSize.width}x${thumbSize.height}: ${sources.length} sources found`);
 					sources.forEach((source) => {
 						this._loggerService.info(`screenshot_res:`, JSON.stringify(source));
 						screens.push({
@@ -1068,6 +1092,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						});
 					}
 				} catch (error) {
+					await this._auditLogService.screenshotLogError(`Error taking screenshot: ${error.message}`);
 					this._errorHandlerService.handleError(error);
 				}
 			})
@@ -1121,6 +1146,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('device_sleep', () =>
 			this._ngZone.run(async () => {
 				if (this.start) {
+					await this._auditLogService.timerAuditLogInfo(`Stop timer with conditions device sleep`);
 					await this.toggleStart(false);
 				}
 			})
@@ -1138,6 +1164,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('stop_from_inactivity_handler', () => {
 			this._ngZone.run(async () => {
 				if (this.start) {
+					await this._auditLogService.timerAuditLogInfo(`Stop timer with from active inactive conditions`);
 					await this.toggleStart(false);
 				}
 			});
@@ -1145,6 +1172,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('start_from_inactivity_handler', () => {
 			this._ngZone.run(async () => {
+				await this._auditLogService.timerAuditLogInfo(`Start timer with from active inactive conditions`);
 				await this.toggleStart(true);
 			});
 		});
@@ -1275,7 +1303,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this._store,
 					this._timeSlotQueueService,
 					this.timeTrackerService,
-					this._timeTrackerStatus
+					this._timeTrackerStatus,
+					this._auditLogService
 				);
 				console.log('⌗', args);
 				for (const arg of args) sequenceQueue.enqueue(arg);
@@ -1424,7 +1453,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							}
 						});
 					} else {
-						if (this.start && !arg.isWorking) await this.toggleStart(false);
+						if (this.start && !arg.isWorking) {
+							await this._auditLogService.timerAuditLogInfo(`Timer stop from idle time deletion`);
+							await this.toggleStart(false);
+						}
 					}
 
 					if (this._isOffline || isReadyForDeletion) {
@@ -1505,7 +1537,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this._store,
 					this._timeSlotQueueService,
 					this.timeTrackerService,
-					this._timeTrackerStatus
+					this._timeTrackerStatus,
+					this._auditLogService
 				);
 				console.log('⌗', args);
 				for (const arg of args) sequenceQueue.enqueue(arg);
@@ -1540,7 +1573,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						distinctUntilChange(),
 						tap((isPaused: boolean) => (this._remoteSleepLock = isPaused)),
 						filter((isPaused: boolean) => !!isPaused && this.start),
-						concatMap(() => this.toggleStart(false, false)),
+						concatMap(async () => {
+							await this._auditLogService.timerAuditLogInfo(`Timer stop with conditions remote sleep lock`);
+							return this.toggleStart(false, false);
+						}),
 						untilDestroyed(this)
 					)
 					.subscribe();
@@ -1571,7 +1607,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if val is false, we stop the timer
 	 */
 	async toggleStart(val: boolean, onClick = true, passed = false) {
-		await this.auditLogService.timerAuditLogInfo(`User attempted to ${val ? 'start' : 'stop'} the timer${onClick ? ' by clicking the button' : ''}${passed ? ' with pre-granted permissions' : ''}.`);
+		await this._auditLogService.timerAuditLogInfo(`User attempted to ${val ? 'start' : 'stop'} the timer${onClick ? ' by clicking the button' : ''}${passed ? ' with pre-granted permissions' : ''}.`);
 		try {
 			const platform = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
 			if (val && onClick && !passed && platform === 'darwin') {
@@ -1636,7 +1672,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 				if (!this.start) {
 					console.log('Starting timer');
-					this.auditLogService.timerAuditLogInfo('Timer validation passed. Starting timer...');
+					this._auditLogService.timerAuditLogInfo('Timer validation passed. Starting timer...');
 					await this.startTimer(onClick);
 				} else {
 					console.log('Timer is already running');
@@ -1690,7 +1726,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			} catch (error) {
 				console.log('Error in update_tray_start', error);
 			}
-			this.auditLogService.timerAuditLogInfo('Starting timer with the following details: ' + JSON.stringify({
+			this._auditLogService.timerAuditLogInfo('Starting timer with the following details: ' + JSON.stringify({
 				startMode: this._startMode
 			}));
 			const timer = await this.electronService.ipcRenderer.invoke('START_TIMER', {
@@ -1706,7 +1742,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				isRemoteTimer: this.isRemoteTimer,
 				organizationTeamId: this.teamSelectorService.selectedId
 			});
-			this.auditLogService.timerAuditLogInfo(`Timer started successfully with result, ${JSON.stringify(timer)}`);
+			this._auditLogService.timerAuditLogInfo(`Timer started successfully with result, ${JSON.stringify(timer)}`);
 
 			this.start$.next(true);
 
@@ -1727,17 +1763,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			if (this._startMode === TimerStartMode.MANUAL) {
 				console.log('Taking screen capture in startTimer');
-				this.auditLogService.timerAuditLogInfo('Taking initial screen capture in startTimer');
+				this._auditLogService.timerAuditLogInfo('Taking initial screen capture in startTimer');
 				const activities = await this.electronService.ipcRenderer.invoke('COLLECT_ACTIVITIES', {
 					quitApp: this.quitApp
 				});
-				this.auditLogService.timerAuditLogInfo('Collected activities for initial screen capture in startTimer');
+				this._auditLogService.timerAuditLogInfo('Collected activities for initial screen capture in startTimer');
 
 				asyncScheduler.schedule(async () => {
-					this.auditLogService.timeSlotLogInfo('Starting initial screen capture and sending activities in startTimer...');
+					this._auditLogService.timeSlotLogInfo('Starting initial screen capture and sending activities in startTimer...');
 					this._loggerService.info('Capturing Screen and Sending Activities Start...', activities);
 					await this.takeCaptureAndSendActivities(activities);
-					this.auditLogService.timeSlotLogInfo('Finished initial screen capture and sending activities in startTimer');
+					this._auditLogService.timeSlotLogInfo('Finished initial screen capture and sending activities in startTimer');
 					this._loggerService.info('Capturing Screen and Sending Activities Done ✔️');
 					this.isProcessingEnabled = false;
 				}, 1000);
@@ -2133,11 +2169,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					width: 320,
 					height: 240
 				};
-
+			await this._auditLogService.screenshotLogInfo(`Attempting to capture screenshot with thumbnail size ${thumbSize.width}x${thumbSize.height}...`);
 			const sources = await this.electronService.desktopCapturer.getSources({
 				types: ['screen'],
 				thumbnailSize: thumbSize
 			});
+			await this._auditLogService.screenshotLogInfo(`Captured ${sources.length} screenshot(s) with thumbnail size ${thumbSize.width}x${thumbSize.height}.`);
 
 			const screens = [];
 
@@ -2171,6 +2208,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			return screens;
 		} catch (error) {
+			await this._auditLogService.screenshotLogError(`Failed to capture screenshot. ${error.message}`);
 			this._errorHandlerService.handleError(error);
 			return [];
 		}
@@ -2239,7 +2277,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async uploadScreenshots(arg, timeSlotId: string, screenshots: any[]) {
 		this._loggerService.info('Upload screenshot to TimeSlot api');
-		this.auditLogService.screenshotLogInfo(`Uploading screenshots for captured activities ${screenshots.length} to time slot ID: ${timeSlotId}...`);
+		this._auditLogService.screenshotLogInfo(`Uploading ${screenshots.length} images screenshots for captured activities to time slot ID: ${timeSlotId}...`);
 		try {
 			await Promise.all(
 				screenshots.map(async (img) => {
@@ -2247,7 +2285,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				})
 			);
 		} catch (error) {
-			this.auditLogService.screenshotLogError(`Failed to upload screenshots for captured activities. ${error.message}`);
+			this._auditLogService.screenshotLogError(`Failed to upload screenshots for captured activities. ${error.message}`);
 			console.log('ERROR', error);
 		}
 
@@ -2315,20 +2353,20 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._loggerService.info('Build Param Activity');
 			const paramActivity = this.buildParamActivity(arg);
 			this._loggerService.info('Create Time Slot');
-			this.auditLogService.timeSlotLogInfo('Creating time slot for captured activities...');
+			this._auditLogService.timeSlotLogInfo('Creating time slot for captured activities...');
 			const { timeLogs, id: timeSlotId } = (await this.timeTrackerService.pushToTimeSlot(
 				paramActivity
 			)) as ITimeSlotTimeLogs;
 			if (!timeSlotId) {
-				this.auditLogService.timeSlotLogInfo('Failed to create time slot for captured activities.');
+				this._auditLogService.timeSlotLogError(`Failed to create time slot for captured activities, no time slot ID returned from server.`);
 			} else {
-				this.auditLogService.timeSlotLogError('Time slot created successfully for captured activities.');
+				this._auditLogService.timeSlotLogInfo('Time slot created successfully for captured activities.');
 			}
 
 			if (!timeLogs?.length) {
 				// Stop process if there is no time logs associate to activity result.
 				this._loggerService.error('[@SendActivities]', 'No time logs');
-				this.auditLogService.timeSlotLogError('No time logs found for captured activities. Aborting time slot creation process.');
+				this._auditLogService.timeSlotLogError('No time logs found for captured activities. Aborting time slot creation process.');
 				return null;
 			}
 			this._loggerService.info('Post Create activities');
@@ -2354,7 +2392,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			return { timeSlotId, error: null };
 		} catch (error) {
-			this.auditLogService.timeSlotLogError('Failed to create time slot for captured activities.');
+			this._auditLogService.timeSlotLogError(`Failed to create time slot for captured activities. ${error.message}`);
 			return { timeSlotId: null, error };
 		}
 	}
@@ -2363,13 +2401,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		// Check validations
 		if (this.isRemoteTimer) return;
 		// Create time slot and return time slot ID
-		this.auditLogService.timeSlotLogInfo('Creating time slot for captured activities...');
 		const { timeSlotId, error } = await this.createTimeSlot(activities);
-		this.auditLogService.timeSlotLogInfo(`Time slot creation ${timeSlotId ? 'succeeded' : 'failed'} for captured activities.`);
 		// Take Screenshots
-		this.auditLogService.screenshotLogInfo('Taking screen capture for captured activities...');
+		this._auditLogService.screenshotLogInfo('Taking screen capture for captured activities...');
 		const screenshots = await this.takeScreenCapture(activities);
-		this.auditLogService.screenshotLogInfo(`Screen capture ${screenshots?.length > 0 ? 'succeeded' : 'failed'} for captured activities.`);
+		this._auditLogService.screenshotLogInfo(`Screen capture ${screenshots?.length > 0 ? 'succeeded' : 'failed'} for captured activities.`);
 		// Check if error
 		if (error) {
 			// handle create time slot error
@@ -2377,7 +2413,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 		// Upload screenshots if available
 		if (timeSlotId && screenshots?.length > 0) {
-			this.auditLogService.screenshotLogInfo('Uploading screenshots for captured activities...');
+			this._auditLogService.screenshotLogInfo('Uploading screenshots for captured activities...');
 			await this.uploadScreenshots(activities, timeSlotId, screenshots);
 		}
 	}
@@ -2401,8 +2437,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					fileName: fileName
 				}
 			);
+			if (resImg?.id && resImg?.thumbUrl) {
+				await this._auditLogService.screenshotLogInfo(`Screenshot uploaded successfully for time slot ID: ${timeSlotId}. Screenshot ID: ${resImg.id}`);
+			} else {
+				await this._auditLogService.screenshotLogError(`Failed to upload screenshot for time slot ID: ${timeSlotId}. Invalid response from server. ${JSON.stringify(resImg)}`);
+			}
 			return resImg;
 		} catch (error) {
+			await this._auditLogService.screenshotLogError(`Failed to upload screenshot for time slot ID: ${timeSlotId}. ${JSON.stringify(error.message)}`);
 			this._loggerService.error(error);
 			this.electronService.ipcRenderer.send('failed_upload_screenshot', {
 				timeSlotId,
@@ -2512,6 +2554,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this._isLockSyncProcess = true;
 
 		try {
+			await this._auditLogService.timerAuditLogInfo(`Initiating timer restart with callback: ${!!callback}...`);
 			return await lastValueFrom(
 				from(this.toggleStart(false)).pipe(
 					concatMap(async () => {
@@ -2528,6 +2571,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						// isProcessingEnabled and loading so toggleStart(true) sees a
 						// clean state with no interleaving window.
 						this._resetProcessingLock();
+						await this._auditLogService.timerAuditLogInfo('Restarting timer after callback execution...');
 						await this.toggleStart(true); // Restart process
 						return callbackResult; // Return the callback result
 					}),

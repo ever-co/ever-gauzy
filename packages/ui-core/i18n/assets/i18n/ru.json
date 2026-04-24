@@ -4662,7 +4662,8 @@
 			"DAILY_RECAP": "Ежедневный обзор",
 			"WEEKLY_RECAP": "Еженедельный Обзор",
 			"MONTHLY_RECAP": "Ежемесячный Обзор",
-			"INSTALL_PLUGIN": "Установить плагин"
+			"INSTALL_PLUGIN": "Установить плагин",
+			"OPEN_LOG_HISTORY": "Logs"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Часовой учет времени",

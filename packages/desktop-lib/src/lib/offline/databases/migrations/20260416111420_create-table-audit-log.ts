@@ -7,8 +7,8 @@ export async function up(knex: Knex): Promise<void> {
 		table.string('logLevel').nullable();
 		table.string('message').nullable();
 		table.timestamp('createdAt').defaultTo(knex.fn.now());
-		table.integer('syncLogId').nullable();
-		table.index(['syncLogId']);
+		table.string('serviceName').nullable();
+		table.index(['logLevel']);
 	});
 }
 

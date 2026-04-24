@@ -3,8 +3,11 @@ import {
 	IActivityWatchEventResult,
 	TimerActionTypeEnum,
 	TimerSyncStateEnum,
-	ISyncRequest,
-	ILogRequest
+	ILogRequest,
+    ILogRequestPage,
+	TSyncStatus,
+	TLogLevel,
+	TServiceName
 } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
@@ -52,7 +55,7 @@ import { TranslateService } from './translation';
 import { ActivityWindow } from '@gauzy/desktop-activity';
 import { DesktopPermissionHandler } from './utilities/desktop-permission-handler';
 import { runTccutil, getAppId } from './utilities/util';
-import { AuditLogHandler, ServiceName, SyncStatus, LogLevel } from './audit';
+import { AuditLogHandler } from './audit';
 
 // Lazily initialized — construction is deferred until after app.ready to avoid
 // native-module loads (better-sqlite3, uiohook-napi) and Electron API calls
@@ -578,26 +581,23 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		app.exit(0);
 	});
 
-
-	ipcMain.handle('LOG_SYNC_TASK', async (_, arg: ISyncRequest) => {
-		return getAuditLogHandler().logSync(
-			arg.payload,
-			arg.key,
-			arg.status,
-			arg.response,
-			arg.errorMessage
-		);
-	});
-
 	// Channel 2: Just for the Diary/Log
 	ipcMain.handle('WRITE_AUDIT_LOG', async (_, arg: ILogRequest) => {
 		return getAuditLogHandler().logAudit(
 			arg.logLevel || 'info',
 			arg.serviceName || 'timer',
 			arg.message,
-			arg.syncLogId || null
 		);
 	});
+
+	ipcMain.handle('GET_AUDIT_LOGS', async (_, arg: ILogRequestPage) => {
+		return getAuditLogHandler().getAuditLogs(
+			arg.logLevel,
+			arg.serviceName,
+			arg.page,
+			arg.limit
+		);
+	})
 
 	pluginListeners();
 }
@@ -686,6 +686,7 @@ export function ipcTimer(
 		for (const window of windows) {
 			getWindowManager().webContents(window)?.send?.('offline-handler', true);
 		}
+		await getAuditLogHandler().logAudit('warn', 'timer', 'Connectivity lost, Offline mode acivated');
 	});
 
 	getOfflineMode().on('connection-restored', async () => {
@@ -699,6 +700,7 @@ export function ipcTimer(
 				getWindowManager().webContents(window)?.send?.('offline-handler', false);
 			}
 			await sequentialSyncQueue(timeTrackerWindow);
+			await getAuditLogHandler().logAudit('info', 'timer', 'Connectivity restored, Offline mode deactivated');
 		} catch (error) {
 			log.error('Error on connection restored', error);
 			throw new UIError('500', error, 'IPCRESTORE');

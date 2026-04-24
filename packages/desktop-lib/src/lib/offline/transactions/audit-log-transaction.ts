@@ -38,10 +38,8 @@ export class AuditLogTransaction implements ITransactionAuditLog {
 						.insert(value)
 						.into(TABLE_NAME_AUDIT_LOG)
 						.returning('*');
-					await trx.commit();
 					return data;
 				} catch (error) {
-					await trx.rollback();
 					throw new AppError('AUDIT_LOG_TRX', error);
 				}
 			}

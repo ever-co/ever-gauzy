@@ -4802,7 +4802,8 @@
 			"DAILY_RECAP": "Daily Recap",
 			"WEEKLY_RECAP": "Weekly Recap",
 			"MONTHLY_RECAP": "Monthly Recap",
-			"INSTALL_PLUGIN": "Install Plugin"
+			"INSTALL_PLUGIN": "Install Plugin",
+			"OPEN_LOG_HISTORY": "Logs"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Hourly Time Tracking",

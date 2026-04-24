@@ -4692,7 +4692,8 @@
 			"DAILY_RECAP": "Дневен преглед",
 			"WEEKLY_RECAP": "Седмичен обзор",
 			"MONTHLY_RECAP": "Месечен обзор",
-			"INSTALL_PLUGIN": "Инсталиране на плъгин"
+			"INSTALL_PLUGIN": "Инсталиране на плъгин",
+			"OPEN_LOG_HISTORY": "Logs"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Проследяване на времето по часове",

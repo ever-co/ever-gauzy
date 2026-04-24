@@ -5,13 +5,13 @@ export class AuditLog implements AuditLogTO, Serializable<AuditLogTO> {
 	private _logLevel: string;
 	private _message: string;
 	private _createdAt: Date;
-	private _syncLogId: number;
+	private _serviceName: string;
 
 	constructor(auditLog: AuditLogTO) {
 		this._logLevel = auditLog.logLevel;
 		this._message = auditLog.message;
 		this._createdAt = auditLog.createdAt;
-		this._syncLogId = auditLog.syncLogId;
+		this._serviceName = auditLog.serviceName;
 		this._id = auditLog.id;
 	}
 
@@ -47,12 +47,20 @@ export class AuditLog implements AuditLogTO, Serializable<AuditLogTO> {
 		this._createdAt = value;
 	}
 
+	public get serviceName(): string {
+		return this._serviceName;
+	}
+
+	public set serviceName(value: string) {
+		this._serviceName = value;
+	}
+
 	toObject(): AuditLogTO {
 		return {
 			id: this.id,
 			logLevel: this.logLevel,
 			message: this.message,
-			syncLogId: this._syncLogId,
+			serviceName: this.serviceName,
 			createdAt: this.createdAt,
 		}
 	}

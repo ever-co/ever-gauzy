@@ -4644,7 +4644,8 @@
 			"DAILY_RECAP": "Riepilogo Giornaliero",
 			"WEEKLY_RECAP": "Riepilogo Settimanale",
 			"MONTHLY_RECAP": "Riepilogo Mensile",
-			"INSTALL_PLUGIN": "Installa plugin"
+			"INSTALL_PLUGIN": "Installa plugin",
+			"OPEN_LOG_HISTORY": "Logs"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Tracciamento del tempo orario",

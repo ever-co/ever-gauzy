@@ -4643,7 +4643,8 @@
 			"DAILY_RECAP": "Podsumowanie Dziennie",
 			"WEEKLY_RECAP": "Cotygodniowe Podsumowanie",
 			"MONTHLY_RECAP": "Miesięczne Podsumowanie",
-			"INSTALL_PLUGIN": "Zainstaluj wtyczkę"
+			"INSTALL_PLUGIN": "Zainstaluj wtyczkę",
+			"OPEN_LOG_HISTORY": "Logs"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Śledzenie czasu według godzin",

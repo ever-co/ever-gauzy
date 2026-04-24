@@ -4644,7 +4644,8 @@
 			"DAILY_RECAP": "Resumo Diário",
 			"WEEKLY_RECAP": "Recapitulação Semanal",
 			"MONTHLY_RECAP": "Recapitulação Mensal",
-			"INSTALL_PLUGIN": "Instalar plugin"
+			"INSTALL_PLUGIN": "Instalar plugin",
+			"OPEN_LOG_HISTORY": "Logs"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Rastreamento de Tempo Horário",

@@ -1,17 +1,20 @@
-import { AuditLogService, AuditLogTO, SyncLogTO, AuditLog, SyncDataLogService } from "../offline";
-import { SyncDataLog } from "../offline/models/sync-data.model";
+import { AuditLogService, AuditLogTO, AuditLog } from '../offline';
+import {
+	TLogLevel,
+	TServiceName,
+} from '@gauzy/contracts';
+import { IPaginationResult } from '../interfaces';
+import { AppWindowManager } from '../app-window-manager';
+import { sendToChildWindow } from '@gauzy/desktop-window';
 
-export type LogLevel = 'info' | 'warn' | 'error';
-export type ServiceName = 'timer' | 'screenshot' | 'timeslot';
-export type SyncStatus = 'pending' | 'success' | 'failure';
 export class AuditLogHandler {
 	private static instance: AuditLogHandler;
 	private _auditLogService: AuditLogService;
-	private _syncLogService: SyncDataLogService;
+	private appWindowManager: AppWindowManager;
 
 	private constructor() {
 		this._auditLogService = new AuditLogService();
-		this._syncLogService = new SyncDataLogService();
+		this.appWindowManager = AppWindowManager.getInstance();
 	}
 
 	public static getInstance(): AuditLogHandler {
@@ -21,36 +24,34 @@ export class AuditLogHandler {
 		return AuditLogHandler.instance;
 	}
 
-	async logAudit(level: LogLevel, service: ServiceName, message: string, syncLogId?: number): Promise<void> {
+	async logAudit(level: TLogLevel, service: TServiceName, message: string): Promise<void> {
 		const auditEntry: AuditLogTO = {
 			createdAt: new Date(),
 			logLevel: level,
-			syncLogId: syncLogId || null, // Optional link to a sync item if it exists
+			serviceName: service,
 			message
 		}
 
-		await this._auditLogService.save(new AuditLog(auditEntry));
+		const newLogEntry = await this._auditLogService.saveAndReturn(new AuditLog(auditEntry));
+		sendToChildWindow('AUDIT_LOG_ENTRY', newLogEntry);
 	}
 
-	async logSync(
-		payload: string,
-		key: string,
-		status: SyncStatus = 'pending', // Defaults to pending
-		response?: string,
-		errorMessage?: string
-	): Promise<SyncLogTO | null> {
-
-		const syncLogEntry: SyncLogTO = {
-			payload,
-			key,
-			status,
-			response: response || null,
-			errorMessage: errorMessage || null,
-			createdAt: new Date()
-		}
-
-		return await this._syncLogService.saveAndReturn(new SyncDataLog(syncLogEntry));
+	async timerAuditInfo(message: string): Promise<void> {
+		await this.logAudit('info', 'timer', message);
 	}
 
+	async timerAuditError(message: string): Promise<void> {
+		await this.logAudit('error', 'timer', message);
+	}
 
+	async getAuditLogs(level: TLogLevel, service: TServiceName, page: number, limit: number): Promise<IPaginationResult<AuditLogTO>> {
+		return this._auditLogService.findAuditLogs({
+			limit,
+			page,
+			...(level !== 'all' ? { logLevel: level } : {}),
+			filter: {
+				...(service !== 'all' ? { serviceName: service } : {})
+			}
+		});
+	}
 }

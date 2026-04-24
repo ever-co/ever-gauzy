@@ -3,7 +3,7 @@ export interface AuditLogTO {
 	logLevel?: string;
 	message?: string;
 	createdAt?: Date;
-	syncLogId?: number;
+	serviceName?: string;
 }
 
 export const TABLE_NAME_AUDIT_LOG: string = 'desktop_audit_log';
