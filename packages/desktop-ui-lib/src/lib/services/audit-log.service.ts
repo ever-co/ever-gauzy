@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ElectronService } from '../electron/services';
 import {
-	ISyncRequest,
 	ILogRequest
 } from '@gauzy/contracts';
 

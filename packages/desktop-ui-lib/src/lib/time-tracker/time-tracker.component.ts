@@ -13,7 +13,6 @@ import {
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import {
-    IDeleteScreenshot,
 	IOrganization,
 	IOrganizationTeam,
 	ITask,
@@ -24,7 +23,6 @@ import {
 	TaskStatusEnum,
 	TimerActionTypeEnum,
 	TimerSyncStateEnum,
-	IScreenshot
 } from '@gauzy/contracts';
 import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
 import {

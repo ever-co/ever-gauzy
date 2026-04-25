@@ -54,14 +54,6 @@ export type TLogLevel = 'info' | 'warn' | 'error' | 'all';
 export type TServiceName = 'timer' | 'screenshot' | 'timeslot' | 'all';
 export type TSyncStatus = 'pending' | 'success' | 'failure' | 'all';
 
-// Define the specific shapes of your two requests
-export interface ISyncRequest {
-    payload: string; // REQUIRED
-    key: string;     // REQUIRED
-    status?: TSyncStatus;
-    response?: string;
-    errorMessage?: string;
-};
 
 export interface ILogRequest {
     message: string; // REQUIRED
@@ -85,4 +77,4 @@ export interface ILogRequestPage {
 }
 
 // Combine them into a union
-export type AuditLogArgs = ISyncRequest | ILogRequest;
+export type AuditLogArgs = ILogRequest;
