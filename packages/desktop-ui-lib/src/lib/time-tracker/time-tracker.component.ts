@@ -2444,7 +2444,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 			return resImg;
 		} catch (error) {
-			await this._auditLogService.screenshotLogError(`Failed to upload screenshot for time slot ID: ${timeSlotId}. ${JSON.stringify(error.message)}`);
+			await this._auditLogService.screenshotLogError(`Failed to upload screenshot for time slot ID: ${timeSlotId}. ${typeof error?.message === 'string' ? error.message : JSON.stringify(error?.message ?? error)}`);
 			this._loggerService.error(error);
 			this.electronService.ipcRenderer.send('failed_upload_screenshot', {
 				timeSlotId,

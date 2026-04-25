@@ -27,27 +27,25 @@
 			<nb-card>
 				<nb-card-body>
 					<!-- Status Row — macOS only (permission API not available on other platforms) -->
-					@if (isMac()) {
-						<div class="row d-flex align-items-center mb-3">
-							<div class="col-6">
-								<span class="subtitle-tile">
-									{{ 'TIMER_TRACKER.PERMISSIONS.STATUS' | translate }}
-								</span>
-							</div>
-							<div class="col-6 d-flex justify-content-end">
-								<ng-container
-									[ngTemplateOutlet]="statusBadge"
-									[ngTemplateOutletContext]="{ status: status$ | async }"
-								>
-								</ng-container>
-							</div>
+					<div class="row d-flex align-items-center mb-3">
+						<div class="col-6">
+							<span class="subtitle-tile">
+								{{ 'TIMER_TRACKER.PERMISSIONS.STATUS' | translate }}
+							</span>
 						</div>
-					}
+						<div class="col-6 d-flex justify-content-end">
+							<ng-container
+								[ngTemplateOutlet]="statusBadge"
+								[ngTemplateOutletContext]="{ status: status$ | async }"
+							>
+							</ng-container>
+						</div>
+					</div>
 
 					<!-- Action Buttons -->
 					<div class="row">
 						<div class="action-buttons">
-							@if (isMac() || isWindows()) {
+							@if (isMac()) {
 								<button nbButton status="primary" size="small" (click)="openSystemSettings()">
 									<nb-icon icon="settings-2-outline"></nb-icon>
 									{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_SYSTEM_SETTINGS' | translate }}
@@ -162,7 +160,7 @@
 					<!-- Action Buttons -->
 					<div class="row">
 						<div class="action-buttons">
-							@if (isMac() || isWindows()) {
+							@if (isMac()) {
 								<button nbButton status="primary" size="small" (click)="openAccessibilitySettings()">
 									<nb-icon icon="settings-2-outline"></nb-icon>
 									{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_SYSTEM_SETTINGS' | translate }}
