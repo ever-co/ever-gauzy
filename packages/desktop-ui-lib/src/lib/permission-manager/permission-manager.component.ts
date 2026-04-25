@@ -1,8 +1,5 @@
 import { Component, input, OnInit, OnDestroy, Optional, ChangeDetectionStrategy, signal } from '@angular/core';
-import {
-	AsyncPipe,
-	NgTemplateOutlet
-} from '@angular/common';
+import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -12,9 +9,7 @@ import {
 	NbDialogRef
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import {
-	untilDestroyed, UntilDestroy
-} from '@ngneat/until-destroy';
+import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { PermissionManagerService } from './permission-manager.service';
 import { take, filter } from 'rxjs';
 
@@ -68,7 +63,7 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly permissionService: PermissionManagerService,
 		@Optional() private readonly dialogRef: NbDialogRef<PermissionManagerComponent>
-	) { }
+	) {}
 
 	ngOnInit() {
 		// Always check on open
@@ -89,16 +84,21 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 
 	async platformSet() {
 		const platform = await this.permissionService.getPlatform();
+		const hardwareAccelerationDisabled = await this.permissionService.getHardwareAccelerationState();
 		this.isMac.set(platform === 'darwin');
 		this.isWindows.set(platform === 'win32');
+		this.hardwareAccelerationDisabled.set(hardwareAccelerationDisabled);
 	}
 
 	startPolling() {
-		this.permissionService.startPolling().pipe(
-			filter(granted => granted && this.isDialog()),
-			take(1),
-			untilDestroyed(this)
-		).subscribe(() => this.dialogRef?.close({ granted: true }));
+		this.permissionService
+			.startPolling()
+			.pipe(
+				filter((granted) => granted && this.isDialog()),
+				take(1),
+				untilDestroyed(this)
+			)
+			.subscribe(() => this.dialogRef?.close({ granted: true }));
 	}
 
 	// ── Screen Recording actions ──────────────────────────────────────────────
@@ -113,7 +113,7 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 	async testGetActiveWindow() {
 		this.testInProgress = true;
 		const result = await this.permissionService.testGetWindow();
-		this.activeWindow = result.success ? result.window ?? null : null;
+		this.activeWindow = result.success ? (result.window ?? null) : null;
 		this.testInProgress = false;
 	}
 
@@ -153,8 +153,12 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 	}
 
 	// ── Dialog-only actions ───────────────────────────────────────────────────
-	startAnyway() { this.dialogRef?.close({ startAnyway: true }); }
-	cancel() { this.dialogRef?.close({ cancelled: true }); }
+	startAnyway() {
+		this.dialogRef?.close({ startAnyway: true });
+	}
+	cancel() {
+		this.dialogRef?.close({ cancelled: true });
+	}
 
 	ngOnDestroy() {
 		this.permissionService.stopPolling();

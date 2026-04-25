@@ -4694,7 +4694,7 @@
 			"HARDWARE_ACCELERATION_STATUS": "Hardware Acceleration is currently",
 			"ENABLED": "Enabled",
 			"DISABLED": "Disabled",
-			"PERMISSIONS.HARDWARE_ACCELERATION_DESC": "Hardware acceleration can improve performance but may cause issues on some systems. If you experience problems with screen capture, try toggling this setting.",
+			"HARDWARE_ACCELERATION_DESC": "Hardware acceleration can improve performance but may cause issues on some systems. If you experience problems with screen capture, try toggling this setting.",
 			"HARDWARE_ACCELERATION": "Hardware Acceleration"
 		}
 	},
