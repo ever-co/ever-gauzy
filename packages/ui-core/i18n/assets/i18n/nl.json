@@ -4688,7 +4688,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "Toegankelijkheidsinstellingen",
 			"RESET_ACCESSIBILITY_PERMISSION": "Toegankelijkheid opnieuw instellen",
 			"ACCESSIBILITY_DENIED_HINT": "Toegankelijkheid is geweigerd. Klik op 'Toegankelijkheid opnieuw instellen' om de machtiging opnieuw in te stellen, of open Systeeminstellingen.",
-			"ACTIVE_WINDOW": "Actief vensterweergave"
+			"ACTIVE_WINDOW": "Actief vensterweergave",
+			"HARDWARE_ACCELERATION_HINT": "If you are experiencing issues with screen capture, try disabling hardware acceleration in the app settings and relaunching the app.",
+			"ENABLE_HARDWARE_ACCELERATION": "Enable Hardware Acceleration",
+			"DISABLE_HARDWARE_ACCELERATION": "Disable Hardware Acceleration",
+			"HARDWARE_ACCELERATION_STATUS": "Hardware Acceleration is currently",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"PERMISSIONS.HARDWARE_ACCELERATION_DESC": "Hardware acceleration can improve performance but may cause issues on some systems. If you experience problems with screen capture, try toggling this setting.",
+			"HARDWARE_ACCELERATION": "Hardware Acceleration"
 		}
 	},
 	"SERVER": "Server",

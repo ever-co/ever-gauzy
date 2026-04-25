@@ -71,6 +71,7 @@ export interface IConfig {
 		};
 	};
 	serverConfigConnected?: boolean;
+	hardwareAccelerationDisabled?: boolean;
 }
 
 export interface IAuth {

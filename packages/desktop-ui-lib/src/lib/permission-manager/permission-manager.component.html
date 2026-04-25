@@ -45,15 +45,18 @@
 					<!-- Action Buttons -->
 					<div class="row">
 						<div class="action-buttons">
-							<button
-								nbButton
-								status="primary"
-								size="small"
-								(click)="openSystemSettings()"
-							>
-								<nb-icon icon="settings-2-outline"></nb-icon>
-								{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_SYSTEM_SETTINGS' | translate }}
-							</button>
+							@if (isMac() || isWindows()) {
+								<button
+									nbButton
+									status="primary"
+									size="small"
+									(click)="openSystemSettings()"
+								>
+									<nb-icon icon="settings-2-outline"></nb-icon>
+									{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_SYSTEM_SETTINGS' | translate }}
+								</button>
+							}
+
 							<button
 								nbButton
 								status="info"
@@ -68,25 +71,28 @@
 								></nb-icon>
 								{{ 'TIMER_TRACKER.PERMISSIONS.TEST_SCREENSHOT' | translate }}
 							</button>
-							<button
-								nbButton
-								status="warning"
-								size="small"
-								outline
-								(click)="resetAndRelaunch()"
-								[disabled]="timerStarted() || resetInProgress || countdown !== null"
-							>
-								<nb-icon
-									[icon]="resetInProgress ? 'loader-outline' : 'refresh-outline'"
-									[class.icon-spin]="resetInProgress"
-								></nb-icon>
-								@if (countdown !== null) {
-									{{ 'TIMER_TRACKER.PERMISSIONS.RESTARTING' | translate }}
-									{{ countdown }}...
-								} @else {
-									{{ 'TIMER_TRACKER.PERMISSIONS.RESET_PERMISSION' | translate }}
-								}
-							</button>
+							@if (isMac()) {
+								<button
+									nbButton
+									status="warning"
+									size="small"
+									outline
+									(click)="resetAndRelaunch()"
+									[disabled]="timerStarted() || resetInProgress || countdown !== null"
+								>
+									<nb-icon
+										[icon]="resetInProgress ? 'loader-outline' : 'refresh-outline'"
+										[class.icon-spin]="resetInProgress"
+									></nb-icon>
+									@if (countdown !== null) {
+										{{ 'TIMER_TRACKER.PERMISSIONS.RESTARTING' | translate }}
+										{{ countdown }}...
+									} @else {
+										{{ 'TIMER_TRACKER.PERMISSIONS.RESET_PERMISSION' | translate }}
+									}
+								</button>
+							}
+
 						</div>
 					</div>
 
@@ -158,15 +164,18 @@
 					<!-- Action Buttons -->
 					<div class="row">
 						<div class="action-buttons">
-							<button
-								nbButton
-								status="primary"
-								size="small"
-								(click)="openAccessibilitySettings()"
-							>
-								<nb-icon icon="settings-2-outline"></nb-icon>
-								{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_SYSTEM_SETTINGS' | translate }}
-							</button>
+							@if (isMac() || isWindows()) {
+								<button
+									nbButton
+									status="primary"
+									size="small"
+									(click)="openAccessibilitySettings()"
+								>
+									<nb-icon icon="settings-2-outline"></nb-icon>
+									{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_SYSTEM_SETTINGS' | translate }}
+								</button>
+							}
+
 							<button
 								nbButton
 								status="primary"
@@ -178,26 +187,28 @@
 								<nb-icon icon="settings-2-outline"></nb-icon>
 								{{ 'TIMER_TRACKER.PERMISSIONS.TEST_GET_ACTIVE_WINDOW' | translate }}
 							</button>
+							@if (isMac()) {
+								<button
+									nbButton
+									status="warning"
+									size="small"
+									outline
+									(click)="resetAccessibilityAndRelaunch()"
+									[disabled]="timerStarted() || accessibilityResetInProgress || accessibilityCountdown !== null"
+								>
+									<nb-icon
+										[icon]="accessibilityResetInProgress ? 'loader-outline' : 'refresh-outline'"
+										[class.icon-spin]="accessibilityResetInProgress"
+									></nb-icon>
+									@if (accessibilityCountdown !== null) {
+										{{ 'TIMER_TRACKER.PERMISSIONS.RESTARTING' | translate }}
+										{{ accessibilityCountdown }}...
+									} @else {
+										{{ 'TIMER_TRACKER.PERMISSIONS.RESET_ACCESSIBILITY_PERMISSION' | translate }}
+									}
+								</button>
+							}
 
-							<button
-								nbButton
-								status="warning"
-								size="small"
-								outline
-								(click)="resetAccessibilityAndRelaunch()"
-								[disabled]="timerStarted() || accessibilityResetInProgress || accessibilityCountdown !== null"
-							>
-								<nb-icon
-									[icon]="accessibilityResetInProgress ? 'loader-outline' : 'refresh-outline'"
-									[class.icon-spin]="accessibilityResetInProgress"
-								></nb-icon>
-								@if (accessibilityCountdown !== null) {
-									{{ 'TIMER_TRACKER.PERMISSIONS.RESTARTING' | translate }}
-									{{ accessibilityCountdown }}...
-								} @else {
-									{{ 'TIMER_TRACKER.PERMISSIONS.RESET_ACCESSIBILITY_PERMISSION' | translate }}
-								}
-							</button>
 						</div>
 					</div>
 					@if (activeWindow) {

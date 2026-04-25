@@ -4673,7 +4673,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "إعدادات إمكانية الوصول",
 			"RESET_ACCESSIBILITY_PERMISSION": "إعادة تعيين إمكانية الوصول",
 			"ACCESSIBILITY_DENIED_HINT": "تم رفض إمكانية الوصول. انقر على 'إعادة تعيين إمكانية الوصول' لإعادة تعيين الإذن، أو افتح إعدادات النظام.",
-			"ACTIVE_WINDOW": "معاينة النافذة النشطة"
+			"ACTIVE_WINDOW": "معاينة النافذة النشطة",
+			"HARDWARE_ACCELERATION_HINT": "If you are experiencing issues with screen capture, try disabling hardware acceleration in the app settings and relaunching the app.",
+			"ENABLE_HARDWARE_ACCELERATION": "Enable Hardware Acceleration",
+			"DISABLE_HARDWARE_ACCELERATION": "Disable Hardware Acceleration",
+			"HARDWARE_ACCELERATION_STATUS": "Hardware Acceleration is currently",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"PERMISSIONS.HARDWARE_ACCELERATION_DESC": "Hardware acceleration can improve performance but may cause issues on some systems. If you experience problems with screen capture, try toggling this setting.",
+			"HARDWARE_ACCELERATION": "Hardware Acceleration"
 		}
 	},
 	"SERVER": "خادم",

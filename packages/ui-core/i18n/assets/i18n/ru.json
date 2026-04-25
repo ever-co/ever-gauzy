@@ -4706,7 +4706,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "Настройки специальных возможностей",
 			"RESET_ACCESSIBILITY_PERMISSION": "Сбросить специальные возможности",
 			"ACCESSIBILITY_DENIED_HINT": "Специальные возможности запрещены. Нажмите 'Сбросить специальные возможности', чтобы сбросить разрешение, или откройте Системные настройки.",
-			"ACTIVE_WINDOW": "Предпросмотр активного окна"
+			"ACTIVE_WINDOW": "Предпросмотр активного окна",
+			"HARDWARE_ACCELERATION_HINT": "If you are experiencing issues with screen capture, try disabling hardware acceleration in the app settings and relaunching the app.",
+			"ENABLE_HARDWARE_ACCELERATION": "Enable Hardware Acceleration",
+			"DISABLE_HARDWARE_ACCELERATION": "Disable Hardware Acceleration",
+			"HARDWARE_ACCELERATION_STATUS": "Hardware Acceleration is currently",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"PERMISSIONS.HARDWARE_ACCELERATION_DESC": "Hardware acceleration can improve performance but may cause issues on some systems. If you experience problems with screen capture, try toggling this setting.",
+			"HARDWARE_ACCELERATION": "Hardware Acceleration"
 		}
 	},
 	"SERVER": "Сервер",

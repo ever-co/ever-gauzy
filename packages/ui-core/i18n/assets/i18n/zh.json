@@ -4688,7 +4688,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "辅助功能设置",
 			"RESET_ACCESSIBILITY_PERMISSION": "重置辅助功能",
 			"ACCESSIBILITY_DENIED_HINT": "辅助功能已被拒绝。点击'重置辅助功能'以重置权限，或打开系统设置手动授权。",
-			"ACTIVE_WINDOW": "活动窗口预览"
+			"ACTIVE_WINDOW": "活动窗口预览",
+			"HARDWARE_ACCELERATION_HINT": "If you are experiencing issues with screen capture, try disabling hardware acceleration in the app settings and relaunching the app.",
+			"ENABLE_HARDWARE_ACCELERATION": "Enable Hardware Acceleration",
+			"DISABLE_HARDWARE_ACCELERATION": "Disable Hardware Acceleration",
+			"HARDWARE_ACCELERATION_STATUS": "Hardware Acceleration is currently",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"PERMISSIONS.HARDWARE_ACCELERATION_DESC": "Hardware acceleration can improve performance but may cause issues on some systems. If you experience problems with screen capture, try toggling this setting.",
+			"HARDWARE_ACCELERATION": "Hardware Acceleration"
 		}
 	},
 	"SERVER": "服务器",

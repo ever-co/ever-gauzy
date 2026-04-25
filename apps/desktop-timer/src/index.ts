@@ -1,10 +1,17 @@
 // Adapted from https://github.com/maximegris/angular-electron/blob/master/main.ts
 import { environment } from './environments/environment';
+import { IConfig, logger as log, store } from '@gauzy/desktop-core';
+
+if (process.platform === 'win32') {
+	const configs: IConfig = store.get('configs');
+	if (configs?.hardwareAccelerationDisabled) {
+		app.disableHardwareAcceleration();
+	}
+}
 // Assign environment variables
 Object.assign(process.env, environment);
 // Import logging for electron and override default console logging
 import * as remoteMain from '@electron/remote/main';
-import { IConfig, logger as log, store } from '@gauzy/desktop-core';
 import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
@@ -107,6 +114,8 @@ let serverDesktop = null;
 let popupWin: BrowserWindow | null = null;
 let splashScreen: SplashScreen = null;
 let alwaysOn: AlwaysOn = null;
+
+
 
 setupTitlebar();
 

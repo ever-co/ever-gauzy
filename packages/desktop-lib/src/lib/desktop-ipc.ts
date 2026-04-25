@@ -4,10 +4,7 @@ import {
 	TimerActionTypeEnum,
 	TimerSyncStateEnum,
 	ILogRequest,
-    ILogRequestPage,
-	TSyncStatus,
-	TLogLevel,
-	TServiceName
+    ILogRequestPage
 } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
@@ -549,9 +546,19 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.handle('OPEN_PRIVACY_SETTINGS', () => {
-		shell.openExternal(
-			'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture'
-		);
+		switch (process.platform) {
+			case 'darwin':
+				shell.openExternal(
+					'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture'
+				);
+				break;
+			case 'win32':
+				// Windows Privacy → Screen capture / Camera settings
+				shell.openExternal('ms-settings:privacy-screencapture');
+				break;
+			default:
+				return;
+		}
 	});
 
 	ipcMain.handle('RESET_ACCESSIBILITY_PERMISSION', async () => {
@@ -571,9 +578,19 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.handle('OPEN_ACCESSIBILITY_SETTINGS', () => {
-		shell.openExternal(
-			'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'
-		);
+		switch (process.platform) {
+			case 'darwin':
+				shell.openExternal(
+					'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'
+				);
+				break;
+			case 'win32':
+				// Windows Ease of Access / Accessibility settings
+				shell.openExternal('ms-settings:easeofaccess');
+				break;
+			default:
+				return;
+		}
 	});
 
 	ipcMain.handle('RELAUNCH_APP', () => {
@@ -600,11 +617,14 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.handle('GET_HARDWARE_ACCELERATION_STATE', async () => {
-		return false;
+		const configs = LocalStore.getStore('configs');
+		return configs?.hardwareAccelerationDisabled;
 	});
 
 	ipcMain.handle('SET_HARDWARE_ACCELERATION', async (_, disabled: boolean) => {
-		return disabled;
+		LocalStore.updateConfigSetting({
+			hardwareAccelerationDisabled: disabled
+		});
 	});
 
 	pluginListeners();

@@ -4690,7 +4690,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "Configuración de accesibilidad",
 			"RESET_ACCESSIBILITY_PERMISSION": "Restablecer accesibilidad",
 			"ACCESSIBILITY_DENIED_HINT": "La accesibilidad fue denegada. Haga clic en 'Restablecer accesibilidad' para restablecer el permiso, o abra Configuración del sistema.",
-			"ACTIVE_WINDOW": "Vista previa de ventana activa"
+			"ACTIVE_WINDOW": "Vista previa de ventana activa",
+			"HARDWARE_ACCELERATION_HINT": "If you are experiencing issues with screen capture, try disabling hardware acceleration in the app settings and relaunching the app.",
+			"ENABLE_HARDWARE_ACCELERATION": "Enable Hardware Acceleration",
+			"DISABLE_HARDWARE_ACCELERATION": "Disable Hardware Acceleration",
+			"HARDWARE_ACCELERATION_STATUS": "Hardware Acceleration is currently",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"PERMISSIONS.HARDWARE_ACCELERATION_DESC": "Hardware acceleration can improve performance but may cause issues on some systems. If you experience problems with screen capture, try toggling this setting.",
+			"HARDWARE_ACCELERATION": "Hardware Acceleration"
 		}
 	},
 	"SERVER": "Servidor",
