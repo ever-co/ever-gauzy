@@ -1,4 +1,5 @@
 // Adapted from https://github.com/maximegris/angular-electron/blob/master/main.ts
+import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
 import { environment } from './environments/environment';
 import { IConfig, logger as log, store } from '@gauzy/desktop-core';
 
@@ -14,7 +15,6 @@ Object.assign(process.env, environment);
 import * as remoteMain from '@electron/remote/main';
 import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
-import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
 import * as path from 'node:path';
 import * as Url from 'node:url';
 import { initSentry } from './sentry';
@@ -114,8 +114,6 @@ let serverDesktop = null;
 let popupWin: BrowserWindow | null = null;
 let splashScreen: SplashScreen = null;
 let alwaysOn: AlwaysOn = null;
-
-
 
 setupTitlebar();
 
@@ -438,7 +436,7 @@ async function setupUpdater() {
 
 function setAppVersion(configs: Partial<IConfig>) {
 	if (!configs) {
-		configs = {}
+		configs = {};
 	}
 	configs.version = app.getVersion();
 	LocalStore.updateConfigSetting({
@@ -694,13 +692,7 @@ app.on('activate', () => {
 		if (configs?.gauzyWindow) {
 			gauzyWindow.show();
 		}
-	} else if (
-		!onWaitingServer &&
-		configs &&
-		configs.isSetup &&
-		configs.serverConfigConnected &&
-		timeTrackerWindow
-	) {
+	} else if (!onWaitingServer && configs && configs.isSetup && configs.serverConfigConnected && timeTrackerWindow) {
 		// On macOS, it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
 		gauzyWindow = timeTrackerWindow;
