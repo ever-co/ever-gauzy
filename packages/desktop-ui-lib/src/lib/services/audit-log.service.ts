@@ -10,11 +10,6 @@ import {
 })
 export class AuditLogService {
 	private readonly electronService = inject(ElectronService);
-
-	private async syncLog(request: ISyncRequest): Promise<void> {
-		return this.electronService.invoke('LOG_SYNC_TASK', request);
-	}
-
 	private async auditLog(request: ILogRequest): Promise<void> {
 		return this.electronService.invoke('WRITE_AUDIT_LOG', request);
 	}
@@ -88,16 +83,6 @@ export class AuditLogService {
 			message,
 			logLevel: 'error',
 			serviceName: 'screenshot'
-		});
-	}
-
-	public syncLogSucess(payload: string, key: string, response?: string) {
-		return this.syncLog({
-			payload,
-			status: 'success',
-			errorMessage: '',
-			key,
-			response
 		});
 	}
 

@@ -552,10 +552,6 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 					'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture'
 				);
 				break;
-			case 'win32':
-				// Windows Privacy → Screen capture / Camera settings
-				shell.openExternal('ms-settings:privacy-screencapture');
-				break;
 			default:
 				return;
 		}
@@ -583,10 +579,6 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 				shell.openExternal(
 					'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'
 				);
-				break;
-			case 'win32':
-				// Windows Ease of Access / Accessibility settings
-				shell.openExternal('ms-settings:easeofaccess');
 				break;
 			default:
 				return;
@@ -714,7 +706,7 @@ export function ipcTimer(
 		for (const window of windows) {
 			getWindowManager().webContents(window)?.send?.('offline-handler', true);
 		}
-		await getAuditLogHandler().logAudit('warn', 'timer', 'Connectivity lost, Offline mode acivated');
+		await getAuditLogHandler().logAudit('warn', 'timer', 'Connectivity lost, Offline mode activated');
 	});
 
 	getOfflineMode().on('connection-restored', async () => {

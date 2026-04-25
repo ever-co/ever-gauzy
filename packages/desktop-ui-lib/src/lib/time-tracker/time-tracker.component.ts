@@ -762,7 +762,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						taskId: remoteTimer.lastLog.taskId
 					});
 					if (!this.isProcessingEnabled) {
-						await this._auditLogService.timerAuditLogInfo(`Timer triggerd ${remoteTimer.running ? 'start' : 'stop'} from current server timer status`)
+						await this._auditLogService.timerAuditLogInfo(`Timer triggered ${remoteTimer.running ? 'start' : 'stop'} from current server timer status`)
 						await this.toggleStart(remoteTimer.running, false);
 					}
 				}),

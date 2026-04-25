@@ -210,7 +210,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	private openChildWindow(url: string): void {
 		// Build the full file:// URL. window.location.href may be a directory URL
-		// (ending with '/') so we normalise it to point at index.html explicitly.
+		// (ending with '/') so we normalize it to point at index.html explicitly.
 		// setWindowOpenHandler in desktop-window-timer.ts intercepts this call and
 		// injects the correct webPreferences + window dimensions.
 		let base = window.location.href.split('#')[0];
