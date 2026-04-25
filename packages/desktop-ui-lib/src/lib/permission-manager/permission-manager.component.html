@@ -26,23 +26,25 @@
 		<div class="col-10">
 			<nb-card>
 				<nb-card-body>
-					<!-- Status Row -->
-					<div class="row d-flex align-items-center mb-3">
-						<div class="col-6">
-							<span class="subtitle-tile">
-								{{ 'TIMER_TRACKER.PERMISSIONS.STATUS' | translate }}
-							</span>
+					<!-- Status Row — macOS only (permission API not available on other platforms) -->
+					@if (isMac()) {
+						<div class="row d-flex align-items-center mb-3">
+							<div class="col-6">
+								<span class="subtitle-tile">
+									{{ 'TIMER_TRACKER.PERMISSIONS.STATUS' | translate }}
+								</span>
+							</div>
+							<div class="col-6 d-flex justify-content-end">
+								<ng-container [ngTemplateOutlet]="statusBadge"
+									[ngTemplateOutletContext]="{ status: status$ | async }">
+								</ng-container>
+							</div>
 						</div>
-						<div class="col-6 d-flex justify-content-end">
-							<ng-container [ngTemplateOutlet]="statusBadge"
-								[ngTemplateOutletContext]="{ status: status$ | async }">
-							</ng-container>
-						</div>
-					</div>
+					}
 
 					<!-- Action Buttons -->
 					<div class="row">
-						<div class="col-12 d-flex flex-wrap gap-2">
+						<div class="action-buttons">
 							<button
 								nbButton
 								status="primary"
@@ -58,7 +60,7 @@
 								size="small"
 								outline
 								(click)="testScreenshot()"
-								[disabled]="testInProgress || (status$ | async) !== 'granted'"
+								[disabled]="testInProgress || (isMac() && (status$ | async) !== 'granted')"
 							>
 								<nb-icon
 									[icon]="testInProgress ? 'loader-outline' : 'camera-outline'"
@@ -155,7 +157,7 @@
 
 					<!-- Action Buttons -->
 					<div class="row">
-						<div class="col-12 d-flex flex-wrap gap-2">
+						<div class="action-buttons">
 							<button
 								nbButton
 								status="primary"
@@ -169,6 +171,7 @@
 								nbButton
 								status="primary"
 								size="small"
+								outline
 								(click)="testGetActiveWindow()"
 								[disabled]="testInProgress || (accessibilityStatus$ | async) !== 'granted'"
 							>
@@ -277,6 +280,75 @@
 							></nb-icon>
 							{{ 'TIMER_TRACKER.PERMISSIONS.RELAUNCH' | translate }}
 						</button>
+					</div>
+				</nb-card-body>
+			</nb-card>
+		</div>
+	</div>
+}
+
+<!-- ─── Windows: Hardware Acceleration ──────────────────────────────── -->
+@if (isWindows()) {
+	<div class="row mt-3">
+		<div class="col-12">
+			<h6>{{ 'TIMER_TRACKER.PERMISSIONS.HARDWARE_ACCELERATION' | translate }}</h6>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-12">
+			<p>{{ 'TIMER_TRACKER.PERMISSIONS.HARDWARE_ACCELERATION_DESC' | translate }}</p>
+		</div>
+	</div>
+	<div class="row notification">
+		<div class="col-10">
+			<nb-card>
+				<nb-card-body>
+					<div class="row d-flex align-items-center mb-3">
+						<div class="col-6">
+							<span class="subtitle-tile">
+								{{ 'TIMER_TRACKER.PERMISSIONS.HARDWARE_ACCELERATION_STATUS' | translate }}
+							</span>
+						</div>
+						<div class="col-6 d-flex justify-content-end">
+							@if (hardwareAccelerationDisabled()) {
+								<button nbButton status="warning" size="tiny" outline>
+									<nb-icon icon="close-circle-outline"></nb-icon>
+									{{ 'TIMER_TRACKER.PERMISSIONS.DISABLED' | translate }}
+								</button>
+							} @else {
+								<button nbButton status="success" size="tiny" outline>
+									<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+									{{ 'TIMER_TRACKER.PERMISSIONS.ENABLED' | translate }}
+								</button>
+							}
+						</div>
+					</div>
+					<div class="row">
+						<div class="action-buttons">
+							<button
+								nbButton
+								[status]="hardwareAccelerationDisabled() ? 'success' : 'warning'"
+								size="small"
+								outline
+								(click)="toggleHardwareAcceleration()"
+								[disabled]="timerStarted()"
+							>
+								<nb-icon [icon]="hardwareAccelerationDisabled() ? 'flash-outline' : 'flash-off-outline'"></nb-icon>
+								@if (hardwareAccelerationDisabled()) {
+									{{ 'TIMER_TRACKER.PERMISSIONS.ENABLE_HARDWARE_ACCELERATION' | translate }}
+								} @else {
+									{{ 'TIMER_TRACKER.PERMISSIONS.DISABLE_HARDWARE_ACCELERATION' | translate }}
+								}
+							</button>
+						</div>
+					</div>
+				</nb-card-body>
+			</nb-card>
+			<nb-card status="info" class="mt-2">
+				<nb-card-body>
+					<div class="d-flex align-items-start gap-2">
+						<nb-icon icon="info-outline" status="info"></nb-icon>
+						<p class="mb-0">{{ 'TIMER_TRACKER.PERMISSIONS.HARDWARE_ACCELERATION_HINT' | translate }}</p>
 					</div>
 				</nb-card-body>
 			</nb-card>

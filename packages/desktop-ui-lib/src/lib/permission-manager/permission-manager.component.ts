@@ -1,4 +1,4 @@
-import { Component, input, OnInit, OnDestroy, Optional, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, OnInit, OnDestroy, Optional, ChangeDetectionStrategy, signal } from '@angular/core';
 import {
 	AsyncPipe,
 	NgTemplateOutlet
@@ -60,6 +60,11 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 	public accessibilityResetInProgress = false;
 	public accessibilityCountdown: number | null = null;
 
+	// ── Platform flags ───────────────────────────────────────────────────────
+	readonly isMac = signal(false);
+	readonly isWindows = signal(false);
+	readonly hardwareAccelerationDisabled = signal(false);
+
 	constructor(
 		private readonly permissionService: PermissionManagerService,
 		@Optional() private readonly dialogRef: NbDialogRef<PermissionManagerComponent>
@@ -69,9 +74,23 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 		// Always check on open
 		this.permissionService.checkStatus();
 
+		// Detect platform so the template can show/hide Mac-only controls
+		this.platformSet();
+		// Sync hardware-acceleration toggle state from the main process
+		if (this.isWindows()) {
+			this.permissionService.getHardwareAccelerationState().then((disabled) => {
+				this.hardwareAccelerationDisabled.set(disabled);
+			});
+		}
+
 		// Start polling — if screen recording granted while open, auto-close dialog
 		this.startPolling();
+	}
 
+	async platformSet() {
+		const platform = await this.permissionService.getPlatform();
+		this.isMac.set(platform === 'darwin');
+		this.isWindows.set(platform === 'win32');
 	}
 
 	startPolling() {
@@ -125,6 +144,12 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 			return;
 		}
 		this.permissionService.relaunchApp();
+	}
+
+	async toggleHardwareAcceleration() {
+		const newState = !this.hardwareAccelerationDisabled();
+		await this.permissionService.setHardwareAcceleration(newState);
+		this.hardwareAccelerationDisabled.set(newState);
 	}
 
 	// ── Dialog-only actions ───────────────────────────────────────────────────

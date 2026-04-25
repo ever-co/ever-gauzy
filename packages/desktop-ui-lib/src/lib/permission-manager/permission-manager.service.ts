@@ -98,4 +98,22 @@ export class PermissionManagerService {
 	relaunchApp(): void {
 		this.electronService.ipcRenderer.invoke('RELAUNCH_APP');
 	}
+
+	/** Returns the current OS platform (e.g. 'darwin', 'win32', 'linux'). */
+	getPlatform(): Promise<'darwin' | 'win32' | 'linux'> {
+		return this.electronService.ipcRenderer.invoke('GET_PLATFORM');
+	}
+
+	/** Returns whether hardware acceleration is currently disabled (Windows). */
+	async getHardwareAccelerationState(): Promise<boolean> {
+		return this.electronService.ipcRenderer.invoke('GET_HARDWARE_ACCELERATION_STATE');
+	}
+
+	/**
+	 * Enable or disable hardware acceleration and schedule a relaunch.
+	 * Calls app.disableHardwareAcceleration() before next launch via the main process.
+	 */
+	async setHardwareAcceleration(disabled: boolean): Promise<void> {
+		return this.electronService.ipcRenderer.invoke('SET_HARDWARE_ACCELERATION', disabled);
+	}
 }
