@@ -597,7 +597,15 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			arg.page,
 			arg.limit
 		);
-	})
+	});
+
+	ipcMain.handle('GET_HARDWARE_ACCELERATION_STATE', async () => {
+		return false;
+	});
+
+	ipcMain.handle('SET_HARDWARE_ACCELERATION', async (_, disabled: boolean) => {
+		return disabled;
+	});
 
 	pluginListeners();
 }
@@ -1515,7 +1523,9 @@ export function removeAllHandlers() {
 		'RELAUNCH_APP',
 		'GET_PLATFORM',
 		'WRITE_AUDIT_LOG',
-		'QUEUE_SYNC_TASK'
+		'GET_AUDIT_LOGS',
+		'GET_HARDWARE_ACCELERATION_STATE',
+		'SET_HARDWARE_ACCELERATION_STATE'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
