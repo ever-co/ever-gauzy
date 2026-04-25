@@ -491,14 +491,17 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			return { success: false, reason: 'unauthorized' };
 		}
 		try {
+			await getAuditLogHandler().logAudit('info', 'screenshot', 'Begin testing screenshot capture');
 			const sources = await desktopCapturer.getSources({
 				types: ['screen'],
 				thumbnailSize: { width: 320, height: 200 }
 			});
+			await getAuditLogHandler().logAudit('info', 'screenshot', `Screenshot sources found: ${sources.length}`);
 			return sources.length > 0
 				? { success: true, thumbnail: sources[0].thumbnail.toDataURL() }
 				: { success: false, reason: 'no_sources' };
 		} catch (err) {
+			await getAuditLogHandler().logAudit('error', 'screenshot', `Error testing screenshot capture: ${err.message}`);
 			return { success: false, reason: err.message };
 		}
 	});
