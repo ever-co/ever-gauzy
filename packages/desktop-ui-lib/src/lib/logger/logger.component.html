@@ -1,0 +1,79 @@
+<nb-layout>
+	<nb-layout-column class="top-bottom-space">
+		<nb-card>
+			<nb-card-header class="log-header">
+				<span class="title">Application Logs</span>
+				<div class="header-actions">
+					<nb-select [selected]="logLevelFilter()" (selectedChange)="onLevelChange($event)" size="small"
+						placeholder="Log Level">
+						<nb-option value="all">All Levels</nb-option>
+						<nb-option value="info">Info</nb-option>
+						<nb-option value="warn">Warn</nb-option>
+						<nb-option value="error">Error</nb-option>
+					</nb-select>
+
+					<nb-select [selected]="serviceNameFilter()" (selectedChange)="onServiceChange($event)" size="small"
+						placeholder="Service">
+						<nb-option value="all">All Services</nb-option>
+						@for (svc of serviceNames(); track svc) {
+						<nb-option [value]="svc">{{ svc }}</nb-option>
+						}
+					</nb-select>
+
+					<button nbButton ghost size="small" nbTooltip="Refresh" (click)="loadEntries(true)" type="button">
+						<nb-icon icon="refresh-outline"></nb-icon>
+					</button>
+
+					<nb-checkbox [checked]="isFollowing()" (checkedChange)="toggleFollow()" status="success"
+						[nbTooltip]="isFollowing() ? 'Following — auto-scrolling to newest log' : 'Follow — enable to auto-scroll'">
+						Follow
+					</nb-checkbox>
+				</div>
+			</nb-card-header>
+
+			<nb-card-body>
+				<div class="log-viewport" #scrollContainer (scroll)="onScroll($event)"
+					role="log" aria-live="polite" aria-label="Application Logs"
+					[attr.aria-busy]="isLoading() || isLoadingMore()">
+
+					@if (isLoadingMore()) {
+					<div class="load-more-bar">
+						<div [nbSpinner]="true" nbSpinnerSize="tiny" nbSpinnerStatus="primary"
+							class="load-more-spinner"></div>
+						<span>Loading older entries…</span>
+					</div>
+					}
+
+					@if (!hasMore() && filteredLogs().length > 0) {
+					<div class="log-boundary">— Beginning of log history —</div>
+					}
+
+					@if (isLoading()) {
+					<div class="spinner-row" [nbSpinner]="true" nbSpinnerSize="small" nbSpinnerStatus="primary"></div>
+					}
+
+					@if (filteredLogs().length === 0 && !isLoading()) {
+					<div class="empty-state">
+						<nb-icon icon="file-text-outline" status="basic"></nb-icon>
+						<p>No log entries found.</p>
+					</div>
+					}
+
+					@for (log of filteredLogs(); track log.id) {
+					<div class="log-entry" [class]="'log-entry--' + log.logLevel">
+						<div class="log-entry__meta">
+							<span class="level-badge" [class]="'level-' + log.logLevel">{{ log.logLevel | uppercase
+								}}</span>
+							<span class="meta-service">{{ log.serviceName }}</span>
+							<span class="meta-sep">·</span>
+							<span class="meta-time">{{ log.createdAt | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
+						</div>
+						<p class="log-entry__message">{{ log.message }}</p>
+					</div>
+					}
+				</div>
+			</nb-card-body>
+
+		</nb-card>
+	</nb-layout-column>
+</nb-layout>

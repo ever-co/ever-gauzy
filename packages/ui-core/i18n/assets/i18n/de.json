@@ -4640,7 +4640,8 @@
 			"DAILY_RECAP": "Tägliche Zusammenfassung",
 			"WEEKLY_RECAP": "Wöchentliche Zusammenfassung",
 			"MONTHLY_RECAP": "Monatliche Zusammenfassung",
-			"INSTALL_PLUGIN": "Plugin installieren"
+			"INSTALL_PLUGIN": "Plugin installieren",
+			"OPEN_LOG_HISTORY": "Protokollverlauf"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Stündliche Zeiterfassung",
@@ -4683,7 +4684,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "Bedienungshilfen-Einstellungen",
 			"RESET_ACCESSIBILITY_PERMISSION": "Bedienungshilfen zurücksetzen",
 			"ACCESSIBILITY_DENIED_HINT": "Bedienungshilfen wurden verweigert. Klicken Sie auf 'Bedienungshilfen zurücksetzen', um die Berechtigung zurückzusetzen, oder öffnen Sie die Systemeinstellungen.",
-			"ACTIVE_WINDOW": "Aktives Fenster – Vorschau"
+			"ACTIVE_WINDOW": "Aktives Fenster – Vorschau",
+			"HARDWARE_ACCELERATION_HINT": "Wenn Sie Probleme mit der Bildschirmaufnahme haben, deaktivieren Sie die Hardwarebeschleunigung in den App-Einstellungen und starten Sie die App neu.",
+			"ENABLE_HARDWARE_ACCELERATION": "Hardwarebeschleunigung aktivieren",
+			"DISABLE_HARDWARE_ACCELERATION": "Hardwarebeschleunigung deaktivieren",
+			"HARDWARE_ACCELERATION_STATUS": "Hardwarebeschleunigung ist derzeit",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"HARDWARE_ACCELERATION_DESC": "Hardwarebeschleunigung kann die Leistung verbessern, jedoch auf manchen Systemen zu Problemen führen. Bei Problemen mit der Bildschirmaufnahme versuchen Sie, diese Einstellung umzuschalten.",
+			"HARDWARE_ACCELERATION": "Hardwarebeschleunigung"
 		}
 	},
 	"SERVER": "Server",

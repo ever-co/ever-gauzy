@@ -4644,7 +4644,8 @@
 			"DAILY_RECAP": "每日总结",
 			"WEEKLY_RECAP": "每周回顾",
 			"MONTHLY_RECAP": "每月回顾",
-			"INSTALL_PLUGIN": "安装插件"
+			"INSTALL_PLUGIN": "安装插件",
+			"OPEN_LOG_HISTORY": "日志历史"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "按小时跟踪时间",
@@ -4687,7 +4688,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "辅助功能设置",
 			"RESET_ACCESSIBILITY_PERMISSION": "重置辅助功能",
 			"ACCESSIBILITY_DENIED_HINT": "辅助功能已被拒绝。点击'重置辅助功能'以重置权限，或打开系统设置手动授权。",
-			"ACTIVE_WINDOW": "活动窗口预览"
+			"ACTIVE_WINDOW": "活动窗口预览",
+			"HARDWARE_ACCELERATION_HINT": "如果您遇到屏幕捕获问题，请尝试在应用设置中禁用硬件加速，然后重新启动应用。",
+			"ENABLE_HARDWARE_ACCELERATION": "启用硬件加速",
+			"DISABLE_HARDWARE_ACCELERATION": "禁用硬件加速",
+			"HARDWARE_ACCELERATION_STATUS": "硬件加速当前",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"HARDWARE_ACCELERATION_DESC": "硬件加速可以提高性能，但在某些系统上可能会引起问题。如果您遇到屏幕捕获问题，请尝试切换此设置。",
+			"HARDWARE_ACCELERATION": "硬件加速"
 		}
 	},
 	"SERVER": "服务器",

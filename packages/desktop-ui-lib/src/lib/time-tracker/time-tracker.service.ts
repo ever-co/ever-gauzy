@@ -768,7 +768,7 @@ export class TimeTrackerService {
 		);
 	}
 
-	uploadImages(values, img: any) {
+	uploadImages(values, img: any): Promise<any> {
 		const TIMEOUT = 60 * 1000; // Max 60 sec to upload images
 		const formData = new FormData();
 		const contentType = 'image/png';

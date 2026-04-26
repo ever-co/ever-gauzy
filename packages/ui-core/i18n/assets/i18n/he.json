@@ -4656,7 +4656,8 @@
 			"DAILY_RECAP": "סיכום יומי",
 			"WEEKLY_RECAP": "סיכום שבועי",
 			"MONTHLY_RECAP": "סיכום חודשי",
-			"INSTALL_PLUGIN": "התקנת תוסף"
+			"INSTALL_PLUGIN": "התקנת תוסף",
+			"OPEN_LOG_HISTORY": "יומן פעילות"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "מעקב זמן לפי שעות",
@@ -4699,7 +4700,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "הגדרות נגישות",
 			"RESET_ACCESSIBILITY_PERMISSION": "אפס נגישות",
 			"ACCESSIBILITY_DENIED_HINT": "הנגישות נדחתה. לחץ על 'אפס נגישות' כדי לאפס את ההרשאה, או פתח את הגדרות המערכת.",
-			"ACTIVE_WINDOW": "תצוגה מקדימה של חלון פעיל"
+			"ACTIVE_WINDOW": "תצוגה מקדימה של חלון פעיל",
+			"HARDWARE_ACCELERATION_HINT": "אם אתה חווה בעיות בצילום מסך, נסה להשבית את האצת החומרה בהגדרות האפליקציה והפעל אותה מחדש.",
+			"ENABLE_HARDWARE_ACCELERATION": "הפעל האצת חומרה",
+			"DISABLE_HARDWARE_ACCELERATION": "השבת האצת חומרה",
+			"HARDWARE_ACCELERATION_STATUS": "האצת החומרה כרגע",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"HARDWARE_ACCELERATION_DESC": "האצת חומרה יכולה לשפר את הביצועים, אך עלולה לגרום לבעיות במערכות מסוימות. אם אתה חווה בעיות בצילום מסך, נסה לשנות הגדרה זו.",
+			"HARDWARE_ACCELERATION": "האצת חומרה"
 		}
 	},
 	"SERVER": "שרת",

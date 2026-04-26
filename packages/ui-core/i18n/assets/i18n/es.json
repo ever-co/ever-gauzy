@@ -4646,7 +4646,8 @@
 			"DAILY_RECAP": "Resumen Diario",
 			"WEEKLY_RECAP": "Resumen Semanal",
 			"MONTHLY_RECAP": "Resumen Mensual",
-			"INSTALL_PLUGIN": "Instalar complemento"
+			"INSTALL_PLUGIN": "Instalar complemento",
+			"OPEN_LOG_HISTORY": "Historial de registros"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Seguimiento del tiempo por hora",
@@ -4689,7 +4690,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "Configuración de accesibilidad",
 			"RESET_ACCESSIBILITY_PERMISSION": "Restablecer accesibilidad",
 			"ACCESSIBILITY_DENIED_HINT": "La accesibilidad fue denegada. Haga clic en 'Restablecer accesibilidad' para restablecer el permiso, o abra Configuración del sistema.",
-			"ACTIVE_WINDOW": "Vista previa de ventana activa"
+			"ACTIVE_WINDOW": "Vista previa de ventana activa",
+			"HARDWARE_ACCELERATION_HINT": "Si experimenta problemas con la captura de pantalla, intente deshabilitar la aceleración de hardware en la configuración de la aplicación y reiníciela.",
+			"ENABLE_HARDWARE_ACCELERATION": "Habilitar aceleración de hardware",
+			"DISABLE_HARDWARE_ACCELERATION": "Deshabilitar aceleración de hardware",
+			"HARDWARE_ACCELERATION_STATUS": "La aceleración de hardware está actualmente",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"HARDWARE_ACCELERATION_DESC": "La aceleración de hardware puede mejorar el rendimiento, pero puede causar problemas en algunos sistemas. Si experimenta problemas con la captura de pantalla, intente alternar esta configuración.",
+			"HARDWARE_ACCELERATION": "Aceleración de hardware"
 		}
 	},
 	"SERVER": "Servidor",

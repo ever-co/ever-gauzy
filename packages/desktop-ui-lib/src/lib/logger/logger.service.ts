@@ -1,0 +1,42 @@
+import { Injectable, inject } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { AuditLogService } from '../services';
+import { ILogItems } from '@gauzy/contracts';
+import { ElectronService } from '../electron/services';
+
+@Injectable({ providedIn: 'root' })
+export class LoggerService {
+	private readonly _electronService = inject(ElectronService);
+	constructor(
+		private readonly _auditLogService: AuditLogService
+	) {
+		this._electronService.ipcRenderer.on('AUDIT_LOG_ENTRY', (_, logEntry: ILogItems) => {
+			this.logs$.next([...this.logs$.getValue(), logEntry]);
+		});
+	}
+
+	private readonly logs$ = new BehaviorSubject<ILogItems[]>([]);
+
+	readonly logsStream$: Observable<ILogItems[]> = this.logs$.asObservable();
+
+
+	private async getLogs(level: string, service: string, page: number, limit: number): Promise<ILogItems[]> {
+		const logsResult = await this._auditLogService.getAuditLogs(level, service, page, limit);
+		const logsSorted = logsResult.data.sort((a: ILogItems, b: ILogItems) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+		return logsSorted;
+	}
+
+	public async nextPage(level: string, service: string, page: number, limit: number): Promise<ILogItems[]> {
+		const logsResult = await this.getLogs(level, service, page, limit);
+		// Older entries (higher page numbers) must be prepended so the list stays
+		// chronological: oldest at the top, newest at the bottom.
+		this.logs$.next([...logsResult, ...this.logs$.getValue()]);
+		return logsResult;
+	}
+
+	public async refreshLogs(level: string, service: string, page: number, limit: number): Promise<ILogItems[]> {
+		const logsResult = await this.getLogs(level, service, page, limit);
+		this.logs$.next(logsResult);
+		return logsResult;
+	}
+}

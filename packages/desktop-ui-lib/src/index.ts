@@ -55,6 +55,7 @@ export * from './lib/time-tracker/task-table/table/task-table.component';
 export * from './lib/time-tracker/task-table/task-table.module';
 export * from './lib/time-tracker/time-tracker.component';
 export * from './lib/updater/updater.component';
+export * from './lib/logger/logger.component';
 
 
 /**

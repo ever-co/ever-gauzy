@@ -63,6 +63,7 @@ export async function createTimeTrackerWindow(
 	manager.register(RegisteredWindow.TIMER, timeTrackerWindow);
 
 	// Return the configured Time Tracker window instance
+	childWindowOpen(timeTrackerWindow, preloadPath);
 	return timeTrackerWindow;
 }
 
@@ -126,6 +127,7 @@ const windowSetting = (preloadPath?: string): Electron.BrowserWindowConstructorO
 		}
 	}
 
+
 	// Return the final settings object
 	return mainWindowSettings;
 };
@@ -184,3 +186,59 @@ export function timeTrackerPage(filePath: string): string {
 		hash: '/time-tracker'
 	});
 }
+
+/** Reference to the currently open child window (e.g. log-history). */
+let _childWindow: BrowserWindow | null = null;
+
+/**
+ * Send an IPC message to the child window if it is open and not destroyed.
+ *
+ * @example
+ * // In desktop-ipc.ts, broadcast a new audit log entry to the child window:
+ * sendToChildWindow('AUDIT_LOG_ENTRY', logEntry);
+ */
+export function sendToChildWindow(channel: string, ...args: unknown[]): void {
+	if (_childWindow && !_childWindow.isDestroyed()) {
+		_childWindow.webContents?.send?.(channel, ...args);
+	}
+}
+
+export function childWindowOpen(window: BrowserWindow, preloadPath?: string) {
+	window.webContents.setWindowOpenHandler(({ url }) => {
+		const targetUrl = new URL(url);
+		if (targetUrl.protocol === 'file:' && targetUrl.hash === '#/log-history') {
+			if (_childWindow && !_childWindow.isDestroyed()) {
+				_childWindow.focus();
+				return { action: 'deny' };
+			}
+			return {
+				action: 'allow',
+				overrideBrowserWindowOptions: {
+					title: 'Log History',
+					width: 460,
+					height: 800,
+					titleBarStyle: 'hidden',
+					titleBarOverlay: true,
+					webPreferences: {
+						nodeIntegration: true,
+						contextIsolation: false,
+						preload: preloadPath,
+						sandbox: false,
+					}
+				}
+			};
+		}
+		return { action: 'deny' };
+	});
+
+	// Capture the child BrowserWindow as soon as Electron creates it so that
+	// the main process can send IPC messages to it via sendToChildWindow().
+	window.webContents.on('did-create-window', (w) => {
+		_childWindow = w;
+		remoteMain.enable(w.webContents);
+		w.on('closed', () => {
+			_childWindow = null;
+		});
+	});
+}
+
