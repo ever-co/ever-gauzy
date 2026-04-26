@@ -4644,7 +4644,8 @@
 			"DAILY_RECAP": "Resumo Diário",
 			"WEEKLY_RECAP": "Recapitulação Semanal",
 			"MONTHLY_RECAP": "Recapitulação Mensal",
-			"INSTALL_PLUGIN": "Instalar plugin"
+			"INSTALL_PLUGIN": "Instalar plugin",
+			"OPEN_LOG_HISTORY": "Histórico de registros"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Rastreamento de Tempo Horário",
@@ -4687,7 +4688,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "Configurações de acessibilidade",
 			"RESET_ACCESSIBILITY_PERMISSION": "Redefinir acessibilidade",
 			"ACCESSIBILITY_DENIED_HINT": "A acessibilidade foi negada. Clique em 'Redefinir acessibilidade' para redefinir a permissão, ou abra as Configurações do sistema.",
-			"ACTIVE_WINDOW": "Pré-visualização da janela ativa"
+			"ACTIVE_WINDOW": "Pré-visualização da janela ativa",
+			"HARDWARE_ACCELERATION_HINT": "Se estiver com problemas na captura de tela, tente desativar a aceleração de hardware nas configurações do aplicativo e reinicie-o.",
+			"ENABLE_HARDWARE_ACCELERATION": "Ativar aceleração de hardware",
+			"DISABLE_HARDWARE_ACCELERATION": "Desativar aceleração de hardware",
+			"HARDWARE_ACCELERATION_STATUS": "A aceleração de hardware está atualmente",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"HARDWARE_ACCELERATION_DESC": "A aceleração de hardware pode melhorar o desempenho, mas pode causar problemas em alguns sistemas. Se tiver problemas com a captura de tela, tente alternar esta configuração.",
+			"HARDWARE_ACCELERATION": "Aceleração de hardware"
 		}
 	},
 	"SERVER": "Servidor",

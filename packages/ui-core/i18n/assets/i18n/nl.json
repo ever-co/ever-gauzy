@@ -4644,7 +4644,8 @@
 			"DAILY_RECAP": "Dagelijkse Samenvatting",
 			"WEEKLY_RECAP": "Wekelijks Overzicht",
 			"MONTHLY_RECAP": "Maandelijks Overzicht",
-			"INSTALL_PLUGIN": "Plugin installeren"
+			"INSTALL_PLUGIN": "Plugin installeren",
+			"OPEN_LOG_HISTORY": "Logboekgeschiedenis"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Uurlijkse tijdregistratie",
@@ -4687,7 +4688,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "Toegankelijkheidsinstellingen",
 			"RESET_ACCESSIBILITY_PERMISSION": "Toegankelijkheid opnieuw instellen",
 			"ACCESSIBILITY_DENIED_HINT": "Toegankelijkheid is geweigerd. Klik op 'Toegankelijkheid opnieuw instellen' om de machtiging opnieuw in te stellen, of open Systeeminstellingen.",
-			"ACTIVE_WINDOW": "Actief vensterweergave"
+			"ACTIVE_WINDOW": "Actief vensterweergave",
+			"HARDWARE_ACCELERATION_HINT": "Als u problemen ondervindt met schermopname, probeer dan hardwareversnelling uit te schakelen in de app-instellingen en start de app opnieuw op.",
+			"ENABLE_HARDWARE_ACCELERATION": "Hardwareversnelling inschakelen",
+			"DISABLE_HARDWARE_ACCELERATION": "Hardwareversnelling uitschakelen",
+			"HARDWARE_ACCELERATION_STATUS": "Hardwareversnelling is momenteel",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"HARDWARE_ACCELERATION_DESC": "Hardwareversnelling kan de prestaties verbeteren, maar kan problemen veroorzaken op sommige systemen. Als u problemen ondervindt met schermopname, probeer dan deze instelling te wijzigen.",
+			"HARDWARE_ACCELERATION": "Hardwareversnelling"
 		}
 	},
 	"SERVER": "Server",

@@ -4802,7 +4802,8 @@
 			"DAILY_RECAP": "Daily Recap",
 			"WEEKLY_RECAP": "Weekly Recap",
 			"MONTHLY_RECAP": "Monthly Recap",
-			"INSTALL_PLUGIN": "Install Plugin"
+			"INSTALL_PLUGIN": "Install Plugin",
+			"OPEN_LOG_HISTORY": "Logs"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Hourly Time Tracking",
@@ -4845,7 +4846,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "Accessibility Settings",
 			"RESET_ACCESSIBILITY_PERMISSION": "Reset Accessibility",
 			"ACCESSIBILITY_DENIED_HINT": "Accessibility was denied. Click 'Reset Accessibility' to reset the permission, or open System Settings to grant it manually.",
-			"ACTIVE_WINDOW": "Active Window Preview"
+			"ACTIVE_WINDOW": "Active Window Preview",
+			"HARDWARE_ACCELERATION_HINT": "If you are experiencing issues with screen capture, try disabling hardware acceleration in the app settings and relaunching the app.",
+			"ENABLE_HARDWARE_ACCELERATION": "Enable Hardware Acceleration",
+			"DISABLE_HARDWARE_ACCELERATION": "Disable Hardware Acceleration",
+			"HARDWARE_ACCELERATION_STATUS": "Hardware Acceleration is currently",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"HARDWARE_ACCELERATION_DESC": "Hardware acceleration can improve performance but may cause issues on some systems. If you experience problems with screen capture, try toggling this setting.",
+			"HARDWARE_ACCELERATION": "Hardware Acceleration"
 		}
 	},
 	"SERVER": "Server",

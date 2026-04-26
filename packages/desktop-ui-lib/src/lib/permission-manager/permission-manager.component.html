@@ -26,7 +26,7 @@
 		<div class="col-10">
 			<nb-card>
 				<nb-card-body>
-					<!-- Status Row -->
+					<!-- Status Row — macOS only (permission API not available on other platforms) -->
 					<div class="row d-flex align-items-center mb-3">
 						<div class="col-6">
 							<span class="subtitle-tile">
@@ -34,31 +34,31 @@
 							</span>
 						</div>
 						<div class="col-6 d-flex justify-content-end">
-							<ng-container [ngTemplateOutlet]="statusBadge"
-								[ngTemplateOutletContext]="{ status: status$ | async }">
+							<ng-container
+								[ngTemplateOutlet]="statusBadge"
+								[ngTemplateOutletContext]="{ status: status$ | async }"
+							>
 							</ng-container>
 						</div>
 					</div>
 
 					<!-- Action Buttons -->
 					<div class="row">
-						<div class="col-12 d-flex flex-wrap gap-2">
-							<button
-								nbButton
-								status="primary"
-								size="small"
-								(click)="openSystemSettings()"
-							>
-								<nb-icon icon="settings-2-outline"></nb-icon>
-								{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_SYSTEM_SETTINGS' | translate }}
-							</button>
+						<div class="action-buttons">
+							@if (isMac()) {
+								<button nbButton status="primary" size="small" (click)="openSystemSettings()">
+									<nb-icon icon="settings-2-outline"></nb-icon>
+									{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_SYSTEM_SETTINGS' | translate }}
+								</button>
+							}
+
 							<button
 								nbButton
 								status="info"
 								size="small"
 								outline
 								(click)="testScreenshot()"
-								[disabled]="testInProgress || (status$ | async) !== 'granted'"
+								[disabled]="testInProgress || (isMac() && (status$ | async) !== 'granted')"
 							>
 								<nb-icon
 									[icon]="testInProgress ? 'loader-outline' : 'camera-outline'"
@@ -66,25 +66,27 @@
 								></nb-icon>
 								{{ 'TIMER_TRACKER.PERMISSIONS.TEST_SCREENSHOT' | translate }}
 							</button>
-							<button
-								nbButton
-								status="warning"
-								size="small"
-								outline
-								(click)="resetAndRelaunch()"
-								[disabled]="timerStarted() || resetInProgress || countdown !== null"
-							>
-								<nb-icon
-									[icon]="resetInProgress ? 'loader-outline' : 'refresh-outline'"
-									[class.icon-spin]="resetInProgress"
-								></nb-icon>
-								@if (countdown !== null) {
-									{{ 'TIMER_TRACKER.PERMISSIONS.RESTARTING' | translate }}
-									{{ countdown }}...
-								} @else {
-									{{ 'TIMER_TRACKER.PERMISSIONS.RESET_PERMISSION' | translate }}
-								}
-							</button>
+							@if (isMac()) {
+								<button
+									nbButton
+									status="warning"
+									size="small"
+									outline
+									(click)="resetAndRelaunch()"
+									[disabled]="timerStarted() || resetInProgress || countdown !== null"
+								>
+									<nb-icon
+										[icon]="resetInProgress ? 'loader-outline' : 'refresh-outline'"
+										[class.icon-spin]="resetInProgress"
+									></nb-icon>
+									@if (countdown !== null) {
+										{{ 'TIMER_TRACKER.PERMISSIONS.RESTARTING' | translate }}
+										{{ countdown }}...
+									} @else {
+										{{ 'TIMER_TRACKER.PERMISSIONS.RESET_PERMISSION' | translate }}
+									}
+								</button>
+							}
 						</div>
 					</div>
 
@@ -147,54 +149,60 @@
 							</span>
 						</div>
 						<div class="col-6 d-flex justify-content-end">
-							<ng-container [ngTemplateOutlet]="statusBadge"
-								[ngTemplateOutletContext]="{ status: accessibilityStatus$ | async }">
+							<ng-container
+								[ngTemplateOutlet]="statusBadge"
+								[ngTemplateOutletContext]="{ status: accessibilityStatus$ | async }"
+							>
 							</ng-container>
 						</div>
 					</div>
 
 					<!-- Action Buttons -->
 					<div class="row">
-						<div class="col-12 d-flex flex-wrap gap-2">
+						<div class="action-buttons">
+							@if (isMac()) {
+								<button nbButton status="primary" size="small" (click)="openAccessibilitySettings()">
+									<nb-icon icon="settings-2-outline"></nb-icon>
+									{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_SYSTEM_SETTINGS' | translate }}
+								</button>
+							}
+
 							<button
 								nbButton
 								status="primary"
 								size="small"
-								(click)="openAccessibilitySettings()"
-							>
-								<nb-icon icon="settings-2-outline"></nb-icon>
-								{{ 'TIMER_TRACKER.PERMISSIONS.OPEN_SYSTEM_SETTINGS' | translate }}
-							</button>
-							<button
-								nbButton
-								status="primary"
-								size="small"
+								outline
 								(click)="testGetActiveWindow()"
 								[disabled]="testInProgress || (accessibilityStatus$ | async) !== 'granted'"
 							>
 								<nb-icon icon="settings-2-outline"></nb-icon>
 								{{ 'TIMER_TRACKER.PERMISSIONS.TEST_GET_ACTIVE_WINDOW' | translate }}
 							</button>
-
-							<button
-								nbButton
-								status="warning"
-								size="small"
-								outline
-								(click)="resetAccessibilityAndRelaunch()"
-								[disabled]="timerStarted() || accessibilityResetInProgress || accessibilityCountdown !== null"
-							>
-								<nb-icon
-									[icon]="accessibilityResetInProgress ? 'loader-outline' : 'refresh-outline'"
-									[class.icon-spin]="accessibilityResetInProgress"
-								></nb-icon>
-								@if (accessibilityCountdown !== null) {
-									{{ 'TIMER_TRACKER.PERMISSIONS.RESTARTING' | translate }}
-									{{ accessibilityCountdown }}...
-								} @else {
-									{{ 'TIMER_TRACKER.PERMISSIONS.RESET_ACCESSIBILITY_PERMISSION' | translate }}
-								}
-							</button>
+							@if (isMac()) {
+								<button
+									nbButton
+									status="warning"
+									size="small"
+									outline
+									(click)="resetAccessibilityAndRelaunch()"
+									[disabled]="
+										timerStarted() ||
+										accessibilityResetInProgress ||
+										accessibilityCountdown !== null
+									"
+								>
+									<nb-icon
+										[icon]="accessibilityResetInProgress ? 'loader-outline' : 'refresh-outline'"
+										[class.icon-spin]="accessibilityResetInProgress"
+									></nb-icon>
+									@if (accessibilityCountdown !== null) {
+										{{ 'TIMER_TRACKER.PERMISSIONS.RESTARTING' | translate }}
+										{{ accessibilityCountdown }}...
+									} @else {
+										{{ 'TIMER_TRACKER.PERMISSIONS.RESET_ACCESSIBILITY_PERMISSION' | translate }}
+									}
+								</button>
+							}
 						</div>
 					</div>
 					@if (activeWindow) {
@@ -222,7 +230,9 @@
 										<nb-icon icon="code-outline" class="active-window__icon"></nb-icon>
 										<div class="active-window__info">
 											<span class="active-window__label">Bundle ID</span>
-											<span class="active-window__value active-window__value--mono">{{ activeWindow?.bundleId || '—' }}</span>
+											<span class="active-window__value active-window__value--mono">{{
+												activeWindow?.bundleId || '—'
+											}}</span>
 										</div>
 									</div>
 								</div>
@@ -245,6 +255,50 @@
 							<p class="mb-0">
 								{{ 'TIMER_TRACKER.PERMISSIONS.ACCESSIBILITY_DENIED_HINT' | translate }}
 							</p>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</div>
+	}
+
+	<!-- ─── Windows: Hardware Acceleration ──────────────────────────────── -->
+	@if (isWindows()) {
+		<div class="row mt-3">
+			<div class="col-12">
+				<h6>{{ 'TIMER_TRACKER.PERMISSIONS.HARDWARE_ACCELERATION' | translate }}</h6>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-12">
+				<p>{{ 'TIMER_TRACKER.PERMISSIONS.HARDWARE_ACCELERATION_DESC' | translate }}</p>
+			</div>
+		</div>
+		<div class="row notification">
+			<div class="col-10">
+				<nb-card>
+					<nb-card-body>
+						<div class="row d-flex align-items-center mb-3">
+							<div class="col-6">
+								<span class="subtitle-tile">
+									{{ 'TIMER_TRACKER.PERMISSIONS.HARDWARE_ACCELERATION_STATUS' | translate }}
+								</span>
+							</div>
+							<div class="col-6 d-flex justify-content-end">
+								<button
+									nbButton
+									role="switch"
+									[attr.aria-checked]="!hardwareAccelerationDisabled()"
+									[status]="hardwareAccelerationDisabled() ? 'warning' : 'success'"
+									size="tiny"
+									outline
+									(click)="toggleHardwareAcceleration()"
+									[disabled]="timerStarted()"
+								>
+									<nb-icon [icon]="hardwareAccelerationDisabled() ? 'close-circle-outline' : 'checkmark-circle-2-outline'"></nb-icon>
+									{{ 'TIMER_TRACKER.PERMISSIONS.HARDWARE_ACCELERATION' | translate }}
+								</button>
+							</div>
 						</div>
 					</nb-card-body>
 				</nb-card>

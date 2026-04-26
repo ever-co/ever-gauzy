@@ -94,6 +94,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 			.pipe(untilDestroyed(this))
 			.subscribe();
 
+		this.electronService
+			.fromEvent('open_child_window')
+			.pipe(
+				tap((arg) => this.openChildWindow('#/log-history')),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		this.electronService.ipcRenderer.on('server_ping_restart', (event, arg) =>
 			this._ngZone.run(() => {
 				const pingHost = setInterval(async () => {
@@ -198,5 +206,20 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.send('navigate_to_login');
 		this.router.navigate(['/auth/login']);
+	}
+
+	private openChildWindow(url: string): void {
+		// Build the full file:// URL. window.location.href may be a directory URL
+		// (ending with '/') so we normalize it to point at index.html explicitly.
+		// setWindowOpenHandler in desktop-window-timer.ts intercepts this call and
+		// injects the correct webPreferences + window dimensions.
+		let base = window.location.href.split('#')[0];
+		if (base.endsWith('/')) {
+			base += 'index.html';
+		}
+		// Using a named target ('gauzy-log-history') prevents duplicate windows:
+		// if a window with that name is already open, window.open() focuses it
+		// instead of creating a new one — both browsers and Electron respect this.
+		window.open(`${base}${url}`, 'gauzy-log-history');
 	}
 }

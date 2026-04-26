@@ -1,8 +1,5 @@
-import { Component, input, OnInit, OnDestroy, Optional, ChangeDetectionStrategy } from '@angular/core';
-import {
-	AsyncPipe,
-	NgTemplateOutlet
-} from '@angular/common';
+import { Component, input, OnInit, OnDestroy, Optional, ChangeDetectionStrategy, signal } from '@angular/core';
+import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -12,9 +9,7 @@ import {
 	NbDialogRef
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import {
-	untilDestroyed, UntilDestroy
-} from '@ngneat/until-destroy';
+import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { PermissionManagerService } from './permission-manager.service';
 import { take, filter } from 'rxjs';
 
@@ -60,26 +55,44 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 	public accessibilityResetInProgress = false;
 	public accessibilityCountdown: number | null = null;
 
+	// ── Platform flags ───────────────────────────────────────────────────────
+	readonly isMac = signal(false);
+	readonly isWindows = signal(false);
+	readonly hardwareAccelerationDisabled = signal(false);
+
 	constructor(
 		private readonly permissionService: PermissionManagerService,
 		@Optional() private readonly dialogRef: NbDialogRef<PermissionManagerComponent>
-	) { }
+	) {}
 
 	ngOnInit() {
 		// Always check on open
 		this.permissionService.checkStatus();
 
+		// Detect platform so the template can show/hide Mac-only controls
+		this.platformSet();
+
 		// Start polling — if screen recording granted while open, auto-close dialog
 		this.startPolling();
+	}
 
+	async platformSet() {
+		const platform = await this.permissionService.getPlatform();
+		const hardwareAccelerationDisabled = await this.permissionService.getHardwareAccelerationState();
+		this.isMac.set(platform === 'darwin');
+		this.isWindows.set(platform === 'win32');
+		this.hardwareAccelerationDisabled.set(hardwareAccelerationDisabled);
 	}
 
 	startPolling() {
-		this.permissionService.startPolling().pipe(
-			filter(granted => granted && this.isDialog()),
-			take(1),
-			untilDestroyed(this)
-		).subscribe(() => this.dialogRef?.close({ granted: true }));
+		this.permissionService
+			.startPolling()
+			.pipe(
+				filter((granted) => granted && this.isDialog()),
+				take(1),
+				untilDestroyed(this)
+			)
+			.subscribe(() => this.dialogRef?.close({ granted: true }));
 	}
 
 	// ── Screen Recording actions ──────────────────────────────────────────────
@@ -94,7 +107,7 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 	async testGetActiveWindow() {
 		this.testInProgress = true;
 		const result = await this.permissionService.testGetWindow();
-		this.activeWindow = result.success ? result.window ?? null : null;
+		this.activeWindow = result.success ? (result.window ?? null) : null;
 		this.testInProgress = false;
 	}
 
@@ -127,9 +140,19 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 		this.permissionService.relaunchApp();
 	}
 
+	async toggleHardwareAcceleration() {
+		const newState = !this.hardwareAccelerationDisabled();
+		await this.permissionService.setHardwareAcceleration(newState);
+		this.hardwareAccelerationDisabled.set(newState);
+	}
+
 	// ── Dialog-only actions ───────────────────────────────────────────────────
-	startAnyway() { this.dialogRef?.close({ startAnyway: true }); }
-	cancel() { this.dialogRef?.close({ cancelled: true }); }
+	startAnyway() {
+		this.dialogRef?.close({ startAnyway: true });
+	}
+	cancel() {
+		this.dialogRef?.close({ cancelled: true });
+	}
 
 	ngOnDestroy() {
 		this.permissionService.stopPolling();
