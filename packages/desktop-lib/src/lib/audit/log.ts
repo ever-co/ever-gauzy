@@ -10,6 +10,15 @@ export class AuditLogHandler {
 	private static instance: AuditLogHandler;
 	private _auditLogService: AuditLogService;
 
+	/** Timestamp of the last successful purge — skip DB call if interval hasn't elapsed. */
+	private _lastPurgedAt: Date | null = null;
+
+	/** How often to check whether a purge is due (15 min). */
+	private static readonly PURGE_INTERVAL_MS = 15 * 60 * 1000;
+
+	/** Keep logs for this many days. */
+	private static readonly RETENTION_DAYS = 8;
+
 	private constructor() {
 		this._auditLogService = new AuditLogService();
 	}
@@ -29,6 +38,7 @@ export class AuditLogHandler {
 			message
 		}
 		this.saveLog(auditEntry);
+		this.purgeOldLogs();
 	}
 
 	async saveLog(entry: AuditLogTO): Promise<void> {
@@ -38,6 +48,35 @@ export class AuditLogHandler {
 		} catch (error) {
 			console.error('Failed to save audit log entry:', error);
 		}
+	}
+
+	/**
+	 * Delete logs older than RETENTION_DAYS.
+	 * Runs at most once per PURGE_INTERVAL_MS — the cached `_lastPurgedAt`
+	 * timestamp is checked first so the DB is never touched unnecessarily.
+	 * Fire-and-forget: errors are logged but never propagated.
+	 */
+	private purgeOldLogs(): void {
+		const now = new Date();
+
+		// Skip if we purged recently
+		if (
+			this._lastPurgedAt &&
+			now.getTime() - this._lastPurgedAt.getTime() < AuditLogHandler.PURGE_INTERVAL_MS
+		) {
+			return;
+		}
+
+		const cutoff = new Date(now.getTime() - AuditLogHandler.RETENTION_DAYS * 24 * 60 * 60 * 1000);
+
+		this._auditLogService
+			.remove({ createdAt: cutoff })
+			.then(() => {
+				this._lastPurgedAt = now;
+			})
+			.catch((err) => {
+				console.error('[AuditLog] Failed to purge old logs:', err);
+			});
 	}
 
 	async timerAuditInfo(message: string): Promise<void> {

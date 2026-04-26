@@ -546,8 +546,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
 							: await this.preventDuplicateApiRequest({ ...lastTimer, ...params }, (payload) =>
-									this.timeTrackerService.toggleApiStart(payload)
-							  );
+								this.timeTrackerService.toggleApiStart(payload)
+							);
 						if (timelog?.id) {
 							await this._auditLogService.timerAuditLogInfo(`Timer Started with timelog id ${timelog.id}`);
 						} else {
@@ -673,8 +673,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			organizationId,
 			...(this.projectSelectorService.selectedId
 				? {
-						projectId: this.projectSelectorService.selectedId
-				  }
+					projectId: this.projectSelectorService.selectedId
+				}
 				: {})
 		});
 	}
@@ -2008,8 +2008,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				typeof img === 'object' && img.thumbUrl
 					? await this._imageViewerService.getBase64ImageFromUrl(img.thumbUrl)
 					: typeof img === 'string'
-					? img
-					: undefined;
+						? img
+						: undefined;
 
 			// Set timestamp, preferring recordedAt if available
 			const timestamp = typeof img === 'object' && img.recordedAt ? new Date(img.recordedAt) : new Date();
@@ -2437,6 +2437,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				await this._auditLogService.screenshotLogInfo(`Screenshot uploaded successfully for time slot ID: ${timeSlotId}. Screenshot ID: ${resImg.id}`);
 			} else {
 				await this._auditLogService.screenshotLogError(`Failed to upload screenshot for time slot ID: ${timeSlotId}. Invalid response from server. ${JSON.stringify(resImg)}`);
+				this.electronService.ipcRenderer.send('failed_upload_screenshot', {
+					timeSlotId,
+					imagePath: b64img,
+					recordedAt: new Date()
+				});
 			}
 			return resImg;
 		} catch (error) {
