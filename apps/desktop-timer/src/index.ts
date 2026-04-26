@@ -539,13 +539,13 @@ app.on('ready', async () => {
 	// 1: User clicked "Keep It"
 	// undefined: No popup was shown (e.g. fresh install or no version change)
 	const buttonResponse = await handleDesktopStartup();
-	setAppVersion(configs);
 	if (buttonResponse === 0) {
 		await restartApp();
 		return;
 	}
 	await launchSplashScreen();
 	await setupDatabase();
+	setAppVersion(configs);
 	initialAppMenu();
 	try {
 		await checkOfflineMode(configs);

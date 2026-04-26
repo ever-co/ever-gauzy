@@ -31,7 +31,7 @@ export class AuditLogTransaction implements ITransactionAuditLog {
 		await this._databaseProvider.connection.transaction(
 			async (trx: Knex.Transaction) => {
 				try {
-					await trx
+					await trx(TABLE_NAME_AUDIT_LOG)
 						.where({ id })
 						.update(value);
 					await trx.commit();

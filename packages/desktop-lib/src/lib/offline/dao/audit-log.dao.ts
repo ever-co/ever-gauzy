@@ -86,8 +86,7 @@ export class AuditLogDAO implements DAO<AuditLogTO> {
 		}
 		await this._provider
 			.connection<AuditLogTO>(TABLE_NAME_AUDIT_LOG)
-			.where('createdAt', '>=', value?.createdAt)
-			.andWhere('createdAt', '<=', value?.createdAt)
+			.where('createdAt', '<=', value?.createdAt)
 			.del();
 	}
 }
