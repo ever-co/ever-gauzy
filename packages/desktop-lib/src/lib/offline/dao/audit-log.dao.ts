@@ -27,8 +27,11 @@ export class AuditLogDAO implements DAO<AuditLogTO> {
 			query.where('message', 'like', `%${filter.message}%`);
 		}
 
+		if (filter?.serviceName !== undefined && filter?.serviceName !== null) {
+			query.where('serviceName', filter.serviceName);
+		}
+
 		const offset = (page) * limit;
-		console.log('AuditLogDAO.findByFilter - filter:', filter, 'limit:', limit, 'page:', page, 'offset:', offset);
 
 		const result = await query
 			.select('*')
@@ -46,6 +49,10 @@ export class AuditLogDAO implements DAO<AuditLogTO> {
 
 		if (filter.message !== undefined && filter.message !== null) {
 			query.where('message', 'like', `%${filter.message}%`);
+		}
+
+		if (filter.serviceName !== undefined && filter.serviceName !== null) {
+			query.where('serviceName', filter.serviceName);
 		}
 
 		const result = await query.count({ total: 'id' });
@@ -73,12 +80,13 @@ export class AuditLogDAO implements DAO<AuditLogTO> {
 	}
 
 	public async delete(value?: Partial<AuditLogTO>): Promise<void> {
-		if (!value || value.createdAt) {
+		if (!value || !value.createdAt) {
 			console.error('Cannot delete audit log data: Missing or invalid createdAt timestamp');
+			return;
 		}
 		await this._provider
 			.connection<AuditLogTO>(TABLE_NAME_AUDIT_LOG)
-			.where('createdAt', '>=', value?.id)
+			.where('createdAt', '>=', value?.createdAt)
 			.andWhere('createdAt', '<=', value?.createdAt)
 			.del();
 	}

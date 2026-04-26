@@ -64,7 +64,7 @@ export default class TimerHandler {
 	private _randomSyncPeriod: number = 1;
 	private readonly _activityWatchService: ActivityWatchService;
 	private readonly _userService: UserService;
-	private _auditLogHandler: AuditLogHandler;
+	private readonly _auditLogHandler: AuditLogHandler;
 
 	constructor() {
 		/**

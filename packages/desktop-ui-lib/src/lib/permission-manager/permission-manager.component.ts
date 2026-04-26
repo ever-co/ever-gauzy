@@ -71,12 +71,6 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 
 		// Detect platform so the template can show/hide Mac-only controls
 		this.platformSet();
-		// Sync hardware-acceleration toggle state from the main process
-		if (this.isWindows()) {
-			this.permissionService.getHardwareAccelerationState().then((disabled) => {
-				this.hardwareAccelerationDisabled.set(disabled);
-			});
-		}
 
 		// Start polling — if screen recording granted while open, auto-close dialog
 		this.startPolling();

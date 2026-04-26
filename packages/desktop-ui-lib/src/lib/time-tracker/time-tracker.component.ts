@@ -548,10 +548,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							: await this.preventDuplicateApiRequest({ ...lastTimer, ...params }, (payload) =>
 									this.timeTrackerService.toggleApiStart(payload)
 							  );
-						if (timelog.id) {
+						if (timelog?.id) {
 							await this._auditLogService.timerAuditLogInfo(`Timer Started with timelog id ${timelog.id}`);
 						} else {
-							await this._auditLogService.timerAuditLogError(`Timer Starting failed with response ${JSON.stringify(timelog)}`)
+							await this._auditLogService.timerAuditLogError(`Timer Starting failed with response ${JSON.stringify(timelog)}`);
 						}
 						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
 							actionType: TimerActionTypeEnum.START_TIMER,
@@ -1450,11 +1450,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								this._errorHandlerService.handleError(error);
 							}
 						});
-					} else {
-						if (this.start && !arg.isWorking) {
-							await this._auditLogService.timerAuditLogInfo(`Timer stop from idle time deletion`);
-							await this.toggleStart(false);
-						}
+					} else if (this.start && !arg.isWorking) {
+						await this._auditLogService.timerAuditLogInfo(`Timer stop from idle time deletion`);
+						await this.toggleStart(false);
 					}
 
 					if (this._isOffline || isReadyForDeletion) {

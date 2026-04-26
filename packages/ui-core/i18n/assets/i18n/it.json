@@ -4645,7 +4645,7 @@
 			"WEEKLY_RECAP": "Riepilogo Settimanale",
 			"MONTHLY_RECAP": "Riepilogo Mensile",
 			"INSTALL_PLUGIN": "Installa plugin",
-			"OPEN_LOG_HISTORY": "Logs"
+			"OPEN_LOG_HISTORY": "Storico dei log"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Tracciamento del tempo orario",
@@ -4689,14 +4689,14 @@
 			"RESET_ACCESSIBILITY_PERMISSION": "Reimposta accessibilità",
 			"ACCESSIBILITY_DENIED_HINT": "L'accessibilità è stata negata. Fai clic su 'Reimposta accessibilità' per reimpostare l'autorizzazione, oppure apri Impostazioni di Sistema.",
 			"ACTIVE_WINDOW": "Anteprima finestra attiva",
-			"HARDWARE_ACCELERATION_HINT": "If you are experiencing issues with screen capture, try disabling hardware acceleration in the app settings and relaunching the app.",
-			"ENABLE_HARDWARE_ACCELERATION": "Enable Hardware Acceleration",
-			"DISABLE_HARDWARE_ACCELERATION": "Disable Hardware Acceleration",
-			"HARDWARE_ACCELERATION_STATUS": "Hardware Acceleration is currently",
+			"HARDWARE_ACCELERATION_HINT": "Se stai riscontrando problemi con l'acquisizione dello schermo, prova a disabilitare l'accelerazione hardware nelle impostazioni dell'app e riavviala.",
+			"ENABLE_HARDWARE_ACCELERATION": "Abilita accelerazione hardware",
+			"DISABLE_HARDWARE_ACCELERATION": "Disabilita accelerazione hardware",
+			"HARDWARE_ACCELERATION_STATUS": "L'accelerazione hardware è attualmente",
 			"ENABLED": "Enabled",
 			"DISABLED": "Disabled",
-			"HARDWARE_ACCELERATION_DESC": "Hardware acceleration can improve performance but may cause issues on some systems. If you experience problems with screen capture, try toggling this setting.",
-			"HARDWARE_ACCELERATION": "Hardware Acceleration"
+			"HARDWARE_ACCELERATION_DESC": "L'accelerazione hardware può migliorare le prestazioni, ma potrebbe causare problemi su alcuni sistemi. Se riscontri problemi con l'acquisizione dello schermo, prova a modificare questa impostazione.",
+			"HARDWARE_ACCELERATION": "Accelerazione hardware"
 		}
 	},
 	"SERVER": "Server",

@@ -4083,6 +4083,9 @@
 		"VIEW_TIMESHEET": "crwdns7564:0crwdne7564:0",
 		"ADD_TIME": "crwdns7566:0crwdne7566:0",
 		"TODAY": "crwdns7568:0crwdne7568:0",
+		"MENU": {
+			"OPEN_LOG_HISTORY": "Lok me Cano"
+		},
 		"PERMISSIONS": {
 			"MENU_LABEL": "Twero pa kal",
 			"TITLE": "Twero pa kal",
@@ -4112,7 +4115,13 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "Yubo Twero me Donyo",
 			"RESET_ACCESSIBILITY_PERMISSION": "Cwal Twero me Donyo Odoco",
 			"ACCESSIBILITY_DENIED_HINT": "Okero twero me donyo. Dii 'Cwal Twero me Donyo Odoco' me cwal twero odoco, onyo yam yubo kal.",
-			"ACTIVE_WINDOW": "Nen Dirica Mudoko"
+			"ACTIVE_WINDOW": "Nen Dirica Mudoko",
+			"HARDWARE_ACCELERATION_HINT": "Ka itemo ayela ki yabo cal pa screen, tem juki lony me tic pa hardware i tic pa app ka dok cwal app odoco.",
+			"ENABLE_HARDWARE_ACCELERATION": "Cwal Lony me Tic pa Hardware",
+			"DISABLE_HARDWARE_ACCELERATION": "Juk Lony me Tic pa Hardware",
+			"HARDWARE_ACCELERATION_STATUS": "Lony me Tic pa Hardware kombedi tye",
+			"HARDWARE_ACCELERATION_DESC": "Lony me tic pa hardware twero kwanyo tic maber, ento twero kelo ayela i tic mogo. Ka itemo ayela ki yabo cal pa screen, tem lok yubo man.",
+			"HARDWARE_ACCELERATION": "Lony me Tic pa Hardware"
 		}
 	},
 	"TIMESHEET": {

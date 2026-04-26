@@ -77,7 +77,6 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 	});
 
 	ngOnInit(): void {
-		console.log('LoggerComponent initialized');
 		this.loggerService.logsStream$.pipe(takeUntil(this.destroy$)).subscribe((items) => {
 			if (!items) return;
 
@@ -129,7 +128,7 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 
 	onPageSizeChange(size: number): void {
 		this.pageSize.set(size);
-		this.loadOlderEntries();
+		this.loadEntries();
 	}
 
 	async loadEntries(initial = false): Promise<void> {
@@ -138,14 +137,19 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 			this.currentPage.set(0);
 			this.hasMore.set(true);
 		}
-		const result = await this.loggerService.refreshLogs(
-			this.logLevelFilter(),
-			this.serviceNameFilter(),
-			0,
-			this.pageSize()
-		);
-		this.hasMore.set(result.length >= this.pageSize());
-		this.isLoading.set(false);
+		try {
+			const result = await this.loggerService.refreshLogs(
+				this.logLevelFilter(),
+				this.serviceNameFilter(),
+				0,
+				this.pageSize()
+			);
+			this.hasMore.set(result.length >= this.pageSize());
+		} catch (error) {
+			console.error('Failed to load log entries', error);
+		} finally {
+			this.isLoading.set(false);
+		}
 	}
 
 	onScroll(event: Event): void {
@@ -162,20 +166,26 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 		this.isLoadingMore.set(true);
 		this.currentPage.update((p) => p + 1);
 
-		const result = await this.loggerService.nextPage(
-			this.logLevelFilter(),
-			this.serviceNameFilter(),
-			this.currentPage(),
-			this.pageSize()
-		);
+		try {
+			const result = await this.loggerService.nextPage(
+				this.logLevelFilter(),
+				this.serviceNameFilter(),
+				this.currentPage(),
+				this.pageSize()
+			);
 
-		this.hasMore.set(result.length >= this.pageSize());
+			this.hasMore.set(result.length >= this.pageSize());
 
-		requestAnimationFrame(() => {
-			if (el) el.scrollTop = el.scrollHeight - prevScrollHeight;
-		});
-
-		this.isLoadingMore.set(false);
+			requestAnimationFrame(() => {
+				if (el) el.scrollTop = el.scrollHeight - prevScrollHeight;
+			});
+		} catch (error) {
+			console.error('Failed to load older log entries', error);
+			// Roll back the page increment so the next attempt requests the correct page.
+			this.currentPage.update((p) => p - 1);
+		} finally {
+			this.isLoadingMore.set(false);
+		}
 	}
 
 	getLevelClass(level?: TLogLevel): string {

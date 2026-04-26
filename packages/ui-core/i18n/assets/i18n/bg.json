@@ -4693,7 +4693,7 @@
 			"WEEKLY_RECAP": "Седмичен обзор",
 			"MONTHLY_RECAP": "Месечен обзор",
 			"INSTALL_PLUGIN": "Инсталиране на плъгин",
-			"OPEN_LOG_HISTORY": "Logs"
+			"OPEN_LOG_HISTORY": "Журнали"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Проследяване на времето по часове",
@@ -4737,14 +4737,14 @@
 			"RESET_ACCESSIBILITY_PERMISSION": "Нулиране на достъпността",
 			"ACCESSIBILITY_DENIED_HINT": "Достъпността е отказана. Щракнете върху 'Нулиране на достъпността', за да нулирате разрешението, или отворете Системни настройки.",
 			"ACTIVE_WINDOW": "Преглед на активния прозорец",
-			"HARDWARE_ACCELERATION_HINT": "If you are experiencing issues with screen capture, try disabling hardware acceleration in the app settings and relaunching the app.",
-			"ENABLE_HARDWARE_ACCELERATION": "Enable Hardware Acceleration",
-			"DISABLE_HARDWARE_ACCELERATION": "Disable Hardware Acceleration",
-			"HARDWARE_ACCELERATION_STATUS": "Hardware Acceleration is currently",
+			"HARDWARE_ACCELERATION_HINT": "Ако изпитвате проблеми с улавянето на екрана, опитайте да деактивирате хардуерното ускорение в настройките на приложението и рестартирайте го.",
+			"ENABLE_HARDWARE_ACCELERATION": "Активиране на хардуерното ускорение",
+			"DISABLE_HARDWARE_ACCELERATION": "Деактивиране на хардуерното ускорение",
+			"HARDWARE_ACCELERATION_STATUS": "Хардуерното ускорение е в момента",
 			"ENABLED": "Enabled",
 			"DISABLED": "Disabled",
-			"HARDWARE_ACCELERATION_DESC": "Hardware acceleration can improve performance but may cause issues on some systems. If you experience problems with screen capture, try toggling this setting.",
-			"HARDWARE_ACCELERATION": "Hardware Acceleration"
+			"HARDWARE_ACCELERATION_DESC": "Хардуерното ускорение може да подобри производителността, но може да причини проблеми на някои системи. Ако имате проблеми с улавянето на екрана, опитайте да превключите тази настройка.",
+			"HARDWARE_ACCELERATION": "Хардуерно ускорение"
 		}
 	},
 	"SERVER": "Сървър",

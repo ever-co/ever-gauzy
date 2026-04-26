@@ -37,31 +37,31 @@ export class AuditLogService implements IAuditLogService<AuditLogTO> {
 		}
 	}
 
-	public async update(auditLog: Partial<AuditLog>): Promise<void> {
+	public async update(auditLog: Partial<AuditLogTO>): Promise<void> {
 		if (!auditLog.id) {
 			return console.error('WARN[AUDIT_LOG_SERVICE]: No audit log data, cannot update');
 		}
 
 		try {
-			await this._auditLogDao.update(auditLog.id, auditLog.toObject());
+			await this._auditLogDao.update(auditLog.id, auditLog);
 		} catch (error) {
 			throw new AppError('AUDIT_LOG_SERVICE', error);
 		}
 	}
 
-	public async remove(auditLog: Partial<AuditLog>): Promise<void> {
+	public async remove(auditLog: Partial<AuditLogTO>): Promise<void> {
 		if (!auditLog.createdAt) {
 			return console.error('WARN[AUDIT_LOG_SERVICE]: No audit log createdAt, cannot delete');
 		}
 
 		try {
-			await this._auditLogDao.delete(auditLog.toObject());
+			await this._auditLogDao.delete(auditLog);
 		} catch (error) {
 			throw new AppError('AUDIT_LOG_SERVICE', error);
 		}
 	}
 
-	public async findById(id: number): Promise<AuditLogTO> {
+	public async findById(id: number): Promise<AuditLogTO | null> {
 		if (!id) {
 			console.error('WARN[AUDIT_LOG_SERVICE]: No audit log id, cannot find');
 			return null;

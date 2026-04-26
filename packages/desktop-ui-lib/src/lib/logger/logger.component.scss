@@ -38,7 +38,7 @@ nb-card-body {
 	flex-direction: column;
 	gap: 0.2rem;
 	padding: 0.55rem 1rem 0.55rem 0.875rem;
-	border-bottom: 1px solid var(--border-basic-color-3, rgba(0, 0, 0, 0.06));
+	border-bottom: 1px solid var(--border-basic-color-3);
 	border-left: 3px solid transparent;
 	transition: background-color 0.12s ease;
 	text-align: left;
@@ -47,10 +47,10 @@ nb-card-body {
 
 	&:hover { background-color: var(--background-basic-color-2); }
 
-	&.log-entry--error { border-left-color: var(--color-danger-default,  #e74c3c); }
-	&.log-entry--warn  { border-left-color: var(--color-warning-default, #f1c40f); }
-	&.log-entry--info  { border-left-color: var(--color-info-default,    #4f8cff); }
-	&.log-entry--debug { border-left-color: var(--border-basic-color-3,  #dde1eb); }
+	&.log-entry--error { border-left-color: var(--color-danger-default); }
+	&.log-entry--warn  { border-left-color: var(--color-warning-default); }
+	&.log-entry--info  { border-left-color: var(--color-info-default); }
+	&.log-entry--debug { border-left-color: var(--border-basic-color-3); }
 }
 
 /* ─── Meta line (small, secondary) ─────────────────────── */
@@ -75,27 +75,27 @@ nb-card-body {
 	flex-shrink: 0;
 
 	&.level-debug {
-		background: rgba(154, 164, 178, 0.14);
-		color: var(--gauzy-text-color-2, #9aa4b2);
+		background: var(--color-basic-transparent-200);
+		color: var(--gauzy-text-color-2);
 	}
 	&.level-info {
-		background: rgba(79, 140, 255, 0.12);
-		color: var(--color-info-default, #4f8cff);
+		background: var(--color-info-transparent-200);
+		color: var(--color-info-default);
 	}
 	&.level-warn {
-		background: rgba(241, 196, 15, 0.14);
-		color: #a07800;
+		background: var(--color-warning-transparent-200);
+		color: var(--color-warning-700);
 	}
 	&.level-error {
-		background: rgba(231, 76, 60, 0.12);
-		color: var(--color-danger-default, #e74c3c);
+		background: var(--color-danger-transparent-200);
+		color: var(--color-danger-default);
 	}
 }
 
 .meta-service {
 	font-size: 0.7rem;
 	font-weight: 600;
-	color: var(--color-primary-default, #6c5ce7);
+	color: var(--color-primary-default);
 	white-space: nowrap;
 }
 
@@ -120,8 +120,8 @@ nb-card-body {
 	color: var(--gauzy-text-color-1);
 	word-break: break-word;
 
-	.log-entry--error & { color: var(--color-danger-default,  #c0392b); }
-	.log-entry--warn  & { color: #7a5800; }
+	.log-entry--error & { color: var(--color-danger-default); }
+	.log-entry--warn  & { color: var(--color-warning-800); }
 }
 
 /* ─── Utility ───────────────────────────────────────────── */
@@ -181,7 +181,7 @@ nb-card-body {
 	}
 
 	/* Pulsing glow ring when actively following */
-	&[ng-reflect-status='success'] {
+	&.follow-btn--active{
 		animation: follow-pulse 2.4s ease-in-out infinite;
 	}
 }

@@ -4,17 +4,14 @@ import {
 	TServiceName,
 } from '@gauzy/contracts';
 import { IPaginationResult } from '../interfaces';
-import { AppWindowManager } from '../app-window-manager';
 import { sendToChildWindow } from '@gauzy/desktop-window';
 
 export class AuditLogHandler {
 	private static instance: AuditLogHandler;
 	private _auditLogService: AuditLogService;
-	private appWindowManager: AppWindowManager;
 
 	private constructor() {
 		this._auditLogService = new AuditLogService();
-		this.appWindowManager = AppWindowManager.getInstance();
 	}
 
 	public static getInstance(): AuditLogHandler {
@@ -31,9 +28,16 @@ export class AuditLogHandler {
 			serviceName: service,
 			message
 		}
+		this.saveLog(auditEntry);
+	}
 
-		const newLogEntry = await this._auditLogService.saveAndReturn(new AuditLog(auditEntry));
-		sendToChildWindow('AUDIT_LOG_ENTRY', newLogEntry);
+	async saveLog(entry: AuditLogTO): Promise<void> {
+		try {
+			const newLogEntry = await this._auditLogService.saveAndReturn(new AuditLog(entry));
+			sendToChildWindow('AUDIT_LOG_ENTRY', newLogEntry);
+		} catch (error) {
+			console.error('Failed to save audit log entry:', error);
+		}
 	}
 
 	async timerAuditInfo(message: string): Promise<void> {
@@ -48,9 +52,9 @@ export class AuditLogHandler {
 		return this._auditLogService.findAuditLogs({
 			limit,
 			page,
-			...(level !== 'all' ? { logLevel: level } : {}),
 			filter: {
-				...(service !== 'all' ? { serviceName: service } : {})
+				...(service !== 'all' ? { serviceName: service } : {}),
+				...(level !== 'all' ? { logLevel: level } : {}),
 			}
 		});
 	}

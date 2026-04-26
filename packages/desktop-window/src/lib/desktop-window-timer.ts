@@ -205,8 +205,12 @@ export function sendToChildWindow(channel: string, ...args: unknown[]): void {
 
 export function childWindowOpen(window: BrowserWindow, preloadPath?: string) {
 	window.webContents.setWindowOpenHandler(({ url }) => {
-		console.log(`Attempting to open URL: ${url}`);
-		if (url.includes('#/log-history')) {
+		const targetUrl = new URL(url);
+		if (targetUrl.protocol === 'file:' && targetUrl.hash === '#/log-history') {
+			if (_childWindow && !_childWindow.isDestroyed()) {
+				_childWindow.focus();
+				return { action: 'deny' };
+			}
 			return {
 				action: 'allow',
 				overrideBrowserWindowOptions: {

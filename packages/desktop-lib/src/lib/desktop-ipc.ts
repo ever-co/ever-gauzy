@@ -1540,7 +1540,7 @@ export function removeAllHandlers() {
 		'WRITE_AUDIT_LOG',
 		'GET_AUDIT_LOGS',
 		'GET_HARDWARE_ACCELERATION_STATE',
-		'SET_HARDWARE_ACCELERATION_STATE'
+		'SET_HARDWARE_ACCELERATION'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

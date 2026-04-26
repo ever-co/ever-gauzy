@@ -1,8 +1,8 @@
 export interface IPagination<T> {
 	page: number;
 	limit: number;
-	filter?: T;
-	sortBy?: keyof T;
+	filter?: Partial<T>;
+	sortBy?: Extract<keyof T, string>;
 }
 
 export interface IPaginationResult<T> {

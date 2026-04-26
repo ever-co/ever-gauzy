@@ -9,6 +9,7 @@ export async function up(knex: Knex): Promise<void> {
 		table.timestamp('createdAt').defaultTo(knex.fn.now());
 		table.string('serviceName').nullable();
 		table.index(['logLevel']);
+		table.index(['createdAt']);
 	});
 }
 

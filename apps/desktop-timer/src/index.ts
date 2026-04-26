@@ -1,16 +1,30 @@
 // Adapted from https://github.com/maximegris/angular-electron/blob/master/main.ts
 import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
 import { environment } from './environments/environment';
-import { IConfig, logger as log, store } from '@gauzy/desktop-core';
+import { logger as log, store, IConfig } from '@gauzy/desktop-core';
 
-if (process.platform === 'win32') {
-	const configs: IConfig = store.get('configs');
-	if (configs?.hardwareAccelerationDisabled) {
-		app.disableHardwareAcceleration();
-	}
-}
-// Assign environment variables
+// Set the app name first — app.getPath('userData') derives its path from
+// app.getName(), so this must happen before any getPath() call.
 Object.assign(process.env, environment);
+if (process.env.NAME) {
+	app.setName(process.env.NAME);
+}
+
+// app.disableHardwareAcceleration() must be called before app.ready.
+// app.setName() above ensures app.getPath('userData') resolves correctly,
+// and electron-store is purely synchronous file I/O — no IPC, no sandbox risk.
+if (process.platform === 'win32') {
+	try {
+		const configs = store.get('configs') as { hardwareAccelerationDisabled?: boolean } | undefined;
+		if (configs?.hardwareAccelerationDisabled) {
+			app.disableHardwareAcceleration();
+		}
+	} catch (error) {
+		console.error(`Error reading hardware acceleration setting: ${error}`);
+	}
+
+}
+// Assign environment variables (already done above — guard against double-assign)
 // Import logging for electron and override default console logging
 import * as remoteMain from '@electron/remote/main';
 import * as Sentry from '@sentry/electron/main';
@@ -21,7 +35,6 @@ import { initSentry } from './sentry';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 
-app.setName(process.env.NAME);
 
 // Initialize logging
 log.setup();

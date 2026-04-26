@@ -15,19 +15,33 @@ export class AuditLogTransaction implements ITransactionAuditLog {
 			async (trx) => {
 				try {
 					await trx
-					.insert(value)
-					.into(TABLE_NAME_AUDIT_LOG);
+						.insert(value)
+						.into(TABLE_NAME_AUDIT_LOG);
 					await trx.commit();
 				} catch (error) {
 					await trx.rollback();
 					console.error('Error creating audit log entry:', error);
+					throw new AppError('AUDIT_LOG_TRX', error);
 				}
 			}
 		);
 	}
 
 	public async update(id: number, value: Partial<AuditLogTO>): Promise<void> {
-		console.log('Updating audit log entry with id:', id, 'and value:', value);
+		await this._databaseProvider.connection.transaction(
+			async (trx: Knex.Transaction) => {
+				try {
+					await trx
+						.where({ id })
+						.update(value);
+					await trx.commit();
+				} catch (error) {
+					console.error('Error updating audit log entry:', error);
+					await trx.rollback();
+					throw new AppError('AUDIT_LOG_TRX', error);
+				}
+			}
+		)
 	}
 
 	public async createAndReturn(value: AuditLogTO): Promise<AuditLogTO> {

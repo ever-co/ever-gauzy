@@ -32,7 +32,9 @@
 			</nb-card-header>
 
 			<nb-card-body>
-				<div class="log-viewport" #scrollContainer (scroll)="onScroll($event)">
+				<div class="log-viewport" #scrollContainer (scroll)="onScroll($event)"
+					role="log" aria-live="polite" aria-label="Application Logs"
+					[attr.aria-busy]="isLoading() || isLoadingMore()">
 
 					@if (isLoadingMore()) {
 					<div class="load-more-bar">
@@ -58,7 +60,7 @@
 					}
 
 					@for (log of filteredLogs(); track log.id) {
-					<div class="log-entry" [class]="'log-entry--' + log.logLevel" key="log-{{ log.id }}">
+					<div class="log-entry" [class]="'log-entry--' + log.logLevel">
 						<div class="log-entry__meta">
 							<span class="level-badge" [class]="'level-' + log.logLevel">{{ log.logLevel | uppercase
 								}}</span>

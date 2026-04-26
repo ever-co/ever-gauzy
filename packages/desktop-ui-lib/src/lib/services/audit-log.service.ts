@@ -87,8 +87,8 @@ export class AuditLogService {
 
 	public getAuditLogs(level: string, service: string, page: number, limit: number): Promise<any> {
 		return this.electronService.invoke('GET_AUDIT_LOGS', {
-			level,
-			service,
+			logLevel: level,
+			serviceName: service,
 			page,
 			limit
 		});

@@ -11,6 +11,6 @@ export interface IAuditLogService<T> {
 	save(log: T): Promise<void>;
 	saveAndReturn(log: T): Promise<AuditLogTO>;
 	update(log: Partial<T>): Promise<void>;
-	remove(log: T): Promise<void>;
+	remove(log: Partial<T>): Promise<void>;
 	findById(id: number): Promise<AuditLogTO | null>;
 }

@@ -53,7 +53,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 				latest = await this._timeTrackerService.getTimeLogById(timer.timelogId);
 			} else if (timer.isStartedOffline && !timer.stoppedAt) {
 				console.log('⏱ - Silent start');
-				this._auditLogService.timerAuditLogInfo(`Silent start for timer ${timer.id} initiated.`);
+				await this._auditLogService.timerAuditLogInfo(`Silent start for timer ${timer.id} initiated.`);
 				latest = await this._timeTrackerService.toggleApiStart({
 					...timer,
 					...params
@@ -66,7 +66,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 					}
 				});
 			} else if (timer.isStartedOffline && !timer.timelogId && timer.startedAt && timer.stoppedAt) {
-				this._auditLogService.timerAuditLogInfo(`Creating time log for offline timer ${timer.id} with start and stop times.`);
+				await this._auditLogService.timerAuditLogInfo(`Creating time log for offline timer ${timer.id} with start and stop times.`);
 				latest = await this._timeTrackerService.addTimeLog({
 					startedAt: timer.startedAt,
 					stoppedAt: timer.stoppedAt,

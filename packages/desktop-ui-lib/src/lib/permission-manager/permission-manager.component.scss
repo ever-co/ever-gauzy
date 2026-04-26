@@ -155,8 +155,9 @@
     }
   }
 }
-// Button row — replaces Bootstrap d-flex flex-wrap gap-2 so the component
-// doesn't depend on the host app having Bootstrap utility classes loaded.
+/* Button row — replaces Bootstrap d-flex flex-wrap gap-2 so the component
+ doesn't depend on the host app having Bootstrap utility classes loaded.
+ */
 .action-buttons {
   display: flex;
   flex-wrap: wrap;

@@ -285,31 +285,19 @@
 								</span>
 							</div>
 							<div class="col-6 d-flex justify-content-end">
-								@if (hardwareAccelerationDisabled()) {
-									<button
-										nbButton
-										status="warning"
-										size="tiny"
-										outline
-										(click)="toggleHardwareAcceleration()"
-										[disabled]="timerStarted()"
-									>
-										<nb-icon icon="close-circle-outline"></nb-icon>
-										{{ 'TIMER_TRACKER.PERMISSIONS.DISABLED' | translate }}
-									</button>
-								} @else {
-									<button
-										nbButton
-										status="success"
-										size="tiny"
-										outline
-										(click)="toggleHardwareAcceleration()"
-										[disabled]="timerStarted()"
-									>
-										<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
-										{{ 'TIMER_TRACKER.PERMISSIONS.ENABLED' | translate }}
-									</button>
-								}
+								<button
+									nbButton
+									role="switch"
+									[attr.aria-checked]="!hardwareAccelerationDisabled()"
+									[status]="hardwareAccelerationDisabled() ? 'warning' : 'success'"
+									size="tiny"
+									outline
+									(click)="toggleHardwareAcceleration()"
+									[disabled]="timerStarted()"
+								>
+									<nb-icon [icon]="hardwareAccelerationDisabled() ? 'close-circle-outline' : 'checkmark-circle-2-outline'"></nb-icon>
+									{{ 'TIMER_TRACKER.PERMISSIONS.HARDWARE_ACCELERATION' | translate }}
+								</button>
 							</div>
 						</div>
 					</nb-card-body>

@@ -4641,7 +4641,7 @@
 			"WEEKLY_RECAP": "Wöchentliche Zusammenfassung",
 			"MONTHLY_RECAP": "Monatliche Zusammenfassung",
 			"INSTALL_PLUGIN": "Plugin installieren",
-			"OPEN_LOG_HISTORY": "Logs"
+			"OPEN_LOG_HISTORY": "Protokollverlauf"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Stündliche Zeiterfassung",
@@ -4685,14 +4685,14 @@
 			"RESET_ACCESSIBILITY_PERMISSION": "Bedienungshilfen zurücksetzen",
 			"ACCESSIBILITY_DENIED_HINT": "Bedienungshilfen wurden verweigert. Klicken Sie auf 'Bedienungshilfen zurücksetzen', um die Berechtigung zurückzusetzen, oder öffnen Sie die Systemeinstellungen.",
 			"ACTIVE_WINDOW": "Aktives Fenster – Vorschau",
-			"HARDWARE_ACCELERATION_HINT": "If you are experiencing issues with screen capture, try disabling hardware acceleration in the app settings and relaunching the app.",
-			"ENABLE_HARDWARE_ACCELERATION": "Enable Hardware Acceleration",
-			"DISABLE_HARDWARE_ACCELERATION": "Disable Hardware Acceleration",
-			"HARDWARE_ACCELERATION_STATUS": "Hardware Acceleration is currently",
+			"HARDWARE_ACCELERATION_HINT": "Wenn Sie Probleme mit der Bildschirmaufnahme haben, deaktivieren Sie die Hardwarebeschleunigung in den App-Einstellungen und starten Sie die App neu.",
+			"ENABLE_HARDWARE_ACCELERATION": "Hardwarebeschleunigung aktivieren",
+			"DISABLE_HARDWARE_ACCELERATION": "Hardwarebeschleunigung deaktivieren",
+			"HARDWARE_ACCELERATION_STATUS": "Hardwarebeschleunigung ist derzeit",
 			"ENABLED": "Enabled",
 			"DISABLED": "Disabled",
-			"HARDWARE_ACCELERATION_DESC": "Hardware acceleration can improve performance but may cause issues on some systems. If you experience problems with screen capture, try toggling this setting.",
-			"HARDWARE_ACCELERATION": "Hardware Acceleration"
+			"HARDWARE_ACCELERATION_DESC": "Hardwarebeschleunigung kann die Leistung verbessern, jedoch auf manchen Systemen zu Problemen führen. Bei Problemen mit der Bildschirmaufnahme versuchen Sie, diese Einstellung umzuschalten.",
+			"HARDWARE_ACCELERATION": "Hardwarebeschleunigung"
 		}
 	},
 	"SERVER": "Server",

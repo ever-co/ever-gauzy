@@ -106,7 +106,8 @@ export class PermissionManagerService {
 
 	/** Returns whether hardware acceleration is currently disabled (Windows). */
 	async getHardwareAccelerationState(): Promise<boolean> {
-		return this.electronService.ipcRenderer.invoke('GET_HARDWARE_ACCELERATION_STATE');
+		const disabled = await this.electronService.ipcRenderer.invoke('GET_HARDWARE_ACCELERATION_STATE');
+		return Boolean(disabled);
 	}
 
 	/**

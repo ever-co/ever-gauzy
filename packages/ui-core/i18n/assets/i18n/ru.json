@@ -4663,7 +4663,7 @@
 			"WEEKLY_RECAP": "Еженедельный Обзор",
 			"MONTHLY_RECAP": "Ежемесячный Обзор",
 			"INSTALL_PLUGIN": "Установить плагин",
-			"OPEN_LOG_HISTORY": "Logs"
+			"OPEN_LOG_HISTORY": "Журнал событий"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Часовой учет времени",
@@ -4707,14 +4707,14 @@
 			"RESET_ACCESSIBILITY_PERMISSION": "Сбросить специальные возможности",
 			"ACCESSIBILITY_DENIED_HINT": "Специальные возможности запрещены. Нажмите 'Сбросить специальные возможности', чтобы сбросить разрешение, или откройте Системные настройки.",
 			"ACTIVE_WINDOW": "Предпросмотр активного окна",
-			"HARDWARE_ACCELERATION_HINT": "If you are experiencing issues with screen capture, try disabling hardware acceleration in the app settings and relaunching the app.",
-			"ENABLE_HARDWARE_ACCELERATION": "Enable Hardware Acceleration",
-			"DISABLE_HARDWARE_ACCELERATION": "Disable Hardware Acceleration",
-			"HARDWARE_ACCELERATION_STATUS": "Hardware Acceleration is currently",
+			"HARDWARE_ACCELERATION_HINT": "Если у вас возникают проблемы с захватом экрана, попробуйте отключить аппаратное ускорение в настройках приложения и перезапустите его.",
+			"ENABLE_HARDWARE_ACCELERATION": "Включить аппаратное ускорение",
+			"DISABLE_HARDWARE_ACCELERATION": "Отключить аппаратное ускорение",
+			"HARDWARE_ACCELERATION_STATUS": "Аппаратное ускорение в данный момент",
 			"ENABLED": "Enabled",
 			"DISABLED": "Disabled",
-			"HARDWARE_ACCELERATION_DESC": "Hardware acceleration can improve performance but may cause issues on some systems. If you experience problems with screen capture, try toggling this setting.",
-			"HARDWARE_ACCELERATION": "Hardware Acceleration"
+			"HARDWARE_ACCELERATION_DESC": "Аппаратное ускорение может улучшить производительность, но может вызывать проблемы на некоторых системах. Если у вас возникают проблемы с захватом экрана, попробуйте переключить этот параметр.",
+			"HARDWARE_ACCELERATION": "Аппаратное ускорение"
 		}
 	},
 	"SERVER": "Сервер",
