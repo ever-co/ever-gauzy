@@ -12,6 +12,7 @@ export class AuditLogHandler {
 
 	/** Timestamp of the last successful purge — skip DB call if interval hasn't elapsed. */
 	private _lastPurgedAt: Date | null = null;
+	private _purgeInProgress = false;
 
 	/** How often to check whether a purge is due (15 min). */
 	private static readonly PURGE_INTERVAL_MS = 15 * 60 * 1000;
@@ -61,22 +62,25 @@ export class AuditLogHandler {
 
 		// Skip if we purged recently
 		if (
-			this._lastPurgedAt &&
-			now.getTime() - this._lastPurgedAt.getTime() < AuditLogHandler.PURGE_INTERVAL_MS
+			this._purgeInProgress || (
+				this._lastPurgedAt &&
+				now.getTime() - this._lastPurgedAt.getTime() < AuditLogHandler.PURGE_INTERVAL_MS
+			)
 		) {
 			return;
 		}
 
 		const cutoff = new Date(now.getTime() - AuditLogHandler.RETENTION_DAYS * 24 * 60 * 60 * 1000);
-
+		this._purgeInProgress = true;
+		this._lastPurgedAt = now;
 		this._auditLogService
 			.remove({ createdAt: cutoff })
-			.then(() => {
-				this._lastPurgedAt = now;
-			})
 			.catch((err) => {
 				console.error('[AuditLog] Failed to purge old logs:', err);
+			}).finally(() => {
+				this._purgeInProgress = false;
 			});
+		;
 	}
 
 	async timerAuditInfo(message: string): Promise<void> {
