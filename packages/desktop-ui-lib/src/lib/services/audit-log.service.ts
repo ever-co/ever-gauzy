@@ -10,7 +10,8 @@ import {
 export class AuditLogService {
 	private readonly electronService = inject(ElectronService);
 	private async auditLog(request: ILogRequest): Promise<void> {
-		return this.electronService.invoke('WRITE_AUDIT_LOG', request);
+		this.electronService.ipcRenderer.send('WRITE_AUDIT_LOG', request);
+		return;
 	}
 
 	public timerAuditLogInfo(message: string) {

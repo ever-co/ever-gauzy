@@ -4,7 +4,7 @@ import {
 	TimerActionTypeEnum,
 	TimerSyncStateEnum,
 	ILogRequest,
-    ILogRequestPage
+	ILogRequestPage
 } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
@@ -594,7 +594,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	// Channel 2: Just for the Diary/Log
-	ipcMain.handle('WRITE_AUDIT_LOG', async (_, arg: ILogRequest) => {
+	ipcMain.on('WRITE_AUDIT_LOG', async (_, arg: ILogRequest) => {
 		return getAuditLogHandler().logAudit(
 			arg.logLevel || 'info',
 			arg.serviceName || 'timer',
@@ -1487,7 +1487,8 @@ export function removeMainListener() {
 		'get_last_screen_capture',
 		'update_app_setting',
 		'update_project_on',
-		'request_permission'
+		'request_permission',
+		'WRITE_AUDIT_LOG',
 	];
 
 	mainListeners.forEach((listener) => {
@@ -1537,7 +1538,6 @@ export function removeAllHandlers() {
 		'OPEN_ACCESSIBILITY_SETTINGS',
 		'RELAUNCH_APP',
 		'GET_PLATFORM',
-		'WRITE_AUDIT_LOG',
 		'GET_AUDIT_LOGS',
 		'GET_HARDWARE_ACCELERATION_STATE',
 		'SET_HARDWARE_ACCELERATION'
