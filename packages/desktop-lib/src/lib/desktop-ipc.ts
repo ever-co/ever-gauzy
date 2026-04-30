@@ -2,7 +2,9 @@ import {
 	DesktopSetupConfig,
 	IActivityWatchEventResult,
 	TimerActionTypeEnum,
-	TimerSyncStateEnum
+	TimerSyncStateEnum,
+	ILogRequest,
+    ILogRequestPage
 } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
@@ -41,7 +43,7 @@ import {
 	TimerService,
 	TimerTO,
 	UserService,
-	Screenshot
+	Screenshot,
 } from './offline';
 import { pluginListeners } from './plugin-system';
 import { AkitaStorageHandler } from './storage/akita-storage.handler';
@@ -50,6 +52,7 @@ import { TranslateService } from './translation';
 import { ActivityWindow } from '@gauzy/desktop-activity';
 import { DesktopPermissionHandler } from './utilities/desktop-permission-handler';
 import { runTccutil, getAppId } from './utilities/util';
+import { AuditLogHandler } from './audit';
 
 // Lazily initialized — construction is deferred until after app.ready to avoid
 // native-module loads (better-sqlite3, uiohook-napi) and Electron API calls
@@ -63,6 +66,8 @@ let _windowManager: WindowManager | null = null;
 let _appWindowManager: AppWindowManager | null = null;
 let _screenshotService: ScreenshotService | null = null;
 let _activeWindow: ActivityWindow | null = null;
+let _auditLogHandler: AuditLogHandler | null = null;
+
 
 function getTimerHandler(): TimerHandler {
 	if (!_timerHandler) _timerHandler = new TimerHandler();
@@ -100,6 +105,11 @@ function getScreenshotService(): ScreenshotService {
 function getActiveWindow(): ActivityWindow {
 	if (!_activeWindow) _activeWindow = ActivityWindow.getInstance();
 	return _activeWindow;
+}
+
+function getAuditLogHandler(): AuditLogHandler {
+	if (!_auditLogHandler) _auditLogHandler = AuditLogHandler.getInstance();
+	return _auditLogHandler;
 }
 
 export function setupAkitaStorageHandler() {
@@ -481,14 +491,17 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			return { success: false, reason: 'unauthorized' };
 		}
 		try {
+			await getAuditLogHandler().logAudit('info', 'screenshot', 'Begin testing screenshot capture');
 			const sources = await desktopCapturer.getSources({
 				types: ['screen'],
 				thumbnailSize: { width: 320, height: 200 }
 			});
+			await getAuditLogHandler().logAudit('info', 'screenshot', `Screenshot sources found: ${sources.length}`);
 			return sources.length > 0
 				? { success: true, thumbnail: sources[0].thumbnail.toDataURL() }
 				: { success: false, reason: 'no_sources' };
 		} catch (err) {
+			await getAuditLogHandler().logAudit('error', 'screenshot', `Error testing screenshot capture: ${err.message}`);
 			return { success: false, reason: err.message };
 		}
 	});
@@ -536,9 +549,15 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.handle('OPEN_PRIVACY_SETTINGS', () => {
-		shell.openExternal(
-			'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture'
-		);
+		switch (process.platform) {
+			case 'darwin':
+				shell.openExternal(
+					'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture'
+				);
+				break;
+			default:
+				return;
+		}
 	});
 
 	ipcMain.handle('RESET_ACCESSIBILITY_PERMISSION', async () => {
@@ -558,14 +577,49 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.handle('OPEN_ACCESSIBILITY_SETTINGS', () => {
-		shell.openExternal(
-			'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'
-		);
+		switch (process.platform) {
+			case 'darwin':
+				shell.openExternal(
+					'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'
+				);
+				break;
+			default:
+				return;
+		}
 	});
 
 	ipcMain.handle('RELAUNCH_APP', () => {
 		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
 		app.exit(0);
+	});
+
+	// Channel 2: Just for the Diary/Log
+	ipcMain.handle('WRITE_AUDIT_LOG', async (_, arg: ILogRequest) => {
+		return getAuditLogHandler().logAudit(
+			arg.logLevel || 'info',
+			arg.serviceName || 'timer',
+			arg.message,
+		);
+	});
+
+	ipcMain.handle('GET_AUDIT_LOGS', async (_, arg: ILogRequestPage) => {
+		return getAuditLogHandler().getAuditLogs(
+			arg.logLevel,
+			arg.serviceName,
+			arg.page,
+			arg.limit
+		);
+	});
+
+	ipcMain.handle('GET_HARDWARE_ACCELERATION_STATE', async () => {
+		const configs = LocalStore.getStore('configs');
+		return configs?.hardwareAccelerationDisabled;
+	});
+
+	ipcMain.handle('SET_HARDWARE_ACCELERATION', async (_, disabled: boolean) => {
+		LocalStore.updateConfigSetting({
+			hardwareAccelerationDisabled: disabled
+		});
 	});
 
 	pluginListeners();
@@ -655,6 +709,7 @@ export function ipcTimer(
 		for (const window of windows) {
 			getWindowManager().webContents(window)?.send?.('offline-handler', true);
 		}
+		await getAuditLogHandler().logAudit('warn', 'timer', 'Connectivity lost, Offline mode activated');
 	});
 
 	getOfflineMode().on('connection-restored', async () => {
@@ -668,6 +723,7 @@ export function ipcTimer(
 				getWindowManager().webContents(window)?.send?.('offline-handler', false);
 			}
 			await sequentialSyncQueue(timeTrackerWindow);
+			await getAuditLogHandler().logAudit('info', 'timer', 'Connectivity restored, Offline mode deactivated');
 		} catch (error) {
 			log.error('Error on connection restored', error);
 			throw new UIError('500', error, 'IPCRESTORE');
@@ -1480,7 +1536,11 @@ export function removeAllHandlers() {
 		'RESET_ACCESSIBILITY_PERMISSION',
 		'OPEN_ACCESSIBILITY_SETTINGS',
 		'RELAUNCH_APP',
-		'GET_PLATFORM'
+		'GET_PLATFORM',
+		'WRITE_AUDIT_LOG',
+		'GET_AUDIT_LOGS',
+		'GET_HARDWARE_ACCELERATION_STATE',
+		'SET_HARDWARE_ACCELERATION'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

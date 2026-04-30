@@ -650,13 +650,15 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			this.menus = this.isServer
 				? ['TIMER_TRACKER.SETTINGS.UPDATE', 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS', 'MENU.ABOUT']
 				: [
-					...(allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
-					...(allowScreenshotCapture && this.platformOS === 'darwin' && this.isDesktopTimer ? ['TIMER_TRACKER.PERMISSIONS.MENU_LABEL'] : []),
-					'TIMER_TRACKER.TIMER',
-					'TIMER_TRACKER.SETTINGS.UPDATE',
-					'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
-					'MENU.ABOUT'
-				];
+						...(allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
+						...(allowScreenshotCapture && this.isDesktopTimer
+							? ['TIMER_TRACKER.PERMISSIONS.MENU_LABEL']
+							: []),
+						'TIMER_TRACKER.TIMER',
+						'TIMER_TRACKER.SETTINGS.UPDATE',
+						'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
+						'MENU.ABOUT'
+					];
 			const lastMenu =
 				this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
 			this._selectedMenu$.next(lastMenu);
@@ -1074,7 +1076,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 					const user = await this.timeTrackerService.getUserDetail();
 					this.currentUser$.next(user);
 				}
-
 			} catch (error) {
 				console.log('User Detail error', error);
 			}

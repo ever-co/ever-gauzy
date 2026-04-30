@@ -900,7 +900,8 @@
 		"noninteractive",
 		"NEEDRESTART",
 		"tccutil",
-		"systempreferences"
+		"systempreferences",
+		"nums"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

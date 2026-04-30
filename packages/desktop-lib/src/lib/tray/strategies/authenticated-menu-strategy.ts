@@ -9,7 +9,8 @@ import {
 	OpenSettingsCommand,
 	OpenTimerCommand,
 	StartTimerCommand,
-	StopTimerCommand
+	StopTimerCommand,
+	OpenLogWindowCommand
 } from '../commands';
 import { IConfigStore, IMenuStrategy, ITranslationService, IWindowService } from '../interfaces';
 
@@ -115,6 +116,18 @@ export class AuthenticatedMenuStrategy implements IMenuStrategy {
 					.build()
 			);
 		}
+
+		// Log history window
+		if (appConfig.timeTrackerWindow) {
+			menu.push(
+				new MenuItemBuilder()
+					.withId('9')
+					.withLabel(this.translationService.instant('TIMER_TRACKER.MENU.OPEN_LOG_HISTORY'))
+					.withCommand(new OpenLogWindowCommand(this.windowService))
+					.build()
+			)
+		}
+
 
 		menu.push(new MenuItemBuilder().asSeparator().build());
 

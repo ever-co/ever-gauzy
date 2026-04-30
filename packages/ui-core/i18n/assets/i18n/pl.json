@@ -4643,7 +4643,8 @@
 			"DAILY_RECAP": "Podsumowanie Dziennie",
 			"WEEKLY_RECAP": "Cotygodniowe Podsumowanie",
 			"MONTHLY_RECAP": "Miesięczne Podsumowanie",
-			"INSTALL_PLUGIN": "Zainstaluj wtyczkę"
+			"INSTALL_PLUGIN": "Zainstaluj wtyczkę",
+			"OPEN_LOG_HISTORY": "Historia dzienników"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Śledzenie czasu według godzin",
@@ -4686,7 +4687,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "Ustawienia dostępności",
 			"RESET_ACCESSIBILITY_PERMISSION": "Zresetuj dostępność",
 			"ACCESSIBILITY_DENIED_HINT": "Dostępność została odmówiona. Kliknij 'Zresetuj dostępność', aby zresetować uprawnienie, lub otwórz Ustawienia systemowe.",
-			"ACTIVE_WINDOW": "Podgląd aktywnego okna"
+			"ACTIVE_WINDOW": "Podgląd aktywnego okna",
+			"HARDWARE_ACCELERATION_HINT": "Jeśli masz problemy z przechwytywaniem ekranu, spróbuj wyłączyć akcelerację sprzętową w ustawieniach aplikacji i uruchom ją ponownie.",
+			"ENABLE_HARDWARE_ACCELERATION": "Włącz akcelerację sprzętową",
+			"DISABLE_HARDWARE_ACCELERATION": "Wyłącz akcelerację sprzętową",
+			"HARDWARE_ACCELERATION_STATUS": "Akceleracja sprzętowa jest obecnie",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"HARDWARE_ACCELERATION_DESC": "Akceleracja sprzętowa może poprawić wydajność, ale może powodować problemy na niektórych systemach. Jeśli masz problemy z przechwytywaniem ekranu, spróbuj przełączyć to ustawienie.",
+			"HARDWARE_ACCELERATION": "Akceleracja sprzętowa"
 		}
 	},
 	"SERVER": "Serwer",

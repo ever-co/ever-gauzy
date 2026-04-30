@@ -4629,7 +4629,8 @@
 			"DAILY_RECAP": "ملخص يومي",
 			"WEEKLY_RECAP": "ملخص أسبوعي",
 			"MONTHLY_RECAP": "ملخص شهري",
-			"INSTALL_PLUGIN": "تثبيت الإضافة"
+			"INSTALL_PLUGIN": "تثبيت الإضافة",
+			"OPEN_LOG_HISTORY": "سجل الأحداث"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "تتبع الوقت بالساعة",
@@ -4672,7 +4673,15 @@
 			"OPEN_ACCESSIBILITY_SETTINGS": "إعدادات إمكانية الوصول",
 			"RESET_ACCESSIBILITY_PERMISSION": "إعادة تعيين إمكانية الوصول",
 			"ACCESSIBILITY_DENIED_HINT": "تم رفض إمكانية الوصول. انقر على 'إعادة تعيين إمكانية الوصول' لإعادة تعيين الإذن، أو افتح إعدادات النظام.",
-			"ACTIVE_WINDOW": "معاينة النافذة النشطة"
+			"ACTIVE_WINDOW": "معاينة النافذة النشطة",
+			"HARDWARE_ACCELERATION_HINT": "إذا كنت تواجه مشكلات في التقاط الشاشة، فحاول تعطيل تسريع الأجهزة في إعدادات التطبيق وإعادة تشغيله.",
+			"ENABLE_HARDWARE_ACCELERATION": "تمكين تسريع الأجهزة",
+			"DISABLE_HARDWARE_ACCELERATION": "تعطيل تسريع الأجهزة",
+			"HARDWARE_ACCELERATION_STATUS": "تسريع الأجهزة حاليًا",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"HARDWARE_ACCELERATION_DESC": "يمكن لتسريع الأجهزة تحسين الأداء، لكنه قد يسبب مشكلات على بعض الأنظمة. إذا واجهت مشكلات في التقاط الشاشة، حاول تبديل هذا الإعداد.",
+			"HARDWARE_ACCELERATION": "تسريع الأجهزة"
 		}
 	},
 	"SERVER": "خادم",
