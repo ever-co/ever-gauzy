@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-16-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-17-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 ## Contributors ✨
 
@@ -32,6 +32,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/abinandh15"><img src="https://avatars.githubusercontent.com/u/47912011?v=4?s=100" width="100px;" alt="Abinandh"/><br /><sub><b>Abinandh</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Aabinandh15" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=abinandh15" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Aabinandh15" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/PavelDenchev"><img src="https://avatars.githubusercontent.com/u/25152459?v=4?s=100" width="100px;" alt="PavelDenchev"/><br /><sub><b>PavelDenchev</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3APavelDenchev" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=PavelDenchev" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3APavelDenchev" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.mkasigwa.com/"><img src="https://avatars.githubusercontent.com/u/38250874?v=4?s=100" width="100px;" alt="Miracle Kasigwa"/><br /><sub><b>Miracle Kasigwa</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3AMKasigwa" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=MKasigwa" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3AMKasigwa" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
   <tfoot>

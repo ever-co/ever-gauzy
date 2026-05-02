@@ -119,6 +119,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/25152459?v=4",
 			"profile": "https://github.com/PavelDenchev",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "MKasigwa",
+			"name": "Miracle Kasigwa",
+			"avatar_url": "https://avatars.githubusercontent.com/u/38250874?v=4",
+			"profile": "https://www.mkasigwa.com/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
