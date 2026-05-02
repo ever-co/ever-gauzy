@@ -231,6 +231,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/58215972?v=4",
 			"profile": "https://github.com/Mahesh-Umachagi",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "RobinHossain",
+			"name": "Robin Hossain",
+			"avatar_url": "https://avatars.githubusercontent.com/u/3712162?v=4",
+			"profile": "http://w3bd.com/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
