@@ -336,6 +336,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/67746440?v=4",
 			"profile": "https://github.com/gitshas",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "fvdavid",
+			"name": "David Tobing",
+			"avatar_url": "https://avatars.githubusercontent.com/u/11892197?v=4",
+			"profile": "https://fvdavid.github.io/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
