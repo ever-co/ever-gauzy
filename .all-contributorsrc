@@ -441,6 +441,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/24277041?v=4",
 			"profile": "https://www.linkedin.com/in/goofy5752/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "pcodexive",
+			"name": "pcodexive",
+			"avatar_url": "https://avatars.githubusercontent.com/u/64474006?v=4",
+			"profile": "https://github.com/pcodexive",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,

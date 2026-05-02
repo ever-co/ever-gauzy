@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-62-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-63-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-57-orange.svg?style=flat-square)](#contributors-)
@@ -92,6 +92,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/IgorMinailov"><img src="https://avatars.githubusercontent.com/u/42372439?v=4?s=100" width="100px;" alt="IgorMinailov"/><br /><sub><b>IgorMinailov</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3AIgorMinailov" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=IgorMinailov" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3AIgorMinailov" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Jycreyn"><img src="https://avatars.githubusercontent.com/u/94803198?v=4?s=100" width="100px;" alt="Jycreyn"/><br /><sub><b>Jycreyn</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3AJycreyn" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=Jycreyn" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3AJycreyn" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/goofy5752/"><img src="https://avatars.githubusercontent.com/u/24277041?v=4?s=100" width="100px;" alt="goofy5752"/><br /><sub><b>goofy5752</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Agoofy5752" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=goofy5752" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Agoofy5752" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/pcodexive"><img src="https://avatars.githubusercontent.com/u/64474006?v=4?s=100" width="100px;" alt="pcodexive"/><br /><sub><b>pcodexive</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Apcodexive" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=pcodexive" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Apcodexive" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
   <tfoot>
