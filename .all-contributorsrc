@@ -70,6 +70,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/6750734?v=4",
 			"profile": "https://www.airlyft.one/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "GloireMutaliko21",
+			"name": "Gloire Mutaliko (Salva)",
+			"avatar_url": "https://avatars.githubusercontent.com/u/86450367?v=4",
+			"profile": "https://gloire-mutaliko.vercel.app/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
