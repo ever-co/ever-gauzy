@@ -266,6 +266,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/22634319?v=4",
 			"profile": "https://ai-research.dev/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "ajay-khandla",
+			"name": "Ajay Khandla",
+			"avatar_url": "https://avatars.githubusercontent.com/u/70377939?v=4",
+			"profile": "https://ackplus.com/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
