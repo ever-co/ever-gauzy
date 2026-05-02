@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-24-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-25-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-57-orange.svg?style=flat-square)](#contributors-)
@@ -44,6 +44,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Gramosx"><img src="https://avatars.githubusercontent.com/u/23419372?v=4?s=100" width="100px;" alt="Govindram Solanki"/><br /><sub><b>Govindram Solanki</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3AGramosx" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=Gramosx" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3AGramosx" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AndrewDavydenko"><img src="https://avatars.githubusercontent.com/u/20084357?v=4?s=100" width="100px;" alt="Andrew"/><br /><sub><b>Andrew</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3AAndrewDavydenko" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=AndrewDavydenko" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3AAndrewDavydenko" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AlishMekliov931"><img src="https://avatars.githubusercontent.com/u/22296670?v=4?s=100" width="100px;" alt="Alish"/><br /><sub><b>Alish</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3AAlishMekliov931" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=AlishMekliov931" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3AAlishMekliov931" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ajay7868"><img src="https://avatars.githubusercontent.com/u/17920761?v=4?s=100" width="100px;" alt="ajay yadav"/><br /><sub><b>ajay yadav</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Aajay7868" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=ajay7868" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Aajay7868" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
   <tfoot>

@@ -175,6 +175,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/22296670?v=4",
 			"profile": "https://github.com/AlishMekliov931",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "ajay7868",
+			"name": "ajay yadav",
+			"avatar_url": "https://avatars.githubusercontent.com/u/17920761?v=4",
+			"profile": "https://github.com/ajay7868",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
