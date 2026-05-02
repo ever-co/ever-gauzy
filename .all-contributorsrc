@@ -147,6 +147,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/78637183?v=4",
 			"profile": "https://github.com/coderNadir",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "badalkhatri0924",
+			"name": "Badal Khatri",
+			"avatar_url": "https://avatars.githubusercontent.com/u/81486442?v=4",
+			"profile": "https://github.com/badalkhatri0924",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
