@@ -273,6 +273,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/70377939?v=4",
 			"profile": "https://ackplus.com/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "SalathielGenese",
+			"name": "Salathiel Genese",
+			"avatar_url": "https://avatars.githubusercontent.com/u/6409576?v=4",
+			"profile": "https://salathiel.genese.name/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
