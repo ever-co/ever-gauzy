@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-27-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-28-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 ## Contributors ✨
 
@@ -45,6 +45,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ajay7868"><img src="https://avatars.githubusercontent.com/u/17920761?v=4?s=100" width="100px;" alt="ajay yadav"/><br /><sub><b>ajay yadav</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Aajay7868" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=ajay7868" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Aajay7868" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/PoojaShah9"><img src="https://avatars.githubusercontent.com/u/26397830?v=4?s=100" width="100px;" alt="Pooja Shah"/><br /><sub><b>Pooja Shah</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3APoojaShah9" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=PoojaShah9" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3APoojaShah9" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/boyanstanchev"><img src="https://avatars.githubusercontent.com/u/32265224?v=4?s=100" width="100px;" alt="Boyan Stanchev"/><br /><sub><b>Boyan Stanchev</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Aboyanstanchev" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=boyanstanchev" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Aboyanstanchev" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Deko898"><img src="https://avatars.githubusercontent.com/u/33526470?v=4?s=100" width="100px;" alt="Deko"/><br /><sub><b>Deko</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3ADeko898" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=Deko898" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3ADeko898" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
   <tfoot>
