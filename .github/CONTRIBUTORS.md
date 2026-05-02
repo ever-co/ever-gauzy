@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-51-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-52-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 ## Contributors ✨
 
@@ -77,6 +77,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/sessgreem"><img src="https://avatars.githubusercontent.com/u/39434603?v=4?s=100" width="100px;" alt="Viktor Ivanov"/><br /><sub><b>Viktor Ivanov</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Asessgreem" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=sessgreem" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Asessgreem" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/CREDO23"><img src="https://avatars.githubusercontent.com/u/103337221?v=4?s=100" width="100px;" alt="Thierry CH."/><br /><sub><b>Thierry CH.</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3ACREDO23" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=CREDO23" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3ACREDO23" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/svetlana-b"><img src="https://avatars.githubusercontent.com/u/60920490?v=4?s=100" width="100px;" alt="Svetlana Bazhynova"/><br /><sub><b>Svetlana Bazhynova</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Asvetlana-b" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=svetlana-b" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Asvetlana-b" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
   <tfoot>
