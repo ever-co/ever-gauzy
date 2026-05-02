@@ -392,6 +392,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/92793710?v=4",
 			"profile": "https://github.com/maceteligolden",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "nelsonBlack",
+			"name": "Nelson Bwogora",
+			"avatar_url": "https://avatars.githubusercontent.com/u/13407936?v=4",
+			"profile": "https://www.linkedin.com/in/nelson-bwogora-b0965713/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
