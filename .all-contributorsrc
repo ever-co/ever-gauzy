@@ -406,6 +406,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/83704005?v=4",
 			"profile": "https://cedric-karungu.vercel.app/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "alish931",
+			"name": "alish931",
+			"avatar_url": "https://avatars.githubusercontent.com/u/41296425?v=4",
+			"profile": "https://github.com/alish931",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,

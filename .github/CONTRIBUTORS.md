@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-57-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-58-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-57-orange.svg?style=flat-square)](#contributors-)
@@ -87,6 +87,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://cedric-karungu.vercel.app/"><img src="https://avatars.githubusercontent.com/u/83704005?v=4?s=100" width="100px;" alt="Lord VB &#124; Evernix"/><br /><sub><b>Lord VB &#124; Evernix</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3ACedric921" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=Cedric921" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3ACedric921" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/alish931"><img src="https://avatars.githubusercontent.com/u/41296425?v=4?s=100" width="100px;" alt="alish931"/><br /><sub><b>alish931</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Aalish931" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=alish931" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Aalish931" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
   <tfoot>
