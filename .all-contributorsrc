@@ -350,6 +350,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/35149259?v=4",
 			"profile": "https://github.com/paradoxe35",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "sessgreem",
+			"name": "Viktor Ivanov",
+			"avatar_url": "https://avatars.githubusercontent.com/u/39434603?v=4",
+			"profile": "https://github.com/sessgreem",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
