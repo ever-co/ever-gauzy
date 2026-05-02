@@ -39,7 +39,7 @@ export class ScreenshotService implements IScreenshotService<ScreenshotTO> {
 	public async update(screenshot: Partial<Screenshot>): Promise<void> {
 		try {
 			if (!screenshot.id) {
-				return console.error('WARN[KB_MOUSE_SERVICE]: No keyboard and mouse data, cannot update');
+				return console.error('WARN[SCREENSHOT_SERVICE]: No screenshot data, cannot update');
 			}
 			await this._screenshotDAO.update(screenshot.id, screenshot.toObject());
 		} catch (error) {

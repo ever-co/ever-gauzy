@@ -75,7 +75,9 @@ import { ActivityWatchComponent } from '../integrations/activity-watch/view/acti
 import { LanguageElectronService } from '../language/language-electron.service';
 import {
 	InterruptedSequenceQueue,
+	IScreenshotQueue,
 	ISequence,
+	ScreenshotQueue,
 	SequenceQueue,
 	TimeSlotQueueService,
 	ViewQueueStateUpdater
@@ -107,13 +109,29 @@ import { HumanizePipe } from './pipes/humanize.pipe';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
 import { TimeTrackerStatusComponent } from './time-tracker-status/time-tracker-status.component';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
-import { TimeTrackerService } from './time-tracker.service';
+import { IImageCreatePayload, IScreenshotUploadContext, TimeTrackerService } from './time-tracker.service';
 import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog/timer-tracker-change-dialog.component';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
 	REMOTE = 'remote',
 	STOP = 'stop'
+}
+
+interface IScreen {
+	width: number;
+	height: number;
+}
+
+interface IScreenshotRequest {
+	screenSize: IScreen;
+	activeWindow?: { id: string } | null;
+}
+
+interface IScreenshotResult {
+	img: Buffer;
+	name: string;
+	id: string;
 }
 
 @UntilDestroy({ checkProperties: true })
@@ -146,6 +164,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _permissions$: Subject<any> = new Subject();
 	private _lastTime = 0;
 	private _isLockSyncProcess = false;
+	private _isLockSyncScreenshotProcess = false;
 	private _startMode = TimerStartMode.STOP;
 	private _isSpecialLogout = false;
 	private _isRestartAndUpdate = false;
@@ -315,8 +334,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	private _inQueue$: BehaviorSubject<ViewQueueStateUpdater> = new BehaviorSubject({ size: 0, inProgress: false });
 
+	private _inScreenshotQueue$: BehaviorSubject<ViewQueueStateUpdater> = new BehaviorSubject({ size: 0, inProgress: false });
+
 	public get inQueue$(): Observable<ViewQueueStateUpdater> {
 		return this._inQueue$.asObservable();
+	}
+
+	public get inScreenshotQueue$(): Observable<ViewQueueStateUpdater> {
+		return this._inScreenshotQueue$.asObservable();
 	}
 
 	private _isRefresh$: BehaviorSubject<boolean> = new BehaviorSubject(false);
@@ -367,6 +392,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public get inQueue(): ViewQueueStateUpdater {
 		return this._inQueue$.getValue();
+	}
+
+	public get inScreenshotQueue(): ViewQueueStateUpdater {
+		return this._inScreenshotQueue$.getValue();
 	}
 
 	public get _weeklyLimit(): number {
@@ -1560,6 +1589,47 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			})
 		);
 
+		this.electronService.ipcRenderer.on('sync-screenshot-error', (_, arg: IScreenshotQueue[]) => {
+			this._ngZone.run(async () => {
+				if (this._isLockSyncScreenshotProcess) {
+					this._inScreenshotQueue$.next({
+						...this.inScreenshotQueue,
+						inProgress: false
+					})
+					return;
+				} else {
+					this._isLockSyncScreenshotProcess = true
+				}
+
+				this._inScreenshotQueue$.next({
+					...this.inScreenshotQueue,
+					inProgress: true
+				});
+
+				const screenshotQueue = new ScreenshotQueue(
+					this.timeTrackerService,
+					this._store,
+					this._auditLogService,
+					this.electronService,
+				);
+
+				for (const screenshot of arg) {
+					screenshotQueue.enqueue(screenshot);
+				}
+				await screenshotQueue.process();
+				asapScheduler.schedule(async () => {
+					try {
+						await this.electronService.ipcRenderer.invoke('FINISH_SYNCED_SCREENSHOT');
+						this.electronService.ipcRenderer.send('check-screenshot-error-sync');
+						this._isLockSyncScreenshotProcess = false;
+						console.log('✅ - Finish synced');
+					} catch (error) {
+						this._errorHandlerService.handleError(error);
+					}
+				});
+			});
+		});
+
 		this._languageElectronService.initialize();
 
 		this.electronService.ipcRenderer.on('sleep_remote_lock', (event, state: boolean) => {
@@ -1944,7 +2014,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.send('screen_shoot');
 	}
 
-	public determineScreenshot(screenSize): { width: number; height: number } {
+	public determineScreenshot(screenSize: { width: number; height: number }): { width: number; height: number } {
 		const maxDimension = Math.max(screenSize.width, screenSize.height);
 		console.log(maxDimension);
 
@@ -2156,9 +2226,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.send('expand', !this.isExpand);
 	}
 
-	public async getScreenshot(arg, isThumb: boolean | null = false): Promise<any> {
+	public async getScreenshot(arg: IScreenshotRequest, isThumb: boolean | null = false): Promise<IScreenshotResult[]> {
 		try {
-			let thumbSize = this.determineScreenshot(arg.screenSize);
+			let thumbSize: { width: number; height: number } = this.determineScreenshot(arg.screenSize);
 
 			if (isThumb)
 				thumbSize = {
@@ -2172,7 +2242,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			});
 			this._auditLogService.screenshotLogInfo(`Captured ${sources.length} screenshot(s) with thumbnail size ${thumbSize.width}x${thumbSize.height}.`);
 
-			const screens = [];
+			const screens: IScreenshotResult[] = [];
 
 			sources.forEach((source) => {
 				this._loggerService.info('screenshot_res::', JSON.stringify(source));
@@ -2210,7 +2280,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async takeScreenCapture(arg) {
+	public async takeScreenCapture(arg: { displays: IScreenshotResult[] } & IScreenshotRequest): Promise<IScreenshotResult[]> {
 		let HighResolutionScreenshots = [];
 		let lowResolutionScreenshots = [];
 
@@ -2271,7 +2341,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async uploadScreenshots(arg, timeSlotId: string, screenshots: any[]) {
+	public async uploadScreenshots(arg, timeSlotId: string, screenshots: IScreenshotResult[]) {
 		this._loggerService.info('Upload screenshot to TimeSlot api');
 		this._auditLogService.screenshotLogInfo(`Uploading ${screenshots.length} images screenshots for captured activities to time slot ID: ${timeSlotId}...`);
 		try {
@@ -2422,7 +2492,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async uploadsScreenshot(arg, imgs: any[], timeSlotId: string): Promise<Object> {
+	public async uploadsScreenshot(arg: IScreenshotUploadContext, imgs: IScreenshotResult, timeSlotId: string): Promise<Object> {
 		const b64img = this.buffToB64(imgs);
 		const fileName = this.fileNameFormat(imgs);
 		try {
@@ -2465,13 +2535,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.replace(/-+$/, ''); // Trim - from end of text
 	}
 
-	buffToB64(imgs) {
+	buffToB64(imgs: IScreenshotResult): string {
 		const bufferImg: Buffer = Buffer.isBuffer(imgs.img) ? imgs.img : Buffer.from(imgs.img);
 		const b64img = bufferImg.toString('base64');
 		return b64img;
 	}
 
-	fileNameFormat(imgs) {
+	fileNameFormat(imgs: IScreenshotResult): string {
 		const fileName = `screenshot-${moment().format('YYYYMMDDHHmmss')}-${imgs.name}.png`;
 		return this.convertToSlug(fileName);
 	}
