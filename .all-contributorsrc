@@ -196,6 +196,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/32265224?v=4",
 			"profile": "https://github.com/boyanstanchev",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "Deko898",
+			"name": "Deko",
+			"avatar_url": "https://avatars.githubusercontent.com/u/33526470?v=4",
+			"profile": "https://github.com/Deko898",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
