@@ -63,6 +63,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/7886437?v=4",
 			"profile": "https://github.com/syns2191",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "rmagon",
+			"name": "Rachit Magon",
+			"avatar_url": "https://avatars.githubusercontent.com/u/6750734?v=4",
+			"profile": "https://www.airlyft.one/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
