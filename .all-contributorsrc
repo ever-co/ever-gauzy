@@ -210,6 +210,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/20579544?v=4",
 			"profile": "https://github.com/BlagovestGerov",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "silverster0113",
+			"name": "O.K.",
+			"avatar_url": "https://avatars.githubusercontent.com/u/10062202?v=4",
+			"profile": "https://github.com/silverster0113",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
