@@ -427,6 +427,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/42372439?v=4",
 			"profile": "https://github.com/IgorMinailov",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "Jycreyn",
+			"name": "Jycreyn",
+			"avatar_url": "https://avatars.githubusercontent.com/u/94803198?v=4",
+			"profile": "https://github.com/Jycreyn",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
