@@ -56,6 +56,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/28997304?v=4",
 			"profile": "https://github.com/YavorGrancharov",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "syns2191",
+			"name": "syns",
+			"avatar_url": "https://avatars.githubusercontent.com/u/7886437?v=4",
+			"profile": "https://github.com/syns2191",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,

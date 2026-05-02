@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 ## Contributors ✨
 
@@ -19,6 +19,9 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://ackplus.com/"><img src="https://avatars.githubusercontent.com/u/27082896?v=4?s=100" width="100px;" alt="Chetan Khandla"/><br /><sub><b>Chetan Khandla</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Ackhandla94" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=ckhandla94" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Ackhandla94" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.samuelmbabhazi.com/"><img src="https://avatars.githubusercontent.com/u/111171386?v=4?s=100" width="100px;" alt="samuel mbabhazi"/><br /><sub><b>samuel mbabhazi</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Asamuelmbabhazi" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=samuelmbabhazi" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Asamuelmbabhazi" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/YavorGrancharov"><img src="https://avatars.githubusercontent.com/u/28997304?v=4?s=100" width="100px;" alt="YavorGrancharov"/><br /><sub><b>YavorGrancharov</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3AYavorGrancharov" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=YavorGrancharov" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3AYavorGrancharov" title="Reviewed Pull Requests">👀</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/syns2191"><img src="https://avatars.githubusercontent.com/u/7886437?v=4?s=100" width="100px;" alt="syns"/><br /><sub><b>syns</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Asyns2191" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=syns2191" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Asyns2191" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
   <tfoot>
