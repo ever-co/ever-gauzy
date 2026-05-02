@@ -21,6 +21,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/45813955?v=4",
 			"profile": "https://github.com/adkif",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "evereq",
+			"name": "Ruslan Konviser",
+			"avatar_url": "https://avatars.githubusercontent.com/u/118497?v=4",
+			"profile": "https://github.com/ever-co",
+			"contributions": ["ideas", "bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
