@@ -413,6 +413,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/41296425?v=4",
 			"profile": "https://github.com/alish931",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "prezhdarov",
+			"name": "Atanas Prezhdarov",
+			"avatar_url": "https://avatars.githubusercontent.com/u/27420675?v=4",
+			"profile": "https://github.com/prezhdarov",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
