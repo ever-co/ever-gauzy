@@ -1,56 +1,22 @@
 {
-  "projectName": "ever-gauzy",
-  "projectOwner": "ever-co",
-  "repoType": "github",
-  "repoHost": "https://github.com",
-  "files": [
-    ".github/CONTRIBUTORS.md"
-  ],
-  "commitConvention": "angular",
-  "contributorsPerLine": 7,
-  "contributors": [
-    {
-      "login": "rahul-rathore-576",
-      "name": "RAHUL RATHORE",
-      "avatar_url": "https://avatars.githubusercontent.com/u/41804588?v=4",
-      "profile": "https://github.com/rahul-rathore-576",
-      "contributions": [
-        "bug",
-        "code",
-        "ideas",
-        "review"
-      ]
-    },
-    {
-      "login": "evereq",
-      "name": "Ruslan Konviser",
-      "avatar_url": "https://avatars.githubusercontent.com/u/118497?v=4",
-      "profile": "https://github.com/ever-co",
-      "contributions": [
-        "business",
-        "ideas",
-        "code",
-        "bug",
-        "doc",
-        "design",
-        "infra",
-        "financial",
-        "maintenance",
-        "mentoring",
-        "projectManagement",
-        "review"
-      ]
-    },
-    {
-      "login": "adkif",
-      "name": "Adolphe Kifungo",
-      "avatar_url": "https://avatars.githubusercontent.com/u/45813955?v=4",
-      "profile": "http://adkif.netlify.app",
-      "contributions": [
-        "code",
-        "ideas",
-        "bug"
-      ]
-    }
-  ]
+	"projectName": "ever-gauzy",
+	"projectOwner": "ever-co",
+	"repoType": "github",
+	"repoHost": "https://github.com",
+	"files": [".github/CONTRIBUTORS.md"],
+	"imageSize": 100,
+	"commit": true,
+	"commitConvention": "angular",
+	"contributors": [
+		{
+			"login": "rahul-rocket",
+			"name": "Rahul R.",
+			"avatar_url": "https://avatars.githubusercontent.com/u/41804588?v=4",
+			"profile": "https://github.com/rahul-rocket",
+			"contributions": ["bug", "code", "ideas", "review"]
+		}
+	],
+	"contributorsPerLine": 7,
+	"linkToUsage": true
 }
+
