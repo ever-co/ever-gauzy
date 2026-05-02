@@ -280,6 +280,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/6409576?v=4",
 			"profile": "https://salathiel.genese.name/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "bhayanishuchi",
+			"name": "bhayanishuchi",
+			"avatar_url": "https://avatars.githubusercontent.com/u/32640339?v=4",
+			"profile": "https://github.com/bhayanishuchi",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
