@@ -378,6 +378,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/58174846?v=4",
 			"profile": "https://github.com/IronMan756",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "mbabhaziSamuel",
+			"name": "Samuel Mbabhazi",
+			"avatar_url": "https://avatars.githubusercontent.com/u/203663166?v=4",
+			"profile": "https://github.com/mbabhaziSamuel",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
