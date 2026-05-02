@@ -84,6 +84,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/43825375?v=4",
 			"profile": "https://github.com/prysiazhna",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "tsvetelina-e-y",
+			"name": "Tsvetelina Yordanova",
+			"avatar_url": "https://avatars.githubusercontent.com/u/49713089?v=4",
+			"profile": "https://github.com/tsvetelina-e-y",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
