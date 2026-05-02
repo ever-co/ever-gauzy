@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-37-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-38-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 ## Contributors ✨
 
@@ -59,6 +59,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/closedspace"><img src="https://avatars.githubusercontent.com/u/36342328?v=4?s=100" width="100px;" alt="closedspace"/><br /><sub><b>closedspace</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Aclosedspace" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=closedspace" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Aclosedspace" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://ai-research.dev/"><img src="https://avatars.githubusercontent.com/u/22634319?v=4?s=100" width="100px;" alt="Kien Duong"/><br /><sub><b>Kien Duong</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Aduongduckien" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=duongduckien" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Aduongduckien" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://ackplus.com/"><img src="https://avatars.githubusercontent.com/u/70377939?v=4?s=100" width="100px;" alt="Ajay Khandla"/><br /><sub><b>Ajay Khandla</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Aajay-khandla" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=ajay-khandla" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Aajay-khandla" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
   <tfoot>
