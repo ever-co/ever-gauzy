@@ -49,6 +49,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/111171386?v=4",
 			"profile": "https://www.samuelmbabhazi.com/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "YavorGrancharov",
+			"name": "YavorGrancharov",
+			"avatar_url": "https://avatars.githubusercontent.com/u/28997304?v=4",
+			"profile": "https://github.com/YavorGrancharov",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
