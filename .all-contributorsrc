@@ -14,6 +14,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/41804588?v=4",
 			"profile": "https://github.com/rahul-rocket",
 			"contributions": ["bug", "code", "ideas", "review"]
+		},
+		{
+			"login": "adkif",
+			"name": "Kifungo A",
+			"avatar_url": "https://avatars.githubusercontent.com/u/45813955?v=4",
+			"profile": "https://github.com/adkif",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
