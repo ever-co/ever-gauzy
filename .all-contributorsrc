@@ -259,6 +259,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/36342328?v=4",
 			"profile": "https://github.com/closedspace",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "duongduckien",
+			"name": "Kien Duong",
+			"avatar_url": "https://avatars.githubusercontent.com/u/22634319?v=4",
+			"profile": "https://ai-research.dev/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
