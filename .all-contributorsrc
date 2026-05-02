@@ -189,6 +189,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/26397830?v=4",
 			"profile": "https://github.com/PoojaShah9",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "boyanstanchev",
+			"name": "Boyan Stanchev",
+			"avatar_url": "https://avatars.githubusercontent.com/u/32265224?v=4",
+			"profile": "https://github.com/boyanstanchev",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
