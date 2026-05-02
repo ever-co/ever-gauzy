@@ -1,6 +1,6 @@
 import { QueueState } from '../../../interfaces/queue-state';
 import { IScreenshotQueue } from '../../screenshot.queue';
-import { InProgressScreenshotState } from './in-prograss-screenshot-state';
+import { InProgressScreenshotState } from './in-progress-screenshot-state';
 export class BlockedScreenshotQueueState extends QueueState<IScreenshotQueue> {
 	public enqueue(data: IScreenshotQueue): void {
 		if (this.context.isEmpty()) {

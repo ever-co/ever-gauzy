@@ -109,7 +109,7 @@ import { HumanizePipe } from './pipes/humanize.pipe';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
 import { TimeTrackerStatusComponent } from './time-tracker-status/time-tracker-status.component';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
-import { IImageCreatePayload, IScreenshotUploadContext, TimeTrackerService } from './time-tracker.service';
+import { IScreenshotUploadContext, TimeTrackerService } from './time-tracker.service';
 import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog/timer-tracker-change-dialog.component';
 
 enum TimerStartMode {
