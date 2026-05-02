@@ -357,6 +357,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/39434603?v=4",
 			"profile": "https://github.com/sessgreem",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "CREDO23",
+			"name": "Thierry CH.",
+			"avatar_url": "https://avatars.githubusercontent.com/u/103337221?v=4",
+			"profile": "https://github.com/CREDO23",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
