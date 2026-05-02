@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-43-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-44-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-57-orange.svg?style=flat-square)](#contributors-)
@@ -69,6 +69,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/shuklajay117"><img src="https://avatars.githubusercontent.com/u/4491530?v=4?s=100" width="100px;" alt="Jay Shukla"/><br /><sub><b>Jay Shukla</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Ashuklajay117" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=shuklajay117" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Ashuklajay117" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lpetrv"><img src="https://avatars.githubusercontent.com/u/12296065?v=4?s=100" width="100px;" alt="Lubomir Petrov"/><br /><sub><b>Lubomir Petrov</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Alpetrv" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=lpetrv" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Alpetrv" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
   <tfoot>
