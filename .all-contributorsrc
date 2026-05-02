@@ -105,6 +105,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/72043010?v=4",
 			"profile": "https://github.com/dokata99",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "abinandh15",
+			"name": "Abinandh",
+			"avatar_url": "https://avatars.githubusercontent.com/u/47912011?v=4",
+			"profile": "https://github.com/abinandh15",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
