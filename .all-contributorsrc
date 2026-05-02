@@ -343,6 +343,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/11892197?v=4",
 			"profile": "https://fvdavid.github.io/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "paradoxe35",
+			"name": "Paradoxe Ng",
+			"avatar_url": "https://avatars.githubusercontent.com/u/35149259?v=4",
+			"profile": "https://github.com/paradoxe35",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
