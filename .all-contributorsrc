@@ -154,6 +154,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/81486442?v=4",
 			"profile": "https://github.com/badalkhatri0924",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "Gramosx",
+			"name": "Govindram Solanki",
+			"avatar_url": "https://avatars.githubusercontent.com/u/23419372?v=4",
+			"profile": "https://github.com/Gramosx",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
