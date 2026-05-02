@@ -140,6 +140,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/32574315?v=4",
 			"profile": "https://www.kyte.one/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "coderNadir",
+			"name": "coderNadir",
+			"avatar_url": "https://avatars.githubusercontent.com/u/78637183?v=4",
+			"profile": "https://github.com/coderNadir",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
