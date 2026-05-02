@@ -203,6 +203,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/33526470?v=4",
 			"profile": "https://github.com/Deko898",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "BlagovestGerov",
+			"name": "BlagovestGerov",
+			"avatar_url": "https://avatars.githubusercontent.com/u/20579544?v=4",
+			"profile": "https://github.com/BlagovestGerov",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
