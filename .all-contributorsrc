@@ -98,6 +98,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/30652722?v=4",
 			"profile": "https://github.com/chiragParmar93",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "dokata99",
+			"name": "Doncho Donchev",
+			"avatar_url": "https://avatars.githubusercontent.com/u/72043010?v=4",
+			"profile": "https://github.com/dokata99",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
