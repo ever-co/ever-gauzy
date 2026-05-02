@@ -245,6 +245,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/36041324?v=4",
 			"profile": "https://github.com/sunk0",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "Volatus",
+			"name": "Isma",
+			"avatar_url": "https://avatars.githubusercontent.com/u/46189206?v=4",
+			"profile": "https://github.com/Volatus",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
