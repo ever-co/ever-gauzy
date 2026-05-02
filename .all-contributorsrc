@@ -294,6 +294,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/171560297?v=4",
 			"profile": "https://github.com/sarju-ackplus",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "rishi-rj-s",
+			"name": "Rishiraj S",
+			"avatar_url": "https://avatars.githubusercontent.com/u/131572506?v=4",
+			"profile": "https://www.rishiraj-sajeev.space/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,

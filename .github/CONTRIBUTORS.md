@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-41-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-42-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 ## Contributors ✨
 
@@ -63,6 +63,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://salathiel.genese.name/"><img src="https://avatars.githubusercontent.com/u/6409576?v=4?s=100" width="100px;" alt="Salathiel Genese"/><br /><sub><b>Salathiel Genese</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3ASalathielGenese" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=SalathielGenese" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3ASalathielGenese" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/bhayanishuchi"><img src="https://avatars.githubusercontent.com/u/32640339?v=4?s=100" width="100px;" alt="bhayanishuchi"/><br /><sub><b>bhayanishuchi</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Abhayanishuchi" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=bhayanishuchi" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Abhayanishuchi" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/sarju-ackplus"><img src="https://avatars.githubusercontent.com/u/171560297?v=4?s=100" width="100px;" alt="sarju-ackplus"/><br /><sub><b>sarju-ackplus</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Asarju-ackplus" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=sarju-ackplus" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Asarju-ackplus" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.rishiraj-sajeev.space/"><img src="https://avatars.githubusercontent.com/u/131572506?v=4?s=100" width="100px;" alt="Rishiraj S"/><br /><sub><b>Rishiraj S</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Arishi-rj-s" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=rishi-rj-s" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Arishi-rj-s" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
   <tfoot>
