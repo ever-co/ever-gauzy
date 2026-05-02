@@ -42,6 +42,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/27082896?v=4",
 			"profile": "https://ackplus.com/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "samuelmbabhazi",
+			"name": "samuel mbabhazi",
+			"avatar_url": "https://avatars.githubusercontent.com/u/111171386?v=4",
+			"profile": "https://www.samuelmbabhazi.com/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
