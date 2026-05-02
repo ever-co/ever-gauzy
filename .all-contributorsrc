@@ -420,6 +420,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/27420675?v=4",
 			"profile": "https://github.com/prezhdarov",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "IgorMinailov",
+			"name": "IgorMinailov",
+			"avatar_url": "https://avatars.githubusercontent.com/u/42372439?v=4",
+			"profile": "https://github.com/IgorMinailov",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
