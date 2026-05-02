@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-35-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-36-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 ## Contributors ✨
 
@@ -55,6 +55,9 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="http://w3bd.com/"><img src="https://avatars.githubusercontent.com/u/3712162?v=4?s=100" width="100px;" alt="Robin Hossain"/><br /><sub><b>Robin Hossain</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3ARobinHossain" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=RobinHossain" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3ARobinHossain" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/sunk0"><img src="https://avatars.githubusercontent.com/u/36041324?v=4?s=100" width="100px;" alt="Alexander Savov"/><br /><sub><b>Alexander Savov</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Asunk0" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=sunk0" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Asunk0" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Volatus"><img src="https://avatars.githubusercontent.com/u/46189206?v=4?s=100" width="100px;" alt="Isma"/><br /><sub><b>Isma</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3AVolatus" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=Volatus" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3AVolatus" title="Reviewed Pull Requests">👀</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/closedspace"><img src="https://avatars.githubusercontent.com/u/36342328?v=4?s=100" width="100px;" alt="closedspace"/><br /><sub><b>closedspace</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Aclosedspace" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=closedspace" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Aclosedspace" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
   <tfoot>
