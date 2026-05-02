@@ -77,6 +77,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/86450367?v=4",
 			"profile": "https://gloire-mutaliko.vercel.app/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "prysiazhna",
+			"name": "prysiazhna",
+			"avatar_url": "https://avatars.githubusercontent.com/u/43825375?v=4",
+			"profile": "https://github.com/prysiazhna",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
