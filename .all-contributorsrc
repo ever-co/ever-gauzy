@@ -112,6 +112,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/47912011?v=4",
 			"profile": "https://github.com/abinandh15",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "PavelDenchev",
+			"name": "PavelDenchev",
+			"avatar_url": "https://avatars.githubusercontent.com/u/25152459?v=4",
+			"profile": "https://github.com/PavelDenchev",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
