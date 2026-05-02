@@ -28,6 +28,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/118497?v=4",
 			"profile": "https://github.com/ever-co",
 			"contributions": ["ideas", "bug", "code", "review"]
+		},
+		{
+			"login": "AlexTasev",
+			"name": "Aleksandar Tasev",
+			"avatar_url": "https://avatars.githubusercontent.com/u/40795644?v=4",
+			"profile": "https://github.com/AlexTasev",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
