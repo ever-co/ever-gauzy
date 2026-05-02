@@ -217,6 +217,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/10062202?v=4",
 			"profile": "https://github.com/silverster0113",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "kamesh95",
+			"name": "Kamesh Dashora",
+			"avatar_url": "https://avatars.githubusercontent.com/u/16370987?v=4",
+			"profile": "https://kamesh95.github.io/react-portfolio/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
