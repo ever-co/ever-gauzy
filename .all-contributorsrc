@@ -329,6 +329,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/35723033?v=4",
 			"profile": "https://github.com/ntmonov",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "gitshas",
+			"name": "gitshas",
+			"avatar_url": "https://avatars.githubusercontent.com/u/67746440?v=4",
+			"profile": "https://github.com/gitshas",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
