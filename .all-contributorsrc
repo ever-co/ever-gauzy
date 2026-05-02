@@ -308,6 +308,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/4491530?v=4",
 			"profile": "https://github.com/shuklajay117",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "lpetrv",
+			"name": "Lubomir Petrov",
+			"avatar_url": "https://avatars.githubusercontent.com/u/12296065?v=4",
+			"profile": "https://github.com/lpetrv",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
