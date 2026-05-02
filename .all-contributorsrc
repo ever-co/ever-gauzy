@@ -168,6 +168,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/20084357?v=4",
 			"profile": "https://github.com/AndrewDavydenko",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "AlishMekliov931",
+			"name": "Alish",
+			"avatar_url": "https://avatars.githubusercontent.com/u/22296670?v=4",
+			"profile": "https://github.com/AlishMekliov931",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
