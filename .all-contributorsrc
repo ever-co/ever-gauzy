@@ -322,6 +322,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/48500636?v=4",
 			"profile": "https://github.com/lawphilenz",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "ntmonov",
+			"name": "ntmonov",
+			"avatar_url": "https://avatars.githubusercontent.com/u/35723033?v=4",
+			"profile": "https://github.com/ntmonov",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
