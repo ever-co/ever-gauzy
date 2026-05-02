@@ -126,6 +126,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/38250874?v=4",
 			"profile": "https://www.mkasigwa.com/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "RolandM99",
+			"name": "Roland MN",
+			"avatar_url": "https://avatars.githubusercontent.com/u/71874425?v=4",
+			"profile": "https://www.rolandmn.com/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
