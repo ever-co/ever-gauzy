@@ -238,6 +238,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/3712162?v=4",
 			"profile": "http://w3bd.com/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "sunk0",
+			"name": "Alexander Savov",
+			"avatar_url": "https://avatars.githubusercontent.com/u/36041324?v=4",
+			"profile": "https://github.com/sunk0",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
