@@ -371,6 +371,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/60920490?v=4",
 			"profile": "https://github.com/svetlana-b",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "IronMan756",
+			"name": "Andrew",
+			"avatar_url": "https://avatars.githubusercontent.com/u/58174846?v=4",
+			"profile": "https://github.com/IronMan756",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
