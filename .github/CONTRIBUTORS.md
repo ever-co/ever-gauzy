@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-30-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-31-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-57-orange.svg?style=flat-square)](#contributors-)
@@ -52,6 +52,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/BlagovestGerov"><img src="https://avatars.githubusercontent.com/u/20579544?v=4?s=100" width="100px;" alt="BlagovestGerov"/><br /><sub><b>BlagovestGerov</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3ABlagovestGerov" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=BlagovestGerov" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3ABlagovestGerov" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/silverster0113"><img src="https://avatars.githubusercontent.com/u/10062202?v=4?s=100" width="100px;" alt="O.K."/><br /><sub><b>O.K.</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Asilverster0113" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=silverster0113" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Asilverster0113" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://kamesh95.github.io/react-portfolio/"><img src="https://avatars.githubusercontent.com/u/16370987?v=4?s=100" width="100px;" alt="Kamesh Dashora"/><br /><sub><b>Kamesh Dashora</b></sub></a><br /><a href="https://github.com/ever-co/ever-gauzy/issues?q=author%3Akamesh95" title="Bug reports">🐛</a> <a href="https://github.com/ever-co/ever-gauzy/commits?author=kamesh95" title="Code">💻</a> <a href="https://github.com/ever-co/ever-gauzy/pulls?q=is%3Apr+reviewed-by%3Akamesh95" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
   <tfoot>
