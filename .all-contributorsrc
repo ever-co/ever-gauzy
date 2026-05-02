@@ -224,6 +224,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/16370987?v=4",
 			"profile": "https://kamesh95.github.io/react-portfolio/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "Mahesh-Umachagi",
+			"name": "Mahesh Umachagi",
+			"avatar_url": "https://avatars.githubusercontent.com/u/58215972?v=4",
+			"profile": "https://github.com/Mahesh-Umachagi",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
