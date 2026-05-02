@@ -399,6 +399,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/13407936?v=4",
 			"profile": "https://www.linkedin.com/in/nelson-bwogora-b0965713/",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "Cedric921",
+			"name": "Lord VB | Evernix",
+			"avatar_url": "https://avatars.githubusercontent.com/u/83704005?v=4",
+			"profile": "https://cedric-karungu.vercel.app/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
