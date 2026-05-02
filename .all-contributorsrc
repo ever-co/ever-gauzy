@@ -434,6 +434,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/94803198?v=4",
 			"profile": "https://github.com/Jycreyn",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "goofy5752",
+			"name": "goofy5752",
+			"avatar_url": "https://avatars.githubusercontent.com/u/24277041?v=4",
+			"profile": "https://www.linkedin.com/in/goofy5752/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
