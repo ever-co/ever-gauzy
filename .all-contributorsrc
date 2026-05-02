@@ -35,6 +35,13 @@
 			"avatar_url": "https://avatars.githubusercontent.com/u/40795644?v=4",
 			"profile": "https://github.com/AlexTasev",
 			"contributions": ["bug", "code", "review"]
+		},
+		{
+			"login": "ckhandla94",
+			"name": "Chetan Khandla",
+			"avatar_url": "https://avatars.githubusercontent.com/u/27082896?v=4",
+			"profile": "https://ackplus.com/",
+			"contributions": ["bug", "code", "review"]
 		}
 	],
 	"contributorsPerLine": 7,
