@@ -990,11 +990,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	async prepareWindow() {
 		/* initiate screenshot to prevent window sizing */
-		const thumbSize = {
-			width: 320,
-			height: 240
-		};
-		await this.electronService.desktopCapturer.getSources({ types: ['screen'], thumbnailSize: thumbSize });
+		try {
+			const thumbSize = {
+				width: 320,
+				height: 240
+			};
+			await this.electronService.desktopCapturer.getSources({ types: ['screen'], thumbnailSize: thumbSize });
+		} catch (error) {
+			console.error('Error preparing window:', error);
+		}
+
 	}
 
 	ngAfterViewInit(): void {

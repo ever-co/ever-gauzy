@@ -99,10 +99,10 @@ export class ScreenshotQueue extends OfflineQueue<IScreenshotQueue> {
 				next: () => { console.log('Screenshot Sync Done'); },
 			})
 
-			const stateSubscribtion = this.state$.subscribe((state) => {
+			const stateSubscription = this.state$.subscribe((state) => {
 				if (state instanceof CompletedScreenshotQueueState) {
 					subscription.unsubscribe();
-					stateSubscribtion.unsubscribe();
+					stateSubscription.unsubscribe();
 					resolve();
 				}
 			})

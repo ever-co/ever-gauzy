@@ -53,6 +53,7 @@ export class ScreenshotDAO implements DAO<ScreenshotTO> {
 		}
 		const screenshots = await query
 			.whereNotNull('imagePath')
+			.andWhere('imagePath', '!=', '')
 			.andWhere('synced', false)
 			.andWhere((qb) =>
 				qb.whereNull('retries').orWhere('retries', '<=', SCREENSHOT_RETRIES_LIMIT)
