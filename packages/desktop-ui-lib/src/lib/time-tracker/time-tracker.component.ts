@@ -988,7 +988,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return (a && !b) || (!a && b);
 	}
 
+	async prepareWindow() {
+		/* initiate screenshot to prevent window sizing */
+		const thumbSize = {
+			width: 320,
+			height: 240
+		};
+		await this.electronService.desktopCapturer.getSources({ types: ['screen'], thumbnailSize: thumbSize });
+	}
+
 	ngAfterViewInit(): void {
+		this.prepareWindow();
+
 		this.electronService.ipcRenderer.on('timer_push', (event, arg) =>
 			this._ngZone.run(async () => {
 				await this.setTime(arg);

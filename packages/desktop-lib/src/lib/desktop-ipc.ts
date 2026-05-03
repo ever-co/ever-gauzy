@@ -353,8 +353,16 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		if (isDarwin && isScreenUnauthorized()) {
 			return [];
 		}
+		const windSender = BrowserWindow.fromWebContents(event.sender);
+		const prevBound = windSender?.getBounds();
+		windSender?.setResizable(false);
+		const sources = await desktopCapturer.getSources(opts);
+		if (windSender && prevBound) {
+			windSender.setBounds(prevBound!, false);
+			windSender.setResizable(false);
+		}
 
-		return await desktopCapturer.getSources(opts);
+		return sources;
 	});
 
 	ipcMain.handle('UPDATE_SYNCED_TIMER', async (event, arg) => {
