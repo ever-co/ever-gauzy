@@ -11,7 +11,6 @@ export class AuditLogService {
 	private readonly electronService = inject(ElectronService);
 	private async auditLog(request: ILogRequest): Promise<void> {
 		this.electronService.ipcRenderer.send('WRITE_AUDIT_LOG', request);
-		return;
 	}
 
 	public timerAuditLogInfo(message: string) {

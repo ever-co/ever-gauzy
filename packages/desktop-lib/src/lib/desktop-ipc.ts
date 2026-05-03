@@ -1549,7 +1549,8 @@ export function removeTimerListener() {
 		'navigate_to_login',
 		'expand',
 		'timer_stopped',
-		'reset_permissions'
+		'reset_permissions',
+		'check-screenshot-error-sync'
 	];
 	timerListeners.forEach((listener) => {
 		ipcMain.removeAllListeners(listener);
@@ -1671,6 +1672,7 @@ async function screenshotErrorSync(window: BrowserWindow) {
 		}
 	} catch (error) {
 		console.log(`Failed get screenshot error sync ${error.message}`);
+		isScreenshotTreadLocked = false;
 	}
 
 }

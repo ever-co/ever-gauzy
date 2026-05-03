@@ -334,7 +334,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	private _inQueue$: BehaviorSubject<ViewQueueStateUpdater> = new BehaviorSubject({ size: 0, inProgress: false });
 
-	private _inScreenshotQueue$: BehaviorSubject<ViewQueueStateUpdater> = new BehaviorSubject({ size: 0, inProgress: false });
+	private readonly _inScreenshotQueue$: BehaviorSubject<ViewQueueStateUpdater> = new BehaviorSubject({ size: 0, inProgress: false });
 
 	public get inQueue$(): Observable<ViewQueueStateUpdater> {
 		return this._inQueue$.asObservable();
@@ -1635,6 +1635,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this._isLockSyncScreenshotProcess = false;
 						console.log('✅ - Finish synced');
 					} catch (error) {
+						this._isLockSyncScreenshotProcess = false;
 						this._errorHandlerService.handleError(error);
 					}
 				});

@@ -15,10 +15,10 @@ export interface IScreenshotQueue {
 
 export class ScreenshotQueue extends OfflineQueue<IScreenshotQueue> {
 	constructor(
-		private _timeTrackerService: TimeTrackerService,
-		private _store: Store,
-		private _auditLogService: AuditLogService,
-		private _electronService: ElectronService
+		private readonly _timeTrackerService: TimeTrackerService,
+		private readonly _store: Store,
+		private readonly _auditLogService: AuditLogService,
+		private readonly _electronService: ElectronService
 	) {
 		super();
 		this.state = new BlockedScreenshotQueueState(this);
@@ -35,6 +35,7 @@ export class ScreenshotQueue extends OfflineQueue<IScreenshotQueue> {
 					id: item.id,
 					remove: true
 				});
+				return;
 			}
 			const timeSlot = await this._timeTrackerService.getTimeSlot({ timeSlotId: item.timeslotId });
 			if (timeSlot?.id) {
@@ -98,9 +99,10 @@ export class ScreenshotQueue extends OfflineQueue<IScreenshotQueue> {
 				next: () => { console.log('Screenshot Sync Done'); },
 			})
 
-			this.state$.subscribe((state) => {
+			const stateSubscribtion = this.state$.subscribe((state) => {
 				if (state instanceof CompletedScreenshotQueueState) {
 					subscription.unsubscribe();
+					stateSubscribtion.unsubscribe();
 					resolve();
 				}
 			})

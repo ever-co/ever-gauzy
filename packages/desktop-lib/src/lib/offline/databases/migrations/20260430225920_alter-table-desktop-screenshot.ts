@@ -6,7 +6,7 @@ export async function up(knex: Knex): Promise<void> {
 		TABLE_NAME_SCREENSHOT,
 		(table: Knex.TableBuilder) => {
 			table.string('message').nullable();
-			table.integer('retries').nullable();
+			table.integer('retries').nullable().defaultTo(0);
 			table.timestamp('lastAttemptAt').nullable();
 		}
 	);
