@@ -4,7 +4,7 @@ import {
 	TimerActionTypeEnum,
 	TimerSyncStateEnum,
 	ILogRequest,
-    ILogRequestPage
+	ILogRequestPage
 } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
@@ -226,7 +226,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 			if (activityId) {
 				const screenshotImage = {
-					timeSlotId: arg?.timeSlotId,
+					timeslotId: arg?.timeSlotId,
 					imagePath: arg?.imagePath,
 					synced: false,
 					activityId,
@@ -268,6 +268,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			});
 			await countIntervalQueue(timeTrackerWindow, false);
 			await sequentialSyncQueue(timeTrackerWindow);
+			await screenshotErrorSync(timeTrackerWindow);
 
 			await latestScreenshots(timeTrackerWindow);
 		} catch (error) {
@@ -352,8 +353,16 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		if (isDarwin && isScreenUnauthorized()) {
 			return [];
 		}
+		const windSender = BrowserWindow.fromWebContents(event.sender);
+		const prevBound = windSender?.getBounds();
+		windSender?.setResizable(false);
+		const sources = await desktopCapturer.getSources(opts);
+		if (windSender && prevBound) {
+			windSender.setBounds(prevBound!, false);
+			windSender.setResizable(false);
+		}
 
-		return await desktopCapturer.getSources(opts);
+		return sources;
 	});
 
 	ipcMain.handle('UPDATE_SYNCED_TIMER', async (event, arg) => {
@@ -458,6 +467,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		} catch (error) {
 			log.error('Error on finish synced timer', error);
 		}
+	});
+
+	ipcMain.handle('FINISH_SYNCED_SCREENSHOT', () => {
+		isScreenshotTreadLocked = false;
 	});
 
 	ipcMain.handle('SAVED_THEME', () => {
@@ -594,7 +607,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	// Channel 2: Just for the Diary/Log
-	ipcMain.handle('WRITE_AUDIT_LOG', async (_, arg: ILogRequest) => {
+	ipcMain.on('WRITE_AUDIT_LOG', async (_, arg: ILogRequest) => {
 		return getAuditLogHandler().logAudit(
 			arg.logLevel || 'info',
 			arg.serviceName || 'timer',
@@ -621,6 +634,17 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			hardwareAccelerationDisabled: disabled
 		});
 	});
+
+	ipcMain.handle('UPDATE_SCREENSHOT_SYNC_STATUS', async (_, arg: { id: number; remove: boolean; failedReason: string; synced: boolean; retries: number }) => {
+		await getScreenshotService().update(new Screenshot({
+			id: arg.id,
+			synced: arg.synced,
+			lastAttemptAt: new Date(),
+			message: arg.failedReason,
+			retries: arg.remove ? 0 : 1,
+			...(arg.remove ? { imagePath: '' } : {})
+		}));
+	})
 
 	pluginListeners();
 }
@@ -723,6 +747,7 @@ export function ipcTimer(
 				getWindowManager().webContents(window)?.send?.('offline-handler', false);
 			}
 			await sequentialSyncQueue(timeTrackerWindow);
+			await screenshotErrorSync(timeTrackerWindow);
 			await getAuditLogHandler().logAudit('info', 'timer', 'Connectivity restored, Offline mode deactivated');
 		} catch (error) {
 			log.error('Error on connection restored', error);
@@ -1302,6 +1327,10 @@ export function ipcTimer(
 				await sequentialSyncQueue(timeTrackerWindow);
 			}
 
+			if (!isScreenshotTreadLocked) {
+				await screenshotErrorSync(timeTrackerWindow);
+			}
+
 			await latestScreenshots(timeTrackerWindow);
 
 			await countIntervalQueue(timeTrackerWindow, false);
@@ -1367,6 +1396,14 @@ export function ipcTimer(
 		} catch (error) {
 			log.error('Error on check waiting sequences', error);
 			throw new UIError('500', error, 'IPCWS');
+		}
+	});
+
+	ipcMain.on('check-screenshot-error-sync', async () => {
+		try {
+			await screenshotErrorSync(timeTrackerWindow);
+		} catch (error) {
+			log.error(`Error on check screenshot error sync`, error);
 		}
 	});
 
@@ -1487,7 +1524,8 @@ export function removeMainListener() {
 		'get_last_screen_capture',
 		'update_app_setting',
 		'update_project_on',
-		'request_permission'
+		'request_permission',
+		'WRITE_AUDIT_LOG',
 	];
 
 	mainListeners.forEach((listener) => {
@@ -1511,7 +1549,8 @@ export function removeTimerListener() {
 		'navigate_to_login',
 		'expand',
 		'timer_stopped',
-		'reset_permissions'
+		'reset_permissions',
+		'check-screenshot-error-sync'
 	];
 	timerListeners.forEach((listener) => {
 		ipcMain.removeAllListeners(listener);
@@ -1524,6 +1563,7 @@ export function removeAllHandlers() {
 		'UPDATE_SYNCED',
 		'DESKTOP_CAPTURER_GET_SOURCES',
 		'FINISH_SYNCED_TIMER',
+		'FINISH_SYNCED_SCREENSHOT',
 		'COLLECT_ACTIVITIES',
 		'START_SERVER',
 		'GET_LAST_CAPTURE',
@@ -1537,10 +1577,10 @@ export function removeAllHandlers() {
 		'OPEN_ACCESSIBILITY_SETTINGS',
 		'RELAUNCH_APP',
 		'GET_PLATFORM',
-		'WRITE_AUDIT_LOG',
 		'GET_AUDIT_LOGS',
 		'GET_HARDWARE_ACCELERATION_STATE',
-		'SET_HARDWARE_ACCELERATION'
+		'SET_HARDWARE_ACCELERATION',
+		'UPDATE_SCREENSHOT_SYNC_STATUS'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
@@ -1565,6 +1605,8 @@ export function removeTimerHandlers() {
 }
 
 let isQueueThreadTimerLocked = false;
+
+let isScreenshotTreadLocked = false;
 
 async function sequentialSyncQueue(window: BrowserWindow) {
 	try {
@@ -1595,6 +1637,44 @@ async function sequentialSyncQueue(window: BrowserWindow) {
 		log.error('Error on sequential sync queue', error);
 		throw new UIError('500', error, 'IPCWS');
 	}
+}
+
+async function screenshotErrorSync(window: BrowserWindow) {
+	if (!window) {
+		return;
+	}
+
+	try {
+		const isAuthenticated = await checkAuthenticatedUser(window);
+
+		if (!isAuthenticated) {
+			return;
+		}
+
+		await getOfflineMode().connectivity();
+
+		if (getOfflineMode().enabled) return;
+
+		isScreenshotTreadLocked = true;
+		const list = await getScreenshotService().findUnSyncedScreenshot();
+		const mapList = list.map((item) => {
+			const {imagePath, ...restItem} = item;
+			return {
+				...restItem,
+				base64Image: imagePath
+			};
+		})
+
+		if (list.length > 0) {
+			window.webContents.send('sync-screenshot-error', mapList);
+		} else {
+			isScreenshotTreadLocked = false;
+		}
+	} catch (error) {
+		console.log(`Failed get screenshot error sync ${error.message}`);
+		isScreenshotTreadLocked = false;
+	}
+
 }
 
 let size = Infinity;
