@@ -233,7 +233,6 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 					recordedAt: new Date(arg?.recordedAt)
 				}
 				await getScreenshotService().saveAndReturn(new Screenshot(screenshotImage));
-				await screenshotErrorSync(timeTrackerWindow);
 			}
 		} catch (error) {
 			console.error('failed to save failed upload screenshot image');

@@ -52,13 +52,13 @@ export class ScreenshotQueue extends OfflineQueue<IScreenshotQueue> {
 				);
 
 				if (resultImg?.id && resultImg?.thumbUrl) {
-					this._auditLogService.screenshotLogInfo(`Successfully uploaded screenshot for timeslot ${item.timeslotId} at ${item.recordedAt}`);
+					this._auditLogService.screenshotLogInfo(`Retry screenshot upload Successfully uploaded screenshot for timeslot ${item.timeslotId} at ${item.recordedAt}`);
 					await this._electronService.invoke('UPDATE_SCREENSHOT_SYNC_STATUS', {
 						id: item.id,
 						synced: true
 					});
 				} else {
-					this._auditLogService.screenshotLogError(`Failed to upload screenshot for timeslot ${item.timeslotId} at ${item.recordedAt}. No valid response from server.`);
+					this._auditLogService.screenshotLogError(`Retry screenshot upload Failed to upload screenshot for timeslot ${item.timeslotId} at ${item.recordedAt}. No valid response from server.`);
 					await this._electronService.invoke('UPDATE_SCREENSHOT_SYNC_STATUS', {
 						id: item.id,
 						synced: false,
@@ -75,7 +75,7 @@ export class ScreenshotQueue extends OfflineQueue<IScreenshotQueue> {
 				});
 			}
 		} catch (error) {
-			this._auditLogService.screenshotLogError(`Failed to retry uploading screenshot for timeslot ${item.timeslotId} at ${item.recordedAt}. Error: ${typeof error?.message === 'string' ? error.message : JSON.stringify(error?.message ?? error)}`);
+			this._auditLogService.screenshotLogError(`Retry screenshot upload Failed uploading screenshot for timeslot ${item.timeslotId} at ${item.recordedAt}. Error: ${typeof error?.message === 'string' ? error.message : JSON.stringify(error?.message ?? error)}`);
 			await this._electronService.invoke('UPDATE_SCREENSHOT_SYNC_STATUS', {
 				id: item.id,
 				synced: false,
