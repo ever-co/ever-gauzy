@@ -57,7 +57,8 @@ export class TimeSlotQueue extends OfflineQueue<ITimeSlot> {
 						const resImg =
 							await this._timeTrackerService.uploadImages(
 								{
-									...interval,
+									organizationId: interval.organizationId,
+									tenantId: interval.tenantId,
 									recordedAt: interval.startedAt,
 									timeSlotId,
 								},

@@ -45,6 +45,18 @@ import {
 } from '../services';
 import { UserOrganizationService } from './organization-selector/user-organization.service';
 
+export interface IScreenshotUploadContext {
+	timeSlotId: string;
+	tenantId: string;
+	organizationId: string;
+	recordedAt: Date | string;
+};
+
+export interface IImageCreatePayload {
+	b64Img: string,
+	fileName: string
+}
+
 @Injectable({
 	providedIn: 'root'
 })
@@ -768,7 +780,7 @@ export class TimeTrackerService {
 		);
 	}
 
-	uploadImages(values, img: any): Promise<any> {
+	uploadImages(values: IScreenshotUploadContext, img: IImageCreatePayload): Promise<any> {
 		const TIMEOUT = 60 * 1000; // Max 60 sec to upload images
 		const formData = new FormData();
 		const contentType = 'image/png';

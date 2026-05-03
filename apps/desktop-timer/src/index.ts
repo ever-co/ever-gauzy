@@ -15,7 +15,7 @@ if (process.env.NAME) {
 // and electron-store is purely synchronous file I/O — no IPC, no sandbox risk.
 if (process.platform === 'win32') {
 	try {
-		const configs = store.get('configs') as { hardwareAccelerationDisabled?: boolean } | undefined;
+		const configs = store.get('configs') as IConfig | undefined;
 		if (configs?.hardwareAccelerationDisabled) {
 			app.disableHardwareAcceleration();
 		}
