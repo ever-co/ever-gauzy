@@ -53,7 +53,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 				latest = await this._timeTrackerService.getTimeLogById(timer.timelogId);
 			} else if (timer.isStartedOffline && !timer.stoppedAt) {
 				console.log('⏱ - Silent start');
-				await this._auditLogService.timerAuditLogInfo(`Silent start for timer ${timer.id} initiated.`);
+				this._auditLogService.timerAuditLogInfo(`Silent start for timer ${timer.id} initiated.`);
 				latest = await this._timeTrackerService.toggleApiStart({
 					...timer,
 					...params
@@ -66,7 +66,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 					}
 				});
 			} else if (timer.isStartedOffline && !timer.timelogId && timer.startedAt && timer.stoppedAt) {
-				await this._auditLogService.timerAuditLogInfo(`Creating time log for offline timer ${timer.id} with start and stop times.`);
+				this._auditLogService.timerAuditLogInfo(`Creating time log for offline timer ${timer.id} with start and stop times.`);
 				latest = await this._timeTrackerService.addTimeLog({
 					startedAt: timer.startedAt,
 					stoppedAt: timer.stoppedAt,
@@ -110,7 +110,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 				if (!latest && timer.timelogId) {
 					const currentTimeLog = await this._timeTrackerService.getTimeLogById(timer.timelogId);
 					if (currentTimeLog.id && currentTimeLog.isRunning) {
-						await this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Current time log is still running, toggling stop.`);
+						this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Current time log is still running, toggling stop.`);
 						latest = await this._timeTrackerService.toggleApiStop({
 							...timer,
 							...params
@@ -124,7 +124,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 							}
 						});
 					} else if (currentTimeLog.id && timer.stoppedAt) {
-						await this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Current time log is not running, updating time log with stoppedAt.`);
+						this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Current time log is not running, updating time log with stoppedAt.`);
 						latest = await this._timeTrackerService.updateTimeLog(timer.timelogId, {
 							startedAt: timer.startedAt || currentTimeLog.startedAt,
 							stoppedAt: timer.stoppedAt,
@@ -143,7 +143,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 					}
 				} else if (latest && latest.id) {
 					if (latest.isRunning) {
-						await this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Latest time log is running, toggling stop.`);
+						this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Latest time log is running, toggling stop.`);
 						latest = await this._timeTrackerService.toggleApiStop({
 							...timer,
 							...params
@@ -157,7 +157,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 							}
 						});
 					} else if (timer.stoppedAt && !latest.isRunning) {
-						await this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Latest time log is not running, updating time log with stoppedAt.`);
+						this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Latest time log is not running, updating time log with stoppedAt.`);
 						latest = await this._timeTrackerService.updateTimeLog(latest.id, {
 							startedAt: timer.startedAt || latest.startedAt,
 							stoppedAt: timer.stoppedAt,

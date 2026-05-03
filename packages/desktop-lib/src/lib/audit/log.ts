@@ -38,7 +38,7 @@ export class AuditLogHandler {
 			serviceName: service,
 			message
 		}
-		this.saveLog(auditEntry);
+		await this.saveLog(auditEntry);
 		this.purgeOldLogs();
 	}
 
