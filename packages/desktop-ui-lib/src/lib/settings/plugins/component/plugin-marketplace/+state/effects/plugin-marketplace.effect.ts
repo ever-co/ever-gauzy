@@ -145,13 +145,7 @@ export class PluginMarketplaceEffects {
 				switchMap(({ id, params = {} }) =>
 					this.pluginService.getOne(id, params).pipe(
 						filter(Boolean), // Filter out null or undefined responses
-						map((plugin) => {
-							this.pluginMarketplaceStore.selectPlugin(plugin);
-							return [
-								PluginVersionActions.selectVersion(plugin.version),
-								PluginSourceActions.selectSource(plugin.source)
-							];
-						}),
+						map((plugin) => PluginMarketplaceActions.getOneSuccess(plugin)),
 						finalize(() => this.pluginMarketplaceStore.setLoading(false)), // Always stop loading
 						catchError((error) => {
 							this.toastrService.error(error.message || error); // Handle error properly
@@ -159,6 +153,21 @@ export class PluginMarketplaceEffects {
 						})
 					)
 				)
+			),
+		{ dispatch: true }
+	);
+
+	getOneSuccess$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginMarketplaceActions.getOneSuccess),
+				map(({ plugin }) => {
+					this.pluginMarketplaceStore.selectPlugin(plugin);
+					return [
+						PluginVersionActions.selectVersion(plugin.version),
+						PluginSourceActions.selectSource(plugin.source)
+					];
+				})
 			),
 		{ dispatch: true }
 	);

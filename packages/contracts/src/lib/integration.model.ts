@@ -18,8 +18,7 @@ export interface IRelationalIntegrationTenant {
 }
 
 export interface IIntegrationEntitySetting
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalIntegrationTenant {
+	extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
 	entity: IntegrationEntity;
 	sync: boolean;
 	tiedEntities?: IIntegrationEntitySettingTied[];
@@ -44,6 +43,17 @@ export interface IIntegrationViewModel {
 	isComingSoon?: boolean;
 }
 
+export interface IIntegrationGroupTypeOption {
+	id: ID;
+	name: string;
+}
+
+export interface IIntegrationGroup {
+	groupName: string;
+	order: number;
+	integrationTypes: IIntegrationGroupTypeOption[];
+}
+
 export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityModel, IRelationIntegration {
 	name: IntegrationEnum;
 	lastSyncedAt?: Date;
@@ -52,9 +62,7 @@ export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityM
 }
 
 export interface IIntegrationTenantFindInput
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IBaseRelationsEntityModel,
-		IRelationIntegration {
+	extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, IRelationIntegration {
 	name?: IntegrationEnum;
 }
 
@@ -92,8 +100,7 @@ export interface IIntegrationFilter {
 
 /** */
 export interface IIntegrationMapSyncBase
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalIntegrationTenant {
+	extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
 	sourceId?: IIntegrationMap['sourceId'];
 }
 
@@ -141,7 +148,8 @@ export enum IntegrationEnum {
 	MakeCom = 'MakeCom',
 	ZAPIER = 'Zapier',
 	ACTIVE_PIECES = 'ActivePieces',
-	SIM = 'Sim'
+	SIM = 'Sim',
+	PLANE = 'Plane'
 }
 
 export enum IntegrationEntity {

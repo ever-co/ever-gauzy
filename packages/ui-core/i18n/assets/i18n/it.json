@@ -179,7 +179,9 @@
 		"ADD_MORE_SOURCES": "Aggiungi più fonti",
 		"REMOVE_FROM_FAVORITES": "Rimuovi dai preferiti",
 		"ADD_TO_FAVORITES": "Aggiungi ai preferiti",
-		"UNSELECT_ALL": "Deseleziona tutto"
+		"UNSELECT_ALL": "Deseleziona tutto",
+		"START_TIMER_ANYWAY": "Avvia comunque",
+		"OPEN_SETTING": "Apri impostazioni"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1140,6 +1142,7 @@
 		"PAYMENT_GATEWAYS": "Portali di pagamento",
 		"SMS_GATEWAYS": "Gateway SMS",
 		"CUSTOM_SMTP": "SMTP personalizzato",
+		"OAUTH_CLIENTS": "Client OAuth",
 		"INVENTORY": "Inventario",
 		"SALES": "Vendite",
 		"PAYMENTS": "Pagamenti",
@@ -1294,16 +1297,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scenari",
-			"EXECUTIONS": "Esecuzioni",
-			"HISTORY": "Cronologia",
+			"WEBHOOKS": "Webhooks",
+			"WEBHOOKS_REFRESH": "Aggiorna webhook",
+			"WEBHOOK_ENABLE": "Abilita webhook",
+			"WEBHOOK_DISABLE": "Disabilita webhook",
+			"WEBHOOK_PING": "Testa webhook",
+			"SCENARIO_ACTIVE": "Attivo",
+			"SCENARIO_INACTIVE": "Inattivo",
+			"SCENARIO_LAST_EDITED": "Ultima modifica: {{value}}",
+			"SCENARIO_DISABLE": "Disabilita scenario",
+			"SCENARIO_ENABLE": "Abilita scenario",
+			"SCENARIO_RUN_ONCE": "Esegui scenario una volta",
+			"WEBHOOK_ENABLED": "Abilitato",
+			"WEBHOOK_DISABLED": "Disabilitato",
+			"WEBHOOK_TYPE": "Tipo",
+			"WEBHOOK_QUEUE": "Coda",
+			"TEMPLATE_PUBLIC": "Pubblico",
+			"TEMPLATE_PUBLISHED": "Pubblicato",
+			"REFRESH_CONNECTIONS": "Aggiorna connessioni",
+			"CONFIGURATION_TITLE": "Configurazione Make.com",
+			"ZONE_LABEL": "Zona",
+			"ZONE_HINT": "Seleziona la zona che corrisponde al tuo account Make.com (es. us2.make.com)",
+			"ORGANIZATION_LABEL": "Organizzazione Make.com",
+			"LOADING_ORGANIZATIONS": "Caricamento organizzazioni...",
+			"NO_ORGANIZATIONS": "Nessuna organizzazione trovata",
+			"TEAM_LABEL": "Team Make.com",
+			"LOADING_TEAMS": "Caricamento team...",
+			"NO_TEAMS": "Nessun team trovato",
+			"CONNECTED_TO": "Connesso a {{org}} / {{team}} su {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "Impostazioni Webhook",
+			"CONNECTIONS": "Connessioni",
+			"TEMPLATES": "Modelli",
 			"SETTINGS": "Impostazioni",
-			"ERRORS": {
-				"INVALID_FORM": "Per favore, compila tutti i campi obbligatori",
-				"START_AUTHORIZATION": "Per favore, inizia il processo di autorizzazione"
+			"CONNECT_TO_MAKE_COM": "Connetti a Make.com",
+			"CONNECT_INFO": "Clicca il pulsante qui sotto per collegare il tuo account Make.com. Verrai reindirizzato a Make.com per autorizzare l'integrazione.",
+			"NO_SCENARIOS": "Nessuno scenario trovato. Crea scenari nella tua dashboard Make.com.",
+			"NO_HOOKS": "Nessun webhook trovato. Crea webhook nella tua dashboard Make.com.",
+			"NO_CONNECTIONS": "Nessuna connessione trovata. Crea connessioni nella tua dashboard Make.com.",
+			"NO_TEMPLATES": "Nessun modello trovato.",
+			"TEST_CONNECTION": "Testa connessione",
+			"CONNECTION": {
+				"ACCOUNT": "Account: {{value}}",
+				"TYPE": "Tipo: {{value}}",
+				"PACKAGE": "Pacchetto: {{value}}",
+				"EXPIRES": "Scadenza: {{value}}"
 			},
-			"CLIENT_ID": "ID Cliente",
-			"CLIENT_SECRET": "Segreto Cliente",
-			"NEXT_STEP_INFO": "Dopo l'autorizzazione, sarai reindirizzato a Make.com per completare la configurazione dell'integrazione"
+			"ERRORS": {
+				"INVALID_FORM": "Per favore compila tutti i campi obbligatori",
+				"START_AUTHORIZATION": "Impossibile avviare il processo di autorizzazione",
+				"NO_ORGANIZATION": "Per favore seleziona prima un'organizzazione",
+				"LOAD_SETTINGS": "Impossibile caricare le impostazioni di Make.com",
+				"SAVE_SETTINGS": "Impossibile salvare le impostazioni di Make.com",
+				"LOAD_SETUP_STATUS": "Impossibile caricare lo stato di configurazione",
+				"LOAD_SCENARIOS": "Impossibile caricare gli scenari",
+				"TOGGLE_SCENARIO": "Impossibile modificare lo stato dello scenario",
+				"RUN_SCENARIO": "Impossibile eseguire lo scenario",
+				"LOAD_CONNECTIONS": "Impossibile caricare le connessioni",
+				"TEST_CONNECTION": "Impossibile testare la connessione",
+				"LOAD_WEBHOOKS": "Impossibile caricare i webhook",
+				"TOGGLE_WEBHOOK": "Impossibile modificare lo stato del webhook",
+				"PING_WEBHOOK": "Impossibile testare il webhook",
+				"SET_ZONE": "Impossibile impostare la zona",
+				"LOAD_ORGANIZATIONS": "Impossibile caricare le organizzazioni",
+				"SELECT_ORGANIZATION": "Impossibile selezionare l'organizzazione",
+				"LOAD_TEAMS": "Impossibile caricare i team",
+				"SELECT_TEAM": "Impossibile selezionare il team",
+				"LOAD_TEMPLATES": "Impossibile caricare i modelli",
+				"REQUEST_TIMEOUT": "Richiesta scaduta. Per favore riprova."
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Impostazioni di Make.com salvate con successo",
+				"SCENARIO_ACTIVATED": "Scenario attivato",
+				"SCENARIO_DEACTIVATED": "Scenario disattivato",
+				"SCENARIO_EXECUTED": "Scenario eseguito",
+				"CONNECTION_VALID": "La connessione \"{{name}}\" è valida",
+				"WEBHOOK_TOGGLED_ON": "Webhook abilitato",
+				"WEBHOOK_TOGGLED_OFF": "Webhook disabilitato",
+				"WEBHOOK_PINGED": "Webhook \"{{name}}\" testato con successo",
+				"ZONE_SET": "Zona impostata su {{zone}}",
+				"ORGANIZATION_SELECTED": "Organizzazione \"{{name}}\" selezionata",
+				"TEAM_SELECTED": "Team \"{{name}}\" selezionato"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Per favore autorizza prima Make.com. Vai alla scheda Impostazioni per collegare il tuo account.",
+				"ZONE": "Per favore seleziona la tua zona Make.com nella scheda Impostazioni.",
+				"ORGANIZATION": "Per favore seleziona la tua organizzazione Make.com nella scheda Impostazioni.",
+				"TEAM": "Per favore seleziona il tuo team Make.com nella scheda Impostazioni."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1316,26 +1396,32 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "ID Cliente",
-			"CLIENT_SECRET": "Segreto Cliente",
-			"NEXT_STEP_INFO": "Dopo l'autorizzazione, sarai reindirizzato a Zapier per completare la configurazione dell'integrazione",
+			"CONNECT_TO_ZAPIER": "Connetti a Zapier",
+			"CONNECT_INFO": "Clicca il pulsante qui sotto per collegare il tuo account Zapier. Sarai reindirizzato a Zapier per autorizzare l'integrazione.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Impossibile caricare le impostazioni di Zapier",
 				"SAVE_SETTINGS": "Impossibile salvare le impostazioni di Zapier",
 				"INVALID_FORM": "Per favore, compila tutti i campi obbligatori",
 				"MISSING_CREDENTIALS": "Credenziali client mancanti",
+				"NO_ORGANIZATION": "Per favore, seleziona prima un'organizzazione",
 				"NO_ACCESS_TOKEN": "Nessun token di accesso disponibile",
 				"LOAD_WEBHOOKS": "Impossibile caricare i webhook",
 				"DELETE_WEBHOOK": "Impossibile eliminare il webhook",
 				"LOAD_ACTIONS": "Impossibile caricare le azioni",
 				"LOAD_TRIGGERS": "Impossibile caricare i trigger",
+				"LOAD_ZAPS": "Impossibile caricare gli zap",
+				"LOAD_ZAP_TEMPLATES": "Impossibile caricare i modelli di zap",
+				"CREATE_ZAP": "Impossibile creare lo zap",
+				"ZAP_TITLE_REQUIRED": "Si prega di fornire un titolo per il nuovo zap",
+				"NO_INTEGRATION_ID": "Non è stato fornito alcun ID di integrazione Zapier",
 				"START_AUTHORIZATION": "Per favore, inizia il processo di autorizzazione",
 				"INVALID_TOKEN": "Token non valido fornito",
 				"TOKEN_NOT_FOUND": "Token non trovato"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Impostazioni di Zapier salvate con successo",
-				"DELETE_WEBHOOK": "Webhook eliminato con successo"
+				"DELETE_WEBHOOK": "Webhook eliminato con successo",
+				"CREATE_ZAP": "Zap creato con successo"
 			},
 			"TAB": {
 				"TRIGGERS": "Trigger",
@@ -1377,6 +1463,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhook",
 				"NO_WEBHOOKS": "Nessun webhook configurato"
+			},
+			"ZAPS": {
+				"TITLE": "Zap",
+				"NO_ZAPS": "Nessun zap disponibile",
+				"CREATE": "Crea Zap",
+				"SUBMIT": "Crea",
+				"ADD_STEP": "Aggiungi passaggio",
+				"OPEN_EDITOR": "Apri in Zapier",
+				"ENABLED": "Abilitato",
+				"DISABLED": "Disabilitato",
+				"TITLE_PLACEHOLDER": "Inserisci un titolo per il nuovo Zap",
+				"FIELDS": {
+					"TITLE": "Titolo",
+					"STEPS": "Passaggi",
+					"STEP": "Passaggio",
+					"STEP_TITLE": "Titolo passaggio",
+					"ACTION": "Azione",
+					"AUTHENTICATION": "Autenticazione",
+					"INPUTS": "Input (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1576,6 +1682,32 @@
 				"LOAD_FAILED": "Impossibile caricare i trigger degli eventi."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Integrazione gestione progetti Plane",
+			"WEB_URL": "URL Web di Plane",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "URL Admin di Plane",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "URL Space di Plane",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Inserisci gli URL dove è ospitata la tua istanza Plane. L'URL Web è obbligatorio. Gli URL Admin e Space sono opzionali.",
+			"URL_REQUIRED": "Questo URL è obbligatorio.",
+			"URL_INVALID": "Inserisci un URL valido che inizi con http:// o https://.",
+			"LOADING": "Caricamento impostazioni...",
+			"REGENERATE_KEY": "Rigenera",
+			"REGENERATE_KEY_LABEL": "Chiave API e Segreto",
+			"CONFIRM_DELETE": "Sei sicuro di voler rimuovere questa integrazione Plane? La chiave API verrà revocata.",
+			"CONFIRM_REGENERATE": "Sei sicuro di voler rigenerare la chiave API? La chiave attuale verrà invalidata.",
+			"API_KEY_DIALOG": {
+				"TITLE": "Credenziali API",
+				"WARNING": "Copia queste credenziali ora. Il segreto API non verrà mostrato di nuovo.",
+				"API_KEY": "Chiave API",
+				"API_SECRET": "Segreto API",
+				"COPY": "Copia",
+				"COPIED": "Copiato!"
+			}
+		},
 		"COMING_SOON": "Prossimamente",
 		"RE_INTEGRATE": "Reintegrare",
 		"SETTINGS": "Impostazioni",
@@ -1583,7 +1715,17 @@
 		"FILTER_INTEGRATIONS": "Filtra le integrazioni",
 		"SEARCH_INTEGRATIONS": "Integrazioni di ricerca",
 		"PAID": "Pagato",
-		"INTEGRATION": "Integrazione"
+		"INTEGRATION": "Integrazione",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Elaborazione autorizzazione Make.com...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Autorizzazione Make.com fallita",
+				"INVALID_CALLBACK": "Parametri di callback non validi"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Autorizzazione Make.com completata con successo"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Contabilità",
@@ -4439,7 +4581,19 @@
 			"INACTIVITY_HANDLER": "Gestore di inattività",
 			"WANT_LOGOUT": "Sei sicuro/a di voler effettuare il logout?",
 			"ERROR_HANDLER": "Gestore degli errori",
-			"ERROR_OCCURRED": "Errore verificatosi"
+			"ERROR_OCCURRED": "Errore verificatosi",
+			"DB_CLEANUP_TITLE": "La versione del database è probabilmente obsoleta",
+			"DB_CLEANUP_MESSAGE": "È stata rilevata una nuova versione dell'app. Per evitare problemi di compatibilità, si desidera cancellare il database locale e utilizzarne uno nuovo?",
+			"DB_CLEANUP_DETAIL": "La rimozione del database cancellerà i dati memorizzati nella cache locale. I dati già sincronizzati con il server rimarranno al sicuro nel cloud Gauzy.",
+			"DB_CLEANUP_REMOVE": "Rimuovi Database",
+			"DB_CLEANUP_KEEP": "Mantieni",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Dati Non Sincronizzati Rilevati",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Attenzione: Possibile Perdita di Dati",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "Hai {{countsText}}. La rimozione del database cancellerà DEFINITIVAMENTE questi dati offline. In caso di dubbio, fare clic su 'Mantieni'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "Non siamo riusciti a determinare se si dispone di dati offline non sincronizzati. La rimozione del database potrebbe cancellare DEFINITIVAMENTE lavoro non salvato. In caso di dubbio, fare clic su 'Mantieni'.",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} timer/i non sincronizzati",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} intervallo/i non sincronizzato/i",
+			"AND_JOIN": "and"
 		},
 		"NO_LIMIT": "∞ Senza Limiti",
 		"TASK": "Compito",
@@ -4490,7 +4644,8 @@
 			"DAILY_RECAP": "Riepilogo Giornaliero",
 			"WEEKLY_RECAP": "Riepilogo Settimanale",
 			"MONTHLY_RECAP": "Riepilogo Mensile",
-			"INSTALL_PLUGIN": "Installa plugin"
+			"INSTALL_PLUGIN": "Installa plugin",
+			"OPEN_LOG_HISTORY": "Storico dei log"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Tracciamento del tempo orario",
@@ -4503,6 +4658,45 @@
 			"PLEASE_HOLD": "Attendere prego...",
 			"SHUTTING_DOWN": "L'applicazione si sta spegnendo",
 			"LOGOUT_IN_PROGRESS": "Logout in corso"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "Autorizzazioni di sistema",
+			"TITLE": "Autorizzazioni di sistema",
+			"DESCRIPTION": "Gauzy richiede alcune autorizzazioni macOS per tracciare il tuo lavoro con precisione. Consultale e gestiscile qui.",
+			"SCREEN_RECORDING": "Registrazione schermo",
+			"SCREEN_RECORDING_DESC": "Necessario per acquisire automaticamente screenshot durante le sessioni di lavoro tracciate.",
+			"STATUS": "Stato",
+			"GRANTED": "Concesso",
+			"DENIED": "Negato",
+			"NOT_DETERMINED": "Non impostato",
+			"RESTRICTED": "Limitato",
+			"OPEN_SYSTEM_SETTINGS": "Apri Impostazioni di Sistema",
+			"TEST_SCREENSHOT": "Testa screenshot",
+			"TEST_GET_ACTIVE_WINDOW": "Testa accesso",
+			"SCREENSHOT_PREVIEW": "Anteprima screenshot",
+			"RESET_PERMISSION": "Reimposta",
+			"RESTARTING": "Riavvio tra",
+			"DENIED_HINT": "La registrazione dello schermo è stata negata. Fai clic su 'Reimposta' per reimpostare l'autorizzazione, oppure apri Impostazioni di Sistema per concederla manualmente.",
+			"RELAUNCH": "Riavvia",
+			"RELAUNCH_DESC": "Autorizzazione concessa ma non riesci ancora ad acquisire lo schermo? Fai clic su Riavvia per applicare le modifiche.",
+			"DIALOG_TITLE": "Autorizzazione registrazione schermo richiesta",
+			"DIALOG_DESC": "Gauzy ha bisogno dell'autorizzazione per la registrazione dello schermo per acquisire screenshot durante la sessione di lavoro. Concedi l'accesso per continuare.",
+			"POLLING_HINT": "Questa finestra di dialogo si chiuderà automaticamente una volta concessa l'autorizzazione.",
+			"START_ANYWAY": "Inizia senza screenshot",
+			"ACCESSIBILITY": "Accessibilità",
+			"ACCESSIBILITY_DESC": "Necessario per tracciare l'attività di tastiera, mouse e finestra attiva durante le sessioni di lavoro.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "Impostazioni accessibilità",
+			"RESET_ACCESSIBILITY_PERMISSION": "Reimposta accessibilità",
+			"ACCESSIBILITY_DENIED_HINT": "L'accessibilità è stata negata. Fai clic su 'Reimposta accessibilità' per reimpostare l'autorizzazione, oppure apri Impostazioni di Sistema.",
+			"ACTIVE_WINDOW": "Anteprima finestra attiva",
+			"HARDWARE_ACCELERATION_HINT": "Se stai riscontrando problemi con l'acquisizione dello schermo, prova a disabilitare l'accelerazione hardware nelle impostazioni dell'app e riavviala.",
+			"ENABLE_HARDWARE_ACCELERATION": "Abilita accelerazione hardware",
+			"DISABLE_HARDWARE_ACCELERATION": "Disabilita accelerazione hardware",
+			"HARDWARE_ACCELERATION_STATUS": "L'accelerazione hardware è attualmente",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"HARDWARE_ACCELERATION_DESC": "L'accelerazione hardware può migliorare le prestazioni, ma potrebbe causare problemi su alcuni sistemi. Se riscontri problemi con l'acquisizione dello schermo, prova a modificare questa impostazione.",
+			"HARDWARE_ACCELERATION": "Accelerazione hardware"
 		}
 	},
 	"SERVER": "Server",
@@ -5442,5 +5636,80 @@
 		"DESCRIPTION": "Il server {{companySite}} non è attualmente raggiungibile. Ciò potrebbe essere dovuto a manutenzione programmata o tempi di inattività imprevisti.",
 		"CONNECTING": "Tentativo automatico di riconnessione...",
 		"HINT": "Stato: Tentativo di stabilire una connessione ai server {{companySite}}. Codice errore: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "Client OAuth",
+		"SUBTITLE": "Registra e gestisci applicazioni di terze parti che possono richiedere l'accesso a Ever Gauzy per conto dei tuoi utenti.",
+		"STATUS": {
+			"ACTIVE": "Attivo",
+			"INACTIVE": "Inattivo"
+		},
+		"EMPTY": {
+			"TITLE": "Nessun client OAuth registrato finora.",
+			"HINT": "Clicca su \"Registra applicazione\" per aggiungere la tua prima integrazione (ad esempio Activepieces, n8n, Make.com)."
+		},
+		"TABLE": {
+			"NAME": "Nome",
+			"CLIENT_ID": "ID client",
+			"TYPE": "Tipo",
+			"STATUS": "Stato",
+			"REDIRECT_URIS": "URI di reindirizzamento",
+			"ACTIONS": "Azioni"
+		},
+		"ACTIONS": {
+			"REGISTER": "Registra applicazione",
+			"EDIT": "Modifica",
+			"ROTATE_SECRET": "Ruota il segreto",
+			"DELETE": "Revoca"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "Registra un nuovo client OAuth",
+			"EDIT_TITLE": "Modifica client OAuth"
+		},
+		"FORM": {
+			"NAME": "Nome dell'applicazione",
+			"NAME_PLACEHOLDER": "es. Activepieces",
+			"DESCRIPTION": "Descrizione",
+			"DESCRIPTION_PLACEHOLDER": "Breve descrizione mostrata nella pagina di consenso",
+			"CLIENT_TYPE": "Tipo di client",
+			"CLIENT_TYPE_IMMUTABLE": "Il tipo di client non può essere modificato dopo la creazione.",
+			"REDIRECT_URIS": "URI di reindirizzamento",
+			"REDIRECT_URI_PLACEHOLDER": "https://app.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "Aggiungi URI di reindirizzamento",
+			"ALLOWED_SCOPES": "Ambiti consentiti",
+			"SCOPE_PLACEHOLDER": "es. offline_access",
+			"ADD_SCOPE": "Aggiungi ambito",
+			"GRANT_TYPES": "Tipi di concessione",
+			"PKCE_REQUIRED": "Richiedi PKCE (client pubblico/nativo)",
+			"ACCESS_TTL": "TTL del token di accesso (secondi)",
+			"REFRESH_TTL": "TTL del token di aggiornamento (secondi)"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Salva il tuo segreto client",
+			"WARNING": "Questa è l'unica volta in cui verrà visualizzato il segreto client. Copialo ora e salvalo nella tua integrazione di terze parti: la rotazione è l'unico modo per recuperare un segreto perso.",
+			"CLIENT_ID": "ID client",
+			"CLIENT_SECRET": "Segreto client",
+			"ACKNOWLEDGE": "Ho copiato e archiviato in modo sicuro il segreto client.",
+			"CLOSE": "L'ho salvato, chiudi",
+			"COPIED_CLIENT_ID": "ID client copiato negli appunti",
+			"COPIED_SECRET": "Segreto client copiato negli appunti"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "Ruotare il segreto del client per \"{{name}}\"? Il segreto precedente smetterà immediatamente di funzionare per i nuovi scambi di token.",
+			"DELETE": "Revocare \"{{name}}\"? Ciò impedirà immediatamente all'app di terze parti di ottenere nuovi token."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" registrato",
+			"UPDATED": "Client OAuth aggiornato",
+			"SECRET_ROTATED": "Segreto del client ruotato",
+			"DELETED": "Client OAuth revocato"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Impossibile caricare i client OAuth",
+			"CREATE_FAILED": "Impossibile registrare il client OAuth",
+			"UPDATE_FAILED": "Impossibile aggiornare il client OAuth",
+			"ROTATE_FAILED": "Impossibile ruotare il segreto del client",
+			"DELETE_FAILED": "Impossibile revocare il client OAuth"
+		}
 	}
 }

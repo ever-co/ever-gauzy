@@ -5,7 +5,7 @@ import {
 	app
 } from 'electron';
 import * as remoteMain from '@electron/remote/main';
-import { logger as log, store } from '@gauzy/desktop-core';
+import { IConfig, logger as log, store } from '@gauzy/desktop-core';
 import {
 	LocalStore,
 	TranslateService,
@@ -14,6 +14,7 @@ import {
 	UserService,
 	pluginListeners,
 	ProviderFactory,
+	DesktopOfflineModeHandler,
 } from '@gauzy/desktop-lib';
 import { getApiBaseUrl, delaySync, getAuthConfig, getAppSetting, updateProject } from '../util';
 import { startServer } from './app';
@@ -331,6 +332,15 @@ export default function AppIpcMain() {
 			projectId: data.projectId ?? null
 		});
 		return true;
+	});
+
+	ipcMain.handle('IS_OFFLINE', async () => {
+		const configs: IConfig = LocalStore.getStore('configs');
+		if (configs?.serverConfigConnected) {
+			const offlineMode = DesktopOfflineModeHandler.instance;
+			return offlineMode.enabled;
+		}
+		return false;
 	});
 
 	ipcMain.on('get-arch', (event) => {

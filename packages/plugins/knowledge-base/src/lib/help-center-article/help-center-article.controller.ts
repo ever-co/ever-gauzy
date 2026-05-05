@@ -1,6 +1,6 @@
 import { PermissionsEnum, IHelpCenterArticle, ID, IPagination, IHelpCenterArticleFiltering } from '@gauzy/contracts';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Controller, HttpStatus, Post, Body, UseGuards, Get, Param, Delete, HttpCode, Put, Res, Query, Req } from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, UseGuards, Get, Param, Delete, HttpCode, Put, Patch, Res, Query, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
 import { Response, Request } from 'express';
@@ -97,7 +97,7 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	}
 
 	/**
-	 * Returns the binary state as octet-stream.
+	 * Returns the Y.js binary state as application/octet-stream.
 	 * Returns an empty buffer if no binary is stored yet.
 	 */
 	@ApiOperation({ summary: 'Get article binary description' })
@@ -109,7 +109,7 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	): Promise<void> {
 		const binary = await this.helpCenterArticleService.getDescriptionBinary(id);
 		res.setHeader('Content-Type', 'application/octet-stream');
-		res.send(binary ?? new Uint8Array(0));
+		res.send(binary ?? Buffer.alloc(0));
 	}
 
 	/**
@@ -126,8 +126,34 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	): Promise<void> {
 		const binary = await this.helpCenterArticleService.readBinaryStream(req);
 		await this.commandBus.execute(
-			new HelpCenterUpdateArticleCommand(id, { descriptionBinary: new Uint8Array(binary) })
+			new HelpCenterUpdateArticleCommand(id, { descriptionBinary: binary as any })
 		);
+	}
+
+	/**
+	 * Atomic update of all description fields (binary, HTML, JSON).
+	 *
+	 * Binary content is received as a base64-encoded string and decoded server-side.
+	 * Uses a direct QueryBuilder update to bypass TypeORM's QueryDeepPartialEntity
+	 * typing, which silently drops Buffer values for Uint8Array-typed entity fields.
+	 */
+	@ApiOperation({ summary: 'Atomic update of all description fields (binary + HTML + JSON)' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Description updated.' })
+	@HttpCode(HttpStatus.OK)
+	@Patch(':id/description')
+	async patchDescription(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() body: { descriptionBinary?: string; descriptionHtml?: string; descriptionJson?: any }
+	): Promise<void> {
+		await this.helpCenterArticleService.updateDescriptionFields(id, {
+			descriptionBinary: body.descriptionBinary
+				? Buffer.from(body.descriptionBinary, 'base64')
+				: undefined,
+			descriptionHtml: body.descriptionHtml,
+			descriptionJson: body.descriptionJson !== undefined
+				? (typeof body.descriptionJson === 'string' ? body.descriptionJson : JSON.stringify(body.descriptionJson))
+				: undefined
+		});
 	}
 
 	@ApiOperation({

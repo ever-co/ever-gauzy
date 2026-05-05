@@ -1,4 +1,11 @@
-import { ActivityType, IActivityWatchCollectEventData, ITimeLog, TimeLogSourceEnum, TimerSyncStateEnum, TimerActionTypeEnum } from '@gauzy/contracts';
+import {
+	ActivityType,
+	IActivityWatchCollectEventData,
+	ITimeLog,
+	TimeLogSourceEnum,
+	TimerSyncStateEnum,
+	TimerActionTypeEnum
+} from '@gauzy/contracts';
 import { app, screen } from 'electron';
 import * as moment from 'moment';
 import { DesktopActiveWindow } from './desktop-active-window';
@@ -20,8 +27,10 @@ import {
 import { IOfflineMode } from './interfaces';
 import { DesktopOfflineModeHandler, Timer, TimerService, UserService } from './offline';
 import { logger } from '@gauzy/desktop-core';
+import { AuditLogHandler } from './audit';
 
-const EmbeddedQueue = require('embedded-queue');
+// embedded-queue is required lazily inside processWithQueue() to avoid
+// loading it at module import time (before app.ready).
 
 export default class TimerHandler {
 	// How frequently to collect activities (ms)
@@ -40,7 +49,12 @@ export default class TimerHandler {
 	listener = false;
 	nextScreenshot = 0;
 	queue: any = null;
-	appName = app.getName();
+	// Deferred: app.getName() is unsafe before app.ready — resolved on first access
+	private _appName: string | null = null;
+	get appName(): string {
+		if (!this._appName) this._appName = app.getName();
+		return this._appName;
+	}
 	_eventCounter = new DesktopEventCounter();
 
 	private _activeWindow = new DesktopActiveWindow();
@@ -50,6 +64,7 @@ export default class TimerHandler {
 	private _randomSyncPeriod: number = 1;
 	private readonly _activityWatchService: ActivityWatchService;
 	private readonly _userService: UserService;
+	private readonly _auditLogHandler: AuditLogHandler;
 
 	constructor() {
 		/**
@@ -65,6 +80,7 @@ export default class TimerHandler {
 
 		this._activityWatchService = new ActivityWatchService();
 		this._userService = new UserService();
+		this._auditLogHandler = AuditLogHandler.getInstance();
 	}
 
 	async startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
@@ -121,6 +137,9 @@ export default class TimerHandler {
 		let nextScreenShootLock = false;
 
 		if (appSetting.randomScreenshotTime) {
+			await this._auditLogHandler.timerAuditInfo(
+				`[collectActivities] Stamping startedAt on local timer (id: ${this.lastTimer ? this.lastTimer.id : null}) before starting random-screenshot activity collection`
+			);
 			await this._timerService.update(
 				new Timer({
 					id: this.lastTimer ? this.lastTimer.id : null,
@@ -128,6 +147,9 @@ export default class TimerHandler {
 					synced: !this._offlineMode.enabled,
 					isStartedOffline: this._offlineMode.enabled
 				})
+			);
+			await this._auditLogHandler.timerAuditInfo(
+				`[collectActivities] Local timer (id: ${this.lastTimer ? this.lastTimer.id : null}) startedAt stamped — random-screenshot collection interval ready`
 			);
 		}
 
@@ -212,6 +234,9 @@ export default class TimerHandler {
 
 		console.log('Timeslot Start Time', this.timeSlotStart);
 
+		await this._auditLogHandler.timerAuditInfo(
+			`[startTimerIntervalPeriod] Anchoring time-slot start on local timer (id: ${this.lastTimer ? this.lastTimer.id : null}) — startedAt: ${this.timeSlotStart.utc().toISOString()}, offlineMode: ${this._offlineMode.enabled}`
+		);
 		await this._timerService.update(
 			new Timer({
 				id: this.lastTimer ? this.lastTimer.id : null,
@@ -220,21 +245,29 @@ export default class TimerHandler {
 				isStartedOffline: this._offlineMode.enabled
 			})
 		);
+		await this._auditLogHandler.timerAuditInfo(
+			`[startTimerIntervalPeriod] Local timer (id: ${this.lastTimer ? this.lastTimer.id : null}) time-slot start anchored — periodic screenshot/activity interval starting every ${updatePeriod} min`
+		);
 
-		this.intervalUpdateTime = setInterval(async () => {
-			try {
-				console.log('Start Timer Interval Period');
-				await this._activeWindow.updateActivities();
-				console.log('Last Timer Id:', this.lastTimer ? this.lastTimer.id : null);
-				const activities = await this.getAllActivities(knex, this.timeSlotStart);
-				console.log('Activities loaded');
-				timeTrackerWindow.webContents.send('prepare_activities_screenshot', activities);
-				console.log('Timeslot Start Time', this.timeSlotStart);
-				this.timeSlotStart = moment();
-			} catch (error) {
-				console.error('Error on startTimerIntervalPeriod', error);
-			}
-		}, 60 * 1000 * updatePeriod);
+		this.intervalUpdateTime = setInterval(
+			async () => {
+				try {
+					console.log('Start Timer Interval Period');
+					await this._activeWindow.updateActivities();
+					console.log('Last Timer Id:', this.lastTimer ? this.lastTimer.id : null);
+					const activities = await this.getAllActivities(knex, this.timeSlotStart);
+					console.log('Activities loaded');
+					timeTrackerWindow.webContents.send('prepare_activities_screenshot', activities);
+					console.log('Timeslot Start Time', this.timeSlotStart);
+					this.timeSlotStart = moment();
+				} catch (error) {
+					await this._auditLogHandler.timerAuditError(
+						`[startTimerIntervalPeriod] Failed to collect activities/screenshot for timer (id: ${this.lastTimer ? this.lastTimer.id : null}): ${error?.message ?? error}`
+					);
+				}
+			},
+			60 * 1000 * updatePeriod
+		);
 	}
 
 	nextTickScreenshot() {
@@ -271,6 +304,9 @@ export default class TimerHandler {
 			clearInterval(this.intervalTimer);
 			clearInterval(this.intervalUpdateTime);
 
+			await this._auditLogHandler.timerAuditInfo(
+				`[stopTimerIntervalPeriod] Stamping stoppedAt on local timer (id: ${this.lastTimer ? this.lastTimer.id : null}) — offlineMode: ${this._offlineMode.enabled}, stopSyncState: PENDING`
+			);
 			await this._timerService.update(
 				new Timer({
 					id: this.lastTimer ? this.lastTimer.id : null,
@@ -280,8 +316,13 @@ export default class TimerHandler {
 					stopSyncState: TimerSyncStateEnum.PENDING
 				})
 			);
+			await this._auditLogHandler.timerAuditInfo(
+				`[stopTimerIntervalPeriod] Local timer (id: ${this.lastTimer ? this.lastTimer.id : null}) stoppedAt stamped — all intervals cleared, sync queued`
+			);
 		} catch (error) {
-			console.error('Error on clear all intervals for timer', error);
+			await this._auditLogHandler.timerAuditError(
+				`[stopTimerIntervalPeriod] Failed to stamp stoppedAt on local timer (id: ${this.lastTimer ? this.lastTimer.id : null}): ${error?.message ?? error}`
+			);
 		}
 
 		console.log('Stop Timer Interval Period:', this.timeSlotStart, this.intervalTimer, this.intervalUpdateTime);
@@ -341,20 +382,20 @@ export default class TimerHandler {
 				.map((item) => {
 					return item.data
 						? {
-							title: item.data.app || item.data.title,
-							date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
-							time: moment(item.timestamp).utc().format('HH:mm:ss'),
-							duration: Math.floor(item.duration),
-							type: item.data.url ? ActivityType.URL : ActivityType.APP,
-							taskId: params.taskId,
-							projectId: params.projectId,
-							organizationContactId: params.organizationContactId,
-							organizationId: params.organizationId,
-							employeeId: params.employeeId,
-							source: TimeLogSourceEnum.DESKTOP,
-							recordedAt: moment(item.timestamp).utc().toDate(),
-							metaData: item.data
-						}
+								title: item.data.app || item.data.title,
+								date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
+								time: moment(item.timestamp).utc().format('HH:mm:ss'),
+								duration: Math.floor(item.duration),
+								type: item.data.url ? ActivityType.URL : ActivityType.APP,
+								taskId: params.taskId,
+								projectId: params.projectId,
+								organizationContactId: params.organizationContactId,
+								organizationId: params.organizationId,
+								employeeId: params.employeeId,
+								source: TimeLogSourceEnum.DESKTOP,
+								recordedAt: moment(item.timestamp).utc().toDate(),
+								metaData: item.data
+							}
 						: null;
 				})
 				.filter((item) => !!item);
@@ -386,9 +427,9 @@ export default class TimerHandler {
 					employeeId: params.employeeId,
 					metaData:
 						this.configs &&
-							(this.configs.db === 'sqlite' ||
-								this.configs.db === 'better-sqlite' ||
-								this.configs.db === 'better-sqlite3')
+						(this.configs.db === 'sqlite' ||
+							this.configs.db === 'better-sqlite' ||
+							this.configs.db === 'better-sqlite3')
 							? JSON.stringify(activityMetadata)
 							: activityMetadata
 				};
@@ -593,7 +634,9 @@ export default class TimerHandler {
 			};
 
 			if (this.isPaused) {
-				console.log('Create Timer - Paused');
+				await this._auditLogHandler.timerAuditInfo(
+					`[createTimer] Saving new local timer record — offlineMode: ${this._offlineMode.enabled}, startSyncState: PENDING, version: v${app.getVersion()}`
+				);
 				await this._timerService.save(
 					new Timer({
 						...payload,
@@ -606,13 +649,21 @@ export default class TimerHandler {
 						startSyncState: TimerSyncStateEnum.PENDING
 					})
 				);
+				await this._auditLogHandler.timerAuditInfo(
+					`[createTimer] New local timer record saved successfully`
+				);
 			} else {
-				console.log('Create Timer - Not Paused');
+				await this._auditLogHandler.timerAuditInfo(
+					`[createTimer] Timer already running — updating existing local timer (id: ${this.lastTimer.id}) with latest project/task payload`
+				);
 				await this._timerService.update(
 					new Timer({
 						...payload,
 						id: this.lastTimer.id
 					})
+				);
+				await this._auditLogHandler.timerAuditInfo(
+					`[createTimer] Existing local timer (id: ${this.lastTimer.id}) updated with latest project/task payload`
 				);
 			}
 
@@ -624,7 +675,9 @@ export default class TimerHandler {
 
 			this.isPaused = false;
 		} catch (error) {
-			console.log('Error create timer', error);
+			await this._auditLogHandler.timerAuditError(
+				`[createTimer] Failed to save/update local timer — ${error?.message ?? error}`
+			);
 		}
 	}
 
@@ -723,11 +776,6 @@ export default class TimerHandler {
 							...(this._offlineMode.enabled && { synced: false })
 						};
 
-						console.log(
-							`Updating Timer Duration ${JSON.stringify(pUpdate)} - Offline Mode: ${this._offlineMode.enabled
-							}`
-						);
-
 						await this._timerService.update(new Timer(pUpdate));
 
 						break;
@@ -739,9 +787,8 @@ export default class TimerHandler {
 							timesheetId: job.data.data.timeSheetId
 						};
 
-						console.log(`Updating Timer Time Slot ${JSON.stringify(pUpdateSlot)}`);
-
 						await this._timerService.update(new Timer(pUpdateSlot));
+
 
 						break;
 
@@ -752,7 +799,9 @@ export default class TimerHandler {
 
 				resolve(true);
 			} catch (error) {
-				console.error('failed insert window activity', error);
+				await this._auditLogHandler.timerAuditError(
+					`[ProcessQueueMessage] Failed to process queue job (type: ${job?.data?.type}): ${error?.message ?? error}`
+				);
 				resolve(false);
 			}
 		});
@@ -764,6 +813,10 @@ export default class TimerHandler {
 
 		if (!this.queue) {
 			console.log(`Initializing Queue ${queName}`);
+
+			// Lazy require — deferred from module scope to avoid loading embedded-queue
+			// (and its native dependencies) before app.ready.
+			const EmbeddedQueue = require('embedded-queue');
 
 			this.queue = await EmbeddedQueue.Queue.createQueue({
 				inMemoryOnly: true
@@ -797,20 +850,36 @@ export default class TimerHandler {
 		console.log(`Job Created for ${queName}`);
 	}
 
-	async updateTimerSyncState(type: TimerActionTypeEnum, data: {
-		state: TimerSyncStateEnum,
-		duration: number,
-		timerId: number
-	}) {
+	async updateTimerSyncState(
+		type: TimerActionTypeEnum,
+		data: {
+			state: TimerSyncStateEnum;
+			duration: number;
+			timerId: number;
+		}
+	) {
 		const lastTimer = await this._timerService.findById({ id: data.timerId });
 		if (!lastTimer) {
-			console.error(`Timer with id ${data.timerId} not found`);
+			await this._auditLogHandler.timerAuditError(
+				`[updateTimerSyncState] Cannot update sync state — local timer with id ${data.timerId} not found`
+			);
 			return;
 		}
-		await this._timerService.update(new Timer({
-			...lastTimer,
-			...(type === 'startTimer' ? { startSyncState: data.state } : { stopSyncState: data.state }),
-			...(data.duration ? { syncDuration: data.duration } : {})
-		}));
+		const syncStateField = type === 'startTimer' ? 'startSyncState' : 'stopSyncState';
+		await this._auditLogHandler.timerAuditInfo(
+			`[updateTimerSyncState] Setting ${syncStateField} to '${data.state}' on local timer (id: ${data.timerId})${
+				data.duration ? `, syncDuration: ${data.duration}ms` : ''
+			} — action: ${type}`
+		);
+		await this._timerService.update(
+			new Timer({
+				...lastTimer,
+				...(type === 'startTimer' ? { startSyncState: data.state } : { stopSyncState: data.state }),
+				...(data.duration ? { syncDuration: data.duration } : {})
+			})
+		);
+		await this._auditLogHandler.timerAuditInfo(
+			`[updateTimerSyncState] Local timer (id: ${data.timerId}) ${syncStateField} updated to '${data.state}'`
+		);
 	}
 }

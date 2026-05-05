@@ -193,7 +193,10 @@
 		"ADD_TO_FAVORITES": "Add to favorites",
 		"DONE": "Done",
 		"SKIP": "Skip",
-		"UNSELECT_ALL": "Deselect All"
+		"UNSELECT_ALL": "Deselect All",
+		"OPEN": "Open",
+		"START_TIMER_ANYWAY": "Start Anyway",
+		"OPEN_SETTING": "Open Settings"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1185,6 +1188,7 @@
 		"PAYMENT_GATEWAYS": "Payment Gateways",
 		"SMS_GATEWAYS": "SMS Gateways",
 		"CUSTOM_SMTP": "Custom SMTP",
+		"OAUTH_CLIENTS": "OAuth Clients",
 		"INVENTORY": "Inventory",
 		"SALES": "Sales",
 		"PAYMENTS": "Payments",
@@ -1342,16 +1346,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scenarios",
-			"EXECUTIONS": "Executions",
-			"HISTORY": "History",
+			"WEBHOOKS": "Webhooks",
+			"WEBHOOKS_REFRESH": "Refresh webhooks",
+			"WEBHOOK_ENABLE": "Enable webhook",
+			"WEBHOOK_DISABLE": "Disable webhook",
+			"WEBHOOK_PING": "Ping webhook",
+			"SCENARIO_ACTIVE": "Active",
+			"SCENARIO_INACTIVE": "Inactive",
+			"SCENARIO_LAST_EDITED": "Last edited: {{value}}",
+			"SCENARIO_DISABLE": "Disable scenario",
+			"SCENARIO_ENABLE": "Enable scenario",
+			"SCENARIO_RUN_ONCE": "Run scenario once",
+			"WEBHOOK_ENABLED": "Enabled",
+			"WEBHOOK_DISABLED": "Disabled",
+			"WEBHOOK_TYPE": "Type",
+			"WEBHOOK_QUEUE": "Queue",
+			"TEMPLATE_PUBLIC": "Public",
+			"TEMPLATE_PUBLISHED": "Published",
+			"REFRESH_CONNECTIONS": "Refresh connections",
+			"CONFIGURATION_TITLE": "Make.com Configuration",
+			"ZONE_LABEL": "Zone",
+			"ZONE_HINT": "Select the zone that matches your Make.com account (e.g., us2.make.com)",
+			"ORGANIZATION_LABEL": "Make.com Organization",
+			"LOADING_ORGANIZATIONS": "Loading organizations...",
+			"NO_ORGANIZATIONS": "No organizations found",
+			"TEAM_LABEL": "Make.com Team",
+			"LOADING_TEAMS": "Loading teams...",
+			"NO_TEAMS": "No teams found",
+			"CONNECTED_TO": "Connected to {{org}} / {{team}} on {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "Webhook Settings",
+			"CONNECTIONS": "Connections",
+			"TEMPLATES": "Templates",
 			"SETTINGS": "Settings",
+			"CONNECT_TO_MAKE_COM": "Connect to Make.com",
+			"CONNECT_INFO": "Click the button below to connect your Make.com account. You will be redirected to Make.com to authorize the integration.",
+			"NO_SCENARIOS": "No scenarios found. Create scenarios in your Make.com dashboard.",
+			"NO_HOOKS": "No webhooks found. Create webhooks in your Make.com dashboard.",
+			"NO_CONNECTIONS": "No connections found. Create connections in your Make.com dashboard.",
+			"NO_TEMPLATES": "No templates found.",
+			"TEST_CONNECTION": "Test connection",
+			"CONNECTION": {
+				"ACCOUNT": "Account: {{value}}",
+				"TYPE": "Type: {{value}}",
+				"PACKAGE": "Package: {{value}}",
+				"EXPIRES": "Expires: {{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "Please fill in all required fields",
-				"START_AUTHORIZATION": "Please start the authorization process"
+				"START_AUTHORIZATION": "Failed to start the authorization process",
+				"NO_ORGANIZATION": "Please select an organization first",
+				"LOAD_SETTINGS": "Failed to load Make.com settings",
+				"SAVE_SETTINGS": "Failed to save Make.com settings",
+				"LOAD_SETUP_STATUS": "Failed to load setup status",
+				"LOAD_SCENARIOS": "Failed to load scenarios",
+				"TOGGLE_SCENARIO": "Failed to toggle scenario",
+				"RUN_SCENARIO": "Failed to run scenario",
+				"LOAD_CONNECTIONS": "Failed to load connections",
+				"TEST_CONNECTION": "Failed to test connection",
+				"LOAD_WEBHOOKS": "Failed to load webhooks",
+				"TOGGLE_WEBHOOK": "Failed to toggle webhook",
+				"PING_WEBHOOK": "Failed to ping webhook",
+				"SET_ZONE": "Failed to set zone",
+				"LOAD_ORGANIZATIONS": "Failed to load organizations",
+				"SELECT_ORGANIZATION": "Failed to select organization",
+				"LOAD_TEAMS": "Failed to load teams",
+				"SELECT_TEAM": "Failed to select team",
+				"LOAD_TEMPLATES": "Failed to load templates",
+				"REQUEST_TIMEOUT": "Request timed out. Please try again."
 			},
-			"CLIENT_ID": "Client ID",
-			"CLIENT_SECRET": "Client Secret",
-			"NEXT_STEP_INFO": "After authorization, you will be redirected to Make.com to complete the integration setup"
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Make.com settings saved successfully",
+				"SCENARIO_ACTIVATED": "Scenario activated",
+				"SCENARIO_DEACTIVATED": "Scenario deactivated",
+				"SCENARIO_EXECUTED": "Scenario executed",
+				"CONNECTION_VALID": "Connection \"{{name}}\" is valid",
+				"WEBHOOK_TOGGLED_ON": "Webhook enabled",
+				"WEBHOOK_TOGGLED_OFF": "Webhook disabled",
+				"WEBHOOK_PINGED": "Webhook \"{{name}}\" pinged successfully",
+				"ZONE_SET": "Zone set to {{zone}}",
+				"ORGANIZATION_SELECTED": "Organization \"{{name}}\" selected",
+				"TEAM_SELECTED": "Team \"{{name}}\" selected"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Please authorize with Make.com first. Go to the Settings tab to connect your account.",
+				"ZONE": "Please select your Make.com zone in the Settings tab.",
+				"ORGANIZATION": "Please select your Make.com organization in the Settings tab.",
+				"TEAM": "Please select your Make.com team in the Settings tab."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1364,31 +1445,40 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "Client ID",
-			"CLIENT_SECRET": "Client Secret",
-			"NEXT_STEP_INFO": "After authorization, you will be redirected to Zapier to complete the integration setup",
+			"CONNECT_TO_ZAPIER": "Connect to Zapier",
+			"CONNECT_INFO": "Click the button below to connect your Zapier account. You will be redirected to Zapier to authorize the integration.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Failed to load Zapier settings",
 				"SAVE_SETTINGS": "Failed to save Zapier settings",
 				"INVALID_FORM": "Please fill in all required fields",
 				"MISSING_CREDENTIALS": "Missing client credentials",
+				"NO_ORGANIZATION": "Please select an organization first",
 				"NO_ACCESS_TOKEN": "No access token available",
 				"LOAD_WEBHOOKS": "Failed to load webhooks",
 				"DELETE_WEBHOOK": "Failed to delete webhook",
 				"LOAD_ACTIONS": "Failed to load actions",
 				"LOAD_TRIGGERS": "Failed to load triggers",
+				"LOAD_ZAPS": "Failed to load zaps",
+				"LOAD_ZAP_TEMPLATES": "Failed to load zap templates",
+				"CREATE_ZAP": "Failed to create zap",
+				"ZAP_TITLE_REQUIRED": "Please provide a title for the new zap",
+				"INVALID_STEP_INPUTS": "Step {{step}} has invalid JSON in the inputs field",
+				"NO_INTEGRATION_ID": "No Zapier integration ID was provided",
 				"START_AUTHORIZATION": "Please start the authorization process",
 				"INVALID_TOKEN": "Invalid token provided",
 				"TOKEN_NOT_FOUND": "Token not found"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier settings saved successfully",
-				"DELETE_WEBHOOK": "Webhook deleted successfully"
+				"DELETE_WEBHOOK": "Webhook deleted successfully",
+				"CREATE_ZAP": "Zap created successfully"
 			},
 			"TAB": {
 				"TRIGGERS": "Triggers",
 				"ACTIONS": "Actions",
 				"WEBHOOKS": "Webhooks",
+				"ZAPS": "Zaps",
+				"ZAP_TEMPLATES": "Zap Templates",
 				"SETTINGS": "Settings"
 			},
 			"TOOLTIP": {
@@ -1425,6 +1515,31 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "No webhooks configured"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "No zaps available",
+				"CREATE": "Create Zap",
+				"SUBMIT": "Create",
+				"ADD_STEP": "Add step",
+				"OPEN_EDITOR": "Open in Zapier",
+				"ENABLED": "Enabled",
+				"DISABLED": "Disabled",
+				"TITLE_PLACEHOLDER": "Enter a title for the new Zap",
+				"FIELDS": {
+					"TITLE": "Title",
+					"STEPS": "Steps",
+					"STEP": "Step",
+					"STEP_TITLE": "Step title",
+					"ACTION": "Action",
+					"AUTHENTICATION": "Authentication",
+					"INPUTS": "Inputs (JSON)"
+				}
+			},
+			"ZAP_TEMPLATES": {
+				"TITLE": "Zap Templates",
+				"NO_TEMPLATES": "No zap templates available",
+				"USE": "Use Template"
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1663,7 +1778,34 @@
 				"LOAD_FAILED": "Failed to load event triggers."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Plane Project Management Integration",
+			"WEB_URL": "Plane Web URL",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "Plane Admin URL",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "Plane Space URL",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Enter the URLs where your Plane instance is hosted. The Web URL is required. Admin and Space URLs are optional.",
+			"URL_REQUIRED": "This URL is required.",
+			"URL_INVALID": "Please enter a valid URL starting with http:// or https://.",
+			"LOADING": "Loading settings...",
+			"REGENERATE_KEY": "Regenerate",
+			"REGENERATE_KEY_LABEL": "API Key & Secret",
+			"CONFIRM_DELETE": "Are you sure you want to remove this Plane integration? This will revoke the API key.",
+			"CONFIRM_REGENERATE": "Are you sure you want to regenerate the API key? The current key will be invalidated.",
+			"API_KEY_DIALOG": {
+				"TITLE": "API Credentials",
+				"WARNING": "Copy these credentials now. The API secret will not be shown again.",
+				"API_KEY": "API Key",
+				"API_SECRET": "API Secret",
+				"COPY": "Copy",
+				"COPIED": "Copied!"
+			}
+		},
 		"COMING_SOON": "Coming soon",
+		"PAID_LABEL": "Paid",
 		"RE_INTEGRATE": "Re-integrate",
 		"SETTINGS": "Settings",
 		"SELECT_GROUPS": "Select Groups",
@@ -1681,7 +1823,17 @@
 			"INTEGRATION_ADDED": "Integration '{{provider}}' has been added to '{{organization}}'"
 		},
 		"ENABLED": "Enabled",
-		"DISABLED": "Disabled"
+		"DISABLED": "Disabled",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Processing Make.com authorization...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Make.com authorization failed",
+				"INVALID_CALLBACK": "Invalid callback parameters"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Make.com authorization completed successfully"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -4585,7 +4737,21 @@
 			"ERROR_OCCURRED": "Error Occurred",
 			"SELECT_FILE": "Select file",
 			"EXIT_AGENT_LOGIN_CONFIRM": "Oops! You need to log in before you can use the app.",
-			"EXIT_AGENT_PREVENT_CONFIRM": "Oops! You are not allowed to exit. Please contact your account administrator."
+			"EXIT_AGENT_PREVENT_CONFIRM": "Oops! You are not allowed to exit. Please contact your account administrator.",
+			"DB_CLEANUP_TITLE": "Database version is probably outdated",
+			"DB_CLEANUP_MESSAGE": "A new version of the app has been detected. To avoid breaking changes, would you like to wipe the local database to use a fresh one?",
+			"DB_CLEANUP_DETAIL": "Removing the database will wipe locally cached data. Data already synced to the server will safely rest on the Gauzy cloud.",
+			"DB_CLEANUP_REMOVE": "Remove Database",
+			"DB_CLEANUP_KEEP": "Keep It",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Unsynced Data Detected",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Warning: Data Loss Possible",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "You have {{countsText}}. Removing the database will PERMANENTLY erase this offline data. If you are unsure, click 'Keep It'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "We could not determine whether you have unsynced offline data. Removing the database may PERMANENTLY erase unsaved work. If you are unsure, click 'Keep It'.",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
+			"AND_JOIN": "and",
+			"PERMISSIONS_REQUIRED_MISSING": "Screen Recording Disabled",
+			"PERMISSIONS_REQUIRED_DETAIL": "Screen recording permission has not been granted. Would you like to start the timer without screen capture?"
 		},
 		"NO_LIMIT": "∞ No Limit",
 		"TASK": "Task",
@@ -4636,7 +4802,8 @@
 			"DAILY_RECAP": "Daily Recap",
 			"WEEKLY_RECAP": "Weekly Recap",
 			"MONTHLY_RECAP": "Monthly Recap",
-			"INSTALL_PLUGIN": "Install Plugin"
+			"INSTALL_PLUGIN": "Install Plugin",
+			"OPEN_LOG_HISTORY": "Logs"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Hourly Time Tracking",
@@ -4649,6 +4816,45 @@
 			"PLEASE_HOLD": "Please hold...",
 			"SHUTTING_DOWN": "Application is shutting down",
 			"LOGOUT_IN_PROGRESS": "Logout in progress"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "System Permissions",
+			"TITLE": "System Permissions",
+			"DESCRIPTION": "Gauzy requires certain macOS permissions to track your work accurately. Review and manage them here.",
+			"SCREEN_RECORDING": "Screen Recording",
+			"SCREEN_RECORDING_DESC": "Required to capture screenshots automatically during your tracked work sessions.",
+			"STATUS": "Status",
+			"GRANTED": "Granted",
+			"DENIED": "Denied",
+			"NOT_DETERMINED": "Not Set",
+			"RESTRICTED": "Restricted",
+			"OPEN_SYSTEM_SETTINGS": "Open System Settings",
+			"TEST_SCREENSHOT": "Test Screenshot",
+			"TEST_GET_ACTIVE_WINDOW": "Test Access",
+			"SCREENSHOT_PREVIEW": "Screenshot Preview",
+			"RESET_PERMISSION": "Reset",
+			"RESTARTING": "Restarting in",
+			"DENIED_HINT": "Screen Recording was denied. Click 'Reset' to reset the permission, or open System Settings to grant it manually.",
+			"RELAUNCH": "Relaunch",
+			"RELAUNCH_DESC": "Granted permission but still unable to capture your screen? Click Relaunch to apply the changes.",
+			"DIALOG_TITLE": "Screen Recording Permission Required",
+			"DIALOG_DESC": "Gauzy needs Screen Recording permission to capture screenshots during your work session. Please grant access to continue.",
+			"POLLING_HINT": "This dialog will close automatically once permission is granted.",
+			"START_ANYWAY": "Start Without Screenshot",
+			"ACCESSIBILITY": "Accessibility",
+			"ACCESSIBILITY_DESC": "Required to track keyboard, mouse and active window during your work sessions.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "Accessibility Settings",
+			"RESET_ACCESSIBILITY_PERMISSION": "Reset Accessibility",
+			"ACCESSIBILITY_DENIED_HINT": "Accessibility was denied. Click 'Reset Accessibility' to reset the permission, or open System Settings to grant it manually.",
+			"ACTIVE_WINDOW": "Active Window Preview",
+			"HARDWARE_ACCELERATION_HINT": "If you are experiencing issues with screen capture, try disabling hardware acceleration in the app settings and relaunching the app.",
+			"ENABLE_HARDWARE_ACCELERATION": "Enable Hardware Acceleration",
+			"DISABLE_HARDWARE_ACCELERATION": "Disable Hardware Acceleration",
+			"HARDWARE_ACCELERATION_STATUS": "Hardware Acceleration is currently",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"HARDWARE_ACCELERATION_DESC": "Hardware acceleration can improve performance but may cause issues on some systems. If you experience problems with screen capture, try toggling this setting.",
+			"HARDWARE_ACCELERATION": "Hardware Acceleration"
 		}
 	},
 	"SERVER": "Server",
@@ -5369,6 +5575,8 @@
 		"DOWNLOADS": "downloads",
 		"FREE": "Free",
 		"NO_DESCRIPTION": "No description available",
+		"INSTALL_IN_DESKTOP": "Install in {{ appName }}",
+		"INSTALL_IN_DESKTOP_TOOLTIP": "Install this plugin in your preferred desktop application",
 		"PENDING_INSTALLATION": {
 			"TITLE": "Pending Plugin Installation",
 			"DESCRIPTION": "The following plugins are waiting to be installed",
@@ -5646,6 +5854,11 @@
 			"UPLOADED_FILE": "Uploaded File",
 			"UNKNOWN_SOURCE": "Unknown Source"
 		},
+		"BUILTIN": {
+			"TITLE": "Built-in Integrations",
+			"SUBTITLE": "Native integrations included with Gauzy — click to configure.",
+			"DESKTOP_NOTICE": "These integrations are configured via the Gauzy web app. Open the web app to manage them."
+		},
 		"MARKETPLACE": {
 			"UPLOAD": "Upload New Plugin",
 			"OFFLINE": "You are currently offline/disconnected ⛓️‍💔",
@@ -5659,6 +5872,8 @@
 		},
 		"LAYOUT": {
 			"DISCOVER": "Discover",
+			"MARKETPLACE": "Marketplace",
+			"BUILTIN": "Built-in",
 			"INSTALLED": "Installed",
 			"VERSION_HISTORY": "Version History"
 		},
@@ -5714,6 +5929,20 @@
 				"VALIDATION": {
 					"REQUIRED": "Authentication token is required"
 				}
+			},
+			"APP_SELECTOR": {
+				"TITLE": "Open in Desktop App",
+				"SUBTITLE": "Choose which desktop application to use for installation",
+				"DESKTOP": "Gauzy Desktop",
+				"DESKTOP_DESC": "Full-featured desktop application with all Gauzy capabilities",
+				"TIMER": "Gauzy Timer",
+				"TIMER_DESC": "Lightweight time tracking application",
+				"SERVER": "Gauzy Server",
+				"SERVER_DESC": "Self-hosted Gauzy server application",
+				"API_SERVER": "Gauzy API Server",
+				"API_SERVER_DESC": "Standalone API server for Gauzy services",
+				"AGENT": "Gauzy Agent",
+				"AGENT_DESC": "Background agent for monitoring and automation"
 			}
 		},
 		"TOASTR": {
@@ -5764,7 +5993,8 @@
 				"DOWNLOAD_COMPLETED": "Download completed",
 				"SERVER_INSTALLATION_COMPLETED": "Server installation completed",
 				"ACTIVATING": "Activating plugin...",
-				"REVERTING_INSTALLATION": "Reverting installation..."
+				"REVERTING_INSTALLATION": "Reverting installation...",
+				"DEEP_LINK_OPENED": "Desktop app opened. Complete the installation there."
 			},
 			"ERROR": {
 				"VERSION": {
@@ -5791,7 +6021,8 @@
 				"COMPLETE_INSTALLATION": "Failed to complete installation"
 			},
 			"WARNING": {
-				"PLUGIN_NOT_FOUND": "Plugin not found: {{name}}"
+				"PLUGIN_NOT_FOUND": "Plugin not found: {{name}}",
+				"DEEP_LINK_FAILED": "Could not open the desktop app. Please make sure it is installed and try again."
 			}
 		},
 		"BUTTONS": {
@@ -6044,5 +6275,89 @@
 		"DESCRIPTION": "The {{companySite}} server is currently unreachable. This may be due to scheduled maintenance or unexpected downtime.",
 		"CONNECTING": "Automatically retrying connection...",
 		"HINT": "Status: Attempting to establish connection to {{companySite}} servers. Error code: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "OAuth Clients",
+		"SUBTITLE": "Register and manage third-party applications that can request access to Ever Gauzy on behalf of your users.",
+		"STATUS": {
+			"ACTIVE": "Active",
+			"INACTIVE": "Inactive"
+		},
+		"EMPTY": {
+			"TITLE": "No OAuth clients registered yet.",
+			"HINT": "Click \"Register App\" to add your first integration (e.g. Activepieces, n8n, Make.com)."
+		},
+		"TABLE": {
+			"NAME": "Name",
+			"CLIENT_ID": "Client ID",
+			"TYPE": "Type",
+			"STATUS": "Status",
+			"REDIRECT_URIS": "Redirect URIs",
+			"ACTIONS": "Actions"
+		},
+		"ACTIONS": {
+			"REGISTER": "Register App",
+			"EDIT": "Edit",
+			"ROTATE_SECRET": "Rotate secret",
+			"DELETE": "Revoke",
+			"COPY_CLIENT_ID": "Copy Client ID"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "Register a new OAuth client",
+			"EDIT_TITLE": "Edit OAuth client"
+		},
+		"FORM": {
+			"NAME": "Application name",
+			"NAME_PLACEHOLDER": "e.g. Activepieces",
+			"DESCRIPTION": "Description",
+			"DESCRIPTION_PLACEHOLDER": "Short description shown on the consent page",
+			"CLIENT_TYPE": "Client type",
+			"CLIENT_TYPE_IMMUTABLE": "Client type cannot be changed after creation.",
+			"REDIRECT_URIS": "Redirect URIs",
+			"REDIRECT_URI_PLACEHOLDER": "https://your-app.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "Add redirect URI",
+			"ALLOWED_SCOPES": "Allowed scopes",
+			"SCOPE_PLACEHOLDER": "e.g. offline_access",
+			"ADD_SCOPE": "Add scope",
+			"GRANT_TYPES": "Grant types",
+			"PKCE_REQUIRED": "Require PKCE (deferred enforcement)",
+			"ACCESS_TTL": "Access token TTL (seconds)",
+			"REFRESH_TTL": "Refresh token TTL (seconds)",
+			"REDIRECT_URI": "Redirect URI {{index}}",
+			"REMOVE_REDIRECT_URI": "Remove redirect URI {{index}}",
+			"ALLOWED_SCOPE": "Allowed scope {{index}}",
+			"REMOVE_SCOPE": "Remove scope {{index}}"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Save your client secret",
+			"WARNING": "This is the only time the client secret will be shown. Copy it now and store it in your third-party integration — rotation is the only way to recover from a lost secret.",
+			"CLIENT_ID": "Client ID",
+			"CLIENT_SECRET": "Client Secret",
+			"ACKNOWLEDGE": "I have copied and safely stored the client secret.",
+			"CLOSE": "I've saved it, close",
+			"COPIED_CLIENT_ID": "Client ID copied to clipboard",
+			"COPIED_SECRET": "Client secret copied to clipboard",
+			"COPY_CLIENT_ID_ARIA": "Copy client ID",
+			"COPY_SECRET_ARIA": "Copy client secret"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "Rotate the client secret for \"{{name}}\"? The previous secret will stop working immediately for new token exchanges.",
+			"DELETE": "Revoke \"{{name}}\"? This will immediately prevent the third-party app from obtaining new tokens."
+		},
+		"TOASTS": {
+			"CREATED": "Registered \"{{name}}\"",
+			"UPDATED": "OAuth client updated",
+			"SECRET_ROTATED": "Client secret rotated",
+			"DELETED": "OAuth client revoked",
+			"CLIENT_ID_COPIED": "Client ID copied to clipboard"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Failed to load OAuth clients",
+			"CREATE_FAILED": "Failed to register OAuth client",
+			"UPDATE_FAILED": "Failed to update OAuth client",
+			"ROTATE_FAILED": "Failed to rotate client secret",
+			"DELETE_FAILED": "Failed to revoke OAuth client",
+			"COPY_FAILED": "Failed to copy to clipboard"
+		}
 	}
 }

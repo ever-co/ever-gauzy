@@ -1,6 +1,6 @@
 {
 	"name": "gauzy-zapier",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "Zapier integration for Gauzy",
 	"main": "index.js",
 	"scripts": {
@@ -13,13 +13,13 @@
 		"clean": "rimraf lib dist"
 	},
 	"dependencies": {
-		"zapier-platform-core": "16.5.0"
+		"zapier-platform-core": "18.4.0"
 	},
 	"devDependencies": {
 		"@types/node": "^24.10.0",
 		"rimraf": "^3.0.2",
 		"typescript": "^5.9.3",
-		"zapier-platform-cli": "16.5.0"
+		"zapier-platform-cli": "18.4.0"
 	},
 	"private": true
 }

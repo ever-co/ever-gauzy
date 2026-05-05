@@ -45,11 +45,11 @@ export class AuthIPCHandler {
 	}
 
 	private setupLogoutHandlers(): void {
-		ipcMain.handle('FINAL_LOGOUT', async () => {
+		ipcMain.handle('FINAL_LOGOUT', async (_, arg: { isRestart?: boolean }) => {
 			console.log('Final Logout');
 
 			const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
-			await this.performLogout(timeTrackerWindow);
+			await this.performLogout(timeTrackerWindow, arg?.isRestart);
 		});
 
 		ipcMain.on('logout', () => {
@@ -60,7 +60,7 @@ export class AuthIPCHandler {
 		});
 	}
 
-	private async performLogout(timeTrackerWindow: BrowserWindow): Promise<void> {
+	private async performLogout(timeTrackerWindow: BrowserWindow, isRestart?: boolean): Promise<void> {
 		// Clear timer display
 		this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {
 			event: 'updateTimer',
@@ -73,7 +73,7 @@ export class AuthIPCHandler {
 		await this.handleGauzyWindowLogout(timeTrackerWindow);
 		this.closePluginsWindow();
 
-		await this.authHandler.handleLogout();
+		await this.authHandler.handleLogout(isRestart);
 	}
 
 	private updateMenuItems(hasEmployeeId: boolean, timeTrackerEnabled: boolean): void {

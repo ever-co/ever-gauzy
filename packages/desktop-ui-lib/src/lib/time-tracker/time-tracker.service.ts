@@ -45,6 +45,18 @@ import {
 } from '../services';
 import { UserOrganizationService } from './organization-selector/user-organization.service';
 
+export interface IScreenshotUploadContext {
+	timeSlotId: string;
+	tenantId: string;
+	organizationId: string;
+	recordedAt: Date | string;
+};
+
+export interface IImageCreatePayload {
+	b64Img: string,
+	fileName: string
+}
+
 @Injectable({
 	providedIn: 'root'
 })
@@ -135,7 +147,7 @@ export class TimeTrackerService {
 		private readonly _teamsCacheService: TeamsCacheService,
 		private readonly _taskPriorityCacheService: TaskPriorityCacheService,
 		private readonly _taskSizeCacheService: TaskSizeCacheService
-	) { }
+	) {}
 
 	createAuthorizationHeader(headers: Headers) {
 		headers.append('Authorization', 'Basic ' + btoa('username:password'));
@@ -148,8 +160,8 @@ export class TimeTrackerService {
 				tenantId: values.tenantId,
 				...(values.projectId
 					? {
-						projectId: values.projectId
-					}
+							projectId: values.projectId
+						}
 					: {}),
 				...(values.organizationTeamId && {
 					teams: {
@@ -340,8 +352,8 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			...(values.organizationContactId
 				? {
-					organizationContactId: values.organizationContactId
-				}
+						organizationContactId: values.organizationContactId
+					}
 				: {}),
 			...(values.organizationTeamId && {
 				organizationTeamId: values.organizationTeamId
@@ -467,12 +479,10 @@ export class TimeTrackerService {
 	}
 
 	async getTimeLogById(timeLogId: string) {
-		const timeLog$ = this.http
-			.get(`${API_PREFIX}/timesheet/time-log/${timeLogId}`)
-			.pipe(
-				map((response: any) => response),
-				shareReplay(1)
-			);
+		const timeLog$ = this.http.get(`${API_PREFIX}/timesheet/time-log/${timeLogId}`).pipe(
+			map((response: any) => response),
+			shareReplay(1)
+		);
 		return firstValueFrom(timeLog$);
 	}
 
@@ -535,7 +545,9 @@ export class TimeTrackerService {
 			organizationTeamId: values.organizationTeamId
 		};
 		this._loggerService.log.info(`Toggle Start Timer Request: ${moment().format()}`, body);
-		return this._serialized('toggleApiStart', () => firstValueFrom(this.http.post(`${API_PREFIX}/timesheet/timer/start`, { ...body }, options)));
+		return this._serialized('toggleApiStart', () =>
+			firstValueFrom(this.http.post(`${API_PREFIX}/timesheet/timer/start`, { ...body }, options))
+		);
 	}
 
 	toggleApiStop(values) {
@@ -586,7 +598,10 @@ export class TimeTrackerService {
 			try {
 				return firstValueFrom(this.http.post<ITimeLog>(API_URL, body, options));
 			} catch (error) {
-				this._loggerService.error<any>(`Error stopping timer: ${moment().format()}`, { error, requestBody: body });
+				this._loggerService.error<any>(`Error stopping timer: ${moment().format()}`, {
+					error,
+					requestBody: body
+				});
 				throw error;
 			}
 		});
@@ -613,17 +628,19 @@ export class TimeTrackerService {
 			source: TimeLogSourceEnum.DESKTOP,
 			tenantId: this._store.tenantId,
 			organizationId: this._store.organizationId,
-			organizationContactId: payload.organizationContactId,
 			employeeId: this._store.user?.employee?.id,
+			...(payload.organizationContactId ? { organizationContactId: payload.organizationContactId } : {}),
 			...(payload.description ? { description: payload.description } : {}),
 			...(payload.taskId ? { taskId: payload.taskId } : {}),
 			...(payload.projectId ? { projectId: payload.projectId } : {})
-		}
+		};
 		const options = {
 			headers: new HttpHeaders({ timeout: TIMEOUT.toString() })
 		};
 		this._loggerService.log.info(`Update Time Log Request: ${timeLogId} ${moment().format()}`, timeLogPayload);
-		return this._serialized(`updateTimeLog:${timeLogId}`, () => firstValueFrom(this.http.put<ITimeLog>(API_URL, timeLogPayload, options)));
+		return this._serialized(`updateTimeLog:${timeLogId}`, () =>
+			firstValueFrom(this.http.put<ITimeLog>(API_URL, timeLogPayload, options))
+		);
 	}
 
 	addTimeLog(payload: Partial<ITimeLog>) {
@@ -645,19 +662,21 @@ export class TimeTrackerService {
 			logType: TimeLogType.TRACKED,
 			source: TimeLogSourceEnum.DESKTOP,
 			tenantId: this._store.tenantId,
-			organizationContactId: payload.organizationContactId,
 			organizationId: this._store.organizationId,
 			employeeId: this._store.user?.employee?.id,
+			...(payload.organizationContactId ? { organizationContactId: payload.organizationContactId } : {}),
 			...(payload.description ? { description: payload.description } : {}),
 			...(payload.taskId ? { taskId: payload.taskId } : {}),
 			...(payload.projectId ? { projectId: payload.projectId } : {})
-		}
+		};
 
 		const options = {
 			headers: new HttpHeaders({ timeout: TIMEOUT.toString() })
 		};
 		this._loggerService.log.info(`Add Time Log Request: ${moment().format()}`, timeLogPayload);
-		return this._serialized('addTimeLog', () => firstValueFrom(this.http.post<ITimeLog>(API_URL, timeLogPayload, options)));
+		return this._serialized('addTimeLog', () =>
+			firstValueFrom(this.http.post<ITimeLog>(API_URL, timeLogPayload, options))
+		);
 	}
 
 	deleteTimeSlot(values) {
@@ -761,7 +780,7 @@ export class TimeTrackerService {
 		);
 	}
 
-	uploadImages(values, img: any) {
+	uploadImages(values: IScreenshotUploadContext, img: IImageCreatePayload): Promise<any> {
 		const TIMEOUT = 60 * 1000; // Max 60 sec to upload images
 		const formData = new FormData();
 		const contentType = 'image/png';

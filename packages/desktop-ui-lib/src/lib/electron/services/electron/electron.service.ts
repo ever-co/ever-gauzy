@@ -3,7 +3,9 @@ import * as remote from '@electron/remote';
 import { desktopCapturer, ipcRenderer, shell } from 'electron';
 import { from, Observable, throwError } from 'rxjs';
 
-@Injectable()
+@Injectable({
+	providedIn: 'root'
+})
 export class ElectronService {
 	private readonly ngZone = inject(NgZone);
 	ipcRenderer: typeof ipcRenderer;

@@ -6,7 +6,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { PluginMetadataService } from '../database/plugin-metadata.service';
 import { PluginEventManager } from '../events/plugin-event.manager';
-import { IPlugin, IPluginManager, IPluginMetadata, IPluginMetadataFindOne, PluginDownloadContextType } from '../shared';
+import { IPlugin, IPluginManager, IPluginMetadata, IPluginMetadataFindOne, IPluginMetadataUpdate, PluginDownloadContextType } from '../shared';
 import { lazyLoader } from '../shared/lazy-loader';
 import { DownloadContextFactory } from './download-context.factory';
 
@@ -26,7 +26,7 @@ export class PluginManager implements IPluginManager {
 		return this.instance;
 	}
 
-	public async downloadPlugin<U extends { contextType: PluginDownloadContextType; marketplaceId: ID; versionId: ID }>(
+	public async downloadPlugin<U extends { contextType: PluginDownloadContextType; marketplaceId?: ID; versionId?: ID }>(
 		config: U
 	): Promise<IPluginMetadata> {
 		logger.info(`Downloading plugin...`);
@@ -39,7 +39,11 @@ export class PluginManager implements IPluginManager {
 		} else {
 			/* Install plugin */
 			await this.installPlugin(
-				{ ...metadata, marketplaceId: config.marketplaceId, versionId: config.versionId },
+				{
+					...metadata,
+					marketplaceId: config.marketplaceId || null,
+					versionId: config.versionId || null
+				},
 				pathDirname
 			);
 		}
@@ -82,12 +86,21 @@ export class PluginManager implements IPluginManager {
 		}
 	}
 
-	// Update plugin marketplace metadata
-	public async completeInstallation(marketplaceId: string, installationId: string): Promise<void> {
-		await this.pluginMetadataService.update({
-			marketplaceId,
-			installationId
-		});
+	// Update plugin marketplace metadata; falls back to plugin name for locally installed plugins
+	public async completeInstallation(marketplaceId: string | null, installationId: string, name?: string): Promise<void> {
+		if (!marketplaceId && !name) {
+			logger.warn(
+				`completeInstallation: either marketplaceId or name is required to identify the record; skipping update for installationId: ${installationId}`
+			);
+			return;
+		}
+		const updateData: IPluginMetadataUpdate = { installationId };
+		if (marketplaceId) {
+			updateData.marketplaceId = marketplaceId;
+		} else {
+			updateData.name = name;
+		}
+		await this.pluginMetadataService.update(updateData);
 	}
 
 	public async installPlugin(pluginMetadata: IPluginMetadata, pluginDir: string): Promise<void> {

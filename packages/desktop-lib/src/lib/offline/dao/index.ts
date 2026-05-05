@@ -8,3 +8,4 @@ export * from './timer.dao';
 export * from './kb-mouse-activity.dao';
 export * from './queue.dao';
 export * from './screenshot.dao';
+export * from './audit-log.dao';

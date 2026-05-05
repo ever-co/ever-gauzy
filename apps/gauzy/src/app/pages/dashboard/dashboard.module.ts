@@ -49,7 +49,6 @@ import { HumanResourcesComponent } from './human-resources/human-resources.compo
 import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { ProjectManagementDetailsComponent } from './project-management/project-management-details/project-management-details.component';
-import { TimeTrackingComponent } from './time-tracking/time-tracking.component';
 import {
 	EmployeeChartsComponent,
 	EmployeeDoughnutChartComponent,
@@ -99,7 +98,6 @@ const COMPONENTS = [
 	HumanResourcesComponent,
 	ProjectManagementComponent,
 	ProjectManagementDetailsComponent,
-	TimeTrackingComponent,
 	EmployeeChartsComponent,
 	EmployeeHorizontalBarChartComponent,
 	EmployeeStackedBarChartComponent,

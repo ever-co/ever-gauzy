@@ -179,7 +179,9 @@
 		"ADD_MORE_SOURCES": "Meer bronnen toevoegen",
 		"REMOVE_FROM_FAVORITES": "Uit favorieten verwijderen",
 		"ADD_TO_FAVORITES": "Aan favorieten toevoegen",
-		"UNSELECT_ALL": "Alles deselecteren"
+		"UNSELECT_ALL": "Alles deselecteren",
+		"START_TIMER_ANYWAY": "Toch starten",
+		"OPEN_SETTING": "Instelling openen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1140,6 +1142,7 @@
 		"PAYMENT_GATEWAYS": "Betalingsgateways",
 		"SMS_GATEWAYS": "SMS-gateways",
 		"CUSTOM_SMTP": "Aangepaste SMTP",
+		"OAUTH_CLIENTS": "OAuth-clients",
 		"INVENTORY": "Inventaris",
 		"SALES": "Verkoop",
 		"PAYMENTS": "Betalingen",
@@ -1294,16 +1297,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "Scenario's",
-			"EXECUTIONS": "Uitvoeringen",
-			"HISTORY": "Geschiedenis",
+			"WEBHOOKS": "Webhooks",
+			"WEBHOOKS_REFRESH": "Webhooks vernieuwen",
+			"WEBHOOK_ENABLE": "Webhook inschakelen",
+			"WEBHOOK_DISABLE": "Webhook uitschakelen",
+			"WEBHOOK_PING": "Webhook testen",
+			"SCENARIO_ACTIVE": "Actief",
+			"SCENARIO_INACTIVE": "Inactief",
+			"SCENARIO_LAST_EDITED": "Laatst bewerkt: {{value}}",
+			"SCENARIO_DISABLE": "Scenario uitschakelen",
+			"SCENARIO_ENABLE": "Scenario inschakelen",
+			"SCENARIO_RUN_ONCE": "Voer scenario eenmaal uit",
+			"WEBHOOK_ENABLED": "Ingeschakeld",
+			"WEBHOOK_DISABLED": "Uitgeschakeld",
+			"WEBHOOK_TYPE": "Type",
+			"WEBHOOK_QUEUE": "Wachtrij",
+			"TEMPLATE_PUBLIC": "Openbaar",
+			"TEMPLATE_PUBLISHED": "Gepubliceerd",
+			"REFRESH_CONNECTIONS": "Verbindingen vernieuwen",
+			"CONFIGURATION_TITLE": "Make.com-configuratie",
+			"ZONE_LABEL": "Zone",
+			"ZONE_HINT": "Selecteer de zone die overeenkomt met uw Make.com-account (bijv. us2.make.com)",
+			"ORGANIZATION_LABEL": "Make.com-organisatie",
+			"LOADING_ORGANIZATIONS": "Organisaties laden...",
+			"NO_ORGANIZATIONS": "Geen organisaties gevonden",
+			"TEAM_LABEL": "Make.com-team",
+			"LOADING_TEAMS": "Teams laden...",
+			"NO_TEAMS": "Geen teams gevonden",
+			"CONNECTED_TO": "Verbonden met {{org}} / {{team}} op {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "Webhook-instellingen",
+			"CONNECTIONS": "Verbindingen",
+			"TEMPLATES": "Sjablonen",
 			"SETTINGS": "Instellingen",
-			"ERRORS": {
-				"INVALID_FORM": "Vul alstublieft alle verplichte velden in",
-				"START_AUTHORIZATION": "Start alstublieft de autorisatieproces"
+			"CONNECT_TO_MAKE_COM": "Verbinden met Make.com",
+			"CONNECT_INFO": "Klik op de knop hieronder om uw Make.com-account te verbinden. U wordt doorgestuurd naar Make.com om de integratie te autoriseren.",
+			"NO_SCENARIOS": "Geen scenario's gevonden. Maak scenario's aan in uw Make.com-dashboard.",
+			"NO_HOOKS": "Geen webhooks gevonden. Maak webhooks aan in uw Make.com-dashboard.",
+			"NO_CONNECTIONS": "Geen verbindingen gevonden. Maak verbindingen aan in uw Make.com-dashboard.",
+			"NO_TEMPLATES": "Geen sjablonen gevonden.",
+			"TEST_CONNECTION": "Verbinding testen",
+			"CONNECTION": {
+				"ACCOUNT": "Account: {{value}}",
+				"TYPE": "Type: {{value}}",
+				"PACKAGE": "Pakket: {{value}}",
+				"EXPIRES": "Verloopt: {{value}}"
 			},
-			"CLIENT_ID": "Client ID",
-			"CLIENT_SECRET": "Client Geheim",
-			"NEXT_STEP_INFO": "Na autorisatie word je doorgestuurd naar Make.com om de integratie-instellingen te voltooien"
+			"ERRORS": {
+				"INVALID_FORM": "Vul alle verplichte velden in",
+				"START_AUTHORIZATION": "Kan het autorisatieproces niet starten",
+				"NO_ORGANIZATION": "Selecteer eerst een organisatie",
+				"LOAD_SETTINGS": "Kan Make.com-instellingen niet laden",
+				"SAVE_SETTINGS": "Kan Make.com-instellingen niet opslaan",
+				"LOAD_SETUP_STATUS": "Kan installatiestatus niet laden",
+				"LOAD_SCENARIOS": "Kan scenario's niet laden",
+				"TOGGLE_SCENARIO": "Kan scenario niet schakelen",
+				"RUN_SCENARIO": "Kan scenario niet uitvoeren",
+				"LOAD_CONNECTIONS": "Kan verbindingen niet laden",
+				"TEST_CONNECTION": "Kan verbinding niet testen",
+				"LOAD_WEBHOOKS": "Kan webhooks niet laden",
+				"TOGGLE_WEBHOOK": "Kan webhook niet schakelen",
+				"PING_WEBHOOK": "Kan webhook niet testen",
+				"SET_ZONE": "Kan zone niet instellen",
+				"LOAD_ORGANIZATIONS": "Kan organisaties niet laden",
+				"SELECT_ORGANIZATION": "Kan organisatie niet selecteren",
+				"LOAD_TEAMS": "Kan teams niet laden",
+				"SELECT_TEAM": "Kan team niet selecteren",
+				"LOAD_TEMPLATES": "Kan sjablonen niet laden",
+				"REQUEST_TIMEOUT": "Aanvraagtijd verstreken. Probeer het opnieuw."
+			},
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Make.com-instellingen succesvol opgeslagen",
+				"SCENARIO_ACTIVATED": "Scenario geactiveerd",
+				"SCENARIO_DEACTIVATED": "Scenario gedeactiveerd",
+				"SCENARIO_EXECUTED": "Scenario uitgevoerd",
+				"CONNECTION_VALID": "Verbinding \"{{name}}\" is geldig",
+				"WEBHOOK_TOGGLED_ON": "Webhook ingeschakeld",
+				"WEBHOOK_TOGGLED_OFF": "Webhook uitgeschakeld",
+				"WEBHOOK_PINGED": "Webhook \"{{name}}\" succesvol getest",
+				"ZONE_SET": "Zone ingesteld op {{zone}}",
+				"ORGANIZATION_SELECTED": "Organisatie \"{{name}}\" geselecteerd",
+				"TEAM_SELECTED": "Team \"{{name}}\" geselecteerd"
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "Autoriseer eerst Make.com. Ga naar het tabblad Instellingen om uw account te verbinden.",
+				"ZONE": "Selecteer uw Make.com-zone in het tabblad Instellingen.",
+				"ORGANIZATION": "Selecteer uw Make.com-organisatie in het tabblad Instellingen.",
+				"TEAM": "Selecteer uw Make.com-team in het tabblad Instellingen."
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1316,26 +1396,32 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "Client ID",
-			"CLIENT_SECRET": "Client Geheim",
-			"NEXT_STEP_INFO": "Na autorisatie word je doorgestuurd naar Zapier om de integratie-instellingen te voltooien",
+			"CONNECT_TO_ZAPIER": "Verbinden met Zapier",
+			"CONNECT_INFO": "Klik op de knop hieronder om je Zapier-account te verbinden. Je wordt doorgestuurd naar Zapier om de integratie te autoriseren.",
 			"ERRORS": {
 				"LOAD_SETTINGS": "Fout bij het laden van Zapier-instellingen",
 				"SAVE_SETTINGS": "Fout bij het opslaan van Zapier-instellingen",
 				"INVALID_FORM": "Vul alstublieft alle verplichte velden in",
 				"MISSING_CREDENTIALS": "Ontbrekende clientreferenties",
+				"NO_ORGANIZATION": "Selecteer alstublieft eerst een organisatie",
 				"NO_ACCESS_TOKEN": "Geen toegangstoken beschikbaar",
 				"LOAD_WEBHOOKS": "Fout bij het laden van webhooks",
 				"DELETE_WEBHOOK": "Fout bij het verwijderen van webhook",
 				"LOAD_ACTIONS": "Fout bij het laden van acties",
 				"LOAD_TRIGGERS": "Fout bij het laden van triggers",
+				"LOAD_ZAPS": "Fout bij het laden van zaps",
+				"LOAD_ZAP_TEMPLATES": "Fout bij het laden van zap-sjablonen",
+				"CREATE_ZAP": "Fout bij het maken van zap",
+				"ZAP_TITLE_REQUIRED": "Geef alstublieft een titel voor de nieuwe zap",
+				"NO_INTEGRATION_ID": "Er is geen Zapier-integratie-ID verstrekt",
 				"START_AUTHORIZATION": "Start alstublieft de autorisatieproces",
 				"INVALID_TOKEN": "Ongeldig token verstrekt",
 				"TOKEN_NOT_FOUND": "Token niet gevonden"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier-instellingen succesvol opgeslagen",
-				"DELETE_WEBHOOK": "Webhook succesvol verwijderd"
+				"DELETE_WEBHOOK": "Webhook succesvol verwijderd",
+				"CREATE_ZAP": "Zap succesvol aangemaakt"
 			},
 			"TAB": {
 				"TRIGGERS": "Triggers",
@@ -1377,6 +1463,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "Geen webhooks geconfigureerd"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "Geen zaps beschikbaar",
+				"CREATE": "Zap maken",
+				"SUBMIT": "Maken",
+				"ADD_STEP": "Stap toevoegen",
+				"OPEN_EDITOR": "Openen in Zapier",
+				"ENABLED": "Ingeschakeld",
+				"DISABLED": "Uitgeschakeld",
+				"TITLE_PLACEHOLDER": "Voer een titel in voor de nieuwe Zap",
+				"FIELDS": {
+					"TITLE": "Titel",
+					"STEPS": "Stappen",
+					"STEP": "Stap",
+					"STEP_TITLE": "Stap titel",
+					"ACTION": "Actie",
+					"AUTHENTICATION": "Authenticatie",
+					"INPUTS": "Invoer (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1576,6 +1682,32 @@
 				"LOAD_FAILED": "Kan gebeurtenistriggers niet laden."
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Plane Projectbeheer Integratie",
+			"WEB_URL": "Plane Web-URL",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "Plane Admin-URL",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "Plane Space-URL",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "Voer de URL's in waar uw Plane-instantie wordt gehost. De Web-URL is vereist. Admin- en Space-URL's zijn optioneel.",
+			"URL_REQUIRED": "Deze URL is vereist.",
+			"URL_INVALID": "Voer een geldige URL in die begint met http:// of https://.",
+			"LOADING": "Instellingen laden...",
+			"REGENERATE_KEY": "Opnieuw genereren",
+			"REGENERATE_KEY_LABEL": "API-sleutel en API-geheim",
+			"CONFIRM_DELETE": "Weet u zeker dat u deze Plane-integratie wilt verwijderen? De API-sleutel wordt ingetrokken.",
+			"CONFIRM_REGENERATE": "Weet u zeker dat u de API-sleutel opnieuw wilt genereren? De huidige sleutel wordt ongeldig.",
+			"API_KEY_DIALOG": {
+				"TITLE": "API-referenties",
+				"WARNING": "Kopieer deze referenties nu. Het API-geheim wordt niet opnieuw weergegeven.",
+				"API_KEY": "API-sleutel",
+				"API_SECRET": "API-geheim",
+				"COPY": "Kopiëren",
+				"COPIED": "Gekopieerd!"
+			}
+		},
 		"COMING_SOON": "Binnenkort beschikbaar.",
 		"RE_INTEGRATE": "Re-integreren",
 		"SETTINGS": "Instellingen",
@@ -1583,7 +1715,17 @@
 		"FILTER_INTEGRATIONS": "Filter integraties",
 		"SEARCH_INTEGRATIONS": "Zoekintegraties",
 		"PAID": "Betaald",
-		"INTEGRATION": "Integratie"
+		"INTEGRATION": "Integratie",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "Make.com-autorisatie wordt verwerkt...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Make.com-autorisatie mislukt",
+				"INVALID_CALLBACK": "Ongeldige callback-parameters"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Make.com-autorisatie succesvol voltooid"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Boekhouding",
@@ -4439,7 +4581,19 @@
 			"INACTIVITY_HANDLER": "Inactiviteitshandler",
 			"WANT_LOGOUT": "Weet je zeker dat je wilt uitloggen?",
 			"ERROR_HANDLER": "Foutafhandeling",
-			"ERROR_OCCURRED": "Er is een fout opgetreden"
+			"ERROR_OCCURRED": "Er is een fout opgetreden",
+			"DB_CLEANUP_TITLE": "De databaseversie is waarschijnlijk verouderd",
+			"DB_CLEANUP_MESSAGE": "Er is een nieuwe versie van de app gedetecteerd. Om compatibiliteitsproblemen te voorkomen, wilt u de lokale database wissen en een nieuwe gebruiken?",
+			"DB_CLEANUP_DETAIL": "Het verwijderen van de database wist lokaal gecachte gegevens. Gegevens die al met de server zijn gesynchroniseerd, blijven veilig in de Gauzy-cloud.",
+			"DB_CLEANUP_REMOVE": "Database Verwijderen",
+			"DB_CLEANUP_KEEP": "Behouden",
+			"DB_CLEANUP_UNSYNCED_TITLE": "Niet-gesynchroniseerde Gegevens Gedetecteerd",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "Waarschuwing: Mogelijk Gegevensverlies",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "U heeft {{countsText}}. Het verwijderen van de database zal deze offline gegevens PERMANENT wissen. Als u het niet zeker weet, klik dan op 'Behouden'.",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "We konden niet bepalen of u niet-gesynchroniseerde offline gegevens heeft. Het verwijderen van de database kan niet-opgeslagen werk PERMANENT wissen. Als u het niet zeker weet, klik dan op 'Behouden'.",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} niet-gesynchroniseerde timer(s)",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} niet-gesynchroniseerde interval(len)",
+			"AND_JOIN": "en"
 		},
 		"NO_LIMIT": "∞ Geen Limiet",
 		"TASK": "Taak",
@@ -4490,7 +4644,8 @@
 			"DAILY_RECAP": "Dagelijkse Samenvatting",
 			"WEEKLY_RECAP": "Wekelijks Overzicht",
 			"MONTHLY_RECAP": "Maandelijks Overzicht",
-			"INSTALL_PLUGIN": "Plugin installeren"
+			"INSTALL_PLUGIN": "Plugin installeren",
+			"OPEN_LOG_HISTORY": "Logboekgeschiedenis"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Uurlijkse tijdregistratie",
@@ -4503,6 +4658,45 @@
 			"PLEASE_HOLD": "Even geduld aub...",
 			"SHUTTING_DOWN": "Applicatie wordt afgesloten",
 			"LOGOUT_IN_PROGRESS": "Uitloggen bezig"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "Systeemmachtigingen",
+			"TITLE": "Systeemmachtigingen",
+			"DESCRIPTION": "Gauzy vereist bepaalde macOS-machtigingen om uw werk nauwkeurig bij te houden. Bekijk en beheer ze hier.",
+			"SCREEN_RECORDING": "Schermopname",
+			"SCREEN_RECORDING_DESC": "Vereist om automatisch schermafbeeldingen te maken tijdens uw bijgehouden werksessies.",
+			"STATUS": "Status",
+			"GRANTED": "Verleend",
+			"DENIED": "Geweigerd",
+			"NOT_DETERMINED": "Niet ingesteld",
+			"RESTRICTED": "Beperkt",
+			"OPEN_SYSTEM_SETTINGS": "Systeeminstellingen openen",
+			"TEST_SCREENSHOT": "Schermafbeelding testen",
+			"TEST_GET_ACTIVE_WINDOW": "Toegang testen",
+			"SCREENSHOT_PREVIEW": "Schermafbeeldingsvoorbeeld",
+			"RESET_PERMISSION": "Opnieuw instellen",
+			"RESTARTING": "Opnieuw opstarten over",
+			"DENIED_HINT": "Schermopname is geweigerd. Klik op 'Opnieuw instellen' om de machtiging opnieuw in te stellen, of open Systeeminstellingen om deze handmatig te verlenen.",
+			"RELAUNCH": "Opnieuw starten",
+			"RELAUNCH_DESC": "Machtiging verleend maar kunt u uw scherm nog steeds niet opnemen? Klik op Opnieuw starten om de wijzigingen toe te passen.",
+			"DIALOG_TITLE": "Machtiging voor schermopname vereist",
+			"DIALOG_DESC": "Gauzy heeft toestemming voor schermopname nodig om schermafbeeldingen te maken tijdens uw werksessie. Verleen toegang om door te gaan.",
+			"POLLING_HINT": "Dit dialoogvenster wordt automatisch gesloten zodra de machtiging is verleend.",
+			"START_ANYWAY": "Starten zonder schermafbeelding",
+			"ACCESSIBILITY": "Toegankelijkheid",
+			"ACCESSIBILITY_DESC": "Vereist om toetsenbord-, muis- en actief vensteractiviteiten bij te houden tijdens uw werksessies.",
+			"OPEN_ACCESSIBILITY_SETTINGS": "Toegankelijkheidsinstellingen",
+			"RESET_ACCESSIBILITY_PERMISSION": "Toegankelijkheid opnieuw instellen",
+			"ACCESSIBILITY_DENIED_HINT": "Toegankelijkheid is geweigerd. Klik op 'Toegankelijkheid opnieuw instellen' om de machtiging opnieuw in te stellen, of open Systeeminstellingen.",
+			"ACTIVE_WINDOW": "Actief vensterweergave",
+			"HARDWARE_ACCELERATION_HINT": "Als u problemen ondervindt met schermopname, probeer dan hardwareversnelling uit te schakelen in de app-instellingen en start de app opnieuw op.",
+			"ENABLE_HARDWARE_ACCELERATION": "Hardwareversnelling inschakelen",
+			"DISABLE_HARDWARE_ACCELERATION": "Hardwareversnelling uitschakelen",
+			"HARDWARE_ACCELERATION_STATUS": "Hardwareversnelling is momenteel",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"HARDWARE_ACCELERATION_DESC": "Hardwareversnelling kan de prestaties verbeteren, maar kan problemen veroorzaken op sommige systemen. Als u problemen ondervindt met schermopname, probeer dan deze instelling te wijzigen.",
+			"HARDWARE_ACCELERATION": "Hardwareversnelling"
 		}
 	},
 	"SERVER": "Server",
@@ -5442,5 +5636,80 @@
 		"DESCRIPTION": "De {{companySite}}-server is momenteel niet bereikbaar. Dit kan komen door gepland onderhoud of onverwachte uitval.",
 		"CONNECTING": "Automatisch verbinding opnieuw proberen...",
 		"HINT": "Status: Poging om verbinding te maken met {{companySite}}-servers. Foutcode: 503."
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "OAuth-clients",
+		"SUBTITLE": "Registreer en beheer apps van derden die namens uw gebruikers toegang kunnen aanvragen tot Ever Gauzy.",
+		"STATUS": {
+			"ACTIVE": "Actief",
+			"INACTIVE": "Inactief"
+		},
+		"EMPTY": {
+			"TITLE": "Nog geen OAuth-clients geregistreerd.",
+			"HINT": "Klik op \"App registreren\" om uw eerste integratie toe te voegen (bijv. Activepieces, n8n, Make.com)."
+		},
+		"TABLE": {
+			"NAME": "Naam",
+			"CLIENT_ID": "Client-ID",
+			"TYPE": "Type",
+			"STATUS": "Status",
+			"REDIRECT_URIS": "Omleidings-URI's",
+			"ACTIONS": "Acties"
+		},
+		"ACTIONS": {
+			"REGISTER": "App registreren",
+			"EDIT": "Bewerken",
+			"ROTATE_SECRET": "Geheim roteren",
+			"DELETE": "Intrekken"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "Nieuwe OAuth-client registreren",
+			"EDIT_TITLE": "OAuth-client bewerken"
+		},
+		"FORM": {
+			"NAME": "Toepassingsnaam",
+			"NAME_PLACEHOLDER": "bijv. Activepieces",
+			"DESCRIPTION": "Beschrijving",
+			"DESCRIPTION_PLACEHOLDER": "Korte beschrijving die wordt weergegeven op de toestemmingspagina",
+			"CLIENT_TYPE": "Clienttype",
+			"CLIENT_TYPE_IMMUTABLE": "Het clienttype kan niet worden gewijzigd na het aanmaken.",
+			"REDIRECT_URIS": "Omleidings-URI's",
+			"REDIRECT_URI_PLACEHOLDER": "https://uw-app.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "Omleidings-URI toevoegen",
+			"ALLOWED_SCOPES": "Toegestane bereiken",
+			"SCOPE_PLACEHOLDER": "bijv. offline_access",
+			"ADD_SCOPE": "Bereik toevoegen",
+			"GRANT_TYPES": "Verleningstypen",
+			"PKCE_REQUIRED": "PKCE vereist (uitgestelde handhaving)",
+			"ACCESS_TTL": "Toegangstoken-TTL (seconden)",
+			"REFRESH_TTL": "Vernieuwingstoken-TTL (seconden)"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Bewaar uw clientgeheim",
+			"WARNING": "Dit is de enige keer dat het clientgeheim wordt weergegeven. Kopieer het nu en bewaar het in uw integratie van derden - rotatie is de enige manier om te herstellen van een verloren geheim.",
+			"CLIENT_ID": "Client-ID",
+			"CLIENT_SECRET": "Clientgeheim",
+			"ACKNOWLEDGE": "Ik heb het clientgeheim gekopieerd en veilig opgeslagen.",
+			"CLOSE": "Ik heb het opgeslagen, sluiten",
+			"COPIED_CLIENT_ID": "Client-ID gekopieerd naar klembord",
+			"COPIED_SECRET": "Clientgeheim gekopieerd naar klembord"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "Het clientgeheim roteren voor \"{{name}}\"? Het vorige geheim werkt onmiddellijk niet meer voor nieuwe token-uitwisselingen.",
+			"DELETE": "\"{{name}}\" intrekken? Dit voorkomt onmiddellijk dat de app van derden nieuwe tokens kan verkrijgen."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" geregistreerd",
+			"UPDATED": "OAuth-client bijgewerkt",
+			"SECRET_ROTATED": "Clientgeheim geroteerd",
+			"DELETED": "OAuth-client ingetrokken"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Kan OAuth-clients niet laden",
+			"CREATE_FAILED": "Kan OAuth-client niet registreren",
+			"UPDATE_FAILED": "Kan OAuth-client niet bijwerken",
+			"ROTATE_FAILED": "Kan clientgeheim niet roteren",
+			"DELETE_FAILED": "Kan OAuth-client niet intrekken"
+		}
 	}
 }

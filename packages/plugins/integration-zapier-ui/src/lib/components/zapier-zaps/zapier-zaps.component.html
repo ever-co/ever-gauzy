@@ -1,0 +1,189 @@
+<nb-card>
+  <nb-card-header class="d-flex justify-content-between align-items-center">
+    <h6 class="m-0">{{ 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.TITLE' | translate }}</h6>
+    <button nbButton status="primary" size="small" (click)="toggleCreateForm()">
+      <nb-icon [icon]="showCreateForm ? 'close-outline' : 'plus-outline'"></nb-icon>
+      {{
+        (showCreateForm ? 'BUTTONS.CANCEL' : 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.CREATE') | translate
+      }}
+    </button>
+  </nb-card-header>
+  <nb-card-body>
+    @if (showCreateForm) {
+      <form [formGroup]="createZapForm" (ngSubmit)="submitCreateZap()" class="create-zap-form mb-3">
+        <div class="form-group">
+          <label class="label">
+            {{ 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.FIELDS.TITLE' | translate }}
+          </label>
+          <input
+            nbInput
+            fullWidth
+            fieldSize="small"
+            type="text"
+            formControlName="title"
+            [placeholder]="'INTEGRATIONS.ZAPIER_PAGE.ZAPS.TITLE_PLACEHOLDER' | translate"
+          />
+        </div>
+
+        <div class="steps-section mt-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="label m-0">
+              {{ 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.FIELDS.STEPS' | translate }}
+            </label>
+            <button type="button" nbButton status="basic" size="tiny" (click)="addStep()">
+              <nb-icon icon="plus-outline"></nb-icon>
+              {{ 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.ADD_STEP' | translate }}
+            </button>
+          </div>
+
+          <div formArrayName="steps">
+            @for (stepCtrl of stepsFormArray.controls; track $index; let i = $index) {
+              <div [formGroupName]="i" class="step-item p-2 mb-2">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <strong>
+                    {{ 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.FIELDS.STEP' | translate }} {{ i + 1 }}
+                  </strong>
+                  @if (stepsFormArray.length > 1) {
+                    <button
+                      type="button"
+                      nbButton
+                      status="danger"
+                      size="tiny"
+                      ghost
+                      (click)="removeStep(i)"
+                    >
+                      <nb-icon icon="trash-2-outline"></nb-icon>
+                    </button>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label class="label">
+                    {{ 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.FIELDS.ACTION' | translate }}
+                  </label>
+                  <input
+                    nbInput
+                    fullWidth
+                    fieldSize="small"
+                    type="text"
+                    formControlName="action"
+                    placeholder="example_core:Vn7xbE60"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label class="label">
+                    {{ 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.FIELDS.AUTHENTICATION' | translate }}
+                  </label>
+                  <input
+                    nbInput
+                    fullWidth
+                    fieldSize="small"
+                    type="text"
+                    formControlName="authentication"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label class="label">
+                    {{ 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.FIELDS.STEP_TITLE' | translate }}
+                  </label>
+                  <input
+                    nbInput
+                    fullWidth
+                    fieldSize="small"
+                    type="text"
+                    formControlName="title"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label class="label">
+                    {{ 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.FIELDS.INPUTS' | translate }}
+                  </label>
+                  <textarea
+                    nbInput
+                    fullWidth
+                    fieldSize="small"
+                    rows="3"
+                    formControlName="inputs"
+                    placeholder='{"key": "value"}'
+                  ></textarea>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="form-actions mt-3">
+          <button
+            type="submit"
+            nbButton
+            status="primary"
+            size="small"
+            [disabled]="creating || createZapForm.invalid"
+          >
+            @if (creating) {
+              <nb-icon icon="loader-outline"></nb-icon>
+            }
+            {{ 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.SUBMIT' | translate }}
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (loading) {
+      <div class="d-flex justify-content-center">
+        <nb-spinner></nb-spinner>
+      </div>
+    }
+    @if (!loading) {
+      <div class="endpoints-list">
+        @for (zap of zaps; track zap.id) {
+          <div class="endpoint-item">
+            <div class="endpoint-info">
+              <h6>{{ zap.title }}</h6>
+              <p>
+                @if (zap.is_enabled !== undefined) {
+                  <span>
+                    {{
+                      (zap.is_enabled
+                        ? 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.ENABLED'
+                        : 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.DISABLED'
+                      ) | translate
+                    }}
+                  </span>
+                } @else if (zap.state) {
+                  <span>{{ zap.state }}</span>
+                }
+                @if (zap.updated_at || zap.modified_time) {
+                  <span> · {{ zap.updated_at || zap.modified_time }}</span>
+                }
+              </p>
+            </div>
+            <div class="endpoint-actions">
+              @if (zap.links?.html_editor || zap.url) {
+                <a
+                  nbButton
+                  status="primary"
+                  size="small"
+                  outline
+                  [href]="zap.links?.html_editor || zap.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.OPEN_EDITOR' | translate }}
+                </a>
+              }
+            </div>
+          </div>
+        }
+        @if (zaps.length === 0) {
+          <div class="no-data">
+            {{ 'INTEGRATIONS.ZAPIER_PAGE.ZAPS.NO_ZAPS' | translate }}
+          </div>
+        }
+      </div>
+    }
+  </nb-card-body>
+</nb-card>

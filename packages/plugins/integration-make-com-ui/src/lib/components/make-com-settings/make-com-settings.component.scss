@@ -6,12 +6,6 @@
     margin-bottom: 0.5rem;
     font-weight: 500;
   }
-
-  .error-message {
-    color: var(--danger-color);
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-  }
 }
 
 .actions {
@@ -22,4 +16,58 @@
   button {
     min-width: 120px;
   }
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.selector-list {
+  border: 1px solid var(--gauzy-card-border);
+  border-radius: calc(var(--border-radius) * 1);
+  overflow: hidden;
+}
+
+.selector-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-bottom: 1px solid var(--gauzy-card-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: var(--gauzy-card-hover);
+  }
+
+  &.selected {
+    background-color: var(--gauzy-sidebar-background-color);
+  }
+}
+
+.setup-complete-card {
+  nb-card-body {
+    font-size: 0.875rem;
+  }
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

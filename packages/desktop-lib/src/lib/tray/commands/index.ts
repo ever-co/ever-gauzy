@@ -8,3 +8,4 @@ export * from './open-settings-command';
 export * from './open-timer-command';
 export * from './start-timer-command';
 export * from './stop-timer-command';
+export * from './open-log-command';

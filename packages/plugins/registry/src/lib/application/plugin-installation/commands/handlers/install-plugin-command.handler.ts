@@ -1,4 +1,4 @@
-import { PluginInstallationStatus, PluginScope } from '@gauzy/contracts';
+import { PluginScope } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
@@ -70,35 +70,37 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 		// Ensure user has access to install the plugin
 		this.ensurePluginAccess(state);
 
-		// Build where clause for finding existing installation (only include database properties)
+		// Build where clause for finding existing installation (status excluded to avoid UNIQUE constraint violations
+		// when re-installing after a previous uninstall)
 		const whereClause = {
 			pluginId,
 			versionId,
-			installedById,
-			status: PluginInstallationStatus.INSTALLED
+			installedById
 		};
 
 		// Find existing plugin installation
-		const found = await this.installationService.findOneOrFailByWhereOptions(whereClause);
+		const { success, record: found } = await this.installationService.findOneOrFailByOptions({ where: whereClause });
 
-		if (found.success) {
+		if (success && found.isInstalled()) {
 			// Plugin is already installed, return the existing record
-			return found.record;
+			return found;
 		}
 
 		// Create the PluginInstallation entity
-		const installationData: Partial<IPluginInstallation> = {
-			tenantId,
-			pluginId,
-			versionId,
-			installedById,
-			status: PluginInstallationStatus.INSTALLED,
-			installedAt: new Date(),
-			uninstalledAt: null,
-			...(organizationId && { organizationId })
-		};
+		const installationData: Partial<IPluginInstallation> = success
+			? found
+			: {
+					tenantId,
+					pluginId,
+					versionId,
+					installedById,
+					...(organizationId && { organizationId })
+				};
 
 		const installation = Object.assign(new PluginInstallation(), installationData);
+
+		// Mark the plugin installation as installed
+		installation.markAsInstalled();
 
 		// Persist the plugin installation record
 		return this.installationService.save(installation);

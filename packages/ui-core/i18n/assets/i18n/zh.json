@@ -179,7 +179,9 @@
 		"ADD_MORE_SOURCES": "添加更多来源",
 		"REMOVE_FROM_FAVORITES": "从收藏夹中移除",
 		"ADD_TO_FAVORITES": "添加到收藏夹",
-		"UNSELECT_ALL": "取消全选"
+		"UNSELECT_ALL": "取消全选",
+		"START_TIMER_ANYWAY": "仍然开始",
+		"OPEN_SETTING": "打开设置"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1140,6 +1142,7 @@
 		"PAYMENT_GATEWAYS": "支付网关",
 		"SMS_GATEWAYS": "短信网关",
 		"CUSTOM_SMTP": "自定义SMTP",
+		"OAUTH_CLIENTS": "OAuth客户端",
 		"INVENTORY": "库存",
 		"SALES": "销售",
 		"PAYMENTS": "支付",
@@ -1294,16 +1297,93 @@
 		},
 		"MAKE_COM_PAGE": {
 			"SCENARIOS": "场景",
-			"EXECUTIONS": "执行",
-			"HISTORY": "历史",
+			"WEBHOOKS": "Webhooks",
+			"WEBHOOKS_REFRESH": "刷新 Webhooks",
+			"WEBHOOK_ENABLE": "启用 Webhook",
+			"WEBHOOK_DISABLE": "禁用 Webhook",
+			"WEBHOOK_PING": "测试 Webhook",
+			"SCENARIO_ACTIVE": "活跃",
+			"SCENARIO_INACTIVE": "非活跃",
+			"SCENARIO_LAST_EDITED": "最后编辑：{{value}}",
+			"SCENARIO_DISABLE": "禁用场景",
+			"SCENARIO_ENABLE": "启用场景",
+			"SCENARIO_RUN_ONCE": "运行场景一次",
+			"WEBHOOK_ENABLED": "已启用",
+			"WEBHOOK_DISABLED": "已禁用",
+			"WEBHOOK_TYPE": "类型",
+			"WEBHOOK_QUEUE": "队列",
+			"TEMPLATE_PUBLIC": "公开",
+			"TEMPLATE_PUBLISHED": "已发布",
+			"REFRESH_CONNECTIONS": "刷新连接",
+			"CONFIGURATION_TITLE": "Make.com 配置",
+			"ZONE_LABEL": "区域",
+			"ZONE_HINT": "选择与您的 Make.com 帐户匹配的区域（例如 us2.make.com）",
+			"ORGANIZATION_LABEL": "Make.com 组织",
+			"LOADING_ORGANIZATIONS": "正在加载组织...",
+			"NO_ORGANIZATIONS": "未找到组织",
+			"TEAM_LABEL": "Make.com 团队",
+			"LOADING_TEAMS": "正在加载团队...",
+			"NO_TEAMS": "未找到团队",
+			"CONNECTED_TO": "已连接到 {{org}} / {{team}} 在 {{zone}}",
+			"WEBHOOK_SETTINGS_TITLE": "Webhook 设置",
+			"CONNECTIONS": "连接",
+			"TEMPLATES": "模板",
 			"SETTINGS": "设置",
+			"CONNECT_TO_MAKE_COM": "连接到 Make.com",
+			"CONNECT_INFO": "点击下面的按钮连接您的 Make.com 帐户。您将被重定向到 Make.com 以授权集成。",
+			"NO_SCENARIOS": "未找到场景。在您的 Make.com 仪表板中创建场景。",
+			"NO_HOOKS": "未找到 Webhooks。在您的 Make.com 仪表板中创建 Webhooks。",
+			"NO_CONNECTIONS": "未找到连接。在您的 Make.com 仪表板中创建连接。",
+			"NO_TEMPLATES": "未找到模板。",
+			"TEST_CONNECTION": "测试连接",
+			"CONNECTION": {
+				"ACCOUNT": "账户：{{value}}",
+				"TYPE": "类型：{{value}}",
+				"PACKAGE": "套餐：{{value}}",
+				"EXPIRES": "过期：{{value}}"
+			},
 			"ERRORS": {
 				"INVALID_FORM": "请填写所有必填字段",
-				"START_AUTHORIZATION": "请开始授权过程"
+				"START_AUTHORIZATION": "启动授权过程失败",
+				"NO_ORGANIZATION": "请先选择一个组织",
+				"LOAD_SETTINGS": "加载 Make.com 设置失败",
+				"SAVE_SETTINGS": "保存 Make.com 设置失败",
+				"LOAD_SETUP_STATUS": "加载设置状态失败",
+				"LOAD_SCENARIOS": "加载场景失败",
+				"TOGGLE_SCENARIO": "切换场景失败",
+				"RUN_SCENARIO": "运行场景失败",
+				"LOAD_CONNECTIONS": "加载连接失败",
+				"TEST_CONNECTION": "测试连接失败",
+				"LOAD_WEBHOOKS": "加载 Webhooks 失败",
+				"TOGGLE_WEBHOOK": "切换 Webhook 失败",
+				"PING_WEBHOOK": "测试 Webhook 失败",
+				"SET_ZONE": "设置区域失败",
+				"LOAD_ORGANIZATIONS": "加载组织失败",
+				"SELECT_ORGANIZATION": "选择组织失败",
+				"LOAD_TEAMS": "加载团队失败",
+				"SELECT_TEAM": "选择团队失败",
+				"LOAD_TEMPLATES": "加载模板失败",
+				"REQUEST_TIMEOUT": "请求超时，请重试。"
 			},
-			"CLIENT_ID": "客户端ID",
-			"CLIENT_SECRET": "客户端密钥",
-			"NEXT_STEP_INFO": "授权后，您将被重定向到Make.com以完成集成设置"
+			"SUCCESS": {
+				"SETTINGS_SAVED": "Make.com 设置已成功保存",
+				"SCENARIO_ACTIVATED": "场景已激活",
+				"SCENARIO_DEACTIVATED": "场景已停用",
+				"SCENARIO_EXECUTED": "场景已执行",
+				"CONNECTION_VALID": "连接 \"{{name}}\" 有效",
+				"WEBHOOK_TOGGLED_ON": "Webhook 已启用",
+				"WEBHOOK_TOGGLED_OFF": "Webhook 已禁用",
+				"WEBHOOK_PINGED": "Webhook \"{{name}}\" 测试成功",
+				"ZONE_SET": "区域已设置为 {{zone}}",
+				"ORGANIZATION_SELECTED": "已选择组织 \"{{name}}\"",
+				"TEAM_SELECTED": "已选择团队 \"{{name}}\""
+			},
+			"SETUP_REQUIRED": {
+				"AUTHORIZE": "请先授权 Make.com。转到设置选项卡连接您的帐户。",
+				"ZONE": "请在设置选项卡中选择您的 Make.com 区域。",
+				"ORGANIZATION": "请在设置选项卡中选择您的 Make.com 组织。",
+				"TEAM": "请在设置选项卡中选择您的 Make.com 团队。"
+			}
 		},
 		"MAKE_COM": {
 			"SETTINGS": {
@@ -1316,26 +1396,32 @@
 			}
 		},
 		"ZAPIER_PAGE": {
-			"CLIENT_ID": "客户端ID",
-			"CLIENT_SECRET": "客户端密钥",
-			"NEXT_STEP_INFO": "授权后，您将被重定向到Zapier以完成集成设置",
+			"CONNECT_TO_ZAPIER": "连接到 Zapier",
+			"CONNECT_INFO": "点击下方按钮连接您的 Zapier 账户。您将被重定向到 Zapier 以授权集成。",
 			"ERRORS": {
 				"LOAD_SETTINGS": "加载Zapier设置失败",
 				"SAVE_SETTINGS": "保存Zapier设置失败",
 				"INVALID_FORM": "请填写所有必填字段",
 				"MISSING_CREDENTIALS": "缺少客户端凭据",
+				"NO_ORGANIZATION": "请先选择一个组织",
 				"NO_ACCESS_TOKEN": "没有可用的访问令牌",
 				"LOAD_WEBHOOKS": "加载Webhooks失败",
 				"DELETE_WEBHOOK": "删除Webhook失败",
 				"LOAD_ACTIONS": "加载动作失败",
 				"LOAD_TRIGGERS": "加载触发器失败",
+				"LOAD_ZAPS": "加载zaps失败",
+				"LOAD_ZAP_TEMPLATES": "加载zap模板失败",
+				"CREATE_ZAP": "创建zap失败",
+				"ZAP_TITLE_REQUIRED": "请为新zap提供标题",
+				"NO_INTEGRATION_ID": "未提供Zapier集成ID",
 				"START_AUTHORIZATION": "请开始授权过程",
 				"INVALID_TOKEN": "提供的令牌无效",
 				"TOKEN_NOT_FOUND": "未找到令牌"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier设置保存成功",
-				"DELETE_WEBHOOK": "Webhook删除成功"
+				"DELETE_WEBHOOK": "Webhook删除成功",
+				"CREATE_ZAP": "Zap创建成功"
 			},
 			"TAB": {
 				"TRIGGERS": "触发器",
@@ -1377,6 +1463,26 @@
 			"WEBHOOKS": {
 				"TITLE": "Webhooks",
 				"NO_WEBHOOKS": "未配置Webhooks"
+			},
+			"ZAPS": {
+				"TITLE": "Zaps",
+				"NO_ZAPS": "没有可用的Zaps",
+				"CREATE": "创建Zap",
+				"SUBMIT": "创建",
+				"ADD_STEP": "添加步骤",
+				"OPEN_EDITOR": "在Zapier中打开",
+				"ENABLED": "已启用",
+				"DISABLED": "已禁用",
+				"TITLE_PLACEHOLDER": "输入新Zap的标题",
+				"FIELDS": {
+					"TITLE": "标题",
+					"STEPS": "步骤",
+					"STEP": "步骤",
+					"STEP_TITLE": "步骤标题",
+					"ACTION": "操作",
+					"AUTHENTICATION": "身份验证",
+					"INPUTS": "输入 (JSON)"
+				}
 			}
 		},
 		"GAUZY_AI_PAGE": {
@@ -1576,6 +1682,32 @@
 				"LOAD_FAILED": "加载事件触发器失败。"
 			}
 		},
+		"PLANE_PAGE": {
+			"TITLE": "Plane",
+			"SUBTITLE": "Plane 项目管理集成",
+			"WEB_URL": "Plane Web URL",
+			"WEB_URL_PLACEHOLDER": "https://plane.example.com",
+			"ADMIN_URL": "Plane 管理员 URL",
+			"ADMIN_URL_PLACEHOLDER": "https://plane-admin.example.com",
+			"SPACE_URL": "Plane Space URL",
+			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
+			"SETUP_INFO": "输入您的 Plane 实例托管的 URL。Web URL 为必填项。管理员和 Space URL 为可选项。",
+			"URL_REQUIRED": "此 URL 为必填项。",
+			"URL_INVALID": "请输入以 http:// 或 https:// 开头的有效 URL。",
+			"LOADING": "正在加载设置...",
+			"REGENERATE_KEY": "重新生成",
+			"REGENERATE_KEY_LABEL": "API 密钥和密钥密码",
+			"CONFIRM_DELETE": "您确定要移除此 Plane 集成吗？API 密钥将被撤销。",
+			"CONFIRM_REGENERATE": "您确定要重新生成 API 密钥吗？当前密钥将失效。",
+			"API_KEY_DIALOG": {
+				"TITLE": "API 凭据",
+				"WARNING": "请立即复制这些凭据。API 密钥密码将不会再次显示。",
+				"API_KEY": "API 密钥",
+				"API_SECRET": "API 密钥密码",
+				"COPY": "复制",
+				"COPIED": "已复制！"
+			}
+		},
 		"COMING_SOON": "即将推出",
 		"RE_INTEGRATE": "重新整合",
 		"SETTINGS": "设置",
@@ -1583,7 +1715,17 @@
 		"FILTER_INTEGRATIONS": "筛选集成",
 		"SEARCH_INTEGRATIONS": "搜索集成",
 		"PAID": "支付",
-		"INTEGRATION": "整合"
+		"INTEGRATION": "整合",
+		"MAKE_PAGE": {
+			"PROCESSING_AUTHORIZATION": "正在处理 Make.com 授权...",
+			"ERRORS": {
+				"AUTHORIZATION_FAILED": "Make.com 授权失败",
+				"INVALID_CALLBACK": "无效的回调参数"
+			},
+			"SUCCESS": {
+				"AUTHORIZATION_COMPLETE": "Make.com 授权已成功完成"
+			}
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "会计",
@@ -4439,7 +4581,19 @@
 			"INACTIVITY_HANDLER": "不活动处理程序",
 			"WANT_LOGOUT": "您确定要注销吗？",
 			"ERROR_HANDLER": "错误处理器",
-			"ERROR_OCCURRED": "发生错误"
+			"ERROR_OCCURRED": "发生错误",
+			"DB_CLEANUP_TITLE": "数据库版本可能已过时",
+			"DB_CLEANUP_MESSAGE": "检测到应用程序的新版本。为避免兼容性问题，是否希望清除本地数据库并使用新的数据库？",
+			"DB_CLEANUP_DETAIL": "删除数据库将清除本地缓存的数据。已与服务器同步的数据将安全地保留在 Gauzy 云中。",
+			"DB_CLEANUP_REMOVE": "删除数据库",
+			"DB_CLEANUP_KEEP": "保留",
+			"DB_CLEANUP_UNSYNCED_TITLE": "检测到未同步数据",
+			"DB_CLEANUP_UNSYNCED_MESSAGE": "警告：可能丢失数据",
+			"DB_CLEANUP_UNSYNCED_DETAIL": "您有 {{countsText}}。删除数据库将永久清除这些离线数据。如果您不确定，请点击“保留”。",
+			"DB_CLEANUP_UNKNOWN_DETAIL": "我们无法确定您是否有未同步的离线数据。删除数据库可能会永久清除未保存的工作。如果您不确定，请点击“保留”。",
+			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
+			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
+			"AND_JOIN": "and"
 		},
 		"NO_LIMIT": "∞ 无限制 (wúxiànzhì)",
 		"TASK": "任务",
@@ -4490,7 +4644,8 @@
 			"DAILY_RECAP": "每日总结",
 			"WEEKLY_RECAP": "每周回顾",
 			"MONTHLY_RECAP": "每月回顾",
-			"INSTALL_PLUGIN": "安装插件"
+			"INSTALL_PLUGIN": "安装插件",
+			"OPEN_LOG_HISTORY": "日志历史"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "按小时跟踪时间",
@@ -4503,6 +4658,45 @@
 			"PLEASE_HOLD": "请稍等...",
 			"SHUTTING_DOWN": "应用程序正在关闭",
 			"LOGOUT_IN_PROGRESS": "正在注销"
+		},
+		"PERMISSIONS": {
+			"MENU_LABEL": "系统权限",
+			"TITLE": "系统权限",
+			"DESCRIPTION": "Gauzy 需要某些 macOS 权限来准确追踪您的工作。在此查看和管理这些权限。",
+			"SCREEN_RECORDING": "屏幕录制",
+			"SCREEN_RECORDING_DESC": "在您的工作会话期间自动截图所必需的。",
+			"STATUS": "状态",
+			"GRANTED": "已授权",
+			"DENIED": "已拒绝",
+			"NOT_DETERMINED": "未设置",
+			"RESTRICTED": "已限制",
+			"OPEN_SYSTEM_SETTINGS": "打开系统设置",
+			"TEST_SCREENSHOT": "测试截图",
+			"TEST_GET_ACTIVE_WINDOW": "测试访问",
+			"SCREENSHOT_PREVIEW": "截图预览",
+			"RESET_PERMISSION": "重置",
+			"RESTARTING": "正在重启，倒计时",
+			"DENIED_HINT": "屏幕录制已被拒绝。点击'重置'以重置权限，或打开系统设置手动授权。",
+			"RELAUNCH": "重新启动",
+			"RELAUNCH_DESC": "已授权但仍无法捕获屏幕？点击重新启动以应用更改。",
+			"DIALOG_TITLE": "需要屏幕录制权限",
+			"DIALOG_DESC": "Gauzy 需要屏幕录制权限才能在您的工作会话期间截图。请授权以继续。",
+			"POLLING_HINT": "授权后此对话框将自动关闭。",
+			"START_ANYWAY": "不截图直接开始",
+			"ACCESSIBILITY": "辅助功能",
+			"ACCESSIBILITY_DESC": "在您的工作会话期间追踪键盘、鼠标和活动窗口活动所必需的。",
+			"OPEN_ACCESSIBILITY_SETTINGS": "辅助功能设置",
+			"RESET_ACCESSIBILITY_PERMISSION": "重置辅助功能",
+			"ACCESSIBILITY_DENIED_HINT": "辅助功能已被拒绝。点击'重置辅助功能'以重置权限，或打开系统设置手动授权。",
+			"ACTIVE_WINDOW": "活动窗口预览",
+			"HARDWARE_ACCELERATION_HINT": "如果您遇到屏幕捕获问题，请尝试在应用设置中禁用硬件加速，然后重新启动应用。",
+			"ENABLE_HARDWARE_ACCELERATION": "启用硬件加速",
+			"DISABLE_HARDWARE_ACCELERATION": "禁用硬件加速",
+			"HARDWARE_ACCELERATION_STATUS": "硬件加速当前",
+			"ENABLED": "Enabled",
+			"DISABLED": "Disabled",
+			"HARDWARE_ACCELERATION_DESC": "硬件加速可以提高性能，但在某些系统上可能会引起问题。如果您遇到屏幕捕获问题，请尝试切换此设置。",
+			"HARDWARE_ACCELERATION": "硬件加速"
 		}
 	},
 	"SERVER": "服务器",
@@ -5442,5 +5636,80 @@
 		"DESCRIPTION": "当前无法访问{{companySite}}服务器。这可能是由于计划维护或意外停机。",
 		"CONNECTING": "正在自动重试连接...",
 		"HINT": "状态：正在尝试连接到{{companySite}}服务器。错误代码：503。"
+	},
+	"OAUTH_CLIENTS": {
+		"TITLE": "OAuth客户端",
+		"SUBTITLE": "注册和管理可以代表您的用户请求访问Ever Gauzy的第三方应用程序。",
+		"STATUS": {
+			"ACTIVE": "活跃",
+			"INACTIVE": "不活跃"
+		},
+		"EMPTY": {
+			"TITLE": "尚未注册OAuth客户端。",
+			"HINT": "点击\"注册应用程序\"添加您的第一个集成（例如Activepieces、n8n、Make.com）。"
+		},
+		"TABLE": {
+			"NAME": "名称",
+			"CLIENT_ID": "客户端ID",
+			"TYPE": "类型",
+			"STATUS": "状态",
+			"REDIRECT_URIS": "重定向URI",
+			"ACTIONS": "操作"
+		},
+		"ACTIONS": {
+			"REGISTER": "注册应用程序",
+			"EDIT": "编辑",
+			"ROTATE_SECRET": "轮换密钥",
+			"DELETE": "撤销"
+		},
+		"DIALOG": {
+			"CREATE_TITLE": "注册新的OAuth客户端",
+			"EDIT_TITLE": "编辑OAuth客户端"
+		},
+		"FORM": {
+			"NAME": "应用程序名称",
+			"NAME_PLACEHOLDER": "例如Activepieces",
+			"DESCRIPTION": "描述",
+			"DESCRIPTION_PLACEHOLDER": "在同意页面显示的简短描述",
+			"CLIENT_TYPE": "客户端类型",
+			"CLIENT_TYPE_IMMUTABLE": "客户端类型在创建后无法更改。",
+			"REDIRECT_URIS": "重定向URI",
+			"REDIRECT_URI_PLACEHOLDER": "https://your-app.example.com/oauth/callback",
+			"ADD_REDIRECT_URI": "添加重定向URI",
+			"ALLOWED_SCOPES": "允许的作用域",
+			"SCOPE_PLACEHOLDER": "例如 offline_access",
+			"ADD_SCOPE": "添加作用域",
+			"GRANT_TYPES": "授权类型",
+			"PKCE_REQUIRED": "要求 PKCE（公共客户端）",
+			"ACCESS_TTL": "访问令牌TTL（秒）",
+			"REFRESH_TTL": "刷新令牌TTL（秒）"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "保存您的客户端密钥",
+			"WARNING": "这是唯一一次显示客户端密钥的机会。立即复制并将其存储在您的第三方集成中——轮换是恢复丢失密钥的唯一方法。",
+			"CLIENT_ID": "客户端ID",
+			"CLIENT_SECRET": "客户端密钥",
+			"ACKNOWLEDGE": "我已复制并安全存储了客户端密钥。",
+			"CLOSE": "我已保存，关闭",
+			"COPIED_CLIENT_ID": "客户端ID已复制到剪贴板",
+			"COPIED_SECRET": "客户端密钥已复制到剪贴板"
+		},
+		"CONFIRM": {
+			"ROTATE_SECRET": "轮换\"{{name}}\"的客户端密钥？以前的密钥将立即停止用于新的令牌交换。",
+			"DELETE": "撤销\"{{name}}\"？这将立即阻止第三方应用程序获取新的令牌。"
+		},
+		"TOASTS": {
+			"CREATED": "已注册\"{{name}}\"",
+			"UPDATED": "OAuth客户端已更新",
+			"SECRET_ROTATED": "客户端密钥已轮换",
+			"DELETED": "OAuth客户端已撤销"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "加载OAuth客户端失败",
+			"CREATE_FAILED": "注册OAuth客户端失败",
+			"UPDATE_FAILED": "更新OAuth客户端失败",
+			"ROTATE_FAILED": "轮换客户端密钥失败",
+			"DELETE_FAILED": "撤销OAuth客户端失败"
+		}
 	}
 }

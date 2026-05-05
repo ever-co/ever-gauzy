@@ -1,0 +1,103 @@
+@let integrations = integrations$ | async;
+@let isLoading = isLoading$ | async;
+
+<div class="builtin-container content-active first">
+	<!-- Search Bar -->
+	<div class="builtin-search">
+		<nb-form-field>
+			<nb-icon nbPrefix icon="search-outline"></nb-icon>
+			<input
+				#searchInput
+				nbInput
+				fullWidth
+				type="text"
+				[placeholder]="'INTEGRATIONS.SEARCH_INTEGRATIONS' | translate"
+				[attr.aria-label]="'INTEGRATIONS.SEARCH_INTEGRATIONS' | translate"
+				(input)="doSearch($event)"
+			/>
+		</nb-form-field>
+	</div>
+
+	<!-- Selectors & Clear -->
+	<div class="builtin-filters">
+		@if (integrationGroups$ | async; as integrationGroups) {
+			<nb-select
+				fullWidth
+				class="integration-selector"
+				[placeholder]="'INTEGRATIONS.SELECT_GROUPS' | translate"
+				[selected]="selectedIntegrationTypeId$ | async"
+				(selectedChange)="setSelectedIntegrationType($event)"
+			>
+				@for (integrationGroup of integrationGroups; track integrationGroup.groupName) {
+					<nb-option-group [title]="integrationGroup.groupName">
+						@for (integrationType of integrationGroup.integrationTypes; track integrationType.id) {
+							<nb-option [value]="integrationType.id">{{ integrationType.name }}</nb-option>
+						}
+					</nb-option-group>
+				}
+			</nb-select>
+		}
+		<nb-select
+			fullWidth
+			[placeholder]="'INTEGRATIONS.FILTER_INTEGRATIONS' | translate"
+			[selected]="selectedIntegrationFilter$ | async"
+			(selectedChange)="setSelectedIntegrationFilter($event)"
+		>
+			@for (filter of filters; track filter.value) {
+				<nb-option [value]="filter.value">{{ filter.label }}</nb-option>
+			}
+		</nb-select>
+		<button type="button" (click)="clearFilter()" status="danger" size="small" nbButton>
+			{{ 'BUTTONS.CLEAR_ALL' | translate }}
+		</button>
+	</div>
+
+	@if (isLoading) {
+		<div class="loading-state">
+			<nb-spinner status="primary" size="large"></nb-spinner>
+		</div>
+	} @else if (!integrations?.length) {
+		<div class="empty-state">
+			<nb-icon icon="cube-outline" class="empty-icon"></nb-icon>
+			<p>{{ 'INTEGRATIONS.MESSAGE.NO_INTEGRATIONS' | translate }}</p>
+		</div>
+	} @else {
+		<!-- Integration Grid -->
+		<div class="integrations-grid">
+			@for (integration of integrations; track integration.id) {
+				<div
+					class="integration-card"
+					[class.coming-soon]="integration.isComingSoon"
+					[class.clickable]="!integration.isComingSoon"
+					(click)="navigateTo(integration)"
+					(keydown.enter)="navigateTo(integration)"
+					[attr.tabindex]="integration.isComingSoon ? null : 0"
+					[attr.role]="integration.isComingSoon ? null : 'button'"
+					[nbTooltipDisabled]="!integration.isComingSoon"
+					[nbTooltip]="'INTEGRATIONS.COMING_SOON' | translate"
+				>
+					<div class="card-logo">
+						<img
+							[ngSrc]="integration.fullImgUrl || integration.imgSrc"
+							[alt]="integration.name"
+							[title]="integration.name | replace: '_' : ' '"
+							width="160"
+							height="120"
+						/>
+						@if (integration.isComingSoon) {
+							<div class="coming-soon-overlay">
+								<span>{{ 'INTEGRATIONS.COMING_SOON' | translate }}</span>
+							</div>
+						}
+					</div>
+					<div class="card-body">
+						<span class="card-name">{{ integration.name | replace: '_' : ' ' }}</span>
+						@if (integration.isPaid) {
+							<nb-tag text="{{ 'INTEGRATIONS.PAID_LABEL' | translate }}" size="tiny" status="warning"></nb-tag>
+						}
+					</div>
+				</div>
+			}
+		</div>
+	}
+</div>

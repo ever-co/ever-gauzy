@@ -45,5 +45,8 @@
 	},
 	"angular.enable-strict-mode-prompt": false,
 	"nxConsole.generateAiAgentRules": true,
-	"git.ignoreLimitWarning": true
+	"git.ignoreLimitWarning": true,
+	"[dockerfile]": {
+		"editor.defaultFormatter": "ms-azuretools.vscode-containers"
+	}
 }

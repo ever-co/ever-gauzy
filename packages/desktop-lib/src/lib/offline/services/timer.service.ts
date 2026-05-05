@@ -42,10 +42,20 @@ export class TimerService implements ITimerService<TimerTO> {
 		}
 	}
 
+	private checkEmptyUpdate(timer: Partial<Timer>) {
+		const obj = typeof timer?.toObject === 'function' ? timer.toObject() : timer;
+		const keys = Object.keys(obj ?? {}).filter((key: keyof Timer) => key !== 'id');
+		return keys.length <= 0;
+	}
+
 	public async update(timer: Partial<Timer>): Promise<void> {
 		try {
 			if (!timer.id) {
 				return console.error('WARN[TIMER_SERVICE]: No timer data, cannot update');
+			}
+
+			if (this.checkEmptyUpdate(timer)) {
+				return console.error('WARN[TIMER_SERVICE]: No timer data want to update');
 			}
 
 			await this._timerDAO.update(timer.id, timer.toObject());

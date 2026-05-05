@@ -18,6 +18,7 @@ import {
 	LanguageModule,
 	LoggerService,
 	NgxDesktopThemeModule,
+	providePluginInitializers,
 	providePluginsEffects,
 	Store
 } from '@gauzy/desktop-ui-lib';
@@ -57,6 +58,7 @@ bootstrapApplication(AppComponent, {
 	providers: [
 		provideEffectsManager(),
 		providePluginsEffects(),
+		providePluginInitializers(),
 		provideZoneChangeDetection(),
 		importProvidersFrom(
 			NbDialogModule.forRoot(),

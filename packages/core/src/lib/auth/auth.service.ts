@@ -73,6 +73,7 @@ import { TypeOrmUserRepository } from '../user/repository/type-orm-user.reposito
 import { UserService } from '../user/user.service';
 import { RequestContext } from './../core/context';
 import { OrganizationTeam, Tenant, User } from './../core/entities/internal';
+import { Employee } from '../employee/employee.entity';
 import { freshTimestamp, getORMType, MultiORM, MultiORMEnum, parseTypeORMFindToMikroOrm } from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { EmailService } from './../email-send/email.service';
@@ -94,6 +95,8 @@ import {
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createClient } from 'redis';
 import { EVER_REDIS_CLIENT } from '../redis/redis.module';
+import { OAuthClientService } from './oauth-client/oauth-client.service';
+import { OAuthClient } from './oauth-client/oauth-client.entity';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -128,7 +131,8 @@ export class AuthService extends SocialAuthService {
 		private readonly refreshTokenService: RefreshTokenService,
 		private readonly accessTokenService: AccessTokenService,
 		private readonly typeOrmPasswordResetRepository: TypeOrmPasswordResetRepository,
-		private readonly mikroOrmPasswordResetRepository: MikroOrmPasswordResetRepository
+		private readonly mikroOrmPasswordResetRepository: MikroOrmPasswordResetRepository,
+		private readonly oauthClientService: OAuthClientService
 	) {
 		super();
 	}
@@ -238,23 +242,78 @@ export class AuthService extends SocialAuthService {
 		}
 	}
 
-	private ensureOAuthAppConfigured(): OAuthAppConfig {
-		const config = this.getOAuthAppConfig();
-		if (!config.clientId || !config.clientSecret || !config.redirectUris?.length || !config.codeSecret) {
-			throw new InternalServerErrorException('OAuth app is not configured');
+	/**
+	 * Map an `OAuthClient` registry row → the `OAuthAppConfig` view used
+	 * by the auth pipeline. Carries the `clientSecretHash` (NEVER plaintext)
+	 * because the `/token` exchange validates incoming secrets via
+	 * `OAuthClientService.validateClientSecret` (constant-time scrypt).
+	 */
+	private mapOAuthClientToConfig(client: OAuthClient): OAuthAppConfig {
+		return {
+			clientId: client.clientId,
+			clientSecretHash: client.clientSecretHash ?? null,
+			codeSecret: client.codeSecret,
+			redirectUris: client.redirectUris ?? [],
+			name: client.name,
+			description: client.description ?? null,
+			allowedScopes: client.allowedScopes ?? [],
+			allowedGrantTypes: (client.allowedGrantTypes ?? []) as string[],
+			pkceRequired: client.pkceRequired,
+			accessTokenTtl: client.accessTokenTtl,
+			tenantId: client.tenantId ?? null,
+			clientType: client.clientType
+		};
+	}
+
+	/**
+	 * Resolve an OAuth client by its public `clientId` from the
+	 * `oauth_clients` registry. Throws `NotFoundException` (mapped to
+	 * `400 invalid_client` by the controller) when the row does not
+	 * exist or is inactive. There is no env-var fallback — every
+	 * third-party app must be registered via `POST /oauth/clients`.
+	 */
+	public async resolveOAuthClient(clientId: string): Promise<OAuthAppConfig> {
+		if (!clientId) {
+			throw new BadRequestException('Invalid client_id');
 		}
-		return config;
+		const client = await this.oauthClientService.findByClientId(clientId);
+		return this.mapOAuthClientToConfig(client);
 	}
 
 	public async createOAuthAppAuthorizationCode(request: OAuthAppAuthorizationRequest): Promise<string> {
-		const config = this.ensureOAuthAppConfigured();
+		const config = await this.resolveOAuthClient(request.clientId);
 
-		if (request.clientId !== config.clientId) {
-			throw new BadRequestException('Invalid client_id');
+		// Verify the client is allowed for the requesting tenant
+		// Global clients (tenantId=null) can be used by any tenant
+		// Tenant-scoped clients can only be used by their owning tenant
+		const requestTenantId = RequestContext.currentTenantId();
+		if (config.tenantId && config.tenantId !== requestTenantId) {
+			throw new BadRequestException('OAuth client is not available for this tenant');
+		}
+
+		// Enforce that the client is allowed to use the authorization_code grant
+		if (config.allowedGrantTypes && config.allowedGrantTypes.length > 0
+			&& !config.allowedGrantTypes.includes('authorization_code')) {
+			throw new BadRequestException('Client is not allowed to use authorization_code grant');
 		}
 
 		if (!this.isOAuthAppRedirectUriAllowed(request.redirectUri, config)) {
 			throw new BadRequestException('Invalid redirect_uri');
+		}
+
+		// Always validate scopes - even when allowedScopes is empty,
+		// the request should not specify scopes unless they're explicitly allowed
+		if (request.scope) {
+			const requested = request.scope.split(/\s+/).filter(Boolean);
+			if (requested.length > 0) {
+				// If client has no allowed scopes defined, reject all scope requests
+				if (!config.allowedScopes || config.allowedScopes.length === 0) {
+					throw new BadRequestException('This client does not allow any scopes');
+				}
+				if (!requested.every((s) => config.allowedScopes!.includes(s))) {
+					throw new BadRequestException('Requested scope is not allowed for this client');
+				}
+			}
 		}
 
 		const now = Math.floor(Date.now() / 1000);
@@ -286,15 +345,16 @@ export class AuthService extends SocialAuthService {
 	}
 
 	public async exchangeOAuthAppAuthorizationCode(request: OAuthAppTokenRequest): Promise<OAuthAppTokenResponse> {
-		const config = this.ensureOAuthAppConfigured();
+		const config = await this.resolveOAuthClient(request.clientId);
 
-		if (request.clientId !== config.clientId) {
-			throw new UnauthorizedException('Invalid client credentials');
-		}
-
-		const secretBuf = Buffer.from(request.clientSecret, 'utf8');
-		const expectedBuf = Buffer.from(config.clientSecret, 'utf8');
-		if (secretBuf.length !== expectedBuf.length || !timingSafeEqual(secretBuf, expectedBuf)) {
+		// Validate the presented client_secret against the per-client
+		// scrypt hash from the registry. Public clients (null hash) will
+		// fail here — PKCE for public clients is deferred to a later phase.
+		const secretValid = await this.oauthClientService.validateClientSecret(
+			config.clientSecretHash,
+			request.clientSecret
+		);
+		if (!secretValid) {
 			throw new UnauthorizedException('Invalid client credentials');
 		}
 
@@ -335,6 +395,11 @@ export class AuthService extends SocialAuthService {
 			tenantId: payload.tenantId
 		});
 
+		// Per-client `accessTokenTtl` is configured on the registry row but
+		// `getJwtAccessToken` currently always signs with the global
+		// `JWT_TOKEN_EXPIRATION_TIME`. Reporting the per-client TTL would
+		// mislead clients into premature / late refreshes, so return the
+		// actual JWT lifetime until TTL-aware signing lands.
 		const expiresIn = Number(environment.JWT_TOKEN_EXPIRATION_TIME) || 86400;
 
 		this.logger.log(
@@ -1311,8 +1376,30 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Retrieve the employee details associated with the user.
-			// Use provided organizationId if available, otherwise fall back to RequestContext
-			const employee = await this.employeeService.findOneByUserId(user.id, organizationId);
+			// Query directly via repository to bypass TenantAwareCrudService which forces RequestContext.currentTenantId().
+			// This ensures correct employee lookup when tenantId differs from RequestContext (e.g. workspace switch).
+			let employee: Employee | null = null;
+			const employeeAccessWhere: Record<string, any> = {
+				userId: user.id,
+				tenantId,
+				isActive: true,
+				isArchived: false,
+				...(organizationId && { organizationId })
+			};
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const parsed = parseTypeORMFindToMikroOrm<Employee>({ where: employeeAccessWhere });
+					employee = (await this.mikroOrmEmployeeRepository.findOne(parsed.where, parsed.mikroOptions)) as Employee;
+					break;
+				}
+				case MultiORMEnum.TypeORM: {
+					employee = await this.typeOrmEmployeeRepository.findOne({ where: employeeAccessWhere });
+					break;
+				}
+				default:
+					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+			}
 
 			// Create a payload for the JWT token
 			const payload: JwtPayload = {
@@ -1577,7 +1664,7 @@ export class AuthService extends SocialAuthService {
 
 				// Check the value of the 'email' variable against certain demo email addresses
 				if (email === demoEmployeeEmail || email === demoAdminEmail) {
-					magicCode = environment.demoCredentialConfig?.employeePassword || DEMO_PASSWORD_LESS_MAGIC_CODE;
+					magicCode = DEMO_PASSWORD_LESS_MAGIC_CODE || environment.demoCredentialConfig?.employeePassword;
 					isDemoCode = true;
 				}
 			}
@@ -2172,12 +2259,26 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException('User does not have access to this workspace');
 			}
 
-			// Retrieve the employee details associated with the user
-			const employee = await this.employeeService.findOneByUserId(user.id);
+			// Retrieve the employee details associated with the user in the TARGET workspace.
+			// We cannot use employeeService.findOneByUserId() here because TenantAwareCrudService
+			// forcefully applies RequestContext.currentUser().tenantId, which is still the OLD workspace
+			// during a switch. Instead, query the repository directly with the explicit target tenantId.
+			let employee: Employee | null = null;
+			const employeeWhere = { userId: user.id, tenantId, isActive: true, isArchived: false };
+			const employeeRelations = { organization: true };
 
-			// Check if the employee is active and not archived
-			if (employee && (!employee.isActive || employee.isArchived)) {
-				throw new UnauthorizedException('Employee account is not active');
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const parsed = parseTypeORMFindToMikroOrm<Employee>({ where: employeeWhere, relations: employeeRelations });
+					employee = (await this.mikroOrmEmployeeRepository.findOne(parsed.where, parsed.mikroOptions)) as Employee;
+					break;
+				}
+				case MultiORMEnum.TypeORM: {
+					employee = await this.typeOrmEmployeeRepository.findOne({ where: employeeWhere, relations: employeeRelations });
+					break;
+				}
+				default:
+					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 			}
 
 			// Determine organization context for tokens
@@ -2189,8 +2290,22 @@ export class AuthService extends SocialAuthService {
 				this.getJwtRefreshToken(user, organizationId)
 			]);
 
-			// Store the current refresh token with the user
-			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+			// Store the current refresh token with the user.
+			// We cannot use userService.setCurrentRefreshToken() here because TenantAwareCrudService.update()
+			// runs a findOneByWhereOptions guard scoped to RequestContext.currentTenantId() (the OLD workspace),
+			// which won't find a user whose tenantId is the TARGET workspace. Update directly via repository.
+			const hashedRefreshToken = refresh_token
+				? await this.passwordHashService.hash(refresh_token)
+				: refresh_token;
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					await this.mikroOrmUserRepository.nativeUpdate({ id: user.id, tenantId }, { refreshToken: hashedRefreshToken });
+					break;
+				case MultiORMEnum.TypeORM:
+					await this.typeOrmUserRepository.update({ id: user.id, tenantId }, { refreshToken: hashedRefreshToken });
+					break;
+			}
 
 			// Update the last login timestamp
 			await this.userService.setUserLastLoginTimestamp(user.id);

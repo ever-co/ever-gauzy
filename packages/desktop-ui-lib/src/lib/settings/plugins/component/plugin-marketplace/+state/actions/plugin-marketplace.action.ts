@@ -20,6 +20,9 @@ export class PluginMarketplaceActions {
 		id,
 		params
 	}));
+	public static readonly getOneSuccess = createAction('[Plugin Marketplace] Get One Success', (plugin: IPlugin) => ({
+		plugin
+	}));
 	public static readonly update = createAction('[Plugin Marketplace] Update', (plugin: IPlugin) => ({
 		plugin
 	}));
@@ -42,6 +45,12 @@ export class PluginMarketplaceActions {
 	public static readonly installUpdate = createAction('[Plugin Marketplace] Install Update', (plugin: IPlugin) => ({
 		plugin
 	}));
+
+	// Web-to-desktop installation via deep link (gauzy:// protocol)
+	public static readonly installFromWeb = createAction(
+		'[Plugin Marketplace] Install From Web',
+		(plugin: IPlugin) => ({ plugin })
+	);
 
 	public static readonly uninstall = createAction(
 		'[Plugin Marketplace] Uninstall Plugin',
