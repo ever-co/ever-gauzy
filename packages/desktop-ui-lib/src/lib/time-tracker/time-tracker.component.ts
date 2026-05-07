@@ -988,14 +988,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return (a && !b) || (!a && b);
 	}
 
-	async prepareWindow() {
+	prepareWindow() {
 		/* initiate screenshot to prevent window sizing */
 		try {
-			const thumbSize = {
-				width: 320,
-				height: 240
-			};
-			await this.electronService.desktopCapturer.getSources({ types: ['screen'], thumbnailSize: thumbSize });
+			setTimeout(async () => {
+				const thumbSize = {
+					width: 320,
+					height: 240
+				};
+				await this.electronService.desktopCapturer.getSources({ types: ['screen'], thumbnailSize: thumbSize });
+			}, 500);
+
 		} catch (error) {
 			console.error('Error preparing window:', error);
 		}
