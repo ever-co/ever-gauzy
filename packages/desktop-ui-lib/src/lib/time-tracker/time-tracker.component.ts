@@ -586,7 +586,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							actionType: TimerActionTypeEnum.START_TIMER,
 							data: {
 								timerId: lastTimer.id,
-								state: TimerSyncStateEnum.SYNCED
+								state: timelog?.id ? TimerSyncStateEnum.SYNCED : TimerSyncStateEnum.FAILED,
 							}
 						});
 					} catch (error) {
@@ -650,7 +650,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					} catch (error) {
 						// Handle any error during the process
 						lastTimer.isStoppedOffline = true;
-						await this._auditLogService.timerAuditLogError(`Error stop timer to API with ID: ${lastTimer.id}`);
+						await this._auditLogService.timerAuditLogError(`Error stop timer to API with ID: ${lastTimer.id}, ${error.message}`);
 						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
 							actionType: TimerActionTypeEnum.STOP_TIMER,
 							data: {

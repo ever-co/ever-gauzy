@@ -524,5 +524,5 @@ export async function notifyScreenshot(notificationWindow, thumb, windowPath, so
 
 function allowScreenshotCapture(): boolean {
 	const auth = LocalStore.getStore('auth');
-	return auth && auth.allowScreenshotCapture;
+	return auth?.allowScreenshotCapture || auth?.user?.employee?.allowScreenshotCapture || false;
 }
