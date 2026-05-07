@@ -39,11 +39,14 @@ export class ScreenshotDAO implements DAO<ScreenshotTO> {
 		if (!value || value.id === undefined) {
 			throw new Error('Cannot delete screenshot data: Missing or invalid id');
 		}
-		await this._provider
+
+		const query = this._provider
 			.connection<ScreenshotTO>(TABLE_NAME_SCREENSHOT)
-			.where('id', '=', value.id)
-			.orWhere('imagePath', '=', value.imagePath)
-			.del();
+			.where('id', '=', value.id);
+		if (value.imagePath) {
+			query.orWhere('imagePath', '=', value.imagePath);
+		}
+		await query.del();
 	}
 
 	public async findUnSyncedScreenshot(limit?: number): Promise<ScreenshotTO[]> {
