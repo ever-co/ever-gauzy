@@ -28,6 +28,9 @@ export class ScreenshotQueue extends OfflineQueue<IScreenshotQueue> {
 		if (!item.timeslotId || !item.base64Image) {
 			return;
 		}
+		if (this._store.isOffline) {
+			return;
+		}
 		try {
 			item.retries = item.retries || 0;
 			if (item.retries >= 3) {

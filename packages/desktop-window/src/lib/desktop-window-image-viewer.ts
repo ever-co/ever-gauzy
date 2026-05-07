@@ -57,7 +57,10 @@ export async function createImageViewerWindow(
 
 	// Attach a custom title bar if a preload script is provided
 	if (preloadPath) {
-		attachTitlebarToWindow(imageViewWindow);
+		attachTitlebarToWindow(imageViewWindow, {
+			minWidth: mainWindowSettings.width,
+			minHeight: mainWindowSettings.height,
+		});
 	}
 
 	// Return the configured Image Viewer window instance

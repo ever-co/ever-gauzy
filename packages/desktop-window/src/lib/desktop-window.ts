@@ -69,7 +69,10 @@ export async function createGauzyWindow(
 
 	// Additional configuration for preloadPath
 	if (preloadPath) {
-		attachTitlebarToWindow(gauzyWindow);
+		attachTitlebarToWindow(gauzyWindow, {
+			minWidth: mainWindowSettings.width,
+			minHeight: mainWindowSettings.height,
+		});
 		gauzyWindow.webContents.send('adjust_view');
 	}
 

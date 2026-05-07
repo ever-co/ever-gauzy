@@ -130,6 +130,8 @@ let alwaysOn: AlwaysOn = null;
 
 setupTitlebar();
 
+ipcMain.removeAllListeners('window-set-minimumSize');
+
 console.log('Time Tracker UI Render Path:', path.join(__dirname, './index.html'));
 
 const pathWindow = {

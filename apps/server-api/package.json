@@ -84,7 +84,7 @@
 		"twing": "^5.0.2",
 		"typeorm": "^0.3.28",
 		"undici": "^6.10.2",
-		"custom-electron-titlebar": "^4.2.8"
+		"custom-electron-titlebar": "^4.4.1"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",

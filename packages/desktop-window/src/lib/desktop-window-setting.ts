@@ -53,7 +53,10 @@ export async function createSettingsWindow(
 
 	// Optionally attach a custom title bar if a preload script is provided
 	if (preloadPath) {
-		attachTitlebarToWindow(settingsWindow);
+		attachTitlebarToWindow(settingsWindow, {
+			minWidth: mainWindowSettings.width,
+			minHeight: mainWindowSettings.height,
+		});
 	}
 
 	// Register the settings window with the WindowManager

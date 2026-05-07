@@ -139,7 +139,7 @@
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
 		"electron-util": "^0.18.1",
-		"custom-electron-titlebar": "^4.2.8"
+		"custom-electron-titlebar": "^4.4.1"
 	},
 	"resolutions": {
 		"@gauzy/mcp-server": "file:../../../dist/packages/mcp-server",
