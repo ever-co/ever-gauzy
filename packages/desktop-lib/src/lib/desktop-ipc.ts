@@ -341,6 +341,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.on('auth_failed', (event, arg) => {
+
 		event.sender.send('show_toast_message', {
 			type: 'error',
 			message: arg.message
@@ -636,14 +637,22 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.handle('UPDATE_SCREENSHOT_SYNC_STATUS', async (_, arg: { id: number; remove: boolean; failedReason: string; synced: boolean; retries: number }) => {
-		await getScreenshotService().update(new Screenshot({
-			id: arg.id,
-			synced: arg.synced,
-			lastAttemptAt: new Date(),
-			message: arg.failedReason,
-			retries: arg.remove ? 0 : 1,
-			...(arg.remove ? { imagePath: '' } : {})
-		}));
+		try {
+			if (arg.remove) {
+				await getScreenshotService().remove({ id: arg.id });
+			} else {
+				await getScreenshotService().update(new Screenshot({
+					id: arg.id,
+					synced: arg.synced,
+					lastAttemptAt: new Date(),
+					message: arg.failedReason,
+					retries: 1
+				}));
+			}
+		} catch (error) {
+			console.error('Failed to update screenshot sync status', error);
+		}
+
 	})
 
 	pluginListeners();

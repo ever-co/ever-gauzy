@@ -52,7 +52,10 @@ export async function createUpdaterWindow(
 
 	// If a preload path is provided, attach a custom title bar to the window
 	if (preloadPath) {
-		attachTitlebarToWindow(updaterWindow);
+		attachTitlebarToWindow(updaterWindow, {
+			minWidth: mainWindowSettings.width,
+			minHeight: mainWindowSettings.height,
+		});
 	}
 
 	// Return the configured window instance
