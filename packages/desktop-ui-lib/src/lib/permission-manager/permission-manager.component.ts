@@ -79,8 +79,8 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 	async platformSet() {
 		const platform = await this.permissionService.getPlatform();
 		const hardwareAccelerationDisabled = await this.permissionService.getHardwareAccelerationState();
-		this.isMac.set(platform === 'darwin');
-		this.isWindows.set(platform === 'win32');
+		this.isMac.set(platform.os === 'darwin');
+		this.isWindows.set(platform.os === 'win32');
 		this.hardwareAccelerationDisabled.set(hardwareAccelerationDisabled);
 	}
 

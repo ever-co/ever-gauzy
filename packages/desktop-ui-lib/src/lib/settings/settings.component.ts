@@ -13,7 +13,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS } from '@gauzy/constants';
-import { LanguagesEnum } from '@gauzy/contracts';
+import { IOSInfo, LanguagesEnum } from '@gauzy/contracts';
 import {
 	NbAccordionModule,
 	NbButtonModule,
@@ -448,7 +448,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		autoStart: true
 	};
 	version = '0.0.0';
-	arch = '';
 	message = {
 		text: 'TIMER_TRACKER.SETTINGS.MESSAGES.APP_UPDATE',
 		status: 'basic'
@@ -505,7 +504,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	private _isHidden$: BehaviorSubject<boolean>;
 	private _simpleScreenshotNotification$: BehaviorSubject<boolean>;
 	private _timeZoneManager = TimeZoneManager;
-	private platformOS: string;
+	private platformInfo: Partial<IOSInfo> = {};
 
 	constructor(
 		private electronService: ElectronService,
@@ -562,7 +561,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		// this.electronService.ipcRenderer.send('request_permission');
 		this.electronService.ipcRenderer.once('get-arch', (_, arg) => {
 			this._ngZone.run(() => {
-				this.arch = arg;
+				this.platformInfo.arch = arg;
 			});
 		});
 		this.setPlatform();
@@ -593,8 +592,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	async setPlatform() {
-		const platform = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
-		this.platformOS = platform;
+		const platform: IOSInfo = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
+		this.platformInfo = platform;
 	}
 
 	ngOnDestroy(): void {
@@ -1404,5 +1403,17 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				'Update ' + type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' setting successfully'
 			);
 		}
+	}
+
+	public get os(): NodeJS.Platform {
+		return this.platformInfo.os;
+	}
+
+	public get arch(): string {
+		return this.platformInfo.arch;
+	}
+
+	public get systemVersion() {
+		return this.platformInfo.version;
 	}
 }

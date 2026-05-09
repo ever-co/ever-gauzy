@@ -13,6 +13,7 @@ import {
 	tap
 } from 'rxjs';
 import { ElectronService } from '../electron/services';
+import { IOSInfo } from '@gauzy/contracts';
 
 type PermissionStatus = 'granted' | 'denied' | 'not-determined' | 'restricted' | 'unknown';
 
@@ -100,7 +101,7 @@ export class PermissionManagerService {
 	}
 
 	/** Returns the current OS platform (e.g. 'darwin', 'win32', 'linux'). */
-	getPlatform(): Promise<'darwin' | 'win32' | 'linux'> {
+	getPlatform(): Promise<IOSInfo> {
 		return this.electronService.ipcRenderer.invoke('GET_PLATFORM');
 	}
 
