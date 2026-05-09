@@ -113,7 +113,43 @@ jobs:
         run: mkdir -p dist/packages
 
       - name: Build Server
-        run: 'yarn build:gauzy-server:linux:release:gh:x64'
+        run: 'yarn build:gauzy-server:prepare'
+        env:
+          USE_HARD_LINKS: false
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+          NX_NO_CLOUD: true
+          NX_DAEMON: false
+
+      - name: Build Server Web
+        run: 'yarn build:gauzy-server:web'
+        env:
+          USE_HARD_LINKS: false
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+          NX_NO_CLOUD: true
+          NX_DAEMON: false
+
+      - name: Build Server App
+        run: 'yarn build:gauzy-server:linux:release:gh:x64:isolated'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -236,7 +272,45 @@ jobs:
         run: mkdir -p dist/packages
 
       - name: Build Server
-        run: 'yarn build:gauzy-server:linux:release:gh:arm64'
+        run: 'yarn build:gauzy-server:prepare'
+        env:
+          USE_HARD_LINKS: false
+          USE_SYSTEM_FPM: true
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+          NX_NO_CLOUD: true
+          NX_DAEMON: false
+
+      - name: Build Server Web
+        run: 'yarn build:gauzy-server:web'
+        env:
+          USE_HARD_LINKS: false
+          USE_SYSTEM_FPM: true
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+          NX_NO_CLOUD: true
+          NX_DAEMON: false
+
+      - name: Build Server App
+        run: 'yarn build:gauzy-server:linux:release:gh:arm64:isolated'
         env:
           USE_HARD_LINKS: false
           USE_SYSTEM_FPM: true
@@ -342,7 +416,43 @@ jobs:
         run: mkdir -p dist/packages
 
       - name: Build Server
-        run: 'yarn build:gauzy-server:mac:release'
+        run: 'yarn build:gauzy-server:prepare'
+        env:
+          USE_HARD_LINKS: false
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+          NX_NO_CLOUD: true
+          NX_DAEMON: false
+
+      - name: Build Server Web
+        run: 'yarn build:gauzy-server:web'
+        env:
+          USE_HARD_LINKS: false
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+          NX_NO_CLOUD: true
+          NX_DAEMON: false
+
+      - name: Build Server App
+        run: 'yarn build:gauzy-server:mac:release:isolated'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -512,7 +622,47 @@ jobs:
 
       - name: Build Server
         shell: cmd
-        run: 'yarn build:gauzy-server:windows:release:gh:x64'
+        run: 'yarn build:gauzy-server:prepare'
+        env:
+          USE_HARD_LINKS: false
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
+          NX_DAEMON: false
+
+      - name: Build Server Web
+        shell: cmd
+        run: 'yarn build:gauzy-server:web'
+        env:
+          USE_HARD_LINKS: false
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
+          NX_DAEMON: false
+
+      - name: Build Server App
+        shell: cmd
+        run: 'yarn build:gauzy-server:windows:release:gh:x64:isolated'
         env:
           USE_HARD_LINKS: false
           ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
@@ -688,7 +838,47 @@ jobs:
 
       - name: Build Server
         shell: cmd
-        run: yarn build:gauzy-server:windows:release:gh:arm64
+        run: yarn build:gauzy-server:prepare
+        env:
+          USE_HARD_LINKS: false
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
+          NX_DAEMON: false
+
+      - name: Build Server Web
+        shell: cmd
+        run: yarn build:gauzy-server:web
+        env:
+          USE_HARD_LINKS: false
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
+          NX_DAEMON: false
+
+      - name: Build Server App
+        shell: cmd
+        run: yarn build:gauzy-server:windows:release:gh:arm64:isolated
         env:
           USE_HARD_LINKS: false
           ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
