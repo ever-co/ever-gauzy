@@ -177,7 +177,7 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 			this.hasMore.set(result.length >= this.pageSize());
 
 			requestAnimationFrame(() => {
-				if (el) el.scrollTop = prevScrollHeight;
+				if (el) el.scrollTop = Math.max(prevScrollHeight - el.clientHeight, 0);
 			});
 		} catch (error) {
 			console.error('Failed to load older log entries', error);

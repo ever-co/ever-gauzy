@@ -1694,7 +1694,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this._auditLogService.timerAuditLogInfo(`User attempted to ${val ? 'start' : 'stop'} the timer${onClick ? ' by clicking the button' : ''}${passed ? ' with pre-granted permissions' : ''}.`);
 		try {
 			const platform = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
-			if (val && onClick && !passed && platform === 'darwin') {
+			if (val && onClick && !passed && platform?.os === 'darwin') {
 				const allow = await this.checkPermission();
 				if (!allow) {
 					return;

@@ -29,7 +29,7 @@ export class LoggerService {
 	public async nextPage(level: string, service: string, page: number, limit: number): Promise<ILogItems[]> {
 		const logsResult = await this.getLogs(level, service, page, limit);
 		// Older entries (higher page numbers) must be prepended so the list stays
-		// chronological: oldest at the top, newest at the bottom.
+		// chronological: newest at the top, oldest at the bottom.
 		this.logs$.next([...this.logs$.getValue(), ...logsResult]);
 		return logsResult;
 	}

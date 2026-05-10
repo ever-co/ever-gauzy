@@ -1406,14 +1406,14 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	public get os(): NodeJS.Platform {
-		return this.platformInfo.os;
+		return this.platformInfo?.os;
 	}
 
 	public get arch(): string {
-		return this.platformInfo.arch;
+		return this.platformInfo?.arch;
 	}
 
 	public get systemVersion() {
-		return this.platformInfo.version;
+		return this.platformInfo?.version;
 	}
 }
