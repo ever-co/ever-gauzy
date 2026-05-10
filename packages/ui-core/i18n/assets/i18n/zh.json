@@ -4374,6 +4374,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "为了更灵活地跟踪时间和活动，请<a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">下载并使用</a> <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy桌面计时器应用</a>。",
 		"STATUS": "时间跟踪器已经在{{source}}中运行。",
 		"VERSION": "版本 v{{ version }}",
+		"OS": "操作系统: {{ os }} {{ systemVersion }} ({{ arch }})",
 		"ARCHITECTURE": "架构: {{ arch }}",
 		"WAIT_FOR": "等待{{ name }}开始...",
 		"SETUP": {

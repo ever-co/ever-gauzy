@@ -4392,6 +4392,7 @@
 		"TODAY": "Сегодня",
 		"STATUS": "Тайм-трекер уже работает в {{ source }}",
 		"VERSION": "Версия v{{ version }}",
+		"OS": "ОС: {{ os }} {{ systemVersion }} ({{ arch }})",
 		"ARCHITECTURE": "Архитектура: {{ arch }}",
 		"WAIT_FOR": "Ожидание запуска {{ name }}...",
 		"SETUP": {

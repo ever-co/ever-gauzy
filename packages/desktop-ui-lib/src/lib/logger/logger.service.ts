@@ -11,7 +11,7 @@ export class LoggerService {
 		private readonly _auditLogService: AuditLogService
 	) {
 		this._electronService.ipcRenderer.on('AUDIT_LOG_ENTRY', (_, logEntry: ILogItems) => {
-			this.logs$.next([...this.logs$.getValue(), logEntry]);
+			this.logs$.next([logEntry, ...this.logs$.getValue()]);
 		});
 	}
 
@@ -22,7 +22,7 @@ export class LoggerService {
 
 	private async getLogs(level: string, service: string, page: number, limit: number): Promise<ILogItems[]> {
 		const logsResult = await this._auditLogService.getAuditLogs(level, service, page, limit);
-		const logsSorted = logsResult.data.sort((a: ILogItems, b: ILogItems) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+		const logsSorted = logsResult.data.sort((a: ILogItems, b: ILogItems) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 		return logsSorted;
 	}
 
@@ -30,7 +30,7 @@ export class LoggerService {
 		const logsResult = await this.getLogs(level, service, page, limit);
 		// Older entries (higher page numbers) must be prepended so the list stays
 		// chronological: oldest at the top, newest at the bottom.
-		this.logs$.next([...logsResult, ...this.logs$.getValue()]);
+		this.logs$.next([...this.logs$.getValue(), ...logsResult]);
 		return logsResult;
 	}
 
