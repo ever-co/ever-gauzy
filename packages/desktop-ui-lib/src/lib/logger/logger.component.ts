@@ -81,7 +81,7 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 			if (!items) return;
 
 			const el = this.scrollContainer()?.nativeElement;
-			const prevScrollHeight = el?.scrollTop ?? 0;
+			const prevScrollHeight = el?.scrollHeight ?? 0;
 
 			this.allItems.set(items);
 
@@ -92,7 +92,7 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 					el.scrollTo({ top: 0, behavior: 'smooth' });
 				} else if (this.isLoadingMore()) {
 					// Loading older entries: keep the viewport anchored so content doesn't jump
-					el.scrollTop = prevScrollHeight;
+					el.scrollTop += el.scrollHeight - prevScrollHeight;
 				}
 			});
 		});
