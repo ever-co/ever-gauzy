@@ -160,9 +160,6 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 	}
 
 	async loadOlderEntries(): Promise<void> {
-		const el = this.scrollContainer()?.nativeElement;
-		const prevScrollHeight = el?.scrollHeight ?? 0;
-
 		this.isLoadingMore.set(true);
 		this.currentPage.update((p) => p + 1);
 
@@ -175,6 +172,8 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 			);
 
 			this.hasMore.set(result.length >= this.pageSize());
+
+
 		} catch (error) {
 			console.error('Failed to load older log entries', error);
 			// Roll back the page increment so the next attempt requests the correct page.
