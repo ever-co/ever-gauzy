@@ -36,22 +36,6 @@
 					role="log" aria-live="polite" aria-label="Application Logs"
 					[attr.aria-busy]="isLoading() || isLoadingMore()">
 
-					@if (isLoadingMore()) {
-					<div class="load-more-bar">
-						<div [nbSpinner]="true" nbSpinnerSize="tiny" nbSpinnerStatus="primary"
-							class="load-more-spinner"></div>
-						<span>Loading older entries…</span>
-					</div>
-					}
-
-					@if (!hasMore() && filteredLogs().length > 0) {
-					<div class="log-boundary">— Beginning of log history —</div>
-					}
-
-					@if (isLoading()) {
-					<div class="spinner-row" [nbSpinner]="true" nbSpinnerSize="small" nbSpinnerStatus="primary"></div>
-					}
-
 					@if (filteredLogs().length === 0 && !isLoading()) {
 					<div class="empty-state">
 						<nb-icon icon="file-text-outline" status="basic"></nb-icon>
@@ -70,6 +54,20 @@
 						</div>
 						<p class="log-entry__message">{{ log.message }}</p>
 					</div>
+					}
+
+					@if (isLoading()) {
+						<div class="spinner-row" [nbSpinner]="true" nbSpinnerSize="small" nbSpinnerStatus="primary"></div>
+					}
+					@if (isLoadingMore()) {
+						<div class="load-more-bar">
+							<div [nbSpinner]="true" nbSpinnerSize="tiny" nbSpinnerStatus="primary"
+								class="load-more-spinner"></div>
+							<span>Loading older entries…</span>
+						</div>
+					}
+					@if (!hasMore() && filteredLogs().length > 0) {
+						<div class="log-boundary">&mdash; Beginning of log history &mdash;</div>
 					}
 				</div>
 			</nb-card-body>

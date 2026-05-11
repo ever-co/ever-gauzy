@@ -4,7 +4,8 @@ import {
 	TimerActionTypeEnum,
 	TimerSyncStateEnum,
 	ILogRequest,
-	ILogRequestPage
+	ILogRequestPage,
+    IOSInfo
 } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
@@ -51,7 +52,7 @@ import { RemoteTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
 import { ActivityWindow } from '@gauzy/desktop-activity';
 import { DesktopPermissionHandler } from './utilities/desktop-permission-handler';
-import { runTccutil, getAppId } from './utilities/util';
+import { runTccutil, getAppId, getOSInfo } from './utilities/util';
 import { AuditLogHandler } from './audit';
 
 // Lazily initialized — construction is deferred until after app.ready to avoid
@@ -145,8 +146,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		}
 	});
 
-	ipcMain.handle('GET_PLATFORM', () => {
-		return process.platform;
+	ipcMain.handle('GET_PLATFORM', (): IOSInfo => {
+		return getOSInfo();
 	});
 
 	ipcMain.on('return_time_sheet', async (event, arg) => {

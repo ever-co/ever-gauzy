@@ -4423,6 +4423,7 @@
 		"STATUS": "Проследяването на времето вече работи в {{ source }}",
 		"VERSION": "Версия v{{ version }}",
 		"ARCHITECTURE": "Архитектура: {{ arch }}",
+		"OS": "ОС: {{ os }} {{ systemVersion }} ({{ arch }})",
 		"WAIT_FOR": "Изчаква се {{ name }} да започне...",
 		"SETUP": {
 			"WELCOME": "Добре дошли",

@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { IOSInfo } from '@gauzy/contracts';
 export function isJSON<T>(input: T): boolean {
 	try {
 		JSON.parse(input as string);
@@ -24,4 +25,12 @@ export function runTccutil(service: string, bundleId: string, timeoutMs = 8000):
 
 export function getAppId() {
 	return process.env.APP_ID || 'com.ever.gauzydesktoptimer';
+}
+
+export function getOSInfo(): IOSInfo {
+	return {
+		os: process.platform,
+		version: process.getSystemVersion(),
+		arch: process.arch
+	}
 }

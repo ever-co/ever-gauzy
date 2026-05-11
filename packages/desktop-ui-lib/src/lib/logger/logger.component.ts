@@ -89,10 +89,10 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 				if (!el) return;
 				if (this.isFollowing() && !this.isLoadingMore()) {
 					// Follow mode: always pin to the newest entry
-					el.scrollTop = el.scrollHeight;
+					el.scrollTo({ top: 0, behavior: 'smooth' });
 				} else if (this.isLoadingMore()) {
 					// Loading older entries: keep the viewport anchored so content doesn't jump
-					el.scrollTop = el.scrollHeight - prevScrollHeight;
+					el.scrollTop += el.scrollHeight - prevScrollHeight;
 				}
 			});
 		});
@@ -107,7 +107,7 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 		// If the user re-enables following, jump to bottom immediately
 		if (next) {
 			const el = this.scrollContainer()?.nativeElement;
-			if (el) el.scrollTop = el.scrollHeight;
+			if (el) el.scrollTo({ top: 0, behavior: 'smooth' });
 		}
 	}
 
@@ -154,15 +154,12 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 
 	onScroll(event: Event): void {
 		const el = event.target as HTMLElement;
-		if (el.scrollTop <= 20 && !this.isLoadingMore() && this.hasMore() && !this.isLoading()) {
+		if (el.scrollTop + el.clientHeight >= el.scrollHeight - 20 && !this.isLoadingMore() && this.hasMore() && !this.isLoading()) {
 			this.loadOlderEntries();
 		}
 	}
 
 	async loadOlderEntries(): Promise<void> {
-		const el = this.scrollContainer()?.nativeElement;
-		const prevScrollHeight = el?.scrollHeight ?? 0;
-
 		this.isLoadingMore.set(true);
 		this.currentPage.update((p) => p + 1);
 
@@ -176,9 +173,7 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 
 			this.hasMore.set(result.length >= this.pageSize());
 
-			requestAnimationFrame(() => {
-				if (el) el.scrollTop = el.scrollHeight - prevScrollHeight;
-			});
+
 		} catch (error) {
 			console.error('Failed to load older log entries', error);
 			// Roll back the page increment so the next attempt requests the correct page.
