@@ -1,0 +1,93 @@
+<div class="wrap">
+	<div class="page-head">
+		<div>
+			<div class="page-title">Session list</div>
+			<div class="page-meta">
+				{{ dateLabel() }} · {{ filteredSessions().length }} sessions.
+			</div>
+		</div>
+		<div class="page-actions">
+			<ngx-date-range-picker
+				[isLockDatePicker]="true"
+				[arrows]="true"
+				[isSingleDatePicker]="true"
+				[isDisableFutureDatePicker]="true"
+				class="medium"
+				(rangeChanges)="onRangeChange($event)"
+				[dates]="selectedRange"
+			></ngx-date-range-picker>
+		</div>
+	</div>
+
+	<div class="filter-bar">
+		@for (f of filterOptions; track f.value) {
+			<button class="filter-chip" [class.active]="statusFilter() === f.value" (click)="setFilter(f.value)">
+				{{ f.label }}
+			</button>
+		}
+	</div>
+
+	<div class="session-list">
+		@if (filteredSessions().length > 0) {
+			@for (s of filteredSessions(); track s.id) {
+				<div class="session-row">
+					<div class="session-body">
+						<div class="row-top">
+							<span class="task-name">{{ s.taskName || 'No Task' }}</span>
+
+							<div class="row-top-right">
+								@if (s.statusSync === 'removed') {
+									<button class="retry-btn" (click)="retrySync(s, $event)">
+										<nb-icon icon="refresh-outline"></nb-icon> Retry
+									</button>
+								} @else if (s.statusSync !== 'removed') {
+									<span class="sync-badge" [ngClass]="syncConfig[s.statusSync]?.cssClass">
+										<nb-icon
+											[icon]="syncConfig[s.statusSync]?.icon"
+											[class.spin]="s.statusSync === 'syncing'"
+										></nb-icon>
+										{{ syncConfig[s.statusSync]?.label }}
+									</span>
+								}
+							</div>
+						</div>
+						<div class="row-meta">
+							<div class="meta-item">
+								<nb-icon icon="folder-outline" class="meta-icon"></nb-icon>
+								<span class="badge">
+									{{ s.projectName || 'No project' }}
+								</span>
+							</div>
+
+							<span class="meta-sep">·</span>
+
+							<div class="meta-item">
+								<nb-icon icon="person-outline" class="meta-icon"></nb-icon>
+								<span>{{ s.clientName || 'No Client' }}</span>
+							</div>
+
+							<span class="meta-sep">·</span>
+
+							<div class="meta-item">
+								<nb-icon icon="clock-outline" class="meta-icon"></nb-icon>
+								<span class="meta-dur">{{ formatSeconds(s.syncDuration || s.duration / 1000) }}</span>
+							</div>
+
+							<span class="meta-sep">·</span>
+
+							<div class="meta-item timestamps">
+								<nb-icon icon="play-circle-outline" class="meta-icon"></nb-icon>
+								<span>{{ formatDatetime(s.startedAt) }}</span>
+								<nb-icon icon="arrow-forward-outline" class="meta-icon arrow"></nb-icon>
+								<nb-icon icon="stop-circle-outline" class="meta-icon"></nb-icon>
+								<span>{{ formatDatetime(s.stoppedAt) }}</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			}
+		} @else {
+			<div class="empty-state">No sessions match your filter</div>
+		}
+	</div>
+</div>

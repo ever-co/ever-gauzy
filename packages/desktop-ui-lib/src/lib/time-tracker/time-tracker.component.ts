@@ -2810,6 +2810,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			disabled: this._isOffline
 		},
 		{
+			title: this._translateService.instant('MENU.SESSIONS'),
+			route: ['/', 'time-tracker', 'sessions-list'],
+			activeLinkOptions: { exact: false },
+		},
+		{
 			title: this._translateService.instant('TIMER_TRACKER.MENU.DAILY_RECAP'),
 			route: ['/', 'time-tracker', 'daily'],
 			activeLinkOptions: { exact: false },

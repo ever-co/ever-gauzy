@@ -1,0 +1,514 @@
+// ── Variables ─────────────────────────────────────────────────
+$bg:          var(--gauzy-card-2);
+$surface:     #1e2340;
+$card:        #252b48;
+$border:      rgba(255, 255, 255, 0.08);
+$divider:     var(--devider-color);
+$text:        var(--gauzy-text-color-1);
+$hint:        #8f9bb3;
+$primary:     #3366ff;
+$primary-dim: rgba(51, 102, 255, 0.12);
+$success:     #00d68f;
+$success-dim: rgba(0, 214, 143, 0.12);
+$warning:     #ffaa00;
+$warning-dim: rgba(255, 170, 0, 0.12);
+$danger:      #ff3d71;
+$danger-dim:  rgba(255, 61, 113, 0.12);
+$radius:      8px;
+$radius-lg:   12px;
+$info-dim:      rgba(0, 149, 255, 0.12);
+$info:          #0095ff;
+
+// ── Host ──────────────────────────────────────────────────────
+:host {
+  display: block;
+  background: $bg;
+  min-height: 100vh;
+  font-family: 'DM Sans', sans-serif;
+  color: $text;
+  font-size: 14px;
+}
+
+// ── Wrap ──────────────────────────────────────────────────────
+.wrap {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 28px 20px;
+}
+
+// ── Page header ───────────────────────────────────────────────
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.page-title {
+  font-size: 17px;
+  font-weight: 500;
+  color: $text;
+}
+
+.page-meta {
+  font-size: 12px;
+  color: $hint;
+  margin-top: 3px;
+}
+
+.head-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+// ── Buttons ───────────────────────────────────────────────────
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: $radius;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s;
+
+  &-ghost {
+    background: transparent;
+    color: $hint;
+    border: 1px solid $border;
+
+    &:hover {
+      background: $divider;
+      color: $text;
+    }
+  }
+
+  &-primary {
+    background: $primary;
+    color: #fff;
+
+    &:hover { background: darken($primary, 8%); }
+  }
+}
+
+// ── Filter chips ──────────────────────────────────────────────
+.filter-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid $border;
+  background: transparent;
+  color: $hint;
+  font-family: inherit;
+  transition: all 0.15s;
+
+  &.active {
+    background: $primary-dim;
+    color: #7b9fff;
+    border-color: rgba($primary, 0.3);
+  }
+
+  &:hover:not(.active) {
+    background: $divider;
+    color: $text;
+  }
+}
+
+// ── Group label ───────────────────────────────────────────────
+.group-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  color: $hint;
+  text-transform: uppercase;
+  padding: 4px 0 8px;
+  margin-top: 4px;
+}
+
+// ── Session rows ──────────────────────────────────────────────
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 13px 16px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  width: 99%;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+
+    .row-actions { opacity: 1; }
+  }
+}
+
+.color-bar {
+  width: 3px;
+  height: 38px;
+  border-radius: 0;
+  flex-shrink: 0;
+}
+
+.session-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: $text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-proj {
+  font-size: 12px;
+  color: $hint;
+  margin-top: 2px;
+}
+
+// ── Badges ────────────────────────────────────────────────────
+.badges {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+
+  &-blue   { background: $primary-dim;  color: #7b9fff; border: 1px solid rgba($primary,  0.2); }
+  &-green  { background: $success-dim;  color: $success; border: 1px solid rgba($success, 0.2); }
+  &-amber  { background: $warning-dim;  color: $warning; border: 1px solid rgba($warning, 0.2); }
+  &-red    { background: $danger-dim;   color: #ff7096;  border: 1px solid rgba($danger,  0.2); }
+}
+
+// ── Duration column ───────────────────────────────────────────
+.dur-col {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.dur {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: $text;
+}
+
+.time-range {
+  font-size: 11px;
+  color: $hint;
+  margin-top: 2px;
+}
+
+// ── Row actions ───────────────────────────────────────────────
+.row-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: $hint;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 1;
+  transition: color 0.15s;
+
+  &:hover { color: $text; }
+  &.danger:hover { color: $danger; }
+}
+
+.session-body {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+// ── Row top: task name + right slot ───────────────────────────
+.row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.task-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: $text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+// ── Retry button (replaces sync badge on failed) ──────────────
+.retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid rgba(255, 61, 113, 0.35);
+  color: $danger;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: inherit;
+  transition: background 0.15s;
+
+  nb-icon { font-size: 13px; }
+
+  &:hover {
+    background: $danger-dim;
+  }
+}
+
+// ── Sync status badge ─────────────────────────────────────────
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  nb-icon { font-size: 13px; }
+
+  &.status-synced {
+    background: $success-dim;
+    color: $success;
+    border: 1px solid rgba(0, 214, 143, 0.25);
+  }
+
+  &.status-pending {
+    background: $warning-dim;
+    color: $warning;
+    border: 1px solid rgba(255, 170, 0, 0.25);
+  }
+
+  &.status-syncing {
+    background: $info-dim;
+    color: $info;
+    border: 1px solid rgba(0, 149, 255, 0.25);
+  }
+}
+
+// Spinning icon for syncing state
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+nb-icon.spin { display: inline-block; animation: spin 1s linear infinite; }
+
+// ── Row meta ──────────────────────────────────────────────────
+.row-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  color: $hint;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &.timestamps { gap: 5px; }
+}
+
+.meta-icon {
+  font-size: 13px;
+  opacity: 0.65;
+
+  &.arrow { font-size: 11px; opacity: 0.35; }
+}
+
+.meta-sep {
+  color: rgba(255, 255, 255, 0.15);
+  font-size: 10px;
+  user-select: none;
+}
+
+.meta-dur {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: $text;
+}
+
+// ── Badges ────────────────────────────────────────────────────
+.badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+
+  &-blue  { background: $primary-dim; color: #7b9fff;  border: 1px solid rgba(51,102,255,0.2); }
+  &-green { background: $success-dim; color: $success;  border: 1px solid rgba(0,214,143,0.2); }
+  &-amber { background: $warning-dim; color: $warning;  border: 1px solid rgba(255,170,0,0.2); }
+  &-red   { background: $danger-dim;  color: #ff7096;   border: 1px solid rgba(255,61,113,0.2); }
+}
+
+// ── Empty state ───────────────────────────────────────────────
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  color: $hint;
+  font-size: 13px;
+
+  nb-icon {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 8px;
+  }
+}
+
+// ── Footer ────────────────────────────────────────────────────
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid $divider;
+}
+
+.footer-total {
+  font-size: 13px;
+  color: $hint;
+
+  span {
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    color: $text;
+  }
+}
+
+// ── Modal ─────────────────────────────────────────────────────
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.modal-title {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// ── Form ──────────────────────────────────────────────────────
+.form-group { margin-bottom: 14px; }
+
+.form-label {
+  font-size: 12px;
+  color: $hint;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  background: $card;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 9px 12px;
+  color: $text;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus { border-color: rgba($primary, 0.5); }
+  &::placeholder { color: $hint; }
+  option { background: $surface; }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-error {
+  font-size: 12px;
+  color: $danger;
+  margin-top: -6px;
+  margin-bottom: 8px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.session-list {
+  max-height: 450px;
+  overflow-y: auto !important;
+}

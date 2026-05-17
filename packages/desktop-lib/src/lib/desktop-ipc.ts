@@ -830,7 +830,7 @@ export function ipcTimer(
 				log.info(`StartInactivityDetection: ${moment().format()}`);
 				powerManagerDetectInactivity.startInactivityDetection();
 			}
-
+			timeTrackerWindow.webContents.send('TIMER_SESSION_UPDATED');
 			return timerResponse;
 		} catch (error) {
 			log.error('Error on start timer', error);
@@ -1076,6 +1076,7 @@ export function ipcTimer(
 			});
 
 			cleanupPowerManagers();
+			timeTrackerWindow.webContents.send('TIMER_SESSION_UPDATED');
 
 			return timerResponse;
 		} catch (error) {
@@ -1247,18 +1248,20 @@ export function ipcTimer(
 	ipcMain.handle(
 		'UPDATE_SYNC_STATE',
 		async (
-			_,
+			event,
 			arg: {
 				actionType: TimerActionTypeEnum;
 				data: {
 					state: TimerSyncStateEnum;
 					duration: number;
 					timerId: number;
+					timelogId?: string;
 				};
 			}
 		) => {
 			try {
 				await getTimerHandler().updateTimerSyncState(arg.actionType, arg.data);
+				event.sender.send('TIMER_SESSION_UPDATED');
 			} catch (error) {
 				console.error(`ERROR_UPDATE_SYNC_STATE: ${error}`);
 			}
@@ -1521,6 +1524,29 @@ export function ipcTimer(
 		);
 		desktopPermissionHandler.showDialogPermissionConfirm();
 	});
+
+	ipcMain.handle('GET_TIMER_SESSIONS', async ( _, args: { start: Date | string; end: Date | string }) => {
+		try {
+			const range = {
+				start: new Date(args.start),
+				end: new Date(args.end),
+			};
+			const timerSessions = await getTimerService().getListByDate(range);
+			return timerSessions;
+		} catch (error) {
+			log.error('Error on get timer sessions', error);
+			throw new UIError('500', error, 'IPCGETTIMSESS');
+		}
+	});
+
+	ipcMain.handle('GET_TIMER_SESSION', async ( _, args: { timerSessionId: number }) => {
+		try {
+			const timerSession = await getTimerService().findById({ id: args.timerSessionId });
+			return timerSession;
+		} catch (error) {
+			return null;
+		}
+	})
 }
 
 export function removeMainListener() {
