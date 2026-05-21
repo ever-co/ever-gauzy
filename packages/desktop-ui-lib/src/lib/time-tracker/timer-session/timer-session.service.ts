@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { ElectronService } from '../../electron/services';
-import { BehaviorSubject, Observable, map, shareReplay, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, Observable, map, firstValueFrom } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Store, TimeZoneManager, TimeTrackerDateManager } from '../../services';
+import { Store } from '../../services';
 import { API_PREFIX } from '../../constants';
 import moment from 'moment';
 import { ITimeLog } from '@gauzy/contracts';
@@ -38,8 +38,8 @@ export class TimerSessionService {
 				'activityLevel[start]': '0',
 				'activityLevel[end]': '100',
 				'employeeIds[]': [this._store.user?.employee?.id],
-				organizationId: this._store.organizationId || null,
-				tenantId: this._store.tenantId || null,
+				organizationId: this._store?.organizationId || null,
+				tenantId: this._store?.tenantId || null,
 				startDate: moment(dateRange.start).utc().format('YYYY-MM-DD HH:mm:ss'),
 				endDate: moment(dateRange.end).utc().format('YYYY-MM-DD HH:mm:ss'),
 				timeZone,

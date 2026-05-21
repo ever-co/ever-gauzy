@@ -3,7 +3,7 @@ $bg: var(--gauzy-card-2);
 $surface: var(--gauzy-card-3);
 $card: #252b48;
 $border: rgba(255, 255, 255, 0.08);
-$divider: var(--devider-color);
+$divider: var(--divider-color);
 $text: var(--gauzy-text-color-1);
 $hint: #8f9bb3;
 $primary: #3366ff;
@@ -19,7 +19,6 @@ $radius-lg: 12px;
 $info-dim: rgba(0, 149, 255, 0.12);
 $info: #0095ff;
 
-// ── Host ──────────────────────────────────────────────────────
 :host {
   display: block;
   background: $bg;
@@ -29,14 +28,12 @@ $info: #0095ff;
   font-size: 14px;
 }
 
-// ── Wrap ──────────────────────────────────────────────────────
 .wrap {
   max-width: 800px;
   margin: 0 auto;
   padding: 28px 20px;
 }
 
-// ── Page header ───────────────────────────────────────────────
 .page-head {
   display: flex;
   align-items: center;
@@ -62,7 +59,6 @@ $info: #0095ff;
   align-items: center;
 }
 
-// ── Buttons ───────────────────────────────────────────────────
 .btn {
   display: inline-flex;
   align-items: center;
@@ -97,7 +93,6 @@ $info: #0095ff;
   }
 }
 
-// ── Filter chips ──────────────────────────────────────────────
 .filter-bar {
   display: flex;
   gap: 6px;
@@ -129,7 +124,6 @@ $info: #0095ff;
   }
 }
 
-// ── Group label ───────────────────────────────────────────────
 .group-label {
   font-size: 11px;
   font-weight: 500;
@@ -140,7 +134,6 @@ $info: #0095ff;
   margin-top: 4px;
 }
 
-// ── Session rows ──────────────────────────────────────────────
 .session-row {
   display: flex;
   align-items: center;

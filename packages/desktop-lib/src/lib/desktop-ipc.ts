@@ -1535,7 +1535,6 @@ export function ipcTimer(
 			return timerSessions;
 		} catch (error) {
 			log.error('Error on get timer sessions', error);
-			throw new UIError('500', error, 'IPCGETTIMSESS');
 		}
 	});
 
