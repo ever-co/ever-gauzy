@@ -37,7 +37,7 @@ export class TimerSessionService {
 			fromObject: {
 				'activityLevel[start]': '0',
 				'activityLevel[end]': '100',
-				'employeeIds[]': [this._store.user?.employee?.id],
+				'employeeIds[]': [this._store?.user?.employee?.id],
 				organizationId: this._store?.organizationId || null,
 				tenantId: this._store?.tenantId || null,
 				startDate: moment(dateRange.start).utc().format('YYYY-MM-DD HH:mm:ss'),
