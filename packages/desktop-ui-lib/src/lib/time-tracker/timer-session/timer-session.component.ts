@@ -247,6 +247,7 @@ export class TimerSessionComponent {
 					duration: timeLog.duration
 				}
 			});
+			this._electronService.ipcRenderer.send('refresh-timer');
 		} catch (error) {
 			console.error(`Failed retry synchronize timer ${error.message}`);
 		} finally {
