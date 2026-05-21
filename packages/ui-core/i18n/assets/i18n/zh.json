@@ -4601,6 +4601,8 @@
 		"DUE": "由于",
 		"AW_CONNECTED": "ActivityWatch的连接",
 		"AW_DISCONNECTED": "ActivityWatch的断开连接",
+		"SESSION_LIST": "会话列表",
+		"SESSION": "会话",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "成功删除最后一张截图和活动",
 			"CANT_RUN_TIMER": "你暂时无法运行计时器。",
@@ -4646,7 +4648,8 @@
 			"WEEKLY_RECAP": "每周回顾",
 			"MONTHLY_RECAP": "每月回顾",
 			"INSTALL_PLUGIN": "安装插件",
-			"OPEN_LOG_HISTORY": "日志历史"
+			"OPEN_LOG_HISTORY": "日志历史",
+			"SESSIONS": "会话"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "按小时跟踪时间",

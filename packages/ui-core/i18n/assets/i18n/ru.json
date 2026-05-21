@@ -4619,6 +4619,8 @@
 		"DUE": "Срок",
 		"AW_CONNECTED": "ActivityWatch подключено",
 		"AW_DISCONNECTED": "ActivityWatch отключено",
+		"SESSION_LIST": "Список сессий",
+		"SESSION": "сессия",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "Последний снимок экрана и действия успешно удалены",
 			"CANT_RUN_TIMER": "Вы не можете запустить таймер на данный момент",
@@ -4664,7 +4666,8 @@
 			"WEEKLY_RECAP": "Еженедельный Обзор",
 			"MONTHLY_RECAP": "Ежемесячный Обзор",
 			"INSTALL_PLUGIN": "Установить плагин",
-			"OPEN_LOG_HISTORY": "Журнал событий"
+			"OPEN_LOG_HISTORY": "Журнал событий",
+			"SESSIONS": "Сессии"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Часовой учет времени",

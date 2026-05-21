@@ -1248,7 +1248,7 @@ export function ipcTimer(
 	ipcMain.handle(
 		'UPDATE_SYNC_STATE',
 		async (
-			event,
+			_,
 			arg: {
 				actionType: TimerActionTypeEnum;
 				data: {
@@ -1261,7 +1261,7 @@ export function ipcTimer(
 		) => {
 			try {
 				await getTimerHandler().updateTimerSyncState(arg.actionType, arg.data);
-				event.sender.send('TIMER_SESSION_UPDATED');
+				timeTrackerWindow.webContents.send('TIMER_SESSION_UPDATED');
 			} catch (error) {
 				console.error(`ERROR_UPDATE_SYNC_STATE: ${error}`);
 			}

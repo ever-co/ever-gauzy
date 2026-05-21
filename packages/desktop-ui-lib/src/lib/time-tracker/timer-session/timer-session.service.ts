@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ElectronService } from '../../electron/services';
 import { BehaviorSubject, Observable, map, shareReplay, firstValueFrom } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Store } from '../../services';
+import { Store, TimeZoneManager, TimeTrackerDateManager } from '../../services';
 import { API_PREFIX } from '../../constants';
 import moment from 'moment';
 import { ITimeLog } from '@gauzy/contracts';
@@ -32,6 +32,7 @@ export class TimerSessionService {
 	}
 
 	async getTimesheets(dateRange: { start: Date; end: Date }): Promise<ITimeLog[]> {
+		const timeZone = this._store?.user?.timeZone || moment.tz.guess();
 		const params = new HttpParams({
 			fromObject: {
 				'activityLevel[start]': '0',
@@ -41,13 +42,11 @@ export class TimerSessionService {
 				tenantId: this._store.tenantId || null,
 				startDate: moment(dateRange.start).utc().format('YYYY-MM-DD HH:mm:ss'),
 				endDate: moment(dateRange.end).utc().format('YYYY-MM-DD HH:mm:ss'),
-				timeZone: 'Asia/Jakarta',
+				timeZone,
 				'relations[]': ['project', 'task', 'organizationContact'] // arrays are natively supported!
 			}
 		});
-		const timesheets = this._http.get(`${API_PREFIX}/timesheet/time-log`, { params }).pipe(
-			map((res: any) => res)
-		);
+		const timesheets = this._http.get(`${API_PREFIX}/timesheet/time-log`, { params }).pipe(map((res: any) => res));
 		return firstValueFrom(timesheets) as Promise<any[]>;
 	}
 }

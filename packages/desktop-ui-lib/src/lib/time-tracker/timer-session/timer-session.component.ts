@@ -1,4 +1,4 @@
-import { NgClass, NgIf } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbCardModule, NbIconModule } from '@nebular/theme';
@@ -10,8 +10,9 @@ import { ElectronService } from '../../electron/services';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ITimeLog, TimerActionTypeEnum, TimerSyncStateEnum } from '@gauzy/contracts';
+import { TranslatePipe } from '@ngx-translate/core';
 
-export type SyncStatus = 'synced' | 'pending' | 'failed' | 'syncing' | 'removed';
+export type SyncStatus = 'synced' | 'pending' | 'failed' | 'syncing' | 'removed' | 'running';
 
 export interface Session {
 	id: number;
@@ -48,7 +49,8 @@ export const SYNC_CONFIG: Record<SyncStatus, { label: string; cssClass: string; 
 	pending: { label: 'Pending', cssClass: 'status-pending', icon: 'clock-outline' },
 	syncing: { label: 'Syncing', cssClass: 'status-syncing', icon: 'sync-outline' },
 	failed: { label: 'Failed', cssClass: 'status-failed', icon: 'alert-circle-outline' },
-	removed: { label: 'Removed', cssClass: 'status-failed', icon: 'alert-circle-outline' }
+	removed: { label: 'Removed', cssClass: 'status-failed', icon: 'alert-circle-outline' },
+	running: { label: 'Running', cssClass: 'status-running', icon: 'clock-outline' }
 };
 
 @Component({
@@ -56,7 +58,7 @@ export const SYNC_CONFIG: Record<SyncStatus, { label: string; cssClass: string; 
 	templateUrl: './timer-session.component.html',
 	styleUrls: ['./timer-session.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [FormsModule, NgIf, NgClass, NbCardModule, NbIconModule, DateRangePickerComponent]
+	imports: [FormsModule, NgClass, NbCardModule, NbIconModule, DateRangePickerComponent, TranslatePipe]
 })
 export class TimerSessionComponent {
 	private readonly timerSessionService = inject(TimerSessionService);
@@ -96,10 +98,6 @@ export class TimerSessionComponent {
 			label: 'Pending'
 		},
 		{
-			value: 'syncing',
-			label: 'Syncing'
-		},
-		{
 			value: 'failed',
 			label: 'Failed'
 		},
@@ -111,6 +109,7 @@ export class TimerSessionComponent {
 
 	private readonly destroy$ = new Subject<void>();
 	private timesheets: any[] | null = [];
+	onRetry = signal<boolean>(false);
 
 	readonly filteredSessions = computed(() => {
 		const status = this.statusFilter();
@@ -132,6 +131,10 @@ export class TimerSessionComponent {
 	});
 
 	private statusSyncCheck(session: Session, timeLog?: ITimeLog, offline?: boolean): SyncStatus {
+		if (session.startedAt && !session.stoppedAt) {
+			return 'running';
+		}
+
 		if (!offline) {
 			if (session.timelogId && !timeLog?.id) {
 				return 'removed';
@@ -150,7 +153,7 @@ export class TimerSessionComponent {
 	}
 
 	ngOnInit(): void {
-		this._electronService.ipcRenderer.on('TIMER_SESSION_UPDATED', () => this.sessionUpdateHandler);
+		this._electronService.ipcRenderer.on('TIMER_SESSION_UPDATED', this.sessionUpdateHandler.bind(this));
 		this.selectedRange = {
 			startDate: new Date(),
 			endDate: new Date(),
@@ -165,7 +168,9 @@ export class TimerSessionComponent {
 
 	sessionUpdateHandler(): void {
 		// check current range same as now date if same then update session list else do nothing
+		console.log('session update listener triggered');
 		if (this.currentRange().start.toDateString() === new Date().toDateString()) {
+			console.log('session must be updated');
 			this.loadLocalSessionsForRange();
 		}
 	}
@@ -179,20 +184,6 @@ export class TimerSessionComponent {
 	setFilter(status: SyncStatus): void {
 		this.statusFilter.set(status);
 		this.loadLocalSessionsForRange();
-	}
-
-	exportCsv(): void {
-		const header = 'ID,Started At,Stopped At,Duration (s),Sync State,Description';
-		const rows = this.sessions().map(
-			(s) =>
-				`${s.id},"${new Date(s.startedAt).toISOString()}","${new Date(s.stoppedAt).toISOString()}",${s.duration},"${s.startSyncState}","${s.description ?? ''}"`
-		);
-		const csv = [header, ...rows].join('\n');
-		const blob = new Blob([csv], { type: 'text/csv' });
-		const url = URL.createObjectURL(blob);
-		const a = Object.assign(document.createElement('a'), { href: url, download: 'sessions.csv' });
-		a.click();
-		URL.revokeObjectURL(url);
 	}
 
 	getSyncStatus(session: Session): SyncStatus {
@@ -212,7 +203,8 @@ export class TimerSessionComponent {
 		});
 	}
 
-	formatSeconds(seconds: number): string {
+	formatSeconds(seconds: number = 0): string {
+		seconds = Math.floor(seconds);
 		const h = Math.floor(seconds / 3600);
 		const m = Math.floor((seconds % 3600) / 60);
 		const s = seconds % 60;
@@ -228,31 +220,38 @@ export class TimerSessionComponent {
 	}
 
 	async retrySync(session: Session) {
-		const sessionDetail = await this.timerSessionService.getSession(session.id);
-		await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-			actionType: TimerActionTypeEnum.STOP_TIMER,
-			data: {
-				timerId: sessionDetail.id,
-				state: TimerSyncStateEnum.SYNCING,
-				timelogId: null
-			}
-		});
-		const timeLog = await this._timeTrackerService.addTimeLog({
-			startedAt: new Date(sessionDetail.startedAt),
-			stoppedAt: new Date(sessionDetail.stoppedAt),
-			description: sessionDetail.description,
-			organizationContactId: sessionDetail.organizationTeamId,
-			taskId: sessionDetail.taskId,
-			projectId: sessionDetail.projectId
-		});
-		await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-			actionType: TimerActionTypeEnum.STOP_TIMER,
-			data: {
-				timerId: sessionDetail.id,
-				state: TimerSyncStateEnum.SYNCED,
-				timelogId: timeLog.id
-			}
-		});
+		this.onRetry.set(true);
+		try {
+			const sessionDetail = await this.timerSessionService.getSession(session.id);
+			await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+				actionType: TimerActionTypeEnum.STOP_TIMER,
+				data: {
+					timerId: sessionDetail.id,
+					state: TimerSyncStateEnum.SYNCING
+				}
+			});
+			const timeLog = await this._timeTrackerService.addTimeLog({
+				startedAt: new Date(sessionDetail.startedAt),
+				stoppedAt: new Date(sessionDetail.stoppedAt),
+				description: sessionDetail.description,
+				organizationTeamId: sessionDetail.organizationTeamId,
+				taskId: sessionDetail.taskId,
+				projectId: sessionDetail.projectId
+			});
+			await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+				actionType: TimerActionTypeEnum.STOP_TIMER,
+				data: {
+					timerId: sessionDetail.id,
+					state: TimerSyncStateEnum.SYNCED,
+					timelogId: timeLog.id,
+					duration: timeLog.duration
+				}
+			});
+		} catch (error) {
+			console.error(`Failed retry synchronize timer ${error.message}`);
+		} finally {
+			this.onRetry.set(false);
+		}
 	}
 
 	onRangeChange(range: { startDate?: string | Date; endDate?: string | Date }): void {
@@ -284,10 +283,12 @@ export class TimerSessionComponent {
 			if (timesheets) {
 				this.timesheets = timesheets;
 			}
-
-			console.log('Timesheets for range:', timesheets);
 		} catch (error) {
 			this.timesheets = null;
 		}
+	}
+
+	getColorBar(status: string): string {
+		return SYNC_CONFIG[status]?.cssClass ?? 'status-pending';
 	}
 }

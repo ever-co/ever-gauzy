@@ -1,23 +1,23 @@
 // ── Variables ─────────────────────────────────────────────────
-$bg:          var(--gauzy-card-2);
-$surface:     #1e2340;
-$card:        #252b48;
-$border:      rgba(255, 255, 255, 0.08);
-$divider:     var(--devider-color);
-$text:        var(--gauzy-text-color-1);
-$hint:        #8f9bb3;
-$primary:     #3366ff;
+$bg: var(--gauzy-card-2);
+$surface: var(--gauzy-card-3);
+$card: #252b48;
+$border: rgba(255, 255, 255, 0.08);
+$divider: var(--devider-color);
+$text: var(--gauzy-text-color-1);
+$hint: #8f9bb3;
+$primary: #3366ff;
 $primary-dim: rgba(51, 102, 255, 0.12);
-$success:     #00d68f;
+$success: #00d68f;
 $success-dim: rgba(0, 214, 143, 0.12);
-$warning:     #ffaa00;
+$warning: #ffaa00;
 $warning-dim: rgba(255, 170, 0, 0.12);
-$danger:      #ff3d71;
-$danger-dim:  rgba(255, 61, 113, 0.12);
-$radius:      8px;
-$radius-lg:   12px;
-$info-dim:      rgba(0, 149, 255, 0.12);
-$info:          #0095ff;
+$danger: #ff3d71;
+$danger-dim: rgba(255, 61, 113, 0.12);
+$radius: 8px;
+$radius-lg: 12px;
+$info-dim: rgba(0, 149, 255, 0.12);
+$info: #0095ff;
 
 // ── Host ──────────────────────────────────────────────────────
 :host {
@@ -91,7 +91,9 @@ $info:          #0095ff;
     background: $primary;
     color: #fff;
 
-    &:hover { background: darken($primary, 8%); }
+    &:hover {
+      background: darken($primary, 8%);
+    }
   }
 }
 
@@ -155,7 +157,13 @@ $info:          #0095ff;
   &:hover {
     border-color: rgba(255, 255, 255, 0.14);
 
-    .row-actions { opacity: 1; }
+    .row-actions {
+      opacity: 1;
+    }
+  }
+
+  &.running {
+    border-color: rgba(0, 214, 143, 0.4);
   }
 }
 
@@ -164,6 +172,50 @@ $info:          #0095ff;
   height: 38px;
   border-radius: 0;
   flex-shrink: 0;
+
+  &.status-synced {
+    background: $info;
+  }
+
+  &.status-pending {
+    background: $warning;
+  }
+
+  &.status-syncing {
+    background: $info;
+  }
+
+  &.status-failed {
+    background: $danger;
+  }
+
+  &.status-removed {
+    background: $danger;
+  }
+  &.status-running {
+    background: $success;
+  }
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: $success;
+  flex-shrink: 0;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(0.7);
+  }
 }
 
 .session-info {
@@ -200,10 +252,26 @@ $info:          #0095ff;
   font-size: 11px;
   font-weight: 500;
 
-  &-blue   { background: $primary-dim;  color: #7b9fff; border: 1px solid rgba($primary,  0.2); }
-  &-green  { background: $success-dim;  color: $success; border: 1px solid rgba($success, 0.2); }
-  &-amber  { background: $warning-dim;  color: $warning; border: 1px solid rgba($warning, 0.2); }
-  &-red    { background: $danger-dim;   color: #ff7096;  border: 1px solid rgba($danger,  0.2); }
+  &-blue {
+    background: $primary-dim;
+    color: #7b9fff;
+    border: 1px solid rgba($primary, 0.2);
+  }
+  &-green {
+    background: $success-dim;
+    color: $success;
+    border: 1px solid rgba($success, 0.2);
+  }
+  &-amber {
+    background: $warning-dim;
+    color: $warning;
+    border: 1px solid rgba($warning, 0.2);
+  }
+  &-red {
+    background: $danger-dim;
+    color: #ff7096;
+    border: 1px solid rgba($danger, 0.2);
+  }
 }
 
 // ── Duration column ───────────────────────────────────────────
@@ -245,8 +313,12 @@ $info:          #0095ff;
   line-height: 1;
   transition: color 0.15s;
 
-  &:hover { color: $text; }
-  &.danger:hover { color: $danger; }
+  &:hover {
+    color: $text;
+  }
+  &.danger:hover {
+    color: $danger;
+  }
 }
 
 .session-body {
@@ -298,7 +370,9 @@ $info:          #0095ff;
   font-family: inherit;
   transition: background 0.15s;
 
-  nb-icon { font-size: 13px; }
+  nb-icon {
+    font-size: 13px;
+  }
 
   &:hover {
     background: $danger-dim;
@@ -316,7 +390,9 @@ $info:          #0095ff;
   font-weight: 500;
   white-space: nowrap;
 
-  nb-icon { font-size: 13px; }
+  nb-icon {
+    font-size: 13px;
+  }
 
   &.status-synced {
     background: $success-dim;
@@ -339,13 +415,27 @@ $info:          #0095ff;
 
 // Spinning icon for syncing state
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-nb-icon.spin { display: inline-block; animation: spin 1s linear infinite; }
+nb-icon.spin {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
 
 // ── Row meta ──────────────────────────────────────────────────
+.row-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .row-meta {
   display: flex;
   align-items: center;
@@ -353,6 +443,13 @@ nb-icon.spin { display: inline-block; animation: spin 1s linear infinite; }
   gap: 6px;
   font-size: 12px;
   color: $hint;
+  flex: 1;
+}
+
+.row-bottom-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .meta-item {
@@ -360,14 +457,19 @@ nb-icon.spin { display: inline-block; animation: spin 1s linear infinite; }
   align-items: center;
   gap: 4px;
 
-  &.timestamps { gap: 5px; }
+  &.timestamps {
+    gap: 5px;
+  }
 }
 
 .meta-icon {
   font-size: 13px;
   opacity: 0.65;
 
-  &.arrow { font-size: 11px; opacity: 0.35; }
+  &.arrow {
+    font-size: 11px;
+    opacity: 0.35;
+  }
 }
 
 .meta-sep {
@@ -390,10 +492,41 @@ nb-icon.spin { display: inline-block; animation: spin 1s linear infinite; }
   font-size: 11px;
   font-weight: 500;
 
-  &-blue  { background: $primary-dim; color: #7b9fff;  border: 1px solid rgba(51,102,255,0.2); }
-  &-green { background: $success-dim; color: $success;  border: 1px solid rgba(0,214,143,0.2); }
-  &-amber { background: $warning-dim; color: $warning;  border: 1px solid rgba(255,170,0,0.2); }
-  &-red   { background: $danger-dim;  color: #ff7096;   border: 1px solid rgba(255,61,113,0.2); }
+  &-blue {
+    background: $primary-dim;
+    color: #7b9fff;
+    border: 1px solid rgba(51, 102, 255, 0.2);
+  }
+  &-green {
+    background: $success-dim;
+    color: $success;
+    border: 1px solid rgba(0, 214, 143, 0.2);
+  }
+  &-amber {
+    background: $warning-dim;
+    color: $warning;
+    border: 1px solid rgba(255, 170, 0, 0.2);
+  }
+  &-red {
+    background: $danger-dim;
+    color: #ff7096;
+    border: 1px solid rgba(255, 61, 113, 0.2);
+  }
+}
+
+.cloud-time {
+  &.status-synced {
+    color: $info;
+  }
+  &.status-pending {
+    color: $warning;
+  }
+  &.status-failed {
+    color: $danger;
+  }
+  &.status-running {
+    color: $success;
+  }
 }
 
 // ── Empty state ───────────────────────────────────────────────
@@ -410,16 +543,6 @@ nb-icon.spin { display: inline-block; animation: spin 1s linear infinite; }
   }
 }
 
-// ── Footer ────────────────────────────────────────────────────
-.footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid $divider;
-}
-
 .footer-total {
   font-size: 13px;
   color: $hint;
@@ -431,84 +554,38 @@ nb-icon.spin { display: inline-block; animation: spin 1s linear infinite; }
   }
 }
 
-// ── Modal ─────────────────────────────────────────────────────
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal {
-  background: $surface;
-  border: 1px solid $border;
-  border-radius: $radius-lg;
-  padding: 24px;
-  width: 100%;
-  max-width: 420px;
-}
-
-.modal-title {
-  font-size: 15px;
-  font-weight: 500;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-// ── Form ──────────────────────────────────────────────────────
-.form-group { margin-bottom: 14px; }
-
-.form-label {
-  font-size: 12px;
-  color: $hint;
-  margin-bottom: 6px;
-  display: block;
-}
-
-.form-input,
-.form-select {
-  width: 100%;
-  background: $card;
-  border: 1px solid $border;
-  border-radius: $radius;
-  padding: 9px 12px;
-  color: $text;
-  font-family: inherit;
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.15s;
-
-  &:focus { border-color: rgba($primary, 0.5); }
-  &::placeholder { color: $hint; }
-  option { background: $surface; }
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.form-error {
-  font-size: 12px;
-  color: $danger;
-  margin-top: -6px;
-  margin-bottom: 8px;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
 .session-list {
   max-height: 450px;
   overflow-y: auto !important;
+}
+
+.dur-local {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  color: $text;
+
+  &.live {
+    color: $success;
+  }
+}
+
+.dur-server {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: $hint;
+
+  nb-icon {
+    font-size: 13px;
+  }
+
+  &.offline {
+    color: rgba(255, 255, 255, 0.2);
+    nb-icon {
+      color: rgba(255, 255, 255, 0.2);
+    }
+  }
 }

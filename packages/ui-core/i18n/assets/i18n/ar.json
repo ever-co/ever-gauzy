@@ -4586,6 +4586,8 @@
 		"DUE": "حق الدفع",
 		"AW_CONNECTED": "متصل بـ ActivityWatch",
 		"AW_DISCONNECTED": "تم فصل ActivityWatch",
+		"SESSION_LIST": "Session List",
+		"SESSION": "session",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "تمت إزالة اللقطة الشاشة الأخيرة والأنشطة بنجاح.",
 			"CANT_RUN_TIMER": "لا يمكنك تشغيل المؤقت في الوقت الحالي.",
@@ -4631,7 +4633,8 @@
 			"WEEKLY_RECAP": "ملخص أسبوعي",
 			"MONTHLY_RECAP": "ملخص شهري",
 			"INSTALL_PLUGIN": "تثبيت الإضافة",
-			"OPEN_LOG_HISTORY": "سجل الأحداث"
+			"OPEN_LOG_HISTORY": "سجل الأحداث",
+			"SESSIONS": "Sessions"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "تتبع الوقت بالساعة",

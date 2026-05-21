@@ -4601,6 +4601,8 @@
 		"DUE": "Vanwege",
 		"AW_CONNECTED": "Verbonden met ActivityWatch",
 		"AW_DISCONNECTED": "ActivityWatch is losgekoppeld.",
+		"SESSION_LIST": "Sessielijst",
+		"SESSION": "sessie",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "Laatste screenshot en activiteiten succesvol verwijderd",
 			"CANT_RUN_TIMER": "Je kunt de timer momenteel niet gebruiken.",
@@ -4646,7 +4648,8 @@
 			"WEEKLY_RECAP": "Wekelijks Overzicht",
 			"MONTHLY_RECAP": "Maandelijks Overzicht",
 			"INSTALL_PLUGIN": "Plugin installeren",
-			"OPEN_LOG_HISTORY": "Logboekgeschiedenis"
+			"OPEN_LOG_HISTORY": "Logboekgeschiedenis",
+			"SESSIONS": "Sessies"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Uurlijkse tijdregistratie",

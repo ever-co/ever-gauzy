@@ -4601,6 +4601,8 @@
 		"DUE": "Due",
 		"AW_CONNECTED": "Connesso ad ActivityWatch",
 		"AW_DISCONNECTED": "ActivityWatch è disconnesso",
+		"SESSION_LIST": "Elenco sessioni",
+		"SESSION": "sessione",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "Rimozione dello screenshot e delle attività precedenti effettuata con successo",
 			"CANT_RUN_TIMER": "Non puoi avviare il timer al momento",
@@ -4646,7 +4648,8 @@
 			"WEEKLY_RECAP": "Riepilogo Settimanale",
 			"MONTHLY_RECAP": "Riepilogo Mensile",
 			"INSTALL_PLUGIN": "Installa plugin",
-			"OPEN_LOG_HISTORY": "Storico dei log"
+			"OPEN_LOG_HISTORY": "Storico dei log",
+			"SESSIONS": "Sessioni"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Tracciamento del tempo orario",
