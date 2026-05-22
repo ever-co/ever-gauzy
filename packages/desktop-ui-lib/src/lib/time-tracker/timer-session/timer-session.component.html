@@ -1,102 +1,117 @@
-<div class="wrap">
-	<div class="page-head">
-		<div>
-			<div class="page-title">{{'TIMER_TRACKER.SESSION_LIST' | translate}}</div>
-			<div class="page-meta">{{ dateLabel() }} · {{ filteredSessions().length }} {{ 'TIMER_TRACKER.SESSION' | translate }}.</div>
-		</div>
-		<div class="page-actions">
-			<ngx-date-range-picker
-				[isLockDatePicker]="true"
-				[arrows]="true"
-				[isSingleDatePicker]="true"
-				[isDisableFutureDatePicker]="true"
-				class="medium"
-				(rangeChanges)="onRangeChange($event)"
-				[dates]="selectedRange"
-			></ngx-date-range-picker>
-		</div>
-	</div>
-
-	<div class="filter-bar">
-		@for (f of filterOptions; track f.value) {
-			<button class="filter-chip" [class.active]="statusFilter() === f.value" (click)="setFilter(f.value)">
-				{{ f.label }}
-			</button>
-		}
-	</div>
-
-	<div class="session-list">
-		@if (filteredSessions().length > 0) {
-			@for (s of filteredSessions(); track s.id) {
-				<div class="session-row" [class.running]="s.statusSync === 'running'">
-					<div class="color-bar" [ngClass]="getColorBar(s.statusSync)"></div>
-					@if (s.statusSync === 'running') {
-						<div class="live-dot"></div>
-					}
-					<div class="session-body">
-						<div class="row-top">
-							<span class="task-name">{{ s.taskName || 'No Task' }}</span>
-
-							<div class="row-top-right">
-								<span class="dur-local" [class.live]="s.statusSync === 'running'">{{
-									formatSeconds(s.duration / 1000)
-								}}</span>
-							</div>
-						</div>
-						<div class="row-bottom">
-							<div class="row-meta">
-								<div class="meta-item">
-									<nb-icon icon="folder-outline" class="meta-icon"></nb-icon>
-									<span class="badge">
-										{{ s.projectName || 'No project' }}
-									</span>
-								</div>
-
-								<span class="meta-sep">·</span>
-
-								<div class="meta-item">
-									<nb-icon icon="person-outline" class="meta-icon"></nb-icon>
-									<span>{{ s.clientName || 'No Client' }}</span>
-								</div>
-
-								<span class="meta-sep">·</span>
-
-								<div class="meta-item timestamps">
-									<nb-icon icon="play-circle-outline" class="meta-icon"></nb-icon>
-									<span>{{ formatDatetime(s.startedAt) }}</span>
-									<nb-icon icon="arrow-forward-outline" class="meta-icon arrow"></nb-icon>
-									<nb-icon icon="stop-circle-outline" class="meta-icon"></nb-icon>
-									<span>{{ formatDatetime(s.stoppedAt) }}</span>
-								</div>
-							</div>
-
-							<div class="row-bottom-right">
-								@if (s.statusSync === 'synced') {
-									<span class="dur-server cloud-time status-synced">
-										<i class="fa-regular fa-cloud"></i>
-										{{ formatSeconds(s.syncDuration) }}
-									</span>
-								} @else if (s.statusSync === 'removed') {
-									<button
-										class="retry-btn"
-										(click)="retrySync(s, $event)"
-										[disabled]="onRetry()"
-									>
-										<nb-icon icon="refresh-outline" [class.spin]="onRetry()"></nb-icon> Retry
-									</button>
-								} @else {
-									<span class="dur-server cloud-time status-pending">
-										<nb-icon icon="clock-outline"></nb-icon>
-										--
-									</span>
-								}
-							</div>
-						</div>
+<nb-layout>
+	<nb-layout-column>
+		@let sessionList = filteredSessions();
+		<nb-card class="session-card">
+			<nb-card-header class="page-head">
+				<div>
+					<div class="page-title">{{ 'TIMER_TRACKER.SESSION_LIST' | translate }}</div>
+					<div class="page-meta">
+						{{ dateLabel() }} · {{ sessionList.length }} {{ 'TIMER_TRACKER.SESSION' | translate }}.
 					</div>
 				</div>
-			}
-		} @else {
-			<div class="empty-state">No sessions match your filter</div>
-		}
-	</div>
-</div>
+				<div class="page-actions">
+					<ngx-date-range-picker
+						[isLockDatePicker]="true"
+						[arrows]="true"
+						[isSingleDatePicker]="true"
+						[isDisableFutureDatePicker]="true"
+						class="medium"
+						(rangeChanges)="onRangeChange($event)"
+						[dates]="selectedRange"
+					></ngx-date-range-picker>
+				</div>
+			</nb-card-header>
+
+			<nb-card-body>
+				<div class="filter-bar">
+					@for (f of filterOptions; track f.value) {
+						<button
+							type="button"
+							class="filter-chip"
+							[class.active]="statusFilter() === f.value"
+							(click)="setFilter(f.value)"
+						>
+							{{ f.label }}
+						</button>
+					}
+				</div>
+
+				<nb-list class="session-list">
+					@for (s of sessionList; track s.id) {
+						<nb-list-item class="session-row" [class.running]="s.statusSync === 'running'">
+							<div class="color-bar" [ngClass]="getColorBar(s.statusSync)"></div>
+							@if (s.statusSync === 'running') {
+								<div class="live-dot"></div>
+							}
+							<div class="session-body">
+								<div class="row-top">
+									<span class="task-name">{{ s.taskName || 'No Task' }}</span>
+
+									<div class="row-top-right">
+										<span class="dur-local" [class.live]="s.statusSync === 'running'">{{
+											formatSeconds(s.duration / 1000)
+										}}</span>
+									</div>
+								</div>
+								<div class="row-bottom">
+									<div class="row-meta">
+										<div class="meta-item">
+											<nb-icon icon="folder-outline" class="meta-icon"></nb-icon>
+											<span class="badge">
+												{{ s.projectName || 'No project' }}
+											</span>
+										</div>
+
+										<span class="meta-sep">·</span>
+
+										<div class="meta-item">
+											<nb-icon icon="person-outline" class="meta-icon"></nb-icon>
+											<span>{{ s.clientName || 'No Client' }}</span>
+										</div>
+
+										<span class="meta-sep">·</span>
+
+										<div class="meta-item timestamps">
+											<nb-icon icon="play-circle-outline" class="meta-icon"></nb-icon>
+											<span>{{ formatDatetime(s.startedAt) }}</span>
+											<nb-icon icon="arrow-forward-outline" class="meta-icon arrow"></nb-icon>
+											<nb-icon icon="stop-circle-outline" class="meta-icon"></nb-icon>
+											<span>{{ formatDatetime(s.stoppedAt) }}</span>
+										</div>
+									</div>
+
+									<div class="row-bottom-right">
+										@if (s.statusSync === 'synced') {
+											<span class="dur-server cloud-time status-synced">
+												<i class="fa-regular fa-cloud"></i>
+												{{ formatSeconds(s.syncDuration) }}
+											</span>
+										} @else if (s.statusSync === 'removed') {
+											<button
+												type="button"
+												class="retry-btn"
+												(click)="retrySync(s, $event)"
+												[disabled]="onRetry()"
+											>
+												<nb-icon icon="refresh-outline" [class.spin]="onRetry()"></nb-icon>
+												Retry
+											</button>
+										} @else {
+											<span class="dur-server cloud-time status-pending">
+												<nb-icon icon="clock-outline"></nb-icon>
+												--
+											</span>
+										}
+									</div>
+								</div>
+							</div>
+						</nb-list-item>
+					}
+					@if (sessionList.length <= 0) {
+						<nb-list-item class="empty-state">No sessions match your filter</nb-list-item>
+					}
+				</nb-list>
+			</nb-card-body>
+		</nb-card>
+	</nb-layout-column>
+</nb-layout>

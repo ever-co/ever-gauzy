@@ -4603,8 +4603,8 @@
 		"DUE": "Debido",
 		"AW_CONNECTED": "\"Conexión de ActivityWatch\"",
 		"AW_DISCONNECTED": "ActivityWatch está desconectado.",
-		"SESSION_LIST": "Session List",
-		"SESSION": "session",
+		"SESSION_LIST": "Lista de sesiones",
+		"SESSION": "sesión",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "Eliminar correctamente la última captura de pantalla y actividades.",
 			"CANT_RUN_TIMER": "No puedes ejecutar el temporizador por el momento.",
@@ -4651,7 +4651,7 @@
 			"MONTHLY_RECAP": "Resumen Mensual",
 			"INSTALL_PLUGIN": "Instalar complemento",
 			"OPEN_LOG_HISTORY": "Historial de registros",
-			"SESSIONS": "Sessions"
+			"SESSIONS": "Sesiones"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Seguimiento del tiempo por hora",

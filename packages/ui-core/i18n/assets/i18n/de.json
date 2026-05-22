@@ -4597,8 +4597,8 @@
 		"DUE": "Wegen",
 		"AW_CONNECTED": "ActivityWatch's verbunden.",
 		"AW_DISCONNECTED": "ActivityWatch ist nicht verbunden.",
-		"SESSION_LIST": "Session List",
-		"SESSION": "session",
+		"SESSION_LIST": "Sitzungsliste",
+		"SESSION": "Sitzung",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "Erfolgreich den letzten Screenshot und die Aktivitäten entfernen.",
 			"CANT_RUN_TIMER": "Du kannst den Timer im Moment nicht starten.",
@@ -4645,7 +4645,7 @@
 			"MONTHLY_RECAP": "Monatliche Zusammenfassung",
 			"INSTALL_PLUGIN": "Plugin installieren",
 			"OPEN_LOG_HISTORY": "Protokollverlauf",
-			"SESSIONS": "Sessions"
+			"SESSIONS": "Sitzung"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Stündliche Zeiterfassung",

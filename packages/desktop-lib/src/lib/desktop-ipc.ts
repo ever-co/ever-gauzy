@@ -1632,7 +1632,9 @@ export function removeTimerHandlers() {
 		'CURRENT_TIMER',
 		'LAST_SYNCED_INTERVAL',
 		'UPDATE_SELECTOR',
-		'UPDATE_SYNC_STATE'
+		'UPDATE_SYNC_STATE',
+		'GET_TIMER_SESSIONS',
+		'GET_TIMER_SESSION'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

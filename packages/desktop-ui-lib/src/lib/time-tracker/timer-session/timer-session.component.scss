@@ -1,23 +1,21 @@
 // ── Variables ─────────────────────────────────────────────────
 $bg: var(--gauzy-card-2);
 $surface: var(--gauzy-card-3);
-$card: #252b48;
-$border: rgba(255, 255, 255, 0.08);
+$border: var(--gauzy-border-default-color);
 $divider: var(--divider-color);
 $text: var(--gauzy-text-color-1);
-$hint: #8f9bb3;
-$primary: #3366ff;
-$primary-dim: rgba(51, 102, 255, 0.12);
-$success: #00d68f;
+$hint: var(--gauzy-text-color-2);
+$primary-dim: var(--color-primary-transparent-100);
+$success: var(--color-success-default);
 $success-dim: rgba(0, 214, 143, 0.12);
 $warning: #ffaa00;
 $warning-dim: rgba(255, 170, 0, 0.12);
 $danger: #ff3d71;
 $danger-dim: rgba(255, 61, 113, 0.12);
-$radius: 8px;
-$radius-lg: 12px;
+$radius: var(--border-radius);
+$radius-lg: calc(var(--border-radius) * 1.5);
 $info-dim: rgba(0, 149, 255, 0.12);
-$info: #0095ff;
+$info: var(--color-info-default);
 
 :host {
   display: block;
@@ -26,19 +24,40 @@ $info: #0095ff;
   font-family: 'DM Sans', sans-serif;
   color: $text;
   font-size: 14px;
+
+  nb-layout {
+    min-height: unset;
+    background: $bg;
+  }
+
+  nb-layout-column {
+    padding: 28px 20px;
+  }
 }
 
-.wrap {
+.session-card {
   max-width: 800px;
   margin: 0 auto;
-  padding: 28px 20px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+
+  nb-card-header {
+    border-bottom: 1px solid $border;
+    background: transparent;
+    padding: 16px 20px;
+  }
+
+  nb-card-body {
+    padding: 16px 20px;
+    background: transparent;
+  }
 }
 
 .page-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
 }
 
 .page-title {
@@ -84,11 +103,11 @@ $info: #0095ff;
   }
 
   &-primary {
-    background: $primary;
+    background: var(--color-primary-default);
     color: #fff;
 
     &:hover {
-      background: darken($primary, 8%);
+      background: var(--color-primary-600);
     }
   }
 }
@@ -115,7 +134,7 @@ $info: #0095ff;
   &.active {
     background: $primary-dim;
     color: #7b9fff;
-    border-color: rgba($primary, 0.3);
+    border-color: rgba(51, 102, 255, 0.3);
   }
 
   &:hover:not(.active) {
@@ -134,11 +153,56 @@ $info: #0095ff;
   margin-top: 4px;
 }
 
+// Reset Nebular's nb-list and nb-list-item host defaults so our layout takes over
+:host ::ng-deep {
+  nb-list.session-list {
+    padding: 0;
+    border: none;
+    background: transparent;
+    display: block;
+  }
+
+  nb-list-item.session-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: $bg;
+    border: 1px solid $border;
+    border-radius: $radius;
+    padding: 13px 16px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    width: 99%;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.14);
+
+      .row-actions {
+        opacity: 1;
+      }
+    }
+
+    &.running {
+      border-color: rgba(0, 214, 143, 0.4);
+    }
+  }
+
+  nb-list-item.empty-state {
+    display: flex;
+    justify-content: center;
+    padding: 40px 0;
+    border: none;
+    background: transparent;
+  }
+}
+
 .session-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: $surface;
+  background: $bg;
   border: 1px solid $border;
   border-radius: $radius;
   padding: 13px 16px;
@@ -248,12 +312,12 @@ $info: #0095ff;
   &-blue {
     background: $primary-dim;
     color: #7b9fff;
-    border: 1px solid rgba($primary, 0.2);
+    border: 1px solid rgba(51, 102, 255, 0.2);
   }
   &-green {
     background: $success-dim;
     color: $success;
-    border: 1px solid rgba($success, 0.2);
+    border: 1px solid rgba(0, 214, 143, 0.2);
   }
   &-amber {
     background: $warning-dim;
@@ -550,6 +614,7 @@ nb-icon.spin {
 .session-list {
   max-height: 450px;
   overflow-y: auto !important;
+  border-radius: $radius;
 }
 
 .dur-local {

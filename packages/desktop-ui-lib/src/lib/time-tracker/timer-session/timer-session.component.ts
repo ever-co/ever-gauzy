@@ -1,7 +1,7 @@
 import { NgClass } from '@angular/common';
 import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NbCardModule, NbIconModule } from '@nebular/theme';
+import { NbCardModule, NbIconModule, NbLayoutModule, NbListModule } from '@nebular/theme';
 import { DateRangePickerComponent } from '../../recap/shared/features/date-range-picker/date-range-picker.component';
 import { IDateRangePicker } from '../../recap/shared/features/date-range-picker/date-picker.interface';
 import { TimerSessionService } from './timer-session.service';
@@ -58,7 +58,16 @@ export const SYNC_CONFIG: Record<SyncStatus, { label: string; cssClass: string; 
 	templateUrl: './timer-session.component.html',
 	styleUrls: ['./timer-session.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [FormsModule, NgClass, NbCardModule, NbIconModule, DateRangePickerComponent, TranslatePipe]
+	imports: [
+		FormsModule,
+		NgClass,
+		NbCardModule,
+		NbIconModule,
+		DateRangePickerComponent,
+		TranslatePipe,
+		NbLayoutModule,
+		NbListModule
+	]
 })
 export class TimerSessionComponent {
 	private readonly timerSessionService = inject(TimerSessionService);
@@ -108,7 +117,7 @@ export class TimerSessionComponent {
 	];
 
 	private readonly destroy$ = new Subject<void>();
-	private timesheets: any[] | null = [];
+	private timesheets: ITimeLog[] | null = [];
 	onRetry = signal<boolean>(false);
 
 	readonly filteredSessions = computed(() => {
@@ -168,9 +177,7 @@ export class TimerSessionComponent {
 
 	sessionUpdateHandler(): void {
 		// check current range same as now date if same then update session list else do nothing
-		console.log('session update listener triggered');
 		if (this.currentRange().start.toDateString() === new Date().toDateString()) {
-			console.log('session must be updated');
 			this.loadLocalSessionsForRange();
 		}
 	}
@@ -181,9 +188,8 @@ export class TimerSessionComponent {
 		this._electronService.ipcRenderer.removeListener('TIMER_SESSION_UPDATED', this.sessionUpdateHandler);
 	}
 
-	setFilter(status: SyncStatus): void {
+	setFilter(status: SyncStatus | 'all'): void {
 		this.statusFilter.set(status);
-		this.loadLocalSessionsForRange();
 	}
 
 	getSyncStatus(session: Session): SyncStatus {
