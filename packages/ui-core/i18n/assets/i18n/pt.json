@@ -4601,6 +4601,8 @@
 		"DUE": "Devido",
 		"AW_CONNECTED": "Atividade do ActivityWatch conectada.",
 		"AW_DISCONNECTED": "ActivityWatch está desconectado.",
+		"SESSION_LIST": "Lista de sessões",
+		"SESSION": "sessão",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "Remover com sucesso a última captura de tela e atividades.",
 			"CANT_RUN_TIMER": "Você não pode executar um cronômetro no momento.",
@@ -4646,7 +4648,8 @@
 			"WEEKLY_RECAP": "Recapitulação Semanal",
 			"MONTHLY_RECAP": "Recapitulação Mensal",
 			"INSTALL_PLUGIN": "Instalar plugin",
-			"OPEN_LOG_HISTORY": "Histórico de registros"
+			"OPEN_LOG_HISTORY": "Histórico de registros",
+			"SESSIONS": "Sessões"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Rastreamento de Tempo Horário",

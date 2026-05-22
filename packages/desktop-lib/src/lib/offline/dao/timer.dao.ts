@@ -210,4 +210,22 @@ export class TimerDAO implements DAO<TimerTO> {
 			)
 			.andWhere('synced', true);
 	}
+
+	public async findByDate(employeeId: string, date: { start: Date; end: Date }): Promise<TimerTO[]> {
+		const toLocalDateString = (d: Date): string => {
+			const y = d.getFullYear();
+			const m = String(d.getMonth() + 1).padStart(2, '0');
+			const day = String(d.getDate()).padStart(2, '0');
+			return `${y}-${m}-${day}`;
+		};
+		const startDate = toLocalDateString(date.start);
+		const endDate = toLocalDateString(date.end);
+		return await this._provider
+			.connection<TimerTO>(TABLE_NAME_TIMERS)
+			.where('employeeId', employeeId)
+			.whereRaw("date(startedAt/1000, 'unixepoch', 'localtime') >= ?", [startDate])
+			.whereRaw("date(startedAt/1000, 'unixepoch', 'localtime') <= ?", [endDate])
+			.whereNotNull('startedAt')
+			.orderBy('startedAt', 'desc');
+	}
 }

@@ -4649,6 +4649,8 @@
 		"DUE": "Дължим",
 		"AW_CONNECTED": "Connected към ActivityWatch",
 		"AW_DISCONNECTED": "Disconnected към ActivityWatch",
+		"SESSION_LIST": "Списък със сесии",
+		"SESSION": "Сесии",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "Успешно премахнахте последната снимка на екрана и дейностите",
 			"CANT_RUN_TIMER": "В момента не може да стартирате таймера",
@@ -4694,7 +4696,8 @@
 			"WEEKLY_RECAP": "Седмичен обзор",
 			"MONTHLY_RECAP": "Месечен обзор",
 			"INSTALL_PLUGIN": "Инсталиране на плъгин",
-			"OPEN_LOG_HISTORY": "Журнали"
+			"OPEN_LOG_HISTORY": "Журнали",
+			"SESSIONS": "Сесии"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Проследяване на времето по часове",

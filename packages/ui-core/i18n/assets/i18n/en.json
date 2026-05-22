@@ -4759,6 +4759,8 @@
 		"DUE": "Due",
 		"AW_CONNECTED": "ActivityWatch's connected",
 		"AW_DISCONNECTED": "ActivityWatch's disconnected",
+		"SESSION_LIST": "Session List",
+		"SESSION": "session",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "Successfully remove last screenshot and activities",
 			"CANT_RUN_TIMER": "Your can't run timer for the moment",
@@ -4804,7 +4806,8 @@
 			"WEEKLY_RECAP": "Weekly Recap",
 			"MONTHLY_RECAP": "Monthly Recap",
 			"INSTALL_PLUGIN": "Install Plugin",
-			"OPEN_LOG_HISTORY": "Logs"
+			"OPEN_LOG_HISTORY": "Logs",
+			"SESSIONS": "Sessions"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Hourly Time Tracking",
