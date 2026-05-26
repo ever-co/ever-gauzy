@@ -62,19 +62,18 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 	/** When true, each new IPC log entry auto-scrolls the viewport to the bottom. */
 	readonly isFollowing = signal(true);
 
-	readonly serviceNames = computed(() =>
-		[...new Set(this.allItems().map((i) => i.serviceName))]
-	);
+	readonly serviceNames = computed(() => [...new Set(this.allItems().map((i) => i.serviceName))]);
 
 	readonly filteredLogs = computed(() => {
 		const level = this.logLevelFilter();
 		const service = this.serviceNameFilter();
 		return this.allItems().filter(
 			(item) =>
-				(level === 'all' || item.logLevel === level) &&
-				(service === 'all' || item.serviceName === service)
+				(level === 'all' || item.logLevel === level) && (service === 'all' || item.serviceName === service)
 		);
 	});
+
+	exportLoading = signal<boolean>(false);
 
 	ngOnInit(): void {
 		this.loggerService.logsStream$.pipe(takeUntil(this.destroy$)).subscribe((items) => {
@@ -96,7 +95,6 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 				}
 			});
 		});
-
 
 		this.loadEntries(true);
 	}
@@ -154,7 +152,12 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 
 	onScroll(event: Event): void {
 		const el = event.target as HTMLElement;
-		if (el.scrollTop + el.clientHeight >= el.scrollHeight - 20 && !this.isLoadingMore() && this.hasMore() && !this.isLoading()) {
+		if (
+			el.scrollTop + el.clientHeight >= el.scrollHeight - 20 &&
+			!this.isLoadingMore() &&
+			this.hasMore() &&
+			!this.isLoading()
+		) {
 			this.loadOlderEntries();
 		}
 	}
@@ -172,8 +175,6 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 			);
 
 			this.hasMore.set(result.length >= this.pageSize());
-
-
 		} catch (error) {
 			console.error('Failed to load older log entries', error);
 			// Roll back the page increment so the next attempt requests the correct page.
@@ -190,5 +191,11 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 			error: 'level-error'
 		};
 		return map[level ?? ''] ?? 'level-info';
+	}
+
+	async exportAuditLogs() {
+		this.exportLoading.set(true);
+		await this.loggerService.exportAuditLogs();
+		this.exportLoading.set(false);
 	}
 }

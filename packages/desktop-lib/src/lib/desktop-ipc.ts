@@ -53,6 +53,7 @@ import { TranslateService } from './translation';
 import { ActivityWindow } from '@gauzy/desktop-activity';
 import { DesktopPermissionHandler } from './utilities/desktop-permission-handler';
 import { runTccutil, getAppId, getOSInfo } from './utilities/util';
+import { exportAuditLogs } from './utilities/export-log';
 import { AuditLogHandler } from './audit';
 
 // Lazily initialized — construction is deferred until after app.ready to avoid
@@ -654,7 +655,19 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			console.error('Failed to update screenshot sync status', error);
 		}
 
-	})
+	});
+
+	ipcMain.handle('EXPORT_AUDIT_LOGS', async() => {
+		try {
+			const result = await exportAuditLogs();
+			return result;
+		} catch (error) {
+			console.error(`Failed export logs to file, ${error.message}`);
+			return {
+				success: false
+			}
+		}
+	});
 
 	pluginListeners();
 }
@@ -1615,7 +1628,8 @@ export function removeAllHandlers() {
 		'GET_AUDIT_LOGS',
 		'GET_HARDWARE_ACCELERATION_STATE',
 		'SET_HARDWARE_ACCELERATION',
-		'UPDATE_SCREENSHOT_SYNC_STATUS'
+		'UPDATE_SCREENSHOT_SYNC_STATUS',
+		'EXPORT_AUDIT_LOGS'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

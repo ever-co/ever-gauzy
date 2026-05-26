@@ -39,4 +39,8 @@ export class LoggerService {
 		this.logs$.next(logsResult);
 		return logsResult;
 	}
+
+	public async exportAuditLogs() {
+		await this._electronService.ipcRenderer.invoke('EXPORT_AUDIT_LOGS');
+	}
 }
