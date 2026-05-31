@@ -73,7 +73,7 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 		);
 	});
 
-	exportLoading = signal<boolean>(false);
+	readonly exportLoading = signal<boolean>(false);
 
 	ngOnInit(): void {
 		this.loggerService.logsStream$.pipe(takeUntil(this.destroy$)).subscribe((items) => {
@@ -194,8 +194,13 @@ export class AuditTrailLoggerComponent implements OnInit, OnDestroy {
 	}
 
 	async exportAuditLogs() {
-		this.exportLoading.set(true);
-		await this.loggerService.exportAuditLogs();
-		this.exportLoading.set(false);
+		try {
+			this.exportLoading.set(true);
+			await this.loggerService.exportAuditLogs();
+		} catch (error) {
+			console.error('Failed export audit logs', error);
+		} finally {
+			this.exportLoading.set(false);
+		}
 	}
 }

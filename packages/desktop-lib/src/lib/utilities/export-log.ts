@@ -12,7 +12,7 @@ function getAuditLogService(): AuditLogService {
 	return auditLogService;
 }
 
-async function showSaveDialog(): Promise<SaveDialogReturnValue>  {
+async function showSaveDialog(): Promise<SaveDialogReturnValue> {
 	return await dialog.showSaveDialog({
 		title: 'Export Logs',
 		defaultPath: `logs-${Date.now()}.jsonl`,
@@ -20,10 +20,6 @@ async function showSaveDialog(): Promise<SaveDialogReturnValue>  {
 			{
 				name: 'JSON Lines',
 				extensions: ['jsonl']
-			},
-			{
-				name: 'csv',
-				extensions: ['csv']
 			}
 		]
 	});
@@ -42,6 +38,7 @@ export async function exportAuditLogs(): Promise<{ success: boolean; filePath?: 
 	}
 
 	const stream = fs.createWriteStream(filePath);
+	const streamError = new Promise<never>((_, reject) => stream.once('error', reject));
 
 	try {
 		const pageSize = 1000;
@@ -56,7 +53,9 @@ export async function exportAuditLogs(): Promise<{ success: boolean; filePath?: 
 				break;
 			}
 			for (const row of logs.data) {
-				stream.write(JSON.stringify(row) + '\n');
+				if (!stream.write(JSON.stringify(row) + '\n')) {
+					await Promise.race([new Promise<void>((resolve) => stream.once('drain', resolve)), streamError]);
+				}
 			}
 			page += 1;
 		}
