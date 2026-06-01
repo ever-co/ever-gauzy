@@ -215,7 +215,7 @@ export function childWindowOpen(window: BrowserWindow, preloadPath?: string) {
 				action: 'allow',
 				overrideBrowserWindowOptions: {
 					title: 'Log History',
-					width: 460,
+					width: 480,
 					height: 800,
 					titleBarStyle: 'hidden',
 					titleBarOverlay: true,
