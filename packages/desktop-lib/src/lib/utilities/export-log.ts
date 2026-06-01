@@ -38,7 +38,12 @@ export async function exportAuditLogs(): Promise<{ success: boolean; filePath?: 
 	}
 
 	const stream = fs.createWriteStream(filePath);
-	const streamError = new Promise<never>((_, reject) => stream.once('error', reject));
+
+	let streamReject: (err: Error) => void;
+	const streamError = new Promise<never>((_, reject) => {
+		streamReject = reject;
+		stream.once('error', reject);
+	});
 
 	try {
 		const pageSize = 1000;
@@ -59,9 +64,11 @@ export async function exportAuditLogs(): Promise<{ success: boolean; filePath?: 
 			}
 			page += 1;
 		}
-		await closeStream(stream);
+		await Promise.race([closeStream(stream), streamError]);
+		stream.off('error', streamReject!);
 		return { success: true, filePath };
 	} catch (err) {
+		stream.off('error', streamReject!);
 		stream.destroy();
 		throw err;
 	}
