@@ -10,7 +10,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy",
-		"directory": "packages/core
+		"directory": "packages/core"
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
