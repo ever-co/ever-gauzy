@@ -4370,6 +4370,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "Für eine flexiblere Zeit- und Aktivitätsverfolgung laden Sie bitte die <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a> herunter und verwenden Sie diese.",
 		"STATUS": "Der Zeitverfolger läuft bereits in der {{ source }}.",
 		"VERSION": "Version v{{ version }}",
+		"OS": "OS: {{ os }} {{ systemVersion }} ({{ arch }})",
 		"ARCHITECTURE": "Architektur: {{ arch }}",
 		"WAIT_FOR": "Warten auf den Beginn von {{ name }}...",
 		"SETUP": {
@@ -4596,6 +4597,8 @@
 		"DUE": "Wegen",
 		"AW_CONNECTED": "ActivityWatch's verbunden.",
 		"AW_DISCONNECTED": "ActivityWatch ist nicht verbunden.",
+		"SESSION_LIST": "Sitzungsliste",
+		"SESSION": "Sitzung",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "Erfolgreich den letzten Screenshot und die Aktivitäten entfernen.",
 			"CANT_RUN_TIMER": "Du kannst den Timer im Moment nicht starten.",
@@ -4641,7 +4644,8 @@
 			"WEEKLY_RECAP": "Wöchentliche Zusammenfassung",
 			"MONTHLY_RECAP": "Monatliche Zusammenfassung",
 			"INSTALL_PLUGIN": "Plugin installieren",
-			"OPEN_LOG_HISTORY": "Protokollverlauf"
+			"OPEN_LOG_HISTORY": "Protokollverlauf",
+			"SESSIONS": "Sitzung"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Stündliche Zeiterfassung",

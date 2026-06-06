@@ -4365,6 +4365,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "Pour un suivi du temps et des activités plus flexible, veuillez <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">télécharger</a> et utiliser l'application de chronomètre Gauzy pour ordinateur.",
 		"STATUS": "Le suivi du temps est déjà en cours dans {{ source }}.",
 		"VERSION": "Version v{{ version }}",
+		"OS": "OS: {{ os }} {{ systemVersion }} ({{ arch }})",
 		"ARCHITECTURE": "Architecture: {{ arch }}",
 		"WAIT_FOR": "En attendant que {{ name }} commence...",
 		"SETUP": {
@@ -4591,6 +4592,8 @@
 		"DUE": "En raison de",
 		"AW_CONNECTED": "La connexion d'ActivityWatch.",
 		"AW_DISCONNECTED": "ActivityWatch est déconnecté.",
+		"SESSION_LIST": "Liste des sessions",
+		"SESSION": "session",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "Supprimer avec succès la dernière capture d'écran et les activités.",
 			"CANT_RUN_TIMER": "Vous ne pouvez pas exécuter le minuteur pour le moment.",
@@ -4636,7 +4639,8 @@
 			"WEEKLY_RECAP": "Récapitulatif Hebdomadaire",
 			"MONTHLY_RECAP": "Récapitulatif Mensuel",
 			"INSTALL_PLUGIN": "Installer plugin",
-			"OPEN_LOG_HISTORY": "Historique des journaux"
+			"OPEN_LOG_HISTORY": "Historique des journaux",
+			"SESSIONS": "Sessions"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Suivi du temps horaire",
