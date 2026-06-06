@@ -52,7 +52,7 @@ spec:
                   resources:
                       requests:
                           cpu: '100m'
-                          memory: '1280Mi'
+                          memory: '672Mi'
                   env:
                       - name: API_HOST
                         value: 0.0.0.0
