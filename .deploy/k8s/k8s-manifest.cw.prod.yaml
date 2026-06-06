@@ -294,8 +294,8 @@ spec:
                         protocol: TCP
                   resources:
                       requests:
-                          cpu: '0.5'
-                          memory: 2Gi
+                          cpu: '300m'
+                          memory: '896Mi'
                       limits:
                           cpu: '4'
                           memory: 16Gi
@@ -392,8 +392,8 @@ spec:
                         protocol: TCP
                   resources:
                       requests:
-                          cpu: '0.5'
-                          memory: 2Gi
+                          cpu: '50m'
+                          memory: '64Mi'
                       limits:
                           cpu: '4'
                           memory: 16Gi

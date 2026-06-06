@@ -49,6 +49,10 @@ spec:
                       readOnlyRootFilesystem: false
                       runAsNonRoot: false
                   image: ghcr.io/ever-co/gauzy-api:latest
+                  resources:
+                      requests:
+                          cpu: '300m'
+                          memory: '896Mi'
                   env:
                       - name: API_HOST
                         value: 0.0.0.0
@@ -291,6 +295,10 @@ spec:
                       readOnlyRootFilesystem: false
                       runAsNonRoot: false
                   image: ghcr.io/ever-co/gauzy-webapp:latest
+                  resources:
+                      requests:
+                          cpu: '50m'
+                          memory: '64Mi'
                   env:
                       - name: DEMO
                         value: 'false'
