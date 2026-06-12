@@ -736,7 +736,7 @@
 		"electron": "^38.1.2",
 		"electron-builder": "26.0.3",
 		"envalid": "^6.0.2",
-		"esbuild": "0.24.0",
+		"esbuild": "0.28.1",
 		"eslint": "^9.0.0",
 		"eslint-plugin-cypress": "2.13.4",
 		"fork-ts-checker-webpack-plugin": "^5.2.0",
