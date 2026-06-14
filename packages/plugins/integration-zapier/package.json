@@ -27,8 +27,8 @@
 		"lib:watch": "yarn nx build plugin-integration-zapier --watch"
 	},
 	"peerDependencies": {
-		"@nestjs/common": "^11.1.14",
-		"@nestjs/core": "^11.1.14"
+		"@nestjs/common": "^11.1.26",
+		"@nestjs/core": "^11.1.26"
 	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
@@ -38,17 +38,17 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
-		"@nestjs/config": "^4.0.3",
+		"@nestjs/config": "^4.0.4",
 		"@nestjs/cqrs": "^11.0.3",
-		"@nestjs/swagger": "^11.2.6",
-		"@nestjs/typeorm": "^11.0.0",
-		"axios": "^1.13.5",
+		"@nestjs/swagger": "^11.4.4",
+		"@nestjs/typeorm": "^11.0.1",
+		"axios": "^1.18.0",
 		"chalk": "^4.1.0",
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.14.2",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.28",
+		"typeorm": "^0.3.30",
 		"zapier-platform-core": "^18.4.0"
 	},
 	"devDependencies": {
