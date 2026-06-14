@@ -8807,10 +8807,10 @@
     path-to-regexp "8.4.2"
     tslib "2.8.1"
 
-"@nestjs/platform-socket.io@^11.1.14":
-  version "11.1.14"
-  resolved "https://registry.yarnpkg.com/@nestjs/platform-socket.io/-/platform-socket.io-11.1.14.tgz#3e5f22030d9a770170f7f7da28378e011fd89bf6"
-  integrity sha512-LLSIWkYz4FcvUhfepillYQboo9qbjq1YtQj8XC3zyex+EaqNXvxhZntx/1uJhAjc655pJts9HfZwWXei8jrRGw==
+"@nestjs/platform-socket.io@^11.1.26":
+  version "11.1.26"
+  resolved "https://registry.npmjs.org/@nestjs/platform-socket.io/-/platform-socket.io-11.1.26.tgz#3206467ef0d0dc1e1a4c928c6baf9bf6bc2822e6"
+  integrity sha512-uuBZI+65OcG0K+lTv8CCuvaQi5/tb2EBhbObnVeSjb7oIxiynwULhdJiynbFfotUKv4PebDPDIhByePCjOnfAQ==
   dependencies:
     socket.io "4.8.3"
     tslib "2.8.1"
