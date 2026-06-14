@@ -43,7 +43,7 @@
 		"rxjs": "^7.8.2",
 		"simstudio-ts-sdk": "^0.1.2",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.30"
+		"typeorm": "^1.0.0"
 	},
 	"devDependencies": {
 		"@types/express": "^5.0.1",
