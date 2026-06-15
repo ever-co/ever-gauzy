@@ -768,10 +768,10 @@
     yargs "18.0.0"
     zod "4.1.13"
 
-"@angular/common@21.0.7":
-  version "21.0.7"
-  resolved "https://registry.yarnpkg.com/@angular/common/-/common-21.0.7.tgz#457feeb68abdc4d14bc15fcd554c7be206faa32a"
-  integrity sha512-KNstFFCv6//x33F+YBPEIztDSNBVyLH99C8yFPmb7vawxGbR9liKSHC1WnEk+GR5KgV3I5lFOJyWL7Elfm0K5A==
+"@angular/common@21.2.17":
+  version "21.2.17"
+  resolved "https://registry.yarnpkg.com/@angular/common/-/common-21.2.17.tgz#020431786e19838674cecc84e8db39585f66e5ec"
+  integrity sha512-hqAQxRfi5ldFE42suAXRcY+JCANrUh7fuSQ/DtZ7L896id5BT/exuv6dWNBC1PyAfQmRbpD5Pt6/pd+tNLyhDQ==
   dependencies:
     tslib "^2.3.0"
 
