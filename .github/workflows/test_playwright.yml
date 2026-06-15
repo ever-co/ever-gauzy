@@ -22,21 +22,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        shell: pwsh
-        run: |
-          $cacheDir = yarn cache dir
-          "dir=$cacheDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-
-      - uses: actions/cache@v4
-        id: yarn-cache
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-${{ runner.arch }}-yarn-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-yarn-
-
       - name: Install Packages & Bootstrap
         run: yarn bootstrap
 
