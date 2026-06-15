@@ -1,0 +1,76 @@
+name: Playwright Tests
+
+# Replaces the dormant Cypress workflows (test_cypress.yml / test_currents.yml, which trigger on
+# branch `nope`). Runs the migrated Playwright e2e suite against a locally-started API + Web.
+on:
+  push:
+    branches: [develop, feat/e2e-playwright]
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-playwright:
+    runs-on: [self-hosted]
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        shell: pwsh
+        run: |
+          $cacheDir = yarn cache dir
+          "dir=$cacheDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - uses: actions/cache@v4
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-${{ runner.arch }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-yarn-
+
+      - name: Install Packages & Bootstrap
+        run: yarn bootstrap
+
+      - name: Build all packages
+        run: yarn build:package:all
+        env:
+          NX_NO_CLOUD: true
+
+      - name: Install forever package
+        run: npm install forever -g
+
+      - name: Run API in background
+        run: yarn start:api:forever
+
+      - name: Run UI in background
+        run: yarn start:gauzy:forever
+
+      - name: Install Playwright browser (chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Wait for API and Web to be ready
+        run: npx wait-on http://localhost:3000/api http://localhost:4200 --timeout 1200000
+
+      - name: Run Playwright tests
+        working-directory: apps/gauzy-e2e
+        run: npx playwright test
+        env:
+          CI: 'true'
+          E2E_BASE_URL: http://localhost:4200
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/gauzy-e2e/playwright-report
+          retention-days: 14

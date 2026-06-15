@@ -16,6 +16,12 @@
 				}
 			}
 		},
+		"playwright": {
+			"executor": "@nx/playwright:playwright",
+			"options": {
+				"config": "apps/gauzy-e2e/playwright.config.ts"
+			}
+		},
 		"lint": {
 			"executor": "@nx/eslint:lint"
 		}
