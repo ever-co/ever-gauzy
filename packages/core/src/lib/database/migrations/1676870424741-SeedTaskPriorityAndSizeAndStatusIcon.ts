@@ -19,7 +19,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
     public async up(queryRunner: QueryRunner): Promise<void> {
         console.log(chalk.yellow(this.name + ' start running!'));
 
-        switch (queryRunner.connection.options.type) {
+        switch (queryRunner.dataSource.options.type as DatabaseTypeEnum) {
             case DatabaseTypeEnum.sqlite:
             case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteSeedTaskPriorityIcon(queryRunner);
@@ -37,7 +37,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
                 await this.mysqlSeedTaskStatusIcon(queryRunner);
                 break;
             default:
-                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+                throw Error(`Unsupported database: ${queryRunner.dataSource.options.type}`);
         }
     }
     /**
@@ -76,7 +76,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
 
 				try {
 					// Execute the SQL update query
-					await queryRunner.connection.manager.query(query, [filepath, color, name, value]);
+					await queryRunner.dataSource.manager.query(query, [filepath, color, name, value]);
 
 					// Copy the icon asset to the destination directory
 					copyAssets(icon, this.config, 'ever-icons');
@@ -119,7 +119,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
 
 				try {
 					// Execute the SQL update query
-					await queryRunner.connection.manager.query(query, [filepath, color, name, value]);
+					await queryRunner.dataSource.manager.query(query, [filepath, color, name, value]);
 
 					// Copy the icon asset to the destination directory
 					copyAssets(icon, this.config, 'ever-icons');
@@ -163,7 +163,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
 
 				try {
 					// Execute the query with parameters
-					await queryRunner.connection.manager.query(query, [filepath, color, name, value]);
+					await queryRunner.dataSource.manager.query(query, [filepath, color, name, value]);
 
 					// Copy the icon asset to the destination directory
 					copyAssets(icon, this.config, 'ever-icons');
@@ -207,7 +207,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
 
 				try {
 					// Execute the query with parameters
-					await queryRunner.connection.manager.query(query, [name, value, filepath, color]);
+					await queryRunner.dataSource.manager.query(query, [name, value, filepath, color]);
 
 					// Copy the icon asset to the destination directory
 					copyAssets(icon, this.config, 'ever-icons');
@@ -251,7 +251,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
 
 				try {
 					// Execute the query with parameters
-					await queryRunner.connection.manager.query(query, [name, value, filepath, color]);
+					await queryRunner.dataSource.manager.query(query, [name, value, filepath, color]);
 
 					// Copy the icon asset to the destination directory
 					copyAssets(icon, this.config, 'ever-icons');
@@ -296,7 +296,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
 
 				try {
 					// Execute the query with parameters
-					await queryRunner.connection.manager.query(query, [name, value, filepath, color]);
+					await queryRunner.dataSource.manager.query(query, [name, value, filepath, color]);
 
 					// Copy the icon asset to the destination directory
 					copyAssets(icon, this.config, 'ever-icons');

@@ -190,10 +190,10 @@ export class EmailTemplateUtils {
 	 */
 	public static async createOrUpdateTemplates(queryRunner: QueryRunner, templates: Array<Record<string, any>> = []) {
 		// Get the database type
-		const type = queryRunner.connection.options.type as DatabaseTypeEnum;
+		const type = queryRunner.dataSource.options.type as DatabaseTypeEnum;
 
 		// Validate the database type
-		EmailTemplateUtils.validateDatabaseType(queryRunner.connection.options.type as DatabaseTypeEnum);
+		EmailTemplateUtils.validateDatabaseType(queryRunner.dataSource.options.type as DatabaseTypeEnum);
 
 		// Determine select query based on the database type
 		const selectQuery = this.getSelectQuery(type);
@@ -257,7 +257,7 @@ export class EmailTemplateUtils {
 		payload: any
 	): Promise<void> {
 		// Get the database manager
-		const manager = queryRunner.connection.manager;
+		const manager = queryRunner.dataSource.manager;
 
 		try {
 			// Execute the SELECT query to check if the template exists

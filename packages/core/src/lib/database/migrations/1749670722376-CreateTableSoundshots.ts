@@ -13,7 +13,7 @@ export class CreateTableSoundshots1749670722376 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(this.name + ' start running!'));
 
-		switch (queryRunner.connection.options.type) {
+		switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 				await this.sqliteUpQueryRunner(queryRunner);
@@ -37,7 +37,7 @@ export class CreateTableSoundshots1749670722376 implements MigrationInterface {
 	public async down(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(this.name + ' reverting changes!'));
 
-		switch (queryRunner.connection.options.type) {
+		switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 				await this.sqliteDownQueryRunner(queryRunner);

@@ -140,7 +140,7 @@ export class HealthService {
 				queryRunner = this.dataSource.createQueryRunner();
 
 				const resDatabase = await this.typeOrmHealthIndicator.pingCheck('database', {
-					connection: queryRunner.connection,
+					connection: queryRunner.dataSource,
 					timeout: 60000
 				});
 

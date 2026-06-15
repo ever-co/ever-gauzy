@@ -104,7 +104,8 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 				const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 				// Set up the find options for the query
-				query.setFindOptions({
+                // TODO(typeorm-v1): `join` find option was removed — migrate `leftJoinAndSelect` to the `relations` option, or switch to QueryBuilder for `innerJoin`/`innerJoinAndSelect`/`leftJoin`
+                query.setFindOptions({
 					...(request && request.limit > 0
 						? {
 								take: request.limit,

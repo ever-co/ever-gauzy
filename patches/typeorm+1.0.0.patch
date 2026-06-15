@@ -1,0 +1,24 @@
+diff --git a/node_modules/typeorm/find-options/FindOneOptions.d.ts b/node_modules/typeorm/find-options/FindOneOptions.d.ts
+index 2e19a6a..54007cb 100644
+--- a/node_modules/typeorm/find-options/FindOneOptions.d.ts
++++ b/node_modules/typeorm/find-options/FindOneOptions.d.ts
+@@ -15,7 +15,7 @@ export interface FindOneOptions<Entity = any> {
+     /**
+      * Specifies what columns should be retrieved.
+      */
+-    select?: FindOptionsSelect<Entity>;
++    select?: FindOptionsSelect<Entity> | string[];
+     /**
+      * Simple condition that should be applied to match entities.
+      */
+@@ -23,7 +23,9 @@ export interface FindOneOptions<Entity = any> {
+     /**
+      * Indicates what relations of entity should be loaded (simplified left join form).
+      */
+-    relations?: FindOptionsRelations<Entity>;
++    relations?: FindOptionsRelations<Entity> | string[];
++    /** @deprecated removed from typeorm 1.0 types but still honored at runtime */
++    join?: any;
+     /**
+      * Specifies how relations must be loaded - using "joins" or separate queries.
+      * If you are loading too much data with nested joins it's better to load relations
