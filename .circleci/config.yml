@@ -69,6 +69,11 @@ defaults: &defaults
     NODE_OPTIONS: --max-old-space-size=12288
     # Disable Angular CLI analytics
     NG_CLI_ANALYTICS: false
+    # Run Nx locally without Nx Cloud (the Nx Cloud org is disabled; the rest of
+    # the repo — GitHub workflows + Dockerfiles — already sets NX_NO_CLOUD=true).
+    # Without this, `nx run-many` hard-fails with "Nx Cloud: Workspace is unable
+    # to be authorized. Exiting run."
+    NX_NO_CLOUD: true
 
 # ==============================================================================
 # Jobs

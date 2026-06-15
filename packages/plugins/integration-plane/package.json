@@ -37,13 +37,13 @@
 		"@ever-gauzy/plugin-integration-plane-models": "^0.1.0",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
 		"@nestjs/cqrs": "^11.0.3",
-		"@nestjs/swagger": "^11.2.6",
-		"axios": "^1.13.5",
+		"@nestjs/swagger": "^11.4.4",
+		"axios": "^1.18.0",
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.14.2",
 		"rxjs": "^7.8.2",
 		"tslib": "^2.3.0",
-		"typeorm": "^0.3.28"
+		"typeorm": "^0.3.30"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",

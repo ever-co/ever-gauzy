@@ -27,8 +27,8 @@
 		"lib:watch": "yarn nx build plugin-posthog --watch"
 	},
 	"peerDependencies": {
-		"@nestjs/common": "^11.1.14",
-		"@nestjs/core": "^11.1.14"
+		"@nestjs/common": "^11.1.26",
+		"@nestjs/core": "^11.1.26"
 	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",

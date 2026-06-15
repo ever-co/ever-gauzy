@@ -41,7 +41,7 @@
 	"dependencies": {
 		"@gauzy/mcp-server": "^0.1.0",
 		"@modelcontextprotocol/sdk": "^1.25.3",
-		"axios": "^1.13.5",
+		"axios": "^1.18.0",
 		"dotenv": "^17.2.4",
 		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0",
