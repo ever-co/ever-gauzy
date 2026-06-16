@@ -61,7 +61,9 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Wait for API and Web to be ready
-        run: npx wait-on http://localhost:3000/api http://localhost:4200 --timeout 1200000
+        # API: wait for the TCP port (it only starts listening after seedDatabaseIfEmpty completes,
+        # and GET /api isn't guaranteed 200). Web: wait for HTTP 200 (ensures Angular finished compiling).
+        run: npx wait-on tcp:127.0.0.1:3000 http://localhost:4200 --timeout 1200000
 
       - name: Server logs (diagnostic)
         if: always()
