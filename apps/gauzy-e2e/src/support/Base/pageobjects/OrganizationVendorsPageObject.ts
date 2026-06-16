@@ -1,16 +1,16 @@
 export const OrganizationVendorsPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	addVendorButtonCss: 'div.mb-3 > button[status="success"]',
+	addVendorButtonCss: 'button[status="success"]',
 	nameInputCss: '[formcontrolname="name"]',
 	phoneInputCss: '[formcontrolname="phone"]',
 	emailInputCss: '[formcontrolname="email"]',
 	websiteInputCss: '[formcontrolname="website"]',
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
-	saveVendorButtonCss: 'nb-card-footer > button[status="success"]',
-	editVendorButtonCss: 'nb-actions > nb-action[icon="edit"]',
-	deleteVendorButtonCss: 'nb-actions > nb-action[icon="close"]',
+	saveVendorButtonCss: 'button[status="success"]:has-text("Save")',
+	editVendorButtonCss: 'button.action.primary',
+	deleteVendorButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyVendorCss: 'div.float-left > div.ng-star-inserted > span.mb-1'
+	verifyVendorCss: 'nb-card-body.custom-table div.float-left.text-truncate'
 };

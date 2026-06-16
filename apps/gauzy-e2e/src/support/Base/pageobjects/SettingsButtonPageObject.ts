@@ -1,9 +1,9 @@
 export const SettingsButton = {
 	rightSidebarContainerCss: 'div.main-container-fixed',
-	settingsButtonCss: 'nb-actions.left > nb-action[ng-reflect-icon="settings-2-outline"]',
-	dropdownButtonCss: 'div.settings-row > nb-select > button.select-button',
+	settingsButtonCss: 'nb-action.toggle-layout:last-of-type',
+	dropdownButtonCss: 'nb-sidebar.settings-sidebar nb-select > button.select-button',
 	dropdownOptionCss: '.option-list nb-option',
-	resetLayoutButtonCss: 'div.theme-settings > button[status="danger"]',
-	verifyHeaderLangCss: 'div.body-header > div > span.setting-name',
+	resetLayoutButtonCss: 'div.reset-button > button[status="danger"]',
+	verifyHeaderLangCss: 'nb-card-header h4',
 	bodyCss: 'body'
 };

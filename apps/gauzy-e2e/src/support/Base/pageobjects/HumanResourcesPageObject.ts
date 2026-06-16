@@ -1,7 +1,7 @@
 export const HumanResourcesPage = {
 	employeeCss: 'div.block-info > div.row > div.col',
-	employeeNameCss: 'span.employee-name',
-	infoTextCss: 'div.info-text',
+	employeeNameCss: 'ngx-avatar a.link-text',
+	infoTextCss: '.statistic-component .title',
 	chartDropdownCss: '[placeholder="Select chart"]',
 	dropdownOptionCss: '.option-list nb-option',
 	popupHeaderCss: 'div.records > h5',

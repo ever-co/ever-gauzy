@@ -1,5 +1,5 @@
 export const GoalsGeneralSettingsPage = {
-	headerTextCss: 'nb-card-header.header-selector-wrapper > div > h4',
+	headerTextCss: 'nb-card-header.card-header-title h4',
 	subheaderTextCss: 'div.col-md-4 > p.font-weight-bold',
 	nbToggleCss: 'div.toggle',
 	checkboxCss: 'input.native-input',

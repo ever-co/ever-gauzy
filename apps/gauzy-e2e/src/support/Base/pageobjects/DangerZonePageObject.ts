@@ -1,6 +1,6 @@
 export const DangerZonePage = {
 	headerTextCss: 'nb-card-header > h4',
-	deleteButtonCss: 'nb-card-body > button[class="btn btn-danger ng-star-inserted"]',
+	deleteButtonCss: 'nb-card-body button.btn-danger',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	confirmDeleteUserButtonCss: 'nb-card-footer > button[status="danger"]',
 	cancelButtonCss: 'nb-card-footer > button[status="info"]',

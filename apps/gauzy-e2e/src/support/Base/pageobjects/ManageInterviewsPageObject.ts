@@ -1,21 +1,19 @@
 export const ManageInterviewsPage = {
-	addInterviewButtonCss: 'nb-card-header > div > button[status="primary"]',
-	candidateDropdownCss:
-		'div.step-content > div.form-group > ga-candidate-select > nb-select > button[class="select-button placeholder"]',
+	addInterviewButtonCss: 'div.add-btn > button[status="primary"]',
+	candidateDropdownCss: 'ga-candidate-select input',
 	candidateDropdownOptionCss: '.option-list nb-option',
 	titleInputCss: '#inputTitle',
 	dateInputCss: 'input[name="date"]',
-	employeeMultiselectCss:
-		'ga-candidate-interview-form > form > div.form-group > ga-employee-multi-select > nb-select > button[class="select-button placeholder"]',
+	employeeMultiselectCss: 'ga-candidate-interview-form ga-employee-multi-select nb-select',
 	employeeMultiselectDropdownOptionCss: 'nb-option-list > ul.option-list > nb-option',
 	radioButtonCss: 'nb-radio > label > span.inner-circle',
 	locationInputCss: '#location',
 	noteInputCss: '#note',
-	nextButtonCss: 'div.text-right > button[status="success"]',
-	nextStepButtonCss: 'div.button-container > button[status="success"]',
+	nextButtonCss: 'button.green',
+	nextStepButtonCss: 'button.green',
 	notifyCandidateCss: 'div.notify-checkboxes nb-checkbox > label > span.custom-checkbox',
-	saveButtonCss: 'div.button-container > button[status="success"]',
-	verifyCandidateCss: 'div.d-block',
+	saveButtonCss: 'button.mr-3.ml-3[status="success"]',
+	verifyCandidateCss: 'angular2-smart-table',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	scrollElementCss: 'nb-card-body.stepper',
 	nameFilterInputCss: 'input[placeholder="Candidate"]',
@@ -29,11 +27,11 @@ export const ManageInterviewsPage = {
 	radioGroupInputCss: 'nb-radio-group > nb-radio input.native-input',
 	feedbackDescriptionCss: '#description',
 	feedbackSaveButtonCss: 'nb-card button[status=success]',
-	interviewCheckboxFiltersCss: 'nb-checkbox[status="warning"]',
-	interviewCheckboxFiltersInputsCss: 'nb-checkbox[status="warning"] input.native-input',
+	interviewCheckboxFiltersCss: 'nb-checkbox[status="basic"]',
+	interviewCheckboxFiltersInputsCss: 'nb-checkbox[status="basic"] input.native-input',
 	notesTableCellCss: 'table > tbody > tr > td:nth-child(9)',
 	archiveInterviewOkButtonCss: 'nb-card-footer > button[status="danger"]',
 	archiveBadgeCss: 'ga-interview-actions div.badges > div.badge',
 	deleteButtonCss: 'ga-delete-interview button[status="danger"]',
-	customCheckBoxCss: 'nb-checkbox[status="warning"] > span.custom-checkbox'
+	customCheckBoxCss: 'nb-checkbox[status="basic"] > span.custom-checkbox'
 };

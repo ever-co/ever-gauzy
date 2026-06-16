@@ -1,11 +1,11 @@
 export const EditProfilePage = {
 	firstNameInputCss: '#firstName',
 	lastNameInputCss: '#lastName',
-	passwordInputCss: '#password',
+	passwordInputCss: '[placeholder="Password"]',
 	repeatPasswordInputCss: '[placeholder="Repeat Password"]',
 	emailInputCss: '#email',
-	preferredLanguageCss: '#preferredLanguage',
+	preferredLanguageCss: 'ngx-language-selector ng-select',
 	languageSelectCss: 'div > div.form-group > ngx-language-selector > ng-select',
-	preferredLanguageOptionCss: 'ng-dropdown-panel > div[class="ng-dropdown-panel-items scroll-host"] > div > div[class="ng-option ng-star-inserted"] > span[class="ng-option-label ng-star-inserted"]',
+	preferredLanguageOptionCss: 'div.ng-option > span.ng-option-label',
 	saveButtonCss: 'div.actions > button[status="success"]'
 };

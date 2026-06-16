@@ -1,12 +1,12 @@
 export const TeamsTasksPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	addTaskButtonCss: 'div.mb-3 > button[status="success"]',
+	addTaskButtonCss: 'div.actions-container button[status="success"]',
 	projectDropdownCss: '[formControlName="projectId"]',
-	statusDropdownCss: '[formcontrolname="status"]',
+	statusDropdownCss: '[formcontrolname="taskStatus"]',
 	teamDropdownCss: '[formcontrolname="teams"]',
 	dropdownOptionCss: 'div.ng-option',
-	duplicateOrEditTaskButtonCss: 'div.mb-3 > button[status="info"]',
-	deleteTaskButtonCss: 'div.mb-3 > button[status="danger"]',
+	duplicateOrEditTaskButtonCss: 'div.actions-container button.action.primary',
+	deleteTaskButtonCss: 'div.actions-container button.action:not(.primary):not(.secondary)',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: '[type="checkbox"]',
@@ -14,7 +14,7 @@ export const TeamsTasksPage = {
 	confirmDuplicateOrEditTaskButtonCss: 'nb-card-footer > button[status="success"]',
 	confirmDeleteTaskButtonCss: 'nb-card-footer > button[status="danger"]',
 	addTitleInputCss: '[formControlName="title"]',
-	selectTeamMultiSelectCss: 'button[class="select-button placeholder"]',
+	selectTeamMultiSelectCss: 'nb-select[formcontrolname="teams"] button.select-button',
 	selectTeamDropdownOptionCss: '.option-list nb-option',
 	dueDateInputCss: '[formControlName="dueDate"]',
 	estimateDaysInputCss: '[formControlName="estimateDays"]',
@@ -23,6 +23,6 @@ export const TeamsTasksPage = {
 	descriptionTextareaCss: '[formControlName="description"]',
 	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
 	cardBodyCss: 'nb-card-footer.text-right',
-	verifyTextCss: 'ga-notes-with-tags > div > div.ng-star-inserted',
+	verifyTextCss: 'ga-notes-with-tags > div > div',
 	toastrMessageCss: 'nb-toast.ng-trigger'
 };

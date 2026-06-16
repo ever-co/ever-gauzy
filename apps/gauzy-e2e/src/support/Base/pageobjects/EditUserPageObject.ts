@@ -1,10 +1,10 @@
 export const EditUserPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
-	editButtonCss: '[data-name="edit"]',
+	editButtonCss: 'button:has(nb-icon[icon="edit-outline"])',
 	orgTabButtonCss: 'ul.route-tabset > li > a.tab-link',
 	addOrgButtonCss: 'nb-card-header > button[status="success"]',
-	removeOrgButtonCss: 'g[data-name="close"]',
+	removeOrgButtonCss: 'nb-action[icon="close"]',
 	confirmRemoveOrgButtonCss: 'nb-card-footer > button[status="danger"]',
 	selectOrgMultiSelectCss: 'button[class="select-button placeholder"]',
 	selectOrgDropdownOptionCss: '.option-list nb-option',

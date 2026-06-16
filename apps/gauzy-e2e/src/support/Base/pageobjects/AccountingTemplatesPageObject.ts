@@ -10,6 +10,5 @@ export const AccountingTemplatesPage = {
 	templateDropdownOptionCss: '.option-list nb-option',
 	logoCss:
 		'table[role="presentation"] > tbody > tr > td[align="right"] > table > tbody > tr > td > img[src="assets/images/logos/ever-large.jpg"]',
-	saveBtnCss:
-		'div[class="col-2 d-flex justify-content-end"] > button[status="success"]'
+	saveBtnCss: 'button[status="success"]'
 };

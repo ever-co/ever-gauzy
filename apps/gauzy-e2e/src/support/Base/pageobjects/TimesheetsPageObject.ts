@@ -1,5 +1,5 @@
 export const TimesheetsPage = {
-	addTimeButtonCss: 'div.text-left > button[status="primary"]',
+	addTimeButtonCss: 'button[status="success"]:has-text("Add Time")',
 	selectEmployeeCss:
 		'ga-employee-multi-select[formcontrolname="employeeId"] > nb-select',
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
@@ -9,14 +9,14 @@ export const TimesheetsPage = {
 	clientDropdownCss: '[formcontrolname="organizationContactId"]',
 	taskDropdownCss: '[formcontrolname="taskId"]',
 	descriptionTextareaCss: 'textarea[name="description"]',
-	saveTimeButtonCss: 'nb-card-footer > button[status="primary"]',
-	viewEmployeeTimeCss: 'div.action-button > button[status="primary"]',
-	editEmployeeTimeCss: 'div.action-button > button[status="success"]',
-	deleteEmployeeTimeCss: 'div.action-button > button[status="danger"]',
-	closeAddTimeLogPopoverCss: 'g[data-name="close"]',
+	saveTimeButtonCss: 'nb-card-footer button[status="success"]',
+	viewEmployeeTimeCss: 'button:has(nb-icon[icon="eye-outline"])',
+	editEmployeeTimeCss: 'button:has(nb-icon[icon="edit"])',
+	deleteEmployeeTimeCss: 'button:has(nb-icon[icon="trash-2-outline"])',
+	closeAddTimeLogPopoverCss: 'span.cancel i.fa-times',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="primary"]',
 	startTimeDropdownCss: 'ga-timer-picker[name="start_time"]',
 	closeButtonCss: 'button.close-button',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyTimeCss: 'ngx-avatar > div > div.col > div.ng-star-inserted'
+	verifyTimeCss: 'ngx-avatar a.link-text'
 };

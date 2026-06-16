@@ -1,7 +1,7 @@
 export const IncomePage = {
 	gridButtonCss: 'div.layout-switch > button',
-	addIncomeButtonCss: 'div.mb-3 > button[status="success"]',
-	selectEmployeeDropdownCss: 'ga-employee-selector.employees',
+	addIncomeButtonCss: 'ngx-gauzy-button-action button[status="success"]',
+	selectEmployeeDropdownCss: 'ga-employee-selector#employee',
 	selectEmployeeDropdownOptionCss: 'div.ng-option',
 	dateInputCss: '[formcontrolname="valueDate"]',
 	organizationContactCss: '[formcontrolname="organizationContact"]',
@@ -11,10 +11,10 @@ export const IncomePage = {
 	notesInputCss: '[formcontrolname="notes"]',
 	saveIncomeButtonCss: 'nb-card-footer > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
-	editIncomeButtonCss: 'div.mb-3 > button[status="info"]',
-	deleteIncomeButtonCss: 'div.mb-3 > button[status="danger"]',
+	editIncomeButtonCss: 'ngx-gauzy-button-action button.action.primary',
+	deleteIncomeButtonCss: 'ngx-gauzy-button-action button.action:has(nb-icon[icon="trash-2-outline"])',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
-	cardBodyCss: 'nb-card-footer.text-right',
+	cardBodyCss: 'nb-card-footer.text-left',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyIncomeCss: 'div.ng-star-inserted'
 };
