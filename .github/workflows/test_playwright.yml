@@ -67,7 +67,8 @@ jobs:
         # The Angular dev server (nx serve gauzy) OOMs over a long e2e run. Build once and serve the
         # static output instead — stable + low memory. The app uses hash routing + an absolute API
         # URL (http://localhost:3000), so a plain static file server is sufficient (no proxy/SPA fallback).
-        run: yarn nx build gauzy -c local
+        shell: bash
+        run: yarn nx build gauzy -c local || { echo "::warning::gauzy build failed — retry 1 (nx cache skips done deps)"; yarn nx build gauzy -c local; }
         env:
           NX_NO_CLOUD: true
           NX_ISOLATE_PLUGINS: 'false'
