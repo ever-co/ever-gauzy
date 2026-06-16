@@ -17,11 +17,11 @@ import { getPage } from '../page-context';
 import { PipelinesPage } from '../../../src/support/Base/pageobjects/PipelinesPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(PipelinesPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index: number) => {
-	await clickButtonByIndex(PipelinesPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addPipelineButtonVisible = async () => {

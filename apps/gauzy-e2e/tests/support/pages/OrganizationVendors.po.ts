@@ -13,11 +13,11 @@ import {
 import { OrganizationVendorsPage } from '../../../src/support/Base/pageobjects/OrganizationVendorsPageObject';
 
 export const gridButtonVisible = async () => {
-	await verifyElementIsVisible(OrganizationVendorsPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const clickGridButton = async (index: number) => {
-	await clickButtonByIndex(OrganizationVendorsPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addVendorButtonVisible = async () => {

@@ -117,11 +117,11 @@ export const clickIncomeAddButton = async () => {
 };
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(EmployeeDashboardPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index) => {
-	await clickButtonByIndex(EmployeeDashboardPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const selectEmployeeDropdownVisible = async () => {

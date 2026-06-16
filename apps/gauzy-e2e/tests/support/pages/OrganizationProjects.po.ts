@@ -15,17 +15,11 @@ import { getPage } from '../page-context';
 import { OrganizationProjectsPage } from '../../../src/support/Base/pageobjects/OrganizationProjectsPageObject';
 
 export const gridBtnExists = async () => {
-	// Cypress aliased '/api/organization-contact*' then waited on it; in Playwright
-	// we wait for the matching response while asserting the grid button is visible.
-	const waitToLoad = getPage().waitForResponse((response) =>
-		/\/api\/organization-contact/.test(response.url())
-	);
-	await verifyElementIsVisible(OrganizationProjectsPage.gridButtonCss);
-	await waitToLoad;
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index) => {
-	await clickButtonByIndex(OrganizationProjectsPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const requestProjectButtonVisible = async () => {

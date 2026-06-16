@@ -15,11 +15,11 @@ import {
 import { AddEmployeeLevelPage } from '../../../src/support/Base/pageobjects/AddEmployeeLevelPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(AddEmployeeLevelPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index: number) => {
-	await clickButtonByIndex(AddEmployeeLevelPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addNewLevelButtonVisible = async () => {

@@ -15,11 +15,11 @@ import {
 import { OrganizationInventoryPage } from '../../../src/support/Base/pageobjects/OrganizationInventoryPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(OrganizationInventoryPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index) => {
-	await clickButtonByIndex(OrganizationInventoryPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addCategoryOrTypeButtonVisible = async () => {

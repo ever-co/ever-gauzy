@@ -16,11 +16,11 @@ import {
 import { PaymentsPage } from '../../../src/support/Base/pageobjects/PaymentsPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(PaymentsPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index: number) => {
-	await clickButtonByIndex(PaymentsPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addPaymentButtonVisible = async () => {

@@ -17,11 +17,11 @@ import {
 import { CandidatesPage } from '../../../src/support/Base/pageobjects/CandidatesPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(CandidatesPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index) => {
-	await clickButtonByIndex(CandidatesPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const inviteButtonVisible = async () => {

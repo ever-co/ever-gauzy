@@ -15,11 +15,11 @@ import {
 import { AddEmployeePositionPage } from '../../../src/support/Base/pageobjects/AddEmployeePositionPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(AddEmployeePositionPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index: number) => {
-	await clickButtonByIndex(AddEmployeePositionPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addNewPositionButtonVisible = async () => {

@@ -22,11 +22,11 @@ import { ProposalsPage } from '../../../src/support/Base/pageobjects/ProposalsPa
 const ckeditorIframeCss = 'iframe[class="cke_wysiwyg_frame cke_reset"]';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(ProposalsPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index) => {
-	await clickButtonByIndex(ProposalsPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const registerProposalButtonVisible = async () => {

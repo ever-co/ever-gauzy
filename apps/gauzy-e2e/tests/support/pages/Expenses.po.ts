@@ -18,11 +18,11 @@ import {
 import { ExpensesPage } from '../../../src/support/Base/pageobjects/ExpensesPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(ExpensesPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index) => {
-	await clickButtonByIndex(ExpensesPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addExpenseButtonVisible = async () => {

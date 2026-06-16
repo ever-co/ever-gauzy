@@ -11,11 +11,11 @@ import {
 import { RemoveUserPage } from '../../../src/support/Base/pageobjects/RemoveUserPageObject';
 
 export const gridButtonVisible = async () => {
-	await verifyElementIsVisible(RemoveUserPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const clickGridButton = async () => {
-	await clickButtonByIndex(RemoveUserPage.gridButtonCss, 1);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const tableBodyExists = async () => {

@@ -13,11 +13,11 @@ import {
 import { OrganizationTeamsPage } from '../../../src/support/Base/pageobjects/OrganizationTeamsPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(OrganizationTeamsPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index: number) => {
-	await clickButtonByIndex(OrganizationTeamsPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addTeamButtonVisible = async () => {

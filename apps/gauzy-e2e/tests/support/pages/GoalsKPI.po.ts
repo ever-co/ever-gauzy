@@ -12,11 +12,11 @@ import {
 import { GoalsKPIPage } from '../../../src/support/Base/pageobjects/GoalsKPIPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(GoalsKPIPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index) => {
-	await clickButtonByIndex(GoalsKPIPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const tabButtonVisible = async () => {

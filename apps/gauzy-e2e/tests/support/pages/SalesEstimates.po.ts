@@ -16,11 +16,11 @@ import {
 import { SalesEstimatesPage } from '../../../src/support/Base/pageobjects/SalesEstimatesPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(SalesEstimatesPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index: number) => {
-	await clickButtonByIndex(SalesEstimatesPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addButtonVisible = async () => {

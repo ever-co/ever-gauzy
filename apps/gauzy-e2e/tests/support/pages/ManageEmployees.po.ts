@@ -18,11 +18,11 @@ import { ManageEmployeesPage } from '../../../src/support/Base/pageobjects/Manag
 
 // INVITE EMPLOYEE BY EMAIL
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(ManageEmployeesPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index) => {
-	await clickButtonByIndex(ManageEmployeesPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const inviteButtonVisible = async () => {

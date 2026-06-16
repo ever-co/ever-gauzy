@@ -16,11 +16,11 @@ import {
 import { ContactsLeadsPage } from '../../../src/support/Base/pageobjects/ContactsLeadsPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(ContactsLeadsPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index) => {
-	await clickButtonByIndex(ContactsLeadsPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addButtonVisible = async () => {

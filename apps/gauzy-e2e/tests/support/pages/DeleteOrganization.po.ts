@@ -3,11 +3,11 @@ import { verifyElementIsVisible, clickButtonByIndex, clickOrganizationByIndex } 
 import { DeleteOrganizationPage } from '../../../src/support/Base/pageobjects/DeleteOrganizationPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(DeleteOrganizationPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index: number = 1) => {
-	await clickButtonByIndex(DeleteOrganizationPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const deleteBtnExists = async () => {

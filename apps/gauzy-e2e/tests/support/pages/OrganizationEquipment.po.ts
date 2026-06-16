@@ -14,11 +14,11 @@ import {
 import { OrganizationEquipmentPage } from '../../../src/support/Base/pageobjects/OrganizationEquipmentPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(OrganizationEquipmentPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index: number) => {
-	await clickButtonByIndex(OrganizationEquipmentPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addEquipmentButtonVisible = async () => {

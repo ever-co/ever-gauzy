@@ -14,9 +14,13 @@ import {
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { IncomePage } from '../../../src/support/Base/pageobjects/IncomePageObject';
 
-export const gridBtnExists = async () => verifyElementIsVisible(IncomePage.gridButtonCss);
+export const gridBtnExists = async () => {
+	/* no-op: grid list/grid layout toggle removed from the app */
+};
 
-export const gridBtnClick = async (index: number) => clickButtonByIndex(IncomePage.gridButtonCss, index);
+export const gridBtnClick = async (index: number) => {
+	/* no-op: grid list/grid layout toggle removed from the app */
+};
 
 export const addIncomeButtonVisible = async () => verifyElementIsVisible(IncomePage.addIncomeButtonCss);
 

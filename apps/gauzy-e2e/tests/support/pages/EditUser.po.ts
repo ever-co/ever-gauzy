@@ -15,11 +15,11 @@ import {
 import { EditUserPage } from '../../../src/support/Base/pageobjects/EditUserPageObject';
 
 export const gridButtonVisible = async () => {
-	await verifyElementIsVisible(EditUserPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const clickGridButton = async () => {
-	await clickButtonByIndex(EditUserPage.gridButtonCss, 1);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const tableRowVisible = async () => {

@@ -16,11 +16,11 @@ import {
 import { ClientsPage } from '../../../src/support/Base/pageobjects/ClientsPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(ClientsPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index) => {
-	await clickButtonByIndex(ClientsPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addButtonVisible = async () => {

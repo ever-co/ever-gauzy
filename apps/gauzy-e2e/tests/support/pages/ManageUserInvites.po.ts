@@ -23,12 +23,12 @@ export const manageInvitesButtonVisible = async () => {
 export const clickManageInvitesButton = async () => clickButton(ManageUserInvitesPage.manageInvitesButtonCss);
 
 export const gridButtonVisible = async () => {
-	const waitInvites = getPage().waitForResponse((res) => res.url().includes('/api/invite'));
-	await verifyElementIsVisible(ManageUserInvitesPage.gridButtonCss);
-	await waitInvites;
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
-export const clickGridButton = async (index: number) => clickButtonByIndex(ManageUserInvitesPage.gridButtonCss, index);
+export const clickGridButton = async (index: number) => {
+	/* no-op: grid list/grid layout toggle removed from the app */
+};
 
 export const tableBodyExists = async () => verifyElementIsVisible(ManageUserInvitesPage.selectTableRowCss);
 

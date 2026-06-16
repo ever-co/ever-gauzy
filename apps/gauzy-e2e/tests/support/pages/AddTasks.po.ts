@@ -17,11 +17,11 @@ import {
 import { AddTaskPage } from '../../../src/support/Base/pageobjects/AddTasksPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(AddTaskPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index) => {
-	await clickButtonByIndex(AddTaskPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addTaskButtonVisible = async () => {

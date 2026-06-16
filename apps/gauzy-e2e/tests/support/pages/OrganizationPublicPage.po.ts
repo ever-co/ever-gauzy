@@ -308,11 +308,11 @@ export const verifyClientFocus = async (text: string) => {
 };
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index) => {
-	await clickButtonByIndex(OrganizationPublicPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addBtnExists = async () => {

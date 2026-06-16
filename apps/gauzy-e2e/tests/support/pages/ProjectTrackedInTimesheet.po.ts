@@ -15,11 +15,11 @@ import { getPage } from '../page-context';
 import { ProjectTrackedInTimesheetPage } from '../../../src/support/Base/pageobjects/ProjectTrackedInTimesheetPageObject';
 
 export const gridBtnExists = async () => {
-	await verifyElementIsVisible(ProjectTrackedInTimesheetPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const gridBtnClick = async (index: number) => {
-	await clickButtonByIndex(ProjectTrackedInTimesheetPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const requestProjectButtonVisible = async () => {

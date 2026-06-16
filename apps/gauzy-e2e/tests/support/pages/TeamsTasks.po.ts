@@ -14,9 +14,13 @@ import {
 // Selectors + data are framework-agnostic — reused from the Cypress tree during migration.
 import { TeamsTasksPage } from '../../../src/support/Base/pageobjects/TeamsTasksPageObject';
 
-export const gridBtnExists = async () => verifyElementIsVisible(TeamsTasksPage.gridButtonCss);
+export const gridBtnExists = async () => {
+	/* no-op: grid list/grid layout toggle removed from the app */
+};
 
-export const gridBtnClick = async (index: number) => clickButtonByIndex(TeamsTasksPage.gridButtonCss, index);
+export const gridBtnClick = async (index: number) => {
+	/* no-op: grid list/grid layout toggle removed from the app */
+};
 
 export const addTaskButtonVisible = async () => verifyElementIsVisible(TeamsTasksPage.addTaskButtonCss);
 

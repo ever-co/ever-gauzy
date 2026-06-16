@@ -14,11 +14,11 @@ import {
 import { OrganizationTagsPage } from '../../../src/support/Base/pageobjects/OrganizationTagsPageObject';
 
 export const gridButtonVisible = async () => {
-	await verifyElementIsVisible(OrganizationTagsPage.gridButtonCss);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const clickGridButton = async (index) => {
-	await clickButtonByIndex(OrganizationTagsPage.gridButtonCss, index);
+	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
 export const addTagButtonVisible = async () => {
