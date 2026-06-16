@@ -16,7 +16,7 @@ export class SeedDefaultGlobalTaskPriorityAndSize1674638501088 implements Migrat
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(this.name + ' start running!'));
 
-		switch (queryRunner.connection.options.type) {
+		switch (queryRunner.dataSource.options.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 				await this.sqliteSeedDefaultTaskPriorities(queryRunner);
@@ -31,7 +31,7 @@ export class SeedDefaultGlobalTaskPriorityAndSize1674638501088 implements Migrat
 				await this.mysqlSeedDefaultTaskSizes(queryRunner);
 				break;
 			default:
-				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+				throw Error(`Unsupported database: ${queryRunner.dataSource.options.type}`);
 		}
 	}
 	/**
@@ -59,7 +59,7 @@ export class SeedDefaultGlobalTaskPriorityAndSize1674638501088 implements Migrat
 				const payload = Object.values(priority);
 				payload.push(uuidV4());
 				const query = `INSERT INTO "task_priority" ("name", "value", "description", "icon", "color", "isSystem", "id") VALUES(?, ?, ?, ?, ?, ?, ?)`;
-				await queryRunner.connection.manager.query(query, payload);
+				await queryRunner.dataSource.manager.query(query, payload);
 			}
 		} catch (error) {
 			// since we have errors let's rollback changes we made
@@ -85,7 +85,7 @@ export class SeedDefaultGlobalTaskPriorityAndSize1674638501088 implements Migrat
 				const payload = Object.values(size);
 				payload.push(uuidV4());
 				const query = `INSERT INTO "task_size" ("name", "value", "description", "icon", "color", "isSystem", "id") VALUES(?, ?, ?, ?, ?, ?, ?)`;
-				await queryRunner.connection.manager.query(query, payload);
+				await queryRunner.dataSource.manager.query(query, payload);
 			}
 		} catch (error) {
 			// since we have errors let's rollback changes we made
@@ -102,7 +102,7 @@ export class SeedDefaultGlobalTaskPriorityAndSize1674638501088 implements Migrat
 			for await (const priority of DEFAULT_GLOBAL_PRIORITIES) {
 				const payload = Object.values(priority);
 				const query = `INSERT INTO "task_priority" ("name", "value", "description", "icon", "color", "isSystem") VALUES($1, $2, $3, $4, $5, $6)`;
-				await queryRunner.connection.manager.query(query, payload);
+				await queryRunner.dataSource.manager.query(query, payload);
 			}
 		} catch (error) {
 			// since we have errors let's rollback changes we made
@@ -120,7 +120,7 @@ export class SeedDefaultGlobalTaskPriorityAndSize1674638501088 implements Migrat
 			for await (const size of DEFAULT_GLOBAL_SIZES) {
 				const payload = Object.values(size);
 				const query = `INSERT INTO "task_size" ("name", "value", "description", "icon", "color", "isSystem") VALUES($1, $2, $3, $4, $5, $6)`;
-				await queryRunner.connection.manager.query(query, payload);
+				await queryRunner.dataSource.manager.query(query, payload);
 			}
 		} catch (error) {
 			// since we have errors let's rollback changes we made

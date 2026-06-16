@@ -186,7 +186,12 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 				tenantId,
 				organizationId
 			},
-			relations: ['timeLogs', 'timeLogs.employee', 'timeLogs.project']
+			relations: {
+                timeLogs: {
+                    employee: true,
+                    project: true
+                }
+            }
 		});
 
 		if (!timeSlot) {
@@ -480,7 +485,11 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 				organizationId: contextOrgId,
 				createdAt: Between(defaultStart, defaultEnd)
 			},
-			relations: ['timeSlot', 'timeSlot.timeLogs'],
+			relations: {
+                timeSlot: {
+                    timeLogs: true
+                }
+            },
 			order: { createdAt: 'ASC' }
 		});
 
@@ -524,7 +533,11 @@ export class CustomTrackingService extends TenantAwareCrudService<TimeSlot> {
 
 		const timeSlotSessions = await this.typeOrmTimeSlotSessionRepository.find({
 			where: whereCondition,
-			relations: ['timeSlot', 'timeSlot.timeLogs'],
+			relations: {
+                timeSlot: {
+                    timeLogs: true
+                }
+            },
 			order: { lastActivity: 'DESC' }
 		});
 

@@ -81,7 +81,9 @@ export const createDefaultKeyResults = async (
 
 export const updateDefaultKeyResultProgress = async (dataSource: DataSource): Promise<KeyResult[]> => {
 	const keyResults: KeyResult[] = await dataSource.manager.find(KeyResult, {
-		relations: ['updates']
+		relations: {
+            updates: true
+        }
 	});
 	await Promise.all(
 		keyResults.map(async (keyResult) => {
