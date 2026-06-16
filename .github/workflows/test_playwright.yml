@@ -61,9 +61,25 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Wait for API and Web to be ready
-        # API: wait for the TCP port (it only starts listening after seedDatabaseIfEmpty completes,
-        # and GET /api isn't guaranteed 200). Web: wait for HTTP 200 (ensures Angular finished compiling).
-        run: npx wait-on tcp:127.0.0.1:3000 http://localhost:4200 --timeout 1200000
+        shell: bash
+        # Poll both ports, but FAIL FAST if a server process has crashed (forever -> STOPPED)
+        # instead of waiting out the whole window. Cap covers a cold Angular dev compile;
+        # warm runs (persistent .nx/cache on the self-hosted runner) come up in ~2-3 min.
+        run: |
+          deadline=$((SECONDS + 720))   # 12 min hard cap
+          while (( SECONDS < deadline )); do
+            api=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:3000/api || true)
+            web=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:4200 || true)
+            echo "waiting (${SECONDS}s): api=$api web=$web"
+            if [ "$api" != "000" ] && [ "$web" != "000" ]; then
+              echo "✅ API (:3000) and Web (:4200) are up"; exit 0
+            fi
+            if npx forever list 2>/dev/null | grep -qi "STOPPED"; then
+              echo "❌ A server process crashed (forever reports STOPPED) — aborting early."; exit 1
+            fi
+            sleep 6
+          done
+          echo "❌ Timed out after ${SECONDS}s waiting for API/Web"; exit 1
 
       - name: Server logs (diagnostic)
         if: always()
