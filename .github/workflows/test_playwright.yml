@@ -56,6 +56,17 @@ jobs:
       - name: Wait for API and Web to be ready
         run: npx wait-on http://localhost:3000/api http://localhost:4200 --timeout 1200000
 
+      - name: Server logs (diagnostic)
+        if: always()
+        shell: bash
+        run: |
+          npx forever list || true
+          for f in "$HOME"/.forever/*.log; do
+            [ -e "$f" ] || continue
+            echo "===== $f ====="
+            tail -120 "$f" || true
+          done
+
       - name: Run Playwright tests
         working-directory: apps/gauzy-e2e
         run: npx playwright test
