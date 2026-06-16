@@ -3,6 +3,8 @@
 	"compilerOptions": {
 		"outDir": "../../../dist/out-tsc",
 		"module": "commonjs",
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
 		"types": ["node", "@playwright/test"],
 		"sourceMap": false,
 		"allowJs": false,

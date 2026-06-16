@@ -1,0 +1,102 @@
+import { test } from './support/fixtures';
+import { getPage } from './support/page-context';
+import * as loginPage from './support/pages/Login.po';
+import { LoginPageData } from '../src/support/Base/pagedata/LoginPageData';
+import * as editUserPage from './support/pages/EditUser.po';
+import * as addUserPage from './support/pages/AddUser.po';
+import { faker } from '@faker-js/faker';
+import { EditUserPageData } from '../src/support/Base/pagedata/EditUserPageData';
+import { AddUserPageData } from '../src/support/Base/pagedata/AddUserPageData';
+import * as dashboardPage from './support/pages/Dashboard.po';
+import { CustomCommands } from './support/commands';
+
+let firstName = ' ';
+let lastName = ' ';
+let username = ' ';
+let password = ' ';
+let email = ' ';
+let imgUrl = ' ';
+let editFirstName = ' ';
+let editLastName = ' ';
+
+test.describe('Edit user test', () => {
+	test('Edit user test', async () => {
+		firstName = faker.person.firstName();
+		lastName = faker.person.lastName();
+		username = faker.internet.username();
+		email = faker.internet.exampleEmail();
+		password = faker.internet.password();
+		imgUrl = faker.image.avatar();
+		editFirstName = faker.person.firstName();
+		editLastName = faker.person.lastName();
+
+		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+
+		await test.step('Should be able to add new user', async () => {
+			await getPage().goto('/#/pages/users');
+			await addUserPage.addUserButtonVisible();
+			await addUserPage.clickAddUserButton();
+			await addUserPage.firstNameInputVisible();
+			await addUserPage.enterFirstNameData(firstName);
+			await addUserPage.lastNameInputVisible();
+			await addUserPage.enterLastNameData(lastName);
+			await addUserPage.usernameInputVisible();
+			await addUserPage.enterUsernameData(username);
+			await addUserPage.emailInputVisible();
+			await addUserPage.enterEmailData(email);
+			await addUserPage.selectUserRoleVisible();
+			await addUserPage.selectUserRoleData(AddUserPageData.role);
+			await addUserPage.passwordInputVisible();
+			await addUserPage.enterPasswordInputData(password);
+			await addUserPage.imageInputVisible();
+			await addUserPage.enterImageDataUrl(imgUrl);
+			await addUserPage.confirmAddButtonVisible();
+			await addUserPage.clickConfirmAddButton();
+			await addUserPage.waitMessageToHide();
+			await addUserPage.verifyUserExists(`${firstName} ${lastName}`);
+		});
+
+		await test.step('Should be able to edit user', async () => {
+			await editUserPage.gridButtonVisible();
+			await editUserPage.clickGridButton();
+			await editUserPage.tableRowVisible();
+			await editUserPage.selectTableRow(`${firstName} ${lastName}`);
+			await editUserPage.editButtonVisible();
+			await editUserPage.clickEditButton();
+			await editUserPage.orgTabButtonVisible();
+			await editUserPage.clickOrgTabButton(1);
+			await editUserPage.addOrgButtonVisible();
+			await editUserPage.clickAddOrgButton();
+			await editUserPage.selectOrgDropdownVisible();
+			await editUserPage.clickSelectOrgDropdown();
+			await editUserPage.clickSelectOrgDropdownOption();
+			await editUserPage.saveSelectedOrgButtonVisible();
+			await editUserPage.clickSaveSelectedOrgButton();
+			await editUserPage.removeOrgButtonVisible();
+			await editUserPage.clickRemoveOrgButton();
+			await editUserPage.confirmRemoveBtnVisible();
+			await editUserPage.clickConfirmRemoveButton();
+			await editUserPage.clickOrgTabButton(0);
+			await editUserPage.firstNameInputVisible();
+			await editUserPage.lastNameInputVisible();
+			await editUserPage.passwordInputVisible();
+			await editUserPage.repeatPasswordInputVisible();
+			await editUserPage.emailInputVisible();
+			await editUserPage.tagsMultiSelectVisible();
+			await editUserPage.selectRoleVisible();
+			await editUserPage.languageSelectVisible();
+			await editUserPage.saveBtnExists();
+			await editUserPage.enterFirstNameData(editFirstName);
+			await editUserPage.enterLastNameData(editLastName);
+			await editUserPage.enterPasswordData(password);
+			await editUserPage.enterRepeatPasswordData(password);
+			await editUserPage.enterEmailData(email);
+			await editUserPage.clickKeyboardButtonByKeyCode(9);
+			await editUserPage.chooseRoleSelectData(EditUserPageData.role);
+			await editUserPage.chooseLanguage(EditUserPageData.preferredLanguage);
+			await editUserPage.saveBtnClick();
+			await addUserPage.waitMessageToHide();
+			await addUserPage.verifyUserExists(`${editFirstName} ${editLastName}`);
+		});
+	});
+});
