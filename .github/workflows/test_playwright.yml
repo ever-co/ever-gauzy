@@ -26,7 +26,14 @@ jobs:
         run: yarn bootstrap
 
       - name: Build all packages
-        run: yarn build:package:all
+        shell: bash
+        # Retry up to 2x: the Windows runner intermittently fails a single Angular package
+        # build (ng-packagr file contention under parallelism). Nx's on-disk cache makes the
+        # retry skip the already-built projects and only re-run the failed one (fast).
+        run: |
+          yarn build:package:all \
+            || { echo "::warning::build:package:all failed — retry 1 (nx cache skips built projects)"; yarn build:package:all; } \
+            || { echo "::warning::build:package:all failed — retry 2"; yarn build:package:all; }
         env:
           NX_NO_CLOUD: true
           # Self-hosted Windows runner: Nx isolated plugin workers fail to spawn
