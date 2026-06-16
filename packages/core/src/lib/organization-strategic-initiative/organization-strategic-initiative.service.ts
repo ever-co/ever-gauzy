@@ -244,11 +244,13 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		// Get the project with its strategic initiatives and their projects/teams for visibility check
 		const project = await this._typeOrmOrganizationProjectRepository.findOne({
 			where: { id: projectId, tenantId },
-			relations: [
-				'organizationStrategicInitiatives',
-				'organizationStrategicInitiatives.projects',
-				'organizationStrategicInitiatives.projects.teams'
-			]
+			relations: {
+                organizationStrategicInitiatives: {
+                    projects: {
+                        teams: true
+                    }
+                }
+            }
 		});
 
 		if (!project) {

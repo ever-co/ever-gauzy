@@ -438,7 +438,8 @@ export class UserService extends TenantAwareCrudService<User> {
 				return items.map((entity) => this.serialize(entity)) as User[];
 			}
 			case MultiORMEnum.TypeORM:
-				return await this.typeOrmRepository.find({
+				// TODO(typeorm-v1): `join` find option was removed — migrate `leftJoinAndSelect` to the `relations` option, or switch to QueryBuilder for `innerJoin`/`innerJoinAndSelect`/`leftJoin`
+                return await this.typeOrmRepository.find({
 					join: {
 						alias: 'user',
 						leftJoin: {
@@ -643,7 +644,8 @@ export class UserService extends TenantAwareCrudService<User> {
 				}
 				case MultiORMEnum.TypeORM: {
 					const query = this.typeOrmRepository.createQueryBuilder('user');
-					query.setFindOptions({
+					// TODO(typeorm-v1): `join` find option was removed — migrate `leftJoinAndSelect` to the `relations` option, or switch to QueryBuilder for `innerJoin`/`innerJoinAndSelect`/`leftJoin`
+                    query.setFindOptions({
 						join: {
 							alias: 'user',
 							leftJoin: { role: 'user.role' }

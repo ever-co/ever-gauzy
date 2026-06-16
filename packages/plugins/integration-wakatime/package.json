@@ -38,7 +38,7 @@
 		"@nestjs/typeorm": "^11.0.1",
 		"moment": "^2.30.1",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.30"
+		"typeorm": "^1.0.0"
 	},
 	"devDependencies": {
 		"@nestjs/testing": "^11.1.26",

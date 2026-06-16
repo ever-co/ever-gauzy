@@ -63,7 +63,10 @@ export class TimeSlotSessionService extends TenantAwareCrudService<TimeSlotSessi
 				tenantId,
 				organizationId
 			},
-			relations: ['timeSlot', 'employee']
+			relations: {
+                timeSlot: true,
+                employee: true
+            }
 		});
 	}
 
@@ -88,7 +91,10 @@ export class TimeSlotSessionService extends TenantAwareCrudService<TimeSlotSessi
 				organizationId,
 				createdAt: Between(defaultStartDate, defaultEndDate)
 			},
-			relations: ['timeSlot', 'employee'],
+			relations: {
+                timeSlot: true,
+                employee: true
+            },
 			order: { createdAt: 'DESC' }
 		});
 	}
@@ -114,7 +120,10 @@ export class TimeSlotSessionService extends TenantAwareCrudService<TimeSlotSessi
 				organizationId,
 				createdAt: Between(defaultStartDate, defaultEndDate)
 			},
-			relations: ['timeSlot', 'employee'],
+			relations: {
+                timeSlot: true,
+                employee: true
+            },
 			order: { createdAt: 'ASC' }
 		});
 	}
@@ -162,7 +171,10 @@ export class TimeSlotSessionService extends TenantAwareCrudService<TimeSlotSessi
 
 		return await super.find({
 			where: whereCondition,
-			relations: ['timeSlot', 'employee'],
+			relations: {
+                timeSlot: true,
+                employee: true
+            },
 			order: { lastActivity: 'DESC' }
 		});
 	}

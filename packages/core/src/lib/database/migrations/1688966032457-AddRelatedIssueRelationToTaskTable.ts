@@ -13,7 +13,7 @@ export class AddRelatedIssueRelationToTaskTable1688966032457 implements Migratio
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(this.name + ' start running!'));
 
-		switch (queryRunner.connection.options.type) {
+		switch (queryRunner.dataSource.options.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 				await this.sqliteUpQueryRunner(queryRunner);
@@ -25,7 +25,7 @@ export class AddRelatedIssueRelationToTaskTable1688966032457 implements Migratio
 				await this.mysqlUpQueryRunner(queryRunner);
 				break;
 			default:
-				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+				throw Error(`Unsupported database: ${queryRunner.dataSource.options.type}`);
 		}
 	}
 	/**
@@ -34,7 +34,7 @@ export class AddRelatedIssueRelationToTaskTable1688966032457 implements Migratio
 	 * @param queryRunner
 	 */
 	public async down(queryRunner: QueryRunner): Promise<void> {
-		switch (queryRunner.connection.options.type) {
+		switch (queryRunner.dataSource.options.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 				await this.sqliteDownQueryRunner(queryRunner);
@@ -46,7 +46,7 @@ export class AddRelatedIssueRelationToTaskTable1688966032457 implements Migratio
 				await this.mysqlDownQueryRunner(queryRunner);
 				break;
 			default:
-				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+				throw Error(`Unsupported database: ${queryRunner.dataSource.options.type}`);
 		}
 	}
 

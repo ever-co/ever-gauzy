@@ -202,7 +202,8 @@ export class EmployeeStatisticsService {
 	 * till the specified Date(searchMonth)
 	 * lastNMonths = 1, for last 1 month and 12 for an year
 	 */
-	employeeIncomeInNMonths = async (
+    // TODO(typeorm-v1): `join` find option was removed — migrate `leftJoinAndSelect` to the `relations` option, or switch to QueryBuilder for `innerJoin`/`innerJoinAndSelect`/`leftJoin`
+    employeeIncomeInNMonths = async (
 		employeeIds: string[],
 		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string

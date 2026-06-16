@@ -20,8 +20,9 @@ export default defineConfig({
 	expect: { timeout: 24_000 },
 	/* Fail the build on test.only left in source. */
 	forbidOnly: !!process.env.CI,
-	/* Retry once in CI (Cypress used runMode retries: 1). */
-	retries: process.env.CI ? 1 : 0,
+	/* Retries: 0 for now to get a complete, fast first triage signal across the full suite
+	 * (re-running failures would double time and risk the job timeout). Restore to 1 once green. */
+	retries: 0,
 	/* Opt out of parallel within a file; shard across CI containers instead. */
 	workers: process.env.CI ? 1 : undefined,
 	reporter: process.env.CI

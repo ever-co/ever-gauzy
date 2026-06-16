@@ -29,6 +29,10 @@ jobs:
         run: yarn build:package:all
         env:
           NX_NO_CLOUD: true
+          # Self-hosted Windows runner: Nx isolated plugin workers fail to spawn
+          # ("Failed to start plugin worker") → run plugins in-process and skip the daemon.
+          NX_ISOLATE_PLUGINS: 'false'
+          NX_DAEMON: 'false'
 
       - name: Generate dev config
         run: yarn config:dev
