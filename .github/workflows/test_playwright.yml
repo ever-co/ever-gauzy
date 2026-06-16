@@ -51,11 +51,31 @@ jobs:
         shell: bash
         run: echo "$(npm prefix -g)" >> "$GITHUB_PATH"
 
+      - name: Reset DB for a clean, deterministic seed
+        shell: bash
+        # The self-hosted runner persists the filesystem; a stale/accumulated DB from a prior run
+        # causes flaky failures (duplicate names, wrong grid counts) or a demo-state onboarding
+        # redirect. Start each run from an empty DB so the API auto-seeds the default org/admin.
+        run: rm -f apps/api/data/gauzy.sqlite3*
+
       - name: Run API in background
         run: yarn start:api:forever
+        env:
+          DEMO: 'false'
 
-      - name: Run UI in background
-        run: yarn start:gauzy:forever
+      - name: Build Web (gauzy) for static serving
+        # The Angular dev server (nx serve gauzy) OOMs over a long e2e run. Build once and serve the
+        # static output instead — stable + low memory. The app uses hash routing + an absolute API
+        # URL (http://localhost:3000), so a plain static file server is sufficient (no proxy/SPA fallback).
+        run: yarn nx build gauzy -c local
+        env:
+          NX_NO_CLOUD: true
+          NX_ISOLATE_PLUGINS: 'false'
+          NX_DAEMON: 'false'
+          NODE_OPTIONS: --max-old-space-size=24576
+
+      - name: Serve Web (static) in background
+        run: forever start apps/gauzy-e2e/tools/serve-web.js dist/apps/gauzy 4200
 
       - name: Install Playwright browser (chromium)
         run: npx playwright install --with-deps chromium
@@ -63,10 +83,10 @@ jobs:
       - name: Wait for API and Web to be ready
         shell: bash
         # Poll both ports, but FAIL FAST if a server process has crashed (forever -> STOPPED)
-        # instead of waiting out the whole window. Cap covers a cold Angular dev compile;
-        # warm runs (persistent .nx/cache on the self-hosted runner) come up in ~2-3 min.
+        # instead of waiting out the whole window. Web is a static server (instant); the API seeds
+        # a fresh DB (~5-7 min: migrations + seedDefault), so a 10-min cap is ample.
         run: |
-          deadline=$((SECONDS + 720))   # 12 min hard cap
+          deadline=$((SECONDS + 600))   # 10 min hard cap
           while (( SECONDS < deadline )); do
             api=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:3000/api || true)
             web=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:4200 || true)
