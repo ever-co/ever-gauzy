@@ -30,8 +30,15 @@ jobs:
         env:
           NX_NO_CLOUD: true
 
+      - name: Generate dev config
+        run: yarn config:dev
+
       - name: Install forever package
         run: npm install forever -g
+
+      - name: Add npm global bin to PATH
+        shell: bash
+        run: echo "$(npm prefix -g)" >> "$GITHUB_PATH"
 
       - name: Run API in background
         run: yarn start:api:forever
