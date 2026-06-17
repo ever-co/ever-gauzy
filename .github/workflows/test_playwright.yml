@@ -62,6 +62,11 @@ jobs:
         run: yarn start:api:forever
         env:
           DEMO: 'false'
+          # MUST be set in the process env (not just .env) before the API starts: the sqlite-vs-postgres
+          # column-type guards (isBetterSqlite3() in @gauzy/config) are captured at module load, before
+          # the app reads .env. Without this the timestamp columns resolve to Postgres 'timestamp' and
+          # better-sqlite3 rejects them -> API crashes at DataSource.initialize -> every spec fails at login.
+          DB_TYPE: 'better-sqlite3'
 
       - name: Build Web (gauzy) for static serving
         # The Angular dev server (nx serve gauzy) OOMs over a long e2e run. Build once and serve the
