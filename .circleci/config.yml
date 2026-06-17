@@ -106,7 +106,7 @@ jobs:
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
@@ -124,7 +124,7 @@ jobs:
             ./sonar-scanner/bin/sonar-scanner \
               -Dsonar.host.url=${SONAR_SERVER:-https://sonarcloud.io} \
               -Dsonar.token=${SONAR_TOKEN}
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-sonarqube-{{ checksum "yarn.lock" }}
@@ -156,7 +156,7 @@ jobs:
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
@@ -185,25 +185,36 @@ jobs:
           keys:
             - yarn-packages-desktop-{{ checksum "yarn.lock" }}
             - yarn-packages-desktop-
+      - restore_cache:
+          name: Restore Nx Cache
+          keys:
+            - nx-cache-{{ arch }}-{{ .Branch }}-
+            - nx-cache-{{ arch }}-develop-
+            - nx-cache-{{ arch }}-
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
       - run:
           name: Run Build
           command: nvm use v24 && yarn build:desktop
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-desktop-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
+      - save_cache:
+          name: Save Nx Cache
+          key: nx-cache-{{ arch }}-{{ .Branch }}-{{ .Revision }}-{{ epoch }}
+          paths:
+            - .nx/cache
 
   # ----------------------------------------------------------------------------
   # Build API Application
@@ -224,29 +235,40 @@ jobs:
           keys:
             - yarn-packages-api-{{ checksum "yarn.lock" }}
             - yarn-packages-api-
+      - restore_cache:
+          name: Restore Nx Cache
+          keys:
+            - nx-cache-{{ arch }}-{{ .Branch }}-
+            - nx-cache-{{ arch }}-develop-
+            - nx-cache-{{ arch }}-
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
       - run:
           name: Run Packages Build
           command: nvm use v24 && yarn build:package:all
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Build
           command: nvm use v24 && yarn build:api:prod:ci
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-api-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
+      - save_cache:
+          name: Save Nx Cache
+          key: nx-cache-{{ arch }}-{{ .Branch }}-{{ .Revision }}-{{ epoch }}
+          paths:
+            - .nx/cache
 
   # ----------------------------------------------------------------------------
   # Build Web Application (Gauzy Frontend)
@@ -267,29 +289,40 @@ jobs:
           keys:
             - yarn-packages-web-{{ checksum "yarn.lock" }}
             - yarn-packages-web-
+      - restore_cache:
+          name: Restore Nx Cache
+          keys:
+            - nx-cache-{{ arch }}-{{ .Branch }}-
+            - nx-cache-{{ arch }}-develop-
+            - nx-cache-{{ arch }}-
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
       - run:
           name: Run Packages Build
           command: nvm use v24 && yarn build:package:all
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Build
           command: nvm use v24 && yarn build:gauzy:prod:ci
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-web-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
+      - save_cache:
+          name: Save Nx Cache
+          key: nx-cache-{{ arch }}-{{ .Branch }}-{{ .Revision }}-{{ epoch }}
+          paths:
+            - .nx/cache
 
   # ----------------------------------------------------------------------------
   # End-to-End Tests
@@ -317,7 +350,7 @@ jobs:
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
@@ -380,7 +413,7 @@ jobs:
           command: |
             nvm use v24
             yarn install --ignore-scripts && yarn postinstall.manual
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - pulumi/update:
           stack: dev
       - save_cache:
