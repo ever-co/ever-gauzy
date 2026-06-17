@@ -189,34 +189,19 @@ export const CustomCommands = {
 		password: string,
 		imgUrl: string
 	) => {
+		// Flow rewritten for the current app: the employee add is now a simple quick-add
+		// ("+ Create" -> Full Name + Email -> "Add"), replacing the old multi-step
+		// firstName/username/password/date/image/tags wizard. username/password/imgUrl are unused now.
+		void username;
+		void password;
+		void imgUrl;
 		await getPage().goto('/#/pages/employees');
-		await manageEmployeesPage.addEmployeeButtonVisible();
-		await manageEmployeesPage.clickAddEmployeeButton();
-		await manageEmployeesPage.firstNameInputVisible();
-		await manageEmployeesPage.enterFirstNameData(firstName);
-		await manageEmployeesPage.lastNameInputVisible();
-		await manageEmployeesPage.enterLastNameData(lastName);
-		await manageEmployeesPage.usernameInputVisible();
-		await manageEmployeesPage.enterUsernameData(username);
-		await manageEmployeesPage.employeeEmailInputVisible();
-		await manageEmployeesPage.enterEmployeeEmailData(employeeEmail);
-		await manageEmployeesPage.dateInputVisible();
-		await manageEmployeesPage.enterDateData();
-		await manageEmployeesPage.clickKeyboardButtonByKeyCode(9);
-		await manageEmployeesPage.passwordInputVisible();
-		await manageEmployeesPage.enterPasswordInputData(password);
-		await manageEmployeesPage.tagsDropdownVisible();
-		await manageEmployeesPage.clickTagsDropdown();
-		await manageEmployeesPage.selectTagFromDropdown(0);
-		await manageEmployeesPage.clickCardBody();
-		await manageEmployeesPage.imageInputVisible();
-		await manageEmployeesPage.enterImageDataUrl(imgUrl);
-		await manageEmployeesPage.nextButtonVisible();
-		await manageEmployeesPage.clickNextButton();
-		await manageEmployeesPage.nextStepButtonVisible();
-		await manageEmployeesPage.clickNextStepButton();
-		await manageEmployeesPage.lastStepButtonVisible();
-		await manageEmployeesPage.clickLastStepButton();
+		await getPage().locator('button.create').first().click();
+		await getPage().locator('input[placeholder="Full Name"]').first().fill(`${firstName} ${lastName}`);
+		await getPage().locator('input[placeholder="Email"]').first().fill(employeeEmail);
+		await getPage().locator('input[placeholder="Email"]').first().press('Tab');
+		await getPage().getByRole('button', { name: 'Add', exact: true }).first().click({ force: true });
+		await getPage().waitForTimeout(2500);
 	},
 	addClient: async (
 		clientsPage: any,
