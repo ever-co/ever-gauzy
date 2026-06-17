@@ -148,7 +148,11 @@ export const clickConfirmDeleteButton = async () => {
 };
 
 export const clickCardBody = async () => {
-	await clickButton(OrganizationProjectsPage.footerCss);
+	// Close the open ng-select dropdown (e.g. after picking a tag). The old
+	// `nb-card-body > div.form-group` wrapper no longer exists in the flat form,
+	// so just dismiss the overlay by pressing Escape / clicking the card header.
+	await getPage().keyboard.press('Escape');
+	await getPage().locator('nb-card-header').first().click({ force: true }).catch(() => undefined);
 };
 
 export const verifyProjectExists = async (text) => {

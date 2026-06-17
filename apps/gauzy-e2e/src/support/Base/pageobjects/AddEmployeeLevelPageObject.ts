@@ -1,6 +1,6 @@
 export const AddEmployeeLevelPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	addNewLevelButtonCss: 'button[status="success"]',
+	addNewLevelButtonCss: 'button[status="success"]:has-text("Add")',
 	newLevelInputCss: '[placeholder="Level name"]',
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: '[type="checkbox"]',

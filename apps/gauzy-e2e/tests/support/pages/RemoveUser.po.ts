@@ -1,11 +1,14 @@
 import {
 	verifyElementIsVisible,
+	verifyElementIsVisibleByIndex,
 	clickButton,
 	clickButtonByIndex,
 	getLastElement,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	clickByText,
+	verifyElementNotExist
 } from '../util';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { RemoveUserPage } from '../../../src/support/Base/pageobjects/RemoveUserPageObject';
@@ -19,11 +22,11 @@ export const clickGridButton = async () => {
 };
 
 export const tableBodyExists = async () => {
-	await verifyElementIsVisible(RemoveUserPage.selectTableRowCss);
+	await verifyElementIsVisibleByIndex(RemoveUserPage.selectTableRowCss, 0);
 };
 
-export const clickTableRow = async () => {
-	await getLastElement(RemoveUserPage.selectTableRowCss);
+export const clickTableRow = async (text: string) => {
+	await clickByText(RemoveUserPage.selectTableRowCss, text);
 };
 
 export const removeButtonVisible = async () => {
@@ -51,5 +54,5 @@ export const verifyUserExists = async (text) => {
 };
 
 export const verifyUserIsDeleted = async (text) => {
-	await verifyTextNotExisting(RemoveUserPage.verifyUserCss, text);
+	await verifyElementNotExist(`${RemoveUserPage.verifyUserCss}:has-text("${text}")`);
 };

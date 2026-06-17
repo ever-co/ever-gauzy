@@ -1,6 +1,6 @@
 export const OrganizationTeamsPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	addTeamButtonCss: 'button[status="success"]',
+	addTeamButtonCss: 'ngx-gauzy-button-action button[status="success"]:has-text("Add")',
 	teamNameInputCss: '[placeholder="Team Name"]',
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: 'div.ng-option',

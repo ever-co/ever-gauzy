@@ -55,7 +55,7 @@ test.describe('Remove user test', () => {
 			await removeUserPage.gridButtonVisible();
 			await removeUserPage.clickGridButton();
 			await removeUserPage.tableBodyExists();
-			await removeUserPage.clickTableRow();
+			await removeUserPage.clickTableRow(`${firstName} ${lastName}`);
 			await removeUserPage.removeButtonVisible();
 			await removeUserPage.clickRemoveButton();
 			await removeUserPage.confirmRemoveBtnVisible();

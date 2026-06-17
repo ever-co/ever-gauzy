@@ -92,7 +92,7 @@ export const clickConfirmAddButton = async () => {
 
 export const verifyUserExists = async (text) => {
 	await waitUntil(3000);
-	await verifyText(AddUserPage.verifyUserCss, text);
+	await verifyText(`${AddUserPage.verifyUserCss}:has-text("${text}")`, text);
 };
 
 export const waitMessageToHide = async () => {

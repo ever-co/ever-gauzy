@@ -2,7 +2,7 @@ export const OrganizationProjectsPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	tagsSelectCss: '#addTags',
-	tagsSelectOptionCss: '[type="checkbox"]',
+	tagsSelectOptionCss: '.ng-dropdown-panel .ng-option',
 	closeTagsMultiSelectDropdownCss: '.ng-select-container > .ng-arrow-wrapper',
 	selectEmployeeMultiSelectCss: 'nb-select:has-text("Add or Remove Employees")',
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',

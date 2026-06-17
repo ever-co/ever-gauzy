@@ -1,5 +1,6 @@
 import {
 	verifyElementIsVisible,
+	verifyElementIsVisibleByIndex,
 	clickButton,
 	clickButtonByIndex,
 	clearField,
@@ -23,7 +24,7 @@ export const clickGridButton = async () => {
 };
 
 export const tableRowVisible = async () => {
-	await verifyElementIsVisible(EditUserPage.selectTableRowCss);
+	await verifyElementIsVisibleByIndex(EditUserPage.selectTableRowCss, 0);
 };
 
 export const selectTableRow = async (text: string) => {
@@ -39,7 +40,7 @@ export const clickEditButton = async () => {
 };
 
 export const orgTabButtonVisible = async () => {
-	await verifyElementIsVisible(EditUserPage.orgTabButtonCss);
+	await verifyElementIsVisibleByIndex(EditUserPage.orgTabButtonCss, 0);
 };
 
 export const clickOrgTabButton = async (index: number) => {
@@ -176,7 +177,7 @@ export const saveBtnClick = async () => {
 };
 
 export const verifyUserExists = async (text: string) => {
-	await verifyText(EditUserPage.verifyUserCss, text);
+	await verifyText(`${EditUserPage.verifyUserCss}:has-text("${text}")`, text);
 };
 
 export const waitMessageToHide = async () => {

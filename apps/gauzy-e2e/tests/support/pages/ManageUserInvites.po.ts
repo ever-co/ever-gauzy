@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import {
 	verifyElementIsVisible,
+	verifyElementIsVisibleByIndex,
 	clickButton,
 	clickButtonByIndex,
 	waitElementToHide,
@@ -30,7 +31,7 @@ export const clickGridButton = async (index: number) => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
-export const tableBodyExists = async () => verifyElementIsVisible(ManageUserInvitesPage.selectTableRowCss);
+export const tableBodyExists = async () => verifyElementIsVisibleByIndex(ManageUserInvitesPage.selectTableRowCss, 0);
 
 export const clickTableRow = async (index: number) =>
 	clickButtonByIndex(ManageUserInvitesPage.selectTableRowCss, index);
