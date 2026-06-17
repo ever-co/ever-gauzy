@@ -24,7 +24,7 @@ test('inspect', async ({ page }) => {
 	if (click) {
 		try {
 			await page.locator(click).first().click({ timeout: 8000 });
-			await page.waitForTimeout(2500);
+			await page.waitForTimeout(Number(process.env.INSPECT_WAIT || 6000));
 		} catch (e) {
 			console.log('INSPECT_CLICK failed: ' + (e as Error).message);
 		}
