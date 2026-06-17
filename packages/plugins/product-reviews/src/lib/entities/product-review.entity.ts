@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsUUID, Max, Min } from 'class-validator';
 import { ID, IProduct, IUser } from '@gauzy/contracts';
+import { isBetterSqlite3 } from '@gauzy/config';
 import {
 	MultiORMEntity,
 	MultiORMColumn,
@@ -59,7 +60,7 @@ export class ProductReview extends TenantOrganizationBaseEntity implements IProd
 	status: ProductReviewStatus;
 
 	// Date when the record was edited
-	@MultiORMColumn({ type: 'timestamp' })
+	@MultiORMColumn({ type: isBetterSqlite3() ? 'text' : 'timestamp' })
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	editedAt: Date;

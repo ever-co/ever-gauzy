@@ -2,6 +2,7 @@ import { RelationId, JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsUUID } from 'class-validator';
 import { ID, IEmployee, ITimesheet, IUser, TimesheetStatus } from '@gauzy/contracts';
+import { isBetterSqlite3 } from '@gauzy/config';
 import { Employee, TenantOrganizationBaseEntity, User } from './../../core/entities/internal';
 import {
 	ColumnIndex,
@@ -74,7 +75,7 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	/**
 	 * Edited timestamp column
 	 */
-	@MultiORMColumn({ type: 'timestamp' })
+	@MultiORMColumn({ type: isBetterSqlite3() ? 'text' : 'timestamp' })
 	@IsDateString()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
