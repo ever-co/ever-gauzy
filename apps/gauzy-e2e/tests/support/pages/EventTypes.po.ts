@@ -1,5 +1,6 @@
 import {
 	verifyElementIsVisible,
+	verifyElementIsVisibleByIndex,
 	clickButton,
 	clickButtonByIndex,
 	clearField,
@@ -88,7 +89,7 @@ export const clickSaveButton = async () => {
 };
 
 export const selectTableRowVisible = async () => {
-	await verifyElementIsVisible(EventTypesPage.selectTableRowCss);
+	await verifyElementIsVisibleByIndex(EventTypesPage.selectTableRowCss, 0);
 };
 
 export const selectTableRow = async (index) => {

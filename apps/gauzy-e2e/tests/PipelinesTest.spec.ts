@@ -13,6 +13,13 @@ test.describe('Pipelines test', () => {
 
 		await test.step('Should be able to add new pipeline', async () => {
 			await getPage().goto('/#/pages/sales/pipelines');
+			// A hash-only goto() is a Playwright no-op when origin+path are unchanged, so the
+			// SPA router can stay on the previous screen. Force the hash route explicitly.
+			await getPage().evaluate(() => {
+				if (!location.hash.includes('/pages/sales/pipelines')) {
+					location.hash = '#/pages/sales/pipelines';
+				}
+			});
 			await pipelinesPage.gridBtnExists();
 			await pipelinesPage.gridBtnClick(1);
 			await pipelinesPage.addPipelineButtonVisible();

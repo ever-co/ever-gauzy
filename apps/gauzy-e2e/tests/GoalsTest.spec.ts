@@ -13,6 +13,13 @@ test.describe('Goals test', () => {
 
 		await test.step('Should be able to add new goal', async () => {
 			await getPage().goto('/#/pages/goals');
+			// A hash-only goto() is a Playwright no-op when origin+path are unchanged, so the
+			// SPA router can stay on the previous screen. Force the hash route explicitly.
+			await getPage().evaluate(() => {
+				if (!location.hash.includes('/pages/goals')) {
+					location.hash = '#/pages/goals';
+				}
+			});
 			await goalsPage.addButtonVisible();
 			await goalsPage.clickAddButton(0);
 			await goalsPage.selectOptionFromDropdown(0);

@@ -29,7 +29,23 @@ export const CustomCommands = {
 		await dashboardPage.verifyCreateButton();
 	},
 	addTag: async (organizationTagsUserPage: any, OrganizationTagsPageData: any) => {
+		// The tags page may share the /pages/organization/ shell with a preceding
+		// setup step (e.g. addProject). When the current route already lives under the
+		// same path+origin (only the hash fragment differs), Playwright's goto() is a
+		// no-op and the SPA router never sees the new route, so the previous screen
+		// stays mounted and the generic success-button click lands on its "Add" button.
+		// Drive the hash change in-page (Angular's hash router reacts to `hashchange`),
+		// then wait until the tags grid header is visible before interacting.
 		await getPage().goto('/#/pages/organization/tags');
+		await getPage().evaluate(() => {
+			if (!location.hash.includes('/pages/organization/tags')) {
+				location.hash = '#/pages/organization/tags';
+			}
+		});
+		await getPage()
+			.locator('h4.card-header-title:has-text("Tags")')
+			.first()
+			.waitFor({ state: 'visible', timeout: 30000 });
 		await organizationTagsUserPage.gridButtonVisible();
 		await organizationTagsUserPage.clickGridButton(1);
 		await organizationTagsUserPage.addTagButtonVisible();
@@ -42,6 +58,14 @@ export const CustomCommands = {
 		await organizationTagsUserPage.enterTagDescriptionData(OrganizationTagsPageData.tagDescription);
 		await organizationTagsUserPage.saveTagButtonVisible();
 		await organizationTagsUserPage.clickSaveTagButton();
+		// Ensure the Add Tags dialog actually closes before the caller navigates away;
+		// nb-dialog overlays can otherwise survive the SPA route change and block the
+		// next screen's controls (e.g. the Add Income button).
+		await getPage()
+			.locator('#inputName')
+			.first()
+			.waitFor({ state: 'hidden', timeout: 15000 })
+			.catch(() => undefined);
 	},
 	addContact: async (
 		fullName: string,

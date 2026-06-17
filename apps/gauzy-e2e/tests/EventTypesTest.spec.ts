@@ -19,7 +19,7 @@ test.describe('Event types test', () => {
 			await eventTypesPage.clickAddEventTypeButton();
 			await eventTypesPage.selectEmployeeDropdownVisible();
 			await eventTypesPage.clickSelectEmployeeDropdown();
-			await eventTypesPage.selectEmployeeFromDropdown(1);
+			await eventTypesPage.selectEmployeeFromDropdown(0);
 			await eventTypesPage.titleInputVisible();
 			await eventTypesPage.enterTitleInputData(EventTypePageData.defaultEventTitle);
 			await eventTypesPage.descriptionInputVisible();

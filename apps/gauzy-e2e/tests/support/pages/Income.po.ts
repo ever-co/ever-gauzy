@@ -2,15 +2,14 @@ import dayjs from 'dayjs';
 import {
 	enterInput,
 	verifyElementIsVisible,
+	verifyElementIsVisibleByIndex,
 	clickButton,
-	enterInputConditionally,
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
-	waitElementToHide,
-	verifyText,
 	verifyElementNotExist
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { IncomePage } from '../../../src/support/Base/pageobjects/IncomePageObject';
 
@@ -24,7 +23,18 @@ export const gridBtnClick = async (index: number) => {
 
 export const addIncomeButtonVisible = async () => verifyElementIsVisible(IncomePage.addIncomeButtonCss);
 
-export const clickAddIncomeButton = async () => clickButton(IncomePage.addIncomeButtonCss);
+export const clickAddIncomeButton = async () => {
+	// The income page may still be settling right after navigation, so the first
+	// force-click on the Add button can land before its (click) handler is wired.
+	// Click, then retry until the Add Income dialog (mutation host) is present.
+	const page = getPage();
+	const dialog = page.locator('ngx-income-mutation');
+	for (let i = 0; i < 4; i++) {
+		await clickButton(IncomePage.addIncomeButtonCss);
+		await page.waitForTimeout(1200);
+		if (await dialog.count()) return;
+	}
+};
 
 export const selectEmployeeDropdownVisible = async () => verifyElementIsVisible(IncomePage.selectEmployeeDropdownCss);
 
@@ -45,8 +55,12 @@ export const contactInputVisible = async () => verifyElementIsVisible(IncomePage
 
 export const clickContactInput = async () => clickButton(IncomePage.organizationContactCss);
 
-export const enterContactInputData = async (data: string) =>
-	enterInputConditionally(IncomePage.organizationContactCss, data);
+export const enterContactInputData = async (data: string) => {
+	// ga-contact-select is an ng-select with addTag: open it, type, create-by-Enter.
+	await clickButton(IncomePage.organizationContactCss);
+	await enterInput(IncomePage.organizationContactSearchInputCss, data);
+	await clickKeyboardBtnByKeycode(13);
+};
 
 export const amountInputVisible = async () => verifyElementIsVisible(IncomePage.amountInputCss);
 
@@ -76,7 +90,20 @@ export const clickKeyboardButtonByKeyCode = async (keycode: number) => clickKeyb
 
 export const tableRowVisible = async () => verifyElementIsVisible(IncomePage.selectTableRowCss);
 
-export const selectTableRow = async (index: number) => clickButtonByIndex(IncomePage.selectTableRowCss, index);
+export const selectTableRow = async (index: number) => {
+	// Selecting a smart-table row enables the Edit/Delete actions, but clicking the
+	// same row twice toggles the selection back off. Click once, then only re-click
+	// if the action buttons are still disabled (first click landed too early).
+	const page = getPage();
+	const row = page.locator(IncomePage.selectTableRowCss).nth(index);
+	const enabledAction = page.locator('div.actions-container button.action.primary:not(.btn-disabled)');
+	await row.click({ force: true });
+	for (let i = 0; i < 5; i++) {
+		await page.waitForTimeout(700);
+		if (await enabledAction.count()) return;
+		await row.click({ force: true });
+	}
+};
 
 export const editIncomeButtonVisible = async () => verifyElementIsVisible(IncomePage.editIncomeButtonCss);
 
@@ -92,8 +119,26 @@ export const clickConfirmDeleteButton = async () => clickButton(IncomePage.confi
 
 export const clickCardBody = async () => clickButton(IncomePage.cardBodyCss);
 
-export const waitMessageToHide = async () => waitElementToHide(IncomePage.toastrMessageCss);
+export const waitMessageToHide = async () => {
+	// Poll for the toast to clear instead of the shared util's fixed 10s hard-sleep,
+	// which would blow the per-test timeout across the spec's many calls.
+	const toast = getPage().locator(IncomePage.toastrMessageCss);
+	try {
+		await toast.first().waitFor({ state: 'hidden', timeout: 12000 });
+	} catch {
+		/* no toast appeared / already gone */
+	}
+};
 
 export const verifyElementIsDeleted = async () => verifyElementNotExist(IncomePage.verifyIncomeCss);
 
-export const verifyIncomeExists = async (text: string) => verifyText(IncomePage.verifyIncomeCss, text);
+export const verifyIncomeExists = async (text: string) => {
+	// May be several income rows; assert the newest (first) row carries the note text.
+	await verifyElementIsVisibleByIndex(IncomePage.verifyIncomeCss, 0);
+	await expectFirstRowContains(text);
+};
+
+const expectFirstRowContains = async (text: string) => {
+	const { expect } = await import('@playwright/test');
+	await expect(getPage().locator(IncomePage.verifyIncomeCss).first()).toContainText(text, { timeout: 24000 });
+};

@@ -3,72 +3,29 @@ import { getPage } from './support/page-context';
 import * as loginPage from './support/pages/Login.po';
 import { LoginPageData } from '../src/support/Base/pagedata/LoginPageData';
 import * as organizationDepartmentsPage from './support/pages/OrganizationDepartments.po';
-import { faker } from '@faker-js/faker';
 import { OrganizationDepartmentsPageData } from '../src/support/Base/pagedata/OrganizationDepartmentsPageData';
 import * as dashboardPage from './support/pages/Dashboard.po';
 import * as organizationTagsUserPage from './support/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../src/support/Base/pagedata/OrganizationTagsPageData';
-import * as manageEmployeesPage from './support/pages/ManageEmployees.po';
-import * as organizationProjectsPage from './support/pages/OrganizationProjects.po';
-import { OrganizationProjectsPageData } from '../src/support/Base/pagedata/OrganizationProjectsPageData';
 import { CustomCommands } from './support/commands';
 
-let email = ' ';
-let secEmail = ' ';
-let firstName = ' ';
-let lastName = ' ';
-let username = ' ';
-let password = ' ';
-let employeeEmail = ' ';
-let imgUrl = ' ';
+// The suite shares one DB, so prior runs leave duplicate departments behind. Use a unique
+// name per run so add/edit/delete target exactly the department this run created and the
+// delete verification is unambiguous.
+let departmentName = ' ';
 
 test.describe('Organization departments test', () => {
 	test('Organization departments test', async () => {
-		email = faker.internet.exampleEmail();
-		secEmail = faker.internet.exampleEmail();
-		firstName = faker.person.firstName();
-		lastName = faker.person.lastName();
-		username = faker.internet.username();
-		email = faker.internet.exampleEmail();
-		password = faker.internet.password();
-		employeeEmail = faker.internet.exampleEmail();
-		imgUrl = faker.image.avatar();
+		departmentName = `${OrganizationDepartmentsPageData.departmentName} ${Date.now()}`;
 
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 
 		await test.step('Should be able to add new department', async () => {
-			await getPage().goto('/#/pages/employees');
-			await manageEmployeesPage.addEmployeeButtonVisible();
-			await manageEmployeesPage.clickAddEmployeeButton();
-			await manageEmployeesPage.firstNameInputVisible();
-			await manageEmployeesPage.enterFirstNameData(firstName);
-			await manageEmployeesPage.lastNameInputVisible();
-			await manageEmployeesPage.enterLastNameData(lastName);
-			await manageEmployeesPage.usernameInputVisible();
-			await manageEmployeesPage.enterUsernameData(username);
-			await manageEmployeesPage.employeeEmailInputVisible();
-			await manageEmployeesPage.enterEmployeeEmailData(employeeEmail);
-			await manageEmployeesPage.dateInputVisible();
-			await manageEmployeesPage.enterDateData();
-			await manageEmployeesPage.clickKeyboardButtonByKeyCode(9);
-			await manageEmployeesPage.passwordInputVisible();
-			await manageEmployeesPage.enterPasswordInputData(password);
-			await manageEmployeesPage.tagsDropdownVisible();
-			await manageEmployeesPage.clickTagsDropdown();
-			await manageEmployeesPage.selectTagFromDropdown(0);
-			await manageEmployeesPage.clickCardBody();
-			await manageEmployeesPage.imageInputVisible();
-			await manageEmployeesPage.enterImageDataUrl(imgUrl);
-			await manageEmployeesPage.nextButtonVisible();
-			await manageEmployeesPage.clickNextButton();
-			await manageEmployeesPage.nextStepButtonVisible();
-			await manageEmployeesPage.clickNextStepButton();
-			await manageEmployeesPage.lastStepButtonVisible();
-			await manageEmployeesPage.clickLastStepButton();
-			await CustomCommands.addProject(
-				organizationProjectsPage,
-				OrganizationProjectsPageData
-			);
+			// The shared organization (42 seeded employees) already provides selectable
+			// employees for the department form, so we no longer create an employee/project
+			// here: the current "Add Employee" quick-add escalates to a multi-step wizard
+			// that leaves a modal backdrop open and blocks the following steps. We only need
+			// a tag for the department's Tags field.
 			await CustomCommands.addTag(
 				organizationTagsUserPage,
 				OrganizationTagsPageData
@@ -79,9 +36,7 @@ test.describe('Organization departments test', () => {
 			await organizationDepartmentsPage.addDepartmentButtonVisible();
 			await organizationDepartmentsPage.clickAddDepartmentButton();
 			await organizationDepartmentsPage.nameInputVisible();
-			await organizationDepartmentsPage.enterNameInputData(
-				OrganizationDepartmentsPageData.departmentName
-			);
+			await organizationDepartmentsPage.enterNameInputData(departmentName);
 			await organizationDepartmentsPage.selectEmployeeDropdownVisible();
 			await organizationDepartmentsPage.clickEmployeeDropdown();
 			await organizationDepartmentsPage.selectEmployeeFromDropdown(0);
@@ -92,33 +47,27 @@ test.describe('Organization departments test', () => {
 			await organizationDepartmentsPage.clickCardBody();
 			await organizationDepartmentsPage.saveDepartmentButtonVisible();
 			await organizationDepartmentsPage.clickSaveDepartmentButton();
-			await organizationDepartmentsPage.verifyDepartmentExists(
-				OrganizationDepartmentsPageData.departmentName
-			);
+			await organizationDepartmentsPage.verifyDepartmentExists(departmentName);
 		});
 
 		await test.step('Should be able to edit department', async () => {
 			await organizationDepartmentsPage.tableRowVisible();
-			await organizationDepartmentsPage.selectTableRow();
+			await organizationDepartmentsPage.selectRowByText(departmentName);
 			await organizationDepartmentsPage.editButtonVisible();
 			await organizationDepartmentsPage.clickEditButton();
 			await organizationDepartmentsPage.nameInputVisible();
-			await organizationDepartmentsPage.enterNameInputData(
-				OrganizationDepartmentsPageData.departmentName
-			);
+			await organizationDepartmentsPage.enterNameInputData(departmentName);
 			await organizationDepartmentsPage.saveDepartmentButtonVisible();
 			await organizationDepartmentsPage.clickSaveDepartmentButton();
 		});
 
 		await test.step('Should be able to delete department', async () => {
-			await organizationDepartmentsPage.selectTableRow();
+			await organizationDepartmentsPage.selectRowByText(departmentName);
 			await organizationDepartmentsPage.deleteButtonVisible();
 			await organizationDepartmentsPage.clickDeleteButton();
 			await organizationDepartmentsPage.confirmDeleteButtonVisible();
 			await organizationDepartmentsPage.clickConfirmDeleteButton();
-			await organizationDepartmentsPage.verifyDepartmentIsDeleted(
-				OrganizationDepartmentsPageData.departmentName
-			);
+			await organizationDepartmentsPage.verifyDepartmentIsDeleted(departmentName);
 		});
 	});
 });

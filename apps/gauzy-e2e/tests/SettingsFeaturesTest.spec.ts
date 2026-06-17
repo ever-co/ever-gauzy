@@ -13,6 +13,10 @@ test.describe('Verify settings features', () => {
 	test('Verify settings features', async () => {
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 
+		// A prior test may have left the (DB-persisted) UI language non-English;
+		// this spec verifies English feature labels, so normalise it first.
+		await settingsFeaturesPage.ensureEnglishLanguage();
+
 		await test.step('Task Dashboard', async () => {
 			await getPage().goto('/#/pages/settings/features/tenant');
 			await settingsFeaturesPage.verifyHeader(SettingsFeaturesPageData.headerText);

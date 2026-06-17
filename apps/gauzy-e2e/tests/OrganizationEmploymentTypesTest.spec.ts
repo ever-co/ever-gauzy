@@ -40,6 +40,7 @@ test.describe('Organization employment types test', () => {
 		});
 
 		await test.step('Should be able to edit employment type', async () => {
+			await organizationEmploymentTypePage.selectFirstItem();
 			await organizationEmploymentTypePage.editButtonVisible();
 			await organizationEmploymentTypePage.clickEditButton(0);
 			await organizationEmploymentTypePage.saveButtonVisible();
@@ -48,6 +49,7 @@ test.describe('Organization employment types test', () => {
 
 		await test.step('Should be able to delete employment type', async () => {
 			await organizationEmploymentTypePage.waitMessageToHide();
+			await organizationEmploymentTypePage.selectFirstItem();
 			await organizationEmploymentTypePage.deleteButtonVisible();
 			await organizationEmploymentTypePage.clickDeleteButton(0);
 			await organizationEmploymentTypePage.confirmDeleteButtonVisible();

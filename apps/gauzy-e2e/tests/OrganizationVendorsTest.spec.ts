@@ -52,6 +52,7 @@ test.describe('Organization vendors test', () => {
 		});
 
 		await test.step('Should be able to edit vendor', async () => {
+			await organizationVendorsPage.selectFirstItem();
 			await organizationVendorsPage.editVendorButtonVisible();
 			await organizationVendorsPage.clickEditVendorButton(0);
 			await organizationVendorsPage.nameInputVisible();
@@ -83,12 +84,15 @@ test.describe('Organization vendors test', () => {
 		});
 
 		await test.step('Should be able to delete vendor', async () => {
+			await organizationVendorsPage.selectFirstItem();
 			await organizationVendorsPage.deleteVendorButtonVisible();
 			await organizationVendorsPage.clickDeleteVendorButton(0);
 			await organizationVendorsPage.confirmDeleteButtonVisible();
 			await organizationVendorsPage.clickConfirmDeleteButton();
 			await organizationVendorsPage.waitMessageToHide();
-			await organizationVendorsPage.verifyVendorIsDeleted();
+			await organizationVendorsPage.verifyVendorIsDeleted(
+				OrganizationVendorsPageData.editVendorName
+			);
 		});
 	});
 });

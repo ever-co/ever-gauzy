@@ -35,7 +35,22 @@ test.describe('Customers test', () => {
 		await test.step('Should be able to add new customer', async () => {
 			await CustomCommands.addProject(organizationProjectsPage, OrganizationProjectsPageData);
 			await CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
+			// addTag leaves us under the /pages/organization hash route. A goto() that only
+			// changes the hash fragment (same origin+path) is a Playwright no-op, so force the
+			// SPA hash router to switch to the customers route before interacting.
 			await getPage().goto('/#/pages/contacts/customers');
+			await getPage().evaluate(() => {
+				if (!location.hash.includes('/pages/contacts/customers')) {
+					location.hash = '#/pages/contacts/customers';
+				}
+			});
+			// Wait until the customers screen has actually rendered before interacting —
+			// otherwise the add-button click can land on the previous screen still mounted
+			// during the hash-route transition. Use the route component (language-agnostic).
+			await getPage()
+				.locator('ngx-contacts-list')
+				.first()
+				.waitFor({ state: 'visible', timeout: 30000 });
 			await customersPage.gridBtnExists();
 			await customersPage.gridBtnClick(1);
 			await customersPage.addButtonVisible();
@@ -66,6 +81,10 @@ test.describe('Customers test', () => {
 			await customersPage.enterPostcodeInputData(postcode);
 			await customersPage.streetInputVisible();
 			await customersPage.enterStreetInputData(street);
+			// Address step -> Budget step
+			await customersPage.verifyNextButtonVisible();
+			await customersPage.clickNextButton();
+			// Budget step (defaults are valid) -> Members step
 			await customersPage.verifyNextButtonVisible();
 			await customersPage.clickNextButton();
 			await customersPage.selectEmployeeDropdownVisible();
@@ -117,6 +136,10 @@ test.describe('Customers test', () => {
 			await customersPage.enterPostcodeInputData(postcode);
 			await customersPage.streetInputVisible();
 			await customersPage.enterStreetInputData(street);
+			// Address step -> Budget step
+			await customersPage.verifyNextButtonVisible();
+			await customersPage.clickNextButton();
+			// Budget step -> Members step
 			await customersPage.verifyNextButtonVisible();
 			await customersPage.clickNextButton();
 			await customersPage.verifyFinishButtonVisible();

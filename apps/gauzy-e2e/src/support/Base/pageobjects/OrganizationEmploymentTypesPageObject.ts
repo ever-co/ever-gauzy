@@ -11,5 +11,8 @@ export const OrganizationEmploymentTypesPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	cardBodyCss: 'nb-card-body',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyTextCss: 'nb-tabset'
+	verifyTextCss: 'nb-tabset',
+	// The list is now a card list (ga-notes-with-tags items); an item must be selected
+	// to enable the header Edit/Delete actions.
+	selectItemCss: 'nb-card-body.custom-table ga-notes-with-tags'
 };

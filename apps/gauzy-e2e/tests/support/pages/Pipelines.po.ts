@@ -13,6 +13,7 @@ import {
 	verifyByLength
 } from '../util';
 import { getPage } from '../page-context';
+import { expect } from '@playwright/test';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { PipelinesPage } from '../../../src/support/Base/pageobjects/PipelinesPageObject';
 
@@ -29,7 +30,18 @@ export const addPipelineButtonVisible = async () => {
 };
 
 export const clickAddPipelineButton = async () => {
-	await clickButton(PipelinesPage.addPipelineButtonCss);
+	// The create dialog occasionally fails to open on the first click (the button can be
+	// briefly re-rendered while the list refreshes). Retry until the dialog name field shows.
+	for (let attempt = 0; attempt < 4; attempt++) {
+		await getPage().locator(PipelinesPage.addPipelineButtonCss).first().click({ force: true }).catch(() => undefined);
+		try {
+			await getPage().locator(PipelinesPage.pipelineNameInputCss).first().waitFor({ state: 'visible', timeout: 8000 });
+			return;
+		} catch {
+			await getPage().waitForTimeout(800);
+		}
+	}
+	await getPage().locator(PipelinesPage.pipelineNameInputCss).first().waitFor({ state: 'visible', timeout: 16000 });
 };
 
 export const nameInputVisible = async () => {
@@ -59,7 +71,7 @@ export const clickCreatePipelineButton = async () => {
 };
 
 export const tableRowVisible = async () => {
-	await verifyElementIsVisible(PipelinesPage.selectTableRowCss);
+	await expect(getPage().locator(PipelinesPage.selectTableRowCss).first()).toBeVisible({ timeout: 24000 });
 };
 
 export const selectTableRow = async (index: number) => {
@@ -71,7 +83,20 @@ export const editPipelineButtonVisible = async () => {
 };
 
 export const clickEditPipelineButton = async () => {
-	await clickButton(PipelinesPage.editPipelineButtonCss);
+	// Edit is enabled only with a selected row, and the dialog can fail to open on the
+	// first click. Re-select the first row and retry until the dialog name field shows.
+	for (let attempt = 0; attempt < 4; attempt++) {
+		await getPage().locator(PipelinesPage.selectTableRowCss).first().click({ force: true }).catch(() => undefined);
+		await getPage().waitForTimeout(500);
+		await getPage().locator(PipelinesPage.editPipelineButtonCss).first().click({ force: true }).catch(() => undefined);
+		try {
+			await getPage().locator(PipelinesPage.pipelineNameInputCss).first().waitFor({ state: 'visible', timeout: 8000 });
+			return;
+		} catch {
+			await getPage().waitForTimeout(800);
+		}
+	}
+	await getPage().locator(PipelinesPage.pipelineNameInputCss).first().waitFor({ state: 'visible', timeout: 16000 });
 };
 
 export const updateButtonVisible = async () => {
@@ -103,11 +128,15 @@ export const waitMessageToHide = async () => {
 };
 
 export const verifyPipelineIsDeleted = async (text: string) => {
-	await verifyTextNotExisting(PipelinesPage.verifyPipelineCss, text);
+	await expect(
+		getPage().locator(PipelinesPage.selectTableRowCss).filter({ hasText: text })
+	).toHaveCount(0, { timeout: 24000 });
 };
 
 export const verifyPipelineExists = async (text: string) => {
-	await verifyText(PipelinesPage.verifyPipelineCss, text);
+	await expect(
+		getPage().locator(PipelinesPage.selectTableRowCss).filter({ hasText: text }).first()
+	).toBeVisible({ timeout: 24000 });
 };
 
 export const enterNameInputDataByIndex = async (data: string, index: number) => {

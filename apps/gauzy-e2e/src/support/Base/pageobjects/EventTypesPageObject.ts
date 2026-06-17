@@ -2,7 +2,8 @@ export const EventTypesPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addEventTypeButtonCss: 'div.actions-container button[status="success"]',
 	editEventTypeButtonCss: 'div.actions-container button.action.primary',
-	deleteEventTypeButtonCss: 'div.actions-container button.action:not(.primary)',
+	deleteEventTypeButtonCss:
+		'div.actions-container button.action:not(.primary):not([status="success"])',
 	selectEmployeeDropdownCss: 'ga-employee-multi-select[id="employee"]',
 	selectEmployeeDropdownOptionCss: 'nb-option-list > ul.option-list > nb-option',
 	titleInputCss: '#title',

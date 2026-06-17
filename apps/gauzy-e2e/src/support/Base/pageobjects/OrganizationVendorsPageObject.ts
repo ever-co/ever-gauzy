@@ -1,6 +1,7 @@
 export const OrganizationVendorsPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	addVendorButtonCss: 'button[status="success"]',
+	addVendorButtonCss: 'button[status="success"]:has-text("Add")',
+	selectItemCss: 'nb-card-body.custom-table div.row',
 	nameInputCss: '[formcontrolname="name"]',
 	phoneInputCss: '[formcontrolname="phone"]',
 	emailInputCss: '[formcontrolname="email"]',

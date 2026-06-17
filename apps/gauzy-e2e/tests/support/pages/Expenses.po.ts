@@ -2,18 +2,19 @@ import dayjs from 'dayjs';
 import {
 	enterInput,
 	verifyElementIsVisible,
+	verifyElementIsVisibleByIndex,
 	clickButton,
 	enterInputConditionally,
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
 	clickElementByText,
-	waitElementToHide,
 	verifyText,
 	verifyElementNotExist,
 	waitUntil,
 	forceClickElementByText
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ExpensesPage } from '../../../src/support/Base/pageobjects/ExpensesPageObject';
 
@@ -66,7 +67,10 @@ export const clickContactInput = async () => {
 };
 
 export const enterContactInputData = async (data) => {
-	await enterInputConditionally(ExpensesPage.organizationContactCss, data);
+	// ga-contact-select is an ng-select with addTag: open it, type, create-by-Enter.
+	await clickButton(ExpensesPage.organizationContactCss);
+	await enterInput(ExpensesPage.organizationContactSearchInputCss, data);
+	await clickKeyboardBtnByKeycode(13);
 };
 
 export const categoryInputVisible = async () => {
@@ -78,7 +82,10 @@ export const clickCategoryInput = async () => {
 };
 
 export const enterCategoryInputData = async (data) => {
-	await enterInputConditionally(ExpensesPage.categoryInputCss, data);
+	// ga-expense-category-select is an ng-select with addTag: open it, type, create-by-Enter.
+	await clickButton(ExpensesPage.categoryInputCss);
+	await enterInput(ExpensesPage.categorySearchInputCss, data);
+	await clickKeyboardBtnByKeycode(13);
 };
 
 export const vendorInputVisible = async () => {
@@ -90,7 +97,10 @@ export const clickVendorInput = async () => {
 };
 
 export const enterVendorInputData = async (data) => {
-	await enterInputConditionally(ExpensesPage.vendorInputCss, data);
+	// ga-vendor-select is an ng-select with addTag: open it, type, create-by-Enter.
+	await clickButton(ExpensesPage.vendorInputCss);
+	await enterInput(ExpensesPage.vendorSearchInputCss, data);
+	await clickKeyboardBtnByKeycode(13);
 };
 
 export const amountInputVisible = async () => {
@@ -153,7 +163,21 @@ export const tableRowVisible = async () => {
 
 export const selectTableRow = async (index) => {
 	await waitUntil(3000);
-	await clickButtonByIndex(ExpensesPage.selectTableRowCss, index);
+	// Selecting a row enables the Edit/Duplicate/Delete actions, but clicking the
+	// same smart-table row twice TOGGLES the selection back off (disableButton).
+	// So click once, then only re-click if the action buttons are still disabled
+	// (i.e. the first click landed before the row was interactive).
+	const page = getPage();
+	const row = page.locator(ExpensesPage.selectTableRowCss).nth(index);
+	const enabledAction = page.locator(
+		'div.actions-container button.action.primary:not(.btn-disabled)'
+	);
+	await row.click({ force: true });
+	for (let i = 0; i < 5; i++) {
+		await page.waitForTimeout(700);
+		if (await enabledAction.count()) return;
+		await row.click({ force: true });
+	}
 };
 
 export const editExpenseButtonVisible = async () => {
@@ -234,11 +258,18 @@ export const clickCategoryCard = async () => {
 };
 
 export const waitMessageToHide = async () => {
-	await waitElementToHide(ExpensesPage.toastrMessageCss);
+	// The shared util.waitElementToHide hard-sleeps 10s every call; this spec calls
+	// it ~6 times, blowing the per-test timeout. Poll for the toast to clear instead.
+	const toast = getPage().locator(ExpensesPage.toastrMessageCss);
+	try {
+		await toast.first().waitFor({ state: 'hidden', timeout: 12000 });
+	} catch {
+		/* no toast appeared / already gone */
+	}
 };
 
 export const verifyExpenseExists = async () => {
-	await verifyElementIsVisible(ExpensesPage.notBillableBadgeCss);
+	await verifyElementIsVisibleByIndex(ExpensesPage.notBillableBadgeCss, 0);
 };
 
 export const verifyElementIsDeleted = async () => {

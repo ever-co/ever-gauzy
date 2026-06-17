@@ -107,6 +107,12 @@ export const saveProjectButtonVisible = async () => {
 
 export const clickSaveProjectButton = async () => {
 	await clickButton(OrganizationProjectsPage.saveProjectButtonCss);
+	// The save is async and the component navigates back to the projects list on success.
+	// Wait for that navigation so callers (e.g. CustomCommands.addProject) don't race a
+	// subsequent goto() against the in-flight save/redirect.
+	await getPage()
+		.waitForURL((url) => /\/pages\/organization\/projects(\?|$)/.test(url.href), { timeout: 30000 })
+		.catch(() => undefined);
 };
 
 export const tableRowVisible = async () => {
