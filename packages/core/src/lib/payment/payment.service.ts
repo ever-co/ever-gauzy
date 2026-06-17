@@ -103,21 +103,18 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 				// Create a query builder for the Payment entity
 				const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
-				// Set up the find options for the query
-                // TODO(typeorm-v1): `join` find option was removed — migrate `leftJoinAndSelect` to the `relations` option, or switch to QueryBuilder for `innerJoin`/`innerJoinAndSelect`/`leftJoin`
-                query.setFindOptions({
+				// Set up the find options for the query.
+				// typeorm-v1: the legacy `join` find-option was removed. The `project` relation is
+				// already left-joined and selected below via `relations` + nested `select`, so the
+				// explicit `leftJoin` is redundant (the where/order filters use the `payment` columns
+				// directly, not the joined `project` alias).
+				query.setFindOptions({
 					...(request && request.limit > 0
 						? {
 								take: request.limit,
 								skip: (request.page || 0) * request.limit
 						  }
 						: {}),
-					join: {
-						alias: `${this.tableName}`,
-						leftJoin: {
-							project: `${this.tableName}.project`
-						}
-					},
 					select: {
 						project: {
 							id: true,

@@ -202,7 +202,6 @@ export class EmployeeStatisticsService {
 	 * till the specified Date(searchMonth)
 	 * lastNMonths = 1, for last 1 month and 12 for an year
 	 */
-    // TODO(typeorm-v1): `join` find option was removed — migrate `leftJoinAndSelect` to the `relations` option, or switch to QueryBuilder for `innerJoin`/`innerJoinAndSelect`/`leftJoin`
     employeeIncomeInNMonths = async (
 		employeeIds: string[],
 		{ startDate, endDate }: IDateRangePicker,
@@ -210,12 +209,8 @@ export class EmployeeStatisticsService {
 	) =>
 		await this.incomeService.findAll({
 			select: ['employeeId', 'valueDate', 'amount', 'currency', 'notes', 'isBonus'],
-			join: {
-				alias: 'income',
-				leftJoinAndSelect: {
-					client: 'income.client'
-				}
-			},
+			// typeorm-v1: `join.leftJoinAndSelect: { client }` is expressed as `relations` now
+			relations: { client: true },
 			where: {
 				organizationId,
 				employee: {

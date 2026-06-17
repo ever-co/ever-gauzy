@@ -196,6 +196,10 @@ RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi
 
+# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them.
+# Without this, patch-package prints "No patch files found" and the typeorm v1 compat
+# patch (string[] relations/select types + runtime shim) is never applied, breaking the build.
+COPY --chown=node:node patches ./patches
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual && yarn cache clean
 
 # Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
@@ -277,6 +281,9 @@ RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi
 
+# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them
+# (see note in the dependencies stage above).
+COPY --chown=node:node patches ./patches
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && yarn postinstall.manual && yarn cache clean
 
 # Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
