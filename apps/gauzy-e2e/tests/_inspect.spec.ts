@@ -20,13 +20,14 @@ test('inspect', async ({ page }) => {
 		await page.goto(target);
 		await page.waitForTimeout(5000);
 	}
-	const click = process.env.INSPECT_CLICK;
-	if (click) {
+	for (const env of ['INSPECT_CLICK', 'INSPECT_CLICK2', 'INSPECT_CLICK3']) {
+		const click = process.env[env];
+		if (!click) continue;
 		try {
-			await page.locator(click).first().click({ timeout: 8000 });
-			await page.waitForTimeout(Number(process.env.INSPECT_WAIT || 6000));
+			await page.locator(click).first().click({ timeout: 8000, force: true });
+			await page.waitForTimeout(Number(process.env.INSPECT_WAIT || 4000));
 		} catch (e) {
-			console.log('INSPECT_CLICK failed: ' + (e as Error).message);
+			console.log(env + ' failed: ' + (e as Error).message);
 		}
 	}
 	const info = await page.evaluate(() => {
@@ -49,7 +50,8 @@ test('inspect', async ({ page }) => {
 			nbActions: pick('nb-action', 20),
 			selects: pick('ng-select, nb-select', 20),
 			inputs: pick('input, textarea', 30),
-			headers: pick('h1, h2, h3, h4, h5, nb-card-header', 20)
+			headers: pick('h1, h2, h3, h4, h5, nb-card-header', 20),
+			options: pick('.ng-option, .ng-dropdown-panel div, .option-list nb-option, nb-option', 15)
 		};
 	});
 	console.log('INSPECT=' + JSON.stringify(info));
