@@ -11,7 +11,7 @@ export const ApprovalRequestPage = {
 	checkUsersMultiSelectCss: '.option-list nb-option',
 	saveButtonCss: 'nb-card-footer > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
-	approvalPolicyButtonCss: 'button.action[status="primary"]',
+	approvalPolicyButtonCss: 'button[status="primary"]:has-text("Approval Policy")',
 	descriptionInputCss: '[formcontrolname="description"]',
 	backButtonCss: 'ngx-back-navigation button',
 	toastrMessageCss: 'nb-toast.ng-trigger',

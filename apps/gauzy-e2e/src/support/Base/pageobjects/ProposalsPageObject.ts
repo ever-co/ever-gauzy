@@ -20,7 +20,7 @@ export const ProposalsPage = {
 	cardBodyCss: 'nb-card-footer.text-left',
 	backButtonCss: 'div.main > button[status="primary"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyProposalCss: 'div.ng-star-inserted',
+	verifyProposalCss: 'angular2-smart-table',
 	acceptedProposalCss: 'div.badge-success',
 	manageTemplatesBtnCss: 'button.action[status="info"]:has-text("Templates")',
 	addProposalTemplateBtnCss: '.gauzy-button-container button[status="success"]',
