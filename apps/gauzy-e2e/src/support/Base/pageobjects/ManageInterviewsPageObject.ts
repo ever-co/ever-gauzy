@@ -1,6 +1,6 @@
 export const ManageInterviewsPage = {
 	addInterviewButtonCss: 'div.add-btn > button[status="primary"]',
-	candidateDropdownCss: 'ga-candidate-select input',
+	candidateDropdownCss: 'input[placeholder="Add candidate"]',
 	candidateDropdownOptionCss: '.option-list nb-option',
 	titleInputCss: '#inputTitle',
 	dateInputCss: 'input[name="date"]',

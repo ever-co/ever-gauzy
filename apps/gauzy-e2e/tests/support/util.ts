@@ -19,10 +19,12 @@ const loc = (selector: string) => getPage().locator(selector);
 export const getTitle = async (): Promise<string> => getPage().title();
 
 export const verifyText = async (selector: string, data: string) =>
-	expect(loc(selector)).toContainText(data, { timeout: defaultCommandTimeout });
+	// .first(): same lenient-match rationale as verifyElementIsVisible — current screens may render
+	// the target selector more than once (e.g. a header reused across stacked nb-cards).
+	expect(loc(selector).first()).toContainText(data, { timeout: defaultCommandTimeout });
 
 export const verifyValue = async (selector: string, data: string) =>
-	expect(loc(selector)).toHaveValue(data, { timeout: defaultCommandTimeout });
+	expect(loc(selector).first()).toHaveValue(data, { timeout: defaultCommandTimeout });
 
 export const verifyTextNotExisting = async (selector: string, text: string) =>
 	expect(loc(selector)).not.toContainText(text, { timeout: defaultCommandTimeout });
@@ -54,7 +56,11 @@ export const clearField = async (selector: string) => loc(selector).clear();
 export const urlChanged = async (): Promise<string> => getPage().url();
 
 export const verifyElementIsVisible = async (selector: string) =>
-	expect(loc(selector)).toBeVisible({ timeout: defaultCommandTimeout });
+	// .first(): the Cypress original matched leniently; several current screens render the target
+	// selector more than once (grid rows, tab headers, repeated nb components). Asserting on the
+	// first match preserves the "is this control present?" intent without Playwright strict-mode
+	// violations. Single-match selectors are unaffected.
+	expect(loc(selector).first()).toBeVisible({ timeout: defaultCommandTimeout });
 
 export const verifyElementIsVisibleByIndex = async (selector: string, index: number) =>
 	expect(loc(selector).nth(index)).toBeVisible({ timeout: defaultCommandTimeout });

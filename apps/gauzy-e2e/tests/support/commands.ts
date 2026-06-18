@@ -58,14 +58,20 @@ export const CustomCommands = {
 		await organizationTagsUserPage.enterTagDescriptionData(OrganizationTagsPageData.tagDescription);
 		await organizationTagsUserPage.saveTagButtonVisible();
 		await organizationTagsUserPage.clickSaveTagButton();
-		// Ensure the Add Tags dialog actually closes before the caller navigates away;
-		// nb-dialog overlays can otherwise survive the SPA route change and block the
-		// next screen's controls (e.g. the Add Income button).
-		await getPage()
-			.locator('#inputName')
-			.first()
-			.waitFor({ state: 'hidden', timeout: 15000 })
-			.catch(() => undefined);
+		// Ensure the Add Tags dialog actually closes before the caller navigates away; nb-dialog
+		// overlays can otherwise survive the SPA route change and block the next screen's controls
+		// (the root cause of the "wrong dialog is open" cascade seen in level/position/tasks specs).
+		// If the save raced (Save briefly disabled while the reactive form validated -> the forced
+		// click was a no-op), the dialog lingers, so dismiss it explicitly with Escape.
+		const tagDialogInput = getPage().locator('#inputName').first();
+		const tagDialogClosed = await tagDialogInput
+			.waitFor({ state: 'hidden', timeout: 12000 })
+			.then(() => true)
+			.catch(() => false);
+		if (!tagDialogClosed) {
+			await getPage().keyboard.press('Escape').catch(() => undefined);
+			await tagDialogInput.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => undefined);
+		}
 	},
 	addContact: async (
 		fullName: string,

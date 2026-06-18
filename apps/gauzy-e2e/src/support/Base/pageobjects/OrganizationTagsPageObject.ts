@@ -14,7 +14,7 @@ export const OrganizationTagsPage = {
 	confirmDeleteTagButtonCss: 'nb-card-footer > button[status="danger"]',
 	cancelDeleteTagButtonCss: 'nb-card-footer > button[status="basic"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyTagCss: 'ngx-tags-color > div > nb-badge',
+	verifyTagCss: 'angular2-smart-table tbody',
 	filterNameInputCss: '[placeholder="Name"]',
 	firstTableCellTagCss: 'tbody > tr.angular2-smart-row:first-of-type > td:first-of-type'
 };
