@@ -3,8 +3,8 @@ export const CreateButton = {
 	createButtonOptionCss:
 		'nb-menu ul.menu-items > li.menu-item > a',
 	titleTextCss: 'ngx-quick-actions',
-	cancelButtonCss: 'nb-card-footer.text-right > button[status="danger"]',
-	closeButtonCss: 'nb-icon[icon="close-outline"]',
+	cancelButtonCss: 'nb-card-footer.text-left > button[status="basic"]',
+	closeButtonCss: 'nb-card-header i.fa-times',
 	nbCardh4Css: 'nb-card-header.d-flex > h4',
 	nbCardh5Css: 'nb-card-header.d-flex > h5',
 	divh4Css: 'div.main-header > h4',
