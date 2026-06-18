@@ -86,7 +86,7 @@ ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
 ARG VERDACCIO_TOKEN
 
-FROM node:24.14.0-alpine3.23 AS dependencies
+FROM node:24.16.0-alpine3.23 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -167,7 +167,7 @@ RUN rm -rf /srv/gauzy-mcp/dist
 RUN yarn build:mcp:prod
 
 # Only prod dependencies
-FROM node:24.14.0-alpine3.23 AS proddependencies
+FROM node:24.16.0-alpine3.23 AS proddependencies
 
 RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
     && npm install --quiet node-gyp@10.2.0 -g \
