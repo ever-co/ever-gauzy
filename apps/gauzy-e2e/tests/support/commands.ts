@@ -16,6 +16,31 @@ import { getPage } from './page-context';
  *   cy.window().then(win => ...)         -> getPage().evaluate(() => ...)
  *   cy.reload()                         -> getPage().reload()
  */
+/**
+ * Robust hash navigation for the setup commands. A hash-only goto() issued right after a previous
+ * screen can be a same-document no-op (Playwright doesn't reload, the Angular hash-router never
+ * re-renders), so the next generic "+ Add" click lands on the PREVIOUS page and re-opens its dialog
+ * (the "wrong dialog open" cascade). Force the hash route when goto() didn't take, then let the new
+ * screen settle. Scoped to these setup commands — NOT a global page.goto hook — so it can't disturb
+ * specs that navigate on their own (a global override regressed clean specs and was reverted).
+ */
+const gotoRoute = async (route: string): Promise<void> => {
+	const page = getPage();
+	await page.goto(route);
+	const hash = route.includes('#') ? route.slice(route.indexOf('#')) : '';
+	if (hash) {
+		// Compare WITHOUT query params: the app appends e.g. ?date=... to the hash, so a naive
+		// equality check wrongly concludes we're off-route and force-reassigns location.hash — a
+		// spurious SECOND navigation that races the first and leaves the previous overlay mounted.
+		// Only force the hash when the PATH genuinely differs (a real same-document no-op).
+		await page.evaluate((h) => {
+			if (location.hash.split('?')[0] !== h) location.hash = h;
+		}, hash);
+		// Let the SPA route fully render before the caller interacts (don't click mid-transition).
+		await page.waitForTimeout(700);
+	}
+};
+
 export const CustomCommands = {
 	login: async (loginPage: any, LoginPageData: any, dashboardPage: any) => {
 		await getPage().goto('/');
@@ -36,7 +61,7 @@ export const CustomCommands = {
 		// stays mounted and the generic success-button click lands on its "Add" button.
 		// Drive the hash change in-page (Angular's hash router reacts to `hashchange`),
 		// then wait until the tags grid header is visible before interacting.
-		await getPage().goto('/#/pages/organization/tags');
+		await gotoRoute('/#/pages/organization/tags');
 		await getPage().evaluate(() => {
 			if (!location.hash.includes('/pages/organization/tags')) {
 				location.hash = '#/pages/organization/tags';
@@ -63,15 +88,20 @@ export const CustomCommands = {
 		// (the root cause of the "wrong dialog is open" cascade seen in level/position/tasks specs).
 		// If the save raced (Save briefly disabled while the reactive form validated -> the forced
 		// click was a no-op), the dialog lingers, so dismiss it explicitly with Escape.
-		const tagDialogInput = getPage().locator('#inputName').first();
+		const page = getPage();
+		const tagDialogInput = page.locator('#inputName').first();
 		const tagDialogClosed = await tagDialogInput
 			.waitFor({ state: 'hidden', timeout: 12000 })
 			.then(() => true)
 			.catch(() => false);
 		if (!tagDialogClosed) {
-			await getPage().keyboard.press('Escape').catch(() => undefined);
+			await page.keyboard.press('Escape').catch(() => undefined);
 			await tagDialogInput.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => undefined);
 		}
+		// The input can already be hidden while the nb-dialog OVERLAY is still fading out; that fading
+		// overlay survives a fast subsequent navigation and blocks the next screen. Wait for the dialog
+		// component itself to fully detach before returning so the caller's next goto/click is clean.
+		await page.locator('ngx-tags-mutation').first().waitFor({ state: 'detached', timeout: 6000 }).catch(() => undefined);
 	},
 	addContact: async (
 		fullName: string,
@@ -83,7 +113,7 @@ export const CustomCommands = {
 		contactsLeadsPage: any,
 		ContactsLeadsPageData: any
 	) => {
-		await getPage().goto('/#/pages/contacts/leads');
+		await gotoRoute('/#/pages/contacts/leads');
 		await contactsLeadsPage.gridBtnExists();
 		await contactsLeadsPage.gridBtnClick(1);
 		await contactsLeadsPage.addButtonVisible();
@@ -128,7 +158,7 @@ export const CustomCommands = {
 		await contactsLeadsPage.clickFinishButton();
 	},
 	addTeam: async (organizationTeamsPage: any, OrganizationTeamsPageData: any) => {
-		await getPage().goto('/#/pages/organization/teams');
+		await gotoRoute('/#/pages/organization/teams');
 		await organizationTeamsPage.gridBtnExists();
 		await organizationTeamsPage.gridBtnClick(1);
 		await organizationTeamsPage.addTeamButtonVisible();
@@ -153,7 +183,7 @@ export const CustomCommands = {
 		OrganizationProjectsPageData: any,
 		employeeFullName?: string
 	) => {
-		await getPage().goto('/#/pages/organization/projects');
+		await gotoRoute('/#/pages/organization/projects');
 		await organizationProjectsPage.gridBtnExists();
 		await organizationProjectsPage.gridBtnClick(1);
 		await organizationProjectsPage.requestProjectButtonVisible();
@@ -178,7 +208,7 @@ export const CustomCommands = {
 		await organizationProjectsPage.clickSaveProjectButton();
 	},
 	addTask: async (addTaskPage: any, AddTasksPageData: any, employeeFullName?: string) => {
-		await getPage().goto('/#/pages/tasks/dashboard');
+		await gotoRoute('/#/pages/tasks/dashboard');
 		await addTaskPage.gridBtnExists();
 		await addTaskPage.gridBtnClick(1);
 		await addTaskPage.addTaskButtonVisible();
@@ -225,7 +255,7 @@ export const CustomCommands = {
 		void username;
 		void password;
 		void imgUrl;
-		await getPage().goto('/#/pages/employees');
+		await gotoRoute('/#/pages/employees');
 		await getPage().locator('button.create').first().click();
 		await getPage().locator('input[placeholder="Full Name"]').first().fill(`${firstName} ${lastName}`);
 		await getPage().locator('input[placeholder="Email"]').first().fill(employeeEmail);
@@ -244,7 +274,7 @@ export const CustomCommands = {
 		ClientsData: any,
 		employeeFullName?: string
 	) => {
-		await getPage().goto('/#/pages/contacts/clients');
+		await gotoRoute('/#/pages/contacts/clients');
 		await clientsPage.gridBtnExists();
 		await clientsPage.gridBtnClick(1);
 		await clientsPage.addButtonVisible();
@@ -305,7 +335,7 @@ export const CustomCommands = {
 		taxId: any,
 		street: string
 	) => {
-		await getPage().goto('/#/pages/organizations');
+		await gotoRoute('/#/pages/organizations');
 		await addOrganizationPage.addBtnExists();
 		await addOrganizationPage.addBtnClick();
 		await addOrganizationPage.enterOrganizationName(organizationName);
@@ -362,7 +392,7 @@ export const CustomCommands = {
 		password: string,
 		imgUrl: string
 	) => {
-		await getPage().goto('/#/pages/employees/candidates');
+		await gotoRoute('/#/pages/employees/candidates');
 		await inviteCandidatePage.addCandidateButtonVisible();
 		await inviteCandidatePage.clickAddCandidateButton(0);
 		await inviteCandidatePage.firstNameInputVisible();
