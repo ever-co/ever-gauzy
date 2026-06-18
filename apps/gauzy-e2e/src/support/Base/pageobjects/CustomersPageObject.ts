@@ -1,10 +1,10 @@
 export const CustomersPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	addButtonCss: 'button[status="success"]:has(nb-icon[icon="plus-outline"])',
+	addButtonCss: 'button.create',
 	editButtonCss: 'button:has(nb-icon[icon="edit-outline"])',
 	inviteButtonCss: 'button.action.info',
 	deleteButtonCss: 'button:has(nb-icon[icon="trash-2-outline"])',
-	nameInputCss: '#name',
+	nameInputCss: '[formcontrolname="name"]',
 	emailInputCss: '#email',
 	budgetInputCss: 'input[formcontrolname="budget"]',
 	lastStepBtnCss: 'button[status="success"]:has-text("Save")',

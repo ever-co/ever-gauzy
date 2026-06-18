@@ -4,7 +4,7 @@ export const ClientsPage = {
 	editButtonCss: 'div.btn-group.actions button.action.primary',
 	inviteButtonCss: 'ngx-contact-action button[status="success"]',
 	deleteButtonCss: 'div.btn-group.actions button:has(nb-icon.status-danger)',
-	nameInputCss: '#name',
+	nameInputCss: '[formcontrolname="name"]',
 	emailInputCss: '#email',
 	lastStepBtnCss: 'button.green, button[status="success"]',
 	phoneInputCss: '[formcontrolname="primaryPhone"]',
