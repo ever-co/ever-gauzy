@@ -15,7 +15,7 @@ test.describe('Roles and permissions test', () => {
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 
 		await test.step('Super admin roles and permissions', async () => {
-			await getPage().goto('/#/pages/settings/roles');
+			await getPage().goto('/#/pages/settings/roles-permissions');
 			await rolesPermissionsPage.rolesDropdownVisible();
 			await rolesPermissionsPage.clickRolesDropdown();
 			await rolesPermissionsPage.rolesDropdownOptionVisible();

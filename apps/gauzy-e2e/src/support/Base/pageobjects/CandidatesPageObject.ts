@@ -10,7 +10,7 @@ export const CandidatesPage = {
 	usernameInputCss: '#username',
 	newCandidateEmailInputCss: '#email',
 	passwordInputCss: 'input#password',
-	imageInputCss: '#inputImageUrl',
+	imageInputCss: '#inputImageUrl input[placeholder="Image"]',
 	newCandidateDateInputCss: '#appliedDate',
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',

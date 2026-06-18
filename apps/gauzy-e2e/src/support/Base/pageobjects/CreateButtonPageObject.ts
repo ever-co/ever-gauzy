@@ -1,8 +1,8 @@
 export const CreateButton = {
 	createButtonCss: 'button.create',
 	createButtonOptionCss:
-		'nb-menu.context-menu > ul.menu-items > li.menu-item > a',
-	titleTextCss: 'nb-menu.context-menu > ul.menu-items span.menu-title',
+		'nb-menu ul.menu-items > li.menu-item > a',
+	titleTextCss: 'ngx-quick-actions',
 	cancelButtonCss: 'nb-card-footer.text-right > button[status="danger"]',
 	closeButtonCss: 'nb-icon[icon="close-outline"]',
 	nbCardh4Css: 'nb-card-header.d-flex > h4',

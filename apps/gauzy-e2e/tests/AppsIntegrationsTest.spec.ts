@@ -12,7 +12,7 @@ test.describe('Apps integrations page test', () => {
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 
 		await test.step('Should be able to verify dropdown text', async () => {
-			await getPage().goto('/#/pages/integrations/list');
+			await getPage().goto('/#/pages/integrations/new');
 			await appsIntegrationsPage.verifyHeaderText(AppsIntegrationsPageData.header);
 			await appsIntegrationsPage.dropdownVisible();
 			await appsIntegrationsPage.clickDropdown(0);

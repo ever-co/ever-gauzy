@@ -2,7 +2,7 @@ export const OrganizationHelpCenterPage = {
 	addButtonCss: 'div.add-icon-field > button[status="success"]',
 	languageDropdownCss: 'div.form-group > ngx-language-selector > ng-select',
 	dropdownOptionCss: '.ng-option, .option-list nb-option',
-	toggleButtonCss: 'span.toggle',
+	toggleButtonCss: 'nb-toggle:has-text("Publish Status")',
 	iconDropdownCss:
 		'nb-select#icon > button.select-button',
 	colorInputCss: 'input[id="color"]',

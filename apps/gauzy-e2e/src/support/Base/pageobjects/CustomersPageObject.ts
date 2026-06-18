@@ -1,6 +1,6 @@
 export const CustomersPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	addButtonCss: 'button.create',
+	addButtonCss: 'button[status="success"]:has(nb-icon[icon="plus-outline"])',
 	editButtonCss: 'button:has(nb-icon[icon="edit-outline"])',
 	inviteButtonCss: 'button.action.info',
 	deleteButtonCss: 'button:has(nb-icon[icon="trash-2-outline"])',
