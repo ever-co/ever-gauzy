@@ -12,27 +12,6 @@ import { setPage } from './page-context';
 export const test = base.extend<{ _autoPage: void }>({
 	_autoPage: [
 		async ({ page }, use) => {
-			// Robust SPA navigation. goto() to a URL differing only in the hash fragment can be a
-			// same-document no-op, so the Angular hash-router never re-renders: we stay on the previous
-			// screen and the next generic "+ Add" click re-opens the PREVIOUS page's dialog (the root
-			// cause of the "wrong dialog is open" cluster after addTag/addProject setup). After goto(),
-			// if the hash didn't actually land on the target, force it so the router reacts, then settle.
-			// This branch ONLY runs on a genuine no-op — when goto() works (every passing spec), it is a
-			// complete no-op, so it cannot regress a passing spec.
-			const realGoto = page.goto.bind(page);
-			(page as { goto: (url: string, opts?: unknown) => Promise<unknown> }).goto = async (url, opts) => {
-				const res = await realGoto(url, opts as Parameters<typeof realGoto>[1]);
-				if (typeof url === 'string' && url.includes('#')) {
-					const hash = url.slice(url.indexOf('#'));
-					const onTarget = await page.evaluate((h) => {
-						if (location.hash === h) return true;
-						location.hash = h;
-						return false;
-					}, hash);
-					if (!onTarget) await page.waitForTimeout(350);
-				}
-				return res;
-			};
 			setPage(page);
 			await use();
 		},
