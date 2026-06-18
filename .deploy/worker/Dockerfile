@@ -113,7 +113,7 @@ ARG WORKER_QUEUE_ENABLED
 ARG WORKER_SCHEDULER_ENABLED
 ARG WORKER_TIMEZONE
 
-FROM node:24.14.0-alpine3.23 AS dependencies
+FROM node:24.16.0-alpine3.23 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -205,7 +205,7 @@ RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts &&
 # Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
 RUN rm -f .npmrc .yarnrc
 
-FROM node:24.14.0-alpine3.23 AS prodDependencies
+FROM node:24.16.0-alpine3.23 AS prodDependencies
 
 ENV CI=true
 
@@ -296,7 +296,7 @@ RUN rm -r node_modules/@angular
 # those within custom webpack in apps/worker/config/custom-webpack.config.js
 # RUN rm -r node_modules/@gauzy
 
-FROM node:24.14.0-alpine3.23 AS development
+FROM node:24.16.0-alpine3.23 AS development
 
 USER node:node
 
@@ -306,7 +306,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:24.14.0-alpine3.23 AS build
+FROM node:24.16.0-alpine3.23 AS build
 
 WORKDIR /srv/gauzy
 
@@ -348,7 +348,7 @@ RUN if [ "$NODE_ENV" = "production" ]; then \
 # those within custom webpack in apps/worker/config/custom-webpack.config.js
 # RUN rm -r dist/apps/worker/node_modules/@gauzy
 
-FROM node:24.14.0-alpine3.23 AS production
+FROM node:24.16.0-alpine3.23 AS production
 
 WORKDIR /srv/gauzy
 
