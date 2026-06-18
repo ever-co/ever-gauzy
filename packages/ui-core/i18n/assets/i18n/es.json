@@ -4376,6 +4376,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "Para un seguimiento más flexible del tiempo y las actividades, por favor <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">descargue</a> y utilice la <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Aplicación de temporizador de escritorio Gauzy</a>.",
 		"STATUS": "El rastreador de tiempo ya está en funcionamiento en {{ source }}.",
 		"VERSION": "Versión v{{ version }}",
+		"OS": "OS: {{ os }} {{ systemVersion }} ({{ arch }})",
 		"ARCHITECTURE": "Arquitectura: {{ arch }}",
 		"WAIT_FOR": "Esperando a {{name}} para empezar...",
 		"SETUP": {
@@ -4602,6 +4603,8 @@
 		"DUE": "Debido",
 		"AW_CONNECTED": "\"Conexión de ActivityWatch\"",
 		"AW_DISCONNECTED": "ActivityWatch está desconectado.",
+		"SESSION_LIST": "Lista de sesiones",
+		"SESSION": "sesión",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "Eliminar correctamente la última captura de pantalla y actividades.",
 			"CANT_RUN_TIMER": "No puedes ejecutar el temporizador por el momento.",
@@ -4647,7 +4650,8 @@
 			"WEEKLY_RECAP": "Resumen Semanal",
 			"MONTHLY_RECAP": "Resumen Mensual",
 			"INSTALL_PLUGIN": "Instalar complemento",
-			"OPEN_LOG_HISTORY": "Historial de registros"
+			"OPEN_LOG_HISTORY": "Historial de registros",
+			"SESSIONS": "Sesiones"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Seguimiento del tiempo por hora",

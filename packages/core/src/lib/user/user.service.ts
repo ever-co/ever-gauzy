@@ -438,13 +438,10 @@ export class UserService extends TenantAwareCrudService<User> {
 				return items.map((entity) => this.serialize(entity)) as User[];
 			}
 			case MultiORMEnum.TypeORM:
+				// typeorm-v1: the legacy `join` find-option was removed. The nested `where` on the
+				// `role` relation already produces the join needed to filter by `role.name`, so the
+				// explicit `leftJoin` is redundant.
 				return await this.typeOrmRepository.find({
-					join: {
-						alias: 'user',
-						leftJoin: {
-							role: 'user.role'
-						}
-					},
 					where: {
 						tenantId,
 						role: {
@@ -643,12 +640,9 @@ export class UserService extends TenantAwareCrudService<User> {
 				}
 				case MultiORMEnum.TypeORM: {
 					const query = this.typeOrmRepository.createQueryBuilder('user');
-					query.setFindOptions({
-						join: {
-							alias: 'user',
-							leftJoin: { role: 'user.role' }
-						}
-					});
+					// typeorm-v1: the legacy `join` find-option was removed. Use an explicit query-builder
+					// left join so the raw `"role"."name" = :role` filter below can resolve the alias.
+					query.leftJoin('user.role', 'role');
 					query.where((qb: SelectQueryBuilder<User>) => {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {

@@ -26,6 +26,11 @@ export const recapRoutes: Routes = [
 		loadChildren: () => import('../time-tracker/task-table/task-table.module').then((m) => m.TaskTableModule)
 	},
 	{
+		path: 'sessions-list',
+		loadComponent: () =>
+			import('../time-tracker/timer-session/timer-session.component').then((m) => m.TimerSessionComponent)
+	},
+	{
 		path: '**',
 		redirectTo: ''
 	}

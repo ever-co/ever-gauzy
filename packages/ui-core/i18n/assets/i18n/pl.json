@@ -4373,6 +4373,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "Aby uzyskać bardziej elastyczne śledzenie czasu i aktywności, proszę <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">pobrać</a> i używać <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">aplikacji Gauzy Desktop Timer</a>",
 		"STATUS": "Śledzenie czasu jest już uruchomione w {{ source }}",
 		"VERSION": "Wersja v{{ version }}",
+		"OS": "OS: {{ os }} {{ systemVersion }} ({{ arch }})",
 		"ARCHITECTURE": "Architektura: {{ arch }}",
 		"WAIT_FOR": "Oczekiwanie na rozpoczęcie przez {{ name }}..",
 		"SETUP": {
@@ -4599,6 +4600,8 @@
 		"DUE": "Z powodu / Do zapłaty",
 		"AW_CONNECTED": "Połączony z ActivityWatch",
 		"AW_DISCONNECTED": "ActivityWatch jest odłączony",
+		"SESSION_LIST": "Lista sesji",
+		"SESSION": "sesja",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "Pomyślnie usunięto ostatni zrzut ekranu i aktywności",
 			"CANT_RUN_TIMER": "Nie możesz uruchomić timera na razie",
@@ -4644,7 +4647,8 @@
 			"WEEKLY_RECAP": "Cotygodniowe Podsumowanie",
 			"MONTHLY_RECAP": "Miesięczne Podsumowanie",
 			"INSTALL_PLUGIN": "Zainstaluj wtyczkę",
-			"OPEN_LOG_HISTORY": "Historia dzienników"
+			"OPEN_LOG_HISTORY": "Historia dzienników",
+			"SESSIONS": "Sesje"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Śledzenie czasu według godzin",

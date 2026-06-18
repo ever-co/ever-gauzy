@@ -44,7 +44,9 @@ export const createDefaultGoals = async (
 
 export const updateDefaultGoalProgress = async (dataSource: DataSource): Promise<Goal[]> => {
 	const goals: Goal[] = await dataSource.manager.find(Goal, {
-		relations: ['keyResults']
+		relations: {
+            keyResults: true
+        }
 	});
 	if (goals && goals.length > 0) {
 		await Promise.all(

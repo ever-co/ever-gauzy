@@ -100,7 +100,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 
 		const { dbConnectionOptions } = this._configService;
 
-		switch (dbConnectionOptions.type) {
+		switch (dbConnectionOptions.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 				sumQuery = `

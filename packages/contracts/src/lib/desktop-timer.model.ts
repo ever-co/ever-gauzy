@@ -76,5 +76,11 @@ export interface ILogRequestPage {
 	logLevel?: TLogLevel;
 }
 
+export interface IOSInfo {
+	os: NodeJS.Platform;
+	arch: NodeJS.Architecture;
+	version: string;
+}
+
 // Combine them into a union
 export type AuditLogArgs = ILogRequest;

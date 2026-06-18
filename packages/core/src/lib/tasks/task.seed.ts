@@ -48,7 +48,11 @@ export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant,
 			tenantId: tenant.id,
 			organizationId: organization.id
 		},
-		relations: ['members', 'members.employee']
+		relations: {
+            members: {
+                employee: true
+            }
+        }
 	});
 	const users = await dataSource.manager.find(User);
 	const employees = await dataSource.manager.find(Employee);
@@ -150,7 +154,11 @@ export const createRandomTask = async (dataSource: DataSource, tenants: ITenant[
 					tenantId,
 					organizationId
 				},
-				relations: ['members', 'members.employee']
+				relations: {
+                    members: {
+                        employee: true
+                    }
+                }
 			});
 
 			const tags: ITag[] = await createTags(dataSource, labels, tenant, organization);

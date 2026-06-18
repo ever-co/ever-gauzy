@@ -39,7 +39,7 @@ ARG NX_BRANCH
 ARG VERDACCIO_TOKEN
 
 
-FROM node:24.14.0-alpine3.23 AS dependencies
+FROM node:24.16.0-alpine3.23 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -78,6 +78,10 @@ RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi
 
+# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them.
+# Without this, patch-package prints "No patch files found" and the typeorm v1 compat patch is
+# never applied. (typeorm is installed here because packages/core/package.json is copied above.)
+COPY --chown=node:node patches ./patches
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
     && yarn postinstall.manual \
     && yarn cache clean
@@ -124,7 +128,7 @@ RUN rm -rf /srv/gauzy-mcp-auth/dist
 RUN yarn build:mcp-auth:prod
 
 # Only prod dependencies
-FROM node:24.14.0-alpine3.23 AS proddependencies
+FROM node:24.16.0-alpine3.23 AS proddependencies
 
 RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
     && npm install --quiet node-gyp@10.2.0 -g \
@@ -156,6 +160,9 @@ RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi
 
+# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them
+# (see note in the dependencies stage above).
+COPY --chown=node:node patches ./patches
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
     && yarn postinstall.manual \
     && yarn cache clean

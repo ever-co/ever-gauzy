@@ -22,7 +22,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(this.name + ' start running!'));
 
-		switch (queryRunner.connection.options.type) {
+		switch (queryRunner.dataSource.options.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 				await this.sqliteSeedDefaultIssueTypes(queryRunner);
@@ -34,7 +34,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 				await this.mysqlSeedDefaultIssueTypes(queryRunner);
 				break;
 			default:
-				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+				throw Error(`Unsupported database: ${queryRunner.dataSource.options.type}`);
 		}
 	}
 	/**
@@ -84,11 +84,11 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 					);
 				`;
 
-				await queryRunner.connection.manager.query(insertQuery, imageAsset);
+				await queryRunner.dataSource.manager.query(insertQuery, imageAsset);
 
 				payload.push(uuidv4(), imageAssetId);
 
-				await queryRunner.connection.manager.query(
+				await queryRunner.dataSource.manager.query(
 					`
 					INSERT INTO "issue_type" (
 						"name", "value", "description", "icon", "color", "isSystem", "id", "imageId"
@@ -139,11 +139,11 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 					RETURNING id;
 				`;
 				const imageAsset = [name, filePath, FileStorageProviderEnum.LOCAL, height, width, size];
-				const image_asset = await queryRunner.connection.manager.query(insertQuery, imageAsset);
+				const image_asset = await queryRunner.dataSource.manager.query(insertQuery, imageAsset);
 				const imageAssetId = image_asset[0]['id'];
 
 				payload.push(imageAssetId);
-				await queryRunner.connection.manager.query(
+				await queryRunner.dataSource.manager.query(
 					`
 					INSERT INTO "issue_type" (
 						"name", "value", "description", "icon", "color", "isSystem", "imageId"

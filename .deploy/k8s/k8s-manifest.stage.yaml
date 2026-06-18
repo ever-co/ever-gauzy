@@ -101,6 +101,10 @@ spec:
                       readOnlyRootFilesystem: false
                       runAsNonRoot: false
                   image: registry.digitalocean.com/ever/gauzy-api-stage:latest
+                  resources:
+                      requests:
+                          cpu: '100m'
+                          memory: '672Mi'
                   env:
                       - name: API_HOST
                         value: 0.0.0.0
@@ -345,6 +349,10 @@ spec:
                       readOnlyRootFilesystem: false
                       runAsNonRoot: false
                   image: registry.digitalocean.com/ever/gauzy-webapp-stage:latest
+                  resources:
+                      requests:
+                          cpu: '50m'
+                          memory: '64Mi'
                   env:
                       - name: DEMO
                         value: 'false'
@@ -413,6 +421,10 @@ spec:
                       readOnlyRootFilesystem: false
                       runAsNonRoot: false
                   image: registry.digitalocean.com/ever/gauzy-worker-stage:latest
+                  resources:
+                      requests:
+                          cpu: '50m'
+                          memory: '256Mi'
                   env:
                       - name: API_HOST
                         value: 0.0.0.0

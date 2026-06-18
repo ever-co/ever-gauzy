@@ -38,6 +38,10 @@ spec:
                       readOnlyRootFilesystem: false
                       runAsNonRoot: false
                   image: registry.digitalocean.com/ever/gauzy-mcp-auth-stage:latest
+                  resources:
+                      requests:
+                          cpu: '50m'
+                          memory: '448Mi'
                   env:
                       - name: DB_URI
                         value: '$DB_URI'
