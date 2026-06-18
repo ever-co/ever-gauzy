@@ -528,6 +528,10 @@ jobs:
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
           NX_PLUGIN_NO_TIMEOUTS: true
+          # Run Nx plugins in-process: isolated plugin workers intermittently fail to spawn on the
+          # self-hosted Windows runners ("Failed to start plugin worker") -> random package build
+          # failures. Matches the e2e workflow's proven setting on the same box.
+          NX_ISOLATE_PLUGINS: false
           NX_DAEMON: false
 
   release-windows-arm64:
@@ -704,4 +708,8 @@ jobs:
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
           NX_PLUGIN_NO_TIMEOUTS: true
+          # Run Nx plugins in-process: isolated plugin workers intermittently fail to spawn on the
+          # self-hosted Windows runners ("Failed to start plugin worker") -> random package build
+          # failures. Matches the e2e workflow's proven setting on the same box.
+          NX_ISOLATE_PLUGINS: false
           NX_DAEMON: false
