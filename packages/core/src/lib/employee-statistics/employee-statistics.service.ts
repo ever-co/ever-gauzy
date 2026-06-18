@@ -202,19 +202,15 @@ export class EmployeeStatisticsService {
 	 * till the specified Date(searchMonth)
 	 * lastNMonths = 1, for last 1 month and 12 for an year
 	 */
-	employeeIncomeInNMonths = async (
+    employeeIncomeInNMonths = async (
 		employeeIds: string[],
 		{ startDate, endDate }: IDateRangePicker,
 		organizationId: string
 	) =>
 		await this.incomeService.findAll({
 			select: ['employeeId', 'valueDate', 'amount', 'currency', 'notes', 'isBonus'],
-			join: {
-				alias: 'income',
-				leftJoinAndSelect: {
-					client: 'income.client'
-				}
-			},
+			// typeorm-v1: `join.leftJoinAndSelect: { client }` is expressed as `relations` now
+			relations: { client: true },
 			where: {
 				organizationId,
 				employee: {

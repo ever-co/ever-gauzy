@@ -27,8 +27,8 @@
 		"lib:watch": "yarn nx build plugin-jitsu-analytics --watch"
 	},
 	"peerDependencies": {
-		"@nestjs/common": "^11.1.14",
-		"@nestjs/core": "^11.1.14"
+		"@nestjs/common": "^11.1.26",
+		"@nestjs/core": "^11.1.26"
 	},
 	"dependencies": {
 		"@gauzy/config": "^0.1.0",
@@ -38,7 +38,7 @@
 		"chalk": "^4.1.0",
 		"node-fetch": "^2.6.7",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.28"
+		"typeorm": "^1.0.0"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",

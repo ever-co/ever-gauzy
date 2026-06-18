@@ -199,7 +199,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 						 *
 						 * @deprecated
 						 */
-						...(options && options.join ? { join: options.join } : {}),
 						...(options && options.select ? { select: options.select } : {}),
 						...(options && options.relations ? { relations: options.relations } : {}),
 						...(options && options.where ? { where: options.where } : {}),

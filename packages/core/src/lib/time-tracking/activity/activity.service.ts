@@ -92,7 +92,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				query.addSelect(p(`"${query.alias}"."employeeId"`), `employeeId`);
 				query.addSelect(p(`"${query.alias}"."date"`), `date`);
 
-				switch (config.dbConnectionOptions.type) {
+				switch (config.dbConnectionOptions.type as DatabaseTypeEnum) {
 					case DatabaseTypeEnum.sqlite:
 					case DatabaseTypeEnum.betterSqlite3:
 						query.addSelect(`time("${query.alias}"."time")`, `time`);
@@ -111,7 +111,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				query.addSelect(p(`"${query.alias}"."title"`), `title`);
 				query.groupBy(p(`"${query.alias}"."date"`));
 
-				switch (config.dbConnectionOptions.type) {
+				switch (config.dbConnectionOptions.type as DatabaseTypeEnum) {
 					case DatabaseTypeEnum.sqlite:
 					case DatabaseTypeEnum.betterSqlite3:
 						query.addGroupBy(`time("${query.alias}"."time")`);
@@ -192,7 +192,9 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				if (empIds.length > 0) {
 					const employees = await this.typeOrmEmployeeRepository.find({
 						where: { id: In(empIds), tenantId, organizationId },
-						relations: ['user']
+						relations: {
+                            user: true
+                        }
 					});
 					employeeById = indexBy(employees, 'id');
 				}
@@ -244,7 +246,9 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 							tenantId,
 							organizationId
 						},
-						relations: ['user']
+						relations: {
+                            user: true
+                        }
 					});
 					employeeById = indexBy(employees, 'id');
 				}

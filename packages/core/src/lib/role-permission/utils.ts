@@ -89,7 +89,7 @@ export class RolePermissionUtils {
 	 */
 	private static async getAllTenants(queryRunner: QueryRunner): Promise<ITenant[]> {
 		const query = p(`SELECT * FROM "tenant"`);
-		return await queryRunner.connection.manager.query(query);
+		return await queryRunner.dataSource.manager.query(query);
 	}
 
 	/**
@@ -100,9 +100,9 @@ export class RolePermissionUtils {
 	 */
 	private static async getRolesByTenantId(queryRunner: QueryRunner, tenantId: ID): Promise<IRole[]> {
 		let query = p(`SELECT * FROM "role" WHERE "tenantId" = $1`);
-		query = replacePlaceholders(query, queryRunner.connection.options.type as DatabaseTypeEnum);
+		query = replacePlaceholders(query, queryRunner.dataSource.options.type as DatabaseTypeEnum);
 
-		return await queryRunner.connection.manager.query(query, [tenantId]);
+		return await queryRunner.dataSource.manager.query(query, [tenantId]);
 	}
 
 	/**
@@ -158,7 +158,7 @@ export class RolePermissionUtils {
 		roleId: ID,
 		permission: PermissionsEnum
 	): Promise<boolean> {
-		const dbType = queryRunner.connection.options.type as DatabaseTypeEnum;
+		const dbType = queryRunner.dataSource.options.type as DatabaseTypeEnum;
 		let query = p(`
 			SELECT DISTINCT
 				"distinctAlias"."role_permission_id"
@@ -184,7 +184,7 @@ export class RolePermissionUtils {
 		`);
 		query = replacePlaceholders(query, dbType);
 
-		const result = await queryRunner.connection.manager.query(query, [
+		const result = await queryRunner.dataSource.manager.query(query, [
 			tenantId,
 			permission,
 			roleId,
@@ -211,7 +211,7 @@ export class RolePermissionUtils {
 		permission: PermissionsEnum,
 		isEnabled: boolean
 	): Promise<any[]> {
-		const dbType = queryRunner.connection.options.type as DatabaseTypeEnum;
+		const dbType = queryRunner.dataSource.options.type as DatabaseTypeEnum;
 		const payload = [tenantId, roleId, permission, isEnabled ? 1 : 0];
 
 		// Add UUID for specific database types
@@ -232,7 +232,7 @@ export class RolePermissionUtils {
 	 * @param payload - The payload for the insert query
 	 */
 	private static async insertRolePermissions(queryRunner: QueryRunner, payload: any[]): Promise<void> {
-		const dbType = queryRunner.connection.options.type as DatabaseTypeEnum;
+		const dbType = queryRunner.dataSource.options.type as DatabaseTypeEnum;
 		let query: string;
 
 		switch (dbType) {
@@ -255,7 +255,7 @@ export class RolePermissionUtils {
 
 		query = replacePlaceholders(query, dbType);
 		console.log(chalk.yellow(`Insert Query: ${query}`));
-		await queryRunner.connection.manager.query(query, payload);
+		await queryRunner.dataSource.manager.query(query, payload);
 		console.log(chalk.green(`Inserted role permission for ${dbType}:`, payload));
 	}
 }

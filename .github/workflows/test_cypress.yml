@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Cypress install
         uses: cypress-io/github-action@v5
@@ -61,7 +61,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -70,7 +70,7 @@ jobs:
           $cacheDir = yarn cache dir
           "dir=$cacheDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}

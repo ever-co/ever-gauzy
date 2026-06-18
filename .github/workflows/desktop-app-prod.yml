@@ -23,19 +23,19 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -93,7 +93,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump version desktop app
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -140,19 +140,19 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -216,7 +216,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump version desktop app
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -265,19 +265,19 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -317,7 +317,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump version desktop app
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -376,7 +376,7 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           clean: false
 
@@ -394,7 +394,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
         shell: powershell
@@ -449,7 +449,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump version desktop app
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -539,7 +539,7 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           clean: false
 
@@ -557,7 +557,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
           architecture: arm64
 
       - name: Get yarn cache directory path
@@ -565,7 +565,7 @@ jobs:
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -629,7 +629,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump version desktop app
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')

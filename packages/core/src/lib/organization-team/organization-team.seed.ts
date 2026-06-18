@@ -20,7 +20,11 @@ export const createDefaultTeams = async (
 	// Load employees with user.role relation to check for admin users
 	const employeesWithRoles = await dataSource.manager.find(Employee, {
 		where: { organizationId, tenantId },
-		relations: ['user', 'user.role']
+		relations: {
+            user: {
+                role: true
+            }
+        }
 	});
 
 	const organizationTeams: OrganizationTeam[] = [];
@@ -198,7 +202,9 @@ export const updateDemoUsersLastTeam = async (dataSource: DataSource, organizati
 				tenantId,
 				organizationId
 			},
-			relations: ['organizationTeam']
+			relations: {
+                organizationTeam: true
+            }
 		});
 
 		if (teamMembership && teamMembership.organizationTeam) {
