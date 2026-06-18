@@ -6,7 +6,7 @@ export const ManageEmployeesPage = {
 	selectProjectDropdownCss: '#projectSelection',
 	selectProjectDropdownOptionCss: 'div.ng-option > span.ng-option-label',
 	sendInviteButtonCss: 'nb-card-footer > button[status="success"]',
-	addEmployeeButtonCss: 'button[status="success"]',
+	addEmployeeButtonCss: 'button.create',
 	editEmployeeButtonCss: 'button.action.primary',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	deleteEmployeeButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',

@@ -1,6 +1,6 @@
 export const ClientsPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	addButtonCss: 'span.show-button button[status="success"]',
+	addButtonCss: 'button.create',
 	editButtonCss: 'div.btn-group.actions button.action.primary',
 	inviteButtonCss: 'ngx-contact-action button[status="success"]',
 	deleteButtonCss: 'div.btn-group.actions button:has(nb-icon.status-danger)',
