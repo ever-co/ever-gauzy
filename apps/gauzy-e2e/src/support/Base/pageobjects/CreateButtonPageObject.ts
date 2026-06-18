@@ -1,5 +1,5 @@
 export const CreateButton = {
-	createButtonCss: 'nb-action.show-large-up > button[status="success"]',
+	createButtonCss: 'button.create',
 	createButtonOptionCss:
 		'nb-menu.context-menu > ul.menu-items > li.menu-item > a',
 	titleTextCss: 'nb-menu.context-menu > ul.menu-items span.menu-title',

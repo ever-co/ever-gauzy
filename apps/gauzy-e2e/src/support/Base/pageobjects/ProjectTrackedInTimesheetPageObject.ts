@@ -1,7 +1,7 @@
 export const ProjectTrackedInTimesheetPage = {
     gridButtonCss: 'div.layout-switch > button',
     requestNewProjectButtonCss: '.gauzy-button-container button[status="success"]',
-    projectNameInputCss: '[formcontrolname="name"]',
+    projectNameInputCss: '#name',
     selectEmployeeMultiSelectCss: 'ga-employee-multi-select button.select-button',
     selectEmployeeDropdownOptionCss: '.option-list nb-option',
     saveProjectButtonCss: 'div.action-buttons > button[status="success"]',

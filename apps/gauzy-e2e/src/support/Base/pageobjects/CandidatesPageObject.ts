@@ -9,7 +9,7 @@ export const CandidatesPage = {
 	lastNameInputCss: '#lastName',
 	usernameInputCss: '#username',
 	newCandidateEmailInputCss: '#email',
-	passwordInputCss: '#password',
+	passwordInputCss: 'input#password',
 	imageInputCss: '#inputImageUrl',
 	newCandidateDateInputCss: '#appliedDate',
 	addTagsDropdownCss: '#addTags',

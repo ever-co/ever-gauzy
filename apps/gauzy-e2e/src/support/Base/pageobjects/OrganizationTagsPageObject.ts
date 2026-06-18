@@ -1,5 +1,5 @@
 export const OrganizationTagsPage = {
-	addTagButtonCss: 'button.create',
+	addTagButtonCss: 'button[status="success"]:has-text("Add")',
 	closeDialogButtonCss: 'nb-card-header span.cancel i.fa-times',
 	tagNameInputCss: '#inputName',
 	tagColorInputCss: '#inputColor',

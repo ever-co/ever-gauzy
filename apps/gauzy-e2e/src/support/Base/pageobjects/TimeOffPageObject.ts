@@ -1,6 +1,6 @@
 export const TimeOffPage = {
 	requestButtonCss: 'div.actions-container button[status="success"]',
-	employeeDropdownCss: 'ngx-time-off-request-mutation > nb-card.main ga-employee-selector.employees',
+	employeeDropdownCss: 'ngx-time-off-request-mutation ga-employee-selector.employees',
 	employeeDropdownOptionCss: 'div.ng-option[role="option"]',
 	timeOffPolicyDropdownCss: 'nb-select[id="policy"]',
 	timeOffPolicyDropdownOptionCss: '.option-list nb-option',
