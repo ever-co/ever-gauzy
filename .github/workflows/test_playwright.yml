@@ -67,13 +67,21 @@ jobs:
           # the app reads .env. Without this the timestamp columns resolve to Postgres 'timestamp' and
           # better-sqlite3 rejects them -> API crashes at DataSource.initialize -> every spec fails at login.
           DB_TYPE: 'better-sqlite3'
+          # This self-hosted runner shares :3000 with other dev processes (e.g. a local Next.js app),
+          # so run the e2e API on :3001 to avoid the port clash. The web bundle is repointed to match.
+          API_PORT: '3001'
+          API_BASE_URL: 'http://localhost:3001'
 
       - name: Build Web (gauzy) for static serving
         # The Angular dev server (nx serve gauzy) OOMs over a long e2e run. Build once and serve the
         # static output instead — stable + low memory. The app uses hash routing + an absolute API
-        # URL (http://localhost:3000), so a plain static file server is sufficient (no proxy/SPA fallback).
+        # URL baked into the bundle, so a plain static file server is sufficient (no proxy/SPA fallback).
         shell: bash
-        run: yarn nx build gauzy -c local || { echo "::warning::gauzy build failed — retry 1 (nx cache skips done deps)"; yarn nx build gauzy -c local; }
+        run: |
+          yarn nx build gauzy -c local || { echo "::warning::gauzy build failed — retry 1 (nx cache skips done deps)"; yarn nx build gauzy -c local; }
+          # The bundle bakes the API URL as http://localhost:3000; the API runs on :3001 here (shared
+          # runner), so repoint the built bundle at :3001 to match.
+          grep -rl 'localhost:3000' dist/apps/gauzy --include='*.js' | xargs -r sed -i 's#localhost:3000#localhost:3001#g'
         env:
           NX_NO_CLOUD: true
           NX_ISOLATE_PLUGINS: 'false'
@@ -94,11 +102,11 @@ jobs:
         run: |
           deadline=$((SECONDS + 600))   # 10 min hard cap
           while (( SECONDS < deadline )); do
-            api=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:3000/api || true)
+            api=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:3001/api || true)
             web=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:4200 || true)
             echo "waiting (${SECONDS}s): api=$api web=$web"
             if [ "$api" != "000" ] && [ "$web" != "000" ]; then
-              echo "✅ API (:3000) and Web (:4200) are up"; exit 0
+              echo "✅ API (:3001) and Web (:4200) are up"; exit 0
             fi
             if npx forever list 2>/dev/null | grep -qi "STOPPED"; then
               echo "❌ A server process crashed (forever reports STOPPED) — aborting early."; exit 1
