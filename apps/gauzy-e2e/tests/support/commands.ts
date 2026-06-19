@@ -133,6 +133,11 @@ export const CustomCommands = {
 		await contactsLeadsPage.clickCardBody();
 		await contactsLeadsPage.websiteInputVisible();
 		await contactsLeadsPage.enterWebsiteInputData(website);
+		// The contact-mutation form resets the Name control whenever an earlier field is
+		// cleared-then-filled (an Angular re-render on valueChanges), leaving step 1 invalid and the
+		// stepper's Next disabled. Re-set Name as the last action before advancing — raw fill, no
+		// clearField, so it doesn't re-trigger the reset.
+		await getPage().locator('[formcontrolname="name"]').first().fill(fullName);
 		await contactsLeadsPage.saveButtonVisible();
 		await contactsLeadsPage.clickSaveButton();
 		await contactsLeadsPage.countryDropdownVisible();
@@ -294,6 +299,8 @@ export const CustomCommands = {
 		await clientsPage.clickCardBody();
 		await clientsPage.websiteInputVisible();
 		await clientsPage.enterWebsiteInputData(website);
+		// Same contact-mutation Name-reset quirk as addContact: re-set Name (raw fill) before advancing.
+		await getPage().locator('[formcontrolname="name"]').first().fill(fullName);
 		await clientsPage.saveButtonVisible();
 		await clientsPage.clickSaveButton();
 		await clientsPage.countryDropdownVisible();
