@@ -19,9 +19,12 @@ const loc = (selector: string) => getPage().locator(selector);
 export const getTitle = async (): Promise<string> => getPage().title();
 
 export const verifyText = async (selector: string, data: string) =>
-	// .first(): same lenient-match rationale as verifyElementIsVisible — current screens may render
-	// the target selector more than once (e.g. a header reused across stacked nb-cards).
-	expect(loc(selector).first()).toContainText(data, { timeout: defaultCommandTimeout });
+	// Verify SOME element matching `selector` contains `data` (not necessarily the first). The earlier
+	// .first().toContainText asserted only the first match, which fails the common "is X among the
+	// rendered options/rows/cards?" check when X isn't first (dropdown options, grid rows, reused
+	// headers). Filter by text then assert visibility — covers both the single-element and among-many
+	// intents, retry-safe, and no Playwright strict-mode violation.
+	expect(loc(selector).filter({ hasText: data }).first()).toBeVisible({ timeout: defaultCommandTimeout });
 
 export const verifyValue = async (selector: string, data: string) =>
 	expect(loc(selector).first()).toHaveValue(data, { timeout: defaultCommandTimeout });
