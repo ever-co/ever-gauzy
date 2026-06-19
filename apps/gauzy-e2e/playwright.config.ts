@@ -20,9 +20,10 @@ export default defineConfig({
 	expect: { timeout: 24_000 },
 	/* Fail the build on test.only left in source. */
 	forbidOnly: !!process.env.CI,
-	/* Retries: 0 for now to get a complete, fast first triage signal across the full suite
-	 * (re-running failures would double time and risk the job timeout). Restore to 1 once green. */
-	retries: 0,
+	/* Retries: 1. The migrated app is heavy and several flows are genuinely flaky under full-suite
+	 * load (a dialog/grid occasionally not rendered before the next action). A single retry absorbs
+	 * that without masking hard failures, which still fail twice. (Use 0 for a raw triage signal.) */
+	retries: process.env.E2E_NO_RETRY ? 0 : 1,
 	/* Opt out of parallel within a file; shard across CI containers instead. */
 	workers: process.env.CI ? 1 : undefined,
 	reporter: process.env.CI

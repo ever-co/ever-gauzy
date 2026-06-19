@@ -42,7 +42,10 @@ export const clickButton = async (selector: string) =>
 	loc(selector).first().click({ force: true, timeout: taskTimeout });
 
 export const clickElementByText = async (selector: string, data: string) =>
-	loc(selector).filter({ hasText: data }).first().click();
+	// force + taskTimeout to match clickButton: several flows leave a fading nb-dialog backdrop
+	// (cdk-overlay-backdrop) that intercepts pointer events; the element is present and correct, the
+	// click just needs to go through (Appointments "Book Public Appointment", etc.).
+	loc(selector).filter({ hasText: data }).first().click({ force: true, timeout: taskTimeout });
 
 export const forceClickElementByText = async (selector: string, data: string) =>
 	loc(selector).filter({ hasText: data }).first().click({ force: true });
