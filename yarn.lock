@@ -15984,12 +15984,12 @@
     debug "^4.4.3"
 
 "@typescript-eslint/scope-manager@8.56.0", "@typescript-eslint/scope-manager@^8.0.0":
-  version "8.61.0"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/scope-manager/-/scope-manager-8.61.0.tgz#93c2520d05653fe65eb9ee98efc74fd0134a7852"
-  integrity sha512-IWdXFHFSb6mlC3HPc7QsLDm5zYEbUla6trDEHf32D3/dnuUyXd87plScSNXSbm0/RxMvObpI17sv/EDTGrGZkA==
+  version "8.61.1"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/scope-manager/-/scope-manager-8.61.1.tgz#2479921a40fdb0afa18f5838fae6167264b417b2"
+  integrity sha512-L2bdIeoQS8FlKAvONAr20w6OcLXeB+qiDKbAooS9A0Ben+iSIkBef0FxqwKWYqt5sa0i4KJtxVyVmhMylKzF5w==
   dependencies:
-    "@typescript-eslint/types" "8.61.0"
-    "@typescript-eslint/visitor-keys" "8.61.0"
+    "@typescript-eslint/types" "8.61.1"
+    "@typescript-eslint/visitor-keys" "8.61.1"
 
 "@typescript-eslint/tsconfig-utils@8.55.0":
   version "8.55.0"
@@ -16022,10 +16022,10 @@
   resolved "https://registry.yarnpkg.com/@typescript-eslint/types/-/types-8.56.0.tgz#a2444011b9a98ca13d70411d2cbfed5443b3526a"
   integrity sha512-DBsLPs3GsWhX5HylbP9HNG15U0bnwut55Lx12bHB9MpXxQ+R5GC8MwQe+N1UFXxAeQDvEsEDY6ZYwX03K7Z6HQ==
 
-"@typescript-eslint/types@8.61.0":
-  version "8.61.0"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/types/-/types-8.61.0.tgz#0ddb46e012a4288292950bdd253db42f278ce64d"
-  integrity sha512-9QTQpZ5Iin4CdIodfbDQFSeiSJKidgYJYug1P9CC2xWgUTvlmixViqDZNciMjwLBZyJnG4tGmPl97rVAFb1AJg==
+"@typescript-eslint/types@8.61.1":
+  version "8.61.1"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/types/-/types-8.61.1.tgz#0c51f518e4e6848371a1c988e859d59eb7522d5a"
+  integrity sha512-G+CRlPqLv7Bz1IZVs03x5K59F1veqL0EJUROAdGhKsEq8qOiRiZbI+HUojPq5l0fEGOKModD9br6lObhB8zkoA==
 
 "@typescript-eslint/typescript-estree@8.55.0":
   version "8.55.0"
@@ -16067,12 +16067,12 @@
     "@typescript-eslint/types" "8.56.0"
     "@typescript-eslint/typescript-estree" "8.56.0"
 
-"@typescript-eslint/visitor-keys@8.55.0", "@typescript-eslint/visitor-keys@8.56.0", "@typescript-eslint/visitor-keys@8.61.0", "@typescript-eslint/visitor-keys@^8.0.0":
-  version "8.61.0"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/visitor-keys/-/visitor-keys-8.61.0.tgz#39b4e1ab8936d23bea973d39fd092f9aa21f275e"
-  integrity sha512-QVLZu3ZPQEE+HICQyAMZ2yLQhxf0meY/wx6Hx14YcTNj13JB3qHlX3lJ02L3fLGHgERRH71kvYDwiXIguT3AjQ==
+"@typescript-eslint/visitor-keys@8.55.0", "@typescript-eslint/visitor-keys@8.56.0", "@typescript-eslint/visitor-keys@8.61.1", "@typescript-eslint/visitor-keys@^8.0.0":
+  version "8.61.1"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/visitor-keys/-/visitor-keys-8.61.1.tgz#546cf102b4efdb72a9a08e63a1b0d7d745eb66eb"
+  integrity sha512-6fJ9MHWtK14C1DSkiMlHUSOmrVebL7150xZJBlJiL62jjhIA4JmOq6flwBgDxIdBKKdoiZRel+dfPD5MLfny3w==
   dependencies:
-    "@typescript-eslint/types" "8.61.0"
+    "@typescript-eslint/types" "8.61.1"
     eslint-visitor-keys "^5.0.0"
 
 "@ungap/structured-clone@^1.3.0":
@@ -42773,16 +42773,11 @@ undici@7.18.2:
   integrity sha512-y+8YjDFzWdQlSE9N5nzKMT3g4a5UBX1HKowfdXh0uvAnTaqqwqB92Jt4UXBAeKekDs5IaDKyJFR4X1gYVCgXcw==
 
 undici@^6.10.2, undici@^6.23.0:
-  version "6.24.0"
-  resolved "https://registry.yarnpkg.com/undici/-/undici-6.24.0.tgz#ad36b879b4882d14addc13dd641da7ed7ac7623a"
-  integrity sha512-lVLNosgqo5EkGqh5XUDhGfsMSoO8K0BAN0TyJLvwNRSl4xWGZlCVYsAIpa/OpA3TvmnM01GWcoKmc3ZWo5wKKA==
+  version "6.27.0"
+  resolved "https://registry.yarnpkg.com/undici/-/undici-6.27.0.tgz#41f9e48f7c5a40d27376caaead8c9a9fc7bca9c4"
+  integrity sha512-YmfV3YnEDzXRC5lZ2jWtWWHKGUm1zIt8AhesR1tens+HTNv+YZlN/dp6G727LOvMJ8xjP9Be7Y2Sdr96LDm+pg==
 
-undici@^7.0.0, undici@^7.12.0:
-  version "7.22.0"
-  resolved "https://registry.yarnpkg.com/undici/-/undici-7.22.0.tgz#7a82590a5908e504a47d85c60b0f89ca14240e60"
-  integrity sha512-RqslV2Us5BrllB+JeiZnK4peryVTndy9Dnqq62S3yYRRTj0tFQCwEniUy2167skdGOy3vqRzEvl1Dm4sV2ReDg==
-
-undici@^7.19.0:
+undici@^7.0.0, undici@^7.12.0, undici@^7.19.0:
   version "7.24.4"
   resolved "https://registry.yarnpkg.com/undici/-/undici-7.24.4.tgz#873bce680d7c6354c941399fd4e8ea4563de4ea7"
   integrity sha512-BM/JzwwaRXxrLdElV2Uo6cTLEjhSb3WXboncJamZ15NgUURmvlXvxa6xkwIOILIjPNo9i8ku136ZvWV0Uly8+w==
