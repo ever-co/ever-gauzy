@@ -9,6 +9,7 @@
 		"CGNAT",
 		"CWE",
 		"denylist",
+		"ESSRFBLOCKED",
 		"GHSA",
 		"hextet",
 		"IDOR",

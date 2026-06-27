@@ -4,6 +4,27 @@ import { isNotEmpty, isObject } from '@gauzy/utils';
 export const sensitiveSecretKeys = ['apiKey', 'apiSecret', 'openAiSecretKey', 'openAiOrganizationId'];
 
 /**
+ * Setting names whose `settingsValue` is NOT a secret and may be returned to API clients in
+ * cleartext. The masking policy is default-deny: every `settingsValue` is masked EXCEPT for the
+ * names in this allowlist. This closes the gap where OAuth access/refresh tokens and client secrets
+ * (access_token, refresh_token, client_secret, accessToken, consumerSecret, ...) were serialized
+ * verbatim because they were not in the old hard-coded sensitive list (GHSA-3rqg-gpm9-gx84).
+ */
+export const nonSecretSettingKeys = [
+	'isEnabled',
+	'sync',
+	'autoSync',
+	'syncTag',
+	'sync_tag',
+	'zone',
+	'region',
+	'setup_action',
+	'installation_id',
+	'organizationId',
+	'tenantId'
+];
+
+/**
  * Wrap specified keys in an object with a specific character.
  *
  * @param keysToWrap - An array of keys to be wrapped.

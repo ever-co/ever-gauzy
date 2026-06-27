@@ -1,6 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsBoolean, IsUUID, IsNumber, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, IsIn, IsUUID, IsNumber, Min, Max } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+
+/** Allowlist of columns that may appear in the SQL `ORDER BY` clause (prevents `sortBy` injection). */
+export const PLUGIN_CATEGORY_SORTABLE_FIELDS = ['name', 'slug', 'order', 'createdAt', 'updatedAt'] as const;
+
+/** Allowed SQL sort directions. */
+export const PLUGIN_CATEGORY_SORT_DIRECTIONS = ['ASC', 'DESC'] as const;
 
 export class PluginCategoryQueryDTO {
 	@ApiPropertyOptional({
@@ -63,20 +69,22 @@ export class PluginCategoryQueryDTO {
 	@ApiPropertyOptional({
 		description: 'Sort field',
 		example: 'name',
-		enum: ['name', 'slug', 'order', 'createdAt', 'updatedAt']
+		enum: PLUGIN_CATEGORY_SORTABLE_FIELDS
 	})
 	@IsOptional()
-	@IsString()
-	readonly sortBy?: 'name' | 'slug' | 'order' | 'createdAt' | 'updatedAt';
+	@IsIn(PLUGIN_CATEGORY_SORTABLE_FIELDS)
+	readonly sortBy?: (typeof PLUGIN_CATEGORY_SORTABLE_FIELDS)[number];
 
 	@ApiPropertyOptional({
 		description: 'Sort direction',
 		example: 'ASC',
-		enum: ['ASC', 'DESC']
+		enum: PLUGIN_CATEGORY_SORT_DIRECTIONS
 	})
 	@IsOptional()
-	@IsString()
-	readonly sortDirection?: 'ASC' | 'DESC';
+	// Normalize case so legacy clients sending `asc`/`desc` keep working, then enforce the allowlist.
+	@Transform(({ value }) => (typeof value === 'string' ? value.toUpperCase() : value))
+	@IsIn(PLUGIN_CATEGORY_SORT_DIRECTIONS)
+	readonly sortDirection?: (typeof PLUGIN_CATEGORY_SORT_DIRECTIONS)[number];
 
 	@ApiPropertyOptional({
 		description: 'Relations to include',

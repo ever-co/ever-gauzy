@@ -31,6 +31,12 @@ export function deepClone<T extends string | number | any[] | Object>(input: T):
 	// Clone objects recursively
 	output = {} as Record<string, any>;
 	for (const key in input) {
+		// Prevent prototype pollution (CWE-1321) via `__proto__`. Unlike deepMerge, `constructor` and
+		// `prototype` are intentionally NOT skipped here: cloning must preserve ordinary own data keys
+		// with those names, and the dangerous recursion only exists in deepMerge's source-driven merge.
+		if (key === '__proto__') {
+			continue;
+		}
 		if (Object.prototype.hasOwnProperty.call(input, key)) {
 			output[key] = deepClone(input[key]);
 		}
