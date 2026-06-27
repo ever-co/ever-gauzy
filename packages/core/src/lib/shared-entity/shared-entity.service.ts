@@ -48,11 +48,14 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
             // Generate a unique token for the shared entity
             const token = generateSharedEntityToken();
 
-            // Create and return the shared entity
+            // Create and return the shared entity. Persist the SAME tenant/organization that the
+            // ownership check above was scoped to, so the token-resolution path (which trusts the
+            // stored scope) cannot be widened by a caller-supplied organizationId.
             return await super.create({
                 ...input,
                 token,
-                tenantId
+                tenantId,
+                organizationId
             });
         } catch (error) {
             // Preserve intentional HTTP exceptions (e.g. the ownership ForbiddenException above)
@@ -157,7 +160,14 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
         organizationId?: ID
     ): Record<string, any> {
         const where: Record<string, any> = { id: entityId };
-        if (tenantId && repository.metadata.findColumnWithPropertyName('tenantId')) {
+        const hasTenantColumn = !!repository.metadata.findColumnWithPropertyName('tenantId');
+        // Fail closed: if the target entity IS tenant-scoped (has a tenantId column) but we have no
+        // tenantId to scope by, refuse rather than fall back to an `id`-only lookup that would bypass
+        // tenant isolation on the public token route (GHSA-gpg5-qwjc-8hqh / GHSA-cx2q-xmh2-pc38).
+        if (hasTenantColumn) {
+            if (!tenantId) {
+                throw new ForbiddenException('Cannot resolve a tenant-scoped entity without a tenant context');
+            }
             where['tenantId'] = tenantId;
         }
         if (organizationId && repository.metadata.findColumnWithPropertyName('organizationId')) {
