@@ -30,7 +30,8 @@ export function validateApplicationSecrets(): void {
 	const env = environment as unknown as Record<string, unknown>;
 
 	const weak = KNOWN_DEFAULT_SECRETS.filter(({ key, value }) => {
-		const current = (env[key] as string) ?? process.env[key];
+		// Trim so whitespace-only values (e.g. " ") are treated as unset rather than a "strong" secret.
+		const current = String((env[key] as string | undefined) ?? process.env[key] ?? '').trim();
 		return !current || current === value;
 	}).map(({ key }) => key);
 
@@ -47,7 +48,9 @@ export function validateApplicationSecrets(): void {
 	// eslint-disable-next-line no-console
 	console.error(chalk.red(guidance));
 
-	const isProduction = environment.production === true;
+	// Use the RUNTIME NODE_ENV (not only the build-time `environment.production` flag), so a deployment
+	// that runs a non-prod build with NODE_ENV=production is still protected.
+	const isProduction = process.env.NODE_ENV === 'production' || environment.production === true;
 	const isDemo = process.env.DEMO === 'true';
 
 	if (isProduction && !isDemo) {
