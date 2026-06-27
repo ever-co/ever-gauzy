@@ -47,6 +47,17 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 		try {
 			const httpServer = this.httpAdapterHost.httpAdapter.getHttpServer();
 
+			// Path<->session binding (extractSessionTenantId) needs JWT_SECRET to verify the
+			// session cookie. Without it every request silently falls back to trusting the
+			// URL tenant, re-opening the confused-deputy. Fail loudly instead of silently.
+			if (!environment.JWT_SECRET) {
+				this.logger.error(
+					'JWT_SECRET is not configured — the Plane proxy cannot bind the path tenant to ' +
+						'the authenticated session and will fall back to trusting the URL tenant. Set ' +
+						'JWT_SECRET so session-based tenant resolution is enforced.'
+				);
+			}
+
 			this.proxyResult = mountPlaneProxy(httpServer, {
 				prefix: PROXY_PREFIX,
 
@@ -56,7 +67,11 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 				 * that authentication is never skipped.
 				 */
 				extractTenantId: (req) => {
-					// 1. Explicit header / cookie (Gauzy-originated calls)
+					// Always strip a UUID path segment first so the downstream proxy app
+					// sees a clean URL regardless of which tenant signal wins below.
+					const pathTenantId = this.extractTenantIdFromPath(req);
+
+					// 1. Explicit header / cookie (Gauzy-originated calls) — JWT-validated.
 					const headerTenantId = this.extractTenantIdFromHeaders(req);
 					if (headerTenantId) {
 						this.validateTenantFromToken(req, headerTenantId);
@@ -64,13 +79,7 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 						return headerTenantId;
 					}
 
-					// 2. UUID baked into the URL path by the Plane UI
-					//    (VITE_API_BASE_URL=.../api/plane/{tenantId}). Always strip it so
-					//    the downstream proxy app sees a clean URL; keep it only as a
-					//    fallback tenant signal for unauthenticated bootstrap requests.
-					const pathTenantId = this.extractTenantIdFromPath(req);
-
-					// 3. The authenticated session cookie is the SOURCE OF TRUTH for the
+					// 2. The authenticated session cookie is the SOURCE OF TRUTH for the
 					//    tenant. When a valid session is present it OVERRIDES the path
 					//    UUID, so a request can never be served with another tenant's
 					//    resolved config (apiKey / apiSecret / CORS origins) while it
@@ -89,7 +98,7 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 						return sessionTenantId;
 					}
 
-					// 4. No session yet — public bootstrap (auth/email-check, login,
+					// 3. No session yet — public bootstrap (auth/email-check, login,
 					//    api/instances). Fall back to the path tenant so CORS and the
 					//    email-check API key resolve for the right tenant.
 					if (pathTenantId) {
