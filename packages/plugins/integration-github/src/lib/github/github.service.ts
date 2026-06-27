@@ -1,6 +1,8 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { HttpService } from '@nestjs/axios';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { firstValueFrom, switchMap } from 'rxjs';
 import { environment } from '@gauzy/config';
 import { SyncTags } from '@gauzy/constants';
@@ -26,8 +28,47 @@ export class GithubService {
 	constructor(
 		private readonly _http: HttpService,
 		private readonly _commandBus: CommandBus,
-		private readonly _integrationService: IntegrationService
+		private readonly _integrationService: IntegrationService,
+		@InjectDataSource() private readonly _dataSource: DataSource
 	) {}
+
+	/**
+	 * Rejects binding a GitHub App `installation_id` that is already linked to a DIFFERENT tenant.
+	 *
+	 * The install endpoint stores the caller-supplied `installation_id` against the caller's own
+	 * tenant without proving the caller initiated that installation, so a user could otherwise bind a
+	 * victim's `installation_id` to their own tenant and read the victim's repositories (CWE-639,
+	 * GHSA-4rwq-65wh-45h4). Enforcing first-claimant-wins uniqueness across tenants removes the
+	 * simultaneous multi-tenant-binding window. This query is intentionally NOT tenant-scoped because
+	 * it must detect bindings owned by other tenants.
+	 *
+	 * @param installationId - The GitHub App installation id being bound.
+	 * @param tenantId - The caller's tenant id.
+	 * @throws BadRequestException if the installation is already linked to another tenant.
+	 */
+	private async assertInstallationNotClaimedByAnotherTenant(installationId: string, tenantId: string): Promise<void> {
+		let existingBindings: Array<{ tenantId?: string }> = [];
+		try {
+			const repository = this._dataSource.getRepository('IntegrationSetting');
+			existingBindings = (await repository.find({
+				where: {
+					settingsName: GithubPropertyMapEnum.INSTALLATION_ID,
+					settingsValue: installationId
+				}
+			})) as Array<{ tenantId?: string }>;
+		} catch (error) {
+			// Fail OPEN on lookup errors: a transient/configuration issue must never break a legitimate
+			// GitHub install. The uniqueness check is simply skipped when it cannot run.
+			this.logger.error('Failed to verify GitHub installation uniqueness; proceeding', error?.message);
+			return;
+		}
+		const claimedByAnotherTenant = existingBindings.some(
+			(setting) => !!setting.tenantId && setting.tenantId !== tenantId
+		);
+		if (claimedByAnotherTenant) {
+			throw new BadRequestException('This GitHub App installation is already linked to another account.');
+		}
+	}
 
 	/**
 	 * Adds a GitHub App installation by validating input data, fetching an access token, and creating integration tenant settings.
@@ -45,6 +86,9 @@ export class GithubService {
 
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const { installation_id, setup_action, organizationId } = input;
+
+			// Security: reject an installation_id already bound to another tenant (GHSA-4rwq-65wh-45h4).
+			await this.assertInstallationNotClaimedByAnotherTenant(installation_id, tenantId);
 
 			/** Find the GitHub integration */
 			const integration = await this._integrationService.findOneByOptions({
@@ -109,6 +153,10 @@ export class GithubService {
 				)
 			);
 		} catch (error) {
+			// Preserve intentional HTTP exceptions (e.g. the cross-tenant uniqueness rejection above).
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			this.logger.error(`Error while creating ${IntegrationEnum.GITHUB} integration settings`, error?.message);
 			throw new Error(`Failed to add ${IntegrationEnum.GITHUB} App Installation`);
 		}
