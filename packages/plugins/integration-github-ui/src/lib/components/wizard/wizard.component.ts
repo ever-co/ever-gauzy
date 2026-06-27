@@ -148,8 +148,10 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 
 		try {
 			if (!this.window || this.window.closed) {
-				// If no window is open or the existing window is closed, open a new one
-				this.openGitHubAppPopup();
+				// If no window is open or the existing window is closed, open a new one. Awaited so the
+				// async state-nonce request completes (and `this.window` is set) BEFORE we start polling —
+				// otherwise the poller would see a null window and navigate away mid-flow.
+				await this.openGitHubAppPopup();
 			} else {
 				// If a window is already open, you can handle it here (e.g., focus or bring it to the front)
 				this.focusGitHubAppPopup();

@@ -41,7 +41,9 @@ export class GithubService {
 
 	/**
 	 * Add a GitHub app installation.
-	 * @param input The input data for the GitHub app installation.
+	 * @param input The input data for the GitHub app installation. `input.state` (the single-use nonce
+	 * from {@link createInstallState}) is REQUIRED — the server binds the installation to the tenant
+	 * recorded against that nonce and rejects requests without a valid one (GHSA-4rwq-65wh-45h4).
 	 * @returns A promise that resolves to the integration tenant object.
 	 */
 	async addInstallationApp(input: IGithubAppInstallInput): Promise<IIntegrationTenant> {

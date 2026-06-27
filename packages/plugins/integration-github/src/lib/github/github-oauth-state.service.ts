@@ -1,8 +1,9 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { randomBytes } from 'crypto';
 import { ID } from '@gauzy/contracts';
+import { EVER_REDIS_CLIENT } from '@gauzy/core';
 
 /**
  * Server-side state recorded when a GitHub App installation flow is initiated by an authenticated
@@ -17,6 +18,16 @@ export interface IGithubOAuthState {
 	userId?: ID;
 }
 
+/**
+ * Minimal slice of the (node-redis) client we use for ATOMIC single-use nonce operations. The raw
+ * client is provided globally as EVER_REDIS_CLIENT (null when REDIS_ENABLED!='true').
+ */
+interface IRedisAtomicClient {
+	get(key: string): Promise<string | null>;
+	getDel(key: string): Promise<string | null>;
+	set(key: string, value: string, options: { PX: number }): Promise<unknown>;
+}
+
 @Injectable()
 export class GithubOAuthStateService {
 	private readonly logger = new Logger(GithubOAuthStateService.name);
@@ -25,12 +36,24 @@ export class GithubOAuthStateService {
 	private static readonly CACHE_PREFIX = 'github_oauth_state:';
 	/** Single-use nonce lifetime: long enough to complete the GitHub install, short enough to limit replay. */
 	private static readonly TTL_MS = 10 * 60 * 1000; // 10 minutes
+	/** Minted nonces are 32 random bytes rendered as lowercase hex (64 chars). */
+	private static readonly NONCE_PATTERN = /^[a-f0-9]{64}$/;
 
-	constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
+	constructor(
+		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+		// Optional raw Redis client for atomic GETDEL (single-use), mirroring AuthService. Null when
+		// Redis is disabled — then we fall back to the (global, possibly multi-layer) cache manager.
+		@Optional() @Inject(EVER_REDIS_CLIENT) private readonly redisClient: IRedisAtomicClient | null
+	) {}
 
 	/** Build the namespaced cache key for a nonce. */
 	private key(nonce: string): string {
 		return `${GithubOAuthStateService.CACHE_PREFIX}${nonce}`;
+	}
+
+	/** Reject anything that is not a well-formed minted nonce (cache-key / log hygiene). */
+	private isValidNonce(nonce?: string): nonce is string {
+		return !!nonce && GithubOAuthStateService.NONCE_PATTERN.test(nonce);
 	}
 
 	/**
@@ -42,7 +65,14 @@ export class GithubOAuthStateService {
 	 */
 	async create(state: IGithubOAuthState): Promise<string> {
 		const nonce = randomBytes(32).toString('hex');
-		await this.cacheManager.set(this.key(nonce), JSON.stringify(state), GithubOAuthStateService.TTL_MS);
+		const value = JSON.stringify(state);
+		const cacheKey = this.key(nonce);
+		if (this.redisClient) {
+			// Authoritative, cross-replica store with TTL (matches the AuthService OAuth pattern).
+			await this.redisClient.set(cacheKey, value, { PX: GithubOAuthStateService.TTL_MS });
+		} else {
+			await this.cacheManager.set(cacheKey, value, GithubOAuthStateService.TTL_MS);
+		}
 		return nonce;
 	}
 
@@ -54,30 +84,38 @@ export class GithubOAuthStateService {
 	 * @returns The bound state, or `null` for an unknown, malformed or expired nonce.
 	 */
 	async peek(nonce?: string): Promise<IGithubOAuthState | null> {
-		if (!nonce) {
+		if (!this.isValidNonce(nonce)) {
 			return null;
 		}
-		const value = await this.cacheManager.get<string>(this.key(nonce));
+		const cacheKey = this.key(nonce);
+		const value = this.redisClient
+			? await this.redisClient.get(cacheKey)
+			: (await this.cacheManager.get<string>(cacheKey)) ?? null;
 		return this.deserialize(value);
 	}
 
 	/**
-	 * Resolve and invalidate a nonce so it can bind at most one installation (single-use).
+	 * Atomically resolve and invalidate a nonce so it binds at most one installation (single-use).
 	 *
 	 * @returns The bound state, or `null` for an unknown, malformed or expired nonce.
 	 */
 	async consume(nonce?: string): Promise<IGithubOAuthState | null> {
-		if (!nonce) {
+		if (!this.isValidNonce(nonce)) {
 			return null;
 		}
 		const cacheKey = this.key(nonce);
-		const value = await this.cacheManager.get<string>(cacheKey);
-		const parsed = this.deserialize(value);
-		if (parsed) {
-			// Best-effort single-use: remove the nonce so a replay cannot reuse it.
-			await this.cacheManager.del(cacheKey);
+		let value: string | null;
+		if (this.redisClient) {
+			// Atomic single-use: GETDEL guarantees exactly one caller resolves a given nonce, even
+			// across replicas, so a replay cannot reuse it (matches AuthService single-use OAuth codes).
+			value = await this.redisClient.getDel(cacheKey);
+		} else {
+			value = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+			if (value) {
+				await this.cacheManager.del(cacheKey);
+			}
 		}
-		return parsed;
+		return this.deserialize(value);
 	}
 
 	/** Safely parse a cached state value, returning `null` for anything malformed. */

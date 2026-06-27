@@ -1,6 +1,6 @@
 import { IGithubAppInstallInput } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString, Matches } from 'class-validator';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
 
 /**
@@ -44,10 +44,12 @@ export class GithubAppInstallDTO implements IGithubAppInstallInput {
 	/**
 	 * Single-use state nonce minted by `POST /integration/github/install/state` when the flow was
 	 * initiated. Required: it binds the installation to the initiating tenant/organization and
-	 * prevents cross-tenant installation hijacking (GHSA-4rwq-65wh-45h4).
+	 * prevents cross-tenant installation hijacking (GHSA-4rwq-65wh-45h4). Format: 64-char lowercase
+	 * hex (32 random bytes).
 	 */
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
+	@Matches(/^[a-f0-9]{64}$/, { message: 'state must be a valid GitHub installation nonce' })
 	readonly state: string;
 }
