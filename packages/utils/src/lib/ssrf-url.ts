@@ -28,21 +28,50 @@ const PRIVATE_IPV4_PATTERNS: RegExp[] = [
  * @param hostname - The hostname or IP literal to check (e.g. `parsedUrl.hostname`).
  */
 export function isPrivateOrLoopbackHost(hostname: string): boolean {
-	const host = (hostname || '').toLowerCase().replace(/^\[/, '').replace(/\]$/, '');
+	// Normalize: lowercase, strip IPv6 brackets and a single trailing root dot (`localhost.`).
+	const host = (hostname || '')
+		.toLowerCase()
+		.replace(/^\[/, '')
+		.replace(/\]$/, '')
+		.replace(/\.$/, '');
 	if (!host) return true;
+
 	// Hostnames
 	if (host === 'localhost' || host.endsWith('.localhost')) return true;
-	// IPv6 loopback / unspecified / link-local (fe80::/10) / unique-local (fc00::/7)
-	if (host === '::1' || host === '::') return true;
-	if (host.startsWith('fe80:') || host.startsWith('fc') || host.startsWith('fd')) return true;
-	// IPv4-mapped IPv6, e.g. ::ffff:127.0.0.1
-	const mapped = host.match(/::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
-	if (mapped) return PRIVATE_IPV4_PATTERNS.some((re) => re.test(mapped[1]));
+
+	// IPv6 literals (contain a colon).
+	if (host.includes(':')) {
+		if (host === '::1' || host === '::') return true;
+		// IPv4-mapped IPv6 in dotted form, e.g. ::ffff:127.0.0.1
+		const mappedDotted = host.match(/::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
+		if (mappedDotted) return isPrivateIpv4(mappedDotted[1]);
+		// IPv4-mapped IPv6 in hex form, e.g. ::ffff:7f00:1
+		const mappedHex = host.match(/::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+		if (mappedHex) {
+			const high = parseInt(mappedHex[1], 16);
+			const low = parseInt(mappedHex[2], 16);
+			const ipv4 = `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`;
+			return isPrivateIpv4(ipv4);
+		}
+		// Link-local (fe80::/10) and unique-local (fc00::/7) by inspecting the first hextet.
+		const firstHextet = parseInt(host.split(':')[0] || '0', 16);
+		if (Number.isFinite(firstHextet)) {
+			if ((firstHextet & 0xffc0) === 0xfe80) return true; // fe80::/10
+			if ((firstHextet & 0xfe00) === 0xfc00) return true; // fc00::/7
+		}
+		return false;
+	}
+
 	// IPv4 literal
 	if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) {
-		return PRIVATE_IPV4_PATTERNS.some((re) => re.test(host));
+		return isPrivateIpv4(host);
 	}
 	return false;
+}
+
+/** Whether the given dotted-decimal IPv4 string falls in a private/loopback/link-local range. */
+function isPrivateIpv4(ip: string): boolean {
+	return PRIVATE_IPV4_PATTERNS.some((re) => re.test(ip));
 }
 
 /**

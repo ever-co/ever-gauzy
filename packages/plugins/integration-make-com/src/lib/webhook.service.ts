@@ -5,11 +5,13 @@ import { firstValueFrom } from 'rxjs';
 import { RequestContext } from '@gauzy/core';
 import { ITimerWebhookEvent, TimerEventType, TimerEventDataType } from './interfaces/timer-webhook.interface';
 import { MakeComService } from './make-com.service';
-import { assertSafeMakeWebhookUrl } from './webhook-url.validator';
+import { assertSafeMakeWebhookUrl, createSsrfSafeHttpsAgent } from './webhook-url.validator';
 
 @Injectable()
 export class WebhookService {
 	private readonly logger = new Logger(WebhookService.name);
+	// HTTPS agent that refuses to connect to private/loopback/link-local resolved IPs (anti-SSRF).
+	private readonly ssrfSafeHttpsAgent = createSsrfSafeHttpsAgent();
 
 	constructor(
 		private readonly configService: ConfigService,
@@ -97,7 +99,9 @@ export class WebhookService {
 					timeout: 10000,
 					headers: {
 						'Content-Type': 'application/json'
-					}
+					},
+					// Re-validate the resolved destination IP at connection time (anti-DNS-rebinding).
+					httpsAgent: this.ssrfSafeHttpsAgent
 				})
 			);
 			this.logger.log(`Timer ${eventType} event sent to Make.com webhook for tenant ${tenantId}`);

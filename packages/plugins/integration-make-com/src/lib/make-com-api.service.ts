@@ -124,20 +124,27 @@ export class MakeComApiService {
 	}
 
 	/**
+	 * Read and validate the stored zone against the known allowlist.
+	 *
+	 * Returns `null` for an unset or out-of-allowlist value (e.g. a legacy row stored before
+	 * validation existed). Centralizing this prevents an unvalidated zone from ever being
+	 * interpolated into the API hostname (host-injection SSRF, GHSA-vcwx-qh95-54g6) and keeps the
+	 * read paths (getZone/getSetupStatus) consistent with the request path.
+	 */
+	private getValidatedZone(integrationTenant: IntegrationTenant): MakeComZone | null {
+		const zone = this.getSettingValue(integrationTenant, MakeSettingName.ZONE);
+		return zone && MAKE_COM_ZONES.includes(zone as MakeComZone) ? (zone as MakeComZone) : null;
+	}
+
+	/**
 	 * Resolve the zone API base URL.
 	 */
 	private getZoneBaseUrl(integrationTenant: IntegrationTenant): string {
-		const zone = this.getSettingValue(integrationTenant, MakeSettingName.ZONE) as MakeComZone;
+		const zone = this.getValidatedZone(integrationTenant);
 		if (!zone) {
 			throw new BadRequestException(
-				'Make.com zone is not configured. Please set your zone (e.g., "us2", "eu1") first.'
+				'Make.com zone is not configured or is invalid. Please set a valid zone (e.g., "us2", "eu1") first.'
 			);
-		}
-		// Defense-in-depth: never interpolate an unvalidated zone into the API hostname. Reject any
-		// stored value outside the known allowlist (e.g. legacy rows from before validation existed)
-		// to prevent host-injection SSRF (GHSA-vcwx-qh95-54g6).
-		if (!MAKE_COM_ZONES.includes(zone)) {
-			throw new BadRequestException(`Invalid Make.com zone "${zone}".`);
 		}
 		return getMakeApiBaseUrl(zone);
 	}
@@ -244,7 +251,7 @@ export class MakeComApiService {
 	 */
 	async getZone(organizationId?: string): Promise<string | null> {
 		const tenant = await this.getIntegrationTenant(organizationId);
-		return this.getSettingValue(tenant, MakeSettingName.ZONE);
+		return this.getValidatedZone(tenant);
 	}
 
 	/**
@@ -297,7 +304,7 @@ export class MakeComApiService {
 	}> {
 		const tenant = await this.getIntegrationTenant(organizationId);
 		const accessToken = this.getSettingValue(tenant, MakeSettingName.ACCESS_TOKEN);
-		const zone = this.getSettingValue(tenant, MakeSettingName.ZONE);
+		const zone = this.getValidatedZone(tenant);
 		const makeOrgId = this.getSettingValue(tenant, MakeSettingName.MAKE_ORGANIZATION_ID);
 		const makeTeamId = this.getSettingValue(tenant, MakeSettingName.MAKE_TEAM_ID);
 
@@ -306,7 +313,7 @@ export class MakeComApiService {
 
 		return {
 			hasAccessToken: !!accessToken,
-			zone: zone as MakeComZone | null,
+			zone,
 			makeOrganizationId: parsedOrgId !== null && !Number.isNaN(parsedOrgId) ? parsedOrgId : null,
 			makeTeamId: parsedTeamId !== null && !Number.isNaN(parsedTeamId) ? parsedTeamId : null,
 			isComplete: !!accessToken && !!zone && !!makeOrgId && !!makeTeamId
