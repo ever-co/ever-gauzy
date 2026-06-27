@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource, FindOneOptions, Repository } from "typeorm";
 
@@ -32,6 +32,15 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
             // Extract the tenant ID from the request context, or use the provided tenantId
             const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
+            // Security: only allow sharing a record that belongs to the caller's tenant. Without this
+            // check a user could create a share-link pointing at another tenant's record by its id
+            // (cross-tenant IDOR - GHSA-gpg5-qwjc-8hqh / GHSA-cx2q-xmh2-pc38).
+            const targetRepository = this.resolveRepository(input.entity);
+            const owned = await targetRepository.findOne({ where: { id: input.entityId, tenantId } });
+            if (!owned) {
+                throw new ForbiddenException('Cannot share an entity that does not belong to your tenant');
+            }
+
             // Generate a unique token for the shared entity
             const token = generateSharedEntityToken();
 
@@ -42,6 +51,10 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
                 tenantId
             });
         } catch (error) {
+            // Preserve intentional HTTP exceptions (e.g. the ownership ForbiddenException above)
+            if (error instanceof HttpException) {
+                throw error;
+            }
             throw new BadRequestException(`Failed to create shared entity: ${error?.message || error}`);
         }
     }
@@ -69,8 +82,11 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
             // Get the repository for the shared entity
             const repository = this.resolveRepository(sharedEntity.entity);
 
-            // Construct the find options for the shared entity
-            const findOptions = this.buildFindOptions(sharedEntity.entityId, shareRules);
+            // Construct the find options for the shared entity.
+            // Scope the lookup to the share's OWN tenant so a token issued by tenant A can never
+            // resolve a record belonging to tenant B (the route is @Public(), so there is no
+            // request-context tenant to rely on) - GHSA-gpg5-qwjc-8hqh / GHSA-cx2q-xmh2-pc38.
+            const findOptions = this.buildFindOptions(sharedEntity.entityId, sharedEntity.tenantId, shareRules);
 
             // Get the entity
             const entity = await repository.findOne(findOptions);
@@ -90,12 +106,13 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
      * Builds the find options for the shared entity.
      *
      * @param entityId - The ID of the entity.
+     * @param tenantId - The tenant ID the shared entity belongs to (used to enforce tenant isolation).
      * @param rules - The share rules for the shared entity.
      * @returns The find options for the shared entity.
      */
-    private buildFindOptions(entityId: ID, rules: IShareRule): FindOneOptions<any> {
+    private buildFindOptions(entityId: ID, tenantId: ID, rules: IShareRule): FindOneOptions<any> {
         return {
-            where: { id: entityId },
+            where: { id: entityId, tenantId },
             select: buildSharedEntitySelect(rules),
             relations: buildSharedEntityRelations(rules)
         }
