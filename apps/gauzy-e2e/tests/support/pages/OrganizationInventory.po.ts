@@ -9,8 +9,11 @@ import {
 	verifyText,
 	verifyTextNotExisting,
 	verifyElementNotExist,
-	clickElementByText
+	clickElementByText,
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { OrganizationInventoryPage } from '../../../src/support/Base/pageobjects/OrganizationInventoryPageObject';
 
@@ -43,7 +46,11 @@ export const languageDropdownVisible = async () => {
 };
 
 export const clickLanguageDropdown = async () => {
-	await clickButton(OrganizationInventoryPage.languageDropdownCss);
+	// ng-select (appendTo="body") opens on MOUSEDOWN and is backdrop-blockable; a force coordinate
+	// click can also close the surrounding form. Open via the keyboard: focus the inner input + ArrowDown.
+	const input = getPage().locator(OrganizationInventoryPage.languageDropdownCss).locator('input').first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
 export const productTypeDropdownVisible = async () => {
@@ -51,7 +58,10 @@ export const productTypeDropdownVisible = async () => {
 };
 
 export const clickProductTypeDropdown = async () => {
-	await clickButton(OrganizationInventoryPage.productTypeDropdownCss);
+	// ng-select (appendTo="body") — open via keyboard, not a backdrop-blockable coordinate click.
+	const input = getPage().locator(OrganizationInventoryPage.productTypeDropdownCss).locator('input').first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
 export const productCategoryDropdownVisible = async () => {
@@ -59,11 +69,31 @@ export const productCategoryDropdownVisible = async () => {
 };
 
 export const clickProductCategoryDropdown = async () => {
-	await clickButton(OrganizationInventoryPage.productCategoryDropdownCss);
+	// ng-select (appendTo="body") — open via keyboard, not a backdrop-blockable coordinate click.
+	const input = getPage().locator(OrganizationInventoryPage.productCategoryDropdownCss).locator('input').first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
-export const clickDropdownOption = async (index) => {
-	await clickButtonByIndex(OrganizationInventoryPage.dropdownOptionCss, index);
+export const clickDropdownOption = async (text) => {
+	// The spec passes the option TEXT (e.g. 'English', 'CRM System', 'Web Development'), not an index —
+	// the old clickButtonByIndex(.nth(text)) was a no-op/NaN. Typeahead-filter the currently-open
+	// ng-select (only one open at a time; appendTo="body") to the target, then click the body-level
+	// option. Options render as div.ng-option.
+	const openInput = getPage().locator('ng-select.ng-select-opened input').first();
+	await openInput.pressSequentially(String(text)).catch(() => {});
+	// Prefer the EXACT-text option so a "[addTag] Add item: <text>" option (which also *contains* the
+	// term, on the type/category selectors) can't be clicked instead of the existing record. Fall back
+	// to a substring match if no exact option is rendered.
+	const exact = getPage()
+		.locator(OrganizationInventoryPage.dropdownOptionCss)
+		.filter({ hasText: new RegExp(`^\\s*${String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`) })
+		.first();
+	if (await exact.count()) {
+		await exact.click({ force: true });
+	} else {
+		await clickElementByText(OrganizationInventoryPage.dropdownOptionCss, text);
+	}
 };
 
 export const nameInputVisible = async () => {
@@ -98,7 +128,9 @@ export const backButtonVisible = async () => {
 };
 
 export const clickBackButton = async () => {
-	await clickButton(OrganizationInventoryPage.backButtonCss);
+	// Comes right after a save/dialog-close; dispatch so a fading backdrop can't intercept it.
+	await waitForSpinnerGone();
+	await dispatchClick(OrganizationInventoryPage.backButtonCss);
 };
 
 export const backFromCategoryButtonVisible = async () => {
@@ -114,7 +146,9 @@ export const backFromInventoryButtonVisible = async () => {
 };
 
 export const clickBackFromInventoryButton = async () => {
-	await clickButton(OrganizationInventoryPage.backFromInventoryButtonCss);
+	// Comes right after saving the inventory item; dispatch so a fading backdrop can't intercept it.
+	await waitForSpinnerGone();
+	await dispatchClick(OrganizationInventoryPage.backFromInventoryButtonCss);
 };
 
 export const saveButtonVisible = async () => {
@@ -122,7 +156,11 @@ export const saveButtonVisible = async () => {
 };
 
 export const clickSaveButton = async () => {
-	await clickButton(OrganizationInventoryPage.saveButtonCss);
+	// Save sits in the card/dialog footer right after form input + (for inventory items) ng-select
+	// mutations. A fading ng-select/dialog backdrop can intercept a coordinate click — dispatch the
+	// event straight to the button so its (click) handler fires regardless.
+	await waitForSpinnerGone();
+	await dispatchClick(OrganizationInventoryPage.saveButtonCss);
 };
 
 export const editButtonVisible = async () => {
@@ -130,7 +168,8 @@ export const editButtonVisible = async () => {
 };
 
 export const clickEditButton = async () => {
-	await clickButton(OrganizationInventoryPage.editButtonCss);
+	// Clicked right after row selection; dispatch so a fading backdrop can't intercept the toolbar click.
+	await dispatchClick(OrganizationInventoryPage.editButtonCss);
 };
 
 export const deleteButtonVisible = async () => {
@@ -138,7 +177,8 @@ export const deleteButtonVisible = async () => {
 };
 
 export const clickDeleteButton = async () => {
-	await clickButton(OrganizationInventoryPage.deleteButtonCss);
+	// Clicked right after row selection; dispatch so a fading backdrop can't intercept the toolbar click.
+	await dispatchClick(OrganizationInventoryPage.deleteButtonCss);
 };
 
 export const tableRowVisible = async () => {
@@ -146,7 +186,23 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index) => {
-	await clickButtonByIndex(OrganizationInventoryPage.selectTableRowCss, index);
+	// The data-row click TOGGLES selection and enables the toolbar Edit/Delete buttons. Settle the grid
+	// first (spinner + network + paint), then click ONCE and poll the Edit button's real `disabled`
+	// attribute; only re-click if the selection didn't take. Rapid re-clicks just toggle it back off.
+	await waitForSpinnerGone();
+	await getPage().waitForLoadState('networkidle').catch(() => {});
+	await getPage().waitForTimeout(1500);
+	const row = getPage().locator(OrganizationInventoryPage.selectTableRowCss).nth(index);
+	const editBtn = getPage().locator(OrganizationInventoryPage.editButtonCss).first();
+	await row.click({ force: true });
+	for (let i = 0; i < 5; i++) {
+		const disabled = await editBtn.getAttribute('disabled').catch(() => null);
+		if (disabled === null) return; // enabled -> a row is selected
+		await getPage().waitForTimeout(500);
+		const stillDisabled = await editBtn.getAttribute('disabled').catch(() => null);
+		if (stillDisabled === null) return;
+		await row.click({ force: true });
+	}
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -154,7 +210,8 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(OrganizationInventoryPage.confirmDeleteButtonCss);
+	// OK button in the delete-confirmation dialog; dispatch to be backdrop-proof.
+	await dispatchClick(OrganizationInventoryPage.confirmDeleteButtonCss);
 };
 
 export const waitMessageToHide = async () => {

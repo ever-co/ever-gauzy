@@ -1,5 +1,4 @@
 import {
-	clickButtonDouble,
 	waitElementToHide,
 	verifyElementIsVisible,
 	clickButton,
@@ -7,7 +6,9 @@ import {
 	clickButtonByIndex,
 	verifyText,
 	enterInput,
-	clickButtonByIndexNoForce
+	clickButtonByIndexNoForce,
+	waitForSpinnerGone,
+	dispatchClick
 } from '../util';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
@@ -18,7 +19,13 @@ export const bookPublicAppointmentButtonVisible = async () => {
 };
 
 export const clickBookPublicAppointmentButton = async (text) => {
+	// "Book Public Appointment" calls bookPublicAppointment() which router.navigate(['/share/employee']).
+	// Wait for the URL to actually land on the public pick-employee page before the next step probes the
+	// dropdown — otherwise verifyElementIsVisible matches the always-present GLOBAL header selector and
+	// we never leave the appointments page.
 	await clickElementByText(AppointmentsPage.bookPublicAppointmentButtonCss, text);
+	await getPage().waitForURL(/\/share\/employee/, { timeout: 24_000 });
+	await waitForSpinnerGone();
 };
 
 // Employee select functions
@@ -27,15 +34,19 @@ export const employeeDropdownVisible = async () => {
 };
 
 export const clickEmployeeDropdown = async () => {
-	const page = getPage();
-	await Promise.all([
-		page.waitForResponse((res) => res.url().includes('/api/employee/working')),
-		clickButton(AppointmentsPage.employeeDropdownCss)
-	]);
-	await clickButtonDouble(AppointmentsPage.employeeDropdownCss);
+	// ng-select (appendTo="body") opens on MOUSEDOWN and its working-employees list is loaded on PAGE
+	// LOAD (combineLatest org+dateRange -> /api/employee/working), NOT on click — so the old
+	// Promise.all([waitForResponse('/api/employee/working'), click]) hung 24s waiting for a request that
+	// already fired. A coordinate click is also backdrop-blockable. Open via keyboard instead.
+	const input = getPage().locator(AppointmentsPage.employeeDropdownCss).locator('input').first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
 export const selectEmployeeFromDropdown = async (text: string) => {
+	// Typeahead-filter the open ng-select to the target employee, then click the body-level option.
+	const input = getPage().locator(AppointmentsPage.employeeDropdownCss).locator('input').first();
+	await input.pressSequentially(text);
 	await clickElementByText(AppointmentsPage.employeeDropdownOptionsCss, text);
 };
 // End of Employee select functions
@@ -45,7 +56,12 @@ export const bookAppointmentButtonVisible = async () => {
 };
 
 export const clickBookAppointmentButton = async () => {
+	// bookPublicEmployeeAppointment() fetches event types then navigates to /share/employee/:id (the
+	// public-appointment page). Click, then wait for that URL so the next visibility probe is on the
+	// right page.
 	await clickButton(AppointmentsPage.bookAppointmentButtonCss);
+	await getPage().waitForURL(/\/share\/employee\/[^/]+$/, { timeout: 24_000 });
+	await waitForSpinnerGone();
 };
 
 export const selectButtonVisible = async () => {
@@ -53,7 +69,19 @@ export const selectButtonVisible = async () => {
 };
 
 export const clickSelectButton = async (index) => {
-	await clickButtonByIndex(AppointmentsPage.appointmentButtonsCss, index);
+	// The public-appointment page shows a full-card nbSpinner while it loads event types; clicking a
+	// "Select" button (selectEventType) navigates to /share/employee/:id/:eventId (the "Pick a date and
+	// time" page). Settle the spinner and dispatchClick so the (click) fires through any overlay, then
+	// wait for the eventId URL before the header/employee assertions.
+	await waitForSpinnerGone();
+	await verifyElementIsVisible(AppointmentsPage.appointmentButtonsCss);
+	if (index === 0) {
+		await dispatchClick(AppointmentsPage.appointmentButtonsCss);
+	} else {
+		await clickButtonByIndex(AppointmentsPage.appointmentButtonsCss, index);
+	}
+	await getPage().waitForURL(/\/share\/employee\/[^/]+\/[^/]+/, { timeout: 24_000 });
+	await waitForSpinnerGone();
 };
 
 export const verifyHeader = async (text) => {

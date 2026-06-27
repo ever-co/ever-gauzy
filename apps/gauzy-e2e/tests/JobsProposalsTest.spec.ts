@@ -17,7 +17,9 @@ test.describe('Job proposals test', () => {
 			await jobProposalsPage.clickAddButton();
 			await jobProposalsPage.selectEmployeeDropdownVisible();
 			await jobProposalsPage.clickEmployeeDropdown();
-			await jobProposalsPage.selectEmployeeFromDropdown(1);
+			// Demo org has a single employee ("Default Employee") — option index 0, not 1
+			// (.nth(1) never resolves and times out).
+			await jobProposalsPage.selectEmployeeFromDropdown(0);
 			await jobProposalsPage.nameInputVisible();
 			await jobProposalsPage.enterNameInputData(JobsProposalsPageData.name);
 			await jobProposalsPage.contentInputVisible();

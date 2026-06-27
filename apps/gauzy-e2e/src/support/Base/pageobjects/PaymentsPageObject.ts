@@ -18,7 +18,10 @@ export const PaymentsPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	cardBodyCss: 'nb-card-footer.text-left',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyPaymentCss: 'div.ng-star-inserted',
+	// The note value renders in a smart-table text cell; verify against the data rows (filter-by-text in
+	// the util). 'div.ng-star-inserted' matched thousands of unrelated nodes — unreliable for both the
+	// exists-check and the not-exists-after-delete check.
+	verifyPaymentCss: 'table > tbody > tr.angular2-smart-row',
 	sidebarBtnCss: 'span.menu-title',
 	accountingPaymentsSidebarBtnCss: 'a[href="#/pages/accounting/payments"] > span.menu-title',
 	reportsPaymentsSidebarBtnCss: 'a[href="#/pages/reports/payments"] > span.menu-title',

@@ -7,8 +7,11 @@ import {
 	clickKeyboardBtnByKeycode,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { OrganizationTeamsPage } from '../../../src/support/Base/pageobjects/OrganizationTeamsPageObject';
 
@@ -42,7 +45,11 @@ export const tagsMultiSelectVisible = async () => {
 };
 
 export const clickTagsMultiSelect = async () => {
-	await clickButton(OrganizationTeamsPage.tagsSelectCss);
+	// Tags is an ng-select (#addTags) — it opens on MOUSEDOWN and a force-click can land on the dialog
+	// backdrop or even close the add form. Open it via keyboard instead (focus its inner input + ArrowDown).
+	const input = getPage().locator(OrganizationTeamsPage.tagsSelectCss).locator('input').first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
 export const selectTagsFromDropdown = async (index: number) => {
@@ -53,32 +60,49 @@ export const employeeDropdownVisible = async () => {
 	await verifyElementIsVisible(OrganizationTeamsPage.employeeMultiSelectCss);
 };
 
-export const clickEmployeeDropdown = async (index: number) => {
-	await clickButtonByIndex(OrganizationTeamsPage.employeeMultiSelectCss, index);
+export const clickEmployeeDropdown = async (_index: number) => {
+	// Members selector is a single nb-select (matched by its placeholder text), so the index is ignored —
+	// open the one match. Settle any transient form spinner first; nb-select opens on click.
+	await waitForSpinnerGone();
+	await clickButton(OrganizationTeamsPage.employeeMultiSelectCss);
 };
 
 export const selectEmployeeFromDropdown = async (index: number) => {
-	await clickButtonByIndex(OrganizationTeamsPage.selectDropdownOptionCss, index);
+	await pickEmployeeOption(index);
 };
 
 export const managerDropdownVisible = async () => {
 	await verifyElementIsVisible(OrganizationTeamsPage.managerMultiSelectCss);
 };
 
-export const clickManagerDropdown = async (index: number) => {
-	await clickButtonByIndex(OrganizationTeamsPage.managerMultiSelectCss, index);
+export const clickManagerDropdown = async (_index: number) => {
+	// Managers selector is a single nb-select (matched by its placeholder text), so the index is ignored.
+	await waitForSpinnerGone();
+	await clickButton(OrganizationTeamsPage.managerMultiSelectCss);
 };
 
 export const selectManagerFromDropdown = async (index: number) => {
-	await clickButtonByIndex(OrganizationTeamsPage.selectDropdownOptionCss, index);
+	await pickEmployeeOption(index);
+};
+
+// Best-effort pick of an nb-select option (members/managers share '.option-list nb-option'). The working
+// employees list loads async; wait for the panel then click. Form validity needs at least one member OR
+// manager, so picking in both flows keeps the Save button enabled.
+const pickEmployeeOption = async (index: number) => {
+	const option = getPage().locator(OrganizationTeamsPage.selectDropdownOptionCss);
+	await option.first().waitFor({ state: 'visible', timeout: 8000 });
+	await option.nth(index).click({ force: true });
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode: number) => {
 	await clickKeyboardBtnByKeycode(keycode);
 };
 
-export const clickCardBody = async (index: number) => {
-	await clickButtonByIndex(OrganizationTeamsPage.cardBodyCss, index);
+export const clickCardBody = async (_index: number) => {
+	// Dismiss an open ng-select / nb-select panel by clicking a neutral element INSIDE the dialog (the
+	// form title). The old 'nb-card-body' target no longer exists in the flat ga-teams-mutation form and
+	// the page card behind sits under a backdrop; Escape would close the whole nb-dialog.
+	await getPage().locator(OrganizationTeamsPage.cardBodyCss).first().click({ force: true }).catch(() => undefined);
 };
 
 export const saveButtonVisible = async () => {
@@ -86,15 +110,39 @@ export const saveButtonVisible = async () => {
 };
 
 export const clickSaveButton = async () => {
-	await clickButton(OrganizationTeamsPage.saveButtonCss);
+	// Save sits in the dialog; a fading backdrop from a closed sub-dropdown can intercept a coordinate
+	// click, so dispatch the click straight to the element.
+	await waitForSpinnerGone();
+	await dispatchClick(OrganizationTeamsPage.saveButtonCss);
 };
 
 export const tableRowVisible = async () => {
 	await verifyElementIsVisible(OrganizationTeamsPage.selectTableRowCss);
 };
 
-export const selectTableRow = async (index: number) => {
-	await clickButtonByIndex(OrganizationTeamsPage.selectTableRowCss, index);
+export const selectTableRow = async (_index: number) => {
+	// Row click TOGGLES selection (selectTeam flips disableButton). Settle the grid first, then click the
+	// row once and poll the toolbar Edit button's real disabled attr; only re-click if selection was lost.
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => undefined);
+	await page.waitForTimeout(1500);
+
+	const row = page.locator(OrganizationTeamsPage.selectTableRowCss).first();
+	const editBtn = page.locator(OrganizationTeamsPage.editButtonCss).first();
+
+	await row.click({ force: true });
+	for (let i = 0; i < 5; i++) {
+		const disabled = await editBtn.getAttribute('disabled');
+		if (disabled === null) {
+			return; // selection took — toolbar actions enabled
+		}
+		await page.waitForTimeout(500);
+		const stillDisabled = await editBtn.getAttribute('disabled');
+		if (stillDisabled !== null) {
+			await row.click({ force: true }); // selection lost/never applied — click once more
+		}
+	}
 };
 
 export const editButtonVisible = async () => {
@@ -118,7 +166,8 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(OrganizationTeamsPage.confirmDeleteButtonCss);
+	// Confirm sits in a freshly opened nb-dialog over a backdrop — dispatch the click to the element.
+	await dispatchClick(OrganizationTeamsPage.confirmDeleteButtonCss);
 };
 
 export const waitMessageToHide = async () => {

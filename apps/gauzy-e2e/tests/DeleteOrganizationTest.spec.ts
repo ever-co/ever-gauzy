@@ -15,6 +15,9 @@ test.describe('Delete Organization Test', () => {
 			await deleteOrganizationPage.gridBtnExists();
 			await deleteOrganizationPage.gridBtnClick();
 			await deleteOrganizationPage.deleteBtnExists();
+			// Selecting a row enables the (otherwise disabled) toolbar Delete button; deleteBtnClick
+			// also selects internally, but make the prerequisite explicit in the flow.
+			await deleteOrganizationPage.selectOrganization(0);
 			await deleteOrganizationPage.deleteBtnClick();
 			await deleteOrganizationPage.confirmBtnExists();
 			await deleteOrganizationPage.confirmBtnClick();

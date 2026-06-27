@@ -3,6 +3,10 @@ export const ProposalsPage = {
 	registerProposalButtonCss: '.gauzy-button-container button[status="success"]',
 	selectEmployeeDropdownCss: 'ga-employee-selector.employees',
 	selectEmployeeDropdownOptionCss: 'div.ng-option',
+	// Contact ng-select on the register form (formcontrolname="organizationContact"); registerProposal()
+	// dereferences organizationContact.id, so a contact MUST be set or the create silently no-ops.
+	contactDropdownCss: 'ga-contact-select',
+	contactDropdownOptionCss: 'div.ng-option',
 	jobPostUrlInputCss: '[formcontrolname="jobPostUrl"]',
 	dateInputCss: '[formcontrolname="valueDate"]',
 	jobPostContentInputCss: '[formControlName="jobPostContent"]',
@@ -12,7 +16,9 @@ export const ProposalsPage = {
 	saveProposalButtonCss: 'nb-card-footer > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	detailsButtonCss: '.gauzy-button-container button.action.primary:has-text("Details")',
-	editProposalButtonCss: '.gauzy-button-container button.action.primary:has-text("Edit")',
+	// On the proposal DETAILS page the Edit button lives in nb-card-header (NOT .gauzy-button-container),
+	// so the old .gauzy-button-container-scoped selector never matched there.
+	editProposalButtonCss: 'button.action.primary:has-text("Edit")',
 	markAsStatusButtonCss: '.gauzy-button-container button.action.warning',
 	deleteProposalButtonCss: '.gauzy-button-container button.action:has(nb-icon[icon="trash-2-outline"])',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',

@@ -11,8 +11,11 @@ import {
 	verifyText,
 	verifyTextNotExisting,
 	verifyByLength,
+	dispatchClick,
+	waitForSpinnerGone,
 	wait
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { AddTaskPage } from '../../../src/support/Base/pageobjects/AddTasksPageObject';
 
@@ -37,7 +40,12 @@ export const selectProjectDropdownVisible = async () => {
 };
 
 export const clickSelectProjectDropdown = async () => {
-	await clickButton(AddTaskPage.selectProjectDropdownCss);
+	// ga-project-selector is an ng-select; it opens on MOUSEDOWN and a coordinate/force click is
+	// backdrop-blocked (a fading nb-dialog overlay) and can even CLOSE the add-task dialog. Open it
+	// with the keyboard instead — focus the inner input and press ArrowDown. (Playbook pattern 3.)
+	const input = getPage().locator(AddTaskPage.selectProjectDropdownCss).locator('input').first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
 export const selectProjectOptionDropdown = async (text) => {
@@ -144,7 +152,11 @@ export const saveTaskButtonVisible = async () => {
 };
 
 export const clickSaveTaskButton = async () => {
-	await clickButton(AddTaskPage.saveNewTaskButtonCss);
+	// Save sits in the dialog footer right after the whole form was filled; a coordinate click can
+	// land on a lingering cdk-overlay backdrop. Settle any spinner, then dispatch the click straight
+	// to the element so the (click) handler fires through the overlay. (Playbook pattern 2.)
+	await waitForSpinnerGone();
+	await dispatchClick(AddTaskPage.saveNewTaskButtonCss);
 };
 
 export const tasksTableVisible = async () => {
@@ -152,6 +164,12 @@ export const tasksTableVisible = async () => {
 };
 
 export const selectTasksTableRow = async (index) => {
+	// Row click TOGGLES selection (it enables the toolbar Edit/Duplicate/Delete). Let the grid finish
+	// loading/re-rendering after the preceding save/delete before clicking, otherwise the click can
+	// toggle a row that's about to be replaced. Settle, then click once. (Playbook pattern 4.)
+	await waitForSpinnerGone();
+	await getPage().waitForLoadState('networkidle').catch(() => {});
+	await getPage().waitForTimeout(1500);
 	await clickButtonByIndex(AddTaskPage.selectTableRowCss, index);
 };
 
@@ -172,7 +190,9 @@ export const confirmDeleteTaskButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteTaskButton = async () => {
-	await clickButton(AddTaskPage.confirmDeleteTaskButtonCss);
+	// Confirm sits in the delete-confirmation dialog footer; dispatch through any fading backdrop. (Pattern 2.)
+	await waitForSpinnerGone();
+	await dispatchClick(AddTaskPage.confirmDeleteTaskButtonCss);
 };
 
 export const duplicateTaskButtonVisible = async () => {
@@ -188,7 +208,9 @@ export const confirmDuplicateTaskButtonVisible = async () => {
 };
 
 export const clickConfirmDuplicateTaskButton = async () => {
-	await clickButton(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
+	// Confirm sits in a freshly-opened dialog footer; dispatch through any fading backdrop. (Pattern 2.)
+	await waitForSpinnerGone();
+	await dispatchClick(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
 
 export const editTaskButtonVisible = async () => {

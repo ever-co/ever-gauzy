@@ -13,6 +13,8 @@ import * as manageEmployeesPage from './support/pages/ManageEmployees.po';
 let jobPostUrl = ' ';
 let editJobPostUrl = ' ';
 let proposalContent = ' ';
+let jobPostContent = ' ';
+let contactName = ' ';
 
 let firstName = ' ';
 let lastName = ' ';
@@ -26,6 +28,8 @@ test.describe('Proposals test', () => {
 		jobPostUrl = faker.internet.url();
 		editJobPostUrl = faker.internet.url();
 		proposalContent = faker.lorem.paragraph();
+		jobPostContent = faker.lorem.paragraph();
+		contactName = faker.company.name();
 
 		firstName = faker.person.firstName();
 		lastName = faker.person.lastName();
@@ -58,6 +62,9 @@ test.describe('Proposals test', () => {
 			await proposalsPage.selectEmployeeDropdownVisible();
 			await proposalsPage.clickEmployeeDropdown();
 			await proposalsPage.selectEmployeeFromDropdown(1);
+			// A contact is mandatory: registerProposal() dereferences organizationContact.id, so create one
+			// inline via the ga-contact-select add-tag option, otherwise the create silently no-ops.
+			await proposalsPage.selectContactFromDropdown(contactName);
 			await proposalsPage.jobPostInputVisible();
 			await proposalsPage.enterJobPostInputData(jobPostUrl);
 			await proposalsPage.dateInputVisible();
@@ -66,6 +73,10 @@ test.describe('Proposals test', () => {
 			await proposalsPage.clickTagsDropdown();
 			await proposalsPage.selectTagFromDropdown(0);
 			await proposalsPage.clickCardBody();
+			// jobPostContent + proposalContent are Validators.required on the form; Save is [disabled] while
+			// the form is invalid, so both CKEditors must be filled before the Save button is clickable.
+			await proposalsPage.enterJobPostContentData(jobPostContent);
+			await proposalsPage.enterProposalContentData(proposalContent);
 			await proposalsPage.saveProposalButtonVisible();
 			await proposalsPage.clickSaveProposalButton();
 			await proposalsPage.waitMessageToHide();

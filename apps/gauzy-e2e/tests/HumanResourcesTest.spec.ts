@@ -38,8 +38,12 @@ test.describe('Human resources page test', () => {
 
 		await test.step('Should be able to verify chart options', async () => {
 			await getPage().goto('/#/pages/dashboard/accounting');
-			await humanResourcesPage.selectEmployeeByName(`${firstName} ${lastName}`);
-			await humanResourcesPage.verifyEmployeeName(`${firstName} ${lastName}`);
+			// The accounting list shows only employees with `startedWorkOn` in range; the quick-add
+			// addEmployee command doesn't set that, so the new faker employee never appears here.
+			// Drive the flow with whichever employee IS present and verify that same name on the HR side.
+			const employeeName = await humanResourcesPage.getFirstEmployeeName();
+			await humanResourcesPage.selectFirstEmployee();
+			await humanResourcesPage.verifyEmployeeName(employeeName);
 			await humanResourcesPage.verifyChartDropdownVisible();
 			await humanResourcesPage.clickChartDropdown();
 			await humanResourcesPage.verifyChartOptionText(HumanResourcesPageData.barChartText);

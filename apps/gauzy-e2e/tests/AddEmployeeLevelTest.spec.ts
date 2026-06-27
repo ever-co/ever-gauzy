@@ -29,6 +29,8 @@ test.describe('Add employee level test', () => {
 			await addEmployeeLevelPage.saveNewLevelButtonVisible();
 			await addEmployeeLevelPage.clickSaveNewLevelButton();
 			await addEmployeeLevelPage.waitMessageToHide();
+			// Edit is disabled until a grid row is selected (selectEmployee enables it).
+			await addEmployeeLevelPage.selectEmployeeLevelRow();
 			await addEmployeeLevelPage.editEmployeeLevelButtonVisible();
 			await addEmployeeLevelPage.clickEditEmployeeLevelButton();
 			await addEmployeeLevelPage.verifyTitleExists(AddEmployeeLevelPageData.levelE);
@@ -37,6 +39,8 @@ test.describe('Add employee level test', () => {
 		});
 
 		await test.step('Should be able to edit employee level', async () => {
+			// Cancel reset disabled=true, so re-select the row to re-enable Edit.
+			await addEmployeeLevelPage.selectEmployeeLevelRow();
 			await addEmployeeLevelPage.editEmployeeLevelButtonVisible();
 			await addEmployeeLevelPage.clickEditEmployeeLevelButton();
 			await addEmployeeLevelPage.editEmployeeLevelInpuVisible();
@@ -48,6 +52,7 @@ test.describe('Add employee level test', () => {
 			await addEmployeeLevelPage.saveNewLevelButtonVisible();
 			await addEmployeeLevelPage.clickSaveNewLevelButton();
 			await addEmployeeLevelPage.waitMessageToHide();
+			await addEmployeeLevelPage.selectEmployeeLevelRow();
 			await addEmployeeLevelPage.editEmployeeLevelButtonVisible();
 			await addEmployeeLevelPage.clickEditEmployeeLevelButton();
 			await addEmployeeLevelPage.verifyTitleExists(AddEmployeeLevelPageData.levelF);
@@ -67,12 +72,16 @@ test.describe('Add employee level test', () => {
 			await addEmployeeLevelPage.saveNewLevelButtonVisible();
 			await addEmployeeLevelPage.clickSaveNewLevelButton();
 			await addEmployeeLevelPage.waitMessageToHide();
+			// removeEmployeeLevel deletes the SELECTED row, so select the just-added Level E first.
+			await addEmployeeLevelPage.selectEmployeeLevelRowByText(AddEmployeeLevelPageData.levelE);
 			await addEmployeeLevelPage.deleteLevelButtonVisible();
 			await addEmployeeLevelPage.clickDeleteLevelButton();
 			await addEmployeeLevelPage.confirmDeleteButtonVisible();
 			await addEmployeeLevelPage.clickConfirmDeleteLevelButton();
 			await addEmployeeLevelPage.verifyElementIsDeleted(AddEmployeeLevelPageData.levelE);
 			await addEmployeeLevelPage.waitMessageToHide();
+			// Remove the remaining row (Level F, carried over from the edit step) to leave a clean grid.
+			await addEmployeeLevelPage.selectEmployeeLevelRowByText(AddEmployeeLevelPageData.levelF);
 			await addEmployeeLevelPage.deleteLevelButtonVisible();
 			await addEmployeeLevelPage.clickDeleteLevelButton();
 			await addEmployeeLevelPage.confirmDeleteButtonVisible();

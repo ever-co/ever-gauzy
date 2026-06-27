@@ -1,4 +1,4 @@
-import { verifyElementIsVisible, clickButton, clickElementByText, verifyText, waitUntil } from '../util';
+import { verifyElementIsVisible, verifyText, dispatchClick, waitForSpinnerGone, waitUntil } from '../util';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { CreateButton } from '../../../src/support/Base/pageobjects/CreateButtonPageObject';
 
@@ -7,52 +7,24 @@ export const createButtonVisible = async () => {
 };
 
 export const clickCreateButton = async () => {
-	await clickButton(CreateButton.createButtonCss);
+	// Opening the Quick Actions dialog: a coordinate click can land on a fading cdk-overlay
+	// backdrop left by a previously-closed dialog — dispatch the (click) handler directly.
+	await dispatchClick(CreateButton.createButtonCss);
 };
 
-export const verifyTextExist = async (text) => {
-	await verifyText(CreateButton.titleTextCss, text);
+export const verifyQuickActionsDialog = async (text) => {
+	await verifyElementIsVisible(CreateButton.quickActionsCss);
+	await verifyText(CreateButton.quickActionsTitleCss, text);
 };
 
-export const clickOptionByText = async (text) => {
-	await clickElementByText(CreateButton.createButtonOptionCss, text);
+export const verifyGroupHeaderExist = async (text) => {
+	await verifyText(CreateButton.groupHeaderCss, text);
 };
 
-export const verifyNbCardH4Header = async (text) => {
-	await verifyText(CreateButton.nbCardh4Css, text);
-};
-
-export const verifyNbCardH5Header = async (text) => {
-	await verifyText(CreateButton.nbCardh5Css, text);
-};
-
-export const verifyDivH4Header = async (text) => {
-	await verifyText(CreateButton.teamHeaderCss, text);
-};
-
-export const verifyProjectHeaderText = async (text) => {
-	await verifyText(CreateButton.projectHeaderCss, text);
-};
-
-export const verifyTimeLogHeaderText = async (text) => {
-	await verifyText(CreateButton.timeLogHeaderTextCss, text);
-};
-
-export const verifyProposalHeaderText = async (text) => {
-	await verifyText(CreateButton.proposalHeaderTextCss, text);
-};
-
-export const verifyContactHeaderText = async (text) => {
-	await waitUntil(3000);
-	await verifyText(CreateButton.contactHeaderTextCss, text);
-};
-
-export const cancelButtonVisible = async () => {
-	await verifyElementIsVisible(CreateButton.cancelButtonCss);
-};
-
-export const clickCancelButton = async () => {
-	await clickButton(CreateButton.cancelButtonCss);
+// The Quick Actions menu options are now navigation links (Create Income, Time Log, ...).
+// Verify each is present rather than clicking through to obsolete in-page "Add X" cards.
+export const verifyOptionExist = async (text) => {
+	await verifyText(CreateButton.createButtonOptionCss, text);
 };
 
 export const closeButtonVisible = async () => {
@@ -60,5 +32,8 @@ export const closeButtonVisible = async () => {
 };
 
 export const clickCloseButton = async () => {
-	await clickButton(CreateButton.closeButtonCss);
+	// dispatchClick: the close <span> sits inside the dialog; dispatch avoids the overlay backdrop.
+	await dispatchClick(CreateButton.closeButtonCss);
+	await waitForSpinnerGone();
+	await waitUntil(500);
 };

@@ -88,6 +88,9 @@ test.describe('Register Test', () => {
 			await registerPage.expiryPeriodInputVisible();
 			await registerPage.enterExpiryPeriodInputData(RegisterPageData.expiryPeriod);
 			await registerPage.clickOnNextButton();
+			// The current onboarding stepper has a 5th step ("Register as Employee") that the
+			// original 4-step Cypress flow predates; its "Add" submit completes onboarding.
+			await registerPage.clickFinishButton();
 			await onboardingPage.verifyHeadingOnCompletePage();
 			await onboardingPage.clickDashboardCard(0);
 			await dashboardPage.verifyCreateButton();

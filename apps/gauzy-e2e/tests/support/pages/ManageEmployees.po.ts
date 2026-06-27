@@ -11,8 +11,10 @@ import {
 	waitElementToHide,
 	verifyText,
 	verifyTextNotExisting,
-	clickButtonWithForce
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ManageEmployeesPage } from '../../../src/support/Base/pageobjects/ManageEmployeesPageObject';
 
@@ -30,7 +32,10 @@ export const inviteButtonVisible = async () => {
 };
 
 export const clickInviteButton = async () => {
-	await clickButton(ManageEmployeesPage.inviteButtonCss);
+	// Toolbar Invite -> invite() opens the dialog. Settle then dispatch so a mid-transition
+	// coordinate click can't land on a fading overlay and miss the handler.
+	await waitForSpinnerGone();
+	await dispatchClick(ManageEmployeesPage.inviteButtonCss);
 };
 
 export const emailInputVisible = async () => {
@@ -60,7 +65,14 @@ export const selectProjectDropdownVisible = async () => {
 };
 
 export const clickProjectDropdown = async () => {
-	await clickButton(ManageEmployeesPage.selectProjectDropdownCss);
+	// #projectSelection is an ng-select that opens on mousedown and is blocked by the dialog
+	// backdrop; a force coordinate click can also close the form. Open it via keyboard instead.
+	const input = getPage()
+		.locator(ManageEmployeesPage.selectProjectDropdownCss)
+		.locator('input')
+		.first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
 export const selectProjectFromDropdown = async (text) => {
@@ -75,7 +87,12 @@ export const sendInviteButtonVisible = async () => {
 };
 
 export const clickSendInviteButton = async () => {
-	await clickButton(ManageEmployeesPage.sendInviteButtonCss);
+	// The invite dialog footer Submit sits under a fading ng-select/dialog backdrop after the
+	// project dropdown closes; a coordinate force-click lands on the backdrop and the dialog never
+	// closes (next step's #firstName form then never opens). Dispatch the click to the element so
+	// the (click)="add()" handler fires regardless of the overlay.
+	await waitForSpinnerGone();
+	await dispatchClick(ManageEmployeesPage.sendInviteButtonCss);
 };
 
 // ADD NEW EMPLOYEE
@@ -84,7 +101,10 @@ export const addEmployeeButtonVisible = async () => {
 };
 
 export const clickAddEmployeeButton = async () => {
-	await clickButtonWithForce(ManageEmployeesPage.addEmployeeButtonCss);
+	// Clicked right after the invite dialog closes; its fading cdk-overlay backdrop intercepts a
+	// coordinate click. Dispatch the click so add() fires and the mutation stepper opens.
+	await waitForSpinnerGone();
+	await dispatchClick(ManageEmployeesPage.addEmployeeButtonCss);
 };
 
 export const firstNameInputVisible = async () => {
@@ -132,7 +152,14 @@ export const tagsDropdownVisible = async () => {
 };
 
 export const clickTagsDropdown = async () => {
-	await clickButton(ManageEmployeesPage.addTagsDropdownCss);
+	// ga-tags-color-input is an ng-select that opens on MOUSEDOWN and is backdrop-blocked; a
+	// force-click on its control can also close the add form. Open it via keyboard instead.
+	const input = getPage()
+		.locator(ManageEmployeesPage.addTagsDropdownCss)
+		.locator('input')
+		.first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
 export const selectTagFromDropdown = async (index) => {
@@ -156,7 +183,10 @@ export const nextButtonVisible = async () => {
 };
 
 export const clickNextButton = async () => {
-	await clickButton(ManageEmployeesPage.nextButtonCss);
+	// Stepper step-1 -> step-2 (nbStepperNext). The tags ng-select we just opened (appendTo body)
+	// leaves a fading overlay over the footer; dispatch straight on the button.
+	await waitForSpinnerGone();
+	await dispatchClick(ManageEmployeesPage.nextButtonCss);
 };
 
 export const nextStepButtonVisible = async () => {
@@ -164,7 +194,9 @@ export const nextStepButtonVisible = async () => {
 };
 
 export const clickNextStepButton = async () => {
-	await clickButton(ManageEmployeesPage.nextStepButtonCss);
+	// Stepper step-2 -> step-3 (nbStepperNext); same backdrop hazard as step-1's Next.
+	await waitForSpinnerGone();
+	await dispatchClick(ManageEmployeesPage.nextStepButtonCss);
 };
 
 export const lastStepButtonVisible = async () => {
@@ -172,7 +204,10 @@ export const lastStepButtonVisible = async () => {
 };
 
 export const clickLastStepButton = async () => {
-	await clickButton(ManageEmployeesPage.lastStepButtonCss);
+	// Stepper step-3 "Finished adding" -> (click)="add()" persists the employee and closes the
+	// dialog; dispatch through any lingering stepper/overlay backdrop.
+	await waitForSpinnerGone();
+	await dispatchClick(ManageEmployeesPage.lastStepButtonCss);
 };
 
 // EDIT EMPLOYEE
@@ -182,6 +217,12 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index) => {
+	// Selecting a grid row TOGGLES selection and enables the toolbar (Edit/End Work/Delete, or the
+	// Copy/Resend/Delete buttons on the invites grid). Settle the grid first so the click lands on
+	// the rendered row, then click ONCE — a rapid re-click would toggle the selection back off.
+	await waitForSpinnerGone();
+	await getPage().waitForLoadState('networkidle').catch(() => {});
+	await getPage().waitForTimeout(1500);
 	await clickButtonByIndex(ManageEmployeesPage.selectTableRowCss, index);
 };
 
@@ -190,7 +231,8 @@ export const editButtonVisible = async () => {
 };
 
 export const clickEditButton = async () => {
-	await clickButton(ManageEmployeesPage.editEmployeeButtonCss);
+	// Toolbar Edit fires after row selection; dispatch so a fading selection/overlay can't swallow it.
+	await dispatchClick(ManageEmployeesPage.editEmployeeButtonCss);
 };
 
 export const usernameEditInputVisible = async () => {
@@ -234,7 +276,14 @@ export const preferredLanguageDropdownVisible = async () => {
 };
 
 export const clickPreferredLanguageDropdown = async () => {
-	await clickButton(ManageEmployeesPage.preferredLanguageDropdownCss);
+	// ngx-language-selector is an ng-select that opens on MOUSEDOWN and is backdrop-blocked; a
+	// force-click on its control can also close the form. Open it via keyboard instead.
+	const input = getPage()
+		.locator(ManageEmployeesPage.preferredLanguageDropdownCss)
+		.locator('input')
+		.first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
 export const selectLanguageFromDropdown = async (text) => {
@@ -246,7 +295,10 @@ export const saveEditButtonVisible = async () => {
 };
 
 export const clickSaveEditButton = async () => {
-	await clickButton(ManageEmployeesPage.saveEditButtonCss);
+	// Edit-page Save (disabled while form invalid). Settle, then dispatch so (click)="submitForm()"
+	// fires even with a transient overlay/spinner from the language ng-select we just closed.
+	await waitForSpinnerGone();
+	await dispatchClick(ManageEmployeesPage.saveEditButtonCss);
 };
 
 export const backButtonVisible = async () => {
@@ -254,7 +306,8 @@ export const backButtonVisible = async () => {
 };
 
 export const clickBackButton = async () => {
-	await clickButton(ManageEmployeesPage.backButtonCss);
+	// Clicked right after the edit Save toast; dispatch through any lingering overlay.
+	await dispatchClick(ManageEmployeesPage.backButtonCss);
 };
 
 // END WORK
@@ -264,7 +317,9 @@ export const endWorkButtonVisible = async () => {
 };
 
 export const clickEndWorkButton = async () => {
-	await clickButton(ManageEmployeesPage.endWorkButtonCss);
+	// Toolbar End Work (after row selection) opens the confirm dialog; dispatch through any fading
+	// selection overlay so (click)="endWork(...)" fires.
+	await dispatchClick(ManageEmployeesPage.endWorkButtonCss);
 };
 
 export const confirmEndWorkButtonVisible = async () => {
@@ -272,7 +327,8 @@ export const confirmEndWorkButtonVisible = async () => {
 };
 
 export const clickConfirmEndWorkButton = async () => {
-	await clickButton(ManageEmployeesPage.confirmEndWorkButtonCss);
+	// Confirm on the freshly-opened End Work dialog; dispatch so its own backdrop can't intercept.
+	await dispatchClick(ManageEmployeesPage.confirmEndWorkButtonCss);
 };
 
 // DELETE EMPLOYEE
@@ -282,7 +338,9 @@ export const deleteButtonVisible = async () => {
 };
 
 export const clickDeleteButton = async () => {
-	await clickButton(ManageEmployeesPage.deleteEmployeeButtonCss);
+	// Toolbar Delete (after row selection) opens the confirm dialog; dispatch through any fading
+	// selection overlay.
+	await dispatchClick(ManageEmployeesPage.deleteEmployeeButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -290,7 +348,8 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(ManageEmployeesPage.confirmDeleteButtonCss);
+	// Confirm on the freshly-opened Delete dialog; dispatch so its own backdrop can't intercept.
+	await dispatchClick(ManageEmployeesPage.confirmDeleteButtonCss);
 };
 
 // COPY INVITE LINK
@@ -300,7 +359,10 @@ export const manageInvitesButtonVisible = async () => {
 };
 
 export const clickManageInviteButton = async () => {
-	await clickButton(ManageEmployeesPage.manageInvitesButtonCss);
+	// Header "Manage Invites" routerLink button; clicked after the delete toast, dispatch through
+	// any lingering overlay.
+	await waitForSpinnerGone();
+	await dispatchClick(ManageEmployeesPage.manageInvitesButtonCss);
 };
 
 export const copyLinkButtonVisible = async () => {
@@ -308,7 +370,8 @@ export const copyLinkButtonVisible = async () => {
 };
 
 export const clickCopyLinkButton = async () => {
-	await clickButton(ManageEmployeesPage.copyLinkButtonCss);
+	// Toolbar Copy Link (after row selection); dispatch through any fading selection overlay.
+	await dispatchClick(ManageEmployeesPage.copyLinkButtonCss);
 };
 
 // RESEND INVITE
@@ -318,7 +381,9 @@ export const resendInviteButtonVisible = async () => {
 };
 
 export const clickResendInviteButton = async () => {
-	await clickButton(ManageEmployeesPage.resendInviteButtonCss);
+	// Toolbar Resend (after row selection) opens the confirm dialog; dispatch through any fading
+	// selection overlay.
+	await dispatchClick(ManageEmployeesPage.resendInviteButtonCss);
 };
 
 export const confirmResendInviteButtonVisible = async () => {
@@ -326,7 +391,8 @@ export const confirmResendInviteButtonVisible = async () => {
 };
 
 export const clickConfirmResendInviteButton = async () => {
-	await clickButton(ManageEmployeesPage.confirmResendInviteButtonCss);
+	// OK on the freshly-opened resend dialog; dispatch so its own backdrop can't intercept.
+	await dispatchClick(ManageEmployeesPage.confirmResendInviteButtonCss);
 };
 
 // DELETE INVITE
@@ -336,7 +402,9 @@ export const deleteInviteButtonVisible = async () => {
 };
 
 export const clickDeleteInviteButton = async () => {
-	await clickButton(ManageEmployeesPage.deleteInviteButtonCss);
+	// Toolbar Delete invite (after row selection) opens the confirm dialog; dispatch through any
+	// fading selection overlay.
+	await dispatchClick(ManageEmployeesPage.deleteInviteButtonCss);
 };
 
 export const confirmDeleteInviteButtonVisible = async () => {
@@ -344,7 +412,8 @@ export const confirmDeleteInviteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteInviteButton = async () => {
-	await clickButton(ManageEmployeesPage.confirmDeleteInviteButtonCss);
+	// OK on the freshly-opened delete dialog; dispatch so its own backdrop can't intercept.
+	await dispatchClick(ManageEmployeesPage.confirmDeleteInviteButtonCss);
 };
 
 export const waitMessageToHide = async () => {

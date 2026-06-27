@@ -6,135 +6,50 @@ import { CreateButtonData } from '../src/support/Base/pagedata/CreateButtonPageD
 import * as dashboardPage from './support/pages/Dashboard.po';
 import { CustomCommands } from './support/commands';
 
+// The "+ Create" header button no longer opens an nb-menu of in-page "Add X" cards; it now opens
+// the Quick Actions dialog (ngx-quick-actions) — a grouped nb-menu of navigation links. The legacy
+// per-option flow (click option -> verify card header -> close/cancel) is gone, so this spec now
+// verifies the Quick Actions dialog itself: it opens, shows its groups, and lists each quick action.
+// "Contact" is dropped (there is no Create Contact action — only Create Lead/Customer/Client).
 test.describe('Create button test', () => {
 	test('Create button test', async () => {
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 
-		await test.step('Should able to verify text exist', async () => {
+		await test.step('Should open the Quick Actions dialog', async () => {
 			await createButton.createButtonVisible();
 			await createButton.clickCreateButton();
-			await createButton.verifyTextExist(CreateButtonData.income);
-			await createButton.verifyTextExist(CreateButtonData.expense);
-			await createButton.verifyTextExist(CreateButtonData.invoice);
-			await createButton.verifyTextExist(CreateButtonData.estimate);
-			await createButton.verifyTextExist(CreateButtonData.payment);
-			await createButton.verifyTextExist(CreateButtonData.timeLog);
-			await createButton.verifyTextExist(CreateButtonData.candidate);
-			await createButton.verifyTextExist(CreateButtonData.proposal);
-			await createButton.verifyTextExist(CreateButtonData.contract);
-			await createButton.verifyTextExist(CreateButtonData.team);
-			await createButton.verifyTextExist(CreateButtonData.task);
-			await createButton.verifyTextExist(CreateButtonData.contact);
-			await createButton.verifyTextExist(CreateButtonData.project);
-			await createButton.verifyTextExist(CreateButtonData.employee);
+			await createButton.verifyQuickActionsDialog(CreateButtonData.quickActionsTitle);
 		});
 
-		await test.step('Should able to verify income card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.income);
-			await createButton.verifyNbCardH5Header(CreateButtonData.incomeHeader);
-			await createButton.closeButtonVisible();
-			await createButton.clickCloseButton();
-			await createButton.createButtonVisible();
-			await createButton.clickCreateButton();
+		await test.step('Should show the quick action group headers', async () => {
+			await createButton.verifyGroupHeaderExist(CreateButtonData.accountingGroup);
+			await createButton.verifyGroupHeaderExist(CreateButtonData.projectManagementGroup);
+			await createButton.verifyGroupHeaderExist(CreateButtonData.organizationGroup);
+			await createButton.verifyGroupHeaderExist(CreateButtonData.timeTrackingGroup);
+			await createButton.verifyGroupHeaderExist(CreateButtonData.contactsGroup);
+			await createButton.verifyGroupHeaderExist(CreateButtonData.jobsGroup);
 		});
 
-		await test.step('Should able to verify expense card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.expense);
-			await createButton.verifyNbCardH4Header(CreateButtonData.expenseHeader);
-			await createButton.closeButtonVisible();
-			await createButton.clickCloseButton();
-			await createButton.createButtonVisible();
-			await createButton.clickCreateButton();
+		await test.step('Should list each quick action option', async () => {
+			await createButton.verifyOptionExist(CreateButtonData.income);
+			await createButton.verifyOptionExist(CreateButtonData.expense);
+			await createButton.verifyOptionExist(CreateButtonData.invoice);
+			await createButton.verifyOptionExist(CreateButtonData.estimate);
+			await createButton.verifyOptionExist(CreateButtonData.payment);
+			await createButton.verifyOptionExist(CreateButtonData.timeLog);
+			await createButton.verifyOptionExist(CreateButtonData.candidate);
+			await createButton.verifyOptionExist(CreateButtonData.proposal);
+			await createButton.verifyOptionExist(CreateButtonData.contract);
+			await createButton.verifyOptionExist(CreateButtonData.team);
+			await createButton.verifyOptionExist(CreateButtonData.task);
+			await createButton.verifyOptionExist(CreateButtonData.project);
+			await createButton.verifyOptionExist(CreateButtonData.employee);
+			await createButton.verifyOptionExist(CreateButtonData.lead);
+			await createButton.verifyOptionExist(CreateButtonData.customer);
+			await createButton.verifyOptionExist(CreateButtonData.client);
 		});
 
-		await test.step('Should able to verify invoice card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.invoice);
-			await createButton.verifyNbCardH4Header(CreateButtonData.invoiceHeader);
-			await createButton.createButtonVisible();
-			await createButton.clickCreateButton();
-		});
-
-		await test.step('Should able to verify estimate card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.estimate);
-			await createButton.verifyNbCardH4Header(CreateButtonData.estimateHeader);
-			await createButton.createButtonVisible();
-			await createButton.clickCreateButton();
-		});
-
-		await test.step('Should able to verify payment card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.payment);
-			await createButton.verifyNbCardH5Header(CreateButtonData.paymentHeader);
-			await createButton.cancelButtonVisible();
-			await createButton.clickCancelButton();
-			await createButton.createButtonVisible();
-			await createButton.clickCreateButton();
-		});
-
-		await test.step('Should able to verify time log card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.timeLog);
-			await createButton.verifyTimeLogHeaderText(CreateButtonData.timeLogHeader);
-			await createButton.closeButtonVisible();
-			await createButton.clickCloseButton();
-			await createButton.createButtonVisible();
-			await createButton.clickCreateButton();
-		});
-
-		await test.step('Should able to verify candidate card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.candidate);
-			await createButton.verifyNbCardH5Header(CreateButtonData.candidateHeader);
-			await createButton.closeButtonVisible();
-			await createButton.clickCloseButton();
-			await createButton.createButtonVisible();
-			await createButton.clickCreateButton();
-		});
-
-		await test.step('Should able to verify proposal card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.proposal);
-			await createButton.verifyProposalHeaderText(CreateButtonData.proposalHeader);
-			await createButton.createButtonVisible();
-			await createButton.clickCreateButton();
-		});
-
-		await test.step('Should able to verify contract card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.contract);
-			await createButton.verifyNbCardH5Header(CreateButtonData.contractHeader);
-			await createButton.createButtonVisible();
-			await createButton.clickCreateButton();
-		});
-
-		await test.step('Should able to verify team card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.team);
-			await createButton.verifyDivH4Header(CreateButtonData.teamHeader);
-			await createButton.createButtonVisible();
-			await createButton.clickCreateButton();
-		});
-
-		await test.step('Should able to verify task card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.task);
-			await createButton.verifyNbCardH5Header(CreateButtonData.taskHeader);
-			await createButton.closeButtonVisible();
-			await createButton.clickCloseButton();
-			await createButton.createButtonVisible();
-			await createButton.clickCreateButton();
-		});
-
-		await test.step('Should able to verify contact card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.contact);
-			await createButton.verifyContactHeaderText(CreateButtonData.contactHeader);
-			await createButton.createButtonVisible();
-			await createButton.clickCreateButton();
-		});
-
-		await test.step('Should able to verify project card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.project);
-			await createButton.verifyDivH4Header(CreateButtonData.projectHeader);
-			await createButton.createButtonVisible();
-			await createButton.clickCreateButton();
-		});
-
-		await test.step('Should able to verify employee card', async () => {
-			await createButton.clickOptionByText(CreateButtonData.employee);
-			await createButton.verifyNbCardH5Header(CreateButtonData.employeeHeader);
+		await test.step('Should close the Quick Actions dialog', async () => {
 			await createButton.closeButtonVisible();
 			await createButton.clickCloseButton();
 			await createButton.createButtonVisible();

@@ -2,7 +2,10 @@ export const ReportsPage = {
 	headerTextCss: 'nb-card-header > h4',
 	subheaderTextCss: 'h5.report-category-name',
 	titleCss: 'div.align-items-center > h6',
-	checkboxCss: 'input.native-input',
+	// Scope to nb-toggle: 'input.native-input' is shared by every nb-checkbox/nb-radio/nb-toggle on
+	// the page, so the bare selector picks up unrelated controls and shifts the indices. The report
+	// "show in menu" switches are nb-toggles, so this maps index 0..10 exactly to the 11 report cards.
+	checkboxCss: 'nb-toggle input.native-input',
 	sidebarBtnCss: 'span.menu-title',
 	totalHoursCss:
 		'ga-daily-statistics > div.row > div.col-sm-4 > nb-card > nb-card-body > div.h1',

@@ -22,6 +22,9 @@ export const clickAddButton = async (index) => {
 };
 
 export const selectOptionFromDropdown = async (index) => {
+	// The "Add new Objective" nb-popover renders as a CDK overlay on click; wait for its option to
+	// paint before clicking so the coordinate click doesn't fire before the overlay has positioned.
+	await verifyElementIsVisible(GoalsPage.optionDropdownCss);
 	await clickButtonByIndex(GoalsPage.optionDropdownCss, index);
 };
 

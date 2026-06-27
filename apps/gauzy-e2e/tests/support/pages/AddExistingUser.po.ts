@@ -2,8 +2,11 @@ import {
 	verifyElementIsVisible,
 	clickButton,
 	clickKeyboardBtnByKeycode,
-	clickElementByText
+	clickElementByText,
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { AddExistingUserPage } from '../../../src/support/Base/pageobjects/AddExistingUserPageObject';
 
@@ -12,7 +15,11 @@ export const addExistingUsersButtonVisible = async () => {
 };
 
 export const clickAddExistingUsersButton = async () => {
-	await clickButton(AddExistingUserPage.addUserButtonCss);
+	// Called both on first load and again right after the remove-confirmation dialog closes +
+	// the grid reloads (getUsers spinner). Settle the spinner and dispatch the click straight at
+	// the element so a fading cdk-overlay backdrop from the closed dialog can't intercept it.
+	await waitForSpinnerGone();
+	await dispatchClick(AddExistingUserPage.addUserButtonCss);
 };
 
 export const tableBodyExists = async () => {
@@ -20,6 +27,12 @@ export const tableBodyExists = async () => {
 };
 
 export const clickTableRow = async (text: string) => {
+	// Row click TOGGLES selection (selectUser sets disableButton = !isSelected). Let the grid finish
+	// loading/settling first, then click the row ONCE — a rapid second click would deselect it and
+	// re-disable the toolbar remove button.
+	await waitForSpinnerGone();
+	await getPage().waitForLoadState('networkidle').catch(() => {});
+	await getPage().waitForTimeout(1500);
 	await clickElementByText(AddExistingUserPage.selectTableRowCss, text);
 };
 

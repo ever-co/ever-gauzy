@@ -2,9 +2,12 @@ export const InvoicesPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	tabButtonCss: 'ul.tabset > li.tab  > a.tab-link',
 	addButtonCss: 'div.actions-container button[status="success"]',
-	editButtonCss: 'div.btn-group button.action.primary',
+	// Edit + Download both render as `button.action.primary` in the invoice toolbar — scope to the
+	// Edit label so clickEditButton targets Edit (not Download).
+	editButtonCss: 'div.btn-group button.action.primary:has-text("Edit")',
 	setStatusButtonCss: 'div.btn-group nb-select.select-nb',
-	viewButtonCss: 'div.btn-group button.action.secondary',
+	// View + Payments both render as `button.action.secondary` for invoices — scope to the View label.
+	viewButtonCss: 'div.btn-group button.action.secondary:has-text("View")',
 	popoverButtonCss: 'div.popover-container-action button.action',
 	deleteButtonCss: 'div.popover-container-action button.action.danger',
 	addTagsDropdownCss: '#addTags',

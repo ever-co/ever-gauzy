@@ -18,13 +18,20 @@ export const ManageEmployeesPage = {
 	lastNameInputCss: '#lastName',
 	usernameInputCss: '#username',
 	emailInputCss: '#email',
-	passwordInputCss: '#password',
-	addTagsDropdownCss: 'ng-select#addTags>div>span',
+	// ngx-password-form-field reflects id onto BOTH its host element and the inner input; scope to
+	// input# so enterInput's fill() (no .first()) doesn't hit a strict-mode violation.
+	passwordInputCss: 'input#password',
+	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
-	imgInputCss: '#inputImageUrl input',
-	nextButtonCss: 'button.green',
-	nextStepButtonCss: 'button.green',
-	lastStepButtonCss: 'button.mr-3.ml-3[status="success"]',
+	// ngx-file-uploader-input renders TWO inputs (text URL + hidden file); target the text one only,
+	// else enterInput's fill() (no .first()) hits a strict-mode violation.
+	imgInputCss: '#inputImageUrl input[type="text"]',
+	// Scope stepper buttons to the dialog: nb-stepper only renders the ACTIVE step's content, so an
+	// unscoped 'button.green' could match a different overlay; inside the dialog it's the current
+	// step's nbStepperNext. Step-3 "Finished adding" is the dialog's lone status="success" button.
+	nextButtonCss: 'nb-dialog-container button.green',
+	nextStepButtonCss: 'nb-dialog-container button.green',
+	lastStepButtonCss: 'nb-dialog-container button[status="success"]',
 	saveEditButtonCss: 'div.actions > button[status="success"]',
 	backButtonCss: 'div.main > button[status="primary"]',
 	usernameEditInputCss: '#username',

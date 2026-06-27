@@ -10,8 +10,11 @@ import {
 	waitElementToHide,
 	verifyText,
 	verifyTextNotExisting,
-	forceClickElementByText
+	forceClickElementByText,
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { PaymentsPage } from '../../../src/support/Base/pageobjects/PaymentsPageObject';
 
@@ -36,10 +39,28 @@ export const tagsDropdownVisible = async () => {
 };
 
 export const clickTagsDropdown = async (index: number) => {
-	await clickButtonByIndex(PaymentsPage.addTagsDropdownCss, index);
+	// ga-tags-color-input is an <ng-select id="addTags"> (opens on mousedown, options appendTo body).
+	// A force-click lands on the dialog's cdk-overlay backdrop and DISMISSES the whole payment form
+	// (the original failure: the form vanished and clickCardBody timed out). Open it via the keyboard
+	// instead — focus the inner <input> (focusing the host leaves the input unfocused so ArrowDown
+	// goes to <body> and never opens the panel), then ArrowDown.
+	await waitForSpinnerGone();
+	await getPage().locator(`${PaymentsPage.addTagsDropdownCss} input`).first().focus().catch(() => {});
+	await getPage().keyboard.press('ArrowDown').catch(() => {});
 };
 
 export const selectTagFromDropdown = async (index: number) => {
+	const page = getPage();
+	const option = page.locator(PaymentsPage.tagsDropdownOption);
+	// Re-open the tags ng-select via keyboard until the options (div.ng-option, appended to body)
+	// render, then pick one. ng-select opens on mousedown so a click is backdrop-blocked.
+	for (let i = 0; i < 4; i++) {
+		if (await option.first().isVisible().catch(() => false)) break;
+		await waitForSpinnerGone();
+		await page.locator(`${PaymentsPage.addTagsDropdownCss} input`).first().focus().catch(() => {});
+		await page.keyboard.press('ArrowDown').catch(() => {});
+		await page.waitForTimeout(800);
+	}
 	await clickButtonByIndex(PaymentsPage.tagsDropdownOption, index);
 };
 
@@ -48,11 +69,31 @@ export const projectDropdownVisible = async () => {
 };
 
 export const clickProjectDropdown = async () => {
-	await clickButton(PaymentsPage.projectDropdownCss);
+	// ga-project-selector (single-select) is an <ng-select formcontrolname="projectId"> (opens on
+	// mousedown, options appendTo body). Same backdrop hazard as the tags input — open via keyboard,
+	// focusing the inner <input> so ArrowDown actually opens the panel.
+	await waitForSpinnerGone();
+	await getPage().locator(`${PaymentsPage.projectDropdownCss} input`).first().focus().catch(() => {});
+	await getPage().keyboard.press('ArrowDown').catch(() => {});
 };
 
 export const selectProjectFromDropdown = async (text: string) => {
-	await clickElementByText(PaymentsPage.projectDropdownOptionCss, text);
+	const page = getPage();
+	const input = page.locator(`${PaymentsPage.projectDropdownCss} input`).first();
+	// Typeahead-filter the ng-select to the wanted project, then click the matching option from the
+	// body-appended panel (div.ng-option).
+	await input.focus().catch(() => {});
+	await input.fill('').catch(() => {});
+	await input.pressSequentially(String(text), { delay: 30 }).catch(() => {});
+	await page.waitForTimeout(400);
+	// Pick the real project option, NOT the ng-select [addTag] "Add <text>" option (the form already
+	// created this project, so the existing option is present).
+	const option = page
+		.locator(PaymentsPage.projectDropdownOptionCss)
+		.filter({ hasText: String(text) })
+		.filter({ hasNotText: 'Add' });
+	await option.first().click({ force: true });
+	await page.waitForTimeout(400);
 };
 
 export const dateInputVisible = async () => {
@@ -100,7 +141,23 @@ export const savePaymentButtonVisible = async () => {
 };
 
 export const clickSavePaymentButton = async () => {
-	await clickButton(PaymentsPage.saveExpenseButtonCss);
+	// The Save button is [disabled]="form.invalid"; wait until it's enabled (a force/dispatch click on a
+	// disabled button is a no-op) then dispatch the click — a fading dialog backdrop intercepts a
+	// coordinate click. Finally wait for the mutation dialog to detach, confirming the submit landed.
+	const page = getPage();
+	const saveBtn = page.locator(PaymentsPage.saveExpenseButtonCss).first();
+	await saveBtn.waitFor({ state: 'visible', timeout: 15000 });
+	for (let i = 0; i < 10; i++) {
+		if (await saveBtn.isEnabled().catch(() => false)) break;
+		await page.waitForTimeout(500);
+	}
+	await waitForSpinnerGone();
+	await dispatchClick(PaymentsPage.saveExpenseButtonCss);
+	await page
+		.locator('ga-payment-add')
+		.first()
+		.waitFor({ state: 'detached', timeout: 15000 })
+		.catch(() => undefined);
 };
 
 export const tableRowVisible = async () => {
@@ -108,7 +165,23 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index: number) => {
-	await clickButtonByIndex(PaymentsPage.selectTableRowCss, index);
+	// Selecting a grid row toggles selection and enables the toolbar Edit/Delete buttons. Settle the
+	// grid first (a re-render mid-click can swallow the selection), click the data row ONCE, then poll
+	// the Edit button's real `disabled` attribute — only re-click if selection was lost. Never rapid
+	// re-click (that would toggle the row back off).
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(PaymentsPage.selectTableRowCss).nth(index);
+	const editBtn = page.locator(PaymentsPage.editPaymentButtonCss).first();
+	await row.click({ force: true });
+	for (let i = 0; i < 6; i++) {
+		const disabled = await editBtn.getAttribute('disabled').catch(() => null);
+		if (disabled === null) return; // enabled -> row is selected
+		await page.waitForTimeout(700);
+		if (i === 2) await row.click({ force: true }); // single retry mid-way if selection didn't take
+	}
 };
 
 export const editPaymentButtonVisible = async () => {
@@ -116,7 +189,9 @@ export const editPaymentButtonVisible = async () => {
 };
 
 export const clickEditPaymentButton = async () => {
-	await clickButton(PaymentsPage.editPaymentButtonCss);
+	// Clicked right after row selection; a coordinate click can land on the still-fading selection
+	// overlay. dispatchClick fires the (click) handler directly to open the edit dialog.
+	await dispatchClick(PaymentsPage.editPaymentButtonCss);
 };
 
 export const deletePaymentButtonVisible = async () => {
@@ -124,7 +199,9 @@ export const deletePaymentButtonVisible = async () => {
 };
 
 export const clickDeletePaymentButton = async () => {
-	await clickButton(PaymentsPage.deletePaymentButtonCss);
+	// Clicked right after row selection — dispatch the click to open the delete-confirmation dialog
+	// reliably (a coordinate click can be intercepted by the fading selection overlay).
+	await dispatchClick(PaymentsPage.deletePaymentButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -132,7 +209,9 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(PaymentsPage.confirmDeleteButtonCss);
+	// The confirm (OK) button lives in a freshly-opened nb-dialog; dispatch the click so the fading
+	// backdrop of the just-closed selection/previous dialog can't intercept it.
+	await dispatchClick(PaymentsPage.confirmDeleteButtonCss);
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode: number) => {
@@ -140,6 +219,8 @@ export const clickKeyboardButtonByKeyCode = async (keycode: number) => {
 };
 
 export const clickCardBody = async () => {
+	// Click the dialog footer to blur/close the still-open tags ng-select (closeOnSelect=false) before
+	// moving to the next field — same proven pattern as Estimates' clickCardBody.
 	await clickButton(PaymentsPage.cardBodyCss);
 };
 

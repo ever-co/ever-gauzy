@@ -10,9 +10,12 @@ import {
 	clickButtonByText,
 	verifyValue,
 	scrollDown,
-	verifyText,
-	clickButtonWithDelay
+	clickButtonWithDelay,
+	dispatchClick,
+	waitForSpinnerGone,
+	verifyByLength
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { SalesInvoicesPage } from '../../../src/support/Base/pageobjects/SalesInvoicesPageObject';
 
@@ -29,7 +32,12 @@ export const addButtonVisible = async () => {
 };
 
 export const clickAddButton = async () => {
-	await clickButton(SalesInvoicesPage.addButtonCss);
+	// First click after navigating here straight from addContact: the leads/contact mutation leaves
+	// fading cdk-overlay backdrops and the invoices page shows a load spinner over the toolbar. Wait it
+	// out then dispatch the click so the add-invoice form reliably opens (a coordinate click can land on
+	// the spinner/backdrop). add() runs synchronously on the click event.
+	await waitForSpinnerGone();
+	await dispatchClick(SalesInvoicesPage.addButtonCss);
 };
 
 export const tagsDropdownVisible = async () => {
@@ -37,7 +45,12 @@ export const tagsDropdownVisible = async () => {
 };
 
 export const clickTagsDropdown = async () => {
-	await clickButton(SalesInvoicesPage.addTagsDropdownCss);
+	// #addTags is an ng-select (opens on MOUSEDOWN); a coordinate/force click can be swallowed by a
+	// lingering backdrop or even toggle the control shut. Open it via the keyboard: focus the inner
+	// search input and press ArrowDown so the option panel (div.ng-option, appended to body) renders.
+	const input = getPage().locator(SalesInvoicesPage.addTagsDropdownCss).locator('input').first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
 export const selectTagFromDropdown = async (index: number) => {
@@ -78,7 +91,15 @@ export const contactDropdownVisible = async () => {
 };
 
 export const clickContactDropdown = async () => {
-	await clickButton(SalesInvoicesPage.organizationContactDropdownCss);
+	// ga-contact-select is an ng-select (opens on MOUSEDOWN, options render as div.ng-option appended to
+	// body). Open via the keyboard rather than a click — a force-click can be intercepted by a fading
+	// backdrop or close the control. ArrowDown opens the panel.
+	const input = getPage()
+		.locator(SalesInvoicesPage.organizationContactDropdownCss)
+		.locator('input')
+		.first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
 export const selectContactFromDropdown = async (index: number) => {
@@ -154,7 +175,23 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index: number) => {
-	await clickButtonByIndex(SalesInvoicesPage.tableRowCss, index);
+	const page = getPage();
+	// Let the grid settle after the preceding mutation (it re-renders/refetches); a click during that
+	// window is lost or instantly cleared. Then click the row ONCE and poll the toolbar Edit button to
+	// enable — clicking a row TOGGLES its selection, so a blind second click would deselect it. Only
+	// re-click if the first was lost to a late re-render.
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(SalesInvoicesPage.tableRowCss).nth(index);
+	const editBtn = page.locator(SalesInvoicesPage.editButtonCss).first();
+	for (let attempt = 0; attempt < 4; attempt++) {
+		await row.click({ force: true });
+		for (let i = 0; i < 8; i++) {
+			await page.waitForTimeout(350);
+			if (!(await editBtn.isDisabled().catch(() => true))) return;
+		}
+	}
 };
 
 export const actionButtonVisible = async () => {
@@ -194,7 +231,12 @@ export const editButtonVisible = async () => {
 };
 
 export const clickEditButton = async (index: number) => {
-	await clickButtonByIndex(SalesInvoicesPage.editButtonCss, index);
+	// dispatchClick: the just-completed save/draft mutation leaves a fading cdk-overlay backdrop over the
+	// toolbar that swallows a coordinate click on Edit. Edit is index 0 (Download is the other
+	// `action.primary`); dispatch fires edit(selectedInvoice) straight on the button.
+	void index;
+	await waitForSpinnerGone();
+	await dispatchClick(SalesInvoicesPage.editButtonCss);
 };
 
 export const viewButtonVisible = async () => {
@@ -202,7 +244,12 @@ export const viewButtonVisible = async () => {
 };
 
 export const clickViewButton = async (index: number) => {
-	await clickButtonByIndex(SalesInvoicesPage.viewButtonCss, index);
+	// viewButtonCss is now scoped to the eye-outline (View) button only, so the index is irrelevant
+	// (the old `1` actually hit Payments). dispatchClick: a lingering toolbar backdrop can swallow a
+	// coordinate click; dispatch fires view() straight on the button.
+	void index;
+	await waitForSpinnerGone();
+	await dispatchClick(SalesInvoicesPage.viewButtonCss);
 };
 
 export const deleteButtonVisible = async () => {
@@ -246,7 +293,12 @@ export const verifySentBadgeClass = async () => {
 };
 
 export const verifyElementIsDeleted = async (text: string) => {
-	await verifyText(SalesInvoicesPage.verifyInvoiceCss, text);
+	// The original asserted a hard-coded empty-grid message, but the live invoices grid renders
+	// "You have not created any invoices." (SM_TABLE.NO_DATA.INVOICE) — not the pagedata string, which
+	// is stale and outside this spec's editable files. Assert the deletion the robust, message-agnostic
+	// way: the lone invoice's data row is gone (no `tr.angular2-smart-row` remains).
+	void text;
+	await verifyByLength(SalesInvoicesPage.tableRowCss, 0);
 };
 
 export const scrollEmailInviteTemplate = async () => {
@@ -258,7 +310,11 @@ export const moreButtonVisible = async () => {
 };
 
 export const clickMoreButton = async () => {
-	await clickButton(SalesInvoicesPage.moreButtonCss);
+	// Clicked right after a row selection / prior mutation; a fading toolbar backdrop can swallow a
+	// coordinate click. dispatch fires toggleActionsPopover() straight on the button so the actions
+	// popover (Send/Email/Delete) opens reliably.
+	await waitForSpinnerGone();
+	await dispatchClick(SalesInvoicesPage.moreButtonCss);
 };
 
 export const verifyMoreButton = async () => {

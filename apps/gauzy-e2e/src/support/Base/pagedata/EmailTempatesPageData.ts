@@ -5,8 +5,11 @@ export const EmailTemplatesPageData = {
 	russian: 'Russian',
 	//Subjects by Language
 	passwordResetSubjectEnglish: 'Welcome to Gauzy user@domain.com',
-	passwordResetSubjectBulgarian: 'Добре дошли в Gauzy™ user@domain.com\n',
-	passwordResetSubjectHebrew: 'ברוך הבא לגוזי! user@domain.com',
+	// The default-loaded template on this page is WELCOME_USER (see email-templates.component.ts),
+	// so the "Password Reset" step actually validates the welcome-user subject. appName seeds as
+	// 'Gauzy' (no ™); bg/he subjects were updated upstream — match the live seed (no ™, "ל Gauzy").
+	passwordResetSubjectBulgarian: 'Добре дошли в Gauzy user@domain.com',
+	passwordResetSubjectHebrew: 'ברוך הבא ל Gauzy user@domain.com',
 	passwordResetSubjectRussian: 'Добро пожаловать в Gauzy user@domain.com',
 	appointmentConfirmationSubjectEnglish: 'Appointment Confirmed',
 	appointmentConfirmationSubjectBulgarian: 'Назначението е потвърдено',
@@ -57,8 +60,9 @@ export const EmailTemplatesPageData = {
 	interviewerScheduleSubjectHebrew: 'לוח הזמנים לראיון',
 	interviewerScheduleSubjectRussian: 'Расписание интервью',
 	welcomeUserSubjectEnglish: 'Welcome to Gauzy user@domain.com',
-	welcomeUserSubjectBulgarian: 'Добре дошли в Gauzy™ user@domain.com',
-	welcomeUserSubjectHebrew: 'ברוך הבא לגוזי! user@domain.com',
+	// welcome-user seed: bg "Добре дошли в {{appName}} {{email}}" (no ™), he "ברוך הבא ל {{appName}} {{email}}".
+	welcomeUserSubjectBulgarian: 'Добре дошли в Gauzy user@domain.com',
+	welcomeUserSubjectHebrew: 'ברוך הבא ל Gauzy user@domain.com',
 	welcomeUserSubjectRussian: 'Добро пожаловать в Gauzy user@domain.com!',
 	inviteOrganizationClientSubjectEnglish:
 		"John Doe, you've been invited to Gauzy!",

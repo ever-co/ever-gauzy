@@ -6,11 +6,12 @@ import {
 	clearField,
 	enterInput,
 	clickElementByText,
-	clickElementIfVisible,
 	clickKeyboardBtnByKeycode,
 	verifyText,
 	waitElementToHide,
-	clickByText
+	clickByText,
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { EditUserPage } from '../../../src/support/Base/pageobjects/EditUserPageObject';
@@ -60,7 +61,9 @@ export const confirmRemoveBtnVisible = async () => {
 };
 
 export const clickConfirmRemoveButton = async () => {
-	await clickButton(EditUserPage.confirmRemoveOrgButtonCss);
+	// Confirm sits in an nb-dialog opened right before; dispatch the click so the fading backdrop
+	// can't intercept a coordinate click.
+	await dispatchClick(EditUserPage.confirmRemoveOrgButtonCss);
 };
 
 export const addOrgButtonVisible = async () => {
@@ -68,7 +71,10 @@ export const addOrgButtonVisible = async () => {
 };
 
 export const clickAddOrgButton = async () => {
-	await clickButton(EditUserPage.addOrgButtonCss);
+	// The Organizations tab card shows a full-card nb-spinner while it loads; settle it, then
+	// dispatch the click straight at the Add button so the spinner overlay can't swallow it.
+	await waitForSpinnerGone();
+	await dispatchClick(EditUserPage.addOrgButtonCss);
 };
 
 export const selectOrgDropdownVisible = async () => {
@@ -76,11 +82,20 @@ export const selectOrgDropdownVisible = async () => {
 };
 
 export const clickSelectOrgDropdown = async () => {
+	// nb-select opens on mousedown; a force coordinate-click is reliable here (no leftover dialog
+	// backdrop at this point — the add form just rendered inline).
 	await clickButton(EditUserPage.selectOrgMultiSelectCss);
 };
 
 export const clickSelectOrgDropdownOption = async () => {
-	await clickElementIfVisible(EditUserPage.selectOrgDropdownOptionCss, 0);
+	// Pick the first org option. The dropdown is open from clickSelectOrgDropdown; assert the
+	// option is present (so submitForm has a selectedOrganizationsId) then click it — the old
+	// clickElementIfVisible silently no-opped when the option list hadn't rendered, leaving the
+	// selection empty and the add a no-op.
+	await verifyElementIsVisible(EditUserPage.selectOrgDropdownOptionCss);
+	await clickButtonByIndex(EditUserPage.selectOrgDropdownOptionCss, 0);
+	// Close the multi-select overlay so it doesn't cover the Save button.
+	await clickKeyboardBtnByKeycode(27);
 };
 
 export const saveSelectedOrgButtonVisible = async () => {
@@ -88,7 +103,10 @@ export const saveSelectedOrgButtonVisible = async () => {
 };
 
 export const clickSaveSelectedOrgButton = async () => {
-	await clickButton(EditUserPage.saveSelectedOrgButton);
+	// Save creates the user-organization then reloads the list (full-card spinner). Dispatch the
+	// click so neither the closing nb-select overlay nor the spinner intercepts it.
+	await dispatchClick(EditUserPage.saveSelectedOrgButton);
+	await waitForSpinnerGone();
 };
 
 export const firstNameInputVisible = async () => {

@@ -101,6 +101,8 @@ test.describe('Approval request test', () => {
 			await approvalRequestPage.selectTableRow(0);
 			await approvalRequestPage.deleteApprovalRequestButtonVisible();
 			await approvalRequestPage.clickDeleteApprovalRequestButton();
+			await approvalRequestPage.confirmDeleteButtonVisible();
+			await approvalRequestPage.clickConfirmDeleteButton();
 			await approvalRequestPage.waitMessageToHide();
 			await approvalRequestPage.verifyElementIsDeleted(ApprovalRequestPageData.editName);
 		});

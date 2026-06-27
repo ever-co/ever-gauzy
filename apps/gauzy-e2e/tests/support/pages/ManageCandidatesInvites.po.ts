@@ -11,8 +11,11 @@ import {
 	clickElementByText,
 	verifyByText,
 	verifyByLength,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ManageCandidatesInvitesPage } from '../../../src/support/Base/pageobjects/ManageCandidatesInvitesPageObject';
 
@@ -47,7 +50,11 @@ export const saveButtonVisible = async () => {
 };
 
 export const clickSaveButton = async () => {
-	await clickButton(ManageCandidatesInvitesPage.saveButtonCss);
+	// Save sits in nb-card-footer of the invite dialog, right after the nb-datepicker overlay was
+	// opened/closed by the appliedDate field. A coordinate click (even force) lands on the fading
+	// cdk-overlay backdrop and the dialog stays open (invite never created). Dispatch the click
+	// straight to the element so the (click)="add()" handler fires regardless of the backdrop.
+	await dispatchClick(ManageCandidatesInvitesPage.saveButtonCss);
 };
 
 export const waitMessageToHide = async () => {
@@ -63,7 +70,24 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (text) => {
-	await clickElementByText(ManageCandidatesInvitesPage.selectTableRowCss, text);
+	// Selecting a grid row toggles selection and enables the toolbar (Resend/Delete are
+	// [disabled]="disableButton"). Settle the grid first so the row isn't re-rendered out from under the
+	// click (which would lose selection), then click once and poll the Delete toolbar button's real
+	// `disabled` attr; only re-click if selection didn't take. Never rapid re-click — that toggles it off.
+	await waitForSpinnerGone();
+	await getPage().waitForLoadState('networkidle').catch(() => {});
+	await getPage().waitForTimeout(1500);
+
+	const row = getPage().locator(ManageCandidatesInvitesPage.selectTableRowCss).filter({ hasText: text }).first();
+	const toolbarBtn = getPage().locator(ManageCandidatesInvitesPage.deleteInviteButtonCss).first();
+
+	await row.click({ force: true });
+	for (let i = 0; i < 5; i++) {
+		const disabled = await toolbarBtn.getAttribute('disabled');
+		if (disabled === null) return; // enabled -> row is selected
+		await getPage().waitForTimeout(800);
+		if (i === 2) await row.click({ force: true }); // single deliberate re-click if selection was lost
+	}
 };
 
 export const resendButtonVisible = async () => {
@@ -71,7 +95,9 @@ export const resendButtonVisible = async () => {
 };
 
 export const clickResendButton = async () => {
-	await clickButton(ManageCandidatesInvitesPage.resendInviteButtonCss);
+	// Toolbar Resend button: dispatch the click so the (click)="resendInvite()" handler fires even if
+	// a fading backdrop from the just-closed invite dialog still overlays the toolbar.
+	await dispatchClick(ManageCandidatesInvitesPage.resendInviteButtonCss);
 };
 
 export const confirmResendButtonVisible = async () => {
@@ -81,7 +107,9 @@ export const confirmResendButtonVisible = async () => {
 };
 
 export const clickConfirmResendButton = async () => {
-	await clickButton(ManageCandidatesInvitesPage.confirmResendInviteButtonCss);
+	// OK button inside the resend-confirmation nb-dialog. Dispatch the click so the (click)="confirm()"
+	// handler fires past the dialog's own cdk-overlay backdrop.
+	await dispatchClick(ManageCandidatesInvitesPage.confirmResendInviteButtonCss);
 };
 
 export const deleteButtonVisible = async () => {
@@ -89,7 +117,9 @@ export const deleteButtonVisible = async () => {
 };
 
 export const clickDeleteButton = async () => {
-	await clickButton(ManageCandidatesInvitesPage.deleteInviteButtonCss);
+	// Toolbar Delete button: dispatch the click so the (click)="deleteInvite()" handler fires even if
+	// a fading backdrop from the just-closed resend dialog still overlays the toolbar.
+	await dispatchClick(ManageCandidatesInvitesPage.deleteInviteButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -97,7 +127,9 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(ManageCandidatesInvitesPage.confirmDeleteButtonCss);
+	// OK button inside the delete-confirmation nb-dialog. Dispatch the click so the (click)="delete()"
+	// handler fires past the dialog's own cdk-overlay backdrop.
+	await dispatchClick(ManageCandidatesInvitesPage.confirmDeleteButtonCss);
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode) => {

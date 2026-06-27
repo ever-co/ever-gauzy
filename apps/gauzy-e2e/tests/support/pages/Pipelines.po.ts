@@ -10,7 +10,9 @@ import {
 	enterInputByIndex,
 	verifyElementIsVisibleByIndex,
 	clearFieldByIndex,
-	verifyByLength
+	verifyByLength,
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
 import { getPage } from '../page-context';
 import { expect } from '@playwright/test';
@@ -31,9 +33,11 @@ export const addPipelineButtonVisible = async () => {
 
 export const clickAddPipelineButton = async () => {
 	// The create dialog occasionally fails to open on the first click (the button can be
-	// briefly re-rendered while the list refreshes). Retry until the dialog name field shows.
+	// briefly re-rendered while the list refreshes). Settle the page, then dispatchClick (fires the
+	// (click)=createPipeline() handler even under the page-load spinner) and retry until the name field shows.
+	await waitForSpinnerGone();
 	for (let attempt = 0; attempt < 4; attempt++) {
-		await getPage().locator(PipelinesPage.addPipelineButtonCss).first().click({ force: true }).catch(() => undefined);
+		await dispatchClick(PipelinesPage.addPipelineButtonCss).catch(() => undefined);
 		try {
 			await getPage().locator(PipelinesPage.pipelineNameInputCss).first().waitFor({ state: 'visible', timeout: 8000 });
 			return;
@@ -67,7 +71,9 @@ export const createPipelineButtonVisible = async () => {
 };
 
 export const clickCreatePipelineButton = async () => {
-	await clickButton(PipelinesPage.createPipelineButtonCss);
+	// Submit inside the open create dialog. Use dispatchClick so the (ngSubmit) handler fires even if a
+	// previous fading cdk-overlay backdrop still sits over the footer.
+	await dispatchClick(PipelinesPage.createPipelineButtonCss);
 };
 
 export const tableRowVisible = async () => {
@@ -75,7 +81,14 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index: number) => {
-	await clickButtonByIndex(PipelinesPage.selectTableRowCss, index);
+	// Row click TOGGLES selection, which enables the toolbar Edit/Delete buttons. Settle the grid first
+	// (post-mutation refresh + spinner) so the click lands on a stable row and isn't immediately undone
+	// by a re-render, then click ONCE. Re-selection (if the toggle is lost) is handled by the consumers
+	// (clickEditPipelineButton / clickDeleteButton) which poll the button's real `disabled` attr.
+	await waitForSpinnerGone();
+	await getPage().waitForLoadState('networkidle').catch(() => {});
+	await getPage().waitForTimeout(1500);
+	await getPage().locator(PipelinesPage.selectTableRowCss).nth(index).click({ force: true });
 };
 
 export const editPipelineButtonVisible = async () => {
@@ -83,12 +96,20 @@ export const editPipelineButtonVisible = async () => {
 };
 
 export const clickEditPipelineButton = async () => {
-	// Edit is enabled only with a selected row, and the dialog can fail to open on the
-	// first click. Re-select the first row and retry until the dialog name field shows.
+	// Edit is enabled only with a selected row (`[disabled]="!selectedItem && disableButton"`). The row
+	// click TOGGLES selection, so we must NOT rapid re-click — that would deselect and re-disable Edit.
+	// Instead: ensure the row is selected by polling the Edit button's real `disabled` attr, only
+	// re-clicking the row when selection was actually lost, then dispatchClick the Edit button (the
+	// create dialog just closed → a fading backdrop can intercept a coordinate click).
+	const editBtn = getPage().locator(PipelinesPage.editPipelineButtonCss).first();
+	const row = getPage().locator(PipelinesPage.selectTableRowCss).first();
 	for (let attempt = 0; attempt < 4; attempt++) {
-		await getPage().locator(PipelinesPage.selectTableRowCss).first().click({ force: true }).catch(() => undefined);
-		await getPage().waitForTimeout(500);
-		await getPage().locator(PipelinesPage.editPipelineButtonCss).first().click({ force: true }).catch(() => undefined);
+		// Make sure a row is selected (Edit enabled) before opening the dialog.
+		if ((await editBtn.getAttribute('disabled')) !== null) {
+			await row.click({ force: true }).catch(() => undefined);
+			await getPage().waitForTimeout(600);
+		}
+		await dispatchClick(PipelinesPage.editPipelineButtonCss).catch(() => undefined);
 		try {
 			await getPage().locator(PipelinesPage.pipelineNameInputCss).first().waitFor({ state: 'visible', timeout: 8000 });
 			return;
@@ -104,7 +125,8 @@ export const updateButtonVisible = async () => {
 };
 
 export const clickUpdateButton = async () => {
-	await clickButton(PipelinesPage.updateButtonCss);
+	// Submit inside the open edit dialog; dispatchClick so (ngSubmit) fires regardless of any overlay.
+	await dispatchClick(PipelinesPage.updateButtonCss);
 };
 
 export const deleteButtonVisible = async () => {
@@ -112,7 +134,20 @@ export const deleteButtonVisible = async () => {
 };
 
 export const clickDeleteButton = async () => {
-	await clickButton(PipelinesPage.deletePipelineButtonCss);
+	// Delete is enabled only with a selected row. Ensure selection by polling the button's real
+	// `disabled` attr (re-selecting only if the toggle was lost — never rapid re-click), then
+	// dispatchClick to open the confirm dialog (avoids any leaked backdrop intercepting the click).
+	const deleteBtn = getPage().locator(PipelinesPage.deletePipelineButtonCss).first();
+	const row = getPage().locator(PipelinesPage.selectTableRowCss).first();
+	for (let attempt = 0; attempt < 4; attempt++) {
+		if ((await deleteBtn.getAttribute('disabled')) !== null) {
+			await row.click({ force: true }).catch(() => undefined);
+			await getPage().waitForTimeout(600);
+		} else {
+			break;
+		}
+	}
+	await dispatchClick(PipelinesPage.deletePipelineButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -120,7 +155,9 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(PipelinesPage.confirmDeleteButtonCss);
+	// Confirm (OK) inside the delete dialog; dispatchClick so the (click)=delete() handler fires even if
+	// the dialog backdrop is mid-animation.
+	await dispatchClick(PipelinesPage.confirmDeleteButtonCss);
 };
 
 export const waitMessageToHide = async () => {

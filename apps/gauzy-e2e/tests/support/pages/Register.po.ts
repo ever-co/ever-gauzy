@@ -1,17 +1,114 @@
 import dayjs from 'dayjs';
 import {
-	clearField,
 	clickButton,
 	clickButtonByIndex,
-	clickElementByText,
 	enterInput,
 	getLastElement,
 	verifyElementIsVisible,
 	verifyText,
-	waitElementToHide
+	waitElementToHide,
+	waitForSpinnerGone
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { RegisterPage } from '../../../src/support/Base/pageobjects/RegisterPageObject';
+
+// The first-organization onboarding screen renders the organizations-step-form component, wrapped in
+// `<nb-card [nbSpinner]="loading">`. On a slow/seeded stack the spinner overlay (pointer-events:auto)
+// can eat coordinate clicks even with {force:true}, and the step's ng-select dropdowns (country/timezone,
+// appendTo="body") open on MOUSEDOWN — a Playwright force-click lands on a fading backdrop or fails to
+// open them. The helpers below dispatch the interaction straight to the element via the DOM so it fires
+// regardless of the overlay (same proven approach used by AddOrganization.po for this exact component).
+
+// Open an ng-select / nb-select by dispatching mousedown/mouseup/click on its host, then confirm the
+// option panel actually rendered (retrying). ng-select opens via the .ng-select-container; nb-select
+// opens on the host button.
+const openDropdown = async (selector: string) => {
+	for (let attempt = 0; attempt < 5; attempt++) {
+		const dispatched = await getPage().evaluate((sel) => {
+			const host = document.querySelector(sel);
+			const container =
+				(host?.querySelector('.ng-select-container') as HTMLElement | null) ??
+				(host?.querySelector('button') as HTMLElement | null) ??
+				(host as HTMLElement | null);
+			if (!container) return false;
+			container.scrollIntoView({ block: 'center' });
+			for (const type of ['mousedown', 'mouseup', 'click']) {
+				container.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window }));
+			}
+			return true;
+		}, selector);
+		if (dispatched) {
+			try {
+				await getPage()
+					.locator('div.ng-option, .ng-dropdown-panel .ng-option, .option-list nb-option, .cdk-overlay-container nb-option')
+					.first()
+					.waitFor({ state: 'visible', timeout: 5000 });
+				return;
+			} catch {
+				/* panel didn't render yet — retry */
+			}
+		}
+		await getPage().waitForTimeout(600);
+	}
+};
+
+// Option panels (ng-select .ng-option / nb-select nb-option) live in overlays that can sit under the
+// same spinner stacking context — dispatch the click on the matching option via DOM.
+const OPTION_SELECTOR =
+	'div.ng-option, .ng-dropdown-panel .ng-option, .option-list nb-option, .cdk-overlay-container nb-option';
+
+const clickOptionByText = async (text: string) => {
+	for (let attempt = 0; attempt < 5; attempt++) {
+		const clicked = await getPage().evaluate(
+			({ sel, wanted }: { sel: string; wanted: string }) => {
+				const opts = Array.from(document.querySelectorAll(sel)) as HTMLElement[];
+				const match = opts.find((o) =>
+					(o.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase().includes(wanted.toLowerCase())
+				);
+				if (!match) return false;
+				match.scrollIntoView({ block: 'center' });
+				for (const type of ['mousedown', 'mouseup', 'click']) {
+					match.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window }));
+				}
+				return true;
+			},
+			{ sel: OPTION_SELECTOR, wanted: text }
+		);
+		if (clicked) return true;
+		await getPage().waitForTimeout(500);
+	}
+	return false;
+};
+
+// Stepper forward/confirm buttons are subject to the same overlay; click the currently-visible matching
+// button via a DOM dispatch. nb-stepper renders only the selected step's content, but we still scope to
+// the stepper and only match visible (offsetParent != null), enabled buttons. Case-insensitive label match.
+const clickFormButtonByText = async (texts: string[]) => {
+	await waitForSpinnerGone();
+	await getPage().waitForTimeout(400);
+	for (let attempt = 0; attempt < 6; attempt++) {
+		const clicked = await getPage().evaluate((labels: string[]) => {
+			const wanted = labels.map((l) => l.toLowerCase());
+			const root = document.querySelector('nb-stepper') ?? document;
+			const buttons = Array.from(root.querySelectorAll('button')) as HTMLButtonElement[];
+			const match = buttons.find((b) => {
+				if (b.disabled || b.offsetParent === null) return false;
+				const t = (b.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+				return wanted.some((w) => t === w || t.includes(w));
+			});
+			if (!match) return false;
+			match.scrollIntoView({ block: 'center' });
+			for (const type of ['mousedown', 'mouseup', 'click']) {
+				match.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window }));
+			}
+			return true;
+		}, texts);
+		if (clicked) return true;
+		await getPage().waitForTimeout(500);
+	}
+	return false;
+};
 
 export const registerLinkVisible = async () => {
 	await verifyElementIsVisible(RegisterPage.registerLinkCss);
@@ -54,8 +151,8 @@ export const enterOrganizationName = async (data) => {
 };
 
 export const selectCurrency = async (data) => {
-	await clickButton(RegisterPage.currencyFieldCss);
-	await clickElementByText(RegisterPage.dropdownOptionCss, data);
+	await openDropdown(RegisterPage.currencyFieldCss);
+	await clickOptionByText(data);
 };
 
 export const enterOfficialName = async (data) => {
@@ -66,8 +163,17 @@ export const enterTaxId = async (data) => {
 	await enterInput(RegisterPage.taxFieldCss, data);
 };
 
+// Advances the onboarding stepper. Steps 1-4 expose a localized "Next" button (settle the loading
+// spinner first, then DOM-dispatch the click so an overlay/backdrop can't intercept it).
 export const clickOnNextButton = async () => {
-	await clickButton(RegisterPage.nextButtonCss);
+	await clickFormButtonByText(['Next', 'Continue']);
+};
+
+// Step 5 (Register as Employee) confirm — its status="success" "Add" button submits the onboarding
+// form (submitEmployeeFeature -> createOrganization), which the app now requires before the
+// complete page renders. The original 4-step Cypress flow predates this extra step.
+export const clickFinishButton = async () => {
+	await clickFormButtonByText(['Add', 'Finish', 'Save']);
 };
 
 export const verifyOrganizationExists = async (text) => {
@@ -79,15 +185,16 @@ export const waitMessageToHide = async () => {
 };
 
 export const countryDropdownVisible = async () => {
-	await verifyElementIsVisible(RegisterPage.countryDropdownCss);
+	// ng-select host attaches lazily — wait for it to be in the DOM rather than asserting visibility.
+	await getPage().locator(RegisterPage.countryDropdownCss).first().waitFor({ state: 'attached', timeout: 24000 });
 };
 
 export const clickCountryDropdown = async () => {
-	await clickButton(RegisterPage.countryDropdownCss);
+	await openDropdown(RegisterPage.countryDropdownCss);
 };
 
 export const selectCountryFromDropdown = async (text) => {
-	await clickElementByText(RegisterPage.dropdownOptionCss, text);
+	await clickOptionByText(text);
 };
 
 export const cityInputVisible = async () => {
@@ -95,7 +202,6 @@ export const cityInputVisible = async () => {
 };
 
 export const enterCityInputData = async (data) => {
-	await clearField(RegisterPage.cityInputCss);
 	await enterInput(RegisterPage.cityInputCss, data);
 };
 
@@ -104,7 +210,6 @@ export const postcodeInputVisible = async () => {
 };
 
 export const enterPostcodeInputData = async (data) => {
-	await clearField(RegisterPage.postCodeInputCss);
 	await enterInput(RegisterPage.postCodeInputCss, data);
 };
 
@@ -113,7 +218,6 @@ export const streetInputVisible = async () => {
 };
 
 export const enterStreetInputData = async (data) => {
-	await clearField(RegisterPage.streetInputCss);
 	await enterInput(RegisterPage.streetInputCss, data);
 };
 
@@ -122,11 +226,11 @@ export const bonusTypeDropdownVisible = async () => {
 };
 
 export const clickBonusTypeDropdown = async () => {
-	await clickButton(RegisterPage.bonusTypeDropdownCss);
+	await openDropdown(RegisterPage.bonusTypeDropdownCss);
 };
 
 export const selectBonusTypeFromDropdown = async (text) => {
-	await clickElementByText(RegisterPage.dropdownOptionCss, text);
+	await clickOptionByText(text);
 };
 
 export const bonusPercentageInputVisible = async () => {
@@ -134,7 +238,6 @@ export const bonusPercentageInputVisible = async () => {
 };
 
 export const enterBonusPercentageInputData = async (data) => {
-	await clearField(RegisterPage.bonusPercentageCss);
 	await enterInput(RegisterPage.bonusPercentageCss, data);
 };
 
@@ -143,20 +246,19 @@ export const expiryPeriodInputVisible = async () => {
 };
 
 export const enterExpiryPeriodInputData = async (data) => {
-	await clearField(RegisterPage.expiryPeriodInputCss);
 	await enterInput(RegisterPage.expiryPeriodInputCss, data);
 };
 
 export const timeZoneDropdownVisible = async () => {
-	await verifyElementIsVisible(RegisterPage.timeZoneDropdownCss);
+	await getPage().locator(RegisterPage.timeZoneDropdownCss).first().waitFor({ state: 'attached', timeout: 24000 });
 };
 
 export const clickTimeZoneDropdown = async () => {
-	await clickButton(RegisterPage.timeZoneDropdownCss);
+	await openDropdown(RegisterPage.timeZoneDropdownCss);
 };
 
 export const selectTimeZoneFromDropdown = async (text) => {
-	await clickElementByText(RegisterPage.timeZoneDropdownOptionCss, text);
+	await clickOptionByText(text);
 };
 
 export const startOfWeekDropdownVisible = async () => {
@@ -164,11 +266,11 @@ export const startOfWeekDropdownVisible = async () => {
 };
 
 export const clickStartOfWeekDropdown = async () => {
-	await clickButton(RegisterPage.startOfWeekDropdownCss);
+	await openDropdown(RegisterPage.startOfWeekDropdownCss);
 };
 
 export const selectStartOfWeekFromDropdown = async (text) => {
-	await clickElementByText(RegisterPage.dropdownOptionCss, text);
+	await clickOptionByText(text);
 };
 
 export const dateTypeDropdownVisible = async () => {
@@ -176,11 +278,11 @@ export const dateTypeDropdownVisible = async () => {
 };
 
 export const clickDateTypeDropdown = async () => {
-	await clickButton(RegisterPage.dateTypeDropdownCss);
+	await openDropdown(RegisterPage.dateTypeDropdownCss);
 };
 
 export const selectDateTypeFromDropdown = async (text) => {
-	await clickElementByText(RegisterPage.dropdownOptionCss, text);
+	await clickOptionByText(text);
 };
 
 export const regionDropdownVisible = async () => {
@@ -188,11 +290,11 @@ export const regionDropdownVisible = async () => {
 };
 
 export const clickRegionDropdown = async () => {
-	await clickButton(RegisterPage.regionCodeDropdownCss);
+	await openDropdown(RegisterPage.regionCodeDropdownCss);
 };
 
 export const selectRegionFromDropdown = async (text) => {
-	await clickElementByText(RegisterPage.dropdownOptionCss, text);
+	await clickOptionByText(text);
 };
 
 export const numberFormatDropdownVisible = async () => {
@@ -200,11 +302,11 @@ export const numberFormatDropdownVisible = async () => {
 };
 
 export const clickNumberFormatDropdown = async () => {
-	await clickButton(RegisterPage.numberFormatDropdownCss);
+	await openDropdown(RegisterPage.numberFormatDropdownCss);
 };
 
 export const selectNumberFormatFromDropdown = async (text) => {
-	await clickElementByText(RegisterPage.dropdownOptionCss, text);
+	await clickOptionByText(text);
 };
 
 export const dateFormatDropdownVisible = async () => {
@@ -212,12 +314,14 @@ export const dateFormatDropdownVisible = async () => {
 };
 
 export const clickDateFormatDropdown = async () => {
-	await clickButton(RegisterPage.dateFormatDropdownCss);
+	await openDropdown(RegisterPage.dateFormatDropdownCss);
 };
 
 export const selectDateFormatFromDropdown = async () => {
+	// dateFormat options preview the moment 'L' format. The region selected just before this is
+	// English (United States) -> moment 'en' -> 'L' renders as MM/DD/YYYY (not DD/MM/YYYY).
 	const today = dayjs().format('MM/DD/YYYY');
-	await clickElementByText(RegisterPage.dropdownOptionCss, today);
+	await clickOptionByText(today);
 };
 
 export const selectTableRow = async () => {

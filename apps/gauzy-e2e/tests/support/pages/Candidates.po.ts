@@ -11,8 +11,11 @@ import {
 	getLastElement,
 	waitElementToHide,
 	verifyText,
-	verifyElementNotExist
+	verifyElementNotExist,
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { CandidatesPage } from '../../../src/support/Base/pageobjects/CandidatesPageObject';
 
@@ -29,7 +32,10 @@ export const inviteButtonVisible = async () => {
 };
 
 export const clickInviteButton = async () => {
-	await clickButton(CandidatesPage.inviteButtonCss);
+	// Toolbar Invite -> invite() opens the dialog. The button lives in an animated transition
+	// container; let the page settle then dispatch so a mid-transition coordinate click can't miss.
+	await waitForSpinnerGone();
+	await dispatchClick(CandidatesPage.inviteButtonCss);
 };
 
 export const emailInputVisible = async () => {
@@ -59,7 +65,21 @@ export const selectTableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index) => {
-	await clickButtonByIndex(CandidatesPage.selectTableRowCss, index);
+	// Selecting a grid row TOGGLES selection and enables the toolbar (Edit/Archive/Reject). Settle
+	// the grid first, then click ONCE and poll the Edit button's real `disabled` attr — only
+	// re-click if selection was lost. Never rapid re-click (that toggles it back off).
+	await waitForSpinnerGone();
+	await getPage().waitForLoadState('networkidle').catch(() => {});
+	await getPage().waitForTimeout(1500);
+	const row = getPage().locator(CandidatesPage.selectTableRowCss).nth(index);
+	const editBtn = getPage().locator(CandidatesPage.editButtonCss).first();
+	await row.click({ force: true });
+	for (let i = 0; i < 5; i++) {
+		const disabled = await editBtn.getAttribute('disabled');
+		if (disabled === null) return; // enabled -> row is selected
+		await getPage().waitForTimeout(500);
+		if (i === 2) await row.click({ force: true }); // one re-click if still not selected
+	}
 };
 
 export const sendInviteButtonVisible = async () => {
@@ -67,7 +87,10 @@ export const sendInviteButtonVisible = async () => {
 };
 
 export const clickSendInviteButton = async () => {
-	await clickButton(CandidatesPage.sendInviteButtonCss);
+	// Invite is submitted right after the appliedDate nb-datepicker mutation; its fading
+	// cdk-overlay-backdrop sits over the footer and swallows a coordinate (force) click, so the
+	// dialog never closes. dispatchClick fires (click)="add()" straight on the element.
+	await dispatchClick(CandidatesPage.sendInviteButtonCss);
 };
 
 export const addCandidateButtonVisible = async () => {
@@ -75,7 +98,10 @@ export const addCandidateButtonVisible = async () => {
 };
 
 export const clickAddCandidateButton = async (index) => {
-	await clickButtonByIndex(CandidatesPage.addButtonCss, index);
+	// Clicked right after the invite dialog closed (its backdrop + toastr still fading over the
+	// toolbar); a coordinate click lands on the overlay. Settle, then dispatch (click)="add()".
+	await waitForSpinnerGone();
+	await dispatchClick(CandidatesPage.addButtonCss);
 };
 
 export const firstNameInputVisible = async () => {
@@ -138,7 +164,11 @@ export const tagsDropdownVisible = async () => {
 };
 
 export const clickAddTagsDropdown = async () => {
-	await clickButton(CandidatesPage.addTagsDropdownCss);
+	// ga-tags-color-input is an ng-select that opens on MOUSEDOWN and is backdrop-blocked; a
+	// force-click on its control can also CLOSE the add form. Open it via the keyboard instead.
+	const input = getPage().locator(CandidatesPage.addTagsDropdownCss).locator('input').first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
 export const selectTagsFromDropdown = async (index) => {
@@ -158,7 +188,10 @@ export const nextButtonVisible = async () => {
 };
 
 export const clickNextButton = async () => {
-	await clickButton(CandidatesPage.nextButtonCss);
+	// Stepper step-1 -> step-2. The tags ng-select dropdown we just opened (appendTo body) leaves a
+	// fading overlay over the footer; dispatch the click straight on the nbStepperNext button.
+	await waitForSpinnerGone();
+	await dispatchClick(CandidatesPage.nextButtonCss);
 };
 
 export const nextStepButtonVisible = async () => {
@@ -166,7 +199,9 @@ export const nextStepButtonVisible = async () => {
 };
 
 export const clickNextStepButton = async () => {
-	await clickButton(CandidatesPage.nextStepButtonCss);
+	// Stepper step-2 -> step-3 (nbStepperNext); same backdrop hazard as step-1's Next.
+	await waitForSpinnerGone();
+	await dispatchClick(CandidatesPage.nextStepButtonCss);
 };
 
 export const allCurrentCandidatesButtonVisible = async () => {
@@ -174,7 +209,10 @@ export const allCurrentCandidatesButtonVisible = async () => {
 };
 
 export const clickAllCurrentCandidatesButton = async () => {
-	await clickButton(CandidatesPage.allCurrentCandidatesButtonCss);
+	// Stepper step-3 "Finished adding" -> (click)="add()" persists the candidate and closes the
+	// dialog; dispatch through any lingering stepper/overlay backdrop.
+	await waitForSpinnerGone();
+	await dispatchClick(CandidatesPage.allCurrentCandidatesButtonCss);
 };
 
 export const tableRowVisible = async () => {
@@ -198,7 +236,8 @@ export const clickIncludeArchiveButton = async () => {
 };
 
 export const clickEditButton = async () => {
-	await clickButton(CandidatesPage.editButtonCss);
+	// Toolbar Edit fires after row selection; dispatch so a fading selection/overlay can't swallow it.
+	await dispatchClick(CandidatesPage.editButtonCss);
 };
 
 export const archiveButtonVisible = async () => {
@@ -206,7 +245,8 @@ export const archiveButtonVisible = async () => {
 };
 
 export const clickArchiveButton = async () => {
-	await clickButton(CandidatesPage.archiveButtonCss);
+	// Toolbar Archive opens the confirm dialog; dispatch through any fading selection overlay.
+	await dispatchClick(CandidatesPage.archiveButtonCss);
 };
 
 export const rejectButtonVisible = async () => {
@@ -214,7 +254,8 @@ export const rejectButtonVisible = async () => {
 };
 
 export const clickRejectButton = async () => {
-	await clickButton(CandidatesPage.rejectButtonCss);
+	// Toolbar Reject opens the confirm dialog; dispatch through any fading selection overlay.
+	await dispatchClick(CandidatesPage.rejectButtonCss);
 };
 
 export const locationButtonVisible = async () => {
@@ -277,7 +318,8 @@ export const backButtonVisible = async () => {
 };
 
 export const clickBackButton = async () => {
-	await clickButton(CandidatesPage.backButtonCss);
+	// Clicked right after the edit Save toast; dispatch through any lingering overlay.
+	await dispatchClick(CandidatesPage.backButtonCss);
 };
 
 export const saveEditButtonVisible = async () => {
@@ -285,7 +327,10 @@ export const saveEditButtonVisible = async () => {
 };
 
 export const clickSaveEditButton = async () => {
-	await clickButton(CandidatesPage.saveEditButtonCss);
+	// Edit-page Save (type="submit", disabled while form invalid). Let the page settle, then
+	// dispatch so the (ngSubmit) fires even with a transient overlay/spinner.
+	await waitForSpinnerGone();
+	await dispatchClick(CandidatesPage.saveEditButtonCss);
 };
 
 export const ratesButtonVisible = async () => {
@@ -372,7 +417,9 @@ export const confirmActionButtonVisible = async () => {
 };
 
 export const clickConfirmActionButton = async () => {
-	await clickButton(CandidatesPage.confirmActionButtonCss);
+	// OK button on the reject/archive confirm dialog; dispatch so the freshly-opened dialog's own
+	// backdrop (or the previous toolbar overlay) can't intercept the coordinate click.
+	await dispatchClick(CandidatesPage.confirmActionButtonCss);
 };
 
 export const waitMessageToHide = async () => {

@@ -32,6 +32,8 @@ test.describe('Add employee position test', () => {
 			await addEmployeePositionPage.savePositionButtonVisible();
 			await addEmployeePositionPage.clickSavePositionButton();
 			await addEmployeePositionPage.waitMessageToHide();
+			// Edit is disabled until a grid row is selected (selectPosition enables it).
+			await addEmployeePositionPage.selectPositionRow();
 			await addEmployeePositionPage.editEmployeePositionButtonVisible();
 			await addEmployeePositionPage.clickEditEmployeePositionButton();
 			await addEmployeePositionPage.verifyTitleExists(AddEmployeePositionPageData.fullStackDeveloper);
@@ -40,6 +42,9 @@ test.describe('Add employee position test', () => {
 		});
 
 		await test.step('Should be able to edit employee position', async () => {
+			// Cancel reset disabled=true, so re-select the row to re-enable Edit.
+			await addEmployeePositionPage.selectPositionRow();
+			await addEmployeePositionPage.editEmployeePositionButtonVisible();
 			await addEmployeePositionPage.clickEditEmployeePositionButton();
 			await addEmployeePositionPage.editEmployeePositionInputVisible();
 			await addEmployeePositionPage.enterEditPositionData(AddEmployeePositionPageData.midLevelWebDeveloper);
@@ -50,6 +55,7 @@ test.describe('Add employee position test', () => {
 			await addEmployeePositionPage.savePositionButtonVisible();
 			await addEmployeePositionPage.clickSavePositionButton();
 			await addEmployeePositionPage.waitMessageToHide();
+			await addEmployeePositionPage.selectPositionRow();
 			await addEmployeePositionPage.editEmployeePositionButtonVisible();
 			await addEmployeePositionPage.clickEditEmployeePositionButton();
 			await addEmployeePositionPage.verifyTitleExists(AddEmployeePositionPageData.midLevelWebDeveloper);
@@ -72,12 +78,16 @@ test.describe('Add employee position test', () => {
 			await addEmployeePositionPage.savePositionButtonVisible();
 			await addEmployeePositionPage.clickSavePositionButton();
 			await addEmployeePositionPage.waitMessageToHide();
+			// removePosition deletes the SELECTED row, so select the just-added Full Stack position first.
+			await addEmployeePositionPage.selectPositionRowByText(AddEmployeePositionPageData.fullStackDeveloper);
 			await addEmployeePositionPage.deletePositionButtonVisible();
 			await addEmployeePositionPage.clickDeletePositionButton();
 			await addEmployeePositionPage.confirmDeleteButtonVisible();
 			await addEmployeePositionPage.clickConfirmDeletePositionButton();
 			await addEmployeePositionPage.verifyElementIsDeleted(AddEmployeePositionPageData.fullStackDeveloper);
 			await addEmployeePositionPage.waitMessageToHide();
+			// Remove the remaining row (Mid Level, carried over from the edit step) to leave a clean grid.
+			await addEmployeePositionPage.selectPositionRowByText(AddEmployeePositionPageData.midLevelWebDeveloper);
 			await addEmployeePositionPage.deletePositionButtonVisible();
 			await addEmployeePositionPage.clickDeletePositionButton();
 			await addEmployeePositionPage.confirmDeleteButtonVisible();

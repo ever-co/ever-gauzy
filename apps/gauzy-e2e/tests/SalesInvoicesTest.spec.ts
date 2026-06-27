@@ -54,6 +54,15 @@ test.describe('Sales invoices test', () => {
 				ContactsLeadsPageData
 			);
 			await getPage().goto('/#/pages/sales/invoices');
+			// A hash-only goto issued right after addContact can be a same-document no-op (the SPA router
+			// never re-renders, leaving the leads screen mounted). Force the hash so Angular's hashchange
+			// fires, then let the invoices screen settle before interacting.
+			await getPage().evaluate(() => {
+				if (!location.hash.includes('/pages/sales/invoices')) {
+					location.hash = '#/pages/sales/invoices';
+				}
+			});
+			await getPage().waitForTimeout(700);
 			await salesInvoicesPage.gridBtnExists();
 			await salesInvoicesPage.gridBtnClick(1);
 			await salesInvoicesPage.addButtonVisible();
@@ -148,7 +157,8 @@ test.describe('Sales invoices test', () => {
 		await test.step('Should be able to view invoice', async () => {
 			await salesInvoicesPage.selectTableRow(0);
 			await salesInvoicesPage.viewButtonVisible();
-			await salesInvoicesPage.clickViewButton(1);
+			// index 0 = the View (eye-outline) button; the old `1` resolved to the Payments button.
+			await salesInvoicesPage.clickViewButton(0);
 			await salesInvoicesPage.backButtonVisible();
 			await salesInvoicesPage.clickBackButton();
 		});

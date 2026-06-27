@@ -44,21 +44,24 @@ export const tagsDropdownVisible = async () => {
 
 export const clickTagsDropdown = async () => {
 	// focus + ArrowDown (NOT a click): a force-click on #addTags lands on the add-form backdrop and
-	// dismisses the whole form; keyboard opens the ng-select without that.
+	// dismisses the whole route form; keyboard opens the ng-select without that. The focus MUST target
+	// the inner <input> — focusing the ng-select host element leaves the input unfocused so ArrowDown
+	// goes to <body> and never opens the panel (this was the test's timeout: options never rendered).
 	await waitForSpinnerGone();
-	await getPage().locator(EstimatesPage.addTagsDropdownCss).first().focus().catch(() => {});
+	await getPage().locator(`${EstimatesPage.addTagsDropdownCss} input`).first().focus().catch(() => {});
 	await getPage().keyboard.press('ArrowDown').catch(() => {});
 };
 
 export const selectTagFromDropdown = async (index) => {
 	const page = getPage();
 	const option = page.locator(EstimatesPage.tagsDropdownOption);
-	// Open the tags ng-select via keyboard (focus #addTags + ArrowDown) if the click didn't open it —
-	// stale backdrops swallow the click and ng-select opens on mousedown. Then pick the option.
+	// Re-open the tags ng-select via keyboard (focus the inner input + ArrowDown) until the options
+	// render — ng-select opens on mousedown so a click is backdrop-blocked; focusing the host (not the
+	// inner input) silently fails to open it. Then pick the option (appended to <body>).
 	for (let i = 0; i < 4; i++) {
 		if (await option.first().isVisible().catch(() => false)) break;
 		await waitForSpinnerGone();
-		await page.locator(EstimatesPage.addTagsDropdownCss).first().focus().catch(() => {});
+		await page.locator(`${EstimatesPage.addTagsDropdownCss} input`).first().focus().catch(() => {});
 		await page.keyboard.press('ArrowDown').catch(() => {});
 		await page.waitForTimeout(800);
 	}
@@ -99,10 +102,24 @@ export const contactDropdownVisible = async () => {
 };
 
 export const clickContactDropdown = async () => {
-	await clickButton(EstimatesPage.organizationContactDropdownCss);
+	// ga-contact-select is an ng-select (opens on mousedown, options appendTo body) — same hazard as the
+	// tags one: a force-click is backdrop-blocked / can dismiss the route form. Open via the inner input.
+	await waitForSpinnerGone();
+	await getPage().locator(`${EstimatesPage.organizationContactDropdownCss} input`).first().focus().catch(() => {});
+	await getPage().keyboard.press('ArrowDown').catch(() => {});
 };
 
 export const selectContactFromDropdown = async (index) => {
+	const page = getPage();
+	const option = page.locator(EstimatesPage.contactOptionCss);
+	// Re-open the contact ng-select via keyboard until its options render, then pick one.
+	for (let i = 0; i < 4; i++) {
+		if (await option.first().isVisible().catch(() => false)) break;
+		await waitForSpinnerGone();
+		await page.locator(`${EstimatesPage.organizationContactDropdownCss} input`).first().focus().catch(() => {});
+		await page.keyboard.press('ArrowDown').catch(() => {});
+		await page.waitForTimeout(800);
+	}
 	await clickButtonByIndex(EstimatesPage.contactOptionCss, index);
 };
 

@@ -1,6 +1,8 @@
 export const JobsProposalsPage = {
 	addButtonCss: 'ngx-gauzy-button-action button[status="success"]',
-	selectEmployeeDropdownCss: 'ga-employee-multi-select nb-select',
+	// nb-select trigger BUTTON (NbSelect renders button.select-button); clicking the host nb-select
+	// element can miss the toggle / land on a leaked dialog backdrop — target the real trigger.
+	selectEmployeeDropdownCss: 'ga-employee-multi-select button.select-button',
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
 	nameInputCss: '[formcontrolname="name"]',
 	contentInputCss: '[formcontrolname="content"]',

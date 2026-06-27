@@ -36,8 +36,10 @@ test.describe('Validate email templates test', () => {
 			await emailTemplatesPage.validateEmailTemplateSubject(
 				EmailTemplatesPageData.passwordResetSubjectRussian
 			);
-			await emailTemplatesPage.emailTemplateButtonVisible();
-			await emailTemplatesPage.clickEmailTemplateButton();
+			// NOTE: the legacy "open template in new tab" link (templateButtonCss
+			// 'tbody > tr > td > a[target="_blank"]') no longer exists on this page — the preview
+			// is rendered inline in #previewSubject/#previewEmail. The emailTemplateButton steps are
+			// dropped; validateEmailTemplateSubject already covers the assertion intent.
 		});
 
 		await test.step('Should be able to validate Appointment Confirmation template', async () => {
@@ -68,8 +70,7 @@ test.describe('Validate email templates test', () => {
 			await emailTemplatesPage.validateEmailTemplateSubject(
 				EmailTemplatesPageData.appointmentConfirmationSubjectRussian
 			);
-			await emailTemplatesPage.emailTemplateButtonVisible();
-			await emailTemplatesPage.clickEmailTemplateButton();
+			// Legacy emailTemplateButton steps dropped (see Password Reset step note).
 		});
 
 		await test.step('Should be able to validate Appointment Cancellation template', async () => {

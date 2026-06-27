@@ -3,6 +3,9 @@ export const ApprovalRequestPage = {
 	addApprovalRequestButtonCss: 'button[status="success"]',
 	editApprovalRequestButtonCss: 'button.action.primary',
 	deleteApprovalRequestButtonCss: 'button:has(nb-icon[icon="trash-2-outline"])',
+	// DeleteConfirmationComponent footer "OK" button (status="danger") — the delete only fires after this
+	// confirmation; clicking the toolbar trash button alone just opens the dialog.
+	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	nameInputCss: '[formcontrolname="name"]',
 	minCountInputCss: '[formcontrolname="min_count"]',
 	approvalPolicyDropdownCss: '[formcontrolname="approvalPolicyId"]',

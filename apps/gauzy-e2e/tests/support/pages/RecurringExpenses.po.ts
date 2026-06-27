@@ -25,12 +25,16 @@ export const employeeDropdownVisible = async () => {
 };
 
 export const clickEmployeeDropdown = async () => {
-	// Open the employee ng-select and wait for its option list; retry the click in
-	// case the first one lands before the dialog is fully interactive.
+	// ng-select opens on MOUSEDOWN and is blocked by the dialog/overlay backdrop, so a
+	// force-click on the control is unreliable (and can land on the backdrop). Open it
+	// via the keyboard instead: focus the inner input and press ArrowDown. Retry until
+	// the option list ('div.ng-option', appendTo="body") renders.
 	const page = getPage();
 	const options = page.locator(RecurringExpensesPage.dropdownOptionCss);
+	const input = page.locator(RecurringExpensesPage.employeeDropdownCss).locator('input').first();
 	for (let i = 0; i < 4; i++) {
-		await clickButton(RecurringExpensesPage.employeeDropdownCss);
+		await input.focus();
+		await page.keyboard.press('ArrowDown');
 		await page.waitForTimeout(800);
 		if (await options.count()) return;
 	}
@@ -61,13 +65,15 @@ export const expenseDropdownVisible = async () => {
 };
 
 export const clickExpenseDropdown = async () => {
-	// Open the category ng-select and wait for its option list. Retry the click in
-	// case the first one lands while the just-closed employee dropdown is still
-	// animating (otherwise the panel never opens).
+	// Same as the employee dropdown: open the category ng-select via the keyboard
+	// (focus its input + ArrowDown) rather than a backdrop-blocked force-click. Retry
+	// in case the panel is still settling after the employee dropdown just closed.
 	const page = getPage();
 	const options = page.locator(RecurringExpensesPage.dropdownOptionCss);
+	const input = page.locator(RecurringExpensesPage.expenseDropdownCss).locator('input').first();
 	for (let i = 0; i < 4; i++) {
-		await clickButton(RecurringExpensesPage.expenseDropdownCss);
+		await input.focus();
+		await page.keyboard.press('ArrowDown');
 		await page.waitForTimeout(800);
 		if (await options.count()) return;
 	}

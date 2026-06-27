@@ -22,7 +22,10 @@ export const TeamsTasksPage = {
 	estimateMinsInputCss: '[formControlName="estimateMinutes"]',
 	descriptionTextareaCss: '[formControlName="description"]',
 	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
-	cardBodyCss: 'nb-card-footer.text-right',
+	// Neutral element inside the task dialog used to dismiss the open tags ng-select panel (closeOnSelect
+	// is false). The old 'nb-card-footer.text-right' no longer exists (footer is now .text-left); click the
+	// dialog title instead so we don't hit the Save button or a backdrop.
+	cardBodyCss: 'nb-card-header h5.title',
 	verifyTextCss: 'ga-notes-with-tags > div > div',
 	toastrMessageCss: 'nb-toast.ng-trigger'
 };

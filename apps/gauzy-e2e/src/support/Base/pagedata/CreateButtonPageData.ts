@@ -1,30 +1,32 @@
+// The "+ Create" button now opens the Quick Actions dialog (ngx-quick-actions): a grouped
+// nb-menu of navigation links, NOT the old in-page "Add X" cards. Labels below match the
+// rendered menu-titles (header.component.ts createQuickActionsMenu / QUICK_ACTIONS_MENU i18n).
 export const CreateButtonData = {
-	income: 'Income',
-	expense: 'Expense',
-	invoice: 'Invoice',
-	estimate: 'Estimate',
-	payment: 'Payment',
+	// Dialog chrome
+	quickActionsTitle: 'Quick Actions',
+	// Group headers (QUICK_ACTIONS_GROUP)
+	accountingGroup: 'Accounting',
+	projectManagementGroup: 'Project Management',
+	organizationGroup: 'Organization',
+	timeTrackingGroup: 'Time Tracking',
+	contactsGroup: 'Contacts',
+	jobsGroup: 'Jobs',
+	// Quick action menu options (QUICK_ACTIONS_MENU). These replace the legacy short labels
+	// (Income/Expense/...) that opened in-page cards; clicking now navigates to a route.
+	income: 'Create Income',
+	expense: 'Create Expense',
+	invoice: 'Create Invoice',
+	estimate: 'Create Estimate',
+	payment: 'Create Payment',
 	timeLog: 'Time Log',
-	candidate: 'Candidate',
-	proposal: 'Proposal',
-	contract: 'Contract',
-	team: 'Team',
-	task: 'Task',
-	contact: 'Contact',
-	project: 'Project',
-	employee: 'Employee',
-	incomeHeader: 'Add Income',
-	expenseHeader: 'Add Expense',
-	invoiceHeader: 'Add Invoice',
-	estimateHeader: 'Add Estimate',
-	paymentHeader: 'Record Payment',
-	timeLogHeader: 'Add Time Logs',
-	candidateHeader: 'Add Candidates',
-	proposalHeader: 'Register Proposal',
-	contractHeader: 'Upwork',
-	teamHeader: 'Teams',
-	taskHeader: 'Add Tasks',
-	contactHeader: 'Add New Contact',
-	projectHeader: 'Projects',
-	employeeHeader: 'Add Employee'
+	candidate: 'Create Candidate',
+	proposal: 'Create Proposal',
+	contract: 'Create Contract',
+	team: 'Create Team',
+	task: 'Create Task',
+	project: 'Create Project',
+	employee: 'Add Employee',
+	lead: 'Create Lead',
+	customer: 'Create Customer',
+	client: 'Create Client'
 };

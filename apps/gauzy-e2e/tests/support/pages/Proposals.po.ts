@@ -9,10 +9,10 @@ import {
 	waitElementToHide,
 	verifyTextNotExisting,
 	verifyText,
-	clickButtonWithForce,
-	waitForDropdownToLoad,
-	clickButtonDouble,
-	verifyByText
+	verifyByText,
+	dispatchClick,
+	waitForSpinnerGone,
+	waitForDropdownToLoad
 } from '../util';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
@@ -34,7 +34,12 @@ export const registerProposalButtonVisible = async () => {
 };
 
 export const clickRegisterProposalButton = async () => {
-	await clickButtonWithForce(ProposalsPage.registerProposalButtonCss);
+	// Add is a routerLink button to /pages/sales/proposals/register. This runs right after addEmployee
+	// closes its dialog, leaving a fading cdk-overlay backdrop that swallows a coordinate (force) click,
+	// so the router never navigates (the observed failure: still on the list, ga-employee-selector absent).
+	// dispatchEvent('click') fires on the element directly and bypasses the backdrop, so navigation fires.
+	await waitForSpinnerGone();
+	await dispatchClick(ProposalsPage.registerProposalButtonCss);
 };
 
 export const selectEmployeeDropdownVisible = async () => {
@@ -42,13 +47,53 @@ export const selectEmployeeDropdownVisible = async () => {
 };
 
 export const clickEmployeeDropdown = async () => {
-	await clickButtonDouble(ProposalsPage.selectEmployeeDropdownCss);
-	await clickButton(ProposalsPage.selectEmployeeDropdownCss);
-	await waitForDropdownToLoad(ProposalsPage.selectEmployeeDropdownOptionCss);
+	// ga-employee-selector is an <ng-select> (opens on mousedown, options appendTo body as div.ng-option).
+	// A click is backdrop-blocked / can close the panel, so open it via the keyboard: focus the inner
+	// <input> (focusing the host leaves the input unfocused so ArrowDown goes to <body>), then ArrowDown.
+	await waitForSpinnerGone();
+	await getPage().locator(`${ProposalsPage.selectEmployeeDropdownCss} input`).first().focus().catch(() => {});
+	await getPage().keyboard.press('ArrowDown').catch(() => {});
 };
 
 export const selectEmployeeFromDropdown = async (index) => {
+	const page = getPage();
+	const option = page.locator(ProposalsPage.selectEmployeeDropdownOptionCss);
+	// Re-open the employee ng-select via keyboard until the options render, then pick one.
+	for (let i = 0; i < 4; i++) {
+		if (await option.first().isVisible().catch(() => false)) break;
+		await waitForSpinnerGone();
+		await page.locator(`${ProposalsPage.selectEmployeeDropdownCss} input`).first().focus().catch(() => {});
+		await page.keyboard.press('ArrowDown').catch(() => {});
+		await page.waitForTimeout(800);
+	}
 	await clickButtonByIndex(ProposalsPage.selectEmployeeDropdownOptionCss, index);
+};
+
+export const selectContactFromDropdown = async (name) => {
+	// ga-contact-select is an <ng-select [addTag]> (opens on mousedown, options appendTo body). Type a
+	// name to create a NEW contact via the add-tag option — registerProposal() dereferences
+	// organizationContact.id, so a contact must exist or the create silently no-ops.
+	const page = getPage();
+	const input = page.locator(`${ProposalsPage.contactDropdownCss} input`).first();
+	await waitForSpinnerGone();
+	await input.focus().catch(() => {});
+	await input.fill('').catch(() => {});
+	await input.pressSequentially(String(name), { delay: 30 }).catch(() => {});
+	await page.waitForTimeout(600);
+	// Pick the add-tag option ("Add <name>...") / any matching option from the body-appended panel.
+	const option = page.locator(ProposalsPage.contactDropdownOptionCss).filter({ hasText: String(name) });
+	await option.first().click({ force: true });
+	await page.waitForTimeout(400);
+};
+
+export const enterJobPostContentData = async (data) => {
+	// jobPostContent is a CKEditor4 widget (required field) — fill the FIRST wysiwyg iframe body.
+	await getPage().frameLocator(ckeditorIframeCss).nth(0).locator('body').fill(String(data));
+};
+
+export const enterProposalContentData = async (data) => {
+	// proposalContent is the SECOND CKEditor4 widget (required field) — fill the second wysiwyg iframe body.
+	await getPage().frameLocator(ckeditorIframeCss).nth(1).locator('body').fill(String(data));
 };
 
 export const jobPostInputVisible = async () => {
@@ -75,10 +120,25 @@ export const tagsDropdownVisible = async () => {
 };
 
 export const clickTagsDropdown = async () => {
-	await clickButton(ProposalsPage.addTagsDropdownCss);
+	// ga-tags-color-input is an <ng-select id="addTags"> (opens on mousedown, options appendTo body).
+	// A force-click lands on a leaked cdk-overlay backdrop / can dismiss the form — open via keyboard:
+	// focus the inner <input> (host focus leaves the input unfocused so ArrowDown hits <body>), ArrowDown.
+	await waitForSpinnerGone();
+	await getPage().locator(`${ProposalsPage.addTagsDropdownCss} input`).first().focus().catch(() => {});
+	await getPage().keyboard.press('ArrowDown').catch(() => {});
 };
 
 export const selectTagFromDropdown = async (index) => {
+	const page = getPage();
+	const option = page.locator(ProposalsPage.tagsDropdownOption);
+	// Re-open the tags ng-select via keyboard until the options (div.ng-option) render, then pick one.
+	for (let i = 0; i < 4; i++) {
+		if (await option.first().isVisible().catch(() => false)) break;
+		await waitForSpinnerGone();
+		await page.locator(`${ProposalsPage.addTagsDropdownCss} input`).first().focus().catch(() => {});
+		await page.keyboard.press('ArrowDown').catch(() => {});
+		await page.waitForTimeout(800);
+	}
 	await clickButtonByIndex(ProposalsPage.tagsDropdownOption, index);
 };
 
@@ -117,7 +177,32 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index) => {
-	await clickButtonByIndex(ProposalsPage.selectTableRowCss, index);
+	// Selecting a grid row TOGGLES selection and enables the toolbar (Details/Edit/status/delete are
+	// [disabled] until a proposal is selected). Settle the grid first, then click ONCE and poll the
+	// Details button's real enabled state; only re-click if selection was lost — never rapid re-click
+	// (a second immediate click would toggle the row back off).
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(ProposalsPage.selectTableRowCss).nth(index);
+	const details = page.locator(ProposalsPage.detailsButtonCss).first();
+	for (let i = 0; i < 4; i++) {
+		await row.click({ force: true }).catch(() => {});
+		// isEnabled() reads the live disabled state via a Playwright locator (supports :has-text); poll
+		// briefly so the toolbar binding (disableButton) has time to flip after the row-select event.
+		let enabled = false;
+		for (let j = 0; j < 8; j++) {
+			if (await details.isEnabled().catch(() => false)) {
+				enabled = true;
+				break;
+			}
+			await page.waitForTimeout(500);
+		}
+		if (enabled) break;
+		await page.waitForTimeout(800);
+	}
+	await details.waitFor({ state: 'visible' }).catch(() => {});
 };
 
 export const detailsButtonVisible = async () => {
@@ -125,7 +210,9 @@ export const detailsButtonVisible = async () => {
 };
 
 export const clickDetailsButton = async (index) => {
-	await clickButtonByIndex(ProposalsPage.detailsButtonCss, index);
+	// Toolbar Details navigates to the details route; dispatchClick bypasses any lingering overlay backdrop.
+	await waitForSpinnerGone();
+	await dispatchClick(ProposalsPage.detailsButtonCss);
 };
 
 export const editProposalButtonVisible = async () => {
@@ -133,7 +220,9 @@ export const editProposalButtonVisible = async () => {
 };
 
 export const clickEditProposalButton = async () => {
-	await clickButton(ProposalsPage.editProposalButtonCss);
+	// Edit (on the details page header) navigates to the edit route — dispatchClick avoids backdrop interception.
+	await waitForSpinnerGone();
+	await dispatchClick(ProposalsPage.editProposalButtonCss);
 };
 
 export const markAsStatusButtonVisible = async () => {
@@ -141,7 +230,9 @@ export const markAsStatusButtonVisible = async () => {
 };
 
 export const clickMarkAsStatusButton = async () => {
-	await clickButton(ProposalsPage.markAsStatusButtonCss);
+	// Opens the status ActionConfirmation dialog — dispatchClick so the toolbar click isn't backdrop-blocked.
+	await waitForSpinnerGone();
+	await dispatchClick(ProposalsPage.markAsStatusButtonCss);
 };
 
 export const confirmStatusButtonVisible = async () => {
@@ -157,7 +248,9 @@ export const deleteProposalButtonVisible = async () => {
 };
 
 export const clickDeleteProposalButton = async () => {
-	await clickButton(ProposalsPage.deleteProposalButtonCss);
+	// Opens the DeleteConfirmation dialog — dispatchClick so the toolbar click isn't backdrop-blocked.
+	await waitForSpinnerGone();
+	await dispatchClick(ProposalsPage.deleteProposalButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {

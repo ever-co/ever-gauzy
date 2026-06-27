@@ -161,7 +161,9 @@ test.describe('Sales estimates test', () => {
 		await test.step('Should be able to view estimate', async () => {
 			await salesEstimatesPage.selectTableRow(0);
 			await salesEstimatesPage.viewButtonVisible();
-			await salesEstimatesPage.clickViewButton(1);
+			// Only one View button exists in the estimates toolbar; use index 0 (the text-scoped
+			// selector matches exactly one element, so the old index 1 resolved to nothing).
+			await salesEstimatesPage.clickViewButton(0);
 			await salesEstimatesPage.backButtonVisible();
 			await salesEstimatesPage.clickBackButton();
 		});

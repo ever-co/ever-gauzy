@@ -14,7 +14,8 @@ import {
 	verifyTextNotExistByIndex,
 	verifyByText,
 	verifyByLength,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	dispatchClick
 } from '../util';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
@@ -94,7 +95,22 @@ export const selectTableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index) => {
-	await clickButtonByIndex(ApprovalRequestPage.selectTableRowCss, index);
+	// Row click TOGGLES selection and enables the toolbar Edit/Delete buttons. Settle the grid first, then
+	// click the row ONCE and poll the Edit button's real `disabled` attr; only re-click if selection was
+	// lost. A rapid re-click would toggle the row back off and leave the toolbar disabled (force-clicking a
+	// disabled Edit button is a no-op, so the next dialog never opens).
+	const page = getPage();
+	await page.waitForLoadState('networkidle').catch(() => undefined);
+	await page.waitForTimeout(1500);
+	const row = page.locator(ApprovalRequestPage.selectTableRowCss).nth(index);
+	const editBtn = page.locator(ApprovalRequestPage.editApprovalRequestButtonCss).first();
+	await row.click({ force: true, timeout: 60_000 });
+	for (let i = 0; i < 10; i++) {
+		const disabled = await editBtn.getAttribute('disabled');
+		if (disabled === null) return; // selection took: Edit is enabled
+		await page.waitForTimeout(500);
+		if (i === 4) await row.click({ force: true, timeout: 60_000 }); // re-click once mid-poll if still disabled
+	}
 };
 
 export const editApprovalRequestButtonVisible = async () => {
@@ -117,12 +133,31 @@ export const clickDeleteApprovalRequestButton = async () => {
 	await clickButton(ApprovalRequestPage.deleteApprovalRequestButtonCss);
 };
 
+export const confirmDeleteButtonVisible = async () => {
+	await verifyElementIsVisible(ApprovalRequestPage.confirmDeleteButtonCss);
+};
+
+export const clickConfirmDeleteButton = async () => {
+	// The actual delete only fires when the confirmation dialog's OK (status="danger") is clicked.
+	// dispatchClick fires the handler directly so a fading backdrop from the just-opened dialog can't
+	// intercept it.
+	await dispatchClick(ApprovalRequestPage.confirmDeleteButtonCss);
+};
+
 export const approvalPolicyButtonVisible = async () => {
 	await verifyElementIsVisible(ApprovalRequestPage.approvalPolicyButtonCss);
 };
 
 export const clickApprovalPolicyButton = async () => {
-	await clickButton(ApprovalRequestPage.approvalPolicyButtonCss);
+	// "Approval Policy" navigates to /pages/organization/approval-policy (router.navigate, not a dialog).
+	// This button is clicked right after the addTag/addEmployee dialog flows, whose fading cdk-overlay
+	// backdrop can swallow a coordinate click — the click was lost and the test stayed on the approvals
+	// page (then opened the request, not policy, dialog). dispatchClick fires the (click) handler directly,
+	// and we wait for the route change so the next steps don't race the in-flight navigation.
+	await dispatchClick(ApprovalRequestPage.approvalPolicyButtonCss);
+	await getPage()
+		.waitForURL((url) => /\/pages\/organization\/approval-policy(\?|$)/.test(url.href), { timeout: 30000 })
+		.catch(() => undefined);
 };
 
 export const descriptionInputVisible = async () => {
@@ -139,7 +174,13 @@ export const backButtonVisible = async () => {
 };
 
 export const clickBackButton = async () => {
+	// Back-navigation returns from the approval-policy page to /pages/employees/approvals. Wait for that
+	// route change so the next step (add request) doesn't race the in-flight navigation and click the
+	// stale (policy-page) Add button.
 	await clickButton(ApprovalRequestPage.backButtonCss);
+	await getPage()
+		.waitForURL((url) => /\/pages\/employees\/approvals(\?|$)/.test(url.href), { timeout: 30000 })
+		.catch(() => undefined);
 };
 
 export const waitMessageToHide = async () => {

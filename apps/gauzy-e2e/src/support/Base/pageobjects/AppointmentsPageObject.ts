@@ -1,7 +1,11 @@
 export const AppointmentsPage = {
 	bookPublicAppointmentButtonCss: 'ngx-appointment-calendar div.float-right button[status="primary"]',
-	employeeDropdownCss: 'ga-employee-selector > ng-select',
-	employeeDropdownOptionsCss: 'ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
+	// Scope to ga-pick-employee: the public /share/employee page's ga-employee-selector. The bare
+	// 'ga-employee-selector > ng-select' also matches the GLOBAL header employee selector (always present
+	// on /pages/...), so the unscoped selector opened the wrong dropdown when navigation hadn't settled.
+	employeeDropdownCss: 'ga-pick-employee ga-employee-selector ng-select',
+	// ng-select with appendTo="body": options render in a body-level ng-dropdown-panel.
+	employeeDropdownOptionsCss: 'ng-dropdown-panel div.ng-option',
 	bookAppointmentButtonCss: 'div.center-div > button[status="success"]',
 	headerCss: 'div.main-header > h4',
 	employeeNameCss: 'div.employee-details > span.employee-name',

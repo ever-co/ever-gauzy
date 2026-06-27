@@ -86,7 +86,10 @@ test.describe('Goals KPI test', () => {
 			await goalsKPIPage.clickDeleteKPIButton();
 			await goalsKPIPage.confirmDeleteButtonVisible();
 			await goalsKPIPage.clickConfirmDeleteButton();
-			await goalsKPIPage.verifyElementDeleted(GoalsKPIPageData.emptyTableText);
+			// Verify by KPI name (the row is gone), not the empty-table string: the app's KPI no-data
+			// message changed and the shared grid may still hold other KPIs.
+			await goalsKPIPage.waitMessageToHide();
+			await goalsKPIPage.verifyElementDeleted(GoalsKPIPageData.name);
 		});
 	});
 });

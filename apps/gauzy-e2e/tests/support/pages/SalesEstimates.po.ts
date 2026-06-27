@@ -2,6 +2,8 @@ import {
 	enterInput,
 	verifyElementIsVisible,
 	clickButton,
+	dispatchClick,
+	waitForSpinnerGone,
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
@@ -10,8 +12,10 @@ import {
 	clickButtonByText,
 	verifyValue,
 	verifyTextNotExisting,
-	scrollDown
+	scrollDown,
+	waitUntil
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { SalesEstimatesPage } from '../../../src/support/Base/pageobjects/SalesEstimatesPageObject';
 
@@ -28,7 +32,10 @@ export const addButtonVisible = async () => {
 };
 
 export const clickAddButton = async () => {
-	await clickButton(SalesEstimatesPage.addButtonCss);
+	// dispatchClick past the post-navigation/mutation load spinner so the Add estimate form reliably
+	// opens; a coordinate click can land on the spinner/backdrop instead.
+	await waitForSpinnerGone();
+	await dispatchClick(SalesEstimatesPage.addButtonCss);
 };
 
 export const tagsDropdownVisible = async () => {
@@ -36,10 +43,27 @@ export const tagsDropdownVisible = async () => {
 };
 
 export const clickTagsDropdown = async () => {
-	await clickButton(SalesEstimatesPage.addTagsDropdownCss);
+	// focus + ArrowDown (NOT a click): #addTags is an ng-select that opens on mousedown, so a force-click
+	// lands on the add-form backdrop and dismisses the route form; keyboard opens the panel without that.
+	// The focus MUST target the inner <input> — focusing the ng-select host leaves the input unfocused so
+	// ArrowDown goes to <body> and the panel never opens (the div.ng-option timeout seen in this suite).
+	await waitForSpinnerGone();
+	await getPage().locator(`${SalesEstimatesPage.addTagsDropdownCss} input`).first().focus().catch(() => {});
+	await getPage().keyboard.press('ArrowDown').catch(() => {});
 };
 
 export const selectTagFromDropdown = async (index: number) => {
+	const page = getPage();
+	const option = page.locator(SalesEstimatesPage.tagsDropdownOption);
+	// Re-open the tags ng-select via keyboard (focus inner input + ArrowDown) until the options render —
+	// ng-select opens on mousedown so a click is backdrop-blocked. Then pick the option (appended to body).
+	for (let i = 0; i < 4; i++) {
+		if (await option.first().isVisible().catch(() => false)) break;
+		await waitForSpinnerGone();
+		await page.locator(`${SalesEstimatesPage.addTagsDropdownCss} input`).first().focus().catch(() => {});
+		await page.keyboard.press('ArrowDown').catch(() => {});
+		await page.waitForTimeout(800);
+	}
 	await clickButtonByIndex(SalesEstimatesPage.tagsDropdownOption, index);
 };
 
@@ -77,10 +101,24 @@ export const contactDropdownVisible = async () => {
 };
 
 export const clickContactDropdown = async () => {
-	await clickButton(SalesEstimatesPage.organizationContactDropdownCss);
+	// ga-contact-select is an ng-select (opens on mousedown, options appendTo body) — same hazard as the
+	// tags one: a force-click is backdrop-blocked / can dismiss the route form. Open via the inner input.
+	await waitForSpinnerGone();
+	await getPage().locator(`${SalesEstimatesPage.organizationContactDropdownCss} input`).first().focus().catch(() => {});
+	await getPage().keyboard.press('ArrowDown').catch(() => {});
 };
 
 export const selectContactFromDropdown = async (index: number) => {
+	const page = getPage();
+	const option = page.locator(SalesEstimatesPage.contactOptionCss);
+	// Re-open the contact ng-select via keyboard until its options render, then pick one.
+	for (let i = 0; i < 4; i++) {
+		if (await option.first().isVisible().catch(() => false)) break;
+		await waitForSpinnerGone();
+		await page.locator(`${SalesEstimatesPage.organizationContactDropdownCss} input`).first().focus().catch(() => {});
+		await page.keyboard.press('ArrowDown').catch(() => {});
+		await page.waitForTimeout(800);
+	}
 	await clickButtonByIndex(SalesEstimatesPage.contactOptionCss, index);
 };
 
@@ -153,6 +191,10 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index: number) => {
+	// Settle the grid (it re-renders after each mutation) before the single row click; the click toggles
+	// selection, so clicking too early/twice can leave the toolbar Edit/View/Delete disabled.
+	await waitForSpinnerGone();
+	await waitUntil(3000);
 	await clickButtonByIndex(SalesEstimatesPage.tableRowCss, index);
 };
 

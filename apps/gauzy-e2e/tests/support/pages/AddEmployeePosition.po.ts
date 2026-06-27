@@ -1,7 +1,5 @@
 import {
 	verifyElementIsVisible,
-	clickButtonByIndex,
-	clickButton,
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
@@ -9,8 +7,11 @@ import {
 	getLastElement,
 	waitElementToHide,
 	verifyValue,
+	dispatchClick,
+	waitForSpinnerGone,
 	wait
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { AddEmployeePositionPage } from '../../../src/support/Base/pageobjects/AddEmployeePositionPageObject';
 
@@ -27,7 +28,20 @@ export const addNewPositionButtonVisible = async () => {
 };
 
 export const clickAddNewPositionButton = async () => {
-	await clickButton(AddEmployeePositionPage.addNewPositionButtonCss);
+	// The preceding addTag CustomCommand can leave a fading "Add Tags" nb-dialog overlay mounted over
+	// the positions page (it survives the SPA route change). A coordinate click on the toolbar Add then
+	// lands on that backdrop and the add-position dialog never opens. Dismiss any leftover overlay first
+	// (Escape + wait for the tags dialog to detach), then dispatch the click straight at the button so
+	// it fires even if a backdrop is still fading out.
+	const page = getPage();
+	await page.keyboard.press('Escape').catch(() => undefined);
+	await page
+		.locator('ngx-tags-mutation')
+		.first()
+		.waitFor({ state: 'detached', timeout: 6000 })
+		.catch(() => undefined);
+	await verifyElementIsVisible(AddEmployeePositionPage.addNewPositionButtonCss);
+	await dispatchClick(AddEmployeePositionPage.addNewPositionButtonCss);
 };
 
 export const cancelNewPositionButtonVisible = async () => {
@@ -35,7 +49,7 @@ export const cancelNewPositionButtonVisible = async () => {
 };
 
 export const clickCancelNewPositionButton = async () => {
-	await clickButton(AddEmployeePositionPage.cancelNewPositionButtonCss);
+	await dispatchClick(AddEmployeePositionPage.cancelNewPositionButtonCss);
 };
 
 export const newPositionInputVisible = async () => {
@@ -43,7 +57,6 @@ export const newPositionInputVisible = async () => {
 };
 
 export const enterNewPositionData = async (data: string) => {
-	await clickButton(AddEmployeePositionPage.newPositionInputCss);
 	await enterInput(AddEmployeePositionPage.newPositionInputCss, data);
 };
 
@@ -52,11 +65,17 @@ export const tagsMultiSelectVisible = async () => {
 };
 
 export const clickTagsMultiSelect = async () => {
-	await clickButton(AddEmployeePositionPage.tagsSelectCss);
+	// #addTags is an ng-select that opens on MOUSEDOWN and is backdrop-blocked; a force-click can also
+	// close the dialog. Open the panel via the keyboard instead (focus the inner input, ArrowDown).
+	const input = getPage().locator(AddEmployeePositionPage.tagsSelectCss).locator('input').first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
 export const selectTagsFromDropdown = async (index: number) => {
-	await clickButtonByIndex(AddEmployeePositionPage.tagsSelectOptionCss, index);
+	// ng-select options render in the body as div.ng-option (appendTo="body").
+	await verifyElementIsVisible(AddEmployeePositionPage.tagsSelectOptionCss);
+	await getPage().locator(AddEmployeePositionPage.tagsSelectOptionCss).nth(index).click({ force: true });
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode: number) => {
@@ -68,7 +87,10 @@ export const savePositionButtonVisible = async () => {
 };
 
 export const clickSavePositionButton = async () => {
-	await clickButton(AddEmployeePositionPage.saveNewPositionButtonCss);
+	// Save sits in the dialog footer right after the tags mutation; dispatch the click so a fading
+	// ng-select/dialog backdrop can't intercept it.
+	await waitForSpinnerGone();
+	await dispatchClick(AddEmployeePositionPage.saveNewPositionButtonCss);
 };
 
 export const updatePositionButtonVisible = async () => {
@@ -76,17 +98,57 @@ export const updatePositionButtonVisible = async () => {
 };
 
 export const clickUpdatePositionButton = async () => {
-	await clickButton(AddEmployeePositionPage.updatePositionButtonCss);
+	await dispatchClick(AddEmployeePositionPage.updatePositionButtonCss);
 };
 
 export const editEmployeePositionButtonVisible = async () => {
-	await verifyElementIsVisible(
-		AddEmployeePositionPage.editEmployeePositionButtonCss
-	);
+	await verifyElementIsVisible(AddEmployeePositionPage.editEmployeePositionButtonCss);
+};
+
+// Select a grid row so the toolbar Edit/Delete buttons enable (Edit is [disabled] until selectPosition
+// runs). The row click TOGGLES selection, so settle the grid first, click ONCE, then poll the Edit
+// button's real disabled attr and only re-click if selection was lost.
+export const selectPositionRow = async () => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(AddEmployeePositionPage.selectPositionToEditCss).first();
+	const edit = page.locator(AddEmployeePositionPage.editEmployeePositionButtonCss).first();
+	await row.click({ force: true });
+	for (let i = 0; i < 5; i++) {
+		const disabled = await edit.getAttribute('disabled');
+		if (disabled === null) return;
+		await page.waitForTimeout(500);
+		if ((await edit.getAttribute('disabled')) !== null) {
+			await row.click({ force: true });
+		}
+	}
+};
+
+// Select a SPECIFIC row by its name text (the delete step has 2 rows; we must select the right one so
+// the subsequent verifyElementIsDeleted checks the position we actually removed). Same toggle-safe poll.
+export const selectPositionRowByText = async (text: string) => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(AddEmployeePositionPage.selectPositionToEditCss).filter({ hasText: text }).first();
+	const edit = page.locator(AddEmployeePositionPage.editEmployeePositionButtonCss).first();
+	await row.click({ force: true });
+	for (let i = 0; i < 5; i++) {
+		const disabled = await edit.getAttribute('disabled');
+		if (disabled === null) return;
+		await page.waitForTimeout(500);
+		if ((await edit.getAttribute('disabled')) !== null) {
+			await row.click({ force: true });
+		}
+	}
 };
 
 export const clickEditEmployeePositionButton = async () => {
-	await clickButton(AddEmployeePositionPage.editEmployeePositionButtonCss);
+	// Edit dialog opens via dispatch so a fading backdrop can't swallow the click (row already selected).
+	await dispatchClick(AddEmployeePositionPage.editEmployeePositionButtonCss);
 };
 
 export const selectPositionToEdit = async () => {
@@ -99,7 +161,7 @@ export const selectPositionToDelete = async () => {
 
 export const clickRowEmployeeLevelTwice = async () => {
 	await wait(500);
-	await getLastElement(AddEmployeePositionPage.selectPositionToEditCss);
+	await selectPositionRow();
 };
 
 export const editEmployeePositionInputVisible = async () => {
@@ -112,23 +174,20 @@ export const enterEditPositionData = async (data: string) => {
 };
 
 export const deletePositionButtonVisible = async () => {
-	await verifyElementIsVisible(
-		AddEmployeePositionPage.removeEmployeePositionButtonCss
-	);
+	await verifyElementIsVisible(AddEmployeePositionPage.removeEmployeePositionButtonCss);
 };
 
 export const clickDeletePositionButton = async () => {
-	await getLastElement(AddEmployeePositionPage.removeEmployeePositionButtonCss);
+	// Delete opens its confirmation via dispatch (row already selected by the caller).
+	await dispatchClick(AddEmployeePositionPage.removeEmployeePositionButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {
-	await verifyElementIsVisible(
-		AddEmployeePositionPage.confirmDeletePositionButtonCss
-	);
+	await verifyElementIsVisible(AddEmployeePositionPage.confirmDeletePositionButtonCss);
 };
 
 export const clickConfirmDeletePositionButton = async () => {
-	await clickButton(AddEmployeePositionPage.confirmDeletePositionButtonCss);
+	await dispatchClick(AddEmployeePositionPage.confirmDeletePositionButtonCss);
 };
 
 export const verifyTitleExists = async (text: string) => {
@@ -148,5 +207,6 @@ export const cancelButtonVisible = async () => {
 };
 
 export const clickCancelButton = async () => {
-	await clickButton(AddEmployeePositionPage.cancelButtonCss);
+	// Cancel sits in the open dialog footer; dispatch so a fading backdrop can't swallow the click.
+	await dispatchClick(AddEmployeePositionPage.cancelButtonCss);
 };

@@ -8,10 +8,34 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	verifyText,
-	verifyElementNotExist
+	verifyElementNotExist,
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors + data are framework-agnostic — reused from the Cypress tree during migration.
 import { OrganizationEquipmentPage } from '../../../src/support/Base/pageobjects/OrganizationEquipmentPageObject';
+
+// The preceding shared addTag step can leave its modal "Add Tags" dialog (ngx-tags-mutation) open
+// when its Save raced while still disabled — its cdk-overlay backdrop then intercepts every click on
+// the Equipment page, so the equipment "Add" button never opens the mutation dialog and the next
+// formcontrolname="name" check matches the leftover tag dialog instead. Defensively dismiss any
+// lingering tag dialog (Escape + close icon) and wait for its overlay to detach before continuing.
+const dismissLeftoverDialogs = async () => {
+	const page = getPage();
+	const tagDialog = page.locator(OrganizationEquipmentPage.tagsMutationCss).first();
+	if (await tagDialog.isVisible().catch(() => false)) {
+		await page.keyboard.press('Escape').catch(() => undefined);
+		await tagDialog.locator('.cancel i').first().dispatchEvent('click').catch(() => undefined);
+		await tagDialog.waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined);
+	}
+	// Absorb a fading cdk-overlay backdrop left behind by any just-closed dialog.
+	await page
+		.locator('.cdk-overlay-backdrop')
+		.first()
+		.waitFor({ state: 'detached', timeout: 4000 })
+		.catch(() => undefined);
+};
 
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
@@ -22,11 +46,15 @@ export const gridBtnClick = async (index: number) => {
 };
 
 export const addEquipmentButtonVisible = async () => {
+	// Clear any leftover (tag) dialog first so the Add button is actually clickable, not just rendered.
+	await dismissLeftoverDialogs();
 	await verifyElementIsVisible(OrganizationEquipmentPage.addButtonCss);
 };
 
 export const clickAddEquipmentButton = async () => {
-	await clickButton(OrganizationEquipmentPage.addButtonCss);
+	// dispatchClick fires the DOM click on the button directly — bypasses any residual overlay backdrop
+	// (force:true coordinate clicks still land on the backdrop) so the equipment dialog reliably opens.
+	await dispatchClick(OrganizationEquipmentPage.addButtonCss);
 };
 
 export const nameInputVisible = async () => {
@@ -88,7 +116,11 @@ export const tagsDropdownVisible = async () => {
 };
 
 export const clickTagsDropdown = async () => {
-	await clickButton(OrganizationEquipmentPage.addTagsDropdownCss);
+	// ng-select (#addTags) opens on mousedown and is backdrop-blocked; a force-click can also CLOSE the
+	// add form. Open it via keyboard instead (focus the inner input + ArrowDown).
+	const input = getPage().locator(OrganizationEquipmentPage.addTagsDropdownCss).locator('input').first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
 };
 
 export const selectTagFromDropdown = async (index: number) => {
@@ -104,7 +136,10 @@ export const saveButtonVisible = async () => {
 };
 
 export const clickSaveButton = async () => {
-	await clickButton(OrganizationEquipmentPage.saveButtonCss);
+	// Save sits in the dialog footer; the just-closed tags ng-select overlay (appendTo="body") can
+	// still be fading over it. Settle, then dispatchClick to fire past any residual backdrop.
+	await waitForSpinnerGone();
+	await dispatchClick(OrganizationEquipmentPage.saveButtonCss);
 };
 
 export const equipmentSharingButtonVisible = async () => {
@@ -112,7 +147,8 @@ export const equipmentSharingButtonVisible = async () => {
 };
 
 export const clickEquipmentSharingButton = async () => {
-	await clickButton(OrganizationEquipmentPage.equipmentSharingButtonCss);
+	// Navigation button clicked right after a save toastr/dialog teardown — dispatchClick past backdrop.
+	await dispatchClick(OrganizationEquipmentPage.equipmentSharingButtonCss);
 };
 
 export const sharingPolicyButtonVisible = async () => {
@@ -120,7 +156,7 @@ export const sharingPolicyButtonVisible = async () => {
 };
 
 export const clickSharingPolicyButton = async () => {
-	await clickButton(OrganizationEquipmentPage.equipmentSharingPolicyButtonCss);
+	await dispatchClick(OrganizationEquipmentPage.equipmentSharingPolicyButtonCss);
 };
 
 export const addPolicyButtonVisible = async () => {
@@ -128,16 +164,16 @@ export const addPolicyButtonVisible = async () => {
 };
 
 export const clickAddPolicyButton = async () => {
-	await clickButton(OrganizationEquipmentPage.addButtonCss);
+	await dispatchClick(OrganizationEquipmentPage.addButtonCss);
 };
 
 export const policyNameInputVisible = async () => {
-	await verifyElementIsVisible(OrganizationEquipmentPage.nameInputCss);
+	await verifyElementIsVisible(OrganizationEquipmentPage.policyNameInputCss);
 };
 
 export const enterPolicyNameInputData = async (data: string) => {
-	await clearField(OrganizationEquipmentPage.nameInputCss);
-	await enterInput(OrganizationEquipmentPage.nameInputCss, data);
+	await clearField(OrganizationEquipmentPage.policyNameInputCss);
+	await enterInput(OrganizationEquipmentPage.policyNameInputCss, data);
 };
 
 export const policyDescriptionInputVisible = async () => {
@@ -162,24 +198,26 @@ export const backButtonVisible = async () => {
 };
 
 export const clickBackButton = async () => {
-	await clickButton(OrganizationEquipmentPage.backButtonCss);
+	// Clicked right after a save (toastr/dialog teardown) — dispatchClick past any residual backdrop.
+	await dispatchClick(OrganizationEquipmentPage.backButtonCss);
 };
 
 export const requestButtonVisible = async () => {
+	await dismissLeftoverDialogs();
 	await verifyElementIsVisible(OrganizationEquipmentPage.addButtonCss);
 };
 
 export const clickRequestButton = async () => {
-	await clickButton(OrganizationEquipmentPage.addButtonCss);
+	await dispatchClick(OrganizationEquipmentPage.addButtonCss);
 };
 
 export const requestNameInputVisible = async () => {
-	await verifyElementIsVisible(OrganizationEquipmentPage.nameInputCss);
+	await verifyElementIsVisible(OrganizationEquipmentPage.requestNameInputCss);
 };
 
 export const enterRequestNameInputData = async (data: string) => {
-	await clearField(OrganizationEquipmentPage.nameInputCss);
-	await enterInput(OrganizationEquipmentPage.nameInputCss, data);
+	await clearField(OrganizationEquipmentPage.requestNameInputCss);
+	await enterInput(OrganizationEquipmentPage.requestNameInputCss, data);
 };
 
 export const selectEquipmentDropdownVisible = async () => {
@@ -265,7 +303,26 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index: number) => {
-	await clickButtonByIndex(OrganizationEquipmentPage.selectTableRowCss, index);
+	// Row selection TOGGLES; rapid re-clicks deselect. Let the grid settle (reload after the prior
+	// save/navigation), click the data row ONCE, then poll the Edit button's real `disabled` attr and
+	// only re-click if selection was lost. Never rapid re-click.
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(OrganizationEquipmentPage.selectTableRowCss).nth(index);
+	const editBtn = page.locator(OrganizationEquipmentPage.editEquipmentButtonCss).first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await row.click({ force: true });
+		try {
+			await editBtn.waitFor({ state: 'visible', timeout: 4000 });
+			const disabled = await editBtn.getAttribute('disabled');
+			if (disabled === null) return; // selection enabled the toolbar — done
+		} catch {
+			/* edit button not ready yet — retry */
+		}
+		await page.waitForTimeout(800);
+	}
 };
 
 export const editButtonVisible = async () => {
@@ -273,7 +330,7 @@ export const editButtonVisible = async () => {
 };
 
 export const clickEditButton = async () => {
-	await clickButton(OrganizationEquipmentPage.editEquipmentButtonCss);
+	await dispatchClick(OrganizationEquipmentPage.editEquipmentButtonCss);
 };
 
 export const deleteButtonVisible = async () => {
@@ -281,7 +338,7 @@ export const deleteButtonVisible = async () => {
 };
 
 export const clickDeleteButton = async () => {
-	await clickButton(OrganizationEquipmentPage.deleteEquipmentButtonCss);
+	await dispatchClick(OrganizationEquipmentPage.deleteEquipmentButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -289,7 +346,8 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(OrganizationEquipmentPage.confirmDeleteButtonCss);
+	// Confirm sits in a dialog opened right after the delete click — dispatchClick past its backdrop.
+	await dispatchClick(OrganizationEquipmentPage.confirmDeleteButtonCss);
 };
 
 export const waitMessageToHide = async () => {

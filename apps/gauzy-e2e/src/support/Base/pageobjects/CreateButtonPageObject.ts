@@ -1,16 +1,16 @@
+// "+ Create" now opens the Quick Actions dialog (ngx-quick-actions), a grouped nb-menu of links.
+// Selectors below target that dialog's markup (quick-actions.component.html + the nb-menu it renders).
 export const CreateButton = {
+	// Header "+ Create" button (header.component.html: button.button.create)
 	createButtonCss: 'button.create',
-	createButtonOptionCss:
-		'nb-menu ul.menu-items > li.menu-item > a',
-	titleTextCss: 'ngx-quick-actions',
-	cancelButtonCss: 'nb-card-footer.text-left > button[status="basic"]',
-	closeButtonCss: 'nb-card-header i.fa-times',
-	nbCardh4Css: 'nb-card-header.d-flex h4',
-	nbCardh5Css: 'nb-card-header > h5.title',
-	divh4Css: 'div.main-header > h4',
-	timeLogHeaderTextCss: 'nb-card-header.header > div.row > div.col',
-	proposalHeaderTextCss: 'nb-card-header > h4',
-	contactHeaderTextCss: 'nb-card-header',
-	teamHeaderCss: 'div.card-header-title > h4',
-	projectHeaderCss: 'nb-card-header'
+	// The whole dialog host (used as a scope / presence check)
+	quickActionsCss: 'ngx-quick-actions',
+	// Dialog title: <nb-card-header><div><h6>Quick Actions</h6>...
+	quickActionsTitleCss: 'ngx-quick-actions nb-card-header h6',
+	// Group section headers: <p class="group-header">Accounting</p>
+	groupHeaderCss: 'ngx-quick-actions p.group-header',
+	// Each quick-action menu option title: nb-menu renders <span class="menu-title">Create Income</span>
+	createButtonOptionCss: 'ngx-quick-actions nb-menu ul.menu-items li.menu-item a span.menu-title',
+	// Dialog close control: <span class="cancel"><i class="fas fa-times"></i></span>
+	closeButtonCss: 'ngx-quick-actions span.cancel'
 };
