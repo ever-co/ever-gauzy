@@ -100,6 +100,9 @@ export class WebhookService {
 					headers: {
 						'Content-Type': 'application/json'
 					},
+					// Do not follow redirects: a 30x to an http:// or private host would bypass the
+					// httpsAgent SSRF check (the redirected request could use the default agent).
+					maxRedirects: 0,
 					// Re-validate the resolved destination IP at connection time (anti-DNS-rebinding).
 					httpsAgent: this.ssrfSafeHttpsAgent
 				})
