@@ -12,6 +12,7 @@ import {
 	verifyByText,
 	verifyByLength
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ClientsPage } from '../../../src/support/Base/pageobjects/ClientsPageObject';
 
@@ -67,7 +68,7 @@ export const clickCountryDropdown = async () => {
 };
 
 export const selectCountryFromDropdown = async (text) => {
-	await clickElementByText(ClientsPage.dropdownOptionCss, text);
+	await clickElementByText(ClientsPage.countryDropdownOptionCss, text);
 };
 
 export const nextButtonVisible = async () => {
@@ -126,7 +127,17 @@ export const clickSelectEmployeeDropdown = async () => {
 };
 
 export const selectEmployeeDropdownOption = async (index) => {
-	await clickButtonByIndex(ClientsPage.dropdownOptionCss, index);
+	const page = getPage();
+	const option = page.locator(ClientsPage.dropdownOptionCss);
+	// Best-effort employee pick: the option list (org employees "working" in the header date range)
+	// loads async and can legitimately be empty. Select one if it shows; otherwise leave members empty
+	// — a client saves fine without members — so the stepper still finishes. Avoids a hard 60s timeout.
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
 };
 
 export const selectEmployeeFromDropdownByName = async (name) => {

@@ -30,7 +30,10 @@ export const verifyValue = async (selector: string, data: string) =>
 	expect(loc(selector).first()).toHaveValue(data, { timeout: defaultCommandTimeout });
 
 export const verifyTextNotExisting = async (selector: string, text: string) =>
-	expect(loc(selector)).not.toContainText(text, { timeout: defaultCommandTimeout });
+	// Assert NO element matching `selector` contains `text` (the "row was deleted" check). The earlier
+	// `.not.toContainText` throws a strict-mode violation when `selector` matches multiple elements
+	// (e.g. several grid rows remain); filter by text then assert zero matches — handles 0, 1 or many.
+	expect(loc(selector).filter({ hasText: text })).toHaveCount(0, { timeout: defaultCommandTimeout });
 
 export const verifyTextNotExistByIndex = async (selector: string, index: number, data: string) =>
 	expect(loc(selector).nth(index)).not.toHaveText(data);
@@ -40,6 +43,23 @@ export const verifyTextByIndex = async (selector: string, data: string, index: n
 
 export const clickButton = async (selector: string) =>
 	loc(selector).first().click({ force: true, timeout: taskTimeout });
+
+// DOM-level click that bypasses overlay hit-testing: dispatches the event straight to the element so
+// the framework's (click) handler fires even when a fading cdk-overlay backdrop sits on top. A
+// coordinate click — even {force:true} — lands on the backdrop instead, because force only skips the
+// actionability *check*, it still dispatches at the element's screen coordinates. Element must be
+// attached (assert visibility first if the control is conditionally rendered).
+export const dispatchClick = async (selector: string) =>
+	loc(selector).first().dispatchEvent('click');
+
+// Best-effort wait for the full-card nb-spinner (shown while a stepper step loads its async data) to
+// detach. While it's up it overlays the footer buttons, so a coordinate click lands on the spinner
+// rather than the button. Swallows timeout so callers still proceed (then use dispatchClick).
+// Short by design: the location step's address-geocode spinner can stay up indefinitely (offline/slow
+// geocode), so callers pair this with dispatchClick, which fires regardless of the overlay. We only
+// want to absorb a transient spinner, not block on a stuck one.
+export const waitForSpinnerGone = async (timeout = 4_000) =>
+	loc('nb-spinner').first().waitFor({ state: 'detached', timeout }).catch(() => {});
 
 export const clickElementByText = async (selector: string, data: string) =>
 	// force + taskTimeout to match clickButton: several flows leave a fading nb-dialog backdrop

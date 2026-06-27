@@ -15,8 +15,10 @@ const baseURL = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
 export default defineConfig({
 	testDir: './tests',
-	/* Mirror Cypress defaultCommandTimeout (24s) for actions and a long nav timeout for the heavy app. */
-	timeout: 120_000,
+	/* Mirror Cypress defaultCommandTimeout (24s) for actions and a long nav timeout for the heavy app.
+	 * 180s per test: the contact-mutation specs walk a 4-step stepper twice (add + edit) plus invite and
+	 * delete, each with settle/retry waits for the app's async dropdowns and overlay-leaking dialogs. */
+	timeout: 180_000,
 	expect: { timeout: 24_000 },
 	/* Fail the build on test.only left in source. */
 	forbidOnly: !!process.env.CI,

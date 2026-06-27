@@ -10,6 +10,9 @@ export const ClientsPage = {
 	phoneInputCss: '[formcontrolname="primaryPhone"]',
 	budgetInputCss: 'input[formcontrolname="budget"]',
 	countryDropdownCss: 'ga-country ng-select',
+	// country is an <ng-select> (options render as div.ng-option in an appended panel), NOT the
+	// nb-select used elsewhere — its option selector differs from dropdownOptionCss (nb-option).
+	countryDropdownOptionCss: 'div.ng-option',
 	cityInputCss: '[formcontrolname="city"]',
 	postCodeInputCss: '[formcontrolname="postcode"]',
 	streetInputCss: '[formcontrolname="address"]',

@@ -75,6 +75,9 @@ test.describe('Contacts leads test', () => {
 			await contactsLeadsPage.enterPhoneInputData(ContactsLeadsPageData.defaultPhone);
 			await contactsLeadsPage.websiteInputVisible();
 			await contactsLeadsPage.enterWebsiteInputData(website);
+			// re-set Name last (raw fill): filling website above re-triggers the form's Name-reset, which
+			// would otherwise save the original name and the rename would silently no-op.
+			await contactsLeadsPage.reenterNameInputData(deleteName);
 			await contactsLeadsPage.saveButtonVisible();
 			await contactsLeadsPage.clickSaveButton();
 			await contactsLeadsPage.countryDropdownVisible();
@@ -86,8 +89,19 @@ test.describe('Contacts leads test', () => {
 			await contactsLeadsPage.enterPostcodeInputData(postcode);
 			await contactsLeadsPage.streetInputVisible();
 			await contactsLeadsPage.enterStreetInputData(street);
+			// location (step 2) → budget (step 3): the edit reopens the same 4-step contact-mutation
+			// stepper as add, so it must traverse budget + employees, not jump straight to finish.
 			await contactsLeadsPage.verifyNextButtonVisible();
 			await contactsLeadsPage.clickNextButton();
+			await contactsLeadsPage.budgetInputVisible();
+			await contactsLeadsPage.enterBudgetData(ContactsLeadsPageData.hours);
+			await contactsLeadsPage.lastStepBtnVisible();
+			await contactsLeadsPage.clickLastStepBtn();
+			// employees (step 4) → finish
+			await contactsLeadsPage.selectEmployeeDropdownVisible();
+			await contactsLeadsPage.clickSelectEmployeeDropdown();
+			await contactsLeadsPage.selectEmployeeDropdownOption(0);
+			await contactsLeadsPage.clickKeyboardButtonByKeyCode(9);
 			await contactsLeadsPage.verifyFinishButtonVisible();
 			await contactsLeadsPage.clickFinishButton();
 			await contactsLeadsPage.waitMessageToHide();

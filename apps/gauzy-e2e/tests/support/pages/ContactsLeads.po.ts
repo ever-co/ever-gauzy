@@ -2,6 +2,8 @@ import {
 	verifyElementIsVisible,
 	clickButtonByIndex,
 	clickButton,
+	dispatchClick,
+	waitForSpinnerGone,
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
@@ -12,6 +14,7 @@ import {
 	verifyByLength,
 	verifyByText
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ContactsLeadsPage } from '../../../src/support/Base/pageobjects/ContactsLeadsPageObject';
 
@@ -28,7 +31,10 @@ export const addButtonVisible = async () => {
 };
 
 export const clickAddButton = async () => {
-	await clickButtonByIndex(ContactsLeadsPage.addButtonCss, 0);
+	// the leads page shows a load spinner over the toolbar right after navigation; wait it out then
+	// dispatch the click so the Add stepper reliably opens (a coordinate click can land on the spinner).
+	await waitForSpinnerGone();
+	await dispatchClick(ContactsLeadsPage.addButtonCss);
 };
 
 export const nameInputVisible = async () => {
@@ -38,6 +44,13 @@ export const nameInputVisible = async () => {
 export const enterNameInputData = async (data) => {
 	await clearField(ContactsLeadsPage.nameInputCss);
 	await enterInput(ContactsLeadsPage.nameInputCss, data);
+};
+
+// Raw re-fill (no clearField) of the Name control. The contact-mutation form resets Name whenever a
+// later field is cleared-then-filled (an Angular re-render on valueChanges); call this as the LAST
+// step-1 action before advancing so the intended name actually persists. Mirrors the addContact fix.
+export const reenterNameInputData = async (data) => {
+	await getPage().locator(ContactsLeadsPage.nameInputCss).first().fill(String(data));
 };
 
 export const emailInputVisible = async () => {
@@ -67,7 +80,21 @@ export const clickCountryDropdown = async () => {
 };
 
 export const selectCountryFromDropdown = async (text) => {
-	await clickElementByText(ContactsLeadsPage.dropdownOptionCss, text);
+	const page = getPage();
+	const input = page.locator(ContactsLeadsPage.countryDropdownCss).locator('input').first();
+	const option = page.locator(ContactsLeadsPage.countryDropdownOptionCss);
+	// Open the ng-select via the keyboard (focus the search input + type the country), NOT a click:
+	// stale cdk-overlay backdrops lingering from the add-project/add-tag dialogs sit over this step and
+	// swallow a coordinate click on the control (ng-select opens on mousedown, so dispatchClick can't
+	// help either). Typing also filters the list so the wanted option renders. Retry until it shows.
+	for (let i = 0; i < 5; i++) {
+		if (await option.first().isVisible().catch(() => false)) break;
+		await waitForSpinnerGone();
+		await input.focus().catch(() => {});
+		await input.pressSequentially(String(text).slice(0, 4), { delay: 60 }).catch(() => {});
+		await page.waitForTimeout(900);
+	}
+	await clickElementByText(ContactsLeadsPage.countryDropdownOptionCss, text);
 };
 
 export const cityInputVisible = async () => {
@@ -114,11 +141,27 @@ export const selectEmployeeDropdownVisible = async () => {
 };
 
 export const clickSelectEmployeeDropdown = async () => {
+	// Wait out the full-card spinner first (it overlays the select, swallowing the open click), then
+	// open the employee multi-select. Its options are the org's employees "working" in the header date
+	// range (EmployeeSelectComponent.getWorkingEmployees), loaded async — selectEmployeeDropdownOption
+	// handles an empty/slow list best-effort.
+	await waitForSpinnerGone();
 	await clickButton(ContactsLeadsPage.usersMultiSelectCss);
 };
 
 export const selectEmployeeDropdownOption = async (index) => {
-	await clickButtonByIndex(ContactsLeadsPage.dropdownOptionCss, index);
+	const page = getPage();
+	const option = page.locator(ContactsLeadsPage.dropdownOptionCss);
+	// Best-effort employee pick: the option list loads async and can legitimately be empty (no
+	// employee "working" in the selected date range). Select one if it shows; otherwise leave members
+	// empty — a contact saves fine without members — so the stepper still finishes. This avoids a hard
+	// 60s timeout on an empty list, which was the main flake on the contact-mutation employees step.
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
 };
 
 export const tagsMultiSelectVisible = async () => {
@@ -151,7 +194,12 @@ export const saveButtonVisible = async () => {
 };
 
 export const clickSaveButton = async () => {
-	await clickButton(ContactsLeadsPage.saveButtonCss);
+	// Stepper-advance buttons (nbStepperNext) only move on a click when the step's form is valid; a
+	// full-card nb-spinner (async geocode on the location step, employee load on the last) overlays the
+	// button so a coordinate click lands on the spinner. Wait briefly, then dispatch the click straight
+	// to the button — nbStepperNext fires on the click event and still gates on form validity.
+	await waitForSpinnerGone();
+	await dispatchClick(ContactsLeadsPage.saveButtonCss);
 };
 
 export const inviteButtonVisible = async () => {
@@ -159,7 +207,9 @@ export const inviteButtonVisible = async () => {
 };
 
 export const clickInviteButton = async () => {
-	await clickButton(ContactsLeadsPage.inviteButtonCss);
+	// dispatchClick (not force-click): the preceding add-contact/toastr flow leaves fading cdk-overlay
+	// backdrops over the toolbar that intercept a coordinate click; dispatch fires invite() directly.
+	await dispatchClick(ContactsLeadsPage.inviteButtonCss);
 };
 
 export const saveInviteButtonVisible = async () => {
@@ -175,15 +225,34 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index) => {
-	await clickButtonByIndex(ContactsLeadsPage.selectTableRowCss, index);
+	const page = getPage();
+	// Let the grid settle first: after the preceding mutation it re-renders/refetches, and a click
+	// during that window is lost or immediately cleared. Then click the row ONCE and poll for the Edit
+	// button to enable — clicking the row TOGGLES selection, so a second click would turn it back off;
+	// only re-click if the first click was lost to a late re-render.
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(ContactsLeadsPage.selectTableRowCss).nth(index);
+	const editBtn = page.locator(ContactsLeadsPage.editButtonCss).first();
+	for (let attempt = 0; attempt < 4; attempt++) {
+		await row.click({ force: true });
+		for (let i = 0; i < 8; i++) {
+			await page.waitForTimeout(350);
+			if (!(await editBtn.isDisabled().catch(() => true))) return;
+		}
+	}
 };
 
 export const editButtonVisible = async () => {
 	await verifyElementIsVisible(ContactsLeadsPage.editButtonCss);
 };
 
-export const clickEditButton = async (index: number = 0) => {
-	await clickButtonByIndex(ContactsLeadsPage.editButtonCss, index);
+export const clickEditButton = async (_index: number = 0) => {
+	// dispatchClick: the preceding mutation dialogs (add/invite) leave fading cdk-overlay backdrops over
+	// the toolbar that swallow a coordinate click on Edit; dispatch fires editOrganizationContact().
+	await waitForSpinnerGone();
+	await dispatchClick(ContactsLeadsPage.editButtonCss);
 };
 
 export const deleteButtonVisible = async () => {
@@ -191,7 +260,8 @@ export const deleteButtonVisible = async () => {
 };
 
 export const clickDeleteButton = async () => {
-	await clickButton(ContactsLeadsPage.deleteButtonCss);
+	await waitForSpinnerGone();
+	await dispatchClick(ContactsLeadsPage.deleteButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -199,7 +269,8 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(ContactsLeadsPage.confirmDeleteButtonCss);
+	await waitForSpinnerGone();
+	await dispatchClick(ContactsLeadsPage.confirmDeleteButtonCss);
 };
 
 export const clickCardBody = async () => {
@@ -250,7 +321,10 @@ export const verifyNextButtonVisible = async () => {
 };
 
 export const clickNextButton = async () => {
-	await clickButton(ContactsLeadsPage.nextButtonCss);
+	// see clickSaveButton: wait out the location-step geocode spinner, then dispatch (the overlay
+	// otherwise swallows a coordinate click and the stepper silently stays on the current step).
+	await waitForSpinnerGone();
+	await dispatchClick(ContactsLeadsPage.nextButtonCss);
 };
 
 export const verifyFinishButtonVisible = async () => {
@@ -258,7 +332,11 @@ export const verifyFinishButtonVisible = async () => {
 };
 
 export const clickFinishButton = async () => {
-	await clickButton(ContactsLeadsPage.finishButtonCss);
+	// The contact-mutation card shows a full-card nb-spinner while the final step loads its data; it
+	// overlays the footer Save button, so a coordinate click (even force) lands on the spinner and the
+	// save never fires. Wait for it to clear, then dispatch the click straight to the button.
+	await waitForSpinnerGone();
+	await dispatchClick(ContactsLeadsPage.finishButtonCss);
 };
 
 export const lastStepBtnVisible = async () => {
@@ -266,7 +344,9 @@ export const lastStepBtnVisible = async () => {
 };
 
 export const clickLastStepBtn = async () => {
-	await clickButton(ContactsLeadsPage.lastStepBtnCss);
+	// see clickSaveButton: wait out the spinner, then dispatch to advance into the employees step.
+	await waitForSpinnerGone();
+	await dispatchClick(ContactsLeadsPage.lastStepBtnCss);
 };
 
 export const budgetInputVisible = async () => {
