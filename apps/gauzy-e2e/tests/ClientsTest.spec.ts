@@ -77,6 +77,9 @@ test.describe('Clients test', () => {
 			await clientsPage.saveButtonVisible();
 			await clientsPage.websiteInputVisible();
 			await clientsPage.enterWebsiteInputData(website);
+			// re-set Name last (raw): filling website re-triggers the form's Name-reset, else the rename
+			// silently saves the original name.
+			await clientsPage.reenterNameInputData(deleteName);
 			await clientsPage.clickSaveButton();
 			await clientsPage.countryDropdownVisible();
 			await clientsPage.clickCountryDropdown();
@@ -87,8 +90,19 @@ test.describe('Clients test', () => {
 			await clientsPage.enterPostcodeInputData(postcode);
 			await clientsPage.streetInputVisible();
 			await clientsPage.enterStreetInputData(street);
+			// location (2) → budget (3) → employees (4) → finish: the edit reopens the same 4-step
+			// contact-mutation stepper as add, so it must traverse budget + employees, not next→next.
 			await clientsPage.nextButtonVisible();
 			await clientsPage.clickNextButton();
+			await clientsPage.budgetInputVisible();
+			await clientsPage.enterBudgetData(ClientsData.hours);
+			await clientsPage.lastStepBtnVisible();
+			await clientsPage.clickLastStepBtn();
+			await clientsPage.selectEmployeeDropdownVisible();
+			await clientsPage.clickSelectEmployeeDropdown();
+			await clientsPage.selectEmployeeDropdownOption(0);
+			await clientsPage.clickKeyboardButtonByKeyCode(9);
+			await clientsPage.nextButtonVisible();
 			await clientsPage.clickNextButton();
 			await clientsPage.waitMessageToHide();
 			await clientsPage.verifyClientExists(deleteName);

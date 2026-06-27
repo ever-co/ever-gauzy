@@ -217,7 +217,10 @@ export const saveInviteButtonVisible = async () => {
 };
 
 export const clickSaveInviteButton = async () => {
-	await clickButton(ContactsLeadsPage.saveInviteButtonCss);
+	// dispatchClick: a leftover stepper backdrop can sit over the dialog footer and swallow the click,
+	// leaving the invite dialog open (so the grid behind it stays hidden from the next assertion).
+	await waitForSpinnerGone();
+	await dispatchClick(ContactsLeadsPage.saveInviteButtonCss);
 };
 
 export const tableRowVisible = async () => {

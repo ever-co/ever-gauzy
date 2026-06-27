@@ -2,12 +2,16 @@ export const ClientsPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addButtonCss: 'button[status="success"]:has(nb-icon[icon="plus-outline"])',
 	editButtonCss: 'div.btn-group.actions button.action.primary',
-	inviteButtonCss: 'ngx-contact-action button[status="success"]',
+	// Toolbar Invite (calls invite() → opens the dialog). The per-row ngx-contact-action Invite only
+	// emits updateResult, which has no subscriber on the contacts page, so it opens nothing.
+	inviteButtonCss: 'button.action.info',
 	deleteButtonCss: 'div.btn-group.actions button:has(nb-icon.status-danger)',
-	nameInputCss: '[formcontrolname="name"]',
+	// Scope add/edit stepper fields to nb-stepper: the closed invite dialog lingers in a cdk-overlay with
+	// the same formcontrolnames, so unscoped these match 2 elements → strict-mode on clear()/fill().
+	nameInputCss: 'nb-stepper [formcontrolname="name"]',
 	emailInputCss: '#email',
 	lastStepBtnCss: 'button.green, button[status="success"]',
-	phoneInputCss: '[formcontrolname="primaryPhone"]',
+	phoneInputCss: 'nb-stepper [formcontrolname="primaryPhone"]',
 	budgetInputCss: 'input[formcontrolname="budget"]',
 	countryDropdownCss: 'ga-country ng-select',
 	// country is an <ng-select> (options render as div.ng-option in an appended panel), NOT the
