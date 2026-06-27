@@ -34,11 +34,12 @@ const PUBLIC_EMPLOYEE_SELECT: FindOptionsSelect<Employee> = {
 	show_average_expenses: true,
 	show_average_bonus: true,
 	organizationId: true,
+	// NOTE: the linked user's `email` is intentionally NOT exposed on the unauthenticated public
+	// profile (GDPR-relevant PII); only display name + avatar are returned (GHSA-49ff-8859-537j).
 	user: {
 		id: true,
 		firstName: true,
 		lastName: true,
-		email: true,
 		imageUrl: true
 	}
 };
