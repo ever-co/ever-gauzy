@@ -2,7 +2,7 @@ import { IPagination, IPlugin } from '@gauzy/contracts';
 import { MultiORM, MultiORMEnum, getORMType } from '@gauzy/core';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PluginService } from '../../../../domain';
-import { PluginSearchFilterDTO } from '../../../../shared';
+import { PLUGIN_SORTABLE_FIELDS, PLUGIN_SORT_DIRECTIONS, PluginSearchFilterDTO } from '../../../../shared';
 import { SearchPluginsQuery } from '../search-plugins.query';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
@@ -62,18 +62,15 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 		// Security (defense-in-depth): `sortBy`/`sortDirection` are interpolated into the SQL `ORDER BY`
 		// clause below (TypeORM `.orderBy()` / Knex `.orderBy()`/`.orderByRaw()` treat the field as a raw
 		// identifier, not a bound parameter). They are already constrained by `@IsIn(...)` on
-		// PluginSearchFilterDTO, but clamp them here too so this sink is safe even if reached unvalidated.
-		const PLUGIN_SORTABLE_FIELDS = [
-			'name',
-			'author',
-			'uploadedAt',
-			'lastDownloadedAt',
-			'downloadCount',
-			'createdAt',
-			'updatedAt'
-		];
-		const sortBy = PLUGIN_SORTABLE_FIELDS.includes(rawSortBy as string) ? (rawSortBy as string) : 'createdAt';
-		const sortDirection = String(rawSortDirection).toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+		// PluginSearchFilterDTO; clamp them against the SAME shared allowlist here too so this sink stays
+		// safe even if ever reached unvalidated, and the two layers cannot drift apart.
+		const sortBy = (PLUGIN_SORTABLE_FIELDS as readonly string[]).includes(rawSortBy as string)
+			? (rawSortBy as string)
+			: 'createdAt';
+		const normalizedSortDirection = String(rawSortDirection).toUpperCase();
+		const sortDirection = (PLUGIN_SORT_DIRECTIONS as readonly string[]).includes(normalizedSortDirection)
+			? (normalizedSortDirection as 'ASC' | 'DESC')
+			: 'DESC';
 
 		const isArray = Array.isArray(relations);
 

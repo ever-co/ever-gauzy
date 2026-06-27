@@ -99,8 +99,22 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		const provider = new FileStorage().getProvider();
 		let thumbnail: UploadedFile;
 
+		// Content-based validation: the multer fileFilter only inspects the client-controlled MIME type
+		// and filename, which can be spoofed. Re-check the actual stored bytes and reject markup
+		// (SVG/XML/HTML/XHTML) that would execute as stored XSS when served from `/public/<key>`
+		// (GHSA-p334-cm7f-php5). The file is deleted on rejection because `/public` serves directly from
+		// disk regardless of whether the DB asset record is ever created.
+		const fileContent = await provider.getFile(file.key);
+		if (this.isMarkupContent(fileContent)) {
+			try {
+				await provider.deleteFile(file.key);
+			} catch (error) {
+				this.logger.error('Error while deleting rejected upload from file storage provider');
+			}
+			throw new BadRequestException('Unsupported file content: markup/script files are not allowed');
+		}
+
 		try {
-			const fileContent = await provider.getFile(file.key);
 			const inputFile = await tempFile('media-asset-thumb');
 			const outputFile = await tempFile('media-asset-thumb');
 
@@ -149,6 +163,35 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 				storageProvider: provider.name
 			})
 		);
+	}
+
+	/**
+	 * Detects whether the given file content is markup (SVG / XML / HTML / XHTML), i.e. its first
+	 * non-whitespace byte is `<` (after skipping a UTF-8 BOM). Raster image formats (PNG, JPEG, GIF,
+	 * BMP, WEBP) never start with `<`, so this rejects disguised active-content uploads without
+	 * false-positives on real images.
+	 *
+	 * @param content - The raw file bytes (or string) to inspect.
+	 * @returns `true` if the content appears to be markup.
+	 */
+	private isMarkupContent(content: Buffer | string): boolean {
+		if (!content) {
+			return false;
+		}
+		const buffer = Buffer.isBuffer(content) ? content : Buffer.from(String(content));
+		let i = 0;
+		// Skip a UTF-8 BOM if present.
+		if (buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) {
+			i = 3;
+		}
+		// Skip leading whitespace (space, tab, CR, LF).
+		while (
+			i < buffer.length &&
+			(buffer[i] === 0x20 || buffer[i] === 0x09 || buffer[i] === 0x0a || buffer[i] === 0x0d)
+		) {
+			i++;
+		}
+		return buffer[i] === 0x3c; // '<'
 	}
 
 	/**
