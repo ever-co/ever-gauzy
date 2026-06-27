@@ -156,6 +156,8 @@ spec:
                         value: '$JWT_SECRET'
                       - name: JWT_REFRESH_TOKEN_SECRET
                         value: '$JWT_REFRESH_TOKEN_SECRET'
+                      - name: JWT_VERIFICATION_TOKEN_SECRET
+                        value: '$JWT_VERIFICATION_TOKEN_SECRET'
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
                         value: '$JWT_REFRESH_TOKEN_EXPIRATION_TIME'
                       - name: ALLOWED_ORIGINS
