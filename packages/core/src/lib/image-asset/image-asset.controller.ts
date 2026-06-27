@@ -166,10 +166,16 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	}
 
 	/**
-	 * Detects whether the given file content is markup (SVG / XML / HTML / XHTML), i.e. its first
-	 * non-whitespace byte is `<` (after skipping a UTF-8 BOM). Raster image formats (PNG, JPEG, GIF,
-	 * BMP, WEBP) never start with `<`, so this rejects disguised active-content uploads without
-	 * false-positives on real images.
+	 * Detects whether the given file content is markup (SVG / XML / HTML / XHTML).
+	 *
+	 * Two checks:
+	 * 1. A leading UTF-16 / UTF-32 byte-order mark indicates a text file — raster image formats
+	 *    (PNG, JPEG, GIF, BMP, WEBP) never start with those byte sequences — so such files are
+	 *    rejected (this closes the wide-encoding `<svg>`/`<xml>` XSS bypass).
+	 * 2. Otherwise (UTF-8, with or without BOM) the first non-whitespace byte is `<`.
+	 *
+	 * Raster images never start with `<` nor a UTF-16/32 BOM, so this has no false positives on
+	 * legitimate images.
 	 *
 	 * @param content - The raw file bytes (or string) to inspect.
 	 * @returns `true` if the content appears to be markup.
@@ -179,12 +185,27 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 			return false;
 		}
 		const buffer = Buffer.isBuffer(content) ? content : Buffer.from(String(content));
+		if (buffer.length === 0) {
+			return false;
+		}
+		const startsWith = (...bytes: number[]): boolean =>
+			buffer.length >= bytes.length && bytes.every((value, index) => buffer[index] === value);
+
+		// UTF-32 / UTF-16 BOMs (a raster image never begins with these).
+		if (
+			startsWith(0xff, 0xfe, 0x00, 0x00) || // UTF-32 LE
+			startsWith(0x00, 0x00, 0xfe, 0xff) || // UTF-32 BE
+			startsWith(0xfe, 0xff) || // UTF-16 BE
+			startsWith(0xff, 0xfe) // UTF-16 LE
+		) {
+			return true;
+		}
+
+		// UTF-8 (optional BOM): first non-whitespace byte is `<`.
 		let i = 0;
-		// Skip a UTF-8 BOM if present.
-		if (buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) {
+		if (startsWith(0xef, 0xbb, 0xbf)) {
 			i = 3;
 		}
-		// Skip leading whitespace (space, tab, CR, LF).
 		while (
 			i < buffer.length &&
 			(buffer[i] === 0x20 || buffer[i] === 0x09 || buffer[i] === 0x0a || buffer[i] === 0x0d)
