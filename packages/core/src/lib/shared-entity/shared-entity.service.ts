@@ -29,14 +29,18 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
      */
     async create(input: ISharedEntityCreateInput): Promise<SharedEntity> {
         try {
-            // Extract the tenant ID from the request context, or use the provided tenantId
+            // Extract the tenant/organization IDs from the request context, falling back to the input
             const tenantId = RequestContext.currentTenantId() || input.tenantId;
+            const organizationId = RequestContext.currentOrganizationId() || input.organizationId;
 
-            // Security: only allow sharing a record that belongs to the caller's tenant. Without this
-            // check a user could create a share-link pointing at another tenant's record by its id
-            // (cross-tenant IDOR - GHSA-gpg5-qwjc-8hqh / GHSA-cx2q-xmh2-pc38).
+            // Security: only allow sharing a record that belongs to the caller's tenant (and
+            // organization, for org-scoped entities). Without this check a user could create a
+            // share-link pointing at another tenant's record by its id (cross-tenant IDOR -
+            // GHSA-gpg5-qwjc-8hqh / GHSA-cx2q-xmh2-pc38).
             const targetRepository = this.resolveRepository(input.entity);
-            const owned = await targetRepository.findOne({ where: { id: input.entityId, tenantId } });
+            const owned = await targetRepository.findOne({
+                where: this.buildScopedWhere(targetRepository, input.entityId, tenantId, organizationId)
+            });
             if (!owned) {
                 throw new ForbiddenException('Cannot share an entity that does not belong to your tenant');
             }
@@ -83,10 +87,16 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
             const repository = this.resolveRepository(sharedEntity.entity);
 
             // Construct the find options for the shared entity.
-            // Scope the lookup to the share's OWN tenant so a token issued by tenant A can never
-            // resolve a record belonging to tenant B (the route is @Public(), so there is no
+            // Scope the lookup to the share's OWN tenant/organization so a token issued by tenant A can
+            // never resolve a record belonging to tenant B (the route is @Public(), so there is no
             // request-context tenant to rely on) - GHSA-gpg5-qwjc-8hqh / GHSA-cx2q-xmh2-pc38.
-            const findOptions = this.buildFindOptions(sharedEntity.entityId, sharedEntity.tenantId, shareRules);
+            const findOptions = this.buildFindOptions(
+                repository,
+                sharedEntity.entityId,
+                sharedEntity.tenantId,
+                sharedEntity.organizationId,
+                shareRules
+            );
 
             // Get the entity
             const entity = await repository.findOne(findOptions);
@@ -105,17 +115,55 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
     /**
      * Builds the find options for the shared entity.
      *
+     * @param repository - The repository for the target entity (used to detect tenant/org columns).
      * @param entityId - The ID of the entity.
      * @param tenantId - The tenant ID the shared entity belongs to (used to enforce tenant isolation).
+     * @param organizationId - The organization ID the shared entity belongs to (org-scoped isolation).
      * @param rules - The share rules for the shared entity.
      * @returns The find options for the shared entity.
      */
-    private buildFindOptions(entityId: ID, tenantId: ID, rules: IShareRule): FindOneOptions<any> {
+    private buildFindOptions(
+        repository: Repository<any>,
+        entityId: ID,
+        tenantId: ID,
+        organizationId: ID,
+        rules: IShareRule
+    ): FindOneOptions<any> {
         return {
-            where: { id: entityId, tenantId },
+            where: this.buildScopedWhere(repository, entityId, tenantId, organizationId),
             select: buildSharedEntitySelect(rules),
             relations: buildSharedEntityRelations(rules)
         }
+    }
+
+    /**
+     * Builds a tenant- (and organization-) scoped `where` clause for a target entity.
+     *
+     * The `tenantId`/`organizationId` predicates are only added when the target entity actually has
+     * those columns. Some shareable entity types (e.g. Tenant, Language, Currency) are global and have
+     * no `tenantId` column; adding it unconditionally would either error or silently degrade the lookup
+     * to `id`-only (no isolation).
+     *
+     * @param repository - The repository for the target entity.
+     * @param entityId - The ID of the entity.
+     * @param tenantId - The caller's/share's tenant ID.
+     * @param organizationId - The caller's/share's organization ID.
+     * @returns A `where` object scoped by the columns the entity actually has.
+     */
+    private buildScopedWhere(
+        repository: Repository<any>,
+        entityId: ID,
+        tenantId?: ID,
+        organizationId?: ID
+    ): Record<string, any> {
+        const where: Record<string, any> = { id: entityId };
+        if (tenantId && repository.metadata.findColumnWithPropertyName('tenantId')) {
+            where['tenantId'] = tenantId;
+        }
+        if (organizationId && repository.metadata.findColumnWithPropertyName('organizationId')) {
+            where['organizationId'] = organizationId;
+        }
+        return where;
     }
 
     /**

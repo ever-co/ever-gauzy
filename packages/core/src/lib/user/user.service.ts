@@ -403,12 +403,14 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 
 			// Restrict users from updating their own role.
-			// Check BOTH the nested `role` object and the flat `roleId` field, otherwise a user could
-			// escalate their own privileges (e.g. to SUPER_ADMIN) by sending only `roleId`
-			// (GHSA-x4mv-fhwj-g3rp).
+			// Check BOTH the nested `role` object and the flat `roleId` field INDEPENDENTLY, otherwise a
+			// user could escalate their own privileges (e.g. to SUPER_ADMIN). `role?.id ?? roleId` is not
+			// enough: a crafted body could send an empty `role: { id: '' }` (non-nullish) to mask a
+			// privileged `roleId` and slip through. Reject if any provided role identifier differs from the
+			// caller's current role.
 			if (currentUserId === id) {
-				const incomingRoleId = entity.role?.id ?? entity.roleId;
-				if (incomingRoleId && incomingRoleId !== currentRoleId) {
+				const requestedRoleIds = [entity.role?.id, entity.roleId].filter((roleId) => isNotEmpty(roleId));
+				if (requestedRoleIds.some((roleId) => roleId !== currentRoleId)) {
 					throw new ForbiddenException();
 				}
 			}
