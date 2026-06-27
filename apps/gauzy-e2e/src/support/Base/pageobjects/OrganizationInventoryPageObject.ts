@@ -3,7 +3,7 @@ export const OrganizationInventoryPage = {
 	addButtonCss: 'button[status="success"]:has-text("Add")',
 	languageDropdownCss: 'ngx-language-selector ng-select',
 	dropdownOptionCss: '.ng-option',
-	nameInputCss: 'input[id="name"]',
+	nameInputCss: 'input[placeholder="Name"]',
 	codeInputCss: 'input[id="codeInput"]',
 	productTypeDropdownCss: 'ngx-product-type-selector ng-select',
 	productCategoryDropdownCss: 'ngx-product-category-selector ng-select',
