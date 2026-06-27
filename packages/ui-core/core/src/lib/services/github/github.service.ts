@@ -25,6 +25,21 @@ export class GithubService {
 	constructor(private readonly _http: HttpClient) {}
 
 	/**
+	 * Mint a single-use, tenant-bound state nonce before starting a GitHub App installation.
+	 *
+	 * The returned `state` is passed to GitHub and echoed back on the post-install callback so the
+	 * resulting installation is bound to the initiating tenant/organization, preventing cross-tenant
+	 * installation hijacking (GHSA-4rwq-65wh-45h4).
+	 *
+	 * @param input The tenant/organization initiating the installation.
+	 * @returns A promise resolving to the opaque `state` nonce.
+	 */
+	async createInstallState(input: IBasePerTenantAndOrganizationEntityModel): Promise<{ state: string }> {
+		const url = `${API_PREFIX}/integration/github/install/state`;
+		return firstValueFrom(this._http.post<{ state: string }>(url, input));
+	}
+
+	/**
 	 * Add a GitHub app installation.
 	 * @param input The input data for the GitHub app installation.
 	 * @returns A promise that resolves to the integration tenant object.

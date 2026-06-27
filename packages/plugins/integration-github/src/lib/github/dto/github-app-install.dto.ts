@@ -22,6 +22,12 @@ export class GithubOAuthDTO extends TenantOrganizationBaseDTO implements IGithub
 }
 
 /**
+ * Payload for minting a single-use, tenant-bound state nonce that starts a GitHub App
+ * installation flow (see GithubOAuthStateService / GHSA-4rwq-65wh-45h4).
+ */
+export class GithubInstallStateDTO extends TenantOrganizationBaseDTO {}
+
+/**
  *
  */
 export class GithubAppInstallDTO implements IGithubAppInstallInput {
@@ -34,4 +40,14 @@ export class GithubAppInstallDTO implements IGithubAppInstallInput {
 	@IsNotEmpty()
 	@IsEnum(GithubSetupActionEnum)
 	readonly setup_action: GithubSetupActionEnum;
+
+	/**
+	 * Single-use state nonce minted by `POST /integration/github/install/state` when the flow was
+	 * initiated. Required: it binds the installation to the initiating tenant/organization and
+	 * prevents cross-tenant installation hijacking (GHSA-4rwq-65wh-45h4).
+	 */
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
+	readonly state: string;
 }

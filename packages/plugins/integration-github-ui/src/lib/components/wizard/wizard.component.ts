@@ -5,7 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@gauzy/ui-config';
 import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange, toParams } from '@gauzy/ui-core/common';
-import { Store } from '@gauzy/ui-core/core';
+import { GithubService, Store } from '@gauzy/ui-core/core';
 import { GITHUB_AUTHORIZATION_URL } from '../../github.config';
 
 @UntilDestroy({ checkProperties: true })
@@ -51,7 +51,8 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _router: Router,
-		private readonly _store: Store
+		private readonly _store: Store,
+		private readonly _githubService: GithubService
 	) {}
 
 	/**
@@ -195,16 +196,34 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 			window.frames[windowName].focus();
 		} else {
 			// Destructure environment variables for better readability
-			const { GAUZY_GITHUB_APP_NAME, GAUZY_GITHUB_REDIRECT_URL, GAUZY_GITHUB_POST_INSTALL_URL } = environment;
-			// Get the redirect URI, Post Install URL from the environment
+			const { GAUZY_GITHUB_APP_NAME, GAUZY_GITHUB_REDIRECT_URL } = environment;
+			// Get the redirect URI from the environment
 			const redirect_uri = GAUZY_GITHUB_REDIRECT_URL;
-			// const client_id = environment.GAUZY_GITHUB_CLIENT_ID;
-			const postInstallURL = GAUZY_GITHUB_POST_INSTALL_URL;
+
+			// Request a single-use, tenant-bound state nonce from the API BEFORE starting the GitHub
+			// App installation. The nonce is echoed back on the post-install callback so the resulting
+			// installation is bound to THIS tenant/organization, preventing cross-tenant installation
+			// hijacking (GHSA-4rwq-65wh-45h4).
+			let state: string;
+			try {
+				const response = await this._githubService.createInstallState({
+					organizationId: this.organization.id,
+					tenantId: this.organization.tenantId
+				});
+				state = response?.state;
+			} catch (error) {
+				console.log('Error while creating GitHub install state: %s', error?.message);
+				return;
+			}
+			if (!state) {
+				console.log('Missing GitHub install state; aborting installation popup.');
+				return;
+			}
 
 			// Define the query parameters for the authorization request
 			const queryParams = toParams({
 				redirect_uri: `${redirect_uri}`,
-				state: `${postInstallURL}`
+				state: `${state}`
 			});
 
 			// Construct the external URL for GitHub authorization with the query parameters

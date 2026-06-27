@@ -28,8 +28,11 @@ export class GithubInstallationComponent implements AfterViewInit, OnInit {
 	ngOnInit(): void {
 		this._route.queryParams
 			.pipe(
-				// Filter and keep only valid queryParams with 'installation_id' and 'setup_action'
-				filter(({ installation_id, setup_action }) => !!installation_id && !!setup_action),
+				// Filter and keep only valid queryParams with 'installation_id', 'setup_action' and the
+				// single-use 'state' nonce (required to bind the installation to the initiating tenant).
+				filter(
+					({ installation_id, setup_action, state }) => !!installation_id && !!setup_action && !!state
+				),
 				tap(() => (this.organization = this._store.selectedOrganization)),
 				// Use 'tap' operator to perform an asynchronous action
 				tap(
@@ -61,19 +64,18 @@ export class GithubInstallationComponent implements AfterViewInit, OnInit {
 		if (!this.organization) {
 			return;
 		}
-		// Split the 'state' parameter to extract 'organizationId' and 'tenantId'
-		const { id: organizationId, tenantId } = this.organization;
-		const { installation_id, setup_action } = input;
+		const { installation_id, setup_action, state } = input;
 
-		// Check if all required parameters are provided
-		if (installation_id && setup_action) {
+		// The installation is bound server-side to the tenant/organization recorded against the
+		// single-use `state` nonce minted at initiation, so we forward only GitHub's identifiers plus
+		// the nonce — never a client-supplied tenant/organization (cross-tenant IDOR, GHSA-4rwq-65wh-45h4).
+		if (installation_id && setup_action && state) {
 			try {
 				// Call a service method (likely from _githubService) to add the installation app
 				const integration = await this._githubService.addInstallationApp({
 					installation_id,
 					setup_action,
-					organizationId,
-					tenantId
+					state
 				});
 
 				// Simulate a success scenario, possibly updating the UI or performing other actions
