@@ -29,6 +29,11 @@ export class GitHubController {
 			// Add the GitHub installation using the service
 			return await this._githubService.addGithubAppInstallation(input);
 		} catch (error) {
+			// Preserve intentional HTTP exceptions (e.g. the cross-tenant uniqueness 400) instead of
+			// masking them as a generic 500.
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			// Handle errors and return an appropriate error response
 			throw new HttpException(
 				`Failed to add GitHub integration: ${error.message}`,
