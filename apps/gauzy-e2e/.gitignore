@@ -3,3 +3,11 @@
 /playwright-report/
 /playwright/.cache/
 /blob-report/
+
+# Local e2e triage scratch — all regenerable (see knowledge runbook E2E_PLAYWRIGHT_MIGRATION):
+# distilled selector digests + full failure-DOM captures (multi-GB), debug screenshots, and
+# scratch repro/debug specs. The reusable triage tools live in tools/ and tests/_inspect|_drive.
+/.triage/
+/*.png
+/tests/_dbg*.spec.ts
+/tests/_repro*.spec.ts
