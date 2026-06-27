@@ -64,8 +64,34 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 						return headerTenantId;
 					}
 
-					// 2. UUID in URL path (Plane UI calls)
+					// 2. UUID baked into the URL path by the Plane UI
+					//    (VITE_API_BASE_URL=.../api/plane/{tenantId}). Always strip it so
+					//    the downstream proxy app sees a clean URL; keep it only as a
+					//    fallback tenant signal for unauthenticated bootstrap requests.
 					const pathTenantId = this.extractTenantIdFromPath(req);
+
+					// 3. The authenticated session cookie is the SOURCE OF TRUTH for the
+					//    tenant. When a valid session is present it OVERRIDES the path
+					//    UUID, so a request can never be served with another tenant's
+					//    resolved config (apiKey / apiSecret / CORS origins) while it
+					//    carries a different tenant's session. Closes the confused-deputy
+					//    where an attacker swaps in someone else's tenant UUID.
+					const sessionTenantId = this.extractSessionTenantId(req);
+					if (sessionTenantId) {
+						if (pathTenantId && pathTenantId !== sessionTenantId) {
+							this.logger.warn(
+								`Plane proxy: path tenant ${pathTenantId} does not match the ` +
+									`authenticated session tenant ${sessionTenantId}; serving the ` +
+									`session tenant.`
+							);
+						}
+						(req as any)[REQ_TENANT_ID] = sessionTenantId;
+						return sessionTenantId;
+					}
+
+					// 4. No session yet — public bootstrap (auth/email-check, login,
+					//    api/instances). Fall back to the path tenant so CORS and the
+					//    email-check API key resolve for the right tenant.
 					if (pathTenantId) {
 						(req as any)[REQ_TENANT_ID] = pathTenantId;
 						return pathTenantId;
@@ -190,6 +216,74 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		return undefined;
+	}
+
+	// ── Session-based tenant resolution ──────────────────
+
+	/**
+	 * Read and verify the Gauzy JWT carried by the chunked
+	 * `auth-proxy-plane-token-*` cookies and return its `tenantId` claim.
+	 *
+	 * Returns `undefined` when no session cookie is present (unauthenticated
+	 * bootstrap) or when JWT_SECRET is not configured (e.g. a standalone proxy
+	 * that does not share Gauzy's signing secret). A present-but-invalid or
+	 * expired cookie is also treated as no session: the forwarded Bearer is the
+	 * same token and Gauzy rejects it with 401, letting the Plane UI
+	 * re-authenticate gracefully instead of the proxy hard-failing the request.
+	 */
+	private extractSessionTenantId(req: http.IncomingMessage): string | undefined {
+		const token = this.readSessionToken(req);
+		if (!token) {
+			return undefined;
+		}
+
+		const jwtSecret = environment.JWT_SECRET;
+		if (!jwtSecret) {
+			return undefined;
+		}
+
+		try {
+			const payload = verify(token, jwtSecret) as { tenantId?: string };
+			return payload.tenantId || undefined;
+		} catch (error) {
+			this.logger.debug(
+				`Ignoring invalid/expired Plane proxy session cookie: ${
+					error instanceof Error ? error.message : String(error)
+				}`
+			);
+			return undefined;
+		}
+	}
+
+	/**
+	 * Reassemble the chunked `auth-proxy-plane-token-{0,1,...}` cookie into the
+	 * raw JWT string from the raw `Cookie` header (cookies are not parsed yet at
+	 * the HTTP-server interception layer).
+	 */
+	private readSessionToken(req: http.IncomingMessage): string | undefined {
+		const cookieHeader = req.headers['cookie'];
+		if (!cookieHeader) {
+			return undefined;
+		}
+
+		const jar: Record<string, string> = {};
+		for (const part of cookieHeader.split(';')) {
+			const eq = part.indexOf('=');
+			if (eq === -1) {
+				continue;
+			}
+			const key = part.slice(0, eq).trim();
+			if (key) {
+				jar[key] = part.slice(eq + 1).trim();
+			}
+		}
+
+		const chunks: string[] = [];
+		for (let index = 0; jar[`auth-proxy-plane-token-${index}`] !== undefined; index++) {
+			chunks.push(jar[`auth-proxy-plane-token-${index}`]);
+		}
+
+		return chunks.length > 0 ? chunks.join('') : undefined;
 	}
 
 	// ── JWT validation ────────────────────────────────────────────────
