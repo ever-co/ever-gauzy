@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	Controller,
 	Get,
 	Logger,
@@ -70,6 +71,22 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 				return new FileStorage().storage({
 					dest: () => path.join(baseDirectory, subDirectory)
 				});
+			},
+			// Only accept raster images. SVG (and other markup/active-content files) are rejected because
+			// uploads are served unauthenticated from `/public/<key>` and an SVG can carry executable
+			// JavaScript, leading to stored XSS (GHSA-p334-cm7f-php5).
+			fileFilter: (_req: any, file: any, callback: (error: Error | null, acceptFile: boolean) => void) => {
+				const allowedMimeTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/bmp'];
+				const blockedExtensions = ['.svg', '.svgz', '.html', '.htm', '.xml', '.xhtml'];
+				const extension = path.extname(file?.originalname || '').toLowerCase();
+				if (allowedMimeTypes.includes(file?.mimetype) && !blockedExtensions.includes(extension)) {
+					callback(null, true);
+				} else {
+					callback(
+						new BadRequestException(`Unsupported file type: ${file?.mimetype || extension || 'unknown'}`),
+						false
+					);
+				}
 			}
 		})
 	)

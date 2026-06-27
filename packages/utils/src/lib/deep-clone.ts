@@ -31,6 +31,10 @@ export function deepClone<T extends string | number | any[] | Object>(input: T):
 	// Clone objects recursively
 	output = {} as Record<string, any>;
 	for (const key in input) {
+		// Prevent prototype pollution (CWE-1321): skip dangerous keys.
+		if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+			continue;
+		}
 		if (Object.prototype.hasOwnProperty.call(input, key)) {
 			output[key] = deepClone(input[key]);
 		}
