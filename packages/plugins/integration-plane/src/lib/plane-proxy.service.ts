@@ -71,20 +71,21 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 					// sees a clean URL regardless of which tenant signal wins below.
 					const pathTenantId = this.extractTenantIdFromPath(req);
 
-					// 1. Explicit header / cookie (Gauzy-originated calls) — JWT-validated.
-					const headerTenantId = this.extractTenantIdFromHeaders(req);
+					// 1. Explicit X-TENANT-ID header (Gauzy-internal calls) — JWT-validated.
+					const headerTenantId = this.extractTenantIdFromHeader(req);
 					if (headerTenantId) {
 						this.validateTenantFromToken(req, headerTenantId);
 						(req as any)[REQ_TENANT_ID] = headerTenantId;
 						return headerTenantId;
 					}
 
-					// 2. The authenticated session cookie is the SOURCE OF TRUTH for the
-					//    tenant. When a valid session is present it OVERRIDES the path
-					//    UUID, so a request can never be served with another tenant's
-					//    resolved config (apiKey / apiSecret / CORS origins) while it
-					//    carries a different tenant's session. Closes the confused-deputy
-					//    where an attacker swaps in someone else's tenant UUID.
+					// 2. The authenticated Plane session is the SOURCE OF TRUTH for the
+					//    tenant. It is resolved BEFORE the ambient `tenant-id` cookie so a
+					//    Plane UI request (session cookie, no Bearer) is never short-
+					//    circuited into the "missing Bearer" path by a stray tenant-id
+					//    cookie. A valid session also OVERRIDES the path UUID, so a request
+					//    can never be served with another tenant's resolved config while it
+					//    carries a different tenant's session (confused-deputy defense).
 					const sessionTenantId = this.extractSessionTenantId(req);
 					if (sessionTenantId) {
 						if (pathTenantId && pathTenantId !== sessionTenantId) {
@@ -98,7 +99,18 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 						return sessionTenantId;
 					}
 
-					// 3. No session yet — public bootstrap (auth/email-check, login,
+					// 3. `tenant-id` cookie from a Gauzy browser session — only honored
+					//    when a Bearer is also present, so it can be cross-checked against
+					//    the token (and so it never throws for a Plane bootstrap request
+					//    that merely carries an ambient tenant-id cookie).
+					const cookieTenantId = this.extractTenantIdFromCookie(req);
+					if (cookieTenantId && this.hasBearerToken(req)) {
+						this.validateTenantFromToken(req, cookieTenantId);
+						(req as any)[REQ_TENANT_ID] = cookieTenantId;
+						return cookieTenantId;
+					}
+
+					// 4. No tenant yet — public bootstrap (auth/email-check, login,
 					//    api/instances). Fall back to the path tenant so CORS and the
 					//    email-check API key resolve for the right tenant.
 					if (pathTenantId) {
@@ -208,14 +220,21 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
-	 * Extract tenant ID from X-TENANT-ID header or tenant-id cookie.
+	 * Extract the tenant ID from the explicit X-TENANT-ID header.
 	 */
-	private extractTenantIdFromHeaders(req: http.IncomingMessage): string | undefined {
+	private extractTenantIdFromHeader(req: http.IncomingMessage): string | undefined {
 		const tenantIdHeader = req.headers['x-tenant-id'];
 		if (tenantIdHeader) {
 			return Array.isArray(tenantIdHeader) ? tenantIdHeader[0] : tenantIdHeader;
 		}
+		return undefined;
+	}
 
+	/**
+	 * Extract the tenant ID from the ambient `tenant-id` cookie (set by Gauzy
+	 * browser sessions). Lower priority than the authenticated Plane session.
+	 */
+	private extractTenantIdFromCookie(req: http.IncomingMessage): string | undefined {
 		const cookieHeader = req.headers['cookie'];
 		if (cookieHeader) {
 			const match = cookieHeader.match(/(?:^|;\s*)tenant-id=([^;]+)/);
@@ -223,8 +242,15 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 				return decodeURIComponent(match[1]);
 			}
 		}
-
 		return undefined;
+	}
+
+	/**
+	 * Whether the request carries an `Authorization: Bearer` token.
+	 */
+	private hasBearerToken(req: http.IncomingMessage): boolean {
+		const auth = req.headers['authorization'];
+		return typeof auth === 'string' && auth.startsWith('Bearer ');
 	}
 
 	// ── Session-based tenant resolution ──────────────────
