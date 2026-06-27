@@ -47,24 +47,38 @@ export class GithubService {
 	 * @throws BadRequestException if the installation is already linked to another tenant.
 	 */
 	private async assertInstallationNotClaimedByAnotherTenant(installationId: string, tenantId: string): Promise<void> {
-		let existingBindings: Array<{ tenantId?: string }> = [];
+		let repository: ReturnType<DataSource['getRepository']>;
 		try {
-			const repository = this._dataSource.getRepository('IntegrationSetting');
+			repository = this._dataSource.getRepository('IntegrationSetting');
+		} catch (error) {
+			// The IntegrationSetting entity could not be resolved — a configuration problem, not a
+			// runtime/availability one. Do NOT block legitimate installs over a config issue; skip the
+			// uniqueness check and log loudly.
+			this.logger.error('IntegrationSetting repository unavailable; skipping GitHub uniqueness check', error?.message);
+			return;
+		}
+
+		let existingBindings: Array<{ tenantId?: string | null }>;
+		try {
 			existingBindings = (await repository.find({
 				where: {
 					settingsName: GithubPropertyMapEnum.INSTALLATION_ID,
 					settingsValue: installationId
 				}
-			})) as Array<{ tenantId?: string }>;
+			})) as Array<{ tenantId?: string | null }>;
 		} catch (error) {
-			// Fail OPEN on lookup errors: a transient/configuration issue must never break a legitimate
-			// GitHub install. The uniqueness check is simply skipped when it cannot run.
-			this.logger.error('Failed to verify GitHub installation uniqueness; proceeding', error?.message);
-			return;
+			// FAIL CLOSED on a lookup (DB) error: this is a security boundary, so a transient failure
+			// must not silently allow a potentially cross-tenant binding.
+			this.logger.error('GitHub installation uniqueness lookup failed', error?.message);
+			throw new HttpException(
+				'Unable to verify the GitHub App installation. Please try again.',
+				HttpStatus.SERVICE_UNAVAILABLE
+			);
 		}
-		const claimedByAnotherTenant = existingBindings.some(
-			(setting) => !!setting.tenantId && setting.tenantId !== tenantId
-		);
+
+		// Reject if the installation is bound to ANY tenant other than the caller's — including rows
+		// with a null/empty tenantId (treated as claimed-by-unknown rather than unclaimed).
+		const claimedByAnotherTenant = existingBindings.some((setting) => setting.tenantId !== tenantId);
 		if (claimedByAnotherTenant) {
 			throw new BadRequestException('This GitHub App installation is already linked to another account.');
 		}
