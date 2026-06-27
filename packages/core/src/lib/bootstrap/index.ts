@@ -52,6 +52,7 @@ import { AppService } from '../app/app.service';
 import { AppModule } from '../app/app.module';
 import { configureRedisSession } from './redis-store';
 import { setupSwagger } from './swagger';
+import { validateApplicationSecrets } from './validate-secrets';
 
 /**
  * Bootstrap the NestJS application, configuring various settings and initializing the server.
@@ -61,6 +62,9 @@ import { setupSwagger } from './swagger';
  */
 export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>): Promise<INestApplication> {
 	console.time(chalk.yellow('✔ Total Application Bootstrap Time'));
+
+	// Fail fast (in real production) or warn (dev/demo) if auth/session secrets are unset or default.
+	validateApplicationSecrets();
 
 	// Pre-bootstrap the application configuration
 	const config = await preBootstrapApplicationConfig(pluginConfig);
