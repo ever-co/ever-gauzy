@@ -2,6 +2,8 @@ import {
 	enterInput,
 	verifyElementIsVisible,
 	clickButton,
+	dispatchClick,
+	waitForSpinnerGone,
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
@@ -14,6 +16,7 @@ import {
 	verifyElementIsNotVisible,
 	waitUntil
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { EstimatesPage } from '../../../src/support/Base/pageobjects/EstimatesPageObject';
 
@@ -30,7 +33,9 @@ export const addButtonVisible = async () => {
 };
 
 export const clickAddButton = async () => {
-	await clickButton(EstimatesPage.addButtonCss);
+	// dispatchClick past the post-navigation load spinner so the Add estimate form reliably opens.
+	await waitForSpinnerGone();
+	await dispatchClick(EstimatesPage.addButtonCss);
 };
 
 export const tagsDropdownVisible = async () => {
@@ -38,10 +43,25 @@ export const tagsDropdownVisible = async () => {
 };
 
 export const clickTagsDropdown = async () => {
-	await clickButton(EstimatesPage.addTagsDropdownCss);
+	// focus + ArrowDown (NOT a click): a force-click on #addTags lands on the add-form backdrop and
+	// dismisses the whole form; keyboard opens the ng-select without that.
+	await waitForSpinnerGone();
+	await getPage().locator(EstimatesPage.addTagsDropdownCss).first().focus().catch(() => {});
+	await getPage().keyboard.press('ArrowDown').catch(() => {});
 };
 
 export const selectTagFromDropdown = async (index) => {
+	const page = getPage();
+	const option = page.locator(EstimatesPage.tagsDropdownOption);
+	// Open the tags ng-select via keyboard (focus #addTags + ArrowDown) if the click didn't open it —
+	// stale backdrops swallow the click and ng-select opens on mousedown. Then pick the option.
+	for (let i = 0; i < 4; i++) {
+		if (await option.first().isVisible().catch(() => false)) break;
+		await waitForSpinnerGone();
+		await page.locator(EstimatesPage.addTagsDropdownCss).first().focus().catch(() => {});
+		await page.keyboard.press('ArrowDown').catch(() => {});
+		await page.waitForTimeout(800);
+	}
 	await clickButtonByIndex(EstimatesPage.tagsDropdownOption, index);
 };
 
