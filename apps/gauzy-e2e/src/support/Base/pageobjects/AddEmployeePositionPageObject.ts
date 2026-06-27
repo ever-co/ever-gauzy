@@ -6,7 +6,7 @@ export const AddEmployeePositionPage = {
 	tagsSelectOptionCss: '[type="checkbox"]',
 	saveNewPositionButtonCss: '.appearance-filled.size-medium',
 	updatePositionButtonCss: '.appearance-filled.size-medium',
-	cancelNewPositionButtonCss: 'button.delete.mr-3',
+	cancelNewPositionButtonCss: 'button[status="danger"]:not(nb-card-footer button)',
 	editEmployeePositionButtonCss: 'button.action.primary',
 	removeEmployeePositionButtonCss: 'button.action.appearance-filled',
 	confirmDeletePositionButtonCss: 'nb-card-footer > button[status="danger"]',
@@ -14,7 +14,7 @@ export const AddEmployeePositionPage = {
 	verifyTextCss: 'ga-notes-with-tags',
 	cardBodyCss: 'nb-card-body',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	cancelButtonCss: 'button.delete.mr-3',
+	cancelButtonCss: 'button[status="danger"]:not(nb-card-footer button)',
 	selectPositionToEditCss: 'ga-notes-with-tags',
 	selectPositionToDeleteCss: 'ga-notes-with-tags'
 };
