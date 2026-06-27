@@ -3,6 +3,26 @@ import { FindOptionsRelations, FindOptionsSelect } from "typeorm";
 import { isEmpty, isNotEmpty } from "@gauzy/utils";
 import { IShareRule } from "@gauzy/contracts";
 
+/**
+ * Field names that must never be exposed through a shared-entity link, regardless of the
+ * caller-supplied share rules. Prevents a share from naming sensitive columns such as password
+ * hashes or tokens (the filtered object is a plain literal, so class-transformer `@Exclude`
+ * protections on the entity class do not apply here).
+ */
+export const SHARED_ENTITY_FORBIDDEN_FIELDS: ReadonlySet<string> = new Set([
+    'hash',
+    'password',
+    'salt',
+    'refreshToken',
+    'code',
+    'codeExpireAt',
+    'emailToken',
+    'emailVerifiedAt',
+    'thirdPartyId',
+    'twoFactorAuthenticationSecret',
+    'twoFactorRecoveryCode'
+]);
+
 
 /**
  * Builds the select for the shared entity.
@@ -15,8 +35,9 @@ export function buildSharedEntitySelect(rules: IShareRule): FindOptionsSelect<an
         id: true // Always include the primary key for TypeORM to work correctly
     };
 
-    // Add the fields to the select
+    // Add the fields to the select (never expose forbidden/sensitive columns)
     for (const field of rules.fields) {
+        if (SHARED_ENTITY_FORBIDDEN_FIELDS.has(field)) continue;
         select[field] = true;
     }
 
@@ -62,6 +83,7 @@ export function filterSharedEntity(entity: any, rules: IShareRule): any {
     const result: any = {};
 
     for (const field of rules.fields) {
+        if (SHARED_ENTITY_FORBIDDEN_FIELDS.has(field)) continue;
         result[field] = entity[field];
     }
 

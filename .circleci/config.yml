@@ -103,6 +103,10 @@ jobs:
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
+      - restore_cache:
+          name: Restore node_modules
+          keys:
+            - v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
@@ -110,6 +114,11 @@ jobs:
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
+      - save_cache:
+          name: Save node_modules
+          key: v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
+          paths:
+            - node_modules
       - run:
           name: Install SonarScanner CLI
           command: |
@@ -153,6 +162,10 @@ jobs:
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
+      - restore_cache:
+          name: Restore node_modules
+          keys:
+            - v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
@@ -160,6 +173,11 @@ jobs:
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
+      - save_cache:
+          name: Save node_modules
+          key: v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
+          paths:
+            - node_modules
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-monorepo-{{ checksum "yarn.lock" }}
@@ -194,6 +212,10 @@ jobs:
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
+      - restore_cache:
+          name: Restore node_modules
+          keys:
+            - v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
@@ -201,6 +223,11 @@ jobs:
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
+      - save_cache:
+          name: Save node_modules
+          key: v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
+          paths:
+            - node_modules
       - run:
           name: Run Build
           command: nvm use v24 && yarn build:desktop
@@ -244,6 +271,10 @@ jobs:
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
+      - restore_cache:
+          name: Restore node_modules
+          keys:
+            - v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
@@ -251,6 +282,11 @@ jobs:
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
+      - save_cache:
+          name: Save node_modules
+          key: v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
+          paths:
+            - node_modules
       - run:
           name: Run Packages Build
           command: nvm use v24 && yarn build:package:all
@@ -298,6 +334,10 @@ jobs:
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
+      - restore_cache:
+          name: Restore node_modules
+          keys:
+            - v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
@@ -305,6 +345,11 @@ jobs:
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
+      - save_cache:
+          name: Save node_modules
+          key: v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
+          paths:
+            - node_modules
       - run:
           name: Run Packages Build
           command: nvm use v24 && yarn build:package:all
@@ -347,6 +392,10 @@ jobs:
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
+      - restore_cache:
+          name: Restore node_modules
+          keys:
+            - v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
@@ -354,6 +403,11 @@ jobs:
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
+      - save_cache:
+          name: Save node_modules
+          key: v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
+          paths:
+            - node_modules
       - run:
           name: Run API in background
           command: nvm use v24 && yarn start:api:ci
@@ -444,6 +498,13 @@ workflows:
       - build-desktop:
           requires:
             - build-monorepo-root
+          filters:
+            branches:
+              only:
+                - develop
+                - stage
+                - main
+                - master
 
   # ----------------------------------------------------------------------------
   # Test Workflow

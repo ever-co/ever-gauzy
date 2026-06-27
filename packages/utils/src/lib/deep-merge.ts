@@ -24,6 +24,11 @@ export function deepMerge(target: any, source: any, depth = 0): any {
 	// Merge objects recursively
 	if (isPlainObject(target) && isPlainObject(source)) {
 		for (const key in source) {
+			// Prevent prototype pollution (CWE-1321): never copy these keys, which would
+			// otherwise let a crafted source object write onto Object.prototype.
+			if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+				continue;
+			}
 			if (Object.prototype.hasOwnProperty.call(source, key)) {
 				// If the source value is an object, recursively merge
 				if (isPlainObject(source[key])) {
