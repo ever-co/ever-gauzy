@@ -24,19 +24,19 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -94,7 +94,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump server version
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -113,7 +113,43 @@ jobs:
         run: mkdir -p dist/packages
 
       - name: Build Server
-        run: 'yarn build:gauzy-server:linux:release:gh:x64'
+        run: 'yarn build:gauzy-server:prepare'
+        env:
+          USE_HARD_LINKS: false
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+          NX_NO_CLOUD: true
+          NX_DAEMON: false
+
+      - name: Build Server Web
+        run: 'yarn build:gauzy-server:web'
+        env:
+          USE_HARD_LINKS: false
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+          NX_NO_CLOUD: true
+          NX_DAEMON: false
+
+      - name: Build Server App
+        run: 'yarn build:gauzy-server:linux:release:gh:x64:isolated'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -141,19 +177,19 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -217,7 +253,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump version server app
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -236,7 +272,45 @@ jobs:
         run: mkdir -p dist/packages
 
       - name: Build Server
-        run: 'yarn build:gauzy-server:linux:release:gh:arm64'
+        run: 'yarn build:gauzy-server:prepare'
+        env:
+          USE_HARD_LINKS: false
+          USE_SYSTEM_FPM: true
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+          NX_NO_CLOUD: true
+          NX_DAEMON: false
+
+      - name: Build Server Web
+        run: 'yarn build:gauzy-server:web'
+        env:
+          USE_HARD_LINKS: false
+          USE_SYSTEM_FPM: true
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+          NX_NO_CLOUD: true
+          NX_DAEMON: false
+
+      - name: Build Server App
+        run: 'yarn build:gauzy-server:linux:release:gh:arm64:isolated'
         env:
           USE_HARD_LINKS: false
           USE_SYSTEM_FPM: true
@@ -266,19 +340,19 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -318,7 +392,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump Server version
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -342,7 +416,43 @@ jobs:
         run: mkdir -p dist/packages
 
       - name: Build Server
-        run: 'yarn build:gauzy-server:mac:release'
+        run: 'yarn build:gauzy-server:prepare'
+        env:
+          USE_HARD_LINKS: false
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+          NX_NO_CLOUD: true
+          NX_DAEMON: false
+
+      - name: Build Server Web
+        run: 'yarn build:gauzy-server:web'
+        env:
+          USE_HARD_LINKS: false
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+          NX_NO_CLOUD: true
+          NX_DAEMON: false
+
+      - name: Build Server App
+        run: 'yarn build:gauzy-server:mac:release:isolated'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -377,7 +487,7 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           clean: false
 
@@ -395,7 +505,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
         shell: powershell
@@ -450,7 +560,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump Server version
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -512,7 +622,47 @@ jobs:
 
       - name: Build Server
         shell: cmd
-        run: 'yarn build:gauzy-server:windows:release:gh:x64'
+        run: 'yarn build:gauzy-server:prepare'
+        env:
+          USE_HARD_LINKS: false
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
+          NX_DAEMON: false
+
+      - name: Build Server Web
+        shell: cmd
+        run: 'yarn build:gauzy-server:web'
+        env:
+          USE_HARD_LINKS: false
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
+          NX_DAEMON: false
+
+      - name: Build Server App
+        shell: cmd
+        run: 'yarn build:gauzy-server:windows:release:gh:x64:isolated'
         env:
           USE_HARD_LINKS: false
           ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
@@ -540,7 +690,7 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           clean: false
 
@@ -558,7 +708,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
           architecture: arm64
 
       - name: Get yarn cache directory path
@@ -566,7 +716,7 @@ jobs:
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -630,7 +780,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump version server app
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -688,7 +838,47 @@ jobs:
 
       - name: Build Server
         shell: cmd
-        run: yarn build:gauzy-server:windows:release:gh:arm64
+        run: yarn build:gauzy-server:prepare
+        env:
+          USE_HARD_LINKS: false
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
+          NX_DAEMON: false
+
+      - name: Build Server Web
+        shell: cmd
+        run: yarn build:gauzy-server:web
+        env:
+          USE_HARD_LINKS: false
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
+          NX_PLUGIN_NO_TIMEOUTS: true
+          NX_DAEMON: false
+
+      - name: Build Server App
+        shell: cmd
+        run: yarn build:gauzy-server:windows:release:gh:arm64:isolated
         env:
           USE_HARD_LINKS: false
           ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder

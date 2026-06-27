@@ -88,6 +88,9 @@
 			"verifyUpdateCodeSignature": false,
 			"requestedExecutionLevel": "requireAdministrator"
 		},
+		"snap": {
+			"base": "core22"
+		},
 		"linux": {
 			"icon": "linux",
 			"target": [
@@ -187,6 +190,7 @@
 		"@gauzy/plugin-camshot": "file:../../../dist/packages/plugins/camshot",
 		"@gauzy/plugin-soundshot": "file:../../../dist/packages/plugins/soundshot",
 		"@gauzy/plugin-integration-activepieces": "file:../../../dist/packages/plugins/integration-activepieces",
+		"@gauzy/plugin-integration-plane": "file:../../../dist/packages/plugins/integration-plane",
 		"@gauzy/scheduler": "file:../../../dist/packages/scheduler",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@gauzy/utils": "file:../../../dist/packages/utils",
@@ -210,15 +214,15 @@
 		"node-notifier": "^8.0.0",
 		"node-static": "^0.7.11",
 		"pdfmake": "^0.2.0",
-		"pg-query-stream": "^4.11.2",
-		"pg": "^8.17.2",
+		"pg-query-stream": "^4.15.0",
+		"pg": "^8.21.0",
 		"sound-play": "1.1.0",
 		"squirrelly": "^8.0.8",
 		"tslib": "^2.6.2",
 		"twing": "^5.0.2",
 		"underscore": "^1.13.8",
 		"undici": "^6.10.2",
-		"custom-electron-titlebar": "^4.2.8",
+		"custom-electron-titlebar": "^4.4.1",
 		"@as-integrations/express5": "^1.1.2",
 		"call-bind-apply-helpers": "^1.0.2",
 		"cheerio-select": "^2.1.0"
@@ -257,6 +261,7 @@
 		"@gauzy/plugin-camshot": "file:../../../dist/packages/plugins/camshot",
 		"@gauzy/plugin-soundshot": "file:../../../dist/packages/plugins/soundshot",
 		"@gauzy/plugin-integration-activepieces": "file:../../../dist/packages/plugins/integration-activepieces",
+		"@gauzy/plugin-integration-plane": "file:../../../dist/packages/plugins/integration-plane",
 		"@gauzy/scheduler": "file:../../../dist/packages/scheduler",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@gauzy/utils": "file:../../../dist/packages/utils",

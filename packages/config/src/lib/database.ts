@@ -6,8 +6,6 @@ import { BetterSqliteDriver, Options as MikroOrmBetterSqliteOptions } from '@mik
 import { PostgreSqlDriver, Options as MikroOrmPostgreSqlOptions } from '@mikro-orm/postgresql';
 import { Options as MikroOrmMySqlOptions, MySqlDriver } from '@mikro-orm/mysql';
 import { DataSourceOptions } from 'typeorm';
-import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
-import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
 import { KnexModuleOptions } from 'nest-knexjs';
 import * as path from 'path';
 import * as chalk from 'chalk';
@@ -116,8 +114,10 @@ switch (dbType) {
 		mikroOrmConnectionConfig = mikroOrmMySqlOptions;
 
 		// TypeORM DB Config (MySQL)
-		const typeOrmMySqlOptions: MysqlConnectionOptions = {
+		const typeOrmMySqlOptions: DataSourceOptions = {
 			type: dbType,
+			// TypeORM 1.0 throws on null/undefined in where by default; restore 0.3 'ignore' behavior.
+			invalidWhereValuesBehavior: { null: 'ignore', undefined: 'ignore' },
 			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
 			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 3306,
@@ -125,7 +125,6 @@ switch (dbType) {
 			username: process.env.DB_USER || 'root',
 			password: process.env.DB_PASS || 'root',
 			// forcing typeorm to use (mysql2) if both (mysql/mysql2) packages found, it prioritize to load (mysql)
-			connectorPackage: 'mysql2',
 			logging: getLoggingOptions(process.env.DB_LOGGING), // by default set to error only
 			logger: 'advanced-console',
 			// log queries that take more than 10 sec as warnings
@@ -212,8 +211,10 @@ switch (dbType) {
 		mikroOrmConnectionConfig = mikroOrmPostgresOptions;
 
 		// TypeORM DB Config (PostgreSQL)
-		const typeOrmPostgresOptions: PostgresConnectionOptions = {
+		const typeOrmPostgresOptions: DataSourceOptions = {
 			type: dbType,
+			// TypeORM 1.0 throws on null/undefined in where by default; restore 0.3 'ignore' behavior.
+			invalidWhereValuesBehavior: { null: 'ignore', undefined: 'ignore' },
 			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
 			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 5432,
@@ -310,7 +311,9 @@ switch (dbType) {
 
 		// TypeORM DB Config (Better-SQLite3)
 		const typeOrmBetterSqliteConfig: DataSourceOptions = {
-			type: dbType,
+			type: DatabaseTypeEnum.betterSqlite3,
+			// TypeORM 1.0 throws on null/undefined in where by default; restore 0.3 'ignore' behavior.
+			invalidWhereValuesBehavior: { null: 'ignore', undefined: 'ignore' },
 			database: sqlitePath,
 			logging: 'all',
 			logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log

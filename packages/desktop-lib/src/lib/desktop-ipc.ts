@@ -4,7 +4,8 @@ import {
 	TimerActionTypeEnum,
 	TimerSyncStateEnum,
 	ILogRequest,
-	ILogRequestPage
+	ILogRequestPage,
+    IOSInfo
 } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
@@ -51,7 +52,8 @@ import { RemoteTrackingSleep } from './strategies';
 import { TranslateService } from './translation';
 import { ActivityWindow } from '@gauzy/desktop-activity';
 import { DesktopPermissionHandler } from './utilities/desktop-permission-handler';
-import { runTccutil, getAppId } from './utilities/util';
+import { runTccutil, getAppId, getOSInfo } from './utilities/util';
+import { exportAuditLogs } from './utilities/export-log';
 import { AuditLogHandler } from './audit';
 
 // Lazily initialized — construction is deferred until after app.ready to avoid
@@ -145,8 +147,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		}
 	});
 
-	ipcMain.handle('GET_PLATFORM', () => {
-		return process.platform;
+	ipcMain.handle('GET_PLATFORM', (): IOSInfo => {
+		return getOSInfo();
 	});
 
 	ipcMain.on('return_time_sheet', async (event, arg) => {
@@ -341,6 +343,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.on('auth_failed', (event, arg) => {
+
 		event.sender.send('show_toast_message', {
 			type: 'error',
 			message: arg.message
@@ -636,15 +639,35 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.handle('UPDATE_SCREENSHOT_SYNC_STATUS', async (_, arg: { id: number; remove: boolean; failedReason: string; synced: boolean; retries: number }) => {
-		await getScreenshotService().update(new Screenshot({
-			id: arg.id,
-			synced: arg.synced,
-			lastAttemptAt: new Date(),
-			message: arg.failedReason,
-			retries: arg.remove ? 0 : 1,
-			...(arg.remove ? { imagePath: '' } : {})
-		}));
-	})
+		try {
+			if (arg.remove) {
+				await getScreenshotService().remove({ id: arg.id });
+			} else {
+				await getScreenshotService().update(new Screenshot({
+					id: arg.id,
+					synced: arg.synced,
+					lastAttemptAt: new Date(),
+					message: arg.failedReason,
+					retries: 1
+				}));
+			}
+		} catch (error) {
+			console.error('Failed to update screenshot sync status', error);
+		}
+
+	});
+
+	ipcMain.handle('EXPORT_AUDIT_LOGS', async() => {
+		try {
+			const result = await exportAuditLogs();
+			return result;
+		} catch (error) {
+			console.error(`Failed export logs to file, ${error.message}`);
+			return {
+				success: false
+			}
+		}
+	});
 
 	pluginListeners();
 }
@@ -820,7 +843,7 @@ export function ipcTimer(
 				log.info(`StartInactivityDetection: ${moment().format()}`);
 				powerManagerDetectInactivity.startInactivityDetection();
 			}
-
+			timeTrackerWindow.webContents.send('TIMER_SESSION_UPDATED');
 			return timerResponse;
 		} catch (error) {
 			log.error('Error on start timer', error);
@@ -1066,6 +1089,7 @@ export function ipcTimer(
 			});
 
 			cleanupPowerManagers();
+			timeTrackerWindow.webContents.send('TIMER_SESSION_UPDATED');
 
 			return timerResponse;
 		} catch (error) {
@@ -1244,11 +1268,13 @@ export function ipcTimer(
 					state: TimerSyncStateEnum;
 					duration: number;
 					timerId: number;
+					timelogId?: string;
 				};
 			}
 		) => {
 			try {
 				await getTimerHandler().updateTimerSyncState(arg.actionType, arg.data);
+				timeTrackerWindow.webContents.send('TIMER_SESSION_UPDATED');
 			} catch (error) {
 				console.error(`ERROR_UPDATE_SYNC_STATE: ${error}`);
 			}
@@ -1511,6 +1537,28 @@ export function ipcTimer(
 		);
 		desktopPermissionHandler.showDialogPermissionConfirm();
 	});
+
+	ipcMain.handle('GET_TIMER_SESSIONS', async ( _, args: { start: Date | string; end: Date | string }) => {
+		try {
+			const range = {
+				start: new Date(args.start),
+				end: new Date(args.end),
+			};
+			const timerSessions = await getTimerService().getListByDate(range);
+			return timerSessions;
+		} catch (error) {
+			log.error('Error on get timer sessions', error);
+		}
+	});
+
+	ipcMain.handle('GET_TIMER_SESSION', async ( _, args: { timerSessionId: number }) => {
+		try {
+			const timerSession = await getTimerService().findById({ id: args.timerSessionId });
+			return timerSession;
+		} catch (error) {
+			return null;
+		}
+	})
 }
 
 export function removeMainListener() {
@@ -1580,7 +1628,8 @@ export function removeAllHandlers() {
 		'GET_AUDIT_LOGS',
 		'GET_HARDWARE_ACCELERATION_STATE',
 		'SET_HARDWARE_ACCELERATION',
-		'UPDATE_SCREENSHOT_SYNC_STATUS'
+		'UPDATE_SCREENSHOT_SYNC_STATUS',
+		'EXPORT_AUDIT_LOGS'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
@@ -1597,7 +1646,9 @@ export function removeTimerHandlers() {
 		'CURRENT_TIMER',
 		'LAST_SYNCED_INTERVAL',
 		'UPDATE_SELECTOR',
-		'UPDATE_SYNC_STATE'
+		'UPDATE_SYNC_STATE',
+		'GET_TIMER_SESSIONS',
+		'GET_TIMER_SESSION'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

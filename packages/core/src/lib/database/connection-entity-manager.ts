@@ -21,7 +21,7 @@ export class ConnectionEntityManager {
 	 * @returns The raw connection from the EntityManager.
 	 */
 	get rawConnection(): DataSource {
-		return this.entityManager.connection;
+		return this.entityManager.dataSource;
 	}
 
 	/**

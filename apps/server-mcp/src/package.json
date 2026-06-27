@@ -83,6 +83,9 @@
 			"verifyUpdateCodeSignature": false,
 			"requestedExecutionLevel": "requireAdministrator"
 		},
+		"snap": {
+			"base": "core22"
+		},
 		"linux": {
 			"icon": "linux",
 			"target": [
@@ -128,7 +131,7 @@
 		"@gauzy/common": "file:../../../dist/packages/common",
 		"@gauzy/constants": "file:../../../dist/packages/constants",
 		"@modelcontextprotocol/sdk": "^1.13.1",
-		"axios": "^1.9.0",
+		"axios": "^1.18.0",
 		"dotenv": "^17.2.4",
 		"zod": "^4.3.5",
 		"@sentry/electron": "7.7.1",
@@ -139,7 +142,7 @@
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
 		"electron-util": "^0.18.1",
-		"custom-electron-titlebar": "^4.2.8"
+		"custom-electron-titlebar": "^4.4.1"
 	},
 	"resolutions": {
 		"@gauzy/mcp-server": "file:../../../dist/packages/mcp-server",

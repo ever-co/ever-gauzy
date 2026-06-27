@@ -6,9 +6,9 @@
 	"types": "./src/index.d.ts",
 	"dependencies": {
 		"@nestjs/bullmq": "^11.0.4",
-		"@nestjs/common": "^11.1.14",
-		"@nestjs/core": "^11.1.14",
-		"@nestjs/schedule": "^6.1.1",
+		"@nestjs/common": "^11.1.26",
+		"@nestjs/core": "^11.1.26",
+		"@nestjs/schedule": "^6.1.3",
 		"bullmq": "^5.70.1",
 		"cron": "^4.3.3",
 		"tslib": "^2.3.0"

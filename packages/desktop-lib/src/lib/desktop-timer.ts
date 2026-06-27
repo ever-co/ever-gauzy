@@ -856,6 +856,7 @@ export default class TimerHandler {
 			state: TimerSyncStateEnum;
 			duration: number;
 			timerId: number;
+			timelogId?: string;
 		}
 	) {
 		const lastTimer = await this._timerService.findById({ id: data.timerId });
@@ -875,7 +876,8 @@ export default class TimerHandler {
 			new Timer({
 				...lastTimer,
 				...(type === 'startTimer' ? { startSyncState: data.state } : { stopSyncState: data.state }),
-				...(data.duration ? { syncDuration: data.duration } : {})
+				...(data.duration ? { syncDuration: data.duration } : {}),
+				...(typeof data.timelogId !== 'undefined' ? { timelogId: data.timelogId } : {})
 			})
 		);
 		await this._auditLogHandler.timerAuditInfo(

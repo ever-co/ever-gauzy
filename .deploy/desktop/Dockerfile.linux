@@ -13,6 +13,11 @@ COPY --chown=node:node package.json yarn.lock ./
 
 USER node:node
 
+# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them.
+# Without this, patch-package prints "No patch files found" and the typeorm v1 compat patch
+# (needed to compile @gauzy/core, which the embedded API uses) is never applied.
+COPY --chown=node:node patches ./patches
+
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
 RUN yarn postinstall.manual
 

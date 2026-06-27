@@ -586,7 +586,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							actionType: TimerActionTypeEnum.START_TIMER,
 							data: {
 								timerId: lastTimer.id,
-								state: TimerSyncStateEnum.SYNCED
+								state: timelog?.id ? TimerSyncStateEnum.SYNCED : TimerSyncStateEnum.FAILED,
 							}
 						});
 					} catch (error) {
@@ -650,7 +650,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					} catch (error) {
 						// Handle any error during the process
 						lastTimer.isStoppedOffline = true;
-						await this._auditLogService.timerAuditLogError(`Error stop timer to API with ID: ${lastTimer.id}`);
+						await this._auditLogService.timerAuditLogError(`Error stop timer to API with ID: ${lastTimer.id}, ${error.message}`);
 						await this.electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
 							actionType: TimerActionTypeEnum.STOP_TIMER,
 							data: {
@@ -988,18 +988,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return (a && !b) || (!a && b);
 	}
 
-	async prepareWindow() {
+	prepareWindow() {
 		/* initiate screenshot to prevent window sizing */
-		try {
-			const thumbSize = {
-				width: 320,
-				height: 240
-			};
-			await this.electronService.desktopCapturer.getSources({ types: ['screen'], thumbnailSize: thumbSize });
-		} catch (error) {
-			console.error('Error preparing window:', error);
-		}
-
+		setTimeout(async () => {
+			try {
+				const thumbSize = {
+					width: 320,
+					height: 240
+				};
+				await this.electronService.desktopCapturer.getSources({ types: ['screen'], thumbnailSize: thumbSize });
+			} catch (error) {
+				console.error('Error preparing window:', error);
+			}
+		}, 500);
 	}
 
 	ngAfterViewInit(): void {
@@ -1693,7 +1694,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this._auditLogService.timerAuditLogInfo(`User attempted to ${val ? 'start' : 'stop'} the timer${onClick ? ' by clicking the button' : ''}${passed ? ' with pre-granted permissions' : ''}.`);
 		try {
 			const platform = await this.electronService.ipcRenderer.invoke('GET_PLATFORM');
-			if (val && onClick && !passed && platform === 'darwin') {
+			if (val && onClick && !passed && platform?.os === 'darwin') {
 				const allow = await this.checkPermission();
 				if (!allow) {
 					return;
@@ -2807,6 +2808,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			route: ['/', 'time-tracker', 'tasks'],
 			activeLinkOptions: { exact: false },
 			disabled: this._isOffline
+		},
+		{
+			title: this._translateService.instant('TIMER_TRACKER.MENU.SESSIONS'),
+			route: ['/', 'time-tracker', 'sessions-list'],
+			activeLinkOptions: { exact: false },
 		},
 		{
 			title: this._translateService.instant('TIMER_TRACKER.MENU.DAILY_RECAP'),

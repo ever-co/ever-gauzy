@@ -69,6 +69,11 @@ defaults: &defaults
     NODE_OPTIONS: --max-old-space-size=12288
     # Disable Angular CLI analytics
     NG_CLI_ANALYTICS: false
+    # Run Nx locally without Nx Cloud (the Nx Cloud org is disabled; the rest of
+    # the repo — GitHub workflows + Dockerfiles — already sets NX_NO_CLOUD=true).
+    # Without this, `nx run-many` hard-fails with "Nx Cloud: Workspace is unable
+    # to be authorized. Exiting run."
+    NX_NO_CLOUD: true
 
 # ==============================================================================
 # Jobs
@@ -98,13 +103,22 @@ jobs:
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
+      - restore_cache:
+          name: Restore node_modules
+          keys:
+            - v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
+      - save_cache:
+          name: Save node_modules
+          key: v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
+          paths:
+            - node_modules
       - run:
           name: Install SonarScanner CLI
           command: |
@@ -119,7 +133,7 @@ jobs:
             ./sonar-scanner/bin/sonar-scanner \
               -Dsonar.host.url=${SONAR_SERVER:-https://sonarcloud.io} \
               -Dsonar.token=${SONAR_TOKEN}
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-sonarqube-{{ checksum "yarn.lock" }}
@@ -148,13 +162,22 @@ jobs:
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
+      - restore_cache:
+          name: Restore node_modules
+          keys:
+            - v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
+      - save_cache:
+          name: Save node_modules
+          key: v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
+          paths:
+            - node_modules
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-monorepo-{{ checksum "yarn.lock" }}
@@ -180,25 +203,45 @@ jobs:
           keys:
             - yarn-packages-desktop-{{ checksum "yarn.lock" }}
             - yarn-packages-desktop-
+      - restore_cache:
+          name: Restore Nx Cache
+          keys:
+            - nx-cache-{{ arch }}-{{ .Branch }}-
+            - nx-cache-{{ arch }}-develop-
+            - nx-cache-{{ arch }}-
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
+      - restore_cache:
+          name: Restore node_modules
+          keys:
+            - v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
+      - save_cache:
+          name: Save node_modules
+          key: v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
+          paths:
+            - node_modules
       - run:
           name: Run Build
           command: nvm use v24 && yarn build:desktop
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-desktop-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
+      - save_cache:
+          name: Save Nx Cache
+          key: nx-cache-{{ arch }}-{{ .Branch }}-{{ .Revision }}-{{ epoch }}
+          paths:
+            - .nx/cache
 
   # ----------------------------------------------------------------------------
   # Build API Application
@@ -219,29 +262,49 @@ jobs:
           keys:
             - yarn-packages-api-{{ checksum "yarn.lock" }}
             - yarn-packages-api-
+      - restore_cache:
+          name: Restore Nx Cache
+          keys:
+            - nx-cache-{{ arch }}-{{ .Branch }}-
+            - nx-cache-{{ arch }}-develop-
+            - nx-cache-{{ arch }}-
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
+      - restore_cache:
+          name: Restore node_modules
+          keys:
+            - v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
+      - save_cache:
+          name: Save node_modules
+          key: v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
+          paths:
+            - node_modules
       - run:
           name: Run Packages Build
           command: nvm use v24 && yarn build:package:all
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Build
           command: nvm use v24 && yarn build:api:prod:ci
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-api-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
+      - save_cache:
+          name: Save Nx Cache
+          key: nx-cache-{{ arch }}-{{ .Branch }}-{{ .Revision }}-{{ epoch }}
+          paths:
+            - .nx/cache
 
   # ----------------------------------------------------------------------------
   # Build Web Application (Gauzy Frontend)
@@ -262,29 +325,49 @@ jobs:
           keys:
             - yarn-packages-web-{{ checksum "yarn.lock" }}
             - yarn-packages-web-
+      - restore_cache:
+          name: Restore Nx Cache
+          keys:
+            - nx-cache-{{ arch }}-{{ .Branch }}-
+            - nx-cache-{{ arch }}-develop-
+            - nx-cache-{{ arch }}-
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
+      - restore_cache:
+          name: Restore node_modules
+          keys:
+            - v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
+      - save_cache:
+          name: Save node_modules
+          key: v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
+          paths:
+            - node_modules
       - run:
           name: Run Packages Build
           command: nvm use v24 && yarn build:package:all
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Build
           command: nvm use v24 && yarn build:gauzy:prod:ci
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-web-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
+      - save_cache:
+          name: Save Nx Cache
+          key: nx-cache-{{ arch }}-{{ .Branch }}-{{ .Revision }}-{{ epoch }}
+          paths:
+            - .nx/cache
 
   # ----------------------------------------------------------------------------
   # End-to-End Tests
@@ -309,13 +392,22 @@ jobs:
       - run:
           name: Verify Node version
           command: nvm use v24 && node --version
+      - restore_cache:
+          name: Restore node_modules
+          keys:
+            - v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
       - run:
           name: Install Yarn Dependencies
           command: nvm use v24 && yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - run:
           name: Run Postinstall Manually
           command: nvm use v24 && yarn postinstall.manual
+      - save_cache:
+          name: Save node_modules
+          key: v1-node-modules-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "patches/typeorm+1.0.0.patch" }}
+          paths:
+            - node_modules
       - run:
           name: Run API in background
           command: nvm use v24 && yarn start:api:ci
@@ -375,7 +467,7 @@ jobs:
           command: |
             nvm use v24
             yarn install --ignore-scripts && yarn postinstall.manual
-          no_output_timeout: 60m
+          no_output_timeout: 90m
       - pulumi/update:
           stack: dev
       - save_cache:
@@ -406,6 +498,13 @@ workflows:
       - build-desktop:
           requires:
             - build-monorepo-root
+          filters:
+            branches:
+              only:
+                - develop
+                - stage
+                - main
+                - master
 
   # ----------------------------------------------------------------------------
   # Test Workflow

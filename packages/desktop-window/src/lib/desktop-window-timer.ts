@@ -44,12 +44,12 @@ export async function createTimeTrackerWindow(
 
 	// Attach the custom title bar if a preload script is provided
 	if (preloadPath) {
-		attachTitlebarToWindow(timeTrackerWindow);
+		const { width, height } = getScreenSize();
+		attachTitlebarToWindow(timeTrackerWindow, {
+			minWidth: width,
+			minHeight: height,
+		});
 	}
-
-	// Set the minimum size for the window
-	const { width, height } = getScreenSize();
-	timeTrackerWindow.setMinimumSize(width, height);
 
 	manager.overrideSystemContextMenu(timeTrackerWindow);
 
@@ -215,7 +215,7 @@ export function childWindowOpen(window: BrowserWindow, preloadPath?: string) {
 				action: 'allow',
 				overrideBrowserWindowOptions: {
 					title: 'Log History',
-					width: 460,
+					width: 480,
 					height: 800,
 					titleBarStyle: 'hidden',
 					titleBarOverlay: true,

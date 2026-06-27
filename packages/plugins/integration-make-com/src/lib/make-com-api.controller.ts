@@ -14,10 +14,11 @@ import {
 	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
-import { TenantPermissionGuard, PermissionGuard, Permissions } from '@gauzy/core';
+import { TenantPermissionGuard, PermissionGuard, Permissions, UseValidationPipe } from '@gauzy/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { MakeComApiService } from './make-com-api.service';
-import { IMakeComPaginationParams, IMakeComScenarioScheduling, MAKE_COM_ZONES, MakeComZone } from './interfaces/make-com-api.model';
+import { IMakeComPaginationParams, IMakeComScenarioScheduling, MAKE_COM_ZONES } from './interfaces/make-com-api.model';
+import { SetZoneDTO } from './dto';
 
 @ApiTags('Make.com API')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -68,7 +69,8 @@ export class MakeComApiController {
 
 	@ApiOperation({ summary: 'Set the Make.com zone for this tenant' })
 	@Post('/zone')
-	async setZone(@Body() body: { zone: MakeComZone; organizationId?: string }) {
+	@UseValidationPipe({ whitelist: true })
+	async setZone(@Body() body: SetZoneDTO) {
 		await this.makeComApiService.setZone(body.zone, body.organizationId);
 		return { success: true, zone: body.zone };
 	}

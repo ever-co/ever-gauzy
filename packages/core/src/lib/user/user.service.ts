@@ -402,10 +402,17 @@ export class UserService extends TenantAwareCrudService<User> {
 				}
 			}
 
-			// Restrict users from updating their own role
-
-			if (currentUserId === id) {
-				if (entity.role && entity.role.id !== currentRoleId) {
+			// Restrict users from updating their own role.
+			// Check BOTH the nested `role` object and the flat `roleId` field INDEPENDENTLY, otherwise a
+			// user could escalate their own privileges (e.g. to SUPER_ADMIN). `role?.id ?? roleId` is not
+			// enough: a crafted body could send an empty `role: { id: '' }` (non-nullish) to mask a
+			// privileged `roleId` and slip through. Reject if any provided role identifier differs from the
+			// caller's current role.
+			// Compare as strings: `id` is typed `ID | number`, so a numeric-equivalent value must not
+			// slip past the self-update check on a strict `===`.
+			if (String(currentUserId) === String(id)) {
+				const requestedRoleIds = [entity.role?.id, entity.roleId].filter((roleId) => isNotEmpty(roleId));
+				if (requestedRoleIds.some((roleId) => String(roleId) !== String(currentRoleId))) {
 					throw new ForbiddenException();
 				}
 			}
@@ -438,13 +445,10 @@ export class UserService extends TenantAwareCrudService<User> {
 				return items.map((entity) => this.serialize(entity)) as User[];
 			}
 			case MultiORMEnum.TypeORM:
+				// typeorm-v1: the legacy `join` find-option was removed. The nested `where` on the
+				// `role` relation already produces the join needed to filter by `role.name`, so the
+				// explicit `leftJoin` is redundant.
 				return await this.typeOrmRepository.find({
-					join: {
-						alias: 'user',
-						leftJoin: {
-							role: 'user.role'
-						}
-					},
 					where: {
 						tenantId,
 						role: {
@@ -643,12 +647,9 @@ export class UserService extends TenantAwareCrudService<User> {
 				}
 				case MultiORMEnum.TypeORM: {
 					const query = this.typeOrmRepository.createQueryBuilder('user');
-					query.setFindOptions({
-						join: {
-							alias: 'user',
-							leftJoin: { role: 'user.role' }
-						}
-					});
+					// typeorm-v1: the legacy `join` find-option was removed. Use an explicit query-builder
+					// left join so the raw `"role"."name" = :role` filter below can resolve the alias.
+					query.leftJoin('user.role', 'role');
 					query.where((qb: SelectQueryBuilder<User>) => {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {

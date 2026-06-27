@@ -1691,7 +1691,9 @@ export class AuthService extends SocialAuthService {
 				case MultiORMEnum.TypeORM: {
 					const users = await this.typeOrmUserRepository.find({
 						where: { email },
-						select: ['id']
+						select: {
+                            id: true
+                        }
 					});
 					for (const user of users) {
 						await this.typeOrmUserRepository.update(user.id, { code: magicCode, codeExpireAt });
@@ -2248,7 +2250,8 @@ export class AuthService extends SocialAuthService {
 					break;
 				}
 				case MultiORMEnum.TypeORM: {
-					user = await this.typeOrmUserRepository.findOne({ where, relations });
+					// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
+                    user = await this.typeOrmUserRepository.findOne({ where, relations });
 					break;
 				}
 				default:
@@ -2274,7 +2277,8 @@ export class AuthService extends SocialAuthService {
 					break;
 				}
 				case MultiORMEnum.TypeORM: {
-					employee = await this.typeOrmEmployeeRepository.findOne({ where: employeeWhere, relations: employeeRelations });
+					// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
+                    employee = await this.typeOrmEmployeeRepository.findOne({ where: employeeWhere, relations: employeeRelations });
 					break;
 				}
 				default:
@@ -2385,7 +2389,8 @@ export class AuthService extends SocialAuthService {
 					break;
 				}
 				case MultiORMEnum.TypeORM: {
-					user = await this.typeOrmUserRepository.findOne({ where, relations });
+					// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
+                    user = await this.typeOrmUserRepository.findOne({ where, relations });
 					break;
 				}
 				default:

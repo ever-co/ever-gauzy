@@ -6,6 +6,7 @@ import { MakeComService } from './make-com.service';
 import { IMakeComIntegrationSettings } from './interfaces/make-com.model';
 import { UpdateMakeComSettingsDTO } from './dto';
 import { MakeComOAuthService } from './make-com-oauth.service';
+import { assertSafeMakeWebhookUrl } from './webhook-url.validator';
 
 @ApiTags('Make.com Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -56,6 +57,12 @@ export class MakeComController {
 		// Verify tenant context exists
 		if (!RequestContext.currentTenantId()) {
 			throw new NotFoundException('Tenant ID not found in request context');
+		}
+
+		// SSRF egress guard: reject webhook URLs that target loopback/private/link-local hosts,
+		// non-HTTPS schemes or the cloud-metadata endpoint (GHSA-534m-c6mh-mp98).
+		if (settings.webhookUrl) {
+			assertSafeMakeWebhookUrl(settings.webhookUrl);
 		}
 
 		// Update webhook settings

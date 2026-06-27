@@ -177,4 +177,17 @@ export class TimerService implements ITimerService<TimerTO> {
 			return [];
 		}
 	}
+
+	public async getListByDate(date: { start: Date; end: Date }): Promise<TimerTO[]> {
+		try {
+			const user = await this._userService.retrieve();
+			if (user && user.employeeId) {
+				return await this._timerDAO.findByDate(user.employeeId, date);
+			}
+			return [];
+		} catch (error) {
+			console.error('Failed to get timer list by date', error);
+			return [];
+		}
+	}
 }

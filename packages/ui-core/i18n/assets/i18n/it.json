@@ -4374,6 +4374,7 @@
 		"ALERT_DESKTOP_DOWNLOAD": "Per una registrazione del tempo e delle attività più flessibile, ti preghiamo di <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">scaricare</a> e utilizzare l'applicazione Gauzy Timer per Desktop",
 		"STATUS": "Il tracker di tempo è già in funzione nel {{ source }}",
 		"VERSION": "Versione v{{ version }}",
+		"OS": "OS: {{ os }} {{ systemVersion }} ({{ arch }})",
 		"ARCHITECTURE": "Architettura: {{ arch }}",
 		"WAIT_FOR": "In attesa che {{ name }} inizi..",
 		"SETUP": {
@@ -4600,6 +4601,8 @@
 		"DUE": "Due",
 		"AW_CONNECTED": "Connesso ad ActivityWatch",
 		"AW_DISCONNECTED": "ActivityWatch è disconnesso",
+		"SESSION_LIST": "Elenco sessioni",
+		"SESSION": "sessione",
 		"TOASTR": {
 			"REMOVE_SCREENSHOT": "Rimozione dello screenshot e delle attività precedenti effettuata con successo",
 			"CANT_RUN_TIMER": "Non puoi avviare il timer al momento",
@@ -4645,7 +4648,8 @@
 			"WEEKLY_RECAP": "Riepilogo Settimanale",
 			"MONTHLY_RECAP": "Riepilogo Mensile",
 			"INSTALL_PLUGIN": "Installa plugin",
-			"OPEN_LOG_HISTORY": "Storico dei log"
+			"OPEN_LOG_HISTORY": "Storico dei log",
+			"SESSIONS": "Sessioni"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Tracciamento del tempo orario",

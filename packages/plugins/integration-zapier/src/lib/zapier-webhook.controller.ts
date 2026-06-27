@@ -12,6 +12,7 @@ import {
 	InternalServerErrorException
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { getUnsafeOutboundUrlReason } from '@gauzy/utils';
 import { IZapierCreateWebhookInput } from './zapier.types';
 import { ZapierWebhookService } from './zapier-webhook.service';
 import { ZapierService } from './zapier.service';
@@ -122,52 +123,13 @@ export class ZapierWebhookController {
 	 * Validate webhook URL for security
 	 */
 	private validateWebhookUrl(url: string): void {
-		try {
-			const parsedUrl = new URL(url);
-
-			// Ensure HTTPS for webhook URLs
-			if (parsedUrl.protocol !== 'https:') {
-				throw new BadRequestException('Webhook URL must use HTTPS');
-			}
-
-			// Prevent localhost and private IP ranges in production
-			if (process.env['NODE_ENV'] === 'production') {
-				const hostname = parsedUrl.hostname.toLowerCase();
-
-				// Block localhost
-				if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
-					throw new BadRequestException('Localhost URLs are not allowed for webhooks');
-				}
-
-				// Block private IP ranges
-				const PRIVATE_IP_RANGES = [
-					/^10\./,
-					/^172\.(1[6-9]|2[0-9]|3[0-1])\./,
-					/^192\.168\./,
-					/^169\.254\./ // Link-local
-				];
-				const privateIpRanges = PRIVATE_IP_RANGES;
-
-				if (privateIpRanges.some(range => range.test(hostname))) {
-					throw new BadRequestException('Private IP addresses are not allowed for webhooks');
-				}
-			}
-
-			// Validate URL length
-			if (url.length > 2048) {
-				throw new BadRequestException('Webhook URL is too long (max 2048 characters)');
-			}
-
-		} catch (error) {
-			if (error instanceof BadRequestException) {
-				throw error;
-			}
-			if (error instanceof TypeError) {
-				// TypeError is thrown by the URL constructor for invalid URLs
-				throw new BadRequestException('Invalid webhook URL format');
-			}
-			// For other errors (e.g., network issues, unexpected errors), rethrow or wrap as InternalServerError
-			throw new InternalServerErrorException('Unexpected error during webhook URL validation');
+		// SSRF egress guard — applied UNCONDITIONALLY (previously the private-IP/loopback checks ran
+		// only when NODE_ENV === 'production', leaving dev/staging unprotected). Rejects non-HTTPS
+		// schemes, embedded credentials, and loopback/private/link-local hosts including the cloud
+		// metadata IP 169.254.169.254 (GHSA-534m-c6mh-mp98 sibling).
+		const reason = getUnsafeOutboundUrlReason(url);
+		if (reason) {
+			throw new BadRequestException(`Invalid webhook URL: ${reason}`);
 		}
 	}
 

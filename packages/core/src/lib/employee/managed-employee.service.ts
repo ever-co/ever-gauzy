@@ -272,7 +272,9 @@ export class ManagedEmployeeService {
 				isArchived: false,
 				tenantId
 			},
-			select: ['organizationTeamId']
+			select: {
+                organizationTeamId: true
+            }
 		});
 
 		if (!isNotEmpty(managedTeams)) {
@@ -317,7 +319,9 @@ export class ManagedEmployeeService {
 					isArchived: false,
 					tenantId
 				},
-				select: ['employeeId']
+				select: {
+                    employeeId: true
+                }
 			});
 
 			teamMembers.forEach((member) => employeeIds.add(member.employeeId));
@@ -332,7 +336,9 @@ export class ManagedEmployeeService {
 					isArchived: false,
 					tenantId
 				},
-				select: ['employeeId']
+				select: {
+                    employeeId: true
+                }
 			});
 
 			projectMembers.forEach((member) => employeeIds.add(member.employeeId));
