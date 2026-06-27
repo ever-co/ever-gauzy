@@ -61,9 +61,8 @@ export class GithubInstallationComponent implements AfterViewInit, OnInit {
 	 * @param input - An object containing input parameters, including 'installation_id', 'setup_action', and 'state'.
 	 */
 	private async verifyGitHubAppAuthorization(input: IGithubAppInstallInput) {
-		if (!this.organization) {
-			return;
-		}
+		// Do NOT gate on a hydrated organization: the server binds the installation to the tenant/org
+		// recorded against the nonce, so a not-yet-hydrated store must not drop a valid GitHub callback.
 		const { installation_id, setup_action, state } = input;
 
 		// The installation is bound server-side to the tenant/organization recorded against the

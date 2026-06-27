@@ -30,10 +30,15 @@ export class GitHubController {
 	@HttpCode(HttpStatus.CREATED)
 	@UseValidationPipe()
 	async createInstallationState(@Body() input: GithubInstallStateDTO): Promise<{ state: string }> {
-		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+		// Require an authenticated tenant from the request context — do NOT trust a client-supplied
+		// tenantId for this security boundary (the minted nonce is later trusted to bind an install).
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new HttpException('Missing authenticated tenant context', HttpStatus.FORBIDDEN);
+		}
 		const organizationId = input.organizationId;
-		if (!tenantId || !organizationId) {
-			throw new HttpException('Invalid tenant or organization', HttpStatus.BAD_REQUEST);
+		if (!organizationId) {
+			throw new HttpException('Invalid organization', HttpStatus.BAD_REQUEST);
 		}
 		const state = await this._githubOAuthStateService.create({
 			tenantId,
@@ -67,9 +72,10 @@ export class GitHubController {
 					HttpStatus.BAD_REQUEST
 				);
 			}
-			// Defense in depth: the authenticated caller must be the tenant that initiated the flow.
+			// The authenticated caller MUST be the tenant that initiated the flow. Require a tenant
+			// context — do not silently skip this check when it is absent (security boundary).
 			const currentTenantId = RequestContext.currentTenantId();
-			if (currentTenantId && String(stateData.tenantId) !== String(currentTenantId)) {
+			if (!currentTenantId || String(stateData.tenantId) !== String(currentTenantId)) {
 				throw new HttpException(
 					'GitHub installation state does not belong to the current tenant.',
 					HttpStatus.FORBIDDEN

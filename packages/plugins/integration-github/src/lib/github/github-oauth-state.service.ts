@@ -38,6 +38,8 @@ export class GithubOAuthStateService {
 	private static readonly TTL_MS = 10 * 60 * 1000; // 10 minutes
 	/** Minted nonces are 32 random bytes rendered as lowercase hex (64 chars). */
 	private static readonly NONCE_PATTERN = /^[a-f0-9]{64}$/;
+	/** In-process guard for the non-Redis fallback so concurrent consumes can't both resolve a nonce. */
+	private static readonly inFlightConsume = new Set<string>();
 
 	constructor(
 		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
@@ -104,18 +106,26 @@ export class GithubOAuthStateService {
 			return null;
 		}
 		const cacheKey = this.key(nonce);
-		let value: string | null;
 		if (this.redisClient) {
 			// Atomic single-use: GETDEL guarantees exactly one caller resolves a given nonce, even
 			// across replicas, so a replay cannot reuse it (matches AuthService single-use OAuth codes).
-			value = await this.redisClient.getDel(cacheKey);
-		} else {
-			value = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+			return this.deserialize(await this.redisClient.getDel(cacheKey));
+		}
+		// Non-Redis fallback (single-node dev): the get+del is not atomic, so guard it with an
+		// in-process lock — a second concurrent consume of the same nonce returns null (single-use).
+		if (GithubOAuthStateService.inFlightConsume.has(cacheKey)) {
+			return null;
+		}
+		GithubOAuthStateService.inFlightConsume.add(cacheKey);
+		try {
+			const value = (await this.cacheManager.get<string>(cacheKey)) ?? null;
 			if (value) {
 				await this.cacheManager.del(cacheKey);
 			}
+			return this.deserialize(value);
+		} finally {
+			GithubOAuthStateService.inFlightConsume.delete(cacheKey);
 		}
-		return this.deserialize(value);
 	}
 
 	/** Safely parse a cached state value, returning `null` for anything malformed. */
