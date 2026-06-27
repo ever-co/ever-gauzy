@@ -17,6 +17,7 @@ import {
 	IMakeComUpdateScenarioParams,
 	IMakeComCreateHookParams,
 	IMakeComPaginationParams,
+	MAKE_COM_ZONES,
 	MakeComZone
 } from './interfaces/make-com-api.model';
 import { MakeComOAuthService } from './make-com-oauth.service';
@@ -131,6 +132,12 @@ export class MakeComApiService {
 			throw new BadRequestException(
 				'Make.com zone is not configured. Please set your zone (e.g., "us2", "eu1") first.'
 			);
+		}
+		// Defense-in-depth: never interpolate an unvalidated zone into the API hostname. Reject any
+		// stored value outside the known allowlist (e.g. legacy rows from before validation existed)
+		// to prevent host-injection SSRF (GHSA-vcwx-qh95-54g6).
+		if (!MAKE_COM_ZONES.includes(zone)) {
+			throw new BadRequestException(`Invalid Make.com zone "${zone}".`);
 		}
 		return getMakeApiBaseUrl(zone);
 	}

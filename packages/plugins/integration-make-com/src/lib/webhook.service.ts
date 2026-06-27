@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { RequestContext } from '@gauzy/core';
 import { ITimerWebhookEvent, TimerEventType, TimerEventDataType } from './interfaces/timer-webhook.interface';
 import { MakeComService } from './make-com.service';
+import { assertSafeMakeWebhookUrl } from './webhook-url.validator';
 
 @Injectable()
 export class WebhookService {
@@ -66,6 +67,16 @@ export class WebhookService {
 			}
 			if (!webhookUrl) {
 				this.logger.warn('Make.com webhook URL not configured for this tenant');
+				return;
+			}
+
+			// SSRF egress guard at request time: re-validate the stored URL before posting, so a
+			// malicious value stored before this guard existed (or via DNS changes) is not used as an
+			// outbound target (GHSA-534m-c6mh-mp98).
+			try {
+				assertSafeMakeWebhookUrl(webhookUrl);
+			} catch (error) {
+				this.logger.warn(`Skipping Make.com webhook emission for an unsafe URL: ${error?.message ?? error}`);
 				return;
 			}
 
