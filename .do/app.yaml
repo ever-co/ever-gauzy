@@ -37,6 +37,18 @@ services:
           - key: CLIENT_BASE_URL
             scope: RUN_TIME
             value: '$CLIENT_BASE_URL'
+          - key: PLANE_CLIENT_BASE_URL
+            scope: RUN_TIME
+            value: 'https://plane.gauzy.co'
+          - key: PLANE_CLIENT_ADMIN_URL
+            scope: RUN_TIME
+            value: 'https://plane-admin.gauzy.co'
+          - key: PLANE_CLIENT_SPACE_URL
+            scope: RUN_TIME
+            value: 'https://plane-space.gauzy.co'
+          - key: PLANE_SHARED_ORIGINS
+            scope: RUN_TIME
+            value: 'https://plane.gauzy.co,https://plane-space.gauzy.co,https://plane-admin.gauzy.co'
           - key: DB_TYPE
             scope: RUN_TIME
             value: '$DB_TYPE'
