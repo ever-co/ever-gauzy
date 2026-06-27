@@ -37,6 +37,7 @@ export * from './lib/password-generator';
 export * from './lib/password-hash';
 export * from './lib/slugify';
 export * from './lib/sleep';
+export * from './lib/ssrf-url';
 export * from './lib/trim-if-not-empty';
 export * from './lib/uc-first';
 export * from './lib/version';

@@ -8,6 +8,7 @@
 		"Authenticode",
 		"CGNAT",
 		"denylist",
+		"ESSRFBLOCKED",
 		"GHSA",
 		"hextet",
 		"IDOR",
