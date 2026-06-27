@@ -16,7 +16,6 @@ export const nonSecretSettingKeys = [
 	'autoSync',
 	'syncTag',
 	'sync_tag',
-	'webhookUrl',
 	'zone',
 	'region',
 	'setup_action',

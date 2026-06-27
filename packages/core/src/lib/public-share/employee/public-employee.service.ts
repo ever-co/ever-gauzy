@@ -43,6 +43,42 @@ const PUBLIC_EMPLOYEE_SELECT: FindOptionsSelect<Employee> = {
 	}
 };
 
+/**
+ * Applies the employee's own `show_*` visibility flags server-side: financial fields are removed from
+ * the response unless the employee has explicitly opted to display them. The `show_*` flags only
+ * control UI rendering, so without this an unauthenticated caller could still read raw values the
+ * employee chose to hide (GHSA-49ff-8859-537j).
+ *
+ * @param employee - The loaded (already field-projected) employee.
+ * @returns The same employee with hidden financial fields stripped.
+ */
+function applyEmployeeVisibility<T extends Partial<IEmployee>>(employee: T): T {
+	if (!employee) {
+		return employee;
+	}
+	const e = employee as Record<string, any>;
+	if (!e['show_billrate']) {
+		delete e['billRateValue'];
+		delete e['billRateCurrency'];
+	}
+	if (!e['show_payperiod']) {
+		delete e['payPeriod'];
+	}
+	if (!e['show_start_work_on']) {
+		delete e['startedWorkOn'];
+	}
+	if (!e['show_average_income']) {
+		delete e['averageIncome'];
+	}
+	if (!e['show_average_expenses']) {
+		delete e['averageExpenses'];
+	}
+	if (!e['show_average_bonus']) {
+		delete e['averageBonus'];
+	}
+	return employee;
+}
+
 @Injectable()
 export class PublicEmployeeService {
 	constructor(
@@ -69,7 +105,7 @@ export class PublicEmployeeService {
 				// Restrict the response to display-safe fields only (GHSA-49ff-8859-537j).
 				select: PUBLIC_EMPLOYEE_SELECT
 			});
-			return { items, total };
+			return { items: items.map(applyEmployeeVisibility), total };
 		} catch (error) {
 			throw new BadRequestException(error, `Error while getting public employees`);
 		}
@@ -85,12 +121,13 @@ export class PublicEmployeeService {
 	async findOneByConditions(where: FindOptionsWhere<Employee>, relations: string[]): Promise<IEmployee> {
 		try {
 			// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
-            return await this.typeOrmEmployeeRepository.findOneOrFail({
+            const employee = await this.typeOrmEmployeeRepository.findOneOrFail({
 				where,
 				relations,
 				// Restrict the response to display-safe fields only (GHSA-49ff-8859-537j).
 				select: PUBLIC_EMPLOYEE_SELECT
 			});
+			return applyEmployeeVisibility(employee);
 		} catch (error) {
 			throw new NotFoundException(`The requested record was not found`);
 		}

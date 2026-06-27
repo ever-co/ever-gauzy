@@ -40,6 +40,25 @@ const PUBLIC_ORGANIZATION_SELECT: FindOptionsSelect<Organization> = {
 
 /** Same allowlist as a flat field list for the MikroORM `fields` option. */
 const PUBLIC_ORGANIZATION_FIELDS: string[] = Object.keys(PUBLIC_ORGANIZATION_SELECT);
+
+/**
+ * Applies the organization's `show_*` visibility flags server-side. `minimumProjectSize` is removed
+ * from the response unless `show_minimum_project_size` is enabled, so it is never readable when the
+ * public profile intends to hide it (GHSA-49ff-8859-537j).
+ *
+ * @param organization - The loaded (already field-projected) organization.
+ * @returns The same organization with hidden fields stripped.
+ */
+function applyOrganizationVisibility<T extends Partial<IOrganization>>(organization: T): T {
+	if (!organization) {
+		return organization;
+	}
+	const o = organization as Record<string, any>;
+	if (!o['show_minimum_project_size']) {
+		delete o['minimumProjectSize'];
+	}
+	return organization;
+}
 import { TypeOrmOrganizationRepository } from '../../organization/repository/type-orm-organization.repository';
 import { MikroOrmOrganizationRepository } from '../../organization/repository/mikro-orm-organization.repository';
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
@@ -72,9 +91,10 @@ export class PublicOrganizationService {
 	 */
 	async findOneByProfileLink(where: FindOptionsWhere<Organization>, relations: string[]): Promise<IOrganization> {
 		try {
+			let organization: IOrganization;
 			switch (ormType) {
 				case MultiORMEnum.MikroORM:
-					return await this.mikroOrmOrganizationRepository.findOneOrFail(where as any, {
+					organization = await this.mikroOrmOrganizationRepository.findOneOrFail(where as any, {
 						populate: relations as any,
 						// Restrict the response to display-safe fields only (GHSA-49ff-8859-537j).
 						// Requested relations are included so they still load in full.
@@ -83,16 +103,20 @@ export class PublicOrganizationService {
 							...(Array.isArray(relations) ? relations : [])
 						] as any
 					});
+					break;
 				case MultiORMEnum.TypeORM:
 				default:
 					// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
-                    return await this.typeOrmOrganizationRepository.findOneOrFail({
+                    organization = await this.typeOrmOrganizationRepository.findOneOrFail({
 						where,
 						relations,
 						// Restrict the response to display-safe fields only (GHSA-49ff-8859-537j).
 						select: PUBLIC_ORGANIZATION_SELECT
 					});
+					break;
 			}
+			// Enforce the organization's own visibility flags server-side.
+			return applyOrganizationVisibility(organization);
 		} catch (error) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
