@@ -917,20 +917,18 @@ export class EmailService {
 		// Check if the email domain is disallowed
 		if (!match) {
 			try {
-				// Get the email sending service instance
-				const instance = await this.emailSendService.getInstance();
-
-				if (instance) {
-					// Send the email
-					const send = await instance.send(sendOptions);
-					// Update the body with the original message
-					body['message'] = send.originalMessage;
-				} else {
-					console.error('Error while getting email instance for password-less authentication');
-				}
+				// Get the email sending service instance (tenant-scoped with fallback to the default transporter)
+				const instance = await this.emailSendService.getEmailInstance({
+					tenantId: RequestContext.currentTenantId()
+				});
+				// Send the email
+				const send = await instance.send(sendOptions);
+				// Update the body with the original message
+				body['message'] = send.originalMessage;
 			} catch (error) {
-				// Handle errors during email sending
-				console.log('Error while sending password-less authentication code: %s', error);
+				console.error(error);
+			} finally {
+				await this.createEmailRecord(body);
 			}
 		}
 	}

@@ -7,6 +7,11 @@ import { PlaneSettingName } from './plane-setting.enum';
 import { ConfigurePlaneIntegrationDto } from './dto/configure-plane-integration.dto';
 import { UpdatePlaneSettingsDto } from './dto/update-plane-settings.dto';
 
+/** Global hosted Ever Gauzy PM UI URLs used when the integration runs in "shared" mode. */
+const SHARED_PLANE_WEB_URL = 'https://pm.gauzy.co';
+const SHARED_PLANE_ADMIN_URL = ''; // admin (god-mode) not offered in shared mode
+const SHARED_PLANE_SPACE_URL = 'https://pm-space.gauzy.co';
+
 @Injectable()
 export class PlaneIntegrationService {
 	private readonly logger = new Logger(PlaneIntegrationService.name);
@@ -61,11 +66,20 @@ export class PlaneIntegrationService {
 			tenantId
 		});
 
+		// Resolve mode (defaults to 'shared' when omitted) and the UI URLs to persist.
+		// In shared mode we store the global hosted PM URLs so the proxy's per-tenant
+		// CORS resolution keeps working; in custom mode we use the tenant-provided URLs.
+		const mode: 'shared' | 'custom' = dto.mode === 'custom' ? 'custom' : 'shared';
+		const webUrl = mode === 'custom' ? dto.planeWebUrl : SHARED_PLANE_WEB_URL;
+		const adminUrl = mode === 'custom' ? dto.planeAdminUrl || '' : SHARED_PLANE_ADMIN_URL;
+		const spaceUrl = mode === 'custom' ? dto.planeSpaceUrl || '' : SHARED_PLANE_SPACE_URL;
+
 		// Build the integration settings array
 		const settings: Partial<IIntegrationSetting>[] = [
-			{ settingsName: PlaneSettingName.PLANE_WEB_URL, settingsValue: dto.planeWebUrl },
-			{ settingsName: PlaneSettingName.PLANE_ADMIN_URL, settingsValue: dto.planeAdminUrl || '' },
-			{ settingsName: PlaneSettingName.PLANE_SPACE_URL, settingsValue: dto.planeSpaceUrl || '' },
+			{ settingsName: PlaneSettingName.PLANE_MODE, settingsValue: mode },
+			{ settingsName: PlaneSettingName.PLANE_WEB_URL, settingsValue: webUrl },
+			{ settingsName: PlaneSettingName.PLANE_ADMIN_URL, settingsValue: adminUrl },
+			{ settingsName: PlaneSettingName.PLANE_SPACE_URL, settingsValue: spaceUrl },
 			{ settingsName: PlaneSettingName.PLANE_API_KEY_VALUE, settingsValue: apiKeyResponse.apiKey },
 			{ settingsName: PlaneSettingName.PLANE_API_SECRET_VALUE, settingsValue: apiKeyResponse.apiSecret },
 			{ settingsName: PlaneSettingName.IS_ENABLED, settingsValue: 'true' }
@@ -108,6 +122,7 @@ export class PlaneIntegrationService {
 	 */
 	async getSettings(_organizationId?: string): Promise<{
 		integrationTenantId: ID;
+		mode: 'shared' | 'custom';
 		planeWebUrl: string;
 		planeAdminUrl: string;
 		planeSpaceUrl: string;
@@ -121,6 +136,7 @@ export class PlaneIntegrationService {
 
 		return {
 			integrationTenantId: integrationTenant.id!,
+			mode: settingsMap[PlaneSettingName.PLANE_MODE] === 'custom' ? 'custom' : 'shared',
 			planeWebUrl: settingsMap[PlaneSettingName.PLANE_WEB_URL] || '',
 			planeAdminUrl: settingsMap[PlaneSettingName.PLANE_ADMIN_URL] || '',
 			planeSpaceUrl: settingsMap[PlaneSettingName.PLANE_SPACE_URL] || '',

@@ -14,6 +14,9 @@ import { PlaneApiKeyDialogComponent } from '../api-key-dialog/api-key-dialog.com
 
 const URL_PATTERN = /^https?:\/\/.+/;
 
+/** Default global hosted Ever Gauzy PM web URL used for SSO in shared mode. */
+const SHARED_PLANE_WEB_URL = 'https://pm.gauzy.co';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-plane-settings',
@@ -83,6 +86,25 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 
 	goBack(): void {
 		this._location.back();
+	}
+
+	/**
+	 * Current integration mode ('shared' | 'custom'), defaulting to 'shared'.
+	 */
+	get mode(): 'shared' | 'custom' {
+		return this.settings()?.mode === 'custom' ? 'custom' : 'shared';
+	}
+
+	/**
+	 * Open the Plane web app with one-click SSO using the Gauzy access token.
+	 * Uses the configured web URL (or the global hosted PM URL for shared mode).
+	 */
+	openPlane(): void {
+		const token = this._store.token;
+		if (!token) return;
+
+		const url = this.settings()?.planeWebUrl?.trim() || SHARED_PLANE_WEB_URL;
+		window.open(`${url}/?sso=${token}`, '_blank');
 	}
 
 	/**

@@ -3,6 +3,9 @@
  * These are stored as `settingsName` in the `integration_setting` table.
  */
 export enum PlaneSettingName {
+	/** Integration mode: 'shared' (global hosted PM UIs) or 'custom' (tenant-provided URLs) */
+	PLANE_MODE = 'PLANE_MODE',
+
 	/** Main Plane web app URL */
 	PLANE_WEB_URL = 'PLANE_WEB_URL',
 
