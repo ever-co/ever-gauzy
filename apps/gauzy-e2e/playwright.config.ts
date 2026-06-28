@@ -22,12 +22,12 @@ export default defineConfig({
 	expect: { timeout: 24_000 },
 	/* Fail the build on test.only left in source. */
 	forbidOnly: !!process.env.CI,
-	/* Retries: 0 by design. This suite shares ONE stateful sqlite DB across all specs and runs serially,
-	 * so a Playwright retry re-runs a failed spec's data-creation and POLLUTES the shared DB, breaking
-	 * LATER specs that would otherwise pass — measured: retries=1 net-LOWERED the suite pass count
-	 * (53 -> ~44) vs retries=0. With no retry, a failure is real and reproducible (what we want while
-	 * driving to all-green). Revisit only once specs are per-spec data-isolated. */
-	retries: 0,
+	/* Retries: 0 while driving the migrated suite to all-green. retries=1 (the prior default) is roughly
+	 * NEUTRAL on pass count here (measured 52 vs 53) — a retry can re-run a failed spec's data-creation
+	 * and pollute the shared sqlite DB, offsetting the transient flakes it would otherwise absorb — but 0
+	 * gives a clean, reproducible signal while diagnosing. Reconsider restoring 1 once specs are
+	 * per-spec data-isolated. Override with E2E_RETRY=1 if a one-off retry is wanted locally. */
+	retries: process.env.E2E_RETRY ? 1 : 0,
 	/* Opt out of parallel within a file; shard across CI containers instead. */
 	workers: process.env.CI ? 1 : undefined,
 	reporter: process.env.CI
