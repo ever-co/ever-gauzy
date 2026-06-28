@@ -128,7 +128,9 @@ test.describe('Goals test', () => {
 			await getPage().reload();
 			await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 			await getPage().goto('/#/pages/goals');
-			await goalsPage.verifyElementIsDeleted();
+			// Scope the verify-deleted to OUR goal name: the shared seed can carry objectives from earlier
+			// specs/runs, so a blanket empty-grid check would be flaky.
+			await goalsPage.verifyElementIsDeleted(GoalsPageData.name);
 		});
 	});
 });

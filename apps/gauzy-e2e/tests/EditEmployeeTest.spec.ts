@@ -184,7 +184,11 @@ test.describe('Edit employee test', () => {
 			await editEmployeePage.saveBtnExists();
 			await editEmployeePage.saveBtnClick();
 			await editEmployeePage.waitMessageToHide();
-			await editEmployeePage.verifyEmployee(`${firstName} ${lastName}`);
+			// Verify the EDITED name, not the original: the Account step changed firstName/lastName to
+			// editFirstName/editLastName, the save persists them, and the profile header
+			// (span.employee-name binds selectedEmployee.user.name) re-renders with the new name after
+			// the employee reloads. Asserting the original name would mismatch the now-edited header.
+			await editEmployeePage.verifyEmployee(`${editFirstName} ${editLastName}`);
 		});
 	});
 });

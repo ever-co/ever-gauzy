@@ -64,7 +64,10 @@ test.describe('Contacts leads test', () => {
 
 		await test.step('Should be able to edit lead', async () => {
 			await contactsLeadsPage.tableRowVisible();
-			await contactsLeadsPage.selectTableRow(0);
+			// Select the lead BY NAME, not row 0: the invite step above created a SECOND lead with the
+			// same `fullName`, so the grid now has >1 row and row 0 is not deterministically ours. Scope
+			// to the unique faker name so the rename acts on the record this spec created.
+			await contactsLeadsPage.selectTableRowByName(fullName);
 			await contactsLeadsPage.editButtonVisible();
 			await contactsLeadsPage.clickEditButton();
 			await contactsLeadsPage.nameInputVisible();
@@ -109,7 +112,10 @@ test.describe('Contacts leads test', () => {
 		});
 
 		await test.step('Should be able to delete lead', async () => {
-			await contactsLeadsPage.selectTableRow(0);
+			// Delete the RENAMED lead BY NAME, not row 0: with the extra invite-created lead still in the
+			// grid, row 0 may be the other ("fullName") record, so a row-0 delete removes the wrong lead
+			// and leaves `deleteName` behind (the verify-deleted then fails seeing it still present).
+			await contactsLeadsPage.selectTableRowByName(deleteName);
 			await contactsLeadsPage.deleteButtonVisible();
 			await contactsLeadsPage.clickDeleteButton();
 			await contactsLeadsPage.confirmDeleteButtonVisible();

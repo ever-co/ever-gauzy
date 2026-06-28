@@ -8,6 +8,7 @@ import {
 	clickElementByText,
 	verifyText,
 	verifyElementNotExist,
+	verifyTextNotExisting,
 	waitUntil,
 	dispatchClick,
 	waitForSpinnerGone
@@ -21,18 +22,36 @@ export const addButtonVisible = async () => {
 };
 
 export const clickAddButton = async (index) => {
-	// The Goals page shows a full-card nb-spinner over the toolbar right after navigation and leaves a
-	// fading cdk-overlay backdrop after each mutation; a coordinate {force:true} click lands on that
-	// overlay instead of the button, so "Add new Objective" (index 0) never toggled its nbPopover and
-	// the create-menu list never rendered. Wait the spinner out, then dispatch the click straight to the
-	// element so the (click) handler fires regardless of any overlay on top.
+	// The Goals page shows a full-card nb-spinner over the toolbar right after navigation; wait it out
+	// first so the toolbar is interactive.
 	await waitForSpinnerGone();
 	// index 0 = toolbar "Add new Objective" (opens the nbPopover); index 1 = "Add new Key Result" inside
 	// the expanded accordion body (a different element, not an nth() of the toolbar add button).
 	const selector = index === 0 ? GoalsPage.addButtonCss : GoalsPage.addKeyResultButtonCss;
 	const button = getPage().locator(selector).first();
 	await button.waitFor({ state: 'attached', timeout: 24000 }).catch(() => {});
-	await button.dispatchEvent('click');
+	if (index === 0) {
+		// "Add new Objective" uses nbPopoverTrigger="click" with NO explicit (click) handler, so the
+		// popover opens ONLY via Nebular's NbClickTriggerStrategy, which subscribes to a REAL
+		// `fromEvent(document, 'click')` and matches host.contains(target). A synthetic
+		// dispatchEvent('click') does not reliably drive that document-level trigger (confirmed: the page
+		// is fully settled with no backdrop, yet the popover never rendered its nb-list), so issue a real
+		// bubbling click here. The page is clean at this step (no leaked dialog backdrop), so a coordinate
+		// {force:true} click lands on the button. Poll for the popover's list and re-click once if a stray
+		// event toggled it closed (idempotent — never rapid re-click), matching this file's other flows.
+		const popoverList = getPage().locator(GoalsPage.optionDropdownCss).first();
+		for (let attempt = 0; attempt < 3; attempt++) {
+			if (await popoverList.isVisible().catch(() => false)) {
+				return;
+			}
+			await button.click({ force: true });
+			await popoverList.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {});
+		}
+	} else {
+		// "Add new Key Result" has a normal Angular (click)="addKeyResult(...)" host listener, which a
+		// dispatched event triggers fine — dispatch past any fading post-mutation overlay.
+		await button.dispatchEvent('click');
+	}
 };
 
 export const selectOptionFromDropdown = async (index) => {
@@ -369,8 +388,16 @@ export const clickProgressBar = async (index) => {
 	await clickButtonByIndex(GoalsPage.progressBarCss, index);
 };
 
-export const verifyElementIsDeleted = async () => {
-	await verifyElementNotExist(GoalsPage.verifyGoalCss);
+export const verifyElementIsDeleted = async (text) => {
+	// POLLUTION RESILIENCE: assert the SPECIFIC goal we created is gone rather than that the whole grid
+	// is empty — a prior spec (or an aborted earlier run) can leave other objectives on the shared seed,
+	// which would make a blanket "no accordion headers" check fail even though our goal was deleted. When
+	// no name is supplied, fall back to the original empty-grid assertion.
+	if (text) {
+		await verifyTextNotExisting(GoalsPage.verifyGoalCss, text);
+	} else {
+		await verifyElementNotExist(GoalsPage.verifyGoalCss);
+	}
 };
 
 export const verifyGoalExists = async (text) => {

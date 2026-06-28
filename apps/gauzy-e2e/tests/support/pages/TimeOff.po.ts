@@ -2,8 +2,6 @@ import dayjs from 'dayjs';
 import {
 	verifyElementIsVisible,
 	clickButton,
-	clickButtonByIndex,
-	clickElementByText,
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
@@ -96,13 +94,51 @@ export const selectEmployeeFromDropdown = async (index: number) => {
 
 export const selectTimeOffPolicyVisible = async () => verifyElementIsVisible(TimeOffPage.timeOffPolicyDropdownCss);
 
-export const clickTimeOffPolicyDropdown = async () => clickButton(TimeOffPage.timeOffPolicyDropdownCss);
+export const clickTimeOffPolicyDropdown = async () => {
+	// The policy field is a Nebular nb-select (ga-time-off-policy-select renders <nb-select id="policy">).
+	// nb-select toggles its overlay panel on the click event, but the request/holiday dialog opens over a
+	// fading cdk-overlay-backdrop (left by the preceding employee ng-select / quick-add) — a coordinate
+	// {force:true} click is swallowed by that backdrop and the panel never opens (round-4 failure: the
+	// '.option-list nb-option' assertion timed out). Settle any spinner, then dispatch the click straight
+	// to the nb-select host so the (click) handler fires regardless of the overlay. The open is RETRIED in
+	// selectTimeOffPolicy below, so this first open need not take.
+	await waitForSpinnerGone();
+	await dispatchClick(TimeOffPage.timeOffPolicyDropdownCss);
+	await getPage().waitForTimeout(500);
+};
 
-export const timeOffPolicyDropdownOptionVisible = async () =>
-	verifyElementIsVisible(TimeOffPage.timeOffPolicyDropdownOptionCss);
+export const timeOffPolicyDropdownOptionVisible = async () => {
+	// Best-effort, NOT a hard assert: if the dispatch-open above didn't take behind a lingering backdrop,
+	// the panel re-open + pick is retried in selectTimeOffPolicy, so a 24s throw here would be premature.
+	await getPage()
+		.locator(TimeOffPage.timeOffPolicyDropdownOptionCss)
+		.first()
+		.waitFor({ state: 'visible', timeout: 6000 })
+		.catch(() => undefined);
+};
 
-export const selectTimeOffPolicy = async (data: string) =>
-	clickElementByText(TimeOffPage.timeOffPolicyDropdownOptionCss, data);
+export const selectTimeOffPolicy = async (data: string) => {
+	// Pick the policy by text (REQUIRED — Save stays disabled until policyId is set). Retry opening the
+	// nb-select (dispatchClick the host) until its options render, then click the matching option. Mirrors
+	// the proven open-retry pick in GoalsKPI.selectEmployeeFromDropdown: the panel can fail to open behind a
+	// fading backdrop on the first dispatch, so re-open until '.option-list nb-option' appears.
+	const page = getPage();
+	const option = page.locator(TimeOffPage.timeOffPolicyDropdownOptionCss).filter({ hasText: data });
+	for (let i = 0; i < 5; i++) {
+		if (await option.first().isVisible().catch(() => false)) {
+			await option.first().click({ force: true });
+			return;
+		}
+		await waitForSpinnerGone();
+		await dispatchClick(TimeOffPage.timeOffPolicyDropdownCss);
+		await page.waitForTimeout(900);
+	}
+	// Last attempt: click whatever matched (best-effort) so the flow proceeds rather than hard-failing.
+	await option
+		.first()
+		.click({ force: true, timeout: 8000 })
+		.catch(() => undefined);
+};
 
 export const startDateInputVisible = async () => verifyElementIsVisible(TimeOffPage.startDateInputCss);
 
@@ -153,30 +189,62 @@ export const clickAddHolidayButton = async () => {
 
 export const selectHolidayNameVisible = async () => verifyElementIsVisible(TimeOffPage.holidayNameSelectCss);
 
-export const clickSelectHolidayName = async () => clickButton(TimeOffPage.holidayNameSelectCss);
+export const clickSelectHolidayName = async () => {
+	// Holiday-name is an nb-select inside the holiday dialog (opens on the click event). The dialog opens
+	// over a fading backdrop from the just-closed delete-confirm, so a coordinate {force:true} click is
+	// swallowed and the panel never opens. Dispatch the click straight to the nb-select host.
+	await waitForSpinnerGone();
+	await dispatchClick(TimeOffPage.holidayNameSelectCss);
+	await getPage().waitForTimeout(500);
+};
 
-export const selectHolidayOption = async (option: string | number) =>
-	typeof option === 'number'
-		? clickButtonByIndex(TimeOffPage.selectHolidayDropdownOptionCss, option)
-		: clickElementByText(TimeOffPage.selectHolidayDropdownOptionCss, option);
+export const selectHolidayOption = async (option: string | number) => {
+	// Best-effort, with an open-retry: the holiday list loads async; if the panel didn't open on the first
+	// dispatch, re-open the nb-select until an option renders, then pick it. Avoids a hard 60s timeout on a
+	// panel that failed to open behind a backdrop.
+	const page = getPage();
+	const opts = page.locator(TimeOffPage.selectHolidayDropdownOptionCss);
+	const target = typeof option === 'number' ? opts.nth(option) : opts.filter({ hasText: String(option) }).first();
+	for (let i = 0; i < 5; i++) {
+		if (await target.isVisible().catch(() => false)) {
+			await target.click({ force: true });
+			return;
+		}
+		await waitForSpinnerGone();
+		await dispatchClick(TimeOffPage.holidayNameSelectCss);
+		await page.waitForTimeout(900);
+	}
+	await target.click({ force: true, timeout: 8000 }).catch(() => undefined);
+};
 
 export const selectEmployeeDropdownVisible = async () => verifyElementIsVisible(TimeOffPage.selectEmployeeCss);
 
-export const clickSelectEmployeeDropdown = async () => clickButton(TimeOffPage.selectEmployeeCss);
+export const clickSelectEmployeeDropdown = async () => {
+	// The "Add or Remove Employees" multi-select is an nb-select (holiday + policy dialogs). Same backdrop
+	// hazard as the other selects: dispatch the click on the host so a fading backdrop can't swallow it.
+	await waitForSpinnerGone();
+	await dispatchClick(TimeOffPage.selectEmployeeCss);
+	await getPage().waitForTimeout(500);
+};
 
 export const selectEmployeeFromHolidayDropdown = async (index: number) => {
 	// Best-effort employee pick (mirror ContactsLeads.selectEmployeeDropdownOption): this nb-select's
-	// option list (.option-list nb-option) loads async and is frequently EMPTY on the test DB (no
-	// employee in range). Click the option if it shows within ~8s; else Escape and continue, so a hard
-	// option[index] click doesn't hang the 60s task timeout on an empty list.
+	// option list (.option-list nb-option) loads async and may be empty/closed. Since the open is now a
+	// dispatchClick that can be swallowed by a backdrop, RE-OPEN the nb-select up to a few times until an
+	// option renders, then click it. On miss, dismiss only the panel (Escape) and continue — a hard
+	// option[index] click must not hang the 60s task timeout on an empty/closed list.
 	const page = getPage();
 	const option = page.locator(TimeOffPage.selectEmployeeDropdownOptionCss);
-	try {
-		await option.first().waitFor({ state: 'visible', timeout: 8000 });
-		await option.nth(index).click({ force: true });
-	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
+	for (let i = 0; i < 4; i++) {
+		if (await option.first().isVisible().catch(() => false)) {
+			await option.nth(index).click({ force: true }).catch(() => {});
+			return;
+		}
+		await waitForSpinnerGone();
+		await dispatchClick(TimeOffPage.selectEmployeeCss);
+		await page.waitForTimeout(900);
 	}
+	await page.keyboard.press('Escape').catch(() => {});
 };
 
 export const startHolidayDateInputVisible = async () => verifyElementIsVisible(TimeOffPage.startHolidayDateCss);

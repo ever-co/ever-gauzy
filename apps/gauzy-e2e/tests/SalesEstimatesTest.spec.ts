@@ -53,7 +53,24 @@ test.describe('Sales estimates test', () => {
 				contactsLeadsPage,
 				ContactsLeadsPageData
 			);
+			// addContact ends on /#/pages/contacts/leads, so a bare hash goto to the estimates route is
+			// frequently a SAME-DOCUMENT NO-OP (Playwright doesn't reload, the Angular hash-router never
+			// re-renders) — the page stays on the Leads screen and the estimates Add button is never found
+			// (the Leads add button is ALSO a status="success" button, so addButtonVisible would still
+			// resolve against the wrong screen). Mirror the gotoRoute helper: force the hash when goto()
+			// didn't take, settle, then wait for the Estimates grid header before interacting.
 			await getPage().goto('/#/pages/sales/invoices/estimates');
+			await getPage().evaluate(() => {
+				if (!location.hash.includes('/pages/sales/invoices/estimates')) {
+					location.hash = '#/pages/sales/invoices/estimates';
+				}
+			});
+			await getPage().waitForTimeout(800);
+			await getPage()
+				.locator('nb-card-header.card-header-title:has-text("Estimates")')
+				.first()
+				.waitFor({ state: 'visible', timeout: 30000 })
+				.catch(() => {});
 			await salesEstimatesPage.gridBtnExists();
 			await salesEstimatesPage.gridBtnClick(1);
 			await salesEstimatesPage.addButtonVisible();
@@ -188,7 +205,11 @@ test.describe('Sales estimates test', () => {
 
 		await test.step('Should be able to convert estimate to invoice', async () => {
 			await salesEstimatesPage.selectTableRow(0);
-			await salesEstimatesPage.actionButtonVisible();
+			// No actionButtonVisible() here — "To invoice" is a TOOLBAR button (button.action.info), not a
+			// popover action. selectTableRow clicks the grid row, which fires the popover's (clickOutside)
+			// and CLOSES it, so asserting the popover action button (div.popover-container-action
+			// button.action) would time out. Only the toolbar convert button is needed (enabled by the row
+			// selection above). Mirrors the proven EstimatesTest convert step.
 			await salesEstimatesPage.convertToInvoiceButtonVisible();
 			await salesEstimatesPage.clickConvertToInvoiceButton(0);
 		});

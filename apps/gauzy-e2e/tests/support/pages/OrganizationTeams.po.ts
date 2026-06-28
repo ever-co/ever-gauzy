@@ -1,7 +1,6 @@
 import {
 	verifyElementIsVisible,
 	clickButtonByIndex,
-	clickButton,
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
@@ -80,10 +79,14 @@ export const employeeDropdownVisible = async () => {
 };
 
 export const clickEmployeeDropdown = async (_index: number) => {
-	// Members selector is a single nb-select (matched by its placeholder text), so the index is ignored —
-	// open the one match. Settle any transient form spinner first; nb-select opens on click.
+	// Members selector is a single nb-select (matched by its label text), so the index is ignored — open
+	// the one match. Settle any transient form spinner first. The mutation form is an nb-dialog opened with
+	// default config (closeOnBackdropClick:true): a coordinate {force:true} click that lands on the fading
+	// cdk-overlay-backdrop (left by the just-closed tags ng-select panel) would CLOSE the whole dialog, so
+	// dispatch the click straight to the nb-select host instead — it opens on the click event and never
+	// touches the backdrop.
 	await waitForSpinnerGone();
-	await clickButton(OrganizationTeamsPage.employeeMultiSelectCss);
+	await dispatchClick(OrganizationTeamsPage.employeeMultiSelectCss);
 };
 
 export const selectEmployeeFromDropdown = async (index: number) => {
@@ -95,28 +98,46 @@ export const managerDropdownVisible = async () => {
 };
 
 export const clickManagerDropdown = async (_index: number) => {
-	// Managers selector is a single nb-select (matched by its placeholder text), so the index is ignored.
+	// Managers selector is a single nb-select (matched by its label text), so the index is ignored. Same
+	// reasoning as clickEmployeeDropdown: dispatch the click so a fading backdrop can't close the nb-dialog.
 	await waitForSpinnerGone();
-	await clickButton(OrganizationTeamsPage.managerMultiSelectCss);
+	await dispatchClick(OrganizationTeamsPage.managerMultiSelectCss);
 };
 
 export const selectManagerFromDropdown = async (index: number) => {
 	await pickEmployeeOption(index);
 };
 
-// Best-effort pick of an nb-select option (members/managers share '.option-list nb-option'). The working
-// employees list loads async and can legitimately be EMPTY (no employee "working" in the selected date
-// range — EmployeeSelectComponent.getWorkingEmployees). Select one if it shows; otherwise press Escape and
-// continue so we don't hang on a 60s click timeout against an empty list. Mirrors
-// ContactsLeads.selectEmployeeDropdownOption.
+// Best-effort, IDEMPOTENT pick of an nb-select option (members/managers share '.option-list nb-option').
+// The working employees list loads async; per the seed it should hold at least the admin, but keep this
+// best-effort so a slow/empty list never hangs on a 60s click timeout.
+// Two dialog-killing hazards handled here:
+//  - closeOnEsc:true — the old `keyboard.press('Escape')` miss-fallback CLOSED THE WHOLE DIALOG (then Save
+//    was never found, the observed failure). On miss we instead click the dialog title (neutral, inside
+//    .editable) to dismiss only the option panel, keeping the team form open.
+//  - multi-select TOGGLE — clicking an already-selected option DESELECTS it. In EDIT the form is pre-filled
+//    with the created team's member/manager (both the admin), so re-clicking option 0 for BOTH would empty
+//    member+manager and leave the form invalid (rename never saves). So only click when the option is NOT
+//    already '.selected' — leaving an existing selection intact and adding one when there is none.
+// The click is dispatched (not a coordinate click) so a fading backdrop can't redirect it onto the dialog
+// backdrop and close the dialog.
 const pickEmployeeOption = async (index: number) => {
 	const page = getPage();
 	const option = page.locator(OrganizationTeamsPage.selectDropdownOptionCss);
 	try {
 		await option.first().waitFor({ state: 'visible', timeout: 8000 });
-		await option.nth(index).click({ force: true });
+		const target = option.nth(index);
+		const cls = (await target.getAttribute('class')) || '';
+		if (!/\bselected\b/.test(cls)) {
+			await target.dispatchEvent('click');
+		}
 	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
+		// Close just the (possibly open) nb-select panel without Escape — never close the team dialog.
+		await page
+			.locator(OrganizationTeamsPage.cardBodyCss)
+			.first()
+			.click({ force: true })
+			.catch(() => undefined);
 	}
 };
 
@@ -146,15 +167,22 @@ export const tableRowVisible = async () => {
 	await verifyElementIsVisible(OrganizationTeamsPage.selectTableRowCss);
 };
 
-export const selectTableRow = async (_index: number) => {
+export const selectTableRow = async (nameOrIndex: number | string) => {
 	// Row click TOGGLES selection (selectTeam flips disableButton). Settle the grid first, then click the
 	// row once and poll the toolbar Edit button's real disabled attr; only re-click if selection was lost.
+	// POLLUTION-RESILIENT: the suite runs serially on ONE seed and the grid also holds the seeded "Default"
+	// team, so a plain .first() row can grab the wrong record. When given a team name, scope to the row whose
+	// Name cell contains it (the record this spec created); only fall back to .first() if no name is passed.
 	const page = getPage();
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => undefined);
 	await page.waitForTimeout(1500);
 
-	const row = page.locator(OrganizationTeamsPage.selectTableRowCss).first();
+	const rows = page.locator(OrganizationTeamsPage.selectTableRowCss);
+	const row =
+		typeof nameOrIndex === 'string' && nameOrIndex.length
+			? rows.filter({ hasText: nameOrIndex }).first()
+			: rows.first();
 	const editBtn = page.locator(OrganizationTeamsPage.editButtonCss).first();
 
 	await row.click({ force: true });
@@ -176,7 +204,10 @@ export const editButtonVisible = async () => {
 };
 
 export const clickEditButton = async () => {
-	await clickButton(OrganizationTeamsPage.editButtonCss);
+	// dispatchClick: the preceding add/save flow leaves fading cdk-overlay backdrops over the toolbar that
+	// can swallow a coordinate click on Edit; dispatch fires openDialog() directly. Mirrors ContactsLeads.
+	await waitForSpinnerGone();
+	await dispatchClick(OrganizationTeamsPage.editButtonCss);
 };
 
 export const deleteButtonVisible = async () => {
@@ -184,7 +215,10 @@ export const deleteButtonVisible = async () => {
 };
 
 export const clickDeleteButton = async () => {
-	await clickButton(OrganizationTeamsPage.deleteButtonCss);
+	// dispatchClick: after the edit/save the toolbar can sit under a fading backdrop; dispatch fires
+	// removeTeam() (which opens the confirm dialog) directly. Mirrors ContactsLeads.
+	await waitForSpinnerGone();
+	await dispatchClick(OrganizationTeamsPage.deleteButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {

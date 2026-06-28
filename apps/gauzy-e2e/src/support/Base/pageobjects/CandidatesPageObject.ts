@@ -5,18 +5,24 @@ export const CandidatesPage = {
 	dateInputCss: '[placeholder="Date"]',
 	sendInviteButtonCss: 'nb-card-footer button[status="success"]',
 	addButtonCss: 'span.show-button button[status="success"]',
-	firstNameInputCss: '#firstName',
-	lastNameInputCss: '#lastName',
-	usernameInputCss: '#username',
-	newCandidateEmailInputCss: '#email',
-	passwordInputCss: 'input#password',
-	imageInputCss: '#inputImageUrl input[placeholder="Image"]',
-	newCandidateDateInputCss: '#appliedDate',
-	addTagsDropdownCss: '#addTags',
+	// The invite step posts to /api/invite/emails; on a server-side rejection (400) the
+	// invite-mutation dialog's add() catch does NOT closeDialog(), so ga-email-invite-form stays
+	// mounted while the add-candidate dialog opens. Both forms share id="appliedDate" (and the
+	// invite footer button is also status="success"), so unscoped selectors hit two elements
+	// (strict-mode violation) or the wrong dialog. Scope every add-candidate (ga-candidate-mutation)
+	// field/button to that host so the leaked invite dialog can never be matched.
+	firstNameInputCss: 'ga-candidate-mutation #firstName',
+	lastNameInputCss: 'ga-candidate-mutation #lastName',
+	usernameInputCss: 'ga-candidate-mutation #username',
+	newCandidateEmailInputCss: 'ga-candidate-mutation #email',
+	passwordInputCss: 'ga-candidate-mutation input#password',
+	imageInputCss: 'ga-candidate-mutation #inputImageUrl input[placeholder="Image"]',
+	newCandidateDateInputCss: 'ga-candidate-mutation #appliedDate',
+	addTagsDropdownCss: 'ga-candidate-mutation #addTags',
 	tagsDropdownOption: 'div.ng-option',
-	nextButtonCss: 'nb-dialog-container button.green',
-	nextStepButtonCss: 'nb-dialog-container button.green',
-	allCurrentCandidatesButtonCss: 'nb-dialog-container button[status="success"]',
+	nextButtonCss: 'ga-candidate-mutation button.green',
+	nextStepButtonCss: 'ga-candidate-mutation button.green',
+	allCurrentCandidatesButtonCss: 'ga-candidate-mutation button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	editButtonCss: 'div.btn-group.actions button.action.primary',
 	archiveButtonCss: 'div.btn-group.actions button.action.secondary',

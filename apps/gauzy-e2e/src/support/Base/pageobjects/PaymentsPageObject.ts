@@ -16,7 +16,13 @@ export const PaymentsPage = {
 	editPaymentButtonCss: '.gauzy-button-container button.action.primary',
 	deletePaymentButtonCss: '.gauzy-button-container button:has(nb-icon[icon="trash-2-outline"])',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
-	cardBodyCss: 'nb-card-footer.text-left',
+	// The inert dialog TITLE (the <h5 class="title"> in the payment-add nb-card-header, no click handler)
+	// — a safe in-dialog outside-click target to close an open ng-select overlay WITHOUT closing the
+	// dialog. Mirrors the verified-green Expenses.cardBodyCss. NOT the header's .cancel > i.fas.fa-times
+	// (-> cancel()) and NOT Escape: the payment dialog is opened with NbDialog defaults (closeOnEsc=true),
+	// so a document-level Escape would close the WHOLE dialog (the round-4 failure here: by the projectId
+	// step the dialog was gone and the payments grid was showing).
+	cardBodyCss: 'ga-payment-add nb-card-header .title',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	// The note value renders in a smart-table text cell; verify against the data rows (filter-by-text in
 	// the util). 'div.ng-star-inserted' matched thousands of unrelated nodes — unreliable for both the

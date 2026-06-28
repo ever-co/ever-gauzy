@@ -82,8 +82,9 @@ export const clickUsersMultiSelect = async () => {
 export const selectUsersFromDropdown = async (text: string) => {
 	// The nb-select option overlay (`.option-list nb-option`) is rendered in a cdk overlay only after
 	// the control opens; wait for the specific user's option to attach before clicking so we don't
-	// race the overlay animation. Super Admin was just removed from the org, so it IS back in the
-	// add-existing list (_loadUsers excludes only users still in this org + EMPLOYEE role).
+	// race the overlay animation. Local Admin was just removed from THIS org, so it IS back in the
+	// add-existing list (_loadUsers lists tenant users not in this org whose role isn't EMPLOYEE).
+	// Scope the click to the unique name so accumulated grid/dropdown pollution can't steal it.
 	const option = getPage().locator(AddExistingUserPage.checkUsersMultiSelectCss).filter({ hasText: text }).first();
 	await option.waitFor({ state: 'visible', timeout: 8_000 }).catch(() => {});
 	await clickElementByText(AddExistingUserPage.checkUsersMultiSelectCss, text);

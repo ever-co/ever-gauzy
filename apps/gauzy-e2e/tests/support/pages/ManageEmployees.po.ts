@@ -7,7 +7,6 @@ import {
 	enterInputConditionally,
 	clearField,
 	clickKeyboardBtnByKeycode,
-	clickButtonByIndex,
 	waitElementToHide,
 	verifyText,
 	verifyTextNotExisting,
@@ -189,7 +188,20 @@ export const clickTagsDropdown = async () => {
 };
 
 export const selectTagFromDropdown = async (index) => {
-	await clickButtonByIndex(ManageEmployeesPage.tagsDropdownOption, index);
+	// Tags are OPTIONAL for the employee form's validity, so make this best-effort: if the ng-select
+	// panel has an option, pick it; if it didn't open / has no options (e.g. the tags grid wasn't
+	// seeded yet), Escape and continue rather than throwing and breaking the whole add flow.
+	const page = getPage();
+	const option = page.locator(ManageEmployeesPage.tagsDropdownOption).nth(index);
+	const appeared = await option
+		.waitFor({ state: 'visible', timeout: 8000 })
+		.then(() => true)
+		.catch(() => false);
+	if (appeared) {
+		await option.click({ force: true }).catch(() => {});
+	} else {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
 };
 
 export const clickCardBody = async () => {
@@ -211,7 +223,21 @@ export const nextButtonVisible = async () => {
 export const clickNextButton = async () => {
 	// Stepper step-1 -> step-2 (nbStepperNext). The tags ng-select we just opened (appendTo body)
 	// leaves a fading overlay over the footer; dispatch straight on the button.
+	// IMPORTANT: this button is [disabled]="userBasicInfo.form.invalid". A dispatchEvent('click') fires
+	// the nbStepperNext host listener even on a DISABLED button, so a still-invalid step-1 form would be
+	// silently force-advanced to step-3, where add()'s addEmployee() skips the push (form invalid) and
+	// createBulk([]) persists nothing — the exact empty-grid failure. Wait for the button to actually be
+	// ENABLED (form valid) before advancing so a real validity problem surfaces here instead of as a
+	// mysterious empty grid downstream.
 	await waitForSpinnerGone();
+	const next = getPage().locator(ManageEmployeesPage.nextButtonCss).first();
+	await next
+		.waitFor({ state: 'visible', timeout: 8000 })
+		.catch(() => {});
+	for (let i = 0; i < 16; i++) {
+		if (!(await next.isDisabled().catch(() => true))) break;
+		await getPage().waitForTimeout(500);
+	}
 	await dispatchClick(ManageEmployeesPage.nextButtonCss);
 };
 

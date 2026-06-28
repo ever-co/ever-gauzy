@@ -67,7 +67,9 @@ test.describe('Organization teams test', () => {
 
 		await test.step('Should be able to edit team', async () => {
 			await organizationTeamsPage.tableRowVisible();
-			await organizationTeamsPage.selectTableRow(0);
+			// Scope to the team we just created (not the seeded "Default" team) — the grid is shared across
+			// the serial suite, so a plain row-0 pick can select the wrong record.
+			await organizationTeamsPage.selectTableRow(OrganizationTeamsPageData.name);
 			await organizationTeamsPage.editButtonVisible();
 			await organizationTeamsPage.clickEditButton();
 			await organizationTeamsPage.nameInputVisible();
@@ -93,7 +95,8 @@ test.describe('Organization teams test', () => {
 		});
 
 		await test.step('Should be able to delete team', async () => {
-			await organizationTeamsPage.selectTableRow(0);
+			// After the rename the row is now under editName — scope to it (not the seeded "Default" team).
+			await organizationTeamsPage.selectTableRow(OrganizationTeamsPageData.editName);
 			await organizationTeamsPage.deleteButtonVisible();
 			await organizationTeamsPage.clickDeleteButton();
 			await organizationTeamsPage.confirmDeleteButtonVisible();

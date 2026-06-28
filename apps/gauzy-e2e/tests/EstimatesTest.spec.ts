@@ -222,7 +222,11 @@ test.describe('Estimates test', () => {
 
 		await test.step('Should be able to convert estimate to invoice', async () => {
 			await estimatesPage.selectTableRow(0);
-			await estimatesPage.actionButtonVisible();
+			// NOTE: no actionButtonVisible() here — "To invoice" is a TOOLBAR button (button.action.info),
+			// not a popover action. selectTableRow clicks the grid row, which fires the popover's
+			// (clickOutside) and CLOSES it, so asserting the popover action button (div.popover-container-action
+			// button.action) would time out. Only the toolbar convert button is needed (enabled by the row
+			// selection above).
 			await estimatesPage.convertToInvoiceButtonVisible();
 			await estimatesPage.clickConvertToInvoiceButton(0);
 		});

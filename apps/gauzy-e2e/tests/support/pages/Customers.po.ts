@@ -9,7 +9,8 @@ import {
 	waitElementToHide,
 	verifyText,
 	verifyTextNotExisting,
-	waitForSpinnerGone
+	waitForSpinnerGone,
+	dispatchClick
 } from '../util';
 import { getPage } from '../page-context';
 import { expect } from '@playwright/test';
@@ -291,10 +292,18 @@ export const inviteButtonVisible = async () => {
 };
 
 export const clickInviteButton = async () => {
-	// The invite dialog occasionally fails to open on the first click (the button can be
-	// briefly re-rendered/disabled by the list refresh). Retry until its name field shows.
-	for (let attempt = 0; attempt < 4; attempt++) {
-		await getPage().locator(CustomersPage.inviteButtonCss).first().click({ force: true }).catch(() => undefined);
+	// This runs immediately after the add-customer stepper closes, so a fading cdk-overlay
+	// backdrop from the just-dismissed contact-mutation card can still sit over the toolbar.
+	// A coordinate click — even {force:true} — lands on that backdrop instead of the Invite
+	// button, so the invite() handler never fires and the dialog never opens (this was the
+	// round-3 failure). Settle the spinner/backdrop, then dispatch the click straight to the
+	// toolbar Invite element (button.action.info) via the DOM so the (click) handler fires
+	// regardless of any overlay. The per-row contact-action Invite is status="success" (not
+	// .info) and only emits an unsubscribed event, so .action.info uniquely targets the
+	// toolbar invite() button. Retry until the dialog's name field shows.
+	await waitForSpinnerGone();
+	for (let attempt = 0; attempt < 5; attempt++) {
+		await getPage().locator(CustomersPage.inviteButtonCss).first().dispatchEvent('click').catch(() => undefined);
 		try {
 			await getPage().locator(CustomersPage.customerNameCss).first().waitFor({ state: 'visible', timeout: 8000 });
 			return;
@@ -341,27 +350,26 @@ export const editButtonVisible = async () => {
 };
 
 export const clickEditButton = async (index: number = 0) => {
-	// The Edit action is disabled until a table row is selected, and the selection can be
-	// lost after a preceding step (e.g. the invite dialog). Re-select the row, click Edit,
-	// and retry until the mutation form (with #name) actually opens.
+	// The row was already selected (Edit enabled) by selectTableRow() right before this call.
+	// Clicking the row again here would TOGGLE selection OFF and disable Edit, so DON'T re-click
+	// the row on the first attempt — just dispatch the Edit click (mirrors the verified-green
+	// Clients.po). dispatchClick fires the (click) handler even under a fading dialog backdrop.
+	// Only if the mutation form never opens do we re-select the row and retry.
+	await waitForSpinnerGone();
 	for (let attempt = 0; attempt < 4; attempt++) {
-		await getPage()
-			.locator(CustomersPage.selectTableRowCss)
-			.nth(index)
-			.click({ force: true })
-			.catch(() => undefined);
-		await getPage().waitForTimeout(700);
-		await getPage()
-			.locator(CustomersPage.editButtonCss)
-			.first()
-			.click({ force: true })
-			.catch(() => undefined);
+		await dispatchClick(CustomersPage.editButtonCss).catch(() => undefined);
 		try {
 			await getPage().locator(CustomersPage.nameInputCss).first().waitFor({ state: 'visible', timeout: 8000 });
 			// Same async form rebuild as the add flow — wait for it to settle before filling.
 			await getPage().waitForTimeout(4000);
 			return;
 		} catch {
+			// Form didn't open — selection may have been lost. Re-select the row ONCE, then retry.
+			await getPage()
+				.locator(CustomersPage.selectTableRowCss)
+				.nth(index)
+				.click({ force: true })
+				.catch(() => undefined);
 			await getPage().waitForTimeout(800);
 		}
 	}
@@ -375,7 +383,10 @@ export const deleteButtonVisible = async () => {
 };
 
 export const clickDeleteButton = async () => {
-	await clickButton(CustomersPage.deleteButtonCss);
+	// Delete (toolbar trash icon) is clicked right after the row selection settles; a fading
+	// edit-dialog backdrop can intercept a coordinate click, so dispatch the click via the DOM.
+	await waitForSpinnerGone();
+	await dispatchClick(CustomersPage.deleteButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -383,7 +394,10 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(CustomersPage.confirmDeleteButtonCss);
+	// Confirm lives in a freshly-opened nb-dialog; dispatch the click so it isn't eaten by the
+	// dialog's own entrance-animation overlay. Mirrors the verified-green Clients.po.
+	await waitForSpinnerGone();
+	await dispatchClick(CustomersPage.confirmDeleteButtonCss);
 };
 
 export const clickCardBody = async () => {

@@ -75,8 +75,8 @@ export const clickEmployeeDropdown = async () => {
 
 export const selectEmployeeFromDropdown = async (index) => {
 	// Best-effort employee pick (mirror ContactsLeads.selectEmployeeDropdownOption): the option list
-	// loads async and is frequently EMPTY on the test DB (no employee "working" in the header date
-	// range). Click an option if one shows within ~8s; otherwise Escape and continue — the employee is
+	// loads async and can be EMPTY on the test DB (no employee "working" in the header date range). Click
+	// an option if one shows within ~8s; otherwise dismiss the dropdown and continue — the employee is
 	// optional for an expense (addExpense sends employeeId: null) so the record still saves. A hard
 	// option[0] click with the 60s task timeout would otherwise hang the whole test on an empty list.
 	const page = getPage();
@@ -85,7 +85,12 @@ export const selectEmployeeFromDropdown = async (index) => {
 		await option.first().waitFor({ state: 'visible', timeout: 8000 });
 		await option.nth(index).click({ force: true });
 	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
+		// Dismiss an empty/open ng-select dropdown by clicking the dialog TITLE (an inert <h4>), NOT by
+		// pressing Escape: the add-expense ExpensesMutationComponent is an NbDialog opened with default
+		// options, so closeOnEsc is true — a document-level Escape would close the whole dialog (the
+		// confirmed round-4 root cause: by saveExpenseButtonVisible() the dialog was gone and the grid
+		// was showing). An in-dialog outside-click closes only the ng-select overlay, leaving the form.
+		await page.locator(ExpensesPage.cardBodyCss).first().click({ force: true }).catch(() => {});
 	}
 };
 
@@ -182,14 +187,16 @@ export const clickTagsDropdown = async () => {
 
 export const selectTagFromDropdown = async (index) => {
 	// Best-effort tag pick: an org tag was created by the addTag prerequisite, but the list still loads
-	// async — click the option if it shows, else Escape and continue (tags are optional on an expense).
+	// async — click the option if it shows, else dismiss and continue (tags are optional on an expense).
 	const page = getPage();
 	const option = page.locator(ExpensesPage.tagsDropdownOption);
 	try {
 		await option.first().waitFor({ state: 'visible', timeout: 8000 });
 		await option.nth(index).click({ force: true });
 	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
+		// As in selectEmployeeFromDropdown: dismiss the open tags ng-select by clicking the dialog title,
+		// NEVER Escape — the dialog's default closeOnEsc would close the whole add-expense form.
+		await page.locator(ExpensesPage.cardBodyCss).first().click({ force: true }).catch(() => {});
 	}
 };
 
@@ -278,10 +285,12 @@ export const clickConfirmDeleteButton = async () => {
 
 export const clickCardBody = async () => {
 	// Purpose here is only to dismiss the still-open tags ng-select overlay (it has closeOnSelect=false)
-	// before clicking Save. Press Escape instead of clicking the card header: the header hosts the X
-	// close icon (fas fa-times -> close()), so a force coordinate click there risks closing the whole
-	// add-expense dialog without saving. Escape closes the dropdown overlay and leaves the form intact.
-	await getPage().keyboard.press('Escape').catch(() => {});
+	// before clicking Save. Do NOT press Escape: the add-expense ExpensesMutationComponent is an NbDialog
+	// opened with default options (closeOnEsc=true), so a document-level Escape closes the ENTIRE dialog —
+	// that left the grid showing and the Save button gone (the round-4 failure). Instead click the inert
+	// dialog title (cardBodyCss = h4.title, no handler): an in-dialog outside-click closes only the tags
+	// dropdown overlay and leaves the form intact. Not the header's X icon, which would close the dialog.
+	await getPage().locator(ExpensesPage.cardBodyCss).first().click({ force: true }).catch(() => {});
 };
 
 export const duplicateButtonVisible = async () => {

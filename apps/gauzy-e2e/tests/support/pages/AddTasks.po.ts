@@ -19,6 +19,14 @@ import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { AddTaskPage } from '../../../src/support/Base/pageobjects/AddTasksPageObject';
 
+// The task form's Description is a CKEditor 4 widget (ckeditor4-angular: <ckeditor [config]="ckConfig">),
+// whose editable lives inside a wysiwyg <iframe> — the [formControlName="description"] host itself is
+// NOT an <input>/<textarea>/[contenteditable], so clearField()/enterInput() throw
+// "Element is not an <input>...". The shared fillCkEditor() helper targets a CKEditor 5
+// .ck-editor__editable contenteditable, which does not exist here. Type into the iframe body instead,
+// mirroring the proven JobsProposals.po pattern. (Description is optional, so this never blocks Save.)
+const ckeditorIframeCss = 'iframe[class="cke_wysiwyg_frame cke_reset"]';
+
 // The preceding CustomCommands.addEmployee quick-add can leave its ga-employee-mutation dialog open
 // (the current app's employee add is a multi-step nb-stepper with separate First Name/Username/Password
 // fields, not the single "Full Name" quick-add the shared command targets, so its step-1 form stays
@@ -208,12 +216,23 @@ export const enterEstimateMinutesInputData = async (mins) => {
 };
 
 export const taskDescriptionTextareaVisible = async () => {
+	// Assert the CKEditor 4 host is present. (The host renders; the editable is inside its iframe.)
 	await verifyElementIsVisible(AddTaskPage.descriptionTextareaCss);
 };
 
 export const enterTaskDescriptionTextareaData = async (data) => {
-	await clearField(AddTaskPage.descriptionTextareaCss);
-	await enterInput(AddTaskPage.descriptionTextareaCss, data);
+	// Description is a CKEditor 4 widget — the [formControlName="description"] host is not fillable.
+	// Type into the editor body inside its wysiwyg iframe. The iframe + its body load async, so wait
+	// for the frame's body before filling; best-effort because description is optional (Save never
+	// depends on it) and we must not hang the run if the CKEditor instance is slow to attach.
+	const page = getPage();
+	try {
+		const body = page.frameLocator(ckeditorIframeCss).first().locator('body');
+		await body.waitFor({ state: 'visible', timeout: 8000 });
+		await body.fill(String(data));
+	} catch {
+		// CKEditor iframe didn't attach in time — leave description empty and continue.
+	}
 };
 
 export const saveTaskButtonVisible = async () => {

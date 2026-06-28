@@ -266,10 +266,26 @@ export const confirmButtonVisible = async () => {
 };
 
 export const clickConfirmButton = async () => {
-	// Send/Email confirm dialog button — dispatchClick so a lingering popover/dialog backdrop can't
-	// intercept it. Mirrors the proven Invoices.po pattern.
-	await waitForSpinnerGone();
-	await dispatchClick(EstimatesPage.confirmButtonCss);
+	// Send/Email confirm dialog button. A SINGLE dispatchClick is racy here: the dialog body renders
+	// <ga-invoice-pdf> (an async PDF/iframe preview) so the first dispatch can land before the (click)
+	// handler is wired, and the dialog stays OPEN with the estimate never sent (the observed failure:
+	// the "Send this estimate?" dialog was still up and the row was still Draft, so div.badge-success
+	// never appeared). Dispatch the success button, then POLL for the mutation dialog host
+	// (ga-invoice-send / ga-invoice-email) to detach — re-dispatching if it lingers — so the send/email
+	// actually fires before we move on. dispatchClick (not a coordinate click) so the fading popover
+	// backdrop can't intercept it.
+	const page = getPage();
+	const dialogHost = page.locator('ga-invoice-send, ga-invoice-email').first();
+	for (let i = 0; i < 5; i++) {
+		await waitForSpinnerGone();
+		await dispatchClick(EstimatesPage.confirmButtonCss).catch(() => {});
+		try {
+			await dialogHost.waitFor({ state: 'detached', timeout: 6000 });
+			return;
+		} catch {
+			// dialog still open — the click didn't take (PDF preview still wiring up); loop and re-dispatch
+		}
+	}
 };
 
 export const emailInputVisible = async () => {
@@ -315,11 +331,15 @@ export const viewButtonVisible = async () => {
 };
 
 export const clickViewButton = async (index) => {
-	// viewButtonCss is scoped to the "View" button; dispatchClick to bypass any fading overlay.
+	// viewButtonCss is scoped to the single toolbar "View" button, so target .first() — the spec passes
+	// index 1 (a Cypress-era artifact), but .nth(1) is out of range here and would no-op, leaving the
+	// view route never opened (backButtonVisible would then time out). dispatchClick to bypass any
+	// fading overlay. Mirrors the proven Invoices.po pattern.
+	void index;
 	await waitForSpinnerGone();
 	await getPage()
 		.locator(EstimatesPage.viewButtonCss)
-		.nth(index)
+		.first()
 		.dispatchEvent('click')
 		.catch(() => {});
 };

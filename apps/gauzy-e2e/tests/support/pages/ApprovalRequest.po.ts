@@ -43,7 +43,24 @@ export const gotoApprovals = async () => {
 			location.hash = '#/pages/employees/approvals';
 		}
 	});
-	await page.waitForTimeout(800);
+	// Don't just wait a fixed 800ms — a late/queued history.back() from the policy-page Back button
+	// (location.back() is processed async and the same-document goto() above never flushes it) can pop
+	// us off the approvals route SEVERAL steps later, landing on Manage Employees (the cause of the
+	// edit/delete verify failing on the wrong screen). Confirm the approvals card is actually mounted
+	// before returning: wait for its header ("Approval Request" — distinct from the policy page's
+	// "Approval Policy" and the employees grid's "Manage Employees") to be visible, and re-force the
+	// hash once if the header hasn't rendered in time.
+	const header = page.locator('h4:has-text("Approval Request")').first();
+	try {
+		await header.waitFor({ state: 'visible', timeout: 15000 });
+	} catch {
+		await page.evaluate(() => {
+			location.hash = '#/pages/dashboard';
+			location.hash = '#/pages/employees/approvals';
+		});
+		await header.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+	}
+	await page.waitForTimeout(500);
 };
 
 export const gridBtnExists = async () => {
@@ -147,6 +164,13 @@ export const selectTableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index) => {
+	// Both callers (edit + delete steps) open with this helper. A queued history.back() from the earlier
+	// policy-page Back button can pop us onto Manage Employees AFTER the add-request step already passed
+	// on approvals (confirmed by the round-4 dump: the edit verify ran while the DOM was the employees
+	// grid). Re-assert we're on the approvals screen first — gotoApprovals waits for the "Approval Request"
+	// header so we never select a row on the wrong grid; the request rows persist server-side, so the
+	// freshly reloaded grid still contains our record.
+	await gotoApprovals();
 	// Row click TOGGLES selection and enables the toolbar Edit/Delete buttons. Settle the grid first, then
 	// click the row ONCE and poll the Edit button's real `disabled` attr; only re-click if selection was
 	// lost. A rapid re-click would toggle the row back off and leave the toolbar disabled (force-clicking a

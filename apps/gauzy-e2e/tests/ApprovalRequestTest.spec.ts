@@ -61,6 +61,12 @@ test.describe('Approval request test', () => {
 		});
 
 		await test.step('Should be able to add new approval request', async () => {
+			// Re-assert we're on the approvals grid before adding. clickBackButton (end of the previous step)
+			// fires location.back() whose pop the browser can process late — landing us on Manage Employees —
+			// and clickAddApprovalButton dispatches on the generic status="success" Add button, which also
+			// exists on that wrong screen. gotoApprovals waits for the "Approval Request" header so the Add
+			// here opens the request dialog, not the employee one.
+			await approvalRequestPage.gotoApprovals();
 			await approvalRequestPage.gridBtnExists();
 			await approvalRequestPage.gridBtnClick(1);
 			await approvalRequestPage.addApprovalButtonVisible();

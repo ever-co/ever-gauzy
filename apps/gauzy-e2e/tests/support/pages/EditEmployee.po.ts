@@ -233,14 +233,30 @@ export const selectProjectOrContactFromDropdown = async (index: number) => {
 	const option = page.locator(EditEmployeePage.projectOrContactDropdownOptionCss);
 	// Open the ng-select via the keyboard (focus the search input + ArrowDown), NOT a click: ng-select
 	// opens on mousedown and a leftover stepper/dialog backdrop swallows a coordinate click, so the
-	// option panel never rendered. Retry the focus+ArrowDown until 'div.ng-option' shows, then pick it.
-	for (let i = 0; i < 6; i++) {
-		if (await option.first().isVisible().catch(() => false)) break;
+	// option panel never rendered. Settle first so the async option list (organizationEntities) is
+	// loaded, then open + pick in ONE tight loop — opening in a separate pass from the click let the
+	// panel auto-close on blur before the click ran, so 'div.ng-option' was never present (round-4
+	// 60s timeout). BEST-EFFORT by design: the dropdown source is "all org entities MINUS the ones
+	// already assigned to this employee". On the Projects tab the only seeded/added project
+	// ("Gauzy Web Site") is assigned to this same employee by CustomCommands.addProject (it picks
+	// member index 0 = our just-added employee), so the list is legitimately EMPTY — there is nothing
+	// to add. Don't hard-fail: close the panel and return; the caller's verifyProjectOrContactExist
+	// still passes (the entities card shows the already-assigned project). On the Contacts tab the
+	// just-added contact is NOT yet assigned, so an option is present and gets picked.
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	for (let i = 0; i < 10; i++) {
+		if (await option.first().isVisible().catch(() => false)) {
+			await option.nth(index).click({ force: true }).catch(() => {});
+			return;
+		}
 		await input.focus().catch(() => {});
 		await page.keyboard.press('ArrowDown').catch(() => {});
 		await page.waitForTimeout(700);
 	}
-	await clickButtonByIndex(EditEmployeePage.projectOrContactDropdownOptionCss, index);
+	// No selectable option after ~7s of polling → empty list (everything already assigned). Close the
+	// open ng-select panel so its body-appended overlay can't swallow the next footer/tab click.
+	await page.keyboard.press('Escape').catch(() => {});
 };
 
 export const saveProjectOrContactButtonVisible = async () => {

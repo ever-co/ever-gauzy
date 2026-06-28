@@ -66,8 +66,8 @@ export const selectTagFromDropdown = async (index: number) => {
 	// land on the dialog backdrop and DISMISS the whole payment form — the exact failure here: by the
 	// next step (clickCardBody) the dialog was already gone and the footer click timed out. So select via
 	// the KEYBOARD only (ArrowDown to highlight, Enter to toggle — multiple+closeOnSelect=false), which
-	// never touches the backdrop. We DON'T close the panel here — clickCardBody (next step) issues the
-	// single Escape that closes it. If no option renders within ~8s, just continue — tags are optional.
+	// never touches the backdrop. We DON'T close the panel here — clickCardBody (next step) closes it by
+	// clicking the inert dialog title. If no option renders within ~8s, just continue — tags are optional.
 	const page = getPage();
 	const tagInput = page.locator(`${PaymentsPage.addTagsDropdownCss} input`).first();
 	const option = page.locator(PaymentsPage.tagsDropdownOption);
@@ -81,11 +81,10 @@ export const selectTagFromDropdown = async (index: number) => {
 	} catch {
 		/* tag list never rendered — tags are optional, continue */
 	}
-	// Do NOT press Escape here. The payment dialog opens with Nebular's default closeOnEsc=true, so an
-	// Escape with no open dropdown closes the WHOLE form. clickCardBody (the very next step) presses a
-	// single Escape to close this (closeOnSelect=false) tags panel — mirroring the verified-green Expenses
-	// flow where exactly ONE Escape is issued. Two Escapes (here + clickCardBody) would dismiss the dialog
-	// and the next field (projectId) would never be found.
+	// Do NOT press Escape here (or anywhere in this flow): the payment dialog opens with Nebular's default
+	// closeOnEsc=true, so any document-level Escape closes the WHOLE form. The tags panel stays open
+	// (closeOnSelect=false); clickCardBody (the very next step) closes it by clicking the inert dialog
+	// title — an in-dialog outside-click that dismisses only the dropdown overlay, leaving the form intact.
 };
 
 export const projectDropdownVisible = async () => {
@@ -106,7 +105,8 @@ export const selectProjectFromDropdown = async (text: string) => {
 	// and the project ng-select panel is appendTo=body over the dialog backdrop — a coordinate click on
 	// an option can land on the backdrop and dismiss the form (same hazard as the tags input). Typeahead
 	// to filter to the wanted project, then Enter to select the highlighted option (the selector's
-	// (change) blurs/closes the panel). If the option never renders, Escape and continue.
+	// (change) blurs/closes the panel). If the option never renders, dismiss the open project ng-select by
+	// clicking the inert dialog title (NEVER Escape — closeOnEsc=true would close the whole dialog).
 	const page = getPage();
 	const input = page.locator(`${PaymentsPage.projectDropdownCss} input`).first();
 	await input.focus().catch(() => {});
@@ -122,7 +122,8 @@ export const selectProjectFromDropdown = async (text: string) => {
 		await option.first().waitFor({ state: 'visible', timeout: 6000 });
 		await page.keyboard.press('Enter').catch(() => {});
 	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
+		// In-dialog outside-click closes only the project dropdown overlay, leaving the form intact.
+		await page.locator(PaymentsPage.cardBodyCss).first().click({ force: true }).catch(() => {});
 	}
 	await page.waitForTimeout(300);
 };
@@ -251,11 +252,13 @@ export const clickKeyboardButtonByKeyCode = async (keycode: number) => {
 
 export const clickCardBody = async () => {
 	// Purpose: dismiss the still-open tags ng-select overlay (closeOnSelect=false) before the next field.
-	// Press Escape instead of force-clicking the dialog footer (nb-card-footer.text-left): that footer
-	// click was the failing step — it timed out at 60s whenever the tags interaction had already closed
-	// the dialog, and even when present a coordinate click near the footer risks the dialog backdrop.
-	// Escape closes the dropdown overlay and leaves the payment form intact (mirrors Expenses.clickCardBody).
-	await getPage().keyboard.press('Escape').catch(() => {});
+	// Do NOT press Escape: the payment-add dialog is an NbDialog opened with default options
+	// (closeOnEsc=true), so a document-level Escape closes the ENTIRE dialog — that was the round-4
+	// failure (by projectDropdownVisible() the dialog was gone and the payments grid was showing). Instead
+	// click the inert dialog TITLE (cardBodyCss = ga-payment-add nb-card-header .title, no handler): an
+	// in-dialog outside-click closes only the tags dropdown overlay and leaves the form intact. Mirrors
+	// the verified-green Expenses.clickCardBody.
+	await getPage().locator(PaymentsPage.cardBodyCss).first().click({ force: true }).catch(() => {});
 };
 
 export const waitMessageToHide = async () => {

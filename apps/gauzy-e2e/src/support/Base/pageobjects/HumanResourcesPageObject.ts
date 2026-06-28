@@ -24,6 +24,9 @@ export const HumanResourcesPage = {
 	popupHeaderCss: 'nb-card.records h5',
 	// Profit-history popup is `nb-card.profit-history` with `<h5 class="title">` inside its header.
 	popupProfitHeaderCss: 'nb-card.profit-history h5',
+	// Either history dialog (records OR profit) — used to confirm a card click actually opened a popup
+	// so the open helper can retry the click if the first attempt didn't register.
+	popupAnyCss: 'nb-card.records, nb-card.profit-history',
 	// angular2-smart-table column headers render as `angular2-st-column-title`
 	// (containing `a.angular2-smart-sort-link` or `span.angular2-smart-sort` with the column title).
 	popupTableHederCss: 'angular2-st-column-title'

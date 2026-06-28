@@ -21,7 +21,14 @@ export const ExpensesPage = {
 	editExpenseButtonCss: 'div.actions-container button.action.primary:has-text("Edit")',
 	deleteExpenseButtonCss: 'div.actions-container button.action:has(nb-icon[icon="trash-2-outline"])',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
-	cardBodyCss: 'ga-expenses-mutation nb-card-header',
+	// The inert dialog TITLE (an <h4>/<h5> heading, no click handler) — a safe in-dialog outside-click
+	// target to close an open ng-select overlay without closing the dialog. Covers BOTH dialogs this spec
+	// drives: the add/edit expense dialog (ga-expenses-mutation, h4.title) AND the add-category dialog
+	// (ngx-expense-category-mutation, h5.title). NOT nb-card-header itself / the X close icon
+	// (.cancel > i.fas.fa-times -> close()) and NOT Escape — both dialogs default to closeOnEsc=true, so a
+	// document Escape would close the whole dialog (the round-4 failure: Save button gone, grid showing).
+	cardBodyCss:
+		'ga-expenses-mutation nb-card-header .title, ngx-expense-category-mutation nb-card-header .title',
 	duplicateExpenseButtonCss: 'div.actions-container button.action.primary:has-text("Duplicate")',
 	manageCategoriesButtonCss: 'div.card-header-title > button.action.primary.soft',
 	expenseNameInputCss: '[placeholder="Expense name"]',

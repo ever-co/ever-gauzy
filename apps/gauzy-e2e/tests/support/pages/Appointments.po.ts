@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import {
 	waitElementToHide,
 	verifyElementIsVisible,
@@ -55,19 +56,55 @@ export const clickEmployeeDropdown = async () => {
 };
 
 export const selectEmployeeFromDropdown = async (text: string) => {
-	// The /api/employee/working fetch that fills [(items)]="employees" fires on page load of the public
-	// /share/employee page and resolves ASYNC. If we type the employee name before the list is populated,
-	// ng-select shows "No items found" and never re-filters once the data arrives (the panel snapshot
-	// showed exactly this: combobox already holding the typed name + "No items found"). So FIRST wait for
-	// the dropdown panel to actually render at least one option (the list loaded), THEN typeahead-filter.
-	const input = getPage().locator(AppointmentsPage.employeeDropdownCss).locator('input').first();
-	const options = getPage().locator(AppointmentsPage.employeeDropdownOptionsCss);
-	// Wait for the working-employees list to populate (seeded admin + the just-added employee).
-	await options.first().waitFor({ state: 'visible', timeout: 24_000 }).catch(() => {});
-	// Now narrow to the target employee; searchFn matches first/last name (see EmployeeSelectorComponent).
-	await input.pressSequentially(text);
-	// The filtered option may not be the first match — filter by text then click the body-level option.
-	const target = options.filter({ hasText: text }).first();
+	// The /api/employee/working fetch that fills [(items)]="employees" (EmployeeSelectorComponent) fires
+	// from a debounced combineLatest([organization$, dateRange$]) on the public /share/employee page and
+	// resolves ASYNC. The post-round-3 failure DOM was the textbook symptom: the combobox already held the
+	// typed name "Milton Schroeder" but the panel showed "No items found" — we had typed BEFORE the list
+	// loaded, and ng-select does NOT re-run its filter against options that arrive later (the search term
+	// is sticky), so the previously-typed query permanently hid every option.
+	//
+	// Two changes make this deterministic:
+	//  1) BLOCK on at least one real option appearing (the list actually loaded) before typing anything —
+	//     poll the body-level panel and re-open it via keyboard if a transient navigation/spinner closed
+	//     it. No silent .catch() that lets us type into an empty list.
+	//  2) Filter by FIRST NAME only. searchEmployee() is keyword-based (matches firstName OR lastName), and
+	//     the rendered option label is truncated via getShortenedName(), so the safest unique-enough query
+	//     is the faker first name — then click the body-level option whose text contains the full name.
+	const page = getPage();
+	const input = page.locator(AppointmentsPage.employeeDropdownCss).locator('input').first();
+	// ng-select renders its empty-state "No items found" row ALSO as a div.ng-option (with
+	// .ng-option-disabled), so a bare div.ng-option count is >0 even when the list hasn't loaded — which is
+	// exactly the post-round-3 trap. Gate on REAL options only: div.ng-option minus the disabled row.
+	const realOptions = page.locator(`${AppointmentsPage.employeeDropdownOptionsCss}:not(.ng-option-disabled)`);
+	const firstName = text.split(' ')[0];
+
+	// 1) Wait (with re-open retries) for the working-employees list to populate before touching the filter.
+	//    A real (non-disabled) option means [(items)] actually resolved.
+	await expect
+		.poll(
+			async () => {
+				if ((await realOptions.count()) > 0) {
+					return true;
+				}
+				// Panel may have collapsed on a transient re-navigation/spinner — re-open via keyboard.
+				await input.focus();
+				await page.keyboard.press('ArrowDown');
+				await page.waitForTimeout(500);
+				return (await realOptions.count()) > 0;
+			},
+			{ timeout: 24_000, intervals: [500, 1000, 1500] }
+		)
+		.toBe(true);
+
+	// 2) Typeahead-filter by first name (searchEmployee() is keyword-based; the option label is truncated by
+	//    getShortenedName(), so first name is the safest query), then click the real option matching it.
+	await input.focus();
+	await input.fill('');
+	await input.pressSequentially(firstName);
+	// Prefer the full-name match; fall back to the first-name-filtered real option (truncated labels).
+	const byFullName = realOptions.filter({ hasText: text }).first();
+	const byFirstName = realOptions.filter({ hasText: firstName }).first();
+	const target = (await byFullName.count()) > 0 ? byFullName : byFirstName;
 	await target.waitFor({ state: 'visible', timeout: 24_000 });
 	await target.click({ force: true });
 };

@@ -180,8 +180,47 @@ export const saveButtonVisible = async () => {
 export const clickSaveButton = async () => {
 	// Save sits in the dialog footer; the just-closed tags ng-select overlay (appendTo="body") can
 	// still be fading over it. Settle, then dispatchClick to fire past any residual backdrop.
-	await waitForSpinnerGone();
-	await dispatchClick(OrganizationEquipmentPage.saveButtonCss);
+	//
+	// ROOT CAUSE (round 4, policy save): the equipment-sharing-policy "Add" dialog was left OPEN with
+	// both fields filled and Save visibly enabled, yet nothing was created (failure DOM + screenshot:
+	// grid empty, dialog still up). Two things make a bare `dispatchClick(saveButtonCss).first()` miss
+	// the real Save:
+	//   (a) Save is [disabled]="form.invalid". dispatchEvent('click') on a momentarily-disabled
+	//       <button> (the last field's .fill() input event hadn't yet propagated to the reactive form)
+	//       is a no-op — disabled controls don't run click handlers.
+	//   (b) A just-closed dialog (the step-1 equipment dialog) can leave a detached-but-not-yet-GC'd
+	//       cdk-overlay whose own `nb-card-footer button[status="success"]` is FIRST in DOM order, so
+	//       `.first()` dispatches on the stale/hidden Save instead of the live dialog's.
+	// Fix: target the VISIBLE Save button, wait until it is actually enabled, dispatch, and re-dispatch
+	// (up to a few tries) until the dialog's footer Save detaches (dialog closed == save committed).
+	const page = getPage();
+	const visibleSave = page.locator(OrganizationEquipmentPage.saveButtonCss).filter({ visible: true }).last();
+	for (let attempt = 0; attempt < 4; attempt++) {
+		await waitForSpinnerGone();
+		try {
+			await visibleSave.waitFor({ state: 'visible', timeout: 6000 });
+		} catch {
+			// No visible Save footer left — the dialog already closed (save committed).
+			return;
+		}
+		// Wait for the live Save button to be enabled (form valid) before dispatching.
+		await page
+			.waitForFunction(
+				(sel) => {
+					const btns = Array.from(document.querySelectorAll(sel)) as HTMLButtonElement[];
+					const live = btns.reverse().find((b) => b.offsetParent !== null);
+					return !!live && !live.disabled && live.getAttribute('disabled') === null;
+				},
+				OrganizationEquipmentPage.saveButtonCss,
+				{ timeout: 8000 }
+			)
+			.catch(() => undefined);
+		await visibleSave.dispatchEvent('click').catch(() => undefined);
+		// Give the save round-trip a beat, then check whether the dialog closed.
+		await page.waitForTimeout(1200);
+		const stillOpen = await visibleSave.isVisible().catch(() => false);
+		if (!stillOpen) return;
+	}
 };
 
 export const equipmentSharingButtonVisible = async () => {

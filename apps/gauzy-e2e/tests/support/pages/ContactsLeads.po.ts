@@ -247,6 +247,31 @@ export const selectTableRow = async (index) => {
 	}
 };
 
+// Select the grid row whose name link contains `name` (pollution-resilient row pick). The suite runs
+// serially on ONE seed, so by the time the edit/delete steps run the grid has MORE than one lead:
+// the toolbar Invite creates a SECOND contact with the same name as the one Add created, so a plain
+// nth(0) row pick can grab the wrong record. Filtering by the unique faker name targets exactly the
+// record this spec is acting on (the rename / the delete), instead of whichever row happens to sort
+// first. Same settle-then-click-once-and-poll-Edit handling as selectTableRow.
+export const selectTableRowByName = async (name: string) => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page
+		.locator(ContactsLeadsPage.selectTableRowCss)
+		.filter({ hasText: name })
+		.first();
+	const editBtn = page.locator(ContactsLeadsPage.editButtonCss).first();
+	for (let attempt = 0; attempt < 4; attempt++) {
+		await row.click({ force: true });
+		for (let i = 0; i < 8; i++) {
+			await page.waitForTimeout(350);
+			if (!(await editBtn.isDisabled().catch(() => true))) return;
+		}
+	}
+};
+
 export const editButtonVisible = async () => {
 	await verifyElementIsVisible(ContactsLeadsPage.editButtonCss);
 };
