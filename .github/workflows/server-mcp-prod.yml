@@ -53,10 +53,24 @@ jobs:
         run: 'sudo apt-get update && sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@v2
+        # Pin snapcraft 7.x: 8.0+ renamed the `snap` command to `pack`, but electron-builder's
+        # app-builder still invokes `snapcraft snap` (ERR_ELECTRON_BUILDER_CANNOT_EXECUTE). 7.x keeps
+        # the `snap` command and still supports the core22 base.
+        run: sudo snap install snapcraft --classic --channel=7.x/stable
+
+      - name: Use Python 3.11 for native rebuilds (Linux)
+        # node-gyp's gyp eval()-parses Electron 38's common.gypi; Python 3.12's stricter tokenizer
+        # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
+        # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine.
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
       - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
+        run: |
+          python3 -m pip install packaging setuptools
+          echo "npm_config_python=$(which python3.11)" >> "$GITHUB_ENV"
+          echo "PYTHON=$(which python3.11)" >> "$GITHUB_ENV"
 
       - name: Install latest version of NPM
         run: 'sudo npm install -g npm@11.6.2'
@@ -164,13 +178,27 @@ jobs:
           sudo gem install --no-document fpm
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@v2
+        # Pin snapcraft 7.x: 8.0+ renamed the `snap` command to `pack`, but electron-builder's
+        # app-builder still invokes `snapcraft snap` (ERR_ELECTRON_BUILDER_CANNOT_EXECUTE). 7.x keeps
+        # the `snap` command and still supports the core22 base.
+        run: sudo snap install snapcraft --classic --channel=7.x/stable
 
       - name: Install Multipass
         run: 'sudo snap install multipass'
 
+      - name: Use Python 3.11 for native rebuilds (Linux)
+        # node-gyp's gyp eval()-parses Electron 38's common.gypi; Python 3.12's stricter tokenizer
+        # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
+        # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine.
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
+        run: |
+          python3 -m pip install packaging setuptools
+          echo "npm_config_python=$(which python3.11)" >> "$GITHUB_ENV"
+          echo "PYTHON=$(which python3.11)" >> "$GITHUB_ENV"
 
       - name: Install latest version of NPM
         run: 'sudo npm install -g npm@11.6.2'
