@@ -48,16 +48,28 @@ export const clickEmployeeDropdown = async () => {
 	// LOAD (combineLatest org+dateRange -> /api/employee/working), NOT on click — so the old
 	// Promise.all([waitForResponse('/api/employee/working'), click]) hung 24s waiting for a request that
 	// already fired. A coordinate click is also backdrop-blockable. Open via keyboard instead.
+	await waitForSpinnerGone();
 	const input = getPage().locator(AppointmentsPage.employeeDropdownCss).locator('input').first();
 	await input.focus();
 	await getPage().keyboard.press('ArrowDown');
 };
 
 export const selectEmployeeFromDropdown = async (text: string) => {
-	// Typeahead-filter the open ng-select to the target employee, then click the body-level option.
+	// The /api/employee/working fetch that fills [(items)]="employees" fires on page load of the public
+	// /share/employee page and resolves ASYNC. If we type the employee name before the list is populated,
+	// ng-select shows "No items found" and never re-filters once the data arrives (the panel snapshot
+	// showed exactly this: combobox already holding the typed name + "No items found"). So FIRST wait for
+	// the dropdown panel to actually render at least one option (the list loaded), THEN typeahead-filter.
 	const input = getPage().locator(AppointmentsPage.employeeDropdownCss).locator('input').first();
+	const options = getPage().locator(AppointmentsPage.employeeDropdownOptionsCss);
+	// Wait for the working-employees list to populate (seeded admin + the just-added employee).
+	await options.first().waitFor({ state: 'visible', timeout: 24_000 }).catch(() => {});
+	// Now narrow to the target employee; searchFn matches first/last name (see EmployeeSelectorComponent).
 	await input.pressSequentially(text);
-	await clickElementByText(AppointmentsPage.employeeDropdownOptionsCss, text);
+	// The filtered option may not be the first match — filter by text then click the body-level option.
+	const target = options.filter({ hasText: text }).first();
+	await target.waitFor({ state: 'visible', timeout: 24_000 });
+	await target.click({ force: true });
 };
 // End of Employee select functions
 

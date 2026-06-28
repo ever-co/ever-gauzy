@@ -1,5 +1,4 @@
 import { test } from './support/fixtures';
-import { getPage } from './support/page-context';
 import * as loginPage from './support/pages/Login.po';
 import { LoginPageData } from '../src/support/Base/pagedata/LoginPageData';
 import * as teamsTasksPage from './support/pages/TeamsTasks.po';
@@ -30,7 +29,11 @@ test.describe('Add teams tasks test', () => {
 				organizationTeamsPage,
 				OrganizationTeamsPageData
 			);
-			await getPage().goto('/#/pages/tasks/team');
+			// A bare goto('/#/pages/tasks/team') right after addTeam (which ends on
+			// /#/pages/organization/teams) is a same-document hash NO-OP: the SPA stays on the teams grid
+			// and the Add click would re-open the teams dialog, so ga-project-selector never renders. Force
+			// the hash through the router and wait for the Team's Tasks screen to mount. (Playbook pattern 8.)
+			await teamsTasksPage.navigateToTeamsTasks();
 			await teamsTasksPage.gridBtnExists();
 			await teamsTasksPage.gridBtnClick(1);
 			await teamsTasksPage.addTaskButtonVisible();
@@ -146,7 +149,9 @@ test.describe('Add teams tasks test', () => {
 			await teamsTasksPage.confirmDeleteTaskButtonVisible();
 			await teamsTasksPage.clickConfirmDeleteTaskButton();
 			await teamsTasksPage.waitMessageToHide();
-			await teamsTasksPage.verifyTaskIsDeleted();
+			// Scope the deleted-check to the edited task's title (the row we just removed) so leftover rows
+			// from intra-run pollution don't flake the assertion. (Round 3 anti-pollution guidance.)
+			await teamsTasksPage.verifyTaskIsDeleted(TeamsTasksPageData.editTaskTitle);
 		});
 	});
 });

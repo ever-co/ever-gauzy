@@ -103,6 +103,9 @@ test.describe('Manage employees test', () => {
 
 		await test.step('Should be able to edit employee', async () => {
 			await manageEmployeesPage.tableRowVisible();
+			// Fresh seed renders Super Admin + Default Employee ahead of the new employee, so filter the
+			// grid by name to make the created employee row 0 before selecting it.
+			await manageEmployeesPage.searchEmployeeByName(`${firstName} ${lastName}`);
 			await manageEmployeesPage.selectTableRow(0);
 			await manageEmployeesPage.editButtonVisible();
 			await manageEmployeesPage.clickEditButton();
@@ -127,6 +130,9 @@ test.describe('Manage employees test', () => {
 
 		await test.step('Should be able to end work', async () => {
 			await manageEmployeesPage.waitMessageToHide();
+			// Back-navigation from edit re-inits the grid (filter cleared), so re-filter by name to keep
+			// the created employee as row 0 (a seeded admin shows "Not Started" with no End Work button).
+			await manageEmployeesPage.searchEmployeeByName(`${firstName} ${lastName}`);
 			await manageEmployeesPage.selectTableRow(0);
 			await manageEmployeesPage.endWorkButtonVisible();
 			await manageEmployeesPage.clickEndWorkButton();
@@ -136,6 +142,8 @@ test.describe('Manage employees test', () => {
 
 		await test.step('Should be able to delete employee', async () => {
 			await manageEmployeesPage.waitMessageToHide();
+			// Re-filter by name so the created employee is row 0 for the delete selection.
+			await manageEmployeesPage.searchEmployeeByName(`${firstName} ${lastName}`);
 			await manageEmployeesPage.selectTableRow(0);
 			await manageEmployeesPage.deleteButtonVisible();
 			await manageEmployeesPage.clickDeleteButton();

@@ -66,8 +66,8 @@ export const selectTagFromDropdown = async (index: number) => {
 	// land on the dialog backdrop and DISMISS the whole payment form — the exact failure here: by the
 	// next step (clickCardBody) the dialog was already gone and the footer click timed out. So select via
 	// the KEYBOARD only (ArrowDown to highlight, Enter to toggle — multiple+closeOnSelect=false), which
-	// never touches the backdrop, then Escape to close the panel. If no option renders within ~8s, just
-	// Escape and continue — the record saves without a tag.
+	// never touches the backdrop. We DON'T close the panel here — clickCardBody (next step) issues the
+	// single Escape that closes it. If no option renders within ~8s, just continue — tags are optional.
 	const page = getPage();
 	const tagInput = page.locator(`${PaymentsPage.addTagsDropdownCss} input`).first();
 	const option = page.locator(PaymentsPage.tagsDropdownOption);
@@ -81,8 +81,11 @@ export const selectTagFromDropdown = async (index: number) => {
 	} catch {
 		/* tag list never rendered — tags are optional, continue */
 	}
-	// Close the (closeOnSelect=false) tags panel without clicking the backdrop.
-	await page.keyboard.press('Escape').catch(() => {});
+	// Do NOT press Escape here. The payment dialog opens with Nebular's default closeOnEsc=true, so an
+	// Escape with no open dropdown closes the WHOLE form. clickCardBody (the very next step) presses a
+	// single Escape to close this (closeOnSelect=false) tags panel — mirroring the verified-green Expenses
+	// flow where exactly ONE Escape is issued. Two Escapes (here + clickCardBody) would dismiss the dialog
+	// and the next field (projectId) would never be found.
 };
 
 export const projectDropdownVisible = async () => {

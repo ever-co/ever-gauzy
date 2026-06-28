@@ -1,5 +1,4 @@
 import { test } from './support/fixtures';
-import { getPage } from './support/page-context';
 import * as loginPage from './support/pages/Login.po';
 import { LoginPageData } from '../src/support/Base/pagedata/LoginPageData';
 import * as organizationEquipmentPage from './support/pages/OrganizationEquipment.po';
@@ -18,7 +17,11 @@ test.describe('Organization equipment test', () => {
 				organizationTagsUserPage,
 				OrganizationTagsPageData
 			);
-			await getPage().goto('/#/pages/organization/equipment');
+			// Robust hash navigation: a bare goto() right after the addTag CustomCommand (ends on the
+			// tags route) is a same-document no-op, leaving the page on the tags screen where the shared
+			// Add button selector also matches. navigateToEquipment forces the hash + waits for the
+			// equipment grid header so the Add click lands on the equipment page (root cause #8).
+			await organizationEquipmentPage.navigateToEquipment();
 			await organizationEquipmentPage.gridBtnExists();
 			await organizationEquipmentPage.gridBtnClick(1);
 			await organizationEquipmentPage.addEquipmentButtonVisible();

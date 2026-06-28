@@ -35,22 +35,31 @@ export const clickAddNewPositionButton = async () => {
 	// dismiss it after a goto() because focus is on <body>, not the overlay, so NbDialog's closeOnEsc
 	// keydown handler never fires. Instead dispatch a click straight at the tags dialog's own close
 	// control (its Cancel button / X icon both call closeDialog()), which fires regardless of focus or a
-	// fading backdrop, then wait for the dialog component to fully detach before clicking Add.
+	// fading backdrop, and retry until ngx-tags-mutation detaches (mirrors the proven AddEmployeeLevel
+	// flow) before clicking Add.
 	const page = getPage();
 	const tagsDialog = page.locator('ngx-tags-mutation').first();
-	if (await tagsDialog.count()) {
-		// Cancel button in the dialog footer (status="basic"); fall back to the header X icon.
-		await page
-			.locator('ngx-tags-mutation nb-card-footer button[status="basic"]')
-			.first()
-			.dispatchEvent('click')
-			.catch(() => undefined);
-		await page.locator('ngx-tags-mutation span.cancel i').first().dispatchEvent('click').catch(() => undefined);
+	for (let i = 0; i < 4; i++) {
+		if ((await tagsDialog.count()) === 0) break;
+		// Cancel button (status="basic" outline) and the X icon both call closeDialog().
+		await dispatchClick('ngx-tags-mutation nb-card-footer button[status="basic"]').catch(() => undefined);
+		await dispatchClick('ngx-tags-mutation .cancel i').catch(() => undefined);
 		await page.keyboard.press('Escape').catch(() => undefined);
-		await tagsDialog.waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined);
+		await tagsDialog.waitFor({ state: 'detached', timeout: 3000 }).catch(() => undefined);
 	}
 	await verifyElementIsVisible(AddEmployeePositionPage.addNewPositionButtonCss);
 	await dispatchClick(AddEmployeePositionPage.addNewPositionButtonCss);
+	// Confirm the add-position dialog actually opened; if a fading backdrop swallowed the first dispatch,
+	// re-dispatch once. The caller's newPositionInputVisible() then asserts the Position name input.
+	const opened = await page
+		.locator(AddEmployeePositionPage.newPositionInputCss)
+		.first()
+		.waitFor({ state: 'visible', timeout: 6000 })
+		.then(() => true)
+		.catch(() => false);
+	if (!opened) {
+		await dispatchClick(AddEmployeePositionPage.addNewPositionButtonCss);
+	}
 };
 
 export const cancelNewPositionButtonVisible = async () => {

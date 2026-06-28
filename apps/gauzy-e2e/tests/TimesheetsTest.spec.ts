@@ -1,5 +1,4 @@
 import { test } from './support/fixtures';
-import { getPage } from './support/page-context';
 import * as loginPage from './support/pages/Login.po';
 import { LoginPageData } from '../src/support/Base/pagedata/LoginPageData';
 import * as timesheetsPage from './support/pages/Timesheets.po';
@@ -72,7 +71,10 @@ test.describe('Timesheets test', () => {
 				ClientsData
 			);
 			await CustomCommands.addTask(addTaskPage, AddTasksPageData);
-			await getPage().goto('/#/pages/employees/timesheets/daily');
+			// addTask ends on /#/pages/tasks/dashboard; a bare hash goto() to the timesheets route is a
+			// same-document no-op (Angular hash-router never re-renders). Force the hash + wait for the
+			// daily screen to mount before interacting. (ROOT CAUSE #8.)
+			await timesheetsPage.navigateToDaily();
 			await timesheetsPage.addTimeButtonVisible();
 			await timesheetsPage.clickAddTimeButton();
 			await timesheetsPage.dateInputVisible();

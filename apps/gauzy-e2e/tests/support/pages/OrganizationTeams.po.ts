@@ -28,7 +28,26 @@ export const addTeamButtonVisible = async () => {
 };
 
 export const clickAddTeamButton = async () => {
-	await clickButton(OrganizationTeamsPage.addTeamButtonCss);
+	// Clicked right after the addTag prerequisite: a leftover/re-opened "Add Tags" nb-dialog can still
+	// be mounted with its cdk backdrop intercepting the toolbar "Add" so ga-teams-mutation never opens.
+	// Dismiss any leftover tags dialog, dispatch the Add click (bypasses the fading backdrop), then
+	// confirm the team mutation form opened — retry the click once if it didn't.
+	const page = getPage();
+	for (let i = 0; i < 3 && (await page.locator('ngx-tags-mutation').count()) > 0; i++) {
+		await page.keyboard.press('Escape').catch(() => undefined);
+		await page.locator('ngx-tags-mutation').first().waitFor({ state: 'detached', timeout: 4000 }).catch(() => undefined);
+	}
+	await waitForSpinnerGone();
+	await dispatchClick(OrganizationTeamsPage.addTeamButtonCss);
+	const mutation = page.locator('ga-teams-mutation');
+	const opened = await mutation
+		.first()
+		.waitFor({ state: 'visible', timeout: 8000 })
+		.then(() => true)
+		.catch(() => false);
+	if (!opened) {
+		await dispatchClick(OrganizationTeamsPage.addTeamButtonCss);
+	}
 };
 
 export const nameInputVisible = async () => {

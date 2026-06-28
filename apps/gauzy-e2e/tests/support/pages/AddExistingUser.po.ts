@@ -15,11 +15,30 @@ export const addExistingUsersButtonVisible = async () => {
 };
 
 export const clickAddExistingUsersButton = async () => {
-	// Called both on first load and again right after the remove-confirmation dialog closes +
-	// the grid reloads (getUsers spinner). Settle the spinner and dispatch the click straight at
-	// the element so a fading cdk-overlay backdrop from the closed dialog can't intercept it.
+	// "Add Existing" calls toggleAddCard() (showAddCard = !showAddCard), so this is a TOGGLE, not an
+	// idempotent open. On the second call (right after the remove-confirmation dialog closes) the
+	// users.component fires a debounced subject$ pipeline whose `tap(() => this.cancel())` sets
+	// showAddCard back to false ~300ms+ later. If we toggle the card open inside that window the
+	// deferred cancel() immediately closes it again and the add form (nb-select[multiple]) never
+	// renders. So: (1) settle the post-remove getUsers spinner + network + a fixed wait so that
+	// deferred cancel() has already run, THEN (2) toggle and poll the real form state — if the
+	// nb-select didn't appear (toggle landed while card was open, or a stray cancel undid it),
+	// toggle again. dispatchClick bypasses any fading cdk-overlay backdrop from the closed dialog.
 	await waitForSpinnerGone();
-	await dispatchClick(AddExistingUserPage.addUserButtonCss);
+	await getPage().waitForLoadState('networkidle').catch(() => {});
+	await getPage().waitForTimeout(1500);
+
+	const multiSelect = getPage().locator(AddExistingUserPage.usersMultiSelectCss).first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await dispatchClick(AddExistingUserPage.addUserButtonCss);
+		try {
+			await multiSelect.waitFor({ state: 'visible', timeout: 4_000 });
+			return; // card is open and the add form rendered
+		} catch {
+			// toggle either closed an already-open card or a deferred cancel() undid it — retry
+			await getPage().waitForTimeout(500);
+		}
+	}
 };
 
 export const tableBodyExists = async () => {
@@ -61,6 +80,12 @@ export const clickUsersMultiSelect = async () => {
 };
 
 export const selectUsersFromDropdown = async (text: string) => {
+	// The nb-select option overlay (`.option-list nb-option`) is rendered in a cdk overlay only after
+	// the control opens; wait for the specific user's option to attach before clicking so we don't
+	// race the overlay animation. Super Admin was just removed from the org, so it IS back in the
+	// add-existing list (_loadUsers excludes only users still in this org + EMPLOYEE role).
+	const option = getPage().locator(AddExistingUserPage.checkUsersMultiSelectCss).filter({ hasText: text }).first();
+	await option.waitFor({ state: 'visible', timeout: 8_000 }).catch(() => {});
 	await clickElementByText(AddExistingUserPage.checkUsersMultiSelectCss, text);
 };
 

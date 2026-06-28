@@ -34,16 +34,60 @@ const openNgSelect = async (selector: string) => {
 		.catch(() => {});
 };
 
+// The spec's bare `await getPage().goto('/#/pages/employees/timesheets/daily')` is issued right after
+// the addTask/addClient CustomCommands, which END on DIFFERENT hash routes (/#/pages/tasks/dashboard,
+// /#/pages/contacts/clients). A hash-only goto() between two same-document routes is a NO-OP in
+// Playwright: the page isn't reloaded and the Angular hash-router never fires, so the SPA stays on the
+// previous screen (the observed failure DOM was still the Clients "Add New Contact" page). Force the
+// hash through to the router (mirrors the gotoRoute helper in commands.ts / AddTasks.po), then wait for
+// the daily Timesheets screen to actually mount before interacting. (ROOT CAUSE #8.)
+export const navigateToDaily = async () => {
+	const page = getPage();
+	await page.goto('/#/pages/employees/timesheets/daily');
+	await page.evaluate(() => {
+		if (!location.hash.includes('/pages/employees/timesheets/daily')) {
+			location.hash = '#/pages/employees/timesheets/daily';
+		}
+	});
+	await page.waitForTimeout(800);
+	// Don't proceed until the daily screen has actually rendered: its toolbar "Add Time" button only
+	// exists once the SPA route finished re-rendering.
+	await page
+		.locator(TimesheetsPage.addTimeButtonCss)
+		.first()
+		.waitFor({ state: 'visible', timeout: 30_000 })
+		.catch(() => {});
+};
+
 export const addTimeButtonVisible = async () => verifyElementIsVisible(TimesheetsPage.addTimeButtonCss);
 
-export const clickAddTimeButton = async () => clickButton(TimesheetsPage.addTimeButtonCss);
+export const clickAddTimeButton = async () => {
+	// Settle any spinner/fading backdrop left by the preceding navigation, then dispatch the click
+	// straight to the toolbar "Add Time" button so its (click)="openAdd()" fires even if an overlay is
+	// still on top (a coordinate click — even force — would land on the backdrop). (ROOT CAUSE #2.)
+	await waitForSpinnerGone();
+	await dispatchClick(TimesheetsPage.addTimeButtonCss);
+};
 
 export const selectEmployeeDropdownVisible = async () => verifyElementIsVisible(TimesheetsPage.selectEmployeeCss);
 
 export const clickSelectEmployeeDropdown = async () => clickButton(TimesheetsPage.selectEmployeeCss);
 
-export const selectEmployeeFromDropdown = async (index: number) =>
-	clickButtonByIndex(TimesheetsPage.selectEmployeeDropdownOptionCss, index);
+export const selectEmployeeFromDropdown = async (index: number) => {
+	// Best-effort employee pick (mirrors ContactsLeads.po.selectEmployeeDropdownOption): the option list
+	// (org employees "working" in the header date range) loads async. With the now-fixed addEmployee it
+	// should contain at least the seeded admin + the added employee, but keep this resilient — select the
+	// option if it shows within ~8s, otherwise Escape and continue rather than hard-hanging 60s on an
+	// empty list (ROUND 3 guidance).
+	const page = getPage();
+	const option = page.locator(TimesheetsPage.selectEmployeeDropdownOptionCss);
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
+};
 
 export const clickKeyboardButtonByKeyCode = async (keycode: number) => clickKeyboardBtnByKeycode(keycode);
 

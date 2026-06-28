@@ -11,13 +11,31 @@ import {
 	getLastElement,
 	waitElementToHide,
 	verifyText,
-	verifyElementNotExist,
+	verifyTextNotExisting,
 	dispatchClick,
 	waitForSpinnerGone
 } from '../util';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { CandidatesPage } from '../../../src/support/Base/pageobjects/CandidatesPageObject';
+
+export const openCandidatesPage = async () => {
+	// Mirror commands.ts gotoRoute: the spec reaches here straight after addTag (which ends on
+	// /#/pages/organization/tags). goto() to a different hash on the same document is a no-op for the
+	// Angular hash-router, so drive the hash change in-page, then wait for the candidates header to
+	// render before any control is touched.
+	await getPage().goto('/#/pages/employees/candidates');
+	await getPage().evaluate(() => {
+		if (!location.hash.includes('/pages/employees/candidates')) {
+			location.hash = '#/pages/employees/candidates';
+		}
+	});
+	await getPage().waitForTimeout(800);
+	await getPage()
+		.locator('h4 ngx-header-title:has-text("Manage Candidates")')
+		.first()
+		.waitFor({ state: 'visible', timeout: 30000 });
+};
 
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
@@ -64,14 +82,24 @@ export const selectTableRowVisible = async () => {
 	await verifyElementIsVisible(CandidatesPage.selectTableRowCss);
 };
 
-export const selectTableRow = async (index) => {
+export const selectTableRow = async (target) => {
 	// Selecting a grid row TOGGLES selection and enables the toolbar (Edit/Archive/Reject). Settle
 	// the grid first, then click ONCE and poll the Edit button's real `disabled` attr — only
 	// re-click if selection was lost. Never rapid re-click (that toggles it back off).
+	//
+	// `target` is the candidate's FULL NAME (string). The DB is fresh-seeded but intra-run pollution
+	// can leave OTHER candidate rows; row 0 is therefore unreliable (a polluted HIRED/REJECTED row at
+	// index 0 would have no toolbar Reject button, which is gated on status === APPLIED). Scope the
+	// row to the candidate we just created by filtering on its `a.link-text` name. A numeric `target`
+	// still falls back to nth() for backward compatibility.
 	await waitForSpinnerGone();
 	await getPage().waitForLoadState('networkidle').catch(() => {});
 	await getPage().waitForTimeout(1500);
-	const row = getPage().locator(CandidatesPage.selectTableRowCss).nth(index);
+	const rows = getPage().locator(CandidatesPage.selectTableRowCss);
+	const row =
+		typeof target === 'number'
+			? rows.nth(target)
+			: rows.filter({ has: getPage().locator(CandidatesPage.verifyCandidateCss, { hasText: target }) }).first();
 	const editBtn = getPage().locator(CandidatesPage.editButtonCss).first();
 	await row.click({ force: true });
 	for (let i = 0; i < 5; i++) {
@@ -430,8 +458,11 @@ export const verifyCandidateExists = async (text) => {
 	await verifyText(CandidatesPage.verifyCandidateCss, text);
 };
 
-export const verifyElementIsDeleted = async () => {
-	await verifyElementNotExist(CandidatesPage.verifyCandidateCss);
+export const verifyElementIsDeleted = async (text) => {
+	// After archiving, the candidate leaves the default (non-archived) grid. Asserting that NO
+	// `a.link-text` remains breaks under intra-run pollution (other candidates' links survive); scope
+	// the "is gone" check to the candidate we created by name instead of the whole grid.
+	await verifyTextNotExisting(CandidatesPage.verifyCandidateCss, text);
 };
 
 export const verifyBadgeClass = async () => {

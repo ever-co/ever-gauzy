@@ -53,7 +53,24 @@ test.describe('Estimates test', () => {
 				contactsLeadsPage,
 				ContactsLeadsPageData
 			);
+			// addContact ends on /#/pages/contacts/leads, so a bare hash goto to the estimates route is
+			// frequently a SAME-DOCUMENT NO-OP (Playwright doesn't reload, the Angular hash-router never
+			// re-renders) — the page stays on the Leads screen and the estimates Add button is never found
+			// (the Leads add button is ALSO a status="success" button, so addButtonVisible would still
+			// resolve against the wrong screen). Mirror the gotoRoute helper: force the hash when goto()
+			// didn't take, settle, then wait for the Estimates grid header before interacting.
 			await getPage().goto('/#/pages/accounting/invoices/estimates');
+			await getPage().evaluate(() => {
+				if (!location.hash.includes('/pages/accounting/invoices/estimates')) {
+					location.hash = '#/pages/accounting/invoices/estimates';
+				}
+			});
+			await getPage().waitForTimeout(800);
+			await getPage()
+				.locator('nb-card-header.card-header-title:has-text("Estimates")')
+				.first()
+				.waitFor({ state: 'visible', timeout: 30000 })
+				.catch(() => {});
 			await estimatesPage.gridBtnExists();
 			await estimatesPage.gridBtnClick(1);
 			await estimatesPage.addButtonVisible();

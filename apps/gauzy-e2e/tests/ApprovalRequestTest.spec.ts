@@ -1,5 +1,4 @@
 import { test } from './support/fixtures';
-import { getPage } from './support/page-context';
 import * as loginPage from './support/pages/Login.po';
 import { LoginPageData } from '../src/support/Base/pagedata/LoginPageData';
 import * as approvalRequestPage from './support/pages/ApprovalRequest.po';
@@ -40,7 +39,9 @@ test.describe('Approval request test', () => {
 				password,
 				imgUrl
 			);
-			await getPage().goto('/#/pages/employees/approvals');
+			// Hash-forced navigation: a bare goto() here (right after addEmployee, which ends on
+			// /#/pages/employees) is a same-document no-op that leaves the DOM on Manage Employees.
+			await approvalRequestPage.gotoApprovals();
 			await approvalRequestPage.approvalPolicyButtonVisible();
 			await approvalRequestPage.clickApprovalPolicyButton();
 			await approvalRequestPage.gridBtnExists();

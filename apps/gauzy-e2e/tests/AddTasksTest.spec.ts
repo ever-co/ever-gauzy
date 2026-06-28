@@ -1,5 +1,4 @@
 import { test } from './support/fixtures';
-import { getPage } from './support/page-context';
 import * as loginPage from './support/pages/Login.po';
 import { LoginPageData } from '../src/support/Base/pagedata/LoginPageData';
 import * as addTaskPage from './support/pages/AddTasks.po';
@@ -43,7 +42,11 @@ test.describe('Add tasks test', () => {
 				password,
 				imgUrl
 			);
-			await getPage().goto('/#/pages/tasks/dashboard');
+			// Force the hash route through the Angular router: a bare goto() right after addEmployee
+			// (which ends on /#/pages/employees) is a same-document no-op and leaves the employees grid
+			// mounted, so the Add click would re-open the employee dialog and ga-project-selector never
+			// renders. (Playbook pattern 8.)
+			await addTaskPage.navigateToTasksDashboard();
 			await addTaskPage.gridBtnExists();
 			await addTaskPage.gridBtnClick(1);
 			await addTaskPage.addTaskButtonVisible();

@@ -13,10 +13,24 @@ export const GoalsPage = {
 	ownerDropdownCss: '[formcontrolname="ownerId"]',
 	dropdownOptionCss: '.option-list nb-option',
 	leadDropdownCss: '#objective-lead',
+	// The objective form's "deadline" (time frame) is a REQUIRED nb-select (deadline:
+	// ['', Validators.required]); without picking one the Save button stays disabled and no goal is
+	// created. The seed always provides active future time frames (Annual-<year> + quarters), so the
+	// select renders options under `.option-list nb-option`.
+	deadlineDropdownCss: '#objective-deadline',
+	// The selectable key-result ROW inside the expanded accordion body — clicking it fires
+	// onClickKeyResult, which selects the key result so the toolbar swaps to the key-result actions
+	// (View / Edit / Weight%). The "Add new Key Result" body button is a sibling without this class.
+	keyResultRowCss: '.goals-container nb-accordion-item-body div.keyResult',
 	timeframeOptionCss: 'div.col-md-4 > nb-list[role="list"] nb-list-item',
 	confirmButtonCss: 'nb-card-footer > button[status="success"]',
 	editButtonCss: '.gauzy-button-container button.action.primary',
 	viewButtonCss: '.gauzy-button-container button.action.secondary',
+	// The objective actions template's Delete button is the only toolbar button bound to
+	// [disabled]="!selectedGoal.isSelected" — its real `disabled` attr is a reliable "objective is
+	// selected" signal that survives the toolbar's translateX hide trick (which fools Playwright's
+	// isVisible). The key-result template's delete has no such binding.
+	objectiveDeleteButtonCss: '.gauzy-button-container .btn-group.actions button.action:has(nb-icon[status="danger"])',
 	deleteButtonCss: 'nb-card-header .button-container button:has(nb-icon[status="danger"])',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	keyResultInputCss: '#key-result-title',

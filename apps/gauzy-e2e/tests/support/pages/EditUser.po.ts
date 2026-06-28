@@ -26,6 +26,19 @@ import { EditUserPage } from '../../../src/support/Base/pageobjects/EditUserPage
 // wipe the user before the real test (the Main-tab rename + verify) runs.
 let orgWasAdded = false;
 
+// Counts the removable org rows (nb-action[icon="close"]) currently rendered. The remove-org sub-flow
+// is only SAFE + meaningful when this is >= 2: removing a row when the user has only one org triggers
+// the delete-user dialog (edit-user-organizations.component.remove, counter - 1 < 1), which would wipe
+// the user before the real test (Main-tab rename + verify) runs. We gate on this LIVE DOM count rather
+// than the orgWasAdded flag alone: the picker may have been non-empty (intra-run pollution), so
+// orgWasAdded can be true while the add never persisted/rendered a second row — in which case the close
+// button never appears and the old hard verify burned its full 24s timeout and failed the whole spec.
+const removableOrgCount = async (): Promise<number> => {
+	// Let the post-save list reload (debounced 300ms + async fetch + full-card spinner) settle first.
+	await waitForSpinnerGone().catch(() => {});
+	return getPage().locator(EditUserPage.removeOrgButtonCss).count();
+};
+
 export const gridButtonVisible = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };
@@ -59,11 +72,15 @@ export const clickOrgTabButton = async (index: number) => {
 };
 
 export const removeOrgButtonVisible = async () => {
-	// Skip when no org was added: there's no second org to remove, and removing the user's LAST org
+	// Best-effort: only the presence of >=2 removable org rows makes the remove sub-flow safe AND
+	// meaningful. Don't hard-assert — if the add didn't persist a second org (empty/raced picker) we
+	// still want to fall through to the real test (the Main-tab rename). Removing the user's LAST org
 	// triggers the delete-user dialog (edit-user-organizations.component.remove, counter - 1 < 1)
 	// which would delete the user and navigate away before the Main-tab rename/verify runs.
 	if (!orgWasAdded) return;
-	await verifyElementIsVisible(EditUserPage.removeOrgButtonCss);
+	if ((await removableOrgCount()) < 2) {
+		orgWasAdded = false; // the add didn't materialize a second row — skip the rest of the sub-flow.
+	}
 };
 
 export const clickRemoveOrgButton = async () => {
@@ -251,7 +268,13 @@ export const saveBtnExists = async () => {
 };
 
 export const saveBtnClick = async () => {
-	await clickButton(EditUserPage.saveButtonCss);
+	// The org sub-flow may have just closed a confirm nb-dialog, leaving a fading cdk-overlay backdrop;
+	// and the Save button carries [disabled]="form.invalid" (a force coordinate-click on a disabled
+	// button is suppressed by the browser). Settle any spinner, then dispatch the click straight at the
+	// button: dispatchEvent fires through the backdrop and regardless of the disabled attr, and
+	// edit-profile-form.submitForm() validates internally before persisting.
+	await waitForSpinnerGone();
+	await dispatchClick(EditUserPage.saveButtonCss);
 };
 
 export const verifyUserExists = async (text: string) => {

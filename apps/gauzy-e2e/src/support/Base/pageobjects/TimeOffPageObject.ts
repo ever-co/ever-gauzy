@@ -1,5 +1,14 @@
 export const TimeOffPage = {
-	requestButtonCss: 'div.actions-container button[status="success"]',
+	// Scope the Request "Add" to the time-off-only calendar icon. The bare
+	// 'div.actions-container button[status="success"]' ALSO matches the employees-page "Add" button
+	// (same gauzy-button-action markup). When the goto() to time-off is a same-document hash no-op (the
+	// employees grid is still mounted for a beat after addEmployee), the bare selector matched the
+	// employees Add and re-opened the Add Employee dialog, whose backdrop then blocked the request
+	// dialog from ever rendering (the round-3 failure). The calendar-outline icon is unique to time-off.
+	requestButtonCss: 'div.actions-container button[status="success"]:has(nb-icon[icon="calendar-outline"])',
+	// Time-off-only header marker used to confirm the SPA actually rendered the time-off screen before
+	// we interact (the employees toolbar has no "Add Holidays" info button / calendar Add).
+	timeOffPageReadyCss: 'div.actions-container button.action.info:has(nb-icon[icon="plus-outline"])',
 	employeeDropdownCss: 'ngx-time-off-request-mutation ga-employee-selector.employees',
 	employeeDropdownOptionCss: 'div.ng-option[role="option"]',
 	timeOffPolicyDropdownCss: 'nb-select[id="policy"]',

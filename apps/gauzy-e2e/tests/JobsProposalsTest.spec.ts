@@ -60,6 +60,10 @@ test.describe('Job proposals test', () => {
 			await jobProposalsPage.selectTableRow(0);
 			await jobProposalsPage.deleteButtonVisible();
 			await jobProposalsPage.clickDeleteButton();
+			// Delete is a two-step confirmation: the trash button opens ConfirmComponent (Yes/No), and only on
+			// "Yes" does deleteProposalTemplate() open the second DeleteConfirmationComponent (Cancel/OK).
+			await jobProposalsPage.confirmFirstDialogVisible();
+			await jobProposalsPage.clickConfirmFirstDialogButton();
 			await jobProposalsPage.confirmDeleteButtonVisible();
 			await jobProposalsPage.clickConfirmDeleteButton();
 			await jobProposalsPage.waitMessageToHide();

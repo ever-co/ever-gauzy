@@ -8,8 +8,11 @@ import {
 	verifyValue,
 	clickButtonByIndex,
 	waitElementToHide,
+	waitForSpinnerGone,
+	dispatchClick,
 	verifyText
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { EditEmployeePage } from '../../../src/support/Base/pageobjects/EditEmployeePageObject';
 
@@ -216,10 +219,27 @@ export const projectOrContactDropdownVisible = async () => {
 };
 
 export const clickProjectOrContactDropdown = async () => {
-	await clickButton(EditEmployeePage.projectOrContactsDropdownCss);
+	// no-op open: this is an ng-select (#departmentsSelect, appendTo="body") that opens on MOUSEDOWN.
+	// A coordinate/force click only focuses the control (combobox goes [active]) but the cdk overlay
+	// panel never renders, so its 'div.ng-option' options never appear (the round-2 timeout). The
+	// keyboard open below (in selectProjectOrContactFromDropdown) drives the panel reliably, so this
+	// wrapper is intentionally inert to avoid the focus-only click closing/no-opening the panel.
 };
 
 export const selectProjectOrContactFromDropdown = async (index: number) => {
+	const page = getPage();
+	const control = page.locator(EditEmployeePage.projectOrContactsDropdownCss);
+	const input = control.locator('input').first();
+	const option = page.locator(EditEmployeePage.projectOrContactDropdownOptionCss);
+	// Open the ng-select via the keyboard (focus the search input + ArrowDown), NOT a click: ng-select
+	// opens on mousedown and a leftover stepper/dialog backdrop swallows a coordinate click, so the
+	// option panel never rendered. Retry the focus+ArrowDown until 'div.ng-option' shows, then pick it.
+	for (let i = 0; i < 6; i++) {
+		if (await option.first().isVisible().catch(() => false)) break;
+		await input.focus().catch(() => {});
+		await page.keyboard.press('ArrowDown').catch(() => {});
+		await page.waitForTimeout(700);
+	}
 	await clickButtonByIndex(EditEmployeePage.projectOrContactDropdownOptionCss, index);
 };
 
@@ -228,7 +248,11 @@ export const saveProjectOrContactButtonVisible = async () => {
 };
 
 export const clickSaveProjectOrContactButton = async () => {
-	await clickButton(EditEmployeePage.saveProjectOrContactButtonCss);
+	// dispatchClick: the just-closed ng-select panel leaves a fading cdk overlay over this footer "Add"
+	// button, so a coordinate click lands on the overlay. Dispatch fires submitForm() directly (the
+	// button only gates on form.invalid, which is satisfied once an option is picked).
+	await waitForSpinnerGone();
+	await dispatchClick(EditEmployeePage.saveProjectOrContactButtonCss);
 };
 
 export const verifyProjectOrContactExist = async () => {

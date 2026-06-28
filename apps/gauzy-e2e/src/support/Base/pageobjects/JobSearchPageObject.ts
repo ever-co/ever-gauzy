@@ -1,6 +1,12 @@
 export const JobSearchPage = {
+	// The Job Search title-input only renders inside the "Search" tab (the default active tab is
+	// "Browse"/ACTIONS), so the spec must activate the Search tab first via searchTabCss.
+	searchTabCss: 'a.tab-link',
 	searchInputCss: '[placeholder="Job Search"]',
-	filterButtonCss: 'div.col-auto > button[status="info"]',
+	// The old standalone Filter button (div.col-auto > button[status="info"]) was removed; the
+	// advanced filter is now a set of nb-selects inside the Search tab. Point the "filter visible"
+	// check at the Source filter select (#jobSource), which proves the filter form rendered.
+	filterButtonCss: 'nb-select#jobSource',
 	hideAllButtonCss: 'button:has-text("Hide All")',
 	refreshButtonCss: 'button.refresh-button',
 	nbToggleCss: 'div.toggle',

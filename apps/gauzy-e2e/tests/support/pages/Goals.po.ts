@@ -93,6 +93,22 @@ export const selectLeadFromDropdown = async (index) => {
 	}
 };
 
+export const deadlineDropdownVisible = async () => {
+	await verifyElementIsVisible(GoalsPage.deadlineDropdownCss);
+};
+
+export const clickDeadlineDropdown = async () => {
+	await clickButton(GoalsPage.deadlineDropdownCss);
+};
+
+export const selectDeadlineFromDropdown = async (index) => {
+	// Deadline is a plain nb-select bound via formControlName, so picking any option both fills the
+	// required control and enables Save. Wait for the overlay option to paint, then click it.
+	const option = getPage().locator(GoalsPage.dropdownOptionCss);
+	await option.first().waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
+	await option.nth(index).click({ force: true });
+};
+
 export const confirmButtonVisible = async () => {
 	await verifyElementIsVisible(GoalsPage.confirmButtonCss);
 };
@@ -144,12 +160,83 @@ export const clickTableRow = async (index) => {
 	await waitForSpinnerGone();
 	await getPage().waitForLoadState('networkidle').catch(() => {});
 	await waitUntil(1500);
+	// IDEMPOTENT EXPAND: the header (click) TOGGLES both Nebular's accordion and the component's
+	// selectedGoal, and loadPage() after each mutation never resets selectedGoal (it keeps a stale ref
+	// with the SAME id) — so a single blind click may COLLAPSE an already-expanded item instead of
+	// opening it. Click the header, then verify the expanded body button is visible; only re-click if it
+	// isn't. Never rapid re-click (matches the row-selection playbook). When the body is open the
+	// objective is also selected, which is what the edit/delete steps need.
+	const page = getPage();
 	// Dispatch on the accordion-item-HEADER, not the item: both onClickObjective and Nebular's expand
 	// toggle are host (click) listeners on the header element, and a click dispatched on the parent item
 	// doesn't reach them. (verifyGoalCss is that header selector.)
-	const row = getPage().locator(GoalsPage.verifyGoalCss).nth(index);
+	const row = page.locator(GoalsPage.verifyGoalCss).nth(index);
 	await row.waitFor({ state: 'attached', timeout: 24000 }).catch(() => {});
-	await row.dispatchEvent('click');
+	const body = page.locator(GoalsPage.addKeyResultButtonCss).first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		if (await body.isVisible().catch(() => false)) {
+			return;
+		}
+		await row.dispatchEvent('click');
+		await body.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {});
+	}
+};
+
+export const keyResultRowVisible = async () => {
+	await verifyElementIsVisible(GoalsPage.keyResultRowCss);
+};
+
+export const clickKeyResultRow = async (index) => {
+	// Selecting a key result is what swaps the toolbar from the objective actions to the key-result
+	// actions (View / Edit / Weight%); the objective-header click alone never reveals those, so the
+	// deadline (step 3) and weight (step 4) flows must select the key-result row first. The row (click)
+	// also TOGGLES selectedKeyResult (with a stale same-id ref after loadPage), so do the same idempotent
+	// poll as clickTableRow: dispatch the click, then confirm the key-result-only Weight% button appeared
+	// (it never renders for an objective selection); only re-click if it didn't.
+	await waitForSpinnerGone();
+	await getPage().waitForLoadState('networkidle').catch(() => {});
+	await waitUntil(1000);
+	const page = getPage();
+	const row = page.locator(GoalsPage.keyResultRowCss).nth(index);
+	await row.waitFor({ state: 'attached', timeout: 24000 }).catch(() => {});
+	const keyResultToolbar = page.locator(GoalsPage.weightTypeButtonCss).first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		if (await keyResultToolbar.isVisible().catch(() => false)) {
+			return;
+		}
+		await row.dispatchEvent('click');
+		await keyResultToolbar.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {});
+	}
+};
+
+export const ensureObjectiveSelected = async (index) => {
+	// The edit/delete steps need the OBJECTIVE actions template (Edit -> createObjective(selectedGoal),
+	// View -> openGoalDetails). After the weight/deadline flows a KEY RESULT is still selected, so the
+	// toolbar shows the key-result template (which also has an .action.primary Edit, but it edits the key
+	// result). Click the objective header to toggle selectedGoal until the objective is truly selected.
+	// Two robust signals (Playwright's isVisible is fooled by the toolbar's translateX/overflow hide):
+	//   1. the key-result-only Weight% button is ABSENT  -> not the key-result template; and
+	//   2. the objective Delete button's real `disabled` attr is gone -> selectedGoal.isSelected is true
+	//      (it is bound [disabled]="!selectedGoal.isSelected", so it stays disabled when nothing/only a
+	//      key result is selected). Idempotent, never rapid re-click.
+	await waitForSpinnerGone();
+	await getPage().waitForLoadState('networkidle').catch(() => {});
+	await waitUntil(1500);
+	const page = getPage();
+	const header = page.locator(GoalsPage.verifyGoalCss).nth(index);
+	await header.waitFor({ state: 'attached', timeout: 24000 }).catch(() => {});
+	const weightBtn = page.locator(GoalsPage.weightTypeButtonCss).first();
+	const objectiveDelete = page.locator(GoalsPage.objectiveDeleteButtonCss).first();
+	for (let attempt = 0; attempt < 4; attempt++) {
+		const weightVisible = await weightBtn.isVisible().catch(() => false);
+		const deleteDisabled = await objectiveDelete.getAttribute('disabled').catch(() => 'disabled');
+		// disabled attr present (any value incl. '') => not selected; null => selected.
+		if (!weightVisible && deleteDisabled === null) {
+			return;
+		}
+		await header.dispatchEvent('click');
+		await waitUntil(800);
+	}
 };
 
 export const keyResultInputVisible = async () => {

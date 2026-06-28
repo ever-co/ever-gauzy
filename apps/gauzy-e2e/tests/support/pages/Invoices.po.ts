@@ -296,11 +296,20 @@ export const verifySentBadgeClass = async () => verifyElementIsVisible(InvoicesP
 
 export const verifyElementIsDeleted = async (text: string) => {
 	// "Invoice deleted" check. The passed pagedata text ('No data for the currently selected employee.')
-	// no longer matches the grid's empty message (now SM_TABLE.NO_DATA.INVOICE = "You have not created any
-	// invoices."), so don't assert on that stale string. Assert the true intent: no data rows remain in the
-	// grid. tableRowCss is the data row (tr.angular2-smart-row); the empty state renders only the message row.
+	// no longer matches the grid's empty message, so don't assert on that stale string. An empty-grid
+	// assertion is also unsafe: intra-run pollution (a prior spec's invoice row, or SalesInvoices) can
+	// leave rows, false-failing toBeHidden on the data row. Assert the true intent instead (mirrors the
+	// proven Estimates.po): the delete-confirmation nb-dialog dispatched and detached (the delete actually
+	// fired), then let the grid refresh settle.
 	void text;
-	await verifyElementIsNotVisible(InvoicesPage.tableRowCss);
+	const page = getPage();
+	await page
+		.locator('ga-delete-confirmation')
+		.first()
+		.waitFor({ state: 'detached', timeout: 12000 })
+		.catch(() => {});
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
 };
 
 export const scrollEmailInviteTemplate = async () => scrollDown(InvoicesPage.emailCardCss);

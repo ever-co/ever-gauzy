@@ -4,11 +4,15 @@ export const CustomersPage = {
 	editButtonCss: 'button:has(nb-icon[icon="edit-outline"])',
 	inviteButtonCss: 'button.action.info',
 	deleteButtonCss: 'button:has(nb-icon[icon="trash-2-outline"])',
-	nameInputCss: '[formcontrolname="name"]',
+	// Scope the add/edit stepper Name + Phone to nb-stepper: the invite step opens an NbDialog that,
+	// once closed, lingers in a fading cdk-overlay carrying the SAME formcontrolnames. Unscoped, these
+	// match 2 elements during the later edit step, so clearField()/enterInput() (which don't use
+	// .first()) throw a Playwright strict-mode violation. Mirrors the verified-green ClientsPageObject.
+	nameInputCss: 'nb-stepper [formcontrolname="name"]',
 	emailInputCss: '#email',
 	budgetInputCss: 'input[formcontrolname="budget"]',
 	lastStepBtnCss: 'button[status="success"]:has-text("Save")',
-	phoneInputCss: '[formcontrolname="primaryPhone"]',
+	phoneInputCss: 'nb-stepper [formcontrolname="primaryPhone"]',
 	countryDropdownCss: 'ga-country ng-select',
 	cityInputCss: '[formcontrolname="city"]',
 	postCodeInputCss: '[formcontrolname="postcode"]',

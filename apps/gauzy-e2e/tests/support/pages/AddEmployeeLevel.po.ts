@@ -14,6 +14,29 @@ import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { AddEmployeeLevelPage } from '../../../src/support/Base/pageobjects/AddEmployeeLevelPageObject';
 
+// Navigate to the Employee Level screen. This runs RIGHT AFTER the addTag CustomCommand, which ends on
+// the /#/pages/organization/tags hash route. A bare page.goto('/#/pages/employees/employee-level') is a
+// SAME-DOCUMENT no-op in that case (only the hash fragment differs), so the Angular hash-router never
+// re-renders and the page stays on the Tags screen — the level Add button / Level-name input are never
+// found. Force the hash in-page (mirrors the gotoRoute helper in commands.ts) and wait for the Employee
+// Levels header to render before the caller interacts.
+export const navigateToEmployeeLevel = async () => {
+	const page = getPage();
+	await page.goto('/#/pages/employees/employee-level');
+	await page.evaluate(() => {
+		if (!location.hash.split('?')[0].includes('/pages/employees/employee-level')) {
+			location.hash = '#/pages/employees/employee-level';
+		}
+	});
+	await page.waitForTimeout(800);
+	// Wait for the screen's own header so we don't act mid-route-transition.
+	await page
+		.locator('ngx-header-title:has-text("Level"), h4:has-text("Employee Level")')
+		.first()
+		.waitFor({ state: 'visible', timeout: 30000 })
+		.catch(() => undefined);
+};
+
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };

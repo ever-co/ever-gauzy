@@ -9,6 +9,10 @@ export const ManageEmployeesPage = {
 	addEmployeeButtonCss: 'button[status="success"]:has-text("Add")',
 	editEmployeeButtonCss: 'button.action.primary',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
+	// Full Name column filter input in the smart-table header (tr.angular2-smart-filters). Typing the
+	// created employee's name filters the grid down to just that record so row 0 is the one we created,
+	// not a seeded employee (the fresh seed renders Super Admin + Default Employee ahead of it).
+	nameFilterInputCss: 'th.angular2-smart-th.fullName input',
 	deleteEmployeeButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	endWorkButtonCss: 'button.action.orange',

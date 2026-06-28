@@ -40,7 +40,10 @@ test.describe('Invite candidate test', () => {
 
 		await test.step('Should be able to send invite', async () => {
 			await CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
-			await getPage().goto('/#/pages/employees/candidates');
+			// addTag ends on /#/pages/organization/tags. A bare goto() to another hash route is a
+			// SAME-DOCUMENT no-op (the Angular hash-router never re-renders, leaving the tags screen
+			// mounted), so force the hash + settle, then wait for the candidates header before acting.
+			await inviteCandidatePage.openCandidatesPage();
 			await inviteCandidatePage.gridBtnExists();
 			await inviteCandidatePage.gridBtnClick(1);
 			await inviteCandidatePage.inviteButtonVisible();
@@ -88,7 +91,9 @@ test.describe('Invite candidate test', () => {
 		});
 
 		await test.step('Should be able to reject candidate', async () => {
-			await inviteCandidatePage.selectTableRow(0);
+			// Scope to the candidate we just created (status APPLIED) — the toolbar Reject button is
+			// gated on status === APPLIED, so a polluted non-APPLIED row at index 0 would hide it.
+			await inviteCandidatePage.selectTableRow(`${firstName} ${lastName}`);
 			await inviteCandidatePage.rejectButtonVisible();
 			await inviteCandidatePage.clickRejectButton();
 			await inviteCandidatePage.confirmActionButtonVisible();
@@ -99,7 +104,7 @@ test.describe('Invite candidate test', () => {
 
 		await test.step('Should be able to edit candidate', async () => {
 			await inviteCandidatePage.waitMessageToHide();
-			await inviteCandidatePage.selectTableRow(0);
+			await inviteCandidatePage.selectTableRow(`${firstName} ${lastName}`);
 			await inviteCandidatePage.editButtonVisible();
 			await inviteCandidatePage.clickEditButton();
 			await inviteCandidatePage.saveEditButtonVisible();
@@ -110,13 +115,14 @@ test.describe('Invite candidate test', () => {
 
 		await test.step('Should be able to archive candidate', async () => {
 			await inviteCandidatePage.waitMessageToHide();
-			await inviteCandidatePage.selectTableRow(0);
+			await inviteCandidatePage.selectTableRow(`${firstName} ${lastName}`);
 			await inviteCandidatePage.archiveButtonVisible();
 			await inviteCandidatePage.clickArchiveButton();
 			await inviteCandidatePage.confirmActionButtonVisible();
 			await inviteCandidatePage.clickConfirmActionButton();
 			await inviteCandidatePage.waitMessageToHide();
-			await inviteCandidatePage.verifyElementIsDeleted();
+			// Scope the "is gone" check to our candidate's name — other candidates' grid rows may remain.
+			await inviteCandidatePage.verifyElementIsDeleted(`${firstName} ${lastName}`);
 		});
 	});
 });

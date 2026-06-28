@@ -1,5 +1,4 @@
 import { test } from './support/fixtures';
-import { getPage } from './support/page-context';
 import * as loginPage from './support/pages/Login.po';
 import { LoginPageData } from '../src/support/Base/pagedata/LoginPageData';
 import * as addEmployeeLevelPage from './support/pages/AddEmployeeLevel.po';
@@ -15,7 +14,9 @@ test.describe('Add employee level test', () => {
 
 		await test.step('Should be able to add new employee level', async () => {
 			await CustomCommands.addTag(organizationTagsUserPage, OrganizationTagsPageData);
-			await getPage().goto('/#/pages/employees/employee-level');
+			// addTag ends on /#/pages/organization/tags; a bare goto to the level hash is a same-document
+			// no-op there, so force the hash + settle (see navigateToEmployeeLevel).
+			await addEmployeeLevelPage.navigateToEmployeeLevel();
 			await addEmployeeLevelPage.gridBtnExists();
 			await addEmployeeLevelPage.gridBtnClick(1);
 			await addEmployeeLevelPage.addNewLevelButtonVisible();

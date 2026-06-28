@@ -11,10 +11,14 @@ export const JobsProposalsPage = {
 	editButtonCss: 'ngx-gauzy-button-action button.action.primary',
 	makeDefaultButtonCss: 'ngx-gauzy-button-action button.action.primary',
 	deleteButtonCss: 'ngx-gauzy-button-action button.action:has(nb-icon[icon="trash-2-outline"])',
-	// Delete opens DeleteConfirmationComponent whose OK button is status="danger" (the Cancel is
-	// status="basic"); the old status="primary" matched no button in that dialog. Scope to the footer
-	// and exclude the form's success Save so it can never collide with another open card.
-	confirmDeleteButtonCss: 'nb-card-footer button[status="danger"]',
+	// Delete is a TWO-dialog confirmation in this list component:
+	//  1) the trash toolbar button carries the `ngxConfirmDialog` directive, which opens ConfirmComponent
+	//     (selector ngx-confirm) — its confirm button is the "Yes" button[status="primary"];
+	//  2) only on Yes does (confirm)="deleteProposalTemplate()" fire, which opens DeleteConfirmationComponent
+	//     (selector ga-delete-confirmation) — its OK button is button[status="danger"] (Cancel is "basic").
+	// Each is host-scoped so they can never cross-match each other or a toolbar status icon.
+	confirmFirstDialogButtonCss: 'ngx-confirm nb-card-footer button[status="primary"]',
+	confirmDeleteButtonCss: 'ga-delete-confirmation nb-card-footer button[status="danger"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyProposalCss: 'div.ng-star-inserted'
 };

@@ -161,9 +161,23 @@ export const backFromInventoryButtonVisible = async () => {
 };
 
 export const clickBackFromInventoryButton = async () => {
-	// Comes right after saving the inventory item; dispatch so a fading backdrop can't intercept it.
+	// Comes right after saving the inventory item. The back arrow only does location.back(), but the
+	// item save chains TWO pushes: onAddInventoryItem() -> router.navigate('/create') then
+	// onSaveRequest() -> router.navigate('/edit/:id'). So the history is [list, create, edit] and a
+	// single location.back() lands on the EMPTY /create form, NOT the inventory list — the following
+	// verifyInventoryExists / tableRowVisible then never find the grid. Click back (backdrop-proof),
+	// then deterministically force the hash to the inventory list and let it render (ROOT CAUSE #8).
 	await waitForSpinnerGone();
 	await dispatchClick(OrganizationInventoryPage.backFromInventoryButtonCss);
+	await getPage().goto('/#/pages/organization/inventory');
+	await getPage().evaluate(() => {
+		// Only force when the PATH genuinely differs (e.g. we're stuck on .../create or .../edit/:id);
+		// a same-path goto is a hash no-op the Angular router ignores.
+		if (location.hash.split('?')[0] !== '#/pages/organization/inventory') {
+			location.hash = '#/pages/organization/inventory';
+		}
+	});
+	await getPage().waitForTimeout(800);
 };
 
 export const saveButtonVisible = async () => {

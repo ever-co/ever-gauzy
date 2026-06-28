@@ -29,7 +29,23 @@ test.describe('Expense test', () => {
 				organizationTagsUserPage,
 				OrganizationTagsPageData
 			);
+			// A bare goto('/#/pages/...') right after the addTag prerequisite (which ends on
+			// /#/pages/organization/tags) is a SAME-DOCUMENT no-op: same origin, only the hash
+			// differs, so Playwright doesn't reload and the Angular hash-router never re-renders —
+			// the tags grid stays mounted and addExpenseButtonVisible() matches the WRONG screen's
+			// Add button. Force the hash + settle, then wait for the Expenses header (mirrors the
+			// gotoRoute helper in commands.ts).
 			await getPage().goto('/#/pages/accounting/expenses');
+			await getPage().evaluate(() => {
+				if (!location.hash.includes('/pages/accounting/expenses')) {
+					location.hash = '#/pages/accounting/expenses';
+				}
+			});
+			await getPage().waitForTimeout(800);
+			await getPage()
+				.locator('ngx-header-title:has-text("Expenses")')
+				.first()
+				.waitFor({ state: 'visible', timeout: 30000 });
 			await expensesPage.gridBtnExists();
 			await expensesPage.gridBtnClick(1);
 			await expensesPage.addExpenseButtonVisible();

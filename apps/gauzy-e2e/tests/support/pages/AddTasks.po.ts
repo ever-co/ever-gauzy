@@ -42,6 +42,32 @@ const dismissLeftoverDialog = async () => {
 		.catch(() => undefined);
 };
 
+// The spec's bare `await getPage().goto('/#/pages/tasks/dashboard')` is issued right after the
+// addEmployee CustomCommand, which ends on the DIFFERENT hash route /#/pages/employees. A hash-only
+// goto() between two same-document routes is a NO-OP in Playwright: the page isn't reloaded and the
+// Angular hash-router never fires, so the SPA stays on the employees grid. The subsequent generic
+// "button[status='success']" Add click then lands on the EMPLOYEES Add button (re-opening the
+// ga-employee-mutation stepper), and the task form's ga-project-selector never renders — the observed
+// failure. Force the hash through to the router (mirrors the gotoRoute helper in commands.ts), then
+// wait for the Tasks screen to actually render before interacting. (Playbook pattern 8.)
+export const navigateToTasksDashboard = async () => {
+	const page = getPage();
+	await page.goto('/#/pages/tasks/dashboard');
+	await page.evaluate(() => {
+		if (!location.hash.includes('/pages/tasks/dashboard')) {
+			location.hash = '#/pages/tasks/dashboard';
+		}
+	});
+	await page.waitForTimeout(800);
+	// Don't proceed until the Tasks screen has actually mounted: wait for the toolbar Add button to be
+	// visible (it's rendered by this screen's header once the SPA route finished re-rendering).
+	await page
+		.locator(AddTaskPage.addTaskButtonCss)
+		.first()
+		.waitFor({ state: 'visible', timeout: 30000 })
+		.catch(() => undefined);
+};
+
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };

@@ -11,7 +11,18 @@ test.describe('Job search test', () => {
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 
 		await test.step('Should be able to verify job search visibility', async () => {
+			// A bare hash goto() right after login (which lands on /#/pages/dashboard) is a
+			// same-document no-op — the Angular hash-router never re-renders and the page stays on
+			// the dashboard. Force the hash in-page + settle so the job-search screen actually mounts.
 			await getPage().goto('/#/pages/jobs/search');
+			await getPage().evaluate(() => {
+				if (!location.hash.includes('/pages/jobs/search')) {
+					location.hash = '#/pages/jobs/search';
+				}
+			});
+			await getPage().waitForTimeout(800);
+			// The search input + advanced filter only render inside the "Search" tab; activate it first.
+			await jobSearchPage.clickSearchTab();
 			await jobSearchPage.searchInputVisible();
 			await jobSearchPage.filterButtonVisible();
 			await jobSearchPage.hideAllButtonVisible();

@@ -80,6 +80,20 @@ export const selectProjectFromDropdown = async (text) => {
 		ManageEmployeesPage.selectProjectDropdownOptionCss,
 		text
 	);
+	// #projectSelection is a [multiple] ng-select with closeOnSelect=false and appendTo="body", so
+	// after picking an option its ng-dropdown-panel stays OPEN, leaving a body-level overlay covering
+	// the dialog footer. The next-step #firstName form then never opens because the invite dialog's
+	// Submit was effectively shielded by that open panel (confirmed in the failure DOM: the invite
+	// dialog stayed open with the project selected). Blur the ng-select input to close the panel
+	// (selection persists; unlike Escape this can't bubble up to dismiss the nb-dialog) so the footer
+	// is clear before we Submit.
+	await getPage()
+		.locator(ManageEmployeesPage.selectProjectDropdownCss)
+		.locator('input')
+		.first()
+		.blur()
+		.catch(() => {});
+	await getPage().waitForTimeout(300);
 };
 
 export const sendInviteButtonVisible = async () => {
@@ -87,12 +101,24 @@ export const sendInviteButtonVisible = async () => {
 };
 
 export const clickSendInviteButton = async () => {
-	// The invite dialog footer Submit sits under a fading ng-select/dialog backdrop after the
-	// project dropdown closes; a coordinate force-click lands on the backdrop and the dialog never
-	// closes (next step's #firstName form then never opens). Dispatch the click to the element so
-	// the (click)="add()" handler fires regardless of the overlay.
+	// The invite dialog footer Submit can sit under the still-open project ng-select panel (body-level
+	// overlay); a coordinate force-click lands on the overlay and the dialog never closes (next step's
+	// #firstName form then never opens). Dispatch the click to the element so (click)="add()" fires
+	// regardless of any overlay, then confirm the dialog actually detached — retry once if a transient
+	// overlay swallowed the first dispatch.
 	await waitForSpinnerGone();
-	await dispatchClick(ManageEmployeesPage.sendInviteButtonCss);
+	const dialog = getPage().locator('ga-invite-mutation').first();
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await dispatchClick(ManageEmployeesPage.sendInviteButtonCss);
+		try {
+			await dialog.waitFor({ state: 'detached', timeout: 8000 });
+			return;
+		} catch {
+			// dialog still open (POST in flight or first dispatch lost) — settle and retry once
+			await waitForSpinnerGone();
+			await getPage().waitForTimeout(500);
+		}
+	}
 };
 
 // ADD NEW EMPLOYEE
@@ -216,14 +242,48 @@ export const tableRowVisible = async () => {
 	await verifyElementIsVisible(ManageEmployeesPage.selectTableRowCss);
 };
 
+// Filter the employees grid by Full Name so the created employee is the only data row (row 0). The
+// fresh seed renders Super Admin + Default Employee ahead of any new employee, so a blind row-0 click
+// would select a seeded admin (whose End Work button never renders — "Not Started") and the chain
+// would stall. Type the name into the smart-table Full Name filter and wait for the grid to settle.
+export const searchEmployeeByName = async (name) => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	const filter = page.locator(ManageEmployeesPage.nameFilterInputCss).first();
+	await filter.fill(String(name)).catch(() => {});
+	// smart-table filtering is debounced + server-side; let the refetch land before selecting a row.
+	await page.waitForTimeout(2000);
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+};
+
 export const selectTableRow = async (index) => {
 	// Selecting a grid row TOGGLES selection and enables the toolbar (Edit/End Work/Delete, or the
-	// Copy/Resend/Delete buttons on the invites grid). Settle the grid first so the click lands on
-	// the rendered row, then click ONCE — a rapid re-click would toggle the selection back off.
+	// Copy/Resend/Delete buttons on the invites grid). Settle the grid first so the click lands on the
+	// rendered row, then click ONCE and poll a toolbar button to confirm selection stuck — a rapid
+	// re-click would toggle the selection back off; only re-click if the first click was lost to a
+	// late re-render (mirrors the proven ContactsLeads.selectTableRow).
+	const page = getPage();
 	await waitForSpinnerGone();
-	await getPage().waitForLoadState('networkidle').catch(() => {});
-	await getPage().waitForTimeout(1500);
-	await clickButtonByIndex(ManageEmployeesPage.selectTableRowCss, index);
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(ManageEmployeesPage.selectTableRowCss).nth(index);
+	const editBtn = page.locator(ManageEmployeesPage.editEmployeeButtonCss).first();
+	for (let attempt = 0; attempt < 4; attempt++) {
+		await row.click({ force: true });
+		for (let i = 0; i < 8; i++) {
+			await page.waitForTimeout(350);
+			// On the employees grid the Edit button enabling confirms the row is selected. On the
+			// invites grid Edit doesn't exist, so this poll falls through after one attempt and the
+			// single click above already toggled selection (Copy/Resend/Delete then become visible).
+			if (await editBtn.isVisible().catch(() => false)) {
+				if (!(await editBtn.isDisabled().catch(() => true))) return;
+			} else {
+				return; // no Edit button (invites grid) — single click is enough
+			}
+		}
+	}
 };
 
 export const editButtonVisible = async () => {

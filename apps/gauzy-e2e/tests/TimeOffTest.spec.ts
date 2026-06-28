@@ -1,5 +1,4 @@
 import { test } from './support/fixtures';
-import { getPage } from './support/page-context';
 import * as loginPage from './support/pages/Login.po';
 import { LoginPageData } from '../src/support/Base/pagedata/LoginPageData';
 import * as timeOffPage from './support/pages/TimeOff.po';
@@ -37,7 +36,10 @@ test.describe('Time Off test', () => {
 				password,
 				imgUrl
 			);
-			await getPage().goto('/#/pages/employees/time-off');
+			// Robust hash nav: a bare goto() to the time-off hash right after addEmployee (which ends on
+			// /#/pages/employees) is a same-document no-op, leaving the employees grid mounted long enough
+			// for the next "Add" click to re-open the Add Employee dialog instead of the request dialog.
+			await timeOffPage.navigateToTimeOff();
 			await timeOffPage.requestButtonVisible();
 			await timeOffPage.clickRequestButton();
 			await timeOffPage.employeeSelectorVisible();

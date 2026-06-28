@@ -22,6 +22,30 @@ import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ApprovalRequestPage } from '../../../src/support/Base/pageobjects/ApprovalRequestPageObject';
 
+// Navigate to the approvals grid via a hash-forced SPA route change. A bare goto('/#/pages/employees/approvals')
+// issued right after the addEmployee prerequisite (which ends on /#/pages/employees — same path+origin, only the
+// hash fragment differs) is a SAME-DOCUMENT NO-OP that does not re-render: the Angular hash router never sees the
+// new route (and a later location.back() from the page's ngx-back-navigation button overshoots the approvals page
+// straight back to Manage Employees). goto() leaves location.hash already set to the target, so the usual
+// `if (!hash.includes(...)) location.hash = ...` guard skips and never forces a hashchange. Bounce the hash through
+// the dashboard FIRST so the assignment to the approvals hash is a genuine change that fires `hashchange`, then
+// settle so the approvals screen is actually mounted before we interact.
+export const gotoApprovals = async () => {
+	const page = getPage();
+	await page.evaluate(() => {
+		if (location.hash.split('?')[0] === '#/pages/employees/approvals') {
+			location.hash = '#/pages/dashboard';
+		}
+	});
+	await page.goto('/#/pages/employees/approvals');
+	await page.evaluate(() => {
+		if (location.hash.split('?')[0] !== '#/pages/employees/approvals') {
+			location.hash = '#/pages/employees/approvals';
+		}
+	});
+	await page.waitForTimeout(800);
+};
+
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };
@@ -216,13 +240,14 @@ export const backButtonVisible = async () => {
 };
 
 export const clickBackButton = async () => {
-	// Back-navigation returns from the approval-policy page to /pages/employees/approvals. Wait for that
-	// route change so the next step (add request) doesn't race the in-flight navigation and click the
-	// stale (policy-page) Add button.
+	// The approval-policy page's ngx-back-navigation button calls location.back() (browser history), NOT a
+	// router.navigate to the approvals route. Because the approvals route was entered via a hash-only SPA
+	// navigation that doesn't always leave a distinct history entry, location.back() can OVERSHOOT past the
+	// approvals page straight to Manage Employees (/#/pages/employees) — the next step would then run on the
+	// employees grid and the request never appears. Click Back, then force the hash to the approvals route so
+	// we're guaranteed to land there regardless of how deep history.back() went.
 	await clickButton(ApprovalRequestPage.backButtonCss);
-	await getPage()
-		.waitForURL((url) => /\/pages\/employees\/approvals(\?|$)/.test(url.href), { timeout: 30000 })
-		.catch(() => undefined);
+	await gotoApprovals();
 };
 
 export const waitMessageToHide = async () => {

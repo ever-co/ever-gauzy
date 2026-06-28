@@ -17,6 +17,33 @@ import { getPage } from '../page-context';
 // Selectors + data are framework-agnostic — reused from the Cypress tree during migration.
 import { TimeOffPage } from '../../../src/support/Base/pageobjects/TimeOffPageObject';
 
+// Robust hash navigation to the time-off screen (mirrors the gotoRoute helper in commands.ts). The
+// spec navigates here right after CustomCommands.addEmployee, which ends on /#/pages/employees. A bare
+// goto() to /#/pages/employees/time-off only changes the hash, so Playwright treats it as a
+// same-document NO-OP and never reloads; the Angular hash-router can lag, leaving the employees grid
+// mounted for a beat. The next requestButton click then landed on the EMPLOYEES "Add" button (same
+// gauzy-button-action markup) and re-opened the Add Employee dialog, whose backdrop blocked the
+// request dialog (the round-3 failure). Force the hash in-page, settle, then wait for a time-off-only
+// toolbar marker before the caller interacts.
+export const navigateToTimeOff = async () => {
+	const page = getPage();
+	await page.goto('/#/pages/employees/time-off');
+	await page.evaluate(() => {
+		if (!location.hash.includes('/pages/employees/time-off')) {
+			location.hash = '#/pages/employees/time-off';
+		}
+	});
+	await page.waitForTimeout(800);
+	// The time-off "Add Holidays" info button is unique to this screen (the employees toolbar has none),
+	// so its presence proves the SPA actually rendered time-off — not the still-mounted employees grid.
+	await page
+		.locator(TimeOffPage.timeOffPageReadyCss)
+		.first()
+		.waitFor({ state: 'visible', timeout: 30000 })
+		.catch(() => {});
+	await waitForSpinnerGone();
+};
+
 export const requestButtonVisible = async () => verifyElementIsVisible(TimeOffPage.requestButtonCss);
 
 export const clickRequestButton = async () => {

@@ -1,12 +1,19 @@
 export const TeamsTasksPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	addTaskButtonCss: 'div.actions-container button[status="success"]',
+	// Toolbar Add lives in #visibleButton (`button[status="success"]`) and is NOT wrapped by a
+	// `div.actions-container` (that wrapper no longer exists; the toolbar is `div.btn-group.actions`).
+	// Mirror the proven AddTasks page object: target the bare success button. (Playbook pattern 1.)
+	addTaskButtonCss: 'button[status="success"]',
 	projectDropdownCss: '[formControlName="projectId"]',
 	statusDropdownCss: '[formcontrolname="taskStatus"]',
 	teamDropdownCss: '[formcontrolname="teams"]',
 	dropdownOptionCss: 'div.ng-option',
-	duplicateOrEditTaskButtonCss: 'div.actions-container button.action.primary',
-	deleteTaskButtonCss: 'div.actions-container button.action:not(.primary):not(.secondary)',
+	// Edit + Duplicate toolbar buttons both carry `class="action primary"` (no actions-container wrapper).
+	// Index 0/1 select between them, same as the proven AddTasks flow. (Playbook pattern 1.)
+	duplicateOrEditTaskButtonCss: 'button.action.primary',
+	// Delete is `class="action"` wrapping an nb-icon[icon="trash-2-outline"]; match it by that icon
+	// (mirrors the proven AddTasks deleteTaskButtonCss) rather than the stale actions-container path.
+	deleteTaskButtonCss: 'button:has(nb-icon[icon="trash-2-outline"])',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: '[type="checkbox"]',

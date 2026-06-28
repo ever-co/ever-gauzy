@@ -50,6 +50,35 @@ const waitForRoute = async (urlGlob: string) => {
 	await page.waitForLoadState('networkidle').catch(() => undefined);
 };
 
+// The spec navigates to the equipment grid with a bare hash goto() issued right after the addTag
+// CustomCommand (which ends on /#/pages/organization/tags). A hash-only goto() to a same-origin URL
+// can be a SAME-DOCUMENT NO-OP — Playwright doesn't reload and the Angular hash-router never
+// re-renders — leaving the page on the tags screen, where the Add button selector
+// (button[status="success"]:has-text("Add")) ALSO matches, so the wrong (tags) dialog gets opened
+// and the equipment formcontrolname="name" check then fails. Mirror commands.ts' gotoRoute: force
+// the hash if goto() didn't take, settle, then BLOCK on the equipment grid header so the caller
+// never interacts mid-transition or on the wrong screen.
+export const navigateToEquipment = async () => {
+	const page = getPage();
+	const route = '/#/pages/organization/equipment';
+	await page.goto(route);
+	await page.evaluate(() => {
+		if (!location.hash.includes('/pages/organization/equipment')) {
+			location.hash = '#/pages/organization/equipment';
+		}
+	});
+	await page.waitForTimeout(800);
+	// Equipment grid header (<h4> "Equipment for ...") — proves the equipment screen actually rendered,
+	// not the leftover tags screen, before the caller clicks the (shared) Add button.
+	await page
+		.locator('ngx-header-title:has-text("Equipment")')
+		.first()
+		.waitFor({ state: 'visible', timeout: 30000 })
+		.catch(() => undefined);
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => undefined);
+};
+
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };

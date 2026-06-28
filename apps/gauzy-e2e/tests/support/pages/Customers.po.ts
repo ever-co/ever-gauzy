@@ -8,7 +8,8 @@ import {
 	clickElementByText,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	waitForSpinnerGone
 } from '../util';
 import { getPage } from '../page-context';
 import { expect } from '@playwright/test';
@@ -317,7 +318,22 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index: number) => {
-	await clickButtonByIndex(CustomersPage.selectTableRowCss, index);
+	const page = getPage();
+	// Settle after the preceding mutation (the grid re-renders), then click the row ONCE and poll the
+	// Edit button's disabled attr — the row click TOGGLES selection, so re-clicking turns it off. This
+	// guards the delete step, whose only selection is this single call. Mirrors the green Clients.po.
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(CustomersPage.selectTableRowCss).nth(index);
+	const editBtn = page.locator(CustomersPage.editButtonCss).first();
+	for (let attempt = 0; attempt < 4; attempt++) {
+		await row.click({ force: true }).catch(() => undefined);
+		for (let i = 0; i < 8; i++) {
+			await page.waitForTimeout(350);
+			if (!(await editBtn.isDisabled().catch(() => true))) return;
+		}
+	}
 };
 
 export const editButtonVisible = async () => {

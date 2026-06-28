@@ -24,7 +24,18 @@ test.describe('Payments test', () => {
 				organizationTagsUserPage,
 				OrganizationTagsPageData
 			);
+			// addTag (the prerequisite above) ends on /#/pages/organization/tags. A bare hash goto to the
+			// payments route from there is a SAME-DOCUMENT no-op (the Angular hash-router never re-renders),
+			// leaving the DOM on the tags screen — and the payments "Add" button (.gauzy-button-container
+			// button[status="success"]) also exists on the tags page, so the wrong dialog would open. Force
+			// the hash + settle so the payments screen actually renders (mirrors gotoRoute in commands.ts).
 			await getPage().goto('/#/pages/accounting/payments');
+			await getPage().evaluate(() => {
+				if (!location.hash.includes('/pages/accounting/payments')) {
+					location.hash = '#/pages/accounting/payments';
+				}
+			});
+			await getPage().waitForTimeout(800);
 			await paymentsPage.gridBtnExists();
 			await paymentsPage.gridBtnClick(1);
 			await paymentsPage.addPaymentButtonVisible();
