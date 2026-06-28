@@ -607,7 +607,7 @@
 		"camelcase": "^9.0.0",
 		"caniuse-lite": "^1.0.30001699",
 		"browserslist": "^4.24.4",
-		"@ever-gauzy/plugin-integration-plane-models": "^0.1.0"
+		"@ever-gauzy/plugin-integration-plane-models": "^0.1.3"
 	},
 	"dependencies": {
 		"@angular/animations": "21.0.7",

@@ -132,6 +132,12 @@ spec:
                         value: 'https://api.gauzy.co'
                       - name: CLIENT_BASE_URL
                         value: 'https://app.gauzy.co'
+                      - name: PLANE_CLIENT_BASE_URL
+                        value: 'https://pm.gauzy.co'
+                      - name: PLANE_CLIENT_SPACE_URL
+                        value: 'https://pm-space.gauzy.co'
+                      - name: PLANE_SHARED_ORIGINS
+                        value: 'https://pm.gauzy.co,https://pm-space.gauzy.co'
                       - name: DB_URI
                         value: '$DB_URI'
                       - name: DB_HOST

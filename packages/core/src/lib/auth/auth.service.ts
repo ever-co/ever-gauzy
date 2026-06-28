@@ -1733,7 +1733,7 @@ export class AuthService extends SocialAuthService {
 				this.logger.debug(`Magic link generated for email: ${email}`);
 
 				// Send the magic code to the user's email
-				this.emailService.sendMagicLoginCode({
+				await this.emailService.sendMagicLoginCode({
 					email,
 					magicCode,
 					magicLink,
