@@ -15,6 +15,11 @@ import { PlaneApiKeyDialogComponent } from '../api-key-dialog/api-key-dialog.com
 
 const URL_PATTERN = /^https?:\/\/.+/;
 
+/** Global hosted Ever Gauzy PM UI URLs shown (read-only) in shared mode. */
+const SHARED_PLANE_WEB_URL = 'https://pm.gauzy.co';
+const SHARED_PLANE_ADMIN_URL = ''; // admin (god-mode) not offered in shared mode
+const SHARED_PLANE_SPACE_URL = 'https://pm-space.gauzy.co';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-plane-authorize',
@@ -34,6 +39,14 @@ export class PlaneAuthorizeComponent extends TranslationBaseComponent implements
 
 	readonly organization = signal<IOrganization | null>(null);
 	readonly loading = signal<boolean>(false);
+
+	/** Integration mode: 'shared' (global hosted PM UIs) or 'custom' (tenant URLs). Defaults to shared. */
+	readonly mode = signal<'shared' | 'custom'>('shared');
+
+	/** Global hosted PM URLs shown read-only in shared mode. */
+	readonly sharedWebUrl = SHARED_PLANE_WEB_URL;
+	readonly sharedAdminUrl = SHARED_PLANE_ADMIN_URL;
+	readonly sharedSpaceUrl = SHARED_PLANE_SPACE_URL;
 
 	form = new FormGroup({
 		planeWebUrl: new FormControl('', [Validators.required, Validators.pattern(URL_PATTERN)]),
@@ -95,31 +108,57 @@ export class PlaneAuthorizeComponent extends TranslationBaseComponent implements
 	}
 
 	/**
-	 * Submit the Plane URLs to configure the integration.
+	 * Switch between 'shared' and 'custom' modes.
+	 * In shared mode the URL inputs are hidden and their validation is suspended.
+	 */
+	selectMode(mode: 'shared' | 'custom'): void {
+		if (this.mode() === mode) return;
+		this.mode.set(mode);
+
+		const webUrlControl = this.form.get('planeWebUrl');
+		if (mode === 'shared') {
+			// Suspend validation so the required URL does not block the shared submit.
+			webUrlControl?.clearValidators();
+		} else {
+			webUrlControl?.setValidators([Validators.required, Validators.pattern(URL_PATTERN)]);
+		}
+		webUrlControl?.updateValueAndValidity();
+	}
+
+	/**
+	 * Submit the Plane configuration. In shared mode only `{ mode: 'shared' }` is sent
+	 * (the backend stores the global hosted URLs); in custom mode the tenant URLs are sent.
 	 */
 	setupPlane(): void {
 		if (this.loading()) return;
 
-		// Trim URL values before validation to prevent submitting
-		// whitespace-padded strings that passed the pattern check untrimmed.
-		const planeWebUrl = this.form.get('planeWebUrl')?.value?.trim() ?? '';
-		const planeAdminUrl = this.form.get('planeAdminUrl')?.value?.trim() ?? '';
-		const planeSpaceUrl = this.form.get('planeSpaceUrl')?.value?.trim() ?? '';
-
-		this.form.patchValue({ planeWebUrl, planeAdminUrl, planeSpaceUrl });
-
-		if (this.form.invalid) return;
-
 		const organizationId = this.organization()?.id;
+		if (!organizationId) return;
 
-		if (!planeWebUrl || !organizationId) {
-			return;
+		let dto: { mode: 'shared' | 'custom'; planeWebUrl?: string; planeAdminUrl?: string; planeSpaceUrl?: string };
+
+		if (this.mode() === 'shared') {
+			dto = { mode: 'shared' };
+		} else {
+			// Trim URL values before validation to prevent submitting
+			// whitespace-padded strings that passed the pattern check untrimmed.
+			const planeWebUrl = this.form.get('planeWebUrl')?.value?.trim() ?? '';
+			const planeAdminUrl = this.form.get('planeAdminUrl')?.value?.trim() ?? '';
+			const planeSpaceUrl = this.form.get('planeSpaceUrl')?.value?.trim() ?? '';
+
+			this.form.patchValue({ planeWebUrl, planeAdminUrl, planeSpaceUrl });
+
+			if (this.form.invalid) return;
+
+			if (!planeWebUrl) {
+				return;
+			}
+
+			// Build DTO excluding empty optional fields to avoid @IsUrl validation failures
+			dto = { mode: 'custom', planeWebUrl };
+			if (planeAdminUrl) dto.planeAdminUrl = planeAdminUrl;
+			if (planeSpaceUrl) dto.planeSpaceUrl = planeSpaceUrl;
 		}
-
-		// Build DTO excluding empty optional fields to avoid @IsUrl validation failures
-		const dto: { planeWebUrl: string; planeAdminUrl?: string; planeSpaceUrl?: string } = { planeWebUrl };
-		if (planeAdminUrl) dto.planeAdminUrl = planeAdminUrl;
-		if (planeSpaceUrl) dto.planeSpaceUrl = planeSpaceUrl;
 
 		this.loading.set(true);
 		this._planeService
