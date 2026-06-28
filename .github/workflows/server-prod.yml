@@ -62,10 +62,26 @@ jobs:
             org.electronjs.Electron2.BaseApp//24.08
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@v2
+        # Pin snapcraft 7.x: 8.0+ renamed the `snap` command to `pack`, but electron-builder's
+        # app-builder still invokes `snapcraft snap` (ERR_ELECTRON_BUILDER_CANNOT_EXECUTE). 7.x keeps
+        # the `snap` command and still supports the core22 base.
+        run: sudo snap install snapcraft --classic --channel=7.x/stable
+
+      - name: Use Python 3.11 for native rebuilds (Linux)
+        # node-gyp's gyp eval()-parses Electron 38's common.gypi; Python 3.12's stricter tokenizer
+        # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
+        # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine. Pinned to a SHA.
+        id: py311
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
 
       - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
+        # Install build deps into, and point node-gyp at, the SAME 3.11 interpreter (not a stray python3).
+        run: |
+          "${{ steps.py311.outputs.python-path }}" -m pip install packaging setuptools
+          echo "npm_config_python=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
+          echo "PYTHON=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
 
       - name: Install latest version of NPM
         run: 'sudo npm install -g npm@11.6.2'
@@ -218,13 +234,29 @@ jobs:
             org.electronjs.Electron2.BaseApp//24.08
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@v2
+        # Pin snapcraft 7.x: 8.0+ renamed the `snap` command to `pack`, but electron-builder's
+        # app-builder still invokes `snapcraft snap` (ERR_ELECTRON_BUILDER_CANNOT_EXECUTE). 7.x keeps
+        # the `snap` command and still supports the core22 base.
+        run: sudo snap install snapcraft --classic --channel=7.x/stable
 
       - name: Install Multipass
         run: 'sudo snap install multipass'
 
+      - name: Use Python 3.11 for native rebuilds (Linux)
+        # node-gyp's gyp eval()-parses Electron 38's common.gypi; Python 3.12's stricter tokenizer
+        # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
+        # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine. Pinned to a SHA.
+        id: py311
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
+
       - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
+        # Install build deps into, and point node-gyp at, the SAME 3.11 interpreter (not a stray python3).
+        run: |
+          "${{ steps.py311.outputs.python-path }}" -m pip install packaging setuptools
+          echo "npm_config_python=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
+          echo "PYTHON=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
 
       - name: Install latest version of NPM
         run: 'sudo npm install -g npm@11.6.2'
