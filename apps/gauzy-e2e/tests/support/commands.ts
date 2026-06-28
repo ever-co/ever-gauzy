@@ -254,19 +254,55 @@ export const CustomCommands = {
 		password: string,
 		imgUrl: string
 	) => {
-		// Flow rewritten for the current app: the employee add is now a simple quick-add
-		// ("+ Create" -> Full Name + Email -> "Add"), replacing the old multi-step
-		// firstName/username/password/date/image/tags wizard. username/password/imgUrl are unused now.
-		void username;
-		void password;
-		void imgUrl;
+		// The employee add is a 3-step ga-employee-mutation stepper (basic info -> image -> confirm),
+		// NOT a quick-add. Mirror the proven ManageEmployeesTest "add new employee" flow, reusing the
+		// already-hardened manageEmployeesPage methods. Two correctness details:
+		//  - the image URL is validated against patterns.imageUrl (must end .png/.jpg/.jpeg/.gif/.svg);
+		//    an extensionless URL (faker.image.avatar()) leaves step 1 invalid -> Next stays disabled
+		//    -> the employee never persists. Fall back to a valid URL when the caller's doesn't match.
+		//  - startedWorkOn is set to today so the new employee counts as "working" now and therefore
+		//    appears in the downstream "working employees" multi-selects these specs depend on.
+		const validImg = /\.(png|jpe?g|gif|svg)(\?|$)/i.test(imgUrl || '')
+			? imgUrl
+			: 'https://dummyimage.com/200x200/cccccc/000000.png';
 		await gotoRoute('/#/pages/employees');
-		await getPage().locator('button.create').first().click();
-		await getPage().locator('input[placeholder="Full Name"]').first().fill(`${firstName} ${lastName}`);
-		await getPage().locator('input[placeholder="Email"]').first().fill(employeeEmail);
-		await getPage().locator('input[placeholder="Email"]').first().press('Tab');
-		await getPage().getByRole('button', { name: 'Add', exact: true }).first().click({ force: true });
-		await getPage().waitForTimeout(2500);
+		await manageEmployeesPage.addEmployeeButtonVisible();
+		await manageEmployeesPage.clickAddEmployeeButton();
+		await manageEmployeesPage.firstNameInputVisible();
+		await manageEmployeesPage.enterFirstNameData(firstName);
+		await manageEmployeesPage.lastNameInputVisible();
+		await manageEmployeesPage.enterLastNameData(lastName);
+		await manageEmployeesPage.usernameInputVisible();
+		await manageEmployeesPage.enterUsernameData(username);
+		await manageEmployeesPage.employeeEmailInputVisible();
+		await manageEmployeesPage.enterEmployeeEmailData(employeeEmail);
+		await manageEmployeesPage.dateInputVisible();
+		await manageEmployeesPage.enterDateData();
+		await manageEmployeesPage.clickKeyboardButtonByKeyCode(9);
+		await manageEmployeesPage.passwordInputVisible();
+		await manageEmployeesPage.enterPasswordInputData(password);
+		// Tags are optional; pick one only if the caller seeded a tag. Always click the card body
+		// afterwards to close the ng-select panel so it can't overlay the stepper's Next button.
+		try {
+			await manageEmployeesPage.tagsDropdownVisible();
+			await manageEmployeesPage.clickTagsDropdown();
+			await manageEmployeesPage.selectTagFromDropdown(0);
+		} catch {
+			/* no tag seeded — employee tags are optional */
+		}
+		await manageEmployeesPage.clickCardBody().catch(() => undefined);
+		await manageEmployeesPage.imageInputVisible();
+		await manageEmployeesPage.enterImageDataUrl(validImg);
+		await manageEmployeesPage.nextButtonVisible();
+		await manageEmployeesPage.clickNextButton();
+		await manageEmployeesPage.nextStepButtonVisible();
+		await manageEmployeesPage.clickNextStepButton();
+		await manageEmployeesPage.lastStepButtonVisible();
+		await manageEmployeesPage.clickLastStepButton();
+		await manageEmployeesPage.waitMessageToHide();
+		// Ensure the mutation dialog fully detaches before the caller navigates away — a lingering
+		// overlay was the root cause of the "wrong dialog open" cascade in the dependent specs.
+		await getPage().locator('ga-employee-mutation').first().waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined);
 	},
 	addClient: async (
 		clientsPage: any,
