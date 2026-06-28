@@ -240,3 +240,17 @@ export const enterInputByIndex = async (selector: string, data: string, index: n
 	loc(selector).nth(index).fill(String(data), { timeout: taskTimeout });
 
 export const clearFieldByIndex = async (selector: string, index: number) => loc(selector).nth(index).clear();
+
+// Fill a CKEditor 5 rich-text field. Forms bind e.g. [formControlName="description"] to a <ckeditor>
+// host whose real editable is a nested contenteditable div (.ck-editor__editable), NOT an <input>, so
+// enterInput/clearField (.fill()/.clear()) throw "Element is not an <input>, <textarea>...". Pass the
+// ckeditor host (or any ancestor) selector; this clicks into the editable, clears it, and types text.
+export const fillCkEditor = async (selector: string, text: string) => {
+	const root = loc(selector).first();
+	const inner = root.locator('.ck-editor__editable').first();
+	const editable = (await inner.count()) > 0 ? inner : root;
+	await editable.click({ timeout: taskTimeout });
+	await getPage().keyboard.press('Control+A');
+	await getPage().keyboard.press('Delete');
+	await editable.pressSequentially(String(text), { timeout: taskTimeout });
+};
