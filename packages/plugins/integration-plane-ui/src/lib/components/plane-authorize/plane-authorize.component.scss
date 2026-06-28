@@ -2,6 +2,14 @@
   margin-bottom: 24px;
 }
 
+.mode-selector {
+  .mode-options {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+}
+
 button {
   box-shadow: var(--gauzy-shadow);
   border-radius: var(--border-radius);
