@@ -3,11 +3,15 @@ export const OrganizationInventoryPage = {
 	addButtonCss: 'button[status="success"]:has-text("Add")',
 	languageDropdownCss: 'ngx-language-selector ng-select',
 	dropdownOptionCss: '.ng-option',
-	nameInputCss: 'input[placeholder="Name"]',
-	codeInputCss: 'input[id="codeInput"]',
+	// Scope name/code/description to the mutation dialog / inventory-item form (all wrapped in
+	// `nb-card.main`). The bare `input[placeholder="Name"]` / `#description` matched the smart-table
+	// FILTER row (input-filter > input[placeholder="Name"]) on the categories/types list, so the spec
+	// silently typed into the grid filter and never noticed the Add dialog had failed to open.
+	nameInputCss: 'nb-card.main [formcontrolname="name"]',
+	codeInputCss: 'nb-card.main [formcontrolname="code"]',
 	productTypeDropdownCss: 'ngx-product-type-selector ng-select',
 	productCategoryDropdownCss: 'ngx-product-category-selector ng-select',
-	descriptionInputCss: '#description',
+	descriptionInputCss: 'nb-card.main [formcontrolname="description"]',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	saveButtonCss: 'nb-card-footer button[status="success"]',
 	editButtonCss: 'button.action.primary',

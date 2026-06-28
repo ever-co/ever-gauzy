@@ -43,6 +43,10 @@ test.describe('Job proposals test', () => {
 		});
 
 		await test.step('Should be able to make proposal default', async () => {
+			// Saving the edit refreshes the grid and clears the selection (clearItem on templates$), so the
+			// toolbar Make Default is disabled until a row is re-selected — re-select first (mirrors the
+			// Estimates CRUD flow, which re-selects the row at the start of every toolbar step).
+			await jobProposalsPage.selectTableRow(0);
 			await jobProposalsPage.makeDefaultButtonVisible();
 			await jobProposalsPage.clickMakeDefaultButton(
 				JobsProposalsPageData.makeDefaultButton
@@ -51,6 +55,9 @@ test.describe('Job proposals test', () => {
 
 		await test.step('Should be able to delete job proposal', async () => {
 			await jobProposalsPage.waitMessageToHide();
+			// Make Default also refreshes the grid and clears selection — re-select before deleting so the
+			// Delete toolbar button is enabled and deleteProposalTemplate() has a selectedItem to remove.
+			await jobProposalsPage.selectTableRow(0);
 			await jobProposalsPage.deleteButtonVisible();
 			await jobProposalsPage.clickDeleteButton();
 			await jobProposalsPage.confirmDeleteButtonVisible();

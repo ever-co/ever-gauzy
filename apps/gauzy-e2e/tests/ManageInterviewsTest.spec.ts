@@ -43,7 +43,10 @@ test.describe('Manage interviews test', () => {
 			await manageInterviewsPage.candidateDropdownVisible();
 			await manageInterviewsPage.clickCandidateDropdown();
 			await manageInterviewsPage.candidateDropdownOptionVisible();
-			await manageInterviewsPage.selectCandidateFromDropdown(0);
+			// Pick the candidate we just created BY NAME (not index 0): the autocomplete lists every
+			// candidate, so selecting index 0 attaches the interview to an arbitrary candidate and the
+			// final verify (which looks for THIS candidate's name in the grid) then fails.
+			await manageInterviewsPage.selectCandidateFromDropdown(`${firstName} ${lastName}`);
 			await manageInterviewsPage.titleInputVisible();
 			await manageInterviewsPage.enterTitleInputData(
 				ManageInterviewsPageData.title

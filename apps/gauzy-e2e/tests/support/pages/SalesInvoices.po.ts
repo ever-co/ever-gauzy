@@ -10,7 +10,6 @@ import {
 	clickButtonByText,
 	verifyValue,
 	scrollDown,
-	clickButtonWithDelay,
 	dispatchClick,
 	waitForSpinnerGone,
 	verifyByLength
@@ -215,7 +214,13 @@ export const confirmButtonVisible = async () => {
 };
 
 export const clickConfirmButton = async () => {
-	await clickButtonWithDelay(SalesInvoicesPage.confirmButtonCss);
+	// The send/email confirmation is an nb-dialog rendered in a cdk-overlay with its own backdrop and a
+	// PDF-preview iframe; a plain coordinate click (clickButtonWithDelay) lands on the backdrop, leaving the
+	// dialog open and the invoice in Draft (the div.badge-success that the next step asserts never appears).
+	// Settle any spinner then dispatch the click straight on the Send button so send()/sendEmail() fires
+	// regardless of the overlay.
+	await waitForSpinnerGone();
+	await dispatchClick(SalesInvoicesPage.confirmButtonCss);
 };
 
 export const emailInputVisible = async () => {

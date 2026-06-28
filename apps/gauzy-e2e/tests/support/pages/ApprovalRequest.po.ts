@@ -15,7 +15,8 @@ import {
 	verifyByText,
 	verifyByLength,
 	verifyTextNotExisting,
-	dispatchClick
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
@@ -34,7 +35,13 @@ export const addApprovalButtonVisible = async () => {
 };
 
 export const clickAddApprovalButton = async () => {
-	await clickButton(ApprovalRequestPage.addApprovalRequestButtonCss);
+	// Add ((click)="add()"/save(true)) opens the policy/request mutation dialog. It is reached right after
+	// the addTag + addEmployee dialog flows (and a router navigation to the policy page), whose fading
+	// cdk-overlay backdrops sit over the toolbar — a coordinate click (even force) lands on the backdrop,
+	// so the dialog never opens and the next nameInput assertion times out. Wait out any load spinner, then
+	// dispatch the click straight to the button so add()/save() fires regardless of the overlay.
+	await waitForSpinnerGone();
+	await dispatchClick(ApprovalRequestPage.addApprovalRequestButtonCss);
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode) => {
@@ -75,11 +82,26 @@ export const selectEmployeeDropdownVisible = async () => {
 };
 
 export const clickSelectEmployeeDropdown = async () => {
+	// Wait out any full-card spinner (it overlays the select and swallows the open click), then open the
+	// employee multi-select. Its options are the org's employees "working" in the header date range, loaded
+	// async — selectEmployeeFromDropdown handles an empty/slow list best-effort.
+	await waitForSpinnerGone();
 	await clickButton(ApprovalRequestPage.usersMultiSelectCss);
 };
 
 export const selectEmployeeFromDropdown = async (index) => {
-	await clickButtonByIndex(ApprovalRequestPage.checkUsersMultiSelectCss, index);
+	// Best-effort employee pick (mirrors ContactsLeads.selectEmployeeDropdownOption): the option list loads
+	// async and can legitimately be empty (no employee "working" in the selected date range). Click one if
+	// it shows within ~8s; otherwise press Escape and continue — the request saves fine without members, so
+	// the next Save still proceeds. Avoids the hard 60s timeout on an empty list that hung this step.
+	const page = getPage();
+	const option = page.locator(ApprovalRequestPage.checkUsersMultiSelectCss);
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => undefined);
+	}
 };
 
 export const saveButtonVisible = async () => {
@@ -87,7 +109,13 @@ export const saveButtonVisible = async () => {
 };
 
 export const clickSaveButton = async () => {
-	await clickButton(ApprovalRequestPage.saveButtonCss);
+	// Save (footer status="success") submits the mutation form. It is clicked right after the policy
+	// nb-select and employee multi-select overlays close, which leave a fading cdk-overlay backdrop over
+	// the dialog footer — a coordinate click lands on that backdrop and the save never fires. Wait out any
+	// spinner, then dispatch the click straight to the button. The button is only enabled once the form is
+	// valid (name + min_count + policy filled), so dispatch fires onSubmit() exactly as a real click would.
+	await waitForSpinnerGone();
+	await dispatchClick(ApprovalRequestPage.saveButtonCss);
 };
 
 export const selectTableRowVisible = async () => {
@@ -118,10 +146,19 @@ export const editApprovalRequestButtonVisible = async () => {
 };
 
 export const clickEditApprovalRequestButton = async () => {
+	// Edit (toolbar button.action.primary -> save(false, item)) opens the request mutation dialog. It is
+	// clicked right after the add+toastr flow, whose fading cdk-overlay backdrop sits over the toolbar and
+	// swallows a coordinate click; dispatchClick fires save() directly. Race the open against the
+	// approval-policy/request-approval fetch the dialog issues on init so the next nameInput assertion
+	// doesn't run before the form renders; the response wait is bounded + best-effort so a missed match
+	// can't hang the step.
 	const page = getPage();
+	await waitForSpinnerGone();
 	await Promise.all([
-		page.waitForResponse((res) => res.url().includes('/api/approval-policy/request-approval')),
-		clickButton(ApprovalRequestPage.editApprovalRequestButtonCss)
+		page
+			.waitForResponse((res) => res.url().includes('/api/approval-policy/request-approval'), { timeout: 30000 })
+			.catch(() => undefined),
+		dispatchClick(ApprovalRequestPage.editApprovalRequestButtonCss)
 	]);
 };
 
@@ -130,7 +167,12 @@ export const deleteApprovalRequestButtonVisible = async () => {
 };
 
 export const clickDeleteApprovalRequestButton = async () => {
-	await clickButton(ApprovalRequestPage.deleteApprovalRequestButtonCss);
+	// Delete (toolbar trash button -> delete(item)) opens the confirmation dialog. Clicked right after the
+	// edit save+toastr flow, whose fading cdk-overlay backdrop sits over the toolbar — a coordinate click
+	// lands on the backdrop and the confirm dialog never opens. Wait out any spinner, then dispatch the
+	// click straight to the button.
+	await waitForSpinnerGone();
+	await dispatchClick(ApprovalRequestPage.deleteApprovalRequestButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {

@@ -86,14 +86,61 @@ export const selectContactFromDropdown = async (name) => {
 	await page.waitForTimeout(400);
 };
 
+// Set a CKEditor4 instance's data (by DOM order) via the JS API so ckeditor4-angular syncs it to the
+// reactive form. Filling the iframe <body> only mutates the contenteditable DOM and does NOT fire
+// CKEditor's `change` event, so the jobPostContent/proposalContent form controls (both Validators.required)
+// stayed empty, form.invalid remained true and the "Register Proposal" button stayed [disabled] — the
+// observed failure (still on the register form, proposal never created, verifyProposalExists timed out).
+// setData() fires the `change`/`dataReady` events that ckeditor4-angular listens to, updating the control.
+// Addressing by index (not the auto-generated name "editorN", which increments globally across page
+// visits) keeps this stable: editor index 0 = Job Post Content, index 1 = Proposal Content.
+const setCkeditorData = async (index: number, data: string) => {
+	const page = getPage();
+	// CKEditor instances load async — wait until at least (index + 1) instances exist and are ready.
+	await page
+		.waitForFunction(
+			(count) => {
+				const ck = (window as any).CKEDITOR;
+				if (!ck || !ck.instances) return false;
+				const ready = Object.keys(ck.instances).filter((k) => ck.instances[k].status === 'ready');
+				return ready.length >= count;
+			},
+			index + 1,
+			{ timeout: 24_000 }
+		)
+		.catch(() => {});
+	await page.evaluate(
+		({ idx, value }) => {
+			const ck = (window as any).CKEDITOR;
+			if (!ck || !ck.instances) return;
+			// Order instances by their host element's document position so idx maps to visual order.
+			const insts = Object.keys(ck.instances)
+				.map((k) => ck.instances[k])
+				.sort((a, b) => {
+					const ea = a.element && a.element.$;
+					const eb = b.element && b.element.$;
+					if (!ea || !eb) return 0;
+					return ea.compareDocumentPosition(eb) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+				});
+			const inst = insts[idx];
+			if (!inst) return;
+			inst.setData(value);
+			// Force the angular adapter to pick up the value (it binds to the editor `change` event).
+			inst.fire('change');
+			if (typeof inst.updateElement === 'function') inst.updateElement();
+		},
+		{ idx: index, value: String(data) }
+	);
+};
+
 export const enterJobPostContentData = async (data) => {
-	// jobPostContent is a CKEditor4 widget (required field) — fill the FIRST wysiwyg iframe body.
-	await getPage().frameLocator(ckeditorIframeCss).nth(0).locator('body').fill(String(data));
+	// jobPostContent is the FIRST CKEditor4 widget — required field.
+	await setCkeditorData(0, data);
 };
 
 export const enterProposalContentData = async (data) => {
-	// proposalContent is the SECOND CKEditor4 widget (required field) — fill the second wysiwyg iframe body.
-	await getPage().frameLocator(ckeditorIframeCss).nth(1).locator('body').fill(String(data));
+	// proposalContent is the SECOND CKEditor4 widget — required field.
+	await setCkeditorData(1, data);
 };
 
 export const jobPostInputVisible = async () => {
@@ -165,6 +212,21 @@ export const saveProposalButtonVisible = async () => {
 };
 
 export const clickSaveProposalButton = async () => {
+	// The register/edit Save button is [disabled]="form.invalid"; a force-click on a disabled button is a
+	// no-op (the (click) handler never fires). After the CKEditor setData() propagates to the required
+	// jobPostContent/proposalContent controls, Angular needs a tick to flip [disabled] — so wait for the
+	// button to actually be enabled before clicking, otherwise we'd silently stay on the form.
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page
+		.locator(ProposalsPage.saveProposalButtonCss)
+		.first()
+		.waitFor({ state: 'visible' })
+		.catch(() => {});
+	for (let i = 0; i < 16; i++) {
+		if (await page.locator(ProposalsPage.saveProposalButtonCss).first().isEnabled().catch(() => false)) break;
+		await page.waitForTimeout(500);
+	}
 	await clickButton(ProposalsPage.saveProposalButtonCss);
 };
 

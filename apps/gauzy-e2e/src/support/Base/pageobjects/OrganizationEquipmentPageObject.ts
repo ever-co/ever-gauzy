@@ -22,10 +22,21 @@ export const OrganizationEquipmentPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	footerCss: 'nb-card-footer',
 	equipmentSharingButtonCss: 'button.sharing[status="primary"]',
+	// Routes used by the cross-page navigation in this flow — waited on after each nav click so the
+	// next step never races against a still-pending route change (see the .po wrappers).
+	equipmentRoute: '**/pages/organization/equipment',
+	equipmentSharingRoute: '**/pages/organization/equipment-sharing',
+	equipmentSharingPolicyRoute: '**/pages/organization/equipment-sharing-policy',
 	selectEquipmentDropdownCss: 'ngx-equipment-sharing-mutation [formcontrolname="equipment"]',
 	selectEquipmentDropdownOptionCss: '.option-list nb-option',
 	selectPolicyDropdownCss: 'ngx-equipment-sharing-mutation [formcontrolname="equipmentSharingPolicyId"]',
 	selectPolicyDropdownOptionCss: '.option-list nb-option',
+	// Employees field in the request dialog = ga-employee-multi-select wrapping an nb-select. Click the
+	// inner nb-select to open; its options render in the cdk overlay as .option-list nb-option. The list
+	// is the org's employees "working" in the header date range (async, can be empty) — the .po wrapper
+	// treats selection as best-effort (employees is NOT a required field on the request form).
+	selectEmployeeDropdownCss: 'ga-employee-multi-select nb-select',
+	selectEmployeeDropdownOptionCss: '.option-list nb-option',
 	dateInputCss: 'ngx-equipment-sharing-mutation [formcontrolname="shareRequestDay"]',
 	startDateInputCss: 'ngx-equipment-sharing-mutation [formcontrolname="shareStartDay"]',
 	endDateInputCss: 'ngx-equipment-sharing-mutation [formcontrolname="shareEndDay"]',
@@ -34,7 +45,11 @@ export const OrganizationEquipmentPage = {
 	// Policy (equipment-sharing-policy) dialog inputs.
 	policyNameInputCss: 'ngx-equipment-sharing-policy-mutation [formcontrolname="name"]',
 	policyDescriptionInputCss: 'ngx-equipment-sharing-policy-mutation [formcontrolname="description"]',
-	equipmentSharingPolicyButtonCss: 'button.action[status="primary"]',
+	// The equipment-sharing page's "Equipment Sharing Policy" nav button is button.action[status="primary"]
+	// WITHOUT the .sharing class. The equipment page's "Equipment Sharing" header button is
+	// button.action.sharing[status="primary"] — exclude .sharing so this never matches the wrong page's
+	// button when a route change is still mid-flight (that ambiguity opened the wrong dialog).
+	equipmentSharingPolicyButtonCss: 'button.action[status="primary"]:not(.sharing)',
 	backButtonCss: 'ngx-back-navigation button[status="primary"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyPolicyCss: 'tr.angular2-smart-row',

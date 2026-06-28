@@ -12,22 +12,30 @@ export const EstimatesPage = {
 	discountInputCss: '#inputDiscountValue',
 	discountTypeDropdownCss: '[formcontrolname="discountType"]',
 	dropdownOptionCss: '.option-list nb-option',
-	organizationContactDropdownCss: 'div.col-sm-6 > ga-contact-select > ng-select',
+	// Scope to the component, not a brittle column-class chain: the contact ng-select is the only
+	// ga-contact-select on the add form (matches the proven Invoices/SalesEstimates selector).
+	organizationContactDropdownCss: 'ga-contact-select ng-select',
 	contactOptionCss: 'div.ng-option',
 	taxInputCss: '#inputTax',
 	taxTypeDropdownCss: '[formcontrolname="taxType"]',
 	invoiceTypeDropdownCss: '[formcontrolname="invoiceType"]',
 	generateItemsButtonCss: 'div.buttons > button.gen',
 	selectEmployeeCss: 'div.form-group ga-employee-multi-select nb-select',
-	saveAsDraftButtonCss: 'nb-card-footer > button[status="success"]',
+	// "Save as Draft" renders status="primary" (the success buttons are Save-and-send-contact /
+	// Save-and-send-email). The old status="success" selector matched the wrong footer buttons.
+	saveAsDraftButtonCss: 'nb-card-footer > button[status="primary"]',
 	emailInputCss: '#email',
 	tableRowCss: 'table > tbody > tr.angular2-smart-row',
 	moreButtonCss: 'div.btn-group button:has(nb-icon[icon="more-vertical-outline"])',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	cardBodyCss: 'nb-card-header.d-flex',
-	backButtonCss: 'div.main > button[status="primary"]',
+	// Scope to the back-navigation component (matches the proven Invoices/SalesEstimates selector);
+	// `div.main > button[status="primary"]` can collide with other primary buttons on view/send screens.
+	backButtonCss: 'ngx-back-navigation button',
 	deleteItemCss: 'i.nb-trash',
-	confirmButtonCss: 'nb-card-footer > button[status="success"]',
+	// Send/Email mutation footer is `nb-card-footer.text-left`; scope to it so the confirm (success)
+	// button isn't confused with the add-form footer's success buttons.
+	confirmButtonCss: 'nb-card-footer.text-left > button[status="success"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	verifyEstimateCss: 'div.ng-star-inserted',
 	draftBadgeCss: 'div.badge-warning',
@@ -39,6 +47,6 @@ export const EstimatesPage = {
 	totalValueInputCss: '#inputTotalValue',
 	currencySelectCss: 'ga-currency ng-select',
 	inputStatusCss: '#inputStatus',
-	searchButtonCss: 'button[status="success"]:has-text("Search")',
+	searchButtonCss: 'button[type="submit"][status="success"]',
 	resetButtonCss: 'button[type="reset"]'
 };

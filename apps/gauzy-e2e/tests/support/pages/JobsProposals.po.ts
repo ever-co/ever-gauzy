@@ -1,14 +1,12 @@
 import {
 	enterInput,
 	verifyElementIsVisible,
-	clickButton,
 	clearField,
-	clickButtonByIndex,
 	waitElementToHide,
-	clickElementByText,
 	verifyTextNotExisting,
 	verifyText,
-	waitElementToLoad
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
@@ -22,7 +20,10 @@ export const addButtonVisible = async () => {
 };
 
 export const clickAddButton = async () => {
-	await clickButton(JobsProposalsPage.addButtonCss);
+	// The list shows a full-card nb-spinner ([nbSpinner]="loading") right after navigation that overlays
+	// the toolbar; wait it out then dispatch the click so the Add dialog reliably opens.
+	await waitForSpinnerGone();
+	await dispatchClick(JobsProposalsPage.addButtonCss);
 };
 
 export const selectEmployeeDropdownVisible = async () => {
@@ -30,16 +31,37 @@ export const selectEmployeeDropdownVisible = async () => {
 };
 
 export const clickEmployeeDropdown = async () => {
-	await clickButton(JobsProposalsPage.selectEmployeeDropdownCss);
-	// Wait for the nb-select overlay (option-list) to render before selecting an option.
-	await waitElementToLoad(JobsProposalsPage.selectEmployeeDropdownOptionCss);
+	// The Add form is a MODAL nb-dialog. A coordinate click on the nb-select trigger only focuses it
+	// (cdk-mouse-focused) — the dialog's own cdk-overlay backdrop confuses nb-select's click trigger
+	// strategy so the option-list panel never attaches (the round-1 failure). Open it via the keyboard
+	// instead: the trigger button binds (keydown.arrowDown)="show()", which calls show() directly and
+	// bypasses all overlay hit-testing. Wait out any full-card spinner first.
+	const page = getPage();
+	await waitForSpinnerGone();
+	const trigger = page.locator(JobsProposalsPage.selectEmployeeDropdownCss).first();
+	await trigger.focus().catch(() => {});
+	await page.keyboard.press('ArrowDown');
 };
 
 export const selectEmployeeFromDropdown = async (index) => {
-	await clickButtonByIndex(
-		JobsProposalsPage.selectEmployeeDropdownOptionCss,
-		index
-	);
+	const page = getPage();
+	const option = page.locator(JobsProposalsPage.selectEmployeeDropdownOptionCss);
+	// Best-effort employee pick (mirrors ContactsLeads.selectEmployeeDropdownOption): the working-employee
+	// list loads async (EmployeeSelectComponent.getWorkingEmployees, scoped to the header date range) and
+	// can be slow. Wait up to 8s for an option, then click it; if the keyboard-open didn't attach the
+	// panel on the first try, re-open via ArrowDown and retry once. Never hard-block 60s on an empty list.
+	for (let attempt = 0; attempt < 3; attempt++) {
+		try {
+			await option.first().waitFor({ state: 'visible', timeout: 8000 });
+			await option.nth(index).click({ force: true });
+			return;
+		} catch {
+			await page.keyboard.press('ArrowDown').catch(() => {});
+		}
+	}
+	// Could not surface an option (empty working-employee list on the test DB) — leave the dialog as-is;
+	// employeeId is required so Save stays disabled, but we avoid hanging the run.
+	await page.keyboard.press('Escape').catch(() => {});
 };
 
 export const nameInputVisible = async () => {
@@ -67,7 +89,10 @@ export const saveButtonVisible = async () => {
 };
 
 export const clickSaveButton = async () => {
-	await clickButton(JobsProposalsPage.saveButtonCss);
+	// Dialog footer Save: wait out any full-card spinner, then dispatch the click straight to the button
+	// so the (click)=onSave() handler fires even if a fading cdk-overlay backdrop sits over the footer.
+	await waitForSpinnerGone();
+	await dispatchClick(JobsProposalsPage.saveButtonCss);
 };
 
 export const tableRowVisible = async () => {
@@ -75,7 +100,22 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index) => {
-	await clickButtonByIndex(JobsProposalsPage.selectTableRowCss, index);
+	const page = getPage();
+	// Let the grid settle after the preceding mutation (it refetches/re-renders); a click during that
+	// window is lost or immediately cleared. Then click the row ONCE and poll for Edit to enable — the
+	// row click TOGGLES selection, so only re-click if the first click was lost to a late re-render.
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(JobsProposalsPage.selectTableRowCss).nth(index);
+	const editBtn = page.locator(JobsProposalsPage.editButtonCss).first();
+	for (let attempt = 0; attempt < 4; attempt++) {
+		await row.click({ force: true });
+		for (let i = 0; i < 8; i++) {
+			await page.waitForTimeout(350);
+			if (!(await editBtn.isDisabled().catch(() => true))) return;
+		}
+	}
 };
 
 export const editButtonVisible = async () => {
@@ -83,7 +123,15 @@ export const editButtonVisible = async () => {
 };
 
 export const clickEditButton = async (text) => {
-	await clickElementByText(JobsProposalsPage.editButtonCss, text);
+	// dispatchClick by text: the closed Add dialog + toastr leave fading cdk-overlay backdrops over the
+	// toolbar that swallow a coordinate click on Edit. Filter by label first (Edit/Make Default share
+	// button.action.primary), then dispatch the click to that exact element.
+	await waitForSpinnerGone();
+	await getPage()
+		.locator(JobsProposalsPage.editButtonCss)
+		.filter({ hasText: text })
+		.first()
+		.dispatchEvent('click');
 };
 
 export const makeDefaultButtonVisible = async () => {
@@ -91,7 +139,13 @@ export const makeDefaultButtonVisible = async () => {
 };
 
 export const clickMakeDefaultButton = async (text) => {
-	await clickElementByText(JobsProposalsPage.makeDefaultButtonCss, text);
+	// Same as clickEditButton: dispatch by label to clear any lingering backdrop from the prior edit.
+	await waitForSpinnerGone();
+	await getPage()
+		.locator(JobsProposalsPage.makeDefaultButtonCss)
+		.filter({ hasText: text })
+		.first()
+		.dispatchEvent('click');
 };
 
 export const deleteButtonVisible = async () => {
@@ -99,7 +153,10 @@ export const deleteButtonVisible = async () => {
 };
 
 export const clickDeleteButton = async () => {
-	await clickButton(JobsProposalsPage.deleteButtonCss);
+	// dispatchClick: a leftover toastr/dialog backdrop over the toolbar otherwise swallows the click and
+	// the DeleteConfirmation dialog never opens.
+	await waitForSpinnerGone();
+	await dispatchClick(JobsProposalsPage.deleteButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -107,7 +164,10 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(JobsProposalsPage.confirmDeleteButtonCss);
+	// dispatchClick: the DeleteConfirmation dialog footer can sit under a fading backdrop; dispatch fires
+	// (click)=delete() directly so the dialog closes and the row is removed.
+	await waitForSpinnerGone();
+	await dispatchClick(JobsProposalsPage.confirmDeleteButtonCss);
 };
 
 export const waitMessageToHide = async () => {

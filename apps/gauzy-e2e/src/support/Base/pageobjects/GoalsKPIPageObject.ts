@@ -3,9 +3,10 @@ export const GoalsKPIPage = {
 	tabButtonCss: 'nb-tabset > ul.tabset > li.tab',
 	kpiTitleInputCss: '#kpi-title',
 	kpiDescriptionInputCss: '#kpi-description',
-	// Target the nb-select's clickable button inside the KPI-lead employee multi-select (a click on the
-	// host id alone doesn't open the dropdown). Scoped by #kpi-lead so it only matches the lead select.
-	employeeMultiSelectCss: '#kpi-lead nb-select button.select-button',
+	// The KPI-lead employee multi-select renders a Nebular nb-select (ga-employee-multi-select host has
+	// id="kpi-lead"). Target the nb-select host (not button.select-button): clicking the host is what
+	// reliably toggles the overlay panel open — matching the ContactsLeads usersMultiSelect pattern.
+	employeeMultiSelectCss: '#kpi-lead nb-select',
 	employeeDropdownCss: '.option-list nb-option',
 	currentValueInputCss: '#current-value',
 	addKPIButtonCss: '.gauzy-button-container button[status="success"]',

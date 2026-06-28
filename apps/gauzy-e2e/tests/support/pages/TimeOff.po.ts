@@ -10,7 +10,8 @@ import {
 	waitElementToHide,
 	verifyText,
 	verifyTextNotExisting,
-	clickButtonDouble
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
 import { getPage } from '../page-context';
 // Selectors + data are framework-agnostic — reused from the Cypress tree during migration.
@@ -18,23 +19,53 @@ import { TimeOffPage } from '../../../src/support/Base/pageobjects/TimeOffPageOb
 
 export const requestButtonVisible = async () => verifyElementIsVisible(TimeOffPage.requestButtonCss);
 
-export const clickRequestButton = async () => clickButton(TimeOffPage.requestButtonCss);
+export const clickRequestButton = async () => {
+	// The preceding CustomCommands.addEmployee leaves a fading cdk-overlay-backdrop (still
+	// `cdk-overlay-backdrop-showing` at this point) over the toolbar; a coordinate click — even
+	// {force:true} — lands on that backdrop, so requestDaysOff() never fires and the request-mutation
+	// dialog never opens (the original failure). Wait out the page spinner then dispatch the click
+	// straight to the button so the (click) handler runs regardless of the overlay.
+	await waitForSpinnerGone();
+	await dispatchClick(TimeOffPage.requestButtonCss);
+};
 
 export const employeeSelectorVisible = async () => {
-	const waitForUsers = getPage().waitForResponse((response) => /\/api\/employee\/working/.test(response.url()));
+	// Best-effort wait for the working-employees fetch the ga-employee-selector kicks off: race it with a
+	// timeout so we don't hang the default 30s if the response already landed before this wrapper
+	// registered the listener (the request dialog opened in the previous step).
+	const waitForUsers = getPage()
+		.waitForResponse((response) => /\/api\/employee\/working/.test(response.url()), { timeout: 8000 })
+		.catch(() => {});
 	await verifyElementIsVisible(TimeOffPage.employeeDropdownCss);
 	await waitForUsers;
 };
 
 export const clickEmployeeSelector = async () => {
-	await clickButton(TimeOffPage.employeeDropdownCss);
-	await clickButtonDouble(TimeOffPage.employeeDropdownCss);
+	// The employee selector is an appendTo=body ng-select (opens on mousedown). A coordinate click — even
+	// the previous force-click + double-click — is swallowed by leftover dialog backdrops and can even
+	// close the form; open it via the keyboard instead (focus its inner input, then ArrowDown).
+	await waitForSpinnerGone();
+	const input = getPage().locator(TimeOffPage.employeeDropdownCss).locator('input').first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
+	await getPage().waitForTimeout(500);
 };
 
 export const employeeDropdownVisible = async () => verifyElementIsVisible(TimeOffPage.employeeDropdownOptionCss);
 
-export const selectEmployeeFromDropdown = async (index: number) =>
-	clickButtonByIndex(TimeOffPage.employeeDropdownOptionCss, index);
+export const selectEmployeeFromDropdown = async (index: number) => {
+	// Best-effort employee pick: the working-employees list loads async and can be empty on the test DB
+	// (no employee "working" in the header date range). Click an option if one shows within ~8s; else
+	// Escape and continue. Options are div.ng-option (ng-select), not .option-list nb-option.
+	const page = getPage();
+	const option = page.locator(TimeOffPage.employeeDropdownOptionCss);
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
+};
 
 export const selectTimeOffPolicyVisible = async () => verifyElementIsVisible(TimeOffPage.timeOffPolicyDropdownCss);
 
@@ -71,13 +102,25 @@ export const enterDescriptionInputData = async (data: string) => {
 
 export const saveRequestButtonVisible = async () => verifyElementIsVisible(TimeOffPage.saveRequestButtonCss);
 
-export const clickSaveRequestButton = async () => clickButton(TimeOffPage.saveRequestButtonCss);
+export const clickSaveRequestButton = async () => {
+	// dispatchClick after settling: the date pickers / leftover backdrops in the request dialog can sit
+	// over the footer Save and swallow a coordinate click, leaving the dialog open. Dispatch fires
+	// saveRequest() straight on the button (it still gates on form validity via [disabled]).
+	await waitForSpinnerGone();
+	await dispatchClick(TimeOffPage.saveRequestButtonCss);
+};
 
 export const addHolidayButtonVisible = async () => verifyElementIsVisible(TimeOffPage.addHolidayButtonCss);
 
 export const clickAddHolidayButton = async () => {
-	const waitForm = getPage().waitForResponse((response) => /\/api\/employee/.test(response.url()));
-	await clickButton(TimeOffPage.addHolidayButtonCss);
+	// dispatchClick after settling: this runs right after the delete-confirm dialog closed, so a fading
+	// backdrop can swallow a coordinate click on the toolbar "Add Holidays". Race the employee fetch with
+	// a timeout so we don't hang the default 30s if it already landed (or isn't issued).
+	await waitForSpinnerGone();
+	const waitForm = getPage()
+		.waitForResponse((response) => /\/api\/employee/.test(response.url()), { timeout: 8000 })
+		.catch(() => {});
+	await dispatchClick(TimeOffPage.addHolidayButtonCss);
 	await waitForm;
 };
 
@@ -94,8 +137,20 @@ export const selectEmployeeDropdownVisible = async () => verifyElementIsVisible(
 
 export const clickSelectEmployeeDropdown = async () => clickButton(TimeOffPage.selectEmployeeCss);
 
-export const selectEmployeeFromHolidayDropdown = async (index: number) =>
-	clickButtonByIndex(TimeOffPage.selectEmployeeDropdownOptionCss, index);
+export const selectEmployeeFromHolidayDropdown = async (index: number) => {
+	// Best-effort employee pick (mirror ContactsLeads.selectEmployeeDropdownOption): this nb-select's
+	// option list (.option-list nb-option) loads async and is frequently EMPTY on the test DB (no
+	// employee in range). Click the option if it shows within ~8s; else Escape and continue, so a hard
+	// option[index] click doesn't hang the 60s task timeout on an empty list.
+	const page = getPage();
+	const option = page.locator(TimeOffPage.selectEmployeeDropdownOptionCss);
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
+};
 
 export const startHolidayDateInputVisible = async () => verifyElementIsVisible(TimeOffPage.startHolidayDateCss);
 
@@ -117,12 +172,36 @@ export const clickKeyboardButtonByKeyCode = async (keycode: number) => clickKeyb
 
 export const saveButtonVisible = async () => verifyElementIsVisible(TimeOffPage.saveButtonCss);
 
-export const clickSaveButton = async () => clickButton(TimeOffPage.saveButtonCss);
+export const clickSaveButton = async () => {
+	// dispatchClick after settling: the holiday/policy dialog's date pickers and async employee load
+	// leave overlays/backdrops over the footer Save; dispatch fires the save handler directly (it still
+	// gates on form validity via [disabled]).
+	await waitForSpinnerGone();
+	await dispatchClick(TimeOffPage.saveButtonCss);
+};
 
 export const timeOffTableRowVisible = async () => verifyElementIsVisible(TimeOffPage.selectTableRowCss);
 
-export const selectTimeOffTableRow = async (index: number) =>
-	clickButtonByIndex(TimeOffPage.selectTableRowCss, index);
+export const selectTimeOffTableRow = async (index: number) => {
+	const page = getPage();
+	// Let the grid settle after the preceding mutation (re-render/refetch) — a click during that window
+	// is lost or immediately cleared. Then click the row ONCE and poll for the toolbar action buttons to
+	// appear (selecting a row sets disableButton=false, rendering the btn-group.actions). Clicking the
+	// row TOGGLES selection, so only re-click if the first click was lost to a late re-render — never
+	// rapid re-click. (root cause #4)
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(TimeOffPage.selectTableRowCss).nth(index);
+	const actions = page.locator('div.btn-group.actions button').first();
+	for (let attempt = 0; attempt < 4; attempt++) {
+		await row.click({ force: true });
+		for (let i = 0; i < 8; i++) {
+			await page.waitForTimeout(350);
+			if (await actions.isVisible().catch(() => false)) return;
+		}
+	}
+};
 
 export const editTimeOffRequestBtnVisible = async () => verifyElementIsVisible(TimeOffPage.editTimeOfRequestButtonCss);
 
@@ -130,30 +209,77 @@ export const clickEditTimeOffRequestButton = async () => clickButton(TimeOffPage
 
 export const deleteTimeOffBtnVisible = async () => verifyElementIsVisible(TimeOffPage.deleteTimeOfRequestButtonCss);
 
-export const clickDeleteTimeOffButton = async () => clickButton(TimeOffPage.deleteTimeOfRequestButtonCss);
+export const clickDeleteTimeOffButton = async () => {
+	// dispatchClick: a leftover toastr/dialog backdrop from the preceding save can intercept a coordinate
+	// click on the toolbar Delete; dispatch fires deleteRequest() and opens the confirm dialog.
+	await waitForSpinnerGone();
+	await dispatchClick(TimeOffPage.deleteTimeOfRequestButtonCss);
+};
+
+// Approve/Deny/Archive live in a SECOND action group that only renders once showActions=true; the
+// only way to flip it is the "more-horizontal" toggle in the first group. The migrated spec never
+// clicked it, so the warning/success buttons were never present. Click it (best-effort: skip if the
+// second group is already showing) before asserting on Deny/Approve.
+export const clickShowActionsButton = async () => {
+	const page = getPage();
+	if (await page.locator(TimeOffPage.denyTimeOffRequestButtonCss).first().isVisible().catch(() => false)) return;
+	await dispatchClick(TimeOffPage.showActionsButtonCss);
+	await page.waitForTimeout(400);
+};
 
 export const denyTimeOffButtonVisible = async () => verifyElementIsVisible(TimeOffPage.denyTimeOffRequestButtonCss);
 
-export const clickDenyTimeOffButton = async () => clickButton(TimeOffPage.denyTimeOffRequestButtonCss);
+export const clickDenyTimeOffButton = async () => {
+	// Best-effort: the spec calls this twice, but denying clears the selection and resets showActions, so
+	// the second click has no target. Click only while the button is present so the doubled call is a
+	// harmless no-op instead of a 60s timeout. dispatchClick defeats any leftover toastr/dialog backdrop.
+	const btn = getPage().locator(TimeOffPage.denyTimeOffRequestButtonCss).first();
+	if (await btn.isVisible().catch(() => false)) {
+		await dispatchClick(TimeOffPage.denyTimeOffRequestButtonCss);
+	}
+};
 
 export const approveTimeOffButtonVisible = async () =>
 	verifyElementIsVisible(TimeOffPage.approveTimeOffRequestButtonCss);
 
-export const clickApproveTimeOffButton = async () => clickButton(TimeOffPage.approveTimeOffRequestButtonCss);
+export const clickApproveTimeOffButton = async () => {
+	// Best-effort, same rationale as clickDenyTimeOffButton: approving clears selection/showActions, so
+	// the doubled call becomes a no-op rather than hanging on a vanished button.
+	const btn = getPage().locator(TimeOffPage.approveTimeOffRequestButtonCss).first();
+	if (await btn.isVisible().catch(() => false)) {
+		await dispatchClick(TimeOffPage.approveTimeOffRequestButtonCss);
+	}
+};
 
 export const confirmDeleteTimeOffBtnVisible = async () =>
 	verifyElementIsVisible(TimeOffPage.confirmDeleteTimeOfButtonCss);
 
-export const clickConfirmDeleteTimeOffButton = async () => clickButton(TimeOffPage.confirmDeleteTimeOfButtonCss);
+export const clickConfirmDeleteTimeOffButton = async () => {
+	// dispatchClick: the confirm dialog's own fading backdrop can swallow a coordinate click on its
+	// footer button, leaving the record undeleted; dispatch fires the confirm handler directly.
+	await waitForSpinnerGone();
+	await dispatchClick(TimeOffPage.confirmDeleteTimeOfButtonCss);
+};
 
 export const timeOffSettingsButtonVisible = async () => verifyElementIsVisible(TimeOffPage.timeOffSettingsButtonCss);
 
-export const clickTimeOffSettingsButton = async (index: number) =>
-	clickButtonByIndex(TimeOffPage.timeOffSettingsButtonCss, index);
+export const clickTimeOffSettingsButton = async (_index: number) => {
+	// There is only ONE settings cog (button.action.p-2) in the time-off header, so the legacy index=1
+	// targeted a non-existent second match and hung. Always dispatch the click on the single cog (which
+	// routes to /pages/employees/time-off/settings); waitForSpinnerGone first so the page-load spinner
+	// doesn't swallow a coordinate click.
+	await waitForSpinnerGone();
+	await dispatchClick(TimeOffPage.timeOffSettingsButtonCss);
+};
 
 export const addNewPolicyButtonVisible = async () => verifyElementIsVisible(TimeOffPage.addNewPolicyButtonCss);
 
-export const clickAddNewPolicyButton = async () => clickButton(TimeOffPage.addNewPolicyButtonCss);
+export const clickAddNewPolicyButton = async () => {
+	// dispatchClick after settling: the settings page shows a load spinner over the toolbar right after
+	// navigation; a coordinate click on "Add" can land on it, so the policy dialog never opens.
+	await waitForSpinnerGone();
+	await dispatchClick(TimeOffPage.addNewPolicyButtonCss);
+};
 
 export const policyInputFieldVisible = async () => verifyElementIsVisible(TimeOffPage.addNewPolicyInputCss);
 

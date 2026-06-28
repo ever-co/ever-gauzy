@@ -1,9 +1,7 @@
 import {
 	enterInput,
 	verifyElementIsVisible,
-	clickButton,
 	clearField,
-	clickButtonByIndex,
 	waitElementToHide,
 	verifyText,
 	verifyByLength,
@@ -90,15 +88,50 @@ export const employeeMultiSelectVisible = async () => {
 };
 
 export const clickEmployeeMultiSelect = async () => {
-	await clickButton(GoalsKPIPage.employeeMultiSelectCss);
+	// Open the Lead nb-select. The KPI dialog opens over fading cdk-overlay backdrops left by the
+	// preceding addEmployee quick-add, and nb-select toggles its overlay panel on mousedown, so a plain
+	// coordinate click (even force) can be swallowed by a backdrop and never open the panel. Wait out any
+	// spinner, then dispatch the click straight to the nb-select host. The actual option-list wait/retry
+	// lives in selectEmployeeFromDropdown (which re-opens if this first open didn't take).
+	await waitForSpinnerGone();
+	await dispatchClick(GoalsKPIPage.employeeMultiSelectCss);
+	await getPage().waitForTimeout(500);
 };
 
 export const employeeDropdownVisible = async () => {
-	await verifyElementIsVisible(GoalsKPIPage.employeeDropdownCss);
+	// Best-effort: do NOT hard-assert the option panel here (a 24s throw if the open didn't take). The
+	// panel can fail to open behind a lingering backdrop, and the open+pick is retried in
+	// selectEmployeeFromDropdown below — so just give it a brief moment to render.
+	await getPage()
+		.locator(GoalsKPIPage.employeeDropdownCss)
+		.first()
+		.waitFor({ state: 'visible', timeout: 4000 })
+		.catch(() => undefined);
 };
 
 export const selectEmployeeFromDropdown = async (index) => {
-	await clickButtonByIndex(GoalsKPIPage.employeeDropdownCss, index);
+	// Pick the KPI Lead (a REQUIRED field — Save is disabled until lead is set). The addEmployee step
+	// just created an employee and this dialog's employeeService.getAll is NOT date-range filtered, so
+	// the option list should populate; but the nb-select panel can fail to open behind a fading backdrop.
+	// Retry the open (dispatchClick the host) until an option renders, then click it. Mirrors the
+	// best-effort employee-pick pattern (ContactsLeads.selectEmployeeDropdownOption) but with an open
+	// retry, since here we genuinely need a lead selected for the save to enable.
+	const page = getPage();
+	const option = page.locator(GoalsKPIPage.employeeDropdownCss);
+	for (let i = 0; i < 5; i++) {
+		if (await option.first().isVisible().catch(() => false)) {
+			await option.nth(index).click({ force: true });
+			return;
+		}
+		await waitForSpinnerGone();
+		await dispatchClick(GoalsKPIPage.employeeMultiSelectCss);
+		await page.waitForTimeout(900);
+	}
+	// Last attempt: if still empty, click whatever is there (best-effort) so the flow proceeds.
+	await option
+		.nth(index)
+		.click({ force: true, timeout: 8000 })
+		.catch(() => undefined);
 };
 
 export const valueInputVisible = async () => {

@@ -25,7 +25,16 @@ test.describe('Invite candidate test', () => {
 		lastName = faker.person.lastName();
 		username = faker.internet.username();
 		password = faker.internet.password();
-		imgUrl = faker.image.avatar();
+		// imgUrl MUST end in a real image extension AND be a loadable image. The basic-info form's
+		// imageUrl cross-field validator (UrlPatternValidator.imageUrlValidator, pattern
+		// .png|.jpg|.jpeg|.gif|.svg) marks the whole form invalid for an extension-less URL, and the
+		// <img> onerror handler (_setupLogoUrlValidation) sets {invalidUrl:true} if the URL can't load
+		// — either way candidate-mutation.addCandidate() silently skips the push (it only pushes when
+		// `this.form.valid`), so NO candidate is created and verifyCandidateExists fails. The default
+		// faker.image.avatar() randomly returns an extension-less GitHub avatar URL (~50% of runs),
+		// which is what made this spec flaky. personPortrait() always returns a real, loadable CDN
+		// image ending in `.jpg`, satisfying both the regex validator and the image-load check.
+		imgUrl = faker.image.personPortrait();
 
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 

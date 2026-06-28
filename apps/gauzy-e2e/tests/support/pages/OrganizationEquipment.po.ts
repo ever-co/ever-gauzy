@@ -37,6 +37,19 @@ const dismissLeftoverDialogs = async () => {
 		.catch(() => undefined);
 };
 
+// The equipment <-> equipment-sharing <-> equipment-sharing-policy buttons are routerLink buttons
+// fired via dispatchClick (fire-and-forget). The original flow then immediately ran the next step,
+// which raced the still-pending route change: the in-between visibility checks pass against the Add /
+// status="primary" buttons that exist on BOTH pages, so the wrong button got clicked on the wrong
+// page (an "Add Equipment" dialog opened while on the equipment-sharing page). After each nav click,
+// wait for the destination route to actually be active, plus a spinner/settle, before continuing.
+const waitForRoute = async (urlGlob: string) => {
+	const page = getPage();
+	await page.waitForURL(urlGlob, { timeout: 24000 }).catch(() => undefined);
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => undefined);
+};
+
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };
@@ -147,8 +160,10 @@ export const equipmentSharingButtonVisible = async () => {
 };
 
 export const clickEquipmentSharingButton = async () => {
-	// Navigation button clicked right after a save toastr/dialog teardown — dispatchClick past backdrop.
+	// Navigation button clicked right after a save toastr/dialog teardown — dispatchClick past backdrop,
+	// then BLOCK until the equipment-sharing route is active so the next step doesn't race the route change.
 	await dispatchClick(OrganizationEquipmentPage.equipmentSharingButtonCss);
+	await waitForRoute(OrganizationEquipmentPage.equipmentSharingRoute);
 };
 
 export const sharingPolicyButtonVisible = async () => {
@@ -156,7 +171,10 @@ export const sharingPolicyButtonVisible = async () => {
 };
 
 export const clickSharingPolicyButton = async () => {
+	// Block until the equipment-sharing-policy route is active before the next step opens the Add dialog —
+	// otherwise the Add click can land on the equipment-sharing page's Add (wrong dialog).
 	await dispatchClick(OrganizationEquipmentPage.equipmentSharingPolicyButtonCss);
+	await waitForRoute(OrganizationEquipmentPage.equipmentSharingPolicyRoute);
 };
 
 export const addPolicyButtonVisible = async () => {
@@ -199,7 +217,12 @@ export const backButtonVisible = async () => {
 
 export const clickBackButton = async () => {
 	// Clicked right after a save (toastr/dialog teardown) — dispatchClick past any residual backdrop.
+	// Back uses location.back(), whose destination differs per step (equipment-sharing vs equipment), so
+	// settle on navigation/spinner generically rather than asserting one URL.
 	await dispatchClick(OrganizationEquipmentPage.backButtonCss);
+	await waitForSpinnerGone();
+	await getPage().waitForLoadState('networkidle').catch(() => undefined);
+	await getPage().waitForTimeout(1000);
 };
 
 export const requestButtonVisible = async () => {
@@ -253,7 +276,20 @@ export const clickEmployeeDropdown = async () => {
 };
 
 export const selectEmployeeFromDropdown = async (index: number) => {
-	await clickButtonByIndex(OrganizationEquipmentPage.selectEmployeeDropdownOptionCss, index);
+	// Best-effort employee pick (mirrors ContactsLeads.po selectEmployeeDropdownOption): the
+	// ga-employee-multi-select options are the org's employees "working" in the header date range,
+	// loaded async, and can legitimately be EMPTY (no one working in range on the test DB). A hard
+	// clickButtonByIndex(0) with the 60s task timeout would hang forever on an empty list. Wait briefly
+	// for an option, click it if present, otherwise Escape and continue — the request saves without an
+	// employee selected, so the flow still completes.
+	const page = getPage();
+	const option = page.locator(OrganizationEquipmentPage.selectEmployeeDropdownOptionCss);
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode: number) => {

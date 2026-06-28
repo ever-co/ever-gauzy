@@ -43,7 +43,9 @@ test.describe('Time Off test', () => {
 			await timeOffPage.employeeSelectorVisible();
 			await timeOffPage.clickEmployeeSelector();
 			await timeOffPage.employeeDropdownVisible();
-			await timeOffPage.selectEmployeeFromDropdown(1);
+			// index 0 = first working employee in the ng-select (no placeholder option), more robust than
+			// the legacy index 1 which skipped the first and broke when only one employee was in range.
+			await timeOffPage.selectEmployeeFromDropdown(0);
 			await timeOffPage.selectTimeOffPolicyVisible();
 			await timeOffPage.clickTimeOffPolicyDropdown();
 			await timeOffPage.timeOffPolicyDropdownOptionVisible();
@@ -65,6 +67,8 @@ test.describe('Time Off test', () => {
 		await test.step('Should be able to DENY time off request', async () => {
 			await timeOffPage.timeOffTableRowVisible();
 			await timeOffPage.selectTimeOffTableRow(0);
+			// Approve/Deny live in a second action group that only renders once "more" is toggled.
+			await timeOffPage.clickShowActionsButton();
 			await timeOffPage.denyTimeOffButtonVisible();
 			await timeOffPage.clickDenyTimeOffButton();
 			await timeOffPage.clickDenyTimeOffButton();
@@ -72,6 +76,10 @@ test.describe('Time Off test', () => {
 
 		await test.step('Should be able to APPROVE time off request', async () => {
 			await timeOffPage.waitMessageToHide();
+			// Denying cleared the selection + collapsed the action group; re-select the row and re-open
+			// the action group before approving.
+			await timeOffPage.selectTimeOffTableRow(0);
+			await timeOffPage.clickShowActionsButton();
 			await timeOffPage.approveTimeOffButtonVisible();
 			await timeOffPage.clickApproveTimeOffButton();
 			await timeOffPage.clickApproveTimeOffButton();
@@ -80,7 +88,8 @@ test.describe('Time Off test', () => {
 			await timeOffPage.employeeSelectorVisible();
 			await timeOffPage.clickEmployeeSelector();
 			await timeOffPage.employeeDropdownVisible();
-			await timeOffPage.selectEmployeeFromDropdown(1);
+			// index 0 = first working employee (see step 1 note).
+			await timeOffPage.selectEmployeeFromDropdown(0);
 			await timeOffPage.selectTimeOffPolicyVisible();
 			await timeOffPage.clickTimeOffPolicyDropdown();
 			await timeOffPage.timeOffPolicyDropdownOptionVisible();

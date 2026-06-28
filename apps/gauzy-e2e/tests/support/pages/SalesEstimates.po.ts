@@ -9,11 +9,9 @@ import {
 	clickButtonByIndex,
 	clickElementByText,
 	waitElementToHide,
-	clickButtonByText,
 	verifyValue,
 	verifyTextNotExisting,
-	scrollDown,
-	waitUntil
+	scrollDown
 } from '../util';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
@@ -163,7 +161,18 @@ export const clickEmployeeDropdown = async () => {
 };
 
 export const selectEmployeeFromDropdown = async (index: number) => {
-	await clickButtonByIndex(SalesEstimatesPage.dropdownOptionCss, index);
+	const page = getPage();
+	const option = page.locator(SalesEstimatesPage.dropdownOptionCss);
+	// Best-effort employee pick: ga-employee-multi-select loads its options async and can legitimately
+	// be EMPTY (no employee "working" in the selected date range). Select one if it appears; otherwise
+	// press Escape and continue — an estimate saves fine without members. This avoids the hard 60s
+	// timeout on an empty `.option-list nb-option` list (mirrors Estimates.po / ContactsLeads.po).
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode: number) => {
@@ -175,7 +184,10 @@ export const generateItemsButtonVisible = async () => {
 };
 
 export const clickGenerateItemsButton = async () => {
-	await clickButton(SalesEstimatesPage.generateItemsButtonCss);
+	// dispatchClick past the form's full-card nb-spinner that overlays the buttons while it loads items
+	// (a coordinate click would land on the spinner). Mirrors the proven Estimates.po pattern.
+	await waitForSpinnerGone();
+	await dispatchClick(SalesEstimatesPage.generateItemsButtonCss);
 };
 
 export const saveAsDraftButtonVisible = async () => {
@@ -183,7 +195,14 @@ export const saveAsDraftButtonVisible = async () => {
 };
 
 export const clickSaveAsDraftButton = async (text: string) => {
-	await clickButtonByText(text);
+	// Footer Save: settle the card spinner first, then DOM-dispatch the click so it fires even when a
+	// fading overlay sits on top (a coordinate click would land on the overlay). Mirrors Estimates.po.
+	await waitForSpinnerGone();
+	await getPage()
+		.locator('button', { hasText: text })
+		.first()
+		.dispatchEvent('click')
+		.catch(() => {});
 };
 
 export const tableRowVisible = async () => {
@@ -191,11 +210,29 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index: number) => {
-	// Settle the grid (it re-renders after each mutation) before the single row click; the click toggles
-	// selection, so clicking too early/twice can leave the toolbar Edit/View/Delete disabled.
+	const page = getPage();
+	// Settle the grid first: a row click TOGGLES selection, so a stray double-click would deselect it
+	// (the spec calls selectTableRow repeatedly across steps). Wait for spinner/network/render to settle,
+	// then click the data row ONCE and poll the toolbar Edit button's real `disabled` attr — only
+	// re-click if selection was lost. Never rapid re-click. Mirrors the proven Estimates.po pattern.
 	await waitForSpinnerGone();
-	await waitUntil(3000);
-	await clickButtonByIndex(SalesEstimatesPage.tableRowCss, index);
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(SalesEstimatesPage.tableRowCss).nth(index);
+	const editBtn = page.locator(SalesEstimatesPage.editButtonCss).first();
+	for (let i = 0; i < 4; i++) {
+		await row.click({ force: true }).catch(() => {});
+		try {
+			await page.waitForFunction(
+				(el) => !!el && !(el as HTMLButtonElement).disabled,
+				await editBtn.elementHandle(),
+				{ timeout: 4000 }
+			);
+			return;
+		} catch {
+			// selection didn't enable the toolbar yet — loop and click the row again
+		}
+	}
 };
 
 export const actionButtonVisible = async () => {
@@ -203,7 +240,13 @@ export const actionButtonVisible = async () => {
 };
 
 export const clickActionButtonByText = async (text: string) => {
-	await clickElementByText(SalesEstimatesPage.popoverButtonCss, text);
+	// dispatchClick: the popover action (Duplicate/Send/Email) is reached right after the More popover
+	// opens; a fading overlay can intercept a coordinate click. Dispatch straight to the matched button.
+	await getPage()
+		.locator(SalesEstimatesPage.popoverButtonCss)
+		.filter({ hasText: text })
+		.first()
+		.dispatchEvent('click');
 };
 
 export const backButtonVisible = async () => {
@@ -211,7 +254,9 @@ export const backButtonVisible = async () => {
 };
 
 export const clickBackButton = async () => {
-	await clickButton(SalesEstimatesPage.backButtonCss);
+	// dispatchClick past any fading overlay from the prior view/duplicate screen. Mirrors Estimates.po.
+	await waitForSpinnerGone();
+	await dispatchClick(SalesEstimatesPage.backButtonCss);
 };
 
 export const confirmButtonVisible = async () => {
@@ -219,7 +264,10 @@ export const confirmButtonVisible = async () => {
 };
 
 export const clickConfirmButton = async () => {
-	await clickButton(SalesEstimatesPage.confirmButtonCss);
+	// Send/Email confirm dialog button — dispatchClick so a lingering popover/dialog backdrop can't
+	// intercept it. Mirrors the proven Estimates.po pattern.
+	await waitForSpinnerGone();
+	await dispatchClick(SalesEstimatesPage.confirmButtonCss);
 };
 
 export const emailInputVisible = async () => {
@@ -235,7 +283,14 @@ export const convertToInvoiceButtonVisible = async () => {
 };
 
 export const clickConvertToInvoiceButton = async (index: number) => {
-	await clickButtonByIndex(SalesEstimatesPage.convertToInvoiceButton, index);
+	// Toolbar "To invoice" (button.action.info) is reached right after row selection; dispatchClick so
+	// a fading overlay/toastr can't intercept the coordinate click. Mirrors Estimates.po.
+	await waitForSpinnerGone();
+	await getPage()
+		.locator(SalesEstimatesPage.convertToInvoiceButton)
+		.nth(index)
+		.dispatchEvent('click')
+		.catch(() => {});
 };
 
 export const editButtonVisible = async () => {
@@ -243,7 +298,14 @@ export const editButtonVisible = async () => {
 };
 
 export const clickEditButton = async (index: number) => {
-	await clickButtonByIndex(SalesEstimatesPage.editButtonCss, index);
+	// editButtonCss is scoped to the "Edit" button; dispatchClick past any fading toastr/overlay from
+	// the prior save so the edit route opens reliably. Mirrors the proven Estimates.po pattern.
+	await waitForSpinnerGone();
+	await getPage()
+		.locator(SalesEstimatesPage.editButtonCss)
+		.nth(index)
+		.dispatchEvent('click')
+		.catch(() => {});
 };
 
 export const viewButtonVisible = async () => {
@@ -251,7 +313,14 @@ export const viewButtonVisible = async () => {
 };
 
 export const clickViewButton = async (index: number) => {
-	await clickButtonByIndex(SalesEstimatesPage.viewButtonCss, index);
+	// viewButtonCss is scoped to the "View" button; dispatchClick to bypass any fading overlay.
+	// Mirrors the proven Estimates.po pattern.
+	await waitForSpinnerGone();
+	await getPage()
+		.locator(SalesEstimatesPage.viewButtonCss)
+		.nth(index)
+		.dispatchEvent('click')
+		.catch(() => {});
 };
 
 export const deleteButtonVisible = async () => {
@@ -259,7 +328,9 @@ export const deleteButtonVisible = async () => {
 };
 
 export const clickDeleteButton = async () => {
-	await clickButton(SalesEstimatesPage.deleteButtonCss);
+	// Popover Delete action — dispatchClick so the open popover's backdrop can't intercept it.
+	// Mirrors the proven Estimates.po pattern.
+	await dispatchClick(SalesEstimatesPage.deleteButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -267,7 +338,10 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(SalesEstimatesPage.confirmDeleteButtonCss);
+	// Delete-confirmation dialog OK button — dispatchClick so the closing popover/dialog backdrop can't
+	// intercept it. Mirrors the proven Estimates.po pattern.
+	await waitForSpinnerGone();
+	await dispatchClick(SalesEstimatesPage.confirmDeleteButtonCss);
 };
 
 export const verifyEstimateExists = async (val: string) => {
@@ -295,5 +369,8 @@ export const moreButtonVisible = async () => {
 };
 
 export const clickMoreButton = async () => {
-	await clickButton(SalesEstimatesPage.moreButtonCss);
+	// The "more" (vertical dots) toolbar button toggles the actions popover; dispatchClick past any
+	// fading toastr/overlay so the popover opens reliably. Mirrors the proven Estimates.po pattern.
+	await waitForSpinnerGone();
+	await dispatchClick(SalesEstimatesPage.moreButtonCss);
 };

@@ -28,18 +28,27 @@ export const addNewPositionButtonVisible = async () => {
 };
 
 export const clickAddNewPositionButton = async () => {
-	// The preceding addTag CustomCommand can leave a fading "Add Tags" nb-dialog overlay mounted over
-	// the positions page (it survives the SPA route change). A coordinate click on the toolbar Add then
-	// lands on that backdrop and the add-position dialog never opens. Dismiss any leftover overlay first
-	// (Escape + wait for the tags dialog to detach), then dispatch the click straight at the button so
-	// it fires even if a backdrop is still fading out.
+	// The preceding addTag CustomCommand can leave the "Add Tags" nb-dialog mounted over the positions
+	// page with its backdrop STILL showing (the tag Save stays disabled when the form is invalid, so the
+	// dialog never auto-closes, and it survives the SPA route change). That backdrop intercepts the
+	// toolbar Add click and the add-position dialog never opens. A plain page.keyboard Escape does NOT
+	// dismiss it after a goto() because focus is on <body>, not the overlay, so NbDialog's closeOnEsc
+	// keydown handler never fires. Instead dispatch a click straight at the tags dialog's own close
+	// control (its Cancel button / X icon both call closeDialog()), which fires regardless of focus or a
+	// fading backdrop, then wait for the dialog component to fully detach before clicking Add.
 	const page = getPage();
-	await page.keyboard.press('Escape').catch(() => undefined);
-	await page
-		.locator('ngx-tags-mutation')
-		.first()
-		.waitFor({ state: 'detached', timeout: 6000 })
-		.catch(() => undefined);
+	const tagsDialog = page.locator('ngx-tags-mutation').first();
+	if (await tagsDialog.count()) {
+		// Cancel button in the dialog footer (status="basic"); fall back to the header X icon.
+		await page
+			.locator('ngx-tags-mutation nb-card-footer button[status="basic"]')
+			.first()
+			.dispatchEvent('click')
+			.catch(() => undefined);
+		await page.locator('ngx-tags-mutation span.cancel i').first().dispatchEvent('click').catch(() => undefined);
+		await page.keyboard.press('Escape').catch(() => undefined);
+		await tagsDialog.waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined);
+	}
 	await verifyElementIsVisible(AddEmployeePositionPage.addNewPositionButtonCss);
 	await dispatchClick(AddEmployeePositionPage.addNewPositionButtonCss);
 };

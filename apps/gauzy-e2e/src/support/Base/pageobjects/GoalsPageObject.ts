@@ -5,6 +5,10 @@ export const GoalsPage = {
 	// NOT the Quick-Settings sidebar list, which also matches `nb-list[role="list"] nb-list-item`
 	// and (being off-screen) caused an "Element is outside of the viewport" click failure.
 	optionDropdownCss: 'nb-popover nb-list[role="list"] nb-list-item',
+	// "Add new Key Result" lives in the EXPANDED accordion item's body (status="success", class "gen"),
+	// NOT in the toolbar's .gauzy-button-container — so the spec's clickAddButton(1) needs this selector,
+	// not an nth(1) of the toolbar add button (which only ever has one success button).
+	addKeyResultButtonCss: '.goals-container nb-accordion-item-body button[status="success"]',
 	nameInputCss: '[formcontrolname="name"]',
 	ownerDropdownCss: '[formcontrolname="ownerId"]',
 	dropdownOptionCss: '.option-list nb-option',

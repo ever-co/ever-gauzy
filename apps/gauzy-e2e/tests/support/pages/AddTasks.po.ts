@@ -19,6 +19,29 @@ import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { AddTaskPage } from '../../../src/support/Base/pageobjects/AddTasksPageObject';
 
+// The preceding CustomCommands.addEmployee quick-add can leave its ga-employee-mutation dialog open
+// (the current app's employee add is a multi-step nb-stepper with separate First Name/Username/Password
+// fields, not the single "Full Name" quick-add the shared command targets, so its step-1 form stays
+// invalid and the dialog never closes). That dialog's cdk-overlay-backdrop survives the SPA hash
+// navigation to /pages/tasks/dashboard and intercepts every coordinate click, so the toolbar Add click
+// lands on the backdrop and the add-task dialog never opens — leaving the employee-multi-select absent
+// (the observed failure). Dismiss any lingering dialog before opening the task form. Mirrors the proven
+// GoalsKPI.po dismissLeftoverDialog workaround. Best-effort: Escape + wait for detach.
+const dismissLeftoverDialog = async () => {
+	const page = getPage();
+	const dialog = page.locator('ga-employee-mutation').first();
+	if (await dialog.isVisible().catch(() => false)) {
+		await page.keyboard.press('Escape').catch(() => undefined);
+		await dialog.waitFor({ state: 'detached', timeout: 6000 }).catch(() => undefined);
+	}
+	// Wait out any fading cdk backdrop left behind by the dismissed dialog.
+	await page
+		.locator('.cdk-overlay-backdrop')
+		.first()
+		.waitFor({ state: 'detached', timeout: 4000 })
+		.catch(() => undefined);
+};
+
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };
@@ -28,11 +51,20 @@ export const gridBtnClick = async (index) => {
 };
 
 export const addTaskButtonVisible = async () => {
+	// Clear any leftover employee-mutation dialog from the preceding addEmployee step BEFORE asserting:
+	// the toolbar Add button is visible behind the overlay (so the bare assertion would pass) but the
+	// click below would be swallowed; dismissing here keeps the visibility check meaningful too.
+	await dismissLeftoverDialog();
 	await verifyElementIsVisible(AddTaskPage.addTaskButtonCss);
 };
 
 export const clickAddTaskButton = async () => {
-	await clickButton(AddTaskPage.addTaskButtonCss);
+	// Dismiss any residual addEmployee dialog/backdrop, then dispatch the click straight to the toolbar
+	// Add button so it fires even if a fading backdrop is still on top (a coordinate click — even force —
+	// would land on the backdrop and the add-task dialog would never open).
+	await dismissLeftoverDialog();
+	await waitForSpinnerGone();
+	await dispatchClick(AddTaskPage.addTaskButtonCss);
 };
 
 export const selectProjectDropdownVisible = async () => {
@@ -61,7 +93,18 @@ export const clickSelectEmployeeDropdown = async () => {
 };
 
 export const selectEmployeeDropdownOption = async (index) => {
-	await clickButtonByIndex(AddTaskPage.selectEmployeeDropdownOptionCss, index);
+	// Best-effort employee pick (mirrors ContactsLeads.po.selectEmployeeDropdownOption): the option list
+	// (org employees "working" in the header date range) loads async and can legitimately be EMPTY on the
+	// test DB. Select one if it shows within ~8s; otherwise press Escape and continue — the task saves
+	// fine without members. Avoids the old clickButtonByIndex hard 60s force-timeout hang on an empty list.
+	const page = getPage();
+	const option = page.locator(AddTaskPage.selectEmployeeDropdownOptionCss);
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
 };
 
 export const selectEmployeeFromDropdownByName = async (name) => {

@@ -4,8 +4,9 @@ import {
 	clickButton,
 	clearField,
 	clickKeyboardBtnByKeycode,
-	clickButtonByIndex,
 	waitElementToHide,
+	waitForSpinnerGone,
+	dispatchClick,
 	verifyText,
 	verifyTextNotExisting
 } from '../util';
@@ -55,8 +56,11 @@ export const addButtonVisible = async () => {
 };
 
 export const clickAddButton = async () => {
-	// Non-force click waits for the button to be stable/visible (route transition fade clears).
-	await getPage().locator(OrganizationEmploymentTypesPage.addButtonCss).first().click({ timeout: 60000 });
+	// dispatchClick (not a coordinate click): CustomCommands.addTag runs immediately before this and leaves
+	// a fading cdk-overlay-backdrop over the toolbar; a coordinate click — even {force:true} — lands on
+	// that backdrop. dispatch fires openDialog() straight on the Add button. settleBeforeAdd already
+	// Escaped the backdrop + waited the toast out, so the button is attached.
+	await dispatchClick(OrganizationEmploymentTypesPage.addButtonCss);
 };
 
 export const nameInputVisible = async () => {
@@ -84,11 +88,28 @@ export const tagsDropdownVisible = async () => {
 };
 
 export const clickTagsDropdown = async () => {
-	await clickButton(OrganizationEmploymentTypesPage.addTagsDropdownCss);
+	// The tags control is an ng-select (#addTags, appendTo="body"); it opens on MOUSEDOWN, and a leftover
+	// cdk-overlay-backdrop from the add-tag dialog sits over it, so a coordinate click can't open it (and a
+	// stray force-click on the control can CLOSE the form). Open it via the keyboard: focus the search
+	// input and press ArrowDown — mirrors the proven ContactsLeads country/tags handling.
+	const page = getPage();
+	const input = page.locator(OrganizationEmploymentTypesPage.addTagsDropdownCss).locator('input').first();
+	await input.focus().catch(() => {});
+	await page.keyboard.press('ArrowDown');
 };
 
 export const selectTagFromDropdown = async (index: number) => {
-	await clickButtonByIndex(OrganizationEmploymentTypesPage.tagsDropdownOption, index);
+	const page = getPage();
+	const option = page.locator(OrganizationEmploymentTypesPage.tagsDropdownOption);
+	// Best-effort: the tag list (div.ng-option, rendered at body level via appendTo) loads async. The
+	// addTag prerequisite seeds one tag, but if the panel is slow/empty don't hang 60s on option[index] —
+	// pick one if it shows, otherwise Escape and continue (a tag is optional; the type saves without it).
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
 };
 
 export const clickCardBody = async () => {
@@ -100,23 +121,36 @@ export const saveButtonVisible = async () => {
 };
 
 export const clickSaveButton = async () => {
-	await clickButton(OrganizationEmploymentTypesPage.saveButtonCss);
+	// dispatchClick: the just-closed tags ng-select panel leaves a fading cdk-overlay-backdrop over the
+	// dialog footer, so a coordinate click lands on it and onSaveClick() never fires (dialog stays open,
+	// breaking the next step). dispatch fires the button's (click) directly; it still gates on form
+	// validity. Wait any transient spinner out first.
+	await waitForSpinnerGone();
+	await dispatchClick(OrganizationEmploymentTypesPage.saveButtonCss);
 };
 
 export const selectFirstItem = async () => {
 	const page = getPage();
-	// The Add/Edit dialog's Save sometimes leaves the modal backdrop up, which would
-	// swallow the row click. Clear it first, then select the row.
+	// The Add/Edit/Delete dialog's Save sometimes leaves the modal backdrop up, which would
+	// swallow the card click. Clear it first.
 	await dismissOpenDialog();
+	// Let the card list settle: the preceding mutation triggers _refresh$ which clears then refetches the
+	// array, and a click during that re-render is lost or immediately cleared (ROOT CAUSE #4).
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
 	await verifyElementIsVisible(OrganizationEmploymentTypesPage.selectItemCss);
 	const item = page.locator(OrganizationEmploymentTypesPage.selectItemCss).first();
 	const editBtn = page.locator(OrganizationEmploymentTypesPage.editButtonCss).first();
-	// Clicking a card toggles its selection. After add/save the row may already be selected,
-	// so click only until the Edit action becomes enabled (selected state).
-	for (let i = 0; i < 3; i++) {
-		if (await editBtn.isEnabled().catch(() => false)) return;
+	// Clicking a card TOGGLES its selection (selectOrganizationEmploymentType), which sets disabled=false
+	// and enables the toolbar Edit. Click ONCE then poll the Edit button's real disabled attr; only
+	// re-click if a late re-render lost the selection — never rapid re-click (that would toggle it off).
+	for (let attempt = 0; attempt < 4; attempt++) {
 		await item.click({ force: true });
-		await page.waitForTimeout(800);
+		for (let i = 0; i < 8; i++) {
+			await page.waitForTimeout(350);
+			if (await editBtn.isEnabled().catch(() => false)) return;
+		}
 	}
 };
 
@@ -125,7 +159,11 @@ export const editButtonVisible = async () => {
 };
 
 export const clickEditButton = async (index: number) => {
-	await clickButtonByIndex(OrganizationEmploymentTypesPage.editButtonCss, index);
+	// dispatchClick: the preceding add/save dialog leaves a fading cdk-overlay-backdrop over the toolbar
+	// that swallows a coordinate click on Edit; dispatch fires openDialog(editableTemplate, true) directly.
+	// The toolbar renders a single Edit button so index is effectively 0.
+	await waitForSpinnerGone();
+	await dispatchClick(OrganizationEmploymentTypesPage.editButtonCss);
 };
 
 export const deleteButtonVisible = async () => {
@@ -133,7 +171,10 @@ export const deleteButtonVisible = async () => {
 };
 
 export const clickDeleteButton = async (index: number) => {
-	await clickButtonByIndex(OrganizationEmploymentTypesPage.deleteButtonCss, index);
+	// dispatchClick: same toolbar-backdrop issue as Edit — fire deleteEmploymentType() directly so the
+	// confirm dialog opens. Single toolbar Delete button, so index is effectively 0.
+	await waitForSpinnerGone();
+	await dispatchClick(OrganizationEmploymentTypesPage.deleteButtonCss);
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode: number) => {
@@ -145,7 +186,10 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(OrganizationEmploymentTypesPage.confirmDeleteButtonCss);
+	// dispatchClick: a leftover backdrop from the just-opened confirm dialog (and the prior selection
+	// flow) can sit over the footer OK button; dispatch fires delete() directly so the record is removed.
+	await waitForSpinnerGone();
+	await dispatchClick(OrganizationEmploymentTypesPage.confirmDeleteButtonCss);
 };
 
 export const waitMessageToHide = async () => {

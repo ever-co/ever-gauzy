@@ -11,7 +11,10 @@ export const JobsProposalsPage = {
 	editButtonCss: 'ngx-gauzy-button-action button.action.primary',
 	makeDefaultButtonCss: 'ngx-gauzy-button-action button.action.primary',
 	deleteButtonCss: 'ngx-gauzy-button-action button.action:has(nb-icon[icon="trash-2-outline"])',
-	confirmDeleteButtonCss: 'nb-card-footer > button[status="primary"]',
+	// Delete opens DeleteConfirmationComponent whose OK button is status="danger" (the Cancel is
+	// status="basic"); the old status="primary" matched no button in that dialog. Scope to the footer
+	// and exclude the form's success Save so it can never collide with another open card.
+	confirmDeleteButtonCss: 'nb-card-footer button[status="danger"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyProposalCss: 'div.ng-star-inserted'
 };

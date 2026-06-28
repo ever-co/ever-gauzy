@@ -6,11 +6,13 @@ import * as addExistingUserPage from './support/pages/AddExistingUser.po';
 import * as dashboardPage from './support/pages/Dashboard.po';
 import { CustomCommands } from './support/commands';
 
-// The seeded admin renders as "Admin Local" in the grid row (ga-picture-name-tags / avatar) AND in
-// the nb-select option ({{ firstName }} {{ lastName }}). The pagedata constant still said the stale
-// "Local Admin", so the row/option text filters matched nothing and the click timed out. Pagedata is
-// read-only for this fix, so the corrected name lives here. (Both contexts use the same rendered name.)
-const defaultUser = 'Admin Local';
+// The seeded admin renders as "Super Admin" in the grid row (ga-picture-name-tags / avatar uses
+// user.name) AND in the nb-select option ({{ firstName }} {{ lastName }}) — confirmed against the
+// failure DOM (row "Super Admin admin@ever.co SUPER ADMIN"). The pagedata constant still said the
+// stale "Local Admin" and a prior pass guessed "Admin Local"; both matched nothing, so the row/option
+// text filters never resolved and the click timed out. Pagedata is read-only for this fix, so the
+// corrected name lives here. (Both contexts render the same name for this user.)
+const defaultUser = 'Super Admin';
 
 test.describe('Add existing user/s test', () => {
 	test('Add existing user/s test', async () => {

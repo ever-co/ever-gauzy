@@ -11,6 +11,9 @@ export const EditUserPage = {
 	selectOrgMultiSelectCss: 'ga-user-organizations-multi-select nb-select',
 	selectOrgDropdownOptionCss: '.option-list nb-option',
 	saveSelectedOrgButton: 'div.form-group > button[status="success"]',
+	// Cancel button in the add-organization form (edit-user-organizations-mutation): outline/basic
+	// button in the actions bar. Used to close the add form when the org picker is empty.
+	cancelAddOrgButtonCss: '.add-organization-action button[status="basic"]',
 	firstNameInputCss: '#firstName',
 	lastNameInputCss: '#lastName',
 	// Password fields are ngx-password-form-field; the rendered input carries the translated

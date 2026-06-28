@@ -4,19 +4,41 @@ import {
 	verifyElementIsVisible,
 	verifyElementIsVisibleByIndex,
 	clickButton,
-	enterInputConditionally,
 	clearField,
 	clickKeyboardBtnByKeycode,
-	clickButtonByIndex,
 	clickElementByText,
 	verifyText,
 	verifyElementNotExist,
 	waitUntil,
-	forceClickElementByText
+	forceClickElementByText,
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ExpensesPage } from '../../../src/support/Base/pageobjects/ExpensesPageObject';
+
+// Open an `appendTo="body"` ng-select via the KEYBOARD (focus its inner input), never a coordinate
+// click: these dropdowns open on mousedown and the add/tag dialogs that ran just before leave fading
+// cdk-overlay backdrops that swallow a click on the control — a force-click can even close the form.
+// Typing filters/creates the option; pressing Enter then commits (addTag selects render the typed
+// value as a "create" option). Returns the focused input locator.
+const openNgSelectAndType = async (ngSelectCss: string, text?: string) => {
+	const page = getPage();
+	const input = page.locator(ngSelectCss).locator('input').first();
+	await input.focus();
+	if (text !== undefined) {
+		// pressSequentially (per-char keystrokes) — ng-select opens + filters on keydown, which a bulk
+		// .fill() does not always trigger (mirrors the verified ContactsLeads country-select helper).
+		await input.pressSequentially(String(text), { delay: 50 });
+		await page.waitForTimeout(600);
+	} else {
+		// No text (existing-option selects): ArrowDown opens the dropdown while the input has focus.
+		await page.keyboard.press('ArrowDown');
+		await page.waitForTimeout(400);
+	}
+	return input;
+};
 
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
@@ -31,8 +53,13 @@ export const addExpenseButtonVisible = async () => {
 };
 
 export const clickAddExpenseButton = async () => {
+	// dispatchClick after settling the load spinner: this button (the toolbar "Add") opens the mutation
+	// dialog; on the manage-categories screen it's reached right after navigation while a card spinner
+	// overlays the toolbar, so a coordinate click can land on the spinner/backdrop and the dialog never
+	// opens. dispatch fires openAddExpenseDialog()/add() straight on the button.
 	await waitUntil(3000);
-	await clickButton(ExpensesPage.addExpenseButtonCss);
+	await waitForSpinnerGone();
+	await dispatchClick(ExpensesPage.addExpenseButtonCss);
 };
 
 export const selectEmployeeDropdownVisible = async () => {
@@ -40,12 +67,26 @@ export const selectEmployeeDropdownVisible = async () => {
 };
 
 export const clickEmployeeDropdown = async () => {
-	await waitUntil(3000);
-	await clickButton(ExpensesPage.selectEmployeeDropdownCss);
+	// Open via keyboard, not a click — the employee selector is an appendTo=body ng-select that opens on
+	// mousedown and is blocked by leftover backdrops; focusing its input + ArrowDown opens it reliably.
+	await waitForSpinnerGone();
+	await openNgSelectAndType(ExpensesPage.selectEmployeeDropdownCss);
 };
 
 export const selectEmployeeFromDropdown = async (index) => {
-	await clickButtonByIndex(ExpensesPage.selectEmployeeDropdownOptionCss, index);
+	// Best-effort employee pick (mirror ContactsLeads.selectEmployeeDropdownOption): the option list
+	// loads async and is frequently EMPTY on the test DB (no employee "working" in the header date
+	// range). Click an option if one shows within ~8s; otherwise Escape and continue — the employee is
+	// optional for an expense (addExpense sends employeeId: null) so the record still saves. A hard
+	// option[0] click with the 60s task timeout would otherwise hang the whole test on an empty list.
+	const page = getPage();
+	const option = page.locator(ExpensesPage.selectEmployeeDropdownOptionCss);
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
 };
 
 export const dateInputVisible = async () => {
@@ -63,13 +104,13 @@ export const contactInputVisible = async () => {
 };
 
 export const clickContactInput = async () => {
-	await clickButton(ExpensesPage.organizationContactCss);
+	await openNgSelectAndType(ExpensesPage.organizationContactCss);
 };
 
 export const enterContactInputData = async (data) => {
-	// ga-contact-select is an ng-select with addTag: open it, type, create-by-Enter.
-	await clickButton(ExpensesPage.organizationContactCss);
-	await enterInput(ExpensesPage.organizationContactSearchInputCss, data);
+	// ga-contact-select is an appendTo=body ng-select with addTag: open via keyboard (focus input),
+	// type the new contact name to surface the "Add item" option, then Enter to create-and-select.
+	await openNgSelectAndType(ExpensesPage.organizationContactCss, data);
 	await clickKeyboardBtnByKeycode(13);
 };
 
@@ -78,13 +119,13 @@ export const categoryInputVisible = async () => {
 };
 
 export const clickCategoryInput = async () => {
-	await clickButton(ExpensesPage.categoryInputCss);
+	await openNgSelectAndType(ExpensesPage.categoryInputCss);
 };
 
 export const enterCategoryInputData = async (data) => {
-	// ga-expense-category-select is an ng-select with addTag: open it, type, create-by-Enter.
-	await clickButton(ExpensesPage.categoryInputCss);
-	await enterInput(ExpensesPage.categorySearchInputCss, data);
+	// ga-expense-category-select is an appendTo=body ng-select with addTag: open via keyboard, type the
+	// category to surface the "Add item" option, then Enter to create-and-select (no coordinate click).
+	await openNgSelectAndType(ExpensesPage.categoryInputCss, data);
 	await clickKeyboardBtnByKeycode(13);
 };
 
@@ -93,13 +134,13 @@ export const vendorInputVisible = async () => {
 };
 
 export const clickVendorInput = async () => {
-	await clickButton(ExpensesPage.vendorInputCss);
+	await openNgSelectAndType(ExpensesPage.vendorInputCss);
 };
 
 export const enterVendorInputData = async (data) => {
-	// ga-vendor-select is an ng-select with addTag: open it, type, create-by-Enter.
-	await clickButton(ExpensesPage.vendorInputCss);
-	await enterInput(ExpensesPage.vendorSearchInputCss, data);
+	// ga-vendor-select is an appendTo=body ng-select with addTag: open via keyboard, type the vendor to
+	// surface the "Add item" option, then Enter to create-and-select (no coordinate click).
+	await openNgSelectAndType(ExpensesPage.vendorInputCss, data);
 	await clickKeyboardBtnByKeycode(13);
 };
 
@@ -117,10 +158,15 @@ export const projectDropdownVisible = async () => {
 };
 
 export const clickProjectDropdown = async () => {
-	await clickButton(ExpensesPage.projectDropdownCss);
+	// ga-project-selector is an appendTo=body ng-select — open via keyboard (focus input), not a click,
+	// to dodge the leftover dialog backdrops that block / close the form on a coordinate click.
+	await openNgSelectAndType(ExpensesPage.projectDropdownCss);
 };
 
 export const selectProjectFromDropdown = async (text) => {
+	// Re-open + type to filter the project list (keyboard, not a click) so the wanted option renders,
+	// then click it by text. The options are div.ng-option in the body-appended overlay.
+	await openNgSelectAndType(ExpensesPage.projectDropdownCss, text);
 	await clickElementByText(ExpensesPage.projectDropdownOptionCss, text);
 };
 
@@ -129,11 +175,22 @@ export const tagsDropdownVisible = async () => {
 };
 
 export const clickTagsDropdown = async () => {
-	await clickButton(ExpensesPage.addTagsDropdownCss);
+	// ga-tags-color-input (#addTags) is an appendTo=body ng-select — open via keyboard, not a click, to
+	// dodge leftover dialog backdrops (ng-select opens on mousedown so dispatchClick can't help either).
+	await openNgSelectAndType(ExpensesPage.addTagsDropdownCss);
 };
 
 export const selectTagFromDropdown = async (index) => {
-	await clickButtonByIndex(ExpensesPage.tagsDropdownOption, index);
+	// Best-effort tag pick: an org tag was created by the addTag prerequisite, but the list still loads
+	// async — click the option if it shows, else Escape and continue (tags are optional on an expense).
+	const page = getPage();
+	const option = page.locator(ExpensesPage.tagsDropdownOption);
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
 };
 
 export const purposeTextareaVisible = async () => {
@@ -150,7 +207,12 @@ export const saveExpenseButtonVisible = async () => {
 };
 
 export const clickSaveExpenseButton = async () => {
-	await clickButton(ExpensesPage.saveExpenseButtonCss);
+	// dispatchClick (not a coordinate click): the just-closed ng-select overlays / addProject+addTag
+	// dialogs leave fading cdk-overlay backdrops over the footer, so a force click lands on the backdrop
+	// and the dialog never closes (=> no expense created, empty grid). dispatch fires addOrEditExpense()
+	// straight on the button, which still gates on form validity. Settle any spinner first.
+	await waitForSpinnerGone();
+	await dispatchClick(ExpensesPage.saveExpenseButtonCss);
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode) => {
@@ -162,21 +224,23 @@ export const tableRowVisible = async () => {
 };
 
 export const selectTableRow = async (index) => {
-	await waitUntil(3000);
-	// Selecting a row enables the Edit/Duplicate/Delete actions, but clicking the
-	// same smart-table row twice TOGGLES the selection back off (disableButton).
-	// So click once, then only re-click if the action buttons are still disabled
-	// (i.e. the first click landed before the row was interactive).
 	const page = getPage();
+	// Let the grid settle first: after the preceding mutation it re-renders/refetches and a click during
+	// that window is lost or immediately cleared. Then click the row ONCE and poll the Edit button's REAL
+	// `disabled` attribute (the toolbar buttons gate on [disabled]="!selectedItem && disableButton", they
+	// never get a .btn-disabled class — the old :not(.btn-disabled) probe matched even when unselected).
+	// Clicking the row TOGGLES selection, so re-click only if the first click was lost to a late re-render.
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
 	const row = page.locator(ExpensesPage.selectTableRowCss).nth(index);
-	const enabledAction = page.locator(
-		'div.actions-container button.action.primary:not(.btn-disabled)'
-	);
-	await row.click({ force: true });
-	for (let i = 0; i < 5; i++) {
-		await page.waitForTimeout(700);
-		if (await enabledAction.count()) return;
+	const editBtn = page.locator(ExpensesPage.editExpenseButtonCss).first();
+	for (let attempt = 0; attempt < 4; attempt++) {
 		await row.click({ force: true });
+		for (let i = 0; i < 8; i++) {
+			await page.waitForTimeout(350);
+			if (!(await editBtn.isDisabled().catch(() => true))) return;
+		}
 	}
 };
 
@@ -185,7 +249,10 @@ export const editExpenseButtonVisible = async () => {
 };
 
 export const clickEditExpenseButton = async () => {
-	await clickButton(ExpensesPage.editExpenseButtonCss);
+	// dispatchClick: the preceding save/toastr leaves a fading backdrop over the toolbar that swallows a
+	// coordinate click on Edit; dispatch fires openEditExpenseDialog() directly.
+	await waitForSpinnerGone();
+	await dispatchClick(ExpensesPage.editExpenseButtonCss);
 };
 
 export const deleteExpenseButtonVisible = async () => {
@@ -193,7 +260,9 @@ export const deleteExpenseButtonVisible = async () => {
 };
 
 export const clickDeleteExpenseButton = async () => {
-	await clickButton(ExpensesPage.deleteExpenseButtonCss);
+	// dispatchClick: same leftover-backdrop reason — fire deleteExpense() directly on the toolbar button.
+	await waitForSpinnerGone();
+	await dispatchClick(ExpensesPage.deleteExpenseButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -201,11 +270,18 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(ExpensesPage.confirmDeleteButtonCss);
+	// dispatchClick: the delete-confirmation dialog footer can sit under a leftover backdrop; dispatch
+	// fires the confirm directly so the dialog actually closes and the row is removed.
+	await waitForSpinnerGone();
+	await dispatchClick(ExpensesPage.confirmDeleteButtonCss);
 };
 
 export const clickCardBody = async () => {
-	await clickButton(ExpensesPage.cardBodyCss);
+	// Purpose here is only to dismiss the still-open tags ng-select overlay (it has closeOnSelect=false)
+	// before clicking Save. Press Escape instead of clicking the card header: the header hosts the X
+	// close icon (fas fa-times -> close()), so a force coordinate click there risks closing the whole
+	// add-expense dialog without saving. Escape closes the dropdown overlay and leaves the form intact.
+	await getPage().keyboard.press('Escape').catch(() => {});
 };
 
 export const duplicateButtonVisible = async () => {
@@ -213,7 +289,9 @@ export const duplicateButtonVisible = async () => {
 };
 
 export const clickDuplicateButton = async () => {
-	await clickButton(ExpensesPage.duplicateExpenseButtonCss);
+	// dispatchClick: leftover backdrop over the toolbar — fire openDuplicateExpenseDialog() directly.
+	await waitForSpinnerGone();
+	await dispatchClick(ExpensesPage.duplicateExpenseButtonCss);
 };
 
 export const manageCategoriesButtonVisible = async () => {
@@ -221,7 +299,10 @@ export const manageCategoriesButtonVisible = async () => {
 };
 
 export const clickManageCategoriesButton = async () => {
-	await clickButton(ExpensesPage.manageCategoriesButtonCss);
+	// dispatchClick after settling: the prior delete leaves a fading backdrop over the header; dispatch
+	// fires manageCategories() (router navigation) directly so we reach the categories screen.
+	await waitForSpinnerGone();
+	await dispatchClick(ExpensesPage.manageCategoriesButtonCss);
 };
 
 export const newCategoryInputVisible = async () => {
@@ -238,7 +319,10 @@ export const SaveCategoryButtonVisible = async () => {
 };
 
 export const clickSaveCategoryButton = async () => {
-	await clickButton(ExpensesPage.SaveCategoryButtonCss);
+	// dispatchClick: the just-closed tags ng-select overlay leaves a fading backdrop over the dialog
+	// footer; dispatch fires the category Save (ngSubmit) directly. Gated on form validity regardless.
+	await waitForSpinnerGone();
+	await dispatchClick(ExpensesPage.SaveCategoryButtonCss);
 };
 
 export const backButtonVisible = async () => {
@@ -246,7 +330,10 @@ export const backButtonVisible = async () => {
 };
 
 export const clickBackButton = async () => {
-	await clickButton(ExpensesPage.backButtonCss);
+	// dispatchClick: ngx-back-navigation's button can sit under a fading toastr/dialog backdrop after the
+	// category save; dispatch fires goBack() directly.
+	await waitForSpinnerGone();
+	await dispatchClick(ExpensesPage.backButtonCss);
 };
 
 export const categoryCardVisible = async () => {

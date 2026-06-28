@@ -86,12 +86,19 @@ export const selectManagerFromDropdown = async (index: number) => {
 };
 
 // Best-effort pick of an nb-select option (members/managers share '.option-list nb-option'). The working
-// employees list loads async; wait for the panel then click. Form validity needs at least one member OR
-// manager, so picking in both flows keeps the Save button enabled.
+// employees list loads async and can legitimately be EMPTY (no employee "working" in the selected date
+// range — EmployeeSelectComponent.getWorkingEmployees). Select one if it shows; otherwise press Escape and
+// continue so we don't hang on a 60s click timeout against an empty list. Mirrors
+// ContactsLeads.selectEmployeeDropdownOption.
 const pickEmployeeOption = async (index: number) => {
-	const option = getPage().locator(OrganizationTeamsPage.selectDropdownOptionCss);
-	await option.first().waitFor({ state: 'visible', timeout: 8000 });
-	await option.nth(index).click({ force: true });
+	const page = getPage();
+	const option = page.locator(OrganizationTeamsPage.selectDropdownOptionCss);
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode: number) => {

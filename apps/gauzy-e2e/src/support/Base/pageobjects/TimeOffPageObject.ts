@@ -21,6 +21,9 @@ export const TimeOffPage = {
 	editTimeOfRequestButtonCss: 'div.btn-group.actions button.action.primary',
 	denyTimeOffRequestButtonCss: 'div.btn-group.actions button[status="warning"]',
 	approveTimeOffRequestButtonCss: 'div.btn-group.actions button[status="success"]',
+	// The "more-horizontal" toggle in the first action group: clicking it sets showActions=true, which
+	// renders the second group containing Approve (success) / Deny (warning) / Archive.
+	showActionsButtonCss: 'div.btn-group.actions button:has(nb-icon[icon="more-horizontal-outline"])',
 	timeOffSettingsButtonCss: 'nb-card-header button.action.p-2',
 	addNewPolicyButtonCss: 'div.actions-container button[status="success"]',
 	editPolicyButtonCss: 'div.btn-group.actions button.action.primary',

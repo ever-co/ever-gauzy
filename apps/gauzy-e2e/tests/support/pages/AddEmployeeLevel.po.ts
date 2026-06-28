@@ -27,20 +27,37 @@ export const addNewLevelButtonVisible = async () => {
 };
 
 export const clickAddNewLevelButton = async () => {
-	// The preceding addTag CustomCommand can leave a fading "Add Tags" nb-dialog overlay mounted over
-	// the employee-level page (it survives the SPA route change). A coordinate click on the toolbar Add
-	// then lands on that backdrop and the add-level dialog never opens. Dismiss any leftover overlay
-	// first (Escape + wait for the tags dialog to detach), then dispatch the click straight at the
-	// button so it fires even if a backdrop is still fading out.
+	// The preceding addTag CustomCommand can leave a FULLY-OPEN "Add Tags" nb-dialog mounted over the
+	// employee-level page (its Save raced while disabled, so the dialog never closed and survived the
+	// SPA route change — confirmed in the failure DOM: the Add Tags card + a disabled Save are still
+	// present). Its cdk-overlay-backdrop then blocks the toolbar Add button and the add-level dialog
+	// never opens. A single Escape doesn't dismiss it (focus isn't in the dialog), so close it
+	// explicitly via its own Cancel/X handlers (closeDialog()), retrying until ngx-tags-mutation
+	// detaches, before opening the add-level dialog.
 	const page = getPage();
-	await page.keyboard.press('Escape').catch(() => undefined);
-	await page
-		.locator('ngx-tags-mutation')
-		.first()
-		.waitFor({ state: 'detached', timeout: 6000 })
-		.catch(() => undefined);
+	const tagsDialog = page.locator('ngx-tags-mutation').first();
+	for (let i = 0; i < 4; i++) {
+		if ((await tagsDialog.count()) === 0) break;
+		// Cancel button (status="basic" outline) and the X icon both call closeDialog(); dispatch the
+		// click so a fading backdrop can't intercept it. Fall back to Escape.
+		await dispatchClick('ngx-tags-mutation nb-card-footer button[status="basic"]').catch(() => undefined);
+		await dispatchClick('ngx-tags-mutation .cancel i').catch(() => undefined);
+		await page.keyboard.press('Escape').catch(() => undefined);
+		await tagsDialog.waitFor({ state: 'detached', timeout: 3000 }).catch(() => undefined);
+	}
 	await verifyElementIsVisible(AddEmployeeLevelPage.addNewLevelButtonCss);
 	await dispatchClick(AddEmployeeLevelPage.addNewLevelButtonCss);
+	// Confirm the add-level dialog actually opened; if a fading backdrop swallowed the first dispatch,
+	// re-dispatch once. The caller's newLevelInputVisible() then asserts the Level name input.
+	const opened = await page
+		.locator(AddEmployeeLevelPage.newLevelInputCss)
+		.first()
+		.waitFor({ state: 'visible', timeout: 6000 })
+		.then(() => true)
+		.catch(() => false);
+	if (!opened) {
+		await dispatchClick(AddEmployeeLevelPage.addNewLevelButtonCss);
+	}
 };
 
 export const cancelNewLevelButtonVisible = async () => {

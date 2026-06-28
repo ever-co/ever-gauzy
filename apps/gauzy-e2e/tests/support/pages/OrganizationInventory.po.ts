@@ -38,7 +38,22 @@ export const addButtonVisible = async () => {
 };
 
 export const clickAddButton = async () => {
-	await clickButton(OrganizationInventoryPage.addButtonCss);
+	// onAdd()/onAddInventoryItem() open the mutation dialog / item form, but onAdd() early-returns while
+	// `this.organization` is still null — it loads via a debounced (300ms) store subscription AFTER the
+	// route settles, so a click fired the instant the button renders is a silent no-op (the dialog never
+	// opens; the form's name input never appears). The earlier failure looked like a stale name/description
+	// selector but was really this race. Settle (spinner + network + debounce window), dispatchClick to be
+	// backdrop-proof, then poll for the form name input and re-dispatch if the dialog didn't open.
+	await waitForSpinnerGone();
+	await getPage().waitForLoadState('networkidle').catch(() => {});
+	await getPage().waitForTimeout(1500);
+	const nameInput = getPage().locator(OrganizationInventoryPage.nameInputCss).first();
+	for (let i = 0; i < 5; i++) {
+		await dispatchClick(OrganizationInventoryPage.addButtonCss);
+		if (await nameInput.isVisible().catch(() => false)) return;
+		await getPage().waitForTimeout(1000);
+		if (await nameInput.isVisible().catch(() => false)) return;
+	}
 };
 
 export const languageDropdownVisible = async () => {

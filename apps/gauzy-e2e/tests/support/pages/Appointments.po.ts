@@ -18,12 +18,22 @@ export const bookPublicAppointmentButtonVisible = async () => {
 	await verifyElementIsVisible(AppointmentsPage.bookPublicAppointmentButtonCss);
 };
 
-export const clickBookPublicAppointmentButton = async (text) => {
+export const clickBookPublicAppointmentButton = async (_text?) => {
 	// "Book Public Appointment" calls bookPublicAppointment() which router.navigate(['/share/employee']).
-	// Wait for the URL to actually land on the public pick-employee page before the next step probes the
-	// dropdown — otherwise verifyElementIsVisible matches the always-present GLOBAL header selector and
-	// we never leave the appointments page.
-	await clickElementByText(AppointmentsPage.bookPublicAppointmentButtonCss, text);
+	// Two problems with a plain force-click here:
+	//  1) On load the appointment-calendar's date-range picker re-navigates the page several times
+	//     (see the failure log: 5x navigations to /pages/employees/appointments?date=...). A click that
+	//     fires mid-flight gets its router.navigate(['/share/employee']) immediately overridden by the
+	//     pending date-picker navigation, so the URL never leaves the appointments page. Settle first.
+	//  2) The page leaves fading cdk-overlay backdrops (quick-settings / "What's new" panels). A
+	//     {force:true} COORDINATE click still dispatches at screen coordinates and lands on the backdrop,
+	//     so the (click) handler never runs. dispatchClick fires the DOM event straight on the element.
+	// The selector already uniquely targets the single status="primary" button in div.float-right, so no
+	// text filter is needed.
+	await waitForSpinnerGone();
+	await getPage().waitForLoadState('networkidle').catch(() => {});
+	await getPage().waitForTimeout(1500);
+	await dispatchClick(AppointmentsPage.bookPublicAppointmentButtonCss);
 	await getPage().waitForURL(/\/share\/employee/, { timeout: 24_000 });
 	await waitForSpinnerGone();
 };

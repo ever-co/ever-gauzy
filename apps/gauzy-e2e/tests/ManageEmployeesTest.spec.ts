@@ -31,7 +31,12 @@ test.describe('Manage employees test', () => {
 		email = faker.internet.exampleEmail();
 		password = faker.internet.password();
 		employeeEmail = faker.internet.exampleEmail();
-		imgUrl = faker.image.avatar();
+		// The add-employee form's imageUrl is validated against patterns.imageUrl, which REQUIRES a path
+		// ending in .png/.jpg/.jpeg/.gif/.svg. faker.image.avatar() returns an extensionless GitHub
+		// avatar URL (https://avatars.githubusercontent.com/u/<id>) that fails the pattern, which marks
+		// step-1's form invalid -> the stepper's Next stays disabled -> add() never persists the
+		// employee (grid stays empty). Use a deterministic URL that ends in a valid image extension.
+		imgUrl = `https://dummyimage.com/200x200/cccccc/000000.png`;
 
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 

@@ -21,7 +21,9 @@ export const AddEmployeePositionPage = {
 	// Toolbar Delete button: class="action" carrying the trash icon (NOT the Edit "action primary" one).
 	removeEmployeePositionButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',
 	confirmDeletePositionButtonCss: 'nb-card-footer > button[status="danger"]',
-	editPositionInputCss: 'div.d-flex > input[type="text"]',
+	// Edit dialog name input: same placeholder "Position name" (ORGANIZATIONS_PAGE.EDIT.POSITION_NAME),
+	// scoped to the open dialog body (.editable) so it can't match a stray/leftover dialog input.
+	editPositionInputCss: '.editable [placeholder="Position name"]',
 	verifyTextCss: 'ga-notes-with-tags',
 	cardBodyCss: 'nb-card-body',
 	toastrMessageCss: 'nb-toast.ng-trigger',
