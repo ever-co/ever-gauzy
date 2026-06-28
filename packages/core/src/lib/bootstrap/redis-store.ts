@@ -106,8 +106,10 @@ export async function configureRedisSession(app: any): Promise<void> {
 					store: redisStore,
 					secret: environment.EXPRESS_SESSION_SECRET,
 					resave: false, // Required for lightweight session keep alive (touch)
-					saveUninitialized: true
-					// cookie: { secure: true } // TODO: Enable if HTTPS is configured
+					saveUninitialized: true,
+					// 'auto' sets the Secure flag only over HTTPS: on (prod/stage/demo run behind the proxy with
+					// `trust proxy` enabled in bootstrap) and off on plain-HTTP local dev so sessions keep working there.
+					cookie: { secure: 'auto' }
 				})
 			);
 
@@ -122,8 +124,10 @@ export async function configureRedisSession(app: any): Promise<void> {
 			expressSession({
 				secret: environment.EXPRESS_SESSION_SECRET,
 				resave: true, // Required as MemoryStore doesn't support `touch` method
-				saveUninitialized: true
-				// cookie: { secure: true } // TODO: Enable if HTTPS is configured
+				saveUninitialized: true,
+				// 'auto' sets the Secure flag only over HTTPS: on (prod/stage/demo run behind the proxy with
+				// `trust proxy` enabled in bootstrap) and off on plain-HTTP local dev so sessions keep working there.
+				cookie: { secure: 'auto' }
 			})
 		);
 	}
