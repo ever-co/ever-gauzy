@@ -114,9 +114,12 @@ test.describe('Customers test', () => {
 
 		await test.step('Should be able to edit customer', async () => {
 			await customersPage.tableRowVisible();
-			await customersPage.selectTableRow(0);
+			// Select the row we actually created by its UNIQUE name, not nth(0): the shared serial DB holds
+			// rows from earlier specs and this spec's own add+invite create two rows, so a fixed index picks
+			// the wrong record. Edit then renames that row from fullName -> deleteName.
+			await customersPage.selectTableRowByText(fullName);
 			await customersPage.editButtonVisible();
-			await customersPage.clickEditButton();
+			await customersPage.clickEditButton(fullName);
 			await customersPage.nameInputVisible();
 			await customersPage.enterNameInputData(deleteName);
 			await customersPage.emailInputVisible();
@@ -125,6 +128,10 @@ test.describe('Customers test', () => {
 			await customersPage.enterPhoneInputData(CustomersPageData.defaultPhone);
 			await customersPage.websiteInputVisible();
 			await customersPage.enterWebsiteInputData(website);
+			// Re-set Name LAST (raw fill): clearing-then-filling website above re-triggers the form's
+			// Name-reset, which would otherwise persist the original name and make the rename a silent
+			// no-op (so "deleteName" would never appear and the later delete-by-name would find nothing).
+			await customersPage.reenterNameInputData(deleteName);
 			await customersPage.saveButtonVisible();
 			await customersPage.clickSaveButton();
 			await customersPage.countryDropdownVisible();
@@ -149,7 +156,10 @@ test.describe('Customers test', () => {
 		});
 
 		await test.step('Should be able to delete customer', async () => {
-			await customersPage.selectTableRow(0);
+			// Select the EDITED row by its unique deleteName (it was renamed from fullName in the edit step).
+			// nth(0) would delete whichever record sorts first (often the still-present fullName/invited row),
+			// leaving deleteName behind and failing verifyElementIsDeleted — the round-5 failure.
+			await customersPage.selectTableRowByText(deleteName);
 			await customersPage.deleteButtonVisible();
 			await customersPage.clickDeleteButton();
 			await customersPage.confirmDeleteButtonVisible();

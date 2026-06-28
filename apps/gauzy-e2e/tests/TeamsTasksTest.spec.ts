@@ -85,7 +85,9 @@ test.describe('Add teams tasks test', () => {
 
 		await test.step('Should be able to duplicate task', async () => {
 			await teamsTasksPage.tasksTableVisible();
-			await teamsTasksPage.selectTasksTableRow(0);
+			// Pollution-resilient: select THIS run's row by its unique title (the shared grid can hold rows
+			// from earlier specs/runs, so index 0 would grab the wrong row). (Round 5.)
+			await teamsTasksPage.selectTaskRowByName(TeamsTasksPageData.defaultTaskTitle);
 			await teamsTasksPage.duplicateOrEditTaskButtonVisible();
 			await teamsTasksPage.clickDuplicateOrEditTaskButton(0);
 			await teamsTasksPage.confirmDuplicateOrEditTaskButtonVisible();
@@ -95,7 +97,8 @@ test.describe('Add teams tasks test', () => {
 		await test.step('Should be able to delete task', async () => {
 			await teamsTasksPage.waitMessageToHide();
 			await teamsTasksPage.tasksTableVisible();
-			await teamsTasksPage.selectTasksTableRow(0);
+			// One of the two identical-title rows from the duplicate step — delete it by title, not index.
+			await teamsTasksPage.selectTaskRowByName(TeamsTasksPageData.defaultTaskTitle);
 			await teamsTasksPage.deleteTaskButtonVisible();
 			await teamsTasksPage.clickDeleteTaskButton();
 			await teamsTasksPage.confirmDeleteTaskButtonVisible();
@@ -105,7 +108,8 @@ test.describe('Add teams tasks test', () => {
 		await test.step('Should be able to edit task', async () => {
 			await teamsTasksPage.waitMessageToHide();
 			await teamsTasksPage.tasksTableVisible();
-			await teamsTasksPage.selectTasksTableRow(0);
+			// Select the remaining original task by title to edit it.
+			await teamsTasksPage.selectTaskRowByName(TeamsTasksPageData.defaultTaskTitle);
 			await teamsTasksPage.duplicateOrEditTaskButtonVisible();
 			await teamsTasksPage.clickDuplicateOrEditTaskButton(1);
 			await teamsTasksPage.selectProjectDropdownVisible();
@@ -143,7 +147,8 @@ test.describe('Add teams tasks test', () => {
 		await test.step('Should be able to delete task', async () => {
 			await teamsTasksPage.waitMessageToHide();
 			await teamsTasksPage.tasksTableVisible();
-			await teamsTasksPage.selectTasksTableRow(0);
+			// Delete the just-edited task by its unique title (not index). (Round 5.)
+			await teamsTasksPage.selectTaskRowByName(TeamsTasksPageData.editTaskTitle);
 			await teamsTasksPage.deleteTaskButtonVisible();
 			await teamsTasksPage.clickDeleteTaskButton();
 			await teamsTasksPage.confirmDeleteTaskButtonVisible();

@@ -44,11 +44,14 @@ test.describe('Income test', () => {
 			await incomePage.saveIncomeButtonVisible();
 			await incomePage.clickSaveIncomeButton();
 			await incomePage.waitMessageToHide();
-			await incomePage.verifyIncomeExists(IncomePageData.defaultNote);
+			// Scope verify/select/delete to the UNIQUE faker contact `name` (its client column), never the
+			// shared static note or row 0 — the suite shares one seeded DB serially, so earlier specs leave
+			// income rows behind and an index/static-text match would target the WRONG record.
+			await incomePage.verifyIncomeExists(name);
 		});
 
 		await test.step('Should be able to edit income', async () => {
-			await incomePage.selectTableRow(0);
+			await incomePage.selectTableRow(name);
 			await incomePage.editIncomeButtonVisible();
 			await incomePage.clickEditIncomeButton();
 			await incomePage.dateInputVisible();
@@ -63,17 +66,17 @@ test.describe('Income test', () => {
 			await incomePage.saveIncomeButtonVisible();
 			await incomePage.clickSaveIncomeButton();
 			await incomePage.waitMessageToHide();
-			await incomePage.verifyIncomeExists(IncomePageData.defaultNote);
+			await incomePage.verifyIncomeExists(name);
 		});
 
 		await test.step('Should be able to delete income', async () => {
-			await incomePage.selectTableRow(0);
+			await incomePage.selectTableRow(name);
 			await incomePage.deleteIncomeButtonVisible();
 			await incomePage.clickDeleteIncomeButton();
 			await incomePage.confirmDeleteButtonVisible();
 			await incomePage.clickConfirmDeleteButton();
 			await incomePage.waitMessageToHide();
-			await incomePage.verifyElementIsDeleted();
+			await incomePage.verifyElementIsDeleted(name);
 		});
 	});
 });

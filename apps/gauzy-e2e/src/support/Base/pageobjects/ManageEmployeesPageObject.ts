@@ -50,6 +50,11 @@ export const ManageEmployeesPage = {
 	preferredLanguageOptionCss: 'ng-dropdown-panel.ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
 	cardBodyCss: 'ga-employee-mutation nb-card-body',
 	manageInvitesButtonCss: 'div.card-header-title > div.mr-2 > button[status="primary"]',
+	// Email-column filter input in the invites smart-table header. The invites grid accumulates invites
+	// from earlier specs (shared serial DB), so a blind row-0 pick can grab another spec's invite (whose
+	// status may not be INVITED -> Copy/Resend buttons wouldn't render). Filter by THIS spec's invited
+	// email so the spec's own invite is the only/first data row.
+	inviteEmailFilterInputCss: 'th.angular2-smart-th.email input',
 	copyLinkButtonCss: 'button.action.success',
 	resendInviteButtonCss: 'button.action.warning',
 	deleteInviteButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',

@@ -90,7 +90,12 @@ test.describe('Sales estimates test', () => {
 			);
 			await salesEstimatesPage.contactDropdownVisible();
 			await salesEstimatesPage.clickContactDropdown();
-			await salesEstimatesPage.selectContactFromDropdown(0);
+			// Bind the estimate to the spec's OWN faker contact so every estimate this spec creates carries
+			// `fullName` in the grid's Contact column — makes later row selection order-independent. The
+			// sales/accounting estimates grids share data, so a plain row-0 / contact-0 grabs a FOREIGN
+			// record (the failure DOM had 6 "Michael Sawayn" Draft rows from earlier specs and the send
+			// dialog targeted that polluting contact). Mirrors the proven EstimatesTest.
+			await salesEstimatesPage.selectContactFromDropdown(fullName);
 			await salesEstimatesPage.taxInputVisible();
 			await salesEstimatesPage.enterTaxData(SalesEstimatesPageData.taxValue);
 			await salesEstimatesPage.taxTypeDropdownVisible();
@@ -118,7 +123,8 @@ test.describe('Sales estimates test', () => {
 		});
 
 		await test.step('Should be able to edit estimate', async () => {
-			await salesEstimatesPage.selectTableRow(0);
+			// scope to one of THIS spec's estimates (by its contact name), never a foreign row-0
+			await salesEstimatesPage.selectTableRow(fullName);
 			await salesEstimatesPage.editButtonVisible();
 			await salesEstimatesPage.clickEditButton(0);
 			await salesEstimatesPage.discountInputVisible();
@@ -132,7 +138,8 @@ test.describe('Sales estimates test', () => {
 			);
 			await salesEstimatesPage.contactDropdownVisible();
 			await salesEstimatesPage.clickContactDropdown();
-			await salesEstimatesPage.selectContactFromDropdown(0);
+			// keep this spec's faker contact on the edited estimate so it stays scoped to `fullName`
+			await salesEstimatesPage.selectContactFromDropdown(fullName);
 			await salesEstimatesPage.taxInputVisible();
 			await salesEstimatesPage.enterTaxData(SalesEstimatesPageData.taxValue);
 			await salesEstimatesPage.taxTypeDropdownVisible();
@@ -148,7 +155,7 @@ test.describe('Sales estimates test', () => {
 
 		await test.step('Should be able to duplicate estimate', async () => {
 			await salesEstimatesPage.waitMessageToHide();
-			await salesEstimatesPage.selectTableRow(0);
+			await salesEstimatesPage.selectTableRow(fullName);
 			await salesEstimatesPage.moreButtonVisible();
 			await salesEstimatesPage.clickMoreButton();
 			await salesEstimatesPage.actionButtonVisible();
@@ -161,7 +168,7 @@ test.describe('Sales estimates test', () => {
 		});
 
 		await test.step('Should be able to send estimate', async () => {
-			await salesEstimatesPage.selectTableRow(0);
+			await salesEstimatesPage.selectTableRow(fullName);
 			await salesEstimatesPage.moreButtonVisible();
 			await salesEstimatesPage.clickMoreButton();
 			await salesEstimatesPage.actionButtonVisible();
@@ -176,7 +183,7 @@ test.describe('Sales estimates test', () => {
 		});
 
 		await test.step('Should be able to view estimate', async () => {
-			await salesEstimatesPage.selectTableRow(0);
+			await salesEstimatesPage.selectTableRow(fullName);
 			await salesEstimatesPage.viewButtonVisible();
 			// Only one View button exists in the estimates toolbar; use index 0 (the text-scoped
 			// selector matches exactly one element, so the old index 1 resolved to nothing).
@@ -186,7 +193,7 @@ test.describe('Sales estimates test', () => {
 		});
 
 		await test.step('Should be able to send estimate by email', async () => {
-			await salesEstimatesPage.selectTableRow(0);
+			await salesEstimatesPage.selectTableRow(fullName);
 			await salesEstimatesPage.moreButtonVisible();
 			await salesEstimatesPage.clickMoreButton();
 			await salesEstimatesPage.actionButtonVisible();
@@ -204,7 +211,7 @@ test.describe('Sales estimates test', () => {
 		});
 
 		await test.step('Should be able to convert estimate to invoice', async () => {
-			await salesEstimatesPage.selectTableRow(0);
+			await salesEstimatesPage.selectTableRow(fullName);
 			// No actionButtonVisible() here — "To invoice" is a TOOLBAR button (button.action.info), not a
 			// popover action. selectTableRow clicks the grid row, which fires the popover's (clickOutside)
 			// and CLOSES it, so asserting the popover action button (div.popover-container-action
@@ -232,7 +239,8 @@ test.describe('Sales estimates test', () => {
 			);
 			await salesEstimatesPage.contactDropdownVisible();
 			await salesEstimatesPage.clickContactDropdown();
-			await salesEstimatesPage.selectContactFromDropdown(0);
+			// keep the delete-target estimate scoped to this spec's faker contact
+			await salesEstimatesPage.selectContactFromDropdown(fullName);
 			await salesEstimatesPage.taxInputVisible();
 			await salesEstimatesPage.enterTaxData(SalesEstimatesPageData.taxValue);
 			await salesEstimatesPage.taxTypeDropdownVisible();
@@ -257,7 +265,7 @@ test.describe('Sales estimates test', () => {
 			);
 			await salesEstimatesPage.waitMessageToHide();
 			await salesEstimatesPage.verifyDraftBadgeClass();
-			await salesEstimatesPage.selectTableRow(0);
+			await salesEstimatesPage.selectTableRow(fullName);
 			await salesEstimatesPage.moreButtonVisible();
 			await salesEstimatesPage.clickMoreButton();
 			await salesEstimatesPage.deleteButtonVisible();

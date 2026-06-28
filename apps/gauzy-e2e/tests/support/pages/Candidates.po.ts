@@ -119,6 +119,32 @@ export const clickSendInviteButton = async () => {
 	// cdk-overlay-backdrop sits over the footer and swallows a coordinate (force) click, so the
 	// dialog never closes. dispatchClick fires (click)="add()" straight on the element.
 	await dispatchClick(CandidatesPage.sendInviteButtonCss);
+	// The invite-mutation add() destructures saveInvites()'s result; on any server/timing error (or a
+	// form that briefly reads invalid) saveInvites() returns undefined and the destructure throws, so
+	// add()'s catch shows a toast but NEVER closeDialog() — the ga-invite-mutation dialog leaks open
+	// (confirmed in the failure DOM: the Invite Candidates dialog was still mounted at the end). Its
+	// modal backdrop then blocks the whole add-candidate flow and later toolbar row actions. The invite
+	// itself is not asserted anywhere, so just make sure the dialog is gone before we proceed: wait for
+	// it to detach, and if it leaked, dismiss it (Cancel button, then Escape as a fallback).
+	const page = getPage();
+	const inviteDialog = page.locator('ga-invite-mutation').first();
+	const closed = await inviteDialog
+		.waitFor({ state: 'detached', timeout: 8000 })
+		.then(() => true)
+		.catch(() => false);
+	if (!closed) {
+		// Cancel = the basic/outline footer button that calls closeDialog().
+		await page
+			.locator('ga-invite-mutation nb-card-footer button[status="basic"]')
+			.first()
+			.click({ force: true })
+			.catch(() => undefined);
+		await inviteDialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => undefined);
+		if (await inviteDialog.count()) {
+			await page.keyboard.press('Escape').catch(() => undefined);
+			await inviteDialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => undefined);
+		}
+	}
 };
 
 export const addCandidateButtonVisible = async () => {

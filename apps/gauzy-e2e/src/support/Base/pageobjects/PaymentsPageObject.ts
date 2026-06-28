@@ -1,16 +1,24 @@
 export const PaymentsPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addPaymentButtonCss: '.gauzy-button-container button[status="success"]',
-	dateInputCss: '[formcontrolname="paymentDate"]',
+	// IMPORTANT: every form control below is SCOPED to the ga-payment-add dialog. The payments grid's
+	// FILTER ROW renders the SAME controls (the Tags column filter is a <ga-tags-color-input> => a SECOND
+	// <ng-select id="addTags">, and there are paymentMethod/note/contact column filters too). Unscoped
+	// '#addTags' / id selectors matched the grid filter (earlier in the DOM, so .first() picked it): the
+	// keyboard tag-pick landed on the grid's Tags FILTER instead of the dialog, applying a where[tags] filter
+	// to the grid while the payment saved with tags:null — so the created "Billable" payment was filtered OUT
+	// and the grid showed "You have not received any payments." (confirmed in the trace: POST /api/payments
+	// returned 201 with note:'Billable', tags:null, while the pagination refetch had where[tags][0]=<id>).
+	dateInputCss: 'ga-payment-add [formcontrolname="paymentDate"]',
 	vendorInputCss: '[formcontrolname="vendor"]',
-	projectDropdownCss: '[formcontrolname="projectId"]',
+	projectDropdownCss: 'ga-payment-add [formcontrolname="projectId"]',
 	projectDropdownOptionCss: 'div.ng-option',
-	addTagsDropdownCss: '#addTags',
+	addTagsDropdownCss: 'ga-payment-add #addTags',
 	tagsDropdownOption: 'div.ng-option',
-	paymentMethodDropdownCss: '[formcontrolname="paymentMethod"]',
+	paymentMethodDropdownCss: 'ga-payment-add [formcontrolname="paymentMethod"]',
 	paymentMethodDropdownOptionCss: '.option-list nb-option',
-	amountInputCss: '#inputAmount',
-	noteInputCss: '#inputNote',
+	amountInputCss: 'ga-payment-add #inputAmount',
+	noteInputCss: 'ga-payment-add #inputNote',
 	saveExpenseButtonCss: 'nb-card-footer > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	editPaymentButtonCss: '.gauzy-button-container button.action.primary',

@@ -161,6 +161,15 @@ export const enterNameInputData = async (data: string) => {
 	await enterInput(CustomersPage.nameInputCss, data);
 };
 
+// Raw re-fill (no clearField) of the stepper Name, scoped to nb-stepper. The contact-mutation form
+// RESETS the Name control whenever a LATER field is cleared-then-filled (an Angular re-render on the
+// form's valueChanges). On edit that means the rename to deleteName silently reverts to the original
+// name and verifyCustomerExists(deleteName) fails, so call this as the LAST step-1 action before
+// advancing. Mirrors the verified-green ContactsLeads.po / Clients.po.
+export const reenterNameInputData = async (data: string) => {
+	await getPage().locator(CustomersPage.nameInputCss).first().fill(String(data));
+};
+
 export const emailInputVisible = async () => {
 	await verifyElementIsVisible(CustomersPage.emailInputCss);
 };
@@ -319,7 +328,12 @@ export const saveInviteButtonVisible = async () => {
 };
 
 export const clickSaveInviteButton = async () => {
-	await clickButton(CustomersPage.saveInviteButtonCss);
+	// dispatchClick (not a coordinate force-click): a leftover stepper/dialog backdrop can sit over the
+	// dialog footer and swallow the click, leaving the invite dialog OPEN as a floating cdk-overlay (seen
+	// in the round-5 failure snapshot — the "Invite Contact" card was still up at the final assertion).
+	// Dispatching the click fires the (click) handler regardless of the overlay. Mirrors green Clients.po.
+	await waitForSpinnerGone();
+	await dispatchClick(CustomersPage.saveInviteButtonCss);
 };
 
 export const tableRowVisible = async () => {
@@ -345,17 +359,43 @@ export const selectTableRow = async (index: number) => {
 	}
 };
 
+// Pollution-proof row selection: the suite shares ONE serial DB, so by the time this spec runs the grid
+// holds rows from earlier specs, AND this spec's own add+invite create TWO rows with the same name. A
+// fixed nth(0) therefore selects the WRONG record (the round-5 failure: delete hit row 0 while the edited
+// "deleteName" row survived). Scope the click to the row that actually contains `name`, then poll the
+// shared toolbar Edit button (the row click toggles selection). Same settle/poll shape as selectTableRow.
+export const selectTableRowByText = async (name: string) => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(CustomersPage.selectTableRowCss).filter({ hasText: name }).first();
+	const editBtn = page.locator(CustomersPage.editButtonCss).first();
+	await row.waitFor({ state: 'visible', timeout: 24000 });
+	for (let attempt = 0; attempt < 4; attempt++) {
+		await row.click({ force: true }).catch(() => undefined);
+		for (let i = 0; i < 8; i++) {
+			await page.waitForTimeout(350);
+			if (!(await editBtn.isDisabled().catch(() => true))) return;
+		}
+	}
+};
+
 export const editButtonVisible = async () => {
 	await verifyElementIsVisible(CustomersPage.editButtonCss);
 };
 
-export const clickEditButton = async (index: number = 0) => {
-	// The row was already selected (Edit enabled) by selectTableRow() right before this call.
+export const clickEditButton = async (rowName?: string) => {
+	// The row was already selected (Edit enabled) by selectTableRowByText() right before this call.
 	// Clicking the row again here would TOGGLE selection OFF and disable Edit, so DON'T re-click
 	// the row on the first attempt — just dispatch the Edit click (mirrors the verified-green
 	// Clients.po). dispatchClick fires the (click) handler even under a fading dialog backdrop.
-	// Only if the mutation form never opens do we re-select the row and retry.
+	// Only if the mutation form never opens do we re-select the row and retry. When a unique
+	// `rowName` is given, re-select THAT row (pollution-proof) instead of a fixed index.
 	await waitForSpinnerGone();
+	const reselectRow = rowName
+		? getPage().locator(CustomersPage.selectTableRowCss).filter({ hasText: rowName }).first()
+		: getPage().locator(CustomersPage.selectTableRowCss).first();
 	for (let attempt = 0; attempt < 4; attempt++) {
 		await dispatchClick(CustomersPage.editButtonCss).catch(() => undefined);
 		try {
@@ -365,11 +405,7 @@ export const clickEditButton = async (index: number = 0) => {
 			return;
 		} catch {
 			// Form didn't open — selection may have been lost. Re-select the row ONCE, then retry.
-			await getPage()
-				.locator(CustomersPage.selectTableRowCss)
-				.nth(index)
-				.click({ force: true })
-				.catch(() => undefined);
+			await reselectRow.click({ force: true }).catch(() => undefined);
 			await getPage().waitForTimeout(800);
 		}
 	}

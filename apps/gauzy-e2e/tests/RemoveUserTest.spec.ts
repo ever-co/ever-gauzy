@@ -48,12 +48,19 @@ test.describe('Remove user test', () => {
 			await addUserPage.confirmAddButtonVisible();
 			await addUserPage.clickConfirmAddButton();
 			await addUserPage.waitMessageToHide();
+			// Pollution-safe: the shared serial DB makes the users grid paginate ("1 - 10 of N"), so a
+			// just-added user can land on page 2 and never render. Filter the grid by the unique full name
+			// so it is the only data row on page 1 before verifying it exists (and for the remove step).
+			await removeUserPage.filterByName(`${firstName} ${lastName}`);
 			await addUserPage.verifyUserExists(`${firstName} ${lastName}`);
 		});
 
 		await test.step('Should be able to remove user', async () => {
 			await removeUserPage.gridButtonVisible();
 			await removeUserPage.clickGridButton();
+			// Re-apply the Full Name filter (idempotent) so the user we created is the only data row even
+			// if the grid re-rendered, then select that specific row to enable the toolbar Remove button.
+			await removeUserPage.filterByName(`${firstName} ${lastName}`);
 			await removeUserPage.tableBodyExists();
 			await removeUserPage.clickTableRow(`${firstName} ${lastName}`);
 			await removeUserPage.removeButtonVisible();

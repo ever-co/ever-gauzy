@@ -46,5 +46,15 @@ export const GoalsPage = {
 	weightParameterDropdownCss: '#key-result-weight',
 	saveDeadlineButtonCss: 'div.d-flex > button[status="success"]',
 	progressBarCss: '.goals-container nb-progress-bar',
-	verifyGoalCss: '.goals-container nb-accordion-item-header'
+	verifyGoalCss: '.goals-container nb-accordion-item-header',
+	// POLLUTION RESILIENCE: the shared seed/serial run can carry objectives from earlier specs, so a
+	// blind nth(0) accordion header may select the WRONG objective. These build selectors scoped to the
+	// nb-accordion-item whose header contains OUR unique (faker) goal name, so every selection/expand is
+	// order-independent. Playwright's :has-text() does a (case-insensitive, substring) text match.
+	objectiveHeaderByName: (name: string) =>
+		`.goals-container nb-accordion-item:has(nb-accordion-item-header:has-text("${name}")) nb-accordion-item-header`,
+	keyResultRowByName: (name: string) =>
+		`.goals-container nb-accordion-item:has(nb-accordion-item-header:has-text("${name}")) nb-accordion-item-body div.keyResult`,
+	addKeyResultButtonByName: (name: string) =>
+		`.goals-container nb-accordion-item:has(nb-accordion-item-header:has-text("${name}")) nb-accordion-item-body button[status="success"]`
 };

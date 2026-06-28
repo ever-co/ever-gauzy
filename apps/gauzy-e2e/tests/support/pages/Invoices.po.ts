@@ -193,25 +193,21 @@ export const tableRowVisible = async () => verifyElementIsVisible(InvoicesPage.t
 
 export const selectTableRow = async (index: number) => {
 	const page = getPage();
-	// Settle the grid first: a row click TOGGLES selection, so a stray double-click would deselect it.
-	// Wait for spinner/network/render to settle, then click the data row ONCE and poll the toolbar Edit
-	// button's real `disabled` attr — only re-click if selection was lost. Never rapid re-click.
+	// Let the grid settle after the preceding mutation (it re-renders/refetches); a click during that
+	// window is lost or instantly cleared. Then click the data row ONCE and poll the toolbar Edit button to
+	// enable — clicking a row TOGGLES its selection, so a blind second click would deselect it. Only
+	// re-click if the first was lost to a late re-render. (Polls isDisabled() rather than holding an
+	// elementHandle, which goes stale across the grid's re-render. Mirrors the proven SalesInvoices.po.)
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
 	await page.waitForTimeout(1500);
 	const row = page.locator(InvoicesPage.tableRowCss).nth(index);
 	const editBtn = page.locator(InvoicesPage.editButtonCss).first();
-	for (let i = 0; i < 4; i++) {
+	for (let attempt = 0; attempt < 4; attempt++) {
 		await row.click({ force: true }).catch(() => {});
-		try {
-			await page.waitForFunction(
-				(el) => !!el && !(el as HTMLButtonElement).disabled,
-				await editBtn.elementHandle(),
-				{ timeout: 4000 }
-			);
-			return;
-		} catch {
-			// selection didn't enable the toolbar yet — loop and click the row again
+		for (let i = 0; i < 8; i++) {
+			await page.waitForTimeout(350);
+			if (!(await editBtn.isDisabled().catch(() => true))) return;
 		}
 	}
 };
@@ -234,10 +230,26 @@ export const clickBackButton = async () => dispatchClick(InvoicesPage.backButton
 export const confirmButtonVisible = async () => verifyElementIsVisible(InvoicesPage.confirmButtonCss);
 
 export const clickConfirmButton = async () => {
-	// Send/Email confirm dialog button — dispatchClick so a lingering popover/dialog backdrop can't
-	// intercept it.
-	await waitForSpinnerGone();
-	await dispatchClick(InvoicesPage.confirmButtonCss);
+	// Send/Email confirm dialog button. A SINGLE dispatchClick is racy here: the dialog body renders
+	// <ga-invoice-pdf> (an async PDF/iframe preview, plus a CKEditor) so the first dispatch can land before
+	// the (click)="send()"/"sendEmail()" handler is wired, and the dialog stays OPEN with the invoice never
+	// sent — exactly the observed failure (the "Send this invoice to ...?" dialog was still up and the row
+	// was still Draft, so div.badge-success never appeared). Dispatch the success button, then POLL for the
+	// mutation dialog host (ga-invoice-send / ga-invoice-email) to detach — re-dispatching if it lingers — so
+	// the send/email actually fires before we move on. dispatchClick (not a coordinate click) so the fading
+	// popover backdrop can't intercept it. Mirrors the proven SalesInvoices.po / SalesEstimates.po pattern.
+	const page = getPage();
+	const dialogHost = page.locator('ga-invoice-send, ga-invoice-email').first();
+	for (let i = 0; i < 5; i++) {
+		await waitForSpinnerGone();
+		await dispatchClick(InvoicesPage.confirmButtonCss).catch(() => {});
+		try {
+			await dialogHost.waitFor({ state: 'detached', timeout: 6000 });
+			return;
+		} catch {
+			// dialog still open — the click didn't take (PDF preview still wiring up); loop and re-dispatch
+		}
+	}
 };
 
 export const emailInputVisible = async () => verifyElementIsVisible(InvoicesPage.emailInputCss);

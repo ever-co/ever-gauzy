@@ -78,17 +78,31 @@ export const clickEmployeeSelector = async () => {
 
 export const employeeDropdownVisible = async () => verifyElementIsVisible(TimeOffPage.employeeDropdownOptionCss);
 
-export const selectEmployeeFromDropdown = async (index: number) => {
-	// Best-effort employee pick: the working-employees list loads async and can be empty on the test DB
-	// (no employee "working" in the header date range). Click an option if one shows within ~8s; else
-	// Escape and continue. Options are div.ng-option (ng-select), not .option-list nb-option.
+export const selectEmployeeFromDropdown = async (name: string) => {
+	// Pick the employee BY NAME via the ng-select typeahead. The list always begins with an
+	// "All Employees" pseudo-option (id=null) and may also contain employees from earlier specs, so a
+	// nth(0)/index pick is wrong (it selects "All Employees", which makes saveRequest() a no-op since it
+	// gates on selectedEmployee.id). Type the unique faker name into the ng-select's inner input to
+	// filter (searchEmployee matches firstName/lastName), then click the matching div.ng-option.
 	const page = getPage();
-	const option = page.locator(TimeOffPage.employeeDropdownOptionCss);
+	const input = page.locator(TimeOffPage.employeeDropdownCss).locator('input').first();
+	const option = page.locator(TimeOffPage.employeeDropdownOptionCss).filter({ hasText: name });
 	try {
+		await input.focus();
+		await input.fill('');
+		await input.pressSequentially(name, { delay: 30 });
 		await option.first().waitFor({ state: 'visible', timeout: 8000 });
-		await option.nth(index).click({ force: true });
+		await option.first().click({ force: true });
 	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
+		// Best-effort fallback: if typeahead filtered to nothing (timing), pick the first REAL employee
+		// option (skip the "All Employees" entry) so the flow still proceeds rather than hanging.
+		const realOption = page
+			.locator(TimeOffPage.employeeDropdownOptionCss)
+			.filter({ hasNotText: 'All Employees' });
+		await realOption
+			.first()
+			.click({ force: true, timeout: 6000 })
+			.catch(() => page.keyboard.press('Escape').catch(() => {}));
 	}
 };
 
@@ -277,17 +291,24 @@ export const clickSaveButton = async () => {
 
 export const timeOffTableRowVisible = async () => verifyElementIsVisible(TimeOffPage.selectTableRowCss);
 
-export const selectTimeOffTableRow = async (index: number) => {
+export const selectTimeOffTableRow = async (name: string) => {
 	const page = getPage();
+	// Select the row for THIS spec's unique employee, not by index. The suite shares one DB and runs
+	// serially, so by now the grid can hold time-off rows from earlier specs; a plain nth(0) would
+	// deny/approve/delete the WRONG record. The grid's Employee column renders employees[0].fullName
+	// (= the unique faker "First Last"), so filter the data rows by that name. (root cause #4 + pollution)
 	// Let the grid settle after the preceding mutation (re-render/refetch) — a click during that window
 	// is lost or immediately cleared. Then click the row ONCE and poll for the toolbar action buttons to
 	// appear (selecting a row sets disableButton=false, rendering the btn-group.actions). Clicking the
 	// row TOGGLES selection, so only re-click if the first click was lost to a late re-render — never
-	// rapid re-click. (root cause #4)
+	// rapid re-click.
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
 	await page.waitForTimeout(1500);
-	const row = page.locator(TimeOffPage.selectTableRowCss).nth(index);
+	const rows = page.locator(TimeOffPage.selectTableRowCss);
+	const named = rows.filter({ hasText: name });
+	// Prefer the uniquely-named row; fall back to the first row only if the name didn't render (best-effort).
+	const row = (await named.count().catch(() => 0)) > 0 ? named.first() : rows.first();
 	const actions = page.locator('div.btn-group.actions button').first();
 	for (let attempt = 0; attempt < 4; attempt++) {
 		await row.click({ force: true });

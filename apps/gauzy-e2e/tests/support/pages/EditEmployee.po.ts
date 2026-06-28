@@ -6,7 +6,6 @@ import {
 	clickElementByText,
 	clearField,
 	verifyValue,
-	clickButtonByIndex,
 	waitElementToHide,
 	waitForSpinnerGone,
 	dispatchClick,
@@ -78,7 +77,20 @@ export const tabButtonVisible = async () => {
 };
 
 export const clickTabButton = async (index: number) => {
-	await clickButtonByIndex(EditEmployeePage.tabButtonCss, index);
+	// Route-tabs are <li.route-tab> wrapping an <a.tab-link routerLink>; the navigation lives on the
+	// inner anchor. A coordinate click on the <li> (clickButtonByIndex) can land on a fading
+	// cdk-overlay backdrop left by the just-closed datepicker / nb-select / ng-select on the previous
+	// tab, so the hash route never changes and the next tab's lazy component never renders (round-4:
+	// the Location tab stayed on Hiring after the date pickers closed). Settle any transient spinner,
+	// then dispatch the click straight to the nth anchor so routerLink fires regardless of any overlay.
+	await waitForSpinnerGone();
+	const anchor = getPage()
+		.locator(`${EditEmployeePage.tabButtonCss} a.tab-link`)
+		.nth(index);
+	await anchor.dispatchEvent('click');
+	// Let the hash route swap + the destination tab component begin rendering before the caller's
+	// *Visible() poll (each tab is a separate lazy route component).
+	await getPage().waitForTimeout(800);
 };
 
 export const linkedinInputVisible = async () => {

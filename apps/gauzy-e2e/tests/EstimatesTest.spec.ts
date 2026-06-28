@@ -88,7 +88,10 @@ test.describe('Estimates test', () => {
 			);
 			await estimatesPage.contactDropdownVisible();
 			await estimatesPage.clickContactDropdown();
-			await estimatesPage.selectContactFromDropdown(0);
+			// Bind the estimate to the spec's OWN faker contact so every estimate this spec creates carries
+			// `fullName` in the grid's Contact column — makes later row selection order-independent (the
+			// sales/accounting estimates grids share data, so a plain row-0 can grab a foreign estimate).
+			await estimatesPage.selectContactFromDropdown(fullName);
 			await estimatesPage.taxInputVisible();
 			await estimatesPage.enterTaxData(EstimatesPageData.taxValue);
 			await estimatesPage.taxTypeDropdownVisible();
@@ -144,7 +147,8 @@ test.describe('Estimates test', () => {
 
 		await test.step('Should be able to edit estimate', async () => {
 			await estimatesPage.clickTabButton(0);
-			await estimatesPage.selectTableRow(0);
+			// scope to one of THIS spec's estimates (by its contact name), never a foreign row-0
+			await estimatesPage.selectTableRow(fullName);
 			await estimatesPage.editButtonVisible();
 			await estimatesPage.clickEditButton(0);
 			await estimatesPage.discountInputVisible();
@@ -156,7 +160,7 @@ test.describe('Estimates test', () => {
 			);
 			await estimatesPage.contactDropdownVisible();
 			await estimatesPage.clickContactDropdown();
-			await estimatesPage.selectContactFromDropdown(0);
+			await estimatesPage.selectContactFromDropdown(fullName);
 			await estimatesPage.taxInputVisible();
 			await estimatesPage.enterTaxData(EstimatesPageData.taxValue);
 			await estimatesPage.taxTypeDropdownVisible();
@@ -170,8 +174,8 @@ test.describe('Estimates test', () => {
 
 		await test.step('Should be able to duplicate estimate', async () => {
 			await estimatesPage.waitMessageToHide();
-			await estimatesPage.selectTableRow(0);
-			await estimatesPage.selectTableRow(0);
+			await estimatesPage.selectTableRow(fullName);
+			await estimatesPage.selectTableRow(fullName);
 			await estimatesPage.moreButtonVisible();
 			await estimatesPage.clickMoreButton();
 			await estimatesPage.actionButtonVisible();
@@ -184,7 +188,7 @@ test.describe('Estimates test', () => {
 		});
 
 		await test.step('Should be able to send estimate', async () => {
-			await estimatesPage.selectTableRow(0);
+			await estimatesPage.selectTableRow(fullName);
 			await estimatesPage.moreButtonVisible();
 			await estimatesPage.clickMoreButton();
 			await estimatesPage.actionButtonVisible();
@@ -197,7 +201,7 @@ test.describe('Estimates test', () => {
 		});
 
 		await test.step('Should be able to view estimate', async () => {
-			await estimatesPage.selectTableRow(0);
+			await estimatesPage.selectTableRow(fullName);
 			await estimatesPage.viewButtonVisible();
 			await estimatesPage.clickViewButton(1);
 			await estimatesPage.backButtonVisible();
@@ -205,7 +209,7 @@ test.describe('Estimates test', () => {
 		});
 
 		await test.step('Should be able to send estimate by email', async () => {
-			await estimatesPage.selectTableRow(0);
+			await estimatesPage.selectTableRow(fullName);
 			await estimatesPage.moreButtonVisible();
 			await estimatesPage.clickMoreButton();
 			await estimatesPage.actionButtonVisible();
@@ -221,7 +225,7 @@ test.describe('Estimates test', () => {
 		});
 
 		await test.step('Should be able to convert estimate to invoice', async () => {
-			await estimatesPage.selectTableRow(0);
+			await estimatesPage.selectTableRow(fullName);
 			// NOTE: no actionButtonVisible() here — "To invoice" is a TOOLBAR button (button.action.info),
 			// not a popover action. selectTableRow clicks the grid row, which fires the popover's
 			// (clickOutside) and CLOSES it, so asserting the popover action button (div.popover-container-action
@@ -247,7 +251,7 @@ test.describe('Estimates test', () => {
 			);
 			await estimatesPage.contactDropdownVisible();
 			await estimatesPage.clickContactDropdown();
-			await estimatesPage.selectContactFromDropdown(0);
+			await estimatesPage.selectContactFromDropdown(fullName);
 			await estimatesPage.taxInputVisible();
 			await estimatesPage.enterTaxData(EstimatesPageData.taxValue);
 			await estimatesPage.taxTypeDropdownVisible();
@@ -270,7 +274,7 @@ test.describe('Estimates test', () => {
 			);
 			await estimatesPage.waitMessageToHide();
 			await estimatesPage.verifyDraftBadgeClass();
-			await estimatesPage.selectTableRow(0);
+			await estimatesPage.selectTableRow(fullName);
 			await estimatesPage.moreButtonVisible();
 			await estimatesPage.clickMoreButton();
 			await estimatesPage.deleteButtonVisible();

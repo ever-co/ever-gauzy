@@ -7,9 +7,24 @@ import * as dashboardPage from './support/pages/Dashboard.po';
 import * as organizationTagsUserPage from './support/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../src/support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from './support/commands';
+import { faker } from '@faker-js/faker';
+
+// POLLUTION RESILIENCE (Round 5 #1): the suite runs serially against ONE shared DB, so by the time this spec
+// runs the equipment / request / policy grids have ACCUMULATED rows from earlier specs and failed/retried
+// runs. The PageData defaults ("Car", "BMW", "Default policy") are NOT unique — a leftover same-named row makes
+// a blind row-0 select / verify-exists / verify-deleted grab or assert the WRONG record. Create everything with
+// UNIQUE faker names and scope every downstream action (row select, verify-exists, verify-deleted) to those
+// names so the spec passes in the full suite, not just in isolation (mirrors the green ApprovalRequestTest).
+let equipmentName = ' ';
+let requestName = ' ';
+let policyName = ' ';
 
 test.describe('Organization equipment test', () => {
 	test('Organization equipment test', async () => {
+		equipmentName = `Equipment ${faker.string.alphanumeric(8)}`;
+		requestName = `Request ${faker.string.alphanumeric(8)}`;
+		policyName = `Policy ${faker.string.alphanumeric(8)}`;
+
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 
 		await test.step('Should be able to add new equipment', async () => {
@@ -27,9 +42,7 @@ test.describe('Organization equipment test', () => {
 			await organizationEquipmentPage.addEquipmentButtonVisible();
 			await organizationEquipmentPage.clickAddEquipmentButton();
 			await organizationEquipmentPage.nameInputVisible();
-			await organizationEquipmentPage.enterNameInputData(
-				OrganizationEquipmentPageData.name
-			);
+			await organizationEquipmentPage.enterNameInputData(equipmentName);
 			await organizationEquipmentPage.typeInputVisible();
 			await organizationEquipmentPage.enterTypeInputData(
 				OrganizationEquipmentPageData.type
@@ -57,9 +70,7 @@ test.describe('Organization equipment test', () => {
 			await organizationEquipmentPage.saveButtonVisible();
 			await organizationEquipmentPage.clickSaveButton();
 			await organizationEquipmentPage.waitMessageToHide();
-			await organizationEquipmentPage.verifyEquipmentExists(
-				OrganizationEquipmentPageData.name
-			);
+			await organizationEquipmentPage.verifyEquipmentExists(equipmentName);
 		});
 
 		await test.step('Should be able to add equipment policy', async () => {
@@ -70,9 +81,7 @@ test.describe('Organization equipment test', () => {
 			await organizationEquipmentPage.addPolicyButtonVisible();
 			await organizationEquipmentPage.clickAddPolicyButton();
 			await organizationEquipmentPage.policyNameInputVisible();
-			await organizationEquipmentPage.enterPolicyNameInputData(
-				OrganizationEquipmentPageData.policy
-			);
+			await organizationEquipmentPage.enterPolicyNameInputData(policyName);
 			await organizationEquipmentPage.policyDescriptionInputVisible();
 			await organizationEquipmentPage.enterPolicyDescriptionInputData(
 				OrganizationEquipmentPageData.description
@@ -80,9 +89,7 @@ test.describe('Organization equipment test', () => {
 			await organizationEquipmentPage.saveButtonVisible();
 			await organizationEquipmentPage.clickSaveButton();
 			await organizationEquipmentPage.waitMessageToHide();
-			await organizationEquipmentPage.verifyPolicyExists(
-				OrganizationEquipmentPageData.policy
-			);
+			await organizationEquipmentPage.verifyPolicyExists(policyName);
 			await organizationEquipmentPage.backButtonVisible();
 			await organizationEquipmentPage.clickBackButton();
 		});
@@ -91,9 +98,7 @@ test.describe('Organization equipment test', () => {
 			await organizationEquipmentPage.requestButtonVisible();
 			await organizationEquipmentPage.clickRequestButton();
 			await organizationEquipmentPage.requestNameInputVisible();
-			await organizationEquipmentPage.enterRequestNameInputData(
-				OrganizationEquipmentPageData.requestName
-			);
+			await organizationEquipmentPage.enterRequestNameInputData(requestName);
 			await organizationEquipmentPage.selectEquipmentDropdownVisible();
 			await organizationEquipmentPage.clickEquipmentDropdown();
 			await organizationEquipmentPage.selectEquipmentFromDropdown(0);
@@ -113,21 +118,18 @@ test.describe('Organization equipment test', () => {
 			await organizationEquipmentPage.saveButtonVisible();
 			await organizationEquipmentPage.clickSaveButton();
 			await organizationEquipmentPage.waitMessageToHide();
-			await organizationEquipmentPage.verifySharingExists(
-				OrganizationEquipmentPageData.requestName
-			);
+			await organizationEquipmentPage.verifySharingExists(requestName);
 			await organizationEquipmentPage.clickBackButton();
 		});
 
 		await test.step('Should be able to edit equipment', async () => {
 			await organizationEquipmentPage.tableRowVisible();
-			await organizationEquipmentPage.selectTableRow(0);
+			// Select OUR equipment row by its unique name (pollution-resilient), not by index.
+			await organizationEquipmentPage.selectTableRow(equipmentName);
 			await organizationEquipmentPage.editButtonVisible();
 			await organizationEquipmentPage.clickEditButton();
 			await organizationEquipmentPage.nameInputVisible();
-			await organizationEquipmentPage.enterNameInputData(
-				OrganizationEquipmentPageData.name
-			);
+			await organizationEquipmentPage.enterNameInputData(equipmentName);
 			await organizationEquipmentPage.typeInputVisible();
 			await organizationEquipmentPage.enterTypeInputData(
 				OrganizationEquipmentPageData.type
@@ -155,13 +157,12 @@ test.describe('Organization equipment test', () => {
 		await test.step('Should be able to edit equipment request', async () => {
 			await organizationEquipmentPage.equipmentSharingButtonVisible();
 			await organizationEquipmentPage.clickEquipmentSharingButton();
-			await organizationEquipmentPage.selectTableRow(0);
+			// Select OUR request row by its unique name (pollution-resilient), not by index.
+			await organizationEquipmentPage.selectTableRow(requestName);
 			await organizationEquipmentPage.editButtonVisible();
 			await organizationEquipmentPage.clickEditButton();
 			await organizationEquipmentPage.requestNameInputVisible();
-			await organizationEquipmentPage.enterRequestNameInputData(
-				OrganizationEquipmentPageData.requestName
-			);
+			await organizationEquipmentPage.enterRequestNameInputData(requestName);
 			await organizationEquipmentPage.selectEquipmentDropdownVisible();
 			await organizationEquipmentPage.clickEquipmentDropdown();
 			await organizationEquipmentPage.selectEquipmentFromDropdown(0);
@@ -178,25 +179,26 @@ test.describe('Organization equipment test', () => {
 
 		await test.step('Should be able to delete equipment request', async () => {
 			await organizationEquipmentPage.waitMessageToHide();
-			await organizationEquipmentPage.selectTableRow(0);
+			// Select + verify-deleted by OUR unique request name (the request keeps its name through the edit
+			// step above, which re-entered the same requestName), not by index / whole-grid-empty.
+			await organizationEquipmentPage.selectTableRow(requestName);
 			await organizationEquipmentPage.deleteButtonVisible();
 			await organizationEquipmentPage.clickDeleteButton();
 			await organizationEquipmentPage.confirmDeleteButtonVisible();
 			await organizationEquipmentPage.clickConfirmDeleteButton();
 			await organizationEquipmentPage.waitMessageToHide();
-			await organizationEquipmentPage.verifyEquipmentIsDeleted();
+			await organizationEquipmentPage.verifyEquipmentIsDeleted(requestName);
 		});
 
 		await test.step('Should be able to edit policy', async () => {
 			await organizationEquipmentPage.sharingPolicyButtonVisible();
 			await organizationEquipmentPage.clickSharingPolicyButton();
-			await organizationEquipmentPage.selectTableRow(0);
+			// Select OUR policy row by its unique name (pollution-resilient), not by index.
+			await organizationEquipmentPage.selectTableRow(policyName);
 			await organizationEquipmentPage.editButtonVisible();
 			await organizationEquipmentPage.clickEditButton();
 			await organizationEquipmentPage.policyNameInputVisible();
-			await organizationEquipmentPage.enterPolicyNameInputData(
-				OrganizationEquipmentPageData.policy
-			);
+			await organizationEquipmentPage.enterPolicyNameInputData(policyName);
 			await organizationEquipmentPage.policyDescriptionInputVisible();
 			await organizationEquipmentPage.enterPolicyDescriptionInputData(
 				OrganizationEquipmentPageData.description
@@ -207,13 +209,14 @@ test.describe('Organization equipment test', () => {
 
 		await test.step('Should be able to delete policy', async () => {
 			await organizationEquipmentPage.waitMessageToHide();
-			await organizationEquipmentPage.selectTableRow(0);
+			// Select + verify-deleted by OUR unique policy name (kept through the edit step), not by index.
+			await organizationEquipmentPage.selectTableRow(policyName);
 			await organizationEquipmentPage.deleteButtonVisible();
 			await organizationEquipmentPage.clickDeleteButton();
 			await organizationEquipmentPage.confirmDeleteButtonVisible();
 			await organizationEquipmentPage.clickConfirmDeleteButton();
 			await organizationEquipmentPage.waitMessageToHide();
-			await organizationEquipmentPage.verifyPolicyIsDeleted();
+			await organizationEquipmentPage.verifyPolicyIsDeleted(policyName);
 		});
 	});
 });

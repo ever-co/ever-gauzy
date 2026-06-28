@@ -25,27 +25,69 @@ import { TeamsTasksPage } from '../../../src/support/Base/pageobjects/TeamsTasks
 const ckeditorIframeCss = 'iframe[class="cke_wysiwyg_frame cke_reset"]';
 
 // The spec's bare `await getPage().goto('/#/pages/tasks/team')` is issued right after the addTeam
-// CustomCommand, which ends on the DIFFERENT hash route /#/pages/organization/teams. A hash-only goto()
-// between two same-document routes is a NO-OP in Playwright: the page isn't reloaded and the Angular
-// hash-router never fires, so the SPA stays on the teams grid. The toolbar Add (button[status="success"])
-// would then click the TEAMS page's Add button and the task dialog's ga-project-selector never renders
-// (the observed failure). Force the hash through to the router (mirrors gotoRoute in commands.ts), then
-// wait for the Team's Tasks screen to actually mount before interacting. (Playbook pattern 8.)
+// CustomCommand, which ends on the DIFFERENT hash route /#/pages/organization/teams and does NOT wait for
+// its team-mutation dialog to detach. A hash-only goto() between two same-document routes is a NO-OP in
+// Playwright: the page isn't reloaded, and — crucially — once goto() has run, location.hash is ALREADY the
+// target, so the old guard `if (!location.hash.includes('/pages/tasks/team'))` SKIPS and never fires a
+// `hashchange`. The Angular hash-router never re-renders and the SPA stays on the teams grid (exactly the
+// observed failure DOM: "Teams for Default Company" / "You have not created any teams.", with the toolbar
+// Add re-opening the TEAMS dialog and the task form's ga-project-selector never rendering). FIX: bounce the
+// hash through the dashboard FIRST so the assignment to the team-tasks hash is a genuine change that DOES
+// fire `hashchange`. Mirrors the proven AddTasks.po.navigateToTasksDashboard. (Playbook pattern 8.)
+const TEAM_TASKS_HASH = '#/pages/tasks/team';
+
 export const navigateToTeamsTasks = async () => {
 	const page = getPage();
-	await page.goto('/#/pages/tasks/team');
+	// If goto() leaves us already on the team-tasks hash (a no-op), pre-bounce so the reassignment below is
+	// a real change and fires hashchange.
 	await page.evaluate(() => {
-		if (!location.hash.includes('/pages/tasks/team')) {
+		if (location.hash.split('?')[0] === '#/pages/tasks/team') {
+			location.hash = '#/pages/dashboard';
+		}
+	});
+	await page.goto('/' + TEAM_TASKS_HASH);
+	await page.evaluate(() => {
+		if (location.hash.split('?')[0] !== '#/pages/tasks/team') {
 			location.hash = '#/pages/tasks/team';
 		}
 	});
 	await page.waitForTimeout(800);
-	// Don't proceed until the Team's Tasks screen has actually mounted: its header text is unique to this
-	// route (the teams grid we may have lingered on has a different header), so it disambiguates a no-op nav.
+	// Don't proceed until the Team's Tasks screen has actually mounted: its header text ("Team's Tasks") is
+	// unique to this route (the teams grid we may have lingered on shows a different header), so it
+	// disambiguates a no-op nav. Then also wait for the toolbar Add button to render.
 	await page
 		.locator('h4:has-text("Team\'s Tasks")')
 		.first()
 		.waitFor({ state: 'visible', timeout: 30000 })
+		.catch(() => undefined);
+	await page
+		.locator(TeamsTasksPage.addTaskButtonCss)
+		.first()
+		.waitFor({ state: 'visible', timeout: 30000 })
+		.catch(() => undefined);
+};
+
+// Re-anchor on the Team's Tasks screen before any toolbar/grid interaction. A late/queued history.back()
+// (left by a closing nb-dialog/datepicker overlay) can pop the SPA OFF the tasks route SEVERAL steps later
+// — landing on /#/pages/organization/teams (or another prior screen) and dropping the action buttons /
+// grid rows to count 0, which makes a later row/toolbar click hang for 60s. If we've drifted, force the
+// hash back (bounce so the assignment fires `hashchange`) and wait for the grid to re-mount. (Mirrors
+// AddTasks.po.reanchorTasksScreen.)
+const reanchorTeamsTasks = async () => {
+	const page = getPage();
+	const onTeamTasks = await page
+		.evaluate(() => location.hash.split('?')[0] === '#/pages/tasks/team')
+		.catch(() => true);
+	if (onTeamTasks) return;
+	await page.evaluate(() => {
+		location.hash = '#/pages/dashboard';
+		location.hash = '#/pages/tasks/team';
+	});
+	await page.waitForTimeout(800);
+	await page
+		.locator(TeamsTasksPage.selectTableRowCss)
+		.first()
+		.waitFor({ state: 'visible', timeout: 20000 })
 		.catch(() => undefined);
 };
 
@@ -226,16 +268,44 @@ export const clickSaveTaskButton = async () => {
 	await dispatchClick(TeamsTasksPage.saveNewTaskButtonCss);
 };
 
-export const tasksTableVisible = async () => verifyElementIsVisible(TeamsTasksPage.selectTableRowCss);
+export const tasksTableVisible = async () => {
+	// Re-anchor first in case a queued history.back() drifted the SPA off the team-tasks route since the
+	// last step (then the grid + its rows would be absent and this would wrongly time out).
+	await reanchorTeamsTasks();
+	await verifyElementIsVisible(TeamsTasksPage.selectTableRowCss);
+};
 
 export const selectTasksTableRow = async (index: number) => {
 	// Row click TOGGLES selection (it enables the toolbar Edit/Duplicate/Delete). Let the grid finish
 	// loading/re-rendering after the preceding save/delete before clicking, otherwise the click can toggle
 	// a row that's about to be replaced. Settle, then click once. (Playbook pattern 4.)
+	await reanchorTeamsTasks();
 	await waitForSpinnerGone();
 	await getPage().waitForLoadState('networkidle').catch(() => undefined);
 	await getPage().waitForTimeout(1500);
 	await clickButtonByIndex(TeamsTasksPage.selectTableRowCss, index);
+};
+
+// Pollution-resilient row selection: the shared DB grid can hold team-task rows from earlier specs/runs,
+// so a bare index 0 selects the WRONG row. Pick THIS run's row by its unique title, then poll for an
+// ENABLED toolbar action to confirm the selection took. Clicking the same row twice toggles selection OFF,
+// so click once and only re-click if the action buttons are still disabled. (Round 5 anti-pollution;
+// mirrors AddTasks.po.selectTaskRowByName.)
+export const selectTaskRowByName = async (name: string) => {
+	const page = getPage();
+	await reanchorTeamsTasks();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => undefined);
+	await page.waitForTimeout(1500);
+	const row = page.locator(TeamsTasksPage.selectTableRowCss).filter({ hasText: name }).first();
+	await row.waitFor({ state: 'visible', timeout: 24000 });
+	const enabledAction = page.locator(TeamsTasksPage.enabledActionButtonCss);
+	await row.click({ force: true });
+	for (let i = 0; i < 6; i++) {
+		await page.waitForTimeout(700);
+		if (await enabledAction.count()) return;
+		await row.click({ force: true });
+	}
 };
 
 export const deleteTaskButtonVisible = async () => verifyElementIsVisible(TeamsTasksPage.deleteTaskButtonCss);
@@ -254,8 +324,17 @@ export const clickConfirmDeleteTaskButton = async () => {
 export const duplicateOrEditTaskButtonVisible = async () =>
 	verifyElementIsVisible(TeamsTasksPage.duplicateOrEditTaskButtonCss);
 
-export const clickDuplicateOrEditTaskButton = async (index: number) =>
-	clickButtonByIndex(TeamsTasksPage.duplicateOrEditTaskButtonCss, index);
+export const clickDuplicateOrEditTaskButton = async (index: number) => {
+	// Edit + Duplicate share `button.action.primary`; a bare nth(index) is ambiguous and brittle across the
+	// show/hide transition wrapper (60s hang risk). Resolve each unambiguously by its nb-icon and dispatch
+	// the click straight through any fading backdrop. The spec passes index 0 (the "duplicate" step, which
+	// only re-opens+saves the dialog) and index 1 (the "edit" step); both just need a task dialog to open,
+	// so map 0 -> Edit, 1 -> Duplicate. (Patterns 1 + 2; mirrors AddTasks.po.clickEditTaskAction/Duplicate.)
+	await waitForSpinnerGone();
+	await dispatchClick(
+		index === 0 ? TeamsTasksPage.editTaskButtonCss : TeamsTasksPage.duplicateTaskButtonCss
+	);
+};
 
 export const confirmDuplicateOrEditTaskButtonVisible = async () =>
 	verifyElementIsVisible(TeamsTasksPage.confirmDuplicateOrEditTaskButtonCss);
@@ -270,10 +349,17 @@ export const clickCardBody = async () => clickButton(TeamsTasksPage.cardBodyCss)
 
 export const waitMessageToHide = async () => waitElementToHide(TeamsTasksPage.toastrMessageCss);
 
-export const verifyTaskExists = async (text: string) => verifyText(TeamsTasksPage.verifyTextCss, text);
+export const verifyTaskExists = async (text: string) => {
+	// Re-anchor first: a queued history.back() can drift the SPA off the team-tasks route, where the grid
+	// (and the title text) is absent — the verify would then wrongly time out.
+	await reanchorTeamsTasks();
+	await verifyText(TeamsTasksPage.verifyTextCss, text);
+};
 
 // Scope the deleted-check to the SPECIFIC task title we removed rather than asserting the whole grid is
 // empty: intra-run pollution (a prior spec's leftover team task) can leave other rows, which would make a
 // bare toHaveCount(0) flake. verifyTextNotExisting filters by text then asserts zero matches. (Round 3.)
-export const verifyTaskIsDeleted = async (text: string) =>
-	verifyTextNotExisting(TeamsTasksPage.verifyTextCss, text);
+export const verifyTaskIsDeleted = async (text: string) => {
+	await reanchorTeamsTasks();
+	await verifyTextNotExisting(TeamsTasksPage.verifyTextCss, text);
+};

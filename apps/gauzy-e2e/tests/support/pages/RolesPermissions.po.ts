@@ -1,11 +1,5 @@
 import { expect } from '@playwright/test';
-import {
-	verifyElementIsVisible,
-	clickButton,
-	clickButtonByIndex,
-	verifyText,
-	clickElementByText
-} from '../util';
+import { verifyElementIsVisible, clickButton, verifyText } from '../util';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { RolesPermissionsPage } from '../../../src/support/Base/pageobjects/RolesPermissionsPageObject';
@@ -27,7 +21,15 @@ export const selectRoleFromDropdown = async (text: string) => {
 	// friendly label ("Super Admin") the pagedata supplies. Normalise label -> enum before matching:
 	// uppercase + spaces to underscores ("Super Admin" -> "SUPER_ADMIN", "Data Entry" -> "DATA_ENTRY").
 	const roleEnum = text.trim().toUpperCase().replace(/\s+/g, '_');
-	await clickElementByText(RolesPermissionsPage.dropdownOptionCss, roleEnum);
+	// EXACT-text match (not the substring filter clickElementByText uses): "ADMIN" is a substring of
+	// "SUPER_ADMIN", so a hasText:'ADMIN' filter matches BOTH options and .first() could pick the wrong
+	// one depending on the (order-dependent) roles list. Anchoring on the whole trimmed option text
+	// makes role selection order-independent and lets the ADMIN step use this helper instead of an index.
+	await getPage()
+		.locator(RolesPermissionsPage.dropdownOptionCss)
+		.filter({ hasText: new RegExp(`^\\s*${roleEnum}\\s*$`) })
+		.first()
+		.click({ force: true });
 };
 
 export const generalSettingsCardVisible = async () => {
@@ -36,10 +38,6 @@ export const generalSettingsCardVisible = async () => {
 
 export const verifyTextExist = async (text: string) => {
 	await verifyText(RolesPermissionsPage.textCss, text);
-};
-
-export const selectRoleByIndex = async (index: number) => {
-	await clickButtonByIndex(RolesPermissionsPage.dropdownOptionCss, index);
 };
 
 /**

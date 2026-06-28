@@ -30,11 +30,13 @@ test.describe('Invite candidate test', () => {
 		// .png|.jpg|.jpeg|.gif|.svg) marks the whole form invalid for an extension-less URL, and the
 		// <img> onerror handler (_setupLogoUrlValidation) sets {invalidUrl:true} if the URL can't load
 		// — either way candidate-mutation.addCandidate() silently skips the push (it only pushes when
-		// `this.form.valid`), so NO candidate is created and verifyCandidateExists fails. The default
-		// faker.image.avatar() randomly returns an extension-less GitHub avatar URL (~50% of runs),
-		// which is what made this spec flaky. personPortrait() always returns a real, loadable CDN
-		// image ending in `.jpg`, satisfying both the regex validator and the image-load check.
-		imgUrl = faker.image.personPortrait();
+		// `this.form.valid`), so NO candidate is created and verifyCandidateExists fails (this was the
+		// observed failure: grid shows "You have not created any candidates"). faker.image.personPortrait()
+		// returns a cdn.jsdelivr.net URL that the sandboxed e2e browser frequently cannot load, so its
+		// onerror fires and invalidates the form. Use the exact reliable placeholder the already-green
+		// shared addEmployee CustomCommand uses (dummyimage.com .png) so the image loads, the form is
+		// valid and the candidate is actually persisted.
+		imgUrl = 'https://dummyimage.com/200x200/cccccc/000000.png';
 
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 

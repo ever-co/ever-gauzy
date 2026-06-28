@@ -84,8 +84,14 @@ export const clickEmployeeDropdown = async (_index: number) => {
 	// default config (closeOnBackdropClick:true): a coordinate {force:true} click that lands on the fading
 	// cdk-overlay-backdrop (left by the just-closed tags ng-select panel) would CLOSE the whole dialog, so
 	// dispatch the click straight to the nb-select host instead — it opens on the click event and never
-	// touches the backdrop.
+	// touches the backdrop. The nb-select renders only after ga-employee-multi-select's @if (loaded) flips
+	// true (its working-employees load resolves), so wait for it to attach before dispatching.
 	await waitForSpinnerGone();
+	await getPage()
+		.locator(OrganizationTeamsPage.employeeMultiSelectCss)
+		.first()
+		.waitFor({ state: 'attached', timeout: 15000 })
+		.catch(() => undefined);
 	await dispatchClick(OrganizationTeamsPage.employeeMultiSelectCss);
 };
 
@@ -99,8 +105,14 @@ export const managerDropdownVisible = async () => {
 
 export const clickManagerDropdown = async (_index: number) => {
 	// Managers selector is a single nb-select (matched by its label text), so the index is ignored. Same
-	// reasoning as clickEmployeeDropdown: dispatch the click so a fading backdrop can't close the nb-dialog.
+	// reasoning as clickEmployeeDropdown: wait for the nb-select to attach (renders only after @if (loaded)),
+	// then dispatch the click so a fading backdrop can't close the nb-dialog.
 	await waitForSpinnerGone();
+	await getPage()
+		.locator(OrganizationTeamsPage.managerMultiSelectCss)
+		.first()
+		.waitFor({ state: 'attached', timeout: 15000 })
+		.catch(() => undefined);
 	await dispatchClick(OrganizationTeamsPage.managerMultiSelectCss);
 };
 

@@ -17,6 +17,7 @@ import {
 import { getPage } from '../page-context';
 // Selectors + data are framework-agnostic — reused from the Cypress tree during migration.
 import { TimesheetsPage } from '../../../src/support/Base/pageobjects/TimesheetsPageObject';
+import { TimesheetsPageData } from '../../../src/support/Base/pagedata/TimesheetsPageData';
 
 // ng-select (project/client/task/start-time) opens on MOUSEDOWN and a force-click on its control is
 // either swallowed by the fading dialog backdrop or closes the dialog. Open it via the keyboard:
@@ -24,14 +25,21 @@ import { TimesheetsPage } from '../../../src/support/Base/pageobjects/Timesheets
 // renders. See migration ROOT CAUSE #3.
 const openNgSelect = async (selector: string) => {
 	const input = getPage().locator(selector).locator('input').first();
-	await input.focus();
-	await getPage().keyboard.press('ArrowDown');
-	// Wait for at least one option to render in the body overlay.
-	await getPage()
-		.locator(TimesheetsPage.dropdownOptionCss)
-		.first()
-		.waitFor({ state: 'visible', timeout: 24_000 })
-		.catch(() => {});
+	const option = getPage().locator(TimesheetsPage.dropdownOptionCss).first();
+	// Retry the keyboard-open: a single focus+ArrowDown is occasionally a no-op when a fading dialog
+	// backdrop still owns focus (observed: the project ng-select never opened, so the 'Gauzy Web Site'
+	// option pick timed out at 60s). Re-focus + ArrowDown until an option renders (or give up after a
+	// few tries and let the caller's click time out with a clearer signal).
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await input.focus().catch(() => {});
+		await getPage().keyboard.press('ArrowDown').catch(() => {});
+		try {
+			await option.waitFor({ state: 'visible', timeout: 8_000 });
+			return; // panel open, options rendered
+		} catch {
+			// closed again / not yet loaded — retry the open
+		}
+	}
 };
 
 // The spec's bare `await getPage().goto('/#/pages/employees/timesheets/daily')` is issued right after
@@ -139,11 +147,40 @@ export const enterTimeLogDescriptionData = async (data: string) => {
 
 export const saveTimeLogButtonVisible = async () => verifyElementIsVisible(TimesheetsPage.saveTimeButtonCss);
 
-// Save sits behind the form's nb-spinner while the request is in flight; dispatchClick fires the
-// (submit)/(click) handler even if a fading overlay sits on top.
+// Unlike every other footer Save in this suite (AddTasks/TimeOff have an explicit (click)="onSave()"),
+// the edit-time-log dialog submits via the FORM's `(submit)="addTime()"` binding — its footer button
+// has NO (click) handler and is just an implicit type=submit. A synthetic dispatchEvent('click') (what
+// dispatchClick does) therefore does NOT perform native form submission, so the old dispatchClick left
+// the dialog open and never created a time log (observed: filled "Add Time Logs" dialog still up, grid
+// "No Data", the next step's row click then timed out). Trigger the real submit instead: call
+// requestSubmit() on the dialog's <form> (fires the (submit) handler regardless of any fading backdrop
+// and still gates on the disabled/spinner state), with a real-click fallback.
 export const clickSaveTimeLogButton = async () => {
 	await waitForSpinnerGone();
-	await dispatchClick(TimesheetsPage.saveTimeButtonCss);
+	const page = getPage();
+	const submitted = await page
+		.evaluate((btnSel) => {
+			try {
+				const btn = document.querySelector(btnSel) as HTMLButtonElement | null;
+				const form = btn?.closest('form') as HTMLFormElement | null;
+				if (!form) return false;
+				// requestSubmit() respects the submit button (its [disabled] gate) and dispatches the
+				// native 'submit' event that Angular's (submit)="addTime()" listens for.
+				if (typeof form.requestSubmit === 'function') {
+					form.requestSubmit(btn ?? undefined);
+				} else {
+					form.submit();
+				}
+				return true;
+			} catch {
+				return false;
+			}
+		}, TimesheetsPage.saveTimeButtonCss)
+		.catch(() => false);
+	if (!submitted) {
+		// Fallback: a real Playwright click performs the button's default action (native form submit).
+		await page.locator(TimesheetsPage.saveTimeButtonCss).first().click({ force: true });
+	}
 };
 
 export const closeAddTimeLogPopoverButtonVisible = async () =>
@@ -151,28 +188,48 @@ export const closeAddTimeLogPopoverButtonVisible = async () =>
 
 export const clickCloseAddTimeLogPopoverButton = async () => dispatchClick(TimesheetsPage.closeAddTimeLogPopoverCss);
 
-// Select the first time-log row so the toolbar View/Edit/Delete buttons become enabled. The row click
-// TOGGLES selection, so settle the grid first, click once, then poll the target toolbar button's
-// `disabled` attribute and only re-click if selection was lost (ROOT CAUSE #4).
-const selectFirstRowFor = async (toolbarBtnCss: string) => {
+// Returns true once the toolbar button is rendered AND not disabled (i.e. a row is currently selected
+// — the View/Edit/Delete buttons only exist in the DOM via `@if (selectedItem)` once a row is picked).
+const toolbarBtnReady = async (toolbarBtnCss: string): Promise<boolean> => {
+	const btn = getPage().locator(toolbarBtnCss).first();
+	if ((await btn.count()) === 0) return false;
+	if (!(await btn.isVisible().catch(() => false))) return false;
+	return (await btn.getAttribute('disabled').catch(() => null)) === null;
+};
+
+// Select the time-log row WE created so the toolbar View/Edit/Delete buttons become enabled. Two
+// gotchas drive this logic:
+//  1. POLLUTION: the grid is shared across the serial suite (other specs add time logs too), so target
+//     OUR row by its unique-to-this-step description rather than blindly row 0 (ROUND 5), with a
+//     first-row fallback.
+//  2. TOGGLE: userRowSelect() TOGGLES isSelected, and closing the VIEW dialog does NOT refresh the grid
+//     (its close passes null, which openView() filters out) — so the row stays selected going into the
+//     Edit step. Clicking an already-selected row would DESELECT it and the Edit button would vanish.
+//     Hence: only click the row when the toolbar button isn't already ready; never blindly re-click.
+const selectRowFor = async (toolbarBtnCss: string) => {
 	await waitForSpinnerGone();
 	await getPage().waitForLoadState('networkidle').catch(() => {});
 	await getPage().waitForTimeout(1500);
-	const row = getPage().locator(TimesheetsPage.timeLogRowCss).first();
-	const btn = getPage().locator(toolbarBtnCss).first();
+	// Already selected (e.g. left selected after the View dialog closed)? Don't toggle it off.
+	if (await toolbarBtnReady(toolbarBtnCss)) return;
+	const ours = getPage()
+		.locator(TimesheetsPage.timeLogRowCss)
+		.filter({ hasText: TimesheetsPageData.defaultDescription })
+		.first();
+	const row = (await ours.count()) > 0 ? ours : getPage().locator(TimesheetsPage.timeLogRowCss).first();
 	await row.click({ force: true });
 	for (let i = 0; i < 5; i++) {
-		const disabled = await btn.getAttribute('disabled').catch(() => null);
-		if (disabled === null) return; // enabled
+		if (await toolbarBtnReady(toolbarBtnCss)) return; // selected + enabled
 		await getPage().waitForTimeout(800);
-		if ((await btn.getAttribute('disabled').catch(() => null)) !== null) {
+		// Still not ready after settling — selection was lost; toggle it back on.
+		if (!(await toolbarBtnReady(toolbarBtnCss))) {
 			await row.click({ force: true });
 		}
 	}
 };
 
 export const viewEmployeeTimeLogButtonVisible = async () => {
-	await selectFirstRowFor(TimesheetsPage.viewEmployeeTimeCss);
+	await selectRowFor(TimesheetsPage.viewEmployeeTimeCss);
 	return verifyElementIsVisible(TimesheetsPage.viewEmployeeTimeCss);
 };
 
@@ -180,7 +237,7 @@ export const clickViewEmployeeTimeLogButton = async (_index: number) =>
 	dispatchClick(TimesheetsPage.viewEmployeeTimeCss);
 
 export const editEmployeeTimeLogButtonVisible = async () => {
-	await selectFirstRowFor(TimesheetsPage.editEmployeeTimeCss);
+	await selectRowFor(TimesheetsPage.editEmployeeTimeCss);
 	return verifyElementIsVisible(TimesheetsPage.editEmployeeTimeCss);
 };
 
@@ -188,7 +245,7 @@ export const clickEditEmployeeTimeLogButton = async (_index: number) =>
 	dispatchClick(TimesheetsPage.editEmployeeTimeCss);
 
 export const deleteEmployeeTimeLogButtonVisible = async () => {
-	await selectFirstRowFor(TimesheetsPage.deleteEmployeeTimeCss);
+	await selectRowFor(TimesheetsPage.deleteEmployeeTimeCss);
 	return verifyElementIsVisible(TimesheetsPage.deleteEmployeeTimeCss);
 };
 

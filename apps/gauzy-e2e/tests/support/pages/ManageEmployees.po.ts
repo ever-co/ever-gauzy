@@ -53,6 +53,10 @@ export const enterDateData = async () => {
 	await clearField(ManageEmployeesPage.dateInputCss);
 	const date = dayjs().format('MMM D, YYYY');
 	await enterInput(ManageEmployeesPage.dateInputCss, date);
+	// NOTE: the caller follows this with clickKeyboardButtonByKeyCode(9) (Tab), which blurs the
+	// [nbDatepicker] input and closes its calendar overlay before the next field is filled. We do NOT
+	// press Escape here — nb-dialog opens with closeOnEsc:true, so an Escape when no calendar is open
+	// would dismiss the whole invite/employee dialog.
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode) => {
@@ -216,6 +220,22 @@ export const enterImageDataUrl = async (url) => {
 	await enterInput(ManageEmployeesPage.imgInputCss, url);
 };
 
+// Re-fill the THREE controls that gate step-1 validity (firstName, email, password) right before we
+// advance. The basic-info form is [disabled]="userBasicInfo.form.invalid"; if any one of these didn't
+// register on its first fill (e.g. the password fill landed on the date-picker overlay, or an earlier
+// field's valueChanges re-rendered the input), the form stays invalid, add()'s addEmployee() skips the
+// push and createBulk([]) persists nothing — the empty grid at verifyEmployeeExists. Scope to the
+// dialog so we don't hit a leftover overlay with the same id (strict-mode), and fire input+blur on the
+// password so its ControlValueAccessor + reactive [formControl] both pick the value up.
+export const reEnterRequiredStep1Fields = async (firstName, email, password) => {
+	const dialog = getPage().locator('ga-employee-mutation').first();
+	await dialog.locator(ManageEmployeesPage.firstNameInputCss).first().fill(String(firstName)).catch(() => {});
+	await dialog.locator(ManageEmployeesPage.emailInputCss).first().fill(String(email)).catch(() => {});
+	const pwd = dialog.locator(ManageEmployeesPage.passwordInputCss).first();
+	await pwd.fill(String(password)).catch(() => {});
+	await pwd.blur().catch(() => {});
+};
+
 export const nextButtonVisible = async () => {
 	await verifyElementIsVisible(ManageEmployeesPage.nextButtonCss);
 };
@@ -234,7 +254,11 @@ export const clickNextButton = async () => {
 	await next
 		.waitFor({ state: 'visible', timeout: 8000 })
 		.catch(() => {});
-	for (let i = 0; i < 16; i++) {
+	// Poll until the form is valid (Next no longer disabled). The spec re-fills the required fields
+	// (reEnterRequiredStep1Fields) right before this, so validity should be reached quickly; only after
+	// it's genuinely enabled do we advance, so we never force-advance an invalid form into an empty
+	// createBulk([]).
+	for (let i = 0; i < 30; i++) {
 		if (!(await next.isDisabled().catch(() => true))) break;
 		await getPage().waitForTimeout(500);
 	}
@@ -279,6 +303,20 @@ export const searchEmployeeByName = async (name) => {
 	const filter = page.locator(ManageEmployeesPage.nameFilterInputCss).first();
 	await filter.fill(String(name)).catch(() => {});
 	// smart-table filtering is debounced + server-side; let the refetch land before selecting a row.
+	await page.waitForTimeout(2000);
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+};
+
+// Filter the invites grid by email so THIS spec's invite is the only/first data row (pollution-safe).
+// The invites grid accumulates earlier specs' invites on the shared serial DB, and the Copy/Resend
+// buttons only render for an INVITED-status row — a blind row-0 pick could land on a non-INVITED invite.
+export const searchInviteByEmail = async (email) => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	const filter = page.locator(ManageEmployeesPage.inviteEmailFilterInputCss).first();
+	await filter.fill(String(email)).catch(() => {});
 	await page.waitForTimeout(2000);
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
@@ -507,10 +545,18 @@ export const waitMessageToHide = async () => {
 };
 
 export const verifyEmployeeExists = async (text) => {
+	// Pollution-resilient: the suite shares ONE seeded DB and runs serially, so by the time this spec
+	// runs the org's grid can hold >10 employees from earlier specs and our just-created row may be on
+	// page 2. Filter the grid by the unique full name first so the matching row is forced onto page 1
+	// (server-side user.name filter) before asserting it's present.
+	await searchEmployeeByName(text);
 	await verifyText(ManageEmployeesPage.verifyEmployeeCss, text);
 };
 
 export const verifyEmployeeIsDeleted = async (text) => {
+	// Filter by the unique name first, then assert the grid holds NO row with it (count 0 of that
+	// name) — order-independent: a non-empty grid full of other specs' employees won't false-pass/fail.
+	await searchEmployeeByName(text);
 	await verifyTextNotExisting(ManageEmployeesPage.verifyEmployeeCss, text);
 };
 

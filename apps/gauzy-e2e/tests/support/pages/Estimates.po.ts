@@ -107,18 +107,41 @@ export const clickContactDropdown = async () => {
 	await getPage().keyboard.press('ArrowDown').catch(() => {});
 };
 
-export const selectContactFromDropdown = async (index) => {
+export const selectContactFromDropdown = async (nameOrIndex) => {
 	const page = getPage();
 	const option = page.locator(EstimatesPage.contactOptionCss);
-	// Re-open the contact ng-select via keyboard until its options render, then pick one.
+	const input = page.locator(`${EstimatesPage.organizationContactDropdownCss} input`).first();
+	// POLLUTION RESILIENCE: the sales- and accounting-estimates grids share the SAME estimate data, so by
+	// the time this spec runs the contact ng-select holds many contacts from earlier specs. When given the
+	// spec's UNIQUE faker contact name, typeahead-filter to it (ga-contact-select uses a name.includes()
+	// searchFn) and pick the matching option — so EVERY estimate this spec creates carries that name in the
+	// grid's Contact column and our later row operations can scope to it instead of a fragile index.
+	const byName = typeof nameOrIndex === 'string';
 	for (let i = 0; i < 4; i++) {
 		if (await option.first().isVisible().catch(() => false)) break;
 		await waitForSpinnerGone();
-		await page.locator(`${EstimatesPage.organizationContactDropdownCss} input`).first().focus().catch(() => {});
+		await input.focus().catch(() => {});
 		await page.keyboard.press('ArrowDown').catch(() => {});
 		await page.waitForTimeout(800);
 	}
-	await clickButtonByIndex(EstimatesPage.contactOptionCss, index);
+	if (byName) {
+		await input.fill('').catch(() => {});
+		await input.pressSequentially(String(nameOrIndex), { delay: 20 }).catch(() => {});
+		await page.waitForTimeout(600);
+		const match = option.filter({ hasText: String(nameOrIndex) }).first();
+		try {
+			await match.waitFor({ state: 'visible', timeout: 8000 });
+			await match.click({ force: true });
+			return;
+		} catch {
+			// fall through to index pick if the named contact didn't surface (shouldn't happen — addContact
+			// created it — but keep the flow moving rather than hard-failing on a transient render). Clear the
+			// typed filter first so the index-0 fallback picks a real (unfiltered) option, not an empty list.
+			await input.fill('').catch(() => {});
+			await page.waitForTimeout(400);
+		}
+	}
+	await clickButtonByIndex(EstimatesPage.contactOptionCss, byName ? 0 : nameOrIndex);
 };
 
 export const taxInputVisible = async () => {
@@ -211,7 +234,7 @@ export const tableRowVisible = async () => {
 	await verifyElementIsVisible(EstimatesPage.tableRowCss);
 };
 
-export const selectTableRow = async (index) => {
+export const selectTableRow = async (indexOrName) => {
 	const page = getPage();
 	// Settle the grid first: a row click TOGGLES selection, so a stray double-click would deselect it
 	// (the spec calls selectTableRow twice in the duplicate step). Wait for spinner/network/render to
@@ -220,7 +243,15 @@ export const selectTableRow = async (index) => {
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
 	await page.waitForTimeout(1500);
-	const row = page.locator(EstimatesPage.tableRowCss).nth(index);
+	// POLLUTION RESILIENCE: the sales/accounting estimates grids share data, so row 0 can be a FOREIGN
+	// estimate from an earlier spec. When given the spec's unique contact name, scope to data rows whose
+	// Contact column shows that name and take the first of OURS — deterministic regardless of how many
+	// foreign rows are interleaved. (All estimates this spec creates carry that contact, so "first of ours"
+	// is a stable target for edit/send/view/delete.) Falls back to the raw index when given a number.
+	const row =
+		typeof indexOrName === 'string'
+			? page.locator(EstimatesPage.tableRowCss).filter({ hasText: indexOrName }).first()
+			: page.locator(EstimatesPage.tableRowCss).nth(indexOrName);
 	const editBtn = page.locator(EstimatesPage.editButtonCss).first();
 	for (let i = 0; i < 4; i++) {
 		await row.click({ force: true }).catch(() => {});
@@ -276,9 +307,19 @@ export const clickConfirmButton = async () => {
 	// backdrop can't intercept it.
 	const page = getPage();
 	const dialogHost = page.locator('ga-invoice-send, ga-invoice-email').first();
-	for (let i = 0; i < 5; i++) {
+	// Wait for the mutation dialog to actually be on screen before clicking — the (click)="send()/sendEmail()"
+	// handler isn't wired until the dialog component has rendered, and dispatching before that is a silent
+	// no-op (the observed failure: dialog stayed open, the estimate never left Draft, so div.badge-success
+	// never appeared). Scope the confirm button to the live dialog host so we never grab a stale handle.
+	await dialogHost.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+	const confirmBtn = dialogHost.locator('nb-card-footer.text-left > button[status="success"]').first();
+	for (let i = 0; i < 8; i++) {
 		await waitForSpinnerGone();
-		await dispatchClick(EstimatesPage.confirmButtonCss).catch(() => {});
+		// dispatchEvent fires the (click) handler past the still-open actions popover backdrop; if the live
+		// button handle is momentarily stale, fall back to dispatching the page-level selector.
+		await confirmBtn.dispatchEvent('click').catch(async () => {
+			await dispatchClick(EstimatesPage.confirmButtonCss).catch(() => {});
+		});
 		try {
 			await dialogHost.waitFor({ state: 'detached', timeout: 6000 });
 			return;

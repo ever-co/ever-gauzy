@@ -63,6 +63,42 @@ export const gotoApprovals = async () => {
 	await page.waitForTimeout(500);
 };
 
+// Navigate DIRECTLY to the approval-policy page (/#/pages/organization/approval-policy) by hash, the same
+// hardened bounce-the-hash pattern as gotoApprovals. Step 1 previously reached the policy page indirectly —
+// gotoApprovals -> the approvals "Approval Policy" button (router.navigate) -> ... -> Back (location.back()) —
+// and a queued/overshooting history pop from that chain landed the next step back on Manage Employees (the
+// retry dump showed the step-1 nameInput assertion running while the DOM was still the employees grid). Going
+// straight to the policy route, then waiting for its "Approval Policy" header, removes that whole fragile
+// button+history dance so the Add we click here always opens the POLICY dialog on the POLICY screen.
+export const gotoApprovalPolicy = async () => {
+	const page = getPage();
+	await page.evaluate(() => {
+		if (location.hash.split('?')[0] === '#/pages/organization/approval-policy') {
+			location.hash = '#/pages/dashboard';
+		}
+	});
+	await page.goto('/#/pages/organization/approval-policy');
+	await page.evaluate(() => {
+		if (location.hash.split('?')[0] !== '#/pages/organization/approval-policy') {
+			location.hash = '#/pages/organization/approval-policy';
+		}
+	});
+	// Confirm the policy card is actually mounted before interacting: wait for its header ("Approval Policy",
+	// distinct from the approvals "Approval Request" and the employees "Manage Employees"), re-forcing the
+	// hash once if it hasn't rendered in time.
+	const header = page.locator('h4:has-text("Approval Policy")').first();
+	try {
+		await header.waitFor({ state: 'visible', timeout: 15000 });
+	} catch {
+		await page.evaluate(() => {
+			location.hash = '#/pages/dashboard';
+			location.hash = '#/pages/organization/approval-policy';
+		});
+		await header.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+	}
+	await page.waitForTimeout(500);
+};
+
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };
@@ -163,22 +199,43 @@ export const selectTableRowVisible = async () => {
 	await verifyElementIsVisible(ApprovalRequestPage.selectTableRowCss);
 };
 
-export const selectTableRow = async (index) => {
-	// Both callers (edit + delete steps) open with this helper. A queued history.back() from the earlier
-	// policy-page Back button can pop us onto Manage Employees AFTER the add-request step already passed
-	// on approvals (confirmed by the round-4 dump: the edit verify ran while the DOM was the employees
-	// grid). Re-assert we're on the approvals screen first — gotoApprovals waits for the "Approval Request"
-	// header so we never select a row on the wrong grid; the request rows persist server-side, so the
-	// freshly reloaded grid still contains our record.
+// Type a request's unique name into the grid's Name-column filter so the grid shows ONLY that record. The
+// approvals grid is shared+serial and uses a client-side LocalDataSource with pagination, so an unfiltered
+// "row 0" is whatever the accumulated rows from earlier specs/runs put first — NOT necessarily our request.
+// Filtering by the unique faker name makes the subsequent row-0 selection / verify-exists order-independent.
+export const searchRequestByName = async (name) => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => undefined);
+	const filter = page.locator(ApprovalRequestPage.nameFilterInputCss).first();
+	await filter.fill(String(name)).catch(() => undefined);
+	// smart-table filtering is debounced; let the grid re-render down to the single match before selecting.
+	await page.waitForTimeout(1500);
+	await waitForSpinnerGone();
+};
+
+export const selectTableRow = async (name) => {
+	// Both callers (edit + delete steps) open with this helper. A queued history.back() from an earlier
+	// navigation can pop us onto Manage Employees AFTER the add-request step already passed on approvals
+	// (confirmed by an earlier dump: the edit verify ran while the DOM was the employees grid). Re-assert
+	// we're on the approvals screen first — gotoApprovals waits for the "Approval Request" header so we
+	// never select a row on the wrong grid; the request rows persist server-side, so the freshly reloaded
+	// grid still contains our record.
 	await gotoApprovals();
+	// POLLUTION RESILIENCE: filter the grid to OUR uniquely-named request, then select by that name. The
+	// caller now passes the unique faker request name (not an index) so we never grab a leftover row from
+	// another spec/run. The filtered grid renders our record as the only data row.
+	await searchRequestByName(name);
 	// Row click TOGGLES selection and enables the toolbar Edit/Delete buttons. Settle the grid first, then
-	// click the row ONCE and poll the Edit button's real `disabled` attr; only re-click if selection was
-	// lost. A rapid re-click would toggle the row back off and leave the toolbar disabled (force-clicking a
-	// disabled Edit button is a no-op, so the next dialog never opens).
+	// click the matching row ONCE and poll the Edit button's real `disabled` attr; only re-click if
+	// selection was lost. A rapid re-click would toggle the row back off and leave the toolbar disabled
+	// (force-clicking a disabled Edit button is a no-op, so the next dialog never opens).
 	const page = getPage();
 	await page.waitForLoadState('networkidle').catch(() => undefined);
 	await page.waitForTimeout(1500);
-	const row = page.locator(ApprovalRequestPage.selectTableRowCss).nth(index);
+	// Scope the row to the unique name as a belt-and-braces over the filter (filter could fail to apply if
+	// the column class shifts): hasText still pins us to our record even on an unfiltered grid.
+	const row = page.locator(ApprovalRequestPage.selectTableRowCss).filter({ hasText: name }).first();
 	const editBtn = page.locator(ApprovalRequestPage.editApprovalRequestButtonCss).first();
 	await row.click({ force: true, timeout: 60_000 });
 	for (let i = 0; i < 10; i++) {
@@ -279,14 +336,32 @@ export const waitMessageToHide = async () => {
 };
 
 export const verifyApprovalPolicyExists = async (text) => {
+	// Filter the (server-side, paginated) policy grid to our uniquely-named policy first so it's guaranteed
+	// to render — an unfiltered page 1 may not include it once earlier specs/runs have created policies.
+	const page = getPage();
+	await waitForSpinnerGone();
+	const filter = page.locator(ApprovalRequestPage.policyNameFilterInputCss).first();
+	await filter.fill(String(text)).catch(() => undefined);
+	await page.waitForTimeout(1500); // server-side filter is debounced — let the refetch land
+	await waitForSpinnerGone();
 	await verifyText(ApprovalRequestPage.verifyApprovalPolicyCss, text);
 };
 
 export const verifyRequestExists = async (text) => {
+	// Re-filter the grid to THIS name before asserting. Two reasons: (1) pollution — the shared grid is
+	// paginated over a client-side LocalDataSource accumulating rows from earlier specs/runs, so an
+	// unfiltered tbody may not even render our row on page 1; (2) the edit step renames the request, which
+	// leaves the grid still filtered by the OLD name from selectTableRow — verifying the NEW name needs the
+	// filter reset to that new name. Filtering by the unique faker name shows exactly our (renamed) record.
+	await searchRequestByName(text);
 	await verifyText(ApprovalRequestPage.verifyRequestCss, text);
 };
 
 export const verifyElementIsDeleted = async (text: string) => {
+	// Re-filter to the (now-deleted) name first so the assertion is order-independent: after filtering, a
+	// genuinely deleted record yields zero matching rows (verifyTextNotExisting -> count 0 of that name),
+	// whereas a leftover same-named row from another spec/run would still be absent under OUR unique name.
+	await searchRequestByName(text);
 	await verifyTextNotExisting(ApprovalRequestPage.tableBodyCss, text);
 };
 

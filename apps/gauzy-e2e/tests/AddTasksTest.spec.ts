@@ -18,6 +18,11 @@ let username = ' ';
 let password = ' ';
 let employeeEmail = ' ';
 let imgUrl = ' ';
+// Unique per-run task titles. The suite shares ONE stateful DB and runs serially, so a STATIC
+// title can collide with rows left by an earlier run/spec; a faker suffix makes EVERY downstream
+// row-select / verify-exists / verify-deleted scope to THIS run's task only (order-independent).
+let taskTitle = ' ';
+let editedTaskTitle = ' ';
 
 test.describe('Add tasks test', () => {
 	test('Add tasks test', async () => {
@@ -27,6 +32,8 @@ test.describe('Add tasks test', () => {
 		password = faker.internet.password();
 		employeeEmail = faker.internet.exampleEmail();
 		imgUrl = faker.image.avatar();
+		taskTitle = `${AddTasksPageData.defaultTaskTitle} ${faker.string.uuid()}`;
+		editedTaskTitle = `${AddTasksPageData.editTaskTitle} ${faker.string.uuid()}`;
 
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 
@@ -59,7 +66,7 @@ test.describe('Add tasks test', () => {
 			await addTaskPage.selectEmployeeDropdownOption(0);
 			await addTaskPage.clickKeyboardButtonByKeyCode(9);
 			await addTaskPage.addTitleInputVisible();
-			await addTaskPage.enterTitleInputData(AddTasksPageData.defaultTaskTitle);
+			await addTaskPage.enterTitleInputData(taskTitle);
 			await addTaskPage.dueDateInputVisible();
 			await addTaskPage.enterDueDateData();
 			await addTaskPage.clickKeyboardButtonByKeyCode(9);
@@ -74,29 +81,32 @@ test.describe('Add tasks test', () => {
 			await addTaskPage.saveTaskButtonVisible();
 			await addTaskPage.clickSaveTaskButton();
 			await addTaskPage.waitMessageToHide();
-			await addTaskPage.verifyTaskExists(AddTasksPageData.defaultTaskTitle);
+			await addTaskPage.verifyTaskExists(taskTitle);
 		});
 
 		await test.step('Should be able to duplicate task', async () => {
 			await addTaskPage.tasksTableVisible();
-			await addTaskPage.selectTasksTableRow(0);
+			// Select THIS run's task by its unique title (not row 0 — the grid may hold rows from
+			// earlier specs/runs), then click the Duplicate toolbar action and confirm Save in the
+			// dialog. A second row with the same title now exists.
+			await addTaskPage.selectTaskRowByName(taskTitle);
 			await addTaskPage.duplicateTaskButtonVisible();
-			await addTaskPage.clickDuplicateTaskButton(0);
+			await addTaskPage.clickDuplicateTaskAction();
 			await addTaskPage.confirmDuplicateTaskButtonVisible();
 			await addTaskPage.clickConfirmDuplicateTaskButton();
+			await addTaskPage.waitMessageToHide();
+			await addTaskPage.verifyTaskExists(taskTitle);
 		});
 
 		await test.step('Should be able to edit task', async () => {
-			await addTaskPage.waitMessageToHide();
 			await addTaskPage.tasksTableVisible();
-			await addTaskPage.selectTasksTableRow(0);
-			await addTaskPage.duplicateTaskButtonVisible();
-			await addTaskPage.clickDuplicateTaskButton(1);
-			await addTaskPage.selectProjectDropdownVisible();
-			await addTaskPage.clickSelectProjectDropdown();
-			await addTaskPage.selectProjectOptionDropdown(AddTasksPageData.defaultTaskProject);
+			// Edit one of THIS run's rows: select by unique title, open Edit, rename to the unique
+			// edited title, re-save.
+			await addTaskPage.selectTaskRowByName(taskTitle);
+			await addTaskPage.editTaskButtonVisible();
+			await addTaskPage.clickEditTaskAction();
 			await addTaskPage.addTitleInputVisible();
-			await addTaskPage.enterTitleInputData(AddTasksPageData.editTaskTitle);
+			await addTaskPage.enterTitleInputData(editedTaskTitle);
 			await addTaskPage.dueDateInputVisible();
 			await addTaskPage.enterDueDateData();
 			await addTaskPage.clickKeyboardButtonByKeyCode(9);
@@ -111,23 +121,21 @@ test.describe('Add tasks test', () => {
 			await addTaskPage.saveTaskButtonVisible();
 			await addTaskPage.clickSaveTaskButton();
 			await addTaskPage.waitMessageToHide();
-			await addTaskPage.verifyTaskExists(AddTasksPageData.editTaskTitle);
+			await addTaskPage.verifyTaskExists(editedTaskTitle);
 		});
 
 		await test.step('Should be able to delete task', async () => {
-			await addTaskPage.selectTasksTableRow(0);
-			await addTaskPage.duplicateTaskButtonVisible();
-			await addTaskPage.clickDuplicateTaskButton(1);
-			await addTaskPage.confirmDuplicateTaskButtonVisible();
-			await addTaskPage.clickConfirmDuplicateTaskButton();
-			await addTaskPage.selectTasksTableRow(0);
+			await addTaskPage.tasksTableVisible();
+			// Delete the edited row (unique title), confirm, then assert that exact title is gone.
+			await addTaskPage.selectTaskRowByName(editedTaskTitle);
 			await addTaskPage.deleteTaskButtonVisible();
 			await addTaskPage.clickDeleteTaskButton();
 			await addTaskPage.confirmDeleteTaskButtonVisible();
 			await addTaskPage.clickConfirmDeleteTaskButton();
 			await addTaskPage.waitMessageToHide();
-			await addTaskPage.verifyElementIsDeleted(AddTasksPageData.editTaskTitle);
-			await addTaskPage.selectTasksTableRow(0);
+			await addTaskPage.verifyElementIsDeleted(editedTaskTitle);
+			// Clean up the remaining duplicate row (still carries the original unique title).
+			await addTaskPage.selectTaskRowByName(taskTitle);
 			await addTaskPage.deleteTaskButtonVisible();
 			await addTaskPage.clickDeleteTaskButton();
 			await addTaskPage.confirmDeleteTaskButtonVisible();

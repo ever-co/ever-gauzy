@@ -25,6 +25,11 @@ import * as rolesPermissionsPage from './support/pages/RolesPermissions.po';
 
 const EXPECTED: Record<string, { general: number[]; admin: number[] }> = {
 	SUPER_ADMIN: {
+		// general[141] = ACCESS_DELETE_ACCOUNT: checked. The backend e2e API seeds with demo=false, so
+		// every permission row IS created with enabled = DEFAULT_ROLE_PERMISSIONS[SUPER_ADMIN].includes(perm)
+		// (role-permission.seed.ts); SUPER_ADMIN's defaults include ACCESS_DELETE_ACCOUNT, and the GENERAL
+		// card is NOT DEMO-filtered (only ADMINISTRATION is, via getAdministrationPermissions) — so this
+		// toggle renders checked (was wrongly 0 on the assumption the row stayed unseeded in DEMO).
 		general: [
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -33,7 +38,7 @@ const EXPECTED: Record<string, { general: number[]; admin: number[] }> = {
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 		],
 		admin: [
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -41,6 +46,9 @@ const EXPECTED: Record<string, { general: number[]; admin: number[] }> = {
 		]
 	},
 	ADMIN: {
+		// general[141] = ACCESS_DELETE_ACCOUNT: checked — same rationale as SUPER_ADMIN; ADMIN's
+		// DEFAULT_ROLE_PERMISSIONS also include ACCESS_DELETE_ACCOUNT and it is rendered in the un-filtered
+		// GENERAL card.
 		general: [
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -49,7 +57,7 @@ const EXPECTED: Record<string, { general: number[]; admin: number[] }> = {
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 		],
 		admin: [
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -81,7 +89,7 @@ const EXPECTED: Record<string, { general: number[]; admin: number[] }> = {
 			1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1,
 			0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1,
-			1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 		],
 		admin: [
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -177,7 +185,9 @@ test.describe('Roles and permissions test', () => {
 		await test.step('Admin roles and permissions', async () => {
 			await rolesPermissionsPage.clickRolesDropdown();
 			await rolesPermissionsPage.rolesDropdownOptionVisible();
-			await rolesPermissionsPage.selectRoleByIndex(1);
+			// Order-independent exact match (selectRoleFromDropdown anchors the whole option text), so
+			// "ADMIN" no longer collides with "SUPER_ADMIN" and we don't rely on the roles list ordering.
+			await rolesPermissionsPage.selectRoleFromDropdown(RolesPermissionsPageData.admin);
 			await verifyRoleState('ADMIN');
 		});
 

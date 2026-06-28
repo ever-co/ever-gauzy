@@ -9,6 +9,7 @@ import {
 	waitElementToHide,
 	verifyText,
 	verifyElementNotExist,
+	verifyTextNotExisting,
 	dispatchClick,
 	waitForSpinnerGone
 } from '../util';
@@ -250,6 +251,19 @@ export const addPolicyButtonVisible = async () => {
 };
 
 export const clickAddPolicyButton = async () => {
+	// ROOT CAUSE (this round): the policy Add dialog threw "Cannot destructure property 'id' of
+	// 'this.selectedOrganization' as it is undefined" on every Save attempt — no POST, dialog stayed open,
+	// grid empty (confirmed via trace pageError). UNLIKE the equipment / sharing-request mutations (which
+	// read the org straight from the Store), EquipmentSharingPolicyMutationComponent.saveEquipmentSharingPolicy()
+	// uses the @Input() selectedOrganization captured AT DIALOG-OPEN from the PARENT page component. The parent
+	// populates that field from store.selectedOrganization$ behind a debounceTime(300), so when this step opens
+	// the dialog immediately after navigating to the policy page, the parent's org is still undefined and the
+	// dialog captures undefined for its whole lifetime (re-clicking Save can't recover it — the value is bound
+	// once at open). Settle here so the parent's debounced org subscription has fired BEFORE we open the dialog.
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => undefined);
+	await page.waitForTimeout(2000); // > debounceTime(300) + store emit, so the parent's selectedOrganization is set
 	await dispatchClick(OrganizationEquipmentPage.addButtonCss);
 };
 
@@ -406,17 +420,23 @@ export const tableRowVisible = async () => {
 	await verifyElementIsVisible(OrganizationEquipmentPage.selectTableRowCss);
 };
 
-export const selectTableRow = async (index: number) => {
+export const selectTableRow = async (name: string) => {
+	// POLLUTION RESILIENCE (Round 5 #1): the suite runs serially on ONE shared DB, so by the time this spec
+	// runs the equipment / request / policy grids have ACCUMULATED rows from earlier specs and failed/retried
+	// runs. A blind .nth(0) select would grab the WRONG record. The caller now passes OUR unique faker name;
+	// filter the grid to that row and select it by name (mirrors the proven ApprovalRequest.po selectTableRow).
+	//
 	// Row selection TOGGLES; rapid re-clicks deselect. Let the grid settle (reload after the prior
-	// save/navigation), click the data row ONCE, then poll the Edit button's real `disabled` attr and
+	// save/navigation), click the matching row ONCE, then poll the Edit button's real `disabled` attr and
 	// only re-click if selection was lost. Never rapid re-click.
 	const page = getPage();
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
 	await page.waitForTimeout(1500);
-	const row = page.locator(OrganizationEquipmentPage.selectTableRowCss).nth(index);
+	const row = page.locator(OrganizationEquipmentPage.selectTableRowCss).filter({ hasText: name }).first();
+	await row.waitFor({ state: 'visible', timeout: 24000 });
 	const editBtn = page.locator(OrganizationEquipmentPage.editEquipmentButtonCss).first();
-	for (let attempt = 0; attempt < 3; attempt++) {
+	for (let attempt = 0; attempt < 6; attempt++) {
 		await row.click({ force: true });
 		try {
 			await editBtn.waitFor({ state: 'visible', timeout: 4000 });
@@ -462,24 +482,31 @@ export const verifyPolicyExists = async (text: string) => {
 	await verifyText(OrganizationEquipmentPage.verifyPolicyCss, text);
 };
 
-export const verifyPolicyIsDeleted = async () => {
-	await verifyElementNotExist(OrganizationEquipmentPage.verifyPolicyCss);
+export const verifyPolicyIsDeleted = async (text: string) => {
+	// POLLUTION RESILIENCE: assert OUR uniquely-named policy row is gone (count 0 of that name) rather than
+	// the whole grid being empty — the shared grid may still hold rows from other specs/runs.
+	await verifyTextNotExisting(OrganizationEquipmentPage.verifyPolicyCss, text);
 };
 
 export const verifySharingExists = async (text: string) => {
 	await verifyText(OrganizationEquipmentPage.verifySharingCss, text);
 };
 
-export const verifySharingIsDeleted = async () => {
-	await verifyElementNotExist(OrganizationEquipmentPage.verifySharingCss);
+export const verifySharingIsDeleted = async (text: string) => {
+	// POLLUTION RESILIENCE: assert OUR uniquely-named request row is gone (count 0 of that name) rather than
+	// the whole table being absent — the shared grid may still hold rows from other specs/runs.
+	await verifyTextNotExisting(OrganizationEquipmentPage.selectTableRowCss, text);
 };
 
 export const verifyEquipmentExists = async (text: string) => {
 	await verifyText(OrganizationEquipmentPage.verifyEquipmentCss, text);
 };
 
-export const verifyEquipmentIsDeleted = async () => {
-	await verifyElementNotExist(OrganizationEquipmentPage.verifyEquipmentCss);
+export const verifyEquipmentIsDeleted = async (text: string) => {
+	// This is the "delete equipment request" step (it runs on the equipment-SHARING request grid, whose rows
+	// are tr.angular2-smart-row — NOT the equipment grid's ga-picture-name-tags). POLLUTION RESILIENCE: assert
+	// OUR uniquely-named request row is gone (count 0 of that name), not that the grid is empty.
+	await verifyTextNotExisting(OrganizationEquipmentPage.selectTableRowCss, text);
 };
 
 export const waitSpinnerToDisappear = async () => {

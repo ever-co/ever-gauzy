@@ -60,9 +60,19 @@ const dismissLeftoverDialog = async () => {
 // wait for the Tasks screen to actually render before interacting. (Playbook pattern 8.)
 export const navigateToTasksDashboard = async () => {
 	const page = getPage();
+	// goto() to a hash-only-different URL leaves location.hash ALREADY set to the target, so the usual
+	// `if (!hash.includes(target)) location.hash = target` guard skips and NEVER fires a `hashchange` —
+	// the Angular hash-router never re-renders and the previous screen (employees, after addEmployee)
+	// stays mounted. Bounce the hash through the dashboard FIRST so the assignment to the tasks hash is a
+	// genuine change that fires `hashchange`. Mirrors ApprovalRequest.po.gotoApprovals. (Playbook #8.)
+	await page.evaluate(() => {
+		if (location.hash.split('?')[0] === '#/pages/tasks/dashboard') {
+			location.hash = '#/pages/dashboard';
+		}
+	});
 	await page.goto('/#/pages/tasks/dashboard');
 	await page.evaluate(() => {
-		if (!location.hash.includes('/pages/tasks/dashboard')) {
+		if (location.hash.split('?')[0] !== '#/pages/tasks/dashboard') {
 			location.hash = '#/pages/tasks/dashboard';
 		}
 	});
@@ -73,6 +83,29 @@ export const navigateToTasksDashboard = async () => {
 		.locator(AddTaskPage.addTaskButtonCss)
 		.first()
 		.waitFor({ state: 'visible', timeout: 30000 })
+		.catch(() => undefined);
+};
+
+// Re-anchor on the Tasks dashboard before any toolbar/grid interaction. A late/queued history.back()
+// (left by an nb-dialog/datepicker overlay closing) can pop the SPA OFF the tasks route SEVERAL steps
+// later — landing on /#/pages/employees and dropping the toolbar action buttons to count 0, which is
+// exactly what made `button.action.primary nth(1)` hang for 60s in the round-4 dump. If we've drifted,
+// force the hash back (bounce so the assignment fires `hashchange`) and wait for the grid to re-mount.
+const reanchorTasksScreen = async () => {
+	const page = getPage();
+	const onTasks = await page
+		.evaluate(() => location.hash.split('?')[0] === '#/pages/tasks/dashboard')
+		.catch(() => true);
+	if (onTasks) return;
+	await page.evaluate(() => {
+		location.hash = '#/pages/dashboard';
+		location.hash = '#/pages/tasks/dashboard';
+	});
+	await page.waitForTimeout(800);
+	await page
+		.locator(AddTaskPage.selectTableRowCss)
+		.first()
+		.waitFor({ state: 'visible', timeout: 20000 })
 		.catch(() => undefined);
 };
 
@@ -248,6 +281,8 @@ export const clickSaveTaskButton = async () => {
 };
 
 export const tasksTableVisible = async () => {
+	// Re-anchor in case a queued history.back() drifted us off the tasks route since the last step.
+	await reanchorTasksScreen();
 	await verifyElementIsVisible(AddTaskPage.selectTableRowCss);
 };
 
@@ -259,6 +294,28 @@ export const selectTasksTableRow = async (index) => {
 	await getPage().waitForLoadState('networkidle').catch(() => {});
 	await getPage().waitForTimeout(1500);
 	await clickButtonByIndex(AddTaskPage.selectTableRowCss, index);
+};
+
+// Pollution-resilient row selection: pick THIS run's task row by its unique title (the grid can hold
+// rows from earlier specs/runs, so an index is wrong), then poll for an ENABLED toolbar action to
+// confirm the selection took. Clicking the same row twice toggles selection OFF, so we click once and
+// only re-click if the action buttons are still disabled. Mirrors the proven Income.po.selectTableRow.
+export const selectTaskRowByName = async (name) => {
+	const page = getPage();
+	// Guard the back-nav drift first, then let the grid settle after the preceding save/delete refresh.
+	await reanchorTasksScreen();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(AddTaskPage.selectTableRowCss).filter({ hasText: name }).first();
+	await row.waitFor({ state: 'visible', timeout: 24000 });
+	const enabledAction = page.locator(AddTaskPage.enabledActionButtonCss);
+	await row.click({ force: true });
+	for (let i = 0; i < 6; i++) {
+		await page.waitForTimeout(700);
+		if (await enabledAction.count()) return;
+		await row.click({ force: true });
+	}
 };
 
 export const selectFirstTaskTableRow = async (index) => {
@@ -291,6 +348,14 @@ export const clickDuplicateTaskButton = async (index) => {
 	await clickButtonByIndex(AddTaskPage.duplicateTaskButtonCss, index);
 };
 
+// Click the Duplicate toolbar action unambiguously by its copy-outline icon (Edit shares the
+// `action primary` classes). dispatchClick fires the (click) handler straight through any fading
+// backdrop, and waitForSpinnerGone absorbs the post-row-select grid spinner. (Patterns 1 + 2.)
+export const clickDuplicateTaskAction = async () => {
+	await waitForSpinnerGone();
+	await dispatchClick(AddTaskPage.duplicateTaskButtonCss);
+};
+
 export const confirmDuplicateTaskButtonVisible = async () => {
 	await verifyElementIsVisible(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
@@ -310,6 +375,13 @@ export const clickEditTaskButton = async (index) => {
 	await clickButtonByIndex(AddTaskPage.editTaskButtonCss, index);
 };
 
+// Click the Edit toolbar action unambiguously by its edit-outline icon (Duplicate shares the
+// `action primary` classes). dispatchClick fires through any fading backdrop. (Patterns 1 + 2.)
+export const clickEditTaskAction = async () => {
+	await waitForSpinnerGone();
+	await dispatchClick(AddTaskPage.editTaskButtonCss);
+};
+
 export const confirmEditTaskButtonVisible = async () => {
 	await verifyElementIsVisible(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
@@ -323,10 +395,14 @@ export const waitMessageToHide = async () => {
 };
 
 export const verifyTaskExists = async (text) => {
+	// Re-anchor first: a queued history.back() can drift the SPA to /#/pages/employees, where the tasks
+	// grid (and the title text) is absent — the verify would then wrongly time out. (See reanchor note.)
+	await reanchorTasksScreen();
 	await verifyText(AddTaskPage.verifyTextCss, text);
 };
 
 export const verifyElementIsDeleted = async (text) => {
+	await reanchorTasksScreen();
 	await verifyTextNotExisting(AddTaskPage.verifyTextCss, text);
 };
 

@@ -20,6 +20,23 @@ export const clickGridButton = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
+// Filter the users grid by Full Name so the just-added user is the only data row on page 1. The shared
+// serial DB accumulates users from earlier specs (seed admin + faker employees from addEmployee), so the
+// grid paginates and a freshly-added user can land on page 2 — invisible to a filter-by-text verify or a
+// row click. Typing the unique name into the smart-table Full Name filter narrows the grid to that record.
+// Mirrors the proven ManageEmployees.searchEmployeeByName pattern.
+export const filterByName = async (name: string) => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	const filter = page.locator(RemoveUserPage.nameFilterInputCss).first();
+	await filter.fill(String(name)).catch(() => {});
+	// smart-table filtering is debounced; let the grid re-render before verifying/selecting.
+	await page.waitForTimeout(2000);
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+};
+
 export const tableBodyExists = async () => {
 	await verifyElementIsVisibleByIndex(RemoveUserPage.selectTableRowCss, 0);
 };

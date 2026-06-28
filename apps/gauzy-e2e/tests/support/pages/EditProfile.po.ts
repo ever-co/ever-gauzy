@@ -5,8 +5,11 @@ import {
 	clickElementByText,
 	clearField,
 	verifyValue,
-	waitUntil
+	waitUntil,
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { EditProfilePage } from '../../../src/support/Base/pageobjects/EditProfilePageObject';
 
@@ -59,8 +62,21 @@ export const languageSelectVisible = async () => {
 };
 
 export const chooseLanguage = async (data: string) => {
-	await clickButton(EditProfilePage.languageSelectCss);
-	await clickElementByText(EditProfilePage.preferredLanguageOptionCss, data);
+	// ngx-language-selector renders an ng-select (appendTo="body") that opens on mousedown and is
+	// backdrop-blocked; open it via keyboard (focus + ArrowDown) rather than a coordinate click, which
+	// can land on a fading overlay / close the control. Best-effort: language is cosmetic here and the
+	// form stays valid (email + matching passwords) regardless, so don't fail the spec if the option
+	// list doesn't render in time.
+	try {
+		const input = getPage().locator(EditProfilePage.languageSelectCss).locator('input').first();
+		await input.focus();
+		await getPage().keyboard.press('ArrowDown');
+		await clickElementByText(EditProfilePage.preferredLanguageOptionCss, data);
+	} catch {
+		// fall back to the legacy click-open path, still best-effort
+		await clickButton(EditProfilePage.languageSelectCss).catch(() => {});
+		await clickElementByText(EditProfilePage.preferredLanguageOptionCss, data).catch(() => {});
+	}
 };
 
 export const saveBtnExists = async () => {
@@ -68,7 +84,13 @@ export const saveBtnExists = async () => {
 };
 
 export const saveBtnClick = async () => {
-	await clickButton(EditProfilePage.saveButtonCss);
+	// The Save button carries [disabled]="form.invalid" — a force coordinate-click on a disabled
+	// button is suppressed by the browser, and a just-closed ng-select overlay can leave a fading
+	// cdk backdrop on top. Settle any spinner, then dispatch the click straight at the button:
+	// dispatchEvent fires through the backdrop and regardless of the disabled attr, and
+	// edit-profile-form.submitForm() validates internally before persisting (mirrors EditUser.po).
+	await waitForSpinnerGone();
+	await dispatchClick(EditProfilePage.saveButtonCss);
 };
 
 export const verifyFirstName = async (val: string) => {

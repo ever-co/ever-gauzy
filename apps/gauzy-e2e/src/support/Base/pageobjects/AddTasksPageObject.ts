@@ -3,9 +3,16 @@ export const AddTaskPage = {
 	addTaskButtonCss: 'button[status="success"]',
 	selectProjectDropdownCss: 'ga-project-selector ng-select',
 	selectProjectDropdownOptionCss: '.ng-dropdown-panel .ng-option',
-	editTaskButtonCss: 'button.action.primary',
-	duplicateTaskButtonCss: 'button.action.primary',
-	deleteTaskButtonCss: 'button:has(nb-icon[icon="trash-2-outline"])',
+	// Edit and Duplicate are BOTH rendered as `button.action.primary` in the tasks toolbar, so a bare
+	// index (nth 0/1) is ambiguous and brittle across grid re-renders + the show/hide transition
+	// wrapper (the cause of the round-4 `button.action.primary nth(1)` 60s hang). Disambiguate by the
+	// button's own nb-icon: edit-outline vs copy-outline. (task.component.html #actionButtons)
+	editTaskButtonCss: 'button.action.primary:has(nb-icon[icon="edit-outline"])',
+	duplicateTaskButtonCss: 'button.action.primary:has(nb-icon[icon="copy-outline"])',
+	// Only an action button matching one of THESE is "enabled" (Nebular adds .btn-disabled when the
+	// host [disabled] is set, i.e. no row selected). Used to poll selection state after a row click.
+	enabledActionButtonCss: 'div.actions-container button.action.primary:not(.btn-disabled)',
+	deleteTaskButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	selectTableFirstRowCss: 'tr.angular2-smart-row.selected',
 	tagsSelectCss: '#addTags',

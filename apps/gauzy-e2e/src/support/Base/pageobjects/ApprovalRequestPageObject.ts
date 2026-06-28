@@ -27,5 +27,17 @@ export const ApprovalRequestPage = {
 	approvalStatusCss: 'table > tbody > tr.angular2-smart-row',
 	searchByNameInputCss: 'input[placeholder="Name"]',
 	rowCss: 'table > tbody > tr.angular2-smart-row',
-	tableBodyCss: 'table > tbody'
+	tableBodyCss: 'table > tbody',
+	// Name-column filter input in the smart-table header (tr.angular2-smart-filters). The approvals grid
+	// is shared/serial and accumulates rows from earlier specs + earlier runs, so typing the request's
+	// unique faker name filters the grid down to just OUR record — making row selection / verify-exists /
+	// verify-deleted order-independent (mirrors ManageEmployees' th.angular2-smart-th.fullName filter).
+	nameFilterInputCss: 'th.angular2-smart-th.name input',
+	// Approval-POLICY page Name-column filter (server-side ga-input-filter-selector, placeholder = column
+	// title "Name"). The policy grid is paginated server-side, so filtering by the unique policy name
+	// guarantees our just-created policy renders even if earlier specs/runs left many policies.
+	policyNameFilterInputCss: 'ga-input-filter-selector input[placeholder="Name"]',
+	// Approval-policy page "Add" button (button[status="success"], (click)="add()"). On the approval-policy
+	// page the toolbar renders just this one success button, so it's unambiguous after a direct hash nav.
+	addPolicyButtonCss: 'button[status="success"]'
 };

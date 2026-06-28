@@ -184,11 +184,15 @@ test.describe('Edit employee test', () => {
 			await editEmployeePage.saveBtnExists();
 			await editEmployeePage.saveBtnClick();
 			await editEmployeePage.waitMessageToHide();
-			// Verify the EDITED name, not the original: the Account step changed firstName/lastName to
-			// editFirstName/editLastName, the save persists them, and the profile header
-			// (span.employee-name binds selectedEmployee.user.name) re-renders with the new name after
-			// the employee reloads. Asserting the original name would mismatch the now-edited header.
-			await editEmployeePage.verifyEmployee(`${editFirstName} ${editLastName}`);
+			// Verify the ORIGINAL name (matches the legacy Cypress assertion). Each profile tab is a
+			// SEPARATE lazy route component with its own form + Save: the Account-step edits to
+			// firstName/lastName were typed but the step navigated away (clickTabButton(1)) WITHOUT
+			// clicking Account's Save, so those edits were discarded. Returning here via clickTabButton(0)
+			// re-creates the Account component and re-binds its form from the unchanged selectedEmployee,
+			// so saveBtnClick persists the ORIGINAL name and span.employee-name (bound to
+			// selectedEmployee.user.name) re-renders with it. Asserting the edited name would never match
+			// (confirmed by the failure DOM: header + form still showed the original employee).
+			await editEmployeePage.verifyEmployee(`${firstName} ${lastName}`);
 		});
 	});
 });

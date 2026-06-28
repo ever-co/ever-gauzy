@@ -1,4 +1,5 @@
 import { test } from './support/fixtures';
+import { faker } from '@faker-js/faker';
 import { getPage } from './support/page-context';
 import * as loginPage from './support/pages/Login.po';
 import { LoginPageData } from '../src/support/Base/pagedata/LoginPageData';
@@ -9,6 +10,12 @@ import { CustomCommands } from './support/commands';
 
 test.describe('Goals test', () => {
 	test('Goals test', async () => {
+		// POLLUTION RESILIENCE: the suite shares ONE stateful DB and runs serially, so the static
+		// GoalsPageData.name can collide with objectives left by an earlier spec/run. A faker suffix makes
+		// THIS run's objective unique, and every downstream select-row / verify-exists / verify-deleted is
+		// scoped to it (order-independent).
+		const goalName = `${GoalsPageData.name} ${faker.string.uuid()}`;
+
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 
 		await test.step('Should be able to add new goal', async () => {
@@ -24,7 +31,7 @@ test.describe('Goals test', () => {
 			await goalsPage.clickAddButton(0);
 			await goalsPage.selectOptionFromDropdown(0);
 			await goalsPage.nameInputVisible();
-			await goalsPage.enterNameInputData(GoalsPageData.name);
+			await goalsPage.enterNameInputData(goalName);
 			await goalsPage.ownerDropdownVisible();
 			await goalsPage.clickOwnerDropdown();
 			await goalsPage.selectOwnerFromDropdown(GoalsPageData.owner);
@@ -39,14 +46,14 @@ test.describe('Goals test', () => {
 			await goalsPage.confirmButtonVisible();
 			await goalsPage.clickConfirmButton();
 			await goalsPage.waitMessageToHide();
-			await goalsPage.verifyGoalExists(GoalsPageData.name);
+			await goalsPage.verifyGoalExists(goalName);
 		});
 
 		await test.step('Should be able to add key result', async () => {
 			await goalsPage.tableRowVisible();
-			await goalsPage.clickTableRow(0);
+			await goalsPage.clickTableRow(0, goalName);
 			await goalsPage.addButtonVisible();
-			await goalsPage.clickAddButton(1);
+			await goalsPage.clickAddButton(1, goalName);
 			await goalsPage.keyResultInputVisible();
 			await goalsPage.enterKeyResultNameData(GoalsPageData.keyResultName);
 			await goalsPage.keyResultOwnerDropdownVisible();
@@ -67,9 +74,9 @@ test.describe('Goals test', () => {
 			// Saving the key result reloaded the page (accordion collapsed, selection cleared). Re-expand
 			// the objective, then select the KEY-RESULT row so the toolbar exposes the key-result View
 			// (openKeyResultDetails) — the objective View only opens goal details, which has no deadline UI.
-			await goalsPage.clickTableRow(0);
-			await goalsPage.keyResultRowVisible();
-			await goalsPage.clickKeyResultRow(0);
+			await goalsPage.clickTableRow(0, goalName);
+			await goalsPage.keyResultRowVisible(goalName);
+			await goalsPage.clickKeyResultRow(0, goalName);
 			await goalsPage.viewButtonVisible();
 			await goalsPage.clickViewButton(0);
 			await goalsPage.addNewDeadlineButtonVisible();
@@ -87,9 +94,9 @@ test.describe('Goals test', () => {
 			// Closing the key-result details reloaded the page (selection cleared). The Weight (%) toolbar
 			// button lives only in the key-result actions template, so re-expand the objective and select
 			// the key-result row before it becomes visible.
-			await goalsPage.clickTableRow(0);
-			await goalsPage.keyResultRowVisible();
-			await goalsPage.clickKeyResultRow(0);
+			await goalsPage.clickTableRow(0, goalName);
+			await goalsPage.keyResultRowVisible(goalName);
+			await goalsPage.clickKeyResultRow(0, goalName);
 			await goalsPage.weightTypeButtonVisible();
 			await goalsPage.clickWeightTypeButton(0);
 			await goalsPage.weightParameterDropdownVisible();
@@ -103,7 +110,7 @@ test.describe('Goals test', () => {
 			await goalsPage.waitMessageToHide();
 			// A key result is still selected from the weight step, so the toolbar shows the key-result
 			// actions. Force the OBJECTIVE actions template so Edit opens the objective (not the key result).
-			await goalsPage.ensureObjectiveSelected(0);
+			await goalsPage.ensureObjectiveSelected(0, goalName);
 			await goalsPage.editButtonVisible();
 			await goalsPage.clickEditButton(0);
 			await goalsPage.ownerDropdownVisible();
@@ -117,7 +124,7 @@ test.describe('Goals test', () => {
 			await goalsPage.waitMessageToHide();
 			// Make sure the OBJECTIVE actions template is up so View opens goal details (which hosts the
 			// delete action), not the key-result details.
-			await goalsPage.ensureObjectiveSelected(0);
+			await goalsPage.ensureObjectiveSelected(0, goalName);
 			await goalsPage.viewButtonVisible();
 			await goalsPage.clickViewButton(0);
 			await goalsPage.deleteButtonVisible();
@@ -130,7 +137,7 @@ test.describe('Goals test', () => {
 			await getPage().goto('/#/pages/goals');
 			// Scope the verify-deleted to OUR goal name: the shared seed can carry objectives from earlier
 			// specs/runs, so a blanket empty-grid check would be flaky.
-			await goalsPage.verifyElementIsDeleted(GoalsPageData.name);
+			await goalsPage.verifyElementIsDeleted(goalName);
 		});
 	});
 });

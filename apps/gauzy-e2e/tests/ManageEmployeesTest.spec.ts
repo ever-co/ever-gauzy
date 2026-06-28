@@ -42,7 +42,20 @@ test.describe('Manage employees test', () => {
 				organizationTagsUserPage,
 				OrganizationTagsPageData
 			);
+			// A bare hash goto issued right after addTag (which ends on /#/pages/organization/tags) can be
+			// a same-document NO-OP — the Angular hash-router never re-renders and we stay on the tags grid,
+			// so the employees toolbar (Invite/Add) is never found. Force the hash + settle, then wait for
+			// the Manage Employees header before interacting.
 			await getPage().goto('/#/pages/employees');
+			await getPage().evaluate(() => {
+				if (!location.hash.includes('/pages/employees')) location.hash = '#/pages/employees';
+			});
+			await getPage().waitForTimeout(800);
+			await getPage()
+				.locator('ngx-header-title:has-text("Manage Employees"), h4:has-text("Manage Employees")')
+				.first()
+				.waitFor({ state: 'visible', timeout: 30000 })
+				.catch(() => {});
 			await manageEmployeesPage.gridBtnExists();
 			await manageEmployeesPage.gridBtnClick(1);
 			await manageEmployeesPage.inviteButtonVisible();
@@ -89,6 +102,11 @@ test.describe('Manage employees test', () => {
 			// the whole step-1 form invalid, so add()'s addEmployee() skipped the push and createBulk([])
 			// persisted nothing (grid stayed "You have not created any employees" -> verifyEmployeeExists
 			// failed). Leaving imageUrl null keeps the form valid and the employee is created.
+			// Re-fill the required step-1 fields (firstName/email/password) as the LAST step-1 action so
+			// the form is reliably valid before advancing. If the password fill earlier landed on the
+			// date-picker overlay (or an earlier valueChanges re-rendered an input), the form would stay
+			// invalid and the stepper would force-advance into an empty createBulk([]) — the empty grid.
+			await manageEmployeesPage.reEnterRequiredStep1Fields(firstName, employeeEmail, password);
 			await manageEmployeesPage.nextButtonVisible();
 			await manageEmployeesPage.clickNextButton();
 			await manageEmployeesPage.nextStepButtonVisible();
@@ -154,6 +172,9 @@ test.describe('Manage employees test', () => {
 		await test.step('Should be able to copy invite link', async () => {
 			await manageEmployeesPage.manageInvitesButtonVisible();
 			await manageEmployeesPage.clickManageInviteButton();
+			// Filter the invites grid by this spec's invited email so row 0 is OUR invite (INVITED status,
+			// so Copy/Resend render), not an earlier spec's polluting invite.
+			await manageEmployeesPage.searchInviteByEmail(email);
 			await manageEmployeesPage.selectTableRow(0);
 			await manageEmployeesPage.copyLinkButtonVisible();
 			await manageEmployeesPage.clickCopyLinkButton();
@@ -161,6 +182,7 @@ test.describe('Manage employees test', () => {
 
 		await test.step('Should be able to resend invite', async () => {
 			await manageEmployeesPage.waitMessageToHide();
+			await manageEmployeesPage.searchInviteByEmail(email);
 			await manageEmployeesPage.selectTableRow(0);
 			await manageEmployeesPage.resendInviteButtonVisible();
 			await manageEmployeesPage.clickResendInviteButton();
@@ -170,6 +192,7 @@ test.describe('Manage employees test', () => {
 
 		await test.step('Should be able to delete invite', async () => {
 			await manageEmployeesPage.waitMessageToHide();
+			await manageEmployeesPage.searchInviteByEmail(email);
 			await manageEmployeesPage.selectTableRow(0);
 			await manageEmployeesPage.deleteInviteButtonVisible();
 			await manageEmployeesPage.clickDeleteInviteButton();

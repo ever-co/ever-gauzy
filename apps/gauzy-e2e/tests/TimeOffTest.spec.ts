@@ -45,9 +45,12 @@ test.describe('Time Off test', () => {
 			await timeOffPage.employeeSelectorVisible();
 			await timeOffPage.clickEmployeeSelector();
 			await timeOffPage.employeeDropdownVisible();
-			// index 0 = first working employee in the ng-select (no placeholder option), more robust than
-			// the legacy index 1 which skipped the first and broke when only one employee was in range.
-			await timeOffPage.selectEmployeeFromDropdown(0);
+			// Pick the employee BY NAME, not by index. The ga-employee-selector ng-select unshifts an
+			// "All Employees" pseudo-option at index 0 (it has id=null), so a plain nth(0) selected that —
+			// and saveRequest() bails when selectedEmployee.id is falsy, so the request was never created
+			// (the round-4 verifyPolicyExists timeout). Selecting the unique faker employee also makes the
+			// spec order-independent in the shared-DB suite.
+			await timeOffPage.selectEmployeeFromDropdown(`${firstName} ${lastName}`);
 			await timeOffPage.selectTimeOffPolicyVisible();
 			await timeOffPage.clickTimeOffPolicyDropdown();
 			await timeOffPage.timeOffPolicyDropdownOptionVisible();
@@ -68,7 +71,9 @@ test.describe('Time Off test', () => {
 
 		await test.step('Should be able to DENY time off request', async () => {
 			await timeOffPage.timeOffTableRowVisible();
-			await timeOffPage.selectTimeOffTableRow(0);
+			// Scope the row to THIS spec's employee (grid Employee column = "First Last") so we never
+			// deny/approve/delete a leftover request from an earlier spec in the shared-DB suite.
+			await timeOffPage.selectTimeOffTableRow(`${firstName} ${lastName}`);
 			// Approve/Deny live in a second action group that only renders once "more" is toggled.
 			await timeOffPage.clickShowActionsButton();
 			await timeOffPage.denyTimeOffButtonVisible();
@@ -80,7 +85,7 @@ test.describe('Time Off test', () => {
 			await timeOffPage.waitMessageToHide();
 			// Denying cleared the selection + collapsed the action group; re-select the row and re-open
 			// the action group before approving.
-			await timeOffPage.selectTimeOffTableRow(0);
+			await timeOffPage.selectTimeOffTableRow(`${firstName} ${lastName}`);
 			await timeOffPage.clickShowActionsButton();
 			await timeOffPage.approveTimeOffButtonVisible();
 			await timeOffPage.clickApproveTimeOffButton();
@@ -90,8 +95,9 @@ test.describe('Time Off test', () => {
 			await timeOffPage.employeeSelectorVisible();
 			await timeOffPage.clickEmployeeSelector();
 			await timeOffPage.employeeDropdownVisible();
-			// index 0 = first working employee (see step 1 note).
-			await timeOffPage.selectEmployeeFromDropdown(0);
+			// Pick the unique faker employee by name (see step-1 note: index 0 is the "All Employees"
+			// pseudo-option with id=null, which makes saveRequest() a no-op).
+			await timeOffPage.selectEmployeeFromDropdown(`${firstName} ${lastName}`);
 			await timeOffPage.selectTimeOffPolicyVisible();
 			await timeOffPage.clickTimeOffPolicyDropdown();
 			await timeOffPage.timeOffPolicyDropdownOptionVisible();
@@ -110,7 +116,8 @@ test.describe('Time Off test', () => {
 
 		await test.step('Should be able to delete time off request', async () => {
 			await timeOffPage.waitMessageToHide();
-			await timeOffPage.selectTimeOffTableRow(0);
+			// Delete the request for THIS spec's employee (pollution-resilient row scope).
+			await timeOffPage.selectTimeOffTableRow(`${firstName} ${lastName}`);
 			await timeOffPage.deleteTimeOffBtnVisible();
 			await timeOffPage.clickDeleteTimeOffButton();
 			await timeOffPage.confirmDeleteTimeOffBtnVisible();

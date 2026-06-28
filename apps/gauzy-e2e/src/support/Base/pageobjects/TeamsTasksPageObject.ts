@@ -1,19 +1,28 @@
 export const TeamsTasksPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	// Toolbar Add lives in #visibleButton (`button[status="success"]`) and is NOT wrapped by a
-	// `div.actions-container` (that wrapper no longer exists; the toolbar is `div.btn-group.actions`).
-	// Mirror the proven AddTasks page object: target the bare success button. (Playbook pattern 1.)
+	// Toolbar Add lives in #visibleButton (`button[status="success"]`) inside the gauzy-button-action
+	// wrapper (`div.actions-container > ... > div.btn-group.actions`). Mirror the proven AddTasks page
+	// object: target the bare success button. (Playbook pattern 1.)
 	addTaskButtonCss: 'button[status="success"]',
 	projectDropdownCss: '[formControlName="projectId"]',
 	statusDropdownCss: '[formcontrolname="taskStatus"]',
 	teamDropdownCss: '[formcontrolname="teams"]',
 	dropdownOptionCss: 'div.ng-option',
-	// Edit + Duplicate toolbar buttons both carry `class="action primary"` (no actions-container wrapper).
-	// Index 0/1 select between them, same as the proven AddTasks flow. (Playbook pattern 1.)
+	// Edit + Duplicate toolbar buttons BOTH carry `class="action primary"`; a bare nth(0)/nth(1) is
+	// ambiguous and brittle across the show/hide transition wrapper (the round-4 cause of a 60s
+	// `button.action.primary nth(1)` hang in AddTasks). Disambiguate each by its own nb-icon —
+	// edit-outline vs copy-outline — exactly as the proven AddTasksPageObject does. (task.component.html
+	// #actionButtons.) clickDuplicateOrEditTaskButton maps index 0 -> edit, 1 -> duplicate.
+	editTaskButtonCss: 'button.action.primary:has(nb-icon[icon="edit-outline"])',
+	duplicateTaskButtonCss: 'button.action.primary:has(nb-icon[icon="copy-outline"])',
+	// Kept for the visibility assertion (either action button present == toolbar rendered with a row selected).
 	duplicateOrEditTaskButtonCss: 'button.action.primary',
+	// Only an action button matching THIS is "enabled" (Nebular adds .btn-disabled when [disabled] is set,
+	// i.e. no row selected) — used to poll that a row-select actually took. (Mirrors AddTasks.)
+	enabledActionButtonCss: 'div.actions-container button.action.primary:not(.btn-disabled)',
 	// Delete is `class="action"` wrapping an nb-icon[icon="trash-2-outline"]; match it by that icon
 	// (mirrors the proven AddTasks deleteTaskButtonCss) rather than the stale actions-container path.
-	deleteTaskButtonCss: 'button:has(nb-icon[icon="trash-2-outline"])',
+	deleteTaskButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: '[type="checkbox"]',
