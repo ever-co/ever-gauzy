@@ -32,10 +32,17 @@ export const ManageEmployeesPage = {
 	imgInputCss: '#inputImageUrl input[type="text"]',
 	// Scope stepper buttons to the dialog: nb-stepper only renders the ACTIVE step's content, so an
 	// unscoped 'button.green' could match a different overlay; inside the dialog it's the current
-	// step's nbStepperNext. Step-3 "Finished adding" is the dialog's lone status="success" button.
+	// step's nbStepperNext.
 	nextButtonCss: 'nb-dialog-container button.green',
 	nextStepButtonCss: 'nb-dialog-container button.green',
-	lastStepButtonCss: 'nb-dialog-container button[status="success"]',
+	// Step-3's "Finished adding" is (click)="add()" — the ONLY button that calls createBulk() and
+	// persists the employee. It is status="success", BUT so is step-2's "Add Another Employee"
+	// (addEmployee(), which pushes then RESETS the form/stepper and NEVER persists). If step 2 -> 3 ever
+	// failed to advance, a bare button[status="success"] would click "Add Another Employee" and the
+	// employee would silently never be created (the empty "You have not created any employees" grid).
+	// Scope to the step-3 button by its unique label ("I've Added All Current Employees" -> match the
+	// apostrophe-free substring) so we only ever fire add() from the real last step.
+	lastStepButtonCss: 'nb-dialog-container button[status="success"]:has-text("Added All Current Employees")',
 	saveEditButtonCss: 'div.actions > button[status="success"]',
 	backButtonCss: 'div.main > button[status="primary"]',
 	usernameEditInputCss: '#username',

@@ -25,7 +25,15 @@ export const TeamsTasksPage = {
 	deleteTaskButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	tagsSelectCss: '#addTags',
-	tagsSelectOptionCss: '[type="checkbox"]',
+	// Tags is an ng-select (#addTags, appendTo="body") — its options render as div.ng-option inside a
+	// body-level div.ng-dropdown-panel (each with a visual <input type="checkbox">). The old bare
+	// '[type="checkbox"]' also matched the Quick-Settings Light/Dark toggle
+	// (<input role="switch" type="checkbox" class="native-input visually-hidden">), which is FIRST in DOM
+	// order and offscreen — so clickButtonByIndex(...,0) grabbed that switch and threw "Element is outside
+	// of the viewport". Target the option div itself, scoped to the appended panel — clicking the ng-option
+	// is what actually toggles selection in ng-select (mirrors the proven AddEmployeeLevel/AddEmployeePosition
+	// tag pickers). (Playbook pattern 1 — stale/too-broad selector.)
+	tagsSelectOptionCss: '.ng-dropdown-panel .ng-option',
 	closeTagsMultiSelectDropdownCss: '.ng-select-container > .ng-arrow-wrapper',
 	confirmDuplicateOrEditTaskButtonCss: 'nb-card-footer > button[status="success"]',
 	confirmDeleteTaskButtonCss: 'nb-card-footer > button[status="danger"]',

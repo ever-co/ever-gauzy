@@ -37,8 +37,26 @@ export const selectFirstEmployee = async () => {
 	await dispatchClick(HumanResourcesPage.employeeRowCss);
 };
 
+// The accounting row's `a.link-text` renders the FULL user name ("First Last"), but the page-header
+// ga-employee-selector label (`ng-select.employee .selector-template span`) renders a SHORTENED form:
+// getShortenedName(firstName, lastName, 18) truncates firstName to 9 chars (no suffix) and lastName to
+// 9 chars + "." if longer (employee.component.ts + truncate.pipe.ts). So a `hasText: <full name>` filter
+// fails whenever either part exceeds 9 chars (e.g. "Valentine Schamberger" -> header "Valentine Schamberg.").
+// Replicate that exact truncation from the full name so the assertion matches whatever the header renders.
 export const verifyEmployeeName = async (text: string) => {
-	await verifyText(HumanResourcesPage.employeeNameCss, text);
+	const truncate = (value: string, limit: number, ellipsis: string) =>
+		value.length > limit ? value.substring(0, limit) + ellipsis : value;
+	// user.name is `[firstName, lastName].join(' ')` (user.subscriber.ts) — split into first token + rest.
+	const trimmed = text.trim();
+	const spaceIdx = trimmed.indexOf(' ');
+	const firstName = spaceIdx === -1 ? trimmed : trimmed.slice(0, spaceIdx);
+	const lastName = spaceIdx === -1 ? '' : trimmed.slice(spaceIdx + 1);
+	const limit = 18;
+	const shortened =
+		firstName && lastName
+			? `${truncate(firstName, limit / 2, '')} ${truncate(lastName, limit / 2, '.')}`
+			: truncate(trimmed, limit, '');
+	await verifyText(HumanResourcesPage.employeeNameCss, shortened);
 };
 
 export const verifyCardTextExist = async (text: string) => {

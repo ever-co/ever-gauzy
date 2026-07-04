@@ -167,6 +167,21 @@ export const enterFirstNameInputData = async (data) => {
 	await enterInput(CandidatesPage.firstNameInputCss, data);
 };
 
+// Re-set the required firstName as the last step-1 action. Selecting a tag emits valueChanges on the
+// shared basic-info form and can transiently blank firstName (the same reset quirk guarded in
+// addClient/addContact); a raw scoped fill restores it so the stepper's Next stays enabled and the
+// form is valid when add() runs. Scoped to ga-candidate-mutation so a leaked invite form can't match.
+export const refillFirstName = async (data) => {
+	await getPage().locator(CandidatesPage.firstNameInputCss).first().fill(String(data));
+};
+
+// Click the mutation card body to close the still-open tags ng-select panel before advancing the
+// stepper. Best-effort: if the body isn't clickable for any reason we still proceed (the Next click
+// uses dispatchClick, which bypasses overlays anyway).
+export const clickCardBody = async () => {
+	await clickButton(CandidatesPage.cardBodyCss).catch(() => undefined);
+};
+
 export const lastNameInputVisible = async () => {
 	await verifyElementIsVisible(CandidatesPage.lastNameInputCss);
 };

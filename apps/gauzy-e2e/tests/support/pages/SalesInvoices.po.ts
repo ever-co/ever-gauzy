@@ -116,26 +116,46 @@ export const clickContactDropdown = async () => {
 	await getPage().keyboard.press('ArrowDown');
 };
 
-export const selectContactFromDropdown = async (index: number) => {
+export const selectContactFromDropdown = async (nameOrIndex: string | number) => {
 	const page = getPage();
 	const option = page.locator(SalesInvoicesPage.contactOptionCss);
-	// Re-open the contact ng-select via keyboard until its options render, then pick one. The contact is a
-	// REQUIRED control (form.invalid disables Save), so retry generously. Best-effort guard at the end: if no
-	// option shows after the re-opens, press Escape and continue rather than hard-waiting on div.ng-option.
-	// Mirrors the proven SalesEstimates.po pattern.
+	const input = page.locator(`${SalesInvoicesPage.organizationContactDropdownCss} input`).first();
+	// POLLUTION RESILIENCE: the sales/accounting invoices grids share data and SalesEstimatesTest (runs first
+	// alphabetically) converts an estimate into an invoice, so by the time this spec runs the contact ng-select
+	// holds many contacts from earlier specs. When given this spec's UNIQUE faker contact name, typeahead-filter
+	// to it (ga-contact-select uses a name.toLowerCase().includes() searchFn) and pick the matching option — so
+	// EVERY invoice this spec creates carries that name in the grid's Contact column and our later row operations
+	// can scope to it instead of a fragile index. Re-open the ng-select via keyboard first (opens on mousedown so
+	// a click is backdrop-blocked). The contact is a REQUIRED control (form.invalid disables Save), retry
+	// generously. Mirrors the proven SalesEstimates.po pattern.
+	const byName = typeof nameOrIndex === 'string';
 	for (let i = 0; i < 6; i++) {
 		if (await option.first().isVisible().catch(() => false)) break;
 		await waitForSpinnerGone();
-		await page
-			.locator(`${SalesInvoicesPage.organizationContactDropdownCss} input`)
-			.first()
-			.focus()
-			.catch(() => {});
+		await input.focus().catch(() => {});
 		await page.keyboard.press('ArrowDown').catch(() => {});
 		await page.waitForTimeout(800);
 	}
+	if (byName) {
+		await input.fill('').catch(() => {});
+		await input.pressSequentially(String(nameOrIndex), { delay: 20 }).catch(() => {});
+		await page.waitForTimeout(600);
+		const match = option.filter({ hasText: String(nameOrIndex) }).first();
+		try {
+			await match.waitFor({ state: 'visible', timeout: 8000 });
+			await match.click({ force: true });
+			return;
+		} catch {
+			// named contact didn't surface (shouldn't happen — addContact created it — but keep the flow moving).
+			// Clear the typed filter so the fallback picks a real (unfiltered) option, not an empty filtered list.
+			await input.fill('').catch(() => {});
+			await page.waitForTimeout(400);
+		}
+	}
+	// index path (or named-fallback): best-effort guard — if no option shows, Escape and continue rather than
+	// hard-waiting on div.ng-option.
 	if (await option.first().isVisible().catch(() => false)) {
-		await option.nth(index).click({ force: true }).catch(() => {});
+		await option.nth(byName ? 0 : (nameOrIndex as number)).click({ force: true }).catch(() => {});
 	} else {
 		await page.keyboard.press('Escape').catch(() => {});
 	}
@@ -228,22 +248,36 @@ export const tableRowVisible = async () => {
 	await verifyElementIsVisible(SalesInvoicesPage.tableRowCss);
 };
 
-export const selectTableRow = async (index: number) => {
+export const selectTableRow = async (indexOrName: string | number) => {
 	const page = getPage();
-	// Let the grid settle after the preceding mutation (it re-renders/refetches); a click during that
-	// window is lost or instantly cleared. Then click the row ONCE and poll the toolbar Edit button to
-	// enable — clicking a row TOGGLES its selection, so a blind second click would deselect it. Only
-	// re-click if the first was lost to a late re-render.
+	// Settle the grid first: a row click TOGGLES selection, so a stray double-click would deselect it (the
+	// spec calls selectTableRow repeatedly across steps). Wait for spinner/network/render to settle, then click
+	// the data row ONCE and poll the toolbar Edit button's real `disabled` attr — only re-click if selection
+	// was lost. Never rapid re-click. Mirrors the proven SalesEstimates.po pattern.
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
 	await page.waitForTimeout(1500);
-	const row = page.locator(SalesInvoicesPage.tableRowCss).nth(index);
+	// POLLUTION RESILIENCE: the sales/accounting invoices grids share data and SalesEstimatesTest converts an
+	// estimate into an invoice before this spec runs, so row 0 can be a FOREIGN invoice (the captured failure
+	// grid already held two invoices #3 and #6). When given this spec's unique contact name, scope to data rows
+	// whose Contact column shows that name and take the first of OURS — deterministic regardless of how many
+	// foreign rows are interleaved. Falls back to the raw index when given a number. Mirrors SalesEstimates.po.
+	const row =
+		typeof indexOrName === 'string'
+			? page.locator(SalesInvoicesPage.tableRowCss).filter({ hasText: indexOrName }).first()
+			: page.locator(SalesInvoicesPage.tableRowCss).nth(indexOrName);
 	const editBtn = page.locator(SalesInvoicesPage.editButtonCss).first();
-	for (let attempt = 0; attempt < 4; attempt++) {
-		await row.click({ force: true });
-		for (let i = 0; i < 8; i++) {
-			await page.waitForTimeout(350);
-			if (!(await editBtn.isDisabled().catch(() => true))) return;
+	for (let i = 0; i < 4; i++) {
+		await row.click({ force: true }).catch(() => {});
+		try {
+			await page.waitForFunction(
+				(el) => !!el && !(el as HTMLButtonElement).disabled,
+				await editBtn.elementHandle(),
+				{ timeout: 4000 }
+			);
+			return;
+		} catch {
+			// selection didn't enable the toolbar yet — loop and click the row again
 		}
 	}
 };
@@ -279,16 +313,24 @@ export const clickConfirmButton = async () => {
 	// Send/Email confirm dialog button. A SINGLE dispatchClick is racy here: the dialog body renders
 	// <ga-invoice-pdf> (an async PDF/iframe preview, plus a CKEditor) so the first dispatch can land before
 	// the (click)="send()"/"sendEmail()" handler is wired, and the dialog stays OPEN with the invoice never
-	// sent — exactly the observed failure (the "Send this invoice to ...?" dialog was still up and the rows
-	// were still Draft, so div.badge-success never appeared). Dispatch the success button, then POLL for the
-	// mutation dialog host (ga-invoice-send / ga-invoice-email) to detach — re-dispatching if it lingers — so
-	// the send/email actually fires before we move on. dispatchClick (not a coordinate click) so the fading
-	// popover backdrop can't intercept it. Mirrors the proven SalesEstimates.po pattern.
+	// sent — exactly the observed failure (the "Send this invoice to Colin Rempel-Howell ?" dialog was still
+	// up with its iframe + Cancel/Send, the rows were still Draft, so div.badge-success never appeared).
+	// The prior version dispatched a PAGE-LEVEL confirmButtonCss without first waiting for the dialog host to
+	// render — dispatching before <ga-invoice-send>/<ga-invoice-email> is on screen is a silent no-op because
+	// the (click)="send()/sendEmail()" handler isn't wired yet. Fix (mirrors the proven SalesEstimates.po):
+	// (1) WAIT for the mutation dialog host to be visible before clicking; (2) scope the confirm button to the
+	// LIVE dialog host (never a stale page-level handle), with a page-level dispatchClick fallback; (3) loop
+	// and poll the host to DETACH so the send/email truly fires before we move on. dispatchEvent (not a
+	// coordinate click) so the fading popover backdrop can't intercept it.
 	const page = getPage();
 	const dialogHost = page.locator('ga-invoice-send, ga-invoice-email').first();
-	for (let i = 0; i < 5; i++) {
+	await dialogHost.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+	const confirmBtn = dialogHost.locator('nb-card-footer.text-left > button[status="success"]').first();
+	for (let i = 0; i < 8; i++) {
 		await waitForSpinnerGone();
-		await dispatchClick(SalesInvoicesPage.confirmButtonCss).catch(() => {});
+		await confirmBtn.dispatchEvent('click').catch(async () => {
+			await dispatchClick(SalesInvoicesPage.confirmButtonCss).catch(() => {});
+		});
 		try {
 			await dialogHost.waitFor({ state: 'detached', timeout: 6000 });
 			return;

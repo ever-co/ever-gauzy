@@ -128,7 +128,7 @@ test.describe('Invoices test', () => {
 
 		await test.step('Should be able to edit invoice', async () => {
 			await invoicesPage.clickTabButton(0);
-			await invoicesPage.selectTableRow(0);
+			await invoicesPage.selectTableRow(0, fullName);
 			await invoicesPage.editButtonVisible();
 			await invoicesPage.clickEditButton(0);
 			await invoicesPage.discountInputVisible();
@@ -151,7 +151,7 @@ test.describe('Invoices test', () => {
 		});
 
 		await test.step('Should be able to send invoice', async () => {
-			await invoicesPage.selectTableRow(0);
+			await invoicesPage.selectTableRow(0, fullName);
 			await invoicesPage.moreButtonVisible();
 			await invoicesPage.clickMoreButton();
 			await invoicesPage.actionButtonVisible();
@@ -163,7 +163,7 @@ test.describe('Invoices test', () => {
 		});
 
 		await test.step('Should be able to view invoice', async () => {
-			await invoicesPage.selectTableRow(0);
+			await invoicesPage.selectTableRow(0, fullName);
 			await invoicesPage.viewButtonVisible();
 			await invoicesPage.clickViewButton(1);
 			await invoicesPage.backButtonVisible();
@@ -171,7 +171,7 @@ test.describe('Invoices test', () => {
 		});
 
 		await test.step('Should be able to send invoice by email', async () => {
-			await invoicesPage.selectTableRow(0);
+			await invoicesPage.selectTableRow(0, fullName);
 			await invoicesPage.moreButtonVisible();
 			await invoicesPage.clickMoreButton();
 			await invoicesPage.actionButtonVisible();
@@ -187,7 +187,7 @@ test.describe('Invoices test', () => {
 
 		await test.step('Should be able to set invoice status', async () => {
 			await invoicesPage.waitMessageToHide();
-			await invoicesPage.selectTableRow(0);
+			await invoicesPage.selectTableRow(0, fullName);
 			await invoicesPage.setStatusButtonVisible();
 			await invoicesPage.clickSetStatusButton(InvoicesPageData.setStatusButton);
 			await invoicesPage.setStatusFromDropdown(InvoicesPageData.status);
@@ -195,7 +195,7 @@ test.describe('Invoices test', () => {
 
 		await test.step('Should be able to delete invoice', async () => {
 			await invoicesPage.waitMessageToHide();
-			await invoicesPage.selectTableRow(0);
+			await invoicesPage.selectTableRow(0, fullName);
 			await invoicesPage.moreButtonVisible();
 			await invoicesPage.clickMoreButton();
 			await invoicesPage.deleteButtonVisible();

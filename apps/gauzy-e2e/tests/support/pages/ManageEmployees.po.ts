@@ -271,8 +271,23 @@ export const nextStepButtonVisible = async () => {
 
 export const clickNextStepButton = async () => {
 	// Stepper step-2 -> step-3 (nbStepperNext); same backdrop hazard as step-1's Next.
+	// IMPORTANT: step 2 has BOTH a green "Next" (nbStepperNext) AND a status="success" "Add Another
+	// Employee" (addEmployee(), which pushes then RESETS the form/stepper and NEVER persists). We must
+	// actually reach step 3 before clicking the persist button — otherwise the later status="success"
+	// click hits "Add Another Employee" and the employee is silently never created (empty grid). Dispatch
+	// step-2's Next, then confirm the step-3 finish button ("Added All Current Employees") appears; retry
+	// the dispatch if the first didn't take.
 	await waitForSpinnerGone();
-	await dispatchClick(ManageEmployeesPage.nextStepButtonCss);
+	const finish = getPage().locator(ManageEmployeesPage.lastStepButtonCss).first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await dispatchClick(ManageEmployeesPage.nextStepButtonCss);
+		const reached = await finish
+			.waitFor({ state: 'visible', timeout: 6000 })
+			.then(() => true)
+			.catch(() => false);
+		if (reached) return;
+		await waitForSpinnerGone();
+	}
 };
 
 export const lastStepButtonVisible = async () => {
@@ -280,10 +295,22 @@ export const lastStepButtonVisible = async () => {
 };
 
 export const clickLastStepButton = async () => {
-	// Stepper step-3 "Finished adding" -> (click)="add()" persists the employee and closes the
-	// dialog; dispatch through any lingering stepper/overlay backdrop.
+	// Stepper step-3 "I've Added All Current Employees" -> (click)="add()" calls createBulk() and closes
+	// the dialog — the ONLY path that persists the employee. Dispatch through any lingering stepper/overlay
+	// backdrop, then confirm the mutation dialog actually detached (createBulk resolved). Retry once if a
+	// transient overlay swallowed the first dispatch, so we never leave with nothing persisted.
 	await waitForSpinnerGone();
-	await dispatchClick(ManageEmployeesPage.lastStepButtonCss);
+	const dialog = getPage().locator('ga-employee-mutation').first();
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await dispatchClick(ManageEmployeesPage.lastStepButtonCss);
+		const closed = await dialog
+			.waitFor({ state: 'detached', timeout: 12000 })
+			.then(() => true)
+			.catch(() => false);
+		if (closed) return;
+		await waitForSpinnerGone();
+		await getPage().waitForTimeout(500);
+	}
 };
 
 // EDIT EMPLOYEE
@@ -292,34 +319,86 @@ export const tableRowVisible = async () => {
 	await verifyElementIsVisible(ManageEmployeesPage.selectTableRowCss);
 };
 
+// Clear EVERY filter in the smart-table filter row (tr.angular2-smart-filters) so a stale sibling
+// filter left by an earlier spec on the shared serial DB can't AND-out our record. The failure DOM
+// proved this: the grid showed "You have not created any employees." with the Full Name filter holding
+// a partial "an", the Email filter "En", and the Tags ng-select "Default" — an over-constrained AND
+// query that hid a row that WAS created. We clear:
+//   - every text <input> filter (Full Name / Email / Invited-By), and
+//   - every ng-select filter's "clear all" (the Tags "Default" chip, Status, etc.)
+// best-effort (swallow errors) — a column with no active filter simply has nothing to clear.
+const clearAllGridFilters = async () => {
+	const page = getPage();
+	const filterRow = page.locator('tr.angular2-smart-filters').first();
+	// Text inputs: select-all + Delete fires the InputFilterComponent's (keyup) so the filter actually
+	// resets (a raw .fill('') dispatches only 'input', which that component ignores — it listens on keyup).
+	const inputs = filterRow.locator('input[type="text"], input:not([type])');
+	const inputCount = await inputs.count().catch(() => 0);
+	for (let i = 0; i < inputCount; i++) {
+		const inp = inputs.nth(i);
+		const val = await inp.inputValue().catch(() => '');
+		if (val) {
+			await inp.click({ force: true }).catch(() => {});
+			await inp.press('Control+a').catch(() => {});
+			await inp.press('Delete').catch(() => {});
+			await inp.press('Backspace').catch(() => {}); // in case selection was lost
+		}
+	}
+	// ng-select filters (Tags / Status): click their "clear all" cross if a value is selected.
+	const clears = filterRow.locator('ng-select .ng-clear-wrapper');
+	const clearCount = await clears.count().catch(() => 0);
+	for (let i = 0; i < clearCount; i++) {
+		await clears.nth(i).click({ force: true }).catch(() => {});
+	}
+	await page.waitForTimeout(700); // let the debounced refetch(es) land
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+};
+
+// Drive one smart-table column filter reliably. The angular2-smart-table InputFilterComponent reacts on
+// (keyup)/(change), NOT (input), and re-renders the whole filter row on each debounced refetch — so a
+// plain Playwright .fill() (which dispatches 'input' and can be clobbered mid-type by the re-render)
+// leaves a partial value (the observed "an"). Type char-by-char via pressSequentially (real keyups),
+// then read the value back and retry (re-locating a fresh input each time) until it sticks.
+const applyColumnFilter = async (inputCss: string, value: string) => {
+	const page = getPage();
+	for (let attempt = 0; attempt < 4; attempt++) {
+		const input = page.locator(inputCss).first();
+		await input.click({ force: true }).catch(() => {});
+		await input.press('Control+a').catch(() => {});
+		await input.press('Delete').catch(() => {});
+		await input.pressSequentially(String(value), { delay: 40 }).catch(() => {});
+		// smart-table filtering is debounced (300ms) + server-side; let the refetch land.
+		await page.waitForTimeout(1500);
+		await waitForSpinnerGone();
+		await page.waitForLoadState('networkidle').catch(() => {});
+		const current = await page.locator(inputCss).first().inputValue().catch(() => '');
+		if (current === String(value)) return; // value stuck -> filter applied
+	}
+};
+
 // Filter the employees grid by Full Name so the created employee is the only data row (row 0). The
 // fresh seed renders Super Admin + Default Employee ahead of any new employee, so a blind row-0 click
 // would select a seeded admin (whose End Work button never renders — "Not Started") and the chain
-// would stall. Type the name into the smart-table Full Name filter and wait for the grid to settle.
+// would stall. Clear any polluting sibling filters first, then apply the Full Name filter robustly.
 export const searchEmployeeByName = async (name) => {
 	const page = getPage();
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
-	const filter = page.locator(ManageEmployeesPage.nameFilterInputCss).first();
-	await filter.fill(String(name)).catch(() => {});
-	// smart-table filtering is debounced + server-side; let the refetch land before selecting a row.
-	await page.waitForTimeout(2000);
-	await waitForSpinnerGone();
-	await page.waitForLoadState('networkidle').catch(() => {});
+	await clearAllGridFilters();
+	await applyColumnFilter(ManageEmployeesPage.nameFilterInputCss, String(name));
 };
 
 // Filter the invites grid by email so THIS spec's invite is the only/first data row (pollution-safe).
 // The invites grid accumulates earlier specs' invites on the shared serial DB, and the Copy/Resend
 // buttons only render for an INVITED-status row — a blind row-0 pick could land on a non-INVITED invite.
+// Clear stale sibling filters (Invited-By text, Status ng-select) first, then apply the Email filter.
 export const searchInviteByEmail = async (email) => {
 	const page = getPage();
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
-	const filter = page.locator(ManageEmployeesPage.inviteEmailFilterInputCss).first();
-	await filter.fill(String(email)).catch(() => {});
-	await page.waitForTimeout(2000);
-	await waitForSpinnerGone();
-	await page.waitForLoadState('networkidle').catch(() => {});
+	await clearAllGridFilters();
+	await applyColumnFilter(ManageEmployeesPage.inviteEmailFilterInputCss, String(email));
 };
 
 export const selectTableRow = async (index) => {

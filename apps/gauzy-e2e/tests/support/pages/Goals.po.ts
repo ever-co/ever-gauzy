@@ -21,58 +21,87 @@ export const addButtonVisible = async () => {
 	await verifyElementIsVisible(GoalsPage.addButtonCss);
 };
 
+// Open the "Add new Objective" nbPopover and confirm its "Create new" list actually rendered.
+// Returns true once the popover list is visible, false if every trigger attempt failed.
+//
+// Why this is finicky (root cause of the round-6 regression): "Add new Objective" uses
+// nbPopoverTrigger="click" with NO explicit (click) handler, so it opens ONLY via Nebular's
+// NbClickTriggerStrategy — `fromEvent(document,'click')` mapped to `[!container() && isOnHost(target)]`.
+// That stream is a TOGGLE: a host click with no open container SHOWS, a host click while the container
+// is open HIDES. The button also sits inside gauzy-button-action's `.transition` span, which is offset
+// by a CSS `transform: translateX()` and clipped by an `overflow-x:hidden` parent, so a {force:true}
+// coordinate click hit-tests to the clipping/transformed ancestor (isOnHost=false → never opens).
+// The previous 3-attempt dispatch loop keyed re-dispatch off the *list-item* visibility, which flickers
+// during the overlay open animation — a flicker made it re-dispatch and TOGGLE the just-opened popover
+// shut, and with only 3 attempts it could end on a closed toggle (the observed failure: the popover
+// never present when selectOptionFromDropdown asserted it).
+//
+// This helper fixes that by:
+//   - keying "is it open?" off the popover OVERLAY pane (nb-popover), which is stable, not the animating
+//     list item, so we never re-trigger a popover that already opened (no accidental toggle-closed);
+//   - trying BOTH a real (non-force) .click() — which properly hit-tests the on-screen button and fires
+//     Nebular's real document click reliably — AND a dispatchEvent('click') straight to the button
+//     (event.target = button → isOnHost matches, bubbles to document), alternating across attempts so a
+//     transform/clip that defeats one path is covered by the other.
+const openObjectivePopover = async (): Promise<boolean> => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	const button = page.locator(GoalsPage.addButtonCss).first();
+	await button.waitFor({ state: 'attached', timeout: 24000 }).catch(() => {});
+	// The popover overlay host (nb-popover) is the reliable "open" signal; its inner nb-list flickers.
+	const pane = page.locator('nb-popover').first();
+	const list = page.locator(GoalsPage.optionDropdownCss).first();
+	for (let attempt = 0; attempt < 6; attempt++) {
+		if (await list.isVisible().catch(() => false)) {
+			return true;
+		}
+		// Only (re-)trigger when the popover is NOT already attached, so we never toggle an open one shut.
+		if (!(await pane.isVisible().catch(() => false))) {
+			if (attempt % 2 === 0) {
+				// Real click: waits for actionability + hit-tests the actual on-screen button box.
+				await button.click({ timeout: 8000 }).catch(() => {});
+			} else {
+				// Dispatch straight to the button: target = button, bubbles to document, isOnHost matches.
+				await button.dispatchEvent('click').catch(() => {});
+			}
+		}
+		await list.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+	}
+	return await list.isVisible().catch(() => false);
+};
+
 export const clickAddButton = async (index, name?) => {
 	// The Goals page shows a full-card nb-spinner over the toolbar right after navigation; wait it out
 	// first so the toolbar is interactive.
 	await waitForSpinnerGone();
-	// index 0 = toolbar "Add new Objective" (opens the nbPopover); index 1 = "Add new Key Result" inside
-	// the expanded accordion body (a different element, not an nth() of the toolbar add button). When a
-	// unique goal name is supplied, scope the key-result add button to OUR objective's body so we never
-	// hit another (polluting) objective's button.
-	const selector =
-		index === 0
-			? GoalsPage.addButtonCss
-			: name
-			? GoalsPage.addKeyResultButtonByName(name)
-			: GoalsPage.addKeyResultButtonCss;
+	if (index === 0) {
+		// index 0 = toolbar "Add new Objective" — open its nbPopover reliably (see openObjectivePopover).
+		await openObjectivePopover();
+		return;
+	}
+	// index 1 = "Add new Key Result" inside the EXPANDED accordion body (a different element, not an
+	// nth() of the toolbar add button). When a unique goal name is supplied, scope the key-result add
+	// button to OUR objective's body so we never hit another (polluting) objective's button.
+	const selector = name ? GoalsPage.addKeyResultButtonByName(name) : GoalsPage.addKeyResultButtonCss;
 	const button = getPage().locator(selector).first();
 	await button.waitFor({ state: 'attached', timeout: 24000 }).catch(() => {});
-	if (index === 0) {
-		// "Add new Objective" uses nbPopoverTrigger="click" with NO explicit (click) handler, so the
-		// popover opens ONLY via Nebular's NbClickTriggerStrategy, which subscribes to
-		// `fromEvent(document, 'click')` and SHOWS when `host.contains(event.target)`. A coordinate
-		// {force:true} click was confirmed NOT to open it (3 real clicks, popover never rendered — no
-		// cdk-overlay-pane ever appeared in the trace): the button sits inside the gauzy-button-action
-		// `transition` div, which is offset by a CSS `transform: translateX()` and clipped by an
-		// `overflow-x:hidden` parent. `force:true` only skips Playwright's actionability check — the
-		// browser still hit-tests the screen coordinates, so the real `click` target ends up being the
-		// clipping/transformed ancestor (NOT the button), making `host.contains(target)` false and the
-		// popover never shows. Dispatching the event STRAIGHT to the button sets `event.target` to the
-		// button itself, still bubbles to `document` (Playwright dispatchEvent => bubbles:true), so the
-		// strategy's `isOnHost` matches and the popover opens — no coordinate hit-test involved. The
-		// strategy TOGGLES on host clicks, so we check visibility first and only re-dispatch while it's
-		// still closed (idempotent — never rapid re-click).
-		const popoverList = getPage().locator(GoalsPage.optionDropdownCss).first();
-		for (let attempt = 0; attempt < 3; attempt++) {
-			if (await popoverList.isVisible().catch(() => false)) {
-				return;
-			}
-			await button.dispatchEvent('click');
-			await popoverList.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {});
-		}
-	} else {
-		// "Add new Key Result" has a normal Angular (click)="addKeyResult(...)" host listener, which a
-		// dispatched event triggers fine — dispatch past any fading post-mutation overlay.
-		await button.dispatchEvent('click');
-	}
+	// "Add new Key Result" has a normal Angular (click)="addKeyResult(...)" host listener, which a
+	// dispatched event triggers fine — dispatch past any fading post-mutation overlay.
+	await button.dispatchEvent('click');
 };
 
 export const selectOptionFromDropdown = async (index) => {
-	// The "Add new Objective" nb-popover renders as a CDK overlay on click; wait for its option to
-	// paint, then dispatch the click straight to the list item — a coordinate click can land on the
-	// popover backdrop rather than the "Create new" item.
+	// The "Add new Objective" nb-popover renders as a CDK overlay on click. It can fail to open (or get
+	// toggled shut) behind a fading backdrop, so SELF-HEAL: if the popover list isn't present, re-open it
+	// before asserting — this is the step that actually depends on the "Create new" item being clickable.
+	const list = getPage().locator(GoalsPage.optionDropdownCss);
+	if (!(await list.first().isVisible().catch(() => false))) {
+		await openObjectivePopover();
+	}
 	await verifyElementIsVisible(GoalsPage.optionDropdownCss);
-	await getPage().locator(GoalsPage.optionDropdownCss).nth(index).dispatchEvent('click');
+	// Dispatch the click straight to the list item — a coordinate click can land on the popover backdrop
+	// rather than the "Create new" item.
+	await list.nth(index).dispatchEvent('click');
 };
 
 export const nameInputVisible = async () => {

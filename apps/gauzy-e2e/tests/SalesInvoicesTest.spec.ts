@@ -82,7 +82,10 @@ test.describe('Sales invoices test', () => {
 			);
 			await salesInvoicesPage.contactDropdownVisible();
 			await salesInvoicesPage.clickContactDropdown();
-			await salesInvoicesPage.selectContactFromDropdown(0);
+			// Pick OUR contact by its unique faker name (not index 0): the shared invoices grid/contact list is
+			// polluted by earlier specs, so every invoice this spec creates must carry `fullName` in its Contact
+			// column for the later row operations to scope to it.
+			await salesInvoicesPage.selectContactFromDropdown(fullName);
 			await salesInvoicesPage.taxInputVisible();
 			await salesInvoicesPage.enterTaxData(SalesInvoicesPageData.taxValue);
 			await salesInvoicesPage.taxTypeDropdownVisible();
@@ -110,7 +113,9 @@ test.describe('Sales invoices test', () => {
 		});
 
 		await test.step('Should be able to edit invoice', async () => {
-			await salesInvoicesPage.selectTableRow(0);
+			// Scope every row selection to OUR unique contact name so a foreign/older polluted invoice row is
+			// never operated on (the shared grid already holds converted-estimate invoices before this spec runs).
+			await salesInvoicesPage.selectTableRow(fullName);
 			await salesInvoicesPage.editButtonVisible();
 			await salesInvoicesPage.clickEditButton(0);
 			await salesInvoicesPage.discountInputVisible();
@@ -124,7 +129,7 @@ test.describe('Sales invoices test', () => {
 			);
 			await salesInvoicesPage.contactDropdownVisible();
 			await salesInvoicesPage.clickContactDropdown();
-			await salesInvoicesPage.selectContactFromDropdown(0);
+			await salesInvoicesPage.selectContactFromDropdown(fullName);
 			await salesInvoicesPage.taxInputVisible();
 			await salesInvoicesPage.enterTaxData(SalesInvoicesPageData.taxValue);
 			await salesInvoicesPage.taxTypeDropdownVisible();
@@ -141,7 +146,7 @@ test.describe('Sales invoices test', () => {
 		});
 
 		await test.step('Should be able to send invoice', async () => {
-			await salesInvoicesPage.selectTableRow(0);
+			await salesInvoicesPage.selectTableRow(fullName);
 			await salesInvoicesPage.moreButtonVisible();
 			await salesInvoicesPage.clickMoreButton();
 			await salesInvoicesPage.actionButtonVisible();
@@ -155,7 +160,7 @@ test.describe('Sales invoices test', () => {
 		});
 
 		await test.step('Should be able to view invoice', async () => {
-			await salesInvoicesPage.selectTableRow(0);
+			await salesInvoicesPage.selectTableRow(fullName);
 			await salesInvoicesPage.viewButtonVisible();
 			// index 0 = the View (eye-outline) button; the old `1` resolved to the Payments button.
 			await salesInvoicesPage.clickViewButton(0);
@@ -164,7 +169,7 @@ test.describe('Sales invoices test', () => {
 		});
 
 		await test.step('Should be able to send invoice by email', async () => {
-			await salesInvoicesPage.selectTableRow(0);
+			await salesInvoicesPage.selectTableRow(fullName);
 			await salesInvoicesPage.moreButtonVisible();
 			await salesInvoicesPage.clickMoreButton();
 			await salesInvoicesPage.actionButtonVisible();
@@ -182,7 +187,7 @@ test.describe('Sales invoices test', () => {
 
 		await test.step('Should be able to set invoice status', async () => {
 			await salesInvoicesPage.waitMessageToHide();
-			await salesInvoicesPage.selectTableRow(0);
+			await salesInvoicesPage.selectTableRow(fullName);
 			await salesInvoicesPage.setStatusButtonVisible();
 			await salesInvoicesPage.clickSetStatusButton(
 				SalesInvoicesPageData.setStatusButton
@@ -192,7 +197,7 @@ test.describe('Sales invoices test', () => {
 
 		await test.step('Should be able to delete invoice', async () => {
 			await salesInvoicesPage.waitMessageToHide();
-			await salesInvoicesPage.selectTableRow(0);
+			await salesInvoicesPage.selectTableRow(fullName);
 			await salesInvoicesPage.moreButtonVisible();
 			await salesInvoicesPage.clickMoreButton();
 			await salesInvoicesPage.deleteButtonVisible();

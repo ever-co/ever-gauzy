@@ -22,81 +22,57 @@ import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ApprovalRequestPage } from '../../../src/support/Base/pageobjects/ApprovalRequestPageObject';
 
-// Navigate to the approvals grid via a hash-forced SPA route change. A bare goto('/#/pages/employees/approvals')
-// issued right after the addEmployee prerequisite (which ends on /#/pages/employees — same path+origin, only the
-// hash fragment differs) is a SAME-DOCUMENT NO-OP that does not re-render: the Angular hash router never sees the
-// new route (and a later location.back() from the page's ngx-back-navigation button overshoots the approvals page
-// straight back to Manage Employees). goto() leaves location.hash already set to the target, so the usual
-// `if (!hash.includes(...)) location.hash = ...` guard skips and never forces a hashchange. Bounce the hash through
-// the dashboard FIRST so the assignment to the approvals hash is a genuine change that fires `hashchange`, then
-// settle so the approvals screen is actually mounted before we interact.
-export const gotoApprovals = async () => {
+// Robust hash-router navigation used by BOTH gotoApprovals and gotoApprovalPolicy.
+//
+// ROUND-6 root cause (confirmed by the failure screenshot: the app was still on "Manage Employees" —
+// #/pages/employees — while the add-request verify ran): the app is a useHash:true SPA, and EVERY same-
+// document hash navigation here (page.goto() to a fragment-only-different URL, AND a plain
+// `location.hash = target`) can be a NO-OP that never re-renders the Angular router. The approvals route
+// (#/pages/employees/approvals) shares its path+origin with the addEmployee prerequisite's landing route
+// (#/pages/employees), so goto() sets location.hash to the target WITHOUT firing a route change, then the
+// old `if (hash !== target) location.hash = target` guard sees the hash already correct and does nothing —
+// the app stays wedged on Manage Employees. The dashboard-bounce fallback was also same-document, so it
+// could wedge the same way.
+//
+// Fix: (1) ALWAYS bounce through #/pages/dashboard first so the assignment to the target hash is a genuine
+// change that fires `hashchange`; (2) if the target screen's header still hasn't mounted, escape the SPA
+// no-op entirely with a HARD page.reload() of the target hash URL — a full document load re-bootstraps
+// Angular directly onto the target route and CANNOT be a same-document no-op. `header` is the card's h4
+// text ("Approval Request" / "Approval Policy" — distinct from the employees grid's "Manage Employees").
+const gotoHashRoute = async (targetHash: string, header: string): Promise<void> => {
 	const page = getPage();
+	const headerLoc = page.locator(`h4:has-text("${header}")`).first();
+	// Unconditional dashboard bounce so the following target-hash assignment is always a REAL hashchange.
 	await page.evaluate(() => {
-		if (location.hash.split('?')[0] === '#/pages/employees/approvals') {
-			location.hash = '#/pages/dashboard';
-		}
+		location.hash = '#/pages/dashboard';
 	});
-	await page.goto('/#/pages/employees/approvals');
-	await page.evaluate(() => {
-		if (location.hash.split('?')[0] !== '#/pages/employees/approvals') {
-			location.hash = '#/pages/employees/approvals';
-		}
-	});
-	// Don't just wait a fixed 800ms — a late/queued history.back() from the policy-page Back button
-	// (location.back() is processed async and the same-document goto() above never flushes it) can pop
-	// us off the approvals route SEVERAL steps later, landing on Manage Employees (the cause of the
-	// edit/delete verify failing on the wrong screen). Confirm the approvals card is actually mounted
-	// before returning: wait for its header ("Approval Request" — distinct from the policy page's
-	// "Approval Policy" and the employees grid's "Manage Employees") to be visible, and re-force the
-	// hash once if the header hasn't rendered in time.
-	const header = page.locator('h4:has-text("Approval Request")').first();
+	await page.waitForTimeout(300);
+	await page.evaluate((h) => {
+		location.hash = h;
+	}, targetHash);
 	try {
-		await header.waitFor({ state: 'visible', timeout: 15000 });
+		await headerLoc.waitFor({ state: 'visible', timeout: 12000 });
 	} catch {
-		await page.evaluate(() => {
-			location.hash = '#/pages/dashboard';
-			location.hash = '#/pages/employees/approvals';
-		});
-		await header.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
+		// SPA hash nav wedged. location.hash is already the target (the assignment above updated the URL
+		// bar even when Angular didn't re-render), so a HARD page.reload() re-bootstraps the app directly
+		// onto the target hash route — a full document load that CANNOT be a same-document no-op. Re-force
+		// the hash first in case the target assignment itself was swallowed, then reload.
+		await page.evaluate((h) => {
+			if (location.hash.split('?')[0] !== h) location.hash = h;
+		}, targetHash);
+		await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => undefined);
+		await headerLoc.waitFor({ state: 'visible', timeout: 20000 }).catch(() => undefined);
 	}
+	await waitForSpinnerGone();
 	await page.waitForTimeout(500);
 };
 
-// Navigate DIRECTLY to the approval-policy page (/#/pages/organization/approval-policy) by hash, the same
-// hardened bounce-the-hash pattern as gotoApprovals. Step 1 previously reached the policy page indirectly —
-// gotoApprovals -> the approvals "Approval Policy" button (router.navigate) -> ... -> Back (location.back()) —
-// and a queued/overshooting history pop from that chain landed the next step back on Manage Employees (the
-// retry dump showed the step-1 nameInput assertion running while the DOM was still the employees grid). Going
-// straight to the policy route, then waiting for its "Approval Policy" header, removes that whole fragile
-// button+history dance so the Add we click here always opens the POLICY dialog on the POLICY screen.
+export const gotoApprovals = async () => {
+	await gotoHashRoute('#/pages/employees/approvals', 'Approval Request');
+};
+
 export const gotoApprovalPolicy = async () => {
-	const page = getPage();
-	await page.evaluate(() => {
-		if (location.hash.split('?')[0] === '#/pages/organization/approval-policy') {
-			location.hash = '#/pages/dashboard';
-		}
-	});
-	await page.goto('/#/pages/organization/approval-policy');
-	await page.evaluate(() => {
-		if (location.hash.split('?')[0] !== '#/pages/organization/approval-policy') {
-			location.hash = '#/pages/organization/approval-policy';
-		}
-	});
-	// Confirm the policy card is actually mounted before interacting: wait for its header ("Approval Policy",
-	// distinct from the approvals "Approval Request" and the employees "Manage Employees"), re-forcing the
-	// hash once if it hasn't rendered in time.
-	const header = page.locator('h4:has-text("Approval Policy")').first();
-	try {
-		await header.waitFor({ state: 'visible', timeout: 15000 });
-	} catch {
-		await page.evaluate(() => {
-			location.hash = '#/pages/dashboard';
-			location.hash = '#/pages/organization/approval-policy';
-		});
-		await header.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
-	}
-	await page.waitForTimeout(500);
+	await gotoHashRoute('#/pages/organization/approval-policy', 'Approval Policy');
 };
 
 export const gridBtnExists = async () => {

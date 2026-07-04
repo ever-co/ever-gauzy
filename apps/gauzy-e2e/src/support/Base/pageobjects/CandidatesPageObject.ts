@@ -11,6 +11,9 @@ export const CandidatesPage = {
 	// invite footer button is also status="success"), so unscoped selectors hit two elements
 	// (strict-mode violation) or the wrong dialog. Scope every add-candidate (ga-candidate-mutation)
 	// field/button to that host so the leaked invite dialog can never be matched.
+	// Clicking the mutation card body closes the appendTo="body" tags ng-select panel (which has
+	// [closeOnSelect]="false") so it can't overlay the stepper footer — mirrors the green employee flow.
+	cardBodyCss: 'ga-candidate-mutation nb-card-body',
 	firstNameInputCss: 'ga-candidate-mutation #firstName',
 	lastNameInputCss: 'ga-candidate-mutation #lastName',
 	usernameInputCss: 'ga-candidate-mutation #username',

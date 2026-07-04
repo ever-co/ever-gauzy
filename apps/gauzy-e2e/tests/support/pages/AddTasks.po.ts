@@ -27,6 +27,12 @@ import { AddTaskPage } from '../../../src/support/Base/pageobjects/AddTasksPageO
 // mirroring the proven JobsProposals.po pattern. (Description is optional, so this never blocks Save.)
 const ckeditorIframeCss = 'iframe[class="cke_wysiwyg_frame cke_reset"]';
 
+// The Tasks screen's card header ("Tasks for <org>") — its <h4> text is unique to this route: the
+// Manage Employees grid we can drift onto reads "Manage Employees", the teams grid "Teams", etc. Used
+// as a POSITIVE, DOM-level anchor that the tasks screen actually rendered (not just that location.hash
+// was reassigned — the two can desync; see reanchorTasksScreen / navigateToTasksDashboard).
+const tasksHeaderCss = 'nb-card-header h4:has-text("Tasks")';
+
 // The preceding CustomCommands.addEmployee quick-add can leave its ga-employee-mutation dialog open
 // (the current app's employee add is a multi-step nb-stepper with separate First Name/Username/Password
 // fields, not the single "Full Name" quick-add the shared command targets, so its step-1 form stays
@@ -77,8 +83,17 @@ export const navigateToTasksDashboard = async () => {
 		}
 	});
 	await page.waitForTimeout(800);
-	// Don't proceed until the Tasks screen has actually mounted: wait for the toolbar Add button to be
-	// visible (it's rendered by this screen's header once the SPA route finished re-rendering).
+	// Don't proceed until the Tasks screen has actually mounted. NOTE: waiting on the Add button
+	// (button[status="success"]) is NOT sufficient — the Manage Employees grid we may have lingered on
+	// (after the addEmployee prerequisite) ALSO renders a status="success" "Add" button, so that wait
+	// gives a false positive and the subsequent Add click would open the EMPLOYEE dialog. Wait for the
+	// tasks-specific header ("Tasks", absent on the "Manage Employees" header) so we only proceed on the
+	// real tasks screen; then confirm the Add button too.
+	await page
+		.locator(tasksHeaderCss)
+		.first()
+		.waitFor({ state: 'visible', timeout: 30000 })
+		.catch(() => undefined);
 	await page
 		.locator(AddTaskPage.addTaskButtonCss)
 		.first()
@@ -87,26 +102,46 @@ export const navigateToTasksDashboard = async () => {
 };
 
 // Re-anchor on the Tasks dashboard before any toolbar/grid interaction. A late/queued history.back()
-// (left by an nb-dialog/datepicker overlay closing) can pop the SPA OFF the tasks route SEVERAL steps
-// later — landing on /#/pages/employees and dropping the toolbar action buttons to count 0, which is
-// exactly what made `button.action.primary nth(1)` hang for 60s in the round-4 dump. If we've drifted,
-// force the hash back (bounce so the assignment fires `hashchange`) and wait for the grid to re-mount.
+// (left by an nb-dialog/datepicker overlay closing during the add/edit form) is processed ASYNC and can
+// pop the SPA OFF the tasks route SEVERAL steps later — landing on /#/pages/employees (the route before
+// tasks in this spec) and dropping the grid rows / toolbar action buttons to count 0. That is exactly the
+// observed round-6 failure: the DOM at the 24s row-wait timeout was the Manage Employees grid, not tasks.
+//
+// The previous guard trusted `location.hash === '#/pages/tasks/dashboard'` and returned early — but the
+// hash and the RENDERED view can desync (a queued back() re-renders employees while the tasks hash string
+// is momentarily restored), and a single-tick double `location.hash =` assignment doesn't reliably fire a
+// `hashchange` Angular acts on. So DON'T trust the hash: verify the tasks HEADER actually rendered, and if
+// not, force the route with the proven bounce (dashboard -> tasks, via goto so it re-renders) and re-check.
+// A late back() that fires after the first force is caught by the second attempt. (Mirrors the hardened
+// ApprovalRequest.po.gotoApprovals; playbook pattern 8.)
 const reanchorTasksScreen = async () => {
 	const page = getPage();
-	const onTasks = await page
-		.evaluate(() => location.hash.split('?')[0] === '#/pages/tasks/dashboard')
-		.catch(() => true);
-	if (onTasks) return;
-	await page.evaluate(() => {
-		location.hash = '#/pages/dashboard';
-		location.hash = '#/pages/tasks/dashboard';
-	});
-	await page.waitForTimeout(800);
-	await page
-		.locator(AddTaskPage.selectTableRowCss)
-		.first()
-		.waitFor({ state: 'visible', timeout: 20000 })
-		.catch(() => undefined);
+	const header = page.locator(tasksHeaderCss).first();
+	const grid = page.locator(AddTaskPage.selectTableRowCss).first();
+	// Already on a rendered tasks screen with rows? Nothing to do.
+	if (await header.isVisible().catch(() => false)) return;
+	for (let attempt = 0; attempt < 2; attempt++) {
+		// Bounce through the dashboard first so the assignment to the tasks hash is a genuine change that
+		// fires `hashchange`; use goto() for the target so the SPA definitely re-renders even from a
+		// same-document state.
+		await page.evaluate(() => {
+			location.hash = '#/pages/dashboard';
+		});
+		await page.waitForTimeout(300);
+		await page.goto('/#/pages/tasks/dashboard');
+		await page.evaluate(() => {
+			if (location.hash.split('?')[0] !== '#/pages/tasks/dashboard') {
+				location.hash = '#/pages/tasks/dashboard';
+			}
+		});
+		// Absorb any queued history.back() that pops us back off-route, then confirm the header rendered.
+		await page.waitForTimeout(800);
+		if (await header.waitFor({ state: 'visible', timeout: 15000 }).then(() => true).catch(() => false)) {
+			break;
+		}
+	}
+	// Best-effort: let the grid rows mount before the caller interacts.
+	await grid.waitFor({ state: 'visible', timeout: 20000 }).catch(() => undefined);
 };
 
 export const gridBtnExists = async () => {
@@ -327,7 +362,12 @@ export const deleteTaskButtonVisible = async () => {
 };
 
 export const clickDeleteTaskButton = async () => {
-	await clickButton(AddTaskPage.deleteTaskButtonCss);
+	// The Delete toolbar action is clicked right after selecting a row that followed the edit/duplicate
+	// save — a grid-refresh spinner or a fading edit-dialog backdrop can still sit on top, so a coordinate
+	// click (even force) can miss. Settle any spinner, then dispatch the (click) straight to the trash
+	// button through the overlay, matching the Edit/Duplicate toolbar actions in this file. (Patterns 1 + 2.)
+	await waitForSpinnerGone();
+	await dispatchClick(AddTaskPage.deleteTaskButtonCss);
 };
 
 export const confirmDeleteTaskButtonVisible = async () => {

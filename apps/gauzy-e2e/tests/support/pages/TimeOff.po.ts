@@ -114,8 +114,9 @@ export const clickTimeOffPolicyDropdown = async () => {
 	// fading cdk-overlay-backdrop (left by the preceding employee ng-select / quick-add) — a coordinate
 	// {force:true} click is swallowed by that backdrop and the panel never opens (round-4 failure: the
 	// '.option-list nb-option' assertion timed out). Settle any spinner, then dispatch the click straight
-	// to the nb-select host so the (click) handler fires regardless of the overlay. The open is RETRIED in
-	// selectTimeOffPolicy below, so this first open need not take.
+	// to the nb-select host so the (click) handler fires regardless of the overlay. The open is IDEMPOTENTLY
+	// re-driven in selectTimeOffPolicy below (which only re-opens when NO option is visible), so this first
+	// open need not take — but do NOT re-toggle here after it succeeds.
 	await waitForSpinnerGone();
 	await dispatchClick(TimeOffPage.timeOffPolicyDropdownCss);
 	await getPage().waitForTimeout(500);
@@ -132,25 +133,43 @@ export const timeOffPolicyDropdownOptionVisible = async () => {
 };
 
 export const selectTimeOffPolicy = async (data: string) => {
-	// Pick the policy by text (REQUIRED — Save stays disabled until policyId is set). Retry opening the
-	// nb-select (dispatchClick the host) until its options render, then click the matching option. Mirrors
-	// the proven open-retry pick in GoalsKPI.selectEmployeeFromDropdown: the panel can fail to open behind a
-	// fading backdrop on the first dispatch, so re-open until '.option-list nb-option' appears.
+	// Pick the policy by text (REQUIRED — Save stays disabled until BOTH policyId AND policy are set; the
+	// nb-select's (selectedChange) is what fires onPolicySelected() to set the `policy` control, so we MUST
+	// actually click the option, not just set the value).
+	//
+	// ROUND-6 root cause (confirmed by the failure DOM: the request dialog was still open with the policy
+	// button reading "Select Time-off Policy" and Save [disabled], so the option was never picked): the old
+	// loop dispatch-toggled the nb-select on EVERY miss. Since dispatchClick on an nb-select host TOGGLES
+	// the panel, a miss on an ALREADY-OPEN panel (options just hadn't rendered yet) CLOSED it, so the loop
+	// oscillated open/closed and could be closed exactly when the option became clickable. Fix: only (re)open
+	// when NO option is currently rendered (idempotent open), give the async policies fetch time to populate,
+	// then click the matching '.option-list nb-option' filtered by the exact policy name (the proven
+	// nb-option pick pattern). Pollution-safe: we filter by the exact policy name, never an index.
 	const page = getPage();
-	const option = page.locator(TimeOffPage.timeOffPolicyDropdownOptionCss).filter({ hasText: data });
-	for (let i = 0; i < 5; i++) {
+	const anyOption = page.locator(TimeOffPage.timeOffPolicyDropdownOptionCss);
+	const option = anyOption.filter({ hasText: data });
+	for (let i = 0; i < 6; i++) {
+		// Already rendered? Pick it. Use dispatchEvent('click') on the option (not a coordinate force-click)
+		// so the nb-option's selectedChange fires even if the option-list overlay's own cdk backdrop is
+		// mid-fade over it — a coordinate click can land on that backdrop and never select the policy.
 		if (await option.first().isVisible().catch(() => false)) {
-			await option.first().click({ force: true });
+			await option.first().dispatchEvent('click').catch(() => option.first().click({ force: true }));
 			return;
 		}
-		await waitForSpinnerGone();
-		await dispatchClick(TimeOffPage.timeOffPolicyDropdownCss);
+		// Panel closed with no options visible → (re)open it. Only toggle when nothing is rendered so we
+		// never close a panel that's mid-populating.
+		if (!(await anyOption.first().isVisible().catch(() => false))) {
+			await waitForSpinnerGone();
+			await dispatchClick(TimeOffPage.timeOffPolicyDropdownCss);
+		}
+		// Panel is (now) open but our option isn't there yet → wait for the async policies to load rather
+		// than immediately re-toggling it shut.
 		await page.waitForTimeout(900);
 	}
-	// Last attempt: click whatever matched (best-effort) so the flow proceeds rather than hard-failing.
+	// Last attempt: dispatch on whatever matched (best-effort) so the flow proceeds rather than hard-failing.
 	await option
 		.first()
-		.click({ force: true, timeout: 8000 })
+		.dispatchEvent('click')
 		.catch(() => undefined);
 };
 
@@ -213,22 +232,25 @@ export const clickSelectHolidayName = async () => {
 };
 
 export const selectHolidayOption = async (option: string | number) => {
-	// Best-effort, with an open-retry: the holiday list loads async; if the panel didn't open on the first
-	// dispatch, re-open the nb-select until an option renders, then pick it. Avoids a hard 60s timeout on a
-	// panel that failed to open behind a backdrop.
+	// Best-effort, idempotent open + retry: the holiday list loads async. Same oscillation hazard as the
+	// policy select — dispatchClick TOGGLES the nb-select, so re-dispatching on an already-open (but empty)
+	// panel would CLOSE it. Only (re)open when NO option is rendered, wait for the async list to populate,
+	// then dispatch the click on the matching option (defeats the option-list overlay's own fading backdrop).
 	const page = getPage();
 	const opts = page.locator(TimeOffPage.selectHolidayDropdownOptionCss);
 	const target = typeof option === 'number' ? opts.nth(option) : opts.filter({ hasText: String(option) }).first();
-	for (let i = 0; i < 5; i++) {
+	for (let i = 0; i < 6; i++) {
 		if (await target.isVisible().catch(() => false)) {
-			await target.click({ force: true });
+			await target.dispatchEvent('click').catch(() => target.click({ force: true }));
 			return;
 		}
-		await waitForSpinnerGone();
-		await dispatchClick(TimeOffPage.holidayNameSelectCss);
+		if (!(await opts.first().isVisible().catch(() => false))) {
+			await waitForSpinnerGone();
+			await dispatchClick(TimeOffPage.holidayNameSelectCss);
+		}
 		await page.waitForTimeout(900);
 	}
-	await target.click({ force: true, timeout: 8000 }).catch(() => undefined);
+	await target.dispatchEvent('click').catch(() => undefined);
 };
 
 export const selectEmployeeDropdownVisible = async () => verifyElementIsVisible(TimeOffPage.selectEmployeeCss);
@@ -249,13 +271,23 @@ export const selectEmployeeFromHolidayDropdown = async (index: number) => {
 	// option[index] click must not hang the 60s task timeout on an empty/closed list.
 	const page = getPage();
 	const option = page.locator(TimeOffPage.selectEmployeeDropdownOptionCss);
-	for (let i = 0; i < 4; i++) {
+	for (let i = 0; i < 5; i++) {
 		if (await option.first().isVisible().catch(() => false)) {
-			await option.nth(index).click({ force: true }).catch(() => {});
+			// Dispatch the click so the option's selectedChange fires even under the overlay's fading backdrop.
+			await option
+				.nth(index)
+				.dispatchEvent('click')
+				.catch(() => option.nth(index).click({ force: true }).catch(() => {}));
+			// Close the multi-select panel so it doesn't overlay the next control (nb-select multiple stays
+			// open after a pick). Escape only dismisses the panel, keeping the selection.
+			await page.keyboard.press('Escape').catch(() => {});
 			return;
 		}
-		await waitForSpinnerGone();
-		await dispatchClick(TimeOffPage.selectEmployeeCss);
+		// Idempotent open: only (re)toggle when nothing is rendered, so we never close a mid-populating list.
+		if (!(await option.first().isVisible().catch(() => false))) {
+			await waitForSpinnerGone();
+			await dispatchClick(TimeOffPage.selectEmployeeCss);
+		}
 		await page.waitForTimeout(900);
 	}
 	await page.keyboard.press('Escape').catch(() => {});
@@ -406,7 +438,16 @@ export const enterNewPolicyName = async (data: string) => {
 
 export const waitMessageToHide = async () => waitElementToHide(TimeOffPage.toastrMessageCss);
 
-export const verifyPolicyExists = async (text: string) => verifyText(TimeOffPage.verifyPolicyCss, text);
+export const verifyPolicyExists = async (text: string) => {
+	// Assert the policy name renders in a grid cell. Used for BOTH the request grid (Policy column, a
+	// custom ApprovalPolicyComponent that renders <div>{{ value.name }}</div>) and the settings grid
+	// (Name column, a type:'string' cell). The old 'div.ng-star-inserted' worked for the custom-render
+	// request cell but a plain string cell has no such wrapper div — so scope the verify to the smart-table
+	// CELL element (present in both grids) filtered by the exact name. This is pollution-safe (matches the
+	// unique/known policy text, not an index) and covers both cell render types.
+	await waitForSpinnerGone();
+	await verifyText(TimeOffPage.verifyPolicyCss, text);
+};
 
 export const verifyPolicyIsDeleted = async (text: string) => verifyTextNotExisting(TimeOffPage.verifyPolicyCss, text);
 

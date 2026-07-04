@@ -28,6 +28,11 @@ export const OrganizationEquipmentPage = {
 	equipmentSharingRoute: '**/pages/organization/equipment-sharing',
 	equipmentSharingPolicyRoute: '**/pages/organization/equipment-sharing-policy',
 	selectEquipmentDropdownCss: 'ngx-equipment-sharing-mutation [formcontrolname="equipment"]',
+	// The equipment <nb-select> renders each option as `<nb-option>{{ item.name }}</nb-option>` in the
+	// cdk overlay '.option-list'. The request grid's first column shows sharing.equipment.name (NOT the
+	// request's own `name` — see EquipmentSharingComponent resultMap), so this spec MUST pick OUR uniquely
+	// named equipment (filter by name), not a blind index-0 which — on the polluted shared grid — grabs a
+	// different equipment and makes the request unverifiable/unselectable by our name.
 	selectEquipmentDropdownOptionCss: '.option-list nb-option',
 	selectPolicyDropdownCss: 'ngx-equipment-sharing-mutation [formcontrolname="equipmentSharingPolicyId"]',
 	selectPolicyDropdownOptionCss: '.option-list nb-option',

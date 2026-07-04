@@ -131,6 +131,26 @@ const clickOptionByIndex = async (index: number) => {
 	return false;
 };
 
+// Close a leftover floating invite dialog that would otherwise cover the grid + toolbar (so a row click
+// lands on its backdrop and selection never engages — the round-6 stuck-"Invite Contact"-dialog failure).
+// NbDialog closes on Escape; if the invite dialog is still up, Escape it, then wait out the fading
+// cdk-overlay backdrop. Best-effort throughout (mirrors the proven GoalsKPI.po / AddTasks.po helper).
+const dismissLeftoverDialog = async () => {
+	const page = getPage();
+	// #emailInput is unique to the invite dialog — if it's present the dialog is still open.
+	const inviteEmail = page.locator(CustomersPage.customerEmailCss).first();
+	if (await inviteEmail.isVisible().catch(() => false)) {
+		await page.keyboard.press('Escape').catch(() => undefined);
+		await inviteEmail.waitFor({ state: 'detached', timeout: 6000 }).catch(() => undefined);
+	}
+	// Wait out any fading cdk backdrop left behind by the dismissed dialog.
+	await page
+		.locator('.cdk-overlay-backdrop')
+		.first()
+		.waitFor({ state: 'detached', timeout: 4000 })
+		.catch(() => undefined);
+};
+
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };
@@ -330,10 +350,26 @@ export const saveInviteButtonVisible = async () => {
 export const clickSaveInviteButton = async () => {
 	// dispatchClick (not a coordinate force-click): a leftover stepper/dialog backdrop can sit over the
 	// dialog footer and swallow the click, leaving the invite dialog OPEN as a floating cdk-overlay (seen
-	// in the round-5 failure snapshot — the "Invite Contact" card was still up at the final assertion).
-	// Dispatching the click fires the (click) handler regardless of the overlay. Mirrors green Clients.po.
+	// in the round-5/6 failure snapshot — the "Invite Contact" card was STILL up at the final assertion,
+	// which then covered the toolbar so every later row-select/edit/delete silently no-op'd).
+	//
+	// The invite dialog only closes once inviteContact() resolves (create contact -> send invite), which
+	// can lag behind a single dispatch, AND the Email-Invite button is [disabled] until the async
+	// email-uniqueness validator settles — a dispatch fired while it is disabled is a no-op. So retry the
+	// dispatch, waiting each time for the dialog's own email field (#emailInput, unique to this dialog) to
+	// DETACH as proof the dialog actually closed. Only give up (and let the next assertion surface it)
+	// after several attempts.
 	await waitForSpinnerGone();
-	await dispatchClick(CustomersPage.saveInviteButtonCss);
+	const inviteEmail = getPage().locator(CustomersPage.customerEmailCss).first();
+	for (let attempt = 0; attempt < 6; attempt++) {
+		await dispatchClick(CustomersPage.saveInviteButtonCss).catch(() => undefined);
+		try {
+			await inviteEmail.waitFor({ state: 'detached', timeout: 6000 });
+			return;
+		} catch {
+			await getPage().waitForTimeout(600);
+		}
+	}
 };
 
 export const tableRowVisible = async () => {
@@ -360,13 +396,18 @@ export const selectTableRow = async (index: number) => {
 };
 
 // Pollution-proof row selection: the suite shares ONE serial DB, so by the time this spec runs the grid
-// holds rows from earlier specs, AND this spec's own add+invite create TWO rows with the same name. A
-// fixed nth(0) therefore selects the WRONG record (the round-5 failure: delete hit row 0 while the edited
-// "deleteName" row survived). Scope the click to the row that actually contains `name`, then poll the
-// shared toolbar Edit button (the row click toggles selection). Same settle/poll shape as selectTableRow.
+// holds rows from earlier specs PLUS this spec's own add + invite rows. A fixed nth(0) therefore selects
+// the WRONG record (round-5: delete hit row 0 while the edited "deleteName" row survived). Scope the click
+// to the row that actually contains `name`, then poll the shared toolbar Edit button (the row click
+// toggles selection). Same settle/poll shape as selectTableRow.
 export const selectTableRowByText = async (name: string) => {
 	const page = getPage();
 	await waitForSpinnerGone();
+	// Defensive: if a prior step left an invite/mutation nb-dialog floating (its cdk-overlay backdrop
+	// covers the whole grid + toolbar, so the row click below would hit the backdrop and selection would
+	// never engage — the round-6 stuck-"Invite Contact"-dialog failure), close it before selecting. The
+	// invite dialog closes on Escape (NbDialog closeOnEsc); if any leftover cdk backdrop remains, click it.
+	await dismissLeftoverDialog();
 	await page.waitForLoadState('networkidle').catch(() => {});
 	await page.waitForTimeout(1500);
 	const row = page.locator(CustomersPage.selectTableRowCss).filter({ hasText: name }).first();

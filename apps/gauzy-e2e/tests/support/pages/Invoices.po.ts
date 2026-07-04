@@ -191,19 +191,30 @@ export const clickSaveAsDraftButton = async (text: string) => {
 
 export const tableRowVisible = async () => verifyElementIsVisible(InvoicesPage.tableRowCss);
 
-export const selectTableRow = async (index: number) => {
+export const selectTableRow = async (index: number, name?: string) => {
 	const page = getPage();
 	// Let the grid settle after the preceding mutation (it re-renders/refetches); a click during that
 	// window is lost or instantly cleared. Then click the data row ONCE and poll the toolbar Edit button to
 	// enable — clicking a row TOGGLES its selection, so a blind second click would deselect it. Only
 	// re-click if the first was lost to a late re-render. (Polls isDisabled() rather than holding an
 	// elementHandle, which goes stale across the grid's re-render. Mirrors the proven SalesInvoices.po.)
+	//
+	// POLLUTION RESILIENCE: EstimatesTest runs BEFORE this spec (alphabetically) and CONVERTS an estimate to
+	// an invoice, so the invoices grid already holds a foreign invoice row (with a different contact) before
+	// this spec even selects a row. A plain .nth(0) would then grab the WRONG record. When `name` (this
+	// spec's unique faker contact) is given, scope the row to it (the grid's Contact column renders the
+	// contact name) so we always act on OUR invoice regardless of order. Falls back to .nth(index) if the
+	// named row hasn't rendered yet.
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
 	await page.waitForTimeout(1500);
-	const row = page.locator(InvoicesPage.tableRowCss).nth(index);
+	const rows = page.locator(InvoicesPage.tableRowCss);
+	const namedRow = name ? rows.filter({ hasText: name }).first() : rows.nth(index);
 	const editBtn = page.locator(InvoicesPage.editButtonCss).first();
 	for (let attempt = 0; attempt < 4; attempt++) {
+		// Prefer the uniquely-named row; if it isn't present yet (late render), fall back to the index row.
+		const row =
+			name && (await namedRow.count().catch(() => 0)) > 0 ? namedRow : rows.nth(index);
 		await row.click({ force: true }).catch(() => {});
 		for (let i = 0; i < 8; i++) {
 			await page.waitForTimeout(350);
@@ -230,24 +241,46 @@ export const clickBackButton = async () => dispatchClick(InvoicesPage.backButton
 export const confirmButtonVisible = async () => verifyElementIsVisible(InvoicesPage.confirmButtonCss);
 
 export const clickConfirmButton = async () => {
-	// Send/Email confirm dialog button. A SINGLE dispatchClick is racy here: the dialog body renders
-	// <ga-invoice-pdf> (an async PDF/iframe preview, plus a CKEditor) so the first dispatch can land before
-	// the (click)="send()"/"sendEmail()" handler is wired, and the dialog stays OPEN with the invoice never
-	// sent — exactly the observed failure (the "Send this invoice to ...?" dialog was still up and the row
-	// was still Draft, so div.badge-success never appeared). Dispatch the success button, then POLL for the
-	// mutation dialog host (ga-invoice-send / ga-invoice-email) to detach — re-dispatching if it lingers — so
-	// the send/email actually fires before we move on. dispatchClick (not a coordinate click) so the fading
-	// popover backdrop can't intercept it. Mirrors the proven SalesInvoices.po / SalesEstimates.po pattern.
+	// Send/Email confirm dialog OK button. ROOT CAUSE of the round-6 failure (captured DOM: "Send this
+	// invoice to <name> ?" dialog still up, iframe + Cancel/Send, row still Draft, so div.badge-success never
+	// rendered): the dialog's Send button is `<button (click)="send()" status="success" nbButton>`, and
+	// `send()` first `await`s `invoicesService.update(...)` and only THEN `dialogRef.close()`s. A bare
+	// `dispatchEvent('click')` fires a synthetic (untrusted) event with no button/coordinate data; against
+	// THIS button — unlike the toolbar popover actions — it did NOT drive `send()` to completion across all
+	// retries, so the dialog stayed open and the invoice never left Draft. Fix (mirrors the proven-green
+	// Estimates.po): the mutation dialog is the TOPMOST cdk-overlay, so its own Send button is NOT under any
+	// fading backdrop — a real, trusted `.click()` lands on it and actually fires `send()`. Scope the confirm
+	// button to the LIVE dialog host (never a stale leaked footer), click for real, then poll the host
+	// (ga-invoice-send / ga-invoice-email) to DETACH so the mutation truly completed before we move on;
+	// re-click if it lingers (the PDF/iframe preview can momentarily steal focus while it streams).
+	// dispatchEvent stays only as a last-ditch fallback if the real click throws.
 	const page = getPage();
 	const dialogHost = page.locator('ga-invoice-send, ga-invoice-email').first();
-	for (let i = 0; i < 5; i++) {
+	// Wait for the mutation dialog to actually be on screen before clicking — the (click)="send()/sendEmail()"
+	// handler isn't wired until the dialog component has rendered.
+	await dialogHost.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+	// The email dialog's Send is `[disabled]="form.invalid"`, so a real click only lands once the email field
+	// is valid (the spec fills it first) — the retry loop below absorbs Angular's settle tick.
+	const confirmBtn = dialogHost.locator('nb-card-footer.text-left > button[status="success"]').first();
+	for (let i = 0; i < 8; i++) {
 		await waitForSpinnerGone();
-		await dispatchClick(InvoicesPage.confirmButtonCss).catch(() => {});
+		await confirmBtn.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {});
+		// Real trusted click first (the dialog is the topmost overlay, so nothing intercepts it and this is
+		// what actually drives async send()/sendEmail() to run and close the dialog). dispatchEvent stays as
+		// a fallback only if the real click throws (handle detached mid-animation).
+		await confirmBtn.click({ force: true, timeout: 6000 }).catch(async () => {
+			await confirmBtn.dispatchEvent('click').catch(async () => {
+				await dispatchClick(InvoicesPage.confirmButtonCss).catch(() => {});
+			});
+		});
 		try {
 			await dialogHost.waitFor({ state: 'detached', timeout: 6000 });
+			// let the onClose refresh ($refresh$ / invoices$) settle so the grid repaints the SENT badge
+			await waitForSpinnerGone();
+			await page.waitForLoadState('networkidle').catch(() => {});
 			return;
 		} catch {
-			// dialog still open — the click didn't take (PDF preview still wiring up); loop and re-dispatch
+			// dialog still open — the click didn't take (PDF preview still wiring up); loop and re-click
 		}
 	}
 };

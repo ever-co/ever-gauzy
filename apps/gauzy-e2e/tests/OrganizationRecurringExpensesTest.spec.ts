@@ -1,5 +1,4 @@
 import { test } from './support/fixtures';
-import { getPage } from './support/page-context';
 import * as loginPage from './support/pages/Login.po';
 import { LoginPageData } from '../src/support/Base/pagedata/LoginPageData';
 import * as organizationRecurringExpensesPage from './support/pages/OrganizationRecurringExpenses.po';
@@ -12,7 +11,7 @@ test.describe('Organization recurring expenses test', () => {
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 
 		await test.step('Should be able to add new expense', async () => {
-			await getPage().goto('/#/pages/organization/expense-recurring');
+			await organizationRecurringExpensesPage.navigateToRecurringExpenses();
 			await organizationRecurringExpensesPage.addButtonVisible();
 			await organizationRecurringExpensesPage.clickAddButton();
 			await organizationRecurringExpensesPage.expenseDropdownVisible();

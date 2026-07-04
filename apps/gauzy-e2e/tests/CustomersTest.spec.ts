@@ -14,6 +14,7 @@ import { CustomCommands } from './support/commands';
 
 let email = ' ';
 let fullName = ' ';
+let inviteName = ' ';
 let deleteName = ' ';
 let city = ' ';
 let postcode = ' ';
@@ -24,6 +25,12 @@ test.describe('Customers test', () => {
 	test('Customers test', async () => {
 		email = faker.internet.exampleEmail();
 		fullName = faker.person.firstName() + ' ' + faker.person.lastName();
+		// Invite must create a SEPARATE record with its OWN unique name (mirrors the verified-green
+		// ClientsTest). Reusing `fullName` for both add + invite left two identically-named rows in the
+		// shared serial grid, so the later select-by-name became ambiguous and the invite's own
+		// verify/close raced against the add row of the same name. A distinct name keeps every downstream
+		// select-by-name (edit picks fullName, delete picks deleteName) unambiguous.
+		inviteName = faker.person.firstName() + ' ' + faker.person.lastName();
 		deleteName = faker.person.firstName() + ' ' + faker.person.lastName();
 		city = faker.location.city();
 		postcode = faker.location.zipCode();
@@ -101,15 +108,18 @@ test.describe('Customers test', () => {
 			await customersPage.inviteButtonVisible();
 			await customersPage.clickInviteButton();
 			await customersPage.customerNameInputVisible();
-			await customersPage.enterCustomerNameData(fullName);
+			// Invite a DISTINCT name + email so the created contact does not collide with the add row
+			// (the invite email validator also rejects an email already tied to a user, so a fresh email
+			// keeps the Email-Invite button enabled).
+			await customersPage.enterCustomerNameData(inviteName);
 			await customersPage.customerPhoneInputVisible();
 			await customersPage.enterCustomerPhoneData(CustomersPageData.defaultPhone);
 			await customersPage.customerEmailInputVisible();
-			await customersPage.enterCustomerEmailData(email);
+			await customersPage.enterCustomerEmailData(faker.internet.exampleEmail());
 			await customersPage.saveInviteButtonVisible();
 			await customersPage.clickSaveInviteButton();
 			await customersPage.waitMessageToHide();
-			await customersPage.verifyCustomerExists(fullName);
+			await customersPage.verifyCustomerExists(inviteName);
 		});
 
 		await test.step('Should be able to edit customer', async () => {

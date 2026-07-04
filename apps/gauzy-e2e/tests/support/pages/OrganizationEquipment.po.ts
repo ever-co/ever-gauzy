@@ -337,6 +337,23 @@ export const selectEquipmentFromDropdown = async (index: number) => {
 	await clickButtonByIndex(OrganizationEquipmentPage.selectEquipmentDropdownOptionCss, index);
 };
 
+// POLLUTION RESILIENCE + CORRECT IDENTITY: the equipment-sharing request grid's first ("Equipment name")
+// column renders sharing.equipment.name — NOT the request's own `name` field (see EquipmentSharingComponent
+// resultMap: `name: sharing.equipment ? sharing.equipment.name : sharing.name`). So the request is identified
+// downstream (verify-exists / select-row-to-edit-or-delete / verify-deleted) by the EQUIPMENT's name, and this
+// spec created a uniquely-named equipment. Pick THAT equipment by name (the shared grid holds equipments from
+// earlier specs, so a blind index-0 would attach the wrong one and break every later by-name lookup). The
+// nb-select options are '.option-list nb-option' with text = the equipment name.
+export const selectEquipmentFromDropdownByName = async (name: string) => {
+	const page = getPage();
+	const option = page
+		.locator(OrganizationEquipmentPage.selectEquipmentDropdownOptionCss)
+		.filter({ hasText: name })
+		.first();
+	await option.waitFor({ state: 'visible', timeout: 24000 });
+	await option.click({ force: true });
+};
+
 export const approvalPolicyDropdownVisible = async () => {
 	await verifyElementIsVisible(OrganizationEquipmentPage.selectPolicyDropdownCss);
 };

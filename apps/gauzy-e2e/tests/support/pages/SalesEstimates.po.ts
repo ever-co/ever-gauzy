@@ -316,33 +316,46 @@ export const confirmButtonVisible = async () => {
 };
 
 export const clickConfirmButton = async () => {
-	// Send/Email confirm dialog button. A SINGLE dispatchClick is racy here: the dialog body renders
-	// <ga-invoice-pdf> (an async PDF/iframe preview) so the first dispatch can land before the (click)
-	// handler is wired, and the dialog stays OPEN with the estimate never sent. This was THE captured
-	// failure: the "Send this estimate to Michael Sawayn ?" dialog was still up (iframe + Cancel/Send) and
-	// every grid row was still Draft, so div.badge-success never appeared. Fixes vs. the old version:
-	// (1) WAIT for the mutation dialog host (ga-invoice-send / ga-invoice-email) to actually be on screen
-	//     before clicking — the (click)="send()/sendEmail()" handler isn't wired until the dialog component
-	//     has rendered, and dispatching before that is a silent no-op.
-	// (2) Scope the confirm button to the LIVE dialog host (never a stale page-level handle), with a
-	//     page-level dispatchClick fallback if the live handle is momentarily stale.
-	// (3) Loop more (8x) and poll the host to detach so the send/email truly fires before we move on.
-	// dispatchEvent (not a coordinate click) so the fading popover backdrop can't intercept it. Mirrors the
-	// proven Estimates.po pattern.
+	// Send/Email confirm dialog OK button. ROOT CAUSE of the round-6 failure (the captured DOM: "Send this
+	// estimate to <name> ?" dialog still up with iframe + Cancel/Send, every grid row still Draft, so
+	// div.badge-success never rendered): the dialog's Send button is `<button (click)="send()" status="success"
+	// nbButton>` and `send()` first `await`s `invoicesService.update(...)` and only THEN `dialogRef.close()`s.
+	// A bare `dispatchEvent('click')` dispatches a synthetic (untrusted) event with no button/coordinate data;
+	// against THIS button — unlike the popover actions — it did NOT drive `send()` to completion, so the dialog
+	// stayed open and the estimate never left Draft. Fix (mirrors the proven Estimates.po): the mutation dialog
+	// is the TOPMOST cdk-overlay, so its own Send button is NOT under any fading backdrop — a real, trusted
+	// `.click()` lands on it and actually fires `send()`. Click for real, then poll the dialog host
+	// (ga-invoice-send / ga-invoice-email) to DETACH so the mutation truly completed before we move on; re-click
+	// if it lingers (the PDF/iframe preview can momentarily steal focus while it streams). dispatchEvent stays
+	// only as a last-ditch fallback if the real click throws (handle detached mid-animation).
 	const page = getPage();
+	// Wait for the mutation dialog to actually be on screen before clicking — the (click)="send()/sendEmail()"
+	// handler isn't wired until the dialog component has rendered. Scope the confirm button to the LIVE dialog
+	// host so we never grab a stale handle.
 	const dialogHost = page.locator('ga-invoice-send, ga-invoice-email').first();
 	await dialogHost.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+	// The email dialog's Send is `[disabled]="form.invalid"`, so a real click only lands once the email field is
+	// valid — the retry loop below absorbs Angular's settle tick.
 	const confirmBtn = dialogHost.locator('nb-card-footer.text-left > button[status="success"]').first();
 	for (let i = 0; i < 8; i++) {
 		await waitForSpinnerGone();
-		await confirmBtn.dispatchEvent('click').catch(async () => {
-			await dispatchClick(SalesEstimatesPage.confirmButtonCss).catch(() => {});
+		await confirmBtn.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {});
+		// Real trusted click first (the dialog is the topmost overlay, so nothing intercepts it and this is what
+		// actually drives async `send()`/`sendEmail()` to run and close the dialog). A bare dispatchEvent('click')
+		// was NOT closing this dialog (captured DOM: dialog still up, rows still Draft) — hence a genuine click.
+		await confirmBtn.click({ force: true, timeout: 6000 }).catch(async () => {
+			await confirmBtn.dispatchEvent('click').catch(async () => {
+				await dispatchClick(SalesEstimatesPage.confirmButtonCss).catch(() => {});
+			});
 		});
 		try {
 			await dialogHost.waitFor({ state: 'detached', timeout: 6000 });
+			// let the onClose refresh ($refresh$ / invoices$) settle so the grid repaints the SENT badge
+			await waitForSpinnerGone();
+			await page.waitForLoadState('networkidle').catch(() => {});
 			return;
 		} catch {
-			// dialog still open — the click didn't take (PDF preview still wiring up); loop and re-dispatch
+			// dialog still open — the click didn't take (PDF preview still wiring up); loop and re-click
 		}
 	}
 };

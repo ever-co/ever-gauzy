@@ -6,18 +6,55 @@ import {
 	enterInput,
 	clickKeyboardBtnByKeycode,
 	verifyText,
-	verifyElementNotExist
+	verifyElementNotExist,
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { OrganizationRecurringExpensesPage } from '../../../src/support/Base/pageobjects/OrganizationRecurringExpensesPageObject';
+
+export const navigateToRecurringExpenses = async () => {
+	// login ends on the dashboard hash route; a bare goto('/#/pages/...') can be a
+	// same-document no-op (the Angular hash-router won't re-render), leaving the previous
+	// screen up. Force the hash + settle, then wait for this page's own card to render
+	// so the Add button is actually present before we assert on it.
+	const page = getPage();
+	await page.goto('/#/pages/organization/expense-recurring');
+	await page.evaluate(() => {
+		if (!location.hash.includes('/pages/organization/expense-recurring')) {
+			location.hash = '#/pages/organization/expense-recurring';
+		}
+	});
+	await page.waitForTimeout(800);
+	await page.locator('ga-expense-recurring nb-card').first().waitFor({ state: 'visible', timeout: 24000 });
+	await waitForSpinnerGone();
+};
 
 export const addButtonVisible = async () => {
 	await verifyElementIsVisible(OrganizationRecurringExpensesPage.addButtonCss);
 };
 
 export const clickAddButton = async () => {
-	await clickButton(OrganizationRecurringExpensesPage.addButtonCss);
+	// The Add button lives inside ngx-gauzy-button-action, whose toolbar slides via a
+	// translateX transition, and a fading cdk-overlay backdrop from an earlier spec's
+	// dialog can sit on top — a coordinate click (even {force:true}) then lands on the
+	// backdrop and the mutation dialog never opens (the observed failure). Dispatch the
+	// click straight to the button so the (click)="addOrganizationRecurringExpense()"
+	// handler fires regardless of the overlay, then confirm the dialog actually opened
+	// (retry once if a stray backdrop swallowed the first open).
+	const page = getPage();
+	const dialog = page.locator('ga-recurring-expense-mutation');
+	for (let i = 0; i < 3; i++) {
+		await dispatchClick(OrganizationRecurringExpensesPage.addButtonCss);
+		try {
+			await dialog.first().waitFor({ state: 'visible', timeout: 6000 });
+			return;
+		} catch {
+			await page.waitForTimeout(600);
+		}
+	}
+	await dialog.first().waitFor({ state: 'visible', timeout: 15000 });
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode) => {
@@ -155,7 +192,12 @@ export const deleteOnlyThisRadioButtonVisible = async () => {
 };
 
 export const clickDeleteOnlyThisRadioButton = async () => {
+	// nb-radio wires the (click) on its host but reflects the choice through the inner
+	// native input's ngModel; click the host and give the model a tick to update so the
+	// footer's OK button (disabled until selectedOption is set) becomes enabled.
+	const page = getPage();
 	await clickButton(OrganizationRecurringExpensesPage.deleteOnlyThisRadioButtonCss);
+	await page.waitForTimeout(400);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -163,7 +205,22 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	await clickButton(OrganizationRecurringExpensesPage.confirmDeleteExpenseButtonCss);
+	// The OK/delete button is [disabled] until a radio option is picked; a force-click on
+	// a disabled button is a no-op, so wait until it's actually enabled before clicking.
+	const page = getPage();
+	const okBtn = page.locator(OrganizationRecurringExpensesPage.confirmDeleteExpenseButtonCss).first();
+	await okBtn.waitFor({ state: 'visible', timeout: 15000 });
+	for (let i = 0; i < 8; i++) {
+		if (await okBtn.isEnabled()) break;
+		await page.waitForTimeout(400);
+	}
+	await okBtn.click({ force: true });
+	// Confirm the delete-confirmation dialog closes so the toast/reload can follow.
+	await page
+		.locator('ga-delete-confirmation')
+		.first()
+		.waitFor({ state: 'detached', timeout: 15000 })
+		.catch(() => undefined);
 };
 
 export const waitMessageToHide = async () => {

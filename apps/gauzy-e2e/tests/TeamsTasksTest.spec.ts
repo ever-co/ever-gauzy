@@ -11,9 +11,23 @@ import * as organizationTagsUserPage from './support/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../src/support/Base/pagedata/OrganizationTagsPageData';
 import * as organizationTeamsPage from './support/pages/OrganizationTeams.po';
 import { OrganizationTeamsPageData } from '../src/support/Base/pagedata/OrganizationTeamsPageData';
+import { faker } from '@faker-js/faker';
+
+// Unique per-run task titles. The suite shares ONE stateful DB and runs SERIALLY (CI too), so the
+// STATIC pagedata titles collide with rows this same spec left on an earlier run — and they are BYTE-FOR-BYTE
+// identical to AddTasksPageData's titles, so the two specs' rows can co-mingle in the shared task table. A
+// faker suffix makes EVERY downstream row-select / verify-exists / verify-deleted scope to THIS run's task
+// only (order-independent) and, crucially, makes the final verifyTaskIsDeleted's count-0 assertion immune to
+// a leftover same-base-title row from a prior run. Mirrors the proven AddTasksTest.spec pattern. (Round 6 —
+// pollution resilience is the #1 remaining failure cause.)
+let taskTitle = ' ';
+let editedTaskTitle = ' ';
 
 test.describe('Add teams tasks test', () => {
 	test('Add teams tasks test', async () => {
+		taskTitle = `${TeamsTasksPageData.defaultTaskTitle} ${faker.string.uuid()}`;
+		editedTaskTitle = `${TeamsTasksPageData.editTaskTitle} ${faker.string.uuid()}`;
+
 		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 
 		await test.step('Should be able to add new task', async () => {
@@ -53,7 +67,7 @@ test.describe('Add teams tasks test', () => {
 			await teamsTasksPage.selectTeamDropdownOption(0);
 			await teamsTasksPage.clickKeyboardButtonByKeyCode(9);
 			await teamsTasksPage.addTitleInputVisible();
-			await teamsTasksPage.enterTitleInputData(TeamsTasksPageData.defaultTaskTitle);
+			await teamsTasksPage.enterTitleInputData(taskTitle);
 			await teamsTasksPage.tagsMultiSelectVisible();
 			await teamsTasksPage.clickTagsMultiSelect();
 			await teamsTasksPage.selectTagsFromDropdown(0);
@@ -80,14 +94,14 @@ test.describe('Add teams tasks test', () => {
 			await teamsTasksPage.saveTaskButtonVisible();
 			await teamsTasksPage.clickSaveTaskButton();
 			await teamsTasksPage.waitMessageToHide();
-			await teamsTasksPage.verifyTaskExists(TeamsTasksPageData.defaultTaskTitle);
+			await teamsTasksPage.verifyTaskExists(taskTitle);
 		});
 
 		await test.step('Should be able to duplicate task', async () => {
 			await teamsTasksPage.tasksTableVisible();
 			// Pollution-resilient: select THIS run's row by its unique title (the shared grid can hold rows
 			// from earlier specs/runs, so index 0 would grab the wrong row). (Round 5.)
-			await teamsTasksPage.selectTaskRowByName(TeamsTasksPageData.defaultTaskTitle);
+			await teamsTasksPage.selectTaskRowByName(taskTitle);
 			await teamsTasksPage.duplicateOrEditTaskButtonVisible();
 			await teamsTasksPage.clickDuplicateOrEditTaskButton(0);
 			await teamsTasksPage.confirmDuplicateOrEditTaskButtonVisible();
@@ -98,7 +112,7 @@ test.describe('Add teams tasks test', () => {
 			await teamsTasksPage.waitMessageToHide();
 			await teamsTasksPage.tasksTableVisible();
 			// One of the two identical-title rows from the duplicate step — delete it by title, not index.
-			await teamsTasksPage.selectTaskRowByName(TeamsTasksPageData.defaultTaskTitle);
+			await teamsTasksPage.selectTaskRowByName(taskTitle);
 			await teamsTasksPage.deleteTaskButtonVisible();
 			await teamsTasksPage.clickDeleteTaskButton();
 			await teamsTasksPage.confirmDeleteTaskButtonVisible();
@@ -109,7 +123,7 @@ test.describe('Add teams tasks test', () => {
 			await teamsTasksPage.waitMessageToHide();
 			await teamsTasksPage.tasksTableVisible();
 			// Select the remaining original task by title to edit it.
-			await teamsTasksPage.selectTaskRowByName(TeamsTasksPageData.defaultTaskTitle);
+			await teamsTasksPage.selectTaskRowByName(taskTitle);
 			await teamsTasksPage.duplicateOrEditTaskButtonVisible();
 			await teamsTasksPage.clickDuplicateOrEditTaskButton(1);
 			await teamsTasksPage.selectProjectDropdownVisible();
@@ -118,7 +132,7 @@ test.describe('Add teams tasks test', () => {
 				TeamsTasksPageData.defaultTaskProject
 			);
 			await teamsTasksPage.addTitleInputVisible();
-			await teamsTasksPage.enterTitleInputData(TeamsTasksPageData.editTaskTitle);
+			await teamsTasksPage.enterTitleInputData(editedTaskTitle);
 			await teamsTasksPage.dueDateInputVisible();
 			await teamsTasksPage.enterDueDateData();
 			await teamsTasksPage.clickKeyboardButtonByKeyCode(9);
@@ -141,14 +155,14 @@ test.describe('Add teams tasks test', () => {
 			await teamsTasksPage.saveTaskButtonVisible();
 			await teamsTasksPage.clickSaveTaskButton();
 			await teamsTasksPage.waitMessageToHide();
-			await teamsTasksPage.verifyTaskExists(TeamsTasksPageData.editTaskTitle);
+			await teamsTasksPage.verifyTaskExists(editedTaskTitle);
 		});
 
 		await test.step('Should be able to delete task', async () => {
 			await teamsTasksPage.waitMessageToHide();
 			await teamsTasksPage.tasksTableVisible();
 			// Delete the just-edited task by its unique title (not index). (Round 5.)
-			await teamsTasksPage.selectTaskRowByName(TeamsTasksPageData.editTaskTitle);
+			await teamsTasksPage.selectTaskRowByName(editedTaskTitle);
 			await teamsTasksPage.deleteTaskButtonVisible();
 			await teamsTasksPage.clickDeleteTaskButton();
 			await teamsTasksPage.confirmDeleteTaskButtonVisible();
@@ -156,7 +170,7 @@ test.describe('Add teams tasks test', () => {
 			await teamsTasksPage.waitMessageToHide();
 			// Scope the deleted-check to the edited task's title (the row we just removed) so leftover rows
 			// from intra-run pollution don't flake the assertion. (Round 3 anti-pollution guidance.)
-			await teamsTasksPage.verifyTaskIsDeleted(TeamsTasksPageData.editTaskTitle);
+			await teamsTasksPage.verifyTaskIsDeleted(editedTaskTitle);
 		});
 	});
 });

@@ -101,7 +101,10 @@ test.describe('Organization equipment test', () => {
 			await organizationEquipmentPage.enterRequestNameInputData(requestName);
 			await organizationEquipmentPage.selectEquipmentDropdownVisible();
 			await organizationEquipmentPage.clickEquipmentDropdown();
-			await organizationEquipmentPage.selectEquipmentFromDropdown(0);
+			// Pick OUR uniquely-named equipment by name (not index-0): the request grid identifies each
+			// row by sharing.equipment.name, so on the polluted shared grid a blind index-0 would attach a
+			// different equipment and break the by-name verify / row-select / verify-deleted steps below.
+			await organizationEquipmentPage.selectEquipmentFromDropdownByName(equipmentName);
 			await organizationEquipmentPage.approvalPolicyDropdownVisible();
 			await organizationEquipmentPage.clickSelectPolicyDropdown();
 			await organizationEquipmentPage.selectPolicyFromDropdown(0);
@@ -118,7 +121,9 @@ test.describe('Organization equipment test', () => {
 			await organizationEquipmentPage.saveButtonVisible();
 			await organizationEquipmentPage.clickSaveButton();
 			await organizationEquipmentPage.waitMessageToHide();
-			await organizationEquipmentPage.verifySharingExists(requestName);
+			// The sharing grid's first column renders sharing.equipment.name — NOT the request's own `name`
+			// (EquipmentSharingComponent resultMap). Verify by the equipment name; requestName never renders.
+			await organizationEquipmentPage.verifySharingExists(equipmentName);
 			await organizationEquipmentPage.clickBackButton();
 		});
 
@@ -157,15 +162,19 @@ test.describe('Organization equipment test', () => {
 		await test.step('Should be able to edit equipment request', async () => {
 			await organizationEquipmentPage.equipmentSharingButtonVisible();
 			await organizationEquipmentPage.clickEquipmentSharingButton();
-			// Select OUR request row by its unique name (pollution-resilient), not by index.
-			await organizationEquipmentPage.selectTableRow(requestName);
+			// The sharing grid shows sharing.equipment.name, so OUR request row is found by the unique
+			// EQUIPMENT name (not the request's own name, which the grid never renders), pollution-resilient.
+			await organizationEquipmentPage.selectTableRow(equipmentName);
 			await organizationEquipmentPage.editButtonVisible();
 			await organizationEquipmentPage.clickEditButton();
 			await organizationEquipmentPage.requestNameInputVisible();
 			await organizationEquipmentPage.enterRequestNameInputData(requestName);
 			await organizationEquipmentPage.selectEquipmentDropdownVisible();
 			await organizationEquipmentPage.clickEquipmentDropdown();
-			await organizationEquipmentPage.selectEquipmentFromDropdown(0);
+			// Pick OUR uniquely-named equipment by name (not index-0): the request grid identifies each
+			// row by sharing.equipment.name, so on the polluted shared grid a blind index-0 would attach a
+			// different equipment and break the by-name verify / row-select / verify-deleted steps below.
+			await organizationEquipmentPage.selectEquipmentFromDropdownByName(equipmentName);
 			await organizationEquipmentPage.approvalPolicyDropdownVisible();
 			await organizationEquipmentPage.clickSelectPolicyDropdown();
 			await organizationEquipmentPage.selectPolicyFromDropdown(0);
@@ -179,15 +188,16 @@ test.describe('Organization equipment test', () => {
 
 		await test.step('Should be able to delete equipment request', async () => {
 			await organizationEquipmentPage.waitMessageToHide();
-			// Select + verify-deleted by OUR unique request name (the request keeps its name through the edit
-			// step above, which re-entered the same requestName), not by index / whole-grid-empty.
-			await organizationEquipmentPage.selectTableRow(requestName);
+			// Select + verify-deleted by OUR unique EQUIPMENT name — the sharing grid renders
+			// sharing.equipment.name for the request row (not its own name), and only THIS spec's request
+			// references THIS unique equipment, so its absence (count 0) proves the request was deleted.
+			await organizationEquipmentPage.selectTableRow(equipmentName);
 			await organizationEquipmentPage.deleteButtonVisible();
 			await organizationEquipmentPage.clickDeleteButton();
 			await organizationEquipmentPage.confirmDeleteButtonVisible();
 			await organizationEquipmentPage.clickConfirmDeleteButton();
 			await organizationEquipmentPage.waitMessageToHide();
-			await organizationEquipmentPage.verifyEquipmentIsDeleted(requestName);
+			await organizationEquipmentPage.verifyEquipmentIsDeleted(equipmentName);
 		});
 
 		await test.step('Should be able to edit policy', async () => {

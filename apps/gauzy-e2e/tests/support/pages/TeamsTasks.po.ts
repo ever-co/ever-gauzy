@@ -196,10 +196,21 @@ export const clickTagsMultiSelect = async () => {
 	await getPage().keyboard.press('ArrowDown');
 };
 
-export const selectTagsFromDropdown = async (index: number) =>
-	// Each ng-option for a multi-select tag renders a checkbox; pick by index. (Options are in the
-	// appended .ng-dropdown-panel, so this matches the option's checkbox regardless of the backdrop.)
-	clickButtonByIndex(TeamsTasksPage.tagsSelectOptionCss, index);
+export const selectTagsFromDropdown = async (index: number) => {
+	// The tag options (div.ng-option in the appended .ng-dropdown-panel) load async after the panel opens,
+	// so wait for one before clicking; best-effort because the tag is optional (it's not part of any
+	// downstream assertion — the task saves fine without it), so we must not hard-hang the 60s force-timeout
+	// if the panel is slow/empty. Mirrors the best-effort team / employee pickers in this file. (Playbook
+	// pattern 1 + anti-hang.)
+	const page = getPage();
+	const option = page.locator(TeamsTasksPage.tagsSelectOptionCss);
+	try {
+		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		await option.nth(index).click({ force: true });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => undefined);
+	}
+};
 
 export const closeTagsMultiSelectDropdownButtonVisible = async () =>
 	verifyElementIsVisible(TeamsTasksPage.closeTagsMultiSelectDropdownCss);
@@ -327,12 +338,17 @@ export const duplicateOrEditTaskButtonVisible = async () =>
 export const clickDuplicateOrEditTaskButton = async (index: number) => {
 	// Edit + Duplicate share `button.action.primary`; a bare nth(index) is ambiguous and brittle across the
 	// show/hide transition wrapper (60s hang risk). Resolve each unambiguously by its nb-icon and dispatch
-	// the click straight through any fading backdrop. The spec passes index 0 (the "duplicate" step, which
-	// only re-opens+saves the dialog) and index 1 (the "edit" step); both just need a task dialog to open,
-	// so map 0 -> Edit, 1 -> Duplicate. (Patterns 1 + 2; mirrors AddTasks.po.clickEditTaskAction/Duplicate.)
+	// the click straight through any fading backdrop. The mapping MATTERS to the spec's logic (it is NOT a
+	// pick-any-dialog): the spec's "duplicate" step passes index 0 and RELIES on a second identical-title
+	// row being created (the later delete-one-then-edit-the-remaining steps need two rows). In this app
+	// duplicateTaskDialog() saves via createTask() (a real new row) while editTaskDialog() saves via
+	// editTask() (in-place). So map index 0 -> Duplicate (creates the 2nd row) and index 1 -> Edit (renames
+	// the survivor). The old 0->Edit mapping created NO duplicate, so the original row was deleted in the
+	// delete step and the edit step's selectTaskRowByName then timed out on a title that no longer existed.
+	// (Patterns 1 + 2; icons per task.component.html #actionButtons.)
 	await waitForSpinnerGone();
 	await dispatchClick(
-		index === 0 ? TeamsTasksPage.editTaskButtonCss : TeamsTasksPage.duplicateTaskButtonCss
+		index === 0 ? TeamsTasksPage.duplicateTaskButtonCss : TeamsTasksPage.editTaskButtonCss
 	);
 };
 
