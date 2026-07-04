@@ -2,8 +2,8 @@ name: Agent Build Prod
 
 # The packaged desktop & server apps are built ONLY when 'master' is promoted to the 'apps' branch
 # (branch flow: develop -> stage -> master -> apps).
-# The build version is resolved at build time (.scripts/bump-version-electron.js) from the
-# latest git tag, which 'Release Prod' creates on the merge to 'master' - so app releases
+# The build version is resolved at build time (.scripts/bump-version-electron.js) from the release
+# tag pointing at this commit, which 'Release Prod' creates on the merge to 'master' - so app releases
 # always carry the same version as the corresponding platform release and publish to the
 # same targets (each app repo's GitHub Releases + DigitalOcean Spaces).
 on:
@@ -18,8 +18,8 @@ concurrency:
 
 jobs:
   check-release-tag:
-    # Guards the latest-tag race (see header comment): builds stamp the LATEST repo tag, so
-    # only build when this exact commit carries a release tag - i.e. 'apps' was fast-forwarded
+    # Only build when this exact commit carries a release tag (the version stamped into the
+    # packages - see header comment) - i.e. 'apps' was fast-forwarded
     # to a 'master' commit that 'Release Prod' has already tagged. Retries absorb the short
     # merge -> tag delay when 'apps' is promoted right after the 'master' merge.
     runs-on: ubicloud-standard-4

@@ -2,8 +2,8 @@ name: Agent Build Stage
 
 # The packaged desktop & server stage apps are built ONLY when 'stage' is promoted to the 'stage-apps' branch
 # ('temp' is kept for ad-hoc testing). No new platform version is created here: the build
-# version is resolved at build time (.scripts/bump-version-electron.js) from the latest git
-# tag, which 'Release Stage' creates on the merge to 'stage' - so the stage app prerelease builds
+# version is resolved at build time (.scripts/bump-version-electron.js) from the release tag
+# pointing at this commit, which 'Release Stage' creates on the merge to 'stage' - so the stage app prerelease builds
 # carry the same version as the corresponding platform stage release.
 on:
   push:
@@ -18,8 +18,8 @@ concurrency:
 
 jobs:
   check-release-tag:
-    # Guards the latest-tag race (see header comment): builds stamp the LATEST repo tag, so
-    # only build when this exact commit carries a release tag - i.e. 'stage-apps' was
+    # Only build when this exact commit carries a release tag (the version stamped into the
+    # packages - see header comment) - i.e. 'stage-apps' was
     # fast-forwarded to a 'stage' commit that 'Release Stage' has already tagged. Retries
     # absorb the short merge -> tag delay. Ad-hoc pushes to 'temp' skip the check.
     runs-on: ubicloud-standard-4

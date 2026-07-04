@@ -30,6 +30,52 @@ async function getLatestTag(repoURL) {
 	}
 }
 
+async function getTagForCommit(repoURL, sha) {
+	const tags = await git.listRemote(['--tags', repoURL]);
+
+	const tagPattern = /^v?[0-9]+\.[0-9]+\.[0-9]+$/;
+
+	// Map tag name -> commit sha. Annotated tags list both the tag object sha and a
+	// peeled 'refs/tags/<name>^{}' line with the commit sha - the peeled sha wins.
+	const tagCommits = {};
+	for (const tagLine of tags.split('\n')) {
+		const [tagSha, ref] = tagLine.split(/\s+/);
+		if (!tagSha || !ref || !ref.startsWith('refs/tags/')) continue;
+		let name = ref.replace('refs/tags/', '');
+		const peeled = name.endsWith('^{}');
+		if (peeled) name = name.slice(0, -3);
+		if (!tagPattern.test(name)) continue;
+		if (peeled || !(name in tagCommits)) tagCommits[name] = tagSha;
+	}
+
+	const matches = Object.keys(tagCommits).filter((name) => tagCommits[name] === sha);
+	return matches
+		.sort((a, b) => {
+			return a.localeCompare(b, undefined, { numeric: true });
+		})
+		.pop();
+}
+
+// Prefer the release tag that points at the commit being built (created by the
+// Release Prod / Release Stage / Release Demo workflow on the promoted commit) so the
+// app version always matches the corresponding platform release, even when newer tags
+// exist (e.g. every develop merge creates one). Falls back to the latest tag for
+// builds of untagged commits (e.g. ad-hoc pushes to 'temp').
+async function getBuildTag(repoURL) {
+	try {
+		const sha = process.env.GITHUB_SHA || (await git.revparse(['HEAD'])).trim();
+		const tagAtCommit = await getTagForCommit(repoURL, sha);
+		if (tagAtCommit) {
+			console.log(`Using release tag pointing at build commit ${sha}:`, tagAtCommit);
+			return tagAtCommit;
+		}
+		console.log(`No release tag points at build commit ${sha}; falling back to the latest tag`);
+	} catch (error) {
+		console.error(`Error resolving the tag for the build commit: ${error.message}`);
+	}
+	return getLatestTag(repoURL);
+}
+
 module.exports.serverapi = async (isProd) => {
 	if (fs.existsSync('./apps/server-api/src/package.json')) {
 		let package = require('../apps/server-api/src/package.json');
@@ -41,7 +87,7 @@ module.exports.serverapi = async (isProd) => {
 		const appName = process.env.DESKTOP_API_SERVER_APP_NAME;
 		console.log('appName', appName);
 
-		const stdout = await getLatestTag(repoURL);
+		const stdout = await getBuildTag(repoURL);
 
 		let newVersion = stdout.trim();
 		console.log('latest tag', newVersion);
@@ -123,7 +169,7 @@ module.exports.server = async (isProd) => {
 		const appName = process.env.DESKTOP_SERVER_APP_NAME;
 		console.log('appName', appName);
 
-		const stdout = await getLatestTag(repoURL);
+		const stdout = await getBuildTag(repoURL);
 
 		let newVersion = stdout.trim();
 		console.log('latest tag', newVersion);
@@ -205,7 +251,7 @@ module.exports.servermcp = async (isProd) => {
 		const appName = process.env.DESKTOP_MCP_SERVER_APP_NAME;
 		console.log('appName', appName);
 
-		const stdout = await getLatestTag(repoURL);
+		const stdout = await getBuildTag(repoURL);
 
 		let newVersion = stdout.trim();
 		console.log('latest tag', newVersion);
@@ -287,7 +333,7 @@ module.exports.desktop = async (isProd) => {
 		const appName = process.env.DESKTOP_APP_NAME;
 		console.log('appName', appName);
 
-		const stdout = await getLatestTag(repoURL);
+		const stdout = await getBuildTag(repoURL);
 
 		let newVersion = stdout.trim();
 		console.log('latest tag', newVersion);
@@ -369,7 +415,7 @@ module.exports.desktopTimer = async (isProd) => {
 		const timerAppName = process.env.DESKTOP_TIMER_APP_NAME;
 		console.log('timerAppName', timerAppName);
 
-		const stdout = await getLatestTag(repoURL);
+		const stdout = await getBuildTag(repoURL);
 
 		let newVersion = stdout.trim();
 		console.log('latest tag', newVersion);
@@ -451,7 +497,7 @@ module.exports.agent = async (isProd) => {
 		const appName = process.env.AGENT_APP_NAME;
 		console.log('appName', appName);
 
-		const stdout = await getLatestTag(repoURL);
+		const stdout = await getBuildTag(repoURL);
 
 		let newVersion = stdout.trim();
 		console.log('latest tag', newVersion);
