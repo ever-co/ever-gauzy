@@ -163,12 +163,35 @@ export class PlaneIntegrationService {
 			settingsIndex.set(s.settingsName, s);
 		}
 
-		// Update only the provided fields
-		const updates: Array<[string, string | undefined]> = [
-			[PlaneSettingName.PLANE_WEB_URL, dto.planeWebUrl],
-			[PlaneSettingName.PLANE_ADMIN_URL, dto.planeAdminUrl],
-			[PlaneSettingName.PLANE_SPACE_URL, dto.planeSpaceUrl]
-		];
+		// Build the set of settings to update. When the caller changes `mode` we must
+		// persist PLANE_MODE and keep the URLs consistent with it (mirroring
+		// setupIntegration): switching to 'shared' overwrites the URLs with the global
+		// hosted PM constants; switching to 'custom' applies the tenant-provided URLs.
+		// When `mode` is omitted we leave PLANE_MODE untouched and patch only the URLs
+		// that were supplied.
+		const updates: Array<[string, string | undefined]> = [];
+		if (dto.mode !== undefined) {
+			updates.push([PlaneSettingName.PLANE_MODE, dto.mode]);
+			if (dto.mode === 'shared') {
+				updates.push(
+					[PlaneSettingName.PLANE_WEB_URL, SHARED_PLANE_WEB_URL],
+					[PlaneSettingName.PLANE_ADMIN_URL, SHARED_PLANE_ADMIN_URL],
+					[PlaneSettingName.PLANE_SPACE_URL, SHARED_PLANE_SPACE_URL]
+				);
+			} else {
+				updates.push(
+					[PlaneSettingName.PLANE_WEB_URL, dto.planeWebUrl],
+					[PlaneSettingName.PLANE_ADMIN_URL, dto.planeAdminUrl],
+					[PlaneSettingName.PLANE_SPACE_URL, dto.planeSpaceUrl]
+				);
+			}
+		} else {
+			updates.push(
+				[PlaneSettingName.PLANE_WEB_URL, dto.planeWebUrl],
+				[PlaneSettingName.PLANE_ADMIN_URL, dto.planeAdminUrl],
+				[PlaneSettingName.PLANE_SPACE_URL, dto.planeSpaceUrl]
+			);
+		}
 
 		for (const [name, value] of updates) {
 			if (value !== undefined) {
