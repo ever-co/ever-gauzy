@@ -5710,10 +5710,10 @@
     "@eslint/core" "^0.17.0"
     levn "^0.4.1"
 
-"@ever-gauzy/plugin-integration-plane-api@^0.1.5":
-  version "0.1.5"
-  resolved "https://registry.npmjs.org/@ever-gauzy/plugin-integration-plane-api/-/plugin-integration-plane-api-0.1.5.tgz#723f2745f6616d491b933cdfb6930e55566cf771"
-  integrity sha512-0jv9nTSJyIOQ5gPnlGVP0eI6lxnNH83j0pY1WnSmuBpOGLCzGxOYqSfTvpjrz7bMAyeCLsgQRcr2wIcAgRpjcA==
+"@ever-gauzy/plugin-integration-plane-api@^0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@ever-gauzy/plugin-integration-plane-api/-/plugin-integration-plane-api-0.1.6.tgz#beec9de448ea06050c49a9897c234fb015a4dfa1"
+  integrity sha512-Wopj/QDU1Q40gyTnnuHcLsqDFXsInxQoG9MjJZxghrNWYZ17w103FW1wqDNy+6xD+lKE/rIBSgzvr9bBg3xhQQ==
   dependencies:
     "@ever-gauzy/plugin-integration-plane-models" "^0.1.3"
     "@nestjs/axios" "^4.0.1"
