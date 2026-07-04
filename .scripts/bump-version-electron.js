@@ -8,7 +8,7 @@ async function getLatestTag(repoURL) {
 		const tags = await git.listRemote(['--tags', repoURL]);
 
 		// Parse and filter tags
-		const tagPattern = /^v?[0-9]+\.[0-9]+\.[0-9]+$/;
+		const tagPattern = /^v[0-9]+\.[0-9]+\.[0-9]+$/;
 		const tagList = tags
 			.split('\n')
 			.map((tagLine) => tagLine.split(/\s+/)[1]) // Extract the tag reference
@@ -33,7 +33,7 @@ async function getLatestTag(repoURL) {
 async function getTagForCommit(repoURL, sha) {
 	const tags = await git.listRemote(['--tags', repoURL]);
 
-	const tagPattern = /^v?[0-9]+\.[0-9]+\.[0-9]+$/;
+	const tagPattern = /^v[0-9]+\.[0-9]+\.[0-9]+$/;
 
 	// Map tag name -> commit sha. Annotated tags list both the tag object sha and a
 	// peeled 'refs/tags/<name>^{}' line with the commit sha - the peeled sha wins.

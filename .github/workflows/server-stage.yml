@@ -24,9 +24,13 @@ jobs:
     # absorb the short merge -> tag delay. Ad-hoc pushes to 'temp' skip the check.
     runs-on: ubicloud-standard-4
     timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Verify a release tag points at this commit
         shell: bash
@@ -35,9 +39,13 @@ jobs:
             echo "Ad-hoc 'temp' branch - skipping the release tag check"
             exit 0
           fi
+          if [ "$GITHUB_REF_NAME" != "stage-apps" ]; then
+            echo "::error::This workflow only releases from the 'stage-apps' branch (got '$GITHUB_REF_NAME')."
+            exit 1
+          fi
           for i in $(seq 1 20); do
-            git fetch --quiet --depth=1 origin '+refs/tags/*:refs/tags/*' || true
-            TAG=$(git tag --points-at HEAD | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
+            git fetch --quiet --depth=1 origin '+refs/tags/*:refs/tags/*' || echo "git fetch failed (attempt $i); will retry"
+            TAG=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
             if [ -n "$TAG" ]; then
               echo "Release tag on this commit: $TAG"
               exit 0
