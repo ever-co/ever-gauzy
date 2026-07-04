@@ -65,7 +65,10 @@ test.describe('Clients test', () => {
 
 		await test.step('Should be able to edit client', async () => {
 			await clientsPage.tableRowVisible();
-			await clientsPage.selectTableRow(0);
+			// Select the invited client BY NAME, not row 0: addClient + the invite step above left the grid
+			// with several rows (plus any from earlier specs on the shared seed), so row 0 is not
+			// deterministically ours. Scope to the unique invite name so the rename acts on this record.
+			await clientsPage.selectTableRowByName(inviteName);
 			await clientsPage.editButtonVisible();
 			await clientsPage.clickEditButton();
 			await clientsPage.nameInputVisible();
@@ -110,7 +113,10 @@ test.describe('Clients test', () => {
 
 		await test.step('Should be able to delete client', async () => {
 			await clientsPage.tableRowVisible();
-			await clientsPage.selectTableRow(0);
+			// Delete the RENAMED client BY NAME, not row 0: with the extra addClient-created row (and any
+			// leftovers from earlier specs) still in the grid, row 0 may be a different record, so a row-0
+			// delete would remove the wrong client and leave `deleteName` behind (verify-deleted then fails).
+			await clientsPage.selectTableRowByName(deleteName);
 			await clientsPage.deleteButtonVisible();
 			await clientsPage.clickDeleteButton();
 			await clientsPage.confirmDeleteButtonVisible();

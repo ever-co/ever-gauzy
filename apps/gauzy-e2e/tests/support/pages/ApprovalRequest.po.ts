@@ -67,8 +67,41 @@ const gotoHashRoute = async (targetHash: string, header: string): Promise<void> 
 	await page.waitForTimeout(500);
 };
 
+// Best-effort reset of the page header's employee selector to "All Employees". The approvals grid's
+// getApprovals() calls getByEmployeeId(selectedEmployeeId) when a SPECIFIC employee is selected in the
+// header, returning ONLY that employee's requests — and the header's ga-employee-selector is store-backed,
+// so a prior spec (TimeOff / RecurringExpenses select a specific employee via the SAME store selector) can
+// leave a non-"All" employee selected when this spec runs. Our request assigns employees best-effort, so a
+// stale header filter would hide it and every verify-exists would fail. Resetting to "All Employees" makes
+// getApprovals() use getAll() -> our request always renders. Fully best-effort (already-"All" is the common
+// case and a harmless no-op); swallow everything so it can never break the flow.
+const ensureAllEmployeesSelected = async (): Promise<void> => {
+	const page = getPage();
+	try {
+		const selector = page.locator('ga-employee-selector.header-selector ng-select').first();
+		if (!(await selector.isVisible().catch(() => false))) return;
+		// Already showing "All Employees"? The selected/placeholder text lives inside the ng-select host, so
+		// its innerText contains "All Employees" when nothing narrower is picked — then this is a no-op.
+		const shownText = (await selector.innerText().catch(() => '')) || '';
+		if (shownText.includes('All Employees')) return;
+		// A specific employee is selected (pollution from an earlier spec). Open the ng-select and pick the
+		// "All Employees" pseudo-option. ng-select opens on mousedown and appends its panel to <body>, so the
+		// options are body-level div.ng-option; a plain click on the host toggles it open.
+		await selector.click({ force: true });
+		const allOption = page.locator('div.ng-option').filter({ hasText: 'All Employees' }).first();
+		await allOption.waitFor({ state: 'visible', timeout: 5000 });
+		await allOption.click({ force: true });
+		await waitForSpinnerGone();
+		await page.waitForTimeout(500); // let getApprovals() re-run with the cleared (getAll) filter
+	} catch {
+		await page.keyboard.press('Escape').catch(() => undefined);
+	}
+};
+
 export const gotoApprovals = async () => {
 	await gotoHashRoute('#/pages/employees/approvals', 'Approval Request');
+	// Clear any inherited header employee filter so the grid loads ALL requests (see helper above).
+	await ensureAllEmployeesSelected();
 };
 
 export const gotoApprovalPolicy = async () => {
@@ -324,19 +357,29 @@ export const verifyApprovalPolicyExists = async (text) => {
 };
 
 export const verifyRequestExists = async (text) => {
-	// Re-filter the grid to THIS name before asserting. Two reasons: (1) pollution — the shared grid is
-	// paginated over a client-side LocalDataSource accumulating rows from earlier specs/runs, so an
-	// unfiltered tbody may not even render our row on page 1; (2) the edit step renames the request, which
-	// leaves the grid still filtered by the OLD name from selectTableRow — verifying the NEW name needs the
-	// filter reset to that new name. Filtering by the unique faker name shows exactly our (renamed) record.
+	// ROUND-7 root cause (confirmed by the failure screenshot: the app was on "Manage Employees" —
+	// #/pages/employees — while this verify ran, so the `angular2-smart-table table tbody` locator resolved
+	// against the WRONG grid and never contained our request). This verify does NOT navigate on its own; it
+	// relied on the preceding add/edit dialog leaving us on approvals, but the SPA hash router can drift back
+	// to Manage Employees (the addEmployee prerequisite's landing route shares the /pages/employees path).
+	// Re-anchor to the approvals screen first — gotoApprovals waits for the "Approval Request" header and
+	// forces a fresh getApprovals() load — so we always assert on the right grid (the request persists
+	// server-side, so the reloaded grid still holds it). Then filter to THIS name before asserting: (1)
+	// pollution — the grid accumulates rows from earlier specs/runs, so an unfiltered tbody may not render
+	// our row on page 1; (2) the edit step renames the request, so verifying the NEW name needs the filter
+	// reset to it. Filtering by the unique faker name shows exactly our (renamed) record.
+	await gotoApprovals();
 	await searchRequestByName(text);
 	await verifyText(ApprovalRequestPage.verifyRequestCss, text);
 };
 
 export const verifyElementIsDeleted = async (text: string) => {
-	// Re-filter to the (now-deleted) name first so the assertion is order-independent: after filtering, a
-	// genuinely deleted record yields zero matching rows (verifyTextNotExisting -> count 0 of that name),
-	// whereas a leftover same-named row from another spec/run would still be absent under OUR unique name.
+	// Re-anchor to approvals first (same SPA-drift reason as verifyRequestExists — the delete confirm can
+	// leave the app on the wrong screen), then re-filter to the (now-deleted) name so the assertion is
+	// order-independent: after filtering, a genuinely deleted record yields zero matching rows
+	// (verifyTextNotExisting -> count 0 of that name), whereas a leftover same-named row from another
+	// spec/run would still be absent under OUR unique name.
+	await gotoApprovals();
 	await searchRequestByName(text);
 	await verifyTextNotExisting(ApprovalRequestPage.tableBodyCss, text);
 };

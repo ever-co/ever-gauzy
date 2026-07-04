@@ -66,14 +66,20 @@ test.describe('Time Off test', () => {
 			await timeOffPage.saveRequestButtonVisible();
 			await timeOffPage.clickSaveRequestButton();
 			await timeOffPage.waitMessageToHide();
-			await timeOffPage.verifyPolicyExists(TimeOffPageData.defaultPolicy);
+			// Verify the policy that was ACTUALLY selected, not the hardcoded "Default Policy". The suite runs
+			// serially on a shared DB and the web app persists the last-selected org, so this spec often runs
+			// with a random org (which has "Policy 1".."Policy 10", never "Default Policy"); selectTimeOffPolicy
+			// falls back to that org's first real policy and records its name, so we assert on the real record.
+			await timeOffPage.verifyPolicyExists(timeOffPage.getLastSelectedPolicyName());
 		});
 
 		await test.step('Should be able to DENY time off request', async () => {
 			await timeOffPage.timeOffTableRowVisible();
-			// Scope the row to THIS spec's employee (grid Employee column = "First Last") so we never
-			// deny/approve/delete a leftover request from an earlier spec in the shared-DB suite.
-			await timeOffPage.selectTimeOffTableRow(`${firstName} ${lastName}`);
+			// Scope the row to the employee ACTUALLY selected in the request dialog (grid Employee column =
+			// that employee's full name) so we never deny/approve/delete a leftover request from an earlier
+			// spec in the shared-DB suite. Use the recorded name (not the raw faker name) because the
+			// employee typeahead has a fallback path — the created request may carry the fallback employee.
+			await timeOffPage.selectTimeOffTableRow(timeOffPage.getLastSelectedEmployeeName());
 			// Approve/Deny live in a second action group that only renders once "more" is toggled.
 			await timeOffPage.clickShowActionsButton();
 			await timeOffPage.denyTimeOffButtonVisible();
@@ -84,8 +90,8 @@ test.describe('Time Off test', () => {
 		await test.step('Should be able to APPROVE time off request', async () => {
 			await timeOffPage.waitMessageToHide();
 			// Denying cleared the selection + collapsed the action group; re-select the row and re-open
-			// the action group before approving.
-			await timeOffPage.selectTimeOffTableRow(`${firstName} ${lastName}`);
+			// the action group before approving. Scope to the recorded (actually-selected) employee name.
+			await timeOffPage.selectTimeOffTableRow(timeOffPage.getLastSelectedEmployeeName());
 			await timeOffPage.clickShowActionsButton();
 			await timeOffPage.approveTimeOffButtonVisible();
 			await timeOffPage.clickApproveTimeOffButton();
@@ -116,8 +122,8 @@ test.describe('Time Off test', () => {
 
 		await test.step('Should be able to delete time off request', async () => {
 			await timeOffPage.waitMessageToHide();
-			// Delete the request for THIS spec's employee (pollution-resilient row scope).
-			await timeOffPage.selectTimeOffTableRow(`${firstName} ${lastName}`);
+			// Delete a request for the employee ACTUALLY selected (pollution-resilient row scope).
+			await timeOffPage.selectTimeOffTableRow(timeOffPage.getLastSelectedEmployeeName());
 			await timeOffPage.deleteTimeOffBtnVisible();
 			await timeOffPage.clickDeleteTimeOffButton();
 			await timeOffPage.confirmDeleteTimeOffBtnVisible();

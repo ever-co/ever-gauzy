@@ -167,12 +167,22 @@ export const enterFirstNameInputData = async (data) => {
 	await enterInput(CandidatesPage.firstNameInputCss, data);
 };
 
-// Re-set the required firstName as the last step-1 action. Selecting a tag emits valueChanges on the
-// shared basic-info form and can transiently blank firstName (the same reset quirk guarded in
-// addClient/addContact); a raw scoped fill restores it so the stepper's Next stays enabled and the
-// form is valid when add() runs. Scoped to ga-candidate-mutation so a leaked invite form can't match.
-export const refillFirstName = async (data) => {
-	await getPage().locator(CandidatesPage.firstNameInputCss).first().fill(String(data));
+// Re-fill the THREE controls that gate step-1 validity (firstName, email, password) as the LAST step-1
+// action, mirroring the already-green ManageEmployees.reEnterRequiredStep1Fields. The step-1 Next is
+// [disabled]="userBasicInfo.form.invalid"; if ANY of these didn't register on its first fill, the form
+// stays invalid, add()'s addCandidate() skips `if (this.form.valid) this.candidates.push(...)` and
+// createBulk([]) persists NOTHING — the empty grid at verifyCandidateExists (the observed failure).
+// The password field (ngx-password-form-field) only propagates its value to the outer CVA on (blur),
+// so a plain .fill() can leave form.controls.password empty and the whole form invalid — fire input +
+// blur on it explicitly. Scoped to ga-candidate-mutation so a leaked invite form can't match (strict).
+export const reEnterRequiredStep1Fields = async (firstName, email, password) => {
+	// The field selectors are already scoped to ga-candidate-mutation, so use them directly (no extra
+	// dialog wrapper, which would double the ga-candidate-mutation prefix and match nothing).
+	await getPage().locator(CandidatesPage.firstNameInputCss).first().fill(String(firstName)).catch(() => {});
+	await getPage().locator(CandidatesPage.newCandidateEmailInputCss).first().fill(String(email)).catch(() => {});
+	const pwd = getPage().locator(CandidatesPage.passwordInputCss).first();
+	await pwd.fill(String(password)).catch(() => {});
+	await pwd.blur().catch(() => {});
 };
 
 // Click the mutation card body to close the still-open tags ng-select panel before advancing the
@@ -257,9 +267,21 @@ export const nextButtonVisible = async () => {
 };
 
 export const clickNextButton = async () => {
-	// Stepper step-1 -> step-2. The tags ng-select dropdown we just opened (appendTo body) leaves a
-	// fading overlay over the footer; dispatch the click straight on the nbStepperNext button.
+	// Stepper step-1 -> step-2 (nbStepperNext). The tags ng-select dropdown we just opened (appendTo
+	// body) leaves a fading overlay over the footer; dispatch the click straight on the button.
+	// IMPORTANT: this button is [disabled]="userBasicInfo.form.invalid". A dispatchEvent('click') fires
+	// the nbStepperNext host listener even on a DISABLED button, so a still-invalid step-1 form would be
+	// silently force-advanced to step-3, where add()'s addCandidate() skips the push (form invalid) and
+	// createBulk([]) persists nothing — the exact empty-grid failure ("You have not created any
+	// candidates"). Poll until the button is genuinely ENABLED (form valid) before advancing, so a real
+	// validity problem surfaces here instead of as a mysterious empty grid downstream.
 	await waitForSpinnerGone();
+	const next = getPage().locator(CandidatesPage.nextButtonCss).first();
+	await next.waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
+	for (let i = 0; i < 30; i++) {
+		if (!(await next.isDisabled().catch(() => true))) break;
+		await getPage().waitForTimeout(500);
+	}
 	await dispatchClick(CandidatesPage.nextButtonCss);
 };
 
@@ -268,9 +290,23 @@ export const nextStepButtonVisible = async () => {
 };
 
 export const clickNextStepButton = async () => {
-	// Stepper step-2 -> step-3 (nbStepperNext); same backdrop hazard as step-1's Next.
+	// Stepper step-2 (CV url) -> step-3 (nbStepperNext); same backdrop hazard as step-1's Next.
+	// nextStepButtonCss matches BOTH the step-1 and step-2 green Next buttons; dispatching a click on
+	// either fires an nbStepperNext, which advances the stepper from its CURRENT step, so it still
+	// reaches step 3. Confirm we actually landed on step 3 by waiting for the status="success"
+	// "Finished adding" button to appear, and retry the dispatch if the first didn't take — otherwise
+	// the later success-button click would fire add() on the wrong step and persist nothing.
 	await waitForSpinnerGone();
-	await dispatchClick(CandidatesPage.nextStepButtonCss);
+	const finish = getPage().locator(CandidatesPage.allCurrentCandidatesButtonCss).first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await dispatchClick(CandidatesPage.nextStepButtonCss);
+		const reached = await finish
+			.waitFor({ state: 'visible', timeout: 6000 })
+			.then(() => true)
+			.catch(() => false);
+		if (reached) return;
+		await waitForSpinnerGone();
+	}
 };
 
 export const allCurrentCandidatesButtonVisible = async () => {
@@ -278,10 +314,23 @@ export const allCurrentCandidatesButtonVisible = async () => {
 };
 
 export const clickAllCurrentCandidatesButton = async () => {
-	// Stepper step-3 "Finished adding" -> (click)="add()" persists the candidate and closes the
-	// dialog; dispatch through any lingering stepper/overlay backdrop.
+	// Stepper step-3 "Finished adding" -> (click)="add()" runs addCandidate() (pushes the candidate only
+	// if the form is valid) then createBulk() and closes the dialog — the ONLY path that persists the
+	// candidate. Dispatch through any lingering stepper/overlay backdrop, then confirm the mutation
+	// dialog actually detached (createBulk resolved). Retry once if a transient overlay swallowed the
+	// first dispatch, so we never leave with nothing persisted.
 	await waitForSpinnerGone();
-	await dispatchClick(CandidatesPage.allCurrentCandidatesButtonCss);
+	const dialog = getPage().locator('ga-candidate-mutation').first();
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await dispatchClick(CandidatesPage.allCurrentCandidatesButtonCss);
+		const closed = await dialog
+			.waitFor({ state: 'detached', timeout: 12000 })
+			.then(() => true)
+			.catch(() => false);
+		if (closed) return;
+		await waitForSpinnerGone();
+		await getPage().waitForTimeout(500);
+	}
 };
 
 export const tableRowVisible = async () => {

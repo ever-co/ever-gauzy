@@ -37,6 +37,11 @@ export const ClientsPage = {
 	clientEmailCss: '#emailInput',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	saveInviteButtonCss: 'nb-card-footer > button[status="success"]',
+	// Host of the Invite Contact dialog (ga-invite-contact). Used to detect whether the invite dialog is
+	// still open after clicking Email Invite — the button's async email-exists validator (getUserByEmail)
+	// is PENDING for a beat after the email is typed, so an early click finds form.valid === false and
+	// inviteContact() no-ops (dialog stays open). We poll this to re-dispatch until it actually closes.
+	inviteDialogCss: 'ga-invite-contact',
 	verifyClientCss: 'a.link-text',
 	searchNameInputCss: 'ga-input-filter-selector input[placeholder="Name"]',
 	clientsTableData: 'td.ng-star-inserted',

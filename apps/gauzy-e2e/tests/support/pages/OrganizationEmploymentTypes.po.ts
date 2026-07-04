@@ -129,7 +129,7 @@ export const clickSaveButton = async () => {
 	await dispatchClick(OrganizationEmploymentTypesPage.saveButtonCss);
 };
 
-export const selectFirstItem = async () => {
+export const selectFirstItem = async (name?: string) => {
 	const page = getPage();
 	// The Add/Edit/Delete dialog's Save sometimes leaves the modal backdrop up, which would
 	// swallow the card click. Clear it first.
@@ -140,7 +140,12 @@ export const selectFirstItem = async () => {
 	await page.waitForLoadState('networkidle').catch(() => {});
 	await page.waitForTimeout(1500);
 	await verifyElementIsVisible(OrganizationEmploymentTypesPage.selectItemCss);
-	const item = page.locator(OrganizationEmploymentTypesPage.selectItemCss).first();
+	// POLLUTION RESILIENCE: the grid accumulates employment-type cards across the shared serial run, so a
+	// bare .first() would select (and later edit/delete) the WRONG record. Each card (ga-notes-with-tags)
+	// renders its rowData.name, so scope the selection to the card that contains OUR unique name. Fall back
+	// to .first() only when no name was supplied.
+	const baseItem = page.locator(OrganizationEmploymentTypesPage.selectItemCss);
+	const item = (name ? baseItem.filter({ hasText: name }) : baseItem).first();
 	const editBtn = page.locator(OrganizationEmploymentTypesPage.editButtonCss).first();
 	// Clicking a card TOGGLES its selection (selectOrganizationEmploymentType), which sets disabled=false
 	// and enables the toolbar Edit. Click ONCE then poll the Edit button's real disabled attr; only

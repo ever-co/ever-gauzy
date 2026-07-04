@@ -101,21 +101,45 @@ export const clickContactDropdown = async () => {
 	await getPage().keyboard.press('ArrowDown').catch(() => {});
 };
 
-export const selectContactFromDropdown = async (index: number) => {
+export const selectContactFromDropdown = async (nameOrIndex: string | number) => {
 	const page = getPage();
 	const option = page.locator(InvoicesPage.contactOptionCss);
-	// Re-open the contact ng-select via keyboard until its options render, then pick one. Best-effort:
-	// the contacts list loads async and can be empty/slow; if no option shows after a few re-opens, press
-	// Escape and continue rather than hard-waiting 60s on div.ng-option (the observed timeout).
-	for (let i = 0; i < 4; i++) {
+	const input = page.locator(`${InvoicesPage.organizationContactDropdownCss} input`).first();
+	// POLLUTION RESILIENCE: EstimatesTest runs BEFORE this spec (alphabetically) and converts an estimate into
+	// an invoice, so by the time this spec runs the contact ng-select already holds foreign contacts from
+	// earlier specs — a plain .nth(0) would link the WRONG contact and break every later name-scoped row/select.
+	// When given this spec's UNIQUE faker contact name, typeahead-filter to it (ga-contact-select uses a
+	// name.toLowerCase().includes() searchFn) and pick the matching option, so EVERY invoice this spec creates
+	// carries that name in the grid's Contact column. Re-open the ng-select via keyboard first (opens on
+	// mousedown so a click is backdrop-blocked). The contact is a REQUIRED control (form.invalid disables Save),
+	// retry generously. Mirrors the proven SalesInvoices.po pattern.
+	const byName = typeof nameOrIndex === 'string';
+	for (let i = 0; i < 6; i++) {
 		if (await option.first().isVisible().catch(() => false)) break;
 		await waitForSpinnerGone();
-		await page.locator(`${InvoicesPage.organizationContactDropdownCss} input`).first().focus().catch(() => {});
+		await input.focus().catch(() => {});
 		await page.keyboard.press('ArrowDown').catch(() => {});
 		await page.waitForTimeout(800);
 	}
+	if (byName) {
+		await input.fill('').catch(() => {});
+		await input.pressSequentially(String(nameOrIndex), { delay: 20 }).catch(() => {});
+		await page.waitForTimeout(600);
+		const match = option.filter({ hasText: String(nameOrIndex) }).first();
+		try {
+			await match.waitFor({ state: 'visible', timeout: 8000 });
+			await match.click({ force: true });
+			return;
+		} catch {
+			// named contact didn't surface (shouldn't happen — addContact created it — but keep the flow moving);
+			// clear the typed filter so the fallback picks a real (unfiltered) option, not an empty filtered list.
+			await input.fill('').catch(() => {});
+			await page.waitForTimeout(400);
+		}
+	}
+	// index path (or named-fallback): best-effort — if no option shows, Escape and continue rather than hanging.
 	if (await option.first().isVisible().catch(() => false)) {
-		await option.nth(index).click({ force: true }).catch(() => {});
+		await option.nth(byName ? 0 : (nameOrIndex as number)).click({ force: true }).catch(() => {});
 	} else {
 		await page.keyboard.press('Escape').catch(() => {});
 	}
@@ -241,37 +265,33 @@ export const clickBackButton = async () => dispatchClick(InvoicesPage.backButton
 export const confirmButtonVisible = async () => verifyElementIsVisible(InvoicesPage.confirmButtonCss);
 
 export const clickConfirmButton = async () => {
-	// Send/Email confirm dialog OK button. ROOT CAUSE of the round-6 failure (captured DOM: "Send this
-	// invoice to <name> ?" dialog still up, iframe + Cancel/Send, row still Draft, so div.badge-success never
-	// rendered): the dialog's Send button is `<button (click)="send()" status="success" nbButton>`, and
-	// `send()` first `await`s `invoicesService.update(...)` and only THEN `dialogRef.close()`s. A bare
-	// `dispatchEvent('click')` fires a synthetic (untrusted) event with no button/coordinate data; against
-	// THIS button — unlike the toolbar popover actions — it did NOT drive `send()` to completion across all
-	// retries, so the dialog stayed open and the invoice never left Draft. Fix (mirrors the proven-green
-	// Estimates.po): the mutation dialog is the TOPMOST cdk-overlay, so its own Send button is NOT under any
-	// fading backdrop — a real, trusted `.click()` lands on it and actually fires `send()`. Scope the confirm
-	// button to the LIVE dialog host (never a stale leaked footer), click for real, then poll the host
-	// (ga-invoice-send / ga-invoice-email) to DETACH so the mutation truly completed before we move on;
-	// re-click if it lingers (the PDF/iframe preview can momentarily steal focus while it streams).
-	// dispatchEvent stays only as a last-ditch fallback if the real click throws.
+	// Send/Email confirm dialog OK button. ROOT CAUSE of the round-7 failure (captured DOM: "Send this
+	// invoice to Pamela Gislason ?" dialog STILL up, its ga-invoice-pdf iframe + Cancel/Send, the row still
+	// Draft, so div.badge-success never rendered): the round-6 attempt used a REAL `.click({force:true})` on
+	// the footer Send button. That regressed the step. The dialog body is <ga-invoice-pdf> — a `height:90vh`
+	// card whose iframe (`height:100%; width:60vw`) fills the body; a coordinate/real click hit-tests at the
+	// button's center and the browser routes it to whatever is topmost at that point (the iframe / a fading
+	// cdk-overlay backdrop), NOT the button — `{force:true}` only skips the actionability WAIT, it still
+	// dispatches at screen coordinates (ROOT CAUSE #2). So `send()`'s `await invoicesService.update(...)` never
+	// ran, the dialog stayed open, the invoice never left Draft. FIX: mirror the PROVEN-GREEN SalesInvoices.po
+	// exactly — `dispatchEvent('click')` fires straight on the button element regardless of what overlay sits
+	// on top or whether it's scrolled below the fold, which is what reliably drives async send()/sendEmail()
+	// and closes the dialog. Wait for the LIVE dialog host to render first (the (click) handler isn't wired
+	// until then), scope the confirm button to that host (never a stale leaked footer), loop-dispatch and poll
+	// the host to DETACH so the mutation truly fired before we move on; page-level dispatchClick is a fallback.
 	const page = getPage();
 	const dialogHost = page.locator('ga-invoice-send, ga-invoice-email').first();
-	// Wait for the mutation dialog to actually be on screen before clicking — the (click)="send()/sendEmail()"
+	// Wait for the mutation dialog to actually be on screen before dispatching — the (click)="send()/sendEmail()"
 	// handler isn't wired until the dialog component has rendered.
 	await dialogHost.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
-	// The email dialog's Send is `[disabled]="form.invalid"`, so a real click only lands once the email field
-	// is valid (the spec fills it first) — the retry loop below absorbs Angular's settle tick.
+	// The email dialog's Send is `[disabled]="form.invalid"`, but the spec fills the email field before this,
+	// so the button is enabled; the retry loop below absorbs Angular's settle tick.
 	const confirmBtn = dialogHost.locator('nb-card-footer.text-left > button[status="success"]').first();
 	for (let i = 0; i < 8; i++) {
 		await waitForSpinnerGone();
 		await confirmBtn.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {});
-		// Real trusted click first (the dialog is the topmost overlay, so nothing intercepts it and this is
-		// what actually drives async send()/sendEmail() to run and close the dialog). dispatchEvent stays as
-		// a fallback only if the real click throws (handle detached mid-animation).
-		await confirmBtn.click({ force: true, timeout: 6000 }).catch(async () => {
-			await confirmBtn.dispatchEvent('click').catch(async () => {
-				await dispatchClick(InvoicesPage.confirmButtonCss).catch(() => {});
-			});
+		await confirmBtn.dispatchEvent('click').catch(async () => {
+			await dispatchClick(InvoicesPage.confirmButtonCss).catch(() => {});
 		});
 		try {
 			await dialogHost.waitFor({ state: 'detached', timeout: 6000 });
@@ -280,7 +300,7 @@ export const clickConfirmButton = async () => {
 			await page.waitForLoadState('networkidle').catch(() => {});
 			return;
 		} catch {
-			// dialog still open — the click didn't take (PDF preview still wiring up); loop and re-click
+			// dialog still open — the dispatch didn't take (PDF preview still wiring up); loop and re-dispatch
 		}
 	}
 };

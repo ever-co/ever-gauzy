@@ -83,10 +83,14 @@ test.describe('Invite candidate test', () => {
 			// grid) — that was the observed failure ("You have not created any candidates"). Leaving the
 			// image untouched keeps the required firstName/email/password-only form deterministically valid
 			// regardless of network, so the candidate is always created.
-			// Re-set the required firstName as the LAST step-1 action: selecting a tag emits valueChanges on
-			// the shared form and can transiently blank the firstName control (same reset quirk guarded in
-			// addClient/addContact); a raw scoped fill restores it so the stepper's Next stays enabled.
-			await inviteCandidatePage.refillFirstName(firstName);
+			// Re-fill ALL THREE required controls (firstName, email, password) as the LAST step-1 action,
+			// mirroring the green ManageEmployees flow. add()'s addCandidate() only pushes the candidate
+			// `if (this.form.valid)`, and the password field (ngx-password-form-field) commits to its outer
+			// control only on blur — so if any required control didn't register on its first fill, the form
+			// stays invalid, createBulk([]) persists nothing, and the grid stays empty ("You have not created
+			// any candidates"). Re-filling + blurring the password here keeps the form deterministically valid
+			// so the stepper's Next is enabled and the candidate is actually created.
+			await inviteCandidatePage.reEnterRequiredStep1Fields(firstName, email, password);
 			await inviteCandidatePage.nextButtonVisible();
 			await inviteCandidatePage.clickNextButton();
 			await inviteCandidatePage.nextStepButtonVisible();

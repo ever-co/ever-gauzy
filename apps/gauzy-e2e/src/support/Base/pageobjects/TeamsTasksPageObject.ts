@@ -12,7 +12,9 @@ export const TeamsTasksPage = {
 	// ambiguous and brittle across the show/hide transition wrapper (the round-4 cause of a 60s
 	// `button.action.primary nth(1)` hang in AddTasks). Disambiguate each by its own nb-icon —
 	// edit-outline vs copy-outline — exactly as the proven AddTasksPageObject does. (task.component.html
-	// #actionButtons.) clickDuplicateOrEditTaskButton maps index 0 -> edit, 1 -> duplicate.
+	// #actionButtons.) clickDuplicateOrEditTaskButton maps index 0 -> DUPLICATE (creates the 2nd row the
+	// delete-then-edit steps rely on) and index 1 -> EDIT (renames the survivor) — see its own comment in
+	// TeamsTasks.po; the wrapper's mapping is authoritative.
 	editTaskButtonCss: 'button.action.primary:has(nb-icon[icon="edit-outline"])',
 	duplicateTaskButtonCss: 'button.action.primary:has(nb-icon[icon="copy-outline"])',
 	// Kept for the visibility assertion (either action button present == toolbar rendered with a row selected).

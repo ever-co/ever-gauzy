@@ -48,24 +48,44 @@ const openObjectivePopover = async (): Promise<boolean> => {
 	await waitForSpinnerGone();
 	const button = page.locator(GoalsPage.addButtonCss).first();
 	await button.waitFor({ state: 'attached', timeout: 24000 }).catch(() => {});
-	// The popover overlay host (nb-popover) is the reliable "open" signal; its inner nb-list flickers.
-	const pane = page.locator('nb-popover').first();
+	// Root cause of the round-7 failure (popover NEVER opens across ~12 attempts, button clearly on-screen
+	// in the dump): Nebular's nbPopoverTrigger="click" is a TOGGLE driven by document clicks, gated on
+	// `!container() && isOnHost(event.target)`. Two things defeated the old loop:
+	//   1. A real Playwright .click() hit-tests the button's box, but the button lives inside
+	//      gauzy-button-action's `.transition-container` (overflow-x:hidden) whose child `.transition` is
+	//      offset by a translateX() transform. The point the click lands on can hit-test to that
+	//      transformed/clipped ANCESTOR, so event.target != host button -> isOnHost=false -> NO show (and
+	//      if a container were open, it counts as an outside click -> HIDE). So the real-click attempts are
+	//      no-ops here.
+	//   2. Alternating real-click / dispatch across attempts could also toggle a just-opened popover shut.
+	// Fix: ONLY dispatch the click straight to the button (event.target = button -> isOnHost=true ->
+	// deterministic SHOW), and make every dispatch happen from a known-CLOSED state: if a stray overlay is
+	// half-open, dismiss it first (outside click) and wait for `nb-popover` to detach, so `!container()`
+	// holds at dispatch time. Key "open" off the stable nb-popover overlay + its list item.
+	const pane = page.locator('nb-popover');
 	const list = page.locator(GoalsPage.optionDropdownCss).first();
-	for (let attempt = 0; attempt < 6; attempt++) {
+	for (let attempt = 0; attempt < 8; attempt++) {
 		if (await list.isVisible().catch(() => false)) {
 			return true;
 		}
-		// Only (re-)trigger when the popover is NOT already attached, so we never toggle an open one shut.
-		if (!(await pane.isVisible().catch(() => false))) {
-			if (attempt % 2 === 0) {
-				// Real click: waits for actionability + hit-tests the actual on-screen button box.
-				await button.click({ timeout: 8000 }).catch(() => {});
-			} else {
-				// Dispatch straight to the button: target = button, bubbles to document, isOnHost matches.
-				await button.dispatchEvent('click').catch(() => {});
+		const paneAttached = (await pane.count().catch(() => 0)) > 0;
+		if (paneAttached) {
+			// A popover overlay is attached but its list item still isn't visible — give the CDK overlay a
+			// moment to finish rendering the nb-list before deciding to re-trigger.
+			if (await list.waitFor({ state: 'visible', timeout: 4000 }).then(() => true).catch(() => false)) {
+				return true;
 			}
+			// Still no list: dismiss this (possibly wrong/empty) overlay from a known-closed baseline before
+			// re-dispatching, so the next dispatch is a guaranteed SHOW (not a toggle-shut). Dispatch the
+			// click on <body> itself (event.target = body -> NOT on host/container -> Nebular's hide$ fires),
+			// which closes the popover WITHOUT a coordinate click that could land on the sidebar/logo and
+			// navigate away.
+			await page.locator('body').dispatchEvent('click').catch(() => {});
+			await pane.first().waitFor({ state: 'detached', timeout: 4000 }).catch(() => {});
 		}
-		await list.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+		// Dispatch straight to the button: target = button, bubbles to document, isOnHost matches -> SHOW.
+		await button.dispatchEvent('click').catch(() => {});
+		await list.waitFor({ state: 'visible', timeout: 4000 }).catch(() => {});
 	}
 	return await list.isVisible().catch(() => false);
 };

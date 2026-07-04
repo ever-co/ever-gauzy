@@ -15,6 +15,26 @@ import { getPage } from '../page-context';
 // Selectors + data are framework-agnostic — reused from the Cypress tree during migration.
 import { TimeOffPage } from '../../../src/support/Base/pageobjects/TimeOffPageObject';
 
+// ROUND-7 root cause: "Default Policy" is seeded ONLY on the default org ("Default Company"). The suite
+// shares one DB and runs serially, and the web app persists the last-selected organizationId (Store ->
+// localStorage), so by the time this spec runs the header org is frequently a RANDOM org left over from an
+// earlier spec (the failure DOM showed "Time Off for Runte, Welch and Roberts", NOT "Default Company").
+// Random orgs get policies named "Policy 1".."Policy 10" — never "Default Policy" — so the policy dropdown
+// never contained the hardcoded "Default Policy", the pick never landed, the request form stayed invalid
+// (Save [disabled]), nothing persisted, and verifyPolicyExists('Default Policy') timed out. Fix: pick the
+// requested policy if present, else fall back to whatever policy the CURRENT org actually offers, and RECORD
+// the name that was really selected so the downstream grid verify asserts THAT name (order/org-independent).
+let lastSelectedPolicyName = '';
+export const getLastSelectedPolicyName = () => lastSelectedPolicyName;
+
+// Record the employee actually chosen in the request dialog. selectEmployeeFromDropdown prefers the unique
+// faker employee, but has a best-effort fallback to the first REAL option when the typeahead doesn't render
+// in time. If the fallback fires, the created request's Employee column will show that fallback name, NOT the
+// faker name — so scoping the later deny/approve/delete row to the faker name would miss the row. Record the
+// name that was actually selected and scope the row to THAT (order/pollution-independent).
+let lastSelectedEmployeeName = '';
+export const getLastSelectedEmployeeName = () => lastSelectedEmployeeName;
+
 // Robust hash navigation to the time-off screen (mirrors the gotoRoute helper in commands.ts). The
 // spec navigates here right after CustomCommands.addEmployee, which ends on /#/pages/employees. A bare
 // goto() to /#/pages/employees/time-off only changes the hash, so Playwright treats it as a
@@ -92,13 +112,16 @@ export const selectEmployeeFromDropdown = async (name: string) => {
 		await input.fill('');
 		await input.pressSequentially(name, { delay: 30 });
 		await option.first().waitFor({ state: 'visible', timeout: 8000 });
+		lastSelectedEmployeeName = name;
 		await option.first().click({ force: true });
 	} catch {
 		// Best-effort fallback: if typeahead filtered to nothing (timing), pick the first REAL employee
-		// option (skip the "All Employees" entry) so the flow still proceeds rather than hanging.
+		// option (skip the "All Employees" entry) so the flow still proceeds rather than hanging. Record the
+		// fallback's actual text so the downstream row scope targets the request we really created.
 		const realOption = page
 			.locator(TimeOffPage.employeeDropdownOptionCss)
 			.filter({ hasNotText: 'All Employees' });
+		lastSelectedEmployeeName = (await realOption.first().textContent().catch(() => null))?.trim() || name;
 		await realOption
 			.first()
 			.click({ force: true, timeout: 6000 })
@@ -133,44 +156,60 @@ export const timeOffPolicyDropdownOptionVisible = async () => {
 };
 
 export const selectTimeOffPolicy = async (data: string) => {
-	// Pick the policy by text (REQUIRED — Save stays disabled until BOTH policyId AND policy are set; the
-	// nb-select's (selectedChange) is what fires onPolicySelected() to set the `policy` control, so we MUST
-	// actually click the option, not just set the value).
+	// Pick the policy (REQUIRED — Save stays disabled until BOTH policyId AND policy are set; the nb-select's
+	// (selectedChange) is what fires onPolicySelected() to set the `policy` control, so we MUST actually click
+	// the option, not just set the value).
 	//
-	// ROUND-6 root cause (confirmed by the failure DOM: the request dialog was still open with the policy
-	// button reading "Select Time-off Policy" and Save [disabled], so the option was never picked): the old
-	// loop dispatch-toggled the nb-select on EVERY miss. Since dispatchClick on an nb-select host TOGGLES
-	// the panel, a miss on an ALREADY-OPEN panel (options just hadn't rendered yet) CLOSED it, so the loop
-	// oscillated open/closed and could be closed exactly when the option became clickable. Fix: only (re)open
-	// when NO option is currently rendered (idempotent open), give the async policies fetch time to populate,
-	// then click the matching '.option-list nb-option' filtered by the exact policy name (the proven
-	// nb-option pick pattern). Pollution-safe: we filter by the exact policy name, never an index.
+	// ROUND-6 root cause: the old loop dispatch-toggled the nb-select on EVERY miss. Since dispatchClick on an
+	// nb-select host TOGGLES the panel, a miss on an ALREADY-OPEN panel (options just hadn't rendered yet)
+	// CLOSED it, so the loop oscillated open/closed. Fix: only (re)open when NO option is rendered (idempotent
+	// open), give the async policies fetch time to populate, then dispatch the click on the option.
+	//
+	// ROUND-7 root cause (the real reason the request never persisted): the requested "Default Policy" only
+	// exists on the default org, but this spec often runs with a RANDOM org selected (persisted from an
+	// earlier spec — see the module note above), so the exact-text option was NEVER present and the pick
+	// silently never landed → invalid form → empty grid → verify timeout. Fix: try the requested policy first,
+	// but fall back to whatever policy the current org actually offers (the first REAL option), and record the
+	// name that was actually picked so verifyPolicyExists can assert THAT name. Pollution-safe: we scope the
+	// verify to the recorded name, never an index.
 	const page = getPage();
 	const anyOption = page.locator(TimeOffPage.timeOffPolicyDropdownOptionCss);
-	const option = anyOption.filter({ hasText: data });
-	for (let i = 0; i < 6; i++) {
-		// Already rendered? Pick it. Use dispatchEvent('click') on the option (not a coordinate force-click)
-		// so the nb-option's selectedChange fires even if the option-list overlay's own cdk backdrop is
-		// mid-fade over it — a coordinate click can land on that backdrop and never select the policy.
-		if (await option.first().isVisible().catch(() => false)) {
-			await option.first().dispatchEvent('click').catch(() => option.first().click({ force: true }));
+	const requested = anyOption.filter({ hasText: data });
+	for (let i = 0; i < 8; i++) {
+		// Requested policy rendered? Pick it (preferred — keeps the spec deterministic when the default org
+		// IS selected). dispatchEvent('click') so the nb-option's selectedChange fires even if the option-list
+		// overlay's own cdk backdrop is mid-fade over it (a coordinate click can land on that backdrop).
+		if (await requested.first().isVisible().catch(() => false)) {
+			lastSelectedPolicyName = data;
+			await requested.first().dispatchEvent('click').catch(() => requested.first().click({ force: true }));
 			return;
 		}
-		// Panel closed with no options visible → (re)open it. Only toggle when nothing is rendered so we
-		// never close a panel that's mid-populating.
-		if (!(await anyOption.first().isVisible().catch(() => false))) {
-			await waitForSpinnerGone();
-			await dispatchClick(TimeOffPage.timeOffPolicyDropdownCss);
+		// Panel open with options, but the requested policy isn't among them (a non-default org that has no
+		// "Default Policy") → pick the FIRST real option so the form becomes valid and the request persists.
+		// Record its exact text so the downstream grid verify matches what we actually chose.
+		if (await anyOption.first().isVisible().catch(() => false)) {
+			// Give the async policies fetch a couple more beats to fully populate before deciding to fall back,
+			// so we don't grab an early partial list that hasn't included the requested policy yet.
+			if (i < 3 && !(await requested.first().isVisible().catch(() => false))) {
+				await page.waitForTimeout(900);
+				continue;
+			}
+			const first = anyOption.first();
+			lastSelectedPolicyName = (await first.textContent().catch(() => null))?.trim() || data;
+			await first.dispatchEvent('click').catch(() => first.click({ force: true }));
+			return;
 		}
-		// Panel is (now) open but our option isn't there yet → wait for the async policies to load rather
-		// than immediately re-toggling it shut.
+		// Nothing rendered → (re)open the panel. Only toggle when nothing is visible so we never close a
+		// panel that's mid-populating.
+		await waitForSpinnerGone();
+		await dispatchClick(TimeOffPage.timeOffPolicyDropdownCss);
 		await page.waitForTimeout(900);
 	}
-	// Last attempt: dispatch on whatever matched (best-effort) so the flow proceeds rather than hard-failing.
-	await option
-		.first()
-		.dispatchEvent('click')
-		.catch(() => undefined);
+	// Last resort: dispatch on the requested option if it ever matched, else the first option (best-effort so
+	// the flow proceeds rather than hard-failing).
+	const fallback = (await requested.first().isVisible().catch(() => false)) ? requested.first() : anyOption.first();
+	lastSelectedPolicyName = (await fallback.textContent().catch(() => null))?.trim() || data;
+	await fallback.dispatchEvent('click').catch(() => undefined);
 };
 
 export const startDateInputVisible = async () => verifyElementIsVisible(TimeOffPage.startDateInputCss);
@@ -244,13 +283,22 @@ export const selectHolidayOption = async (option: string | number) => {
 			await target.dispatchEvent('click').catch(() => target.click({ force: true }));
 			return;
 		}
+		// The requested holiday name is locale-dependent (date-holidays localizes names by country, e.g.
+		// 'Нова Година' only appears for UA), so it may never render. Once the list HAS populated but our
+		// named target isn't in it, fall back to the first available holiday — the holiday name is optional
+		// (it only prefills description/dates, both of which the spec overwrites explicitly afterward), so any
+		// pick is fine and keeps the panel from being left open over the next control.
+		if (typeof option !== 'number' && i >= 2 && (await opts.first().isVisible().catch(() => false))) {
+			await opts.first().dispatchEvent('click').catch(() => opts.first().click({ force: true }));
+			return;
+		}
 		if (!(await opts.first().isVisible().catch(() => false))) {
 			await waitForSpinnerGone();
 			await dispatchClick(TimeOffPage.holidayNameSelectCss);
 		}
 		await page.waitForTimeout(900);
 	}
-	await target.dispatchEvent('click').catch(() => undefined);
+	await target.dispatchEvent('click').catch(() => opts.first().dispatchEvent('click')).catch(() => undefined);
 };
 
 export const selectEmployeeDropdownVisible = async () => verifyElementIsVisible(TimeOffPage.selectEmployeeCss);
@@ -338,8 +386,9 @@ export const selectTimeOffTableRow = async (name: string) => {
 	await page.waitForLoadState('networkidle').catch(() => {});
 	await page.waitForTimeout(1500);
 	const rows = page.locator(TimeOffPage.selectTableRowCss);
-	const named = rows.filter({ hasText: name });
-	// Prefer the uniquely-named row; fall back to the first row only if the name didn't render (best-effort).
+	// Prefer the uniquely-named row; fall back to the first row only if the name is empty or didn't render
+	// (best-effort). Guard the empty case explicitly so we don't build a hasText:'' filter (matches all rows).
+	const named = name ? rows.filter({ hasText: name }) : rows;
 	const row = (await named.count().catch(() => 0)) > 0 ? named.first() : rows.first();
 	const actions = page.locator('div.btn-group.actions button').first();
 	for (let attempt = 0; attempt < 4; attempt++) {

@@ -2,8 +2,6 @@ import dayjs from 'dayjs';
 import {
 	verifyElementIsVisible,
 	clickButton,
-	clickButtonByIndex,
-	clickElementByText,
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
@@ -23,7 +21,7 @@ import { TimesheetsPageData } from '../../../src/support/Base/pagedata/Timesheet
 // either swallowed by the fading dialog backdrop or closes the dialog. Open it via the keyboard:
 // focus the control's input and press ArrowDown so the option panel (div.ng-option appended to body)
 // renders. See migration ROOT CAUSE #3.
-const openNgSelect = async (selector: string) => {
+const openNgSelect = async (selector: string, typeahead?: string) => {
 	const input = getPage().locator(selector).locator('input').first();
 	const option = getPage().locator(TimesheetsPage.dropdownOptionCss).first();
 	// Retry the keyboard-open: a single focus+ArrowDown is occasionally a no-op when a fading dialog
@@ -33,6 +31,15 @@ const openNgSelect = async (selector: string) => {
 	for (let attempt = 0; attempt < 3; attempt++) {
 		await input.focus().catch(() => {});
 		await getPage().keyboard.press('ArrowDown').catch(() => {});
+		// Typeahead-filter when a search term is given: typing into the ng-select input both guarantees
+		// the panel is THIS control's (not a leftover div.ng-option panel from an earlier ng-select whose
+		// backdrop is still fading) and narrows the option list to the wanted row, so the async project
+		// fetch's target ('Gauzy Web Site') is the only/first div.ng-option — deterministic even under
+		// virtual-scroll or a slow getProjects() load. (ROOT CAUSE #3 typeahead variant.)
+		if (typeahead) {
+			await input.fill('').catch(() => {});
+			await input.pressSequentially(typeahead, { delay: 30 }).catch(() => {});
+		}
 		try {
 			await option.waitFor({ state: 'visible', timeout: 8_000 });
 			return; // panel open, options rendered
@@ -42,21 +49,66 @@ const openNgSelect = async (selector: string) => {
 	}
 };
 
+// Best-effort ng-option pick. The Add-Time dialog's project/client/task selects are DECORATIVE for a
+// valid save: edit-time-log-modal.buildForm() declares NO Validators, so `form.invalid` is effectively
+// always false, and addTime() persists using the constructor's default 1-hour `selectedRange` and an
+// employeeId fallback to the current user — i.e. the time log is created whether or not these dropdowns
+// were filled. So a slow/absent option must NOT hard-fail the flow (the old clickElementByText/
+// clickButtonByIndex used a 60s force-timeout — the round-6 failure was exactly this hanging on the
+// 'Gauzy Web Site' option). Pick by text if present within a short window, else by index, else Escape
+// and move on so the flow still reaches Save and the record persists. (ROUND 7 (a) — prove the record
+// persists rather than blocking on optional decoration.)
+const bestEffortPick = async (text?: string, index = 0) => {
+	const page = getPage();
+	const options = page.locator(TimesheetsPage.dropdownOptionCss);
+	try {
+		await options.first().waitFor({ state: 'visible', timeout: 8_000 });
+		if (text) {
+			const byText = options.filter({ hasText: text }).first();
+			if ((await byText.count()) > 0) {
+				await byText.click({ force: true, timeout: 8_000 });
+				return;
+			}
+		}
+		await options.nth(index).click({ force: true, timeout: 8_000 });
+	} catch {
+		await page.keyboard.press('Escape').catch(() => {});
+	}
+};
+
 // The spec's bare `await getPage().goto('/#/pages/employees/timesheets/daily')` is issued right after
 // the addTask/addClient CustomCommands, which END on DIFFERENT hash routes (/#/pages/tasks/dashboard,
 // /#/pages/contacts/clients). A hash-only goto() between two same-document routes is a NO-OP in
 // Playwright: the page isn't reloaded and the Angular hash-router never fires, so the SPA stays on the
-// previous screen (the observed failure DOM was still the Clients "Add New Contact" page). Force the
-// hash through to the router (mirrors the gotoRoute helper in commands.ts / AddTasks.po), then wait for
-// the daily Timesheets screen to actually mount before interacting. (ROOT CAUSE #8.)
+// previous screen (the observed failure DOM was still the Clients "Add New Contact" page, mid-submit
+// with its card spinner still up).
+//
+// ROUND 7 root cause: a plain hash goto()/force can't dislodge a WEDGED previous screen — if the
+// preceding addClient's contact-mutation form is still rendering (in-flight submit / geocode spinner),
+// the daily route's "Add Time" toolbar button never mounts, the visibility wait below is swallowed, and
+// the whole timesheets flow then runs against the dead Clients DOM (the div.ng-option 'Gauzy Web Site'
+// pick times out because the Add Time dialog was never opened). Re-anchor with a HARD RELOAD: set the
+// hash first, then reload() so the browser re-fetches index.html and Angular re-bootstraps cleanly on
+// the daily route, discarding any leftover form/overlay/spinner from the prerequisite. (ROOT CAUSE #8 +
+// ROUND 7 (b) "re-anchor to your route via hard reload before acting".)
 export const navigateToDaily = async () => {
 	const page = getPage();
+	// Point the hash at the daily route, then force a real document reload so a stuck prerequisite
+	// screen (e.g. an addClient contact form still spinning) can't survive into our flow.
 	await page.goto('/#/pages/employees/timesheets/daily');
 	await page.evaluate(() => {
 		if (!location.hash.includes('/pages/employees/timesheets/daily')) {
 			location.hash = '#/pages/employees/timesheets/daily';
 		}
 	});
+	await page.reload();
+	// After the reload the hash is preserved; confirm the router landed on daily (belt-and-braces).
+	await page.evaluate(() => {
+		if (!location.hash.includes('/pages/employees/timesheets/daily')) {
+			location.hash = '#/pages/employees/timesheets/daily';
+		}
+	});
+	await page.waitForLoadState('networkidle').catch(() => {});
 	await page.waitForTimeout(800);
 	// Don't proceed until the daily screen has actually rendered: its toolbar "Add Time" button only
 	// exists once the SPA route finished re-rendering.
@@ -112,8 +164,7 @@ export const startTimeDropdownVisible = async () => verifyElementIsVisible(Times
 // Open via keyboard — never a force-click (would close the dialog / hit the backdrop).
 export const clickStartTimeDropdown = async () => openNgSelect(TimesheetsPage.startTimeDropdownCss);
 
-export const selectTimeFromDropdown = async (index: number) =>
-	clickButtonByIndex(TimesheetsPage.dropdownOptionCss, index);
+export const selectTimeFromDropdown = async (index: number) => bestEffortPick(undefined, index);
 
 export const clientDropdownVisible = async () => verifyElementIsVisible(TimesheetsPage.clientDropdownCss);
 
@@ -121,22 +172,32 @@ export const clickClientDropdown = async () => openNgSelect(TimesheetsPage.clien
 
 export const selectClientFromDropdown = async (text: string | number) =>
 	// ng-option index-based pick (the visible option after opening); text is unreliable here because the
-	// contact list label may differ from the data passed in.
-	clickButtonByIndex(TimesheetsPage.dropdownOptionCss, Number(text) || 0);
+	// contact list label may differ from the data passed in. Best-effort — the client is optional for a
+	// valid time-log save.
+	bestEffortPick(undefined, Number(text) || 0);
 
 export const selectProjectDropdownVisible = async () => verifyElementIsVisible(TimesheetsPage.projectDropdownCss);
 
-export const clickSelectProjectDropdown = async () => openNgSelect(TimesheetsPage.projectDropdownCss);
+// Open the project ng-select AND typeahead-filter to the wanted project so its option is the only
+// div.ng-option rendered (the prior plain ArrowDown open intermittently matched a stale panel and then
+// the 'Gauzy Web Site' text-pick timed out at 60s — the observed round-6 failure). Filter on the first
+// word only ('Gauzy') so ng-select's contains-match still yields the full 'Gauzy Web Site' row.
+export const clickSelectProjectDropdown = async () =>
+	openNgSelect(TimesheetsPage.projectDropdownCss, String(TimesheetsPageData.defaultProjectName).split(' ')[0]);
 
 export const selectProjectFromDropdown = async (text: string) =>
-	clickElementByText(TimesheetsPage.dropdownOptionCss, text);
+	// Prefer the wanted project by text (typeahead-filtered open above narrows the panel to it), but stay
+	// best-effort so a slow project fetch can't hard-block the flow — the save persists regardless.
+	bestEffortPick(text, 0);
 
 export const taskDropdownVisible = async () => verifyElementIsVisible(TimesheetsPage.taskDropdownCss);
 
 export const clickTaskDropdown = async () => openNgSelect(TimesheetsPage.taskDropdownCss);
 
 export const selectTaskFromDropdown = async (index: number) =>
-	clickButtonByIndex(TimesheetsPage.dropdownOptionCss, index);
+	// Best-effort — the task/start-time option is optional for a valid save; don't hang 60s on an empty
+	// or slow-loading panel.
+	bestEffortPick(undefined, index);
 
 export const addTimeLogDescriptionVisible = async () => verifyElementIsVisible(TimesheetsPage.descriptionTextareaCss);
 

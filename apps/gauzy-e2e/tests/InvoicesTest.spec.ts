@@ -80,7 +80,9 @@ test.describe('Invoices test', () => {
 			await invoicesPage.selectDiscountTypeFromDropdown(InvoicesPageData.discountType);
 			await invoicesPage.contactDropdownVisible();
 			await invoicesPage.clickContactDropdown();
-			await invoicesPage.selectContactFromDropdown(0);
+			// Scope to THIS spec's unique faker contact (not .nth(0)) so the invoice links OUR contact even when
+			// the dropdown holds foreign contacts from earlier specs, and every later name-scoped row op matches.
+			await invoicesPage.selectContactFromDropdown(fullName);
 			await invoicesPage.taxInputVisible();
 			await invoicesPage.enterTaxData(InvoicesPageData.taxValue);
 			await invoicesPage.taxTypeDropdownVisible();
@@ -138,7 +140,8 @@ test.describe('Invoices test', () => {
 			await invoicesPage.selectDiscountTypeFromDropdown(InvoicesPageData.discountType);
 			await invoicesPage.contactDropdownVisible();
 			await invoicesPage.clickContactDropdown();
-			await invoicesPage.selectContactFromDropdown(0);
+			// Keep the same unique contact linked on edit (name-scoped, pollution-proof — see the add step).
+			await invoicesPage.selectContactFromDropdown(fullName);
 			await invoicesPage.taxInputVisible();
 			await invoicesPage.enterTaxData(InvoicesPageData.taxValue);
 			await invoicesPage.taxTypeDropdownVisible();

@@ -220,10 +220,27 @@ export const saveInviteButtonVisible = async () => {
 };
 
 export const clickSaveInviteButton = async () => {
-	// dispatchClick: a leftover stepper backdrop can sit over the dialog footer and swallow the click,
-	// leaving the invite dialog open (so the grid behind it stays hidden from the next assertion).
+	// The Email Invite button is [disabled]="form.invalid", but its primaryEmail control has an ASYNC
+	// validator (usersService.getUserByEmail -> GET /user/email/:email). Right after the email is typed the
+	// group is status PENDING: form.invalid is false (button NOT disabled) yet form.valid is ALSO false, and
+	// inviteContact() -> addOrEditOrganizationContact() only persists when `this.form.valid`. So an early
+	// click no-ops and the dialog stays open (grid never refreshes -> the following verifyClientExists on
+	// the fresh invite name times out — the exact observed failure). Fix: let the async validator settle,
+	// then dispatch and POLL the dialog host; re-dispatch until it actually closes (form has gone valid).
+	const page = getPage();
+	const dialog = page.locator(ClientsPage.inviteDialogCss);
 	await waitForSpinnerGone();
-	await dispatchClick(ClientsPage.saveInviteButtonCss);
+	await page.waitForTimeout(1200); // allow the getUserByEmail async validator round-trip to resolve
+	for (let attempt = 0; attempt < 6; attempt++) {
+		await dispatchClick(ClientsPage.saveInviteButtonCss);
+		try {
+			await dialog.first().waitFor({ state: 'detached', timeout: 3000 });
+			return; // dialog closed -> invite persisted and the grid will refresh
+		} catch {
+			// still open (form was PENDING/invalid at click time) — settle again and retry the dispatch
+			await page.waitForTimeout(900);
+		}
+	}
 };
 
 export const tableRowVisible = async () => {
@@ -238,6 +255,29 @@ export const selectTableRow = async (index) => {
 	await page.waitForLoadState('networkidle').catch(() => {});
 	await page.waitForTimeout(1500);
 	const row = page.locator(ClientsPage.selectTableRowCss).nth(index);
+	const editBtn = page.locator(ClientsPage.editButtonCss).first();
+	for (let attempt = 0; attempt < 4; attempt++) {
+		await row.click({ force: true });
+		for (let i = 0; i < 8; i++) {
+			await page.waitForTimeout(350);
+			if (!(await editBtn.isDisabled().catch(() => true))) return;
+		}
+	}
+};
+
+// Select the grid row whose name link contains `name` (pollution-resilient row pick). The suite runs
+// serially on ONE shared seed, so by the time the edit/delete steps run the clients grid holds MORE than
+// one row: this spec's own addClient + toolbar-Invite create two records, and earlier specs leave others.
+// A plain nth(0) then grabs whichever row sorts first — not deterministically ours — so the rename/delete
+// would act on the wrong client and the verify would fail. Filtering by the unique faker name targets
+// exactly the record this step means to act on. Same settle-then-click-once-and-poll-Edit handling as
+// selectTableRow (the row click TOGGLES selection, so only re-click if the first click was lost).
+export const selectTableRowByName = async (name: string) => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(ClientsPage.selectTableRowCss).filter({ hasText: name }).first();
 	const editBtn = page.locator(ClientsPage.editButtonCss).first();
 	for (let attempt = 0; attempt < 4; attempt++) {
 		await row.click({ force: true });

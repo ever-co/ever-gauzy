@@ -1,4 +1,5 @@
 import { test } from './support/fixtures';
+import { getPage } from './support/page-context';
 import * as loginPage from './support/pages/Login.po';
 import { LoginPageData } from '../src/support/Base/pagedata/LoginPageData';
 import * as teamsTasksPage from './support/pages/TeamsTasks.po';
@@ -23,6 +24,51 @@ import { faker } from '@faker-js/faker';
 let taskTitle = ' ';
 let editedTaskTitle = ' ';
 
+// Dismiss any leftover add-mutation dialog + let its fading cdk-overlay-backdrop fully detach before the
+// next screen opens a dialog. Mirrors the inline cleanup the proven-passing OrganizationTeamsTest does prior
+// to opening the team dialog: a surviving backdrop from addTag's ngx-tags-mutation lands a delayed backdrop
+// click that closes the team-mutation nb-dialog (closeOnBackdropClick:true) mid-fill. Best-effort throughout
+// so it never blocks the run.
+const settleLeftoverOverlays = async () => {
+	const page = getPage();
+	for (let i = 0; i < 3 && (await page.locator('ngx-tags-mutation').count()) > 0; i++) {
+		await page.keyboard.press('Escape').catch(() => undefined);
+		await page
+			.locator('ngx-tags-mutation')
+			.first()
+			.waitFor({ state: 'detached', timeout: 4000 })
+			.catch(() => undefined);
+	}
+	// Wait for the fading backdrop overlay itself to detach — the input can be gone while the overlay is
+	// still animating out, and that overlay is what closes the next dialog.
+	await page
+		.locator('.cdk-overlay-backdrop')
+		.first()
+		.waitFor({ state: 'detached', timeout: 4000 })
+		.catch(() => undefined);
+};
+
+// Was a team with `name` actually created? Read the teams grid (force the hash + settle) and check for a row
+// containing the name. Used to decide whether addTeam's dialog got killed by a fading backdrop and must be
+// retried. Best-effort/boolean — never throws.
+const teamRowExists = async (name: string): Promise<boolean> => {
+	const page = getPage();
+	await page.goto('/#/pages/organization/teams');
+	await page.evaluate(() => {
+		if (!location.hash.includes('/pages/organization/teams')) {
+			location.hash = '#/pages/organization/teams';
+		}
+	});
+	await page.waitForTimeout(800);
+	return page
+		.locator('table > tbody > tr.angular2-smart-row')
+		.filter({ hasText: name })
+		.first()
+		.waitFor({ state: 'visible', timeout: 8000 })
+		.then(() => true)
+		.catch(() => false);
+};
+
 test.describe('Add teams tasks test', () => {
 	test('Add teams tasks test', async () => {
 		taskTitle = `${TeamsTasksPageData.defaultTaskTitle} ${faker.string.uuid()}`;
@@ -39,10 +85,30 @@ test.describe('Add teams tasks test', () => {
 				organizationTagsUserPage,
 				OrganizationTagsPageData
 			);
+			// ROOT CAUSE of the round-1..6 TeamsTasksTest failure (dump: dialog gone + "You have not created
+			// any teams." + timeout on the manager nb-select): addTeam runs right after addTag, which only
+			// BEST-EFFORT-detaches its ngx-tags-mutation dialog. A still-fading cdk-overlay-backdrop from that
+			// tags dialog survives addTeam's gotoRoute, then lands a delayed backdrop click on the freshly
+			// opened ga-teams-mutation nb-dialog (closeOnBackdropClick:true) — closing it mid-fill, so the
+			// manager multi-select is never reached and NO team is created. addTeam is a shared CustomCommand
+			// (can't edit); the proven-passing OrganizationTeamsTest avoids this by dismissing the leftover tags
+			// dialog + waiting for its overlay to detach BEFORE opening the team dialog. Replicate that cleanup
+			// here (spec-local), then verify a team actually persisted and retry addTeam once if the dialog got
+			// killed on the first pass — so the prerequisite is deterministic regardless of backdrop timing.
+			await settleLeftoverOverlays();
 			await CustomCommands.addTeam(
 				organizationTeamsPage,
 				OrganizationTeamsPageData
 			);
+			// Confirm the team persisted (its row appears in the grid). If the fading backdrop still closed the
+			// dialog before Save, no row exists — clean up and add it again once.
+			if (!(await teamRowExists(OrganizationTeamsPageData.name))) {
+				await settleLeftoverOverlays();
+				await CustomCommands.addTeam(
+					organizationTeamsPage,
+					OrganizationTeamsPageData
+				);
+			}
 			// A bare goto('/#/pages/tasks/team') right after addTeam (which ends on
 			// /#/pages/organization/teams) is a same-document hash NO-OP: the SPA stays on the teams grid
 			// and the Add click would re-open the teams dialog, so ga-project-selector never renders. Force
