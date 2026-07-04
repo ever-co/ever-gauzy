@@ -91,6 +91,37 @@ const reanchorTeamsTasks = async () => {
 		.catch(() => undefined);
 };
 
+// POLLUTION-RESILIENCE (Round 8 — the #1 remaining failure cause for this spec, and the reason AddTasksTest
+// passes where this one didn't). The team-tasks grid is a SERVER-side paginated angular2-smart-table:
+// itemsPerPage = 10 (PaginationFilterBaseComponent) and the endpoint is /tasks/team. The suite shares ONE
+// seeded DB and runs serially, so by the time this spec runs the grid already holds team tasks from earlier
+// specs/runs. A newly-created task is NOT guaranteed to be on the rendered first page — so the old
+// verifyText / selectTaskRowByName / verifyTextNotExisting, which only inspect the currently-rendered <tbody>
+// (page 1) via .filter({hasText}), look at the WRONG page and time out even though the record persisted (the
+// exact "record persisted but the verify/row-select times out" class the Round-8 intel calls out). Fix: drive
+// the grid's Title column filter (the InputFilterComponent whose placeholder is the column title "Title",
+// wired to setFilter({field:'title'})) with THIS run's unique title so the server re-queries and returns ONLY
+// our matching row(s) on page 1. Every downstream verify/row-select then acts on a grid scoped to our record,
+// independent of accumulated pollution and API sort order. Mirrors the proven AddTasks.po.filterTasksByTitle.
+export const filterTasksByTitle = async (name: string) => {
+	const page = getPage();
+	// The filter row lives on the team-tasks screen; make sure we're actually on it first (a queued
+	// history.back() can drift the SPA off /#/pages/tasks/team).
+	await reanchorTeamsTasks();
+	await waitForSpinnerGone();
+	const input = page.locator(TeamsTasksPage.searchTitleInputCss).first();
+	await input.waitFor({ state: 'visible', timeout: 24000 }).catch(() => undefined);
+	// Retype from clean each time so switching between the original and the edited title re-queries.
+	await input.fill('').catch(() => undefined);
+	await input.fill(String(name)).catch(() => undefined);
+	// The InputFilterComponent debounces valueChanges before it fires the server re-query; give the debounce
+	// + the /tasks/team round-trip time to land, then let the grid finish re-rendering.
+	await page.waitForTimeout(1200);
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => undefined);
+	await page.waitForTimeout(500);
+};
+
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };
@@ -304,7 +335,11 @@ export const selectTasksTableRow = async (index: number) => {
 // mirrors AddTasks.po.selectTaskRowByName.)
 export const selectTaskRowByName = async (name: string) => {
 	const page = getPage();
-	await reanchorTeamsTasks();
+	// filterTasksByTitle re-anchors (guards the back-nav drift) then scopes the grid to THIS run's title so
+	// the target row is guaranteed on the rendered first page even when accumulated pollution would otherwise
+	// push it onto page 2+ (the grid is 10 rows/page, server-paginated). Without this, .filter({hasText})
+	// below matches nothing because the row isn't in the rendered <tbody> at all and the 24s waitFor times out.
+	await filterTasksByTitle(name);
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => undefined);
 	await page.waitForTimeout(1500);
@@ -366,9 +401,12 @@ export const clickCardBody = async () => clickButton(TeamsTasksPage.cardBodyCss)
 export const waitMessageToHide = async () => waitElementToHide(TeamsTasksPage.toastrMessageCss);
 
 export const verifyTaskExists = async (text: string) => {
-	// Re-anchor first: a queued history.back() can drift the SPA off the team-tasks route, where the grid
-	// (and the title text) is absent — the verify would then wrongly time out.
-	await reanchorTeamsTasks();
+	// filterTasksByTitle re-anchors first (a queued history.back() can drift the SPA off /#/pages/tasks/team,
+	// where the grid/title is absent), THEN filters the grid to THIS run's title. The grid paginates at 10
+	// rows/page (server-side), so on a polluted DB the freshly-created row can be on page 2+ and the rendered
+	// <tbody> this verify inspects wouldn't contain it. Filtering re-queries and returns our row on page 1 —
+	// proving it actually persisted, independent of accumulated rows and the API's default sort.
+	await filterTasksByTitle(text);
 	await verifyText(TeamsTasksPage.verifyTextCss, text);
 };
 
@@ -376,6 +414,9 @@ export const verifyTaskExists = async (text: string) => {
 // empty: intra-run pollution (a prior spec's leftover team task) can leave other rows, which would make a
 // bare toHaveCount(0) flake. verifyTextNotExisting filters by text then asserts zero matches. (Round 3.)
 export const verifyTaskIsDeleted = async (text: string) => {
-	await reanchorTeamsTasks();
+	// Filter to the (now-deleted) title first so the "no matching row" assertion is scoped to our record and
+	// not fooled by a same-named row from another spec sitting on a different page. After the delete + filter
+	// the grid shows only rows still matching `text` — expected to be zero. (Re-anchors internally.)
+	await filterTasksByTitle(text);
 	await verifyTextNotExisting(TeamsTasksPage.verifyTextCss, text);
 };

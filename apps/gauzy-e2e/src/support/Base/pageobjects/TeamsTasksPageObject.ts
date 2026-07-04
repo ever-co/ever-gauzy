@@ -53,5 +53,13 @@ export const TeamsTasksPage = {
 	// dialog title instead so we don't hit the Save button or a backdrop.
 	cardBodyCss: 'nb-card-header h5.title',
 	verifyTextCss: 'ga-notes-with-tags > div > div',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	// The team-tasks grid is SERVER-side paginated (endpoint /tasks/team, PaginationFilterBaseComponent =
+	// 10 rows/page). On the shared, serially-run DB the grid already holds team tasks from earlier runs, so
+	// a freshly-created row can land on page 2+ and NEVER appear in the rendered <tbody> (page 1) that a
+	// verify/row-select inspects. The description ("Title") column carries an InputFilterComponent whose
+	// input renders placeholder={{column.title}} = "Title" and is wired to setFilter({field:'title'}); typing
+	// THIS run's unique title re-queries the server and returns only our matching row(s) on page 1. Mirrors
+	// the proven AddTasksPageObject.searchTitleInputCss that makes AddTasksTest pollution-resilient.
+	searchTitleInputCss: 'input[placeholder="Title"]'
 };

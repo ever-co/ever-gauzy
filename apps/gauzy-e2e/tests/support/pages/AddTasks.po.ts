@@ -321,6 +321,48 @@ export const tasksTableVisible = async () => {
 	await verifyElementIsVisible(AddTaskPage.selectTableRowCss);
 };
 
+// POLLUTION-RESILIENCE (the #1 remaining failure cause for this spec). The tasks grid is a SERVER-side
+// paginated angular2-smart-table: itemsPerPage = 10 (PaginationFilterBaseComponent) and the endpoint is
+// /tasks/pagination. The suite shares ONE seeded DB and runs serially, so by the time this spec runs the
+// grid already holds tasks from earlier specs/runs. A newly-created task is NOT guaranteed to be on the
+// rendered first page — so verifyText / selectTaskRowByName / verifyTextNotExisting, which only see the
+// currently-rendered <tbody> (page 1), would look at the WRONG page and time out even though the record
+// persisted. Fix: drive the grid's Title column filter (the InputFilterComponent whose placeholder is the
+// column title "Title", wired to setFilter({field:'title'})) with THIS run's unique title, so the server
+// re-queries and returns ONLY our matching row(s) on page 1. Every downstream verify/row-select then acts
+// on a grid scoped to our record, independent of accumulated pollution and API sort order. Mirrors the
+// proven addClient search-then-verify pattern (commands.ts) but adapted to the tasks grid's own filter.
+export const filterTasksByTitle = async (name: string) => {
+	const page = getPage();
+	// The filter row lives on the tasks screen; make sure we're actually on it first.
+	await reanchorTasksScreen();
+	await waitForSpinnerGone();
+	const input = page.locator(AddTaskPage.searchTitleInputCss).first();
+	await input.waitFor({ state: 'visible', timeout: 24000 }).catch(() => undefined);
+	// Retype from clean each time so switching between the original and the edited title re-queries.
+	await input.fill('').catch(() => undefined);
+	await input.fill(String(name)).catch(() => undefined);
+	// The InputFilterComponent debounces valueChanges (300ms) before it fires the server re-query; give the
+	// debounce + the /tasks/pagination round-trip time to land, then let the grid finish re-rendering.
+	await page.waitForTimeout(1200);
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => undefined);
+	await page.waitForTimeout(500);
+};
+
+// Clear the Title filter so the grid returns to the full (paginated) list. Best-effort — a stale filter
+// left set can't corrupt a later step because each filter call re-fills from clean, but clearing keeps the
+// grid state tidy between the create/duplicate/edit/delete phases.
+export const clearTitleFilter = async () => {
+	const page = getPage();
+	const input = page.locator(AddTaskPage.searchTitleInputCss).first();
+	if (await input.isVisible().catch(() => false)) {
+		await input.fill('').catch(() => undefined);
+		await page.waitForTimeout(1000);
+		await waitForSpinnerGone();
+	}
+};
+
 export const selectTasksTableRow = async (index) => {
 	// Row click TOGGLES selection (it enables the toolbar Edit/Duplicate/Delete). Let the grid finish
 	// loading/re-rendering after the preceding save/delete before clicking, otherwise the click can
@@ -337,8 +379,12 @@ export const selectTasksTableRow = async (index) => {
 // only re-click if the action buttons are still disabled. Mirrors the proven Income.po.selectTableRow.
 export const selectTaskRowByName = async (name) => {
 	const page = getPage();
-	// Guard the back-nav drift first, then let the grid settle after the preceding save/delete refresh.
-	await reanchorTasksScreen();
+	// filterTasksByTitle re-anchors (guards the back-nav drift) then scopes the grid to THIS run's title,
+	// so the target row is guaranteed on the rendered first page even when accumulated pollution would
+	// otherwise push it onto page 2+ (the grid is 10-rows/page, server-paginated). Without this,
+	// .filter({hasText}) below matches nothing because the row isn't in the rendered <tbody> at all, and
+	// the 24s waitFor times out. Then let the grid settle after the preceding save/delete refresh.
+	await filterTasksByTitle(name);
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
 	await page.waitForTimeout(1500);
@@ -435,14 +481,20 @@ export const waitMessageToHide = async () => {
 };
 
 export const verifyTaskExists = async (text) => {
-	// Re-anchor first: a queued history.back() can drift the SPA to /#/pages/employees, where the tasks
-	// grid (and the title text) is absent — the verify would then wrongly time out. (See reanchor note.)
-	await reanchorTasksScreen();
+	// filterTasksByTitle re-anchors first (a queued history.back() can drift the SPA to /#/pages/employees,
+	// where the tasks grid/title is absent), THEN filters the grid to THIS run's title. The grid paginates
+	// at 10 rows/page (server-side), so on a polluted DB the freshly-created row can be on page 2+ and the
+	// rendered <tbody> the verify inspects wouldn't contain it. Filtering re-queries and returns our row on
+	// page 1 — proving it actually persisted, independent of accumulated rows and the API's default sort.
+	await filterTasksByTitle(text);
 	await verifyText(AddTaskPage.verifyTextCss, text);
 };
 
 export const verifyElementIsDeleted = async (text) => {
-	await reanchorTasksScreen();
+	// Filter to the (now-deleted) title first so the "no matching row" assertion is scoped to our record
+	// and not fooled by a same-named row from another spec sitting on a different page. After the delete +
+	// filter the grid shows only rows still matching `text` — expected to be zero.
+	await filterTasksByTitle(text);
 	await verifyTextNotExisting(AddTaskPage.verifyTextCss, text);
 };
 

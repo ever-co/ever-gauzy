@@ -188,14 +188,38 @@ export const clickEmployeeDropdown = async () => {
 export const selectEmployeeFromDropdown = async (index) => {
 	const page = getPage();
 	const option = page.locator(EstimatesPage.dropdownOptionCss);
-	// Best-effort employee pick: ga-employee-multi-select loads its options async and can legitimately
-	// be EMPTY (no employee "working" in the selected date range). Select one if it appears; otherwise
-	// press Escape and continue — an estimate saves fine without members. This avoids the hard 60s
-	// timeout on an empty `.option-list nb-option` list (mirrors ContactsLeads.selectEmployeeDropdownOption).
+	// ROOT CAUSE of the whole-spec failure (shared by all 4 financial specs): with invoiceType
+	// "By Employee Hours", invoice-add.generateTable() ONLY builds line items `if (isNotEmpty(selectedEmployeeIds))`
+	// (invoice-add.component.ts). If NO employee is selected here, ZERO items generate, and Save-as-Draft's
+	// addInvoice() aborts with a "NO_ITEMS" toast and persists NOTHING — so the grid never gets a row for our
+	// contact, and every later step (row-select/edit/send/view/delete) and finally verifySentBadgeClass fails.
+	// The seeded org DOES have a working employee (the default employee), so the nb-select list is NOT empty —
+	// we just have to make the pick RELIABLY register. Re-open the nb-select via its host until an option
+	// renders, click it, confirm the control now shows a selected value (so `onMembersSelected` fired and
+	// `selectedEmployeeIds` is non-empty), and close the overlay so it can't intercept later clicks. Only fall
+	// back to a soft skip if the list is genuinely empty (should not happen on the seeded org).
+	for (let attempt = 0; attempt < 4; attempt++) {
+		if (await option.first().isVisible().catch(() => false)) break;
+		await clickButton(EstimatesPage.selectEmployeeCss).catch(() => {});
+		await page.waitForTimeout(800);
+	}
 	try {
-		await option.first().waitFor({ state: 'visible', timeout: 8000 });
-		await option.nth(index).click({ force: true });
+		await option.first().waitFor({ state: 'visible', timeout: 12000 });
+		const picked = option.nth(index);
+		await picked.click({ force: true });
+		// nb-select is multi-select: after picking, the panel stays open and the chosen nb-option gets the
+		// `selected` class. Confirm it registered (so `onMembersSelected` fired and `selectedEmployeeIds`
+		// is non-empty) — re-click once if it didn't take — then close the overlay with Escape so the open
+		// option list can't intercept the fake-item table's generate/save clicks.
+		const isSelected = async () =>
+			(await picked.getAttribute('class').catch(() => ''))?.includes('selected') ?? false;
+		if (!(await isSelected())) {
+			await picked.click({ force: true }).catch(() => {});
+			await page.waitForTimeout(300);
+		}
+		await page.keyboard.press('Escape').catch(() => {});
 	} catch {
+		// Truly empty list — keep the flow moving, but this means items won't generate for By Employee Hours.
 		await page.keyboard.press('Escape').catch(() => {});
 	}
 };
@@ -211,8 +235,29 @@ export const generateItemsButtonVisible = async () => {
 export const clickGenerateItemsButton = async () => {
 	// dispatchClick past the form's full-card nb-spinner that overlays the buttons while it loads items
 	// (a coordinate click would land on the spinner). Mirrors the proven Invoices.po pattern.
-	await waitForSpinnerGone();
-	await dispatchClick(EstimatesPage.generateItemsButtonCss);
+	//
+	// DETERMINISTIC PERSISTENCE GATE: Save-as-Draft aborts with a silent "NO_ITEMS" toast (and persists
+	// nothing) if the item table is empty (invoice-add.addInvoice()). generateTable() only fills the table
+	// when a member/project is selected, so a mis-timed generate click leaves it empty and the estimate is
+	// never created — cascading into every later step failing. Click Generate, then POLL for at least one
+	// generated line-item row before returning; re-click if none appeared yet (the first click can land on
+	// the loading spinner). The items grid is the angular2-smart-table inside `.table-scroll-container`.
+	const page = getPage();
+	const itemRow = page.locator(
+		'.table-scroll-container table > tbody > tr.angular2-smart-row'
+	);
+	for (let attempt = 0; attempt < 4; attempt++) {
+		await waitForSpinnerGone();
+		await dispatchClick(EstimatesPage.generateItemsButtonCss).catch(() => {});
+		try {
+			await itemRow.first().waitFor({ state: 'visible', timeout: 6000 });
+			return;
+		} catch {
+			// no rows yet — the generate click may have hit the spinner or the member value hadn't
+			// settled; loop and dispatch it again.
+			await page.waitForTimeout(600);
+		}
+	}
 };
 
 export const saveAsDraftButtonVisible = async () => {
@@ -222,12 +267,33 @@ export const saveAsDraftButtonVisible = async () => {
 export const clickSaveAsDraftButton = async (text) => {
 	// Footer Save: settle the card spinner first, then DOM-dispatch the click so it fires even when a
 	// fading overlay sits on top (a coordinate click would land on the overlay). Mirrors Invoices.po.
-	await waitForSpinnerGone();
-	await getPage()
-		.locator('button', { hasText: text })
-		.first()
-		.dispatchEvent('click')
-		.catch(() => {});
+	//
+	// PERSISTENCE CONFIRMATION: addInvoice() only navigates back to the estimates grid (URL leaves `/add`
+	// or `/edit`) AFTER the estimate is actually created; a silent NO_ITEMS/duplicate/invalid-date abort
+	// keeps us on the add form. Click Save, then wait for the route to leave the add/edit form so we know
+	// the record persisted before the spec moves on to row-select/send/verify. Re-dispatch once if the
+	// first click didn't take (a fading toastr/overlay stole it).
+	const page = getPage();
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await waitForSpinnerGone();
+		await page
+			.locator('button', { hasText: text })
+			.first()
+			.dispatchEvent('click')
+			.catch(() => {});
+		try {
+			await page.waitForFunction(
+				() => !/\/(add|edit)(\b|\/|$)/.test(location.hash),
+				undefined,
+				{ timeout: 15000 }
+			);
+			await waitForSpinnerGone();
+			await page.waitForLoadState('networkidle').catch(() => {});
+			return;
+		} catch {
+			// still on the add/edit form — the click may have been intercepted; loop and re-dispatch.
+		}
+	}
 };
 
 export const tableRowVisible = async () => {

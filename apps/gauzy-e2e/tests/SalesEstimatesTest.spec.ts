@@ -159,8 +159,10 @@ test.describe('Sales estimates test', () => {
 			await salesEstimatesPage.moreButtonVisible();
 			await salesEstimatesPage.clickMoreButton();
 			await salesEstimatesPage.actionButtonVisible();
+			// pass fullName so a background grid refresh that deselected the row self-heals (re-select + reopen More)
 			await salesEstimatesPage.clickActionButtonByText(
-				SalesEstimatesPageData.duplicateButton
+				SalesEstimatesPageData.duplicateButton,
+				fullName
 			);
 			await salesEstimatesPage.waitMessageToHide();
 			await salesEstimatesPage.backButtonVisible();
@@ -172,8 +174,12 @@ test.describe('Sales estimates test', () => {
 			await salesEstimatesPage.moreButtonVisible();
 			await salesEstimatesPage.clickMoreButton();
 			await salesEstimatesPage.actionButtonVisible();
+			// The popover Send is `[disabled]="!canBeSend"`; passing fullName lets clickActionButtonByText
+			// re-select this spec's row (recomputing canBeSend) if a grid refresh deselected it, so send()
+			// actually fires and the estimate flips DRAFT -> SENT (otherwise div.badge-success never renders).
 			await salesEstimatesPage.clickActionButtonByText(
-				SalesEstimatesPageData.sendButton
+				SalesEstimatesPageData.sendButton,
+				fullName
 			);
 			await salesEstimatesPage.confirmButtonVisible();
 			await salesEstimatesPage.clickConfirmButton();
@@ -197,8 +203,10 @@ test.describe('Sales estimates test', () => {
 			await salesEstimatesPage.moreButtonVisible();
 			await salesEstimatesPage.clickMoreButton();
 			await salesEstimatesPage.actionButtonVisible();
+			// pass fullName so a deselecting grid refresh self-heals before the Email popover action dispatches
 			await salesEstimatesPage.clickActionButtonByText(
-				SalesEstimatesPageData.emailButton
+				SalesEstimatesPageData.emailButton,
+				fullName
 			);
 			await salesEstimatesPage.scrollEmailInviteTemplate();
 			await salesEstimatesPage.emailInputVisible();

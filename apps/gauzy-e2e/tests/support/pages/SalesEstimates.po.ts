@@ -291,14 +291,46 @@ export const actionButtonVisible = async () => {
 	await verifyElementIsVisible(SalesEstimatesPage.popoverButtonCss);
 };
 
-export const clickActionButtonByText = async (text: string) => {
+export const clickActionButtonByText = async (text: string, rowName?: string) => {
 	// dispatchClick: the popover action (Duplicate/Send/Email) is reached right after the More popover
 	// opens; a fading overlay can intercept a coordinate click. Dispatch straight to the matched button.
-	await getPage()
-		.locator(SalesEstimatesPage.popoverButtonCss)
-		.filter({ hasText: text })
-		.first()
-		.dispatchEvent('click');
+	//
+	// ROUND-8 ROOT CAUSE (why this Sales spec died at div.badge-success while the identical Estimates.po
+	// passes): the popover SEND button is `(click)="send()" [disabled]="!canBeSend"`, and canBeSend is
+	// RESET to false every time the grid refreshes (invoices$ -> _clearItem() -> selectInvoice(isSelected:
+	// false)). A dispatchEvent('click') on a DISABLED Angular button is a NO-OP — the (click) handler never
+	// runs — so if a background grid refresh deselected the row between selectTableRow() and this dispatch,
+	// send() never fires, the confirm dialog never opens, and the estimate stays DRAFT (no badge-success).
+	// The Accounting/Estimates spec masks this with its extra search + double-select settling; this Sales
+	// spec goes edit->duplicate->send with almost no settle, so the race bites. FIX: before dispatching,
+	// wait for the matched popover button to actually be ENABLED; if it's still disabled (row got
+	// deselected), re-select the spec's row by its unique contact name and re-open the More popover, then
+	// retry. Only dispatch onto an enabled button so send()/email()/duplicated() truly run.
+	const page = getPage();
+	const btn = page.locator(SalesEstimatesPage.popoverButtonCss).filter({ hasText: text }).first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await btn.waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
+		const disabled = await btn
+			.evaluate((el) => (el as HTMLButtonElement).disabled)
+			.catch(() => false);
+		if (!disabled) {
+			await btn.dispatchEvent('click').catch(() => {});
+			return;
+		}
+		// Popover action is disabled -> the row lost its selection (a grid refresh fired). Re-select the
+		// row (recomputes canBeSend from the fresh row data) and re-open More, then loop to re-check.
+		if (rowName) {
+			await page.keyboard.press('Escape').catch(() => {}); // dismiss the stale popover
+			await selectTableRow(rowName);
+			await clickMoreButton();
+			await actionButtonVisible().catch(() => {});
+		} else {
+			// no name to re-select with — give the popover a moment and retry the enabled check
+			await page.waitForTimeout(600);
+		}
+	}
+	// Final best-effort dispatch even if it never reported enabled (keeps the flow moving).
+	await btn.dispatchEvent('click').catch(() => {});
 };
 
 export const backButtonVisible = async () => {

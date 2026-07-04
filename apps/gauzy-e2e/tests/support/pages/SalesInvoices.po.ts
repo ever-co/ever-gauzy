@@ -310,32 +310,56 @@ export const confirmButtonVisible = async () => {
 };
 
 export const clickConfirmButton = async () => {
-	// Send/Email confirm dialog button. A SINGLE dispatchClick is racy here: the dialog body renders
-	// <ga-invoice-pdf> (an async PDF/iframe preview, plus a CKEditor) so the first dispatch can land before
-	// the (click)="send()"/"sendEmail()" handler is wired, and the dialog stays OPEN with the invoice never
-	// sent — exactly the observed failure (the "Send this invoice to Colin Rempel-Howell ?" dialog was still
-	// up with its iframe + Cancel/Send, the rows were still Draft, so div.badge-success never appeared).
-	// The prior version dispatched a PAGE-LEVEL confirmButtonCss without first waiting for the dialog host to
-	// render — dispatching before <ga-invoice-send>/<ga-invoice-email> is on screen is a silent no-op because
-	// the (click)="send()/sendEmail()" handler isn't wired yet. Fix (mirrors the proven SalesEstimates.po):
-	// (1) WAIT for the mutation dialog host to be visible before clicking; (2) scope the confirm button to the
-	// LIVE dialog host (never a stale page-level handle), with a page-level dispatchClick fallback; (3) loop
-	// and poll the host to DETACH so the send/email truly fires before we move on. dispatchEvent (not a
-	// coordinate click) so the fading popover backdrop can't intercept it.
+	// Send/Email confirm dialog OK button. The dialog's Send button is `<button (click)="send()"
+	// status="success" nbButton>` (ga-invoice-send) / `<button (click)="sendEmail()" [disabled]="form.invalid"
+	// status="success" nbButton>` (ga-invoice-email). `send()`/`sendEmail()` first `await` an
+	// invoicesService.update(status: SENT) / sendEmail(...)+updateAction(status: SENT) and only THEN
+	// `dialogRef.close()` — so nothing short of a REAL click that actually reaches the button drives it to
+	// completion and flips the row out of Draft. ROOT CAUSE this spec kept dying at `div.badge-success` while
+	// the "Send this invoice to <name> ?" dialog was STILL open and every row Draft: the prior handler used a
+	// synthetic `dispatchEvent('click')` (and a page-level dispatchClick fallback) which does NOT reliably drive
+	// the async (click)="send()"/"sendEmail()" handler on the nbButton — the dialog never closed, status stayed
+	// SENT-never-set, the SENT badge never rendered. The mutation dialog is the TOPMOST cdk-overlay, so its own
+	// Send button is not under any fading backdrop; a REAL actionable click lands on it and fires the handler.
+	// FIX mirrors the proven (round-7) SalesEstimates.po: (1) wait for the dialog host to render before clicking
+	// (the handler isn't wired until then); (2) settle the ga-invoice-pdf preview briefly, scroll the footer
+	// Send button into the scrollable card's viewport, and do a REAL actionable click (no force) so Playwright
+	// waits until the button genuinely receives pointer events AND is enabled (the email Send is
+	// [disabled]="form.invalid") before clicking — force/dispatch only as fallbacks; (3) poll the host to DETACH
+	// with a generous window (the awaited update round-trip must resolve before dialogRef.close), so we don't
+	// loop into a no-op re-click while the first click's handler is still awaiting.
 	const page = getPage();
 	const dialogHost = page.locator('ga-invoice-send, ga-invoice-email').first();
 	await dialogHost.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+	// Let the PDF preview settle a moment (bounded — the ga-invoice-pdf iframe can stream indefinitely, so a
+	// bare networkidle wait could stall; a short fixed pause clears the initial layout/animation).
+	await page.waitForTimeout(1200);
 	const confirmBtn = dialogHost.locator('nb-card-footer.text-left > button[status="success"]').first();
 	for (let i = 0; i < 8; i++) {
 		await waitForSpinnerGone();
-		await confirmBtn.dispatchEvent('click').catch(async () => {
-			await dispatchClick(SalesInvoicesPage.confirmButtonCss).catch(() => {});
+		await confirmBtn.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {});
+		await confirmBtn.scrollIntoViewIfNeeded().catch(() => {});
+		// Real ACTIONABLE click (no force): waits for visible/stable/enabled AND receives-pointer-events, so the
+		// event lands on the Send button and drives async send()/sendEmail(). Fall back to force, then a raw DOM
+		// dispatch, only if the actionable click can't resolve in time.
+		await confirmBtn.click({ timeout: 6000 }).catch(async () => {
+			await confirmBtn.click({ force: true, timeout: 4000 }).catch(async () => {
+				await confirmBtn.dispatchEvent('click').catch(async () => {
+					await dispatchClick(SalesInvoicesPage.confirmButtonCss).catch(() => {});
+				});
+			});
 		});
 		try {
-			await dialogHost.waitFor({ state: 'detached', timeout: 6000 });
+			// Generous detach window: send()/sendEmail() awaits the service update before dialogRef.close(), so the
+			// dialog only leaves the DOM once that round-trip resolves. 12s absorbs a slow update without looping
+			// into a no-op re-click while the first click's handler is still awaiting.
+			await dialogHost.waitFor({ state: 'detached', timeout: 12000 });
+			// let the onClose refresh ($refresh$ / invoices$) settle so the grid repaints the SENT badge
+			await waitForSpinnerGone();
+			await page.waitForLoadState('networkidle').catch(() => {});
 			return;
 		} catch {
-			// dialog still open — the click didn't take (PDF preview still wiring up); loop and re-dispatch
+			// dialog still open — the click didn't take (PDF preview still wiring up); loop and re-click
 		}
 	}
 };

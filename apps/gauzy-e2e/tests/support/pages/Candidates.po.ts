@@ -133,16 +133,25 @@ export const clickSendInviteButton = async () => {
 		.then(() => true)
 		.catch(() => false);
 	if (!closed) {
-		// Cancel = the basic/outline footer button that calls closeDialog().
-		await page
-			.locator('ga-invite-mutation nb-card-footer button[status="basic"]')
-			.first()
-			.click({ force: true })
-			.catch(() => undefined);
-		await inviteDialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => undefined);
-		if (await inviteDialog.count()) {
-			await page.keyboard.press('Escape').catch(() => undefined);
-			await inviteDialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => undefined);
+		// The leaked dialog MUST be dismissed or its modal backdrop blocks the whole add-candidate flow
+		// (the observed failure: #firstName never appears because the Add-candidate dialog can't open).
+		// A `.click({force:true})` on Cancel fires a TRUSTED pointer event at the button's center, which a
+		// lingering cdk-overlay-backdrop (the appliedDate datepicker opened via Tab, or a danger toast from
+		// add()'s catch) can still intercept — that's why the prior force-click left the dialog mounted.
+		// dispatchEvent('click') fires the (click)="closeDialog()" handler straight on the node, bypassing
+		// all coordinate hit-testing. Try Cancel, then the header X-icon, then Escape, re-checking detach
+		// after each and looping a few times until the dialog is genuinely gone.
+		const cancelBtn = page.locator('ga-invite-mutation nb-card-footer button[status="basic"]').first();
+		const closeIcon = page.locator('ga-invite-mutation span.cancel i').first();
+		for (let attempt = 0; attempt < 4 && (await inviteDialog.count()); attempt++) {
+			await cancelBtn.dispatchEvent('click').catch(() => undefined);
+			if (!(await inviteDialog.waitFor({ state: 'detached', timeout: 2500 }).then(() => true).catch(() => false))) {
+				await closeIcon.dispatchEvent('click').catch(() => undefined);
+				if (!(await inviteDialog.waitFor({ state: 'detached', timeout: 2500 }).then(() => true).catch(() => false))) {
+					await page.keyboard.press('Escape').catch(() => undefined);
+					await inviteDialog.waitFor({ state: 'detached', timeout: 2500 }).catch(() => undefined);
+				}
+			}
 		}
 	}
 };
@@ -154,8 +163,21 @@ export const addCandidateButtonVisible = async () => {
 export const clickAddCandidateButton = async (index) => {
 	// Clicked right after the invite dialog closed (its backdrop + toastr still fading over the
 	// toolbar); a coordinate click lands on the overlay. Settle, then dispatch (click)="add()".
+	// dispatchEvent fires the handler straight on the node, bypassing any fading invite backdrop.
+	// Confirm the ga-candidate-mutation dialog actually opened (its onClose is what persists the
+	// candidate); retry the dispatch if a transient overlay ate the first one, so #firstName reliably
+	// appears — the observed failure was the Add dialog never opening because the invite dialog leaked.
 	await waitForSpinnerGone();
-	await dispatchClick(CandidatesPage.addButtonCss);
+	const dialog = getPage().locator('ga-candidate-mutation').first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await dispatchClick(CandidatesPage.addButtonCss);
+		const opened = await dialog
+			.waitFor({ state: 'visible', timeout: 6000 })
+			.then(() => true)
+			.catch(() => false);
+		if (opened) return;
+		await waitForSpinnerGone();
+	}
 };
 
 export const firstNameInputVisible = async () => {

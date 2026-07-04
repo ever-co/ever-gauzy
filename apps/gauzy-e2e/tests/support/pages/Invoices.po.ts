@@ -114,34 +114,57 @@ export const selectContactFromDropdown = async (nameOrIndex: string | number) =>
 	// mousedown so a click is backdrop-blocked). The contact is a REQUIRED control (form.invalid disables Save),
 	// retry generously. Mirrors the proven SalesInvoices.po pattern.
 	const byName = typeof nameOrIndex === 'string';
-	for (let i = 0; i < 6; i++) {
-		if (await option.first().isVisible().catch(() => false)) break;
-		await waitForSpinnerGone();
+	// The selected contact renders as a label INSIDE the ng-select control (ng-label-tmp -> the contact
+	// name). Verifying that label committed is what proves organizationContactId will land on the saved
+	// invoice — a REQUIRED gate: send() opens the confirm dialog only if selectedInvoice.organizationContactId
+	// is set (else it toasts "NOT_LINKED" and never sends), and the popover Send button is [disabled]="!canBeSend"
+	// which is false when the row has no toContact. A silent mis-pick here => the invoice stays DRAFT and
+	// verifySentBadgeClass times out three steps later. So confirm the label, and re-pick if it didn't take.
+	const control = page.locator(InvoicesPage.organizationContactDropdownCss).first();
+	const committed = async () =>
+		byName
+			? (await control.innerText().catch(() => '')).toLowerCase().includes(String(nameOrIndex).toLowerCase())
+			: (await control.locator('.ng-value').count().catch(() => 0)) > 0;
+
+	for (let attempt = 0; attempt < 3; attempt++) {
+		for (let i = 0; i < 6; i++) {
+			if (await option.first().isVisible().catch(() => false)) break;
+			await waitForSpinnerGone();
+			await input.focus().catch(() => {});
+			await page.keyboard.press('ArrowDown').catch(() => {});
+			await page.waitForTimeout(800);
+		}
+		if (byName) {
+			await input.fill('').catch(() => {});
+			await input.pressSequentially(String(nameOrIndex), { delay: 20 }).catch(() => {});
+			await page.waitForTimeout(600);
+			const match = option.filter({ hasText: String(nameOrIndex) }).first();
+			try {
+				await match.waitFor({ state: 'visible', timeout: 8000 });
+				await match.click({ force: true });
+				await page.waitForTimeout(400);
+				if (await committed()) return;
+				// pick didn't commit onto the control — reopen and retry (below).
+			} catch {
+				// named contact didn't surface (shouldn't happen — addContact created it — but keep the flow moving);
+				// clear the typed filter so the fallback picks a real (unfiltered) option, not an empty filtered list.
+				await input.fill('').catch(() => {});
+				await page.waitForTimeout(400);
+			}
+		}
+		// index path (or named-fallback): best-effort — if no option shows, Escape and continue rather than hanging.
+		if (await option.first().isVisible().catch(() => false)) {
+			await option.nth(byName ? 0 : (nameOrIndex as number)).click({ force: true }).catch(() => {});
+			await page.waitForTimeout(400);
+			if (await committed()) return;
+		} else if (!byName) {
+			await page.keyboard.press('Escape').catch(() => {});
+			return;
+		}
+		// not committed yet — reopen the ng-select for another attempt (opens on mousedown, so keyboard).
 		await input.focus().catch(() => {});
 		await page.keyboard.press('ArrowDown').catch(() => {});
-		await page.waitForTimeout(800);
-	}
-	if (byName) {
-		await input.fill('').catch(() => {});
-		await input.pressSequentially(String(nameOrIndex), { delay: 20 }).catch(() => {});
-		await page.waitForTimeout(600);
-		const match = option.filter({ hasText: String(nameOrIndex) }).first();
-		try {
-			await match.waitFor({ state: 'visible', timeout: 8000 });
-			await match.click({ force: true });
-			return;
-		} catch {
-			// named contact didn't surface (shouldn't happen — addContact created it — but keep the flow moving);
-			// clear the typed filter so the fallback picks a real (unfiltered) option, not an empty filtered list.
-			await input.fill('').catch(() => {});
-			await page.waitForTimeout(400);
-		}
-	}
-	// index path (or named-fallback): best-effort — if no option shows, Escape and continue rather than hanging.
-	if (await option.first().isVisible().catch(() => false)) {
-		await option.nth(byName ? 0 : (nameOrIndex as number)).click({ force: true }).catch(() => {});
-	} else {
-		await page.keyboard.press('Escape').catch(() => {});
+		await page.waitForTimeout(500);
 	}
 };
 

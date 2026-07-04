@@ -129,8 +129,15 @@ export const nameInputVisible = async () => {
 };
 
 export const enterNameInputData = async (data) => {
-	await clearField(GoalsPage.nameInputCss);
-	await enterInput(GoalsPage.nameInputCss, data);
+	// STRICT-MODE / RESET SAFETY: `[formcontrolname="name"]` can resolve to more than one control on the
+	// page (a lingering closed-dialog overlay from an earlier spec, or the key-result form's own name once
+	// it has been opened once), which makes the bare clearField().clear()/fill() throw a strict-mode
+	// violation. Scope to the objective mutation dialog's name input and drive it directly, filling last so
+	// the required `name` control is definitely populated before Save's validity is evaluated.
+	const input = getPage().locator('ga-objective-mutation [formcontrolname="name"]').first();
+	await input.waitFor({ state: 'visible', timeout: 24000 }).catch(() => {});
+	await input.fill('');
+	await input.fill(String(data));
 };
 
 export const ownerDropdownVisible = async () => {
@@ -184,9 +191,24 @@ export const clickDeadlineDropdown = async () => {
 
 export const selectDeadlineFromDropdown = async (index) => {
 	// Deadline is a plain nb-select bound via formControlName, so picking any option both fills the
-	// required control and enables Save. Wait for the overlay option to paint, then click it.
-	const option = getPage().locator(GoalsPage.dropdownOptionCss);
+	// required control and enables Save.
+	//
+	// DATE ROBUSTNESS: the chosen time frame is NOT cosmetic — the later "add new deadline" step opens the
+	// key-result-details dialog, whose "Add New" (update) button is `[hidden]="!isUpdatable"`, and
+	// isUpdatable = (endDate future/today) AND (startDate in the PAST). The objective form only lists ACTIVE
+	// time frames with a future endDate, but that still includes a NOT-YET-STARTED frame (e.g. a future
+	// quarter Q4 whose startDate is ahead of today), and the option ORDER coming back from the API is not
+	// guaranteed — so a blind nth(0) can land on a future-start frame and the deadline step then times out
+	// waiting for a hidden button. The seeded "Annual-<year>" frame always starts on Jan 1 (past) and ends
+	// Dec 31 (future) for the whole current year, so it is ALWAYS updatable. Prefer it; fall back to nth().
+	const page = getPage();
+	const option = page.locator(GoalsPage.dropdownOptionCss);
 	await option.first().waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
+	const annual = option.filter({ hasText: 'Annual' }).first();
+	if (await annual.isVisible().catch(() => false)) {
+		await annual.click({ force: true });
+		return;
+	}
 	await option.nth(index).click({ force: true });
 };
 
@@ -340,8 +362,12 @@ export const keyResultInputVisible = async () => {
 };
 
 export const enterKeyResultNameData = async (data) => {
-	await clearField(GoalsPage.keyResultInputCss);
-	await enterInput(GoalsPage.keyResultInputCss, data);
+	// Scope to the key-result mutation dialog and fill directly (same strict-mode/reset safety as the
+	// objective name field). `name` is a required control on this form, so populate it deterministically.
+	const input = getPage().locator('ga-edit-keyresults #key-result-title').first();
+	await input.waitFor({ state: 'visible', timeout: 24000 }).catch(() => {});
+	await input.fill('');
+	await input.fill(String(data));
 };
 
 export const initialValueInputVisible = async () => {
@@ -371,15 +397,24 @@ export const clickKeyResultOwnerDropdown = async () => {
 };
 
 export const selectKeyResultOwnerFromDropdown = async (index) => {
-	// Best-effort employee pick (same async/empty-list hazard as the objective lead). The key-result
-	// owner IS required to save, but the option list loads async — wait up to ~8s, pick one if present,
-	// else Escape so we never hard-hang 60s on an empty list.
+	// The key-result owner (ownerId) is a REQUIRED control — if it stays null the form is invalid, Save
+	// never fires, the key result is never persisted, and EVERY later step (add-deadline / weight / edit /
+	// delete all operate on that key result) dies downstream. The seed always provides employees (18
+	// default employees, all with a past startedWorkOn), so the ga-employee-multi-select option list is
+	// non-empty; wait robustly (poll up to ~20s) for an option and actually click it rather than
+	// escape-and-continue. Only fall back to Escape if the list genuinely never renders, so we never
+	// hard-hang but also don't silently leave the required owner empty.
 	const page = getPage();
 	const option = page.locator(GoalsPage.dropdownOptionCss);
-	try {
-		await option.first().waitFor({ state: 'visible', timeout: 8000 });
-		await option.nth(index).click({ force: true });
-	} catch {
+	let clicked = false;
+	for (let attempt = 0; attempt < 4; attempt++) {
+		if (await option.first().waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false)) {
+			await option.nth(index).click({ force: true }).catch(() => {});
+			clicked = true;
+			break;
+		}
+	}
+	if (!clicked) {
 		await page.keyboard.press('Escape').catch(() => {});
 	}
 };
@@ -421,12 +456,19 @@ export const clickAddDeadlineButton = async () => {
 };
 
 export const updatedValueInputVisible = async () => {
-	await verifyElementIsVisible(GoalsPage.updatedValueCss);
+	// Scope to the key-result UPDATE dialog: `#updated-value` is also the id of the assign-as-objective
+	// nb-toggle in the key-result ADD form, so a bare '#updated-value' can resolve to that (non-input)
+	// element if its overlay lingers. The numeric update input lives only under ga-keyresult-update.
+	await verifyElementIsVisible('ga-keyresult-update #updated-value');
 };
 
 export const enterUpdatedValueData = async (data) => {
-	await clearField(GoalsPage.updatedValueCss);
-	await enterInput(GoalsPage.updatedValueCss, data);
+	// Same scoping as above; fill the update dialog's numeric input directly (value is within the
+	// [min=initialValue, max=targetValue] range the field allows). No validators gate this form.
+	const input = getPage().locator('ga-keyresult-update #updated-value').first();
+	await input.waitFor({ state: 'visible', timeout: 24000 }).catch(() => {});
+	await input.fill('');
+	await input.fill(String(data));
 };
 
 export const saveDeadlineButtonVisible = async () => {

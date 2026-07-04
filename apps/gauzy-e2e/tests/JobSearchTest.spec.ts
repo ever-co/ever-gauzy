@@ -1,5 +1,4 @@
 import { test } from './support/fixtures';
-import { getPage } from './support/page-context';
 import * as loginPage from './support/pages/Login.po';
 import { LoginPageData } from '../src/support/Base/pagedata/LoginPageData';
 import * as jobSearchPage from './support/pages/JobSearch.po';
@@ -12,15 +11,11 @@ test.describe('Job search test', () => {
 
 		await test.step('Should be able to verify job search visibility', async () => {
 			// A bare hash goto() right after login (which lands on /#/pages/dashboard) is a
-			// same-document no-op — the Angular hash-router never re-renders and the page stays on
-			// the dashboard. Force the hash in-page + settle so the job-search screen actually mounts.
-			await getPage().goto('/#/pages/jobs/search');
-			await getPage().evaluate(() => {
-				if (!location.hash.includes('/pages/jobs/search')) {
-					location.hash = '#/pages/jobs/search';
-				}
-			});
-			await getPage().waitForTimeout(800);
+			// same-document no-op — the Angular hash-router never re-renders and the page stays on the
+			// dashboard (confirmed: the failure DOM was still the dashboard). navigateToJobSearch bounces
+			// through the dashboard hash to force a real hashchange, waits for the "Job Search" header,
+			// and hard-reloads onto the route if the SPA nav wedges — so the screen actually mounts.
+			await jobSearchPage.navigateToJobSearch();
 			// The search input + advanced filter only render inside the "Search" tab; activate it first.
 			await jobSearchPage.clickSearchTab();
 			await jobSearchPage.searchInputVisible();
