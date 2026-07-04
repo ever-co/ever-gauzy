@@ -1,12 +1,15 @@
 name: MCP Server Build Prod
 
+# Desktop apps are built ONLY when 'master' is promoted to the 'apps' branch
+# (branch flow: develop -> stage -> master -> apps).
+# The build version is resolved at build time (.scripts/bump-version-electron.js) from the
+# latest git tag, which 'Release Prod' creates on the merge to 'master' - so app releases
+# always carry the same version as the corresponding platform release and publish to the
+# same targets (each app repo's GitHub Releases + DigitalOcean Spaces).
 on:
-  workflow_run:
-    workflows: ['Release Prod']
+  push:
     branches:
-      - master
-    types:
-      - completed
+      - apps
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}

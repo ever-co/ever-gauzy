@@ -1,13 +1,15 @@
 name: Server Build Stage
 
+# Stage desktop apps are built ONLY when 'stage' is promoted to the 'stage-apps' branch
+# ('temp' is kept for ad-hoc testing). No new platform version is created here: the build
+# version is resolved at build time (.scripts/bump-version-electron.js) from the latest git
+# tag, which 'Release Stage' creates on the merge to 'stage' - so stage app prereleases
+# carry the same version as the corresponding platform stage release.
 on:
-  workflow_run:
-    workflows: ['Release Apps Stage']
+  push:
     branches:
       - stage-apps
       - temp
-    types:
-      - completed
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
