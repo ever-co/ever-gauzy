@@ -179,11 +179,35 @@ export class PlaneIntegrationService {
 					[PlaneSettingName.PLANE_SPACE_URL, SHARED_PLANE_SPACE_URL]
 				);
 			} else {
-				updates.push(
-					[PlaneSettingName.PLANE_WEB_URL, dto.planeWebUrl],
-					[PlaneSettingName.PLANE_ADMIN_URL, dto.planeAdminUrl],
-					[PlaneSettingName.PLANE_SPACE_URL, dto.planeSpaceUrl]
-				);
+				// Switching to custom mode: UpdatePlaneSettingsDto is a PartialType, so a
+				// bare `{ mode: 'custom' }` passes validation. Guard here so we never
+				// persist mode='custom' while the URLs stay empty or on the shared hosted
+				// defaults. Resolve the effective web/space URLs (from this request or
+				// already stored) and reject the switch unless both are real tenant URLs.
+				const effectiveWebUrl =
+					dto.planeWebUrl ?? settingsIndex.get(PlaneSettingName.PLANE_WEB_URL)?.settingsValue;
+				const effectiveSpaceUrl =
+					dto.planeSpaceUrl ?? settingsIndex.get(PlaneSettingName.PLANE_SPACE_URL)?.settingsValue;
+				if (
+					!effectiveWebUrl ||
+					effectiveWebUrl === SHARED_PLANE_WEB_URL ||
+					!effectiveSpaceUrl ||
+					effectiveSpaceUrl === SHARED_PLANE_SPACE_URL
+				) {
+					throw new HttpException(
+						'Switching to custom mode requires planeWebUrl and planeSpaceUrl.',
+						HttpStatus.BAD_REQUEST
+					);
+				}
+				if (dto.planeWebUrl !== undefined) {
+					updates.push([PlaneSettingName.PLANE_WEB_URL, dto.planeWebUrl]);
+				}
+				if (dto.planeAdminUrl !== undefined) {
+					updates.push([PlaneSettingName.PLANE_ADMIN_URL, dto.planeAdminUrl]);
+				}
+				if (dto.planeSpaceUrl !== undefined) {
+					updates.push([PlaneSettingName.PLANE_SPACE_URL, dto.planeSpaceUrl]);
+				}
 			}
 		} else {
 			updates.push(
