@@ -9,12 +9,12 @@ import {
 	UseInterceptors
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
-import { FeatureFlag, IAppIntegrationConfig, Public } from '@gauzy/common';
+import { FeatureFlag, Public } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { FeatureFlagGuard } from './../shared/guards';
 import { UseValidationPipe } from '../shared/pipes';
-import { ConfirmEmailByCodeDTO, ConfirmEmailByTokenDTO } from './dto';
+import { AppIntegrationConfigDTO, ConfirmEmailByCodeDTO, ConfirmEmailByTokenDTO } from './dto';
 
 @UseGuards(FeatureFlagGuard)
 @FeatureFlag(FeatureEnum.FEATURE_EMAIL_VERIFICATION)
@@ -67,7 +67,8 @@ export class EmailVerificationController {
 	@ApiOperation({ summary: 'Resend email verification link' })
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post('resend-link')
-	public async resendConfirmationLink(@Body() config: IAppIntegrationConfig): Promise<Object> {
+	@UseValidationPipe({ whitelist: true })
+	public async resendConfirmationLink(@Body() config: AppIntegrationConfigDTO): Promise<Object> {
 		return await this.emailConfirmationService.resendConfirmationLink(config);
 	}
 }

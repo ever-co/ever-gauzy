@@ -47,6 +47,17 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 		try {
 			const httpServer = this.httpAdapterHost.httpAdapter.getHttpServer();
 
+			// Path<->session binding (extractSessionTenantId) needs JWT_SECRET to verify the
+			// session cookie. Without it every request silently falls back to trusting the
+			// URL tenant, re-opening the confused-deputy. Fail loudly instead of silently.
+			if (!environment.JWT_SECRET) {
+				this.logger.error(
+					'JWT_SECRET is not configured — the Plane proxy cannot bind the path tenant to ' +
+						'the authenticated session and will fall back to trusting the URL tenant. Set ' +
+						'JWT_SECRET so session-based tenant resolution is enforced.'
+				);
+			}
+
 			this.proxyResult = mountPlaneProxy(httpServer, {
 				prefix: PROXY_PREFIX,
 
@@ -56,16 +67,52 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 				 * that authentication is never skipped.
 				 */
 				extractTenantId: (req) => {
-					// 1. Explicit header / cookie (Gauzy-originated calls)
-					const headerTenantId = this.extractTenantIdFromHeaders(req);
+					// Always strip a UUID path segment first so the downstream proxy app
+					// sees a clean URL regardless of which tenant signal wins below.
+					const pathTenantId = this.extractTenantIdFromPath(req);
+
+					// 1. Explicit X-TENANT-ID header (Gauzy-internal calls) — JWT-validated.
+					const headerTenantId = this.extractTenantIdFromHeader(req);
 					if (headerTenantId) {
 						this.validateTenantFromToken(req, headerTenantId);
 						(req as any)[REQ_TENANT_ID] = headerTenantId;
 						return headerTenantId;
 					}
 
-					// 2. UUID in URL path (Plane UI calls)
-					const pathTenantId = this.extractTenantIdFromPath(req);
+					// 2. The authenticated Plane session is the SOURCE OF TRUTH for the
+					//    tenant. It is resolved BEFORE the ambient `tenant-id` cookie so a
+					//    Plane UI request (session cookie, no Bearer) is never short-
+					//    circuited into the "missing Bearer" path by a stray tenant-id
+					//    cookie. A valid session also OVERRIDES the path UUID, so a request
+					//    can never be served with another tenant's resolved config while it
+					//    carries a different tenant's session (confused-deputy defense).
+					const sessionTenantId = this.extractSessionTenantId(req);
+					if (sessionTenantId) {
+						if (pathTenantId && pathTenantId !== sessionTenantId) {
+							this.logger.warn(
+								`Plane proxy: path tenant ${pathTenantId} does not match the ` +
+									`authenticated session tenant ${sessionTenantId}; serving the ` +
+									`session tenant.`
+							);
+						}
+						(req as any)[REQ_TENANT_ID] = sessionTenantId;
+						return sessionTenantId;
+					}
+
+					// 3. `tenant-id` cookie from a Gauzy browser session — only honored
+					//    when a Bearer is also present, so it can be cross-checked against
+					//    the token (and so it never throws for a Plane bootstrap request
+					//    that merely carries an ambient tenant-id cookie).
+					const cookieTenantId = this.extractTenantIdFromCookie(req);
+					if (cookieTenantId && this.hasBearerToken(req)) {
+						this.validateTenantFromToken(req, cookieTenantId);
+						(req as any)[REQ_TENANT_ID] = cookieTenantId;
+						return cookieTenantId;
+					}
+
+					// 4. No tenant yet — public bootstrap (auth/email-check, login,
+					//    api/instances). Fall back to the path tenant so CORS and the
+					//    email-check API key resolve for the right tenant.
 					if (pathTenantId) {
 						(req as any)[REQ_TENANT_ID] = pathTenantId;
 						return pathTenantId;
@@ -173,14 +220,21 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
-	 * Extract tenant ID from X-TENANT-ID header or tenant-id cookie.
+	 * Extract the tenant ID from the explicit X-TENANT-ID header.
 	 */
-	private extractTenantIdFromHeaders(req: http.IncomingMessage): string | undefined {
+	private extractTenantIdFromHeader(req: http.IncomingMessage): string | undefined {
 		const tenantIdHeader = req.headers['x-tenant-id'];
 		if (tenantIdHeader) {
 			return Array.isArray(tenantIdHeader) ? tenantIdHeader[0] : tenantIdHeader;
 		}
+		return undefined;
+	}
 
+	/**
+	 * Extract the tenant ID from the ambient `tenant-id` cookie (set by Gauzy
+	 * browser sessions). Lower priority than the authenticated Plane session.
+	 */
+	private extractTenantIdFromCookie(req: http.IncomingMessage): string | undefined {
 		const cookieHeader = req.headers['cookie'];
 		if (cookieHeader) {
 			const match = cookieHeader.match(/(?:^|;\s*)tenant-id=([^;]+)/);
@@ -188,8 +242,83 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 				return decodeURIComponent(match[1]);
 			}
 		}
-
 		return undefined;
+	}
+
+	/**
+	 * Whether the request carries an `Authorization: Bearer` token.
+	 */
+	private hasBearerToken(req: http.IncomingMessage): boolean {
+		const auth = req.headers['authorization'];
+		return typeof auth === 'string' && auth.startsWith('Bearer ');
+	}
+
+	// ── Session-based tenant resolution ──────────────────
+
+	/**
+	 * Read and verify the Gauzy JWT carried by the chunked
+	 * `auth-proxy-plane-token-*` cookies and return its `tenantId` claim.
+	 *
+	 * Returns `undefined` when no session cookie is present (unauthenticated
+	 * bootstrap) or when JWT_SECRET is not configured (e.g. a standalone proxy
+	 * that does not share Gauzy's signing secret). A present-but-invalid or
+	 * expired cookie is also treated as no session: the forwarded Bearer is the
+	 * same token and Gauzy rejects it with 401, letting the Plane UI
+	 * re-authenticate gracefully instead of the proxy hard-failing the request.
+	 */
+	private extractSessionTenantId(req: http.IncomingMessage): string | undefined {
+		const token = this.readSessionToken(req);
+		if (!token) {
+			return undefined;
+		}
+
+		const jwtSecret = environment.JWT_SECRET;
+		if (!jwtSecret) {
+			return undefined;
+		}
+
+		try {
+			const payload = verify(token, jwtSecret) as { tenantId?: string };
+			return payload.tenantId || undefined;
+		} catch (error) {
+			this.logger.debug(
+				`Ignoring invalid/expired Plane proxy session cookie: ${
+					error instanceof Error ? error.message : String(error)
+				}`
+			);
+			return undefined;
+		}
+	}
+
+	/**
+	 * Reassemble the chunked `auth-proxy-plane-token-{0,1,...}` cookie into the
+	 * raw JWT string from the raw `Cookie` header (cookies are not parsed yet at
+	 * the HTTP-server interception layer).
+	 */
+	private readSessionToken(req: http.IncomingMessage): string | undefined {
+		const cookieHeader = req.headers['cookie'];
+		if (!cookieHeader) {
+			return undefined;
+		}
+
+		const jar: Record<string, string> = {};
+		for (const part of cookieHeader.split(';')) {
+			const eq = part.indexOf('=');
+			if (eq === -1) {
+				continue;
+			}
+			const key = part.slice(0, eq).trim();
+			if (key) {
+				jar[key] = part.slice(eq + 1).trim();
+			}
+		}
+
+		const chunks: string[] = [];
+		for (let index = 0; jar[`auth-proxy-plane-token-${index}`] !== undefined; index++) {
+			chunks.push(jar[`auth-proxy-plane-token-${index}`]);
+		}
+
+		return chunks.length > 0 ? chunks.join('') : undefined;
 	}
 
 	// ── JWT validation ────────────────────────────────────────────────

@@ -12,6 +12,7 @@ export interface IPlaneSetupResponse {
 
 export interface IPlaneSettingsResponse {
 	integrationTenantId: ID;
+	mode: 'shared' | 'custom';
 	planeWebUrl: string;
 	planeAdminUrl: string;
 	planeSpaceUrl: string;
@@ -44,7 +45,7 @@ export class PlaneService {
 	 * Configure Plane integration with URLs.
 	 */
 	setup(
-		dto: { planeWebUrl: string; planeAdminUrl?: string; planeSpaceUrl?: string },
+		dto: { mode?: 'shared' | 'custom'; planeWebUrl?: string; planeAdminUrl?: string; planeSpaceUrl?: string },
 		organizationId?: string
 	): Observable<IPlaneSetupResponse> {
 		const params = organizationId ? new HttpParams().set('organizationId', organizationId) : undefined;

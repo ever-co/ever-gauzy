@@ -11,6 +11,10 @@
 
 .actions-section {
   margin-top: 16px;
+
+  .d-flex + .d-flex {
+    margin-top: 12px;
+  }
 }
 
 button {

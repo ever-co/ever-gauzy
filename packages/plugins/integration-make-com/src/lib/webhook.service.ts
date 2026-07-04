@@ -5,10 +5,13 @@ import { firstValueFrom } from 'rxjs';
 import { RequestContext } from '@gauzy/core';
 import { ITimerWebhookEvent, TimerEventType, TimerEventDataType } from './interfaces/timer-webhook.interface';
 import { MakeComService } from './make-com.service';
+import { assertSafeMakeWebhookUrl, createSsrfSafeHttpsAgent } from './webhook-url.validator';
 
 @Injectable()
 export class WebhookService {
 	private readonly logger = new Logger(WebhookService.name);
+	// HTTPS agent that refuses to connect to private/loopback/link-local resolved IPs (anti-SSRF).
+	private readonly ssrfSafeHttpsAgent = createSsrfSafeHttpsAgent();
 
 	constructor(
 		private readonly configService: ConfigService,
@@ -69,6 +72,16 @@ export class WebhookService {
 				return;
 			}
 
+			// SSRF egress guard at request time: re-validate the stored URL before posting, so a
+			// malicious value stored before this guard existed (or via DNS changes) is not used as an
+			// outbound target (GHSA-534m-c6mh-mp98).
+			try {
+				assertSafeMakeWebhookUrl(webhookUrl);
+			} catch (error) {
+				this.logger.warn(`Skipping Make.com webhook emission for an unsafe URL: ${error?.message ?? error}`);
+				return;
+			}
+
 			// Get the current tenant ID.
 			const tenantId = RequestContext.currentTenantId();
 
@@ -86,7 +99,12 @@ export class WebhookService {
 					timeout: 10000,
 					headers: {
 						'Content-Type': 'application/json'
-					}
+					},
+					// Do not follow redirects: a 30x to an http:// or private host would bypass the
+					// httpsAgent SSRF check (the redirected request could use the default agent).
+					maxRedirects: 0,
+					// Re-validate the resolved destination IP at connection time (anti-DNS-rebinding).
+					httpsAgent: this.ssrfSafeHttpsAgent
 				})
 			);
 			this.logger.log(`Timer ${eventType} event sent to Make.com webhook for tenant ${tenantId}`);
