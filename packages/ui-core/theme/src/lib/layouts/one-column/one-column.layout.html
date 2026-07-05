@@ -1,7 +1,12 @@
 <nb-layout windowMode>
-	<!-- Header -->
+	<!-- Header — its content shifts aside for the expanded AI chat panel
+	     (the chat is a full-height column; it must displace content, not cover it) -->
 	@if (user()) {
-		<nb-layout-header fixed>
+		<nb-layout-header
+			fixed
+			[style.paddingLeft.px]="chatHeaderPad('start')"
+			[style.paddingRight.px]="chatHeaderPad('end')"
+		>
 			<ngx-header [expanded]="isExpanded()"></ngx-header>
 		</nb-layout-header>
 	}

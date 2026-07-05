@@ -104,6 +104,19 @@ export class OneColumnLayoutComponent {
 	/** The chat sidebar host element (present only while the chat renders). */
 	readonly chatSidebarHost = viewChild<ElementRef<HTMLElement>>('chatSidebarHost');
 
+	/**
+	 * Horizontal padding the fixed header needs on the given side so its
+	 * content moves aside for the expanded chat column instead of being
+	 * covered by it. Null when the chat is collapsed, docked to the other
+	 * side, or maximized (maximized covers the header band entirely).
+	 */
+	chatHeaderPad(side: 'start' | 'end'): number | null {
+		const chat = this.chatSidebarService;
+		return chat.available() && chat.expanded() && !chat.maximized() && chat.position() === side
+			? chat.width()
+			: null;
+	}
+
 	private chatHostResizeObserver?: ResizeObserver;
 
 	/**
