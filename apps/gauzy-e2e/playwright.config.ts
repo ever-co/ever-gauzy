@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { defineBddConfig } from 'playwright-bdd';
 
 /**
  * Playwright config for the Ever Gauzy e2e suite.
@@ -13,8 +14,17 @@ import { defineConfig, devices } from '@playwright/test';
  */
 const baseURL = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
+// Restored BDD (Gherkin) layer via playwright-bdd: .feature files + step definitions -> generated
+// Playwright specs. `bddgen` writes the specs into this dir and the 'bdd' project below runs them.
+// The plain '*.spec.ts' tests keep running via the 'chromium' project until each is converted to a
+// .feature — the two coexist during the transition. Step defs bind the shared page-object layer via
+// tests/support/bdd.ts. Run: `npx bddgen && npx playwright test` (bddgen is also invoked by CI).
+const bddTestDir = defineBddConfig({
+	features: 'tests/bdd/features/**/*.feature',
+	steps: ['tests/bdd/steps/**/*.ts', 'tests/support/bdd.ts']
+});
+
 export default defineConfig({
-	testDir: './tests',
 	/* Mirror Cypress defaultCommandTimeout (24s) for actions and a long nav timeout for the heavy app.
 	 * 180s per test: the contact-mutation specs walk a 4-step stepper twice (add + edit) plus invite and
 	 * delete, each with settle/retry waits for the app's async dropdowns and overlay-leaking dialogs. */
@@ -42,5 +52,8 @@ export default defineConfig({
 		screenshot: 'only-on-failure',
 		video: 'off'
 	},
-	projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }]
+	projects: [
+		{ name: 'chromium', testDir: './tests', testIgnore: ['bdd/**'], use: { ...devices['Desktop Chrome'] } },
+		{ name: 'bdd', testDir: bddTestDir, use: { ...devices['Desktop Chrome'] } }
+	]
 });

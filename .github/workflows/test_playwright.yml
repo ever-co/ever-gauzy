@@ -128,7 +128,9 @@ jobs:
 
       - name: Run Playwright tests
         working-directory: apps/gauzy-e2e
-        run: npx playwright test
+        # bddgen regenerates the Playwright specs from the .feature (Gherkin) files + step definitions
+        # before the run; the plain *.spec.ts and the generated BDD specs run together (see playwright.config).
+        run: npx bddgen && npx playwright test
         env:
           CI: 'true'
           E2E_BASE_URL: http://localhost:4200
