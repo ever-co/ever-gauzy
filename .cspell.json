@@ -5,6 +5,8 @@
 	"ignoreRegExpList": ["GHSA-[A-Za-z0-9-]+"],
 	"words": [
 		"agentic",
+		"unserialized",
+		"upserts",
 		"BYOK",
 		"Cascadia",
 		"ciphertext",
@@ -945,6 +947,8 @@
 	],
 	"useGitignore": true,
 	"ignorePaths": [
+		".all-contributorsrc",
+		".github/CONTRIBUTORS.md",
 		".deploy/*",
 		".git/*",
 		".git/!{COMMIT_EDITMSG,EDITMSG}",
