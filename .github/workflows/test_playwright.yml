@@ -128,6 +128,9 @@ jobs:
 
       - name: Run Playwright tests
         working-directory: apps/gauzy-e2e
+        # MUST be bash: `run:` defaults to PowerShell on this Windows self-hosted runner, where `&&` is a
+        # parse error (FullyQualifiedErrorId: InvalidEndOfLine) — so the chained command never runs.
+        shell: bash
         # bddgen regenerates the Playwright specs from the .feature (Gherkin) files + step definitions
         # before the run; the plain *.spec.ts and the generated BDD specs run together (see playwright.config).
         run: npx bddgen && npx playwright test
