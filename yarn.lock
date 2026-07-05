@@ -7,6 +7,11 @@
   resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-5.2.0.tgz#7a03314684dd6572b7dfa89e68ce31d60286854d"
   integrity sha512-ukTPVhqG4jNzMro2qA9HSCSSVJN3aN7tlb+hfqYCt3ER0yWroeA2VR38MNrOHLQ/cVj+DaIMad0kFCtWWowh/A==
 
+"@4tw/cypress-drag-drop@^2.1.0":
+  version "2.3.1"
+  resolved "https://registry.npmjs.org/@4tw/cypress-drag-drop/-/cypress-drag-drop-2.3.1.tgz#44488852bb02ecc7e43423f0ecc0f11c3141552f"
+  integrity sha512-ht9Mx0eK+j4UO7fZvHNyCGOQEIj4d5+CZDYdxUCHGL4yvEhdDBH6PT4Lt12Ct+O+8qK8K1K31p7iiOghA8ewxQ==
+
 "@actions/core@^3.0.0":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@actions/core/-/core-3.0.0.tgz#89cb07c119e9b46a649ad5f355e77de9b3108cf8"
