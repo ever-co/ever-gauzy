@@ -118,8 +118,9 @@ export class AgentPageBridgeService {
 
 	private normalize(path: string): string {
 		try {
-			// Strip origin if a full URL to this app was passed.
-			const url = new URL(path, 'http://local');
+			// Strip origin if a full URL to this app was passed (the base is a
+			// placeholder for relative parsing only — nothing is fetched).
+			const url = new URL(path, 'https://local.invalid');
 			return url.pathname + (url.search ?? '');
 		} catch {
 			return path;

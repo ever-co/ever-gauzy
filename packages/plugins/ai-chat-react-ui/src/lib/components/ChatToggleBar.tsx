@@ -83,6 +83,12 @@ export function ChatToggleBar({ isExpanded, onToggle, onNewChat, messageCount = 
 			onMouseEnter={() => setIsHovered(true)}
 			onMouseLeave={() => setIsHovered(false)}
 			onClick={onToggle}
+			onKeyDown={(e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					onToggle();
+				}
+			}}
 			role="button"
 			tabIndex={0}
 			aria-expanded={isExpanded}

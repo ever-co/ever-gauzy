@@ -119,9 +119,11 @@
 								nbInput
 								fullWidth
 								class="custom-model"
+								[id]="'ai-chat-custom-model-' + provider.id"
 								formControlName="customModel"
 								type="text"
 								autocomplete="off"
+								[attr.aria-label]="'AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate"
 								[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate"
 							/>
 							}

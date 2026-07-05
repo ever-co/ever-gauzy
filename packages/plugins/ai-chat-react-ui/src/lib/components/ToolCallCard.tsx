@@ -125,6 +125,12 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 			<div
 				style={headerStyle}
 				onClick={() => setExpanded((v) => !v)}
+				onKeyDown={(e) => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault();
+						setExpanded((v) => !v);
+					}
+				}}
 				role="button"
 				tabIndex={0}
 				aria-expanded={expanded}

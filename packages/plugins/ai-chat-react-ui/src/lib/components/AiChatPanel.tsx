@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type CSSProperties } from 'react';
+import { useCallback, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useChat } from '@ai-sdk/react';
 import {
 	DefaultChatTransport,
@@ -12,7 +12,15 @@ import { executeClientTool, isClientTool } from '../chat-client-tools';
 import { ChatMessageList } from './ChatMessageList';
 import { ChatInput } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
+import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
 import { chatTheme } from '../chat-theme';
+
+/** Client-generated conversation id (UUID v4). */
+function newConversationId(): string {
+	return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+		? crypto.randomUUID()
+		: `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 /**
  * AiChatPanel
@@ -34,17 +42,31 @@ export function AiChatPanel() {
 	const chatSidebar = useMemo(() => injector.get(ChatSidebarService), [injector]);
 	const [input, setInput] = useState('');
 
+	// Conversation persistence: a client-generated id sent with every turn;
+	// the backend saves the full message list for the current user.
+	const conversationIdRef = useRef<string>(newConversationId());
+	const [activeConversationId, setActiveConversationId] = useState(conversationIdRef.current);
+	const [showHistory, setShowHistory] = useState(false);
+	const [history, setHistory] = useState<IChatHistoryItem[]>([]);
+	const [historyLoading, setHistoryLoading] = useState(false);
+
+	const authHeaders = useCallback(
+		(): Record<string, string> => ({
+			Authorization: `Bearer ${store.token}`,
+			...(store.tenantId ? { 'Tenant-Id': store.tenantId } : {}),
+			...(store.organizationId ? { 'Organization-Id': store.organizationId } : {})
+		}),
+		[store]
+	);
+
 	const transport = useMemo(
 		() =>
 			new DefaultChatTransport({
 				api: `${environment.API_BASE_URL}/api/ai-chat`,
-				headers: () => ({
-					Authorization: `Bearer ${store.token}`,
-					...(store.tenantId ? { 'Tenant-Id': store.tenantId } : {}),
-					...(store.organizationId ? { 'Organization-Id': store.organizationId } : {})
-				})
+				headers: authHeaders,
+				body: () => ({ conversationId: conversationIdRef.current })
 			}),
-		[store]
+		[authHeaders]
 	);
 
 	const chat = useChat({
@@ -92,6 +114,9 @@ export function AiChatPanel() {
 	const handleNewChat = useCallback(() => {
 		void stop();
 		setMessages([]);
+		conversationIdRef.current = newConversationId();
+		setActiveConversationId(conversationIdRef.current);
+		setShowHistory(false);
 	}, [stop, setMessages]);
 
 	const handleApprovalResponse = useCallback(
@@ -102,6 +127,49 @@ export function AiChatPanel() {
 	);
 
 	const handleCollapse = useCallback(() => chatSidebar.collapse(), [chatSidebar]);
+	const handleMoveSide = useCallback(() => chatSidebar.togglePosition(), [chatSidebar]);
+
+	// ── Conversation history (server-side, current user only) ────
+	const conversationsUrl = `${environment.API_BASE_URL}/api/ai-chat/conversations`;
+
+	const openHistory = useCallback(() => {
+		setShowHistory(true);
+		setHistoryLoading(true);
+		fetch(conversationsUrl, { headers: authHeaders() })
+			.then((response) => (response.ok ? response.json() : []))
+			.then((items) => setHistory(Array.isArray(items) ? items : items?.items ?? []))
+			.catch(() => setHistory([]))
+			.finally(() => setHistoryLoading(false));
+	}, [conversationsUrl, authHeaders]);
+
+	const handleSelectConversation = useCallback(
+		(id: string) => {
+			fetch(`${conversationsUrl}/${id}`, { headers: authHeaders() })
+				.then((response) => (response.ok ? response.json() : null))
+				.then((conversation) => {
+					if (!conversation) return;
+					void stop();
+					conversationIdRef.current = conversation.id;
+					setActiveConversationId(conversation.id);
+					setMessages((conversation.messages ?? []) as never);
+					setShowHistory(false);
+				})
+				.catch(() => setShowHistory(false));
+		},
+		[conversationsUrl, authHeaders, stop, setMessages]
+	);
+
+	const handleDeleteConversation = useCallback(
+		(id: string) => {
+			fetch(`${conversationsUrl}/${id}`, { method: 'DELETE', headers: authHeaders() })
+				.then(() => setHistory((items) => items.filter((item) => item.id !== id)))
+				.catch(() => undefined);
+			if (id === conversationIdRef.current) {
+				handleNewChat();
+			}
+		},
+		[conversationsUrl, authHeaders, handleNewChat]
+	);
 
 	// ── Styles ──────────────────────────────────────────────────
 	const containerStyle: CSSProperties = {
@@ -109,7 +177,8 @@ export function AiChatPanel() {
 		display: 'flex',
 		flexDirection: 'column',
 		height: '100%',
-		overflow: 'hidden'
+		overflow: 'hidden',
+		position: 'relative'
 	};
 
 	const headerStyle: CSSProperties = {
@@ -177,6 +246,21 @@ export function AiChatPanel() {
 				<span>AI Assistant</span>
 
 				<span style={{ marginLeft: 'auto', display: 'flex', gap: 2 }}>
+					<button onClick={openHistory} style={headerBtnStyle} title="History" aria-label="Conversation history">
+						<svg
+							width="13"
+							height="13"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<polyline points="12 6 12 12 16 14" />
+						</svg>
+					</button>
 					{hasMessages && (
 						<button
 							onClick={handleNewChat}
@@ -200,6 +284,28 @@ export function AiChatPanel() {
 						</button>
 					)}
 					<button
+						onClick={handleMoveSide}
+						style={headerBtnStyle}
+						title="Move chat to the other side"
+						aria-label="Move chat to the other side"
+					>
+						<svg
+							width="13"
+							height="13"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						>
+							<polyline points="17 1 21 5 17 9" />
+							<path d="M3 11V9a4 4 0 0 1 4-4h14" />
+							<polyline points="7 23 3 19 7 15" />
+							<path d="M21 13v2a4 4 0 0 1-4 4H3" />
+						</svg>
+					</button>
+					<button
 						onClick={handleCollapse}
 						style={headerBtnStyle}
 						title="Collapse chat"
@@ -220,6 +326,18 @@ export function AiChatPanel() {
 					</button>
 				</span>
 			</div>
+
+			{/* Conversation history overlay */}
+			{showHistory && (
+				<ChatHistoryPanel
+					items={history}
+					loading={historyLoading}
+					activeId={activeConversationId}
+					onSelect={handleSelectConversation}
+					onDelete={handleDeleteConversation}
+					onClose={() => setShowHistory(false)}
+				/>
+			)}
 
 			{/* Chat body — fills remaining height */}
 			<div style={bodyStyle}>

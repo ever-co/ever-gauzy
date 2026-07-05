@@ -66,6 +66,7 @@
 		<nb-sidebar
 			class="chat-sidebar"
 			[class]="chatSidebarService.config()?.class ?? ''"
+			[class.chat-sidebar-end]="chatSidebarService.position() === 'end'"
 			tag="chat-sidebar"
 			[state]="chatSidebarService.expanded() ? 'expanded' : 'collapsed'"
 		>

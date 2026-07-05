@@ -15,6 +15,9 @@ export interface IChatSidebarConfig {
 /** localStorage key holding the user's expand/collapse preference. */
 const CHAT_SIDEBAR_EXPANDED_KEY = 'gauzy_chat_sidebar_expanded';
 
+/** localStorage key holding the user's docking-side preference. */
+const CHAT_SIDEBAR_POSITION_KEY = 'gauzy_chat_sidebar_position';
+
 /**
  * ChatSidebarService
  *
@@ -35,6 +38,13 @@ export class ChatSidebarService {
 
 	/** Whether the chat sidebar is currently expanded. */
 	readonly expanded = signal<boolean>(false);
+
+	/**
+	 * Which side of the content the chat docks to:
+	 * 'start' → `Menu | Chat | Canvas`, 'end' → `Menu | Canvas | Chat`.
+	 * Persisted per browser.
+	 */
+	readonly position = signal<'start' | 'end'>('start');
 
 	/**
 	 * Whether the chat is available for the current user — set by the
@@ -61,6 +71,7 @@ export class ChatSidebarService {
 		}
 		this.config.set(sidebarConfig);
 		this.expanded.set(this.readStoredExpanded() ?? sidebarConfig.defaultExpanded ?? false);
+		this.position.set(this.readStoredPosition() ?? 'start');
 	}
 
 	/**
@@ -98,11 +109,36 @@ export class ChatSidebarService {
 		}
 	}
 
+	/** Move the chat to the other side of the content column and persist. */
+	togglePosition(): void {
+		this.setPosition(this.position() === 'start' ? 'end' : 'start');
+	}
+
+	/** Dock the chat to 'start' (left of the canvas) or 'end' (right). */
+	setPosition(position: 'start' | 'end'): void {
+		this.position.set(position);
+		try {
+			localStorage.setItem(CHAT_SIDEBAR_POSITION_KEY, position);
+		} catch {
+			// Storage unavailable — state stays in-memory only.
+		}
+	}
+
 	/** Read the persisted preference; null when never set or storage unavailable. */
 	private readStoredExpanded(): boolean | null {
 		try {
 			const stored = localStorage.getItem(CHAT_SIDEBAR_EXPANDED_KEY);
 			return stored === null ? null : stored === 'true';
+		} catch {
+			return null;
+		}
+	}
+
+	/** Read the persisted docking side; null when never set or storage unavailable. */
+	private readStoredPosition(): 'start' | 'end' | null {
+		try {
+			const stored = localStorage.getItem(CHAT_SIDEBAR_POSITION_KEY);
+			return stored === 'start' || stored === 'end' ? stored : null;
 		} catch {
 			return null;
 		}

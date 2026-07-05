@@ -1,4 +1,4 @@
-import { Component, effect, inject, viewChild, afterNextRender, DestroyRef, signal, Type } from '@angular/core';
+import { Component, ElementRef, effect, inject, viewChild, afterNextRender, DestroyRef, signal, Type } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
 import { ChatSidebarService, LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
@@ -21,6 +21,7 @@ export class OneColumnLayoutComponent {
 
 	readonly layout = viewChild.required(NbLayoutComponent);
 
+	private readonly elementRef = inject(ElementRef<HTMLElement>);
 	private readonly windowModeBlockScrollService = inject(WindowModeBlockScrollService);
 	private readonly store = inject(Store);
 	public readonly navigationBuilderService = inject(NavigationBuilderService);
@@ -70,12 +71,31 @@ export class OneColumnLayoutComponent {
 		// Runs only in the browser, after the first render — replaces ngAfterViewInit + isPlatformBrowser
 		afterNextRender(() => {
 			this.windowModeBlockScrollService.register(this.layout());
+			this.observeHeaderHeight();
 		});
 
 		this.destroyRef.onDestroy(() => {
 			this.navigationBuilderService.clearSidebars();
 			this.navigationBuilderService.clearActionBars();
+			this.headerResizeObserver?.disconnect();
 		});
+	}
+
+	private headerResizeObserver?: ResizeObserver;
+
+	/**
+	 * Tracks the REAL rendered header height (the theme's `--header-height`
+	 * variable does not include extras like the demo banner) and exposes it
+	 * as `--gz-header-offset` for the chat sidebar's fixed container.
+	 */
+	private observeHeaderHeight(): void {
+		const host = this.elementRef.nativeElement as HTMLElement;
+		const header = host.querySelector('nb-layout-header');
+		if (!header || typeof ResizeObserver === 'undefined') return;
+		const apply = () => host.style.setProperty('--gz-header-offset', `${header.getBoundingClientRect().height}px`);
+		this.headerResizeObserver = new ResizeObserver(apply);
+		this.headerResizeObserver.observe(header);
+		apply();
 	}
 
 	/**
