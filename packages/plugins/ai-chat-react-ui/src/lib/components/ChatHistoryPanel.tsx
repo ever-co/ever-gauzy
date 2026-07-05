@@ -54,20 +54,28 @@ export function ChatHistoryPanel({ items, loading, activeId, onSelect, onDelete,
 	const rowStyle = (active: boolean): CSSProperties => ({
 		display: 'flex',
 		alignItems: 'center',
-		gap: 6,
 		width: '100%',
+		borderRadius: 8,
+		backgroundColor: active ? chatTheme.accentLight : 'transparent'
+	});
+
+	const selectBtnStyle: CSSProperties = {
+		display: 'flex',
+		alignItems: 'center',
+		gap: 6,
+		flex: 1,
+		minWidth: 0,
 		padding: '8px 10px',
 		borderRadius: 8,
 		border: 'none',
 		textAlign: 'left',
 		cursor: 'pointer',
-		backgroundColor: active ? chatTheme.accentLight : 'transparent',
+		backgroundColor: 'transparent',
 		color: 'inherit',
 		fontSize: chatTheme.fontSizeBase
-	});
+	};
 
 	const deleteBtnStyle: CSSProperties = {
-		marginLeft: 'auto',
 		border: 'none',
 		background: 'transparent',
 		color: chatTheme.textHint,
@@ -101,8 +109,8 @@ export function ChatHistoryPanel({ items, loading, activeId, onSelect, onDelete,
 					<div style={{ padding: 12, color: chatTheme.textSecondary }}>No saved conversations yet.</div>
 				)}
 				{items.map((item) => (
-					<div key={item.id} style={{ display: 'flex' }}>
-						<button style={rowStyle(item.id === activeId)} onClick={() => onSelect(item.id)}>
+					<div key={item.id} style={rowStyle(item.id === activeId)}>
+						<button type="button" style={selectBtnStyle} onClick={() => onSelect(item.id)}>
 							<span
 								style={{
 									overflow: 'hidden',
@@ -116,37 +124,26 @@ export function ChatHistoryPanel({ items, loading, activeId, onSelect, onDelete,
 							<span style={{ color: chatTheme.textHint, fontSize: '0.625rem', flexShrink: 0 }}>
 								{new Date(item.updatedAt).toLocaleDateString()}
 							</span>
-							<span
-								role="button"
-								tabIndex={0}
-								style={deleteBtnStyle}
-								title="Delete conversation"
-								aria-label={`Delete ${item.title}`}
-								onClick={(e) => {
-									e.stopPropagation();
-									onDelete(item.id);
-								}}
-								onKeyDown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') {
-										e.preventDefault();
-										e.stopPropagation();
-										onDelete(item.id);
-									}
-								}}
+						</button>
+						<button
+							type="button"
+							style={deleteBtnStyle}
+							title="Delete conversation"
+							aria-label={`Delete ${item.title}`}
+							onClick={() => onDelete(item.id)}
+						>
+							<svg
+								width="12"
+								height="12"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
 							>
-								<svg
-									width="12"
-									height="12"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="2"
-									strokeLinecap="round"
-								>
-									<polyline points="3 6 5 6 21 6" />
-									<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-								</svg>
-							</span>
+								<polyline points="3 6 5 6 21 6" />
+								<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+							</svg>
 						</button>
 					</div>
 				))}

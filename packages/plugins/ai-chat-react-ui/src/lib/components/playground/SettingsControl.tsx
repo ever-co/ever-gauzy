@@ -49,6 +49,7 @@ export function SettingsControl({ label, value, min, max, step, onChange, disabl
 				step={step}
 				value={value}
 				disabled={disabled}
+				aria-label={label}
 				onChange={(e) => onChange(Number(e.target.value))}
 				style={{
 					width: '100%',

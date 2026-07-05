@@ -21,6 +21,8 @@ export interface PlaygroundChatPanelProps {
 	inputPlaceholder?: string;
 	/** Force-disable the input (e.g. while configuration loads). */
 	disabled?: boolean;
+	/** Respond to a pending tool approval request. */
+	onApprovalResponse?: (approvalId: string, approved: boolean) => void;
 }
 
 /**
@@ -35,7 +37,8 @@ export function PlaygroundChatPanel({
 	onRetry,
 	header,
 	inputPlaceholder,
-	disabled = false
+	disabled = false,
+	onApprovalResponse
 }: PlaygroundChatPanelProps) {
 	const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -136,6 +139,7 @@ export function PlaygroundChatPanel({
 								isStreaming={
 									status === 'streaming' && message === lastMessage && message.role === 'assistant'
 								}
+								onApprovalResponse={onApprovalResponse}
 							/>
 						))}
 						{showWaiting && (

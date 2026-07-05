@@ -109,6 +109,7 @@
           [attr.aria-label]="'HEADER.AI_CHAT' | translate"
           (click)="chatSidebarService.toggle()"
           (keydown.enter)="chatSidebarService.toggle()"
+          (keydown.space)="$event.preventDefault(); chatSidebarService.toggle()"
         ></nb-action>
       }
 

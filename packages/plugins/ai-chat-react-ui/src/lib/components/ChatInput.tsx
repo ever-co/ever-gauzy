@@ -20,8 +20,8 @@ export interface ChatInputProps {
  * - Enter to send, Shift+Enter for newline, Escape to collapse
  * - Send / Stop button depending on generation state
  *
- * Controlled component — the AI SDK v4 `useChat` no longer manages
- * input state, so the parent owns `value`.
+ * Controlled component — `useChat` from @ai-sdk/react v4 (AI SDK 7)
+ * does not manage input state, so the parent owns `value`.
  */
 export function ChatInput({ value, isBusy, onChange, onSubmit, onStop, onEscape }: ChatInputProps) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -37,6 +37,9 @@ export function ChatInput({ value, isBusy, onChange, onSubmit, onStop, onEscape 
 	}, [value]);
 
 	function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+		// Ignore key events fired while an IME composition is active (e.g.
+		// confirming Japanese/Chinese candidates with Enter must not submit).
+		if (e.nativeEvent.isComposing || e.key === 'Process') return;
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
 			if (value.trim() && !isBusy) {

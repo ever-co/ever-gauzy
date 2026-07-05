@@ -163,11 +163,15 @@ export function AiChatPanel() {
 	const handleDeleteConversation = useCallback(
 		(id: string) => {
 			fetch(`${conversationsUrl}/${id}`, { method: 'DELETE', headers: authHeaders() })
-				.then(() => setHistory((items) => items.filter((item) => item.id !== id)))
+				.then((response) => {
+					// Keep the item in the list if the server refused the delete.
+					if (!response.ok) return;
+					setHistory((items) => items.filter((item) => item.id !== id));
+					if (id === conversationIdRef.current) {
+						handleNewChat();
+					}
+				})
 				.catch(() => undefined);
-			if (id === conversationIdRef.current) {
-				handleNewChat();
-			}
 		},
 		[conversationsUrl, authHeaders, handleNewChat]
 	);

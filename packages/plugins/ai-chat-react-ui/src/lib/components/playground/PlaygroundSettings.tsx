@@ -131,7 +131,8 @@ export function PlaygroundSettings({
 	};
 
 	return (
-		<div style={collapsed ? panelCollapsedStyle : panelExpandedStyle}>
+		// `inert` removes the collapsed panel's controls from the tab order / a11y tree.
+		<div style={collapsed ? panelCollapsedStyle : panelExpandedStyle} inert={collapsed}>
 			{/* Model */}
 			<div style={sectionStyle}>
 				<ModelSelector

@@ -1,6 +1,10 @@
 import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
+import {
+	DefaultChatTransport,
+	lastAssistantMessageIsCompleteWithApprovalResponses,
+	lastAssistantMessageIsCompleteWithToolCalls
+} from 'ai';
 import { useInjector } from '@gauzy/ui-react';
 import { Store } from '@gauzy/ui-core/core';
 import { environment } from '@gauzy/ui-config';
@@ -143,13 +147,26 @@ export function Playground({ title, settingsExtra, chatHeader, inputPlaceholder,
 		[store]
 	);
 
-	const { messages, sendMessage, status, stop, error, regenerate, setMessages } = useChat({ transport });
+	const { messages, sendMessage, status, stop, error, regenerate, setMessages, addToolApprovalResponse } = useChat({
+		transport,
+		// Resume the agent loop once all tool results / approvals are in.
+		sendAutomaticallyWhen: (options) =>
+			lastAssistantMessageIsCompleteWithToolCalls(options) ||
+			lastAssistantMessageIsCompleteWithApprovalResponses(options)
+	});
 
 	const handleSend = useCallback(
 		(text: string) => {
 			void sendMessage({ text });
 		},
 		[sendMessage]
+	);
+
+	const handleApprovalResponse = useCallback(
+		(id: string, approved: boolean) => {
+			void addToolApprovalResponse({ id, approved });
+		},
+		[addToolApprovalResponse]
 	);
 
 	const handleNewChat = useCallback(() => {
@@ -262,6 +279,7 @@ export function Playground({ title, settingsExtra, chatHeader, inputPlaceholder,
 					onRetry={() => void regenerate()}
 					header={chatHeader}
 					inputPlaceholder={inputPlaceholder}
+					onApprovalResponse={handleApprovalResponse}
 				/>
 			</>
 		);

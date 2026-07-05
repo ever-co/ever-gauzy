@@ -77,7 +77,20 @@ export class AgentPageBridgeService {
 			return { success: false, url: this.router.url, error: `Only absolute in-app paths are allowed, got '${path}'.` };
 		}
 		try {
-			const success = await this.router.navigate([normalized], { queryParams });
+			// `normalized` may itself carry a query string (e.g. '/pages/tasks?x=1'),
+			// so it must not be passed as a single router *command* (the '?…' part
+			// would be treated as a literal segment). Split it, merge any inline
+			// query with the explicit `queryParams`, and navigate by URL tree.
+			const [pathOnly, search = ''] = normalized.split('?');
+			const merged: Record<string, string> = {};
+			new URLSearchParams(search).forEach((paramValue, paramKey) => {
+				merged[paramKey] = paramValue;
+			});
+			Object.assign(merged, queryParams ?? {});
+			const target = Object.keys(merged).length
+				? this.router.createUrlTree([pathOnly], { queryParams: merged })
+				: pathOnly;
+			const success = await this.router.navigateByUrl(target);
 			return {
 				success,
 				url: this.router.url,

@@ -52,12 +52,19 @@ export class OneColumnLayoutComponent {
 				this.chatSidebarComponent.set(null);
 				return;
 			}
-			Promise.resolve(config.loadComponent()).then((component) => {
-				// Ignore the result if the sidebar was unregistered while loading.
-				if (this.chatSidebarService.config() === config) {
-					this.chatSidebarComponent.set(component);
-				}
-			});
+			Promise.resolve(config.loadComponent())
+				.then((component) => {
+					// Ignore the result if the sidebar was unregistered while loading.
+					if (this.chatSidebarService.config() === config) {
+						this.chatSidebarComponent.set(component);
+					}
+				})
+				.catch((error: unknown) => {
+					console.error('[OneColumnLayout] Failed to load the chat sidebar component:', error);
+					if (this.chatSidebarService.config() === config) {
+						this.chatSidebarComponent.set(null);
+					}
+				});
 		});
 
 		Object.entries(DEFAULT_SIDEBARS).forEach(([id, config]) => {

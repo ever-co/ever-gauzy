@@ -101,7 +101,18 @@ export class AgentFormBridgeService {
 	 */
 	async fillForm(instructions: IAgentFillInstruction[], formIndex?: number): Promise<IAgentFillResult> {
 		const roots = this.findFormRoots();
-		const scope: Element[] = formIndex != null && roots[formIndex] ? [roots[formIndex]] : roots;
+		// An explicit but out-of-range formIndex is an error — silently searching
+		// all forms could fill fields of the wrong form.
+		if (formIndex != null && !roots[formIndex]) {
+			return {
+				filled: [],
+				failed: instructions.map((instruction) => ({
+					field: instruction.field,
+					reason: `formIndex ${formIndex} not found (page has ${roots.length} forms).`
+				}))
+			};
+		}
+		const scope: Element[] = formIndex != null ? [roots[formIndex]] : roots;
 		const result: IAgentFillResult = { filled: [], failed: [] };
 
 		for (const instruction of instructions) {
@@ -249,6 +260,8 @@ export class AgentFormBridgeService {
 
 	private findField(scope: Element[], query: string): Element | null {
 		const needle = query.trim().toLowerCase();
+		// A blank query would `includes('')`-match the first field — reject it.
+		if (!needle) return null;
 		let fallback: Element | null = null;
 		for (const root of scope) {
 			for (const el of this.collectFields(root)) {
@@ -268,7 +281,10 @@ export class AgentFormBridgeService {
 
 		if (tag === 'input') {
 			const input = el as HTMLInputElement;
-			if (input.type === 'checkbox' || input.type === 'radio') {
+			if (input.type === 'radio') {
+				return this.pickRadioOption(input, value);
+			}
+			if (input.type === 'checkbox') {
 				const desired = /^(true|yes|1|on|checked)$/i.test(value);
 				if (input.checked !== desired) input.click();
 				return true;
@@ -302,6 +318,31 @@ export class AgentFormBridgeService {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Select the radio button of `input`'s `name` group (within the same form
+	 * root) whose value or associated label text matches `value`
+	 * (case-insensitive). Throws when no radio in the group matches.
+	 */
+	private pickRadioOption(input: HTMLInputElement, value: string): boolean {
+		const needle = value.trim().toLowerCase();
+		if (!needle) throw new Error('No value provided for the radio group.');
+		const scope: ParentNode = input.form ?? input.closest('form') ?? document;
+		const group: HTMLInputElement[] = input.name
+			? Array.from(scope.querySelectorAll<HTMLInputElement>(`input[type=radio][name="${CSS.escape(input.name)}"]`))
+			: [input];
+		const match =
+			group.find(
+				(radio) =>
+					radio.value.trim().toLowerCase() === needle ||
+					this.findLabel(radio).trim().toLowerCase() === needle
+			) ?? group.find((radio) => this.findLabel(radio).toLowerCase().includes(needle));
+		if (!match) {
+			throw new Error(`No radio option matching '${value}' found in group '${input.name || '(unnamed)'}'.`);
+		}
+		if (!match.checked) match.click();
+		return true;
 	}
 
 	private setNativeValue(el: HTMLInputElement | HTMLTextAreaElement, value: string): boolean {

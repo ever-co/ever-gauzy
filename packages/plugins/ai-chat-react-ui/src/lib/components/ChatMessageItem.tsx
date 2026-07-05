@@ -54,7 +54,7 @@ export function ChatMessageItem({ message, isStreaming, onApprovalResponse }: Ch
 						<div style={rowStyle} key={`${message.id}-${index}`}>
 							<div style={bubbleStyle}>
 								{isUser ? (
-									<span>{part.text}</span>
+									<span style={{ whiteSpace: 'pre-wrap' }}>{part.text}</span>
 								) : (
 									<MarkdownContent content={part.text} isStreaming={isStreaming} />
 								)}

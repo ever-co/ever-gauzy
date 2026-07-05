@@ -11,6 +11,8 @@ export interface PlaygroundChatMessageProps {
 	isStreaming?: boolean;
 	/** Custom avatar node (defaults to "U" / "AI" initials). */
 	avatar?: ReactNode;
+	/** Respond to a pending tool approval request. */
+	onApprovalResponse?: (approvalId: string, approved: boolean) => void;
 }
 
 /**
@@ -21,7 +23,7 @@ export interface PlaygroundChatMessageProps {
  *
  * User messages are right-aligned, assistant messages left-aligned.
  */
-export function PlaygroundChatMessage({ message, isStreaming, avatar }: PlaygroundChatMessageProps) {
+export function PlaygroundChatMessage({ message, isStreaming, avatar, onApprovalResponse }: PlaygroundChatMessageProps) {
 	const isUser = message.role === 'user';
 	const defaultInitial = isUser ? 'U' : 'AI';
 
@@ -92,9 +94,13 @@ export function PlaygroundChatMessage({ message, isStreaming, avatar }: Playgrou
 							input?: unknown;
 							output?: unknown;
 							errorText?: string;
+							approval?: { id?: string; approvalId?: string };
+							approvalId?: string;
 						};
 						const toolName: string =
 							part.type === 'dynamic-tool' ? toolPart.toolName ?? 'tool' : part.type.slice(5);
+						const approvalId: string | undefined =
+							toolPart.approval?.id ?? toolPart.approvalId ?? toolPart.approval?.approvalId;
 						return (
 							<div key={`${message.id}-${index}`} style={{ alignSelf: 'stretch' }}>
 								<ToolCallCard
@@ -103,6 +109,12 @@ export function PlaygroundChatMessage({ message, isStreaming, avatar }: Playgrou
 									input={toolPart.input}
 									output={toolPart.output}
 									errorText={toolPart.errorText}
+									{...(toolPart.state === 'approval-requested' && approvalId && onApprovalResponse
+										? {
+												onApprove: () => onApprovalResponse(approvalId, true),
+												onReject: () => onApprovalResponse(approvalId, false)
+										  }
+										: {})}
 								/>
 							</div>
 						);
