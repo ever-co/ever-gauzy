@@ -2,6 +2,7 @@ import * as chalk from 'chalk';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { AiChatModule } from './ai-chat.module';
 import { AiProviderCredential } from './credentials/ai-provider-credential.entity';
+import { AiChatConversation } from './conversations/ai-chat-conversation.entity';
 
 /**
  * AiChatPlugin
@@ -17,7 +18,7 @@ import { AiProviderCredential } from './credentials/ai-provider-credential.entit
  */
 @Plugin({
 	imports: [AiChatModule],
-	entities: [AiProviderCredential]
+	entities: [AiProviderCredential, AiChatConversation]
 })
 export class AiChatPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	private logEnabled = true;

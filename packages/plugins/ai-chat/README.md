@@ -48,6 +48,26 @@ AiChatController ──▶ AiChatService.streamChat()
   management requires `AI_CHAT_SETTINGS`.
 - **BYOK keys** are encrypted at rest and only ever returned masked.
 
+### Verified permission ceiling (audit 2026-07-05)
+
+The guarantee "the agent can only ever do what the requesting user can do" was verified live
+against a running stack:
+
+| Check | Result |
+|---|---|
+| User without `AI_CHAT_ACCESS` calls `POST /api/ai-chat` / `GET /config` | **403** |
+| User without `AI_CHAT_SETTINGS` calls `/api/ai-chat/credentials` | **403** |
+| Employee (no `ORG_INCOMES_VIEW`) calls `GET /api/income` directly | **403** |
+| The same employee asks the agent for income records (`get_incomes` tool) | tool receives the **same 403** and the agent reports it honestly |
+| User A's conversation fetched/deleted by user B (same tenant) | **404** (read and delete) |
+| Conversation ids | client-supplied ids honored only when globally unused (no overwrite of another user's row) |
+
+Why this holds by construction: the user's own JWT (plus `Tenant-Id`/`Organization-Id`) is the
+ONLY credential in the server-tool path — there is no service account; client/canvas tools run
+in the user's own browser session where route guards and server-side validation still apply;
+history queries are explicitly scoped by `(tenantId, userId)`; provider API keys can only reach
+LLM endpoints, never the Gauzy API; MCP tools are disabled by default (see the security note).
+
 ### Provider plugins
 
 Providers are NOT part of this plugin. Each provider ships as its own backend plugin implementing

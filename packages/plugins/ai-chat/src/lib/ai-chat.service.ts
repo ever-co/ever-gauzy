@@ -12,6 +12,7 @@ import { buildGauzyTools, GAUZY_TOOLS_REQUIRING_APPROVAL } from './tools/gauzy-t
 import { buildClientTools, CLIENT_TOOLS_REQUIRING_APPROVAL } from './tools/client-tools';
 import { createMcpTools } from './tools/mcp-tools';
 import { AiProviderCredentialService } from './credentials/ai-provider-credential.service';
+import { AiChatConversationService } from './conversations/ai-chat-conversation.service';
 
 /** Maximum agent steps (model turns incl. tool calls) per user message. */
 const MAX_STEPS = 12;
@@ -23,6 +24,12 @@ export interface IStreamChatArgs {
 	providerId?: string;
 	/** Optional model override. */
 	modelId?: string;
+	/**
+	 * Conversation to append this turn to (client-generated UUID).
+	 * The full message list is persisted for the requesting user after
+	 * the stream finishes; omitted → the turn is not persisted.
+	 */
+	conversationId?: string;
 	/** The requesting user's `Authorization` header — forwarded to all API tools. */
 	authorizationHeader: string;
 	/** Preferred response language (ISO code). */
@@ -43,7 +50,10 @@ export interface IStreamChatArgs {
 export class AiChatService {
 	private readonly logger = new Logger(AiChatService.name);
 
-	constructor(private readonly credentialService: AiProviderCredentialService) {}
+	constructor(
+		private readonly credentialService: AiProviderCredentialService,
+		private readonly conversationService: AiChatConversationService
+	) {}
 
 	/**
 	 * Handle one chat turn: run the agent loop and pipe the UI message
@@ -107,13 +117,38 @@ export class AiChatService {
 			}
 		} as any);
 
+		// Capture identity now — the request context is gone by stream end.
+		const persistFor = {
+			userId: RequestContext.currentUserId() ?? undefined,
+			tenantId: requestDefaults.tenantId,
+			organizationId: requestDefaults.organizationId
+		};
+
 		ai.pipeUIMessageStreamToResponse({
 			response: args.response,
 			stream: ai.toUIMessageStream({
 				stream: (result as any).stream,
 				// Keeps message ids stable across tool-call round-trips.
-				originalMessages: args.messages
-			})
+				originalMessages: args.messages,
+				onEnd: async ({ messages }: { messages: UIMessage[] }) => {
+					if (!args.conversationId || !persistFor.userId || !persistFor.tenantId) return;
+					try {
+						await this.conversationService.saveTurn({
+							conversationId: args.conversationId,
+							userId: persistFor.userId,
+							tenantId: persistFor.tenantId,
+							organizationId: persistFor.organizationId,
+							messages
+						});
+					} catch (error) {
+						this.logger.warn(
+							`Failed to persist conversation ${args.conversationId}: ${
+								error instanceof Error ? error.message : error
+							}`
+						);
+					}
+				}
+			} as any)
 		} as any);
 	}
 

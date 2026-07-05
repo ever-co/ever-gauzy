@@ -12,6 +12,8 @@ export interface IAiChatRequestBody {
 	/** Optional provider/model override (playground). */
 	providerId?: string;
 	modelId?: string;
+	/** Conversation to persist this turn to (client-generated UUID). */
+	conversationId?: string;
 }
 
 @ApiTags('AI Chat')
@@ -41,6 +43,7 @@ export class AiChatController {
 			messages: body?.messages,
 			providerId: body?.providerId,
 			modelId: body?.modelId,
+			conversationId: body?.conversationId,
 			authorizationHeader: request.headers.authorization ?? '',
 			languageCode,
 			response
