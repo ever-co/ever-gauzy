@@ -21,7 +21,6 @@ export class OneColumnLayoutComponent {
 
 	readonly layout = viewChild.required(NbLayoutComponent);
 
-	private readonly elementRef = inject(ElementRef<HTMLElement>);
 	private readonly windowModeBlockScrollService = inject(WindowModeBlockScrollService);
 	private readonly store = inject(Store);
 	public readonly navigationBuilderService = inject(NavigationBuilderService);
@@ -75,35 +74,50 @@ export class OneColumnLayoutComponent {
 
 		this.themeLanguageSelectorService.initialize();
 
+		// Track the chat sidebar HOST width (flex-computed: normal, maximized
+		// or collapsed) and mirror it to --gz-chat-live-width so the fixed
+		// .main-container always matches the space the host reserves.
+		effect(() => {
+			const hostRef = this.chatSidebarHost();
+			this.chatHostResizeObserver?.disconnect();
+			this.chatHostResizeObserver = undefined;
+			if (!hostRef || typeof ResizeObserver === 'undefined') return;
+			const host = hostRef.nativeElement as HTMLElement;
+			const apply = () => host.style.setProperty('--gz-chat-live-width', `${host.getBoundingClientRect().width}px`);
+			this.chatHostResizeObserver = new ResizeObserver(apply);
+			this.chatHostResizeObserver.observe(host);
+			apply();
+		});
+
 		// Runs only in the browser, after the first render — replaces ngAfterViewInit + isPlatformBrowser
 		afterNextRender(() => {
 			this.windowModeBlockScrollService.register(this.layout());
-			this.observeHeaderHeight();
 		});
 
 		this.destroyRef.onDestroy(() => {
 			this.navigationBuilderService.clearSidebars();
 			this.navigationBuilderService.clearActionBars();
-			this.headerResizeObserver?.disconnect();
+			this.chatHostResizeObserver?.disconnect();
 		});
 	}
 
-	private headerResizeObserver?: ResizeObserver;
+	/** The chat sidebar host element (present only while the chat renders). */
+	readonly chatSidebarHost = viewChild<ElementRef<HTMLElement>>('chatSidebarHost');
 
 	/**
-	 * Tracks the REAL rendered header height (the theme's `--header-height`
-	 * variable does not include extras like the demo banner) and exposes it
-	 * as `--gz-header-offset` for the chat sidebar's fixed container.
+	 * Horizontal padding the fixed header needs on the given side so its
+	 * content moves aside for the expanded chat column instead of being
+	 * covered by it. Null when the chat is collapsed, docked to the other
+	 * side, or maximized (maximized covers the header band entirely).
 	 */
-	private observeHeaderHeight(): void {
-		const host = this.elementRef.nativeElement as HTMLElement;
-		const header = host.querySelector('nb-layout-header');
-		if (!header || typeof ResizeObserver === 'undefined') return;
-		const apply = () => host.style.setProperty('--gz-header-offset', `${header.getBoundingClientRect().height}px`);
-		this.headerResizeObserver = new ResizeObserver(apply);
-		this.headerResizeObserver.observe(header);
-		apply();
+	chatHeaderPad(side: 'start' | 'end'): number | null {
+		const chat = this.chatSidebarService;
+		return chat.available() && chat.expanded() && !chat.maximized() && chat.position() === side
+			? chat.width()
+			: null;
 	}
+
+	private chatHostResizeObserver?: ResizeObserver;
 
 	/**
 	 * Toggles the expansion state of the sidebar.

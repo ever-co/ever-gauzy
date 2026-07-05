@@ -15,14 +15,23 @@ import { AiChatPanel } from './components/AiChatPanel';
 @Component({
 	selector: 'gz-ai-chat-sidebar',
 	imports: [CommonModule, ReactHostDirective],
-	template: `<div [gaReactHost]="page" style="display:flex;flex-direction:column;height:100%"></div>`,
+	template: `<div
+		[gaReactHost]="page"
+		style="display:flex;flex-direction:column;height:100%;width:100%;min-width:0;max-width:100%;overflow:hidden"
+	></div>`,
 	styles: [
 		`
+			/* min-width: 0 at every flex layer — otherwise wide streamed
+			   content (code blocks, tables) sets the min-content width and
+			   stretches the whole panel column. */
 			:host {
 				display: flex;
 				flex-direction: column;
 				flex: 1;
 				overflow: hidden;
+				width: 100%;
+				min-width: 0;
+				max-width: 100%;
 			}
 		`
 	],

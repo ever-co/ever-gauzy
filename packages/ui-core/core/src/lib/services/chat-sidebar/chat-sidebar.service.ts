@@ -18,6 +18,14 @@ const CHAT_SIDEBAR_EXPANDED_KEY = 'gauzy_chat_sidebar_expanded';
 /** localStorage key holding the user's docking-side preference. */
 const CHAT_SIDEBAR_POSITION_KEY = 'gauzy_chat_sidebar_position';
 
+/** localStorage key holding the user's chat width preference. */
+const CHAT_SIDEBAR_WIDTH_KEY = 'gauzy_chat_sidebar_width';
+
+/** Default / minimum / maximum chat panel width (px). */
+const DEFAULT_CHAT_WIDTH = 384;
+export const MIN_CHAT_WIDTH = 300;
+export const MAX_CHAT_WIDTH = 860;
+
 /**
  * ChatSidebarService
  *
@@ -46,6 +54,15 @@ export class ChatSidebarService {
 	 */
 	readonly position = signal<'start' | 'end'>('start');
 
+	/** Chat panel width in pixels (user-resizable, persisted). */
+	readonly width = signal<number>(DEFAULT_CHAT_WIDTH);
+
+	/**
+	 * Maximized: the chat fills all space except the nav menu sidebar
+	 * (`Menu | Chat`); the canvas is hidden (kept alive) until restored.
+	 */
+	readonly maximized = signal<boolean>(false);
+
 	/**
 	 * Whether the chat is available for the current user — set by the
 	 * registering plugin once it has checked the user's permission and
@@ -72,6 +89,7 @@ export class ChatSidebarService {
 		this.config.set(sidebarConfig);
 		this.expanded.set(this.readStoredExpanded() ?? sidebarConfig.defaultExpanded ?? false);
 		this.position.set(this.readStoredPosition() ?? 'start');
+		this.width.set(this.readStoredWidth() ?? DEFAULT_CHAT_WIDTH);
 	}
 
 	/**
@@ -80,6 +98,7 @@ export class ChatSidebarService {
 	unregister(): void {
 		this.config.set(null);
 		this.expanded.set(false);
+		this.maximized.set(false);
 	}
 
 	/** Toggle the sidebar between expanded and collapsed. */
@@ -99,14 +118,50 @@ export class ChatSidebarService {
 
 	/**
 	 * Set the expand state and persist the user's preference.
+	 * Collapsing always leaves maximized mode.
 	 */
 	setExpanded(expanded: boolean): void {
 		this.expanded.set(expanded);
+		if (!expanded) {
+			this.maximized.set(false);
+		}
 		try {
 			localStorage.setItem(CHAT_SIDEBAR_EXPANDED_KEY, String(expanded));
 		} catch {
 			// Storage unavailable (private mode / SSR) — state stays in-memory only.
 		}
+	}
+
+	/** Maximize the chat (`Menu | Chat`) or restore it to its normal width. */
+	toggleMaximized(): void {
+		this.maximized.set(!this.maximized());
+		if (this.maximized()) {
+			this.expanded.set(true);
+		}
+	}
+
+	/** Pending debounced width persist (drag-resize calls setWidth per pointermove). */
+	private widthPersistTimer: ReturnType<typeof setTimeout> | null = null;
+
+	/**
+	 * Set the chat panel width (px), clamped to sane bounds and persisted.
+	 * The signal updates immediately (live resize); the localStorage write
+	 * is debounced so a 60 Hz drag doesn't do synchronous I/O per frame.
+	 */
+	setWidth(width: number): void {
+		const clamped = Math.round(Math.min(MAX_CHAT_WIDTH, Math.max(MIN_CHAT_WIDTH, width)));
+		this.width.set(clamped);
+		if (this.widthPersistTimer !== null) {
+			clearTimeout(this.widthPersistTimer);
+		}
+		this.widthPersistTimer = setTimeout(() => {
+			this.widthPersistTimer = null;
+			try {
+				localStorage.setItem(CHAT_SIDEBAR_WIDTH_KEY, String(this.width()));
+			} catch {
+				// Storage unavailable — state stays in-memory only.
+			}
+		}, 250);
 	}
 
 	/** Move the chat to the other side of the content column and persist. */
@@ -129,6 +184,16 @@ export class ChatSidebarService {
 		try {
 			const stored = localStorage.getItem(CHAT_SIDEBAR_EXPANDED_KEY);
 			return stored === null ? null : stored === 'true';
+		} catch {
+			return null;
+		}
+	}
+
+	/** Read the persisted width; null when never set, invalid, or storage unavailable. */
+	private readStoredWidth(): number | null {
+		try {
+			const stored = Number(localStorage.getItem(CHAT_SIDEBAR_WIDTH_KEY));
+			return Number.isFinite(stored) && stored >= MIN_CHAT_WIDTH && stored <= MAX_CHAT_WIDTH ? stored : null;
 		} catch {
 			return null;
 		}
