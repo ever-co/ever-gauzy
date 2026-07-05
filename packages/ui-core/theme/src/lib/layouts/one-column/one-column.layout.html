@@ -31,6 +31,22 @@
 								<i class="fas fa-ellipsis-h"></i>
 							</button>
 						}
+
+						<!-- AI agent launcher — visible whenever the chat is available
+						     but collapsed, so the agent is always one click away. -->
+						@if (chatSidebarService.available() && !chatSidebarService.expanded()) {
+							<button
+								class="ai-agent-launch"
+								outline
+								nbButton
+								size="small"
+								[title]="'HEADER.AI_CHAT' | translate"
+								[attr.aria-label]="'HEADER.AI_CHAT' | translate"
+								(click)="chatSidebarService.expand()"
+							>
+								<i class="fas fa-robot"></i>
+							</button>
+						}
 					</div>
 				</div>
 
@@ -64,9 +80,12 @@
 	     nb-layout's select-based content projection for nb-sidebar. -->
 	@if (user() && chatSidebarService.available() && chatSidebarComponent(); as chatComponent) {
 		<nb-sidebar
+			#chatSidebarHost
 			class="chat-sidebar"
 			[class]="chatSidebarService.config()?.class ?? ''"
 			[class.chat-sidebar-end]="chatSidebarService.position() === 'end'"
+			[class.chat-sidebar-maximized]="chatSidebarService.maximized()"
+			[style.--gz-chat-width]="chatSidebarService.width() + 'px'"
 			tag="chat-sidebar"
 			[state]="chatSidebarService.expanded() ? 'expanded' : 'collapsed'"
 		>

@@ -51,6 +51,10 @@ export function buildSystemPrompt(context: ISystemPromptContext): string {
 		'- Before filling a form, read_page first so field names are grounded in what is actually on screen.',
 		'- Never auto-submit a form or perform a destructive action without an explicit approval from the user.',
 		'- Keep answers concise and well-formatted (markdown: short paragraphs, lists, tables when comparing).',
+		'- IMPORTANT: your answers render in a NARROW chat panel (roughly 380px wide). Prefer compact bullet',
+		'  lists over wide tables; keep tables to 2-3 short columns max; keep code lines short; never output',
+		'  wide ASCII art or long unbroken strings. For large datasets, summarize the highlights and offer to',
+		'  open the relevant page in the canvas instead.',
 		'- Amounts, dates and names must come from tool results, not memory.'
 	]
 		.filter(Boolean)

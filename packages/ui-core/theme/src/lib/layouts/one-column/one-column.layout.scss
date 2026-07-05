@@ -46,11 +46,13 @@
     order: 0 !important;
   }
 
-  // AI Chat sidebar — sits between the nav menu sidebar and the page content.
-  // The HOST stays in the flex flow and reserves the width (Menu | Chat | Content,
-  // DOM order after the menu sidebar); Nebular's .main-container is position:fixed
-  // in windowMode, so it must inherit the host width (100% would mean the viewport)
-  // and be pinned below the header.
+  // AI Chat sidebar — a full-height vertical block like the nav menu sidebar
+  // (Menu | Chat | Canvas, or Menu | Canvas | Chat when docked right).
+  // The HOST stays in the flex flow and reserves the width; Nebular's
+  // .main-container is position:fixed in windowMode, so it is pinned to the
+  // full viewport height (top 0 → nothing above or below it) and follows the
+  // host's flex-computed width via --gz-chat-live-width (set by the layout's
+  // ResizeObserver — covers normal, user-resized, maximized and collapsed).
   nb-sidebar.chat-sidebar {
     order: 0 !important;
     align-self: stretch;
@@ -68,7 +70,14 @@
     }
 
     &.expanded {
-      width: 24rem !important;
+      width: var(--gz-chat-width, 24rem) !important;
+    }
+
+    // Maximized: take all space except the nav menu (Menu | Chat);
+    // the canvas is hidden (components stay alive) until restored.
+    &.chat-sidebar-maximized {
+      flex: 1 1 auto !important;
+      width: auto !important;
     }
 
     &.collapsed {
@@ -77,13 +86,11 @@
     }
 
     ::ng-deep .main-container {
-      width: inherit !important;
-      max-width: 24rem;
-      // --gz-header-offset = the header's REAL rendered height (set by the
-      // layout via ResizeObserver; includes e.g. the demo banner), falling
-      // back to the theme variable.
-      top: var(--gz-header-offset, var(--header-height, 4.75rem)) !important;
-      height: calc(100vh - var(--gz-header-offset, var(--header-height, 4.75rem))) !important;
+      width: var(--gz-chat-live-width, var(--gz-chat-width, 24rem)) !important;
+      max-width: none;
+      top: 0 !important;
+      height: 100vh !important;
+      z-index: 1041; // same layer as the nav menu sidebar — covers the header band
       transition: width 0.2s ease;
       overflow: hidden;
 
@@ -101,6 +108,7 @@
       }
     }
   }
+
 
   gauzy-user-menu {
     position: absolute;
@@ -184,11 +192,30 @@ nb-sidebar[tag='menu-sidebar'] {
   max-width: nb-theme(sidebar-width);
   width: nb-theme(sidebar-width);
   padding: 0.75rem;
+  // The logo area must keep a stable footprint: whatever renders inside
+  // (logo or the tenant/workspace switcher) may not widen the sidebar.
+  overflow: hidden;
   button.hidden-menu {
     padding: 0 0.5rem;
     height: 1.625rem;
     width: 1.625rem;
     margin: 0 0.625rem;
+  }
+  button.ai-agent-launch {
+    padding: 0 0.5rem;
+    height: 1.625rem;
+    width: 1.625rem;
+    margin: 0 0.25rem;
+    flex-shrink: 0;
+    color: #3366ff;
+  }
+  // The in-place workspace/tenant switcher must fit the sidebar width
+  // instead of pushing the layout around (it renders wider than the logo).
+  ::ng-deep .accordion.workspace {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
   ngx-gauzy-logo {
     width: 100%;
@@ -277,6 +304,12 @@ nb-sidebar[tag='menu-sidebar'] {
 ::ng-deep {
   nb-layout .layout .layout-container nb-sidebar .main-container-fixed > .scrollable {
     overflow-y: auto;
+  }
+
+  // Hide the canvas while the AI chat is maximized (all nb-sidebars are
+  // projected before the .content column inside .layout-container).
+  nb-layout .layout .layout-container nb-sidebar.chat-sidebar.chat-sidebar-maximized ~ .content {
+    display: none;
   }
 }
 

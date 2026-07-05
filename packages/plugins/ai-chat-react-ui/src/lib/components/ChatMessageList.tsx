@@ -31,10 +31,13 @@ export function ChatMessageList({ messages, status, onApprovalResponse }: ChatMe
 	const containerStyle: CSSProperties = {
 		flex: 1,
 		overflowY: 'auto',
+		overflowX: 'hidden',
 		padding: '10px',
 		display: 'flex',
 		flexDirection: 'column',
-		gap: 8
+		gap: 8,
+		// Wide streamed content must never stretch the panel's flex column.
+		minWidth: 0
 	};
 
 	const lastMessage = messages[messages.length - 1];

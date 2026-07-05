@@ -1,4 +1,11 @@
-import { useCallback, useMemo, useRef, useState, type CSSProperties } from 'react';
+import {
+	useCallback,
+	useMemo,
+	useRef,
+	useState,
+	type CSSProperties,
+	type PointerEvent as ReactPointerEvent
+} from 'react';
 import { useChat } from '@ai-sdk/react';
 import {
 	DefaultChatTransport,
@@ -50,6 +57,13 @@ export function AiChatPanel() {
 	const [showHistory, setShowHistory] = useState(false);
 	const [history, setHistory] = useState<IChatHistoryItem[]>([]);
 	const [historyLoading, setHistoryLoading] = useState(false);
+
+	// Docking / maximize state mirrors the Angular ChatSidebarService signals
+	// (they only change through this panel's own buttons, so a local mirror
+	// keeps the icons in sync without a signal→React bridge).
+	const [dockSide, setDockSide] = useState<'start' | 'end'>(chatSidebar.position());
+	const [isMaximized, setIsMaximized] = useState<boolean>(chatSidebar.maximized());
+	const rootRef = useRef<HTMLDivElement>(null);
 
 	const authHeaders = useCallback(
 		(): Record<string, string> => ({
@@ -128,7 +142,38 @@ export function AiChatPanel() {
 	);
 
 	const handleCollapse = useCallback(() => chatSidebar.collapse(), [chatSidebar]);
-	const handleMoveSide = useCallback(() => chatSidebar.togglePosition(), [chatSidebar]);
+
+	const handleMoveSide = useCallback(() => {
+		chatSidebar.togglePosition();
+		setDockSide(chatSidebar.position());
+	}, [chatSidebar]);
+
+	const handleToggleMaximize = useCallback(() => {
+		chatSidebar.toggleMaximized();
+		setIsMaximized(chatSidebar.maximized());
+	}, [chatSidebar]);
+
+	// ── Drag-to-resize (grip on the canvas-facing edge) ──────────
+	const handleResizeStart = useCallback(
+		(event: ReactPointerEvent<HTMLDivElement>) => {
+			event.preventDefault();
+			const host = rootRef.current;
+			if (!host) return;
+			const rect = host.getBoundingClientRect();
+			const side = chatSidebar.position();
+			const onMove = (move: PointerEvent) => {
+				const width = side === 'start' ? move.clientX - rect.left : rect.right - move.clientX;
+				chatSidebar.setWidth(width);
+			};
+			const onUp = () => {
+				window.removeEventListener('pointermove', onMove);
+				window.removeEventListener('pointerup', onUp);
+			};
+			window.addEventListener('pointermove', onMove);
+			window.addEventListener('pointerup', onUp);
+		},
+		[chatSidebar]
+	);
 
 	// ── Conversation history (server-side, current user only) ────
 	const conversationsUrl = `${environment.API_BASE_URL}/api/ai-chat/conversations`;
@@ -182,6 +227,11 @@ export function AiChatPanel() {
 		display: 'flex',
 		flexDirection: 'column',
 		height: '100%',
+		// Hard width containment: the panel must never grow past its host,
+		// no matter how wide the streamed content's min-content size is.
+		width: '100%',
+		minWidth: 0,
+		maxWidth: '100%',
 		overflow: 'hidden',
 		position: 'relative'
 	};
@@ -217,12 +267,28 @@ export function AiChatPanel() {
 		flex: 1,
 		display: 'flex',
 		flexDirection: 'column',
-		overflow: 'hidden'
+		overflow: 'hidden',
+		minWidth: 0
+	};
+
+	const resizeHandleStyle: CSSProperties = {
+		position: 'absolute',
+		top: 0,
+		bottom: 0,
+		[dockSide === 'start' ? 'right' : 'left']: 0,
+		width: 6,
+		cursor: 'col-resize',
+		zIndex: 6,
+		// Invisible until hovered — then a subtle accent strip.
+		background: 'transparent'
 	};
 
 	return (
-		<div style={containerStyle}>
-			{/* Inline keyframe animations */}
+		<div ref={rootRef} style={containerStyle}>
+			{/* Inline keyframes + width containment for streamed markdown:
+			    wide content (code blocks, tables) must scroll inside its own
+			    box instead of stretching the narrow panel and squeezing the
+			    input row. */}
 			<style>{`
 				@keyframes fadeIn {
 					from { opacity: 0; transform: translateY(4px); }
@@ -232,6 +298,18 @@ export function AiChatPanel() {
 					0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
 					40% { transform: scale(1); opacity: 1; }
 				}
+				.gz-ai-chat-markdown { max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
+				.gz-ai-chat-markdown pre {
+					max-width: 100%; overflow-x: auto; white-space: pre;
+					font-size: 0.75rem; border-radius: 8px;
+				}
+				.gz-ai-chat-markdown code { overflow-wrap: anywhere; }
+				.gz-ai-chat-markdown table {
+					display: block; max-width: 100%; width: fit-content;
+					overflow-x: auto; font-size: 0.75rem;
+				}
+				.gz-ai-chat-markdown img, .gz-ai-chat-markdown video { max-width: 100%; height: auto; }
+				.gz-ai-chat-resize:hover { background: rgba(51, 102, 255, 0.35) !important; }
 			`}</style>
 
 			{/* Header: title + new chat + collapse */}
@@ -291,24 +369,81 @@ export function AiChatPanel() {
 					<button
 						onClick={handleMoveSide}
 						style={headerBtnStyle}
-						title="Move chat to the other side"
-						aria-label="Move chat to the other side"
+						title={dockSide === 'start' ? 'Dock chat to the right side' : 'Dock chat to the left side'}
+						aria-label={dockSide === 'start' ? 'Dock chat to the right side' : 'Dock chat to the left side'}
 					>
-						<svg
-							width="13"
-							height="13"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-						>
-							<polyline points="17 1 21 5 17 9" />
-							<path d="M3 11V9a4 4 0 0 1 4-4h14" />
-							<polyline points="7 23 3 19 7 15" />
-							<path d="M21 13v2a4 4 0 0 1-4 4H3" />
-						</svg>
+						{/* Arrow pointing toward the side the chat will move to */}
+						{dockSide === 'start' ? (
+							<svg
+								width="13"
+								height="13"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<line x1="3" y1="12" x2="15" y2="12" />
+								<polyline points="10 7 15 12 10 17" />
+								<line x1="20" y1="4" x2="20" y2="20" />
+							</svg>
+						) : (
+							<svg
+								width="13"
+								height="13"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<line x1="21" y1="12" x2="9" y2="12" />
+								<polyline points="14 7 9 12 14 17" />
+								<line x1="4" y1="4" x2="4" y2="20" />
+							</svg>
+						)}
+					</button>
+					<button
+						onClick={handleToggleMaximize}
+						style={headerBtnStyle}
+						title={isMaximized ? 'Restore chat width' : 'Maximize chat (hide the page)'}
+						aria-label={isMaximized ? 'Restore chat width' : 'Maximize chat'}
+					>
+						{isMaximized ? (
+							<svg
+								width="13"
+								height="13"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<polyline points="4 14 10 14 10 20" />
+								<polyline points="20 10 14 10 14 4" />
+								<line x1="14" y1="10" x2="21" y2="3" />
+								<line x1="3" y1="21" x2="10" y2="14" />
+							</svg>
+						) : (
+							<svg
+								width="13"
+								height="13"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<polyline points="15 3 21 3 21 9" />
+								<polyline points="9 21 3 21 3 15" />
+								<line x1="21" y1="3" x2="14" y2="10" />
+								<line x1="3" y1="21" x2="10" y2="14" />
+							</svg>
+						)}
 					</button>
 					<button
 						onClick={handleCollapse}
@@ -395,6 +530,18 @@ export function AiChatPanel() {
 					onEscape={handleCollapse}
 				/>
 			</div>
+
+			{/* Drag-to-resize grip on the canvas-facing edge */}
+			{!isMaximized && (
+				<div
+					className="gz-ai-chat-resize"
+					style={resizeHandleStyle}
+					onPointerDown={handleResizeStart}
+					role="separator"
+					aria-orientation="vertical"
+					aria-label="Resize chat panel"
+				/>
+			)}
 		</div>
 	);
 }

@@ -81,7 +81,12 @@ export function ChatInput({ value, isBusy, onChange, onSubmit, onStop, onEscape 
 		minHeight: 20,
 		maxHeight: 80,
 		padding: 0,
-		margin: 0
+		margin: 0,
+		minWidth: 0,
+		// No stray scrollbars/borders inside the field: scroll vertically only
+		// once the 3-line auto-grow limit is reached.
+		overflowX: 'hidden',
+		overflowY: 'auto'
 	};
 
 	const buttonStyle: CSSProperties = {
