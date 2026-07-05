@@ -23,7 +23,7 @@ export abstract class BaseAiProviderPlugin implements IOnPluginBootstrap, IOnPlu
 	/** The provider definition this plugin contributes. */
 	protected abstract readonly definition: IAiChatProviderDefinition;
 
-	// We disable by default additional logging for each event to avoid cluttering the logs
+	// Lifecycle logging is enabled by default; subclasses may set `logEnabled = false`.
 	protected logEnabled = true;
 
 	/**

@@ -63,6 +63,8 @@ export class GauzyApiClient {
 				...this.extraHeaders,
 				'Content-Type': 'application/json'
 			},
+			// A hung self-call must not keep the chat stream open forever.
+			signal: AbortSignal.timeout(45_000),
 			...(body !== undefined ? { body: JSON.stringify(body) } : {})
 		});
 

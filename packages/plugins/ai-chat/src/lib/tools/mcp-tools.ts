@@ -27,9 +27,10 @@ export async function createMcpTools(authorizationHeader: string): Promise<IMcpT
 	const url = process.env.GAUZY_AI_CHAT_MCP_URL;
 	if (!url) return null;
 
+	let client: any;
 	try {
 		const { createMCPClient } = await importEsm<any>('@ai-sdk/mcp');
-		const client = await createMCPClient({
+		client = await createMCPClient({
 			transport: {
 				type: 'http',
 				url,
@@ -48,7 +49,13 @@ export async function createMcpTools(authorizationHeader: string): Promise<IMcpT
 			}
 		};
 	} catch (error) {
-		// MCP being down must not take chat down — degrade to built-in tools.
+		// MCP being down must not take chat down — degrade to built-in tools,
+		// but never leak a half-initialized client.
+		try {
+			await client?.close?.();
+		} catch {
+			/* already logging the primary failure */
+		}
 		logger.warn(`MCP tools unavailable (${url}): ${error instanceof Error ? error.message : error}`);
 		return null;
 	}

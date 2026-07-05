@@ -112,8 +112,13 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 	async upsert(
 		input: IAiProviderCredentialCreateInput | IAiProviderCredentialUpdateInput
 	): Promise<IAiProviderCredential> {
-		const tenantId = input.tenantId ?? RequestContext.currentTenantId();
-		const { providerId } = input;
+		// SECURITY: the tenant always comes from the authenticated request
+		// context — a body-supplied tenantId must never re-scope the write.
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new BadRequestException('Tenant context is required.');
+		}
+		const providerId = input.providerId?.toLowerCase();
 
 		if (!providerId) {
 			throw new BadRequestException('Provider id is required.');
@@ -128,7 +133,7 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 		}
 
 		// Encrypt the incoming API key; keep the stored one when omitted.
-		const payload: Partial<AiProviderCredential> = { ...input, tenantId } as Partial<AiProviderCredential>;
+		const payload: Partial<AiProviderCredential> = { ...input, providerId, tenantId } as Partial<AiProviderCredential>;
 		if (input.apiKey) {
 			payload.apiKey = this.encryptionService.encrypt(input.apiKey);
 		} else {

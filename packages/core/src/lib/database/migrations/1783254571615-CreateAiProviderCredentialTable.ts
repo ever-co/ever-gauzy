@@ -71,6 +71,9 @@ export class CreateAiProviderCredentialTable1783254571615 implements MigrationIn
 		await queryRunner.query(`CREATE INDEX "IDX_506bd348f082e306fa106c31f3" ON "ai_provider_credential" ("organizationId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_823fa39165adc2223792a02e4a" ON "ai_provider_credential" ("providerId") `);
 		await queryRunner.query(
+			`CREATE UNIQUE INDEX "UQ_ai_provider_credential_tenant_provider" ON "ai_provider_credential" ("tenantId", "providerId") `
+		);
+		await queryRunner.query(
 			`ALTER TABLE "ai_provider_credential" ADD CONSTRAINT "FK_91d67d330af8977f70ef04621c1" FOREIGN KEY ("createdByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
@@ -126,6 +129,9 @@ export class CreateAiProviderCredentialTable1783254571615 implements MigrationIn
 		await queryRunner.query(`CREATE INDEX "IDX_3ff5f4914d7180d24c81328b7d" ON "ai_provider_credential" ("tenantId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_506bd348f082e306fa106c31f3" ON "ai_provider_credential" ("organizationId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_823fa39165adc2223792a02e4a" ON "ai_provider_credential" ("providerId") `);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX "UQ_ai_provider_credential_tenant_provider" ON "ai_provider_credential" ("tenantId", "providerId") `
+		);
 	}
 
 	/**
@@ -153,6 +159,9 @@ export class CreateAiProviderCredentialTable1783254571615 implements MigrationIn
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(
 			`CREATE TABLE \`ai_provider_credential\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`createdByUserId\` varchar(255) NULL, \`updatedByUserId\` varchar(255) NULL, \`deletedByUserId\` varchar(255) NULL, \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`providerId\` varchar(255) NOT NULL, \`apiKey\` text NULL, \`baseUrl\` varchar(255) NULL, \`enabled\` tinyint NOT NULL DEFAULT 1, \`isDefault\` tinyint NOT NULL DEFAULT 0, \`defaultModel\` varchar(255) NULL, INDEX \`IDX_91d67d330af8977f70ef04621c\` (\`createdByUserId\`), INDEX \`IDX_75e914e1e807641505d7087b5f\` (\`updatedByUserId\`), INDEX \`IDX_d8699f7283e0e764834e621e0e\` (\`deletedByUserId\`), INDEX \`IDX_451dff655a76072657f52207f2\` (\`isActive\`), INDEX \`IDX_42a6490d37783e35fbe44a52f6\` (\`isArchived\`), INDEX \`IDX_3ff5f4914d7180d24c81328b7d\` (\`tenantId\`), INDEX \`IDX_506bd348f082e306fa106c31f3\` (\`organizationId\`), INDEX \`IDX_823fa39165adc2223792a02e4a\` (\`providerId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+		);
+		await queryRunner.query(
+			`CREATE UNIQUE INDEX \`UQ_ai_provider_credential_tenant_provider\` ON \`ai_provider_credential\` (\`tenantId\`, \`providerId\`)`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`ai_provider_credential\` ADD CONSTRAINT \`FK_91d67d330af8977f70ef04621c1\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`

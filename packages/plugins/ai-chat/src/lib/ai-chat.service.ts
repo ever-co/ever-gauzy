@@ -91,7 +91,14 @@ export class AiChatService {
 			languageCode: args.languageCode
 		});
 
-		const approvalRequired = [...GAUZY_TOOLS_REQUIRING_APPROVAL, ...CLIENT_TOOLS_REQUIRING_APPROVAL];
+		const mcpToolNames = Object.keys((mcp?.tools as object) ?? {});
+		// MCP tools are external — we cannot know which ones mutate state, so
+		// EVERY MCP tool requires the user's explicit in-chat approval.
+		const approvalRequired = [
+			...GAUZY_TOOLS_REQUIRING_APPROVAL,
+			...CLIENT_TOOLS_REQUIRING_APPROVAL,
+			...mcpToolNames
+		];
 
 		const tools = {
 			...gauzyTools,
@@ -99,23 +106,35 @@ export class AiChatService {
 			...((mcp?.tools as any) ?? {})
 		} as any;
 
-		const result = ai.streamText({
-			model,
-			instructions,
-			messages: await ai.convertToModelMessages(args.messages, {
+		let result: any;
+		try {
+			result = ai.streamText({
+				model,
+				instructions,
+				messages: await ai.convertToModelMessages(args.messages, {
+					tools,
+					ignoreIncompleteToolCalls: true
+				}).catch((error: unknown) => {
+					// Malformed UI messages are a client error, not a server fault.
+					throw new BadRequestException(
+						`Invalid chat messages payload: ${error instanceof Error ? error.message : error}`
+					);
+				}),
 				tools,
-				ignoreIncompleteToolCalls: true
-			}),
-			tools,
-			stopWhen: ai.isStepCount(MAX_STEPS),
-			toolApproval: Object.fromEntries(approvalRequired.map((name) => [name, 'user-approval'])),
-			onEnd: async () => {
-				await mcp?.close();
-			},
-			onError: (error: unknown) => {
-				this.logger.error(`streamText error: ${error instanceof Error ? error.message : error}`);
-			}
-		} as any);
+				stopWhen: ai.isStepCount(MAX_STEPS),
+				toolApproval: Object.fromEntries(approvalRequired.map((name) => [name, 'user-approval'])),
+				onEnd: async () => {
+					await mcp?.close();
+				},
+				onError: (error: unknown) => {
+					this.logger.error(`streamText error: ${error instanceof Error ? error.message : error}`);
+				}
+			} as any);
+		} catch (error) {
+			// Setup failed before streaming started — don't leak the MCP client.
+			await mcp?.close();
+			throw error;
+		}
 
 		// Capture identity now — the request context is gone by stream end.
 		const persistFor = {
