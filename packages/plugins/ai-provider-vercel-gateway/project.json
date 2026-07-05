@@ -1,0 +1,59 @@
+{
+	"name": "plugin-ai-provider-vercel-gateway",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/ai-provider-vercel-gateway/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"currentVersionResolver": "git-tag",
+			"preserveLocalDependencyProtocols": false,
+			"manifestRootsToUpdate": [
+				"dist/{projectRoot}"
+			]
+		}
+	},
+	"tags": [],
+	"implicitDependencies": [
+		"constants",
+		"contracts",
+		"plugin",
+		"plugin-ai-chat"
+	],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": [
+				"{options.outputPath}"
+			],
+			"options": {
+				"outputPath": "dist/packages/plugins/ai-provider-vercel-gateway",
+				"tsConfig": "packages/plugins/ai-provider-vercel-gateway/tsconfig.lib.json",
+				"packageJson": "packages/plugins/ai-provider-vercel-gateway/package.json",
+				"main": "packages/plugins/ai-provider-vercel-gateway/src/index.ts",
+				"assets": [
+					"packages/plugins/ai-provider-vercel-gateway/*.md"
+				]
+			},
+			"dependsOn": [
+				"^build"
+			]
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
+			"options": {
+				"jestConfig": "packages/plugins/ai-provider-vercel-gateway/jest.config.ts"
+			}
+		}
+	}
+}

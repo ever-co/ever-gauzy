@@ -1,7 +1,7 @@
-import { Component, inject, viewChild, afterNextRender, DestroyRef, signal } from '@angular/core';
+import { Component, ElementRef, effect, inject, viewChild, afterNextRender, DestroyRef, signal, Type } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
-import { LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
+import { ChatSidebarService, LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
 import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.service';
@@ -21,9 +21,11 @@ export class OneColumnLayoutComponent {
 
 	readonly layout = viewChild.required(NbLayoutComponent);
 
+	private readonly elementRef = inject(ElementRef<HTMLElement>);
 	private readonly windowModeBlockScrollService = inject(WindowModeBlockScrollService);
 	private readonly store = inject(Store);
 	public readonly navigationBuilderService = inject(NavigationBuilderService);
+	public readonly chatSidebarService = inject(ChatSidebarService);
 	private readonly sidebarService = inject(NbSidebarService);
 	private readonly layoutService = inject(LayoutService);
 	private readonly themeLanguageSelectorService = inject(ThemeLanguageSelectorService);
@@ -35,7 +37,36 @@ export class OneColumnLayoutComponent {
 	/** User observable — kept for child component compatibility (gauzy-user, gauzy-user-menu). */
 	readonly user$ = this.store.user$;
 
+	/**
+	 * Resolved chat sidebar component for `ngComponentOutlet`.
+	 * `IChatSidebarConfig.loadComponent` may be async (lazy chunk), so the
+	 * factory result is resolved into this signal.
+	 */
+	readonly chatSidebarComponent = signal<Type<any> | null>(null);
+
 	constructor() {
+		// Resolve the (possibly lazy) chat sidebar component whenever a plugin registers one.
+		effect(() => {
+			const config = this.chatSidebarService.config();
+			if (!config) {
+				this.chatSidebarComponent.set(null);
+				return;
+			}
+			Promise.resolve(config.loadComponent())
+				.then((component) => {
+					// Ignore the result if the sidebar was unregistered while loading.
+					if (this.chatSidebarService.config() === config) {
+						this.chatSidebarComponent.set(component);
+					}
+				})
+				.catch((error: unknown) => {
+					console.error('[OneColumnLayout] Failed to load the chat sidebar component:', error);
+					if (this.chatSidebarService.config() === config) {
+						this.chatSidebarComponent.set(null);
+					}
+				});
+		});
+
 		Object.entries(DEFAULT_SIDEBARS).forEach(([id, config]) => {
 			this.navigationBuilderService.registerSidebar(id, config);
 			this.navigationBuilderService.addSidebarActionItem(config.actionItem);
@@ -47,12 +78,31 @@ export class OneColumnLayoutComponent {
 		// Runs only in the browser, after the first render — replaces ngAfterViewInit + isPlatformBrowser
 		afterNextRender(() => {
 			this.windowModeBlockScrollService.register(this.layout());
+			this.observeHeaderHeight();
 		});
 
 		this.destroyRef.onDestroy(() => {
 			this.navigationBuilderService.clearSidebars();
 			this.navigationBuilderService.clearActionBars();
+			this.headerResizeObserver?.disconnect();
 		});
+	}
+
+	private headerResizeObserver?: ResizeObserver;
+
+	/**
+	 * Tracks the REAL rendered header height (the theme's `--header-height`
+	 * variable does not include extras like the demo banner) and exposes it
+	 * as `--gz-header-offset` for the chat sidebar's fixed container.
+	 */
+	private observeHeaderHeight(): void {
+		const host = this.elementRef.nativeElement as HTMLElement;
+		const header = host.querySelector('nb-layout-header');
+		if (!header || typeof ResizeObserver === 'undefined') return;
+		const apply = () => host.style.setProperty('--gz-header-offset', `${header.getBoundingClientRect().height}px`);
+		this.headerResizeObserver = new ResizeObserver(apply);
+		this.headerResizeObserver.observe(header);
+		apply();
 	}
 
 	/**

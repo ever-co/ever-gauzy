@@ -46,6 +46,62 @@
     order: 0 !important;
   }
 
+  // AI Chat sidebar — sits between the nav menu sidebar and the page content.
+  // The HOST stays in the flex flow and reserves the width (Menu | Chat | Content,
+  // DOM order after the menu sidebar); Nebular's .main-container is position:fixed
+  // in windowMode, so it must inherit the host width (100% would mean the viewport)
+  // and be pinned below the header.
+  nb-sidebar.chat-sidebar {
+    order: 0 !important;
+    align-self: stretch;
+
+    // Docked to the right of the canvas: Menu | Canvas | Chat.
+    // .layout (the content column) has default order 0, so order 2 places
+    // the host after it (same trick as .menu-sidebar-rtl).
+    &.chat-sidebar-end {
+      order: 2 !important;
+
+      ::ng-deep .main-container .scrollable {
+        border-right: none;
+        border-left: 1px solid nb-theme(divider-color);
+      }
+    }
+
+    &.expanded {
+      width: 24rem !important;
+    }
+
+    &.collapsed {
+      width: 0 !important;
+      overflow: hidden;
+    }
+
+    ::ng-deep .main-container {
+      width: inherit !important;
+      max-width: 24rem;
+      // --gz-header-offset = the header's REAL rendered height (set by the
+      // layout via ResizeObserver; includes e.g. the demo banner), falling
+      // back to the theme variable.
+      top: var(--gz-header-offset, var(--header-height, 4.75rem)) !important;
+      height: calc(100vh - var(--gz-header-offset, var(--header-height, 4.75rem))) !important;
+      transition: width 0.2s ease;
+      overflow: hidden;
+
+      .scrollable {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 0 !important;
+        overflow: hidden;
+        // Same surface as the nav menu sidebar; the chat panel's design
+        // tokens derive from currentColor, so set the themed text color here.
+        background: nb-theme(gauzy-sidebar-background-2);
+        color: nb-theme(text-basic-color);
+        border-right: 1px solid nb-theme(divider-color);
+      }
+    }
+  }
+
   gauzy-user-menu {
     position: absolute;
     bottom: 0px;

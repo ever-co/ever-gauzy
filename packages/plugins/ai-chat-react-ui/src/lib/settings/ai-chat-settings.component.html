@@ -1,0 +1,176 @@
+<nb-card class="ai-chat-settings" [nbSpinner]="loading()" nbSpinnerStatus="primary">
+	<nb-card-header>
+		<div class="page-header">
+			<div>
+				<h5>{{ 'AI_CHAT_UI.SETTINGS.TITLE' | translate }}</h5>
+				<p class="description">{{ 'AI_CHAT_UI.SETTINGS.DESCRIPTION' | translate }}</p>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		@if (!loading() && !providers().length) {
+		<p class="empty-state">{{ 'AI_CHAT_UI.SETTINGS.NO_PROVIDERS' | translate }}</p>
+		}
+
+		<nb-radio-group class="providers" [formControl]="defaultProviderControl" name="defaultProvider">
+			@for (provider of providers(); track provider.id) {
+			<nb-card class="provider-card">
+				<nb-card-header>
+					<div class="provider-header">
+						<div class="provider-title">
+							<h6>{{ provider.label }}</h6>
+							<nb-badge
+								[text]="getBadgeKey(provider) | translate"
+								[status]="getBadgeStatus(provider)"
+								position="top right"
+							></nb-badge>
+						</div>
+						@if (provider.models.length) {
+						<div class="provider-models">
+							<span class="models-label">{{ 'AI_CHAT_UI.SETTINGS.MODELS' | translate }}:</span>
+							@for (model of provider.models; track model.id) {
+							<span class="model-chip" [nbTooltip]="model.id">{{ model.label }}</span>
+							}
+						</div>
+						}
+					</div>
+				</nb-card-header>
+				<nb-card-body>
+					@if (getForm(provider.id); as form) {
+					<form [formGroup]="form" (ngSubmit)="save(provider)">
+						<div class="form-group">
+							<label class="label" [for]="'apiKey-' + provider.id">
+								{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY' | translate }}
+							</label>
+							<nb-form-field>
+								<input
+									nbInput
+									fullWidth
+									[id]="'apiKey-' + provider.id"
+									formControlName="apiKey"
+									autocomplete="off"
+									[type]="isKeyRevealed(provider.id) ? 'text' : 'password'"
+									[placeholder]="
+										getCredential(provider.id)?.apiKey ||
+										('AI_CHAT_UI.SETTINGS.FORM.API_KEY_PLACEHOLDER' | translate)
+									"
+								/>
+								<button
+									nbSuffix
+									nbButton
+									ghost
+									type="button"
+									size="small"
+									(click)="toggleKeyReveal(provider.id)"
+									[attr.aria-label]="
+										(isKeyRevealed(provider.id)
+											? 'AI_CHAT_UI.SETTINGS.FORM.HIDE_KEY'
+											: 'AI_CHAT_UI.SETTINGS.FORM.SHOW_KEY'
+										) | translate
+									"
+								>
+									<nb-icon [icon]="isKeyRevealed(provider.id) ? 'eye-off-outline' : 'eye-outline'"></nb-icon>
+								</button>
+							</nb-form-field>
+							@if (getCredential(provider.id)) {
+							<span class="hint">{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY_KEEP' | translate }}</span>
+							} @if (form.controls.apiKey.touched && form.controls.apiKey.hasError('required')) {
+							<span class="error">{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY_REQUIRED' | translate }}</span>
+							}
+						</div>
+
+						<div class="form-group">
+							<label class="label" [for]="'baseUrl-' + provider.id">
+								{{ 'AI_CHAT_UI.SETTINGS.FORM.BASE_URL' | translate }}
+							</label>
+							<input
+								nbInput
+								fullWidth
+								[id]="'baseUrl-' + provider.id"
+								formControlName="baseUrl"
+								type="url"
+								autocomplete="off"
+								[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.BASE_URL_PLACEHOLDER' | translate"
+							/>
+							@if (form.controls.baseUrl.touched && form.controls.baseUrl.hasError('pattern')) {
+							<span class="error">{{ 'AI_CHAT_UI.SETTINGS.FORM.BASE_URL_INVALID' | translate }}</span>
+							}
+						</div>
+
+						<div class="form-group">
+							<label class="label">{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL' | translate }}</label>
+							<nb-select
+								fullWidth
+								formControlName="defaultModel"
+								[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_NONE' | translate"
+							>
+								<nb-option value="">
+									{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_NONE' | translate }}
+								</nb-option>
+								@for (model of provider.models; track model.id) {
+								<nb-option [value]="model.id">{{ model.label }}</nb-option>
+								}
+								<nb-option [value]="CUSTOM_MODEL">
+									{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_CUSTOM' | translate }}
+								</nb-option>
+							</nb-select>
+							@if (form.controls.defaultModel.value === CUSTOM_MODEL) {
+							<input
+								nbInput
+								fullWidth
+								class="custom-model"
+								[id]="'ai-chat-custom-model-' + provider.id"
+								formControlName="customModel"
+								type="text"
+								autocomplete="off"
+								[attr.aria-label]="'AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate"
+								[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate"
+							/>
+							}
+						</div>
+
+						<div class="form-group toggles">
+							<nb-toggle formControlName="enabled" status="primary">
+								{{ 'AI_CHAT_UI.SETTINGS.FORM.ENABLED' | translate }}
+							</nb-toggle>
+							<nb-radio [value]="provider.id">
+								{{ 'AI_CHAT_UI.SETTINGS.FORM.USE_AS_DEFAULT' | translate }}
+							</nb-radio>
+						</div>
+
+						<div class="actions">
+							<button
+								nbButton
+								status="primary"
+								type="submit"
+								[disabled]="saving() === provider.id"
+								[nbSpinner]="saving() === provider.id"
+								nbSpinnerSize="tiny"
+								nbSpinnerStatus="control"
+							>
+								{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.SAVE' | translate }}
+							</button>
+							@if (getCredential(provider.id)) {
+							<button
+								nbButton
+								status="danger"
+								ghost
+								type="button"
+								(click)="delete(provider)"
+								[disabled]="deleting() === provider.id"
+								[nbSpinner]="deleting() === provider.id"
+								nbSpinnerSize="tiny"
+								nbSpinnerStatus="danger"
+							>
+								{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.DELETE' | translate }}
+							</button>
+							}
+						</div>
+					</form>
+					}
+				</nb-card-body>
+			</nb-card>
+			}
+		</nb-radio-group>
+	</nb-card-body>
+</nb-card>

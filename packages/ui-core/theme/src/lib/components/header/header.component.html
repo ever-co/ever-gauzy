@@ -98,6 +98,21 @@
         </nb-action>
       }
 
+      @if (chatSidebarService.config() && chatSidebarService.available()) {
+        <nb-action
+          icon="message-square-outline"
+          class="toggle-layout ai-chat-toggle"
+          [class.active]="chatSidebarService.expanded()"
+          [nbTooltip]="'HEADER.AI_CHAT' | translate"
+          tabindex="0"
+          role="button"
+          [attr.aria-label]="'HEADER.AI_CHAT' | translate"
+          (click)="chatSidebarService.toggle()"
+          (keydown.enter)="chatSidebarService.toggle()"
+          (keydown.space)="$event.preventDefault(); chatSidebarService.toggle()"
+        ></nb-action>
+      }
+
       @for (action of navigationBuilderService.sidebarActions$ | async; track action) {
         <nb-action
           [icon]="action.icon"
