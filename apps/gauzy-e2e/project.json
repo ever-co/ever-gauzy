@@ -5,15 +5,9 @@
 	"sourceRoot": "apps/gauzy-e2e/src",
 	"targets": {
 		"e2e": {
-			"executor": "@nx/cypress:cypress",
+			"executor": "@nx/playwright:playwright",
 			"options": {
-				"cypressConfig": "apps/gauzy-e2e/cypress.json",
-				"devServerTarget": "gauzy:serve"
-			},
-			"configurations": {
-				"production": {
-					"devServerTarget": "gauzy:serve:production"
-				}
+				"config": "apps/gauzy-e2e/playwright.config.ts"
 			}
 		},
 		"playwright": {
