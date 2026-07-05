@@ -15,11 +15,12 @@ import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
 import { chatTheme } from '../chat-theme';
 
-/** Client-generated conversation id (UUID v4). */
+/**
+ * Client-generated conversation id (UUID v4, crypto-secure).
+ * `crypto.randomUUID` is available in every browser Angular 21 supports.
+ */
 function newConversationId(): string {
-	return typeof crypto !== 'undefined' && 'randomUUID' in crypto
-		? crypto.randomUUID()
-		: `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+	return crypto.randomUUID();
 }
 
 /**
