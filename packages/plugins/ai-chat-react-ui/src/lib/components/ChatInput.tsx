@@ -1,20 +1,15 @@
-import {
-	type CSSProperties,
-	type FormEvent,
-	type ChangeEvent,
-	type KeyboardEvent,
-	useRef,
-	useEffect,
-	useState
-} from 'react';
+import { type CSSProperties, type KeyboardEvent, useRef, useEffect, useState } from 'react';
 import { chatTheme } from '../chat-theme';
 
 export interface ChatInputProps {
-	input: string;
-	isLoading: boolean;
-	onInputChange: (e: ChangeEvent<HTMLTextAreaElement> | ChangeEvent<HTMLInputElement>) => void;
-	onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+	value: string;
+	/** True while a response is being generated (submit disabled, stop shown). */
+	isBusy: boolean;
+	onChange: (value: string) => void;
+	onSubmit: () => void;
 	onStop: () => void;
+	/** Called when the user presses Escape (collapse the sidebar). */
+	onEscape?: () => void;
 }
 
 /**
@@ -22,12 +17,13 @@ export interface ChatInputProps {
  *
  * Compact input area for the inline sidebar chat. Features:
  * - Auto-resizing textarea (up to 3 lines)
- * - Enter to send, Shift+Enter for newline
- * - Send / Stop button depending on loading state
+ * - Enter to send, Shift+Enter for newline, Escape to collapse
+ * - Send / Stop button depending on generation state
  *
- * Styled for dark sidebar backgrounds.
+ * Controlled component — the AI SDK v4 `useChat` no longer manages
+ * input state, so the parent owns `value`.
  */
-export function ChatInput({ input, isLoading, onInputChange, onSubmit, onStop }: ChatInputProps) {
+export function ChatInput({ value, isBusy, onChange, onSubmit, onStop, onEscape }: ChatInputProps) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const [isFocused, setIsFocused] = useState(false);
 
@@ -38,16 +34,17 @@ export function ChatInput({ input, isLoading, onInputChange, onSubmit, onStop }:
 			el.style.height = 'auto';
 			el.style.height = `${Math.min(el.scrollHeight, 80)}px`;
 		}
-	}, [input]);
+	}, [value]);
 
-	// Handle Enter to submit, Shift+Enter for newline
 	function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
-			if (input.trim() && !isLoading) {
-				const syntheticEvent = new Event('submit', { bubbles: true, cancelable: true });
-				(e.target as HTMLElement).closest('form')?.dispatchEvent(syntheticEvent);
+			if (value.trim() && !isBusy) {
+				onSubmit();
 			}
+		} else if (e.key === 'Escape' && onEscape) {
+			e.preventDefault();
+			onEscape();
 		}
 	}
 
@@ -88,7 +85,7 @@ export function ChatInput({ input, isLoading, onInputChange, onSubmit, onStop }:
 		width: 28,
 		height: 28,
 		borderRadius: '50%',
-		backgroundColor: isLoading ? chatTheme.red : chatTheme.accent,
+		backgroundColor: isBusy ? chatTheme.red : chatTheme.accent,
 		color: '#ffffff',
 		border: 'none',
 		cursor: 'pointer',
@@ -97,17 +94,23 @@ export function ChatInput({ input, isLoading, onInputChange, onSubmit, onStop }:
 		justifyContent: 'center',
 		flexShrink: 0,
 		transition: `background-color ${chatTheme.transitionSpeed} ease`,
-		opacity: !isLoading && !input.trim() ? 0.4 : 1,
+		opacity: !isBusy && !value.trim() ? 0.4 : 1,
 		outline: 'none'
 	};
 
 	return (
 		<div style={containerStyle}>
-			<form onSubmit={onSubmit} style={formStyle}>
+			<form
+				onSubmit={(e) => {
+					e.preventDefault();
+					if (value.trim() && !isBusy) onSubmit();
+				}}
+				style={formStyle}
+			>
 				<textarea
 					ref={textareaRef}
-					value={input}
-					onChange={onInputChange}
+					value={value}
+					onChange={(e) => onChange(e.target.value)}
 					onKeyDown={handleKeyDown}
 					onFocus={() => setIsFocused(true)}
 					onBlur={() => setIsFocused(false)}
@@ -117,26 +120,14 @@ export function ChatInput({ input, isLoading, onInputChange, onSubmit, onStop }:
 					aria-label="Chat message input"
 				/>
 
-				{isLoading ? (
-					<button
-						type="button"
-						onClick={onStop}
-						style={buttonStyle}
-						title="Stop generating"
-						aria-label="Stop"
-					>
+				{isBusy ? (
+					<button type="button" onClick={onStop} style={buttonStyle} title="Stop generating" aria-label="Stop">
 						<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
 							<rect x="6" y="6" width="12" height="12" rx="2" />
 						</svg>
 					</button>
 				) : (
-					<button
-						type="submit"
-						disabled={!input.trim()}
-						style={buttonStyle}
-						title="Send message"
-						aria-label="Send"
-					>
+					<button type="submit" disabled={!value.trim()} style={buttonStyle} title="Send message" aria-label="Send">
 						<svg
 							width="14"
 							height="14"

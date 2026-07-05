@@ -6,10 +6,18 @@ import { SettingsControl } from './SettingsControl';
 export interface PlaygroundSettingsProps {
 	models: ModelOption[];
 	selectedModelId: string;
-	onModelChange: (modelId: string) => void;
+	/** Provider of the selected model (disambiguates duplicate model ids). */
+	selectedProviderId?: string;
+	/** Called with the model id and (when known) its provider id. */
+	onModelChange: (modelId: string, providerId?: string) => void;
 
 	systemPrompt: string;
 	onSystemPromptChange: (value: string) => void;
+	/**
+	 * Disables the system prompt editor. The Gauzy backend builds its own
+	 * system prompt, so the playground keeps this visible but not wired.
+	 */
+	systemPromptDisabled?: boolean;
 
 	temperature: number;
 	onTemperatureChange: (value: number) => void;
@@ -19,6 +27,13 @@ export interface PlaygroundSettingsProps {
 
 	topP: number;
 	onTopPChange: (value: number) => void;
+
+	/**
+	 * Disables the parameter sliders. The backend does not accept
+	 * temperature / topP / maxTokens yet, so the playground keeps the
+	 * sliders visible but not wired.
+	 */
+	parametersDisabled?: boolean;
 
 	/** Whether the panel is collapsed. */
 	collapsed?: boolean;
@@ -65,46 +80,66 @@ const sectionTitleStyle: CSSProperties = {
 	marginBottom: '0.75rem'
 };
 
-const textareaStyle: CSSProperties = {
-	width: '100%',
-	minHeight: '5rem',
-	padding: '0.5rem 0.75rem',
-	fontSize: t.fontSizeSm,
-	fontFamily: t.font,
-	color: t.textPrimary,
-	background: t.bgInput,
-	border: `1px solid ${t.border}`,
-	borderRadius: t.radius,
-	outline: 'none',
-	resize: 'vertical',
-	lineHeight: 1.5,
-	boxSizing: 'border-box' as const
+const noteStyle: CSSProperties = {
+	fontSize: t.fontSizeXs,
+	color: t.textHint,
+	marginTop: '0.375rem',
+	lineHeight: 1.4
 };
 
 /**
  * PlaygroundSettings — left panel with model selector, system prompt,
  * and parameter controls (Temperature, Max Tokens, Top P).
+ *
+ * Controls that the backend does not support yet stay visible but are
+ * disabled with an explanatory note, so the UI never pretends a value
+ * is being applied when it is not.
  */
 export function PlaygroundSettings({
 	models,
 	selectedModelId,
+	selectedProviderId,
 	onModelChange,
 	systemPrompt,
 	onSystemPromptChange,
+	systemPromptDisabled = false,
 	temperature,
 	onTemperatureChange,
 	maxTokens,
 	onMaxTokensChange,
 	topP,
 	onTopPChange,
+	parametersDisabled = false,
 	collapsed = false,
 	children
 }: PlaygroundSettingsProps) {
+	const textareaStyle: CSSProperties = {
+		width: '100%',
+		minHeight: '5rem',
+		padding: '0.5rem 0.75rem',
+		fontSize: t.fontSizeSm,
+		fontFamily: t.font,
+		color: systemPromptDisabled ? t.textHint : t.textPrimary,
+		background: t.bgInput,
+		border: `1px solid ${t.border}`,
+		borderRadius: t.radius,
+		outline: 'none',
+		resize: 'vertical',
+		lineHeight: 1.5,
+		boxSizing: 'border-box' as const,
+		cursor: systemPromptDisabled ? 'not-allowed' : 'text'
+	};
+
 	return (
 		<div style={collapsed ? panelCollapsedStyle : panelExpandedStyle}>
 			{/* Model */}
 			<div style={sectionStyle}>
-				<ModelSelector models={models} selectedModelId={selectedModelId} onModelChange={onModelChange} />
+				<ModelSelector
+					models={models}
+					selectedModelId={selectedModelId}
+					selectedProviderId={selectedProviderId}
+					onModelChange={onModelChange}
+				/>
 			</div>
 
 			{/* System Prompt */}
@@ -115,7 +150,16 @@ export function PlaygroundSettings({
 					value={systemPrompt}
 					onChange={(e) => onSystemPromptChange(e.target.value)}
 					placeholder="You are a helpful assistant…"
+					disabled={systemPromptDisabled}
+					title={
+						systemPromptDisabled
+							? 'The Gauzy backend builds its own system prompt — this editor is not wired yet.'
+							: undefined
+					}
 				/>
+				{systemPromptDisabled && (
+					<div style={noteStyle}>Managed by the server — custom system prompts are not wired yet.</div>
+				)}
 			</div>
 
 			{/* Parameters */}
@@ -128,6 +172,8 @@ export function PlaygroundSettings({
 					max={2}
 					step={0.1}
 					onChange={onTemperatureChange}
+					disabled={parametersDisabled}
+					title={parametersDisabled ? 'Not supported by the backend yet.' : undefined}
 				/>
 				<SettingsControl
 					label="Max Tokens"
@@ -136,8 +182,22 @@ export function PlaygroundSettings({
 					max={16384}
 					step={1}
 					onChange={onMaxTokensChange}
+					disabled={parametersDisabled}
+					title={parametersDisabled ? 'Not supported by the backend yet.' : undefined}
 				/>
-				<SettingsControl label="Top P" value={topP} min={0} max={1} step={0.05} onChange={onTopPChange} />
+				<SettingsControl
+					label="Top P"
+					value={topP}
+					min={0}
+					max={1}
+					step={0.05}
+					onChange={onTopPChange}
+					disabled={parametersDisabled}
+					title={parametersDisabled ? 'Not supported by the backend yet.' : undefined}
+				/>
+				{parametersDisabled && (
+					<div style={noteStyle}>These parameters are not supported by the backend yet.</div>
+				)}
 			</div>
 
 			{/* Extra children */}

@@ -16,11 +16,19 @@ export { AiChatSidebarComponent } from './lib/ai-chat-sidebar.component';
 export { PlaygroundPageComponent } from './lib/playground-page.component';
 export { PlaygroundChatSidebarComponent } from './lib/playground-chat-sidebar.component';
 
-// Providers — register the AI Chat as a collapsible right-side sidebar
-export { provideAiChatPlaygroundSidebar } from './lib/provide-ai-chat-playground-sidebar';
+// Providers — register the AI Chat in the layout's dedicated chat sidebar slot
+export { provideAiChatSidebar } from './lib/provide-ai-chat-sidebar';
 
 // Route config
 export { PLAYGROUND_PATH, PLAYGROUND_ROUTE } from './lib/playground.routes';
+
+// AI Providers (BYOK) settings page — component, service, and route config
+export {
+	AiChatSettingsComponent,
+	AiChatSettingsService,
+	AI_CHAT_SETTINGS_PATH,
+	AI_CHAT_SETTINGS_ROUTE
+} from './lib/settings';
 
 // React components (for advanced composition / embedding)
 export {

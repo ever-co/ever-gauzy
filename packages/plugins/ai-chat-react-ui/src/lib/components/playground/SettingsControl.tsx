@@ -8,20 +8,24 @@ export interface SettingsControlProps {
 	max: number;
 	step: number;
 	onChange: (value: number) => void;
+	/** Disables the slider (e.g. when the parameter is not wired to the backend). */
+	disabled?: boolean;
+	/** Tooltip shown on hover (e.g. explaining why the control is disabled). */
+	title?: string;
 }
 
 /**
  * SettingsControl — labelled range slider for model parameters
  * (temperature, maxTokens, topP, etc.).
  */
-export function SettingsControl({ label, value, min, max, step, onChange }: SettingsControlProps) {
+export function SettingsControl({ label, value, min, max, step, onChange, disabled = false, title }: SettingsControlProps) {
 	const labelStyle: CSSProperties = {
 		display: 'flex',
 		justifyContent: 'space-between',
 		alignItems: 'center',
 		fontSize: t.fontSizeSm,
 		fontWeight: 500,
-		color: t.textPrimary,
+		color: disabled ? t.textHint : t.textPrimary,
 		marginBottom: '0.375rem'
 	};
 
@@ -33,7 +37,7 @@ export function SettingsControl({ label, value, min, max, step, onChange }: Sett
 	};
 
 	return (
-		<div style={{ marginBottom: '0.75rem' }}>
+		<div style={{ marginBottom: '0.75rem' }} title={title}>
 			<div style={labelStyle}>
 				<span>{label}</span>
 				<span style={valueStyle}>{value}</span>
@@ -44,8 +48,15 @@ export function SettingsControl({ label, value, min, max, step, onChange }: Sett
 				max={max}
 				step={step}
 				value={value}
+				disabled={disabled}
 				onChange={(e) => onChange(Number(e.target.value))}
-				style={{ width: '100%', accentColor: t.accent, cursor: 'pointer', margin: 0 }}
+				style={{
+					width: '100%',
+					accentColor: t.accent,
+					cursor: disabled ? 'not-allowed' : 'pointer',
+					opacity: disabled ? 0.5 : 1,
+					margin: 0
+				}}
 			/>
 		</div>
 	);

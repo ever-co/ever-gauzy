@@ -6,8 +6,11 @@
 	},
 	"allowedNonPeerDependencies": [
 		"@ai-sdk/react",
+		"ai",
+		"streamdown",
 		"@gauzy/contracts",
 		"@gauzy/plugin-ui",
+		"@gauzy/ui-config",
 		"@gauzy/ui-core",
 		"@gauzy/ui-react",
 		"@gauzy/ui-react-components",

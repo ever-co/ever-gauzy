@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactHostDirective } from '@gauzy/ui-react';
 import { AiChatPanel } from './components/AiChatPanel';
@@ -28,10 +28,6 @@ import { AiChatPanel } from './components/AiChatPanel';
 	],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AiChatSidebarComponent implements OnInit {
+export class AiChatSidebarComponent {
 	readonly page = AiChatPanel;
-
-	ngOnInit(): void {
-		console.log('AI Chat sidebar widget initialized');
-	}
 }

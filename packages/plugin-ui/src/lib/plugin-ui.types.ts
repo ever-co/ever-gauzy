@@ -358,7 +358,7 @@ export interface PluginUiDefinition {
 	 *
 	 * @example
 	 * ```ts
-	 * providers: [provideAiChatPlaygroundSidebar()]
+	 * providers: [provideAiChatSidebar()]
 	 * ```
 	 */
 	providers?: Array<Provider | EnvironmentProviders>;

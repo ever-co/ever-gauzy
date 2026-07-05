@@ -1,21 +1,24 @@
 import { useRef, useEffect, type CSSProperties } from 'react';
-import type { Message } from '@ai-sdk/react';
+import type { UIMessage } from 'ai';
 import { ChatMessageItem } from './ChatMessageItem';
 import { chatTheme } from '../chat-theme';
 
 export interface ChatMessageListProps {
-	messages: Message[];
-	isLoading: boolean;
+	messages: UIMessage[];
+	/** Chat status from useChat: 'submitted' | 'streaming' | 'ready' | 'error'. */
+	status: string;
+	/** Respond to a pending tool approval request. */
+	onApprovalResponse?: (approvalId: string, approved: boolean) => void;
 }
 
 /**
  * ChatMessageList
  *
  * Scrollable container for chat messages. Auto-scrolls to
- * the bottom when new messages arrive. Compact layout
+ * the bottom when new content streams in. Compact layout
  * optimised for the narrow sidebar width.
  */
-export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
+export function ChatMessageList({ messages, status, onApprovalResponse }: ChatMessageListProps) {
 	const scrollRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -23,7 +26,7 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
 		if (el) {
 			el.scrollTop = el.scrollHeight;
 		}
-	}, [messages]);
+	}, [messages, status]);
 
 	const containerStyle: CSSProperties = {
 		flex: 1,
@@ -34,14 +37,22 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
 		gap: 8
 	};
 
+	const lastMessage = messages[messages.length - 1];
+	const isStreaming = status === 'streaming';
+
 	return (
 		<div ref={scrollRef} style={containerStyle}>
 			{messages.map((message) => (
-				<ChatMessageItem key={message.id} message={message} />
+				<ChatMessageItem
+					key={message.id}
+					message={message}
+					isStreaming={isStreaming && message === lastMessage && message.role === 'assistant'}
+					onApprovalResponse={onApprovalResponse}
+				/>
 			))}
 
-			{/* Typing indicator */}
-			{isLoading && messages[messages.length - 1]?.role === 'user' && <TypingIndicator />}
+			{/* Typing indicator — model is thinking, nothing streamed yet */}
+			{status === 'submitted' && lastMessage?.role === 'user' && <TypingIndicator />}
 		</div>
 	);
 }

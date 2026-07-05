@@ -1,20 +1,28 @@
 import { type CSSProperties, type ReactNode } from 'react';
+import type { UIMessage } from 'ai';
 import { playgroundTheme as t } from '../../playground-theme';
+import { MarkdownContent } from '../MarkdownContent';
+import { ToolCallCard } from '../ToolCallCard';
 
 export interface PlaygroundChatMessageProps {
-	role: 'user' | 'assistant' | 'system';
-	content: string;
+	/** UI message (AI SDK 7) whose `parts` are rendered. */
+	message: UIMessage;
+	/** True while this (assistant) message is still streaming in. */
+	isStreaming?: boolean;
+	/** Custom avatar node (defaults to "U" / "AI" initials). */
 	avatar?: ReactNode;
-	timestamp?: string;
 }
 
 /**
- * PlaygroundChatMessage — a single message bubble for user or assistant
- * in the playground chat panel. User messages right-aligned, assistant
- * messages left-aligned.
+ * PlaygroundChatMessage — a single message for user or assistant in the
+ * playground chat panel, rendered from the message `parts`:
+ * - text parts → markdown bubbles (assistant) / plain bubbles (user)
+ * - tool parts (`tool-*` / `dynamic-tool`) → {@link ToolCallCard} chips
+ *
+ * User messages are right-aligned, assistant messages left-aligned.
  */
-export function PlaygroundChatMessage({ role, content, avatar, timestamp }: PlaygroundChatMessageProps) {
-	const isUser = role === 'user';
+export function PlaygroundChatMessage({ message, isStreaming, avatar }: PlaygroundChatMessageProps) {
+	const isUser = message.role === 'user';
 	const defaultInitial = isUser ? 'U' : 'AI';
 
 	const containerStyle: CSSProperties = {
@@ -40,28 +48,68 @@ export function PlaygroundChatMessage({ role, content, avatar, timestamp }: Play
 		userSelect: 'none'
 	};
 
+	const columnStyle: CSSProperties = {
+		display: 'flex',
+		flexDirection: 'column',
+		alignItems: isUser ? 'flex-end' : 'flex-start',
+		gap: '0.375rem',
+		minWidth: 0,
+		maxWidth: '80%'
+	};
+
 	const bubbleStyle: CSSProperties = {
-		maxWidth: '80%',
 		padding: '0.625rem 0.875rem',
 		borderRadius: t.radiusLg,
 		background: isUser ? t.accent : t.bgInput,
 		color: isUser ? '#fff' : t.textPrimary,
 		fontSize: t.fontSizeBase,
 		lineHeight: 1.55,
-		whiteSpace: 'pre-wrap',
 		wordBreak: 'break-word'
 	};
 
 	return (
 		<div style={containerStyle}>
 			<div style={avatarStyle}>{avatar ?? defaultInitial}</div>
-			<div style={{ display: 'flex', flexDirection: 'column', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
-				<div style={bubbleStyle}>{content}</div>
-				{timestamp && (
-					<span style={{ fontSize: t.fontSizeXs, color: t.textHint, marginTop: '0.25rem' }}>
-						{new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-					</span>
-				)}
+			<div style={columnStyle}>
+				{message.parts.map((part, index) => {
+					if (part.type === 'text') {
+						if (!part.text) return null;
+						return (
+							<div style={bubbleStyle} key={`${message.id}-${index}`}>
+								{isUser ? (
+									<span style={{ whiteSpace: 'pre-wrap' }}>{part.text}</span>
+								) : (
+									<MarkdownContent content={part.text} isStreaming={isStreaming} />
+								)}
+							</div>
+						);
+					}
+
+					if (part.type === 'dynamic-tool' || part.type.startsWith('tool-')) {
+						const toolPart = part as unknown as {
+							toolName?: string;
+							state?: string;
+							input?: unknown;
+							output?: unknown;
+							errorText?: string;
+						};
+						const toolName: string =
+							part.type === 'dynamic-tool' ? toolPart.toolName ?? 'tool' : part.type.slice(5);
+						return (
+							<div key={`${message.id}-${index}`} style={{ alignSelf: 'stretch' }}>
+								<ToolCallCard
+									toolName={toolName}
+									state={toolPart.state ?? ''}
+									input={toolPart.input}
+									output={toolPart.output}
+									errorText={toolPart.errorText}
+								/>
+							</div>
+						);
+					}
+
+					return null;
+				})}
 			</div>
 		</div>
 	);

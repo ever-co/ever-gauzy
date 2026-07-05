@@ -1,25 +1,51 @@
-import { useState, useCallback, type CSSProperties } from 'react';
+import { useCallback, useMemo, type CSSProperties } from 'react';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
+import { useInjector } from '@gauzy/ui-react';
+import { Store } from '@gauzy/ui-core/core';
+import { environment } from '@gauzy/ui-config';
 import { playgroundTheme as t } from '../../playground-theme';
 import { PlaygroundChatPanel } from './PlaygroundChatPanel';
-import { type PlaygroundChatMessageProps } from './PlaygroundChatMessage';
 
 /**
  * PlaygroundChatSidebar — standalone chat-only panel designed to render
  * inside a collapsible right sidebar (`nb-sidebar`). No settings panel.
  *
- * Manages its own message state internally. Includes a compact header
- * with title and "New Chat" button.
+ * Wired to the Gauzy backend via the Vercel AI SDK (`useChat` from
+ * @ai-sdk/react v4 / AI SDK 7): streams from `POST /api/ai-chat` with
+ * the user's own JWT, using the tenant's default provider/model.
+ * Includes a compact header with title and "New Chat" button.
  */
 export function PlaygroundChatSidebar() {
-	const [messages, setMessages] = useState<PlaygroundChatMessageProps[]>([]);
+	const injector = useInjector();
+	const store = useMemo(() => injector.get(Store), [injector]);
 
-	const handleSend = useCallback((text: string) => {
-		setMessages((prev) => [...prev, { role: 'user' as const, content: text, timestamp: new Date().toISOString() }]);
-	}, []);
+	const transport = useMemo(
+		() =>
+			new DefaultChatTransport({
+				api: `${environment.API_BASE_URL}/api/ai-chat`,
+				headers: () => ({
+					Authorization: `Bearer ${store.token}`,
+					...(store.tenantId ? { 'Tenant-Id': store.tenantId } : {}),
+					...(store.organizationId ? { 'Organization-Id': store.organizationId } : {})
+				})
+			}),
+		[store]
+	);
+
+	const { messages, sendMessage, status, stop, error, regenerate, setMessages } = useChat({ transport });
+
+	const handleSend = useCallback(
+		(text: string) => {
+			void sendMessage({ text });
+		},
+		[sendMessage]
+	);
 
 	const handleNewChat = useCallback(() => {
+		void stop();
 		setMessages([]);
-	}, []);
+	}, [stop, setMessages]);
 
 	const containerStyle: CSSProperties = {
 		display: 'flex',
@@ -84,7 +110,13 @@ export function PlaygroundChatSidebar() {
 				)}
 			</div>
 
-			<PlaygroundChatPanel messages={messages} onSend={handleSend} loading={false} />
+			<PlaygroundChatPanel
+				messages={messages}
+				onSend={handleSend}
+				status={status}
+				error={error ? error.message || 'Something went wrong.' : undefined}
+				onRetry={() => void regenerate()}
+			/>
 		</div>
 	);
 }

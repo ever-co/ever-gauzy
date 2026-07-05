@@ -1,32 +1,52 @@
 import { type CSSProperties, useRef, useEffect, type ReactNode } from 'react';
+import type { ChatStatus, UIMessage } from 'ai';
 import { playgroundTheme as t } from '../../playground-theme';
-import { PlaygroundChatMessage, type PlaygroundChatMessageProps } from './PlaygroundChatMessage';
+import { PlaygroundChatMessage } from './PlaygroundChatMessage';
 import { PlaygroundChatInput } from './PlaygroundChatInput';
 
 export interface PlaygroundChatPanelProps {
-	messages: PlaygroundChatMessageProps[];
+	/** UI messages (AI SDK 7) to render. */
+	messages: UIMessage[];
+	/** Called when the user submits a message. */
 	onSend: (message: string) => void;
-	loading?: boolean;
+	/** Chat status from `useChat` ('submitted' | 'streaming' | 'ready' | 'error'). */
+	status?: ChatStatus;
+	/** Error text shown in the error bar above the input. */
+	error?: string;
+	/** Retry the last request (shown next to the error). */
+	onRetry?: () => void;
+	/** Optional header content. */
 	header?: ReactNode;
+	/** Custom placeholder for the chat input. */
 	inputPlaceholder?: string;
+	/** Force-disable the input (e.g. while configuration loads). */
+	disabled?: boolean;
 }
 
 /**
  * PlaygroundChatPanel — right-side chat area with message list,
- * empty-state illustration, loading indicator, and input bar.
+ * empty-state illustration, loading indicator, error bar, and input bar.
  */
 export function PlaygroundChatPanel({
 	messages,
 	onSend,
-	loading = false,
+	status = 'ready',
+	error,
+	onRetry,
 	header,
-	inputPlaceholder
+	inputPlaceholder,
+	disabled = false
 }: PlaygroundChatPanelProps) {
 	const bottomRef = useRef<HTMLDivElement>(null);
 
+	const isBusy = status === 'submitted' || status === 'streaming';
+	// Waiting dots only before the first streamed token arrives.
+	const showWaiting = status === 'submitted';
+	const lastMessage = messages[messages.length - 1];
+
 	useEffect(() => {
 		bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-	}, [messages.length, loading]);
+	}, [messages, status]);
 
 	const panelStyle: CSSProperties = {
 		display: 'flex',
@@ -73,6 +93,17 @@ export function PlaygroundChatPanel({
 		background: t.textHint
 	};
 
+	const errorBarStyle: CSSProperties = {
+		display: 'flex',
+		alignItems: 'center',
+		gap: '0.5rem',
+		padding: '0.5rem 1rem',
+		borderTop: `1px solid ${t.border}`,
+		background: 'rgba(255, 61, 113, 0.08)',
+		color: t.red,
+		fontSize: t.fontSizeSm
+	};
+
 	return (
 		<div style={panelStyle}>
 			{header && <div style={headerStyle}>{header}</div>}
@@ -98,11 +129,24 @@ export function PlaygroundChatPanel({
 					</div>
 				) : (
 					<>
-						{messages.map((msg, i) => (
-							<PlaygroundChatMessage key={i} {...msg} />
+						{messages.map((message) => (
+							<PlaygroundChatMessage
+								key={message.id}
+								message={message}
+								isStreaming={
+									status === 'streaming' && message === lastMessage && message.role === 'assistant'
+								}
+							/>
 						))}
-						{loading && (
-							<div style={{ padding: '0.75rem 1rem', display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+						{showWaiting && (
+							<div
+								style={{
+									padding: '0.75rem 1rem',
+									display: 'flex',
+									gap: '0.25rem',
+									alignItems: 'center'
+								}}
+							>
 								<div style={{ ...dotStyle, animation: 'pgPulse 1.4s ease-in-out infinite' }} />
 								<div style={{ ...dotStyle, animation: 'pgPulse 1.4s ease-in-out 0.2s infinite' }} />
 								<div style={{ ...dotStyle, animation: 'pgPulse 1.4s ease-in-out 0.4s infinite' }} />
@@ -113,7 +157,32 @@ export function PlaygroundChatPanel({
 				)}
 			</div>
 
-			<PlaygroundChatInput onSend={onSend} disabled={loading} placeholder={inputPlaceholder} />
+			{error && (
+				<div style={errorBarStyle}>
+					<span>⚠</span>
+					<span>{error}</span>
+					{onRetry && (
+						<button
+							type="button"
+							onClick={onRetry}
+							style={{
+								background: 'none',
+								border: 'none',
+								color: t.accent,
+								cursor: 'pointer',
+								textDecoration: 'underline',
+								fontSize: t.fontSizeSm,
+								fontFamily: t.font,
+								padding: 0
+							}}
+						>
+							Retry
+						</button>
+					)}
+				</div>
+			)}
+
+			<PlaygroundChatInput onSend={onSend} disabled={disabled || isBusy} placeholder={inputPlaceholder} />
 		</div>
 	);
 }

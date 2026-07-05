@@ -1,21 +1,29 @@
 import { type CSSProperties } from 'react';
-import type { Message } from '@ai-sdk/react';
+import type { UIMessage } from 'ai';
 import { MarkdownContent } from './MarkdownContent';
+import { ToolCallCard } from './ToolCallCard';
 import { chatTheme } from '../chat-theme';
 
 export interface ChatMessageItemProps {
-	message: Message;
+	message: UIMessage;
+	/** True while this (assistant) message is still streaming. */
+	isStreaming?: boolean;
+	/** Respond to a pending tool approval request. */
+	onApprovalResponse?: (approvalId: string, approved: boolean) => void;
 }
 
 /**
  * ChatMessageItem
  *
- * Compact message bubble for the inline sidebar chat.
- * No avatars — the narrow sidebar width requires maximum
- * content space. User messages are right-aligned (accent),
- * assistant messages are left-aligned (semi-transparent).
+ * Renders one UI message from its `parts`:
+ * - text parts → markdown bubbles (user: accent right, assistant: subtle left)
+ * - tool parts (`tool-*` / `dynamic-tool`) → compact ToolCallCard chips with
+ *   live state, expandable details and Approve/Reject when the tool awaits
+ *   the user's approval.
+ * Other part kinds (step markers, reasoning) are not rendered in the
+ * compact sidebar view.
  */
-export function ChatMessageItem({ message }: ChatMessageItemProps) {
+export function ChatMessageItem({ message, isStreaming, onApprovalResponse }: ChatMessageItemProps) {
 	const isUser = message.role === 'user';
 
 	const rowStyle: CSSProperties = {
@@ -37,25 +45,49 @@ export function ChatMessageItem({ message }: ChatMessageItemProps) {
 		wordBreak: 'break-word'
 	};
 
-	const timestampStyle: CSSProperties = {
-		fontSize: '0.625rem',
-		color: chatTheme.textHint,
-		marginTop: 2,
-		textAlign: isUser ? 'right' : 'left'
-	};
-
-	const createdAt = message.createdAt
-		? new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-		: '';
-
 	return (
 		<div>
-			<div style={rowStyle}>
-				<div style={bubbleStyle}>
-					{isUser ? <span>{message.content}</span> : <MarkdownContent content={message.content} />}
-				</div>
-			</div>
-			{createdAt && <div style={timestampStyle}>{createdAt}</div>}
+			{message.parts.map((part, index) => {
+				if (part.type === 'text') {
+					if (!part.text) return null;
+					return (
+						<div style={rowStyle} key={`${message.id}-${index}`}>
+							<div style={bubbleStyle}>
+								{isUser ? (
+									<span>{part.text}</span>
+								) : (
+									<MarkdownContent content={part.text} isStreaming={isStreaming} />
+								)}
+							</div>
+						</div>
+					);
+				}
+
+				if (part.type === 'dynamic-tool' || part.type.startsWith('tool-')) {
+					const toolPart = part as any;
+					const toolName: string = part.type === 'dynamic-tool' ? toolPart.toolName : part.type.slice(5);
+					const approvalId: string | undefined =
+						toolPart.approval?.id ?? toolPart.approvalId ?? toolPart.approval?.approvalId;
+					return (
+						<ToolCallCard
+							key={`${message.id}-${index}`}
+							toolName={toolName}
+							state={toolPart.state}
+							input={toolPart.input}
+							output={toolPart.output}
+							errorText={toolPart.errorText}
+							{...(toolPart.state === 'approval-requested' && approvalId && onApprovalResponse
+								? {
+										onApprove: () => onApprovalResponse(approvalId, true),
+										onReject: () => onApprovalResponse(approvalId, false)
+								  }
+								: {})}
+						/>
+					);
+				}
+
+				return null;
+			})}
 		</div>
 	);
 }

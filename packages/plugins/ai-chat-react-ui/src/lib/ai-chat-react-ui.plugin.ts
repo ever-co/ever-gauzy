@@ -1,6 +1,8 @@
+import { PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, PluginRouteInput } from '@gauzy/plugin-ui';
 import { PLAYGROUND_ROUTE } from './playground.routes';
-import { provideAiChatPlaygroundSidebar } from './provide-ai-chat-playground-sidebar';
+import { AI_CHAT_SETTINGS_ROUTE } from './settings';
+import { provideAiChatSidebar } from './provide-ai-chat-sidebar';
 import en from '../i18n/en.json';
 
 /**
@@ -8,21 +10,44 @@ import en from '../i18n/en.json';
  *
  * Self-contained plugin that registers:
  * - An AI Playground page at `/pages/playground` (Vercel AI SDK style)
- * - A chat sidebar panel in the layout's dedicated chat slot
+ * - A per-tenant "AI Providers" (BYOK) settings page at `/pages/settings/ai`
+ *   with a nav item under the core Settings section (AI_CHAT_SETTINGS permission)
+ * - The AI Chat panel in the layout's dedicated chat sidebar slot
+ *   (`Menu | Chat | Page content`)
  *
  * Uses `defineDeclarativePlugin` with `providers` for the chat sidebar
  * and declarative `routes` for the playground page. No external provider
  * (e.g. in `bootstrap.module.ts`) is needed.
  *
- * > **Note:** Backend API endpoint is not yet configured.
- * > The `useChat` hook's `api` option will be set once the backend is ready.
+ * The chat talks to the `@gauzy/plugin-ai-chat` backend plugin
+ * (`POST /api/ai-chat`, Vercel AI SDK UI message stream).
  */
 export const AiChatReactUiPlugin = defineDeclarativePlugin('ai-chat-react-ui', {
 	// ── Versioning & Compatibility ────────────────────────────────
 	version: '1.0.0',
 
 	// ── Routes ───────────────────────────────────────────────────
-	routes: [PLAYGROUND_ROUTE as PluginRouteInput],
+	routes: [PLAYGROUND_ROUTE as PluginRouteInput, AI_CHAT_SETTINGS_ROUTE as PluginRouteInput],
+
+	// ── Nav menu (item under the core Settings section) ──────────
+	navMenu: [
+		{
+			type: 'section',
+			sectionId: 'settings',
+			items: [
+				{
+					id: 'settings-ai-providers',
+					title: 'AI Providers',
+					icon: 'fas fa-robot',
+					link: '/pages/settings/ai',
+					data: {
+						translationKey: 'AI_CHAT_UI.SETTINGS.MENU_ITEM',
+						permissionKeys: [PermissionsEnum.AI_CHAT_SETTINGS]
+					}
+				}
+			]
+		}
+	],
 
 	// ── Namespace-isolated translations ──────────────────────────
 	translationNamespace: 'AI_CHAT_UI',
@@ -52,5 +77,5 @@ export const AiChatReactUiPlugin = defineDeclarativePlugin('ai-chat-react-ui', {
 	},
 
 	// ── Providers ────────────────────────────────────────────────
-	providers: [provideAiChatPlaygroundSidebar()]
+	providers: [provideAiChatSidebar()]
 });

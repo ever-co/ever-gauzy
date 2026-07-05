@@ -81,6 +81,10 @@ export const uiPluginConfig: PluginUiConfig = {
 		}),
 
 		// React UI Plugin (demo only)
-		...(environment.DEMO ? [DashboardTimeTrackReactUiPlugin, AiChatReactUiPlugin] : [])
+		...(environment.DEMO ? [DashboardTimeTrackReactUiPlugin] : []),
+
+		// AI Chat — enabled in all builds; visibility is gated at runtime by the
+		// AI_CHAT_ACCESS permission and the backend configuration (/api/ai-chat/config).
+		AiChatReactUiPlugin
 	]
 };

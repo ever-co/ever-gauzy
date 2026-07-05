@@ -1,24 +1,26 @@
-import { type CSSProperties } from 'react';
+import { memo, type CSSProperties } from 'react';
+import { Streamdown } from 'streamdown';
 import { chatTheme } from '../chat-theme';
 
 export interface MarkdownContentProps {
 	content: string;
+	/** True while this message is still streaming in. */
+	isStreaming?: boolean;
 }
 
 /**
  * MarkdownContent
  *
- * Lightweight markdown renderer for assistant messages.
- * Supports basic formatting: bold, italic, inline code,
- * code blocks, lists, and line breaks.
+ * Markdown renderer for assistant messages, built on Vercel's
+ * `streamdown` — a drop-in replacement for react-markdown designed for
+ * AI streaming: it renders incomplete/unterminated markdown blocks
+ * gracefully while tokens arrive, with GFM (tables, lists, task lists)
+ * and hardened HTML handling out of the box.
  *
- * Uses `dangerouslySetInnerHTML` with a simple parser —
- * no external markdown library required. For production,
- * consider swapping to `react-markdown` or similar.
+ * Styles come from `streamdown/styles.css` (loaded by the host app,
+ * see apps/gauzy angular.json). Colors inherit from the chat theme.
  */
-export function MarkdownContent({ content }: MarkdownContentProps) {
-	const html = parseMarkdown(content);
-
+export const MarkdownContent = memo(function MarkdownContent({ content, isStreaming }: MarkdownContentProps) {
 	const style: CSSProperties = {
 		fontSize: chatTheme.fontSizeBase,
 		lineHeight: 1.6,
@@ -27,56 +29,8 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
 	};
 
 	return (
-		<div
-			style={style}
-			dangerouslySetInnerHTML={{ __html: html }}
-		/>
+		<div style={style} className="gz-ai-chat-markdown">
+			<Streamdown mode={isStreaming ? 'streaming' : 'static'}>{content}</Streamdown>
+		</div>
 	);
-}
-
-// ── Lightweight markdown parser ──────────────────────────────────────────────
-
-function parseMarkdown(text: string): string {
-	let html = escapeHtml(text);
-
-	// Code blocks: ```lang\ncode\n```
-	html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_match, _lang, code) => {
-		return `<pre style="background:#1e1e2e;color:#cdd6f4;padding:12px;border-radius:8px;overflow-x:auto;font-size:0.8rem;margin:8px 0;"><code>${code.trim()}</code></pre>`;
-	});
-
-	// Inline code: `code`
-	html = html.replace(/`([^`]+)`/g, (_match, code) => {
-		return `<code style="background:#f0f0f4;padding:2px 6px;border-radius:4px;font-size:0.82em;color:#d63384;">${code}</code>`;
-	});
-
-	// Bold: **text**
-	html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-	// Italic: *text*
-	html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-	// Unordered list items: - item
-	html = html.replace(/^- (.+)$/gm, '<li style="margin-left:16px;list-style:disc;">$1</li>');
-
-	// Ordered list items: 1. item
-	html = html.replace(/^\d+\. (.+)$/gm, '<li style="margin-left:16px;list-style:decimal;">$1</li>');
-
-	// Headers: ### heading
-	html = html.replace(/^### (.+)$/gm, '<h4 style="margin:8px 0 4px;font-size:0.9rem;">$1</h4>');
-	html = html.replace(/^## (.+)$/gm, '<h3 style="margin:8px 0 4px;font-size:0.95rem;">$1</h3>');
-	html = html.replace(/^# (.+)$/gm, '<h2 style="margin:8px 0 4px;font-size:1rem;">$1</h2>');
-
-	// Line breaks
-	html = html.replace(/\n/g, '<br/>');
-
-	return html;
-}
-
-function escapeHtml(text: string): string {
-	return text
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&#039;');
-}
+});

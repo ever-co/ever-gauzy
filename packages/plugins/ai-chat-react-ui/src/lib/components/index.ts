@@ -5,3 +5,4 @@ export { ChatMessageItem } from './ChatMessageItem';
 export { ChatInput } from './ChatInput';
 export { ChatWelcome } from './ChatWelcome';
 export { MarkdownContent } from './MarkdownContent';
+export { ToolCallCard } from './ToolCallCard';
