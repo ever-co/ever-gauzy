@@ -98,6 +98,7 @@ export class ChatSidebarService {
 	unregister(): void {
 		this.config.set(null);
 		this.expanded.set(false);
+		this.maximized.set(false);
 	}
 
 	/** Toggle the sidebar between expanded and collapsed. */
@@ -139,17 +140,28 @@ export class ChatSidebarService {
 		}
 	}
 
+	/** Pending debounced width persist (drag-resize calls setWidth per pointermove). */
+	private widthPersistTimer: ReturnType<typeof setTimeout> | null = null;
+
 	/**
 	 * Set the chat panel width (px), clamped to sane bounds and persisted.
+	 * The signal updates immediately (live resize); the localStorage write
+	 * is debounced so a 60 Hz drag doesn't do synchronous I/O per frame.
 	 */
 	setWidth(width: number): void {
 		const clamped = Math.round(Math.min(MAX_CHAT_WIDTH, Math.max(MIN_CHAT_WIDTH, width)));
 		this.width.set(clamped);
-		try {
-			localStorage.setItem(CHAT_SIDEBAR_WIDTH_KEY, String(clamped));
-		} catch {
-			// Storage unavailable — state stays in-memory only.
+		if (this.widthPersistTimer !== null) {
+			clearTimeout(this.widthPersistTimer);
 		}
+		this.widthPersistTimer = setTimeout(() => {
+			this.widthPersistTimer = null;
+			try {
+				localStorage.setItem(CHAT_SIDEBAR_WIDTH_KEY, String(this.width()));
+			} catch {
+				// Storage unavailable — state stays in-memory only.
+			}
+		}, 250);
 	}
 
 	/** Move the chat to the other side of the content column and persist. */

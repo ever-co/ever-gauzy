@@ -211,7 +211,7 @@ nb-sidebar[tag='menu-sidebar'] {
     height: 1.625rem;
     width: 1.625rem;
     margin: 0;
-    color: #3366ff;
+    color: nb-theme(color-primary-default);
   }
   // The logo / in-place workspace switcher takes the remaining row width and
   // SHRINKS (min-width: 0) instead of pushing the buttons or wrapping.

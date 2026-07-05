@@ -1,5 +1,6 @@
 import {
 	useCallback,
+	useEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -16,6 +17,7 @@ import { useInjector } from '@gauzy/ui-react';
 import { ChatSidebarService, Store } from '@gauzy/ui-core/core';
 import { environment } from '@gauzy/ui-config';
 import { executeClientTool, isClientTool } from '../chat-client-tools';
+import { useAngularSignal } from '../use-angular-signal';
 import { ChatMessageList } from './ChatMessageList';
 import { ChatInput } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
@@ -58,11 +60,11 @@ export function AiChatPanel() {
 	const [history, setHistory] = useState<IChatHistoryItem[]>([]);
 	const [historyLoading, setHistoryLoading] = useState(false);
 
-	// Docking / maximize state mirrors the Angular ChatSidebarService signals
-	// (they only change through this panel's own buttons, so a local mirror
-	// keeps the icons in sync without a signal→React bridge).
-	const [dockSide, setDockSide] = useState<'start' | 'end'>(chatSidebar.position());
-	const [isMaximized, setIsMaximized] = useState<boolean>(chatSidebar.maximized());
+	// Docking / maximize state comes straight from the Angular
+	// ChatSidebarService signals — they also change outside this panel
+	// (e.g. collapsing clears maximized), so a live bridge is required.
+	const dockSide = useAngularSignal(injector, chatSidebar.position);
+	const isMaximized = useAngularSignal(injector, chatSidebar.maximized);
 	const rootRef = useRef<HTMLDivElement>(null);
 
 	const authHeaders = useCallback(
@@ -143,34 +145,39 @@ export function AiChatPanel() {
 
 	const handleCollapse = useCallback(() => chatSidebar.collapse(), [chatSidebar]);
 
-	const handleMoveSide = useCallback(() => {
-		chatSidebar.togglePosition();
-		setDockSide(chatSidebar.position());
-	}, [chatSidebar]);
+	const handleMoveSide = useCallback(() => chatSidebar.togglePosition(), [chatSidebar]);
 
-	const handleToggleMaximize = useCallback(() => {
-		chatSidebar.toggleMaximized();
-		setIsMaximized(chatSidebar.maximized());
-	}, [chatSidebar]);
+	const handleToggleMaximize = useCallback(() => chatSidebar.toggleMaximized(), [chatSidebar]);
 
 	// ── Drag-to-resize (grip on the canvas-facing edge) ──────────
+	// Window listeners are tracked in a ref so a drag interrupted by
+	// `pointercancel` (touch gesture takeover) or component unmount
+	// never leaks them.
+	const endResizeRef = useRef<(() => void) | null>(null);
+	useEffect(() => () => endResizeRef.current?.(), []);
+
 	const handleResizeStart = useCallback(
 		(event: ReactPointerEvent<HTMLDivElement>) => {
 			event.preventDefault();
 			const host = rootRef.current;
 			if (!host) return;
+			endResizeRef.current?.();
 			const rect = host.getBoundingClientRect();
 			const side = chatSidebar.position();
 			const onMove = (move: PointerEvent) => {
 				const width = side === 'start' ? move.clientX - rect.left : rect.right - move.clientX;
 				chatSidebar.setWidth(width);
 			};
-			const onUp = () => {
+			const end = () => {
 				window.removeEventListener('pointermove', onMove);
-				window.removeEventListener('pointerup', onUp);
+				window.removeEventListener('pointerup', end);
+				window.removeEventListener('pointercancel', end);
+				endResizeRef.current = null;
 			};
+			endResizeRef.current = end;
 			window.addEventListener('pointermove', onMove);
-			window.addEventListener('pointerup', onUp);
+			window.addEventListener('pointerup', end);
+			window.addEventListener('pointercancel', end);
 		},
 		[chatSidebar]
 	);
@@ -279,6 +286,8 @@ export function AiChatPanel() {
 		width: 6,
 		cursor: 'col-resize',
 		zIndex: 6,
+		// A touch drag on the grip must resize, not scroll/zoom the page.
+		touchAction: 'none',
 		// Invisible until hovered — then a subtle accent strip.
 		background: 'transparent'
 	};
