@@ -471,7 +471,7 @@ export async function buildGauzyTools(
 					const scope = requireScope(defaults);
 					const take = clampLimit(limit);
 					const response = await client.get(
-						'/api/organization-project/pagination',
+						'/api/organization-projects/pagination',
 						buildBaseQuery(
 							{ ...scope, ...(name ? { name } : {}) },
 							{ relations: relations ?? [], take, page: page ?? 1 }

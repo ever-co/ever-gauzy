@@ -13,7 +13,15 @@ export class GauzyApiClient {
 	private static readonly logger = new Logger('AiChatGauzyApiClient');
 	private readonly baseUrl: string;
 
-	constructor(private readonly authorizationHeader: string) {
+	constructor(
+		private readonly authorizationHeader: string,
+		/**
+		 * Extra headers forwarded on every call — in particular `Tenant-Id`
+		 * and `Organization-Id`, which the platform's tenant guards expect
+		 * alongside the JWT (same as the web app's HTTP interceptor sends).
+		 */
+		private readonly extraHeaders: Record<string, string> = {}
+	) {
 		const base =
 			process.env.GAUZY_AI_CHAT_SELF_API_URL ||
 			process.env.API_BASE_URL ||
@@ -52,6 +60,7 @@ export class GauzyApiClient {
 			method,
 			headers: {
 				Authorization: this.authorizationHeader,
+				...this.extraHeaders,
 				'Content-Type': 'application/json'
 			},
 			...(body !== undefined ? { body: JSON.stringify(body) } : {})

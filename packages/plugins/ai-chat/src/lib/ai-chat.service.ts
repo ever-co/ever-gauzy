@@ -64,7 +64,10 @@ export class AiChatService {
 			employeeId: RequestContext.currentEmployeeId() ?? undefined
 		};
 
-		const apiClient = new GauzyApiClient(args.authorizationHeader);
+		const apiClient = new GauzyApiClient(args.authorizationHeader, {
+			...(requestDefaults.tenantId ? { 'Tenant-Id': requestDefaults.tenantId } : {}),
+			...(requestDefaults.organizationId ? { 'Organization-Id': requestDefaults.organizationId } : {})
+		});
 		const [gauzyTools, clientTools, mcp] = await Promise.all([
 			buildGauzyTools(apiClient, requestDefaults),
 			buildClientTools(),
