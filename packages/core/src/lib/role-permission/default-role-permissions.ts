@@ -148,6 +148,10 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.INTEGRATION_EDIT,
 			PermissionsEnum.INTEGRATION_DELETE,
 			/** Integration CRUD Permissions End */
+			/** AI Chat Permissions Start */
+			PermissionsEnum.AI_CHAT_ACCESS,
+			PermissionsEnum.AI_CHAT_SETTINGS,
+			/** AI Chat Permissions End */
 			PermissionsEnum.IMPORT_ADD,
 			PermissionsEnum.EXPORT_ADD,
 			PermissionsEnum.FILE_STORAGE_VIEW,
@@ -384,6 +388,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.INTEGRATION_DELETE,
 			/** Integration CRUD Permissions End */
 
+			/** AI Chat Permissions Start */
+			PermissionsEnum.AI_CHAT_ACCESS,
+			PermissionsEnum.AI_CHAT_SETTINGS,
+			/** AI Chat Permissions End */
+
 			PermissionsEnum.IMPORT_ADD,
 			PermissionsEnum.EXPORT_ADD,
 			PermissionsEnum.FILE_STORAGE_VIEW,
@@ -521,6 +530,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT,
 			PermissionsEnum.SELECT_EMPLOYEE,
+			/** AI Chat Permissions Start */
+			PermissionsEnum.AI_CHAT_ACCESS,
+			/** AI Chat Permissions End */
 			/** Time Off Permissions Start */
 			PermissionsEnum.TIME_OFF_VIEW,
 			/** Time Off Permissions End */

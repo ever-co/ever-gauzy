@@ -247,6 +247,10 @@ export enum PermissionsEnum {
 	ORG_STRATEGIC_INITIATIVE_UPDATE = 'ORG_STRATEGIC_INITIATIVE_UPDATE',
 	ORG_STRATEGIC_INITIATIVE_DELETE = 'ORG_STRATEGIC_INITIATIVE_DELETE',
 	/** Organization Strategic Initiative Permissions End */
+	/** AI Chat Permissions Start */
+	AI_CHAT_ACCESS = 'AI_CHAT_ACCESS',
+	AI_CHAT_SETTINGS = 'AI_CHAT_SETTINGS',
+	/** AI Chat Permissions End */
 	/**
 	 * Plugin Permissions
 	 */
@@ -290,6 +294,10 @@ export const PermissionGroups = {
 		PermissionsEnum.INTEGRATION_EDIT,
 		PermissionsEnum.INTEGRATION_DELETE,
 		/** Integration CRUD Permissions End */
+		/** AI Chat Permissions Start */
+		PermissionsEnum.AI_CHAT_ACCESS,
+		PermissionsEnum.AI_CHAT_SETTINGS,
+		/** AI Chat Permissions End */
 		/** Jobs Permissions Start */
 		PermissionsEnum.ORG_JOB_APPLY,
 		PermissionsEnum.ORG_JOB_SEARCH,
