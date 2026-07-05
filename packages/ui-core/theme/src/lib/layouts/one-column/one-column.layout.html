@@ -59,6 +59,20 @@
 		</nb-sidebar>
 	}
 
+	<!-- AI Chat sidebar — dedicated slot between the nav menu and the main content -->
+	@if (user() && chatSidebarService.available()) {
+		@if (chatSidebarComponent(); as chatComponent) {
+			<nb-sidebar
+				class="chat-sidebar"
+				[class]="chatSidebarService.config()?.class ?? ''"
+				tag="chat-sidebar"
+				[state]="chatSidebarService.expanded() ? 'expanded' : 'collapsed'"
+			>
+				<ng-container *ngComponentOutlet="chatComponent"></ng-container>
+			</nb-sidebar>
+		}
+	}
+
 	<!-- Main content -->
 	<nb-layout-column>
 		<ng-content select="router-outlet"></ng-content>

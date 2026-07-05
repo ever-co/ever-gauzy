@@ -1,4 +1,4 @@
-import { Component, inject, viewChild, afterNextRender, DestroyRef, signal } from '@angular/core';
+import { Component, effect, inject, viewChild, afterNextRender, DestroyRef, signal, Type } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
 import { ChatSidebarService, LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
@@ -36,7 +36,29 @@ export class OneColumnLayoutComponent {
 	/** User observable — kept for child component compatibility (gauzy-user, gauzy-user-menu). */
 	readonly user$ = this.store.user$;
 
+	/**
+	 * Resolved chat sidebar component for `ngComponentOutlet`.
+	 * `IChatSidebarConfig.loadComponent` may be async (lazy chunk), so the
+	 * factory result is resolved into this signal.
+	 */
+	readonly chatSidebarComponent = signal<Type<any> | null>(null);
+
 	constructor() {
+		// Resolve the (possibly lazy) chat sidebar component whenever a plugin registers one.
+		effect(() => {
+			const config = this.chatSidebarService.config();
+			if (!config) {
+				this.chatSidebarComponent.set(null);
+				return;
+			}
+			Promise.resolve(config.loadComponent()).then((component) => {
+				// Ignore the result if the sidebar was unregistered while loading.
+				if (this.chatSidebarService.config() === config) {
+					this.chatSidebarComponent.set(component);
+				}
+			});
+		});
+
 		Object.entries(DEFAULT_SIDEBARS).forEach(([id, config]) => {
 			this.navigationBuilderService.registerSidebar(id, config);
 			this.navigationBuilderService.addSidebarActionItem(config.actionItem);

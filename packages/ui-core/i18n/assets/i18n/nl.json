@@ -3487,7 +3487,8 @@
 		"SELECT_A_DATE": "Kies een datum",
 		"SELECT_AN_ORGANIZATION": "Selecteer een organisatie",
 		"SELECT_PROJECT": "Selecteer Project",
-		"SELECT_TEAM": "Selecteer Team"
+		"SELECT_TEAM": "Selecteer Team",
+		"AI_CHAT": "AI-chat"
 	},
 	"HEADER_TITLE": {
 		"FOR": "voor",

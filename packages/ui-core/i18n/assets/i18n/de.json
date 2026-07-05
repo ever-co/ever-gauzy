@@ -3483,7 +3483,8 @@
 		"SELECT_A_DATE": "Ein Datum auswählen",
 		"SELECT_AN_ORGANIZATION": "Organisation auswählen",
 		"SELECT_PROJECT": "Projekt auswählen",
-		"SELECT_TEAM": "Team auswählen"
+		"SELECT_TEAM": "Team auswählen",
+		"AI_CHAT": "KI-Chat"
 	},
 	"HEADER_TITLE": {
 		"FOR": "für",

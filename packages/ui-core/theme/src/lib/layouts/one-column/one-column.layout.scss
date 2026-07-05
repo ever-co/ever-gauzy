@@ -46,6 +46,40 @@
     order: 0 !important;
   }
 
+  // AI Chat sidebar — sits between the nav menu sidebar and the page content.
+  // Width is animated via the Nebular expanded/collapsed state classes.
+  nb-sidebar.chat-sidebar {
+    order: 1 !important;
+    height: 100%;
+
+    &.expanded {
+      width: 24rem !important;
+    }
+
+    &.collapsed {
+      width: 0 !important;
+      overflow: hidden;
+    }
+
+    ::ng-deep .main-container {
+      width: 100% !important;
+      height: 100% !important;
+      transition: width 0.2s ease;
+
+      .scrollable {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 0 !important;
+        overflow: hidden;
+        // Same dark surface as the nav menu sidebar — the chat panel's
+        // design tokens are tuned for dark backgrounds in every theme.
+        background: nb-theme(gauzy-sidebar-background-2);
+        border-right: 1px solid nb-theme(divider-color);
+      }
+    }
+  }
+
   gauzy-user-menu {
     position: absolute;
     bottom: 0px;
