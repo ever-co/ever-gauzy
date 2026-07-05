@@ -47,10 +47,13 @@
   }
 
   // AI Chat sidebar — sits between the nav menu sidebar and the page content.
-  // Width is animated via the Nebular expanded/collapsed state classes.
+  // The HOST stays in the flex flow and reserves the width (Menu | Chat | Content,
+  // DOM order after the menu sidebar); Nebular's .main-container is position:fixed
+  // in windowMode, so it must inherit the host width (100% would mean the viewport)
+  // and be pinned below the header.
   nb-sidebar.chat-sidebar {
-    order: 1 !important;
-    height: 100%;
+    order: 0 !important;
+    align-self: stretch;
 
     &.expanded {
       width: 24rem !important;
@@ -62,9 +65,11 @@
     }
 
     ::ng-deep .main-container {
-      width: 100% !important;
-      height: 100% !important;
+      width: inherit !important;
+      max-width: 24rem;
+      height: calc(100vh - var(--header-height, 4.75rem)) !important;
       transition: width 0.2s ease;
+      overflow: hidden;
 
       .scrollable {
         display: flex;
@@ -72,9 +77,10 @@
         height: 100%;
         padding: 0 !important;
         overflow: hidden;
-        // Same dark surface as the nav menu sidebar — the chat panel's
-        // design tokens are tuned for dark backgrounds in every theme.
+        // Same surface as the nav menu sidebar; the chat panel's design
+        // tokens derive from currentColor, so set the themed text color here.
         background: nb-theme(gauzy-sidebar-background-2);
+        color: nb-theme(text-basic-color);
         border-right: 1px solid nb-theme(divider-color);
       }
     }

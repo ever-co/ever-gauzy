@@ -1,11 +1,13 @@
 /**
  * Design tokens for the AI Chat sidebar panel.
  *
- * Uses semi-transparent colours optimised for dark sidebar backgrounds
- * (matching Gauzy's `gauzy-sidebar-background-2`).
+ * Theme-adaptive: text and surface tones derive from `currentColor` via
+ * `color-mix()`, so the panel works on both light and dark Nebular themes.
+ * The Angular layout sets the base `color` on the sidebar surface
+ * (see one-column.layout.scss), and everything here follows it.
  *
  * The chat panel renders as a dedicated sidebar between the nav menu
- * and the main page content area.
+ * and the main page content area: `Menu | Chat | Canvas`.
  */
 export const chatTheme = {
 	// ── Widget layout ─────────────────────────────────────────
@@ -19,16 +21,16 @@ export const chatTheme = {
 	// ── Message bubbles ───────────────────────────────────────
 	userBubbleBg: '#3366ff',
 	userBubbleText: '#ffffff',
-	assistantBubbleBg: 'rgba(255, 255, 255, 0.08)',
-	assistantBubbleText: 'rgba(255, 255, 255, 0.87)',
+	assistantBubbleBg: 'color-mix(in srgb, currentColor 7%, transparent)',
+	assistantBubbleText: 'inherit',
 	bubbleRadius: '12px',
 
 	// ── Input ─────────────────────────────────────────────────
-	inputBg: 'rgba(255, 255, 255, 0.06)',
-	inputBorder: 'rgba(255, 255, 255, 0.12)',
-	inputFocusBorder: 'rgba(255, 255, 255, 0.25)',
-	inputText: 'rgba(255, 255, 255, 0.87)',
-	inputPlaceholder: 'rgba(255, 255, 255, 0.4)',
+	inputBg: 'color-mix(in srgb, currentColor 5%, transparent)',
+	inputBorder: 'color-mix(in srgb, currentColor 15%, transparent)',
+	inputFocusBorder: 'color-mix(in srgb, currentColor 30%, transparent)',
+	inputText: 'inherit',
+	inputPlaceholder: 'color-mix(in srgb, currentColor 40%, transparent)',
 	inputRadius: '8px',
 
 	// ── Accent ────────────────────────────────────────────────
@@ -42,16 +44,20 @@ export const chatTheme = {
 	fontSizeBase: '0.8125rem',
 	fontSizeLarge: '0.875rem',
 
-	// ── Text on dark background ───────────────────────────────
-	textPrimary: 'rgba(255, 255, 255, 0.87)',
-	textSecondary: 'rgba(255, 255, 255, 0.5)',
-	textHint: 'rgba(255, 255, 255, 0.3)',
+	// ── Text (relative to the themed surface color) ───────────
+	textPrimary: 'inherit',
+	textSecondary: 'color-mix(in srgb, currentColor 60%, transparent)',
+	textHint: 'color-mix(in srgb, currentColor 40%, transparent)',
 
 	// ── Borders / dividers ────────────────────────────────────
-	border: 'rgba(255, 255, 255, 0.08)',
+	border: 'color-mix(in srgb, currentColor 12%, transparent)',
+
+	// ── Surfaces (cards, code) ────────────────────────────────
+	surface: 'color-mix(in srgb, currentColor 4%, transparent)',
+	surfaceDeep: 'color-mix(in srgb, currentColor 10%, transparent)',
 
 	// ── Scrollbar ─────────────────────────────────────────────
-	scrollbarThumb: 'rgba(255, 255, 255, 0.15)',
+	scrollbarThumb: 'color-mix(in srgb, currentColor 20%, transparent)',
 	scrollbarTrack: 'transparent',
 
 	// ── Animation ─────────────────────────────────────────────

@@ -59,18 +59,18 @@
 		</nb-sidebar>
 	}
 
-	<!-- AI Chat sidebar — dedicated slot between the nav menu and the main content -->
-	@if (user() && chatSidebarService.available()) {
-		@if (chatSidebarComponent(); as chatComponent) {
-			<nb-sidebar
-				class="chat-sidebar"
-				[class]="chatSidebarService.config()?.class ?? ''"
-				tag="chat-sidebar"
-				[state]="chatSidebarService.expanded() ? 'expanded' : 'collapsed'"
-			>
-				<ng-container *ngComponentOutlet="chatComponent"></ng-container>
-			</nb-sidebar>
-		}
+	<!-- AI Chat sidebar — dedicated slot between the nav menu and the main content.
+	     Single @if (like the menu sidebar above): nesting control-flow blocks breaks
+	     nb-layout's select-based content projection for nb-sidebar. -->
+	@if (user() && chatSidebarService.available() && chatSidebarComponent(); as chatComponent) {
+		<nb-sidebar
+			class="chat-sidebar"
+			[class]="chatSidebarService.config()?.class ?? ''"
+			tag="chat-sidebar"
+			[state]="chatSidebarService.expanded() ? 'expanded' : 'collapsed'"
+		>
+			<ng-container *ngComponentOutlet="chatComponent"></ng-container>
+		</nb-sidebar>
 	}
 
 	<!-- Main content -->

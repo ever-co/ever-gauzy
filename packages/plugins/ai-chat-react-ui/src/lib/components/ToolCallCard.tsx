@@ -58,7 +58,7 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 		borderRadius: 8,
 		padding: '6px 10px',
 		margin: '4px 0',
-		backgroundColor: isApproval ? chatTheme.accentLight : 'rgba(255, 255, 255, 0.04)',
+		backgroundColor: isApproval ? chatTheme.accentLight : chatTheme.surface,
 		fontSize: chatTheme.fontSizeSmall,
 		color: chatTheme.textSecondary,
 		animation: 'fadeIn 0.2s ease'
@@ -76,7 +76,7 @@ export function ToolCallCard({ toolName, state, input, output, errorText, onAppr
 		marginTop: 6,
 		maxHeight: 160,
 		overflow: 'auto',
-		backgroundColor: 'rgba(0, 0, 0, 0.25)',
+		backgroundColor: chatTheme.surfaceDeep,
 		borderRadius: 6,
 		padding: 8,
 		fontSize: '0.6875rem',
