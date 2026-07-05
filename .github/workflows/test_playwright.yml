@@ -9,6 +9,11 @@ on:
     branches: [develop]
   workflow_dispatch:
 
+# Least-privilege GITHUB_TOKEN (CodeQL: a workflow should limit the token's permissions). This job only
+# checks out code and runs tests against a locally-started stack — it needs no write scopes.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
