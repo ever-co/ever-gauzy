@@ -22,7 +22,7 @@ jobs:
     # packages - see header comment) - i.e. 'stage-apps' was
     # fast-forwarded to a 'stage' commit that 'Release Stage' has already tagged. Retries
     # absorb the short merge -> tag delay. Ad-hoc pushes to 'temp' skip the check.
-    runs-on: ever-k8s-linux-x64-4
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
     timeout-minutes: 15
     permissions:
       contents: read
@@ -63,7 +63,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ever-k8s-linux-x64-8]
+        os: ["${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}"]
 
     steps:
       - name: Check out Git repository
