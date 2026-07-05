@@ -48,7 +48,10 @@ export default defineConfig({
 		actionTimeout: 24_000,
 		navigationTimeout: 60_000,
 		viewport: { width: 1920, height: 1080 },
-		trace: 'on-first-retry',
+		// retain-on-failure (not on-first-retry): with retries=0 there IS no retry, so on-first-retry
+		// captured nothing. This keeps a full trace for every failed test — essential for diagnosing the
+		// suite remotely (the local rig can't run it), viewable via `npx playwright show-trace`.
+		trace: 'retain-on-failure',
 		screenshot: 'only-on-failure',
 		video: 'off'
 	},
