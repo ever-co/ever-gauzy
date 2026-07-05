@@ -43,6 +43,38 @@ module.exports = composePlugins(
 		};
 		config.devtool = 'source-map';
 
+		// ever-gauzy fix (worker CrashLoop): @nx/webpack's swc-loader (compiler-loaders.js)
+		// configures `jsc` WITHOUT a `target`, so SWC falls back to its es3 default and
+		// downlevels `class extends` to `_inherits`/`_call_super`. The worker's own
+		// app-source `WorkerLifecycleProcessor` then invokes the prebuilt, NATIVE
+		// `@gauzy/scheduler` `QueueWorkerHost` constructor as a plain function ->
+		// "TypeError: Class constructor QueueWorkerHost cannot be invoked without 'new'"
+		// on boot (background jobs down). Pin the swc target so the worker's app classes
+		// stay native and match the prebuilt @gauzy/* packages (and @nestjs/bullmq's
+		// WorkerHost), making the `super()` call a native class construction.
+		const pinSwcTarget = (rules) => {
+			for (const rule of rules || []) {
+				if (!rule || typeof rule !== 'object') continue;
+				if (String(rule.loader || '').includes('swc-loader')) {
+					rule.options = rule.options || {};
+					rule.options.jsc = rule.options.jsc || {};
+					rule.options.jsc.target = 'es2021';
+				}
+				if (Array.isArray(rule.use)) {
+					for (const u of rule.use) {
+						if (u && typeof u === 'object' && String(u.loader || '').includes('swc-loader')) {
+							u.options = u.options || {};
+							u.options.jsc = u.options.jsc || {};
+							u.options.jsc.target = 'es2021';
+						}
+					}
+				}
+				if (Array.isArray(rule.oneOf)) pinSwcTarget(rule.oneOf);
+				if (Array.isArray(rule.rules)) pinSwcTarget(rule.rules);
+			}
+		};
+		pinSwcTarget(config.module && config.module.rules);
+
 		// Generate copy patterns for built packages
 		// Logs timing to track performance
 		console.time('✔️ Copying all built package folders to dist node_modules');
