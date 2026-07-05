@@ -1,14 +1,15 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Login smoke test — the proof-of-pattern for the Cypress → Playwright migration.
+ * Login smoke test — the suite's one intentionally dependency-light canary.
  *
- * Mirrors the legacy Cypress LoginTest (src/integration/LoginTest.ts):
+ * Everything else is now authored as playwright-bdd .feature files backed by the shared page-object
+ * layer (see tests/bdd/). This spec is DELIBERATELY kept plain and self-contained: raw `@playwright/test`,
+ * inline selectors, no page objects, no BDD fixtures, env-overridable creds. If the page-object / step
+ * layer regresses, this still answers the first triage question — "can the super-admin log in at all?" —
+ * independently of that layer. Keep it minimal and coupling-free on purpose.
+ *
  *  visit / → see login → enter creds → submit → land on the dashboard.
- *
- * Selectors reused verbatim from the Cypress page objects
- * (src/support/Base/pageobjects/LoginPageObject.ts) so they stay in lockstep
- * during the migration. Credentials default to the seeded super-admin.
  */
 const EMAIL = process.env.E2E_EMAIL || 'admin@ever.co';
 const PASSWORD = process.env.E2E_PASSWORD || 'admin';
