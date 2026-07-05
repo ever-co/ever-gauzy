@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubicloud-standard-4]
+        os: [ever-k8s-linux-x64-4]
 
     steps:
       - name: Check out Git repository
