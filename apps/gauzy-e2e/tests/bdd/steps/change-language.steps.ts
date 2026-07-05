@@ -1,10 +1,7 @@
 import { Given, When, Then } from '../../support/bdd';
-import * as loginPage from '../../support/pages/Login.po';
-import * as dashboardPage from '../../support/pages/Dashboard.po';
 import * as changeLanguagePage from '../../support/pages/ChangeLanguage.po';
-import { LoginPageData } from '../../../src/support/Base/pagedata/LoginPageData';
 import { ChangeLanguagePageData } from '../../../src/support/Base/pagedata/ChangeLanguagePageData';
-import { CustomCommands } from '../../support/commands';
+// The `Given I am logged in as the default user` step (used by the Background) lives in common.steps.ts.
 
 // Map the human language name from the .feature to the option index/code and to the translated
 // "+ Create" button text the app renders once that locale is active — both come from the page data,
@@ -21,10 +18,6 @@ const translatedCreate: Record<string, string> = {
 	Hebrew: ChangeLanguagePageData.Hebrew,
 	English: ChangeLanguagePageData.English
 };
-
-Given('I am logged in as the default user', async () => {
-	await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
-});
 
 Given('I open the Quick Settings panel', async () => {
 	await changeLanguagePage.verifySettingsButtonVisible();
