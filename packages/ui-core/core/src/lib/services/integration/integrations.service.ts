@@ -6,6 +6,8 @@ import {
 	IBaseRelationsEntityModel,
 	ID,
 	IIntegration,
+	IIntegrationGroup,
+	IIntegrationType,
 	IIntegrationTenant,
 	IIntegrationTenantFindInput
 } from '@gauzy/contracts';
@@ -33,26 +35,28 @@ export class IntegrationsService {
 		});
 	}
 
-	fetchIntegrationGroups() {
-		return this._http.get<any[]>(`${API_PREFIX}/integration/types`).pipe(
-			map((groups) =>
-				groups.reduce((prev, current) => {
-					const index = prev.findIndex((p) => p.order === current.order);
-					if (index > -1) {
-						prev[index].integrationTypes = prev[index].integrationTypes.concat({
-							name: current.name,
-							id: current.id
+	fetchIntegrationGroups(): Observable<IIntegrationGroup[]> {
+		return this._http
+			.get<Array<Pick<IIntegrationType, 'id' | 'name' | 'groupName' | 'order'>>>(`${API_PREFIX}/integration/types`)
+			.pipe(
+				map((groups) =>
+					groups.reduce<IIntegrationGroup[]>((prev, current) => {
+						const index = prev.findIndex((p) => p.order === current.order);
+						if (index > -1) {
+							prev[index].integrationTypes = prev[index].integrationTypes.concat({
+								name: current.name,
+								id: current.id
+							});
+							return prev;
+						}
+						return prev.concat({
+							groupName: current.groupName,
+							order: current.order,
+							integrationTypes: [{ name: current.name, id: current.id }]
 						});
-						return prev;
-					}
-					return prev.concat({
-						groupName: current.groupName,
-						order: current.order,
-						integrationTypes: [{ name: current.name, id: current.id }]
-					});
-				}, [])
-			)
-		);
+					}, [])
+				)
+			);
 	}
 
 	/**

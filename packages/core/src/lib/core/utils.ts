@@ -68,7 +68,7 @@ export function unixTimestampToDate(timestamps, format = 'YYYY-MM-DD HH:mm:ss') 
  */
 export function convertToDatetime(datetime): Date | string | null {
 	if (moment(new Date(datetime)).isValid()) {
-		switch (getConfig().dbConnectionOptions.type) {
+		switch (getConfig().dbConnectionOptions.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 				return moment(new Date(datetime)).format('YYYY-MM-DD HH:mm:ss');
@@ -122,7 +122,7 @@ export function getDateRange(
 		throw 'End date must be greater than start date.';
 	}
 
-	switch (getConfig().dbConnectionOptions.type) {
+	switch (getConfig().dbConnectionOptions.type as DatabaseTypeEnum) {
 		case DatabaseTypeEnum.sqlite:
 		case DatabaseTypeEnum.betterSqlite3:
 			start = start.format('YYYY-MM-DD HH:mm:ss');
@@ -216,7 +216,7 @@ export function getDateRangeFormat(startDate: moment.Moment, endDate: moment.Mom
 		throw 'End date must be greater than start date.';
 	}
 
-	switch (getConfig().dbConnectionOptions.type) {
+	switch (getConfig().dbConnectionOptions.type as DatabaseTypeEnum) {
 		case DatabaseTypeEnum.sqlite:
 		case DatabaseTypeEnum.betterSqlite3:
 			return {

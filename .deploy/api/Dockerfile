@@ -109,7 +109,7 @@ ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
 ARG VERDACCIO_TOKEN
 
-FROM node:24.14.0-alpine3.23 AS dependencies
+FROM node:24.16.0-alpine3.23 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -161,6 +161,7 @@ COPY --chown=node:node packages/plugins/integration-github/package.json ./packag
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/integration-make-com/package.json ./packages/plugins/integration-make-com/
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
+COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
@@ -191,12 +192,16 @@ RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi
 
+# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them.
+# Without this, patch-package prints "No patch files found" and the typeorm v1 compat
+# patch (string[] relations/select types + runtime shim) is never applied, breaking the build.
+COPY --chown=node:node patches ./patches
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual && yarn cache clean
 
 # Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
 RUN rm -f .npmrc .yarnrc
 
-FROM node:24.14.0-alpine3.23 AS prodDependencies
+FROM node:24.16.0-alpine3.23 AS prodDependencies
 
 ENV CI=true
 
@@ -241,6 +246,7 @@ COPY --chown=node:node packages/plugins/integration-github/package.json ./packag
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/integration-make-com/package.json ./packages/plugins/integration-make-com/
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
+COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
@@ -271,6 +277,9 @@ RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi
 
+# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them
+# (see note in the dependencies stage above).
+COPY --chown=node:node patches ./patches
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && yarn postinstall.manual && yarn cache clean
 
 # Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
@@ -283,7 +292,7 @@ RUN rm -r node_modules/@angular
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r node_modules/@gauzy
 
-FROM node:24.14.0-alpine3.23 AS development
+FROM node:24.16.0-alpine3.23 AS development
 
 USER node:node
 
@@ -293,7 +302,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:24.14.0-alpine3.23 AS build
+FROM node:24.16.0-alpine3.23 AS build
 
 WORKDIR /srv/gauzy
 
@@ -321,7 +330,7 @@ ENV DEMO=${DEMO:-false}
 ENV IS_DOCKER=true
 
 # Enable NX Cloud caching for faster builds
-ENV NX_NO_CLOUD=false
+ENV NX_NO_CLOUD=true
 ENV NX_CLOUD_ACCESS_TOKEN=${NX_CLOUD_ACCESS_TOKEN}
 ENV NX_BRANCH=${NX_BRANCH}
 
@@ -335,7 +344,7 @@ RUN if [ "$NODE_ENV" = "production" ]; then \
 # those within custom webpack in apps/api/config/custom-webpack.config.js
 # RUN rm -r dist/apps/api/node_modules/@gauzy
 
-FROM node:24.14.0-alpine3.23 AS production
+FROM node:24.16.0-alpine3.23 AS production
 
 WORKDIR /srv/gauzy
 
@@ -385,6 +394,7 @@ RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin
     cp -r ./packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/ && \
     cp -r ./packages/plugins/integration-make-com/node_modules ./node_modules/@gauzy/plugin-integration-make-com/ && \
     cp -r ./packages/plugins/integration-sim/node_modules ./node_modules/@gauzy/plugin-integration-sim/ && \
+    cp -r ./packages/plugins/integration-plane/node_modules ./node_modules/@gauzy/plugin-integration-plane/ && \
     cp -r ./packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/ && \
     cp -r ./packages/plugins/integration-zapier/node_modules ./node_modules/@gauzy/plugin-integration-zapier/ && \
     cp -r ./packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/ && \

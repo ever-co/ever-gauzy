@@ -1,5 +1,5 @@
 import { ITimeSlot, TimerSyncStateEnum, TimerActionTypeEnum } from '@gauzy/contracts';
-import { asapScheduler, concatMap, defer, of, repeat, timer as synchronizer } from 'rxjs';
+import { concatMap, defer, of, repeat, timer as synchronizer } from 'rxjs';
 import { BACKGROUND_SYNC_OFFLINE_INTERVAL } from '../../constants/app.constants';
 import { ElectronService } from '../../electron/services';
 import { ErrorHandlerService, Store } from '../../services';
@@ -9,6 +9,7 @@ import { OfflineQueue } from '../interfaces/offline-queue';
 import { TimeSlotQueueService } from '../time-slot-queue.service';
 import { BlockedSequenceState, CompletedSequenceState, InProgressSequenceState } from './states';
 import { TimeSlotQueue } from './time-slot-queue';
+import { AuditLogService } from '../../services';
 
 export interface ISequence {
 	timer: any;
@@ -25,7 +26,8 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 		protected _store: Store,
 		protected _timeSlotQueueService: TimeSlotQueueService,
 		protected _timeTrackerService: TimeTrackerService,
-		protected _timeTrackerStatusService: TimeTrackerStatusService
+		protected _timeTrackerStatusService: TimeTrackerStatusService,
+		protected _auditLogService: AuditLogService
 	) {
 		super();
 		this.state = new BlockedSequenceState(this);
@@ -51,6 +53,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 				latest = await this._timeTrackerService.getTimeLogById(timer.timelogId);
 			} else if (timer.isStartedOffline && !timer.stoppedAt) {
 				console.log('⏱ - Silent start');
+				this._auditLogService.timerAuditLogInfo(`Silent start for timer ${timer.id} initiated.`);
 				latest = await this._timeTrackerService.toggleApiStart({
 					...timer,
 					...params
@@ -63,6 +66,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 					}
 				});
 			} else if (timer.isStartedOffline && !timer.timelogId && timer.startedAt && timer.stoppedAt) {
+				this._auditLogService.timerAuditLogInfo(`Creating time log for offline timer ${timer.id} with start and stop times.`);
 				latest = await this._timeTrackerService.addTimeLog({
 					startedAt: timer.startedAt,
 					stoppedAt: timer.stoppedAt,
@@ -86,7 +90,8 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 				this._timeTrackerService,
 				this._timeSlotQueueService,
 				this._electronService,
-				this._store
+				this._store,
+				latest ? latest.id : timer.timelogId
 			);
 
 			// append data to queue;
@@ -105,6 +110,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 				if (!latest && timer.timelogId) {
 					const currentTimeLog = await this._timeTrackerService.getTimeLogById(timer.timelogId);
 					if (currentTimeLog.id && currentTimeLog.isRunning) {
+						this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Current time log is still running, toggling stop.`);
 						latest = await this._timeTrackerService.toggleApiStop({
 							...timer,
 							...params
@@ -118,6 +124,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 							}
 						});
 					} else if (currentTimeLog.id && timer.stoppedAt) {
+						this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Current time log is not running, updating time log with stoppedAt.`);
 						latest = await this._timeTrackerService.updateTimeLog(timer.timelogId, {
 							startedAt: timer.startedAt || currentTimeLog.startedAt,
 							stoppedAt: timer.stoppedAt,
@@ -134,41 +141,64 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 							}
 						});
 					}
-				} else if (latest && latest.id && latest.isRunning) {
-					latest = await this._timeTrackerService.toggleApiStop({
-						...timer,
-						...params
-					});
-					await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
-						actionType: TimerActionTypeEnum.STOP_TIMER,
-						data: {
-							state: TimerSyncStateEnum.SYNCED,
-							duration: latest.duration || null,
-							timerId: timer.id
-						}
-					});
+				} else if (latest && latest.id) {
+					if (latest.isRunning) {
+						this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Latest time log is running, toggling stop.`);
+						latest = await this._timeTrackerService.toggleApiStop({
+							...timer,
+							...params
+						});
+						await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+							actionType: TimerActionTypeEnum.STOP_TIMER,
+							data: {
+								state: TimerSyncStateEnum.SYNCED,
+								duration: latest.duration || null,
+								timerId: timer.id
+							}
+						});
+					} else if (timer.stoppedAt && !latest.isRunning) {
+						this._auditLogService.timerAuditLogInfo(`Silent stop for timer ${timer.id} initiated. Latest time log is not running, updating time log with stoppedAt.`);
+						latest = await this._timeTrackerService.updateTimeLog(latest.id, {
+							startedAt: timer.startedAt || latest.startedAt,
+							stoppedAt: timer.stoppedAt,
+							description: timer.description,
+							projectId: timer.projectId,
+							taskId: timer.taskId
+						});
+						await this._electronService.ipcRenderer.invoke('UPDATE_SYNC_STATE', {
+							actionType: TimerActionTypeEnum.STOP_TIMER,
+							data: {
+								state: TimerSyncStateEnum.SYNCED,
+								duration: latest.duration || null,
+								timerId: timer.id
+							}
+						});
+					}
 				}
 			}
 
 			const status = await this._timeTrackerStatusService.status();
 
-			asapScheduler.schedule(async () => {
-				try {
-					await this._electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
-						lastTimer: latest
-							? latest
-							: {
-									...timer,
-									id: status?.lastLog?.id
-							  },
-						...timer
-					});
-					console.log('⏱ - local database updated');
-				} catch (error) {
-					console.error('🚨 - Error updating local database', error);
-					this._errorHandlerService.handleError(error);
-				}
-			});
+			/* Await directly instead of using asapScheduler (fire-and-forget).
+			  The asapScheduler deferral allowed the next queue item to start processing
+			  before this item's local DB update completed, causing out-of-order writes
+			  that corrupted syncDuration and timeslotId for concurrent offline sessions.
+			*/
+			try {
+				await this._electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
+					lastTimer: latest
+						? latest
+						: {
+							...timer,
+							id: status?.lastLog?.id
+						},
+					...timer
+				});
+				console.log('⏱ - local database updated');
+			} catch (error) {
+				console.error('🚨 - Error updating local database', error);
+				this._errorHandlerService.handleError(error);
+			}
 		} catch (error) {
 			console.error('🚨 - Error processing time slot queue', error);
 			this._timeSlotQueueService.viewQueueStateUpdater = {

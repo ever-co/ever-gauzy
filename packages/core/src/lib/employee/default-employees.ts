@@ -18,7 +18,7 @@ export const DEFAULT_EMPLOYEES: any = [
 export const DEFAULT_EVER_EMPLOYEES: any = [
 	{
 		email: 'ruslan@example-ever.co',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Ruslan',
 		lastName: 'K.',
 		imageUrl: 'assets/images/avatars/ruslan.jpg',
@@ -28,7 +28,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'alish@example-ever.co',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Alish',
 		lastName: 'M.',
 		imageUrl: 'assets/images/avatars/alish.jpg',
@@ -40,7 +40,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'booster@example-ever.co',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Booster',
 		lastName: 'P.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
@@ -52,7 +52,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'yoster@example-ever.co',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Yoster',
 		lastName: 'F.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
@@ -64,7 +64,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'hoster@example-ever.co',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Hoster',
 		lastName: 'H.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
@@ -76,7 +76,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'aster@example-ever.co',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Aster',
 		lastName: 'A.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
@@ -88,7 +88,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'roster@example-ever.co',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Roster',
 		lastName: 'R.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
@@ -100,7 +100,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'dister@example-ever.co',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Dister',
 		lastName: 'D.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
@@ -112,7 +112,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'postern@example-ever.co',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Postern',
 		lastName: 'P.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
@@ -124,7 +124,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'kyoster@example-ever.co',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Kyoster',
 		lastName: 'K.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
@@ -136,7 +136,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'taster@example-ever.co',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Taster',
 		lastName: 'T.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
@@ -148,7 +148,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'mustero@smooper.xyz',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Mustero',
 		lastName: 'M.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
@@ -160,7 +160,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'desterrro@hotmail.com',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Desterrro',
 		lastName: 'D.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',
@@ -172,7 +172,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'ckhandla94@gmail.com',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Chetan',
 		lastName: 'K.',
 		imageUrl: 'assets/images/avatars/chetan.png',
@@ -184,7 +184,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'rahulrathore576@gmail.com',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Rahul',
 		lastName: 'R.',
 		imageUrl: 'assets/images/avatars/rahul.png',
@@ -196,7 +196,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'julia@example-ever.co',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Julia',
 		lastName: 'K.',
 		imageUrl: 'assets/images/avatars/julia.png',
@@ -208,7 +208,7 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 	},
 	{
 		email: 'yostorono@example-ever.co',
-		password: '123456',
+		password: '12345678',
 		firstName: 'Yostorono',
 		lastName: 'Y.',
 		imageUrl: 'assets/images/avatars/avatar-default.svg',

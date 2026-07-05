@@ -77,7 +77,7 @@ export class IntegrationsUtils {
 				let upsertQuery = ``;
 				let payload: any[];
 
-				switch (queryRunner.connection.options.type) {
+				switch (queryRunner.dataSource.options.type as DatabaseTypeEnum) {
 					case DatabaseTypeEnum.sqlite:
 					case DatabaseTypeEnum.betterSqlite3:
 						payload = [name, filePath, isComingSoon ? 1 : 0, order, redirectUrl, provider];
@@ -95,7 +95,7 @@ export class IntegrationsUtils {
 						upsertQuery = mysqlUpsertQuery;
 						break;
 					default:
-						throw Error(`cannot upsert integration and integration types due to unsupported database type: ${queryRunner.connection.options.type}`);
+						throw Error(`cannot upsert integration and integration types due to unsupported database type: ${queryRunner.dataSource.options.type}`);
 				}
 
 				const [integration] = await queryRunner.query(upsertQuery, payload);
@@ -190,7 +190,7 @@ export class IntegrationsUtils {
 
 			let upsertQuery = ``;
 
-			switch (queryRunner.connection.options.type) {
+			switch (queryRunner.dataSource.options.type as DatabaseTypeEnum) {
 				case DatabaseTypeEnum.sqlite:
 				case DatabaseTypeEnum.betterSqlite3:
 					// For SQLite, manually generate a UUID using uuidv4()
@@ -205,7 +205,7 @@ export class IntegrationsUtils {
 					upsertQuery = mysqlUpsertQuery;
 					break;
 				default:
-					throw Error(`cannot upsert integration types due to unsupported database type: ${queryRunner.connection.options.type}`);
+					throw Error(`cannot upsert integration types due to unsupported database type: ${queryRunner.dataSource.options.type}`);
 			}
 			await queryRunner.query(upsertQuery, payload);
 		}
@@ -259,7 +259,7 @@ export class IntegrationsUtils {
 							integrationTypeId = ?
 					);
 				`);
-				switch (queryRunner.connection.options.type) {
+				switch (queryRunner.dataSource.options.type as DatabaseTypeEnum) {
 					case DatabaseTypeEnum.sqlite:
 					case DatabaseTypeEnum.betterSqlite3:
 						insertPivotQuery = sqliteUpsertQuery;
@@ -271,7 +271,7 @@ export class IntegrationsUtils {
 						insertPivotQuery = mysqlUpsertQuery;
 						break;
 					default:
-						throw Error(`cannot sync integration types due to unsupported database type: ${queryRunner.connection.options.type}`);
+						throw Error(`cannot sync integration types due to unsupported database type: ${queryRunner.dataSource.options.type}`);
 				}
 				await queryRunner.query(insertPivotQuery, [integrationId, integrationType.id]);
 			}

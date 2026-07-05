@@ -382,7 +382,7 @@ const generateRandomUser = async (role: IRole, tenant: ITenant): Promise<IUser> 
 	user.preferredLanguage = getRandomLanguage();
 	user.emailVerifiedAt = new Date();
 	user.lastLoginAt = getRandomDateWithinLast3Months();
-	user.hash = await hashPassword('123456');
+	user.hash = await hashPassword('12345678');
 
 	return user;
 };

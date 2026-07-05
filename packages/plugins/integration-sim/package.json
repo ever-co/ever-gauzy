@@ -36,14 +36,14 @@
 		"@gauzy/utils": "^0.1.0",
 		"@nestjs/axios": "github:ever-co/nestjs-axios#master",
 		"@nestjs/cqrs": "^11.0.3",
-		"@nestjs/swagger": "^11.2.6",
-		"axios": "^1.13.5",
+		"@nestjs/swagger": "^11.4.4",
+		"axios": "^1.18.0",
 		"express": "^5.2.1",
 		"moment": "^2.30.1",
 		"rxjs": "^7.8.2",
 		"simstudio-ts-sdk": "^0.1.2",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.28"
+		"typeorm": "^1.0.0"
 	},
 	"devDependencies": {
 		"@types/express": "^5.0.1",

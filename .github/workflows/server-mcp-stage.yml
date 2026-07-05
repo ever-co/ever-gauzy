@@ -1,20 +1,63 @@
 name: MCP Server Build Stage
 
+# The packaged desktop & server stage apps are built ONLY when 'stage' is promoted to the 'stage-apps' branch
+# ('temp' is kept for ad-hoc testing). No new platform version is created here: the build
+# version is resolved at build time (.scripts/bump-version-electron.js) from the release tag
+# pointing at this commit, which 'Release Stage' creates on the merge to 'stage' - so the stage app prerelease builds
+# carry the same version as the corresponding platform stage release.
 on:
-  workflow_run:
-    workflows: ['Release Apps Stage']
+  push:
     branches:
       - stage-apps
       - temp
-    types:
-      - completed
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
+  check-release-tag:
+    # Only build when this exact commit carries a release tag (the version stamped into the
+    # packages - see header comment) - i.e. 'stage-apps' was
+    # fast-forwarded to a 'stage' commit that 'Release Stage' has already tagged. Retries
+    # absorb the short merge -> tag delay. Ad-hoc pushes to 'temp' skip the check.
+    runs-on: ubicloud-standard-4
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Verify a release tag points at this commit
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_NAME" = "temp" ]; then
+            echo "Ad-hoc 'temp' branch - skipping the release tag check"
+            exit 0
+          fi
+          if [ "$GITHUB_REF_NAME" != "stage-apps" ]; then
+            echo "::error::This workflow only releases from the 'stage-apps' branch (got '$GITHUB_REF_NAME')."
+            exit 1
+          fi
+          for i in $(seq 1 20); do
+            git fetch --quiet --depth=1 origin '+refs/tags/*:refs/tags/*' || echo "git fetch failed (attempt $i); will retry"
+            TAG=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
+            if [ -n "$TAG" ]; then
+              echo "Release tag on this commit: $TAG"
+              exit 0
+            fi
+            echo "No release tag points at this commit yet (attempt $i/20); retrying in 30s..."
+            sleep 30
+          done
+          echo "::error::No release tag points at this commit. Promote by fast-forwarding 'stage-apps' to the tagged 'stage' commit (git push origin origin/stage:stage-apps) after 'Release Stage' has created the tag."
+          exit 1
+
   release-linux:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -24,19 +67,19 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -85,7 +128,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump server version
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -118,11 +161,12 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: false
+          NX_NO_CLOUD: true
           NX_DAEMON: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
 
   release-linux-arm64:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -132,19 +176,19 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -199,7 +243,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump version server mcp app
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -233,12 +277,13 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: false
+          NX_NO_CLOUD: true
           NX_DAEMON: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
           SNAPCRAFT_BUILD_ENVIRONMENT: host
 
   release-mac:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -248,19 +293,19 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -300,7 +345,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump Server version
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -338,7 +383,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: false
+          NX_NO_CLOUD: true
           NX_DAEMON: false
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_APP_PASSWORD: ${{ secrets.APPLE_ID_APP_PASSWORD }}
@@ -350,6 +395,7 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
 
   release-windows:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -359,7 +405,7 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           clean: false
 
@@ -377,7 +423,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
         shell: powershell
@@ -432,7 +478,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump Server version
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -513,6 +559,7 @@ jobs:
           NX_DAEMON: false
 
   release-windows-arm64:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -522,7 +569,7 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           clean: false
 
@@ -540,7 +587,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
           architecture: arm64
 
       - name: Get yarn cache directory path
@@ -548,7 +595,7 @@ jobs:
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -612,7 +659,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump version server mcp app
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')

@@ -20,7 +20,6 @@ import {
 	IJiraIntegrationConfig,
 	IDigitalOceanConfig,
 	IMakeComConfig,
-	IOAuthAppConfig,
 	IPosthogConfig,
 	IZapierConfig
 } from '@gauzy/common';
@@ -109,7 +108,6 @@ export interface IEnvironment {
 	jira: IJiraIntegrationConfig /** Jira Configuration */;
 	fiverrConfig: IFiverrConfig;
 	auth0Config: IAuth0Config;
-	oauthApp?: IOAuthAppConfig;
 
 	sentry?: {
 		dsn: string;

@@ -3,6 +3,7 @@ import { AppError } from '../../error-handler';
 import { IScreenshotService } from '../../interfaces';
 import {  ScreenshotDAO } from '../dao';
 import { ScreenshotTO } from '../dto';
+import { Screenshot } from '../models';
 
 export class ScreenshotService implements IScreenshotService<ScreenshotTO> {
 	private _screenshotDAO: ScreenshotDAO;
@@ -22,25 +23,25 @@ export class ScreenshotService implements IScreenshotService<ScreenshotTO> {
 		}
 	}
 
-	public async saveAndReturn(screenshot: ScreenshotTO): Promise<ScreenshotTO | null> {
+	public async saveAndReturn(screenshot: Screenshot): Promise<ScreenshotTO | null> {
 		try {
 			if (!screenshot) {
 				console.error('WARN[SCREENSHOT_SERVICE]: No screenshot data, cannot save');
 				return null;
 			}
-			const created = await this._screenshotDAO.saveAndReturn(screenshot);
+			const created = await this._screenshotDAO.saveAndReturn(screenshot.toObject());
 			return created;
 		} catch (error) {
 			throw new AppError('SCREENSHOT_SERVICE', error);
 		}
 	}
 
-	public async update(screenshot: Partial<ScreenshotTO>): Promise<void> {
+	public async update(screenshot: Partial<Screenshot>): Promise<void> {
 		try {
 			if (!screenshot.id) {
-				return console.error('WARN[KB_MOUSE_SERVICE]: No keyboard and mouse data, cannot update');
+				return console.error('WARN[SCREENSHOT_SERVICE]: No screenshot data, cannot update');
 			}
-			await this._screenshotDAO.update(screenshot.id, screenshot);
+			await this._screenshotDAO.update(screenshot.id, screenshot.toObject());
 		} catch (error) {
 			throw new AppError('SCREENSHOT_SERVICE', error);
 		}

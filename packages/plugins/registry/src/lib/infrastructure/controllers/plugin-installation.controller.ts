@@ -69,8 +69,10 @@ export class PluginInstallationController {
 	})
 	@Permissions(PermissionsEnum.PLUGIN_UNINSTALL)
 	@Delete(':installationId')
-	public async remove(@Param('installationId', UUIDValidationPipe) installationId: ID) {
-		await this.commandBus.execute(new UninstallPluginCommand(installationId));
+	public async remove(
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Param('installationId', UUIDValidationPipe) installationId: ID) {
+		await this.commandBus.execute(new UninstallPluginCommand(pluginId, installationId));
 		return { message: 'Plugin installation removed successfully', statusCode: HttpStatus.NO_CONTENT };
 	}
 }

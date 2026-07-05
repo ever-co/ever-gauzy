@@ -1,0 +1,192 @@
+nb-card-header.log-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+
+	.title {
+		font-size: 1rem;
+		font-weight: 600;
+		color: var(--gauzy-text-color-1);
+	}
+
+	.header-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+}
+
+nb-card-body {
+	padding: 0;
+	overflow: hidden;
+}
+
+/* ─── Scrollable viewport ───────────────────────────────── */
+.log-viewport {
+	height: calc(100vh - 10rem);
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+}
+
+/* ─── Single log entry ──────────────────────────────────── */
+.log-entry {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	padding: 0.55rem 1rem 0.55rem 0.875rem;
+	border-bottom: 1px solid var(--border-basic-color-3);
+	border-left: 3px solid transparent;
+	transition: background-color 0.12s ease;
+	text-align: left;
+
+	&:last-child { border-bottom: none; }
+
+	&:hover { background-color: var(--background-basic-color-2); }
+
+	&.log-entry--error { border-left-color: var(--color-danger-default); }
+	&.log-entry--warn  { border-left-color: var(--color-warning-default); }
+	&.log-entry--info  { border-left-color: var(--color-info-default); }
+	&.log-entry--debug { border-left-color: var(--border-basic-color-3); }
+}
+
+/* ─── Meta line (small, secondary) ─────────────────────── */
+.log-entry__meta {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	flex-wrap: wrap;
+	line-height: 1;
+}
+
+.level-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 3.25rem;
+	padding: 0.08rem 0;
+	border-radius: calc(var(--border-radius) * 0.4);
+	font-size: 0.6rem;
+	font-weight: 700;
+	letter-spacing: 0.07em;
+	flex-shrink: 0;
+
+	&.level-debug {
+		background: var(--color-basic-transparent-200);
+		color: var(--gauzy-text-color-2);
+	}
+	&.level-info {
+		background: var(--color-info-transparent-200);
+		color: var(--color-info-default);
+	}
+	&.level-warn {
+		background: var(--color-warning-transparent-200);
+		color: var(--color-warning-700);
+	}
+	&.level-error {
+		background: var(--color-danger-transparent-200);
+		color: var(--color-danger-default);
+	}
+}
+
+.meta-service {
+	font-size: 0.7rem;
+	font-weight: 600;
+	color: var(--color-primary-default);
+	white-space: nowrap;
+}
+
+.meta-sep {
+	font-size: 0.65rem;
+	color: var(--gauzy-text-color-2);
+	opacity: 0.5;
+}
+
+.meta-time {
+	font-size: 0.68rem;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+/* ─── Message (main content) ────────────────────────────── */
+.log-entry__message {
+	margin: 0;
+	font-size: 0.875rem;
+	line-height: 1.55;
+	color: var(--gauzy-text-color-1);
+	word-break: break-word;
+
+	.log-entry--error & { color: var(--color-danger-default); }
+	.log-entry--warn  & { color: var(--color-warning-800); }
+}
+
+/* ─── Utility ───────────────────────────────────────────── */
+.load-more-bar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.5rem 1rem;
+	font-size: 0.75rem;
+	color: var(--gauzy-text-color-2);
+
+	.load-more-spinner { width: 1rem; height: 1rem; }
+}
+
+.log-boundary {
+	text-align: center;
+	padding: 0.35rem;
+	font-size: 0.68rem;
+	color: var(--gauzy-text-color-2);
+	opacity: 0.5;
+	letter-spacing: 0.04em;
+}
+
+.spinner-row { min-height: 3rem; }
+
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	flex: 1;
+	padding: 3rem 1rem;
+	color: var(--gauzy-text-color-2);
+
+	nb-icon {
+		font-size: 2.5rem;
+		margin-bottom: 0.75rem;
+	}
+
+	p { margin: 0; font-size: 0.875rem; }
+}
+
+/* ─── Follow (live-stream) toggle button ────────────────── */
+.follow-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	font-size: 0.72rem;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	white-space: nowrap;
+	transition: box-shadow 0.2s ease, opacity 0.2s ease;
+
+	nb-icon {
+		font-size: 0.9rem;
+	}
+
+	/* Pulsing glow ring when actively following */
+	&.follow-btn--active{
+		animation: follow-pulse 2.4s ease-in-out infinite;
+	}
+}
+
+@keyframes follow-pulse {
+	0%, 100% { box-shadow: 0 0 0 0   rgba(0, 214, 143, 0); }
+	50%       { box-shadow: 0 0 0 4px rgba(0, 214, 143, 0.28); }
+}

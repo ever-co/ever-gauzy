@@ -1,25 +1,50 @@
-h4 {
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 24px;
-  letter-spacing: 0em;
-  color: var(--gauzy-text-color-1);
+.plugin-layout-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--gauzy-card-2);
+  overflow: hidden;
+
+  &.webview {
+    height: calc(100vh - 9rem);
+  }
 }
 
-.container-fluid {
-  padding: 1rem;
-  background: var(--gauzy-card-2);
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 :host ::ng-deep {
+  nb-route-tabset {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+
+    .tabset {
+      flex-shrink: 0;
+    }
+
+    router-outlet + * {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+  }
+
   .content-active {
     background-color: var(--gauzy-card-2);
     border-radius: var(--border-radius);
+
     &.first {
       border-radius: 0 var(--border-radius) var(--border-radius);
     }
-    height: calc(100vh - 7.5rem);
-    padding: 1rem;
+
+    height: 100%;
+    overflow: auto;
     width: 100%;
 
     nb-card {
@@ -46,18 +71,21 @@ h4 {
   nb-icon {
     margin-bottom: unset;
   }
+
   svg {
     fill: var(--text-primary-color);
   }
+
   span {
     display: inline-block;
     text-transform: initial;
+
     &:first-letter {
       text-transform: uppercase;
     }
   }
 }
 
-::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
+:host ::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
   padding: 0px;
 }

@@ -2,7 +2,7 @@
   background: var(--gauzy-card-1);
   border: 1px solid var(--border-basic-color-3);
   border-radius: calc(var(--border-radius) * 1.5);
-  overflow: hidden;
+  overflow: visible;
   transition: all 0.3s ease;
   position: relative;
   box-shadow: var(--gauzy-shadow);
@@ -125,30 +125,9 @@
     }
   }
 
-  // Filter Content
+  // Filter Content — parent .filter-panel handles scrolling
   .filter-content {
-    max-height: calc(100vh - 14.75rem);
-    overflow-y: auto;
-    scroll-padding-top: 72px;
     border-radius: var(--border-radius);
-
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: var(--background-basic-color-2);
-      border-radius: 3px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: var(--background-basic-color-4);
-      border-radius: 3px;
-
-      &:hover {
-        background: var(--background-basic-color-3);
-      }
-    }
   }
 
   .filter-form {
@@ -720,12 +699,6 @@
 
   // Responsive Design
   @media (max-width: 768px) {
-    /* Disable inner scroll on small screens so the whole page scrolls */
-    .filter-content {
-      max-height: none;
-      overflow: visible;
-    }
-
     &:not(.mobile) {
       margin: 0 -1rem;
       border-radius: 0;

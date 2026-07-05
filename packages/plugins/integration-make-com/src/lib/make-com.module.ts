@@ -11,11 +11,13 @@ import {
 } from '@gauzy/core';
 import { MakeComController } from './make-com.controller';
 import { MakeComAuthorizationController } from './make-com-authorization.controller';
+import { MakeComApiController } from './make-com-api.controller';
 import { MakeComMiddleware } from './make-com.middleware';
 import { MakeComService } from './make-com.service';
 import { WebhookService } from './webhook.service';
 import { EventHandlers } from './handlers';
 import { MakeComOAuthService } from './make-com-oauth.service';
+import { MakeComApiService } from './make-com-api.service';
 
 @Module({
 	imports: [
@@ -28,9 +30,9 @@ import { MakeComOAuthService } from './make-com-oauth.service';
 		IntegrationTenantModule,
 		UserModule
 	],
-	controllers: [MakeComController, MakeComAuthorizationController],
-	providers: [WebhookService, MakeComService, MakeComOAuthService, ...EventHandlers],
-	exports: [WebhookService, MakeComService, MakeComOAuthService]
+	controllers: [MakeComController, MakeComAuthorizationController, MakeComApiController],
+	providers: [WebhookService, MakeComService, MakeComOAuthService, MakeComApiService, ...EventHandlers],
+	exports: [WebhookService, MakeComService, MakeComOAuthService, MakeComApiService]
 })
 export class MakeComModule implements NestModule {
 	/**
@@ -55,6 +57,11 @@ export class MakeComModule implements NestModule {
 			{
 				path: '/integration/make-com',
 				method: RequestMethod.POST
+			},
+			// Make.com API proxy routes
+			{
+				path: '/integration/make-com/api/*',
+				method: RequestMethod.ALL
 			}
 		);
 	}

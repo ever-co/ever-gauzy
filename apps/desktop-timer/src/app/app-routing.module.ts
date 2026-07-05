@@ -73,6 +73,10 @@ const routes: Routes = [
 		path: 'viewer',
 		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.ImageViewerComponent)
 	},
+	{
+		path: 'log-history',
+		loadComponent: () => import('@gauzy/desktop-ui-lib').then((m) => m.AuditTrailLoggerComponent)
+	},
 
 	// Wildcard - redirect to default
 	{

@@ -38,7 +38,7 @@ export class ReactBridge extends UiBridge {
 	readonly config: UiBridgeConfig = {
 		frameworkId: UI_BRIDGE_FRAMEWORK.REACT,
 		name: 'React Bridge',
-		version: '1.0.0'
+		version: '0.1.0'
 	};
 
 	/**

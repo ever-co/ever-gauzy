@@ -34,7 +34,7 @@ export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTi
 				let subQuery = knex('time_log').withSchema(knex.userParams.schema).as('time_log').select('time_log.id');
 
 				let overlapQuery: string = '';
-				switch (this.configService.dbConnectionOptions.type) {
+				switch (this.configService.dbConnectionOptions.type as DatabaseTypeEnum) {
 					case DatabaseTypeEnum.sqlite:
 					case DatabaseTypeEnum.betterSqlite3:
 						overlapQuery = `'${startedAt}' >= "time_log"."startedAt" and '${startedAt}' <= "time_log"."stoppedAt"`;
@@ -86,7 +86,7 @@ export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTi
 				let conflictQuery = this.typeOrmTimeLogRepository.createQueryBuilder();
 
 				let query: string = ``;
-				switch (this.configService.dbConnectionOptions.type) {
+				switch (this.configService.dbConnectionOptions.type as DatabaseTypeEnum) {
 					case DatabaseTypeEnum.sqlite:
 					case DatabaseTypeEnum.betterSqlite3:
 						query = `'${startedAt}' >= "${conflictQuery.alias}"."startedAt" and '${startedAt}' <= "${conflictQuery.alias}"."stoppedAt"`;

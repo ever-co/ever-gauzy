@@ -72,6 +72,12 @@ export class TaskSelectorService extends SelectorService<ITask> {
 	public async load(options?: { searchTerm?: string; projectId?: string }): Promise<void> {
 		try {
 			this.taskSelectorStore.setLoading(true);
+			if (this.store.isOffline) {
+				this.taskSelectorStore.setLoading(false);
+				console.warn('Offline mode: Unable to fetch tasks from the server.');
+				return;
+			}
+
 			const { searchTerm } = options || {};
 			const {
 				organizationId,

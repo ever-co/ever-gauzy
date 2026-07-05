@@ -17,7 +17,7 @@ jobs:
     runs-on: ubicloud-standard-4
     timeout-minutes: 300
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: streetsidesoftware/cspell-action@v2
         with:
           # Github token used to fetch the list of changed files in the commit.

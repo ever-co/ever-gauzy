@@ -1,6 +1,6 @@
+import { env } from '../../env';
 import { IPackage } from '../interfaces/i-package';
 import { BasePackager } from './base-packager';
-import { env } from '../../env';
 
 export class AgentPackager extends BasePackager {
 	public prepare(pkg: IPackage): IPackage {
@@ -13,7 +13,7 @@ export class AgentPackager extends BasePackager {
 			env.AGENT_APP_DESCRIPTION || pkg.build.productName;
 		pkg.build.linux.executableName =
 			env.AGENT_APP_NAME || pkg.build.linux.executableName;
-
-		return pkg;
+		const protocol = env.AGENT_APP_PROTOCOL || 'gauzy-agent';
+		return this.registerProtocol(pkg, protocol);
 	}
 }

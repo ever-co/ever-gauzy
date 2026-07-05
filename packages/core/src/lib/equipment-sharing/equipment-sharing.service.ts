@@ -54,7 +54,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment')
 					.leftJoinAndSelect(`${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
 
-				switch (this.configService.dbConnectionOptions.type) {
+				switch (this.configService.dbConnectionOptions.type as DatabaseTypeEnum) {
 					case DatabaseTypeEnum.sqlite:
 					case DatabaseTypeEnum.betterSqlite3:
 						query.leftJoinAndSelect(
@@ -287,7 +287,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					query.leftJoinAndSelect(`${query.alias}.employees`, 'employees');
 					query.leftJoinAndSelect(`${query.alias}.teams`, 'teams');
 
-					switch (this.configService.dbConnectionOptions.type) {
+					switch (this.configService.dbConnectionOptions.type as DatabaseTypeEnum) {
 						case DatabaseTypeEnum.sqlite:
 						case DatabaseTypeEnum.betterSqlite3:
 							query.leftJoinAndSelect(

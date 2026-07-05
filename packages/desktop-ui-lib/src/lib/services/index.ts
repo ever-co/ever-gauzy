@@ -31,3 +31,4 @@ export * from './time-tracker-date.manager';
 export * from './time-zone-manager';
 export * from './toastr-notification.service';
 export * from './user-organization-cache.service';
+export * from './audit-log.service';

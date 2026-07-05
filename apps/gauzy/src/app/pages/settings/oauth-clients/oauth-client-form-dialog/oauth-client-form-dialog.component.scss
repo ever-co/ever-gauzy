@@ -1,0 +1,57 @@
+.form-dialog {
+	min-width: 520px;
+	max-width: 640px;
+}
+
+.form-row {
+	margin-bottom: 1rem;
+
+	.label {
+		display: block;
+		font-weight: 600;
+		font-size: 0.8125rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.hint {
+		display: block;
+		color: var(--gauzy-text-color-2);
+		margin-top: 0.25rem;
+	}
+
+	&.two-cols {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
+	}
+
+	&.toggle-row {
+		display: flex;
+		align-items: center;
+	}
+}
+
+.array-row {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	margin-bottom: 0.5rem;
+}
+
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.actions {
+	display: flex;
+	gap: 0.5rem;
+	justify-content: flex-end;
+}

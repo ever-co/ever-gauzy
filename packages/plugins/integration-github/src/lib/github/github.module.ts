@@ -20,6 +20,7 @@ import { GitHubAuthorizationController } from './github-authorization.controller
 import { GitHubIntegrationController } from './github-integration.controller';
 import { GitHubController } from './github.controller';
 import { GithubService } from './github.service';
+import { GithubOAuthStateService } from './github-oauth-state.service';
 import { GithubMiddleware } from './github.middleware';
 import { GitHubHooksController } from './github.hooks.controller';
 import { GithubHooksService } from './github.hooks.service';
@@ -88,6 +89,7 @@ const { github } = environment;
 		// Define services heres
 		GithubEventSubscriber,
 		GithubService,
+		GithubOAuthStateService,
 		GithubSyncService,
 		GithubHooksService,
 		GithubRepositoryService,

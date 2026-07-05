@@ -733,7 +733,9 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		// Fetch tasks from the database that match the extracted IDs, including their associated modules
 		return this._taskService.find({
 			where: { id: In(taskIds) },
-			relations: ['modules']
+			relations: {
+                modules: true
+            }
 		});
 	}
 

@@ -126,7 +126,7 @@ async function createFeature(
  * @returns {Promise<void>} - Resolves when the cleanup operation is complete.
  */
 async function cleanFeature(dataSource: DataSource, config: Partial<ApplicationPluginConfig>): Promise<void> {
-	switch (config.dbConnectionOptions.type) {
+	switch (config.dbConnectionOptions.type as DatabaseTypeEnum) {
 		case DatabaseTypeEnum.sqlite:
 		case DatabaseTypeEnum.betterSqlite3:
 			await dataSource.query('DELETE FROM feature');

@@ -61,7 +61,10 @@ export async function createSetupWindow(
 	handleCloseEvent(setupWindow);
 
 	if (preloadPath) {
-		attachTitlebarToWindow(setupWindow);
+		attachTitlebarToWindow(setupWindow, {
+			minWidth: mainWindowSettings.width,
+			minHeight: mainWindowSettings.height,
+		});
 	}
 
 	// Register the Setup window with the WindowManager

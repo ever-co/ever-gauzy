@@ -50,7 +50,10 @@ export async function createServerWindow(
 
 	// Attach a custom title bar if a preload script is provided
 	if (preloadPath) {
-		attachTitlebarToWindow(serverWindow);
+		attachTitlebarToWindow(serverWindow, {
+			minWidth: mainWindowSettings.width,
+			minHeight: mainWindowSettings.height,
+		});
 	}
 
 	manager.overrideSystemContextMenu(serverWindow);

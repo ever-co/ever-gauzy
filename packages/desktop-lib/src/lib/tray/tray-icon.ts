@@ -6,6 +6,7 @@ import { TrayIPCHandler } from './handlers/tray-ipc-handler';
 import { IConfigStore, ITranslationService, ITrayIconConfig, IWindowService } from './interfaces';
 import { TrayMenuManager } from './managers/tray-menu-manager';
 import { ILanguageObserver, LanguageChangeSubject } from './observer/language-subject';
+import { IconManager } from './managers/icon-manager';
 
 /**
  * Main TrayIcon class implementing Observer pattern for language changes
@@ -17,6 +18,7 @@ export class TrayIcon implements ILanguageObserver {
 	private readonly trayIPCHandler: TrayIPCHandler;
 	private readonly languageSubject: LanguageChangeSubject;
 	private readonly pluginEventManager: PluginEventManager;
+	private readonly iconManager: IconManager;
 
 	constructor(
 		private readonly config: ITrayIconConfig,
@@ -41,6 +43,11 @@ export class TrayIcon implements ILanguageObserver {
 			this.config.windowPath
 		);
 
+		this.iconManager = new IconManager(
+			this.tray,
+			this.config.iconPath,
+		);
+
 		// Build initial menu
 		this.menuManager.rebuildMenu();
 
@@ -48,7 +55,8 @@ export class TrayIcon implements ILanguageObserver {
 		this.trayIPCHandler = new TrayIPCHandler(
 			this.menuManager,
 			this.dependencies.windowService,
-			this.dependencies.configStore
+			this.dependencies.configStore,
+			this.iconManager
 		);
 		this.trayIPCHandler.setupHandlers();
 
@@ -83,7 +91,7 @@ export class TrayIcon implements ILanguageObserver {
 
 	private createTray(iconPath: string): Tray {
 		const iconDir = path.dirname(iconPath);
-		const normalIcon = path.join(iconDir, 'icon.png');
+		const normalIcon = path.join(iconDir, 'icon_gray.png');
 		const iconNativePath = nativeImage.createFromPath(normalIcon);
 		iconNativePath.resize({ width: 16, height: 16 });
 		return new Tray(iconNativePath);

@@ -29,7 +29,7 @@ export const JobMatchingPlugin: PluginUiDefinition = {
 	id: 'job-matching',
 
 	// ── Versioning & Compatibility ────────────────────────────────
-	version: '1.0.0',
+	version: '0.1.0',
 
 	// ── Location & Module ────────────────────────────────────────
 	location: 'jobs-sections',

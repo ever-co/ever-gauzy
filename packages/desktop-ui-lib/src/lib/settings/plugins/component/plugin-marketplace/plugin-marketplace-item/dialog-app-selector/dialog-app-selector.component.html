@@ -1,0 +1,61 @@
+<nb-card class="dialog-card" status="basic">
+	<nb-card-header class="mb-0">
+		<div class="header-content">
+			<div class="header-left">
+				<div class="icon-container">
+					<nb-icon icon="external-link-outline"></nb-icon>
+				</div>
+				<div class="header-info">
+					<h5 class="title m-0">{{ 'PLUGIN.DIALOG.APP_SELECTOR.TITLE' | translate }}</h5>
+					<p class="subtitle m-0">{{ 'PLUGIN.DIALOG.APP_SELECTOR.SUBTITLE' | translate }}</p>
+				</div>
+			</div>
+			<button nbButton ghost size="small" (click)="dismiss()" class="close-button">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body class="py-3">
+		<div class="apps-list">
+			@for (app of apps; track app.protocol) {
+				<button
+					type="button"
+					class="app-option"
+					[class.selected]="selectedProtocol() === app.protocol"
+					(click)="select(app.protocol)"
+					[attr.aria-pressed]="selectedProtocol() === app.protocol"
+				>
+					<div class="app-icon-wrapper">
+						<nb-icon [icon]="app.icon"></nb-icon>
+					</div>
+					<div class="app-info">
+						<span class="app-name">{{ app.labelKey | translate }}</span>
+						<span class="app-desc">{{ app.descriptionKey | translate }}</span>
+					</div>
+					@if (selectedProtocol() === app.protocol) {
+						<nb-icon icon="checkmark-circle-2-outline" class="check-icon"></nb-icon>
+					}
+				</button>
+			}
+		</div>
+	</nb-card-body>
+
+	<nb-card-footer class="dialog-footer">
+		<div class="footer-actions">
+			<button nbButton type="button" outline status="basic" (click)="dismiss()" class="cancel-button">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+			<button
+				nbButton
+				type="button"
+				status="primary"
+				[disabled]="!selectedProtocol()"
+				(click)="confirm()"
+				class="confirm-button"
+			>
+				{{ 'BUTTONS.OPEN' | translate }}
+			</button>
+		</div>
+	</nb-card-footer>
+</nb-card>

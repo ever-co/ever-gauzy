@@ -6,6 +6,7 @@ import { ElectronService } from '../../electron/services';
 import { LanguageElectronService } from '../../language/language-electron.service';
 import { NbLayoutModule, NbCardModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
+import { IOSInfo } from '@gauzy/contracts';
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'gauzy-about',
@@ -21,6 +22,7 @@ export class AboutComponent implements OnInit {
 		companyName: 'Ever Co. LTD.',
 		arch: ''
 	};
+	private platformInfo: Partial<IOSInfo> = {}
 	constructor(
 		private readonly _electronService: ElectronService,
 		private readonly _languageElectronService: LanguageElectronService,
@@ -35,13 +37,8 @@ export class AboutComponent implements OnInit {
 		this.getArch();
 	}
 
-	getArch() {
-		this._electronService.ipcRenderer.once('get-arch', (_, arg) => {
-			this._ngZone.run(() => {
-				this._application.arch = arg
-			});
-		});
-		this._electronService.ipcRenderer.send('get-arch');
+	async getArch() {
+		this.platformInfo = await this._electronService.ipcRenderer.invoke('GET_PLATFORM');
 	}
 
 	public async openLink(link: string) {
@@ -73,5 +70,17 @@ export class AboutComponent implements OnInit {
 			companyName: this._environment.COMPANY_NAME
 		};
 		return this._application;
+	}
+
+	public get os(): NodeJS.Platform {
+		return this.platformInfo.os;
+	}
+
+	public get arch(): NodeJS.Architecture {
+		return this.platformInfo.arch;
+	}
+
+	public get systemVersion(): string {
+		return this.platformInfo.version;
 	}
 }

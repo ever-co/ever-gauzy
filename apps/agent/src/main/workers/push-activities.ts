@@ -6,6 +6,7 @@ import {
 	Timer,
 	TimerTO,
 	ScreenshotService,
+    Screenshot,
 } from '@gauzy/desktop-lib';
 import {
 	KbMouseActivityPool,
@@ -151,13 +152,13 @@ class PushActivities {
 			} catch (error) {
 				job.attempts += 1;
 				try {
-					const screenshot = await this.screenshotService.saveAndReturn({
+					const screenshot = await this.screenshotService.saveAndReturn(new Screenshot({
 						timeslotId: job.data?.timeSlotId,
 						imagePath: job.data?.imagePath,
 						synced: false,
 						activityId: job.data?.activityId,
 						recordedAt: new Date(job.data?.recordedAt)
-					});
+					}));
 					if (!job.isRetry) {
 						job.isRetry = true;
 						job.queue = 'screenshot_retry';

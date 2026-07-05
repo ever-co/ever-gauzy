@@ -15,7 +15,7 @@ export class MigrateEmailTemplates1701353754397 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(this.name + ' start running!'));
 
-		switch (queryRunner.connection.options.type) {
+		switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 			case DatabaseTypeEnum.postgres:

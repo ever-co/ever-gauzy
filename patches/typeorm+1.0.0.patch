@@ -1,0 +1,94 @@
+diff --git a/node_modules/typeorm/find-options/FindOneOptions.d.ts b/node_modules/typeorm/find-options/FindOneOptions.d.ts
+index 2e19a6a..4896a8d 100644
+--- a/node_modules/typeorm/find-options/FindOneOptions.d.ts
++++ b/node_modules/typeorm/find-options/FindOneOptions.d.ts
+@@ -15,7 +15,7 @@ export interface FindOneOptions<Entity = any> {
+     /**
+      * Specifies what columns should be retrieved.
+      */
+-    select?: FindOptionsSelect<Entity>;
++    select?: FindOptionsSelect<Entity> | string[];
+     /**
+      * Simple condition that should be applied to match entities.
+      */
+@@ -23,7 +23,7 @@ export interface FindOneOptions<Entity = any> {
+     /**
+      * Indicates what relations of entity should be loaded (simplified left join form).
+      */
+-    relations?: FindOptionsRelations<Entity>;
++    relations?: FindOptionsRelations<Entity> | string[];
+     /**
+      * Specifies how relations must be loaded - using "joins" or separate queries.
+      * If you are loading too much data with nested joins it's better to load relations
+diff --git a/node_modules/typeorm/find-options/FindOptionsUtils.js b/node_modules/typeorm/find-options/FindOptionsUtils.js
+index d5c79d8..6966629 100644
+--- a/node_modules/typeorm/find-options/FindOptionsUtils.js
++++ b/node_modules/typeorm/find-options/FindOptionsUtils.js
+@@ -37,9 +37,29 @@ class FindOptionsUtils {
+             typeof options === "object" &&
+             "select" in options &&
+             Array.isArray(options.select)) {
+-            throw new error_2.TypeORMError(`String-array "select" syntax has been removed. ` +
+-                `Use object syntax instead, e.g. select: { id: true, name: true }. ` +
+-                `See the v1 migration guide for details.`);
++            // Ever Gauzy compat shim: convert the legacy string-array `select` syntax (removed in
++            // v1.0) to the object form v0.3 accepted, instead of rejecting. e.g.
++            // ["id","name","role.name"] => { id: true, name: true, role: { name: true } }
++            const obj = {};
++            for (const col of options.select) {
++                if (typeof col !== "string" || col.length === 0)
++                    continue;
++                let cur = obj;
++                const parts = col.split(".");
++                for (let i = 0; i < parts.length; i++) {
++                    const p = parts[i];
++                    if (i === parts.length - 1) {
++                        if (cur[p] === undefined)
++                            cur[p] = true;
++                    }
++                    else {
++                        if (cur[p] === true || cur[p] === undefined)
++                            cur[p] = {};
++                        cur = cur[p];
++                    }
++                }
++            }
++            options.select = obj;
+         }
+     }
+     /**
+@@ -53,9 +73,31 @@ class FindOptionsUtils {
+             typeof options === "object" &&
+             "relations" in options &&
+             Array.isArray(options.relations)) {
+-            throw new error_2.TypeORMError(`String-array "relations" syntax has been removed. ` +
+-                `Use object syntax instead, e.g. relations: { profile: true, posts: true }. ` +
+-                `See the v1 migration guide for details.`);
++            // Ever Gauzy compat shim: instead of rejecting the legacy string-array `relations`
++            // syntax (removed in typeorm v1.0), convert it to the object form that v0.3 accepted.
++            // The codebase passes dynamic `string[]` relations in many places; converting here
++            // keeps them working at runtime. e.g. ["role","tenant.featureOrganizations"] =>
++            // { role: true, tenant: { featureOrganizations: true } }
++            const obj = {};
++            for (const rel of options.relations) {
++                if (typeof rel !== "string" || rel.length === 0)
++                    continue;
++                let cur = obj;
++                const parts = rel.split(".");
++                for (let i = 0; i < parts.length; i++) {
++                    const p = parts[i];
++                    if (i === parts.length - 1) {
++                        if (cur[p] === undefined)
++                            cur[p] = true;
++                    }
++                    else {
++                        if (cur[p] === true || cur[p] === undefined)
++                            cur[p] = {};
++                        cur = cur[p];
++                    }
++                }
++            }
++            options.relations = obj;
+         }
+     }
+     /**

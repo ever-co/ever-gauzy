@@ -31,6 +31,7 @@ const SKIP_PACKAGES = new Set([
 	'onboarding-ui',
 	'maintenance-ui',
 	'legal-ui',
+	'jobs-ui',
 	'job-search-ui',
 	'job-proposal-ui',
 	'job-employee-ui',
@@ -41,7 +42,9 @@ const SKIP_PACKAGES = new Set([
 	'integration-hubstaff-ui',
 	'integration-github-ui',
 	'integration-ai-ui',
-	'integration-activepieces-ui'
+	'integration-activepieces-ui',
+	'dashboard-time-track-angular-ui',
+	'dashboard-time-track-react-ui'
 ]);
 
 /**
@@ -73,12 +76,7 @@ function shouldSkipPackage(packageName) {
  * @returns {boolean} True if entry should be skipped
  */
 function shouldSkipEntry(entry) {
-	return (
-		entry.name.startsWith('.') ||
-		SKIP_DIRS.has(entry.name) ||
-		entry.isSymbolicLink?.() ||
-		!entry.isDirectory()
-	);
+	return entry.name.startsWith('.') || SKIP_DIRS.has(entry.name) || entry.isSymbolicLink?.() || !entry.isDirectory();
 }
 
 /**
@@ -172,12 +170,7 @@ function getCopyPatterns(distPackagesDir, targetNodeModulesDir) {
 
 			// Check if this directory is a package
 			if (fs.existsSync(packageJsonPath)) {
-				skippedCount += processPackageDirectory(
-					fullPath,
-					packageJsonPath,
-					targetNodeModulesDir,
-					patterns
-				);
+				skippedCount += processPackageDirectory(fullPath, packageJsonPath, targetNodeModulesDir, patterns);
 				// Don't recurse into package directories
 				continue;
 			}

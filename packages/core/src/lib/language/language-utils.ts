@@ -13,7 +13,7 @@ export class LanguageUtils {
 
 			let insertOrUpdateQuery = '';
 			let payload: any[];
-			switch (queryRunner.connection.options.type) {
+			switch (queryRunner.dataSource.options.type as DatabaseTypeEnum) {
 				case DatabaseTypeEnum.sqlite:
 				case DatabaseTypeEnum.betterSqlite3:
 					payload = [name, code, is_system ? 1 : 0, description, color];
@@ -57,11 +57,11 @@ export class LanguageUtils {
 					break;
 				default:
 					throw Error(`
-						cannot create query to add languages due to unsupported database type: ${queryRunner.connection.options.type}
+						cannot create query to add languages due to unsupported database type: ${queryRunner.dataSource.options.type}
 					`);
 			}
 
-			await queryRunner.connection.manager.query(insertOrUpdateQuery, payload);
+			await queryRunner.dataSource.manager.query(insertOrUpdateQuery, payload);
 		}
 	}
 

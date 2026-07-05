@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,17 +16,16 @@ import { DynamicTabsComponent } from '@gauzy/ui-core/shared';
 	standalone: false
 })
 export class DashboardComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+	private readonly _route = inject(ActivatedRoute);
+	private readonly _store = inject(Store);
+	private readonly _pageTabRegistryService = inject(PageTabRegistryService);
+
 	public tabsetId: PageTabsetPageId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
 	public selectedEmployee: ISelectedEmployee;
 
 	@ViewChild('dynamicTabs', { static: true }) dynamicTabsComponent!: DynamicTabsComponent;
 
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly _route: ActivatedRoute,
-		private readonly _store: Store,
-		private readonly _pageTabRegistryService: PageTabRegistryService
-	) {
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -80,21 +79,6 @@ export class DashboardComponent extends TranslationBaseComponent implements OnIn
 			order: 2, // The order of the tab
 			permissions: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.PROJECT_MANAGEMENT_DASHBOARD]
 		});
-
-		// Register the time tracking tab
-		this._pageTabRegistryService.registerPageTab({
-			tabsetId: this.tabsetId, // The identifier for the tabset
-			tabId: 'time-tracking', // The identifier for the tab
-			tabsetType: 'route', // The type of tabset to use
-			route: '/pages/dashboard/time-tracking', // The route for the tab
-			tabTitle: (_i18n) => _i18n.getTranslation('TIMESHEET.TIME_TRACKING'), // The title for the tab
-			tabIcon: 'clock-outline', // The icon for the tab
-			responsive: true, // Whether the tab is responsive
-			activeLinkOptions: { exact: false }, // The options for the active link
-			order: 3, // The order of the tab
-			permissions: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKING_DASHBOARD]
-		});
-
 	}
 
 	/**

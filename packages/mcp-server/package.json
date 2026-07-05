@@ -28,25 +28,25 @@
 		"lib:watch": "cross-env NODE_OPTIONS=--max-old-space-size=12288 yarn nx build mcp-server --watch"
 	},
 	"peerDependencies": {
-		"@nestjs/common": "^11.1.14",
-		"@nestjs/core": "^11.1.14"
+		"@nestjs/common": "^11.1.26",
+		"@nestjs/core": "^11.1.26"
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.25.3",
-		"@nestjs/platform-express": "^11.1.14",
+		"@nestjs/platform-express": "^11.1.26",
 		"express": "^5.2.1",
 		"express-rate-limit": "^8.0.1",
 		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.5",
 		"csrf-csrf": "4.0.3",
-		"axios": "^1.13.5",
+		"axios": "^1.18.0",
 		"zod": "^4.3.6",
-		"ws": "^8.18.3",
+		"ws": "^8.21.0",
 		"tslib": "^2.6.2",
 		"jose": "^6.0.13",
 		"jsonwebtoken": "^9.0.0",
 		"bcryptjs": "^3.0.2",
-		"uuid": "^13.0.0",
+		"uuid": "^14.0.0",
 		"express-session": "^1.18.1",
 		"connect-redis": "^7.1.0",
 		"ioredis": "^5.7.0",

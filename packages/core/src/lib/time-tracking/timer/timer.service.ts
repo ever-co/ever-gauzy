@@ -152,8 +152,17 @@ export class TimerService {
 				break;
 
 			case MultiORMEnum.TypeORM:
-				// Get today's completed timelogs
-				logs = await this.typeOrmTimeLogRepository.find(buildLogQueryParameters(queryParams));
+				// Get today's completed timelogs.
+				// typeorm-v1: the legacy `join` find-option was removed and `find()` rejects it at
+				// runtime. `buildLogQueryParameters` still carries that inner join for the MikroORM
+				// path; for TypeORM we apply it explicitly on the query builder — an inner join on
+				// `timeSlots` filters to time logs that have at least one time slot.
+				const completedLogQueryParams = buildLogQueryParameters(queryParams);
+				logs = await this.typeOrmTimeLogRepository
+					.createQueryBuilder('time_log')
+					.setFindOptions({ where: completedLogQueryParams.where, order: completedLogQueryParams.order })
+					.innerJoin('time_log.timeSlots', 'time_slots')
+					.getMany();
 
 				const lastLogQueryParamsTypeOrm = buildCommonQueryParameters(queryParams); // Common query parameters for time log operations.
 				addRelationsToQuery(lastLogQueryParamsTypeOrm, request); // Adds relations from the request to the query parameters.

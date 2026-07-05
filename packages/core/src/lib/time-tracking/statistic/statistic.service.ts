@@ -79,7 +79,7 @@ export class StatisticService {
 	 */
 	async getOverallTrackedTime(): Promise<number> {
 		// Retrieve the database type from the configuration service
-		const dbType = this.configService.dbConnectionOptions.type;
+		const dbType = this.configService.dbConnectionOptions.type as DatabaseTypeEnum;
 
 		let overallDurationInSeconds = 0;
 
@@ -178,7 +178,7 @@ export class StatisticService {
 		} = request;
 
 		// Retrieves the database type from the configuration service.
-		const dbType = this.configService.dbConnectionOptions.type;
+		const dbType = this.configService.dbConnectionOptions.type as DatabaseTypeEnum;
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
 
 		// Filter employeeIds based on permissions and manager access
@@ -364,7 +364,7 @@ export class StatisticService {
 		} = request || {};
 
 		// Retrieves the database type from the configuration service.
-		const dbType = this.configService.dbConnectionOptions.type;
+		const dbType = this.configService.dbConnectionOptions.type as DatabaseTypeEnum;
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
 
 		// Filter employeeIds based on permissions and manager access
@@ -543,7 +543,7 @@ export class StatisticService {
 		const { organizationId, startDate, endDate, todayStart, todayEnd } = request;
 		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
 
-		const dbType = this.configService.dbConnectionOptions.type;
+		const dbType = this.configService.dbConnectionOptions.type as DatabaseTypeEnum;
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 
 		const { start: weeklyStart, end: weeklyEnd } = getDateRangeFormat(
@@ -1138,7 +1138,7 @@ export class StatisticService {
 		);
 
 		// Retrieves the database type from the configuration service.
-		const dbType = this.configService.dbConnectionOptions.type;
+		const dbType = this.configService.dbConnectionOptions.type as DatabaseTypeEnum;
 
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;
@@ -1498,7 +1498,7 @@ export class StatisticService {
 		}
 
 		// Retrieves the database type from the configuration service.
-		const dbType = this.configService.dbConnectionOptions.type;
+		const dbType = this.configService.dbConnectionOptions.type as DatabaseTypeEnum;
 
 		let todayStatistics: any[] = [];
 
@@ -2187,7 +2187,7 @@ export class StatisticService {
 		);
 
 		// Retrieves the database type from the configuration service.
-		const dbType = this.configService.dbConnectionOptions.type;
+		const dbType = this.configService.dbConnectionOptions.type as DatabaseTypeEnum;
 
 		// Determine if the request specifies to retrieve data for the current user only
 		const isOnlyMeSelected: boolean = request.onlyMe;

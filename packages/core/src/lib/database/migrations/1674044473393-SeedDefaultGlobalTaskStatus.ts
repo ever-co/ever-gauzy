@@ -15,7 +15,7 @@ export class SeedDefaultGlobalTaskStatus1674044473393 implements MigrationInterf
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(this.name + ' start running!'));
 
-		switch (queryRunner.connection.options.type) {
+		switch (queryRunner.dataSource.options.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 				await this.sqliteSeedDefaultTaskStatus(queryRunner);
@@ -27,7 +27,7 @@ export class SeedDefaultGlobalTaskStatus1674044473393 implements MigrationInterf
 				await this.mysqlSeedDefaultTaskStatus(queryRunner);
 				break;
 			default:
-				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+				throw Error(`Unsupported database: ${queryRunner.dataSource.options.type}`);
 		}
 	}
 	/**
@@ -65,7 +65,7 @@ export class SeedDefaultGlobalTaskStatus1674044473393 implements MigrationInterf
 				payload.push(uuidV4());
 
 				const query = `INSERT INTO "status" ("name", "value", "description", "icon", "color", "isSystem", "id") VALUES(?, ?, ?, ?, ?, ?, ?)`;
-				await queryRunner.connection.manager.query(query, payload);
+				await queryRunner.dataSource.manager.query(query, payload);
 			}
 		} catch (error) {
 			// since we have errors let's rollback changes we made
@@ -95,7 +95,7 @@ export class SeedDefaultGlobalTaskStatus1674044473393 implements MigrationInterf
 				const payload = Object.values(status);
 
 				const query = `INSERT INTO "status" ("name", "value", "description", "icon", "color", "isSystem") VALUES($1, $2, $3, $4, $5, $6)`;
-				await queryRunner.connection.manager.query(query, payload);
+				await queryRunner.dataSource.manager.query(query, payload);
 			}
 		} catch (error) {
 			// since we have errors let's rollback changes we made

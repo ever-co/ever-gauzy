@@ -176,6 +176,8 @@ spec:
                         value: '$JWT_SECRET'
                       - name: JWT_REFRESH_TOKEN_SECRET
                         value: '$JWT_REFRESH_TOKEN_SECRET'
+                      - name: JWT_VERIFICATION_TOKEN_SECRET
+                        value: '$JWT_VERIFICATION_TOKEN_SECRET'
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
                         value: '$JWT_REFRESH_TOKEN_EXPIRATION_TIME'
                       - name: ALLOWED_ORIGINS
@@ -294,8 +296,8 @@ spec:
                         protocol: TCP
                   resources:
                       requests:
-                          cpu: '0.5'
-                          memory: 2Gi
+                          cpu: '100m'
+                          memory: '672Mi'
                       limits:
                           cpu: '2'
                           memory: 8Gi
@@ -392,8 +394,8 @@ spec:
                         protocol: TCP
                   resources:
                       requests:
-                          cpu: '0.5'
-                          memory: 2Gi
+                          cpu: '50m'
+                          memory: '64Mi'
                       limits:
                           cpu: '2'
                           memory: 8Gi

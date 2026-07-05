@@ -46,3 +46,6 @@ export * from './i-audit-queue-transaction';
 export * from './i-audit-queue';
 export * from './i-screenshot-transaction';
 export * from './i-screenshot';
+export * from './i-audit-log';
+export * from './i-audit-log-transaction';
+export * from './i-pagination';

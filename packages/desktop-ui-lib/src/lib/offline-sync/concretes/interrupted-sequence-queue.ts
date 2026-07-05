@@ -4,7 +4,7 @@ import { Store } from '../../services/store.service';
 import { TimeSlotQueue } from '.';
 import { TimeSlotQueueService } from '..';
 import { ElectronService } from '../../electron/services';
-import { ErrorHandlerService } from '../../services';
+import { ErrorHandlerService, AuditLogService } from '../../services';
 import { TimeTrackerStatusService } from '../../time-tracker/time-tracker-status/time-tracker-status.service';
 import { TimeTrackerService } from '../../time-tracker/time-tracker.service';
 
@@ -15,7 +15,8 @@ export class InterruptedSequenceQueue extends SequenceQueue {
 		protected _store: Store,
 		protected _timeSlotQueueService: TimeSlotQueueService,
 		protected _timeTrackerService: TimeTrackerService,
-		protected _timeTrackerStatusService: TimeTrackerStatusService
+		protected _timeTrackerStatusService: TimeTrackerStatusService,
+		protected _auditLogService: AuditLogService
 	) {
 		super(
 			_electronService,
@@ -23,7 +24,8 @@ export class InterruptedSequenceQueue extends SequenceQueue {
 			_store,
 			_timeSlotQueueService,
 			_timeTrackerService,
-			_timeTrackerStatusService
+			_timeTrackerStatusService,
+			_auditLogService
 		);
 	}
 

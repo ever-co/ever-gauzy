@@ -3,13 +3,15 @@ import { ipcMain } from 'electron';
 import { TranslateService } from '../../translation';
 import { IConfigStore, IWindowService } from '../interfaces';
 import { TrayMenuManager } from '../managers/tray-menu-manager';
+import { IconManager } from '../managers/icon-manager';
 
 export class TrayIPCHandler {
 	constructor(
 		private menuManager: TrayMenuManager,
 		private windowService: IWindowService,
-		private configStore: IConfigStore
-	) {}
+		private configStore: IConfigStore,
+		private iconManager: IconManager
+	) { }
 
 	setupHandlers(): void {
 		this.setupTimerHandlers();
@@ -23,10 +25,12 @@ export class TrayIPCHandler {
 			this.menuManager.updateMenuItem('0', { visible: true });
 			this.menuManager.updateMenuItem('2', { enabled: true });
 			const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
-			if (timeTrackerWindow) {
+			if (timeTrackerWindow && process.platform === 'darwin') {
 				this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {
 					event: 'startTimer'
 				});
+			} else {
+				this.iconManager.updateIcon('start');
 			}
 		});
 		ipcMain.on('update_tray_stop', () => {
@@ -34,10 +38,12 @@ export class TrayIPCHandler {
 			this.menuManager.updateMenuItem('0', { visible: false });
 			this.menuManager.updateMenuItem('2', { enabled: false });
 			const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
-			if (timeTrackerWindow) {
+			if (timeTrackerWindow && process.platform === 'darwin') {
 				this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {
 					event: 'stopTimer'
 				});
+			} else {
+				this.iconManager.updateIcon('stop');
 			}
 		});
 
@@ -60,7 +66,7 @@ export class TrayIPCHandler {
 			const auth = this.configStore.get('auth');
 			if (auth && auth.employeeId && !auth.isLogout) {
 				const timeTrackerWindow = this.windowService.getOne(RegisteredWindow.TIMER);
-				if (timeTrackerWindow) {
+				if (timeTrackerWindow && process.platform === 'darwin') {
 					this.windowService.webContents(timeTrackerWindow).send('custom_tray_icon', {
 						event: 'updateTimer',
 						timeText: arg ? arg.timeRun : null

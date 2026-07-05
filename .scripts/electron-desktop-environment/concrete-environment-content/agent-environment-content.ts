@@ -27,6 +27,7 @@ export class AgentEnvironmentContent implements IContentGenerator {
 			REPO_OWNER: '${variable.AGENT_APP_REPO_OWNER || variable.REPO_OWNER}',
 			WELCOME_TITLE: '${variable.AGENT_APP_WELCOME_TITLE || variable.WELCOME_TITLE || ''}',
 			WELCOME_CONTENT: '${variable.AGENT_APP_WELCOME_CONTENT || variable.WELCOME_CONTENT || ''}',
+			PROTOCOL: '${variable.AGENT_APP_PROTOCOL || variable.PROTOCOL || 'gauzy-agent'}',
 			IS_AGENT: ${true},
 			IS_DESKTOP: ${false},
 			IS_SERVER: ${false},

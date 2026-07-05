@@ -1,19 +1,59 @@
 name: API Server Build Prod
 
+# The packaged desktop & server apps are built ONLY when 'master' is promoted to the 'apps' branch
+# (branch flow: develop -> stage -> master -> apps).
+# The build version is resolved at build time (.scripts/bump-version-electron.js) from the release
+# tag pointing at this commit, which 'Release Prod' creates on the merge to 'master' - so app releases
+# always carry the same version as the corresponding platform release and publish to the
+# same targets (each app repo's GitHub Releases + DigitalOcean Spaces).
 on:
-  workflow_run:
-    workflows: ['Release Prod']
+  push:
     branches:
-      - master
-    types:
-      - completed
+      - apps
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
+  check-release-tag:
+    # Only build when this exact commit carries a release tag (the version stamped into the
+    # packages - see header comment) - i.e. 'apps' was fast-forwarded
+    # to a 'master' commit that 'Release Prod' has already tagged. Retries absorb the short
+    # merge -> tag delay when 'apps' is promoted right after the 'master' merge.
+    runs-on: ubicloud-standard-4
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Verify a release tag points at this commit
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_NAME" != "apps" ]; then
+            echo "::error::This workflow only releases from the 'apps' branch (got '$GITHUB_REF_NAME')."
+            exit 1
+          fi
+          for i in $(seq 1 20); do
+            git fetch --quiet --depth=1 origin '+refs/tags/*:refs/tags/*' || echo "git fetch failed (attempt $i); will retry"
+            TAG=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
+            if [ -n "$TAG" ]; then
+              echo "Release tag on this commit: $TAG"
+              exit 0
+            fi
+            echo "No release tag points at this commit yet (attempt $i/20); retrying in 30s..."
+            sleep 30
+          done
+          echo "::error::No release tag points at this commit. Promote by fast-forwarding 'apps' to the tagged 'master' commit (git push origin origin/master:apps) after 'Release Prod' has created the tag."
+          exit 1
+
   release-linux:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -23,19 +63,19 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -50,13 +90,38 @@ jobs:
         run: 'sudo chown -R $(whoami) ./*'
 
       - name: Install system dependencies
-        run: 'sudo apt-get update && sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
+        run: 'sudo apt-get update && sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick flatpak flatpak-builder'
+
+      - name: Initialize Flatpak
+        run: |
+          export XDG_DATA_DIRS=$XDG_DATA_DIRS:/var/lib/flatpak/exports/share:$HOME/.local/share/flatpak/exports/share
+          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y --noninteractive flathub \
+            org.freedesktop.Platform//24.08 \
+            org.freedesktop.Sdk//24.08 \
+            org.electronjs.Electron2.BaseApp//24.08
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@v2
+        # Pin snapcraft 7.x: 8.0+ renamed the `snap` command to `pack`, but electron-builder's
+        # app-builder still invokes `snapcraft snap` (ERR_ELECTRON_BUILDER_CANNOT_EXECUTE). 7.x keeps
+        # the `snap` command and still supports the core22 base.
+        run: sudo snap install snapcraft --classic --channel=7.x/stable
+
+      - name: Use Python 3.11 for native rebuilds (Linux)
+        # node-gyp's gyp eval()-parses Electron 38's common.gypi; Python 3.12's stricter tokenizer
+        # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
+        # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine. Pinned to a SHA.
+        id: py311
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
 
       - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
+        # Install build deps into, and point node-gyp at, the SAME 3.11 interpreter (not a stray python3).
+        run: |
+          "${{ steps.py311.outputs.python-path }}" -m pip install packaging setuptools
+          echo "npm_config_python=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
+          echo "PYTHON=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
 
       - name: Install latest version of NPM
         run: 'sudo npm install -g npm@11.6.2'
@@ -84,7 +149,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump server version
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -117,11 +182,12 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: false
+          NX_NO_CLOUD: true
           NX_DAEMON: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
 
   release-linux-arm64:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -131,19 +197,19 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -160,17 +226,42 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick libx11-dev libxtst-dev libxt-dev libxinerama-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev libxkbfile-dev libxrandr-dev ruby ruby-dev rubygems build-essential
+          sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick libx11-dev libxtst-dev libxt-dev libxinerama-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev libxkbfile-dev libxrandr-dev ruby ruby-dev rubygems build-essential flatpak flatpak-builder
           sudo gem install --no-document fpm
 
+      - name: Initialize Flatpak
+        run: |
+          export XDG_DATA_DIRS=$XDG_DATA_DIRS:/var/lib/flatpak/exports/share:$HOME/.local/share/flatpak/exports/share
+          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install -y --user --noninteractive flathub \
+            org.freedesktop.Platform//24.08 \
+            org.freedesktop.Sdk//24.08 \
+            org.electronjs.Electron2.BaseApp//24.08
+
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@v2
+        # Pin snapcraft 7.x: 8.0+ renamed the `snap` command to `pack`, but electron-builder's
+        # app-builder still invokes `snapcraft snap` (ERR_ELECTRON_BUILDER_CANNOT_EXECUTE). 7.x keeps
+        # the `snap` command and still supports the core22 base.
+        run: sudo snap install snapcraft --classic --channel=7.x/stable
 
       - name: Install Multipass
         run: 'sudo snap install multipass'
 
+      - name: Use Python 3.11 for native rebuilds (Linux)
+        # node-gyp's gyp eval()-parses Electron 38's common.gypi; Python 3.12's stricter tokenizer
+        # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
+        # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine. Pinned to a SHA.
+        id: py311
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
+
       - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
+        # Install build deps into, and point node-gyp at, the SAME 3.11 interpreter (not a stray python3).
+        run: |
+          "${{ steps.py311.outputs.python-path }}" -m pip install packaging setuptools
+          echo "npm_config_python=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
+          echo "PYTHON=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
 
       - name: Install latest version of NPM
         run: 'sudo npm install -g npm@11.6.2'
@@ -198,7 +289,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump version server api app
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -232,12 +323,13 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: false
+          NX_NO_CLOUD: true
           NX_DAEMON: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
           SNAPCRAFT_BUILD_ENVIRONMENT: host
 
   release-mac:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -247,19 +339,19 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -299,7 +391,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump Server version
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -337,7 +429,7 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-          NX_NO_CLOUD: false
+          NX_NO_CLOUD: true
           NX_DAEMON: false
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_APP_PASSWORD: ${{ secrets.APPLE_ID_APP_PASSWORD }}
@@ -349,6 +441,7 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
 
   release-windows:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -358,7 +451,7 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           clean: false
 
@@ -376,7 +469,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
         shell: powershell
@@ -431,7 +524,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump Server version
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
@@ -512,6 +605,7 @@ jobs:
           NX_DAEMON: false
 
   release-windows-arm64:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -521,7 +615,7 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           clean: false
 
@@ -539,7 +633,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.14.0
+          node-version: 24.17.0
           architecture: arm64
 
       - name: Get yarn cache directory path
@@ -547,7 +641,7 @@ jobs:
         shell: bash
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: yarn-cache
         with:
           path: |
@@ -611,7 +705,7 @@ jobs:
         run: 'yarn postinstall.manual'
 
       - name: Bump version server api app
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const script = require('./.scripts/bump-version-electron.js')

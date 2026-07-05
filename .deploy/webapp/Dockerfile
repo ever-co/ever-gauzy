@@ -64,7 +64,7 @@ ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
 ARG VERDACCIO_TOKEN
 
-FROM node:24.14.0-alpine3.23 AS dependencies
+FROM node:24.16.0-alpine3.23 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -120,6 +120,8 @@ COPY --chown=node:node packages/plugins/integration-make-com-ui/package.json ./p
 COPY --chown=node:node packages/plugins/integration-zapier-ui/package.json ./packages/plugins/integration-zapier-ui/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
+COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
+COPY --chown=node:node packages/plugins/integration-plane-ui/package.json ./packages/plugins/integration-plane-ui/
 COPY --chown=node:node packages/plugins/integration-sim-ui/package.json ./packages/plugins/integration-sim-ui/
 COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-activepieces-ui/package.json ./packages/plugins/integration-activepieces-ui/
@@ -146,6 +148,7 @@ COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/v
 COPY --chown=node:node packages/plugins/camshot/package.json ./packages/plugins/camshot/
 COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
+COPY --chown=node:node packages/plugins/dashboard-time-track-angular-ui/package.json ./packages/plugins/dashboard-time-track-angular-ui/
 COPY --chown=node:node packages/plugins/dashboard-time-track-react-ui/package.json ./packages/plugins/dashboard-time-track-react-ui/
 COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
 COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
@@ -167,6 +170,11 @@ RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
 	sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
 	fi
 
+# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them.
+# Without this, patch-package prints "No patch files found" and the typeorm v1 compat patch is
+# never applied. (typeorm is installed here because packages/core/package.json is copied above.)
+COPY --chown=node:node patches ./patches
+
 # Must be without --production because we need dev deps installed
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
 RUN yarn postinstall.manual
@@ -175,7 +183,7 @@ RUN yarn cache clean
 # Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
 RUN rm -f .npmrc .yarnrc
 
-FROM node:24.14.0-alpine3.23 AS development
+FROM node:24.16.0-alpine3.23 AS development
 
 USER node:node
 
@@ -185,7 +193,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypo
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:24.14.0-alpine3.23 AS build
+FROM node:24.16.0-alpine3.23 AS build
 
 WORKDIR /srv/gauzy
 
@@ -209,7 +217,7 @@ ENV DEMO=${DEMO:-false}
 ENV IS_DOCKER=true
 
 # Enable NX Cloud caching for faster builds
-ENV NX_NO_CLOUD=false
+ENV NX_NO_CLOUD=true
 ENV NX_CLOUD_ACCESS_TOKEN=${NX_CLOUD_ACCESS_TOKEN}
 ENV NX_BRANCH=${NX_BRANCH}
 

@@ -90,12 +90,13 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 				// Create a query builder for the JobPreset entity
 				const query = this.typeOrmRepository.createQueryBuilder('job_preset');
 
+				// typeorm-v1: the legacy `join` find-option was removed. Left join the `employees`
+				// relation explicitly so the raw `"employees"."id" = :employeeId` filter below can
+				// resolve the alias.
+				query.leftJoin('job_preset.employees', 'employees');
+
 				// Set the find options for the query
 				query.setFindOptions({
-					join: {
-						alias: 'job_preset', // Alias for the job preset table
-						leftJoin: { employees: 'job_preset.employees' } // Left join employees relation
-					},
 					// Include job preset criterions in the query result
 					relations: { jobPresetCriterions: true },
 					// Order the results by job preset name in ascending order

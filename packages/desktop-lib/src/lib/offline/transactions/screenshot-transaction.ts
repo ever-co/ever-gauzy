@@ -49,12 +49,15 @@ export class ScreenshotTransaction implements IScreenshotTransaction {
 		await this._databaseProvider.connection.transaction(
 			async (trx: Knex.Transaction) => {
 				try {
+					const incrementValue = value.retries || 0;
+					const { retries, ...rest } = value;
 					await trx(TABLE_NAME_SCREENSHOT)
 						.where('id', '=', id)
-						.update(value);
-					await trx.commit();
+						.update({
+							...rest,
+							retries: trx.raw('COALESCE(??, 0) + ?', ['retries', incrementValue]),
+						});
 				} catch (error) {
-					await trx.rollback();
 					throw new AppError('SCREENSHOT_TRX', error);
 				}
 			}

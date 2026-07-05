@@ -15,7 +15,7 @@ export class AlterTagCustomEntityFields1713275626299 implements MigrationInterfa
     public async up(queryRunner: QueryRunner): Promise<void> {
         console.log(chalk.yellow(this.name + ' start running!'));
 
-        switch (queryRunner.connection.options.type) {
+        switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
             case DatabaseTypeEnum.sqlite:
             case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteUpQueryRunner(queryRunner);
@@ -37,7 +37,7 @@ export class AlterTagCustomEntityFields1713275626299 implements MigrationInterfa
      * @param queryRunner
      */
     public async down(queryRunner: QueryRunner): Promise<void> {
-        switch (queryRunner.connection.options.type) {
+        switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
             case DatabaseTypeEnum.sqlite:
             case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteDownQueryRunner(queryRunner);

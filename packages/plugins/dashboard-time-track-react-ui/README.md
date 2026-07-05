@@ -34,9 +34,10 @@ React dashboard plugin for Time Tracking widgets, using `@gauzy/plugin-ui`, `@ga
 ## Usage
 
 ```typescript
-import { ReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
+import { PluginUiConfig } from '@gauzy/plugin-ui';
+import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
 
 export const uiPluginConfig: PluginUiConfig = {
-  plugins: [ReactUiPlugin]
+  plugins: [DashboardTimeTrackReactUiPlugin]
 };
 ```

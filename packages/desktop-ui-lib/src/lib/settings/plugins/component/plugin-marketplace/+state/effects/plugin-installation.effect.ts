@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Inject, Injectable } from '@angular/core';
 import { ID, IPluginSource, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { createEffect, ofType } from '@ngneat/effects';
@@ -12,11 +13,14 @@ import {
 	exhaustMap,
 	finalize,
 	from,
+	fromEvent,
 	map,
 	of,
+	race,
 	switchMap,
 	take,
-	tap
+	tap,
+	timer
 } from 'rxjs';
 import { PluginActions } from '../../../+state/plugin.action';
 import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
@@ -30,6 +34,7 @@ import {
 import { PluginElectronService } from '../../../../services/plugin-electron.service';
 import { PluginEnvironmentService } from '../../../../services/plugin-environment.service';
 import { PluginService } from '../../../../services/plugin.service';
+import { DialogAppSelectorComponent } from '../../plugin-marketplace-item/dialog-app-selector/dialog-app-selector.component';
 import { DialogInstallationValidationComponent } from '../../plugin-marketplace-item/dialog-installation-validation/dialog-installation-validation.component';
 import { InstallationValidationChainBuilder } from '../../services';
 import { PluginInstallationActions } from '../actions/plugin-installation.action';
@@ -59,7 +64,8 @@ export class PluginInstallationEffects {
 		private readonly completeInstallCommand: CompleteInstallationCommand,
 		private readonly activateCommand: ActivatePluginCommand,
 		private readonly dialogService: NbDialogService,
-		private readonly installationValidationChainBuilder: InstallationValidationChainBuilder
+		private readonly installationValidationChainBuilder: InstallationValidationChainBuilder,
+		@Inject(DOCUMENT) private readonly document: Document
 	) {}
 
 	/**
@@ -92,6 +98,10 @@ export class PluginInstallationEffects {
 									PluginSubscriptionActions.openSubscriptionManagement(plugin),
 									PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false })
 								);
+							}
+
+							if (this.environmentService.canUseDeepLink(plugin)) {
+								return of(PluginMarketplaceActions.installFromWeb(plugin));
 							}
 
 							// Environment validation at effect level (web/mobile/desktop)
@@ -193,6 +203,88 @@ export class PluginInstallationEffects {
 	);
 
 	/**
+	 * Handles web-to-desktop installation via the gauzy:// deep link protocol.
+	 *
+	 * Flow:
+	 * 1. Open app-selector dialog listing all supported desktop apps
+	 * 2. If user cancels, do nothing
+	 * 3. Construct a deep-link URL using the chosen app's protocol
+	 * 4. Open it via a hidden anchor so browser-blocked scheme navigation still work
+	 */
+	installFromWeb$ = createEffect(
+		() =>
+			this.action$.pipe(
+				ofType(PluginMarketplaceActions.installFromWeb),
+				exhaustMap(({ plugin }) =>
+					this.openAppSelectorDialog().pipe(
+						switchMap((protocol) => {
+							if (!protocol) {
+								return of(PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false }));
+							}
+							const versionId = plugin.version?.id ?? '';
+							const params = new URLSearchParams({
+								pluginId: plugin.id,
+								versionId,
+								forceInstall: 'true'
+							});
+
+							const deepLinkUrl = `${protocol}://install-plugin?${params.toString()}`;
+
+							const anchor = this.document.createElement('a');
+							anchor.href = deepLinkUrl;
+							anchor.style.display = 'none';
+							this.document.body.appendChild(anchor);
+
+							// Observe whether the OS handled the protocol by watching for a
+							// window blur event (the desktop app steals focus) within 2.5 s.
+							const win = this.document.defaultView;
+							const appOpened$ = win
+								? fromEvent<Event>(win, 'blur').pipe(
+										take(1),
+										map(() => true)
+								  )
+								: EMPTY;
+							const timeout$ = timer(2500).pipe(map(() => false));
+
+							anchor.click();
+							anchor.remove();
+
+							// inside the desktop app, so the web UI must reflect uninstalled state.
+							return race(appOpened$, timeout$).pipe(
+								map((appOpened) => {
+									if (appOpened) {
+										this.toastrService.info(
+											this.translateService.instant(
+												'PLUGIN.TOASTR.INFO.DEEP_LINK_OPENED'
+											)
+										);
+									} else {
+										this.toastrService.warn(
+											this.translateService.instant(
+												'PLUGIN.TOASTR.WARNING.DEEP_LINK_FAILED'
+											)
+										);
+									}
+									return PluginToggleActions.toggle({ pluginId: plugin.id, enabled: false });
+								})
+							);
+						})
+					)
+				)
+			),
+		{ dispatch: true }
+	);
+
+	/**
+	 * Opens the app-selector dialog and returns the chosen protocol string, or null if dismissed.
+	 */
+	private openAppSelectorDialog(): Observable<string | null> {
+		return this.dialogService
+			.open(DialogAppSelectorComponent, { backdropClass: 'backdrop-blur' })
+			.onClose.pipe(take(1));
+	}
+
+	/**
 	 * Main installation orchestrator
 	 * Dispatches granular actions to trigger step-by-step effects
 	 * Following Single Responsibility: Only coordinates action dispatching
@@ -206,6 +298,12 @@ export class PluginInstallationEffects {
 					if (pluginId) {
 						this.pluginInstallationStore.setInstalling(pluginId, true);
 						this.pluginInstallationStore.setErrorMessage(pluginId, null);
+					} else {
+						// Generate a unique ID per local install to avoid key collisions
+						// for concurrent local installations.
+						const localInstallId = crypto.randomUUID();
+						(config as Record<string, unknown>)['_localInstallId'] = localInstallId;
+						this.pluginInstallationStore.setInstalling(localInstallId, true);
 					}
 					// Dispatch download start action to trigger download effect
 					return PluginInstallationActions.startDownload(config);
@@ -237,11 +335,23 @@ export class PluginInstallationEffects {
 								message || this.translateService.instant('PLUGIN.TOASTR.INFO.DOWNLOAD_COMPLETED')
 							);
 						}),
-						map(({ plugin, message }) => PluginInstallationActions.downloadCompleted(plugin, message)),
+						map(({ plugin, message }) =>
+							PluginInstallationActions.downloadCompleted(
+								plugin,
+								message,
+								config?.['contextType'],
+								config?.['_localInstallId'] as string | undefined
+							)
+						),
 						finalize(() => {
 							const pluginId = config?.['marketplaceId'];
 							if (pluginId) {
 								this.pluginInstallationStore.setDownloading(pluginId, false);
+							}
+							// Clear localInstallId here so that switchMap cancellation
+							const localInstallId = config?.['_localInstallId'] as string | undefined;
+							if (localInstallId) {
+								this.pluginInstallationStore.setInstalling(localInstallId, false);
 							}
 						}),
 						catchError((error) => {
@@ -261,20 +371,37 @@ export class PluginInstallationEffects {
 	/**
 	 * Step 2: Server Installation Effect
 	 * Single Responsibility: Only handles server-side installation
+	 * For local installations (without marketplace metadata), skip server installation
 	 */
 	serverInstallPlugin$ = createEffect(
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.downloadCompleted),
-				map(({ plugin }) => {
+				map(({ plugin, contextType, localInstallId }) => {
 					const { marketplaceId: pluginId, versionId } = plugin || {};
+					// For marketplace plugins, proceed with server installation
 					if (pluginId && versionId) {
 						return PluginInstallationActions.startServerInstallation(pluginId, versionId);
-					} else {
-						return PluginInstallationActions.downloadFailed(
-							this.translateService.instant('PLUGIN.TOASTR.ERROR.INVALID_PLUGIN_DATA')
+					}
+					// For local/direct installations: the contextType must be explicitly 'local',
+					// the DB record must have no marketplaceId, and a plugin name must be present.
+					// All three conditions together prevent marketplace plugins from bypassing
+					// access checks through the local installation path.
+					if (contextType === 'local' && !pluginId && plugin?.name) {
+						return PluginInstallationActions.startActivation(
+							plugin.installationId || null,
+							null,
+							plugin.name,
+							localInstallId
 						);
 					}
+					// Clear the local install loading key before dispatching failure
+					if (localInstallId) {
+						this.pluginInstallationStore.setInstalling(localInstallId, false);
+					}
+					return PluginInstallationActions.downloadFailed(
+						this.translateService.instant('PLUGIN.TOASTR.ERROR.INVALID_PLUGIN_DATA')
+					);
 				})
 			),
 		{
@@ -410,29 +537,39 @@ export class PluginInstallationEffects {
 
 	/**
 	 * Execute plugin activation
+	 * Handles both marketplace and local installations
 	 */
 	executeActivation$ = createEffect(
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.startActivation),
-				tap(({ marketplaceId }) => this.pluginInstallationStore.setActivating(marketplaceId, true)),
-				switchMap(({ installationId, marketplaceId }) => {
-					return this.activateCommand.execute({ marketplaceId, installationId }).pipe(
+				tap(({ marketplaceId }) => {
+					if (marketplaceId) {
+						this.pluginInstallationStore.setActivating(marketplaceId, true);
+					}
+				}),
+				switchMap(({ installationId, marketplaceId, name, localInstallId }) => {
+					return this.activateCommand.execute({ marketplaceId, installationId, name }).pipe(
 						tap(({ message }) => {
 							this.toastrService.success(
 								message || this.translateService.instant('PLUGIN.TOASTR.SUCCESS.ACTIVATION_COMPLETED')
 							);
 						}),
-						map(({ plugin, message }) => PluginInstallationActions.activationCompleted(plugin, message)),
+						map(({ plugin, message }) =>
+							PluginInstallationActions.activationCompleted(plugin, message, localInstallId)
+						),
 						finalize(() => {
-							this.pluginInstallationStore.setActivating(marketplaceId, false);
-							this.pluginInstallationStore.setInstalling(marketplaceId, false);
+							if (marketplaceId) {
+								this.pluginInstallationStore.setActivating(marketplaceId, false);
+								this.pluginInstallationStore.setInstalling(marketplaceId, false);
+							}
 						}),
 						catchError((error) =>
 							of(
 								PluginInstallationActions.activationFailed(
 									error?.message || 'Activation failed',
-									marketplaceId
+									marketplaceId,
+									localInstallId
 								)
 							)
 						)
@@ -446,18 +583,27 @@ export class PluginInstallationEffects {
 
 	/**
 	 * Finalize installation after successful activation
+	 * For local installations without marketplaceId, skip marketplace-specific actions
 	 */
 	finalizeInstallation$ = createEffect(
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.activationCompleted),
-				concatMap(({ plugin: { marketplaceId } }) => {
+				concatMap(({ plugin: { marketplaceId }, localInstallId }) => {
 					this.handleSuccess('Installation done', marketplaceId);
-					return [
-						PluginToggleActions.toggle({ pluginId: marketplaceId, enabled: true }),
-						PluginActions.selectPlugin(null),
-						PluginActions.refresh()
-					];
+					type DispatchableAction =
+						| ReturnType<typeof PluginActions.selectPlugin>
+						| ReturnType<typeof PluginActions.refresh>
+						| ReturnType<typeof PluginToggleActions.toggle>;
+					const actions: DispatchableAction[] = [PluginActions.selectPlugin(null), PluginActions.refresh()];
+					// Only toggle for marketplace plugins
+					if (marketplaceId) {
+						actions.unshift(PluginToggleActions.toggle({ pluginId: marketplaceId, enabled: true }));
+					} else if (localInstallId) {
+						// Clear the unique local install loading key generated at install start
+						this.pluginInstallationStore.setInstalling(localInstallId, false);
+					}
+					return actions;
 				})
 			),
 		{
@@ -478,6 +624,8 @@ export class PluginInstallationEffects {
 						this.pluginInstallationStore.setDownloading(pluginId, false);
 						this.pluginInstallationStore.setErrorMessage(pluginId, error);
 					}
+					// For local installs the unique loading key is cleared directly in the
+					// downloadPlugin$ catchError, so no additional cleanup is needed here.
 					this.toastrService.error(
 						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.DOWNLOAD_FAILED')
 					);
@@ -487,7 +635,7 @@ export class PluginInstallationEffects {
 									pluginId,
 									enabled: false
 								})
-						  )
+							)
 						: EMPTY;
 				})
 			),
@@ -519,7 +667,7 @@ export class PluginInstallationEffects {
 									pluginId,
 									enabled: false
 								})
-						  )
+							)
 						: EMPTY;
 				})
 			),
@@ -549,7 +697,7 @@ export class PluginInstallationEffects {
 									pluginId,
 									enabled: false
 								})
-						  )
+							)
 						: EMPTY;
 				})
 			),
@@ -563,11 +711,14 @@ export class PluginInstallationEffects {
 		() =>
 			this.action$.pipe(
 				ofType(PluginInstallationActions.activationFailed),
-				concatMap(({ error, pluginId }) => {
+				concatMap(({ error, pluginId, localInstallId }) => {
 					if (pluginId) {
 						this.pluginInstallationStore.setInstalling(pluginId, false);
 						this.pluginInstallationStore.setActivating(pluginId, false);
 						this.pluginInstallationStore.setErrorMessage(pluginId, error);
+					} else if (localInstallId) {
+						// Clear the unique local install loading key on activation failure
+						this.pluginInstallationStore.setInstalling(localInstallId, false);
 					}
 					this.toastrService.error(
 						error || this.translateService.instant('PLUGIN.TOASTR.ERROR.ACTIVATION_FAILED')
@@ -579,7 +730,7 @@ export class PluginInstallationEffects {
 									pluginId,
 									enabled: false
 								})
-						  )
+							)
 						: EMPTY;
 				})
 			),

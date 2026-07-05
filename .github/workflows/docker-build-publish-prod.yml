@@ -15,18 +15,18 @@ jobs:
     timeout-minutes: 300
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
           driver: docker
 
       - name: Build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./.deploy/api/Dockerfile
@@ -51,7 +51,7 @@ jobs:
           sudo docker image list
 
       - name: Login to DockerHub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -73,7 +73,7 @@ jobs:
           docker push registry.digitalocean.com/ever/gauzy-api:latest
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -84,7 +84,7 @@ jobs:
           docker push ghcr.io/ever-co/gauzy-api:latest
 
     #   - name: Login to CW Container Registry
-    #     uses: docker/login-action@v3
+    #     uses: docker/login-action@v4
     #     with:
     #       registry: ${{ secrets.CW_DOCKER_REGISTRY }}
     #       username: ${{ secrets.CW_DOCKER_USER }}
@@ -99,16 +99,16 @@ jobs:
     timeout-minutes: 300
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./.deploy/webapp/Dockerfile
@@ -133,7 +133,7 @@ jobs:
           sudo docker image list
 
       - name: Login to DockerHub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -155,7 +155,7 @@ jobs:
           docker push registry.digitalocean.com/ever/gauzy-webapp:latest
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -166,7 +166,7 @@ jobs:
           docker push ghcr.io/ever-co/gauzy-webapp:latest
 
     #   - name: Login to CW Container Registry
-    #     uses: docker/login-action@v3
+    #     uses: docker/login-action@v4
     #     with:
     #       registry: ${{ secrets.CW_DOCKER_REGISTRY }}
     #       username: ${{ secrets.CW_DOCKER_USER }}
@@ -181,18 +181,18 @@ jobs:
     timeout-minutes: 300
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
           driver: docker
 
       - name: Build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./.deploy/worker/Dockerfile
@@ -221,7 +221,7 @@ jobs:
           sudo docker image list
 
       - name: Login to DockerHub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -243,7 +243,7 @@ jobs:
           docker push registry.digitalocean.com/ever/gauzy-worker:latest
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -254,7 +254,7 @@ jobs:
           docker push ghcr.io/ever-co/gauzy-worker:latest
 
     #   - name: Login to CW Container Registry
-    #     uses: docker/login-action@v3
+    #     uses: docker/login-action@v4
     #     with:
     #       registry: ${{ secrets.CW_DOCKER_REGISTRY }}
     #       username: ${{ secrets.CW_DOCKER_USER }}

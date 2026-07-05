@@ -45,4 +45,19 @@ class LocalStore {
 	}
 }
 
-export const localStore = new LocalStore();
+// Lazily-initialized singleton — deferred so that the underlying ElectronStore
+// (and its app.getPath('userData') call) does not run before app.ready.
+let _localStore: LocalStore | null = null;
+
+export const localStore = new Proxy({} as LocalStore, {
+	get(_target, prop) {
+		if (!_localStore) _localStore = new LocalStore();
+		const value = (_localStore as any)[prop];
+		return typeof value === 'function' ? value.bind(_localStore) : value;
+	},
+	set(_target, prop, value) {
+		if (!_localStore) _localStore = new LocalStore();
+		(_localStore as any)[prop] = value;
+		return true;
+	}
+});

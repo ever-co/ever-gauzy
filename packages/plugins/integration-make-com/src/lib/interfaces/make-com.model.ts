@@ -14,6 +14,12 @@ export enum MakeSettingName {
 	CLIENT_ID = 'client_id',
 	CLIENT_SECRET = 'client_secret',
 	AUTH_CODE = 'auth_code',
+	/** The Make.com zone for API calls, e.g. "us2", "eu1" */
+	ZONE = 'make_zone',
+	/** The Make.com organization ID (their side, not Gauzy) */
+	MAKE_ORGANIZATION_ID = 'make_organization_id',
+	/** The Make.com team ID (their side, not Gauzy) */
+	MAKE_TEAM_ID = 'make_team_id',
 }
 
 // Define the return type for the settings
@@ -51,10 +57,7 @@ export interface IMakeComAuthConfig {
 	postInstallUrl: string;
 }
 
-export interface IMakeComCreateIntegration extends IBasePerTenantAndOrganizationEntityModel {
-	client_id: string;
-	client_secret: string;
-}
+export interface IMakeComCreateIntegration extends IBasePerTenantAndOrganizationEntityModel {}
 
 export interface IMakeComOAuthCodeExchange {
 	code: string;

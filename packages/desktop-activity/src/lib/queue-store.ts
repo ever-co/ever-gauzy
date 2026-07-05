@@ -1,14 +1,16 @@
-
-import * as Database from 'better-sqlite3';
+import type * as BetterSqlite3 from 'better-sqlite3';
 import { randomUUID } from 'crypto';
 
 export class QueueStore {
-	private db: Database.Database;
+	private db: BetterSqlite3.Database;
 	private tableName: string;
 
-	constructor(options: { path: string, tableName?: string }) {
+	constructor(options: { path: string; tableName?: string }) {
 		this.tableName = options.tableName || 'task';
-		this.db = new Database(options.path);
+		// Lazy require — defers native binary load until first QueueStore construction
+		// (after app.ready), not at module parse time.
+		const Database: typeof import('better-sqlite3') = require('better-sqlite3');
+		this.db = new (Database as any)(options.path);
 		this.db.pragma('journal_mode = WAL');
 		this.db.pragma('synchronous = NORMAL');
 
@@ -56,9 +58,7 @@ export class QueueStore {
 
 	getTask(taskId: string, cb: (err: any, task?: any) => void) {
 		try {
-			const row = this.db
-				.prepare(`SELECT task FROM ${this.tableName} WHERE id=?`)
-				.get(taskId);
+			const row = this.db.prepare(`SELECT task FROM ${this.tableName} WHERE id=?`).get(taskId);
 			if (!row) return cb(null, undefined);
 			cb(null, JSON.parse(row.task));
 		} catch (err) {
@@ -78,7 +78,7 @@ export class QueueStore {
 					id: taskId,
 					task: JSON.stringify(task),
 					priority,
-					added: Date.now(),
+					added: Date.now()
 				});
 			cb();
 		} catch (err) {
@@ -90,8 +90,9 @@ export class QueueStore {
 	private lockRows(n: number, orderBy: string): string {
 		const lockId = randomUUID();
 		const txn = this.db.transaction(() => {
-			const result = this.db.prepare(
-				`UPDATE ${this.tableName}
+			const result = this.db
+				.prepare(
+					`UPDATE ${this.tableName}
 				SET lock = @lockId
 				WHERE id IN (
 					SELECT id FROM ${this.tableName}
@@ -99,7 +100,8 @@ export class QueueStore {
 					${orderBy}
 					LIMIT @n
 				)`
-			).run({ lockId, n });
+				)
+				.run({ lockId, n });
 			return result.changes > 0 ? lockId : '';
 		});
 		return txn();
@@ -134,9 +136,7 @@ export class QueueStore {
 
 	getLock(lockId: string, cb: (err: any, tasks: { [taskId: string]: any }) => void) {
 		try {
-			const rows = this.db
-				.prepare(`SELECT id, task FROM ${this.tableName} WHERE lock=?`)
-				.all(lockId);
+			const rows = this.db.prepare(`SELECT id, task FROM ${this.tableName} WHERE lock=?`).all(lockId);
 
 			const tasks: { [taskId: string]: any } = {};
 			for (const r of rows) {

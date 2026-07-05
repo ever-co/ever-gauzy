@@ -27,6 +27,10 @@ export const recapChildRoutes: Routes = [
 		loadComponent: () => import('./features/projects/projects.component').then((m) => m.ProjectsComponent)
 	},
 	{
+		path: 'sessions-list',
+		loadComponent: () => import('../time-tracker/timer-session/timer-session.component').then((m) => m.TimerSessionComponent)
+	},
+	{
 		path: '**',
 		redirectTo: 'hourly'
 	}

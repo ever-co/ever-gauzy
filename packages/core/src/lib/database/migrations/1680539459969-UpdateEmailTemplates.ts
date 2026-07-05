@@ -15,7 +15,7 @@ export class UpdateEmailTemplates1680539459969 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(this.name + ' start running!'));
 
-		switch (queryRunner.connection.options.type) {
+		switch (queryRunner.dataSource.options.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 			case DatabaseTypeEnum.postgres:
@@ -25,7 +25,7 @@ export class UpdateEmailTemplates1680539459969 implements MigrationInterface {
 				await this.mysqlUpdateEmailTemplates(queryRunner);
 				break;
 			default:
-				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+				throw Error(`Unsupported database: ${queryRunner.dataSource.options.type}`);
 		}
 	}
 	/**

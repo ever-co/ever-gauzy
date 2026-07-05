@@ -8,3 +8,4 @@ export * from './timer.model';
 export * from './kb-mouse-activity.model';
 export * from './audit-queue.model';
 export * from './screenshot.model';
+export * from './audit-log.model';

@@ -100,7 +100,7 @@ export class WakatimeService {
 					.createQueryBuilder()
 					.insert()
 					.values(wakatime)
-					.onConflict(`("time", "entities") do nothing`)
+					.orIgnore()
 					.execute();
 		}
 	}
@@ -126,7 +126,7 @@ export class WakatimeService {
 					.createQueryBuilder()
 					.insert()
 					.values(wakatime)
-					.onConflict(`("time", "entities") do nothing`)
+					.orIgnore()
 					.execute();
 		}
 	}

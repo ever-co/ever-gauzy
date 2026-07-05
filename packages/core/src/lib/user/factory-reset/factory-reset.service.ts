@@ -760,11 +760,15 @@ export class FactoryResetService {
 			default:
 				oldOrganization = await this.typeOrmUserOrganizationRepository.findOne({
 					order: { createdAt: 'ASC' },
-					select: ['organizationId'],
+					select: {
+                        organizationId: true
+                    },
 					where: { userId: userId }
 				});
 				organizations = await this.typeOrmUserOrganizationRepository.find({
-					select: ['organizationId'],
+					select: {
+                        organizationId: true
+                    },
 					where: { userId: userId }
 				});
 				break;

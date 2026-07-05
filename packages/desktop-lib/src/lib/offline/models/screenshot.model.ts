@@ -9,12 +9,20 @@ export class Screenshot implements ScreenshotTO, Serializable<ScreenshotTO> {
 	private _synced: boolean;
 	private _id: number;
 	private _recordedAt: Date;
+	private _message?: string;
+	private _retries?: number;
+	private _lastAttemptAt?: Date;
+
 	constructor(screenshot: ScreenshotTO) {
+		this._id = screenshot.id;
 		this._timeSlotId = screenshot.timeslotId;
 		this._activityId = screenshot.activityId;
 		this._imagePath = screenshot.imagePath;
 		this._synced = screenshot.synced;
 		this._recordedAt = screenshot.recordedAt;
+		this._message = screenshot.message;
+		this._retries = screenshot.retries;
+		this._lastAttemptAt = screenshot.lastAttemptAt;
 	}
 
 	public set id(value: number) {
@@ -53,6 +61,24 @@ export class Screenshot implements ScreenshotTO, Serializable<ScreenshotTO> {
 	public get recordedAt(): Date {
 		return this._recordedAt;
 	}
+	public set message(value: string) {
+		this._message = value;
+	}
+	public get message(): string {
+		return this._message;
+	}
+	public set retries(value: number) {
+		this._retries = value;
+	}
+	public get retries(): number {
+		return this._retries;
+	}
+	public set lastAttemptAt(value: Date) {
+		this._lastAttemptAt = value;
+	}
+	public get lastAttemptAt(): Date {
+		return this._lastAttemptAt;
+	}
 
 	public toObject(): ScreenshotTO {
 		return {
@@ -61,7 +87,10 @@ export class Screenshot implements ScreenshotTO, Serializable<ScreenshotTO> {
 			activityId: this.activityId,
 			imagePath: this.imagePath,
 			synced: this.synced,
-			recordedAt: this.recordedAt
+			recordedAt: this.recordedAt,
+			message: this.message,
+			retries: this.retries,
+			lastAttemptAt: this.lastAttemptAt
 		};
 	}
 }

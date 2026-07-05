@@ -1,0 +1,649 @@
+// ── Variables ─────────────────────────────────────────────────
+$bg: var(--gauzy-card-2);
+$surface: var(--gauzy-card-3);
+$border: var(--gauzy-border-default-color);
+$divider: var(--divider-color);
+$text: var(--gauzy-text-color-1);
+$hint: var(--gauzy-text-color-2);
+$primary-dim: var(--color-primary-transparent-100);
+$success: var(--color-success-default);
+$success-dim: rgba(0, 214, 143, 0.12);
+$warning: #ffaa00;
+$warning-dim: rgba(255, 170, 0, 0.12);
+$danger: #ff3d71;
+$danger-dim: rgba(255, 61, 113, 0.12);
+$radius: var(--border-radius);
+$radius-lg: calc(var(--border-radius) * 1.5);
+$info-dim: rgba(0, 149, 255, 0.12);
+$info: var(--color-info-default);
+
+:host {
+  display: block;
+  background: $bg;
+  min-height: 100vh;
+  font-family: 'DM Sans', sans-serif;
+  color: $text;
+  font-size: 14px;
+
+  nb-layout {
+    min-height: unset;
+    background: $bg;
+  }
+
+  nb-layout-column {
+    padding: 28px 20px;
+  }
+}
+
+.session-card {
+  max-width: 800px;
+  margin: 0 auto;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+
+  nb-card-header {
+    border-bottom: 1px solid $border;
+    background: transparent;
+    padding: 16px 20px;
+  }
+
+  nb-card-body {
+    padding: 16px 20px;
+    background: transparent;
+  }
+}
+
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page-title {
+  font-size: 17px;
+  font-weight: 500;
+  color: $text;
+}
+
+.page-meta {
+  font-size: 12px;
+  color: $hint;
+  margin-top: 3px;
+}
+
+.head-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: $radius;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s;
+
+  &-ghost {
+    background: transparent;
+    color: $hint;
+    border: 1px solid $border;
+
+    &:hover {
+      background: $divider;
+      color: $text;
+    }
+  }
+
+  &-primary {
+    background: var(--color-primary-default);
+    color: #fff;
+
+    &:hover {
+      background: var(--color-primary-600);
+    }
+  }
+}
+
+.filter-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid $border;
+  background: transparent;
+  color: $hint;
+  font-family: inherit;
+  transition: all 0.15s;
+
+  &.active {
+    background: $primary-dim;
+    color: #7b9fff;
+    border-color: rgba(51, 102, 255, 0.3);
+  }
+
+  &:hover:not(.active) {
+    background: $divider;
+    color: $text;
+  }
+}
+
+.group-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  color: $hint;
+  text-transform: uppercase;
+  padding: 4px 0 8px;
+  margin-top: 4px;
+}
+
+// Reset Nebular's nb-list and nb-list-item host defaults so our layout takes over
+:host ::ng-deep {
+  nb-list.session-list {
+    padding: 0;
+    border: none;
+    background: transparent;
+    display: block;
+  }
+
+  nb-list-item.session-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: $bg;
+    border: 1px solid $border;
+    border-radius: $radius;
+    padding: 13px 16px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    width: 99%;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.14);
+
+      .row-actions {
+        opacity: 1;
+      }
+    }
+
+    &.running {
+      border-color: rgba(0, 214, 143, 0.4);
+    }
+  }
+
+  nb-list-item.empty-state {
+    display: flex;
+    justify-content: center;
+    padding: 40px 0;
+    border: none;
+    background: transparent;
+  }
+}
+
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: $bg;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 13px 16px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  width: 99%;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+
+    .row-actions {
+      opacity: 1;
+    }
+  }
+
+  &.running {
+    border-color: rgba(0, 214, 143, 0.4);
+  }
+}
+
+.color-bar {
+  width: 3px;
+  height: 38px;
+  border-radius: 0;
+  flex-shrink: 0;
+
+  &.status-synced {
+    background: $info;
+  }
+
+  &.status-pending {
+    background: $warning;
+  }
+
+  &.status-syncing {
+    background: $info;
+  }
+
+  &.status-failed {
+    background: $danger;
+  }
+
+  &.status-removed {
+    background: $danger;
+  }
+  &.status-running {
+    background: $success;
+  }
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: $success;
+  flex-shrink: 0;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(0.7);
+  }
+}
+
+.session-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: $text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-proj {
+  font-size: 12px;
+  color: $hint;
+  margin-top: 2px;
+}
+
+// ── Badges ────────────────────────────────────────────────────
+.badges {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+
+  &-blue {
+    background: $primary-dim;
+    color: #7b9fff;
+    border: 1px solid rgba(51, 102, 255, 0.2);
+  }
+  &-green {
+    background: $success-dim;
+    color: $success;
+    border: 1px solid rgba(0, 214, 143, 0.2);
+  }
+  &-amber {
+    background: $warning-dim;
+    color: $warning;
+    border: 1px solid rgba($warning, 0.2);
+  }
+  &-red {
+    background: $danger-dim;
+    color: #ff7096;
+    border: 1px solid rgba($danger, 0.2);
+  }
+}
+
+// ── Duration column ───────────────────────────────────────────
+.dur-col {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.dur {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: $text;
+}
+
+.time-range {
+  font-size: 11px;
+  color: $hint;
+  margin-top: 2px;
+}
+
+// ── Row actions ───────────────────────────────────────────────
+.row-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: $hint;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 1;
+  transition: color 0.15s;
+
+  &:hover {
+    color: $text;
+  }
+  &.danger:hover {
+    color: $danger;
+  }
+}
+
+.session-body {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+// ── Row top: task name + right slot ───────────────────────────
+.row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.task-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: $text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+// ── Retry button (replaces sync badge on failed) ──────────────
+.retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid rgba(255, 61, 113, 0.35);
+  color: $danger;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: inherit;
+  transition: background 0.15s;
+
+  nb-icon {
+    font-size: 13px;
+  }
+
+  &:hover {
+    background: $danger-dim;
+  }
+}
+
+// ── Sync status badge ─────────────────────────────────────────
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  nb-icon {
+    font-size: 13px;
+  }
+
+  &.status-synced {
+    background: $success-dim;
+    color: $success;
+    border: 1px solid rgba(0, 214, 143, 0.25);
+  }
+
+  &.status-pending {
+    background: $warning-dim;
+    color: $warning;
+    border: 1px solid rgba(255, 170, 0, 0.25);
+  }
+
+  &.status-syncing {
+    background: $info-dim;
+    color: $info;
+    border: 1px solid rgba(0, 149, 255, 0.25);
+  }
+}
+
+// Spinning icon for syncing state
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+nb-icon.spin {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+// ── Row meta ──────────────────────────────────────────────────
+.row-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.row-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  color: $hint;
+  flex: 1;
+}
+
+.row-bottom-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &.timestamps {
+    gap: 5px;
+  }
+}
+
+.meta-icon {
+  font-size: 13px;
+  opacity: 0.65;
+
+  &.arrow {
+    font-size: 11px;
+    opacity: 0.35;
+  }
+}
+
+.meta-sep {
+  color: rgba(255, 255, 255, 0.15);
+  font-size: 10px;
+  user-select: none;
+}
+
+.meta-dur {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: $text;
+}
+
+// ── Badges ────────────────────────────────────────────────────
+.badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+
+  &-blue {
+    background: $primary-dim;
+    color: #7b9fff;
+    border: 1px solid rgba(51, 102, 255, 0.2);
+  }
+  &-green {
+    background: $success-dim;
+    color: $success;
+    border: 1px solid rgba(0, 214, 143, 0.2);
+  }
+  &-amber {
+    background: $warning-dim;
+    color: $warning;
+    border: 1px solid rgba(255, 170, 0, 0.2);
+  }
+  &-red {
+    background: $danger-dim;
+    color: #ff7096;
+    border: 1px solid rgba(255, 61, 113, 0.2);
+  }
+}
+
+.cloud-time {
+  &.status-synced {
+    color: $info;
+  }
+  &.status-pending {
+    color: $warning;
+  }
+  &.status-failed {
+    color: $danger;
+  }
+  &.status-running {
+    color: $success;
+  }
+}
+
+// ── Empty state ───────────────────────────────────────────────
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  color: $hint;
+  font-size: 13px;
+
+  nb-icon {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 8px;
+  }
+}
+
+.footer-total {
+  font-size: 13px;
+  color: $hint;
+
+  span {
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    color: $text;
+  }
+}
+
+.session-list {
+  max-height: 450px;
+  overflow-y: auto !important;
+  border-radius: $radius;
+}
+
+.dur-local {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  color: $text;
+
+  &.live {
+    color: $success;
+  }
+}
+
+.dur-server {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: $hint;
+
+  nb-icon {
+    font-size: 13px;
+  }
+
+  &.offline {
+    color: rgba(255, 255, 255, 0.2);
+    nb-icon {
+      color: rgba(255, 255, 255, 0.2);
+    }
+  }
+}

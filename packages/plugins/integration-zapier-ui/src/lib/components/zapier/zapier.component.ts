@@ -88,6 +88,18 @@ export class ZapierComponent extends TranslationBaseComponent implements OnInit,
 				route: this.getRoute('webhooks')
 			},
 			{
+				title: this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.TAB.ZAPS'),
+				icon: 'grid-outline',
+				responsive: true,
+				route: this.getRoute('zaps')
+			},
+			{
+				title: this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.TAB.ZAP_TEMPLATES'),
+				icon: 'layout-outline',
+				responsive: true,
+				route: this.getRoute('zap-templates')
+			},
+			{
 				title: this.getTranslation('INTEGRATIONS.ZAPIER_PAGE.TAB.SETTINGS'),
 				icon: 'settings-2-outline',
 				responsive: true,

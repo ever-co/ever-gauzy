@@ -37,11 +37,15 @@ export * from './lib/server-dashboard/server-dashboard.module';
 export * from './lib/server-down/server-down.module';
 export * from './lib/services';
 export * from './lib/settings/plugins/component/plugin-layout/plugin-layout.component';
+export * from './lib/settings/plugins/component/plugin-layout/plugin-show-builtin.token';
+export * from './lib/settings/plugins/component/plugin-installed-routing.module';
 export * from './lib/settings/plugins/component/plugin-marketplace/+state';
 export * from './lib/settings/plugins/component/plugin-marketplace/plugin-marketplace-routing.module';
 export * from './lib/settings/plugins/component/plugin-marketplace/plugin-marketplace.component';
 export * from './lib/settings/plugins/plugin-routing.module';
+export * from './lib/settings/plugins/plugin-route-selectors';
 export * from './lib/settings/plugins/plugins.module';
+export * from './lib/settings/plugins/services/resolvers';
 export * from './lib/settings/settings.component';
 export * from './lib/setup/setup.component';
 export * from './lib/splash-screen/splash-screen.component';
@@ -51,6 +55,7 @@ export * from './lib/time-tracker/task-table/table/task-table.component';
 export * from './lib/time-tracker/task-table/task-table.module';
 export * from './lib/time-tracker/time-tracker.component';
 export * from './lib/updater/updater.component';
+export * from './lib/logger/logger.component';
 
 
 /**

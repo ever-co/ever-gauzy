@@ -1,13 +1,20 @@
 // Marketplace Container Layout
+:host {
+  display: block;
+  height: 100%;
+}
+
 .marketplace-container {
   display: grid;
   /* Use a flexible sidebar width that adapts without forcing fixed heights */
   grid-template-columns: minmax(280px, 340px) 1fr;
   background: var(--gauzy-card-2);
-  height: calc(100vh - 7.5rem);
+  height: 100%;
+  overflow: hidden;
   padding: 1rem;
   gap: 1rem;
   border-radius: var(--border-radius);
+  box-sizing: border-box;
 
   @media (max-width: 1024px) {
     grid-template-columns: minmax(260px, 300px) 1fr;
@@ -17,6 +24,10 @@
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
     gap: 1rem;
     padding: 1rem;
   }
@@ -25,15 +36,20 @@
 .filter-panel {
   display: flex;
   flex-direction: column;
-  height: fit-content;
-  max-height: calc(100vh - 9.5rem);
-  overflow: auto;
-  position: sticky;
-  top: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  @media (max-width: 992px) {
+    height: auto;
+    max-height: 60vh;
+    overflow-y: auto;
+    order: -1;
+  }
 
   @media (max-width: 768px) {
-    position: relative;
-    max-height: none;
+    height: auto;
+    max-height: 50vh;
     order: -1;
   }
 }
@@ -43,7 +59,8 @@
   flex-direction: column;
   min-width: 0;
   gap: 1rem;
-  flex: 1;
+  height: 100%;
+  overflow: hidden;
 }
 
 // Results Header
@@ -81,11 +98,11 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--gauzy-shadow);
 
     nb-icon {
       font-size: 1.5rem;
-      color: white;
+      color: var(--text-control-color);
     }
 
     @media (max-width: 768px) {
@@ -192,142 +209,130 @@
   }
 }
 
-// Content Active (Plugin List)
-.content-active {
-  overflow: auto;
-  flex: 1;
+// Plugin List view modes (applied directly to nb-card.plugin-list)
+.grid-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1rem;
+  align-content: start;
 
-  .grid-view {
-    // Grid view: plugins will be displayed in cards
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-    gap: 1rem;
-    padding: 1rem;
-    align-content: start;
-
-    &.unavailable {
-      display: flex;
-      width: 100%;
-    }
-
-    &.first {
-      max-height: calc(100vh - 15rem);
-      overflow: auto;
-    }
-
-    @media (max-width: 1400px) {
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 1.25rem;
-    }
-
-    @media (max-width: 1200px) {
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 1.25rem;
-    }
-
-    @media (max-width: 992px) {
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1rem;
-    }
-
-    @media (max-width: 768px) {
-      grid-template-columns: 1fr;
-      padding: 1rem;
-    }
-
-    .plugin {
-      border-bottom: none;
-      margin-bottom: 0;
-    }
-  }
-
-  &.list-view {
-    // List view: plugins will be displayed in a compact list
+  &.unavailable {
     display: flex;
-    flex-direction: column;
-    gap: 0;
-    padding: 1rem;
+    width: 100%;
+  }
 
-    @media (max-width: 768px) {
-      padding: 0.75rem;
+  @media (max-width: 1400px) {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.25rem;
+  }
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+  }
+
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+
+  .plugin {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+}
+
+.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  @media (max-width: 768px) {
+    padding: 0.75rem;
+  }
+
+  .plugin {
+    border-bottom: 1px solid var(--border-basic-color-3);
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: var(--gauzy-card-2);
     }
 
-    .plugin {
-      border-bottom: 1px solid var(--border-basic-color-3);
-      transition: background 0.2s ease;
+    &:last-child,
+    &.none {
+      border-bottom: none;
+    }
+  }
+}
 
-      &:hover {
-        background: var(--gauzy-card-2);
-      }
+// Upload FAB
+.button-upload {
+  cursor: pointer;
+  position: fixed;
+  bottom: 2.5rem;
+  right: 2.5rem;
+  z-index: 10;
 
-      &:last-child,
-      &.none {
-        border-bottom: none;
-      }
+  .upload-fab {
+    background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-primary-600) 100%);
+    box-shadow: var(--gauzy-shadow);
+    border-radius: 50%;
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    border: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    nb-icon {
+      font-size: 28px;
+      color: var(--text-control-color);
+    }
+
+    .upload-progress {
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: white;
+      position: absolute;
+      bottom: 0.5rem;
+    }
+
+    &:hover:not(:disabled) {
+      transform: translateY(-4px) scale(1.08);
+      box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.3),
+        0 0 0 8px rgba(0, 0, 0, 0.05);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(-2px) scale(1.05);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   }
 
-  .button-upload {
-    cursor: pointer;
-    position: fixed;
-    bottom: 2.5rem;
-    right: 2.5rem;
-    z-index: 10;
+  @media (max-width: 768px) {
+    bottom: 1.5rem;
+    right: 1.5rem;
 
     .upload-fab {
-      background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-primary-600) 100%);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), 0 0 0 0 rgba(var(--color-primary-default), 0.4);
-      border-radius: 50%;
-      width: 64px;
-      height: 64px;
-      padding: 0;
-      border: none;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 0.25rem;
+      width: 56px;
+      height: 56px;
 
       nb-icon {
-        font-size: 28px;
-        color: white;
-      }
-
-      .upload-progress {
-        font-size: 0.625rem;
-        font-weight: 700;
-        color: white;
-        position: absolute;
-        bottom: 0.5rem;
-      }
-
-      &:hover:not(:disabled) {
-        transform: translateY(-4px) scale(1.08);
-        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3), 0 0 0 8px rgba(0, 0, 0, 0.05);
-      }
-
-      &:active:not(:disabled) {
-        transform: translateY(-2px) scale(1.05);
-      }
-
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-    }
-
-    @media (max-width: 768px) {
-      bottom: 1.5rem;
-      right: 1.5rem;
-
-      .upload-fab {
-        width: 56px;
-        height: 56px;
-
-        nb-icon {
-          font-size: 24px;
-        }
+        font-size: 24px;
       }
     }
   }
@@ -335,15 +340,12 @@
 
 // No Data States
 .no-data {
-  height: calc(100vh - 11.5rem);
+  flex: 1;
+  min-height: 250px;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  @media (max-width: 768px) {
-    height: 300px;
-  }
 }
 
 // Plugin Items
@@ -428,6 +430,10 @@
 @media (max-width: 992px) {
   .marketplace-container {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
 
     .filter-panel {
       order: 1;
@@ -435,6 +441,8 @@
 
     .content-panel {
       order: 2;
+      height: auto;
+      overflow: visible;
     }
   }
 }
@@ -509,19 +517,16 @@ nb-button-group {
   .plugin-list {
     border-radius: calc(var(--border-radius) * 2.25);
     overflow: auto;
-    height: calc(100vh - 16rem);
+    flex: 1;
+    min-height: 0;
     padding: 1rem;
     background-color: var(--gauzy-card-2);
     gap: 1rem;
 
-    &.unavailable {
-      height: auto;
-    }
-
+    &.unavailable,
     &.loading {
-      .no-data {
-        height: 100%;
-      }
+      height: 100%;
+      min-height: 250px;
     }
   }
 }
@@ -544,8 +549,8 @@ nb-button-group {
   }
 
   nb-toggle {
-	label {
-		margin-bottom: 0 !important;
-	}
- }
+    label {
+      margin-bottom: 0 !important;
+    }
+  }
 }

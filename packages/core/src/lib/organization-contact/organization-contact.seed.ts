@@ -52,7 +52,9 @@ const createOrganizationContact = async (
 		where: {
 			tenantId
 		},
-		relations: ['employees']
+		relations: {
+            employees: true
+        }
 	});
 	const allOrganizationContacts: IOrganizationContact[] = [];
 	for await (const organization of organizations) {

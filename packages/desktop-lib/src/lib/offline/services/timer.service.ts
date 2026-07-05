@@ -42,10 +42,20 @@ export class TimerService implements ITimerService<TimerTO> {
 		}
 	}
 
+	private checkEmptyUpdate(timer: Partial<Timer>) {
+		const obj = typeof timer?.toObject === 'function' ? timer.toObject() : timer;
+		const keys = Object.keys(obj ?? {}).filter((key: keyof Timer) => key !== 'id');
+		return keys.length <= 0;
+	}
+
 	public async update(timer: Partial<Timer>): Promise<void> {
 		try {
 			if (!timer.id) {
 				return console.error('WARN[TIMER_SERVICE]: No timer data, cannot update');
+			}
+
+			if (this.checkEmptyUpdate(timer)) {
+				return console.error('WARN[TIMER_SERVICE]: No timer data want to update');
 			}
 
 			await this._timerDAO.update(timer.id, timer.toObject());
@@ -164,6 +174,19 @@ export class TimerService implements ITimerService<TimerTO> {
 			}
 		} catch (error) {
 			console.error('Failed to get unfinished sync timer');
+			return [];
+		}
+	}
+
+	public async getListByDate(date: { start: Date; end: Date }): Promise<TimerTO[]> {
+		try {
+			const user = await this._userService.retrieve();
+			if (user && user.employeeId) {
+				return await this._timerDAO.findByDate(user.employeeId, date);
+			}
+			return [];
+		} catch (error) {
+			console.error('Failed to get timer list by date', error);
 			return [];
 		}
 	}

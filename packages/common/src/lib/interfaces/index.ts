@@ -18,7 +18,6 @@ export * from './IKeycloakConfig';
 export * from './ILinkedinIConfig';
 export * from './IMakeComConfig';
 export * from './IMicrosoftConfig';
-export * from './IOAuthAppConfig';
 export * from './IPosthogConfig';
 export * from './ISimConfig';
 export * from './ISMTPConfig';

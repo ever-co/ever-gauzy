@@ -42,6 +42,10 @@ spec:
                       readOnlyRootFilesystem: false
                       runAsNonRoot: false
                   image: registry.digitalocean.com/ever/gauzy-mcp-demo:latest
+                  resources:
+                      requests:
+                          cpu: '50m'
+                          memory: '192Mi'
                   env:
                       - name: NODE_ENV
                         value: 'development'

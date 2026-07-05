@@ -51,7 +51,9 @@ export class TimeSlotBulkCreateOrUpdateHandler implements ICommandHandler<TimeSl
 				organizationId,
 				employeeId
 			},
-			relations: ['timeLogs']
+			relations: {
+                timeLogs: true
+            }
 		});
 
 		const newSlotsTimeLogIds: any = _.chain(slots)

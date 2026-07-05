@@ -8,6 +8,8 @@ import { ZapierSettingsComponent } from './components/zapier-settings/zapier-set
 import { ZapierTriggersComponent } from './components/zapier-triggers/zapier-triggers.component';
 import { ZapierActionsComponent } from './components/zapier-actions/zapier-actions.component';
 import { ZapierWebhooksComponent } from './components/zapier-webhooks/zapier-webhooks.component';
+import { ZapierZapsComponent } from './components/zapier-zaps/zapier-zaps.component';
+import { ZapierZapTemplatesComponent } from './components/zapier-zap-templates/zapier-zap-templates.component';
 
 @NgModule({
 	imports: [
@@ -50,6 +52,14 @@ import { ZapierWebhooksComponent } from './components/zapier-webhooks/zapier-web
 							{
 								path: 'webhooks',
 								component: ZapierWebhooksComponent
+							},
+							{
+								path: 'zaps',
+								component: ZapierZapsComponent
+							},
+							{
+								path: 'zap-templates',
+								component: ZapierZapTemplatesComponent
 							},
 							{
 								path: 'settings',

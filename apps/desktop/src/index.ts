@@ -33,7 +33,9 @@ import {
 	ErrorEventManager,
 	ErrorReport,
 	ErrorReportRepository,
+	InstallPluginHandler,
 	LocalStore,
+	ProtocolRouter,
 	ProviderFactory,
 	TranslateLoader,
 	TranslateService,
@@ -43,7 +45,9 @@ import {
 	ipcTimer,
 	removeMainListener,
 	removeTimerListener,
-	setupAkitaStorageHandler
+	setupAkitaStorageHandler,
+	handleDesktopStartup,
+    DesktopOfflineModeHandler
 } from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
@@ -55,11 +59,12 @@ import {
 	setLaunchPathAndLoad
 } from '@gauzy/desktop-window';
 
+import { DesktopSetupConfig } from '@gauzy/contracts';
 import * as Sentry from '@sentry/electron/main';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
-import { DesktopSetupConfig } from '@gauzy/contracts';
+import { IConfig } from '@gauzy/desktop-core';
 
 /**
  * Describes the configuration for building the Gauzy API base URL.
@@ -174,6 +179,19 @@ LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
 
+// Register custom protocol for deep linking
+const appProtocol = process.env.PROTOCOL || 'gauzy-desktop';
+if (process.defaultApp) {
+	if (process.argv.length >= 2) {
+		app.setAsDefaultProtocolClient(appProtocol, process.execPath, [path.resolve(process.argv[1])]);
+	}
+} else {
+	app.setAsDefaultProtocolClient(appProtocol);
+}
+
+// Deep-link protocol router — registered with all supported action handlers.
+const protocolRouter = ProtocolRouter.getInstance();
+
 // Set unlimited listeners
 ipcMain.setMaxListeners(0);
 
@@ -261,20 +279,40 @@ if (!gotTheLock) {
 	console.log('Another instance is already running, quitting...');
 	app.quit();
 } else {
-	app.on('second-instance', () => {
+	app.on('second-instance', (event, commandLine) => {
 		console.log('Another instance is already running...');
+
+		// Handle deep link from second instance
+		const url = commandLine.find((arg) => arg.startsWith(`${appProtocol}://`));
+		if (url) {
+			console.log('Deep link received from second instance:', url);
+			protocolRouter.route(url);
+		}
+
 		// if someone tried to run a second instance, we should focus our window and show warning message.
 		if (gauzyWindow) {
 			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
 			gauzyWindow.focus();
-			dialog.showMessageBoxSync(gauzyWindow, {
-				type: 'warning',
-				title: process.env.DESCRIPTION,
-				message: 'You already have a running instance'
-			});
+			if (!url) {
+				dialog.showMessageBoxSync(gauzyWindow, {
+					type: 'warning',
+					title: process.env.DESCRIPTION,
+					message: 'You already have a running instance'
+				});
+			}
 		}
 	});
+
+	// Handle deep links on macOS
+	app.on('open-url', (event, url) => {
+		event.preventDefault();
+		console.log('Deep link received (macOS):', url);
+		protocolRouter.route(url);
+	});
 }
+
+// Configure the protocol router with all supported deep-link action handlers.
+protocolRouter.register(new InstallPluginHandler(pathWindow.timeTrackerUi));
 
 function setGlobalVariable(setupConfig: {
 	host?: string;
@@ -551,6 +589,12 @@ function initialApplicationMenu() {
 	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 }
 
+function setAppVersion() {
+	LocalStore.updateConfigSetting({
+		version: app.getVersion()
+	});
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -578,6 +622,20 @@ app.on('ready', async () => {
 	}
 
 	await launchSplashScreen();
+	// buttonResponse:
+	// 0: User clicked "Remove Database"
+	// 1: User clicked "Keep It"
+	// undefined: No popup was shown (e.g. fresh install or no version change)
+	const buttonResponse = await handleDesktopStartup();
+	setAppVersion();
+	if (buttonResponse === 0) {
+		// The user chose to remove the local database.
+		// Relaunch the app so it boots into a clean state after the DB
+		// has been wiped — do not proceed with the normal startup sequence.
+		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+		app.exit(0);
+		return;
+	}
 	await initialDatabase();
 	initialApplicationMenu();
 	try {
@@ -913,6 +971,15 @@ ipcMain.handle('get-app-path', () => app.getAppPath());
 ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
 ipcMain.on('get-arch', (event) => {
 	event.sender.send('get-arch', process.arch);
+});
+
+ipcMain.handle('IS_OFFLINE', async () => {
+	const configs: IConfig = LocalStore.getStore('configs');
+	if (configs?.serverConfigConnected) {
+		const offlineMode = DesktopOfflineModeHandler.instance;
+		return offlineMode.enabled;
+	}
+	return false;
 });
 
 /**

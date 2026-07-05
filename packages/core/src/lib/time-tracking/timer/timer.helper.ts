@@ -60,6 +60,11 @@ export function buildCommonQueryParameters(params: TimeLogParams, includeJoin: b
 /**
  * Adds a join clause to the query parameters if includeJoin is true.
  *
+ * NOTE (typeorm-v1): the `join` find-option was removed in TypeORM 1.0 and is rejected by `find()`
+ * at runtime. This `join` is consumed only by the MikroORM path (via `parseTypeORMFindToMikroOrm`);
+ * the TypeORM path applies the equivalent inner join on the query builder instead (see
+ * `TimerService` TypeORM branch). Do not pass the object produced here straight to a TypeORM `find()`.
+ *
  * @param queryParams - The existing query parameters object to be modified.
  * @param includeJoin - A flag indicating whether to include the join clause.
  */

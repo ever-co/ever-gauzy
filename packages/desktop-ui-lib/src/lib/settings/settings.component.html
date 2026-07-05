@@ -1096,6 +1096,13 @@
 				</div>
 			</div>
 		}
+		@if ((selectedMenu$ | async) === 'TIMER_TRACKER.PERMISSIONS.MENU_LABEL') {
+			<ngx-permission-manager
+				[isDialog]="false"
+				[timerStarted]="appSetting?.timerStarted"
+			>
+			</ngx-permission-manager>
+		}
 		@if ((selectedMenu$ | async) === 'MENU.ABOUT') {
 			<ng-container class="row">
 				<div class="col-12 titlebar-space">
@@ -1104,9 +1111,11 @@
 							<img [src]="gauzyIcon" class="margin-icon" />
 						</div>
 						<div class="col-12 version-text">
-							<span>{{ 'TIMER_TRACKER.VERSION' | translate: { version } }}</span>
 							<div>
-								<span>{{ 'TIMER_TRACKER.ARCHITECTURE' | translate: { arch } }}</span>
+								<span>{{ 'TIMER_TRACKER.VERSION' | translate: { version } }}</span>
+							</div>
+							<div>
+								<span>{{ 'TIMER_TRACKER.OS' | translate: { os, arch, systemVersion } }}</span>
 							</div>
 						</div>
 						<div class="col-12 copyright-text text-center">

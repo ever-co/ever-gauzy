@@ -15,7 +15,7 @@ export class CreateTagTypeTable1736155704913 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         console.log(chalk.yellow(this.name + ' start running!'));
 
-        switch (queryRunner.connection.options.type) {
+        switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
             case DatabaseTypeEnum.sqlite:
             case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteUpQueryRunner(queryRunner);
@@ -37,7 +37,7 @@ export class CreateTagTypeTable1736155704913 implements MigrationInterface {
      * @param queryRunner
      */
     public async down(queryRunner: QueryRunner): Promise<void> {
-        switch (queryRunner.connection.options.type) {
+        switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
             case DatabaseTypeEnum.sqlite:
             case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteDownQueryRunner(queryRunner);

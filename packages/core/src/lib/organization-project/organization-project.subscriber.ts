@@ -121,7 +121,7 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
 
 			// Get ORM type dynamically at runtime to ensure correct environment selection
 			const ormType = getORMType();
-			const dbType = getConfig().dbConnectionOptions.type;
+			const dbType = getConfig().dbConnectionOptions.type as DatabaseTypeEnum;
 			const { organizationId, tenantId, id: projectId } = entity;
 
 			let query = p(`

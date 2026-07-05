@@ -1,0 +1,58 @@
+.hooks-container {
+  padding: 0.5rem 0;
+}
+
+.hook-card {
+  margin-bottom: 0.5rem;
+
+  nb-card-body {
+    padding: 1rem 1.25rem;
+  }
+}
+
+.hook-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.hook-url {
+  font-family: monospace;
+  font-size: 0.75rem;
+  word-break: break-all;
+  max-width: 500px;
+}
+
+.badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+
+  &-success {
+    background-color: var(--color-success-transparent-default);
+    color: var(--color-success-default);
+  }
+
+  &-basic {
+    background-color: var(--color-basic-transparent-default);
+    color: var(--color-basic-600);
+  }
+}
+
+.empty-icon {
+  font-size: 2rem;
+  color: var(--color-basic-600);
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

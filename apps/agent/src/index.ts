@@ -1,5 +1,5 @@
 import { logger as log } from '@gauzy/desktop-core';
-import { LocalStore, setupAkitaStorageHandler } from '@gauzy/desktop-lib';
+import { InstallPluginHandler, LocalStore, ProtocolRouter, setupAkitaStorageHandler } from '@gauzy/desktop-lib';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import { environment } from './environments/environment';
@@ -19,10 +19,52 @@ args.some((val) => val === '--serve');
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
+
+// Register custom protocol for deep linking
+const appProtocol = process.env.PROTOCOL || 'gauzy-agent';
+if (process.defaultApp) {
+	if (process.argv.length >= 2) {
+		app.setAsDefaultProtocolClient(appProtocol, process.execPath, [path.resolve(process.argv[1])]);
+	}
+} else {
+	app.setAsDefaultProtocolClient(appProtocol);
+}
+
+// Deep-link protocol router — registered with all supported action handlers.
+const protocolRouter = ProtocolRouter.getInstance();
+
+// Instance detection
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+	console.log('Another instance is already running, quitting...');
+	app.quit();
+} else {
+	app.on('second-instance', (event, commandLine) => {
+		console.log('Another instance is already running...');
+
+		// Handle deep link from second instance
+		const url = commandLine.find((arg) => arg.startsWith(`${appProtocol}://`));
+		if (url) {
+			console.log('Deep link received from second instance:', url);
+			protocolRouter.route(url);
+		}
+	});
+
+	// Handle deep links on macOS
+	app.on('open-url', (event, url) => {
+		event.preventDefault();
+		console.log('Deep link received (macOS):', url);
+		protocolRouter.route(url);
+	});
+}
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
 	app.setAppUserModelId(process.env.APP_ID);
 }
+
+// Configure the protocol router with all supported deep-link action handlers.
+protocolRouter.register(new InstallPluginHandler(path.join(__dirname, './index.html')));
 
 // Setup storage handler for Akita state management
 setupAkitaStorageHandler();

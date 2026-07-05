@@ -24,6 +24,11 @@ export default {
   platformVersion,
   authentication,
 
+  // Global flags for the app
+  flags: {
+    cleanInputData: false,
+  },
+
   // Triggers that users can use to start Zaps
   triggers: {
     [timerStatusKey]: timerStatus,

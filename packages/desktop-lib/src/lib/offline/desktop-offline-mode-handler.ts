@@ -29,8 +29,8 @@ export class DesktopOfflineModeHandler extends EventEmitter implements IOfflineM
 		// Initial server ping timer
 		this._pingTimer = null;
 
-		// Default ping timer interval set to 40 seconds
-		this._PING_INTERVAL = 40 * 1000;
+		// Default ping timer interval set to 10 seconds
+		this._PING_INTERVAL = 10 * 1000;
 
 		this.on('connection-restored', () => {
 			console.log('[OfflineModeHandler]: Connection restored');
@@ -162,5 +162,14 @@ export class DesktopOfflineModeHandler extends EventEmitter implements IOfflineM
 	public get isTracking(): boolean {
 		const setting = LocalStore.getStore('appSetting');
 		return setting && setting.timerStarted;
+	}
+
+	public forceOffline(): void {
+		if (!this._isEnabled) {
+			console.log('[OfflineModeHandler]: Hard network error detected. Forcing offline instantly.');
+			this._startedAt = new Date();
+			this._isEnabled = true;
+			this.emit('offline');
+		}
 	}
 }

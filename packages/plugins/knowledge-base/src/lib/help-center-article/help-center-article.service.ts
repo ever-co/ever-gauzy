@@ -270,14 +270,74 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	}
 
 	/**
-	 * Get the raw binary description of an article.
-	 * Returns null if not yet set.
+	 * Get the raw binary description of an article as a Buffer.
+	 *
+	 * Uses QueryBuilder directly to avoid TypeORM DISTINCT subquery issues
+	 * when `select: { descriptionBinary: true }` omits the 'id' column.
+	 * Scoped to the current tenant to prevent cross-tenant data access.
+	 *
+	 * @returns Buffer if binary exists, null otherwise
 	 */
-	public async getDescriptionBinary(id: ID): Promise<Uint8Array | null> {
-		const { record: article } = await this.findOneOrFailByIdString(id, {
-			select: { descriptionBinary: true } as any
-		});
-		return article?.descriptionBinary ?? null;
+	public async getDescriptionBinary(id: ID): Promise<Buffer | null> {
+		const tenantId = RequestContext.currentTenantId();
+		const qb = this.typeOrmHelpCenterArticleRepository
+			.createQueryBuilder('article')
+			.select(['article.id', 'article.descriptionBinary'])
+			.where('article.id = :id', { id });
+
+		if (tenantId) {
+			qb.andWhere('article.tenantId = :tenantId', { tenantId });
+		}
+
+		const article = await qb.getOne();
+		return article?.descriptionBinary ? Buffer.from(article.descriptionBinary) : null;
+	}
+
+	/**
+	 * Atomic update of description fields using QueryBuilder directly.
+	 *
+	 * This bypasses the CrudService.update() → TypeORM Repository.update() chain
+	 * because TypeORM's QueryDeepPartialEntity typing silently drops Buffer values
+	 * for entity fields typed as Uint8Array, preventing binary data from being persisted
+	 * to PostgreSQL bytea columns.
+	 *
+	 * Scoped to the current tenant to prevent cross-tenant data modification.
+	 *
+	 * @param id - Article ID
+	 * @param fields - Object with descriptionBinary (Buffer | null to clear), descriptionHtml, descriptionJson
+	 */
+	public async updateDescriptionFields(
+		id: ID,
+		fields: { descriptionBinary?: Buffer | null; descriptionHtml?: string; descriptionJson?: string }
+	): Promise<void> {
+		const setClauses: Record<string, any> = {};
+
+		if (fields.descriptionBinary !== undefined) {
+			setClauses.descriptionBinary = fields.descriptionBinary;
+		}
+		if (fields.descriptionHtml !== undefined) {
+			setClauses.descriptionHtml = fields.descriptionHtml;
+		}
+		if (fields.descriptionJson !== undefined) {
+			setClauses.descriptionJson = fields.descriptionJson;
+		}
+
+		if (Object.keys(setClauses).length === 0) {
+			return;
+		}
+
+		const tenantId = RequestContext.currentTenantId();
+		const qb = this.typeOrmHelpCenterArticleRepository
+			.createQueryBuilder()
+			.update()
+			.set(setClauses)
+			.where('id = :id', { id });
+
+		if (tenantId) {
+			qb.andWhere('"tenantId" = :tenantId', { tenantId });
+		}
+
+		await qb.execute();
 	}
 
 	/**

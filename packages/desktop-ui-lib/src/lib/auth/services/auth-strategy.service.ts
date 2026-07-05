@@ -157,7 +157,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		);
 	}
 
-	logout(): Observable<NbAuthResult> {
+	logout(isRestart?: boolean): Observable<NbAuthResult> {
 		this.authService
 			.doLogout(this.store.refreshToken)
 			.pipe(
@@ -165,15 +165,15 @@ export class AuthStrategy extends NbAuthStrategy {
 				catchError(() => EMPTY)
 			)
 			.subscribe();
-		return from(this._logout());
+		return from(this._logout(isRestart));
 	}
 
-	private async _logout(): Promise<NbAuthResult> {
+	private async _logout(isRestart?: boolean): Promise<NbAuthResult> {
 		this.store.clear();
 		this.store.serverConnection = 200;
 		if (this.electronService.isElectron) {
 			try {
-				await this.electronService.ipcRenderer.invoke('FINAL_LOGOUT');
+				await this.electronService.ipcRenderer.invoke('FINAL_LOGOUT', { isRestart });
 			} catch (error) {}
 		}
 

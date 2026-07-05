@@ -4,6 +4,8 @@ import { ProviderFactory } from '../databases';
 import { TABLE_NAME_SCREENSHOT, ScreenshotTO } from '../dto';
 import { ScreenshotTransaction } from '../transactions';
 
+const SCREENSHOT_RETRIES_LIMIT = 3;
+
 export class ScreenshotDAO implements DAO<ScreenshotTO> {
 	private _trx: IScreenshotTransaction;
 	private _provider: IDatabaseProvider;
@@ -37,17 +39,29 @@ export class ScreenshotDAO implements DAO<ScreenshotTO> {
 		if (!value || value.id === undefined) {
 			throw new Error('Cannot delete screenshot data: Missing or invalid id');
 		}
-		await this._provider
+
+		const query = this._provider
 			.connection<ScreenshotTO>(TABLE_NAME_SCREENSHOT)
-			.where('id', '=', value.id)
-			.orWhere('imagePath', '=', value.imagePath)
-			.del();
+			.where('id', '=', value.id);
+		if (value.imagePath) {
+			query.orWhere('imagePath', '=', value.imagePath);
+		}
+		await query.del();
 	}
 
-	public async findUnSyncedScreenshot(): Promise<ScreenshotTO[]> {
-		const screenshots = await this._provider
-			.connection<ScreenshotTO>(TABLE_NAME_SCREENSHOT)
-			.where('synced', false)
+	public async findUnSyncedScreenshot(limit?: number): Promise<ScreenshotTO[]> {
+		const query = this._provider.connection<ScreenshotTO>(TABLE_NAME_SCREENSHOT);
+		if (limit) {
+			query.limit(limit);
+		}
+		const screenshots = await query
+			.whereNotNull('imagePath')
+			.andWhere('imagePath', '!=', '')
+			.andWhere('synced', false)
+			.andWhere((qb) =>
+				qb.whereNull('retries').orWhere('retries', '<=', SCREENSHOT_RETRIES_LIMIT)
+			)
+			.orderBy('lastAttemptAt', 'asc')
 		return screenshots;
 	}
 }

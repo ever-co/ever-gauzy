@@ -33,7 +33,7 @@ export class GetConflictAvailabilitySlotsHandler implements ICommandHandler<GetC
 			employeeId
 		});
 
-		switch (this.configService.dbConnectionOptions.type) {
+		switch (this.configService.dbConnectionOptions.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 				query.andWhere(

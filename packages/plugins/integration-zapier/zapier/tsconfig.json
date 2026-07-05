@@ -9,7 +9,8 @@
         "strict": true,
         "declaration": true,
         "sourceMap": true,
-        "incremental": true
+        "incremental": true,
+        "skipLibCheck": true
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules", "**/*.test.ts", "lib"]

@@ -14,7 +14,7 @@ export class MigrateRolePermisisons1721026150876 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(`${this.constructor.name} start running!`));
 
-		switch (queryRunner.connection.options.type) {
+		switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 			case DatabaseTypeEnum.postgres:

@@ -1,0 +1,118 @@
+<div class="hooks-container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6>{{ 'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOKS' | translate }}</h6>
+    <button
+      type="button"
+      nbButton
+      size="small"
+      status="basic"
+      (click)="refresh()"
+      [disabled]="loading"
+      [attr.aria-label]="'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOKS_REFRESH' | translate"
+    >
+      <nb-icon icon="refresh-outline"></nb-icon>
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="d-flex justify-content-center py-5">
+      <nb-spinner></nb-spinner>
+    </div>
+  }
+
+  <!-- Setup incomplete -->
+  @if (!loading && setupStatus && !setupStatus.isComplete) {
+    <nb-card accent="warning">
+      <nb-card-body class="text-center py-4">
+        <nb-icon icon="alert-triangle-outline" class="empty-icon mb-2" status="warning"></nb-icon>
+        @if (!setupStatus.hasAccessToken) {
+          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.AUTHORIZE' | translate }}</p>
+        } @else if (!setupStatus.zone) {
+          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.ZONE' | translate }}</p>
+        } @else if (!setupStatus.makeOrganizationId) {
+          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.ORGANIZATION' | translate }}</p>
+        } @else if (!setupStatus.makeTeamId) {
+          <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.SETUP_REQUIRED.TEAM' | translate }}</p>
+        }
+      </nb-card-body>
+    </nb-card>
+  }
+
+  @if (!loading && setupStatus?.isComplete && hooks.length === 0) {
+    <nb-card accent="info">
+      <nb-card-body class="text-center py-4">
+        <nb-icon icon="link-2-outline" class="empty-icon mb-2"></nb-icon>
+        <p>{{ 'INTEGRATIONS.MAKE_COM_PAGE.NO_HOOKS' | translate }}</p>
+      </nb-card-body>
+    </nb-card>
+  }
+
+  @if (!loading && setupStatus?.isComplete && hooks.length > 0) {
+    <div class="hook-list">
+      @for (hook of hooks; track hook.id) {
+        <nb-card class="hook-card mb-2">
+          <nb-card-body class="d-flex align-items-center justify-content-between">
+            <div class="hook-info">
+              <div class="d-flex align-items-center gap-2">
+                <nb-icon icon="link-2-outline" [status]="hook.enabled ? 'success' : 'basic'"></nb-icon>
+                <span class="hook-name">{{ hook.name }}</span>
+                @if (hook.enabled) {
+                  <span class="badge badge-success">{{ 'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_ENABLED' | translate }}</span>
+                } @else {
+                  <span class="badge badge-basic">{{ 'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_DISABLED' | translate }}</span>
+                }
+              </div>
+              @if (hook.typeName) {
+                <small class="text-hint d-block mt-1">{{ 'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_TYPE' | translate }}: {{ hook.typeName }}</small>
+              }
+              @if (hook.url) {
+                <small class="text-hint d-block hook-url">{{ hook.url }}</small>
+              }
+              @if (hook.queueCount != null) {
+                <small class="text-hint d-block">
+                  {{ 'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_QUEUE' | translate }}: {{ hook.queueCount }}@if (hook.queueLimit != null) { / {{ hook.queueLimit }}}
+                </small>
+              }
+            </div>
+            <div class="hook-actions d-flex gap-2">
+              <button
+                type="button"
+                nbButton
+                size="small"
+                [status]="hook.enabled ? 'warning' : 'success'"
+                [nbTooltip]="hook.enabled ? ('INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_DISABLE' | translate) : ('INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_ENABLE' | translate)"
+                (click)="toggleHook(hook)"
+                [disabled]="toggleLoading[hook.id] || pingLoading[hook.id]"
+                [attr.aria-label]="hook.enabled
+                  ? ('INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_DISABLE' | translate)
+                  : ('INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_ENABLE' | translate)"
+              >
+                @if (toggleLoading[hook.id]) {
+                  <nb-icon icon="loader-outline" class="spin"></nb-icon>
+                } @else {
+                  <nb-icon [icon]="hook.enabled ? 'toggle-right-outline' : 'toggle-left-outline'"></nb-icon>
+                }
+              </button>
+              <button
+                type="button"
+                nbButton
+                size="small"
+                status="info"
+                [nbTooltip]="'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_PING' | translate"
+                (click)="pingHook(hook)"
+                [disabled]="toggleLoading[hook.id] || pingLoading[hook.id]"
+                [attr.aria-label]="'INTEGRATIONS.MAKE_COM_PAGE.WEBHOOK_PING' | translate"
+              >
+                @if (pingLoading[hook.id]) {
+                  <nb-icon icon="loader-outline" class="spin"></nb-icon>
+                } @else {
+                  <nb-icon icon="radio-outline"></nb-icon>
+                }
+              </button>
+            </div>
+          </nb-card-body>
+        </nb-card>
+      }
+    </div>
+  }
+</div>

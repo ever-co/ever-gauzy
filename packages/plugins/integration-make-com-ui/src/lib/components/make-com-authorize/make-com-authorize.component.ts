@@ -1,12 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap, catchError, filter } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { MakeComService, ToastrService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { IMakeComCreateIntegration, IOrganization, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
+import { IOrganization, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
 import { Router, ActivatedRoute } from '@angular/router';
 import { IntegrationsService } from '@gauzy/ui-core/core';
 
@@ -18,15 +17,12 @@ import { IntegrationsService } from '@gauzy/ui-core/core';
 	standalone: false
 })
 export class AuthorizationComponent extends TranslationBaseComponent implements OnInit {
-	public form: FormGroup;
 	public loading = false;
-	public oauthConfig: { clientId: string; redirectUri: string } = null;
 	public organization: IOrganization;
 	public rememberState: boolean;
 	private static readonly MAKE_DASHBOARD_ROUTE = '/pages/integrations/makecom';
 
 	constructor(
-		private readonly _fb: FormBuilder,
 		private readonly _makeComService: MakeComService,
 		private readonly _toastrService: ToastrService,
 		public readonly translateService: TranslateService,
@@ -39,16 +35,7 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 	}
 
 	ngOnInit() {
-		this._initializeForm();
 		this._loadOrganization();
-		this._loadOAuthConfig();
-	}
-
-	private _initializeForm() {
-		this.form = this._fb.group({
-			clientId: ['', [Validators.required]],
-			clientSecret: ['', [Validators.required]]
-		});
 	}
 
 	private _loadOrganization() {
@@ -60,25 +47,6 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	private _loadOAuthConfig() {
-		this.loading = true;
-		this._makeComService
-			.getOAuthConfig()
-			.pipe(
-				tap((config) => {
-					this.oauthConfig = config;
-				}),
-				catchError((error) => {
-					console.error('Error loading OAuth config:', error);
-					return EMPTY;
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe(() => {
-				this.loading = false;
-			});
 	}
 
 	/**
@@ -119,22 +87,22 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 	}
 
 	/**
-	 * Start OAuth authorization flow
+	 * Start OAuth authorization flow.
+	 * No credentials needed — server uses its own env-configured client_id/secret.
 	 */
-	startAuthorization() {
-		if (this.form.invalid || !this.organization) {
+	connectToMakeCom() {
+		if (!this.organization) {
 			this._toastrService.error(
-				this.getTranslation('INTEGRATIONS.MAKE_PAGE.ERRORS.INVALID_FORM'),
+				this.getTranslation('INTEGRATIONS.MAKE_COM_PAGE.ERRORS.NO_ORGANIZATION'),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 			return;
 		}
 
 		this.loading = true;
-		const credentials: IMakeComCreateIntegration = this.form.value;
 
 		this._makeComService
-			.addOAuthSettings(credentials)
+			.initializeIntegration({ organizationId: this.organization.id })
 			.pipe(
 				tap((response) => {
 					// Redirect to Make.com authorization page
@@ -146,13 +114,14 @@ export class AuthorizationComponent extends TranslationBaseComponent implements 
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
 					console.error('Error starting authorization:', error);
+					this.loading = false;
 					return EMPTY;
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe(() => {
-				this.loading = false;
-			});
+                this.loading = false;
+            });
 	}
 
 	/**

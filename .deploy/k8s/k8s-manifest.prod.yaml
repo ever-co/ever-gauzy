@@ -82,7 +82,7 @@ kind: Deployment
 metadata:
     name: gauzy-prod-api
 spec:
-    replicas: 4
+    replicas: 2
     selector:
         matchLabels:
             app: gauzy-prod-api
@@ -103,8 +103,8 @@ spec:
                   image: registry.digitalocean.com/ever/gauzy-api:latest
                   resources:
                       requests:
-                          memory: '1536Mi'
-                          cpu: '1000m'
+                          cpu: '300m'
+                          memory: '896Mi'
                       limits:
                           memory: '2048Mi'
                   env:
@@ -132,6 +132,12 @@ spec:
                         value: 'https://api.gauzy.co'
                       - name: CLIENT_BASE_URL
                         value: 'https://app.gauzy.co'
+                      - name: PLANE_CLIENT_BASE_URL
+                        value: 'https://pm.gauzy.co'
+                      - name: PLANE_CLIENT_SPACE_URL
+                        value: 'https://pm-space.gauzy.co'
+                      - name: PLANE_SHARED_ORIGINS
+                        value: 'https://pm.gauzy.co,https://pm-space.gauzy.co'
                       - name: DB_URI
                         value: '$DB_URI'
                       - name: DB_HOST
@@ -208,6 +214,8 @@ spec:
                         value: '$JWT_SECRET'
                       - name: JWT_REFRESH_TOKEN_SECRET
                         value: '$JWT_REFRESH_TOKEN_SECRET'
+                      - name: JWT_VERIFICATION_TOKEN_SECRET
+                        value: '$JWT_VERIFICATION_TOKEN_SECRET'
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
                         value: '$JWT_REFRESH_TOKEN_EXPIRATION_TIME'
                       - name: ALLOWED_ORIGINS
@@ -351,6 +359,10 @@ spec:
                       readOnlyRootFilesystem: false
                       runAsNonRoot: false
                   image: registry.digitalocean.com/ever/gauzy-webapp:latest
+                  resources:
+                      requests:
+                          cpu: '50m'
+                          memory: '64Mi'
                   env:
                       - name: DEMO
                         value: 'false'
@@ -421,8 +433,8 @@ spec:
                   image: registry.digitalocean.com/ever/gauzy-worker:latest
                   resources:
                       requests:
-                          memory: '1536Mi'
-                          cpu: '1000m'
+                          cpu: '100m'
+                          memory: '256Mi'
                       limits:
                           memory: '2048Mi'
                   env:
@@ -490,6 +502,8 @@ spec:
                         value: '$JWT_SECRET'
                       - name: JWT_REFRESH_TOKEN_SECRET
                         value: '$JWT_REFRESH_TOKEN_SECRET'
+                      - name: JWT_VERIFICATION_TOKEN_SECRET
+                        value: '$JWT_VERIFICATION_TOKEN_SECRET'
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
                         value: '$JWT_REFRESH_TOKEN_EXPIRATION_TIME'
                       - name: MAIL_FROM_ADDRESS

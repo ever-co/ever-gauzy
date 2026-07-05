@@ -15,8 +15,8 @@ export class AppMenu {
 	public editMenu: MenuItemConstructorOptions;
 	private readonly windowPath: any;
 
-	private readonly pluginManager = PluginManager.getInstance();
-	private readonly pluginEventManager = PluginEventManager.getInstance();
+	private pluginManager: ReturnType<typeof PluginManager.getInstance>;
+	private pluginEventManager: PluginEventManager;
 
 	/**
 	 * Constructs and initializes the application menu.
@@ -40,6 +40,9 @@ export class AppMenu {
 		isZoomVisible?: boolean,
 		isCustomMenu?: boolean
 	) {
+		this.pluginManager = PluginManager.getInstance();
+		this.pluginEventManager = PluginEventManager.getInstance();
+
 		this.windowPath = windowPath;
 		const isZoomEnabled = isZoomVisible ?? false;
 		this.applicationMenu = {

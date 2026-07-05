@@ -22,6 +22,7 @@ import { CommandHandlers } from './commands/handlers';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
 import { SocialAccountModule } from './social-account/social-account.module';
+import { OAuthClientModule } from './oauth-client/oauth-client.module';
 import { JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 
 // Core service providers for handling authentication and related functionalities
@@ -49,7 +50,8 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 				EventBusModule,
 				RolePermissionModule,
 				AccessTokenModule,
-				RefreshTokenModule
+				RefreshTokenModule,
+				OAuthClientModule
 			],
 			useClass: AuthService
 		}),
@@ -67,7 +69,8 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 		EventBusModule,
 		RolePermissionModule,
 		AccessTokenModule,
-		RefreshTokenModule
+		RefreshTokenModule,
+		OAuthClientModule
 	],
 	controllers: [AuthController, EmailVerificationController],
 	providers: [...providers, ...CommandHandlers, ...strategies],

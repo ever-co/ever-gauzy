@@ -14,7 +14,7 @@ export class MigrateRolePermisisons1679765443208 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(`${this.constructor.name} start running!`));
 
-		switch (queryRunner.connection.options.type) {
+		switch (queryRunner.dataSource.options.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 			case DatabaseTypeEnum.postgres:
@@ -28,7 +28,7 @@ export class MigrateRolePermisisons1679765443208 implements MigrationInterface {
 				console.log('role permission migration is not supported for mysql yet');
 				break;
 			default:
-				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+				throw Error(`Unsupported database: ${queryRunner.dataSource.options.type}`);
 		}
 	}
 

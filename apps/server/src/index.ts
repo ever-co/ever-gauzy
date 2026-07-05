@@ -45,9 +45,11 @@ import {
 	ErrorReport,
 	ErrorReportRepository,
 	ILocalServer,
+	InstallPluginHandler,
 	IPathWindow,
 	IServerConfig,
 	LocalStore,
+	ProtocolRouter,
 	ReadWriteFile,
 	ReverseProxy,
 	ReverseUiProxy,
@@ -155,6 +157,55 @@ if (process.platform === 'win32') {
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
+
+// Register custom protocol for deep linking
+const appProtocol = process.env.PROTOCOL || 'gauzy-server';
+if (process.defaultApp) {
+	if (process.argv.length >= 2) {
+		app.setAsDefaultProtocolClient(appProtocol, process.execPath, [path.resolve(process.argv[1])]);
+	}
+} else {
+	app.setAsDefaultProtocolClient(appProtocol);
+}
+
+// Deep-link protocol router — registered with all supported action handlers.
+const protocolRouter = ProtocolRouter.getInstance();
+
+// Instance detection
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+	console.log('Another instance is already running, quitting...');
+	app.quit();
+} else {
+	app.on('second-instance', (event, commandLine) => {
+		console.log('Another instance is already running...');
+
+		// Handle deep link from second instance
+		const url = commandLine.find((arg) => arg.startsWith(`${appProtocol}://`));
+		if (url) {
+			console.log('Deep link received from second instance:', url);
+			protocolRouter.route(url);
+		}
+
+		// if someone tried to run a second instance, we should focus our window
+		const mainWindow = serverWindow || setupWindow;
+		if (mainWindow) {
+			if (mainWindow.isMinimized()) mainWindow.restore();
+			mainWindow.focus();
+		}
+	});
+
+	// Handle deep links on macOS
+	app.on('open-url', (event, url) => {
+		event.preventDefault();
+		console.log('Deep link received (macOS):', url);
+		protocolRouter.route(url);
+	});
+}
+
+// Configure the protocol router with all supported deep-link action handlers.
+protocolRouter.register(new InstallPluginHandler(pathWindow.timeTrackerUi));
 
 // Set unlimited listeners
 ipcMain.setMaxListeners(0);

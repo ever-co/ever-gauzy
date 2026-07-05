@@ -161,6 +161,7 @@ import { TaskStatusModule } from '../tasks/statuses/status.module';
 import { TaskModule } from '../tasks/task.module';
 import { TaskVersionModule } from '../tasks/versions/version.module';
 import { TaskViewModule } from '../tasks/views/view.module';
+import { OAuthClientModule } from '../auth/oauth-client/oauth-client.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.module';
 import { TenantModule } from '../tenant/tenant.module';
@@ -523,6 +524,7 @@ if (environment.THROTTLE_ENABLED) {
 		EmployeeNotificationModule,
 		EmployeeNotificationSettingModule,
 		TenantApiKeyModule,
+		OAuthClientModule,
 		EmployeeRecentVisitModule,
 		SharedEntityModule,
 		BroadcastModule,
