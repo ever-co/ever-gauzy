@@ -1,9 +1,14 @@
 export const OrganizationPublicPage = {
 	organizationDropdownCss: 'ga-organization-selector ng-select',
 	organizationDropdownOptionsCss: 'ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
+	// The organizations grid reuses the "Client Name" column header/filter label (SM_TABLE.CLIENT_NAME),
+	// so the name-filter input placeholder really is "Client Name" here — verified against
+	// organizations.component.ts columns.name.title.
 	nameFilterInputCss: 'input[placeholder="Client Name"]',
-	organizationTableRowCss: 'table > tbody > tr:first-of-type',
-	organizationNameTableCellCss: 'table > tbody > tr:first-of-type > td:first-of-type div.d-block',
+	organizationTableRowCss: 'table > tbody > tr.angular2-smart-row:first-of-type',
+	// The name cell renders via OrganizationWithTagsComponent as `.organization-render span > div`
+	// (no more `div.d-block`); match the render container's text so the filter-result assertion holds.
+	organizationNameTableCellCss: 'table > tbody > tr.angular2-smart-row:first-of-type .organization-render',
 	manageButtonCss: 'button.action.primary',
 	profileLinkInputCss: 'input[formcontrolname="profile_link"]',
 	saveButtonCss: 'div.actions > button[status="success"]',
@@ -20,10 +25,13 @@ export const OrganizationPublicPage = {
 	shortDescriptionInputCss: 'textarea[formcontrolname="short_description"]',
 	cardBodyCss: 'nb-card-body.body',
 	awardsTabCss: 'form > nb-tabset > ul.tabset > li.tab',
-	addAwardsButtonCss: 'nb-tab button[status="success"]',
-	awardNameInputCss: 'input[placeholder="Name"]',
-	awardYearInputCss: 'input[placeholder="Year"]',
-	awardsSaveButtonCss: 'nb-tab button[status="success"]',
+	// Add-award trigger and its Save button are distinct in the current markup: the "+" lives under
+	// .button-add-award, the Save (once the sub-form is shown) under .show-add-award. Scope each so the
+	// broad `nb-tab button[status="success"]` can't collide (both were previously identical).
+	addAwardsButtonCss: '.button-add-award button[status="success"]',
+	awardNameInputCss: '.show-add-award input.input_name',
+	awardYearInputCss: '.show-add-award input.input_year',
+	awardsSaveButtonCss: '.show-add-award button[status="success"]',
 	skillsTabCss: 'form > nb-tabset > ul.tabset > li.tab',
 	skillsDropdownCss: 'ng-select[formcontrolname="skills"]',
 	skillsDropdownOptionsCss: 'ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
