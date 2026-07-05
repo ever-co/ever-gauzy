@@ -55,6 +55,7 @@ describe('AiProviderCredentialEncryptionService', () => {
 		});
 
 		it('should round-trip unicode and special characters', () => {
+			// cspell:disable-next-line — intentional non-English test data
 			const plaintext = 'clé-secrète-😀-\'":\\-密钥';
 			expect(service.decrypt(service.encrypt(plaintext))).toBe(plaintext);
 		});
