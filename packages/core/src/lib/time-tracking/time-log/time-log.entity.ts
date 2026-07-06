@@ -16,7 +16,7 @@ import {
 	IOrganizationTeam,
 	ID
 } from '@gauzy/contracts';
-import { isMySQL } from '@gauzy/config';
+import { isBetterSqlite3, isMySQL } from '@gauzy/config';
 import {
 	Employee,
 	OrganizationContact,
@@ -54,7 +54,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * Edited timestamp column
 	 */
-	@MultiORMColumn({ type: 'timestamp' })
+	@MultiORMColumn({ type: isBetterSqlite3() ? 'text' : 'timestamp' })
 	@IsDateString()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })

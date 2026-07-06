@@ -61,14 +61,17 @@ jobs:
           docker push everco/gauzy-api:latest
 
       - name: Install doctl
+        if: ${{ vars.DO_ENABLED == 'true' }}
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: doctl registry login --expiry-seconds 3600
 
       - name: Push to DigitalOcean Registry
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: |
           docker push registry.digitalocean.com/ever/gauzy-api:latest
 
@@ -143,14 +146,17 @@ jobs:
           docker push everco/gauzy-webapp:latest
 
       - name: Install doctl
+        if: ${{ vars.DO_ENABLED == 'true' }}
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: doctl registry login --expiry-seconds 3600
 
       - name: Push to DigitalOcean Registry
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: |
           docker push registry.digitalocean.com/ever/gauzy-webapp:latest
 
@@ -231,14 +237,17 @@ jobs:
           docker push everco/gauzy-worker:latest
 
       - name: Install doctl
+        if: ${{ vars.DO_ENABLED == 'true' }}
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: doctl registry login --expiry-seconds 3600
 
       - name: Push to DigitalOcean Registry
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: |
           docker push registry.digitalocean.com/ever/gauzy-worker:latest
 

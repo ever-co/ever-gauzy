@@ -3623,7 +3623,8 @@
 		"SELECT_A_DATE": "Sélectionner une date",
 		"SELECT_AN_ORGANIZATION": "Sélectionner une organisation",
 		"SELECT_PROJECT": "Sélectionner un projet",
-		"SELECT_TEAM": "Sélectionner une équipe"
+		"SELECT_TEAM": "Sélectionner une équipe",
+		"AI_CHAT": "Chat IA"
 	},
 	"HEADER_TITLE": {
 		"FOR": "pour",

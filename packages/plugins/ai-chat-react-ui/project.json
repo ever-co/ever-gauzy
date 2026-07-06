@@ -1,0 +1,40 @@
+{
+	"name": "plugin-ai-chat-react-ui",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/ai-chat-react-ui/src",
+	"prefix": "gz",
+	"projectType": "library",
+	"tags": [],
+	"implicitDependencies": ["plugin-ui", "ui-react", "ui-react-components", "ui-core"],
+	"targets": {
+		"build": {
+			"executor": "@nx/angular:ng-packagr-lite",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"options": {
+				"project": "packages/plugins/ai-chat-react-ui/ng-package.json",
+				"tsConfig": "packages/plugins/ai-chat-react-ui/tsconfig.lib.json"
+			},
+			"configurations": {
+				"production": {
+					"tsConfig": "packages/plugins/ai-chat-react-ui/tsconfig.lib.prod.json"
+				},
+				"development": {
+					"tsConfig": "packages/plugins/ai-chat-react-ui/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "development",
+			"dependsOn": ["^build"]
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/ai-chat-react-ui/jest.config.ts",
+				"tsConfig": "packages/plugins/ai-chat-react-ui/tsconfig.spec.json"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

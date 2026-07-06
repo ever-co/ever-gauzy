@@ -179,6 +179,12 @@ COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugi
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
 COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
+COPY --chown=node:node packages/plugins/ai-chat/package.json ./packages/plugins/ai-chat/
+COPY --chown=node:node packages/plugins/ai-provider-anthropic/package.json ./packages/plugins/ai-provider-anthropic/
+COPY --chown=node:node packages/plugins/ai-provider-openai/package.json ./packages/plugins/ai-provider-openai/
+COPY --chown=node:node packages/plugins/ai-provider-openrouter/package.json ./packages/plugins/ai-provider-openrouter/
+COPY --chown=node:node packages/plugins/ai-provider-vercel-gateway/package.json ./packages/plugins/ai-provider-vercel-gateway/
+COPY --chown=node:node packages/plugins/ai-provider-gauzy-ai/package.json ./packages/plugins/ai-provider-gauzy-ai/
 
 # We do not build Wakatime plugin here, because it is used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -264,6 +270,12 @@ COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugi
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
 COPY --chown=node:node packages/plugins/soundshot/package.json ./packages/plugins/soundshot/
 COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins/registry/
+COPY --chown=node:node packages/plugins/ai-chat/package.json ./packages/plugins/ai-chat/
+COPY --chown=node:node packages/plugins/ai-provider-anthropic/package.json ./packages/plugins/ai-provider-anthropic/
+COPY --chown=node:node packages/plugins/ai-provider-openai/package.json ./packages/plugins/ai-provider-openai/
+COPY --chown=node:node packages/plugins/ai-provider-openrouter/package.json ./packages/plugins/ai-provider-openrouter/
+COPY --chown=node:node packages/plugins/ai-provider-vercel-gateway/package.json ./packages/plugins/ai-provider-vercel-gateway/
+COPY --chown=node:node packages/plugins/ai-provider-gauzy-ai/package.json ./packages/plugins/ai-provider-gauzy-ai/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -411,7 +423,13 @@ RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin
     cp -r ./packages/plugins/posthog/node_modules ./node_modules/@gauzy/plugin-posthog/ && \
     cp -r ./packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/ && \
     cp -r ./packages/plugins/soundshot/node_modules ./node_modules/@gauzy/plugin-soundshot/ && \
-    cp -r ./packages/plugins/registry/node_modules ./node_modules/@gauzy/plugin-registry/
+    cp -r ./packages/plugins/registry/node_modules ./node_modules/@gauzy/plugin-registry/ && \
+    cp -r ./packages/plugins/ai-chat/node_modules ./node_modules/@gauzy/plugin-ai-chat/ && \
+    cp -r ./packages/plugins/ai-provider-anthropic/node_modules ./node_modules/@gauzy/plugin-ai-provider-anthropic/ && \
+    cp -r ./packages/plugins/ai-provider-openai/node_modules ./node_modules/@gauzy/plugin-ai-provider-openai/ && \
+    cp -r ./packages/plugins/ai-provider-openrouter/node_modules ./node_modules/@gauzy/plugin-ai-provider-openrouter/ && \
+    cp -r ./packages/plugins/ai-provider-vercel-gateway/node_modules ./node_modules/@gauzy/plugin-ai-provider-vercel-gateway/ && \
+    cp -r ./packages/plugins/ai-provider-gauzy-ai/node_modules ./node_modules/@gauzy/plugin-ai-provider-gauzy-ai/
 
 # We do not copy node_modules for Wakatime plugin here, because it is used in Desktop Apps for now
 # RUN cp -r ./packages/plugins/integration-wakatime/node_modules ./node_modules/@gauzy/plugin-integration-wakatime/

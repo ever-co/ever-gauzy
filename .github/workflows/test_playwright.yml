@@ -1,0 +1,152 @@
+name: Playwright Tests
+
+# Replaces the dormant Cypress workflows (test_cypress.yml / test_currents.yml, which trigger on
+# branch `nope`). Runs the migrated Playwright e2e suite against a locally-started API + Web.
+on:
+  push:
+    branches: [develop, feat/e2e-playwright]
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+
+# Least-privilege GITHUB_TOKEN (CodeQL: a workflow should limit the token's permissions). This job only
+# checks out code and runs tests against a locally-started stack — it needs no write scopes.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-playwright:
+    runs-on: [self-hosted]
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Packages & Bootstrap
+        run: yarn bootstrap
+
+      - name: Build all packages
+        shell: bash
+        # --parallel=1: the self-hosted Windows runner kills large lib builds (core:build, exit 130)
+        # under parallel pressure ("flaky task"). core builds fine alone (verified locally), so build
+        # serially — cached libs skip fast, only cache-misses rebuild. Once core caches, reruns are
+        # fast. Retry once for any residual flake (nx cache makes the retry cheap).
+        run: |
+          yarn build:package:all --parallel=1 \
+            || { echo "::warning::build:package:all failed — retry 1 (nx cache skips built projects)"; yarn build:package:all --parallel=1; }
+        env:
+          NX_NO_CLOUD: true
+          # Self-hosted Windows runner: Nx isolated plugin workers fail to spawn
+          # ("Failed to start plugin worker") → run plugins in-process and skip the daemon.
+          NX_ISOLATE_PLUGINS: 'false'
+          NX_DAEMON: 'false'
+
+      - name: Generate dev config
+        run: yarn config:dev
+
+      - name: Install forever package
+        run: npm install forever -g
+
+      - name: Add npm global bin to PATH
+        shell: bash
+        run: echo "$(npm prefix -g)" >> "$GITHUB_PATH"
+
+      - name: Reset DB for a clean, deterministic seed
+        shell: bash
+        # The self-hosted runner persists the filesystem; a stale/accumulated DB from a prior run
+        # causes flaky failures (duplicate names, wrong grid counts) or a demo-state onboarding
+        # redirect. Start each run from an empty DB so the API auto-seeds the default org/admin.
+        run: rm -f apps/api/data/gauzy.sqlite3*
+
+      - name: Run API in background
+        run: yarn start:api:forever
+        env:
+          DEMO: 'false'
+          # MUST be set in the process env (not just .env) before the API starts: the sqlite-vs-postgres
+          # column-type guards (isBetterSqlite3() in @gauzy/config) are captured at module load, before
+          # the app reads .env. Without this the timestamp columns resolve to Postgres 'timestamp' and
+          # better-sqlite3 rejects them -> API crashes at DataSource.initialize -> every spec fails at login.
+          DB_TYPE: 'better-sqlite3'
+          # This self-hosted runner shares :3000 with other dev processes (e.g. a local Next.js app),
+          # so run the e2e API on :3001 to avoid the port clash. The web bundle is repointed to match.
+          API_PORT: '3001'
+          API_BASE_URL: 'http://localhost:3001'
+
+      - name: Build Web (gauzy) for static serving
+        # The Angular dev server (nx serve gauzy) OOMs over a long e2e run. Build once and serve the
+        # static output instead — stable + low memory. The app uses hash routing + an absolute API
+        # URL baked into the bundle, so a plain static file server is sufficient (no proxy/SPA fallback).
+        shell: bash
+        run: |
+          yarn nx build gauzy -c local || { echo "::warning::gauzy build failed — retry 1 (nx cache skips done deps)"; yarn nx build gauzy -c local; }
+          # The bundle bakes the API URL as http://localhost:3000; the API runs on :3001 here (shared
+          # runner), so repoint the built bundle at :3001 to match.
+          grep -rl 'localhost:3000' dist/apps/gauzy --include='*.js' | xargs -r sed -i 's#localhost:3000#localhost:3001#g'
+        env:
+          NX_NO_CLOUD: true
+          NX_ISOLATE_PLUGINS: 'false'
+          NX_DAEMON: 'false'
+          NODE_OPTIONS: --max-old-space-size=24576
+
+      - name: Serve Web (static) in background
+        run: forever start apps/gauzy-e2e/tools/serve-web.js dist/apps/gauzy 4200
+
+      - name: Install Playwright browser (chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Wait for API and Web to be ready
+        shell: bash
+        # Poll both ports, but FAIL FAST if a server process has crashed (forever -> STOPPED)
+        # instead of waiting out the whole window. Web is a static server (instant); the API seeds
+        # a fresh DB (~5-7 min: migrations + seedDefault), so a 10-min cap is ample.
+        run: |
+          deadline=$((SECONDS + 600))   # 10 min hard cap
+          while (( SECONDS < deadline )); do
+            api=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:3001/api || true)
+            web=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:4200 || true)
+            echo "waiting (${SECONDS}s): api=$api web=$web"
+            if [ "$api" != "000" ] && [ "$web" != "000" ]; then
+              echo "✅ API (:3001) and Web (:4200) are up"; exit 0
+            fi
+            if npx forever list 2>/dev/null | grep -qi "STOPPED"; then
+              echo "❌ A server process crashed (forever reports STOPPED) — aborting early."; exit 1
+            fi
+            sleep 6
+          done
+          echo "❌ Timed out after ${SECONDS}s waiting for API/Web"; exit 1
+
+      - name: Server logs (diagnostic)
+        if: always()
+        shell: bash
+        run: |
+          npx forever list || true
+          for f in "$HOME"/.forever/*.log; do
+            [ -e "$f" ] || continue
+            echo "===== $f ====="
+            tail -120 "$f" || true
+          done
+
+      - name: Run Playwright tests
+        working-directory: apps/gauzy-e2e
+        # MUST be bash: `run:` defaults to PowerShell on this Windows self-hosted runner, where `&&` is a
+        # parse error (FullyQualifiedErrorId: InvalidEndOfLine) — so the chained command never runs.
+        shell: bash
+        # bddgen regenerates the Playwright specs from the .feature (Gherkin) files + step definitions
+        # before the run; the plain *.spec.ts and the generated BDD specs run together (see playwright.config).
+        run: npx bddgen && npx playwright test
+        env:
+          CI: 'true'
+          E2E_BASE_URL: http://localhost:4200
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: apps/gauzy-e2e/playwright-report
+          retention-days: 14

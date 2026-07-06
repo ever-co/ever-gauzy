@@ -46,6 +46,70 @@
     order: 0 !important;
   }
 
+  // AI Chat sidebar — a full-height vertical block like the nav menu sidebar
+  // (Menu | Chat | Canvas, or Menu | Canvas | Chat when docked right).
+  // The HOST stays in the flex flow and reserves the width; Nebular's
+  // .main-container is position:fixed in windowMode, so it is pinned to the
+  // full viewport height (top 0 → nothing above or below it) and follows the
+  // host's flex-computed width via --gz-chat-live-width (set by the layout's
+  // ResizeObserver — covers normal, user-resized, maximized and collapsed).
+  nb-sidebar.chat-sidebar {
+    order: 0 !important;
+    align-self: stretch;
+
+    // Docked to the right of the canvas: Menu | Canvas | Chat.
+    // .layout (the content column) has default order 0, so order 2 places
+    // the host after it (same trick as .menu-sidebar-rtl).
+    &.chat-sidebar-end {
+      order: 2 !important;
+
+      ::ng-deep .main-container .scrollable {
+        border-right: none;
+        border-left: 1px solid nb-theme(divider-color);
+      }
+    }
+
+    &.expanded {
+      width: var(--gz-chat-width, 24rem) !important;
+    }
+
+    // Maximized: take all space except the nav menu (Menu | Chat);
+    // the canvas is hidden (components stay alive) until restored.
+    &.chat-sidebar-maximized {
+      flex: 1 1 auto !important;
+      width: auto !important;
+    }
+
+    &.collapsed {
+      width: 0 !important;
+      overflow: hidden;
+    }
+
+    ::ng-deep .main-container {
+      width: var(--gz-chat-live-width, var(--gz-chat-width, 24rem)) !important;
+      max-width: none;
+      top: 0 !important;
+      height: 100vh !important;
+      z-index: 1041; // same layer as the nav menu sidebar — covers the header band
+      transition: width 0.2s ease;
+      overflow: hidden;
+
+      .scrollable {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 0 !important;
+        overflow: hidden;
+        // Same surface as the nav menu sidebar; the chat panel's design
+        // tokens derive from currentColor, so set the themed text color here.
+        background: nb-theme(gauzy-sidebar-background-2);
+        color: nb-theme(text-basic-color);
+        border-right: 1px solid nb-theme(divider-color);
+      }
+    }
+  }
+
+
   gauzy-user-menu {
     position: absolute;
     bottom: 0px;
@@ -122,24 +186,66 @@ nb-sidebar[tag='menu-sidebar'] {
 }
 
 .logo-container {
+  // One stable single row: [logo / workspace switcher (shrinks)] [… btn] [AI btn].
+  // Nothing may wrap, overlap, or change the row's footprint between the
+  // closed (logo) and open (tenant/company switcher) states.
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
   max-width: nb-theme(sidebar-width);
   width: nb-theme(sidebar-width);
+  min-height: 3.25rem;
   padding: 0.75rem;
+  overflow: hidden;
   button.hidden-menu {
+    flex: 0 0 auto;
     padding: 0 0.5rem;
     height: 1.625rem;
     width: 1.625rem;
-    margin: 0 0.625rem;
+    margin: 0;
   }
+  button.ai-agent-launch {
+    flex: 0 0 auto;
+    padding: 0 0.5rem;
+    height: 1.625rem;
+    width: 1.625rem;
+    margin: 0;
+    color: nb-theme(color-primary-default);
+  }
+  // The logo / in-place workspace switcher takes the remaining row width and
+  // SHRINKS (min-width: 0) instead of pushing the buttons or wrapping.
   ngx-gauzy-logo {
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
     z-index: 2;
   }
+  ::ng-deep .accordion.workspace {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+
+    nb-accordion-item-header.principal {
+      // logo image and the (absolutely positioned) chevron share the
+      // header without overlap: reserve the chevron's space on the right
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      overflow: hidden;
+      position: relative;
+      padding-right: 2.25rem;
+
+      .logo {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+      }
+    }
+  }
   &.not-collapsed {
-    padding: 0.75rem 0;
+    padding: 0.75rem 0.5rem;
   }
   &.compacted {
     width: nb-theme(sidebar-width-compact);
@@ -147,6 +253,11 @@ nb-sidebar[tag='menu-sidebar'] {
     align-items: center;
     button.hidden-menu {
       margin-left: 0;
+    }
+    // No room for the AI launcher in the compacted rail — the header
+    // chat toggle remains available.
+    button.ai-agent-launch {
+      display: none;
     }
     ::ng-deep .accordion.workspace {
       box-shadow: none;
@@ -221,6 +332,16 @@ nb-sidebar[tag='menu-sidebar'] {
 ::ng-deep {
   nb-layout .layout .layout-container nb-sidebar .main-container-fixed > .scrollable {
     overflow-y: auto;
+  }
+
+  // While the AI chat is maximized the canvas SHRINKS to zero width instead
+  // of being covered or display:none'd — the page stays alive and restoring
+  // simply gives the space back. (All nb-sidebars are projected before the
+  // .content column inside .layout-container.)
+  nb-layout .layout .layout-container nb-sidebar.chat-sidebar.chat-sidebar-maximized ~ .content {
+    flex: 0 1 0% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
   }
 }
 

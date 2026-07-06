@@ -10,6 +10,7 @@ on:
 
 jobs:
   deploy-demo:
+    if: ${{ vars.DO_ENABLED == 'true' }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
     timeout-minutes: 300
 

@@ -1,4 +1,5 @@
 import {
+	createEnvironmentInjector,
 	EnvironmentInjector,
 	inject,
 	InjectionToken,
@@ -108,6 +109,9 @@ export class PluginUiModule implements OnDestroy {
 	/** Definitions of bootstrap-only plugins (no NgModule). Tracked separately for extension cleanup on destroy. */
 	private readonly _declarativePluginDefs: PluginUiDefinition[] = [];
 
+	/** Child EnvironmentInjectors created for declarative plugins with providers. Destroyed with the module. */
+	private readonly _pluginEnvInjectors: EnvironmentInjector[] = [];
+
 	/**
 	 * Configure the PluginUiModule.
 	 *
@@ -179,6 +183,17 @@ export class PluginUiModule implements OnDestroy {
 				this._extRegistry.deregisterByPlugin(definition.id);
 			}
 		}
+
+		// Destroy the child EnvironmentInjectors created for declarative plugins
+		// so their providers' ngOnDestroy hooks run and references are released.
+		for (const injector of this._pluginEnvInjectors) {
+			try {
+				injector.destroy();
+			} catch (e: unknown) {
+				console.error('[PluginUiModule] Error destroying plugin environment injector', e);
+			}
+		}
+		this._pluginEnvInjectors.length = 0;
 	}
 
 	// ─── Bootstrap ───────────────────────────────────────────────
@@ -384,7 +399,16 @@ export class PluginUiModule implements OnDestroy {
 				}
 
 				this._health.recordBootStart(definition.id);
-				const result = runInInjectionContext(this._envInjector, () => definition.bootstrap!(this._envInjector));
+
+				// Create a child EnvironmentInjector with plugin providers (if any)
+				const pluginInjector = definition.providers?.length
+					? createEnvironmentInjector(definition.providers, this._envInjector)
+					: this._envInjector;
+				if (pluginInjector !== this._envInjector) {
+					this._pluginEnvInjectors.push(pluginInjector);
+				}
+
+				const result = runInInjectionContext(pluginInjector, () => definition.bootstrap!(pluginInjector));
 				if (result instanceof Promise) await result;
 				this._declarativePluginDefs.push(definition);
 				this._health.recordBootEnd(definition.id);

@@ -7,6 +7,7 @@ import { JobsPlugin } from '@gauzy/plugin-jobs-ui';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork-ui';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane-ui';
 import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
+import { AiChatReactUiPlugin } from '@gauzy/plugin-ai-chat-react-ui';
 import { DashboardTimeTrackAngularUiPlugin } from '@gauzy/plugin-dashboard-time-track-angular-ui';
 import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
 import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
@@ -86,6 +87,10 @@ export const uiPluginConfig: PluginUiConfig = {
 		}),
 
 		// React UI Plugin (demo only)
-		...(environment.DEMO ? [DashboardTimeTrackReactUiPlugin] : [])
+		...(environment.DEMO ? [DashboardTimeTrackReactUiPlugin] : []),
+
+		// AI Chat — enabled in all builds; visibility is gated at runtime by the
+		// AI_CHAT_ACCESS permission and the backend configuration (/api/ai-chat/config).
+		AiChatReactUiPlugin
 	]
 };

@@ -3687,7 +3687,8 @@
 		"SELECT_A_DATE": "Изберете дата",
 		"SELECT_AN_ORGANIZATION": "Изберете организация",
 		"SELECT_PROJECT": "Изберете проект",
-		"SELECT_TEAM": "Изберете отбор"
+		"SELECT_TEAM": "Изберете отбор",
+		"AI_CHAT": "AI чат"
 	},
 	"HEADER_TITLE": {
 		"FOR": "за",
