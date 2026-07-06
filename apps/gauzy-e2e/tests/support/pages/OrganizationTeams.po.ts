@@ -161,7 +161,12 @@ export const clickCardBody = async (_index: number) => {
 	// Dismiss an open ng-select / nb-select panel by clicking a neutral element INSIDE the dialog (the
 	// form title). The old 'nb-card-body' target no longer exists in the flat ga-teams-mutation form and
 	// the page card behind sits under a backdrop; Escape would close the whole nb-dialog.
-	await getPage().locator(OrganizationTeamsPage.cardBodyCss).first().click({ force: true }).catch(() => undefined);
+	// dispatchClick (not a coordinate click): a just-closed nb-select option panel leaves a fading
+	// cdk-overlay-backdrop over the dialog; a coordinate click({force:true}) on the title lands on
+	// that backdrop, and the nb-dialog (closeOnBackdropClick:true) then closes the whole team form —
+	// which is why the next Managers nb-select was never found. Dispatch straight to the title element
+	// so the open panel is dismissed without the click ever reaching the backdrop.
+	await dispatchClick(OrganizationTeamsPage.cardBodyCss).catch(() => undefined);
 };
 
 export const saveButtonVisible = async () => {

@@ -313,23 +313,20 @@ export const clickConfirmButton = async () => {
 	for (let i = 0; i < 8; i++) {
 		await waitForSpinnerGone();
 		await confirmBtn.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {});
-		// A REAL actionable click first — the mutation dialog is the topmost cdk-overlay so its Send button is
-		// not under any fading backdrop. send()/sendEmail() await an invoicesService.update(status: SENT)
-		// BEFORE dialogRef.close(), and a synthetic dispatchEvent('click') does NOT reliably drive that async
-		// nbButton (click) handler (root cause: dialog stayed open, status never flipped to SENT, div.badge-success
-		// never rendered). Fall back to force-click, then dispatch, only if the actionable click can't resolve.
-		await confirmBtn.click({ timeout: 6000 }).catch(async () => {
-			await confirmBtn.click({ force: true, timeout: 4000 }).catch(async () => {
-				await confirmBtn.dispatchEvent('click').catch(async () => {
-					await dispatchClick(InvoicesPage.confirmButtonCss).catch(() => {});
-				});
+		// FORCE-click FIRST (was an actionable click — that regressed: the ga-invoice-pdf <iframe> streams into
+		// the card body and overlays the nb-card-footer coordinates, so a non-force click spins on the "receives
+		// pointer events" check and burns the whole 180s test cap). force skips only the actionability CHECK,
+		// still dispatches a trusted click that drives the async nbButton (click) -> send()/sendEmail() ->
+		// invoicesService.update(status: SENT). Keep dispatch fallbacks for a mid-animation detach.
+		await confirmBtn.click({ force: true, timeout: 6000 }).catch(async () => {
+			await confirmBtn.dispatchEvent('click').catch(async () => {
+				await dispatchClick(InvoicesPage.confirmButtonCss).catch(() => {});
 			});
 		});
 		try {
-			// Generous detach window: send()/sendEmail() awaits the service update before dialogRef.close(), so the
-			// dialog only leaves the DOM once that round-trip resolves. 12s absorbs a slow update without looping
-			// into a no-op re-click while the first click's handler is still awaiting.
-			await dialogHost.waitFor({ state: 'detached', timeout: 12000 });
+			// Detach window sized so all 8 retries fit within the 180s test cap. send() awaits invoicesService.update()
+			// before dialogRef.close(); 6s absorbs a normal round-trip, and a lingering dialog just loops to re-click.
+			await dialogHost.waitFor({ state: 'detached', timeout: 6000 });
 			// let the onClose refresh ($refresh$ / invoices$) settle so the grid repaints the SENT badge
 			await waitForSpinnerGone();
 			await page.waitForLoadState('networkidle').catch(() => {});

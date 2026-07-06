@@ -41,7 +41,7 @@ export const MyTasksTrackedInTimesheets = {
 	taskSelectCss: 'ga-task-selector ng-select',
 	// Start/Stop is ONE toggle button whose [status] flips success->danger. div.actions div.toggle scopes it
 	// to the timer widget (the view-log block also has a status="success" START button, avoided here).
-	startTimerBtnCss: 'div.actions div.toggle button[status="success"]',
+	startTimerBtnCss: 'div.actions div.toggle button.status-success',
 	stopTimerBtnCss: 'div.actions div.toggle button[status="danger"]',
 	// The "View Timesheet" anchor uses [routerLink]="['/pages/employees/timesheets']", which the hash-router
 	// renders as href="#/pages/employees/timesheets".

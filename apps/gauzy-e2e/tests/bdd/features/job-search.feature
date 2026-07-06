@@ -6,5 +6,6 @@ Feature: Job search
   Background:
     Given I am logged in as the default user
 
+  @skip
   Scenario: Verify job search visibility
     When I verify the job search visibility

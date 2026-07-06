@@ -333,8 +333,11 @@ export const enterOrganizationName = async (data) => {
 };
 
 export const selectCurrency = async (data) => {
-	await clickButton(OrganizationPublicPage.currencyFieldCss);
-	await clickElementByText(OrganizationPublicPage.dropdownOptionCss, data);
+	// Currency is a <ga-currency> host wrapping <ng-select class="currency-selector"> (appendTo="body").
+	// The old '#currencySelect' id only exists on an optional <label for>, not the control; open the
+	// ng-select and pick from the body-level ng-dropdown-panel (ng-option), matching AddOrganizationPageObject.
+	await clickButton('ga-currency ng-select');
+	await clickByText('ng-dropdown-panel div.ng-option', data);
 };
 
 export const enterOfficialName = async (data) => {

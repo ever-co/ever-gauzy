@@ -135,6 +135,24 @@ export const clickAddApprovalButton = async () => {
 	// dispatch the click straight to the button so add()/save() fires regardless of the overlay.
 	await waitForSpinnerGone();
 	await dispatchClick(ApprovalRequestPage.addApprovalRequestButtonCss);
+	// The generic button[status="success"] Add is ambiguous: the Manage Employees page (which the
+	// addEmployee prerequisite leaves us on) ALSO renders a status="success" Add button, so if the
+	// preceding hash navigation to the policy/request page was a same-document no-op the click above
+	// fires on the WRONG page and opens no policy/request dialog — the next nameInput assertion then
+	// times out on the Manage Employees grid (the failure-snapshot symptom). Confirm the mutation
+	// dialog actually opened (its formcontrolname="name" input appears); if not, dispatch the Add once
+	// more after settling. Page-agnostic — both the policy step and the request step open a dialog
+	// containing this input — so it hardens the real "Add fired but no dialog opened" gap.
+	const page = getPage();
+	const dialogNameInput = page.locator(ApprovalRequestPage.nameInputCss).first();
+	const opened = await dialogNameInput
+		.waitFor({ state: 'visible', timeout: 6000 })
+		.then(() => true)
+		.catch(() => false);
+	if (!opened) {
+		await waitForSpinnerGone();
+		await dispatchClick(ApprovalRequestPage.addApprovalRequestButtonCss);
+	}
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode) => {

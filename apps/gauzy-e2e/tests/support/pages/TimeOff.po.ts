@@ -45,6 +45,32 @@ export const getLastSelectedEmployeeName = () => lastSelectedEmployeeName;
 // toolbar marker before the caller interacts.
 export const navigateToTimeOff = async () => {
 	const page = getPage();
+	// ORG POLLUTION FIX: the suite shares one DB/browser context and the web app persists the
+	// last-selected organizationId (Store -> localStorage), so this spec frequently runs with a random
+	// faker org selected (the failure DOM showed "Time Off for Denesik Group"). Random orgs only have
+	// "Policy 1".."Policy 10" — never the seeded "Default Policy" — so the hardcoded policy pick never
+	// lands, the request form stays invalid (Save [disabled]), nothing persists, and verifyPolicyExists
+	// times out. Force the header org selector back to "Default Company" (the only org seeded with
+	// "Default Policy") BEFORE the org-scoped request work so the exact-match policy pick is deterministic.
+	try {
+		const orgSelector = page.locator('ga-organization-selector.organization-selector ng-select').first();
+		await orgSelector.waitFor({ state: 'visible', timeout: 8000 });
+		await orgSelector.click({ force: true });
+		const defaultCompanyOption = page
+			.locator('div.ng-option[role="option"]')
+			.filter({ hasText: 'Default Company' })
+			.first();
+		if (await defaultCompanyOption.isVisible({ timeout: 4000 }).catch(() => false)) {
+			await defaultCompanyOption.click({ force: true });
+			// Let the org switch (switchOrganization backend call + policies refetch) settle.
+			await page.waitForTimeout(1500);
+		} else {
+			// Already on Default Company (or panel didn't render an option) — dismiss the panel and proceed.
+			await page.keyboard.press('Escape').catch(() => {});
+		}
+	} catch {
+		// Best-effort: never let the org-normalisation hang the flow; the downstream policy fallback still applies.
+	}
 	await page.goto('/#/pages/employees/time-off');
 	await page.evaluate(() => {
 		if (!location.hash.includes('/pages/employees/time-off')) {
