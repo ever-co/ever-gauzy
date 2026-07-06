@@ -46,7 +46,14 @@ const gotoHashRoute = async (targetHash: string, header: string): Promise<void> 
 	await page.evaluate(() => {
 		location.hash = '#/pages/dashboard';
 	});
-	await page.waitForTimeout(300);
+	// Wait for the dashboard bounce to actually COMMIT before assigning the target hash. A bare 300ms
+	// settle was too short: in the useHash router the intermediate #/pages/dashboard hashchange had not
+	// rendered yet, so the two rapid location.hash writes coalesced and the target route change was
+	// dropped — the app stayed wedged on Manage Employees (the failure-snapshot symptom). Wait for the
+	// dashboard container to render (proof the bounce landed), then settle, so the next assignment is a
+	// genuine, non-coalesced hashchange.
+	await page.locator('.dashboard-container').first().waitFor({ state: 'visible', timeout: 12000 }).catch(() => undefined);
+	await page.waitForTimeout(700);
 	await page.evaluate((h) => {
 		location.hash = h;
 	}, targetHash);

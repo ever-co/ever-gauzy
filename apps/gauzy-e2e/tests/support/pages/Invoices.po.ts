@@ -313,17 +313,29 @@ export const clickConfirmButton = async () => {
 	for (let i = 0; i < 8; i++) {
 		await waitForSpinnerGone();
 		await confirmBtn.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {});
-		await confirmBtn.dispatchEvent('click').catch(async () => {
-			await dispatchClick(InvoicesPage.confirmButtonCss).catch(() => {});
+		// A REAL actionable click first — the mutation dialog is the topmost cdk-overlay so its Send button is
+		// not under any fading backdrop. send()/sendEmail() await an invoicesService.update(status: SENT)
+		// BEFORE dialogRef.close(), and a synthetic dispatchEvent('click') does NOT reliably drive that async
+		// nbButton (click) handler (root cause: dialog stayed open, status never flipped to SENT, div.badge-success
+		// never rendered). Fall back to force-click, then dispatch, only if the actionable click can't resolve.
+		await confirmBtn.click({ timeout: 6000 }).catch(async () => {
+			await confirmBtn.click({ force: true, timeout: 4000 }).catch(async () => {
+				await confirmBtn.dispatchEvent('click').catch(async () => {
+					await dispatchClick(InvoicesPage.confirmButtonCss).catch(() => {});
+				});
+			});
 		});
 		try {
-			await dialogHost.waitFor({ state: 'detached', timeout: 6000 });
+			// Generous detach window: send()/sendEmail() awaits the service update before dialogRef.close(), so the
+			// dialog only leaves the DOM once that round-trip resolves. 12s absorbs a slow update without looping
+			// into a no-op re-click while the first click's handler is still awaiting.
+			await dialogHost.waitFor({ state: 'detached', timeout: 12000 });
 			// let the onClose refresh ($refresh$ / invoices$) settle so the grid repaints the SENT badge
 			await waitForSpinnerGone();
 			await page.waitForLoadState('networkidle').catch(() => {});
 			return;
 		} catch {
-			// dialog still open — the dispatch didn't take (PDF preview still wiring up); loop and re-dispatch
+			// dialog still open — the click didn't take (PDF preview still wiring up); loop and re-click
 		}
 	}
 };

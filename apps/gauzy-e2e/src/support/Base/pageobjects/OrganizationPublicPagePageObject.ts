@@ -57,7 +57,9 @@ export const OrganizationPublicPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	taxFieldCss: '#taxIdInput',
 	nextButtonCss: 'button[type="submit"]',
-	addButtonCss: 'nb-card-body > div > button[status="success"]',
+	// Add button moved from nb-card-body into the nb-card-header toolbar (ngx-gauzy-button-action
+	// #visible template). Scope to the plus icon so a leaked success button elsewhere can't match first.
+	addButtonCss: 'button[status="success"]:has(nb-icon[icon="plus-outline"])',
 	verifyOrganizationCss: 'div.d-block',
 	countryDropdownCss: 'ga-country div.form-group nb-select',
 	cityInputCss: '#cityInput',

@@ -387,7 +387,15 @@ export const selectEmployeeFromDropdown = async (index: number) => {
 		await option.first().waitFor({ state: 'visible', timeout: 8000 });
 		await option.nth(index).click({ force: true });
 	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
+		// Do NOT press Escape here: the parent opens this mutation via NbDialogService with the default
+		// closeOnEsc:true, so an Escape propagates to the dialog and closes the WHOLE request form (the
+		// employees field is optional). Dismiss the empty nb-select overlay by clicking a benign spot
+		// INSIDE the dialog (its header title) instead, which collapses the panel without closing the dialog.
+		await page
+			.locator('ngx-equipment-sharing-mutation nb-card-header h5.title')
+			.first()
+			.click({ force: true })
+			.catch(() => {});
 	}
 };
 

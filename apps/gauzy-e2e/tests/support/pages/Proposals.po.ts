@@ -283,8 +283,23 @@ export const editProposalButtonVisible = async () => {
 
 export const clickEditProposalButton = async () => {
 	// Edit (on the details page header) navigates to the edit route — dispatchClick avoids backdrop interception.
+	// ProposalDetailsComponent.edit() no-ops unless this.proposal is set, and that is populated
+	// asynchronously (resolver fetch + route.data debounceTime(100)) AFTER the Edit button already
+	// renders/becomes visible. A single dispatch therefore races the proposal resolution and can fire
+	// while this.proposal is still undefined → no navigation, then jobPostInputVisible() times out on an
+	// edit form that never loads. Retry the dispatch until the edit route/form actually renders.
+	const page = getPage();
 	await waitForSpinnerGone();
-	await dispatchClick(ProposalsPage.editProposalButtonCss);
+	const jobPostInput = page.locator(ProposalsPage.jobPostUrlInputCss).first();
+	for (let i = 0; i < 8; i++) {
+		await dispatchClick(ProposalsPage.editProposalButtonCss);
+		try {
+			await jobPostInput.waitFor({ state: 'visible', timeout: 3_000 });
+			return;
+		} catch {
+			await page.waitForTimeout(500);
+		}
+	}
 };
 
 export const markAsStatusButtonVisible = async () => {

@@ -76,7 +76,16 @@ export const clickCardBody = async () => {
 };
 
 export const waitMessageToHide = async () => {
-	await waitElementToHide(SalesInvoicesPage.toastrMessageCss);
+	// The shared util.waitElementToHide hard-sleeps 10s every call; this scenario calls it ~7 times
+	// (add/edit/send/email/set-status/delete), blowing the single 180s per-test budget shared by all 7
+	// BDD steps and killing the test mid-send. Poll for the toast to clear instead (bounded, returns as
+	// soon as it's gone). Mirrors the proven Expenses.po local override.
+	const toast = getPage().locator(SalesInvoicesPage.toastrMessageCss);
+	try {
+		await toast.first().waitFor({ state: 'hidden', timeout: 12000 });
+	} catch {
+		/* no toast appeared / already gone */
+	}
 };
 
 export const discountInputVisible = async () => {

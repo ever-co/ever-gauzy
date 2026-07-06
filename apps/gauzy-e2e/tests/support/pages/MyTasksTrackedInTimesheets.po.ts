@@ -147,9 +147,14 @@ export const selectTagsFromDropdown = async (index: number) => {
 };
 
 export const clickCardBody = async () => {
-	// Close any open ng-select panel by clicking the dialog body, then belt-and-braces Escape.
+	// Close any open ng-select panel by clicking the dialog body. Do NOT press Escape here: the
+	// MyTaskDialog is opened with Nebular's default closeOnEsc:true, and NbDialogService listens for
+	// document-level `keyup` Esc (keyCode 27) to close the dialog. An Escape keystroke — regardless of
+	// focus, and even when an ng-select panel is open (ng-select only handles keydown and never
+	// stopPropagation) — bubbles to the document and closes the WHOLE dialog, detaching dueDate/estimate/
+	// description/Save. Clicking nb-card-body.body already dismisses any open ng-select via its
+	// outside-click handler, so the Escape is both redundant and destructive.
 	await clickButton(MyTasksTrackedInTimesheets.cardBodyCss).catch(() => undefined);
-	await getPage().keyboard.press('Escape').catch(() => undefined);
 };
 
 export const dueDateInputVisible = async () => verifyElementIsVisible(MyTasksTrackedInTimesheets.dueDateInputCss);
