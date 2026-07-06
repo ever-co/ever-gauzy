@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   gauzy-mcp-auth:
-    runs-on: ubicloud-standard-8
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 300
     steps:
       - name: Checkout

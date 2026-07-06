@@ -19,7 +19,7 @@ jobs:
     # Only build when this exact commit carries a release tag (the version stamped into the
     # packages - see header comment) - i.e. 'local-apps' was fast-forwarded to a 'develop'
     # commit that 'Release Demo' has already tagged. Retries absorb the short merge -> tag delay.
-    runs-on: ubicloud-standard-4
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
     timeout-minutes: 15
     permissions:
       contents: read

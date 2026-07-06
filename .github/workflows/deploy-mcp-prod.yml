@@ -11,7 +11,7 @@ on:
 jobs:
   deploy-mcp-prod:
     if: ${{ vars.DO_ENABLED == 'true' }}
-    runs-on: ubicloud-standard-4
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
     timeout-minutes: 300
 
     environment: prod

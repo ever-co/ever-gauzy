@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubicloud-standard-4]
+        os: ["${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}"]
 
     steps:
       - name: Check out Git repository

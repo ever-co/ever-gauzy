@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   e2e-tests-setup:
-    runs-on: ubicloud-standard-4
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
     timeout-minutes: 360
 
     steps:
