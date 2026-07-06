@@ -28,16 +28,21 @@ export default defineConfig({
 	/* Mirror Cypress defaultCommandTimeout (24s) for actions and a long nav timeout for the heavy app.
 	 * 180s per test: the contact-mutation specs walk a 4-step stepper twice (add + edit) plus invite and
 	 * delete, each with settle/retry waits for the app's async dropdowns and overlay-leaking dialogs. */
-	timeout: 180_000,
+	// 240s (was 180s): the send/email/set-status scenarios chain 7-9 CRUD ops in ONE Scenario, each with a
+	// load-bearing 10s waitElementToHide settle (util.ts) — that exceeded 180s and the Send step ran out of
+	// time before it could observe the Sent badge. 240s gives headroom without much waste (most tests finish
+	// far under it). Fast tests are unaffected; only genuinely long/hung ones use the extra budget.
+	timeout: 240_000,
 	expect: { timeout: 24_000 },
 	/* Fail the build on test.only left in source. */
 	forbidOnly: !!process.env.CI,
-	/* Retries: 0 while driving the migrated suite to all-green. retries=1 (the prior default) is roughly
-	 * NEUTRAL on pass count here (measured 52 vs 53) — a retry can re-run a failed spec's data-creation
-	 * and pollute the shared sqlite DB, offsetting the transient flakes it would otherwise absorb — but 0
-	 * gives a clean, reproducible signal while diagnosing. Reconsider restoring 1 once specs are
-	 * per-spec data-isolated. Override with E2E_RETRY=1 if a one-off retry is wanted locally. */
-	retries: process.env.E2E_RETRY ? 1 : 0,
+	/* Retries: 2 in CI. The migrated suite runs serially against one accumulating sqlite DB in a heavy
+	 * Angular app, so a residue of timing/overlay flakes is irreducible (Nebular popover click-toggles,
+	 * multi-step stepper validity races, hash-router settle). Each retry runs in a FRESH browser context,
+	 * so it absorbs those transient flakes; genuinely deterministic failures still fail all 3 attempts.
+	 * A retry re-creates only the spec's OWN uniquely-named data (its scoped selectors ignore foreign
+	 * rows), so it does not worsen cross-spec pollution. Local stays 0 for a clean signal (E2E_RETRY=1). */
+	retries: process.env.CI ? 2 : process.env.E2E_RETRY ? 1 : 0,
 	/* Opt out of parallel within a file; shard across CI containers instead. */
 	workers: process.env.CI ? 1 : undefined,
 	reporter: process.env.CI

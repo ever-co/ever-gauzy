@@ -127,13 +127,12 @@ export const getNotEqualElement = async (selector: string, text: string) =>
 	expect(loc(selector)).not.toHaveText(text, { timeout: defaultCommandTimeout });
 
 export const waitElementToHide = async (selector: string) => {
-	// Poll for the element (typically a success toast) to leave the DOM instead of an UNCONDITIONAL 10s
-	// hard sleep. Every spec's waitMessageToHide() funnels through here, and the long multi-step scenarios
-	// (estimates/invoices/sales-* chain 7-9 CRUD ops) called it many times — 10s x N blew the single 180s
-	// per-test budget (the send step then had no time to observe the Sent badge) AND needlessly inflated
-	// the whole suite's wall-clock. Give a just-fired toast a brief moment to mount, then wait for it to
-	// clear; returns as soon as it's gone (or was never there). Same end-assertion (count 0) as before.
-	await loc(selector).first().waitFor({ state: 'visible', timeout: 3_000 }).catch(() => undefined);
+	// The unconditional 10s wait is load-bearing: it is not merely "wait for the toast to hide" but a
+	// de-facto SETTLE that lets the grid refresh / navigation / valueChanges finish before the next step.
+	// Replacing it with a bounded toast-poll regressed ~9 previously-green specs (add-user/clients/
+	// customers/edit-user/… raced their next action). So keep the settle globally; the long send-cluster
+	// scenarios instead get more budget via the per-test `timeout` in playwright.config.ts.
+	await getPage().waitForTimeout(10_000);
 	await expect(loc(selector)).toHaveCount(0, { timeout: defaultCommandTimeout });
 };
 
