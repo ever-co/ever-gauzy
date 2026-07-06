@@ -3,9 +3,10 @@ name: Playwright Tests
 # Replaces the dormant Cypress workflows (test_cypress.yml / test_currents.yml, which trigger on
 # branch `nope`). Runs the migrated Playwright e2e suite against a locally-started API + Web.
 on:
+  # Run the e2e suite ONLY when code lands on develop (merge/push). Deliberately NOT on pull_request or
+  # any other branch: the suite is long (~1.3h) and shared-DB flaky, so it's gated to the integration
+  # branch. Use the manual "Run workflow" button (workflow_dispatch) to run it on demand from any ref.
   push:
-    branches: [develop, feat/e2e-playwright]
-  pull_request:
     branches: [develop]
   workflow_dispatch:
 
