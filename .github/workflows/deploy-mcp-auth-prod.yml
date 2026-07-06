@@ -10,6 +10,7 @@ on:
 
 jobs:
   deploy-mcp-auth-prod:
+    if: ${{ vars.DO_ENABLED == 'true' }}
     runs-on: ubicloud-standard-4
     timeout-minutes: 300
 
