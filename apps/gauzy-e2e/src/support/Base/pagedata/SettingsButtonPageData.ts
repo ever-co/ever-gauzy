@@ -1,23 +1,19 @@
 export const SettingsButtonData = {
-	themeButtonLight: 'Light',
-	themeButtonDark: 'Dark',
-	themeButtonCosmic: 'Cosmic',
-	themeButtonCorporate: 'Corporate',
-	languageEnglish: 'English',
-	languageBulgarian: 'Bulgarian',
-	languageHebrew: 'Hebrew',
-	changeLangHebrew: 'Иврит',
-	changeLangRussian: 'Руски',
-	languageRussian: 'Russian',
+	// Light/Dark theme toggle now drives the body skin classes.
+	lightTheme: 'nb-theme-gauzy-light',
+	darkTheme: 'nb-theme-gauzy-dark',
+	// Language options are labelled with a language-invariant 2-letter code
+	// prefix (e.g. "EN (English)" / "EN (Английский)"), so we match on the code.
+	languageEnglish: 'EN ',
+	languageBulgarian: 'BG ',
+	languageHebrew: 'HE ',
+	languageRussian: 'RU ',
+	// Resulting language-button captions after selecting each language.
+	langButtonEnglish: 'EN (English)',
+	langButtonBulgarian: 'BG (Български)',
+	langButtonHebrew: 'HE (עִברִית)',
+	langButtonRussian: 'RU (Русский)',
+	// Layout dropdown options.
 	layoutGrid: 'Cards Grid',
-	layoutTable: 'Table',
-	layoutSprint: 'Sprint View',
-	headerEnglish: 'Employee Statistics',
-	headerRussian: 'Статистика сотрудников',
-	headerBulgarian: 'Статистика на служителите',
-	headerHebrew: 'סטטיסטיקת עובדים',
-	lightTheme: 'nb-theme-default',
-	darkTheme: 'nb-theme-dark',
-	cosmicTheme: 'nb-theme-cosmic',
-	corporateTheme: 'nb-theme-corporate'
+	layoutTable: 'Table'
 };

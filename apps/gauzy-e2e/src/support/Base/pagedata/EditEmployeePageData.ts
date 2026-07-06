@@ -6,6 +6,6 @@ export const EditEmployeePageData = {
 	description: 'Full-Stack Web Developer',
 	country: 'Bulgaria',
 	payPeriod: 'Weekly',
-	weeklyLimits: 30,
-	billRate: 35
+	weeklyLimits: '30',
+	billRate: '35'
 };

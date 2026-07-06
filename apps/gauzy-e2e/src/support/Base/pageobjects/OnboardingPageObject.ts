@@ -1,7 +1,7 @@
 export const OnboardingPage = {
 	organizationNameFieldCss: '#nameInput',
-	currencyFieldCss: '#currencySelect',
-	currencyOptionCss: '.option-list nb-option',
+	currencyFieldCss: 'ng-select.currency-selector',
+	currencyOptionCss: '.ng-dropdown-panel .ng-option',
 	officialNameFieldCss: '#officialNameInput',
 	taxFieldCss: '#taxIdInput',
 	nextButtonCss: 'button[type="submit"]',
