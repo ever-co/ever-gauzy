@@ -1,0 +1,115 @@
+:host {
+	display: block;
+}
+
+.ai-chat-settings {
+	.page-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+
+		h5 {
+			margin: 0;
+		}
+
+		.description {
+			margin: 0.25rem 0 0;
+			font-size: 0.875rem;
+			opacity: 0.7;
+		}
+	}
+
+	.empty-state {
+		margin: 0;
+		opacity: 0.7;
+	}
+
+	.providers {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+		gap: 1rem;
+	}
+
+	.provider-card {
+		margin-bottom: 0;
+
+		.provider-header {
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+		}
+
+		.provider-title {
+			position: relative;
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			padding-right: 8rem;
+
+			h6 {
+				margin: 0;
+			}
+		}
+
+		.provider-models {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 0.25rem;
+
+			.models-label {
+				font-size: 0.75rem;
+				opacity: 0.7;
+			}
+
+			.model-chip {
+				font-size: 0.75rem;
+				line-height: 1.25;
+				padding: 0.125rem 0.5rem;
+				border-radius: 1rem;
+				background: rgba(143, 155, 179, 0.16);
+				white-space: nowrap;
+			}
+		}
+	}
+
+	.form-group {
+		margin-bottom: 1rem;
+
+		.label {
+			display: block;
+			margin-bottom: 0.25rem;
+		}
+
+		.hint {
+			display: block;
+			margin-top: 0.25rem;
+			font-size: 0.75rem;
+			opacity: 0.7;
+		}
+
+		.error {
+			display: block;
+			margin-top: 0.25rem;
+			font-size: 0.75rem;
+			color: #ff3d71; // Nebular color-danger-default
+		}
+
+		.custom-model {
+			margin-top: 0.5rem;
+		}
+
+		&.toggles {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 1rem;
+		}
+	}
+
+	.actions {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+}

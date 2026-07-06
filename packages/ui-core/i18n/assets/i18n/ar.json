@@ -3614,7 +3614,8 @@
 		"SELECT_A_DATE": "اختر تاريخًا",
 		"SELECT_AN_ORGANIZATION": "اختر مؤسسة",
 		"SELECT_PROJECT": "اختر مشروعًا",
-		"SELECT_TEAM": "اختر فريقًا"
+		"SELECT_TEAM": "اختر فريقًا",
+		"AI_CHAT": "دردشة الذكاء الاصطناعي"
 	},
 	"HEADER_TITLE": {
 		"FOR": "لـ",

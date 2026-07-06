@@ -1,7 +1,7 @@
-import { Component, inject, viewChild, afterNextRender, DestroyRef, signal } from '@angular/core';
+import { Component, ElementRef, effect, inject, viewChild, afterNextRender, DestroyRef, signal, Type } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
-import { LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
+import { ChatSidebarService, LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
 import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.service';
@@ -24,6 +24,7 @@ export class OneColumnLayoutComponent {
 	private readonly windowModeBlockScrollService = inject(WindowModeBlockScrollService);
 	private readonly store = inject(Store);
 	public readonly navigationBuilderService = inject(NavigationBuilderService);
+	public readonly chatSidebarService = inject(ChatSidebarService);
 	private readonly sidebarService = inject(NbSidebarService);
 	private readonly layoutService = inject(LayoutService);
 	private readonly themeLanguageSelectorService = inject(ThemeLanguageSelectorService);
@@ -35,7 +36,36 @@ export class OneColumnLayoutComponent {
 	/** User observable — kept for child component compatibility (gauzy-user, gauzy-user-menu). */
 	readonly user$ = this.store.user$;
 
+	/**
+	 * Resolved chat sidebar component for `ngComponentOutlet`.
+	 * `IChatSidebarConfig.loadComponent` may be async (lazy chunk), so the
+	 * factory result is resolved into this signal.
+	 */
+	readonly chatSidebarComponent = signal<Type<any> | null>(null);
+
 	constructor() {
+		// Resolve the (possibly lazy) chat sidebar component whenever a plugin registers one.
+		effect(() => {
+			const config = this.chatSidebarService.config();
+			if (!config) {
+				this.chatSidebarComponent.set(null);
+				return;
+			}
+			Promise.resolve(config.loadComponent())
+				.then((component) => {
+					// Ignore the result if the sidebar was unregistered while loading.
+					if (this.chatSidebarService.config() === config) {
+						this.chatSidebarComponent.set(component);
+					}
+				})
+				.catch((error: unknown) => {
+					console.error('[OneColumnLayout] Failed to load the chat sidebar component:', error);
+					if (this.chatSidebarService.config() === config) {
+						this.chatSidebarComponent.set(null);
+					}
+				});
+		});
+
 		Object.entries(DEFAULT_SIDEBARS).forEach(([id, config]) => {
 			this.navigationBuilderService.registerSidebar(id, config);
 			this.navigationBuilderService.addSidebarActionItem(config.actionItem);
@@ -43,6 +73,21 @@ export class OneColumnLayoutComponent {
 		this.navigationBuilderService.getSidebarWidgets();
 
 		this.themeLanguageSelectorService.initialize();
+
+		// Track the chat sidebar HOST width (flex-computed: normal, maximized
+		// or collapsed) and mirror it to --gz-chat-live-width so the fixed
+		// .main-container always matches the space the host reserves.
+		effect(() => {
+			const hostRef = this.chatSidebarHost();
+			this.chatHostResizeObserver?.disconnect();
+			this.chatHostResizeObserver = undefined;
+			if (!hostRef || typeof ResizeObserver === 'undefined') return;
+			const host = hostRef.nativeElement as HTMLElement;
+			const apply = () => host.style.setProperty('--gz-chat-live-width', `${host.getBoundingClientRect().width}px`);
+			this.chatHostResizeObserver = new ResizeObserver(apply);
+			this.chatHostResizeObserver.observe(host);
+			apply();
+		});
 
 		// Runs only in the browser, after the first render — replaces ngAfterViewInit + isPlatformBrowser
 		afterNextRender(() => {
@@ -52,8 +97,27 @@ export class OneColumnLayoutComponent {
 		this.destroyRef.onDestroy(() => {
 			this.navigationBuilderService.clearSidebars();
 			this.navigationBuilderService.clearActionBars();
+			this.chatHostResizeObserver?.disconnect();
 		});
 	}
+
+	/** The chat sidebar host element (present only while the chat renders). */
+	readonly chatSidebarHost = viewChild<ElementRef<HTMLElement>>('chatSidebarHost');
+
+	/**
+	 * Horizontal padding the fixed header needs on the given side so its
+	 * content moves aside for the expanded chat column instead of being
+	 * covered by it. Null when the chat is collapsed, docked to the other
+	 * side, or maximized (maximized covers the header band entirely).
+	 */
+	chatHeaderPad(side: 'start' | 'end'): number | null {
+		const chat = this.chatSidebarService;
+		return chat.available() && chat.expanded() && !chat.maximized() && chat.position() === side
+			? chat.width()
+			: null;
+	}
+
+	private chatHostResizeObserver?: ResizeObserver;
 
 	/**
 	 * Toggles the expansion state of the sidebar.

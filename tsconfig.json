@@ -20,6 +20,14 @@
 			"@gauzy/desktop-window": ["./packages/desktop-window/src/index.ts"],
 			"@gauzy/plugin": ["./packages/plugin/src/index.ts"],
 			"@gauzy/plugin-ui": ["./packages/plugin-ui/src/index.ts"],
+			"@gauzy/plugin-ai-chat": ["./packages/plugins/ai-chat/src/index.ts"],
+			"@gauzy/plugin-ai-provider-anthropic": ["./packages/plugins/ai-provider-anthropic/src/index.ts"],
+			"@gauzy/plugin-ai-provider-openai": ["./packages/plugins/ai-provider-openai/src/index.ts"],
+			"@gauzy/plugin-ai-provider-openrouter": ["./packages/plugins/ai-provider-openrouter/src/index.ts"],
+			"@gauzy/plugin-ai-provider-vercel-gateway": [
+				"./packages/plugins/ai-provider-vercel-gateway/src/index.ts"
+			],
+			"@gauzy/plugin-ai-provider-gauzy-ai": ["./packages/plugins/ai-provider-gauzy-ai/src/index.ts"],
 			"@gauzy/plugin-changelog": ["./packages/plugins/changelog/src/index.ts"],
 			"@gauzy/plugin-integration-activepieces": ["./packages/plugins/integration-activepieces/src/index.ts"],
 			"@gauzy/plugin-integration-activepieces-ui": [
@@ -70,6 +78,9 @@
 			],
 			"@gauzy/plugin-dashboard-time-track-react-ui": [
 				"./packages/plugins/dashboard-time-track-react-ui/src/index.ts"
+			],
+			"@gauzy/plugin-ai-chat-react-ui": [
+				"./packages/plugins/ai-chat-react-ui/src/index.ts"
 			],
 			"@gauzy/ui-react": ["./packages/ui-react/src/index.ts"],
 			"@gauzy/ui-react-components": ["./packages/ui-react-components/src/index.ts"],

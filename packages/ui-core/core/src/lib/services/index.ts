@@ -1,5 +1,6 @@
 export * from './accounting-template';
 export * from './activepieces';
+export * from './ai-agent';
 export * from './analytics';
 export * from './app';
 export * from './appointment-employee';
@@ -8,6 +9,7 @@ export * from './auth';
 export * from './availability-slot';
 export * from './candidate';
 export * from './changelog';
+export * from './chat-sidebar';
 export * from './cloud';
 export * from './country';
 export * from './crud';

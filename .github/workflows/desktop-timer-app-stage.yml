@@ -1,20 +1,63 @@
 name: Desktop Timer App Build Stage
 
+# The packaged desktop & server stage apps are built ONLY when 'stage' is promoted to the 'stage-apps' branch
+# ('temp' is kept for ad-hoc testing). No new platform version is created here: the build
+# version is resolved at build time (.scripts/bump-version-electron.js) from the release tag
+# pointing at this commit, which 'Release Stage' creates on the merge to 'stage' - so the stage app prerelease builds
+# carry the same version as the corresponding platform stage release.
 on:
-  workflow_run:
-    workflows: ['Release Apps Stage']
+  push:
     branches:
       - stage-apps
       - temp
-    types:
-      - completed
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
+  check-release-tag:
+    # Only build when this exact commit carries a release tag (the version stamped into the
+    # packages - see header comment) - i.e. 'stage-apps' was
+    # fast-forwarded to a 'stage' commit that 'Release Stage' has already tagged. Retries
+    # absorb the short merge -> tag delay. Ad-hoc pushes to 'temp' skip the check.
+    runs-on: ubicloud-standard-4
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Verify a release tag points at this commit
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_NAME" = "temp" ]; then
+            echo "Ad-hoc 'temp' branch - skipping the release tag check"
+            exit 0
+          fi
+          if [ "$GITHUB_REF_NAME" != "stage-apps" ]; then
+            echo "::error::This workflow only releases from the 'stage-apps' branch (got '$GITHUB_REF_NAME')."
+            exit 1
+          fi
+          for i in $(seq 1 20); do
+            git fetch --quiet --depth=1 origin '+refs/tags/*:refs/tags/*' || echo "git fetch failed (attempt $i); will retry"
+            TAG=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
+            if [ -n "$TAG" ]; then
+              echo "Release tag on this commit: $TAG"
+              exit 0
+            fi
+            echo "No release tag points at this commit yet (attempt $i/20); retrying in 30s..."
+            sleep 30
+          done
+          echo "::error::No release tag points at this commit. Promote by fast-forwarding 'stage-apps' to the tagged 'stage' commit (git push origin origin/stage:stage-apps) after 'Release Stage' has created the tag."
+          exit 1
+
   release-linux:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -132,6 +175,7 @@ jobs:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
 
   release-linux-arm64:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -257,6 +301,7 @@ jobs:
           SNAPCRAFT_BUILD_ENVIRONMENT: host
 
   release-mac:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -368,6 +413,7 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
 
   release-windows:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -535,6 +581,7 @@ jobs:
           NX_DAEMON: false
 
   release-windows-arm64:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 

@@ -1,7 +1,12 @@
 <nb-layout windowMode>
-	<!-- Header -->
+	<!-- Header — its content shifts aside for the expanded AI chat panel
+	     (the chat is a full-height column; it must displace content, not cover it) -->
 	@if (user()) {
-		<nb-layout-header fixed>
+		<nb-layout-header
+			fixed
+			[style.paddingLeft.px]="chatHeaderPad('start')"
+			[style.paddingRight.px]="chatHeaderPad('end')"
+		>
 			<ngx-header [expanded]="isExpanded()"></ngx-header>
 		</nb-layout-header>
 	}
@@ -31,6 +36,22 @@
 								<i class="fas fa-ellipsis-h"></i>
 							</button>
 						}
+
+						<!-- AI agent launcher — visible whenever the chat is available
+						     but collapsed, so the agent is always one click away. -->
+						@if (chatSidebarService.available() && !chatSidebarService.expanded()) {
+							<button
+								class="ai-agent-launch"
+								outline
+								nbButton
+								size="small"
+								[title]="'HEADER.AI_CHAT' | translate"
+								[attr.aria-label]="'HEADER.AI_CHAT' | translate"
+								(click)="chatSidebarService.expand()"
+							>
+								<i class="fas fa-robot"></i>
+							</button>
+						}
 					</div>
 				</div>
 
@@ -56,6 +77,24 @@
 					</div>
 				</div>
 			</div>
+		</nb-sidebar>
+	}
+
+	<!-- AI Chat sidebar — dedicated slot between the nav menu and the main content.
+	     Single @if (like the menu sidebar above): nesting control-flow blocks breaks
+	     nb-layout's select-based content projection for nb-sidebar. -->
+	@if (user() && chatSidebarService.available() && chatSidebarComponent(); as chatComponent) {
+		<nb-sidebar
+			#chatSidebarHost
+			class="chat-sidebar"
+			[class]="chatSidebarService.config()?.class ?? ''"
+			[class.chat-sidebar-end]="chatSidebarService.position() === 'end'"
+			[class.chat-sidebar-maximized]="chatSidebarService.maximized()"
+			[style.--gz-chat-width]="chatSidebarService.width() + 'px'"
+			tag="chat-sidebar"
+			[state]="chatSidebarService.expanded() ? 'expanded' : 'collapsed'"
+		>
+			<ng-container *ngComponentOutlet="chatComponent"></ng-container>
 		</nb-sidebar>
 	}
 

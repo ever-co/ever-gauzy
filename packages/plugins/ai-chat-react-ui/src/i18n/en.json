@@ -1,0 +1,61 @@
+{
+	"AI_CHAT": {
+		"TITLE": "AI Assistant",
+		"PLACEHOLDER": "Type a message…",
+		"SEND": "Send",
+		"STOP": "Stop",
+		"THINKING": "Thinking…",
+		"EMPTY_STATE": "Start a conversation with the AI assistant.",
+		"ERROR": "Something went wrong. Please try again.",
+		"COLLAPSE": "Close chat",
+		"EXPAND": "Open AI Chat",
+		"NEW_CHAT": "New conversation",
+		"WELCOME_TITLE": "Hi! I'm your AI Assistant",
+		"WELCOME_SUBTITLE": "Ask me anything about your workspace, tasks, or projects.",
+		"POWERED_BY": "Powered by AI"
+	},
+	"SETTINGS": {
+		"TITLE": "AI Providers",
+		"MENU_ITEM": "AI Providers",
+		"DESCRIPTION": "Bring your own API keys: configure per-tenant credentials for the registered AI providers used by the AI chat.",
+		"NO_PROVIDERS": "No AI providers are registered on the server.",
+		"MODELS": "Models",
+		"BADGE": {
+			"TENANT_KEY": "Tenant key",
+			"SERVER_ENV": "Server environment",
+			"NOT_CONFIGURED": "Not configured"
+		},
+		"FORM": {
+			"API_KEY": "API key",
+			"API_KEY_PLACEHOLDER": "Enter API key",
+			"API_KEY_KEEP": "Leave blank to keep the current key.",
+			"API_KEY_REQUIRED": "API key is required.",
+			"SHOW_KEY": "Show API key",
+			"HIDE_KEY": "Hide API key",
+			"BASE_URL": "Base URL (optional)",
+			"BASE_URL_PLACEHOLDER": "https://api.example.com",
+			"BASE_URL_INVALID": "Base URL must be a valid HTTP or HTTPS URL.",
+			"DEFAULT_MODEL": "Default model",
+			"DEFAULT_MODEL_NONE": "Provider default",
+			"DEFAULT_MODEL_CUSTOM": "Custom model…",
+			"CUSTOM_MODEL_PLACEHOLDER": "Enter a model id (e.g. claude-sonnet-5)",
+			"ENABLED": "Enabled",
+			"USE_AS_DEFAULT": "Use as default provider"
+		},
+		"ACTIONS": {
+			"SAVE": "Save",
+			"DELETE": "Delete"
+		},
+		"DELETE_CONFIRM": {
+			"TITLE": "Delete credential",
+			"MESSAGE": "Delete the {{provider}} API credential for this tenant? AI chat may stop working for this provider."
+		},
+		"TOASTR": {
+			"SUCCESS_TITLE": "Success",
+			"ERROR_TITLE": "Error",
+			"SAVED": "{{provider}} credential saved.",
+			"DELETED": "{{provider}} credential deleted.",
+			"ERROR": "Something went wrong. Please try again."
+		}
+	}
+}
