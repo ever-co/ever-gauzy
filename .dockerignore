@@ -6,6 +6,7 @@ tmp
 .angular
 **/.angular
 .nx
+**/.nx
 .github
 .circle
 .circleci
