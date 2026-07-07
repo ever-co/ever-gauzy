@@ -23,7 +23,7 @@ export class ScreenCaptureWebRTSService {
 	 * Electron version + Linux DE/compositor before relying on it. See the
 	 * notes at the bottom of this file.
 	 */
-	async takeScreenshot(): Promise<string> {
+	async takeScreenshot(): Promise<{ screenshot: string; thumbnail: string }> {
 		const sourceId = await this.getSourceId();
 
 		const stream = await (navigator.mediaDevices as any).getUserMedia({
@@ -74,7 +74,7 @@ export class ScreenCaptureWebRTSService {
 	 * Attaches a stream to a detached <video>, waits for a frame to be
 	 * available, draws it to an offscreen <canvas>, and returns the PNG data URL.
 	 */
-	private grabFrame(stream: MediaStream): Promise<string> {
+	private grabFrame(stream: MediaStream): Promise<{ screenshot: string; thumbnail: string }> {
 		return new Promise((resolve, reject) => {
 			const video = document.createElement('video');
 			video.muted = true;
@@ -109,7 +109,23 @@ export class ScreenCaptureWebRTSService {
 					}
 
 					ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-					resolve(canvas.toDataURL('image/png'));
+
+					// Create thumbnail canvas of size 320x240
+					const thumbCanvas = document.createElement('canvas');
+					thumbCanvas.width = 320;
+					thumbCanvas.height = 240;
+
+					const thumbCtx = thumbCanvas.getContext('2d');
+					if (!thumbCtx) {
+						throw new Error('Failed to get 2D canvas context for thumbnail.');
+					}
+
+					thumbCtx.drawImage(video, 0, 0, thumbCanvas.width, thumbCanvas.height);
+
+					resolve({
+						screenshot: canvas.toDataURL('image/png'),
+						thumbnail: thumbCanvas.toDataURL('image/png')
+					});
 				} catch (err) {
 					reject(err);
 				} finally {

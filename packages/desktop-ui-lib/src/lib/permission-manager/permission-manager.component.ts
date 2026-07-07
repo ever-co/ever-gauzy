@@ -106,7 +106,7 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 			this.thumbnail = result.success ? result.thumbnail : null;
 		} else {
 			const result = await this.screenCaptureService.takeScreenshot();
-			this.thumbnail = result;
+			this.thumbnail = result.thumbnail;
 		}
 		this.testInProgress = false;
 	}
