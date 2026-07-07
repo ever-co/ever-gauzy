@@ -1,4 +1,4 @@
-import { Component, input, OnInit, OnDestroy, Optional, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, input, OnInit, OnDestroy, Optional, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import {
 	NbCardModule,
@@ -12,6 +12,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { PermissionManagerService } from './permission-manager.service';
 import { take, filter } from 'rxjs';
+import { ScreenCaptureWebRTSService } from '../electron/services/electron/screen-capture.service';
 
 @UntilDestroy()
 @Component({
@@ -33,6 +34,7 @@ import { take, filter } from 'rxjs';
 })
 export class PermissionManagerComponent implements OnInit, OnDestroy {
 	/** When true: renders as a dialog with Cancel/Start Anyway buttons */
+	private readonly screenCaptureService: ScreenCaptureWebRTSService = inject(ScreenCaptureWebRTSService);
 	isDialog = input(false);
 	timerStarted = input(false);
 
@@ -99,8 +101,13 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 
 	async testScreenshot() {
 		this.testInProgress = true;
-		const result = await this.permissionService.testScreenshot();
-		this.thumbnail = result.success ? result.thumbnail : null;
+		if (this.isMac || this.isWindows) {
+			const result = await this.permissionService.testScreenshot();
+			this.thumbnail = result.success ? result.thumbnail : null;
+		} else {
+			const result = await this.screenCaptureService.takeScreenshot();
+			this.thumbnail = result;
+		}
 		this.testInProgress = false;
 	}
 
