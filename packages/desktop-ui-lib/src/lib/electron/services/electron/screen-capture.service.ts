@@ -1,73 +1,56 @@
 import { Injectable, inject } from '@angular/core';
 import { ElectronService } from './electron.service';
 
+interface ScreenSources {
+	id: string;
+	name: string;
+	display_id: string;
+}
+
 @Injectable({
 	providedIn: 'root'
 })
 export class ScreenCaptureWebRTSService {
-	// Cache the source id so we don't need to re-enumerate sources on every
-	// screenshot — enumerating sources is cheap and doesn't itself prompt,
-	// but no need to repeat it if the source list won't change mid-session.
 	private readonly electronService: ElectronService = inject(ElectronService);
-	private cachedSourceId: string | null = null;
+	private cachedSourceIds: ScreenSources[] | null = null;
 
-	/**
-	 * IPC handler entry point for 'take_screenshot'.
-	 *
-	 * Opens a short-lived getUserMedia stream, grabs exactly one frame via
-	 * canvas, then immediately stops the stream. No stream is held open
-	 * between screenshots — this relies on the portal/Chromium reusing the
-	 * permission grant (restore token) instead of re-prompting.
-	 *
-	 * IMPORTANT: verify this actually avoids re-prompting on your target
-	 * Electron version + Linux DE/compositor before relying on it. See the
-	 * notes at the bottom of this file.
-	 */
-	async takeScreenshot(): Promise<{ screenshot: string; thumbnail: string }> {
-		const sourceId = await this.getSourceId();
-
-		const stream = await (navigator.mediaDevices as any).getUserMedia({
-			audio: false,
-			video: {
-				mandatory: {
-					chromeMediaSource: 'desktop',
-					chromeMediaSourceId: sourceId,
-					// No need for continuous high frame rate — we only want one frame.
-					maxFrameRate: 5
-				}
-			}
-		} as any);
+	async takeScreenshot(): Promise<{ screenshot: string; thumbnail: string }[]> {
+		const sourceIds = await this.getSourceId();
+		const streams = await Promise.all(
+			sourceIds.map((source) => {
+				return (navigator.mediaDevices as any).getUserMedia({
+					audio: false,
+					video: {
+						mandatory: {
+							chromeMediaSource: 'desktop',
+							chromeMediaSourceId: source.id,
+							maxFrameRate: 5
+						}
+					}
+				} as any);
+			})
+		);
 
 		try {
-			return await this.grabFrame(stream);
+			return await Promise.all(streams.map((stream) => this.grabFrame(stream)));
 		} finally {
-			// Always stop tracks, even if grabFrame throws, so we never leak
-			// an open capture session.
-			stream.getTracks().forEach((track) => track.stop());
+			streams.forEach((stream) => stream.getTracks().forEach((track) => track.stop()));
 		}
 	}
 
-	/**
-	 * Returns the screen source id, using a cached value if we already have one.
-	 * If your app lets the user pick a monitor, don't cache — re-fetch and let
-	 * them choose each time instead.
-	 */
-	private async getSourceId(): Promise<string> {
-		if (this.cachedSourceId) {
-			return this.cachedSourceId;
-		}
+	async testScreenshot(): Promise<{ screenshot: string; thumbnail: string }> {
+		const images = await this.takeScreenshot();
+		return images[0];
+	}
 
-		// No thumbnailSize needed — we only want the source id, not an image.
+	private async getSourceId(): Promise<ScreenSources[]> {
+		if (this.cachedSourceIds) {
+			return this.cachedSourceIds;
+		}
 		const sources = await this.electronService.desktopCapturer.getSources({ types: ['screen'] });
 
-		if (!sources.length) {
-			throw new Error('No screen sources available from desktopCapturer');
-		}
-
-		// If you support multi-monitor selection, let the user pick here instead
-		// of always taking sources[0].
-		this.cachedSourceId = sources[0].id;
-		return this.cachedSourceId;
+		this.cachedSourceIds = sources;
+		return this.cachedSourceIds;
 	}
 
 	/**

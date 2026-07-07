@@ -60,6 +60,8 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 	// ── Platform flags ───────────────────────────────────────────────────────
 	readonly isMac = signal(false);
 	readonly isWindows = signal(false);
+	readonly isLinux = signal(false);
+	readonly isWayland = signal(false);
 	readonly hardwareAccelerationDisabled = signal(false);
 
 	constructor(
@@ -80,9 +82,12 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 
 	async platformSet() {
 		const platform = await this.permissionService.getPlatform();
+		const isWayland = await this.permissionService.getIsWayland();
 		const hardwareAccelerationDisabled = await this.permissionService.getHardwareAccelerationState();
 		this.isMac.set(platform?.os === 'darwin');
 		this.isWindows.set(platform?.os === 'win32');
+		this.isLinux.set(platform?.os === 'linux');
+		this.isWayland.set(isWayland);
 		this.hardwareAccelerationDisabled.set(hardwareAccelerationDisabled);
 	}
 
@@ -101,12 +106,12 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 
 	async testScreenshot() {
 		this.testInProgress = true;
-		if (this.isMac || this.isWindows) {
+		if (this.isWayland()) {
+			const result = await this.screenCaptureService.testScreenshot();
+			this.thumbnail = result.thumbnail;
+		} else {
 			const result = await this.permissionService.testScreenshot();
 			this.thumbnail = result.success ? result.thumbnail : null;
-		} else {
-			const result = await this.screenCaptureService.takeScreenshot();
-			this.thumbnail = result.thumbnail;
 		}
 		this.testInProgress = false;
 	}

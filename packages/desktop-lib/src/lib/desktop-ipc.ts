@@ -5,7 +5,7 @@ import {
 	TimerSyncStateEnum,
 	ILogRequest,
 	ILogRequestPage,
-    IOSInfo
+	IOSInfo
 } from '@gauzy/contracts';
 import { AkitaStorageEngine, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification } from '@gauzy/desktop-window';
@@ -44,7 +44,7 @@ import {
 	TimerService,
 	TimerTO,
 	UserService,
-	Screenshot,
+	Screenshot
 } from './offline';
 import { pluginListeners } from './plugin-system';
 import { AkitaStorageHandler } from './storage/akita-storage.handler';
@@ -69,7 +69,6 @@ let _appWindowManager: AppWindowManager | null = null;
 let _screenshotService: ScreenshotService | null = null;
 let _activeWindow: ActivityWindow | null = null;
 let _auditLogHandler: AuditLogHandler | null = null;
-
 
 function getTimerHandler(): TimerHandler {
 	if (!_timerHandler) _timerHandler = new TimerHandler();
@@ -233,13 +232,13 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 					synced: false,
 					activityId,
 					recordedAt: new Date(arg?.recordedAt)
-				}
+				};
 				await getScreenshotService().saveAndReturn(new Screenshot(screenshotImage));
 			}
 		} catch (error) {
 			console.error('failed to save failed upload screenshot image');
 		}
-	})
+	});
 
 	ipcMain.on('set_project_task', (event, arg) => {
 		event.sender.send('set_project_task_reply', arg);
@@ -343,7 +342,6 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	});
 
 	ipcMain.on('auth_failed', (event, arg) => {
-
 		event.sender.send('show_toast_message', {
 			type: 'error',
 			message: arg.message
@@ -501,7 +499,6 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		};
 	});
 
-
 	ipcMain.handle('TEST_SCREENSHOT', async () => {
 		if (process.platform === 'darwin' && isScreenUnauthorized()) {
 			return { success: false, reason: 'unauthorized' };
@@ -517,14 +514,18 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 				? { success: true, thumbnail: sources[0].thumbnail.toDataURL() }
 				: { success: false, reason: 'no_sources' };
 		} catch (err) {
-			await getAuditLogHandler().logAudit('error', 'screenshot', `Error testing screenshot capture: ${err.message}`);
+			await getAuditLogHandler().logAudit(
+				'error',
+				'screenshot',
+				`Error testing screenshot capture: ${err.message}`
+			);
 			return { success: false, reason: err.message };
 		}
 	});
 
 	ipcMain.handle('TEST_GET_ACTIVE_WINDOW', async () => {
 		if (process.platform === 'darwin' && !systemPreferences.isTrustedAccessibilityClient(false)) {
-			return { success: false, reason: 'unauthorized' }
+			return { success: false, reason: 'unauthorized' };
 		}
 		try {
 			const windowList = await getActiveWindow().getActiveWindow({
@@ -538,12 +539,12 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 					appName: windowList?.owner?.name,
 					bundleId: windowList?.owner?.bundleId
 				}
-			}
+			};
 		} catch (error) {
 			return {
 				success: false,
 				reason: error.message
-			}
+			};
 		}
 	});
 
@@ -567,9 +568,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.handle('OPEN_PRIVACY_SETTINGS', () => {
 		switch (process.platform) {
 			case 'darwin':
-				shell.openExternal(
-					'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture'
-				);
+				shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture');
 				break;
 			default:
 				return;
@@ -584,7 +583,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			await getActiveWindow().getActiveWindow({
 				screenRecordingPermission: false,
 				accessibilityPermission: true
-			})
+			});
 			return { success: true };
 		} catch (err) {
 			log.error('Failed to reset Accessibility TCC permission', err);
@@ -595,9 +594,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.handle('OPEN_ACCESSIBILITY_SETTINGS', () => {
 		switch (process.platform) {
 			case 'darwin':
-				shell.openExternal(
-					'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'
-				);
+				shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility');
 				break;
 			default:
 				return;
@@ -611,20 +608,11 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	// Channel 2: Just for the Diary/Log
 	ipcMain.on('WRITE_AUDIT_LOG', async (_, arg: ILogRequest) => {
-		return getAuditLogHandler().logAudit(
-			arg.logLevel || 'info',
-			arg.serviceName || 'timer',
-			arg.message,
-		);
+		return getAuditLogHandler().logAudit(arg.logLevel || 'info', arg.serviceName || 'timer', arg.message);
 	});
 
 	ipcMain.handle('GET_AUDIT_LOGS', async (_, arg: ILogRequestPage) => {
-		return getAuditLogHandler().getAuditLogs(
-			arg.logLevel,
-			arg.serviceName,
-			arg.page,
-			arg.limit
-		);
+		return getAuditLogHandler().getAuditLogs(arg.logLevel, arg.serviceName, arg.page, arg.limit);
 	});
 
 	ipcMain.handle('GET_HARDWARE_ACCELERATION_STATE', async () => {
@@ -638,26 +626,30 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		});
 	});
 
-	ipcMain.handle('UPDATE_SCREENSHOT_SYNC_STATUS', async (_, arg: { id: number; remove: boolean; failedReason: string; synced: boolean; retries: number }) => {
-		try {
-			if (arg.remove) {
-				await getScreenshotService().remove({ id: arg.id });
-			} else {
-				await getScreenshotService().update(new Screenshot({
-					id: arg.id,
-					synced: arg.synced,
-					lastAttemptAt: new Date(),
-					message: arg.failedReason,
-					retries: 1
-				}));
+	ipcMain.handle(
+		'UPDATE_SCREENSHOT_SYNC_STATUS',
+		async (_, arg: { id: number; remove: boolean; failedReason: string; synced: boolean; retries: number }) => {
+			try {
+				if (arg.remove) {
+					await getScreenshotService().remove({ id: arg.id });
+				} else {
+					await getScreenshotService().update(
+						new Screenshot({
+							id: arg.id,
+							synced: arg.synced,
+							lastAttemptAt: new Date(),
+							message: arg.failedReason,
+							retries: 1
+						})
+					);
+				}
+			} catch (error) {
+				console.error('Failed to update screenshot sync status', error);
 			}
-		} catch (error) {
-			console.error('Failed to update screenshot sync status', error);
 		}
+	);
 
-	});
-
-	ipcMain.handle('EXPORT_AUDIT_LOGS', async() => {
+	ipcMain.handle('EXPORT_AUDIT_LOGS', async () => {
 		try {
 			const result = await exportAuditLogs();
 			return result;
@@ -665,8 +657,12 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			console.error(`Failed export logs to file, ${error.message}`);
 			return {
 				success: false
-			}
+			};
 		}
+	});
+
+	ipcMain.handle('GET_IS_WAYLAND', () => {
+		return process.platform === 'linux' && process.env.XDG_SESSION_TYPE === 'wayland';
 	});
 
 	pluginListeners();
@@ -1532,17 +1528,15 @@ export function ipcTimer(
 	});
 
 	ipcMain.handle('SHOW_PERMISSION_CONFIRM', () => {
-		const desktopPermissionHandler = DesktopPermissionHandler.getInstance(
-			timeTrackerWindow, windowPath
-		);
+		const desktopPermissionHandler = DesktopPermissionHandler.getInstance(timeTrackerWindow, windowPath);
 		desktopPermissionHandler.showDialogPermissionConfirm();
 	});
 
-	ipcMain.handle('GET_TIMER_SESSIONS', async ( _, args: { start: Date | string; end: Date | string }) => {
+	ipcMain.handle('GET_TIMER_SESSIONS', async (_, args: { start: Date | string; end: Date | string }) => {
 		try {
 			const range = {
 				start: new Date(args.start),
-				end: new Date(args.end),
+				end: new Date(args.end)
 			};
 			const timerSessions = await getTimerService().getListByDate(range);
 			return timerSessions;
@@ -1551,14 +1545,14 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.handle('GET_TIMER_SESSION', async ( _, args: { timerSessionId: number }) => {
+	ipcMain.handle('GET_TIMER_SESSION', async (_, args: { timerSessionId: number }) => {
 		try {
 			const timerSession = await getTimerService().findById({ id: args.timerSessionId });
 			return timerSession;
 		} catch (error) {
 			return null;
 		}
-	})
+	});
 }
 
 export function removeMainListener() {
@@ -1573,7 +1567,7 @@ export function removeMainListener() {
 		'update_app_setting',
 		'update_project_on',
 		'request_permission',
-		'WRITE_AUDIT_LOG',
+		'WRITE_AUDIT_LOG'
 	];
 
 	mainListeners.forEach((listener) => {
@@ -1629,7 +1623,8 @@ export function removeAllHandlers() {
 		'GET_HARDWARE_ACCELERATION_STATE',
 		'SET_HARDWARE_ACCELERATION',
 		'UPDATE_SCREENSHOT_SYNC_STATUS',
-		'EXPORT_AUDIT_LOGS'
+		'EXPORT_AUDIT_LOGS',
+		'GET_IS_WAYLAND'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
@@ -1709,12 +1704,12 @@ async function screenshotErrorSync(window: BrowserWindow) {
 		isScreenshotTreadLocked = true;
 		const list = await getScreenshotService().findUnSyncedScreenshot();
 		const mapList = list.map((item) => {
-			const {imagePath, ...restItem} = item;
+			const { imagePath, ...restItem } = item;
 			return {
 				...restItem,
 				base64Image: imagePath
 			};
-		})
+		});
 
 		if (list.length > 0) {
 			window.webContents.send('sync-screenshot-error', mapList);
@@ -1725,7 +1720,6 @@ async function screenshotErrorSync(window: BrowserWindow) {
 		console.log(`Failed get screenshot error sync ${error.message}`);
 		isScreenshotTreadLocked = false;
 	}
-
 }
 
 let size = Infinity;
