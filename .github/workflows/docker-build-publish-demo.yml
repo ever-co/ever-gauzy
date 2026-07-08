@@ -49,7 +49,7 @@ jobs:
           cache-from: |
             type=registry,ref=ghcr.io/ever-co/gauzy-api-demo:buildcache
             type=registry,ref=ghcr.io/ever-co/gauzy-api-demo:latest
-          cache-to: type=registry,ref=ghcr.io/ever-co/gauzy-api-demo:buildcache,mode=max
+          cache-to: type=registry,ref=ghcr.io/ever-co/gauzy-api-demo:buildcache,mode=min
           build-args: |
             NODE_ENV=development
             DEMO=true
@@ -146,7 +146,7 @@ jobs:
           cache-from: |
             type=registry,ref=ghcr.io/ever-co/gauzy-webapp-demo:buildcache
             type=registry,ref=ghcr.io/ever-co/gauzy-webapp-demo:latest
-          cache-to: type=registry,ref=ghcr.io/ever-co/gauzy-webapp-demo:buildcache,mode=max
+          cache-to: type=registry,ref=ghcr.io/ever-co/gauzy-webapp-demo:buildcache,mode=min
           build-args: |
             NODE_ENV=development
             DEMO=true
@@ -243,7 +243,7 @@ jobs:
           cache-from: |
             type=registry,ref=ghcr.io/ever-co/gauzy-worker-demo:buildcache
             type=registry,ref=ghcr.io/ever-co/gauzy-worker-demo:latest
-          cache-to: type=registry,ref=ghcr.io/ever-co/gauzy-worker-demo:buildcache,mode=max
+          cache-to: type=registry,ref=ghcr.io/ever-co/gauzy-worker-demo:buildcache,mode=min
           build-args: |
             NODE_ENV=development
             DEMO=true
