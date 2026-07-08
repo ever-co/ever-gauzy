@@ -40,7 +40,6 @@ export class PermissionManagerService {
 	/** Check once */
 	async checkStatus(): Promise<string> {
 		const result = await this.electronService.ipcRenderer.invoke('CHECK_MACOS_PERMISSIONS');
-		console.log('permissions check result', result);
 		this._status$.next(result.screen);
 		this._accessibilityStatus$.next(result.accessibility ?? 'unknown');
 		return result.screen;

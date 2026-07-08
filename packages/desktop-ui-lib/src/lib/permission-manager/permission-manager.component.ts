@@ -108,7 +108,7 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 		this.testInProgress = true;
 		if (this.isWayland()) {
 			const result = await this.screenCaptureService.testScreenshot();
-			this.thumbnail = result.thumbnail;
+			this.thumbnail = result.screenshot;
 		} else {
 			const result = await this.permissionService.testScreenshot();
 			this.thumbnail = result.success ? result.thumbnail : null;
