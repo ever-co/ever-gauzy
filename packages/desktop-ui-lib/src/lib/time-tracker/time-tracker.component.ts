@@ -2313,7 +2313,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				const isWayland = await this.electronService.ipcRenderer.invoke('GET_IS_WAYLAND');
 				if (!isWayland) {
 					this._loggerService.info('Wayland detected, using WebRTC screen capture');
-					const frames = await this._screenCaptureService.takeScreenshot();
+					const frames = await this._screenCaptureService.takeScreenshot({ resetScreen: false });
 					HighResolutionScreenshots = frames.map((frame, index) => ({
 						img: Buffer.from(frame.screenshot.replace(/^data:image\/\w+;base64,/, ''), 'base64'),
 						name: `screen-${index}`,

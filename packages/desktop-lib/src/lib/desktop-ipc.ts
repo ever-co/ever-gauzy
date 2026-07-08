@@ -70,6 +70,14 @@ let _screenshotService: ScreenshotService | null = null;
 let _activeWindow: ActivityWindow | null = null;
 let _auditLogHandler: AuditLogHandler | null = null;
 
+let _cachedScreen:
+	| {
+			id: string;
+			name: string;
+			display_id: string;
+	  }[]
+	| null = null;
+
 function getTimerHandler(): TimerHandler {
 	if (!_timerHandler) _timerHandler = new TimerHandler();
 	return _timerHandler;
@@ -667,6 +675,17 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	ipcMain.handle('GET_ALL_DISPLAYS', () => {
 		return screen.getAllDisplays();
+	});
+
+	ipcMain.handle('GET_SCREEN_SOURCES', async (_, opts: { resetScreen: boolean }) => {
+		if (opts.resetScreen || !_cachedScreen) {
+			const sources = await desktopCapturer.getSources({
+				types: ['screen']
+			});
+			_cachedScreen = sources;
+			return _cachedScreen;
+		}
+		return _cachedScreen;
 	});
 
 	pluginListeners();

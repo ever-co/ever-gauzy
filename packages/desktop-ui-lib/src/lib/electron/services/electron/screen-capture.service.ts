@@ -12,10 +12,9 @@ interface ScreenSources {
 })
 export class ScreenCaptureWebRTSService {
 	private readonly electronService: ElectronService = inject(ElectronService);
-	private cachedSourceIds: ScreenSources[] | null = null;
 
-	async takeScreenshot(): Promise<{ screenshot: string; thumbnail: string }[]> {
-		const sourceIds = await this.getSourceId();
+	async takeScreenshot({ resetScreen }: { resetScreen: boolean }): Promise<{ screenshot: string; thumbnail: string }[]> {
+		const sourceIds = await this.getSourceId(resetScreen);
 		const allDisplays: { id: number; bounds: { width: number; height: number } }[] =
 			await this.electronService.invoke('GET_ALL_DISPLAYS');
 		const streams = await Promise.all(
@@ -47,18 +46,13 @@ export class ScreenCaptureWebRTSService {
 
 	async testScreenshot(): Promise<{ screenshot: string; thumbnail: string }> {
 		// Reset cache to get the latest screen sources
-		this.cachedSourceIds = null;
-		const images = await this.takeScreenshot();
+		const images = await this.takeScreenshot({ resetScreen: true });
 		return images[0];
 	}
 
-	private async getSourceId(): Promise<ScreenSources[]> {
-		if (this.cachedSourceIds) {
-			return this.cachedSourceIds;
-		}
-		const sources = await this.electronService.desktopCapturer.getSources({ types: ['screen'] });
-		this.cachedSourceIds = sources;
-		return this.cachedSourceIds;
+	private async getSourceId(resetScreen = false): Promise<ScreenSources[]> {
+		const sources: ScreenSources[] = await this.electronService.invoke('GET_SCREEN_SOURCES', { resetScreen });
+		return sources;
 	}
 
 	/**
