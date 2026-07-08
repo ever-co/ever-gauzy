@@ -994,7 +994,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		/* initiate screenshot to prevent window sizing */
 		setTimeout(async () => {
 			const isWayland = await this.electronService.ipcRenderer.invoke('GET_IS_WAYLAND');
-			if (isWayland) {
+			if (!isWayland) {
 				try {
 					const thumbSize = {
 						width: 320,
