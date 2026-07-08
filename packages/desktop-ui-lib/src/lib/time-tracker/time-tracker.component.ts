@@ -69,6 +69,7 @@ import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.servi
 import { AuthStrategy } from '../auth';
 import { BLOCK_DELAY, GAUZY_ENV } from '../constants';
 import { ElectronService, LoggerService } from '../electron/services';
+import { ScreenCaptureWebRTSService } from '../electron/services/electron/screen-capture.service';
 import { ImageViewerService } from '../image-viewer/image-viewer.service';
 import { ActivityWatchViewService } from '../integrations';
 import { ActivityWatchComponent } from '../integrations/activity-watch/view/activity-watch.component';
@@ -259,7 +260,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private readonly timeTrackerFormService: TimeTrackerFormService,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly router: Router,
-		private readonly _auditLogService: AuditLogService
+		private readonly _auditLogService: AuditLogService,
+		private readonly _screenCaptureService: ScreenCaptureWebRTSService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -991,14 +993,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	prepareWindow() {
 		/* initiate screenshot to prevent window sizing */
 		setTimeout(async () => {
-			try {
-				const thumbSize = {
-					width: 320,
-					height: 240
-				};
-				await this.electronService.desktopCapturer.getSources({ types: ['screen'], thumbnailSize: thumbSize });
-			} catch (error) {
-				console.error('Error preparing window:', error);
+			const isWayland = await this.electronService.ipcRenderer.invoke('GET_IS_WAYLAND');
+			if (isWayland) {
+				try {
+					const thumbSize = {
+						width: 320,
+						height: 240
+					};
+					await this.electronService.desktopCapturer.getSources({ types: ['screen'], thumbnailSize: thumbSize });
+				} catch (error) {
+					console.error('Error preparing window:', error);
+				}
 			}
 		}, 500);
 	}
@@ -2299,14 +2304,30 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public async takeScreenCapture(arg: { displays: IScreenshotResult[] } & IScreenshotRequest): Promise<IScreenshotResult[]> {
-		let HighResolutionScreenshots = [];
-		let lowResolutionScreenshots = [];
+		let HighResolutionScreenshots: IScreenshotResult[] = [];
+		let lowResolutionScreenshots: IScreenshotResult[] = [];
 
 		try {
 			this._loggerService.info('Take screen capture');
 			if (!arg.displays) {
-				HighResolutionScreenshots = await this.getScreenshot(arg, false);
-				lowResolutionScreenshots = await this.getScreenshot(arg, true);
+				const isWayland = await this.electronService.ipcRenderer.invoke('GET_IS_WAYLAND');
+				if (isWayland) {
+					this._loggerService.info('Wayland detected, using WebRTC screen capture');
+					const frames = await this._screenCaptureService.takeScreenshot();
+					HighResolutionScreenshots = frames.map((frame, index) => ({
+						img: Buffer.from(frame.screenshot.replace(/^data:image\/\w+;base64,/, ''), 'base64'),
+						name: `screen-${index}`,
+						id: String(index)
+					}));
+					lowResolutionScreenshots = frames.map((frame, index) => ({
+						img: Buffer.from(frame.thumbnail.replace(/^data:image\/\w+;base64,/, ''), 'base64'),
+						name: `screen-${index}`,
+						id: String(index)
+					}));
+				} else {
+					HighResolutionScreenshots = await this.getScreenshot(arg, false);
+					lowResolutionScreenshots = await this.getScreenshot(arg, true);
+				}
 			} else {
 				HighResolutionScreenshots = arg.displays;
 			}

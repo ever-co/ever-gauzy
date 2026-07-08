@@ -665,6 +665,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		return process.platform === 'linux' && process.env.XDG_SESSION_TYPE === 'wayland';
 	});
 
+	ipcMain.handle('GET_ALL_DISPLAYS', () => {
+		return screen.getAllDisplays();
+	});
+
 	pluginListeners();
 }
 
@@ -1624,7 +1628,8 @@ export function removeAllHandlers() {
 		'SET_HARDWARE_ACCELERATION',
 		'UPDATE_SCREENSHOT_SYNC_STATUS',
 		'EXPORT_AUDIT_LOGS',
-		'GET_IS_WAYLAND'
+		'GET_IS_WAYLAND',
+		'GET_ALL_DISPLAYS'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
