@@ -39,22 +39,15 @@ export class ScreenCaptureWebRTSService {
 	}
 
 	async testScreenshot(): Promise<{ screenshot: string; thumbnail: string }> {
+		// Reset cache to get the latest screen sources
+		this.cachedSourceIds = null;
 		const images = await this.takeScreenshot();
 		return images[0];
 	}
 
 	private async getSourceId(): Promise<ScreenSources[]> {
 		if (this.cachedSourceIds) {
-			const allScreens: { id: number }[] = await this.electronService.invoke('GET_ALL_DISPLAYS');
-			const currentIds = new Set(allScreens.map((d) => String(d.id)));
-			const cachedIds = new Set(this.cachedSourceIds.map((s) => s.display_id));
-			const screensChanged =
-				currentIds.size !== cachedIds.size || [...currentIds].some((id) => !cachedIds.has(id));
-			if (screensChanged) {
-				this.cachedSourceIds = null;
-			} else {
-				return this.cachedSourceIds;
-			}
+			return this.cachedSourceIds;
 		}
 		const sources = await this.electronService.desktopCapturer.getSources({ types: ['screen'] });
 		this.cachedSourceIds = sources;
