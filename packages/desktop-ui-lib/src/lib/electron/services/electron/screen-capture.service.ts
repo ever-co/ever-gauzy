@@ -16,15 +16,22 @@ export class ScreenCaptureWebRTSService {
 
 	async takeScreenshot(): Promise<{ screenshot: string; thumbnail: string }[]> {
 		const sourceIds = await this.getSourceId();
+		const allDisplays: { id: number; bounds: { width: number; height: number } }[] =
+			await this.electronService.invoke('GET_ALL_DISPLAYS');
 		const streams = await Promise.all(
 			sourceIds.map((source) => {
+				const display = allDisplays.find((d) => String(d.id) === source.display_id);
+				const width = display?.bounds.width ?? 1920;
+				const height = display?.bounds.height ?? 1080;
 				return (navigator.mediaDevices as any).getUserMedia({
 					audio: false,
 					video: {
 						mandatory: {
 							chromeMediaSource: 'desktop',
 							chromeMediaSourceId: source.id,
-							maxFrameRate: 5
+							maxFrameRate: 5,
+							maxWidth: width,
+							maxHeight: height
 						}
 					}
 				} as any);
