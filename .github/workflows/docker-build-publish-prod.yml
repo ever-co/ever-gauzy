@@ -43,6 +43,7 @@ jobs:
             NODE_ENV=production
             DEMO=false
             NX_BRANCH=${{ github.ref_name }}
+            GAUZY_APP_COMMIT=${{ github.sha }}
           # VERDACCIO_TOKEN / NX_CLOUD_ACCESS_TOKEN are BuildKit build secrets (mounted
           # per-RUN, never embedded in image layers) — see the Dockerfile header.
           secrets: |
@@ -131,6 +132,7 @@ jobs:
             NODE_ENV=production
             DEMO=false
             NX_BRANCH=${{ github.ref_name }}
+            GAUZY_APP_COMMIT=${{ github.sha }}
           # VERDACCIO_TOKEN / NX_CLOUD_ACCESS_TOKEN are BuildKit build secrets (mounted
           # per-RUN, never embedded in image layers) — see the Dockerfile header.
           secrets: |
@@ -221,6 +223,7 @@ jobs:
             NODE_ENV=production
             DEMO=false
             NX_BRANCH=${{ github.ref_name }}
+            GAUZY_APP_COMMIT=${{ github.sha }}
           # VERDACCIO_TOKEN / NX_CLOUD_ACCESS_TOKEN are BuildKit build secrets (mounted
           # per-RUN, never embedded in image layers) — see the Dockerfile header.
           # WORKER_* build-args were dropped: they never reached the image (the global

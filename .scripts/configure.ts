@@ -85,6 +85,9 @@ if (!isDocker) {
 	{
 		production:  ${isProd},
 
+		version: '${env.GAUZY_APP_VERSION}',
+		commit: '${env.GAUZY_APP_COMMIT}',
+
 		API_BASE_URL: API_BASE_URL,
 		CLIENT_BASE_URL: CLIENT_BASE_URL,
 		COOKIE_DOMAIN: '${env.COOKIE_DOMAIN}',
@@ -246,6 +249,9 @@ if (!isDocker) {
 	export const environment: Environment =
 	{
 		production:  ${isProd},
+
+		version: '${env.GAUZY_APP_VERSION}',
+		commit: '${env.GAUZY_APP_COMMIT}',
 
 		API_BASE_URL: API_BASE_URL,
 		CLIENT_BASE_URL: CLIENT_BASE_URL,

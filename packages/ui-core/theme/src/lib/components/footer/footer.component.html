@@ -5,6 +5,72 @@
   <a href="{{ companyLink }}" target="_blank">{{ companyName }}</a
     >. {{ 'FOOTER.RIGHTS_RESERVED' | translate }}
   </span>
+
+  @if (hasVersionInfo) {
+    <span class="app-version">
+      @if (!isVersionMismatch) {
+        @if (primary.version) {
+          <a
+            [href]="releaseUrl(primary.version)"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="ver"
+            [title]="'FOOTER.VERSION' | translate"
+            >{{ primary.version }}</a
+          >
+        }
+        @if (primary.version && primary.commit) {
+          <span class="bullet">•</span>
+        }
+        @if (primary.commit) {
+          <a
+            [href]="commitUrl(primary.commit)"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="sha"
+            [title]="'FOOTER.COMMIT' | translate"
+            >{{ shortCommit(primary.commit) }}</a
+          >
+        }
+      } @else {
+        <span class="scope">
+          <span class="scope-label">{{ 'FOOTER.WEB' | translate }}</span>
+          @if (web.version) {
+            <a [href]="releaseUrl(web.version)" target="_blank" rel="noopener noreferrer" class="ver">{{
+              web.version
+            }}</a>
+          }
+          @if (web.version && web.commit) {
+            <span class="bullet">•</span>
+          }
+          @if (web.commit) {
+            <a [href]="commitUrl(web.commit)" target="_blank" rel="noopener noreferrer" class="sha">{{
+              shortCommit(web.commit)
+            }}</a>
+          }
+        </span>
+        @if (api) {
+          <span class="scope">
+            <span class="scope-label">{{ 'FOOTER.API' | translate }}</span>
+            @if (api.version) {
+              <a [href]="releaseUrl(api.version)" target="_blank" rel="noopener noreferrer" class="ver">{{
+                api.version
+              }}</a>
+            }
+            @if (api.version && api.commit) {
+              <span class="bullet">•</span>
+            }
+            @if (api.commit) {
+              <a [href]="commitUrl(api.commit)" target="_blank" rel="noopener noreferrer" class="sha">{{
+                shortCommit(api.commit)
+              }}</a>
+            }
+          </span>
+        }
+      }
+    </span>
+  }
+
   <div class="right-side">
     @if (user) {
       <div class="mr-2">

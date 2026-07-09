@@ -378,6 +378,14 @@ ENV CI=true
 ENV NODE_OPTIONS="--max-old-space-size=12288"
 ENV NODE_ENV=production
 
+# Deployed release version (git tag) + commit SHA — exposed at runtime by
+# GET /api/version so the web footer can show them and flag an API/web drift.
+# Public build info (not secrets); safe to bake into the image.
+ARG GAUZY_APP_VERSION
+ARG GAUZY_APP_COMMIT
+ENV GAUZY_APP_VERSION=${GAUZY_APP_VERSION}
+ENV GAUZY_APP_COMMIT=${GAUZY_APP_COMMIT}
+
 ENV API_HOST=api
 ENV API_PORT=3000
 

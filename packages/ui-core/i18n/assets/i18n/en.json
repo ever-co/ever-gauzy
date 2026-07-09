@@ -4111,7 +4111,11 @@
 		"RIGHTS_RESERVED": "All rights reserved.",
 		"PRESENT": "Present",
 		"TERMS_OF_SERVICE": "Terms Of Service",
-		"PRIVACY_POLICY": "Privacy Policy"
+		"PRIVACY_POLICY": "Privacy Policy",
+		"VERSION": "Release version — open on GitHub",
+		"COMMIT": "Deployed commit — open on GitHub",
+		"WEB": "Web",
+		"API": "API"
 	},
 	"TOASTR": {
 		"TITLE": {
