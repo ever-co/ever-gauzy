@@ -14,7 +14,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context/request-context';
-import { MultiORMEnum } from '../../core/utils';
+import { MultiORMEnum, parseFindOptionsRelations } from '../../core/utils';
 import { EmployeeService } from '../../employee/employee.service';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TaskService } from '../task.service';
@@ -159,7 +159,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 							}),
 						...(isNotEmpty(options) &&
 							isNotEmpty(options.relations) && {
-								relations: options.relations
+								relations: parseFindOptionsRelations(options.relations)
 							})
 					});
 
@@ -235,7 +235,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 					query.setFindOptions({
 						where: isNotEmpty(where) && where,
-						relations: isNotEmpty(relations) && relations
+						relations: isNotEmpty(relations) && parseFindOptionsRelations(relations)
 					});
 
 					// Filter conditions

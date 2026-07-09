@@ -22,7 +22,16 @@ import { BaseEntity, SoftDeletableBaseEntity } from '../entities/internal';
 import { multiORMCreateQueryBuilder } from '../../core/orm/query-builder/query-builder.factory';
 import { IQueryBuilder } from '../../core/orm/query-builder/iquery-builder';
 import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
-import { MultiORM, MultiORMEnum, concatIdToWhere, getORMType, parseTypeORMFindToMikroOrm } from './../../core/utils';
+import {
+	MultiORM,
+	MultiORMEnum,
+	concatIdToWhere,
+	getORMType,
+	parseFindOptionsRelations,
+	parseFindOptionsSelect,
+	parseTypeORMFindOptions,
+	parseTypeORMFindToMikroOrm
+} from './../../core/utils';
 import { parseTypeORMFindCountOptions } from './utils';
 import {
 	ICountByOptions,
@@ -143,7 +152,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				items = items.map((entity: T) => this.serialize(entity)) as T[];
 				break;
 			case MultiORMEnum.TypeORM:
-				[items, total] = await this.typeOrmRepository.findAndCount(options as FindManyOptions<T>);
+				[items, total] = await this.typeOrmRepository.findAndCount(
+					parseTypeORMFindOptions(options as FindManyOptions<T>)
+				);
 				break;
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
@@ -165,7 +176,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				const items = await this.mikroOrmRepository.find(where, mikroOptions);
 				return items.map((entity: T) => this.serialize(entity)) as T[];
 			case MultiORMEnum.TypeORM:
-				return await this.typeOrmRepository.find(options as FindManyOptions<T>);
+				return await this.typeOrmRepository.find(parseTypeORMFindOptions(options as FindManyOptions<T>));
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -179,7 +190,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @param options
 	 * @returns
 	 */
-	public async paginate(options?: FindManyOptions<T>): Promise<IPagination<T>> {
+	public async paginate(options?: IFindManyOptions<T>): Promise<IPagination<T>> {
 		try {
 			let total: number;
 			let items: T[];
@@ -191,19 +202,23 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					items = items.map((entity) => this.serialize(entity)) as T[];
 					break;
 				case MultiORMEnum.TypeORM:
+					// Normalize legacy string-array `relations`/`select` to object form before hitting TypeORM.
+					const typeOrmOptions = parseTypeORMFindOptions(options as FindManyOptions<T>);
 					[items, total] = await this.typeOrmRepository.findAndCount({
-						skip: options && options.skip ? options.take * (options.skip - 1) : 0,
-						take: options && options.take ? options.take : 10,
-						/**
-						 * Specifies what relations should be loaded.
-						 *
-						 * @deprecated
-						 */
-						...(options && options.select ? { select: options.select } : {}),
-						...(options && options.relations ? { relations: options.relations } : {}),
-						...(options && options.where ? { where: options.where } : {}),
-						...(options && options.order ? { order: options.order } : {}),
-						...(options && options.withDeleted ? { withDeleted: options.withDeleted } : {})
+						skip:
+							typeOrmOptions && typeOrmOptions.skip
+								? typeOrmOptions.take * (typeOrmOptions.skip - 1)
+								: 0,
+						take: typeOrmOptions && typeOrmOptions.take ? typeOrmOptions.take : 10,
+						...(typeOrmOptions && typeOrmOptions.select ? { select: typeOrmOptions.select } : {}),
+						...(typeOrmOptions && typeOrmOptions.relations
+							? { relations: typeOrmOptions.relations }
+							: {}),
+						...(typeOrmOptions && typeOrmOptions.where ? { where: typeOrmOptions.where } : {}),
+						...(typeOrmOptions && typeOrmOptions.order ? { order: typeOrmOptions.order } : {}),
+						...(typeOrmOptions && typeOrmOptions.withDeleted
+							? { withDeleted: typeOrmOptions.withDeleted }
+							: {})
 					});
 					break;
 				default:
@@ -249,8 +264,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 							id,
 							...(options && options.where ? options.where : {})
 						},
-						...(options && options.select ? { select: options.select } : {}),
-						...(options && options.relations ? { relations: options.relations } : []),
+						...(options && options.select ? { select: parseFindOptionsSelect(options.select) } : {}),
+						...(options && options.relations
+							? { relations: parseFindOptionsRelations(options.relations) }
+							: []),
 						...(options && options.order ? { order: options.order } : {})
 					} as FindOneOptions<T>);
 					break;
@@ -285,7 +302,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					record = (await this.mikroOrmRepository.findOneOrFail(where, mikroOptions)) as any;
 					break;
 				case MultiORMEnum.TypeORM:
-					record = await this.typeOrmRepository.findOneOrFail(options as FindOneOptions<T>);
+					record = await this.typeOrmRepository.findOneOrFail(
+						parseTypeORMFindOptions(options as FindOneOptions<T>)
+					);
 					break;
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
@@ -363,8 +382,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 						id,
 						...(options && options.where ? options.where : {})
 					},
-					...(options && options.select ? { select: options.select } : {}),
-					...(options && options.relations ? { relations: options.relations } : []),
+					...(options && options.select ? { select: parseFindOptionsSelect(options.select) } : {}),
+					...(options && options.relations
+						? { relations: parseFindOptionsRelations(options.relations) }
+						: []),
 					...(options && options.order ? { order: options.order } : {}),
 					...(options && options.withDeleted ? { withDeleted: options.withDeleted } : {})
 				} as FindOneOptions<T>);
@@ -395,7 +416,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				record = (await this.mikroOrmRepository.findOne(where, mikroOptions)) as any;
 				break;
 			case MultiORMEnum.TypeORM:
-				record = await this.typeOrmRepository.findOne(options as FindOneOptions<T>);
+				record = await this.typeOrmRepository.findOne(parseTypeORMFindOptions(options as FindOneOptions<T>));
 				break;
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);

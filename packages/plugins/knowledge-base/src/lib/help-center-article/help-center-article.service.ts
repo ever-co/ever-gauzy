@@ -12,6 +12,8 @@ import {
 } from 'typeorm';
 import {
 	MultiORMEnum,
+	parseFindOptionsRelations,
+	parseFindOptionsSelect,
 	RequestContext,
 	TenantAwareCrudService,
 	BaseQueryDTO,
@@ -141,8 +143,8 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 					// Apply find options if provided
 					if (isNotEmpty(options)) {
 						query.setFindOptions({
-							...(options.select && { select: options.select }),
-							...(options.relations && { relations: options.relations }),
+							...(options.select && { select: parseFindOptionsSelect(options.select) }),
+							...(options.relations && { relations: parseFindOptionsRelations(options.relations) }),
 							...(options.order && { order: options.order }),
 							...(options.take && { take: options.take }),
 							...(options.skip && { skip: options.skip })

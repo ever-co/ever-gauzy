@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { parseFindOptionsRelations } from '@gauzy/core';
 import { IPluginTag } from '../../shared';
 import { PluginTag } from '../entities/plugin-tag.entity';
 
@@ -36,7 +37,7 @@ export class TypeOrmPluginTagRepository extends Repository<PluginTag> {
 	async findByPluginId(pluginId: string, relations: string[] = ['tag']): Promise<IPluginTag[]> {
 		return this.find({
 			where: { pluginId },
-			relations
+			relations: parseFindOptionsRelations(relations)
 		});
 	}
 
@@ -50,7 +51,7 @@ export class TypeOrmPluginTagRepository extends Repository<PluginTag> {
 	async findByTagId(tagId: string, relations: string[] = ['plugin']): Promise<IPluginTag[]> {
 		return this.find({
 			where: { tagId },
-			relations
+			relations: parseFindOptionsRelations(relations)
 		});
 	}
 

@@ -4,7 +4,7 @@ import * as moment from 'moment';
 import { IGetTimesheetInput, PermissionsEnum, ITimesheet, TimesheetStatus } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
-import { getDateRangeFormat, MultiORMEnum } from './../../core/utils';
+import { getDateRangeFormat, MultiORMEnum, parseFindOptionsRelations } from './../../core/utils';
 import { Timesheet } from './timesheet.entity';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { TypeOrmTimesheetRepository } from './repository/type-orm-timesheet.repository';
@@ -139,7 +139,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 							brandColor: true
 						}
 					},
-					...(request?.relations ? { relations: request.relations } : {})
+					...(request?.relations ? { relations: parseFindOptionsRelations(request.relations) } : {})
 				});
 
 				// Apply filters to the query

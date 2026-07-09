@@ -10,7 +10,14 @@ import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MySqlDriver } from '@mikro-orm/mysql';
-import { FindManyOptions, FindOperator, FindOptionsOrder } from 'typeorm';
+import {
+	FindManyOptions,
+	FindOneOptions,
+	FindOperator,
+	FindOptionsOrder,
+	FindOptionsRelations,
+	FindOptionsSelect
+} from 'typeorm';
 import { sample } from 'underscore';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -442,6 +449,163 @@ export const flatten = (input: any): any => {
 };
 
 /**
+ * TypeORM `FindManyOptions` widened to also accept the legacy string-array `relations`/`select`
+ * syntax that TypeORM removed in v1.0 (e.g. `relations: ['role', 'tenant.featureOrganizations']`).
+ *
+ * Ever Gauzy still passes this syntax in many dynamic call sites. Rather than patching TypeORM's own
+ * type declarations (the old `patches/typeorm+1.0.0.patch` approach), we widen our own option types
+ * and convert the arrays to object form at the TypeORM data-access boundary (see
+ * {@link parseTypeORMFindOptions}). The `relations`/`select` element types are pulled from TypeORM
+ * via indexed access so they track upstream automatically.
+ */
+export type LegacyFindManyOptions<T> = Omit<FindManyOptions<T>, 'relations' | 'select'> & {
+	relations?: FindManyOptions<T>['relations'] | string[];
+	select?: FindManyOptions<T>['select'] | string[];
+};
+
+/**
+ * TypeORM `FindOneOptions` widened to also accept the legacy string-array `relations`/`select`
+ * syntax. See {@link LegacyFindManyOptions}.
+ */
+export type LegacyFindOneOptions<T> = Omit<FindOneOptions<T>, 'relations' | 'select'> & {
+	relations?: FindOneOptions<T>['relations'] | string[];
+	select?: FindOneOptions<T>['select'] | string[];
+};
+
+/**
+ * Path segments that must never be used as object keys when building find-option objects from
+ * (potentially untrusted) string input, to avoid prototype-pollution assignments.
+ */
+const UNSAFE_FIND_OPTION_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor']);
+
+/**
+ * Converts the legacy string-array find-option syntax (`['role', 'tenant.featureOrganizations']`)
+ * into the nested object form TypeORM v1 requires (`{ role: true, tenant: { featureOrganizations: true } }`).
+ * A dot in a segment denotes nesting.
+ *
+ * This replaces the runtime compatibility shim that previously lived in
+ * `patches/typeorm+1.0.0.patch` (TypeORM removed the string-array `relations`/`select` syntax in
+ * v1.0). Applying the conversion in application code — at the TypeORM data-access boundary — lets us
+ * drop that node_modules patch while keeping the many dynamic `string[]` call sites working.
+ *
+ * The merge rules match the shim exactly so behaviour is unchanged: a leaf only sets `true` when the
+ * key is still unset (an existing nested object from a longer sibling path is preserved), and an
+ * intermediate segment upgrades a `true` leaf to a nested object. Empty / non-string segments are
+ * skipped.
+ *
+ * @param paths - The dot-notated relation/column paths to convert.
+ * @returns The equivalent nested object form.
+ */
+export function stringArrayToFindOptionsObject(paths: readonly string[]): Record<string, any> {
+	let result: Record<string, any> = {};
+
+	for (const rawPath of paths) {
+		if (typeof rawPath !== 'string' || rawPath.length === 0) {
+			continue;
+		}
+
+		// Drop empty segments so malformed inputs like `role.` or `tenant..settings` don't create
+		// bogus `''` relation keys, and reject any path that carries a prototype-polluting segment
+		// (these values can originate from untrusted API `relations`/`select` query params).
+		const segments = rawPath.split('.').filter((segment) => segment.length > 0);
+		if (segments.length === 0 || segments.some((segment) => UNSAFE_FIND_OPTION_SEGMENTS.has(segment))) {
+			continue;
+		}
+
+		let cursor = result;
+		for (let i = 0; i < segments.length; i++) {
+			const segment = segments[i];
+			const isLeaf = i === segments.length - 1;
+
+			if (isLeaf) {
+				if (cursor[segment] === undefined) {
+					cursor[segment] = true;
+				}
+			} else {
+				if (cursor[segment] === true || cursor[segment] === undefined) {
+					cursor[segment] = {};
+				}
+				cursor = cursor[segment];
+			}
+		}
+	}
+
+	return result;
+}
+
+/**
+ * Normalizes a TypeORM `relations` find-option, converting the legacy `string[]` form to the object
+ * form v1 expects and passing the object form (or `undefined`) through unchanged. Safe to call on any
+ * `relations` value, so it can wrap options that may already use either syntax.
+ *
+ * @param relations - The `relations` option in either legacy `string[]` or object form.
+ * @returns The `relations` option in object form, or the original value when not an array.
+ */
+export function parseFindOptionsRelations<T = unknown>(
+	relations: string[] | FindOptionsRelations<any> | undefined
+): FindOptionsRelations<T> | undefined {
+	// NOTE: the parameter is intentionally `FindOptionsRelations<any>` (not `FindOptionsRelations<T>`)
+	// so `T` is inferred from the assignment context (the field being populated), never from the
+	// argument. Inferring `T` from a `string[]` argument makes `FindOptionsRelations<T>` resolve to a
+	// bogus array type, which would then reject at every call site.
+	if (Array.isArray(relations)) {
+		return stringArrayToFindOptionsObject(relations) as FindOptionsRelations<T>;
+	}
+	return relations as FindOptionsRelations<T> | undefined;
+}
+
+/**
+ * Normalizes a TypeORM `select` find-option, converting the legacy `string[]` form to the object form
+ * v1 expects and passing the object form (or `undefined`) through unchanged. Safe to call on any
+ * `select` value, so it can wrap options that may already use either syntax.
+ *
+ * @param select - The `select` option in either legacy `string[]` or object form.
+ * @returns The `select` option in object form, or the original value when not an array.
+ */
+export function parseFindOptionsSelect<T = unknown>(
+	select: string[] | FindOptionsSelect<any> | undefined
+): FindOptionsSelect<T> | undefined {
+	// See parseFindOptionsRelations: parameter is `FindOptionsSelect<any>` so `T` is inferred from the
+	// assignment context rather than a `string[]` argument.
+	if (Array.isArray(select)) {
+		return stringArrayToFindOptionsObject(select) as FindOptionsSelect<T>;
+	}
+	return select as FindOptionsSelect<T> | undefined;
+}
+
+/**
+ * Normalizes the `relations` and `select` members of a TypeORM find-options object in place-safe
+ * fashion, returning a shallow copy with the legacy `string[]` form converted to object form. Any
+ * other options (`where`, `order`, `skip`, `take`, …) are preserved untouched.
+ *
+ * Use this at TypeORM data-access boundaries (repository / query-builder calls) that must not receive
+ * the legacy `string[]` syntax now that the TypeORM patch is removed. The MikroORM path does NOT need
+ * this — {@link flatten} already accepts both forms — so callers should convert only on the TypeORM
+ * branch to keep MikroORM behaviour identical.
+ *
+ * @param options - The find-options to normalize. `null`/`undefined` is returned unchanged.
+ * @returns A normalized shallow copy, or the original value when there is nothing to convert.
+ */
+export function parseTypeORMFindOptions<T, O extends { relations?: any; select?: any }>(options: O): O {
+	if (!options || typeof options !== 'object') {
+		return options;
+	}
+
+	const hasArrayRelations = Array.isArray(options.relations);
+	const hasArraySelect = Array.isArray(options.select);
+
+	if (!hasArrayRelations && !hasArraySelect) {
+		return options;
+	}
+
+	return {
+		...options,
+		...(hasArrayRelations ? { relations: stringArrayToFindOptionsObject(options.relations) } : {}),
+		...(hasArraySelect ? { select: stringArrayToFindOptionsObject(options.select) } : {})
+	};
+}
+
+/**
  * Concatenate an ID to the given MikroORM where condition.
  *
  * @param id - The ID to concatenate to the where condition.
@@ -483,10 +647,12 @@ export function enhanceWhereWithTenantId<T>(tenantId: any, where: MikroFilterQue
  * @param options - TypeORM's FindManyOptions.
  * @returns An object with MikroORM's where and options.
  */
-export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): {
+export function parseTypeORMFindToMikroOrm<T>(options: LegacyFindManyOptions<any>): {
 	where: MikroFilterQuery<T>;
 	mikroOptions: MikroORMFindOptions<T, any, any, any>;
 } {
+	// The parameter accepts the legacy string-array `relations`/`select` form: the MikroORM path
+	// consumes both forms natively (see `flatten`), so no conversion is applied here.
 	const mikroOptions: MikroORMFindOptions<T, any, any, any> = {
 		disableIdentityMap: true,
 		populate: []

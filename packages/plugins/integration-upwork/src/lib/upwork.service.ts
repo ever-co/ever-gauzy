@@ -39,7 +39,7 @@ import {
 	ITimeLog,
 	IIntegrationSetting
 } from '@gauzy/contracts';
-import { RequestContext, mergeOverlappingDateRanges, unixTimestampToDate } from '@gauzy/core';
+import { RequestContext, mergeOverlappingDateRanges, parseFindOptionsRelations, unixTimestampToDate } from '@gauzy/core';
 import {
 	ExpenseService,
 	IncomeService,
@@ -101,7 +101,7 @@ export class UpworkService {
 					settingsValue: config.consumerKey,
 					organizationId: organizationId
 				},
-				relations: ['integration']
+				relations: parseFindOptionsRelations(['integration'])
 			})
 		);
 		if (!integrationSetting) {
@@ -216,7 +216,7 @@ export class UpworkService {
 						settingsValue: requestToken,
 						organizationId
 					},
-					relations: ['integration']
+					relations: parseFindOptionsRelations(['integration'])
 				})
 			);
 			const integrationSettings: IIntegrationSetting[] = await this._commandBus.execute(

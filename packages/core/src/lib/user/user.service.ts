@@ -31,7 +31,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { freshTimestamp, MultiORMEnum } from './../core/utils';
+import { freshTimestamp, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { EmployeeService } from '../employee/employee.service';
 import { TaskService } from '../tasks/task.service';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
@@ -133,7 +133,9 @@ export class UserService extends TenantAwareCrudService<User> {
 		// Fetch employee details if 'includeEmployee' is true
 		if (options.includeEmployee) {
 			const relations = options.includeOrganization ? { organization: true } : [];
-			employee = await this._employeeService.findOneByUserId(user.id, undefined, { relations });
+			employee = await this._employeeService.findOneByUserId(user.id, undefined, {
+				relations: parseFindOptionsRelations(relations)
+			});
 		}
 
 		// Return user data combined with employee data, if it exists.

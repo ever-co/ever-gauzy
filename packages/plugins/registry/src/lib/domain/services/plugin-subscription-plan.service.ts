@@ -1,5 +1,5 @@
 import { ID, PluginSubscriptionType } from '@gauzy/contracts';
-import { CrudService, MultiORMEnum } from '@gauzy/core';
+import { CrudService, MultiORMEnum, parseFindOptionsRelations } from '@gauzy/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOneOptions, MoreThan } from 'typeorm';
 import {
@@ -144,7 +144,7 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 					pluginId,
 					...(onlyActive && { isActive: true })
 				},
-				relations,
+				relations: parseFindOptionsRelations(relations),
 				order: {
 					sortOrder: 'ASC',
 					price: 'ASC'
@@ -172,7 +172,7 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 					...(pluginId && { pluginId }),
 					...(type && { type })
 				},
-				relations,
+				relations: parseFindOptionsRelations(relations),
 				order: {
 					sortOrder: 'ASC',
 					price: 'ASC'
@@ -347,7 +347,7 @@ export class PluginSubscriptionPlanService extends CrudService<PluginSubscriptio
 		try {
 			const queryOptions: FindOneOptions<PluginSubscriptionPlan> = {
 				where: { id },
-				relations
+				relations: parseFindOptionsRelations(relations)
 			};
 
 			const { success, record: plan } = await this.findOneOrFailByOptions(queryOptions);

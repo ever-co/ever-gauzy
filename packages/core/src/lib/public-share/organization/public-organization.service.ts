@@ -1,7 +1,7 @@
 import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FindOptionsSelect, FindOptionsWhere } from 'typeorm';
-import { MultiORM, MultiORMEnum, getORMType } from '../../core/utils';
+import { MultiORM, MultiORMEnum, getORMType, parseFindOptionsRelations } from '../../core/utils';
 import { Organization, OrganizationContact, OrganizationProject } from './../../core/entities/internal';
 
 /**
@@ -106,10 +106,9 @@ export class PublicOrganizationService {
 					break;
 				case MultiORMEnum.TypeORM:
 				default:
-					// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
                     organization = await this.typeOrmOrganizationRepository.findOneOrFail({
 						where,
-						relations,
+						relations: parseFindOptionsRelations(relations),
 						// Restrict the response to display-safe fields only (GHSA-49ff-8859-537j).
 						select: PUBLIC_ORGANIZATION_SELECT
 					});

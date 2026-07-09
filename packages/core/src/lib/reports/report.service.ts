@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GetReportMenuItemsInput, IPagination, IReport } from '@gauzy/contracts';
 import { CrudService } from '../core/crud';
-import { MultiORMEnum } from '../core/utils';
+import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { RequestContext } from './../core/context';
 import { Report } from './report.entity';
 import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
@@ -62,7 +62,7 @@ export class ReportService extends CrudService<Report> {
 				// Fetch all reports and their associated organizations in a single query
 				const qb = this.typeOrmRepository.createQueryBuilder('report');
 				qb.setFindOptions({
-					...(filter.relations ? { relations: filter.relations } : {})
+					...(filter.relations ? { relations: parseFindOptionsRelations(filter.relations) } : {})
 				});
 				qb.leftJoinAndSelect(
 					'report.reportOrganizations',

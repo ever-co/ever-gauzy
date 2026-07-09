@@ -4,6 +4,7 @@ import { FindOptionsSelect, FindOptionsWhere } from 'typeorm';
 import { IEmployee, IPagination } from '@gauzy/contracts';
 import { Employee } from './../../core/entities/internal';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
+import { parseFindOptionsRelations } from '../../core/utils';
 
 /**
  * Display-safe field allowlist for the public employee profile.
@@ -99,10 +100,9 @@ export class PublicEmployeeService {
 		relations: string[] = []
 	): Promise<IPagination<IEmployee>> {
 		try {
-			// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
             const [items = [], total = 0] = await this.typeOrmEmployeeRepository.findAndCount({
 				where,
-				relations,
+				relations: parseFindOptionsRelations(relations),
 				// Restrict the response to display-safe fields only (GHSA-49ff-8859-537j).
 				select: PUBLIC_EMPLOYEE_SELECT
 			});
@@ -121,10 +121,9 @@ export class PublicEmployeeService {
 	 */
 	async findOneByConditions(where: FindOptionsWhere<Employee>, relations: string[]): Promise<IEmployee> {
 		try {
-			// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
             const employee = await this.typeOrmEmployeeRepository.findOneOrFail({
 				where,
-				relations,
+				relations: parseFindOptionsRelations(relations),
 				// Restrict the response to display-safe fields only (GHSA-49ff-8859-537j).
 				select: PUBLIC_EMPLOYEE_SELECT
 			});
