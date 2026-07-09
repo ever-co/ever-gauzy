@@ -113,6 +113,7 @@
 		"doc:build": "compodoc -p tsconfig.json -d dist/docs",
 		"doc:serve": "compodoc -s -d dist/docs",
 		"doc:build-serve": "compodoc -p tsconfig.json -d docs -s",
+		"postinstall": "patch-package",
 		"postinstall.manual": "patch-package && yarn node ./.scripts/postinstall.js",
 		"postinstall.electron": "yarn electron-builder install-app-deps && yarn node tools/electron/postinstall",
 		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn node tools/web/postinstall",
