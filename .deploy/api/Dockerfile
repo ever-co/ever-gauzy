@@ -1,113 +1,23 @@
 # Ever Gauzy Platform API (Core)
-
-ARG NODE_OPTIONS
-ARG NODE_ENV
-ARG API_BASE_URL
-ARG CLIENT_BASE_URL
-ARG API_HOST
-ARG API_PORT
-ARG ALLOWED_ORIGINS
-ARG CLOUD_PROVIDER
-ARG SENTRY_DSN
-ARG SENTRY_HTTP_TRACING_ENABLED
-ARG SENTRY_POSTGRES_TRACKING_ENABLED
-ARG SENTRY_PROFILING_ENABLED
-ARG DB_URI
-ARG DB_HOST
-ARG DB_NAME
-ARG DB_PORT
-ARG DB_USER
-ARG DB_PASS
-ARG DB_TYPE
-ARG DB_SSL_MODE
-ARG DB_CA_CERT
-ARG DB_POOL_SIZE
-ARG DB_POOL_SIZE_KNEX
-ARG DEMO
-ARG AWS_ACCESS_KEY_ID
-ARG AWS_SECRET_ACCESS_KEY
-ARG AWS_REGION
-ARG AWS_S3_BUCKET
-ARG WASABI_ACCESS_KEY_ID
-ARG WASABI_SECRET_ACCESS_KEY
-ARG WASABI_REGION
-ARG WASABI_SERVICE_URL
-ARG WASABI_S3_BUCKET
-ARG WASABI_S3_FORCE_PATH_STYLE
-ARG DIGITALOCEAN_ACCESS_KEY_ID
-ARG DIGITALOCEAN_SECRET_ACCESS_KEY
-ARG DIGITALOCEAN_REGION
-ARG DIGITALOCEAN_SERVICE_URL
-ARG DIGITALOCEAN_CDN_URL
-ARG DIGITALOCEAN_S3_BUCKET
-ARG DIGITALOCEAN_S3_FORCE_PATH_STYLE
-ARG EXPRESS_SESSION_SECRET
-ARG JWT_SECRET
-ARG JWT_REFRESH_TOKEN_SECRET
-ARG REFRESH_TOKEN_EXPIRATION_TIME
-ARG MAIL_FROM_ADDRESS
-ARG MAIL_HOST
-ARG MAIL_PORT
-ARG MAIL_USERNAME
-ARG MAIL_PASSWORD
-ARG ALLOW_SUPER_ADMIN_ROLE
-ARG GOOGLE_CLIENT_ID
-ARG GOOGLE_CLIENT_SECRET
-ARG GOOGLE_CALLBACK_URL
-ARG FACEBOOK_CLIENT_ID
-ARG FACEBOOK_CLIENT_SECRET
-ARG FACEBOOK_GRAPH_VERSION
-ARG FACEBOOK_CALLBACK_URL
-ARG INTEGRATED_USER_DEFAULT_PASS
-ARG UPWORK_REDIRECT_URL
-ARG HUBSTAFF_CLIENT_ID
-ARG HUBSTAFF_CLIENT_SECRET
-ARG HUBSTAFF_PERSONAL_ACCESS_TOKEN
-ARG FILE_PROVIDER
-ARG GAUZY_AI_GRAPHQL_ENDPOINT
-ARG GAUZY_AI_REST_ENDPOINT
-ARG DEFAULT_CURRENCY
-ARG CLOUDINARY_CLOUD_NAME
-ARG CLOUDINARY_API_KEY
-ARG UNLEASH_APP_NAME
-ARG UNLEASH_API_URL
-ARG UNLEASH_INSTANCE_ID
-ARG UNLEASH_REFRESH_INTERVAL
-ARG UNLEASH_METRICS_INTERVAL
-ARG UNLEASH_API_KEY
-ARG JITSU_SERVER_URL
-ARG JITSU_SERVER_WRITE_KEY
-ARG GAUZY_GITHUB_CLIENT_ID
-ARG GAUZY_GITHUB_CLIENT_SECRET
-ARG GAUZY_GITHUB_WEBHOOK_URL
-ARG GAUZY_GITHUB_WEBHOOK_SECRET
-ARG GAUZY_GITHUB_APP_ID
-ARG GAUZY_GITHUB_APP_NAME
-ARG GAUZY_GITHUB_POST_INSTALL_URL
-ARG GAUZY_GITHUB_APP_PRIVATE_KEY
-ARG MAGIC_CODE_EXPIRATION_TIME
-ARG APP_NAME
-ARG APP_LOGO
-ARG APP_SIGNATURE
-ARG APP_LINK
-ARG APP_EMAIL_CONFIRMATION_URL
-ARG APP_MAGIC_SIGN_URL
-ARG COMPANY_LINK
-ARG COMPANY_NAME
-ARG OTEL_ENABLED
-ARG OTEL_PROVIDER
-ARG OTEL_EXPORTER_OTLP_HEADERS
-ARG OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-ARG REDIS_ENABLED
-ARG REDIS_HOST
-ARG REDIS_PASSWORD
-ARG REDIS_PORT
-ARG REDIS_USER
-ARG REDIS_TLS
-ARG REDIS_URL
-ARG NX_CLOUD_ACCESS_TOKEN
-ARG NX_BRANCH
-ARG VERDACCIO_TOKEN
+#
+# Requires BuildKit (Docker 23+/buildx): uses RUN --mount stage bind mounts and build
+# secrets so the multi-GB node_modules trees never land in persisted layers (issue #9791).
+#
+# Build args consumed: NODE_ENV, DEMO, NODE_OPTIONS, NX_BRANCH (build stage only).
+# Optional build SECRETS (never pass these as build args — they would be embedded in
+# layers and trigger buildx SecretsUsedInArgOrEnv warnings):
+#   VERDACCIO_TOKEN       — auth for the packages.ever.co private registry
+#   NX_CLOUD_ACCESS_TOKEN — Nx Cloud (currently inert: NX_NO_CLOUD=true below)
+# e.g. docker buildx build --secret id=VERDACCIO_TOKEN,env=VERDACCIO_TOKEN ...
+#      or the `secrets:` input of docker/build-push-action.
+#
+# Runtime configuration (DB credentials, JWT secrets, integrations, ...) comes from the
+# orchestrator environment (k8s manifests / docker-compose env_file) — it is deliberately
+# NOT declared here. Only neutral literal defaults are baked into the image below.
+#
+# NOTE: every new @gauzy workspace package must be added in THREE places in this file
+# (and mirrored in the worker/webapp Dockerfiles): the dependencies stage COPY, the
+# prod-dependencies stage COPY, and the production stage per-package node_modules copy.
 
 FROM node:24.16.0-alpine3.23 AS dependencies
 
@@ -121,7 +31,7 @@ ENV CI=true
 ENV NODE_ENV=development
 
 # Set Python interpreter for `node-gyp` to use
-ENV PYTHON /usr/bin/python
+ENV PYTHON=/usr/bin/python
 
 RUN apk --update add bash && npm i -g npm@9 \
     && apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
@@ -188,26 +98,30 @@ COPY --chown=node:node packages/plugins/ai-provider-gauzy-ai/package.json ./pack
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
-ARG VERDACCIO_TOKEN
-RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
+# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them.
+# Without this, patch-package prints "No patch files found" and the typeorm v1 compat
+# patch (string[] relations/select types + runtime shim) is never applied, breaking the build.
+COPY --chown=node:node patches ./patches
+
+# VERDACCIO_TOKEN arrives as a BuildKit secret (optional; absent file → private registry
+# skipped). Registry rewrite, install and .npmrc/.yarnrc cleanup happen in ONE RUN so the
+# token never persists in any layer.
+RUN --mount=type=secret,id=VERDACCIO_TOKEN,mode=0444 \
+    VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
+    if [ -n "$VERDACCIO_TOKEN" ]; then \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
     echo "registry=https://packages.ever.co/" >> .npmrc && \
     echo "always-auth=true" >> .npmrc && \
     echo 'registry "https://packages.ever.co/"' >> .yarnrc && \
     sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
-    fi
+    fi && \
+    yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && \
+    yarn postinstall.manual && \
+    yarn cache clean && \
+    rm -f .npmrc .yarnrc
 
-# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them.
-# Without this, patch-package prints "No patch files found" and the typeorm v1 compat
-# patch (string[] relations/select types + runtime shim) is never applied, breaking the build.
-COPY --chown=node:node patches ./patches
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual && yarn cache clean
-
-# Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
-RUN rm -f .npmrc .yarnrc
-
-FROM node:24.16.0-alpine3.23 AS prodDependencies
+FROM node:24.16.0-alpine3.23 AS prod-dependencies
 
 ENV CI=true
 
@@ -215,7 +129,7 @@ ENV CI=true
 ARG NODE_ENV
 
 # Set Python interpreter for `node-gyp` to use
-ENV PYTHON /usr/bin/python
+ENV PYTHON=/usr/bin/python
 
 RUN apk --update add bash && npm i -g npm@9 \
     && apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
@@ -279,23 +193,25 @@ COPY --chown=node:node packages/plugins/ai-provider-gauzy-ai/package.json ./pack
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
-ARG VERDACCIO_TOKEN
-RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
+# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them
+# (see note in the dependencies stage above).
+COPY --chown=node:node patches ./patches
+
+# VERDACCIO_TOKEN as a BuildKit secret — same single-RUN hygiene as the dependencies stage.
+RUN --mount=type=secret,id=VERDACCIO_TOKEN,mode=0444 \
+    VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
+    if [ -n "$VERDACCIO_TOKEN" ]; then \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
     echo "registry=https://packages.ever.co/" >> .npmrc && \
     echo "always-auth=true" >> .npmrc && \
     echo 'registry "https://packages.ever.co/"' >> .yarnrc && \
     sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
-    fi
-
-# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them
-# (see note in the dependencies stage above).
-COPY --chown=node:node patches ./patches
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && yarn postinstall.manual && yarn cache clean
-
-# Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
-RUN rm -f .npmrc .yarnrc
+    fi && \
+    yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && \
+    yarn postinstall.manual && \
+    yarn cache clean && \
+    rm -f .npmrc .yarnrc
 
 # We remove Angular modules as it's not used in APIs
 RUN rm -r node_modules/@angular
@@ -320,11 +236,17 @@ WORKDIR /srv/gauzy
 
 RUN mkdir dist
 
-# Copy the node_modules from the dependencies stage
-COPY --from=dependencies /srv/gauzy/node_modules ./node_modules
+# Per-package node_modules created by the workspace install in the dependencies stage
+# (non-hoisted deps + .bin shims). Node module resolution needs them next to each
+# package/app source, and the production stage re-nests packages/*/node_modules under
+# node_modules/@gauzy/<pkg>. These trees are small (<1GB total) — unlike the root
+# node_modules, which is bind-mounted below instead of being copied into a layer.
+COPY --chown=node:node --from=dependencies /srv/gauzy/packages ./packages
+COPY --chown=node:node --from=dependencies /srv/gauzy/apps ./apps
 
-# Copy the compiled packages from the development stage
-COPY --chown=node:node --from=development /srv/gauzy .
+# Full source from the build context (root/per-package node_modules and dist are
+# .dockerignore'd, so this merges source files over the trees copied above).
+COPY --chown=node:node . .
 
 ENV CI=true
 
@@ -332,7 +254,6 @@ ENV CI=true
 ARG NODE_ENV
 ARG DEMO
 ARG NODE_OPTIONS
-ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
 
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
@@ -341,16 +262,29 @@ ENV DEMO=${DEMO:-false}
 
 ENV IS_DOCKER=true
 
-# Enable NX Cloud caching for faster builds
+# The org's Nx Cloud is disabled — do not flip this (builds hard-fail with auth errors).
 ENV NX_NO_CLOUD=true
-ENV NX_CLOUD_ACCESS_TOKEN=${NX_CLOUD_ACCESS_TOKEN}
 ENV NX_BRANCH=${NX_BRANCH}
 
-RUN if [ "$NODE_ENV" = "production" ]; then \
+# The multi-GB root node_modules is bind-mounted from the dependencies stage for this RUN
+# only — it never lands in a persisted layer (this was the main cause of the 44GB+
+# build-time disk footprint, see issue #9791). `rw` allows transient cache writes into
+# the mount, which are discarded after the step. The @gauzy/* symlinks inside the mount
+# resolve to /srv/gauzy/packages|apps on this stage's fs — that is why the source COPYs
+# above must happen before this RUN.
+# The nx local task cache (.nx/cache — NOT disabled by CI=true) is written to the stage
+# fs and would duplicate every build output into this layer, so it is deleted in the
+# same RUN. (The Angular CLI disk cache IS disabled under CI.)
+# NX_CLOUD_ACCESS_TOKEN is an optional build secret (inert while NX_NO_CLOUD=true).
+RUN --mount=type=bind,from=dependencies,source=/srv/gauzy/node_modules,target=/srv/gauzy/node_modules,rw \
+    --mount=type=secret,id=NX_CLOUD_ACCESS_TOKEN,mode=0444 \
+    export NX_CLOUD_ACCESS_TOKEN="$(cat /run/secrets/NX_CLOUD_ACCESS_TOKEN 2>/dev/null || true)" && \
+    if [ "$NODE_ENV" = "production" ]; then \
     yarn build:api:prod:docker; \
     else \
     yarn build:api:dev:docker; \
-    fi
+    fi && \
+    rm -rf ./.nx
 
 # Exclude @gauzy directories before copying because we copy
 # those within custom webpack in apps/api/config/custom-webpack.config.js
@@ -361,7 +295,10 @@ FROM node:24.16.0-alpine3.23 AS production
 WORKDIR /srv/gauzy
 
 COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
-COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
+
+# NOTE: packages/ is intentionally NOT copied into this stage — the old flow copied it
+# and later ran `rm -rf ./packages` (the data still persisted in the layer). The
+# node_modules assembly RUN below reads it through a bind mount instead.
 
 # Copy static assets files which used for example in the seeds (e.g. images for features, reports, screenshots)
 COPY --chown=node:node apps/api/src/assets apps/api/src/assets
@@ -376,177 +313,85 @@ COPY --chown=node:node apps/api/src/assets/seed apps/api/public
 
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
-# Copy node_modules to a temporary location
-COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules /tmp/node_modules_temp
-# Ensure node_modules directory exists (safety net in case build output doesn't include one)
-RUN mkdir -p ./node_modules
-# Add a script to merge directories inside the container (skip files that already exists)
-RUN cp -rn /tmp/node_modules_temp/* ./node_modules/ && rm -rf /tmp/node_modules_temp
+# Assemble the runtime node_modules in a SINGLE layer, reading the source trees through
+# bind mounts so they are never duplicated into this image:
+#  1. merge the production node_modules from prod-dependencies with cp -rn (no-clobber:
+#     the webpack-built @gauzy packages already inside dist/apps/api/node_modules WIN —
+#     this precedence is load-bearing, see custom-webpack.config.js);
+#  2. re-nest each workspace package's own node_modules (its non-hoisted deps from the
+#     workspace install) under node_modules/@gauzy/<pkg> — required for Node module
+#     resolution at runtime. Wakatime plugin is intentionally absent (Desktop Apps only).
+RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,target=/mnt/prod_node_modules \
+    --mount=type=bind,from=build,source=/srv/gauzy/packages,target=/mnt/packages \
+    mkdir -p ./node_modules && \
+    cp -rn /mnt/prod_node_modules/* ./node_modules/ && \
+    cp -r /mnt/packages/auth/node_modules ./node_modules/@gauzy/auth/ && \
+    cp -r /mnt/packages/common/node_modules ./node_modules/@gauzy/common/ && \
+    cp -r /mnt/packages/utils/node_modules ./node_modules/@gauzy/utils/ && \
+    cp -r /mnt/packages/config/node_modules ./node_modules/@gauzy/config/ && \
+    cp -r /mnt/packages/contracts/node_modules ./node_modules/@gauzy/contracts/ && \
+    cp -r /mnt/packages/core/node_modules ./node_modules/@gauzy/core/ && \
+    cp -r /mnt/packages/scheduler/node_modules ./node_modules/@gauzy/scheduler/ && \
+    cp -r /mnt/packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/ && \
+    cp -r /mnt/packages/plugins/integration-activepieces/node_modules ./node_modules/@gauzy/plugin-integration-activepieces/ && \
+    cp -r /mnt/packages/plugins/integration-ai/node_modules ./node_modules/@gauzy/plugin-integration-ai/ && \
+    cp -r /mnt/packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/ && \
+    cp -r /mnt/packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/ && \
+    cp -r /mnt/packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/ && \
+    cp -r /mnt/packages/plugins/integration-make-com/node_modules ./node_modules/@gauzy/plugin-integration-make-com/ && \
+    cp -r /mnt/packages/plugins/integration-sim/node_modules ./node_modules/@gauzy/plugin-integration-sim/ && \
+    cp -r /mnt/packages/plugins/integration-plane/node_modules ./node_modules/@gauzy/plugin-integration-plane/ && \
+    cp -r /mnt/packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/ && \
+    cp -r /mnt/packages/plugins/integration-zapier/node_modules ./node_modules/@gauzy/plugin-integration-zapier/ && \
+    cp -r /mnt/packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/ && \
+    cp -r /mnt/packages/plugins/job-proposal/node_modules ./node_modules/@gauzy/plugin-job-proposal/ && \
+    cp -r /mnt/packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugin-job-search/ && \
+    cp -r /mnt/packages/plugins/knowledge-base/node_modules ./node_modules/@gauzy/plugin-knowledge-base/ && \
+    cp -r /mnt/packages/plugins/camshot/node_modules ./node_modules/@gauzy/plugin-camshot/ && \
+    cp -r /mnt/packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/plugin-product-reviews/ && \
+    cp -r /mnt/packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/ && \
+    cp -r /mnt/packages/plugins/posthog/node_modules ./node_modules/@gauzy/plugin-posthog/ && \
+    cp -r /mnt/packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/ && \
+    cp -r /mnt/packages/plugins/soundshot/node_modules ./node_modules/@gauzy/plugin-soundshot/ && \
+    cp -r /mnt/packages/plugins/registry/node_modules ./node_modules/@gauzy/plugin-registry/ && \
+    cp -r /mnt/packages/plugins/ai-chat/node_modules ./node_modules/@gauzy/plugin-ai-chat/ && \
+    cp -r /mnt/packages/plugins/ai-provider-anthropic/node_modules ./node_modules/@gauzy/plugin-ai-provider-anthropic/ && \
+    cp -r /mnt/packages/plugins/ai-provider-openai/node_modules ./node_modules/@gauzy/plugin-ai-provider-openai/ && \
+    cp -r /mnt/packages/plugins/ai-provider-openrouter/node_modules ./node_modules/@gauzy/plugin-ai-provider-openrouter/ && \
+    cp -r /mnt/packages/plugins/ai-provider-vercel-gateway/node_modules ./node_modules/@gauzy/plugin-ai-provider-vercel-gateway/ && \
+    cp -r /mnt/packages/plugins/ai-provider-gauzy-ai/node_modules ./node_modules/@gauzy/plugin-ai-provider-gauzy-ai/
 
 RUN mkdir /import && chown node:node /import && touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
     chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
-
-# Clean up
-RUN yarn cache clean
-
-# we need node_modules inside each @gauzy package
-RUN cp -r ./packages/auth/node_modules ./node_modules/@gauzy/auth/
-RUN cp -r ./packages/common/node_modules ./node_modules/@gauzy/common/
-RUN cp -r ./packages/utils/node_modules ./node_modules/@gauzy/utils/
-RUN cp -r ./packages/config/node_modules ./node_modules/@gauzy/config/
-RUN cp -r ./packages/contracts/node_modules ./node_modules/@gauzy/contracts/
-RUN cp -r ./packages/core/node_modules ./node_modules/@gauzy/core/
-RUN cp -r ./packages/scheduler/node_modules ./node_modules/@gauzy/scheduler/
-
-RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/ && \
-    cp -r ./packages/plugins/integration-activepieces/node_modules ./node_modules/@gauzy/plugin-integration-activepieces/ && \
-    cp -r ./packages/plugins/integration-ai/node_modules ./node_modules/@gauzy/plugin-integration-ai/ && \
-    cp -r ./packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/ && \
-    cp -r ./packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/ && \
-    cp -r ./packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/ && \
-    cp -r ./packages/plugins/integration-make-com/node_modules ./node_modules/@gauzy/plugin-integration-make-com/ && \
-    cp -r ./packages/plugins/integration-sim/node_modules ./node_modules/@gauzy/plugin-integration-sim/ && \
-    cp -r ./packages/plugins/integration-plane/node_modules ./node_modules/@gauzy/plugin-integration-plane/ && \
-    cp -r ./packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/ && \
-    cp -r ./packages/plugins/integration-zapier/node_modules ./node_modules/@gauzy/plugin-integration-zapier/ && \
-    cp -r ./packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/ && \
-    cp -r ./packages/plugins/job-proposal/node_modules ./node_modules/@gauzy/plugin-job-proposal/ && \
-    cp -r ./packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugin-job-search/ && \
-    cp -r ./packages/plugins/knowledge-base/node_modules ./node_modules/@gauzy/plugin-knowledge-base/ && \
-    cp -r ./packages/plugins/camshot/node_modules ./node_modules/@gauzy/plugin-camshot/ && \
-    cp -r ./packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/plugin-product-reviews/ && \
-    cp -r ./packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/ && \
-    cp -r ./packages/plugins/posthog/node_modules ./node_modules/@gauzy/plugin-posthog/ && \
-    cp -r ./packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/ && \
-    cp -r ./packages/plugins/soundshot/node_modules ./node_modules/@gauzy/plugin-soundshot/ && \
-    cp -r ./packages/plugins/registry/node_modules ./node_modules/@gauzy/plugin-registry/ && \
-    cp -r ./packages/plugins/ai-chat/node_modules ./node_modules/@gauzy/plugin-ai-chat/ && \
-    cp -r ./packages/plugins/ai-provider-anthropic/node_modules ./node_modules/@gauzy/plugin-ai-provider-anthropic/ && \
-    cp -r ./packages/plugins/ai-provider-openai/node_modules ./node_modules/@gauzy/plugin-ai-provider-openai/ && \
-    cp -r ./packages/plugins/ai-provider-openrouter/node_modules ./node_modules/@gauzy/plugin-ai-provider-openrouter/ && \
-    cp -r ./packages/plugins/ai-provider-vercel-gateway/node_modules ./node_modules/@gauzy/plugin-ai-provider-vercel-gateway/ && \
-    cp -r ./packages/plugins/ai-provider-gauzy-ai/node_modules ./node_modules/@gauzy/plugin-ai-provider-gauzy-ai/
-
-# We do not copy node_modules for Wakatime plugin here, because it is used in Desktop Apps for now
-# RUN cp -r ./packages/plugins/integration-wakatime/node_modules ./node_modules/@gauzy/plugin-integration-wakatime/
-
-# we don't need packages folder anymore
-RUN rm -rf ./packages
 
 USER node:node
 
 ENV CI=true
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"}
-ENV NODE_ENV=${NODE_ENV:-production}
+# Neutral runtime defaults baked into the image. These are the SAME literal values the
+# previous ${X:-default} expansions always produced (the corresponding build args never
+# reached this stage, so every non-defaulted ENV here used to bake an empty string).
+# Everything else — DB credentials, JWT/session secrets, mail, storage, integrations —
+# must come from the orchestrator's runtime environment (k8s manifests, compose env_file);
+# declaring secret-named ARG/ENV here would embed them in a public image and trigger
+# buildx SecretsUsedInArgOrEnv warnings.
+ENV NODE_OPTIONS="--max-old-space-size=12288"
+ENV NODE_ENV=production
 
-ENV API_HOST=${API_HOST:-api}
-ENV API_PORT=${API_PORT:-3000}
+ENV API_HOST=api
+ENV API_PORT=3000
 
-ENV API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
-ENV CLIENT_BASE_URL=${CLIENT_BASE_URL:-http://localhost:4200}
-ENV ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
-ENV SENTRY_DSN=${SENTRY_DSN}
-ENV SENTRY_HTTP_TRACING_ENABLED=${SENTRY_HTTP_TRACING_ENABLED:-false}
-ENV SENTRY_PROFILING_ENABLED=${SENTRY_PROFILING_ENABLED:-false}
-ENV SENTRY_POSTGRES_TRACKING_ENABLED=${SENTRY_POSTGRES_TRACKING_ENABLED:-false}
-ENV DB_URI=${DB_URI}
-ENV DB_HOST=${DB_HOST:-db}
-ENV DB_NAME=${DB_NAME:-postgres}
-ENV DB_PORT=${DB_PORT:-5432}
-ENV DB_USER=${DB_USER}
-ENV DB_PASS=${DB_PASS}
-ENV DB_TYPE=${DB_TYPE:-better-sqlite3}
-ENV DB_SSL_MODE=${DB_SSL_MODE}
-ENV DB_CA_CERT=${DB_CA_CERT}
-ENV DB_POOL_SIZE=${DB_POOL_SIZE}
-ENV DB_POOL_SIZE_KNEX=${DB_POOL_SIZE_KNEX}
-ENV DEMO=${DEMO:-false}
-ENV CLOUD_PROVIDER=${CLOUD_PROVIDER}
-ENV AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-ENV AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-ENV AWS_REGION=${AWS_REGION}
-ENV AWS_S3_BUCKET=${AWS_S3_BUCKET}
-ENV WASABI_ACCESS_KEY_ID=${WASABI_ACCESS_KEY_ID}
-ENV WASABI_SECRET_ACCESS_KEY=${WASABI_SECRET_ACCESS_KEY}
-ENV WASABI_REGION=${WASABI_REGION}
-ENV WASABI_SERVICE_URL=${WASABI_SERVICE_URL}
-ENV WASABI_S3_BUCKET=${WASABI_S3_BUCKET}
-ENV WASABI_S3_FORCE_PATH_STYLE=${WASABI_S3_FORCE_PATH_STYLE}
-ENV DIGITALOCEAN_ACCESS_KEY_ID=${DIGITALOCEAN_ACCESS_KEY_ID}
-ENV DIGITALOCEAN_SECRET_ACCESS_KEY=${DIGITALOCEAN_SECRET_ACCESS_KEY}
-ENV DIGITALOCEAN_REGION=${DIGITALOCEAN_REGION}
-ENV DIGITALOCEAN_SERVICE_URL=${DIGITALOCEAN_SERVICE_URL}
-ENV DIGITALOCEAN_CDN_URL=${DIGITALOCEAN_CDN_URL}
-ENV DIGITALOCEAN_S3_BUCKET=${DIGITALOCEAN_S3_BUCKET}
-ENV DIGITALOCEAN_S3_FORCE_PATH_STYLE=${DIGITALOCEAN_S3_FORCE_PATH_STYLE:-false}
-ENV EXPRESS_SESSION_SECRET=${EXPRESS_SESSION_SECRET:-gauzy}
-ENV JWT_SECRET=${JWT_SECRET:-secretKey}
-ENV JWT_REFRESH_TOKEN_SECRET=${JWT_REFRESH_TOKEN_SECRET:-refreshSecretKey}
-ENV REFRESH_TOKEN_EXPIRATION_TIME=${REFRESH_TOKEN_EXPIRATION_TIME:-86400}
-ENV MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS}
-ENV MAIL_HOST=${MAIL_HOST}
-ENV MAIL_PORT=${MAIL_PORT}
-ENV MAIL_USERNAME=${MAIL_USERNAME}
-ENV MAIL_PASSWORD=${MAIL_PASSWORD}
-ENV ALLOW_SUPER_ADMIN_ROLE=${ALLOW_SUPER_ADMIN_ROLE}
-ENV GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-ENV GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-ENV GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
-ENV FACEBOOK_CLIENT_ID=${FACEBOOK_CLIENT_ID}
-ENV FACEBOOK_CLIENT_SECRET=${FACEBOOK_CLIENT_SECRET}
-ENV FACEBOOK_GRAPH_VERSION=${FACEBOOK_GRAPH_VERSION}
-ENV FACEBOOK_CALLBACK_URL=${FACEBOOK_CALLBACK_URL}
-ENV INTEGRATED_USER_DEFAULT_PASS=${INTEGRATED_USER_DEFAULT_PASS}
-ENV UPWORK_REDIRECT_URL=${UPWORK_REDIRECT_URL}
-ENV HUBSTAFF_CLIENT_ID=${HUBSTAFF_CLIENT_ID}
-ENV HUBSTAFF_CLIENT_SECRET=${HUBSTAFF_CLIENT_SECRET}
-ENV HUBSTAFF_PERSONAL_ACCESS_TOKEN=${HUBSTAFF_PERSONAL_ACCESS_TOKEN}
-ENV FILE_PROVIDER=${FILE_PROVIDER}
-ENV GAUZY_AI_GRAPHQL_ENDPOINT=${GAUZY_AI_GRAPHQL_ENDPOINT}
-ENV GAUZY_AI_REST_ENDPOINT=${GAUZY_AI_REST_ENDPOINT}
-ENV DEFAULT_CURRENCY=${DEFAULT_CURRENCY}
-ENV CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-ENV CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-ENV UNLEASH_APP_NAME=${UNLEASH_APP_NAME}
-ENV UNLEASH_API_URL=${UNLEASH_API_URL}
-ENV UNLEASH_INSTANCE_ID=${UNLEASH_INSTANCE_ID}
-ENV UNLEASH_REFRESH_INTERVAL=${UNLEASH_REFRESH_INTERVAL}
-ENV UNLEASH_METRICS_INTERVAL=${UNLEASH_METRICS_INTERVAL}
-ENV UNLEASH_API_KEY=${UNLEASH_API_KEY}
-ENV JITSU_SERVER_URL=${JITSU_SERVER_URL}
-ENV JITSU_SERVER_WRITE_KEY=${JITSU_SERVER_WRITE_KEY}
-ENV GAUZY_GITHUB_CLIENT_ID=${GAUZY_GITHUB_CLIENT_ID}
-ENV GAUZY_GITHUB_CLIENT_SECRET=${GAUZY_GITHUB_CLIENT_SECRET}
-ENV GAUZY_GITHUB_WEBHOOK_URL=${GAUZY_GITHUB_WEBHOOK_URL}
-ENV GAUZY_GITHUB_WEBHOOK_SECRET=${GAUZY_GITHUB_WEBHOOK_SECRET}
-ENV GAUZY_GITHUB_APP_PRIVATE_KEY=${GAUZY_GITHUB_APP_PRIVATE_KEY}
-ENV GAUZY_GITHUB_APP_ID=${GAUZY_GITHUB_APP_ID}
-ENV GAUZY_GITHUB_APP_NAME=${GAUZY_GITHUB_APP_NAME}
-ENV GAUZY_GITHUB_POST_INSTALL_URL=${GAUZY_GITHUB_POST_INSTALL_URL}
-ENV GAUZY_GITHUB_OAUTH_CLIENT_ID=${GAUZY_GITHUB_OAUTH_CLIENT_ID}
-ENV GAUZY_GITHUB_OAUTH_CLIENT_SECRET=${GAUZY_GITHUB_OAUTH_CLIENT_SECRET}
-ENV GAUZY_GITHUB_OAUTH_CALLBACK_URL=${GAUZY_GITHUB_OAUTH_CALLBACK_URL}
-ENV MAGIC_CODE_EXPIRATION_TIME=${MAGIC_CODE_EXPIRATION_TIME}
-ENV APP_NAME=${APP_NAME}
-ENV APP_LOGO=${APP_LOGO}
-ENV APP_SIGNATURE=${APP_SIGNATURE}
-ENV APP_LINK=${APP_LINK}
-ENV APP_EMAIL_CONFIRMATION_URL=${APP_EMAIL_CONFIRMATION_URL}
-ENV APP_MAGIC_SIGN_URL=${APP_MAGIC_SIGN_URL}
-ENV COMPANY_LINK=${COMPANY_LINK}
-ENV COMPANY_NAME=${COMPANY_NAME}
-ENV OTEL_ENABLED=${OTEL_ENABLED}
-ENV OTEL_PROVIDER=${OTEL_PROVIDER}
-ENV OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT}
-ENV OTEL_EXPORTER_OTLP_HEADERS=${OTEL_EXPORTER_OTLP_HEADERS}
-ENV REDIS_ENABLED=${REDIS_ENABLED}
-ENV REDIS_HOST=${REDIS_HOST}
-ENV REDIS_PASSWORD=${REDIS_PASSWORD}
-ENV REDIS_PORT=${REDIS_PORT}
-ENV REDIS_USER=${REDIS_USER}
-ENV REDIS_TLS=${REDIS_TLS}
-ENV REDIS_URL=${REDIS_URL}
+ENV API_BASE_URL=http://localhost:3000
+ENV CLIENT_BASE_URL=http://localhost:4200
+ENV SENTRY_HTTP_TRACING_ENABLED=false
+ENV SENTRY_PROFILING_ENABLED=false
+ENV SENTRY_POSTGRES_TRACKING_ENABLED=false
+ENV DB_HOST=db
+ENV DB_NAME=postgres
+ENV DB_PORT=5432
+ENV DB_TYPE=better-sqlite3
+ENV DEMO=false
+ENV DIGITALOCEAN_S3_FORCE_PATH_STYLE=false
 
 EXPOSE ${API_PORT}
 
