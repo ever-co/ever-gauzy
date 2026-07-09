@@ -100,7 +100,6 @@ export class PublicEmployeeService {
 		relations: string[] = []
 	): Promise<IPagination<IEmployee>> {
 		try {
-			// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
             const [items = [], total = 0] = await this.typeOrmEmployeeRepository.findAndCount({
 				where,
 				relations: parseFindOptionsRelations(relations),
@@ -122,7 +121,6 @@ export class PublicEmployeeService {
 	 */
 	async findOneByConditions(where: FindOptionsWhere<Employee>, relations: string[]): Promise<IEmployee> {
 		try {
-			// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
             const employee = await this.typeOrmEmployeeRepository.findOneOrFail({
 				where,
 				relations: parseFindOptionsRelations(relations),

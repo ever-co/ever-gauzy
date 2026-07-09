@@ -473,6 +473,12 @@ export type LegacyFindOneOptions<T> = Omit<FindOneOptions<T>, 'relations' | 'sel
 };
 
 /**
+ * Path segments that must never be used as object keys when building find-option objects from
+ * (potentially untrusted) string input, to avoid prototype-pollution assignments.
+ */
+const UNSAFE_FIND_OPTION_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor']);
+
+/**
  * Converts the legacy string-array find-option syntax (`['role', 'tenant.featureOrganizations']`)
  * into the nested object form TypeORM v1 requires (`{ role: true, tenant: { featureOrganizations: true } }`).
  * A dot in a segment denotes nesting.
@@ -491,16 +497,22 @@ export type LegacyFindOneOptions<T> = Omit<FindOneOptions<T>, 'relations' | 'sel
  * @returns The equivalent nested object form.
  */
 export function stringArrayToFindOptionsObject(paths: readonly string[]): Record<string, any> {
-	const result: Record<string, any> = {};
+	let result: Record<string, any> = {};
 
-	for (const path of paths) {
-		if (typeof path !== 'string' || path.length === 0) {
+	for (const rawPath of paths) {
+		if (typeof rawPath !== 'string' || rawPath.length === 0) {
+			continue;
+		}
+
+		// Drop empty segments so malformed inputs like `role.` or `tenant..settings` don't create
+		// bogus `''` relation keys, and reject any path that carries a prototype-polluting segment
+		// (these values can originate from untrusted API `relations`/`select` query params).
+		const segments = rawPath.split('.').filter((segment) => segment.length > 0);
+		if (segments.length === 0 || segments.some((segment) => UNSAFE_FIND_OPTION_SEGMENTS.has(segment))) {
 			continue;
 		}
 
 		let cursor = result;
-		const segments = path.split('.');
-
 		for (let i = 0; i < segments.length; i++) {
 			const segment = segments[i];
 			const isLeaf = i === segments.length - 1;

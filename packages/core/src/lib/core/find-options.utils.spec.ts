@@ -62,10 +62,37 @@ describe('stringArrayToFindOptionsObject', () => {
 		expect(stringArrayToFindOptionsObject(['role', 'role'])).toEqual({ role: true });
 	});
 
-	it('skips empty and non-string segments', () => {
+	it('skips empty and non-string entries', () => {
 		expect(stringArrayToFindOptionsObject(['role', '', null as any, undefined as any, 5 as any])).toEqual({
 			role: true
 		});
+	});
+
+	it('drops empty segments inside malformed dotted paths', () => {
+		expect(stringArrayToFindOptionsObject(['tenant..settings', 'role.'])).toEqual({
+			tenant: { settings: true },
+			role: true
+		});
+	});
+
+	it('rejects prototype-polluting paths without altering Object.prototype', () => {
+		const result = stringArrayToFindOptionsObject([
+			'__proto__',
+			'role.__proto__',
+			'constructor',
+			'a.prototype.b',
+			'role'
+		]);
+
+		// Only the safe `role` survives; every path containing a dangerous segment is dropped.
+		expect(result).toEqual({ role: true });
+		expect(({} as any).polluted).toBeUndefined();
+		expect(Object.prototype).not.toHaveProperty('polluted');
+	});
+
+	it('does not pollute Object.prototype via a crafted __proto__ payload', () => {
+		stringArrayToFindOptionsObject(['__proto__.polluted']);
+		expect(({} as any).polluted).toBeUndefined();
 	});
 });
 

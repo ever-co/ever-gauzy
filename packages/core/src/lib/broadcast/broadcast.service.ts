@@ -165,7 +165,9 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		// Extract filters from where clause
 		const whereClause = filters.where ?? {};
 		const { entity, entityId, category, visibilityMode, isArchived = false } = whereClause;
-		const relations = Array.isArray(filters.relations) ? (filters.relations as string[]) : [];
+		// Pass the raw value through the converter, which handles both the legacy string[] form and the
+		// v1 object form (and undefined) — so object-form relations aren't silently dropped.
+		const relations = filters.relations;
 
 		// Extract pagination options from filters
 		const { take, skip } = filters;
