@@ -174,9 +174,18 @@ ARG DEMO
 ARG NODE_OPTIONS
 ARG NX_BRANCH
 
+# Deployed release version (git tag) + commit SHA. Baked into the Angular bundle
+# at build time by .scripts/configure.ts (env.GAUZY_APP_VERSION/COMMIT) so the
+# footer shows them — they are image constants, not runtime-substituted.
+ARG GAUZY_APP_VERSION
+ARG GAUZY_APP_COMMIT
+
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
 ENV NODE_ENV=${NODE_ENV:-production}
 ENV DEMO=${DEMO:-false}
+
+ENV GAUZY_APP_VERSION=${GAUZY_APP_VERSION}
+ENV GAUZY_APP_COMMIT=${GAUZY_APP_COMMIT}
 
 ENV IS_DOCKER=true
 
