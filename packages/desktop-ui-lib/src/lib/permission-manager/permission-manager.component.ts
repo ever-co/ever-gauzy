@@ -12,7 +12,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { PermissionManagerService } from './permission-manager.service';
 import { take, filter } from 'rxjs';
-import { ScreenCaptureWebRTSService } from '../electron/services/electron/screen-capture.service';
+import { ScreenCaptureWebRTCService } from '../electron/services/electron/screen-capture.service';
 
 @UntilDestroy()
 @Component({
@@ -34,7 +34,7 @@ import { ScreenCaptureWebRTSService } from '../electron/services/electron/screen
 })
 export class PermissionManagerComponent implements OnInit, OnDestroy {
 	/** When true: renders as a dialog with Cancel/Start Anyway buttons */
-	private readonly screenCaptureService: ScreenCaptureWebRTSService = inject(ScreenCaptureWebRTSService);
+	private readonly screenCaptureService: ScreenCaptureWebRTCService = inject(ScreenCaptureWebRTCService);
 	isDialog = input(false);
 	timerStarted = input(false);
 
@@ -108,7 +108,7 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 		this.testInProgress = true;
 		if (this.isWayland()) {
 			const result = await this.screenCaptureService.testScreenshot();
-			this.thumbnail = result.screenshot;
+			this.thumbnail = result && result.screenshot;
 		} else {
 			const result = await this.permissionService.testScreenshot();
 			this.thumbnail = result.success ? result.thumbnail : null;

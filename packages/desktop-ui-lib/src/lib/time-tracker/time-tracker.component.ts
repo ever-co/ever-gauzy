@@ -69,7 +69,7 @@ import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.servi
 import { AuthStrategy } from '../auth';
 import { BLOCK_DELAY, GAUZY_ENV } from '../constants';
 import { ElectronService, LoggerService } from '../electron/services';
-import { ScreenCaptureWebRTSService } from '../electron/services/electron/screen-capture.service';
+import { ScreenCaptureWebRTCService } from '../electron/services/electron/screen-capture.service';
 import { ImageViewerService } from '../image-viewer/image-viewer.service';
 import { ActivityWatchViewService } from '../integrations';
 import { ActivityWatchComponent } from '../integrations/activity-watch/view/activity-watch.component';
@@ -261,7 +261,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private readonly cdr: ChangeDetectorRef,
 		private readonly router: Router,
 		private readonly _auditLogService: AuditLogService,
-		private readonly _screenCaptureService: ScreenCaptureWebRTSService
+		private readonly _screenCaptureService: ScreenCaptureWebRTCService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',

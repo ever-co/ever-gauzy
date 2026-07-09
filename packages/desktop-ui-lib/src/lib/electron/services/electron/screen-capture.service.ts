@@ -10,14 +10,18 @@ interface ScreenSources {
 @Injectable({
 	providedIn: 'root'
 })
-export class ScreenCaptureWebRTSService {
+export class ScreenCaptureWebRTCService {
 	private readonly electronService: ElectronService = inject(ElectronService);
 
-	async takeScreenshot({ resetScreen }: { resetScreen: boolean }): Promise<{ screenshot: string; thumbnail: string }[]> {
+	async takeScreenshot({
+		resetScreen
+	}: {
+		resetScreen: boolean;
+	}): Promise<{ screenshot: string; thumbnail: string }[]> {
 		const sourceIds = await this.getSourceId(resetScreen);
 		const allDisplays: { id: number; bounds: { width: number; height: number } }[] =
 			await this.electronService.invoke('GET_ALL_DISPLAYS');
-		const streams = await Promise.all(
+		const streamResults = await Promise.allSettled(
 			sourceIds.map((source) => {
 				const display = allDisplays.find((d) => String(d.id) === source.display_id);
 				const width = display?.bounds.width ?? 1920;
@@ -37,6 +41,14 @@ export class ScreenCaptureWebRTSService {
 			})
 		);
 
+		const streams = streamResults
+			.filter((r): r is PromiseFulfilledResult<MediaStream> => r.status === 'fulfilled')
+			.map((r) => r.value);
+
+		streamResults
+			.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+			.forEach((r) => console.error('[ScreenCapture] getUserMedia failed:', r.reason));
+
 		try {
 			return await Promise.all(streams.map((stream) => this.grabFrame(stream)));
 		} finally {
@@ -44,10 +56,13 @@ export class ScreenCaptureWebRTSService {
 		}
 	}
 
-	async testScreenshot(): Promise<{ screenshot: string; thumbnail: string }> {
+	async testScreenshot(): Promise<{ screenshot: string; thumbnail: string } | null> {
 		// Reset cache to get the latest screen sources
 		const images = await this.takeScreenshot({ resetScreen: true });
-		return images[0];
+		if (images.length === 0) {
+			return images[0];
+		}
+		return null;
 	}
 
 	private async getSourceId(resetScreen = false): Promise<ScreenSources[]> {
@@ -69,6 +84,16 @@ export class ScreenCaptureWebRTSService {
 				video.pause();
 				video.srcObject = null;
 				video.remove();
+			};
+
+			const timeout = setTimeout(() => {
+				cleanup();
+				reject(new Error('grabFrame timed out: video metadata never loaded'));
+			}, 10_000);
+
+			const settle = (fn: () => void) => {
+				clearTimeout(timeout);
+				fn();
 			};
 
 			video.onloadedmetadata = async () => {
@@ -107,12 +132,14 @@ export class ScreenCaptureWebRTSService {
 
 					thumbCtx.drawImage(video, 0, 0, thumbCanvas.width, thumbCanvas.height);
 
-					resolve({
-						screenshot: canvas.toDataURL('image/png'),
-						thumbnail: thumbCanvas.toDataURL('image/png')
-					});
+					settle(() =>
+						resolve({
+							screenshot: canvas.toDataURL('image/png'),
+							thumbnail: thumbCanvas.toDataURL('image/png')
+						})
+					);
 				} catch (err) {
-					reject(err);
+					settle(() => reject(err));
 				} finally {
 					cleanup();
 				}
@@ -120,7 +147,7 @@ export class ScreenCaptureWebRTSService {
 
 			video.onerror = (err) => {
 				cleanup();
-				reject(err);
+				settle(() => reject(err));
 			};
 		});
 	}
