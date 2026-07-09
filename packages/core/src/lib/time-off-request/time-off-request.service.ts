@@ -15,7 +15,7 @@ import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { MultiORMEnum } from '../core/utils';
+import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
@@ -228,7 +228,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							take: options.take ? options.take : 10,
 
 							...(options.join ? { join: options.join } : {}),
-							...(options.relations ? { relations: options.relations } : {})
+							...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {})
 						});
 					}
 					query.where((qb: SelectQueryBuilder<TimeOffRequest>) => {

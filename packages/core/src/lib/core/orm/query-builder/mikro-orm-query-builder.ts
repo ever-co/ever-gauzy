@@ -1,7 +1,8 @@
 import { EntityRepository, QueryBuilder, QueryOrder } from '@mikro-orm/knex';
 import { IQueryBuilder } from './iquery-builder';
-import { Brackets, EntityTarget, FindManyOptions } from 'typeorm';
+import { Brackets, EntityTarget } from 'typeorm';
 import { convertTypeOrmConationAndParamsToMikroOrm, getConationFromQuery } from '../utils';
+import { LegacyFindManyOptions } from '../../utils';
 
 export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilder<Entity> {
 
@@ -46,7 +47,9 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         return qb;
     }
 
-    setFindOptions(findOptions: FindManyOptions<Entity>): this {
+    setFindOptions(findOptions: LegacyFindManyOptions<Entity>): this {
+        // MikroORM natively accepts the string-array `relations`/`select` form (it flattens to
+        // populate/fields), so no conversion is needed here — only the widened parameter type.
         const { select, where, order, skip, take, relations } = findOptions;
 
         if (select) {

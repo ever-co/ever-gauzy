@@ -6,7 +6,7 @@ import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { moment } from '../../core/moment-extend';
-import { getDateRangeFormat, MultiORMEnum } from './../../core/utils';
+import { getDateRangeFormat, MultiORMEnum, parseFindOptionsRelations } from './../../core/utils';
 import { generateTimeSlots } from './utils';
 import { TimeSlot } from './time-slot.entity';
 import {
@@ -138,7 +138,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 						}
 					},
 					// Spread relations if provided, otherwise an empty array
-					relations: request.relations || []
+					relations: parseFindOptionsRelations(request.relations || [])
 				});
 
 				// Add where conditions to the query

@@ -5,7 +5,7 @@ import { FileStorageProviderEnum, IPagination, ITag, ITagFindInput } from '@gauz
 import { getConfig } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
-import { MultiORMEnum } from '../core/utils';
+import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { Tag } from './tag.entity';
 import { FileStorage } from './../core/file-storage';
@@ -53,7 +53,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 
 				// Add relations if specified
 				if (relations.length) {
-					query.setFindOptions({ relations });
+					query.setFindOptions({ relations: parseFindOptionsRelations(relations) });
 				}
 
 				// Apply filter criteria
@@ -115,7 +115,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 					// Define special criteria to find specific relations
 					query.setFindOptions({
-						...(relations ? { relations: relations } : {})
+						...(relations ? { relations: parseFindOptionsRelations(relations) } : {})
 					});
 
 					// Left join all relational tables with tag table

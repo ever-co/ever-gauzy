@@ -17,7 +17,7 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { RequestContext } from '../core/context';
 import { RequestApprovalEmployee, RequestApprovalTeam } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
-import { MultiORMEnum } from './../core/utils';
+import { MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { RequestApproval } from './request-approval.entity';
 import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
 import { TypeOrmRequestApprovalRepository } from './repository/type-orm-request-approval.repository';
@@ -144,7 +144,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 				const relations = filter.relations as string[];
 				if (relations && relations.length > 0) {
-					query.setFindOptions({ relations });
+					query.setFindOptions({ relations: parseFindOptionsRelations(relations) });
 				}
 
 				const [items, total] = await query
@@ -212,7 +212,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
                 employee = await this.typeOrmEmployeeRepository.findOne({
 					where: { id },
-					relations
+					relations: parseFindOptionsRelations(relations)
 				});
 				break;
 		}
