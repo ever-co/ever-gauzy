@@ -8,10 +8,12 @@ services:
     build:
       context: .
       dockerfile: .deploy/api/Dockerfile
+      # Only NODE_ENV is passed as a build arg here (picks the dev/prod nx build);
+      # the Dockerfile also accepts DEMO, NODE_OPTIONS and NX_BRANCH with built-in
+      # defaults. All other configuration is runtime environment (see `environment:`
+      # below) — the API image does not bake env values at build time.
       args:
         NODE_ENV: ${NODE_ENV:-development}
-        API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
-        CLIENT_BASE_URL: ${CLIENT_BASE_URL:-http://localhost:4200}
     environment:
       API_HOST: ${API_HOST:-api}
       API_PORT: ${API_PORT:-3000}
@@ -95,31 +97,14 @@ services:
     build:
       context: .
       dockerfile: .deploy/webapp/Dockerfile
+      # Only NODE_ENV and DEMO are passed as build args here; the Dockerfile also
+      # accepts NODE_OPTIONS and NX_BRANCH with built-in defaults. The Angular bundle
+      # is compiled with DOCKER_* placeholders; all other values are substituted from
+      # the RUNTIME environment (see `environment:` below) by the container entrypoint
+      # at startup.
       args:
         NODE_ENV: ${NODE_ENV:-development}
-        API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
-        CLIENT_BASE_URL: ${CLIENT_BASE_URL:-http://localhost:4200}
-        SENTRY_DSN: ${SENTRY_DSN:-}
-        SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0.1}
-        SENTRY_PROFILE_SAMPLE_RATE: ${SENTRY_PROFILE_SAMPLE_RATE:-1}
-        CHATWOOT_SDK_TOKEN: ${CHATWOOT_SDK_TOKEN:-}
-        CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
-        CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
-        GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
-        GOOGLE_PLACE_AUTOCOMPLETE: ${GOOGLE_PLACE_AUTOCOMPLETE:-false}
-        DEFAULT_LATITUDE: ${DEFAULT_LATITUDE:-42.6459136}
-        DEFAULT_LONGITUDE: ${DEFAULT_LONGITUDE:-23.3332736}
-        DEFAULT_CURRENCY: ${DEFAULT_CURRENCY:-USD}
-        GAUZY_GITHUB_CLIENT_ID: ${GAUZY_GITHUB_CLIENT_ID:-}
-        GAUZY_GITHUB_APP_NAME: ${GAUZY_GITHUB_APP_NAME:-}
-        GAUZY_GITHUB_REDIRECT_URL: ${GAUZY_GITHUB_REDIRECT_URL:-}
-        GAUZY_GITHUB_POST_INSTALL_URL: ${GAUZY_GITHUB_POST_INSTALL_URL:-}
-        GAUZY_GITHUB_APP_ID: ${GAUZY_GITHUB_APP_ID:-}
-        JITSU_BROWSER_URL: ${JITSU_BROWSER_URL:-}
-        JITSU_BROWSER_WRITE_KEY: ${JITSU_BROWSER_WRITE_KEY:-}
         DEMO: 'true'
-        API_HOST: ${API_HOST:-api}
-        API_PORT: ${API_PORT:-3000}
     environment:
       WEB_HOST: ${WEB_HOST:-webapp}
       WEB_PORT: ${WEB_PORT:-4200}

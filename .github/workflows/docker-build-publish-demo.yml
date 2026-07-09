@@ -53,9 +53,12 @@ jobs:
           build-args: |
             NODE_ENV=development
             DEMO=true
-            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
             NX_BRANCH=${{ github.ref_name }}
+          # VERDACCIO_TOKEN / NX_CLOUD_ACCESS_TOKEN are BuildKit build secrets (mounted
+          # per-RUN, never embedded in image layers) — see the Dockerfile header.
+          secrets: |
             VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
+            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
       - name: Docker images list
         run: |
@@ -150,9 +153,12 @@ jobs:
           build-args: |
             NODE_ENV=development
             DEMO=true
-            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
             NX_BRANCH=${{ github.ref_name }}
+          # VERDACCIO_TOKEN / NX_CLOUD_ACCESS_TOKEN are BuildKit build secrets (mounted
+          # per-RUN, never embedded in image layers) — see the Dockerfile header.
+          secrets: |
             VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
+            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
       - name: Docker images list
         run: |
@@ -247,13 +253,15 @@ jobs:
           build-args: |
             NODE_ENV=development
             DEMO=true
-            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
             NX_BRANCH=${{ github.ref_name }}
+          # VERDACCIO_TOKEN / NX_CLOUD_ACCESS_TOKEN are BuildKit build secrets (mounted
+          # per-RUN, never embedded in image layers) — see the Dockerfile header.
+          # WORKER_* build-args were dropped: they never reached the image (the global
+          # ARGs were not re-declared in the production stage, so the image always baked
+          # the literal defaults) — k8s manifests set WORKER_* at runtime.
+          secrets: |
             VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
-            WORKER_DEFAULT_QUEUE=${{ secrets.WORKER_DEFAULT_QUEUE }}
-            WORKER_QUEUE_ENABLED=${{ secrets.WORKER_QUEUE_ENABLED }}
-            WORKER_SCHEDULER_ENABLED=${{ secrets.WORKER_SCHEDULER_ENABLED }}
-            WORKER_TIMEZONE=${{ secrets.WORKER_TIMEZONE }}
+            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
       - name: Docker images list
         run: |

@@ -248,6 +248,7 @@
 		"browserslist",
 		"browserslist",
 		"Buildable",
+		"buildcache",
 		"buildjet",
 		"buildtools",
 		"buildx",
