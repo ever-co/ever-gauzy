@@ -40,7 +40,6 @@ jobs:
             ghcr.io/ever-co/gauzy-mcp-stage:latest
             everco/gauzy-mcp-stage:latest
             registry.digitalocean.com/ever/gauzy-mcp-stage:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-mcp-stage:latest
           cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-mcp-stage:latest
           cache-to: type=inline
           build-args: |
