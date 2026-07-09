@@ -48,7 +48,6 @@ jobs:
             ghcr.io/ever-co/gauzy-api-stage:latest
             everco/gauzy-api-stage:latest
             registry.digitalocean.com/ever/gauzy-api-stage:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-stage:latest
           cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-api-stage:latest
           cache-to: type=inline
           build-args: |
@@ -150,7 +149,6 @@ jobs:
             ghcr.io/ever-co/gauzy-webapp-stage:latest
             everco/gauzy-webapp-stage:latest
             registry.digitalocean.com/ever/gauzy-webapp-stage:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-stage:latest
           cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-webapp-stage:latest
           cache-to: type=inline
           build-args: |
@@ -254,7 +252,6 @@ jobs:
             ghcr.io/ever-co/gauzy-worker-stage:latest
             everco/gauzy-worker-stage:latest
             registry.digitalocean.com/ever/gauzy-worker-stage:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-worker-stage:latest
           cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-worker-stage:latest
           cache-to: type=inline
           build-args: |
