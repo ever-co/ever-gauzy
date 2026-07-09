@@ -25,8 +25,13 @@ export class ScreenCaptureWebRTCService {
 		const allDisplays: { id: number; bounds: { width: number; height: number } }[] =
 			await this.electronService.invoke('GET_ALL_DISPLAYS');
 		const streamResults = await Promise.allSettled(
-			sourceIds.map((source) => {
-				const display = allDisplays.find((d) => String(d.id) === source.display_id);
+			sourceIds.map((source, index) => {
+				// display_id can be empty or mismatched on Wayland/PipeWire —
+				// fall back to positional mapping, then the first display.
+				const display =
+					allDisplays.find((d) => String(d.id) === source.display_id) ??
+					allDisplays[index] ??
+					allDisplays[0];
 				const width = display?.bounds.width ?? 1920;
 				const height = display?.bounds.height ?? 1080;
 				return (navigator.mediaDevices as any).getUserMedia({

@@ -2314,9 +2314,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (isWayland) {
 					this._loggerService.info('Wayland detected, using WebRTC screen capture');
 					let frames = await this._screenCaptureService.takeScreenshot({ resetScreen: false });
-					// Respect the "active-only" monitor setting, same as getScreenshot()
+					// Respect the "active-only" monitor setting, same as getScreenshot().
+					// display_id can be empty on Wayland/PipeWire — only trust the filter
+					// when it actually matches, otherwise keep all captured frames.
 					if (this.appSetting?.monitor?.captured === 'active-only' && arg.activeWindow) {
-						frames = frames.filter((frame) => frame.display_id === arg.activeWindow.id.toString());
+						const filtered = frames.filter(
+							(frame) => frame.display_id && frame.display_id === arg.activeWindow.id.toString()
+						);
+						if (filtered.length > 0) {
+							frames = filtered;
+						}
 					}
 					HighResolutionScreenshots = frames.map((frame) => ({
 						img: Buffer.from(frame.screenshot.replace(/^data:image\/\w+;base64,/, ''), 'base64'),
