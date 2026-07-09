@@ -123,9 +123,15 @@ COPY --chown=node:node patches ./patches
 # skipped). Registry rewrite, install and .npmrc/.yarnrc cleanup happen in ONE RUN so the
 # token never persists in any layer.
 # Must be without --production because we need dev deps installed.
+ARG VERDACCIO_REGISTRY=""
 RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
 	VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
-	if [ -n "$VERDACCIO_TOKEN" ]; then \
+	if [ -n "$VERDACCIO_REGISTRY" ]; then \
+	echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
+	echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
+	sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
+	sed -i "s|https://registry.npmjs.org|${VERDACCIO_REGISTRY%/}|g" yarn.lock; \
+	elif [ -n "$VERDACCIO_TOKEN" ]; then \
 	echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
 	echo "registry=https://packages.ever.co/" >> .npmrc && \
 	echo "always-auth=true" >> .npmrc && \

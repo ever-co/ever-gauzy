@@ -66,6 +66,7 @@ jobs:
           cache-to: type=registry,ref=ghcr.io/ever-co/gauzy-api-demo:buildcache,mode=min
           build-args: |
             NODE_ENV=development
+            VERDACCIO_REGISTRY=http://192.168.1.183:4873/
             DEMO=true
             NX_BRANCH=${{ github.ref_name }}
             GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
@@ -182,6 +183,7 @@ jobs:
           cache-to: type=registry,ref=ghcr.io/ever-co/gauzy-webapp-demo:buildcache,mode=min
           build-args: |
             NODE_ENV=development
+            VERDACCIO_REGISTRY=http://192.168.1.183:4873/
             DEMO=true
             NX_BRANCH=${{ github.ref_name }}
             GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
@@ -298,6 +300,7 @@ jobs:
           cache-to: type=registry,ref=ghcr.io/ever-co/gauzy-worker-demo:buildcache,mode=min
           build-args: |
             NODE_ENV=development
+            VERDACCIO_REGISTRY=http://192.168.1.183:4873/
             DEMO=true
             NX_BRANCH=${{ github.ref_name }}
             GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
