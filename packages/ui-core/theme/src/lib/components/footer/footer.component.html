@@ -36,34 +36,54 @@
         <span class="scope">
           <span class="scope-label">{{ 'FOOTER.WEB' | translate }}</span>
           @if (web.version) {
-            <a [href]="releaseUrl(web.version)" target="_blank" rel="noopener noreferrer" class="ver">{{
-              web.version
-            }}</a>
+            <a
+              [href]="releaseUrl(web.version)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="ver"
+              [title]="'FOOTER.VERSION' | translate"
+              >{{ web.version }}</a
+            >
           }
           @if (web.version && web.commit) {
             <span class="bullet">•</span>
           }
           @if (web.commit) {
-            <a [href]="commitUrl(web.commit)" target="_blank" rel="noopener noreferrer" class="sha">{{
-              shortCommit(web.commit)
-            }}</a>
+            <a
+              [href]="commitUrl(web.commit)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="sha"
+              [title]="'FOOTER.COMMIT' | translate"
+              >{{ shortCommit(web.commit) }}</a
+            >
           }
         </span>
         @if (api) {
           <span class="scope">
             <span class="scope-label">{{ 'FOOTER.API' | translate }}</span>
             @if (api.version) {
-              <a [href]="releaseUrl(api.version)" target="_blank" rel="noopener noreferrer" class="ver">{{
-                api.version
-              }}</a>
+              <a
+                [href]="releaseUrl(api.version)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="ver"
+                [title]="'FOOTER.VERSION' | translate"
+                >{{ api.version }}</a
+              >
             }
             @if (api.version && api.commit) {
               <span class="bullet">•</span>
             }
             @if (api.commit) {
-              <a [href]="commitUrl(api.commit)" target="_blank" rel="noopener noreferrer" class="sha">{{
-                shortCommit(api.commit)
-              }}</a>
+              <a
+                [href]="commitUrl(api.commit)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="sha"
+                [title]="'FOOTER.COMMIT' | translate"
+                >{{ shortCommit(api.commit) }}</a
+              >
             }
           </span>
         }

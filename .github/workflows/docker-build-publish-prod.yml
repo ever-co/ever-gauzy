@@ -22,8 +22,10 @@ jobs:
       - name: Resolve release version
         id: relver
         run: |
+          # Only the tag that points AT the built commit — no `git describe` fallback,
+          # which would surface a stale ancestor tag as this build's version. When the
+          # commit is untagged the footer shows the commit alone (accurate).
           VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
-          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --abbrev=0 2>/dev/null || true); fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Release version: ${VERSION:-<none>}"
 
@@ -124,8 +126,10 @@ jobs:
       - name: Resolve release version
         id: relver
         run: |
+          # Only the tag that points AT the built commit — no `git describe` fallback,
+          # which would surface a stale ancestor tag as this build's version. When the
+          # commit is untagged the footer shows the commit alone (accurate).
           VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
-          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --abbrev=0 2>/dev/null || true); fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Release version: ${VERSION:-<none>}"
 
@@ -224,8 +228,10 @@ jobs:
       - name: Resolve release version
         id: relver
         run: |
+          # Only the tag that points AT the built commit — no `git describe` fallback,
+          # which would surface a stale ancestor tag as this build's version. When the
+          # commit is untagged the footer shows the commit alone (accurate).
           VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
-          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --abbrev=0 2>/dev/null || true); fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Release version: ${VERSION:-<none>}"
 
