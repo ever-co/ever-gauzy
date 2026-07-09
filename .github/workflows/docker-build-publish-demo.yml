@@ -39,6 +39,7 @@ jobs:
           platforms: linux/amd64
           tags: |
             ghcr.io/ever-co/gauzy-api-demo:latest
+            ghcr.io/ever-co/gauzy-api-demo:0.1.${{ github.run_number }}
             everco/gauzy-api-demo:latest
             registry.digitalocean.com/ever/gauzy-api-demo:latest
             ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-demo:latest
@@ -99,6 +100,7 @@ jobs:
       - name: Push to Github Registry
         run: |
           docker push ghcr.io/ever-co/gauzy-api-demo:latest
+          docker push ghcr.io/ever-co/gauzy-api-demo:0.1.${{ github.run_number }}
 
     #   - name: Login to CW Container Registry
     #    uses: docker/login-action@v4
@@ -139,6 +141,7 @@ jobs:
           platforms: linux/amd64
           tags: |
             ghcr.io/ever-co/gauzy-webapp-demo:latest
+            ghcr.io/ever-co/gauzy-webapp-demo:0.1.${{ github.run_number }}
             everco/gauzy-webapp-demo:latest
             registry.digitalocean.com/ever/gauzy-webapp-demo:latest
             ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-demo:latest
@@ -199,6 +202,7 @@ jobs:
       - name: Push to Github Registry
         run: |
           docker push ghcr.io/ever-co/gauzy-webapp-demo:latest
+          docker push ghcr.io/ever-co/gauzy-webapp-demo:0.1.${{ github.run_number }}
 
       # - name: Login to CW Container Registry
       #  uses: docker/login-action@v4
@@ -239,6 +243,7 @@ jobs:
           platforms: linux/amd64
           tags: |
             ghcr.io/ever-co/gauzy-worker-demo:latest
+            ghcr.io/ever-co/gauzy-worker-demo:0.1.${{ github.run_number }}
             everco/gauzy-worker-demo:latest
             registry.digitalocean.com/ever/gauzy-worker-demo:latest
             ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-worker-demo:latest
@@ -302,6 +307,7 @@ jobs:
       - name: Push to Github Registry
         run: |
           docker push ghcr.io/ever-co/gauzy-worker-demo:latest
+          docker push ghcr.io/ever-co/gauzy-worker-demo:0.1.${{ github.run_number }}
 
     #   - name: Login to CW Container Registry
     #    uses: docker/login-action@v4
