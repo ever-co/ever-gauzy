@@ -55,7 +55,6 @@ jobs:
             ghcr.io/ever-co/gauzy-api-demo:${{ steps.relver.outputs.version }}
             everco/gauzy-api-demo:latest
             registry.digitalocean.com/ever/gauzy-api-demo:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-demo:latest
           # mode=max caches ALL stages (incl. the multi-minute yarn-install layers) to a dedicated
           # :buildcache tag; every ephemeral runner restores it → no more fully-cold rebuilds.
           # Needs the default docker-container buildx driver — the classic `docker` driver only
@@ -66,7 +65,7 @@ jobs:
           cache-to: type=registry,ref=ghcr.io/ever-co/gauzy-api-demo:buildcache,mode=min
           build-args: |
             NODE_ENV=development
-            VERDACCIO_REGISTRY=http://192.168.1.183:4873/
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             DEMO=true
             NX_BRANCH=${{ github.ref_name }}
             GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
@@ -172,7 +171,6 @@ jobs:
             ghcr.io/ever-co/gauzy-webapp-demo:${{ steps.relver.outputs.version }}
             everco/gauzy-webapp-demo:latest
             registry.digitalocean.com/ever/gauzy-webapp-demo:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-demo:latest
           # mode=max caches ALL stages (incl. the multi-minute yarn-install layers) to a dedicated
           # :buildcache tag; every ephemeral runner restores it → no more fully-cold rebuilds.
           # Needs the default docker-container buildx driver — the classic `docker` driver only
@@ -183,7 +181,7 @@ jobs:
           cache-to: type=registry,ref=ghcr.io/ever-co/gauzy-webapp-demo:buildcache,mode=min
           build-args: |
             NODE_ENV=development
-            VERDACCIO_REGISTRY=http://192.168.1.183:4873/
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             DEMO=true
             NX_BRANCH=${{ github.ref_name }}
             GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
@@ -289,7 +287,6 @@ jobs:
             ghcr.io/ever-co/gauzy-worker-demo:${{ steps.relver.outputs.version }}
             everco/gauzy-worker-demo:latest
             registry.digitalocean.com/ever/gauzy-worker-demo:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-worker-demo:latest
           # mode=max caches ALL stages (incl. the multi-minute yarn-install layers) to a dedicated
           # :buildcache tag; every ephemeral runner restores it → no more fully-cold rebuilds.
           # Needs the default docker-container buildx driver — the classic `docker` driver only
@@ -300,7 +297,7 @@ jobs:
           cache-to: type=registry,ref=ghcr.io/ever-co/gauzy-worker-demo:buildcache,mode=min
           build-args: |
             NODE_ENV=development
-            VERDACCIO_REGISTRY=http://192.168.1.183:4873/
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             DEMO=true
             NX_BRANCH=${{ github.ref_name }}
             GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
