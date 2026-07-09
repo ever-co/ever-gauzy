@@ -16,6 +16,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: relver
+        run: |
+          VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
+          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --abbrev=0 2>/dev/null || true); fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: ${VERSION:-<none>}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -43,6 +53,7 @@ jobs:
             NODE_ENV=production
             DEMO=false
             NX_BRANCH=${{ github.ref_name }}
+            GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
             GAUZY_APP_COMMIT=${{ github.sha }}
           # VERDACCIO_TOKEN / NX_CLOUD_ACCESS_TOKEN are BuildKit build secrets (mounted
           # per-RUN, never embedded in image layers) — see the Dockerfile header.
@@ -107,6 +118,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: relver
+        run: |
+          VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
+          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --abbrev=0 2>/dev/null || true); fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: ${VERSION:-<none>}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -132,6 +153,7 @@ jobs:
             NODE_ENV=production
             DEMO=false
             NX_BRANCH=${{ github.ref_name }}
+            GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
             GAUZY_APP_COMMIT=${{ github.sha }}
           # VERDACCIO_TOKEN / NX_CLOUD_ACCESS_TOKEN are BuildKit build secrets (mounted
           # per-RUN, never embedded in image layers) — see the Dockerfile header.
@@ -196,6 +218,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: relver
+        run: |
+          VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
+          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --abbrev=0 2>/dev/null || true); fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: ${VERSION:-<none>}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -223,6 +255,7 @@ jobs:
             NODE_ENV=production
             DEMO=false
             NX_BRANCH=${{ github.ref_name }}
+            GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
             GAUZY_APP_COMMIT=${{ github.sha }}
           # VERDACCIO_TOKEN / NX_CLOUD_ACCESS_TOKEN are BuildKit build secrets (mounted
           # per-RUN, never embedded in image layers) — see the Dockerfile header.
