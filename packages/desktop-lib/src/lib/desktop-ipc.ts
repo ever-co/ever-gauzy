@@ -1648,7 +1648,8 @@ export function removeAllHandlers() {
 		'UPDATE_SCREENSHOT_SYNC_STATUS',
 		'EXPORT_AUDIT_LOGS',
 		'GET_IS_WAYLAND',
-		'GET_ALL_DISPLAYS'
+		'GET_ALL_DISPLAYS',
+		'GET_SCREEN_SOURCES'
 	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);

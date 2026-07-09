@@ -993,17 +993,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	prepareWindow() {
 		/* initiate screenshot to prevent window sizing */
 		setTimeout(async () => {
-			const isWayland = await this.electronService.ipcRenderer.invoke('GET_IS_WAYLAND');
-			if (!isWayland) {
-				try {
+			try {
+				const isWayland = await this.electronService.ipcRenderer.invoke('GET_IS_WAYLAND');
+				if (!isWayland) {
 					const thumbSize = {
 						width: 320,
 						height: 240
 					};
 					await this.electronService.desktopCapturer.getSources({ types: ['screen'], thumbnailSize: thumbSize });
-				} catch (error) {
-					console.error('Error preparing window:', error);
 				}
+			} catch (error) {
+				console.error('Error preparing window:', error);
 			}
 		}, 500);
 	}
