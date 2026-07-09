@@ -1,4 +1,4 @@
-import { Component, input, OnInit, OnDestroy, Optional, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, input, OnInit, OnDestroy, Optional, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import {
 	NbCardModule,
@@ -12,6 +12,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { PermissionManagerService } from './permission-manager.service';
 import { take, filter } from 'rxjs';
+import { ScreenCaptureWebRTCService } from '../electron/services/electron/screen-capture.service';
 
 @UntilDestroy()
 @Component({
@@ -33,6 +34,7 @@ import { take, filter } from 'rxjs';
 })
 export class PermissionManagerComponent implements OnInit, OnDestroy {
 	/** When true: renders as a dialog with Cancel/Start Anyway buttons */
+	private readonly screenCaptureService: ScreenCaptureWebRTCService = inject(ScreenCaptureWebRTCService);
 	isDialog = input(false);
 	timerStarted = input(false);
 
@@ -58,6 +60,8 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 	// ── Platform flags ───────────────────────────────────────────────────────
 	readonly isMac = signal(false);
 	readonly isWindows = signal(false);
+	readonly isLinux = signal(false);
+	readonly isWayland = signal(false);
 	readonly hardwareAccelerationDisabled = signal(false);
 
 	constructor(
@@ -78,9 +82,12 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 
 	async platformSet() {
 		const platform = await this.permissionService.getPlatform();
+		const isWayland = await this.permissionService.getIsWayland();
 		const hardwareAccelerationDisabled = await this.permissionService.getHardwareAccelerationState();
 		this.isMac.set(platform?.os === 'darwin');
 		this.isWindows.set(platform?.os === 'win32');
+		this.isLinux.set(platform?.os === 'linux');
+		this.isWayland.set(isWayland);
 		this.hardwareAccelerationDisabled.set(hardwareAccelerationDisabled);
 	}
 
@@ -99,9 +106,22 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 
 	async testScreenshot() {
 		this.testInProgress = true;
-		const result = await this.permissionService.testScreenshot();
-		this.thumbnail = result.success ? result.thumbnail : null;
-		this.testInProgress = false;
+		try {
+			// Check Wayland at click time — the isWayland() signal may not be set yet
+			// if the user clicks before platformSet() resolves.
+			if (await this.permissionService.getIsWayland()) {
+				const result = await this.screenCaptureService.testScreenshot();
+				this.thumbnail = result?.thumbnail ?? null;
+			} else {
+				const result = await this.permissionService.testScreenshot();
+				this.thumbnail = result.success ? result.thumbnail : null;
+			}
+		} catch (error) {
+			console.error('Error testing screenshot:', error);
+			this.thumbnail = null;
+		} finally {
+			this.testInProgress = false;
+		}
 	}
 
 	async testGetActiveWindow() {
