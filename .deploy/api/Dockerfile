@@ -106,7 +106,7 @@ COPY --chown=node:node patches ./patches
 # VERDACCIO_TOKEN arrives as a BuildKit secret (optional; absent file → private registry
 # skipped). Registry rewrite, install and .npmrc/.yarnrc cleanup happen in ONE RUN so the
 # token never persists in any layer.
-RUN --mount=type=secret,id=VERDACCIO_TOKEN,mode=0444 \
+RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
     if [ -n "$VERDACCIO_TOKEN" ]; then \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
@@ -198,7 +198,7 @@ COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 COPY --chown=node:node patches ./patches
 
 # VERDACCIO_TOKEN as a BuildKit secret — same single-RUN hygiene as the dependencies stage.
-RUN --mount=type=secret,id=VERDACCIO_TOKEN,mode=0444 \
+RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
     if [ -n "$VERDACCIO_TOKEN" ]; then \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
@@ -277,7 +277,7 @@ ENV NX_BRANCH=${NX_BRANCH}
 # same RUN. (The Angular CLI disk cache IS disabled under CI.)
 # NX_CLOUD_ACCESS_TOKEN is an optional build secret (inert while NX_NO_CLOUD=true).
 RUN --mount=type=bind,from=dependencies,source=/srv/gauzy/node_modules,target=/srv/gauzy/node_modules,rw \
-    --mount=type=secret,id=NX_CLOUD_ACCESS_TOKEN,mode=0444 \
+    --mount=type=secret,id=NX_CLOUD_ACCESS_TOKEN,uid=1000 \
     export NX_CLOUD_ACCESS_TOKEN="$(cat /run/secrets/NX_CLOUD_ACCESS_TOKEN 2>/dev/null || true)" && \
     if [ "$NODE_ENV" = "production" ]; then \
     yarn build:api:prod:docker; \
