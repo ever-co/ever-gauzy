@@ -2313,16 +2313,20 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				const isWayland = await this.electronService.ipcRenderer.invoke('GET_IS_WAYLAND');
 				if (isWayland) {
 					this._loggerService.info('Wayland detected, using WebRTC screen capture');
-					const frames = await this._screenCaptureService.takeScreenshot({ resetScreen: false });
-					HighResolutionScreenshots = frames.map((frame, index) => ({
+					let frames = await this._screenCaptureService.takeScreenshot({ resetScreen: false });
+					// Respect the "active-only" monitor setting, same as getScreenshot()
+					if (this.appSetting?.monitor?.captured === 'active-only' && arg.activeWindow) {
+						frames = frames.filter((frame) => frame.display_id === arg.activeWindow.id.toString());
+					}
+					HighResolutionScreenshots = frames.map((frame) => ({
 						img: Buffer.from(frame.screenshot.replace(/^data:image\/\w+;base64,/, ''), 'base64'),
-						name: `screen-${index}`,
-						id: String(index)
+						name: frame.name,
+						id: frame.display_id
 					}));
-					lowResolutionScreenshots = frames.map((frame, index) => ({
+					lowResolutionScreenshots = frames.map((frame) => ({
 						img: Buffer.from(frame.thumbnail.replace(/^data:image\/\w+;base64,/, ''), 'base64'),
-						name: `screen-${index}`,
-						id: String(index)
+						name: frame.name,
+						id: frame.display_id
 					}));
 				} else {
 					HighResolutionScreenshots = await this.getScreenshot(arg, false);

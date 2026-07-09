@@ -7,17 +7,20 @@ interface ScreenSources {
 	display_id: string;
 }
 
+export interface IScreenCaptureFrame {
+	screenshot: string;
+	thumbnail: string;
+	name: string;
+	display_id: string;
+}
+
 @Injectable({
 	providedIn: 'root'
 })
 export class ScreenCaptureWebRTCService {
 	private readonly electronService: ElectronService = inject(ElectronService);
 
-	async takeScreenshot({
-		resetScreen
-	}: {
-		resetScreen: boolean;
-	}): Promise<{ screenshot: string; thumbnail: string }[]> {
+	async takeScreenshot({ resetScreen }: { resetScreen: boolean }): Promise<IScreenCaptureFrame[]> {
 		const sourceIds = await this.getSourceId(resetScreen);
 		const allDisplays: { id: number; bounds: { width: number; height: number } }[] =
 			await this.electronService.invoke('GET_ALL_DISPLAYS');
@@ -37,32 +40,41 @@ export class ScreenCaptureWebRTCService {
 							maxHeight: height
 						}
 					}
-				} as any);
+				} as any) as Promise<MediaStream>;
 			})
 		);
 
-		const streams = streamResults
-			.filter((r): r is PromiseFulfilledResult<MediaStream> => r.status === 'fulfilled')
-			.map((r) => r.value);
-
-		streamResults
-			.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-			.forEach((r) => console.error('[ScreenCapture] getUserMedia failed:', r.reason));
+		// Keep each stream paired with its source so frames retain display metadata
+		const streams: { stream: MediaStream; source: ScreenSources }[] = [];
+		streamResults.forEach((result, index) => {
+			if (result.status === 'fulfilled') {
+				streams.push({ stream: result.value, source: sourceIds[index] });
+			} else {
+				console.error('[ScreenCapture] getUserMedia failed:', result.reason);
+			}
+		});
 
 		try {
-			return await Promise.all(streams.map((stream) => this.grabFrame(stream)));
+			const frameResults = await Promise.allSettled(streams.map(({ stream }) => this.grabFrame(stream)));
+			const frames: IScreenCaptureFrame[] = [];
+			frameResults.forEach((result, index) => {
+				if (result.status === 'fulfilled') {
+					const { name, display_id } = streams[index].source;
+					frames.push({ ...result.value, name, display_id });
+				} else {
+					console.error('[ScreenCapture] grabFrame failed:', result.reason);
+				}
+			});
+			return frames;
 		} finally {
-			streams.forEach((stream) => stream.getTracks().forEach((track) => track.stop()));
+			streams.forEach(({ stream }) => stream.getTracks().forEach((track) => track.stop()));
 		}
 	}
 
-	async testScreenshot(): Promise<{ screenshot: string; thumbnail: string } | null> {
+	async testScreenshot(): Promise<IScreenCaptureFrame | null> {
 		// Reset cache to get the latest screen sources
 		const images = await this.takeScreenshot({ resetScreen: true });
-		if (images.length === 0) {
-			return images[0];
-		}
-		return null;
+		return images.length > 0 ? images[0] : null;
 	}
 
 	private async getSourceId(resetScreen = false): Promise<ScreenSources[]> {
@@ -145,9 +157,9 @@ export class ScreenCaptureWebRTCService {
 				}
 			};
 
-			video.onerror = (err) => {
+			video.onerror = () => {
 				cleanup();
-				settle(() => reject(err));
+				settle(() => reject(new Error(video.error?.message || 'Video element failed to load the capture stream.')));
 			};
 		});
 	}

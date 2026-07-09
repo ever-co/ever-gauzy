@@ -106,14 +106,22 @@ export class PermissionManagerComponent implements OnInit, OnDestroy {
 
 	async testScreenshot() {
 		this.testInProgress = true;
-		if (this.isWayland()) {
-			const result = await this.screenCaptureService.testScreenshot();
-			this.thumbnail = result && result.screenshot;
-		} else {
-			const result = await this.permissionService.testScreenshot();
-			this.thumbnail = result.success ? result.thumbnail : null;
+		try {
+			// Check Wayland at click time — the isWayland() signal may not be set yet
+			// if the user clicks before platformSet() resolves.
+			if (await this.permissionService.getIsWayland()) {
+				const result = await this.screenCaptureService.testScreenshot();
+				this.thumbnail = result?.thumbnail ?? null;
+			} else {
+				const result = await this.permissionService.testScreenshot();
+				this.thumbnail = result.success ? result.thumbnail : null;
+			}
+		} catch (error) {
+			console.error('Error testing screenshot:', error);
+			this.thumbnail = null;
+		} finally {
+			this.testInProgress = false;
 		}
-		this.testInProgress = false;
 	}
 
 	async testGetActiveWindow() {

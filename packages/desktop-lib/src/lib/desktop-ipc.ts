@@ -677,13 +677,13 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		return screen.getAllDisplays();
 	});
 
-	ipcMain.handle('GET_SCREEN_SOURCES', async (_, opts: { resetScreen: boolean }) => {
-		if (opts.resetScreen || !_cachedScreen) {
+	ipcMain.handle('GET_SCREEN_SOURCES', async (_, opts?: { resetScreen?: boolean }) => {
+		if (opts?.resetScreen || !_cachedScreen) {
 			const sources = await desktopCapturer.getSources({
-				types: ['screen']
+				types: ['screen'],
+				thumbnailSize: { width: 0, height: 0 } // ids only — skip thumbnail capture
 			});
-			_cachedScreen = sources;
-			return _cachedScreen;
+			_cachedScreen = sources.map(({ id, name, display_id }) => ({ id, name, display_id }));
 		}
 		return _cachedScreen;
 	});
