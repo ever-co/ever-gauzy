@@ -1,22 +1,35 @@
 name: Build and Publish Docker Images Demo
 
 on:
-  push:
-    branches:
-      - develop
-      - temp
+  # Build + publish AFTER the "Release Demo" workflow bumps the version and creates the tag/release,
+  # so images are tagged with that exact release version (v111.2.10, ...) instead of :latest.
+  workflow_run:
+    workflows: ["Release Demo"]
+    types: [completed]
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
+  group: ${{ github.event.workflow_run.head_branch }}-${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
   gauzy-api:
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 300
     steps:
-      - name: Checkout
+      - name: Checkout the released commit
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: relver
+        run: |
+          VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
+          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --abbrev=0); fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: $VERSION"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -39,7 +52,7 @@ jobs:
           platforms: linux/amd64
           tags: |
             ghcr.io/ever-co/gauzy-api-demo:latest
-            ghcr.io/ever-co/gauzy-api-demo:0.1.${{ github.run_number }}
+            ghcr.io/ever-co/gauzy-api-demo:${{ steps.relver.outputs.version }}
             everco/gauzy-api-demo:latest
             registry.digitalocean.com/ever/gauzy-api-demo:latest
             ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-demo:latest
@@ -100,7 +113,7 @@ jobs:
       - name: Push to Github Registry
         run: |
           docker push ghcr.io/ever-co/gauzy-api-demo:latest
-          docker push ghcr.io/ever-co/gauzy-api-demo:0.1.${{ github.run_number }}
+          docker push ghcr.io/ever-co/gauzy-api-demo:${{ steps.relver.outputs.version }}
 
     #   - name: Login to CW Container Registry
     #    uses: docker/login-action@v4
@@ -115,10 +128,22 @@ jobs:
 
   gauzy-webapp:
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 300
     steps:
-      - name: Checkout
+      - name: Checkout the released commit
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: relver
+        run: |
+          VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
+          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --abbrev=0); fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: $VERSION"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -141,7 +166,7 @@ jobs:
           platforms: linux/amd64
           tags: |
             ghcr.io/ever-co/gauzy-webapp-demo:latest
-            ghcr.io/ever-co/gauzy-webapp-demo:0.1.${{ github.run_number }}
+            ghcr.io/ever-co/gauzy-webapp-demo:${{ steps.relver.outputs.version }}
             everco/gauzy-webapp-demo:latest
             registry.digitalocean.com/ever/gauzy-webapp-demo:latest
             ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-demo:latest
@@ -202,7 +227,7 @@ jobs:
       - name: Push to Github Registry
         run: |
           docker push ghcr.io/ever-co/gauzy-webapp-demo:latest
-          docker push ghcr.io/ever-co/gauzy-webapp-demo:0.1.${{ github.run_number }}
+          docker push ghcr.io/ever-co/gauzy-webapp-demo:${{ steps.relver.outputs.version }}
 
       # - name: Login to CW Container Registry
       #  uses: docker/login-action@v4
@@ -217,10 +242,22 @@ jobs:
 
   gauzy-worker:
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 300
     steps:
-      - name: Checkout
+      - name: Checkout the released commit
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: relver
+        run: |
+          VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
+          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --abbrev=0); fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: $VERSION"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -243,7 +280,7 @@ jobs:
           platforms: linux/amd64
           tags: |
             ghcr.io/ever-co/gauzy-worker-demo:latest
-            ghcr.io/ever-co/gauzy-worker-demo:0.1.${{ github.run_number }}
+            ghcr.io/ever-co/gauzy-worker-demo:${{ steps.relver.outputs.version }}
             everco/gauzy-worker-demo:latest
             registry.digitalocean.com/ever/gauzy-worker-demo:latest
             ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-worker-demo:latest
@@ -307,7 +344,7 @@ jobs:
       - name: Push to Github Registry
         run: |
           docker push ghcr.io/ever-co/gauzy-worker-demo:latest
-          docker push ghcr.io/ever-co/gauzy-worker-demo:0.1.${{ github.run_number }}
+          docker push ghcr.io/ever-co/gauzy-worker-demo:${{ steps.relver.outputs.version }}
 
     #   - name: Login to CW Container Registry
     #    uses: docker/login-action@v4
