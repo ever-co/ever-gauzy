@@ -8,9 +8,10 @@ services:
     build:
       context: .
       dockerfile: .deploy/api/Dockerfile
-      # Only NODE_ENV is consumed at build time (picks the dev/prod nx build).
-      # All other configuration is runtime environment (see `environment:` below) —
-      # the API image does not bake env values at build time.
+      # Only NODE_ENV is passed as a build arg here (picks the dev/prod nx build);
+      # the Dockerfile also accepts DEMO, NODE_OPTIONS and NX_BRANCH with built-in
+      # defaults. All other configuration is runtime environment (see `environment:`
+      # below) — the API image does not bake env values at build time.
       args:
         NODE_ENV: ${NODE_ENV:-development}
     environment:
@@ -96,9 +97,11 @@ services:
     build:
       context: .
       dockerfile: .deploy/webapp/Dockerfile
-      # Only NODE_ENV and DEMO are consumed at build time. The Angular bundle is compiled
-      # with DOCKER_* placeholders; all other values are substituted from the RUNTIME
-      # environment (see `environment:` below) by the container entrypoint at startup.
+      # Only NODE_ENV and DEMO are passed as build args here; the Dockerfile also
+      # accepts NODE_OPTIONS and NX_BRANCH with built-in defaults. The Angular bundle
+      # is compiled with DOCKER_* placeholders; all other values are substituted from
+      # the RUNTIME environment (see `environment:` below) by the container entrypoint
+      # at startup.
       args:
         NODE_ENV: ${NODE_ENV:-development}
         DEMO: 'true'
