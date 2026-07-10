@@ -17,13 +17,15 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { EMPTY, forkJoin } from 'rxjs';
+import { EMPTY, forkJoin, of } from 'rxjs';
 import { catchError, filter, finalize, switchMap } from 'rxjs/operators';
 import {
+	IAiChatConfig,
 	IAiChatProvider,
 	IAiProviderCredential,
 	IAiProviderCredentialCreateInput,
-	IAiProviderCredentialUpdateInput
+	IAiProviderCredentialUpdateInput,
+	IPagination
 } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import { ConfirmComponent } from '@gauzy/ui-core/shared';
@@ -118,9 +120,22 @@ export class AiChatSettingsComponent implements OnInit {
 	 */
 	load(): void {
 		this.loading.set(true);
+		// Fail each call soft so one failing does NOT blank the whole BYOK page.
+		// `/config` (registered providers) and `/credentials` (saved tenant keys) are
+		// independent and even require different permissions (AI_CHAT_ACCESS vs
+		// AI_CHAT_SETTINGS); a forkJoin that rejected on either previously left the page
+		// empty with only an error toast. Now the provider cards still render when the
+		// credentials call fails (keys just aren't pre-filled), and vice-versa.
 		forkJoin({
-			config: this.settingsService.getConfig(),
-			credentials: this.settingsService.getCredentials()
+			config: this.settingsService.getConfig().pipe(
+				catchError(() => {
+					this.showError();
+					return of<IAiChatConfig | null>(null);
+				})
+			),
+			credentials: this.settingsService.getCredentials().pipe(
+				catchError(() => of<IPagination<IAiProviderCredential>>({ items: [], total: 0 }))
+			)
 		})
 			.pipe(finalize(() => this.loading.set(false)))
 			.subscribe({
