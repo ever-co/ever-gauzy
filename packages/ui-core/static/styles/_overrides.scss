@@ -178,10 +178,35 @@ body {
     }
   }
 
-  // Override scrollable-container overflow-y for dashboard layout
+  // Dashboard layout: the page itself must not scroll (each panel scrolls
+  // internally), but the global app-version / Terms-Privacy footer must stay
+  // visible. The footer is the `margin-top:auto` last child of `.content`
+  // (Nebular's `nb-layout-footer` is display:block; margin-top:auto — the
+  // `fixed` attribute is a no-op in this version), and Nebular forces
+  // `.layout` / `.layout-container` to `min-height:100vh` which, with the fixed
+  // header padding and the footer height, pushes the footer below the clipped
+  // `.scrollable-container`. Bound the layout to the visible height so the
+  // footer stays in view and the dashboard column shrinks (panels keep their
+  // own internal scroll). Do NOT flip overflow-y back to `auto` here — that
+  // regresses the dashboard into a whole-page scroll with a moving tab bar and
+  // a double scrollbar against the panels' internal `overflow:auto`.
   nb-layout:has(ga-dashboard-layout) {
     .scrollable-container {
       overflow-y: hidden !important;
+    }
+
+    .layout {
+      height: 100%;
+      min-height: 0 !important;
+    }
+
+    .layout .layout-container {
+      min-height: 0 !important;
+    }
+
+    .layout .layout-container .content .columns {
+      min-height: 0; // allow the flex child to shrink below its content size
+      overflow: hidden; // dashboard panels already scroll internally
     }
   }
 
