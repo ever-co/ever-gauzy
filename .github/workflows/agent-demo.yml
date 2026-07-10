@@ -1,19 +1,56 @@
 name: Agent App Build Demo
 
+# The packaged desktop & server demo apps are built ONLY when 'develop' is promoted to the
+# 'local-apps' branch. The build version is resolved at build time
+# (.scripts/bump-version-electron.js) from the release tag pointing at this commit, which
+# 'Release Demo' creates on every merge to 'develop'.
 on:
-  workflow_run:
-    workflows: ['Release Demo']
+  push:
     branches:
-      - develop
-    types:
-      - completed
+      - local-apps
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
+  check-release-tag:
+    # Only build when this exact commit carries a release tag (the version stamped into the
+    # packages - see header comment) - i.e. 'local-apps' was fast-forwarded to a 'develop'
+    # commit that 'Release Demo' has already tagged. Retries absorb the short merge -> tag delay.
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Verify a release tag points at this commit
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_NAME" != "local-apps" ]; then
+            echo "::error::This workflow only releases from the 'local-apps' branch (got '$GITHUB_REF_NAME')."
+            exit 1
+          fi
+          for i in $(seq 1 20); do
+            git fetch --quiet --depth=1 origin '+refs/tags/*:refs/tags/*' || echo "git fetch failed (attempt $i); will retry"
+            TAG=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
+            if [ -n "$TAG" ]; then
+              echo "Release tag on this commit: $TAG"
+              exit 0
+            fi
+            echo "No release tag points at this commit yet (attempt $i/20); retrying in 30s..."
+            sleep 30
+          done
+          echo "::error::No release tag points at this commit. Promote by fast-forwarding 'local-apps' to the tagged 'develop' commit (git push origin origin/develop:local-apps) after 'Release Demo' has created the tag."
+          exit 1
+
   release-windows:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 

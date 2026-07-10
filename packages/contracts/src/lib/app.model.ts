@@ -1,4 +1,20 @@
 /**
+ * Version information for a running application (API or web UI), embedded at
+ * build/deploy time. Used by the web footer to show the deployed version +
+ * commit and to detect a drift between the web app and the API.
+ */
+export interface IAppVersionInfo {
+    /** Which application this describes: 'api' or 'web'. */
+    name: 'api' | 'web';
+
+    /** Release version, i.e. the git tag the image was built from (e.g. 'v111.2.10'). Empty when unknown. */
+    version: string;
+
+    /** Full git commit SHA the image was built from. Empty when unknown. */
+    commit: string;
+}
+
+/**
  * Interface representing the application configuration.
  */
 export interface IAppConfig extends IAppSetting {

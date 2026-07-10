@@ -20,7 +20,8 @@ import {
 	DEFAULT_ENTITY_SETTINGS,
 	PROJECT_TIED_ENTITIES,
 	RequestContext,
-	IntegrationTenantService
+	IntegrationTenantService,
+	parseFindOptionsRelations
 } from '@gauzy/core';
 import { ZAPIER_API_URL, ZAPIER_BASE_URL, ZAPIER_TOKEN_EXPIRATION_TIME, ZAPIER_OAUTH_SCOPES } from './zapier.config';
 import {
@@ -869,7 +870,7 @@ export class ZapierService {
 				tenantId,
 				name: IntegrationEnum.ZAPIER
 			} as IIntegrationFilter,
-			relations: ['settings']
+			relations: parseFindOptionsRelations(['settings'])
 		});
 
 		if (total === 0) {

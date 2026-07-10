@@ -5,7 +5,7 @@ export const AddUserPage = {
 	usernameInputCss: '#username',
 	emailInputCss: '#email',
 	selectRoleDropdownCss: 'nb-select#role>button',
-	selectRoleDropdownOptionCss: '.option-list',
+	selectRoleDropdownOptionCss: '.option-list nb-option',
 	passwordInputCss: 'input#password',
 	imageInputUrlCss: '[placeholder="Image"]',
 	confirmAddUserButtonCss:

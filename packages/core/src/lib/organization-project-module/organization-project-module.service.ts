@@ -29,7 +29,7 @@ import {
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { MultiORMEnum } from '../core/utils';
+import { MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -621,7 +621,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			}
 
 			if (params.select) {
-				options.select = params.select;
+				options.select = parseFindOptionsSelect(params.select);
 			}
 
 			if (params.order) {
@@ -629,7 +629,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			}
 
 			if (params.relations) {
-				options.relations = params.relations;
+				options.relations = parseFindOptionsRelations(params.relations);
 			}
 
 			// Apply pagination and query options

@@ -23,7 +23,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { RelationsQueryDTO } from '../shared/dto';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
-import { MultiORMEnum } from '../core/utils';
+import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { OrganizationProjectEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -446,7 +446,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 						owner: true,
 						taskListType: true
 					},
-					relations
+					relations: parseFindOptionsRelations(relations)
 				});
 				query
 					.innerJoin(`${query.alias}.members`, 'project_members')

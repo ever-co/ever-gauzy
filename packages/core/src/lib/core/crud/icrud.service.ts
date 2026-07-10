@@ -2,9 +2,10 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { DeepPartial, DeleteResult, FindManyOptions, FindOneOptions, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { DeepPartial, DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination, ID } from '@gauzy/contracts';
+import { LegacyFindManyOptions, LegacyFindOneOptions } from '../utils';
 import { ITryRequest } from './try-request';
 import {
 	FindOptions as MikroFindOptions,
@@ -39,15 +40,15 @@ export interface ICrudService<T> {
 
 export type IMikroOptions<T> = { where?: MikroFilterQuery<T> } & MikroFindOptions<T>;
 
-export type ICountOptions<T> = FindManyOptions<T> | IMikroOptions<T>;
+export type ICountOptions<T> = LegacyFindManyOptions<T> | IMikroOptions<T>;
 
 export type ICountByOptions<T> = FindOptionsWhere<T> | MikroFilterQuery<T>;
 
-export type IFindManyOptions<T> = FindManyOptions<T> | IMikroOptions<T>;
+export type IFindManyOptions<T> = LegacyFindManyOptions<T> | IMikroOptions<T>;
 
-export type IFindOneOptions<T> = FindOneOptions<T> | IMikroOptions<T>;
+export type IFindOneOptions<T> = LegacyFindOneOptions<T> | IMikroOptions<T>;
 
-export type IFindOrFailOptions<T> = FindOneOptions<T> | IMikroOptions<T>;
+export type IFindOrFailOptions<T> = LegacyFindOneOptions<T> | IMikroOptions<T>;
 
 export type IFindWhereOptions<T> = FindOptionsWhere<T> | MikroFilterQuery<T>;
 

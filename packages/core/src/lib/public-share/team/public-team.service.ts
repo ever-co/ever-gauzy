@@ -8,6 +8,7 @@ import {
 	ITimerStatus
 } from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/utils';
+import { parseFindOptionsRelations } from '../../core/utils';
 import { OrganizationTeam } from './../../core/entities/internal';
 import { StatisticService } from './../../time-tracking/statistic';
 import { TimerService } from './../../time-tracking/timer/timer.service';
@@ -62,7 +63,7 @@ export class PublicTeamService {
 				public: true,
 				...params
 			},
-			...(options.relations ? { relations: options.relations } : {})
+			...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {})
 		};
 
 		try {

@@ -1,0 +1,236 @@
+import {
+	verifyElementIsVisible,
+	clickButton,
+	clearField,
+	enterInput,
+	clickKeyboardBtnByKeycode,
+	verifyTextNotExisting,
+	waitElementToHide,
+	verifyValue,
+	dispatchClick,
+	waitForSpinnerGone
+} from '../util';
+import { getPage } from '../page-context';
+// Selectors are framework-agnostic — reused from the Cypress tree during migration.
+import { AddEmployeeLevelPage } from '../../../src/support/Base/pageobjects/AddEmployeeLevelPageObject';
+
+// Navigate to the Employee Level screen. This runs RIGHT AFTER the addTag CustomCommand, which ends on
+// the /#/pages/organization/tags hash route. A bare page.goto('/#/pages/employees/employee-level') is a
+// SAME-DOCUMENT no-op in that case (only the hash fragment differs), so the Angular hash-router never
+// re-renders and the page stays on the Tags screen — the level Add button / Level-name input are never
+// found. Force the hash in-page (mirrors the gotoRoute helper in commands.ts) and wait for the Employee
+// Levels header to render before the caller interacts.
+export const navigateToEmployeeLevel = async () => {
+	const page = getPage();
+	await page.goto('/#/pages/employees/employee-level');
+	await page.evaluate(() => {
+		if (!location.hash.split('?')[0].includes('/pages/employees/employee-level')) {
+			location.hash = '#/pages/employees/employee-level';
+		}
+	});
+	await page.waitForTimeout(800);
+	// Wait for the screen's own header so we don't act mid-route-transition.
+	await page
+		.locator('ngx-header-title:has-text("Level"), h4:has-text("Employee Level")')
+		.first()
+		.waitFor({ state: 'visible', timeout: 30000 })
+		.catch(() => undefined);
+};
+
+export const gridBtnExists = async () => {
+	/* no-op: grid list/grid layout toggle removed from the app */
+};
+
+export const gridBtnClick = async (index: number) => {
+	/* no-op: grid list/grid layout toggle removed from the app */
+};
+
+export const addNewLevelButtonVisible = async () => {
+	await verifyElementIsVisible(AddEmployeeLevelPage.addNewLevelButtonCss);
+};
+
+export const clickAddNewLevelButton = async () => {
+	// The preceding addTag CustomCommand can leave a FULLY-OPEN "Add Tags" nb-dialog mounted over the
+	// employee-level page (its Save raced while disabled, so the dialog never closed and survived the
+	// SPA route change — confirmed in the failure DOM: the Add Tags card + a disabled Save are still
+	// present). Its cdk-overlay-backdrop then blocks the toolbar Add button and the add-level dialog
+	// never opens. A single Escape doesn't dismiss it (focus isn't in the dialog), so close it
+	// explicitly via its own Cancel/X handlers (closeDialog()), retrying until ngx-tags-mutation
+	// detaches, before opening the add-level dialog.
+	const page = getPage();
+	const tagsDialog = page.locator('ngx-tags-mutation').first();
+	for (let i = 0; i < 4; i++) {
+		if ((await tagsDialog.count()) === 0) break;
+		// Cancel button (status="basic" outline) and the X icon both call closeDialog(); dispatch the
+		// click so a fading backdrop can't intercept it. Fall back to Escape.
+		await dispatchClick('ngx-tags-mutation nb-card-footer button[status="basic"]').catch(() => undefined);
+		await dispatchClick('ngx-tags-mutation .cancel i').catch(() => undefined);
+		await page.keyboard.press('Escape').catch(() => undefined);
+		await tagsDialog.waitFor({ state: 'detached', timeout: 3000 }).catch(() => undefined);
+	}
+	await verifyElementIsVisible(AddEmployeeLevelPage.addNewLevelButtonCss);
+	await dispatchClick(AddEmployeeLevelPage.addNewLevelButtonCss);
+	// Confirm the add-level dialog actually opened; if a fading backdrop swallowed the first dispatch,
+	// re-dispatch once. The caller's newLevelInputVisible() then asserts the Level name input.
+	const opened = await page
+		.locator(AddEmployeeLevelPage.newLevelInputCss)
+		.first()
+		.waitFor({ state: 'visible', timeout: 6000 })
+		.then(() => true)
+		.catch(() => false);
+	if (!opened) {
+		await dispatchClick(AddEmployeeLevelPage.addNewLevelButtonCss);
+	}
+};
+
+export const cancelNewLevelButtonVisible = async () => {
+	await verifyElementIsVisible(AddEmployeeLevelPage.cancelNewLevelButtonCss);
+};
+
+export const clickCancelNewLevelButton = async () => {
+	await clickButton(AddEmployeeLevelPage.cancelNewLevelButtonCss);
+};
+
+export const newLevelInputVisible = async () => {
+	await verifyElementIsVisible(AddEmployeeLevelPage.newLevelInputCss);
+};
+
+export const enterNewLevelData = async (data: string) => {
+	await enterInput(AddEmployeeLevelPage.newLevelInputCss, data);
+};
+
+export const tagsMultiSelectVisible = async () => {
+	await verifyElementIsVisible(AddEmployeeLevelPage.tagsSelectCss);
+};
+
+export const clickTagsMultiSelect = async () => {
+	// #addTags is an ng-select that opens on MOUSEDOWN and is backdrop-blocked; a force-click can also
+	// close the dialog. Open the panel via the keyboard instead (focus the inner input, ArrowDown).
+	const input = getPage().locator(AddEmployeeLevelPage.tagsSelectCss).locator('input').first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
+};
+
+export const selectTagsFromDropdown = async (index: number) => {
+	// ng-select options render in the body as div.ng-option (appendTo="body").
+	await verifyElementIsVisible(AddEmployeeLevelPage.tagsSelectOptionCss);
+	await getPage().locator(AddEmployeeLevelPage.tagsSelectOptionCss).nth(index).click({ force: true });
+};
+
+export const clickKeyboardButtonByKeyCode = async (keycode: number) => {
+	await clickKeyboardBtnByKeycode(keycode);
+};
+
+export const saveNewLevelButtonVisible = async () => {
+	await verifyElementIsVisible(AddEmployeeLevelPage.updateLevelButtonCss);
+};
+
+export const clickSaveNewLevelButton = async () => {
+	// Save sits in the dialog footer right after the tags mutation; dispatch the click so a fading
+	// ng-select/dialog backdrop can't intercept it.
+	await waitForSpinnerGone();
+	await dispatchClick(AddEmployeeLevelPage.updateLevelButtonCss);
+};
+
+export const editEmployeeLevelButtonVisible = async () => {
+	await verifyElementIsVisible(AddEmployeeLevelPage.editEmployeeLevelButtonCss);
+};
+
+// Select a grid row so the toolbar Edit/Delete buttons enable (Edit is [disabled] until selectEmployee
+// runs). The row click TOGGLES selection, so settle the grid first, click ONCE, then poll the Edit
+// button's real disabled attr and only re-click if selection was lost.
+export const selectEmployeeLevelRow = async () => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(AddEmployeeLevelPage.selectEmployeeLevelRow).first();
+	const edit = page.locator(AddEmployeeLevelPage.editEmployeeLevelButtonCss).first();
+	await row.click({ force: true });
+	for (let i = 0; i < 5; i++) {
+		const disabled = await edit.getAttribute('disabled');
+		if (disabled === null) return;
+		await page.waitForTimeout(500);
+		if ((await edit.getAttribute('disabled')) !== null) {
+			await row.click({ force: true });
+		}
+	}
+};
+
+// Select a SPECIFIC row by its level text (delete step has 2 rows; we must select the right one so the
+// subsequent verifyElementIsDeleted checks the level we actually removed). Same toggle-safe poll as above.
+export const selectEmployeeLevelRowByText = async (text: string) => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(AddEmployeeLevelPage.selectEmployeeLevelRow).filter({ hasText: text }).first();
+	const edit = page.locator(AddEmployeeLevelPage.editEmployeeLevelButtonCss).first();
+	await row.click({ force: true });
+	for (let i = 0; i < 5; i++) {
+		const disabled = await edit.getAttribute('disabled');
+		if (disabled === null) return;
+		await page.waitForTimeout(500);
+		if ((await edit.getAttribute('disabled')) !== null) {
+			await row.click({ force: true });
+		}
+	}
+};
+
+export const clickRowEmployeeLevel = async () => {
+	await selectEmployeeLevelRow();
+};
+
+export const clickRowEmployeeLevelToDelete = async () => {
+	await selectEmployeeLevelRow();
+};
+
+export const clickEditEmployeeLevelButton = async () => {
+	await dispatchClick(AddEmployeeLevelPage.editEmployeeLevelButtonCss);
+};
+
+export const editEmployeeLevelInpuVisible = async () => {
+	await verifyElementIsVisible(AddEmployeeLevelPage.editLevelInputCss);
+};
+
+export const enterEditLevelData = async (data: string) => {
+	await clearField(AddEmployeeLevelPage.editLevelInputCss);
+	await enterInput(AddEmployeeLevelPage.editLevelInputCss, data);
+};
+
+export const deleteLevelButtonVisible = async () => {
+	await verifyElementIsVisible(AddEmployeeLevelPage.removeEmployeeLevelButtonCss);
+};
+
+export const clickDeleteLevelButton = async () => {
+	await dispatchClick(AddEmployeeLevelPage.removeEmployeeLevelButtonCss);
+};
+
+export const confirmDeleteButtonVisible = async () => {
+	await verifyElementIsVisible(AddEmployeeLevelPage.confirmDeleteLevelButtonCss);
+};
+
+export const clickConfirmDeleteLevelButton = async () => {
+	await dispatchClick(AddEmployeeLevelPage.confirmDeleteLevelButtonCss);
+};
+
+export const verifyTitleExists = async (text: string) => {
+	await verifyValue(AddEmployeeLevelPage.editLevelInputCss, text);
+};
+
+export const verifyElementIsDeleted = async (text: string) => {
+	await verifyTextNotExisting(AddEmployeeLevelPage.verifyTextCss, text);
+};
+
+export const waitMessageToHide = async () => {
+	await waitElementToHide(AddEmployeeLevelPage.toastrMessageCss);
+};
+
+export const cancelButtonVisible = async () => {
+	await verifyElementIsVisible(AddEmployeeLevelPage.cancelButtonCss);
+};
+
+export const clickCancelButton = async () => {
+	// Cancel sits in the open dialog footer; dispatch so a fading backdrop can't swallow the click.
+	await dispatchClick(AddEmployeeLevelPage.cancelButtonCss);
+};

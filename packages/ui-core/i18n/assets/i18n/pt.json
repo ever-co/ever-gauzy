@@ -3629,7 +3629,8 @@
 		"SELECT_A_DATE": "Selecionar uma Data",
 		"SELECT_AN_ORGANIZATION": "Selecionar uma Organização",
 		"SELECT_PROJECT": "Selecionar Projeto",
-		"SELECT_TEAM": "Selecionar Equipe"
+		"SELECT_TEAM": "Selecionar Equipe",
+		"AI_CHAT": "Chat de IA"
 	},
 	"HEADER_TITLE": {
 		"FOR": "para",

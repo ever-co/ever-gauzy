@@ -3658,7 +3658,8 @@
 		"SELECT_A_DATE": "Выберите дату",
 		"SELECT_AN_ORGANIZATION": "Выберите организацию",
 		"SELECT_PROJECT": "Выбрать проект",
-		"SELECT_TEAM": "Выберите команду"
+		"SELECT_TEAM": "Выберите команду",
+		"AI_CHAT": "ИИ-чат"
 	},
 	"HEADER_TITLE": {
 		"FOR": "для",

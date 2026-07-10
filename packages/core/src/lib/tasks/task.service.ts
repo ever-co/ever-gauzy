@@ -35,7 +35,7 @@ import {
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
-import { MultiORMEnum } from './../core/utils';
+import { MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from './../core/utils';
 import { addBetween, LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
@@ -444,7 +444,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							});
 						}
 						query.setFindOptions({
-							...(options.relations ? { relations: options.relations } : {})
+							...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {})
 						});
 					}
 
@@ -581,7 +581,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							}),
 						...(isNotEmpty(options) &&
 							isNotEmpty(options.relations) && {
-								relations: options.relations
+								relations: parseFindOptionsRelations(options.relations)
 							})
 					});
 
@@ -714,8 +714,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							});
 						}
 						query.setFindOptions({
-							...(options.select ? { select: options.select } : {}),
-							...(options.relations ? { relations: options.relations } : {}),
+							...(options.select ? { select: parseFindOptionsSelect(options.select) } : {}),
+							...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {}),
 							...(options.order ? { order: options.order } : {})
 						});
 					}
@@ -1131,8 +1131,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					// Apply find options if provided
 					if (isNotEmpty(options)) {
 						query.setFindOptions({
-							...(options.select && { select: options.select }),
-							...(options.relations && { relations: options.relations }),
+							...(options.select && { select: parseFindOptionsSelect(options.select) }),
+							...(options.relations && { relations: parseFindOptionsRelations(options.relations) }),
 							...(options.order && { order: options.order })
 						});
 					}
@@ -1301,7 +1301,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			};
 
 			// Define find options
-			const findOptions: FindManyOptions<Task> = { where, ...(relations && { relations }) };
+			const findOptions: FindManyOptions<Task> = { where, ...(relations && { relations: parseFindOptionsRelations(relations) }) };
 
 			// Retrieve tasks using base class method
 			return await super.findAll(findOptions);
@@ -1437,7 +1437,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 					// Check if relations were provided and include them
 					query.setFindOptions({
-						...(relations ? { relations } : {})
+						...(relations ? { relations: parseFindOptionsRelations(relations) } : {})
 					});
 
 					const [items, total] = await query.getManyAndCount();

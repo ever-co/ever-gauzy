@@ -1,4 +1,4 @@
-import { TenantAwareCrudService } from '@gauzy/core';
+import { parseFindOptionsRelations, TenantAwareCrudService } from '@gauzy/core';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOptionsWhere } from 'typeorm';
 import {
@@ -81,7 +81,7 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 
 		const result = await this.findAll({
 			where,
-			relations,
+			relations: parseFindOptionsRelations(relations),
 			order: {
 				category: {
 					name: 'ASC'
@@ -113,7 +113,7 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 
 		const result = await this.findAll({
 			where,
-			relations,
+			relations: parseFindOptionsRelations(relations),
 			order: {
 				category: {
 					name: 'ASC'
@@ -172,7 +172,7 @@ export class PluginSettingService extends TenantAwareCrudService<PluginSetting> 
 
 		const result = await this.findAll({
 			where,
-			relations,
+			relations: parseFindOptionsRelations(relations),
 			order: { order: 'ASC', key: 'ASC' }
 		} as FindManyOptions);
 

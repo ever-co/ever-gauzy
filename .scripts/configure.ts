@@ -10,6 +10,13 @@ import { env } from './env';
 const environment = argv.environment;
 const isProd = environment === 'prod';
 
+// Version + commit are interpolated into single-quoted TS string literals below.
+// They only ever come from `git tag` / `git describe` / a commit SHA, but strip
+// anything outside the safe charset defensively so a malformed value can never
+// break out of the quotes and corrupt the generated environment file.
+const safeAppVersion = (env.GAUZY_APP_VERSION || '').replace(/[^\w.\-/]/g, '');
+const safeAppCommit = (env.GAUZY_APP_COMMIT || '').replace(/[^\w.\-/]/g, '');
+
 let envFileContent = `// NOTE: Auto-generated file
 // The file contents for the current environment will overwrite these during build.
 // The build system defaults to the dev environment which uses 'environment.ts', but if you do
@@ -84,6 +91,9 @@ if (!isDocker) {
 	export const environment: Environment =
 	{
 		production:  ${isProd},
+
+		version: '${safeAppVersion}',
+		commit: '${safeAppCommit}',
 
 		API_BASE_URL: API_BASE_URL,
 		CLIENT_BASE_URL: CLIENT_BASE_URL,
@@ -246,6 +256,9 @@ if (!isDocker) {
 	export const environment: Environment =
 	{
 		production:  ${isProd},
+
+		version: '${safeAppVersion}',
+		commit: '${safeAppCommit}',
 
 		API_BASE_URL: API_BASE_URL,
 		CLIENT_BASE_URL: CLIENT_BASE_URL,

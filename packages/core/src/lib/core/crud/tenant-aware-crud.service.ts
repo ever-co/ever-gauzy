@@ -1,8 +1,9 @@
 import { NotFoundException } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, FindManyOptions, FindOneOptions, In, Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
+import { LegacyFindManyOptions, LegacyFindOneOptions } from '../utils';
 import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
@@ -163,7 +164,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param filter - Additional find options.
 	 * @returns The find one options based on the current user's relationship with the tenant and additional options.
 	 */
-	private findOneWithTenant(filter?: FindOneOptions<T>): FindOneOptions<T> {
+	private findOneWithTenant(filter?: LegacyFindOneOptions<T>): LegacyFindOneOptions<T> {
 		const user = RequestContext.currentUser();
 		if (!user || !user.tenantId) {
 			return filter;
@@ -194,7 +195,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param filter - Additional find options.
 	 * @returns The find many options based on the current user's relationship with the tenant and additional options.
 	 */
-	private findManyWithTenant(filter?: FindManyOptions<T>): FindManyOptions<T> {
+	private findManyWithTenant(filter?: LegacyFindManyOptions<T>): LegacyFindManyOptions<T> {
 		const user = RequestContext.currentUser();
 		if (!user || !user.tenantId) {
 			return filter;
@@ -226,7 +227,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async count(options?: FindManyOptions<T>): Promise<number> {
+	public async count(options?: LegacyFindManyOptions<T>): Promise<number> {
 		return await super.count(this.findManyWithTenant(options));
 	}
 
@@ -253,7 +254,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param filter
 	 * @returns
 	 */
-	public async findAll(filter?: FindManyOptions<T>): Promise<IPagination<T>> {
+	public async findAll(filter?: LegacyFindManyOptions<T>): Promise<IPagination<T>> {
 		return await super.findAll(this.findManyWithTenant(filter));
 	}
 
@@ -263,7 +264,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param filter
 	 * @returns
 	 */
-	public async find(filter?: FindManyOptions<T>): Promise<T[]> {
+	public async find(filter?: LegacyFindManyOptions<T>): Promise<T[]> {
 		return await super.find(this.findManyWithTenant(filter));
 	}
 
@@ -275,7 +276,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param filter
 	 * @returns
 	 */
-	public async paginate(filter?: FindManyOptions<T>): Promise<IPagination<T>> {
+	public async paginate(filter?: LegacyFindManyOptions<T>): Promise<IPagination<T>> {
 		return await super.paginate(this.findManyWithTenant(filter));
 	}
 
@@ -293,7 +294,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneOrFailByIdString(id: ID, options?: FindOneOptions<T>): Promise<ITryRequest<T>> {
+	public async findOneOrFailByIdString(id: ID, options?: LegacyFindOneOptions<T>): Promise<ITryRequest<T>> {
 		return await super.findOneOrFailByIdString(id, this.findOneWithTenant(options));
 	}
 
@@ -304,7 +305,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneOrFailByOptions(options?: FindOneOptions<T>): Promise<ITryRequest<T>> {
+	public async findOneOrFailByOptions(options?: LegacyFindOneOptions<T>): Promise<ITryRequest<T>> {
 		return await super.findOneOrFailByOptions(this.findOneWithTenant(options));
 	}
 
@@ -336,7 +337,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneByIdString(id: ID, options?: FindOneOptions<T>): Promise<T> {
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<T>): Promise<T> {
 		return await super.findOneByIdString(id, this.findOneWithTenant(options));
 	}
 
@@ -347,7 +348,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneByOptions(options: FindOneOptions<T>): Promise<T> {
+	public async findOneByOptions(options: LegacyFindOneOptions<T>): Promise<T> {
 		return await super.findOneByOptions(this.findOneWithTenant(options));
 	}
 
@@ -517,7 +518,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options - Additional options for querying, such as extra conditions or query parameters.
 	 * @returns {Promise<DeleteResult>} - The result of the delete operation.
 	 */
-	public async delete(criteria: string | FindOptionsWhere<T>, options?: FindOneOptions<T>): Promise<DeleteResult> {
+	public async delete(criteria: string | FindOptionsWhere<T>, options?: LegacyFindOneOptions<T>): Promise<DeleteResult> {
 		try {
 			// Merge additional where conditions from options into criteria if needed
 			let where: FindOptionsWhere<T> =
@@ -588,7 +589,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 */
 	public async softDelete(
 		criteria: string | number | FindOptionsWhere<T>,
-		options?: FindOneOptions<T>
+		options?: LegacyFindOneOptions<T>
 	): Promise<UpdateResult | T> {
 		try {
 			let record: T | null;

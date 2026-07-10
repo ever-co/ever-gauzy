@@ -22,7 +22,7 @@ concurrency:
 jobs:
   build:
     name: MegaLinter
-    runs-on: ubicloud-standard-4
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
     timeout-minutes: 300
     steps:
       # Git Checkout

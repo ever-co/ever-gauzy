@@ -18,6 +18,7 @@ import {
 } from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
+import { parseFindOptionsRelations } from '../core/utils';
 import { EmployeeService } from '../employee/employee.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { RoleService } from '../role/role.service';
@@ -164,7 +165,9 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		// Extract filters from where clause
 		const whereClause = filters.where ?? {};
 		const { entity, entityId, category, visibilityMode, isArchived = false } = whereClause;
-		const relations = Array.isArray(filters.relations) ? (filters.relations as string[]) : [];
+		// Pass the raw value through the converter, which handles both the legacy string[] form and the
+		// v1 object form (and undefined) — so object-form relations aren't silently dropped.
+		const relations = filters.relations;
 
 		// Extract pagination options from filters
 		const { take, skip } = filters;
@@ -184,7 +187,7 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		// Retrieve broadcasts matching base criteria with pagination
 		const queryOptions: FindManyOptions<Broadcast> = {
 			where,
-			relations,
+			relations: parseFindOptionsRelations(relations),
 			order: { publishedAt: 'DESC' },
 			...(take !== undefined && { take }),
 			...(skip !== undefined && { skip })
@@ -340,7 +343,7 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 						organizationId: organizationId || RequestContext.currentOrganizationId()
 					})
 				},
-				relations: [relationName]
+				relations: parseFindOptionsRelations([relationName])
 			});
 
 			if (!entityWithMembers) {
@@ -522,7 +525,7 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 
 			const entityWithMembers = await repository.findOne({
 				where: { id: entityId, tenantId, organizationId },
-				relations: [relationName]
+				relations: parseFindOptionsRelations([relationName])
 			});
 
 			if (!entityWithMembers) return [];

@@ -1,36 +1,67 @@
 export const OrganizationEquipmentPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	addButtonCss: 'div.mb-3 > button[status="success"]',
-	nameInputCss: '[formcontrolname="name"]',
-	typeInputCss: '[formcontrolname="type"]',
-	serialNumberInputCss: '[formcontrolname="serialNumber"]',
-	manufacturedYearInputCss: '[formcontrolname="manufacturedYear"]',
-	initialCostInputCss: '[formcontrolname="initialCost"]',
-	maxSharePeriodInputCss: '[formcontrolname="maxSharePeriod"]',
-	selectEmployeeDropdownCss: '[formcontrolname="employees"]',
-	selectEmployeeDropdownOptionCss: '.option-list nb-option',
+	addButtonCss: 'button[status="success"]:has-text("Add")',
+	// The three equipment dialogs (equipment / sharing-request / sharing-policy) all expose a
+	// formcontrolname="name" input, and the preceding addTag step can leave its own
+	// ngx-tags-mutation dialog (also formcontrolname="name") mounted. Scope each form field to its
+	// OWN mutation host so an unscoped .first() never matches a leftover/wrong dialog.
+	nameInputCss: 'ngx-equipment-mutation [formcontrolname="name"]',
+	typeInputCss: 'ngx-equipment-mutation [formcontrolname="type"]',
+	serialNumberInputCss: 'ngx-equipment-mutation [formcontrolname="serialNumber"]',
+	manufacturedYearInputCss: 'ngx-equipment-mutation [formcontrolname="manufacturedYear"]',
+	initialCostInputCss: 'ngx-equipment-mutation [formcontrolname="initialCost"]',
+	maxSharePeriodInputCss: 'ngx-equipment-mutation [formcontrolname="maxSharePeriod"]',
+	// Equipment tags = ga-tags-color-input ng-select (#addTags). Opens on mousedown and is
+	// backdrop-blocked; the .po wrapper opens it via keyboard, not a click.
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
-	saveButtonCss: 'nb-card-footer.text-right > button[status="success"]',
-	editEquipmentButtonCss: 'div.mb-3 > button[status="info"]',
-	deleteEquipmentButtonCss: 'div.mb-3 > button[status="danger"]',
+	saveButtonCss: 'nb-card-footer button[status="success"]',
+	editEquipmentButtonCss: 'button.action.primary',
+	deleteEquipmentButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
-	footerCss: 'nb-card-footer.text-right',
-	equipmentSharingButtonCss: 'div.card-header-title > div.mr-2 > button[status="primary"]',
-	selectEquipmentDropdownCss: '[formcontrolname="equipment"]',
+	footerCss: 'nb-card-footer',
+	equipmentSharingButtonCss: 'button.sharing[status="primary"]',
+	// Routes used by the cross-page navigation in this flow — waited on after each nav click so the
+	// next step never races against a still-pending route change (see the .po wrappers).
+	equipmentRoute: '**/pages/organization/equipment',
+	equipmentSharingRoute: '**/pages/organization/equipment-sharing',
+	equipmentSharingPolicyRoute: '**/pages/organization/equipment-sharing-policy',
+	selectEquipmentDropdownCss: 'ngx-equipment-sharing-mutation [formcontrolname="equipment"]',
+	// The equipment <nb-select> renders each option as `<nb-option>{{ item.name }}</nb-option>` in the
+	// cdk overlay '.option-list'. The request grid's first column shows sharing.equipment.name (NOT the
+	// request's own `name` — see EquipmentSharingComponent resultMap), so this spec MUST pick OUR uniquely
+	// named equipment (filter by name), not a blind index-0 which — on the polluted shared grid — grabs a
+	// different equipment and makes the request unverifiable/unselectable by our name.
 	selectEquipmentDropdownOptionCss: '.option-list nb-option',
-	selectPolicyDropdownCss: '[formcontrolname="equipmentSharingPolicyId"]',
+	selectPolicyDropdownCss: 'ngx-equipment-sharing-mutation [formcontrolname="equipmentSharingPolicyId"]',
 	selectPolicyDropdownOptionCss: '.option-list nb-option',
-	dateInputCss: '[formcontrolname="shareRequestDay"]',
-	startDateInputCss: '[formcontrolname="shareStartDay"]',
-	endDateInputCss: '[formcontrolname="shareEndDay"]',
-	equipmentSharingPolicyButtonCss: 'nb-card-header.main-header > div.main-header > button[status="primary"]',
-	policyDescriptionInputCss: '[formcontrolname="description"]',
-	backButtonCss: 'g[data-name="arrow-back"]',
+	// Employees field in the request dialog = ga-employee-multi-select wrapping an nb-select. Click the
+	// inner nb-select to open; its options render in the cdk overlay as .option-list nb-option. The list
+	// is the org's employees "working" in the header date range (async, can be empty) — the .po wrapper
+	// treats selection as best-effort (employees is NOT a required field on the request form).
+	selectEmployeeDropdownCss: 'ga-employee-multi-select nb-select',
+	selectEmployeeDropdownOptionCss: '.option-list nb-option',
+	dateInputCss: 'ngx-equipment-sharing-mutation [formcontrolname="shareRequestDay"]',
+	startDateInputCss: 'ngx-equipment-sharing-mutation [formcontrolname="shareStartDay"]',
+	endDateInputCss: 'ngx-equipment-sharing-mutation [formcontrolname="shareEndDay"]',
+	// Request (equipment-sharing) dialog name input — same formcontrolname="name", different host.
+	requestNameInputCss: 'ngx-equipment-sharing-mutation [formcontrolname="name"]',
+	// Policy (equipment-sharing-policy) dialog inputs.
+	policyNameInputCss: 'ngx-equipment-sharing-policy-mutation [formcontrolname="name"]',
+	policyDescriptionInputCss: 'ngx-equipment-sharing-policy-mutation [formcontrolname="description"]',
+	// The equipment-sharing page's "Equipment Sharing Policy" nav button is button.action[status="primary"]
+	// WITHOUT the .sharing class. The equipment page's "Equipment Sharing" header button is
+	// button.action.sharing[status="primary"] — exclude .sharing so this never matches the wrong page's
+	// button when a route change is still mid-flight (that ambiguity opened the wrong dialog).
+	equipmentSharingPolicyButtonCss: 'button.action[status="primary"]:not(.sharing)',
+	backButtonCss: 'ngx-back-navigation button[status="primary"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyPolicyCss: 'tr.angular2-smart-row',
-	verifySharingCss: 'div.ng-star-inserted',
-	verifyEquipmentCss: 'ga-picture-name-tags > div > div.d-block',
-	spinnerCss: 'nb-spinner'
+	verifySharingCss: 'angular2-smart-table',
+	verifyEquipmentCss: 'ga-picture-name-tags',
+	spinnerCss: 'nb-spinner',
+	// Leftover tags dialog host — used by the defensive "dismiss any open dialog" guard before
+	// opening a new add form (its modal backdrop otherwise blocks the equipment Add button).
+	tagsMutationCss: 'ngx-tags-mutation'
 };

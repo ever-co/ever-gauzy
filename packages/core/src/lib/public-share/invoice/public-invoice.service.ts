@@ -5,6 +5,7 @@ import { verify } from 'jsonwebtoken';
 import { IInvoice, IInvoiceUpdateInput } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { Invoice } from './../../core/entities/internal';
+import { parseFindOptionsRelations } from '../../core/utils';
 import { TypeOrmInvoiceRepository } from '../../invoice/repository/type-orm-invoice.repository';
 
 @Injectable()
@@ -101,7 +102,7 @@ export class PublicInvoiceService {
 					organizationId,
 					tenantId
 				},
-				...(relations ? { relations: relations } : {})
+				...(relations ? { relations: parseFindOptionsRelations(relations) } : {})
 			});
 		} catch (error) {
 			throw new ForbiddenException();

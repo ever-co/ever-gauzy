@@ -1,31 +1,49 @@
 export const ManageEmployeesPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	inviteButtonCss: 'div.mb-3 > button[status="primary"]',
+	inviteButtonCss: 'button.action[status="info"]',
 	emailsInputCss: '#emails',
 	dateInputCss: '[formcontrolname="startedWorkOn"]',
 	selectProjectDropdownCss: '#projectSelection',
 	selectProjectDropdownOptionCss: 'div.ng-option > span.ng-option-label',
-	sendInviteButtonCss: 'nb-card-footer.text-right > button[status="success"]',
-	addEmployeeButtonCss: 'button[status="success"]',
-	editEmployeeButtonCss: 'div.mb-3 > button[status="info"]',
+	sendInviteButtonCss: 'nb-card-footer > button[status="success"]',
+	addEmployeeButtonCss: 'button[status="success"]:has-text("Add")',
+	editEmployeeButtonCss: 'button.action.primary',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
-	deleteEmployeeButtonCss: 'div.mb-3 > button[status="danger"]',
+	// Full Name column filter input in the smart-table header (tr.angular2-smart-filters). Typing the
+	// created employee's name filters the grid down to just that record so row 0 is the one we created,
+	// not a seeded employee (the fresh seed renders Super Admin + Default Employee ahead of it).
+	nameFilterInputCss: 'th.angular2-smart-th.fullName input',
+	deleteEmployeeButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
-	endWorkButtonCss: 'div.mb-3 > button[status="warning"]',
+	endWorkButtonCss: 'button.action.orange',
 	endWorkDateInputCss: '[placeholder="Pick a Date"]',
-	confirmEndWorkButtonCss: 'nb-card-footer.text-right > button[status="success"]',
+	confirmEndWorkButtonCss: 'nb-card-footer > button[status="success"]',
 	firstNameInputCss: '#firstName',
 	lastNameInputCss: '#lastName',
 	usernameInputCss: '#username',
 	emailInputCss: '#email',
-	passwordInputCss: '#password',
-	addTagsDropdownCss: 'ng-select#addTags>div>span',
+	// ngx-password-form-field reflects id onto BOTH its host element and the inner input; scope to
+	// input# so enterInput's fill() (no .first()) doesn't hit a strict-mode violation.
+	passwordInputCss: 'input#password',
+	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
-	imgInputCss: '#inputImageUrl',
-	nextButtonCss: 'button[type="submit"]',
-	nextStepButtonCss: 'button[type="submit"]',
-	lastStepButtonCss: 'button.mr-3.ml-3',
-	saveEditButtonCss: 'button[status="success"]',
+	// ngx-file-uploader-input renders TWO inputs (text URL + hidden file); target the text one only,
+	// else enterInput's fill() (no .first()) hits a strict-mode violation.
+	imgInputCss: '#inputImageUrl input[type="text"]',
+	// Scope stepper buttons to the dialog: nb-stepper only renders the ACTIVE step's content, so an
+	// unscoped 'button.green' could match a different overlay; inside the dialog it's the current
+	// step's nbStepperNext.
+	nextButtonCss: 'nb-dialog-container button.green',
+	nextStepButtonCss: 'nb-dialog-container button.green',
+	// Step-3's "Finished adding" is (click)="add()" — the ONLY button that calls createBulk() and
+	// persists the employee. It is status="success", BUT so is step-2's "Add Another Employee"
+	// (addEmployee(), which pushes then RESETS the form/stepper and NEVER persists). If step 2 -> 3 ever
+	// failed to advance, a bare button[status="success"] would click "Add Another Employee" and the
+	// employee would silently never be created (the empty "You have not created any employees" grid).
+	// Scope to the step-3 button by its unique label ("I've Added All Current Employees" -> match the
+	// apostrophe-free substring) so we only ever fire add() from the real last step.
+	lastStepButtonCss: 'nb-dialog-container button[status="success"]:has-text("Added All Current Employees")',
+	saveEditButtonCss: 'div.actions > button[status="success"]',
 	backButtonCss: 'div.main > button[status="primary"]',
 	usernameEditInputCss: '#username',
 	emailEditInputCss: '#email',
@@ -39,12 +57,17 @@ export const ManageEmployeesPage = {
 	preferredLanguageOptionCss: 'ng-dropdown-panel.ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
 	cardBodyCss: 'ga-employee-mutation nb-card-body',
 	manageInvitesButtonCss: 'div.card-header-title > div.mr-2 > button[status="primary"]',
-	copyLinkButtonCss: 'button[status="success"]',
-	resendInviteButtonCss: 'button[status="warning"]',
-	deleteInviteButtonCss: 'button[status="danger"]',
+	// Email-column filter input in the invites smart-table header. The invites grid accumulates invites
+	// from earlier specs (shared serial DB), so a blind row-0 pick can grab another spec's invite (whose
+	// status may not be INVITED -> Copy/Resend buttons wouldn't render). Filter by THIS spec's invited
+	// email so the spec's own invite is the only/first data row.
+	inviteEmailFilterInputCss: 'th.angular2-smart-th.email input',
+	copyLinkButtonCss: 'button.action.success',
+	resendInviteButtonCss: 'button.action.warning',
+	deleteInviteButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',
 	confirmResendInviteButtonCss: 'nb-card-footer > button[status="success"]',
 	confirmDeleteInviteButtonCss: 'nb-card-footer > button[status="danger"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyEmployeeCss: 'div.d-block',
-	verifyInviteCss: 'div.ng-star-inserted'
+	verifyEmployeeCss: 'angular2-smart-table',
+	verifyInviteCss: 'angular2-smart-table'
 };

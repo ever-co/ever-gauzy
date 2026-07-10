@@ -27,7 +27,13 @@ import {
 import { isNotEmpty, parseToBoolean } from '@gauzy/utils';
 import { FavoriteService } from '../core/decorators';
 import { Employee, OrganizationTeamEmployee } from '../core/entities/internal';
-import { MultiORMEnum, enhanceWhereWithTenantId, parseTypeORMFindToMikroOrm } from '../core/utils';
+import {
+	MultiORMEnum,
+	enhanceWhereWithTenantId,
+	parseTypeORMFindToMikroOrm,
+	parseFindOptionsRelations,
+	parseFindOptionsSelect
+} from '../core/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
@@ -560,8 +566,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					typeOrmQueryBuilder.setFindOptions({
 						...(options.skip ? { skip: options.take * (options.skip - 1) } : {}),
 						...(options.take ? { take: options.take } : {}),
-						...(options.select ? { select: options.select } : {}),
-						...(options.relations ? { relations: options.relations } : {}),
+						...(options.select ? { select: parseFindOptionsSelect(options.select) } : {}),
+						...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {}),
 						...(options.where ? { where: options.where } : {}),
 						...(options.order ? { order: options.order } : {})
 					});

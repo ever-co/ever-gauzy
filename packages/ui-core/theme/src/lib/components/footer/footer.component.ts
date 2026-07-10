@@ -1,16 +1,24 @@
 import { Component, Inject, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { IUser } from '@gauzy/contracts';
-import { filter, tap } from 'rxjs/operators';
+import { IAppVersionInfo, IUser } from '@gauzy/contracts';
+import { of } from 'rxjs';
+import { catchError, filter, tap } from 'rxjs/operators';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 import { Store } from '@gauzy/ui-core/core';
 
+/** Version + commit of one side (web or api) for the footer build-info line. */
+interface IVersionDisplay {
+	version: string;
+	commit: string;
+}
+
 @Component({
-    selector: 'ngx-footer',
-    styleUrls: ['./footer.component.scss'],
-    templateUrl: './footer.component.html',
-    standalone: false
+	selector: 'ngx-footer',
+	styleUrls: ['./footer.component.scss'],
+	templateUrl: './footer.component.html',
+	standalone: false
 })
 export class FooterComponent extends TranslationBaseComponent implements OnInit {
 	companyName: string;
@@ -24,9 +32,19 @@ export class FooterComponent extends TranslationBaseComponent implements OnInit 
 	companyLinkedinLink: string;
 	user: IUser;
 
+	/** GitHub repo base (no trailing `.git`), e.g. `https://github.com/ever-co/ever-gauzy`. */
+	private readonly repoBaseUrl: string;
+
+	/** This web build's version + commit (baked at build time). */
+	readonly web: IVersionDisplay;
+
+	/** The running API's version + commit (fetched from `/api/version`); null until/if it loads. */
+	api: IVersionDisplay | null = null;
+
 	constructor(
 		public translationService: TranslateService,
 		private readonly store: Store,
+		private readonly http: HttpClient,
 		@Inject(GAUZY_ENV) readonly environment: Environment
 	) {
 		super(translationService);
@@ -40,6 +58,9 @@ export class FooterComponent extends TranslationBaseComponent implements OnInit 
 		this.companyFacebookLink = environment.COMPANY_FACEBOOK_LINK;
 		this.companyTwitterLink = environment.COMPANY_TWITTER_LINK;
 		this.companyLinkedinLink = environment.COMPANY_IN_LINK;
+
+		this.repoBaseUrl = (environment.PROJECT_REPO ?? 'https://github.com/ever-co/ever-gauzy.git').replace(/\.git$/, '');
+		this.web = { version: environment.version ?? '', commit: environment.commit ?? '' };
 	}
 
 	ngOnInit() {
@@ -49,5 +70,58 @@ export class FooterComponent extends TranslationBaseComponent implements OnInit 
 				tap((user: IUser) => (this.user = user))
 			)
 			.subscribe();
+
+		// Fetch the running API's version so the footer can flag a drift between
+		// the deployed web app and API. Public endpoint — works pre-login too.
+		this.http
+			.get<IAppVersionInfo>(`${this.environment.API_BASE_URL}/api/version`)
+			.pipe(
+				catchError(() => of(null)),
+				tap((info) => {
+					this.api = info ? { version: info.version ?? '', commit: info.commit ?? '' } : null;
+				})
+			)
+			.subscribe();
+	}
+
+	/** Whether there is any build info at all to display. */
+	get hasVersionInfo(): boolean {
+		return this.hasInfo(this.web) || this.hasInfo(this.api);
+	}
+
+	/**
+	 * True when the web and API report different builds (both known and not equal).
+	 * When true the footer lists Web and API separately; otherwise it shows one line.
+	 */
+	get isVersionMismatch(): boolean {
+		return (
+			this.hasInfo(this.web) &&
+			this.hasInfo(this.api) &&
+			(this.web.version !== this.api.version || this.web.commit !== this.api.commit)
+		);
+	}
+
+	/** The single build to show when web and API agree (or only one is known). */
+	get primary(): IVersionDisplay {
+		return this.hasInfo(this.web) ? this.web : (this.api ?? this.web);
+	}
+
+	/** GitHub release/tag page for a version (empty when no version). */
+	releaseUrl(version: string): string | null {
+		return version ? `${this.repoBaseUrl}/releases/tag/${version}` : null;
+	}
+
+	/** GitHub commit page for a full commit SHA (empty when no commit). */
+	commitUrl(commit: string): string | null {
+		return commit ? `${this.repoBaseUrl}/commit/${commit}` : null;
+	}
+
+	/** Short 7-char commit for display. */
+	shortCommit(commit: string): string {
+		return commit ? commit.substring(0, 7) : '';
+	}
+
+	private hasInfo(info: IVersionDisplay | null): info is IVersionDisplay {
+		return !!info && (!!info.version || !!info.commit);
 	}
 }
