@@ -53,9 +53,16 @@ export class AiChatController {
 	/**
 	 * Runtime configuration for the current tenant: registered providers,
 	 * their models, configuration status and defaults. No secrets.
+	 *
+	 * Accessible with EITHER `AI_CHAT_ACCESS` (the chat surfaces need it) OR
+	 * `AI_CHAT_SETTINGS` (the BYOK "AI Providers" settings page needs it) —
+	 * overriding the controller-wide `AI_CHAT_ACCESS`. Without this, a tenant
+	 * admin granted only `AI_CHAT_SETTINGS` could open the settings page but got
+	 * a 403 here, blanking the whole page. The payload exposes no secrets.
 	 */
 	@ApiOperation({ summary: 'AI chat runtime configuration for the current tenant' })
 	@ApiResponse({ status: 200, description: 'AI chat configuration.' })
+	@Permissions(PermissionsEnum.AI_CHAT_ACCESS, PermissionsEnum.AI_CHAT_SETTINGS)
 	@Get('/config')
 	async config(): Promise<IAiChatConfig> {
 		return this.aiChatService.getConfig();
