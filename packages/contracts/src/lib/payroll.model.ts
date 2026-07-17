@@ -1,7 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployee } from './employee.model';
 import { IPaginationInput } from './core.model';
-import { CurrencyPosition } from './organization.model';
 
 /**
  * Enum representing the status of a payroll run
