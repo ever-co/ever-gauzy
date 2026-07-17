@@ -11,10 +11,10 @@ import { TimeOffBalance } from './time-off-balance.entity';
     */
     @Injectable()
     export class TimeOffBalanceService {
-    	constructo
-      		@InjectRepository(TimeOffBalance)
-          		private readonly repo: Repository<TimeOffBalance>
-              	) {}
+    constructor(
+      @InjectRepository(TimeOffBalance)
+      private readonly repo: Repository<TimeOffBalance>
+    ) {}
 
                 	/** Find existing balance or create a zeroed record. */
                   	async findOrCreate(input: {
