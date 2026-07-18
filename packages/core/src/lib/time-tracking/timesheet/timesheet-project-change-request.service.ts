@@ -13,9 +13,9 @@ import {
         @Injectable()
         export class TimesheetProjectChangeRequestService {
         	constructor(
-          		`@InjectRepository`(TimesheetProjectChangeRequest)
+          		@InjectRepository(TimesheetProjectChangeRequest)
               		private readonly changeRequestRepository: Repository<TimesheetProjectChangeRequest>,
-                  		`@InjectRepository`(Timesheet)
+                  		@InjectRepository(Timesheet)
                       		private readonly timesheetRepository: Repository<Timesheet>
                           	) {}
 
