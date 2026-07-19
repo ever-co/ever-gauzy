@@ -1,4 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import * as moment from 'moment';
 import { IActivity, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { Activity } from '../../activity.entity';
@@ -50,16 +51,26 @@ export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivities
 
 		activities = activities
 			.filter((activity: IActivity) => Object.keys(activity).length !== 0)
-			.map(
-				(activity: IActivity) =>
-					new Activity({
-						...activity,
-						...(projectId ? { projectId } : {}),
-						employeeId,
-						organizationId,
-						tenantId
-					})
-			);
+			.map((activity: IActivity) => {
+				// Always persist `recordedAt`: reports filter on it, and a NULL value makes the
+				// row invisible to (and non-indexable by) the time-range query. Prefer the value
+				// sent by the client; otherwise derive it from the activity's date + time; and as
+				// a last resort fall back to the current time so it is never left NULL.
+				const recordedAt =
+					activity.recordedAt ??
+					(activity.date && activity.time
+						? moment(`${activity.date} ${activity.time}`, 'YYYY-MM-DD HH:mm:ss').toDate()
+						: new Date());
+
+				return new Activity({
+					...activity,
+					...(projectId ? { projectId } : {}),
+					employeeId,
+					organizationId,
+					tenantId,
+					recordedAt
+				});
+			});
 
 		// Log the activities that will be inserted into the database
 		console.log(`Activities should be inserted into database for employee (${user.name})`, { activities });
