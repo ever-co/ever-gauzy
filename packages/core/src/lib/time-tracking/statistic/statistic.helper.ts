@@ -112,6 +112,14 @@ export const getTotalDurationQueryString = (dbType: string, queryAlias: string):
 /**
  * Generates the SQL query string for filtering activity duration based on database type.
  *
+ * Filters on the indexed `recordedAt` timestamp column instead of a non-sargable
+ * `concat(date, time)::timestamp` expression. The old form had to compute the value for every
+ * row, so it could not use an index and forced a full scan of the (very large) activity table.
+ * `recordedAt` holds the same instant (date + time) and is covered by the
+ * (organizationId, employeeId, recordedAt) / (organizationId, recordedAt) indexes, turning the
+ * range filter into an index range scan. Since it is a plain column comparison, the per-dialect
+ * concat/cast branching is no longer needed — only identifier quoting differs, handled by `p()`.
+ *
  * @param dbType The type of the database (e.g., sqlite, postgres, mysql).
  * @param queryAlias The alias used for the query table in SQL.
  * @returns The SQL query string for filtering activity duration.
@@ -120,11 +128,10 @@ export const getActivityDurationQueryString = (dbType: string, queryAlias: strin
 	switch (dbType) {
 		case DatabaseTypeEnum.sqlite:
 		case DatabaseTypeEnum.betterSqlite3:
-			return `datetime("${queryAlias}"."date" || ' ' || "${queryAlias}"."time") Between :start AND :end`;
 		case DatabaseTypeEnum.postgres:
-			return `CONCAT("${queryAlias}"."date", ' ', "${queryAlias}"."time")::timestamp Between :start AND :end`;
+			return `"${queryAlias}"."recordedAt" BETWEEN :start AND :end`;
 		case DatabaseTypeEnum.mysql:
-			return p(`CONCAT(\`${queryAlias}\`.\`date\`, ' ', \`${queryAlias}\`.\`time\`) BETWEEN :start AND :end`);
+			return p(`"${queryAlias}"."recordedAt" BETWEEN :start AND :end`);
 		default:
 			throw Error(`cannot create statistic query due to unsupported database type: ${dbType}`);
 	}
