@@ -15,13 +15,21 @@ export class ActivitySubscriber extends BaseEntityEventSubscriber<Activity> {
 
 	/**
 	 * Called before an Activity entity is inserted or created in the database.
-	 * This method prepares the entity for insertion, particularly by serializing the metaData property to a JSON string
-	 * for SQLite databases.
+	 * This method prepares the entity for insertion by (1) guaranteeing `recordedAt` is populated
+	 * and (2) serializing the metaData property to a JSON string for SQLite databases.
 	 *
 	 * @param entity The Activity entity that is about to be created.
 	 * @returns {Promise<void>} A promise that resolves when the pre-creation processing is complete.
 	 */
 	async beforeEntityCreate(entity: Activity): Promise<void> {
+		// Guarantee `recordedAt` is always set, regardless of the write path (bulk save, single
+		// create, or third-party imports). Reports/statistics filter on `recordedAt`, and a NULL
+		// value makes the row invisible to the time-range query. Prefer an explicit value, else
+		// derive it from the activity's date + time, else fall back to the current time.
+		entity.recordedAt =
+			entity.recordedAt ??
+			(entity.date && entity.time ? new Date(`${entity.date}T${entity.time}`) : new Date());
+
 		try {
 			// Check if the database is SQLite and the entity's metaData is a JavaScript object
 			if ((isSqlite() || isBetterSqlite3()) && isObject(entity.metaData)) {
