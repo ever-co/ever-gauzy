@@ -132,6 +132,7 @@
 		},
 		"serve": {
 			"executor": "@angular-builders/custom-webpack:dev-server",
+			"defaultConfiguration": "local",
 			"options": {
 				"buildTarget": "gauzy:build",
 				"proxyConfig": "apps/gauzy/proxy.conf.json",
@@ -148,8 +149,7 @@
 					"liveReload": true,
 					"poll": 0
 				}
-			},
-			"defaultConfiguration": "local"
+			}
 		},
 		"extract-i18n": {
 			"executor": "@angular-devkit/build-angular:extract-i18n",
@@ -161,7 +161,6 @@
 			"executor": "@nx/jest:jest",
 			"options": {
 				"jestConfig": "apps/gauzy/jest.config.js",
-				"setupFile": "apps/gauzy/src/test-setup.ts",
 				"tsConfig": "apps/gauzy/tsconfig.spec.json"
 			}
 		},
