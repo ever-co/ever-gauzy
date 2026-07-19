@@ -16,7 +16,7 @@ concurrency:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubicloud-standard-4
+    runs-on: ubuntu-latest
     timeout-minutes: 300
 
     steps:
