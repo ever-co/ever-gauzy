@@ -8,7 +8,8 @@
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitReturns": false,
 		"noFallthroughCasesInSwitch": false,
-		"types": ["node"]
+		"types": ["node"],
+		"ignoreDeprecations": "6.0"
 	},
 	"files": [],
 	"include": [],

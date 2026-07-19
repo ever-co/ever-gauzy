@@ -15,7 +15,12 @@
 		"skipDefaultLibCheck": true,
 		"baseUrl": ".",
 		"incremental": true,
-		"jsx": "react-jsx"
+		"jsx": "react-jsx",
+		"strict": false,
+		"noUncheckedSideEffectImports": false,
+		"types": ["*"],
+		"esModuleInterop": false,
+		"ignoreDeprecations": "6.0"
 	},
 	"exclude": ["coverage/**/*", "dist/**/*", "node_modules", "tmp"]
 }

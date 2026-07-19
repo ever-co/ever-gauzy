@@ -8,7 +8,8 @@
 		"types": ["node", "@playwright/test"],
 		"sourceMap": false,
 		"allowJs": false,
-		"noEmit": true
+		"noEmit": true,
+		"ignoreDeprecations": "6.0"
 	},
 	"include": ["**/*.ts"]
 }

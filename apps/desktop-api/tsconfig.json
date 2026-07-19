@@ -11,6 +11,7 @@
 		}
 	],
 	"compilerOptions": {
-		"incremental": true
+		"incremental": true,
+		"ignoreDeprecations": "6.0"
 	}
 }
