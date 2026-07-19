@@ -10,7 +10,8 @@
 		"noImplicitReturns": false,
 		"noFallthroughCasesInSwitch": false,
 		"allowImportingTsExtensions": false,
-		"types": ["node"]
+		"types": ["node"],
+		"ignoreDeprecations": "6.0"
 	},
 	"files": [],
 	"include": [],

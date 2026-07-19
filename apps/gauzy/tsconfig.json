@@ -5,7 +5,8 @@
 		"module": "preserve",
 		"downlevelIteration": true,
 		"useDefineForClassFields": false,
-		"moduleResolution": "bundler"
+		"moduleResolution": "bundler",
+		"ignoreDeprecations": "6.0"
 	},
 	"angularCompilerOptions": {
 		"fullTemplateTypeCheck": false,

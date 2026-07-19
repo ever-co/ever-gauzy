@@ -9,6 +9,7 @@
 	],
 	"compilerOptions": {
 		"incremental": true,
-		"types": ["node", "jest"]
+		"types": ["node", "jest"],
+		"ignoreDeprecations": "6.0"
 	}
 }

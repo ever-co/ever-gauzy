@@ -6,7 +6,8 @@
 		"noPropertyAccessFromIndexSignature": true,
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
-		"jsx": "react-jsx"
+		"jsx": "react-jsx",
+		"ignoreDeprecations": "6.0"
 	},
 	"files": [],
 	"include": [],
