@@ -35,11 +35,11 @@
 	"devDependencies": {
 		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
-		"typescript": "^5.9.3"
+		"typescript": "~6.0.3"
 	},
 	"peerDependencies": {
-		"@nestjs/common": "^11.1.14",
-		"@nestjs/core": "^11.1.14"
+		"@nestjs/common": "^11.1.26",
+		"@nestjs/core": "^11.1.26"
 	},
 	"keywords": [
 		"Ever Gauzy",
