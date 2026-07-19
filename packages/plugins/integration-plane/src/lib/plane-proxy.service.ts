@@ -184,10 +184,17 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 	 */
 	private getDefaultProxyConfig() {
 		const baseUrl = environment.baseUrl || 'http://localhost:3000';
+		// Shared mode: pre-auth bootstrap requests (auth/email-check, login) carry no
+		// tenant, so this default config is what authenticates the proxy's internal
+		// email-check call. Empty strings here would SHADOW the proxy's own
+		// GAUZY_API_KEY/GAUZY_API_SECRET env fallback ('' is not nullish), so resolve
+		// the env pair explicitly — otherwise every shared-mode login degrades to the
+		// magic-code flow. The pair is tenant-scoped and only ever grants the
+		// email-existence check (ApiKeyAuthGuard sets tenantId only; single guarded route).
 		return {
 			externalBaseApiUrl: `${baseUrl}/api`,
-			apiKey: '',
-			apiSecret: '',
+			apiKey: process.env['GAUZY_API_KEY'] || '',
+			apiSecret: process.env['GAUZY_API_SECRET'] || '',
 			clientBaseUrl: process.env['PLANE_CLIENT_BASE_URL'] || 'http://localhost:3001',
 			clientAdminUrl: process.env['PLANE_CLIENT_ADMIN_URL'] || 'http://localhost:3002',
 			clientSpaceUrl: process.env['PLANE_CLIENT_SPACE_URL'] || 'http://localhost:3003'
