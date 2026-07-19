@@ -52,6 +52,8 @@ export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivities
 			.filter((activity: IActivity) => Object.keys(activity).length !== 0)
 			.map(
 				(activity: IActivity) =>
+					// `recordedAt` is guaranteed by `ActivitySubscriber.beforeEntityCreate`, which
+					// runs for every Activity write path (bulk save, single create, imports).
 					new Activity({
 						...activity,
 						...(projectId ? { projectId } : {}),
