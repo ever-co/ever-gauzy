@@ -15,7 +15,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.command';
 import { indexBy, pluck } from 'underscore';
 import { isNotEmpty } from '@gauzy/utils';
-import { DatabaseTypeEnum, getConfig, isSqlite, isBetterSqlite3, isMySQL, isPostgres } from '@gauzy/config';
+import { DatabaseTypeEnum, getConfig } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { TypeOrmActivityRepository } from './repository/type-orm-activity.repository';
 import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repository';
@@ -392,21 +392,17 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(
-					isSqlite() || isBetterSqlite3()
-						? `datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`
-						: isPostgres()
-						? `concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`
-						: isMySQL()
-						? p(
-								`concat("${query.alias}"."date", ' ', "${query.alias}"."time") Between :startDate AND :endDate`
-						  )
-						: '',
-					{
-						startDate,
-						endDate
-					}
-				);
+				// Filter on the indexed `recordedAt` timestamp column instead of a
+				// non-sargable `concat(date, time)::timestamp` expression. The old form had
+				// to compute the expression for every row, so it could not use any index and
+				// forced a full scan of the (very large) activity table. `recordedAt` holds
+				// the same instant (date + time) and is covered by the
+				// (organizationId, employeeId, recordedAt) / (organizationId, recordedAt)
+				// indexes, turning the range filter into an index range scan.
+				qb.andWhere(p(`"${query.alias}"."recordedAt" BETWEEN :startDate AND :endDate`), {
+					startDate,
+					endDate
+				});
 			})
 		);
 		query.andWhere(
