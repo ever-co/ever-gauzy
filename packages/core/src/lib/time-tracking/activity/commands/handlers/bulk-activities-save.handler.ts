@@ -1,5 +1,4 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import * as moment from 'moment';
 import { IActivity, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { Activity } from '../../activity.entity';
@@ -59,7 +58,7 @@ export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivities
 				const recordedAt =
 					activity.recordedAt ??
 					(activity.date && activity.time
-						? moment(`${activity.date} ${activity.time}`, 'YYYY-MM-DD HH:mm:ss').toDate()
+						? new Date(`${activity.date}T${activity.time}`)
 						: new Date());
 
 				return new Activity({
