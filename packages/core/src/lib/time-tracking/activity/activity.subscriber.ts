@@ -22,13 +22,15 @@ export class ActivitySubscriber extends BaseEntityEventSubscriber<Activity> {
 	 * @returns {Promise<void>} A promise that resolves when the pre-creation processing is complete.
 	 */
 	async beforeEntityCreate(entity: Activity): Promise<void> {
-		// Guarantee `recordedAt` is always set, regardless of the write path (bulk save, single
-		// create, or third-party imports). Reports/statistics filter on `recordedAt`, and a NULL
-		// value makes the row invisible to the time-range query. Prefer an explicit value, else
-		// derive it from the activity's date + time, else fall back to the current time.
-		entity.recordedAt =
-			entity.recordedAt ??
-			(entity.date && entity.time ? new Date(`${entity.date}T${entity.time}`) : new Date());
+		// Guarantee `recordedAt` is always set to a VALID timestamp, regardless of the write path
+		// (bulk save, single create, or third-party imports). Reports/statistics filter on
+		// `recordedAt`, and a NULL value makes the row invisible to the time-range query. Prefer an
+		// explicit value, else derive it from the activity's date + time, else fall back to now.
+		if (!entity.recordedAt) {
+			const derived = entity.date && entity.time ? new Date(`${entity.date}T${entity.time}`) : null;
+			// Guard against malformed date/time producing an `Invalid Date`, which would fail on insert.
+			entity.recordedAt = derived && !isNaN(derived.getTime()) ? derived : new Date();
+		}
 
 		try {
 			// Check if the database is SQLite and the entity's metaData is a JavaScript object
