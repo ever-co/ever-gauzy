@@ -390,21 +390,26 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				}
 			})
 		);
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				// Filter on the indexed `recordedAt` timestamp column instead of a
-				// non-sargable `concat(date, time)::timestamp` expression. The old form had
-				// to compute the expression for every row, so it could not use any index and
-				// forced a full scan of the (very large) activity table. `recordedAt` holds
-				// the same instant (date + time) and is covered by the
-				// (organizationId, employeeId, recordedAt) / (organizationId, recordedAt)
-				// indexes, turning the range filter into an index range scan.
-				qb.andWhere(p(`"${query.alias}"."recordedAt" BETWEEN :startDate AND :endDate`), {
-					startDate,
-					endDate
-				});
-			})
-		);
+		// Only apply the date-range filter when both bounds are provided, matching the MikroORM
+		// branches. Applying it unconditionally would produce `recordedAt BETWEEN NULL AND NULL`
+		// (which matches nothing) when a caller omits the range.
+		if (startDate && endDate) {
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					// Filter on the indexed `recordedAt` timestamp column instead of a
+					// non-sargable `concat(date, time)::timestamp` expression. The old form had
+					// to compute the expression for every row, so it could not use any index and
+					// forced a full scan of the (very large) activity table. `recordedAt` holds
+					// the same instant (date + time) and is covered by the
+					// (organizationId, employeeId, recordedAt) / (organizationId, recordedAt)
+					// indexes, turning the range filter into an index range scan.
+					qb.andWhere(p(`"${query.alias}"."recordedAt" BETWEEN :startDate AND :endDate`), {
+						startDate,
+						endDate
+					});
+				})
+			);
+		}
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				const { projectIds = [] } = request;
