@@ -25,6 +25,7 @@ import {
 	MultiORMEnum,
 	getDateRangeFormat,
 	getORMType,
+	parseFindOptionsRelations,
 	parseTypeORMFindToMikroOrm,
 	wrapSerialize,
 	validateDateRange
@@ -168,7 +169,10 @@ export class TimerService {
 				addRelationsToQuery(lastLogQueryParamsTypeOrm, request); // Adds relations from the request to the query parameters.
 
 				// Get today's last log (running or completed)
-				lastLog = await this.typeOrmTimeLogRepository.findOne(lastLogQueryParamsTypeOrm);
+				lastLog = await this.typeOrmTimeLogRepository.findOne({
+					...lastLogQueryParamsTypeOrm,
+					relations: parseFindOptionsRelations(lastLogQueryParamsTypeOrm.relations)
+				});
 				break;
 
 			default:
@@ -779,7 +783,7 @@ export class TimerService {
 				const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 				// query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 				query.setFindOptions({
-					...(request['relations'] ? { relations: request['relations'] } : {})
+					...(request['relations'] ? { relations: parseFindOptionsRelations(request['relations']) } : {})
 				});
 				query.where({
 					startedAt: Not(IsNull()),

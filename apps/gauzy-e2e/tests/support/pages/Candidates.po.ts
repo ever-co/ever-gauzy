@@ -1,0 +1,582 @@
+import dayjs from 'dayjs';
+import {
+	enterInput,
+	verifyElementIsVisible,
+	clickButton,
+	clickElementByText,
+	enterInputConditionally,
+	clearField,
+	clickKeyboardBtnByKeycode,
+	clickButtonByIndex,
+	getLastElement,
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting,
+	dispatchClick,
+	waitForSpinnerGone
+} from '../util';
+import { getPage } from '../page-context';
+// Selectors are framework-agnostic — reused from the Cypress tree during migration.
+import { CandidatesPage } from '../../../src/support/Base/pageobjects/CandidatesPageObject';
+
+export const openCandidatesPage = async () => {
+	// Mirror commands.ts gotoRoute: the spec reaches here straight after addTag (which ends on
+	// /#/pages/organization/tags). goto() to a different hash on the same document is a no-op for the
+	// Angular hash-router, so drive the hash change in-page, then wait for the candidates header to
+	// render before any control is touched.
+	await getPage().goto('/#/pages/employees/candidates');
+	await getPage().evaluate(() => {
+		if (!location.hash.includes('/pages/employees/candidates')) {
+			location.hash = '#/pages/employees/candidates';
+		}
+	});
+	await getPage().waitForTimeout(800);
+	await getPage()
+		.locator('h4 ngx-header-title:has-text("Manage Candidates")')
+		.first()
+		.waitFor({ state: 'visible', timeout: 30000 });
+};
+
+export const gridBtnExists = async () => {
+	/* no-op: grid list/grid layout toggle removed from the app */
+};
+
+export const gridBtnClick = async (index) => {
+	/* no-op: grid list/grid layout toggle removed from the app */
+};
+
+export const inviteButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.inviteButtonCss);
+};
+
+export const clickInviteButton = async () => {
+	// Toolbar Invite -> invite() opens the dialog. The button lives in an animated transition
+	// container; let the page settle then dispatch so a mid-transition coordinate click can't miss.
+	await waitForSpinnerGone();
+	await dispatchClick(CandidatesPage.inviteButtonCss);
+};
+
+export const emailInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.emailInputCss);
+};
+
+export const enterEmailData = async (data) => {
+	await enterInputConditionally(CandidatesPage.emailInputCss, data);
+};
+
+export const inviteDateInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.dateInputCss);
+};
+
+export const enterInviteDateInputData = async () => {
+	await clearField(CandidatesPage.dateInputCss);
+	const date = dayjs().format('MMM D, YYYY');
+	await enterInput(CandidatesPage.dateInputCss, date);
+};
+
+export const clickKeyboardButtonByKeyCode = async (keycode) => {
+	await clickKeyboardBtnByKeycode(keycode);
+};
+
+export const selectTableRowVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.selectTableRowCss);
+};
+
+export const selectTableRow = async (target) => {
+	// Selecting a grid row TOGGLES selection and enables the toolbar (Edit/Archive/Reject). Settle
+	// the grid first, then click ONCE and poll the Edit button's real `disabled` attr — only
+	// re-click if selection was lost. Never rapid re-click (that toggles it back off).
+	//
+	// `target` is the candidate's FULL NAME (string). The DB is fresh-seeded but intra-run pollution
+	// can leave OTHER candidate rows; row 0 is therefore unreliable (a polluted HIRED/REJECTED row at
+	// index 0 would have no toolbar Reject button, which is gated on status === APPLIED). Scope the
+	// row to the candidate we just created by filtering on its `a.link-text` name. A numeric `target`
+	// still falls back to nth() for backward compatibility.
+	await waitForSpinnerGone();
+	await getPage().waitForLoadState('networkidle').catch(() => {});
+	await getPage().waitForTimeout(1500);
+	const rows = getPage().locator(CandidatesPage.selectTableRowCss);
+	const row =
+		typeof target === 'number'
+			? rows.nth(target)
+			: rows.filter({ has: getPage().locator(CandidatesPage.verifyCandidateCss, { hasText: target }) }).first();
+	const editBtn = getPage().locator(CandidatesPage.editButtonCss).first();
+	await row.click({ force: true });
+	for (let i = 0; i < 5; i++) {
+		const disabled = await editBtn.getAttribute('disabled');
+		if (disabled === null) return; // enabled -> row is selected
+		await getPage().waitForTimeout(500);
+		if (i === 2) await row.click({ force: true }); // one re-click if still not selected
+	}
+};
+
+export const sendInviteButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.sendInviteButtonCss);
+};
+
+export const clickSendInviteButton = async () => {
+	// Invite is submitted right after the appliedDate nb-datepicker mutation; its fading
+	// cdk-overlay-backdrop sits over the footer and swallows a coordinate (force) click, so the
+	// dialog never closes. dispatchClick fires (click)="add()" straight on the element.
+	await dispatchClick(CandidatesPage.sendInviteButtonCss);
+	// The invite-mutation add() destructures saveInvites()'s result; on any server/timing error (or a
+	// form that briefly reads invalid) saveInvites() returns undefined and the destructure throws, so
+	// add()'s catch shows a toast but NEVER closeDialog() — the ga-invite-mutation dialog leaks open
+	// (confirmed in the failure DOM: the Invite Candidates dialog was still mounted at the end). Its
+	// modal backdrop then blocks the whole add-candidate flow and later toolbar row actions. The invite
+	// itself is not asserted anywhere, so just make sure the dialog is gone before we proceed: wait for
+	// it to detach, and if it leaked, dismiss it (Cancel button, then Escape as a fallback).
+	const page = getPage();
+	const inviteDialog = page.locator('ga-invite-mutation').first();
+	const closed = await inviteDialog
+		.waitFor({ state: 'detached', timeout: 8000 })
+		.then(() => true)
+		.catch(() => false);
+	if (!closed) {
+		// The leaked dialog MUST be dismissed or its modal backdrop blocks the whole add-candidate flow
+		// (the observed failure: #firstName never appears because the Add-candidate dialog can't open).
+		// A `.click({force:true})` on Cancel fires a TRUSTED pointer event at the button's center, which a
+		// lingering cdk-overlay-backdrop (the appliedDate datepicker opened via Tab, or a danger toast from
+		// add()'s catch) can still intercept — that's why the prior force-click left the dialog mounted.
+		// dispatchEvent('click') fires the (click)="closeDialog()" handler straight on the node, bypassing
+		// all coordinate hit-testing. Try Cancel, then the header X-icon, then Escape, re-checking detach
+		// after each and looping a few times until the dialog is genuinely gone.
+		const cancelBtn = page.locator('ga-invite-mutation nb-card-footer button[status="basic"]').first();
+		const closeIcon = page.locator('ga-invite-mutation span.cancel i').first();
+		for (let attempt = 0; attempt < 4 && (await inviteDialog.count()); attempt++) {
+			await cancelBtn.dispatchEvent('click').catch(() => undefined);
+			if (!(await inviteDialog.waitFor({ state: 'detached', timeout: 2500 }).then(() => true).catch(() => false))) {
+				await closeIcon.dispatchEvent('click').catch(() => undefined);
+				if (!(await inviteDialog.waitFor({ state: 'detached', timeout: 2500 }).then(() => true).catch(() => false))) {
+					await page.keyboard.press('Escape').catch(() => undefined);
+					await inviteDialog.waitFor({ state: 'detached', timeout: 2500 }).catch(() => undefined);
+				}
+			}
+		}
+	}
+};
+
+export const addCandidateButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.addButtonCss);
+};
+
+export const clickAddCandidateButton = async (index) => {
+	// Clicked right after the invite dialog closed (its backdrop + toastr still fading over the
+	// toolbar); a coordinate click lands on the overlay. Settle, then dispatch (click)="add()".
+	// dispatchEvent fires the handler straight on the node, bypassing any fading invite backdrop.
+	// Confirm the ga-candidate-mutation dialog actually opened (its onClose is what persists the
+	// candidate); retry the dispatch if a transient overlay ate the first one, so #firstName reliably
+	// appears — the observed failure was the Add dialog never opening because the invite dialog leaked.
+	await waitForSpinnerGone();
+	const dialog = getPage().locator('ga-candidate-mutation').first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await dispatchClick(CandidatesPage.addButtonCss);
+		const opened = await dialog
+			.waitFor({ state: 'visible', timeout: 6000 })
+			.then(() => true)
+			.catch(() => false);
+		if (opened) return;
+		await waitForSpinnerGone();
+	}
+};
+
+export const firstNameInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.firstNameInputCss);
+};
+
+export const enterFirstNameInputData = async (data) => {
+	await clearField(CandidatesPage.firstNameInputCss);
+	await enterInput(CandidatesPage.firstNameInputCss, data);
+};
+
+// Re-fill the THREE controls that gate step-1 validity (firstName, email, password) as the LAST step-1
+// action, mirroring the already-green ManageEmployees.reEnterRequiredStep1Fields. The step-1 Next is
+// [disabled]="userBasicInfo.form.invalid"; if ANY of these didn't register on its first fill, the form
+// stays invalid, add()'s addCandidate() skips `if (this.form.valid) this.candidates.push(...)` and
+// createBulk([]) persists NOTHING — the empty grid at verifyCandidateExists (the observed failure).
+// The password field (ngx-password-form-field) only propagates its value to the outer CVA on (blur),
+// so a plain .fill() can leave form.controls.password empty and the whole form invalid — fire input +
+// blur on it explicitly. Scoped to ga-candidate-mutation so a leaked invite form can't match (strict).
+export const reEnterRequiredStep1Fields = async (firstName, email, password) => {
+	// The field selectors are already scoped to ga-candidate-mutation, so use them directly (no extra
+	// dialog wrapper, which would double the ga-candidate-mutation prefix and match nothing).
+	await getPage().locator(CandidatesPage.firstNameInputCss).first().fill(String(firstName)).catch(() => {});
+	await getPage().locator(CandidatesPage.newCandidateEmailInputCss).first().fill(String(email)).catch(() => {});
+	const pwd = getPage().locator(CandidatesPage.passwordInputCss).first();
+	await pwd.fill(String(password)).catch(() => {});
+	await pwd.blur().catch(() => {});
+};
+
+// Click the mutation card body to close the still-open tags ng-select panel before advancing the
+// stepper. Best-effort: if the body isn't clickable for any reason we still proceed (the Next click
+// uses dispatchClick, which bypasses overlays anyway).
+export const clickCardBody = async () => {
+	await clickButton(CandidatesPage.cardBodyCss).catch(() => undefined);
+};
+
+export const lastNameInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.lastNameInputCss);
+};
+
+export const enterLastNameInputData = async (data) => {
+	await clearField(CandidatesPage.lastNameInputCss);
+	await enterInput(CandidatesPage.lastNameInputCss, data);
+};
+
+export const usernameInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.usernameInputCss);
+};
+
+export const enterUsernameInputData = async (data) => {
+	await clearField(CandidatesPage.usernameInputCss);
+	await enterInput(CandidatesPage.usernameInputCss, data);
+};
+
+export const candidateEmailInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.newCandidateEmailInputCss);
+};
+
+export const enterCandidateEmailInputData = async (data) => {
+	await clearField(CandidatesPage.newCandidateEmailInputCss);
+	await enterInput(CandidatesPage.newCandidateEmailInputCss, data);
+};
+
+export const passwordInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.passwordInputCss);
+};
+
+export const enterPasswordInputData = async (data) => {
+	await clearField(CandidatesPage.passwordInputCss);
+	await enterInput(CandidatesPage.passwordInputCss, data);
+};
+
+export const candidateDateInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.newCandidateDateInputCss);
+};
+
+export const enterCandidateDateInputData = async () => {
+	await clearField(CandidatesPage.newCandidateDateInputCss);
+	const date = dayjs().format('MMM D, YYYY');
+	await enterInput(CandidatesPage.newCandidateDateInputCss, date);
+};
+
+export const tagsDropdownVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.addTagsDropdownCss);
+};
+
+export const clickAddTagsDropdown = async () => {
+	// ga-tags-color-input is an ng-select that opens on MOUSEDOWN and is backdrop-blocked; a
+	// force-click on its control can also CLOSE the add form. Open it via the keyboard instead.
+	const input = getPage().locator(CandidatesPage.addTagsDropdownCss).locator('input').first();
+	await input.focus();
+	await getPage().keyboard.press('ArrowDown');
+};
+
+export const selectTagsFromDropdown = async (index) => {
+	await clickButtonByIndex(CandidatesPage.tagsDropdownOption, index);
+};
+
+export const imageInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.imageInputCss);
+};
+
+export const enterImageInputData = async (data) => {
+	await enterInput(CandidatesPage.imageInputCss, data);
+};
+
+export const nextButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.nextButtonCss);
+};
+
+export const clickNextButton = async () => {
+	// Stepper step-1 -> step-2 (nbStepperNext). The tags ng-select dropdown we just opened (appendTo
+	// body) leaves a fading overlay over the footer; dispatch the click straight on the button.
+	// IMPORTANT: this button is [disabled]="userBasicInfo.form.invalid". A dispatchEvent('click') fires
+	// the nbStepperNext host listener even on a DISABLED button, so a still-invalid step-1 form would be
+	// silently force-advanced to step-3, where add()'s addCandidate() skips the push (form invalid) and
+	// createBulk([]) persists nothing — the exact empty-grid failure ("You have not created any
+	// candidates"). Poll until the button is genuinely ENABLED (form valid) before advancing, so a real
+	// validity problem surfaces here instead of as a mysterious empty grid downstream.
+	await waitForSpinnerGone();
+	const next = getPage().locator(CandidatesPage.nextButtonCss).first();
+	await next.waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
+	for (let i = 0; i < 30; i++) {
+		if (!(await next.isDisabled().catch(() => true))) break;
+		await getPage().waitForTimeout(500);
+	}
+	await dispatchClick(CandidatesPage.nextButtonCss);
+};
+
+export const nextStepButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.nextStepButtonCss);
+};
+
+export const clickNextStepButton = async () => {
+	// Stepper step-2 (CV url) -> step-3 (nbStepperNext); same backdrop hazard as step-1's Next.
+	// nextStepButtonCss matches BOTH the step-1 and step-2 green Next buttons; dispatching a click on
+	// either fires an nbStepperNext, which advances the stepper from its CURRENT step, so it still
+	// reaches step 3. Confirm we actually landed on step 3 by waiting for the status="success"
+	// "Finished adding" button to appear, and retry the dispatch if the first didn't take — otherwise
+	// the later success-button click would fire add() on the wrong step and persist nothing.
+	await waitForSpinnerGone();
+	const finish = getPage().locator(CandidatesPage.allCurrentCandidatesButtonCss).first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await dispatchClick(CandidatesPage.nextStepButtonCss);
+		const reached = await finish
+			.waitFor({ state: 'visible', timeout: 6000 })
+			.then(() => true)
+			.catch(() => false);
+		if (reached) return;
+		await waitForSpinnerGone();
+	}
+};
+
+export const allCurrentCandidatesButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.allCurrentCandidatesButtonCss);
+};
+
+export const clickAllCurrentCandidatesButton = async () => {
+	// Stepper step-3 "Finished adding" -> (click)="add()" runs addCandidate() (pushes the candidate only
+	// if the form is valid) then createBulk() and closes the dialog — the ONLY path that persists the
+	// candidate. Dispatch through any lingering stepper/overlay backdrop, then confirm the mutation
+	// dialog actually detached (createBulk resolved). Retry once if a transient overlay swallowed the
+	// first dispatch, so we never leave with nothing persisted.
+	await waitForSpinnerGone();
+	const dialog = getPage().locator('ga-candidate-mutation').first();
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await dispatchClick(CandidatesPage.allCurrentCandidatesButtonCss);
+		const closed = await dialog
+			.waitFor({ state: 'detached', timeout: 12000 })
+			.then(() => true)
+			.catch(() => false);
+		if (closed) return;
+		await waitForSpinnerGone();
+		await getPage().waitForTimeout(500);
+	}
+};
+
+export const tableRowVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.selectTableRowCss);
+};
+
+export const selectLastTableRow = async () => {
+	await getLastElement(CandidatesPage.selectTableRowCss);
+};
+
+export const editButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.editButtonCss);
+};
+
+export const includeArchiveButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.checkboxButtonCss);
+};
+
+export const clickIncludeArchiveButton = async () => {
+	await clickButton(CandidatesPage.checkboxButtonCss);
+};
+
+export const clickEditButton = async () => {
+	// Toolbar Edit fires after row selection; dispatch so a fading selection/overlay can't swallow it.
+	await dispatchClick(CandidatesPage.editButtonCss);
+};
+
+export const archiveButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.archiveButtonCss);
+};
+
+export const clickArchiveButton = async () => {
+	// Toolbar Archive opens the confirm dialog; dispatch through any fading selection overlay.
+	await dispatchClick(CandidatesPage.archiveButtonCss);
+};
+
+export const rejectButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.rejectButtonCss);
+};
+
+export const clickRejectButton = async () => {
+	// Toolbar Reject opens the confirm dialog; dispatch through any fading selection overlay.
+	await dispatchClick(CandidatesPage.rejectButtonCss);
+};
+
+export const locationButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.locationButtonCss);
+};
+
+export const clickLocationButton = async () => {
+	await clickButton(CandidatesPage.locationButtonCss);
+};
+
+export const countryDropdownVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.countryDropdownCss);
+};
+
+export const clickCountryDropdown = async () => {
+	await clickButton(CandidatesPage.countryDropdownCss);
+};
+
+export const selectCountryFromDropdown = async (text) => {
+	await clickElementByText(CandidatesPage.selectDropdownOptionCss, text);
+};
+
+export const cityInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.cityInputCss);
+};
+
+export const enterCityInputData = async (data) => {
+	await clearField(CandidatesPage.cityInputCss);
+	await enterInput(CandidatesPage.cityInputCss, data);
+};
+
+export const addressOneInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.addressOneInputCss);
+};
+
+export const enterAddressOneInputData = async (data) => {
+	await clearField(CandidatesPage.addressOneInputCss);
+	await enterInput(CandidatesPage.addressOneInputCss, data);
+};
+
+export const postcodeInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.postCodeInputCss);
+};
+
+export const enterPostcodeInputData = async (data) => {
+	await clearField(CandidatesPage.postCodeInputCss);
+	await enterInput(CandidatesPage.postCodeInputCss, data);
+};
+
+export const saveActionButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.saveActionButtonCss);
+};
+
+export const clickSaveActionButton = async () => {
+	await clickButton(CandidatesPage.saveActionButtonCss);
+};
+
+export const backButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.backButtonCss);
+};
+
+export const clickBackButton = async () => {
+	// Clicked right after the edit Save toast; dispatch through any lingering overlay.
+	await dispatchClick(CandidatesPage.backButtonCss);
+};
+
+export const saveEditButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.saveEditButtonCss);
+};
+
+export const clickSaveEditButton = async () => {
+	// Edit-page Save (type="submit", disabled while form invalid). Let the page settle, then
+	// dispatch so the (ngSubmit) fires even with a transient overlay/spinner.
+	await waitForSpinnerGone();
+	await dispatchClick(CandidatesPage.saveEditButtonCss);
+};
+
+export const ratesButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.ratesButtonCss);
+};
+
+export const clickRatesButton = async () => {
+	await clickButton(CandidatesPage.ratesButtonCss);
+};
+
+export const payPeriodDropdownVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.payPeriodDropdownCss);
+};
+
+export const clickPayPeriodDropdown = async () => {
+	await clickButton(CandidatesPage.payPeriodDropdownCss);
+};
+
+export const selectPayPeriodFromDropdown = async (text) => {
+	await clickElementByText(CandidatesPage.selectDropdownOptionCss, text);
+};
+
+export const billRateInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.billRateInputCss);
+};
+
+export const enterBillRateInputData = async (data) => {
+	await clearField(CandidatesPage.billRateInputCss);
+	await enterInput(CandidatesPage.billRateInputCss, data);
+};
+
+export const saveBillRateButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.saveActionButtonCss);
+};
+
+export const clickSaveBillRateButton = async () => {
+	await clickButton(CandidatesPage.saveActionButtonCss);
+};
+
+export const experienceButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.experienceButtonCss);
+};
+
+export const clickExperienceButton = async () => {
+	await clickButton(CandidatesPage.experienceButtonCss);
+};
+
+export const addExperienceButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.addExperienceButtonCss);
+};
+
+export const clickAddExperienceButton = async () => {
+	await clickButton(CandidatesPage.addExperienceButtonCss);
+};
+
+export const schoolNameInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.schoolNameInputCss);
+};
+
+export const enterSchoolNameInputData = async (data) => {
+	await clearField(CandidatesPage.schoolNameInputCss);
+	await enterInput(CandidatesPage.schoolNameInputCss, data);
+};
+
+export const degreeInputVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.degreeInputCss);
+};
+
+export const enterDegreeInputData = async (data) => {
+	await clearField(CandidatesPage.degreeInputCss);
+	await enterInput(CandidatesPage.degreeInputCss, data);
+};
+
+export const saveExperienceButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.saveExperienceButtonCss);
+};
+
+export const clickSaveExperienceButton = async () => {
+	await clickButton(CandidatesPage.saveExperienceButtonCss);
+};
+
+export const confirmActionButtonVisible = async () => {
+	await verifyElementIsVisible(CandidatesPage.confirmActionButtonCss);
+};
+
+export const clickConfirmActionButton = async () => {
+	// OK button on the reject/archive confirm dialog; dispatch so the freshly-opened dialog's own
+	// backdrop (or the previous toolbar overlay) can't intercept the coordinate click.
+	await dispatchClick(CandidatesPage.confirmActionButtonCss);
+};
+
+export const waitMessageToHide = async () => {
+	await waitElementToHide(CandidatesPage.toastrMessageCss);
+};
+
+export const verifyCandidateExists = async (text) => {
+	await verifyText(CandidatesPage.verifyCandidateCss, text);
+};
+
+export const verifyElementIsDeleted = async (text) => {
+	// After archiving, the candidate leaves the default (non-archived) grid. Asserting that NO
+	// `a.link-text` remains breaks under intra-run pollution (other candidates' links survive); scope
+	// the "is gone" check to the candidate we created by name instead of the whole grid.
+	await verifyTextNotExisting(CandidatesPage.verifyCandidateCss, text);
+};
+
+export const verifyBadgeClass = async () => {
+	await verifyElementIsVisible(CandidatesPage.badgeCss);
+};

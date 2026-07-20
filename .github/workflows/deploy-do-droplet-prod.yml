@@ -10,7 +10,8 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubicloud-standard-4
+    if: ${{ vars.DO_ENABLED == 'true' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
     timeout-minutes: 300
 
     environment: prod
@@ -97,6 +98,7 @@ jobs:
           EXPRESS_SESSION_SECRET: '${{ secrets.EXPRESS_SESSION_SECRET }}'
           JWT_SECRET: '${{ secrets.JWT_SECRET }}'
           JWT_REFRESH_TOKEN_SECRET: '${{ secrets.JWT_REFRESH_TOKEN_SECRET }}'
+          JWT_VERIFICATION_TOKEN_SECRET: '${{ secrets.JWT_VERIFICATION_TOKEN_SECRET }}'
           JWT_REFRESH_TOKEN_EXPIRATION_TIME: '${{ secrets.JWT_REFRESH_TOKEN_EXPIRATION_TIME }}'
           ALLOWED_ORIGINS: '${{ secrets.ALLOWED_ORIGINS }}'
           CLOUDINARY_API_KEY: '${{ secrets.CLOUDINARY_API_KEY }}'

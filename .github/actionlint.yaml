@@ -1,0 +1,7 @@
+# actionlint configuration
+# Declares the self-hosted ARC runner labels used by this repo's Linux CI so that
+# actionlint does not flag `runs-on:` values it doesn't recognize.
+self-hosted-runner:
+  labels:
+    - ever-k8s-linux-x64-4
+    - ever-k8s-linux-x64-8

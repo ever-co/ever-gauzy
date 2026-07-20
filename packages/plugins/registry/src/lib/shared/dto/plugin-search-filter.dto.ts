@@ -3,8 +3,27 @@ import { BaseQueryDTO } from '@gauzy/core';
 import { parseToBoolean } from '@gauzy/utils';
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsIn, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import { IPlugin } from '../models';
+
+/**
+ * Allowlist of columns that may be used in the SQL `ORDER BY` clause.
+ * MUST stay in sync with the columns interpolated by SearchPluginsQueryHandler.
+ * Keeping this as a runtime `@IsIn` check (not just the compile-time union below)
+ * is what prevents SQL injection via the `sortBy` parameter.
+ */
+export const PLUGIN_SORTABLE_FIELDS = [
+	'name',
+	'author',
+	'uploadedAt',
+	'lastDownloadedAt',
+	'downloadCount',
+	'createdAt',
+	'updatedAt'
+] as const;
+
+/** Allowed SQL sort directions. */
+export const PLUGIN_SORT_DIRECTIONS = ['ASC', 'DESC'] as const;
 
 /**
  * DTO for plugin search and filtering functionality
@@ -206,25 +225,20 @@ export class PluginSearchFilterDTO extends PartialType(BaseQueryDTO<IPlugin>) {
 	@ApiPropertyOptional({
 		description: 'Sort field',
 		example: 'name',
-		enum: ['name', 'author', 'uploadedAt', 'lastDownloadedAt', 'downloadCount', 'createdAt', 'updatedAt']
+		enum: PLUGIN_SORTABLE_FIELDS
 	})
 	@IsOptional()
-	@IsString()
-	readonly sortBy?:
-		| 'name'
-		| 'author'
-		| 'uploadedAt'
-		| 'lastDownloadedAt'
-		| 'downloadCount'
-		| 'createdAt'
-		| 'updatedAt';
+	@IsIn(PLUGIN_SORTABLE_FIELDS)
+	readonly sortBy?: (typeof PLUGIN_SORTABLE_FIELDS)[number];
 
 	@ApiPropertyOptional({
 		description: 'Sort direction',
 		example: 'ASC',
-		enum: ['ASC', 'DESC']
+		enum: PLUGIN_SORT_DIRECTIONS
 	})
 	@IsOptional()
-	@IsString()
-	readonly sortDirection?: 'ASC' | 'DESC';
+	// Normalize case so legacy clients sending `asc`/`desc` keep working, then enforce the allowlist.
+	@Transform(({ value }) => (typeof value === 'string' ? value.toUpperCase() : value))
+	@IsIn(PLUGIN_SORT_DIRECTIONS)
+	readonly sortDirection?: (typeof PLUGIN_SORT_DIRECTIONS)[number];
 }

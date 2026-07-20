@@ -23,6 +23,7 @@ import { environment } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import {
+	ChatSidebarService,
 	DEFAULT_SELECTOR_VISIBILITY,
 	DateRangePickerBuilderService,
 	EmployeeStore,
@@ -136,6 +137,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		public readonly navigationBuilderService: NavigationBuilderService,
+		public readonly chatSidebarService: ChatSidebarService,
 		private readonly dateRangeService: DateRangePickerBuilderService,
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly organizationProjectStore: OrganizationProjectStore,

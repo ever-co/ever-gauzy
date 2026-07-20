@@ -1,7 +1,7 @@
 import { EventSubscriber } from 'typeorm';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { IntegrationSetting } from './integration-setting.entity';
-import { keysToWrapSecrets, sensitiveSecretKeys } from './integration-setting.utils';
+import { keysToWrapSecrets, nonSecretSettingKeys } from './integration-setting.utils';
 
 @EventSubscriber()
 export class IntegrationSettingSubscriber extends BaseEntityEventSubscriber<IntegrationSetting> {
@@ -29,11 +29,14 @@ export class IntegrationSettingSubscriber extends BaseEntityEventSubscriber<Inte
 			entity.wrapSecretKey = settingsName;
 			entity.wrapSecretValue = settingsValue;
 
-			if (sensitiveSecretKeys.includes(settingsName) && typeof settingsValue === 'string') {
+			// Default-deny: mask EVERY settings value unless its name is on the explicit non-secret
+			// allowlist. This ensures OAuth access/refresh tokens, client secrets and similar
+			// credentials are never returned in cleartext (GHSA-3rqg-gpm9-gx84).
+			if (typeof settingsValue === 'string' && !nonSecretSettingKeys.includes(settingsName)) {
 				// Create an object containing the sensitive data
 				const secrets: Record<string, string> = { [settingsName]: settingsValue };
-				// Apply the wrapping function only to the sensitive keys
-				const wrapped = keysToWrapSecrets(sensitiveSecretKeys, secrets, percentage);
+				// Apply the wrapping function to this setting's value
+				const wrapped = keysToWrapSecrets([settingsName], secrets, percentage);
 				entity.wrapSecretValue = wrapped[settingsName];
 			}
 		} catch (error) {

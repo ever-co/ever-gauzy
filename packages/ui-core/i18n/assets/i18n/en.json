@@ -1788,6 +1788,12 @@
 			"SPACE_URL": "Plane Space URL",
 			"SPACE_URL_PLACEHOLDER": "https://plane-space.example.com",
 			"SETUP_INFO": "Enter the URLs where your Plane instance is hosted. The Web URL is required. Admin and Space URLs are optional.",
+			"MODE_LABEL": "Setup Type",
+			"MODE_SHARED": "Use shared Ever Gauzy PM (recommended)",
+			"MODE_CUSTOM": "Use my own URLs",
+			"SHARED_INFO": "You're using the shared Ever Gauzy project management apps. No URLs to configure — just enable the integration.",
+			"OPEN_PLANE": "Open Plane",
+			"OPEN_PLANE_LABEL": "Project Management App",
 			"URL_REQUIRED": "This URL is required.",
 			"URL_INVALID": "Please enter a valid URL starting with http:// or https://.",
 			"LOADING": "Loading settings...",
@@ -2756,6 +2762,10 @@
 			"INTEGRATION_VIEW": "View Integrations",
 			"INTEGRATION_EDIT": "Edit Integrations",
 			"INTEGRATION_DELETE": "Delete Integrations",
+			"AI_CHAT_ACCESS": "Access AI Chat",
+			"AI_CHAT_SETTINGS": "Manage AI Chat Settings",
+			"OAUTH_CLIENT_VIEW": "View OAuth Clients",
+			"OAUTH_CLIENT_EDIT": "Manage OAuth Clients",
 			"FILE_STORAGE_VIEW": "View File Storage",
 			"PAYMENT_GATEWAY_VIEW": "View Payment Gateway",
 			"SMS_GATEWAY_VIEW": "View SMS Gateway",
@@ -3770,7 +3780,8 @@
 		"SELECT_A_DATE": "Select A Date",
 		"SELECT_AN_ORGANIZATION": "Select An Organization",
 		"SELECT_PROJECT": "Select Project",
-		"SELECT_TEAM": "Select Team"
+		"SELECT_TEAM": "Select Team",
+		"AI_CHAT": "AI Chat"
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -4104,7 +4115,11 @@
 		"RIGHTS_RESERVED": "All rights reserved.",
 		"PRESENT": "Present",
 		"TERMS_OF_SERVICE": "Terms Of Service",
-		"PRIVACY_POLICY": "Privacy Policy"
+		"PRIVACY_POLICY": "Privacy Policy",
+		"VERSION": "Release version — open on GitHub",
+		"COMMIT": "Deployed commit — open on GitHub",
+		"WEB": "Web",
+		"API": "API"
 	},
 	"TOASTR": {
 		"TITLE": {

@@ -1,14 +1,19 @@
 export const OrganizationPublicPage = {
 	organizationDropdownCss: 'ga-organization-selector ng-select',
 	organizationDropdownOptionsCss: 'ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
+	// The organizations grid reuses the "Client Name" column header/filter label (SM_TABLE.CLIENT_NAME),
+	// so the name-filter input placeholder really is "Client Name" here — verified against
+	// organizations.component.ts columns.name.title.
 	nameFilterInputCss: 'input[placeholder="Client Name"]',
-	organizationTableRowCss: 'table > tbody > tr:first-of-type',
-	organizationNameTableCellCss: 'table > tbody > tr:first-of-type > td:first-of-type div.d-block',
-	manageButtonCss: 'button[status="info"]',
+	organizationTableRowCss: 'table > tbody > tr.angular2-smart-row:first-of-type',
+	// The name cell renders via OrganizationWithTagsComponent as `.organization-render span > div`
+	// (no more `div.d-block`); match the render container's text so the filter-result assertion holds.
+	organizationNameTableCellCss: 'table > tbody > tr.angular2-smart-row:first-of-type .organization-render',
+	manageButtonCss: 'button.action.primary',
 	profileLinkInputCss: 'input[formcontrolname="profile_link"]',
 	saveButtonCss: 'div.actions > button[status="success"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	editPageButtonCss: 'div.edit-icon > nb-icon',
+	editPageButtonCss: 'button.action.primary',
 	companyNameInputCss: 'input[formcontrolname="name"]',
 	companySizeInputCss: 'input[formcontrolname="totalEmployees"]',
 	yearFoundedInputCss: 'input[formcontrolname="founded"]',
@@ -20,27 +25,30 @@ export const OrganizationPublicPage = {
 	shortDescriptionInputCss: 'textarea[formcontrolname="short_description"]',
 	cardBodyCss: 'nb-card-body.body',
 	awardsTabCss: 'form > nb-tabset > ul.tabset > li.tab',
-	addAwardsButtonCss: 'nb-tab button[status="success"]',
-	awardNameInputCss: 'input[placeholder="Name"]',
-	awardYearInputCss: 'input[placeholder="Year"]',
-	awardsSaveButtonCss: 'nb-tab button[status="success"]',
+	// Add-award trigger and its Save button are distinct in the current markup: the "+" lives under
+	// .button-add-award, the Save (once the sub-form is shown) under .show-add-award. Scope each so the
+	// broad `nb-tab button[status="success"]` can't collide (both were previously identical).
+	addAwardsButtonCss: '.button-add-award button[status="success"]',
+	awardNameInputCss: '.show-add-award input.input_name',
+	awardYearInputCss: '.show-add-award input.input_year',
+	awardsSaveButtonCss: '.show-add-award button[status="success"]',
 	skillsTabCss: 'form > nb-tabset > ul.tabset > li.tab',
 	skillsDropdownCss: 'ng-select[formcontrolname="skills"]',
 	skillsDropdownOptionsCss: 'ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
 	languagesTabCss: 'form > nb-tabset > ul.tabset > li.tab',
-	addLanguageButtonCss: 'nb-tab[ng-reflect-tab-title="Languages"] button[status="success"]',
+	addLanguageButtonCss: '.button-add-language button[status="success"]',
 	languageDropdownCss: 'ngx-language-selector div[role="combobox"]',
 	languageDropdownOptionsCss: 'ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
 	languageLevelDropdownCss: 'nb-select[placeholder="Select Showcase"]',
 	languageLevelDropdownOptionsCss: 'nb-option-list > ul.option-list > nb-option',
-	languageSaveButtonCss: 'nb-tab[ng-reflect-tab-title="Languages"] button[status="success"]',
-	updateButtonCss: 'nb-card-footer.text-right > button[status="success"]',
+	languageSaveButtonCss: '.show-add-language button[status="success"]',
+	updateButtonCss: 'nb-card-footer > button[status="success"]',
 	companyNameCss: 'div.org-head h4.org-name',
 	bannerCss: 'div.org-head span.org-banner',
 	companySizeCss: 'div.org-head div.org-size > h5.org-title',
 	totalClientsCss: 'div.org-head div.org-size > h5.org-title',
 	clientFocusCss: 'div.org-head div.org-client-focus > h5.org-title > span.client-focus',
-	skillsCss: 'div.org-skills > .org-value > li.org_list_data',
+	skillsCss: 'div.org-skills nb-tag',
 
 	organizationNameFieldCss: '[placeholder="Organization Name"]',
 	currencyFieldCss: '#currencySelect',
@@ -49,7 +57,9 @@ export const OrganizationPublicPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	taxFieldCss: '#taxIdInput',
 	nextButtonCss: 'button[type="submit"]',
-	addButtonCss: 'nb-card-body > div > button[status="success"]',
+	// Add button moved from nb-card-body into the nb-card-header toolbar (ngx-gauzy-button-action
+	// #visible template). Scope to the plus icon so a leaked success button elsewhere can't match first.
+	addButtonCss: 'button[status="success"]:has(nb-icon[icon="plus-outline"])',
 	verifyOrganizationCss: 'div.d-block',
 	countryDropdownCss: 'ga-country div.form-group nb-select',
 	cityInputCss: '#cityInput',

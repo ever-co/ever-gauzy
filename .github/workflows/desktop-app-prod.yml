@@ -1,25 +1,65 @@
 name: Desktop App Build Prod
 
+# The packaged desktop & server apps are built ONLY when 'master' is promoted to the 'apps' branch
+# (branch flow: develop -> stage -> master -> apps).
+# The build version is resolved at build time (.scripts/bump-version-electron.js) from the release
+# tag pointing at this commit, which 'Release Prod' creates on the merge to 'master' - so app releases
+# always carry the same version as the corresponding platform release and publish to the
+# same targets (each app repo's GitHub Releases + DigitalOcean Spaces).
 on:
-  workflow_run:
-    workflows: ['Release Prod']
+  push:
     branches:
-      - master
-    types:
-      - completed
+      - apps
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
+  check-release-tag:
+    # Only build when this exact commit carries a release tag (the version stamped into the
+    # packages - see header comment) - i.e. 'apps' was fast-forwarded
+    # to a 'master' commit that 'Release Prod' has already tagged. Retries absorb the short
+    # merge -> tag delay when 'apps' is promoted right after the 'master' merge.
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Verify a release tag points at this commit
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_NAME" != "apps" ]; then
+            echo "::error::This workflow only releases from the 'apps' branch (got '$GITHUB_REF_NAME')."
+            exit 1
+          fi
+          for i in $(seq 1 20); do
+            git fetch --quiet --depth=1 origin '+refs/tags/*:refs/tags/*' || echo "git fetch failed (attempt $i); will retry"
+            TAG=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
+            if [ -n "$TAG" ]; then
+              echo "Release tag on this commit: $TAG"
+              exit 0
+            fi
+            echo "No release tag points at this commit yet (attempt $i/20); retrying in 30s..."
+            sleep 30
+          done
+          echo "::error::No release tag points at this commit. Promote by fast-forwarding 'apps' to the tagged 'master' commit (git push origin origin/master:apps) after 'Release Prod' has created the tag."
+          exit 1
+
   release-linux:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
     strategy:
       matrix:
-        os: [ubicloud-standard-8]
+        os: ["${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}"]
 
     steps:
       - name: Check out Git repository
@@ -62,10 +102,26 @@ jobs:
             org.electronjs.Electron2.BaseApp//24.08
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@v2
+        # Pin snapcraft 7.x: 8.0+ renamed the `snap` command to `pack`, but electron-builder's
+        # app-builder still invokes `snapcraft snap` (ERR_ELECTRON_BUILDER_CANNOT_EXECUTE). 7.x keeps
+        # the `snap` command and still supports the core22 base.
+        run: sudo snap install snapcraft --classic --channel=7.x/stable
+
+      - name: Use Python 3.11 for native rebuilds (Linux)
+        # node-gyp's gyp eval()-parses Electron 38's common.gypi; Python 3.12's stricter tokenizer
+        # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
+        # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine. Pinned to a SHA.
+        id: py311
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
 
       - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
+        # Install build deps into, and point node-gyp at, the SAME 3.11 interpreter (not a stray python3).
+        run: |
+          "${{ steps.py311.outputs.python-path }}" -m pip install packaging setuptools
+          echo "npm_config_python=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
+          echo "PYTHON=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
 
       - name: Install latest version of NPM
         run: 'sudo npm install -g npm@11.6.2'
@@ -131,6 +187,7 @@ jobs:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
 
   release-linux-arm64:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -182,13 +239,29 @@ jobs:
             org.electronjs.Electron2.BaseApp//24.08
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@v2
+        # Pin snapcraft 7.x: 8.0+ renamed the `snap` command to `pack`, but electron-builder's
+        # app-builder still invokes `snapcraft snap` (ERR_ELECTRON_BUILDER_CANNOT_EXECUTE). 7.x keeps
+        # the `snap` command and still supports the core22 base.
+        run: sudo snap install snapcraft --classic --channel=7.x/stable
 
       - name: Install Multipass
         run: 'sudo snap install multipass'
 
+      - name: Use Python 3.11 for native rebuilds (Linux)
+        # node-gyp's gyp eval()-parses Electron 38's common.gypi; Python 3.12's stricter tokenizer
+        # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
+        # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine. Pinned to a SHA.
+        id: py311
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
+
       - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
+        # Install build deps into, and point node-gyp at, the SAME 3.11 interpreter (not a stray python3).
+        run: |
+          "${{ steps.py311.outputs.python-path }}" -m pip install packaging setuptools
+          echo "npm_config_python=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
+          echo "PYTHON=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
 
       - name: Install latest version of NPM
         run: 'sudo npm install -g npm@11.6.2'
@@ -256,6 +329,7 @@ jobs:
           SNAPCRAFT_BUILD_ENVIRONMENT: host
 
   release-mac:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -367,6 +441,7 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
 
   release-windows:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -527,9 +602,14 @@ jobs:
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
           NX_PLUGIN_NO_TIMEOUTS: true
+          # Run Nx plugins in-process: isolated plugin workers intermittently fail to spawn on the
+          # self-hosted Windows runners ("Failed to start plugin worker") -> random package build
+          # failures. Matches the e2e workflow's proven setting on the same box.
+          NX_ISOLATE_PLUGINS: false
           NX_DAEMON: false
 
   release-windows-arm64:
+    needs: check-release-tag
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
 
@@ -703,4 +783,8 @@ jobs:
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
           NX_PLUGIN_NO_TIMEOUTS: true
+          # Run Nx plugins in-process: isolated plugin workers intermittently fail to spawn on the
+          # self-hosted Windows runners ("Failed to start plugin worker") -> random package build
+          # failures. Matches the e2e workflow's proven setting on the same box.
+          NX_ISOLATE_PLUGINS: false
           NX_DAEMON: false

@@ -88,6 +88,9 @@
 			"verifyUpdateCodeSignature": false,
 			"requestedExecutionLevel": "requireAdministrator"
 		},
+		"snap": {
+			"base": "core22"
+		},
 		"linux": {
 			"icon": "linux",
 			"target": [

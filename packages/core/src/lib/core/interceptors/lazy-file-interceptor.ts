@@ -26,7 +26,9 @@ export function LazyFileInterceptor(fieldName: string, localOptions?: MulterOpti
 			this.multer = (multer as any)({
 				...this.options,
 				...{
-					storage
+					storage,
+					// Pass through a per-route fileFilter when provided (e.g. to block executable/SVG uploads).
+					...(localOptions?.fileFilter ? { fileFilter: localOptions.fileFilter } : {})
 				}
 			});
 			await new Promise<void>((resolve, reject) =>

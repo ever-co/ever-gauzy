@@ -15,7 +15,7 @@
 			<h5 class="mb-0 ml-4">{{ 'INTEGRATIONS.PLANE_PAGE.TITLE' | translate }}</h5>
 		</div>
 		<div class="header-actions">
-			@if (!isEditing()) {
+			@if (!isEditing() && mode === 'custom') {
 				<button
 					nbButton
 					size="small"
@@ -52,6 +52,26 @@
 				<span class="sr-only">{{ 'INTEGRATIONS.PLANE_PAGE.LOADING' | translate }}</span>
 			</div>
 		} @else {
+			@if (mode === 'shared') {
+				<div class="col-xl-6 col-12">
+					<div class="hint">
+						<nb-icon icon="info-outline"></nb-icon>
+						{{ 'INTEGRATIONS.PLANE_PAGE.SHARED_INFO' | translate }}
+					</div>
+					<div class="form-group">
+						<label class="label">{{ 'INTEGRATIONS.PLANE_PAGE.WEB_URL' | translate }}</label>
+						<input fullWidth type="url" nbInput readonly [value]="settings()?.planeWebUrl || ''" />
+					</div>
+					<div class="form-group">
+						<label class="label">{{ 'INTEGRATIONS.PLANE_PAGE.ADMIN_URL' | translate }}</label>
+						<input fullWidth type="url" nbInput readonly [value]="settings()?.planeAdminUrl || ''" />
+					</div>
+					<div class="form-group">
+						<label class="label">{{ 'INTEGRATIONS.PLANE_PAGE.SPACE_URL' | translate }}</label>
+						<input fullWidth type="url" nbInput readonly [value]="settings()?.planeSpaceUrl || ''" />
+					</div>
+				</div>
+			} @else {
 			<form class="col-xl-6 col-12" [formGroup]="form" (ngSubmit)="saveSettings()">
 				<div class="form-group">
 					<label class="label" for="planeWebUrl">
@@ -118,10 +138,18 @@
 					</div>
 				}
 			</form>
+			}
 
 			@if (!isEditing()) {
 				<div class="actions-section col-xl-6 col-12">
 					<hr />
+					<div class="d-flex align-items-center justify-content-between">
+						<span class="label">{{ 'INTEGRATIONS.PLANE_PAGE.OPEN_PLANE_LABEL' | translate }}</span>
+						<button nbButton status="primary" size="small" outline (click)="openPlane()" [disabled]="loading()">
+							<nb-icon icon="external-link-outline"></nb-icon>
+							{{ 'INTEGRATIONS.PLANE_PAGE.OPEN_PLANE' | translate }}
+						</button>
+					</div>
 					<div class="d-flex align-items-center justify-content-between">
 						<span class="label">{{ 'INTEGRATIONS.PLANE_PAGE.REGENERATE_KEY_LABEL' | translate }}</span>
 						<button

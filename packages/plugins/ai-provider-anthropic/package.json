@@ -1,0 +1,61 @@
+{
+	"name": "@gauzy/plugin-ai-provider-anthropic",
+	"version": "0.1.0",
+	"description": "Ever Gauzy AI Chat provider plugin — registers Anthropic (Claude) models with the @gauzy/plugin-ai-chat provider registry via @ai-sdk/anthropic",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/ai-provider-anthropic"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-ai-provider-anthropic",
+		"lib:build:prod": "yarn nx build plugin-ai-provider-anthropic",
+		"lib:watch": "yarn nx build plugin-ai-provider-anthropic --watch"
+	},
+	"dependencies": {
+		"@ai-sdk/anthropic": "^4.0.8",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/plugin-ai-chat": "^0.1.0",
+		"chalk": "^4.1.0",
+		"tslib": "^2.6.2"
+	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"typescript": "^5.9.3"
+	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.14",
+		"@nestjs/core": "^11.1.14"
+	},
+	"keywords": [
+		"Ever Gauzy",
+		"plugin",
+		"AI",
+		"chat",
+		"AI provider",
+		"Vercel AI SDK",
+		"NestJS",
+		"Anthropic",
+		"Claude"
+	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}

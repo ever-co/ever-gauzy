@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	Controller,
 	Get,
 	Logger,
@@ -70,6 +71,22 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 				return new FileStorage().storage({
 					dest: () => path.join(baseDirectory, subDirectory)
 				});
+			},
+			// Only accept raster images. SVG (and other markup/active-content files) are rejected because
+			// uploads are served unauthenticated from `/public/<key>` and an SVG can carry executable
+			// JavaScript, leading to stored XSS (GHSA-p334-cm7f-php5).
+			fileFilter: (_req: any, file: any, callback: (error: Error | null, acceptFile: boolean) => void) => {
+				const allowedMimeTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/bmp'];
+				const blockedExtensions = ['.svg', '.svgz', '.html', '.htm', '.xml', '.xhtml'];
+				const extension = path.extname(file?.originalname || '').toLowerCase();
+				if (allowedMimeTypes.includes(file?.mimetype) && !blockedExtensions.includes(extension)) {
+					callback(null, true);
+				} else {
+					callback(
+						new BadRequestException(`Unsupported file type: ${file?.mimetype || extension || 'unknown'}`),
+						false
+					);
+				}
 			}
 		})
 	)
@@ -82,8 +99,22 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		const provider = new FileStorage().getProvider();
 		let thumbnail: UploadedFile;
 
+		// Content-based validation: the multer fileFilter only inspects the client-controlled MIME type
+		// and filename, which can be spoofed. Re-check the actual stored bytes and reject markup
+		// (SVG/XML/HTML/XHTML) that would execute as stored XSS when served from `/public/<key>`
+		// (GHSA-p334-cm7f-php5). The file is deleted on rejection because `/public` serves directly from
+		// disk regardless of whether the DB asset record is ever created.
+		const fileContent = await provider.getFile(file.key);
+		if (this.isMarkupContent(fileContent)) {
+			try {
+				await provider.deleteFile(file.key);
+			} catch (error) {
+				this.logger.error('Error while deleting rejected upload from file storage provider');
+			}
+			throw new BadRequestException('Unsupported file content: markup/script files are not allowed');
+		}
+
 		try {
-			const fileContent = await provider.getFile(file.key);
 			const inputFile = await tempFile('media-asset-thumb');
 			const outputFile = await tempFile('media-asset-thumb');
 
@@ -132,6 +163,56 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 				storageProvider: provider.name
 			})
 		);
+	}
+
+	/**
+	 * Detects whether the given file content is markup (SVG / XML / HTML / XHTML).
+	 *
+	 * Two checks:
+	 * 1. A leading UTF-16 / UTF-32 byte-order mark indicates a text file — raster image formats
+	 *    (PNG, JPEG, GIF, BMP, WEBP) never start with those byte sequences — so such files are
+	 *    rejected (this closes the wide-encoding `<svg>`/`<xml>` XSS bypass).
+	 * 2. Otherwise (UTF-8, with or without BOM) the first non-whitespace byte is `<`.
+	 *
+	 * Raster images never start with `<` nor a UTF-16/32 BOM, so this has no false positives on
+	 * legitimate images.
+	 *
+	 * @param content - The raw file bytes (or string) to inspect.
+	 * @returns `true` if the content appears to be markup.
+	 */
+	private isMarkupContent(content: Buffer | string): boolean {
+		if (!content) {
+			return false;
+		}
+		const buffer = Buffer.isBuffer(content) ? content : Buffer.from(String(content));
+		if (buffer.length === 0) {
+			return false;
+		}
+		const startsWith = (...bytes: number[]): boolean =>
+			buffer.length >= bytes.length && bytes.every((value, index) => buffer[index] === value);
+
+		// UTF-32 / UTF-16 BOMs (a raster image never begins with these).
+		if (
+			startsWith(0xff, 0xfe, 0x00, 0x00) || // UTF-32 LE
+			startsWith(0x00, 0x00, 0xfe, 0xff) || // UTF-32 BE
+			startsWith(0xfe, 0xff) || // UTF-16 BE
+			startsWith(0xff, 0xfe) // UTF-16 LE
+		) {
+			return true;
+		}
+
+		// UTF-8 (optional BOM): first non-whitespace byte is `<`.
+		let i = 0;
+		if (startsWith(0xef, 0xbb, 0xbf)) {
+			i = 3;
+		}
+		while (
+			i < buffer.length &&
+			(buffer[i] === 0x20 || buffer[i] === 0x09 || buffer[i] === 0x0a || buffer[i] === 0x0d)
+		) {
+			i++;
+		}
+		return buffer[i] === 0x3c; // '<'
 	}
 
 	/**

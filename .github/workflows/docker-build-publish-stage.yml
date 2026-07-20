@@ -11,11 +11,23 @@ concurrency:
 
 jobs:
   gauzy-api:
-    runs-on: ubicloud-standard-8
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 300
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: relver
+        run: |
+          # Only the tag that points AT the built commit — no `git describe` fallback,
+          # which would surface a stale ancestor tag as this build's version. When the
+          # commit is untagged the footer shows the commit alone (accurate).
+          VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: ${VERSION:-<none>}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -36,15 +48,20 @@ jobs:
             ghcr.io/ever-co/gauzy-api-stage:latest
             everco/gauzy-api-stage:latest
             registry.digitalocean.com/ever/gauzy-api-stage:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-stage:latest
           cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-api-stage:latest
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             DEMO=false
-            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
             NX_BRANCH=${{ github.ref_name }}
+            GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
+            GAUZY_APP_COMMIT=${{ github.sha }}
+          # VERDACCIO_TOKEN / NX_CLOUD_ACCESS_TOKEN are BuildKit build secrets (mounted
+          # per-RUN, never embedded in image layers) — see the Dockerfile header.
+          secrets: |
             VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
+            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
       - name: Docker images list
         run: |
@@ -61,14 +78,17 @@ jobs:
           docker push everco/gauzy-api-stage:latest
 
       - name: Install doctl
+        if: ${{ vars.DO_ENABLED == 'true' }}
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: doctl registry login --expiry-seconds 3600
 
       - name: Push to DigitalOcean Registry
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: |
           docker push registry.digitalocean.com/ever/gauzy-api-stage:latest
 
@@ -95,11 +115,23 @@ jobs:
     #      docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-stage:latest
 
   gauzy-webapp:
-    runs-on: ubicloud-standard-8
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 300
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: relver
+        run: |
+          # Only the tag that points AT the built commit — no `git describe` fallback,
+          # which would surface a stale ancestor tag as this build's version. When the
+          # commit is untagged the footer shows the commit alone (accurate).
+          VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: ${VERSION:-<none>}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -118,15 +150,20 @@ jobs:
             ghcr.io/ever-co/gauzy-webapp-stage:latest
             everco/gauzy-webapp-stage:latest
             registry.digitalocean.com/ever/gauzy-webapp-stage:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-stage:latest
           cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-webapp-stage:latest
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             DEMO=false
-            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
             NX_BRANCH=${{ github.ref_name }}
+            GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
+            GAUZY_APP_COMMIT=${{ github.sha }}
+          # VERDACCIO_TOKEN / NX_CLOUD_ACCESS_TOKEN are BuildKit build secrets (mounted
+          # per-RUN, never embedded in image layers) — see the Dockerfile header.
+          secrets: |
             VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
+            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
       - name: Docker images list
         run: |
@@ -143,14 +180,17 @@ jobs:
           docker push everco/gauzy-webapp-stage:latest
 
       - name: Install doctl
+        if: ${{ vars.DO_ENABLED == 'true' }}
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: doctl registry login --expiry-seconds 3600
 
       - name: Push to DigitalOcean Registry
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: |
           docker push registry.digitalocean.com/ever/gauzy-webapp-stage:latest
 
@@ -177,11 +217,23 @@ jobs:
     #      docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-stage:latest
 
   gauzy-worker:
-    runs-on: ubicloud-standard-8
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 300
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: relver
+        run: |
+          # Only the tag that points AT the built commit — no `git describe` fallback,
+          # which would surface a stale ancestor tag as this build's version. When the
+          # commit is untagged the footer shows the commit alone (accurate).
+          VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: ${VERSION:-<none>}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -202,19 +254,23 @@ jobs:
             ghcr.io/ever-co/gauzy-worker-stage:latest
             everco/gauzy-worker-stage:latest
             registry.digitalocean.com/ever/gauzy-worker-stage:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-worker-stage:latest
           cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-worker-stage:latest
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             DEMO=false
-            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
             NX_BRANCH=${{ github.ref_name }}
+            GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
+            GAUZY_APP_COMMIT=${{ github.sha }}
+          # VERDACCIO_TOKEN / NX_CLOUD_ACCESS_TOKEN are BuildKit build secrets (mounted
+          # per-RUN, never embedded in image layers) — see the Dockerfile header.
+          # WORKER_* build-args were dropped: they never reached the image (the global
+          # ARGs were not re-declared in the production stage, so the image always baked
+          # the literal defaults) — k8s manifests set WORKER_* at runtime.
+          secrets: |
             VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
-            WORKER_DEFAULT_QUEUE=${{ secrets.WORKER_DEFAULT_QUEUE }}
-            WORKER_QUEUE_ENABLED=${{ secrets.WORKER_QUEUE_ENABLED }}
-            WORKER_SCHEDULER_ENABLED=${{ secrets.WORKER_SCHEDULER_ENABLED }}
-            WORKER_TIMEZONE=${{ secrets.WORKER_TIMEZONE }}
+            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
       - name: Docker images list
         run: |
@@ -231,14 +287,17 @@ jobs:
           docker push everco/gauzy-worker-stage:latest
 
       - name: Install doctl
+        if: ${{ vars.DO_ENABLED == 'true' }}
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: doctl registry login --expiry-seconds 3600
 
       - name: Push to DigitalOcean Registry
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: |
           docker push registry.digitalocean.com/ever/gauzy-worker-stage:latest
 

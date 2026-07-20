@@ -37,7 +37,7 @@ import {
 	TimeLogDeleteCommand,
 	TimeLogUpdateCommand
 } from './commands';
-import { getDateRangeFormat, getDaysBetweenDates, MultiORMEnum } from './../../core/utils';
+import { getDateRangeFormat, getDaysBetweenDates, MultiORMEnum, parseFindOptionsRelations } from './../../core/utils';
 import { RequestContext } from '../../core/context';
 import { moment } from './../../core/moment-extend';
 import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
@@ -123,7 +123,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							}
 						}
 					},
-					relations: [...(request.relations ? request.relations : [])],
+					relations: parseFindOptionsRelations([...(request.relations ? request.relations : [])]),
 					order: {
 						// Order results by the 'startedAt' field in ascending order
 						startedAt: 'ASC'

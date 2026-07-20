@@ -7,6 +7,7 @@ import { Pipeline } from './pipeline.entity';
 import { Deal, PipelineStage } from './../core/entities/internal';
 import { RequestContext } from '../core/context/request-context';
 import { LIKE_OPERATOR } from '../core/util';
+import { parseFindOptionsRelations } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
 import { TypeOrmDealRepository } from '../deal/repository/type-orm-deal.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
@@ -68,7 +69,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		};
 
 		if (relations.length) {
-			queryOptions.relations = relations;
+			queryOptions.relations = parseFindOptionsRelations(relations);
 		}
 
 		try {

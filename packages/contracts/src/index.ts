@@ -3,6 +3,7 @@
  */
 export * from './lib/accounting-template.model';
 export * from './lib/activepieces-integration-config.model';
+export * from './lib/ai-chat.model';
 /** App Setting Model */
 export * from './lib/activity-log.model';
 export * from './lib/activity-watch.model';

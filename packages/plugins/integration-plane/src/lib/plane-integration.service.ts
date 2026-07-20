@@ -7,6 +7,11 @@ import { PlaneSettingName } from './plane-setting.enum';
 import { ConfigurePlaneIntegrationDto } from './dto/configure-plane-integration.dto';
 import { UpdatePlaneSettingsDto } from './dto/update-plane-settings.dto';
 
+/** Global hosted Ever Gauzy PM UI URLs used when the integration runs in "shared" mode. */
+const SHARED_PLANE_WEB_URL = 'https://pm.gauzy.co';
+const SHARED_PLANE_ADMIN_URL = ''; // admin (god-mode) not offered in shared mode
+const SHARED_PLANE_SPACE_URL = 'https://pm-space.gauzy.co';
+
 @Injectable()
 export class PlaneIntegrationService {
 	private readonly logger = new Logger(PlaneIntegrationService.name);
@@ -61,11 +66,20 @@ export class PlaneIntegrationService {
 			tenantId
 		});
 
+		// Resolve mode (defaults to 'shared' when omitted) and the UI URLs to persist.
+		// In shared mode we store the global hosted PM URLs so the proxy's per-tenant
+		// CORS resolution keeps working; in custom mode we use the tenant-provided URLs.
+		const mode: 'shared' | 'custom' = dto.mode === 'custom' ? 'custom' : 'shared';
+		const webUrl = mode === 'custom' ? dto.planeWebUrl : SHARED_PLANE_WEB_URL;
+		const adminUrl = mode === 'custom' ? dto.planeAdminUrl || '' : SHARED_PLANE_ADMIN_URL;
+		const spaceUrl = mode === 'custom' ? dto.planeSpaceUrl || '' : SHARED_PLANE_SPACE_URL;
+
 		// Build the integration settings array
 		const settings: Partial<IIntegrationSetting>[] = [
-			{ settingsName: PlaneSettingName.PLANE_WEB_URL, settingsValue: dto.planeWebUrl },
-			{ settingsName: PlaneSettingName.PLANE_ADMIN_URL, settingsValue: dto.planeAdminUrl || '' },
-			{ settingsName: PlaneSettingName.PLANE_SPACE_URL, settingsValue: dto.planeSpaceUrl || '' },
+			{ settingsName: PlaneSettingName.PLANE_MODE, settingsValue: mode },
+			{ settingsName: PlaneSettingName.PLANE_WEB_URL, settingsValue: webUrl },
+			{ settingsName: PlaneSettingName.PLANE_ADMIN_URL, settingsValue: adminUrl },
+			{ settingsName: PlaneSettingName.PLANE_SPACE_URL, settingsValue: spaceUrl },
 			{ settingsName: PlaneSettingName.PLANE_API_KEY_VALUE, settingsValue: apiKeyResponse.apiKey },
 			{ settingsName: PlaneSettingName.PLANE_API_SECRET_VALUE, settingsValue: apiKeyResponse.apiSecret },
 			{ settingsName: PlaneSettingName.IS_ENABLED, settingsValue: 'true' }
@@ -108,6 +122,7 @@ export class PlaneIntegrationService {
 	 */
 	async getSettings(_organizationId?: string): Promise<{
 		integrationTenantId: ID;
+		mode: 'shared' | 'custom';
 		planeWebUrl: string;
 		planeAdminUrl: string;
 		planeSpaceUrl: string;
@@ -121,6 +136,7 @@ export class PlaneIntegrationService {
 
 		return {
 			integrationTenantId: integrationTenant.id!,
+			mode: settingsMap[PlaneSettingName.PLANE_MODE] === 'custom' ? 'custom' : 'shared',
 			planeWebUrl: settingsMap[PlaneSettingName.PLANE_WEB_URL] || '',
 			planeAdminUrl: settingsMap[PlaneSettingName.PLANE_ADMIN_URL] || '',
 			planeSpaceUrl: settingsMap[PlaneSettingName.PLANE_SPACE_URL] || '',
@@ -147,12 +163,59 @@ export class PlaneIntegrationService {
 			settingsIndex.set(s.settingsName, s);
 		}
 
-		// Update only the provided fields
-		const updates: Array<[string, string | undefined]> = [
-			[PlaneSettingName.PLANE_WEB_URL, dto.planeWebUrl],
-			[PlaneSettingName.PLANE_ADMIN_URL, dto.planeAdminUrl],
-			[PlaneSettingName.PLANE_SPACE_URL, dto.planeSpaceUrl]
-		];
+		// Build the set of settings to update. When the caller changes `mode` we must
+		// persist PLANE_MODE and keep the URLs consistent with it (mirroring
+		// setupIntegration): switching to 'shared' overwrites the URLs with the global
+		// hosted PM constants; switching to 'custom' applies the tenant-provided URLs.
+		// When `mode` is omitted we leave PLANE_MODE untouched and patch only the URLs
+		// that were supplied.
+		const updates: Array<[string, string | undefined]> = [];
+		if (dto.mode !== undefined) {
+			updates.push([PlaneSettingName.PLANE_MODE, dto.mode]);
+			if (dto.mode === 'shared') {
+				updates.push(
+					[PlaneSettingName.PLANE_WEB_URL, SHARED_PLANE_WEB_URL],
+					[PlaneSettingName.PLANE_ADMIN_URL, SHARED_PLANE_ADMIN_URL],
+					[PlaneSettingName.PLANE_SPACE_URL, SHARED_PLANE_SPACE_URL]
+				);
+			} else {
+				// Switching to custom mode: UpdatePlaneSettingsDto is a PartialType, so a
+				// bare `{ mode: 'custom' }` passes validation. Guard here so we never
+				// persist mode='custom' while the URLs stay empty or on the shared hosted
+				// defaults. Resolve the effective web/space URLs (from this request or
+				// already stored) and reject the switch unless both are real tenant URLs.
+				const effectiveWebUrl =
+					dto.planeWebUrl ?? settingsIndex.get(PlaneSettingName.PLANE_WEB_URL)?.settingsValue;
+				const effectiveSpaceUrl =
+					dto.planeSpaceUrl ?? settingsIndex.get(PlaneSettingName.PLANE_SPACE_URL)?.settingsValue;
+				if (
+					!effectiveWebUrl ||
+					effectiveWebUrl === SHARED_PLANE_WEB_URL ||
+					!effectiveSpaceUrl ||
+					effectiveSpaceUrl === SHARED_PLANE_SPACE_URL
+				) {
+					throw new HttpException(
+						'Switching to custom mode requires planeWebUrl and planeSpaceUrl.',
+						HttpStatus.BAD_REQUEST
+					);
+				}
+				if (dto.planeWebUrl !== undefined) {
+					updates.push([PlaneSettingName.PLANE_WEB_URL, dto.planeWebUrl]);
+				}
+				if (dto.planeAdminUrl !== undefined) {
+					updates.push([PlaneSettingName.PLANE_ADMIN_URL, dto.planeAdminUrl]);
+				}
+				if (dto.planeSpaceUrl !== undefined) {
+					updates.push([PlaneSettingName.PLANE_SPACE_URL, dto.planeSpaceUrl]);
+				}
+			}
+		} else {
+			updates.push(
+				[PlaneSettingName.PLANE_WEB_URL, dto.planeWebUrl],
+				[PlaneSettingName.PLANE_ADMIN_URL, dto.planeAdminUrl],
+				[PlaneSettingName.PLANE_SPACE_URL, dto.planeSpaceUrl]
+			);
+		}
 
 		for (const [name, value] of updates) {
 			if (value !== undefined) {

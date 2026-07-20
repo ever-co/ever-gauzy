@@ -31,7 +31,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { freshTimestamp, MultiORMEnum } from './../core/utils';
+import { freshTimestamp, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { EmployeeService } from '../employee/employee.service';
 import { TaskService } from '../tasks/task.service';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
@@ -133,7 +133,9 @@ export class UserService extends TenantAwareCrudService<User> {
 		// Fetch employee details if 'includeEmployee' is true
 		if (options.includeEmployee) {
 			const relations = options.includeOrganization ? { organization: true } : [];
-			employee = await this._employeeService.findOneByUserId(user.id, undefined, { relations });
+			employee = await this._employeeService.findOneByUserId(user.id, undefined, {
+				relations: parseFindOptionsRelations(relations)
+			});
 		}
 
 		// Return user data combined with employee data, if it exists.
@@ -402,10 +404,17 @@ export class UserService extends TenantAwareCrudService<User> {
 				}
 			}
 
-			// Restrict users from updating their own role
-
-			if (currentUserId === id) {
-				if (entity.role && entity.role.id !== currentRoleId) {
+			// Restrict users from updating their own role.
+			// Check BOTH the nested `role` object and the flat `roleId` field INDEPENDENTLY, otherwise a
+			// user could escalate their own privileges (e.g. to SUPER_ADMIN). `role?.id ?? roleId` is not
+			// enough: a crafted body could send an empty `role: { id: '' }` (non-nullish) to mask a
+			// privileged `roleId` and slip through. Reject if any provided role identifier differs from the
+			// caller's current role.
+			// Compare as strings: `id` is typed `ID | number`, so a numeric-equivalent value must not
+			// slip past the self-update check on a strict `===`.
+			if (String(currentUserId) === String(id)) {
+				const requestedRoleIds = [entity.role?.id, entity.roleId].filter((roleId) => isNotEmpty(roleId));
+				if (requestedRoleIds.some((roleId) => String(roleId) !== String(currentRoleId))) {
 					throw new ForbiddenException();
 				}
 			}

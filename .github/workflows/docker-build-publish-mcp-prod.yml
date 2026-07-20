@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   gauzy-mcp:
-    runs-on: ubicloud-standard-8
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 300
     steps:
       - name: Checkout
@@ -40,7 +40,6 @@ jobs:
             ghcr.io/ever-co/gauzy-mcp:latest
             everco/gauzy-mcp:latest
             registry.digitalocean.com/ever/gauzy-mcp:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-mcp:latest
           cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-mcp:latest
           cache-to: type=inline
           build-args: |
@@ -64,14 +63,17 @@ jobs:
           docker push everco/gauzy-mcp:latest
 
       - name: Install doctl
+        if: ${{ vars.DO_ENABLED == 'true' }}
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: doctl registry login --expiry-seconds 3600
 
       - name: Push to DigitalOcean Registry
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: |
           docker push registry.digitalocean.com/ever/gauzy-mcp:latest
 

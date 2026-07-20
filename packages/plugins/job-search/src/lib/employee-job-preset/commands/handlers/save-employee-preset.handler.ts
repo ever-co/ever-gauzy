@@ -1,7 +1,7 @@
 import { In } from 'typeorm';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { GauzyAIService } from '@gauzy/plugin-integration-ai';
-import { TypeOrmEmployeeRepository } from '@gauzy/core';
+import { parseFindOptionsRelations, TypeOrmEmployeeRepository } from '@gauzy/core';
 import { EmployeeUpworkJobsSearchCriterion } from '../../employee-upwork-jobs-search-criterion.entity';
 import { JobPreset } from '../../job-preset.entity';
 import { SaveEmployeePresetCommand } from '../save-employee-preset.command';
@@ -30,7 +30,7 @@ export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePr
 		// Find the employee with related data
 		let employee = await this._typeOrmEmployeeRepository.findOne({
 			where: { id: employeeId },
-			relations: ['user', 'organization', 'customFields.jobPresets']
+			relations: parseFindOptionsRelations(['user', 'organization', 'customFields.jobPresets'])
 		});
 
 		// Find the job preset with related criteria
@@ -60,7 +60,7 @@ export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePr
 		// Find the employee with related data
 		employee = await this._typeOrmEmployeeRepository.findOne({
 			where: { id: employeeId },
-			relations: ['customFields.jobPresets']
+			relations: parseFindOptionsRelations(['customFields.jobPresets'])
 		});
 
 		return employee.customFields['jobPresets'];

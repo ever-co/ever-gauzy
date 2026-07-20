@@ -1,4 +1,4 @@
-import { RequestContext } from '@gauzy/core';
+import { RequestContext, parseFindOptionsRelations } from '@gauzy/core';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { PluginTenant, PluginTenantService } from '../../../../domain';
@@ -68,7 +68,7 @@ export class GetAllPluginTenantsHandler implements IQueryHandler<GetAllPluginTen
 
 		const options: FindManyOptions = {
 			where,
-			relations: ['plugin', 'approvedBy', 'allowedRoles', 'allowedUsers', 'deniedUsers'],
+			relations: parseFindOptionsRelations(['plugin', 'approvedBy', 'allowedRoles', 'allowedUsers', 'deniedUsers']),
 			order: { createdAt: 'DESC' }
 		};
 

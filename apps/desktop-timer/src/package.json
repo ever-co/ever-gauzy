@@ -83,6 +83,9 @@
 			"icon": "icon.ico",
 			"verifyUpdateCodeSignature": false
 		},
+		"snap": {
+			"base": "core22"
+		},
 		"linux": {
 			"icon": "linux",
 			"target": [

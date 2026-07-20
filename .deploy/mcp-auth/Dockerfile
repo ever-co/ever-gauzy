@@ -69,7 +69,13 @@ COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 ARG VERDACCIO_TOKEN
-RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
+ARG VERDACCIO_REGISTRY=""
+RUN if [ -n "$VERDACCIO_REGISTRY" ]; then \
+    echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
+    echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
+    sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
+    sed -i "s|https://registry.npmjs.org|${VERDACCIO_REGISTRY%/}|g" yarn.lock; \
+    elif [ -n "$VERDACCIO_TOKEN" ]; then \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
     echo "registry=https://packages.ever.co/" >> .npmrc && \
     echo "always-auth=true" >> .npmrc && \
@@ -151,7 +157,13 @@ COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 ARG VERDACCIO_TOKEN
-RUN if [ -n "$VERDACCIO_TOKEN" ]; then \
+ARG VERDACCIO_REGISTRY=""
+RUN if [ -n "$VERDACCIO_REGISTRY" ]; then \
+    echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
+    echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
+    sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
+    sed -i "s|https://registry.npmjs.org|${VERDACCIO_REGISTRY%/}|g" yarn.lock; \
+    elif [ -n "$VERDACCIO_TOKEN" ]; then \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
     echo "registry=https://packages.ever.co/" >> .npmrc && \
     echo "always-auth=true" >> .npmrc && \
