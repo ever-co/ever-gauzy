@@ -1,4 +1,4 @@
-import { Controller, Post, Put, Get, Body, Param, UseGuards, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Post, Put, Get, Body, Param, UseGuards, HttpStatus, HttpCode }, ForbiddenException from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IRequestTimesheetProjectChange, ITimesheetProjectChangeRequest, IUpdateTimesheetProjectChangeStatus, PermissionsEnum } from '@gauzy/contracts';
 import { TimesheetProjectChangeRequestService } from './timesheet-project-change-request.service';
@@ -24,6 +24,9 @@ export class TimesheetProjectChangeRequestController {
 		@Body() input: IRequestTimesheetProjectChange
 	): Promise<ITimesheetProjectChangeRequest> {
 		const employee = RequestContext.currentEmployee();
+		if (!employee) {
+			    throw new ForbiddenException('Only employees can request a project change');
+		}
 		return this.changeRequestService.requestProjectChange(input, employee.id);
 }
 
