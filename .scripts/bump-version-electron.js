@@ -134,13 +134,6 @@ module.exports.serverapi = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'prerelease'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}-pre`,
-					acl: 'public-read'
 				}
 			];
 		} else {
@@ -150,13 +143,6 @@ module.exports.serverapi = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'release'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}`,
-					acl: 'public-read'
 				}
 			];
 		}
@@ -216,13 +202,6 @@ module.exports.server = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'prerelease'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}-pre`,
-					acl: 'public-read'
 				}
 			];
 		} else {
@@ -232,13 +211,6 @@ module.exports.server = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'release'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}`,
-					acl: 'public-read'
 				}
 			];
 		}
@@ -298,13 +270,6 @@ module.exports.servermcp = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'prerelease'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}-pre`,
-					acl: 'public-read'
 				}
 			];
 		} else {
@@ -314,13 +279,6 @@ module.exports.servermcp = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'release'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}`,
-					acl: 'public-read'
 				}
 			];
 		}
@@ -380,13 +338,6 @@ module.exports.desktop = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'prerelease'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}-pre`,
-					acl: 'public-read'
 				}
 			];
 		} else {
@@ -396,13 +347,6 @@ module.exports.desktop = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'release'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}`,
-					acl: 'public-read'
 				}
 			];
 		}
@@ -462,13 +406,6 @@ module.exports.desktopTimer = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'prerelease'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${timerAppName}-pre`,
-					acl: 'public-read'
 				}
 			];
 		} else {
@@ -478,13 +415,6 @@ module.exports.desktopTimer = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'release'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${timerAppName}`,
-					acl: 'public-read'
 				}
 			];
 		}
@@ -544,13 +474,6 @@ module.exports.agent = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'prerelease'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}-pre`,
-					acl: 'public-read'
 				}
 			];
 		} else {
@@ -560,13 +483,6 @@ module.exports.agent = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'release'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}`,
-					acl: 'public-read'
 				}
 			];
 		}
