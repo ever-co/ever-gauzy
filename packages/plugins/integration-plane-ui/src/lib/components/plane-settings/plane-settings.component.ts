@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, EMPTY, filter, switchMap, tap } from 'rxjs';
+import { catchError, combineLatest, EMPTY, filter, startWith, Subject, switchMap, tap } from 'rxjs';
 import { IOrganization } from '@gauzy/contracts';
 import {
 	ErrorHandlingService,
@@ -53,6 +53,9 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 	 * state instead of rendering a misleading empty shared-mode page. */
 	readonly loadFailed = signal<boolean>(false);
 
+	/** Emits to re-trigger the settings load (retry after a failed load). */
+	private readonly _retry$ = new Subject<void>();
+
 	form = new FormGroup({
 		planeWebUrl: new FormControl('', [Validators.required, Validators.pattern(URL_PATTERN)]),
 		planeAdminUrl: new FormControl('', [Validators.pattern(URL_PATTERN)]),
@@ -73,12 +76,16 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 			)
 			.subscribe();
 
-		// Load settings when organization is available
-		this._store.selectedOrganization$
+		// Load settings whenever the organization changes or a retry is requested.
+		// combineLatest + switchMap means an org switch (or a retry) cancels any
+		// in-flight load, so a stale response can't overwrite the current org.
+		combineLatest([
+			this._store.selectedOrganization$.pipe(filter((org): org is IOrganization => !!org)),
+			this._retry$.pipe(startWith(undefined))
+		])
 			.pipe(
-				filter((org): org is IOrganization => !!org),
-				tap((org) => this.organization.set(org)),
-				switchMap((org) => {
+				tap(([org]) => this.organization.set(org)),
+				switchMap(([org]) => {
 					this.loading.set(true);
 					return this._planeService.getSettings(org.id).pipe(
 						catchError((error: HttpErrorResponse) => {
@@ -122,33 +129,11 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 	}
 
 	/**
-	 * Retry loading settings for the current organization after a failed load.
+	 * Retry loading settings after a failed load. Re-triggers the same reactive
+	 * load pipeline, so an in-flight retry is cancelled if the organization changes.
 	 */
 	retryLoad(): void {
-		const organizationId = this.organization()?.id;
-		if (!organizationId) return;
-
-		this.loading.set(true);
-		this._planeService
-			.getSettings(organizationId)
-			.pipe(untilDestroyed(this))
-			.subscribe({
-				next: (settings) => {
-					this.loading.set(false);
-					this.loadFailed.set(false);
-					this.settings.set(settings);
-					this._patchForm(settings);
-				},
-				error: (error: HttpErrorResponse) => {
-					this.loading.set(false);
-					if (error?.status === 404) {
-						this._router.navigate([INTEGRATION_PLANE_PAGE_LINK]);
-					} else {
-						this.loadFailed.set(true);
-						this._errorHandlingService.handleError(error);
-					}
-				}
-			});
+		this._retry$.next();
 	}
 
 	/**
