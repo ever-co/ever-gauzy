@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDate, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import { Type } from 'class-transformer';
 import { Column, Entity, Index } from 'typeorm';
 import { IOfficialHoliday } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
@@ -43,6 +44,7 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
                                               	@ApiProperty({ type: () => Date, description: 'Holiday date or start date for multi-day holidays' })
                                                 	@IsNotEmpty()
                                                   	@IsDate()
+				@Type(() => Date)
                                                     	@Column()
                                                       	date: Date;
 
@@ -51,6 +53,7 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
                                                           	@ApiPropertyOptional({ type: () => Date, description: 'End date for multi-day holidays' })
                                                             	@IsOptional()
                                                               	@IsDate()
+				@Type(() => Date)
                                                                 	@Column({ nullable: true })
                                                                   	endDate?: Date;
 
