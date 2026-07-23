@@ -89,10 +89,13 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 							if (error?.status === 404) {
 								this._router.navigate([INTEGRATION_PLANE_PAGE_LINK]);
 							} else {
-								// Clear any previously-loaded settings so a failed org switch
-								// doesn't leave the prior org's settings on screen, then surface
-								// the error.
+								// Clear ALL loaded state (settings, form values, edit mode) so a
+								// failed org switch doesn't leave the previous org's settings/URLs
+								// on screen as a misleading "shared-mode" page, then surface the
+								// error.
 								this.settings.set(null);
+								this.isEditing.set(false);
+								this.form.reset({ planeWebUrl: '', planeAdminUrl: '', planeSpaceUrl: '' });
 								this._errorHandlingService.handleError(error);
 							}
 							return EMPTY;
