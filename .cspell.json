@@ -558,6 +558,7 @@
 		"kube",
 		"kubeconfig",
 		"kubectl",
+		"kubelet",
 		"Kubernetes",
 		"kurkle",
 		"Kyoster",
