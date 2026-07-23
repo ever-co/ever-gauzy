@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ITimeOffBalance, ITimeOffBalanceFindInput } from '@gauzy/contracts';
@@ -56,6 +56,9 @@ import { TimeOffBalance } from './time-off-balance.entity';
                                                                                                                                       	async deduct(employeeId: string, policyId: string, year: number, days: number, tenantId: string, organizationId: string): Promise<ITimeOffBalance> {
                                                                                                                                         		const balance = await this.repo.findOne({ where: { employeeId, policyId, year, tenantId, organizationId } });
                                                                                                                                             		if (!balance) throw new NotFoundException(`TimeOffBalance not found for employee ${employeeId}, policy ${policyId}, year ${year}`);
+																																			if (days > Number(balance.remaining)) {
+																																					throw new BadRequestException(`Insufficient leave balance: ${balance.remaining} days remaining`);
+																																			}
                                                                                                                                                 		balance.taken = Number(balance.taken) + days;
                                                                                                                                                     		balance.remaining = Number(balance.accrued) + Number(balance.carriedForward) - Number(balance.taken);
                                                                                                                                                         		return this.repo.save(balance);
