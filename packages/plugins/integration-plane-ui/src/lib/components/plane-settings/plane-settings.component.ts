@@ -89,6 +89,10 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 							if (error?.status === 404) {
 								this._router.navigate([INTEGRATION_PLANE_PAGE_LINK]);
 							} else {
+								// Clear any previously-loaded settings so a failed org switch
+								// doesn't leave the prior org's settings on screen, then surface
+								// the error.
+								this.settings.set(null);
 								this._errorHandlingService.handleError(error);
 							}
 							return EMPTY;
