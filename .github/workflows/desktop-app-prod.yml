@@ -3,7 +3,8 @@ name: Desktop App Build Prod
 # The packaged desktop & server apps are built ONLY when 'master' is promoted to the 'apps' branch
 # (branch flow: develop -> stage -> master -> apps).
 # The build version is resolved at build time (.scripts/bump-version-electron.js) from the release
-# tag pointing at this commit, which 'Release Prod' creates on the merge to 'master' - so app releases
+# tag of the promoted commit (on HEAD, or on the merge parent for PR-merge promotions), which
+# 'Release Prod' creates on the merge to 'master' - so app releases
 # always carry the same version as the corresponding platform release and publish to the
 # same targets (each app repo's GitHub Releases + DigitalOcean Spaces).
 on:
@@ -18,38 +19,72 @@ concurrency:
 
 jobs:
   check-release-tag:
-    # Only build when this exact commit carries a release tag (the version stamped into the
-    # packages - see header comment) - i.e. 'apps' was fast-forwarded
-    # to a 'master' commit that 'Release Prod' has already tagged. Retries absorb the short
-    # merge -> tag delay when 'apps' is promoted right after the 'master' merge.
+    # Only build when the promoted commit carries a release tag (the version stamped into the
+    # packages - see header comment). 'apps' is promoted from 'master' either by
+    # fast-forwarding to the tagged 'master' commit (tag on HEAD) or by merging the
+    # 'master' -> 'apps' promotion PR (the tag then points at the merged
+    # 'master' tip, HEAD^2). Retries absorb the short delay until 'Release Prod' tags
+    # the 'master' commit.
     runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
-    timeout-minutes: 15
+    timeout-minutes: 30
     permissions:
       contents: read
+    outputs:
+      # The resolved vX.Y.Z release tag; the build jobs stamp exactly this version.
+      tag: ${{ steps.resolve.outputs.tag }}
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+          # Depth 2 so HEAD^2 resolves on merge-commit promotions
+          fetch-depth: 2
 
-      - name: Verify a release tag points at this commit
+      - name: Verify a release tag points at the promoted commit
+        id: resolve
         shell: bash
         run: |
           if [ "$GITHUB_REF_NAME" != "apps" ]; then
             echo "::error::This workflow only releases from the 'apps' branch (got '$GITHUB_REF_NAME')."
             exit 1
           fi
+          HEAD_SHA=$(git rev-parse HEAD)
+          # Present only when the promotion PR was merged as a merge commit; the release tag
+          # then points at the merged 'master' tip, not at the merge commit itself.
+          PARENT2_SHA=$(git rev-parse --verify --quiet 'HEAD^2' || true)
+          resolve_tag() {
+            # Highest vX.Y.Z tag pointing at $1 in the remote listing (peeled '^{}' entries
+            # carry the commit sha of annotated tags); empty when none match.
+            printf '%s\n' "$REMOTE_REFS" | awk -v sha="$1" '
+              $1 == sha && $2 ~ /^refs\/tags\/v[0-9]+\.[0-9]+\.[0-9]+(\^\{\})?$/ {
+                t = $2
+                sub(/^refs\/tags\//, "", t)
+                sub(/\^\{\}$/, "", t)
+                print t
+              }' | sort -V | tail -n 1
+          }
           for i in $(seq 1 20); do
-            git fetch --quiet --depth=1 origin '+refs/tags/*:refs/tags/*' || echo "git fetch failed (attempt $i); will retry"
-            TAG=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
-            if [ -n "$TAG" ]; then
-              echo "Release tag on this commit: $TAG"
-              exit 0
+            if REMOTE_REFS=$(git ls-remote origin refs/heads/master 'refs/tags/*'); then
+              SRC_TIP=$(printf '%s\n' "$REMOTE_REFS" | awk -v ref="refs/heads/master" '$2 == ref { print $1 }')
+              TAG=$(resolve_tag "$HEAD_SHA")
+              # Accept the merge-parent tag only when HEAD^2 is the current 'master' tip -
+              # i.e. this is the promotion merge of 'master', not an arbitrary tagged branch
+              # merged in, nor a fast-forward racing 'Release Prod' (whose tag lands on HEAD).
+              if [ -z "$TAG" ] && [ -n "$PARENT2_SHA" ] && [ "$PARENT2_SHA" = "$SRC_TIP" ]; then
+                TAG=$(resolve_tag "$PARENT2_SHA")
+              fi
+              if [ -n "$TAG" ]; then
+                echo "Release tag on the promoted commit: $TAG"
+                echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+            else
+              echo "git ls-remote failed (attempt $i); will retry"
             fi
-            echo "No release tag points at this commit yet (attempt $i/20); retrying in 30s..."
+            echo "No release tag points at this commit or its merge parent yet (attempt $i/20); retrying in 30s..."
             sleep 30
           done
-          echo "::error::No release tag points at this commit. Promote by fast-forwarding 'apps' to the tagged 'master' commit (git push origin origin/master:apps) after 'Release Prod' has created the tag."
+          echo "::error::No release tag points at this commit, and its merge parent does not match the tagged 'master' tip. Promote by merging the 'master' -> 'apps' PR (or fast-forwarding: git push origin origin/master:apps) after 'Release Prod' has created the tag; if 'master' has moved since the promotion PR was opened, re-promote."
           exit 1
 
   release-linux:
@@ -155,6 +190,7 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktop(true))
         env:
+          GAUZY_RELEASE_TAG: ${{ needs.check-release-tag.outputs.tag }}
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
           DESKTOP_APP_NAME: 'gauzy-desktop'
           DESKTOP_APP_REPO_NAME: 'ever-gauzy-desktop'
@@ -295,6 +331,7 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktop(true))
         env:
+          GAUZY_RELEASE_TAG: ${{ needs.check-release-tag.outputs.tag }}
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
           DESKTOP_APP_NAME: 'gauzy-desktop'
           DESKTOP_APP_REPO_NAME: 'ever-gauzy-desktop'
@@ -397,6 +434,7 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktop(true))
         env:
+          GAUZY_RELEASE_TAG: ${{ needs.check-release-tag.outputs.tag }}
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
           DESKTOP_APP_NAME: 'gauzy-desktop'
           DESKTOP_APP_REPO_NAME: 'ever-gauzy-desktop'
@@ -530,6 +568,7 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktop(true))
         env:
+          GAUZY_RELEASE_TAG: ${{ needs.check-release-tag.outputs.tag }}
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
           DESKTOP_APP_NAME: 'gauzy-desktop'
           DESKTOP_APP_REPO_NAME: 'ever-gauzy-desktop'
@@ -715,6 +754,7 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktop(true))
         env:
+          GAUZY_RELEASE_TAG: ${{ needs.check-release-tag.outputs.tag }}
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
           DESKTOP_APP_NAME: 'gauzy-desktop'
           DESKTOP_APP_REPO_NAME: 'ever-gauzy-desktop'
