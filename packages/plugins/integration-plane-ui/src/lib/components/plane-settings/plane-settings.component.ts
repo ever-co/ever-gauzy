@@ -129,7 +129,11 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 		}
 
 		const url = this.settings()?.planeWebUrl?.trim() || SHARED_PLANE_WEB_URL;
-		window.open(`${url}/?sso=${token}`, '_blank');
+		// Pass the token in the URL fragment (#sso=) rather than the query (?sso=):
+		// fragments are never sent to the server, so the token stays out of the Plane
+		// web server's access logs / Referer / CDN. The fork's entry.client reads the
+		// fragment first and falls back to the query for backward compatibility.
+		window.open(`${url}/#sso=${token}`, '_blank');
 	}
 
 	/**
