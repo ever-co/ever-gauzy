@@ -98,7 +98,10 @@ jobs:
 
     strategy:
       matrix:
-        os: ["${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}"]
+        # Flatpak (bwrap) and Snapcraft (snapd) cannot run inside the k8s ARC container
+        # runners - this packaging job needs a VM-class runner. Override with the
+        # RUNNER_LINUX_APPS_X64 org/repo variable to use a self-hosted VM.
+        os: ["${{ vars.RUNNER_LINUX_APPS_X64 || 'ubuntu-latest' }}"]
 
     steps:
       - name: Check out Git repository
