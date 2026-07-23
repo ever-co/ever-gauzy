@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, filter, switchMap, tap } from 'rxjs';
 import { IOrganization } from '@gauzy/contracts';
 import {
 	ErrorHandlingService,
@@ -77,7 +77,23 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 				tap((org) => this.organization.set(org)),
 				switchMap((org) => {
 					this.loading.set(true);
-					return this._planeService.getSettings(org.id);
+					return this._planeService.getSettings(org.id).pipe(
+						catchError((error: HttpErrorResponse) => {
+							this.loading.set(false);
+							// Only bounce to the setup screen when the integration is
+							// genuinely not configured (HTTP 404). A transient/5xx error is
+							// surfaced and the user stays put, instead of a configured tenant
+							// being silently kicked back to "set up Plane". Recover to EMPTY
+							// so the outer organization stream stays alive and future org
+							// switches still reload settings.
+							if (error?.status === 404) {
+								this._router.navigate([INTEGRATION_PLANE_PAGE_LINK]);
+							} else {
+								this._errorHandlingService.handleError(error);
+							}
+							return EMPTY;
+						})
+					);
 				}),
 				tap((settings: IPlaneSettingsResponse) => {
 					this.settings.set(settings);
@@ -86,23 +102,7 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 				}),
 				untilDestroyed(this)
 			)
-			.subscribe({
-				error: (error: HttpErrorResponse) => {
-					this.loading.set(false);
-					// Only bounce to the setup screen when the integration genuinely
-					// isn't configured (404). On a transient error (network/5xx) surface
-					// it and stay put, instead of silently kicking a configured tenant
-					// back to "set up Plane".
-					const message = typeof error?.message === 'string' ? error.message.toLowerCase() : '';
-					const notConfigured =
-						error?.status === 404 || message.includes('not configured') || message.includes('not found');
-					if (notConfigured) {
-						this._router.navigate([INTEGRATION_PLANE_PAGE_LINK]);
-					} else {
-						this._errorHandlingService.handleError(error);
-					}
-				}
-			});
+			.subscribe();
 	}
 
 	goBack(): void {

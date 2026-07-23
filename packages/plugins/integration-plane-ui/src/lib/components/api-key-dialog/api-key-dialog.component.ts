@@ -20,6 +20,7 @@ export class PlaneApiKeyDialogComponent implements OnDestroy {
 
 	private _keyResetTimer?: ReturnType<typeof setTimeout>;
 	private _secretResetTimer?: ReturnType<typeof setTimeout>;
+	private _destroyed = false;
 
 	constructor(private readonly dialogRef: NbDialogRef<PlaneApiKeyDialogComponent>) {}
 
@@ -51,6 +52,9 @@ export class PlaneApiKeyDialogComponent implements OnDestroy {
 	 * copy re-confirms (instead of the check mark being stuck for the dialog's life).
 	 */
 	private _markCopied(field: 'key' | 'secret'): void {
+		// A pending clipboard write can resolve after the dialog is torn down; don't
+		// mutate a destroyed component or schedule a timer the cleanup won't catch.
+		if (this._destroyed) return;
 		if (field === 'key') {
 			this.apiKeyCopied.set(true);
 			clearTimeout(this._keyResetTimer);
@@ -67,6 +71,7 @@ export class PlaneApiKeyDialogComponent implements OnDestroy {
 	}
 
 	ngOnDestroy(): void {
+		this._destroyed = true;
 		clearTimeout(this._keyResetTimer);
 		clearTimeout(this._secretResetTimer);
 	}
