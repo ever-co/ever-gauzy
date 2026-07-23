@@ -62,6 +62,17 @@ async function getTagForCommit(repoURL, sha) {
 // exist (e.g. every develop merge creates one). Falls back to the latest tag for
 // builds of untagged commits (e.g. ad-hoc pushes to 'temp').
 async function getBuildTag(repoURL) {
+	// The check-release-tag gate resolves the release tag of the promoted commit - including
+	// merge-commit promotions, where the tag points at the merge parent (the promoted branch
+	// tip) rather than at GITHUB_SHA itself - and hands it down via GAUZY_RELEASE_TAG.
+	const gateTag = (process.env.GAUZY_RELEASE_TAG || '').trim();
+	if (gateTag) {
+		if (/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(gateTag)) {
+			console.log('Using release tag resolved by the check-release-tag gate:', gateTag);
+			return gateTag;
+		}
+		console.warn(`Ignoring GAUZY_RELEASE_TAG '${gateTag}' - not a vX.Y.Z release tag`);
+	}
 	try {
 		const sha = process.env.GITHUB_SHA || (await git.revparse(['HEAD'])).trim();
 		const tagAtCommit = await getTagForCommit(repoURL, sha);
