@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Location } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
@@ -7,7 +8,14 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, switchMap, tap } from 'rxjs';
 import { IOrganization } from '@gauzy/contracts';
-import { IPlaneRegenerateKeyResponse, PlaneService, IPlaneSettingsResponse, Store } from '@gauzy/ui-core/core';
+import {
+	ErrorHandlingService,
+	IPlaneRegenerateKeyResponse,
+	PlaneService,
+	IPlaneSettingsResponse,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { INTEGRATION_PLANE_PAGE_LINK } from '../../integration-plane.routes';
 import { PlaneApiKeyDialogComponent } from '../api-key-dialog/api-key-dialog.component';
@@ -32,6 +40,8 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 	private readonly _store = inject(Store);
 	private readonly _planeService = inject(PlaneService);
 	private readonly _dialogService = inject(NbDialogService);
+	private readonly _toastrService = inject(ToastrService);
+	private readonly _errorHandlingService = inject(ErrorHandlingService);
 
 	readonly organization = signal<IOrganization | null>(null);
 	readonly integrationTenantId = signal<string | null>(null);
@@ -77,9 +87,20 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 				untilDestroyed(this)
 			)
 			.subscribe({
-				error: () => {
+				error: (error: HttpErrorResponse) => {
 					this.loading.set(false);
-					this._router.navigate([INTEGRATION_PLANE_PAGE_LINK]);
+					// Only bounce to the setup screen when the integration genuinely
+					// isn't configured (404). On a transient error (network/5xx) surface
+					// it and stay put, instead of silently kicking a configured tenant
+					// back to "set up Plane".
+					const message = typeof error?.message === 'string' ? error.message.toLowerCase() : '';
+					const notConfigured =
+						error?.status === 404 || message.includes('not configured') || message.includes('not found');
+					if (notConfigured) {
+						this._router.navigate([INTEGRATION_PLANE_PAGE_LINK]);
+					} else {
+						this._errorHandlingService.handleError(error);
+					}
 				}
 			});
 	}
@@ -101,7 +122,11 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 	 */
 	openPlane(): void {
 		const token = this._store.token;
-		if (!token) return;
+		if (!token) {
+			// Surface why nothing opened instead of a silent no-op.
+			this._toastrService.warning('INTEGRATIONS.PLANE_PAGE.SESSION_EXPIRED');
+			return;
+		}
 
 		const url = this.settings()?.planeWebUrl?.trim() || SHARED_PLANE_WEB_URL;
 		window.open(`${url}/?sso=${token}`, '_blank');
@@ -151,11 +176,13 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 				next: () => {
 					this.saving.set(false);
 					this.isEditing.set(false);
+					this._toastrService.success('INTEGRATIONS.PLANE_PAGE.SETTINGS_SAVED');
 					// Refresh settings
 					this._refreshSettings();
 				},
-				error: () => {
+				error: (error: HttpErrorResponse) => {
 					this.saving.set(false);
+					this._errorHandlingService.handleError(error);
 				}
 			});
 	}
@@ -178,10 +205,12 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 			.subscribe({
 				next: () => {
 					this.loading.set(false);
+					this._toastrService.success('INTEGRATIONS.PLANE_PAGE.INTEGRATION_REMOVED');
 					this._router.navigate([INTEGRATION_PLANE_PAGE_LINK]);
 				},
-				error: () => {
+				error: (error: HttpErrorResponse) => {
 					this.loading.set(false);
+					this._errorHandlingService.handleError(error);
 				}
 			});
 	}
@@ -206,8 +235,9 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 					this.loading.set(false);
 					this._showApiKeyDialog(result.apiKey, result.apiSecret);
 				},
-				error: () => {
+				error: (error: HttpErrorResponse) => {
 					this.loading.set(false);
+					this._errorHandlingService.handleError(error);
 				}
 			});
 	}
@@ -241,7 +271,8 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 				next: (settings) => {
 					this.settings.set(settings);
 					this._patchForm(settings);
-				}
+				},
+				error: (error: HttpErrorResponse) => this._errorHandlingService.handleError(error)
 			});
 	}
 }
