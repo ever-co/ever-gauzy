@@ -1804,6 +1804,8 @@
 			"SETTINGS_SAVED": "Plane settings saved.",
 			"INTEGRATION_REMOVED": "Plane integration removed.",
 			"SESSION_EXPIRED": "Your session has expired. Please sign in again to open Plane.",
+			"LOAD_FAILED": "Couldn't load the Plane integration settings.",
+			"RETRY": "Retry",
 			"API_KEY_DIALOG": {
 				"TITLE": "API Credentials",
 				"WARNING": "Copy these credentials now. The API secret will not be shown again.",

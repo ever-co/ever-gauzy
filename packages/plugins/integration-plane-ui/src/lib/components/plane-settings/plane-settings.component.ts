@@ -49,6 +49,9 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 	readonly saving = signal<boolean>(false);
 	readonly settings = signal<IPlaneSettingsResponse | null>(null);
 	readonly isEditing = signal<boolean>(false);
+	/** True when a settings load failed (non-404), so the UI shows an error/retry
+	 * state instead of rendering a misleading empty shared-mode page. */
+	readonly loadFailed = signal<boolean>(false);
 
 	form = new FormGroup({
 		planeWebUrl: new FormControl('', [Validators.required, Validators.pattern(URL_PATTERN)]),
@@ -95,6 +98,7 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 								// error.
 								this.settings.set(null);
 								this.isEditing.set(false);
+								this.loadFailed.set(true);
 								this.form.reset({ planeWebUrl: '', planeAdminUrl: '', planeSpaceUrl: '' });
 								this._errorHandlingService.handleError(error);
 							}
@@ -105,6 +109,7 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 				tap((settings: IPlaneSettingsResponse) => {
 					this.settings.set(settings);
 					this._patchForm(settings);
+					this.loadFailed.set(false);
 					this.loading.set(false);
 				}),
 				untilDestroyed(this)
@@ -114,6 +119,36 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 
 	goBack(): void {
 		this._location.back();
+	}
+
+	/**
+	 * Retry loading settings for the current organization after a failed load.
+	 */
+	retryLoad(): void {
+		const organizationId = this.organization()?.id;
+		if (!organizationId) return;
+
+		this.loading.set(true);
+		this._planeService
+			.getSettings(organizationId)
+			.pipe(untilDestroyed(this))
+			.subscribe({
+				next: (settings) => {
+					this.loading.set(false);
+					this.loadFailed.set(false);
+					this.settings.set(settings);
+					this._patchForm(settings);
+				},
+				error: (error: HttpErrorResponse) => {
+					this.loading.set(false);
+					if (error?.status === 404) {
+						this._router.navigate([INTEGRATION_PLANE_PAGE_LINK]);
+					} else {
+						this.loadFailed.set(true);
+						this._errorHandlingService.handleError(error);
+					}
+				}
+			});
 	}
 
 	/**
