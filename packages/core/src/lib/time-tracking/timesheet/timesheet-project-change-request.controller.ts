@@ -1,4 +1,4 @@
-import { Controller, Post, Put, Get, Body, Param, UseGuards, HttpStatus, HttpCode }, ForbiddenException from '@nestjs/common';
+import { Controller, Post, Put, Get, Body, Param, UseGuards, HttpStatus, HttpCode, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IRequestTimesheetProjectChange, ITimesheetProjectChangeRequest, IUpdateTimesheetProjectChangeStatus, PermissionsEnum } from '@gauzy/contracts';
 import { TimesheetProjectChangeRequestService } from './timesheet-project-change-request.service';
@@ -59,6 +59,6 @@ export class TimesheetProjectChangeRequestController {
     	async getByTimesheet(
 		@Param('timesheetId') timesheetId: string
     	): Promise<ITimesheetProjectChangeRequest[]> {
-        		return this.changeRequestService.getChangeRequestsByTimesheet(timesheetId);
+return this.changeRequestService.getChangeRequestsByTimesheet(timesheetId, RequestContext.currentTenantId());
        }
        }
