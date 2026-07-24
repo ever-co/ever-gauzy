@@ -109,8 +109,6 @@ COPY --chown=node:node patches ./patches
 ARG VERDACCIO_REGISTRY=""
 RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
-    { echo 'fetch-retries=5'; echo 'fetch-retry-mintimeout=20000'; echo 'fetch-retry-maxtimeout=120000'; echo 'fetch-retry-factor=10'; } >> .npmrc && \
-    echo 'network-concurrency 4' >> .yarnrc && \
     if [ -n "$VERDACCIO_REGISTRY" ]; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
@@ -124,7 +122,7 @@ RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi && \
-    yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && \
+    yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts && \
     yarn postinstall.manual && \
     yarn cache clean && \
     rm -f .npmrc .yarnrc
@@ -209,8 +207,6 @@ COPY --chown=node:node patches ./patches
 ARG VERDACCIO_REGISTRY=""
 RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
-    { echo 'fetch-retries=5'; echo 'fetch-retry-mintimeout=20000'; echo 'fetch-retry-maxtimeout=120000'; echo 'fetch-retry-factor=10'; } >> .npmrc && \
-    echo 'network-concurrency 4' >> .yarnrc && \
     if [ -n "$VERDACCIO_REGISTRY" ]; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
@@ -224,7 +220,7 @@ RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi && \
-    yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && \
+    yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts --production && \
     yarn postinstall.manual && \
     yarn cache clean && \
     rm -f .npmrc .yarnrc
