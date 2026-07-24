@@ -111,7 +111,7 @@ export interface IPayrollRunFindInput extends IPaginationInput {
 export interface IPayrollItem extends IBasePerTenantAndOrganizationEntityModel {
 	payrollRunId: ID;
 	payrollRun?: IPayrollRun;
-	employeeId: ID;
+    employeeId?: ID;
 	employee?: IEmployee;
 	type: PayrollItemTypeEnum;
 	category: PayrollItemCategoryEnum;
