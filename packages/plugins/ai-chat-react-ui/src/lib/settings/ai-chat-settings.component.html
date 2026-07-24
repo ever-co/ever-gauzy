@@ -12,7 +12,11 @@
 		<p class="empty-state">{{ 'AI_CHAT_UI.SETTINGS.NO_PROVIDERS' | translate }}</p>
 		}
 
-		<nb-radio-group class="providers" [formControl]="defaultProviderControl" name="defaultProvider">
+		<!-- NOT an <nb-radio-group>: its template only projects <nb-radio> elements
+		     and silently drops any other content — the provider cards would never
+		     render. The default-provider radios are native inputs sharing a name,
+		     wired to `defaultProviderControl` manually. -->
+		<div class="providers" role="radiogroup" [attr.aria-label]="'AI_CHAT_UI.SETTINGS.FORM.USE_AS_DEFAULT' | translate">
 			@for (provider of providers(); track provider.id) {
 			<nb-card class="provider-card">
 				<nb-card-header>
@@ -133,9 +137,16 @@
 							<nb-toggle formControlName="enabled" status="primary">
 								{{ 'AI_CHAT_UI.SETTINGS.FORM.ENABLED' | translate }}
 							</nb-toggle>
-							<nb-radio [value]="provider.id">
+							<label class="default-radio">
+								<input
+									type="radio"
+									name="defaultProvider"
+									[value]="provider.id"
+									[checked]="defaultProviderControl.value === provider.id"
+									(change)="defaultProviderControl.setValue(provider.id)"
+								/>
 								{{ 'AI_CHAT_UI.SETTINGS.FORM.USE_AS_DEFAULT' | translate }}
-							</nb-radio>
+							</label>
 						</div>
 
 						<div class="actions">
@@ -171,6 +182,6 @@
 				</nb-card-body>
 			</nb-card>
 			}
-		</nb-radio-group>
+		</div>
 	</nb-card-body>
 </nb-card>
