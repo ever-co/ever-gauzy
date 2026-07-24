@@ -70,7 +70,9 @@ COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 ARG VERDACCIO_TOKEN
 ARG VERDACCIO_REGISTRY=""
-RUN if [ -n "$VERDACCIO_REGISTRY" ]; then \
+RUN { echo 'fetch-retries=5'; echo 'fetch-retry-mintimeout=20000'; echo 'fetch-retry-maxtimeout=120000'; echo 'fetch-retry-factor=10'; } >> .npmrc \
+    && echo 'network-concurrency 4' >> .yarnrc \
+    && if [ -n "$VERDACCIO_REGISTRY" ]; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
@@ -158,7 +160,9 @@ COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 ARG VERDACCIO_TOKEN
 ARG VERDACCIO_REGISTRY=""
-RUN if [ -n "$VERDACCIO_REGISTRY" ]; then \
+RUN { echo 'fetch-retries=5'; echo 'fetch-retry-mintimeout=20000'; echo 'fetch-retry-maxtimeout=120000'; echo 'fetch-retry-factor=10'; } >> .npmrc \
+    && echo 'network-concurrency 4' >> .yarnrc \
+    && if [ -n "$VERDACCIO_REGISTRY" ]; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \

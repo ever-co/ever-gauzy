@@ -11,8 +11,13 @@ permissions:
   packages: write
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
-  cancel-in-progress: true
+  # Shared across all non-prod gauzy image-build workflows so demo/stage/mcp builds QUEUE
+  # instead of overlapping (they used to run ~6-8 parallel installs against one registry VIP).
+  # cancel-in-progress:false = never kill a running build; a newer queued run supersedes an
+  # older *pending* one (fine for WIP images — the next push rebuilds). The prod (master)
+  # build workflows are deliberately NOT in this group.
+  group: gauzy-docker-build
+  cancel-in-progress: false
 
 jobs:
   gauzy-mcp-auth:

@@ -126,6 +126,8 @@ COPY --chown=node:node patches ./patches
 ARG VERDACCIO_REGISTRY=""
 RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
 	VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
+	{ echo 'fetch-retries=5'; echo 'fetch-retry-mintimeout=20000'; echo 'fetch-retry-maxtimeout=120000'; echo 'fetch-retry-factor=10'; } >> .npmrc && \
+	echo 'network-concurrency 4' >> .yarnrc && \
 	if [ -n "$VERDACCIO_REGISTRY" ]; then \
 	echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
 	echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
