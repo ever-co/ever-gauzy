@@ -105,6 +105,22 @@
 			align-items: center;
 			gap: 1rem;
 		}
+
+		.default-radio {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.375rem;
+			margin: 0;
+			cursor: pointer;
+
+			input[type='radio'] {
+				accent-color: #3366ff; // Nebular color-primary-default
+				width: 1rem;
+				height: 1rem;
+				margin: 0;
+				cursor: pointer;
+			}
+		}
 	}
 
 	.actions {
