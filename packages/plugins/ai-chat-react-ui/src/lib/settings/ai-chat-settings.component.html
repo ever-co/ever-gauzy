@@ -144,6 +144,9 @@
 									[value]="provider.id"
 									[checked]="defaultProviderControl.value === provider.id"
 									(change)="defaultProviderControl.setValue(provider.id)"
+									[attr.aria-label]="
+										('AI_CHAT_UI.SETTINGS.FORM.USE_AS_DEFAULT' | translate) + ': ' + provider.label
+									"
 								/>
 								{{ 'AI_CHAT_UI.SETTINGS.FORM.USE_AS_DEFAULT' | translate }}
 							</label>
