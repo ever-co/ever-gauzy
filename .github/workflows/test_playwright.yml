@@ -51,11 +51,16 @@ jobs:
         run: yarn config:dev
 
       - name: Install forever package
-        run: npm install forever -g
+        shell: bash
+        # The k8s ARC container runners' system npm prefix (/usr/lib) is root-owned and there
+        # is no sudo - route npm -g installs to a user-writable prefix (harmless on VM runners).
+        run: |
+          npm config set prefix "$HOME/.npm-global"
+          npm install forever -g
 
       - name: Add npm global bin to PATH
         shell: bash
-        run: echo "$(npm prefix -g)" >> "$GITHUB_PATH"
+        run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
       - name: Reset DB for a clean, deterministic seed
         shell: bash
