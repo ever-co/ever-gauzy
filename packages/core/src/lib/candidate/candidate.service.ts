@@ -4,7 +4,7 @@ import { ICandidateCreateInput, BaseEntityEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { Candidate } from './candidate.entity';
 import { TenantAwareCrudService } from './../core/crud';
-import { MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
+import { flatten, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmCandidateRepository } from './repository/type-orm-candidate.repository';
@@ -80,7 +80,7 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 					}
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
-						...(options?.relations ? { populate: Object.keys(options.relations) as any[] } : {}),
+						...(options?.relations ? { populate: flatten(options.relations) as any[] } : {}),
 						offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0,
 						limit: options?.take || 10
 					});
