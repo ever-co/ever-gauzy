@@ -40,11 +40,15 @@
 			"DEFAULT_MODEL_CUSTOM": "Custom model…",
 			"CUSTOM_MODEL_PLACEHOLDER": "Enter a model id (e.g. claude-sonnet-5)",
 			"ENABLED": "Enabled",
-			"USE_AS_DEFAULT": "Use as default provider"
+			"USE_AS_DEFAULT": "Use as default provider",
+			"GET_KEY": "Get API key"
 		},
 		"ACTIONS": {
 			"SAVE": "Save",
-			"DELETE": "Delete"
+			"DELETE": "Delete",
+			"ADD_PROVIDER": "Add AI Provider",
+			"BACK": "Back",
+			"CONFIGURE": "Configure"
 		},
 		"DELETE_CONFIRM": {
 			"TITLE": "Delete credential",
@@ -55,7 +59,27 @@
 			"ERROR_TITLE": "Error",
 			"SAVED": "{{provider}} credential saved.",
 			"DELETED": "{{provider}} credential deleted.",
-			"ERROR": "Something went wrong. Please try again."
+			"ERROR": "Something went wrong. Please try again.",
+			"CONNECTED": "{{ provider }} connected successfully.",
+			"CONNECT_WORKSPACE_MISMATCH": "This Connect flow was started in a different workspace. Switch back to that workspace and try again."
+		},
+		"LIST": {
+			"EMPTY": "No AI providers are configured yet. Add one to enable the AI chat.",
+			"NAME": "Provider",
+			"SOURCE": "Credential",
+			"ENABLED": "Enabled",
+			"DEFAULT": "Default",
+			"VIA_ENV": "Managed via server environment"
+		},
+		"CATALOG": {
+			"TITLE": "Add AI Provider",
+			"DESCRIPTION": "Choose a provider to connect or configure with your own API key.",
+			"SUPPORTS_CONNECT": "Connect"
+		},
+		"CONNECT": {
+			"BUTTON": "Connect {{ provider }}",
+			"HINT": "Opens the provider website — authorize there and you will be brought back with the connection ready. No copy/paste needed.",
+			"OR_MANUAL": "or enter an API key manually"
 		}
 	}
 }

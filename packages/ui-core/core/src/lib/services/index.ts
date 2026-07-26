@@ -15,6 +15,7 @@ export * from './country';
 export * from './crud';
 export * from './currency';
 export * from './custom-smtp';
+export * from './dashboard';
 export * from './deals';
 export * from './email';
 export * from './employee';

@@ -1,0 +1,123 @@
+@use 'var' as *;
+
+:host {
+	display: block;
+}
+
+.dashboard-switcher {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 8px;
+
+	.chips-area {
+		display: flex;
+		align-items: center;
+		flex: 1 1 auto;
+		min-width: 0;
+		gap: 4px;
+
+		.scroll-button {
+			flex: 0 0 auto;
+		}
+
+		.chips-scroll {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			overflow-x: auto;
+			scroll-behavior: smooth;
+			// Hide the scrollbar; the < and > arrow buttons handle overflow
+			scrollbar-width: none;
+			-ms-overflow-style: none;
+
+			&::-webkit-scrollbar {
+				display: none;
+			}
+
+			.chip {
+				flex: 0 0 auto;
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+				border: 1px solid var(--border-basic-color-4);
+				border-radius: var(--border-radius);
+				background-color: var(--card-background-color);
+				color: var(--text-basic-color);
+				padding: 4px 12px;
+				font-size: 12px;
+				font-weight: 600;
+				cursor: pointer;
+				white-space: nowrap;
+				transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+
+				&:hover {
+					background-color: var(--background-basic-color-2);
+				}
+
+				&.active {
+					background-color: var(--color-primary-default);
+					border-color: var(--color-primary-default);
+					color: var(--text-control-color);
+				}
+
+				.default-icon {
+					font-size: 12px;
+					height: 12px;
+					width: 12px;
+				}
+			}
+		}
+	}
+
+	.actions-area {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-left: auto;
+		flex: 0 0 auto;
+	}
+}
+
+.edit-hint {
+	padding: 2px 16px 6px;
+	font-size: 12px;
+	color: var(--text-hint-color);
+}
+
+.dashboard-actions-popover {
+	display: flex;
+	flex-direction: column;
+	padding: 8px 0;
+	min-width: 200px;
+
+	.action {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 8px 16px;
+		font-size: 13px;
+		color: var(--text-basic-color);
+		cursor: pointer;
+		// native <button> resets (keyboard-accessible menu items)
+		background: none;
+		border: none;
+		width: 100%;
+		text-align: left;
+		font-family: inherit;
+
+		nb-icon {
+			font-size: 16px;
+			height: 16px;
+			width: 16px;
+		}
+
+		&:hover {
+			background-color: var(--background-basic-color-2);
+		}
+
+		&.danger {
+			color: var(--color-danger-default);
+		}
+	}
+}

@@ -10,7 +10,7 @@ const PROVIDER_ID = AiProviderEnum.ANTHROPIC;
  */
 const MODELS: IAiChatModel[] = [
 	{ id: 'claude-sonnet-5', label: 'Claude Sonnet 5', providerId: PROVIDER_ID },
-	{ id: 'claude-opus-4-8', label: 'Claude Opus 4.8', providerId: PROVIDER_ID },
+	{ id: 'claude-opus-5', label: 'Claude Opus 5', providerId: PROVIDER_ID },
 	{ id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5', providerId: PROVIDER_ID }
 ];
 
@@ -28,6 +28,9 @@ export const anthropicProviderDefinition: IAiChatProviderDefinition = {
 	baseUrlEnvVar: 'ANTHROPIC_BASE_URL',
 	models: MODELS,
 	defaultModel: 'claude-sonnet-5',
+	order: 40,
+	websiteUrl: 'https://www.anthropic.com',
+	apiKeysUrl: 'https://console.anthropic.com/settings/keys',
 
 	/**
 	 * Create a Claude `LanguageModel` for the given model id and credentials.

@@ -1,0 +1,59 @@
+{
+	"name": "plugin-ai-provider-gemini",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/ai-provider-gemini/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"currentVersionResolver": "git-tag",
+			"preserveLocalDependencyProtocols": false,
+			"manifestRootsToUpdate": [
+				"dist/{projectRoot}"
+			]
+		}
+	},
+	"tags": [],
+	"implicitDependencies": [
+		"constants",
+		"contracts",
+		"plugin",
+		"plugin-ai-chat"
+	],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": [
+				"{options.outputPath}"
+			],
+			"options": {
+				"outputPath": "dist/packages/plugins/ai-provider-gemini",
+				"tsConfig": "packages/plugins/ai-provider-gemini/tsconfig.lib.json",
+				"packageJson": "packages/plugins/ai-provider-gemini/package.json",
+				"main": "packages/plugins/ai-provider-gemini/src/index.ts",
+				"assets": [
+					"packages/plugins/ai-provider-gemini/*.md"
+				]
+			},
+			"dependsOn": [
+				"^build"
+			]
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
+			"options": {
+				"jestConfig": "packages/plugins/ai-provider-gemini/jest.config.ts"
+			}
+		}
+	}
+}

@@ -5,8 +5,9 @@
 .ai-chat-settings {
 	.page-header {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		justify-content: space-between;
+		gap: 1rem;
 
 		h5 {
 			margin: 0;
@@ -17,68 +18,260 @@
 			font-size: 0.875rem;
 			opacity: 0.7;
 		}
+
+		.back {
+			margin: 0 0 0.5rem -0.5rem;
+			opacity: 0.8;
+		}
+	}
+
+	// ── Provider tiles (monogram "logos") ─────────────────────────────
+	.tile {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.25rem;
+		height: 2.25rem;
+		border-radius: 0.5rem;
+		color: #ffffff;
+		font-weight: 700;
+		font-size: 0.8125rem;
+		letter-spacing: 0.02em;
+		flex-shrink: 0;
+		user-select: none;
+
+		&.large {
+			width: 3.5rem;
+			height: 3.5rem;
+			border-radius: 0.75rem;
+			font-size: 1.125rem;
+		}
+	}
+
+	// Render nb-badge inline (its default is absolute positioning).
+	.static-badge {
+		position: static;
+		white-space: nowrap;
 	}
 
 	.empty-state {
-		margin: 0;
-		opacity: 0.7;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+		padding: 2.5rem 0;
+		opacity: 0.85;
+
+		p {
+			margin: 0;
+		}
 	}
 
-	.providers {
+	// ── LIST view ─────────────────────────────────────────────────────
+	.provider-rows {
+		display: flex;
+		flex-direction: column;
+
+		.row-head,
+		.row {
+			display: grid;
+			grid-template-columns: minmax(14rem, 1.4fr) minmax(9rem, 1fr) minmax(7rem, 0.7fr) auto;
+			gap: 1rem;
+			align-items: center;
+			padding: 0.75rem 0.5rem;
+		}
+
+		.row-head {
+			font-size: 0.75rem;
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+			opacity: 0.6;
+			border-bottom: 1px solid rgba(143, 155, 179, 0.24);
+		}
+
+		.row {
+			border-bottom: 1px solid rgba(143, 155, 179, 0.12);
+
+			&:last-child {
+				border-bottom: none;
+			}
+		}
+
+		.cell.name {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.75rem;
+			font-weight: 600;
+		}
+
+		.default-chip {
+			margin-left: 0.5rem;
+			font-size: 0.6875rem;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+			padding: 0.125rem 0.5rem;
+			border-radius: 1rem;
+			background: rgba(0, 214, 143, 0.16);
+			// WCAG contrast: dark success shade on the light tint (not #00d68f)
+			color: #00875a;
+		}
+
+		.env-note {
+			font-size: 0.75rem;
+			opacity: 0.6;
+		}
+
+		.actions-col {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.25rem;
+			justify-content: flex-end;
+		}
+	}
+
+	// ── CATALOG view ──────────────────────────────────────────────────
+	.catalog-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
 		gap: 1rem;
 	}
 
-	.provider-card {
-		margin-bottom: 0;
+	.catalog-card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.625rem;
+		padding: 1.5rem 1rem 1.25rem;
+		border: 1px solid rgba(143, 155, 179, 0.24);
+		border-radius: 0.75rem;
+		background: transparent;
+		cursor: pointer;
+		transition: border-color 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease;
+		color: inherit;
+		font: inherit;
 
-		.provider-header {
-			display: flex;
-			flex-direction: column;
-			gap: 0.5rem;
+		&:hover,
+		&:focus-visible {
+			border-color: #3366ff;
+			transform: translateY(-2px);
+			box-shadow: 0 4px 16px rgba(51, 102, 255, 0.12);
+			outline: none;
 		}
 
-		.provider-title {
-			position: relative;
-			display: flex;
-			align-items: center;
-			gap: 0.5rem;
-			padding-right: 8rem;
-
-			h6 {
-				margin: 0;
-			}
+		.name {
+			font-weight: 600;
 		}
 
-		.provider-models {
-			display: flex;
-			flex-wrap: wrap;
+		.configured {
+			display: inline-flex;
 			align-items: center;
 			gap: 0.25rem;
+			font-size: 0.75rem;
+			// WCAG contrast: dark success shade (not #00d68f)
+			color: #00875a;
 
-			.models-label {
-				font-size: 0.75rem;
-				opacity: 0.7;
-			}
-
-			.model-chip {
-				font-size: 0.75rem;
-				line-height: 1.25;
-				padding: 0.125rem 0.5rem;
-				border-radius: 1rem;
-				background: rgba(143, 155, 179, 0.16);
-				white-space: nowrap;
+			nb-icon {
+				font-size: 0.9375rem;
 			}
 		}
+
+		.connect-chip {
+			font-size: 0.6875rem;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+			padding: 0.125rem 0.5rem;
+			border-radius: 1rem;
+			background: rgba(51, 102, 255, 0.14);
+			// WCAG contrast: darker primary shade on the light tint
+			color: #274bdb;
+		}
+	}
+
+	// ── CONFIG view ───────────────────────────────────────────────────
+	.config-title {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.provider-models {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.25rem;
+		margin-top: 0.5rem;
+
+		.models-label {
+			font-size: 0.75rem;
+			opacity: 0.7;
+		}
+
+		.model-chip {
+			font-size: 0.75rem;
+			line-height: 1.25;
+			padding: 0.125rem 0.5rem;
+			border-radius: 1rem;
+			background: rgba(143, 155, 179, 0.16);
+			white-space: nowrap;
+		}
+	}
+
+	.connect-box {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.5rem;
+		margin-bottom: 1.25rem;
+
+		.hint {
+			font-size: 0.75rem;
+			opacity: 0.7;
+		}
+
+		.divider {
+			align-self: stretch;
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+			margin-top: 0.75rem;
+			font-size: 0.75rem;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			opacity: 0.6;
+
+			&::before,
+			&::after {
+				content: '';
+				flex: 1;
+				border-top: 1px solid rgba(143, 155, 179, 0.24);
+			}
+		}
+	}
+
+	.config-form {
+		max-width: 34rem;
 	}
 
 	.form-group {
 		margin-bottom: 1rem;
 
 		.label {
-			display: block;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 0.5rem;
 			margin-bottom: 0.25rem;
+		}
+
+		.get-key {
+			font-size: 0.75rem;
+			text-decoration: none;
+
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 
 		.hint {

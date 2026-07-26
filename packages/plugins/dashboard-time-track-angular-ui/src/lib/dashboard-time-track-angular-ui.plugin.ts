@@ -1,6 +1,10 @@
 import { PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, IPluginI18nService, PluginRouteInput } from '@gauzy/plugin-ui';
-import { DASHBOARD_TIME_TRACKING_ROUTE, DASHBOARD_TIME_TRACKING_PATH } from './dashboard-time-track-angular-ui.constants';
+import {
+	DASHBOARD_CUSTOM_ROUTE,
+	DASHBOARD_TIME_TRACKING_ROUTE,
+	DASHBOARD_TIME_TRACKING_PATH
+} from './dashboard-time-track-angular-ui.constants';
 import ar from '../i18n/ar.json';
 import bg from '../i18n/bg.json';
 import de from '../i18n/de.json';
@@ -44,7 +48,7 @@ export const DashboardTimeTrackAngularUiPlugin = defineDeclarativePlugin('dashbo
 	location: 'page-sections',
 
 	// ── Routes ───────────────────────────────────────────────────
-	routes: [DASHBOARD_TIME_TRACKING_ROUTE as PluginRouteInput],
+	routes: [DASHBOARD_TIME_TRACKING_ROUTE as PluginRouteInput, DASHBOARD_CUSTOM_ROUTE as PluginRouteInput],
 
 	// ── Dashboard Tab ────────────────────────────────────────────
 	tabs: [
