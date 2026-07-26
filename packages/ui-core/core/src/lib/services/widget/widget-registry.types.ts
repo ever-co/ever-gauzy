@@ -17,7 +17,42 @@ export type WidgetGridWidth = 3 | 4 | 6 | 8 | 12;
  * @readonly
  * @enum {string}
  */
-export type WidgetPageLocationId = 'time-tracking' | 'accounting';
+export type WidgetPageLocationId = 'time-tracking' | 'accounting' | 'dashboard';
+
+/**
+ * Palette grouping for a widget. Drives the category accordion in the
+ * dashboard builder's widget palette.
+ */
+export type WidgetCategory =
+	| 'time-tracking'
+	| 'accounting'
+	| 'hr'
+	| 'teams'
+	| 'project-management'
+	| 'plugin'
+	| 'other';
+
+/**
+ * Ambient context every canvas-hosted widget receives (organization, date
+ * range, and the currently selected employee/project/team scope).
+ *
+ * Declared here (rather than importing the concrete interface) so the registry
+ * types stay dependency-free; the concrete shape is `IDashboardWidgetContext`
+ * in `@gauzy/ui-core/core`'s dashboard services.
+ */
+export type WidgetContextRequirement = 'organization' | 'dateRange' | 'employee' | 'project' | 'team';
+
+/**
+ * A configurable setting exposed by a widget, rendered by the builder's
+ * per-widget configuration dialog.
+ */
+export interface WidgetConfigField {
+	key: string;
+	label: string;
+	type: 'text' | 'number' | 'boolean' | 'select' | 'employee' | 'project' | 'team';
+	options?: { label: string; value: unknown }[];
+	default?: unknown;
+}
 
 /**
  * Configuration for registering a widget.
@@ -31,6 +66,64 @@ export interface WidgetRegistryConfig {
 	 * @example 'time-tracking'
 	 */
 	location: WidgetPageLocationId;
+
+	/**
+	 * @description
+	 * Palette grouping for the dashboard builder. Widgets without a category
+	 * are grouped under 'other'.
+	 */
+	category?: WidgetCategory;
+
+	/**
+	 * @description
+	 * Eva/Nebular icon name shown on the palette entry.
+	 *
+	 * @example 'people-outline'
+	 */
+	icon?: string;
+
+	/**
+	 * @description
+	 * Short description shown under the title in the palette. May be a
+	 * translation key.
+	 */
+	description?: string | ResolveFn<string>;
+
+	/**
+	 * @description
+	 * Default grid footprint used when the widget is dropped on a canvas,
+	 * in a 12 column grid (`w`) and row units (`h`).
+	 *
+	 * @example { w: 3, h: 2 }
+	 */
+	defaultSize?: { w: number; h: number };
+
+	/** Smallest footprint the widget may be resized to. */
+	minSize?: { w: number; h: number };
+
+	/** Largest footprint the widget may be resized to. */
+	maxSize?: { w: number; h: number };
+
+	/**
+	 * @description
+	 * Per-instance settings this widget accepts, rendered by the builder's
+	 * configuration dialog and persisted in the placement's `config`.
+	 */
+	configSchema?: WidgetConfigField[];
+
+	/**
+	 * @description
+	 * Ambient context the widget needs to render meaningful data. Used to show
+	 * an actionable empty state (e.g. "select an employee") instead of a blank
+	 * or broken widget.
+	 */
+	contextRequirements?: WidgetContextRequirement[];
+
+	/**
+	 * @description
+	 * Feature flag gating the widget, mirroring plugin page extensions.
+	 */
+	featureKey?: string;
 
 	/**
 	 * @description

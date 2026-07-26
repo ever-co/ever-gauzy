@@ -1,5 +1,7 @@
-import { Injectable } from '@angular/core';
-import { IWidgetRegistry, WidgetPageLocationId, WidgetRegistryConfig } from './widget-registry.types';
+import { Injectable, Type } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { IWidgetRegistry, WidgetCategory, WidgetPageLocationId, WidgetRegistryConfig } from './widget-registry.types';
 
 @Injectable({
 	providedIn: 'root'
@@ -12,6 +14,23 @@ export class WidgetRegistryService implements IWidgetRegistry {
 	 * This Map stores arrays of WidgetRegistryConfig objects, keyed by WidgetPageLocationId.
 	 */
 	private readonly registry = new Map<WidgetPageLocationId, WidgetRegistryConfig[]>();
+
+	/**
+	 * Global `widgetId` -> config index, so a persisted placement can resolve
+	 * its widget without knowing which location registered it.
+	 */
+	private readonly byId = new Map<string, WidgetRegistryConfig>();
+
+	/** Resolved component cache, so a widget dropped twice only loads once. */
+	private readonly componentCache = new Map<string, Promise<Type<any>>>();
+
+	private readonly _widgets$ = new BehaviorSubject<WidgetRegistryConfig[]>([]);
+
+	/**
+	 * All registered widgets, emitting again whenever registrations change
+	 * (plugins register during app initialization and may be enabled later).
+	 */
+	public readonly widgets$: Observable<WidgetRegistryConfig[]> = this._widgets$.asObservable();
 
 	/**
 	 * Retrieves the current widget registry.
@@ -66,6 +85,89 @@ export class WidgetRegistryService implements IWidgetRegistry {
 
 		// Update the registry with the new or updated list of widgets for the specified location.
 		this.registry.set(config.location, widgets);
+
+		// Index globally by id and publish the change to palette subscribers.
+		this.byId.set(config.widgetId, config);
+		this.publish();
+	}
+
+	/**
+	 * Registers a widget, replacing any existing registration with the same id.
+	 *
+	 * Unlike {@link registerWidget} this never throws on duplicates, which makes
+	 * it safe for hot module replacement and for plugins that re-register when
+	 * they are toggled on and off at runtime.
+	 *
+	 * @param config - The configuration object for the widget.
+	 */
+	public registerOrReplaceWidget(config: WidgetRegistryConfig): void {
+		if (!config?.location || !config?.widgetId) {
+			throw new Error('A widget configuration must have location and widgetId properties');
+		}
+
+		const widgets = (this.registry.get(config.location) || []).filter(
+			(widget: WidgetRegistryConfig) => widget.widgetId !== config.widgetId
+		);
+		widgets.push(config);
+		this.registry.set(config.location, widgets);
+		this.byId.set(config.widgetId, config);
+		this.componentCache.delete(config.widgetId);
+		this.publish();
+	}
+
+	/**
+	 * Retrieves a widget configuration by its global id, regardless of the
+	 * location it was registered at.
+	 *
+	 * @param widgetId - The registry key persisted on a dashboard placement.
+	 * @returns The widget configuration, or `undefined` when it is not registered
+	 *          (e.g. its plugin is disabled, or the widget was removed).
+	 */
+	public getWidget(widgetId: string): WidgetRegistryConfig | undefined {
+		return this.byId.get(widgetId);
+	}
+
+	/**
+	 * Streams the registered widgets, optionally narrowed to one palette category.
+	 *
+	 * @param category - Optional category filter.
+	 */
+	public getWidgets$(category?: WidgetCategory): Observable<WidgetRegistryConfig[]> {
+		return this.widgets$.pipe(
+			map((widgets: WidgetRegistryConfig[]) =>
+				category ? widgets.filter((widget) => (widget.category ?? 'other') === category) : widgets
+			)
+		);
+	}
+
+	/**
+	 * Resolves (and caches) the component class backing a widget.
+	 *
+	 * @param widgetId - The widget's registry key.
+	 * @returns The component type, or `null` when the widget is unknown or
+	 *          declares no component.
+	 */
+	public resolveComponent(widgetId: string): Promise<Type<any> | null> {
+		const cached = this.componentCache.get(widgetId);
+		if (cached) {
+			return cached;
+		}
+
+		const config = this.byId.get(widgetId);
+		if (!config?.loadComponent) {
+			return Promise.resolve(null);
+		}
+
+		const loading = Promise.resolve(config.loadComponent());
+		this.componentCache.set(widgetId, loading);
+		// A failed load must not poison the cache — the next render retries.
+		loading.catch(() => this.componentCache.delete(widgetId));
+		return loading;
+	}
+
+	/** Emits the flattened registry to `widgets$` subscribers. */
+	private publish(): void {
+		this._widgets$.next(Array.from(this.byId.values()));
 	}
 
 	/**
