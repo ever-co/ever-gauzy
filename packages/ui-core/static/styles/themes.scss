@@ -33,11 +33,10 @@ $gauzy-density: (
 	// Cards
 	card-padding: 1rem,
 	card-header-padding: 0.875rem 1rem,
-	// Page frame — less empty space around content
-	layout-padding: 16px 16px 0 8px,
-	layout-padding-top: 16px,
-	header-height: 3.75rem,
-	header-padding: 0.75rem 1rem,
+	// NOTE: header-height / layout-padding are intentionally NOT compacted:
+	// the fixed header's real height is content-driven (demo banner + toolbar)
+	// while Nebular offsets the page by the header-height variable only, so
+	// shrinking the variable clips the top of the page content.
 	// Tabs
 	tabset-tab-padding: 0.75rem 1.25rem,
 	tabset-tab-text-font-size: 0.875rem,
