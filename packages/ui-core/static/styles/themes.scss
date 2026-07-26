@@ -29,6 +29,14 @@ $gauzy-density: (
 	menu-text-font-size: 0.8125rem,
 	menu-text-font-weight: 500,
 	menu-item-divider-width: 0,
+	// Flat-chrome tokens (shadcn-like): a small radius and a low-contrast
+	// hover fill shared by breadcrumb links, sidebar rows and overlay menu
+	// items, so "hover" reads identically everywhere in all 8 themes.
+	// NOTE: deliberately smaller than `border-radius` (0.625rem) — that is the
+	// CARD radius, and a 10px pill on a 20px row is what made menu items look
+	// like blocks.
+	gauzy-radius-sm: 0.375rem,
+	gauzy-hover-tint: background-basic-color-2,
 	menu-item-divider-style: none,
 	// Cards
 	card-padding: 1rem,

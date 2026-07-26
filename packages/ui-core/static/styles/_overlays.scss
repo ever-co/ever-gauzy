@@ -1,0 +1,319 @@
+// Forward so mixins/themes are available to importers
+@forward './themes';
+@use './themes' as *;
+
+// ──────────────────────────────────────────────────────────────────────────────
+// shadcn-like overlay menus (context menu / dropdown / popover / option list)
+//
+// The whole point of this file is the CONTAINER / ITEM split:
+//
+//   CONTAINER  one soft 1px hairline + one soft shadow + 8px radius + 4px pad
+//   ITEMS      completely FLAT rows — no border, no shadow, no visible pill.
+//              6px/10px padding, 13px text, muted icon. Hover is nothing but a
+//              low-contrast background tint on a 6px radius; active/selected is
+//              a primary tint plus accent text.
+//
+// Why this lives in a global partial instead of the component styles: Nebular
+// renders every overlay into `.cdk-overlay-container` at the <body> level, so
+// component-scoped rules can only reach it through leaky `::ng-deep`. Several
+// components already do that (see `workspaces.component.scss`, whose top-level
+// `::ng-deep nb-context-menu {…}` compiles to a *global* `nb-context-menu` rule
+// and therefore restyles every context menu in the app). Prefixing everything
+// here with `.cdk-overlay-container` raises specificity by one class so these
+// rules win over those leaks regardless of stylesheet injection order.
+// ──────────────────────────────────────────────────────────────────────────────
+
+// Colours go through CSS custom properties with alpha-neutral fallbacks so the
+// exact same declaration reads correctly on a white surface AND on a dark one.
+// The `--gauzy-overlay-*` properties are NOT registered in `themes.scss` yet —
+// that file is owned by the integrator — so the fallbacks below are the live
+// values until the tokens land, at which point they take over automatically.
+
+// 1px hairline: neutral grey at low alpha => light grey on white, soft light
+// line on dark. Never a raw hex that only works on one background.
+$overlay-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
+// Two-layer soft elevation (shadcn `shadow-md`), instead of Nebular's default
+// `rgba(0, 0, 0, 0.733) 0 4px 8px -2px` which is almost opaque in dark themes.
+// NOTE: a `var()` fallback keeps every comma after the first one, so the whole
+// two-shadow list below is the fallback value. It is written as an interpolated
+// literal so Sass emits it verbatim instead of re-parsing `12px -2px` as maths.
+$overlay-shadow: #{'var(--gauzy-overlay-shadow, 0 4px 12px -2px rgba(0, 0, 0, 0.14), 0 2px 6px -2px rgba(0, 0, 0, 0.08))'};
+
+// Neutral hover tint (shadcn `accent`) — deliberately NOT the brand colour, so
+// hovering a row does not read as "selected".
+$overlay-item-hover-bg: var(--gauzy-overlay-item-hover-background, rgba(126, 126, 143, 0.12));
+
+// Active / selected: brand tint (never a full-bleed solid fill).
+$overlay-item-active-bg: var(--gauzy-overlay-item-active-background, var(--color-primary-transparent-100));
+
+// Active / selected LABEL. Deliberately `text-basic-color` + weight 600 rather
+// than the brand colour: `--text-primary-color` is `color-primary-500`
+// (#6e49e8) in every gauzy theme, and on the dark themes that sits at ~2.7:1
+// against the tinted row — unreadable at 13px. Weight + tint carry the state
+// instead, which is also how shadcn marks a selected row (it uses a check mark,
+// not coloured text).
+// TODO(theme): once `--gauzy-overlay-item-active-text-color` exists per theme
+// (a light accent on dark, a dark accent on light) this can go back to accent
+// text automatically — the fallback is already wired below.
+$overlay-item-active-color: var(--gauzy-overlay-item-active-text-color, var(--text-basic-color));
+
+$overlay-radius: 8px;
+$overlay-padding: 4px;
+$overlay-item-radius: 6px;
+$overlay-item-padding-y: 0.375rem; // 6px
+$overlay-item-padding-x: 0.625rem; // 10px
+
+/**
+ * The soft container chrome shared by every overlay surface that hosts a list
+ * of menu rows.
+ */
+@mixin gauzy-overlay-surface() {
+  border: 1px solid #{$overlay-hairline};
+  border-radius: $overlay-radius;
+  box-shadow: #{$overlay-shadow};
+  background-color: nb-theme(background-basic-color-1);
+}
+
+/**
+ * A single flat menu row. No border, no shadow, no persistent background — the
+ * row only lights up on hover/active, which is what removes the "visible
+ * rounded blocks" the design review flagged.
+ */
+@mixin gauzy-overlay-item() {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: $overlay-item-padding-y $overlay-item-padding-x;
+  border: 0;
+  border-radius: $overlay-item-radius;
+  box-shadow: none;
+  background-color: transparent;
+  color: nb-theme(text-basic-color);
+  font-size: nb-theme(menu-text-font-size);
+  font-weight: nb-theme(menu-text-font-weight);
+  line-height: 1.25rem;
+  text-decoration: none;
+  // Nebular centres context-menu labels by default (`context-menu-text-align`);
+  // shadcn rows are start-aligned. `start` is the logical keyword, so it flips
+  // on its own in RTL without depending on a `dir` attribute being present.
+  text-align: start;
+  // Colour-only transition: transitioning `all` also animates the radius and
+  // makes the row look like it is inflating into a block.
+  transition:
+    background-color 0.12s ease-in-out,
+    color 0.12s ease-in-out;
+}
+
+@mixin gauzy-overlay-menus() {
+  // ── Context menus ───────────────────────────────────────────────────────
+  .cdk-overlay-container nb-context-menu {
+    @include gauzy-overlay-surface();
+    padding: $overlay-padding;
+    // Nebular ships 10rem/15rem; component-level leaks push it to 280/320px,
+    // which makes a two-item support menu absurdly wide.
+    min-width: 11rem;
+    max-width: 20rem;
+
+    nb-menu {
+      background-color: transparent;
+      border-radius: 0;
+      // The container already clips; keeping `overflow: hidden` here would
+      // crop the hover tint of the first/last row against the 4px padding.
+      overflow: visible;
+
+      .menu-items {
+        margin: 0;
+        padding: 0;
+      }
+
+      .menu-item {
+        // Kill any per-item divider inherited from the theme.
+        border: 0;
+        margin: 0;
+
+        > a {
+          @include gauzy-overlay-item();
+        }
+
+        > a:hover {
+          background-color: #{$overlay-item-hover-bg};
+          color: nb-theme(text-basic-color);
+        }
+
+        > a.active {
+          background-color: #{$overlay-item-active-bg};
+          color: #{$overlay-item-active-color};
+          font-weight: 600;
+        }
+
+        // Muted 16px glyph, flush with the label. The previous look wrapped
+        // it in a 32x32 filled rounded box — that box *was* the "rounded
+        // block" inside the popup.
+        > a .menu-icon {
+          flex-shrink: 0;
+          width: 1em;
+          height: 1em;
+          min-width: auto;
+          padding: 0;
+          border: 0;
+          border-radius: 0;
+          background-color: transparent;
+          font-size: 1rem;
+          color: nb-theme(text-hint-color);
+          margin: 0;
+
+          svg {
+            width: 100%;
+            height: 100%;
+          }
+        }
+
+        > a:hover .menu-icon {
+          color: nb-theme(text-basic-color);
+        }
+
+        > a.active .menu-icon {
+          color: #{$overlay-item-active-color};
+        }
+
+        > a .menu-title {
+          flex: 1 1 auto;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+
+        // Trailing chevron of a submenu row: same muted treatment, no box.
+        // `min-width` / `border-radius` / `svg` are reset explicitly because
+        // the leaked component rule targets `nb-icon` as a whole, so it hits
+        // the chevron as well as the leading glyph.
+        > a .expand-state {
+          flex-shrink: 0;
+          width: 0.875em;
+          height: 0.875em;
+          min-width: auto;
+          padding: 0;
+          border: 0;
+          border-radius: 0;
+          font-size: 0.875rem;
+          color: nb-theme(text-hint-color);
+          background-color: transparent;
+
+          svg {
+            width: 100%;
+            height: 100%;
+          }
+        }
+      }
+
+      // Section captions above a group of rows.
+      .menu-group {
+        padding: 0.375rem $overlay-item-padding-x 0.25rem;
+        color: nb-theme(text-hint-color);
+        font-size: nb-theme(text-caption-font-size);
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+    }
+  }
+
+  // ── Popovers ────────────────────────────────────────────────────────────
+  // Template-driven popovers render their content directly (no
+  // `.primitive-overlay` wrapper), so only the container chrome is set here
+  // and the content keeps its own padding.
+  .cdk-overlay-container nb-popover {
+    @include gauzy-overlay-surface();
+
+    // The arrow is two stacked triangles: the element itself is the outline,
+    // `::after` is the fill drawn 3px inside it. The theme paints the outline
+    // with `popover-border-color` (transparent), so it has to be re-pointed at
+    // the hairline or the arrow reads as detached from the bordered panel.
+    .arrow {
+      border-bottom-color: #{$overlay-hairline};
+
+      &::after {
+        border-bottom-color: nb-theme(background-basic-color-1);
+      }
+    }
+  }
+
+  // ── nb-select option lists ──────────────────────────────────────────────
+  .cdk-overlay-container nb-option-list {
+    @include gauzy-overlay-surface();
+
+    // Nebular draws a heavier "adjacent" edge on the side facing the trigger
+    // so the panel reads as glued to the select; a floating shadcn panel is
+    // a uniform hairline on all four sides.
+    &.position-top,
+    &.position-bottom {
+      border-top-color: #{$overlay-hairline};
+      border-bottom-color: #{$overlay-hairline};
+    }
+
+    .option-list {
+      padding: $overlay-padding;
+    }
+  }
+
+  // Nebular emits `nb-option-list.size-#{$size} nb-option` (0,1,2) for the
+  // option metrics; the selector below has the same specificity but is
+  // included later in this very stylesheet, so it wins the cascade.
+  .cdk-overlay-container nb-option-list nb-option {
+    @include gauzy-overlay-item();
+
+    &:hover,
+    &.active,
+    &:focus {
+      background-color: #{$overlay-item-hover-bg};
+      color: nb-theme(text-basic-color);
+    }
+
+    // shadcn marks the selected option with a tint + weight, never with a
+    // full-bleed solid primary fill (Nebular's default is the whole row
+    // painted `color-primary-default` with white text).
+    &.selected,
+    &.selected:hover,
+    &.selected:focus {
+      background-color: #{$overlay-item-active-bg};
+      color: #{$overlay-item-active-color};
+      font-weight: 600;
+    }
+  }
+
+  // The multi-select checkbox ships its own 0.5rem inline margin from a
+  // component-scoped rule; the flex `gap` above is the single source of
+  // spacing, so zero it. Anchoring on `.option-list` (rather than the
+  // `nb-option-list` element) is what buys the specificity to beat that
+  // component rule.
+  .cdk-overlay-container .option-list nb-option nb-checkbox {
+    margin: 0;
+  }
+
+  .cdk-overlay-container nb-option-list nb-option-group .option-group-title {
+    padding: 0.375rem $overlay-item-padding-x 0.25rem;
+    color: nb-theme(text-hint-color);
+    font-size: nb-theme(text-caption-font-size);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  // ── Separators ──────────────────────────────────────────────────────────
+  // 1px hairlines at low alpha, never a thick divider. Bootstrap's reboot
+  // gives every `hr` a 1px `currentColor` border at 25% opacity, which reads
+  // as a hard grey bar inside a menu.
+  .cdk-overlay-container {
+    nb-context-menu hr,
+    nb-popover hr,
+    nb-option-list hr {
+      height: 0;
+      margin: $overlay-padding 0;
+      border: 0;
+      border-top: 1px solid #{$overlay-hairline};
+      opacity: 1;
+    }
+  }
+}

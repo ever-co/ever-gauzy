@@ -1,87 +1,242 @@
 @use 'themes' as *;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Flat (shadcn-like) sidebar rows.
+//
+// WHY this file strips so much: Nebular renders every top level entry as its
+// own <nb-accordion>, and the framework defaults paint that accordion as a
+// CARD — an opaque `accordion-item-background-color` fill, the 0.625rem
+// `accordion-border-radius`, `accordion-shadow`, and a 1px divider under each
+// header. Stacked in a narrow sidebar those cards read as a "rounded block"
+// around every item, which is exactly the look we are removing.
+//
+// The rule from here on: a row paints NOTHING at rest. Only :hover and the
+// active entry get a low contrast overlay on a small radius — never a border,
+// never a per item shadow.
+//
+// The overlays are neutral rgba rather than solid colours on purpose: the same
+// value darkens the light sidebar (#f4f4f5 / #fbfbfb) and lightens the dark one
+// (#141416 / #1e1e22), so no per theme branch is needed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Hover overlay. `gauzy-sidebar-background-3` is rgba(126, 126, 143, 0.1) in
+// every theme that declares it; the literal fallback keeps hover visible in the
+// material-* themes, which never declared the token.
+// TODO(theme): replace with nb-theme(gauzy-menu-item-hover-background).
+$menu-row-hover-background: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
+
+// Active overlay — exactly twice the hover alpha. Measured on both surfaces the
+// pair stays distinguishable (light #ededee vs #e2e2e5, dark #2b2b2f vs
+// #313138) while neither reads as a filled block.
+// TODO(theme): replace with nb-theme(gauzy-menu-item-active-background).
+$menu-row-active-background: rgba(126, 126, 143, 0.2);
+
+// 6px. Deliberately NOT nb-theme(border-radius) (0.625rem / 10px): that is the
+// CARD radius, and a 10px pill is a large part of why rows look like blocks.
+// TODO(theme): replace with nb-theme(gauzy-menu-item-radius).
+$menu-row-radius: 0.375rem;
+
+// Resting label colour, muted. Nested fallback because gauzy-text-color-2 is
+// undefined in the material-* themes.
+$menu-row-color: var(--gauzy-text-color-2, var(--text-hint-color));
+
+// Fixed icon column so labels line up whatever glyph an entry uses.
+$menu-icon-column: 1rem;
+
+// Room reserved on the trailing edge for the accordion chevron. Nebular pins
+// the indicator at `right: 1rem`, so the gutter has to clear 1rem + the icon.
+$menu-chevron-gutter: 2rem;
+
+// The inline half of `menu-item-padding` (0.5rem 0.75rem). Needed as a literal
+// wherever the chevron gutter is given back, because a CSS custom property
+// cannot be destructured into its longhands.
+// KEEP IN SYNC with `menu-item-padding` in packages/ui-core/static/styles/themes.scss.
+$menu-row-inline-padding: 0.75rem;
+
+// Child rows sit one step in from the parent row's icon column:
+// 0.75rem (row padding) + 0.75rem (step).
+$menu-child-indent: 1.5rem;
+
 :host {
   position: relative;
-  nb-accordion-item-body.item-collapsed ::ng-deep .item-body {
-    padding: 4px;
-  }
+  display: block;
+
+  // ── Container: no card fill, no card radius, no shadow ────────────────────
   nb-accordion {
-    box-shadow: unset;
-    margin-top: 2px;
-    nb-accordion-item.opened {
-      box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.1);
-      nb-accordion-item-header {
-        background-color: nb-theme(gauzy-sidebar-background-3);
-        &.accordion-item-header-expanded {
-          border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-        }
-      }
-      nb-accordion-item-body {
-        background-color: nb-theme(gauzy-sidebar-background-4);
-        border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
-      }
-    }
-    &.focus {
-      box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.1);
-      nb-accordion-item-header,
-      i {
-        color: rgba(245, 109, 88, 1);
-      }
-    }
-    nb-accordion-item-header.accordion-item-header-collapsed {
-      border-radius: nb-theme(border-radius);
-    }
-    &.closed {
-      nb-accordion-item-header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        i {
-          margin-right: unset;
-        }
-        ::ng-deep nb-icon {
-          display: none;
-        }
-      }
-    }
-    &.application {
-      nb-accordion-item {
-        nb-accordion-item-header {
-          border: 1px solid nb-theme(background-primary-color-1);
-          color: nb-theme(text-primary-color);
-          border-radius: nb-theme(border-radius);
-        }
-        i {
-          color: nb-theme(text-primary-color);
-        }
-        nb-accordion-item-header ::ng-deep nb-icon {
-          border: 1px solid nb-theme(background-primary-color-1);
-          border-radius: nb-theme(border-radius);
-          width: 1.75rem;
-          height: 1.75rem;
-          @include nb-ltr(margin-right, calc(-1.75rem / 4));
-          @include nb-rtl(margin-left, calc(-1.75rem / 4));
-        }
-      }
-    }
-  }
-  hr.custom-separator {
-    border: 0.5px solid nb-theme(gauzy-border-default-color);
-    border-top: none;
-    border-left: none;
-    border-right: none;
-  }
-  i {
-    color: nb-theme(gauzy-text-color-1);
+    // 2px breathing room between rows (shadcn stacks menu rows with a small gap
+    // instead of dividers).
+    margin-top: 0.125rem;
+    background-color: transparent;
+    border-radius: 0;
+    box-shadow: none;
   }
 
+  nb-accordion-item {
+    background-color: transparent;
+    border-radius: 0;
+  }
+
+  // ── The row ───────────────────────────────────────────────────────────────
   nb-accordion-item-header {
-    color: nb-theme(gauzy-text-color-2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: nb-theme(menu-item-padding);
+    // Keep the label clear of the absolutely positioned chevron. Logical
+    // property rather than nb-ltr/nb-rtl: it flips with the inherited
+    // `direction` and does not depend on a [dir] attribute being present.
+    padding-inline-end: $menu-chevron-gutter;
+    border-radius: $menu-row-radius;
+    // Nebular draws a 1px divider above/below every header; flat rows have none.
+    border-width: 0;
+    color: $menu-row-color;
     font-size: nb-theme(menu-text-font-size);
     font-weight: nb-theme(menu-text-font-weight);
-    line-height: 16px;
-    letter-spacing: 0em;
-    gap: 0.5rem;
+    line-height: 1.25rem;
+    letter-spacing: 0;
+    transition:
+      background-color 0.12s ease-in-out,
+      color 0.12s ease-in-out;
+
+    // Icons inherit the row colour (muted at rest, brightening with the label)
+    // and sit in a fixed width column so every label starts at the same x.
+    > i {
+      flex: 0 0 auto;
+      width: $menu-icon-column;
+      font-size: 0.875rem;
+      text-align: center;
+      color: inherit;
+    }
+
+    // Label: never wraps, never pushes the chevron — it truncates.
+    > span {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    // Collapsed and expanded headers look identical — the radius must not be
+    // squared off on expand, or the row turns back into the top half of a card.
+    &.accordion-item-header-collapsed,
+    &.accordion-item-header-expanded {
+      border-radius: $menu-row-radius;
+    }
+  }
+
+  // Hover: a tint only. No shadow, no border, no colour shift on the surface
+  // behind it.
+  nb-accordion-item-header:hover {
+    background-color: $menu-row-hover-background;
+    color: nb-theme(text-basic-color);
+  }
+
+  // Chevron: muted and sized to the row (nb-icon defaults to 1.25rem, which
+  // towers over a 0.8125rem label). Position stays Nebular's.
+  ::ng-deep nb-icon.expansion-indicator {
+    font-size: 1rem;
+    color: inherit;
+    opacity: 0.55;
+  }
+
+  // A leaf entry cannot expand, so it must not advertise a chevron. The body is
+  // only rendered when the entry has children, which is what :has() tests.
+  nb-accordion-item:not(:has(nb-accordion-item-body)) ::ng-deep nb-icon.expansion-indicator {
+    display: none;
+  }
+
+  // ...and with no chevron to clear, the trailing gutter is dead space that
+  // would truncate the label ~1.25rem early in a ~200px sidebar. Give it back.
+  // Same :has() test as above, so the two always agree: a browser without
+  // :has() keeps BOTH the chevron and its gutter.
+  nb-accordion-item:not(:has(nb-accordion-item-body)) > nb-accordion-item-header {
+    padding-inline-end: $menu-row-inline-padding;
+  }
+
+  // ── Active entry ──────────────────────────────────────────────────────────
+  // `.opened` is bound to `selected`, i.e. this entry owns the current route.
+  // Icon and label share `text-basic-color` on purpose: a single brand accent
+  // cannot clear 3:1 on BOTH the tinted light row (#e2e2e5) and the tinted dark
+  // one (#313138) — color-primary-default measures ~5.4:1 light but only ~2.5:1
+  // dark. Tint + weight already say "current" without a colour.
+  // TODO(theme): a per theme `gauzy-menu-item-active-foreground` would let the
+  // icon carry the accent safely (light: color-primary-600, dark: -300).
+  nb-accordion-item.opened > nb-accordion-item-header {
+    background-color: $menu-row-active-background;
+    color: nb-theme(text-basic-color);
+    font-weight: 600;
+  }
+
+  // ...but when the entry has children the fill belongs to the selected CHILD
+  // row. Filling the parent as well would stack two highlighted rows, which is
+  // the "block" look again — so the parent keeps the emphasis (weight/colour)
+  // and drops the fill. Browsers without :has() simply keep the fill above.
+  nb-accordion-item.opened:has(nb-accordion-item-body) > nb-accordion-item-header {
+    background-color: transparent;
+
+    &:hover {
+      background-color: $menu-row-hover-background;
+    }
+  }
+
+  // ── Sub-list ──────────────────────────────────────────────────────────────
+  nb-accordion-item-body {
+    background-color: transparent;
+    border-radius: 0;
+
+    ::ng-deep .item-body {
+      padding: 0.125rem 0 0.25rem;
+    }
+  }
+
+  // Icon rail (sidebar collapsed): the sub-list is a bare stack of glyphs, so
+  // it needs no horizontal gutter at all.
+  nb-accordion-item-body.item-collapsed ::ng-deep .item-body {
+    padding: 0.25rem 0;
+  }
+
+  // ── Icon rail ─────────────────────────────────────────────────────────────
+  // `.closed` mirrors the sidebar's collapsed state: one centred glyph per row,
+  // no label and no chevron (there is no width to spare for either).
+  nb-accordion.closed {
+    nb-accordion-item-header {
+      justify-content: center;
+      // The chevron is hidden here, so give its gutter back to the glyph.
+      padding-inline-end: $menu-row-inline-padding;
+
+      > i {
+        margin-right: unset;
+      }
+
+      // No room for the chevron in the rail.
+      ::ng-deep nb-icon {
+        display: none;
+      }
+    }
+  }
+
+  // ── Variants ──────────────────────────────────────────────────────────────
+  // "Focus" entry: keeps its accent label/icon colour (it reads on both the
+  // light and the dark sidebar), but no longer floats on its own drop shadow.
+  nb-accordion.focus {
+    nb-accordion-item-header,
+    i {
+      color: rgba(245, 109, 88, 1);
+    }
+  }
+
+  // "Applications" entry: same flat row as everything else; the boxed icon and
+  // outlined header it used to carry were pure block chrome.
+  nb-accordion.application {
+    nb-accordion-item-header {
+      color: nb-theme(text-basic-color);
+      border-width: 0;
+
+      i {
+        color: nb-theme(color-primary-default);
+      }
+    }
   }
 
   a {
@@ -90,34 +245,50 @@
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Child rows. NOTE: this block is consumed by children-menu-item.component.scss
+// via @use, so `:host` resolves to <ga-children-menu-item> there.
+// ─────────────────────────────────────────────────────────────────────────────
 :host .sub-item {
-  padding: 0px 9px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  color: nb-theme(gauzy-text-color-2);
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 16px;
-  letter-spacing: 0em;
+  border-radius: $menu-row-radius;
+  color: $menu-row-color;
+  font-size: nb-theme(menu-text-font-size);
+  font-weight: nb-theme(menu-text-font-weight);
+  line-height: 1.25rem;
+  letter-spacing: 0;
   cursor: pointer;
-  &:hover,
-  &.selected {
-    background-color: nb-theme(gauzy-sidebar-background-3);
-    border-radius: nb-theme(border-radius);
-    font-weight: 600;
-    color: nb-theme(gauzy-text-color-1);
-    border: unset;
+  transition:
+    background-color 0.12s ease-in-out,
+    color 0.12s ease-in-out;
+
+  // Hover: tint only — the old rule also fired a 10px drop shadow, which is
+  // what made child rows read as floating blocks.
+  &:hover {
+    background-color: $menu-row-hover-background;
+    color: nb-theme(text-basic-color);
   }
 
-  &:hover {
-    box-shadow: 0px 4px 10px 0px rgba(0, 0, 0, 0.15);
+  // Same treatment as an active top level row — see the contrast note there for
+  // why the icon stays neutral instead of taking the brand accent.
+  &.selected {
+    background-color: $menu-row-active-background;
+    color: nb-theme(text-basic-color);
+    font-weight: 600;
   }
+
+  // Icon rail: no indent, glyph centred, label hidden by the template.
   &.custom {
-    display: flex;
-    align-items: center;
     justify-content: center;
+
+    .info {
+      justify-content: center;
+      padding-inline: 0;
+    }
   }
+
   &.mouse-hover {
     display: flex;
     flex-direction: row;
@@ -129,9 +300,29 @@
   }
 }
 
-.info {
-  padding: 11px 0;
+// The clickable area of a child row. Padding lives here (not on .sub-item) so
+// the whole row height is a hit target, while the tint still spans full width.
+:host .info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: nb-theme(menu-item-padding);
+  padding-inline-start: $menu-child-indent;
+
+  i {
+    flex: 0 0 auto;
+    width: $menu-icon-column;
+    font-size: 0.875rem;
+    text-align: center;
+    color: inherit;
+  }
+
   span {
-    margin: 0 0.625rem;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 }

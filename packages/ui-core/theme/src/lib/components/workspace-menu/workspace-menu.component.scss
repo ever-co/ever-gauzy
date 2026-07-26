@@ -1,25 +1,43 @@
 @use 'themes' as *;
 
+// The workspace switcher is a popup, so it follows the same shadcn rules as the
+// overlay menus in `packages/ui-core/static/styles/_overlays.scss`: ONE soft
+// container (1px hairline + soft shadow + 8px radius + small padding) wrapping
+// completely FLAT rows.
+//
+// It is NOT rendered into `.cdk-overlay-container` — the layout absolutely
+// positions it — so the global overlay rules never reach it and the container
+// chrome has to be repeated here. The `--gauzy-overlay-*` custom properties are
+// not registered in themes.scss yet (the integrator owns that file), so each one
+// carries the same alpha-neutral fallback the global partial uses: a neutral
+// grey at low alpha darkens a light surface and lightens a dark one, so no
+// per-theme branch is needed.
+$overlay-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+$overlay-shadow: #{'var(--gauzy-overlay-shadow, 0 4px 12px -2px rgba(0, 0, 0, 0.14), 0 2px 6px -2px rgba(0, 0, 0, 0.08))'};
+
 :host {
   .workspace-dropdown {
     height: fit-content;
     max-height: 80vh;
-    box-shadow: 0px 6px 30px 0px rgba(0, 0, 0, 0.2);
-    border-radius: var(--border-radius);
-    background: nb-theme(background-basic-color-2);
-    padding: 0.75rem;
+    border: 1px solid #{$overlay-hairline};
+    border-radius: 8px;
+    box-shadow: #{$overlay-shadow};
+    background: nb-theme(background-basic-color-1);
+    // Just enough inset that a hovered row's radius never touches the edge.
+    padding: 0.375rem;
   }
 
   .workspace-content {
     display: flex;
     width: 100%;
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
 
   .workspace-left-section {
     overflow-y: auto;
-    border-right: 1px solid nb-theme(border-basic-color-4);
-    padding-right: 0.75rem;
+    // 1px hairline at low alpha, not a solid theme divider.
+    border-right: 1px solid #{$overlay-hairline};
+    padding-right: 0.5rem;
     min-width: 180px;
   }
 
@@ -28,31 +46,36 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    padding-left: 0.75rem;
-    gap: 0.25rem;
+    padding-left: 0.5rem;
+    gap: 0.125rem;
   }
 
-  // Flatten accordion headers in the popup for both nav menus. Settings is a
-  // plain link to /pages/settings (no inline accordion anymore), so its
-  // expansion chevron is hidden the same way as the main nav's.
+  // The two nav menus embedded here are the sidebar's `ga-sidebar-menu`, which
+  // already renders flat rows (see `menu-item.component.scss`). The only thing
+  // that differs in the popup is the accordion chevron: Settings is a plain
+  // link to /pages/settings and the main nav routes straight through, so
+  // nothing ever expands inline and the indicator would be a lie.
   .setting.action ::ng-deep ga-main-nav-menu,
   .setting ::ng-deep ga-settings-nav-menu {
     ga-sidebar-menu {
-      nb-accordion-item {
-        nb-accordion-item-header {
-          box-shadow: unset;
-          border-width: 0;
-          nb-icon {
-            display: none;
-          }
+      nb-accordion-item nb-accordion-item-header {
+        nb-icon {
+          display: none;
         }
+
+        // With no chevron to clear, reclaim the gutter the sidebar rows
+        // reserve for it so the label is not floating in dead space.
+        @include nb-ltr(padding-right, 0.625rem);
+        @include nb-rtl(padding-left, 0.625rem);
       }
     }
   }
 
+  // Spacer under the two menu columns. It used to carry `--gauzy-shadow`,
+  // which drew a stray line across the bottom of an otherwise empty element.
   .item.footer {
-    box-shadow: var(--gauzy-shadow);
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: none;
+
     ::ng-deep {
       .item-body {
         padding: 5px;

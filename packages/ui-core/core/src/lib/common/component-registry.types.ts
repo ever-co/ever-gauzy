@@ -39,6 +39,10 @@ export type ComponentRegistryLocationId = 'table' | 'tab' | 'route';
  * - 'organization-sections': Children under /pages/organization.
  * - 'goals-sections': Children under /pages/goals.
  * - 'reports-sections': Children under /pages/reports.
+ * - 'settings-sections': Children under /pages/settings, rendered inside the
+ *   settings shell (Sidebar | Settings menu | content). Plugin settings pages
+ *   MUST use this rather than 'page-sections', or they render standalone
+ *   without the settings menu.
  * - 'page-sections': Top-level plugin section routes under /pages.
  */
 export type PageRouteLocationId =
@@ -57,6 +61,7 @@ export type PageRouteLocationId =
 	| 'organization-sections'
 	| 'goals-sections'
 	| 'reports-sections'
+	| 'settings-sections'
 	| 'page-sections';
 
 /**

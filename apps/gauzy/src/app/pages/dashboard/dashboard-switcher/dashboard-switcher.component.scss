@@ -85,39 +85,74 @@
 	color: var(--text-hint-color);
 }
 
+// ⋮ actions menu. The nb-popover host supplies the container chrome (1px
+// hairline + soft shadow + 8px radius) from
+// `packages/ui-core/static/styles/_overlays.scss`; everything below is the FLAT
+// item layer — no per-row border, shadow or resting fill.
 .dashboard-actions-popover {
 	display: flex;
 	flex-direction: column;
-	padding: 8px 0;
-	min-width: 200px;
+	// Just enough inset that a hovered row's 6px radius never touches the
+	// container edge.
+	padding: 4px;
+	min-width: 11rem;
 
 	.action {
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		padding: 8px 16px;
+		padding: 6px 10px;
+		border-radius: 6px;
 		font-size: 13px;
+		line-height: 1.25rem;
 		color: var(--text-basic-color);
 		cursor: pointer;
 		// native <button> resets (keyboard-accessible menu items)
 		background: none;
 		border: none;
 		width: 100%;
-		text-align: left;
+		// Logical keyword so the row flips on its own in RTL.
+		text-align: start;
 		font-family: inherit;
+		// Colour only: transitioning `all` would animate the radius and make the
+		// row look like it is inflating into a block.
+		transition: background-color 0.12s ease-in-out, color 0.12s ease-in-out;
 
 		nb-icon {
-			font-size: 16px;
-			height: 16px;
-			width: 16px;
+			flex-shrink: 0;
+			font-size: 14px;
+			height: 14px;
+			width: 14px;
+			// Muted glyph, brought up to full contrast on hover.
+			color: var(--text-hint-color);
+			transition: color 0.12s ease-in-out;
 		}
 
+		// Was `--background-basic-color-2`, which is the SAME colour as the
+		// popover surface in the dark themes — the hover state was invisible
+		// there. A neutral low-alpha tint reads on both backgrounds.
 		&:hover {
-			background-color: var(--background-basic-color-2);
+			background-color: var(--gauzy-overlay-item-hover-background, rgba(126, 126, 143, 0.12));
+
+			nb-icon {
+				color: var(--text-basic-color);
+			}
 		}
 
 		&.danger {
 			color: var(--color-danger-default);
+
+			nb-icon {
+				color: var(--color-danger-default);
+			}
+
+			&:hover {
+				background-color: var(--color-danger-transparent-100);
+
+				nb-icon {
+					color: var(--color-danger-default);
+				}
+			}
 		}
 	}
 }

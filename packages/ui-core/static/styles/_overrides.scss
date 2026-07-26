@@ -255,7 +255,10 @@ body {
   }
 
   .ng-dropdown-panel {
-    background-color: var(--gauzy-card-5) !important;
+    // Was `--gauzy-card-5` (a faint lavender that is also undefined in the two
+    // material themes, leaving the panel transparent there). The overlay
+    // surface colour is the same one every other dropdown uses.
+    background-color: nb-theme(background-basic-color-1) !important;
 
     .scroll-host {
       scrollbar-width: thin;
@@ -345,28 +348,65 @@ body {
     @include f-window-mode(nb-theme(layout-window-mode-padding-top));
   }
 
+  // ng-select dropdown rows follow the same shadcn container/item split as the
+  // Nebular overlays (see `_overlays.scss`): the panel owns the border/shadow,
+  // the rows are flat until hovered.
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
-    background: nb-theme(background-basic-color-1);
-    color: var(--gauzy-text-color-1);
-    transition-duration: 0.15s;
-    transition-property: border, background-color, color, box-shadow;
-    transition-timing-function: ease-in;
+    background: transparent;
+    // `--gauzy-text-color-1` only exists in 6 of the 8 registered themes (the
+    // two material ones never define it), where the declaration would be
+    // invalid at computed-value time. `text-basic-color` is defined everywhere
+    // and is the same colour in the themes that do define the gauzy token.
+    color: nb-theme(text-basic-color);
+    transition-duration: 0.12s;
+    transition-property: background-color, color;
+    transition-timing-function: ease-in-out;
+    font-weight: nb-theme(menu-text-font-weight);
+    font-size: nb-theme(menu-text-font-size);
+    line-height: 1.25rem;
+    // Overrides ng-select's own `padding: 8px 10px` (its sheet is loaded after
+    // this one, so a tie would go to it).
+    padding: 0.375rem 0.625rem !important;
+    border-radius: 6px;
+  }
+
+  // Group captions get the same muted treatment as `nb-option-group`. ng-select
+  // hard-codes `color: rgba(0, 0, 0, 0.54)` and a pale blue fill on the
+  // marked/selected states — both illegible on the dark themes.
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-optgroup,
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-optgroup.ng-option-marked,
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-optgroup.ng-option-selected {
+    padding: 0.375rem 0.625rem !important;
+    color: var(--text-hint-color) !important;
+    background-color: transparent !important;
+    font-size: nb-theme(text-caption-font-size);
     font-weight: 600;
-    font-size: 0.8125rem;
-    line-height: 1.5rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
   }
 
+  // Neutral tint, not the brand colour — a hovered row must not read as
+  // "selected".
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option:hover {
-    background-color: var(--color-primary-transparent-default) !important;
+    background-color: var(--gauzy-overlay-item-hover-background, rgba(126, 126, 143, 0.12)) !important;
   }
 
+  // `ng-option-marked` is keyboard focus; give it the same tint as hover so
+  // arrow-key navigation is visible (it used to be reset to nothing).
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
-    background-color: unset !important;
+    background-color: var(--gauzy-overlay-item-hover-background, rgba(126, 126, 143, 0.12)) !important;
   }
 
-  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-selected {
-    color: var(--text-primary-color) !important;
-    background-color: var(--color-primary-transparent-default) !important;
+  // Selected keeps the accent tint even under the cursor, so the `:hover` rule
+  // above (same specificity, declared earlier) cannot grey it out. The label
+  // stays `text-basic-color` + weight 600 rather than the brand colour, which
+  // sits at ~2.7:1 on the tinted row in the dark themes — see the note on
+  // `$overlay-item-active-color` in `_overlays.scss`.
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-selected,
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-selected:hover {
+    color: var(--gauzy-overlay-item-active-text-color, var(--text-basic-color)) !important;
+    background-color: var(--gauzy-overlay-item-active-background, var(--color-primary-transparent-100)) !important;
+    font-weight: 600;
   }
 
   .ng-value-container .ng-input input {
@@ -374,17 +414,39 @@ body {
     color: nb-theme(text-basic-color);
   }
 
+  // NOTE ON `!important` IN THIS BLOCK: `@ng-select/ng-select/themes/default.theme.css`
+  // is listed AFTER `styles.scss` in the app's `styles` array, so its rules win
+  // every specificity tie. Each `!important` below overrides a specific
+  // declaration from that sheet — they are not blanket hammers.
   .ng-dropdown-panel {
-    transform: translateY(10px);
-    box-shadow: var(--gauzy-shadow);
-    border-width: 0 !important;
+    transform: translateY(6px);
+    // One soft 1px hairline + one soft shadow on the CONTAINER, mirroring
+    // `gauzy-overlay-surface()`. `--gauzy-overlay-*` are not registered in
+    // themes.scss yet, hence the inline fallbacks.
+    // Overrides `border: 1px solid #ccc`.
+    border: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18)) !important;
+    // Overrides `box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06)`.
+    box-shadow: var(
+      --gauzy-overlay-shadow,
+      0 4px 12px -2px rgba(0, 0, 0, 0.14),
+      0 2px 6px -2px rgba(0, 0, 0, 0.08)
+    ) !important;
+    border-radius: 8px;
 
-    &.ng-select-bottom {
-      border-radius: nb-theme(border-radius);
+    // ng-select squares off the edge facing the trigger (`border-*-radius: 4px`
+    // on the other two corners) so the panel reads as glued to the input; a
+    // floating shadcn panel is uniformly rounded.
+    &.ng-select-bottom,
+    &.ng-select-top,
+    &.ng-select-left,
+    &.ng-select-right {
+      border-radius: 8px !important;
     }
 
     .ng-dropdown-panel-items {
-      border-radius: nb-theme(border-radius);
+      border-radius: 8px;
+      // Breathing room so the 6px item radius never touches the container edge.
+      padding: 4px;
 
       img {
         border-radius: 4px;
@@ -392,6 +454,22 @@ body {
         height: 24px;
         z-index: 10000001;
       }
+    }
+
+    // ng-select rounds the first/last row to the panel's old 4px corners. With
+    // the container padding above, every row is a free-floating 6px pill.
+    &.ng-select-bottom .ng-dropdown-panel-items .ng-option:last-child,
+    &.ng-select-top .ng-dropdown-panel-items .ng-option:first-child,
+    &.ng-select-left .ng-dropdown-panel-items .ng-option:first-child,
+    &.ng-select-right .ng-dropdown-panel-items .ng-option:first-child {
+      border-radius: 6px;
+    }
+
+    // Hairline, not the theme's hard `1px solid #ccc`.
+    .ng-dropdown-header,
+    .ng-dropdown-footer {
+      border-color: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+      padding: 0.375rem 0.625rem;
     }
   }
 
@@ -873,7 +951,13 @@ angular2-smart-table {
   }
 }
 
+// Rows are flat: the panel behind them supplies the surface colour, so an
+// opaque per-row background would paint a solid block inside the 4px container
+// padding and re-introduce the "rounded blocks" look.
 .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
-  background-color: var(--gauzy-card-1) !important;
-  color: var(--gauzy-text-color-1) !important;
+  background-color: transparent !important;
+  // `--text-basic-color` rather than `--gauzy-text-color-1`: the latter is
+  // undefined in the two material themes, so the row text fell back to
+  // whatever it inherited there.
+  color: var(--text-basic-color) !important;
 }

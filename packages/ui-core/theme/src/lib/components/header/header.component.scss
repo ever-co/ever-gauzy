@@ -94,6 +94,40 @@ $orange: #f56d58;
       padding: 0 !important;
     }
 
+    // The nav sidebar's container is fixed at top: 0 with z-index 1041 (see the
+    // one-column layout), so it paints OVER the left of the header band and the
+    // trail has to start exactly where the sidebar ends — and follow it when the
+    // sidebar is compacted.
+    //
+    // The offset is the bare sidebar width: `nb-layout-header nav` has its
+    // `header-padding` zeroed globally (_overrides.scss), so there is no padding
+    // to subtract — doing so would tuck the first crumb under the sidebar.
+    .breadcrumb-container {
+      flex: 1 1 auto;
+      min-width: 0;
+      @include nb-ltr(margin-left, nb-theme(sidebar-width));
+      @include nb-rtl(margin-right, nb-theme(sidebar-width));
+
+      &.compacted {
+        @include nb-ltr(margin-left, nb-theme(sidebar-width-compact));
+        @include nb-rtl(margin-right, nb-theme(sidebar-width-compact));
+      }
+
+      // Below `lg` the trail itself is hidden (breadcrumb.component.scss). Drop the
+      // offset with it: an empty spacer carrying a 16rem margin would push the
+      // header actions off a narrow viewport. The element stays in the flow so
+      // `justify-content: space-between` still parks the actions on the right.
+      @include media-breakpoint-down(lg) {
+        @include nb-ltr(margin-left, 0);
+        @include nb-rtl(margin-right, 0);
+
+        &.compacted {
+          @include nb-ltr(margin-left, 0);
+          @include nb-rtl(margin-right, 0);
+        }
+      }
+    }
+
     .header-container {
       display: flex;
       align-items: center;
