@@ -39,7 +39,9 @@ export class DashboardService {
 	findById(id: ID, params?: any): Promise<IDashboard> {
 		return firstValueFrom(
 			this.http.get<IDashboard>(`${this.DASHBOARD_URL}/${id}`, {
-				params: toParams(params)
+				// The endpoint's BaseQueryDTO rejects an empty `where`,
+				// so always send at least the id filter.
+				params: toParams(params ?? { where: { id } })
 			})
 		);
 	}

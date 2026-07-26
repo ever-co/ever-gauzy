@@ -160,7 +160,11 @@ export class DashboardStoreService {
 	public async selectById(id: ID): Promise<IDashboard> {
 		let dashboard = this.dashboards.find((item: IDashboard) => item.id === id);
 		if (!dashboard) {
-			dashboard = await this._dashboardService.findById(id);
+			// Not in the loaded list yet (e.g. navigating right after create,
+			// before the refresh round-trip): reload and search again.
+			const items = await this._loadDashboards();
+			this._dashboards$.next(items);
+			dashboard = items.find((item: IDashboard) => item.id === id);
 		}
 		if (!dashboard) {
 			throw new Error(`Dashboard with id ${id} not found`);
