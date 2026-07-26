@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsArray, IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID, IDashboard, IEmployee, JsonData } from '@gauzy/contracts';
 import { DashboardWidget, Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
@@ -48,11 +48,14 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	description?: string;
 
 	/**
-	 * Content of the dashboard
+	 * Content of the dashboard (serialized widget layout).
+	 *
+	 * Note: intentionally has no strict type validator — `JsonData` may be an
+	 * object (postgres/mysql json columns) or a string (sqlite text column),
+	 * mirroring `DashboardWidget.options`.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@IsArray()
 	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
 	contentHtml?: JsonData;
 

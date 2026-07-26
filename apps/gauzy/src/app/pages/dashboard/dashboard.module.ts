@@ -27,6 +27,7 @@ import { PageExtensionSlotComponent } from '@gauzy/plugin-ui';
 import {
 	ActivityItemModule,
 	CounterPointComponent,
+	DialogsModule,
 	DynamicTabsModule,
 	GalleryModule,
 	InfoBlockModule,
@@ -45,6 +46,7 @@ import {
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { createDashboardRoutes } from './dashboard.routes';
 import { DashboardComponent } from './dashboard.component';
+import { DashboardSwitcherComponent } from './dashboard-switcher/dashboard-switcher.component';
 import { HumanResourcesComponent } from './human-resources/human-resources.component';
 import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
@@ -94,6 +96,7 @@ const THIRD_PARTY_MODULES = [
 // Components
 const COMPONENTS = [
 	DashboardComponent,
+	DashboardSwitcherComponent,
 	AccountingComponent,
 	HumanResourcesComponent,
 	ProjectManagementComponent,
@@ -117,6 +120,7 @@ const COMPONENTS = [
 		...STANDALONE_MODULES,
 		BaseChartDirective,
 		// Feature Modules
+		DialogsModule,
 		RecordsHistoryModule,
 		ProfitHistoryModule,
 		SingleStatisticModule,

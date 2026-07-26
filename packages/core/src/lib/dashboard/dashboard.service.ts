@@ -1,12 +1,14 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import {
 	ActionTypeEnum,
 	BaseEntityEnum,
 	ActorTypeEnum,
+	IDashboard,
 	IDashboardCreateInput,
 	IDashboardUpdateInput,
 	ID
 } from '@gauzy/contracts';
+import { DeleteResult } from 'typeorm';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { ActivityLogService } from '../activity-log/activity-log.service';
@@ -91,6 +93,15 @@ export class DashboardService extends TenantAwareCrudService<Dashboard> {
 				throw new NotFoundException(`Dashboard with ID ${id} does not exist`);
 			}
 
+			// Dashboards are personal: only the user who created a dashboard may modify it
+			this.checkOwnership(dashboard);
+
+			// When promoting a dashboard to be the default one,
+			// demote any other default dashboards of the same user first
+			if (input.isDefault === true) {
+				await this.resetDefaultDashboards(dashboard);
+			}
+
 			// Update the dashboard using the base service's create method
 			const updatedDashboard = await super.create({
 				...data,
@@ -116,9 +127,67 @@ export class DashboardService extends TenantAwareCrudService<Dashboard> {
 			// Return the updated dashboard
 			return updatedDashboard;
 		} catch (error) {
+			// Preserve the original HTTP semantics for ownership violations
+			if (error instanceof ForbiddenException) {
+				throw error;
+			}
 			// Log the error and throw an HttpException
 			console.error('Error while updating dashboard:', error);
 			throw new HttpException(`Failed to update dashboard: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
+	}
+
+	/**
+	 * Deletes a dashboard by ID, ensuring the requesting user owns it.
+	 *
+	 * @param id - The unique identifier of the dashboard to delete.
+	 * @returns The delete result.
+	 * @throws {ForbiddenException} If the dashboard belongs to another user.
+	 */
+	async delete(id: ID): Promise<DeleteResult> {
+		// Retrieve the existing dashboard by ID (throws NotFound if missing)
+		const dashboard = await this.findOneByIdString(id);
+
+		// Dashboards are personal: only the user who created a dashboard may delete it
+		this.checkOwnership(dashboard);
+
+		return await super.delete(id);
+	}
+
+	/**
+	 * Ensures the current user is the creator of the given dashboard.
+	 *
+	 * @param dashboard - The dashboard to verify ownership of.
+	 * @throws {ForbiddenException} If the dashboard was created by another user.
+	 */
+	private checkOwnership(dashboard: IDashboard): void {
+		const currentUserId = RequestContext.currentUserId();
+		if (dashboard.createdByUserId && currentUserId && dashboard.createdByUserId !== currentUserId) {
+			throw new ForbiddenException('You can only manage your own dashboards');
+		}
+	}
+
+	/**
+	 * Demotes all default dashboards of the dashboard's creator (within the same
+	 * tenant/organization), so that at most one dashboard is default per user.
+	 *
+	 * Uses `find` + `save` (via `super.create`) to stay ORM-agnostic (TypeORM/MikroORM).
+	 *
+	 * @param dashboard - The dashboard being promoted to default.
+	 */
+	private async resetDefaultDashboards(dashboard: IDashboard): Promise<void> {
+		const { tenantId, organizationId, createdByUserId, id } = dashboard;
+
+		// Find all other default dashboards of the same user
+		const { items: defaults } = await this.findAll({
+			where: { tenantId, organizationId, createdByUserId, isDefault: true }
+		});
+
+		// Demote each of them (except the one being promoted)
+		await Promise.all(
+			defaults
+				.filter((item: IDashboard) => item.id !== id)
+				.map((item: IDashboard) => super.create({ id: item.id, isDefault: false }))
+		);
 	}
 }

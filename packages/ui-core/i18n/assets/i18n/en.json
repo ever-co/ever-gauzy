@@ -1847,6 +1847,25 @@
 		}
 	},
 	"DASHBOARD_PAGE": {
+		"CUSTOM": {
+			"STANDARD": "Standard",
+			"NEW_DASHBOARD": "New Dashboard",
+			"DUPLICATE_DASHBOARD": "Duplicate Dashboard",
+			"RENAME_DASHBOARD": "Rename Dashboard",
+			"SET_AS_DEFAULT": "Set as Default",
+			"DELETE_DASHBOARD": "Delete Dashboard",
+			"EDIT_DASHBOARD": "Edit Dashboard",
+			"NAME_LABEL": "Dashboard name",
+			"NAME_PLACEHOLDER": "Enter dashboard name",
+			"COPY_SUFFIX": "(Copy)",
+			"CREATED": "Dashboard \"{{ name }}\" created",
+			"UPDATED": "Dashboard \"{{ name }}\" updated",
+			"DELETED": "Dashboard \"{{ name }}\" deleted",
+			"SET_DEFAULT_SUCCESS": "\"{{ name }}\" is now your default dashboard",
+			"LAYOUT_SAVED": "Dashboard layout saved",
+			"DELETE_CONFIRM": "Are you sure you want to delete the dashboard \"{{ name }}\"? This cannot be undone.",
+			"EDIT_HINT": "Drag & drop widgets to rearrange them, or use the Manage Widget menu to show/hide widgets. Click Save to persist this layout."
+		},
 		"ACCOUNTING": "Accounting",
 		"HUMAN_RESOURCES": "Human Resources",
 		"TIME_TRACKING": "Time Tracking",
