@@ -156,9 +156,12 @@ export class AiChatSettingsComponent implements OnInit {
 		const code = this.route.snapshot.queryParamMap.get('code');
 		const pending = this.readConnectSession();
 		if (code && pending) {
-			// The exchange stores the key for the CURRENT tenant, so refuse to
-			// complete a flow that was started in a different workspace.
-			if (pending.tenantId && pending.tenantId !== (this.store.user?.tenantId ?? null)) {
+			// The exchange stores the key for the CURRENT tenant/organization, so
+			// refuse to complete a flow that was started in a different workspace.
+			const tenantChanged = pending.tenantId && pending.tenantId !== (this.store.user?.tenantId ?? null);
+			const organizationChanged =
+				pending.organizationId && pending.organizationId !== (this.store.organizationId ?? null);
+			if (tenantChanged || organizationChanged) {
 				sessionStorage.removeItem(CONNECT_SESSION_KEY);
 				this.toastrService.danger(
 					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.CONNECT_WORKSPACE_MISMATCH'),
@@ -339,11 +342,16 @@ export class AiChatSettingsComponent implements OnInit {
 			const verifier = this.base64Url(crypto.getRandomValues(new Uint8Array(48)));
 			const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
 			const challenge = this.base64Url(new Uint8Array(digest));
-			// Bind the pending flow to the workspace it was started in so a
-			// mid-flight workspace switch can't store the key elsewhere.
+			// Bind the pending flow to the workspace (tenant + organization) it
+			// was started in so a mid-flight switch can't store the key elsewhere.
 			sessionStorage.setItem(
 				CONNECT_SESSION_KEY,
-				JSON.stringify({ providerId: provider.id, verifier, tenantId: this.store.user?.tenantId ?? null })
+				JSON.stringify({
+					providerId: provider.id,
+					verifier,
+					tenantId: this.store.user?.tenantId ?? null,
+					organizationId: this.store.organizationId ?? null
+				})
 			);
 
 			// The authorize page comes from the provider definition (backend
@@ -394,7 +402,12 @@ export class AiChatSettingsComponent implements OnInit {
 			});
 	}
 
-	private readConnectSession(): { providerId: string; verifier: string; tenantId?: string | null } | null {
+	private readConnectSession(): {
+		providerId: string;
+		verifier: string;
+		tenantId?: string | null;
+		organizationId?: string | null;
+	} | null {
 		try {
 			const raw = sessionStorage.getItem(CONNECT_SESSION_KEY);
 			if (!raw) return null;
