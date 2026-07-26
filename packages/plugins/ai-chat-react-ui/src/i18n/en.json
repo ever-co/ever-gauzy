@@ -61,7 +61,8 @@
 			"DELETED": "{{provider}} credential deleted.",
 			"ERROR": "Something went wrong. Please try again.",
 			"CONNECTED": "{{ provider }} connected successfully.",
-			"CONNECT_WORKSPACE_MISMATCH": "This Connect flow was started in a different workspace. Switch back to that workspace and try again."
+			"CONNECT_WORKSPACE_MISMATCH": "This Connect flow was started in a different workspace. Switch back to that workspace and try again.",
+			"CONNECT_SESSION_EXPIRED": "The Connect session has expired or was started in another tab. Please click Connect again."
 		},
 		"LIST": {
 			"EMPTY": "No AI providers are configured yet. Add one to enable the AI chat.",

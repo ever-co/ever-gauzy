@@ -173,6 +173,16 @@ export class AiChatSettingsComponent implements OnInit {
 			} else {
 				this.completeConnect(pending.providerId, code, pending.verifier);
 			}
+		} else if (code) {
+			// ?code= arrived but the PKCE session is gone (page reloaded, other
+			// tab, or expired) — tell the user instead of failing silently, and
+			// strip the stale one-time code from the URL.
+			this.toastrService.warning(
+				this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.CONNECT_SESSION_EXPIRED'),
+				this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.ERROR_TITLE')
+			);
+			void this.router.navigate([], { relativeTo: this.route, queryParams: {} });
+			this.load();
 		} else {
 			this.load();
 		}

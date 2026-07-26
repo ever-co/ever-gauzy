@@ -1865,7 +1865,9 @@
 			"SET_DEFAULT_SUCCESS": "\"{{ name }}\" is now your default dashboard",
 			"LAYOUT_SAVED": "Dashboard layout saved",
 			"DELETE_CONFIRM": "Are you sure you want to delete the dashboard \"{{ name }}\"? This cannot be undone.",
-			"EDIT_HINT": "Drag & drop widgets to rearrange them, or use the Manage Widget menu to show/hide widgets. Click Save to persist this layout."
+			"EDIT_HINT": "Drag & drop widgets to rearrange them, or use the Manage Widget menu to show/hide widgets. Click Save to persist this layout.",
+			"DISCARD_CHANGES": "Discard unsaved changes?",
+			"DISCARD_CONFIRM": "You have unsaved layout changes. Switching dashboards will discard them. Continue?"
 		},
 		"ACCOUNTING": "Accounting",
 		"HUMAN_RESOURCES": "Human Resources",

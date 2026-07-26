@@ -66,16 +66,43 @@ export class DashboardSwitcherComponent extends TranslationBaseComponent impleme
 	}
 
 	/** Switches to the Standard (prebuilt) dashboard. */
-	public selectStandard(): void {
+	public async selectStandard(): Promise<void> {
+		if (!(await this._confirmDiscardIfEditing())) {
+			return;
+		}
 		this._dashboardStore.navigateToStandard();
 	}
 
 	/** Switches to the given custom dashboard. */
-	public select(dashboard: IDashboard): void {
+	public async select(dashboard: IDashboard): Promise<void> {
 		if (this._dashboardStore.selectedDashboard?.id === dashboard.id) {
 			return;
 		}
+		if (!(await this._confirmDiscardIfEditing())) {
+			return;
+		}
 		this._dashboardStore.navigateToDashboard(dashboard.id);
+	}
+
+	/**
+	 * When edit mode is active, asks the user to confirm discarding the
+	 * unsaved widget arrangement before navigating away.
+	 *
+	 * @returns `true` to proceed with the navigation, `false` to stay.
+	 */
+	private async _confirmDiscardIfEditing(): Promise<boolean> {
+		if (!this.editing()) {
+			return true;
+		}
+		const dialogRef = this._dialogService.open(ConfirmComponent, {
+			context: {
+				data: {
+					title: this.getTranslation('DASHBOARD_PAGE.CUSTOM.DISCARD_CHANGES'),
+					message: this.getTranslation('DASHBOARD_PAGE.CUSTOM.DISCARD_CONFIRM')
+				}
+			}
+		});
+		return !!(await firstValueFrom(dialogRef.onClose));
 	}
 
 	/*
