@@ -1,6 +1,7 @@
 import { Route } from '@angular/router';
 import {
 	BookmarkQueryParamsResolver,
+	customDashboardGuard,
 	defaultDashboardGuard,
 	PageRouteRegistryService,
 	PermissionsGuard,
@@ -9,6 +10,7 @@ import {
 import { PermissionsEnum } from '@gauzy/contracts';
 import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { DashboardComponent } from './dashboard.component';
+import { CustomDashboardComponent } from './custom-dashboard/custom-dashboard.component';
 import { HumanResourcesComponent } from './human-resources/human-resources.component';
 import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
@@ -45,6 +47,27 @@ export function createDashboardRoutes(_pageRouteRegistryService: PageRouteRegist
 					// widget host when switching between two custom dashboards.
 					path: 'switching',
 					children: []
+				},
+				{
+					// A user-built custom dashboard: a canvas of freely placed widgets
+					// across user-created tabs. Owned by the core dashboard feature
+					// (it used to be registered by the time-track plugin, which made a
+					// custom dashboard a permutation of that plugin's page).
+					path: 'custom/:id',
+					component: CustomDashboardComponent,
+					canActivate: [customDashboardGuard],
+					data: {
+						selectors: {
+							project: false
+						},
+						datePicker: {
+							unitOfTime: 'week'
+						}
+					},
+					resolve: {
+						dates: DateRangePickerResolver,
+						bookmarkParams: BookmarkQueryParamsResolver
+					}
 				},
 				{
 					path: 'accounting',

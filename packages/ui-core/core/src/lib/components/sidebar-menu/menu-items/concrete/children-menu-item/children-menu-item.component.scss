@@ -1,12 +1,43 @@
+// `themes` must be loaded HERE as well: Sass `@use ... as *` inside
+// menu-item.component.scss makes nb-theme() available to that file only, it is
+// not re-exported. Without this line the rules below compiled to a literal
+// `nb-theme(...)` in the output — an unknown CSS function the browser drops.
+@use 'themes' as *;
+
+// Row layout, hover/active overlays and the icon column all live in the parent
+// stylesheet so both components stay in sync; `:host` resolves to
+// <ga-children-menu-item> here.
 @use '../menu-item/menu-item.component';
 
+// Inline "add" control on a child row. It sits inside a flat menu row, so it
+// is a ghost icon button: no outline, no fill, it only brightens on hover.
 [nbButton].plus.appearance-outline.size-tiny {
-    padding: 2px 3px;
-    border: 2px solid nb-theme(gauzy-border-default-color);
-    color: nb-theme(gauzy-text-color-2);
+  padding: 0.125rem 0.25rem;
+  border: none;
+  background-color: transparent;
+  // `inherit`, not nb-theme(gauzy-text-color-2): that token is undefined in the
+  // material-* themes, and it would also freeze the button at the RESTING label
+  // colour while the row around it brightens on hover/selection. Inheriting from
+  // `.sub-item` tracks the row in every theme and every state.
+  color: inherit;
 
-    i.fa-plus {
-        margin: 0;
-        font-size: 14px;
-    }
+  &:hover {
+    background-color: transparent;
+    color: nb-theme(text-basic-color);
+  }
+
+  // Keyboard focus needs a NON-colour indicator: the hover treatment is a
+  // brightness shift only, which on its own fails WCAG 1.4.11 / 2.4.7. The
+  // outline is inset so it never widens the row.
+  &:focus-visible {
+    background-color: transparent;
+    color: nb-theme(text-basic-color);
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: -2px;
+  }
+
+  i.fa-plus {
+    margin: 0;
+    font-size: 0.75rem;
+  }
 }

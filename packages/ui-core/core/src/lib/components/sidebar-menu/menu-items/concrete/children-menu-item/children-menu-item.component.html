@@ -1,7 +1,6 @@
 <ng-container *ngxPermissionsOnly="item?.data?.permissionKeys">
 	@if (!collapse) { @if (!item?.hidden) {
 	<div
-		[class.border-bottom]="!isLast()"
 		[gaTooltip]="item?.title"
 		[icon]="item?.icon"
 		[class]="(selected ? 'selected ' : '') + (!collapse ? 'custom ' : '') + 'sub-item'"
@@ -20,7 +19,6 @@
 	</div>
 	} } @else { @if (!item?.hidden) {
 	<div
-		[class.border-bottom]="!isLast()"
 		[nbTooltip]="item?.title"
 		nbTooltipPlacement="right"
 		[class]="(selected ? 'sub-item selected' : 'sub-item') + (!collapse ? ' custom' : '')"

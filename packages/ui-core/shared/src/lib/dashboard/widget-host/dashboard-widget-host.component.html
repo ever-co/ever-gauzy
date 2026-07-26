@@ -1,0 +1,118 @@
+@if (!hidden() || editing()) {
+	<nb-card class="widget-card" [class.is-editing]="editing()" [class.is-hidden]="hidden()">
+		<nb-card-header class="widget-header">
+			<span class="widget-title" [attr.title]="title() | translate">{{ title() | translate }}</span>
+
+			@if (hidden()) {
+				<span class="widget-badge">{{ 'DASHBOARD_PAGE.BUILDER.HOST.HIDDEN' | translate }}</span>
+			}
+
+			@if (editing()) {
+				<button
+					type="button"
+					nbButton
+					ghost
+					size="tiny"
+					class="widget-menu-trigger"
+					[nbPopover]="widgetMenu"
+					nbPopoverTrigger="click"
+					nbPopoverPlacement="bottom"
+					[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.HOST.WIDGET_MENU' | translate"
+				>
+					<nb-icon icon="more-vertical-outline"></nb-icon>
+				</button>
+			}
+		</nb-card-header>
+
+		<nb-card-body class="widget-body">
+			@switch (state()) {
+				@case ('ready') {
+					@if (component(); as widgetComponent) {
+						<ng-container
+							*ngComponentOutlet="widgetComponent; injector: widgetInjector(); inputs: widgetInputs()"
+						/>
+					}
+				}
+				@case ('loading') {
+					<!-- Skeleton rather than a spinner: the card keeps its height, so the
+					     canvas does not reflow when the widget bundle lands. -->
+					<div class="widget-skeleton" [attr.aria-label]="'DASHBOARD_PAGE.BUILDER.HOST.LOADING' | translate">
+						<span class="skeleton-line w-60"></span>
+						<span class="skeleton-line w-90"></span>
+						<span class="skeleton-line w-75"></span>
+					</div>
+				}
+				@case ('error') {
+					<div class="widget-placeholder is-error">
+						<nb-icon icon="alert-triangle-outline"></nb-icon>
+						<p class="placeholder-title">{{ 'DASHBOARD_PAGE.BUILDER.HOST.LOAD_FAILED' | translate }}</p>
+						<p class="placeholder-hint">{{ loadError() }}</p>
+						<button type="button" nbButton size="tiny" status="basic" (click)="retry()">
+							{{ 'DASHBOARD_PAGE.BUILDER.HOST.RETRY' | translate }}
+						</button>
+					</div>
+				}
+				@case ('forbidden') {
+					<div class="widget-placeholder">
+						<nb-icon icon="lock-outline"></nb-icon>
+						<p class="placeholder-title">{{ 'DASHBOARD_PAGE.BUILDER.HOST.NO_ACCESS' | translate }}</p>
+						<p class="placeholder-hint">{{ 'DASHBOARD_PAGE.BUILDER.HOST.NO_ACCESS_HINT' | translate }}</p>
+					</div>
+				}
+				@default {
+					<!-- The widget's plugin was disabled or the widget was removed: a saved
+					     dashboard must stay usable instead of crashing. -->
+					<div class="widget-placeholder">
+						<nb-icon icon="cube-outline"></nb-icon>
+						<p class="placeholder-title">
+							{{ 'DASHBOARD_PAGE.BUILDER.HOST.UNAVAILABLE' | translate }}
+						</p>
+						<p class="placeholder-hint">
+							{{ 'DASHBOARD_PAGE.BUILDER.HOST.UNAVAILABLE_HINT' | translate }}
+						</p>
+						<code class="placeholder-id">{{ widgetId() }}</code>
+					</div>
+				}
+			}
+		</nb-card-body>
+	</nb-card>
+}
+
+<!-- Edit-mode kebab menu -->
+<ng-template #widgetMenu>
+	<div class="widget-menu">
+		<!-- Only offered when the widget actually declares settings, so the action
+		     is never a dead end. -->
+		@if (configurable()) {
+			<button type="button" class="menu-item" (click)="onConfigure()">
+				<nb-icon icon="settings-2-outline"></nb-icon>
+				<span>{{ 'DASHBOARD_PAGE.BUILDER.HOST.CONFIGURE' | translate }}</span>
+			</button>
+		}
+
+		@if (widthOptions().length > 1) {
+			<div class="menu-section">{{ 'DASHBOARD_PAGE.BUILDER.HOST.WIDTH' | translate }}</div>
+			<div class="menu-widths">
+				@for (width of widthOptions(); track width) {
+					<!-- The bare number is meaningless to a screen reader, and the
+					     current width is otherwise conveyed by color alone. -->
+					<button
+						type="button"
+						class="width-option"
+						[class.selected]="width === placement().w"
+						[attr.aria-pressed]="width === placement().w"
+						[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.HOST.WIDTH_COLUMNS' | translate: { count: width }"
+						(click)="onResize(width)"
+					>
+						{{ width }}
+					</button>
+				}
+			</div>
+		}
+
+		<button type="button" class="menu-item is-danger" (click)="onRemove()">
+			<nb-icon icon="trash-2-outline"></nb-icon>
+			<span>{{ 'DASHBOARD_PAGE.BUILDER.HOST.REMOVE' | translate }}</span>
+		</button>
+	</div>
+</ng-template>

@@ -37,6 +37,13 @@ export const PLUGIN_ROUTE_REGISTRY = new InjectionToken<IDeclarativePageRouteReg
 export const PLUGIN_TAB_REGISTRY = new InjectionToken<IDeclarativePageTabRegistry>('PLUGIN_TAB_REGISTRY');
 
 /**
+ * Token for the dashboard widget registry.
+ * Used internally by `defineDeclarativePlugin` to publish plugin widgets to the
+ * dashboard builder's palette.
+ */
+export const PLUGIN_WIDGET_REGISTRY = new InjectionToken<IDeclarativeWidgetRegistry>('PLUGIN_WIDGET_REGISTRY');
+
+/**
  * Minimal interface for applying nav sections/items.
  * Implemented by NavMenuBuilderService from @gauzy/ui-core.
  */
@@ -77,6 +84,17 @@ export interface IDeclarativeExtensionRegistry {
 export interface IDeclarativePageTabRegistry {
 	registerPageTab(config: unknown): void;
 	registerPageTabs(configs: unknown[]): void;
+}
+
+/**
+ * Minimal interface for registering dashboard-builder widgets.
+ * Implemented by WidgetRegistryService from @gauzy/ui-core.
+ *
+ * `registerOrReplaceWidget` is used (not `registerWidget`) so re-registering a
+ * plugin — e.g. after it is toggled off and on — never throws on duplicate ids.
+ */
+export interface IDeclarativeWidgetRegistry {
+	registerOrReplaceWidget(config: unknown): void;
 }
 
 /**
@@ -501,9 +519,10 @@ export function applyDeclarativeRegistrations(
 		pageRouteRegistry?: IDeclarativePageRouteRegistry;
 		pageTabRegistry?: IDeclarativePageTabRegistry;
 		pageExtensionRegistry?: IDeclarativeExtensionRegistry;
+		widgetRegistry?: IDeclarativeWidgetRegistry;
 	}
 ): void {
-	const { navBuilder, pageRouteRegistry, pageTabRegistry, pageExtensionRegistry } = services;
+	const { navBuilder, pageRouteRegistry, pageTabRegistry, pageExtensionRegistry, widgetRegistry } = services;
 
 	if (pageRouteRegistry && definition.routes?.length) {
 		for (const r of definition.routes) {
@@ -530,6 +549,24 @@ export function applyDeclarativeRegistrations(
 
 	if (pageExtensionRegistry && definition.extensions?.length) {
 		pageExtensionRegistry.registerAll(definition.extensions, { pluginId: definition.id });
+	}
+
+	// Dashboard-builder widgets contributed by this plugin. Registered here —
+	// alongside routes/tabs/nav — rather than through plugin `providers`,
+	// because declarative providers live in a child EnvironmentInjector whose
+	// app initializers never run (APP_INITIALIZER fires only for the root).
+	if (widgetRegistry && definition.widgets?.length) {
+		for (const widget of definition.widgets) {
+			// Isolated per widget: `registerOrReplaceWidget` throws on a malformed
+			// entry, and letting that escape would abort the rest of
+			// `defineDeclarativePlugin` — translations and settings included — over
+			// one bad widget.
+			try {
+				widgetRegistry.registerOrReplaceWidget(widget);
+			} catch (error) {
+				console.error(`[${definition.id}] failed to register a dashboard widget`, error);
+			}
+		}
 	}
 }
 
@@ -590,7 +627,8 @@ export function defineDeclarativePlugin(
 			navBuilder: injector.get(PLUGIN_NAV_BUILDER, null) ?? undefined,
 			pageRouteRegistry: injector.get(PLUGIN_ROUTE_REGISTRY, null) ?? undefined,
 			pageTabRegistry: injector.get(PLUGIN_TAB_REGISTRY, null) ?? undefined,
-			pageExtensionRegistry: injector.get(PageExtensionRegistryService, null) ?? undefined
+			pageExtensionRegistry: injector.get(PageExtensionRegistryService, null) ?? undefined,
+			widgetRegistry: injector.get(PLUGIN_WIDGET_REGISTRY, null) ?? undefined
 		});
 
 		// Merge plugin translations into the global @ngx-translate namespace.

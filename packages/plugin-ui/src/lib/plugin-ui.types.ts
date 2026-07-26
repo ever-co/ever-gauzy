@@ -124,6 +124,25 @@ export interface PluginTabInput {
 }
 
 /**
+ * A dashboard-builder widget contributed by a plugin.
+ *
+ * Structurally compatible with `WidgetRegistryConfig` from @gauzy/ui-core/core,
+ * declaring only the fields `WidgetRegistryService.registerOrReplaceWidget()`
+ * validates at runtime. Every other `WidgetRegistryConfig` field (title, icon,
+ * loadComponent, ...) rides along structurally. This keeps @gauzy/plugin-ui
+ * dependency-free while still failing at COMPILE time on the mistakes the
+ * registry would otherwise only catch at bootstrap.
+ */
+export interface PluginWidgetInput {
+	/** Page location the widget is registered at (e.g. 'dashboard'). */
+	location: string;
+	/** Globally unique id; persisted on every dashboard placement. */
+	widgetId: string;
+	/** Permissions required to see the widget (empty = everyone). */
+	permissions: string[];
+}
+
+/**
  * Defines a UI plugin for the Gauzy application.
  *
  * Each plugin encapsulates an Angular module, its metadata, and a
@@ -245,6 +264,21 @@ export interface PluginUiDefinition {
 	 * Use applyDeclarativeRegistrations() with pageTabRegistry to apply.
 	 */
 	tabs?: PluginTabInput[];
+
+	/**
+	 * Dashboard-builder widgets contributed by this plugin.
+	 *
+	 * Each entry is a `WidgetRegistryConfig` (from @gauzy/ui-core/core) and is
+	 * published to the widget palette, so users can drop it onto any custom
+	 * dashboard canvas. Applied by `applyDeclarativeRegistrations()` when a
+	 * `widgetRegistry` service is available.
+	 *
+	 * Structurally typed (rather than importing `WidgetRegistryConfig`) to keep
+	 * @gauzy/plugin-ui free of a build-time dependency on the widget registry,
+	 * while still catching at compile time the three fields the registry
+	 * validates at runtime.
+	 */
+	widgets?: PluginWidgetInput[];
 
 	/**
 	 * Plugin-specific translations keyed by language code.

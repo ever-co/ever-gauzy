@@ -11,20 +11,29 @@ import { Store } from '@gauzy/ui-core/core';
     templateUrl: './header-title.component.html',
     styles: [
         `
-			.name,
-			.org-name {
-				font-size: 24px;
-				font-weight: 400;
-				line-height: 30px;
-				letter-spacing: 0em;
+			/*
+			 * Page title, NOT a breadcrumb trail — the real trail is rendered once
+			 * in the header (<ngx-breadcrumbs>). This used to be 24px/600, which
+			 * read as an oversized breadcrumb path; a page heading only needs to
+			 * out-rank body copy, so it now sits at the h5 step of the type scale.
+			 * The org/employee qualifier is deliberately lighter and muted so the
+			 * page name is what the eye lands on.
+			 */
+			:host {
+				font-size: 1.25rem;
+				font-weight: 600;
+				line-height: 1.75rem;
+				letter-spacing: -0.01em;
 				text-align: left;
 			}
-			:host {
-				font-size: 24px;
-				font-weight: 600;
-				line-height: 30px;
-				letter-spacing: 0em;
+			.name,
+			.org-name {
+				font-size: 1.25rem;
+				font-weight: 400;
+				line-height: 1.75rem;
+				letter-spacing: -0.01em;
 				text-align: left;
+				color: var(--text-hint-color);
 			}
 		`
     ],

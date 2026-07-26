@@ -162,13 +162,4 @@ export class ChildrenMenuItemComponent implements OnInit {
 		this.focusItemChange.emit({ children: this.item, parent: this.parent });
 		this.router.navigateByUrl(this.item.data.add);
 	}
-
-	/**
-	 * Checks if the current item is the last item among its siblings.
-	 * @returns A boolean indicating whether the current item is the last among its siblings.
-	 */
-	public isLast(): boolean {
-		const last = this.parent.children.slice(-1)[0];
-		return this.item === last;
-	}
 }
