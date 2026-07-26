@@ -10,9 +10,9 @@
 @use './material/material-light' as *;
 
 // ── Shared density preset (shadcn/Ever-Works-like) ─────────────────────────
-// Compact typography, spacing and paddings applied to the gauzy-light and
-// gauzy-dark themes (merged below). Keep changes here so both themes stay
-// in sync; other registered themes keep Nebular's default density.
+// Compact typography, spacing and paddings merged into ALL registered themes
+// below (merged last, so these values win over per-theme ones). Keep density
+// changes here so every theme stays in sync.
 $gauzy-density: (
 	// Typography — 14px body, 13px controls, tighter headings
 	text-paragraph-font-size: 0.875rem,
@@ -396,7 +396,10 @@ $nb-themes: nb-register-theme(
     // Gauzy
     gauzy-card-1: rgba(255, 255, 255, 1),
     // Neutral near-white sidebar (zinc-100), shadcn-like
-    gauzy-sidebar-background-1: #f4f4f5
+    gauzy-sidebar-background-1: #f4f4f5,
+    // WCAG: >=4.5:1 for 13px menu labels on the #f4f4f5 sidebar
+    // (inherited rgba(126,126,143) was only ~3.6:1)
+    gauzy-text-color-2: rgba(91, 91, 107, 1)
   ), $gauzy-density),
   gauzy-light,
   default

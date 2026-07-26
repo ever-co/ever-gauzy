@@ -77,8 +77,8 @@
 
   nb-accordion-item-header {
     color: nb-theme(gauzy-text-color-2);
-    font-size: 13px;
-    font-weight: 500;
+    font-size: nb-theme(menu-text-font-size);
+    font-weight: nb-theme(menu-text-font-weight);
     line-height: 16px;
     letter-spacing: 0em;
     gap: 0.5rem;
