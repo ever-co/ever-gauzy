@@ -557,7 +557,15 @@ export function applyDeclarativeRegistrations(
 	// app initializers never run (APP_INITIALIZER fires only for the root).
 	if (widgetRegistry && definition.widgets?.length) {
 		for (const widget of definition.widgets) {
-			widgetRegistry.registerOrReplaceWidget(widget);
+			// Isolated per widget: `registerOrReplaceWidget` throws on a malformed
+			// entry, and letting that escape would abort the rest of
+			// `defineDeclarativePlugin` — translations and settings included — over
+			// one bad widget.
+			try {
+				widgetRegistry.registerOrReplaceWidget(widget);
+			} catch (error) {
+				console.error(`[${definition.id}] failed to register a dashboard widget`, error);
+			}
 		}
 	}
 }

@@ -73,6 +73,24 @@ function declaredInputs(component: Type<unknown>): ReadonlySet<string> {
 	return names;
 }
 
+/**
+ * Normalizes whatever a registry `title` resolver returned into an observable.
+ *
+ * A resolver may hand back a plain string, a promise, or an observable, and the
+ * host treats all three the same way.
+ *
+ * @param resolved - The raw value produced by the resolver.
+ */
+function toTitleStream(resolved: unknown): Observable<string> {
+	if (isObservable(resolved)) {
+		return resolved as Observable<string>;
+	}
+	if (resolved instanceof Promise) {
+		return from(resolved as Promise<string>);
+	}
+	return of(resolved as string);
+}
+
 /** Coerces a config value that may hold a single id or a list of ids. */
 function toIdArray(value: unknown): ID[] | undefined {
 	if (Array.isArray(value)) {
@@ -161,8 +179,17 @@ export class DashboardWidgetHostComponent {
 	/** Whether the canvas is in edit mode (shows the kebab menu). */
 	readonly editing = input(false, { transform: booleanAttribute });
 
+	/*
+	|--------------------------------------------------------------------------
+	| Outputs
+	|--------------------------------------------------------------------------
+	| Past-tense / `*Requested` names on purpose: an output named after a native
+	| DOM event (`remove`, `resize`, ...) shadows that event on the host element,
+	| so a consumer binding it can fire twice or bind something else entirely.
+	*/
+
 	/** The user asked to remove this placement from the canvas. */
-	readonly remove = output<IDashboardWidgetPlacement>();
+	readonly removed = output<IDashboardWidgetPlacement>();
 
 	/**
 	 * The user asked to configure this placement.
@@ -171,10 +198,10 @@ export class DashboardWidgetHostComponent {
 	 * the parent already knows which placement it bound. Emitting a payload here
 	 * would be mistaken for "the new configuration" by canvases that persist it.
 	 */
-	readonly configure = output<void>();
+	readonly configureRequested = output<void>();
 
 	/** The user picked a new width (in grid columns) for this placement. */
-	readonly resize = output<{ w: number }>();
+	readonly resized = output<{ w: number }>();
 
 	/** Bumped whenever the registry changes, so a late-registered plugin appears. */
 	private readonly registryVersion = signal(0);
@@ -248,6 +275,14 @@ export class DashboardWidgetHostComponent {
 
 	/** Title (or translation key) shown in the card header. */
 	readonly title = computed<string>(() => this.resolvedTitle() || 'DASHBOARD_PAGE.BUILDER.HOST.UNTITLED_WIDGET');
+
+	/**
+	 * Whether the widget exposes per-instance settings.
+	 *
+	 * The kebab menu only offers "Configure" when this is true, so the action is
+	 * never a dead end: a widget with nothing to configure simply does not show it.
+	 */
+	readonly configurable = computed<boolean>(() => !!this.widget()?.configSchema?.length);
 
 	/** Widths offered by the resize menu, clamped to the widget's min/max size. */
 	readonly widthOptions = computed<number[]>(() => {
@@ -352,26 +387,26 @@ export class DashboardWidgetHostComponent {
 		});
 	}
 
-	/** Emits {@link configure} for this placement and closes the menu. */
+	/** Emits {@link configureRequested} for this placement and closes the menu. */
 	onConfigure(): void {
 		this.closeMenu();
-		this.configure.emit();
+		this.configureRequested.emit();
 	}
 
-	/** Emits {@link remove} for this placement and closes the menu. */
+	/** Emits {@link removed} for this placement and closes the menu. */
 	onRemove(): void {
 		this.closeMenu();
-		this.remove.emit(this.placement());
+		this.removed.emit(this.placement());
 	}
 
 	/**
-	 * Emits {@link resize} with the picked width and closes the menu.
+	 * Emits {@link resized} with the picked width and closes the menu.
 	 *
 	 * @param width - New span in grid columns.
 	 */
 	onResize(width: number): void {
 		this.closeMenu();
-		this.resize.emit({ w: width });
+		this.resized.emit({ w: width });
 	}
 
 	/** Retries a failed component resolution. */
@@ -462,23 +497,19 @@ export class DashboardWidgetHostComponent {
 			return;
 		}
 
-		const resolved$ = isObservable(resolved)
-			? (resolved as Observable<string>)
-			: resolved instanceof Promise
-				? from(resolved as Promise<string>)
-				: of(resolved as string);
-
-		resolved$.pipe(take(1), untilDestroyed(this)).subscribe({
-			next: (value: string) => {
-				if (token === this.titleToken) {
-					this.resolvedTitle.set(value ?? '');
+		toTitleStream(resolved)
+			.pipe(take(1), untilDestroyed(this))
+			.subscribe({
+				next: (value: string) => {
+					if (token === this.titleToken) {
+						this.resolvedTitle.set(value ?? '');
+					}
+				},
+				error: () => {
+					if (token === this.titleToken) {
+						this.resolvedTitle.set('');
+					}
 				}
-			},
-			error: () => {
-				if (token === this.titleToken) {
-					this.resolvedTitle.set('');
-				}
-			}
-		});
+			});
 	}
 }

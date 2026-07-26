@@ -77,6 +77,20 @@ describe('time-track widget utils', () => {
 			expect(resolvePeriodSeconds(createContext(), 2)).toBe(7 * 86400 * 2);
 		});
 
+		it('falls back to a full day when only one end of the working day is set', () => {
+			const context = createContext({
+				organization: { defaultStartTime: '09:00' } as unknown as IOrganization
+			});
+			expect(resolvePeriodSeconds(context, 2)).toBe(7 * 86400 * 2);
+		});
+
+		it('falls back to a full day when the working hours do not parse', () => {
+			const context = createContext({
+				organization: { defaultStartTime: 'nonsense', defaultEndTime: '17:00' } as unknown as IOrganization
+			});
+			expect(resolvePeriodSeconds(context, 1)).toBe(7 * 86400);
+		});
+
 		it('is zero without a range', () => {
 			expect(resolvePeriodSeconds(null, 5)).toBe(0);
 		});
@@ -93,6 +107,15 @@ describe('time-track widget utils', () => {
 
 		it('unwraps an error message', () => {
 			expect(toErrorMessage(new Error('request failed'))).toBe('request failed');
+		});
+
+		it('prefers the nested API message of an HttpErrorResponse', () => {
+			const response = { message: 'Http failure response', error: { message: 'Organization not found' } };
+			expect(toErrorMessage(response)).toBe('Organization not found');
+		});
+
+		it('never renders a bare object as [object Object]', () => {
+			expect(toErrorMessage({ status: 500 })).toBe('Something went wrong');
 		});
 	});
 });

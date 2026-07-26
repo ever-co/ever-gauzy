@@ -13,18 +13,37 @@ export const DASHBOARD_GRID_COLUMNS = 12;
 /** Default footprint applied when a widget declares no `defaultSize`. */
 export const DEFAULT_WIDGET_SIZE = { w: 3, h: 2 };
 
+/** Bytes of entropy in a fallback id — 128 bits, same as a v4 UUID. */
+const FALLBACK_ID_BYTES = 16;
+
+/** Monotonic suffix for the no-crypto fallback of {@link createId}. */
+let idCounter = 0;
+
 /**
  * Generates a stable identifier for tabs and widget placements.
  *
- * Uses `crypto.randomUUID()` when available (all supported browsers) and falls
- * back to a random string so unit tests and non-secure contexts still work.
+ * SECURITY NOTE (rule typescript:S2245): these ids are document identity only —
+ * a tab key, a placement key, a CDK drop-list handle. They are never a secret,
+ * a token, or any part of an access decision: a dashboard is fetched by its own
+ * server-issued id and authorized server-side, so nothing follows from knowing
+ * or predicting a placement id.
+ *
+ * They are still produced from Web Crypto wherever it exists — `randomUUID()`
+ * first, then `getRandomValues()` — with a plain time-plus-counter fallback for
+ * the jsdom/unit-test and insecure-context environments that offer neither.
  */
 export function createId(): string {
 	const cryptoRef = typeof crypto !== 'undefined' ? crypto : undefined;
-	if (cryptoRef?.randomUUID) {
+	if (typeof cryptoRef?.randomUUID === 'function') {
 		return cryptoRef.randomUUID();
 	}
-	return `id-${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
+	if (typeof cryptoRef?.getRandomValues === 'function') {
+		const bytes = cryptoRef.getRandomValues(new Uint8Array(FALLBACK_ID_BYTES));
+		return `id-${Array.from(bytes, (byte: number) => byte.toString(16).padStart(2, '0')).join('')}`;
+	}
+	// Last resort: no Web Crypto at all. Counter-suffixed so two calls in the
+	// same millisecond can never collide.
+	return `id-${Date.now().toString(36)}-${(++idCounter).toString(36)}`;
 }
 
 /**
@@ -85,9 +104,15 @@ export function normalizeLayout(layout: DashboardLayout | null | undefined, defa
 				id: tab.id || createId(),
 				name: tab.name || `${defaultTabName} ${index + 1}`,
 				order: Number.isFinite(tab.order) ? tab.order : index,
-				widgets: (Array.isArray(tab.widgets) ? tab.widgets : [])
-					.filter((placement) => !!placement && typeof placement === 'object' && !!placement.widgetId)
-					.map(clampPlacement)
+				// `packLayout` (not just `clampPlacement`): clamping fixes each
+				// placement in isolation, so a hand-edited or corrupt document could
+				// still describe two widgets stacked on the same cells. Packing is
+				// idempotent, so a well-formed document passes through unchanged.
+				widgets: packLayout(
+					(Array.isArray(tab.widgets) ? tab.widgets : []).filter(
+						(placement) => !!placement && typeof placement === 'object' && !!placement.widgetId
+					)
+				)
 			}))
 			.sort((a, b) => a.order - b.order)
 			.map((tab, index) => ({ ...tab, order: index }));
@@ -156,9 +181,14 @@ export function packLayout(placements: IDashboardWidgetPlacement[]): IDashboardW
 	const packed: IDashboardWidgetPlacement[] = [];
 	for (const placement of ordered) {
 		const candidate = { ...placement, y: 0 };
-		// Walk down until the candidate no longer collides with a placed widget.
-		while (packed.some((other) => collides(candidate, other))) {
-			candidate.y += 1;
+		// Jump straight past the lowest edge the candidate currently overlaps,
+		// rather than stepping one row at a time: a persisted (or corrupt) `h` of
+		// a few thousand rows would otherwise make this loop run for that many
+		// iterations per widget and freeze the canvas.
+		let blockers = packed.filter((other) => collides(candidate, other));
+		while (blockers.length) {
+			candidate.y = Math.max(...blockers.map((other) => other.y + other.h));
+			blockers = packed.filter((other) => collides(candidate, other));
 		}
 		packed.push(candidate);
 	}
@@ -197,7 +227,11 @@ export function movePlacement(
 		return packLayout(ordered);
 	}
 	const [moved] = ordered.splice(fromIndex, 1);
-	ordered.splice(clamp(toIndex, 0, ordered.length), 0, moved);
+	// `clamp(NaN, ...)` is NaN and `splice(NaN, ...)` silently inserts at 0, so an
+	// unresolved drop index would jump the widget to the front instead of leaving
+	// it where it was. Anything non-finite therefore lands at the end.
+	const target = Number.isFinite(toIndex) ? clamp(Math.round(toIndex), 0, ordered.length) : ordered.length;
+	ordered.splice(target, 0, moved);
 	// Re-assign rows in the new reading order before packing so the drop sticks.
 	return packLayout(ordered.map((placement, index) => ({ ...placement, y: index })));
 }

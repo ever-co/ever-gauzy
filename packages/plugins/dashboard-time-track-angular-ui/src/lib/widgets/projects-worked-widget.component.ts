@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { from, of } from 'rxjs';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { defer, from, of } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, retry, switchMap, tap } from 'rxjs/operators';
 import { IDashboardWidgetContext, OrganizationProjectsService } from '@gauzy/ui-core/core';
 import { BaseTimeTrackCounterWidgetComponent } from './base-time-track-counter-widget.component';
 import { TimeTrackCounterCardComponent } from './time-track-counter-card.component';
@@ -37,20 +37,33 @@ export class ProjectsWorkedWidgetComponent extends BaseTimeTrackCounterWidgetCom
 	/**
 	 * Keeps the total project count in sync with the active organization.
 	 *
-	 * Wrapped in `from` because `OrganizationProjectsService.getCount` returns a
-	 * Promise. Failures only affect the strip's scale, so they are swallowed.
+	 * Wrapped in `defer` + `from` because `OrganizationProjectsService.getCount`
+	 * returns a Promise — `defer` re-invokes it on retry, where a bare `from`
+	 * would just replay the SAME settled promise. Failures only affect the
+	 * strip's scale, so they are swallowed.
 	 */
 	private observeProjectsCount(): void {
 		this.context$
 			.pipe(
 				filter((context): context is IDashboardWidgetContext => !!context?.organizationId),
+				// The project count depends on the organization ALONE, so a date-range
+				// change must not re-issue it (see the Members Worked widget).
+				distinctUntilChanged(
+					(previous: IDashboardWidgetContext, current: IDashboardWidgetContext) =>
+						previous.organizationId === current.organizationId && previous.tenantId === current.tenantId
+				),
 				switchMap((context: IDashboardWidgetContext) =>
-					from(
-						this._projectsService.getCount({
-							organizationId: context.organizationId,
-							tenantId: context.tenantId
-						})
-					).pipe(catchError(() => of(0)))
+					defer(() =>
+						from(
+							this._projectsService.getCount({
+								organizationId: context.organizationId,
+								tenantId: context.tenantId
+							})
+						)
+					).pipe(
+						retry({ count: 1, delay: 1_000 }),
+						catchError(() => of(0))
+					)
 				),
 				tap((count: number) => this.totalProjects.set(count || 0)),
 				takeUntilDestroyed(this.destroyRef)

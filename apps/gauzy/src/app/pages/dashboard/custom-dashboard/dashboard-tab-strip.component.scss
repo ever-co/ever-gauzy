@@ -4,6 +4,13 @@
 	display: block;
 }
 
+// Single keyboard-focus treatment for every control in the strip, so tabbing
+// through chips, kebab menus and popover actions looks the same everywhere.
+@mixin tab-strip-focus-ring {
+	outline: 2px solid nb-theme(color-primary-default);
+	outline-offset: -2px;
+}
+
 .tab-strip {
 	display: flex;
 	align-items: center;
@@ -70,6 +77,10 @@
 		white-space: nowrap;
 		color: inherit;
 		cursor: pointer;
+
+		&:focus-visible {
+			@include tab-strip-focus-ring;
+		}
 	}
 
 	&__icon {
@@ -93,6 +104,10 @@
 			font-size: 14px;
 			height: 14px;
 			width: 14px;
+		}
+
+		&:focus-visible {
+			@include tab-strip-focus-ring;
 		}
 	}
 
@@ -162,6 +177,10 @@
 
 		&:hover {
 			background-color: nb-theme(background-basic-color-2);
+		}
+
+		&:focus-visible {
+			@include tab-strip-focus-ring;
 		}
 
 		&.danger {

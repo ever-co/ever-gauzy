@@ -32,12 +32,21 @@
 			></div>
 
 			@if (editing) {
+				<!--
+					Pointer drag AND keyboard move: CDK drag is pointer-only, so the
+					handle also answers the arrow keys to move the widget one slot in
+					reading order. Without that, reordering is unreachable by keyboard.
+				-->
 				<button
 					type="button"
 					class="drag-handle"
 					cdkDragHandle
 					[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.CANVAS.DRAG_HANDLE' | translate"
 					[nbTooltip]="'DASHBOARD_PAGE.BUILDER.CANVAS.DRAG_HANDLE' | translate"
+					(keydown.arrowLeft)="moveBy(placement, -1, $event)"
+					(keydown.arrowUp)="moveBy(placement, -1, $event)"
+					(keydown.arrowRight)="moveBy(placement, 1, $event)"
+					(keydown.arrowDown)="moveBy(placement, 1, $event)"
 				>
 					<nb-icon icon="move-outline"></nb-icon>
 				</button>
@@ -46,9 +55,9 @@
 			<ga-dashboard-widget-host
 				[placement]="placement"
 				[editing]="editing"
-				(remove)="onRemove(placement)"
-				(configure)="onConfigure(placement)"
-				(resize)="onResize(placement, $event)"
+				(removed)="onRemove(placement)"
+				(configureRequested)="onConfigure(placement)"
+				(resized)="onResize(placement, $event)"
 			></ga-dashboard-widget-host>
 		</div>
 	}

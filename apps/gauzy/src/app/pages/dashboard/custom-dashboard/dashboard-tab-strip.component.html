@@ -1,9 +1,10 @@
 <!--
-	Deliberately `role="group"` and not a tablist: the chips are wrapped (each one
-	also carries a kebab button), so they cannot be the direct `tab` children an
-	ARIA tablist requires. The active chip is marked with `aria-current` instead.
+	A labelled navigation landmark rather than an ARIA tablist: every chip is a
+	wrapper that also carries a kebab button, so the chips cannot be the direct
+	tab children a tablist requires. Switching tabs is a navigation (it updates
+	the tab query parameter), and the active chip is marked with aria-current.
 -->
-<div class="tab-strip" role="group" [attr.aria-label]="'DASHBOARD_PAGE.BUILDER.TABS.TITLE' | translate">
+<nav class="tab-strip" [attr.aria-label]="'DASHBOARD_PAGE.BUILDER.TABS.TITLE' | translate">
 	<div
 		class="tab-strip__list"
 		cdkDropList
@@ -55,9 +56,9 @@
 			</button>
 		}
 	</div>
-</div>
+</nav>
 
-<!-- Shared kebab menu; `menuTab` is set by the button that opened it -->
+<!-- Shared kebab menu; menuTab is set by the button that opened it -->
 <ng-template #tabActions>
 	@if (menuTab) {
 		<div class="tab-actions-popover">

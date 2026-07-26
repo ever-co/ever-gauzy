@@ -98,10 +98,17 @@ export interface WidgetRegistryConfig {
 	 */
 	defaultSize?: { w: number; h: number };
 
-	/** Smallest footprint the widget may be resized to. */
+	/**
+	 * Smallest footprint the widget reads well at.
+	 *
+	 * ADVISORY, builder-UI only: the widget host uses it to narrow the widths it
+	 * offers in the resize menu. The geometry helpers in `dashboard-layout.utils`
+	 * clamp to the 12-column grid and do NOT enforce this bound, so a placement
+	 * that predates a widget's current bounds still renders.
+	 */
 	minSize?: { w: number; h: number };
 
-	/** Largest footprint the widget may be resized to. */
+	/** Largest footprint the widget reads well at. Advisory, see {@link WidgetRegistryConfig.minSize}. */
 	maxSize?: { w: number; h: number };
 
 	/**

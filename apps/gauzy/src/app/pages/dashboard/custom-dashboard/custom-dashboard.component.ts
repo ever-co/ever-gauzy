@@ -22,7 +22,7 @@ import { DashboardCanvasComponent } from './dashboard-canvas.component';
  *
  * Saving is NOT done here: every change is staged on the dashboard store, which
  * is what the switcher's Save / Discard buttons act on. Keeping a single pair of
- * buttons avoids two competing "save" affordances on the same screen.
+ * buttons avoids two competing "save" controls on the same screen.
  */
 @UntilDestroy()
 @Component({
@@ -50,7 +50,7 @@ export class CustomDashboardComponent extends TranslationBaseComponent implement
 	/** Tab id requested through the URL, applied as soon as the layout is known. */
 	private _requestedTabId: string | null = null;
 
-	@ViewChild(DashboardCanvasComponent) private _canvas?: DashboardCanvasComponent;
+	@ViewChild(DashboardCanvasComponent) private readonly _canvas?: DashboardCanvasComponent;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -180,7 +180,7 @@ export class CustomDashboardComponent extends TranslationBaseComponent implement
 
 	/**
 	 * Deletes a tab (the strip already confirmed with the user) and activates a
-	 * neighbouring tab when the deleted one was displayed.
+	 * neighboring tab when the deleted one was displayed.
 	 *
 	 * @param tab - The tab to delete.
 	 */

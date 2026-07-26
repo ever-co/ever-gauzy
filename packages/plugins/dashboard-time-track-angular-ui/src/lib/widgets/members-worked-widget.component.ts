@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, retry, switchMap, tap } from 'rxjs/operators';
 import { IDashboardWidgetContext, EmployeesService } from '@gauzy/ui-core/core';
 import { BaseTimeTrackCounterWidgetComponent } from './base-time-track-counter-widget.component';
 import { TimeTrackCounterCardComponent } from './time-track-counter-card.component';
@@ -51,10 +51,24 @@ export class MembersWorkedWidgetComponent extends BaseTimeTrackCounterWidgetComp
 		this.context$
 			.pipe(
 				filter((context): context is IDashboardWidgetContext => !!context?.organizationId),
+				// The head count depends on the organization ALONE. Without this,
+				// every date-range tweak would fire another `/employee/count` per
+				// widget on the canvas, for an answer that cannot have changed.
+				distinctUntilChanged(
+					(previous: IDashboardWidgetContext, current: IDashboardWidgetContext) =>
+						previous.organizationId === current.organizationId && previous.tenantId === current.tenantId
+				),
 				switchMap((context: IDashboardWidgetContext) =>
 					this._employeesService
 						.getCount({ organizationId: context.organizationId, tenantId: context.tenantId })
-						.pipe(catchError(() => of(0)))
+						// One retry before giving up: because the request is now
+						// deduplicated per organization, a transient failure would
+						// otherwise pin the denominator to 0 until the user switches
+						// organizations.
+						.pipe(
+							retry({ count: 1, delay: 1_000 }),
+							catchError(() => of(0))
+						)
 				),
 				tap((count: number) => this.totalEmployees.set(count || 0)),
 				takeUntilDestroyed(this.destroyRef)

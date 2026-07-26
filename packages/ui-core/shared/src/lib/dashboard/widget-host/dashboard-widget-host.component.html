@@ -81,19 +81,27 @@
 <!-- Edit-mode kebab menu -->
 <ng-template #widgetMenu>
 	<div class="widget-menu">
-		<button type="button" class="menu-item" (click)="onConfigure()">
-			<nb-icon icon="settings-2-outline"></nb-icon>
-			<span>{{ 'DASHBOARD_PAGE.BUILDER.HOST.CONFIGURE' | translate }}</span>
-		</button>
+		<!-- Only offered when the widget actually declares settings, so the action
+		     is never a dead end. -->
+		@if (configurable()) {
+			<button type="button" class="menu-item" (click)="onConfigure()">
+				<nb-icon icon="settings-2-outline"></nb-icon>
+				<span>{{ 'DASHBOARD_PAGE.BUILDER.HOST.CONFIGURE' | translate }}</span>
+			</button>
+		}
 
 		@if (widthOptions().length > 1) {
 			<div class="menu-section">{{ 'DASHBOARD_PAGE.BUILDER.HOST.WIDTH' | translate }}</div>
 			<div class="menu-widths">
 				@for (width of widthOptions(); track width) {
+					<!-- The bare number is meaningless to a screen reader, and the
+					     current width is otherwise conveyed by color alone. -->
 					<button
 						type="button"
 						class="width-option"
 						[class.selected]="width === placement().w"
+						[attr.aria-pressed]="width === placement().w"
+						[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.HOST.WIDTH_COLUMNS' | translate: { count: width }"
 						(click)="onResize(width)"
 					>
 						{{ width }}

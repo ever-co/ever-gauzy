@@ -1876,6 +1876,7 @@
 				"WIDGET_MENU": "Widget menu",
 				"CONFIGURE": "Configure",
 				"WIDTH": "Width",
+				"WIDTH_COLUMNS": "Width: {{ count }} columns",
 				"REMOVE": "Remove",
 				"RETRY": "Retry",
 				"LOADING": "Loading widget",

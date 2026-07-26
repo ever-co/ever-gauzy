@@ -1,4 +1,4 @@
-import { Injectable, Type } from '@angular/core';
+import { Injectable, Type, isDevMode } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { IWidgetRegistry, WidgetCategory, WidgetPageLocationId, WidgetRegistryConfig } from './widget-registry.types';
@@ -86,8 +86,23 @@ export class WidgetRegistryService implements IWidgetRegistry {
 		// Update the registry with the new or updated list of widgets for the specified location.
 		this.registry.set(config.location, widgets);
 
+		// `widgetId` is the key persisted on every dashboard placement, so it has
+		// to be unique across ALL locations — not just within one. Registering the
+		// same id at a second location silently re-points every saved placement.
+		// Warn instead of throwing: registration runs during app bootstrap, where
+		// a throw would abort the remaining widgets too.
+		const existing = this.byId.get(config.widgetId);
+		if (existing && existing.location !== config.location && isDevMode()) {
+			console.warn(
+				`[WidgetRegistryService] Widget "${config.widgetId}" is already registered at location "${existing.location}"; the "${config.location}" registration now wins.`
+			);
+		}
+
 		// Index globally by id and publish the change to palette subscribers.
 		this.byId.set(config.widgetId, config);
+		// A replaced entry may declare a different `loadComponent`, so the memoized
+		// component class must go with it.
+		this.componentCache.delete(config.widgetId);
 		this.publish();
 	}
 
@@ -105,9 +120,17 @@ export class WidgetRegistryService implements IWidgetRegistry {
 			throw new Error('A widget configuration must have location and widgetId properties');
 		}
 
-		const widgets = (this.registry.get(config.location) || []).filter(
-			(widget: WidgetRegistryConfig) => widget.widgetId !== config.widgetId
-		);
+		// Drop the id from EVERY location first: a re-registration may move the
+		// widget to a different location, and leaving the old entry behind makes
+		// location-based consumers render stale metadata.
+		for (const [location, registered] of this.registry) {
+			this.registry.set(
+				location,
+				registered.filter((widget: WidgetRegistryConfig) => widget.widgetId !== config.widgetId)
+			);
+		}
+
+		const widgets = this.registry.get(config.location) || [];
 		widgets.push(config);
 		this.registry.set(config.location, widgets);
 		this.byId.set(config.widgetId, config);
@@ -148,8 +171,11 @@ export class WidgetRegistryService implements IWidgetRegistry {
 	 *          declares no component.
 	 */
 	public resolveComponent(widgetId: string): Promise<Type<any> | null> {
+		// Explicit `!== undefined` rather than truthiness: the cached value is a
+		// Promise, and a Promise in a boolean conditional is ALWAYS truthy — the
+		// check would read as "is it resolved?" while meaning "is it cached?".
 		const cached = this.componentCache.get(widgetId);
-		if (cached) {
+		if (cached !== undefined) {
 			return cached;
 		}
 
@@ -158,10 +184,26 @@ export class WidgetRegistryService implements IWidgetRegistry {
 			return Promise.resolve(null);
 		}
 
-		const loading = Promise.resolve(config.loadComponent());
+		// `try` (not just `Promise.resolve(...)`): a loader that throws
+		// SYNCHRONOUSLY would otherwise escape before the promise chain exists,
+		// leaving the widget host stuck on its loading skeleton instead of
+		// showing the error state with its Retry button.
+		let loading: Promise<Type<any>>;
+		try {
+			loading = Promise.resolve(config.loadComponent());
+		} catch (error) {
+			return Promise.reject(error);
+		}
+
 		this.componentCache.set(widgetId, loading);
-		// A failed load must not poison the cache — the next render retries.
-		loading.catch(() => this.componentCache.delete(widgetId));
+		// A failed load must not poison the cache — the next render retries. Only
+		// evict OUR entry: a re-registration may already have replaced it, and
+		// dropping that would discard a healthy load.
+		loading.catch(() => {
+			if (this.componentCache.get(widgetId) === loading) {
+				this.componentCache.delete(widgetId);
+			}
+		});
 		return loading;
 	}
 

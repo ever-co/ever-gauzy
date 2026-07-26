@@ -68,8 +68,13 @@ export class WidgetPaletteComponent extends TranslationBaseComponent {
 	/** Drop lists palette entries may be dragged into. */
 	@Input() public connectedTo: string[] = [DASHBOARD_CANVAS_DROP_LIST_ID];
 
-	/** Emits the registry key of the widget to add (click / keyboard path). */
-	@Output() public readonly add = new EventEmitter<string>();
+	/**
+	 * Emits the registry key of the widget to add (click / keyboard path).
+	 *
+	 * Named `addRequested` rather than `add`: an output that shadows a native DOM
+	 * event name makes a parent binding ambiguous.
+	 */
+	@Output() public readonly addRequested = new EventEmitter<string>();
 
 	/** Categories with their (permission- and search-filtered) widgets. */
 	public readonly groups: Signal<IWidgetPaletteGroup[]>;
@@ -108,7 +113,11 @@ export class WidgetPaletteComponent extends TranslationBaseComponent {
 			this._widgetRegistry.getWidgets$(),
 			// Re-filter when the permission set changes (role switch / reload)
 			this._store.userRolePermissions$.pipe(startWith(this._store.userRolePermissions ?? [])),
-			this.search$
+			this.search$,
+			// `_buildGroups` resolves titles/descriptions EAGERLY, so a language
+			// switch has to rebuild them — otherwise the palette keeps the old
+			// labels (and searches against them) until something else changes.
+			this.translateService.onLangChange.pipe(startWith(null))
 		]).pipe(
 			map(([widgets, , term]) => this._buildGroups(widgets, term)),
 			shareReplay({ bufferSize: 1, refCount: true })
@@ -172,7 +181,7 @@ export class WidgetPaletteComponent extends TranslationBaseComponent {
 		if (this._dragging) {
 			return;
 		}
-		this.add.emit(widgetId);
+		this.addRequested.emit(widgetId);
 	}
 
 	/**

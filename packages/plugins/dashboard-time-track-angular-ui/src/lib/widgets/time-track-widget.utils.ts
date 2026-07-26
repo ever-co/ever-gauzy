@@ -84,18 +84,48 @@ export function resolvePeriodSeconds(context: IDashboardWidgetContext | null, em
 		return 0;
 	}
 
-	const startWork = moment(context.organization?.defaultStartTime, 'HH:mm');
-	const endWork = moment(context.organization?.defaultEndTime, 'HH:mm');
-	const workingSeconds = endWork.diff(startWork) / 1000;
-
 	const dayCount = moment(context.endDate).diff(moment(context.startDate), 'days') + 1;
 
-	return dayCount * (isNaN(workingSeconds) ? SECONDS_IN_DAY : workingSeconds) * (employeesCount || 0);
+	return dayCount * resolveWorkingSeconds(context) * (employeesCount || 0);
 }
+
+/**
+ * Working seconds in one day for the context's organization.
+ *
+ * Both ends have to be present AND parse: `moment(undefined, 'HH:mm')` yields
+ * the CURRENT time rather than an invalid date, so an organization with no
+ * configured hours would produce a near-zero capacity instead of reaching the
+ * documented full-day fallback.
+ *
+ * @param context The ambient dashboard widget context.
+ * @returns Seconds of capacity per day, falling back to a full day.
+ */
+function resolveWorkingSeconds(context: IDashboardWidgetContext): number {
+	const { defaultStartTime, defaultEndTime } = context.organization ?? {};
+	if (!defaultStartTime || !defaultEndTime) {
+		return SECONDS_IN_DAY;
+	}
+
+	const startWork = moment(defaultStartTime, 'HH:mm', true);
+	const endWork = moment(defaultEndTime, 'HH:mm', true);
+	if (!startWork.isValid() || !endWork.isValid()) {
+		return SECONDS_IN_DAY;
+	}
+
+	const workingSeconds = endWork.diff(startWork) / 1000;
+	return Number.isNaN(workingSeconds) || workingSeconds <= 0 ? SECONDS_IN_DAY : workingSeconds;
+}
+
+/** Shown when an error carries no readable message of its own. */
+const GENERIC_ERROR_MESSAGE = 'Something went wrong';
 
 /**
  * Normalizes anything thrown by an HTTP call (or held in the base widget's
  * `error` signal) into a displayable message.
+ *
+ * An `HttpErrorResponse` nests the server's text under `error.message`, so that
+ * is unwrapped too. A bare object is NEVER stringified: `String({})` renders the
+ * useless `[object Object]` straight into the widget's error state.
  *
  * @param error The caught value.
  * @returns A human readable message, or `null` when there is no error.
@@ -107,6 +137,16 @@ export function toErrorMessage(error: unknown): string | null {
 	if (typeof error === 'string') {
 		return error;
 	}
-	const message = (error as { message?: unknown }).message;
-	return typeof message === 'string' && message.length > 0 ? message : String(error);
+	if (typeof error !== 'object') {
+		return String(error);
+	}
+
+	const candidate = error as { message?: unknown; error?: { message?: unknown } };
+	// The API payload's own message wins: it is the one written for a human.
+	const nested = candidate.error?.message;
+	if (typeof nested === 'string' && nested.length > 0) {
+		return nested;
+	}
+	const message = candidate.message;
+	return typeof message === 'string' && message.length > 0 ? message : GENERIC_ERROR_MESSAGE;
 }

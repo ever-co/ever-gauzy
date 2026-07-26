@@ -11,15 +11,15 @@
 		</button>
 	</div>
 } @else if (loading()) {
-	<div
+	<!-- <output> carries an implicit `status` live region, so no explicit role. -->
+	<output
 		class="counter-skeleton"
-		role="status"
 		aria-busy="true"
 		[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.WIDGETS.LOADING' | translate"
 	>
 		<div class="skeleton-line skeleton-value"></div>
 		<div class="skeleton-line skeleton-strip"></div>
-	</div>
+	</output>
 } @else {
 	<div class="h1 counter-value">{{ value() }}</div>
 	<div class="counter-container">

@@ -63,13 +63,18 @@ interface ICacheEntry {
 /**
  * Serializes a request object into a stable string, independent of key order.
  *
+ * The comparator is explicit on purpose: the default `Array.sort()` compares the
+ * UTF-16 code units of the *stringified* elements, which is not a guaranteed
+ * alphabetical order. Since this string IS the cache key, an unstable order
+ * would produce two keys for one request — i.e. duplicate HTTP calls.
+ *
  * @param value - The object to serialize.
  * @returns A deterministic string representation.
  */
 function stableStringify(value: object): string {
 	const record = value as Record<string, unknown>;
 	return Object.keys(record)
-		.sort()
+		.sort((a: string, b: string) => a.localeCompare(b))
 		.map((key: string) => `${key}=${JSON.stringify(record[key])}`)
 		.join('&');
 }
@@ -122,14 +127,16 @@ export function buildStatisticsRequest(context: IDashboardWidgetContext): Statis
  * @returns A new array with `durationPercentage` populated.
  */
 export function withDurationPercentage(activities: IActivitiesStatistics[]): IActivitiesStatistics[] {
-	const total = (activities ?? []).reduce(
-		(sum: number, activity: IActivitiesStatistics) => sum + parseInt(activity.duration + '', 10),
-		0
-	);
+	const list = activities ?? [];
+	// ONE coercion for both the numerator and the denominator: the API may return
+	// a duration as a string or with a fractional part, and mixing `parseInt`
+	// (truncating) with implicit numeric coercion made the shares miss 100%.
+	const duration = (activity: IActivitiesStatistics): number => Number(activity.duration) || 0;
+	const total = list.reduce((sum: number, activity: IActivitiesStatistics) => sum + duration(activity), 0);
 
-	return (activities ?? []).map((activity: IActivitiesStatistics) => ({
+	return list.map((activity: IActivitiesStatistics) => ({
 		...activity,
-		durationPercentage: total ? (activity.duration * 100) / total : 0
+		durationPercentage: total ? (duration(activity) * 100) / total : 0
 	}));
 }
 
@@ -321,7 +328,7 @@ export class TimesheetStatisticsCacheService {
 		// type into the typed payload literal below widens every value to `unknown`.
 		extra?: Partial<StatisticsRequestPayload>
 	): Observable<T> {
-		const payload: StatisticsRequestPayload = { ...buildStatisticsRequest(context), ...(extra ?? {}) };
+		const payload: StatisticsRequestPayload = { ...buildStatisticsRequest(context), ...extra };
 		const key = `${this._contextHash(context)}::${endpoint}::${extra ? stableStringify(extra) : ''}`;
 
 		return this._invalidated$.pipe(

@@ -33,28 +33,37 @@ export class DashboardTabStripComponent extends TranslationBaseComponent {
 	/** Whether the dashboard is in edit (arrange) mode. */
 	@Input() public editing = false;
 
+	/*
+	|--------------------------------------------------------------------------
+	| Outputs
+	|--------------------------------------------------------------------------
+	| None of these may be named after a native DOM event (`select`, `add`,
+	| `delete`, ...): such an output shadows the real event on the host element,
+	| so a parent binding can fire twice or bind the wrong thing entirely.
+	*/
+
 	/** Emits the id of the tab the user switched to. */
-	@Output() public readonly select = new EventEmitter<string>();
+	@Output() public readonly tabSelect = new EventEmitter<string>();
 
 	/** Emits the name entered for a new tab. */
-	@Output() public readonly add = new EventEmitter<string>();
+	@Output() public readonly addRequested = new EventEmitter<string>();
 
 	/** Emits the tab together with its new name. */
-	@Output() public readonly rename = new EventEmitter<{ tab: IDashboardTab; name: string }>();
+	@Output() public readonly renameRequested = new EventEmitter<{ tab: IDashboardTab; name: string }>();
 
 	/** Emits the tab to duplicate. */
-	@Output() public readonly duplicate = new EventEmitter<IDashboardTab>();
+	@Output() public readonly duplicateRequested = new EventEmitter<IDashboardTab>();
 
 	/** Emits the tab to delete (already confirmed by the user). */
-	@Output() public readonly delete = new EventEmitter<IDashboardTab>();
+	@Output() public readonly deleteRequested = new EventEmitter<IDashboardTab>();
 
 	/** Emits the full tab list in its new order, with `order` re-numbered. */
-	@Output() public readonly reorder = new EventEmitter<IDashboardTab[]>();
+	@Output() public readonly reordered = new EventEmitter<IDashboardTab[]>();
 
 	/** Tab whose kebab menu is currently open (the menu template reads it). */
 	public menuTab: IDashboardTab | null = null;
 
-	@ViewChildren(NbPopoverDirective) private _popovers: QueryList<NbPopoverDirective>;
+	@ViewChildren(NbPopoverDirective) private readonly _popovers: QueryList<NbPopoverDirective>;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -75,7 +84,7 @@ export class DashboardTabStripComponent extends TranslationBaseComponent {
 	 */
 	public onSelect(tab: IDashboardTab): void {
 		if (tab.id !== this.activeTabId) {
-			this.select.emit(tab.id);
+			this.tabSelect.emit(tab.id);
 		}
 	}
 
@@ -102,7 +111,7 @@ export class DashboardTabStripComponent extends TranslationBaseComponent {
 		}
 		const tabs = [...this.tabs];
 		moveItemInArray(tabs, event.previousIndex, event.currentIndex);
-		this.reorder.emit(tabs.map((tab, index) => ({ ...tab, order: index })));
+		this.reordered.emit(tabs.map((tab, index) => ({ ...tab, order: index })));
 	}
 
 	/*
@@ -115,20 +124,23 @@ export class DashboardTabStripComponent extends TranslationBaseComponent {
 	public async promptAdd(): Promise<void> {
 		const name = await this._promptForName('DASHBOARD_PAGE.BUILDER.TABS.ADD_TAB');
 		if (name) {
-			this.add.emit(name);
+			this.addRequested.emit(name);
 		}
 	}
 
 	/**
 	 * Prompts for a new name for the given tab.
 	 *
+	 * The prompt opens pre-filled with the current name: renaming is usually a
+	 * small edit, and an empty box would force the user to retype it in full.
+	 *
 	 * @param tab - The tab to rename.
 	 */
 	public async promptRename(tab: IDashboardTab): Promise<void> {
 		this._closeMenus();
-		const name = await this._promptForName('DASHBOARD_PAGE.BUILDER.TABS.RENAME_TAB');
+		const name = await this._promptForName('DASHBOARD_PAGE.BUILDER.TABS.RENAME_TAB', tab.name);
 		if (name) {
-			this.rename.emit({ tab, name });
+			this.renameRequested.emit({ tab, name });
 		}
 	}
 
@@ -139,7 +151,7 @@ export class DashboardTabStripComponent extends TranslationBaseComponent {
 	 */
 	public onDuplicate(tab: IDashboardTab): void {
 		this._closeMenus();
-		this.duplicate.emit(tab);
+		this.duplicateRequested.emit(tab);
 	}
 
 	/**
@@ -163,7 +175,7 @@ export class DashboardTabStripComponent extends TranslationBaseComponent {
 		});
 
 		if (await firstValueFrom(dialogRef.onClose)) {
-			this.delete.emit(tab);
+			this.deleteRequested.emit(tab);
 		}
 	}
 
@@ -177,9 +189,10 @@ export class DashboardTabStripComponent extends TranslationBaseComponent {
 	 * Opens a prompt dialog asking for a tab name.
 	 *
 	 * @param titleKey - Translation key for the dialog title.
+	 * @param value - Initial value of the input (used when renaming).
 	 * @returns The trimmed name, or `null` when cancelled/empty.
 	 */
-	private async _promptForName(titleKey: string): Promise<string | null> {
+	private async _promptForName(titleKey: string, value = ''): Promise<string | null> {
 		const dialogRef = this._dialogService.open(PromptComponent, {
 			context: {
 				data: {
@@ -188,7 +201,8 @@ export class DashboardTabStripComponent extends TranslationBaseComponent {
 					placeholder: this.getTranslation('DASHBOARD_PAGE.BUILDER.TABS.NAME_PLACEHOLDER'),
 					okText: this.getTranslation('BUTTONS.OK'),
 					cancelText: this.getTranslation('BUTTONS.CANCEL'),
-					inputType: 'text'
+					inputType: 'text',
+					value
 				}
 			}
 		});

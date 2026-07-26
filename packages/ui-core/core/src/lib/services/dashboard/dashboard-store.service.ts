@@ -495,7 +495,11 @@ export class DashboardStoreService {
 			return null;
 		}
 
-		if (this.isBuilderDashboard(selected)) {
+		// A STAGED document is itself proof that the canvas produced this edit, so
+		// it takes the v2 path even when the persisted row is still v1: a legacy
+		// dashboard that the user just arranged in the builder must save what is
+		// on the canvas, not an unrelated `Store.widgets` snapshot.
+		if (this._pendingLayout || this.isBuilderDashboard(selected)) {
 			const pending = this._pendingLayout;
 			// Nothing staged (canvas already persisted, or no changes): leaving
 			// edit mode is all that is left to do.
@@ -503,7 +507,13 @@ export class DashboardStoreService {
 			// Leave edit mode only once the write succeeded — a rejected save must
 			// keep the user in the editor (Save / Discard still reachable) with the
 			// staged document intact, exactly like the v1 branch below.
-			this._editing$.next(false);
+			//
+			// A still-staged document here means the user kept arranging WHILE the
+			// request was in flight; those edits are unsaved, so the editor has to
+			// stay open for them.
+			if (!this._pendingLayout) {
+				this._editing$.next(false);
+			}
 			return saved;
 		}
 
@@ -578,7 +588,13 @@ export class DashboardStoreService {
 		// The write is now the source of truth: drop the staged copy and refresh
 		// the in-memory selection so later reads (cancelEditing, getLayout) do
 		// not see the pre-save content.
-		this._pendingLayout = null;
+		//
+		// Identity check on purpose: the canvas stages a NEW object on every
+		// change, so a different reference means the user edited while the request
+		// was in flight. Clearing that would silently discard their newer work.
+		if (this._pendingLayout === layout) {
+			this._pendingLayout = null;
+		}
 		const selected = this.selectedDashboard;
 		if (selected?.id === dashboardId) {
 			this._selectedDashboard$.next({
@@ -640,15 +656,18 @@ export class DashboardStoreService {
 	}
 
 	/**
-	 * Structural clone through JSON — the same round-trip the value goes through
-	 * when persisted, so anything that survives here survives a save.
+	 * Structural clone of a placement's persisted configuration.
+	 *
+	 * The value is plain JSON layout data (it round-trips through the API's json
+	 * column), so `structuredClone` handles it and — unlike the JSON round-trip
+	 * it replaces — copes with cycles too.
 	 */
 	private _deepClone<T>(value: T): T {
 		try {
-			return JSON.parse(JSON.stringify(value)) as T;
+			return structuredClone(value);
 		} catch {
-			// Non-serializable (e.g. circular) config: keep the reference rather
-			// than losing the widget's settings entirely.
+			// Not structurally cloneable (a function or DOM node smuggled into a
+			// config): keep the reference rather than losing the settings entirely.
 			return value;
 		}
 	}

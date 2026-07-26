@@ -336,10 +336,20 @@ export class DashboardContextService {
 	 * organization time zone, everyone else sees their own. Without this a
 	 * builder page rendered WITHOUT the timezone filter would silently fall back
 	 * to UTC and report different totals than the standard dashboard.
+	 *
+	 * `userRolePermissions$` is a source (its value is unused) because the branch
+	 * below READS the permission set imperatively: right after sign-in or a tenant
+	 * switch the permissions resolve AFTER the organization and user have already
+	 * emitted, and without this trigger a manager would keep the personal zone
+	 * forever — the exact drift this fallback exists to prevent.
 	 */
 	private _defaultTimeZone$(): Observable<string> {
-		return combineLatest([this._store.selectedOrganization$, this._store.user$]).pipe(
-			map(([organization, user]: [IOrganization, IUser]) =>
+		return combineLatest([
+			this._store.selectedOrganization$,
+			this._store.user$,
+			this._store.userRolePermissions$
+		]).pipe(
+			map(([organization, user]: [IOrganization, IUser, unknown]) =>
 				this._canChangeSelectedEmployee()
 					? organization?.timeZone || DEFAULT_DASHBOARD_TIME_ZONE
 					: user?.timeZone || moment.tz.guess()
@@ -352,10 +362,16 @@ export class DashboardContextService {
 	 * Fallback time format stream, normalized exactly like
 	 * `TimezoneFilterComponent.selectTimeFormat()` (anything that is not
 	 * explicitly 24h is 12h).
+	 *
+	 * Includes `userRolePermissions$` for the same reason as {@link _defaultTimeZone$}.
 	 */
 	private _defaultTimeFormat$(): Observable<TimeFormatEnum> {
-		return combineLatest([this._store.selectedOrganization$, this._store.user$]).pipe(
-			map(([organization, user]: [IOrganization, IUser]) => {
+		return combineLatest([
+			this._store.selectedOrganization$,
+			this._store.user$,
+			this._store.userRolePermissions$
+		]).pipe(
+			map(([organization, user]: [IOrganization, IUser, unknown]) => {
 				const timeFormat = this._canChangeSelectedEmployee() ? organization?.timeFormat : user?.timeFormat;
 				return timeFormat === TimeFormatEnum.FORMAT_24_HOURS
 					? TimeFormatEnum.FORMAT_24_HOURS

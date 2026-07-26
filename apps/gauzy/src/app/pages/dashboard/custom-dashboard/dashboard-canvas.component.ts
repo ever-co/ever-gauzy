@@ -67,8 +67,13 @@ export class DashboardCanvasComponent extends TranslationBaseComponent {
 	/** Emits the full placement list of the tab whenever the arrangement changes. */
 	@Output() public readonly layoutChange = new EventEmitter<IDashboardWidgetPlacement[]>();
 
-	/** Re-emits a widget's "configure" request so the page can open the settings dialog. */
-	@Output() public readonly configure = new EventEmitter<IDashboardWidgetPlacement>();
+	/**
+	 * Re-emits a widget's "configure" request so the page can open the settings dialog.
+	 *
+	 * Named `configureRequested` for symmetry with the widget host: outputs here
+	 * must never collide with a native DOM event name.
+	 */
+	@Output() public readonly configureRequested = new EventEmitter<IDashboardWidgetPlacement>();
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -181,7 +186,31 @@ export class DashboardCanvasComponent extends TranslationBaseComponent {
 	 * @param placement - The placement being configured.
 	 */
 	public onConfigure(placement: IDashboardWidgetPlacement): void {
-		this.configure.emit(placement);
+		this.configureRequested.emit(placement);
+	}
+
+	/**
+	 * Moves a widget one slot forwards/backwards in reading order.
+	 *
+	 * The keyboard counterpart of dragging the handle: CDK drag & drop is
+	 * pointer-only, so without this the canvas cannot be rearranged at all
+	 * without a mouse.
+	 *
+	 * @param placement - The placement to move.
+	 * @param delta - `-1` to move it earlier, `+1` to move it later.
+	 * @param event - The originating key event, whose default scroll is suppressed.
+	 */
+	public moveBy(placement: IDashboardWidgetPlacement, delta: number, event?: Event): void {
+		event?.preventDefault();
+		if (!this.editing) {
+			return;
+		}
+		const from = this.placements.findIndex((item) => item.instanceId === placement.instanceId);
+		const to = from + delta;
+		if (from < 0 || to < 0 || to >= this.placements.length) {
+			return;
+		}
+		this._emit(movePlacement(this.placements, from, to));
 	}
 
 	/**
