@@ -77,7 +77,8 @@ export function createSettingsRoutes(_pageRouteRegistryService: PageRouteRegistr
 				},
 				{
 					path: 'import-export',
-					loadChildren: () => import('../import-export/import-export.module').then((m) => m.ImportExportModule),
+					loadChildren: () =>
+						import('../import-export/import-export.module').then((m) => m.ImportExportModule),
 					data: {
 						selectors: {
 							project: false,
