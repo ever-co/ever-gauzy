@@ -190,7 +190,9 @@ export class AiChatService {
 				...(definition.order !== undefined ? { order: definition.order } : {}),
 				...(definition.websiteUrl ? { websiteUrl: definition.websiteUrl } : {}),
 				...(definition.apiKeysUrl ? { apiKeysUrl: definition.apiKeysUrl } : {}),
-				...(definition.connect ? { connectType: definition.connect.type } : {})
+				...(definition.connect
+					? { connectType: definition.connect.type, connectAuthorizeUrl: definition.connect.authorizeUrl }
+					: {})
 			});
 		}
 

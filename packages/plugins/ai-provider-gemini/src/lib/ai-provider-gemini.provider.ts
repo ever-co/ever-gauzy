@@ -8,10 +8,7 @@ const PROVIDER_ID = AiProviderEnum.GEMINI;
  * Chat models offered by Gemini (shown in the model selector).
  * Model ids as accepted by `@ai-sdk/google`.
  */
-const MODELS: IAiChatModel[] = [
-	{ id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash', providerId: PROVIDER_ID },
-	{ id: 'gemini-3.5-pro', label: 'Gemini 3.5 Pro', providerId: PROVIDER_ID }
-];
+const MODELS: IAiChatModel[] = [{ id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash', providerId: PROVIDER_ID }];
 
 /**
  * Gemini provider definition for the AI chat engine.

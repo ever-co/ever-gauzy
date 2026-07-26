@@ -8,10 +8,7 @@ const PROVIDER_ID = AiProviderEnum.GROK;
  * Chat models offered by Grok (shown in the model selector).
  * Model ids as accepted by `@ai-sdk/xai`.
  */
-const MODELS: IAiChatModel[] = [
-	{ id: 'grok-4.3', label: 'Grok 4.3', providerId: PROVIDER_ID },
-	{ id: 'grok-4.3-mini', label: 'Grok 4.3 Mini', providerId: PROVIDER_ID }
-];
+const MODELS: IAiChatModel[] = [{ id: 'grok-4.3', label: 'Grok 4.3', providerId: PROVIDER_ID }];
 
 /**
  * Grok provider definition for the AI chat engine.

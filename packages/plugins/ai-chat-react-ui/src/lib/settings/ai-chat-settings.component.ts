@@ -17,7 +17,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { EMPTY, forkJoin } from 'rxjs';
+import { EMPTY, forkJoin, of } from 'rxjs';
 import { catchError, filter, finalize, switchMap } from 'rxjs/operators';
 import {
 	IAiChatProvider,
@@ -198,22 +198,33 @@ export class AiChatSettingsComponent implements OnInit {
 	 */
 	load(): void {
 		this.loading.set(true);
+		// Each call fails soft so one failing does NOT blank the whole page:
+		// `/config` (registered providers) and `/credentials` (saved tenant keys)
+		// are independent — the catalog must still render when the credentials
+		// call fails (keys just aren't pre-filled), and vice versa.
 		forkJoin({
-			config: this.settingsService.getConfig(),
-			credentials: this.settingsService.getCredentials()
+			config: this.settingsService.getConfig().pipe(
+				catchError((error) => {
+					this.showError(error);
+					return of(null);
+				})
+			),
+			credentials: this.settingsService.getCredentials().pipe(catchError(() => of({ items: [], total: 0 })))
 		})
 			.pipe(finalize(() => this.loading.set(false)))
-			.subscribe({
-				next: ({ config, credentials }) => {
-					this.credentialsByProvider = new Map(
-						(credentials?.items ?? []).map((credential) => [credential.providerId, credential])
-					);
-					this.providers.set(config?.providers ?? []);
-					this.defaultProviderId.set(config?.defaultProvider ?? null);
-					this.buildForms();
-					this.cdr.markForCheck();
-				},
-				error: (error) => this.showError(error)
+			.subscribe(({ config, credentials }) => {
+				this.credentialsByProvider = new Map(
+					(credentials?.items ?? []).map((credential) => [credential.providerId, credential])
+				);
+				this.providers.set(config?.providers ?? []);
+				this.defaultProviderId.set(config?.defaultProvider ?? null);
+				this.buildForms();
+				// Unknown ?provider= deep link → fall back to the catalog
+				// instead of a blank config view.
+				if (this.view() === 'config' && this.providers().length && !this.selectedProvider()) {
+					this.showCatalog();
+				}
+				this.cdr.markForCheck();
 			});
 	}
 
@@ -302,7 +313,7 @@ export class AiChatSettingsComponent implements OnInit {
 	 * to this page with `?code=...`.
 	 */
 	async connect(provider: IAiChatProvider): Promise<void> {
-		if (provider.connectType !== 'openrouter-pkce') {
+		if (provider.connectType !== 'openrouter-pkce' || !provider.connectAuthorizeUrl) {
 			return;
 		}
 		try {
@@ -311,9 +322,11 @@ export class AiChatSettingsComponent implements OnInit {
 			const challenge = this.base64Url(new Uint8Array(digest));
 			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify({ providerId: provider.id, verifier }));
 
+			// The authorize page comes from the provider definition (backend
+			// config) so additional connect-capable providers need no UI change.
 			const callbackUrl = `${location.origin}${location.pathname}#/pages/settings/ai`;
 			const authorizeUrl =
-				`https://openrouter.ai/auth?callback_url=${encodeURIComponent(callbackUrl)}` +
+				`${provider.connectAuthorizeUrl}?callback_url=${encodeURIComponent(callbackUrl)}` +
 				`&code_challenge=${challenge}&code_challenge_method=S256`;
 			location.assign(authorizeUrl);
 		} catch (error) {

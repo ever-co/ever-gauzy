@@ -25,15 +25,15 @@
 			}
 
 			@if (configuredProviders().length) {
-				<div class="provider-rows" role="table">
-					<div class="row-head" role="row">
+				<div class="provider-rows">
+					<div class="row-head">
 						<span>{{ 'AI_CHAT_UI.SETTINGS.LIST.NAME' | translate }}</span>
 						<span>{{ 'AI_CHAT_UI.SETTINGS.LIST.SOURCE' | translate }}</span>
 						<span>{{ 'AI_CHAT_UI.SETTINGS.LIST.ENABLED' | translate }}</span>
 						<span class="actions-col"></span>
 					</div>
 					@for (provider of configuredProviders(); track provider.id) {
-						<div class="row" role="row">
+						<div class="row">
 							<span class="cell name">
 								<span class="tile" [style.background]="tileColor(provider.id)">{{
 									tileMonogram(provider.id)
@@ -55,7 +55,7 @@
 								></nb-badge>
 							</span>
 							<span class="cell">
-								@if (getCredential(provider.id)?.id; as credentialId) {
+								@if (getCredential(provider.id)?.id) {
 									<nb-toggle
 										status="primary"
 										[checked]="getCredential(provider.id)?.enabled ?? false"

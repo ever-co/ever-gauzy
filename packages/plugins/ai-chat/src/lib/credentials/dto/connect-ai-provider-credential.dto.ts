@@ -30,5 +30,8 @@ export class ConnectAiProviderCredentialDTO extends TenantOrganizationBaseDTO {
 	@IsNotEmpty({ message: 'Code verifier is required' })
 	@IsString({ message: 'Code verifier must be a string' })
 	@Length(43, 128, { message: 'Code verifier must be between 43 and 128 characters (RFC 7636)' })
+	@Matches(/^[A-Za-z0-9\-._~]+$/, {
+		message: 'Code verifier may only contain RFC 7636 unreserved characters (A-Z a-z 0-9 - . _ ~)'
+	})
 	codeVerifier: string;
 }

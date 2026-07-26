@@ -63,6 +63,8 @@ export interface IAiChatProvider {
 	apiKeysUrl?: string;
 	/** Set when the provider supports a "Connect" flow (see {@link AiProviderConnectType}). */
 	connectType?: AiProviderConnectType;
+	/** Authorization page for the Connect flow (client appends callback/PKCE params). */
+	connectAuthorizeUrl?: string;
 }
 
 /**

@@ -113,7 +113,8 @@
 			padding: 0.125rem 0.5rem;
 			border-radius: 1rem;
 			background: rgba(0, 214, 143, 0.16);
-			color: #00d68f;
+			// WCAG contrast: dark success shade on the light tint (not #00d68f)
+			color: #00875a;
 		}
 
 		.env-note {
@@ -167,7 +168,8 @@
 			align-items: center;
 			gap: 0.25rem;
 			font-size: 0.75rem;
-			color: #00d68f;
+			// WCAG contrast: dark success shade (not #00d68f)
+			color: #00875a;
 
 			nb-icon {
 				font-size: 0.9375rem;
@@ -182,7 +184,8 @@
 			padding: 0.125rem 0.5rem;
 			border-radius: 1rem;
 			background: rgba(51, 102, 255, 0.14);
-			color: #3366ff;
+			// WCAG contrast: darker primary shade on the light tint
+			color: #274bdb;
 		}
 	}
 

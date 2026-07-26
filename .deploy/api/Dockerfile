@@ -375,7 +375,9 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/plugins/ai-provider-openai/node_modules ./node_modules/@gauzy/plugin-ai-provider-openai/ && \
     cp -r /mnt/packages/plugins/ai-provider-openrouter/node_modules ./node_modules/@gauzy/plugin-ai-provider-openrouter/ && \
     cp -r /mnt/packages/plugins/ai-provider-vercel-gateway/node_modules ./node_modules/@gauzy/plugin-ai-provider-vercel-gateway/ && \
-    cp -r /mnt/packages/plugins/ai-provider-gauzy-ai/node_modules ./node_modules/@gauzy/plugin-ai-provider-gauzy-ai/ && \n    cp -r /mnt/packages/plugins/ai-provider-gemini/node_modules ./node_modules/@gauzy/plugin-ai-provider-gemini/ && \n    cp -r /mnt/packages/plugins/ai-provider-grok/node_modules ./node_modules/@gauzy/plugin-ai-provider-grok/
+    cp -r /mnt/packages/plugins/ai-provider-gauzy-ai/node_modules ./node_modules/@gauzy/plugin-ai-provider-gauzy-ai/ && \
+    cp -r /mnt/packages/plugins/ai-provider-gemini/node_modules ./node_modules/@gauzy/plugin-ai-provider-gemini/ && \
+    cp -r /mnt/packages/plugins/ai-provider-grok/node_modules ./node_modules/@gauzy/plugin-ai-provider-grok/
 
 RUN mkdir /import && chown node:node /import && touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
     chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
