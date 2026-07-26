@@ -66,6 +66,23 @@ export class AiChatSettingsService {
 	}
 
 	/**
+	 * Completes a provider "Connect" flow (e.g. OpenRouter PKCE): sends the
+	 * authorization code + PKCE verifier to the backend, which exchanges
+	 * them for an API key server-side and stores it as the tenant credential.
+	 *
+	 * @param input - Provider id, authorization code and PKCE code verifier.
+	 * @returns An observable emitting the persisted credential (API key masked).
+	 */
+	connectCredential(input: {
+		providerId: string;
+		code: string;
+		codeVerifier: string;
+		organizationId?: ID;
+	}): Observable<IAiProviderCredential> {
+		return this.http.post<IAiProviderCredential>(`${this.API_URL}/credentials/connect`, input);
+	}
+
+	/**
 	 * Updates an existing credential by its ID. An omitted `apiKey` keeps
 	 * the currently stored (encrypted) key.
 	 *

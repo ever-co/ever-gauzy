@@ -11,7 +11,7 @@ const PROVIDER_ID = AiProviderEnum.VERCEL_GATEWAY;
  */
 const MODELS: IAiChatModel[] = [
 	{ id: 'anthropic/claude-sonnet-5', label: 'Claude Sonnet 5', providerId: PROVIDER_ID },
-	{ id: 'anthropic/claude-opus-4.8', label: 'Claude Opus 4.8', providerId: PROVIDER_ID },
+	{ id: 'anthropic/claude-opus-5', label: 'Claude Opus 5', providerId: PROVIDER_ID },
 	{ id: 'openai/gpt-5.5', label: 'GPT-5.5', providerId: PROVIDER_ID },
 	{ id: 'google/gemini-3.5-flash', label: 'Gemini 3.5 Flash', providerId: PROVIDER_ID }
 ];
@@ -30,6 +30,9 @@ export const vercelGatewayProviderDefinition: IAiChatProviderDefinition = {
 	baseUrlEnvVar: 'AI_GATEWAY_BASE_URL',
 	models: MODELS,
 	defaultModel: 'anthropic/claude-sonnet-5',
+	order: 30,
+	websiteUrl: 'https://vercel.com/ai-gateway',
+	apiKeysUrl: 'https://vercel.com/dashboard',
 
 	/**
 	 * Create a gateway-routed `LanguageModel` for the given model slug and credentials.

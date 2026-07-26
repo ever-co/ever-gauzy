@@ -6,6 +6,8 @@ import { AiProviderOpenAiPlugin } from '@gauzy/plugin-ai-provider-openai';
 import { AiProviderOpenRouterPlugin } from '@gauzy/plugin-ai-provider-openrouter';
 import { AiProviderVercelGatewayPlugin } from '@gauzy/plugin-ai-provider-vercel-gateway';
 import { AiProviderGauzyAiPlugin } from '@gauzy/plugin-ai-provider-gauzy-ai';
+import { AiProviderGeminiPlugin } from '@gauzy/plugin-ai-provider-gemini';
+import { AiProviderGrokPlugin } from '@gauzy/plugin-ai-provider-grok';
 import { ChangelogPlugin } from '@gauzy/plugin-changelog';
 import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
 import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
@@ -60,6 +62,8 @@ export const plugins = [
 	AiProviderVercelGatewayPlugin,
 	// Gauzy AI provider is registered but chat is not routed through it yet (see plugin README).
 	AiProviderGauzyAiPlugin,
+	AiProviderGeminiPlugin,
+	AiProviderGrokPlugin,
 	// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
 	ChangelogPlugin,
 	// Indicates the inclusion or intention to use the IntegrationActivepiecesPlugin in the codebase.

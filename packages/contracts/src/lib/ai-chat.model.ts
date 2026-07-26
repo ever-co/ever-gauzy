@@ -13,8 +13,17 @@ export enum AiProviderEnum {
 	OPENAI = 'openai',
 	OPENROUTER = 'openrouter',
 	VERCEL_GATEWAY = 'vercel-gateway',
-	GAUZY_AI = 'gauzy-ai'
+	GAUZY_AI = 'gauzy-ai',
+	GEMINI = 'gemini',
+	GROK = 'grok'
 }
+
+/**
+ * "Connect" flows a provider supports as an alternative to pasting an API
+ * key. Currently only OpenRouter's PKCE flow (the user authorizes on
+ * openrouter.ai and the platform exchanges the returned code for a key).
+ */
+export type AiProviderConnectType = 'openrouter-pkce';
 
 /**
  * A chat model offered by a registered AI provider.
@@ -46,6 +55,16 @@ export interface IAiChatProvider {
 	configured: boolean;
 	/** Where the active credential comes from. */
 	credentialSource?: 'tenant' | 'environment';
+	/** Display ordering (ascending) in provider lists/catalogs. */
+	order?: number;
+	/** Provider marketing/home page. */
+	websiteUrl?: string;
+	/** Page where the user can create/manage API keys for this provider. */
+	apiKeysUrl?: string;
+	/** Set when the provider supports a "Connect" flow (see {@link AiProviderConnectType}). */
+	connectType?: AiProviderConnectType;
+	/** Authorization page for the Connect flow (client appends callback/PKCE params). */
+	connectAuthorizeUrl?: string;
 }
 
 /**
