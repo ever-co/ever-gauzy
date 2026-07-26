@@ -18,5 +18,13 @@
 		<nb-list-item>
 			<gauzy-layout-selector class="theme"></gauzy-layout-selector>
 		</nb-list-item>
+		<nb-list-item>
+			<div class="settings-link theme">
+				<button nbButton fullWidth status="primary" size="small" (click)="navigateToSettings()">
+					<nb-icon icon="settings-2-outline"></nb-icon>
+					{{ 'SETTINGS_MENU.SETTINGS' | translate }}
+				</button>
+			</div>
+		</nb-list-item>
 	</nb-list>
 </div>

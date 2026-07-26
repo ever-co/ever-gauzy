@@ -1030,6 +1030,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				id: 'settings',
 				title: 'Settings',
 				icon: 'fas fa-cog',
+				link: '/pages/settings',
 				menuCategory: 'settings',
 				data: {
 					translationKey: 'MENU.SETTINGS'

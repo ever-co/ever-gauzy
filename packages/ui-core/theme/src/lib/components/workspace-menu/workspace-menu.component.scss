@@ -48,6 +48,24 @@
     }
   }
 
+  // Settings is a plain link to /pages/settings (no inline accordion anymore),
+  // so hide the accordion expansion chevron the same way as the section above.
+  .setting ::ng-deep {
+    ga-settings-nav-menu {
+      ga-sidebar-menu {
+        nb-accordion-item {
+          nb-accordion-item-header {
+            box-shadow: unset;
+            border-width: 0;
+            nb-icon {
+              display: none;
+            }
+          }
+        }
+      }
+    }
+  }
+
   .item.footer {
     box-shadow: var(--gauzy-shadow);
     border-radius: 0 0 var(--border-radius) var(--border-radius);

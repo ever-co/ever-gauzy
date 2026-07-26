@@ -1,4 +1,5 @@
 import { Component, OnDestroy, AfterViewChecked } from '@angular/core';
+import { Router } from '@angular/router';
 import { NbSidebarService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
@@ -13,7 +14,7 @@ import { tap } from 'rxjs/operators';
 export class ThemeSettingsComponent implements AfterViewChecked, OnDestroy {
 	private state: boolean;
 
-	constructor(private readonly sidebarService: NbSidebarService) {}
+	constructor(private readonly sidebarService: NbSidebarService, private readonly router: Router) {}
 
 	ngAfterViewChecked(): void {
 		this.sidebarService
@@ -40,5 +41,13 @@ export class ThemeSettingsComponent implements AfterViewChecked, OnDestroy {
 	 */
 	public onClickOutside(event: boolean) {
 		if (!event && this.state) this.closeSidebar();
+	}
+
+	/**
+	 * Navigates to the settings page and closes the quick settings sidebar.
+	 */
+	public navigateToSettings() {
+		this.router.navigate(['/pages/settings']);
+		this.closeSidebar();
 	}
 }
