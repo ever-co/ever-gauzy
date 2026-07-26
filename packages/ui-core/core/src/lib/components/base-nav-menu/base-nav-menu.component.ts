@@ -3,9 +3,10 @@ import { combineLatest, EMPTY } from 'rxjs';
 import { catchError, debounceTime, filter, startWith, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { FeatureEnum, IDashboard, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { DashboardStoreService } from '../../services/dashboard/dashboard-store.service';
 import { FavoriteStoreService } from '../../services/favorite/favorite-store.service';
 import { NavMenuBuilderService } from '../../services/nav-builder/nav-menu-builder.service';
 import { NavMenuSectionItem } from '../../services/nav-builder/nav-builder-types';
@@ -22,8 +23,10 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	protected readonly _store = inject(Store);
 	protected readonly _sidebarMenuService = inject(SidebarMenuService);
 	protected readonly _favoriteStoreService = inject(FavoriteStoreService);
+	protected readonly _dashboardStoreService = inject(DashboardStoreService);
 
 	private _favoriteItems: NavMenuSectionItem[] = [];
+	private _customDashboards: IDashboard[] = [];
 
 	constructor(protected readonly _translateService: TranslateService) {
 		super(_translateService);
@@ -36,6 +39,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	ngAfterViewInit(): void {
 		combineLatest([
 			this._favoriteStoreService.favoriteItems$,
+			this._dashboardStoreService.dashboards$,
 			this._translateService.onLangChange.pipe(startWith(null)),
 			this._store.selectedOrganization$.pipe(
 				filter((organization: IOrganization | null): organization is IOrganization => !!organization),
@@ -47,8 +51,9 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 		])
 			.pipe(
 				debounceTime(50),
-				tap(([favorites]) => {
+				tap(([favorites, dashboards]) => {
 					this._favoriteItems = favorites;
+					this._customDashboards = dashboards;
 					this.defineBaseNavMenus();
 				}),
 				catchError((error) => {
@@ -99,6 +104,10 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 
 	/**
 	 * Returns the dashboard-related menu items (Dashboards, Focus, Applications).
+	 *
+	 * The "Dashboards" item is a plain link while the user has no custom
+	 * dashboards; once custom dashboards exist it becomes expandable with a
+	 * "Standard" child plus one child per custom dashboard.
 	 */
 	private _getDashboardMenu(): NavMenuSectionItem[] {
 		return [
@@ -106,13 +115,16 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				id: 'dashboards',
 				title: 'Dashboards',
 				icon: 'fas fa-th',
-				link: '/pages/dashboard',
 				pathMatch: 'prefix',
 				home: true,
 				data: {
 					translationKey: 'MENU.DASHBOARDS',
 					featureKey: FeatureEnum.FEATURE_DASHBOARD
-				}
+				},
+				// Plain link when there are no custom dashboards; expandable otherwise
+				...(this._customDashboards.length === 0
+					? { link: '/pages/dashboard' }
+					: { items: this._getDashboardChildren() })
 			},
 			{
 				id: 'focus',
@@ -140,6 +152,34 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 					featureKey: FeatureEnum.FEATURE_DASHBOARD
 				}
 			}
+		];
+	}
+
+	/**
+	 * Returns the children of the expandable "Dashboards" menu item:
+	 * the "Standard" (prebuilt) dashboard followed by each custom dashboard.
+	 */
+	private _getDashboardChildren(): NavMenuSectionItem[] {
+		return [
+			{
+				id: 'dashboard-standard',
+				title: 'Standard',
+				icon: 'fas fa-columns',
+				link: '/pages/dashboard/time-tracking',
+				data: {
+					translationKey: 'DASHBOARD_PAGE.CUSTOM.STANDARD'
+				}
+			},
+			...this._customDashboards.map((dashboard: IDashboard) => ({
+				id: `dashboard-custom-${dashboard.id}`,
+				title: dashboard.name,
+				icon: 'fas fa-th-large',
+				link: `/pages/dashboard/custom/${dashboard.id}`,
+				data: {
+					// Custom dashboard names are user content; the translate pipe passes unknown keys through
+					translationKey: dashboard.name
+				}
+			}))
 		];
 	}
 
@@ -1030,6 +1070,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				id: 'settings',
 				title: 'Settings',
 				icon: 'fas fa-cog',
+				link: '/pages/settings',
 				menuCategory: 'settings',
 				data: {
 					translationKey: 'MENU.SETTINGS'

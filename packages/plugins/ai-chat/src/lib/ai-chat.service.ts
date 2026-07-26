@@ -186,7 +186,13 @@ export class AiChatService {
 				label: definition.label,
 				models: definition.models,
 				configured: credentials !== null,
-				...(credentials ? { credentialSource: credentials.source } : {})
+				...(credentials ? { credentialSource: credentials.source } : {}),
+				...(definition.order !== undefined ? { order: definition.order } : {}),
+				...(definition.websiteUrl ? { websiteUrl: definition.websiteUrl } : {}),
+				...(definition.apiKeysUrl ? { apiKeysUrl: definition.apiKeysUrl } : {}),
+				...(definition.connect
+					? { connectType: definition.connect.type, connectAuthorizeUrl: definition.connect.authorizeUrl }
+					: {})
 			});
 		}
 

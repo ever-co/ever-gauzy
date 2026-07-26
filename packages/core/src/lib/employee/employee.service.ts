@@ -14,7 +14,7 @@ import {
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
-import { getDateRangeFormat, MultiORMEnum } from './../core/utils';
+import { flatten, getDateRangeFormat, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
@@ -564,7 +564,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					}
 
 					const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mFilter, {
-						...(options?.relations ? { populate: Object.keys(options.relations) as any[] } : {}),
+						...(options?.relations ? { populate: flatten(options.relations) as any[] } : {}),
 						offset: options?.skip ? options.take * (options.skip - 1) : 0,
 						limit: options?.take || 10
 					});
@@ -607,7 +607,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							isAway: true,
 							isOnline: true
 						},
-						...(options && options.relations ? { relations: options.relations } : {}),
+						...(options && options.relations
+							? { relations: parseFindOptionsRelations(options.relations) }
+							: {}),
 						...(options && 'withDeleted' in options ? { withDeleted: options.withDeleted } : {}) // Include soft-deleted parent entities
 					});
 

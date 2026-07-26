@@ -1,5 +1,5 @@
 import type { LanguageModel } from 'ai';
-import { IAiChatModel } from '@gauzy/contracts';
+import { AiProviderConnectType, IAiChatModel } from '@gauzy/contracts';
 
 /**
  * Credentials resolved for a provider at request time.
@@ -38,6 +38,23 @@ export interface IAiChatProviderDefinition {
 	readonly models: IAiChatModel[];
 	/** Default model id when the caller does not specify one. */
 	readonly defaultModel: string;
+	/** Display ordering (ascending) in provider lists/catalogs. Unset sorts last. */
+	readonly order?: number;
+	/** Provider marketing/home page (shown in the settings UI). */
+	readonly websiteUrl?: string;
+	/** Page where the user can create/manage API keys ("Get API key" link). */
+	readonly apiKeysUrl?: string;
+	/**
+	 * Optional "Connect" flow support. When set, the settings UI offers a
+	 * Connect button in addition to manual key entry, and the backend
+	 * exchanges the flow's result for an API key (see the credentials
+	 * controller's `/connect` endpoint).
+	 */
+	readonly connect?: {
+		type: AiProviderConnectType;
+		/** Authorization page the browser is sent to (callback/challenge params appended by the client). */
+		authorizeUrl: string;
+	};
 	/**
 	 * Create a LanguageModel for the given model id and credentials.
 	 * Implementations lazily import their ESM-only provider package.

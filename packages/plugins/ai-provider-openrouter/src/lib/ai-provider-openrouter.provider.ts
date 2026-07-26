@@ -33,6 +33,15 @@ export const openRouterProviderDefinition: IAiChatProviderDefinition = {
 	baseUrlEnvVar: 'OPENROUTER_BASE_URL',
 	models: MODELS,
 	defaultModel: 'anthropic/claude-sonnet-5',
+	order: 20,
+	websiteUrl: 'https://openrouter.ai',
+	apiKeysUrl: 'https://openrouter.ai/keys',
+	// OpenRouter's PKCE flow: the browser authorizes on openrouter.ai and the
+	// backend exchanges the returned code for an API key (no manual copy/paste).
+	connect: {
+		type: 'openrouter-pkce',
+		authorizeUrl: 'https://openrouter.ai/auth'
+	},
 
 	/**
 	 * Create an OpenRouter chat `LanguageModel` for the given model slug and credentials.

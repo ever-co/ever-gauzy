@@ -29,6 +29,9 @@ export const openAiProviderDefinition: IAiChatProviderDefinition = {
 	baseUrlEnvVar: 'OPENAI_BASE_URL',
 	models: MODELS,
 	defaultModel: 'gpt-5.5',
+	order: 50,
+	websiteUrl: 'https://openai.com',
+	apiKeysUrl: 'https://platform.openai.com/api-keys',
 
 	/**
 	 * Create a GPT `LanguageModel` for the given model id and credentials.

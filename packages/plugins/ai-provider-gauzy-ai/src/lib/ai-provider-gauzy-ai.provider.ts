@@ -20,6 +20,9 @@ export const gauzyAiProviderDefinition: IAiChatProviderDefinition = {
 	baseUrlEnvVar: 'GAUZY_AI_BASE_URL',
 	models: [],
 	defaultModel: '',
+	order: 10,
+	websiteUrl: 'https://gauzy.ai',
+	apiKeysUrl: 'https://app.gauzy.ai',
 
 	/**
 	 * Not implemented yet — Gauzy AI chat routing is a planned integration.

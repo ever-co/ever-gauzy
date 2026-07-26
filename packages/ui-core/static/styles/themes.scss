@@ -1,4 +1,5 @@
 @use 'sass:string';
+@use 'sass:map';
 // @nebular theming framework - forward so nb-theme() is available to importers
 @forward '@nebular/theme/styles/theming';
 @use '@nebular/theme/styles/theming' as *;
@@ -8,8 +9,47 @@
 @use './material/material-dark' as *;
 @use './material/material-light' as *;
 
+// ── Shared density preset (shadcn/Ever-Works-like) ─────────────────────────
+// Compact typography, spacing and paddings merged into ALL registered themes
+// below (merged last, so these values win over per-theme ones). Keep density
+// changes here so every theme stays in sync.
+$gauzy-density: (
+	// Typography — 14px body, 13px controls, tighter headings
+	text-paragraph-font-size: 0.875rem,
+	text-subtitle-font-size: 0.9375rem,
+	text-subtitle-2-font-size: 0.8125rem,
+	text-label-font-size: 0.75rem,
+	text-caption-font-size: 0.75rem,
+	text-button-medium-font-size: 0.8125rem,
+	text-heading-4-font-size: 1.5rem,
+	text-heading-5-font-size: 1.25rem,
+	text-heading-6-font-size: 1rem,
+	// Menus / sidebar
+	menu-item-padding: 0.5rem 0.75rem,
+	menu-text-font-size: 0.8125rem,
+	menu-text-font-weight: 500,
+	menu-item-divider-width: 0,
+	menu-item-divider-style: none,
+	// Cards
+	card-padding: 1rem,
+	card-header-padding: 0.875rem 1rem,
+	// NOTE: header-height / layout-padding are intentionally NOT compacted:
+	// the fixed header's real height is content-driven (demo banner + toolbar)
+	// while Nebular offsets the page by the header-height variable only, so
+	// shrinking the variable clips the top of the page content.
+	// Tabs
+	tabset-tab-padding: 0.75rem 1.25rem,
+	tabset-tab-text-font-size: 0.875rem,
+	route-tabset-tab-padding: 0.75rem 1.25rem,
+	route-tabset-tab-text-font-size: 0.875rem,
+	// Inputs / selects
+	input-medium-text-font-size: 0.8125rem,
+	input-medium-padding: 0.4375rem 0.75rem,
+	select-medium-text-font-size: 0.8125rem
+);
+
 $nb-themes: nb-register-theme(
-  (
+  map.merge((
     font-family-secondary: font-family-primary,
     layout-padding-top: 24px,
     layout-window-mode-padding-top: 0,
@@ -59,13 +99,13 @@ $nb-themes: nb-register-theme(
     button-outline-medium-padding: 0.4375rem 0.875rem,
     button-filled-small-padding: 0.375rem 0.875rem,
     button-outline-small-padding: 0.375rem 0.875rem
-  ),
+  ), $gauzy-density),
   default,
   default
 );
 
 $nb-themes: nb-register-theme(
-  (
+  map.merge((
     font-family-secondary: font-family-primary,
     layout-window-mode-padding-top: 0,
     layout-padding-top: 24px,
@@ -109,13 +149,13 @@ $nb-themes: nb-register-theme(
     header-height: 4.5rem,
     gauzy-text-color-1: rgba(255, 255, 255, 1),
     gauzy-text-color-2: rgba(255, 255, 255, 0.5)
-  ),
+  ), $gauzy-density),
   cosmic,
   cosmic
 );
 
 $nb-themes: nb-register-theme(
-  (
+  map.merge((
     font-family-secondary: font-family-primary,
     layout-padding-top: 24px,
     layout-window-mode-padding-top: 0,
@@ -158,13 +198,13 @@ $nb-themes: nb-register-theme(
     gauzy-card-6: rgba(249, 249, 249, 1),
     layout-padding: 24px 24px 0 12px,
     header-height: 4.5rem
-  ),
+  ), $gauzy-density),
   corporate,
   corporate
 );
 
 $nb-themes: nb-register-theme(
-  (
+  map.merge((
     font-family-secondary: font-family-primary,
     layout-padding-top: 24px,
     layout-window-mode-padding-top: 0,
@@ -210,13 +250,13 @@ $nb-themes: nb-register-theme(
     gauzy-card-6: rgba(52, 52, 62, 1),
     layout-padding: 24px 24px 0 12px,
     header-height: 4.5rem
-  ),
+  ), $gauzy-density),
   dark,
   dark
 );
 
 $nb-themes: nb-register-theme(
-  (
+  map.merge((
     layout-padding-top: 24px,
     menu-item-icon-margin: 0 0.5rem 0 0,
     card-height-tiny: 13.5rem,
@@ -236,13 +276,13 @@ $nb-themes: nb-register-theme(
     button-filled-medium-padding: 0.4375rem 0.875rem,
     button-outline-medium-padding: 0.4375rem 0.875rem,
     gauzy-primary-background: rgb(240, 235, 246)
-  ),
+  ), $gauzy-density),
   material-light,
   material-light
 );
 
 $nb-themes: nb-register-theme(
-  (
+  map.merge((
     layout-padding-top: 24px,
     menu-item-icon-margin: 0 0.5rem 0 0,
     card-height-tiny: 13.5rem,
@@ -265,13 +305,13 @@ $nb-themes: nb-register-theme(
     gauzy-sidebar-background-1: #2a2323,
     gauzy-sidebar-background-2: rgb(51 51 51),
     gauzy-border-table: rgb(37 37 59 / 16%)
-  ),
+  ), $gauzy-density),
   material-dark,
   material-dark
 );
 
 $nb-themes: nb-register-theme(
-  (
+  map.merge((
     // Status colors: primary, success, info, warning, danger - for colored elements (buttons, etc)
     color-primary-100: #f2f6ff,
     color-primary-200: #dbd3f7,
@@ -353,14 +393,19 @@ $nb-themes: nb-register-theme(
     select-outline-border-width: 0,
     select-outline-basic-border-color: transparent,
     // Gauzy
-    gauzy-card-1: rgba(255, 255, 255, 1)
-  ),
+    gauzy-card-1: rgba(255, 255, 255, 1),
+    // Neutral near-white sidebar (zinc-100), shadcn-like
+    gauzy-sidebar-background-1: #f4f4f5,
+    // WCAG: >=4.5:1 for 13px menu labels on the #f4f4f5 sidebar
+    // (inherited rgba(126,126,143) was only ~3.6:1)
+    gauzy-text-color-2: rgba(91, 91, 107, 1)
+  ), $gauzy-density),
   gauzy-light,
   default
 );
 
 $nb-themes: nb-register-theme(
-  (
+  map.merge((
     // Status colors: primary, success, info, warning, danger - for colored elements (buttons, etc)
     color-primary-100: #f2f6ff,
     color-primary-200: #dbd3f7,
@@ -435,9 +480,12 @@ $nb-themes: nb-register-theme(
     color-warning-default: rgba(255, 171, 45, 1),
     gauzy-background-transparent: rgba(110, 73, 232, 0.5),
     gauzy-card-1: rgba(32, 32, 35, 1),
-    gauzy-sidebar-background-1: #181818,
-    gauzy-sidebar-background-2: rgba(38, 38, 46, 1)
-  ),
+    // Neutral (zinc-like) sidebar — no blue/purple tint, shadcn-like
+    gauzy-sidebar-background-1: #141416,
+    gauzy-sidebar-background-2: rgba(30, 30, 34, 1),
+    // More legible sidebar/menu labels than the inherited 50% white
+    gauzy-text-color-2: rgba(255, 255, 255, 0.7)
+  ), $gauzy-density),
   gauzy-dark,
   dark
 );
