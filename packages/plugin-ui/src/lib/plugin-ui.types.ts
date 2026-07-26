@@ -247,6 +247,19 @@ export interface PluginUiDefinition {
 	tabs?: PluginTabInput[];
 
 	/**
+	 * Dashboard-builder widgets contributed by this plugin.
+	 *
+	 * Each entry is a `WidgetRegistryConfig` (from @gauzy/ui-core/core) and is
+	 * published to the widget palette, so users can drop it onto any custom
+	 * dashboard canvas. Applied by `applyDeclarativeRegistrations()` when a
+	 * `widgetRegistry` service is available.
+	 *
+	 * Typed loosely here to keep @gauzy/plugin-ui free of a build-time
+	 * dependency on the widget registry types.
+	 */
+	widgets?: unknown[];
+
+	/**
 	 * Plugin-specific translations keyed by language code.
 	 * Deep-merged into the global @ngx-translate namespace at bootstrap
 	 * via TranslateService.setTranslation(lang, data, shouldMerge: true).
