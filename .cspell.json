@@ -5,6 +5,8 @@
 	"ignoreRegExpList": ["GHSA-[A-Za-z0-9-]+"],
 	"words": [
 		"relver",
+		"aistudio",
+		"Xai",
 		"fontobject",
 		"textareas",
 		"ababa",

@@ -62,6 +62,14 @@
     "@ai-sdk/provider-utils" "5.0.5"
     "@vercel/oidc" "3.2.0"
 
+"@ai-sdk/google@^4.0.24":
+  version "4.0.24"
+  resolved "https://registry.npmjs.org/@ai-sdk/google/-/google-4.0.24.tgz#ecb56103a580774bedd6fe3bc962ae026b9ab9bd"
+  integrity sha512-W+kTGb/RRe2SEYwbKcKYM3N2EQryS2Iqjgou6wPsyP/2BwBU7Q23CF6/YWE8k7xtseDLcSY59jsR2MDpY4azRg==
+  dependencies:
+    "@ai-sdk/provider" "4.0.3"
+    "@ai-sdk/provider-utils" "5.0.12"
+
 "@ai-sdk/mcp@2.0.7", "@ai-sdk/mcp@^2.0.7":
   version "2.0.7"
   resolved "https://registry.npmjs.org/@ai-sdk/mcp/-/mcp-2.0.7.tgz#47a4e448213e2497d98f6347847f8ec238b1780b"
@@ -71,6 +79,14 @@
     "@ai-sdk/provider-utils" "5.0.5"
     pkce-challenge "^5.0.1"
 
+"@ai-sdk/openai-compatible@3.0.14":
+  version "3.0.14"
+  resolved "https://registry.npmjs.org/@ai-sdk/openai-compatible/-/openai-compatible-3.0.14.tgz#e2126d6b49f61e394c88b335cab2d512c481d847"
+  integrity sha512-nUl7dBHUDTqcnuWGnEbKMwDDqL94BxRfibLwYv8uWp+kZn8Zqdxy7tUBt4sv2hpHQi+S2P6bUyqW18xmbykErw==
+  dependencies:
+    "@ai-sdk/provider" "4.0.3"
+    "@ai-sdk/provider-utils" "5.0.12"
+
 "@ai-sdk/openai@^4.0.7":
   version "4.0.7"
   resolved "https://registry.npmjs.org/@ai-sdk/openai/-/openai-4.0.7.tgz#933793f7e347145b8dd9a87efc3c63529181678c"
@@ -78,6 +94,16 @@
   dependencies:
     "@ai-sdk/provider" "4.0.2"
     "@ai-sdk/provider-utils" "5.0.5"
+
+"@ai-sdk/provider-utils@5.0.12":
+  version "5.0.12"
+  resolved "https://registry.npmjs.org/@ai-sdk/provider-utils/-/provider-utils-5.0.12.tgz#fa26c4988094e6430b222c17399fb0ef69ff4b40"
+  integrity sha512-bbhlOgHeYwrIGheLkM6fhS8hVger8uFPmcOLg+kxc9EFh7y30XYorWhthlYAgpadO3SJhFZrIcEknN7qEqEVvA==
+  dependencies:
+    "@ai-sdk/provider" "4.0.3"
+    "@standard-schema/spec" "^1.1.0"
+    "@workflow/serde" "4.1.0"
+    eventsource-parser "^3.0.8"
 
 "@ai-sdk/provider-utils@5.0.5":
   version "5.0.5"
@@ -96,6 +122,13 @@
   dependencies:
     json-schema "^0.4.0"
 
+"@ai-sdk/provider@4.0.3":
+  version "4.0.3"
+  resolved "https://registry.npmjs.org/@ai-sdk/provider/-/provider-4.0.3.tgz#308624f81547a73556a67dc2465bf6f1d67fb77f"
+  integrity sha512-e0CpNWJUY7OxAFAnCZkw+ri9QOHWwTs1tXP42782KFGCU07qt8NiXCrCVowyCB5dP2r5/Uls+g2oPd8kOJn9dw==
+  dependencies:
+    json-schema "^0.4.0"
+
 "@ai-sdk/react@^4.0.16":
   version "4.0.16"
   resolved "https://registry.npmjs.org/@ai-sdk/react/-/react-4.0.16.tgz#89ad40d1f2741ba53e2f097bac34d4e1ac27fd8f"
@@ -107,6 +140,15 @@
     ai "7.0.15"
     swr "^2.4.1"
     throttleit "2.1.0"
+
+"@ai-sdk/xai@^4.0.18":
+  version "4.0.18"
+  resolved "https://registry.npmjs.org/@ai-sdk/xai/-/xai-4.0.18.tgz#8d36c0bf81589eb14e7ac4781bfb3ffcc2b65b10"
+  integrity sha512-2hrfujGCzNj89+BkREXU3siHlutdWcDMMkKc/+RITRk8T8NPIuAZ4yF8g1/2W+Xessbqz+4PQP7al9HPTfbimg==
+  dependencies:
+    "@ai-sdk/openai-compatible" "3.0.14"
+    "@ai-sdk/provider" "4.0.3"
+    "@ai-sdk/provider-utils" "5.0.12"
 
 "@akveo/ng2-completer@^9.0.1":
   version "9.0.1"

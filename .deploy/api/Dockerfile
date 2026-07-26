@@ -91,6 +91,8 @@ COPY --chown=node:node packages/plugins/ai-provider-openai/package.json ./packag
 COPY --chown=node:node packages/plugins/ai-provider-openrouter/package.json ./packages/plugins/ai-provider-openrouter/
 COPY --chown=node:node packages/plugins/ai-provider-vercel-gateway/package.json ./packages/plugins/ai-provider-vercel-gateway/
 COPY --chown=node:node packages/plugins/ai-provider-gauzy-ai/package.json ./packages/plugins/ai-provider-gauzy-ai/
+COPY --chown=node:node packages/plugins/ai-provider-gemini/package.json ./packages/plugins/ai-provider-gemini/
+COPY --chown=node:node packages/plugins/ai-provider-grok/package.json ./packages/plugins/ai-provider-grok/
 
 # We do not build Wakatime plugin here, because it is used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -192,6 +194,8 @@ COPY --chown=node:node packages/plugins/ai-provider-openai/package.json ./packag
 COPY --chown=node:node packages/plugins/ai-provider-openrouter/package.json ./packages/plugins/ai-provider-openrouter/
 COPY --chown=node:node packages/plugins/ai-provider-vercel-gateway/package.json ./packages/plugins/ai-provider-vercel-gateway/
 COPY --chown=node:node packages/plugins/ai-provider-gauzy-ai/package.json ./packages/plugins/ai-provider-gauzy-ai/
+COPY --chown=node:node packages/plugins/ai-provider-gemini/package.json ./packages/plugins/ai-provider-gemini/
+COPY --chown=node:node packages/plugins/ai-provider-grok/package.json ./packages/plugins/ai-provider-grok/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -371,7 +375,7 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/plugins/ai-provider-openai/node_modules ./node_modules/@gauzy/plugin-ai-provider-openai/ && \
     cp -r /mnt/packages/plugins/ai-provider-openrouter/node_modules ./node_modules/@gauzy/plugin-ai-provider-openrouter/ && \
     cp -r /mnt/packages/plugins/ai-provider-vercel-gateway/node_modules ./node_modules/@gauzy/plugin-ai-provider-vercel-gateway/ && \
-    cp -r /mnt/packages/plugins/ai-provider-gauzy-ai/node_modules ./node_modules/@gauzy/plugin-ai-provider-gauzy-ai/
+    cp -r /mnt/packages/plugins/ai-provider-gauzy-ai/node_modules ./node_modules/@gauzy/plugin-ai-provider-gauzy-ai/ && \n    cp -r /mnt/packages/plugins/ai-provider-gemini/node_modules ./node_modules/@gauzy/plugin-ai-provider-gemini/ && \n    cp -r /mnt/packages/plugins/ai-provider-grok/node_modules ./node_modules/@gauzy/plugin-ai-provider-grok/
 
 RUN mkdir /import && chown node:node /import && touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
     chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/

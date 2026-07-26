@@ -1,6 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { generateEncryptionKey } from '@gauzy/utils';
+
+/** AES-256 requires exactly a 32-byte key. */
+const REQUIRED_KEY_BYTES = 32;
 
 /**
  * Encryption algorithm — identical to the core `EncryptionService`
@@ -31,9 +34,25 @@ export class AiProviderCredentialEncryptionService {
 	private readonly algorithm = AI_CREDENTIAL_ENCRYPTION_ALGORITHM;
 	private readonly key: Buffer;
 
+	/**
+	 * Set when `ENCRYPTION_KEY` is present but not a valid base64-encoded
+	 * 32-byte key. We deliberately do NOT fall back to a temporary key in
+	 * that case — silently encrypting with a different key than the operator
+	 * configured would hide the misconfiguration and strand the data. Every
+	 * encrypt/decrypt instead fails with this message (surfaced to the UI).
+	 */
+	private readonly keyError: string | null = null;
+
 	constructor() {
 		if (process.env.ENCRYPTION_KEY) {
 			this.key = Buffer.from(process.env.ENCRYPTION_KEY, 'base64');
+			if (this.key.length !== REQUIRED_KEY_BYTES) {
+				this.keyError =
+					`ENCRYPTION_KEY is invalid: it must be a base64-encoded ${REQUIRED_KEY_BYTES}-byte key ` +
+					`(decoded ${this.key.length} bytes). Generate one with generateEncryptionKey() from ` +
+					`@gauzy/utils or \`openssl rand -base64 32\`.`;
+				this.logger.error(this.keyError);
+			}
 		} else {
 			this.logger.warn(
 				'ENCRYPTION_KEY is not set. Generating a temporary key for this session. ' +
@@ -41,6 +60,13 @@ export class AiProviderCredentialEncryptionService {
 			);
 			// Generate a random key for this session
 			this.key = Buffer.from(generateEncryptionKey(32), 'base64');
+		}
+	}
+
+	/** Throws a clear, user-visible error when the configured key is unusable. */
+	private assertUsableKey(): void {
+		if (this.keyError) {
+			throw new ServiceUnavailableException(this.keyError);
 		}
 	}
 
@@ -55,6 +81,7 @@ export class AiProviderCredentialEncryptionService {
 	 * @returns {string} The encrypted data in the format `{ivHex}:{authTagHex}:{cipherHex}`.
 	 */
 	encrypt(text: string): string {
+		this.assertUsableKey();
 		const iv = randomBytes(16); // Generate a random initialization vector
 		const cipher = createCipheriv(this.algorithm, this.key, iv); // Create cipher instance
 
@@ -75,6 +102,7 @@ export class AiProviderCredentialEncryptionService {
 	 * @throws {Error} If decryption fails due to a wrong key, corrupted data, or tampering.
 	 */
 	decrypt(text: string): string {
+		this.assertUsableKey();
 		const [ivHex, authTagHex, encryptedText] = text.split(':'); // Split encrypted data into components
 
 		const iv = Buffer.from(ivHex, 'hex'); // Convert IV from hex to buffer
