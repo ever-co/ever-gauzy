@@ -1,0 +1,40 @@
+<div class="custom-dashboard">
+	<!-- Builder hint bar: only while arranging. Save / Discard live in the switcher. -->
+	@if (editing) {
+		<div class="builder-toolbar">
+			<span class="builder-toolbar__hint">
+				{{ 'DASHBOARD_PAGE.BUILDER.EDIT_HINT' | translate }}
+			</span>
+			@if (dirty) {
+				<span class="builder-toolbar__dirty">
+					<nb-icon icon="alert-circle-outline"></nb-icon>
+					{{ 'DASHBOARD_PAGE.BUILDER.UNSAVED_CHANGES' | translate }}
+				</span>
+			}
+		</div>
+	}
+
+	<ga-dashboard-tab-strip
+		[tabs]="layout.tabs"
+		[activeTabId]="activeTabId"
+		[editing]="editing"
+		(select)="onSelectTab($event)"
+		(add)="onAddTab($event)"
+		(rename)="onRenameTab($event)"
+		(duplicate)="onDuplicateTab($event)"
+		(delete)="onDeleteTab($event)"
+		(reorder)="onReorderTabs($event)"
+	></ga-dashboard-tab-strip>
+
+	<div class="custom-dashboard__body">
+		<ga-dashboard-canvas
+			[tab]="activeTab"
+			[editing]="editing"
+			(layoutChange)="onLayoutChange($event)"
+		></ga-dashboard-canvas>
+
+		@if (editing) {
+			<ga-widget-palette (add)="onAddWidget($event)"></ga-widget-palette>
+		}
+	</div>
+</div>

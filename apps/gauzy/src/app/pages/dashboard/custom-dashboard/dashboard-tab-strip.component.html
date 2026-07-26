@@ -1,0 +1,80 @@
+<!--
+	Deliberately `role="group"` and not a tablist: the chips are wrapped (each one
+	also carries a kebab button), so they cannot be the direct `tab` children an
+	ARIA tablist requires. The active chip is marked with `aria-current` instead.
+-->
+<div class="tab-strip" role="group" [attr.aria-label]="'DASHBOARD_PAGE.BUILDER.TABS.TITLE' | translate">
+	<div
+		class="tab-strip__list"
+		cdkDropList
+		cdkDropListOrientation="horizontal"
+		[cdkDropListDisabled]="!editing"
+		(cdkDropListDropped)="onDrop($event)"
+	>
+		@for (tab of tabs; track tab.id) {
+			<div class="tab-chip" [class.active]="tab.id === activeTabId" cdkDrag [cdkDragDisabled]="!editing">
+				<div class="tab-chip__placeholder" *cdkDragPlaceholder></div>
+
+				<button
+					type="button"
+					class="tab-chip__label"
+					[attr.aria-current]="tab.id === activeTabId ? 'true' : null"
+					(click)="onSelect(tab)"
+				>
+					@if (tab.icon) {
+						<nb-icon class="tab-chip__icon" [icon]="tab.icon"></nb-icon>
+					}
+					{{ tab.name }}
+				</button>
+
+				@if (editing) {
+					<button
+						type="button"
+						class="tab-chip__menu"
+						[nbPopover]="tabActions"
+						nbPopoverPlacement="bottom"
+						nbPopoverTrigger="click"
+						[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.TABS.TAB_ACTIONS' | translate: { name: tab.name }"
+						(click)="openMenu(tab)"
+					>
+						<nb-icon icon="more-vertical-outline"></nb-icon>
+					</button>
+				}
+			</div>
+		}
+
+		@if (editing) {
+			<button
+				type="button"
+				class="tab-add"
+				[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.TABS.ADD_TAB' | translate"
+				[nbTooltip]="'DASHBOARD_PAGE.BUILDER.TABS.ADD_TAB' | translate"
+				(click)="promptAdd()"
+			>
+				<nb-icon icon="plus-outline"></nb-icon>
+			</button>
+		}
+	</div>
+</div>
+
+<!-- Shared kebab menu; `menuTab` is set by the button that opened it -->
+<ng-template #tabActions>
+	@if (menuTab) {
+		<div class="tab-actions-popover">
+			<button type="button" class="action" (click)="promptRename(menuTab)">
+				<nb-icon icon="edit-2-outline"></nb-icon>
+				{{ 'DASHBOARD_PAGE.BUILDER.TABS.RENAME_TAB' | translate }}
+			</button>
+			<button type="button" class="action" (click)="onDuplicate(menuTab)">
+				<nb-icon icon="copy-outline"></nb-icon>
+				{{ 'DASHBOARD_PAGE.BUILDER.TABS.DUPLICATE_TAB' | translate }}
+			</button>
+			@if (canDelete) {
+				<button type="button" class="action danger" (click)="confirmDelete(menuTab)">
+					<nb-icon icon="trash-2-outline"></nb-icon>
+					{{ 'DASHBOARD_PAGE.BUILDER.TABS.DELETE_TAB' | translate }}
+				</button>
+			}
+		</div>
+	}
+</ng-template>

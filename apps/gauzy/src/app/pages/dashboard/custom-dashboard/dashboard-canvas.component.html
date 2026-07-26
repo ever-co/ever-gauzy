@@ -1,0 +1,72 @@
+<div
+	class="dashboard-canvas"
+	[class.editing]="editing"
+	cdkDropList
+	cdkDropListOrientation="mixed"
+	[id]="dropListId"
+	[cdkDropListData]="placements"
+	[cdkDropListConnectedTo]="connectedTo"
+	[cdkDropListDisabled]="!editing"
+	(cdkDropListDropped)="onDrop($event)"
+>
+	@for (placement of placements; track placement.instanceId) {
+		<div
+			class="canvas-cell"
+			[class.hidden-widget]="placement.hidden"
+			[style.grid-column]="placement.x + 1 + ' / span ' + placement.w"
+			[style.grid-row]="placement.y + 1 + ' / span ' + placement.h"
+			cdkDrag
+			[cdkDragData]="placement"
+			[cdkDragDisabled]="!editing"
+		>
+			<!--
+				Placeholder left behind while the cell is dragged. CDK swaps it in
+				for the cell itself, so it must carry the same grid position or the
+				surrounding widgets jump.
+			-->
+			<div
+				class="canvas-drop-placeholder"
+				*cdkDragPlaceholder
+				[style.grid-column]="placement.x + 1 + ' / span ' + placement.w"
+				[style.grid-row]="placement.y + 1 + ' / span ' + placement.h"
+			></div>
+
+			@if (editing) {
+				<button
+					type="button"
+					class="drag-handle"
+					cdkDragHandle
+					[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.CANVAS.DRAG_HANDLE' | translate"
+					[nbTooltip]="'DASHBOARD_PAGE.BUILDER.CANVAS.DRAG_HANDLE' | translate"
+				>
+					<nb-icon icon="move-outline"></nb-icon>
+				</button>
+			}
+
+			<ga-dashboard-widget-host
+				[placement]="placement"
+				[editing]="editing"
+				(remove)="onRemove(placement)"
+				(configure)="onConfigure(placement)"
+				(resize)="onResize(placement, $event)"
+			></ga-dashboard-widget-host>
+		</div>
+	}
+
+	<!-- Empty state: the key call to action of the builder -->
+	@if (!placements.length) {
+		<div class="canvas-empty">
+			<nb-icon class="canvas-empty__icon" icon="grid-outline"></nb-icon>
+			<h4 class="canvas-empty__title">
+				{{ 'DASHBOARD_PAGE.BUILDER.CANVAS.EMPTY_TITLE' | translate }}
+			</h4>
+			<p class="canvas-empty__hint">
+				@if (editing) {
+					{{ 'DASHBOARD_PAGE.BUILDER.CANVAS.EMPTY_HINT' | translate }}
+				} @else {
+					{{ 'DASHBOARD_PAGE.BUILDER.CANVAS.EMPTY_HINT_READONLY' | translate }}
+				}
+			</p>
+		</div>
+	}
+</div>

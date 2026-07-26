@@ -1869,6 +1869,91 @@
 			"DISCARD_CHANGES": "Discard unsaved changes?",
 			"DISCARD_CONFIRM": "You have unsaved layout changes. Switching dashboards will discard them. Continue?"
 		},
+		"BUILDER": {
+			"EDIT_HINT": "Drag widgets from the panel on the right onto the canvas, use the grip to rearrange them, then click Save above.",
+			"UNSAVED_CHANGES": "Unsaved changes",
+			"HOST": {
+				"WIDGET_MENU": "Widget menu",
+				"CONFIGURE": "Configure",
+				"WIDTH": "Width",
+				"REMOVE": "Remove",
+				"RETRY": "Retry",
+				"LOADING": "Loading widget",
+				"HIDDEN": "Hidden",
+				"UNTITLED_WIDGET": "Untitled widget",
+				"LOAD_FAILED": "This widget failed to load",
+				"UNAVAILABLE": "Widget unavailable",
+				"UNAVAILABLE_HINT": "This widget is no longer registered. The plugin that provides it may be disabled.",
+				"NO_ACCESS": "No access",
+				"NO_ACCESS_HINT": "You do not have permission to view this widget."
+			},
+			"CANVAS": {
+				"DRAG_HANDLE": "Drag to move this widget",
+				"EMPTY_TITLE": "Your canvas is empty",
+				"EMPTY_HINT": "Drag widgets from the panel on the right, or click one to add it.",
+				"EMPTY_HINT_READONLY": "Click \"Edit Dashboard\" to start adding widgets to this tab."
+			},
+			"PALETTE": {
+				"TITLE": "Widgets",
+				"HINT": "Drag a widget onto the canvas, or click it to add it.",
+				"SEARCH_PLACEHOLDER": "Search widgets",
+				"CLEAR_SEARCH": "Clear search",
+				"ADD_WIDGET": "Add \"{{ name }}\" to the dashboard",
+				"NO_RESULTS": "No widgets match \"{{ term }}\".",
+				"NO_WIDGETS": "No widgets are available for your permissions."
+			},
+			"TABS": {
+				"TITLE": "Dashboard tabs",
+				"DEFAULT_NAME": "Overview",
+				"ADD_TAB": "Add tab",
+				"RENAME_TAB": "Rename tab",
+				"DUPLICATE_TAB": "Duplicate tab",
+				"DELETE_TAB": "Delete tab",
+				"DELETE_CONFIRM": "Are you sure you want to delete the tab \"{{ name }}\" and all of its widgets?",
+				"TAB_ACTIONS": "Actions for tab {{ name }}",
+				"NAME_LABEL": "Tab name",
+				"NAME_PLACEHOLDER": "Enter tab name",
+				"COPY_SUFFIX": "(Copy)"
+			},
+			"CATEGORIES": {
+				"TIME_TRACKING": "Time Tracking",
+				"ACCOUNTING": "Accounting",
+				"HR": "Human Resources",
+				"TEAMS": "Teams",
+				"PROJECT_MANAGEMENT": "Project Management",
+				"PLUGIN": "Plugins",
+				"OTHER": "Other"
+			},
+			"WIDGETS": {
+				"LOADING": "Loading widget data",
+				"ERROR": "Could not load this widget",
+				"RETRY": "Retry",
+				"MEMBERS_WORKED": {
+					"TITLE": "Members Worked",
+					"DESCRIPTION": "How many members logged time in the selected period, against your total head count."
+				},
+				"PROJECTS_WORKED": {
+					"TITLE": "Projects Worked",
+					"DESCRIPTION": "How many projects received logged time in the selected period, against your total projects."
+				},
+				"TODAY_ACTIVITY": {
+					"TITLE": "Today's Activity",
+					"DESCRIPTION": "Overall activity percentage recorded today."
+				},
+				"WORKED_TODAY": {
+					"TITLE": "Worked Today",
+					"DESCRIPTION": "Total time logged today across the current selection."
+				},
+				"WORKED_THIS_WEEK": {
+					"TITLE": "Worked This Week",
+					"DESCRIPTION": "Total time logged over the selected period; defaults to the current week."
+				},
+				"WEEKLY_ACTIVITY": {
+					"TITLE": "Weekly Activity",
+					"DESCRIPTION": "Overall activity percentage over the selected period; defaults to the current week."
+				}
+			}
+		},
 		"ACCOUNTING": "Accounting",
 		"HUMAN_RESOURCES": "Human Resources",
 		"TIME_TRACKING": "Time Tracking",

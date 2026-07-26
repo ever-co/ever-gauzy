@@ -1,10 +1,7 @@
-import { customDashboardGuard, PageRouteRegistryConfig, standardDashboardGuard } from '@gauzy/ui-core/core';
+import { PageRouteRegistryConfig, standardDashboardGuard } from '@gauzy/ui-core/core';
 
 /** Path segment for the Time Tracking tab under /pages/dashboard. */
 export const DASHBOARD_TIME_TRACKING_PATH = 'time-tracking';
-
-/** Path segment for the custom dashboards host under /pages/dashboard. */
-export const DASHBOARD_CUSTOM_PATH = 'custom/:id';
 
 /**
  * Route config for registering the Angular Time Tracking tab at dashboard-sections.
@@ -12,27 +9,17 @@ export const DASHBOARD_CUSTOM_PATH = 'custom/:id';
  *
  * `standardDashboardGuard` restores the Standard widget layout whenever a
  * custom dashboard was previously applied.
+ *
+ * NOTE: the custom dashboard host (`custom/:id`) used to be registered here and
+ * lazy-loaded THIS module — i.e. a custom dashboard was the Time Tracking page
+ * with a different saved permutation. It now lives in the core dashboard
+ * feature as its own canvas page (see `createDashboardRoutes`), and this plugin
+ * instead contributes its counters to the builder palette as registered widgets.
  */
 export const DASHBOARD_TIME_TRACKING_ROUTE: PageRouteRegistryConfig = {
 	location: 'dashboard-sections',
 	path: DASHBOARD_TIME_TRACKING_PATH,
 	canActivate: [standardDashboardGuard],
-	loadChildren: () =>
-		import('./dashboard-time-track-angular-ui.module').then((m) => m.DashboardTimeTrackAngularUiModule)
-};
-
-/**
- * Route config for the custom dashboards host (`/pages/dashboard/custom/:id`).
- *
- * A custom dashboard re-uses the Time Tracking widget system as its widget
- * host: `customDashboardGuard` applies the dashboard's persisted widget layout
- * (visibility/order/collapse state) into the widget system state BEFORE the
- * host component initializes, then the same lazy module renders it.
- */
-export const DASHBOARD_CUSTOM_ROUTE: PageRouteRegistryConfig = {
-	location: 'dashboard-sections',
-	path: DASHBOARD_CUSTOM_PATH,
-	canActivate: [customDashboardGuard],
 	loadChildren: () =>
 		import('./dashboard-time-track-angular-ui.module').then((m) => m.DashboardTimeTrackAngularUiModule)
 };

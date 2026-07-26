@@ -1,10 +1,7 @@
 import { PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, IPluginI18nService, PluginRouteInput } from '@gauzy/plugin-ui';
-import {
-	DASHBOARD_CUSTOM_ROUTE,
-	DASHBOARD_TIME_TRACKING_ROUTE,
-	DASHBOARD_TIME_TRACKING_PATH
-} from './dashboard-time-track-angular-ui.constants';
+import { DASHBOARD_TIME_TRACKING_ROUTE, DASHBOARD_TIME_TRACKING_PATH } from './dashboard-time-track-angular-ui.constants';
+import { provideDashboardTimeTrackWidgets } from './provide-dashboard-widgets';
 import ar from '../i18n/ar.json';
 import bg from '../i18n/bg.json';
 import de from '../i18n/de.json';
@@ -48,7 +45,14 @@ export const DashboardTimeTrackAngularUiPlugin = defineDeclarativePlugin('dashbo
 	location: 'page-sections',
 
 	// ── Routes ───────────────────────────────────────────────────
-	routes: [DASHBOARD_TIME_TRACKING_ROUTE as PluginRouteInput, DASHBOARD_CUSTOM_ROUTE as PluginRouteInput],
+	// NOTE: the custom dashboard host (`custom/:id`) is NO LONGER registered
+	// here. A custom dashboard is its own canvas page owned by the core
+	// dashboard feature, not a saved permutation of this plugin's page.
+	routes: [DASHBOARD_TIME_TRACKING_ROUTE as PluginRouteInput],
+
+	// ── Providers ────────────────────────────────────────────────
+	// Publishes this plugin's counter widgets to the dashboard builder palette.
+	providers: [provideDashboardTimeTrackWidgets()],
 
 	// ── Dashboard Tab ────────────────────────────────────────────
 	tabs: [
