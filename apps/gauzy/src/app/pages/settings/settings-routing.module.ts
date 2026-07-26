@@ -13,6 +13,11 @@ const routes: Routes = [
 		component: SettingsComponent,
 		children: [
 			{
+				path: '',
+				redirectTo: 'general',
+				pathMatch: 'full'
+			},
+			{
 				path: 'general',
 				loadChildren: () =>
 					import('./general-setting/general-setting.module').then((m) => m.GeneralSettingModule)

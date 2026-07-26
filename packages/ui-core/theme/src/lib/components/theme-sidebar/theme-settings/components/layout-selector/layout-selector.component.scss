@@ -7,9 +7,16 @@
   flex-wrap: wrap;
 }
 
-.reset-button{
-  margin-top: 1rem;
+// Dropdown with the tiny reset button tucked directly below it
+.layout-control{
   display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.reset-layout{
+  font-size: 11px;
 }
 
 :host ::ng-deep{
