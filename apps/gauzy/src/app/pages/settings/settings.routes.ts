@@ -25,6 +25,14 @@ export function createSettingsRoutes(_pageRouteRegistryService: PageRouteRegistr
 			component: SettingsComponent,
 			children: [
 				{
+					// `/pages/settings` is a real navigation target (the sidebar entry and several
+					// permission guards redirect there), so the shell needs a default child or it
+					// renders an empty content pane next to the settings menu.
+					path: '',
+					redirectTo: 'general',
+					pathMatch: 'full'
+				},
+				{
 					path: 'general',
 					loadChildren: () =>
 						import('./general-setting/general-setting.module').then((m) => m.GeneralSettingModule)

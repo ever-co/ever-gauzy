@@ -6,7 +6,8 @@
 @include nb-install-component() {
   display: flex;
   align-items: center;
-  // Never push the header actions around — the trail shrinks and ellipsizes instead.
+  // Never push the header actions around — the trail shrinks and truncates with
+  // an ellipsis instead.
   min-width: 0;
   overflow: hidden;
 

@@ -9,7 +9,7 @@
 // <ga-children-menu-item> here.
 @use '../menu-item/menu-item.component';
 
-// Inline "add" affordance on a child row. It sits inside a flat menu row, so it
+// Inline "add" control on a child row. It sits inside a flat menu row, so it
 // is a ghost icon button: no outline, no fill, it only brightens on hover.
 [nbButton].plus.appearance-outline.size-tiny {
   padding: 0.125rem 0.25rem;
@@ -21,10 +21,19 @@
   // `.sub-item` tracks the row in every theme and every state.
   color: inherit;
 
-  &:hover,
-  &:focus {
+  &:hover {
     background-color: transparent;
     color: nb-theme(text-basic-color);
+  }
+
+  // Keyboard focus needs a NON-colour indicator: the hover treatment is a
+  // brightness shift only, which on its own fails WCAG 1.4.11 / 2.4.7. The
+  // outline is inset so it never widens the row.
+  &:focus-visible {
+    background-color: transparent;
+    color: nb-theme(text-basic-color);
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: -2px;
   }
 
   i.fa-plus {

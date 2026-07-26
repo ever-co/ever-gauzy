@@ -352,12 +352,16 @@ body {
   // Nebular overlays (see `_overlays.scss`): the panel owns the border/shadow,
   // the rows are flat until hovered.
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
-    background: transparent;
+    // Rows are flat: the panel behind them supplies the surface colour, so an
+    // opaque per-row background would paint a solid block inside the 4px
+    // container padding and re-introduce the "rounded blocks" look.
+    // `!important` because ng-select's own sheet is loaded after this one.
+    background-color: transparent !important;
     // `--gauzy-text-color-1` only exists in 6 of the 8 registered themes (the
     // two material ones never define it), where the declaration would be
     // invalid at computed-value time. `text-basic-color` is defined everywhere
     // and is the same colour in the themes that do define the gauzy token.
-    color: nb-theme(text-basic-color);
+    color: nb-theme(text-basic-color) !important;
     transition-duration: 0.12s;
     transition-property: background-color, color;
     transition-timing-function: ease-in-out;
@@ -419,10 +423,9 @@ body {
   // every specificity tie. Each `!important` below overrides a specific
   // declaration from that sheet — they are not blanket hammers.
   .ng-dropdown-panel {
-    transform: translateY(6px);
     // One soft 1px hairline + one soft shadow on the CONTAINER, mirroring
-    // `gauzy-overlay-surface()`. `--gauzy-overlay-*` are not registered in
-    // themes.scss yet, hence the inline fallbacks.
+    // `gauzy-overlay-surface()`. `--gauzy-overlay-border-color` resolves from
+    // themes.scss; the fallback covers the material-* themes.
     // Overrides `border: 1px solid #ccc`.
     border: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18)) !important;
     // Overrides `box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06)`.
@@ -441,6 +444,17 @@ body {
     &.ng-select-left,
     &.ng-select-right {
       border-radius: 8px !important;
+    }
+
+    // Detach the panel from the trigger by 6px. The offset has to follow the
+    // placement: a `.ng-select-top` panel sits ABOVE the input, so shifting it
+    // down would close the gap and push the panel over the trigger instead.
+    &.ng-select-bottom {
+      transform: translateY(6px);
+    }
+
+    &.ng-select-top {
+      transform: translateY(-6px);
     }
 
     .ng-dropdown-panel-items {
@@ -465,11 +479,14 @@ body {
       border-radius: 6px;
     }
 
-    // Hairline, not the theme's hard `1px solid #ccc`.
+    // Hairline, not the theme's hard `1px solid #ccc`. `!important` for the same
+    // reason as the rest of this block: ng-select's own sheet is loaded after
+    // this one, so it wins every specificity tie — and its `border-bottom`
+    // shorthand would otherwise reinstate both the colour and the width.
     .ng-dropdown-header,
     .ng-dropdown-footer {
-      border-color: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
-      padding: 0.375rem 0.625rem;
+      border-color: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18)) !important;
+      padding: 0.375rem 0.625rem !important;
     }
   }
 
@@ -949,15 +966,4 @@ angular2-smart-table {
   angular2-st-tbody-create-cancel {
     display: flex;
   }
-}
-
-// Rows are flat: the panel behind them supplies the surface colour, so an
-// opaque per-row background would paint a solid block inside the 4px container
-// padding and re-introduce the "rounded blocks" look.
-.ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
-  background-color: transparent !important;
-  // `--text-basic-color` rather than `--gauzy-text-color-1`: the latter is
-  // undefined in the two material themes, so the row text fell back to
-  // whatever it inherited there.
-  color: var(--text-basic-color) !important;
 }

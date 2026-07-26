@@ -4,12 +4,12 @@
 // overlay menus in `packages/ui-core/static/styles/_overlays.scss`: ONE soft
 // container wrapping FLAT rows. Like the workspace switcher it is absolutely
 // positioned by the layout rather than rendered into `.cdk-overlay-container`,
-// so the container chrome is repeated here. `--gauzy-overlay-*` are not
-// registered in themes.scss yet (the integrator owns that file), hence the
-// alpha-neutral fallbacks — they read correctly on light AND dark surfaces.
+// so the container chrome is repeated here. `--gauzy-overlay-border-color` and
+// `--gauzy-hover-tint` resolve from themes.scss; the alpha-neutral fallbacks
+// cover the material-* themes and read correctly on light AND dark surfaces.
 $overlay-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 $overlay-shadow: #{'var(--gauzy-overlay-shadow, 0 4px 12px -2px rgba(0, 0, 0, 0.14), 0 2px 6px -2px rgba(0, 0, 0, 0.08))'};
-$overlay-item-hover-bg: var(--gauzy-overlay-item-hover-background, rgba(126, 126, 143, 0.12));
+$overlay-item-hover-bg: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 
 :host {
   .main-menu {
@@ -23,7 +23,11 @@ $overlay-item-hover-bg: var(--gauzy-overlay-item-hover-background, rgba(126, 126
     display: flex;
     .right-menu {
       background: nb-theme(color-primary-transparent-default);
-      border-radius: 0 8px 8px 0;
+      // `direction: rtl` reverses the flex row, so this column moves to the
+      // LEFT edge under RTL while physical corner radii stay put — mirror them
+      // or the panel ends up with two squared outer corners.
+      @include nb-ltr(border-radius, 0 8px 8px 0);
+      @include nb-rtl(border-radius, 8px 0 0 8px);
       width: 50%;
       padding: 13.5px 15.5px 13.5px 26px;
       span {
@@ -43,7 +47,9 @@ $overlay-item-hover-bg: var(--gauzy-overlay-item-hover-background, rgba(126, 126
     }
     .left-menu {
       width: 50%;
-      border-radius: 8px 0 0 8px;
+      // Mirrored for the same reason as `.right-menu` above.
+      @include nb-ltr(border-radius, 8px 0 0 8px);
+      @include nb-rtl(border-radius, 0 8px 8px 0);
       display: flex;
       flex-direction: column;
       justify-content: space-between;

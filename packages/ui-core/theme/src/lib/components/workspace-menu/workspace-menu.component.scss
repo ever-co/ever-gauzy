@@ -7,11 +7,12 @@
 //
 // It is NOT rendered into `.cdk-overlay-container` — the layout absolutely
 // positions it — so the global overlay rules never reach it and the container
-// chrome has to be repeated here. The `--gauzy-overlay-*` custom properties are
-// not registered in themes.scss yet (the integrator owns that file), so each one
-// carries the same alpha-neutral fallback the global partial uses: a neutral
-// grey at low alpha darkens a light surface and lightens a dark one, so no
-// per-theme branch is needed.
+// chrome has to be repeated here. `--gauzy-overlay-border-color` resolves from
+// themes.scss; `--gauzy-overlay-shadow` is not registered (a Sass map entry
+// cannot hold a comma-separated shadow list as-is), so each one keeps the same
+// alpha-neutral fallback the global partial uses: a neutral grey at low alpha
+// darkens a light surface and lightens a dark one, so no per-theme branch is
+// needed.
 $overlay-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 $overlay-shadow: #{'var(--gauzy-overlay-shadow, 0 4px 12px -2px rgba(0, 0, 0, 0.14), 0 2px 6px -2px rgba(0, 0, 0, 0.08))'};
 

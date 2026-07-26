@@ -49,7 +49,7 @@ export class BreadcrumbComponent {
 
 	/**
 	 * Menu sections skipped while matching. "Favorites" mirrors links that already live
-	 * elsewhere in the tree, so a favorited page would otherwise win the match and render
+	 * elsewhere in the tree, so a page marked as favorite would otherwise win the match and render
 	 * as "Favorites / …" instead of its real place in the hierarchy.
 	 */
 	private static readonly IGNORED_SECTION_IDS = new Set<string>(['favorites']);
@@ -104,17 +104,14 @@ export class BreadcrumbComponent {
 		}
 
 		const match = this.findDeepestMatch(path, sections);
-		const crumbs: IBreadcrumb[] = [this.homeCrumb()];
-
-		if (match) {
-			for (const ancestor of match.ancestors) {
-				crumbs.push(this.toCrumb(ancestor));
-			}
-			crumbs.push(this.toCrumb(match.item));
-			crumbs.push(...this.segmentCrumbs(path, match.link));
-		} else {
-			crumbs.push(...this.segmentCrumbs(path, '/pages'));
-		}
+		const crumbs: IBreadcrumb[] = match
+			? [
+					this.homeCrumb(),
+					...match.ancestors.map((ancestor: NavMenuSectionItem) => this.toCrumb(ancestor)),
+					this.toCrumb(match.item),
+					...this.segmentCrumbs(path, match.link)
+				]
+			: [this.homeCrumb(), ...this.segmentCrumbs(path, '/pages')];
 
 		return this.finalize(crumbs);
 	}
@@ -213,7 +210,7 @@ export class BreadcrumbComponent {
 			}
 
 			// Collapse repeats — home and the "Dashboards" menu item point at the same route.
-			const previous = trail[trail.length - 1];
+			const previous = trail.at(-1);
 			const duplicate =
 				previous && ((!!crumb.link && previous.link === crumb.link) || previous.label === crumb.label);
 			if (duplicate) {
@@ -223,9 +220,10 @@ export class BreadcrumbComponent {
 			trail.push({ ...crumb });
 		}
 
-		if (trail.length > 0) {
-			// The current page is never a link — it is announced with aria-current instead.
-			trail[trail.length - 1].link = null;
+		// The current page is never a link — it is announced with aria-current instead.
+		const current = trail.at(-1);
+		if (current) {
+			current.link = null;
 		}
 
 		// A lone home crumb reads better as a word than as a bare icon.
@@ -244,15 +242,19 @@ export class BreadcrumbComponent {
 	 */
 	private toCrumb(item: NavMenuSectionItem): IBreadcrumb {
 		const key = item.data?.translationKey;
+		const link = typeof item.link === 'string' ? this.toPath(item.link) : null;
+
+		if (!key) {
+			return { label: item.title ?? '', link };
+		}
+
 		// `noTranslate` items hold user content (custom dashboard names) — render literally so a
 		// name that happens to match an i18n key is not translated away.
-		const label = key
-			? item.data?.noTranslate
-				? key
-				: (this.translateOrNull(key) ?? item.title ?? '')
-			: (item.title ?? '');
+		if (item.data?.noTranslate) {
+			return { label: key, link };
+		}
 
-		return { label, link: typeof item.link === 'string' ? this.toPath(item.link) : null };
+		return { label: this.translateOrNull(key) ?? item.title ?? '', link };
 	}
 
 	/**
@@ -320,7 +322,15 @@ export class BreadcrumbComponent {
 	 * @returns The bare path.
 	 */
 	private toPath(url: string): string {
-		const [path = ''] = String(url ?? '').split(/[?#;]/);
+		const [withoutQuery = ''] = String(url ?? '').split(/[?#]/);
+		// Matrix params attach to a SINGLE segment (`/pages/settings;tab=1/ai`), so they have to
+		// be stripped segment by segment. Splitting the whole URL on the first `;` instead would
+		// discard every later segment and leave the trail pointing at the wrong page.
+		const path = withoutQuery
+			.split('/')
+			.map((segment: string) => segment.split(';')[0])
+			.join('/');
+
 		return path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
 	}
 

@@ -49,7 +49,7 @@ $menu-chevron-gutter: 2rem;
 
 // The inline half of `menu-item-padding` (0.5rem 0.75rem). Needed as a literal
 // wherever the chevron gutter is given back, because a CSS custom property
-// cannot be destructured into its longhands.
+// cannot be destructured into its longhand properties.
 // KEEP IN SYNC with `menu-item-padding` in packages/ui-core/static/styles/themes.scss.
 $menu-row-inline-padding: 0.75rem;
 
@@ -130,6 +130,16 @@ $menu-child-indent: 1.5rem;
   nb-accordion-item-header:hover {
     background-color: $menu-row-hover-background;
     color: nb-theme(text-basic-color);
+  }
+
+  // Nebular makes the header focusable (tabindex="0") but paints nothing on
+  // focus, so keyboard users had no row indicator at all. Same tint as hover
+  // plus an inset outline, because the tint alone is a colour-only signal.
+  nb-accordion-item-header:focus-visible {
+    background-color: $menu-row-hover-background;
+    color: nb-theme(text-basic-color);
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: -2px;
   }
 
   // Chevron: muted and sized to the row (nb-icon defaults to 1.25rem, which
