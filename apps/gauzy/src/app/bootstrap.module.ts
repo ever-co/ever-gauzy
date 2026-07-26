@@ -11,7 +11,13 @@ import {
 	PluginUiRegistryService,
 	TranslateAdapterService
 } from '@gauzy/plugin-ui';
-import { NavMenuBuilderService, PageRouteRegistryService, PageTabRegistryService, Store } from '@gauzy/ui-core/core';
+import {
+	NavMenuBuilderService,
+	PageRouteRegistryService,
+	PageTabRegistryService,
+	Store,
+	WidgetRegistryService
+} from '@gauzy/ui-core/core';
 import { provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { AppComponent } from './app.component';
@@ -38,6 +44,7 @@ import { AppModule } from './app.module';
 			navBuilder: NavMenuBuilderService,
 			routeRegistry: PageRouteRegistryService,
 			tabRegistry: PageTabRegistryService,
+			widgetRegistry: WidgetRegistryService,
 			translateService: TranslateAdapterService,
 			permissionChecker: PermissionAdapterService,
 			featureChecker: FeatureAdapterService
