@@ -145,8 +145,11 @@ export class DashboardService extends TenantAwareCrudService<Dashboard> {
 	 * @throws {ForbiddenException} If the dashboard belongs to another user.
 	 */
 	async delete(id: ID): Promise<DeleteResult> {
-		// Retrieve the existing dashboard by ID (throws NotFound if missing)
+		// Retrieve the existing dashboard by ID
 		const dashboard = await this.findOneByIdString(id);
+		if (!dashboard) {
+			throw new NotFoundException(`Dashboard with ID ${id} does not exist`);
+		}
 
 		// Dashboards are personal: only the user who created a dashboard may delete it
 		this.checkOwnership(dashboard);
@@ -162,7 +165,9 @@ export class DashboardService extends TenantAwareCrudService<Dashboard> {
 	 */
 	private checkOwnership(dashboard: IDashboard): void {
 		const currentUserId = RequestContext.currentUserId();
-		if (dashboard.createdByUserId && currentUserId && dashboard.createdByUserId !== currentUserId) {
+		// Deny when either identity is missing — an orphaned/legacy dashboard
+		// must not become manageable by arbitrary users.
+		if (!dashboard.createdByUserId || !currentUserId || dashboard.createdByUserId !== currentUserId) {
 			throw new ForbiddenException('You can only manage your own dashboards');
 		}
 	}

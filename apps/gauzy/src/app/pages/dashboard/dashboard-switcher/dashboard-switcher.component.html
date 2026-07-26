@@ -1,63 +1,61 @@
 <div class="dashboard-switcher">
 	<!-- Chips row: only rendered when at least one custom dashboard exists -->
-	@if (dashboards$ | async; as dashboards) {
-		@if (dashboards.length > 0) {
-			<div class="chips-area">
-				@if (canScroll) {
-					<button
-						nbButton
-						ghost
-						size="tiny"
-						class="scroll-button"
-						type="button"
-						(click)="scroll(-1)"
-					>
-						<nb-icon icon="chevron-left-outline"></nb-icon>
-					</button>
-				}
-				<div #chipsScroll class="chips-scroll">
+	@if (dashboards().length > 0) {
+		<div class="chips-area">
+			@if (canScroll) {
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					class="scroll-button"
+					type="button"
+					(click)="scroll(-1)"
+				>
+					<nb-icon icon="chevron-left-outline"></nb-icon>
+				</button>
+			}
+			<div #chipsScroll class="chips-scroll">
+				<button
+					type="button"
+					class="chip"
+					[class.active]="!selected()"
+					(click)="selectStandard()"
+				>
+					{{ 'DASHBOARD_PAGE.CUSTOM.STANDARD' | translate }}
+				</button>
+				@for (dashboard of dashboards(); track dashboard.id) {
 					<button
 						type="button"
 						class="chip"
-						[class.active]="!(selectedDashboard$ | async)"
-						(click)="selectStandard()"
+						[class.active]="selected()?.id === dashboard.id"
+						(click)="select(dashboard)"
 					>
-						{{ 'DASHBOARD_PAGE.CUSTOM.STANDARD' | translate }}
-					</button>
-					@for (dashboard of dashboards; track dashboard.id) {
-						<button
-							type="button"
-							class="chip"
-							[class.active]="(selectedDashboard$ | async)?.id === dashboard.id"
-							(click)="select(dashboard)"
-						>
-							{{ dashboard.name }}
-							@if (dashboard.isDefault) {
-								<nb-icon class="default-icon" icon="star-outline"></nb-icon>
-							}
-						</button>
-					}
-				</div>
-				@if (canScroll) {
-					<button
-						nbButton
-						ghost
-						size="tiny"
-						class="scroll-button"
-						type="button"
-						(click)="scroll(1)"
-					>
-						<nb-icon icon="chevron-right-outline"></nb-icon>
+						{{ dashboard.name }}
+						@if (dashboard.isDefault) {
+							<nb-icon class="default-icon" icon="star-outline"></nb-icon>
+						}
 					</button>
 				}
 			</div>
-		}
+			@if (canScroll) {
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					class="scroll-button"
+					type="button"
+					(click)="scroll(1)"
+				>
+					<nb-icon icon="chevron-right-outline"></nb-icon>
+				</button>
+			}
+		</div>
 	}
 
 	<!-- Actions: Edit / Save / Discard + the ⋮ menu -->
 	<div class="actions-area">
-		@if (selectedDashboard$ | async) {
-			@if (editing$ | async) {
+		@if (selected()) {
+			@if (editing()) {
 				<button nbButton status="success" size="small" type="button" (click)="saveLayout()">
 					<nb-icon icon="save-outline"></nb-icon>
 					{{ 'BUTTONS.SAVE' | translate }}
@@ -88,7 +86,7 @@
 </div>
 
 <!-- Edit-mode hint -->
-@if (editing$ | async) {
+@if (editing()) {
 	<div class="edit-hint">
 		{{ 'DASHBOARD_PAGE.CUSTOM.EDIT_HINT' | translate }}
 	</div>
@@ -105,7 +103,7 @@
 			<nb-icon icon="copy-outline"></nb-icon>
 			{{ 'DASHBOARD_PAGE.CUSTOM.DUPLICATE_DASHBOARD' | translate }}
 		</div>
-		@if (selectedDashboard$ | async) {
+		@if (selected()) {
 			<div class="action" (click)="renameDashboard()">
 				<nb-icon icon="edit-2-outline"></nb-icon>
 				{{ 'DASHBOARD_PAGE.CUSTOM.RENAME_DASHBOARD' | translate }}
@@ -115,7 +113,7 @@
 			<nb-icon icon="star-outline"></nb-icon>
 			{{ 'DASHBOARD_PAGE.CUSTOM.SET_AS_DEFAULT' | translate }}
 		</div>
-		@if (selectedDashboard$ | async) {
+		@if (selected()) {
 			<div class="action" (click)="editDashboard()">
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'DASHBOARD_PAGE.CUSTOM.EDIT_DASHBOARD' | translate }}

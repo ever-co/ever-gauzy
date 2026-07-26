@@ -1,5 +1,6 @@
-import { AfterViewChecked, ChangeDetectorRef, Component, ElementRef, ViewChild } from '@angular/core';
-import { firstValueFrom, Observable } from 'rxjs';
+import { AfterViewChecked, ChangeDetectorRef, Component, ElementRef, Signal, ViewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
 import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
@@ -26,9 +27,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	standalone: false
 })
 export class DashboardSwitcherComponent extends TranslationBaseComponent implements AfterViewChecked {
-	public dashboards$: Observable<IDashboard[]>;
-	public selectedDashboard$: Observable<IDashboard | null>;
-	public editing$: Observable<boolean>;
+	// Signals (single subscription each) instead of repeated `| async` pipes
+	public dashboards: Signal<IDashboard[]>;
+	public selected: Signal<IDashboard | null>;
+	public editing: Signal<boolean>;
 
 	/** Whether the chips row currently overflows and needs scroll arrows. */
 	public canScroll = false;
@@ -44,9 +46,9 @@ export class DashboardSwitcherComponent extends TranslationBaseComponent impleme
 		private readonly _changeRef: ChangeDetectorRef
 	) {
 		super(translateService);
-		this.dashboards$ = this._dashboardStore.dashboards$;
-		this.selectedDashboard$ = this._dashboardStore.selectedDashboard$;
-		this.editing$ = this._dashboardStore.editing$;
+		this.dashboards = toSignal(this._dashboardStore.dashboards$, { initialValue: [] as IDashboard[] });
+		this.selected = toSignal(this._dashboardStore.selectedDashboard$, { initialValue: null });
+		this.editing = toSignal(this._dashboardStore.editing$, { initialValue: false });
 	}
 
 	ngAfterViewChecked(): void {

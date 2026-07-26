@@ -7,10 +7,10 @@ import { ID, IDashboard, IDashboardLayout, IDashboardLayoutItem, JsonData } from
 import { DashboardService } from './dashboard.service';
 import { Store } from '../store/store.service';
 
-/** LocalStorage key holding the currently applied custom dashboard ID. */
+/** LocalStorage key prefix holding the currently applied custom dashboard ID (suffixed with the user ID). */
 const SELECTED_DASHBOARD_KEY = '_selectedDashboardId';
 
-/** LocalStorage key holding the "Standard" widget layout snapshot taken before a custom dashboard is applied. */
+/** LocalStorage key prefix holding the "Standard" widget layout snapshot taken before a custom dashboard is applied (suffixed with the user ID). */
 const STANDARD_LAYOUT_BACKUP_KEY = '_standardDashboardLayout';
 
 /**
@@ -66,6 +66,18 @@ export class DashboardStoreService {
 	/** Triggers a reload of the dashboards list. */
 	public refresh(): void {
 		this._refresh$.next();
+	}
+
+	/**
+	 * Storage keys are scoped to the current user so that on a shared browser
+	 * one user's selection/layout backup can never leak into another's session.
+	 */
+	private get _selectedKey(): string {
+		return `${SELECTED_DASHBOARD_KEY}_${this._store.userId ?? 'anonymous'}`;
+	}
+
+	private get _backupKey(): string {
+		return `${STANDARD_LAYOUT_BACKUP_KEY}_${this._store.userId ?? 'anonymous'}`;
 	}
 
 	/*
@@ -126,7 +138,7 @@ export class DashboardStoreService {
 	 * (e.g. after rename) and clears a stale selection when the dashboard is gone.
 	 */
 	private _reconcileSelection(items: IDashboard[]): void {
-		const selectedId = this.selectedDashboard?.id ?? localStorage.getItem(SELECTED_DASHBOARD_KEY);
+		const selectedId = this.selectedDashboard?.id ?? localStorage.getItem(this._selectedKey);
 		if (!selectedId) {
 			return;
 		}
@@ -177,7 +189,7 @@ export class DashboardStoreService {
 		this._applyLayout(dashboard.contentHtml);
 
 		// Persist and publish the selection
-		localStorage.setItem(SELECTED_DASHBOARD_KEY, dashboard.id as string);
+		localStorage.setItem(this._selectedKey, dashboard.id as string);
 		this._selectedDashboard$.next(dashboard);
 		this._editing$.next(false);
 
@@ -190,13 +202,13 @@ export class DashboardStoreService {
 	 * call repeatedly (no-op when Standard is already active).
 	 */
 	public ensureStandardLayout(): void {
-		const selectedId = localStorage.getItem(SELECTED_DASHBOARD_KEY);
+		const selectedId = localStorage.getItem(this._selectedKey);
 		if (!selectedId && !this.selectedDashboard) {
 			return;
 		}
 
 		this._restoreStandardSnapshot();
-		localStorage.removeItem(SELECTED_DASHBOARD_KEY);
+		localStorage.removeItem(this._selectedKey);
 		this._selectedDashboard$.next(null);
 		this._editing$.next(false);
 	}
@@ -400,8 +412,9 @@ export class DashboardStoreService {
 	/** Writes the given saved layout into the widget system state. */
 	private _applyLayout(content: JsonData | undefined): void {
 		const layout = this._parseLayout(content);
-		this._store.widgets = (layout.widgets ?? []) as any[];
-		this._store.windows = (layout.windows ?? []) as any[];
+		// Validate shapes — malformed/hand-edited content must not crash the widget host
+		this._store.widgets = (Array.isArray(layout.widgets) ? layout.widgets : []) as any[];
+		this._store.windows = (Array.isArray(layout.windows) ? layout.windows : []) as any[];
 	}
 
 	/**
@@ -455,25 +468,25 @@ export class DashboardStoreService {
 
 	/** Snapshots the Standard layout once, before the first custom dashboard is applied. */
 	private _snapshotStandardIfNeeded(): void {
-		const alreadyCustom = !!localStorage.getItem(SELECTED_DASHBOARD_KEY);
+		const alreadyCustom = !!localStorage.getItem(this._selectedKey);
 		if (alreadyCustom) {
 			return;
 		}
 		const snapshot = this.captureLayout();
-		localStorage.setItem(STANDARD_LAYOUT_BACKUP_KEY, JSON.stringify(snapshot));
+		localStorage.setItem(this._backupKey, JSON.stringify(snapshot));
 	}
 
 	/** Restores the Standard layout snapshot into the widget system state. */
 	private _restoreStandardSnapshot(): void {
 		let layout: IDashboardLayout = {};
 		try {
-			layout = JSON.parse(localStorage.getItem(STANDARD_LAYOUT_BACKUP_KEY) || '{}') as IDashboardLayout;
+			layout = JSON.parse(localStorage.getItem(this._backupKey) || '{}') as IDashboardLayout;
 		} catch {
 			layout = {};
 		}
-		this._store.widgets = (layout.widgets ?? []) as any[];
-		this._store.windows = (layout.windows ?? []) as any[];
-		localStorage.removeItem(STANDARD_LAYOUT_BACKUP_KEY);
+		this._store.widgets = (Array.isArray(layout.widgets) ? layout.widgets : []) as any[];
+		this._store.windows = (Array.isArray(layout.windows) ? layout.windows : []) as any[];
+		localStorage.removeItem(this._backupKey);
 	}
 
 	/** Builds a unique identifier (slug) for a dashboard name. */
