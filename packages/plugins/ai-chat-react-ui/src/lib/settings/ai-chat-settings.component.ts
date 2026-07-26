@@ -158,9 +158,10 @@ export class AiChatSettingsComponent implements OnInit {
 		if (code && pending) {
 			// The exchange stores the key for the CURRENT tenant/organization, so
 			// refuse to complete a flow that was started in a different workspace.
-			const tenantChanged = pending.tenantId && pending.tenantId !== (this.store.user?.tenantId ?? null);
-			const organizationChanged =
-				pending.organizationId && pending.organizationId !== (this.store.organizationId ?? null);
+			// Compare exactly (null included): a flow started with no organization
+			// must not complete under one selected mid-flight.
+			const tenantChanged = (pending.tenantId ?? null) !== (this.store.user?.tenantId ?? null);
+			const organizationChanged = (pending.organizationId ?? null) !== (this.store.organizationId ?? null);
 			if (tenantChanged || organizationChanged) {
 				sessionStorage.removeItem(CONNECT_SESSION_KEY);
 				this.toastrService.danger(
