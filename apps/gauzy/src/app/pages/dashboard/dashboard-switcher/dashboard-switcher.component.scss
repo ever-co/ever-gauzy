@@ -99,6 +99,12 @@
 		font-size: 13px;
 		color: var(--text-basic-color);
 		cursor: pointer;
+		// native <button> resets (keyboard-accessible menu items)
+		background: none;
+		border: none;
+		width: 100%;
+		text-align: left;
+		font-family: inherit;
 
 		nb-icon {
 			font-size: 16px;

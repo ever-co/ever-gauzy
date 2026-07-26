@@ -95,33 +95,33 @@
 <!-- ⋮ actions menu -->
 <ng-template #dashboardActions>
 	<div class="dashboard-actions-popover">
-		<div class="action" (click)="newDashboard()">
+		<button type="button" class="action" (click)="newDashboard()">
 			<nb-icon icon="plus-outline"></nb-icon>
 			{{ 'DASHBOARD_PAGE.CUSTOM.NEW_DASHBOARD' | translate }}
-		</div>
-		<div class="action" (click)="duplicateDashboard()">
+		</button>
+		<button type="button" class="action" (click)="duplicateDashboard()">
 			<nb-icon icon="copy-outline"></nb-icon>
 			{{ 'DASHBOARD_PAGE.CUSTOM.DUPLICATE_DASHBOARD' | translate }}
-		</div>
+		</button>
 		@if (selected()) {
-			<div class="action" (click)="renameDashboard()">
+			<button type="button" class="action" (click)="renameDashboard()">
 				<nb-icon icon="edit-2-outline"></nb-icon>
 				{{ 'DASHBOARD_PAGE.CUSTOM.RENAME_DASHBOARD' | translate }}
-			</div>
+			</button>
 		}
-		<div class="action" (click)="setAsDefault()">
+		<button type="button" class="action" (click)="setAsDefault()">
 			<nb-icon icon="star-outline"></nb-icon>
 			{{ 'DASHBOARD_PAGE.CUSTOM.SET_AS_DEFAULT' | translate }}
-		</div>
+		</button>
 		@if (selected()) {
-			<div class="action" (click)="editDashboard()">
+			<button type="button" class="action" (click)="editDashboard()">
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'DASHBOARD_PAGE.CUSTOM.EDIT_DASHBOARD' | translate }}
-			</div>
-			<div class="action danger" (click)="deleteDashboard()">
+			</button>
+			<button type="button" class="action danger" (click)="deleteDashboard()">
 				<nb-icon icon="trash-2-outline"></nb-icon>
 				{{ 'DASHBOARD_PAGE.CUSTOM.DELETE_DASHBOARD' | translate }}
-			</div>
+			</button>
 		}
 	</div>
 </ng-template>
