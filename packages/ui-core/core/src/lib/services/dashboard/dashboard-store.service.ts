@@ -69,15 +69,20 @@ export class DashboardStoreService {
 	}
 
 	/**
-	 * Storage keys are scoped to the current user so that on a shared browser
-	 * one user's selection/layout backup can never leak into another's session.
+	 * Storage keys are scoped to the current user AND organization so that on a
+	 * shared browser (or after an organization switch) one context's selection
+	 * or layout backup can never leak into another's session.
 	 */
 	private get _selectedKey(): string {
-		return `${SELECTED_DASHBOARD_KEY}_${this._store.userId ?? 'anonymous'}`;
+		return `${SELECTED_DASHBOARD_KEY}_${this._store.userId ?? 'anonymous'}_${
+			this._store.selectedOrganization?.id ?? 'no-org'
+		}`;
 	}
 
 	private get _backupKey(): string {
-		return `${STANDARD_LAYOUT_BACKUP_KEY}_${this._store.userId ?? 'anonymous'}`;
+		return `${STANDARD_LAYOUT_BACKUP_KEY}_${this._store.userId ?? 'anonymous'}_${
+			this._store.selectedOrganization?.id ?? 'no-org'
+		}`;
 	}
 
 	/*
@@ -93,18 +98,26 @@ export class DashboardStoreService {
 		])
 			.pipe(
 				// Catch load errors INSIDE the switchMap so a failed request
-				// does not complete the outer stream (future reloads keep working)
+				// does not complete the outer stream (future reloads keep working).
+				// A failure emits `null` (NOT []) so it can't be mistaken for
+				// "the user has no dashboards" downstream.
 				switchMap(() =>
 					from(this._loadDashboards()).pipe(
 						catchError((error) => {
 							console.error('Error loading custom dashboards', error);
-							return of([] as IDashboard[]);
+							return of(null as IDashboard[] | null);
 						})
 					)
 				),
 				untilDestroyed(this)
 			)
-			.subscribe((items: IDashboard[]) => {
+			.subscribe((items: IDashboard[] | null) => {
+				if (items === null) {
+					// Transient load failure: keep the current list and selection —
+					// reconciling against [] would wrongly treat the active custom
+					// dashboard as deleted and silently kick the user to Standard.
+					return;
+				}
 				this._dashboards$.next(items);
 				this._reconcileSelection(items);
 			});
@@ -149,6 +162,11 @@ export class DashboardStoreService {
 		} else if (this.selectedDashboard) {
 			// The selected dashboard no longer exists (e.g. deleted elsewhere)
 			this.ensureStandardLayout();
+		} else {
+			// Stale persisted selection with no in-memory counterpart (e.g. the
+			// dashboard was deleted in another session) — drop it so it can't
+			// resurface later.
+			localStorage.removeItem(this._selectedKey);
 		}
 	}
 
@@ -225,7 +243,10 @@ export class DashboardStoreService {
 
 		const { id: organizationId, tenantId } = this._store.selectedOrganization || {};
 		const createdByUserId = this._store.userId;
-		if (!createdByUserId) {
+		// The custom dashboard experience is organization-scoped: without a
+		// selected organization the query could surface a default dashboard
+		// from ANOTHER organization — land on Standard instead.
+		if (!createdByUserId || !organizationId) {
 			return null;
 		}
 
@@ -233,7 +254,7 @@ export class DashboardStoreService {
 		// serialization differences across the supported databases.
 		const { items = [] } = await this._dashboardService.findAll({
 			where: {
-				...(organizationId ? { organizationId } : {}),
+				organizationId,
 				...(tenantId ? { tenantId } : {}),
 				createdByUserId
 			}
@@ -443,14 +464,20 @@ export class DashboardStoreService {
 		if (!content) {
 			return {};
 		}
+		let parsed: unknown = content;
 		if (typeof content === 'string') {
 			try {
-				return JSON.parse(content) as IDashboardLayout;
+				parsed = JSON.parse(content);
 			} catch {
 				return {};
 			}
 		}
-		return content as IDashboardLayout;
+		// Normalize: a null/array/primitive root (e.g. the string "null") must
+		// not reach _applyLayout, which reads `.widgets` off the result.
+		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+			return {};
+		}
+		return parsed as IDashboardLayout;
 	}
 
 	/** Keeps only the serializable `GuiDrag` fields of each layout item. */

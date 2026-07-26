@@ -112,9 +112,10 @@
 			letter-spacing: 0.04em;
 			padding: 0.125rem 0.5rem;
 			border-radius: 1rem;
-			background: rgba(0, 214, 143, 0.16);
-			// WCAG contrast: dark success shade on the light tint (not #00d68f)
-			color: #00875a;
+			// Theme tokens (not hardcoded hex) so every theme resolves an
+			// accessible pair; the dark override below lightens the foreground.
+			background: var(--color-success-transparent-200, rgba(0, 214, 143, 0.16));
+			color: var(--color-success-800, #007d6c);
 		}
 
 		.env-note {
@@ -168,8 +169,7 @@
 			align-items: center;
 			gap: 0.25rem;
 			font-size: 0.75rem;
-			// WCAG contrast: dark success shade (not #00d68f)
-			color: #00875a;
+			color: var(--color-success-800, #007d6c);
 
 			nb-icon {
 				font-size: 0.9375rem;
@@ -183,9 +183,24 @@
 			letter-spacing: 0.04em;
 			padding: 0.125rem 0.5rem;
 			border-radius: 1rem;
-			background: rgba(51, 102, 255, 0.14);
-			// WCAG contrast: darker primary shade on the light tint
-			color: #274bdb;
+			background: var(--color-primary-transparent-200, rgba(51, 102, 255, 0.14));
+			color: var(--color-primary-700, #274bdb);
+		}
+	}
+
+	// Dark themes: light foregrounds on the translucent tints (the light-theme
+	// shades would land well below the 4.5:1 WCAG minimum on dark cards).
+	@at-root :host-context(.nb-theme-gauzy-dark) &,
+		:host-context(.nb-theme-dark) &,
+		:host-context(.nb-theme-cosmic) &,
+		:host-context(.nb-theme-material-dark) & {
+		.default-chip,
+		.configured {
+			color: var(--color-success-300, #2ce69b);
+		}
+
+		.connect-chip {
+			color: var(--color-primary-300, #94b3ff);
 		}
 	}
 

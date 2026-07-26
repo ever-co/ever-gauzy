@@ -176,8 +176,10 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				icon: 'fas fa-th-large',
 				link: `/pages/dashboard/custom/${dashboard.id}`,
 				data: {
-					// Custom dashboard names are user content; the translate pipe passes unknown keys through
-					translationKey: dashboard.name
+					// Custom dashboard names are user content — render literally so a
+					// name matching an existing i18n key isn't translated away.
+					translationKey: dashboard.name,
+					noTranslate: true
 				}
 			}))
 		];
@@ -1229,7 +1231,10 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	public mapMenuSection(item: NavMenuSectionItem): NavMenuSectionItem {
 		const section: NavMenuSectionItem = {
 			...item,
-			title: this.getTranslation(item.data.translationKey),
+			// noTranslate items carry user content (e.g. a custom dashboard name)
+			// that must render literally — a name that happens to match an i18n
+			// key must not come out as that key's translation.
+			title: item.data.noTranslate ? item.data.translationKey : this.getTranslation(item.data.translationKey),
 			hidden: item.hidden || this.isSectionHidden(item)
 		};
 
