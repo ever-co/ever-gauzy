@@ -32,34 +32,18 @@
     gap: 0.25rem;
   }
 
-  .setting.action ::ng-deep {
-    ga-main-nav-menu {
-      ga-sidebar-menu {
-        nb-accordion-item {
-          nb-accordion-item-header {
-            box-shadow: unset;
-            border-width: 0;
-            nb-icon {
-              display: none;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // Settings is a plain link to /pages/settings (no inline accordion anymore),
-  // so hide the accordion expansion chevron the same way as the section above.
-  .setting ::ng-deep {
-    ga-settings-nav-menu {
-      ga-sidebar-menu {
-        nb-accordion-item {
-          nb-accordion-item-header {
-            box-shadow: unset;
-            border-width: 0;
-            nb-icon {
-              display: none;
-            }
+  // Flatten accordion headers in the popup for both nav menus. Settings is a
+  // plain link to /pages/settings (no inline accordion anymore), so its
+  // expansion chevron is hidden the same way as the main nav's.
+  .setting.action ::ng-deep ga-main-nav-menu,
+  .setting ::ng-deep ga-settings-nav-menu {
+    ga-sidebar-menu {
+      nb-accordion-item {
+        nb-accordion-item-header {
+          box-shadow: unset;
+          border-width: 0;
+          nb-icon {
+            display: none;
           }
         }
       }
