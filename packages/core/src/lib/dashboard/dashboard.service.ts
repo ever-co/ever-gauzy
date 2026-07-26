@@ -128,7 +128,8 @@ export class DashboardService extends TenantAwareCrudService<Dashboard> {
 			return updatedDashboard;
 		} catch (error) {
 			// Preserve the original HTTP semantics for ownership violations
-			if (error instanceof ForbiddenException) {
+			// and missing dashboards (403/404, not a generic 400)
+			if (error instanceof ForbiddenException || error instanceof NotFoundException) {
 				throw error;
 			}
 			// Log the error and throw an HttpException

@@ -105,15 +105,6 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 	}
 
 	/**
-	 * Create or update the tenant's credential for a provider (one credential
-	 * per `(tenant, providerId)` pair). The API key is encrypted before storage;
-	 * when omitted on update, the previously stored key is kept. Setting
-	 * `isDefault: true` clears the flag on the tenant's other credentials.
-	 *
-	 * @param input - The credential payload (provider id required; API key required on first create).
-	 * @returns The persisted credential with a masked API key.
-	 */
-	/**
 	 * Complete a provider "Connect" flow: exchange the PKCE authorization
 	 * `code` + `codeVerifier` for an API key server-side and store it as the
 	 * tenant's BYOK credential for that provider. The key never touches the
@@ -175,6 +166,15 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 		});
 	}
 
+	/**
+	 * Create or update the tenant's credential for a provider (one credential
+	 * per `(tenant, providerId)` pair). The API key is encrypted before storage;
+	 * when omitted on update, the previously stored key is kept. Setting
+	 * `isDefault: true` clears the flag on the tenant's other credentials.
+	 *
+	 * @param input - The credential payload (provider id required; API key required on first create).
+	 * @returns The persisted credential with a masked API key.
+	 */
 	async upsert(
 		input: IAiProviderCredentialCreateInput | IAiProviderCredentialUpdateInput
 	): Promise<IAiProviderCredential> {
