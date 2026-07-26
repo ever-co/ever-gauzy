@@ -60,7 +60,8 @@
 			"SAVED": "{{provider}} credential saved.",
 			"DELETED": "{{provider}} credential deleted.",
 			"ERROR": "Something went wrong. Please try again.",
-			"CONNECTED": "{{ provider }} connected successfully."
+			"CONNECTED": "{{ provider }} connected successfully.",
+			"CONNECT_WORKSPACE_MISMATCH": "This Connect flow was started in a different workspace. Switch back to that workspace and try again."
 		},
 		"LIST": {
 			"EMPTY": "No AI providers are configured yet. Add one to enable the AI chat.",

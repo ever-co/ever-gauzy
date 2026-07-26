@@ -156,7 +156,19 @@ export class AiChatSettingsComponent implements OnInit {
 		const code = this.route.snapshot.queryParamMap.get('code');
 		const pending = this.readConnectSession();
 		if (code && pending) {
-			this.completeConnect(pending.providerId, code, pending.verifier);
+			// The exchange stores the key for the CURRENT tenant, so refuse to
+			// complete a flow that was started in a different workspace.
+			if (pending.tenantId && pending.tenantId !== (this.store.user?.tenantId ?? null)) {
+				sessionStorage.removeItem(CONNECT_SESSION_KEY);
+				this.toastrService.danger(
+					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.CONNECT_WORKSPACE_MISMATCH'),
+					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.ERROR_TITLE')
+				);
+				void this.router.navigate([], { relativeTo: this.route, queryParams: {} });
+				this.load();
+			} else {
+				this.completeConnect(pending.providerId, code, pending.verifier);
+			}
 		} else {
 			this.load();
 		}
@@ -209,7 +221,14 @@ export class AiChatSettingsComponent implements OnInit {
 					return of(null);
 				})
 			),
-			credentials: this.settingsService.getCredentials().pipe(catchError(() => of({ items: [], total: 0 })))
+			credentials: this.settingsService.getCredentials().pipe(
+				catchError((error) => {
+					// Surface the failure — otherwise saved keys silently look
+					// unconfigured (toggles/delete disappear) on a transient error.
+					this.showError(error);
+					return of({ items: [], total: 0 });
+				})
+			)
 		})
 			.pipe(finalize(() => this.loading.set(false)))
 			.subscribe(({ config, credentials }) => {
@@ -320,7 +339,12 @@ export class AiChatSettingsComponent implements OnInit {
 			const verifier = this.base64Url(crypto.getRandomValues(new Uint8Array(48)));
 			const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
 			const challenge = this.base64Url(new Uint8Array(digest));
-			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify({ providerId: provider.id, verifier }));
+			// Bind the pending flow to the workspace it was started in so a
+			// mid-flight workspace switch can't store the key elsewhere.
+			sessionStorage.setItem(
+				CONNECT_SESSION_KEY,
+				JSON.stringify({ providerId: provider.id, verifier, tenantId: this.store.user?.tenantId ?? null })
+			);
 
 			// The authorize page comes from the provider definition (backend
 			// config) so additional connect-capable providers need no UI change.
@@ -370,7 +394,7 @@ export class AiChatSettingsComponent implements OnInit {
 			});
 	}
 
-	private readConnectSession(): { providerId: string; verifier: string } | null {
+	private readConnectSession(): { providerId: string; verifier: string; tenantId?: string | null } | null {
 		try {
 			const raw = sessionStorage.getItem(CONNECT_SESSION_KEY);
 			if (!raw) return null;
