@@ -114,7 +114,11 @@ export class DashboardStoreService {
 			where: { organizationId, tenantId, createdByUserId }
 		});
 
-		return items;
+		// Keep only dashboards that hold a serialized widget layout. Seeded /
+		// legacy rows (e.g. the demo "Default Dashboard" with HTML content)
+		// are not custom layout dashboards and must not surface in the
+		// switcher or hijack the default-dashboard redirect.
+		return items.filter((item: IDashboard) => this._isLayoutDashboard(item));
 	}
 
 	/**
@@ -219,7 +223,7 @@ export class DashboardStoreService {
 			}
 		});
 
-		return items.find((item: IDashboard) => item.isDefault) ?? null;
+		return items.find((item: IDashboard) => item.isDefault && this._isLayoutDashboard(item)) ?? null;
 	}
 
 	/*
@@ -257,7 +261,9 @@ export class DashboardStoreService {
 		const dashboard = await this._dashboardService.create({
 			name,
 			identifier: this._slugify(name),
-			contentHtml: (layout ?? {}) as JsonData,
+			// Always persist the layout marker keys so the row is recognized
+			// as a custom layout dashboard (see _isLayoutDashboard).
+			contentHtml: (layout ?? { widgets: [], windows: [] }) as JsonData,
 			organizationId,
 			tenantId,
 			...(this._store.user?.employee?.id ? { employeeId: this._store.user.employee.id } : {})
@@ -392,6 +398,27 @@ export class DashboardStoreService {
 		const layout = this._parseLayout(content);
 		this._store.widgets = (layout.widgets ?? []) as any[];
 		this._store.windows = (layout.windows ?? []) as any[];
+	}
+
+	/**
+	 * Whether the dashboard row holds a serialized widget layout (i.e. was
+	 * created by this feature). Seeded/legacy rows store arbitrary HTML in
+	 * `contentHtml` and are excluded from the custom dashboard experience.
+	 */
+	private _isLayoutDashboard(item: IDashboard): boolean {
+		const content = item?.contentHtml as JsonData | undefined;
+		if (!content) {
+			return false;
+		}
+		let parsed: unknown = content;
+		if (typeof content === 'string') {
+			try {
+				parsed = JSON.parse(content);
+			} catch {
+				return false;
+			}
+		}
+		return !!parsed && typeof parsed === 'object' && ('widgets' in (parsed as object) || 'windows' in (parsed as object));
 	}
 
 	/** Parses a dashboard `contentHtml` payload into a layout object. */
