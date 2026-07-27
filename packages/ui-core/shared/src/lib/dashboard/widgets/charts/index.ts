@@ -7,6 +7,9 @@
  * charts it actually renders — importing this barrel from application code
  * would pull all four bundles in eagerly.
  */
+// `employee-chart.utils` re-exports `employee-chart.constants`, so the constants
+// are covered here without a second `export *` (which would be an ambiguous
+// re-export of the same symbols).
 export * from './employee-chart.utils';
 export * from './employee-month-statistics-cache.service';
 export * from './employee-chart-card.component';

@@ -52,10 +52,10 @@ export function teamsScopeKey(context: IDashboardWidgetContext | null): string {
 	return [
 		context.tenantId,
 		context.organizationId,
-		context.startDate?.getTime(),
-		context.endDate?.getTime(),
-		context.todayStart?.getTime(),
-		context.todayEnd?.getTime(),
+		toEpoch(context.startDate),
+		toEpoch(context.endDate),
+		toEpoch(context.todayStart),
+		toEpoch(context.todayEnd),
 		context.timeZone,
 		// Part of the key because it is the denominator of every member progress bar.
 		context.organization?.defaultStartTime,
@@ -64,6 +64,25 @@ export function teamsScopeKey(context: IDashboardWidgetContext | null): string {
 		(context.projectIds ?? []).join(','),
 		(context.teamIds ?? []).join(',')
 	].join('|');
+}
+
+/**
+ * Epoch milliseconds of a value the context types as a `Date`.
+ *
+ * Defensive on purpose: a context restored from a bookmark carries an ISO
+ * STRING, and calling `.getTime()` on it throws — inside a
+ * `distinctUntilChanged` comparator that kills the widget's subscription for
+ * the rest of the session. Mirrors the same guard in the chart widgets.
+ *
+ * @param value - The date to normalize.
+ * @returns The epoch value, or an empty string when it is absent or unparsable.
+ */
+function toEpoch(value: Date | undefined): string {
+	if (!value) {
+		return '';
+	}
+	const time = value instanceof Date ? value.getTime() : new Date(value as unknown as string).getTime();
+	return Number.isNaN(time) ? '' : String(time);
 }
 
 /**
@@ -107,6 +126,12 @@ export function toPercentage(value: number, total: number): number {
 	if (!total || !Number.isFinite(total) || !Number.isFinite(value)) {
 		return 0;
 	}
-	const percentage = Math.abs((value / total) * 100);
-	return Number.isFinite(percentage) ? Math.min(percentage, 100) : 0;
+	const percentage = (value / total) * 100;
+	if (!Number.isFinite(percentage)) {
+		return 0;
+	}
+	// Clamped at BOTH ends. Taking the absolute value instead would turn a
+	// negative duration (a correction, or a malformed log) into positive
+	// progress — a -30 minute day would render as a 6% filled bar.
+	return Math.min(Math.max(percentage, 0), 100);
 }

@@ -20,9 +20,9 @@ const NEUTRAL_PALETTE: ITeamStatusChartPalette = {
  * Doughnut of how the teams in scope are split between working now, worked
  * today and not working.
  *
- * This is the widgetized form of `gz-doughnut-chart` — a component that was
- * declared in `dashboard.module.ts` but rendered by NO template, so it had never
- * run. Widgetizing it surfaced three defects that are fixed here:
+ * This wraps `gz-doughnut-chart` as a widget — a component that was declared in
+ * `dashboard.module.ts` but rendered by NO template, so it had never run.
+ * Wrapping it surfaced three defects that are fixed here:
  *
  * 1. `ngOnChanges` dereferenced `changes['statistics']` unconditionally, so any
  *    other input change threw. There are no inputs at all now: the data comes

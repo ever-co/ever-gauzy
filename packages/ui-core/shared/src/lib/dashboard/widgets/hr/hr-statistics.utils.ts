@@ -1,11 +1,7 @@
-import { ID, IMonthAggregatedEmployeeStatistics, IMonthAggregatedEmployeeStatisticsFindInput } from '@gauzy/contracts';
-import { toUTC } from '@gauzy/ui-core/common';
+import { ID, IMonthAggregatedEmployeeStatistics } from '@gauzy/contracts';
 // Type-only import: keeps this module free of a runtime dependency on
 // `@gauzy/ui-core/core`, so it stays trivially unit-testable.
 import type { IDashboardWidgetContext } from '@gauzy/ui-core/core';
-
-/** Date format the `/employee-statistics/months` endpoint expects. */
-const API_DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 
 /**
  * Theme tokens standing in for the hard-coded hexes of the legacy Human
@@ -149,30 +145,6 @@ export function resolveHrEmployeeId(context: IDashboardWidgetContext | null | un
 }
 
 /**
- * Builds the `/employee-statistics/months` request for a dashboard context.
- *
- * Parity-critical: reproduces `HumanResourcesComponent.getEmployeeStatistics()`
- * exactly — same `toUTC` shift and the same `YYYY-MM-DD HH:mm:ss` serialization —
- * so a canvas widget and the legacy page send byte-identical requests.
- *
- * @param context - The ambient dashboard widget context.
- * @param employeeId - The employee to report on.
- * @returns The request payload.
- */
-export function buildHrStatisticsRequest(
-	context: IDashboardWidgetContext,
-	employeeId: ID
-): IMonthAggregatedEmployeeStatisticsFindInput {
-	return {
-		employeeId,
-		startDate: toUTC(context.startDate).format(API_DATE_FORMAT),
-		endDate: toUTC(context.endDate).format(API_DATE_FORMAT),
-		organizationId: context.organizationId,
-		tenantId: context.tenantId
-	};
-}
-
-/**
  * Fingerprint of everything the statistics request is built from.
  *
  * Used as the `distinctUntilChanged` comparator so that context changes the
@@ -190,26 +162,27 @@ export function hrStatisticsKey(context: IDashboardWidgetContext | null | undefi
 		context.tenantId,
 		context.organizationId,
 		resolveHrEmployeeId(context),
-		context.startDate?.getTime(),
-		context.endDate?.getTime()
+		toEpoch(context.startDate),
+		toEpoch(context.endDate)
 	].join('|');
 }
 
 /**
- * Serializes an object into a stable string, independent of key order.
+ * Epoch milliseconds of a value the context types as a `Date`.
  *
- * The comparator is explicit because the default `Array.sort()` compares UTF-16
- * code units of the stringified elements, which is not a guaranteed
- * alphabetical order — and this string IS a cache key, so an unstable order
- * would produce two keys for one request, i.e. duplicate HTTP calls.
+ * Defensive on purpose: a context restored from a bookmark carries an ISO
+ * STRING, and calling `.getTime()` on it throws — inside the
+ * `distinctUntilChanged` comparator that uses this key, the throw kills the
+ * widget's subscription and the block stops reacting to the date picker for
+ * the rest of the session. Mirrors the same guard in the chart widgets.
  *
- * @param value - The object to serialize.
- * @returns A deterministic string representation.
+ * @param value - The date to normalize.
+ * @returns The epoch value, or an empty string when it is absent or unparsable.
  */
-export function stableStringify(value: object): string {
-	const record = value as Record<string, unknown>;
-	return Object.keys(record)
-		.sort((a: string, b: string) => a.localeCompare(b))
-		.map((key: string) => `${key}=${JSON.stringify(record[key])}`)
-		.join('&');
+function toEpoch(value: Date | undefined): string {
+	if (!value) {
+		return '';
+	}
+	const time = value instanceof Date ? value.getTime() : new Date(value as unknown as string).getTime();
+	return Number.isNaN(time) ? '' : String(time);
 }

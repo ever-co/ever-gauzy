@@ -274,13 +274,16 @@ export abstract class BaseEmployeeChartWidgetComponent extends BaseDashboardWidg
 				// previous request instead of racing it to the signal.
 				switchMap((context: IDashboardWidgetContext) => this.fetchStatistics(context)),
 				tap((statistics: IMonthAggregatedEmployeeStatistics[] | null) => {
-					// Keep the last good payload on screen when a refresh fails,
-					// rather than blanking a working chart. `Array.isArray` rather
-					// than a truthiness check: an endpoint (or a proxy) answering
-					// `200` with an object would otherwise reach the dataset builders
-					// and throw while Angular renders the widget.
 					if (Array.isArray(statistics)) {
 						this.statistics.set(statistics);
+					} else if (statistics !== null) {
+						// A `200` carrying something other than a list (a proxy's error
+						// page, a changed contract). Feeding it to the dataset builders
+						// would throw while Angular renders the widget, but silently
+						// keeping the previous payload is worse still: the chart would
+						// show the PREVIOUS employee's months as if they were current.
+						// Say so instead.
+						this.setError(new Error('Unexpected employee statistics response'));
 					}
 					this.loading.set(false);
 				}),

@@ -19,9 +19,10 @@
 		aria-busy="true"
 		[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.WIDGETS.LOADING' | translate"
 	>
-		<div class="skeleton-line skeleton-title"></div>
-		<div class="skeleton-line skeleton-meta"></div>
-		<div class="skeleton-line skeleton-value"></div>
+		<!-- `span`, not `div`: `<output>` only accepts phrasing content. -->
+		<span class="skeleton-line skeleton-title"></span>
+		<span class="skeleton-line skeleton-meta"></span>
+		<span class="skeleton-line skeleton-value"></span>
 	</output>
 } @else if (!hasEmployee()) {
 	<div class="hr-info-state is-empty">

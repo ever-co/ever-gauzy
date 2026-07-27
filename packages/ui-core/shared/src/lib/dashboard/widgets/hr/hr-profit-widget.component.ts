@@ -48,8 +48,7 @@ export class HrProfitWidgetComponent extends BaseHrInfoWidgetComponent {
 	 * Overrides the base's single-history behaviour because profit is derived from
 	 * two record sets, exactly as `HumanResourcesComponent.openProfitDialog()`
 	 * does. Both requests and the dialog bundle are loaded in parallel, and any
-	 * failure surfaces in the widget's own error state rather than silently
-	 * swallowing the click.
+	 * failure is reported rather than silently swallowing the click.
 	 */
 	public openProfitHistory(): void {
 		const context = this.widgetContext();
@@ -58,6 +57,11 @@ export class HrProfitWidgetComponent extends BaseHrInfoWidgetComponent {
 			return;
 		}
 
+		// Captured with the rest of the click-time scope. Reading `totals()`
+		// after the await would pair the OLD employee's records with the NEW
+		// employee's totals whenever the selection moves while the fetch is in
+		// flight — a dialog that silently disagrees with itself.
+		const totals = this.totals();
 		const { startDate, endDate, organizationId, tenantId } = context;
 		const history = (type: EmployeeStatisticsHistoryEnum) =>
 			this.employeeStatistics.getEmployeeStatisticsHistory({
@@ -83,7 +87,7 @@ export class HrProfitWidgetComponent extends BaseHrInfoWidgetComponent {
 			.pipe(
 				take(1),
 				catchError((error: unknown) => {
-					this.setError(error);
+					this.reportActionError(error);
 					return of(null);
 				}),
 				takeUntilDestroyed(this.destroyRef)
@@ -93,7 +97,6 @@ export class HrProfitWidgetComponent extends BaseHrInfoWidgetComponent {
 					return;
 				}
 				const [incomes, expenses, component] = resolved;
-				const totals = this.totals();
 				this.dialogs?.open(component, {
 					context: {
 						records: {

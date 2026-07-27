@@ -57,8 +57,9 @@ const BLOCK_PERMISSIONS: PermissionsEnum[] = [
  * Registry entries for the nine Human Resources info-block widgets.
  *
  * Every block is a projection of the same `/employee-statistics/months` payload;
- * `HrStatisticsCacheService` collapses them into a single request per scope, so
- * a canvas holding all nine still issues one call.
+ * `EmployeeMonthStatisticsCacheService` collapses them into a single request per
+ * scope, so a canvas holding all nine still issues one call — and shares it with
+ * any employee chart widget pinned to the same person.
  *
  * Registered by the integrator (via `WidgetRegistryService.registerWidgets`) so
  * they show up in the dashboard builder's palette under "Human Resources".

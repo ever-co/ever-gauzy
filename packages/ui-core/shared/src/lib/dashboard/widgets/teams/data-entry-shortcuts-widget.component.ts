@@ -32,15 +32,17 @@ interface IDataEntryShortcut {
 /**
  * Quick links that jump straight into the "add income" / "add expense" flows.
  *
- * This is the widgetized form of `ga-data-entry-shortcuts`, a component that was
+ * This wraps `ga-data-entry-shortcuts` as a widget — a component that was
  * written but never declared in ANY NgModule, so it could not be rendered at
- * all. Widgetizing it fixes four things beyond making it reachable:
+ * all. Wrapping it fixes four things beyond making it reachable:
  *
  * 1. Its header was the untranslated literal "Data Entry Shortcuts". On a canvas
  *    the title belongs to `ga-dashboard-widget-host`, which translates it.
  * 2. Its two recurring-expense tiles shared one label
  *    (`DASHBOARD_PAGE.RECURRING_EXPENSES`), so they were indistinguishable; they
- *    now say Organization / Employee.
+ *    now say Organization / Employee, and they open the recurring-expense pages
+ *    with the create dialog rather than dropping the user on the generic
+ *    organizations / employees list the original navigated to.
  * 3. The tiles were `<nb-card (click)>` — not focusable, not keyboard operable,
  *    and invisible to a screen reader. They are `<button>`s now.
  * 4. A user with none of the four permissions got an empty card; there is an
@@ -80,6 +82,13 @@ export class DataEntryShortcutsWidgetComponent extends BaseDashboardWidgetCompon
 		const canAddExpense =
 			this._store.hasPermission(PermissionsEnum.ORG_EXPENSES_VIEW) &&
 			this._store.hasPermission(PermissionsEnum.ORG_EXPENSES_EDIT);
+		// The EMPLOYEE recurring expenses page is gated by its OWN permission pair
+		// in the sidebar (`employees-recurring-expenses`), not by the organization
+		// expense one — offering the tile on `ORG_EXPENSES_*` would advertise a
+		// page the route guard then refuses.
+		const canAddEmployeeRecurringExpense =
+			this._store.hasPermission(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW) &&
+			this._store.hasPermission(PermissionsEnum.EMPLOYEE_EXPENSES_EDIT);
 
 		if (canAddIncome) {
 			shortcuts.push({
@@ -108,17 +117,25 @@ export class DataEntryShortcutsWidgetComponent extends BaseDashboardWidgetCompon
 					descriptionKey: 'DASHBOARD_PAGE.ADD_ORGANIZATION_RECURRING_EXPENSE',
 					icon: 'minus-circle-outline',
 					status: 'danger',
-					route: 'pages/organizations'
-				},
-				{
-					id: 'employee-recurring-expense',
-					titleKey: 'DASHBOARD_PAGE.BUILDER.WIDGETS.DATA_ENTRY_SHORTCUTS.EMPLOYEE_RECURRING',
-					descriptionKey: 'DASHBOARD_PAGE.ADD_EMPLOYEE_RECURRING_EXPENSE',
-					icon: 'minus-circle-outline',
-					status: 'danger',
-					route: 'pages/employees'
+					// Same target the sidebar's "Expense Recurring" add-link uses. The
+					// original component navigated to `pages/organizations`, i.e. the
+					// org list — the advertised entry flow never opened.
+					route: 'pages/accounting/expense-recurring?openAddDialog=true'
 				}
 			);
+		}
+
+		if (canAddEmployeeRecurringExpense) {
+			shortcuts.push({
+				id: 'employee-recurring-expense',
+				titleKey: 'DASHBOARD_PAGE.BUILDER.WIDGETS.DATA_ENTRY_SHORTCUTS.EMPLOYEE_RECURRING',
+				descriptionKey: 'DASHBOARD_PAGE.ADD_EMPLOYEE_RECURRING_EXPENSE',
+				icon: 'minus-circle-outline',
+				status: 'danger',
+				// Same target the sidebar's "Recurring Expenses" add-link uses; the
+				// original navigated to the employee LIST instead.
+				route: 'pages/employees/recurring-expenses?openAddDialog=true'
+			});
 		}
 
 		return shortcuts;
@@ -142,7 +159,9 @@ export class DataEntryShortcutsWidgetComponent extends BaseDashboardWidgetCompon
 	public open(shortcut: IDataEntryShortcut): void {
 		// Failures are swallowed on purpose: a rejected navigation (a guard said
 		// no) is not a data error, and turning it into the widget's error state
-		// would hide every other shortcut behind a retry button.
-		void this._router.navigateByUrl(shortcut.route).catch(() => undefined);
+		// would hide every other shortcut behind a retry button. `false` rather
+		// than `undefined` so the handler matches `navigateByUrl`'s own
+		// `Promise<boolean>` instead of widening it to `any`.
+		void this._router.navigateByUrl(shortcut.route).catch(() => false);
 	}
 }

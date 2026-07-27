@@ -2,7 +2,13 @@
 	<div class="counter-error" role="alert">
 		<div class="counter-error-text">
 			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
-			<span class="counter-error-label" [title]="error()">
+			<!-- See `teams-widget-state`: `title` alone reaches neither screen
+				readers nor touch users, so the detail goes in `aria-label`. -->
+			<span
+				class="counter-error-label"
+				[title]="error()"
+				[attr.aria-label]="('DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate) + ': ' + error()"
+			>
 				{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate }}
 			</span>
 		</div>
@@ -17,8 +23,9 @@
 		aria-busy="true"
 		[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.WIDGETS.LOADING' | translate"
 	>
-		<div class="skeleton-line skeleton-value"></div>
-		<div class="skeleton-line skeleton-strip"></div>
+		<!-- `span`, not `div`: `<output>` only accepts phrasing content. -->
+		<span class="skeleton-line skeleton-value"></span>
+		<span class="skeleton-line skeleton-strip"></span>
 	</output>
 } @else {
 	<div class="counter-headline">

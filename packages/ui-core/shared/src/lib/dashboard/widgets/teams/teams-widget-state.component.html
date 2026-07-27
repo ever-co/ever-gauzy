@@ -2,7 +2,17 @@
 	<div class="widget-error" role="alert">
 		<div class="widget-error-text">
 			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
-			<span class="widget-error-label" [title]="error()">
+			<!--
+				`aria-label` carries the DETAIL: the visible text is the generic
+				"Error" label (the message is truncated to one line), and `title`
+				only surfaces on hover — which leaves keyboard and touch users, and
+				every screen reader, with no way to learn what actually failed.
+			-->
+			<span
+				class="widget-error-label"
+				[title]="error()"
+				[attr.aria-label]="('DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate) + ': ' + error()"
+			>
 				{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate }}
 			</span>
 		</div>
@@ -18,7 +28,8 @@
 		[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.WIDGETS.LOADING' | translate"
 	>
 		@for (row of skeletonRange(); track row) {
-			<div class="skeleton-line"></div>
+			<!-- `span`, not `div`: `<output>` only accepts phrasing content. -->
+			<span class="skeleton-line"></span>
 		}
 	</output>
 } @else if (empty()) {

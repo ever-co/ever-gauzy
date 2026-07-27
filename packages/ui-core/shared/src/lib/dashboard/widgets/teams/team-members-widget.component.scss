@@ -5,6 +5,12 @@
 	height: 100%;
 	width: 100%;
 	min-width: 0;
+	// Makes the host a query container so the row layout below can break on the
+	// WIDGET's width. A viewport media query is the wrong axis here: this widget
+	// can sit in a 3-column cell of a 12-column canvas on a wide desktop, where
+	// the five columns collide long before the viewport is narrow.
+	container-type: inline-size;
+	container-name: team-members-widget;
 }
 
 .member-list {
@@ -83,7 +89,7 @@
 
 // Below this the five columns stop fitting; drop the progress bar rather than
 // letting the name and the duration collide.
-@media only screen and (max-width: 480px) {
+@container team-members-widget (max-width: 480px) {
 	.member-row {
 		grid-template-columns: 16px minmax(0, 1fr) auto auto;
 	}

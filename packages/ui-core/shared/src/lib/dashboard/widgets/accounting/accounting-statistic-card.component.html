@@ -2,7 +2,14 @@
 	<div class="statistic-error" role="alert">
 		<div class="statistic-error-text">
 			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
-			<span class="statistic-error-label" [title]="error()">
+			<!-- The visible label is generic and the message is only in `title`,
+				which needs a hover. `aria-label` gives screen-reader, keyboard and
+				touch users the same detail. -->
+			<span
+				class="statistic-error-label"
+				[title]="error()"
+				[attr.aria-label]="('DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate) + ': ' + error()"
+			>
 				{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate }}
 			</span>
 		</div>
@@ -17,7 +24,8 @@
 		aria-busy="true"
 		[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.WIDGETS.LOADING' | translate"
 	>
-		<div class="skeleton-line skeleton-value"></div>
+		<!-- `span`, not `div`: `<output>` only accepts phrasing content. -->
+		<span class="skeleton-line skeleton-value"></span>
 	</output>
 } @else if (unavailableKey(); as unavailable) {
 	<p class="statistic-unavailable">{{ unavailable | translate }}</p>

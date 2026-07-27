@@ -54,10 +54,10 @@ const TEAMS_PERMISSIONS: PermissionsEnum[] = [PermissionsEnum.ADMIN_DASHBOARD_VI
  * palette under the "Teams" category.
  *
  * The last entry is the odd one out: the data-entry shortcuts are a navigation
- * widget with nothing to do with teams, so it is categorised as `other` and
+ * widget with nothing to do with teams, so it is categorized as `other` and
  * carries the accounting permissions of the pages it links to. It lives in this
- * file because it was widgetized in the same pass — moving it to an accounting
- * bundle later only requires moving the entry, not the id.
+ * file because it was wrapped as a widget in the same pass — moving it to an
+ * accounting bundle later only requires moving the entry, not the id.
  */
 export const TEAMS_DASHBOARD_WIDGETS: WidgetRegistryConfig[] = [
 	{
@@ -173,7 +173,7 @@ export const TEAMS_DASHBOARD_WIDGETS: WidgetRegistryConfig[] = [
 	},
 	{
 		location: 'dashboard',
-		// Not a Teams widget: it links into Accounting. Categorised honestly so the
+		// Not a Teams widget: it links into Accounting. Categorized honestly so the
 		// palette groups it where a user would look for it.
 		category: 'other',
 		widgetId: TEAMS_WIDGET_IDS.DATA_ENTRY_SHORTCUTS,
@@ -186,10 +186,16 @@ export const TEAMS_DASHBOARD_WIDGETS: WidgetRegistryConfig[] = [
 		supportedWidths: [3, 4, 6, 8, 12],
 		// Pure navigation: it renders the same tiles whatever the range or scope.
 		contextRequirements: [],
-		// The tiles open the Income / Expenses create dialogs, so a user needs the
-		// view permission of at least one of them for the widget to show anything.
-		// The tiles themselves additionally check the matching EDIT permission.
-		permissions: [PermissionsEnum.ORG_INCOMES_VIEW, PermissionsEnum.ORG_EXPENSES_VIEW],
+		// The tiles open the Income / Expenses / recurring-expense create dialogs,
+		// so a user needs the view permission of at least one of them for the
+		// widget to show anything. The tiles themselves additionally check the
+		// matching EDIT permission, and the employee recurring-expense tile checks
+		// the EMPLOYEE (not organization) pair its page is guarded by.
+		permissions: [
+			PermissionsEnum.ORG_INCOMES_VIEW,
+			PermissionsEnum.ORG_EXPENSES_VIEW,
+			PermissionsEnum.EMPLOYEE_EXPENSES_VIEW
+		],
 		loadComponent: () =>
 			import('./data-entry-shortcuts-widget.component').then((m) => m.DataEntryShortcutsWidgetComponent)
 	}

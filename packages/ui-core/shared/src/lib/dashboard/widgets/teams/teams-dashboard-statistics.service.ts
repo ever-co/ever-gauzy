@@ -9,7 +9,6 @@ import {
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IReportDayData,
-	IReportDayGroupByEmployee,
 	ITimeLog,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
@@ -48,6 +47,26 @@ const TIME_LOG_RELATIONS: string[] = ['project', 'task', 'employee.user'];
 interface ICacheEntry {
 	readonly stream$: Observable<ITeamsDashboardSnapshot>;
 	readonly expiresAt: number;
+}
+
+/**
+ * Runtime shape of one employee-grouped daily report row.
+ *
+ * Typed here rather than taken from `IReportDayGroupByEmployee`, which is stale:
+ * the contract declares `logs[].employeeLogs[]`, but
+ * `GetTimeLogGroupByEmployeeHandler` actually answers with
+ * `logs[].projectLogs[]` plus an already averaged `activity` on the row itself.
+ * Walking the contract's shape yields `undefined` at every level, which is why
+ * activity badges read 0% for everybody. Fixing the contract is not an option
+ * here — the API builds against it too.
+ */
+interface IEmployeeGroupedReportRow {
+	readonly employee?: { readonly userId?: ID };
+	/** Average activity over the whole range, computed server side. */
+	readonly activity?: number;
+	readonly logs?: readonly {
+		readonly projectLogs?: readonly { readonly sum?: number; readonly activity?: number }[];
+	}[];
 }
 
 /**
@@ -142,7 +161,9 @@ export class TeamsDashboardStatisticsService {
 			// member-scoped context, which hashes differently. Drop that one too,
 			// or "refresh" leaves the activity percentage frozen for the TTL.
 			const employeeIds = this._countsEmployeeIds.get(scope);
-			if (employeeIds) {
+			// An empty list means `_loadCounts` never issued a request for this
+			// scope, so there is no narrowed entry to drop.
+			if (employeeIds?.length) {
 				this._statisticsCache.invalidate(this._countsContext(context, employeeIds));
 			}
 		} else {
@@ -228,12 +249,15 @@ export class TeamsDashboardStatisticsService {
 	 * implementations would hash differently, which is exactly the bug that makes
 	 * a refresh replay a stale activity percentage.
 	 *
+	 * Both callers guarantee a non-empty list: an empty one would widen the query
+	 * back to the whole organization, which {@link _loadCounts} refuses to do.
+	 *
 	 * @param context - The ambient dashboard context.
-	 * @param employeeIds - Members of the teams in scope; empty keeps the ambient scope.
+	 * @param employeeIds - Members of the teams in scope.
 	 * @returns The context to hand to {@link TimesheetStatisticsCacheService}.
 	 */
 	private _countsContext(context: IDashboardWidgetContext, employeeIds: ID[]): IDashboardWidgetContext {
-		return { ...context, employeeIds: employeeIds.length ? employeeIds : context.employeeIds };
+		return { ...context, employeeIds };
 	}
 
 	/**
@@ -254,14 +278,13 @@ export class TeamsDashboardStatisticsService {
 			groupBy: ReportGroupFilterEnum.employee
 		};
 
-		const [teams, projectsTotal] = await Promise.all([
+		// All four are independent of each other, so they go out together: two
+		// sequential batches cost an extra round-trip on every Teams canvas load.
+		const [teams, projectsTotal, logs, dailyReport] = await Promise.all([
 			this._teamsService.getAll(TEAM_RELATIONS, { organizationId, tenantId }).then((page) => page?.items ?? []),
 			// A failing project count only degrades one denominator; it must not
 			// take down every Teams widget on the canvas.
-			this._projectsService.getCount({ organizationId, tenantId }).catch(() => 0)
-		]);
-
-		const [logs, dailyReport] = await Promise.all([
+			this._projectsService.getCount({ organizationId, tenantId }).catch(() => 0),
 			this._timesheetService.getTimeLogs(request, TIME_LOG_RELATIONS),
 			// Same reasoning: without the daily report members simply have no
 			// activity percentage, which is far better than an error state.
@@ -391,11 +414,11 @@ export class TeamsDashboardStatisticsService {
 			employee: member.employee,
 			// The last log wins, exactly like the legacy page's `logs.reverse()[0]`,
 			// but without mutating the shared array it filtered from.
-			isRunningTimer: isWorkingToday ? !!memberLogs[memberLogs.length - 1]?.isRunning : false,
+			isRunningTimer: isWorkingToday ? !!memberLogs.at(-1)?.isRunning : false,
 			isWorkingToday,
 			workedDuration,
 			workPeriod,
-			activity: activity === undefined ? null : activity,
+			activity: activity ?? null,
 			teamId: team.id,
 			teamName: team.name
 		};
@@ -403,49 +426,70 @@ export class TeamsDashboardStatisticsService {
 
 	/**
 	 * Reduces the employee-grouped daily report into one activity percentage per
-	 * user, weighted by logged duration.
+	 * user.
 	 *
-	 * The legacy page reads `dailyLog.activity`, a field the grouped report does
-	 * not have (activity lives on `logs[].employeeLogs[]`), so its activity badges
-	 * were always empty. This walks the real shape instead.
+	 * @param report - The daily report, grouped by employee.
+	 * @returns Activity percentage keyed by the member's USER id, which is what
+	 *          the report rows carry (not the employee id).
 	 */
 	private _mapActivity(report: IReportDayData[]): Map<ID, number> {
 		const activityByUserId = new Map<ID, number>();
 
-		for (const row of (report ?? []) as IReportDayGroupByEmployee[]) {
+		for (const row of (report ?? []) as IEmployeeGroupedReportRow[]) {
 			const userId = row?.employee?.userId;
 			if (!userId) {
 				continue;
 			}
-
-			let weightedTotal = 0;
-			let weight = 0;
-			let plainTotal = 0;
-			let samples = 0;
-
-			for (const day of row.logs ?? []) {
-				for (const entry of day?.employeeLogs ?? []) {
-					const activity = Number(entry?.activity);
-					if (!Number.isFinite(activity)) {
-						continue;
-					}
-					const duration = Number(entry?.sum) || 0;
-					weightedTotal += activity * duration;
-					weight += duration;
-					plainTotal += activity;
-					samples += 1;
-				}
+			const activity = this._rowActivity(row);
+			if (activity !== null) {
+				activityByUserId.set(userId, activity);
 			}
-
-			if (!samples) {
-				continue;
-			}
-			// Fall back to the plain mean when every entry has a zero duration —
-			// dividing by that weight would produce NaN.
-			activityByUserId.set(userId, weight > 0 ? weightedTotal / weight : plainTotal / samples);
 		}
 
 		return activityByUserId;
+	}
+
+	/**
+	 * Activity percentage of one report row.
+	 *
+	 * Prefers the row's own `activity` — the server-side average over the whole
+	 * range, and the very field the legacy page reads — and only falls back to
+	 * averaging the per-project entries when the row carries none.
+	 *
+	 * @param row - One employee-grouped daily report row.
+	 * @returns The percentage, or `null` when the row holds no usable sample.
+	 */
+	private _rowActivity(row: IEmployeeGroupedReportRow): number | null {
+		const rowActivity = Number(row?.activity);
+		if (Number.isFinite(rowActivity)) {
+			return rowActivity;
+		}
+
+		let weightedTotal = 0;
+		let weight = 0;
+		let plainTotal = 0;
+		let samples = 0;
+
+		for (const day of row.logs ?? []) {
+			for (const entry of day?.projectLogs ?? []) {
+				const activity = Number(entry?.activity);
+				if (!Number.isFinite(activity)) {
+					continue;
+				}
+				const duration = Number(entry?.sum) || 0;
+				weightedTotal += activity * duration;
+				weight += duration;
+				plainTotal += activity;
+				samples += 1;
+			}
+		}
+
+		if (!samples) {
+			return null;
+		}
+		// Fall back to the plain mean when every entry has a zero duration —
+		// dividing by that weight would produce NaN.
+		return weight > 0 ? weightedTotal / weight : plainTotal / samples;
 	}
 
 	/**
@@ -464,6 +508,14 @@ export class TeamsDashboardStatisticsService {
 		// Remembered so `invalidate()` can drop the entry this call is about to
 		// create — it is keyed by the narrowed context, not by `context`.
 		this._countsEmployeeIds.set(teamsScopeKey(context), employeeIds);
+
+		if (!employeeIds.length) {
+			// Nobody is in scope, so there is nothing to ask about. Asking anyway
+			// would drop the employee filter and report the WHOLE organization's
+			// activity next to a team that has zero members — the one number on
+			// this snapshot a user would read as "my empty team is 84% active".
+			return Promise.resolve(null);
+		}
 
 		return firstValueFrom(
 			this._statisticsCache

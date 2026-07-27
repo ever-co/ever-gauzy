@@ -13,9 +13,14 @@
 }
 
 // `ga-info-block` was written for a vertical stack of blocks on the legacy page
-// and carries a bottom margin for the next sibling. Inside a widget card it is
-// the ONLY block, so that margin is dead space that pushes the figure off-centre.
-:host ::ng-deep .info-block-wrapper {
+// and carries a bottom margin for the next sibling. Inside a widget card the
+// OUTER block is the only one, so that margin is dead space that pushes the
+// figure off-centre.
+//
+// The `:not()` is load-bearing: the accordion rows this card projects are
+// `ga-info-block`s too and carry the very same wrapper class, so an unqualified
+// selector would also collapse the spacing BETWEEN those rows.
+:host ::ng-deep .info-block-wrapper:not(.info-block-wrapper--list-item) {
   margin-bottom: 0;
 }
 

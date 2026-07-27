@@ -5,10 +5,14 @@ import { NbDialogService } from '@nebular/theme';
 import { combineLatest, from, of, Subject } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, startWith, switchMap, take, tap } from 'rxjs/operators';
 import { BonusTypeEnum, EmployeeStatisticsHistoryEnum, ID, IMonthAggregatedEmployeeStatistics } from '@gauzy/contracts';
-import { EmployeeStatisticsService, IDashboardWidgetContext } from '@gauzy/ui-core/core';
+import { EmployeeStatisticsService, ErrorHandlingService, IDashboardWidgetContext } from '@gauzy/ui-core/core';
 import { CurrencyPositionPipe } from '../../../pipes/currency-position.pipe';
 import { BaseDashboardWidgetComponent } from '../../widget-host/base-dashboard-widget.component';
-import { HrStatisticsCacheService } from './hr-statistics-cache.service';
+// Deliberately the CHART family's cache: both widget families project the very
+// same `/employee-statistics/months` response, and a second cache beside it
+// would mean an HR block and an employee chart pinned to the same person issue
+// two identical requests. One cache, one request — whoever asks first wins.
+import { EmployeeMonthStatisticsCacheService } from '../charts/employee-month-statistics-cache.service';
 import { hrStatisticsKey, IHrStatisticsTotals, resolveHrEmployeeId, sumHrStatistics } from './hr-statistics.utils';
 
 /**
@@ -16,16 +20,20 @@ import { hrStatisticsKey, IHrStatisticsTotals, resolveHrEmployeeId, sumHrStatist
  *
  * All nine blocks are projections of the very same
  * `/employee-statistics/months` payload, so they all subscribe to the ambient
- * dashboard context here and fetch through {@link HrStatisticsCacheService},
- * which collapses their nine identical in-flight requests into one — that is the
- * whole reason a block is cheap enough to be dropped on a canvas nine times.
+ * dashboard context here and fetch through
+ * {@link EmployeeMonthStatisticsCacheService}, which collapses their nine
+ * identical in-flight requests into one — that is the whole reason a block is
+ * cheap enough to be dropped on a canvas nine times.
  *
  * Subclasses only decide *which* number of the payload they show, how it is
  * labelled, and which history dialog (if any) it opens; they never fetch.
  */
 @Directive()
 export abstract class BaseHrInfoWidgetComponent extends BaseDashboardWidgetComponent implements OnInit {
-	private readonly _statisticsCache = inject(HrStatisticsCacheService);
+	private readonly _statisticsCache = inject(EmployeeMonthStatisticsCacheService);
+
+	/** Surfaces secondary (dialog) failures without touching the widget's own state. */
+	private readonly _errorHandling = inject(ErrorHandlingService);
 
 	/** Record-level history behind the aggregates; used by the history dialogs. */
 	protected readonly employeeStatistics = inject(EmployeeStatisticsService);
@@ -188,7 +196,7 @@ export abstract class BaseHrInfoWidgetComponent extends BaseDashboardWidgetCompo
 			.pipe(
 				take(1),
 				catchError((error: unknown) => {
-					this.setError(error);
+					this.reportActionError(error);
 					return of(null);
 				}),
 				takeUntilDestroyed(this.destroyRef)
@@ -200,6 +208,28 @@ export abstract class BaseHrInfoWidgetComponent extends BaseDashboardWidgetCompo
 				const [records, component] = resolved;
 				this.dialogs?.open(component, { context: { type, records } });
 			});
+	}
+
+	/**
+	 * Reports the failure of a SECONDARY action (a history dialog) without
+	 * touching the widget's own state.
+	 *
+	 * Routing these through `setError()` would put an already-loaded card into
+	 * its error state, hiding correct totals behind a retry button because an
+	 * optional, read-only dialog failed to open.
+	 *
+	 * @param error - Anything thrown or rejected by the dialog's data/bundle load.
+	 */
+	protected reportActionError(error: unknown): void {
+		try {
+			this._errorHandling.handleError(error);
+		} catch {
+			// The toast stack lives in `NbToastrModule.forRoot()`. A widget is
+			// created through the host's own injector and may be rendered by a
+			// shell that never registered it — a missing toast must not turn one
+			// swallowed failure into two.
+			console.error('Dashboard widget action failed', error);
+		}
 	}
 
 	/**
@@ -268,7 +298,7 @@ export abstract class BaseHrInfoWidgetComponent extends BaseDashboardWidgetCompo
 					}
 
 					this.loading.set(true);
-					return this._statisticsCache.getStatistics(context, employeeId).pipe(
+					return this._statisticsCache.getMonthStatistics(context, employeeId).pipe(
 						catchError((error: unknown) => {
 							this.setError(error);
 							return of(null);

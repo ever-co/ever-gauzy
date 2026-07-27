@@ -7,7 +7,6 @@
  * pays for the blocks it actually renders.
  */
 export * from './hr-statistics.utils';
-export * from './hr-statistics-cache.service';
 export * from './hr-info-card.component';
 export * from './base-hr-info-widget.component';
 export * from './hr-total-income-widget.component';

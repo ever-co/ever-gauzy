@@ -1,14 +1,16 @@
 import { PermissionsEnum } from '@gauzy/contracts';
 import { WidgetRegistryConfig } from '@gauzy/ui-core/core';
-// Only value-free helpers are imported here on purpose: pulling a widget
-// component into this module would load every chart bundle up front and defeat
-// the `loadComponent` dynamic imports below.
+// The DEPENDENCY-FREE constants module, never `employee-chart.utils`. This file
+// is reachable from the root bootstrap through `provideCoreDashboardWidgets()`,
+// so whatever it imports lands in the INITIAL bundle: importing the utils here
+// would drag the Chart.js dataset builders (and `@gauzy/ui-config`) in eagerly
+// and undo the `loadComponent` lazy imports below.
 import {
 	EMPLOYEE_CHART_KINDS,
 	EMPLOYEE_CHART_KIND_LABELS,
 	EMPLOYEE_CHART_TYPE_CONFIG_KEY,
 	EmployeeChartKind
-} from './employee-chart.utils';
+} from './employee-chart.constants';
 
 /**
  * Namespaced widget ids for the employee statistics charts.
