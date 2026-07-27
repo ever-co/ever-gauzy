@@ -1,0 +1,7 @@
+<ga-accounting-statistic-card
+	color="var(--color-danger-default)"
+	[value]="expenses()"
+	[loading]="loading()"
+	[error]="error()"
+	(retry)="refresh()"
+></ga-accounting-statistic-card>

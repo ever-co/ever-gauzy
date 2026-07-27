@@ -1,0 +1,111 @@
+@use 'themes' as *;
+
+// No card chrome here on purpose: `ga-dashboard-widget-host` already renders the
+// `nb-card`, its header and the body padding. This component only fills that body,
+// centred the same way the Accounting page centres its KPI cards.
+:host {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+// `ga-single-statistic` is reused as-is, but it was written for a page that
+// prints the KPI name above the figure. On a canvas the host header already does
+// that, so the (empty) title slot is collapsed rather than fed a duplicate label,
+// and the trailing margin is dropped so the figure stays vertically centred.
+:host ::ng-deep ga-single-statistic {
+  .statistic-component {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .title {
+    display: none;
+  }
+
+  .content {
+    margin-bottom: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// Loading state — one shimmering bar standing in for the figure, so the card
+// does not change height while fetching.
+.statistic-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  .skeleton-line {
+    border-radius: nb-theme(border-radius);
+    background: linear-gradient(
+      90deg,
+      nb-theme(background-basic-color-2) 25%,
+      nb-theme(background-basic-color-3) 37%,
+      nb-theme(background-basic-color-2) 63%
+    );
+    background-size: 400% 100%;
+    animation: accounting-skeleton-shimmer 1.4s ease infinite;
+  }
+
+  .skeleton-value {
+    height: 36px;
+    width: 60%;
+  }
+}
+
+// Respect users who asked the OS to reduce motion.
+@media (prefers-reduced-motion: reduce) {
+  .statistic-skeleton .skeleton-line {
+    animation: none;
+  }
+}
+
+@keyframes accounting-skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+.statistic-unavailable {
+  margin: 0;
+  color: nb-theme(text-hint-color);
+  font-size: nb-theme(text-caption-font-size);
+}
+
+.statistic-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+
+  .statistic-error-text {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: nb-theme(text-hint-color);
+    font-size: 12px;
+    line-height: 15px;
+  }
+
+  .statistic-error-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  nb-icon {
+    height: 14px;
+    width: 14px;
+  }
+}

@@ -1,0 +1,57 @@
+<ga-teams-widget-state
+	[loading]="loading()"
+	[error]="error()"
+	[empty]="members().length === 0"
+	[skeletonRows]="4"
+	emptyMessageKey="DASHBOARD_PAGE.BUILDER.WIDGETS.TEAM_MEMBERS.EMPTY"
+	(retry)="refresh()"
+>
+	<div class="member-list">
+		@for (member of members(); track member.id) {
+			<div class="member-row">
+				<span
+					class="member-dot"
+					[class.online]="member.isRunningTimer"
+					[class.offline]="!member.isWorkingToday"
+					[attr.aria-hidden]="true"
+				></span>
+
+				<div class="member-identity">
+					<ngx-avatar
+						class="avatar-dashboard"
+						[id]="member.employee?.id"
+						[name]="member.name"
+						[src]="member.imageUrl"
+						[employee]="member.employee"
+					></ngx-avatar>
+					@if (showTeamName()) {
+						<div class="member-team" [title]="member.teamName">{{ member.teamName }}</div>
+					}
+				</div>
+
+				<div class="member-progress">
+					<nb-progress-bar
+						size="tiny"
+						[displayValue]="false"
+						[status]="statusFor(workedPercentage(member))"
+						[value]="workedPercentage(member)"
+					></nb-progress-bar>
+				</div>
+
+				<div class="member-duration">
+					@if (member.workedDuration > 0) {
+						{{ member.workedDuration | durationFormat }}
+					} @else {
+						{{ 'ORGANIZATIONS_PAGE.NOT_WORKED' | translate }}
+					}
+				</div>
+
+				<div class="member-activity">
+					@if (member.isWorkingToday && member.activity !== null) {
+						<nb-badge [status]="statusFor(member.activity)" [text]="activityLabel(member)"></nb-badge>
+					}
+				</div>
+			</div>
+		}
+	</div>
+</ga-teams-widget-state>

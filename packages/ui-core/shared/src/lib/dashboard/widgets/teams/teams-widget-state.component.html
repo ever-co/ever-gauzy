@@ -1,0 +1,31 @@
+@if (error()) {
+	<div class="widget-error" role="alert">
+		<div class="widget-error-text">
+			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
+			<span class="widget-error-label" [title]="error()">
+				{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate }}
+			</span>
+		</div>
+		<button nbButton ghost size="tiny" status="basic" type="button" (click)="retry.emit()">
+			{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.RETRY' | translate }}
+		</button>
+	</div>
+} @else if (loading()) {
+	<!-- <output> carries an implicit `status` live region, so no explicit role. -->
+	<output
+		class="widget-skeleton"
+		aria-busy="true"
+		[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.WIDGETS.LOADING' | translate"
+	>
+		@for (row of skeletonRange(); track row) {
+			<div class="skeleton-line"></div>
+		}
+	</output>
+} @else if (empty()) {
+	<div class="widget-empty">
+		<nb-icon icon="info-outline"></nb-icon>
+		<span>{{ emptyMessageKey() | translate }}</span>
+	</div>
+} @else {
+	<ng-content></ng-content>
+}

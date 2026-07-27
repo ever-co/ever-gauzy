@@ -1,0 +1,43 @@
+@if (error()) {
+	<div class="counter-error" role="alert">
+		<div class="counter-error-text">
+			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
+			<span class="counter-error-label" [title]="error()">
+				{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate }}
+			</span>
+		</div>
+		<button nbButton ghost size="tiny" status="basic" type="button" (click)="retry.emit()">
+			{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.RETRY' | translate }}
+		</button>
+	</div>
+} @else if (loading()) {
+	<!-- <output> carries an implicit `status` live region, so no explicit role. -->
+	<output
+		class="counter-skeleton"
+		aria-busy="true"
+		[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.WIDGETS.LOADING' | translate"
+	>
+		<div class="skeleton-line skeleton-value"></div>
+		<div class="skeleton-line skeleton-strip"></div>
+	</output>
+} @else {
+	<div class="counter-headline">
+		<div class="h1 counter-value">{{ value() }}</div>
+		@if (suffix(); as suffixText) {
+			<div class="counter-suffix">{{ suffixText }}</div>
+		}
+	</div>
+
+	<div class="counter-container">
+		<gauzy-counter-point
+			[total]="total()"
+			[value]="counterValue()"
+			[color]="color()"
+			[progress]="progress()"
+		></gauzy-counter-point>
+	</div>
+
+	@if (captionKey(); as caption) {
+		<div class="counter-caption">{{ caption | translate }}</div>
+	}
+}

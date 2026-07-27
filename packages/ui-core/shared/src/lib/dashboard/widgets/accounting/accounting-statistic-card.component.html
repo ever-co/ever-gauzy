@@ -1,0 +1,26 @@
+@if (error()) {
+	<div class="statistic-error" role="alert">
+		<div class="statistic-error-text">
+			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
+			<span class="statistic-error-label" [title]="error()">
+				{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate }}
+			</span>
+		</div>
+		<button nbButton ghost size="tiny" status="basic" type="button" (click)="retry.emit()">
+			{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.RETRY' | translate }}
+		</button>
+	</div>
+} @else if (loading()) {
+	<!-- <output> carries an implicit `status` live region, so no explicit role. -->
+	<output
+		class="statistic-skeleton"
+		aria-busy="true"
+		[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.WIDGETS.LOADING' | translate"
+	>
+		<div class="skeleton-line skeleton-value"></div>
+	</output>
+} @else if (unavailableKey(); as unavailable) {
+	<p class="statistic-unavailable">{{ unavailable | translate }}</p>
+} @else {
+	<ga-single-statistic [value]="value()" [color]="color()" [type]="type()"></ga-single-statistic>
+}

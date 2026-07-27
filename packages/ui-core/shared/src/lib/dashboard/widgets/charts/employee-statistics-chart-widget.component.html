@@ -1,0 +1,33 @@
+<div class="chart-switcher">
+	<div class="chart-switcher__toolbar">
+		<span class="chart-switcher__label">{{ 'DASHBOARD_PAGE.CHARTS.CHART_TYPE' | translate }}</span>
+
+		<!--
+			`nb-select` is not a native <select>, so the label above cannot be
+			associated with it via `for`; the accessible name is set explicitly.
+		-->
+		<nb-select
+			class="chart-switcher__select"
+			size="tiny"
+			[selected]="selectedKind()"
+			[attr.aria-label]="'DASHBOARD_PAGE.CHARTS.CHART_TYPE' | translate"
+			(selectedChange)="onKindChange($event)"
+		>
+			@for (kind of chartKinds; track kind) {
+				<nb-option [value]="kind">{{ labelFor(kind) | translate }}</nb-option>
+			}
+		</nb-select>
+	</div>
+
+	<ga-employee-chart-card
+		class="chart-switcher__chart"
+		[type]="chartType()"
+		[data]="chartData()"
+		[options]="chartOptions()"
+		[loading]="loading()"
+		[error]="error()"
+		[requiresEmployee]="requiresEmployee()"
+		[empty]="isEmpty()"
+		(retry)="refresh()"
+	></ga-employee-chart-card>
+</div>
