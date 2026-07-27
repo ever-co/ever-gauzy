@@ -20,7 +20,13 @@ import {
 	TimesheetService,
 	TimesheetStatisticsCacheService
 } from '@gauzy/ui-core/core';
-import { ITeamDashboardMember, ITeamDashboardTeam, ITeamsDashboardSnapshot } from './teams-dashboard.types';
+import {
+	ITeamDashboardMember,
+	ITeamDashboardMemberTask,
+	ITeamDashboardTeam,
+	ITeamsDashboardSnapshot,
+	NO_TASK_ID
+} from './teams-dashboard.types';
 import { resolveWorkingSeconds, teamsScopeKey, uniqueById } from './teams-widget.utils';
 
 /**
@@ -423,9 +429,45 @@ export class TeamsDashboardStatisticsService {
 			workedDuration,
 			workPeriod,
 			activity: activity ?? null,
+			tasks: this._mapTasks(memberLogs),
 			teamId: team.id,
 			teamName: team.name
 		};
+	}
+
+	/**
+	 * Groups a member's logs by task and sums each group's duration.
+	 *
+	 * Replicates the legacy page's `_groupBy('taskId', logs)` pass, with the logs
+	 * without a task collected under an explicit {@link NO_TASK_ID} bucket rather
+	 * than under the `"undefined"` string key that grouping produced by accident.
+	 *
+	 * @param logs - The member's time logs inside the selected range.
+	 * @returns One row per task, in the order the tasks were first logged against.
+	 */
+	private _mapTasks(logs: ITimeLog[]): ITeamDashboardMemberTask[] {
+		const byTask = new Map<ID, ITeamDashboardMemberTask>();
+
+		for (const log of logs) {
+			const id = log?.taskId ?? NO_TASK_ID;
+			const existing = byTask.get(id);
+
+			if (existing) {
+				existing.duration += Number(log.duration) || 0;
+				continue;
+			}
+
+			byTask.set(id, {
+				id,
+				title: log?.task?.title ?? '',
+				duration: Number(log.duration) || 0,
+				// `estimate` belongs to the task, not the log, so it is read once
+				// from the first log of the group rather than accumulated.
+				estimate: log?.task?.estimate
+			});
+		}
+
+		return Array.from(byTask.values());
 	}
 
 	/**

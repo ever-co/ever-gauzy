@@ -1,0 +1,44 @@
+<div class="member-row">
+	<span
+		class="member-dot"
+		[class.online]="member().isRunningTimer"
+		[class.offline]="!member().isWorkingToday"
+		[attr.aria-hidden]="true"
+	></span>
+
+	<div class="member-identity">
+		<ngx-avatar
+			class="avatar-dashboard"
+			[id]="member().employee?.id"
+			[name]="member().name"
+			[src]="member().imageUrl"
+			[employee]="member().employee"
+		></ngx-avatar>
+		@if (showTeamName()) {
+			<div class="member-team" [title]="member().teamName">{{ member().teamName }}</div>
+		}
+	</div>
+
+	<div class="member-progress">
+		<nb-progress-bar
+			size="tiny"
+			[displayValue]="false"
+			[status]="statusFor(workedPercentage())"
+			[value]="workedPercentage()"
+		></nb-progress-bar>
+	</div>
+
+	<div class="member-duration">
+		@if (member().workedDuration > 0) {
+			{{ member().workedDuration | durationFormat }}
+		} @else {
+			{{ 'ORGANIZATIONS_PAGE.NOT_WORKED' | translate }}
+		}
+	</div>
+
+	<div class="member-activity">
+		@if (member().isWorkingToday && member().activity !== null) {
+			<nb-badge [status]="statusFor(member().activity)" [text]="activityLabel()"></nb-badge>
+		}
+	</div>
+</div>

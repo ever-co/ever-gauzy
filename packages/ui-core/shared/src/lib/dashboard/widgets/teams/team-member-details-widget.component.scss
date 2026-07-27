@@ -1,0 +1,173 @@
+@use 'themes' as *;
+
+// `min-height: 0` is what makes the table scroll INSIDE the card: a grid child
+// defaults to `min-height: auto` and refuses to shrink below its content, which
+// would push the rows out of the widget's grid cell instead.
+//
+// The host is also the query container so the columns below break on the
+// WIDGET's width. A viewport media query is the wrong axis: this widget can sit
+// in a 6-column cell of a 12-column canvas on a wide desktop, where its six
+// columns collide long before the viewport is narrow.
+:host {
+	display: block;
+	height: 100%;
+	width: 100%;
+	min-width: 0;
+	min-height: 0;
+	container-type: inline-size;
+	container-name: team-member-details;
+}
+
+.details-scroll {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	height: 100%;
+	min-height: 0;
+	overflow-y: auto;
+	// Room for the scrollbar so it never sits on top of the activity badge.
+	padding-right: 0.25rem;
+}
+
+// identity | tasks | activity — the legacy table's col-3 / col-8 / col-1 split.
+.details-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr) auto;
+	align-items: start;
+	gap: 0.5rem;
+	padding: 0.5rem;
+}
+
+.details-head {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	// Opaque: the rows scroll underneath it.
+	background-color: nb-theme(gauzy-card-1);
+	color: nb-theme(text-hint-color);
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: nb-theme(text-subtitle-2-font-weight);
+	align-items: center;
+}
+
+.details-row {
+	border-radius: nb-theme(border-radius);
+	background-color: nb-theme(background-basic-color-2);
+}
+
+/* ---------- Member identity ---------- */
+
+.details-identity {
+	display: grid;
+	grid-template-columns: 16px minmax(0, 1fr);
+	align-items: center;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+.details-identity-text {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+	min-width: 0;
+}
+
+// Colours come from the theme palette (never a literal): the legacy row hard
+// coded green/orange/red, which reads wrong in the dark themes.
+.member-dot {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background-color: var(--color-warning-default);
+
+	&.online {
+		background-color: var(--color-success-default);
+	}
+
+	&.offline {
+		background-color: var(--color-danger-default);
+	}
+}
+
+.details-team {
+	color: nb-theme(text-hint-color);
+	font-size: nb-theme(text-caption-font-size);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ---------- Task lines ---------- */
+
+.details-tasks {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 0;
+}
+
+// title | duration | progress | estimate
+.task-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1.6fr) auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+/* ---------- Cells ---------- */
+
+// Every textual cell truncates rather than wrapping: a wrapped task title would
+// make one member's block twice as tall as their neighbours'.
+.cell-text {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.cell-numeric {
+	white-space: nowrap;
+	text-align: right;
+}
+
+.cell-muted {
+	color: nb-theme(text-hint-color);
+	font-size: nb-theme(text-caption-font-size);
+}
+
+.cell-progress {
+	min-width: 0;
+}
+
+.details-activity {
+	// `nb-badge` is absolutely positioned by default; the legacy row relies on the
+	// same override to use it as an inline chip.
+	nb-badge {
+		position: relative;
+		font-size: 12px;
+		font-weight: 600;
+		padding: 2px 4px;
+		border-radius: calc(#{nb-theme(border-radius)} / 2);
+	}
+}
+
+::ng-deep nb-progress-bar.size-tiny .progress-container {
+	height: 10px;
+}
+
+/* ---------- Narrow widget fallback ---------- */
+
+@container team-member-details (max-width: 560px) {
+	// Below this the four task columns stop fitting. The progress bar and the
+	// estimate go first — they are the pair that stops being readable, and the
+	// title plus the logged duration are what a user actually scans for.
+	.task-grid {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+
+	.cell-progress,
+	.cell-estimate {
+		display: none;
+	}
+}

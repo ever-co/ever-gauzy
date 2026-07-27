@@ -1,6 +1,36 @@
 import { ID, IEmployee } from '@gauzy/contracts';
 
 /**
+ * One task row of a team member, as rendered by the member-details widget.
+ *
+ * The legacy Teams dashboard derives these by grouping a member's time logs on
+ * `taskId` and summing the durations, so a member who logged three sessions
+ * against one task gets ONE row carrying their total.
+ */
+export interface ITeamDashboardMemberTask {
+	/** Task id, or {@link NO_TASK_ID} for time logged without a task. */
+	id: ID;
+
+	/** Task title; empty for the {@link NO_TASK_ID} bucket, which the widget labels. */
+	title: string;
+
+	/** Seconds the member logged against this task inside the selected range. */
+	duration: number;
+
+	/** The task's own estimate in seconds, when it has one. */
+	estimate?: number;
+}
+
+/**
+ * Bucket key for time logged WITHOUT a task.
+ *
+ * The legacy page produced the same bucket implicitly (grouping on an
+ * `undefined` `taskId` yields the string `"undefined"`); naming it means the
+ * template can recognise it instead of testing for a missing title.
+ */
+export const NO_TASK_ID = '__no_task__';
+
+/**
  * One member row of a team, as rendered by the Teams dashboard widgets.
  *
  * Flattened on purpose: the widgets render lists and counters, never the raw
@@ -37,6 +67,14 @@ export interface ITeamDashboardMember {
 
 	/** Activity percentage (0..100), or `null` when the daily report had none. */
 	activity: number | null;
+
+	/**
+	 * What the member worked ON inside the range, one row per task.
+	 *
+	 * Only the member-details widget renders these; the compact widgets ignore
+	 * them. Empty for a member who logged nothing.
+	 */
+	tasks: ITeamDashboardMemberTask[];
 
 	/** Team the row belongs to; a member of two teams produces two rows. */
 	teamId: ID;

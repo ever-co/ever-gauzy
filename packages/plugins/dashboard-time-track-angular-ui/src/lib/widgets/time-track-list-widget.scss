@@ -1,0 +1,240 @@
+@use 'themes' as *;
+
+// Layout shared by the five list-shaped Time Tracking widgets (Manual Time,
+// Tasks, Projects, Apps & URLs, Members).
+//
+// ONE stylesheet referenced from all five `styleUrls` rather than five
+// near-identical files: Angular still scopes it per component (emulated
+// encapsulation rewrites the selectors with each component's own attribute), so
+// nothing leaks, and the row chrome cannot drift between the panels.
+//
+// Colours are theme tokens only — never a literal — because a canvas widget has
+// to read correctly in all eight Gauzy themes.
+
+// `min-height: 0` is what makes the list scroll INSIDE the card: a flex/grid
+// child defaults to `min-height: auto` and refuses to shrink below its content,
+// which would push the rows out of the widget's grid cell instead.
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  // Query container so the row templates below break on the WIDGET's width. A
+  // viewport media query is the wrong axis: this widget can sit in a 4-column
+  // cell on a wide desktop, where its columns collide long before the viewport
+  // is narrow.
+  container-type: inline-size;
+  container-name: time-track-list-widget;
+}
+
+.list-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 100%;
+  min-height: 0;
+}
+
+// Right-aligned "View report" / "View all" link, mirroring the legacy panels.
+.list-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+.list-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  // Room for the scrollbar so it never sits on top of the last column.
+  padding-right: 0.25rem;
+}
+
+.list-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  // Opaque: the rows scroll underneath it.
+  background-color: nb-theme(gauzy-card-1);
+  color: nb-theme(text-hint-color);
+  font-size: nb-theme(text-caption-font-size);
+  font-weight: nb-theme(text-subtitle-2-font-weight);
+  // Same horizontal padding AND the same gap as `.list-row`: a grid computes its
+  // tracks per element, so a header with a different gap would print its labels
+  // out of line with the columns underneath it.
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.list-row {
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: nb-theme(border-radius);
+  background-color: nb-theme(background-basic-color-2);
+}
+
+// Every textual cell truncates rather than wrapping: a wrapped project name
+// would make one row twice as tall as the rows around it.
+.cell-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell-muted {
+  color: nb-theme(text-hint-color);
+  font-size: nb-theme(text-caption-font-size);
+}
+
+.cell-numeric {
+  white-space: nowrap;
+  text-align: right;
+}
+
+// Local, not Bootstrap's `.text-center`: a canvas widget must not depend on a
+// global utility sheet that a host application is free not to load.
+.cell-center {
+  text-align: center;
+}
+
+/* ---------- Percentage + progress bar cell (Tasks, Projects) ---------- */
+
+.cell-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+
+  .progress-value {
+    flex: 0 0 auto;
+    color: nb-theme(text-hint-color);
+    font-size: nb-theme(text-caption-font-size);
+    white-space: nowrap;
+  }
+
+  nb-progress-bar {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+// Scoped under `:host`: a bare `::ng-deep` is GLOBAL once any component using
+// this stylesheet loads, so it would resize every tiny progress bar in the app.
+// The bars it targets are all inside `.cell-progress` above, i.e. descendants of
+// this widget's host element.
+:host ::ng-deep nb-progress-bar.size-tiny .progress-container {
+  height: 10px;
+}
+
+/* ---------- Row templates ---------- */
+
+// member | project | duration | date
+.manual-time-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) auto auto;
+}
+
+// title | percentage + bar | duration
+.progress-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto;
+}
+
+// member | today | this week
+.member-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr);
+}
+
+/* ---------- Members: duration + activity badge + weekly bars ---------- */
+
+.member-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  min-width: 0;
+
+  .metric-duration {
+    font-size: nb-theme(text-caption-font-size);
+    white-space: nowrap;
+  }
+
+  // `nb-badge` is absolutely positioned by default; the legacy member row relies
+  // on the same override to use it as an inline chip.
+  nb-badge {
+    position: relative;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 4px;
+    border-radius: calc(#{nb-theme(border-radius)} / 2);
+  }
+}
+
+.member-week {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+// Seven bars, each as tall as that day's share of the member's own week.
+.member-week-graph {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 28px;
+  flex: 0 0 auto;
+
+  .bar-graph-entry {
+    width: 4px;
+    // A zero-duration day still gets a visible baseline stub, so the graph
+    // reads as "seven days" rather than as missing data.
+    min-height: 2px;
+    border-radius: 1px;
+    background-color: nb-theme(color-primary-default);
+  }
+}
+
+/* ---------- Apps & URLs ---------- */
+
+// `ngx-activity-item` is reused as-is (it owns the title / share / duration
+// layout of the legacy panel). It was written for a page whose rows sit inside
+// an `nb-list-item`, so only the surrounding row chrome is supplied here.
+.activity-row {
+  display: block;
+  padding: 0.25rem 0.5rem;
+}
+
+/* ---------- Narrow widget fallbacks ---------- */
+
+@container time-track-list-widget (max-width: 420px) {
+  // Below this the four/three column templates stop fitting; drop the least
+  // important column rather than letting the cells collide.
+  .manual-time-row {
+    grid-template-columns: minmax(0, 1.4fr) auto auto;
+  }
+
+  .manual-time-date {
+    display: none;
+  }
+
+  .progress-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .cell-progress {
+    display: none;
+  }
+
+  .member-week-graph {
+    display: none;
+  }
+}
