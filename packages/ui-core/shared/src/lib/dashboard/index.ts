@@ -23,3 +23,4 @@ export * from './window/window-template.directive';
 export * from './window-layout/window-layout.component';
 export * from './window-layout/window-layout.module';
 export * from './widget-host';
+export * from './widgets';

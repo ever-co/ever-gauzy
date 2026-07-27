@@ -1,0 +1,24 @@
+@if (shortcuts().length) {
+	<div class="shortcut-grid">
+		@for (shortcut of shortcuts(); track shortcut.id) {
+			<button
+				type="button"
+				class="shortcut-tile"
+				[class.shortcut-tile--success]="shortcut.status === 'success'"
+				[class.shortcut-tile--danger]="shortcut.status === 'danger'"
+				(click)="open(shortcut)"
+			>
+				<span class="shortcut-heading">
+					<nb-icon [icon]="shortcut.icon"></nb-icon>
+					<span class="shortcut-title">{{ shortcut.titleKey | translate }}</span>
+				</span>
+				<span class="shortcut-description">{{ shortcut.descriptionKey | translate }}</span>
+			</button>
+		}
+	</div>
+} @else {
+	<div class="shortcut-empty">
+		<nb-icon icon="info-outline"></nb-icon>
+		<span>{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.DATA_ENTRY_SHORTCUTS.NO_ACCESS' | translate }}</span>
+	</div>
+}

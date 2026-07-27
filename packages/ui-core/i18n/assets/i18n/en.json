@@ -1952,6 +1952,121 @@
 				"WEEKLY_ACTIVITY": {
 					"TITLE": "Weekly Activity",
 					"DESCRIPTION": "Overall activity percentage over the selected period; defaults to the current week."
+				},
+				"TEAMS_COUNT": {
+					"TITLE": "Teams",
+					"DESCRIPTION": "How many of your teams had somebody working in the selected period."
+				},
+				"TEAMS_MEMBERS_WORKED": {
+					"TITLE": "Team Members Worked",
+					"DESCRIPTION": "How many team members logged time in the selected period, against everyone on those teams."
+				},
+				"TEAMS_PROJECTS_WORKED": {
+					"TITLE": "Team Projects Worked",
+					"DESCRIPTION": "How many projects your teams logged time against, out of all projects."
+				},
+				"TEAMS_ACTIVITY": {
+					"TITLE": "Team Activity",
+					"DESCRIPTION": "Overall activity percentage of your teams over the selected period."
+				},
+				"TEAM_CARDS": {
+					"TITLE": "Team Cards",
+					"DESCRIPTION": "One card per team: members working, and the working now / working today / not working split."
+				},
+				"TEAM_MEMBERS": {
+					"TITLE": "Team Members",
+					"DESCRIPTION": "Every team member with their status, time logged and activity for the selected period.",
+					"EMPTY": "None of your teams have members yet."
+				},
+				"TEAM_STATUS_CHART": {
+					"TITLE": "Team Status",
+					"DESCRIPTION": "Doughnut chart splitting your teams into working now, working today and not working.",
+					"EMPTY": "No team activity in the selected period."
+				},
+				"DATA_ENTRY_SHORTCUTS": {
+					"TITLE": "Data Entry Shortcuts",
+					"DESCRIPTION": "Jump straight into adding an income, an expense or a recurring expense.",
+					"ORGANIZATION_RECURRING": "Organization Recurring Expense",
+					"EMPLOYEE_RECURRING": "Employee Recurring Expense",
+					"NO_ACCESS": "You do not have permission to add income or expenses."
+				},
+				"ACCOUNTING_TOTAL_INCOME": {
+					"TITLE": "Total Income",
+					"DESCRIPTION": "All income booked across the organization over the selected period."
+				},
+				"ACCOUNTING_TOTAL_EXPENSES": {
+					"TITLE": "Total Expenses",
+					"DESCRIPTION": "All expenses booked across the organization over the selected period."
+				},
+				"ACCOUNTING_PROFIT": {
+					"TITLE": "Profit",
+					"DESCRIPTION": "Income minus expenses across the organization over the selected period."
+				},
+				"ACCOUNTING_TOTAL_BONUS": {
+					"TITLE": "Total Bonus",
+					"DESCRIPTION": "Total bonus paid across the organization over the selected period.",
+					"NOT_CONFIGURED": "This organization has no bonus type configured."
+				},
+				"HR": {
+					"NO_EMPLOYEE": "No employee selected",
+					"NO_EMPLOYEE_HINT": "Pick an employee in the header selector to see their figures.",
+					"UNAVAILABLE": "Not available",
+					"NO_BONUS_TYPE": "This organization has no bonus type configured.",
+					"NOT_PROFIT_BASED": "This organization does not use a profit-based bonus.",
+					"NOT_REVENUE_BASED": "This organization does not use a revenue-based bonus.",
+					"TOTAL_INCOME": {
+						"TITLE": "Employee Total Income",
+						"DESCRIPTION": "Everything the selected employee brought in, split into earned income and direct bonus."
+					},
+					"INCOME": {
+						"TITLE": "Employee Income",
+						"DESCRIPTION": "The selected employee's income, excluding any direct bonus.",
+						"META": "Income excluding the direct income bonus"
+					},
+					"DIRECT_INCOME": {
+						"TITLE": "Employee Direct Income",
+						"DESCRIPTION": "The part of the selected employee's income that came from a direct bonus."
+					},
+					"EXPENSES_WITHOUT_SALARY": {
+						"TITLE": "Employee Expenses without Salary",
+						"DESCRIPTION": "What the selected employee cost, salary aside: expenses, split expenses and recurring."
+					},
+					"TOTAL_EXPENSES": {
+						"TITLE": "Employee Total Expenses",
+						"DESCRIPTION": "The full cost of the selected employee, salary included."
+					},
+					"PROFIT": {
+						"TITLE": "Employee Profit",
+						"DESCRIPTION": "The selected employee's income minus their expenses. Opens the profit history."
+					},
+					"TOTAL_DIRECT_BONUS": {
+						"TITLE": "Employee Direct Income Bonus",
+						"DESCRIPTION": "Bonus equal to the selected employee's direct income."
+					},
+					"PROFIT_BONUS": {
+						"TITLE": "Employee Profit Bonus",
+						"DESCRIPTION": "Bonus owed on a profit-based rule: a percentage of the employee's profit."
+					},
+					"REVENUE_BONUS": {
+						"TITLE": "Employee Income Bonus",
+						"DESCRIPTION": "Bonus owed on a revenue-based rule: a percentage of the employee's income."
+					}
+				},
+				"EMPLOYEE_STATISTICS_CHART": {
+					"TITLE": "Employee Statistics Chart",
+					"DESCRIPTION": "The selected employee's revenue, expenses, profit and bonus, as a bar, doughnut or stacked chart."
+				},
+				"EMPLOYEE_BAR_CHART": {
+					"TITLE": "Employee Statistics by Month",
+					"DESCRIPTION": "Bar chart of the selected employee's revenue, expenses, profit and bonus, month by month."
+				},
+				"EMPLOYEE_DOUGHNUT_CHART": {
+					"TITLE": "Employee Statistics Breakdown",
+					"DESCRIPTION": "Doughnut chart splitting the selected employee's revenue, expenses, bonus and profit."
+				},
+				"EMPLOYEE_STACKED_BAR_CHART": {
+					"TITLE": "Employee Statistics Composition",
+					"DESCRIPTION": "Stacked chart of how each month's expenses, bonus and profit divide the selected employee's revenue."
 				}
 			}
 		},

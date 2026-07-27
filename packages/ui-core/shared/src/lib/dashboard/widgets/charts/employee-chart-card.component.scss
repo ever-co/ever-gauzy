@@ -1,0 +1,131 @@
+@use 'themes' as *;
+
+// No card chrome here on purpose: `ga-dashboard-widget-host` already renders the
+// `nb-card`, its header and the body padding. This component only fills that body.
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+/*
+ * Chart.js measures a responsive canvas against this box, so it has to be the
+ * element that resolves to a real height (`flex: 1` inside the host, which the
+ * widget host sizes) and it must be positioned, or the canvas would escape it
+ * while the library recalculates.
+ */
+.chart-container {
+  position: relative;
+  // `flex-basis: 0`, not `auto`: with a content-based basis the canvas Chart.js
+  // just sized would feed back into this box's own size on the next layout pass,
+  // which is the classic "chart grows a few pixels per frame" bug.
+  flex: 1 1 0;
+  width: 100%;
+  min-width: 0;
+  // Below this a legend plus one bar is unreadable; the widget host's body
+  // scrolls rather than squashing the plot into nothing.
+  min-height: 6rem;
+
+  canvas {
+    display: block;
+  }
+}
+
+/* ---------- Non-chart states ---------- */
+
+.chart-state {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 0;
+  padding: 0.5rem;
+  text-align: center;
+  color: nb-theme(text-hint-color);
+
+  nb-icon {
+    height: 20px;
+    width: 20px;
+    font-size: 20px;
+  }
+
+  // Wraps rather than truncating: every string rendered here is the whole
+  // message, so an ellipsis would hide the only explanation the card gives.
+  &__text {
+    font-size: nb-theme(text-caption-font-size);
+    max-width: 100%;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+  }
+
+  &__hint {
+    font-size: nb-theme(text-caption-2-font-size);
+    max-width: 22rem;
+  }
+
+  &.is-error {
+    nb-icon {
+      color: nb-theme(color-danger-default);
+    }
+  }
+}
+
+/* ---------- Loading state ---------- */
+
+// Two shimmering blocks standing in for the legend and the plot, so the card
+// keeps its height while fetching instead of collapsing and shifting the grid.
+.chart-skeleton {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+
+  .skeleton-line,
+  .skeleton-plot {
+    border-radius: nb-theme(border-radius);
+    background: linear-gradient(
+      90deg,
+      nb-theme(background-basic-color-2) 25%,
+      nb-theme(background-basic-color-3) 37%,
+      nb-theme(background-basic-color-2) 63%
+    );
+    background-size: 400% 100%;
+    animation: ga-employee-chart-skeleton 1.4s ease infinite;
+  }
+
+  .skeleton-legend {
+    flex: 0 0 auto;
+    height: 12px;
+    width: 60%;
+    align-self: center;
+  }
+
+  .skeleton-plot {
+    flex: 1 1 auto;
+    min-height: 4rem;
+    width: 100%;
+  }
+}
+
+// Respect users who asked the OS to reduce motion.
+@media (prefers-reduced-motion: reduce) {
+  .chart-skeleton .skeleton-line,
+  .chart-skeleton .skeleton-plot {
+    animation: none;
+  }
+}
+
+@keyframes ga-employee-chart-skeleton {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}

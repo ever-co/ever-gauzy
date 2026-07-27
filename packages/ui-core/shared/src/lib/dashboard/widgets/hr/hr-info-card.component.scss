@@ -1,0 +1,113 @@
+@use 'themes' as *;
+
+// No card chrome here on purpose: `ga-dashboard-widget-host` already renders the
+// `nb-card`, its header and the body padding. This component only fills that body.
+:host {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  overflow: auto;
+}
+
+// `ga-info-block` was written for a vertical stack of blocks on the legacy page
+// and carries a bottom margin for the next sibling. Inside a widget card the
+// OUTER block is the only one, so that margin is dead space that pushes the
+// figure off-centre.
+//
+// The `:not()` is load-bearing: the accordion rows this card projects are
+// `ga-info-block`s too and carry the very same wrapper class, so an unqualified
+// selector would also collapse the spacing BETWEEN those rows.
+:host ::ng-deep .info-block-wrapper:not(.info-block-wrapper--list-item) {
+  margin-bottom: 0;
+}
+
+.hr-info-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+
+  nb-icon {
+    height: 18px;
+    width: 18px;
+    color: nb-theme(text-hint-color);
+  }
+
+  .state-title {
+    margin: 0;
+    color: nb-theme(text-basic-color);
+    font-size: nb-theme(text-subtitle-2-font-size);
+    font-weight: nb-theme(text-subtitle-2-font-weight);
+  }
+
+  .state-hint {
+    margin: 0;
+    color: nb-theme(text-hint-color);
+    font-size: nb-theme(text-caption-font-size);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &.is-error nb-icon {
+    color: nb-theme(color-danger-default);
+  }
+
+  button {
+    margin-top: 0.25rem;
+  }
+}
+
+// Loading state — three shimmering bars standing in for the title, the muted
+// explanation and the figure, so the card does not change height while fetching.
+.hr-info-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+
+  .skeleton-line {
+    border-radius: nb-theme(border-radius);
+    background: linear-gradient(
+      90deg,
+      nb-theme(background-basic-color-2) 25%,
+      nb-theme(background-basic-color-3) 37%,
+      nb-theme(background-basic-color-2) 63%
+    );
+    background-size: 400% 100%;
+    animation: hr-info-skeleton-shimmer 1.4s ease infinite;
+  }
+
+  .skeleton-title {
+    height: 14px;
+    width: 45%;
+  }
+
+  .skeleton-meta {
+    height: 10px;
+    width: 70%;
+  }
+
+  .skeleton-value {
+    height: 22px;
+    width: 35%;
+  }
+}
+
+// Respect users who asked the OS to reduce motion.
+@media (prefers-reduced-motion: reduce) {
+  .hr-info-skeleton .skeleton-line {
+    animation: none;
+  }
+}
+
+@keyframes hr-info-skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
