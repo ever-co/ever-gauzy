@@ -7,20 +7,32 @@
 					<h5>{{ 'AI_CHAT_UI.SETTINGS.TITLE' | translate }}</h5>
 					<p class="description">{{ 'AI_CHAT_UI.SETTINGS.DESCRIPTION' | translate }}</p>
 				</div>
-				<button nbButton status="success" (click)="showCatalog()">
-					<nb-icon icon="plus-outline"></nb-icon>
-					{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.ADD_PROVIDER' | translate }}
-				</button>
+				<!-- Header action only once something is configured: with an empty list
+				     the centred call-to-action below is the single obvious next step,
+				     and showing both put two identical green buttons on one screen. -->
+				@if (configuredProviders().length) {
+					<button nbButton status="success" (click)="showCatalog()">
+						<nb-icon icon="plus-outline"></nb-icon>
+						{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.ADD_PROVIDER' | translate }}
+					</button>
+				}
 			</div>
 		</nb-card-header>
 		<nb-card-body>
 			@if (!loading() && !configuredProviders().length) {
 				<div class="empty-state">
-					<p>{{ 'AI_CHAT_UI.SETTINGS.LIST.EMPTY' | translate }}</p>
-					<button nbButton status="success" size="large" (click)="showCatalog()">
+					<span class="empty-illustration" aria-hidden="true">
+						<nb-icon icon="cube-outline"></nb-icon>
+					</span>
+					<h6 class="empty-title">{{ 'AI_CHAT_UI.SETTINGS.LIST.EMPTY_TITLE' | translate }}</h6>
+					<p class="empty-hint">{{ 'AI_CHAT_UI.SETTINGS.LIST.EMPTY' | translate }}</p>
+					<button nbButton status="success" size="medium" (click)="showCatalog()">
 						<nb-icon icon="plus-outline"></nb-icon>
 						{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.ADD_PROVIDER' | translate }}
 					</button>
+					<!-- Name the providers on offer so the empty state teaches what this
+					     page is for, instead of only asking for a click. -->
+					<p class="empty-providers">{{ 'AI_CHAT_UI.SETTINGS.LIST.EMPTY_PROVIDERS' | translate }}</p>
 				</div>
 			}
 

@@ -58,12 +58,58 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 1rem;
-		padding: 2.5rem 0;
-		opacity: 0.85;
+		gap: 0.5rem;
+		// Vertically centred in the card rather than pinned near the top, so the
+		// single call-to-action reads as the purpose of the page.
+		min-height: 22rem;
+		justify-content: center;
+		text-align: center;
 
 		p {
 			margin: 0;
+		}
+
+		.empty-illustration {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 3.5rem;
+			height: 3.5rem;
+			margin-bottom: 0.5rem;
+			border-radius: 50%;
+			// Neutral translucent disc: darkens a light card and lightens a dark
+			// one, so no per-theme branch is needed.
+			background: rgba(126, 126, 143, 0.12);
+
+			nb-icon {
+				font-size: 1.75rem;
+				width: 1.75rem;
+				height: 1.75rem;
+				color: var(--text-hint-color);
+			}
+		}
+
+		.empty-title {
+			margin: 0;
+			font-size: 1rem;
+			font-weight: 600;
+			color: var(--text-basic-color);
+		}
+
+		.empty-hint {
+			max-width: 26rem;
+			color: var(--text-hint-color);
+		}
+
+		button {
+			margin-top: 0.75rem;
+		}
+
+		.empty-providers {
+			margin-top: 0.75rem;
+			font-size: 0.75rem;
+			color: var(--text-hint-color);
+			opacity: 0.75;
 		}
 	}
 

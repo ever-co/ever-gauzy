@@ -65,12 +65,14 @@
 			"CONNECT_SESSION_EXPIRED": "The Connect session has expired or was started in another tab. Please click Connect again."
 		},
 		"LIST": {
-			"EMPTY": "No AI providers are configured yet. Add one to enable the AI chat.",
+			"EMPTY": "Connect a provider to enable the AI chat and assistant features.",
 			"NAME": "Provider",
 			"SOURCE": "Credential",
 			"ENABLED": "Enabled",
 			"DEFAULT": "Default",
-			"VIA_ENV": "Managed via server environment"
+			"VIA_ENV": "Managed via server environment",
+			"EMPTY_TITLE": "No AI providers yet",
+			"EMPTY_PROVIDERS": "Gauzy AI · OpenRouter · Vercel AI Gateway · Anthropic · OpenAI · Gemini · Grok"
 		},
 		"CATALOG": {
 			"TITLE": "Add AI Provider",
