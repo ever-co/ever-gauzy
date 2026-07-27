@@ -11,6 +11,7 @@ import {
 	PluginUiRegistryService,
 	TranslateAdapterService
 } from '@gauzy/plugin-ui';
+import { provideCoreDashboardWidgets } from '@gauzy/ui-core/shared';
 import {
 	NavMenuBuilderService,
 	PageRouteRegistryService,
@@ -52,6 +53,10 @@ import { AppModule } from './app.module';
 		AppModule // Core application module (declares AppComponent + all app logic)
 	],
 	providers: [
+		// Core dashboard-builder widgets (Accounting, HR, charts, Teams).
+		// Must be registered from the ROOT injector — an initializer inside a
+		// lazily-created child EnvironmentInjector never runs.
+		provideCoreDashboardWidgets(),
 		{
 			provide: PLUGIN_UI_CONFIG,
 			useFactory: getPluginUiConfig
