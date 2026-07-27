@@ -1,4 +1,4 @@
-import { AfterViewChecked, ChangeDetectorRef, Component, ElementRef, Signal, ViewChild } from '@angular/core';
+import { AfterViewChecked, ChangeDetectorRef, Component, computed, ElementRef, Signal, ViewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
@@ -32,6 +32,14 @@ export class DashboardSwitcherComponent extends TranslationBaseComponent impleme
 	public selected: Signal<IDashboard | null>;
 	public editing: Signal<boolean>;
 
+	/**
+	 * Whether one of the CUSTOM dashboards is flagged as the user's default.
+	 *
+	 * When none is, the Standard dashboard is what `/pages/dashboard` lands on,
+	 * so Standard is the one that should carry the default star.
+	 */
+	public hasDefaultCustom!: Signal<boolean>;
+
 	/** Whether the chips row currently overflows and needs scroll arrows. */
 	public canScroll = false;
 
@@ -49,6 +57,7 @@ export class DashboardSwitcherComponent extends TranslationBaseComponent impleme
 		this.dashboards = toSignal(this._dashboardStore.dashboards$, { initialValue: [] as IDashboard[] });
 		this.selected = toSignal(this._dashboardStore.selectedDashboard$, { initialValue: null });
 		this.editing = toSignal(this._dashboardStore.editing$, { initialValue: false });
+		this.hasDefaultCustom = computed(() => this.dashboards().some((dashboard: IDashboard) => dashboard.isDefault));
 	}
 
 	ngAfterViewChecked(): void {

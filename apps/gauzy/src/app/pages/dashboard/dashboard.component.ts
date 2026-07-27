@@ -1,6 +1,7 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { filter, tap } from 'rxjs/operators';
+import { Component, OnDestroy, OnInit, Signal, ViewChild, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ISelectedEmployee, PermissionsEnum } from '@gauzy/contracts';
@@ -22,6 +23,21 @@ export class DashboardComponent extends TranslationBaseComponent implements OnIn
 
 	public tabsetId: PageTabsetPageId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
 	public selectedEmployee: ISelectedEmployee;
+
+	/**
+	 * True while a user-built custom dashboard is open (`/pages/dashboard/custom/:id`).
+	 *
+	 * Drives hiding the standard tabset: those tabs (Teams, Project Management,
+	 * Time Tracking, Accounting) are the Standard dashboard's own sections and
+	 * are meaningless on a canvas that carries its own tabs.
+	 */
+	public readonly isCustomDashboard: Signal<boolean> = toSignal(
+		inject(Router).events.pipe(
+			filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+			map((event: NavigationEnd) => event.urlAfterRedirects.includes('/dashboard/custom/'))
+		),
+		{ initialValue: inject(Router).url.includes('/dashboard/custom/') }
+	);
 
 	@ViewChild('dynamicTabs', { static: true }) dynamicTabsComponent!: DynamicTabsComponent;
 
