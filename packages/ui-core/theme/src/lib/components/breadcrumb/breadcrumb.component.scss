@@ -3,6 +3,12 @@
 
 // shadcn-style trail: small muted text, thin chevrons, no title styling and no
 // background block. Every value is a theme token so light and dark stay in sync.
+//
+// NOTE the `ga-` prefix on every class. Bootstrap is loaded globally and styles
+// `.breadcrumb` with a light `#e9ecef` fill plus padding/margin/radius, and
+// `.breadcrumb-item + .breadcrumb-item::before` injects a "/" separator. Using
+// those names painted a white pill behind the trail in every dark theme and
+// rendered a slash next to each chevron. Do not drop the prefix.
 @include nb-install-component() {
   display: flex;
   align-items: center;
@@ -11,13 +17,13 @@
   min-width: 0;
   overflow: hidden;
 
-  .breadcrumb {
+  .ga-breadcrumb {
     display: flex;
     align-items: center;
     min-width: 0;
   }
 
-  .breadcrumb-list {
+  .ga-breadcrumb-list {
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
@@ -28,7 +34,7 @@
     min-width: 0;
   }
 
-  .breadcrumb-item {
+  .ga-breadcrumb-item {
     display: flex;
     align-items: center;
     gap: 0.125rem;
@@ -38,9 +44,9 @@
     line-height: 1.25rem;
   }
 
-  .breadcrumb-link,
-  .breadcrumb-text,
-  .breadcrumb-current {
+  .ga-breadcrumb-link,
+  .ga-breadcrumb-text,
+  .ga-breadcrumb-current {
     display: inline-flex;
     align-items: center;
     // Long names (custom dashboards, projects) truncate rather than wrap the header.
@@ -52,7 +58,7 @@
     border-radius: 0.375rem;
   }
 
-  .breadcrumb-link {
+  .ga-breadcrumb-link {
     color: nb-theme(text-hint-color);
     text-decoration: none;
     transition:
@@ -76,17 +82,17 @@
 
   // An intermediate level with no route of its own (a menu section such as
   // "Organization"): muted like a link, but not interactive.
-  .breadcrumb-text {
+  .ga-breadcrumb-text {
     color: nb-theme(text-hint-color);
   }
 
-  .breadcrumb-current {
+  .ga-breadcrumb-current {
     // The current page is the only crumb with full-strength text.
     color: nb-theme(text-basic-color);
     font-weight: 500;
   }
 
-  .breadcrumb-separator {
+  .ga-breadcrumb-separator {
     display: inline-flex;
     align-items: center;
     color: nb-theme(text-hint-color);

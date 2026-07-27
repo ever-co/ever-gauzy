@@ -102,7 +102,7 @@ $orange: #f56d58;
     // The offset is the bare sidebar width: `nb-layout-header nav` has its
     // `header-padding` zeroed globally (_overrides.scss), so there is no padding
     // to subtract — doing so would tuck the first crumb under the sidebar.
-    .breadcrumb-container {
+    .ga-breadcrumb-container {
       flex: 1 1 auto;
       min-width: 0;
       @include nb-ltr(margin-left, nb-theme(sidebar-width));
@@ -113,7 +113,7 @@ $orange: #f56d58;
         @include nb-rtl(margin-right, nb-theme(sidebar-width-compact));
       }
 
-      // Below `lg` the trail itself is hidden (breadcrumb.component.scss). Drop the
+      // Below `lg` the trail itself is hidden (ga-breadcrumb.component.scss). Drop the
       // offset with it: an empty spacer carrying a 16rem margin would push the
       // header actions off a narrow viewport. The element stays in the flow so
       // `justify-content: space-between` still parks the actions on the right.
