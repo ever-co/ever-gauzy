@@ -2,16 +2,14 @@
 	<div class="statistic-error" role="alert">
 		<div class="statistic-error-text">
 			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
-			<!-- The visible label is generic and the message is only in `title`,
-				which needs a hover. `aria-label` gives screen-reader, keyboard and
-				touch users the same detail. -->
-			<span
-				class="statistic-error-label"
-				[title]="error()"
-				[attr.aria-label]="('DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate) + ': ' + error()"
-			>
+			<!-- The visible label stays generic so a narrow widget cell never
+				overflows, but the detail is REAL DOM text (visually hidden), not a
+				`title`/`aria-label` only: those are unavailable to keyboard and many
+				touch users, and the surrounding role="alert" announces text content. -->
+			<span class="statistic-error-label" [title]="error()">
 				{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate }}
 			</span>
+			<span class="statistic-error-detail">{{ error() }}</span>
 		</div>
 		<button nbButton ghost size="tiny" status="basic" type="button" (click)="retry.emit()">
 			{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.RETRY' | translate }}

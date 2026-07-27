@@ -166,6 +166,10 @@ export class TeamsDashboardStatisticsService {
 			if (employeeIds?.length) {
 				this._statisticsCache.invalidate(this._countsContext(context, employeeIds));
 			}
+			// Drop the scope record too. `_cache.delete(scope)` above already put
+			// this key out of `_prune()`'s reach, so keeping the ID[] would leak a
+			// little memory on every scope switch until the next `clear()`.
+			this._countsEmployeeIds.delete(scope);
 		} else {
 			this._cache.clear();
 			this._countsEmployeeIds.clear();
