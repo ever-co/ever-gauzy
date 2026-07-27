@@ -1,19 +1,36 @@
 import { EnvironmentProviders, inject, provideAppInitializer } from '@angular/core';
 import { WidgetRegistryService } from '@gauzy/ui-core/core';
-import { CORE_DASHBOARD_WIDGETS } from './index';
+// Import the registration arrays from their own modules, NOT through the folder
+// barrels: the barrels also export the widget component classes, which would
+// drag every widget into the initial bundle and defeat their lazy loading.
+import { ACCOUNTING_DASHBOARD_WIDGETS } from './accounting/accounting.widgets';
+import { CHART_DASHBOARD_WIDGETS } from './charts/charts.widgets';
+import { HR_DASHBOARD_WIDGETS } from './hr/hr.widgets';
+import { TEAMS_DASHBOARD_WIDGETS } from './teams/teams.widgets';
 
 /**
- * Publishes the core application's dashboard widgets (Accounting, HR, employee
- * charts, Teams) to the widget registry, so they appear in the dashboard
- * builder's palette and can be placed on any custom dashboard canvas.
+ * Every dashboard-builder widget contributed by the core application, as
+ * opposed to the ones plugins publish through their declarative `widgets` field.
  *
- * Plugins contribute their own widgets declaratively via the `widgets` field on
- * `defineDeclarativePlugin`; these are core-owned, so they are registered from
- * the application's ROOT injector instead.
+ * These are configuration objects only — each one's component is fetched on
+ * demand by `WidgetRegistryService.resolveComponent()`, so a canvas only pays
+ * for the widgets it actually renders.
+ */
+export const CORE_DASHBOARD_WIDGETS = [
+	...ACCOUNTING_DASHBOARD_WIDGETS,
+	...HR_DASHBOARD_WIDGETS,
+	...CHART_DASHBOARD_WIDGETS,
+	...TEAMS_DASHBOARD_WIDGETS
+];
+
+/**
+ * Publishes the core dashboard widgets (Accounting, HR, employee charts, Teams)
+ * to the widget registry, so they appear in the dashboard builder's palette and
+ * can be placed on any custom dashboard canvas.
  *
- * IMPORTANT: this must be provided at the root (e.g. in the bootstrap module).
+ * IMPORTANT: provide this at the ROOT (the bootstrap module).
  * `provideAppInitializer` inside a lazily-created child EnvironmentInjector
- * never runs — that is exactly the trap the plugin widget registration hit.
+ * never runs — exactly the trap plugin widget registration hit.
  *
  * @returns Environment providers to spread into the root providers array.
  */
@@ -21,7 +38,7 @@ export function provideCoreDashboardWidgets(): EnvironmentProviders {
 	return provideAppInitializer(() => {
 		const registry = inject(WidgetRegistryService);
 		for (const widget of CORE_DASHBOARD_WIDGETS) {
-			// registerOrReplace (not register): idempotent under HMR and safe if a
+			// registerOrReplace, not register: idempotent under HMR and safe if a
 			// future bundle re-registers the same id.
 			registry.registerOrReplaceWidget(widget);
 		}
