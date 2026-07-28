@@ -1,17 +1,21 @@
 @use 'var' as *;
 
+/*
+ * No `height: 100%` and no internal scroller anywhere in here.
+ *
+ * The canvas used to be boxed into the visible page height so it could scroll
+ * inside `.custom-dashboard__body`, which is what put a second scrollbar inside
+ * the page. The dashboard page is the single scroll surface now (see
+ * `../dashboard.component.scss`); the canvas simply grows with its widgets.
+ */
 :host {
 	display: block;
-	height: 100%;
-	min-height: 0;
 }
 
 .custom-dashboard {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
-	height: 100%;
-	min-height: 0;
 	padding: 0.5rem 0.25rem 0;
 }
 
@@ -52,12 +56,11 @@
 
 .custom-dashboard__body {
 	display: flex;
-	align-items: stretch;
+	// Each column keeps its own height. Stretching them to match left the
+	// palette as a mostly-empty panel the length of a tall canvas; the palette
+	// pins itself instead (`widget-palette.component.scss`).
+	align-items: flex-start;
 	gap: 1rem;
-	flex: 1 1 auto;
-	min-height: 0;
-	// The canvas scrolls; the palette stays put next to it
-	overflow: auto;
 	padding-bottom: 1rem;
 }
 
@@ -67,8 +70,9 @@
 		flex-direction: column;
 
 		ga-widget-palette {
+			// Stacked below the canvas, pinning it would park it over the widgets
+			position: static;
 			width: 100%;
-			max-height: 320px;
 		}
 	}
 }

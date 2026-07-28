@@ -6,13 +6,29 @@
 	width: 300px;
 	max-width: 100%;
 	min-width: 0;
+	// The canvas next to it is now page-length, so the palette pins itself to
+	// stay in reach while the page scrolls past. `top: 0` is the top of the
+	// dashboard's scroll container, i.e. just under the chips + tabs.
+	position: sticky;
+	top: 0;
 }
 
 .widget-palette {
 	display: flex;
 	flex-direction: column;
-	height: 100%;
-	max-height: 100%;
+	// A CEILING, not a fit. `.palette-list` below is the scroller, so this only
+	// has to stop a 40-widget panel from growing past the fold; being a little
+	// generous costs nothing, being short would strand rows. It is spelled in
+	// the layout's OWN tokens rather than as a hand-tuned offset, so a density
+	// pass moves it automatically. (Was `height/max-height: 100%`, which only
+	// worked while an ancestor was clamped to the viewport.)
+	//
+	// The column's own padding is deliberately NOT subtracted: `layout-padding`
+	// is a shorthand (`24px 24px 0 12px`, but `2.25rem …` in the two material
+	// themes) and `layout-padding-top` does not track it, so there is no scalar
+	// token that describes it in all 8 themes. Subtracting the wrong one would
+	// be a magic number wearing a token's clothes.
+	max-height: calc(100vh - nb-theme(header-height) - nb-theme(footer-height));
 	border: 1px solid nb-theme(border-basic-color-3);
 	border-radius: nb-theme(border-radius);
 	background-color: nb-theme(card-background-color);

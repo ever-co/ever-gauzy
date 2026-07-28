@@ -18,7 +18,7 @@
 			>
 			</ngx-gauzy-button-action>
 		</div>
-		<nb-tabset class="mt-4">
+		<nb-tabset>
 			<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.BROWSE' | translate" [tabId]="employmentTypeTabsEnum.BROWSE">
 				@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE && organizationEmploymentTypes?.length) {
 				<div class="table-scroll-container">

@@ -35,36 +35,129 @@
 				display: none;
 			}
 
+			/*
+			 * A chip carries TWO independent flags, so it needs three readings:
+			 *
+			 *   other      → quiet neutral (the base rule)
+			 *   .is-default→ amber edge + wash (the dashboard "Dashboards" lands on)
+			 *   .active    → primary tint + doubled primary edge (what you are viewing)
+			 *
+			 * Different HUES, matched weights: neither state can be mistaken for
+			 * the other, and a chip that is BOTH keeps the primary chrome plus the
+			 * amber star (see `.default-icon`).
+			 *
+			 * The tints are mixed from the theme's own status colours rather than
+			 * from `color-*-transparent-*`: the gauzy themes re-point
+			 * `color-primary-*` to purple but inherit Nebular's BLUE
+			 * `color-primary-transparent-200+`, so those tokens are the wrong hue
+			 * in 2 of the 8 themes. `color-mix()` always tracks the live token, in
+			 * light and dark alike.
+			 */
 			.chip {
 				flex: 0 0 auto;
 				display: inline-flex;
 				align-items: center;
-				gap: 4px;
+				gap: 0.25rem;
 				border: 1px solid var(--border-basic-color-4);
 				border-radius: var(--border-radius);
 				background-color: var(--card-background-color);
 				color: var(--text-basic-color);
-				padding: 4px 12px;
-				font-size: 12px;
+				// Same footprint as the custom-dashboard tab chips one row below
+				// (`dashboard-tab-strip`), so the two rows read as one family
+				// instead of two differently sized pill sets.
+				padding: 0.3125rem 0.75rem;
+				font-family: inherit;
+				font-size: 0.75rem;
 				font-weight: 600;
+				line-height: 1.25;
 				cursor: pointer;
 				white-space: nowrap;
-				transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+				transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out,
+					color 0.15s ease-in-out;
 
 				&:hover {
 					background-color: var(--background-basic-color-2);
 				}
 
-				&.active {
-					background-color: var(--color-primary-default);
-					border-color: var(--color-primary-default);
-					color: var(--text-control-color);
+				// Inset so the ring is never clipped by the row's `overflow-x`
+				&:focus-visible {
+					outline: 2px solid var(--color-primary-default);
+					outline-offset: -2px;
 				}
 
+				/*
+				 * CURRENT — the dashboard on screen. The second edge is an INSET
+				 * box-shadow rather than a 2px border so the chip keeps exactly the
+				 * footprint of its neighbors and the row never jumps when the
+				 * selection moves.
+				 *
+				 * The label deliberately does NOT switch to `--text-primary-color`,
+				 * for the same reason `.is-default` keeps the basic colour below:
+				 * the theme's primary hue on a wash of that same hue is a 2.6–4.4:1
+				 * pair across the 8 themes (worst: gauzy-dark 2.57, material-dark
+				 * 2.75) — under 4.5:1 for 12px text everywhere but material-light.
+				 * Inheriting `--text-basic-color` from the base rule gives 7.1–14.6:1
+				 * in every theme, and the border + ring + wash + weight already say
+				 * "current".
+				 */
+				&.active {
+					border-color: var(--color-primary-default);
+					box-shadow: inset 0 0 0 1px var(--color-primary-default);
+					background-color: color-mix(in srgb, var(--color-primary-default) 16%, transparent);
+					font-weight: 700;
+
+					&:hover {
+						background-color: color-mix(in srgb, var(--color-primary-default) 24%, transparent);
+					}
+				}
+
+				/*
+				 * DEFAULT — but not the one being viewed. `:not(.active)` instead of
+				 * relying on source order: both selectors weigh the same, so an
+				 * explicit exclusion is the only way the "current AND default" chip
+				 * is guaranteed to keep its primary fill.
+				 *
+				 * The label stays at `--text-basic-color`: amber-on-amber is below
+				 * 4.5:1 in the light themes, and the star already carries the hue.
+				 */
+				&.is-default:not(.active) {
+					border-color: color-mix(in srgb, var(--color-warning-default) 60%, transparent);
+					background-color: color-mix(in srgb, var(--color-warning-default) 12%, transparent);
+
+					&:hover {
+						background-color: color-mix(in srgb, var(--color-warning-default) 20%, transparent);
+					}
+				}
+
+				/*
+				 * The star IS the default marker, so it stays warm in every
+				 * combination — including on top of the primary wash of a chip that
+				 * is current and default at once.
+				 *
+				 * Warm, but NOT the flat `--color-warning-default`: that token is a
+				 * light amber meant to be a FILL under dark text, and as a glyph it
+				 * lands at 1.4–1.8:1 on the light themes' near-white surfaces —
+				 * invisible. Pulling it toward the theme's own text colour is the
+				 * only lever that flips with the theme (dark text darkens it on
+				 * light surfaces, light text lightens it on dark ones) without an
+				 * eight-way `:host-context` branch; the fixed `color-warning-700`
+				 * step does not, and bottoms out at 2.41:1 on material-dark.
+				 *
+				 * 35% is the most amber that still clears the 3:1 a glyph needs on
+				 * ALL FOUR backgrounds this star can land on (the amber wash and the
+				 * primary wash, resting and hovered) in all 8 themes: floor 3.31:1
+				 * on material-light hovered-and-current, ceiling ~11:1 on the dark
+				 * themes. 45% drops that floor to 2.80:1.
+				 *
+				 * Sized in `em` so it tracks the chip's own label instead of
+				 * restating its font-size.
+				 */
 				.default-icon {
-					font-size: 12px;
-					height: 12px;
-					width: 12px;
+					flex: 0 0 auto;
+					font-size: 1em;
+					height: 1em;
+					width: 1em;
+					color: color-mix(in srgb, var(--color-warning-default) 35%, var(--text-basic-color));
 				}
 			}
 		}

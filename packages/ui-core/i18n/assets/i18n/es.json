@@ -834,6 +834,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Debes ser empleado para poder realizar el seguimiento del tiempo, crear gastos divididos y utilizar otras funciones relacionadas con los empleados."
 	},
 	"MENU": {
+		"BREADCRUMB": "Ruta de navegación",
 		"PIPELINES": "Las tuberías.",
 		"DASHBOARD": "Tablero de control",
 		"DASHBOARDS": "Paneles de control",

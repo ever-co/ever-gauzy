@@ -200,8 +200,19 @@ export class AiChatService {
 		const configured = providers.filter((provider) => provider.configured);
 		const defaults = await this.resolveDefaultProvider(configured.map((p) => p.id));
 
+		// Report WHICH gate is closed: the chat is hidden client-side when this is
+		// false, and without a reason the user cannot tell "nobody configured a
+		// provider yet" from "an operator switched the whole feature off".
+		let disabledReason: IAiChatConfig['disabledReason'];
+		if (globallyDisabled) {
+			disabledReason = 'globally-disabled';
+		} else if (!configured.length) {
+			disabledReason = 'no-providers';
+		}
+
 		return {
 			enabled: !globallyDisabled && configured.length > 0,
+			...(disabledReason ? { disabledReason } : {}),
 			providers,
 			...(defaults ?? {})
 		};

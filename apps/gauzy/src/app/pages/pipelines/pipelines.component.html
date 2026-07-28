@@ -17,7 +17,7 @@
         [componentName]="viewComponentName"
       ></ngx-gauzy-button-action>
     </div>
-    <nb-tabset class="mt-4" (changeTab)="onChangeTab($event)">
+    <nb-tabset (changeTab)="onChangeTab($event)">
       <nb-tab [tabTitle]="'PIPELINES_PAGE.BROWSE' | translate" [tabId]="pipelineTabsEnum.ACTIONS">
         @if ((nbTab$ | async) === pipelineTabsEnum.ACTIONS) {
           <ng-template

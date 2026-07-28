@@ -33,7 +33,11 @@
 					@if (item.logo) {
 						<img [src]="item.logo" width="20px" height="20px" />
 					}
-					<span class="ml-1">{{ getShortenedName(item?.name) }}</span>
+					<!-- No `ml-1`: the logo already carries the gap (and is optional), so
+					     the utility class only ever shifted a logo-less team name 4px to
+					     the right of the "All Teams" placeholder it replaces. Matches the
+					     project/employee/organization label templates. -->
+					<span>{{ getShortenedName(item?.name) }}</span>
 				</div>
 			</ng-template>
 		}

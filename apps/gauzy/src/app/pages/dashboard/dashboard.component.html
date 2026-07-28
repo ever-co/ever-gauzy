@@ -1,5 +1,11 @@
 <div class="dashboard-container">
 	<!-- Custom dashboards switcher (chips row + actions), rendered above the tabs line -->
 	<ga-dashboard-switcher></ga-dashboard-switcher>
-	<gz-dynamic-tabs #dynamicTabs [tabsetId]="tabsetId"></gz-dynamic-tabs>
+	<!-- Teams / Project Management / Time Tracking / Accounting belong to the
+	     STANDARD dashboard only. A custom dashboard brings its own user-created
+	     tabs, so the standard tabset is hidden there — but it must stay in the
+	     DOM (hidden, not destroyed) because gz-dynamic-tabs loads component-backed
+	     tab content exactly once in ngAfterViewInit and never re-runs it, so
+	     destroying it would leave the standard tabs blank on the way back. -->
+	<gz-dynamic-tabs #dynamicTabs [tabsetId]="tabsetId" [class.hidden]="isCustomDashboard()"></gz-dynamic-tabs>
 </div>

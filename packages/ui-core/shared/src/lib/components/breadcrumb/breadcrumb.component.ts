@@ -1,7 +1,8 @@
 import { Component, Signal, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
-import { filter, map, startWith } from 'rxjs/operators';
+import { merge, of } from 'rxjs';
+import { catchError, filter, map, startWith } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { NavMenuBuilderService, NavMenuSectionItem } from '@gauzy/ui-core/core';
 
@@ -31,8 +32,10 @@ interface IMenuMatch {
  * Breadcrumb trail for the current route.
  *
  * Labels are resolved from the navigation menu tree instead of the raw URL, so every
- * crumb shows the same translated wording as the sidebar. Mounted once in the shared
- * header, which gives every page under `/pages` a trail without touching page templates.
+ * crumb shows the same translated wording as the sidebar. Mounted once by
+ * `ngx-header-title`, which gives every page carrying a page title a trail without
+ * touching page templates. When the URL has no navigation menu entry the trail falls
+ * back to the URL segments, so a page never renders an empty nav.
  */
 @Component({
 	selector: 'ngx-breadcrumbs',
@@ -71,15 +74,40 @@ export class BreadcrumbComponent {
 		{ initialValue: this._router.url }
 	);
 
-	/** Navigation menu tree — the source of translated, hierarchy-aware labels. */
-	private readonly _menu = toSignal(this._navMenuBuilderService.menuConfig$, {
-		initialValue: [] as NavMenuSectionItem[]
-	});
+	/**
+	 * Navigation menu tree — the source of translated, hierarchy-aware labels.
+	 *
+	 * A broken menu must not take the page title down with it: the trail degrades to
+	 * its URL-derived fallback instead (the sidebar treats menu errors the same way).
+	 */
+	private readonly _menu = toSignal(
+		this._navMenuBuilderService.menuConfig$.pipe(
+			catchError((error: unknown) => {
+				console.error('[Breadcrumbs] Could not read the navigation menu:', error);
+				return of([] as NavMenuSectionItem[]);
+			})
+		),
+		{ initialValue: [] as NavMenuSectionItem[] }
+	);
 
-	/** Emits on language change so the trail can be re-translated in place. */
-	private readonly _language = toSignal(this._translateService.onLangChange.pipe(startWith(null)), {
-		initialValue: null
-	});
+	/**
+	 * Emits whenever the resolved translations change so the trail can be re-translated
+	 * in place.
+	 *
+	 * `onLangChange` alone is not enough: the trail is built during the first paint,
+	 * which regularly happens BEFORE the i18n bundle has finished loading. Every label
+	 * then falls back to the menu item's hard-coded English `title` and, with no further
+	 * language change, stays English for the rest of the session. `onTranslationChange`
+	 * (bundle loaded / extended) and `onDefaultLangChange` close that window.
+	 */
+	private readonly _language = toSignal(
+		merge(
+			this._translateService.onLangChange,
+			this._translateService.onTranslationChange,
+			this._translateService.onDefaultLangChange
+		).pipe(startWith(null)),
+		{ initialValue: null }
+	);
 
 	/** The trail for the current route, outermost level first. */
 	public readonly breadcrumbs: Signal<IBreadcrumb[]> = computed(() => {
@@ -104,16 +132,37 @@ export class BreadcrumbComponent {
 		}
 
 		const match = this.findDeepestMatch(path, sections);
-		const crumbs: IBreadcrumb[] = match
-			? [
-					this.homeCrumb(),
-					...match.ancestors.map((ancestor: NavMenuSectionItem) => this.toCrumb(ancestor)),
-					this.toCrumb(match.item),
-					...this.segmentCrumbs(path, match.link)
-				]
-			: [this.homeCrumb(), ...this.segmentCrumbs(path, '/pages')];
+		const trail = this.finalize(
+			match
+				? [
+						this.homeCrumb(),
+						...match.ancestors.map((ancestor: NavMenuSectionItem) => this.toCrumb(ancestor)),
+						this.toCrumb(match.item),
+						...this.segmentCrumbs(path, match.link)
+					]
+				: [this.homeCrumb(), ...this.segmentCrumbs(path, '/pages')]
+		);
 
-		return this.finalize(crumbs);
+		// Fallback. The menu is not a complete map of the router: sections come and go
+		// with permissions, features and plugins, and it is empty altogether on the very
+		// first paint. Whenever the resolved trail says nothing about where we are —
+		// no match, or a match that collapsed into the home crumb — describe the URL
+		// instead of rendering a lone home icon.
+		if (trail.length <= 1 && !this.isHomePath(path)) {
+			return this.finalize([this.homeCrumb(), ...this.segmentCrumbs(path, '/pages')]);
+		}
+
+		return trail;
+	}
+
+	/**
+	 * Checks whether a path is the application home itself.
+	 *
+	 * @param path Normalized URL path.
+	 * @returns True for `/pages` and for the route the home crumb points at.
+	 */
+	private isHomePath(path: string): boolean {
+		return path === '/pages' || path === BreadcrumbComponent.HOME_LINK;
 	}
 
 	/**
@@ -127,8 +176,7 @@ export class BreadcrumbComponent {
 		const matches = this.collectMatches(path, sections, []);
 
 		return matches.reduce((best: IMenuMatch | null, candidate: IMenuMatch) => {
-			// Deepest link wins; on a tie a visible item beats a hidden twin
-			// (several hidden items point at /pages/dashboard, for instance).
+			// Deepest link wins — it is the most specific description of the page.
 			if (!best) {
 				return candidate;
 			}
@@ -154,7 +202,11 @@ export class BreadcrumbComponent {
 
 			const link = typeof item.link === 'string' ? this.toPath(item.link) : null;
 
-			if (link && this.isAncestorPath(link, path)) {
+			// Hidden items are decoys, not destinations: "Focus" and "Applications" are
+			// permanently hidden yet both point at /pages/dashboard, so matching them
+			// labelled the dashboard "Focus". Their children can still be real pages,
+			// so only the item's own link is skipped — the subtree is still walked.
+			if (link && !item.hidden && this.isAncestorPath(link, path)) {
 				matches.push({ item, ancestors: [...ancestors], link });
 			}
 
@@ -167,13 +219,13 @@ export class BreadcrumbComponent {
 	}
 
 	/**
-	 * Ranks a match: deeper links score higher, and visible items outrank hidden ones.
+	 * Ranks a match by how much of the path its link accounts for.
 	 *
 	 * @param match Candidate match.
-	 * @returns The comparable score.
+	 * @returns The comparable score — the number of segments the link covers.
 	 */
 	private matchScore(match: IMenuMatch): number {
-		return match.link.split('/').length * 2 + (match.item.hidden ? 0 : 1);
+		return match.link.split('/').length;
 	}
 
 	/**
@@ -209,10 +261,16 @@ export class BreadcrumbComponent {
 				continue;
 			}
 
-			// Collapse repeats — home and the "Dashboards" menu item point at the same route.
+			// Collapse repeats — two menu levels pointing at the same route, say.
+			// The home crumb is exempt: it renders as an icon, so it never *reads* as a
+			// repeat, and collapsing it is what left /pages/dashboard (where home and
+			// the "Dashboards" menu item share a link) with a single wordless crumb.
 			const previous = trail.at(-1);
+			const eitherIsIcon = !!previous?.icon || !!crumb.icon;
 			const duplicate =
-				previous && ((!!crumb.link && previous.link === crumb.link) || previous.label === crumb.label);
+				previous &&
+				!eitherIsIcon &&
+				((!!crumb.link && previous.link === crumb.link) || previous.label === crumb.label);
 			if (duplicate) {
 				continue;
 			}

@@ -175,6 +175,92 @@ body {
   nb-layout {
     .scrollable-container {
       overflow-y: auto !important;
+      // Anchors the page frame. Everything below this element is sized with
+      // `min-height` only (`.layout`, `.layout-container`), which leaves the
+      // chain indefinite: a page could not resolve a percentage height and had
+      // to fall back to `100vh` arithmetic of its own. Pinning the scroll box to
+      // the viewport makes every nested flex height definite — content that
+      // overflows still scrolls here, exactly as before.
+      //
+      // Window mode narrows this to `calc(100vh - <inset>)` from a more specific
+      // selector (`nb-layout.window-mode .scrollable-container`), so it wins.
+      height: 100vh;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // The page frame.
+  //
+  // The content column is ALREADY the right size: Nebular gives it whatever is
+  // left of the viewport once the fixed header offset and the footer are taken
+  // out. It was just never handed to the page — `nb-layout-column` is a plain
+  // block, so the routed component is auto-height, every `nb-card { height:100% }`
+  // collapses to `auto`, and each page had to guess its own height from
+  // `100vh` minus an estimate of the chrome (see _gauzy-cards.scss). That
+  // estimate is a fixed number while the card header is content-driven (title +
+  // subtitle + an action-button row), so it over-shoots on most pages: a table
+  // with three rows still produced a card taller than the column, which scrolled
+  // the window and pushed the footer below the fold.
+  //
+  // Making the column a flex context turns those `100vh` numbers into a
+  // PREFERRED size that the card can shrink back from, so the page fits by
+  // construction and the viewport arithmetic can no longer push anything off
+  // screen.
+  //
+  // Making the column a flex context was necessary but not sufficient: a flex
+  // item's AUTOMATIC minimum size is its content, so every level from `.content`
+  // down still refused to shrink and the card's intrinsic height (its header
+  // plus its body's `100vh` calc) went on driving the whole layout. Measured on
+  // /pages/accounting/expenses at 1600x900: the card came out 776px against the
+  // 755px the column had, `.layout` grew to 920px inside a 900px scroll box, and
+  // the footer sat 20px below the fold.
+  //
+  // What made that newly visible is the breadcrumb trail: it lives in the card
+  // header now, so it adds ~22px to the very height being propagated. Hiding the
+  // trail takes the overflow to exactly 0 on every affected route, which is what
+  // identified this chain in the first place.
+  //
+  // So the layout is bounded to the viewport and the automatic minimums are
+  // released all the way down. This is the same treatment the dashboard already
+  // gets below, and it matches what every page here was already trying to
+  // express: the `calc(100vh - …)` heights scattered across the page styles only
+  // make sense if a page is meant to FIT the viewport and scroll its table
+  // internally. Card bodies keep whatever `overflow` their own page chose, so
+  // this decides the frame, not what happens inside it.
+  nb-layout .layout {
+    max-height: 100vh;
+
+    .layout-container {
+      min-height: 0;
+    }
+  }
+
+  nb-layout .layout .layout-container .content,
+  nb-layout .layout .layout-container .content .columns {
+    min-height: 0;
+  }
+
+  nb-layout .layout .layout-container .content .columns nb-layout-column {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+
+    // The outlet is an anchor for the routed view, never a box of its own.
+    > router-outlet {
+      display: none;
+    }
+
+    > router-outlet + * {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    nb-card {
+      min-height: 0;
+
+      > nb-card-body {
+        min-height: 0;
+      }
     }
   }
 
@@ -207,6 +293,12 @@ body {
     .layout .layout-container .content .columns {
       min-height: 0; // allow the flex child to shrink below its content size
       overflow: hidden; // dashboard panels already scroll internally
+    }
+
+    // Same reasoning one level down: the dashboard page must shrink WITH the
+    // column rather than grow the layout, because its panels scroll internally.
+    .layout .layout-container .content .columns nb-layout-column > router-outlet + * {
+      min-height: 0;
     }
   }
 
@@ -306,8 +398,20 @@ body {
     }
   }
 
+  // `.card-scroll` / `.dashboard-card-scroll` are used both inside the page frame
+  // and inside dialogs, so they keep a viewport-relative preferred height for the
+  // dialog case. Two changes to what used to be `calc(100vh - 157px)` and
+  // `calc(100vh - 270px)`:
+  //   * the subtrahend is spelled out from the theme's own chrome tokens instead
+  //     of a pixel constant nobody could re-derive;
+  //   * `max-height: 100%` bounds them by the page frame whenever there is one
+  //     (it resolves to `none` in a dialog, where the parent height is auto), so
+  //     the preferred height can never push the window into a scroll again.
+  $page-chrome-height: calc(#{nb-theme(header-height)} + #{nb-theme(footer-height)});
+
   .card-scroll {
-    height: calc(100vh - 157px);
+    height: calc(100vh - #{$page-chrome-height} - 0.5rem);
+    max-height: 100%;
     min-height: auto !important;
 
     nb-card {
@@ -322,7 +426,9 @@ body {
   }
 
   .dashboard-card-scroll {
-    height: calc(100vh - 270px);
+    // Sits below the dashboard's own tab bar and summary row, hence the extra step.
+    height: calc(100vh - #{$page-chrome-height} - 7.5rem);
+    max-height: 100%;
     min-height: auto !important;
 
     nb-card {
@@ -587,6 +693,17 @@ nb-card-header {
   }
 }
 
+// `ngx-header-title` parks the breadcrumb trail as a sibling of the page heading
+// (a <nav><ol> may not live inside an <h4>) and tags the heading's parent with
+// this class. That parent is usually a flex ROW shared with the page's action
+// buttons: it has to be allowed to wrap for the full-width, last-ordered trail
+// to drop onto its own line under the title instead of squeezing in beside it.
+// The rule lives here, globally, because the row belongs to the page template
+// rather than to the header-title component.
+.ga-page-title-row {
+  flex-wrap: wrap;
+}
+
 nb-card-body {
   .pagination-container {
     display: flex;
@@ -601,7 +718,12 @@ nb-card-body {
   }
 }
 
-// ng smart table scroll container
+// ng smart table scroll container.
+//
+// The viewport cap is only a LAST RESORT, for a table whose card body is not a
+// flex column. Where it is (@shared/_pg-card.scss) the container is a flex child
+// that takes exactly the room the card body has, which is both more accurate and
+// immune to changes in the chrome above it.
 .table-scroll-container,
 .grid-scroll-container {
   border-radius: var(--border-radius);
@@ -815,12 +937,27 @@ angular2-smart-table {
   padding: var(--accordion-padding);
 }
 
-// TODO overrides perfectly chevron-down unicode
+// ng-select's chevron is a CSS-border triangle; we swap it for a Font Awesome
+// glyph. The library sizes that element `width: 0; height: 0` (all it needed for
+// a border triangle) and leaves it inline, so the glyph hung off the text
+// baseline instead of the middle of the trigger — measurably ~2px low, and ~4px
+// low plus clipped in the organization selector, which additionally aligned its
+// wrapper on `baseline`. Give the arrow a real box and centre it in the wrapper.
+//
+// `!important` throughout: `@ng-select/ng-select`'s own component styles are
+// injected after this sheet, so `.ng-select .ng-arrow-wrapper .ng-arrow`'s
+// `width/height: 0` and the default theme's border shorthand win every tie.
 .ng-select {
   .ng-select-container {
     border-radius: var(--border-radius) !important;
     box-shadow: var(--gauzy-shadow) inset;
     border: none !important;
+  }
+
+  .ng-arrow-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .ng-arrow {
@@ -829,16 +966,20 @@ angular2-smart-table {
     border-width: 0 !important;
     font-size: 10px;
     font-weight: 900;
-    top: 0 !important;
-    left: -4px;
-    @include nb-ltr(left, -4px);
-    @include nb-rtl(right, -4px);
+    // A glyph needs a box: with the library's `width: 0; height: 0` the chevron
+    // rendered as overflow hanging off the baseline, which is what pushed it
+    // below the trigger's optical centre.
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    line-height: 1 !important;
+    // The old `top: 0` / `left: -4px` nudges only existed to drag that
+    // baseline-hung glyph back into view; the flex wrapper now positions it.
+    top: auto !important;
     color: var(--select-outline-basic-icon-color);
     text-align: center;
     transform: rotate(0deg);
-    transform-origin: 5.5px 8.6px;
-    @include nb-ltr(transform-origin, 5.5px 8.6px);
-    @include nb-rtl(transform-origin, -5.5px 8.6px);
+    transform-origin: center;
     transition: transform 0.2s ease;
 
     &:before {

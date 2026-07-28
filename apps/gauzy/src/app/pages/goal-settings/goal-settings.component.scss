@@ -1,6 +1,22 @@
 @use 'gauzy/_gauzy-table' as *;
+@use '../tabset-actions' as *;
 
 :host {
+  nb-tabset {
+    // Card body height: the viewport less the app chrome above the tabset. The
+    // card has no definite height here, so a percentage would collapse to the
+    // content height and `.table-scroll-container` would stop scrolling — this
+    // has to be viewport-anchored. The old figure also budgeted for a
+    // `margin-top: 27px` spacer that only existed to keep the tabs clear of the
+    // action row; the action row now shares the tab strip's own box, so the
+    // spacer is gone.
+    //
+    // The fixed header is subtracted as the token, not as part of the constant:
+    // it is 4.5rem in most themes but 4.75rem in material-*, and Nebular offsets
+    // the page by exactly `header-height`. 9.3125rem + 4.5rem == the 13.8125rem
+    // this was measured at, so the six 4.5rem themes are unchanged.
+    @include tabset-fills-height(calc(100vh - #{nb-theme(header-height)} - 9.3125rem));
+  }
   nb-tab.content-active {
     @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
     @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
@@ -8,8 +24,6 @@
     border-radius: 0 0 var(--border-radius) var(--border-radius);
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 18.5rem);
-    overflow: unset;
     .table-scroll-container {
       flex-grow: 10;
       max-height: unset;
@@ -27,13 +41,6 @@
   }
 }
 
-.nb-tabset {
-  margin-top: 27px;
-}
-
-nb-tab {
-  height: calc(100vh - 18.5rem);
-}
 .card-general {
   background: var(--gauzy-card-3);
   border-radius: nb-theme(border-radius);
@@ -46,8 +53,5 @@ nb-tab {
   height: 100%;
 }
 :host .gauzy-button-container {
-  position: absolute;
-  @include nb-ltr(right, 1rem);
-  @include nb-rtl(left, 1rem);
-  top: 0;
+  @include tabset-action-row(1rem);
 }

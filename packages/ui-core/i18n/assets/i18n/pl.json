@@ -831,6 +831,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Musisz być pracownikiem, aby móc śledzić czas, tworzyć podziały kosztów i korzystać z innych funkcji związanych z pracownikami"
 	},
 	"MENU": {
+		"BREADCRUMB": "Ścieżka nawigacji",
 		"PIPELINES": "Rurociągi",
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Nawigacje",

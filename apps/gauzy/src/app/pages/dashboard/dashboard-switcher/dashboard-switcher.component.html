@@ -1,56 +1,61 @@
 <div class="dashboard-switcher">
-	<!-- Chips row: only rendered when at least one custom dashboard exists -->
-	@if (dashboards().length > 0) {
-		<div class="chips-area">
-			@if (canScroll) {
-				<button
-					nbButton
-					ghost
-					size="tiny"
-					class="scroll-button"
-					type="button"
-					(click)="scroll(-1)"
-				>
-					<nb-icon icon="chevron-left-outline"></nb-icon>
-				</button>
-			}
-			<div #chipsScroll class="chips-scroll">
+	<!-- ALWAYS rendered, even with no custom dashboards: this row is the only
+	     content on its line, so hiding it left the ⋮ button floating alone on an
+	     otherwise empty row. With no customs it simply reads "Standard". -->
+	<div class="chips-area">
+		@if (canScroll) {
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				class="scroll-button"
+				type="button"
+				(click)="scroll(-1)"
+			>
+				<nb-icon icon="chevron-left-outline"></nb-icon>
+			</button>
+		}
+		<div #chipsScroll class="chips-scroll">
+			<button
+				type="button"
+				class="chip"
+				[class.active]="!selected()"
+				[class.is-default]="!hasDefaultCustom()"
+				(click)="selectStandard()"
+			>
+				{{ 'DASHBOARD_PAGE.CUSTOM.STANDARD' | translate }}
+				@if (!hasDefaultCustom()) {
+					<nb-icon class="default-icon" icon="star" [nbTooltip]="'DASHBOARD_PAGE.CUSTOM.IS_DEFAULT' | translate"></nb-icon>
+				}
+			</button>
+			@for (dashboard of dashboards(); track dashboard.id) {
 				<button
 					type="button"
 					class="chip"
-					[class.active]="!selected()"
-					(click)="selectStandard()"
+					[class.active]="selected()?.id === dashboard.id"
+					[class.is-default]="dashboard.isDefault"
+					(click)="select(dashboard)"
 				>
-					{{ 'DASHBOARD_PAGE.CUSTOM.STANDARD' | translate }}
-				</button>
-				@for (dashboard of dashboards(); track dashboard.id) {
-					<button
-						type="button"
-						class="chip"
-						[class.active]="selected()?.id === dashboard.id"
-						(click)="select(dashboard)"
-					>
-						{{ dashboard.name }}
-						@if (dashboard.isDefault) {
-							<nb-icon class="default-icon" icon="star-outline"></nb-icon>
-						}
-					</button>
-				}
-			</div>
-			@if (canScroll) {
-				<button
-					nbButton
-					ghost
-					size="tiny"
-					class="scroll-button"
-					type="button"
-					(click)="scroll(1)"
-				>
-					<nb-icon icon="chevron-right-outline"></nb-icon>
+					{{ dashboard.name }}
+					@if (dashboard.isDefault) {
+						<nb-icon class="default-icon" icon="star" [nbTooltip]="'DASHBOARD_PAGE.CUSTOM.IS_DEFAULT' | translate"></nb-icon>
+					}
 				</button>
 			}
 		</div>
-	}
+		@if (canScroll) {
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				class="scroll-button"
+				type="button"
+				(click)="scroll(1)"
+			>
+				<nb-icon icon="chevron-right-outline"></nb-icon>
+			</button>
+		}
+	</div>
 
 	<!-- Actions: Edit / Save / Discard + the ⋮ menu -->
 	<div class="actions-area">
