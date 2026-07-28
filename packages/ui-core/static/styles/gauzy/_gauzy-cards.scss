@@ -8,7 +8,15 @@
 //     layout offsets the content by), and
 //   * the content column padding plus the card's own header/footer rows.
 $page-chrome-height: calc(#{nb-theme(header-height)} + #{nb-theme(footer-height)});
-$card-chrome-height: 11.5rem;
+
+// 9.875rem of title/action rows and column padding, plus 1.625rem for the
+// breadcrumb trail that now sits under the page title (22px + its 4px offset —
+// see header-title.component.ts). The trail is rendered by `ngx-header-title`,
+// which every page title goes through, so it is part of the card header on
+// essentially every page: leaving it out of this constant made each card ask
+// for ~26px more than the column has, which is what pushed the footer below the
+// fold on otherwise-sparse pages.
+$card-chrome-height: 13.125rem;
 
 // PREFERRED body height, not a hard one. Since the content column became a flex
 // context (styles/_overrides.scss) a card can shrink back from this value, so an
