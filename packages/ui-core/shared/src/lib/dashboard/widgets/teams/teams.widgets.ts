@@ -15,6 +15,8 @@ export const TEAMS_WIDGET_IDS = {
 	ACTIVITY: 'teams.activity',
 	TEAM_CARDS: 'teams.team-cards',
 	TEAM_MEMBERS: 'teams.team-members',
+	OVERVIEW: 'teams.overview',
+	MEMBER_DETAILS: 'teams.member-details',
 	STATUS_CHART: 'teams.status-chart',
 	DATA_ENTRY_SHORTCUTS: 'shortcuts.data-entry'
 } as const;
@@ -153,6 +155,41 @@ export const TEAMS_DASHBOARD_WIDGETS: WidgetRegistryConfig[] = [
 		contextRequirements: TEAMS_CONTEXT,
 		permissions: TEAMS_PERMISSIONS,
 		loadComponent: () => import('./team-members-widget.component').then((m) => m.TeamMembersWidgetComponent)
+	},
+	{
+		location: 'dashboard',
+		category: 'teams',
+		widgetId: TEAMS_WIDGET_IDS.OVERVIEW,
+		title: 'DASHBOARD_PAGE.BUILDER.WIDGETS.TEAM_OVERVIEW.TITLE',
+		description: 'DASHBOARD_PAGE.BUILDER.WIDGETS.TEAM_OVERVIEW.DESCRIPTION',
+		icon: 'layout-outline',
+		// The composite of the two widgets above, so it needs the room of both:
+		// eight columns fit two team cards side by side with their member rows.
+		defaultSize: { w: 8, h: 6 },
+		minSize: { w: 4, h: 4 },
+		maxSize: { w: 12, h: 12 },
+		supportedWidths: [4, 6, 8, 12],
+		contextRequirements: TEAMS_CONTEXT,
+		permissions: TEAMS_PERMISSIONS,
+		loadComponent: () => import('./team-overview-widget.component').then((m) => m.TeamOverviewWidgetComponent)
+	},
+	{
+		location: 'dashboard',
+		category: 'teams',
+		widgetId: TEAMS_WIDGET_IDS.MEMBER_DETAILS,
+		title: 'DASHBOARD_PAGE.BUILDER.WIDGETS.TEAM_MEMBER_DETAILS.TITLE',
+		description: 'DASHBOARD_PAGE.BUILDER.WIDGETS.TEAM_MEMBER_DETAILS.DESCRIPTION',
+		icon: 'list-outline',
+		// A six-column table: anything narrower than half a row starts dropping
+		// columns (see the widget's container query).
+		defaultSize: { w: 8, h: 5 },
+		minSize: { w: 6, h: 3 },
+		maxSize: { w: 12, h: 12 },
+		supportedWidths: [6, 8, 12],
+		contextRequirements: TEAMS_CONTEXT,
+		permissions: TEAMS_PERMISSIONS,
+		loadComponent: () =>
+			import('./team-member-details-widget.component').then((m) => m.TeamMemberDetailsWidgetComponent)
 	},
 	{
 		location: 'dashboard',

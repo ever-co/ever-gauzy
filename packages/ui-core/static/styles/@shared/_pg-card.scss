@@ -4,6 +4,10 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-cards' as *;
 
+// The pg-card layout carries less chrome around the body than the default (no
+// separate filter row), so it hands 3.75rem of that budget back to the body.
+// Like $default-card-height this is a PREFERRED size — the flex page frame
+// (styles/_overrides.scss) shrinks the card back whenever it asks for too much.
 $card-height: calc($default-card-height + 3.75rem);
 
 :host {
@@ -14,8 +18,14 @@ $card-height: calc($default-card-height + 3.75rem);
     display: flex;
     flex-direction: column;
 
-    .table-scroll-container {
-      flex-grow: 10;
+    // The body is a flex column here, so the table takes exactly the room the
+    // card has: no viewport cap (which would leave a gap under a short table or
+    // clip a long one) and `min-height: 0` so it scrolls internally instead of
+    // stretching the card past the frame.
+    .table-scroll-container,
+    .grid-scroll-container {
+      flex: 1 1 auto;
+      min-height: 0;
       max-height: unset;
     }
   }

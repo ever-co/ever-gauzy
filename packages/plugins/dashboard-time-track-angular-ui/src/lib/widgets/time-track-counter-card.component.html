@@ -17,8 +17,11 @@
 		aria-busy="true"
 		[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.WIDGETS.LOADING' | translate"
 	>
-		<div class="skeleton-line skeleton-value"></div>
-		<div class="skeleton-line skeleton-strip"></div>
+		<!-- `span`, not `div`: `<output>` only accepts phrasing content. The
+		     skeleton is a column flex container, so the spans are blockified as
+		     flex items and keep their explicit height/width. -->
+		<span class="skeleton-line skeleton-value"></span>
+		<span class="skeleton-line skeleton-strip"></span>
 	</output>
 } @else {
 	<div class="h1 counter-value">{{ value() }}</div>

@@ -1,5 +1,7 @@
 @use 'themes' as *;
 
+// Card chrome lives in `team-summary-card.component.scss` — this widget only
+// owns the grid the cards are laid out on.
 :host {
 	display: block;
 	height: 100%;
@@ -17,60 +19,4 @@
 	height: 100%;
 	overflow-y: auto;
 	padding-right: 0.25rem;
-}
-
-.team-card {
-	display: flex;
-	flex-direction: column;
-	gap: 0.375rem;
-	padding: 0.75rem;
-	min-width: 0;
-	border-radius: nb-theme(border-radius);
-	background-color: nb-theme(background-basic-color-2);
-}
-
-.team-card-headline {
-	display: flex;
-	align-items: center;
-	gap: 0.25rem;
-	min-width: 0;
-}
-
-.team-card-value {
-	margin-bottom: 0;
-}
-
-.team-card-total {
-	color: nb-theme(text-hint-color);
-	white-space: nowrap;
-}
-
-.team-card-name {
-	color: nb-theme(text-basic-color);
-	font-size: nb-theme(text-subtitle-2-font-size);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.team-card-legend {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.375rem;
-
-	// `nb-badge` is absolutely positioned by default (it is designed to sit in the
-	// corner of a card); the legacy Teams page relies on the same override to use
-	// it as an inline chip.
-	nb-badge {
-		position: relative;
-		font-size: 12px;
-		font-weight: 600;
-		padding: 2px 4px;
-		border-radius: calc(#{nb-theme(border-radius)} / 2);
-	}
-}
-
-.team-card-counter {
-	margin-top: auto;
-	padding-top: 0.25rem;
 }

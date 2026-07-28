@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { NbBadgeModule, NbButtonModule, NbCardModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
@@ -7,6 +8,7 @@ import { AlertModalComponent } from './alert-modal/alert-modal.component';
 import { AvatarComponent } from './avatar/avatar.component';
 import { BackNavigationComponent } from './back-navigation/back-navigation.component';
 import { BadgeLabelComponent } from './badge-label/badge-label.component';
+import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 import { DashboardSkeletonComponent } from './dashboard-skeleton/dashboard-skeleton.component';
 import { DateRangeTitleComponent } from './date-range-title/date-range-title.component';
 import { HeaderTitleComponent } from './header-title/header-title.component';
@@ -20,6 +22,7 @@ export const Components = [
 	AvatarComponent,
 	BackNavigationComponent,
 	BadgeLabelComponent,
+	BreadcrumbComponent,
 	DashboardSkeletonComponent,
 	DateRangeTitleComponent,
 	HeaderTitleComponent,
@@ -31,6 +34,8 @@ export const Components = [
 @NgModule({
 	imports: [
 		CommonModule,
+		// `ngx-breadcrumbs` renders `routerLink`s for the ancestor levels.
+		RouterModule,
 		NbCardModule,
 		NbBadgeModule,
 		NbButtonModule,

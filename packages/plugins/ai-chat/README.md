@@ -12,7 +12,7 @@ chat sidebar rendered between the navigation menu and the page content
 | Endpoint | Method | Permission | Description |
 |---|---|---|---|
 | `/api/ai-chat` | POST | `AI_CHAT_ACCESS` | One chat turn. Accepts `{ messages: UIMessage[], providerId?, modelId? }`, streams back a Vercel AI SDK **UI message stream** (SSE) with text, tool calls, tool results and approval requests. |
-| `/api/ai-chat/config` | GET | `AI_CHAT_ACCESS` | Providers/models/config status for the current tenant (never returns secrets). |
+| `/api/ai-chat/config` | GET | `AI_CHAT_ACCESS` or `AI_CHAT_SETTINGS` | Providers/models/config status for the current tenant (never returns secrets). When `enabled` is `false`, `disabledReason` says why (`globally-disabled` = `GAUZY_AI_CHAT_ENABLED=false`, `no-providers` = no provider has usable credentials) so the UI can explain it instead of silently hiding the chat. |
 | `/api/ai-chat/credentials` | CRUD | `AI_CHAT_SETTINGS` | Per-tenant BYOK provider credentials (API keys stored encrypted; reads return masked keys). |
 
 ## Architecture

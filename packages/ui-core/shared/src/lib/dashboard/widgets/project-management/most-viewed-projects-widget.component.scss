@@ -1,0 +1,10 @@
+// The row is a plain container on purpose: `ngx-project` brings its own
+// encapsulated styles (thumbnail, name, member count) and is reused as-is —
+// restyling it here would make the dashboard copy drift from the table cell
+// every other page renders.
+.project-row {
+	min-width: 0;
+	// A long project name has nowhere to wrap inside the cell component, so the
+	// card clips it rather than letting it widen the scroll container.
+	overflow: hidden;
+}

@@ -832,6 +832,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "您必须成为公司职员才能够追踪时间、创建分摊费用以及使用其他与员工相关的功能。"
 	},
 	"MENU": {
+		"BREADCRUMB": "面包屑导航",
 		"PIPELINES": "管道",
 		"DASHBOARD": "仪表盘",
 		"DASHBOARDS": "仪表板",

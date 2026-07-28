@@ -19,6 +19,14 @@ export { PlaygroundChatSidebarComponent } from './lib/playground-chat-sidebar.co
 // Providers — register the AI Chat in the layout's dedicated chat sidebar slot
 export { provideAiChatSidebar } from './lib/provide-ai-chat-sidebar';
 
+// Chat availability (permission + backend configuration) — shared by the
+// sidebar registration and the AI Providers settings page
+export {
+	AiChatAvailabilityService,
+	type AiChatUnavailableReason,
+	type IAiChatAvailability
+} from './lib/ai-chat-availability.service';
+
 // Route config
 export { PLAYGROUND_PATH, PLAYGROUND_ROUTE } from './lib/playground.routes';
 

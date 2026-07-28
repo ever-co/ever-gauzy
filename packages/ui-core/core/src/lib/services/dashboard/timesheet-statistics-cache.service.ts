@@ -120,24 +120,33 @@ export function buildStatisticsRequest(context: IDashboardWidgetContext): Statis
 }
 
 /**
- * Adds the `durationPercentage` field the Apps & URLs widgets render, using the
- * same total-of-the-page denominator the standard dashboard uses.
+ * Makes the server-computed `durationPercentage` safe to render.
  *
- * @param activities - Raw activities as returned by the API.
- * @returns A new array with `durationPercentage` populated.
+ * `/timesheet/statistics/activities` returns only the TOP 5 activity buckets, but
+ * it computes each one's `durationPercentage` against the total of the WHOLE
+ * period — `StatisticService.getActivities()` runs a second, unlimited aggregate
+ * for exactly that denominator. Re-deriving the share client-side from the five
+ * returned rows (which `TimeTrackingComponent.getActivities()` still does) forces
+ * those five to add up to 100% and so overstates every one of them: an app worth
+ * 12% of the tracked period renders as 40%. The server value is the correct one
+ * and is therefore kept as-is.
+ *
+ * Only normalization happens here: the aggregate can come back as a string, and
+ * the server divides by the period total without a zero guard, so an empty period
+ * yields `NaN` — either would reach `nb-progress-bar` as a `NaN` width.
+ *
+ * @param activities - Activities as returned by the API.
+ * @returns A new array whose `durationPercentage` is a finite 0..100 number.
  */
-export function withDurationPercentage(activities: IActivitiesStatistics[]): IActivitiesStatistics[] {
-	const list = activities ?? [];
-	// ONE coercion for both the numerator and the denominator: the API may return
-	// a duration as a string or with a fractional part, and mixing `parseInt`
-	// (truncating) with implicit numeric coercion made the shares miss 100%.
-	const duration = (activity: IActivitiesStatistics): number => Number(activity.duration) || 0;
-	const total = list.reduce((sum: number, activity: IActivitiesStatistics) => sum + duration(activity), 0);
+export function normalizeDurationPercentage(activities: IActivitiesStatistics[]): IActivitiesStatistics[] {
+	return (activities ?? []).map((activity: IActivitiesStatistics) => {
+		const share = Number(activity?.durationPercentage);
 
-	return list.map((activity: IActivitiesStatistics) => ({
-		...activity,
-		durationPercentage: total ? (duration(activity) * 100) / total : 0
-	}));
+		return {
+			...activity,
+			durationPercentage: Number.isFinite(share) ? Math.min(Math.max(share, 0), 100) : 0
+		};
+	});
 }
 
 /**
@@ -198,8 +207,9 @@ export class TimesheetStatisticsCacheService {
 	/**
 	 * Application / URL activity buckets.
 	 *
-	 * Returns the raw API payload — use {@link withDurationPercentage} when the
-	 * widget needs the relative share.
+	 * Returns the raw API payload — pass it through
+	 * {@link normalizeDurationPercentage} when the widget renders the relative
+	 * share the server already computed.
 	 *
 	 * @param context - The dashboard context to query for.
 	 */

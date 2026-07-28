@@ -1,17 +1,79 @@
 // Forward themes so files importing this also get nb-theme() etc.
 @forward 'themes';
 @use 'themes' as *;
+@use 'sass:list';
+@use 'sass:map';
 
 $default-box-shadow-inset: var(--gauzy-shadow) inset;
-$default-height: 42px;
+
+// ── Shared control geometry ────────────────────────────────────────────────
+// Derived from the density tokens rather than pinned in pixels. The density pass
+// moved `input-medium-padding` / `select-medium-*`, and every control that had
+// hard-coded its height stopped agreeing with the text inside it — a 42px pill
+// around a 13px line, an `ng-select` that silently fell back to the library's own
+// 36px, an `nb-select` that stayed at 42px. Keeping the height content-derived
+// means the next token change carries the controls with it.
+//
+// `$control-padding-y` is the block half of `input-medium-padding`, READ OUT of
+// the density map in `themes.scss` rather than copied. It cannot go through
+// `nb-theme()`: this build has Nebular's CSS-custom-properties mode on, so that
+// returns `var(--input-medium-padding)`, and a `var()` is opaque to Sass — there
+// is no way to take half of it. Slicing the map instead means retuning the token
+// carries this with it, and renaming the token fails the build rather than
+// leaving a stale copy behind.
+$control-padding-y: list.nth(map.get($gauzy-density, input-medium-padding), 1);
+// The inline half of `select-outline-medium-padding` (0.4375rem 1rem) — the
+// inset an `nb-select` button gives its own text, so an `ng-select` trigger
+// starts its text on the same x as the `nb-select` beside it.
+//
+// THE ONE HARDCODED VALUE IN THIS FILE, and deliberately so: that token is
+// defined in Nebular's own `_mapping.scss`, not in `themes.scss`, so there is no
+// Sass map here to slice — and `themes.scss` is not this change's to edit. It is
+// a framework constant rather than a knob the density pass turns, so the drift
+// risk is small; if a theme ever overrides `select-outline-medium-padding`, this
+// has to move with it.
+$control-padding-x: 1rem;
+// One line box plus both block insets — i.e. the height `nb-select` computes for
+// itself, so both combobox flavours land on the same size instead of 36 vs 42.
+$default-height: calc(#{nb-theme(select-medium-text-line-height)} + #{$control-padding-y} * 2);
 $default-radius: nb-theme(border-radius);
 $default-button-radius: calc(nb-theme(button-rectangle-border-radius) / 1.625);
 $default-box-shadow: var(--gauzy-shadow);
 
+// NOTE ON `!important` IN THIS MIXIN: `@ng-select/ng-select/themes/default.theme.css`
+// is listed AFTER `styles.scss` in the app's `styles` array (see the `styles`
+// block in `apps/gauzy/project.json`), and the library's own component styles are
+// injected later still, so both win every specificity tie against these rules.
+// Each `!important` below overrides one specific declaration from those sheets —
+// they are not blanket hammers.
 @mixin ng-select-overrides($height, $radius, $box-shadow) {
   .ng-select {
-    &.ng-select-single .ng-select-container {
-      height: $height;
+    // `ng-select` is third-party and carries no Nebular tokens, so it inherited
+    // `text-paragraph-font-size` and kept rendering 14px text while the density
+    // pass took every Nebular control down to 13px. Reading the same token
+    // `nb-select` reads is what makes the two match when they stand side by side
+    // in the page header.
+    font-size: nb-theme(select-medium-text-font-size);
+
+    // Sizing lives on the `single`/`multiple` variants rather than on the bare
+    // `.ng-select-container` on purpose. Those two classes are mutually exclusive
+    // and one is always present, so this covers every trigger — but at one step
+    // more specificity than the library theme's `min-height: 36px`, WITHOUT
+    // `!important`. That ordering matters: a consumer that deliberately pins a
+    // size (the page header runs its selectors at 2rem) has to keep winning, and
+    // an `!important` here would silently overrule it.
+    &.ng-select-single .ng-select-container,
+    &.ng-select-multiple .ng-select-container {
+      // `min-height`, not `height`: the trigger is sized by its content — one
+      // line box plus both block insets — so it follows the density tokens, and a
+      // taller value (an organization logo, multi-select chips) can no longer
+      // overflow the pill. It also clamps the theme's `height: 36px` up to the
+      // token-derived size without having to fight that declaration directly.
+      min-height: $height;
+      // Centre the content explicitly instead of relying on the value box
+      // happening to fill the pill, so a consumer-imposed fixed height keeps the
+      // text on the middle line rather than dropping it to the top.
+      align-items: center;
     }
 
     &.ng-select-opened > .ng-select-container:hover {
@@ -25,21 +87,60 @@ $default-box-shadow: var(--gauzy-shadow);
     .ng-select-container {
       border-radius: $radius;
       box-shadow: $box-shadow;
-      height: $height;
       border: none;
       &:hover {
         box-shadow: $box-shadow;
       }
 
+      .ng-value-container {
+        align-items: center;
+        // ONE inset for the whole trigger. Each selector used to set its own
+        // (0 / 5px / 10px) and the placeholder added another 15px on top, so the
+        // text jumped horizontally the moment a value was picked and the header
+        // selectors never shared a left edge with each other.
+        // A logical property rather than the `nb-ltr`/`nb-rtl` pair: those are
+        // gated on an explicit `[dir]` attribute, while `padding-inline-start`
+        // flips on its own and still overrides the library theme's physical
+        // `padding-left: 10px` through the normal cascade.
+        padding-inline-start: $control-padding-x !important;
+
+        // Cancels the 15px indent that `includes/_ng-select.scss` puts on the
+        // placeholder. Nothing sets a matching margin on `.ng-value`, so the text
+        // used to shift 15px to the left the moment a value was picked. Scoped to
+        // the placeholder for the same reason: `.ng-value` in a multi-select is a
+        // chip whose own margins do the chip spacing.
+        .ng-placeholder {
+          margin: 0 !important;
+        }
+      }
+
       input {
+        // The search field is a bare `<input>`, so every rule written for a
+        // form control lands on it and paints a second control inside the pill:
+        // the global `input` rule in `text-inputs-overrides` gives it a radius,
+        // an inset shadow and — since the height there became a `min-height`
+        // floor — a full control's worth of height. That last one is not
+        // cosmetic: `.ng-input` is absolutely positioned at the top of the
+        // trigger, so a control-height floor on it pushes the text being typed
+        // below the value it replaces, which is the exact misalignment this
+        // change exists to remove. Strip the control chrome; it has to read as
+        // the trigger's own text.
         height: unset;
+        // `!important` because `input-appearance`'s `::ng-deep input` rule is
+        // itself `!important`, and in a component stylesheet `::ng-deep` at the
+        // start of a selector emits an unscoped `input { ... !important }` —
+        // no specificity will beat it.
+        min-height: 0 !important;
+        border-radius: 0;
+        box-shadow: none;
+        font: inherit;
       }
     }
   }
 }
 
 @mixin dialog($card-background-color, $input-background-color) {
-  @include input-appearance(42px, $input-background-color);
+  @include input-appearance($default-height, $input-background-color);
   nb-card {
     background-color: $card-background-color;
   }
@@ -51,7 +152,9 @@ $default-box-shadow: var(--gauzy-shadow);
   ::ng-deep .ng-select .ng-select-container {
     background-color: $input-background-color !important;
     border: none;
-    height: $height !important;
+    // `min-height` so a control can still grow past the token-derived floor
+    // (multi-select chips, a wrapped label) instead of clipping its own content.
+    min-height: $height !important;
   }
 
   ::ng-deep .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder,
@@ -85,7 +188,9 @@ $default-box-shadow: var(--gauzy-shadow);
   input {
     border-radius: $default-radius;
     box-shadow: $default-box-shadow-inset;
-    height: $default-height;
+    // Same reasoning as the controls above: a floor, not a fixed size, so the
+    // field follows the density tokens and never crops its own text.
+    min-height: $default-height;
     background-color: nb-theme(select-outline-basic-background-color);
   }
 
@@ -102,10 +207,20 @@ $default-box-shadow: var(--gauzy-shadow);
   nb-select.shape-rectangle .select-button {
     border-radius: $radius;
     box-shadow: $box-shadow;
-    height: $height;
+    // Token-derived floor instead of the old flat 42px, which is what put an
+    // `nb-select` 6px taller than the `ng-select` next to it once the density
+    // pass shrank the control metrics.
+    min-height: $height;
     display: flex;
     align-items: center;
     border: none;
+  }
+
+  // Nebular compacted `select-medium-text-font-size` but not the matching
+  // placeholder token, so an empty select rendered its prompt one step larger
+  // than the value that replaces it — the text visibly shrinks on selection.
+  nb-select.size-medium .select-button.placeholder {
+    font-size: nb-theme(select-medium-text-font-size);
   }
 
   nb-select.appearance-outline.size-medium .select-button {
@@ -264,7 +379,7 @@ $default-box-shadow: var(--gauzy-shadow);
   @include nb-stepper;
   @include full-calendar();
   @include ck-editor();
-  @include input-appearance(42px, var(--gauzy-card-1));
+  @include input-appearance($default-height, var(--gauzy-card-1));
   @include nb-tabset-overrides;
 }
 

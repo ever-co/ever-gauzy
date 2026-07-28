@@ -1,0 +1,75 @@
+@use 'themes' as *;
+
+// No card chrome here on purpose: `ga-dashboard-widget-host` already renders the
+// `nb-card`, its header and the body padding. This component only fills that body.
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.employee-statistics {
+  height: 100%;
+  width: 100%;
+  // The table scrolls INSIDE the widget: a canvas cell must never push the grid
+  // sideways, and a long roster must not stretch the cell vertically either.
+  overflow: auto;
+}
+
+.employee-statistics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: nb-theme(text-caption-font-size);
+  color: nb-theme(text-basic-color);
+
+  th,
+  td {
+    padding: 0.375rem 0.5rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    // Opaque so the rows scrolling underneath do not show through the header.
+    background-color: nb-theme(card-background-color);
+    color: nb-theme(text-hint-color);
+    font-weight: nb-theme(text-subtitle-2-font-weight);
+  }
+
+  tbody tr {
+    border-top: 1px solid nb-theme(border-basic-color-3);
+  }
+
+  .is-numeric {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .is-employee {
+    // The identity column absorbs the free space so the money columns stay
+    // aligned however wide the cell is.
+    width: 100%;
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// Standard technique for a label that must stay in the accessibility tree while
+// taking no space (unlike `display: none` / `visibility: hidden`).
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

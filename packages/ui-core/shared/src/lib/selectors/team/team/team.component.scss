@@ -9,10 +9,13 @@
 	}
 
 	ng-select {
+		// The label template is a flex row so the logo and the name share one
+		// baseline. No `height: 100%` — the parent is auto-height, so it resolved
+		// to `auto` anyway and only made the box look intentional; the trigger
+		// centres its own content (see `ng-select-overrides`).
 		.selector-template {
 			display: flex;
 			align-items: center;
-			height: 100%;
 		}
 
 		img {
@@ -20,15 +23,8 @@
 			border-radius: nb-theme(button-rectangle-border-radius);
 		}
 	}
-
-	::ng-deep {
-		.ng-select .ng-select-container .ng-value-container {
-			align-items: center;
-			padding-left: 5px;
-		}
-	}
 }
 
-img{
+img {
 	object-fit: cover;
 }

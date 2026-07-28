@@ -32,6 +32,7 @@ import {
 	IDashboardWidgetContextOverrides,
 	narrowDashboardContext,
 	Store,
+	WidgetConfigField,
 	WidgetRegistryConfig,
 	WidgetRegistryService
 } from '@gauzy/ui-core/core';
@@ -130,6 +131,37 @@ export function toContextOverrides(
 		return undefined;
 	}
 	return { employeeIds, projectIds, teamIds };
+}
+
+/**
+ * Config field types the builder's configuration dialog knows how to render.
+ *
+ * `employee` / `project` / `team` are declared by {@link WidgetConfigField} but
+ * have no picker yet: the shared page selectors are store-bound (they write
+ * `Store.selectedProject` / `selectedEmployee` and rewrite the route's query
+ * params), so dropping one into a modal would silently re-scope the whole page.
+ *
+ * TODO(dashboard-builder): add modal-safe entity pickers and delete this set.
+ */
+const RENDERABLE_CONFIG_TYPES: ReadonlySet<WidgetConfigField['type']> = new Set<WidgetConfigField['type']>([
+	'text',
+	'number',
+	'boolean',
+	'select'
+]);
+
+/**
+ * The subset of a widget's `configSchema` the configuration dialog can render.
+ *
+ * Shared with the dialog on purpose: the kebab's "Configure" entry is gated on
+ * this being non-empty, so the menu can never advertise a dialog that would open
+ * with nothing in it.
+ *
+ * @param schema - The widget's declared configuration schema.
+ * @returns The renderable fields, in declaration order.
+ */
+export function renderableConfigFields(schema: WidgetConfigField[] | undefined): WidgetConfigField[] {
+	return (schema ?? []).filter((field) => !!field?.key && RENDERABLE_CONFIG_TYPES.has(field.type));
 }
 
 /**
@@ -277,12 +309,14 @@ export class DashboardWidgetHostComponent {
 	readonly title = computed<string>(() => this.resolvedTitle() || 'DASHBOARD_PAGE.BUILDER.HOST.UNTITLED_WIDGET');
 
 	/**
-	 * Whether the widget exposes per-instance settings.
+	 * Whether the widget exposes per-instance settings the dialog can render.
 	 *
 	 * The kebab menu only offers "Configure" when this is true, so the action is
-	 * never a dead end: a widget with nothing to configure simply does not show it.
+	 * never a dead end — neither for a widget with nothing to configure, nor for
+	 * one whose whole schema uses a field type the dialog cannot render yet (see
+	 * {@link renderableConfigFields}).
 	 */
-	readonly configurable = computed<boolean>(() => !!this.widget()?.configSchema?.length);
+	readonly configurable = computed<boolean>(() => renderableConfigFields(this.widget()?.configSchema).length > 0);
 
 	/** Widths offered by the resize menu, clamped to the widget's min/max size. */
 	readonly widthOptions = computed<number[]>(() => {

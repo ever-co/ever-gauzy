@@ -20,7 +20,7 @@
         </ngx-gauzy-button-action>
       </div>
     }
-    <nb-tabset class="nb-tabset" (changeTab)="tabChange($event)">
+    <nb-tabset (changeTab)="tabChange($event)">
       <nb-tab
         tabId="general"
         tabTitle="{{ 'GOALS_PAGE.SETTINGS.GENERAL' | translate }}"

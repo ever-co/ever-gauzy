@@ -6,6 +6,7 @@ import { WidgetRegistryService } from '@gauzy/ui-core/core';
 import { ACCOUNTING_DASHBOARD_WIDGETS } from './accounting/accounting.widgets';
 import { CHART_DASHBOARD_WIDGETS } from './charts/charts.widgets';
 import { HR_DASHBOARD_WIDGETS } from './hr/hr.widgets';
+import { PROJECT_MANAGEMENT_DASHBOARD_WIDGETS } from './project-management/project-management.widgets';
 import { TEAMS_DASHBOARD_WIDGETS } from './teams/teams.widgets';
 
 /**
@@ -20,7 +21,8 @@ export const CORE_DASHBOARD_WIDGETS = [
 	...ACCOUNTING_DASHBOARD_WIDGETS,
 	...HR_DASHBOARD_WIDGETS,
 	...CHART_DASHBOARD_WIDGETS,
-	...TEAMS_DASHBOARD_WIDGETS
+	...TEAMS_DASHBOARD_WIDGETS,
+	...PROJECT_MANAGEMENT_DASHBOARD_WIDGETS
 ];
 
 /**

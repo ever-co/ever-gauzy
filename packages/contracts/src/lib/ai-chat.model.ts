@@ -74,6 +74,11 @@ export interface IAiChatProvider {
 export interface IAiChatConfig {
 	/** Whether AI chat is enabled and at least one provider is configured. */
 	enabled: boolean;
+	/**
+	 * Machine-readable reason why `enabled` is `false`, so the UI can tell the
+	 * user what to fix instead of silently hiding the chat. Absent when enabled.
+	 */
+	disabledReason?: 'globally-disabled' | 'no-providers';
 	/** Registered providers (with configuration status, without secrets). */
 	providers: IAiChatProvider[];
 	/** Default provider id used when the client does not request one. */
