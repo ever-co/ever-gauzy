@@ -237,8 +237,8 @@ export class AiChatSettingsComponent implements OnInit {
 				return 'no-permission';
 			case 'globally-disabled':
 				return 'globally-disabled';
-			case 'unreachable':
-				return 'unreachable';
+			// No `unreachable` case: it is decided above the "nothing configured"
+			// gate, so control flow has already narrowed it out of `reason` here.
 			case 'no-providers':
 				// A credential row exists but the server can use none of them: the
 				// credential is disabled, or its stored key no longer decrypts
