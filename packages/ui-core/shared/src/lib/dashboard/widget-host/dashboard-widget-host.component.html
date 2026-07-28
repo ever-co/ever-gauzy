@@ -35,12 +35,22 @@
 				}
 				@case ('loading') {
 					<!-- Skeleton rather than a spinner: the card keeps its height, so the
-					     canvas does not reflow when the widget bundle lands. -->
-					<div class="widget-skeleton" [attr.aria-label]="'DASHBOARD_PAGE.BUILDER.HOST.LOADING' | translate">
+					     canvas does not reflow when the widget bundle lands.
+
+					     `<output>` (like the widget state components), not a `<div>`: a
+					     role-less element DISCARDS `aria-label`, so the loading state was
+					     announced as nothing at all. `<output>` carries an implicit
+					     `status` live region — hence no explicit role — which also gets
+					     the swap to the loaded content announced. -->
+					<output
+						class="widget-skeleton"
+						aria-busy="true"
+						[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.HOST.LOADING' | translate"
+					>
 						<span class="skeleton-line w-60"></span>
 						<span class="skeleton-line w-90"></span>
 						<span class="skeleton-line w-75"></span>
-					</div>
+					</output>
 				}
 				@case ('error') {
 					<div class="widget-placeholder is-error">

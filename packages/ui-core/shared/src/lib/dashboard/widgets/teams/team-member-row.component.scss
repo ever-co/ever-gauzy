@@ -1,0 +1,94 @@
+@use 'themes' as *;
+
+// Chrome of one member row, moved here verbatim from the member-list widget so
+// the flat list and the per-team overview cannot drift apart.
+//
+// The host is the query container: the row's OWN inline size is what decides
+// whether five columns still fit. A viewport media query would be the wrong
+// axis — this row can sit in a 3-column cell of a 12-column canvas on a wide
+// desktop, where the columns collide long before the viewport is narrow.
+:host {
+	display: block;
+	min-width: 0;
+	container-type: inline-size;
+}
+
+.member-row {
+	display: grid;
+	// status dot | identity | progress | duration | activity
+	grid-template-columns: 16px minmax(0, 1.6fr) minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem;
+	border-radius: nb-theme(border-radius);
+	background-color: nb-theme(background-basic-color-2);
+}
+
+// Colours come from the theme palette (never a literal): the legacy row hard
+// coded green/orange/red, which reads wrong in the dark themes.
+.member-dot {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background-color: var(--color-warning-default);
+
+	&.online {
+		background-color: var(--color-success-default);
+	}
+
+	&.offline {
+		background-color: var(--color-danger-default);
+	}
+}
+
+.member-identity {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+	min-width: 0;
+}
+
+.member-team {
+	color: nb-theme(text-hint-color);
+	font-size: nb-theme(text-caption-font-size);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.member-duration {
+	color: nb-theme(text-hint-color);
+	font-size: nb-theme(text-caption-font-size);
+	white-space: nowrap;
+}
+
+.member-activity {
+	// `nb-badge` is absolutely positioned by default; the legacy member row
+	// relies on the same override to use it as an inline chip.
+	nb-badge {
+		position: relative;
+		font-size: 12px;
+		font-weight: 600;
+		padding: 2px 4px;
+		border-radius: calc(#{nb-theme(border-radius)} / 2);
+	}
+}
+
+// Scoped under `:host`: a bare `::ng-deep` is GLOBAL once any component using
+// this stylesheet is on screen (it compiles with no `_nghost`/`_ngcontent`
+// attribute at all), which would shrink every tiny progress bar in the app.
+:host ::ng-deep nb-progress-bar.size-tiny .progress-container {
+	height: 10px;
+}
+
+// Below this the five columns stop fitting; drop the progress bar rather than
+// letting the name and the duration collide.
+@container (max-width: 480px) {
+	.member-row {
+		grid-template-columns: 16px minmax(0, 1fr) auto auto;
+	}
+
+	.member-progress {
+		display: none;
+	}
+}

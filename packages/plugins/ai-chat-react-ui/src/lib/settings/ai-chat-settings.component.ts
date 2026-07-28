@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject, signal, computed } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	ChangeDetectorRef,
+	Component,
+	DestroyRef,
+	OnInit,
+	inject,
+	signal,
+	computed
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -149,6 +159,9 @@ export class AiChatSettingsComponent implements OnInit {
 	private readonly cdr = inject(ChangeDetectorRef);
 	private readonly router = inject(Router);
 	private readonly route = inject(ActivatedRoute);
+	// Angular's own teardown rather than @ngneat/until-destroy: that package is
+	// not a dependency of this plugin, and takeUntilDestroyed does the same job.
+	private readonly destroyRef = inject(DestroyRef);
 
 	ngOnInit(): void {
 		// Complete an in-flight Connect flow when the provider redirected back
@@ -188,7 +201,7 @@ export class AiChatSettingsComponent implements OnInit {
 		}
 
 		// Keep the view in sync with the query params (back/forward navigation).
-		this.route.queryParamMap.subscribe((params) => {
+		this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
 			const providerId = params.get('provider');
 			if (providerId) {
 				this.selectedProviderId.set(providerId);
@@ -244,7 +257,10 @@ export class AiChatSettingsComponent implements OnInit {
 				})
 			)
 		})
-			.pipe(finalize(() => this.loading.set(false)))
+			.pipe(
+				takeUntilDestroyed(this.destroyRef),
+				finalize(() => this.loading.set(false))
+			)
 			.subscribe(({ config, credentials }) => {
 				this.credentialsByProvider = new Map(
 					(credentials?.items ?? []).map((credential) => [credential.providerId, credential])
@@ -327,7 +343,10 @@ export class AiChatSettingsComponent implements OnInit {
 		this.saving.set(provider.id);
 		this.settingsService
 			.updateCredential(credential.id, { providerId: provider.id, enabled })
-			.pipe(finalize(() => this.saving.set(null)))
+			.pipe(
+				takeUntilDestroyed(this.destroyRef),
+				finalize(() => this.saving.set(null))
+			)
 			.subscribe({
 				next: () => this.load(),
 				error: (error) => {
@@ -393,12 +412,16 @@ export class AiChatSettingsComponent implements OnInit {
 				organizationId: this.store.organizationId ?? undefined
 			})
 			.pipe(
-				finalize(() => {
-					this.connecting.set(false);
-					// Strip the one-time ?code=... from the URL.
-					void this.router.navigate([], { relativeTo: this.route, queryParams: {} });
-					this.load();
-				})
+				takeUntilDestroyed(this.destroyRef),
+				// ONLY the spinner is reset here. `finalize` runs on ANY termination —
+				// including the completion `takeUntilDestroyed` injects when the component
+				// is destroyed — so the URL cleanup must NOT live in it: a relative
+				// `router.navigate()` issued from a destroyed component still resolves
+				// against its populated route snapshot, which would drag the user back
+				// to /pages/settings/ai from whatever settings page they moved on to.
+				// `next`/`error` are the handlers that are genuinely skipped after
+				// teardown, so the navigation lives there instead.
+				finalize(() => this.connecting.set(false))
 			)
 			.subscribe({
 				next: () => {
@@ -408,9 +431,22 @@ export class AiChatSettingsComponent implements OnInit {
 						}),
 						this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
 					);
+					this.finishConnect();
 				},
-				error: (error) => this.showError(error)
+				error: (error) => {
+					this.showError(error);
+					this.finishConnect();
+				}
 			});
+	}
+
+	/**
+	 * Strips the one-time `?code=...` from the URL and reloads the page data
+	 * after a Connect exchange settled (either way).
+	 */
+	private finishConnect(): void {
+		void this.router.navigate([], { relativeTo: this.route, queryParams: {} });
+		this.load();
 	}
 
 	private readConnectSession(): {
@@ -472,17 +508,24 @@ export class AiChatSettingsComponent implements OnInit {
 			: this.settingsService.upsertCredential({ ...payload, apiKey } as IAiProviderCredentialCreateInput);
 
 		this.saving.set(provider.id);
-		request$.pipe(finalize(() => this.saving.set(null))).subscribe({
-			next: () => {
-				this.toastrService.success(
-					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SAVED', { provider: provider.label }),
-					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
-				);
-				this.load();
-				this.showList();
-			},
-			error: (error) => this.showError(error)
-		});
+		request$
+			.pipe(
+				takeUntilDestroyed(this.destroyRef),
+				finalize(() => this.saving.set(null))
+			)
+			.subscribe({
+				next: () => {
+					this.toastrService.success(
+						this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SAVED', { provider: provider.label }),
+						this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
+					);
+					this.load();
+					// Navigates: without the `takeUntilDestroyed(this.destroyRef)` above, a save that
+					// resolves after the user left would yank them back to this page.
+					this.showList();
+				},
+				error: (error) => this.showError(error)
+			});
 	}
 
 	/** Deletes the tenant credential of a provider after confirmation. */
@@ -514,7 +557,8 @@ export class AiChatSettingsComponent implements OnInit {
 							return EMPTY;
 						})
 					);
-				})
+				}),
+				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe(() => {
 				this.toastrService.success(
@@ -545,7 +589,7 @@ export class AiChatSettingsComponent implements OnInit {
 						defaultModel: this.fb.nonNullable.control(
 							credential?.defaultModel ? (knownModel ? credential.defaultModel : CUSTOM_MODEL) : ''
 						),
-						customModel: this.fb.nonNullable.control(knownModel ? '' : credential?.defaultModel ?? ''),
+						customModel: this.fb.nonNullable.control(knownModel ? '' : (credential?.defaultModel ?? '')),
 						enabled: this.fb.nonNullable.control(credential?.enabled ?? true)
 					})
 				];

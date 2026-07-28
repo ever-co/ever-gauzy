@@ -1,0 +1,93 @@
+<ga-teams-widget-state
+	[loading]="loading()"
+	[error]="error()"
+	[empty]="members().length === 0"
+	[skeletonRows]="4"
+	emptyMessageKey="DASHBOARD_PAGE.BUILDER.WIDGETS.TEAM_MEMBER_DETAILS.EMPTY"
+	(retry)="refresh()"
+>
+	<div class="details-scroll">
+		<!-- Column captions of the legacy drill-down table, kept in view while scrolling. -->
+		<div class="details-grid details-head">
+			<span class="cell-text">{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}</span>
+
+			<div class="task-grid">
+				<span class="cell-text">{{ 'MENU.IMPORT_EXPORT.TASK' | translate }}</span>
+				<span class="cell-numeric">{{ 'TIMESHEET.DURATION' | translate }}</span>
+				<span class="cell-text cell-progress">{{ 'MENU.IMPORT_EXPORT.PROGRESS' | translate }}</span>
+				<span class="cell-numeric cell-estimate">{{ 'TASKS_PAGE.ESTIMATE' | translate }}</span>
+			</div>
+
+			<span class="cell-numeric">{{ 'REPORT_PAGE.ACTIVITY' | translate }}</span>
+		</div>
+
+		@for (member of members(); track member.id) {
+			<div class="details-grid details-row">
+				<div class="details-identity">
+					<span
+						class="member-dot"
+						[class.online]="member.isRunningTimer"
+						[class.offline]="!member.isWorkingToday"
+						[attr.aria-hidden]="true"
+					></span>
+
+					<div class="details-identity-text">
+						<ngx-avatar
+							class="report-table"
+							[id]="member.employee?.id"
+							[name]="member.name"
+							[src]="member.imageUrl"
+							[employee]="member.employee"
+						></ngx-avatar>
+						@if (showTeamName()) {
+							<div class="details-team" [title]="member.teamName">{{ member.teamName }}</div>
+						}
+					</div>
+				</div>
+
+				<div class="details-tasks">
+					@for (task of member.tasks; track task.id) {
+						<div class="task-grid">
+							<span class="cell-text" [title]="task.title">
+								@if (isWithoutTask(task)) {
+									{{ 'REPORT_PAGE.NO_TASK' | translate }}
+								} @else {
+									{{ task.title }}
+								}
+							</span>
+
+							<span class="cell-numeric cell-muted">{{ task.duration | durationFormat }}</span>
+
+							<div class="cell-progress">
+								<nb-progress-bar
+									size="tiny"
+									[displayValue]="false"
+									[status]="statusFor(estimatePercentage(task))"
+									[value]="estimatePercentage(task)"
+								></nb-progress-bar>
+							</div>
+
+							<span class="cell-numeric cell-muted cell-estimate">
+								@if (task.estimate) {
+									{{ task.estimate | durationFormat }}
+								} @else {
+									&#8212;
+								}
+							</span>
+						</div>
+					} @empty {
+						<div class="task-grid">
+							<span class="cell-text cell-muted">{{ 'ORGANIZATIONS_PAGE.NOT_WORKED' | translate }}</span>
+						</div>
+					}
+				</div>
+
+				<div class="details-activity">
+					@if (member.isWorkingToday && member.activity !== null) {
+						<nb-badge [status]="statusFor(member.activity)" [text]="activityLabel(member)"></nb-badge>
+					}
+				</div>
+			</div>
+		}
+	</div>
+</ga-teams-widget-state>

@@ -31,6 +31,7 @@
 			[tab]="activeTab"
 			[editing]="editing"
 			(layoutChange)="onLayoutChange($event)"
+			(configureRequested)="onConfigureWidget($event)"
 		></ga-dashboard-canvas>
 
 		@if (editing) {

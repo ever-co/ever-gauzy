@@ -53,6 +53,7 @@ import { CustomDashboardComponent } from './custom-dashboard/custom-dashboard.co
 import { DashboardCanvasComponent } from './custom-dashboard/dashboard-canvas.component';
 import { WidgetPaletteComponent } from './custom-dashboard/widget-palette.component';
 import { DashboardTabStripComponent } from './custom-dashboard/dashboard-tab-strip.component';
+import { WidgetConfigDialogComponent } from './custom-dashboard/widget-config-dialog.component';
 import { HumanResourcesComponent } from './human-resources/human-resources.component';
 import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
@@ -104,10 +105,12 @@ const COMPONENTS = [
 	DashboardComponent,
 	DashboardSwitcherComponent,
 	// Dashboard builder: canvas page, grid canvas, widget palette, tab strip
+	// and the per-widget settings dialog opened from a widget's kebab menu
 	CustomDashboardComponent,
 	DashboardCanvasComponent,
 	WidgetPaletteComponent,
 	DashboardTabStripComponent,
+	WidgetConfigDialogComponent,
 	AccountingComponent,
 	HumanResourcesComponent,
 	ProjectManagementComponent,

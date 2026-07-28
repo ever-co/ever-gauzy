@@ -69,6 +69,24 @@ export function isCurrentWeekRange(context: IDashboardWidgetContext | null): boo
 }
 
 /**
+ * Whether the selected range spans more than one calendar week.
+ *
+ * Replicates `TimeTrackingComponent.isMoreThanWeek()`: the Members panel only
+ * draws its per-day bar graph for ranges up to a week, because beyond that the
+ * seven bars stop mapping onto seven real days.
+ *
+ * @param context The ambient dashboard widget context.
+ * @returns True when the range is longer than a week.
+ */
+export function isMoreThanWeekRange(context: IDashboardWidgetContext | null): boolean {
+	if (!context?.startDate || !context?.endDate) {
+		return false;
+	}
+
+	return moment(context.endDate).diff(moment(context.startDate), 'weeks') > 0;
+}
+
+/**
  * Total number of workable seconds in the selected range across all members.
  *
  * Used as the denominator ("total") of the duration counters so the coloured
@@ -114,6 +132,127 @@ function resolveWorkingSeconds(context: IDashboardWidgetContext): number {
 
 	const workingSeconds = endWork.diff(startWork) / 1000;
 	return Number.isNaN(workingSeconds) || workingSeconds <= 0 ? SECONDS_IN_DAY : workingSeconds;
+}
+
+/**
+ * Stable fingerprint of everything a `/timesheet/statistics/*` request depends on.
+ *
+ * Used as the `distinctUntilChanged` comparator of the list widgets, so a
+ * context change that CANNOT affect the response — a new `organization` object
+ * identity after an unrelated store write, a currency or time-format switch —
+ * does not re-run the fetch. The fields are exactly the ones
+ * `buildStatisticsRequest` (@gauzy/ui-core/core) puts on the wire, so the
+ * comparator can never be narrower than the payload it guards.
+ *
+ * @param context The ambient dashboard widget context.
+ * @returns A deterministic key; the empty string for a missing context.
+ */
+export function timeTrackScopeKey(context: IDashboardWidgetContext | null): string {
+	if (!context) {
+		return '';
+	}
+
+	return [
+		context.tenantId,
+		context.organizationId,
+		toEpoch(context.startDate),
+		toEpoch(context.endDate),
+		toEpoch(context.todayStart),
+		toEpoch(context.todayEnd),
+		context.timeZone,
+		(context.employeeIds ?? []).join(','),
+		(context.projectIds ?? []).join(','),
+		(context.teamIds ?? []).join(',')
+	].join('|');
+}
+
+/**
+ * Epoch milliseconds of a value the context types as a `Date`.
+ *
+ * Defensive on purpose: a context restored from a bookmark carries an ISO
+ * STRING, and calling `.getTime()` on it throws — inside a
+ * `distinctUntilChanged` comparator that kills the widget's subscription for the
+ * rest of the session. Mirrors the same guard in the core widget families.
+ *
+ * @param value The date to normalize.
+ * @returns The epoch value, or an empty string when absent or unparsable.
+ */
+function toEpoch(value: Date | undefined): string {
+	if (!value) {
+		return '';
+	}
+	const time = value instanceof Date ? value.getTime() : new Date(value as unknown as string).getTime();
+	return Number.isNaN(time) ? '' : String(time);
+}
+
+/**
+ * Builds the range-aware translation key the legacy panels used for their
+ * "nothing here" message (`..._DAY` / `..._WEEK` / `..._PERIOD`).
+ *
+ * The suffixes ARE the {@link RangePeriod} values, so a widget only has to
+ * declare the shared prefix.
+ *
+ * @param baseKey Translation key without the range suffix, e.g. `TIMESHEET.NO_MANUAL_TIME`.
+ * @param period The classified range.
+ * @returns The full translation key.
+ */
+export function rangeMessageKey(baseKey: string, period: RangePeriod): string {
+	return `${baseKey}_${period}`;
+}
+
+/** Days in a week — the fixed width of the Members panel's bar graph. */
+const DAYS_IN_WEEK = 7;
+
+/** One bar of the Members panel's weekly activity graph. */
+export interface IWeekHourBar {
+	/** Day index, 0 (Sunday) through 6. */
+	day: number;
+	/** Share of the member's week logged on that day, 0..100. */
+	duration: number;
+}
+
+/**
+ * Normalizes a member's `weekHours` into exactly seven bars of RELATIVE height.
+ *
+ * Replicates the underscore-based reshaping in `TimeTrackingComponent.getMembers()`
+ * without pulling underscore into a lazily loaded widget chunk: the API returns
+ * only the days that have logs, and each bar's height is that day's share of the
+ * member's own week (so the tallest day of every member reaches the top).
+ *
+ * @param weekHours Raw per-day durations as returned by the API.
+ * @returns Seven bars, ordered Sunday..Saturday, with `duration` as a percentage.
+ */
+export function toWeekHourBars(weekHours: Array<{ duration: number; day: number }> | undefined): IWeekHourBar[] {
+	const byDay = new Map<number, number>();
+	let total = 0;
+
+	for (const entry of weekHours ?? []) {
+		// `Number(...)` for BOTH fields, because the contract lies about them: the
+		// statistics endpoint returns the RAW SQL day-of-week and SUM(), and both
+		// arrive as strings on the databases we ship — `strftime('%w', ...)` is TEXT
+		// on better-sqlite3 (the default dev/e2e database) and both `EXTRACT(DOW ...)`
+		// and SUM() come back as strings from PostgreSQL.
+		//
+		// `day` is load-bearing here: a `Map` compares keys with SameValueZero, so a
+		// '3' key can NEVER be read back by the numeric loop index below and every
+		// bar renders empty. For `duration` the coercion also keeps the shares
+		// honest — mixing `parseInt` (truncating) with implicit coercion is what
+		// makes them miss 100%.
+		const day = Number(entry?.day);
+		const duration = Number(entry?.duration) || 0;
+		// Out-of-range/unparsable days belong to no bar, so they are dropped from
+		// the total as well — counting them would shrink every rendered share.
+		if (!Number.isInteger(day) || day < 0 || day >= DAYS_IN_WEEK) {
+			continue;
+		}
+		byDay.set(day, (byDay.get(day) ?? 0) + duration);
+		total += duration;
+	}
+
+	return Array.from({ length: DAYS_IN_WEEK }, (_, day: number) => ({
+		day,
+		duration: total > 0 ? ((byDay.get(day) ?? 0) * 100) / total : 0
+	}));
 }
 
 /** Shown when an error carries no readable message of its own. */

@@ -1,0 +1,85 @@
+<gz-time-track-widget-state
+	[loading]="loading()"
+	[error]="errorMessage()"
+	[empty]="hasNoActivities()"
+	[emptyMessageKey]="emptyMessageKey()"
+	[skeletonRows]="2"
+	(retry)="refresh()"
+>
+	<div class="list-panel">
+		<div class="list-scroll">
+			@for (employee of employees(); track employee.id) {
+				<div class="activity-group">
+					<div class="activity-group-header">
+						@if (canChangeSelectedEmployee()) {
+							<ngx-avatar
+								class="avatar-dashboard activity"
+								size="sm"
+								[id]="employee?.id"
+								[name]="employee?.user?.name"
+								[src]="employee?.user?.imageUrl"
+								[employee]="employee"
+								[appendCaption]="'TIMESHEET.LAST_WORKED' | translate"
+								[caption]="lastWorkedAt(employee) | utcToLocal | dateFormat"
+							></ngx-avatar>
+						}
+
+						<div class="activity-group-actions">
+							<button
+								class="carousel-button"
+								type="button"
+								[attr.aria-label]="'BUTTONS.PREVIOUS' | translate"
+								(click)="slidePrev(swiperRef)"
+							>
+								<i class="fas fa-angle-left" aria-hidden="true"></i>
+							</button>
+							<button
+								class="carousel-button"
+								type="button"
+								[attr.aria-label]="'BUTTONS.NEXT' | translate"
+								(click)="slideNext(swiperRef)"
+							>
+								<i class="fas fa-angle-right" aria-hidden="true"></i>
+							</button>
+
+							@if (canChangeSelectedEmployee()) {
+								<button
+									nbButton
+									ghost
+									size="tiny"
+									status="primary"
+									type="button"
+									(click)="openScreenshots(employee)"
+								>
+									{{ 'BUTTONS.VIEW_ALL' | translate }}
+								</button>
+							}
+						</div>
+					</div>
+
+					<!--
+						`slides-per-view="auto"` (with a fixed slide width in the
+						stylesheet) rather than the legacy page's hard-coded three-up:
+						a canvas widget is resized to any of 4/6/8/12 columns, where
+						three slides would be unreadable slivers. Swiper's own arrows
+						stay off — the buttons above drive it.
+					-->
+					<swiper-container #swiperRef class="activity-swiper" slides-per-view="auto" space-between="12">
+						@for (timeSlot of employee.timeSlots; track timeSlot.id) {
+							<swiper-slide>
+								<ngx-screenshots-item
+									[timeSlot]="timeSlot"
+									[timeFormat]="timeFormat()"
+									[timezone]="timeZone()"
+									[employeeId]="timeSlot?.employee?.id"
+									[multiple]="false"
+									(delete)="onDelete()"
+								></ngx-screenshots-item>
+							</swiper-slide>
+						}
+					</swiper-container>
+				</div>
+			}
+		</div>
+	</div>
+</gz-time-track-widget-state>
