@@ -1,0 +1,15 @@
+<!--
+	`empty` carries the "no employee selected" case only: once an employee IS in
+	scope the wrapped report renders its own "no profit history" message, so a
+	second empty state here would hide it.
+-->
+<ga-teams-widget-state
+	[loading]="loading()"
+	[error]="error()"
+	[empty]="requiresEmployee()"
+	[skeletonRows]="5"
+	emptyMessageKey="DASHBOARD_PAGE.BUILDER.WIDGETS.HR.NO_EMPLOYEE"
+	(retry)="refresh()"
+>
+	<ga-profit-history-selector [records]="payload()"></ga-profit-history-selector>
+</ga-teams-widget-state>

@@ -1889,6 +1889,10 @@
 				"NO_ACCESS": "No access",
 				"NO_ACCESS_HINT": "You do not have permission to view this widget."
 			},
+			"CONFIG": {
+				"TITLE": "Widget settings",
+				"HINT": "These settings apply to this widget only."
+			},
 			"CANVAS": {
 				"DRAG_HANDLE": "Drag to move this widget",
 				"EMPTY_TITLE": "Your canvas is empty",
@@ -1954,6 +1958,30 @@
 					"TITLE": "Weekly Activity",
 					"DESCRIPTION": "Overall activity percentage over the selected period; defaults to the current week."
 				},
+				"TIME_TRACKING_RECENT_ACTIVITIES": {
+					"TITLE": "Recent Activities",
+					"DESCRIPTION": "Screenshot carousel of the time slots each member recorded in the selected period."
+				},
+				"TIME_TRACKING_MANUAL_TIME": {
+					"TITLE": "Manual Time",
+					"DESCRIPTION": "Time entries that were added by hand rather than tracked, with who logged them and against which project."
+				},
+				"TIME_TRACKING_TASKS": {
+					"TITLE": "Tasks",
+					"DESCRIPTION": "The tasks that absorbed the most tracked time in the selected period, with each one's share."
+				},
+				"TIME_TRACKING_PROJECTS": {
+					"TITLE": "Projects Breakdown",
+					"DESCRIPTION": "How the tracked time of the selected period splits across projects, with each one's share."
+				},
+				"TIME_TRACKING_APPS_URLS": {
+					"TITLE": "Apps & URLs",
+					"DESCRIPTION": "Which applications and websites the tracked time was spent in, with each one's share."
+				},
+				"TIME_TRACKING_MEMBERS": {
+					"TITLE": "Members Breakdown",
+					"DESCRIPTION": "Per member: time logged and activity today, and over the selected period."
+				},
 				"TEAMS_COUNT": {
 					"TITLE": "Teams",
 					"DESCRIPTION": "How many of your teams had somebody working in the selected period."
@@ -1977,6 +2005,17 @@
 				"TEAM_MEMBERS": {
 					"TITLE": "Team Members",
 					"DESCRIPTION": "Every team member with their status, time logged and activity for the selected period.",
+					"EMPTY": "None of your teams have members yet."
+				},
+				"TEAM_OVERVIEW": {
+					"TITLE": "Team Overview",
+					"DESCRIPTION": "One card per team with its headline numbers and the members behind them.",
+					"EMPTY": "No teams in the selected scope.",
+					"NO_MEMBERS": "This team has no members yet."
+				},
+				"TEAM_MEMBER_DETAILS": {
+					"TITLE": "Team Member Details",
+					"DESCRIPTION": "Every team member with the tasks they logged time against, measured against each task's estimate.",
 					"EMPTY": "None of your teams have members yet."
 				},
 				"TEAM_STATUS_CHART": {
@@ -2068,6 +2107,48 @@
 				"EMPLOYEE_STACKED_BAR_CHART": {
 					"TITLE": "Employee Statistics Composition",
 					"DESCRIPTION": "Stacked chart of how each month's expenses, bonus and profit divide the selected employee's revenue."
+				},
+				"ACCOUNTING_CASH_FLOW": {
+					"TITLE": "Cash Flow",
+					"DESCRIPTION": "Income, expenses, profit and bonus plotted across the selected period.",
+					"EMPTY": "No cash flow was recorded in this period."
+				},
+				"ACCOUNTING_EMPLOYEE_STATISTICS": {
+					"TITLE": "Employee Statistics",
+					"DESCRIPTION": "Income, expenses, profit and bonus per employee over the selected period.",
+					"EMPTY": "No employee has figures in this period."
+				},
+				"ACCOUNTING_RECORDS_HISTORY": {
+					"TITLE": "Records History",
+					"DESCRIPTION": "The selected employee's individual income or expense records for the period.",
+					"HISTORY_TYPE": "Records to show"
+				},
+				"ACCOUNTING_PROFIT_HISTORY": {
+					"TITLE": "Profit History",
+					"DESCRIPTION": "The selected employee's income and expense records side by side, with their totals."
+				},
+				"PROJECT_MANAGEMENT": {
+					"SHOWING": "Showing {{ shown }} of {{ total }}",
+					"MY_TASKS": {
+						"TITLE": "My Tasks",
+						"DESCRIPTION": "Your tasks by due date, with their status. Follows the employee and project selectors.",
+						"EMPTY": "No tasks for the current selection."
+					},
+					"MOST_VIEWED_PROJECTS": {
+						"TITLE": "Most Viewed Projects",
+						"DESCRIPTION": "The projects your tasks belong to, busiest first.",
+						"EMPTY": "None of these tasks belong to a project yet."
+					},
+					"RECENTLY_ASSIGNED": {
+						"TITLE": "Recently Assigned",
+						"DESCRIPTION": "Open tasks with their tags, most recently assigned first.",
+						"EMPTY": "No open tasks assigned."
+					},
+					"INBOX": {
+						"TITLE": "Inbox",
+						"DESCRIPTION": "Placeholder for the upcoming task inbox. It has nothing to show yet.",
+						"EMPTY": "The inbox is coming soon."
+					}
 				}
 			}
 		},

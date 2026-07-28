@@ -1,0 +1,12 @@
+<ga-teams-widget-state
+	[loading]="loading()"
+	[error]="error()"
+	[empty]="isEmpty()"
+	[skeletonRows]="3"
+	emptyMessageKey="DASHBOARD_PAGE.BUILDER.WIDGETS.ACCOUNTING_CASH_FLOW.EMPTY"
+	(retry)="refresh()"
+>
+	<div class="cash-flow-chart">
+		<ngx-line-chart [data]="chartData()"></ngx-line-chart>
+	</div>
+</ga-teams-widget-state>

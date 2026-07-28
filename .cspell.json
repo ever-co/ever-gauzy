@@ -5,6 +5,10 @@
 	"ignoreRegExpList": ["GHSA-[A-Za-z0-9-]+"],
 	"words": [
 		"scroller",
+		"blockified",
+		"affordance",
+		"ngcontent",
+		"nghost",
 		"componentless",
 		"relver",
 		"aistudio",
