@@ -7,15 +7,24 @@
 //   * the fixed header band and the footer (theme tokens, the same numbers the
 //     layout offsets the content by), and
 //   * the content column padding plus the card's own header/footer rows.
+//
+// styles/_overrides.scss declares a variable of the same name and formula for
+// `.card-scroll`. The two are deliberately NOT shared: this one is evaluated at
+// module top level, that one inside `nb-install-component()`, and `nb-theme()`
+// resolves against a different scope in each. Consolidating them would quietly
+// change which theme's tokens the card heights follow. Keep them in step by
+// hand; if the formula ever needs to differ per theme, this is the one to move.
 $page-chrome-height: calc(#{nb-theme(header-height)} + #{nb-theme(footer-height)});
 
-// 9.875rem of title/action rows and column padding, plus 1.625rem for the
+// 11.5rem of title/action rows and column padding, plus 1.625rem for the
 // breadcrumb trail that now sits under the page title (22px + its 4px offset —
 // see header-title.component.ts). The trail is rendered by `ngx-header-title`,
 // which every page title goes through, so it is part of the card header on
-// essentially every page: leaving it out of this constant made each card ask
-// for ~26px more than the column has, which is what pushed the footer below the
-// fold on otherwise-sparse pages.
+// essentially every page, and this constant should say so.
+//
+// It is only an estimate either way: the page frame is bounded to the viewport
+// in styles/_overrides.scss, so an over-estimate no longer pushes anything off
+// screen — it just makes a card ask for more room than it is given.
 $card-chrome-height: 13.125rem;
 
 // PREFERRED body height, not a hard one. Since the content column became a flex

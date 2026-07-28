@@ -216,6 +216,14 @@ export class AiChatSettingsComponent implements OnInit {
 		// service never calls `/credentials`, so this page is the only source for
 		// "a credential row exists", not a second opinion on the same question.
 		const credentialCount = this.credentialsByProvider().size;
+		// `unreachable` is exempt from the "nothing configured yet, stay quiet"
+		// gate below. In that state the service's call FAILED, so it reports
+		// `configuredProviders: 0` meaning "unknown", not "none" — and a tenant
+		// configured purely through server env has no credential rows either, so
+		// the gate would swallow the one notice that explains why chat is missing.
+		if (status.reason === 'unreachable') {
+			return 'unreachable';
+		}
 		if (!configuredCount && !credentialCount) {
 			return null;
 		}
