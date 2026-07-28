@@ -1,13 +1,18 @@
+// Tag chips render inside smart-table cells, so their box is part of the row
+// height. They follow the shared table-density tokens (`$gauzy-density` in
+// `themes.scss`) so a density change moves the chips with the cells instead of
+// leaving the old 24px-per-chip footprint behind. Literals are CSS-var
+// fallbacks only.
 .color {
   position: static;
-  margin-top: 5px;
-  margin-right: 5px;
+  margin-top: var(--gauzy-table-chip-gap, 0.1875rem);
+  margin-right: var(--gauzy-table-chip-gap, 0.1875rem);
   display: inline-block;
-  font-size: 11px;
+  font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
   font-weight: 600;
-  line-height: 13px;
+  line-height: var(--gauzy-table-chip-line-height, 0.875rem);
   letter-spacing: 0em;
-  padding: 3px 8px;
+  padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
 }
 
 .tags {

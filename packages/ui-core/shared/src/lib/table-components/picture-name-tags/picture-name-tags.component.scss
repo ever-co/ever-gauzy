@@ -1,5 +1,8 @@
 @use 'themes' as *;
 
+// The avatar itself is only 20px in a table cell (`:host-context(.report-table)`
+// in `avatar.component.scss`); what actually makes an employee row tall is this
+// tag block stacked under it. Its gap follows the shared table-density tokens.
 .badges-block {
-  margin-top: 10px;
+  margin-top: var(--gauzy-table-chip-gap, 0.1875rem);
 }

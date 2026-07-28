@@ -1,13 +1,17 @@
+// The pill is normally the tallest thing in its smart-table cell, so its height
+// is what the row pays for it. Sized from the shared table-density tokens
+// (`$gauzy-density` in `themes.scss`) so a status column costs a row exactly one
+// line box, the same as a plain text column. Literals are CSS-var fallbacks.
 div {
   border-radius: 0.25rem;
   align-content: center;
   display: flex;
   justify-content: center;
   width: 100%;
-  height: 23px;
-  font-size: 12px;
+  height: var(--gauzy-table-badge-height, 1.25rem);
+  font-size: var(--gauzy-table-header-font-size, 0.75rem);
   font-weight: 600;
-  line-height: 15px;
+  line-height: var(--gauzy-table-header-line-height, 0.9375rem);
   letter-spacing: 0em;
   text-align: left;
 }
