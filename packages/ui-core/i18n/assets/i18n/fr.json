@@ -833,6 +833,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Vous devez être employé afin de pouvoir suivre le temps, créer des dépenses partagées et utiliser d'autres fonctionnalités liées aux employés."
 	},
 	"MENU": {
+		"BREADCRUMB": "Fil d'Ariane",
 		"PIPELINES": "Les pipelines",
 		"DASHBOARD": "Tableau de bord",
 		"DASHBOARDS": "Tableaux de bord",

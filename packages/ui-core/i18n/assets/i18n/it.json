@@ -832,6 +832,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Devi essere un dipendente per poter registrare il tempo, creare spese suddivise e utilizzare altre funzioni legate ai dipendenti"
 	},
 	"MENU": {
+		"BREADCRUMB": "Percorso di navigazione",
 		"PIPELINES": "Tubature",
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Dashboard",

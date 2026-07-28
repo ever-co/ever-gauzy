@@ -832,6 +832,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Você precisa ser um funcionário para poder rastrear o tempo, criar despesas divididas e usar outras funcionalidades relacionadas a outros funcionários."
 	},
 	"MENU": {
+		"BREADCRUMB": "Trilha de navegação",
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Painel de Controle",
 		"DASHBOARDS": "Painéis de controle",

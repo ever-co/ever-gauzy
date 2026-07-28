@@ -832,6 +832,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Sie müssen Mitarbeiter sein, um Zeit verfolgen zu können, geteilte Ausgaben zu erstellen und andere mitarbeiterbezogene Funktionen verwenden zu können."
 	},
 	"MENU": {
+		"BREADCRUMB": "Navigationspfad",
 		"PIPELINES": "Rohrleitungen",
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Dashboards",

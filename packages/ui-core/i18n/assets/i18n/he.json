@@ -836,6 +836,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "You must be employee in order to be able to track time, create split expenses and use other employees related features."
 	},
 	"MENU": {
+		"BREADCRUMB": "נתיב ניווט",
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "לוח מחוונים",
 		"DASHBOARDS": "Dashboards",

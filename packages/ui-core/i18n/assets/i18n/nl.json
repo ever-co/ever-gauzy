@@ -832,6 +832,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Je moet werknemer zijn om tijd te kunnen bijhouden, kosten te kunnen splitsen en andere functies gerelateerd aan werknemers te kunnen gebruiken."
 	},
 	"MENU": {
+		"BREADCRUMB": "Kruimelpad",
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Dashboards",

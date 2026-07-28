@@ -1,5 +1,11 @@
 @if (breadcrumbs().length) {
-	<nav class="ga-breadcrumb" aria-label="Breadcrumb">
+	<!--
+		The landmark name goes through translate like every crumb label does: the
+		component re-resolves the trail on language change, so a hard-coded English
+		"Breadcrumb" would be the one string a screen reader still announces in
+		English after switching locale.
+	-->
+	<nav class="ga-breadcrumb" [attr.aria-label]="'MENU.BREADCRUMB' | translate">
 		<ol class="ga-breadcrumb-list">
 			@for (crumb of breadcrumbs(); track $index; let first = $first, last = $last) {
 				<li class="ga-breadcrumb-item">

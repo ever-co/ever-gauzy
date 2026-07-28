@@ -733,6 +733,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "crwdns11507:0crwdne11507:0"
 	},
 	"MENU": {
+		"BREADCRUMB": "Breadcrumb",
 		"PIPELINES": "crwdns4734:0crwdne4734:0",
 		"DASHBOARD": "crwdns174:0crwdne174:0",
 		"DASHBOARDS": "crwdns11523:0crwdne11523:0",
