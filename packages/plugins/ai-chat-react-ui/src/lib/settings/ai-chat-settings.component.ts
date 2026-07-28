@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject, signal, computed } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	ChangeDetectorRef,
+	Component,
+	DestroyRef,
+	OnInit,
+	inject,
+	signal,
+	computed
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -17,7 +27,6 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EMPTY, forkJoin, of } from 'rxjs';
 import { catchError, filter, finalize, switchMap } from 'rxjs/operators';
 import {
@@ -78,7 +87,6 @@ const PROVIDER_TILES: Record<string, { monogram: string; color: string }> = {
  *
  * Requires the `AI_CHAT_SETTINGS` permission (route guard + backend).
  */
-@UntilDestroy()
 @Component({
 	selector: 'gz-ai-chat-settings',
 	imports: [
@@ -151,6 +159,9 @@ export class AiChatSettingsComponent implements OnInit {
 	private readonly cdr = inject(ChangeDetectorRef);
 	private readonly router = inject(Router);
 	private readonly route = inject(ActivatedRoute);
+	// Angular's own teardown rather than @ngneat/until-destroy: that package is
+	// not a dependency of this plugin, and takeUntilDestroyed does the same job.
+	private readonly destroyRef = inject(DestroyRef);
 
 	ngOnInit(): void {
 		// Complete an in-flight Connect flow when the provider redirected back
@@ -190,7 +201,7 @@ export class AiChatSettingsComponent implements OnInit {
 		}
 
 		// Keep the view in sync with the query params (back/forward navigation).
-		this.route.queryParamMap.pipe(untilDestroyed(this)).subscribe((params) => {
+		this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
 			const providerId = params.get('provider');
 			if (providerId) {
 				this.selectedProviderId.set(providerId);
@@ -247,7 +258,7 @@ export class AiChatSettingsComponent implements OnInit {
 			)
 		})
 			.pipe(
-				untilDestroyed(this),
+				takeUntilDestroyed(this.destroyRef),
 				finalize(() => this.loading.set(false))
 			)
 			.subscribe(({ config, credentials }) => {
@@ -333,7 +344,7 @@ export class AiChatSettingsComponent implements OnInit {
 		this.settingsService
 			.updateCredential(credential.id, { providerId: provider.id, enabled })
 			.pipe(
-				untilDestroyed(this),
+				takeUntilDestroyed(this.destroyRef),
 				finalize(() => this.saving.set(null))
 			)
 			.subscribe({
@@ -401,9 +412,9 @@ export class AiChatSettingsComponent implements OnInit {
 				organizationId: this.store.organizationId ?? undefined
 			})
 			.pipe(
-				untilDestroyed(this),
+				takeUntilDestroyed(this.destroyRef),
 				// ONLY the spinner is reset here. `finalize` runs on ANY termination —
-				// including the completion `untilDestroyed` injects when the component
+				// including the completion `takeUntilDestroyed` injects when the component
 				// is destroyed — so the URL cleanup must NOT live in it: a relative
 				// `router.navigate()` issued from a destroyed component still resolves
 				// against its populated route snapshot, which would drag the user back
@@ -499,7 +510,7 @@ export class AiChatSettingsComponent implements OnInit {
 		this.saving.set(provider.id);
 		request$
 			.pipe(
-				untilDestroyed(this),
+				takeUntilDestroyed(this.destroyRef),
 				finalize(() => this.saving.set(null))
 			)
 			.subscribe({
@@ -509,7 +520,7 @@ export class AiChatSettingsComponent implements OnInit {
 						this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
 					);
 					this.load();
-					// Navigates: without the `untilDestroyed(this)` above, a save that
+					// Navigates: without the `takeUntilDestroyed(this.destroyRef)` above, a save that
 					// resolves after the user left would yank them back to this page.
 					this.showList();
 				},
@@ -547,7 +558,7 @@ export class AiChatSettingsComponent implements OnInit {
 						})
 					);
 				}),
-				untilDestroyed(this)
+				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe(() => {
 				this.toastrService.success(
@@ -578,7 +589,7 @@ export class AiChatSettingsComponent implements OnInit {
 						defaultModel: this.fb.nonNullable.control(
 							credential?.defaultModel ? (knownModel ? credential.defaultModel : CUSTOM_MODEL) : ''
 						),
-						customModel: this.fb.nonNullable.control(knownModel ? '' : credential?.defaultModel ?? ''),
+						customModel: this.fb.nonNullable.control(knownModel ? '' : (credential?.defaultModel ?? '')),
 						enabled: this.fb.nonNullable.control(credential?.enabled ?? true)
 					})
 				];
