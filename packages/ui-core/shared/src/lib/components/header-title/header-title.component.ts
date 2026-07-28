@@ -163,8 +163,11 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {
 			HeaderTitleComponent.trailOwner = null;
 		}
 
+		// `this.trailHost &&` stays FIRST and the comparison stays an identity
+		// check: the trail may have been detached already (`parentNode === null`),
+		// and `null === null` would otherwise "match" a host that is itself null.
 		const trail = this.trailRef?.nativeElement;
-		if (this.trailHost && trail && trail.parentNode === this.trailHost) {
+		if (this.trailHost && trail?.parentNode === this.trailHost) {
 			this.renderer.removeChild(this.trailHost, trail);
 		}
 		this.trailHost = null;

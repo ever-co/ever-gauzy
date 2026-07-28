@@ -37,10 +37,6 @@
     background-color: unset;
   }
 
-  .card {
-    background-color: var(--gauzy-card-2);
-  }
-
   .button-container {
     display: flex;
     gap: 1rem;
@@ -122,9 +118,16 @@ nb-badge {
    */
   @include card_overrides(unset, auto, 0 $default-radius $default-radius $default-radius);
 
-  // `card_overrides` pins `.card` to `height: 100%`, which is what forced the
-  // body into a viewport-sized box. Content-driven height instead.
+  // The single `:host .card` block (SonarCloud flagged a second one). It has to
+  // sit AFTER `card_overrides` above: that mixin emits its own `:host .card`
+  // with `height: 100%` at the very same specificity, so the block that comes
+  // last wins. Merging these declarations into the earlier `:host` block — the
+  // obvious reading of "de-duplicate the selector" — would put them *before* the
+  // mixin and hand the viewport-sized height back to the card body.
   .card {
+    background-color: var(--gauzy-card-2);
+    // `card_overrides` pins `.card` to `height: 100%`, which is what forced the
+    // body into a viewport-sized box. Content-driven height instead.
     height: auto;
   }
 

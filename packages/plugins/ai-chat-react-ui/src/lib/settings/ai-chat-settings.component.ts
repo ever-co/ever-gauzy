@@ -43,41 +43,39 @@ const CUSTOM_MODEL = '__custom__';
 type AiChatNoticeKind = 'ready' | 'no-permission' | 'globally-disabled' | 'credentials-unusable' | 'unreachable';
 
 /** Presentation of each chat notice: Nebular status, icon and i18n keys. */
-const CHAT_NOTICES: Record<
-	AiChatNoticeKind,
-	{ status: NbComponentStatus; icon: string; title: string; hint: string }
-> = {
-	ready: {
-		status: 'success',
-		icon: 'checkmark-circle-2-outline',
-		title: 'AI_CHAT_UI.SETTINGS.STATUS.READY_TITLE',
-		hint: 'AI_CHAT_UI.SETTINGS.STATUS.READY_HINT'
-	},
-	'no-permission': {
-		status: 'warning',
-		icon: 'lock-outline',
-		title: 'AI_CHAT_UI.SETTINGS.STATUS.NO_PERMISSION_TITLE',
-		hint: 'AI_CHAT_UI.SETTINGS.STATUS.NO_PERMISSION_HINT'
-	},
-	'globally-disabled': {
-		status: 'warning',
-		icon: 'slash-outline',
-		title: 'AI_CHAT_UI.SETTINGS.STATUS.GLOBALLY_DISABLED_TITLE',
-		hint: 'AI_CHAT_UI.SETTINGS.STATUS.GLOBALLY_DISABLED_HINT'
-	},
-	'credentials-unusable': {
-		status: 'danger',
-		icon: 'alert-triangle-outline',
-		title: 'AI_CHAT_UI.SETTINGS.STATUS.CREDENTIALS_UNUSABLE_TITLE',
-		hint: 'AI_CHAT_UI.SETTINGS.STATUS.CREDENTIALS_UNUSABLE_HINT'
-	},
-	unreachable: {
-		status: 'info',
-		icon: 'question-mark-circle-outline',
-		title: 'AI_CHAT_UI.SETTINGS.STATUS.UNREACHABLE_TITLE',
-		hint: 'AI_CHAT_UI.SETTINGS.STATUS.UNREACHABLE_HINT'
-	}
-};
+const CHAT_NOTICES: Record<AiChatNoticeKind, { status: NbComponentStatus; icon: string; title: string; hint: string }> =
+	{
+		ready: {
+			status: 'success',
+			icon: 'checkmark-circle-2-outline',
+			title: 'AI_CHAT_UI.SETTINGS.STATUS.READY_TITLE',
+			hint: 'AI_CHAT_UI.SETTINGS.STATUS.READY_HINT'
+		},
+		'no-permission': {
+			status: 'warning',
+			icon: 'lock-outline',
+			title: 'AI_CHAT_UI.SETTINGS.STATUS.NO_PERMISSION_TITLE',
+			hint: 'AI_CHAT_UI.SETTINGS.STATUS.NO_PERMISSION_HINT'
+		},
+		'globally-disabled': {
+			status: 'warning',
+			icon: 'slash-outline',
+			title: 'AI_CHAT_UI.SETTINGS.STATUS.GLOBALLY_DISABLED_TITLE',
+			hint: 'AI_CHAT_UI.SETTINGS.STATUS.GLOBALLY_DISABLED_HINT'
+		},
+		'credentials-unusable': {
+			status: 'danger',
+			icon: 'alert-triangle-outline',
+			title: 'AI_CHAT_UI.SETTINGS.STATUS.CREDENTIALS_UNUSABLE_TITLE',
+			hint: 'AI_CHAT_UI.SETTINGS.STATUS.CREDENTIALS_UNUSABLE_HINT'
+		},
+		unreachable: {
+			status: 'info',
+			icon: 'question-mark-circle-outline',
+			title: 'AI_CHAT_UI.SETTINGS.STATUS.UNREACHABLE_TITLE',
+			hint: 'AI_CHAT_UI.SETTINGS.STATUS.UNREACHABLE_HINT'
+		}
+	};
 
 /** sessionStorage key holding the in-flight Connect (PKCE) state. */
 const CONNECT_SESSION_KEY = 'gauzy_ai_provider_connect';
@@ -206,7 +204,17 @@ export class AiChatSettingsComponent implements OnInit {
 			return null;
 		}
 
-		const configuredCount = this.configuredProviders().length;
+		// Read the count off the SAME verdict that produced `status.reason`.
+		// `AiChatAvailabilityService` and this component each call
+		// `/api/ai-chat/config` on their own — and after save/delete/toggle both
+		// `load()` and `refresh()` fire independently — so pairing this
+		// component's `configuredProviders()` with the service's `reason` let the
+		// notice combine two different snapshots (a fresh "no usable provider"
+		// verdict with a stale count, say) and contradict the list below it.
+		const configuredCount = status.configuredProviders;
+		// The saved-credential rows have no counterpart on the verdict: the
+		// service never calls `/credentials`, so this page is the only source for
+		// "a credential row exists", not a second opinion on the same question.
 		const credentialCount = this.credentialsByProvider().size;
 		if (!configuredCount && !credentialCount) {
 			return null;
@@ -382,7 +390,7 @@ export class AiChatSettingsComponent implements OnInit {
 		// Own-property lookup rather than a bare index: provider ids come from
 		// the backend, and an id such as "constructor" would otherwise resolve
 		// to something off `Object.prototype` and blow up the tile.
-		return Object.prototype.hasOwnProperty.call(PROVIDER_LOGOS, providerId) ? PROVIDER_LOGOS[providerId] : null;
+		return Object.hasOwn(PROVIDER_LOGOS, providerId) ? PROVIDER_LOGOS[providerId] : null;
 	}
 
 	/**
@@ -693,7 +701,7 @@ export class AiChatSettingsComponent implements OnInit {
 						defaultModel: this.fb.nonNullable.control(
 							credential?.defaultModel ? (knownModel ? credential.defaultModel : CUSTOM_MODEL) : ''
 						),
-						customModel: this.fb.nonNullable.control(knownModel ? '' : credential?.defaultModel ?? ''),
+						customModel: this.fb.nonNullable.control(knownModel ? '' : (credential?.defaultModel ?? '')),
 						enabled: this.fb.nonNullable.control(credential?.enabled ?? true)
 					})
 				];
