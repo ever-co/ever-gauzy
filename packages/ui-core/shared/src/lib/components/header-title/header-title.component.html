@@ -1,27 +1,39 @@
 <ng-content></ng-content>
 
 <ng-template [ngxPermissionsOnly]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
-  @if (allowEmployee && employee?.id) {
-    <span> {{ 'HEADER_TITLE.FOR' | translate }} </span>
-    <span> {{ employee?.fullName | truncate : 22 }} </span>
-  }
+	@if (allowEmployee && employee?.id) {
+		<span> {{ 'HEADER_TITLE.FOR' | translate }} </span>
+		<span> {{ employee?.fullName | truncate: 22 }} </span>
+	}
 </ng-template>
 
 @if (organization?.id) {
-  <span class="name">
-    @if (allowEmployee && employee?.id) {
-      <ng-template [ngxPermissionsOnly]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
-        {{ 'HEADER_TITLE.FROM' | translate }}
-      </ng-template>
-      <ng-template [ngxPermissionsExcept]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
-        {{ 'HEADER_TITLE.FOR' | translate }}
-      </ng-template>
-    } @else {
-      {{ 'HEADER_TITLE.FOR' | translate }}
-    }
-  </span>
-  <span class="org-name">
-    {{ organization?.name }}
-  </span>
+	<span class="name">
+		@if (allowEmployee && employee?.id) {
+			<ng-template [ngxPermissionsOnly]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
+				{{ 'HEADER_TITLE.FROM' | translate }}
+			</ng-template>
+			<ng-template [ngxPermissionsExcept]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
+				{{ 'HEADER_TITLE.FOR' | translate }}
+			</ng-template>
+		} @else {
+			{{ 'HEADER_TITLE.FOR' | translate }}
+		}
+	</span>
+	<span class="org-name">
+		{{ organization?.name }}
+	</span>
 }
 
+<!--
+  The breadcrumb trail. It is declared here so that every page carrying a title
+  gets one for free, but it is MOVED next to the heading on init (see
+  `relocateTrail`): this component is always used inside an <h4>, whose content
+  model is phrasing content only — a <nav><ol> nested in a heading is invalid
+  HTML and would be swallowed into the heading's accessible name.
+-->
+@if (ownsTrail) {
+	<div #trail class="ga-page-title-trail">
+		<ngx-breadcrumbs></ngx-breadcrumbs>
+	</div>
+}

@@ -57,7 +57,6 @@ import {
 	MATERIAL_LIGHT_THEME
 } from './themes';
 import { WindowModeBlockScrollService } from './services/window-mode-block-scroll.service';
-import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
@@ -104,7 +103,6 @@ const MODULES = [
 ];
 
 const COMPONENTS = [
-	BreadcrumbComponent,
 	HeaderComponent,
 	FooterComponent,
 	OneColumnLayoutComponent,

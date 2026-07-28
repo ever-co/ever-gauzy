@@ -1,8 +1,23 @@
 // Forward themes so files importing this also get nb-theme() etc.
 @forward 'themes';
 @use 'themes' as *;
-$default-card-height: calc(100vh - nb-theme(header-height) - nb-theme(footer-height) - 11.5rem);
+
+// The chrome the page frame spends around a card body, spelled out rather than
+// hidden in a single constant:
+//   * the fixed header band and the footer (theme tokens, the same numbers the
+//     layout offsets the content by), and
+//   * the content column padding plus the card's own header/footer rows.
+$page-chrome-height: calc(#{nb-theme(header-height)} + #{nb-theme(footer-height)});
+$card-chrome-height: 11.5rem;
+
+// PREFERRED body height, not a hard one. Since the content column became a flex
+// context (styles/_overrides.scss) a card can shrink back from this value, so an
+// over-estimate no longer pushes the page into a scroll — it just means the card
+// asks for more than it gets. Pages add/subtract their own rem deltas on top of
+// it to describe the extra chrome they carry (a tab bar, a filter row, …).
+$default-card-height: calc(100vh - #{$page-chrome-height} - #{$card-chrome-height});
 $default-radius: nb-theme(border-radius);
+
 @mixin nb-card_overrides($overflow, $height, $radius) {
   nb-card {
     display: flex;
