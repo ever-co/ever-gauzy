@@ -6,7 +6,7 @@
 // let a stack of fixed paddings (`.actions-container { padding: 1rem 0 }`, the
 // shared `button { margin: 5px }`, a `mt-4` / `margin-top: 27px` spacer on the
 // tabset) happen to land the button near the middle of the tab strip, and sized
-// the tab body with hand-measured `calc(100% - 3rem)` / `calc(100vh - Nrem)`
+// the tab body with hand-measured `calc(100% - 3rem)` / `calc(100vh - <n>rem)`
 // values. All of that only ever worked for one set of tab metrics: the shared
 // `$gauzy-density` map in `themes.scss` cut `tabset-tab-padding` from `1rem 2rem`
 // to `0.75rem 1.25rem`, the strip lost 0.5rem of height, and every one of those
