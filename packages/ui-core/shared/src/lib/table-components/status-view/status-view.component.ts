@@ -12,7 +12,7 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 			}
 			/* Status pill in a smart-table cell. Sized from the shared
 			   table-density tokens ($gauzy-density in themes.scss); the
-			   literals are CSS-var fallbacks only. `align-items: center`
+			   literals are CSS-var fallbacks only. 'align-items: center'
 			   below is what makes the explicit height safe to shrink. */
 			.badge {
 				display: flex;
