@@ -1888,6 +1888,10 @@
 				"NO_ACCESS": "No access",
 				"NO_ACCESS_HINT": "You do not have permission to view this widget."
 			},
+			"CONFIG": {
+				"TITLE": "Widget settings",
+				"HINT": "These settings apply to this widget only."
+			},
 			"CANVAS": {
 				"DRAG_HANDLE": "Drag to move this widget",
 				"EMPTY_TITLE": "Your canvas is empty",

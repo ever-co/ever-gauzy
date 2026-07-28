@@ -203,6 +203,24 @@ describe('time-track widget utils', () => {
 			expect(bars[1].duration).toBeCloseTo(75);
 		});
 
+		it('buckets string days, as better-sqlite3 and PostgreSQL return them', () => {
+			const bars = toWeekHourBars([
+				{ day: '1' as unknown as number, duration: '3600' as unknown as number },
+				{ day: '3' as unknown as number, duration: '1200' as unknown as number }
+			]);
+			expect(bars[1].duration).toBeCloseTo(75);
+			expect(bars[3].duration).toBeCloseTo(25);
+		});
+
+		it('drops days outside the week instead of shrinking every share', () => {
+			const bars = toWeekHourBars([
+				{ day: 2, duration: 100 },
+				{ day: 9, duration: 100 },
+				{ day: NaN, duration: 100 }
+			]);
+			expect(bars[2].duration).toBeCloseTo(100);
+		});
+
 		it('returns zeroed bars for an empty or missing week', () => {
 			expect(toWeekHourBars(undefined).every((bar) => bar.duration === 0)).toBe(true);
 			expect(toWeekHourBars([]).every((bar) => bar.duration === 0)).toBe(true);

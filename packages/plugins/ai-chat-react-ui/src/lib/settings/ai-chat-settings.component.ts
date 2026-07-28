@@ -17,6 +17,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EMPTY, forkJoin, of } from 'rxjs';
 import { catchError, filter, finalize, switchMap } from 'rxjs/operators';
 import {
@@ -77,6 +78,7 @@ const PROVIDER_TILES: Record<string, { monogram: string; color: string }> = {
  *
  * Requires the `AI_CHAT_SETTINGS` permission (route guard + backend).
  */
+@UntilDestroy()
 @Component({
 	selector: 'gz-ai-chat-settings',
 	imports: [
@@ -188,7 +190,7 @@ export class AiChatSettingsComponent implements OnInit {
 		}
 
 		// Keep the view in sync with the query params (back/forward navigation).
-		this.route.queryParamMap.subscribe((params) => {
+		this.route.queryParamMap.pipe(untilDestroyed(this)).subscribe((params) => {
 			const providerId = params.get('provider');
 			if (providerId) {
 				this.selectedProviderId.set(providerId);
@@ -244,7 +246,10 @@ export class AiChatSettingsComponent implements OnInit {
 				})
 			)
 		})
-			.pipe(finalize(() => this.loading.set(false)))
+			.pipe(
+				untilDestroyed(this),
+				finalize(() => this.loading.set(false))
+			)
 			.subscribe(({ config, credentials }) => {
 				this.credentialsByProvider = new Map(
 					(credentials?.items ?? []).map((credential) => [credential.providerId, credential])
@@ -327,7 +332,10 @@ export class AiChatSettingsComponent implements OnInit {
 		this.saving.set(provider.id);
 		this.settingsService
 			.updateCredential(credential.id, { providerId: provider.id, enabled })
-			.pipe(finalize(() => this.saving.set(null)))
+			.pipe(
+				untilDestroyed(this),
+				finalize(() => this.saving.set(null))
+			)
 			.subscribe({
 				next: () => this.load(),
 				error: (error) => {
@@ -393,12 +401,16 @@ export class AiChatSettingsComponent implements OnInit {
 				organizationId: this.store.organizationId ?? undefined
 			})
 			.pipe(
-				finalize(() => {
-					this.connecting.set(false);
-					// Strip the one-time ?code=... from the URL.
-					void this.router.navigate([], { relativeTo: this.route, queryParams: {} });
-					this.load();
-				})
+				untilDestroyed(this),
+				// ONLY the spinner is reset here. `finalize` runs on ANY termination —
+				// including the completion `untilDestroyed` injects when the component
+				// is destroyed — so the URL cleanup must NOT live in it: a relative
+				// `router.navigate()` issued from a destroyed component still resolves
+				// against its populated route snapshot, which would drag the user back
+				// to /pages/settings/ai from whatever settings page they moved on to.
+				// `next`/`error` are the handlers that are genuinely skipped after
+				// teardown, so the navigation lives there instead.
+				finalize(() => this.connecting.set(false))
 			)
 			.subscribe({
 				next: () => {
@@ -408,9 +420,22 @@ export class AiChatSettingsComponent implements OnInit {
 						}),
 						this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
 					);
+					this.finishConnect();
 				},
-				error: (error) => this.showError(error)
+				error: (error) => {
+					this.showError(error);
+					this.finishConnect();
+				}
 			});
+	}
+
+	/**
+	 * Strips the one-time `?code=...` from the URL and reloads the page data
+	 * after a Connect exchange settled (either way).
+	 */
+	private finishConnect(): void {
+		void this.router.navigate([], { relativeTo: this.route, queryParams: {} });
+		this.load();
 	}
 
 	private readConnectSession(): {
@@ -472,17 +497,24 @@ export class AiChatSettingsComponent implements OnInit {
 			: this.settingsService.upsertCredential({ ...payload, apiKey } as IAiProviderCredentialCreateInput);
 
 		this.saving.set(provider.id);
-		request$.pipe(finalize(() => this.saving.set(null))).subscribe({
-			next: () => {
-				this.toastrService.success(
-					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SAVED', { provider: provider.label }),
-					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
-				);
-				this.load();
-				this.showList();
-			},
-			error: (error) => this.showError(error)
-		});
+		request$
+			.pipe(
+				untilDestroyed(this),
+				finalize(() => this.saving.set(null))
+			)
+			.subscribe({
+				next: () => {
+					this.toastrService.success(
+						this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SAVED', { provider: provider.label }),
+						this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
+					);
+					this.load();
+					// Navigates: without the `untilDestroyed(this)` above, a save that
+					// resolves after the user left would yank them back to this page.
+					this.showList();
+				},
+				error: (error) => this.showError(error)
+			});
 	}
 
 	/** Deletes the tenant credential of a provider after confirmation. */
@@ -514,7 +546,8 @@ export class AiChatSettingsComponent implements OnInit {
 							return EMPTY;
 						})
 					);
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe(() => {
 				this.toastrService.success(

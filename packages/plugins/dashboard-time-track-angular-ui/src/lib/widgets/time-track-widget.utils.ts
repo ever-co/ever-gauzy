@@ -227,11 +227,25 @@ export function toWeekHourBars(weekHours: Array<{ duration: number; day: number 
 	let total = 0;
 
 	for (const entry of weekHours ?? []) {
-		// `Number(...)` for BOTH the bucket and the total: the API may hand back a
-		// duration as a string, and mixing `parseInt` (truncating) with implicit
-		// numeric coercion is what makes the shares miss 100%.
+		// `Number(...)` for BOTH fields, because the contract lies about them: the
+		// statistics endpoint returns the RAW SQL day-of-week and SUM(), and both
+		// arrive as strings on the databases we ship — `strftime('%w', ...)` is TEXT
+		// on better-sqlite3 (the default dev/e2e database) and both `EXTRACT(DOW ...)`
+		// and SUM() come back as strings from PostgreSQL.
+		//
+		// `day` is load-bearing here: a `Map` compares keys with SameValueZero, so a
+		// '3' key can NEVER be read back by the numeric loop index below and every
+		// bar renders empty. For `duration` the coercion also keeps the shares
+		// honest — mixing `parseInt` (truncating) with implicit coercion is what
+		// makes them miss 100%.
+		const day = Number(entry?.day);
 		const duration = Number(entry?.duration) || 0;
-		byDay.set(entry?.day, (byDay.get(entry?.day) ?? 0) + duration);
+		// Out-of-range/unparsable days belong to no bar, so they are dropped from
+		// the total as well — counting them would shrink every rendered share.
+		if (!Number.isInteger(day) || day < 0 || day >= DAYS_IN_WEEK) {
+			continue;
+		}
+		byDay.set(day, (byDay.get(day) ?? 0) + duration);
 		total += duration;
 	}
 

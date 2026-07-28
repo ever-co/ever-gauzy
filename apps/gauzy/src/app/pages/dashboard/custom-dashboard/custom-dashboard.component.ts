@@ -1,13 +1,23 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { combineLatest } from 'rxjs';
+import { combineLatest, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IDashboard, IDashboardLayoutV2, IDashboardTab, IDashboardWidgetPlacement } from '@gauzy/contracts';
-import { createId, DashboardStoreService, normalizeLayout, parseLayout } from '@gauzy/ui-core/core';
+import {
+	createId,
+	DashboardStoreService,
+	normalizeLayout,
+	parseLayout,
+	WidgetConfigField,
+	WidgetRegistryService
+} from '@gauzy/ui-core/core';
+import { renderableConfigFields } from '@gauzy/ui-core/shared';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DashboardCanvasComponent } from './dashboard-canvas.component';
+import { WidgetConfigDialogComponent } from './widget-config-dialog.component';
 
 /**
  * Host page of a custom dashboard (route `custom/:id`).
@@ -57,6 +67,8 @@ export class CustomDashboardComponent extends TranslationBaseComponent implement
 		private readonly _route: ActivatedRoute,
 		private readonly _router: Router,
 		private readonly _dashboardStore: DashboardStoreService,
+		private readonly _dialogService: NbDialogService,
+		private readonly _widgetRegistry: WidgetRegistryService,
 		private readonly _changeRef: ChangeDetectorRef
 	) {
 		super(translateService);
@@ -241,6 +253,40 @@ export class CustomDashboardComponent extends TranslationBaseComponent implement
 	 */
 	public onAddWidget(widgetId: string): void {
 		this._canvas?.addWidget(widgetId);
+	}
+
+	/**
+	 * Opens the per-widget settings dialog and applies the result.
+	 *
+	 * The page owns the dialog because the widget host deliberately does not: it
+	 * only signals WHICH placement the user wants to configure. The result goes
+	 * back through `DashboardCanvasComponent.applyConfig()`, which re-emits
+	 * `layoutChange` — so a configuration change is staged and saved by exactly
+	 * the same path as a drag or a resize.
+	 *
+	 * @param placement - The placement whose settings were requested.
+	 */
+	public async onConfigureWidget(placement: IDashboardWidgetPlacement): Promise<void> {
+		const widget = this._widgetRegistry.getWidget(placement.widgetId);
+		const fields: WidgetConfigField[] = renderableConfigFields(widget?.configSchema);
+		if (!fields.length) {
+			// The host only offers "Configure" for a renderable schema, so this is a
+			// registry that changed under an open menu — not something to report.
+			return;
+		}
+
+		// The registry title may be a resolver; only a plain string (or the user's
+		// own override) can be shown without re-running it here.
+		const widgetTitle = placement.title ?? (typeof widget?.title === 'string' ? widget.title : '');
+
+		const dialogRef = this._dialogService.open(WidgetConfigDialogComponent, {
+			context: { widgetTitle, fields, config: placement.config ?? {} }
+		});
+
+		const config = await firstValueFrom(dialogRef.onClose);
+		if (config) {
+			this._canvas?.applyConfig(placement.instanceId, config as Record<string, unknown>);
+		}
 	}
 
 	/*
