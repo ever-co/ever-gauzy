@@ -107,11 +107,26 @@ nb-badge {
     border-radius: 0 0 var(--border-radius) var(--border-radius);
   }
 
-  @include card_overrides(
-    unset,
-    calc($default-card-height - 1.5rem),
-    0 $default-radius $default-radius $default-radius
-  );
+  /*
+   * `auto` height, NOT `calc($default-card-height ± …)`.
+   *
+   * `$default-card-height` is `100vh` minus the header, the footer and a
+   * hand-tuned `11.5rem` standing in for the rest of the page chrome. That
+   * guess is now wrong twice over — the density pass re-cut the tab, card and
+   * button metrics, and the dashboard grew an always-visible chips row — so the
+   * card was pinned to the wrong height and scrolled inside the page.
+   *
+   * The dashboard page owns the single scrollbar now (see
+   * `apps/gauzy/src/app/pages/dashboard/dashboard.component.scss`); this card
+   * just grows to fit its widgets.
+   */
+  @include card_overrides(unset, auto, 0 $default-radius $default-radius $default-radius);
+
+  // `card_overrides` pins `.card` to `height: 100%`, which is what forced the
+  // body into a viewport-sized box. Content-driven height instead.
+  .card {
+    height: auto;
+  }
 
   ngx-activity-item.tracking-progress ::ng-deep {
     .progress-container {
@@ -270,11 +285,12 @@ nb-card-body > .header-widget {
   }
 }
 
+// The widget grid: no `overflow` and no `height` — this block is exactly what
+// the report was about. It grows to its natural height and the dashboard page
+// scrolls, so there is one scrollbar on screen instead of two.
 :host .container {
   max-width: unset;
   border-radius: 0 0 $default-radius $default-radius;
-  overflow: auto;
-  height: 100%;
   @include nb-ltr(padding, 0 0.5rem 0 0);
   @include nb-rtl(padding, 0 0 0 0.5rem);
 }
@@ -283,5 +299,6 @@ nb-card-body > .header-widget {
   @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
   @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
   border-radius: 0 0 $default-radius $default-radius;
-  height: calc($default-card-height + 1.5rem) !important;
+  // Was a `!important` viewport calc; see the `card_overrides` note above.
+  height: auto !important;
 }

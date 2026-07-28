@@ -1,10 +1,6 @@
 import { EnvironmentProviders, inject, provideEnvironmentInitializer } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { combineLatest, of } from 'rxjs';
-import { catchError, debounceTime, map, switchMap } from 'rxjs/operators';
-import { IAiChatConfig, PermissionsEnum } from '@gauzy/contracts';
-import { environment } from '@gauzy/ui-config';
-import { AgentPageBridgeService, ChatSidebarService, Store } from '@gauzy/ui-core/core';
+import { AgentPageBridgeService, ChatSidebarService } from '@gauzy/ui-core/core';
+import { AiChatAvailabilityService } from './ai-chat-availability.service';
 import { AiChatSidebarComponent } from './ai-chat-sidebar.component';
 import { GAUZY_PAGE_REGISTRY } from './page-registry';
 
@@ -15,10 +11,14 @@ import { GAUZY_PAGE_REGISTRY } from './page-registry';
  *
  * Also:
  * - seeds the agent page registry (pages the agent may open in the canvas);
- * - keeps `ChatSidebarService.available` in sync with the user's
- *   `AI_CHAT_ACCESS` permission and the backend configuration
- *   (`GET /api/ai-chat/config`) — the layout and the header toggle only
- *   show the chat when both are satisfied.
+ * - keeps `ChatSidebarService.available` in sync with the verdict of
+ *   {@link AiChatAvailabilityService} (permission + `GET /api/ai-chat/config`)
+ *   — the layout and the header toggle only show the chat when it is true.
+ *
+ * The verdict deliberately lives in a shared service rather than here: the
+ * "AI Providers" settings page reads the very same verdict to explain the chat
+ * to the user, and forces a re-evaluation after a credential changes so the
+ * first configured provider turns the chat on without a page reload.
  *
  * @example
  * ```typescript
@@ -29,8 +29,7 @@ export function provideAiChatSidebar(): EnvironmentProviders {
 	return provideEnvironmentInitializer(() => {
 		const chatSidebar = inject(ChatSidebarService);
 		const pageBridge = inject(AgentPageBridgeService);
-		const store = inject(Store);
-		const http = inject(HttpClient);
+		const availability = inject(AiChatAvailabilityService);
 
 		chatSidebar.register({
 			loadComponent: () => AiChatSidebarComponent,
@@ -40,24 +39,8 @@ export function provideAiChatSidebar(): EnvironmentProviders {
 
 		pageBridge.registerPages(GAUZY_PAGE_REGISTRY);
 
-		// Availability = logged in + AI_CHAT_ACCESS permission + backend configured.
-		// Re-evaluated whenever the user or their role permissions change.
-		combineLatest([store.user$, store.userRolePermissions$])
-			.pipe(
-				debounceTime(100),
-				switchMap(([user, rolePermissions]) => {
-					if (!user) return of(false);
-					const permitted = (rolePermissions ?? []).some(
-						(rolePermission: any) =>
-							rolePermission.permission === PermissionsEnum.AI_CHAT_ACCESS && rolePermission.enabled
-					);
-					if (!permitted) return of(false);
-					return http.get<IAiChatConfig>(`${environment.API_BASE_URL}/api/ai-chat/config`).pipe(
-						map((config) => !!config?.enabled),
-						catchError(() => of(false))
-					);
-				})
-			)
-			.subscribe((available) => chatSidebar.setAvailable(available));
+		// Lives for the lifetime of the app (environment injector) — the chat
+		// availability must keep tracking login/permission/credential changes.
+		availability.status$.subscribe((status) => chatSidebar.setAvailable(status.available));
 	});
 }

@@ -4,7 +4,6 @@ ng-select {
 	.selector-template {
 		display: flex;
 		align-items: center;
-		height: 100%;
 	}
 
 	img {
@@ -14,7 +13,6 @@ ng-select {
 	}
 }
 
-:host ::ng-deep .employee.ng-select .ng-select-container .ng-value-container {
-	@include nb-ltr(padding-left, 0);
-	@include nb-rtl(padding-right, 0);
-}
+// The `.ng-value-container` inset used to be zeroed here, which is what left the
+// employee selector's text on a different x from the team and project ones next
+// to it. The trigger now carries one shared inset (`ng-select-overrides`).

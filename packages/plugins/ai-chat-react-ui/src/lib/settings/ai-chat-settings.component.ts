@@ -6,6 +6,7 @@ import {
 	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
+	NbComponentStatus,
 	NbDialogService,
 	NbFormFieldModule,
 	NbIconModule,
@@ -25,12 +26,58 @@ import {
 	IAiProviderCredentialCreateInput,
 	IAiProviderCredentialUpdateInput
 } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/core';
+import { ChatSidebarService, Store } from '@gauzy/ui-core/core';
 import { ConfirmComponent } from '@gauzy/ui-core/shared';
+import { AiChatAvailabilityService } from '../ai-chat-availability.service';
 import { AiChatSettingsService } from './ai-chat-settings.service';
+import { IProviderLogo, PROVIDER_LOGOS } from './provider-logos';
 
 /** Sentinel select value meaning "type a custom model id". */
 const CUSTOM_MODEL = '__custom__';
+
+/**
+ * What the page tells the user about the chat itself, once they have (or
+ * tried to) configure a provider. Each kind maps to one notice in
+ * {@link CHAT_NOTICES}.
+ */
+type AiChatNoticeKind = 'ready' | 'no-permission' | 'globally-disabled' | 'credentials-unusable' | 'unreachable';
+
+/** Presentation of each chat notice: Nebular status, icon and i18n keys. */
+const CHAT_NOTICES: Record<
+	AiChatNoticeKind,
+	{ status: NbComponentStatus; icon: string; title: string; hint: string }
+> = {
+	ready: {
+		status: 'success',
+		icon: 'checkmark-circle-2-outline',
+		title: 'AI_CHAT_UI.SETTINGS.STATUS.READY_TITLE',
+		hint: 'AI_CHAT_UI.SETTINGS.STATUS.READY_HINT'
+	},
+	'no-permission': {
+		status: 'warning',
+		icon: 'lock-outline',
+		title: 'AI_CHAT_UI.SETTINGS.STATUS.NO_PERMISSION_TITLE',
+		hint: 'AI_CHAT_UI.SETTINGS.STATUS.NO_PERMISSION_HINT'
+	},
+	'globally-disabled': {
+		status: 'warning',
+		icon: 'slash-outline',
+		title: 'AI_CHAT_UI.SETTINGS.STATUS.GLOBALLY_DISABLED_TITLE',
+		hint: 'AI_CHAT_UI.SETTINGS.STATUS.GLOBALLY_DISABLED_HINT'
+	},
+	'credentials-unusable': {
+		status: 'danger',
+		icon: 'alert-triangle-outline',
+		title: 'AI_CHAT_UI.SETTINGS.STATUS.CREDENTIALS_UNUSABLE_TITLE',
+		hint: 'AI_CHAT_UI.SETTINGS.STATUS.CREDENTIALS_UNUSABLE_HINT'
+	},
+	unreachable: {
+		status: 'info',
+		icon: 'question-mark-circle-outline',
+		title: 'AI_CHAT_UI.SETTINGS.STATUS.UNREACHABLE_TITLE',
+		hint: 'AI_CHAT_UI.SETTINGS.STATUS.UNREACHABLE_HINT'
+	}
+};
 
 /** sessionStorage key holding the in-flight Connect (PKCE) state. */
 const CONNECT_SESSION_KEY = 'gauzy_ai_provider_connect';
@@ -43,17 +90,6 @@ interface ProviderCredentialForm {
 	customModel: FormControl<string>;
 	enabled: FormControl<boolean>;
 }
-
-/** Monogram + brand color for the provider tiles (no external logo assets needed). */
-const PROVIDER_TILES: Record<string, { monogram: string; color: string }> = {
-	'gauzy-ai': { monogram: 'GA', color: '#6e49e8' },
-	openrouter: { monogram: 'OR', color: '#4f46e5' },
-	'vercel-gateway': { monogram: '▲', color: '#000000' },
-	anthropic: { monogram: 'A✱', color: '#d97757' },
-	openai: { monogram: 'OA', color: '#10a37f' },
-	gemini: { monogram: 'GE', color: '#4285f4' },
-	grok: { monogram: 'X', color: '#1a1a1a' }
-};
 
 /**
  * AiChatSettingsComponent
@@ -130,8 +166,12 @@ export class AiChatSettingsComponent implements OnInit {
 		this.providers().filter((provider) => provider.configured)
 	);
 
-	/** Tenant credentials indexed by provider id (API keys masked). */
-	private credentialsByProvider = new Map<string, IAiProviderCredential>();
+	/**
+	 * Tenant credentials indexed by provider id (API keys masked).
+	 * A signal because {@link chatNotice} has to react to it: a saved-but-unusable
+	 * credential is exactly the case the notice exists to explain.
+	 */
+	private readonly credentialsByProvider = signal<Map<string, IAiProviderCredential>>(new Map());
 	/** Per-provider reactive forms indexed by provider id. */
 	private forms = new Map<string, FormGroup<ProviderCredentialForm>>();
 	/** Provider ids whose API key input is shown as plain text. */
@@ -142,6 +182,8 @@ export class AiChatSettingsComponent implements OnInit {
 
 	private readonly fb = inject(FormBuilder);
 	private readonly store = inject(Store);
+	private readonly availability = inject(AiChatAvailabilityService);
+	private readonly chatSidebar = inject(ChatSidebarService);
 	private readonly settingsService = inject(AiChatSettingsService);
 	private readonly dialogService = inject(NbDialogService);
 	private readonly toastrService = inject(NbToastrService);
@@ -149,6 +191,54 @@ export class AiChatSettingsComponent implements OnInit {
 	private readonly cdr = inject(ChangeDetectorRef);
 	private readonly router = inject(Router);
 	private readonly route = inject(ActivatedRoute);
+
+	/**
+	 * Which notice (if any) to show about the chat itself — the answer to
+	 * "I configured a provider, so where is the chat?".
+	 *
+	 * Stays `null` while the page is loading, while the availability check is
+	 * still pending, and for a brand-new tenant that has configured nothing yet
+	 * (the empty state already tells that user what to do).
+	 */
+	readonly chatNotice = computed<AiChatNoticeKind | null>(() => {
+		const status = this.availability.status();
+		if (this.loading() || !status.resolved) {
+			return null;
+		}
+
+		const configuredCount = this.configuredProviders().length;
+		const credentialCount = this.credentialsByProvider().size;
+		if (!configuredCount && !credentialCount) {
+			return null;
+		}
+
+		if (status.available) {
+			return 'ready';
+		}
+
+		switch (status.reason) {
+			case 'no-permission':
+				return 'no-permission';
+			case 'globally-disabled':
+				return 'globally-disabled';
+			case 'unreachable':
+				return 'unreachable';
+			case 'no-providers':
+				// A credential row exists but the server can use none of them: the
+				// credential is disabled, or its stored key no longer decrypts
+				// (ENCRYPTION_KEY changed). Without this the row silently vanishes
+				// from the list and the page looks like nothing was ever saved.
+				return configuredCount === 0 && credentialCount > 0 ? 'credentials-unusable' : null;
+			default:
+				return null;
+		}
+	});
+
+	/** Presentation (status, icon, i18n keys) of the current chat notice. */
+	readonly chatNoticeMeta = computed(() => {
+		const kind = this.chatNotice();
+		return kind ? CHAT_NOTICES[kind] : null;
+	});
 
 	ngOnInit(): void {
 		// Complete an in-flight Connect flow when the provider redirected back
@@ -246,8 +336,8 @@ export class AiChatSettingsComponent implements OnInit {
 		})
 			.pipe(finalize(() => this.loading.set(false)))
 			.subscribe(({ config, credentials }) => {
-				this.credentialsByProvider = new Map(
-					(credentials?.items ?? []).map((credential) => [credential.providerId, credential])
+				this.credentialsByProvider.set(
+					new Map((credentials?.items ?? []).map((credential) => [credential.providerId, credential]))
 				);
 				this.providers.set(config?.providers ?? []);
 				this.defaultProviderId.set(config?.defaultProvider ?? null);
@@ -261,16 +351,63 @@ export class AiChatSettingsComponent implements OnInit {
 			});
 	}
 
-	// ── Template helpers ───────────────────────────────────────────────
+	// ── Chat availability ──────────────────────────────────────────────
 
-	/** Monogram text for a provider tile. */
-	tileMonogram(providerId: string): string {
-		return PROVIDER_TILES[providerId]?.monogram ?? providerId.slice(0, 2).toUpperCase();
+	/**
+	 * Re-evaluates whether the chat is now available.
+	 *
+	 * Saving/deleting/connecting a credential flips the backend verdict but
+	 * emits nothing the sidebar registration listens to, so without this call
+	 * the chat only appears after a full page reload.
+	 */
+	private refreshChatAvailability(): void {
+		this.availability.refresh();
 	}
 
-	/** Brand background color for a provider tile. */
-	tileColor(providerId: string): string {
-		return PROVIDER_TILES[providerId]?.color ?? '#8f9bb3';
+	/** Expands the chat sidebar, so "where is the chat?" is one click away. */
+	openChat(): void {
+		this.chatSidebar.expand();
+	}
+
+	// ── Template helpers ───────────────────────────────────────────────
+
+	/**
+	 * The brand mark bundled for a provider, or `null` when none is bundled.
+	 *
+	 * @param providerId Registered provider id, e.g. `openai`.
+	 * @returns The mark to draw in the provider's tile, `null` to fall back to
+	 * the monogram tile (see {@link tileMonogram}).
+	 */
+	providerLogo(providerId: string): IProviderLogo | null {
+		// Own-property lookup rather than a bare index: provider ids come from
+		// the backend, and an id such as "constructor" would otherwise resolve
+		// to something off `Object.prototype` and blow up the tile.
+		return Object.prototype.hasOwnProperty.call(PROVIDER_LOGOS, providerId) ? PROVIDER_LOGOS[providerId] : null;
+	}
+
+	/**
+	 * Initials for the fallback monogram tile, drawn only for providers that
+	 * ship no brand mark — a provider contributed by a future plugin, say.
+	 * Rendering initials keeps that tile from collapsing into an empty box.
+	 *
+	 * @param provider The provider to label.
+	 * @returns Up to two uppercase initials, one per leading word of the label
+	 * (so "Vercel AI Gateway" reads "VA", not "VE").
+	 */
+	tileMonogram(provider: IAiChatProvider): string {
+		// Everything here comes off the wire, so nothing is assumed present: a
+		// provider that somehow arrives without a label AND without an id must
+		// still render a tile rather than throw and blank the whole page.
+		const id = provider?.id ?? '';
+		const words = (provider?.label || id)
+			.trim()
+			.split(/[\s_-]+/)
+			.filter(Boolean);
+		const initials = words
+			.slice(0, 2)
+			.map((word) => word.charAt(0))
+			.join('');
+		return (initials || id.slice(0, 2) || '?').toUpperCase();
 	}
 
 	/** Returns the credential form for a provider. */
@@ -280,7 +417,7 @@ export class AiChatSettingsComponent implements OnInit {
 
 	/** Returns the tenant credential (masked) for a provider, if any. */
 	getCredential(providerId: string): IAiProviderCredential | undefined {
-		return this.credentialsByProvider.get(providerId);
+		return this.credentialsByProvider().get(providerId);
 	}
 
 	/** Whether the API key input of a provider is shown as plain text. */
@@ -329,7 +466,12 @@ export class AiChatSettingsComponent implements OnInit {
 			.updateCredential(credential.id, { providerId: provider.id, enabled })
 			.pipe(finalize(() => this.saving.set(null)))
 			.subscribe({
-				next: () => this.load(),
+				next: () => {
+					this.load();
+					// Disabling the last enabled credential takes the chat away —
+					// and enabling one brings it back. Both must be reflected now.
+					this.refreshChatAvailability();
+				},
 				error: (error) => {
 					this.showError(error);
 					this.load();
@@ -398,6 +540,7 @@ export class AiChatSettingsComponent implements OnInit {
 					// Strip the one-time ?code=... from the URL.
 					void this.router.navigate([], { relativeTo: this.route, queryParams: {} });
 					this.load();
+					this.refreshChatAvailability();
 				})
 			)
 			.subscribe({
@@ -479,6 +622,9 @@ export class AiChatSettingsComponent implements OnInit {
 					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
 				);
 				this.load();
+				// The very first provider turns the chat on — the list view the
+				// user lands on must already say so.
+				this.refreshChatAvailability();
 				this.showList();
 			},
 			error: (error) => this.showError(error)
@@ -522,6 +668,8 @@ export class AiChatSettingsComponent implements OnInit {
 					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
 				);
 				this.load();
+				// Deleting the last credential takes the chat away again.
+				this.refreshChatAvailability();
 			});
 	}
 
@@ -552,7 +700,7 @@ export class AiChatSettingsComponent implements OnInit {
 			})
 		);
 
-		const defaultCredential = [...this.credentialsByProvider.values()].find((credential) => credential.isDefault);
+		const defaultCredential = [...this.credentialsByProvider().values()].find((credential) => credential.isDefault);
 		this.defaultProviderControl.setValue(defaultCredential?.providerId ?? null, { emitEvent: false });
 	}
 

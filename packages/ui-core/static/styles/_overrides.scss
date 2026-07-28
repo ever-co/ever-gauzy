@@ -815,12 +815,27 @@ angular2-smart-table {
   padding: var(--accordion-padding);
 }
 
-// TODO overrides perfectly chevron-down unicode
+// ng-select's chevron is a CSS-border triangle; we swap it for a Font Awesome
+// glyph. The library sizes that element `width: 0; height: 0` (all it needed for
+// a border triangle) and leaves it inline, so the glyph hung off the text
+// baseline instead of the middle of the trigger — measurably ~2px low, and ~4px
+// low plus clipped in the organization selector, which additionally aligned its
+// wrapper on `baseline`. Give the arrow a real box and centre it in the wrapper.
+//
+// `!important` throughout: `@ng-select/ng-select`'s own component styles are
+// injected after this sheet, so `.ng-select .ng-arrow-wrapper .ng-arrow`'s
+// `width/height: 0` and the default theme's border shorthand win every tie.
 .ng-select {
   .ng-select-container {
     border-radius: var(--border-radius) !important;
     box-shadow: var(--gauzy-shadow) inset;
     border: none !important;
+  }
+
+  .ng-arrow-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .ng-arrow {
@@ -829,16 +844,20 @@ angular2-smart-table {
     border-width: 0 !important;
     font-size: 10px;
     font-weight: 900;
-    top: 0 !important;
-    left: -4px;
-    @include nb-ltr(left, -4px);
-    @include nb-rtl(right, -4px);
+    // A glyph needs a box: with the library's `width: 0; height: 0` the chevron
+    // rendered as overflow hanging off the baseline, which is what pushed it
+    // below the trigger's optical centre.
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    line-height: 1 !important;
+    // The old `top: 0` / `left: -4px` nudges only existed to drag that
+    // baseline-hung glyph back into view; the flex wrapper now positions it.
+    top: auto !important;
     color: var(--select-outline-basic-icon-color);
     text-align: center;
     transform: rotate(0deg);
-    transform-origin: 5.5px 8.6px;
-    @include nb-ltr(transform-origin, 5.5px 8.6px);
-    @include nb-rtl(transform-origin, -5.5px 8.6px);
+    transform-origin: center;
     transition: transform 0.2s ease;
 
     &:before {

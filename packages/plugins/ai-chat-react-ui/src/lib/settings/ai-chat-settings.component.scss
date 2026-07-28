@@ -25,7 +25,9 @@
 		}
 	}
 
-	// ── Provider tiles (monogram "logos") ─────────────────────────────
+	// ── Provider tiles ────────────────────────────────────────────────
+	// `.brand` draws a bundled brand mark, `.monogram` is the fallback for a
+	// provider that ships none (see provider-logos.ts).
 	.tile {
 		display: inline-flex;
 		align-items: center;
@@ -33,10 +35,6 @@
 		width: 2.25rem;
 		height: 2.25rem;
 		border-radius: 0.5rem;
-		color: #ffffff;
-		font-weight: 700;
-		font-size: 0.8125rem;
-		letter-spacing: 0.02em;
 		flex-shrink: 0;
 		user-select: none;
 
@@ -44,6 +42,48 @@
 			width: 3.5rem;
 			height: 3.5rem;
 			border-radius: 0.75rem;
+		}
+	}
+
+	.tile.brand {
+		// A translucent neutral rather than a per-brand fill: it darkens a light
+		// card and lightens a dark one, so one rule holds in all 8 themes. The
+		// opaque `background-basic-color-*` tokens are unusable here — in
+		// `gauzy-dark` colour-2 resolves to the card colour itself, so the tile
+		// would vanish.
+		background: var(--color-basic-transparent-100);
+		border: 1px solid var(--color-basic-transparent-200);
+		padding: 0.375rem;
+		// Monochrome marks fill with `currentColor`. Sourcing it from the theme's
+		// text colour is what flips them from dark-on-light to light-on-dark —
+		// without it the black artwork (Gauzy AI, OpenAI, Vercel, Anthropic, xAI)
+		// is all but invisible on the dark themes.
+		color: var(--text-basic-color);
+
+		&.large {
+			padding: 0.625rem;
+		}
+
+		.mark {
+			width: 100%;
+			height: 100%;
+			// Marks that carry a fixed brand colour set `color` inline and win
+			// here; the rest inherit the theme text colour set above.
+			fill: currentColor;
+		}
+	}
+
+	.tile.monogram {
+		background: var(--color-basic-transparent-200);
+		border: 1px solid var(--color-basic-transparent-300);
+		// Full text colour, not the hint colour: these initials are the only
+		// thing identifying the provider in this tile, so they must stay legible.
+		color: var(--text-basic-color);
+		font-weight: 700;
+		font-size: 0.8125rem;
+		letter-spacing: 0.02em;
+
+		&.large {
 			font-size: 1.125rem;
 		}
 	}
@@ -52,6 +92,72 @@
 	.static-badge {
 		position: static;
 		white-space: nowrap;
+	}
+
+	// ── Chat availability notice ──────────────────────────────────────
+	// Tinted with the Nebular status custom properties, so the box tracks
+	// every theme (light and dark) without a per-theme branch.
+	.chat-notice {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 1rem;
+		padding: 0.625rem 0.875rem;
+		border: 1px solid var(--color-basic-transparent-300);
+		border-radius: var(--border-radius);
+		background: var(--color-basic-transparent-100);
+
+		> nb-icon {
+			font-size: 1.25rem;
+			width: 1.25rem;
+			height: 1.25rem;
+			flex-shrink: 0;
+		}
+
+		.notice-text {
+			display: flex;
+			flex-direction: column;
+			gap: 0.125rem;
+			min-width: 0;
+		}
+
+		.notice-title {
+			font-size: 0.875rem;
+			font-weight: 600;
+			color: var(--text-basic-color);
+		}
+
+		.notice-hint {
+			font-size: 0.75rem;
+			color: var(--text-hint-color);
+		}
+
+		.notice-action {
+			// Pushed to the trailing edge so the call to action reads as the
+			// answer to the sentence on its left.
+			margin-left: auto;
+			flex-shrink: 0;
+		}
+
+		&.success {
+			border-color: var(--color-success-transparent-300);
+			background: var(--color-success-transparent-100);
+		}
+
+		&.warning {
+			border-color: var(--color-warning-transparent-300);
+			background: var(--color-warning-transparent-100);
+		}
+
+		&.danger {
+			border-color: var(--color-danger-transparent-300);
+			background: var(--color-danger-transparent-100);
+		}
+
+		&.info {
+			border-color: var(--color-info-transparent-300);
+			background: var(--color-info-transparent-100);
+		}
 	}
 
 	.empty-state {
@@ -79,7 +185,7 @@
 			border-radius: 50%;
 			// Neutral translucent disc: darkens a light card and lightens a dark
 			// one, so no per-theme branch is needed.
-			background: rgba(126, 126, 143, 0.12);
+			background: var(--color-basic-transparent-200);
 
 			nb-icon {
 				font-size: 1.75rem;
@@ -132,11 +238,11 @@
 			text-transform: uppercase;
 			letter-spacing: 0.04em;
 			opacity: 0.6;
-			border-bottom: 1px solid rgba(143, 155, 179, 0.24);
+			border-bottom: 1px solid var(--color-basic-transparent-300);
 		}
 
 		.row {
-			border-bottom: 1px solid rgba(143, 155, 179, 0.12);
+			border-bottom: 1px solid var(--color-basic-transparent-200);
 
 			&:last-child {
 				border-bottom: none;
@@ -160,8 +266,8 @@
 			border-radius: 1rem;
 			// Theme tokens (not hardcoded hex) so every theme resolves an
 			// accessible pair; the dark override below lightens the foreground.
-			background: var(--color-success-transparent-200, rgba(0, 214, 143, 0.16));
-			color: var(--color-success-800, #007d6c);
+			background: var(--color-success-transparent-200);
+			color: var(--color-success-800);
 		}
 
 		.env-note {
@@ -190,7 +296,7 @@
 		align-items: center;
 		gap: 0.625rem;
 		padding: 1.5rem 1rem 1.25rem;
-		border: 1px solid rgba(143, 155, 179, 0.24);
+		border: 1px solid var(--color-basic-transparent-300);
 		border-radius: 0.75rem;
 		background: transparent;
 		cursor: pointer;
@@ -200,9 +306,9 @@
 
 		&:hover,
 		&:focus-visible {
-			border-color: #3366ff;
+			border-color: var(--color-primary-default);
 			transform: translateY(-2px);
-			box-shadow: 0 4px 16px rgba(51, 102, 255, 0.12);
+			box-shadow: 0 4px 16px var(--color-primary-transparent-200);
 			outline: none;
 		}
 
@@ -215,7 +321,7 @@
 			align-items: center;
 			gap: 0.25rem;
 			font-size: 0.75rem;
-			color: var(--color-success-800, #007d6c);
+			color: var(--color-success-800);
 
 			nb-icon {
 				font-size: 0.9375rem;
@@ -229,8 +335,8 @@
 			letter-spacing: 0.04em;
 			padding: 0.125rem 0.5rem;
 			border-radius: 1rem;
-			background: var(--color-primary-transparent-200, rgba(51, 102, 255, 0.14));
-			color: var(--color-primary-700, #274bdb);
+			background: var(--color-primary-transparent-200);
+			color: var(--color-primary-700);
 		}
 	}
 
@@ -242,11 +348,11 @@
 		:host-context(.nb-theme-material-dark) & {
 		.default-chip,
 		.configured {
-			color: var(--color-success-300, #2ce69b);
+			color: var(--color-success-300);
 		}
 
 		.connect-chip {
-			color: var(--color-primary-300, #94b3ff);
+			color: var(--color-primary-300);
 		}
 	}
 
@@ -274,7 +380,7 @@
 			line-height: 1.25;
 			padding: 0.125rem 0.5rem;
 			border-radius: 1rem;
-			background: rgba(143, 155, 179, 0.16);
+			background: var(--color-basic-transparent-200);
 			white-space: nowrap;
 		}
 	}
@@ -306,7 +412,7 @@
 			&::after {
 				content: '';
 				flex: 1;
-				border-top: 1px solid rgba(143, 155, 179, 0.24);
+				border-top: 1px solid var(--color-basic-transparent-300);
 			}
 		}
 	}
@@ -346,7 +452,7 @@
 			display: block;
 			margin-top: 0.25rem;
 			font-size: 0.75rem;
-			color: #ff3d71; // Nebular color-danger-default
+			color: var(--color-danger-default);
 		}
 
 		.custom-model {
@@ -368,7 +474,8 @@
 			cursor: pointer;
 
 			input[type='radio'] {
-				accent-color: #3366ff; // Nebular color-primary-default
+				// Theme token, so the radio dot matches whichever theme is active.
+				accent-color: var(--color-primary-default);
 				width: 1rem;
 				height: 1rem;
 				margin: 0;

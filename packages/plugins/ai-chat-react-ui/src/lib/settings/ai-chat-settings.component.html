@@ -1,3 +1,31 @@
+<!--
+	Provider tile, shared by the list rows, the catalog cards and the config
+	header so one provider looks identical wherever it appears. Draws the
+	bundled brand mark when there is one and falls back to a monogram when
+	there is not, so a tile is never an empty box.
+-->
+<ng-template #providerTile let-provider let-large="large">
+	@if (providerLogo(provider.id); as logo) {
+		<span class="tile brand" [class.large]="large" [style.color]="logo.brandColor">
+			<svg
+				class="mark"
+				[attr.viewBox]="logo.viewBox"
+				preserveAspectRatio="xMidYMid meet"
+				aria-hidden="true"
+				focusable="false"
+			>
+				<g [attr.transform]="logo.transform">
+					@for (path of logo.paths; track $index) {
+						<path [attr.d]="path"></path>
+					}
+				</g>
+			</svg>
+		</span>
+	} @else {
+		<span class="tile monogram" [class.large]="large" aria-hidden="true">{{ tileMonogram(provider) }}</span>
+	}
+</ng-template>
+
 <nb-card class="ai-chat-settings" [nbSpinner]="loading() || connecting()" nbSpinnerStatus="primary">
 	<!-- ══════════════ LIST VIEW (default) ══════════════ -->
 	@if (view() === 'list') {
@@ -19,6 +47,24 @@
 			</div>
 		</nb-card-header>
 		<nb-card-body>
+			<!-- Where is the chat? Answer it here — configuring a provider is the
+			     only place the user learns whether the chat turned on, and why not. -->
+			@if (chatNoticeMeta(); as notice) {
+				<div class="chat-notice" [ngClass]="notice.status" role="status">
+					<nb-icon [icon]="notice.icon" [status]="notice.status"></nb-icon>
+					<div class="notice-text">
+						<span class="notice-title">{{ notice.title | translate }}</span>
+						<span class="notice-hint">{{ notice.hint | translate }}</span>
+					</div>
+					@if (chatNotice() === 'ready') {
+						<button nbButton size="small" status="success" class="notice-action" (click)="openChat()">
+							<nb-icon icon="message-circle-outline"></nb-icon>
+							{{ 'AI_CHAT_UI.SETTINGS.STATUS.OPEN_CHAT' | translate }}
+						</button>
+					}
+				</div>
+			}
+
 			@if (!loading() && !configuredProviders().length) {
 				<div class="empty-state">
 					<span class="empty-illustration" aria-hidden="true">
@@ -47,9 +93,10 @@
 					@for (provider of configuredProviders(); track provider.id) {
 						<div class="row">
 							<span class="cell name">
-								<span class="tile" [style.background]="tileColor(provider.id)">{{
-									tileMonogram(provider.id)
-								}}</span>
+								<ng-container
+									[ngTemplateOutlet]="providerTile"
+									[ngTemplateOutletContext]="{ $implicit: provider }"
+								></ng-container>
 								<span class="label">
 									{{ provider.label }}
 									@if (defaultProviderId() === provider.id) {
@@ -127,9 +174,10 @@
 			<div class="catalog-grid">
 				@for (provider of providers(); track provider.id) {
 					<button type="button" class="catalog-card" (click)="showConfigure(provider.id)">
-						<span class="tile large" [style.background]="tileColor(provider.id)">{{
-							tileMonogram(provider.id)
-						}}</span>
+						<ng-container
+							[ngTemplateOutlet]="providerTile"
+							[ngTemplateOutletContext]="{ $implicit: provider, large: true }"
+						></ng-container>
 						<span class="name">{{ provider.label }}</span>
 						@if (provider.configured) {
 							<span class="configured">
@@ -156,9 +204,10 @@
 						{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.BACK' | translate }}
 					</button>
 					<div class="config-title">
-						<span class="tile" [style.background]="tileColor(provider.id)">{{
-							tileMonogram(provider.id)
-						}}</span>
+						<ng-container
+							[ngTemplateOutlet]="providerTile"
+							[ngTemplateOutletContext]="{ $implicit: provider }"
+						></ng-container>
 						<h5>{{ provider.label }}</h5>
 						<nb-badge
 							class="static-badge"

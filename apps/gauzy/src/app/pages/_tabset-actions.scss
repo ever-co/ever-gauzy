@@ -1,0 +1,121 @@
+// Shared layout for pages that show a page-action row (Add / Edit / Delete +
+// layout selector) alongside an `nb-tabset` header strip.
+//
+// WHY THIS EXISTS
+// Those pages used to pin the action row with `position: absolute; top: 0` and
+// let a stack of fixed paddings (`.actions-container { padding: 1rem 0 }`, the
+// shared `button { margin: 5px }`, a `mt-4` / `margin-top: 27px` spacer on the
+// tabset) happen to land the button near the middle of the tab strip, and sized
+// the tab body with hand-measured `calc(100% - 3rem)` / `calc(100vh - Nrem)`
+// values. All of that only ever worked for one set of tab metrics: the shared
+// `$gauzy-density` map in `themes.scss` cut `tabset-tab-padding` from `1rem 2rem`
+// to `0.75rem 1.25rem`, the strip lost 0.5rem of height, and every one of those
+// magic offsets went out of alignment.
+//
+// The two mixins below take the numbers out of the pages:
+//   * the action row reproduces `.tab-link`'s own box model, so it *is* the tab
+//     strip's row and the button centres on the tab labels;
+//   * the tab body takes whatever height the strip leaves, via flex.
+//
+// NOTE: Nebular runs here with CSS custom properties enabled, so `nb-theme()`
+// returns `var(--token)` rather than a Sass value. Multi-value shorthands like
+// `tabset-tab-padding` therefore cannot be picked apart in `calc()` — the layout
+// below deliberately only ever uses whole tokens.
+
+@use 'var' as *;
+
+/// Lays the page-action row out as the tab strip's own row, so the buttons stay
+/// vertically centred on the tab labels whatever height either side ends up
+/// being.
+///
+/// PRECONDITION 1: the row's containing block is an `nb-card-body.p-0` whose
+/// next child is the `nb-tabset` — `nb-card-body` is `position: relative` in
+/// Nebular's card theme, so `top: 0` lands on the strip's first pixel. On a
+/// padded card body the row would sit one `card-padding` too high, so give the
+/// card body `p-0` (or offset `top`) before reaching for this.
+///
+/// PRECONDITION 2: the tabs are TEXT-ONLY. The row reproduces the tab label's
+/// line box, so it is only as tall as the strip while the label is the tallest
+/// thing in `.tab-link`. A tab carrying an `nb-icon` (1.5rem, i.e. taller than
+/// the 1rem `tabset-tab-text-line-height`) grows the strip by 8px while this row
+/// stays put, and the buttons then sit 4px high. Measured, not assumed. If a
+/// page adds tab icons, this mixin needs the icon box folded in too.
+///
+/// @param {Length} $inline-offset - gutter between the buttons and the card edge.
+@mixin tabset-action-row($inline-offset: 1rem) {
+  position: absolute;
+  top: 0;
+  @include nb-ltr(right, $inline-offset);
+  @include nb-rtl(left, $inline-offset);
+
+  // Reproduce `.tab-link`'s box: the tab label's line box, plus the tab link's
+  // own vertical padding. `content-box` is required because the global reset
+  // makes everything `border-box`, which would fold the padding back into the
+  // height. Result: this row is exactly as tall as the strip, and its centre
+  // line is the strip's centre line — no offset tuned by hand.
+  box-sizing: content-box;
+  padding: nb-theme(tabset-tab-padding);
+  padding-inline: 0;
+  height: nb-theme(tabset-tab-text-line-height);
+
+  // Centre on that line. The buttons are taller than a tab label, so they
+  // overhang the line box symmetrically, which is what keeps them centred on
+  // the strip instead of hanging below it.
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  // The shared `.gauzy-button-container` is `width: 100%`, and
+  // `ngx-gauzy-button-action` measures its slide-in transition against that, so
+  // the width stays — but a full-width absolutely positioned overlay sitting on
+  // the tab strip swallows clicks on the tab labels underneath it. Let events
+  // through the empty part of the row and re-enable them on the buttons.
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+
+  // `ngx-gauzy-button-action` pads itself for a standalone row; inside the strip
+  // the row height already provides the rhythm, so its padding only pushed the
+  // buttons off-centre.
+  ::ng-deep .actions-container {
+    padding: 0;
+
+    // The shared `button { margin: 5px }` from `gauzy/_gauzy-table` made the
+    // button pill taller than the strip it sits in. Drop the block margin only
+    // — the inline one still separates adjacent action buttons.
+    button {
+      margin-block: 0;
+    }
+  }
+}
+
+/// Makes an `nb-tabset` lay its strip and its body out as one flex column, so
+/// the tab body takes whatever height the strip leaves.
+///
+/// Nebular already ships `nb-tab { flex: 1 }` for this; only the active tab is
+/// `display: block`, so exactly one body is ever a flex item.
+///
+/// `$height` MUST be definite. A percentage only works where every ancestor up
+/// to `nb-layout-column` has a definite height; `nb-layout .layout` is
+/// `min-height: 100vh` with an auto height, so a page whose card is not pinned
+/// grows with its content — the tab body then stretches past the viewport and
+/// the inner `.table-scroll-container` never scrolls. Such pages must pass a
+/// viewport-anchored height instead (see the callers).
+///
+/// @param {Length} $height - definite height for the tabset itself.
+@mixin tabset-fills-height($height: 100%) {
+  display: flex;
+  flex-direction: column;
+  height: $height;
+
+  nb-tab.content-active {
+    flex: 1 1 auto;
+    height: auto;
+    // Flex items default to `min-height: auto`, i.e. they refuse to shrink below
+    // their content — the inner `.table-scroll-container` would then overflow
+    // the card instead of scrolling.
+    min-height: 0;
+  }
+}
