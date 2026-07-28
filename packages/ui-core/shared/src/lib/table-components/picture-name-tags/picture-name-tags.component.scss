@@ -5,4 +5,8 @@
 // tag block stacked under it. Its gap follows the shared table-density tokens.
 .badges-block {
   margin-top: var(--gauzy-table-chip-gap, 0.1875rem);
+  // The chips are inline-blocks, so a chip row is a line box and inherits the
+  // cell's 20px line-height as a minimum. Zeroing it lets the row measure
+  // exactly the chip; the chips set their own `line-height` via `.color`.
+  line-height: 0;
 }

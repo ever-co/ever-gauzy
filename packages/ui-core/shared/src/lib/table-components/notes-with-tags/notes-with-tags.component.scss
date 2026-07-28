@@ -19,6 +19,17 @@
   // display: flex;
   // width: 100px;
   flex-wrap: wrap;
+  // The chips are inline-blocks, so each chip row is a line box and inherits
+  // the cell's 20px line-height as a minimum — 4px per row that nothing can
+  // see. Zeroing it here lets a chip row measure exactly the chip. Safe because
+  // this container only ever holds `nb-badge` chips, each of which sets its own
+  // `line-height` via `.color` above.
+  line-height: 0;
+  // The template tags this element with Bootstrap's `.mt-2` utility, which is
+  // `!important`, so this is one of the two places in the density pass where
+  // `!important` is unavoidable. The chips carry their own `margin-top`, so the
+  // extra 8px here was a second gap on top of the one that shows.
+  margin-top: 0 !important;
 }
 
 .tags-right {
