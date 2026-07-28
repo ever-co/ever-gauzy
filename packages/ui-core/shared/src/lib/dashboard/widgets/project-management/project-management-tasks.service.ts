@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, Subject, throwError } from 'rxjs';
-import { catchError, map, shareReplay, startWith, switchMap } from 'rxjs/operators';
+import { catchError, map, shareReplay, startWith, switchMap, takeUntil } from 'rxjs/operators';
 import { IPagination, ITask } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { IDashboardWidgetContext, STATISTICS_CACHE_TTL_MS } from '@gauzy/ui-core/core';
@@ -12,15 +12,19 @@ import { buildProjectManagementSnapshot, projectManagementScopeKey, scopedId } f
  * How many tasks one snapshot samples.
  *
  * The legacy panel pages through the whole task list with an infinite scroll; a
- * canvas card has no room for that, so the widgets read one generous page. It
- * doubles as the sample the Most Viewed Projects ranking is computed over, which
- * is why it is a shared CONSTANT rather than a per-widget setting: two widgets
- * asking for different page sizes would hash to different cache keys and defeat
- * the request sharing this service exists for.
+ * canvas card has no room for that, so the widgets read one page. It is a shared
+ * CONSTANT rather than a per-widget setting because two widgets asking for
+ * different page sizes would hash to different cache keys and defeat the request
+ * sharing this service exists for.
  *
- * Capped at 100 by `PaginationQueryDTO.take` on the API side.
+ * Set to 100 — the hard ceiling `PaginationQueryDTO.take` (`@Max(100)`) enforces
+ * on the API side, so this is as large a sample as the endpoints can return in
+ * one call. That matters beyond the row count: the Most Viewed Projects ranking
+ * is derived from this same page, so the page size IS the ranking's sample size
+ * (see `sortProjectsByPopularity`). Ranking beyond it would need a server-side
+ * "tasks per project" aggregate, which no endpoint exposes today.
  */
-export const PROJECT_MANAGEMENT_TASKS_PAGE_SIZE = 50;
+export const PROJECT_MANAGEMENT_TASKS_PAGE_SIZE = 100;
 
 /** Relations the legacy Project Management panel loads with its tasks. */
 const TASK_RELATIONS: string[] = ['project', 'tags'];
@@ -38,6 +42,15 @@ const INVALIDATE_COALESCE_MS = 250;
 interface ICacheEntry {
 	readonly stream$: Observable<IProjectManagementSnapshot>;
 	readonly expiresAt: number;
+	/**
+	 * Aborts the entry's HTTP call when the entry is dropped.
+	 *
+	 * See {@link ProjectManagementTasksService._drop}: because the shared stream is
+	 * built with `refCount: false`, unsubscribing every widget does NOT tear the
+	 * request down, so an evicted entry would otherwise keep a request in flight
+	 * that nothing can ever read.
+	 */
+	readonly released$: Subject<void>;
 }
 
 /** An endpoint plus the query string to call it with. */
@@ -168,12 +181,13 @@ export class ProjectManagementTasksService {
 		this._lastInvalidatedKey = scope;
 		this._lastInvalidatedAt = now;
 
-		if (context) {
-			this._cache.delete(scope);
-		} else {
-			this._cache.clear();
-		}
+		const dropped = context ? this._drop(scope) : this._dropAll();
+
+		// Notify BEFORE releasing: `_invalidated$` makes every live `switchMap`
+		// unsubscribe from the evicted entry and resolve a fresh one, so by the time
+		// the old entry is aborted no widget is listening to it any more.
 		this._invalidated$.next();
+		this._release(dropped);
 	}
 
 	/**
@@ -183,7 +197,7 @@ export class ProjectManagementTasksService {
 	 * previous organization's tasks would be wrong.
 	 */
 	public clear(): void {
-		this._cache.clear();
+		this._release(this._dropAll());
 		this._lastInvalidatedKey = null;
 		this._lastInvalidatedAt = 0;
 	}
@@ -214,11 +228,17 @@ export class ProjectManagementTasksService {
 
 		const { endPoint, params } = buildProjectManagementTasksRequest(context);
 		const request$: Observable<IPagination<ITask>> = this._http.get<IPagination<ITask>>(endPoint, { params });
+		const released$ = new Subject<void>();
 
 		// Holder so the error handler can identify "its own" entry without a
 		// use-before-assignment dance on the entry const itself.
 		const own: { entry?: ICacheEntry } = {};
 		const stream$: Observable<IProjectManagementSnapshot> = request$.pipe(
+			// FIRST in the chain, so it unsubscribes from `HttpClient` itself and the
+			// XHR is actually aborted. Once the response has arrived `request$` has
+			// completed and `takeUntil` has already dropped its notifier, so releasing
+			// a settled entry is a no-op and can never truncate a replayed value.
+			takeUntil(released$),
 			map((response: IPagination<ITask>) =>
 				buildProjectManagementSnapshot(response?.items ?? [], response?.total ?? 0)
 			),
@@ -233,13 +253,67 @@ export class ProjectManagementTasksService {
 			})
 		);
 
-		own.entry = { stream$, expiresAt: now + STATISTICS_CACHE_TTL_MS };
+		own.entry = { stream$, expiresAt: now + STATISTICS_CACHE_TTL_MS, released$ };
 		this._cache.set(key, own.entry);
 
 		return stream$;
 	}
 
-	/** Drops expired entries so long sessions do not accumulate dead scopes. */
+	/**
+	 * Removes one scope from the cache.
+	 *
+	 * @param key - The scope key to evict.
+	 * @returns The evicted entry, if there was one, for {@link _release}.
+	 */
+	private _drop(key: string): ICacheEntry[] {
+		const entry = this._cache.get(key);
+		if (!entry) {
+			return [];
+		}
+
+		this._cache.delete(key);
+		return [entry];
+	}
+
+	/**
+	 * Empties the cache.
+	 *
+	 * @returns Every evicted entry, for {@link _release}.
+	 */
+	private _dropAll(): ICacheEntry[] {
+		const entries = Array.from(this._cache.values());
+		this._cache.clear();
+		return entries;
+	}
+
+	/**
+	 * Aborts the requests of entries that are no longer reachable.
+	 *
+	 * Without this, a refresh issued while a fetch is still in flight would leave
+	 * TWO requests running for the same scope: the evicted entry holds its source
+	 * subscription open (`refCount: false`) even after every widget has switched
+	 * away, so nothing would ever tear it down, and its response would be parsed
+	 * and thrown away.
+	 *
+	 * @param entries - The entries {@link _drop} / {@link _dropAll} removed.
+	 */
+	private _release(entries: ICacheEntry[]): void {
+		for (const entry of entries) {
+			entry.released$.next();
+			entry.released$.complete();
+		}
+	}
+
+	/**
+	 * Drops expired entries so long sessions do not accumulate dead scopes.
+	 *
+	 * Deliberately does NOT {@link _release} what it drops. Expiry only means the
+	 * entry is too stale to be handed to the NEXT subscriber; widgets that are
+	 * already subscribed keep theirs. Aborting here would cut off a request that
+	 * merely outlived the TTL — its widget would complete without a value and sit
+	 * in the loading state forever. Only an explicit invalidate/clear, where every
+	 * subscriber is told to re-resolve, may abort.
+	 */
 	private _prune(now: number): void {
 		for (const [key, entry] of Array.from(this._cache.entries())) {
 			if (entry.expiresAt <= now) {

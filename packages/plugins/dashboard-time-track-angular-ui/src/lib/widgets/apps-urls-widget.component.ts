@@ -6,7 +6,7 @@ import * as moment from 'moment';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { IActivitiesStatistics } from '@gauzy/contracts';
-import { IDashboardWidgetContext, withDurationPercentage } from '@gauzy/ui-core/core';
+import { IDashboardWidgetContext, normalizeDurationPercentage } from '@gauzy/ui-core/core';
 import { ActivityItemModule } from '@gauzy/ui-core/shared';
 import { BaseTimeTrackListWidgetComponent } from './base-time-track-list-widget.component';
 import { TimeTrackWidgetStateComponent } from './time-track-widget-state.component';
@@ -35,17 +35,19 @@ export class AppsUrlsWidgetComponent extends BaseTimeTrackListWidgetComponent<IA
 	/**
 	 * Reads the app / URL activity buckets for the current scope.
 	 *
-	 * The endpoint returns raw durations, so the relative share every row renders
-	 * is derived with the shared {@link withDurationPercentage} helper — the same
-	 * denominator (the total of the returned page) the legacy dashboard used.
+	 * The share each row renders is the one the API computed against the whole
+	 * reporting period, not one re-derived from the five rows it returned — see
+	 * {@link normalizeDurationPercentage} for why the legacy dashboard's local
+	 * re-computation inflates every row. The helper only makes that server value
+	 * renderable (finite, clamped).
 	 *
 	 * @param context - The dashboard context to query for.
-	 * @returns The activity rows with `durationPercentage` populated.
+	 * @returns The activity rows with a renderable `durationPercentage`.
 	 */
 	protected override fetch(context: IDashboardWidgetContext): Observable<IActivitiesStatistics[]> {
 		return this.statisticsCache
 			.getActivities(context)
-			.pipe(map((activities: IActivitiesStatistics[]) => withDurationPercentage(activities)));
+			.pipe(map((activities: IActivitiesStatistics[]) => normalizeDurationPercentage(activities)));
 	}
 
 	/**

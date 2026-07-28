@@ -20,7 +20,7 @@ export interface IProjectManagementSnapshot {
 	 * Total number of tasks matching the scope, as reported by the server.
 	 *
 	 * Only one page is fetched (see `PROJECT_MANAGEMENT_TASKS_PAGE_SIZE`), so
-	 * this is what lets a widget say "showing 50 of 340" instead of implying the
+	 * this is what lets a widget say "showing 100 of 340" instead of implying the
 	 * page is everything.
 	 */
 	readonly total: number;

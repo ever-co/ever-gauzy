@@ -39,10 +39,22 @@ export function projectManagementScopeKey(context: IDashboardWidgetContext | nul
  * The single id the tasks endpoints accept out of a context scope list.
  *
  * `/tasks/employee` and `/tasks/pagination` both take ONE employee and ONE
- * project — they have no "in" form. The ambient dashboard context never carries
- * more than one of each (the page selectors are single-select), but a placement
- * pinned to several would; narrowing to the first is the only thing the API can
- * express, and it is at least deterministic.
+ * project — they have no "in" form, and this is a server constraint rather than a
+ * client shortcut:
+ *
+ * - `TaskService.getEmployeeTasks()` binds the employee as a single equality
+ *   (`"task_employee"."employeeId" = :employeeId`), so an array would be bound as
+ *   one parameter and blow up rather than widen the filter.
+ * - `/tasks/pagination` hands `where` straight to TypeORM's `findAndCount`
+ *   (`CrudService.paginate`), which has no array-to-`IN` coercion — only an
+ *   explicit `In([...])` built server-side would work.
+ *
+ * The ambient dashboard context never carries more than one of each anyway
+ * (`DashboardContextService` builds `employeeIds`/`projectIds` from the
+ * single-select page selectors), and the Project Management widgets declare no
+ * `configSchema`, so no placement can be pinned to several either. Narrowing to
+ * the first is the only thing the API can express, and it is at least
+ * deterministic.
  *
  * @param ids - The scope list from the context.
  * @returns The first id, or `null` when the scope is empty.
@@ -59,10 +71,20 @@ export function scopedId(ids: ID[] | undefined): ID | null {
  * descending. Rewritten as a pure function so it can be unit tested and so the
  * ranking is computed ONCE per fetch instead of once per widget.
  *
+ * KNOWN LIMITATION — this is a ranking over a SAMPLE, not over the whole task
+ * list. It sees exactly the one page `ProjectManagementTasksService` fetched, so
+ * it ranks at most `PROJECT_MANAGEMENT_TASKS_PAGE_SIZE` (100) tasks, and that
+ * page is ordered by `dueDate` ascending — a scope with more matching tasks is
+ * therefore ranked on its earliest-due slice, not on a random or complete one.
+ * Ranking the true totals would need a server-side "tasks per project" aggregate
+ * and no endpoint exposes one; the legacy panel has the same limitation (it
+ * re-ranks over whatever its infinite scroll has loaded so far), so this is not a
+ * regression, and 100 is the largest page the API's `@Max(100)` allows.
+ *
  * Tasks without a project are ignored rather than collapsed into a single
  * "unknown" bucket — the legacy panel links each row to a real project.
  *
- * @param tasks - The fetched page of tasks.
+ * @param tasks - The fetched page of tasks (at most one page, see above).
  * @returns Projects ordered by descending task count; ties keep first-seen order.
  */
 export function sortProjectsByPopularity(tasks: ITask[]): IOrganizationProject[] {

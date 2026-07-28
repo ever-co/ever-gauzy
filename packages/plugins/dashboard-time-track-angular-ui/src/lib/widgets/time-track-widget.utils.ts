@@ -228,8 +228,8 @@ export function toWeekHourBars(weekHours: Array<{ duration: number; day: number 
 
 	for (const entry of weekHours ?? []) {
 		// `Number(...)` for BOTH the bucket and the total: the API may hand back a
-		// duration as a string, and mixing coercions is what makes the shares miss
-		// 100% (the same trap `withDurationPercentage` documents).
+		// duration as a string, and mixing `parseInt` (truncating) with implicit
+		// numeric coercion is what makes the shares miss 100%.
 		const duration = Number(entry?.duration) || 0;
 		byDay.set(entry?.day, (byDay.get(entry?.day) ?? 0) + duration);
 		total += duration;

@@ -26,7 +26,7 @@ export interface ITeamDashboardMemberTask {
  *
  * The legacy page produced the same bucket implicitly (grouping on an
  * `undefined` `taskId` yields the string `"undefined"`); naming it means the
- * template can recognise it instead of testing for a missing title.
+ * template can recognize it instead of testing for a missing title.
  */
 export const NO_TASK_ID = '__no_task__';
 

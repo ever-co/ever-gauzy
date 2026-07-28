@@ -74,7 +74,10 @@
 	}
 }
 
-::ng-deep nb-progress-bar.size-tiny .progress-container {
+// Scoped under `:host`: a bare `::ng-deep` is GLOBAL once any component using
+// this stylesheet is on screen (it compiles with no `_nghost`/`_ngcontent`
+// attribute at all), which would shrink every tiny progress bar in the app.
+:host ::ng-deep nb-progress-bar.size-tiny .progress-container {
 	height: 10px;
 }
 

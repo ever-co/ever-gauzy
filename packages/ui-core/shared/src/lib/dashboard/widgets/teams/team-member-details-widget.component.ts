@@ -40,7 +40,20 @@ import { toPercentage } from './teams-widget.utils';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TeamMemberDetailsWidgetComponent extends BaseTeamsWidgetComponent {
-	/** Every member row across the teams in scope, working members first. */
+	/**
+	 * Every member row across the teams in scope, GROUPED BY TEAM.
+	 *
+	 * The grouping is the point, not an accident of `flatMap`: the legacy page
+	 * rendered one team at a time (`TeamComponent.members` concatenates the
+	 * selected team's `membersWorkingToday` with its `membersNotWorkingToday`), so
+	 * rendering several teams at once has to keep each team's block contiguous —
+	 * the rows carry a team name column exactly when there is more than one.
+	 * `TeamsDashboardStatisticsService` already emits `team.members` as
+	 * working-then-idle, which reproduces the legacy order INSIDE each block.
+	 *
+	 * Sorting the flattened list by working-state instead would interleave teams
+	 * and make the team column jump, which no view of this data ever did.
+	 */
 	protected readonly members = computed<ITeamDashboardMember[]>(() =>
 		(this.snapshot()?.teams ?? []).flatMap((team) => team.members)
 	);
