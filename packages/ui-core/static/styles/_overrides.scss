@@ -207,13 +207,43 @@ body {
   // construction and the viewport arithmetic can no longer push anything off
   // screen.
   //
-  // Note the deliberate absence of `min-height: 0` on the page: keeping the
-  // automatic minimum size means a genuinely long page (a form with no internal
-  // scroller) still grows the layout and scrolls the window as before — only
-  // content that FITS is allowed to shrink into the frame.
+  // Making the column a flex context was necessary but not sufficient: a flex
+  // item's AUTOMATIC minimum size is its content, so every level from `.content`
+  // down still refused to shrink and the card's intrinsic height (its header
+  // plus its body's `100vh` calc) went on driving the whole layout. Measured on
+  // /pages/accounting/expenses at 1600x900: the card came out 776px against the
+  // 755px the column had, `.layout` grew to 920px inside a 900px scroll box, and
+  // the footer sat 20px below the fold.
+  //
+  // What made that newly visible is the breadcrumb trail: it lives in the card
+  // header now, so it adds ~22px to the very height being propagated. Hiding the
+  // trail takes the overflow to exactly 0 on every affected route, which is what
+  // identified this chain in the first place.
+  //
+  // So the layout is bounded to the viewport and the automatic minimums are
+  // released all the way down. This is the same treatment the dashboard already
+  // gets below, and it matches what every page here was already trying to
+  // express: the `calc(100vh - …)` heights scattered across the page styles only
+  // make sense if a page is meant to FIT the viewport and scroll its table
+  // internally. Card bodies keep whatever `overflow` their own page chose, so
+  // this decides the frame, not what happens inside it.
+  nb-layout .layout {
+    max-height: 100vh;
+
+    .layout-container {
+      min-height: 0;
+    }
+  }
+
+  nb-layout .layout .layout-container .content,
+  nb-layout .layout .layout-container .content .columns {
+    min-height: 0;
+  }
+
   nb-layout .layout .layout-container .content .columns nb-layout-column {
     display: flex;
     flex-direction: column;
+    min-height: 0;
 
     // The outlet is an anchor for the routed view, never a box of its own.
     > router-outlet {
@@ -222,6 +252,15 @@ body {
 
     > router-outlet + * {
       flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    nb-card {
+      min-height: 0;
+
+      > nb-card-body {
+        min-height: 0;
+      }
     }
   }
 
