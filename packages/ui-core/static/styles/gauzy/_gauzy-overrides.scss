@@ -188,11 +188,16 @@ $default-box-shadow: $control-hairline;
     top: unset !important;
   }
 
+  // Every form label in the app. `text-label-font-size` (0.75rem) is the density
+  // preset's own name for exactly this tier, and was being ignored in favour of
+  // a hard-coded 11px — one step off the scale, and in px, so it did not respond
+  // to the root font size. The line box is held at its previous 13px (now in
+  // rem) so no form grows.
   ::ng-deep label,
   ::ng-deep .label {
-    font-size: 11px;
+    font-size: nb-theme(text-label-font-size);
     font-weight: 600;
-    line-height: 13px;
+    line-height: 0.8125rem;
     letter-spacing: -0.01em;
     color: var(--gauzy-text-color-2);
   }
@@ -271,12 +276,14 @@ $default-box-shadow: $control-hairline;
     border: unset;
   }
 
+  // Same tier as a form label, so the same token — the box is a fixed 24px
+  // square, so nothing here can move.
   nb-stepper .header .step .label-index {
     width: 24px;
     height: 24px;
-    font-size: 11px;
+    font-size: nb-theme(text-label-font-size);
     font-weight: 600;
-    line-height: 13px;
+    line-height: 0.8125rem;
     letter-spacing: -0.01em;
     text-align: left;
     margin: 0 !important;
@@ -416,10 +423,13 @@ $default-box-shadow: $control-hairline;
     div.fc-header-toolbar {
       .fc-toolbar-chunk {
         h2.fc-toolbar-title {
-          /* Override title typography*/
-          font-size: 18px;
+          // The calendar month/week title. 18px was its own size, off the
+          // heading scale in both directions; `text-heading-6-font-size` (1rem)
+          // is the scale step this belongs to. Line box held at its previous
+          // 30px so the toolbar keeps its height.
+          font-size: nb-theme(text-heading-6-font-size);
           font-weight: 600;
-          line-height: 30px;
+          line-height: 1.875rem;
           letter-spacing: 0em;
           text-align: left;
         }
@@ -456,8 +466,10 @@ $default-box-shadow: $control-hairline;
             padding: 8px 16px;
             font-style: normal;
             font-weight: 600;
-            font-size: 12px;
-            line-height: 11px;
+            // Same 12px as before, resolved from the caption step of the scale
+            // instead of retyped in px.
+            font-size: nb-theme(text-caption-font-size);
+            line-height: 0.6875rem;
             border-radius: nb-theme(button-rectangle-border-radius);
             text-transform: capitalize;
             margin: 0 4px;
@@ -473,7 +485,7 @@ $default-box-shadow: $control-hairline;
         .fc-next-button,
         .fc-prev-button {
           border-radius: nb-theme(button-rectangle-border-radius);
-          font-size: 12px;
+          font-size: nb-theme(text-caption-font-size);
           padding: 0;
           background-color: nb-theme(background-primary-color-1);
           border-color: nb-theme(background-primary-color-1);
@@ -495,8 +507,8 @@ $default-box-shadow: $control-hairline;
           padding: 8px 24px;
           font-style: normal;
           font-weight: 600;
-          font-size: 12px;
-          line-height: 11px;
+          font-size: nb-theme(text-caption-font-size);
+          line-height: 0.6875rem;
           border-radius: nb-theme(button-rectangle-border-radius);
           text-transform: capitalize;
         }
@@ -650,17 +662,22 @@ $default-box-shadow: $control-hairline;
   }
 }
 
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+// These four rules used to hard-code `font-size: 16px`, which SILENTLY beat the
+// `tabset-tab-text-font-size` / `route-tabset-tab-text-font-size` tokens the
+// density preset sets to 0.875rem — the tokens resolved correctly and were then
+// overwritten by a later rule with no error anywhere. The two tab bars are
+// split into their own rules (they were one selector) so each can resolve its
+// OWN token; a shared selector could only ever honour one of them.
+//
+// `line-height` is deliberately pinned to the value it already computed (1rem =
+// the old 16px) rather than raised to Nebular's `tabset-tab-text-line-height`:
+// that would add 8px to every tab bar in the app, and this pass is allowed to
+// change type sizes, not the boxes around them.
 @mixin nb-tabset-overrides() {
-  nb-tabset .tabset .tab.active a.tab-link,
-  nb-route-tabset .route-tabset .route-tab.active a.tab-link {
+  nb-tabset .tabset .tab.active a.tab-link {
+    @include tab-link-typography(nb-theme(tabset-tab-text-font-size), 600);
     border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-    display: flex;
-    align-items: center;
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 16px;
-    letter-spacing: 0em;
-    text-align: center;
     color: var(--text-primary-color);
 
     nb-icon {
@@ -670,30 +687,54 @@ $default-box-shadow: $control-hairline;
     }
   }
 
-  nb-tabset .tabset .tab a.tab-link,
-  nb-route-tabset .route-tabset .route-tab a.tab-link {
-    display: flex;
-    align-items: center;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 16px;
-    letter-spacing: 0em;
-    text-align: center;
-    color: var(--gauzy-text-color-2);
+  nb-route-tabset .route-tabset .route-tab.active a.tab-link {
+    @include tab-link-typography(nb-theme(route-tabset-tab-text-font-size), 600);
+    border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
+    color: var(--text-primary-color);
 
     nb-icon {
       svg {
-        fill: var(--gauzy-text-color-2);
+        fill: var(--text-primary-color);
       }
     }
+  }
 
-    &:hover {
-      color: var(--text-primary-color);
+  nb-tabset .tabset .tab a.tab-link {
+    @include tab-link-typography(nb-theme(tabset-tab-text-font-size), 400);
+    @include tab-link-resting-colour();
+  }
 
-      nb-icon {
-        svg {
-          fill: var(--text-primary-color);
-        }
+  nb-route-tabset .route-tabset .route-tab a.tab-link {
+    @include tab-link-typography(nb-theme(route-tabset-tab-text-font-size), 400);
+    @include tab-link-resting-colour();
+  }
+}
+
+@mixin tab-link-typography($font-size, $font-weight) {
+  display: flex;
+  align-items: center;
+  font-size: $font-size;
+  font-weight: $font-weight;
+  line-height: 1rem;
+  letter-spacing: 0em;
+  text-align: center;
+}
+
+@mixin tab-link-resting-colour() {
+  color: var(--gauzy-text-color-2);
+
+  nb-icon {
+    svg {
+      fill: var(--gauzy-text-color-2);
+    }
+  }
+
+  &:hover {
+    color: var(--text-primary-color);
+
+    nb-icon {
+      svg {
+        fill: var(--text-primary-color);
       }
     }
   }

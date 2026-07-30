@@ -456,8 +456,6 @@ $nb-themes: nb-register-theme(
     footer-divider-style: none,
     sidebar-shadow: none,
     tabset-tab-underline-width: 0,
-    tabset-tab-text-font-size: 1rem,
-    route-tabset-tab-text-font-size: 1rem,
     tabset-tab-text-font-weight: 400,
     route-tabset-tab-text-font-weight: 400,
     color-success-default: rgba(37, 184, 105, 1),
@@ -470,7 +468,15 @@ $nb-themes: nb-register-theme(
     toggle-basic-background-color: rgba(126, 126, 143, 1),
     background-basic-color-1: gauzy-card-1,
     gauzy-primary-background: rgba(248, 246, 254, 1),
-    input-basic-placeholder-text-color: rgba(126, 126, 143, 0.5),
+    // Secondary text. The inherited `color-basic-600` (#8f9bb3, blue-grey)
+    // measures 2.8:1 on white — under the 3:1 floor for large/secondary text,
+    // and this token paints placeholders, `.action.secondary`, overlay captions
+    // and menu icons. Zinc-500 is neutral and measures 4.8:1 on the page and
+    // 4.6:1 on the card.
+    text-hint-color: rgba(113, 113, 122, 1),
+    // 1.8:1 before — a placeholder that was effectively invisible. 3.3:1 now,
+    // still clearly weaker than a real value (`color-basic-800`, 14.0:1).
+    input-basic-placeholder-text-color: rgba(113, 113, 122, 0.8),
     input-basic-background-color: gauzy-card-1,
     select-outline-basic-background-color: gauzy-card-1,
     input-border-width: 0,
@@ -575,8 +581,6 @@ $nb-themes: nb-register-theme(
     footer-background-color: rgba(9, 9, 11, 1),
     header-background-color: rgba(9, 9, 11, 1),
     tabset-tab-underline-width: 0,
-    tabset-tab-text-font-size: 1rem,
-    route-tabset-tab-text-font-size: 1rem,
     // KEEP this alias: Nebular's eva mapping follows `background-basic-color-1`
     // into card / sidebar / popover / context-menu / option-list / smart-table /
     // calendar / chat backgrounds, so this is the single token that makes every
@@ -592,7 +596,9 @@ $nb-themes: nb-register-theme(
     // what happened to be stacked behind it.
     background-basic-color-3: rgba(9, 9, 11, 1),
     gauzy-primary-background: rgba(31, 31, 35, 1),
-    input-basic-placeholder-text-color: rgba(126, 126, 143, 0.5),
+    // 2.1:1 before, on the panel — the least legible text in the app. 3.4:1 now,
+    // and still far weaker than a real value (17.9:1).
+    input-basic-placeholder-text-color: rgba(161, 161, 170, 0.6),
     select-outline-basic-background-color: gauzy-card-1,
     input-border-width: 0,
     select-outline-border-width: 0,
@@ -636,6 +642,25 @@ $nb-themes: nb-register-theme(
     gauzy-border-table: rgba(255, 255, 255, 0.07),
     gauzy-border-default-color: rgba(255, 255, 255, 0.08),
     gauzy-scrollbar: rgba(255, 255, 255, 0.14),
+    // ── Text ramp ─────────────────────────────────────────────────────────
+    // Inherited from Nebular `dark`: `text-basic-color` = #ffffff and
+    // `text-hint-color` = color-basic-600 = #8f9bb3 — a BLUE-grey, and the
+    // muted/secondary colour for most of the app (placeholders, option-group
+    // captions, overlay menu icons, `.action.secondary`, table header labels).
+    // That blue cast on a strictly neutral near-black is a large part of why the
+    // UI read grey-blue rather than neutral. Pure white is also more contrast
+    // than a body face needs here: it haloes at 14px on #121214.
+    //
+    // Contrast against the panel rgb(18, 18, 20):
+    //   #fafafa body      17.9:1   (was #ffffff, 18.9:1)
+    //   #a1a1aa secondary  7.3:1   (was rgba(255,255,255,0.7) ~= 9.5:1)
+    // and against the canvas rgb(9, 9, 11): 19.0:1 and 7.8:1. Both clear the
+    // 4.5:1 body / 3:1 secondary floors with room to spare — the point of the
+    // change is to DEMOTE secondary text, which was competing with body copy.
+    text-basic-color: rgba(250, 250, 250, 1),
+    text-hint-color: rgba(161, 161, 170, 1),
+    text-disabled-color: rgba(161, 161, 170, 0.45),
+    gauzy-text-color-1: rgba(250, 250, 250, 1),
     // ── Border ramp ───────────────────────────────────────────────────────
     // Inherited wholesale from Nebular `dark`: #222b45 / #192038 / #151a30 /
     // #101426 — hue ~225 degrees, i.e. a navy line drawn on a strictly neutral
@@ -659,8 +684,12 @@ $nb-themes: nb-register-theme(
     // `gauzy-siderbar-background-5`; these two now agree.
     tooltip-background-color: rgba(24, 24, 27, 1),
     tooltip-text-color: rgba(250, 250, 250, 1),
-    // More legible sidebar/menu labels than the inherited 50% white
-    gauzy-text-color-2: rgba(255, 255, 255, 0.7)
+    // The secondary face, same value as `text-hint-color` above so the two
+    // muted ramps in this codebase stop disagreeing: this token paints the
+    // sidebar/menu labels, inactive tab labels and table header labels, while
+    // `text-hint-color` paints placeholders and overlay captions — they are the
+    // same tier of information and were two different colours.
+    gauzy-text-color-2: rgba(161, 161, 170, 1)
   ), $gauzy-density),
   gauzy-dark,
   dark

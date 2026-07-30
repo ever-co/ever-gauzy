@@ -115,11 +115,16 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     overflow-y: auto;
   }
 
+  // The dashboard/recap stat number (`<div class="h1">` — a display figure, not
+  // a heading element). 36px/44px was the largest type in the app and sat two
+  // steps above anything the scale defines, in a UI whose body copy is 14px and
+  // whose top heading step is 1.5rem. On the scale it is a heading-4, which is
+  // also where a shadcn stat tile puts it.
   .h1 {
     color: var(--gauzy-text-color-1);
-    font-size: 36px;
+    font-size: nb-theme(text-heading-4-font-size);
     font-weight: 400;
-    line-height: 44px;
+    line-height: 2rem;
     letter-spacing: 0em;
   }
 
@@ -987,9 +992,11 @@ angular2-smart-table {
   text-align: right;
   z-index: 1041;
   position: fixed;
-  font-size: 13px;
+  // 13px, resolved from the scale's small-subtitle step rather than retyped in
+  // px; the line box is held at its previous 16px so the bubble keeps its size.
+  font-size: nb-theme(text-subtitle-2-font-size);
   font-weight: 500;
-  line-height: 16px;
+  line-height: 1rem;
   letter-spacing: 0em;
 
   color: nb-theme(gauzy-text-color-2);
