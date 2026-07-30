@@ -68,7 +68,7 @@
   }
 
   ::ng-deep nb-accordion nb-accordion-item {
-    // `:2` and `:49` are already neutralised from `_overrides.scss`; this one
+    // `:2` and `:49` are already neutralized from `_overrides.scss`; this one
     // was not, so it kept a hard-coded light-blue fill in every theme.
     background-color: var(--background-basic-color-2);
   }

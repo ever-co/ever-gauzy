@@ -725,7 +725,7 @@ body {
   // is scoped to the three cell renderers that emit ONLY a formatted date or
   // date-time — never to `td` itself, because name, note, address and
   // description columns must keep wrapping. The table keeps `table-layout:
-  // auto`, so a nowrapped date simply raises that column's min-content width
+  // auto`, so a date held on one line simply raises that column's min-content width
   // and the library's own `overflow-x: auto` wrapper absorbs the rest; nothing
   // is truncated.
   angular2-smart-table table tr td ngx-date-view,
