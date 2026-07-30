@@ -124,7 +124,7 @@
 .childout {
   margin-left: 3px;
   min-width: 240px;
-  background-color: #fafafa;
+  background-color: var(--gauzy-card-1);
 }
 
 :host ::ng-deep {

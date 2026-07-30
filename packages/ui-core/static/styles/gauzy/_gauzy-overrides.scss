@@ -423,10 +423,10 @@ $default-box-shadow: var(--gauzy-shadow);
           .fc-timeGridDay-button,
           .fc-timeGridWeek-button,
           .fc-dayGridMonth-button {
-            border-color: rgba(126, 126, 143, 0.5);
+            border-color: var(--gauzy-border-default-color);
             border-width: 2px;
             background-color: transparent;
-            color: rgba(126, 126, 143, 1);
+            color: var(--text-hint-color);
             padding: 8px 16px;
             font-style: normal;
             font-weight: 600;
@@ -462,10 +462,10 @@ $default-box-shadow: var(--gauzy-shadow);
         }
 
         .fc-today-button {
-          border-color: rgba(126, 126, 143, 0.5);
+          border-color: var(--gauzy-border-default-color);
           border-width: 2px;
           background-color: transparent;
-          color: rgba(126, 126, 143, 1);
+          color: var(--text-hint-color);
           padding: 8px 24px;
           font-style: normal;
           font-weight: 600;
@@ -510,7 +510,9 @@ $default-box-shadow: var(--gauzy-shadow);
         th.fc-col-header-cell {
           border: none;
           border-radius: nb-theme(border-radius);
-          background-color: rgba($color: white, $alpha: 0.75);
+          // Was rgba(white, 0.75) — a near-white block on every column header,
+          // in every theme.
+          background-color: var(--gauzy-sidebar-background-3);
           padding: 11px 15px 11px 10px;
         }
 
@@ -522,13 +524,15 @@ $default-box-shadow: var(--gauzy-shadow);
           padding: 0;
         }
 
+        // Both were rgba(white, 0.25): every time lane and every day column
+        // rendered as a light-grey block regardless of theme.
         td.fc-timegrid-slot-lane {
-          background-color: rgba($color: white, $alpha: 0.25);
+          background-color: var(--gauzy-sidebar-background-4);
           border-radius: nb-theme(border-radius);
         }
 
         td[role='gridcell'].fc-timegrid-col {
-          background-color: rgba($color: white, $alpha: 0.25);
+          background-color: var(--gauzy-sidebar-background-4);
           border-radius: nb-theme(border-radius);
         }
       }
@@ -577,7 +581,7 @@ $default-box-shadow: var(--gauzy-shadow);
   }
 
   .fc-event {
-    background-color: rgba(126, 126, 143, 0.1);
+    background-color: var(--gauzy-card-3);
     border-radius: nb-theme(border-radius);
 
     &.fc-v-event {
@@ -609,7 +613,9 @@ $default-box-shadow: var(--gauzy-shadow);
   .fc .fc-timegrid-axis-frame,
   .fc .fc-daygrid-day-frame,
   .fc fc-timegrid-col-bg > * {
-    background-color: rgba($color: white, $alpha: 0.5);
+    // Was rgba(white, 0.5) — the day cells themselves, i.e. the largest area of
+    // the calendar, painted 50 % white in every theme.
+    background-color: var(--gauzy-card-2);
     border-radius: nb-theme(border-radius);
   }
 

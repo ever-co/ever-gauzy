@@ -8,7 +8,7 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
     ),
   inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
 [nbButton].gen.appearance-outline.status-basic {
-  background-color: #ffffff;
+  background-color: var(--gauzy-card-2);
   border-color: transparent;
   box-shadow: $shadow;
   border-width: 2px;

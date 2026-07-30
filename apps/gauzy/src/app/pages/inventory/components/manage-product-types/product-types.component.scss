@@ -4,7 +4,7 @@
   box-shadow: var(--gauzy-shadow);
 
   &[nbButton].appearance-filled.status-basic {
-    background-color: #ffffff;
+    background-color: var(--gauzy-card-2);
   }
 
   &.info {
@@ -12,7 +12,7 @@
   }
 
   &.secondary {
-    color: #7e7e8f;
+    color: var(--text-hint-color);
   }
 
   &.success {
@@ -41,7 +41,7 @@
 
     .select-button {
       box-shadow: var(--gauzy-shadow);
-      background: rgba(245, 245, 245);
+      background: var(--gauzy-card-2);
     }
   }
 }

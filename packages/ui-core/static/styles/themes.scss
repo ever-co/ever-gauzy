@@ -518,18 +518,34 @@ $nb-themes: nb-register-theme(
     footer-shadow: none,
     footer-divider-style: none,
     sidebar-shadow: none,
-    layout-background-color: gauzy-card-1,
-    footer-background-color: gauzy-card-1,
-    header-background-color: gauzy-card-1,
+    // ── Dark canvas ───────────────────────────────────────────────────────
+    // The page band (layout + header + footer) is the DARKEST surface, and it
+    // is deliberately NOT `gauzy-card-1` any more. That one alias used to paint
+    // eleven surfaces at once — page == header == footer == card == table row ==
+    // dropdown == input == rgb(32, 32, 35) — with `card-border-style: none` on
+    // top, so the whole UI collapsed onto a single flat grey. Panels now lift
+    // off this near-black canvas instead.
+    layout-background-color: rgba(9, 9, 11, 1),
+    footer-background-color: rgba(9, 9, 11, 1),
+    header-background-color: rgba(9, 9, 11, 1),
     tabset-tab-underline-width: 0,
     tabset-tab-text-font-size: 1rem,
     route-tabset-tab-text-font-size: 1rem,
+    // KEEP this alias: Nebular's eva mapping follows `background-basic-color-1`
+    // into card / sidebar / popover / context-menu / option-list / smart-table /
+    // calendar / chat backgrounds, so this is the single token that makes every
+    // panel the panel colour at once.
     background-basic-color-1: gauzy-card-1,
     input-basic-background-color: gauzy-card-1,
-    background-basic-color-2: rgba(32, 32, 35, 1),
-    smart-table-bg-active: rgba(126, 126, 143, 0.05),
-    background-basic-color-3: gauzy-card-3,
-    gauzy-primary-background: rgb(86, 82, 99),
+    // One step ABOVE the panel — zebra rows, muted blocks, scrollbar track.
+    // Was byte-identical to `background-basic-color-1`, i.e. a dead ramp step.
+    background-basic-color-2: rgba(24, 24, 27, 1),
+    smart-table-bg-active: rgba(255, 255, 255, 0.05),
+    // Recessed surface. Was aliased to `gauzy-card-3`, i.e. a translucent
+    // overlay sitting in an opaque slot, which resolved differently depending on
+    // what happened to be stacked behind it.
+    background-basic-color-3: rgba(9, 9, 11, 1),
+    gauzy-primary-background: rgba(31, 31, 35, 1),
     input-basic-placeholder-text-color: rgba(126, 126, 143, 0.5),
     select-outline-basic-background-color: gauzy-card-1,
     input-border-width: 0,
@@ -540,10 +556,40 @@ $nb-themes: nb-register-theme(
     color-danger-default: #ff0000,
     color-warning-default: rgba(255, 171, 45, 1),
     gauzy-background-transparent: rgba(110, 73, 232, 0.5),
-    gauzy-card-1: rgba(32, 32, 35, 1),
-    // Neutral (zinc-like) sidebar — no blue/purple tint, shadcn-like
-    gauzy-sidebar-background-1: #141416,
-    gauzy-sidebar-background-2: rgba(30, 30, 34, 1),
+    // Panel / card surface — one visible step above the near-black canvas.
+    gauzy-card-1: rgba(18, 18, 20, 1),
+    // Tints layered ON TOP of a panel. Inherited from the `dark` map these were
+    // DARKENING overlays — rgba(16, 16, 20, 0.3) / rgba(5, 5, 5, 0.5) /
+    // rgba(5, 5, 5, 0.25) — and a darkening overlay simply disappears on a
+    // near-black canvas. Flipped to LIFTING (white at a low alpha) so they read
+    // on the canvas and on every panel alike.
+    gauzy-card-2: rgba(255, 255, 255, 0.02),
+    gauzy-card-3: rgba(255, 255, 255, 0.04),
+    gauzy-card-4: rgba(255, 255, 255, 0.06),
+    // Opaque, on-hue near-blacks: the inherited rgb(7, 9, 1) (green-black) and
+    // rgb(52, 52, 62) (blue-purple) both fought the neutral ramp.
+    gauzy-card-5: rgba(24, 24, 27, 1),
+    gauzy-card-6: rgba(31, 31, 35, 1),
+    // Neutral (zinc-like) sidebar — no blue/purple tint, shadcn-like. Both rails
+    // sit BELOW the canvas so the content column is the brightest thing on
+    // screen; the menu rail used to be rgb(30, 30, 34), i.e. brighter than the
+    // content it framed.
+    gauzy-sidebar-background-1: rgba(10, 10, 11, 1),
+    gauzy-sidebar-background-2: rgba(12, 12, 14, 1),
+    // Interactive tints: menu-row hover, smart-table filter fill, stepper
+    // connector, ckeditor chrome. The inherited rgba(126, 126, 143, 0.1 / 0.05)
+    // carried a blue cast on a strictly neutral ramp.
+    gauzy-sidebar-background-3: rgba(255, 255, 255, 0.06),
+    gauzy-sidebar-background-4: rgba(255, 255, 255, 0.03),
+    // (the token-name typo is upstream — not renamed here) custom tooltip body
+    gauzy-siderbar-background-5: rgba(24, 24, 27, 1),
+    // Hairlines. The inherited table border rgba(16, 16, 20, 0.5) DARKENS, which
+    // is invisible on a near-black canvas — the table would have got *worse*
+    // from the palette change alone. Both are white-at-low-alpha so one value
+    // works on the canvas and on every panel.
+    gauzy-border-table: rgba(255, 255, 255, 0.07),
+    gauzy-border-default-color: rgba(255, 255, 255, 0.08),
+    gauzy-scrollbar: rgba(255, 255, 255, 0.14),
     // More legible sidebar/menu labels than the inherited 50% white
     gauzy-text-color-2: rgba(255, 255, 255, 0.7)
   ), $gauzy-density),

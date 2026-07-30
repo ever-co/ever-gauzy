@@ -29,7 +29,11 @@ body {
   -ms-overflow-style: none;
   /* Dark theme overrides when body has nb-theme-gauzy-dark */
   &.nb-theme-gauzy-dark {
-    background: var(--card-background-color) !important;
+    // The canvas, NOT the panel colour: `card-background-color` follows
+    // `background-basic-color-1` -> `gauzy-card-1`, so the body/overscroll area
+    // would otherwise stay at the (lighter) panel colour while the layout above
+    // it is near-black.
+    background: var(--layout-background-color) !important;
     color: var(--card-text-color) !important;
     .spinner {
       background: var(--card-background-color) !important;

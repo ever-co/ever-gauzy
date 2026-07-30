@@ -6,7 +6,9 @@
   box-shadow: var(--gauzy-shadow);
   border: none;
   &[nbButton].appearance-filled.status-basic {
-    background-color: #ffffff;
+    // Was a hard-coded #ffffff: a pure-white pill on every data-table toolbar,
+    // in every theme.
+    background-color: var(--gauzy-card-2);
   }
   &.info {
     &[nbButton].appearance-filled.status-basic {
@@ -21,7 +23,7 @@
     }
   }
   &.secondary {
-    color: #7e7e8f;
+    color: var(--text-hint-color);
   }
   &.success {
     color: nb-theme(color-success-default);
@@ -45,7 +47,7 @@
     box-shadow: none;
     .select-button {
       box-shadow: var(--gauzy-shadow);
-      background: rgba(245, 245, 245);
+      background: var(--gauzy-card-2);
     }
   }
 }

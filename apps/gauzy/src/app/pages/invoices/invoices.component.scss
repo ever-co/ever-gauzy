@@ -260,7 +260,7 @@ textarea {
   box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
 
   &[nbButton].appearance-filled.status-basic {
-    background-color: #ffffff;
+    background-color: var(--gauzy-card-2);
   }
 
   &.info {
@@ -272,7 +272,7 @@ textarea {
   }
 
   &.secondary {
-    color: #7e7e8f;
+    color: var(--text-hint-color);
   }
 
   &.primary {
@@ -287,7 +287,7 @@ textarea {
 
     .select-button {
       box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
-      background: rgba(245, 245, 245);
+      background: var(--gauzy-card-2);
       height: 2rem;
       border-radius: nb-theme(button-rectangle-border-radius);
     }

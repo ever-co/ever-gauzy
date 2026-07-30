@@ -133,13 +133,15 @@
     height: 84px;
     border-radius: 4px;
     padding: 29px;
-    background-color: #f6f9fc;
+    // #f6f9fc / #333333 were a hard-coded light-blue tile with dark text on the
+    // landing route. They must move together or the tile becomes unreadable.
+    background-color: var(--gauzy-card-2);
     cursor: pointer;
     .info-text,
     .info-value {
       display: flex;
       font-size: 18px;
-      color: #333333;
+      color: var(--text-basic-color);
 
       .profit-positive-color {
         color: #66de0b;

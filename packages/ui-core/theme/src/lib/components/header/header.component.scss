@@ -7,14 +7,14 @@ $orange: #f56d58;
 @include nb-install-component() {
   width: 100%;
   .notification-header {
-    background-color: #1b005d;
+    background-color: var(--color-primary-600);
     text-align: center;
     font-weight: 300;
     margin: 0;
     padding: 3px;
     width: 100%;
     position: relative;
-    color: rgb(236, 236, 236);
+    color: var(--text-control-color);
     a {
       color: rgb(236, 236, 236);
     }
@@ -169,7 +169,9 @@ $orange: #f56d58;
   top: 4.75rem;
   width: 100%;
   height: calc(100vh - 4.75rem);
-  background: white;
+  // Was a hard-coded `white`: a full-viewport white sheet over the app whenever
+  // the header overflow panel opens (below the `lg` breakpoint), in every theme.
+  background: var(--background-basic-color-1);
   overflow: hidden;
   display: flex;
   flex-direction: column;

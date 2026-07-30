@@ -18,13 +18,15 @@
 }
 
 // === GAUZY DARK ===
+// Mirrors the `gauzy-dark` map in `static/styles/themes.scss`; if these drift,
+// the loading skeleton flashes the previous palette before the app paints.
 :host-context([data-skeleton-theme='gauzy-dark']) {
-  --background-basic-color-1: rgb(32, 32, 35);
-  --border-basic-color-2: #303030;
+  --background-basic-color-1: rgb(18, 18, 20);
+  --border-basic-color-2: rgba(255, 255, 255, 0.08);
   --border-radius: 0.625rem;
   --button-rectangle-border-radius: 2rem;
-  --gauzy-sidebar-background-2: rgb(38, 38, 46);
-  --gauzy-card-2: rgba(16, 16, 20, 0.3);
+  --gauzy-sidebar-background-2: rgb(12, 12, 14);
+  --gauzy-card-2: rgba(255, 255, 255, 0.02);
 }
 
 // === DEFAULT THEME ===
