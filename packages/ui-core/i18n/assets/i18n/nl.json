@@ -3633,6 +3633,31 @@
 		"SELECT_TEAM": "Selecteer Team",
 		"AI_CHAT": "AI-chat"
 	},
+	"AI_ASSISTANT": {
+		"TITLE": "AI-assistent",
+		"OPEN": "AI-assistent openen",
+		"CLOSE": "AI-assistent sluiten",
+		"HISTORY": "Geschiedenis",
+		"HISTORY_HINT": "Opgeslagen gesprekken bekijken",
+		"HISTORY_CLOSE": "Geschiedenis sluiten",
+		"HISTORY_EMPTY": "Nog geen opgeslagen gesprekken.",
+		"NEW_CHAT": "Nieuwe chat",
+		"NEW_CHAT_HINT": "Een nieuw gesprek starten",
+		"DELETE_CONVERSATION": "Gesprek verwijderen",
+		"LOADING": "Laden…",
+		"DOCK_LEFT": "Links vastzetten",
+		"DOCK_RIGHT": "Rechts vastzetten",
+		"MAXIMIZE": "Maximaliseren",
+		"RESTORE": "Breedte herstellen",
+		"COLLAPSE": "Inklappen",
+		"RESIZE": "Sleep om de breedte aan te passen",
+		"WELCOME_SUBTITLE": "Vraag me alles over je werkruimte, taken of projecten.",
+		"PLACEHOLDER": "Typ een bericht…",
+		"SEND": "Bericht verzenden",
+		"STOP": "Genereren stoppen",
+		"ERROR": "Er is iets misgegaan.",
+		"RETRY": "Opnieuw proberen"
+	},
 	"HEADER_TITLE": {
 		"FOR": "voor",
 		"FROM": "van"

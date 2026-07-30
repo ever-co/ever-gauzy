@@ -3629,6 +3629,31 @@
 		"SELECT_TEAM": "Team auswählen",
 		"AI_CHAT": "KI-Chat"
 	},
+	"AI_ASSISTANT": {
+		"TITLE": "KI-Assistent",
+		"OPEN": "KI-Assistent öffnen",
+		"CLOSE": "KI-Assistent schließen",
+		"HISTORY": "Verlauf",
+		"HISTORY_HINT": "Gespeicherte Unterhaltungen durchsuchen",
+		"HISTORY_CLOSE": "Verlauf schließen",
+		"HISTORY_EMPTY": "Noch keine gespeicherten Unterhaltungen.",
+		"NEW_CHAT": "Neuer Chat",
+		"NEW_CHAT_HINT": "Neue Unterhaltung starten",
+		"DELETE_CONVERSATION": "Unterhaltung löschen",
+		"LOADING": "Wird geladen…",
+		"DOCK_LEFT": "Links andocken",
+		"DOCK_RIGHT": "Rechts andocken",
+		"MAXIMIZE": "Maximieren",
+		"RESTORE": "Breite wiederherstellen",
+		"COLLAPSE": "Einklappen",
+		"RESIZE": "Zum Ändern der Breite ziehen",
+		"WELCOME_SUBTITLE": "Frag mich alles zu deinem Arbeitsbereich, deinen Aufgaben oder Projekten.",
+		"PLACEHOLDER": "Nachricht eingeben…",
+		"SEND": "Nachricht senden",
+		"STOP": "Generierung stoppen",
+		"ERROR": "Etwas ist schiefgelaufen.",
+		"RETRY": "Erneut versuchen"
+	},
 	"HEADER_TITLE": {
 		"FOR": "für",
 		"FROM": "aus"

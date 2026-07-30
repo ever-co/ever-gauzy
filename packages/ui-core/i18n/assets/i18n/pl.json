@@ -3632,6 +3632,31 @@
 		"SELECT_TEAM": "Wybierz zespół",
 		"AI_CHAT": "Czat AI"
 	},
+	"AI_ASSISTANT": {
+		"TITLE": "Asystent AI",
+		"OPEN": "Otwórz asystenta AI",
+		"CLOSE": "Zamknij asystenta AI",
+		"HISTORY": "Historia",
+		"HISTORY_HINT": "Przeglądaj zapisane rozmowy",
+		"HISTORY_CLOSE": "Zamknij historię",
+		"HISTORY_EMPTY": "Brak zapisanych rozmów.",
+		"NEW_CHAT": "Nowy czat",
+		"NEW_CHAT_HINT": "Rozpocznij nową rozmowę",
+		"DELETE_CONVERSATION": "Usuń rozmowę",
+		"LOADING": "Ładowanie…",
+		"DOCK_LEFT": "Zadokuj po lewej",
+		"DOCK_RIGHT": "Zadokuj po prawej",
+		"MAXIMIZE": "Maksymalizuj",
+		"RESTORE": "Przywróć szerokość",
+		"COLLAPSE": "Zwiń",
+		"RESIZE": "Przeciągnij, aby zmienić szerokość",
+		"WELCOME_SUBTITLE": "Zapytaj o cokolwiek dotyczącego Twojego obszaru roboczego, zadań lub projektów.",
+		"PLACEHOLDER": "Wpisz wiadomość…",
+		"SEND": "Wyślij wiadomość",
+		"STOP": "Zatrzymaj generowanie",
+		"ERROR": "Coś poszło nie tak.",
+		"RETRY": "Spróbuj ponownie"
+	},
 	"HEADER_TITLE": {
 		"FOR": "dla",
 		"FROM": "z"
