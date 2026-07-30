@@ -49,6 +49,10 @@ export {
 	MarkdownContent
 } from './lib/components';
 
+// i18n bridge — lets React components read the same ngx-translate bundles the
+// Angular side uses (chat chrome lives in the core `AI_ASSISTANT.*` namespace)
+export { useChatTranslate, passthroughChatTranslate, type ChatTranslate } from './lib/use-chat-translate';
+
 // Theme tokens
 export { chatTheme } from './lib/chat-theme';
 export { playgroundTheme } from './lib/playground-theme';

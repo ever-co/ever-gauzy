@@ -1,10 +1,13 @@
 import { type CSSProperties, type KeyboardEvent, useRef, useEffect, useState } from 'react';
 import { chatTheme } from '../chat-theme';
+import { type ChatTranslate, passthroughChatTranslate } from '../use-chat-translate';
 
 export interface ChatInputProps {
 	value: string;
 	/** True while a response is being generated (submit disabled, stop shown). */
 	isBusy: boolean;
+	/** `t(key, fallback)` from the panel — see `useChatTranslate`. */
+	translate?: ChatTranslate;
 	onChange: (value: string) => void;
 	onSubmit: () => void;
 	onStop: () => void;
@@ -23,7 +26,15 @@ export interface ChatInputProps {
  * Controlled component — `useChat` from @ai-sdk/react v4 (AI SDK 7)
  * does not manage input state, so the parent owns `value`.
  */
-export function ChatInput({ value, isBusy, onChange, onSubmit, onStop, onEscape }: ChatInputProps) {
+export function ChatInput({
+	value,
+	isBusy,
+	translate: t = passthroughChatTranslate,
+	onChange,
+	onSubmit,
+	onStop,
+	onEscape
+}: ChatInputProps) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const [isFocused, setIsFocused] = useState(false);
 
@@ -126,20 +137,32 @@ export function ChatInput({ value, isBusy, onChange, onSubmit, onStop, onEscape 
 					onKeyDown={handleKeyDown}
 					onFocus={() => setIsFocused(true)}
 					onBlur={() => setIsFocused(false)}
-					placeholder="Type a message…"
+					placeholder={t('AI_ASSISTANT.PLACEHOLDER', 'Type a message…')}
 					rows={1}
 					style={textareaStyle}
-					aria-label="Chat message input"
+					aria-label={t('AI_ASSISTANT.PLACEHOLDER', 'Type a message…')}
 				/>
 
 				{isBusy ? (
-					<button type="button" onClick={onStop} style={buttonStyle} title="Stop generating" aria-label="Stop">
+					<button
+						type="button"
+						onClick={onStop}
+						style={buttonStyle}
+						title={t('AI_ASSISTANT.STOP', 'Stop generating')}
+						aria-label={t('AI_ASSISTANT.STOP', 'Stop generating')}
+					>
 						<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
 							<rect x="6" y="6" width="12" height="12" rx="2" />
 						</svg>
 					</button>
 				) : (
-					<button type="submit" disabled={!value.trim()} style={buttonStyle} title="Send message" aria-label="Send">
+					<button
+						type="submit"
+						disabled={!value.trim()}
+						style={buttonStyle}
+						title={t('AI_ASSISTANT.SEND', 'Send message')}
+						aria-label={t('AI_ASSISTANT.SEND', 'Send message')}
+					>
 						<svg
 							width="14"
 							height="14"

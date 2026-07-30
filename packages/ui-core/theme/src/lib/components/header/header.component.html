@@ -97,19 +97,27 @@
         </nb-action>
       }
 
+      <!-- AI assistant entry point. An unlabelled speech bubble among five other
+           header icons read as "some other chat"; the name sits next to the icon
+           (hidden below `lg`, where the whole action cluster collapses) and the
+           open state is drawn as a filled pill so "is it on?" is answerable at a
+           glance. Behaviour is unchanged: one click still toggles the panel. -->
       @if (chatSidebarService.config() && chatSidebarService.available()) {
         <nb-action
-          icon="message-square-outline"
           class="toggle-layout ai-chat-toggle"
           [class.active]="chatSidebarService.expanded()"
-          [nbTooltip]="'HEADER.AI_CHAT' | translate"
+          [nbTooltip]="(chatSidebarService.expanded() ? 'AI_ASSISTANT.CLOSE' : 'AI_ASSISTANT.OPEN') | translate"
           tabindex="0"
           role="button"
-          [attr.aria-label]="'HEADER.AI_CHAT' | translate"
+          [attr.aria-pressed]="chatSidebarService.expanded()"
+          [attr.aria-label]="(chatSidebarService.expanded() ? 'AI_ASSISTANT.CLOSE' : 'AI_ASSISTANT.OPEN') | translate"
           (click)="chatSidebarService.toggle()"
           (keydown.enter)="chatSidebarService.toggle()"
           (keydown.space)="$event.preventDefault(); chatSidebarService.toggle()"
-        ></nb-action>
+        >
+          <nb-icon icon="message-square-outline"></nb-icon>
+          <span class="ai-chat-label">{{ 'HEADER.AI_CHAT' | translate }}</span>
+        </nb-action>
       }
 
       @for (action of navigationBuilderService.sidebarActions$ | async; track action) {

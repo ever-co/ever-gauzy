@@ -1,5 +1,11 @@
 import { type CSSProperties } from 'react';
 import { chatTheme } from '../chat-theme';
+import { type ChatTranslate, passthroughChatTranslate } from '../use-chat-translate';
+
+export interface ChatWelcomeProps {
+	/** `t(key, fallback)` from the panel — see `useChatTranslate`. */
+	translate?: ChatTranslate;
+}
 
 /**
  * ChatWelcome
@@ -8,7 +14,7 @@ import { chatTheme } from '../chat-theme';
  * Compact layout for the narrow sidebar — shows a sparkle icon,
  * a short greeting, and a brief hint.
  */
-export function ChatWelcome() {
+export function ChatWelcome({ translate: t = passthroughChatTranslate }: ChatWelcomeProps) {
 	const containerStyle: CSSProperties = {
 		flex: 1,
 		display: 'flex',
@@ -62,8 +68,10 @@ export function ChatWelcome() {
 				</svg>
 			</div>
 
-			<h3 style={titleStyle}>AI Assistant</h3>
-			<p style={subtitleStyle}>Ask anything about your workspace, tasks, or projects.</p>
+			<h3 style={titleStyle}>{t('AI_ASSISTANT.TITLE', 'AI Assistant')}</h3>
+			<p style={subtitleStyle}>
+				{t('AI_ASSISTANT.WELCOME_SUBTITLE', 'Ask anything about your workspace, tasks, or projects.')}
+			</p>
 		</div>
 	);
 }

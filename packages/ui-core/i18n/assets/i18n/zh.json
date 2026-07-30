@@ -3633,6 +3633,31 @@
 		"SELECT_TEAM": "选择团队",
 		"AI_CHAT": "AI 聊天"
 	},
+	"AI_ASSISTANT": {
+		"TITLE": "AI 助手",
+		"OPEN": "打开 AI 助手",
+		"CLOSE": "关闭 AI 助手",
+		"HISTORY": "历史记录",
+		"HISTORY_HINT": "浏览已保存的对话",
+		"HISTORY_CLOSE": "关闭历史记录",
+		"HISTORY_EMPTY": "暂无已保存的对话。",
+		"NEW_CHAT": "新对话",
+		"NEW_CHAT_HINT": "开始新的对话",
+		"DELETE_CONVERSATION": "删除对话",
+		"LOADING": "加载中…",
+		"DOCK_LEFT": "停靠到左侧",
+		"DOCK_RIGHT": "停靠到右侧",
+		"MAXIMIZE": "最大化",
+		"RESTORE": "恢复宽度",
+		"COLLAPSE": "收起",
+		"RESIZE": "拖动以调整宽度",
+		"WELCOME_SUBTITLE": "有关工作区、任务或项目的任何问题都可以问我。",
+		"PLACEHOLDER": "输入消息…",
+		"SEND": "发送消息",
+		"STOP": "停止生成",
+		"ERROR": "出了点问题。",
+		"RETRY": "重试"
+	},
 	"HEADER_TITLE": {
 		"FOR": "为了",
 		"FROM": "从"
