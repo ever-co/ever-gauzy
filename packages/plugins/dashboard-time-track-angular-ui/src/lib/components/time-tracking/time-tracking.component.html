@@ -2,19 +2,12 @@
 	<nb-card-header class="card-header">
 		<div class="row">
 			<div class="col-auto">
-				@if (selectedDateRange?.startDate && selectedDateRange?.endDate) {
-					<h4>
-						<ngx-header-title>
-							{{ headerTitle }}
-							{{ 'TIMESHEET.TIME_TRACKING' | translate }}
-						</ngx-header-title>
-					</h4>
-					<ngx-date-range-title
-						[start]="selectedDateRange?.startDate"
-						[end]="selectedDateRange?.endDate"
-						[format]="'dddd, LL'"
-					></ngx-date-range-title>
-				}
+				<h4>
+					<ngx-header-title>
+						{{ headerTitle }}
+						{{ 'TIMESHEET.TIME_TRACKING' | translate }}
+					</ngx-header-title>
+				</h4>
 			</div>
 			<div class="mb-4 ml-auto col-auto d-flex align-items-center">
 				<ga-timezone-filter
