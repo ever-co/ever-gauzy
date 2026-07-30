@@ -30,8 +30,11 @@
       }
 
       &:hover {
+        // No `--gauzy-shadow` here: the button already draws a 1px border, and
+        // on the dark canvas that token is a ring, so hovering added a second
+        // hairline just outside the first. The fill change plus the 1px lift
+        // are the hover state.
         background-color: var(--gauzy-card-1);
-        box-shadow: var(--gauzy-shadow);
         transform: translateY(-1px);
       }
 
@@ -79,7 +82,11 @@ a.disabled {
     display: flex;
     padding: 15px;
     margin: 0 1rem 1rem 0;
-    box-shadow: 0 1px 1px 0 rgb(0 0 0 / 15%);
+    // Was the literal `0 1px 1px 0 rgb(0 0 0 / 15%)` — a hand-copied duplicate
+    // of the light-theme `--gauzy-shadow`, so these tiles kept a black drop
+    // shadow (i.e. no visible edge at all) on the dark canvas. Reading the token
+    // keeps light identical and gives dark the shared hairline.
+    box-shadow: var(--gauzy-shadow);
     border-radius: 8px;
     position: relative;
     background-color: var(--gauzy-card-1);
@@ -209,6 +216,7 @@ nb-option {
   width: fit-content;
 
   button {
-    box-shadow: 0 1px 1px 0 rgb(0 0 0 / 15%);
+    // Same hand-copied light-theme literal as `.list-item` above.
+    box-shadow: var(--gauzy-shadow);
   }
 }

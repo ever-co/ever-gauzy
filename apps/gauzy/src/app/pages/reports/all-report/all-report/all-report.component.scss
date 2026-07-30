@@ -39,8 +39,12 @@
   flex-direction: column;
   justify-content: space-between;
   position: relative;
-  border: nb-theme(border-radius);
-  box-shadow: var(--gauzy-shadow);
+  // No edge of its own. This div is a pure wrapper around a flush
+  // `<nb-card class="border-0 m-0 card-nb">` (zero margin, zero border), and the
+  // card already draws the shared 1px `card-shadow` ring — so the two hairlines
+  // landed on top of each other, ~0px apart. `border: nb-theme(border-radius)`
+  // was also a typo for `border-radius` that resolved to `border: 0.5rem` with
+  // style `none`, i.e. a computed width of 0: it never painted anything.
   border-radius: nb-theme(border-radius);
   & .custom-button {
     height: 40px;

@@ -18,10 +18,20 @@
     justify-content: center;
     border: unset;
     &:hover {
-      box-shadow: 0px 36px 18px -24px rgba(0, 0, 0, 0.15);
+      // Keep the token edge and ADD the lift, rather than replacing one with
+      // the other: on the dark canvas that 15 %-black blur is invisible, so
+      // hovering used to make the card's only edge disappear.
+      box-shadow:
+        var(--gauzy-shadow),
+        0px 36px 18px -24px rgba(0, 0, 0, 0.15);
     }
+    // Declared AFTER `:hover` on purpose — equal specificity, so this wins in
+    // both states. The 2px danger border IS the edge here, and `--gauzy-shadow`
+    // resolves to a 1px ring on the dark canvas, which would hug the outside of
+    // it; the hover lift is dropped with it rather than reintroducing the pair.
     &.danger-bordered {
       border: 2px solid nb-theme(color-danger-500) !important;
+      box-shadow: none;
     }
   }
   .curser-pointer {

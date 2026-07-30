@@ -877,7 +877,7 @@ nb-card-body {
     }
 
     &:last-child {
-      border-right: 1px solidvar(--gauzy-border-table);
+      border-right: 1px solid var(--gauzy-border-table);
       border-radius: 0 var(--border-radius) var(--border-radius) 0;
     }
   }

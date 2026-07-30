@@ -67,7 +67,9 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				height: 64px;
 				border-radius: 4px;
 				object-fit: cover;
-				box-shadow: var(--gauzy-shadow) (0 0 0 / 15%);
+				/* the trailing '(0 0 0 / 15%)' left here by an old find-and-replace made
+				   the whole declaration invalid, so no shadow rendered at all */
+				box-shadow: var(--gauzy-shadow);
 			}
 
 			.no-image {

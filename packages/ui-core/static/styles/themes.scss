@@ -642,6 +642,32 @@ $nb-themes: nb-register-theme(
     gauzy-border-table: rgba(255, 255, 255, 0.07),
     gauzy-border-default-color: rgba(255, 255, 255, 0.08),
     gauzy-scrollbar: rgba(255, 255, 255, 0.14),
+    // ── Elevation → edge ──────────────────────────────────────────────────
+    // Inherited from Nebular `dark`: `0 1px 1px 0 rgb(0 0 0 / 35%)`. A BLACK
+    // drop shadow under a panel that sits on a near-black canvas is invisible,
+    // and ~50 component stylesheets lean on this token as their only source of
+    // separation (cards, avatars, toolbar pills, floating action strips) — so
+    // on this theme alone they were rendering with no edge at all.
+    //
+    // A 1px RING instead, and deliberately the SAME line the cards, overlays,
+    // controls and table actions already draw (`card-shadow` above,
+    // `$card-hairline` in `_overrides.scss`, `$control-hairline` in
+    // `gauzy/_gauzy-overrides.scss`), so the app has one hairline weight rather
+    // than two. Three properties make this a safe drop-in for every consumer:
+    //   * it costs no layout box, so nothing reflows and nothing resizes;
+    //   * the `inset` keyword is legal LAST in a shadow, so the ~30 stylesheets
+    //     that write `box-shadow: var(--gauzy-shadow) inset` still parse — they
+    //     get the same hairline drawn on the inside of the box;
+    //   * no consumer depended on the offset (the inherited value is a 1px-down,
+    //     1px-blur hairline, i.e. already an edge rather than an elevation), and
+    //     the handful that really float compose it with a second, explicit blur
+    //     layer that is untouched.
+    //
+    // DARK-ONLY on purpose: on the light themes the 15 %-black drop shadow is
+    // legible against a white page and reads as intended, and swapping it for a
+    // ring there would both flatten those surfaces and put a second line beside
+    // the ~45 blocks that pair this token with a real `border`.
+    gauzy-shadow: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18)),
     // ── Text ramp ─────────────────────────────────────────────────────────
     // Inherited from Nebular `dark`: `text-basic-color` = #ffffff and
     // `text-hint-color` = color-basic-600 = #8f9bb3 — a BLUE-grey, and the
