@@ -4,7 +4,28 @@
 @use 'sass:list';
 @use 'sass:map';
 
-$default-box-shadow-inset: var(--gauzy-shadow) inset;
+// ── Control edge ───────────────────────────────────────────────────────────
+// Every control in the app (input, textarea, nb-select trigger, ng-select
+// trigger, ckeditor chrome) draws `border: none` and relies on a shadow to say
+// "this is a field". That shadow used to be `--gauzy-shadow`, i.e.
+// `0 1px 1px 0 rgb(0 0 0 / 35%)` — a black drop shadow, which is invisible on a
+// near-black canvas and reads as a smudge on a light one. A 1px INSET ring is a
+// hairline border that costs no layout box (so no field changes size, and no
+// control gains a second edge next to a `border` it may already have), and it
+// resolves the same `--gauzy-overlay-border-color` the overlay surfaces use, so
+// a field and the dropdown it opens are drawn with one line weight.
+//
+// The literal fallback is the alpha-neutral grey used everywhere else in this
+// codebase: it darkens a light surface and lightens a dark one, so one value
+// works in all 8 themes (and covers material-*, which never registered the
+// gauzy token set).
+$control-hairline: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
+// Kept under both historical names so the ~25 component stylesheets that pass
+// one of them into `nb-select-overrides()` / `ng-select-overrides()` keep
+// compiling — and now agree with each other. `--gauzy-shadow` itself is
+// untouched; it still means "elevation" for the handful of surfaces that float.
+$default-box-shadow-inset: $control-hairline;
 
 // ── Shared control geometry ────────────────────────────────────────────────
 // Derived from the density tokens rather than pinned in pixels. The density pass
@@ -37,8 +58,13 @@ $control-padding-x: 1rem;
 // itself, so both combobox flavours land on the same size instead of 36 vs 42.
 $default-height: calc(#{nb-theme(select-medium-text-line-height)} + #{$control-padding-y} * 2);
 $default-radius: nb-theme(border-radius);
-$default-button-radius: calc(nb-theme(button-rectangle-border-radius) / 1.625);
-$default-box-shadow: var(--gauzy-shadow);
+// Was `calc(button-rectangle-border-radius / 1.625)` — an arithmetic dodge that
+// only existed to walk the old 2rem stadium back to something usable (~19.7px).
+// With the button radius now on the shared scale that divisor would take a
+// compact select down to ~3.7px, so this resolves the scale's control step
+// directly instead of deriving it.
+$default-button-radius: nb-theme(gauzy-radius-sm);
+$default-box-shadow: $control-hairline;
 
 // NOTE ON `!important` IN THIS MIXIN: `@ng-select/ng-select/themes/default.theme.css`
 // is listed AFTER `styles.scss` in the app's `styles` array (see the `styles`

@@ -55,7 +55,8 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     padding: 0.0625rem 0.25rem;
-    border-radius: 0.375rem;
+    // The shared control/row radius, resolved rather than retyped.
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
     // The trail renders inside the card header, which carries the card's heading
     // typography — reset the weight and tracking it would otherwise inherit so
     // the trail reads as small muted metadata rather than as a second title.
@@ -71,9 +72,13 @@
       background-color 0.15s ease-in-out;
 
     &:hover {
-      // Low-contrast tint only — no border, no shadow, no pill.
+      // Low-contrast tint only — no border, no shadow, no pill. The shared
+      // `gauzy-hover-tint`, not `background-basic-color-2`: that is an opaque
+      // SURFACE colour, so a hovered crumb painted a solid block whose exact
+      // shade depended on which surface the trail happened to be sitting on,
+      // while every other hover in the app is a translucent tint.
       color: nb-theme(text-basic-color);
-      background-color: nb-theme(background-basic-color-2);
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
       text-decoration: none;
     }
 

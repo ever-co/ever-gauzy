@@ -3,7 +3,10 @@
 // (`$gauzy-density` in `themes.scss`) so a status column costs a row exactly one
 // line box, the same as a plain text column. Literals are CSS-var fallbacks.
 div {
-  border-radius: 0.25rem;
+  // The shared control/row radius (0.375rem), so a status pill, a tag chip and a
+  // toolbar button are drawn on the same corner. 0.25rem is the scale's step
+  // BELOW this one and is reserved for the tiny boxes (checkbox).
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
   align-content: center;
   display: flex;
   justify-content: center;

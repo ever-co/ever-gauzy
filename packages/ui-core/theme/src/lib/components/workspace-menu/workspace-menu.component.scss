@@ -21,7 +21,9 @@ $overlay-shadow: #{'var(--gauzy-overlay-shadow, 0 4px 12px -2px rgba(0, 0, 0, 0.
     height: fit-content;
     max-height: 80vh;
     border: 1px solid #{$overlay-hairline};
-    border-radius: 8px;
+    // The surface radius, resolved rather than retyped, so this popup stays
+    // flush with the overlay panels and the cards around it.
+    border-radius: var(--border-radius, 8px);
     box-shadow: #{$overlay-shadow};
     background: nb-theme(background-basic-color-1);
     // Just enough inset that a hovered row's radius never touches the edge.

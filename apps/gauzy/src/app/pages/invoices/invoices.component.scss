@@ -256,8 +256,11 @@ textarea {
   resize: none;
 }
 
+// Same hairline ring as the shared `.action` block in `gauzy/_gauzy-table.scss`
+// — this file carries a near-verbatim copy of it (with the drop shadow spelled
+// out as a literal rather than read from `--gauzy-shadow`).
 .action {
-  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 
   &[nbButton].appearance-filled.status-basic {
     background-color: var(--gauzy-card-2);
@@ -286,7 +289,7 @@ textarea {
     box-shadow: none;
 
     .select-button {
-      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+      box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
       background: var(--gauzy-card-2);
       height: 2rem;
       border-radius: nb-theme(button-rectangle-border-radius);

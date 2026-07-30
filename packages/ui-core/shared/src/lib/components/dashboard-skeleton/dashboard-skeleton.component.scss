@@ -11,8 +11,8 @@
   // === GAUZY LIGHT (default) ===
   --background-basic-color-1: rgb(255, 255, 255);
   --border-basic-color-2: #f5f5f5;
-  --border-radius: 0.625rem;
-  --button-rectangle-border-radius: 2rem;
+  --border-radius: 0.5rem;
+  --button-rectangle-border-radius: 0.375rem;
   --gauzy-sidebar-background-2: rgba(251, 251, 251, 1);
   --gauzy-card-2: rgba(50, 50, 50, 0.03);
 }
@@ -23,8 +23,8 @@
 :host-context([data-skeleton-theme='gauzy-dark']) {
   --background-basic-color-1: rgb(18, 18, 20);
   --border-basic-color-2: rgba(255, 255, 255, 0.08);
-  --border-radius: 0.625rem;
-  --button-rectangle-border-radius: 2rem;
+  --border-radius: 0.5rem;
+  --button-rectangle-border-radius: 0.375rem;
   --gauzy-sidebar-background-2: rgb(12, 12, 14);
   --gauzy-card-2: rgba(255, 255, 255, 0.02);
 }

@@ -246,9 +246,14 @@ $orange: #f56d58;
 .employee-selector,
 .team-selector,
 .project-selector {
+  // The header selector pills. They are controls, so they resolve the shared
+  // control radius directly instead of borrowing the button token, and they
+  // carry the same 1px hairline ring as every other control — the old
+  // `--gauzy-shadow` is a black drop shadow, which on the near-black header band
+  // left these pills with no visible edge at all.
   ::ng-deep {
     .ng-select.ng-select-opened.ng-select-bottom > .ng-select-container {
-      border-radius: var(--button-rectangle-border-radius) !important;
+      border-radius: var(--gauzy-radius-sm) !important;
     }
     .ng-select.ng-select-single .ng-select-container {
       height: 2rem;
@@ -257,8 +262,8 @@ $orange: #f56d58;
       min-width: 4rem;
     }
     .ng-select .ng-select-container {
-      box-shadow: var(--gauzy-shadow);
-      border-radius: var(--button-rectangle-border-radius) !important;
+      box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+      border-radius: var(--gauzy-radius-sm) !important;
       background-color: var(--gauzy-card-1);
     }
   }
