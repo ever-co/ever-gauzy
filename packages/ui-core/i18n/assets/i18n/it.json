@@ -3633,6 +3633,31 @@
 		"SELECT_TEAM": "Seleziona squadra",
 		"AI_CHAT": "Chat IA"
 	},
+	"AI_ASSISTANT": {
+		"TITLE": "Assistente IA",
+		"OPEN": "Apri l'assistente IA",
+		"CLOSE": "Chiudi l'assistente IA",
+		"HISTORY": "Cronologia",
+		"HISTORY_HINT": "Sfoglia le conversazioni salvate",
+		"HISTORY_CLOSE": "Chiudi la cronologia",
+		"HISTORY_EMPTY": "Nessuna conversazione salvata.",
+		"NEW_CHAT": "Nuova chat",
+		"NEW_CHAT_HINT": "Avvia una nuova conversazione",
+		"DELETE_CONVERSATION": "Elimina conversazione",
+		"LOADING": "Caricamento…",
+		"DOCK_LEFT": "Ancora a sinistra",
+		"DOCK_RIGHT": "Ancora a destra",
+		"MAXIMIZE": "Ingrandisci",
+		"RESTORE": "Ripristina la larghezza",
+		"COLLAPSE": "Comprimi",
+		"RESIZE": "Trascina per ridimensionare",
+		"WELCOME_SUBTITLE": "Chiedimi qualsiasi cosa sul tuo spazio di lavoro, sulle attività o sui progetti.",
+		"PLACEHOLDER": "Scrivi un messaggio…",
+		"SEND": "Invia messaggio",
+		"STOP": "Interrompi la generazione",
+		"ERROR": "Si è verificato un errore.",
+		"RETRY": "Riprova"
+	},
 	"HEADER_TITLE": {
 		"FOR": "per",
 		"FROM": "da"

@@ -18,6 +18,7 @@ import { ChatSidebarService, Store } from '@gauzy/ui-core/core';
 import { environment } from '@gauzy/ui-config';
 import { executeClientTool, isClientTool } from '../chat-client-tools';
 import { useAngularSignal } from '../use-angular-signal';
+import { useChatTranslate } from '../use-chat-translate';
 import { ChatMessageList } from './ChatMessageList';
 import { ChatInput } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
@@ -50,6 +51,7 @@ export function AiChatPanel() {
 	const injector = useInjector();
 	const store = useMemo(() => injector.get(Store), [injector]);
 	const chatSidebar = useMemo(() => injector.get(ChatSidebarService), [injector]);
+	const t = useChatTranslate(injector);
 	const [input, setInput] = useState('');
 
 	// Conversation persistence: a client-generated id sent with every turn;
@@ -247,12 +249,24 @@ export function AiChatPanel() {
 		display: 'flex',
 		alignItems: 'center',
 		gap: 8,
-		padding: '8px 12px',
+		padding: '8px 10px 8px 12px',
 		borderBottom: `1px solid ${chatTheme.border}`,
 		flexShrink: 0,
 		color: chatTheme.textPrimary,
 		fontSize: chatTheme.fontSizeBase,
-		fontWeight: 600
+		fontWeight: 600,
+		// Drives the `@container` rule that drops the button words on a narrow
+		// panel — the labels are the point, but not at the cost of clipping.
+		containerType: 'inline-size'
+	};
+
+	// The title yields space before anything else: at 300px (the minimum panel
+	// width) the controls matter more than the full word "Assistant".
+	const headerTitleStyle: CSSProperties = {
+		minWidth: 0,
+		overflow: 'hidden',
+		textOverflow: 'ellipsis',
+		whiteSpace: 'nowrap'
 	};
 
 	const headerBtnStyle: CSSProperties = {
@@ -270,6 +284,20 @@ export function AiChatPanel() {
 		transition: `all ${chatTheme.transitionSpeed} ease`
 	};
 
+	// "New chat" and "History" are the two controls people go looking for, so
+	// they carry their name instead of hiding behind a glyph.
+	const headerBtnLabelledStyle: CSSProperties = {
+		...headerBtnStyle,
+		width: 'auto',
+		gap: 4,
+		padding: '0 7px',
+		fontFamily: 'inherit',
+		fontSize: '0.6875rem',
+		fontWeight: 600,
+		letterSpacing: '0.01em',
+		whiteSpace: 'nowrap'
+	};
+
 	const bodyStyle: CSSProperties = {
 		flex: 1,
 		display: 'flex',
@@ -283,12 +311,13 @@ export function AiChatPanel() {
 		top: 0,
 		bottom: 0,
 		[dockSide === 'start' ? 'right' : 'left']: 0,
-		width: 6,
+		width: 8,
 		cursor: 'col-resize',
 		zIndex: 6,
 		// A touch drag on the grip must resize, not scroll/zoom the page.
 		touchAction: 'none',
-		// Invisible until hovered — then a subtle accent strip.
+		// A faint grip is always drawn (see `.gz-ai-chat-resize::after`); the
+		// accent strip only lights up on hover.
 		background: 'transparent'
 	};
 
@@ -318,10 +347,50 @@ export function AiChatPanel() {
 					overflow-x: auto; font-size: 0.75rem;
 				}
 				.gz-ai-chat-markdown img, .gz-ai-chat-markdown video { max-width: 100%; height: auto; }
+				/* Panel header controls. Inline styles cannot express :hover, so these
+				   buttons gave no feedback at all and read as decoration. */
+				.gz-ai-chat-head-btn:hover {
+					background-color: color-mix(in srgb, currentColor 12%, transparent) !important;
+					color: inherit !important;
+				}
+				.gz-ai-chat-head-btn:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 1px;
+					color: inherit !important;
+				}
+
+				/* Under ~380px the words would clip: keep the icons, drop the labels.
+				   title + aria-label still name every control. */
+				@container (max-width: 380px) {
+					.gz-ai-chat-btn-label { display: none; }
+					.gz-ai-chat-head-btn.gz-labelled {
+						padding: 0 !important; width: 26px !important; gap: 0 !important;
+					}
+				}
+
+				/* Drag-to-resize edge. It was a fully transparent 6px strip that showed
+				   itself only once the cursor happened to land on it, so nobody found
+				   the resize: draw a faint permanent grip, and light it on hover. */
+				.gz-ai-chat-resize::after {
+					content: '';
+					position: absolute;
+					top: 50%;
+					left: 50%;
+					transform: translate(-50%, -50%);
+					width: 2px;
+					height: 28px;
+					border-radius: 2px;
+					background: color-mix(in srgb, currentColor 22%, transparent);
+					transition: height 0.15s ease, background-color 0.15s ease;
+					pointer-events: none;
+				}
 				.gz-ai-chat-resize:hover { background: rgba(51, 102, 255, 0.35) !important; }
+				.gz-ai-chat-resize:hover::after { height: 48px; background: rgba(255, 255, 255, 0.8); }
 			`}</style>
 
-			{/* Header: title + new chat + collapse */}
+			{/* Header: title + history + new chat + dock/maximize/collapse.
+			    History and New chat carry their names — they were unlabelled
+			    glyphs, which is why people asked whether history existed. */}
 			<div style={headerStyle}>
 				<svg
 					width="14"
@@ -332,13 +401,21 @@ export function AiChatPanel() {
 					strokeWidth="2"
 					strokeLinecap="round"
 					strokeLinejoin="round"
+					style={{ flexShrink: 0 }}
 				>
 					<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
 				</svg>
-				<span>AI Assistant</span>
+				<span style={headerTitleStyle}>{t('AI_ASSISTANT.TITLE', 'AI Assistant')}</span>
 
-				<span style={{ marginLeft: 'auto', display: 'flex', gap: 2 }}>
-					<button onClick={openHistory} style={headerBtnStyle} title="History" aria-label="Conversation history">
+				<span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 2 }}>
+					<button
+						type="button"
+						onClick={openHistory}
+						className="gz-ai-chat-head-btn gz-labelled"
+						style={headerBtnLabelledStyle}
+						title={t('AI_ASSISTANT.HISTORY_HINT', 'Browse saved conversations')}
+						aria-label={t('AI_ASSISTANT.HISTORY_HINT', 'Browse saved conversations')}
+					>
 						<svg
 							width="13"
 							height="13"
@@ -348,17 +425,21 @@ export function AiChatPanel() {
 							strokeWidth="2"
 							strokeLinecap="round"
 							strokeLinejoin="round"
+							style={{ flexShrink: 0 }}
 						>
 							<circle cx="12" cy="12" r="10" />
 							<polyline points="12 6 12 12 16 14" />
 						</svg>
+						<span className="gz-ai-chat-btn-label">{t('AI_ASSISTANT.HISTORY', 'History')}</span>
 					</button>
 					{hasMessages && (
 						<button
+							type="button"
 							onClick={handleNewChat}
-							style={headerBtnStyle}
-							title="New conversation"
-							aria-label="New conversation"
+							className="gz-ai-chat-head-btn gz-labelled"
+							style={headerBtnLabelledStyle}
+							title={t('AI_ASSISTANT.NEW_CHAT_HINT', 'Start a new conversation')}
+							aria-label={t('AI_ASSISTANT.NEW_CHAT_HINT', 'Start a new conversation')}
 						>
 							<svg
 								width="13"
@@ -369,17 +450,29 @@ export function AiChatPanel() {
 								strokeWidth="2"
 								strokeLinecap="round"
 								strokeLinejoin="round"
+								style={{ flexShrink: 0 }}
 							>
 								<path d="M12 20h9" />
 								<path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z" />
 							</svg>
+							<span className="gz-ai-chat-btn-label">{t('AI_ASSISTANT.NEW_CHAT', 'New chat')}</span>
 						</button>
 					)}
 					<button
+						type="button"
 						onClick={handleMoveSide}
+						className="gz-ai-chat-head-btn"
 						style={headerBtnStyle}
-						title={dockSide === 'start' ? 'Dock chat to the right side' : 'Dock chat to the left side'}
-						aria-label={dockSide === 'start' ? 'Dock chat to the right side' : 'Dock chat to the left side'}
+						title={
+							dockSide === 'start'
+								? t('AI_ASSISTANT.DOCK_RIGHT', 'Dock to the right')
+								: t('AI_ASSISTANT.DOCK_LEFT', 'Dock to the left')
+						}
+						aria-label={
+							dockSide === 'start'
+								? t('AI_ASSISTANT.DOCK_RIGHT', 'Dock to the right')
+								: t('AI_ASSISTANT.DOCK_LEFT', 'Dock to the left')
+						}
 					>
 						{/* Arrow pointing toward the side the chat will move to */}
 						{dockSide === 'start' ? (
@@ -415,10 +508,21 @@ export function AiChatPanel() {
 						)}
 					</button>
 					<button
+						type="button"
 						onClick={handleToggleMaximize}
+						className="gz-ai-chat-head-btn"
 						style={headerBtnStyle}
-						title={isMaximized ? 'Restore chat width' : 'Maximize chat (hide the page)'}
-						aria-label={isMaximized ? 'Restore chat width' : 'Maximize chat'}
+						title={
+							isMaximized
+								? t('AI_ASSISTANT.RESTORE', 'Restore width')
+								: t('AI_ASSISTANT.MAXIMIZE', 'Maximize')
+						}
+						aria-label={
+							isMaximized
+								? t('AI_ASSISTANT.RESTORE', 'Restore width')
+								: t('AI_ASSISTANT.MAXIMIZE', 'Maximize')
+						}
+						aria-pressed={isMaximized}
 					>
 						{isMaximized ? (
 							<svg
@@ -455,11 +559,15 @@ export function AiChatPanel() {
 						)}
 					</button>
 					<button
+						type="button"
 						onClick={handleCollapse}
+						className="gz-ai-chat-head-btn"
 						style={headerBtnStyle}
-						title="Collapse chat"
-						aria-label="Collapse chat"
+						title={t('AI_ASSISTANT.CLOSE', 'Close AI Assistant')}
+						aria-label={t('AI_ASSISTANT.CLOSE', 'Close AI Assistant')}
 					>
+						{/* The chevron points the way the panel actually leaves — it used
+						    to point left even when the chat was docked on the right. */}
 						<svg
 							width="14"
 							height="14"
@@ -470,7 +578,11 @@ export function AiChatPanel() {
 							strokeLinecap="round"
 							strokeLinejoin="round"
 						>
-							<polyline points="15 18 9 12 15 6" />
+							{dockSide === 'start' ? (
+								<polyline points="15 18 9 12 15 6" />
+							) : (
+								<polyline points="9 18 15 12 9 6" />
+							)}
 						</svg>
 					</button>
 				</span>
@@ -482,6 +594,7 @@ export function AiChatPanel() {
 					items={history}
 					loading={historyLoading}
 					activeId={activeConversationId}
+					translate={t}
 					onSelect={handleSelectConversation}
 					onDelete={handleDeleteConversation}
 					onClose={() => setShowHistory(false)}
@@ -493,7 +606,7 @@ export function AiChatPanel() {
 				{hasMessages ? (
 					<ChatMessageList messages={messages} status={status} onApprovalResponse={handleApprovalResponse} />
 				) : (
-					<ChatWelcome />
+					<ChatWelcome translate={t} />
 				)}
 
 				{/* Error bar */}
@@ -511,8 +624,9 @@ export function AiChatPanel() {
 						}}
 					>
 						<span>⚠</span>
-						<span>Something went wrong.</span>
+						<span>{t('AI_ASSISTANT.ERROR', 'Something went wrong.')}</span>
 						<button
+							type="button"
 							onClick={() => regenerate()}
 							style={{
 								background: 'none',
@@ -524,7 +638,7 @@ export function AiChatPanel() {
 								padding: 0
 							}}
 						>
-							Retry
+							{t('AI_ASSISTANT.RETRY', 'Retry')}
 						</button>
 					</div>
 				)}
@@ -533,6 +647,7 @@ export function AiChatPanel() {
 				<ChatInput
 					value={input}
 					isBusy={isBusy}
+					translate={t}
 					onChange={setInput}
 					onSubmit={handleSubmit}
 					onStop={() => void stop()}
@@ -548,7 +663,8 @@ export function AiChatPanel() {
 					onPointerDown={handleResizeStart}
 					role="separator"
 					aria-orientation="vertical"
-					aria-label="Resize chat panel"
+					title={t('AI_ASSISTANT.RESIZE', 'Drag to resize')}
+					aria-label={t('AI_ASSISTANT.RESIZE', 'Drag to resize')}
 				/>
 			)}
 		</div>

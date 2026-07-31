@@ -39,8 +39,12 @@
     }
   }
 
+  // Same spacer rule as `workspace-menu.component.scss`, and the same fix: it
+  // used to carry `--gauzy-shadow`, which on the dark canvas resolves to a full
+  // ring and would box an otherwise empty element. (This component's template
+  // no longer renders a `.item.footer` at all, so the rule is inert either way.)
   .item.footer {
-    box-shadow: var(--gauzy-shadow);
+    box-shadow: none;
     border-radius: 0 0 var(--border-radius) var(--border-radius);
     ::ng-deep{
       .item-body {

@@ -64,9 +64,11 @@ $overlay-item-active-bg: var(--gauzy-overlay-item-active-background, var(--color
 // text automatically — the fallback is already wired below.
 $overlay-item-active-color: var(--gauzy-overlay-item-active-text-color, var(--text-basic-color));
 
-// CONTAINER radius. Its own value, not `gauzy-radius-sm`: the panel is a card-like
-// surface, the rows inside it are not.
-$overlay-radius: 8px;
+// CONTAINER radius. Not `gauzy-radius-sm`: the panel is a card-like surface, the
+// rows inside it are not — so it resolves the SURFACE token instead of a retyped
+// literal, and an overlay stays flush with the cards behind it when that token
+// moves. (The fallback is the value this was pinned to before.)
+$overlay-radius: var(--border-radius, 8px);
 $overlay-padding: 4px;
 // ITEM radius — the shared flat-chrome row radius (0.375rem / 6px).
 $overlay-item-radius: var(--gauzy-radius-sm, 6px);

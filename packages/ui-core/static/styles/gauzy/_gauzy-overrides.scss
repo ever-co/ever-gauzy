@@ -4,7 +4,28 @@
 @use 'sass:list';
 @use 'sass:map';
 
-$default-box-shadow-inset: var(--gauzy-shadow) inset;
+// ── Control edge ───────────────────────────────────────────────────────────
+// Every control in the app (input, textarea, nb-select trigger, ng-select
+// trigger, ckeditor chrome) draws `border: none` and relies on a shadow to say
+// "this is a field". That shadow used to be `--gauzy-shadow`, i.e.
+// `0 1px 1px 0 rgb(0 0 0 / 35%)` — a black drop shadow, which is invisible on a
+// near-black canvas and reads as a smudge on a light one. A 1px INSET ring is a
+// hairline border that costs no layout box (so no field changes size, and no
+// control gains a second edge next to a `border` it may already have), and it
+// resolves the same `--gauzy-overlay-border-color` the overlay surfaces use, so
+// a field and the dropdown it opens are drawn with one line weight.
+//
+// The literal fallback is the alpha-neutral grey used everywhere else in this
+// codebase: it darkens a light surface and lightens a dark one, so one value
+// works in all 8 themes (and covers material-*, which never registered the
+// gauzy token set).
+$control-hairline: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
+// Kept under both historical names so the ~25 component stylesheets that pass
+// one of them into `nb-select-overrides()` / `ng-select-overrides()` keep
+// compiling — and now agree with each other. `--gauzy-shadow` itself is
+// untouched; it still means "elevation" for the handful of surfaces that float.
+$default-box-shadow-inset: $control-hairline;
 
 // ── Shared control geometry ────────────────────────────────────────────────
 // Derived from the density tokens rather than pinned in pixels. The density pass
@@ -37,8 +58,13 @@ $control-padding-x: 1rem;
 // itself, so both combobox flavours land on the same size instead of 36 vs 42.
 $default-height: calc(#{nb-theme(select-medium-text-line-height)} + #{$control-padding-y} * 2);
 $default-radius: nb-theme(border-radius);
-$default-button-radius: calc(nb-theme(button-rectangle-border-radius) / 1.625);
-$default-box-shadow: var(--gauzy-shadow);
+// Was `calc(button-rectangle-border-radius / 1.625)` — an arithmetic dodge that
+// only existed to walk the old 2rem stadium back to something usable (~19.7px).
+// With the button radius now on the shared scale that divisor would take a
+// compact select down to ~3.7px, so this resolves the scale's control step
+// directly instead of deriving it.
+$default-button-radius: nb-theme(gauzy-radius-sm);
+$default-box-shadow: $control-hairline;
 
 // NOTE ON `!important` IN THIS MIXIN: `@ng-select/ng-select/themes/default.theme.css`
 // is listed AFTER `styles.scss` in the app's `styles` array (see the `styles`
@@ -162,11 +188,16 @@ $default-box-shadow: var(--gauzy-shadow);
     top: unset !important;
   }
 
+  // Every form label in the app. `text-label-font-size` (0.75rem) is the density
+  // preset's own name for exactly this tier, and was being ignored in favour of
+  // a hard-coded 11px — one step off the scale, and in px, so it did not respond
+  // to the root font size. The line box is held at its previous 13px (now in
+  // rem) so no form grows.
   ::ng-deep label,
   ::ng-deep .label {
-    font-size: 11px;
+    font-size: nb-theme(text-label-font-size);
     font-weight: 600;
-    line-height: 13px;
+    line-height: 0.8125rem;
     letter-spacing: -0.01em;
     color: var(--gauzy-text-color-2);
   }
@@ -245,12 +276,14 @@ $default-box-shadow: var(--gauzy-shadow);
     border: unset;
   }
 
+  // Same tier as a form label, so the same token — the box is a fixed 24px
+  // square, so nothing here can move.
   nb-stepper .header .step .label-index {
     width: 24px;
     height: 24px;
-    font-size: 11px;
+    font-size: nb-theme(text-label-font-size);
     font-weight: 600;
-    line-height: 13px;
+    line-height: 0.8125rem;
     letter-spacing: -0.01em;
     text-align: left;
     margin: 0 !important;
@@ -390,10 +423,13 @@ $default-box-shadow: var(--gauzy-shadow);
     div.fc-header-toolbar {
       .fc-toolbar-chunk {
         h2.fc-toolbar-title {
-          /* Override title typography*/
-          font-size: 18px;
+          // The calendar month/week title. 18px was its own size, off the
+          // heading scale in both directions; `text-heading-6-font-size` (1rem)
+          // is the scale step this belongs to. Line box held at its previous
+          // 30px so the toolbar keeps its height.
+          font-size: nb-theme(text-heading-6-font-size);
           font-weight: 600;
-          line-height: 30px;
+          line-height: 1.875rem;
           letter-spacing: 0em;
           text-align: left;
         }
@@ -423,15 +459,17 @@ $default-box-shadow: var(--gauzy-shadow);
           .fc-timeGridDay-button,
           .fc-timeGridWeek-button,
           .fc-dayGridMonth-button {
-            border-color: rgba(126, 126, 143, 0.5);
+            border-color: var(--gauzy-border-default-color);
             border-width: 2px;
             background-color: transparent;
-            color: rgba(126, 126, 143, 1);
+            color: var(--text-hint-color);
             padding: 8px 16px;
             font-style: normal;
             font-weight: 600;
-            font-size: 12px;
-            line-height: 11px;
+            // Same 12px as before, resolved from the caption step of the scale
+            // instead of retyped in px.
+            font-size: nb-theme(text-caption-font-size);
+            line-height: 0.6875rem;
             border-radius: nb-theme(button-rectangle-border-radius);
             text-transform: capitalize;
             margin: 0 4px;
@@ -447,7 +485,7 @@ $default-box-shadow: var(--gauzy-shadow);
         .fc-next-button,
         .fc-prev-button {
           border-radius: nb-theme(button-rectangle-border-radius);
-          font-size: 12px;
+          font-size: nb-theme(text-caption-font-size);
           padding: 0;
           background-color: nb-theme(background-primary-color-1);
           border-color: nb-theme(background-primary-color-1);
@@ -462,15 +500,15 @@ $default-box-shadow: var(--gauzy-shadow);
         }
 
         .fc-today-button {
-          border-color: rgba(126, 126, 143, 0.5);
+          border-color: var(--gauzy-border-default-color);
           border-width: 2px;
           background-color: transparent;
-          color: rgba(126, 126, 143, 1);
+          color: var(--text-hint-color);
           padding: 8px 24px;
           font-style: normal;
           font-weight: 600;
-          font-size: 12px;
-          line-height: 11px;
+          font-size: nb-theme(text-caption-font-size);
+          line-height: 0.6875rem;
           border-radius: nb-theme(button-rectangle-border-radius);
           text-transform: capitalize;
         }
@@ -510,7 +548,9 @@ $default-box-shadow: var(--gauzy-shadow);
         th.fc-col-header-cell {
           border: none;
           border-radius: nb-theme(border-radius);
-          background-color: rgba($color: white, $alpha: 0.75);
+          // Was rgba(white, 0.75) — a near-white block on every column header,
+          // in every theme.
+          background-color: var(--gauzy-sidebar-background-3);
           padding: 11px 15px 11px 10px;
         }
 
@@ -522,13 +562,15 @@ $default-box-shadow: var(--gauzy-shadow);
           padding: 0;
         }
 
+        // Both were rgba(white, 0.25): every time lane and every day column
+        // rendered as a light-grey block regardless of theme.
         td.fc-timegrid-slot-lane {
-          background-color: rgba($color: white, $alpha: 0.25);
+          background-color: var(--gauzy-sidebar-background-4);
           border-radius: nb-theme(border-radius);
         }
 
         td[role='gridcell'].fc-timegrid-col {
-          background-color: rgba($color: white, $alpha: 0.25);
+          background-color: var(--gauzy-sidebar-background-4);
           border-radius: nb-theme(border-radius);
         }
       }
@@ -577,7 +619,7 @@ $default-box-shadow: var(--gauzy-shadow);
   }
 
   .fc-event {
-    background-color: rgba(126, 126, 143, 0.1);
+    background-color: var(--gauzy-card-3);
     border-radius: nb-theme(border-radius);
 
     &.fc-v-event {
@@ -609,7 +651,9 @@ $default-box-shadow: var(--gauzy-shadow);
   .fc .fc-timegrid-axis-frame,
   .fc .fc-daygrid-day-frame,
   .fc fc-timegrid-col-bg > * {
-    background-color: rgba($color: white, $alpha: 0.5);
+    // Was rgba(white, 0.5) — the day cells themselves, i.e. the largest area of
+    // the calendar, painted 50 % white in every theme.
+    background-color: var(--gauzy-card-2);
     border-radius: nb-theme(border-radius);
   }
 
@@ -618,17 +662,22 @@ $default-box-shadow: var(--gauzy-shadow);
   }
 }
 
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+// These four rules used to hard-code `font-size: 16px`, which SILENTLY beat the
+// `tabset-tab-text-font-size` / `route-tabset-tab-text-font-size` tokens the
+// density preset sets to 0.875rem — the tokens resolved correctly and were then
+// overwritten by a later rule with no error anywhere. The two tab bars are
+// split into their own rules (they were one selector) so each can resolve its
+// OWN token; a shared selector could only ever honour one of them.
+//
+// `line-height` is deliberately pinned to the value it already computed (1rem =
+// the old 16px) rather than raised to Nebular's `tabset-tab-text-line-height`:
+// that would add 8px to every tab bar in the app, and this pass is allowed to
+// change type sizes, not the boxes around them.
 @mixin nb-tabset-overrides() {
-  nb-tabset .tabset .tab.active a.tab-link,
-  nb-route-tabset .route-tabset .route-tab.active a.tab-link {
+  nb-tabset .tabset .tab.active a.tab-link {
+    @include tab-link-typography(nb-theme(tabset-tab-text-font-size), 600);
     border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-    display: flex;
-    align-items: center;
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 16px;
-    letter-spacing: 0em;
-    text-align: center;
     color: var(--text-primary-color);
 
     nb-icon {
@@ -638,31 +687,58 @@ $default-box-shadow: var(--gauzy-shadow);
     }
   }
 
-  nb-tabset .tabset .tab a.tab-link,
-  nb-route-tabset .route-tabset .route-tab a.tab-link {
-    display: flex;
-    align-items: center;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 16px;
-    letter-spacing: 0em;
-    text-align: center;
-    color: var(--gauzy-text-color-2);
+  nb-route-tabset .route-tabset .route-tab.active a.tab-link {
+    @include tab-link-typography(nb-theme(route-tabset-tab-text-font-size), 600);
+    border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
+    color: var(--text-primary-color);
 
     nb-icon {
       svg {
-        fill: var(--gauzy-text-color-2);
+        fill: var(--text-primary-color);
       }
     }
+  }
+
+  nb-tabset .tabset .tab a.tab-link {
+    @include tab-link-typography(nb-theme(tabset-tab-text-font-size), 400);
+    @include tab-link-colour(var(--gauzy-text-color-2));
 
     &:hover {
-      color: var(--text-primary-color);
+      @include tab-link-colour(var(--text-primary-color));
+    }
+  }
 
-      nb-icon {
-        svg {
-          fill: var(--text-primary-color);
-        }
-      }
+  nb-route-tabset .route-tabset .route-tab a.tab-link {
+    @include tab-link-typography(nb-theme(route-tabset-tab-text-font-size), 400);
+    @include tab-link-colour(var(--gauzy-text-color-2));
+
+    &:hover {
+      @include tab-link-colour(var(--text-primary-color));
+    }
+  }
+}
+
+@mixin tab-link-typography($font-size, $font-weight) {
+  display: flex;
+  align-items: center;
+  font-size: $font-size;
+  font-weight: $font-weight;
+  line-height: 1rem;
+  letter-spacing: 0em;
+  text-align: center;
+}
+
+// Takes the colour rather than nesting `&:hover` itself: a bare `&` at a mixin's
+// root has no scoping root of its own, so it only resolves once included — which
+// is true here, but it reads as unscoped to a static analyzer and is a genuine
+// trap if the mixin is ever included at the top level. The hover STATE is
+// selected by the caller; this mixin only says what a tab link's colour is.
+@mixin tab-link-colour($colour) {
+  color: $colour;
+
+  nb-icon {
+    svg {
+      fill: $colour;
     }
   }
 }

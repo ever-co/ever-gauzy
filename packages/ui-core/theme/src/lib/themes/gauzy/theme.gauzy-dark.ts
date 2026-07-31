@@ -12,23 +12,30 @@ const theme = {
 	fontMain: 'Open Sans, sans-serif',
 	fontSecondary: 'Raleway, sans-serif',
 
-	bg: '#000000',
-	bg2: '#1a2138',
-	bg3: '#151a30',
-	bg4: '#101426',
+	// Mirrors the `gauzy-dark` map in `packages/ui-core/static/styles/themes.scss`.
+	// This palette is completely independent of the SCSS theme — every echarts /
+	// chartjs widget reads it through `nbThemeService.getJsTheme()` — so if it
+	// drifts, charts render as navy rectangles floating on the neutral canvas.
+	// echarts needs opaque hex here, so these are the composited equivalents of
+	// the translucent SCSS tints.
+	bg: '#09090b',
+	bg2: '#121214',
+	bg3: '#18181b',
+	bg4: '#1f1f23',
 
-	border: '#222b45',
-	border2: '#1a2138',
-	border3: '#151a30',
-	border4: '#101426',
-	border5: '#101426',
+	border: '#27272a',
+	border2: '#27272a',
+	border3: '#3f3f46',
+	border4: '#3f3f46',
+	border5: '#52525b',
 
-	fg: '#8f9bb3',
-	fgHeading: '#ffffff',
-	fgText: '#ffffff',
+	fg: '#a1a1aa',
+	fgHeading: '#fafafa',
+	fgText: '#fafafa',
 	fgHighlight: palette.primary,
-	layoutBg: '#1b1b38',
-	separator: '#1b1b38',
+	// Charts sit INSIDE cards, so this is the CARD colour, not the canvas.
+	layoutBg: '#121214',
+	separator: '#27272a',
 
 	primary: palette.primary,
 	success: palette.success,

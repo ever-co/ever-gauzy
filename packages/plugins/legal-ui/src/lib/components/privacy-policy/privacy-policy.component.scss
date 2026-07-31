@@ -335,8 +335,9 @@
   }
 
   .box_primary {
-    -webkit-box-shadow: var(--gauzy-shadow) (0 0 0 / 15%) !important;
-    box-shadow: var(--gauzy-shadow) (0 0 0 / 15%) !important;
+    // The trailing `(0 0 0 / 15%)` left behind by an old find-and-replace made
+    // both declarations invalid, so this box drew no edge at all.
+    box-shadow: var(--gauzy-shadow) !important;
     border: unset !important;
     border-radius: var(--border-radius) !important;
     background: var(--gauzy-card-4) !important;
@@ -1384,8 +1385,9 @@
   }
 
   .iubenda_vip_policy .box_primary {
-    -webkit-box-shadow: var(--gauzy-shadow) (0 0 0 / 15%) !important;
-    box-shadow: var(--gauzy-shadow) (0 0 0 / 15%) !important;
+    // The trailing `(0 0 0 / 15%)` left behind by an old find-and-replace made
+    // both declarations invalid, so this box drew no edge at all.
+    box-shadow: var(--gauzy-shadow) !important;
     border: unset !important;
     border-radius: var(--border-radius) !important;
     background: var(--gauzy-card-4) !important;

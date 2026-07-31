@@ -19,22 +19,24 @@
 // (#141416 / #1e1e22), so no per theme branch is needed.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Hover overlay. `gauzy-sidebar-background-3` is rgba(126, 126, 143, 0.1) in
-// every theme that declares it; the literal fallback keeps hover visible in the
-// material-* themes, which never declared the token.
-// TODO(theme): replace with nb-theme(gauzy-menu-item-hover-background).
-$menu-row-hover-background: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
+// Hover overlay. Resolves the shared `gauzy-hover-tint` token (registered in
+// `$gauzy-density`, i.e. present in all 8 themes) so a sidebar row, a breadcrumb
+// link, a settings-menu row and an overlay menu item light up by exactly the
+// same amount. It used to read `gauzy-sidebar-background-3`, which is 0.10 alpha
+// — a DIFFERENT hover strength from every other row in the app, and undefined in
+// the material-* themes. The literal is only a fallback for a theme that somehow
+// registers neither.
+$menu-row-hover-background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 
-// Active overlay — exactly twice the hover alpha. Measured on both surfaces the
-// pair stays distinguishable (light #ededee vs #e2e2e5, dark #2b2b2f vs
-// #313138) while neither reads as a filled block.
-// TODO(theme): replace with nb-theme(gauzy-menu-item-active-background).
-$menu-row-active-background: rgba(126, 126, 143, 0.2);
+// Active overlay — the shared token, exactly twice the hover alpha. Measured on
+// both surfaces the pair stays distinguishable (light #ededee vs #e2e2e5, dark
+// #2b2b2f vs #313138) while neither reads as a filled block.
+$menu-row-active-background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
 
-// 6px. Deliberately NOT nb-theme(border-radius) (0.625rem / 10px): that is the
-// CARD radius, and a 10px pill is a large part of why rows look like blocks.
-// TODO(theme): replace with nb-theme(gauzy-menu-item-radius).
-$menu-row-radius: 0.375rem;
+// The shared control/row radius. Deliberately NOT nb-theme(border-radius): that
+// is the CARD radius, and a card-sized pill on a 20px row is a large part of why
+// rows looked like blocks.
+$menu-row-radius: var(--gauzy-radius-sm, 0.375rem);
 
 // Resting label colour, muted. Nested fallback because gauzy-text-color-2 is
 // undefined in the material-* themes.

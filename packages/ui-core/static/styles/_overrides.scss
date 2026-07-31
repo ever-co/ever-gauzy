@@ -29,7 +29,11 @@ body {
   -ms-overflow-style: none;
   /* Dark theme overrides when body has nb-theme-gauzy-dark */
   &.nb-theme-gauzy-dark {
-    background: var(--card-background-color) !important;
+    // The canvas, NOT the panel colour: `card-background-color` follows
+    // `background-basic-color-1` -> `gauzy-card-1`, so the body/overscroll area
+    // would otherwise stay at the (lighter) panel colour while the layout above
+    // it is near-black.
+    background: var(--layout-background-color) !important;
     color: var(--card-text-color) !important;
     .spinner {
       background: var(--card-background-color) !important;
@@ -54,9 +58,26 @@ body {
   z-index: 1050 !important;
 }
 
+// ── Card edge ────────────────────────────────────────────────────────────────
+// The hairline ring an `nb-card` is drawn with. The value itself is registered
+// as the `card-shadow` token in both gauzy theme maps (`themes.scss`), which is
+// what actually reaches `nb-card` — Nebular emits its own `nb-card { box-shadow:
+// var(--card-shadow) }` at element specificity LATER in this bundle, so a plain
+// `nb-card` rule here would be overruled without an `!important`. This copy
+// exists for the handful of non-`nb-card` panels below that have to match it.
+//
+// A ring rather than a border, deliberately: `card-border-width` is 0.0625rem
+// and a `none` border computes to width 0, so flipping `card-border-style` to
+// `solid` genuinely adds 1px per side and reflows every card. `box-shadow`
+// occupies no layout box, so this is a pure paint change — no card moves and no
+// card changes size.
+$card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
 .dashboard-card-scroll nb-card {
   background: nb-theme(background-basic-color-1);
-  box-shadow: var(--gauzy-shadow);
+  // Was `--gauzy-shadow`. Dashboard panels are the same kind of surface as every
+  // other card, so they get the same edge instead of a drop shadow of their own.
+  box-shadow: $card-hairline;
 }
 
 @mixin nb-overrides() {
@@ -94,11 +115,16 @@ body {
     overflow-y: auto;
   }
 
+  // The dashboard/recap stat number (`<div class="h1">` — a display figure, not
+  // a heading element). 36px/44px was the largest type in the app and sat two
+  // steps above anything the scale defines, in a UI whose body copy is 14px and
+  // whose top heading step is 1.5rem. On the scale it is a heading-4, which is
+  // also where a shadcn stat tile puts it.
   .h1 {
     color: var(--gauzy-text-color-1);
-    font-size: 36px;
+    font-size: nb-theme(text-heading-4-font-size);
     font-weight: 400;
-    line-height: 44px;
+    line-height: 2rem;
     letter-spacing: 0em;
   }
 
@@ -373,15 +399,17 @@ body {
   angular2-smart-table table {
     border-collapse: separate !important;
 
+    // Filter-row controls track the table density: they are the tallest thing
+    // in the filter row, so their height IS that row's height.
     .angular2-smart-filter input {
-      height: 32px;
+      height: var(--gauzy-table-control-height, 1.75rem);
       background-color: var(--gauzy-sidebar-background-3) !important;
       border: none !important;
     }
 
     .angular2-smart-filter .ng-select .ng-select-container {
       background-color: var(--gauzy-sidebar-background-3) !important;
-      height: 32px;
+      height: var(--gauzy-table-control-height, 1.75rem);
       min-height: auto;
 
       input {
@@ -477,7 +505,7 @@ body {
     // Overrides ng-select's own `padding: 8px 10px` (its sheet is loaded after
     // this one, so a tie would go to it).
     padding: 0.375rem 0.625rem !important;
-    border-radius: 6px;
+    border-radius: var(--gauzy-radius-sm, 6px);
   }
 
   // Group captions get the same muted treatment as `nb-option-group`. ng-select
@@ -496,15 +524,18 @@ body {
   }
 
   // Neutral tint, not the brand colour — a hovered row must not read as
-  // "selected".
+  // "selected". `--gauzy-hover-tint` is the registered token (it is what
+  // `_overlays.scss`, the sidebar rows and the settings menu all resolve);
+  // `--gauzy-overlay-item-hover-background` was never registered anywhere, so
+  // these two rules always fell through to the literal.
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option:hover {
-    background-color: var(--gauzy-overlay-item-hover-background, rgba(126, 126, 143, 0.12)) !important;
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12)) !important;
   }
 
   // `ng-option-marked` is keyboard focus; give it the same tint as hover so
   // arrow-key navigation is visible (it used to be reset to nothing).
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
-    background-color: var(--gauzy-overlay-item-hover-background, rgba(126, 126, 143, 0.12)) !important;
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12)) !important;
   }
 
   // Selected keeps the accent tint even under the cursor, so the `:hover` rule
@@ -540,7 +571,10 @@ body {
       0 4px 12px -2px rgba(0, 0, 0, 0.14),
       0 2px 6px -2px rgba(0, 0, 0, 0.08)
     ) !important;
-    border-radius: 8px;
+    // The surface radius, resolved from the theme rather than retyped: an
+    // ng-select panel is the same kind of floating surface as an `nb-option-list`
+    // or a card, so it must move with `border-radius` and not drift from it.
+    border-radius: var(--border-radius, 8px);
 
     // ng-select squares off the edge facing the trigger (`border-*-radius: 4px`
     // on the other two corners) so the panel reads as glued to the input; a
@@ -549,7 +583,7 @@ body {
     &.ng-select-top,
     &.ng-select-left,
     &.ng-select-right {
-      border-radius: 8px !important;
+      border-radius: var(--border-radius, 8px) !important;
     }
 
     // Detach the panel from the trigger by 6px. The offset has to follow the
@@ -564,8 +598,8 @@ body {
     }
 
     .ng-dropdown-panel-items {
-      border-radius: 8px;
-      // Breathing room so the 6px item radius never touches the container edge.
+      border-radius: var(--border-radius, 8px);
+      // Breathing room so the item radius never touches the container edge.
       padding: 4px;
 
       img {
@@ -577,12 +611,13 @@ body {
     }
 
     // ng-select rounds the first/last row to the panel's old 4px corners. With
-    // the container padding above, every row is a free-floating 6px pill.
+    // the container padding above, every row is a free-floating row on the
+    // shared control radius.
     &.ng-select-bottom .ng-dropdown-panel-items .ng-option:last-child,
     &.ng-select-top .ng-dropdown-panel-items .ng-option:first-child,
     &.ng-select-left .ng-dropdown-panel-items .ng-option:first-child,
     &.ng-select-right .ng-dropdown-panel-items .ng-option:first-child {
-      border-radius: 6px;
+      border-radius: var(--gauzy-radius-sm, 6px);
     }
 
     // Hairline, not the theme's hard `1px solid #ccc`. `!important` for the same
@@ -626,13 +661,16 @@ body {
     color: nb-theme(text-basic-color) !important;
   }
 
+  // Two dashboard panels that painted their own drop shadow. Same surface as an
+  // `nb-card`, so same hairline. (The `!important` predates this change and is
+  // kept: these override component-scoped rules that arrive later.)
   .records {
-    box-shadow: var(--gauzy-shadow) !important;
+    box-shadow: $card-hairline !important;
     background: nb-theme(background-basic-color-1) !important;
   }
 
   .profit-history {
-    box-shadow: var(--gauzy-shadow) !important;
+    box-shadow: $card-hairline !important;
     background: nb-theme(background-basic-color-1) !important;
   }
 
@@ -657,6 +695,75 @@ body {
   nb-sidebar .main-container-fixed {
     height: calc(100vh - #{nb-theme(header-height)} - #{$padding-top}) !important;
     top: calc(#{nb-theme(header-height)} + #{$padding-top}) !important;
+  }
+}
+
+// ── Data-table density (angular2-smart-table) ────────────────────────────────
+//
+// WHERE THE OLD NUMBERS CAME FROM: nothing in this repo. `angular2-smart-table`
+// ships emulated component CSS that reads
+//     :host                          { font-size: 1rem }
+//     :host ::ng-deep table          { line-height: 1.5em }
+//     :host ::ng-deep table tr td,
+//     :host ::ng-deep table tr th    { font-size: .875em; padding: .5em 1em }
+// i.e. 14px text, a 24px line inherited from the table, and a 7px/14px box (the
+// `em` resolves against the cell's own 14px). Neither Bootstrap nor Nebular
+// touches these cells — Bootstrap's padding needs the `.table` class the library
+// only adds from `settings.attr.class` (empty in Gauzy), and Nebular's
+// smart-table theme still targets the old `ng2-smart-table` element name.
+//
+// SPECIFICITY: the library rule compiles to `[_nghost-x] table tr td`, i.e.
+// (0,1,3), so a plain `angular2-smart-table table tr td` (0,0,4) LOSES — which
+// is why so many smart-table rules in this file reach for `!important`. Leading
+// with `:root` buys one pseudo-class and takes the block to (0,1,4)+, enough to
+// win outright, so nothing below needs `!important`.
+//
+// All values come from the shared `$gauzy-density` map in `themes.scss`, merged
+// last into all 8 registered themes; the literals here are only CSS-var
+// fallbacks for the (nonexistent) case of a theme that never registered them.
+:root {
+  angular2-smart-table table {
+    // Set on the TABLE by the library and inherited by every cell, so resetting
+    // the cells alone would leave 24px line boxes behind in nested markup.
+    line-height: var(--gauzy-table-line-height, 1.25rem);
+  }
+
+  angular2-smart-table table tr td,
+  angular2-smart-table table tr th {
+    font-size: var(--gauzy-table-font-size, 0.8125rem);
+    line-height: var(--gauzy-table-line-height, 1.25rem);
+    padding: var(--gauzy-table-cell-padding-y, 0.375rem) var(--gauzy-table-cell-padding-x, 0.625rem);
+  }
+
+  angular2-smart-table table tr.angular2-smart-titles th {
+    padding: var(--gauzy-table-header-padding-y, 0.5rem) var(--gauzy-table-header-padding-x, 0.625rem);
+    line-height: var(--gauzy-table-header-line-height, 0.9375rem);
+  }
+
+  angular2-smart-table table tr.angular2-smart-filters th {
+    padding: var(--gauzy-table-filter-padding-y, 0.25rem) var(--gauzy-table-cell-padding-x, 0.625rem);
+  }
+
+  // The action column holds buttons that carry their own padding; letting the
+  // cell add its own on top is what makes an action row taller than a text row.
+  angular2-smart-table table tr td.angular2-smart-actions {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  // ── One-line dates ──────────────────────────────────────────────────────
+  // A formatted date ("September 11, 2026") is the single biggest source of
+  // wasted row height: long enough to wrap, never worth two lines. The `nowrap`
+  // is scoped to the three cell renderers that emit ONLY a formatted date or
+  // date-time — never to `td` itself, because name, note, address and
+  // description columns must keep wrapping. The table keeps `table-layout:
+  // auto`, so a date held on one line simply raises that column's min-content width
+  // and the library's own `overflow-x: auto` wrapper absorbs the rest; nothing
+  // is truncated.
+  angular2-smart-table table tr td ngx-date-view,
+  angular2-smart-table table tr td ngx-created-at,
+  angular2-smart-table table tr td ga-document-date {
+    white-space: nowrap;
   }
 }
 
@@ -753,8 +860,11 @@ nb-card-body {
   angular2-smart-table table tr th {
     border-top: 1px solid var(--gauzy-border-table);
     border-bottom: 1px solid var(--gauzy-border-table);
-    padding-top: 1em;
-    padding-bottom: 1em;
+    // Vertical padding deliberately NOT set here any more. It used to be
+    // `1em` top and bottom, which — `em` being the cell's own 14px — is where
+    // the 14px header padding (and a ~45px header row) came from. Header
+    // padding now has one source of truth: the `gauzy-table-header-padding-*`
+    // tokens applied in the density block above.
   }
 
   table thead th {
@@ -767,7 +877,7 @@ nb-card-body {
     }
 
     &:last-child {
-      border-right: 1px solidvar(--gauzy-border-table);
+      border-right: 1px solid var(--gauzy-border-table);
       border-radius: 0 var(--border-radius) var(--border-radius) 0;
     }
   }
@@ -850,7 +960,10 @@ angular2-smart-table {
 
       .page-link-next,
       .page-link-prev {
-        box-shadow: 1px 2px 2px nb-theme(background-basic-color-4);
+        // Was an offset shadow painted with `background-basic-color-4`, i.e. a
+        // SURFACE colour used as a shadow colour: opaque, and on the dark themes
+        // near-black on near-black. Same hairline ring as every other control.
+        box-shadow: $card-hairline;
         border-radius: 20px;
         padding: 0rem;
         display: flex;
@@ -879,9 +992,11 @@ angular2-smart-table {
   text-align: right;
   z-index: 1041;
   position: fixed;
-  font-size: 13px;
+  // 13px, resolved from the scale's small-subtitle step rather than retyped in
+  // px; the line box is held at its previous 16px so the bubble keeps its size.
+  font-size: nb-theme(text-subtitle-2-font-size);
   font-weight: 500;
-  line-height: 16px;
+  line-height: 1rem;
   letter-spacing: 0em;
 
   color: nb-theme(gauzy-text-color-2);
@@ -950,7 +1065,10 @@ angular2-smart-table {
 .ng-select {
   .ng-select-container {
     border-radius: var(--border-radius) !important;
-    box-shadow: var(--gauzy-shadow) inset;
+    // Same hairline ring as every other control (see `$control-hairline` in
+    // `gauzy/_gauzy-overrides.scss`) rather than a black inset drop shadow that
+    // does not read on either canvas.
+    box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
     border: none !important;
   }
 
@@ -995,18 +1113,23 @@ angular2-smart-table {
   }
 }
 
+// Header labels: smaller and heavier than the body text — the header reads as a
+// header through weight and colour rather than through extra padding. The
+// `!important` here predates the density work and is kept because these two
+// rules also have to beat the library's own `a.sort` styling, which arrives
+// after this sheet.
 angular2-smart-table table tr.angular2-smart-titles .angular2-smart-sort {
-  font-size: 12px !important;
+  font-size: var(--gauzy-table-header-font-size, 0.75rem) !important;
   font-weight: 600 !important;
-  line-height: 15px;
+  line-height: var(--gauzy-table-header-line-height, 0.9375rem);
   letter-spacing: 0em;
   color: var(--gauzy-text-color-2) !important;
 }
 
 angular2-smart-table table tr.angular2-smart-titles th a.sort {
-  font-size: 12px !important;
+  font-size: var(--gauzy-table-header-font-size, 0.75rem) !important;
   font-weight: 600 !important;
-  line-height: 15px;
+  line-height: var(--gauzy-table-header-line-height, 0.9375rem);
   letter-spacing: 0em;
   color: var(--gauzy-text-color-2) !important;
   display: flex;
@@ -1094,7 +1217,7 @@ angular2-smart-table {
     padding: var(--smart-table-filter-padding);
     border-color: var(--smart-table-add-button-border-color);
     background-color: var(--smart-table-add-button-background-color);
-    border-radius: 0.375rem;
+    border-radius: var(--gauzy-radius-sm, 0.375rem);
     color: var(--text-control-color);
 
     &:hover {
