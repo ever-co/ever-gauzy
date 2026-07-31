@@ -173,6 +173,9 @@ jobs:
           echo "container memory: ${limit_mb:-unknown} MB, cpus: $(nproc 2>/dev/null || echo '?') -> node heap ${heap_mb} MB"
           free -h || true
           echo "NODE_OPTIONS=--max-old-space-size=${heap_mb}" >> "$GITHUB_ENV"
+          # Also published on its own so the web build can pass the flag directly on the node
+          # command line. NODE_OPTIONS alone was demonstrably not enough — see that step.
+          echo "NODE_HEAP_MB=${heap_mb}" >> "$GITHUB_ENV"
 
       - name: Build all packages
         shell: bash
@@ -232,9 +235,26 @@ jobs:
         # option outright ("NX  'source-map' is not found in schema"). A configuration NAME is not
         # forwarded — dependencies fall back to their own default — so it is the safe lever here.
         # Keeping `local` untouched also leaves `serve:local` (the dev server) with its source maps.
+        #
+        # The heap flag is passed on the node command line rather than left to NODE_OPTIONS, because
+        # NODE_OPTIONS demonstrably did not reach this build. Both run 30633937038 (NODE_OPTIONS=12288)
+        # and the run before it (24576) died with the SAME ~4 GB ceiling in the GC trace:
+        #   "Scavenge (interleaved) 3983.7 (4051.6) -> 3978.9 (4052.1) MB"
+        #   "FATAL ERROR: Ineffective mark-compacts near heap limit"
+        # ~4 GB is node's default old-space on a 64-bit host — i.e. the process that ran out was on
+        # defaults, whatever NODE_OPTIONS said. The probe below prints what node actually sees so the
+        # next run answers this definitively instead of by inference.
         shell: bash
         run: |
-          yarn nx build gauzy -c ci || { echo "::warning::gauzy build failed — retry 1 (nx cache skips done deps)"; yarn nx build gauzy -c ci; }
+          heap_mb="${NODE_HEAP_MB:-12288}"
+          echo "--- heap probe -------------------------------------------------"
+          echo "NODE_OPTIONS=${NODE_OPTIONS:-(unset)}"
+          node -e "console.log('a plain node process sees heap_size_limit =', Math.round(require('v8').getHeapStatistics().heap_size_limit/1048576), 'MB')"
+          node --max-old-space-size=$heap_mb -e "console.log('with the flag on the command line   =', Math.round(require('v8').getHeapStatistics().heap_size_limit/1048576), 'MB')"
+          echo "----------------------------------------------------------------"
+          # Drive nx through node directly so the ceiling cannot be lost in a wrapper.
+          build() { node --max-old-space-size=$heap_mb ./node_modules/nx/bin/nx.js build gauzy -c ci; }
+          build || { echo "::warning::gauzy build failed — retry 1 (nx cache skips done deps)"; build; }
           # The bundle bakes the API URL as http://localhost:3000; the API runs on :3001 in the test
           # job (this shared runner's :3000 is taken by other dev processes), so repoint the built
           # bundle at :3001 BEFORE it is packed — the test job serves this artifact verbatim.
