@@ -79,7 +79,10 @@ const clickOptionByText = async (text: string) => {
 		if (clicked) return true;
 		await getPage().waitForTimeout(500);
 	}
-	return false;
+	// Fail closed. Returning false let the caller carry on with the value never
+	// committed, so the spec died later somewhere unrelated — the same swallowed
+	// failure this file is meant to remove.
+	throw new Error(`No selectable option matching "${text}" appeared (placeholders such as "No items found" are excluded by design)`);
 };
 
 // Stepper Next/Add buttons are subject to the same overlay; click the currently-visible
@@ -111,7 +114,8 @@ const clickFormButtonByText = async (texts: string[]) => {
 		if (clicked) return true;
 		await getPage().waitForTimeout(500);
 	}
-	return false;
+	// Fail closed — see clickOptionByText above.
+	throw new Error(`No selectable option at index ${index} appeared (placeholders such as "No items found" are excluded by design)`);
 };
 
 export const gridBtnExists = async () => {

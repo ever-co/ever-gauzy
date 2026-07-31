@@ -109,7 +109,9 @@ const clickOptionByText = async (text: string) => {
 		if (clicked) return true;
 		await getPage().waitForTimeout(500);
 	}
-	return false;
+	// Fail closed. Returning false let the caller carry on with the value never
+	// committed, so the spec died later somewhere unrelated.
+	throw new Error(`No selectable option matching "${text}" appeared (placeholders such as "No items found" are excluded by design)`);
 };
 
 const clickOptionByIndex = async (index: number) => {
@@ -130,7 +132,8 @@ const clickOptionByIndex = async (index: number) => {
 		if (clicked) return true;
 		await getPage().waitForTimeout(500);
 	}
-	return false;
+	// Fail closed — see clickOptionByText above.
+	throw new Error(`No selectable option at index ${index} appeared (placeholders such as "No items found" are excluded by design)`);
 };
 
 // Close a leftover floating invite dialog that would otherwise cover the grid + toolbar (so a row click

@@ -78,7 +78,9 @@ const clickOptionByText = async (text: string) => {
 		if (clicked) return true;
 		await getPage().waitForTimeout(500);
 	}
-	return false;
+	// Fail closed. Returning false let the caller carry on with the value never
+	// committed, so the spec died later somewhere unrelated.
+	throw new Error(`No selectable option matching "${text}" appeared (placeholders such as "No items found" are excluded by design)`);
 };
 
 export const gridBtnExists = async () => {
