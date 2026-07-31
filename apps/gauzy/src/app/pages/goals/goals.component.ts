@@ -39,7 +39,9 @@ import {
 	NbSpinnerModule,
 	NbProgressBarModule,
 	NbAccordionModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbPopoverModule,
+	NbListModule
 } from '@nebular/theme';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { GoalsComponentsModule } from './goals-components.module';
@@ -62,6 +64,9 @@ import { GauzyButtonActionModule } from '@gauzy/ui-core/shared';
 		NbProgressBarModule,
 		NbAccordionModule,
 		NbTooltipModule,
+		// `[nbPopover]` drives the Add Objective / Group By / Filter menus, whose bodies are `nb-list`s.
+		NbPopoverModule,
+		NbListModule,
 		SharedModule,
 		GauzyButtonActionModule
 	]
