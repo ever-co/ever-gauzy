@@ -11,6 +11,7 @@ import {
 	waitElementToHide,
 	clickByText,
 	dispatchClick,
+	dispatchClickWhenSettled,
 	waitForSpinnerGone
 } from '../util';
 import { getPage } from '../page-context';
@@ -60,7 +61,12 @@ export const editButtonVisible = async () => {
 };
 
 export const clickEditButton = async () => {
-	await clickButtonByIndex(EditUserPage.editButtonCss, 0);
+	// The action bar (ngx-gauzy-button-action) slides in over ~0.2s once a row is selected, so a
+	// coordinate click resolved mid-transition lands on whichever button occupies that spot at delivery
+	// time — the failing run's trace shows it hitting "Convert to employee" (its toast is in the trace)
+	// and the edit page never opening. Settle, dispatch straight at the Edit button, and confirm the
+	// edit page's tab strip rendered.
+	await dispatchClickWhenSettled(EditUserPage.editButtonCss, EditUserPage.orgTabButtonCss);
 };
 
 export const orgTabButtonVisible = async () => {

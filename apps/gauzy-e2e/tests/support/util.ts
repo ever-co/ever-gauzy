@@ -61,6 +61,44 @@ export const dispatchClick = async (selector: string) =>
 export const waitForSpinnerGone = async (timeout = 4_000) =>
 	loc('nb-spinner').first().waitFor({ state: 'detached', timeout }).catch(() => {});
 
+/**
+ * Click a control that sits under a loading overlay or an in-flight CSS transition, and prove the
+ * click landed.
+ *
+ * The grid pages wrap their card in `[nbSpinner]="loading"`, whose overlay covers the whole card —
+ * header toolbar included — at z-index 9999, and ngx-gauzy-button-action slides its action bar in over
+ * ~0.2s. A coordinate click issued while either is in flight is delivered at screen coordinates and
+ * lands on the overlay (or on whichever button has slid into that spot): `force: true` only skips the
+ * actionability CHECK, it does not change where the click is delivered. That is how the Users toolbar
+ * clicks were being lost ~1.9s after navigation, and how edit-user's Edit click landed on "Convert to
+ * employee" instead.
+ *
+ * So: settle first (spinner detached + network idle), then dispatch the event straight at the element
+ * so no overlay can intercept it, then wait for `confirmSelector` — the thing the click is supposed to
+ * produce, e.g. the dialog's first input — and dispatch once more if it never appeared. Raising a
+ * timeout would not have helped: the click was never delivered to the button in the first place.
+ */
+export const dispatchClickWhenSettled = async (selector: string, confirmSelector?: string, attempts = 2) => {
+	const page = getPage();
+	for (let attempt = 0; attempt < attempts; attempt++) {
+		await waitForSpinnerGone();
+		// Bounded on purpose: this is a settle attempt, not a gate. waitForLoadState defaults to the
+		// 60s navigationTimeout, and a page that never goes idle must not cost a minute per click.
+		await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+		const target = loc(selector).first();
+		await target.waitFor({ state: 'visible', timeout: defaultCommandTimeout });
+		await target.dispatchEvent('click');
+		if (!confirmSelector) return;
+		try {
+			await loc(confirmSelector).first().waitFor({ state: 'visible', timeout: 12_000 });
+			return;
+		} catch {
+			/* the click was swallowed — settle again and re-dispatch. Never re-dispatch blindly: the
+			   confirm target is checked first, so an already-open dialog is not opened twice. */
+		}
+	}
+};
+
 export const clickElementByText = async (selector: string, data: string) =>
 	// force + taskTimeout to match clickButton: several flows leave a fading nb-dialog backdrop
 	// (cdk-overlay-backdrop) that intercepts pointer events; the element is present and correct, the

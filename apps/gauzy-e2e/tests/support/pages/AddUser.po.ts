@@ -6,7 +6,8 @@ import {
 	clearField,
 	verifyText,
 	waitElementToHide,
-	waitUntil
+	waitUntil,
+	dispatchClickWhenSettled
 } from '../util';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { AddUserPage } from '../../../src/support/Base/pageobjects/AddUserPageObject';
@@ -16,7 +17,10 @@ export const addUserButtonVisible = async () => {
 };
 
 export const clickAddUserButton = async () => {
-	await clickButton(AddUserPage.addUserButtonCss);
+	// Same overlay as the Invite button: the Users card's [nbSpinner] covers the header toolbar while
+	// the grid loads, so the old coordinate force-click was eaten and #firstName never appeared.
+	// Settle, dispatch at the button, confirm the mutation dialog opened.
+	await dispatchClickWhenSettled(AddUserPage.addUserButtonCss, AddUserPage.firstNameInputCss);
 };
 
 export const firstNameInputVisible = async () => {
