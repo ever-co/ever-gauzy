@@ -200,7 +200,8 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {
 		if (owner === this) {
 			return;
 		}
-		// A healthy owner keeps the trail; only a detached or unrendered one loses it.
+		// A healthy owner keeps the trail; it is lost only by an owner that has been
+		// detached, or one that no longer renders.
 		if (owner && owner.elementRef.nativeElement.isConnected && owner.isRendered()) {
 			return;
 		}
