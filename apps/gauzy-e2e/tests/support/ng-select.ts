@@ -60,7 +60,7 @@ const REAL_OPTION_GRACE = 8_000;
  * `div.ng-option[role="option"]`, `div.ng-option > span.ng-option-label`, and comma-separated lists
  * that also carry unrelated `nb-option` branches (those are Nebular, and are left untouched).
  *
- * The lookaheads make it precise and idempotent:
+ * The two negative look-ahead assertions make it precise and idempotent:
  *  • `(?![\w-])`  — `.ng-option-label` / `.ng-option-selected` / `.ng-option-disabled` are DIFFERENT
  *                   classes and must not be rewritten;
  *  • `(?!:not\(…)` — an already-hardened selector is returned unchanged, so applying this twice
@@ -194,7 +194,12 @@ export const selectNgOption = async (
 		}
 		if (wanted) {
 			// Single select replacing an existing value keeps the count at 1 — match on the text instead.
-			return (await values.filter({ hasText: wanted }).count().catch(() => 0)) > 0;
+			return (
+				(await values
+					.filter({ hasText: wanted })
+					.count()
+					.catch(() => 0)) > 0
+			);
 		}
 		return false;
 	};

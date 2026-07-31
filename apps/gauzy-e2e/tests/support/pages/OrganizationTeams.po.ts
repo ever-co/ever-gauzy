@@ -1,7 +1,5 @@
 import {
 	verifyElementIsVisible,
-	clearField,
-	enterInput,
 	clickKeyboardBtnByKeycode,
 	waitElementToHide,
 	verifyText,
