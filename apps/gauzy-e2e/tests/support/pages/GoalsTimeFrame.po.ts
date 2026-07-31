@@ -7,6 +7,8 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	verifyText,
+	verifyTextNotExisting,
+	clickByText,
 	clickKeyboardBtnByKeycode
 } from '../util';
 // Selectors + data are framework-agnostic — reused from the Cypress tree during migration.
@@ -81,6 +83,14 @@ export const selectTableRow = async (index) => {
 	await clickButtonByIndex(GoalsTimeFramePage.selectTableRowCss, index);
 };
 
+// Select the row for a specific time frame instead of a positional index. The organization can hold
+// time frames this spec did not create — the goals spec has to create one (the objective form's
+// deadline is required and the database seeds no time frames), and it survives the run — so a blind
+// row 0 would edit and then DELETE somebody else's frame.
+export const selectTableRowByName = async (name: string) => {
+	await clickByText(GoalsTimeFramePage.selectTableRowCss, name);
+};
+
 export const editTimeFrameButtonVisible = async () => {
 	await verifyElementIsVisible(GoalsTimeFramePage.editButtonCss);
 };
@@ -111,6 +121,16 @@ export const waitMessageToHide = async () => {
 
 export const verifyElementDeleted = async (text) => {
 	await verifyText(GoalsTimeFramePage.verifyEmptyTableCss, text);
+};
+
+// Assert THIS spec's time frame is gone, rather than that the whole grid is empty. "No data found"
+// only ever held because nothing else created a time frame; the goals spec now has to create one (the
+// objective form's deadline is required and the database seeds none), so an empty-table assertion
+// fails on a row that is not ours and was never part of what this spec exercises.
+export const verifyTimeFrameIsDeleted = async (name: string) => {
+	// Scope to grid ROWS: verifyTimeFrameCss ('div.ng-star-inserted') also matches the row's ancestor
+	// wrappers, so a hasText filter resolves to six nested elements for a single row.
+	await verifyTextNotExisting(GoalsTimeFramePage.selectTableRowCss, name);
 };
 
 export const verifyTimeFrameExists = async (text) => {

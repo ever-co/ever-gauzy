@@ -49,6 +49,16 @@ export const dateInputVisible = async () => {
 	await verifyElementIsVisible(ManageEmployeesPage.dateInputCss);
 };
 
+// Add-Employee dialog's start-work date (scoped to ga-employee-mutation — see employeeDateInputCss).
+export const employeeDateInputVisible = async () => {
+	await verifyElementIsVisible(ManageEmployeesPage.employeeDateInputCss);
+};
+
+export const enterEmployeeDateData = async () => {
+	await clearField(ManageEmployeesPage.employeeDateInputCss);
+	await enterInput(ManageEmployeesPage.employeeDateInputCss, dayjs().format('MMM D, YYYY'));
+};
+
 export const enterDateData = async () => {
 	await clearField(ManageEmployeesPage.dateInputCss);
 	const date = dayjs().format('MMM D, YYYY');
