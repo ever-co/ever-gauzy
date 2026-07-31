@@ -701,12 +701,20 @@ $default-box-shadow: $control-hairline;
 
   nb-tabset .tabset .tab a.tab-link {
     @include tab-link-typography(nb-theme(tabset-tab-text-font-size), 400);
-    @include tab-link-resting-colour();
+    @include tab-link-colour(var(--gauzy-text-color-2));
+
+    &:hover {
+      @include tab-link-colour(var(--text-primary-color));
+    }
   }
 
   nb-route-tabset .route-tabset .route-tab a.tab-link {
     @include tab-link-typography(nb-theme(route-tabset-tab-text-font-size), 400);
-    @include tab-link-resting-colour();
+    @include tab-link-colour(var(--gauzy-text-color-2));
+
+    &:hover {
+      @include tab-link-colour(var(--text-primary-color));
+    }
   }
 }
 
@@ -720,22 +728,17 @@ $default-box-shadow: $control-hairline;
   text-align: center;
 }
 
-@mixin tab-link-resting-colour() {
-  color: var(--gauzy-text-color-2);
+// Takes the colour rather than nesting `&:hover` itself: a bare `&` at a mixin's
+// root has no scoping root of its own, so it only resolves once included — which
+// is true here, but it reads as unscoped to a static analyser and is a genuine
+// trap if the mixin is ever included at the top level. The hover STATE is
+// selected by the caller; this mixin only says what a tab link's colour is.
+@mixin tab-link-colour($colour) {
+  color: $colour;
 
   nb-icon {
     svg {
-      fill: var(--gauzy-text-color-2);
-    }
-  }
-
-  &:hover {
-    color: var(--text-primary-color);
-
-    nb-icon {
-      svg {
-        fill: var(--text-primary-color);
-      }
+      fill: $colour;
     }
   }
 }
