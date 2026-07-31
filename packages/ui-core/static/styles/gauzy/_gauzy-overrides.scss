@@ -414,6 +414,35 @@ $default-box-shadow: $control-hairline;
   @include ck-editor();
   @include input-appearance($default-height, var(--gauzy-card-1));
   @include nb-tabset-overrides;
+  @include ng-select-text-alignment();
+}
+
+/// Vertically centres the text inside an `ng-select` trigger.
+///
+/// ng-select positions `.ng-placeholder` and `.ng-input` with `top: 5px`, tuned
+/// for its own default control height. Against our control height that lands the
+/// text high in the box — visible on the dashboard's "All Teams" / "All Projects"
+/// / "All Employees" selectors, and worst while typing, because `.ng-input` is a
+/// separate overlaid element from the value it replaces.
+///
+/// `input-appearance()` already contains these two rules, but every selector in
+/// that mixin is written `::ng-deep …`. Angular only strips `::ng-deep` from
+/// COMPONENT stylesheets; `gauzy-overrides()` is installed from the global
+/// `styles.scss`, where it survives into the output verbatim — and a browser
+/// treats `::ng-deep` as an unknown pseudo-element and discards the whole rule.
+/// The compiled `dist/apps/gauzy/styles.css` carries 10 such dead selectors.
+///
+/// So the alignment is restated here with plain selectors, which is what the
+/// global sheet needs: global CSS is unscoped, so it already reaches inside
+/// `ng-select` without any piercing combinator. Deliberately narrow — un-deadening
+/// the rest of `input-appearance` would newly apply `background-color … !important`
+/// and a `min-height` floor to every input in the app, which is a much larger
+/// change than the misalignment being fixed.
+@mixin ng-select-text-alignment() {
+  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder,
+  .ng-select.ng-select-single .ng-select-container .ng-value-container .ng-input {
+    top: unset;
+  }
 }
 
 @mixin full-calendar() {

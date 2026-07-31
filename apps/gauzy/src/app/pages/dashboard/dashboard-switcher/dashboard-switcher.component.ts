@@ -1,6 +1,6 @@
 import { AfterViewChecked, ChangeDetectorRef, Component, computed, ElementRef, Signal, ViewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom, of, take, timeout } from 'rxjs';
 import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
@@ -130,14 +130,41 @@ export class DashboardSwitcherComponent extends TranslationBaseComponent impleme
 		try {
 			const dashboard = await this._dashboardStore.createDashboard(name);
 			this._toastrService.success('DASHBOARD_PAGE.CUSTOM.CREATED', { name });
-			// A brand new dashboard has nothing on it, so it has to land in edit mode:
-			// that is the only state that renders the widget palette. Flagged on the
-			// store rather than calling startEditing() here because this navigation
-			// resolves through selectById(), which otherwise resets editing to false.
-			this._dashboardStore.openForEditing(dashboard.id);
 			this._dashboardStore.navigateToDashboard(dashboard.id);
+			await this._enterEditingWhenSelected(dashboard.id);
 		} catch (error) {
 			this._toastrService.danger(error);
+		}
+	}
+
+	/**
+	 * Enters edit mode once the store has actually selected the given dashboard.
+	 *
+	 * A brand new dashboard has nothing on it, and the widget palette only renders
+	 * in edit mode — so without this the user lands on an empty canvas whose own
+	 * empty state tells them to go and find the Edit button, which is the opposite
+	 * of "create a dashboard and drag widgets onto it".
+	 *
+	 * It has to wait for the selection rather than call `startEditing()` straight
+	 * after `navigateToDashboard()`: that only kicks off a router navigation, and
+	 * `startEditing()` is a no-op until `selectedDashboard` is the new dashboard.
+	 * Waiting on the store's own selection stream also keeps this independent of
+	 * *how* the selection gets published (today `refresh()` → `_reconcileSelection`).
+	 *
+	 * @param id - The dashboard that should end up in edit mode.
+	 */
+	private async _enterEditingWhenSelected(id: IDashboard['id']): Promise<void> {
+		await firstValueFrom(
+			this._dashboardStore.selectedDashboard$.pipe(
+				filter((selected: IDashboard | null) => selected?.id === id),
+				take(1),
+				// Never leave the caller hanging if the selection never lands — the
+				// dashboard still exists and is reachable, it just opens read-only.
+				timeout({ first: 10000, with: () => of(null) })
+			)
+		);
+		if (this._dashboardStore.selectedDashboard?.id === id) {
+			this._dashboardStore.startEditing();
 		}
 	}
 
