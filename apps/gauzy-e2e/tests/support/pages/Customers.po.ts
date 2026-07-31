@@ -87,7 +87,9 @@ const clickFormButtonByText = async (texts: string[]) => {
 // same spinner stacking context, so option clicks are flaky via normal Playwright clicks.
 // Dispatch the click on the matching option via the DOM. Matches ng-select (.ng-option)
 // and nb-select (nb-option) panels.
-const OPTION_SELECTOR = 'div.ng-option, .ng-dropdown-panel .ng-option, .option-list nb-option, .cdk-overlay-container nb-option';
+// ':not(.ng-option-disabled)' is load-bearing: ng-select renders its own 'No items found' / 'Loading…'
+// rows with the same ng-option class, so an index/text pick could land on a placeholder ng-select ignores.
+const OPTION_SELECTOR = 'div.ng-option:not(.ng-option-disabled), .ng-dropdown-panel .ng-option:not(.ng-option-disabled), .option-list nb-option, .cdk-overlay-container nb-option';
 
 const clickOptionByText = async (text: string) => {
 	for (let attempt = 0; attempt < 5; attempt++) {

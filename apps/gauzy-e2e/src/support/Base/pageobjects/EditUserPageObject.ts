@@ -27,7 +27,10 @@ export const EditUserPage = {
 	repeatPasswordInputCss: '[placeholder="Repeat Password"]',
 	emailInputCss: '#email',
 	tagsSelectCss: '#addTags',
-	tagsSelectOptionCss: 'div.ng-dropdown-panel-items.scroll-host',
+	// The OPTIONS, not the scroll host: 'div.ng-dropdown-panel-items.scroll-host' is the panel's scroll
+	// container, so nth(i) addressed the container itself and the pick relied on the coordinate click
+	// happening to land on an option. ':not(.ng-option-disabled)' is applied by the shared driver.
+	tagsSelectOptionCss: 'div.ng-option',
 	roleSelectCss: 'nb-select#role>button',
 	// Options render as nb-option inside the cdk-overlay ul.option-list; filter-by-text needs the
 	// individual options, not the whole list (the bare .option-list contains every role name).

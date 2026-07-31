@@ -41,7 +41,7 @@ const openDropdown = async (selector: string) => {
 		if (dispatched) {
 			try {
 				await getPage()
-					.locator('div.ng-option, .ng-dropdown-panel .ng-option, .option-list nb-option, .cdk-overlay-container nb-option')
+					.locator('div.ng-option:not(.ng-option-disabled), .ng-dropdown-panel .ng-option:not(.ng-option-disabled), .option-list nb-option, .cdk-overlay-container nb-option')
 					.first()
 					.waitFor({ state: 'visible', timeout: 5000 });
 				return;
@@ -55,8 +55,10 @@ const openDropdown = async (selector: string) => {
 
 // Option panels (ng-select .ng-option / nb-select nb-option) live in overlays that can sit under the
 // same spinner stacking context — dispatch the click on the matching option via DOM.
+// ':not(.ng-option-disabled)' is load-bearing: ng-select renders its own 'No items found' / 'Loading…'
+// rows with the same ng-option class, so an index/text pick could land on a placeholder ng-select ignores.
 const OPTION_SELECTOR =
-	'div.ng-option, .ng-dropdown-panel .ng-option, .option-list nb-option, .cdk-overlay-container nb-option';
+	'div.ng-option:not(.ng-option-disabled), .ng-dropdown-panel .ng-option:not(.ng-option-disabled), .option-list nb-option, .cdk-overlay-container nb-option';
 
 const clickOptionByText = async (text: string) => {
 	for (let attempt = 0; attempt < 5; attempt++) {

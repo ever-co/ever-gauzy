@@ -1,6 +1,5 @@
 import {
 	verifyElementIsVisible,
-	clickButtonByIndex,
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
@@ -8,8 +7,11 @@ import {
 	verifyText,
 	verifyTextNotExisting,
 	dispatchClick,
+	scopeGridTo,
+	clickAndAwaitDialogClose,
 	waitForSpinnerGone
 } from '../util';
+import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { OrganizationTeamsPage } from '../../../src/support/Base/pageobjects/OrganizationTeamsPageObject';
@@ -54,8 +56,13 @@ export const nameInputVisible = async () => {
 };
 
 export const enterNameInputData = async (data: string) => {
-	await clearField(OrganizationTeamsPage.teamNameInputCss);
-	await enterInput(OrganizationTeamsPage.teamNameInputCss, data);
+	// Target the CURRENT (topmost) mutation dialog. clearField/enterInput are strict, so if a previous
+	// dialog is somehow still mounted this threw "strict mode violation: … resolved to 2 elements" — and
+	// `.first()` would have been worse, quietly typing into the dead dialog. `.last()` is the one the
+	// user is looking at, and with a single dialog (the normal case) it is identical to today.
+	const input = getPage().locator(OrganizationTeamsPage.teamNameInputCss).last();
+	await input.clear();
+	await input.fill(String(data));
 };
 
 export const tagsMultiSelectVisible = async () => {
@@ -71,7 +78,15 @@ export const clickTagsMultiSelect = async () => {
 };
 
 export const selectTagsFromDropdown = async (index: number) => {
-	await clickButtonByIndex(OrganizationTeamsPage.tagsSelectOptionCss, index);
+	// Routed through the ONE shared ng-select driver (tests/support/ng-select.ts). It counts only REAL
+	// options: a bare `div.ng-option` ALSO matches ng-select's disabled "No items found" / "Loading…"
+	// rows, so the old wait-then-click was satisfied by an EMPTY list and then clicked a row ng-select
+	// ignores — a silent no-op that left this field unset. It re-opens the panel via the control's own
+	// container until real options render (NEVER Escape: nb-dialog opens with closeOnEsc and that closed
+	// the whole form), and it confirms the pick against `div.ng-value`, the only node that exists once a
+	// value is really bound. Still best-effort — the tag is optional here — but it can no longer
+	// half-succeed, and it can no longer kill the dialog on a slow list.
+	await selectNgOption(OrganizationTeamsPage.tagsSelectCss, OrganizationTeamsPage.tagsSelectOptionCss, index);
 };
 
 export const employeeDropdownVisible = async () => {
@@ -174,10 +189,14 @@ export const saveButtonVisible = async () => {
 };
 
 export const clickSaveButton = async () => {
-	// Save sits in the dialog; a fading backdrop from a closed sub-dropdown can intercept a coordinate
-	// click, so dispatch the click straight to the element.
-	await waitForSpinnerGone();
-	await dispatchClick(OrganizationTeamsPage.saveButtonCss);
+	// PROVE the submit landed, instead of assuming it. Previously this dispatched one click and moved on;
+	// when the click didn't submit (Save still disabled while memberIds — a required control — was being
+	// bound, or a fading backdrop from a closed sub-dropdown in the way) the dialog just stayed open. The
+	// following verifyTeamExists then passed anyway on a LEFTOVER "Front-End Team" row from an earlier
+	// run (this spec uses a fixed name against an accumulating DB), and the failure only surfaced two
+	// steps later as a second stacked dialog. clickAndAwaitDialogClose waits for Save to be enabled,
+	// dispatches at the element, and requires ga-teams-mutation to DETACH — re-dispatching if it doesn't.
+	await clickAndAwaitDialogClose(OrganizationTeamsPage.saveButtonCss, 'ga-teams-mutation');
 };
 
 export const tableRowVisible = async () => {
@@ -194,6 +213,14 @@ export const selectTableRow = async (nameOrIndex: number | string) => {
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => undefined);
 	await page.waitForTimeout(1500);
+
+	// Filtering by name is what makes the row-scoping actually work: `.filter({ hasText })` can only see
+	// the 10 rows the server rendered for the CURRENT page, so on an accumulated DB the spec's own team
+	// is simply not among them and the click silently lands on nothing (or, via the .first() fallback,
+	// on a foreign row that then gets edited/deleted). Best-effort — no-ops if the filter row is absent.
+	if (typeof nameOrIndex === 'string' && nameOrIndex.length) {
+		await scopeGridTo(OrganizationTeamsPage.nameFilterInputCss, nameOrIndex);
+	}
 
 	const rows = page.locator(OrganizationTeamsPage.selectTableRowCss);
 	const row =
@@ -252,9 +279,16 @@ export const waitMessageToHide = async () => {
 };
 
 export const verifyTeamExists = async (text: string) => {
+	// Narrow the grid to THIS team before asserting: it is server-paginated at 10 rows and the serial
+	// suite keeps adding teams to one shared DB, so the row the spec just created is regularly on page 2
+	// and the unfiltered assertion failed with the record perfectly intact.
+	await scopeGridTo(OrganizationTeamsPage.nameFilterInputCss, text);
 	await verifyText(OrganizationTeamsPage.verifyTeamCss, text);
 };
 
 export const verifyTeamIsDeleted = async (text: string) => {
+	// Same scoping: an absence assertion on an unfiltered, paginated grid is satisfied by the row simply
+	// having moved to another page, which makes it both flaky AND too weak.
+	await scopeGridTo(OrganizationTeamsPage.nameFilterInputCss, text);
 	await verifyTextNotExisting(OrganizationTeamsPage.verifyTeamCss, text);
 };

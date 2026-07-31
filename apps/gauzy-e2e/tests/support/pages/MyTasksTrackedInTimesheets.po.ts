@@ -10,6 +10,7 @@ import {
 	waitForSpinnerGone,
 	compareTwoTexts
 } from '../util';
+import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
 import type { Response } from '@playwright/test';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
@@ -134,16 +135,15 @@ export const clickTagsMultiSelect = async () => {
 };
 
 export const selectTagsFromDropdown = async (index: number) => {
-	// Best-effort tag pick: the tag options load async and can be empty. Pick one if present; otherwise leave
-	// tags unset (tags are optional on a task, so Save is unaffected).
-	const page = getPage();
-	const options = page.locator(MyTasksTrackedInTimesheets.tagsSelectOptionCss);
-	try {
-		await options.first().waitFor({ state: 'visible', timeout: 8000 });
-		await options.nth(index).click({ force: true });
-	} catch {
-		await page.keyboard.press('Escape').catch(() => undefined);
-	}
+	// Routed through the ONE shared ng-select driver (tests/support/ng-select.ts). It counts only REAL
+	// options: a bare `div.ng-option` ALSO matches ng-select's disabled "No items found" / "Loading…"
+	// rows, so the old wait-then-click was satisfied by an EMPTY list and then clicked a row ng-select
+	// ignores — a silent no-op that left this field unset. It re-opens the panel via the control's own
+	// container until real options render (NEVER Escape: nb-dialog opens with closeOnEsc and that closed
+	// the whole form), and it confirms the pick against `div.ng-value`, the only node that exists once a
+	// value is really bound. Still best-effort — the tag is optional here — but it can no longer
+	// half-succeed, and it can no longer kill the dialog on a slow list.
+	await selectNgOption(MyTasksTrackedInTimesheets.tagsSelectCss, MyTasksTrackedInTimesheets.tagsSelectOptionCss, index);
 };
 
 export const clickCardBody = async () => {
