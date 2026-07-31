@@ -59,7 +59,7 @@ const nameFilterInput = () => getPage().locator(DeleteOrganizationPage.nameFilte
  *   `<input [value]="query" (change)="onValueChanged(...)" (keyup)="onValueChanged(...)">`
  * — it reacts to keyup/change, never to 'input', and the debounced refetch writes `query` straight
  * back into [value]. Typing character by character therefore races the write-back and leaves a
- * mangled value ("Dickinson, Kozey and Casper" came out as "Dicknsn, oe ndCspr" and matched nothing).
+ * mangled value — a 27-character company name came out with 9 characters missing and matched nothing.
  * Set the whole value in one shot with fill() and then dispatch the 'change' the component listens
  * for: atomic, so there is no window for the write-back to eat characters.
  */

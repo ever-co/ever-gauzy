@@ -54,8 +54,9 @@ export default defineConfig({
 	 * rendered in Bulgarian/Hebrew and every english-text selector missed — two failures that had
 	 * nothing to do with the specs themselves.
 	 *
-	 * Serial execution roughly doubles local wall-clock (~47min -> ~90min); parallelising this suite
-	 * needs per-worker accounts/organizations, not a worker count. Shard across CI containers instead. */
+	 * Serial execution roughly doubles local wall-clock (~47min -> ~90min); running this suite in
+	 * parallel needs per-worker accounts/organizations, not a worker count. Shard across CI containers
+	 * instead. */
 	workers: 1,
 	reporter: process.env.CI
 		? [['list'], ['html', { open: 'never' }], ['junit', { outputFile: '../../dist/playwright/apps/gauzy-e2e/junit.xml' }]]
