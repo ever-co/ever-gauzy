@@ -730,7 +730,7 @@ $default-box-shadow: $control-hairline;
 
 // Takes the colour rather than nesting `&:hover` itself: a bare `&` at a mixin's
 // root has no scoping root of its own, so it only resolves once included — which
-// is true here, but it reads as unscoped to a static analyser and is a genuine
+// is true here, but it reads as unscoped to a static analyzer and is a genuine
 // trap if the mixin is ever included at the top level. The hover STATE is
 // selected by the caller; this mixin only says what a tab link's colour is.
 @mixin tab-link-colour($colour) {
