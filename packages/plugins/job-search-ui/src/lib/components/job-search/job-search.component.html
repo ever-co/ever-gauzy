@@ -82,7 +82,7 @@
 				}
 			</div>
 		</div>
-		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
+		<nb-tabset (changeTab)="onTabChange($event)">
 			<nb-tab [tabId]="JobSearchTabsEnum.ACTIONS" [tabTitle]="'JOBS.BROWSE' | translate">
 				@if ((nbTab$ | async) === JobSearchTabsEnum.ACTIONS) {
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>

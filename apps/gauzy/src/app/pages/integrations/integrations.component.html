@@ -1,6 +1,10 @@
 <nb-card [nbSpinner]="isLoading$ | async" class="card-scroll">
 	<nb-card-header>
-		<h4>{{ 'INTEGRATIONS.AVAILABLE_INTEGRATIONS' | translate }}</h4>
+		<h4>
+			<ngx-header-title [allowEmployee]="false">
+				{{ 'INTEGRATIONS.AVAILABLE_INTEGRATIONS' | translate }}
+			</ngx-header-title>
+		</h4>
 	</nb-card-header>
 	<nb-card-body>
 		<ng-template [ngxPermissionsOnly]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">

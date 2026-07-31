@@ -18,7 +18,7 @@
 				[isDisable]="!selectedItem && disableButton"
 			></ngx-gauzy-button-action>
 		</div>
-		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
+		<nb-tabset (changeTab)="onTabChange($event)">
 			<nb-tab [tabTitle]="'PROPOSAL_TEMPLATE.BROWSE' | translate" [tabId]="proposalTemplateTabsEnum.ACTIONS">
 				@if ((nbTab$ | async) === proposalTemplateTabsEnum.ACTIONS) {
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>

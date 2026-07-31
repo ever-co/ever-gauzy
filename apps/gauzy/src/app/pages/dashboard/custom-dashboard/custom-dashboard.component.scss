@@ -19,6 +19,21 @@
 	padding: 0.5rem 0.25rem 0;
 }
 
+// Page title + breadcrumb trail. `ngx-header-title` moves the trail out of the
+// heading and turns this box into the wrapping row that holds both.
+.custom-dashboard__heading {
+	display: flex;
+	align-items: center;
+}
+
+.custom-dashboard__title {
+	margin: 0;
+	font-size: nb-theme(card-header-text-font-size);
+	font-weight: nb-theme(card-header-text-font-weight);
+	line-height: nb-theme(card-header-text-line-height);
+	color: nb-theme(text-basic-color);
+}
+
 .builder-toolbar {
 	display: flex;
 	align-items: center;

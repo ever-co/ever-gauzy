@@ -1,6 +1,10 @@
 <nb-card>
 	<nb-card-header>
-		<h4>{{ 'ABOUT_PAGE.ABOUT' | translate }}</h4>
+		<h4>
+			<ngx-header-title [allowEmployee]="false">
+				{{ 'ABOUT_PAGE.ABOUT' | translate }}
+			</ngx-header-title>
+		</h4>
 	</nb-card-header>
 	<nb-card-body></nb-card-body>
 </nb-card>

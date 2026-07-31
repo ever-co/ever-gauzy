@@ -3,6 +3,11 @@
 	<div class="main">
 		<nb-card>
 			<nb-card-header class="head">
+				<h4>
+					<ngx-header-title [allowEmployee]="false">
+						{{ 'ORGANIZATIONS_PAGE.HELP_CENTER' | translate }}
+					</ngx-header-title>
+				</h4>
 				<div class="header">
 					<div class="header-article">
 						@if (!categoryName) {
