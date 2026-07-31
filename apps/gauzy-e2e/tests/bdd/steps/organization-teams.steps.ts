@@ -5,13 +5,29 @@ import { OrganizationTeamsPageData } from '../../../src/support/Base/pagedata/Or
 import * as organizationTagsUserPage from '../../support/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../../../src/support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../../support/commands';
+import { faker } from '@faker-js/faker';
 
 // Converted 1:1 from the plain OrganizationTeamsTest.spec.ts: the single test() -> one Scenario, each
 // test.step() -> one When step whose body is the verbatim .po call sequence (verification folded in),
 // so runtime behaviour is identical to the already-CI-tested spec. The `Given I am logged in as the
 // default user` Background step is defined once in common.steps.ts.
 
+
+// RUN-UNIQUE team names. The API rejects a duplicate name with 400 "The team name X is already in use",
+// and teams.component swallows that in a bare catch, so with the old FIXED names the very first run to
+// leave a team behind poisoned every later run: the create silently failed, the dialog stayed open, and
+// verifyTeamExists still passed — on the LEFTOVER row. The spec only fell over two steps later, on a
+// second stacked dialog. Unique-per-run names (the pattern the rest of the suite already uses, see
+// clients.steps.ts) make the create succeed and make every assertion below refer to THIS run's record.
+// Initialised at the very start of the first step, and shared across steps at module scope.
+let teamName = OrganizationTeamsPageData.name;
+let editTeamName = OrganizationTeamsPageData.editName;
+
 When('I add a new team', async () => {
+	const suffix = faker.string.alphanumeric(6);
+	teamName = `${OrganizationTeamsPageData.name} ${suffix}`;
+	editTeamName = `${OrganizationTeamsPageData.editName} ${suffix}`;
+
 	await CustomCommands.addTag(
 		organizationTagsUserPage,
 		OrganizationTagsPageData
@@ -45,7 +61,7 @@ When('I add a new team', async () => {
 	await organizationTeamsPage.clickAddTeamButton();
 	await organizationTeamsPage.nameInputVisible();
 	await organizationTeamsPage.enterNameInputData(
-		OrganizationTeamsPageData.name
+		teamName
 	);
 	await organizationTeamsPage.tagsMultiSelectVisible();
 	await organizationTeamsPage.clickTagsMultiSelect();
@@ -60,19 +76,19 @@ When('I add a new team', async () => {
 	await organizationTeamsPage.saveButtonVisible();
 	await organizationTeamsPage.clickSaveButton();
 	await organizationTeamsPage.waitMessageToHide();
-	await organizationTeamsPage.verifyTeamExists(OrganizationTeamsPageData.name);
+	await organizationTeamsPage.verifyTeamExists(teamName);
 });
 
 When('I edit the team', async () => {
 	await organizationTeamsPage.tableRowVisible();
 	// Scope to the team we just created (not the seeded "Default" team) — the grid is shared across
 	// the serial suite, so a plain row-0 pick can select the wrong record.
-	await organizationTeamsPage.selectTableRow(OrganizationTeamsPageData.name);
+	await organizationTeamsPage.selectTableRow(teamName);
 	await organizationTeamsPage.editButtonVisible();
 	await organizationTeamsPage.clickEditButton();
 	await organizationTeamsPage.nameInputVisible();
 	await organizationTeamsPage.enterNameInputData(
-		OrganizationTeamsPageData.editName
+		editTeamName
 	);
 	await organizationTeamsPage.tagsMultiSelectVisible();
 	await organizationTeamsPage.clickTagsMultiSelect();
@@ -88,19 +104,19 @@ When('I edit the team', async () => {
 	await organizationTeamsPage.clickSaveButton();
 	await organizationTeamsPage.waitMessageToHide();
 	await organizationTeamsPage.verifyTeamExists(
-		OrganizationTeamsPageData.editName
+		editTeamName
 	);
 });
 
 When('I delete the team', async () => {
 	// After the rename the row is now under editName — scope to it (not the seeded "Default" team).
-	await organizationTeamsPage.selectTableRow(OrganizationTeamsPageData.editName);
+	await organizationTeamsPage.selectTableRow(editTeamName);
 	await organizationTeamsPage.deleteButtonVisible();
 	await organizationTeamsPage.clickDeleteButton();
 	await organizationTeamsPage.confirmDeleteButtonVisible();
 	await organizationTeamsPage.clickConfirmDeleteButton();
 	await organizationTeamsPage.waitMessageToHide();
 	await organizationTeamsPage.verifyTeamIsDeleted(
-		OrganizationTeamsPageData.editName
+		editTeamName
 	);
 });
