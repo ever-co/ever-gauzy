@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpException, NotAcceptableException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
 import { chain, pluck } from 'underscore';
@@ -1504,8 +1504,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Create the new time log entry
 			return await this.commandBus.execute(new TimeLogCreateCommand(request));
 		} catch (error) {
-			// Handle exceptions appropriately
-			throw new BadRequestException('Failed to add manual time log');
+			// Never swallow the reason: a blanket message here hid a real database failure indefinitely.
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new BadRequestException(`Failed to add manual time log: ${error?.message ?? error}`);
 		}
 	}
 
@@ -1579,8 +1582,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Retrieve the updated time log entry
 			return await this.findOneByIdString(id);
 		} catch (error) {
-			// Handle exceptions appropriately
-			throw new BadRequestException('Failed to update manual time log');
+			// Never swallow the reason (same blanket catch as `addManualTime`).
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new BadRequestException(`Failed to update manual time log: ${error?.message ?? error}`);
 		}
 	}
 
