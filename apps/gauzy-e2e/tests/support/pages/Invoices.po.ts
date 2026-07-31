@@ -13,6 +13,7 @@ import {
 	scrollDown,
 	verifyElementIsNotVisible
 } from '../util';
+import { committedValues, selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { InvoicesPage } from '../../../src/support/Base/pageobjects/InvoicesPageObject';
@@ -47,24 +48,15 @@ export const clickTagsDropdown = async () => {
 };
 
 export const selectTagFromDropdown = async (index: number) => {
-	const page = getPage();
-	const option = page.locator(InvoicesPage.tagsDropdownOption);
-	// Re-open the tags ng-select via keyboard (focus the inner input + ArrowDown) until the options
-	// render — ng-select opens on mousedown so a click is backdrop-blocked. Then pick the option
-	// (appended to <body>). Best-effort: tags are optional for an invoice, and the list can render empty,
-	// so if no option shows after a few re-opens, press Escape and continue rather than hard-waiting 60s.
-	for (let i = 0; i < 4; i++) {
-		if (await option.first().isVisible().catch(() => false)) break;
-		await waitForSpinnerGone();
-		await page.locator(`${InvoicesPage.addTagsDropdownCss} input`).first().focus().catch(() => {});
-		await page.keyboard.press('ArrowDown').catch(() => {});
-		await page.waitForTimeout(800);
-	}
-	if (await option.first().isVisible().catch(() => false)) {
-		await option.nth(index).click({ force: true }).catch(() => {});
-	} else {
-		await page.keyboard.press('Escape').catch(() => {});
-	}
+	// Routed through the ONE shared ng-select driver (tests/support/ng-select.ts). It counts only REAL
+	// options: a bare `div.ng-option` ALSO matches ng-select's disabled "No items found" / "Loading…"
+	// rows, so the old wait-then-click was satisfied by an EMPTY list and then clicked a row ng-select
+	// ignores — a silent no-op that left this field unset. It re-opens the panel via the control's own
+	// container until real options render (NEVER Escape: nb-dialog opens with closeOnEsc and that closed
+	// the whole form), and it confirms the pick against `div.ng-value`, the only node that exists once a
+	// value is really bound. Still best-effort — the tag is optional here — but it can no longer
+	// half-succeed, and it can no longer kill the dialog on a slow list.
+	await selectNgOption(InvoicesPage.addTagsDropdownCss, InvoicesPage.tagsDropdownOption, index);
 };
 
 export const clickCardBody = async () => {
@@ -120,11 +112,19 @@ export const selectContactFromDropdown = async (nameOrIndex: string | number) =>
 	// is set (else it toasts "NOT_LINKED" and never sends), and the popover Send button is [disabled]="!canBeSend"
 	// which is false when the row has no toContact. A silent mis-pick here => the invoice stays DRAFT and
 	// verifySentBadgeClass times out three steps later. So confirm the label, and re-pick if it didn't take.
-	const control = page.locator(InvoicesPage.organizationContactDropdownCss).first();
+	//
+	// VERIFY AGAINST div.ng-value, NOT the control's own text. Reading `control.innerText()` back is the
+	// self-validating trap: ng-select renders its OPEN PANEL inside the <ng-select> element unless the app
+	// sets appendTo="body", and the step immediately before this typeahead-filters the panel down to the
+	// wanted contact — so the check would be satisfied by the option it just typed, and report a commit
+	// while nothing was selected. (It only holds today because contact-select.component.html happens to
+	// carry appendTo="body" — an app-side detail no spec should depend on.) `div.ng-value` is the value
+	// container ng-select writes ONLY once a value is really bound, so it cannot be satisfied by the panel.
+	const values = committedValues(InvoicesPage.organizationContactDropdownCss);
 	const committed = async () =>
 		byName
-			? (await control.innerText().catch(() => '')).toLowerCase().includes(String(nameOrIndex).toLowerCase())
-			: (await control.locator('.ng-value').count().catch(() => 0)) > 0;
+			? (await values.first().innerText().catch(() => '')).toLowerCase().includes(String(nameOrIndex).toLowerCase())
+			: (await values.count().catch(() => 0)) > 0;
 
 	for (let attempt = 0; attempt < 3; attempt++) {
 		for (let i = 0; i < 6; i++) {

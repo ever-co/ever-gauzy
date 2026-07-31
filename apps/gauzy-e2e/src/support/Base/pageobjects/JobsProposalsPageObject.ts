@@ -20,5 +20,10 @@ export const JobsProposalsPage = {
 	confirmFirstDialogButtonCss: 'ngx-confirm nb-card-footer button[status="primary"]',
 	confirmDeleteButtonCss: 'ga-delete-confirmation nb-card-footer button[status="danger"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyProposalCss: 'div.ng-star-inserted'
+	// Scope the row assertions to the GRID (mirrors ProposalsPageObject). 'div.ng-star-inserted' matched
+	// every Angular-inserted div on the page, so "the proposal exists" could be satisfied by anything the
+	// create/edit dialog still had mounted — the proposal's own form, an ng-select label, a chip — rather
+	// than by a committed row. The mirror assertion 'is it deleted?' is weakened the same way: it passes
+	// as soon as the text disappears from ANY div, grid included or not.
+	verifyProposalCss: 'angular2-smart-table'
 };
