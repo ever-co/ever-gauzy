@@ -1,6 +1,11 @@
 <div class="avatar-container">
   @if (rowData?.createdByUser; as createdByUser) {
-    <a class="avatar" [nbTooltip]="createdByUser.name" (click)="edit(createdByUser.id)">
+    <a
+      class="avatar"
+      [class.is-link]="!!employeeId(createdByUser)"
+      [nbTooltip]="createdByUser.name"
+      (click)="edit(createdByUser)"
+    >
       <img class="img" type="createdByUser" [src]="createdByUser.imageUrl" />
       <div class="names-wrapper">{{ createdByUser.name }}</div>
     </a>
