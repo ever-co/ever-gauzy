@@ -122,14 +122,21 @@ When('I delete the expense', async () => {
 	await expensesPage.verifyElementIsDeleted();
 });
 
+// RUN-UNIQUE category name. POST /api/expense-categories is guarded by
+// IsExpenseCategoryAlreadyExist, so re-using the FIXED name against this suite's one accumulating
+// database means every run after the first is rejected — and verifyCategoryExists then passes on the
+// LEFTOVER row, so the step asserts nothing. Same trap that made organization-teams fail. (The
+// EXPENSE above still picks the stock ExpensePageData.defaultCategory; only the category CREATED
+// here needs to be unique.)
 When('I add a new expense category', async () => {
+	const categoryName = `${ExpensePageData.defaultCategory} ${faker.string.alphanumeric(6)}`;
 	await expensesPage.waitMessageToHide();
 	await expensesPage.manageCategoriesButtonVisible();
 	await expensesPage.clickManageCategoriesButton();
 	await expensesPage.addExpenseButtonVisible();
 	await expensesPage.clickAddExpenseButton();
 	await expensesPage.newCategoryInputVisible();
-	await expensesPage.enterNewCategoryInputData(ExpensePageData.defaultCategory);
+	await expensesPage.enterNewCategoryInputData(categoryName);
 	await expensesPage.tagsDropdownVisible();
 	await expensesPage.clickTagsDropdown();
 	await expensesPage.selectTagFromDropdown(0);
@@ -137,7 +144,7 @@ When('I add a new expense category', async () => {
 	await expensesPage.clickKeyboardButtonByKeyCode(9);
 	await expensesPage.SaveCategoryButtonVisible();
 	await expensesPage.clickSaveCategoryButton();
-	await expensesPage.verifyCategoryExists(ExpensePageData.defaultCategory);
+	await expensesPage.verifyCategoryExists(categoryName);
 	await expensesPage.backButtonVisible();
 	await expensesPage.clickBackButton();
 });
