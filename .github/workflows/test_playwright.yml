@@ -352,9 +352,20 @@ jobs:
         shell: bash
         # The k8s ARC container runners' system npm prefix (/usr/lib) is root-owned and there
         # is no sudo - route npm -g installs to a user-writable prefix (harmless on VM runners).
+        #
+        # Retried because a single failed request here costs the whole shard: in run
+        # 30646106163 shard 3 died with
+        #   npm error network request to https://registry.npmjs.org/forever failed
+        # before a single test ran, while the other three shards completed. Registry blips
+        # on these runners are common enough that one attempt is not worth a lost shard.
         run: |
           npm config set prefix "$HOME/.npm-global"
-          npm install forever -g
+          for attempt in 1 2 3; do
+            npm install forever -g && break
+            echo "::warning::npm install forever -g failed (attempt ${attempt}/3)"
+            [ "$attempt" = 3 ] && exit 1
+            sleep $((attempt * 10))
+          done
 
       - name: Add npm global bin to PATH
         shell: bash
