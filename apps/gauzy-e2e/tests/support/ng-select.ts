@@ -69,9 +69,6 @@ const REAL_OPTION_GRACE = 8_000;
 export const realOptionSelector = (selector: string): string =>
 	selector.replace(/\.ng-option(?![\w-])(?!:not\(\.ng-option-disabled\))/g, '.ng-option:not(.ng-option-disabled)');
 
-/** Does this selector address ng-select options at all? (Nebular `nb-option` selectors do not.) */
-export const isNgOptionSelector = (selector: string): boolean => realOptionSelector(selector) !== selector;
-
 /** Locator for the REAL options of an ng-select — placeholders excluded. */
 export const realOptions = (optionSelector: string) => getPage().locator(realOptionSelector(optionSelector));
 
