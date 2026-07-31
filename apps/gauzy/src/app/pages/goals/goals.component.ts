@@ -39,7 +39,9 @@ import {
 	NbSpinnerModule,
 	NbProgressBarModule,
 	NbAccordionModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbPopoverModule,
+	NbListModule
 } from '@nebular/theme';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { GoalsComponentsModule } from './goals-components.module';
@@ -62,6 +64,9 @@ import { GauzyButtonActionModule } from '@gauzy/ui-core/shared';
 		NbProgressBarModule,
 		NbAccordionModule,
 		NbTooltipModule,
+		// `[nbPopover]` drives the Add Objective / Group By / Filter menus, whose bodies are `nb-list`s.
+		NbPopoverModule,
+		NbListModule,
 		SharedModule,
 		GauzyButtonActionModule
 	]
@@ -144,6 +149,17 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		return this.goals.filter((goal) =>
 			this.objectiveGroup === 'timeFrames' ? goal.deadline === group : goal.level === group
 		);
+	}
+
+	/**
+	 * Position of the given objective in `goals`.
+	 *
+	 * The template iterates a *group* (a filtered slice of `goals`), so its `$index` is group-local
+	 * while every handler indexes into `goals` — passing the loop index therefore addressed the
+	 * wrong objective as soon as more than one group was rendered.
+	 */
+	goalIndex(goal: IGoal): number {
+		return this.goals.indexOf(goal);
 	}
 
 	ngOnInit() {
@@ -283,7 +299,9 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 	}
 
 	async addKeyResult(index?, isAdd?) {
-		index = index ? index : this.selectedKeyResult.index;
+		// `index` is 0 for the first objective, so it must be nullish-checked — `index ? … : …`
+		// discarded it and fell back to an unset `selectedKeyResult.index`.
+		index = index ?? this.selectedKeyResult.index;
 		const keyResult = isAdd ? null : this.selectedKeyResult.data;
 		if (!keyResult && this.goalGeneralSettings?.maxKeyResults <= this.goals[index].keyResults.length) {
 			this.toastrService.info(

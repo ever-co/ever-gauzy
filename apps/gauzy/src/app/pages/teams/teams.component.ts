@@ -210,7 +210,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.EDIT_EXISTING_TEAM', {
 					name: team.name
 				});
-				this.clearItem();
+				this.closeDialog();
 				this._refresh$.next(true);
 				this.teams$.next(true);
 			} catch (error) {
@@ -223,7 +223,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM', {
 					name: team.name
 				});
-				this.clearItem();
+				this.closeDialog();
 				this._refresh$.next(true);
 				this.teams$.next(true);
 			} catch (error) {
@@ -498,6 +498,10 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 
 	/*
 	 * Clear selected item
+	 *
+	 * NOTE: this runs on every `teams$` emission (grid refresh), so it must never touch the
+	 * add/edit dialog — closing it here destroyed the form the user was still filling in.
+	 * Use `closeDialog()` for the explicit save/cancel paths instead.
 	 */
 	clearItem() {
 		this.selected = {
@@ -506,7 +510,15 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 		};
 		this.selectedTeam = null;
 		this.disableButton = true;
+	}
+
+	/*
+	 * Close the add/edit dialog and clear the selected item
+	 */
+	closeDialog() {
 		this.addEditDialogRef?.close();
+		this.addEditDialogRef = null;
+		this.clearItem();
 	}
 
 	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {

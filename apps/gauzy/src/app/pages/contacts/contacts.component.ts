@@ -515,7 +515,12 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		if (!this.organization) {
 			return;
 		}
-		this.loading = true;
+		/**
+		 * The card spinner belongs to the grid and is only ever cleared by the smart table's `finalize`
+		 * hook. While the add/edit form is showing, the grid is unmounted and that hook can never run,
+		 * so raising the spinner here would strand it on top of the form and swallow every click.
+		 */
+		this.loading = !this.showAddCard;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		try {

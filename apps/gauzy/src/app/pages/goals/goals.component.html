@@ -32,10 +32,10 @@
 			<div>
 				@if (noGoals === false) {
 				<h6>{{ group }}</h6>
-				} @for (goal of goalsForGroup(group); track goal.id; let index = $index) {
+				} @for (goal of goalsForGroup(group); track goal.id) {
 				<nb-accordion class="my-3">
 					<nb-accordion-item>
-						<nb-accordion-item-header (click)="onClickObjective(goal, index)">
+						<nb-accordion-item-header (click)="onClickObjective(goal, goalIndex(goal))">
 							<div class="w-100 d-flex align-items-center justify-content-between">
 								{{ goal.name }}
 								<div class="w-25 d-flex align-items-center mr-5 ml-5">
@@ -62,7 +62,7 @@
 							"
 						>
 							<div
-								(click)="onClickKeyResult(keyResult, index)"
+								(click)="onClickKeyResult(keyResult, goalIndex(goal))"
 								class="w-100 d-flex align-items-center justify-content-between keyResult"
 							>
 								{{ keyResult.name }}
@@ -99,7 +99,7 @@
 								class="gen"
 								outline
 								size="small"
-								(click)="addKeyResult(index, true)"
+								(click)="addKeyResult(goalIndex(goal), true)"
 							>
 								<nb-icon icon="plus-outline"></nb-icon>
 								{{ 'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate }}
