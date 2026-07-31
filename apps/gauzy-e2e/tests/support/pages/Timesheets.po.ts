@@ -278,12 +278,37 @@ const toolbarBtnReady = async (toolbarBtnCss: string): Promise<boolean> => {
 //     (its close passes null, which openView() filters out) — so the row stays selected going into the
 //     Edit step. Clicking an already-selected row would DESELECT it and the Edit button would vanish.
 //     Hence: only click the row when the toolbar button isn't already ready; never blindly re-click.
+/**
+ * Make sure the daily view has actually queried for the log we just created.
+ *
+ * The daily component refreshes `logs$` when the Add Time dialog closes, and that refresh can race the
+ * write. In the run this was diagnosed from, POST /api/timesheet/time-log returned 201 and a GET of the
+ * same day DID return the log — yet the grid was still rendering its "No Data" empty state, so there
+ * was no row to select and the click timed out. A reload re-runs the query.
+ *
+ * Bounded, and keyed on OUR row appearing rather than on time: if the log genuinely is not there the
+ * caller's own assertion still fails, and if the row is already rendered this costs nothing.
+ */
+const ensureOurRowRendered = async () => {
+	const page = getPage();
+	const ours = page.locator(TimesheetsPage.timeLogRowCss).filter({ hasText: TimesheetsPageData.defaultDescription });
+	for (let attempt = 0; attempt < 2; attempt++) {
+		if ((await ours.count().catch(() => 0)) > 0) return;
+		await page.reload();
+		await page.waitForTimeout(1500);
+		await waitForSpinnerGone();
+		await page.waitForLoadState('networkidle').catch(() => {});
+		await page.waitForTimeout(1500);
+	}
+};
+
 const selectRowFor = async (toolbarBtnCss: string) => {
 	await waitForSpinnerGone();
 	await getPage().waitForLoadState('networkidle').catch(() => {});
 	await getPage().waitForTimeout(1500);
 	// Already selected (e.g. left selected after the View dialog closed)? Don't toggle it off.
 	if (await toolbarBtnReady(toolbarBtnCss)) return;
+	await ensureOurRowRendered();
 	const ours = getPage()
 		.locator(TimesheetsPage.timeLogRowCss)
 		.filter({ hasText: TimesheetsPageData.defaultDescription })

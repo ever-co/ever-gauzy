@@ -54,6 +54,13 @@ export const GoalsPage = {
 	weightTypeButtonCss: '.gauzy-button-container button.action:has(i.fa-percentage)',
 	weightParameterDropdownCss: '#key-result-weight',
 	saveDeadlineButtonCss: 'div.d-flex > button[status="success"]',
+	// The key-result UPDATE dialog (ga-keyresult-update) opens ON TOP of the key-result DETAILS dialog
+	// (ga-keyresult-details), so both are mounted at once and the bare footer / `div.d-flex` selectors
+	// above are ambiguous. Scope each control to its own dialog component.
+	keyResultUpdateDialogCss: 'ga-keyresult-update',
+	keyResultUpdateConfirmCss: 'ga-keyresult-update nb-card-footer > button[status="success"]',
+	keyResultDetailsDialogCss: 'ga-keyresult-details',
+	keyResultDetailsSaveCss: 'ga-keyresult-details div.d-flex > button[status="success"]',
 	progressBarCss: '.goals-container nb-progress-bar',
 	verifyGoalCss: '.goals-container nb-accordion-item-header',
 	// POLLUTION RESILIENCE: the shared seed/serial run can carry objectives from earlier specs, so a

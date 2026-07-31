@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { expect } from '@playwright/test';
 import {
 	enterInput,
 	verifyElementIsVisible,
@@ -527,12 +528,54 @@ export const enterUpdatedValueData = async (data) => {
 	await input.fill(String(data));
 };
 
+/**
+ * Confirm the key-result UPDATE dialog.
+ *
+ * Two things made the generic confirm silently no-op here, leaving BOTH the update dialog and the
+ * details dialog underneath it stacked over the page — which is why the next step could not reach the
+ * toolbar and `#key-result-weight` never appeared:
+ *
+ *  - the update dialog opens on top of the details dialog, so both are mounted and the generic
+ *    `nb-card-footer > button[status="success"]` is ambiguous; and
+ *  - the Update button is `[disabled]="!keyResultUpdateForm.valid"`, and a DISPATCHED click on a
+ *    disabled nbButton is swallowed by Nebular's own host listener (preventDefault +
+ *    stopImmediatePropagation), so it fires nothing at all and reports no error.
+ *
+ * Scope to the update dialog, wait for the button to actually be enabled, then prove the dialog went
+ * away rather than assuming it did.
+ */
+export const confirmUpdateKeyResultVisible = async () => {
+	await verifyElementIsVisible(GoalsPage.keyResultUpdateConfirmCss);
+};
+
+export const clickConfirmUpdateKeyResult = async () => {
+	const page = getPage();
+	const button = page.locator(GoalsPage.keyResultUpdateConfirmCss).first();
+	await expect(button).toBeEnabled({ timeout: 24_000 });
+	await waitForSpinnerGone();
+	await button.dispatchEvent('click').catch(() => {});
+	await page
+		.locator(GoalsPage.keyResultUpdateDialogCss)
+		.first()
+		.waitFor({ state: 'detached', timeout: 12_000 })
+		.catch(() => {});
+};
+
 export const saveDeadlineButtonVisible = async () => {
-	await verifyElementIsVisible(GoalsPage.saveDeadlineButtonCss);
+	await verifyElementIsVisible(GoalsPage.keyResultDetailsSaveCss);
 };
 
 export const clickSaveDeadlineButton = async () => {
-	await clickButton(GoalsPage.saveDeadlineButtonCss);
+	// Scoped to the DETAILS dialog (see above) and verified closed, so the next step's toolbar is
+	// actually reachable instead of sitting behind two leftover overlays.
+	const page = getPage();
+	await waitForSpinnerGone();
+	await dispatchClick(GoalsPage.keyResultDetailsSaveCss);
+	await page
+		.locator(GoalsPage.keyResultDetailsDialogCss)
+		.first()
+		.waitFor({ state: 'detached', timeout: 12_000 })
+		.catch(() => {});
 };
 
 export const weightTypeButtonVisible = async () => {

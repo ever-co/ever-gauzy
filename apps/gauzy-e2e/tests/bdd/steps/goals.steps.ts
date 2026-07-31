@@ -87,8 +87,10 @@ When('I add a new deadline to the key result', async () => {
 	await goalsPage.clickAddDeadlineButton();
 	await goalsPage.updatedValueInputVisible();
 	await goalsPage.enterUpdatedValueData(1);
-	await goalsPage.confirmButtonVisible();
-	await goalsPage.clickConfirmButton();
+	// Dialog-scoped: the update dialog is stacked on the details dialog, so the generic confirm/save
+	// selectors are ambiguous and were leaving both overlays open over the toolbar the next step needs.
+	await goalsPage.confirmUpdateKeyResultVisible();
+	await goalsPage.clickConfirmUpdateKeyResult();
 	await goalsPage.saveDeadlineButtonVisible();
 	await goalsPage.clickSaveDeadlineButton();
 });
