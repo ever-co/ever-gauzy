@@ -1,5 +1,5 @@
 @use 'gauzy/_gauzy-table' as *;
-@use '../tabset-actions' as *;
+@use 'gauzy/tabset-actions' as *;
 
 :host {
   nb-tabset {
