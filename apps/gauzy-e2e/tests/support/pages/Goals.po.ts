@@ -219,7 +219,7 @@ const createTimeFrameFromObjectiveForm = async () => {
 	await enterInput(GoalsPage.timeFrameStartDateCss, dayjs().startOf('year').format('MMM D, YYYY'));
 	await clearField(GoalsPage.timeFrameEndDateCss);
 	await enterInput(GoalsPage.timeFrameEndDateCss, dayjs().endOf('year').format('MMM D, YYYY'));
-	// Commit the last date field so the reactive form revalidates and Save enables.
+	// Commit the last date field so the reactive form re-validates and Save enables.
 	await page.keyboard.press('Tab').catch(() => {});
 	await waitForSpinnerGone();
 	await clickButton(GoalsPage.timeFrameSaveButtonCss);
