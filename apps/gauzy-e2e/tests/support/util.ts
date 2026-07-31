@@ -99,6 +99,39 @@ export const dispatchClickWhenSettled = async (selector: string, confirmSelector
 	}
 };
 
+/**
+ * Set an angular2-smart-table column filter and make it stick.
+ *
+ * The filter cell is
+ *   `<input [value]="query" (change)="onValueChanged(...)" (keyup)="onValueChanged(...)">`
+ * It never listens for 'input' — which is the only event `.fill()` dispatches — so a plain fill puts
+ * text in the box and filters nothing: the grid keeps paging over every row and the record the spec
+ * just created stays on page 2, never rendered and so never found. Typing character by character
+ * instead races the debounced refetch, which writes `query` straight back into [value] and eats
+ * keystrokes (a 27-character company name came out with 9 characters missing).
+ *
+ * So: fill the whole value in one shot, dispatch the 'change' the component actually subscribes to,
+ * let the debounced refetch land, then read the value back and retry if a re-render clobbered it.
+ */
+export const applySmartTableFilter = async (selector: string, value: string, attempts = 4) => {
+	const page = getPage();
+	for (let attempt = 0; attempt < attempts; attempt++) {
+		await waitForSpinnerGone();
+		const input = loc(selector).first();
+		await input.waitFor({ state: 'visible', timeout: defaultCommandTimeout });
+		await input.fill(String(value));
+		await input.dispatchEvent('change');
+		await page.waitForTimeout(1200); // debounced refetch
+		await waitForSpinnerGone();
+		await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+		const current = await loc(selector)
+			.first()
+			.inputValue()
+			.catch(() => '');
+		if (current === String(value)) return;
+	}
+};
+
 export const clickElementByText = async (selector: string, data: string) =>
 	// force + taskTimeout to match clickButton: several flows leave a fading nb-dialog backdrop
 	// (cdk-overlay-backdrop) that intercepts pointer events; the element is present and correct, the

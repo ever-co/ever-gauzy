@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import {
+	applySmartTableFilter,
 	clearField,
 	clickButton,
 	clickByText,
@@ -14,7 +15,6 @@ import {
 	verifyText,
 	getLastElement
 } from '../util';
-import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { OrganizationPublicPage } from '../../../src/support/Base/pageobjects/OrganizationPublicPagePageObject';
 
@@ -36,16 +36,10 @@ export const organizationNameFilterInputVisible = async () => {
 };
 
 export const enterOrganizationNameFilterInputData = async (name: string) => {
-	// This is angular2-smart-table's InputFilterComponent:
-	//   <input [value]="query" (change)="onValueChanged(...)" (keyup)="onValueChanged(...)">
-	// It never listens for 'input', which is the only event .fill() dispatches — so the plain
-	// enterInput() left the grid unfiltered, the freshly created organization stayed off page 1, and
-	// the profile-link flow silently fell into its best-effort catch. Fill, then dispatch the 'change'
-	// the component actually subscribes to.
-	const input = getPage().locator(OrganizationPublicPage.nameFilterInputCss).first();
-	await input.fill(String(name));
-	await input.dispatchEvent('change');
-	await waitUntil(2000);
+	// The plain enterInput() (.fill()) left the grid unfiltered — see applySmartTableFilter — so the
+	// freshly created organization stayed off page 1 and the profile-link flow silently fell into its
+	// best-effort catch.
+	await applySmartTableFilter(OrganizationPublicPage.nameFilterInputCss, name);
 };
 
 export const verifyOrganizationNameTableRowContains = async (text: string) => {

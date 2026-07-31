@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { verifyElementIsVisible, dispatchClick, waitForSpinnerGone } from '../util';
+import { applySmartTableFilter, verifyElementIsVisible, dispatchClick, waitForSpinnerGone } from '../util';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { DeleteOrganizationPage } from '../../../src/support/Base/pageobjects/DeleteOrganizationPageObject';
@@ -49,38 +49,13 @@ export const confirmBtnClick = async () => {
 	await dispatchClick(DeleteOrganizationPage.confirmDeleteCss);
 };
 
-const nameFilterInput = () => getPage().locator(DeleteOrganizationPage.nameFilterInputCss).first();
-
 /**
  * Narrow the grid via the Name column filter. `term` should be a short unique token, not a whole
- * company name (see the step file) — the filter is a substring match, so a token is enough.
- *
- * angular2-smart-table's InputFilterComponent is
- *   `<input [value]="query" (change)="onValueChanged(...)" (keyup)="onValueChanged(...)">`
- * — it reacts to keyup/change, never to 'input', and the debounced refetch writes `query` straight
- * back into [value]. Typing character by character therefore races the write-back and leaves a
- * mangled value — a 27-character company name came out with 9 characters missing and matched nothing.
- * Set the whole value in one shot with fill() and then dispatch the 'change' the component listens
- * for: atomic, so there is no window for the write-back to eat characters.
+ * company name (see the step file) — the filter is a substring match, so a token is enough, and the
+ * shorter the term the less there is for a mid-entry re-render to mangle.
  */
 export const searchOrganizationByName = async (term: string) => {
-	const page = getPage();
-	await waitForSpinnerGone();
-	await page.waitForLoadState('networkidle').catch(() => {});
-	await expect(nameFilterInput()).toBeVisible({ timeout: 24_000 });
-
-	for (let attempt = 0; attempt < 4; attempt++) {
-		const input = nameFilterInput();
-		await input.fill(String(term)).catch(() => {});
-		await input.dispatchEvent('change').catch(() => {});
-		// Filtering is debounced; let the grid repaint before reading the value back.
-		await page.waitForTimeout(1200);
-		await waitForSpinnerGone();
-		const current = await nameFilterInput()
-			.inputValue()
-			.catch(() => '');
-		if (current === String(term)) return;
-	}
+	await applySmartTableFilter(DeleteOrganizationPage.nameFilterInputCss, term);
 };
 
 /**
