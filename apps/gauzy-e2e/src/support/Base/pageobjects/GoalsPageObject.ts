@@ -17,7 +17,16 @@ export const GoalsPage = {
 	// ['', Validators.required]); without picking one the Save button stays disabled and no goal is
 	// created. The seed always provides active future time frames (Annual-<year> + quarters), so the
 	// select renders options under `.option-list nb-option`.
+	// NOTE: `#objective-deadline` is TWO different controls in edit-objective.component.html — an
+	// nb-select when the organization has time frames, and a plain "Add Time Frame" button when it has
+	// none (the id is reused). Goals.po handles both.
 	deadlineDropdownCss: '#objective-deadline',
+	// EditTimeFrameComponent, opened by that button (and reused by the Goals settings page).
+	timeFrameDialogCss: 'ga-edit-time-frame',
+	timeFrameNameInputCss: 'ga-edit-time-frame #time-frame-title',
+	timeFrameStartDateCss: 'ga-edit-time-frame #start-date',
+	timeFrameEndDateCss: 'ga-edit-time-frame #end-date',
+	timeFrameSaveButtonCss: 'ga-edit-time-frame nb-card-footer > button[status="success"]',
 	// The selectable key-result ROW inside the expanded accordion body — clicking it fires
 	// onClickKeyResult, which selects the key result so the toolbar swaps to the key-result actions
 	// (View / Edit / Weight%). The "Add new Key Result" body button is a sibling without this class.

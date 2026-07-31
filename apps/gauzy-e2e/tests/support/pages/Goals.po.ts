@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
 	enterInput,
 	verifyElementIsVisible,
@@ -189,6 +190,44 @@ export const clickDeadlineDropdown = async () => {
 	await clickButton(GoalsPage.deadlineDropdownCss);
 };
 
+/**
+ * Create a goal time frame from inside the objective form.
+ *
+ * edit-objective.component.html renders `#objective-deadline` as an nb-select ONLY when
+ * `timeFrames.length > 0`; with zero time frames the SAME id is a plain "Add Time Frame" button that
+ * opens the EditTimeFrame dialog. So on an organization with no time frames, clickDeadlineDropdown()
+ * opens that dialog instead of an option list, and waiting for `.option-list nb-option` can only time
+ * out. The organization really can have none: goals-time-frame (which runs just before this spec)
+ * creates one and deletes it again, and the database has no seeded frames — `select count(*) from
+ * goal_time_frame` was 0 on the run this was diagnosed from.
+ *
+ * Fill the dialog the app itself opened. The dates matter: the later "add new deadline" step needs a
+ * frame that started in the PAST and ends in the FUTURE (key-result-details hides its update button
+ * unless both hold), so use the whole current year, which is also the shape of the seeded
+ * "Annual-<year>" frame this page object already prefers.
+ */
+const createTimeFrameFromObjectiveForm = async () => {
+	const page = getPage();
+	const dialog = page.locator(GoalsPage.timeFrameDialogCss).first();
+	await dialog.waitFor({ state: 'visible', timeout: 12_000 });
+
+	const year = new Date().getFullYear();
+	await clearField(GoalsPage.timeFrameNameInputCss);
+	await enterInput(GoalsPage.timeFrameNameInputCss, `Annual-${year}`);
+	await clearField(GoalsPage.timeFrameStartDateCss);
+	await enterInput(GoalsPage.timeFrameStartDateCss, dayjs().startOf('year').format('MMM D, YYYY'));
+	await clearField(GoalsPage.timeFrameEndDateCss);
+	await enterInput(GoalsPage.timeFrameEndDateCss, dayjs().endOf('year').format('MMM D, YYYY'));
+	// Commit the last date field so the reactive form revalidates and Save enables.
+	await page.keyboard.press('Tab').catch(() => {});
+	await waitForSpinnerGone();
+	await clickButton(GoalsPage.timeFrameSaveButtonCss);
+	// The dialog resolves and edit-objective re-runs getTimeFrames(), which swaps the button for the
+	// nb-select — wait for it to go before reopening the (now real) dropdown.
+	await dialog.waitFor({ state: 'detached', timeout: 12_000 }).catch(() => {});
+	await page.waitForTimeout(800);
+};
+
 export const selectDeadlineFromDropdown = async (index) => {
 	// Deadline is a plain nb-select bound via formControlName, so picking any option both fills the
 	// required control and enables Save.
@@ -203,7 +242,24 @@ export const selectDeadlineFromDropdown = async (index) => {
 	// Dec 31 (future) for the whole current year, so it is ALWAYS updatable. Prefer it; fall back to nth().
 	const page = getPage();
 	const option = page.locator(GoalsPage.dropdownOptionCss);
-	await option.first().waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
+	const optionsRendered = await option
+		.first()
+		.waitFor({ state: 'visible', timeout: 8000 })
+		.then(() => true)
+		.catch(() => false);
+
+	if (!optionsRendered) {
+		// No option list: the organization has no time frames, so the click landed on the
+		// "Add Time Frame" button and opened its dialog. Create the frame, then reopen the control —
+		// which is an nb-select now that timeFrames is non-empty.
+		await createTimeFrameFromObjectiveForm();
+		await clickButton(GoalsPage.deadlineDropdownCss);
+		await option
+			.first()
+			.waitFor({ state: 'visible', timeout: 12_000 })
+			.catch(() => {});
+	}
+
 	const annual = option.filter({ hasText: 'Annual' }).first();
 	if (await annual.isVisible().catch(() => false)) {
 		await annual.click({ force: true });

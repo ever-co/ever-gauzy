@@ -31,12 +31,12 @@ export const employeeDropdownVisible = async () => {
 	await verifyElementIsVisible(RecurringExpensesPage.employeeDropdownCss);
 };
 
-export const clickEmployeeDropdown = async () => {
-	// ng-select opens on MOUSEDOWN and is blocked by the dialog/overlay backdrop, so a force-click on the
-	// control is unreliable (and can land on the backdrop). Open it via the keyboard instead: focus the
-	// inner input and press ArrowDown. Retry until the option list ('div.ng-option', appendTo="body")
-	// renders, but bail out best-effort — the employee list loads async and can legitimately be EMPTY
-	// (no employee "working" in the header date range); selectEmployeeFromDropdown handles that case.
+// ng-select opens on MOUSEDOWN and is blocked by the dialog/overlay backdrop, so a force-click on the
+// control is unreliable (and can land on the backdrop). Open it via the keyboard instead: focus the
+// inner input and press ArrowDown. Retry until the option list ('div.ng-option', appendTo="body")
+// renders, but bail out best-effort — the employee list loads async and can legitimately be EMPTY
+// (no employee "working" in the header date range); selectEmployeeFromDropdown handles that case.
+const openEmployeeDropdown = async () => {
 	const page = getPage();
 	const options = page.locator(RecurringExpensesPage.dropdownOptionCss);
 	const input = page.locator(RecurringExpensesPage.employeeDropdownCss).locator('input').first();
@@ -48,24 +48,44 @@ export const clickEmployeeDropdown = async () => {
 	}
 };
 
+export const clickEmployeeDropdown = async () => {
+	await openEmployeeDropdown();
+};
+
 export const selectEmployeeFromDropdown = async (index) => {
-	// Best-effort employee pick (mirrors ContactsLeads.selectEmployeeDropdownOption): the option list
-	// loads async and can be empty. The first option is the "All Employees" pseudo-entry, which has no
-	// real id and makes the create fail, so prefer the first REAL employee. If nothing renders within a
-	// short wait, press Escape and continue — the selector keeps its [defaultSelected]="true" employee,
-	// so the expense still saves. Avoids a 60s hang on an empty list.
+	// Pick the first REAL employee: the leading "All Employees" pseudo-entry has no id, and
+	// recurring-expense-mutation sends `employee = employeeSelector.selectedEmployee` straight into the
+	// payload, so leaving it on ALL posts employeeId:null and the API 400s with
+	// "employeeId must be a string" — a rejection the spec then only notices three steps later as a
+	// missing row.
+	//
+	// The click alone is not proof: this is an appendTo="body" ng-select whose panel is re-rendered as
+	// the async employee list settles, so a click can land on a node that is being replaced and the
+	// selection never commits (that is exactly the 400 above — the option was clicked, employeeId was
+	// still null at save). Read the chosen name back off the control and retry until it sticks.
 	void index;
 	const page = getPage();
-	const realEmployee = page
-		.locator(RecurringExpensesPage.dropdownOptionCss)
-		.filter({ hasNotText: 'All Employees' });
-	try {
-		await realEmployee.first().waitFor({ state: 'visible', timeout: 8000 });
-		await realEmployee.first().click({ force: true });
-		// Let the ng-select commit the selection (close + write the form value).
-		await page.waitForTimeout(500);
-	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
+	const control = page.locator(RecurringExpensesPage.employeeDropdownCss).first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		const realEmployee = page
+			.locator(RecurringExpensesPage.dropdownOptionCss)
+			.filter({ hasNotText: 'All Employees' })
+			.first();
+		try {
+			await realEmployee.waitFor({ state: 'visible', timeout: 8000 });
+		} catch {
+			// Panel not open (or the list is genuinely empty for this date range) — try to reopen once
+			// more; on the last attempt fall through so the caller's own assertions report the state.
+			await page.keyboard.press('Escape').catch(() => {});
+			await openEmployeeDropdown();
+			continue;
+		}
+		const wanted = ((await realEmployee.textContent().catch(() => '')) || '').replace(/\s+/g, ' ').trim();
+		await realEmployee.click({ force: true }).catch(() => {});
+		await page.waitForTimeout(600); // let ng-select close and write the value
+		const shown = ((await control.textContent().catch(() => '')) || '').replace(/\s+/g, ' ').trim();
+		if (wanted && shown.includes(wanted)) return; // committed
+		await openEmployeeDropdown();
 	}
 };
 

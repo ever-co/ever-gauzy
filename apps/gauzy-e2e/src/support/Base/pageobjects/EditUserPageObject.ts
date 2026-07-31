@@ -1,6 +1,11 @@
 export const EditUserPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
+	// Full Name column filter input in the users smart-table header (tr.angular2-smart-filters). The
+	// shared serial DB accumulates users (seed admin + every faker user/employee earlier specs create),
+	// so the grid paginates at 10 and the user this spec just added lands on page 2 — not rendered, so
+	// neither the by-name verify nor the row click can find it. Same column key as RemoveUserPageObject.
+	nameFilterInputCss: 'th.angular2-smart-th.fullName input',
 	editButtonCss: 'button:has(nb-icon[icon="edit-outline"])',
 	orgTabButtonCss: 'ul.route-tabset > li > a.tab-link',
 	addOrgButtonCss: 'nb-card-header > button[status="success"]',

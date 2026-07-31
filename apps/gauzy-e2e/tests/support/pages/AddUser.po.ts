@@ -7,7 +7,8 @@ import {
 	verifyText,
 	waitElementToHide,
 	waitUntil,
-	dispatchClickWhenSettled
+	dispatchClickWhenSettled,
+	applySmartTableFilter
 } from '../util';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { AddUserPage } from '../../../src/support/Base/pageobjects/AddUserPageObject';
@@ -21,6 +22,12 @@ export const clickAddUserButton = async () => {
 	// the grid loads, so the old coordinate force-click was eaten and #firstName never appeared.
 	// Settle, dispatch at the button, confirm the mutation dialog opened.
 	await dispatchClickWhenSettled(AddUserPage.addUserButtonCss, AddUserPage.firstNameInputCss);
+};
+
+// Narrow the users grid to one full name so the user just created is the only data row on page 1.
+// Without it verifyUserExists asserts against page 1 of a grid the new user is not on.
+export const filterByName = async (name: string) => {
+	await applySmartTableFilter(AddUserPage.nameFilterInputCss, name);
 };
 
 export const firstNameInputVisible = async () => {

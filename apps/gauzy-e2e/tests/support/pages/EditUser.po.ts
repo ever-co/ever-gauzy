@@ -1,4 +1,5 @@
 import {
+	applySmartTableFilter,
 	verifyElementIsVisible,
 	verifyElementIsVisibleByIndex,
 	clickButton,
@@ -46,6 +47,13 @@ export const gridButtonVisible = async () => {
 
 export const clickGridButton = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
+};
+
+// Narrow the users grid to one full name so the user this spec created is the only data row on page 1.
+// The grid pages at 10 and the shared serial DB accumulates users, so without this the new user is
+// simply not rendered and both the by-name verify and the row click miss it (mirrors RemoveUser.po).
+export const filterByName = async (name: string) => {
+	await applySmartTableFilter(EditUserPage.nameFilterInputCss, name);
 };
 
 export const tableRowVisible = async () => {
@@ -137,13 +145,22 @@ export const selectOrgDropdownVisible = async () => {
 };
 
 export const clickSelectOrgDropdown = async () => {
-	// nb-select opens on mousedown; a force coordinate-click is reliable here (no leftover dialog
-	// backdrop at this point — the add form just rendered inline). Best-effort: skip if the control
-	// isn't present (empty/closed add form) so we don't burn the 60s task timeout.
+	// Best-effort: skip if the control isn't present (empty/closed add form).
 	const select = getPage().locator(EditUserPage.selectOrgMultiSelectCss).first();
-	if (await select.isVisible().catch(() => false)) {
-		await clickButton(EditUserPage.selectOrgMultiSelectCss);
+	if (!(await select.isVisible().catch(() => false))) return;
+	// DISPATCH, not a coordinate click: the Organizations tab keeps re-rendering the add form while it
+	// settles (debounced showAddCard reset + org-list reload), so a retrying coordinate click sees
+	// "element was detached from the DOM, retrying" over and over and clickButton burns its full 60s
+	// task timeout before throwing. A dispatched click fires nb-select's own handler on whichever
+	// instance is attached right now, and stays best-effort — this whole add-organization sub-flow is
+	// a prerequisite, not the test (orgWasAdded gates everything after it).
+	const toggle = select.locator('button.select-button').first();
+	if ((await toggle.count().catch(() => 0)) > 0) {
+		await toggle.dispatchEvent('click').catch(() => {});
+	} else {
+		await select.dispatchEvent('click').catch(() => {});
 	}
+	await getPage().waitForTimeout(400);
 };
 
 export const clickSelectOrgDropdownOption = async () => {
