@@ -17,6 +17,8 @@
           @if (candidates$ | async; as candidates) {
             @if (candidates.length > 0) {
               <ga-overall-rating-chart [candidates]="candidates"></ga-overall-rating-chart>
+            } @else {
+              <ng-container *ngTemplateOutlet="noCandidates"></ng-container>
             }
           }
         </nb-accordion-item-body>
@@ -32,6 +34,8 @@
                 [candidates]="candidates"
                 [employees]="employees$ | async"
               ></ga-interview-rating-chart>
+            } @else {
+              <ng-container *ngTemplateOutlet="noCandidates"></ng-container>
             }
           }
         </nb-accordion-item-body>
@@ -48,6 +52,8 @@
                 [interviews]="interviews$ | async"
                 [employees]="employees$ | async"
               ></ga-criterions-rating-chart>
+            } @else {
+              <ng-container *ngTemplateOutlet="noCandidates"></ng-container>
             }
           }
         </nb-accordion-item-body>
@@ -63,6 +69,8 @@
                 [candidates]="candidates"
                 [interviews]="interviews$ | async"
               ></ga-average-criterions-rating-chart>
+            } @else {
+              <ng-container *ngTemplateOutlet="noCandidates"></ng-container>
             }
           }
         </nb-accordion-item-body>
@@ -70,3 +78,17 @@
     </nb-accordion>
   </nb-card-body>
 </nb-card>
+
+<!--
+  Shown when the organization has NO candidates at all. Without it each accordion body
+  renders completely empty: the "no data" markup lives INSIDE the chart components, which
+  are themselves behind the `candidates.length > 0` gate, so zero candidates meant four
+  expanded, blank panels rather than an empty state. Same class names as the charts use,
+  so it reads identically and existing selectors still match.
+-->
+<ng-template #noCandidates>
+  <div class="no-data">
+    <nb-icon icon="info-outline" class="no-data-icon"></nb-icon>
+    <span class="no-data-text">{{ 'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate }}</span>
+  </div>
+</ng-template>

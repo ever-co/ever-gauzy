@@ -5,6 +5,7 @@ import { NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { IDateRange } from '@gauzy/contracts';
 import { merge } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
+import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
 @Component({
 	selector: 'ngx-timer-range-picker',
@@ -82,7 +83,41 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	maxSlotEndTime: string;
 	minSlotEndTime: string;
 
-	constructor(private cd: ChangeDetectorRef) {}
+	/**
+	 * True when the host bound `[timezoneOffset]` explicitly (manage-appointment does,
+	 * from the appointment's own timezone). Recorded before the default is applied so
+	 * a supplied offset is never mistaken for a derived one.
+	 */
+	private hasExplicitTimezoneOffset = false;
+
+	constructor(private cd: ChangeDetectorRef, private readonly timeZoneService: TimeZoneService) {}
+
+	/**
+	 * The UTC offset used to turn the picked wall-clock time into an instant.
+	 *
+	 * This used to be the BROWSER's offset (`timezone.tz.guess()`), while every read of
+	 * time logs filters by the configured Gauzy timezone (`TimeZoneService`, consumed in
+	 * `BaseSelectorFilterComponent`). When the two differ, a log created near a day
+	 * boundary is written at an instant that falls outside the day the grid asks for, and
+	 * it silently disappears: the POST returns 201, and the GET that follows comes back
+	 * empty. Deriving from the same service the read path uses keeps write and read on
+	 * one clock.
+	 *
+	 * Resolved per call rather than once, and against the date being edited rather than
+	 * "now", because a zone's offset changes across a DST boundary — asking for today's
+	 * offset while entering time for the other side of that boundary files the log an
+	 * hour out.
+	 *
+	 * @param date - The date the entry is being made for.
+	 * @returns A `±HH:mm` offset string.
+	 */
+	private resolveTimezoneOffset(date: Date | string): string {
+		if (this.hasExplicitTimezoneOffset && this.timezoneOffset) {
+			return this.timezoneOffset;
+		}
+		const on = moment(date ?? new Date()).format('YYYY-MM-DD');
+		return timezone.tz(on, this.timeZoneService.currentTimeZone).format('Z');
+	}
 
 	onChange: any = () => {};
 	onTouched: any = () => {};
@@ -101,14 +136,14 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	}
 
 	ngAfterViewInit() {
-		this.timezoneOffset = this.timezoneOffset || timezone.tz(timezone.tz.guess()).format('Z');
+		this.hasExplicitTimezoneOffset = !!this.timezoneOffset;
 		merge(this.dateModel.valueChanges, this.startTimeModel.valueChanges, this.endTimeModel.valueChanges)
 			.pipe(debounceTime(10))
 			.subscribe((data) => {
-				const start = new Date(
-					moment(this.date).format('YYYY-MM-DD') + ' ' + this.startTime + this.timezoneOffset
-				);
-				const end = new Date(moment(this.date).format('YYYY-MM-DD') + ' ' + this.endTime + this.timezoneOffset);
+				const day = moment(this.date).format('YYYY-MM-DD');
+				const offset = this.resolveTimezoneOffset(this.date);
+				const start = new Date(day + ' ' + this.startTime + offset);
+				const end = new Date(day + ' ' + this.endTime + offset);
 
 				if (this.slotStartTime && this.slotEndTime && this.allowedDuration) {
 					this.minSlotStartTime = moment(this.slotStartTime).clone().format('HH:mm');
