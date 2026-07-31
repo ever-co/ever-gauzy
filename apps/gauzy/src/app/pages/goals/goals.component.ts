@@ -151,6 +151,17 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		);
 	}
 
+	/**
+	 * Position of the given objective in `goals`.
+	 *
+	 * The template iterates a *group* (a filtered slice of `goals`), so its `$index` is group-local
+	 * while every handler indexes into `goals` — passing the loop index therefore addressed the
+	 * wrong objective as soon as more than one group was rendered.
+	 */
+	goalIndex(goal: IGoal): number {
+		return this.goals.indexOf(goal);
+	}
+
 	ngOnInit() {
 		this.store.user$
 			.pipe(
@@ -288,7 +299,9 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 	}
 
 	async addKeyResult(index?, isAdd?) {
-		index = index ? index : this.selectedKeyResult.index;
+		// `index` is 0 for the first objective, so it must be nullish-checked — `index ? … : …`
+		// discarded it and fell back to an unset `selectedKeyResult.index`.
+		index = index ?? this.selectedKeyResult.index;
 		const keyResult = isAdd ? null : this.selectedKeyResult.data;
 		if (!keyResult && this.goalGeneralSettings?.maxKeyResults <= this.goals[index].keyResults.length) {
 			this.toastrService.info(
