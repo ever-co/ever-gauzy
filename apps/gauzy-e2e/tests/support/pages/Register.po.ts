@@ -112,8 +112,10 @@ const clickFormButtonByText = async (texts: string[]) => {
 		if (clicked) return true;
 		await getPage().waitForTimeout(500);
 	}
-	// Fail closed — see clickOptionByText above.
-	throw new Error(`No selectable option at index ${index} appeared (placeholders such as "No items found" are excluded by design)`);
+	// Deliberately returns a boolean rather than throwing: unlike a dropdown value that
+	// never committed, an absent form button is a legitimate branch for the callers here
+	// (they fall back to another submit path).
+	return false;
 };
 
 export const registerLinkVisible = async () => {
