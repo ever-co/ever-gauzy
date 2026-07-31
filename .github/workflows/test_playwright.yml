@@ -217,9 +217,24 @@ jobs:
         # The Angular dev server (nx serve gauzy) OOMs over a long e2e run. Build once and serve the
         # static output instead — stable + low memory. The app uses hash routing + an absolute API
         # URL baked into the bundle, so a plain static file server is sufficient (no proxy/SPA fallback).
+        #
+        # Builds the `ci` configuration, which is `local` with `sourceMap: false` — that is what makes
+        # this build FIT. Source maps are the single largest memory consumer in an Angular build, and
+        # run 30633937038 died twice with
+        #   "FATAL ERROR: Ineffective mark-compacts near heap limit — JavaScript heap out of memory"
+        # on a 16384 MB container (heap capped at 12288 MB). They are also pure waste here: the suite
+        # drives headless Chromium, which only fetches `.map` with devtools open, and the `Pack build
+        # output` step below already excludes `*.map` from the tarball — so they were being generated
+        # at peak memory cost and thrown away one step later.
+        #
+        # This is a separate configuration rather than `-c local --source-map=false` because nx
+        # forwards raw CLI flags to dependency tasks, and ui-config's executor rejects the unknown
+        # option outright ("NX  'source-map' is not found in schema"). A configuration NAME is not
+        # forwarded — dependencies fall back to their own default — so it is the safe lever here.
+        # Keeping `local` untouched also leaves `serve:local` (the dev server) with its source maps.
         shell: bash
         run: |
-          yarn nx build gauzy -c local || { echo "::warning::gauzy build failed — retry 1 (nx cache skips done deps)"; yarn nx build gauzy -c local; }
+          yarn nx build gauzy -c ci || { echo "::warning::gauzy build failed — retry 1 (nx cache skips done deps)"; yarn nx build gauzy -c ci; }
           # The bundle bakes the API URL as http://localhost:3000; the API runs on :3001 in the test
           # job (this shared runner's :3000 is taken by other dev processes), so repoint the built
           # bundle at :3001 BEFORE it is packed — the test job serves this artifact verbatim.
