@@ -130,6 +130,11 @@ export class DashboardSwitcherComponent extends TranslationBaseComponent impleme
 		try {
 			const dashboard = await this._dashboardStore.createDashboard(name);
 			this._toastrService.success('DASHBOARD_PAGE.CUSTOM.CREATED', { name });
+			// A brand new dashboard has nothing on it, so it has to land in edit mode:
+			// that is the only state that renders the widget palette. Flagged on the
+			// store rather than calling startEditing() here because this navigation
+			// resolves through selectById(), which otherwise resets editing to false.
+			this._dashboardStore.openForEditing(dashboard.id);
 			this._dashboardStore.navigateToDashboard(dashboard.id);
 		} catch (error) {
 			this._toastrService.danger(error);

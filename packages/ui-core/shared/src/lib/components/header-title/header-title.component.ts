@@ -103,6 +103,12 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {
 	/** Element the trail was moved into, so it can be detached again on destroy. */
 	private trailHost: HTMLElement | null = null;
 
+	/**
+	 * Watches this title for becoming visible, so a trail stranded in a hidden
+	 * subtree can be taken over. See `claimTrailIfOrphaned`.
+	 */
+	private visibilityObserver: IntersectionObserver | null = null;
+
 	_allowEmployee: boolean = true;
 	get allowEmployee(): boolean {
 		return this._allowEmployee;
@@ -152,6 +158,74 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {
 	 */
 	ngAfterViewInit(): void {
 		this.relocateTrail();
+		this.observeVisibility();
+	}
+
+	/**
+	 * Starts watching for this title becoming visible.
+	 *
+	 * Ownership is claimed once, in `ngOnInit`, which is correct for a page whose
+	 * titles are all live at once — but not for a tabset. `gz-dynamic-tabs` creates
+	 * every tab's content up front and Nebular hides the inactive ones with
+	 * `display: none`, so on the dashboard the first tab ("Teams") claims the trail
+	 * and then takes it into a hidden subtree the moment another tab is selected,
+	 * leaving that tab with no breadcrumbs at all. `isConnected` does not catch this:
+	 * a `display: none` element is still connected.
+	 *
+	 * An observer is used rather than a check on each change-detection pass because
+	 * every way of asking "is this visible" forces layout; this way the question is
+	 * only asked when the browser reports the element actually came into view.
+	 */
+	private observeVisibility(): void {
+		if (typeof IntersectionObserver === 'undefined') {
+			return;
+		}
+
+		this.visibilityObserver = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
+			if (entries.some((entry: IntersectionObserverEntry) => entry.isIntersecting)) {
+				this.claimTrailIfOrphaned();
+			}
+		});
+		this.visibilityObserver.observe(this.elementRef.nativeElement);
+	}
+
+	/**
+	 * Takes the trail over when the current owner is gone or is no longer rendered.
+	 *
+	 * Runs from the observer callback — outside change detection — so the view can
+	 * be updated and the trail re-parked synchronously.
+	 */
+	private claimTrailIfOrphaned(): void {
+		const owner = HeaderTitleComponent.trailOwner;
+		if (owner === this) {
+			return;
+		}
+		// A healthy owner keeps the trail; only a detached or unrendered one loses it.
+		if (owner && owner.elementRef.nativeElement.isConnected && owner.isRendered()) {
+			return;
+		}
+
+		owner?.releaseTrail();
+		HeaderTitleComponent.trailOwner = this;
+		this.ownsTrail = true;
+		// Render the trail element, then park it next to this title's heading.
+		this.crd.detectChanges();
+		this.relocateTrail();
+	}
+
+	/** Whether this title currently generates boxes (false under `display: none`). */
+	private isRendered(): boolean {
+		return (this.elementRef.nativeElement as HTMLElement).getClientRects().length > 0;
+	}
+
+	/**
+	 * Gives up the trail, detaching the relocated element so it does not linger in
+	 * the old host once another title renders its own.
+	 */
+	private releaseTrail(): void {
+		this.detachTrail();
+		this.ownsTrail = false;
+		this.crd.detectChanges();
 	}
 
 	/**
@@ -163,6 +237,17 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {
 			HeaderTitleComponent.trailOwner = null;
 		}
 
+		this.visibilityObserver?.disconnect();
+		this.visibilityObserver = null;
+
+		this.detachTrail();
+	}
+
+	/**
+	 * Removes the relocated trail from the host it was parked in. It lives outside
+	 * this component's view, so Angular's own teardown would leave it behind.
+	 */
+	private detachTrail(): void {
 		// `this.trailHost &&` stays FIRST and the comparison stays an identity
 		// check: the trail may have been detached already (`parentNode === null`),
 		// and `null === null` would otherwise "match" a host that is itself null.

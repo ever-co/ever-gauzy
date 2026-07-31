@@ -65,6 +65,20 @@ export class DashboardStoreService {
 	private readonly _refresh$ = new Subject<void>();
 
 	/**
+	 * Dashboard id that should open in edit mode as soon as it is selected, or
+	 * `null`. Consumed (and cleared) by `selectById`.
+	 *
+	 * This exists because a freshly created dashboard has to arrive in edit mode —
+	 * that is the only state in which the widget palette is rendered, and a new
+	 * dashboard with no palette is an empty canvas with no way to fill it. It
+	 * cannot be done by calling `startEditing()` around `navigateToDashboard()`:
+	 * that only kicks off a router navigation, and the `selectById` it eventually
+	 * resolves to unconditionally resets editing to `false`. A one-shot flag is
+	 * therefore the only thing that survives the round-trip.
+	 */
+	private _openForEditingId: ID | null = null;
+
+	/**
 	 * In-progress v2 document staged by the canvas while editing, so the
 	 * switcher's Save button (which has no reference to the canvas) can persist
 	 * it. `null` whenever there is nothing unsaved.
@@ -287,9 +301,27 @@ export class DashboardStoreService {
 		// Persist and publish the selection
 		localStorage.setItem(this._selectedKey, dashboard.id as string);
 		this._selectedDashboard$.next(dashboard);
-		this._editing$.next(false);
+		// Selecting a dashboard normally leaves edit mode. The one exception is a
+		// dashboard that asked to open in it (a newly created one) — consume the
+		// flag so it applies to this selection only.
+		const openForEditing = this._openForEditingId !== null && this._openForEditingId === dashboard.id;
+		this._openForEditingId = null;
+		this._editing$.next(openForEditing);
 
 		return dashboard;
+	}
+
+	/**
+	 * Marks a dashboard to open in edit mode the next time it is selected.
+	 *
+	 * Used right before navigating to a freshly created dashboard: edit mode is
+	 * what renders the widget palette, without which the new dashboard is an
+	 * empty canvas the user cannot add anything to.
+	 *
+	 * @param id - The dashboard that should arrive in edit mode.
+	 */
+	public openForEditing(id: ID): void {
+		this._openForEditingId = id;
 	}
 
 	/**
