@@ -74,7 +74,7 @@ $gauzy-density: (
 	// organization) and a bare `<input>` wrapped in a pill (the date range) —
 	// so nothing derives a common height for them, and each used to land on
 	// whatever its own internals produced. The date range came out ~10px taller
-	// than its neighbours because the global `input { min-height: … }` control
+	// than its neighbors because the global `input { min-height: … }` control
 	// floor in `text-inputs-overrides` clamps the field inside its pill to a
 	// full-size control, which the pill then has to wrap.
 	//

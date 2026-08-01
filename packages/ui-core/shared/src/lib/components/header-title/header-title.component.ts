@@ -255,7 +255,7 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.visibilityObserver = null;
 
 		this.detachTrail();
-		this.unmarkPageHeader();
+		this.clearPageHeaderMarks();
 	}
 
 	/**
@@ -325,7 +325,7 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	/** Undoes `markPageHeader` — the marks live outside this component's view. */
-	private unmarkPageHeader(): void {
+	private clearPageHeaderMarks(): void {
 		if (this.pageHeader) {
 			this.renderer.removeClass(this.pageHeader, HeaderTitleComponent.PAGE_HEADER_CLASS);
 			this.pageHeader = null;
