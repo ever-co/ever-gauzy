@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
 	<nb-card-header class="card-header-title">
 		<div class="col-auto">
 			<h4>
@@ -22,7 +22,7 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body class="card-body">
+	<nb-card-body class="card-body" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		<ng-template [ngxPermissionsOnly]="['INVOICES_EDIT', 'INVOICES_VIEW']">
 			<div class="actions-container">
 				<ng-template ngxPermissionsOnly="INVOICES_EDIT">

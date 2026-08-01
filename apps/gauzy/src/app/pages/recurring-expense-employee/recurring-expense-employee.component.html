@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
   <nb-card-header class="flex flex-column">
     <h4>
       <ngx-header-title [allowEmployee]="false">
@@ -14,7 +14,7 @@
       ></ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body class="settings-body">
+  <nb-card-body class="settings-body" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
     <div class="container">
       @if (recurringExpenses?.length) {
         <div

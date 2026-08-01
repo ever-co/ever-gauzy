@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
   <nb-card-header class="card-custom-header">
     <div class="card-header-title">
       <h4>
@@ -16,7 +16,7 @@
       ></ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body>
+  <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
     @if (
       dataLayoutStyle === componentLayoutStyleEnum.TABLE && !loading
       ) {

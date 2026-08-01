@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
   <nb-card-header class="d-flex flex-column pb-0">
     <div class="card-header-title">
       <h4>
@@ -18,7 +18,7 @@
       </ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body>
+  <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
     <ng-template ngxPermissionsOnly="ORG_PRODUCT_TYPES_VIEW">
       @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
         <div class="table-scroll-container">
