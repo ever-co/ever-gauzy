@@ -18,7 +18,7 @@ $overlay-item-hover-bg: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
     height: 18rem;
     border: 1px solid #{$overlay-hairline};
     box-shadow: #{$overlay-shadow};
-    border-radius: 8px;
+    border-radius: var(--border-radius, 8px);
     background: nb-theme(background-basic-color-1);
     display: flex;
     .right-menu {
@@ -26,8 +26,8 @@ $overlay-item-hover-bg: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
       // `direction: rtl` reverses the flex row, so this column moves to the
       // LEFT edge under RTL while physical corner radii stay put — mirror them
       // or the panel ends up with two squared outer corners.
-      @include nb-ltr(border-radius, 0 8px 8px 0);
-      @include nb-rtl(border-radius, 8px 0 0 8px);
+      @include nb-ltr(border-radius, 0 var(--border-radius, 8px) var(--border-radius, 8px) 0);
+      @include nb-rtl(border-radius, var(--border-radius, 8px) 0 0 var(--border-radius, 8px));
       width: 50%;
       padding: 13.5px 15.5px 13.5px 26px;
       span {
@@ -48,8 +48,8 @@ $overlay-item-hover-bg: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
     .left-menu {
       width: 50%;
       // Mirrored for the same reason as `.right-menu` above.
-      @include nb-ltr(border-radius, 8px 0 0 8px);
-      @include nb-rtl(border-radius, 0 8px 8px 0);
+      @include nb-ltr(border-radius, var(--border-radius, 8px) 0 0 var(--border-radius, 8px));
+      @include nb-rtl(border-radius, 0 var(--border-radius, 8px) var(--border-radius, 8px) 0);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -109,7 +109,7 @@ $overlay-item-hover-bg: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
     p.link {
       margin: 0;
       padding: 0.375rem 0.625rem;
-      border-radius: 6px;
+      border-radius: var(--gauzy-radius-sm, 6px);
       font-size: nb-theme(menu-text-font-size);
       font-weight: nb-theme(menu-text-font-weight);
       line-height: 1.25rem;

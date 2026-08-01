@@ -86,7 +86,7 @@
 		},
 		"STATUS": {
 			"READY_TITLE": "AI chat is ready",
-			"READY_HINT": "Open it any time from the chat icon in the header.",
+			"READY_HINT": "Open it any time from the \"AI Chat\" button in the header, at the top right of every page.",
 			"OPEN_CHAT": "Open AI chat",
 			"NO_PERMISSION_TITLE": "AI chat is configured, but hidden for your role",
 			"NO_PERMISSION_HINT": "Your role does not have AI chat access — ask an admin to enable the AI_CHAT_ACCESS permission.",

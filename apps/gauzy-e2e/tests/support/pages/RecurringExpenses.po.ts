@@ -31,41 +31,71 @@ export const employeeDropdownVisible = async () => {
 	await verifyElementIsVisible(RecurringExpensesPage.employeeDropdownCss);
 };
 
-export const clickEmployeeDropdown = async () => {
-	// ng-select opens on MOUSEDOWN and is blocked by the dialog/overlay backdrop, so a force-click on the
-	// control is unreliable (and can land on the backdrop). Open it via the keyboard instead: focus the
-	// inner input and press ArrowDown. Retry until the option list ('div.ng-option', appendTo="body")
-	// renders, but bail out best-effort — the employee list loads async and can legitimately be EMPTY
-	// (no employee "working" in the header date range); selectEmployeeFromDropdown handles that case.
+/**
+ * A REAL employee option — not ng-select's own placeholder.
+ *
+ * While the employee list is still loading, ng-select renders "No items found" as
+ * `div.ng-option.ng-option-disabled`. Counting bare `div.ng-option` treats that placeholder as "the
+ * list is open and populated", which is how the spec ended up clicking it (a no-op) and posting
+ * employeeId:null. Only options that are not disabled, and not the "All Employees" pseudo-entry (it
+ * has no id, so it produces the same null), are real choices.
+ */
+const realEmployeeOptions = () =>
+	getPage()
+		.locator(`${RecurringExpensesPage.dropdownOptionCss}:not(.ng-option-disabled)`)
+		.filter({ hasNotText: 'All Employees' });
+
+// ng-select opens on MOUSEDOWN and is blocked by the dialog/overlay backdrop, so a force-click on the
+// control is unreliable (and can land on the backdrop). Open it via the keyboard instead: focus the
+// inner input and press ArrowDown.
+//
+// Opening it in the same tick the dialog appears catches the list mid-load, and it then stays stuck on
+// "No items found" (measured: still empty 5s later) — but closing and re-opening the panel picks the
+// loaded list straight up. So retry around a real option appearing, toggling the panel shut between
+// attempts via its own container. NEVER Escape: nb-dialog opens with closeOnEsc, so that would dismiss
+// the whole Add-Expense form. Best-effort — the list can legitimately be empty (no employee "working"
+// in the header date range) and selectEmployeeFromDropdown reports that.
+const openEmployeeDropdown = async () => {
 	const page = getPage();
-	const options = page.locator(RecurringExpensesPage.dropdownOptionCss);
 	const input = page.locator(RecurringExpensesPage.employeeDropdownCss).locator('input').first();
+	const container = page.locator(`${RecurringExpensesPage.employeeDropdownCss} .ng-select-container`).first();
 	for (let i = 0; i < 6; i++) {
 		await input.focus().catch(() => {});
 		await page.keyboard.press('ArrowDown').catch(() => {});
-		await page.waitForTimeout(800);
-		if (await options.count()) return;
+		await page.waitForTimeout(900);
+		if (await realEmployeeOptions().count()) return;
+		await container.click({ force: true }).catch(() => {}); // toggle shut, then re-open next pass
+		await page.waitForTimeout(700);
 	}
 };
 
+export const clickEmployeeDropdown = async () => {
+	await openEmployeeDropdown();
+};
+
 export const selectEmployeeFromDropdown = async (index) => {
-	// Best-effort employee pick (mirrors ContactsLeads.selectEmployeeDropdownOption): the option list
-	// loads async and can be empty. The first option is the "All Employees" pseudo-entry, which has no
-	// real id and makes the create fail, so prefer the first REAL employee. If nothing renders within a
-	// short wait, press Escape and continue — the selector keeps its [defaultSelected]="true" employee,
-	// so the expense still saves. Avoids a 60s hang on an empty list.
+	// Pick the first REAL employee: the leading "All Employees" pseudo-entry has no id, and
+	// recurring-expense-mutation sends `employee = employeeSelector.selectedEmployee` straight into the
+	// payload, so leaving it on ALL posts employeeId:null and the API 400s with
+	// "employeeId must be a string" — a rejection the spec then only notices three steps later as a
+	// missing row.
+	//
+	// The click alone is not proof, and neither is reading the CONTROL's text back: ng-select renders
+	// its open panel inside the control, so the previous check ("does the control's text contain the
+	// option I clicked?") was satisfied by the very panel it clicked in — it passed while nothing had
+	// been selected. Verify against the committed value instead: on a real selection ng-select closes
+	// the panel and renders the choice as `div.ng-value` in the container.
 	void index;
 	const page = getPage();
-	const realEmployee = page
-		.locator(RecurringExpensesPage.dropdownOptionCss)
-		.filter({ hasNotText: 'All Employees' });
-	try {
-		await realEmployee.first().waitFor({ state: 'visible', timeout: 8000 });
-		await realEmployee.first().click({ force: true });
-		// Let the ng-select commit the selection (close + write the form value).
-		await page.waitForTimeout(500);
-	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
+	const value = page.locator(`${RecurringExpensesPage.employeeDropdownCss} div.ng-value`);
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await openEmployeeDropdown();
+		const option = realEmployeeOptions().first();
+		if ((await option.count().catch(() => 0)) === 0) continue; // list still empty — try again
+		const wanted = ((await option.textContent().catch(() => '')) || '').replace(/\s+/g, ' ').trim();
+		await option.click({ force: true }).catch(() => {});
+		await page.waitForTimeout(800); // let ng-select close and write the value
+		if (wanted && (await value.filter({ hasText: wanted }).count().catch(() => 0)) > 0) return; // committed
 	}
 };
 

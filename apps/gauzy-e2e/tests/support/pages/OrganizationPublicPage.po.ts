@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import {
+	applySmartTableFilter,
 	clearField,
 	clickButton,
 	clickByText,
@@ -35,8 +36,10 @@ export const organizationNameFilterInputVisible = async () => {
 };
 
 export const enterOrganizationNameFilterInputData = async (name: string) => {
-	await enterInput(OrganizationPublicPage.nameFilterInputCss, name);
-	await waitUntil(2000);
+	// The plain enterInput() (.fill()) left the grid unfiltered — see applySmartTableFilter — so the
+	// freshly created organization stayed off page 1 and the profile-link flow silently fell into its
+	// best-effort catch.
+	await applySmartTableFilter(OrganizationPublicPage.nameFilterInputCss, name);
 };
 
 export const verifyOrganizationNameTableRowContains = async (text: string) => {
@@ -365,7 +368,8 @@ export const clickCountryDropdown = async () => {
 };
 
 export const selectCountryFromDropdown = async (text) => {
-	await clickElementByText(OrganizationPublicPage.dropdownOptionCss, text);
+	// ng-select options, not nb-select options — see countryDropdownOptionCss.
+	await clickElementByText(OrganizationPublicPage.countryDropdownOptionCss, text);
 };
 
 export const cityInputVisible = async () => {

@@ -8,14 +8,22 @@ import { GoalsTimeFramePageData } from '../../../src/support/Base/pagedata/Goals
 // identical to the already-CI-tested spec. The `Given I am logged in as the default user` Background
 // step is defined once in common.steps.ts.
 
+// The suite shares one accumulating database, so a fixed name accumulates duplicate rows across runs
+// (and a run that fails before its delete step leaves one behind). Use a unique name per run so
+// add/edit/delete target exactly the time frame this run created and the delete verification is
+// unambiguous — same approach as organization-departments.
+let timeFrameName = ' ';
+
 When('I add a new goal time frame', async () => {
+	timeFrameName = `${GoalsTimeFramePageData.name} ${Date.now()}`;
+
 	await getPage().goto('/#/pages/goals/settings');
 	await goalsTimeFramePage.tabButtonVisible();
 	await goalsTimeFramePage.clickTabButton(1);
 	await goalsTimeFramePage.addTimeFrameButtonVisible();
 	await goalsTimeFramePage.clickAddTimeFrameButton();
 	await goalsTimeFramePage.nameInputVisible();
-	await goalsTimeFramePage.enterNameInputData(GoalsTimeFramePageData.name);
+	await goalsTimeFramePage.enterNameInputData(timeFrameName);
 	await goalsTimeFramePage.startDateInputVisible();
 	await goalsTimeFramePage.enterStartDateData();
 	await goalsTimeFramePage.endDateInputVisible();
@@ -27,13 +35,16 @@ When('I add a new goal time frame', async () => {
 
 When('I edit the goal time frame', async () => {
 	await goalsTimeFramePage.waitMessageToHide();
-	await goalsTimeFramePage.verifyTimeFrameExists(GoalsTimeFramePageData.name);
+	await goalsTimeFramePage.verifyTimeFrameExists(timeFrameName);
 	await goalsTimeFramePage.tableRowVisible();
-	await goalsTimeFramePage.selectTableRow(0);
+	// By name, not by index: the grid can hold time frames this spec did not create (the goals spec
+	// has to create one, since the objective form's deadline is required and the database seeds none),
+	// and row 0 would then edit/delete somebody else's.
+	await goalsTimeFramePage.selectTableRowByName(timeFrameName);
 	await goalsTimeFramePage.editTimeFrameButtonVisible();
 	await goalsTimeFramePage.clickEditTimeFrameButton();
 	await goalsTimeFramePage.nameInputVisible();
-	await goalsTimeFramePage.enterNameInputData(GoalsTimeFramePageData.name);
+	await goalsTimeFramePage.enterNameInputData(timeFrameName);
 	await goalsTimeFramePage.startDateInputVisible();
 	await goalsTimeFramePage.enterStartDateData();
 	await goalsTimeFramePage.endDateInputVisible();
@@ -45,12 +56,16 @@ When('I edit the goal time frame', async () => {
 
 When('I delete the goal time frame', async () => {
 	await goalsTimeFramePage.waitMessageToHide();
-	await goalsTimeFramePage.verifyTimeFrameExists(GoalsTimeFramePageData.name);
+	await goalsTimeFramePage.verifyTimeFrameExists(timeFrameName);
 	await goalsTimeFramePage.tableRowVisible();
-	await goalsTimeFramePage.selectTableRow(0);
+	// By name, not by index: the grid can hold time frames this spec did not create (the goals spec
+	// has to create one, since the objective form's deadline is required and the database seeds none),
+	// and row 0 would then edit/delete somebody else's.
+	await goalsTimeFramePage.selectTableRowByName(timeFrameName);
 	await goalsTimeFramePage.deleteTimeFrameButtonVisible();
 	await goalsTimeFramePage.clickDeleteTimeFrameButton();
 	await goalsTimeFramePage.confirmDeleteButtonVisible();
 	await goalsTimeFramePage.clickConfirmDeleteButton();
-	await goalsTimeFramePage.verifyElementDeleted(GoalsTimeFramePageData.emptyTableText);
+	// Assert OUR time frame is gone rather than that the grid is empty — see verifyTimeFrameIsDeleted.
+	await goalsTimeFramePage.verifyTimeFrameIsDeleted(timeFrameName);
 });

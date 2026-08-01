@@ -45,5 +45,9 @@ When('I add a new user', async () => {
 	await addUserPage.confirmAddButtonVisible();
 	await addUserPage.clickConfirmAddButton();
 	await addUserPage.waitMessageToHide();
+	// Pollution-safe: the users grid pages at 10 and the shared serial DB accumulates users, so the
+	// one just added lands on page 2 and never renders. Filter by the unique full name first (same as
+	// edit-user / remove-user) — without it this asserts against a page the new user is not on.
+	await addUserPage.filterByName(`${firstName} ${lastName}`);
 	await addUserPage.verifyUserExists(`${firstName} ${lastName}`);
 });

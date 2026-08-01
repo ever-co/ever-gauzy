@@ -1,4 +1,25 @@
 <div class="custom-dashboard">
+	<!--
+	  A custom dashboard had no page title, and therefore no breadcrumb trail —
+	  `ngx-header-title` is what renders one, and it parks it next to the heading
+	  it sits in. Every standard dashboard tab carries its own title ("Teams for
+	  …"), so a custom one showing its own name is the consistent shape.
+	-->
+	@if (dashboard) {
+		<!--
+		  The heading gets its own wrapper because `ngx-header-title` stamps
+		  `ga-page-title-row` (which is `flex-wrap: wrap`) onto the heading's
+		  PARENT, so the trail can drop onto its own line. `.custom-dashboard` is
+		  the page's column flex container — that class belongs on a box that
+		  exists for the title, not on the layout.
+		-->
+		<div class="custom-dashboard__heading">
+			<h4 class="custom-dashboard__title">
+				<ngx-header-title [allowEmployee]="false">{{ dashboard.name }}</ngx-header-title>
+			</h4>
+		</div>
+	}
+
 	<!-- Builder hint bar: only while arranging. Save / Discard live in the switcher. -->
 	@if (editing) {
 		<div class="builder-toolbar">

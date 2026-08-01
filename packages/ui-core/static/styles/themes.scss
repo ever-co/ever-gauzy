@@ -67,7 +67,46 @@ $gauzy-density: (
 	// Inputs / selects
 	input-medium-text-font-size: 0.8125rem,
 	input-medium-padding: 0.4375rem 0.75rem,
-	select-medium-text-font-size: 0.8125rem
+	select-medium-text-font-size: 0.8125rem,
+	// ── Data tables (angular2-smart-table) ─────────────────────────────────
+	// The library ships its own emulated component CSS and nothing in this repo
+	// used to contest it:
+	//     :host                          { font-size: 1rem }
+	//     :host ::ng-deep table          { line-height: 1.5em }   ->  24px
+	//     :host ::ng-deep table tr td/th { font-size: .875em;     ->  14px
+	//                                      padding: .5em 1em }    ->  7px 14px
+	// (the `em` in that padding resolves against the CELL's own 14px font-size,
+	// which is where the odd 7px/14px box came from). The rules in
+	// `_overrides.scss` consume the tokens below instead, so all 8 themes move
+	// together. Bootstrap is NOT in play here: its cell padding lives on
+	// `.table`, and the library's `<table [ngClass]="tableClass">` takes that
+	// class from `settings.attr.class`, which Gauzy never sets.
+	//
+	// 0.8125rem (13px) is the deliberate readability floor for cell text.
+	gauzy-table-font-size: 0.8125rem,
+	gauzy-table-line-height: 1.25rem,
+	gauzy-table-cell-padding-y: 0.375rem,
+	gauzy-table-cell-padding-x: 0.625rem,
+	// Header stays distinct through weight + colour (see the
+	// `.angular2-smart-titles` rules in `_overrides.scss`), not through height.
+	gauzy-table-header-font-size: 0.75rem,
+	gauzy-table-header-line-height: 0.9375rem,
+	gauzy-table-header-padding-y: 0.5rem,
+	gauzy-table-header-padding-x: 0.625rem,
+	// Filter row: the control is the tallest thing in it, so that row measures
+	// `gauzy-table-control-height + 2 * gauzy-table-filter-padding-y`.
+	gauzy-table-filter-padding-y: 0.25rem,
+	gauzy-table-control-height: 1.75rem,
+	// Chips / status pills rendered INSIDE cells. They have their own box and
+	// therefore their own say in the row height, so they are compacted in the
+	// same proportion rather than left at their old 24px-per-chip footprint.
+	gauzy-table-chip-font-size: 0.6875rem,
+	gauzy-table-chip-line-height: 0.875rem,
+	gauzy-table-chip-padding-y: 0.0625rem,
+	gauzy-table-chip-padding-x: 0.375rem,
+	gauzy-table-chip-gap: 0.1875rem,
+	// A status pill should cost a row exactly one line box and no more.
+	gauzy-table-badge-height: 1.25rem
 );
 
 $nb-themes: nb-register-theme(
@@ -348,23 +387,35 @@ $nb-themes: nb-register-theme(
     // Basic colors: background
     layout-background-color: #ffffff,
     background-basic-color-3: #f9f9f9,
-    // Supporting variables - border radius, outline, shadow, divider
-    border-radius: 0.625rem,
+    // ── Radius scale ──────────────────────────────────────────────────────
+    // Three steps, and only three: 0.25rem for the tiny boxes (checkbox),
+    // `gauzy-radius-sm` (0.375rem, in $gauzy-density) for anything that reads as
+    // a control or a row (buttons, selects, tags, badges, menu rows), and
+    // `border-radius` for the surfaces those things sit on (cards, panels,
+    // overlays). What was here before was not a scale: `2rem` on a ~30px button
+    // is a stadium pill, and `1rem` on a 16px checkbox is a circle — i.e. a
+    // checkbox that reads as a radio button.
+    border-radius: 0.5rem,
     outline-width: 0.375rem,
     outline-color: color-basic-transparent-200,
     scrollbar-color: background-basic-color-4,
     scrollbar-background-color: background-basic-color-2,
-    button-rectangle-border-radius: 2rem,
+    button-rectangle-border-radius: 0.375rem,
     scrollbar-width: 0.3125rem,
-    shadow: rgba(9, 30, 66, 0.25) 0px 4px 8px -2px,
+    // Softer and further out, instead of a 25 %-opaque navy block 4px below the
+    // element. Elevation is now carried by a hairline ring (see `nb-card` in
+    // `_overrides.scss`); this stays only for the few surfaces that really float.
+    shadow: 0 4px 12px -2px rgba(9, 30, 66, 0.12),
     divider-color: border-basic-color-3,
-    checkbox-border-radius: 1rem,
+    checkbox-border-radius: 0.25rem,
     divider-width: 0,
     tabset-tab-active-underline-color: none,
     tabset-tab-active-background-color: rgb(249, 249, 249),
     card-background-color: rgb(249, 249, 249),
     tabset-border-radius: 0.5rem,
-    select-rectangle-border-radius: 2rem,
+    select-rectangle-border-radius: 0.375rem,
+    // Nebular's default is 1.5rem, i.e. a full pill on every nb-tag.
+    tag-border-radius: 0.375rem,
     tabset-tab-hover-underline-color: none,
     tabset-tab-focus-underline-color: none,
     tabset-tab-text-transform: capitalize,
@@ -385,6 +436,17 @@ $nb-themes: nb-register-theme(
     toggle-switcher-icon-size: 0,
     header-shadow: none,
     card-border-style: none,
+    // ── Card edge ─────────────────────────────────────────────────────────
+    // With `card-border-style: none` an `nb-card` has no edge at all, and the
+    // `card-shadow` it inherits from `shadow` is a heavy drop shadow rather than
+    // a definition of where the panel stops. A 1px RING instead: it occupies no
+    // layout box, so unlike flipping `card-border-style` to `solid` — which
+    // would take `card-border-width` from a computed 0 to a real 1px on all four
+    // sides and reflow every card — nothing moves. Set as a token rather than as
+    // an `nb-card` rule in `_overrides.scss`, because Nebular emits its own
+    // element-specificity `nb-card { box-shadow: var(--card-shadow) }` LATER in
+    // the bundle and would overrule any such rule without an `!important`.
+    card-shadow: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18)),
     tabset-divider-style: none,
     route-tabset-divider-style: none,
     tabset-divider-width: 0,
@@ -394,8 +456,6 @@ $nb-themes: nb-register-theme(
     footer-divider-style: none,
     sidebar-shadow: none,
     tabset-tab-underline-width: 0,
-    tabset-tab-text-font-size: 1rem,
-    route-tabset-tab-text-font-size: 1rem,
     tabset-tab-text-font-weight: 400,
     route-tabset-tab-text-font-weight: 400,
     color-success-default: rgba(37, 184, 105, 1),
@@ -408,7 +468,15 @@ $nb-themes: nb-register-theme(
     toggle-basic-background-color: rgba(126, 126, 143, 1),
     background-basic-color-1: gauzy-card-1,
     gauzy-primary-background: rgba(248, 246, 254, 1),
-    input-basic-placeholder-text-color: rgba(126, 126, 143, 0.5),
+    // Secondary text. The inherited `color-basic-600` (#8f9bb3, blue-grey)
+    // measures 2.8:1 on white — under the 3:1 floor for large/secondary text,
+    // and this token paints placeholders, `.action.secondary`, overlay captions
+    // and menu icons. Zinc-500 is neutral and measures 4.8:1 on the page and
+    // 4.6:1 on the card.
+    text-hint-color: rgba(113, 113, 122, 1),
+    // 1.8:1 before — a placeholder that was effectively invisible. 3.3:1 now,
+    // still clearly weaker than a real value (`color-basic-800`, 14.0:1).
+    input-basic-placeholder-text-color: rgba(113, 113, 122, 0.8),
     input-basic-background-color: gauzy-card-1,
     select-outline-basic-background-color: gauzy-card-1,
     input-border-width: 0,
@@ -439,21 +507,33 @@ $nb-themes: nb-register-theme(
     color-primary-800: #291d52,
     color-primary-900: #1a1038,
     color-primary-transparent-100: rgba(110, 73, 232, 0.1),
-    // Supporting variables - border radius, outline, shadow, divider
-    border-radius: 0.625rem,
+    // ── Radius scale ──────────────────────────────────────────────────────
+    // Same three steps as `gauzy-light` — see the note there. Metrics are kept
+    // byte-identical between the two gauzy themes on purpose: only colour is
+    // allowed to differ.
+    border-radius: 0.5rem,
     outline-width: 0.375rem,
     outline-color: color-basic-transparent-200,
-    scrollbar-color: background-basic-color-4,
+    // Un-aliased from `background-basic-color-4`. That token is a near-black
+    // SURFACE on this theme, so a scrollbar thumb painted with it disappeared
+    // into the canvas. Same value as `gauzy-scrollbar`, which is what the
+    // hand-written scrollbar rules in `_overrides.scss` already use.
+    scrollbar-color: rgba(255, 255, 255, 0.14),
     scrollbar-background-color: background-basic-color-2,
     scrollbar-width: 0.3125rem,
-    shadow: rgba(0, 0, 0, 0.733) 0px 4px 8px -2px,
+    // Was `rgba(0, 0, 0, 0.733) 0 4px 8px -2px` — 73 % opaque black, i.e. a hard
+    // black slab under every floating surface. `_overlays.scss` already worked
+    // around it with its own two-layer shadow; this brings the base value into
+    // line so the workaround can eventually go.
+    shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.5),
     divider-color: border-basic-color-3,
-    button-rectangle-border-radius: 2rem,
-    checkbox-border-radius: 1rem,
+    button-rectangle-border-radius: 0.375rem,
+    checkbox-border-radius: 0.25rem,
     divider-width: 0,
     tabset-tab-active-underline-color: none,
     tabset-border-radius: 0.5rem,
-    select-rectangle-border-radius: 2rem,
+    select-rectangle-border-radius: 0.375rem,
+    tag-border-radius: 0.375rem,
     tabset-tab-hover-underline-color: none,
     tabset-tab-focus-underline-color: none,
     tabset-tab-text-transform: capitalize,
@@ -471,6 +551,17 @@ $nb-themes: nb-register-theme(
     toggle-switcher-icon-size: 0,
     header-shadow: none,
     card-border-style: none,
+    // ── Card edge ─────────────────────────────────────────────────────────
+    // With `card-border-style: none` an `nb-card` has no edge at all, and the
+    // `card-shadow` it inherits from `shadow` is a heavy drop shadow rather than
+    // a definition of where the panel stops. A 1px RING instead: it occupies no
+    // layout box, so unlike flipping `card-border-style` to `solid` — which
+    // would take `card-border-width` from a computed 0 to a real 1px on all four
+    // sides and reflow every card — nothing moves. Set as a token rather than as
+    // an `nb-card` rule in `_overrides.scss`, because Nebular emits its own
+    // element-specificity `nb-card { box-shadow: var(--card-shadow) }` LATER in
+    // the bundle and would overrule any such rule without an `!important`.
+    card-shadow: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18)),
     tabset-divider-style: none,
     route-tabset-divider-style: none,
     tabset-divider-width: 0,
@@ -479,19 +570,35 @@ $nb-themes: nb-register-theme(
     footer-shadow: none,
     footer-divider-style: none,
     sidebar-shadow: none,
-    layout-background-color: gauzy-card-1,
-    footer-background-color: gauzy-card-1,
-    header-background-color: gauzy-card-1,
+    // ── Dark canvas ───────────────────────────────────────────────────────
+    // The page band (layout + header + footer) is the DARKEST surface, and it
+    // is deliberately NOT `gauzy-card-1` any more. That one alias used to paint
+    // eleven surfaces at once — page == header == footer == card == table row ==
+    // dropdown == input == rgb(32, 32, 35) — with `card-border-style: none` on
+    // top, so the whole UI collapsed onto a single flat grey. Panels now lift
+    // off this near-black canvas instead.
+    layout-background-color: rgba(9, 9, 11, 1),
+    footer-background-color: rgba(9, 9, 11, 1),
+    header-background-color: rgba(9, 9, 11, 1),
     tabset-tab-underline-width: 0,
-    tabset-tab-text-font-size: 1rem,
-    route-tabset-tab-text-font-size: 1rem,
+    // KEEP this alias: Nebular's eva mapping follows `background-basic-color-1`
+    // into card / sidebar / popover / context-menu / option-list / smart-table /
+    // calendar / chat backgrounds, so this is the single token that makes every
+    // panel the panel colour at once.
     background-basic-color-1: gauzy-card-1,
     input-basic-background-color: gauzy-card-1,
-    background-basic-color-2: rgba(32, 32, 35, 1),
-    smart-table-bg-active: rgba(126, 126, 143, 0.05),
-    background-basic-color-3: gauzy-card-3,
-    gauzy-primary-background: rgb(86, 82, 99),
-    input-basic-placeholder-text-color: rgba(126, 126, 143, 0.5),
+    // One step ABOVE the panel — zebra rows, muted blocks, scrollbar track.
+    // Was byte-identical to `background-basic-color-1`, i.e. a dead ramp step.
+    background-basic-color-2: rgba(24, 24, 27, 1),
+    smart-table-bg-active: rgba(255, 255, 255, 0.05),
+    // Recessed surface. Was aliased to `gauzy-card-3`, i.e. a translucent
+    // overlay sitting in an opaque slot, which resolved differently depending on
+    // what happened to be stacked behind it.
+    background-basic-color-3: rgba(9, 9, 11, 1),
+    gauzy-primary-background: rgba(31, 31, 35, 1),
+    // 2.1:1 before, on the panel — the least legible text in the app. 3.4:1 now,
+    // and still far weaker than a real value (17.9:1).
+    input-basic-placeholder-text-color: rgba(161, 161, 170, 0.6),
     select-outline-basic-background-color: gauzy-card-1,
     input-border-width: 0,
     select-outline-border-width: 0,
@@ -501,12 +608,114 @@ $nb-themes: nb-register-theme(
     color-danger-default: #ff0000,
     color-warning-default: rgba(255, 171, 45, 1),
     gauzy-background-transparent: rgba(110, 73, 232, 0.5),
-    gauzy-card-1: rgba(32, 32, 35, 1),
-    // Neutral (zinc-like) sidebar — no blue/purple tint, shadcn-like
-    gauzy-sidebar-background-1: #141416,
-    gauzy-sidebar-background-2: rgba(30, 30, 34, 1),
-    // More legible sidebar/menu labels than the inherited 50% white
-    gauzy-text-color-2: rgba(255, 255, 255, 0.7)
+    // Panel / card surface — one visible step above the near-black canvas.
+    gauzy-card-1: rgba(18, 18, 20, 1),
+    // Tints layered ON TOP of a panel. Inherited from the `dark` map these were
+    // DARKENING overlays — rgba(16, 16, 20, 0.3) / rgba(5, 5, 5, 0.5) /
+    // rgba(5, 5, 5, 0.25) — and a darkening overlay simply disappears on a
+    // near-black canvas. Flipped to LIFTING (white at a low alpha) so they read
+    // on the canvas and on every panel alike.
+    gauzy-card-2: rgba(255, 255, 255, 0.02),
+    gauzy-card-3: rgba(255, 255, 255, 0.04),
+    gauzy-card-4: rgba(255, 255, 255, 0.06),
+    // Opaque, on-hue near-blacks: the inherited rgb(7, 9, 1) (green-black) and
+    // rgb(52, 52, 62) (blue-purple) both fought the neutral ramp.
+    gauzy-card-5: rgba(24, 24, 27, 1),
+    gauzy-card-6: rgba(31, 31, 35, 1),
+    // Neutral (zinc-like) sidebar — no blue/purple tint, shadcn-like. Both rails
+    // sit BELOW the canvas so the content column is the brightest thing on
+    // screen; the menu rail used to be rgb(30, 30, 34), i.e. brighter than the
+    // content it framed.
+    gauzy-sidebar-background-1: rgba(10, 10, 11, 1),
+    gauzy-sidebar-background-2: rgba(12, 12, 14, 1),
+    // Interactive tints: menu-row hover, smart-table filter fill, stepper
+    // connector, ckeditor chrome. The inherited rgba(126, 126, 143, 0.1 / 0.05)
+    // carried a blue cast on a strictly neutral ramp.
+    gauzy-sidebar-background-3: rgba(255, 255, 255, 0.06),
+    gauzy-sidebar-background-4: rgba(255, 255, 255, 0.03),
+    // (the token-name typo is upstream — not renamed here) custom tooltip body
+    gauzy-siderbar-background-5: rgba(24, 24, 27, 1),
+    // Hairlines. The inherited table border rgba(16, 16, 20, 0.5) DARKENS, which
+    // is invisible on a near-black canvas — the table would have got *worse*
+    // from the palette change alone. Both are white-at-low-alpha so one value
+    // works on the canvas and on every panel.
+    gauzy-border-table: rgba(255, 255, 255, 0.07),
+    gauzy-border-default-color: rgba(255, 255, 255, 0.08),
+    gauzy-scrollbar: rgba(255, 255, 255, 0.14),
+    // ── Elevation → edge ──────────────────────────────────────────────────
+    // Inherited from Nebular `dark`: `0 1px 1px 0 rgb(0 0 0 / 35%)`. A BLACK
+    // drop shadow under a panel that sits on a near-black canvas is invisible,
+    // and ~50 component stylesheets lean on this token as their only source of
+    // separation (cards, avatars, toolbar pills, floating action strips) — so
+    // on this theme alone they were rendering with no edge at all.
+    //
+    // A 1px RING instead, and deliberately the SAME line the cards, overlays,
+    // controls and table actions already draw (`card-shadow` above,
+    // `$card-hairline` in `_overrides.scss`, `$control-hairline` in
+    // `gauzy/_gauzy-overrides.scss`), so the app has one hairline weight rather
+    // than two. Three properties make this a safe drop-in for every consumer:
+    //   * it costs no layout box, so nothing reflows and nothing resizes;
+    //   * the `inset` keyword is legal LAST in a shadow, so the ~30 stylesheets
+    //     that write `box-shadow: var(--gauzy-shadow) inset` still parse — they
+    //     get the same hairline drawn on the inside of the box;
+    //   * no consumer depended on the offset (the inherited value is a 1px-down,
+    //     1px-blur hairline, i.e. already an edge rather than an elevation), and
+    //     the handful that really float compose it with a second, explicit blur
+    //     layer that is untouched.
+    //
+    // DARK-ONLY on purpose: on the light themes the 15 %-black drop shadow is
+    // legible against a white page and reads as intended, and swapping it for a
+    // ring there would both flatten those surfaces and put a second line beside
+    // the ~45 blocks that pair this token with a real `border`.
+    gauzy-shadow: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18)),
+    // ── Text ramp ─────────────────────────────────────────────────────────
+    // Inherited from Nebular `dark`: `text-basic-color` = #ffffff and
+    // `text-hint-color` = color-basic-600 = #8f9bb3 — a BLUE-grey, and the
+    // muted/secondary colour for most of the app (placeholders, option-group
+    // captions, overlay menu icons, `.action.secondary`, table header labels).
+    // That blue cast on a strictly neutral near-black is a large part of why the
+    // UI read grey-blue rather than neutral. Pure white is also more contrast
+    // than a body face needs here: it haloes at 14px on #121214.
+    //
+    // Contrast against the panel rgb(18, 18, 20):
+    //   #fafafa body      17.9:1   (was #ffffff, 18.9:1)
+    //   #a1a1aa secondary  7.3:1   (was rgba(255,255,255,0.7) ~= 9.5:1)
+    // and against the canvas rgb(9, 9, 11): 19.0:1 and 7.8:1. Both clear the
+    // 4.5:1 body / 3:1 secondary floors with room to spare — the point of the
+    // change is to DEMOTE secondary text, which was competing with body copy.
+    text-basic-color: rgba(250, 250, 250, 1),
+    text-hint-color: rgba(161, 161, 170, 1),
+    text-disabled-color: rgba(161, 161, 170, 0.45),
+    gauzy-text-color-1: rgba(250, 250, 250, 1),
+    // ── Border ramp ───────────────────────────────────────────────────────
+    // Inherited wholesale from Nebular `dark`: #222b45 / #192038 / #151a30 /
+    // #101426 — hue ~225 degrees, i.e. a navy line drawn on a strictly neutral
+    // near-black. It shows up on the menu- and chat-sidebar edges, the user
+    // block divider, and every nb-card / tabset divider (`divider-color` is
+    // aliased to `border-basic-color-3`, so that alias is kept and follows).
+    // White at a low alpha self-adjusts on both the canvas and the panel, so one
+    // value works everywhere; none of these tokens is ever used as a fill.
+    border-basic-color-1: rgba(255, 255, 255, 0.06),
+    border-basic-color-2: rgba(255, 255, 255, 0.08),
+    border-basic-color-3: rgba(255, 255, 255, 0.1),
+    border-basic-color-4: rgba(255, 255, 255, 0.12),
+    border-basic-color-5: rgba(255, 255, 255, 0.16),
+    // The one place the -4 name IS a surface (workspace gradients, pager
+    // shadow): keep it opaque, just off the navy.
+    background-basic-color-4: rgba(5, 5, 6, 1),
+    // Nebular's tooltip inherits `background-alternative-color-3`, which on the
+    // dark chain is `color-basic-300` = #edf1f7 — a near-WHITE tooltip on a
+    // near-black canvas. The app also ships a second, hand-rolled tooltip
+    // (`.tooltip-container` in `_overrides.scss`) painted with
+    // `gauzy-siderbar-background-5`; these two now agree.
+    tooltip-background-color: rgba(24, 24, 27, 1),
+    tooltip-text-color: rgba(250, 250, 250, 1),
+    // The secondary face, same value as `text-hint-color` above so the two
+    // muted ramps in this codebase stop disagreeing: this token paints the
+    // sidebar/menu labels, inactive tab labels and table header labels, while
+    // `text-hint-color` paints placeholders and overlay captions — they are the
+    // same tier of information and were two different colours.
+    gauzy-text-color-2: rgba(161, 161, 170, 1)
   ), $gauzy-density),
   gauzy-dark,
   dark

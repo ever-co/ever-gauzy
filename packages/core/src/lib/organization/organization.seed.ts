@@ -10,6 +10,7 @@ import {
 	WeekDaysEnum,
 	AlignmentOptions,
 	IOrganization,
+	InvitationExpirationEnum,
 	ITenant,
 	ISkill,
 	IContact
@@ -18,6 +19,20 @@ import { environment as env } from '@gauzy/config';
 import { getRandomElement } from '@gauzy/utils';
 import { getDummyImage } from '../core/utils';
 import { Contact, Organization, Skill } from '../core/entities/internal';
+
+/**
+ * The invite expiry periods an organization may be seeded with.
+ *
+ * `InvitationExpirationEnum` also carries `NEVER = 'Never'`, but `inviteExpiryPeriod` is a numeric
+ * (days) column, so only the numeric members are seedable. Listing them explicitly rather than using
+ * `Object.values()` avoids TypeScript's reverse mappings (`'DAY'`, `'WEEK'`, ...) leaking in.
+ */
+const SEEDABLE_INVITE_EXPIRY_PERIODS: InvitationExpirationEnum[] = [
+	InvitationExpirationEnum.DAY,
+	InvitationExpirationEnum.WEEK,
+	InvitationExpirationEnum.TWO_WEEK,
+	InvitationExpirationEnum.MONTH
+];
 
 /**
  * Retrieves the default organization for a given tenant.
@@ -121,7 +136,7 @@ export const createDefaultOrganizations = async (
 			.add(faker.number.int({ min: 10, max: 20 }), 'days')
 			.toDate();
 		defaultOrganization.futureDateAllowed = true;
-		defaultOrganization.inviteExpiryPeriod = faker.number.int(50);
+		defaultOrganization.inviteExpiryPeriod = Number(faker.helpers.arrayElement(SEEDABLE_INVITE_EXPIRY_PERIODS));
 		defaultOrganization.numberFormat = faker.helpers.arrayElement(['USD', 'BGN', 'ILS']);
 		defaultOrganization.officialName = faker.company.name();
 		defaultOrganization.separateInvoiceItemTaxAndDiscount = faker.datatype.boolean();
@@ -240,7 +255,7 @@ const generateRandomOrganization = async (
 	organization.fiscalStartDate = moment().add(faker.number.int(10), 'days').toDate();
 	organization.fiscalEndDate = moment(organization.fiscalStartDate).add(faker.number.int(10), 'days').toDate();
 	organization.futureDateAllowed = true;
-	organization.inviteExpiryPeriod = faker.number.int(50);
+	organization.inviteExpiryPeriod = Number(faker.helpers.arrayElement(SEEDABLE_INVITE_EXPIRY_PERIODS));
 	organization.numberFormat = faker.helpers.arrayElement(['USD', 'BGN', 'ILS']);
 	organization.officialName = faker.company.name();
 	organization.separateInvoiceItemTaxAndDiscount = faker.datatype.boolean();

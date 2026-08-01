@@ -96,13 +96,14 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 							? {
 									relations: parseFindOptionsRelations(options.relations)
 							  }
-							: {}),
-						...(options && options.join
-							? {
-									join: options.join
-							  }
 							: {})
 					});
+					/**
+					 * The `join` find-option was removed in TypeORM v1 (passing it throws, which surfaced as a
+					 * blanket 400 for every paginated request). Declare the aliases the raw predicates below
+					 * rely on explicitly instead.
+					 */
+					query.leftJoin(`${query.alias}.user`, 'user');
 					query.where((qb: SelectQueryBuilder<Candidate>) => {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
@@ -178,7 +179,8 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 				}
 			}
 		} catch (error) {
-			throw new BadRequestException(error);
+			// Preserve the underlying reason, otherwise the client only ever sees `400 {}`.
+			throw new BadRequestException(error?.message ?? error);
 		}
 	}
 }

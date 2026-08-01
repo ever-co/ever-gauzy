@@ -2,11 +2,18 @@
 @forward 'var';
 @use 'var' as *;
 
+// Hairline ring instead of `--gauzy-shadow`: a 35 %-black drop shadow under a
+// toolbar button is invisible on the dark canvas and a smudge on the light one.
+// An inset ring is a border that costs no layout box, so no button moves.
+$action-hairline: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
 .action {
-  box-shadow: var(--gauzy-shadow);
+  box-shadow: $action-hairline;
   border: none;
   &[nbButton].appearance-filled.status-basic {
-    background-color: #ffffff;
+    // Was a hard-coded #ffffff: a pure-white pill on every data-table toolbar,
+    // in every theme.
+    background-color: var(--gauzy-card-2);
   }
   &.info {
     &[nbButton].appearance-filled.status-basic {
@@ -21,7 +28,7 @@
     }
   }
   &.secondary {
-    color: #7e7e8f;
+    color: var(--text-hint-color);
   }
   &.success {
     color: nb-theme(color-success-default);
@@ -44,8 +51,8 @@
   &.select-nb ::ng-deep {
     box-shadow: none;
     .select-button {
-      box-shadow: var(--gauzy-shadow);
-      background: rgba(245, 245, 245);
+      box-shadow: $action-hairline;
+      background: var(--gauzy-card-2);
     }
   }
 }
@@ -110,6 +117,6 @@ button {
   // }
   input {
     border-radius: nb-theme(border-radius);
-    box-shadow: var(--gauzy-shadow) inset;
+    box-shadow: $action-hairline;
   }
 }

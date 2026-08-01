@@ -41,8 +41,11 @@ export const MyTasksTrackedInTimesheets = {
 	taskSelectCss: 'ga-task-selector ng-select',
 	// Start/Stop is ONE toggle button whose [status] flips success->danger. div.actions div.toggle scopes it
 	// to the timer widget (the view-log block also has a status="success" START button, avoided here).
+	// Both use the CLASS form: time-tracker.component.html property-binds [status]="running ? 'danger' :
+	// 'success'", and a property binding is never written to the DOM as an attribute — Nebular only
+	// reflects it as the class status-danger / status-success. `button[status="danger"]` matched nothing.
 	startTimerBtnCss: 'div.actions div.toggle button.status-success',
-	stopTimerBtnCss: 'div.actions div.toggle button[status="danger"]',
+	stopTimerBtnCss: 'div.actions div.toggle button.status-danger',
 	// The "View Timesheet" anchor uses [routerLink]="['/pages/employees/timesheets']", which the hash-router
 	// renders as href="#/pages/employees/timesheets".
 	viewTimesheetBtnCss: 'div.view-log-button a[href="#/pages/employees/timesheets"]',

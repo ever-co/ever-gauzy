@@ -3656,6 +3656,31 @@
 		"SELECT_TEAM": "בחר קבוצה",
 		"AI_CHAT": "צ'אט AI"
 	},
+	"AI_ASSISTANT": {
+		"TITLE": "עוזר AI",
+		"OPEN": "פתיחת עוזר ה-AI",
+		"CLOSE": "סגירת עוזר ה-AI",
+		"HISTORY": "היסטוריה",
+		"HISTORY_HINT": "עיון בשיחות שנשמרו",
+		"HISTORY_CLOSE": "סגירת ההיסטוריה",
+		"HISTORY_EMPTY": "אין עדיין שיחות שמורות.",
+		"NEW_CHAT": "צ'אט חדש",
+		"NEW_CHAT_HINT": "התחלת שיחה חדשה",
+		"DELETE_CONVERSATION": "מחיקת השיחה",
+		"LOADING": "טוען…",
+		"DOCK_LEFT": "עגינה משמאל",
+		"DOCK_RIGHT": "עגינה מימין",
+		"MAXIMIZE": "הגדלה",
+		"RESTORE": "שחזור הרוחב",
+		"COLLAPSE": "כיווץ",
+		"RESIZE": "גרור כדי לשנות את הרוחב",
+		"WELCOME_SUBTITLE": "שאל אותי כל דבר על סביבת העבודה, המשימות או הפרויקטים שלך.",
+		"PLACEHOLDER": "הקלד הודעה…",
+		"SEND": "שליחת ההודעה",
+		"STOP": "עצירת היצירה",
+		"ERROR": "משהו השתבש.",
+		"RETRY": "נסה שוב"
+	},
 	"HEADER_TITLE": {
 		"FOR": "for",
 		"FROM": "from"

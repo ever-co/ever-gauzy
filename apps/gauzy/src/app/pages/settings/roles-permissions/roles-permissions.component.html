@@ -1,8 +1,10 @@
 <nb-card>
   <nb-card-header>
     <h4>
-      <span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/</span>
-      {{ 'ORGANIZATIONS_PAGE.EDIT.ROLES_PERMISSIONS' | translate }}
+      <ngx-header-title [allowEmployee]="false">
+        <span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/</span>
+        {{ 'ORGANIZATIONS_PAGE.EDIT.ROLES_PERMISSIONS' | translate }}
+      </ngx-header-title>
     </h4>
   </nb-card-header>
   <nb-card-body>

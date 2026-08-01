@@ -276,8 +276,10 @@ export const CustomCommands = {
 		await manageEmployeesPage.enterUsernameData(username);
 		await manageEmployeesPage.employeeEmailInputVisible();
 		await manageEmployeesPage.enterEmployeeEmailData(employeeEmail);
-		await manageEmployeesPage.dateInputVisible();
-		await manageEmployeesPage.enterDateData();
+		// Employee-dialog-scoped: the bare [formcontrolname="startedWorkOn"] also matches the invite
+		// dialog's field whenever that dialog is still mounted (strict-mode violation).
+		await manageEmployeesPage.employeeDateInputVisible();
+		await manageEmployeesPage.enterEmployeeDateData();
 		await manageEmployeesPage.clickKeyboardButtonByKeyCode(9);
 		await manageEmployeesPage.passwordInputVisible();
 		await manageEmployeesPage.enterPasswordInputData(password);

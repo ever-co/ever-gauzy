@@ -4093,6 +4093,31 @@
 		"SELECT_TEAM": "Select Team",
 		"AI_CHAT": "AI Chat"
 	},
+	"AI_ASSISTANT": {
+		"TITLE": "AI Assistant",
+		"OPEN": "Open AI Assistant",
+		"CLOSE": "Close AI Assistant",
+		"HISTORY": "History",
+		"HISTORY_HINT": "Browse saved conversations",
+		"HISTORY_CLOSE": "Close history",
+		"HISTORY_EMPTY": "No saved conversations yet.",
+		"NEW_CHAT": "New chat",
+		"NEW_CHAT_HINT": "Start a new conversation",
+		"DELETE_CONVERSATION": "Delete conversation",
+		"LOADING": "Loading…",
+		"DOCK_LEFT": "Dock to the left",
+		"DOCK_RIGHT": "Dock to the right",
+		"MAXIMIZE": "Maximize",
+		"RESTORE": "Restore width",
+		"COLLAPSE": "Collapse",
+		"RESIZE": "Drag to resize",
+		"WELCOME_SUBTITLE": "Ask anything about your workspace, tasks, or projects.",
+		"PLACEHOLDER": "Type a message…",
+		"SEND": "Send message",
+		"STOP": "Stop generating",
+		"ERROR": "Something went wrong.",
+		"RETRY": "Retry"
+	},
 	"HEADER_TITLE": {
 		"FOR": "for",
 		"FROM": "from"

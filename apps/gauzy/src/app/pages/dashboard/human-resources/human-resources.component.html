@@ -1,6 +1,11 @@
 @if (selectedEmployee && selectedEmployee.id) {
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
 	<nb-card-header class="header">
+		<h4>
+			<ngx-header-title>
+				{{ 'DASHBOARD_PAGE.HUMAN_RESOURCES' | translate }}
+			</ngx-header-title>
+		</h4>
 		@if (incomePermissionsError || expensePermissionError) {
 		<nb-alert outline="danger">
 			{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.INSUFFICIENT' | translate }}

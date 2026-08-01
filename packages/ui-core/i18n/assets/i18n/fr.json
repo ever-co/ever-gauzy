@@ -3627,6 +3627,31 @@
 		"SELECT_TEAM": "Sélectionner une équipe",
 		"AI_CHAT": "Chat IA"
 	},
+	"AI_ASSISTANT": {
+		"TITLE": "Assistant IA",
+		"OPEN": "Ouvrir l'assistant IA",
+		"CLOSE": "Fermer l'assistant IA",
+		"HISTORY": "Historique",
+		"HISTORY_HINT": "Parcourir les conversations enregistrées",
+		"HISTORY_CLOSE": "Fermer l'historique",
+		"HISTORY_EMPTY": "Aucune conversation enregistrée pour le moment.",
+		"NEW_CHAT": "Nouvelle discussion",
+		"NEW_CHAT_HINT": "Démarrer une nouvelle conversation",
+		"DELETE_CONVERSATION": "Supprimer la conversation",
+		"LOADING": "Chargement…",
+		"DOCK_LEFT": "Ancrer à gauche",
+		"DOCK_RIGHT": "Ancrer à droite",
+		"MAXIMIZE": "Agrandir",
+		"RESTORE": "Rétablir la largeur",
+		"COLLAPSE": "Réduire",
+		"RESIZE": "Faire glisser pour redimensionner",
+		"WELCOME_SUBTITLE": "Posez-moi vos questions sur votre espace de travail, vos tâches ou vos projets.",
+		"PLACEHOLDER": "Saisissez un message…",
+		"SEND": "Envoyer le message",
+		"STOP": "Arrêter la génération",
+		"ERROR": "Une erreur s'est produite.",
+		"RETRY": "Réessayer"
+	},
 	"HEADER_TITLE": {
 		"FOR": "pour",
 		"FROM": "de"

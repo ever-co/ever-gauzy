@@ -1,19 +1,35 @@
+// Tag chips render inside smart-table cells, so their box is part of the row
+// height. They follow the shared table-density tokens (`$gauzy-density` in
+// `themes.scss`) so a density change moves the chips with the cells instead of
+// leaving the old 24px-per-chip footprint behind. Literals are CSS-var
+// fallbacks only.
 .color {
   position: static;
-  margin-top: 5px;
-  margin-right: 5px;
+  margin-top: var(--gauzy-table-chip-gap, 0.1875rem);
+  margin-right: var(--gauzy-table-chip-gap, 0.1875rem);
   display: inline-block;
-  font-size: 11px;
+  font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
   font-weight: 600;
-  line-height: 13px;
+  line-height: var(--gauzy-table-chip-line-height, 0.875rem);
   letter-spacing: 0em;
-  padding: 3px 8px;
+  padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
 }
 
 .tags {
   // display: flex;
   // width: 100px;
   flex-wrap: wrap;
+  // The chips are inline-blocks, so each chip row is a line box and inherits
+  // the cell's 20px line-height as a minimum — 4px per row that nothing can
+  // see. Zeroing it here lets a chip row measure exactly the chip. Safe because
+  // this container only ever holds `nb-badge` chips, each of which sets its own
+  // `line-height` via `.color` above.
+  line-height: 0;
+  // The template tags this element with Bootstrap's `.mt-2` utility, which is
+  // `!important`, so this is one of the two places in the density pass where
+  // `!important` is unavoidable. The chips carry their own `margin-top`, so the
+  // extra 8px here was a second gap on top of the one that shows.
+  margin-top: 0 !important;
 }
 
 .tags-right {

@@ -2,7 +2,13 @@ export const ManageEmployeesPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	inviteButtonCss: 'button.action[status="info"]',
 	emailsInputCss: '#emails',
+	// Invite dialog's "Date when started work" (the invite dialog is the only thing open at that point).
 	dateInputCss: '[formcontrolname="startedWorkOn"]',
+	// Add-Employee dialog's own start-work date. It has NO id, so the bare
+	// `[formcontrolname="startedWorkOn"]` matches this AND the invite dialog's field whenever the
+	// invite dialog is still mounted (e.g. its Send failed), and clearField()/enterInput() — which have
+	// no .first() — die on a Playwright strict-mode violation instead of reporting the real problem.
+	employeeDateInputCss: 'ga-employee-mutation [formcontrolname="startedWorkOn"]',
 	selectProjectDropdownCss: '#projectSelection',
 	selectProjectDropdownOptionCss: 'div.ng-option > span.ng-option-label',
 	sendInviteButtonCss: 'nb-card-footer > button[status="success"]',

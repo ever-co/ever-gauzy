@@ -7,14 +7,14 @@ $orange: #f56d58;
 @include nb-install-component() {
   width: 100%;
   .notification-header {
-    background-color: #1b005d;
+    background-color: var(--color-primary-600);
     text-align: center;
     font-weight: 300;
     margin: 0;
     padding: 3px;
     width: 100%;
     position: relative;
-    color: rgb(236, 236, 236);
+    color: var(--text-control-color);
     a {
       color: rgb(236, 236, 236);
     }
@@ -169,7 +169,9 @@ $orange: #f56d58;
   top: 4.75rem;
   width: 100%;
   height: calc(100vh - 4.75rem);
-  background: white;
+  // Was a hard-coded `white`: a full-viewport white sheet over the app whenever
+  // the header overflow panel opens (below the `lg` breakpoint), in every theme.
+  background: var(--background-basic-color-1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -193,6 +195,80 @@ $orange: #f56d58;
     min-width: 300px;
     width: 100%;
     max-width: 500px;
+  }
+}
+
+// AI assistant entry point.
+//
+// It used to be a bare `message-square-outline` sitting between the support
+// bubble and the timer, with nothing but a tooltip to say what it was — the
+// reason people asked "where is chat?" while looking straight at it. Three
+// cues fix that without moving or rewiring anything:
+//   1. the name renders next to the icon (dropped below `lg`, where the rest
+//      of the action cluster collapses into the overflow sheet too);
+//   2. hover lifts it to the primary colour so it reads as a control;
+//   3. `.active` (bound to the panel's expanded state) fills it in, so the
+//      button answers "is the assistant open?" without opening anything.
+.ai-chat-toggle {
+  // `.toggle-layout` stretches to 100% in the sidebar context; this is a pill
+  // in a horizontal action row, so it must hug its content.
+  width: auto !important;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.625rem !important;
+  border-radius: var(--button-rectangle-border-radius, 0.375rem);
+  border: 1px solid transparent;
+  color: var(--gauzy-text-color-2, var(--text-hint-color));
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color 0.15s ease-in-out,
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out;
+
+  nb-icon {
+    font-size: 1.125rem;
+    flex-shrink: 0;
+  }
+
+  .ai-chat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: 0.01em;
+  }
+
+  &:hover {
+    color: var(--color-primary-default);
+    background-color: var(--color-primary-transparent-100);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-primary-default);
+  }
+
+  // Panel open — the pill stays lit so the header mirrors the layout.
+  &.active {
+    color: var(--color-primary-default);
+    background-color: var(--color-primary-transparent-200);
+    border-color: var(--color-primary-transparent-300);
+
+    &:hover {
+      background-color: var(--color-primary-transparent-300);
+    }
+  }
+
+  // Below `lg` the header hands its controls to the overflow sheet and space
+  // is scarce: keep the icon, drop the word (the tooltip still names it).
+  @include media-breakpoint-down(lg) {
+    gap: 0;
+    padding: 0.5rem !important;
+
+    .ai-chat-label {
+      display: none;
+    }
   }
 }
 
@@ -244,9 +320,14 @@ $orange: #f56d58;
 .employee-selector,
 .team-selector,
 .project-selector {
+  // The header selector pills. They are controls, so they resolve the shared
+  // control radius directly instead of borrowing the button token, and they
+  // carry the same 1px hairline ring as every other control — the old
+  // `--gauzy-shadow` is a black drop shadow, which on the near-black header band
+  // left these pills with no visible edge at all.
   ::ng-deep {
     .ng-select.ng-select-opened.ng-select-bottom > .ng-select-container {
-      border-radius: var(--button-rectangle-border-radius) !important;
+      border-radius: var(--gauzy-radius-sm) !important;
     }
     .ng-select.ng-select-single .ng-select-container {
       height: 2rem;
@@ -255,8 +336,8 @@ $orange: #f56d58;
       min-width: 4rem;
     }
     .ng-select .ng-select-container {
-      box-shadow: var(--gauzy-shadow);
-      border-radius: var(--button-rectangle-border-radius) !important;
+      box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+      border-radius: var(--gauzy-radius-sm) !important;
       background-color: var(--gauzy-card-1);
     }
   }

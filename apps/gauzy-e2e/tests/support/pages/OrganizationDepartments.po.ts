@@ -12,6 +12,7 @@ import {
 	dispatchClick,
 	getLastElement
 } from '../util';
+import { selectNgOption } from '../ng-select';
 import { expect } from '@playwright/test';
 import { getPage } from '../page-context';
 // Selectors + data are framework-agnostic — reused from the Cypress tree during migration.
@@ -84,6 +85,41 @@ export const clickEmployeeDropdown = async () => {
 	await clickButton(OrganizationDepartmentsPage.selectEmployeeDropdownCss);
 };
 
+/**
+ * Collapse the members nb-select's option panel.
+ *
+ * ga-employee-multi-select is `<nb-select [multiple]>`, and a MULTIPLE nb-select deliberately keeps its
+ * panel open after a selection so you can pick more. That panel is a cdk overlay hanging BELOW the
+ * control — i.e. straight over the dialog footer where Save lives. Every click in this page object is
+ * `force: true`, which skips the "receives events" check but still delivers the click at screen
+ * coordinates, so the Save click was being handed to the option list instead of the button: no submit,
+ * no POST, no toast, the dialog just sat there and verifyDepartmentExists timed out on an empty grid.
+ *
+ * It only bites once the organization has enough employees for the panel to reach the footer, which is
+ * exactly why this passed on a fresh database and started failing after the specs that add employees
+ * had run. Closing the panel is the fix; do it by DISPATCHING the toggle click (a coordinate click can
+ * itself be swallowed by the panel we are trying to close) and confirm via nb-select's own `open` class.
+ *
+ * Escape is not an option here: nb-dialog opens with closeOnEsc, so it closes the whole Add form.
+ */
+const closeEmployeeDropdown = async () => {
+	const page = getPage();
+	// Target whichever nb-select is currently OPEN: nb-select puts an `open` class on its host while the
+	// panel is up, so this needs no assumption about the control's caption (which changes as soon as
+	// employees are picked) or about the dialog still being mounted.
+	const openSelect = page.locator('nb-select.open');
+	for (let attempt = 0; attempt < 5; attempt++) {
+		if ((await openSelect.count().catch(() => 0)) === 0) return;
+		await openSelect
+			.first()
+			.locator('button.select-button')
+			.first()
+			.dispatchEvent('click')
+			.catch(() => {});
+		await page.waitForTimeout(400);
+	}
+};
+
 export const selectEmployeeFromDropdown = async (index: number) => {
 	// Best-effort employee pick (mirrors ContactsLeads.selectEmployeeDropdownOption): the nb-option
 	// list loads async and can legitimately be EMPTY (no employee "working" in the header date range).
@@ -94,6 +130,8 @@ export const selectEmployeeFromDropdown = async (index: number) => {
 	try {
 		await option.first().waitFor({ state: 'visible', timeout: 8000 });
 		await option.nth(index).click({ force: true });
+		// A multiple nb-select keeps its panel open over the footer — collapse it before moving on.
+		await closeEmployeeDropdown();
 	} catch {
 		await page.keyboard.press('Escape').catch(() => {});
 	}
@@ -118,17 +156,15 @@ export const clickTagsDropdown = async () => {
 };
 
 export const selectTagFromDropdown = async (index: number) => {
-	// Best-effort tag pick: tags is an OPTIONAL field (no validator on the form), so if the appended
-	// ng-dropdown panel is slow/empty, press Escape and continue rather than hanging — the department
-	// still saves. Click the first rendered option when present.
-	const page = getPage();
-	const option = page.locator(OrganizationDepartmentsPage.tagsDropdownOption);
-	try {
-		await option.first().waitFor({ state: 'visible', timeout: 8000 });
-		await option.nth(index).click({ force: true });
-	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
-	}
+	// Routed through the ONE shared ng-select driver (tests/support/ng-select.ts). It counts only REAL
+	// options: a bare `div.ng-option` ALSO matches ng-select's disabled "No items found" / "Loading…"
+	// rows, so the old wait-then-click was satisfied by an EMPTY list and then clicked a row ng-select
+	// ignores — a silent no-op that left this field unset. It re-opens the panel via the control's own
+	// container until real options render (NEVER Escape: nb-dialog opens with closeOnEsc and that closed
+	// the whole form), and it confirms the pick against `div.ng-value`, the only node that exists once a
+	// value is really bound. Still best-effort — the tag is optional here — but it can no longer
+	// half-succeed, and it can no longer kill the dialog on a slow list.
+	await selectNgOption(OrganizationDepartmentsPage.addTagsDropdownCss, OrganizationDepartmentsPage.tagsDropdownOption, index);
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode: number) => {
@@ -146,11 +182,30 @@ export const saveDepartmentButtonVisible = async () => {
 export const clickSaveDepartmentButton = async () => {
 	// IMPORTANT: this Save button is type="submit" with NO (click) handler — it submits the form via the
 	// native submit -> (ngSubmit). A synthetic dispatchEvent('click') is an UNtrusted event and does NOT
-	// trigger native form submission, so it would silently no-op. Use a real (force) click instead. The
-	// button lives in the top dialog overlay, and clickCardBody() has already closed the tags panel, so a
-	// coordinate click reaches it. Wait out the card spinner first.
-	await waitForSpinnerGone();
-	await clickButton(OrganizationDepartmentsPage.saveDepartmentButtonCss);
+	// trigger native form submission, so it would silently no-op. It has to be a real coordinate click,
+	// which means nothing may be painted on top of it: `force: true` skips the actionability CHECK but
+	// still delivers the click wherever the pointer is, so an overlay lying over the button eats the
+	// submit silently. Collapse the option panels first, then click and PROVE it landed — the dialog
+	// closes on a successful save (departments.component._clearItem), so a dialog that is still there
+	// means the submit never happened, and we close panels and try once more.
+	const page = getPage();
+	const dialog = page.locator('ga-departments-mutation');
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await waitForSpinnerGone();
+		await closeEmployeeDropdown();
+		await page
+			.locator(OrganizationDepartmentsPage.tagsDropdownOption)
+			.first()
+			.waitFor({ state: 'hidden', timeout: 2000 })
+			.catch(() => {});
+		await clickButton(OrganizationDepartmentsPage.saveDepartmentButtonCss);
+		try {
+			await dialog.first().waitFor({ state: 'detached', timeout: 8000 });
+			return;
+		} catch {
+			/* still open -> the click did not submit; re-close panels and retry once */
+		}
+	}
 };
 
 export const tableRowVisible = async () => {

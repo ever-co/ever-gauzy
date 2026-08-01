@@ -27,6 +27,7 @@ import {
 	RecurringExpenseHistoryModule,
 	RecurringExpenseMutationModule,
 	RemoveLodashModule,
+	SharedModule,
 	TableComponentsModule,
 	UserFormsModule
 } from '@gauzy/ui-core/shared';
@@ -70,7 +71,8 @@ import {
 		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule,
 		CardGridModule,
-		DirectivesModule
+		DirectivesModule,
+		SharedModule
 	],
 	declarations: [
 		OrganizationsComponent,

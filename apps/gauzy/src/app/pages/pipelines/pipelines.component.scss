@@ -1,5 +1,5 @@
 @use '@shared/_pg-card' as *;
-@use '../tabset-actions' as *;
+@use 'gauzy/tabset-actions' as *;
 
 :host {
   height: 100%;

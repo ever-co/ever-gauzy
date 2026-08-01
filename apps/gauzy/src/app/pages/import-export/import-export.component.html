@@ -6,8 +6,10 @@
   >
   <nb-card-header>
     <h4>
-      <span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/</span>
-      {{ 'MENU.IMPORT_EXPORT.IMPORT_EXPORT_DATA' | translate }}
+      <ngx-header-title [allowEmployee]="false">
+        <span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/</span>
+        {{ 'MENU.IMPORT_EXPORT.IMPORT_EXPORT_DATA' | translate }}
+      </ngx-header-title>
     </h4>
   </nb-card-header>
   <nb-card-body>

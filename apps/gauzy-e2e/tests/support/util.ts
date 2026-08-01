@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { getPage } from './page-context';
+import { resolveOptionSelector } from './ng-select';
 
 /**
  * Playwright port of the Cypress util layer (src/support/Base/utils/util.ts).
@@ -16,6 +17,22 @@ const taskTimeout = 60_000;
 
 const loc = (selector: string) => getPage().locator(selector);
 
+/**
+ * `loc()` for selectors that MAY address ng-select options.
+ *
+ * ng-select renders "No items found" / "Loading…" / "Type to search" as
+ * `div.ng-option.ng-option-disabled` — the same class real choices carry. Every util below that
+ * WAITS FOR or CLICKS an option therefore has to exclude those placeholders, or it either proceeds
+ * against an empty list or clicks a row ng-select ignores (a silent no-op that submits null; see
+ * ng-select.ts for the proof).
+ *
+ * `resolveOptionSelector` upgrades the selector only once a real option has actually rendered, and
+ * otherwise returns the caller's original selector untouched — so this is strictly safer than what
+ * it replaces and cannot turn a step that used to pass into one that fails. Non-option selectors
+ * (the vast majority, plus every Nebular `nb-option` one) are returned as-is with no extra wait.
+ */
+const optionAwareLoc = async (selector: string) => loc(await resolveOptionSelector(selector));
+
 export const getTitle = async (): Promise<string> => getPage().title();
 
 export const verifyText = async (selector: string, data: string) =>
@@ -24,7 +41,9 @@ export const verifyText = async (selector: string, data: string) =>
 	// rendered options/rows/cards?" check when X isn't first (dropdown options, grid rows, reused
 	// headers). Filter by text then assert visibility — covers both the single-element and among-many
 	// intents, retry-safe, and no Playwright strict-mode violation.
-	expect(loc(selector).filter({ hasText: data }).first()).toBeVisible({ timeout: defaultCommandTimeout });
+	expect((await optionAwareLoc(selector)).filter({ hasText: data }).first()).toBeVisible({
+		timeout: defaultCommandTimeout
+	});
 
 export const verifyValue = async (selector: string, data: string) =>
 	expect(loc(selector).first()).toHaveValue(data, { timeout: defaultCommandTimeout });
@@ -42,7 +61,7 @@ export const verifyTextByIndex = async (selector: string, data: string, index: n
 	expect(loc(selector).nth(index)).toContainText(data);
 
 export const clickButton = async (selector: string) =>
-	loc(selector).first().click({ force: true, timeout: taskTimeout });
+	(await optionAwareLoc(selector)).first().click({ force: true, timeout: taskTimeout });
 
 // DOM-level click that bypasses overlay hit-testing: dispatches the event straight to the element so
 // the framework's (click) handler fires even when a fading cdk-overlay backdrop sits on top. A
@@ -61,14 +80,159 @@ export const dispatchClick = async (selector: string) =>
 export const waitForSpinnerGone = async (timeout = 4_000) =>
 	loc('nb-spinner').first().waitFor({ state: 'detached', timeout }).catch(() => {});
 
+/**
+ * Click a control that sits under a loading overlay or an in-flight CSS transition, and prove the
+ * click landed.
+ *
+ * The grid pages wrap their card in `[nbSpinner]="loading"`, whose overlay covers the whole card —
+ * header toolbar included — at z-index 9999, and ngx-gauzy-button-action slides its action bar in over
+ * ~0.2s. A coordinate click issued while either is in flight is delivered at screen coordinates and
+ * lands on the overlay (or on whichever button has slid into that spot): `force: true` only skips the
+ * actionability CHECK, it does not change where the click is delivered. That is how the Users toolbar
+ * clicks were being lost ~1.9s after navigation, and how edit-user's Edit click landed on "Convert to
+ * employee" instead.
+ *
+ * So: settle first (spinner detached + network idle), then dispatch the event straight at the element
+ * so no overlay can intercept it, then wait for `confirmSelector` — the thing the click is supposed to
+ * produce, e.g. the dialog's first input — and dispatch once more if it never appeared. Raising a
+ * timeout would not have helped: the click was never delivered to the button in the first place.
+ */
+export const dispatchClickWhenSettled = async (selector: string, confirmSelector?: string, attempts = 2) => {
+	const page = getPage();
+	for (let attempt = 0; attempt < attempts; attempt++) {
+		await waitForSpinnerGone();
+		// Bounded on purpose: this is a settle attempt, not a gate. waitForLoadState defaults to the
+		// 60s navigationTimeout, and a page that never goes idle must not cost a minute per click.
+		await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+		const target = loc(selector).first();
+		await target.waitFor({ state: 'visible', timeout: defaultCommandTimeout });
+		await target.dispatchEvent('click');
+		if (!confirmSelector) return;
+		try {
+			await loc(confirmSelector).first().waitFor({ state: 'visible', timeout: 12_000 });
+			return;
+		} catch {
+			/* the click was swallowed — settle again and re-dispatch. Never re-dispatch blindly: the
+			   confirm target is checked first, so an already-open dialog is not opened twice. */
+		}
+	}
+};
+
+/**
+ * Set an angular2-smart-table column filter and make it stick.
+ *
+ * The filter cell is
+ *   `<input [value]="query" (change)="onValueChanged(...)" (keyup)="onValueChanged(...)">`
+ * It never listens for 'input' — which is the only event `.fill()` dispatches — so a plain fill puts
+ * text in the box and filters nothing: the grid keeps paging over every row and the record the spec
+ * just created stays on page 2, never rendered and so never found. Typing character by character
+ * instead races the debounced refetch, which writes `query` straight back into [value] and eats
+ * keystrokes (a 27-character company name came out with 9 characters missing).
+ *
+ * So: fill the whole value in one shot, dispatch the 'change' the component actually subscribes to,
+ * let the debounced refetch land, then read the value back and retry if a re-render clobbered it.
+ */
+export const applySmartTableFilter = async (selector: string, value: string, attempts = 4) => {
+	const page = getPage();
+	for (let attempt = 0; attempt < attempts; attempt++) {
+		await waitForSpinnerGone();
+		const input = loc(selector).first();
+		await input.waitFor({ state: 'visible', timeout: defaultCommandTimeout });
+		await input.fill(String(value));
+		await input.dispatchEvent('change');
+		await page.waitForTimeout(1200); // debounced refetch
+		await waitForSpinnerGone();
+		await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+		const current = await loc(selector)
+			.first()
+			.inputValue()
+			.catch(() => '');
+		if (current === String(value)) return;
+	}
+};
+
+/**
+ * Narrow a smart-table grid to the record this spec is about, so "my row exists" stops depending on
+ * how much data earlier specs left behind.
+ *
+ * The grids are SERVER-paginated at 10 rows and the suite runs serially against ONE accumulating
+ * database, so a row a spec just created is regularly not on page 1 at all. A bare
+ * `verifyText(<tbody>, name)` then fails — not because the record is missing, but because it is on
+ * page 2. That is precisely the kind of order-dependence that makes the failing set rotate between
+ * runs, and it is what `remove-user` / `edit-user` were already fixed by filtering.
+ *
+ * Best-effort ON PURPOSE: not every grid has a filter row (several set `hideSubHeader` or mark all
+ * columns `isFilterable: false`, and some screens are card grids, not tables). When the filter input
+ * is not there this returns false and the caller asserts exactly as it did before — so adding this
+ * call to an existing verification can only ever narrow the grid, never break it.
+ *
+ * Prefer a column-key selector (`th.angular2-smart-th.<columnKey> input`) over a
+ * `[placeholder="…"]` one: the placeholder is the TRANSLATED column title, so it breaks the moment a
+ * spec changes the UI language, while the column key is stable.
+ */
+export const scopeGridTo = async (filterSelector: string, value: string): Promise<boolean> => {
+	await waitForSpinnerGone();
+	try {
+		await loc(filterSelector).first().waitFor({ state: 'visible', timeout: 6_000 });
+	} catch {
+		return false; // this grid has no filter row — leave the caller's behaviour untouched
+	}
+	await applySmartTableFilter(filterSelector, value);
+	return true;
+};
+
+/**
+ * Submit a dialog and PROVE it closed.
+ *
+ * "Click Save, then assert the row exists" is one of the ways this suite lies to itself. When the
+ * click does not actually submit — the button was still disabled, the dispatch raced an async
+ * valueChanges, an overlay swallowed it — the dialog simply stays open, and the following
+ * `verifyXExists` is then satisfied by a LEFTOVER row that an earlier run created under the same
+ * fixed test name. The spec goes green having saved nothing, and the next step opens a SECOND dialog
+ * on top of the first, which is where it finally falls over (`strict mode violation: … resolved to 2
+ * elements`) — several steps away from the real cause, and only when the previous run happened to
+ * leave the right residue. That is exactly the shape of an order-dependent failure.
+ *
+ * So: wait for the button to be genuinely enabled (a dispatched click on a disabled button runs the
+ * handler but the component's own guard then discards it), dispatch the click at the element so no
+ * overlay can intercept it, and wait for the dialog host to DETACH. Re-dispatch if it is still there.
+ * Returns whether the dialog actually closed.
+ */
+export const clickAndAwaitDialogClose = async (
+	buttonSelector: string,
+	dialogSelector: string,
+	attempts = 3
+): Promise<boolean> => {
+	const page = getPage();
+	const dialog = loc(dialogSelector).first();
+	for (let attempt = 0; attempt < attempts; attempt++) {
+		await waitForSpinnerGone();
+		const button = loc(buttonSelector).first();
+		await button.waitFor({ state: 'visible', timeout: defaultCommandTimeout }).catch(() => undefined);
+		for (let i = 0; i < 12; i++) {
+			if (await button.isEnabled().catch(() => false)) break;
+			await page.waitForTimeout(500);
+		}
+		await button.dispatchEvent('click').catch(() => undefined);
+		try {
+			await dialog.waitFor({ state: 'detached', timeout: 12_000 });
+			return true;
+		} catch {
+			/* still open — the submit did not take. Settle and try once more. */
+		}
+		await page.waitForTimeout(800);
+	}
+	return (await loc(dialogSelector).count().catch(() => 0)) === 0;
+};
+
 export const clickElementByText = async (selector: string, data: string) =>
 	// force + taskTimeout to match clickButton: several flows leave a fading nb-dialog backdrop
 	// (cdk-overlay-backdrop) that intercepts pointer events; the element is present and correct, the
 	// click just needs to go through (Appointments "Book Public Appointment", etc.).
-	loc(selector).filter({ hasText: data }).first().click({ force: true, timeout: taskTimeout });
+	(await optionAwareLoc(selector)).filter({ hasText: data }).first().click({ force: true, timeout: taskTimeout });
 
 export const forceClickElementByText = async (selector: string, data: string) =>
-	loc(selector).filter({ hasText: data }).first().click({ force: true });
+	(await optionAwareLoc(selector)).filter({ hasText: data }).first().click({ force: true });
 
 export const enterInput = async (selector: string, data: string) =>
 	loc(selector).fill(String(data), { timeout: taskTimeout });
@@ -86,13 +250,17 @@ export const verifyElementIsVisible = async (selector: string) =>
 	// selector more than once (grid rows, tab headers, repeated nb components). Asserting on the
 	// first match preserves the "is this control present?" intent without Playwright strict-mode
 	// violations. Single-match selectors are unaffected.
-	expect(loc(selector).first()).toBeVisible({ timeout: defaultCommandTimeout });
+	expect((await optionAwareLoc(selector)).first()).toBeVisible({ timeout: defaultCommandTimeout });
 
 export const verifyElementIsVisibleByIndex = async (selector: string, index: number) =>
-	expect(loc(selector).nth(index)).toBeVisible({ timeout: defaultCommandTimeout });
+	expect((await optionAwareLoc(selector)).nth(index)).toBeVisible({ timeout: defaultCommandTimeout });
 
 export const clickButtonByIndex = async (selector: string, index: number) =>
-	loc(selector).nth(index).click({ force: true, timeout: taskTimeout });
+	// Option selectors are resolved to REAL options first: `nth(0)` on a bare `div.ng-option` is
+	// ng-select's own "No items found" row whenever the list has not loaded, and clicking it is a
+	// silent no-op. The index is unchanged for a populated list — ng-select only renders a placeholder
+	// row when there are no real items at all.
+	(await optionAwareLoc(selector)).nth(index).click({ force: true, timeout: taskTimeout });
 
 export const clickOrganizationByIndex = async (selector: string, index: number) =>
 	loc(selector).nth(index).click({ force: true, timeout: taskTimeout });
@@ -155,10 +323,10 @@ export const verifyElementNotExist = async (selector: string) =>
 	expect(loc(selector)).toHaveCount(0, { timeout: defaultCommandTimeout });
 
 export const verifyByText = async (selector: string, text: string) =>
-	expect(loc(selector)).toContainText(text, { timeout: defaultCommandTimeout });
+	expect(await optionAwareLoc(selector)).toContainText(text, { timeout: defaultCommandTimeout });
 
 export const clickByText = async (selector: string, text: string) =>
-	loc(selector).filter({ hasText: text }).first().click({ force: true, timeout: taskTimeout });
+	(await optionAwareLoc(selector)).filter({ hasText: text }).first().click({ force: true, timeout: taskTimeout });
 
 export const clickButtonMultipleTimes = async (selector: string, n: number) => {
 	for (let i = 0; i < n; i++) {
@@ -198,7 +366,7 @@ export const uploadMedia = async (selector: string, btn: string, file: string) =
 export const uploadMediaInput = async (selector: string, file: string) => loc(selector).setInputFiles(file);
 
 export const waitElementToLoad = async (selector: string) =>
-	expect(loc(selector).first()).toBeAttached({ timeout: defaultCommandTimeout });
+	expect((await optionAwareLoc(selector)).first()).toBeAttached({ timeout: defaultCommandTimeout });
 
 export const dragNDrop = async (source: string, index: number, target: string) =>
 	loc(source).nth(index).dragTo(loc(target));
@@ -219,7 +387,7 @@ export const verifyElementIsNotVisibleByIndex = async (selector: string, index: 
 	expect(loc(selector).nth(index)).toBeHidden({ timeout: defaultCommandTimeout });
 
 export const clickButtonWithForce = async (selector: string) =>
-	loc(selector).click({ force: true, timeout: taskTimeout });
+	(await optionAwareLoc(selector)).click({ force: true, timeout: taskTimeout });
 
 export const verifyElementIfVisible = async (locOne: string, locTwo: string) => {
 	if (await loc(locTwo).first().isVisible()) {
@@ -229,11 +397,16 @@ export const verifyElementIfVisible = async (locOne: string, locTwo: string) => 
 
 export const clickButtonDouble = async (selector: string) => loc(selector).dblclick({ timeout: taskTimeout });
 
-export const waitForDropdownToLoad = async (selector: string) =>
-	expect.poll(async () => loc(selector).count(), { timeout: defaultCommandTimeout }).toBeGreaterThan(1);
+export const waitForDropdownToLoad = async (selector: string) => {
+	// Poll REAL options: a bare `div.ng-option` count includes ng-select's "No items found" placeholder,
+	// so "the dropdown loaded" could be satisfied by an empty list. Strictly stricter — the raw count is
+	// always >= the real count, so anything that satisfied this before still does.
+	const resolved = await resolveOptionSelector(selector);
+	return expect.poll(async () => loc(resolved).count(), { timeout: defaultCommandTimeout }).toBeGreaterThan(1);
+};
 
 export const clickButtonByIndexNoForce = async (selector: string, index: number) =>
-	loc(selector).nth(index).click({ timeout: taskTimeout });
+	(await optionAwareLoc(selector)).nth(index).click({ timeout: taskTimeout });
 
 export const enterTextInIFrame = async (selector: string, text: string) =>
 	getPage().frameLocator(selector).locator('p').type(text);

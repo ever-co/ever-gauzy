@@ -14,6 +14,7 @@ import {
 	waitForSpinnerGone,
 	waitForDropdownToLoad
 } from '../util';
+import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ProposalsPage } from '../../../src/support/Base/pageobjects/ProposalsPageObject';
@@ -176,17 +177,15 @@ export const clickTagsDropdown = async () => {
 };
 
 export const selectTagFromDropdown = async (index) => {
-	const page = getPage();
-	const option = page.locator(ProposalsPage.tagsDropdownOption);
-	// Re-open the tags ng-select via keyboard until the options (div.ng-option) render, then pick one.
-	for (let i = 0; i < 4; i++) {
-		if (await option.first().isVisible().catch(() => false)) break;
-		await waitForSpinnerGone();
-		await page.locator(`${ProposalsPage.addTagsDropdownCss} input`).first().focus().catch(() => {});
-		await page.keyboard.press('ArrowDown').catch(() => {});
-		await page.waitForTimeout(800);
-	}
-	await clickButtonByIndex(ProposalsPage.tagsDropdownOption, index);
+	// Routed through the ONE shared ng-select driver (tests/support/ng-select.ts). It counts only REAL
+	// options: a bare `div.ng-option` ALSO matches ng-select's disabled "No items found" / "Loading…"
+	// rows, so the old wait-then-click was satisfied by an EMPTY list and then clicked a row ng-select
+	// ignores — a silent no-op that left this field unset. It re-opens the panel via the control's own
+	// container until real options render (NEVER Escape: nb-dialog opens with closeOnEsc and that closed
+	// the whole form), and it confirms the pick against `div.ng-value`, the only node that exists once a
+	// value is really bound. Still best-effort — the tag is optional here — but it can no longer
+	// half-succeed, and it can no longer kill the dialog on a slow list.
+	await selectNgOption(ProposalsPage.addTagsDropdownCss, ProposalsPage.tagsDropdownOption, index);
 };
 
 export const jobPostContentTextareaVisible = async () => {

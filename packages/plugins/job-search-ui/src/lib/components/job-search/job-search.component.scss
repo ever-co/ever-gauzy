@@ -1,6 +1,7 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-overrides' as *;
 @use 'gauzy/_gauzy-cards' as *;
+@use 'gauzy/tabset-actions' as *;
 
 :host {
   .form-group {
@@ -114,10 +115,12 @@
 }
 
 :host .gauzy-button-container {
-  position: absolute;
-  @include nb-ltr(right, 1rem);
-  @include nb-rtl(left, 1rem);
-  top: 0;
+  // Sits on the tab strip. The mixin reproduces the tab link's box so the
+  // buttons centre on the strip, and — critically — lets pointer events
+  // through the empty part of the row: this container is globally
+  // `width: 100%` (gauzy/_gauzy-table), so as a plain absolute overlay it
+  // swallowed every click on the tab labels underneath it.
+  @include tabset-action-row(1rem);
 }
 
 .advanced-filter {

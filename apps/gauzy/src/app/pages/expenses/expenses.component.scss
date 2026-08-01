@@ -1,15 +1,17 @@
 @forward '@shared/_pg-card';
 
+// Same hairline ring as the shared `.action` block in `gauzy/_gauzy-table.scss`
+// — this file carries a verbatim copy of it.
 .action {
-  box-shadow: var(--gauzy-shadow);
+  box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   &[nbButton].appearance-filled.status-basic {
-    background-color: #ffffff;
+    background-color: var(--gauzy-card-2);
   }
   &.info {
     background-color: #0088fe;
   }
   &.secondary {
-    color: #7e7e8f;
+    color: var(--text-hint-color);
   }
   &.success {
     color: rgba(37, 184, 105, 1);
@@ -31,8 +33,8 @@
   &.select-nb ::ng-deep {
     box-shadow: none;
     .select-button {
-      box-shadow: var(--gauzy-shadow);
-      background: rgba(245, 245, 245);
+      box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+      background: var(--gauzy-card-2);
     }
   }
 }

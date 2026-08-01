@@ -2,7 +2,8 @@
 
 $radius: nb-theme(button-rectangle-border-radius);
 
-a {
+// Only the creators that actually have an employee page to open are clickable.
+a.is-link {
   cursor: pointer;
 }
 

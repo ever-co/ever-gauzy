@@ -6,14 +6,20 @@ import {
 	clickElementByText,
 	enterInputConditionally,
 	clearField,
-	clickKeyboardBtnByKeycode
+	clickKeyboardBtnByKeycode,
+	dispatchClickWhenSettled
 } from '../util';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { InviteUserPage } from '../../../src/support/Base/pageobjects/InviteUserPageObject';
 
 export const inviteButtonVisible = async () => verifyElementIsVisible(InviteUserPage.inviteButtonCss);
 
-export const clickInviteButton = async () => clickButton(InviteUserPage.inviteButtonCss);
+// The Users card is `[nbSpinner]="loading"`; its overlay covers the header toolbar while the grid
+// loads, and the spec clicks Invite ~1.9s after navigating. The old force-click was delivered at the
+// button's coordinates, landed on the overlay, and the dialog never opened (#emails not found).
+// Settle, dispatch straight at the button, and confirm the dialog opened.
+export const clickInviteButton = async () =>
+	dispatchClickWhenSettled(InviteUserPage.inviteButtonCss, InviteUserPage.emailInputCss);
 
 export const emailInputVisible = async () => verifyElementIsVisible(InviteUserPage.emailInputCss);
 
