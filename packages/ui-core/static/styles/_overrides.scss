@@ -1196,6 +1196,56 @@ angular2-smart-table {
   }
 }
 
+// ── Appended dropdown panels size to their options, not to the trigger ───────
+//
+// `appendTo="body"` gets the panel OUT of a clipping ancestor (a card, a
+// `.table-scroll-container`), but ng-select then pins the panel to the trigger's
+// box: `NgDropdownPanelComponent._updateXPosition()` writes
+// `left: <offset>px; right: auto; width: <trigger>px; min-width: <trigger>px`
+// inline on the panel, once, when it appends it. In an `angular2-smart-table`
+// filter row the trigger is one narrow column, so a Tags filter rendered its
+// options as "Ur…", "Cr…", "Br…" with the rest of the row empty.
+//
+// The fix keeps ng-select's inline `left` (the panel stays anchored under its
+// trigger) and its inline `min-width` (the panel is never NARROWER than the
+// trigger), and replaces only the inline `width` with the classic
+// absolutely-positioned "auto width between left and right" resolution:
+//
+//   left       ng-select's inline offset                       — the anchor
+//   right      1rem from the initial containing block          — the viewport edge
+//   width      auto  -> tentative used width = right - left, i.e. all the room
+//              there is between the trigger and the edge of the screen
+//   max-width  max-content -> shrunk straight back to exactly what the widest
+//              option needs, whenever that is less than the room available
+//   min-width  ng-select's inline trigger width. Per CSS 2.1 §10.4 min-width is
+//              applied AFTER max-width and wins, so a wide form select still
+//              gets a panel exactly as wide as its input — unchanged.
+//
+// The result is "as wide as the options, capped at the screen edge" with no JS:
+// nothing to re-run on scroll, resize, or when the option list changes.
+//
+// Scoped to `body > ng-dropdown-panel` because only an APPENDED panel carries
+// the inline `left`/`width`. A non-appended panel is `width: 100%` of its
+// `.ng-select` (which is the containing block), and giving that one a `right`
+// would make the browser solve for `left` instead and slide it sideways.
+//
+// `html:not([dir='rtl'])` mirrors ng-select's own RTL test
+// (`document.documentElement.dir === 'rtl'`): in RTL it anchors the panel on
+// `right` and sets `left: auto`, and forcing `right` there would tear it off its
+// trigger. `@supports` so that a browser without `max-content` keeps today's
+// behaviour rather than getting a panel stretched to the screen edge.
+//
+// `!important` on the two properties that have to beat an INLINE style; the
+// note above the `.ng-dropdown-panel` block in `nb-overrides()` explains why the
+// rest of this file needs it too.
+@supports (max-width: max-content) {
+  html:not([dir='rtl']) > body > ng-dropdown-panel.ng-dropdown-panel {
+    width: auto !important;
+    right: 1rem !important;
+    max-width: max-content;
+  }
+}
+
 // Header labels: smaller and heavier than the body text — the header reads as a
 // header through weight and colour rather than through extra padding. The
 // `!important` here predates the density work and is kept because these two
