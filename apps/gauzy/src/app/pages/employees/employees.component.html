@@ -130,7 +130,14 @@
     }
     <ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ORG_EMPLOYEES_VIEW]">
       <ng-template ngxPermissionsOnly="ORG_EMPLOYEES_VIEW">
-        <button status="basic" class="action secondary" size="small" nbButton underConstruction>
+        <button
+          status="basic"
+          class="action secondary"
+          size="small"
+          nbButton
+          [disabled]="!selectedItem && disableButton"
+          (click)="view(selectedItem)"
+          >
           <nb-icon icon="eye-outline" pack="eva"></nb-icon>
           <span> {{ 'BUTTONS.VIEW' | translate }} </span>
         </button>

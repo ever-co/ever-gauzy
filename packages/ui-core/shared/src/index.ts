@@ -51,6 +51,7 @@ export * from './lib/product';
 export * from './lib/project';
 export * from './lib/project-module';
 export * from './lib/proposal-template-select';
+export * from './lib/record-view';
 export * from './lib/remove-lodash';
 export * from './lib/report';
 export * from './lib/select-asset-modal';

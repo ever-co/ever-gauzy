@@ -46,6 +46,9 @@
 </nb-card>
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
   <div class="btn-group actions">
+    <!-- `view()` navigates to the invoice/estimate view page; the leftover
+         `underConstruction` directive was opening the placeholder dialog on top
+         of it on every click. -->
     <button
       nbButton
       status="basic"
@@ -53,7 +56,6 @@
       (click)="view(selectedItem)"
       [disabled]="!selectedItem && disableButton"
       size="small"
-      underConstruction
       >
       <nb-icon icon="eye-outline"></nb-icon>
       {{ 'BUTTONS.VIEW' | translate }}
