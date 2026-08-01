@@ -320,9 +320,12 @@ $orange: #f56d58;
       border-radius: var(--gauzy-radius-sm) !important;
     }
     .ng-select.ng-select-single .ng-select-container {
-      height: 2rem;
+      // Was a hard-coded `2rem` / `32px` pair that only these four selectors
+      // knew about, so the date-range picker standing next to them had no way
+      // to agree with it. Both sides resolve the token now.
+      height: nb-theme(gauzy-header-control-height);
       background-color: var(--gauzy-card-1);
-      min-height: 32px;
+      min-height: nb-theme(gauzy-header-control-height);
       min-width: 4rem;
     }
     .ng-select .ng-select-container {
