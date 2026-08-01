@@ -1,0 +1,87 @@
+// ── Data-table loading skeleton ──────────────────────────────────────────────
+//
+// `angular2-smart-table` renders
+//     <tr *ngIf="grid.getRows().length == 0"><td [colspan]="n">{{ noDataMessage }}</td></tr>
+// whenever the grid holds zero rows — which includes the whole window between
+// the component mounting and its first response landing. Every list page in the
+// app therefore opened by telling the user their data was gone.
+//
+// Repainting that ONE cell is the least invasive fix available: the table, its
+// header and its filter row stay mounted (no sort/filter state is thrown away,
+// nothing is added to the DOM), and the rule can only ever bite when the grid is
+// genuinely empty, because that is the only time the row exists at all.
+//
+// TWO class names, on purpose:
+//   .ga-table-settling  set by `SmartTableSettlingDirective` for the first
+//                       moments of every table's life — the zero-wiring default.
+//   .ga-table-loading   bound by a page to its own in-flight flag, for requests
+//                       that outlive the settling window.
+// They cannot share a name: a template class binding outranks a directive host
+// binding for the same class, so a page whose flag is still `false` would cancel
+// the settling window it is meant to extend.
+//
+// Colours are theme tokens only — a literal grey is a light smear on the
+// near-black themes.
+
+$ga-table-skeleton-row-height: 2rem;
+$ga-table-skeleton-rows: 5;
+$ga-table-skeleton-fill: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
+
+angular2-smart-table.ga-table-settling,
+angular2-smart-table.ga-table-loading {
+  // The "no data" cell. The expanded-detail cell is the only other `td` in
+  // `tbody` that carries a colspan, so it is excluded by class.
+  tbody > tr > td[colspan]:not(.angular2-smart-column-expandedDetail) {
+    position: relative;
+    overflow: hidden;
+    height: calc(#{$ga-table-skeleton-row-height} * #{$ga-table-skeleton-rows});
+    padding: 0 var(--gauzy-table-cell-padding-x, 0.625rem);
+    // Collapses "No data found" to nothing without collapsing the box that
+    // carries the bars.
+    font-size: 0;
+    color: transparent;
+    // Bands = fake rows. `content-box` origin insets them by the cell padding so
+    // they read as content rather than as a full-bleed block.
+    background-image: repeating-linear-gradient(
+      to bottom,
+      #{$ga-table-skeleton-fill} 0,
+      #{$ga-table-skeleton-fill} calc(#{$ga-table-skeleton-row-height} - 0.75rem),
+      transparent calc(#{$ga-table-skeleton-row-height} - 0.75rem),
+      transparent #{$ga-table-skeleton-row-height}
+    );
+    background-origin: content-box;
+    background-clip: content-box;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 35%;
+      background: linear-gradient(90deg, transparent 0%, #{$ga-table-skeleton-fill} 50%, transparent 100%);
+      animation: ga-table-skeleton-sweep 1.6s linear infinite;
+    }
+  }
+}
+
+@keyframes ga-table-skeleton-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+// A placeholder that animates forever is a vestibular trigger; the static bands
+// still read as "loading".
+@media (prefers-reduced-motion: reduce) {
+  angular2-smart-table.ga-table-settling,
+  angular2-smart-table.ga-table-loading {
+    tbody > tr > td[colspan]:not(.angular2-smart-column-expandedDetail)::after {
+      animation: none;
+    }
+  }
+}

@@ -228,6 +228,7 @@
 		<div class="table-scroll-container">
 			@if (settingsSmartTable) {
 				<angular2-smart-table
+					[class.ga-table-loading]="loading"
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					(userRowSelect)="onSelectJob($event)"

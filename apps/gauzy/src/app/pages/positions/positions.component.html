@@ -33,6 +33,7 @@
 		</div>
 		} @if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && positions?.length) {
 		<ga-card-grid
+			[loading]="loading"
 			[totalItems]="pagination?.totalItems"
 			[settings]="settingsSmartTable"
 			[source]="positions"

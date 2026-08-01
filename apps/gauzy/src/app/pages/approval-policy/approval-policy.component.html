@@ -24,6 +24,7 @@
       @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
         <div class="table-scroll-container custom-table">
           <angular2-smart-table
+            [class.ga-table-loading]="loading"
             style="cursor: pointer"
             (userRowSelect)="selectApprovalPolicy($event)"
             [settings]="settingsSmartTable"
@@ -40,6 +41,7 @@
       }
       @if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID) {
         <ga-card-grid
+          [loading]="loading"
           [totalItems]="pagination?.totalItems"
           [settings]="settingsSmartTable"
           [source]="approvalPolicies"

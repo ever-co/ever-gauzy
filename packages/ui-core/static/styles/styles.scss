@@ -23,6 +23,7 @@
 @use './overlays' as *;
 @use './material/material-overrides' as *;
 @use './gauzy/gauzy-overrides' as *;
+@use './gauzy/gauzy-skeleton' as *; // "still loading", so no page claims "No Data" mid-request
 
 @use './site-menu.scss' as *;
 

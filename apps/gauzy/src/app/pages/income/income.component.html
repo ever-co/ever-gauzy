@@ -20,6 +20,7 @@
     @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
       <div class="table-scroll-container">
         <angular2-smart-table
+          [class.ga-table-loading]="loading"
           style="cursor: pointer"
           (userRowSelect)="selectIncome($event)"
           [settings]="smartTableSettings"
@@ -35,6 +36,7 @@
       </div>
     } @else {
       <ga-card-grid
+        [loading]="loading"
         [totalItems]="pagination?.totalItems"
         [settings]="smartTableSettings"
         [source]="incomes"
@@ -44,6 +46,7 @@
     }
     <ng-template #gridLayout>
       <ga-card-grid
+        [loading]="loading"
         [totalItems]="pagination?.totalItems"
         [settings]="smartTableSettings"
         [source]="incomes"

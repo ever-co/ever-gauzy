@@ -51,9 +51,9 @@
 				}
 			} @else {
 				@if (!request.employeeIds.length) {
-					<ngx-no-data-message [message]="'ACTIVITY.NO_RECORD_FOUND' | translate"></ngx-no-data-message>
+					<ngx-no-data-message [loading]="loading" [message]="'ACTIVITY.NO_RECORD_FOUND' | translate"></ngx-no-data-message>
 				} @else {
-					<ngx-no-data-message [message]="'ACTIVITY.NO_SCREENSHOTS' | translate"></ngx-no-data-message>
+					<ngx-no-data-message [loading]="loading" [message]="'ACTIVITY.NO_SCREENSHOTS' | translate"></ngx-no-data-message>
 				}
 			}
 		</div>

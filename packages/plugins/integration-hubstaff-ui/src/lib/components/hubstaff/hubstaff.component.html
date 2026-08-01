@@ -54,6 +54,7 @@
 				appendTo="body"
 			></ng-select>
 			<angular2-smart-table
+				[class.ga-table-loading]="loading"
 				[settings]="settingsSmartTable"
 				[source]="projects$ | async"
 				(userRowSelect)="selectProject($event)"

@@ -50,6 +50,7 @@
         @case (componentLayoutStyleEnum.TABLE) {
           <div class="table-scroll-container">
             <angular2-smart-table
+              [class.ga-table-loading]="loading"
               style="cursor: pointer"
               [settings]="settingsSmartTable"
               [source]="smartTableSource"
@@ -66,6 +67,7 @@
         @case (componentLayoutStyleEnum.CARDS_GRID) {
           <div class="grid">
             <ga-card-grid
+              [loading]="loading"
               [totalItems]="pagination?.totalItems"
               [settings]="settingsSmartTable"
               [source]="employees"

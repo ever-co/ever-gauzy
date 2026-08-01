@@ -55,6 +55,7 @@ export * from './lib/remove-lodash';
 export * from './lib/report';
 export * from './lib/select-asset-modal';
 export * from './lib/selectors';
+export * from './lib/skeleton';
 export * from './lib/smart-data-layout';
 export * from './lib/smtp';
 export * from './lib/star-rating';

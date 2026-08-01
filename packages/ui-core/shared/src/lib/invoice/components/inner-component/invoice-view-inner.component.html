@@ -58,6 +58,7 @@
       </div>
       <div class="table-scroll-container table">
         <angular2-smart-table
+          [class.ga-table-loading]="loading"
           [settings]="settingsSmartTable"
           [source]="smartTableSource"
           style="cursor: pointer"

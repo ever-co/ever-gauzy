@@ -37,6 +37,7 @@
     @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
       <div class="table-scroll-container">
         <angular2-smart-table
+          [class.ga-table-loading]="loading"
           (userRowSelect)="selectRequestApproval($event)"
           [settings]="settingsSmartTable"
           [source]="smartTableSource"
@@ -52,6 +53,7 @@
       </div>
     } @else {
       <ga-card-grid
+        [loading]="loading"
         [totalItems]="pagination?.totalItems"
         (scroll)="onScroll()"
         (onSelectedItem)="selectRequestApproval($event)"
