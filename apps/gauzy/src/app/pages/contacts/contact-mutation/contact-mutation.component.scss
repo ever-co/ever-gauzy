@@ -5,11 +5,15 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  margin-right: 3rem;
+  // Logical property, so RTL flips it without a second rule.
+  margin-inline-end: 2rem;
 
   .contact-photo {
-    width: fit-content;
-    height: 294px;
+    // Was a 299x294 slab that took up most of the first step and pushed the rest
+    // of the form out of view. A square thumbnail is enough to preview an avatar,
+    // and the centring maths below is written against 50% so it still holds.
+    width: 12.5rem;
+    height: 12.5rem;
     position: relative;
 
     .image-overlay {
@@ -23,8 +27,8 @@
 
     img,
     .image {
-      width: 299px;
-      height: 294px;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       border-radius: nb-theme(border-radius);
     }
@@ -63,6 +67,27 @@
 
 .contact-form {
   display: flex;
+  flex-direction: column;
+}
+
+// Bootstrap's `.container` caps the field column and centres it; inside the
+// step's flex row it also has to be allowed to shrink, or the photo column
+// squeezes it into an overflow at narrow widths.
+.fields {
+  flex: 1 1 auto;
+  min-width: 0;
+
+  // Bootstrap's 1rem field gap was set against a 16px label; the density pass put
+  // labels at 0.75rem, which left the rows floating. 0.75rem keeps a clear break
+  // between fields without the form reading as a stack of unrelated boxes.
+  .form-group {
+    margin-bottom: 0.75rem;
+  }
+
+  .label {
+    display: inline-block;
+    margin-bottom: 0.375rem;
+  }
 }
 
 .team-card {
@@ -96,45 +121,97 @@
   }
 }
 
-.buttons {
-  position: absolute;
-  left: 2.75rem;
-  bottom: 1.4rem;
+/*
+ * Step actions.
+ *
+ * These used to be `position: absolute; left: 2.75rem; bottom: 1.4rem`, pinned to
+ * whatever the step happened to be sized to — which is why they only lined up
+ * while the stepper carried a hard `calc(100vh - …)` height, and why each step
+ * arranged them differently (step 2 kept its own copy inside the address column).
+ * In flow they sit at the end of the step, right-aligned, with the step's single
+ * primary action last; "Cancel" leaves the wizard, so it is pushed to the far
+ * side rather than mixed in with the navigation.
+ */
+.wizard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid nb-theme(divider-color);
+
+  .wizard-quit {
+    margin-inline-end: auto;
+  }
 }
 
 h4 {
-  font-size: 24px;
+  // The page title above this card is the h5 step of the type scale; the form's
+  // own heading has to sit BELOW it, not shout over it at 24px/600.
+  font-size: 1rem;
   font-weight: 600;
-  line-height: 30px;
-  letter-spacing: 0em;
+  line-height: 1.5rem;
+  letter-spacing: -0.01em;
+  margin-bottom: 0;
 }
 
 :host {
-  height: 100%;
+  display: block;
+
   nb-card,
   nb-card-body,
   nb-card-header {
     background-color: unset;
   }
+
+  /*
+   * The wizard grows with its content and the PAGE card body owns the only
+   * scrollbar (see contacts.component.scss). Previously every level here was
+   * pinned to 100% and `.step-content` scrolled inside a `calc(100vh - 20.75rem)`
+   * box, so the window scrollbar and the step's own were both live at once — and
+   * the 20.75rem was a guess that stopped matching the chrome long ago.
+   */
   nb-card,
   nb-card-body,
   nb-stepper {
-    height: 100%;
-    padding-bottom: 0 !important;
+    height: auto;
+    // Nebular's own `nb-card-body` default is `overflow: auto`, i.e. a third
+    // candidate scrollbar. Nothing inside the wizard scrolls.
+    overflow: visible;
   }
 
+  // A transparent wrapper, not a card of its own: the page card already draws the
+  // surface and the inset, so this one contributes no edge and no second padding
+  // step. (It used to cancel that inset with `margin: -1rem`, which pushed the
+  // wizard past the page card's right padding edge.)
   nb-card {
-    margin: -1rem;
-    border: var(--gauzy-card-2);
+    border: none;
+    box-shadow: none;
+    margin: 0;
+  }
+
+  nb-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 0 0.75rem;
+    // The step indicator below already draws a rule; a second one right above it
+    // would band the top of the form for no reason.
+    border-bottom: none;
+  }
+
+  nb-card-body {
+    padding: 1rem 0 0.25rem;
   }
 
   nb-stepper ::ng-deep .step-content {
-    overflow-y: auto;
-    height: calc(100vh - 20.75rem);
+    height: auto;
+    overflow: visible;
   }
 
   .custom-card {
-    height: 100%;
     width: 100%;
   }
 
@@ -142,5 +219,128 @@ h4 {
     height: 100% !important;
   }
 
+  /*
+   * Step indicator.
+   *
+   * The global override (styles/gauzy/_gauzy-overrides.scss) hides the step
+   * LABELS and joins the numbers with 10px bars, which reads as a progress meter
+   * with no legend — you cannot tell what step 3 is without clicking into it.
+   * This wizard has four named steps, so it shows them: numbered chip, name, and
+   * a hairline connector. Scoped to this component so no other stepper moves.
+   */
+  ::ng-deep nb-stepper > .header {
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0 !important;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid nb-theme(divider-color);
+  }
+
+  ::ng-deep nb-stepper.horizontal > .header .step {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    margin: 0;
+  }
+
+  ::ng-deep nb-stepper > .header .step .label {
+    display: inline-block;
+    font-size: nb-theme(menu-text-font-size);
+    font-weight: 400;
+    line-height: 1.25rem;
+    letter-spacing: normal;
+    white-space: nowrap;
+    color: nb-theme(text-hint-color);
+    margin: 0;
+    padding: 0;
+  }
+
+  ::ng-deep nb-stepper > .header .step.selected .label,
+  ::ng-deep nb-stepper > .header .step.completed .label {
+    color: nb-theme(text-basic-color);
+  }
+
+  ::ng-deep nb-stepper > .header .step.selected .label {
+    font-weight: 600;
+  }
+
+  // A circle rather than the theme's rounded square: it is a step marker, not a
+  // control, and it should not read as a small button.
+  ::ng-deep nb-stepper > .header .step .label-index {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    flex: 0 0 auto;
+  }
+
+  // The connector carries `height`/`margin` with `!important` globally, so the
+  // hairline has to answer in kind — the selector is more specific, which is what
+  // decides it between two `!important` declarations. The walked-past connectors
+  // are matched by a SEPARATE, more specific global rule (`.step.selected + …`),
+  // so they need their own override or only the untouched ones would thin out.
+  ::ng-deep nb-stepper > .header .connector {
+    flex: 1 1 auto;
+    min-width: 1rem;
+    height: 1px !important;
+    margin: 0 0.5rem !important;
+    border-radius: 0;
+  }
+
+  ::ng-deep nb-stepper > .header .step.selected + .connector,
+  ::ng-deep nb-stepper > .header .step.completed + .connector {
+    height: 1px !important;
+    margin: 0 0.5rem !important;
+    border-radius: 0;
+  }
+
   @include dialog(transparent, var(--gauzy-card-1));
+
+  /*
+   * Step buttons — restated AFTER `dialog()` so these win at equal specificity.
+   *
+   * That shared partial paints every outline/basic button a literal orange
+   * (`rgba(245,109,88,…)`), `.gray` a literal grey and `.green` a literal green,
+   * each with a 2px edge and a coloured glow on hover. On the wizard that gave
+   * three differently-coloured 2px buttons per step with no hierarchy between
+   * them, and none of the three colours belongs to any theme — the orange
+   * "Cancel" is as loud as the action that actually moves the form on.
+   *
+   * So: ONE accented button per step (Next, from the primary token), everything
+   * else a quiet hairline. Save keeps Nebular's own `status="success"` — it is the
+   * only irreversible action in the flow and should not look like Next.
+   */
+  [nbButton].appearance-outline.status-basic,
+  [nbButton].gray.appearance-outline.status-basic {
+    background-color: transparent;
+    border-width: 1px;
+    border-color: nb-theme(border-basic-color-4);
+    color: nb-theme(text-hint-color);
+
+    &:hover {
+      border-color: nb-theme(border-basic-color-5);
+      color: nb-theme(text-basic-color);
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    }
+  }
+
+  [nbButton].green.appearance-outline.status-basic {
+    background-color: nb-theme(color-primary-default);
+    border-width: 1px;
+    border-color: nb-theme(color-primary-default);
+    color: nb-theme(text-control-color);
+
+    &:hover {
+      background-color: nb-theme(color-primary-hover);
+      border-color: nb-theme(color-primary-hover);
+      color: nb-theme(text-control-color);
+    }
+  }
+
+  // The partial's coloured hover glow, which no longer matches any of the above.
+  [nbButton].appearance-outline:hover,
+  [nbButton].gray.appearance-outline:hover,
+  [nbButton].green.appearance-outline:hover {
+    box-shadow: none;
+  }
 }

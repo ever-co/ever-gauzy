@@ -4,6 +4,7 @@ export * from './avatar/avatar.component';
 export * from './back-navigation/back-navigation.component';
 export * from './badge-label/badge-label.component';
 export * from './breadcrumb/breadcrumb.component';
+export * from './breadcrumb/breadcrumb-tail.service';
 export * from './dashboard-skeleton/dashboard-skeleton.component';
 export * from './date-range-title/date-range-title.component';
 export * from './header-title/header-title.component';

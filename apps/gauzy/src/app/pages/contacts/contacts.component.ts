@@ -32,6 +32,7 @@ import {
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import {
+	BreadcrumbTailService,
 	ContactWithTagsComponent,
 	DeleteConfirmationComponent,
 	EmployeeWithLinksComponent,
@@ -99,7 +100,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		private readonly cd: ChangeDetectorRef,
 		private readonly _router: Router,
 		private readonly http: HttpClient,
-		private readonly genericFavoriteService: GenericFavoriteService
+		private readonly genericFavoriteService: GenericFavoriteService,
+		private readonly breadcrumbTailService: BreadcrumbTailService
 	) {
 		super(translateService);
 		this.countryService.find$.next(true);
@@ -403,6 +405,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				}
 
 				this.showAddCard = !this.showAddCard;
+				this.breadcrumbTailService.clearTail();
 				this._refresh$.next(true);
 				this.contacts$.next(true);
 			} else {
@@ -541,6 +544,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		this.loading = true;
 		this.selectedOrganizationContact = null;
 		this.showAddCard = !this.showAddCard;
+		this.breadcrumbTailService.clearTail();
 	}
 
 	async editOrganizationContact(organizationContact: IOrganizationContact) {
@@ -548,11 +552,15 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		this.selectedOrganizationContact = organizationContact;
 		this.showAddCard = true;
 		this.loading = false;
+		this.breadcrumbTailService.setTail('BUTTONS.EDIT');
 	}
 
 	async add() {
 		this.selectedOrganizationContact = null;
 		this.showAddCard = true;
+		// The wizard replaces the list WITHOUT navigating, so the URL still reads
+		// `/pages/contacts/leads` — the trail has to be told about the extra level.
+		this.breadcrumbTailService.setTail('BUTTONS.NEW');
 	}
 
 	/**
@@ -656,5 +664,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		this.loadFavoriteContacts();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this.breadcrumbTailService.clearTail();
+	}
 }
