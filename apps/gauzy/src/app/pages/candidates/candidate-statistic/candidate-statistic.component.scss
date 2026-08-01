@@ -10,6 +10,29 @@
   nb-accordion {
     box-shadow: unset;
   }
+
+  // Empty state for "this organization has no candidates at all". Mirrors the layout the
+  // chart components use for "no rating data", but from theme tokens rather than the
+  // hardcoded `#e5e5e5` / `#909cb4` those carry — a fixed light border and grey text read
+  // wrong on the dark canvas.
+  .no-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 150px;
+    border: 1px solid nb-theme(border-basic-color-3);
+    border-radius: nb-theme(border-radius);
+
+    &-text {
+      color: nb-theme(text-hint-color);
+    }
+
+    &-icon {
+      color: nb-theme(text-hint-color);
+    }
+  }
   nb-accordion-item-header {
     padding: 1.5rem;
   }
