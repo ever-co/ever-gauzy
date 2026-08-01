@@ -6,20 +6,21 @@
   }
 }
 
+// Approve / Refuse are plain `[nbButton] status="success|danger"` buttons and
+// now take their colour from the theme like every other action in the app (see
+// `$gauzy-action-accents-*` in `packages/ui-core/static/styles/themes.scss`):
+// accent TEXT + accent BORDER, no fill.
+//
+// What used to be here — `.req-green` / `.req-red` painting
+// `rgba(0, 214, 143, 1)` / `rgba(255, 94, 94, 1)` with `!important`, plus a
+// hard-coded black drop shadow — is deleted rather than retuned: those two
+// declarations are the reason this one page could not follow the theme, and a
+// drop shadow under a borderless-fill button is exactly the dated look being
+// removed. The `.req-green` / `.req-red` classes are left on the elements; they
+// are now unstyled hooks.
 ngx-request-approval-action {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 0 5px;
-  ::ng-deep button {
-    box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15);
-    &.req-green {
-      background-color: rgba(0, 214, 143, 1) !important;
-      border-color: rgba(0, 214, 143, 1) !important;
-    }
-    &.req-red {
-      background-color: rgba(255, 94, 94, 1) !important;
-      border-color: rgba(255, 94, 94, 1) !important;
-    }
-  }
 }
