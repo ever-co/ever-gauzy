@@ -96,19 +96,25 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 	}
 	private async loadEducations() {
 		this.loading = true;
-		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const { items = [] } = await this.candidateEducationsService.getAll({
-			candidateId: this.candidateId,
-			organizationId,
-			tenantId
-		});
-		this.educationList = items;
-		this.sourceSmartTable.load(items);
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.sourceSmartTable.count()
-		});
-		this.loading = false;
+		try {
+			const { id: organizationId, tenantId } = this.selectedOrganization;
+			const { items = [] } = await this.candidateEducationsService.getAll({
+				candidateId: this.candidateId,
+				organizationId,
+				tenantId
+			});
+			this.educationList = items;
+			this.sourceSmartTable.load(items);
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.sourceSmartTable.count()
+			});
+		} catch (error) {
+			console.error('Error while retrieving candidate educations', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
+		}
 	}
 	async loadSmartTable() {
 		this.settingsSmartTable = {

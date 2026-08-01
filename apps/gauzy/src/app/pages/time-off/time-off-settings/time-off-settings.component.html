@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
   <nb-card-header class="d-flex flex-column pb-0">
     <div class="card-header-title d-flex justify-content-start">
       <ngx-back-navigation></ngx-back-navigation>
@@ -17,7 +17,7 @@
       ></ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body>
+  <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
     <!-- Check if the user has the 'TIME_OFF_POLICY_VIEW' permission -->
     <ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_POLICY_VIEW]">
       @switch (dataLayoutStyle) {

@@ -1,8 +1,5 @@
 <ng-template ngxPermissionsOnly="APPROVALS_POLICY_VIEW">
   <nb-card
-    [nbSpinner]="loading"
-    nbSpinnerStatus="primary"
-    nbSpinnerSize="large"
     class="card-scroll"
     >
     <nb-card-header class="d-flex flex-column pb-0">
@@ -23,7 +20,7 @@
         ></ngx-gauzy-button-action>
       </div>
     </nb-card-header>
-    <nb-card-body>
+    <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
       @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
         <div class="table-scroll-container custom-table">
           <angular2-smart-table

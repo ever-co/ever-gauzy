@@ -187,8 +187,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	private async _initEditMethod(id: string) {
 		if (id) {
 			this.loading = true;
-			const { tenantId } = this.store.user;
 			try {
+				const { tenantId } = this.store.user;
 				const items = await this.organizationContactService.getById(id, tenantId, [
 					'projects',
 					'members',
@@ -202,8 +202,9 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				}
 			} catch (error) {
 				this.toastrService.danger(this.getTranslation('TOASTR.TITLE.ERROR'));
+			} finally {
+				this.loading = false;
 			}
-			this.loading = false;
 			this.cd.detectChanges();
 		}
 	}

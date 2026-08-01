@@ -290,10 +290,11 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 
 	async getTagTypes() {
 		this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
 
 		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
 			const { items } = await this.tagTypesService.getTagTypes({
 				tenantId,
 				organizationId
@@ -309,10 +310,11 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 					};
 				})
 			);
-			this.loading = false;
 		} catch (error) {
-			this.loading = false;
+			console.error('Error while retrieving tag types', error);
 			this.toastrService.danger('TAGS_PAGE.TAGS_FETCH_FAILED', 'Error fetching tag types');
+		} finally {
+			this.loading = false;
 		}
 	}
 
@@ -320,33 +322,39 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 		this.allTags = [];
 		this.filterOptions = [{ value: '', displayName: 'All' }];
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 
-		const { items } = await this.tagsService.getTags(
-			{
-				tenantId,
-				organizationId
-			},
-			['tagType']
-		);
+			const { items } = await this.tagsService.getTags(
+				{
+					tenantId,
+					organizationId
+				},
+				['tagType']
+			);
 
-		const { activePage, itemsPerPage } = this.getPagination();
+			const { activePage, itemsPerPage } = this.getPagination();
 
-		this.allTags = items;
+			this.allTags = items;
 
-		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-		if (!this._isFiltered) {
-			this.smartTableSource.load(this.allTags);
-		} else {
-			if (!this._isGridLayout) await this.smartTableSource.getElements();
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			if (!this._isFiltered) {
+				this.smartTableSource.load(this.allTags);
+			} else {
+				if (!this._isGridLayout) await this.smartTableSource.getElements();
+			}
+			this._loadDataLayoutCard();
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			});
+		} catch (error) {
+			console.error('Error while retrieving tags', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
 		}
-		this._loadDataLayoutCard();
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.smartTableSource.count()
-		});
-		this.loading = false;
 	}
 
 	private async _loadDataLayoutCard() {

@@ -1,7 +1,9 @@
 import dayjs from 'dayjs';
+import { expect } from '@playwright/test';
 import {
 	clickButton,
 	clickButtonByIndex,
+	clickWhenEnabled,
 	enterInput,
 	getLastElement,
 	verifyElementIsVisible,
@@ -144,10 +146,33 @@ export const enterConfirmPass = async (data) => {
 
 export const clickTermAndConditionCheckBox = async () => {
 	await clickButton(RegisterPage.termAndConditionCheckboxCss);
+	// Prove the toggle landed. The submit button's `[disabled]` reads `user.terms`, so a swallowed
+	// checkbox click would otherwise only ever show up as a submit that quietly never fires.
+	await expect(getPage().locator(RegisterPage.termAndConditionInputCss).first()).toBeChecked({
+		timeout: 24_000
+	});
 };
 
 export const clickRegisterButton = async () => {
-	await clickButton(RegisterPage.registerButtonCss);
+	// register.component.html: `[disabled]="submitted || !form.valid || !user.terms"`. The terms
+	// checkbox is clicked immediately before this, and `user.terms` only reaches the binding on
+	// Angular's next change-detection pass — so the button is still `disabled` for a few frames. A
+	// {force:true} click is DROPPED outright on a disabled button (force skips the actionability
+	// check, not the browser's own rule), which is why the run then died 60s later in the NEXT step
+	// on `locator.fill … waiting for locator('#nameInput')`. Wait for it to be genuinely enabled and
+	// click for real.
+	await clickWhenEnabled(RegisterPage.registerButtonCss);
+	// ...then prove the submit took. AuthStrategy.register() chains into login() and redirects to '/',
+	// which pages.component forwards to /onboarding/tenant — either way we leave /auth/register. Poll
+	// the URL directly rather than waitForURL so this does not depend on hash-router navigations being
+	// reported as navigation events. Without this assertion a dropped click stays invisible here and
+	// surfaces a minute later somewhere unrelated.
+	await expect
+		.poll(() => getPage().url().includes('/auth/register'), {
+			timeout: 60_000,
+			message: 'Register submit did not take — still on /auth/register after clicking Register'
+		})
+		.toBe(false);
 };
 
 export const verifyOrganisationNameField = async () => {

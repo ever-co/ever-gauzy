@@ -63,6 +63,31 @@ export const verifyTextByIndex = async (selector: string, data: string, index: n
 export const clickButton = async (selector: string) =>
 	(await optionAwareLoc(selector)).first().click({ force: true, timeout: taskTimeout });
 
+/**
+ * Click a control only once it is genuinely INTERACTIVE (not `disabled`).
+ *
+ * `clickButton` above passes `force: true`, and **force does not bypass `disabled`**. It skips
+ * Playwright's actionability CHECK, but the click is still delivered as a real mouse event at the
+ * element's coordinates — and the HTML spec has the browser drop click events queued on a *disabled*
+ * form control instead of dispatching them. So a forced click on a button whose `[disabled]` binding
+ * Angular has not re-evaluated yet is a SILENT no-op: nothing is clicked, no error is raised, and the
+ * spec dies many seconds later on whatever that click was supposed to produce.
+ *
+ * That is exactly how the register submit was being lost: the terms checkbox is clicked ~40ms earlier
+ * and `[disabled]="submitted || !form.valid || !user.terms"` only clears on Angular's next
+ * change-detection pass, so the run failed a minute later in the NEXT step with
+ * `locator.fill: Timeout 60000ms exceeded … waiting for locator('#nameInput')`.
+ *
+ * Gating on `toBeEnabled` waits for the state that actually matters and retries until it holds, so no
+ * sleep is needed. `force` defaults to OFF because the point is that the control must be interactive;
+ * callers that also have to survive a fading overlay can opt back in.
+ */
+export const clickWhenEnabled = async (selector: string, options: { force?: boolean } = {}) => {
+	const target = loc(selector).first();
+	await expect(target).toBeEnabled({ timeout: defaultCommandTimeout });
+	await target.click({ force: options.force ?? false, timeout: taskTimeout });
+};
+
 // DOM-level click that bypasses overlay hit-testing: dispatches the event straight to the element so
 // the framework's (click) handler fires even when a fading cdk-overlay backdrop sits on top. A
 // coordinate click — even {force:true} — lands on the backdrop instead, because force only skips the

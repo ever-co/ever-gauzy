@@ -106,17 +106,23 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	async getEmployees() {
 		this.loading = true;
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.selectedOrganization;
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.selectedOrganization;
 
-		const { items } = await firstValueFrom(
-			this.employeesService.getAll(['user'], {
-				organizationId,
-				tenantId
-			})
-		);
-		this.employeeList = items;
-		this.loading = false;
+			const { items } = await firstValueFrom(
+				this.employeesService.getAll(['user'], {
+					organizationId,
+					tenantId
+				})
+			);
+			this.employeeList = items;
+		} catch (error) {
+			console.error('Error while retrieving employees', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
+		}
 	}
 	setView() {
 		this.viewComponentName = ComponentEnum.FEEDBACKS;
@@ -273,53 +279,62 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 		return res;
 	}
 	async loadInterviews() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.selectedOrganization;
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.selectedOrganization;
 
-		const result = await firstValueFrom(
-			this.candidateInterviewService.getAll(['feedbacks', 'interviewers', 'technologies', 'personalQualities'], {
-				candidateId: this.candidateId,
-				organizationId,
-				tenantId
-			})
-		);
-		const { items } = await firstValueFrom(
-			this.candidatesService.getAll(['user', 'interview', 'feedbacks'], {
-				organizationId,
-				tenantId
-			})
-		);
-
-		if (result) {
-			this.interviewList = result.items;
-			this.interviewList.forEach((interview) => {
-				items.forEach((candidate) => {
-					if (interview.candidateId === candidate.id) {
-						interview.candidate = candidate;
+			const result = await firstValueFrom(
+				this.candidateInterviewService.getAll(
+					['feedbacks', 'interviewers', 'technologies', 'personalQualities'],
+					{
+						candidateId: this.candidateId,
+						organizationId,
+						tenantId
 					}
-				});
-			});
-			this.loading = true;
-			const feedbackList = await this.loadFeedbacks();
-			feedbackList.forEach((fb) => {
-				const currentInterview = this.interviewList.find(
-					(interview) => fb.interviewId && interview.id === fb.interviewId
-				);
-				fb.interviewTitle = currentInterview ? currentInterview.title : '';
+				)
+			);
+			const { items } = await firstValueFrom(
+				this.candidatesService.getAll(['user', 'interview', 'feedbacks'], {
+					organizationId,
+					tenantId
+				})
+			);
 
-				if (fb.interviewer) {
-					this.employeeList.forEach((item) => {
-						if (fb.interviewId && fb.interviewer.employeeId === item.id) {
-							fb.interviewer.employeeImageUrl = item.user.imageUrl;
-							fb.interviewer.employeeName = item.user.name;
+			if (result) {
+				this.interviewList = result.items;
+				this.interviewList.forEach((interview) => {
+					items.forEach((candidate) => {
+						if (interview.candidateId === candidate.id) {
+							interview.candidate = candidate;
 						}
 					});
-				}
-			});
-			const uniq = {};
-			this.interviewList = this.interviewList.filter((obj) => !uniq[obj.id] && (uniq[obj.id] = true));
+				});
+				this.loading = true;
+				const feedbackList = await this.loadFeedbacks();
+				feedbackList.forEach((fb) => {
+					const currentInterview = this.interviewList.find(
+						(interview) => fb.interviewId && interview.id === fb.interviewId
+					);
+					fb.interviewTitle = currentInterview ? currentInterview.title : '';
+
+					if (fb.interviewer) {
+						this.employeeList.forEach((item) => {
+							if (fb.interviewId && fb.interviewer.employeeId === item.id) {
+								fb.interviewer.employeeImageUrl = item.user.imageUrl;
+								fb.interviewer.employeeName = item.user.name;
+							}
+						});
+					}
+				});
+				const uniq = {};
+				this.interviewList = this.interviewList.filter((obj) => !uniq[obj.id] && (uniq[obj.id] = true));
+			}
+		} catch (error) {
+			console.error('Error while retrieving candidate interviews', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
 		}
-		this.loading = false;
 	}
 	editFeedback(feedback?: ICandidateFeedback) {
 		this.cancel();

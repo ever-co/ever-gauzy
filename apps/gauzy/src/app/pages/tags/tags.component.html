@@ -22,7 +22,7 @@
     </nb-card>
   </div>
   <div class="col-10 h-100">
-    <nb-card class="tags-component h-100" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+    <nb-card class="tags-component h-100">
       <nb-card-header class="flex flex-column pb-0">
         <h4 class="card-header-title">
           <ngx-header-title>
@@ -38,7 +38,7 @@
           ></ngx-gauzy-button-action>
         </div>
       </nb-card-header>
-      <nb-card-body>
+      <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
         @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
           <div class="table-scroll-container">
             <angular2-smart-table
