@@ -6,7 +6,10 @@
       [nbTooltip]="createdByUser.name"
       (click)="edit(createdByUser)"
     >
-      <img class="img" type="createdByUser" [src]="createdByUser.imageUrl" />
+      @if (createdByUser.imageUrl) {
+        <!-- Without the guard an avatar-less creator renders a broken-image icon. -->
+        <img class="img" type="createdByUser" [src]="createdByUser.imageUrl" [alt]="createdByUser.name" />
+      }
       <div class="names-wrapper">{{ createdByUser.name }}</div>
     </a>
   } @else {
