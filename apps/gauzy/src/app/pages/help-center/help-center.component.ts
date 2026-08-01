@@ -132,35 +132,41 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 
 	async loadArticles(id) {
 		this.loading = true;
-		this.expandedArticles.clear();
-		this.articleContent.clear();
-		const result = await this.helpCenterArticleService.findByCategoryId(id);
-		if (result) {
-			this.articleList = result;
-			for (const article of this.articleList) {
-				if (article.data) {
-					this.articleContent.set(article.id, this.sanitizer.bypassSecurityTrustHtml(article.data));
+		try {
+			this.expandedArticles.clear();
+			this.articleContent.clear();
+			const result = await this.helpCenterArticleService.findByCategoryId(id);
+			if (result) {
+				this.articleList = result;
+				for (const article of this.articleList) {
+					if (article.data) {
+						this.articleContent.set(article.id, this.sanitizer.bypassSecurityTrustHtml(article.data));
+					}
 				}
 			}
-		}
-		this.filteredArticles = this.articleList;
-		const { id: organizationId, tenantId } = this.organization;
-		const res = await this.helpCenterAuthorService.getAll([], {
-			organizationId,
-			tenantId
-		});
-		if (res) {
-			this.authors = res.items;
-			for (const article of this.articleList) {
-				const employeesList = [];
-				this.authors.forEach((author) => {
-					this.employees.forEach((employee) => {
-						if (employee.id === author.employeeId && author.articleId === article.id)
-							employeesList.push(employee);
+			this.filteredArticles = this.articleList;
+			const { id: organizationId, tenantId } = this.organization;
+			const res = await this.helpCenterAuthorService.getAll([], {
+				organizationId,
+				tenantId
+			});
+			if (res) {
+				this.authors = res.items;
+				for (const article of this.articleList) {
+					const employeesList = [];
+					this.authors.forEach((author) => {
+						this.employees.forEach((employee) => {
+							if (employee.id === author.employeeId && author.articleId === article.id)
+								employeesList.push(employee);
+						});
 					});
-				});
-				article.employees = employeesList;
+					article.employees = employeesList;
+				}
 			}
+		} catch (error) {
+			console.error('Error while retrieving help center articles', error);
+			this.toastrService.danger(error);
+		} finally {
 			this.loading = false;
 		}
 	}

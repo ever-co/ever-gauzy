@@ -145,56 +145,62 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 			return;
 		}
 		this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { activePage, itemsPerPage } = this.getPagination();
-		const buffersItems: any[] = [];
-		let items: any = [];
-		if (this.selectedEmployeeId) {
-			items = (
-				await this.approvalRequestService.getByEmployeeId(this.selectedEmployeeId, ['requestApprovals'], {
-					organizationId,
-					tenantId
-				})
-			).items;
-		} else {
-			items = (
-				await this.approvalRequestService.getAll(
-					[
-						'employeeApprovals',
-						'employeeApprovals.employee',
-						'employeeApprovals.employee.user',
-						'teamApprovals',
-						'teamApprovals.team',
-						'tags',
-						'createdByUser'
-					],
-					{ organizationId, tenantId }
-				)
-			).items;
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+			const { activePage, itemsPerPage } = this.getPagination();
+			const buffersItems: any[] = [];
+			let items: any = [];
+			if (this.selectedEmployeeId) {
+				items = (
+					await this.approvalRequestService.getByEmployeeId(this.selectedEmployeeId, ['requestApprovals'], {
+						organizationId,
+						tenantId
+					})
+				).items;
+			} else {
+				items = (
+					await this.approvalRequestService.getAll(
+						[
+							'employeeApprovals',
+							'employeeApprovals.employee',
+							'employeeApprovals.employee.user',
+							'teamApprovals',
+							'teamApprovals.team',
+							'tags',
+							'createdByUser'
+						],
+						{ organizationId, tenantId }
+					)
+				).items;
 
-			if (items.length > 0) {
-				items.filter((item) => {
-					item.employees = pluck(item.employeeApprovals, 'employee');
-					item.teams = pluck(item.teamApprovals, 'team');
-					return item;
-				});
+				if (items.length > 0) {
+					items.filter((item) => {
+						item.employees = pluck(item.employeeApprovals, 'employee');
+						item.teams = pluck(item.teamApprovals, 'team');
+						return item;
+					});
+				}
 			}
-		}
-		items.map((item: any) => {
-			buffersItems.push({
-				...item,
-				status: this.statusMapper(item)
+			items.map((item: any) => {
+				buffersItems.push({
+					...item,
+					status: this.statusMapper(item)
+				});
 			});
-		});
-		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-		this.smartTableSource.load(buffersItems);
-		if (this.isGridLayout) this._loadGridLayoutData();
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.smartTableSource.count()
-		});
-		this.loading = false;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			this.smartTableSource.load(buffersItems);
+			if (this.isGridLayout) this._loadGridLayoutData();
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			});
+		} catch (error) {
+			console.error('Error while retrieving approvals', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	private get isGridLayout(): boolean {

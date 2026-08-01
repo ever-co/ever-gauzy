@@ -100,27 +100,33 @@ export class EmployeeLevelComponent extends PaginationFilterBaseComponent implem
 			return;
 		}
 		this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { activePage, itemsPerPage } = this.getPagination();
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+			const { activePage, itemsPerPage } = this.getPagination();
 
-		const { items } = await this.employeeLevelService.getAll(['tags'], {
-			tenantId,
-			organizationId
-		});
-		if (items) {
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-			this.smartTableSource.load(items);
-			if (this._isGridLayout) {
-				this._loadGridLayoutData();
-			} else this.employeeLevels = items;
-			this.setPagination({
-				...this.getPagination(),
-				totalItems: this.smartTableSource.count()
+			const { items } = await this.employeeLevelService.getAll(['tags'], {
+				tenantId,
+				organizationId
 			});
+			if (items) {
+				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+				this.smartTableSource.load(items);
+				if (this._isGridLayout) {
+					this._loadGridLayoutData();
+				} else this.employeeLevels = items;
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+			}
+			await this.emptyListInvoke();
+		} catch (error) {
+			console.error('Error while retrieving employee levels', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
 		}
-		await this.emptyListInvoke();
-		this.loading = false;
 	}
 
 	private async _loadGridLayoutData() {

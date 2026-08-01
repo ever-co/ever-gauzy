@@ -216,49 +216,55 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		}
 		this.loading = true;
 
-		const { tenantId } = this.store.user;
-		const findObj = {
-			organizationId: this.selectedOrganizationId,
-			tenantId
-		};
-		await this.getGoalSettings(findObj);
-		await this.goalService
-			.getAllGoals(
-				[
-					'keyResults',
-					'keyResults.updates',
-					'keyResults.goal',
-					'ownerEmployee',
-					'ownerEmployee.user',
-					'organization',
-					'ownerTeam',
-					'lead',
-					'lead.user',
-					'keyResults.owner',
-					'keyResults.lead',
-					'alignedKeyResult',
-					'alignedKeyResult.goal',
-					'alignedKeyResult.goal.ownerEmployee',
-					'alignedKeyResult.goal.ownerEmployee.user',
-					'alignedKeyResult.goal.organization',
-					'alignedKeyResult.goal.ownerTeam',
-					'alignedKeyResult.owner',
-					'alignedKeyResult.lead',
-					'alignedKeyResult.updates'
-				],
-				findObj
-			)
-			.then((goals) => {
-				if (goals) {
-					this.noGoals = goals.items.length > 0 ? false : true;
-					this.goals = goals.items;
-					this.allGoals = goals.items;
-					if (!!this.selectedFilter) {
-						this.filterGoals(this.selectedFilter, this.allGoals);
+		try {
+			const { tenantId } = this.store.user;
+			const findObj = {
+				organizationId: this.selectedOrganizationId,
+				tenantId
+			};
+			await this.getGoalSettings(findObj);
+			await this.goalService
+				.getAllGoals(
+					[
+						'keyResults',
+						'keyResults.updates',
+						'keyResults.goal',
+						'ownerEmployee',
+						'ownerEmployee.user',
+						'organization',
+						'ownerTeam',
+						'lead',
+						'lead.user',
+						'keyResults.owner',
+						'keyResults.lead',
+						'alignedKeyResult',
+						'alignedKeyResult.goal',
+						'alignedKeyResult.goal.ownerEmployee',
+						'alignedKeyResult.goal.ownerEmployee.user',
+						'alignedKeyResult.goal.organization',
+						'alignedKeyResult.goal.ownerTeam',
+						'alignedKeyResult.owner',
+						'alignedKeyResult.lead',
+						'alignedKeyResult.updates'
+					],
+					findObj
+				)
+				.then((goals) => {
+					if (goals) {
+						this.noGoals = goals.items.length > 0 ? false : true;
+						this.goals = goals.items;
+						this.allGoals = goals.items;
+						if (!!this.selectedFilter) {
+							this.filterGoals(this.selectedFilter, this.allGoals);
+						}
 					}
-					this.loading = false;
-				}
-			});
+				});
+		} catch (error) {
+			console.error('Error while retrieving goals', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	async openKeyResultParameters() {

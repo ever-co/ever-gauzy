@@ -277,29 +277,34 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 
 		this.loading = true;
 
-		this.fetchedHistories = {};
-		if (this.selectedEmployeeId) {
-			this.recurringExpenses = (
-				await this.employeeRecurringExpenseService.getAllByRange(['employee', 'employee.user'], {
-					employeeId: this.selectedEmployeeId,
-					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
-					organizationId,
-					tenantId
-				})
-			).items;
-			this.loading = false;
-		} else {
-			this.recurringExpenses = (
-				await this.employeeRecurringExpenseService.getAll(
-					['employee', 'employee.user'],
-					{
+		try {
+			this.fetchedHistories = {};
+			if (this.selectedEmployeeId) {
+				this.recurringExpenses = (
+					await this.employeeRecurringExpenseService.getAllByRange(['employee', 'employee.user'], {
+						employeeId: this.selectedEmployeeId,
+						startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+						endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
 						organizationId,
 						tenantId
-					},
-					{}
-				)
-			).items;
+					})
+				).items;
+			} else {
+				this.recurringExpenses = (
+					await this.employeeRecurringExpenseService.getAll(
+						['employee', 'employee.user'],
+						{
+							organizationId,
+							tenantId
+						},
+						{}
+					)
+				).items;
+			}
+		} catch (error) {
+			console.error('Error while retrieving employee recurring expenses', error);
+			this.toastrService.danger(error);
+		} finally {
 			this.loading = false;
 		}
 	}

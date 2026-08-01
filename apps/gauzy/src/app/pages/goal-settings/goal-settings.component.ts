@@ -162,53 +162,59 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 
 	private async _loadTableData(tab) {
 		this.loading = true;
-		if (!this.organization) {
-			return;
-		}
+		try {
+			if (!this.organization) {
+				return;
+			}
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const findObj = {
-			organization: {
-				id: organizationId
-			},
-			tenantId
-		};
-		const { activePage, itemsPerPage } = this.getPagination();
-		this.smartTableData.setPaging(activePage, itemsPerPage, false);
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+			const findObj = {
+				organization: {
+					id: organizationId
+				},
+				tenantId
+			};
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableData.setPaging(activePage, itemsPerPage, false);
 
-		if (tab === 'kpi') {
-			await this.goalSettingService.getAllKPI(findObj).then((res) => {
-				this.smartTableData.load(res.items);
-			});
-		} else if (tab === 'timeframe') {
-			await this.goalSettingService.getAllTimeFrames(findObj).then((res) => {
-				if (!!res) {
-					const mappedItems = [];
-					res.items.map((item) => {
-						item = Object.assign({}, item, {
-							status: this.statusMapper(item.status)
-						});
-						mappedItems.push(item);
-					});
-					this.smartTableData.load(mappedItems);
-				}
-			});
-		} else {
-			await this.goalSettingService.getAllGeneralSettings(findObj).then((generalSettings) => {
-				const { items } = generalSettings;
-				this.goalGeneralSettings = items.pop();
-				this.generalSettingsForm.patchValue({
-					...this.goalGeneralSettings
+			if (tab === 'kpi') {
+				await this.goalSettingService.getAllKPI(findObj).then((res) => {
+					this.smartTableData.load(res.items);
 				});
+			} else if (tab === 'timeframe') {
+				await this.goalSettingService.getAllTimeFrames(findObj).then((res) => {
+					if (!!res) {
+						const mappedItems = [];
+						res.items.map((item) => {
+							item = Object.assign({}, item, {
+								status: this.statusMapper(item.status)
+							});
+							mappedItems.push(item);
+						});
+						this.smartTableData.load(mappedItems);
+					}
+				});
+			} else {
+				await this.goalSettingService.getAllGeneralSettings(findObj).then((generalSettings) => {
+					const { items } = generalSettings;
+					this.goalGeneralSettings = items.pop();
+					this.generalSettingsForm.patchValue({
+						...this.goalGeneralSettings
+					});
+				});
+			}
+			this._loadGridLayoutData();
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableData.count()
 			});
+		} catch (error) {
+			console.error('Error while retrieving goal settings', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
 		}
-		this._loadGridLayoutData();
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.smartTableData.count()
-		});
-		this.loading = false;
 	}
 
 	private async _loadGridLayoutData() {
