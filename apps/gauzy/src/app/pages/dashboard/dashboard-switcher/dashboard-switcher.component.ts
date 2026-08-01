@@ -40,6 +40,17 @@ export class DashboardSwitcherComponent extends TranslationBaseComponent impleme
 	 */
 	public hasDefaultCustom!: Signal<boolean>;
 
+	/**
+	 * Whether there is more than one dashboard, i.e. whether the chips row has
+	 * anything to switch BETWEEN.
+	 *
+	 * Standard always exists, so a user with no custom dashboards would get a
+	 * single chip naming the only thing on screen — a control that answers a
+	 * question nobody asked. The row appears with the second dashboard. Creating
+	 * one stays reachable either way: the ⋮ menu lives outside the chips row.
+	 */
+	public hasMultipleDashboards!: Signal<boolean>;
+
 	/** Whether the chips row currently overflows and needs scroll arrows. */
 	public canScroll = false;
 
@@ -58,6 +69,8 @@ export class DashboardSwitcherComponent extends TranslationBaseComponent impleme
 		this.selected = toSignal(this._dashboardStore.selectedDashboard$, { initialValue: null });
 		this.editing = toSignal(this._dashboardStore.editing$, { initialValue: false });
 		this.hasDefaultCustom = computed(() => this.dashboards().some((dashboard: IDashboard) => dashboard.isDefault));
+		// Standard + at least one custom dashboard.
+		this.hasMultipleDashboards = computed(() => this.dashboards().length > 0);
 	}
 
 	ngAfterViewChecked(): void {

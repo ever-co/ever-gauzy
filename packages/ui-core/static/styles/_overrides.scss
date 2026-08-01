@@ -811,6 +811,89 @@ nb-card-header {
   flex-wrap: wrap;
 }
 
+// One-line page header: the title/breadcrumb block and the page action row
+// (+ Add, Edit/Delete, the grid-vs-list selector) share the first line.
+//
+// Nearly every list page stacks them instead — a block holding the <h4> and its
+// trail, then a full-width block whose only content is the buttons pinned to its
+// right edge. That second block is empty across the rest of its width and costs
+// the table below it around four rem of height, i.e. two or three rows that no
+// longer fit without scrolling.
+//
+// The classes are stamped at runtime rather than written into the ~45 page
+// templates that share this shape but no wrapper class: `HeaderTitleComponent`
+// marks the header and the title block (and decides whether a header takes part
+// at all — headers that already lay their children out in a row are skipped),
+// and `GauzyButtonActionComponent` marks the block holding the buttons.
+nb-card-header.ga-page-header {
+  // `!important` here only to out-rank Bootstrap's own `!important` utilities:
+  // most of these headers carry `d-flex flex-column` in the template.
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 1rem;
+
+  // Whatever else the page stacked under the title stays stacked: a full basis
+  // keeps each remaining child (a filter strip, a table's column headings) on a
+  // line of its own, which is exactly what the column layout gave it, and the
+  // later order keeps it below the shared line even where the template renders
+  // it BETWEEN the two — as the proposals page does with its statistics strip.
+  > * {
+    flex-basis: 100%;
+    order: 1;
+
+    // Bootstrap's `.row` bleeds 15px past its container on both sides through
+    // negative margins, which block-level stretch used to absorb by growing the
+    // child. Sized from the container's content box instead, it would keep the
+    // left bleed and lose the right one; drop the margins so it stays symmetric
+    // and lines up under the title.
+    &.row {
+      margin-inline: 0;
+    }
+  }
+
+  > .ga-page-header-main,
+  > .ga-page-header-actions {
+    order: 0;
+  }
+
+  > .ga-page-header-main {
+    // Takes the free space, which is what pushes the buttons to the far edge —
+    // no auto margin, so this works unchanged in RTL.
+    flex: 1 1 auto;
+    // Any `width: 100%` a page set while this block had a row to itself would
+    // come back as the flex basis and push the buttons onto a second line.
+    width: auto;
+    // A long title wraps inside its own block instead of shoving the buttons out.
+    min-width: 0;
+  }
+
+  > .ga-page-header-actions:not(.ga-page-header-main) {
+    // Shrinkable, so a narrow viewport squeezes the buttons (which wrap inside
+    // their own container) rather than overflowing the card.
+    flex: 0 1 auto;
+
+    // The shared `.gauzy-button-container` is `width: 100%` — on a row of its own
+    // that is how the buttons ended up right-aligned. Beside the title it would
+    // claim the whole line, so the block goes back to the buttons' own width.
+    width: auto;
+
+    // Beats Bootstrap's `align-self-end`, which several pages use to right-align
+    // this block while the header was still a column. Along a row that same
+    // declaration would drop the buttons to the bottom of the title block.
+    align-self: center !important;
+
+    // `ngx-gauzy-button-action` pads itself for a standalone row; on the title's
+    // line the title block already sets the height, and that padding IS the band
+    // being reclaimed. `!important` because the component's own `:host`-scoped
+    // rule out-ranks any plain global selector.
+    .actions-container {
+      padding-block: 0 !important;
+    }
+  }
+}
+
 nb-card-body {
   .pagination-container {
     display: flex;

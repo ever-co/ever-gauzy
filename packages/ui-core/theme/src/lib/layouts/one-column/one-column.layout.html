@@ -31,12 +31,6 @@
 							(onWorkspaceToggle)="onWorkspaceToggle($event)"
 						></ngx-gauzy-logo>
 
-						@if (isCollapse() && isExpanded()) {
-							<button class="hidden-menu" outline nbButton underConstruction>
-								<i class="fas fa-ellipsis-h"></i>
-							</button>
-						}
-
 						<!-- AI agent launcher — visible whenever the chat is available
 						     but collapsed, so the agent is always one click away. -->
 						@if (chatSidebarService.available() && !chatSidebarService.expanded()) {

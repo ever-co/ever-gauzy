@@ -5,6 +5,7 @@
 	"ignoreRegExpList": ["GHSA-[A-Za-z0-9-]+"],
 	"words": [
 		"scroller",
+		"scrollport",
 		"blockified",
 		"tabindex",
 		"nproc",

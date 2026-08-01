@@ -181,14 +181,41 @@ nb-select {
             padding-bottom: 3px !important;
         }
 
+        // The activity-level filter is an `nbButton` standing in a row of `nb-select`
+        // triggers, so it arrives carrying button typography (700 weight, 0.875rem) and,
+        // because it is `outline`, a real 1px border — while the selects beside it draw
+        // `border: none` plus the shared inset hairline from `nb-select-overrides`. Side
+        // by side that reads as one control being styled by a different system, so the
+        // button restates the select's own tokens instead of Nebular's button scale.
         .activity-level-filter {
-            padding: 7px 7px 7px 11px !important;
-            border: 1px solid nb-theme(select-outline-basic-border-color) !important;
+            // Matches the select trigger's box: the same 3px block inset as
+            // `.select-button` above, `select-outline-medium-padding`'s 1rem lead-in, and
+            // 0.5rem on the trailing edge — where the select absolutely positions its
+            // chevron and this button flows one inline.
+            padding: 3px 0.5rem 3px 1rem !important;
+            border: none !important;
+            min-height: 2rem;
+            border-radius: $default-button-radius !important;
+            // `nb-button-core` centres a button's content, and the rule at the bottom of
+            // `filters.component` stretches this one to fill its 220px column — so the
+            // label sat mid-control while every select's text starts at the left inset.
+            // `space-between` puts the label on that same x and pushes the chevron to the
+            // trailing edge, where the select positions its own.
+            justify-content: space-between;
+            text-align: left;
+            font-size: nb-theme(select-medium-text-font-size);
+            // An unset select shows its PLACEHOLDER, so that is the weight to match —
+            // not the heavier weight it switches to once a value is chosen.
+            font-weight: nb-theme(select-medium-placeholder-text-font-weight);
+            line-height: nb-theme(select-medium-text-line-height);
         }
 
         .activity-level-filter,
         .select-button {
-            box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+            // The shared control hairline rather than the old black drop shadow, which is
+            // invisible on the near-black canvas and was the second thing setting this
+            // button's edge apart from the selects next to it.
+            box-shadow: $default-box-shadow;
             background-color: nb-theme(gauzy-card-1) !important;
             color: nb-theme(select-outline-basic-text-color) !important;
         }

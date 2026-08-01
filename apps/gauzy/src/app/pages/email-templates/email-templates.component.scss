@@ -61,7 +61,11 @@ $height: calc(100vh - 25.5rem);
       border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
 
       .label {
-        background: rgba(231, 227, 218, 0.75);
+        // Was a hardcoded beige (rgba(231, 227, 218, .75)) — a light chip that reads as a
+        // white block on the near-black themes. `gauzy-hover-tint` is the translucent
+        // neutral the rest of the chrome uses: it darkens a light surface and lightens a
+        // dark one, so one value covers all 8 themes.
+        background: nb-theme(gauzy-hover-tint);
         padding: 5px;
         border-radius: 4px;
         color: nb-theme(gauzy-text-color-2);
@@ -85,19 +89,24 @@ $height: calc(100vh - 25.5rem);
             height: 4px !important;
           }
 
+          // These three used to paint the same hardcoded beige as the header. An OPAQUE
+          // beige gutter next to a dark Ace theme is the white block on this page, so all
+          // three now use the translucent neutral tint instead: it sits ON TOP of whatever
+          // the active Ace syntax theme paints, which is the only way one value can work
+          // for both `sqlserver` (light) and `tomorrow_night` (dark).
           .ace_active-line {
-            background: rgba(231, 227, 218, 0.5) !important;
+            background: nb-theme(gauzy-hover-tint) !important;
             border-radius: 4px !important;
             margin-left: 3px;
           }
 
           .ace_gutter {
-            background-color: rgba(231, 227, 218, 1);
+            background-color: nb-theme(gauzy-hover-tint);
             border-radius: 4px;
 
             .ace_fold-widget {
               border-radius: 0;
-              background-color: rgba(231, 227, 218, 0.5);
+              background-color: nb-theme(gauzy-active-tint);
             }
           }
         }
@@ -112,7 +121,9 @@ $height: calc(100vh - 25.5rem);
     line-height: 15px;
     letter-spacing: 0em;
     text-align: left;
-    background: rgba(231, 227, 218, 0.75);
+    // The "HTML Editor" strip. Same hardcoded beige as the label chip above, and the most
+    // visible of the white blocks because it spans the whole card width.
+    background: nb-theme(gauzy-hover-tint);
     border-radius: 10px 10px 0px 0px;
   }
 

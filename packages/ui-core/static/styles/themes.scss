@@ -68,6 +68,19 @@ $gauzy-density: (
 	input-medium-text-font-size: 0.8125rem,
 	input-medium-padding: 0.4375rem 0.75rem,
 	select-medium-text-font-size: 0.8125rem,
+	// ── Header band ────────────────────────────────────────────────────────
+	// ONE height for every control in the header action cluster. Those controls
+	// are unrelated widgets — `ng-select` triggers (employee / project / team /
+	// organization) and a bare `<input>` wrapped in a pill (the date range) —
+	// so nothing derives a common height for them, and each used to land on
+	// whatever its own internals produced. The date range came out ~10px taller
+	// than its neighbors because the global `input { min-height: … }` control
+	// floor in `text-inputs-overrides` clamps the field inside its pill to a
+	// full-size control, which the pill then has to wrap.
+	//
+	// Deliberately shorter than the full-size control height that floor
+	// resolves to: the header band is chrome, not a form.
+	gauzy-header-control-height: 2rem,
 	// ── Data tables (angular2-smart-table) ─────────────────────────────────
 	// The library ships its own emulated component CSS and nothing in this repo
 	// used to contest it:
