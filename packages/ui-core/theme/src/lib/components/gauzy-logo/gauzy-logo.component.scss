@@ -6,35 +6,38 @@
   max-height: 2.625rem;
   box-shadow: unset;
 
-  .organization {
+  .tenant {
     display: flex;
     flex-direction: row;
     align-items: center;
     width: 100%;
 
+    // 1.75rem (not the 2.25rem the organization row used): the header is a
+    // fixed 42px and the avatar now shows in BOTH states, so it has to clear
+    // the accordion's own padding instead of being cropped by it.
     img {
-      width: 2.25rem;
-      height: 2.25rem;
+      width: 1.75rem;
+      height: 1.75rem;
       border-radius: nb-theme(button-rectangle-border-radius);
-      margin-right: 0.25rem;
+      margin-right: 0.5rem;
+      object-fit: cover;
+      flex: 0 0 auto;
     }
 
     .description {
-      >div {
-		  overflow: hidden;
-		  white-space: nowrap;
-		  text-overflow: ellipsis;
-		  width: fit-content;
-		  max-width: 150px;
+      min-width: 0;
+      // `.text` below adds a 10px side margin meant for the old two-line block.
+      margin: 0;
 
-        &:first-child {
-          font-size: 0.75rem;
-        }
-
-        &:last-child {
-          font-size: 0.6875rem;
-          color: nb-theme(text-primary-color);
-        }
+      > div {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        width: fit-content;
+        max-width: 150px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: nb-theme(text-basic-color);
       }
     }
   }
@@ -54,11 +57,14 @@
   }
 }
 
+// The switcher is a logo + name + chevron, not a text input: the chevron used to
+// sit in its own bordered 1.75rem box, which together with the ring on the header
+// (below) drew a form control around something you cannot type into.
 nb-accordion-item-header ::ng-deep nb-icon {
-  border: 1px solid nb-theme(border-basic-color-4);
-  border-radius: nb-theme(button-rectangle-border-radius);
+  border: none;
   width: 1.75rem;
   height: 1.75rem;
+  color: nb-theme(text-hint-color);
 }
 
 nb-accordion-item-body ::ng-deep {
@@ -98,19 +104,37 @@ nb-accordion-item-body.setting ::ng-deep {
 
 // GEOMETRY for the principal header is state-agnostic: identical height and
 // vertical alignment whether the switcher is collapsed or expanded, so
-// toggling it never shifts the logo/organization row (only colors/shadow
-// below may differ per state).
+// toggling it never shifts the tenant row.
+//
+// So is the CHROME. It carries no border, ring or fill in either state — it
+// identifies the tenant and opens a panel, and dressing it as a text input
+// invited the reading that you could type a company name into it. Hover is the
+// only affordance it needs.
 nb-accordion-item:first-child nb-accordion-item-header.principal {
   max-height: 42px;
   min-height: 42px;
   align-items: center;
+  // Nebular's `accordion-padding` (0.625rem all round) leaves only 22px of
+  // content box inside a 42px row — not enough for the tenant avatar.
+  padding: 0.25rem 0.625rem;
+  border-bottom: none;
+  background-color: transparent;
+  border-radius: nb-theme(border-radius);
+  box-shadow: none;
+  transition: background-color 0.15s ease-in-out;
 }
 
 nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal {
   border-bottom: none;
-  background-color: unset;
-  border-radius: nb-theme(border-radius);
-  box-shadow: var(--gauzy-shadow);
+  background-color: transparent;
+  box-shadow: none;
+}
+
+// Declared after the state blocks above (and matching `.collapsed` explicitly)
+// so the hover fill is not cancelled by the equally specific reset.
+nb-accordion-item:first-child nb-accordion-item-header.principal:hover,
+nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal:hover {
+  background-color: nb-theme(background-basic-color-3);
 }
 
 .white-svg {

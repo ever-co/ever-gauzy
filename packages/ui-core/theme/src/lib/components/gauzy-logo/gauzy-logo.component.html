@@ -2,32 +2,26 @@
 	<nb-accordion class="accordion workspace">
 		<nb-accordion-item [collapsed]="controlled" (collapsedChange)="onCollapse($event)">
 			<nb-accordion-item-header class="principal" (click)="toggleWorkspace()">
-				<ng-container [ngTemplateOutlet]="logoTemplate"></ng-container>
-				@if (!isCollapse) {
-					<div class="organization">
-						<img [src]="organization?.imageUrl" [alt]="organization?.name" />
-						<div class="description text">
-							<div [nbTooltip]="organization?.name">
-								{{ organization?.name }}
-							</div>
-							<div [nbTooltip]="organization?.website">
-								{{ organization?.website }}
-							</div>
+				<!-- This block is the TENANT (workspace) switcher, not an organization
+				     one — the organization is picked from the header selector, and
+				     duplicating it here is what made the two read as the same control.
+				     The active tenant stays visible in BOTH states, so the panel it
+				     opens lists only the other tenants. -->
+				<div class="tenant">
+					<img [src]="tenantLogo" [alt]="tenantName" />
+					<div class="description text">
+						<div [nbTooltip]="tenantName">
+							{{ tenantName }}
 						</div>
 					</div>
-				}
+				</div>
 			</nb-accordion-item-header>
 		</nb-accordion-item>
 	</nb-accordion>
 }
 @if (!isAccordion) {
 	<div>
-		<ng-container [ngTemplateOutlet]="logoTemplate"></ng-container>
-	</div>
-}
-
-<ng-template #logoTemplate>
-	@if (isCollapse) {
+		<!-- Standalone platform logo (auth screens, onboarding). -->
 		<div class="logo" [class.white-svg]="isWhiteSvg()" (click)="navigateHome()">
 			@if (isSVG) {
 				<object [data]="logoUrl" type="image/svg+xml">
@@ -37,5 +31,5 @@
 				<img [src]="logoUrl || 'assets/images/logos/logo_Gauzy.png'" />
 			}
 		</div>
-	}
-</ng-template>
+	</div>
+}
