@@ -1,205 +1,322 @@
-<ng-container>
-  <nb-card>
-    <nb-card-header class="d-flex justify-content-between align-items-center">
-      <ngx-back-navigation></ngx-back-navigation>
-      @if (selectedContact) {
-        <ngx-favorite-toggle
-          [entityType]="'OrganizationContact'"
-          [entityId]="selectedContact.id"
-          [entityName]="selectedContact.name"
-          size="small"
-          status="basic"
-          spacing="detail"
-          [showLabel]="false"
-          (favoriteToggled)="onFavoriteToggled($event)"
-        ></ngx-favorite-toggle>
-      }
-    </nb-card-header>
-    <nb-card-body>
-      <div class="row">
-        <div class="col-3">
-          <div class="profile-sidebar">
-            <div class="profile-userpic">
-              <img class="rounded-circle" type="user" [src]="selectedContact?.imageUrl" />
-              <div class="profile-usertitle">
-                <div class="profile-user-title-name">
-                  {{ selectedContact?.name }}
-                </div>
-                <div class="profile-usertitle-tags">
-                  @if (selectedContact?.tags?.length) {
-                    <ga-only-tags
-                      [rowData]="selectedContact"
-                    ></ga-only-tags>
-                  }
-                </div>
-              </div>
-            </div>
-            <nb-accordion>
-              <nb-accordion-item class="about-accordion-item" [expanded]="true">
-                <nb-accordion-item-header>
-                  {{ 'MENU.ABOUT' | translate }}
-                </nb-accordion-item-header>
-                <nb-accordion-item-body>
-                  <label class="label">
-                    {{ 'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate }}
-                  </label>
-                  <div class="text-caption border-bottom caption">
-                    <gauzy-email
-											[rowData]="{
-												email: selectedContact?.primaryEmail
-											}"
-                    ></gauzy-email>
-                  </div>
+<nb-card class="contact-view">
+	<!--
+		The page had no title at all — just a back arrow and a star — while the
+		contact's name sat in a purple pill halfway down the left column. The name
+		is the page identity, so it lives on the header line; the sidebar below
+		therefore starts straight at the fact panels instead of repeating it.
+	-->
+	<nb-card-header class="contact-header">
+		<ngx-back-navigation></ngx-back-navigation>
 
-                  <label class="label mt-3">
-                    {{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}
-                  </label>
-                  <div class="text-caption border-bottom caption">
-                    <ga-phone-url [rowData]="selectedContact"></ga-phone-url>
-                  </div>
+		<div class="identity">
+			@if (selectedContact?.imageUrl) {
+				<img class="identity-avatar" [src]="selectedContact?.imageUrl" [alt]="selectedContact?.name" />
+			} @else {
+				<!-- An <img> bound to a missing URL renders the browser's broken-image glyph. -->
+				<span class="identity-avatar identity-avatar-fallback" aria-hidden="true">{{ initials }}</span>
+			}
+			<h4 class="identity-name" [title]="selectedContact?.name">{{ selectedContact?.name }}</h4>
+			@if (selectedContact?.contactType) {
+				<span class="identity-type">{{ selectedContact?.contactType | titlecase }}</span>
+			}
+		</div>
 
-                  <label class="label mt-3">
-                    {{ 'ORGANIZATIONS_PAGE.EDIT.FAX' | translate }}
-                  </label>
-                  <div class="text-caption border-bottom caption">
-                    {{ selectedContact?.contact?.fax }}
-                  </div>
+		@if (selectedContact) {
+			<ngx-favorite-toggle
+				[entityType]="'OrganizationContact'"
+				[entityId]="selectedContact.id"
+				[entityName]="selectedContact.name"
+				size="small"
+				status="basic"
+				spacing="detail"
+				[showLabel]="false"
+				(favoriteToggled)="onFavoriteToggled($event)"
+			></ngx-favorite-toggle>
+		}
+	</nb-card-header>
 
-                  <label class="label mt-3">
-                    {{ 'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION' | translate }}
-                  </label>
-                  <div class="text-caption border-bottom caption">
-                    {{ selectedContact?.contact?.fiscalInformation }}
-                  </div>
+	<nb-card-body class="contact-body">
+		<div class="contact-layout">
+			<aside class="contact-aside">
+				<!-- `multi`: opening Projects used to collapse About, so the panel the
+					 user came for disappeared as soon as they looked at anything else. -->
+				<nb-accordion multi>
+					<nb-accordion-item [expanded]="true">
+						<nb-accordion-item-header>
+							<span class="panel-title">{{ 'MENU.ABOUT' | translate }}</span>
+						</nb-accordion-item-header>
+						<nb-accordion-item-body>
+							<dl class="fields">
+								<div class="field">
+									<dt class="field-label">
+										{{ 'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate }}
+									</dt>
+									<dd class="field-value">
+										@if (selectedContact?.primaryEmail) {
+											<gauzy-email
+												[rowData]="{ email: selectedContact?.primaryEmail }"
+												[nbTooltip]="selectedContact?.primaryEmail"
+											></gauzy-email>
+										} @else {
+											<span class="field-empty">&mdash;</span>
+										}
+									</dd>
+								</div>
 
-                  <label class="label mt-3">
-                    {{ 'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate }}
-                  </label>
-                  <div class="text-caption border-bottom caption">
-                    <gauzy-external-link [rowData]="selectedContact?.contact"></gauzy-external-link>
-                  </div>
+								<div class="field">
+									<dt class="field-label">
+										{{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}
+									</dt>
+									<dd class="field-value">
+										@if (selectedContact?.primaryPhone) {
+											<ga-phone-url [rowData]="selectedContact"></ga-phone-url>
+										} @else {
+											<span class="field-empty">&mdash;</span>
+										}
+									</dd>
+								</div>
 
-                  <label class="label mt-3">
-                    {{ 'MENU.TAGS' | translate }}
-                  </label>
-                  <div class="text-caption caption">
-                    @if (selectedContact?.tags?.length) {
-                      <ga-only-tags
-                        [rowData]="selectedContact"
-                      ></ga-only-tags>
-                    }
-                  </div>
-                </nb-accordion-item-body>
-              </nb-accordion-item>
-              <nb-accordion-item>
-                <nb-accordion-item-header>
-                  {{ 'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate }}
-                </nb-accordion-item-header>
-                <nb-accordion-item-body>
-                  @if (selectedContact?.projects?.length) {
-                    <ngx-project
-                      [rowData]="selectedContact"
-                    ></ngx-project>
-                  }
-                </nb-accordion-item-body>
-              </nb-accordion-item>
-              <nb-accordion-item>
-                <nb-accordion-item-header>
-                  {{ 'CONTACTS_PAGE.BUDGET' | translate }}
-                </nb-accordion-item-header>
-                <nb-accordion-item-body>
-                  <label class="label mt-3">
-                    {{ 'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate }}
-                  </label>
-                  <div class="text-caption caption">
-                    {{ selectedContact?.budgetType }}
-                  </div>
+								<div class="field">
+									<dt class="field-label">
+										{{ 'ORGANIZATIONS_PAGE.EDIT.FAX' | translate }}
+									</dt>
+									<dd class="field-value">
+										@if (selectedContact?.contact?.fax) {
+											{{ selectedContact?.contact?.fax }}
+										} @else {
+											<span class="field-empty">&mdash;</span>
+										}
+									</dd>
+								</div>
 
-                  <label class="label mt-3">
-                    {{ 'FORM.PLACEHOLDERS.HOURS' | translate }}
-                  </label>
-                  <div class="text-caption caption">
-                    {{ selectedContact?.budget }}
-                  </div>
-                </nb-accordion-item-body>
-              </nb-accordion-item>
-            </nb-accordion>
-          </div>
-        </div>
-        <div class="col-9">
-          <nb-tabset>
-            <nb-tab [tabTitle]="'CONTACTS_PAGE.ADDRESS' | translate">
-              <div class="row map">
-                <div class="col-md-12">
-                  <div class="address-details d-flex flex-column">
-                    <label class="label">
-                      {{ 'CONTACTS_PAGE.COUNTRY' | translate }}
-                    </label>
-                    <div class="text-caption caption mb-3">
-                      {{ selectedContact?.contact?.country }}
-                    </div>
-                    <label class="label">{{ 'CONTACTS_PAGE.CITY' | translate }}</label>
-                    <div class="text-caption caption mb-3">
-                      {{ selectedContact?.contact?.city }}
-                    </div>
-                    <label class="label">
-                      {{ 'CONTACTS_PAGE.ADDRESS' | translate }}
-                    </label>
-                    <div class="text-caption caption mb-3">
-                      {{ selectedContact?.contact?.address }}
-                    </div>
-                    <label class="label">
-                      {{ 'CONTACTS_PAGE.ADDRESS_2' | translate }}
-                    </label>
-                    <div class="text-caption caption mb-3">
-                      {{ selectedContact?.contact?.address2 }}
-                    </div>
-                  </div>
-                  <ga-leaflet-map #leafletTemplate> </ga-leaflet-map>
-                </div>
-              </div>
-            </nb-tab>
-            <nb-tab [tabTitle]="'CONTACTS_PAGE.MEMBERS' | translate">
-              <div class="row">
-                <div class="col-12">
-                  <div class="form-group">
-                    <ga-employee-multi-select
-                      [selectedEmployeeIds]="selectedEmployeeIds"
-                      [allEmployees]="employees"
-                      (selectedChange)="onMembersSelected($event)"
-                      class="select"
-                      [multiple]="true"
-                      [label]="false"
-                      >
-                    </ga-employee-multi-select>
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-12">
-                  @if (selectedMembers?.length > 0) {
-                    <div>
-                      <nb-list>
-                        @for (member of selectedMembers; track member) {
-                          <nb-list-item class="p-1">
-                            <ngx-avatar
-                              class="report-table"
-                              [name]="member?.user?.name"
-                              [src]="member.user?.imageUrl"
-                              [id]="member?.id"
-                              [employee]="member"
-                            ></ngx-avatar>
-                          </nb-list-item>
-                        }
-                      </nb-list>
-                    </div>
-                  }
-                </div>
-              </div>
-            </nb-tab>
-          </nb-tabset>
-        </div>
-      </div>
-    </nb-card-body>
-  </nb-card>
-</ng-container>
+								<div class="field">
+									<dt class="field-label">
+										{{ 'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION' | translate }}
+									</dt>
+									<dd class="field-value">
+										@if (selectedContact?.contact?.fiscalInformation) {
+											<span [nbTooltip]="selectedContact?.contact?.fiscalInformation">
+												{{ selectedContact?.contact?.fiscalInformation }}
+											</span>
+										} @else {
+											<span class="field-empty">&mdash;</span>
+										}
+									</dd>
+								</div>
+
+								<div class="field">
+									<dt class="field-label">
+										{{ 'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate }}
+									</dt>
+									<dd class="field-value">
+										@if (selectedContact?.contact?.website) {
+											<gauzy-external-link
+												[rowData]="selectedContact?.contact"
+												[nbTooltip]="selectedContact?.contact?.website"
+											></gauzy-external-link>
+										} @else {
+											<span class="field-empty">&mdash;</span>
+										}
+									</dd>
+								</div>
+
+								<div class="field">
+									<dt class="field-label">{{ 'MENU.TAGS' | translate }}</dt>
+									<dd class="field-value">
+										@if (selectedContact?.tags?.length) {
+											<ga-only-tags [rowData]="selectedContact"></ga-only-tags>
+										} @else {
+											<span class="field-empty">&mdash;</span>
+										}
+									</dd>
+								</div>
+							</dl>
+						</nb-accordion-item-body>
+					</nb-accordion-item>
+
+					<nb-accordion-item>
+						<nb-accordion-item-header>
+							<span class="panel-title">
+								{{ 'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate }}
+								@if (selectedContact?.projects?.length) {
+									<span class="panel-count">{{ selectedContact?.projects?.length }}</span>
+								}
+							</span>
+						</nb-accordion-item-header>
+						<nb-accordion-item-body>
+							<!--
+								Rendered here rather than through `ngx-project`: that component
+								draws the projects of a contact as bare thumbnails and skips any
+								project without an image entirely, so a contact whose projects
+								have no logo showed an empty panel.
+							-->
+							@if (selectedContact?.projects?.length) {
+								<ul class="entity-list">
+									@for (project of selectedContact?.projects; track project.id) {
+										<li class="entity-row">
+											@if (project.imageUrl) {
+												<img
+													class="entity-avatar"
+													[src]="project.imageUrl"
+													[alt]="project.name"
+												/>
+											} @else {
+												<span class="entity-avatar entity-avatar-fallback" aria-hidden="true">
+													{{ project.name | slice: 0 : 1 }}
+												</span>
+											}
+											<span class="entity-text">
+												<span class="entity-name" [title]="project.name">{{
+													project.name
+												}}</span>
+												@if (project.membersCount) {
+													<span class="entity-meta">
+														{{ 'CONTACTS_PAGE.MEMBERS' | translate }}:
+														{{ project.membersCount }}
+													</span>
+												}
+											</span>
+										</li>
+									}
+								</ul>
+							} @else {
+								<p class="panel-empty">{{ 'SM_TABLE.NO_DATA_MESSAGE' | translate }}</p>
+							}
+						</nb-accordion-item-body>
+					</nb-accordion-item>
+
+					<nb-accordion-item>
+						<nb-accordion-item-header>
+							<span class="panel-title">{{ 'CONTACTS_PAGE.BUDGET' | translate }}</span>
+						</nb-accordion-item-header>
+						<nb-accordion-item-body>
+							<dl class="fields">
+								<div class="field">
+									<dt class="field-label">
+										{{ 'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate }}
+									</dt>
+									<dd class="field-value">
+										@if (selectedContact?.budgetType) {
+											{{ selectedContact?.budgetType | titlecase }}
+										} @else {
+											<span class="field-empty">&mdash;</span>
+										}
+									</dd>
+								</div>
+
+								<div class="field">
+									<!--
+										Was labelled "Hours", but `budgetType` is hours OR cost —
+										the number is only hours half the time.
+									-->
+									<dt class="field-label">{{ 'POP_UPS.AMOUNT' | translate }}</dt>
+									<dd class="field-value">
+										@if (selectedContact?.budget) {
+											{{ selectedContact?.budget }}
+										} @else {
+											<span class="field-empty">&mdash;</span>
+										}
+									</dd>
+								</div>
+							</dl>
+						</nb-accordion-item-body>
+					</nb-accordion-item>
+				</nb-accordion>
+			</aside>
+
+			<section class="contact-main">
+				<nb-tabset>
+					<nb-tab [tabTitle]="'CONTACTS_PAGE.ADDRESS' | translate">
+						<div class="pane">
+							<!--
+								Four stacked label/value rows used to eat the top third of the
+								tab before the map started. As a grid they cost one or two lines.
+							-->
+							<dl class="fields fields-grid">
+								<div class="field">
+									<dt class="field-label">{{ 'CONTACTS_PAGE.COUNTRY' | translate }}</dt>
+									<dd class="field-value">
+										@if (selectedContact?.contact?.country) {
+											{{ selectedContact?.contact?.country }}
+										} @else {
+											<span class="field-empty">&mdash;</span>
+										}
+									</dd>
+								</div>
+								<div class="field">
+									<dt class="field-label">{{ 'CONTACTS_PAGE.CITY' | translate }}</dt>
+									<dd class="field-value">
+										@if (selectedContact?.contact?.city) {
+											{{ selectedContact?.contact?.city }}
+										} @else {
+											<span class="field-empty">&mdash;</span>
+										}
+									</dd>
+								</div>
+								<div class="field">
+									<dt class="field-label">{{ 'CONTACTS_PAGE.ADDRESS' | translate }}</dt>
+									<dd class="field-value">
+										@if (selectedContact?.contact?.address) {
+											{{ selectedContact?.contact?.address }}
+										} @else {
+											<span class="field-empty">&mdash;</span>
+										}
+									</dd>
+								</div>
+								<div class="field">
+									<dt class="field-label">{{ 'CONTACTS_PAGE.ADDRESS_2' | translate }}</dt>
+									<dd class="field-value">
+										@if (selectedContact?.contact?.address2) {
+											{{ selectedContact?.contact?.address2 }}
+										} @else {
+											<span class="field-empty">&mdash;</span>
+										}
+									</dd>
+								</div>
+							</dl>
+
+							<!--
+								The frame owns the rounded edge and the hairline; the map fills
+								it through the flex chain in the stylesheet, so no second
+								viewport-height guess has to be kept in step with this one.
+							-->
+							<div class="map-frame">
+								<ga-leaflet-map #leafletTemplate></ga-leaflet-map>
+							</div>
+						</div>
+					</nb-tab>
+
+					<nb-tab [tabTitle]="'CONTACTS_PAGE.MEMBERS' | translate">
+						<div class="pane pane-scroll">
+							<ga-employee-multi-select
+								class="members-select"
+								[selectedEmployeeIds]="selectedEmployeeIds"
+								[allEmployees]="employees"
+								(selectedChange)="onMembersSelected($event)"
+								[multiple]="true"
+							>
+							</ga-employee-multi-select>
+
+							@if (selectedMembers?.length) {
+								<ul class="member-grid">
+									@for (member of selectedMembers; track member.id) {
+										<li class="member-card">
+											<ngx-avatar
+												[name]="member?.user?.name"
+												[src]="member?.user?.imageUrl"
+												[id]="member?.id"
+												[employee]="member"
+											></ngx-avatar>
+										</li>
+									}
+								</ul>
+							} @else {
+								<p class="panel-empty">{{ 'SM_TABLE.NO_DATA_MESSAGE' | translate }}</p>
+							}
+						</div>
+					</nb-tab>
+				</nb-tabset>
+			</section>
+		</div>
+	</nb-card-body>
+</nb-card>

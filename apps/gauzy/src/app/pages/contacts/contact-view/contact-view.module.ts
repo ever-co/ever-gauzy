@@ -7,6 +7,7 @@ import {
 	NbRouteTabsetModule,
 	NbTabsetModule,
 	NbTagModule,
+	NbTooltipModule,
 	NbUserModule
 } from '@nebular/theme';
 import {
@@ -31,6 +32,9 @@ import { ContactViewRoutingModule } from './contact-view-routing.module';
 		NbUserModule,
 		NbAccordionModule,
 		NbTagModule,
+		// The About panel puts the unbroken email / URL / fiscal string on a tooltip,
+		// so a value that wraps across lines can still be read (and copied) in one piece.
+		NbTooltipModule,
 		LeafletMapModule,
 		NbListModule,
 		SharedModule,

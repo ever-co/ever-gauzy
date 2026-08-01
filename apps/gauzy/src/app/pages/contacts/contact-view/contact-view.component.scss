@@ -1,106 +1,451 @@
-nb-accordion {
-  box-shadow: var(--gauzy-shadow);
+/*
+ * Contact detail screen.
+ *
+ * The About panel used to be a stack of `<label>` + `<div class="border-bottom">`
+ * pairs. `border-bottom` is a BOOTSTRAP utility — a fixed `1px solid #dee2e6`,
+ * i.e. a near-white line that ignores the theme entirely and, under every value,
+ * read as the underline of an empty text input. Values also had nothing telling
+ * them to wrap, and an email or a URL has no space to break at, so they ran
+ * straight out of the 3-column sidebar.
+ *
+ * Everything below is label/value pairs on theme tokens: no borrowed utilities,
+ * no fake control chrome, and values that wrap instead of escaping their panel.
+ */
 
-  nb-accordion-item-header {
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 18px;
-    letter-spacing: 0em;
-    text-align: left;
-    color: var(--gauzy-text-color-2);
+// The tab body is sized from the viewport so the page fits without the window
+// scrolling (panels scroll internally instead). The aside is offset by ~3rem
+// less because it starts at the tabset's TAB BAR rather than at its body.
+$pane-height: calc(100vh - 17.25rem);
+$aside-height: calc(100vh - 14.25rem);
 
-    &.accordion-item-header-expanded {
-      background-color: var(--gauzy-sidebar-background-3);
-      border-radius: var(--border-radius) var(--border-radius) 0 0;
-    }
-  }
-
-  nb-accordion-item-body {
-    background-color: var(--gauzy-card-3);
-
-    label {
-      color: var(--gauzy-text-color-2);
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 15px;
-      letter-spacing: 0em;
-      text-align: left;
-    }
-  }
+:host nb-card {
+	background-color: var(--gauzy-card-2);
+	margin: 0;
 }
 
-nb-card {
-  background-color: var(--gauzy-card-2);
-  margin: 0;
+/* ── Header: back · avatar · name · type · favourite ─────────────────────── */
+
+.contact-header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.75rem;
+
+	// The back button ships its own 1.5rem side margin for standalone use; on a
+	// flex row that doubles up with the gap. `!important` because the component's
+	// own rule is `[dir] :host .main button`, which out-ranks any selector reachable
+	// from here.
+	::ng-deep ngx-back-navigation .main button {
+		margin: 0 !important;
+	}
 }
 
-.profile-userpic {
-  display: flex;
-  align-items: center;
-
-  img {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-  }
+.identity {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.625rem;
+	// Takes the free space so the favourite toggle sits at the far edge, and can
+	// shrink so a long name truncates instead of pushing the toggle out.
+	flex: 1 1 auto;
+	min-width: 0;
 }
 
-.profile-userpic {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
+.identity-avatar {
+	flex: 0 0 auto;
+	width: 2.25rem;
+	height: 2.25rem;
+	border-radius: 50%;
+	object-fit: cover;
+	box-shadow: var(--gauzy-shadow);
 }
 
-.profile-sidebar {
-  display: flex;
-  flex-direction: column;
-  row-gap: 2.25rem;
+.identity-avatar-fallback {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--gauzy-hover-tint);
+	color: var(--gauzy-text-color-2);
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1;
+	// The initials are decoration — the name is right next to them.
+	user-select: none;
 }
 
-.profile-usertitle {
-  display: flex;
-  flex-direction: column;
-  row-gap: 10px;
-
-  .profile-user-title-name {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    padding: 5px 14px 5px 7px;
-    width: fit-content;
-    background: rgba(110, 73, 232, 0.05);
-    border-radius: 20px;
-    color: rgba(110, 73, 232, 1);
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 19px;
-    letter-spacing: 0em;
-    text-align: left;
-  }
+.identity-name {
+	margin: 0;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--gauzy-text-color-1);
+	font-size: 1.125rem;
+	font-weight: 600;
+	line-height: 1.5rem;
+	letter-spacing: -0.01em;
 }
 
-.text-caption.caption {
-  color: var(--gauzy-text-color-1);
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 17px;
-  letter-spacing: 0em;
-  text-align: left;
+.identity-type {
+	flex: 0 0 auto;
+	padding: 0.125rem 0.5rem;
+	border-radius: 999px;
+	background-color: var(--gauzy-hover-tint);
+	color: var(--gauzy-text-color-2);
+	font-size: 0.6875rem;
+	font-weight: 600;
+	line-height: 1rem;
+	letter-spacing: 0.02em;
 }
 
-nb-tab.content-active {
-  background-color: var(--gauzy-card-2);
-  margin: 0 -24px -16px 0;
-  border-radius: 0 0 var(--border-radius) 0;
-  height: calc(100vh - 17.25rem);
-  padding: 16px 20px 0 20px;
+/* ── Two-column body ──────────────────────────────────────────────────────── */
 
-  .map {
-    margin-bottom: -10px;
-  }
+.contact-layout {
+	display: grid;
+	// A fixed-ish rail rather than Bootstrap's `col-3`: at 1080px `col-3` left the
+	// About values ~200px of room, which is what made long emails clip.
+	grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+	gap: 1rem;
+	align-items: start;
+}
+
+.contact-aside {
+	min-width: 0;
+	max-height: $aside-height;
+	// Three open accordions can out-run the tabset beside them; the rail scrolls
+	// rather than growing the page past the viewport.
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.contact-main {
+	min-width: 0;
+}
+
+/* ── Accordion panels ─────────────────────────────────────────────────────── */
+
+:host nb-accordion {
+	display: block;
+	border-radius: var(--border-radius);
+	// Header and body paint to the edges, so the container has to clip them for
+	// the rounded corner to survive.
+	overflow: hidden;
+	box-shadow: var(--gauzy-shadow);
+
+	nb-accordion-item-header {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		line-height: 1.125rem;
+		letter-spacing: 0em;
+		text-align: left;
+		color: var(--gauzy-text-color-2);
+
+		&.accordion-item-header-expanded {
+			background-color: var(--gauzy-sidebar-background-3);
+		}
+	}
+
+	nb-accordion-item-body {
+		background-color: var(--gauzy-card-3);
+	}
+}
+
+.panel-title {
+	// `inline-flex`, not `flex`: the accordion header lays its own children out as
+	// a row (title, then the chevron) and a block-level child would push the
+	// chevron onto a second line if that ever stopped being true.
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	min-width: 0;
+}
+
+.panel-count {
+	padding: 0 0.375rem;
+	border-radius: 999px;
+	background-color: var(--gauzy-hover-tint);
+	color: var(--gauzy-text-color-2);
+	font-size: 0.6875rem;
+	font-weight: 600;
+	line-height: 1rem;
+}
+
+.panel-empty {
+	margin: 0;
+	color: var(--gauzy-text-color-2);
+	font-size: 0.8125rem;
+	line-height: 1.125rem;
+}
+
+/* ── Label / value pairs ──────────────────────────────────────────────────── */
+
+.fields {
+	display: grid;
+	row-gap: 0.875rem;
+	margin: 0;
+}
+
+.fields-grid {
+	// Country / City / Address / Address 2 side by side while there is room, so
+	// the map starts one or two lines down instead of four rows down.
+	grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+	column-gap: 1.5rem;
+}
+
+.field {
+	min-width: 0;
+}
+
+.field-label {
+	margin: 0 0 0.125rem;
+	color: var(--gauzy-text-color-2);
+	font-size: 0.6875rem;
+	font-weight: 600;
+	line-height: 1rem;
+	// Uppercase at 11px needs the extra tracking to stay readable.
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.field-value {
+	margin: 0;
+	min-width: 0;
+	color: var(--gauzy-text-color-1);
+	font-size: 0.8125rem;
+	font-weight: 400;
+	line-height: 1.125rem;
+	// `anywhere` and not `break-word`: an address wraps at its spaces, but
+	// `first.last@some-long-company.com` and a deep URL have none, and those are
+	// exactly the two values that used to overflow. The tooltip carries the
+	// unbroken string for anyone who wants to read or copy it in one piece.
+	overflow-wrap: anywhere;
+
+	// The link components (`gauzy-email`, `ga-phone-url`, `gauzy-external-link`)
+	// each hard-code `rgba(0, 136, 254, 1)` plus a permanent underline. They are
+	// shared with every data table, so they are re-dressed HERE rather than
+	// edited: the token follows the theme, and the underline arrives on hover so
+	// a resting value no longer looks like a control.
+	::ng-deep a {
+		color: var(--color-info-default);
+		text-decoration: none;
+
+		&:hover,
+		&:focus-visible {
+			text-decoration: underline;
+		}
+	}
+}
+
+.field-empty {
+	color: var(--gauzy-text-color-2);
+	// A dash is a placeholder, not a value: keep it out of the reading order.
+	user-select: none;
+}
+
+/* ── Project rows ─────────────────────────────────────────────────────────── */
+
+.entity-list {
+	list-style: none;
+	display: grid;
+	row-gap: 0.625rem;
+	margin: 0;
+	padding: 0;
+}
+
+.entity-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+.entity-avatar {
+	flex: 0 0 auto;
+	width: 1.75rem;
+	height: 1.75rem;
+	border-radius: var(--gauzy-radius-sm, 0.375rem);
+	object-fit: cover;
+	box-shadow: var(--gauzy-shadow);
+}
+
+.entity-avatar-fallback {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--gauzy-hover-tint);
+	color: var(--gauzy-text-color-2);
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 1;
+	text-transform: uppercase;
+	box-shadow: none;
+}
+
+.entity-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.entity-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--gauzy-text-color-1);
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1.125rem;
+}
+
+.entity-meta {
+	color: var(--gauzy-text-color-2);
+	font-size: 0.6875rem;
+	font-weight: 400;
+	line-height: 0.9375rem;
+}
+
+/* ── Tabs: address + map, members ─────────────────────────────────────────── */
+
+:host nb-tabset {
+	display: block;
+}
+
+:host nb-tab.content-active {
+	// A flex column so the map can claim whatever the address block leaves,
+	// instead of a second viewport-height guess that has to be kept in step with
+	// the one on the tab itself.
+	display: flex;
+	flex-direction: column;
+	height: $pane-height;
+	min-height: 0;
+	padding: 1rem 1.25rem;
+	// Same surface as the accordion bodies opposite, so the two columns read as
+	// one screen. The tab BAR is deliberately left on the card behind it — that
+	// is the shape Nebular draws and fighting it only adds a second seam.
+	background-color: var(--gauzy-card-3);
+	border-radius: var(--border-radius);
+	box-shadow: var(--gauzy-shadow);
+}
+
+.pane {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	gap: 1rem;
+	min-height: 0;
+
+	// Everything except the map keeps its natural height; the map is the only
+	// thing in a pane that is allowed to absorb (or give up) the leftover space.
+	> .fields,
+	> .member-grid {
+		flex: 0 0 auto;
+	}
+}
+
+.pane-scroll {
+	overflow-y: auto;
+}
+
+.map-frame {
+	// Owns the rounded edge and the hairline; the map itself is left square and
+	// simply fills this box.
+	display: flex;
+	flex: 1 1 auto;
+	min-height: 14rem;
+	overflow: hidden;
+	border-radius: var(--gauzy-radius-sm, 0.375rem);
+	border: 1px solid var(--gauzy-border-default-color);
+}
+
+:host ga-leaflet-map {
+	display: flex;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+// The map's own template is a Bootstrap `.row > .col-12 > [leaflet]` with margin
+// utilities and a `calc(100vh - 30rem) !important` height baked in. Each level is
+// turned into a stretching flex row so the leaflet element inherits the frame's
+// height instead of a number that has nothing to do with this layout.
+:host ga-leaflet-map ::ng-deep .row {
+	display: flex;
+	flex: 1 1 auto;
+	margin: 0 !important;
+}
+
+:host ga-leaflet-map ::ng-deep .col-12 {
+	display: flex;
+	flex: 1 1 auto;
+	padding: 0;
 }
 
 :host ga-leaflet-map ::ng-deep .leaflet-container {
-  height: calc(100vh - 30.5rem) !important;
+	flex: 1 1 auto;
+	height: 100% !important;
+	// Floor, not a layout: should an ancestor ever stop stretching, a short map
+	// is recoverable and an invisible one is not.
+	min-height: 14rem;
+	border-radius: 0;
+}
+
+.members-select {
+	display: block;
+	flex: 0 0 auto;
+	max-width: 28rem;
+}
+
+.member-grid {
+	list-style: none;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0;
+}
+
+.member-card {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	padding: 0.375rem 0.5rem;
+	border: 1px solid var(--gauzy-border-default-color);
+	border-radius: var(--gauzy-radius-sm, 0.375rem);
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+	}
+
+	// Without this the avatar's own `min-width: auto` keeps the card as wide as
+	// the longest name, which breaks the grid's equal columns.
+	ngx-avatar {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+}
+
+/* ── Narrow viewports ─────────────────────────────────────────────────────── */
+
+@media (max-width: 1199.98px) {
+	.contact-layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	// Stacked, neither pane may pin itself to the viewport — that is what turns a
+	// one-column layout into two nested scrollers.
+	.contact-aside {
+		max-height: none;
+		overflow: visible;
+
+		// Full width, a single column of pairs is mostly empty space and makes the
+		// panel three times taller than it needs to be.
+		.fields {
+			grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+			column-gap: 1.5rem;
+		}
+	}
+
+	:host nb-tab.content-active {
+		height: auto;
+		min-height: 28rem;
+	}
 }
