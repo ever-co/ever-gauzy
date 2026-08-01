@@ -8,6 +8,10 @@ export const RegisterPage = {
 	confirmPassFieldCss: '#input-re-password',
 	// nb-checkbox renders its visual box as span.custom-checkbox (the terms checkbox).
 	termAndConditionCheckboxCss: 'span.custom-checkbox',
+	// ...but the CHECKED STATE lives on nb-checkbox's real control: a visually-hidden native input
+	// inside the same <label>. Assert against this one — the span above is only the click target.
+	// Scoped to ngx-register so it can never resolve to a checkbox from another mounted component.
+	termAndConditionInputCss: 'ngx-register nb-checkbox input[type="checkbox"]',
 	registerButtonCss: 'ngx-register form button.submit-btn',
 
 	// --- First-organization onboarding stepper (organizations-step-form, isOnboarding=true) ---
