@@ -10,16 +10,19 @@
 		}
 	}
 
+	// The page title lives directly on the card header here — no heading
+	// element for the shared card-title rule to catch — so it reads the same
+	// tokens itself. Only the "Project:" prefix is emphasised.
 	.header {
 		display: flex;
-		font-size: 24px;
+		font-size: var(--gauzy-page-title-font-size);
 		font-weight: 400;
-		line-height: 30px;
-		letter-spacing: 0em;
+		line-height: var(--gauzy-page-title-line-height);
+		letter-spacing: var(--gauzy-page-title-letter-spacing);
 		text-align: left;
 
 		.bold {
-			font-weight: 600;
+			font-weight: var(--gauzy-page-title-font-weight);
 		}
 
 	}

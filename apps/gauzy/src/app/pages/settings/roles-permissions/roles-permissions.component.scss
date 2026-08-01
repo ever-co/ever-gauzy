@@ -33,29 +33,17 @@
   }
 }
 
-h4 {
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 30px;
-  letter-spacing: 0em;
-  text-align: left;
-
-  .menu-setting {
-    font-weight: 400;
-  }
-}
-
 :host .col-12 {
   @include nb-ltr(padding-right, 8px !important);
   @include nb-rtl(padding-left, 8px !important);
 }
 
+// "Settings/" ahead of the page name, inside `ngx-header-title`. Size is
+// INHERITED from that component so the prefix and the page name stay one line
+// of text — it used to restate 24px and came out larger than the name it
+// qualifies. Only the weight makes it recede.
 .menu-setting {
-  font-size: 24px;
   font-weight: 400;
-  line-height: 30px;
-  letter-spacing: 0em;
-  text-align: left;
 }
 
 .content {

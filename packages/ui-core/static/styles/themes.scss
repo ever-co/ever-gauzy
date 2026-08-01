@@ -24,6 +24,21 @@ $gauzy-density: (
 	text-heading-4-font-size: 1.5rem,
 	text-heading-5-font-size: 1.25rem,
 	text-heading-6-font-size: 1rem,
+	// ── Page / card title ──────────────────────────────────────────────────
+	// The ONE step every card title resolves to, whether it comes from the
+	// shared `ngx-header-title` or from a heading a template dropped straight
+	// into an `nb-card-header`. A page heading only has to out-rank body copy;
+	// at the h4 step (1.5rem/700) it read as an oversized breadcrumb path.
+	//
+	// Kept as its own token rather than reusing `text-heading-5-*`: those
+	// describe what an <h5> is worth ANYWHERE, while this describes a role,
+	// and the rules that consume it deliberately apply to h1..h5 alike. Every
+	// theme key is emitted as a CSS custom property, so the component that
+	// owns the shared title can read the same value from its inline styles.
+	gauzy-page-title-font-size: 1.25rem,
+	gauzy-page-title-font-weight: 600,
+	gauzy-page-title-line-height: 1.75rem,
+	gauzy-page-title-letter-spacing: -0.01em,
 	// Menus / sidebar
 	menu-item-padding: 0.5rem 0.75rem,
 	menu-text-font-size: 0.8125rem,

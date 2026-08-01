@@ -173,13 +173,10 @@ img {
     @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
   }
 
+  // Size/weight come from the shared card-title step in `styles/_overrides.scss`;
+  // only the colour and the RTL alignment are this page's business.
   h4 {
     color: var(--gauzy-text-color-1);
-    font-size: 24px;
-    font-weight: 600;
-    line-height: 30px;
-    letter-spacing: 0em;
-    text-align: left;
     @include nb-ltr(text-align, left);
     @include nb-rtl(text-align, right);
   }

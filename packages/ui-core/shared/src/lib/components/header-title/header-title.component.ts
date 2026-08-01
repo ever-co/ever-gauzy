@@ -27,22 +27,28 @@ import { Store } from '@gauzy/ui-core/core';
 			 * this component renders below the heading (.ga-page-title-trail). The
 			 * title used to be 24px/600, which read as an oversized breadcrumb path;
 			 * a page heading only needs to out-rank body copy, so it now sits at the
-			 * h5 step of the type scale. The org/employee qualifier is deliberately
-			 * lighter and muted so the page name is what the eye lands on.
+			 * gauzy-page-title-* step of the type scale. That step is defined once
+			 * in styles/themes.scss and is the SAME one the global rule in
+			 * styles/_overrides.scss applies to the card-header headings that do
+			 * NOT use this component, so a page title measures the same whichever
+			 * way it is built. The fallbacks keep this readable if the component is
+			 * ever rendered outside a themed layout. The org/employee qualifier is
+			 * deliberately lighter and muted so the page name is what the eye lands
+			 * on.
 			 */
 			:host {
-				font-size: 1.25rem;
-				font-weight: 600;
-				line-height: 1.75rem;
-				letter-spacing: -0.01em;
+				font-size: var(--gauzy-page-title-font-size, 1.25rem);
+				font-weight: var(--gauzy-page-title-font-weight, 600);
+				line-height: var(--gauzy-page-title-line-height, 1.75rem);
+				letter-spacing: var(--gauzy-page-title-letter-spacing, -0.01em);
 				text-align: left;
 			}
 			.name,
 			.org-name {
-				font-size: 1.25rem;
+				font-size: var(--gauzy-page-title-font-size, 1.25rem);
 				font-weight: 400;
-				line-height: 1.75rem;
-				letter-spacing: -0.01em;
+				line-height: var(--gauzy-page-title-line-height, 1.75rem);
+				letter-spacing: var(--gauzy-page-title-letter-spacing, -0.01em);
 				text-align: left;
 				color: var(--text-hint-color);
 			}

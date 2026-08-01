@@ -147,16 +147,6 @@
   }
 }
 
-h4 {
-  // The page title above this card is the h5 step of the type scale; the form's
-  // own heading has to sit BELOW it, not shout over it at 24px/600.
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.5rem;
-  letter-spacing: -0.01em;
-  margin-bottom: 0;
-}
-
 :host {
   display: block;
 
