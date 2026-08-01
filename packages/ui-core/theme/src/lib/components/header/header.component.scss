@@ -349,8 +349,14 @@ $orange: #f56d58;
     .ng-select .ng-select-container,
     .ng-select.ng-select-single .ng-select-container,
     .ng-select .ng-select-container:hover {
-      height: 2rem;
-      min-height: 32px;
+      // Resolves the SAME token as the pills beside it. This block exists to drop
+      // the border chrome (the control only shows a logo and a chevron, so input
+      // styling is wrong for it) — not to opt out of the shared height. Pulling
+      // `.organization-selector` out of the shared rule also pulled it out of the
+      // height normalisation, so the token is restated here; hardcoding 2rem would
+      // silently drift the moment the token moves.
+      height: nb-theme(gauzy-header-control-height);
+      min-height: nb-theme(gauzy-header-control-height);
       min-width: auto;
       background-color: transparent;
       box-shadow: none;
