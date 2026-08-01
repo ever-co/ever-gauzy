@@ -68,14 +68,28 @@ nb-select {
 			padding-bottom: 3px !important;
 		}
 
+		// Same mismatch as the web copy of this filter bar: this one control is an
+		// `nbButton` in a row of `nb-select` triggers, so it inherits button typography
+		// (700 weight, 0.875rem) and an `outline` border while the selects draw
+		// `border: none` plus the shared inset hairline. It borrows the select tokens.
 		.activity-level-filter {
-			padding: 7px 7px 7px 16px !important;
-			border: 1px solid var(--select-outline-basic-border-color) !important;
+			padding: 3px 0.5rem 3px 1rem !important;
+			border: none !important;
+			min-height: 2rem;
+			border-radius: $default-button-radius !important;
+			// The button is stretched to fill its column and `nb-button-core` centres its
+			// content; the selects start their text at the left inset.
+			justify-content: space-between;
+			text-align: left;
+			font-size: var(--select-medium-text-font-size);
+			// The neighbours are showing their placeholder, not a selected value.
+			font-weight: var(--select-medium-placeholder-text-font-weight);
+			line-height: var(--select-medium-text-line-height);
 		}
 
 		.activity-level-filter,
 		.select-button {
-			box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+			box-shadow: $default-box-shadow;
 			background-color: var(--gauzy-card-1) !important;
 			color: var(--select-outline-basic-text-color) !important;
 		}
