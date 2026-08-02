@@ -40,14 +40,19 @@
   }
 }
 
+// `--gauzy-card-*` is undefined in material-light / material-dark (see
+// `themes.scss`: those two register against Nebular's own parent themes and so
+// never inherit the `gauzy-card-*` keys). A `var()` with no fallback makes the
+// browser drop the WHOLE declaration there, which left these panels unpainted,
+// so every use below carries one.
 .button-container {
-  background: var(--gauzy-card-2);
+  background: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
   padding: 5px;
   border-radius: nb-theme(button-rectangle-border-radius);
 }
 .custom-card,
 .custom-footer {
-  background: var(--gauzy-card-2);
+  background: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
 }
 .custom-header,
 .custom-footer {
@@ -79,7 +84,14 @@
   text-align: left;
 }
 
+// The key-result summary panel. Its class comes from Bootstrap 4, whose
+// `.border` is literally `border: 1px solid #dee2e6 !important` — a light grey
+// hairline drawn identically in all eight themes, i.e. a visible pale box on
+// the near-black cards of `dark` / `cosmic` / `gauzy-dark` / `material-dark`.
+// Restated here from a theme token; `!important` only to out-rank Bootstrap's
+// own, and the same 1px so nothing re-flows.
 .border {
+  border: 1px solid nb-theme(border-basic-color-3) !important;
   border-radius: nb-theme(border-radius);
   margin: 3rem 0;
 }

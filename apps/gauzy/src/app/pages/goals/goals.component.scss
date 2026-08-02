@@ -16,10 +16,14 @@
   }
 }
 
+// `--gauzy-card-2` is undefined in material-light / material-dark — those two
+// themes register against Nebular's own parents in `themes.scss` and never pick
+// up the `gauzy-card-*` keys — and a `var()` with no fallback makes the browser
+// throw the whole declaration away. Every use below carries one.
 :host {
   nb-card,
   nb-card-body {
-    background-color: var(--gauzy-card-2);
+    background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
   }
   nb-card-body {
     overflow: unset;
@@ -57,10 +61,23 @@
     box-shadow: unset;
   }
 }
+// Key-result rows inside an objective. Hover and "this is the selected row"
+// used to share one declaration, so the row the action bar is actually acting
+// on looked exactly like whatever the pointer happened to be over. They are two
+// different states and now read as two:
+//   * selection takes the primary accent — the tint the rest of the app uses
+//     for "current" — rather than the neutral hover fill;
+//   * the hover rule is guarded with `:not(.selected)`. The two selectors are
+//     the same specificity (0,2,1 either way), so without the guard whichever
+//     came last would simply win, and hovering the selected row would repaint
+//     it as an ordinary hover.
 nb-accordion-item-body {
-  &:hover,
+  &:hover:not(.selected) {
+    background: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
+  }
+
   &.item.selected {
-    background: var(--gauzy-card-2);
+    background: nb-theme(color-primary-transparent-100);
   }
 }
 .keyResult {

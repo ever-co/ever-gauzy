@@ -4,14 +4,17 @@
   width: 30vw;
 }
 
-.main-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+// Removed: a `.main-header` flex block. `keyresult-update.component.html` has
+// no element carrying that class (the dialog's heading goes straight into
+// `nb-card-header`), and this stylesheet is not shared — no other component's
+// `styleUrls` points at it and nothing `@use`s or `@forward`s it.
 
 :host {
   nb-card {
-    background: var(--gauzy-card-1);
+    // Fallback required: `--gauzy-card-1` is undefined in material-light and
+    // material-dark (`themes.scss` registers those two against Nebular's own
+    // parent themes, which carry no `gauzy-card-*` keys), and a `var()` with no
+    // fallback makes the browser discard the whole declaration.
+    background: var(--gauzy-card-1, var(--card-background-color));
   }
 }
