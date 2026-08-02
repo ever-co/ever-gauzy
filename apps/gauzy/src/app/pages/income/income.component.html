@@ -44,16 +44,9 @@
         (scroll)="onScroll()"
       ></ga-card-grid>
     }
-    <ng-template #gridLayout>
-      <ga-card-grid
-        [loading]="loading"
-        [totalItems]="pagination?.totalItems"
-        [settings]="smartTableSettings"
-        [source]="incomes"
-        (onSelectedItem)="selectIncome($event)"
-        (scroll)="onScroll()"
-      ></ga-card-grid>
-    </ng-template>
+    <!-- Removed an `<ng-template #gridLayout>` that repeated the card grid above:
+         `gridLayout` was referenced nowhere in this template or its component, so
+         it was never instantiated. The `@else` branch is the grid layout. -->
   </nb-card-body>
 </nb-card>
 

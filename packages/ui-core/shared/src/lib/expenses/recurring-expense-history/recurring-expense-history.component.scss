@@ -12,11 +12,27 @@
     max-width: 560px;
     flex: 1;
 
-    row.head {
+    // Was `row.head`, an element selector for a `<row>` tag. The template marks
+    // the column headings with `<div class="row head">`, so the rule matched
+    // nothing and the headings rendered as ordinary bold text. The colour
+    // carries a fallback because `gauzy-text-color-2` is not registered by
+    // material-light / material-dark.
+    .row.head {
       b {
         font-weight: 600;
-        color: nb-theme(gauzy-text-color-2);
+        color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
       }
+    }
+
+    // Every history entry ends with an `<hr>`, but a Bootstrap `.row` is a flex
+    // container, which left that `<hr>` a zero-width flex item, so no separator
+    // was ever drawn. Given a full line of its own it separates the entries, and
+    // the colour replaces Bootstrap's own `rgba(0, 0, 0, .1)` — invisible on
+    // every dark theme.
+    .row hr {
+      flex: 0 0 100%;
+      margin: 0.5rem 0 0;
+      border-top-color: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
     }
 
     h6 {
@@ -25,7 +41,7 @@
       line-height: 17px;
       letter-spacing: 0em;
       text-align: left;
-      color: nb-theme(gauzy-text-color-1);
+      color: var(--gauzy-text-color-1, var(--text-basic-color));
     }
   }
 

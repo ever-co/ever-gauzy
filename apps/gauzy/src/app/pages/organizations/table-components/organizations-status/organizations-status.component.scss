@@ -4,15 +4,18 @@
 // with its own padding around an inner coloured pill that has padding again, so
 // the cell paid for two boxes. Sized from the shared table-density tokens
 // (`$gauzy-density` in `themes.scss`); the literals are CSS-var fallbacks only.
+// `text-align: flex-start` was dropped from both pills below: `flex-start` is
+// not one of the values `text-align` accepts, so the browser threw the whole
+// declaration away and the pills have always taken their alignment from what
+// they inherit. Removing it changes nothing on screen; it only stops the rule
+// from claiming to do something it never did.
 .badge-danger {
-	text-align: flex-start;
 	padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
 	background-color: nb-theme(color-danger-default);
 	margin-bottom: var(--gauzy-table-chip-gap, 0.1875rem);
 }
 
 .badge-success {
-	text-align: flex-start;
 	padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
 	background-color: nb-theme(color-success-default);
 }

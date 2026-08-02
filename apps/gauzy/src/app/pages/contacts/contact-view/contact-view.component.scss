@@ -10,6 +10,17 @@
  *
  * Everything below is label/value pairs on theme tokens: no borrowed utilities,
  * no fake control chrome, and values that wrap instead of escaping their panel.
+ *
+ * Every `var(--gauzy-…)` here carries a fallback. `material-light` and
+ * `material-dark` register against Nebular's own material themes rather than
+ * against the gauzy default, so they inherit NONE of the `gauzy-card-*`,
+ * `gauzy-text-color-*`, `gauzy-shadow`, `gauzy-sidebar-background-*` or
+ * `gauzy-border-default-color` keys (themes.scss lines 501-554 set none of them).
+ * A `var()` with no fallback resolves to nothing there and the browser drops the
+ * WHOLE declaration — which is how this panel lost its text colours, its
+ * surfaces and its edges on two of the eight themes. The fallbacks are
+ * translucent neutrals or Nebular keys that every theme does define, so one
+ * value stays right on a white card and on a near-black one.
  */
 
 // The tab body is sized from the viewport so the page fits without the window
@@ -19,7 +30,7 @@ $pane-height: calc(100vh - 17.25rem);
 $aside-height: calc(100vh - 14.25rem);
 
 :host nb-card {
-	background-color: var(--gauzy-card-2);
+	background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
 	margin: 0;
 }
 
@@ -57,15 +68,15 @@ $aside-height: calc(100vh - 14.25rem);
 	height: 2.25rem;
 	border-radius: 50%;
 	object-fit: cover;
-	box-shadow: var(--gauzy-shadow);
+	box-shadow: var(--gauzy-shadow, 0 1px 1px 0 rgba(0, 0, 0, 0.15));
 }
 
 .identity-avatar-fallback {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background-color: var(--gauzy-hover-tint);
-	color: var(--gauzy-text-color-2);
+	background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+	color: var(--gauzy-text-color-2, var(--text-hint-color));
 	font-size: 0.8125rem;
 	font-weight: 600;
 	line-height: 1;
@@ -79,7 +90,7 @@ $aside-height: calc(100vh - 14.25rem);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	color: var(--gauzy-text-color-1);
+	color: var(--gauzy-text-color-1, var(--text-basic-color));
 	font-size: 1.125rem;
 	font-weight: 600;
 	line-height: 1.5rem;
@@ -90,8 +101,8 @@ $aside-height: calc(100vh - 14.25rem);
 	flex: 0 0 auto;
 	padding: 0.125rem 0.5rem;
 	border-radius: 999px;
-	background-color: var(--gauzy-hover-tint);
-	color: var(--gauzy-text-color-2);
+	background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+	color: var(--gauzy-text-color-2, var(--text-hint-color));
 	font-size: 0.6875rem;
 	font-weight: 600;
 	line-height: 1rem;
@@ -130,7 +141,7 @@ $aside-height: calc(100vh - 14.25rem);
 	// Header and body paint to the edges, so the container has to clip them for
 	// the rounded corner to survive.
 	overflow: hidden;
-	box-shadow: var(--gauzy-shadow);
+	box-shadow: var(--gauzy-shadow, 0 1px 1px 0 rgba(0, 0, 0, 0.15));
 
 	nb-accordion-item-header {
 		font-size: 0.8125rem;
@@ -138,15 +149,15 @@ $aside-height: calc(100vh - 14.25rem);
 		line-height: 1.125rem;
 		letter-spacing: 0em;
 		text-align: left;
-		color: var(--gauzy-text-color-2);
+		color: var(--gauzy-text-color-2, var(--text-hint-color));
 
 		&.accordion-item-header-expanded {
-			background-color: var(--gauzy-sidebar-background-3);
+			background-color: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
 		}
 	}
 
 	nb-accordion-item-body {
-		background-color: var(--gauzy-card-3);
+		background-color: var(--gauzy-card-3, rgba(126, 126, 143, 0.05));
 	}
 }
 
@@ -163,8 +174,8 @@ $aside-height: calc(100vh - 14.25rem);
 .panel-count {
 	padding: 0 0.375rem;
 	border-radius: 999px;
-	background-color: var(--gauzy-hover-tint);
-	color: var(--gauzy-text-color-2);
+	background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+	color: var(--gauzy-text-color-2, var(--text-hint-color));
 	font-size: 0.6875rem;
 	font-weight: 600;
 	line-height: 1rem;
@@ -172,7 +183,7 @@ $aside-height: calc(100vh - 14.25rem);
 
 .panel-empty {
 	margin: 0;
-	color: var(--gauzy-text-color-2);
+	color: var(--gauzy-text-color-2, var(--text-hint-color));
 	font-size: 0.8125rem;
 	line-height: 1.125rem;
 }
@@ -198,7 +209,7 @@ $aside-height: calc(100vh - 14.25rem);
 
 .field-label {
 	margin: 0 0 0.125rem;
-	color: var(--gauzy-text-color-2);
+	color: var(--gauzy-text-color-2, var(--text-hint-color));
 	font-size: 0.6875rem;
 	font-weight: 600;
 	line-height: 1rem;
@@ -210,7 +221,7 @@ $aside-height: calc(100vh - 14.25rem);
 .field-value {
 	margin: 0;
 	min-width: 0;
-	color: var(--gauzy-text-color-1);
+	color: var(--gauzy-text-color-1, var(--text-basic-color));
 	font-size: 0.8125rem;
 	font-weight: 400;
 	line-height: 1.125rem;
@@ -237,7 +248,7 @@ $aside-height: calc(100vh - 14.25rem);
 }
 
 .field-empty {
-	color: var(--gauzy-text-color-2);
+	color: var(--gauzy-text-color-2, var(--text-hint-color));
 	// A dash is a placeholder, not a value: keep it out of the reading order.
 	user-select: none;
 }
@@ -265,15 +276,15 @@ $aside-height: calc(100vh - 14.25rem);
 	height: 1.75rem;
 	border-radius: var(--gauzy-radius-sm, 0.375rem);
 	object-fit: cover;
-	box-shadow: var(--gauzy-shadow);
+	box-shadow: var(--gauzy-shadow, 0 1px 1px 0 rgba(0, 0, 0, 0.15));
 }
 
 .entity-avatar-fallback {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background-color: var(--gauzy-hover-tint);
-	color: var(--gauzy-text-color-2);
+	background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+	color: var(--gauzy-text-color-2, var(--text-hint-color));
 	font-size: 0.75rem;
 	font-weight: 600;
 	line-height: 1;
@@ -291,14 +302,14 @@ $aside-height: calc(100vh - 14.25rem);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	color: var(--gauzy-text-color-1);
+	color: var(--gauzy-text-color-1, var(--text-basic-color));
 	font-size: 0.8125rem;
 	font-weight: 600;
 	line-height: 1.125rem;
 }
 
 .entity-meta {
-	color: var(--gauzy-text-color-2);
+	color: var(--gauzy-text-color-2, var(--text-hint-color));
 	font-size: 0.6875rem;
 	font-weight: 400;
 	line-height: 0.9375rem;
@@ -322,9 +333,9 @@ $aside-height: calc(100vh - 14.25rem);
 	// Same surface as the accordion bodies opposite, so the two columns read as
 	// one screen. The tab BAR is deliberately left on the card behind it — that
 	// is the shape Nebular draws and fighting it only adds a second seam.
-	background-color: var(--gauzy-card-3);
+	background-color: var(--gauzy-card-3, rgba(126, 126, 143, 0.05));
 	border-radius: var(--border-radius);
-	box-shadow: var(--gauzy-shadow);
+	box-shadow: var(--gauzy-shadow, 0 1px 1px 0 rgba(0, 0, 0, 0.15));
 }
 
 .pane {
@@ -354,7 +365,7 @@ $aside-height: calc(100vh - 14.25rem);
 	min-height: 14rem;
 	overflow: hidden;
 	border-radius: var(--gauzy-radius-sm, 0.375rem);
-	border: 1px solid var(--gauzy-border-default-color);
+	border: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
 }
 
 :host ga-leaflet-map {
@@ -408,11 +419,11 @@ $aside-height: calc(100vh - 14.25rem);
 	align-items: center;
 	min-width: 0;
 	padding: 0.375rem 0.5rem;
-	border: 1px solid var(--gauzy-border-default-color);
+	border: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
 	border-radius: var(--gauzy-radius-sm, 0.375rem);
 
 	&:hover {
-		background-color: var(--gauzy-hover-tint);
+		background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 	}
 
 	// Without this the avatar's own `min-width: auto` keeps the card as wide as

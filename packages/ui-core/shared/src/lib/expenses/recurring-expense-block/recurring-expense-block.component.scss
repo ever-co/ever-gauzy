@@ -4,14 +4,19 @@
 
   border-radius: nb-theme(border-radius);
   margin-bottom: 8px;
-  background-color: nb-theme(gauzy-card-1) !important;
+  // Fallbacks on every `--gauzy-*` here: material-light and material-dark do
+  // not register these keys, and a `var()` that resolves to nothing invalidates
+  // the whole declaration, which left these rows transparent on those themes.
+  background-color: var(--gauzy-card-1, var(--card-background-color)) !important;
 
-  // Selection rail. This was `rgba(0, 0, 0, 0.15)` — 15 % black, which on the
-  // four dark themes is drawn against an already near-black card and simply does
-  // not appear, so a selected recurring expense had no rail at all. A selection
-  // state has to read in every theme, so it takes the primary accent.
+  // Selection rail. This was `rgba(0, 0, 0, 0.15)` — 15% black, drawn against an
+  // already near-black card on the four dark themes, so a selected recurring
+  // expense had no rail at all. A selection state has to read in every theme, so
+  // it takes the primary accent. The rail sits on the leading edge, so it flips
+  // with the writing direction.
   &.block {
     box-shadow: -6px 0 0 0 nb-theme(color-primary-default);
+    @include nb-rtl(box-shadow, 6px 0 0 0 nb-theme(color-primary-default));
   }
 
   .setting-row {
@@ -19,14 +24,21 @@
     justify-content: space-between;
     width: 100%;
     height: 84px;
-    background-color: nb-theme(gauzy-card-1);
+    background-color: var(--gauzy-card-1, var(--card-background-color));
     border-radius: nb-theme(border-radius);
     @include nb-ltr(padding, 0.75rem 0 0.75rem 0.75rem);
     @include nb-rtl(padding, 0.75rem 0.75rem 0.75rem 0);
 
-    &:hover,
+    // `:hover` and `.active` used to share one fill, so pointing at any row made
+    // it look exactly as selected as the row that really was. The two shared
+    // density tokens are the app-wide hover / current pair and — unlike
+    // `gauzy-sidebar-background-3` — are registered by all eight themes.
+    &:hover:not(.active) {
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    }
+
     &.active {
-      background-color: nb-theme(gauzy-sidebar-background-3);
+      background-color: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
     }
   }
 
@@ -39,7 +51,9 @@
     display: flex;
     height: 84px;
     align-items: center;
-    background-color: #333;
+    // Was `#333` with `#d7d9de` labels, i.e. a dark slab hard-coded for one
+    // theme. `background-basic-color-3` is a recessed surface in every theme.
+    background-color: nb-theme(background-basic-color-3);
     justify-content: space-evenly;
     overflow: hidden;
     transition: width 0.2s ease-in;
@@ -53,11 +67,11 @@
       cursor: pointer;
 
       ::ng-deep svg {
-        fill: rgb(127, 127, 127);
+        fill: nb-theme(text-hint-color);
       }
 
       span {
-        color: #d7d9de;
+        color: nb-theme(text-hint-color);
         font-size: 10px;
         opacity: 0.6;
       }
@@ -100,7 +114,9 @@
     }
 
     span {
-      color: nb-theme(gauzy-text-color-1);
+      // Fallback: `gauzy-text-color-1` is not registered by material-light /
+      // material-dark, and without one the declaration is dropped there.
+      color: var(--gauzy-text-color-1, var(--text-basic-color));
       font-size: 14px;
     }
 
@@ -118,8 +134,11 @@
     }
   }
 
+  // The per-row settings fly-out. It is deliberately hidden — the same edit /
+  // history / delete actions live in the page toolbar — and the rules below only
+  // survive so the panel can be brought back. Removed a `display: flex` that was
+  // declared here and overruled by the `display: none` lower in the same block.
   .block-panel {
-    display: flex;
     justify-content: space-between;
     align-items: center;
     width: 240px;

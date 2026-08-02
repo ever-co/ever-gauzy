@@ -14,7 +14,17 @@
 
   nb-card,
   nb-card-body {
-    background-color: var(--gauzy-card-2);
+    // Fallbacks on the surface/text `--gauzy-*` tokens in this file: a bare
+    // `var()` naming a custom property a theme does not emit takes the whole
+    // declaration with it, which on a background means the card renders
+    // transparent. The `--gauzy-page-title-*` metrics below need none — those
+    // come from the shared density preset, which every theme merges.
+    // The fallback is a neutral mid-grey, not the light theme's 3% black: the
+    // only themes that reach it are material-light and material-dark, and 3%
+    // black on the dark one is invisible — which is the one case the fallback
+    // exists to cover. A neutral at the same weight darkens a light surface and
+    // lightens a dark one.
+    background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.1));
 
     &.card-body {
       height: calc(100vh - 21rem);
@@ -48,7 +58,7 @@
         line-height: 13px;
         letter-spacing: 0em;
         text-align: left;
-        color: var(--gauzy-text-color-2);
+        color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
       }
     }
   }
@@ -58,12 +68,12 @@
   ::ng-deep {
       .download {
           padding: 0.5rem;
-          background-color: var(--gauzy-card-2);
+          background-color: var(--gauzy-card-2, rgba(50, 50, 50, 0.03));
           border-radius: var(--button-rectangle-border-radius);
           @include nb-ltr(float, right);
           @include nb-rtl(float, left);
           .action {
-            box-shadow: var(--gauzy-shadow);
+            box-shadow: var(--gauzy-shadow, 0px 1px 1px 0px rgb(0 0 0 / 15%));
           }
       }
   }
@@ -84,7 +94,7 @@
   line-height: var(--gauzy-page-title-line-height);
   letter-spacing: var(--gauzy-page-title-letter-spacing);
   text-align: left;
-  color: var(--gauzy-text-color-1);
+  color: var(--gauzy-text-color-1, var(--text-basic-color));
   white-space: nowrap;
 }
 
@@ -94,5 +104,5 @@
   line-height: 17px;
   letter-spacing: 0em;
   text-align: left;
-  color: var(--gauzy-text-color-2);
+  color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
 }

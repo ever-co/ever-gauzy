@@ -28,7 +28,13 @@
 				>
 					<div>
 						<nb-icon icon="file-text-outline"></nb-icon>
-						<a [href]="document.documentUrl">
+						<!--
+							The target is an uploaded file on another origin, and the row it sits
+							in also handles the click to SELECT the document — following the link
+							in place threw the whole app away to open an attachment. `noopener`
+							keeps the opened tab from reaching back through `window.opener`.
+						-->
+						<a [href]="document.documentUrl" target="_blank" rel="noopener noreferrer">
 							{{ document.name }}
 						</a>
 					</div>

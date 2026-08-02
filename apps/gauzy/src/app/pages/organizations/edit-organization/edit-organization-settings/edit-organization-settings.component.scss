@@ -44,8 +44,13 @@ nb-card-body {
           margin-left: 0;
         }
       }
+      // The resting tab icon. Was a literal `#7e7e8f` — a mid grey that reads as
+      // disabled on the dark themes and is off the ramp on the light ones. That
+      // literal IS `gauzy-text-color-2` on the gauzy themes, so it is the token
+      // this always meant; the fallback keeps it working on the themes that do
+      // not emit the custom property.
       & svg {
-        fill: #7e7e8f !important;
+        fill: var(--gauzy-text-color-2, rgba(126, 126, 143, 1)) !important;
       }
       &.active {
         & .tab-link {

@@ -31,7 +31,11 @@
   }
   nb-card,
   nb-tab {
-    background-color: var(--gauzy-card-2);
+    // Fallback required: `--gauzy-card-2` is undefined in material-light and
+    // material-dark — `themes.scss` registers those two against Nebular's own
+    // parent themes, so they never inherit the `gauzy-card-*` keys — and a
+    // `var()` without one makes the browser discard the whole declaration.
+    background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
     margin: 0;
   }
   nb-card-body {
@@ -42,7 +46,10 @@
 }
 
 .card-general {
-  background: var(--gauzy-card-3);
+  // Same story as `--gauzy-card-2` above: `--gauzy-card-3` is not defined in
+  // material-light / material-dark, so without a fallback the General tab's
+  // settings panel lost its background entirely there.
+  background: var(--gauzy-card-3, rgba(126, 126, 143, 0.05));
   border-radius: nb-theme(border-radius);
 }
 

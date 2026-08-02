@@ -14,10 +14,13 @@
       flex-direction: column;
       @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
       @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
-      nb-accordion {
-        @include nb-ltr(margin-right, 0.625rem);
-        @include nb-rtl(margin-left, 0.625rem);
-      }
+      // Removed: `nb-accordion { margin-right/left: 0.625rem }`. Grepping this
+      // page for "accordion" matches only this stylesheet — the template
+      // (employment-types.component.html) renders nb-tabset > nb-card >
+      // ga-notes-with-tags / ga-card-grid, never an accordion, and the .ts adds
+      // no class or element bindings. With emulated encapsulation the selector
+      // could only ever have matched an nb-accordion in this component's own
+      // template, so it styled nothing.
     }
     nb-tabset {
       // Card body height: the viewport less the app chrome above the tabset.
@@ -38,7 +41,12 @@
     }
     nb-card,
     nb-tab.content-active {
-      background-color: var(--gauzy-card-2);
+      // material-light / material-dark register no `gauzy-card-2` (themes.scss
+      // gives them only gauzy-primary-background, gauzy-sidebar-background-*
+      // and gauzy-border-table), so a bare var() is invalid there and the whole
+      // declaration is dropped — the row cards lose their panel tint and sit
+      // flat on the tab body. Neutral translucent gray as the fallback.
+      background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
     }
     nb-card-body{
       overflow: unset;
@@ -57,12 +65,11 @@
     @include tabset-action-row(16px);
 }
 
-nb-accordion-item-header ::ng-deep nb-icon {
-    border: 1px solid nb-theme(border-basic-color-4);
-    border-radius: nb-theme(input-rectangle-border-radius);
-    width: 1.75rem;
-    height: 1.75rem;
-}
+// Removed: `nb-accordion-item-header ::ng-deep nb-icon { border/radius/size }`.
+// Same reason as the nb-accordion rule above — this page has no accordion, and
+// the part of the selector before `::ng-deep` still carries this component's
+// encapsulation attribute, so it could only have matched an
+// nb-accordion-item-header in employment-types.component.html. There is none.
 
 nb-card-body {
     background: none;

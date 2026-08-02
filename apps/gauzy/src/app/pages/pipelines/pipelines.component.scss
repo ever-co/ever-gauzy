@@ -26,7 +26,12 @@
   }
   nb-card,
   nb-tab.content-active {
-    background-color: var(--gauzy-card-2);
+    // Fallback required: `--gauzy-card-2` is undefined in material-light and
+    // material-dark — `themes.scss` registers those two against Nebular's own
+    // parent themes, so they never inherit the `gauzy-card-*` keys — and a
+    // `var()` without one makes the browser drop the whole declaration, which
+    // left the tab body unpainted there.
+    background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
   }
   nb-card-body {
     overflow: unset;
