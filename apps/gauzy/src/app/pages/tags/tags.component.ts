@@ -70,8 +70,16 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 			.pipe(
 				debounceTime(300),
 				tap(() => (this.loading = true)),
-				tap(() => this.getTags()),
-				tap(() => this.getTagTypes()),
+				// Sequential on purpose. Both are async and neither was awaited, so they
+				// raced: `getTagTypes()` ends by reconciling the selected filter chip
+				// against `allTags`, which `getTags()` is what refreshes. When the
+				// tag-types response won, the reconcile reloaded the PREVIOUS
+				// organization's tags. Awaiting inside one tap orders them without
+				// changing what downstream operators see (they never waited either).
+				tap(async () => {
+					await this.getTags();
+					await this.getTagTypes();
+				}),
 				tap(() => this.clearItem()),
 				untilDestroyed(this)
 			)
