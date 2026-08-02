@@ -85,7 +85,7 @@
 // `setting-block sub-header`). accounting.component.scss re-declares
 // `.body-header` but sets no `margin-bottom`, and it is loaded after this file,
 // so dropping these would have silently pulled 35px out from under the Accounting
-// page header and unbolded its section headings.
+// page header and dropped the bold from its section headings.
 .body-header {
     display: flex;
     justify-content: space-between;
