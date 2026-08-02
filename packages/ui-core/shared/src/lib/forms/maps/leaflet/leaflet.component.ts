@@ -46,7 +46,7 @@ export class LeafletMapComponent implements AfterViewInit {
 		this._icon = val;
 	}
 	get icon() {
-		return this._icon || 'assets/leafelt/marker-icon.png';
+		return this._icon || 'assets/leaflet/marker-icon.png';
 	}
 
 	@Input()

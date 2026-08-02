@@ -12,7 +12,7 @@
 
 	// The page title lives directly on the card header here — no heading
 	// element for the shared card-title rule to catch — so it reads the same
-	// tokens itself. Only the "Project:" prefix is emphasised.
+	// tokens itself. Only the "Project:" prefix is emphasized.
 	.header {
 		display: flex;
 		font-size: var(--gauzy-page-title-font-size);

@@ -13,7 +13,7 @@
 //
 // What used to be here — `.req-green` / `.req-red` painting
 // `rgba(0, 214, 143, 1)` / `rgba(255, 94, 94, 1)` with `!important`, plus a
-// hard-coded black drop shadow — is deleted rather than retuned: those two
+// hard-coded black drop shadow — is deleted rather than re-tuned: those two
 // declarations are the reason this one page could not follow the theme, and a
 // drop shadow under a borderless-fill button is exactly the dated look being
 // removed. The `.req-green` / `.req-red` classes are left on the elements; they

@@ -23,7 +23,7 @@ $aside-height: calc(100vh - 14.25rem);
 	margin: 0;
 }
 
-/* ── Header: back · avatar · name · type · favourite ─────────────────────── */
+/* ── Header: back · avatar · name · type · favorite ─────────────────────── */
 
 .contact-header {
 	display: flex;
@@ -45,7 +45,7 @@ $aside-height: calc(100vh - 14.25rem);
 	flex-direction: row;
 	align-items: center;
 	gap: 0.625rem;
-	// Takes the free space so the favourite toggle sits at the far edge, and can
+	// Takes the free space so the favorite toggle sits at the far edge, and can
 	// shrink so a long name truncates instead of pushing the toggle out.
 	flex: 1 1 auto;
 	min-width: 0;
@@ -431,7 +431,7 @@ $aside-height: calc(100vh - 14.25rem);
 	}
 
 	// Stacked, neither pane may pin itself to the viewport — that is what turns a
-	// one-column layout into two nested scrollers.
+	// one-column layout into two nested scroll containers.
 	.contact-aside {
 		max-height: none;
 		overflow: visible;
