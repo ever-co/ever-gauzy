@@ -9,7 +9,10 @@
 
     .members-count {
       font-size: 0.7em;
-      color: darkgray;
+      // `darkgray` (#a9a9a9) is a fixed CSS keyword: too light to read on the
+      // light themes' white card and no darker on the dark ones. `text-hint-color`
+      // is the muted-label token and is registered by all eight themes.
+      color: nb-theme(text-hint-color);
     }
   }
 

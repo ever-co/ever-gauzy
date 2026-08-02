@@ -3,8 +3,13 @@
 // The members block of a project card. The people themselves are rendered by
 // `ngx-people-list` and carry no box of their own, so the only thing left here
 // is the surrounding panel and its label.
+// `--gauzy-card-1` / `--gauzy-text-color-2` are not registered by the
+// material-light and material-dark themes (themes.scss), and a var() with no
+// fallback there drops the whole declaration — the members panel lost its
+// background and the title its muted color. Fallbacks are Nebular tokens, which
+// every theme defines.
 .members {
-	background-color: var(--gauzy-card-1);
+	background-color: var(--gauzy-card-1, var(--card-background-color));
 	border-radius: var(--border-radius);
 	padding: 0.625rem;
 	margin: 0;
@@ -16,5 +21,5 @@
 	font-weight: 600;
 	line-height: 0.9375rem;
 	letter-spacing: 0em;
-	color: var(--gauzy-text-color-2);
+	color: var(--gauzy-text-color-2, var(--text-hint-color));
 }
