@@ -1,153 +1,23 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-overrides' as *;
 
-.right-block {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .checkboxes {
   display: flex;
   justify-content: flex-end;
   align-items: center;
 }
 
-:host .card-container {
-  display: flex;
-  flex-wrap: wrap;
-
-  .card-body {
-    width: 100%;
-    max-width: 300px;
-    margin: 20px;
-
-    .card-header {
-      padding: 0.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      &-badge {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-      }
-
-      .header-container {
-        text-align: center;
-      }
-    }
-
-    .interview-card {
-      display: flex;
-      flex-direction: column;
-      padding: 0.5rem;
-
-      .name-container {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-
-        &:hover {
-          cursor: pointer;
-          color: #3366ff;
-        }
-
-        .image-container {
-          width: 70px;
-          height: 50px;
-          display: flex;
-          justify-content: center;
-          margin-right: 10px;
-          @include nb-ltr(margin-right, 10px);
-          @include nb-rtl(margin-left, 10px);
-
-          img {
-            height: 100%;
-            max-width: 70px;
-          }
-        }
-      }
-
-      .team-members {
-        margin-bottom: 0.5rem;
-      }
-    }
-
-    .button-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: auto;
-      flex-wrap: wrap;
-    }
-  }
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  .btn {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-  }
-}
-
-:host .badge {
-  text-align: center;
-  padding: 5px;
-  @include nb-ltr(margin-left, 0.2rem);
-  @include nb-rtl(margin-right, 0.2rem);
-}
-
-:host .client-info {
-  padding: 0px 12px;
-  display: flex;
-  flex-direction: column;
-
-  .info-line {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    font-size: 0.7em;
-    color: darkgray;
-
-    .info-value {
-      display: flex;
-      justify-content: flex-end;
-      text-align: end;
-
-      .info-list-item:not(:last-child)::after {
-        content: ',';
-        @include nb-ltr(margin-right, 5px);
-        @include nb-rtl(margin-left, 5px);
-      }
-    }
-
-    .criterions {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      text-align: end;
-    }
-  }
-}
-
-.btn {
-  margin: 0.2rem;
-}
-
-.badge-warning {
-  background-color: #fa0;
-}
-
-.badge-primary {
-  background-color: #0095ff;
-}
+// REMOVED with the visual sweep, all of it dead against this template (which
+// renders `.checkboxes`, `.table-scroll-container`, `.custom-card-body` and the
+// action buttons, and nothing else):
+//   * `.right-block`, `.header`, `.btn`;
+//   * `.card-container` / `.interview-card` / `.image-container`, a hand-rolled
+//     interview card replaced by `<ga-card-grid>` — it carried
+//     `.name-container:hover { color: #3366ff }`;
+//   * `.client-info .info-line { color: darkgray }`;
+//   * `.badge`, plus `.badge-warning { #fa0 }` and `.badge-primary { #0095ff }`.
+// Component styles are view-encapsulated, so none of these could reach the card
+// grid's own markup either.
 
 :host {
   overflow-y: auto;

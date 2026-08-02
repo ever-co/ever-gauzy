@@ -6,6 +6,7 @@ import { LocalDataSource } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest } from 'rxjs';
 import { IImageAsset, IProductOptionTranslatable, IProductTranslatable, LanguagesEnum } from '@gauzy/contracts';
+import { getContrastColor } from '@gauzy/ui-core/common';
 import { ProductService, TranslatableService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { Store } from '@gauzy/ui-core/core';
@@ -111,6 +112,20 @@ export class InventoryItemViewComponent extends TranslationBaseComponent impleme
 			},
 			dialogClass: 'fullscreen'
 		});
+	}
+
+	/**
+	 * Readable label colour for a tag chip.
+	 *
+	 * Tag colours are user-chosen, so the chip's label cannot be a fixed white —
+	 * it disappeared on every light tag. Same helper the inventory table cells
+	 * use for the same chips.
+	 */
+	backgroundContrast(bgColor: string): string | null {
+		// `getContrastColor` indexes into the string, so a tag saved without a
+		// colour would throw. Returning null drops the style binding and the chip
+		// simply inherits, which is what it did before.
+		return bgColor ? getContrastColor(bgColor) : null;
 	}
 
 	getTranslatedProp(item: any, prop: string) {

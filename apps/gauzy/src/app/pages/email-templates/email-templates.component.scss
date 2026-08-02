@@ -140,8 +140,13 @@ $height: calc(100vh - 25.5rem);
       border-radius: nb-theme(border-radius);
     }
 
+    // The "Template preview" strip. It is the facing half of `.editor-header`
+    // ("HTML editor") on the other column, but it was the one literal the
+    // white-block pass missed: a hand-written rgba at 0.05 against the token's
+    // 0.12, so the two column headers on the same row never matched. Same tint
+    // as its opposite number now, and defined in all eight themes.
     .email-column-sub-header {
-      background-color: rgba(126, 126, 143, 0.05);
+      background-color: nb-theme(gauzy-hover-tint);
       padding: 13px;
       border-radius: 8px 8px 0 0;
       margin: -10px -10px 0;

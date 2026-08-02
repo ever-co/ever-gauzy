@@ -68,7 +68,17 @@ export const CustomCommands = {
 			}
 		});
 		await getPage()
-			.locator('h4.card-header-title:has-text("Tags")')
+			// Anchored to the CLASS, not to the element carrying it. The heading used
+			// to be `<h4 class="card-header-title">`; moving the page actions up onto
+			// the title line needed the heading in a block of its own, so it became
+			// `<div class="card-header-title"><h4>`. `h4.card-header-title` then
+			// matched nothing — on every page, since this helper is shared — and all
+			// four shards failed here rather than on anything they were testing.
+			//
+			// Scoped to the main card because this page renders a second header for
+			// the tag-type filter rail, and an unscoped `:has-text("Tags")` is a
+			// substring match.
+			.locator('nb-card.tags-component .card-header-title:has-text("Tags")')
 			.first()
 			.waitFor({ state: 'visible', timeout: 30000 });
 		await organizationTagsUserPage.gridButtonVisible();

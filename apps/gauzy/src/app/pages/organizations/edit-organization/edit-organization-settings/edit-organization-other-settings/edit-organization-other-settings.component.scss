@@ -55,10 +55,22 @@
       border-radius: nb-theme(button-rectangle-border-radius);
       list-style: none;
       cursor: pointer;
-      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+      // Was a literal `0px 1px 1px rgba(0, 0, 0, 0.15)` — a black drop shadow,
+      // which against a near-black canvas is no edge at all. `gauzy-shadow` is
+      // the shared token for this hairline, so the row follows whatever the
+      // active theme decides an edge should be.
+      //
+      // Note it is NOT a ring everywhere: of the five themes that define it,
+      // only `gauzy-dark` resolves to `0 0 0 1px var(--gauzy-overlay-border-color)`.
+      // The others keep a black drop shadow (15% on the light pair, 35% on the
+      // dark pair), so `cosmic`, `dark` and `material-dark` still get a shadow
+      // rather than a ring. That is the shared token's problem to fix, in
+      // themes.scss, not this file's to work around. The fallback is the old
+      // literal, for the themes that emit no token at all.
+      box-shadow: var(--gauzy-shadow, 0px 1px 1px 0px rgb(0 0 0 / 15%));
       &.active {
         background: nb-theme(background-basic-color-1);
-        box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15) inset;
+        box-shadow: var(--gauzy-shadow, 0px 1px 1px 0px rgb(0 0 0 / 15%)) inset;
       }
     }
   }
@@ -86,9 +98,23 @@
   padding-right: 10px;
   max-width: 49% !important;
 }
-.active {
-  background: #ffffff;
-}
+// Removed `.active { background: #ffffff; }`, which was NOT dead — it was the bug.
+//
+// `active` is bound here in two ways. The visible one is the aside-nav `<li>`
+// items (`[class.active]="general?.expanded"` and nine siblings), which
+// `.aside-nav ul li.active` above already paints with
+// `nb-theme(background-basic-color-1)` at higher specificity. The one that is
+// easy to miss is that this template also holds 19 `<nb-option>` elements, and
+// Nebular host-binds `class.active` onto them at RUNTIME as the keyboard manager
+// moves — nothing a grep of the template can see.
+//
+// Those options are authored here, so they carry this component's `_ngcontent`
+// attribute even after `nb-select` portals them into the CDK overlay, and the
+// compiled `.active[_ngcontent-x]` (0,2,0) outranks Nebular's own
+// `nb-option-list nb-option.active` (0,1,2). The hard white therefore won: the
+// highlighted item in every dropdown on this page was painted #ffffff on all
+// eight themes, including the near-black ones. Dropping the rule hands the
+// styling back to Nebular, which resolves per theme.
 
 // start of nb-overrides
 nb-accordion {
@@ -104,7 +130,13 @@ nb-accordion {
       border-radius: 6px;
       width: 23px;
       height: 23px;
-      border: 1px solid rgba(66, 66, 66, 0.2);
+      // Was `rgba(66, 66, 66, 0.2)` — a dark grey ring around the accordion
+      // chevron, which disappears against the dark themes' panels. The shared
+      // border token is light-on-dark and dark-on-light. Spelled out as a
+      // custom property with a fallback rather than `nb-theme()`, which emits a
+      // bare `var()` and would drop the border entirely on a theme that does
+      // not carry the token.
+      border: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.1));
     }
   }
   & nb-accordion-item-header,
@@ -291,8 +323,14 @@ nb-accordion {
   }
 }
 :host ::ng-deep .toggle {
-  border: 1px solid #7e7e8f !important;
-  background-color: #7e7e8f !important;
+  // The unchecked toggle track. Both were a literal `#7e7e8f`, i.e. one fixed
+  // mid grey in all eight themes — a dark bar on the dark canvases, where the
+  // rest of the muted chrome is light. `gauzy-text-color-2` is the app's muted
+  // ramp and is `rgba(126, 126, 143, 1)` (exactly the old literal) on the
+  // themes that inherit the default palette, so those are unchanged; the
+  // fallback covers the themes that do not emit the custom property.
+  border: 1px solid var(--gauzy-text-color-2, rgba(126, 126, 143, 1)) !important;
+  background-color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1)) !important;
   &.checked {
     background-color: nb-theme(text-primary-color) !important;
     border: 1px solid nb-theme(text-primary-color) !important;
@@ -425,9 +463,10 @@ nb-accordion {
     }
   }
 }
-#temporary {
-  padding-bottom: 215px;
-}
+// Removed `#temporary { padding-bottom: 215px; }` — `temporary` appears nowhere
+// in `edit-organization-other-settings.component.html` or its .ts, and a
+// component stylesheet can only reach its own template, so the id never
+// existed to style.
 
 :host {
   nb-card-body {

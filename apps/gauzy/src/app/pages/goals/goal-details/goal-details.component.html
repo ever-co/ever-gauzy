@@ -67,10 +67,7 @@
       <nb-tabset>
         <nb-tab tabTitle="{{ 'GOALS_PAGE.KEY_RESULTS' | translate }}">
           @if (goal.keyResults.length == 0) {
-            <div
-              class="card-key-result"
-              å
-              >
+            <div class="card-key-result">
               {{ 'GOALS_PAGE.MESSAGE.NO_KEY_RESULT' | translate }}
             </div>
           }
@@ -285,7 +282,7 @@
                     <textarea
                       nbInput
                       fullWidth
-                      placeholder="Add Comment"
+                      [placeholder]="'BUTTONS.ADD_COMMENT' | translate"
                     ></textarea>
                   </div>
                   <div class="col-3 btn-comment">

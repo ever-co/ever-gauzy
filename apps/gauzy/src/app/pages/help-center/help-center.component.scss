@@ -64,10 +64,18 @@
   flex-direction: row;
 }
 
+// The DRAFT pill sat beside the EMPLOYEES (`.privacy`) pill with a hard-coded
+// `#aaaeb3` fill while the control beside it already resolved `--color-primary-default`
+// — the one chip on the page that ignored the theme, and white-on-#aaaeb3 is
+// 2.2:1 besides. DRAFT is not a status with a colour, it is the ABSENCE of
+// publication, so it reads as a neutral chip now: the same low-alpha tint the
+// rest of the app uses for a quiet fill, with ordinary body text on it. Works
+// out on both the light card and the near-black one, and stays visibly
+// subordinate to the filled purple pill next to it.
 .draft {
   padding: 0 0.4rem;
-  color: #fff;
-  background-color: #aaaeb3;
+  color: var(--text-basic-color);
+  background-color: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
   margin-left: 10px;
   border-radius: 12px;
   font-size: 14px;
@@ -76,9 +84,12 @@
   text-align: center;
 }
 
+// Filled with the theme primary already; only the label was a literal `#fff`.
+// `--text-control-color` is Nebular's token for text on a filled status chip
+// (it is `#ffffff` in every registered theme, so nothing moves here).
 .privacy {
   padding: 0 0.4rem;
-  color: #fff;
+  color: var(--text-control-color);
   background-color: var(--color-primary-default);
   margin-left: 10px;
   border-radius: 12px;
@@ -166,12 +177,19 @@ h6 {
     text-align: left;
     cursor: pointer;
 
+    // Selection marker. Was a DARKENING overlay — rgba(50,50,50,.1) for the
+    // left bar and rgba(50,50,50,.03) for the fill — which is invisible on the
+    // near-black `gauzy-dark` canvas, and darker than the `--gauzy-card-2`
+    // hover fill below it, so a hovered row read as "more selected" than the
+    // selected one. `--gauzy-active-tint` is the registered token for exactly
+    // this (a neutral at twice the hover alpha, so it darkens a light surface
+    // and lightens a dark one) and is what the sidebar's current row uses.
     &.selected {
-      box-shadow: -8px 0px 0px 0px rgba(50, 50, 50, 0.1);
-      background: rgba(50, 50, 50, 0.03);
+      box-shadow: -8px 0px 0px 0px var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+      background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
     }
 
-    &:hover {
+    &:hover:not(.selected) {
       background: var(--gauzy-card-2);
     }
   }
@@ -195,8 +213,18 @@ h6 {
     }
   }
 
+  // The empty state stands in for `.table-scroll`, so it has to measure the
+  // same box. It was 6rem TALLER (`100vh - 15rem` against the list's
+  // `100vh - 21rem`), which showed up twice: as a direct child of the card body
+  // it made an empty Help Center card taller than a full one, and in the
+  // `@empty` branch — where it renders INSIDE `.table-scroll` — it forced that
+  // container into a 6rem scroll just to show "no matching articles".
+  // `max-height: 100%` bounds it whenever the parent has a definite height
+  // (the nested case) and resolves to `none` when it does not (the card-body
+  // case), the same treatment `.card-scroll` gets in styles/_overrides.scss.
   .no-data {
-    height: calc(100vh - 15rem);
+    height: calc(100vh - 21rem);
+    max-height: 100%;
     padding: 0 0.5rem;
   }
 

@@ -20,9 +20,12 @@
   width: 50%;
 }
 
+// Was `#8f9bb3` (Nebular's old blue-grey `color-basic-600`) and a hard-coded
+// `Open Sans` face. The themes moved secondary text onto a neutral ramp and the
+// app onto Inter, so this label was the only blue-grey, wrong-face text in the
+// dialog. `--text-hint-color` is the token that paints every other caption.
 .select-label {
-  color: #8f9bb3;
-  font-family: Open Sans, sans-serif;
+  color: var(--text-hint-color);
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1rem;
@@ -91,9 +94,13 @@
     }
   }
 
+  // Unchecked toggle track. `#7e7e8f` is the literal behind
+  // `toggle-basic-background-color` in the gauzy themes; spelled as the token it
+  // also follows the six other registered themes instead of painting one grey
+  // everywhere.
   ::ng-deep .toggle {
-    border: 1px solid #7E7E8F !important;
-    background-color: #7E7E8F !important;
+    border: 1px solid var(--toggle-basic-background-color) !important;
+    background-color: var(--toggle-basic-background-color) !important;
 
     &.checked {
       background-color: var(--text-primary-color) !important;

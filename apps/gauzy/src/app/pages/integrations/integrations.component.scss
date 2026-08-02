@@ -52,11 +52,15 @@
 }
 
 
+// Search + filter strip, separated from the integration tiles by a hairline.
+// The 38px of padding under the controls plus 37px of margin under the rule left
+// 75px of empty band across the page — two off-by-one magic numbers from before
+// the density pass, not a deliberate rhythm. One rem either side of the rule.
 .integration-filters {
   display: flex;
-  margin-bottom: 37px;
+  margin-bottom: 1rem;
   box-shadow: 0 1px 0 0 var(--gauzy-border-default-color);
-  padding-bottom: 38px;
+  padding-bottom: 1rem;
 }
 
 .group-select {
@@ -111,16 +115,26 @@ img {
   overflow: hidden;
 }
 
+// The "coming soon" corner ribbon.
+//
+// Its top gradient stop already read `--text-primary-color`, but the bottom stop
+// and both fold triangles were literal purples (`rgb(101,105,223)` /
+// `rgb(103,63,189)`) sampled from the default theme's accent. Anywhere the accent
+// is not that purple — the material themes ship a different primary entirely —
+// the ribbon faded from the theme colour into a stray blue-violet and folded back
+// in a third colour again. All three now come from the same primary ramp, so the
+// ribbon is one colour family in every theme. The white label stays literal: it
+// sits on a saturated fill, not on a theme surface.
 .coming-soon {
   position: absolute;
   width: 130px;
   transform: rotate(45deg);
   top: 25px;
   right: -27px;
-  background: linear-gradient(var(--text-primary-color), rgb(101, 105, 223) 100%);
+  background: linear-gradient(var(--color-primary-500), var(--color-primary-600) 100%);
   box-shadow: #000 0px 3px 10px -5px;
   line-height: 25px;
-  color: rgb(255, 255, 255);
+  color: #fff;
   font-size: 10px;
   font-weight: bold;
   text-transform: uppercase;
@@ -131,10 +145,10 @@ img {
     position: absolute;
     left: 0px;
     top: 100%;
-    border-left: 3px solid rgb(103, 63, 189);
+    border-left: 3px solid var(--color-primary-700);
     border-right: 3px solid transparent;
     border-bottom: 3px solid transparent;
-    border-top: 3px solid rgb(103, 63, 189);
+    border-top: 3px solid var(--color-primary-700);
   }
 
   &::after {
@@ -143,9 +157,9 @@ img {
     right: 0px;
     top: 100%;
     border-left: 3px solid transparent;
-    border-right: 3px solid rgb(103, 63, 189);
+    border-right: 3px solid var(--color-primary-700);
     border-bottom: 3px solid transparent;
-    border-top: 3px solid rgb(103, 63, 189);
+    border-top: 3px solid var(--color-primary-700);
   }
 }
 

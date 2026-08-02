@@ -9,100 +9,13 @@
   justify-content: space-between;
 }
 
-:host .grid-scroll-container {
-  .flex-container {
-    display: flex;
-    flex-flow: row wrap;
-    justify-content: flex-start;
-    padding: 0;
-    margin: 0;
-    list-style: none;
-
-    .flex-item {
-      border: 0.0625rem solid #e4e9f2;
-      border-radius: 0.25rem;
-      width: 23%;
-      margin: 10px;
-
-      .fullName {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        padding: 1rem 1.5rem;
-        line-height: 40px;
-        font-size: 1.5em;
-      }
-
-      .avatar {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-      }
-
-      .email {
-        @include nb-ltr(text-align, right);
-        @include nb-rtl(text-align, left);
-        padding-right: 1.5rem;
-        bottom: 36px;
-        position: relative;
-      }
-
-      .info-line {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.8em;
-        color: darkgray;
-        line-height: 0px;
-        padding: 0.7rem 1.5rem;
-
-        .info-meta {
-          margin-right: 10px;
-          @include nb-ltr(margin-right, 10px);
-          @include nb-rtl(margin-left, 10px);
-        }
-
-        .info-value {
-          display: flex;
-          justify-content: flex-end;
-          text-align: end;
-          color: black;
-          font-size: 1em;
-        }
-
-        .status-badge {
-          text-align: center;
-          padding: 10px 30px;
-          border-radius: 0.25rem;
-          color: #fff;
-        }
-
-        /* Status */
-        .badge-danger {
-          background-color: #ff3d71;
-        }
-
-        .badge-success {
-          background-color: #00d68f;
-        }
-
-        .badge-primary {
-          background-color: #0095ff;
-        }
-
-        .badge-warning {
-          background-color: #fa0;
-        }
-      }
-
-      .card-footer {
-        justify-content: space-around;
-        display: flex;
-      }
-    }
-  }
-}
+// REMOVED: a `:host .grid-scroll-container .flex-container .flex-item` block
+// describing a hand-rolled candidate card — `.avatar`, `.fullName`, `.email`,
+// `.status-badge` and four `.badge-*` fills. No template in the repo renders
+// `.flex-container`; the grid view goes through `<ga-card-grid>`, whose own
+// stylesheet is already token-based. So none of it ever applied, and what it
+// carried was `#e4e9f2` / `darkgray` / `color: black` / four literal status
+// fills — exactly the values a later theme sweep would waste time "fixing".
 
 :host {
   nb-card-body {

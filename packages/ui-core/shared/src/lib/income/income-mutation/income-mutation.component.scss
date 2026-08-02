@@ -3,6 +3,9 @@
 .main {
   .body {
     width: 605px;
+    // The fixed width is a preferred size; without this the dialog overflowed
+    // the overlay on narrow viewports instead of shrinking with it.
+    max-width: 100%;
   }
 
   .close {
@@ -14,13 +17,11 @@
     resize: none;
   }
 
-  nb-card-header .employees {
-    margin-left: 20px;
-    padding-left: 20px;
-    border-left: 1px solid #edf1f7;
-
-    width: 220px;
-  }
+  // Removed `nb-card-header .employees` (margin/padding-left 20px, width 220px
+  // and a hard-coded `border-left: 1px solid #edf1f7` that was invisible on the
+  // dark themes). The only `.employees` element in this template is the
+  // `<div class="row employees">` inside `nb-card-body`, so the rule never
+  // matched anything.
 
   .employees {
     margin-bottom: 15px;

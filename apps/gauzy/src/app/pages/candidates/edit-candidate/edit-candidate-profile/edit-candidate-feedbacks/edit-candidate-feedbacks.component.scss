@@ -34,7 +34,9 @@
 }
 
 .block {
-  border: 0.0625rem solid #e4e9f2;
+  // `#e4e9f2` is a fixed pale-blue hairline: on the near-black canvas it draws a
+  // light box, and it ignores the theme everywhere else too.
+  border: 0.0625rem solid nb-theme(gauzy-border-default-color);
   padding: 0.5rem;
   width: 12rem;
   border-radius: 5px;
@@ -130,12 +132,14 @@
   font-size: 15px;
 }
 
+// The thumbs-up / thumbs-down glyphs beside the Hire / Reject radios. Literal
+// eva-palette values before, so they stayed put whichever theme was active.
 .success {
-  color: #00d68f;
+  color: nb-theme(color-success-default);
 }
 
 .error {
-  color: #ff3d71;
+  color: nb-theme(color-danger-default);
 }
 
 .image-small {
@@ -258,7 +262,8 @@
           flex-direction: row;
           justify-content: space-between;
           align-items: center;
-          border: 1px #e4e9f2 solid;
+          // See `.block` above — `#e4e9f2` is a fixed pale-blue hairline.
+          border: 1px solid nb-theme(gauzy-border-default-color);
           @include nb-ltr(margin, 0.15rem 0.15rem 0.15rem 0);
           @include nb-rtl(margin, 0.15rem 0 0.15rem 0.15rem);
           padding: 0.2rem 0.5rem;

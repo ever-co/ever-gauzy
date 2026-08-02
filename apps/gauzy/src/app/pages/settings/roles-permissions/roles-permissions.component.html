@@ -98,8 +98,13 @@
                     [disabled]="isDisabledGeneralPermissions()"
                     >
                     <div class="custom-permission-view">
+                      <!--
+                        The <small> line under this one used to render the SAME
+                        translation key, so every row printed its label twice —
+                        once bold, once as a 11px grey "description". There are no
+                        *_DESCRIPTION keys in the catalogue for it to have meant.
+                      -->
                       <strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
-                      <small>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</small>
                     </div>
                   </nb-toggle>
                 }
@@ -129,8 +134,8 @@
                     [disabled]="isDisabledAdministrationPermissions()"
                     >
                     <div class="custom-permission-view">
+                      <!-- Same duplicated-label removal as the General group above. -->
                       <strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
-                      <small>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</small>
                     </div>
                   </nb-toggle>
                 }

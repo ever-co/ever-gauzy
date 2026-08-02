@@ -53,11 +53,14 @@ $gap: 1rem;
       width: 100%;
       cursor: pointer;
       .dot {
-        border: 1px solid #6e49e8;
+        // Was a literal `#6e49e8` on both the ring and the checked fill — the
+        // accent, spelled out rather than resolved, so it stayed the same purple
+        // on every theme including the ones whose primary is not purple.
+        border: 1px solid nb-theme(color-primary-default);
         padding: 4px;
         border-radius: var(--border-radius);
         &.checked {
-          background-color: #6e49e8;
+          background-color: nb-theme(color-primary-default);
         }
       }
       .status {

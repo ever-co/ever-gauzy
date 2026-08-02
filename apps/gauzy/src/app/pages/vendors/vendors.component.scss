@@ -3,6 +3,89 @@
 
 .editable {
   width: 525px;
+  // A hard width with nothing to stop it ran the dialog past both edges of a
+  // narrow viewport, footer buttons included.
+  max-width: calc(100vw - 3rem);
+  // The forwarded `expense-categories` stylesheet paints this panel with
+  // `nb-theme(gauzy-card-1)`, which compiles to a bare `var(--gauzy-card-1)`
+  // (Nebular runs in CSS-custom-property mode). That key is NOT registered for
+  // `material-light` / `material-dark` — both are registered against Nebular's
+  // own material themes rather than against the gauzy default (themes.scss lines
+  // 501-554) — so the declaration was dropped whole and the dialog body showed
+  // the backdrop through it. Restated with a fallback every theme can resolve.
+  background-color: var(--gauzy-card-1, var(--card-background-color));
+
+  /*
+   * Cancel, restated AFTER the forward so it wins at equal specificity.
+   *
+   * `expense-categories` paints `[nbButton].delete.appearance-outline` a literal
+   * `rgba(245, 109, 88, 1)` orange, 2px wide, with an orange glow on hover. That
+   * colour is in none of the eight themes, and it made the button you press to
+   * BACK OUT the loudest thing in the dialog — louder than Save, which the
+   * theme's own action tokens draw as a restrained accent. A hairline in the
+   * neutral border token with the shared hover tint instead.
+   */
+  [nbButton].delete.appearance-outline.status-basic {
+    background-color: transparent;
+    border-width: 1px;
+    border-color: nb-theme(border-basic-color-4);
+    color: nb-theme(text-hint-color);
+
+    &:hover {
+      border-color: nb-theme(border-basic-color-5);
+      color: nb-theme(text-basic-color);
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    }
+  }
+
+  // The orange hover glow that went with it.
+  [nbButton].delete.appearance-outline:hover {
+    box-shadow: none;
+  }
+
+  // The close control is a bare Font Awesome `<i>`, so it inherited the body
+  // size and full text contrast — as loud as the dialog title two lines under
+  // it. `expense-categories` gives it a pointer cursor and nothing else.
+  i.fa-times {
+    font-size: 0.75rem;
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
+
+    &:hover {
+      color: nb-theme(text-basic-color);
+    }
+  }
+}
+
+/*
+ * Row hover / selection, also restated after the forward.
+ *
+ * `expense-categories` gives BOTH states the same `rgba(50, 50, 50, 0.03)` fill,
+ * so hovering a row looked exactly like selecting one, and 3 % of black over a
+ * near-black card is nothing at all — on the four dark themes there was no
+ * visible selection. Selection also arrived as a 6px border that only exists
+ * when the row is selected, so the whole row jumped 6px sideways on click.
+ *
+ * Now: the neutral tints (they darken a light surface and lighten a dark one, so
+ * one value works in all eight themes), selection carried by the primary colour
+ * on the leading edge, and a transparent edge of the same width at rest so
+ * nothing moves.
+ */
+:host .custom-table {
+  @include nb-ltr(border-left, 3px solid transparent);
+  @include nb-rtl(border-right, 3px solid transparent);
+
+  // `:not(.selected)` because this rule is declared after `.selected` at the same
+  // specificity — without it, hovering a selected row would repaint it as merely
+  // hovered.
+  &:hover:not(.selected) {
+    background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  }
+
+  &.selected {
+    background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+    @include nb-ltr(border-left, 3px solid var(--color-primary-default));
+    @include nb-rtl(border-right, 3px solid var(--color-primary-default));
+  }
 }
 
 :host nb-card-body {
@@ -19,12 +102,18 @@
 }
 
 .columns-header {
-  background-color: nb-theme(gauzy-card-2);
+  // Same story as `.editable` above: `nb-theme(gauzy-card-2)` is a bare
+  // `var(--gauzy-card-2)` and that key is missing from the two material themes,
+  // where the column-title band therefore had no background and merged into the
+  // card behind it.
+  background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
   border-radius: 8px;
   margin-bottom: 10px;
   padding-top: 12px;
   padding-bottom: 12px;
-  padding-left: 12px;
+  // Logical, so the title band still indents from the reading edge under RTL —
+  // the row of `col-md-*` cells it labels is mirrored, but `padding-left` was not.
+  padding-inline-start: 12px;
   font-size: 12px;
   font-style: normal;
   font-weight: 600;

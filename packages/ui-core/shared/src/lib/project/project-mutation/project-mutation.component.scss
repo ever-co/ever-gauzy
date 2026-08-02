@@ -20,8 +20,14 @@
 
 		nb-card-body {
 			padding: 0;
+			// `--gauzy-card-2` is NOT registered by the material-light /
+			// material-dark themes (themes.scss only gives them
+			// gauzy-primary-background / sidebar / border-table), so a bare
+			// var() there resolves to nothing and the browser drops the whole
+			// declaration — the tab body and the action bar lose their panel
+			// and sit on the raw card. Fallback keeps a neutral panel tint.
 			nb-tab.content-active, .action-buttons {
-				background-color: var(--gauzy-card-2);
+				background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
 				margin: 0;
 			}
 
@@ -51,8 +57,11 @@
 		div.checked+span.text {
 			color: var(--text-primary-color);
 		}
+		// Same story as `--gauzy-card-2` above: `--gauzy-text-color-2` is
+		// undefined in the two material themes, so without a fallback the
+		// declaration is dropped and the label keeps the inherited color.
 		div+span.text {
-			color: var(--gauzy-text-color-2);
+			color: var(--gauzy-text-color-2, var(--text-hint-color));
 		}
 	}
 
@@ -62,7 +71,7 @@
 		line-height: 11px;
 		letter-spacing: 0em;
 		text-align: left;
-		color: var(--gauzy-text-color-2);
+		color: var(--gauzy-text-color-2, var(--text-hint-color));
 	}
 }
 
@@ -114,7 +123,11 @@
 			}
 
 			>span {
-				color: rgba(126, 126, 143, 1);
+				// Was the literal rgba(126, 126, 143, 1), which is exactly the
+				// light-theme value of `gauzy-text-color-2` — so the "Add or
+				// Drop Image" hint stayed dark gray on the dark themes. Token
+				// first, that same literal kept as the fallback.
+				color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
 				z-index: 2;
 				transition: opacity 0.2s ease-in;
 				position: absolute;
@@ -143,6 +156,10 @@
 		height: 100% !important;
 	}
 
-	// Apply dialog styles
-	@include dialog(transparent, var(--gauzy-card-1));
+	// Apply dialog styles. Second argument is the input background — it is
+	// applied with `!important`, so on material-light / material-dark (where
+	// `--gauzy-card-1` is not registered) the declaration is dropped entirely
+	// and the inputs go back to Nebular's own color. Fall back to the card
+	// color those themes DO define.
+	@include dialog(transparent, var(--gauzy-card-1, var(--card-background-color)));
 }

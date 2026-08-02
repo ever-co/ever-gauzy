@@ -32,6 +32,13 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	disableButton = true;
 	private allTags = [];
 	filterOptions: Array<any> = [];
+	/**
+	 * Which entry of `filterOptions` is currently filtering the table. Selecting
+	 * a type changed the table and left the rail looking untouched, so the only
+	 * way to tell what you were looking at was to remember what you clicked.
+	 * `''` is the "All" entry, i.e. no filter.
+	 */
+	selectedFilterValue: string = '';
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -314,7 +321,32 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 			console.error('Error while retrieving tag types', error);
 			this.toastrService.danger('TAGS_PAGE.TAGS_FETCH_FAILED', 'Error fetching tag types');
 		} finally {
+			this.reconcileSelectedFilter();
 			this.loading = false;
+		}
+	}
+
+	/**
+	 * Drops a filter selection that no longer exists.
+	 *
+	 * `getTags()` resets `filterOptions` to just "All" and this method refills it from
+	 * the current organization's tag types, so a chip that was selected a moment ago can
+	 * simply be gone — switching organization is the usual way. Left alone, the rail then
+	 * highlights nothing at all, not even "All".
+	 *
+	 * The table needs the same treatment. `getTags()` runs BEFORE this method and skips
+	 * reloading while `_isFiltered` is still set, so it will have kept the previous
+	 * organization's filtered rows on screen. Reloading `allTags` — which `getTags()` has
+	 * already refreshed — puts the rail and the table back in agreement.
+	 */
+	private reconcileSelectedFilter() {
+		if (this.filterOptions.some((option) => option.value === this.selectedFilterValue)) {
+			return;
+		}
+		this.selectedFilterValue = '';
+		if (this._isFiltered) {
+			this._isFiltered = false;
+			this.smartTableSource.load(this.allTags);
 		}
 	}
 
@@ -376,6 +408,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	 * @returns
 	 */
 	selectedFilterOption(value: string) {
+		this.selectedFilterValue = value;
 		if (value === '') {
 			this._isFiltered = false;
 			this._refresh$.next(true);
