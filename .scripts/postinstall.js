@@ -41,7 +41,32 @@ const nativePackages = ['@sentry/profiling-node', 'bcrypt', 'better-sqlite3', 'a
  *   carries prebuilt binaries. Demanding a binary here would fail every build.
  * - `active-win` — desktop-only, and pruned by `--production` in the API image.
  */
-const packagesRequiringBinary = new Set(['better-sqlite3', 'bcrypt']);
+const defaultPackagesRequiringBinary = ['better-sqlite3', 'bcrypt'];
+
+/**
+ * Which packages MUST end up with a loadable binary, overridable per image.
+ *
+ * The default is strict on purpose — a missing binary is how a broken API image
+ * reached an environment once, and failing the build is the whole point. But the
+ * requirement is not universal: the webapp image's final stage is
+ * `FROM nginx:alpine` and copies nothing but the compiled Angular bundle, so
+ * `better-sqlite3` exists there only inside a throwaway build stage and is never
+ * shipped. Demanding a binary there fails a build over a package the image does
+ * not contain — which is exactly what happened when a transient
+ * `unofficial-builds.nodejs.org` header fetch stopped node-gyp mid-compile.
+ *
+ * `REQUIRE_NATIVE_BINARIES` overrides the list: a comma-separated set of package
+ * names, or empty to require none. Set it in the Dockerfile that knows what its
+ * final stage actually ships; leave it unset everywhere else to keep the strict
+ * default.
+ */
+const packagesRequiringBinary = new Set(
+	process.env.REQUIRE_NATIVE_BINARIES === undefined
+		? defaultPackagesRequiringBinary
+		: process.env.REQUIRE_NATIVE_BINARIES.split(',')
+				.map((name) => name.trim())
+				.filter(Boolean)
+);
 
 // Function to check for postinstall scripts in a package.json
 function checkPackageScripts(dir) {
