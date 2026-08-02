@@ -1,20 +1,20 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 
-.main-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  .subtitle {
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 16px;
-    letter-spacing: 0em;
-    text-align: center;
-  }
-}
+// Removed: a `.main-header` block (and the `.subtitle` rule nested inside it).
+// `edit-time-frame.component.html` has no `main-header` element — the dialog
+// puts its heading straight into `nb-card-header` — so neither selector could
+// ever match; the file's only `.subtitle` is the "Predefined Time Frames" <h6>,
+// which is not inside a `.main-header` and so was never reached by the nested
+// rule either. This stylesheet is not shared: no other component points its
+// `styleUrls` at it, and nothing `@use`s or `@forward`s it.
 
 :host {
   nb-card {
-    background-color: var(--gauzy-card-1);
+    // Fallback required: `--gauzy-card-1` is undefined in material-light and
+    // material-dark (`themes.scss` registers those two against Nebular's own
+    // parent themes, which carry no `gauzy-card-*` keys), and a `var()` with no
+    // fallback makes the browser drop the whole declaration. Nebular's own card
+    // background is what `gauzy-card-1` aliases in most themes anyway.
+    background-color: var(--gauzy-card-1, var(--card-background-color));
   }
 }

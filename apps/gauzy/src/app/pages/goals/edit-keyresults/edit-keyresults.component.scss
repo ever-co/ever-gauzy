@@ -16,13 +16,20 @@
   }
 }
 
+// `--gauzy-card-1` / `--gauzy-card-2` are undefined in material-light and
+// material-dark: `themes.scss` registers those two against Nebular's own parent
+// themes, which carry no `gauzy-card-*` keys. A `var()` with no fallback makes
+// the browser throw the entire declaration away, so both uses below carry one.
+// This stylesheet is shared — `key-result-parameters` points its `styleUrls`
+// here and `edit-objective` / `goal-details` `@forward` it — so the fix reaches
+// all four dialogs.
 :host {
   nb-card {
-    background: var(--gauzy-card-1);
+    background: var(--gauzy-card-1, var(--card-background-color));
   }
   nb-tab,
   .content {
-    background-color: var(--gauzy-card-2);
+    background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
   }
   nb-tab {
     height: 20.75vh;
