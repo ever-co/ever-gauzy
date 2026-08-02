@@ -31,7 +31,11 @@
   .custom-footer {
     // Was a literal `rgba(126, 126, 143, 0.1)`. This is the same recessed
     // surface the identical update cards in `keyresult-details` paint with
-    // `--gauzy-card-2`, so it follows the same token. The fallback is required:
+    // `--gauzy-card-2`, so it follows the same token. The FALLBACKS differ on
+    // purpose — 0.1 here, 0.08 there — because each keeps the literal its own
+    // file already used, and the fallback is only reached by the two material
+    // themes. The token is what makes them agree everywhere else.
+    // The fallback is required:
     // `--gauzy-card-2` is not defined in material-light / material-dark (see
     // `themes.scss` — those two register against Nebular's own parents and
     // never pick up the `gauzy-card-*` keys), and without one the whole

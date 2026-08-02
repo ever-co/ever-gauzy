@@ -55,11 +55,18 @@
       border-radius: nb-theme(button-rectangle-border-radius);
       list-style: none;
       cursor: pointer;
-      // Was a literal `0px 1px 1px rgba(0, 0, 0, 0.15)`, i.e. a black drop
-      // shadow that is invisible on the dark canvases. `gauzy-shadow` is the
-      // token for exactly this hairline and resolves to a ring on the dark
-      // themes; the fallback is the old literal, for the themes that do not
-      // emit the token.
+      // Was a literal `0px 1px 1px rgba(0, 0, 0, 0.15)` — a black drop shadow,
+      // which against a near-black canvas is no edge at all. `gauzy-shadow` is
+      // the shared token for this hairline, so the row follows whatever the
+      // active theme decides an edge should be.
+      //
+      // Note it is NOT a ring everywhere: of the five themes that define it,
+      // only `gauzy-dark` resolves to `0 0 0 1px var(--gauzy-overlay-border-color)`.
+      // The others keep a black drop shadow (15% on the light pair, 35% on the
+      // dark pair), so `cosmic`, `dark` and `material-dark` still get a shadow
+      // rather than a ring. That is the shared token's problem to fix, in
+      // themes.scss, not this file's to work around. The fallback is the old
+      // literal, for the themes that emit no token at all.
       box-shadow: var(--gauzy-shadow, 0px 1px 1px 0px rgb(0 0 0 / 15%));
       &.active {
         background: nb-theme(background-basic-color-1);

@@ -5,7 +5,10 @@ import { differenceInCalendarDays, addMonths, compareDesc, addDays, addWeeks, ad
 import { Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
+import { NbThemeService } from '@nebular/theme';
+import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ga-keyresult-progress-chart',
     templateUrl: './keyresult-progress-chart.component.html',
@@ -26,6 +29,7 @@ export class KeyResultProgressChartComponent extends TranslationBaseComponent im
 	 * NOT on `<html>`, so they have to be resolved against an element inside it.
 	 */
 	private readonly elementRef = inject(ElementRef);
+	private readonly themeService = inject(NbThemeService);
 
 	constructor(
 		private goalSettingsService: GoalSettingsService,
@@ -37,6 +41,16 @@ export class KeyResultProgressChartComponent extends TranslationBaseComponent im
 
 	ngOnInit() {
 		this.updateChart(this.keyResult);
+
+		// Chart.js copies concrete colour strings into the dataset; it cannot hold a
+		// `var()` and re-resolve it. So a theme switch while this dialog is open would
+		// otherwise leave both lines painted in the colours of the theme that was
+		// active when the chart was built — the exact contrast problem the tokens were
+		// introduced to solve. Rebuilding on theme change re-reads them.
+		this.themeService
+			.onThemeChange()
+			.pipe(untilDestroyed(this))
+			.subscribe(() => this.updateChart(this.keyResult));
 	}
 
 	public async updateChart(keyResult: IKeyResult) {

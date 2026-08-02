@@ -19,7 +19,12 @@
     // declaration with it, which on a background means the card renders
     // transparent. The `--gauzy-page-title-*` metrics below need none — those
     // come from the shared density preset, which every theme merges.
-    background-color: var(--gauzy-card-2, rgba(50, 50, 50, 0.03));
+    // The fallback is a neutral mid-grey, not the light theme's 3% black: the
+    // only themes that reach it are material-light and material-dark, and 3%
+    // black on the dark one is invisible — which is the one case the fallback
+    // exists to cover. A neutral at the same weight darkens a light surface and
+    // lightens a dark one.
+    background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.1));
 
     &.card-body {
       height: calc(100vh - 21rem);

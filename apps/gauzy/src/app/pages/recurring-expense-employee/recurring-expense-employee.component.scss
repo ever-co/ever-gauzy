@@ -17,7 +17,13 @@
   background-color: var(--gauzy-card-3, rgba(126, 126, 143, 0.12));
   padding: 0.75rem;
   border-radius: nb-theme(border-radius);
-  color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+  // Chained rather than a single literal: this fallback is reached only by
+  // material-light and material-dark, and no one fixed grey serves both — the
+  // old `rgba(126, 126, 143, 1)` is about 3.6:1 on a light band, under the 4.5:1
+  // needed for normal text (the same reason gauzy-light overrides this token to
+  // `rgba(91, 91, 107, 1)`; see themes.scss). Nebular defines `text-hint-color`
+  // in every theme and it adapts, so it takes the middle step.
+  color: var(--gauzy-text-color-2, var(--text-hint-color, rgba(113, 113, 122, 1)));
 }
 
 :host .header-content {
