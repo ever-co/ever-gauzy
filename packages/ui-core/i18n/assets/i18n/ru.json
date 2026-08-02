@@ -5182,7 +5182,9 @@
 	"GAUZY_MAINTENANCE": "{{ companySite }} @ Обслуживание",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Политика конфиденциальности",
-		"TERMS_AND_CONDITIONS": "Условия использования"
+		"TERMS_AND_CONDITIONS": "Условия использования",
+		"DOCUMENT_VERSION": "Версия {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "Действует с {{ date }}"
 	},
 	"LOADING": "Загрузка, пожалуйста удерживайте....",
 	"ACCOUNTING_TEMPLATES_PAGE": {

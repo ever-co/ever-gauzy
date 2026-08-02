@@ -5169,7 +5169,9 @@
 	"GAUZY_MAINTENANCE": "{{ companySite }} @ الصيانة",
 	"LEGAL": {
 		"PRIVACY_POLICY": "سياسة الخصوصية",
-		"TERMS_AND_CONDITIONS": "الشروط والأحكام"
+		"TERMS_AND_CONDITIONS": "الشروط والأحكام",
+		"DOCUMENT_VERSION": "الإصدار {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "سارية اعتباراً من {{ date }}"
 	},
 	"LOADING": "تحميل، يرجى الانتظار...",
 	"ACCOUNTING_TEMPLATES_PAGE": {
