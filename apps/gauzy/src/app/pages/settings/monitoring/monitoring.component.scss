@@ -6,6 +6,20 @@
 }
 
 // main sections
+//
+// Two problems, one rule. The card carries `.card-scroll`, so the page frame
+// already bounds it to the viewport — but this block re-derived a height of its
+// own from `100vh` minus a hand-tuned 19.25rem, a number measured against older
+// chrome and now wrong by the height of the breadcrumb trail the card header
+// gained. And it declared `overflow: hidden` immediately followed by
+// `overflow-y: scroll`, so the second won and painted a permanently visible
+// track whether or not there was anything to scroll.
+//
+// The column that is MEANT to scroll is `.accordion-section` — it reserves an 8px
+// gutter for its own scrollbar, and `.aside-nav` is `height: fit-content` so the
+// service list can stay put while the fields move. Fill the card body and clip
+// here; the accordion column does the scrolling. (At the `md` breakpoint the two
+// stack into a column and this becomes the scroll box instead — see below.)
 :host .main-form {
   width: 100%;
   background-color: nb-theme(gauzy-card-2);
@@ -14,9 +28,9 @@
   padding: 20px;
   @include nb-ltr(padding-right, 8px);
   @include nb-rtl(padding-left, 8px);
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
-  height: calc(100vh - 19.25rem);
-  overflow-y: scroll;
 }
 
 .aside-nav {
@@ -81,9 +95,13 @@
   padding: 0;
 }
 
+// The page's one scroll box. The `- 3rem` in `max-height` cut the box short of
+// the column it sits in, so the accordion always stopped 3rem above the card's
+// bottom edge with a dead strip beneath it — room the fields could have used.
+// Now that `.main-form` clips rather than scrolls, the column IS the budget.
 :host .accordion-section {
   overflow: auto;
-  max-height: calc(100% - 3rem);
+  max-height: 100%;
   @include nb-ltr(padding-right, 8px);
   @include nb-rtl(padding-left, 8px);
 }
@@ -100,9 +118,12 @@
   max-width: 49% !important;
 }
 
-.active {
-  background: #ffffff;
-}
+// NOTE: a bare `.active { background: #ffffff }` used to sit here. The only
+// elements in this template that take `.active` are the service rows in
+// `.aside-nav`, which the rule above already paints with a theme token — so all
+// this one could ever do was drop a literal white block into the seven themes
+// where white is the wrong surface. Removed rather than re-tokenised: there is
+// nothing left for it to style.
 
 // start of nb-overrides
 nb-accordion {
@@ -118,7 +139,11 @@ nb-accordion {
       border-radius: 6px;
       width: 23px;
       height: 23px;
-      border: 1px solid rgba(66, 66, 66, 0.2);
+      // Was `rgba(66, 66, 66, 0.2)` — 20% of the LIGHT theme's body colour, so
+      // the expand/collapse chevron lost its box entirely on the dark canvas.
+      // The shared hairline token darkens a light surface and lightens a dark
+      // one, which is the only way one value works in all eight themes.
+      border: 1px solid nb-theme(gauzy-border-default-color);
     }
   }
 
@@ -209,8 +234,15 @@ nb-accordion {
     padding-right: 0;
   }
 
-  .main-form {
+  // Stacked, the service list is no longer a column beside the fields, so the
+  // accordion column has no cross-axis height to bound its own scroll box. The
+  // whole pane scrolls as one instead — which is also what you want on a narrow
+  // screen, since the service list would otherwise take a fixed slice of it.
+  // `:host` prefix so this out-ranks the `overflow: hidden` above on specificity
+  // rather than on source order.
+  :host .main-form {
     flex-direction: column;
+    overflow-y: auto;
   }
 
   .aside-nav {
