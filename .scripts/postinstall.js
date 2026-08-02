@@ -38,7 +38,7 @@ const nativePackages = ['@sentry/profiling-node', 'bcrypt', 'better-sqlite3', 'a
  * Not required, and why:
  * - `@sentry/profiling-node` — from v10 it has no `install` script and ships no binary
  *   of its own; the native part moved to `@sentry-internal/node-cpu-profiler`, which
- *   carries prebuilds. Demanding a binary here would fail every build.
+ *   carries prebuilt binaries. Demanding a binary here would fail every build.
  * - `active-win` — desktop-only, and pruned by `--production` in the API image.
  */
 const packagesRequiringBinary = new Set(['better-sqlite3', 'bcrypt']);
@@ -100,7 +100,7 @@ function runScriptsSequentially() {
 /**
  * Whether a native package has produced a loadable binary.
  *
- * `prebuild-install` drops it in `prebuilds/`, `node-gyp` in `build/Release`, and a
+ * `prebuild-install` drops it in a `prebuilds` folder, `node-gyp` in `build/Release`, and a
  * few packages keep it elsewhere — so this looks for any `.node` anywhere under the
  * package rather than assuming one layout.
  *
