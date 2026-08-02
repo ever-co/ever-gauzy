@@ -6,8 +6,12 @@
   margin-bottom: 8px;
   background-color: nb-theme(gauzy-card-1) !important;
 
+  // Selection rail. This was `rgba(0, 0, 0, 0.15)` — 15 % black, which on the
+  // four dark themes is drawn against an already near-black card and simply does
+  // not appear, so a selected recurring expense had no rail at all. A selection
+  // state has to read in every theme, so it takes the primary accent.
   &.block {
-    box-shadow: -6px 0px 0px 0px rgba(0, 0, 0, 0.15);
+    box-shadow: -6px 0 0 0 nb-theme(color-primary-default);
   }
 
   .setting-row {

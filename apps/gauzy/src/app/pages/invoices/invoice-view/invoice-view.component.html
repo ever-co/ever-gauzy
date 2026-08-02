@@ -1,9 +1,9 @@
 <nb-card class="main">
   <nb-card-header class="header">
     <ngx-back-navigation></ngx-back-navigation>
-    <h3 class="title">
+    <h4 class="title">
       {{ (isEstimate ? 'INVOICES_PAGE.VIEW_ESTIMATE' : 'INVOICES_PAGE.VIEW_INVOICE') | translate }}
-    </h3>
+    </h4>
   </nb-card-header>
   <nb-card-body>
     @if (invoice$ | async; as invoice) {

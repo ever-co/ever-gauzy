@@ -547,7 +547,8 @@ export const waitMessageToHide = async () => waitElementToHide(TimeOffPage.toast
 
 export const verifyPolicyExists = async (text: string) => {
 	// Assert the policy name renders in a grid cell. Used for BOTH the request grid (Policy column, a
-	// custom ApprovalPolicyComponent that renders <div>{{ value.name }}</div>) and the settings grid
+	// custom ApprovalPolicyComponent that renders <div class="policy">{{ value.name }}</div>, or an
+	// em-dash in a <span class="empty"> when the request has no policy) and the settings grid
 	// (Name column, a type:'string' cell). The old 'div.ng-star-inserted' worked for the custom-render
 	// request cell but a plain string cell has no such wrapper div — so scope the verify to the smart-table
 	// CELL element (present in both grids) filtered by the exact name. This is pollution-safe (matches the

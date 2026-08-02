@@ -322,6 +322,11 @@
                 <div class="block">
                   <div class="row group d-flex flex-column">
                     <label class="label label-group">{{ 'INVOICES_PAGE.DISCOUNT' | translate }}</label>
+                    <!-- The group is a flex COLUMN, so the two half-width fields only sit side by
+                         side inside a nested `.row` — exactly how the taxes group below and the
+                         edit screen already lay theirs out. Without it, Discount value and
+                         Discount type stacked full width and the block was twice as tall. -->
+                    <div class="row">
                     <div class="col-sm-6">
                       <div class="form-group">
                         <label for="inputDiscountValue" class="label">{{
@@ -361,6 +366,7 @@
                           </nb-select>
                         </div>
                       </div>
+                    </div>
                     </div>
 
                     <div class="row group d-flex flex-column">
@@ -512,15 +518,14 @@
                   }
                 </nb-card-body>
                 <nb-card-footer class="text-left">
-                  <button size="small" status="basic" size="small" outline nbButton (click)="cancel()">
+                  <button class="mr-3" size="small" status="basic" outline nbButton (click)="cancel()">
                     {{ 'BUTTONS.CANCEL' | translate }}
                   </button>
                   <button
-                    class="mr-3"
+                    class="mr-3 gray"
                     (click)="addInvoice('DRAFT')"
                     size="small"
                     status="primary"
-                    class="gray"
                     [disabled]="disableSaveButton || form.invalid"
                     nbButton
                     >

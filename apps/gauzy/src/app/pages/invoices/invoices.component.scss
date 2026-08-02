@@ -247,7 +247,9 @@ ga-pagination {
 }
 
 .comments {
-  overflow-y: scroll;
+  // `scroll` reserved a scrollbar gutter on the History tab even when an invoice
+  // has one comment or none, so the empty panel showed a dead scrollbar track.
+  overflow-y: auto;
   height: 15rem;
 }
 
@@ -266,9 +268,12 @@ textarea {
     background-color: var(--gauzy-card-2);
   }
 
-  &.info {
-    background-color: #0088fe;
-  }
+  // `&.info { background-color: #0088fe }` used to sit here — a hard-coded blue
+  // that never painted anything. Its only user is the estimates toolbar's "To
+  // invoice" button, which carries `status="info"`, so Nebular's own
+  // `[nbButton].appearance-filled.status-info` background (0,3,0) out-ranked the
+  // bare `.action.info` (0,2,0) on every render. The button is, and stays, a
+  // filled info button drawn from `button-filled-info-background-color`.
 
   &.danger {
     color: nb-theme(color-danger-default);
@@ -345,7 +350,12 @@ input {
 
 nb-tab {
   background-color: var(--gauzy-card-2);
-  border: 0 0 $default-radius $default-radius;
+  // Was `border: 0 0 $default-radius $default-radius`. The `border` shorthand
+  // takes width/style/colour, not four corner radii, so with `$default-radius`
+  // resolving to `var(--border-radius)` the declaration became invalid at
+  // computed-value time and was thrown away whole: the tab panel filled the
+  // bottom of the card with square corners inside the card's rounded ones.
+  border-radius: 0 0 $default-radius $default-radius;
 }
 
 :host {
@@ -356,7 +366,9 @@ nb-tab {
   .remove-scroll {
     overflow: unset;
     width: 100%;
-    border: 0 0 $default-radius $default-radius;
+    // Same `border` / `border-radius` mix-up as the `nb-tab` rule above — this
+    // targets the same element (`nb-tab.remove-scroll`).
+    border-radius: 0 0 $default-radius $default-radius;
     @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
     @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
     nb-accordion {

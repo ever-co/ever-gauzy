@@ -1,17 +1,5 @@
 @use 'gauzy/_gauzy-table' as *;
 
-.setting-name {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.body-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 35px;
-}
-
 .sub-header {
   margin-bottom: 20px;
   font-weight: bold;
@@ -56,14 +44,6 @@
   }
 }
 
-.container {
-  padding: 0;
-}
-
-.container::-webkit-scrollbar {
-  display: none;
-}
-
 :host {
   nb-card,
   nb-card-header {
@@ -86,13 +66,31 @@
     padding: 8px;
   }
 }
+// One `.container` rule. There were two — a `padding: 0` block a few lines up
+// that the later one silently overrode — plus a bare `.container::-webkit-scrollbar`
+// rule sitting between them. The two dead blocks that used to sit above them,
+// `.setting-name` and `.body-header`, matched nothing in either template that
+// uses this stylesheet.
+//
+// The rows are laid out with fixed column widths (~57rem), so this really does
+// need to scroll sideways on a narrow viewport; what it does NOT need is
+// `overflow-x: scroll`, which reserves a scrollbar gutter unconditionally. With
+// `auto` the bar only exists when there is something to scroll, and the two
+// hide-the-bar declarations now cover Firefox as well as WebKit rather than
+// WebKit alone.
 .container {
   padding: 0.5rem;
-  overflow-x: scroll;
+  overflow-x: auto;
+  scrollbar-width: none;
   height: 100%;
   margin: 0;
   max-width: unset;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
+
 .history {
   align-items: center;
   gap: 8px;

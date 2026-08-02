@@ -31,8 +31,25 @@
   color: var(--gauzy-text-color-1);
 }
 
+// The board scrolls inside the card body rather than against a guess at the
+// viewport. It used to be `height: calc(100vh - 24rem)`, hand-measured against
+// older page chrome: the card body the board sits in is sized by @shared/_pg-card
+// (`$default-card-height + 3.75rem`, i.e. roughly `100vh - 14rem` of chrome), so
+// the board stopped ~6rem short of the card and left a dead band under the
+// backlog on every screen size. `_pg-card` already makes that body a flex
+// column with a definite height — this joins the chain instead of restating it.
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .sprints {
-  height: calc(100vh - 24rem);
+  flex: 1 1 auto;
+  // Without this a flex item refuses to shrink below its content, which is what
+  // would push the card past the page frame instead of scrolling here.
+  min-height: 0;
   overflow: auto;
   border-radius: var(--border-radius);
 }

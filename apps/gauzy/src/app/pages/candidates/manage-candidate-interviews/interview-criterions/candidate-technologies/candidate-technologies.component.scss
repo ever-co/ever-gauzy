@@ -51,13 +51,19 @@
   }
 }
 
+// The "already exists" list. `rgba(50, 50, 50, 0.08)` is the literal value of
+// `gauzy-card-2` on the light themes only — on the dark ones that token is a
+// LIFTING white tint, so this panel was darkening a canvas that is already
+// near-black. The sibling `candidate-personal-qualities` page carries the same
+// list with no background at all; both now read the same.
 .existedNames {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
-  background-color: rgba(50, 50, 50, 0.08);
+  background-color: var(--gauzy-card-2);
+  border-radius: nb-theme(border-radius);
 
   &-card {
     width: 100%;
@@ -69,8 +75,12 @@
     margin-top: 0.5rem;
   }
 
+  // Marks a name that clashes with an existing one, so it wants the theme's
+  // danger colour rather than a literal `#ff3d70`. The radius was missing too,
+  // which left a square-cornered box among rounded ones.
   .existedName {
-    border: 1px #ff3d70 solid;
+    border: 1px solid nb-theme(color-danger-default);
+    border-radius: nb-theme(border-radius);
     margin: 0.2rem 0;
     padding: 1rem;
     display: flex;

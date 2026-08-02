@@ -9,7 +9,10 @@
   width: fit-content;
   color: nb-theme(color-danger-default);
   padding-right: 10px;
-  font-weight: 600px;
+  // Was `600px`. `font-weight` takes a number, not a length, so the declaration
+  // was invalid and dropped at parse time — the "Create new role" / "Delete
+  // existing role" lines have been rendering at the inherited weight ever since.
+  font-weight: 600;
 }
 
 .delete {
@@ -53,6 +56,9 @@
   border-radius: nb-theme(border-radius);
 }
 
+// One label per permission row. The `<small>` description this used to style was
+// bound to the same translation key as the `<strong>` above it, so it is gone from
+// the template — and with it the 5px gap that was only there to separate the two.
 .custom-permission-view {
   display: flex;
   flex-direction: column;
@@ -64,16 +70,6 @@
     letter-spacing: 0em;
     text-align: left;
     color: nb-theme(gauzy-text-color-1);
-    margin-bottom: 5px;
-  }
-
-  small {
-    font-size: 11px;
-    font-weight: 400;
-    line-height: 13px;
-    letter-spacing: 0em;
-    text-align: left;
-    color: nb-theme(gauzy-text-color-2);
   }
 }
 

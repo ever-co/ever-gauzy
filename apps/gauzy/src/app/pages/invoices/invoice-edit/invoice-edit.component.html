@@ -320,7 +320,7 @@
                                 </div>
                                 <div class="col-sm-6">
                                   <div class="form-group">
-                                    <label for="inputTaxType" class="label">{{
+                                    <label for="inputTax2Type" class="label">{{
                                       'INVOICES_PAGE.TAX_TYPE' | translate
                                     }}</label>
                                     <nb-select
@@ -329,7 +329,7 @@
 											'INVOICES_PAGE.TAX_TYPE' | translate
 										}}"
                                       (ngModelChange)="calculateTotal()"
-                                      id="inputTaxType"
+                                      id="inputTax2Type"
                                       fullWidth
                                       >
                                       @for (
@@ -421,7 +421,6 @@
                     <nb-card-footer>
                       @if (!duplicate) {
                         <button
-                          status="danger"
                           class="mr-3"
                           status="basic"
                           size="small"
@@ -433,12 +432,11 @@
                         </button>
                       }
                       <button
-                        class="mr-3"
+                        class="mr-3 gray"
                         (click)="updateInvoice('DRAFT')"
                         [disabled]="form.invalid"
                         size="small"
                         status="primary"
-                        class="gray"
                         nbButton
                         >
                         {{ 'BUTTONS.SAVE_AS_DRAFT' | translate }}

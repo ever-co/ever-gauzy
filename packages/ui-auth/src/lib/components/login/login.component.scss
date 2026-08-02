@@ -45,7 +45,12 @@
           font-size: 14px;
           font-style: normal;
           font-weight: 400;
-          line-height: 11px;
+          // Was 11px — a line box SHORTER than the 14px glyphs sitting in it, so
+          // the strap line under "Login" rode into the divider below and its
+          // descenders were cut by the next block. Every other auth screen
+          // (forgot-password, reset-password, login-workspace) sets 14/17 for the
+          // same element; the features column further down this very file does too.
+          line-height: 17px;
           letter-spacing: 0em;
           margin-bottom: 26px;
           text-align: start;

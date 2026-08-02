@@ -1,3 +1,15 @@
+@use 'themes' as *;
+
+// This page renders the same day/log rows as Daily, Weekly and Timesheet
+// Approvals, but its stylesheet imported none of theirs and re-declared none of
+// the classes the markup uses — so `.custom-header`, `.custom-body`, `.content`
+// and `.log` were all unstyled here, and `.border-bottom` fell through to
+// Bootstrap's own `1px solid #dee2e6`: a fixed light hairline under every row,
+// which is a bright line on the near-black canvas.
+//
+// The rules are spelled out here rather than pulled in with a `@forward` of the
+// daily/weekly chain: that chain also carries `@shared/_pg-card` and a set of
+// card-height overrides this page does not want.
 :host {
     nb-card {
         height: calc(100vh - 13rem);
@@ -12,5 +24,63 @@
             overflow: auto;
             background-color: var(--gauzy-card-2);
         }
+    }
+
+    // Column labels above each day's rows — same muted strip as Daily/Weekly.
+    .custom-header {
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 15px;
+        letter-spacing: 0em;
+        text-align: left;
+        color: nb-theme(gauzy-text-color-2);
+        background: var(--gauzy-card-4);
+        border-radius: nb-theme(border-radius);
+        padding: 10px 10px 10px 12px;
+        flex-wrap: nowrap;
+    }
+
+    // No `overflow`/`height` here on purpose: the card body above is already the
+    // scroll container, and one `.custom-body` is rendered per DAY, so making
+    // each of them scroll would put a second scrollbar inside the page's own.
+    .custom-body {
+        border-radius: nb-theme(border-radius);
+        margin-top: 6px;
+        @include nb-ltr(padding-right, 0.5rem);
+        @include nb-rtl(padding-left, 0.5rem);
+
+        .content {
+            background-color: var(--gauzy-card-3);
+            border-radius: var(--border-radius);
+            @include nb-ltr(padding-left, 12px);
+            @include nb-rtl(padding-right, 12px);
+        }
+
+        // Out-ranks Bootstrap's `.border-bottom` utility, which is `!important`.
+        .border-bottom {
+            border-bottom: 1px solid var(--gauzy-border-default-color) !important;
+        }
+    }
+
+    .project-name {
+        flex: 0 0 20%;
+        max-width: 20%;
+    }
+
+    // The log-type chip ("Manual" / "Tracked"), same pill as on Daily.
+    .log {
+        width: fit-content;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 15px;
+        letter-spacing: 0em;
+        text-align: left;
+        padding: 3px 8px;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        border-radius: nb-theme(border-radius);
+        background: var(--gauzy-sidebar-background-3);
     }
 }

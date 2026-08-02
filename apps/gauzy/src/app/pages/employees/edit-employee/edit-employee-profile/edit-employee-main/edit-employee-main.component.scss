@@ -6,14 +6,21 @@ $radius: nb-theme(border-radius);
   	margin-top: 20px;
 }
 
+// `rgba(126, 126, 143, 0.1)` is the literal value this token carries on the
+// light themes; on `gauzy-dark` the token is a LIFTING white tint instead, so
+// reading it keeps the photo column one visible step off the tab surface there
+// rather than hoping a grey wash shows up on near-black.
 .organization-container {
-  background-color: rgba(126, 126, 143, 0.1);
+  background-color: var(--gauzy-sidebar-background-3);
 }
 
 .organization-photo img {
   width: 100px;
   height: 100px;
-  box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.25);
+  // A 25 %-black drop shadow is invisible against the near-black canvas — this
+  // avatar had no edge at all on `gauzy-dark`. The token is the same hairline
+  // on the light themes and a 1px ring on the dark one.
+  box-shadow: var(--gauzy-shadow);
   object-fit: cover;
   border-radius: $radius;
 }
