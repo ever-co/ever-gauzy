@@ -122,7 +122,7 @@
 // elements in this template that take `.active` are the service rows in
 // `.aside-nav`, which the rule above already paints with a theme token — so all
 // this one could ever do was drop a literal white block into the seven themes
-// where white is the wrong surface. Removed rather than re-tokenised: there is
+// where white is the wrong surface. Removed rather than mapped to a token: there is
 // nothing left for it to style.
 
 // start of nb-overrides

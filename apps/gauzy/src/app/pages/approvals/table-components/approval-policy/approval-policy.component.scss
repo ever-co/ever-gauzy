@@ -13,7 +13,7 @@
 // `tag-border-radius` was taken off across the app — and the background was a
 // hand-copy of `gauzy-sidebar-background-3`. The `margin: 0 10px` is gone too:
 // the cell already has its own horizontal padding, so the chip was indented
-// 10px further than the text in every neighbouring column.
+// 10px further than the text in every adjacent column.
 .policy {
   display: flex;
   flex-direction: row;

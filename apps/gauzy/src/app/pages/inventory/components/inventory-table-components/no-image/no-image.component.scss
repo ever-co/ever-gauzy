@@ -1,7 +1,7 @@
 // `ga-no-image` had no host styling at all, so the element defaulted to
 // `display: inline` — and width/height do not apply to a non-replaced inline
 // box. Inside the two table-cell renderers that use it the parent happens to be
-// `display: flex`, which blockifies the host and hid the problem; the five
+// `display: flex`, which forces the host to a block box and hid the problem; the five
 // places that drop it into a plain image WELL got a placeholder that collapsed
 // to a single text line pinned to the top-left of an otherwise empty box:
 //   * the inventory item form's gallery (a 260px / 180px well),

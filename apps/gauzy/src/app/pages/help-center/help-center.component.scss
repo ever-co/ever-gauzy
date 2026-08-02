@@ -65,7 +65,7 @@
 }
 
 // The DRAFT pill sat beside the EMPLOYEES (`.privacy`) pill with a hard-coded
-// `#aaaeb3` fill while its neighbour already resolved `--color-primary-default`
+// `#aaaeb3` fill while the control beside it already resolved `--color-primary-default`
 // — the one chip on the page that ignored the theme, and white-on-#aaaeb3 is
 // 2.2:1 besides. DRAFT is not a status with a colour, it is the ABSENCE of
 // publication, so it reads as a neutral chip now: the same low-alpha tint the
