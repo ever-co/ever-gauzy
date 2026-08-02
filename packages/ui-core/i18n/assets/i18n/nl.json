@@ -5184,7 +5184,9 @@
 	"GAUZY_MAINTENANCE": "{{ companySite }} @ Onderhoud",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Privacybeleid",
-		"TERMS_AND_CONDITIONS": "Algemene Voorwaarden"
+		"TERMS_AND_CONDITIONS": "Algemene Voorwaarden",
+		"DOCUMENT_VERSION": "Versie {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "Van kracht vanaf {{ date }}"
 	},
 	"LOADING": "Laden, even geduld a.u.b....",
 	"ACCOUNTING_TEMPLATES_PAGE": {

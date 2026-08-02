@@ -5212,7 +5212,9 @@
 	"GAUZY_MAINTENANCE": "{{ companySite }} @ Поддръжка",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Политика за поверителност",
-		"TERMS_AND_CONDITIONS": "Общи условия"
+		"TERMS_AND_CONDITIONS": "Общи условия",
+		"DOCUMENT_VERSION": "Версия {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "В сила от {{ date }}"
 	},
 	"LOADING": "Зарежда се, моля изчакайте....",
 	"ACCOUNTING_TEMPLATES_PAGE": {
