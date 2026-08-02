@@ -37,7 +37,7 @@ $bar-radius: var(--gauzy-radius-sm, 0.375rem);
   background-color: $bar-color;
   overflow: hidden;
 
-  // The travelling highlight. `currentColor` is unusable here (the bar has no
+  // The moving highlight. `currentColor` is unusable here (the bar has no
   // text), so the sweep reuses the same token at a second alpha via a gradient
   // over the bar's own background — no new colour is introduced.
   &::after {

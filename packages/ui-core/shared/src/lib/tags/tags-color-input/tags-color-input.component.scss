@@ -49,7 +49,7 @@ input {
 // `ng-dropdown-panel` grow to `max-content`, so without a cap here ONE
 // pathologically long tag name would decide the width of the whole popup. 20rem
 // is the cap: everything shorter shows in full, only a genuinely long name
-// is ellipsized.
+// is truncated with an ellipsis.
 //
 // `min-width: 0` because this span is a flex item, and a flex item's default
 // `min-width: auto` refuses to shrink below its own content — which is what
