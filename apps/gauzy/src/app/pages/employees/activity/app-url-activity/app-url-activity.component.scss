@@ -32,8 +32,13 @@
   padding: 20px;
   margin-bottom: 5px;
   border-radius: nb-theme(border-radius);
+  // The column-heading strip. `rgba(white, 0.5)` is a fixed 50 %-white wash: on
+  // the light themes it reads as a faint tint, but on `gauzy-dark` it paints a
+  // near-white block across the top of the list. `gauzy-card-3` is the token for
+  // exactly this — a translucent step over a panel — and it flips to a DARKENING
+  // overlay on the themes whose panels are light-on-dark.
   &.head {
-    background-color: rgba($color: white, $alpha: 0.5);
+    background-color: var(--gauzy-card-3);
     padding: 12px 20px;
   }
   .times {

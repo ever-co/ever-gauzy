@@ -91,11 +91,18 @@
 									[class.disabled]="integration.isComingSoon"
 									[routerLink]="['../', integration.redirectUrl]"
 								>
+									<!--
+										`alt` was the literal string "image not found", so a logo
+										that failed to load rendered those words inside the tile —
+										the broken-image state told the user nothing about which
+										integration the tile was. The integration name is both the
+										correct alternative text and a usable fallback.
+									-->
 									<img
 										[src]="integration.fullImgUrl"
 										width="100%"
 										height="100%"
-										alt="image not found"
+										[alt]="integration.name | replace: '_' : ' '"
 										[title]="integration.name | replace: '_' : ' '"
 									/>
 									@if (integration.isComingSoon) {

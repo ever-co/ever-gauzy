@@ -1,4 +1,7 @@
 @forward '@shared/_pg-card';
+// `@forward` re-exports to importers but does NOT bring members into this file,
+// so `nb-theme()` needs its own `@use`.
+@use 'themes' as *;
 
 :host {
   nb-card-body {

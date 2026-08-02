@@ -119,19 +119,35 @@
 					</ga-tags-color-input>
 				</div>
 			</div>
+			<!-- The buttons live inside a column, like the Edit dialog below and
+			     like both dialogs on the sibling Positions page. They used to be
+			     direct children of the `.row`, preceded by an empty full-width
+			     `col-sm-12`: that spacer claimed a line of its own, so the footer
+			     was pushed down by an empty row, and the buttons then sat outside
+			     any column and so 15px left of every other dialog's footer
+			     (Bootstrap's `.row` bleeds past its container on both sides). -->
 			<div class="row mb-3">
-				<div class="col-sm-12"></div>
-				<button class="delete mr-3 ml-3" (click)="ref.close(); disabled = true" nbButton status="basic" outline>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button>
-				<button
-					(click)="save(addInput.value); disabled = true; ref.close()"
-					nbButton
-					status="success"
-					[disabled]="addInput.invalid"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
+				<div class="col-sm-12 d-flex">
+					<button
+						type="button"
+						class="delete mr-3 ml-3"
+						(click)="ref.close(); disabled = true"
+						nbButton
+						status="basic"
+						outline
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+					<button
+						type="button"
+						(click)="save(addInput.value); disabled = true; ref.close()"
+						nbButton
+						status="success"
+						[disabled]="addInput.invalid"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -175,6 +191,7 @@
 			<div class="row mb-3">
 				<div class="d-flex">
 					<button
+						type="button"
 						class="delete mr-3 ml-3"
 						outline
 						(click)="ref.close(); disabled = true"
@@ -184,6 +201,7 @@
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
 					<button
+						type="button"
 						(click)="
 							editEmployeeLevel(selected.employeeLevel.id, editInput.value); disabled = true; ref.close()
 						"

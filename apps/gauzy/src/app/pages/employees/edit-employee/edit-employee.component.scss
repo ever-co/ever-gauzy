@@ -1,38 +1,53 @@
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/_gauzy-overrides' as ga-overrides;
 
-.edit-icon {
-  margin-left: 30px;
-  position: relative;
-  width: 36px;
-
-  svg {
-    position: absolute;
-  }
-
-  nb-icon {
-    position: absolute;
-  }
+// The avatar and the name/position block sit side by side. Without this the
+// container is a plain block: the `<img>` makes a line box of its own and the
+// details land UNDER the photo, which is not what the `d-flex align-items-start`
+// on the surrounding row was written for.
+.employee-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.employee-image img {
+// Sized on the element that actually carries the class. This was
+// `.employee-image img`, i.e. an `<img>` INSIDE an `.employee-image` box — but
+// the template puts the class on the image itself, so nothing matched and the
+// header rendered the uploaded file at its intrinsic size.
+img.employee-image,
+.employee-image-placeholder {
   width: 48px;
   height: 48px;
+  flex: 0 0 48px;
   object-fit: cover;
+  border-radius: nb-theme(border-radius);
 }
 
-.edit-icon {
-  margin-left: 30px;
-  position: relative;
-  width: 36px;
+// Stand-in for an employee with no photo. The `<img>` used to render
+// unconditionally, so an employee without one got the browser's broken-image
+// glyph in the page header.
+.employee-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--gauzy-sidebar-background-3);
+  color: nb-theme(text-hint-color);
+}
 
-  svg {
-    position: absolute;
-  }
+// The page header's own two-step type scale: the name out-ranks body copy, the
+// position is demoted. Both used to inherit body size and weight, so the two
+// lines read as one undifferentiated block.
+.employee-name {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.375rem;
+}
 
-  nb-icon {
-    position: absolute;
-  }
+.employee-position {
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+  color: nb-theme(text-hint-color);
 }
 
 .edit-public-page {
@@ -56,46 +71,15 @@
   }
 }
 
-.setting-name {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.body-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 35px;
-}
-
-.mutation-card.setting-block {
-  background: #eaf3fc;
-}
-
 .transparent {
   opacity: 0.7;
 }
 
-.settings-body {
-  padding: 35px;
-}
-
-.sub-header {
-  margin-bottom: 20px;
-  font-weight: bold;
-}
-
-.header-content {
-  display: flex;
-
-  .header-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 560px;
-    padding-left: 30px;
-  }
-}
+// Removed with this pass, all of them dead: `.edit-icon` (declared twice),
+// `.setting-name`, `.body-header`, `.settings-body`, `.sub-header` and
+// `.header-content` name nothing in this template, and `.mutation-card
+// .setting-block` painted a fixed `#eaf3fc` pale blue that would have been a
+// light panel on the near-black theme had anything ever used it.
 
 .icon-verified {
   margin-right: 5px;

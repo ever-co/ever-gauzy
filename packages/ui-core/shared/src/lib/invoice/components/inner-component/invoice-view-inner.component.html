@@ -33,9 +33,11 @@
                     {{ 'INVOICES_PAGE.DUE_DATE' | translate }}:
                   </div>
                 </div>
+                <!-- `dueDate` is optional and `dateFormat` yields undefined for an unset
+                     date, so these labels used to stand over blanks. -->
                 <div class="ml-3 mr-3">
-                  <div>{{ invoice?.invoiceDate | dateFormat }}</div>
-                  <div>{{ invoice?.dueDate | dateFormat }}</div>
+                  <div>{{ (invoice?.invoiceDate | dateFormat) || '—' }}</div>
+                  <div>{{ (invoice?.dueDate | dateFormat) || '—' }}</div>
                 </div>
               </div>
             </div>
@@ -44,13 +46,14 @@
                 <div class="font-weight-bold text-left">
                   {{ 'INVOICES_PAGE.VIEW.FROM' | translate | titlecase }}:
                 </div>
-                <div>{{ invoice?.fromOrganization?.name }}</div>
+                <div>{{ invoice?.fromOrganization?.name || '—' }}</div>
               </div>
               <div class="ml-3">
                 <div class="font-weight-bold text-left">
                   {{ 'INVOICES_PAGE.VIEW.TO' | translate | titlecase }}:
                 </div>
-                <div>{{ invoice?.toContact?.name }}</div>
+                <!-- A draft invoice can have no contact yet; the label used to sit over a blank. -->
+                <div>{{ invoice?.toContact?.name || '—' }}</div>
               </div>
             </div>
           </div>
@@ -89,12 +92,14 @@
               }
               @if (invoice.taxType === discountTaxTypes.PERCENT) {
                 <span>
-                  {{ invoice?.tax || 0 }} %
+                  {{ invoice?.tax || 0 }}%
                 </span>
               }
             </div>
+            <!-- The second tax row was keyed off `taxType`, so a percentage Tax 2 on
+                 a flat-value Tax 1 was rendered as a currency amount. -->
             <div class="mt-2">
-              @if (invoice.taxType === discountTaxTypes.FLAT_VALUE) {
+              @if (invoice.tax2Type === discountTaxTypes.FLAT_VALUE) {
                 <span>
                   {{
                   invoice?.tax2 || 0
@@ -103,7 +108,7 @@
                   }}
                 </span>
               }
-              @if (invoice.taxType === discountTaxTypes.PERCENT) {
+              @if (invoice.tax2Type === discountTaxTypes.PERCENT) {
                 <span>
                   {{ invoice?.tax2 || 0 }}%
                 </span>
@@ -120,10 +125,9 @@
                 </span>
               }
               @if (invoice.discountType === discountTaxTypes.PERCENT) {
-                <span>
-                  {{ invoice?.discountValue || 0 }}
-                  %
-                </span>
+                <!-- The `%` was on its own line, which renders as "12 %"; the tax rows
+                     above it read "12%". Same figure, one spelling. -->
+                <span>{{ invoice?.discountValue || 0 }}%</span>
               }
             </div>
             <div class="mt-2">

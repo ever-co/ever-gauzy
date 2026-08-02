@@ -45,7 +45,7 @@
 		.employee-salary {
 			font-size: 24px;
 			font-weight: bold;
-			color: #0091ff;
+			color: nb-theme(color-info-default);
 		}
 	}
 }
@@ -89,11 +89,11 @@
 			:last-child {
 				font-size: 36px;
 				font-weight: bold;
-				color: #0091ff;
+				color: nb-theme(color-info-default);
 			}
 
 			.negative-bonus-color {
-				color: red;
+				color: nb-theme(color-danger-default);
 			}
 		}
 

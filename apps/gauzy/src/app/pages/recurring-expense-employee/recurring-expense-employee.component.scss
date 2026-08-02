@@ -63,11 +63,8 @@
 
 // Removed a first `.container { padding: 0 }` block that sat here: the second
 // `.container` block at the bottom of this file has the same specificity and
-// comes later, so its `padding: 0.5rem` always won.
-
-.container::-webkit-scrollbar {
-  display: none;
-}
+// comes later, so its `padding: 0.5rem` always won. Its `::-webkit-scrollbar`
+// rule moved into that block too, rather than sitting loose up here.
 
 :host {
   nb-card,
@@ -94,6 +91,18 @@
     padding: 8px;
   }
 }
+// One `.container` rule. There were two — a `padding: 0` block a few lines up
+// that the later one silently overrode — plus a bare `.container::-webkit-scrollbar`
+// rule sitting between them. The two dead blocks that used to sit above them,
+// `.setting-name` and `.body-header`, matched nothing in either template that
+// uses this stylesheet.
+//
+// The rows are laid out with fixed column widths (~57rem), so this really does
+// need to scroll sideways on a narrow viewport; what it does NOT need is
+// `overflow-x: scroll`, which reserves a scrollbar gutter unconditionally. With
+// `auto` the bar only exists when there is something to scroll, and the two
+// hide-the-bar declarations now cover Firefox as well as WebKit rather than
+// WebKit alone.
 .container {
   padding: 0.5rem;
   // `scroll` kept a horizontal scrollbar reserved at all times. The
@@ -101,10 +110,16 @@
   // in Firefox, where an always-on bar sat under the list even when the rows
   // fitted. `auto` only scrolls when the row width actually overflows.
   overflow-x: auto;
+  scrollbar-width: none;
   height: 100%;
   margin: 0;
   max-width: unset;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
+
 .history {
   align-items: center;
   gap: 8px;

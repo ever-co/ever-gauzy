@@ -1,10 +1,20 @@
+// `--gauzy-color-text-1` / `--gauzy-color-text-2` are NOT theme tokens — the
+// registered names are `--gauzy-text-color-1` / `--gauzy-text-color-2` (see
+// styles/themes.scss). A `color` declaration whose var() names an undefined
+// custom property is invalid at computed-value time and is dropped, so both
+// lines here used to inherit the cell colour: the name and its description
+// rendered as one flat block instead of a value/caption pair.
+//
+// The fallbacks matter: the gauzy text tokens only exist in 6 of the 8
+// registered themes (the two material ones never define them) — same reason
+// the ng-select rules in styles/_overrides.scss resolve `text-basic-color`.
 .name {
     font-size: 14px;
     font-weight: 600;
     line-height: 17px;
     letter-spacing: 0em;
     text-align: left;
-    color: var(--gauzy-color-text-1);
+    color: var(--gauzy-text-color-1, var(--text-basic-color));
     margin-bottom: 4px;
 }
 
@@ -14,5 +24,5 @@
     line-height: 15px;
     letter-spacing: 0em;
     text-align: left;
-    color: var(--gauzy-color-text-2);
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
 }

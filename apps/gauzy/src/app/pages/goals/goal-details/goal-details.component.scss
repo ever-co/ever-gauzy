@@ -24,6 +24,10 @@
       }
     }
   }
+  // `rgba(126, 126, 143, 0.1)` is the literal `--gauzy-sidebar-background-3`
+  // happens to hold in the LIGHT themes only; on `gauzy-dark` that token is a
+  // white-at-low-alpha lift precisely because a mid-grey overlay reads wrong on
+  // a near-black panel. Name the token so the footer follows the theme.
   .custom-footer {
     // Was a literal `rgba(126, 126, 143, 0.1)`. This is the same recessed
     // surface the identical update cards in `keyresult-details` paint with

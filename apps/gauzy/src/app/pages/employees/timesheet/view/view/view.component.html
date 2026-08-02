@@ -1,15 +1,24 @@
 <ng-template ngxPermissionsOnly="CAN_APPROVE_TIMESHEET">
   <nb-card>
-    <nb-card-header class="flex flex-column">
+    <!-- `d-flex`, not `flex`: Bootstrap has no `.flex` utility, so the column
+         direction was being applied to a block. -->
+    <nb-card-header class="d-flex flex-column">
       <div style="display: flex">
         <ngx-back-navigation></ngx-back-navigation>
         <h4>
-          {{ 'MENU.TIMESHEETS' | translate }}
-          <ngx-date-range-title
-            [start]="timesheet.startedAt"
-            [end]="timesheet.stoppedAt"
-            [format]="'dddd, LL'"
-          ></ngx-date-range-title>
+          <!-- Every other page in this area routes its title through
+               `ngx-header-title`, which is what places the breadcrumb trail
+               under the heading and lets the action row share the title's line.
+               This page rendered a bare <h4>, so it had no trail and its
+               buttons took a band of their own. -->
+          <ngx-header-title>
+            {{ 'MENU.TIMESHEETS' | translate }}
+            <ngx-date-range-title
+              [start]="timesheet.startedAt"
+              [end]="timesheet.stoppedAt"
+              [format]="'dddd, LL'"
+            ></ngx-date-range-title>
+          </ngx-header-title>
         </h4>
       </div>
       <div class="gauzy-button-action">

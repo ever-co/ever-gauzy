@@ -32,7 +32,10 @@
       }
       & .sub-title {
         width: 358px;
-        height: 34px;
+        max-width: 100%;
+        // Same fixed-height flex box as forgot-password / reset-password: a
+        // two-line instruction overflowed it and crossed the divider below.
+        min-height: 34px;
         font-family: 'Inter';
         font-style: normal;
         font-weight: 400;

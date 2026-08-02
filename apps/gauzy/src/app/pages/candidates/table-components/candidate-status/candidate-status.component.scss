@@ -1,18 +1,27 @@
+@use 'themes' as *;
+
+// Status fills come from the theme's status palette, the same way
+// `organizations-status` takes them. The literals here before (#ff3d71 /
+// #00d68f / #0095ff / #fa0) were a snapshot of one theme's eva palette, so the
+// pills stayed on those four colours whichever of the eight themes was active.
 .badge-danger {
-  background-color: #ff3d71;
+  background-color: nb-theme(color-danger-default);
 }
 
 .badge-success {
-  background-color: #00d68f;
+  background-color: nb-theme(color-success-default);
 }
 
 .badge-primary {
-  background-color: #0095ff;
+  background-color: nb-theme(color-info-default);
 }
 
+// No `color` override: the label keeps Bootstrap's dark-on-amber pairing. White
+// on this fill measured ~2:1, i.e. the ARCHIVED pill was the one status label
+// you could not read — and unlike the other three, amber is a LIGHT fill, so it
+// wants dark text in every theme.
 .badge-warning {
-  background-color: #fa0;
-  color: #fff;
+  background-color: nb-theme(color-warning-default);
 }
 
 div {

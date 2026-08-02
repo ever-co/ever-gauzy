@@ -8,24 +8,50 @@
 	</nb-card-header>
 	<nb-card-body>
 		@if (!environment.DEMO) {
+		<!--
+			These two used to be Bootstrap `.btn.btn-danger`. bootstrap.css is loaded
+			globally (apps/gauzy/project.json), so they took Bootstrap's own red, its
+			0.25rem radius and its 0.375rem/0.75rem padding — the only buttons left in
+			the app that ignored the Nebular theme and its density.
+
+			`btn` — the class that carried the layout — is gone; `btn-danger` stays
+			because `apps/gauzy-e2e/.../DangerZonePageObject.ts` selects
+			`nb-card-body button.btn-danger`. On its own that class sets nothing but
+			color / background-color / border-color, and every one of those is
+			out-ranked by Nebular's `[nbButton].appearance-filled.status-danger`, so it
+			is now purely a test hook.
+		-->
 		<ng-template ngxPermissionsOnly="ACCESS_DELETE_ACCOUNT">
-			<button type="button" class="btn btn-danger" (click)="deleteAccount()">
+			<button type="button" nbButton status="danger" size="small" class="btn-danger" (click)="deleteAccount()">
 				<nb-icon class="mr-1" icon="trash-2-outline"> </nb-icon>
 				{{ 'BUTTONS.DELETE_ACCOUNT' | translate }}
 			</button>
 		</ng-template>
 		<ng-template ngxPermissionsOnly="ACCESS_DELETE_ALL_DATA">
-			<button type="button" class="btn btn-danger ml-3 mr-3" [disabled]="loading" (click)="deleteAllData()">
+			<button
+				type="button"
+				nbButton
+				status="danger"
+				size="small"
+				class="btn-danger ml-3 mr-3"
+				[disabled]="loading"
+				(click)="deleteAllData()"
+			>
 				<nb-icon class="mr-1" icon="trash-2-outline"> </nb-icon>
 				{{ 'BUTTONS.DELETE_ALL_DATA' | translate }}
 			</button>
 		</ng-template>
 		@if (process !== 0) {
-		<div class="mt-4">
-			<span style="display: block">
+		<div class="queue-progress mt-4">
+			<span class="queue-progress-label">
 				{{ 'MENU.IMPORT_EXPORT.QUEUE_PROGRESS' | translate }}
 			</span>
-			<br />
+			<!--
+				Bootstrap's `.progress` track is a hardcoded #e9ecef and its `.progress-bar`
+				fill a hardcoded #007bff: a light-grey rail with a blue bar, on every theme.
+				The classes are kept (the shape is Bootstrap's) but the colours now come
+				from theme tokens — see danger-zone.component.scss.
+			-->
 			<div class="progress">
 				<div class="progress-bar" role="progressbar" [style.width]="process + '%'"></div>
 			</div>

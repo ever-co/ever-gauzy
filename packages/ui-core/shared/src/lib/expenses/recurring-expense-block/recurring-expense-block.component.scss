@@ -9,12 +9,14 @@
   // the whole declaration, which left these rows transparent on those themes.
   background-color: var(--gauzy-card-1, var(--card-background-color)) !important;
 
-  // Selected marker. It was a black shadow at 15% alpha, which is invisible on
-  // every dark theme; the primary accent reads as "selected" on all eight. The
-  // bar is drawn on the leading edge, so it flips with the writing direction.
+  // Selection rail. This was `rgba(0, 0, 0, 0.15)` — 15% black, drawn against an
+  // already near-black card on the four dark themes, so a selected recurring
+  // expense had no rail at all. A selection state has to read in every theme, so
+  // it takes the primary accent. The rail sits on the leading edge, so it flips
+  // with the writing direction.
   &.block {
-    box-shadow: -6px 0px 0px 0px var(--color-primary-default);
-    @include nb-rtl(box-shadow, 6px 0px 0px 0px var(--color-primary-default));
+    box-shadow: -6px 0 0 0 nb-theme(color-primary-default);
+    @include nb-rtl(box-shadow, 6px 0 0 0 nb-theme(color-primary-default));
   }
 
   .setting-row {

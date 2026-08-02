@@ -1,3 +1,11 @@
+// The email-templates sheet `@use`s the theme module, which keeps it private to
+// that file — loading it here brings in `$height` but not `nb-theme`. Sass passes
+// an unknown function through as plain CSS, so the two rules at the bottom of this
+// file shipped as the literal text `nb-theme(...)` and the browser dropped them:
+// the language/template selects lost their background, and — the visible one —
+// the rendered template preview never had `color: text-basic-color` applied, so
+// it kept the seeded HTML's own near-black text on the dark themes' dark panel.
+@use 'themes' as *;
 @use '../email-templates/email-templates.component' as *;
 
 :host {

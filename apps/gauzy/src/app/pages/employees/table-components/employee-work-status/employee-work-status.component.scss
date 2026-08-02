@@ -10,8 +10,20 @@
 //     forced to stack one per line even when there was room for both.
 // Sizes now come from the shared table-density tokens (`$gauzy-density` in
 // `themes.scss`); the literals are CSS-var fallbacks only.
+
+// The "Not Started" pill. Unlike `.badge-danger` / `.badge-success` this is not
+// a Bootstrap class, so it never got Bootstrap's `color: #fff` and the label
+// inherits the cell's text colour — which on `gauzy-dark` is #fafafa. Against
+// the opaque light grey `#ccc` that was 1.6:1, i.e. an unreadable pill on the
+// one theme where the surrounding text is light.
+//
+// A translucent neutral instead: it darkens a light surface and lightens a dark
+// one, so a single value reads on every theme (the same reasoning as
+// `gauzy-hover-tint` in themes.scss), paired with the muted text colour, which
+// is the right rank for a "no state yet" label.
 .badge-disabled {
-  background-color: #ccc;
+  background-color: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
+  color: var(--text-hint-color, rgba(113, 113, 122, 1));
 }
 
 // The pill is sized by padding alone rather than a `min-height`: padding
