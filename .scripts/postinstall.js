@@ -100,7 +100,7 @@ function runScriptsSequentially() {
 /**
  * Whether a native package has produced a loadable binary.
  *
- * `prebuild-install` drops it in a `prebuilds` folder, `node-gyp` in `build/Release`, and a
+ * `prebuild-install` drops it under a prebuilt-binaries folder, `node-gyp` in `build/Release`, and a
  * few packages keep it elsewhere — so this looks for any `.node` anywhere under the
  * package rather than assuming one layout.
  *
