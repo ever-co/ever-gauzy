@@ -57,10 +57,10 @@
       // there, but on `gauzy-dark` it resolves to a 1px hairline ring instead —
       // a black shadow under a panel that sits on a near-black canvas is
       // invisible, which left these section rows with no edge at all.
-      box-shadow: var(--gauzy-shadow);
+      box-shadow: var(--gauzy-shadow, 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18)));
       &.active {
         background: nb-theme(background-basic-color-1);
-        box-shadow: var(--gauzy-shadow) inset;
+        box-shadow: var(--gauzy-shadow, 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18))) inset;
       }
     }
   }

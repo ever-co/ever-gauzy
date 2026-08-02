@@ -25,7 +25,7 @@
 						<!-- `dueDate` is optional and `dateFormat` yields undefined for an
 						     unset one, so this label used to stand over a blank cell. -->
 						<div class="col-6 pr-0 pl-0">
-							{{ invoice ? (invoice.dueDate | dateFormat) || '—' : '' }}
+							{{ invoice ? (invoice.dueDate | dateFormat) || '—' : '—' }}
 						</div>
 					</div>
 					<div class="row">

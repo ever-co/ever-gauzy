@@ -110,7 +110,7 @@ nb-card-body {
     background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
   }
 
-  &:hover {
+  &:hover:not(.selected) {
     background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
   }
 }

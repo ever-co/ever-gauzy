@@ -129,6 +129,7 @@
 			<div class="row mb-3">
 				<div class="col-sm-12 d-flex">
 					<button
+						type="button"
 						class="delete mr-3 ml-3"
 						(click)="ref.close(); disabled = true"
 						nbButton
@@ -138,6 +139,7 @@
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
 					<button
+						type="button"
 						(click)="save(addInput.value); disabled = true; ref.close()"
 						nbButton
 						status="success"
@@ -189,6 +191,7 @@
 			<div class="row mb-3">
 				<div class="d-flex">
 					<button
+						type="button"
 						class="delete mr-3 ml-3"
 						outline
 						(click)="ref.close(); disabled = true"
@@ -198,6 +201,7 @@
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
 					<button
+						type="button"
 						(click)="
 							editEmployeeLevel(selected.employeeLevel.id, editInput.value); disabled = true; ref.close()
 						"

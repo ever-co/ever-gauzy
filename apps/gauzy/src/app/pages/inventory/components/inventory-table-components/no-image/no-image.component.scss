@@ -29,7 +29,7 @@
     line-height: 11px;
     letter-spacing: 0em;
     text-align: left;
-    color: var(--gauzy-text-color-2);
+    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
 }
 
 .content {
