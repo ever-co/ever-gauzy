@@ -1,3 +1,9 @@
+// `nb-theme()` below needs the theming module in scope. Without this line Sass does
+// not error — an unknown function is passed through verbatim — so the build stays
+// green while the browser drops `border: 1px solid nb-theme(...)` as invalid and
+// the completion dot loses both its ring and its fill on every theme.
+@use 'gauzy/_gauzy-cards' as *;
+
 $height: calc(100vh - 20.5rem);
 $gap: 1rem;
 

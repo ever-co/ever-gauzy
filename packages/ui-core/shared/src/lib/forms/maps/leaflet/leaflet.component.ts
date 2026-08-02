@@ -46,7 +46,13 @@ export class LeafletMapComponent implements AfterViewInit {
 		this._icon = val;
 	}
 	get icon() {
-		return this._icon || 'assets/leaflet/marker-icon.png';
+		// `leafelt` is NOT a typo to fix — it is the real directory name on disk
+		// (`apps/gauzy/src/assets/leafelt/`), copied verbatim into the build output.
+		// A spelling pass "corrected" this once and every map marker 404'd, because
+		// none of the seven `<ga-leaflet-map>` call sites binds `[icon]`, so this
+		// default is always the one used. Rename the folder first if you want the
+		// other spelling.
+		return this._icon || 'assets/leafelt/marker-icon.png';
 	}
 
 	@Input()
