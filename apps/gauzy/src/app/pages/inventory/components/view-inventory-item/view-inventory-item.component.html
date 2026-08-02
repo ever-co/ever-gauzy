@@ -75,7 +75,11 @@
 							<span class="key-description mb-2">{{ 'INVENTORY_PAGE.TAGS' | translate }}:</span>
 							<div class="inventory-item-tags">
 								@for (tag of inventoryItem.tags; track tag.id) {
-								<div class="tag-item" [style.background]="tag.color">
+								<div
+									class="tag-item"
+									[style.background]="tag.color"
+									[style.color]="backgroundContrast(tag.color)"
+								>
 									{{ tag.name }}
 								</div>
 								}

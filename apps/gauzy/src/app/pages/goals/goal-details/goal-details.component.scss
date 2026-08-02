@@ -24,8 +24,12 @@
       }
     }
   }
+  // `rgba(126, 126, 143, 0.1)` is the literal `--gauzy-sidebar-background-3`
+  // happens to hold in the LIGHT themes only; on `gauzy-dark` that token is a
+  // white-at-low-alpha lift precisely because a mid-grey overlay reads wrong on
+  // a near-black panel. Name the token so the footer follows the theme.
   .custom-footer {
-    background-color: rgba(126, 126, 143, 0.1);
+    background-color: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
     padding-bottom: 5px;
   }
   .custom-header {

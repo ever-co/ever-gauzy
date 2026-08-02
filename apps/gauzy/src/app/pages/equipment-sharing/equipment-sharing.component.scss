@@ -1,96 +1,16 @@
 @forward '@shared/_pg-card';
 
-/* Card grid */
-
-.flex-container {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.flex-item {
-  border: 0.0625rem solid #e4e9f2;
-  border-radius: 0.25rem;
-  width: 350px;
-  margin-top: 10px;
-  margin-right: 10px;
-}
-
-.info-line {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  font-size: 0.7em;
-  color: darkgray;
-  line-height: 0px;
-  padding: 1rem 1.5rem;
-
-  .info-meta {
-    margin-right: 10px;
-  }
-
-  .info-value {
-    display: flex;
-    justify-content: flex-end;
-    text-align: end;
-    color: black;
-    font-size: 1em;
-  }
-}
-
-.card-footer {
-  justify-content: space-around;
-  display: flex;
-}
-
-/* Status */
-
-.badge-danger {
-  text-align: center;
-  padding: 10px;
-  background-color: #dc3545;
-  border-radius: 13px;
-  color: #fff;
-}
-
-.badge-success {
-  text-align: center;
-  padding: 10px;
-  background-color: #28a745;
-  border-radius: 13px;
-  color: #fff;
-}
-
-.badge-warning {
-  text-align: center;
-  padding: 10px;
-  background-color: #ffc107;
-  border-radius: 13px;
-  color: #fff;
-}
-
-.badge-danger-card {
-  text-align: center;
-  padding: 10px;
-  background-color: #ff3d71;
-  border-radius: 0.45rem;
-  color: #fff;
-}
-
-.badge-success-card {
-  text-align: center;
-  padding: 10px;
-  background-color: #00d68f;
-  border-radius: 0.45rem;
-  color: #fff;
-}
-
-.badge-warning-card {
-  text-align: center;
-  padding: 10px;
-  background-color: #fa0;
-  border-radius: 0.45rem;
-  color: #fff;
-}
+// Everything else this sheet used to hold was a hand-rolled card grid
+// (`.flex-container` / `.flex-item` / `.info-line` / `.card-footer`) and six
+// status pills (`.badge-danger` … `.badge-warning-card`), carrying eleven
+// literal colours between them — #e4e9f2, #dc3545, #28a745, #ffc107, #ff3d71,
+// #00d68f, #fa0, #fff, `black` and `darkgray`.
+//
+// None of it renders any more, in either layout:
+//   * the grid is `<ga-card-grid>` (shared, themed) as of the template rewrite;
+//   * the status column is `StatusBadgeComponent`, and `statusMapper()` in the
+//     component hands it the bare status names 'success' / 'danger' / 'warning',
+//     never a `badge-*` class.
+// The `badge-*` names that the e2e page objects do select (`div.badge-success`
+// and friends, in the Invoices / Estimates / Proposals / Candidates specs) are
+// painted by those pages, not by this component-scoped sheet.

@@ -2,9 +2,19 @@
   width: 100%;
 }
 
+// Label column for the Name/Description/Type/Category/Enabled/Options rows.
+// This was a hard `width: 6rem` on an inline-block with visible overflow, so
+// any label wider than 96px — "Description:" is already ~90px at 14px/600, and
+// every non-English translation of it is longer — spilled out of its box and
+// ran underneath the value that follows it on the same line. `min-width` keeps
+// the values aligned in the common case and lets the long ones push instead of
+// collide.
 .key-description {
   font-weight: 600;
-  width: 6rem;
+  min-width: 6rem;
+  // Logical, so it mirrors in RTL without pulling the nb-ltr/nb-rtl mixins
+  // (and their `themes` dependency) into a sheet that has no other use for them.
+  padding-inline-end: 0.5rem;
   display: inline-block;
 }
 
@@ -18,30 +28,36 @@ img.gallery-sm-preview-item {
   }
 }
 
+// The option chips were `#3366ff` — Nebular's stock blue, not the app's primary
+// (`#6e49e8`), and hard-coded either way, so they were the only blue thing on a
+// purple page and identical in all eight themes. `7px` was also off the radius
+// scale; `--gauzy-radius-sm` is the step every other chip/control uses.
 .option-item {
   padding: 5px 10px;
   font-size: 12px;
-  background: #3366ff;
-  border-radius: 7px;
-  color: #fff;
+  background: var(--color-primary-default);
+  border-radius: var(--gauzy-radius-sm, 6px);
+  color: var(--text-control-color);
   margin-right: 10px;
   display: flex;
   align-items: center;
   margin-bottom: 10px;
 }
 
+// Tag colour is user-chosen and painted inline by the template, so a fixed
+// white label was unreadable on every light tag. The text colour is picked per
+// tag now (see `backgroundContrast()` in the component, the same
+// `getContrastColor` helper the inventory table cells already use).
 .tag-item {
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 11px;
-  font-weight: 600;
   line-height: 13px;
   letter-spacing: 0em;
 
   display: flex;
   align-items: center;
   text-align: center;
-  color: white;
   font-weight: bold;
   width: fit-content;
 }
