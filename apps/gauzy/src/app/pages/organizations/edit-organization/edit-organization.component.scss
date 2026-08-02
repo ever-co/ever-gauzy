@@ -66,68 +66,19 @@
     }
 }
 
-// old styles
-.edit-icon {
-    margin-left: 30px;
-    position: relative;
-    width: 36px;
-
-    svg {
-        position: absolute;
-    }
-
-    nb-icon {
-        position: absolute;
-    }
-}
-
-.org-details {
-    .edit-public-page {
-        cursor: pointer;
-        color: #027ad6;
-        padding-top: 3px;
-    }
-}
-
-.setting-name {
-    font-size: 24px;
-    font-weight: bold;
-}
-
-.body-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 35px;
-}
-
-.mutation-card.setting-block {
-    background: #eaf3fc;
-}
-
-.transparent {
-    opacity: 0.7;
-}
-
-.settings-body {
-    padding: 35px;
-}
-
-.sub-header {
-    margin-bottom: 20px;
-    font-weight: bold;
-}
-
-.header-content {
-    display: flex;
-    .header-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 560px;
-        padding-left: 30px;
-    }
-}
+// Removed a block of dead "old styles". Component stylesheets are scoped to
+// this component's own template, and none of these selectors can match anything
+// in `edit-organization.component.html`, whose only classes are `org-edit`,
+// `card-scroll`, `header`, `header-container`, `org-info`, `org-image`,
+// `org-details`, `org-name`, `org-position`, `edit-public-page` and `mr-1`:
+//   * `.edit-icon`, `.setting-name`, `.body-header`, `.mutation-card.setting-block`
+//     (a `#eaf3fc` fill), `.transparent`, `.settings-body`, `.sub-header` and
+//     `.header-content` — no such class in the template or in the component .ts;
+//   * `.org-details .edit-public-page` (a `#027ad6` text colour) — both classes
+//     exist, but `.edit-public-page` is a SIBLING of `.org-details`, not a
+//     descendant, so the two-part selector never matched. The rule that really
+//     paints that control is `.edit-public-page` under `:host .card-scroll`
+//     above, and it already reads `nb-theme(text-primary-color)`.
 
 @include respond(sm) {
     .header .header-container {
@@ -143,5 +94,10 @@
     nb-card{
         height: unset;
     }
-    @include ga-overrides.input-appearance(42px, var(--gauzy-card-1));
+    // `--gauzy-card-1` is not emitted by every registered theme, and a bare
+    // `var()` with no fallback drops the whole `background-color` declaration
+    // there, leaving every input on this page transparent. `--card-background-color`
+    // is a core Nebular token present in all of them, and it is exactly what
+    // `gauzy-card-1` is aliased to in most themes anyway.
+    @include ga-overrides.input-appearance(42px, var(--gauzy-card-1, var(--card-background-color)));
 }
