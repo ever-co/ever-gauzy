@@ -4,16 +4,29 @@
   margin-top: 20px;
   padding: 10px;
   background-color: nb-theme(gauzy-card-2);
+  // NOTE: `max-height: 17.5rem` is a flat 280px cap on the item list whatever the
+  // window, so an invoice of more than about eight lines scrolls internally while
+  // the card around it still has room. Left alone deliberately: the cap is also
+  // what keeps the totals block below it on screen without the page scrolling,
+  // and re-balancing the two needs the running app.
   max-height: 17.5rem;
 }
 
-.bottom-data-container {
-  width: 25%;
-  justify-content: space-between;
-  margin-left: auto;
-}
-
-::ng-deep ga-invoice-view-inner {
-  padding: 0 100px;
-  padding-top: 25px;
+// Was `::ng-deep ga-invoice-view-inner { padding: 0 100px; padding-top: 25px }`.
+// Three things wrong with it:
+//
+//   * a LEADING `::ng-deep` has no compound selector to scope, so this was
+//     emitted as a GLOBAL `ga-invoice-view-inner` rule rather than staying with
+//     the component;
+//   * the host is a custom element with no `display` of its own — an inline box
+//     — and its only child is a block-level `nb-card-body`. Padding on an inline
+//     box does not lay out as the block gutter this was written to be;
+//   * 100px per side is a constant: on a narrow window 200px of it went to
+//     padding, squeezing the item grid into a column.
+//
+// The host is now a block, so the gutter is the one the declaration always meant,
+// and it scales with the viewport, topping out at the original 100px.
+:host {
+  display: block;
+  padding: 25px clamp(1rem, 6vw, 100px) 0;
 }

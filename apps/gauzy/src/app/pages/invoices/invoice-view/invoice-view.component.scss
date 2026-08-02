@@ -1,30 +1,7 @@
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/_gauzy-table' as *;
 
-.grid {
-  display: grid;
-  grid-template-columns: 0.3fr 0.3fr;
-  &-item {
-    margin: 15px;
-  }
-}
-
-.item {
-  margin: 15px;
-}
-
-.table {
-  margin-top: 50px;
-}
-
-/**
-* By setting min-height of the card to this value, we ensure the card will properly adjust it's height
-*/
-:host > nb-card {
-  min-height: 47.5rem;
-}
-
-.button-container{
+.button-container {
   background: var(--gauzy-card-2);
   border-radius: nb-theme(button-rectangle-border-radius);
   padding: 6px 8px;
@@ -33,15 +10,27 @@
 .header {
   display: flex;
   align-items: center;
-  // Type comes from the shared card-title rule in `styles/_overrides.scss` —
-  // the title is an <h3>, which that rule covers.
+
+  // The heading used to be an `<h3>` pinned to a literal `24px/30px`. It is now an
+  // `<h4>` — the step the Add / Edit / Payments screens already use — so the size
+  // comes from `text-heading-4-font-size` rather than being spelled out here, and
+  // the heading level matches its sibling screens.
+  //
+  // `margin-bottom: 0` because the row is `align-items: center`, which centres the
+  // MARGIN box: Bootstrap's default `0.5rem` under a heading was tipping the title
+  // half a step above the back arrow beside it.
   .title {
     text-align: left;
+    margin-bottom: 0;
   }
 }
+
 :host {
-  $height: calc(
-    100vh - 18rem
-  );
+  // The body is anchored to the viewport and the card follows it. The card also
+  // carried `min-height: 47.5rem` — a 760px floor no window shorter than roughly
+  // 1050px can satisfy, so on a laptop the card grew past the page frame (bounded
+  // to 100vh in styles/_overrides.scss) and put the whole PAGE into a scroll
+  // instead of scrolling its own content.
+  $height: calc(100vh - 18rem);
   @include nb-card_overrides(unset, $height, $default-radius);
 }

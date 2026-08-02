@@ -1,17 +1,5 @@
 @use 'gauzy/_gauzy-table' as *;
 
-.setting-name {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.body-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 35px;
-}
-
 .sub-header {
   margin-bottom: 20px;
   font-weight: bold;
@@ -56,8 +44,23 @@
   }
 }
 
+// One `.container` block, not two: this file declared it twice (`padding: 0` up
+// here, then `padding: 0.5rem` further down), so the first was dead. The two
+// dead blocks that used to sit above it — `.setting-name` and `.body-header` —
+// matched nothing in either template that uses this stylesheet.
+//
+// `overflow-x: scroll` reserved a horizontal scrollbar gutter unconditionally.
+// The `::-webkit-scrollbar` rule below papers over that in Chromium and WebKit,
+// but not in Firefox, where the recurring-expense list carried a permanent
+// horizontal scrollbar however wide the window was. The rows genuinely can
+// overflow on a narrow viewport (`.block-item` / `.block-item-big` are a fixed
+// 11rem / 17.5rem), so `auto` rather than dropping the scroll altogether.
 .container {
-  padding: 0;
+  padding: 0.5rem;
+  overflow-x: auto;
+  height: 100%;
+  margin: 0;
+  max-width: unset;
 }
 
 .container::-webkit-scrollbar {
@@ -85,13 +88,6 @@
     height: calc(100vh - 19.25rem);
     padding: 8px;
   }
-}
-.container {
-  padding: 0.5rem;
-  overflow-x: scroll;
-  height: 100%;
-  margin: 0;
-  max-width: unset;
 }
 .history {
   align-items: center;

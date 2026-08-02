@@ -97,14 +97,21 @@ nb-card-body {
   border-radius: nb-theme(border-radius);
   cursor: pointer;
 
+  // Both states were painted with literal copies of the LIGHT themes' surface
+  // values — `rgba(50, 50, 50, 0.03)` is `gauzy-card-2` from the light maps, and
+  // the rail is 10 % black. Over the dark themes' near-black card neither shows,
+  // so hovering and selecting a category looked identical to doing nothing. The
+  // shared hover/active tints are one translucent neutral that darkens a light
+  // surface and lightens a dark one, and the rail takes the primary accent (same
+  // treatment as the recurring-expense blocks).
   &.selected {
-    @include nb-ltr(border-left, 6px solid rgb(50 50 50 / 10%));
-    @include nb-rtl(border-right, 6px solid rgb(50 50 50 / 10%));
-    background: rgba(50, 50, 50, 0.03);
+    @include nb-ltr(border-left, 6px solid nb-theme(color-primary-default));
+    @include nb-rtl(border-right, 6px solid nb-theme(color-primary-default));
+    background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
   }
 
   &:hover {
-    background: rgba(50, 50, 50, 0.03);
+    background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
   }
 }
 
