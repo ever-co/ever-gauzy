@@ -36,6 +36,7 @@ import {
 	ExpenseCategoryFilterComponent,
 	ExpensesMutationComponent,
 	IPaginationBase,
+	IRecordViewSection,
 	IncomeExpenseAmountComponent,
 	InputFilterComponent,
 	PaginationFilterBaseComponent,
@@ -67,6 +68,13 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 	public organization: IOrganization;
 	public expenses$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
+
+	/*
+	 * Read-only View: an expense is a small record, so it opens in the right-side
+	 * drawer rather than on a page of its own.
+	 */
+	public viewedExpense: IExpense;
+	public viewSections: IRecordViewSection[] = [];
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -578,6 +586,66 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 	}
 
 	/**
+	 * Opens the read-only View of an expense in the right-side drawer.
+	 *
+	 * @param selectedItem - Row the action was invoked from, when it came from the grid.
+	 */
+	viewExpense(selectedItem?: IExpense): void {
+		if (selectedItem) {
+			this.selectExpense({ isSelected: true, data: selectedItem });
+		}
+
+		const expense = selectedItem ?? this.selectedExpense;
+		if (!expense) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections();
+		this.viewedExpense = expense;
+	}
+
+	closeView(): void {
+		this.viewedExpense = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer — the grid columns, read vertically.
+	 */
+	private buildViewSections(): IRecordViewSection[] {
+		return [
+			{
+				fields: [
+					{ label: 'SM_TABLE.DATE', key: 'valueDate', type: 'date' },
+					{ label: 'SM_TABLE.VALUE', key: 'amount', type: 'money' },
+					// `statuses` was derived by `statusMapper` when the rows were
+					// loaded, so it is already the `{ text, class }` a badge expects.
+					{ label: 'SM_TABLE.STATUS', key: 'statuses', type: 'badge' },
+					{ label: 'SM_TABLE.VENDOR', key: 'vendor.name' },
+					{ label: 'SM_TABLE.CATEGORY', key: 'category.name' },
+					{ label: 'SM_TABLE.PROJECT', key: 'project.name' },
+					{ label: 'SM_TABLE.CONTACT', key: 'organizationContact.name' },
+					{
+						label: 'SM_TABLE.EMPLOYEE',
+						key: 'employee',
+						type: 'person',
+						// Same rule the grid applies: without this permission the
+						// employee column is removed, so the View must not show it either.
+						permission: PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					},
+					{ label: 'EXPENSES_PAGE.SPLIT_EXPENSE', key: 'splitExpense', type: 'boolean' }
+				]
+			},
+			{
+				fields: [
+					{ label: 'POP_UPS.PURPOSE', key: 'purpose', type: 'multiline', wide: true },
+					{ label: 'SM_TABLE.NOTES', key: 'notes', type: 'multiline', wide: true },
+					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', wide: true }
+				]
+			}
+		];
+	}
+
+	/**
 	 * Registers Smart Table Source Config for expenses.
 	 */
 	setSmartTableSource(): void {
@@ -677,6 +745,9 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 	 * Clears the selected expense.
 	 */
 	private _clearItem() {
+		// The list is about to be reloaded, so whatever the drawer is showing is
+		// about to go stale — close it rather than leave a detached record open.
+		this.closeView();
 		this.selectExpense({
 			isSelected: false,
 			data: null

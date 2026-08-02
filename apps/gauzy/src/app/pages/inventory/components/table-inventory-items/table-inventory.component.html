@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<div class="card-header-title">
@@ -24,10 +24,11 @@
 		</div>
 	</nb-card-header>
 
-	<nb-card-body>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
 			<div class="table-scroll-container">
 				<angular2-smart-table
+					[class.ga-table-loading]="loading"
 					[settings]="settingsSmartTable"
 					(userRowSelect)="selectProduct($event)"
 					[source]="smartTableSource"
@@ -41,6 +42,7 @@
 			</div>
 		} @else {
 			<ga-card-grid
+				[loading]="loading"
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="products"
@@ -50,6 +52,7 @@
 		}
 		<ng-template #gridLayout>
 			<ga-card-grid
+				[loading]="loading"
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="products"

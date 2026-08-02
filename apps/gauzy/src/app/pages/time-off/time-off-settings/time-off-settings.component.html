@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
   <nb-card-header class="d-flex flex-column pb-0">
     <div class="card-header-title d-flex justify-content-start">
       <ngx-back-navigation></ngx-back-navigation>
@@ -17,7 +17,7 @@
       ></ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body>
+  <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
     <!-- Check if the user has the 'TIME_OFF_POLICY_VIEW' permission -->
     <ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_POLICY_VIEW]">
       @switch (dataLayoutStyle) {
@@ -25,6 +25,7 @@
         @case (componentLayoutStyleEnum.TABLE) {
           <div class="table-scroll-container custom-table">
             <angular2-smart-table
+              [class.ga-table-loading]="loading"
               style="cursor: pointer"
               [settings]="smartTableSettings"
               [source]="smartTableSource"
@@ -38,6 +39,7 @@
         <!-- Card Grid View -->
         @case (componentLayoutStyleEnum.CARDS_GRID) {
           <ga-card-grid
+            [loading]="loading"
             [totalItems]="pagination?.totalItems"
             [settings]="smartTableSettings"
             [source]="timeOffPolicies"

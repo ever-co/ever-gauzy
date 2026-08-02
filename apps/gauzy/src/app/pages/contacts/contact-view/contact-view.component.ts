@@ -66,6 +66,21 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 			.subscribe();
 	}
 
+	/**
+	 * The contact's initials, shown in place of a picture.
+	 *
+	 * An `<img>` bound to a missing `imageUrl` renders the browser's broken-image
+	 * glyph, which is what the header used to show for every contact without one.
+	 */
+	get initials(): string {
+		return (this.selectedContact?.name ?? '')
+			.split(/\s+/)
+			.filter((part: string) => !!part)
+			.slice(0, 2)
+			.map((part: string) => part.charAt(0).toUpperCase())
+			.join('');
+	}
+
 	private _init(id: string) {
 		if (id) {
 			const { tenantId } = this.store.user;
@@ -74,19 +89,20 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 				.then((items) => {
 					if (items) {
 						this.selectedContact = items;
-						if (this.selectedContact.contact.latitude && this.selectedContact.contact.longitude) {
-							setTimeout(() => {
-								// Check if leafletTemplate exists before adding marker
-								if (this.leafletTemplate) {
-									this.leafletTemplate.addMarker(
-										new LatLng(
-											this.selectedContact.contact.latitude,
-											this.selectedContact.contact.longitude
-										)
-									);
-								}
-							}, 200);
-						}
+						// `contact` is the ADDRESS relation and is genuinely optional: reading
+						// through it unguarded threw, the rejection landed in the `catch` below,
+						// and a contact with no address rendered as a blank page.
+						const latitude = this.selectedContact.contact?.latitude;
+						const longitude = this.selectedContact.contact?.longitude;
+						setTimeout(() => {
+							// The map is created ~200ms after view init and caches its size then;
+							// the address block above it has usually grown by now, so it has to be
+							// re-measured or the tiles sit offset inside the frame.
+							this.leafletTemplate?.invalidateSize();
+							if (latitude && longitude) {
+								this.leafletTemplate?.addMarker(new LatLng(latitude, longitude));
+							}
+						}, 200);
 					}
 				})
 				.catch((error) => {
@@ -102,6 +118,11 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 	}
 
 	private async _getEmployees() {
+		// Runs from `finally`, i.e. also on the failure path where there is no
+		// contact to read an organization from.
+		if (!this.selectedContact) {
+			return;
+		}
 		const { items } = await firstValueFrom(
 			this.employeesService.getAll(['user'], {
 				organizationId: this.selectedContact.organizationId,
@@ -109,12 +130,10 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 			})
 		);
 		this.employees = items;
-		if (this.selectedContact) {
-			this.selectedMembers = this.selectedContact.members;
-			setTimeout(() => {
-				this.selectedEmployeeIds = this.selectedContact.members.map((member) => member.id);
-			}, 200);
-		}
+		this.selectedMembers = this.selectedContact.members ?? [];
+		setTimeout(() => {
+			this.selectedEmployeeIds = (this.selectedContact?.members ?? []).map((member) => member.id);
+		}, 200);
 	}
 
 	onMembersSelected(members: string[]) {

@@ -48,7 +48,7 @@
 			</nb-card>
 		}
 	} @else {
-		<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.PAYMENT' | translate"></ngx-no-data-message>
+		<ngx-no-data-message [loading]="loading" [message]="'SM_TABLE.NO_DATA.PAYMENT' | translate"></ngx-no-data-message>
 	}
 </div>
 

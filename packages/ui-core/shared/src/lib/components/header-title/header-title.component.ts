@@ -27,22 +27,28 @@ import { Store } from '@gauzy/ui-core/core';
 			 * this component renders below the heading (.ga-page-title-trail). The
 			 * title used to be 24px/600, which read as an oversized breadcrumb path;
 			 * a page heading only needs to out-rank body copy, so it now sits at the
-			 * h5 step of the type scale. The org/employee qualifier is deliberately
-			 * lighter and muted so the page name is what the eye lands on.
+			 * gauzy-page-title-* step of the type scale. That step is defined once
+			 * in styles/themes.scss and is the SAME one the global rule in
+			 * styles/_overrides.scss applies to the card-header headings that do
+			 * NOT use this component, so a page title measures the same whichever
+			 * way it is built. The fallbacks keep this readable if the component is
+			 * ever rendered outside a themed layout. The org/employee qualifier is
+			 * deliberately lighter and muted so the page name is what the eye lands
+			 * on.
 			 */
 			:host {
-				font-size: 1.25rem;
-				font-weight: 600;
-				line-height: 1.75rem;
-				letter-spacing: -0.01em;
+				font-size: var(--gauzy-page-title-font-size, 1.25rem);
+				font-weight: var(--gauzy-page-title-font-weight, 600);
+				line-height: var(--gauzy-page-title-line-height, 1.75rem);
+				letter-spacing: var(--gauzy-page-title-letter-spacing, -0.01em);
 				text-align: left;
 			}
 			.name,
 			.org-name {
-				font-size: 1.25rem;
+				font-size: var(--gauzy-page-title-font-size, 1.25rem);
 				font-weight: 400;
-				line-height: 1.75rem;
-				letter-spacing: -0.01em;
+				line-height: var(--gauzy-page-title-line-height, 1.75rem);
+				letter-spacing: var(--gauzy-page-title-letter-spacing, -0.01em);
 				text-align: left;
 				color: var(--text-hint-color);
 			}
@@ -88,6 +94,12 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {
 	/** Marks the flex row holding the heading so it is allowed to wrap. */
 	private static readonly HEADING_ROW_CLASS = 'ga-page-title-row';
 
+	/** Marks the card header whose title and action row are laid out as one line. */
+	private static readonly PAGE_HEADER_CLASS = 'ga-page-header';
+
+	/** Marks the block inside that header which carries the title and the trail. */
+	private static readonly PAGE_HEADER_MAIN_CLASS = 'ga-page-header-main';
+
 	PermissionsEnum: typeof PermissionsEnum = PermissionsEnum;
 	organization: IOrganization;
 	employee: ISelectedEmployee;
@@ -102,6 +114,12 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	/** Element the trail was moved into, so it can be detached again on destroy. */
 	private trailHost: HTMLElement | null = null;
+
+	/** Card header marked as a one-line page header, so the mark can be undone. */
+	private pageHeader: HTMLElement | null = null;
+
+	/** Block inside it marked as the title side of that line. */
+	private pageHeaderMain: HTMLElement | null = null;
 
 	/**
 	 * Watches this title for becoming visible, so a trail stranded in a hidden
@@ -158,6 +176,7 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {
 	 */
 	ngAfterViewInit(): void {
 		this.relocateTrail();
+		this.markPageHeader();
 		this.observeVisibility();
 	}
 
@@ -242,6 +261,85 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.visibilityObserver = null;
 
 		this.detachTrail();
+		this.clearPageHeaderMarks();
+	}
+
+	/**
+	 * Marks the card header so the page action row can share the title's line.
+	 *
+	 * Pages render that header as a stack: a block holding the `<h4>` (with the
+	 * relocated trail under it), then a second block whose only content is the
+	 * action buttons pinned to its right edge. That second block is empty across
+	 * its whole width and costs the table below it about four rem of height, so
+	 * the two are marked here and laid out as one row by the `.ga-page-header`
+	 * rule in `styles/_overrides.scss`. Marking happens from this component
+	 * because the ~45 page templates involved share no wrapper class for them.
+	 */
+	private markPageHeader(): void {
+		const heading: HTMLElement | null = this.elementRef.nativeElement.closest(
+			HeaderTitleComponent.HEADING_SELECTOR
+		);
+		const header: HTMLElement | null = heading?.closest<HTMLElement>('nb-card-header') ?? null;
+		if (!heading || !header) {
+			return;
+		}
+
+		// The title needs a block of its own to become the row's left-hand item.
+		// Where the page dropped the heading straight into the card header there
+		// is nothing to pair the buttons with, so that layout is left alone.
+		const main = this.headerChildContaining(header, heading);
+		if (!main) {
+			return;
+		}
+
+		// Only a header that STACKS its children has a band to reclaim. One that
+		// already runs as a row (`nb-card-header.card-header-title`, or a `d-flex`
+		// without `flex-column`) places its children side by side on purpose, and
+		// re-flowing it would push them onto separate lines instead.
+		const { display, flexDirection } = getComputedStyle(header);
+		if ((display === 'flex' || display === 'inline-flex') && flexDirection.startsWith('row')) {
+			return;
+		}
+
+		// Nothing to lift. A page that grows an action row later keeps the layout
+		// it has rather than a half-applied one.
+		if (!header.querySelector('ngx-gauzy-button-action')) {
+			return;
+		}
+
+		this.renderer.addClass(header, HeaderTitleComponent.PAGE_HEADER_CLASS);
+		this.renderer.addClass(main, HeaderTitleComponent.PAGE_HEADER_MAIN_CLASS);
+		this.pageHeader = header;
+		this.pageHeaderMain = main;
+	}
+
+	/**
+	 * The card header's own child that `node` sits inside, or null when `node` is
+	 * that child itself — i.e. when the page gave the heading no wrapper.
+	 */
+	private headerChildContaining(header: HTMLElement, node: HTMLElement): HTMLElement | null {
+		if (node.parentElement === header) {
+			return null;
+		}
+		// `header` is known to be an ancestor of `node` (it was found with
+		// `closest`), so the walk always terminates.
+		let child: HTMLElement | null = node.parentElement;
+		while (child && child.parentElement !== header) {
+			child = child.parentElement;
+		}
+		return child;
+	}
+
+	/** Undoes `markPageHeader` — the marks live outside this component's view. */
+	private clearPageHeaderMarks(): void {
+		if (this.pageHeader) {
+			this.renderer.removeClass(this.pageHeader, HeaderTitleComponent.PAGE_HEADER_CLASS);
+			this.pageHeader = null;
+		}
+		if (this.pageHeaderMain) {
+			this.renderer.removeClass(this.pageHeaderMain, HeaderTitleComponent.PAGE_HEADER_MAIN_CLASS);
+			this.pageHeaderMain = null;
+		}
 	}
 
 	/**

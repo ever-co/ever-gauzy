@@ -142,6 +142,7 @@
 					</nb-card>
 					} @else {
 					<ngx-no-data-message
+						[loading]="loading"
 						[message]="'REPORT_PAGE.NO_DATA.WEEKLY_TIME_AND_ACTIVITY' | translate"
 					></ngx-no-data-message>
 					}

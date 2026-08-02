@@ -1,8 +1,4 @@
-<nb-card
-  [nbSpinner]="loading"
-  nbSpinnerStatus="primary"
-  nbSpinnerSize="large"
-  >
+<nb-card>
   <nb-card-header class="d-flex flex-column pb-0">
     <div class="card-header-title">
       <h4>
@@ -21,11 +17,12 @@
       ></ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body>
+  <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
     <ng-template ngxPermissionsOnly="ORG_INVENTORY_VIEW">
       @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
         <div class="table-scroll-container">
           <angular2-smart-table
+            [class.ga-table-loading]="loading"
             style="cursor: pointer"
             [settings]="settingsSmartTable"
             (userRowSelect)="selectStore($event)"
@@ -41,6 +38,7 @@
         </div>
       } @else {
         <ga-card-grid
+          [loading]="loading"
           [totalItems]="pagination?.totalItems"
           [settings]="settingsSmartTable"
           [source]="merchants"
@@ -50,6 +48,7 @@
       }
       <ng-template #gridLayout>
         <ga-card-grid
+          [loading]="loading"
           [totalItems]="pagination?.totalItems"
           [settings]="settingsSmartTable"
           [source]="merchants"

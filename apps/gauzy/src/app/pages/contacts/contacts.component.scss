@@ -43,8 +43,33 @@
   justify-content: space-between;
 }
 
-:host {
-  nb-card-body.mutation {
-    height: calc($card-height + 4.75rem) !important;
+/*
+ * ── One scroll surface while the add/edit wizard is showing ──────────────────
+ *
+ * The list state already follows the house rule: the card body fits the page
+ * frame and `.table-scroll-container` is the single thing that scrolls
+ * (@shared/_pg-card). The wizard state broke it twice over — the body asked for
+ * `calc($card-height + 4.75rem)`, i.e. ~4.75rem MORE than the column has, which
+ * spilled the card past the layout and gave the WINDOW a scrollbar, and the
+ * stepper then scrolled its own content inside that (see
+ * contact-mutation.component.scss). Two bars, neither sized from anything real.
+ *
+ * Now the body keeps the height the frame hands it and owns the only scrollbar;
+ * everything inside the wizard grows with its content. Horizontal overflow stays
+ * hidden — a form column that briefly measures a pixel wide at a narrow viewport
+ * must not add a second bar along the bottom.
+ *
+ * The selector matches the `nb-card nb-card-body` shape of the `nb-card-overrides`
+ * mixin so it out-ranks the `overflow` that mixin sets — deliberately, rather
+ * than by reaching for `!important` the way the old height rule had to.
+ */
+:host nb-card nb-card-body.mutation {
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  // The body is a flex column (@shared/_pg-card). The wizard sizes the scroll
+  // content, so it must never be shrunk back to fit the box it is scrolling in.
+  > ga-contact-mutation {
+    flex: 0 0 auto;
   }
 }

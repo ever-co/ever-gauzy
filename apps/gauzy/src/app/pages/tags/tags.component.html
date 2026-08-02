@@ -22,13 +22,17 @@
     </nb-card>
   </div>
   <div class="col-10 h-100">
-    <nb-card class="tags-component h-100" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+    <nb-card class="tags-component h-100">
       <nb-card-header class="flex flex-column pb-0">
-        <h4 class="card-header-title">
-          <ngx-header-title>
-            {{ 'TAGS_PAGE.HEADER' | translate }}
-          </ngx-header-title>
-        </h4>
+        <!-- The heading needs a block of its own for the action row to be laid
+             out beside it rather than under it (see `.ga-page-header`). -->
+        <div class="card-header-title">
+          <h4>
+            <ngx-header-title>
+              {{ 'TAGS_PAGE.HEADER' | translate }}
+            </ngx-header-title>
+          </h4>
+        </div>
         <div class="gauzy-action">
           <ngx-gauzy-button-action
             [componentName]="viewComponentName"
@@ -38,10 +42,11 @@
           ></ngx-gauzy-button-action>
         </div>
       </nb-card-header>
-      <nb-card-body>
+      <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
         @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
           <div class="table-scroll-container">
             <angular2-smart-table
+              [class.ga-table-loading]="loading"
               [settings]="settingsSmartTable"
               [source]="smartTableSource"
               (userRowSelect)="selectTag($event)"
@@ -53,6 +58,7 @@
           }
         } @else {
           <ga-card-grid
+            [loading]="loading"
             [totalItems]="pagination?.totalItems"
             [settings]="settingsSmartTable"
             [source]="tags"

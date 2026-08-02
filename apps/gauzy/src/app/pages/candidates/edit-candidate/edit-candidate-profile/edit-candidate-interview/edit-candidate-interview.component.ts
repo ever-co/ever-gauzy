@@ -237,86 +237,94 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 		}
 		this.loading = true;
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.selectedOrganization;
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.selectedOrganization;
 
-		const { items: allFeedbacks = [] } = await this.candidateFeedbacksService.getAll(['interviewer'], {
-			organizationId,
-			tenantId
-		});
-		this.allFeedbacks = allFeedbacks;
-
-		const { items } = await firstValueFrom(
-			this.employeesService.getAll(['user'], {
+			const { items: allFeedbacks = [] } = await this.candidateFeedbacksService.getAll(['interviewer'], {
 				organizationId,
 				tenantId
-			})
-		);
-		this.employeeList = items;
+			});
+			this.allFeedbacks = allFeedbacks;
 
-		const interviews = await firstValueFrom(
-			this.candidateInterviewService.getAll(
-				['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
-				{ candidateId: this.candidateId, organizationId, tenantId }
-			)
-		);
+			const { items } = await firstValueFrom(
+				this.employeesService.getAll(['user'], {
+					organizationId,
+					tenantId
+				})
+			);
+			this.employeeList = items;
 
-		if (interviews) {
-			this.interviewList = interviews.items;
-			this.allInterviews = interviews.items;
-			this.tableInterviewList = [];
+			const interviews = await firstValueFrom(
+				this.candidateInterviewService.getAll(
+					['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
+					{ candidateId: this.candidateId, organizationId, tenantId }
+				)
+			);
 
-			if (isNotEmpty(this.interviewList)) {
-				this.interviewList.forEach((interview) => {
-					const employees = [];
-					interview.interviewers.forEach((interviewer: ICandidateInterviewers) => {
-						this.employeeList.forEach((employee: IEmployee) => {
-							if (interviewer.employeeId === employee.id) {
-								interviewer.employeeImageUrl = employee.user.imageUrl;
-								interviewer.employeeName = employee.user.name;
-								employees.push(employee);
+			if (interviews) {
+				this.interviewList = interviews.items;
+				this.allInterviews = interviews.items;
+				this.tableInterviewList = [];
+
+				if (isNotEmpty(this.interviewList)) {
+					this.interviewList.forEach((interview) => {
+						const employees = [];
+						interview.interviewers.forEach((interviewer: ICandidateInterviewers) => {
+							this.employeeList.forEach((employee: IEmployee) => {
+								if (interviewer.employeeId === employee.id) {
+									interviewer.employeeImageUrl = employee.user.imageUrl;
+									interviewer.employeeName = employee.user.name;
+									employees.push(employee);
+								}
+							});
+						});
+						this.candidates.forEach((item) => {
+							if (item.id === interview.candidate.id) {
+								interview.candidate.user = item.user;
 							}
 						});
-					});
-					this.candidates.forEach((item) => {
-						if (item.id === interview.candidate.id) {
-							interview.candidate.user = item.user;
-						}
-					});
 
-					interview.employees = employees;
-					this.tableInterviewList.push({
-						...interview,
-						fullName: this.selectedCandidate.user.name,
-						imageUrl: this.selectedCandidate.user.imageUrl,
-						showArchive: false,
-						employees: employees,
-						allFeedbacks: this.allFeedbacks,
-						hideActions: true
+						interview.employees = employees;
+						this.tableInterviewList.push({
+							...interview,
+							fullName: this.selectedCandidate.user.name,
+							imageUrl: this.selectedCandidate.user.imageUrl,
+							showArchive: false,
+							employees: employees,
+							allFeedbacks: this.allFeedbacks,
+							hideActions: true
+						});
 					});
-				});
+				}
 			}
+			this.interviewList = this.onlyPast
+				? this.filterInterviewByTime(this.interviewList, true)
+				: this.interviewList;
+
+			this.interviewList = this.onlyFuture
+				? this.filterInterviewByTime(this.interviewList, false)
+				: this.interviewList;
+
+			this.tableInterviewList = this.onlyPast
+				? this.filterInterviewByTime(this.tableInterviewList, true)
+				: this.tableInterviewList;
+
+			this.tableInterviewList = this.onlyFuture
+				? this.filterInterviewByTime(this.tableInterviewList, false)
+				: this.tableInterviewList;
+
+			this.sourceSmartTable.load(this.tableInterviewList);
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.sourceSmartTable.count()
+			});
+		} catch (error) {
+			console.error('Error while retrieving candidate interviews', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
 		}
-		this.interviewList = this.onlyPast ? this.filterInterviewByTime(this.interviewList, true) : this.interviewList;
-
-		this.interviewList = this.onlyFuture
-			? this.filterInterviewByTime(this.interviewList, false)
-			: this.interviewList;
-
-		this.tableInterviewList = this.onlyPast
-			? this.filterInterviewByTime(this.tableInterviewList, true)
-			: this.tableInterviewList;
-
-		this.tableInterviewList = this.onlyFuture
-			? this.filterInterviewByTime(this.tableInterviewList, false)
-			: this.tableInterviewList;
-
-		this.sourceSmartTable.load(this.tableInterviewList);
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.sourceSmartTable.count()
-		});
-		this.loading = false;
 	}
 
 	async addInterviewFeedback(id: string) {

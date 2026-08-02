@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" class="card-scroll">
+<nb-card class="card-scroll">
 	<nb-card-header class="pb-0">
 		<div class="main-header">
 			<h4>
@@ -16,7 +16,7 @@
 			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary">
 		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE && documentList?.length) {
 		<div class="table-scroll-container">
 			@for (document of documentList; track document.id) {
@@ -47,6 +47,7 @@
 		</div>
 		} @else if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && documentList?.length) {
 		<ga-card-grid
+			[loading]="loading"
 			[totalItems]="pagination?.totalItems"
 			[settings]="settingsSmartTable"
 			[source]="documentList"

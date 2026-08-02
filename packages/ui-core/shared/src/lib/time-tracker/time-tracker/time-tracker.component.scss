@@ -205,7 +205,11 @@
     width: 120px;
   }
   &.success {
-    box-shadow: 0px 10px 13px -7px #25b869;
+    // Was `box-shadow: 0px 10px 13px -7px #25b869` — a green glow cast under a
+    // solid green block. `status="success"` buttons are now outline/text (see
+    // `$gauzy-action-accents-*` in `packages/ui-core/static/styles/themes.scss`),
+    // and a coloured glow under a transparent button reads as a smudge sitting
+    // below it rather than as elevation.
     &.start,
     &.add {
       height: 36px;

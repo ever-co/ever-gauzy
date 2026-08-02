@@ -6,12 +6,6 @@
 	padding: 0 15px;
 }
 :host {
-  h4 {
-    font-size: 24px;
-    font-weight: 500;
-    line-height: 30px;
-    letter-spacing: 0em;
-  }
   @include nb-card-overrides(
     overlay,
     calc($default-card-height + 3.5rem),

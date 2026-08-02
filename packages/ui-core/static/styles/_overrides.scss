@@ -685,6 +685,42 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
   nb-accordion-item-body .item-body {
     overflow-x: hidden;
   }
+
+  // ── Card / page title type step ──────────────────────────────────────────
+  // A heading dropped straight into an `nb-card-header` IS that card's title:
+  // the page title on a page card, the dialog title on a dialog. Nothing sized
+  // those, so each fell back to Nebular's `text-heading-N` — a bare <h4> came
+  // out at 1.5rem/700 and an <h3> larger still, which is why "Add New Contact"
+  // and its ~150 siblings shouted. `ngx-header-title` was pulled off that step
+  // long ago; the headings that DON'T use it are brought onto the same one
+  // here, so there is a single answer for the whole app instead of a private
+  // `h4 { font-size: 24px }` per page (those duplicates are now removed).
+  //
+  // It lives in this mixin, not at file scope, because `nb-theme()` may only
+  // be called inside `nb-install()`. Nebular emits its own typography as a
+  // bare `h4, .h4`, so the descendant selector here out-ranks it.
+  //
+  // What it does NOT out-rank is a component stylesheet: emulated
+  // encapsulation makes a page's own `h4` rule `h4[_ngcontent-x]`, one class
+  // step above this. Every page that restated the old 24px has therefore had
+  // that rule DELETED rather than left to lose a specificity race it wins.
+  //
+  // h6 is deliberately excluded: at 1rem it already sits BELOW this step and
+  // is what templates reach for when a card header carries a SUB-heading
+  // (the file-storage provider blocks, the dashboard team panels). Pulling it
+  // up would make those louder rather than quieter.
+  nb-card-header {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5 {
+      font-size: nb-theme(gauzy-page-title-font-size);
+      font-weight: nb-theme(gauzy-page-title-font-weight);
+      line-height: nb-theme(gauzy-page-title-line-height);
+      letter-spacing: nb-theme(gauzy-page-title-letter-spacing);
+    }
+  }
 }
 
 @mixin f-window-mode($padding-top) {
@@ -809,6 +845,89 @@ nb-card-header {
 // rather than to the header-title component.
 .ga-page-title-row {
   flex-wrap: wrap;
+}
+
+// One-line page header: the title/breadcrumb block and the page action row
+// (+ Add, Edit/Delete, the grid-vs-list selector) share the first line.
+//
+// Nearly every list page stacks them instead — a block holding the <h4> and its
+// trail, then a full-width block whose only content is the buttons pinned to its
+// right edge. That second block is empty across the rest of its width and costs
+// the table below it around four rem of height, i.e. two or three rows that no
+// longer fit without scrolling.
+//
+// The classes are stamped at runtime rather than written into the ~45 page
+// templates that share this shape but no wrapper class: `HeaderTitleComponent`
+// marks the header and the title block (and decides whether a header takes part
+// at all — headers that already lay their children out in a row are skipped),
+// and `GauzyButtonActionComponent` marks the block holding the buttons.
+nb-card-header.ga-page-header {
+  // `!important` here only to out-rank Bootstrap's own `!important` utilities:
+  // most of these headers carry `d-flex flex-column` in the template.
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 1rem;
+
+  // Whatever else the page stacked under the title stays stacked: a full basis
+  // keeps each remaining child (a filter strip, a table's column headings) on a
+  // line of its own, which is exactly what the column layout gave it, and the
+  // later order keeps it below the shared line even where the template renders
+  // it BETWEEN the two — as the proposals page does with its statistics strip.
+  > * {
+    flex-basis: 100%;
+    order: 1;
+
+    // Bootstrap's `.row` bleeds 15px past its container on both sides through
+    // negative margins, which block-level stretch used to absorb by growing the
+    // child. Sized from the container's content box instead, it would keep the
+    // left bleed and lose the right one; drop the margins so it stays symmetric
+    // and lines up under the title.
+    &.row {
+      margin-inline: 0;
+    }
+  }
+
+  > .ga-page-header-main,
+  > .ga-page-header-actions {
+    order: 0;
+  }
+
+  > .ga-page-header-main {
+    // Takes the free space, which is what pushes the buttons to the far edge —
+    // no auto margin, so this works unchanged in RTL.
+    flex: 1 1 auto;
+    // Any `width: 100%` a page set while this block had a row to itself would
+    // come back as the flex basis and push the buttons onto a second line.
+    width: auto;
+    // A long title wraps inside its own block instead of shoving the buttons out.
+    min-width: 0;
+  }
+
+  > .ga-page-header-actions:not(.ga-page-header-main) {
+    // Shrinkable, so a narrow viewport squeezes the buttons (which wrap inside
+    // their own container) rather than overflowing the card.
+    flex: 0 1 auto;
+
+    // The shared `.gauzy-button-container` is `width: 100%` — on a row of its own
+    // that is how the buttons ended up right-aligned. Beside the title it would
+    // claim the whole line, so the block goes back to the buttons' own width.
+    width: auto;
+
+    // Beats Bootstrap's `align-self-end`, which several pages use to right-align
+    // this block while the header was still a column. Along a row that same
+    // declaration would drop the buttons to the bottom of the title block.
+    align-self: center !important;
+
+    // `ngx-gauzy-button-action` pads itself for a standalone row; on the title's
+    // line the title block already sets the height, and that padding IS the band
+    // being reclaimed. `!important` because the component's own `:host`-scoped
+    // rule out-ranks any plain global selector.
+    .actions-container {
+      padding-block: 0 !important;
+    }
+  }
 }
 
 nb-card-body {
@@ -1110,6 +1229,56 @@ angular2-smart-table {
     .ng-arrow {
       transform: rotate(180deg);
     }
+  }
+}
+
+// ── Appended dropdown panels size to their options, not to the trigger ───────
+//
+// `appendTo="body"` gets the panel OUT of a clipping ancestor (a card, a
+// `.table-scroll-container`), but ng-select then pins the panel to the trigger's
+// box: `NgDropdownPanelComponent._updateXPosition()` writes
+// `left: <offset>px; right: auto; width: <trigger>px; min-width: <trigger>px`
+// inline on the panel, once, when it appends it. In an `angular2-smart-table`
+// filter row the trigger is one narrow column, so a Tags filter rendered its
+// options as "Ur…", "Cr…", "Br…" with the rest of the row empty.
+//
+// The fix keeps ng-select's inline `left` (the panel stays anchored under its
+// trigger) and its inline `min-width` (the panel is never NARROWER than the
+// trigger), and replaces only the inline `width` with the classic
+// absolutely-positioned "auto width between left and right" resolution:
+//
+//   left       ng-select's inline offset                       — the anchor
+//   right      1rem from the initial containing block          — the viewport edge
+//   width      auto  -> tentative used width = right - left, i.e. all the room
+//              there is between the trigger and the edge of the screen
+//   max-width  max-content -> shrunk straight back to exactly what the widest
+//              option needs, whenever that is less than the room available
+//   min-width  ng-select's inline trigger width. Per CSS 2.1 §10.4 min-width is
+//              applied AFTER max-width and wins, so a wide form select still
+//              gets a panel exactly as wide as its input — unchanged.
+//
+// The result is "as wide as the options, capped at the screen edge" with no JS:
+// nothing to re-run on scroll, resize, or when the option list changes.
+//
+// Scoped to `body > ng-dropdown-panel` because only an APPENDED panel carries
+// the inline `left`/`width`. A non-appended panel is `width: 100%` of its
+// `.ng-select` (which is the containing block), and giving that one a `right`
+// would make the browser solve for `left` instead and slide it sideways.
+//
+// `html:not([dir='rtl'])` mirrors ng-select's own RTL test
+// (`document.documentElement.dir === 'rtl'`): in RTL it anchors the panel on
+// `right` and sets `left: auto`, and forcing `right` there would tear it off its
+// trigger. `@supports` so that a browser without `max-content` keeps today's
+// behaviour rather than getting a panel stretched to the screen edge.
+//
+// `!important` on the two properties that have to beat an INLINE style; the
+// note above the `.ng-dropdown-panel` block in `nb-overrides()` explains why the
+// rest of this file needs it too.
+@supports (max-width: max-content) {
+  html:not([dir='rtl']) > body > ng-dropdown-panel.ng-dropdown-panel {
+    width: auto !important;
+    right: 1rem !important;
+    max-width: max-content;
   }
 }
 

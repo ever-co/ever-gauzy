@@ -25,6 +25,18 @@
 			display: flex;
 			align-items: center;
 			gap: 8px;
+			// `overflow-x: auto` promotes this row's `overflow-y` from `visible`
+			// to `auto`, so it clips vertically too — and its height is exactly
+			// one chip, leaving a chip's 1px border no slack at all. Any
+			// fractional rounding of the scrollport (a fractional device-pixel
+			// grid at 125 % Windows scaling is enough) then shaves the edge, and
+			// `align-items: center` splits that overflow across BOTH edges, where
+			// the top half is clipped and unreachable — which is how "Standard"
+			// lost its top edge. The block padding gives the border room inside
+			// the scrollport; the matching negative margin hands those pixels
+			// back to the row, so the switcher keeps the height it had.
+			padding-block: 3px;
+			margin-block: -3px;
 			overflow-x: auto;
 			scroll-behavior: smooth;
 			// Hide the scrollbar; the < and > arrow buttons handle overflow

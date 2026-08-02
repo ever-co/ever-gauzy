@@ -1,4 +1,4 @@
-<nb-card class="card-scroll" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card class="card-scroll">
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -32,7 +32,7 @@
 			</ng-template>
 		</ng-template>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		<div class="table-scroll-container">
 			<ng-template [ngxPermissionsOnly]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
 				<ng-template [ngxPermissionsOnly]="['INTEGRATION_VIEW']">
@@ -111,6 +111,7 @@
 					} } @else {
 					<div class="no-data">
 						<ngx-no-data-message
+							[loading]="loading"
 							[title]="'INTEGRATIONS.MESSAGE.NO_INTEGRATIONS' | translate"
 						></ngx-no-data-message>
 					</div>

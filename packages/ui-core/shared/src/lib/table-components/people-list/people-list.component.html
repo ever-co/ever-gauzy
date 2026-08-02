@@ -1,0 +1,44 @@
+<!--
+  One horizontal group per cell: named people first, then avatar-only people,
+  then a `+N` chip. No per-person box and no per-person border — see
+  `people-list.component.scss`.
+-->
+@if (total > 0) {
+	<div class="people" [class.is-wrapped]="wrap">
+		@for (person of named; track person.key) {
+			<a class="person" [class.is-link]="!!person.id" [nbTooltip]="person.name" (click)="onSelect(person)">
+				<span class="person-avatar">
+					@if (person.imageUrl) {
+						<img [src]="person.imageUrl" [alt]="person.name" (error)="onImageError(person)" />
+					} @else {
+						<span class="person-initials">{{ person.initials }}</span>
+					}
+				</span>
+				<span class="person-name">{{ person.name }}</span>
+			</a>
+		}
+		@if (stacked.length > 0 || overflowCount > 0) {
+			<span class="people-stack">
+				@for (person of stacked; track person.key) {
+					<a
+						class="person-avatar is-stacked"
+						[class.is-link]="!!person.id"
+						[nbTooltip]="person.name"
+						(click)="onSelect(person)"
+					>
+						@if (person.imageUrl) {
+							<img [src]="person.imageUrl" [alt]="person.name" (error)="onImageError(person)" />
+						} @else {
+							<span class="person-initials">{{ person.initials }}</span>
+						}
+					</a>
+				}
+				@if (overflowCount > 0) {
+					<span class="person-avatar is-stacked is-more" [nbTooltip]="overflowNames">
+						+{{ overflowCount }}
+					</span>
+				}
+			</span>
+		}
+	</div>
+}

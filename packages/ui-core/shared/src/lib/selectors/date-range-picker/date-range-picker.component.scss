@@ -14,7 +14,16 @@ $button-radius: nb-theme(button-rectangle-border-radius);
 }
 
 .custom-input {
-    height: inherit;
+    // The same height as the selectors this control stands next to in the header
+    // band — both sides resolve `gauzy-header-control-height`.
+    //
+    // This was `height: inherit` against an auto-height parent, i.e. whatever the
+    // contents came to. The contents are an `<input>`, and the global
+    // `input { min-height: … }` control floor (`text-inputs-overrides`) clamps
+    // that field to a FULL-size control no matter what `height` is set on it
+    // below — so the pill wrapped a 38px field and came out ~10px taller than
+    // every other control in the row.
+    height: nb-theme(gauzy-header-control-height);
     display: flex;
     align-items: center;
     background: var(--gauzy-card-1);
@@ -24,7 +33,11 @@ $button-radius: nb-theme(button-rectangle-border-radius);
     padding: 2px 0px 2px 5px;
     margin-right: 16px;
     input {
-        height: 1.875rem;
+        // Fill the pill rather than pinning a second height inside it, and lift
+        // the global control floor: in here the field is the control's TEXT, not
+        // a control of its own, so it must not claim a control's height.
+        height: 100%;
+        min-height: 0;
         background-color: transparent;
         /* Tell the input to use all the available space */
         flex-grow: 2;

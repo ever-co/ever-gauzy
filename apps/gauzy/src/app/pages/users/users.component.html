@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -27,7 +27,7 @@
 			</ng-template>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
 			@if (showAddCard) {
 				<div class="edit-user-mutation">
@@ -49,6 +49,7 @@
 				@case (componentLayoutStyleEnum.TABLE) {
 					<div class="table-scroll-container">
 						<angular2-smart-table
+							[class.ga-table-loading]="loading"
 							style="cursor: pointer"
 							[settings]="settingsSmartTable"
 							[source]="sourceSmartTable"
@@ -64,6 +65,7 @@
 				<!-- Card Grid View -->
 				@case (componentLayoutStyleEnum.CARDS_GRID) {
 					<ga-card-grid
+						[loading]="loading"
 						[totalItems]="pagination?.totalItems"
 						[settings]="settingsSmartTable"
 						[source]="users"

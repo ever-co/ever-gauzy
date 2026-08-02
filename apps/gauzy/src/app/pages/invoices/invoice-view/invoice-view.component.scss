@@ -33,11 +33,9 @@
 .header {
   display: flex;
   align-items: center;
+  // Type comes from the shared card-title rule in `styles/_overrides.scss` —
+  // the title is an <h3>, which that rule covers.
   .title {
-    font-size: 24px;
-    font-weight: 600;
-    line-height: 30px;
-    letter-spacing: 0em;
     text-align: left;
   }
 }

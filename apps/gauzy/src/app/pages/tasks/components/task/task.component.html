@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
 	<nb-card-header class="card-customer-header pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -31,13 +31,14 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body [class.project]="selectedProject">
+	<nb-card-body [class.project]="selectedProject" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'ORG_TASK_VIEW']">
 			@switch (viewMode) {
 				@case (taskListTypeEnum.GRID) {
 					@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
 						<div class="table-scroll-container">
 							<angular2-smart-table
+								[class.ga-table-loading]="loading"
 								style="cursor: pointer"
 								[settings]="settingsSmartTable"
 								[source]="smartTableSource"
@@ -52,6 +53,7 @@
 						></ng-container>
 					} @else {
 						<ga-card-grid
+							[loading]="loading"
 							[totalItems]="pagination?.totalItems"
 							[settings]="settingsSmartTable"
 							[source]="availableTasks$ | async"

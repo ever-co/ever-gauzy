@@ -292,6 +292,13 @@ export const CustomCommands = {
 		} catch {
 			/* no tag seeded — employee tags are optional */
 		}
+		// The tag itself is optional, but the DIALOG is not: driving an ng-select that turns out to sit
+		// BEHIND the modal delivers its coordinate clicks onto the cdk-overlay-backdrop, and NbDialog's
+		// closeOnBackdropClick (default true) then dismisses the whole form. Assert the dialog survived
+		// so that failure is reported HERE, with its real cause, instead of being swallowed by the
+		// clickCardBody() catch below and resurfacing 60s later as "#inputImageUrl not found". This can
+		// only ever fire on a run that was already doomed — every line after it needs this same dialog.
+		await getPage().locator('ga-employee-mutation').first().waitFor({ state: 'visible', timeout: 10_000 });
 		await manageEmployeesPage.clickCardBody().catch(() => undefined);
 		await manageEmployeesPage.imageInputVisible();
 		await manageEmployeesPage.enterImageDataUrl(validImg);

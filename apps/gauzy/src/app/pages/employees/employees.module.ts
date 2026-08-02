@@ -45,6 +45,7 @@ import {
 	RecurringExpenseBlockModule,
 	RecurringExpenseDeleteConfirmationModule,
 	RecurringExpenseMutationModule,
+	RecordViewModule,
 	SharedModule,
 	SkillsInputModule,
 	TableComponentsModule,
@@ -76,9 +77,11 @@ import {
 	EmployeeTimeTrackingStatusComponent
 } from './table-components';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
+import { ViewEmployeeComponent } from './view-employee/view-employee.component';
 
 const COMPONENTS = [
 	EmployeesComponent,
+	ViewEmployeeComponent,
 	EmployeeBonusComponent,
 	EmployeeAverageIncomeComponent,
 	EmployeeAverageExpensesComponent,
@@ -123,6 +126,7 @@ const COMPONENTS = [
 		TranslateModule.forChild(),
 		EmployeesRoutingModule,
 		SharedModule,
+		RecordViewModule,
 		TableComponentsModule,
 		EmployeeMutationModule,
 		EmployeeEndWorkModule,

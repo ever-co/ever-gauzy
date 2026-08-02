@@ -424,12 +424,12 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 				...this.getPagination(),
 				totalItems: this.smartTableSource.count()
 			});
-
-			// Set loading indicator back to false
-			this.loading = false;
 		} catch (error) {
 			// Handle errors using the errorHandlingService
 			this.errorHandlingService.handleError(error);
+		} finally {
+			// Always drop the spinner, otherwise a failed request leaves the card covered forever
+			this.loading = false;
 		}
 	}
 

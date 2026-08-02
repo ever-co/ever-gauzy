@@ -1,8 +1,4 @@
-<nb-card
-  [nbSpinner]="loading"
-  [nbSpinnerStatus]="'primary'"
-  [nbSpinnerSize]="'large'"
-  >
+<nb-card>
   <nb-card-header class="flex flex-column">
     <div class="card-header-title">
       <h4>
@@ -20,7 +16,7 @@
       ></ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body class="settings-body">
+  <nb-card-body class="settings-body" [nbSpinner]="loading" [nbSpinnerStatus]="'primary'" [nbSpinnerSize]="'large'">
     <div class="container">
       @if (expenses?.length) {
         <div
@@ -68,6 +64,7 @@
       @if (!loading && expenses?.length == 0) {
         <div class="no-data">
           <ngx-no-data-message
+            [loading]="loading"
             [message]="'ORGANIZATIONS_PAGE.EXPENSE_NO_DATA_MESSAGE' | translate"
           ></ngx-no-data-message>
         </div>

@@ -14,7 +14,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
-import { DateRangePickerBuilderService, EmployeeStatisticsService, Store } from '@gauzy/ui-core/core';
+import { DateRangePickerBuilderService, EmployeeStatisticsService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { ProfitHistoryComponent, RecordsHistoryComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
@@ -57,7 +57,8 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		private readonly dialogService: NbDialogService,
 		private readonly router: Router,
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly toastrService: ToastrService
 	) {}
 
 	async ngOnInit() {
@@ -108,24 +109,29 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 
 		this.loading = true;
 
-		this.employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId({
-			employeeId: this.selectedEmployee.id,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			organizationId,
-			tenantId
-		});
-		this.income = this._statsSum(this.employeeStatistics, 'income');
-		this.expenseWithoutSalary = this._statsSum(this.employeeStatistics, 'expenseWithoutSalary');
-		this.expense = this._statsSum(this.employeeStatistics, 'expense');
-		this.directIncomeBonus = this._statsSum(this.employeeStatistics, 'directIncomeBonus');
-		this.nonBonusIncome = this.income - this.directIncomeBonus;
-		this.profit = this._statsSum(this.employeeStatistics, 'profit');
-		this.bonus = this._statsSum(this.employeeStatistics, 'bonus');
-		this.calculatedBonus = +(this.bonus - this.directIncomeBonus).toFixed(2);
-		this.salary = +(this.expense - this.expenseWithoutSalary).toFixed(2);
-
-		this.loading = false;
+		try {
+			this.employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId({
+				employeeId: this.selectedEmployee.id,
+				startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+				endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
+				organizationId,
+				tenantId
+			});
+			this.income = this._statsSum(this.employeeStatistics, 'income');
+			this.expenseWithoutSalary = this._statsSum(this.employeeStatistics, 'expenseWithoutSalary');
+			this.expense = this._statsSum(this.employeeStatistics, 'expense');
+			this.directIncomeBonus = this._statsSum(this.employeeStatistics, 'directIncomeBonus');
+			this.nonBonusIncome = this.income - this.directIncomeBonus;
+			this.profit = this._statsSum(this.employeeStatistics, 'profit');
+			this.bonus = this._statsSum(this.employeeStatistics, 'bonus');
+			this.calculatedBonus = +(this.bonus - this.directIncomeBonus).toFixed(2);
+			this.salary = +(this.expense - this.expenseWithoutSalary).toFixed(2);
+		} catch (error) {
+			console.error('Error while retrieving employee aggregated statistics', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	async openHistoryDialog(type: EmployeeStatisticsHistoryEnum) {

@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -44,7 +44,7 @@
 			<ga-layout-selector [componentName]="viewComponentName"></ga-layout-selector>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		@if (showFilter) {
 		<div class="row mb-3 justify-content-end">
 			<div class="filter">
@@ -80,6 +80,7 @@
 			@case (componentLayoutStyleEnum.TABLE) {
 			<div class="table-scroll-container custom-table">
 				<angular2-smart-table
+					[class.ga-table-loading]="loading"
 					class="time-off-table"
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
@@ -95,6 +96,7 @@
 			@case (componentLayoutStyleEnum.CARDS_GRID) {
 			<div class="custom-grid">
 				<ga-card-grid
+					[loading]="loading"
 					[totalItems]="pagination?.totalItems"
 					(onSelectedItem)="selectTimeOff($event)"
 					(scroll)="onScroll()"

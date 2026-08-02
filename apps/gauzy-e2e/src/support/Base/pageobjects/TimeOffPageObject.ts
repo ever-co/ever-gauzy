@@ -45,7 +45,9 @@ export const TimeOffPage = {
 	// existed for custom-render cells), so the settings "TEST" policy verify (a plain string cell) also
 	// resolves. verifyPolicyExists filters this by the exact policy name (pollution-safe, no index).
 	verifyPolicyCss: 'angular2-smart-table-cell',
-	holidayNameSelectCss: 'ngx-time-off-holiday-mutation nb-select:has-text("Select Holiday name")',
+	// Placeholder is TIME_OFF_PAGE.SELECT_HOLIDAY_NAME, which lost its "Select " prefix along with
+	// every other combobox placeholder.
+	holidayNameSelectCss: 'ngx-time-off-holiday-mutation nb-select:has-text("Holiday name")',
 	employeeSelectorCss: 'nb-select:has-text("Add or Remove Employees")',
 	timeOffPolicySelectorCss: 'nb-select[id="policy"]'
 };

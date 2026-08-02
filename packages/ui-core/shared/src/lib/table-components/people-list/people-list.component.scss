@@ -1,0 +1,131 @@
+@use 'themes' as *;
+
+// ── The shared "several people in one cell" treatment ────────────────────────
+//
+// WHAT THIS REPLACES: every people column used to render one bordered,
+// fixed-width pill PER member (`width: 5rem; border: 2px solid #ffffff`), and
+// those pills were then grouped three-to-a-row and pulled back on top of each
+// other with a `-4rem` margin. That produced the visible white box around each
+// member, the overlap, and a name column so narrow that "Julia" came out as
+// "Jul…". Nothing here has a box, a border, or a width in characters.
+//
+// Every metric comes from the `gauzy-people-*` keys of the shared
+// `$gauzy-density` map in `themes.scss`, merged last into all registered
+// themes, so this stays in step with table density and never hardcodes a
+// colour that would break the near-black dark themes.
+
+:host {
+	display: block;
+	// Lets the group shrink inside a narrow grid cell instead of forcing the
+	// column wider (a flex/grid child defaults to `min-width: auto`).
+	min-width: 0;
+}
+
+.people {
+	display: flex;
+	align-items: center;
+	flex-wrap: nowrap;
+	gap: nb-theme(gauzy-people-gap);
+	min-width: 0;
+	// The avatar is the tallest thing in the group, so the whole cell costs the
+	// row exactly one line box.
+	line-height: nb-theme(gauzy-people-avatar-size);
+
+	// Cards have room for several lines; grid cells do not.
+	&.is-wrapped {
+		flex-wrap: wrap;
+		row-gap: nb-theme(gauzy-people-gap);
+	}
+}
+
+// ── One person: avatar + name, no box of its own ─────────────────────────────
+.person {
+	display: inline-flex;
+	align-items: center;
+	gap: nb-theme(gauzy-people-gap);
+	min-width: 0;
+	max-width: 100%;
+	color: nb-theme(text-basic-color);
+	font-size: nb-theme(gauzy-people-font-size);
+	text-decoration: none;
+
+	&.is-link {
+		cursor: pointer;
+
+		&:hover {
+			color: nb-theme(text-primary-color);
+			text-decoration: none;
+
+			.person-name {
+				text-decoration: underline;
+			}
+		}
+	}
+}
+
+.person-name {
+	// Truncation is on WIDTH, never on a character count: a short name renders
+	// in full and only a genuinely long one picks up an ellipsis.
+	min-width: 0;
+	max-width: nb-theme(gauzy-people-name-max-width);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.person-avatar {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: nb-theme(gauzy-people-avatar-size);
+	height: nb-theme(gauzy-people-avatar-size);
+	border-radius: 50%;
+	overflow: hidden;
+	// Only the fallback bubble is tinted; a real photo covers it completely.
+	background-color: nb-theme(background-basic-color-3);
+	color: nb-theme(text-hint-color);
+	text-decoration: none;
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		border-radius: 50%;
+	}
+
+	&.is-link {
+		cursor: pointer;
+	}
+}
+
+.person-initials {
+	font-size: nb-theme(gauzy-people-initials-font-size);
+	font-weight: 600;
+	line-height: 1;
+	letter-spacing: 0;
+	// Avoids inheriting the ellipsis rules of a surrounding name.
+	white-space: nowrap;
+}
+
+// ── Avatar-only tail + the `+N` chip ─────────────────────────────────────────
+.people-stack {
+	display: inline-flex;
+	align-items: center;
+	flex: 0 0 auto;
+	gap: nb-theme(gauzy-people-stack-gap);
+}
+
+.is-more {
+	// Wider than tall, so it has to opt out of the square avatar box.
+	width: auto;
+	min-width: nb-theme(gauzy-people-avatar-size);
+	padding: 0 0.25rem;
+	// A pill: any radius at or above half the height reads as fully round.
+	border-radius: nb-theme(gauzy-people-avatar-size);
+	background-color: nb-theme(color-primary-transparent-200);
+	color: nb-theme(text-primary-color);
+	font-size: nb-theme(gauzy-people-initials-font-size);
+	font-weight: 600;
+	cursor: default;
+}

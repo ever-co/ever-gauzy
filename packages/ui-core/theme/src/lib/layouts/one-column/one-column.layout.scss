@@ -186,9 +186,9 @@ nb-sidebar[tag='menu-sidebar'] {
 }
 
 .logo-container {
-  // One stable single row: [logo / workspace switcher (shrinks)] [… btn] [AI btn].
+  // One stable single row: [tenant switcher (shrinks)] [AI btn].
   // Nothing may wrap, overlap, or change the row's footprint between the
-  // closed (logo) and open (tenant/company switcher) states.
+  // closed and open states of the switcher.
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
@@ -198,13 +198,6 @@ nb-sidebar[tag='menu-sidebar'] {
   min-height: 3.25rem;
   padding: 0.75rem;
   overflow: hidden;
-  button.hidden-menu {
-    flex: 0 0 auto;
-    padding: 0 0.5rem;
-    height: 1.625rem;
-    width: 1.625rem;
-    margin: 0;
-  }
   button.ai-agent-launch {
     flex: 0 0 auto;
     padding: 0 0.5rem;
@@ -213,8 +206,8 @@ nb-sidebar[tag='menu-sidebar'] {
     margin: 0;
     color: nb-theme(color-primary-default);
   }
-  // The logo / in-place workspace switcher takes the remaining row width and
-  // SHRINKS (min-width: 0) instead of pushing the buttons or wrapping.
+  // The tenant switcher takes the remaining row width and SHRINKS
+  // (min-width: 0) instead of pushing the buttons or wrapping.
   ngx-gauzy-logo {
     flex: 1 1 auto;
     min-width: 0;
@@ -228,7 +221,7 @@ nb-sidebar[tag='menu-sidebar'] {
     box-sizing: border-box;
 
     nb-accordion-item-header.principal {
-      // logo image and the (absolutely positioned) chevron share the
+      // tenant avatar/name and the (absolutely positioned) chevron share the
       // header without overlap: reserve the chevron's space on the right
       display: flex;
       align-items: center;
@@ -237,7 +230,7 @@ nb-sidebar[tag='menu-sidebar'] {
       position: relative;
       padding-right: 2.25rem;
 
-      .logo {
+      .tenant {
         flex: 1 1 auto;
         min-width: 0;
         overflow: hidden;
@@ -251,9 +244,6 @@ nb-sidebar[tag='menu-sidebar'] {
     width: nb-theme(sidebar-width-compact);
     justify-content: center;
     align-items: center;
-    button.hidden-menu {
-      margin-left: 0;
-    }
     // No room for the AI launcher in the compacted rail — the header
     // chat toggle remains available.
     button.ai-agent-launch {
@@ -263,8 +253,7 @@ nb-sidebar[tag='menu-sidebar'] {
       box-shadow: none;
       width: 1.75rem;
       height: auto;
-      .logo,
-      .organization,
+      .tenant,
       nb-accordion-item-body {
         display: none;
       }

@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
   <nb-card-header class="card-custom-header">
     <div class="card-header-title">
       <h4>
@@ -17,10 +17,11 @@
       ></ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body>
+  <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
     @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
       <div class="table-scroll-container">
         <angular2-smart-table
+          [class.ga-table-loading]="loading"
           style="cursor: pointer"
           [settings]="settingsSmartTable"
           [source]="smartTableSource"
@@ -36,6 +37,7 @@
       </div>
     } @else {
       <ga-card-grid
+        [loading]="loading"
         [totalItems]="pagination?.totalItems"
         [settings]="settingsSmartTable"
         [source]="equipmentSharingPolicyData"

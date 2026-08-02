@@ -163,6 +163,7 @@
 						</ng-template>
 					} @else {
 						<ngx-no-data-message
+							[loading]="loading"
 							[message]="'REPORT_PAGE.NO_DATA.MANUAL_ACTIVITY' | translate"
 						></ngx-no-data-message>
 					}
