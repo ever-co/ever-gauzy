@@ -108,15 +108,12 @@
   }
 }
 
-<<<<<<< HEAD
-=======
 // (removed a local `h4 { font-size: 24px; line-height: 30px }` override.) The
 // page heading is governed by one type step, applied by `ngx-header-title`
 // itself — 1.25rem/1.75rem, deliberately the h5 step, "a page heading only needs
 // to out-rank body copy". 24px here made this the single largest page title in
 // the app, a full step above every sibling in Employees & Candidates.
 
->>>>>>> 93d4704d72 (fix(ui): visual sweep of Employees & Candidates)
 :host {
   @include input-appearance(42px, var(--gauzy-card-1));
 }

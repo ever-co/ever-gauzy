@@ -44,32 +44,6 @@
   }
 }
 
-<<<<<<< HEAD
-// One `.container` block, not two: this file declared it twice (`padding: 0` up
-// here, then `padding: 0.5rem` further down), so the first was dead. The two
-// dead blocks that used to sit above it — `.setting-name` and `.body-header` —
-// matched nothing in either template that uses this stylesheet.
-//
-// `overflow-x: scroll` reserved a horizontal scrollbar gutter unconditionally.
-// The `::-webkit-scrollbar` rule below papers over that in Chromium and WebKit,
-// but not in Firefox, where the recurring-expense list carried a permanent
-// horizontal scrollbar however wide the window was. The rows genuinely can
-// overflow on a narrow viewport (`.block-item` / `.block-item-big` are a fixed
-// 11rem / 17.5rem), so `auto` rather than dropping the scroll altogether.
-.container {
-  padding: 0.5rem;
-  overflow-x: auto;
-  height: 100%;
-  margin: 0;
-  max-width: unset;
-}
-
-.container::-webkit-scrollbar {
-  display: none;
-}
-
-=======
->>>>>>> 93d4704d72 (fix(ui): visual sweep of Employees & Candidates)
 :host {
   nb-card,
   nb-card-header {
@@ -92,11 +66,11 @@
     padding: 8px;
   }
 }
-<<<<<<< HEAD
-=======
 // One `.container` rule. There were two — a `padding: 0` block a few lines up
 // that the later one silently overrode — plus a bare `.container::-webkit-scrollbar`
-// rule sitting between them.
+// rule sitting between them. The two dead blocks that used to sit above them,
+// `.setting-name` and `.body-header`, matched nothing in either template that
+// uses this stylesheet.
 //
 // The rows are laid out with fixed column widths (~57rem), so this really does
 // need to scroll sideways on a narrow viewport; what it does NOT need is
@@ -116,7 +90,7 @@
     display: none;
   }
 }
->>>>>>> 93d4704d72 (fix(ui): visual sweep of Employees & Candidates)
+
 .history {
   align-items: center;
   gap: 8px;
