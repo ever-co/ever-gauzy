@@ -119,12 +119,18 @@
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
+			<!--
+				`isDisabled` is not a member of VendorsComponent, nor of the
+				PaginationFilterBaseComponent it extends, so this bound to `undefined`:
+				Delete stayed fully lit beside a disabled Edit, and pressing it with
+				nothing selected read `selected.vendor.id` off null.
+			-->
 			<button
 				(click)="removeVendor(selected.vendor.id, selected.vendor.name)"
 				nbButton
 				status="basic"
 				class="action"
-				[disabled]="isDisabled"
+				[disabled]="disabled"
 				size="small"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>

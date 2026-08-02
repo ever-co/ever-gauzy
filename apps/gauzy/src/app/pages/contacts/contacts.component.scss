@@ -1,41 +1,16 @@
 @use '@shared/_pg-card' as *;
 
-.contact-list {
-  display: flex;
-  flex-wrap: wrap;
-
-  .member-card {
-    display: flex;
-    flex-wrap: wrap;
-    max-width: 340px;
-    width: 100%;
-  }
-
-  .contact-info {
-    padding-right: 12px;
-    display: flex;
-    flex-direction: column;
-
-    .info-line {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      font-size: 0.7em;
-      color: darkgray;
-
-      .info-value {
-        display: flex;
-        justify-content: flex-end;
-        text-align: end;
-
-        .info-list-item:not(:last-child)::after {
-          content: ',';
-          margin-right: 5px;
-        }
-      }
-    }
-  }
-}
+/*
+ * REMOVED: the `.contact-list` block (`.member-card`, `.contact-info`,
+ * `.info-line`, `.info-value`, `.info-list-item`).
+ *
+ * `contact-list` appears nowhere in the worktree outside this file — the card
+ * layout is rendered by `ga-card-grid`, a CHILD component, whose elements carry
+ * ITS `_ngcontent` attribute, so these rules could never have reached them under
+ * the default emulated encapsulation. (`ga-card-grid` styles its own `.info-line`
+ * in card-grid.component.scss.) The block also carried `color: darkgray`, a
+ * literal that belongs to no theme.
+ */
 
 .main-header {
   display: flex;

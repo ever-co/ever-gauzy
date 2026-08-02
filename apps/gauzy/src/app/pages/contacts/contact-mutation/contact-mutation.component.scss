@@ -18,6 +18,9 @@
 
     .image-overlay {
       pointer-events: none;
+      // Deliberately a literal, and deliberately NOT a theme token: this is a
+      // scrim over the uploaded PHOTO (0 -> 0.2 opacity on hover), so what it has
+      // to darken is the picture, not the surface the card is painted on.
       background: black;
       position: absolute;
       height: 100%;
@@ -33,20 +36,33 @@
       border-radius: nb-theme(border-radius);
     }
 
+    // The empty-state placeholder behind the uploader. It is a NEUTRAL tint, not
+    // a colour of its own: the same token the rest of the app hovers with, so it
+    // darkens a white card and lightens a near-black one instead of staying a
+    // fixed light grey that vanishes on the four dark themes.
     .image {
-      background-color: rgba(126, 126, 143, 0.1);
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+      // Centers the prompt for real. It used to be absolutely positioned at
+      // `left: calc(50% - 141px / 2)` — 141px being a guess at the width of the
+      // English string. Any other translation, or any other root font size, put
+      // the label off center, and a longer one ran out of the 12.5rem box with
+      // nowhere to wrap.
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 0.75rem;
 
       i {
         margin: 5px;
       }
 
       > span {
-        color: rgba(126, 126, 143, 1);
+        // `rgba(126, 126, 143, 1)` is the LIGHT themes' muted text value written
+        // out by hand; on a dark card it is barely above the background.
+        color: var(--gauzy-text-color-2, var(--text-hint-color));
         z-index: 2;
         transition: opacity 0.2s ease-in;
-        position: absolute;
-        top: calc(50% - 16px / 2);
-        left: calc(50% - 141px / 2);
+        text-align: center;
       }
     }
 
@@ -99,26 +115,15 @@
     display: flex;
     align-items: center;
     margin-bottom: 10px;
-
-    .image-container {
-      width: 70px;
-      height: 50px;
-      display: flex;
-
-      img {
-        height: 100%;
-        max-width: 70px;
-      }
-    }
   }
 
-  .button-container {
-    display: flex;
-    width: 160px;
-    justify-content: space-between;
-    margin-top: 15px;
-    margin-left: 9px;
-  }
+  /*
+   * REMOVED: `.image-container` (and its `img`) and `.button-container`.
+   * Neither class occurs anywhere in contact-mutation.component.html or
+   * contact-mutation.component.ts — the members step renders
+   * `.team-card > .name-container > ngx-avatar` and nothing else, and a
+   * component stylesheet cannot reach past its own template.
+   */
 }
 
 /*
@@ -284,7 +289,13 @@
     border-radius: 0;
   }
 
-  @include dialog(transparent, var(--gauzy-card-1));
+  // The second argument paints every input/select in the wizard. It needs a
+  // fallback: `gauzy-card-1` is not registered for `material-light` /
+  // `material-dark` (they inherit from Nebular's material themes, not from the
+  // gauzy default), and an unresolvable `var()` takes the whole
+  // `background-color` declaration with it — there the fields would fall back to
+  // Nebular's own field background, which is not the surface they sit on.
+  @include dialog(transparent, var(--gauzy-card-1, var(--card-background-color)));
 
   /*
    * Step buttons — restated AFTER `dialog()` so these win at equal specificity.
