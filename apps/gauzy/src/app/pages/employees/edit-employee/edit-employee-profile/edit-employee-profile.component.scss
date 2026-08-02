@@ -2,16 +2,23 @@
 
 :host {
   ::ng-deep .tabset-container .route-tabset {
-    overflow-x: scroll;
+    // `auto`, not `scroll`: with nine tabs the strip usually fits, and `scroll`
+    // reserves a scrollbar gutter whether or not there is anything to scroll.
+    overflow-x: auto;
     overflow-y: hidden;
 
+    // `scrollbar-width` and `-ms-overflow-style` apply to the SCROLL CONTAINER,
+    // not to a `::-webkit-scrollbar` pseudo-element — nested inside that rule
+    // (as they were) they matched nothing, so Firefox drew a real scrollbar
+    // across the bottom of the tab strip while Chrome hid it. They belong here.
+    /* Firefox */
+    scrollbar-width: none;
+    /* IE, Edge */
+    -ms-overflow-style: none;
+
+    /* Chrome, Safari, Opera */
     &::-webkit-scrollbar {
-      /* Chrome, Safari, Opera */
       display: none;
-      /* IE, Edge */
-      -ms-overflow-style: none;
-      /* Firefox */
-      scrollbar-width: none;
     }
 
     @media only screen and (max-width: 1280px) {

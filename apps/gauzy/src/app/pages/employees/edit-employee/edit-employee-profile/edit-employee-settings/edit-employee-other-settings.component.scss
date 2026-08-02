@@ -52,10 +52,15 @@
       border-radius: nb-theme(button-rectangle-border-radius);
       list-style: none;
       cursor: pointer;
-      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+      // `gauzy-shadow`, not a literal black drop shadow. The token IS
+      // `0 1px 1px rgb(0 0 0 / 15%)` on the light themes, so nothing moves
+      // there, but on `gauzy-dark` it resolves to a 1px hairline ring instead —
+      // a black shadow under a panel that sits on a near-black canvas is
+      // invisible, which left these section rows with no edge at all.
+      box-shadow: var(--gauzy-shadow);
       &.active {
         background: nb-theme(background-basic-color-1);
-        box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15) inset;
+        box-shadow: var(--gauzy-shadow) inset;
       }
     }
   }
@@ -88,7 +93,11 @@ nb-accordion {
       border-radius: 6px;
       width: 23px;
       height: 23px;
-      border: 1px solid rgba(66, 66, 66, 0.2);
+      // Was `rgba(66, 66, 66, 0.2)`, a DARKENING hairline — invisible on the
+      // near-black canvas, where the accordion chevrons then had no box at all.
+      // `gauzy-border-default-color` is white-at-low-alpha there and the same
+      // grey it was on the light themes.
+      border: 1px solid nb-theme(gauzy-border-default-color);
     }
   }
   & nb-accordion-item-header,
@@ -311,9 +320,12 @@ nb-accordion {
     margin-bottom: 0;
   }
 }
+// `#7e7e8f` is rgb(126, 126, 143), i.e. a hand-copied value of the theme's own
+// `toggle-basic-background-color`. Reading the token instead means the unchecked
+// track follows whichever theme is active rather than staying on one theme's grey.
 :host ::ng-deep .toggle {
-  border: 1px solid #7e7e8f !important;
-  background-color: #7e7e8f !important;
+  border: 1px solid nb-theme(toggle-basic-background-color) !important;
+  background-color: nb-theme(toggle-basic-background-color) !important;
   &.checked {
     background-color: nb-theme(text-primary-color) !important;
     border: 1px solid nb-theme(text-primary-color) !important;

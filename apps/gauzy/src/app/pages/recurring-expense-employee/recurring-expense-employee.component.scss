@@ -44,6 +44,7 @@
   }
 }
 
+<<<<<<< HEAD
 // One `.container` block, not two: this file declared it twice (`padding: 0` up
 // here, then `padding: 0.5rem` further down), so the first was dead. The two
 // dead blocks that used to sit above it — `.setting-name` and `.body-header` —
@@ -67,6 +68,8 @@
   display: none;
 }
 
+=======
+>>>>>>> 93d4704d72 (fix(ui): visual sweep of Employees & Candidates)
 :host {
   nb-card,
   nb-card-header {
@@ -89,6 +92,31 @@
     padding: 8px;
   }
 }
+<<<<<<< HEAD
+=======
+// One `.container` rule. There were two — a `padding: 0` block a few lines up
+// that the later one silently overrode — plus a bare `.container::-webkit-scrollbar`
+// rule sitting between them.
+//
+// The rows are laid out with fixed column widths (~57rem), so this really does
+// need to scroll sideways on a narrow viewport; what it does NOT need is
+// `overflow-x: scroll`, which reserves a scrollbar gutter unconditionally. With
+// `auto` the bar only exists when there is something to scroll, and the two
+// hide-the-bar declarations now cover Firefox as well as WebKit rather than
+// WebKit alone.
+.container {
+  padding: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  height: 100%;
+  margin: 0;
+  max-width: unset;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+>>>>>>> 93d4704d72 (fix(ui): visual sweep of Employees & Candidates)
 .history {
   align-items: center;
   gap: 8px;

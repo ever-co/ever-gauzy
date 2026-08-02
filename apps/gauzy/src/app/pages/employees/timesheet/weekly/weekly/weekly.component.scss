@@ -64,8 +64,12 @@
         @include nb-ltr(padding-left, 12px);
         @include nb-rtl(padding-right, 12px);
       }
+      // Out-ranks Bootstrap's `.border-bottom` utility (a fixed `#dee2e6`),
+      // which is `!important`. The value now comes from the border token rather
+      // than being a hand-copy of what that token happens to be on the light
+      // themes.
       .border-bottom {
-        border-bottom: 1px solid rgba(126, 126, 143, 0.1) !important;
+        border-bottom: 1px solid var(--gauzy-border-default-color) !important;
       }
 
       [nbButton].appearance-outline.status-primary {
@@ -76,9 +80,14 @@
         cursor: pointer;
       }
 
+      // The 6px bar down the left edge that marks the selected row. It was
+      // `rgba(48, 48, 120, 0.2)` — a 20 %-opaque navy, which on the near-black
+      // canvas is all but the canvas itself, so the selection marker vanished
+      // on the dark themes. The primary transparent tint is the app's own
+      // "selected" colour and carries on both.
       .selected {
         background-color: var(--gauzy-sidebar-background-3);
-        box-shadow: -6px 0 0 0 rgba(48, 48, 120, 0.2);
+        box-shadow: -6px 0 0 0 var(--color-primary-transparent-default);
         border-radius: var(--border-radius) 0 0 var(--border-radius);
 
         &.border-bottom {

@@ -42,117 +42,19 @@
 .select {
   width: 18rem;
 }
-:host .card-container {
-  display: flex;
-  flex-wrap: wrap;
-
-  .card-body {
-    width: 100%;
-    max-width: 300px;
-    .card-header {
-      padding: 0.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      &-badge {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-      }
-      .header-container {
-        text-align: center;
-      }
-    }
-
-    .interview-card {
-      display: flex;
-      flex-direction: column;
-      padding: 0.5rem;
-
-      .name-container {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-
-        &:hover {
-          cursor: pointer;
-          color: #3366ff;
-        }
-
-        .image-container {
-          width: 70px;
-          height: 50px;
-          display: flex;
-          justify-content: center;
-          @include nb-ltr(margin-right, 10px);
-          @include nb-rtl(margin-left, 10px);
-
-          img {
-            height: 100%;
-            max-width: 70px;
-          }
-        }
-      }
-      .team-members {
-        margin-bottom: 0.5rem;
-      }
-    }
-
-    .button-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: auto;
-      flex-wrap: wrap;
-    }
-  }
-}
 .btn {
   margin: 0.2rem;
 }
 
-.badge-warning {
-  background-color: #fa0;
-}
-
-.badge-primary {
-  background-color: #0095ff;
-}
-
-.badge {
-  text-align: center;
-  padding: 5px;
-  margin-left: 0.2rem;
-}
-.client-info {
-  padding: 0px 12px;
-  display: flex;
-  flex-direction: column;
-  .info-line {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    font-size: 0.7em;
-    color: darkgray;
-    .info-value {
-      display: flex;
-      justify-content: flex-end;
-      text-align: end;
-      .info-list-item:not(:last-child)::after {
-        content: ',';
-        @include nb-ltr(margin-right, 5px);
-        @include nb-rtl(margin-left, 5px);
-      }
-    }
-    .criterions {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      text-align: end;
-    }
-  }
-}
+// REMOVED: `.card-container` (with `.interview-card`, `.image-container`,
+// `.name-container:hover { color: #3366ff }`), `.client-info` (with
+// `.info-line { color: darkgray }`), the bare `.badge` box and the
+// `.badge-warning` / `.badge-primary` fills `#fa0` / `#0095ff`.
+//
+// All dead: this template renders its grid view through `<ga-card-grid>` and
+// none of those class names appears in any template in the repo. Component
+// styles are view-encapsulated, so they could not reach the card grid's own
+// markup either.
 
 :host {
   @include card-overrides(unset, calc($default-card-height), $default-radius);

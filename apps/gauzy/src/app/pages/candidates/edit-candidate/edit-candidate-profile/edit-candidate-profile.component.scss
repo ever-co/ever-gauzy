@@ -6,13 +6,17 @@
   width: 100%;
 }
 
+// The "upcoming interviews" bell. The disc was a literal `rgb(0, 145, 255)` and
+// the unread dot below a literal `#f10`; both now read the theme's status
+// palette. (`.bell` keeps `color: white` — that is a contrast pair against this
+// disc, not a theme colour, and the disc is a saturated fill in every theme.)
 .notification {
   position: relative;
   display: inline-block;
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: rgb(0, 145, 255);
+  background-color: nb-theme(color-info-default);
 }
 
 .notification:hover {
@@ -37,7 +41,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #f10;
+  background-color: nb-theme(color-danger-default);
 }
 
 .nb-card {
@@ -104,6 +108,15 @@
   }
 }
 
+<<<<<<< HEAD
+=======
+// (removed a local `h4 { font-size: 24px; line-height: 30px }` override.) The
+// page heading is governed by one type step, applied by `ngx-header-title`
+// itself — 1.25rem/1.75rem, deliberately the h5 step, "a page heading only needs
+// to out-rank body copy". 24px here made this the single largest page title in
+// the app, a full step above every sibling in Employees & Candidates.
+
+>>>>>>> 93d4704d72 (fix(ui): visual sweep of Employees & Candidates)
 :host {
   @include input-appearance(42px, var(--gauzy-card-1));
 }

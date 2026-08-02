@@ -1,29 +1,38 @@
 @use 'themes' as *;
 
-div {
+// The approval-policy chip in a smart-table cell.
+//
+// The selector was a bare `div`, which is why the template could not grow a
+// second branch without the empty state inheriting the pill; it is `.policy`
+// now (a new class, nothing was renamed — no template or page object referred
+// to this element by name).
+//
+// Sized from the shared table-density tokens (`$gauzy-density` in `themes.scss`)
+// like every other in-cell chip; the literals are CSS-var fallbacks only. The
+// radius was `12px`, i.e. a full stadium pill on a ~19px chip — the same thing
+// `tag-border-radius` was taken off across the app — and the background was a
+// hand-copy of `gauzy-sidebar-background-3`. The `margin: 0 10px` is gone too:
+// the cell already has its own horizontal padding, so the chip was indented
+// 10px further than the text in every neighbouring column.
+.policy {
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
-  padding: 3px 8px;
-
   width: fit-content;
-
-  background: rgba(126, 126, 143, 0.1);
-  border-radius: 12px;
-
-  /* Inside auto layout */
-
-  flex: none;
-  order: 0;
-  flex-grow: 0;
-  margin: 0px 10px;
-
-  /* Typography */
-
-  font-size: 12px;
+  padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
+  background: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
+  font-size: var(--gauzy-table-header-font-size, 0.75rem);
   font-weight: 600;
-  line-height: 15px;
+  line-height: var(--gauzy-table-header-line-height, 0.9375rem);
   letter-spacing: 0em;
   text-align: left;
+  white-space: nowrap;
+}
+
+// "No policy set". Muted, and deliberately WITHOUT the chip box, so an unset
+// value does not read as a value.
+.empty {
+  color: nb-theme(text-hint-color);
 }

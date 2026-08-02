@@ -6,11 +6,15 @@
           <div class="d-flex align-items-start">
             <ngx-back-navigation></ngx-back-navigation>
             <div class="employee-info">
-              <img
-                class="employee-image"
-                [src]="selectedEmployee?.user?.image?.fullUrl || selectedEmployee?.user?.imageUrl"
-                alt="Employee Avatar"
-                />
+              <!-- Guarded: the image used to render unconditionally, so an
+                   employee with no photo got a broken-image glyph. -->
+              @if (selectedEmployee?.user?.image?.fullUrl || selectedEmployee?.user?.imageUrl; as avatarUrl) {
+                <img class="employee-image" [src]="avatarUrl" alt="Employee Avatar" />
+              } @else {
+                <div class="employee-image-placeholder" aria-hidden="true">
+                  <nb-icon icon="person-outline"></nb-icon>
+                </div>
+              }
                 <div class="employee-details flex-column align-items-start">
                   @if (selectedEmployee?.isVerified) {
                     <nb-icon
@@ -23,8 +27,9 @@
                   <span class="employee-name">
                     {{ selectedEmployee?.user?.name }}
                   </span>
+                  <!-- An em-dash rather than a blank line where no position is set. -->
                   <div class="employee-position">
-                    {{ selectedEmployee?.organizationPosition?.name }}
+                    {{ selectedEmployee?.organizationPosition?.name || '—' }}
                   </div>
                 </div>
               </div>
