@@ -16,10 +16,14 @@
     <div class="row">
       <div class="col-sm-12 button-imports">
         <div class="button-import">
+          <!--
+            `shape="round"` was dropped: this was the only one of the four
+            buttons in this row that asked for a pill, so it sat next to three
+            rectangles.
+          -->
           <button
             class="action"
             nbButton
-            shape="round"
             status="success"
             size="small"
             (click)="importPage()"

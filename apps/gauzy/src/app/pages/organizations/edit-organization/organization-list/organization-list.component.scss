@@ -1,7 +1,11 @@
 nb-list {
   height: fit-content;
   max-height: 116px;
-  border: 1px solid #edf1f7;
+  // Was `#edf1f7`, a near-white hairline that vanishes on the light themes and
+  // draws a bright box on the dark ones. Written as a custom property rather
+  // than `nb-theme()` because this stylesheet does not `@use 'themes'`, and it
+  // carries a fallback for the themes that do not emit the token.
+  border: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.1));
   margin-top: 10px;
   transform-origin: top center;
   transform: scaleY(0);
