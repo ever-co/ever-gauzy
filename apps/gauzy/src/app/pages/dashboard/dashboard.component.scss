@@ -143,20 +143,25 @@
       font-size: 18px;
       color: var(--text-basic-color);
 
+      // Four literal status colours here resolved to two meanings: green for
+      // "profit up" / "income", orange-yellow for "profit down" / "expense".
+      // They were two slightly different greens and two slightly different
+      // yellows, none of which changed per theme. Mapped onto the status
+      // tokens, which do.
       .profit-positive-color {
-        color: #66de0b;
+        color: nb-theme(color-success-default);
       }
 
       .profit-negative-color {
-        color: #ff7b00;
+        color: nb-theme(color-warning-default);
       }
 
       .expense-color {
-        color: #dbc300;
+        color: nb-theme(color-warning-default);
       }
 
       .income-color {
-        color: #089c17;
+        color: nb-theme(color-success-default);
       }
     }
 
@@ -195,7 +200,7 @@
       :last-child {
         font-size: 46px;
         font-weight: bold;
-        color: #0091ff;
+        color: nb-theme(color-info-default);
       }
 
       .negative-bonus-color {
