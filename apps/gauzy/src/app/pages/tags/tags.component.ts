@@ -32,6 +32,13 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	disableButton = true;
 	private allTags = [];
 	filterOptions: Array<any> = [];
+	/**
+	 * Which entry of `filterOptions` is currently filtering the table. Selecting
+	 * a type changed the table and left the rail looking untouched, so the only
+	 * way to tell what you were looking at was to remember what you clicked.
+	 * `''` is the "All" entry, i.e. no filter.
+	 */
+	selectedFilterValue: string = '';
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -376,6 +383,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	 * @returns
 	 */
 	selectedFilterOption(value: string) {
+		this.selectedFilterValue = value;
 		if (value === '') {
 			this._isFiltered = false;
 			this._refresh$.next(true);

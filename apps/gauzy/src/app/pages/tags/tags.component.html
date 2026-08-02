@@ -11,6 +11,7 @@
             @for (option of filterOptions; track option) {
               <nb-list-item
                 class="filter-item"
+                [class.selected]="selectedFilterValue === option.value"
                 (click)="selectedFilterOption(option.value)"
                 >
                 {{ option.displayName }}
