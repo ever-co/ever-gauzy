@@ -11,7 +11,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: rgb(0, 145, 255);
+  background-color: nb-theme(color-info-default);
 }
 
 .notification:hover {
@@ -27,7 +27,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #f10;
+  background-color: nb-theme(color-danger-default);
 }
 
 :host .bell {
@@ -62,30 +62,13 @@
   padding: 1rem;
 }
 
-.org-details {
-  .edit-public-page {
-    cursor: pointer;
-    color: #027ad6;
-    padding-top: 3px;
-  }
-}
-
-.setting-name {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.body-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 35px;
-}
-
-.mutation-card.setting-block {
-  background: #eaf3fc;
-}
-
+// Removed as dead: `.org-details .edit-public-page` (a literal `#027ad6` link
+// blue), `.setting-name`, `.body-header`, and `.mutation-card.setting-block`
+// (a literal `#eaf3fc` pale-blue panel, which would have been a light slab on
+// the near-black themes had anything used it). None of those class names
+// appears in this component's own template — only `notification`, `exist` and
+// `bell` do — and these styles are view-encapsulated, so they could not reach a
+// child route's markup either.
 .transparent {
   opacity: 0.7;
 }
