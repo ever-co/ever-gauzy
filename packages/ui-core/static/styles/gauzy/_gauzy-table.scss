@@ -15,26 +15,29 @@ $action-hairline: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 12
     // in every theme.
     background-color: var(--gauzy-card-2);
   }
-  &.info {
-    &[nbButton].appearance-filled.status-basic {
-      background-color: nb-theme(color-info-default);
-      color: white;
-      border-color: nb-theme(color-info-default);
-    }
-  }
+  // Every `.action` modifier below is a TEXT colour, and `.info` no longer is
+  // the one exception: it used to paint a saturated `color-info-default` block
+  // with white text, i.e. a filled colour button sitting in a row of outline
+  // ones. The hairline ring `.action` already draws is the edge; the accent only
+  // has to say which action this is. Accents come from `$gauzy-action-accents-*`
+  // in `themes.scss`, so a `.action.success` chip and a
+  // `[nbButton] status="success"` button are now the same green, and both are
+  // legible on the light and the near-black canvas (the inherited
+  // `color-success-default` measured 2.9:1 on white).
+  &.info,
   &.info-text-1 {
     &[nbButton].appearance-filled.status-basic {
-      color: nb-theme(color-info-default);
+      color: nb-theme(gauzy-action-info-text);
     }
   }
   &.secondary {
     color: var(--text-hint-color);
   }
   &.success {
-    color: nb-theme(color-success-default);
+    color: nb-theme(gauzy-action-success-text);
   }
   &.warning {
-    color: rgba(245, 109, 88, 1);
+    color: nb-theme(gauzy-action-warning-text);
   }
   &.orange {
     color: rgba(255, 171, 45, 1);

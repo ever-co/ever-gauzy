@@ -26,7 +26,7 @@
 		<div class="goals-container">
 			@if (noGoals === true) {
 			<div class="h-100">
-				<ngx-no-data-message [message]="'GOALS_PAGE.GOALS_EMPTY' | translate"></ngx-no-data-message>
+				<ngx-no-data-message [loading]="loading" [message]="'GOALS_PAGE.GOALS_EMPTY' | translate"></ngx-no-data-message>
 			</div>
 			} @for (group of activeGroups; track group) {
 			<div>

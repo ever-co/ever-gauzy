@@ -341,6 +341,7 @@
       <ng-template #tableLayout>
         <div class="table-scroll-container">
           <angular2-smart-table
+            [class.ga-table-loading]="loading"
             [settings]="smartTableSettings"
             [source]="smartTableData"
             (userRowSelect)="selectRow($event)"
@@ -357,6 +358,7 @@
       </ng-template>
       <ng-template #gridLayout>
         <ga-card-grid
+          [loading]="loading"
           [totalItems]="pagination?.totalItems"
           [settings]="smartTableSettings"
           [source]="goalTimeFrames"

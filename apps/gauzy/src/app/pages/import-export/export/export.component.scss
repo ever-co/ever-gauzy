@@ -75,11 +75,14 @@
   gap: 50px;
 }
 
+// The page title. Built from a <span> rather than a heading, so it misses the
+// shared card-title rule in `styles/_overrides.scss` and has to read the same
+// tokens itself.
 .title {
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 30px;
-  letter-spacing: 0em;
+  font-size: var(--gauzy-page-title-font-size);
+  font-weight: var(--gauzy-page-title-font-weight);
+  line-height: var(--gauzy-page-title-line-height);
+  letter-spacing: var(--gauzy-page-title-letter-spacing);
   text-align: left;
   color: var(--gauzy-text-color-1);
   white-space: nowrap;

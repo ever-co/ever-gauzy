@@ -34,6 +34,7 @@
 		</div>
 		} @else if (employeeLevels?.length && dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID) {
 		<ga-card-grid
+			[loading]="loading"
 			[totalItems]="pagination?.totalItems"
 			[settings]="settingsSmartTable"
 			[source]="employeeLevels"

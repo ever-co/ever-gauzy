@@ -67,6 +67,7 @@
       @if (!loading && recurringExpenses?.length == 0) {
         <div class="no-data">
           <ngx-no-data-message
+            [loading]="loading"
             [message]="'ORGANIZATIONS_PAGE.EXPENSE_NO_DATA_MESSAGE' | translate"
           ></ngx-no-data-message>
         </div>

@@ -1,0 +1,109 @@
+@use 'themes' as *;
+
+// Same overlay chrome as the popup menus (see `_overlays.scss`): one soft
+// container — hairline + soft shadow — wrapping flat content. The alpha-neutral
+// fallbacks darken a light surface and lighten a dark one, so no per-theme
+// branch is needed.
+$overlay-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+$overlay-shadow: #{'var(--gauzy-overlay-shadow, 0 4px 12px -2px rgba(0, 0, 0, 0.14), 0 2px 6px -2px rgba(0, 0, 0, 0.08))'};
+
+// One layer above the sidebars (1041/1042 in the one-column layout) so the
+// drawer is never half-covered by the nav rail it was opened over.
+$drawer-z-index: 1043;
+
+:host {
+  // The host itself must not take part in the page's flow or paint anything —
+  // the panel is fixed to the viewport, the host is only its declaration site.
+  display: contents;
+}
+
+.record-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: $drawer-z-index;
+  // A backdrop is a dimming layer, not a themed surface: the same translucent
+  // black works on the light canvas and on the near-black one, which is why
+  // Nebular's own backdrop is a literal too.
+  background: rgba(0, 0, 0, 0.32);
+}
+
+.record-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: $drawer-z-index + 1;
+
+  display: flex;
+  flex-direction: column;
+  // Wide enough for a label column plus a real value, capped so it never eats
+  // the whole canvas on a narrow laptop.
+  width: min(26rem, 92vw);
+  background: nb-theme(background-basic-color-1);
+  color: nb-theme(text-basic-color);
+  box-shadow: #{$overlay-shadow};
+
+  // Closed: parked off-canvas and fully inert, so nothing here can intercept a
+  // click or show up in the accessibility tree.
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.2s ease, visibility 0.2s;
+
+  // LTR is the BASE, not an `nb-ltr` branch: those mixins emit `[dir=ltr] &`,
+  // and a panel positioned only when that attribute happens to sit on an
+  // ancestor would otherwise land wherever its static position falls. RTL then
+  // overrides — `[dir=rtl] .record-drawer` out-ranks `.record-drawer`, and the
+  // later `.is-open` rule still wins the transform on equal specificity.
+  right: 0;
+  transform: translateX(100%);
+  border-left: 1px solid #{$overlay-hairline};
+  @include nb-rtl(right, auto);
+  @include nb-rtl(left, 0);
+  @include nb-rtl(transform, translateX(-100%));
+
+  &.is-open {
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(0);
+  }
+}
+
+.record-drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #{$overlay-hairline};
+}
+
+.record-drawer-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.record-drawer-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+.record-drawer-subtitle {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: nb-theme(text-hint-color);
+  overflow-wrap: anywhere;
+}
+
+.record-drawer-close {
+  flex: 0 0 auto;
+  padding: 0 0.25rem;
+}
+
+.record-drawer-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 0.75rem 1rem 1rem;
+}

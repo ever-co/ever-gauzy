@@ -1,8 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Router } from '@angular/router';
 import {
 	IBaseEntityWithMembers,
 	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
+import { IPersonListItem } from '../table-components/people-list/people-list.component';
 
 @Component({
     selector: 'ga-entity-with-members-card',
@@ -23,6 +25,20 @@ export class EntityWithMembersCardComponent {
 
 	@Input()
 	layout?: ComponentLayoutStyleEnum | undefined;
+
+	constructor(private readonly router: Router) {}
+
+	/**
+	 * Opens the profile of a member clicked in the people list.
+	 *
+	 * @param person The member that was clicked.
+	 */
+	openMember(person: IPersonListItem): void {
+		const id = person?.id;
+		if (id) {
+			this.router.navigate([`/pages/employees/edit/${id}/profile`]);
+		}
+	}
 
 	removeEntity(id: string): void {
 		this.remove.emit(id);

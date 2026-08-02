@@ -16,7 +16,8 @@ import {
 	EditEmployeeProjectsComponent,
 	EditEmployeeRatesComponent
 } from './edit-employee/edit-employee-profile';
-import { EmployeeResolver } from './employee.resolver';
+import { EmployeeResolver, EmployeeViewResolver } from './employee.resolver';
+import { ViewEmployeeComponent } from './view-employee/view-employee.component';
 
 const selectors = {
 	team: false,
@@ -47,6 +48,22 @@ const routes: Routes = [
 				date: false
 			}
 		}
+	},
+	{
+		// Read-only View. An employee is a large record, so it gets a page rather
+		// than a drawer; the guard is the same one that gates the Manage Employees
+		// list it is opened from, so it shows nothing new.
+		path: 'view/:id',
+		component: ViewEmployeeComponent,
+		canActivate: [PermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ORG_EMPLOYEES_VIEW],
+				redirectTo: '/pages/dashboard'
+			},
+			selectors
+		},
+		resolve: { employee: EmployeeViewResolver }
 	},
 	{
 		path: 'edit/:id',

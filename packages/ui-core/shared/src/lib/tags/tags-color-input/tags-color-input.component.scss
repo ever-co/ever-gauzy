@@ -44,7 +44,21 @@ input {
     box-shadow: var(--gauzy-shadow) inset !important;
   }
 }
+
+// The tag name inside a dropdown row. `_overrides.scss` lets an appended
+// `ng-dropdown-panel` grow to `max-content`, so without a cap here ONE
+// pathologically long tag name would decide the width of the whole popup. 20rem
+// is the cap: everything shorter shows in full, only a genuinely long name
+// is truncated with an ellipsis.
+//
+// `min-width: 0` because this span is a flex item, and a flex item's default
+// `min-width: auto` refuses to shrink below its own content — which is what
+// stopped `text-overflow` from ever engaging when the row WAS narrower than the
+// text. `overflow: hidden` (not just `overflow-x`) so the box is a genuine
+// ellipsis container; `white-space: nowrap` is inherited from `.ng-option`.
 .text {
-  overflow-x: hidden;
+  min-width: 0;
+  max-width: 20rem;
+  overflow: hidden;
   text-overflow: ellipsis;
 }

@@ -24,6 +24,21 @@ $gauzy-density: (
 	text-heading-4-font-size: 1.5rem,
 	text-heading-5-font-size: 1.25rem,
 	text-heading-6-font-size: 1rem,
+	// ── Page / card title ──────────────────────────────────────────────────
+	// The ONE step every card title resolves to, whether it comes from the
+	// shared `ngx-header-title` or from a heading a template dropped straight
+	// into an `nb-card-header`. A page heading only has to out-rank body copy;
+	// at the h4 step (1.5rem/700) it read as an oversized breadcrumb path.
+	//
+	// Kept as its own token rather than reusing `text-heading-5-*`: those
+	// describe what an <h5> is worth ANYWHERE, while this describes a role,
+	// and the rules that consume it deliberately apply to h1..h5 alike. Every
+	// theme key is emitted as a CSS custom property, so the component that
+	// owns the shared title can read the same value from its inline styles.
+	gauzy-page-title-font-size: 1.25rem,
+	gauzy-page-title-font-weight: 600,
+	gauzy-page-title-line-height: 1.75rem,
+	gauzy-page-title-letter-spacing: -0.01em,
 	// Menus / sidebar
 	menu-item-padding: 0.5rem 0.75rem,
 	menu-text-font-size: 0.8125rem,
@@ -119,8 +134,162 @@ $gauzy-density: (
 	gauzy-table-chip-padding-x: 0.375rem,
 	gauzy-table-chip-gap: 0.1875rem,
 	// A status pill should cost a row exactly one line box and no more.
-	gauzy-table-badge-height: 1.25rem
+	gauzy-table-badge-height: 1.25rem,
+	// ── People lists inside cells (`ngx-people-list`) ───────────────────────
+	// One shared treatment for "several people in one cell" (Members,
+	// Managers, Employees, Assigned To, Interviewers …). The whole group must
+	// cost the row a SINGLE line box, so the avatar is the tallest thing in it
+	// and everything else is sized off `gauzy-people-avatar-size`.
+	gauzy-people-avatar-size: 1.25rem,
+	// Horizontal gap between two people; also the gap between the avatar and
+	// the name inside one person.
+	gauzy-people-gap: 0.375rem,
+	// Gap inside the avatar-only stack. Deliberately NOT a negative margin:
+	// overlapped avatars need a ring to stay legible, and a ring is exactly the
+	// per-person border this treatment exists to get rid of.
+	gauzy-people-stack-gap: 0.125rem,
+	// Names truncate on WIDTH, never on a character count: anything shorter
+	// than this renders in full, only genuinely long names get an ellipsis.
+	gauzy-people-name-max-width: 8rem,
+	gauzy-people-font-size: 0.75rem,
+	// Initials fallback + the "+N" chip, both of which sit inside an avatar box.
+	gauzy-people-initials-font-size: 0.5625rem
 );
+
+// ── Action buttons: colour by TEXT + BORDER, not by fill ────────────────────
+// A Nebular `[nbButton] status="success"` with no `outline` / `ghost` modifier
+// is an `appearance-filled` button: a saturated block of `color-success-default`
+// with white text. Those are the "+ Add" / "Approve" / "Refuse" buttons that sat
+// next to outline-styled toolbar chips and read as a different, older design
+// language.
+//
+// Re-tuned as TOKENS rather than in the ~150 templates that write
+// `status="success"` / `status="danger"`: the whole app moves at once, in all 8
+// themes, and no template has to learn a new modifier.
+//
+// `filled` and `outline` get the SAME values per status, so a button looks the
+// same whether or not its template happened to add `outline` — that asymmetry is
+// exactly what the complaint was about. Nothing re-flows: filled buttons already
+// draw a 1px border (`button-filled-border-width`), so only `background-color`,
+// `border-color` and `color` change, never the box.
+//
+// `primary` is deliberately LEFT FILLED. It stays the one solid button in the
+// app so a form's real submit action still outranks everything around it, and
+// its purple (`color-primary-500`, #6e49e8) is not the dated fill that was being
+// complained about. `basic` / `control` are untouched for the same reason.
+$gauzy-action-statuses: (success, danger, warning, info);
+
+@function gauzy-action-buttons($statuses: $gauzy-action-statuses) {
+	$tokens: ();
+
+	@each $status in $statuses {
+		// Token NAMES (unquoted), resolved per-theme by `nb-deep-find-value`, so
+		// the light and dark accent maps below can hold different values behind
+		// one set of button tokens.
+		$text: string.unquote('gauzy-action-#{$status}-text');
+		$border: string.unquote('gauzy-action-#{$status}-border');
+		$tint: string.unquote('gauzy-action-#{$status}-tint');
+		$tint-strong: string.unquote('gauzy-action-#{$status}-tint-strong');
+
+		@each $appearance in (filled, outline) {
+			$p: 'button-#{$appearance}-#{$status}';
+
+			$tokens: map.merge(
+				$tokens,
+				(
+					string.unquote('#{$p}-background-color'): transparent,
+					string.unquote('#{$p}-border-color'): $border,
+					string.unquote('#{$p}-text-color'): $text,
+					// Hover / focus / active are the only places a fill remains, and
+					// it is a low-alpha tint of the button's own accent rather than a
+					// second saturated colour.
+					string.unquote('#{$p}-focus-background-color'): $tint,
+					string.unquote('#{$p}-focus-border-color'): $text,
+					string.unquote('#{$p}-hover-background-color'): $tint,
+					string.unquote('#{$p}-hover-border-color'): $text,
+					string.unquote('#{$p}-active-background-color'): $tint-strong,
+					string.unquote('#{$p}-active-border-color'): $text,
+					string.unquote('#{$p}-disabled-background-color'): transparent,
+					string.unquote('#{$p}-disabled-border-color'): color-basic-transparent-300,
+					string.unquote('#{$p}-disabled-text-color'): text-disabled-color
+				)
+			);
+		}
+
+		// `outline` carries a text colour per interaction state; `filled` does not.
+		$tokens: map.merge(
+			$tokens,
+			(
+				string.unquote('button-outline-#{$status}-focus-text-color'): $text,
+				string.unquote('button-outline-#{$status}-hover-text-color'): $text,
+				string.unquote('button-outline-#{$status}-active-text-color'): $text
+			)
+		);
+	}
+
+	@return $tokens;
+}
+
+// The accents themselves. Two sets, because one value cannot be legible on both
+// a white card and a near-black one — a green dark enough to pass 4.5:1 on white
+// is under 3:1 on #121214, and vice versa. Contrast of the text colour:
+//   light set on #ffffff / #f9f9f9 : success 5.5 / 5.2, danger 4.8 / 4.6,
+//                                    warning 5.0 / 4.8, info 6.7 / 6.4
+//   dark  set on #121214 (panel)   : success 9.7, danger 6.8, warning 10.4,
+//                                    info 6.4
+// Borders sit at 40 % alpha of the same hue so the edge reads as "this button is
+// green / red" without becoming a second saturated block.
+$gauzy-action-accents-light: (
+	// emerald-700
+	gauzy-action-success-text: #047857,
+	gauzy-action-success-border: rgba(4, 120, 87, 0.4),
+	gauzy-action-success-tint: rgba(4, 120, 87, 0.08),
+	gauzy-action-success-tint-strong: rgba(4, 120, 87, 0.14),
+	// red-600 — replaces a pure #ff0000 / #ff3d71 fill
+	gauzy-action-danger-text: #dc2626,
+	gauzy-action-danger-border: rgba(220, 38, 38, 0.4),
+	gauzy-action-danger-tint: rgba(220, 38, 38, 0.08),
+	gauzy-action-danger-tint-strong: rgba(220, 38, 38, 0.14),
+	// amber-700
+	gauzy-action-warning-text: #b45309,
+	gauzy-action-warning-border: rgba(180, 83, 9, 0.4),
+	gauzy-action-warning-tint: rgba(180, 83, 9, 0.08),
+	gauzy-action-warning-tint-strong: rgba(180, 83, 9, 0.14),
+	// blue-700
+	gauzy-action-info-text: #1d4ed8,
+	gauzy-action-info-border: rgba(29, 78, 216, 0.4),
+	gauzy-action-info-tint: rgba(29, 78, 216, 0.08),
+	gauzy-action-info-tint-strong: rgba(29, 78, 216, 0.14)
+);
+
+$gauzy-action-accents-dark: (
+	// emerald-400
+	gauzy-action-success-text: #34d399,
+	gauzy-action-success-border: rgba(52, 211, 153, 0.4),
+	gauzy-action-success-tint: rgba(52, 211, 153, 0.1),
+	gauzy-action-success-tint-strong: rgba(52, 211, 153, 0.18),
+	// red-400
+	gauzy-action-danger-text: #f87171,
+	gauzy-action-danger-border: rgba(248, 113, 113, 0.4),
+	gauzy-action-danger-tint: rgba(248, 113, 113, 0.12),
+	gauzy-action-danger-tint-strong: rgba(248, 113, 113, 0.2),
+	// amber-400
+	gauzy-action-warning-text: #fbbf24,
+	gauzy-action-warning-border: rgba(251, 191, 36, 0.4),
+	gauzy-action-warning-tint: rgba(251, 191, 36, 0.12),
+	gauzy-action-warning-tint-strong: rgba(251, 191, 36, 0.2),
+	// blue-400
+	gauzy-action-info-text: #60a5fa,
+	gauzy-action-info-border: rgba(96, 165, 250, 0.4),
+	gauzy-action-info-tint: rgba(96, 165, 250, 0.12),
+	gauzy-action-info-tint-strong: rgba(96, 165, 250, 0.2)
+);
+
+// What actually gets merged into a theme, last, so it wins over the per-theme
+// map — same contract `$gauzy-density` has always had. Themes take the light or
+// the dark accent set depending on the canvas they paint.
+$gauzy-shared-light: map.merge(map.merge($gauzy-density, $gauzy-action-accents-light), gauzy-action-buttons());
+$gauzy-shared-dark: map.merge(map.merge($gauzy-density, $gauzy-action-accents-dark), gauzy-action-buttons());
 
 $nb-themes: nb-register-theme(
   map.merge((
@@ -173,7 +342,7 @@ $nb-themes: nb-register-theme(
     button-outline-medium-padding: 0.4375rem 0.875rem,
     button-filled-small-padding: 0.375rem 0.875rem,
     button-outline-small-padding: 0.375rem 0.875rem
-  ), $gauzy-density),
+  ), $gauzy-shared-light),
   default,
   default
 );
@@ -223,7 +392,7 @@ $nb-themes: nb-register-theme(
     header-height: 4.5rem,
     gauzy-text-color-1: rgba(255, 255, 255, 1),
     gauzy-text-color-2: rgba(255, 255, 255, 0.5)
-  ), $gauzy-density),
+  ), $gauzy-shared-dark),
   cosmic,
   cosmic
 );
@@ -272,7 +441,7 @@ $nb-themes: nb-register-theme(
     gauzy-card-6: rgba(249, 249, 249, 1),
     layout-padding: 24px 24px 0 12px,
     header-height: 4.5rem
-  ), $gauzy-density),
+  ), $gauzy-shared-light),
   corporate,
   corporate
 );
@@ -324,7 +493,7 @@ $nb-themes: nb-register-theme(
     gauzy-card-6: rgba(52, 52, 62, 1),
     layout-padding: 24px 24px 0 12px,
     header-height: 4.5rem
-  ), $gauzy-density),
+  ), $gauzy-shared-dark),
   dark,
   dark
 );
@@ -350,7 +519,7 @@ $nb-themes: nb-register-theme(
     button-filled-medium-padding: 0.4375rem 0.875rem,
     button-outline-medium-padding: 0.4375rem 0.875rem,
     gauzy-primary-background: rgb(240, 235, 246)
-  ), $gauzy-density),
+  ), $gauzy-shared-light),
   material-light,
   material-light
 );
@@ -379,7 +548,7 @@ $nb-themes: nb-register-theme(
     gauzy-sidebar-background-1: #2a2323,
     gauzy-sidebar-background-2: rgb(51 51 51),
     gauzy-border-table: rgb(37 37 59 / 16%)
-  ), $gauzy-density),
+  ), $gauzy-shared-dark),
   material-dark,
   material-dark
 );
@@ -473,7 +642,13 @@ $nb-themes: nb-register-theme(
     route-tabset-tab-text-font-weight: 400,
     color-success-default: rgba(37, 184, 105, 1),
     color-info-default: rgba(0, 136, 254, 1),
-    color-danger-default: #ff0000,
+    // Was a pure `#ff0000`. That is the single most dated colour in the palette
+    // and it is not confined to buttons: this token feeds `icon-danger-color`,
+    // `badge-danger-*`, `toastr-danger-*`, `tag-filled-danger-*`,
+    // `toggle-danger-*` and `text-danger-color`, so a delete icon sat at full
+    // saturation next to everything else. red-600 is the same signal read as a
+    // modern one, and white-on-danger goes from 4.0:1 to 4.8:1.
+    color-danger-default: #dc2626,
     color-warning-default: rgba(255, 171, 45, 1),
     gauzy-background-transparent: rgba(110, 73, 232, 0.5),
     gauzy-background-transparent-1: rgba(110, 73, 232, 0.1),
@@ -502,7 +677,7 @@ $nb-themes: nb-register-theme(
     // WCAG: >=4.5:1 for 13px menu labels on the #f4f4f5 sidebar
     // (inherited rgba(126,126,143) was only ~3.6:1)
     gauzy-text-color-2: rgba(91, 91, 107, 1)
-  ), $gauzy-density),
+  ), $gauzy-shared-light),
   gauzy-light,
   default
 );
@@ -618,7 +793,11 @@ $nb-themes: nb-register-theme(
     select-outline-basic-border-color: transparent,
     color-success-default: rgba(37, 184, 105, 1),
     color-info-default: rgba(0, 136, 254, 1),
-    color-danger-default: #ff0000,
+    // Same red-600 as `gauzy-light` — see the note there. Kept identical across
+    // the pair on purpose: a danger badge should not change hue with the theme,
+    // and #dc2626 still clears the 3:1 graphic floor on the near-black canvas
+    // (3.9:1) while carrying white text at 4.8:1.
+    color-danger-default: #dc2626,
     color-warning-default: rgba(255, 171, 45, 1),
     gauzy-background-transparent: rgba(110, 73, 232, 0.5),
     // Panel / card surface — one visible step above the near-black canvas.
@@ -729,7 +908,7 @@ $nb-themes: nb-register-theme(
     // `text-hint-color` paints placeholders and overlay captions — they are the
     // same tier of information and were two different colours.
     gauzy-text-color-2: rgba(161, 161, 170, 1)
-  ), $gauzy-density),
+  ), $gauzy-shared-dark),
   gauzy-dark,
   dark
 );

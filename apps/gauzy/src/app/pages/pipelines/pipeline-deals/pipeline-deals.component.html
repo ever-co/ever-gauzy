@@ -48,6 +48,7 @@
 <ng-template #tableLayout>
 	<div class="table-scroll-container">
 		<angular2-smart-table
+			[class.ga-table-loading]="loading"
 			#pipelineDealsTable
 			(userRowSelect)="selectPipelineDeals($event)"
 			[settings]="smartTableSettings"
@@ -65,6 +66,7 @@
 <ng-template #gridLayout let-deals="deals">
 	<div class="grid">
 		<ga-card-grid
+			[loading]="loading"
 			(onSelectedItem)="selectPipelineDeals($event)"
 			(scroll)="loadMoreDeals()"
 			[settings]="smartTableSettings"

@@ -170,7 +170,7 @@
 						</div>
 					} @else {
 						<div class="h-100">
-							<ngx-no-data-message>
+							<ngx-no-data-message [loading]="loading">
 								<div
 									message
 									[innerHTML]="'REPORT_PAGE.NO_DATA.DAILY_TIME_AND_ACTIVITY' | translate"

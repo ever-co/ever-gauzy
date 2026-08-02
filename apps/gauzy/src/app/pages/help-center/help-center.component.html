@@ -126,6 +126,7 @@
 					} @empty {
 					<div class="no-data">
 						<ngx-no-data-message
+							[loading]="loading"
 							[message]="'HELP_PAGE.NO_MATCHING_ARTICLES' | translate"
 						></ngx-no-data-message>
 					</div>
@@ -133,7 +134,7 @@
 				</div>
 				} @else {
 				<div class="no-data">
-					<ngx-no-data-message [message]="'HELP_PAGE.CHOOSE_ANY_CATEGORY' | translate"></ngx-no-data-message>
+					<ngx-no-data-message [loading]="loading" [message]="'HELP_PAGE.CHOOSE_ANY_CATEGORY' | translate"></ngx-no-data-message>
 				</div>
 				}
 			</nb-card-body>

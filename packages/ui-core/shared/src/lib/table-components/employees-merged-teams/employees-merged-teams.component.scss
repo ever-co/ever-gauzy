@@ -1,5 +1,11 @@
-div {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+@use 'themes' as *;
+
+// "Employee / Teams" is two people-ish groups in one cell. They stack, but on
+// the same tight rhythm as the people list itself so the cell stays compact.
+:host > div {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: nb-theme(gauzy-people-stack-gap);
+	min-width: 0;
 }

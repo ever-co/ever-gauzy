@@ -5,6 +5,7 @@ import { merge, of } from 'rxjs';
 import { catchError, filter, map, startWith } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { NavMenuBuilderService, NavMenuSectionItem } from '@gauzy/ui-core/core';
+import { BreadcrumbTailService } from './breadcrumb-tail.service';
 
 /**
  * One rendered level of the breadcrumb trail.
@@ -63,6 +64,7 @@ export class BreadcrumbComponent {
 	private readonly _router = inject(Router);
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _translateService = inject(TranslateService);
+	private readonly _breadcrumbTailService = inject(BreadcrumbTailService);
 
 	/** Current URL, tracked across navigations. */
 	private readonly _url = toSignal(
@@ -113,7 +115,7 @@ export class BreadcrumbComponent {
 	public readonly breadcrumbs: Signal<IBreadcrumb[]> = computed(() => {
 		// Read the language signal so switching language rebuilds (and re-translates) the trail.
 		this._language();
-		return this.buildTrail(this._url(), this._menu());
+		return this.buildTrail(this._url(), this._menu(), this._breadcrumbTailService.keys());
 	});
 
 	/**
@@ -121,9 +123,10 @@ export class BreadcrumbComponent {
 	 *
 	 * @param url Current router URL — may carry a query string, fragment or matrix params.
 	 * @param sections Navigation menu sections as defined by the menu builder.
+	 * @param tailKeys i18n keys for levels the current page entered without navigating.
 	 * @returns The ordered trail; empty outside the `/pages` shell.
 	 */
-	private buildTrail(url: string, sections: NavMenuSectionItem[]): IBreadcrumb[] {
+	private buildTrail(url: string, sections: NavMenuSectionItem[], tailKeys: string[] = []): IBreadcrumb[] {
 		const path = this.toPath(url);
 
 		// Breadcrumbs describe the in-app page hierarchy only (auth / public routes have none).
@@ -132,27 +135,53 @@ export class BreadcrumbComponent {
 		}
 
 		const match = this.findDeepestMatch(path, sections);
-		const trail = this.finalize(
-			match
-				? [
-						this.homeCrumb(),
-						...match.ancestors.map((ancestor: NavMenuSectionItem) => this.toCrumb(ancestor)),
-						this.toCrumb(match.item),
-						...this.segmentCrumbs(path, match.link)
-					]
-				: [this.homeCrumb(), ...this.segmentCrumbs(path, '/pages')]
-		);
+		const routeCrumbs = match
+			? [
+					this.homeCrumb(),
+					...match.ancestors.map((ancestor: NavMenuSectionItem) => this.toCrumb(ancestor)),
+					this.toCrumb(match.item),
+					...this.segmentCrumbs(path, match.link)
+				]
+			: [this.homeCrumb(), ...this.segmentCrumbs(path, '/pages')];
 
 		// Fallback. The menu is not a complete map of the router: sections come and go
 		// with permissions, features and plugins, and it is empty altogether on the very
 		// first paint. Whenever the resolved trail says nothing about where we are —
 		// no match, or a match that collapsed into the home crumb — describe the URL
-		// instead of rendering a lone home icon.
-		if (trail.length <= 1 && !this.isHomePath(path)) {
-			return this.finalize([this.homeCrumb(), ...this.segmentCrumbs(path, '/pages')]);
-		}
+		// instead of rendering a lone home icon. Judged on the ROUTE levels alone, so a
+		// page-supplied tail can never make an otherwise empty trail look resolved.
+		const resolved =
+			this.finalize(routeCrumbs).length <= 1 && !this.isHomePath(path)
+				? [this.homeCrumb(), ...this.segmentCrumbs(path, '/pages')]
+				: routeCrumbs;
 
-		return trail;
+		// The tail is finalized together with the route levels rather than appended
+		// afterwards: that is what marks the last tail level as the current page and
+		// collapses any repeat across the join.
+		const trail = this.finalize([...resolved, ...this.tailCrumbs(tailKeys)]);
+
+		// A crumb addressing the URL we are already on is text, not a link. Without a
+		// tail `finalize` has covered that (it is the last crumb); with one, the page's
+		// own crumb is no longer last, and a `routerLink` to the current URL would be a
+		// control that visibly does nothing — the router ignores same-URL navigation.
+		return trail.map((crumb: IBreadcrumb) => (crumb.link === path ? { ...crumb, link: null } : crumb));
+	}
+
+	/**
+	 * Maps the page-supplied tail keys to crumbs.
+	 *
+	 * They address a state of the page rather than a route, so they are never links.
+	 *
+	 * @param keys i18n keys, outermost level first.
+	 * @returns The crumbs, falling back to a humanized key when the translation is missing.
+	 */
+	private tailCrumbs(keys: string[]): IBreadcrumb[] {
+		return keys.map((key: string) => ({
+			// `BUTTONS.ADD_NEW` → `Add New`: the last i18n segment lower-cased first, or
+			// `humanize` would leave the SCREAMING_CASE key as it found it.
+			label: this.translateOrNull(key) ?? this.humanize((key.split('.').pop() ?? key).toLowerCase()),
+			link: null
+		}));
 	}
 
 	/**

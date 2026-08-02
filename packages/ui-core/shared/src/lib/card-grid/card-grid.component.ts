@@ -18,6 +18,16 @@ export class CardGridComponent implements OnInit, OnDestroy {
 	@Input() set source(content: any) {
 		this.source$.next(content);
 	}
+	/**
+	 * The owning page's in-flight flag. Forwarded to the empty state so a grid
+	 * that has not received its first response yet shows card-shaped placeholders
+	 * instead of announcing that the user has no records.
+	 */
+	@Input() loading: boolean = false;
+
+	/** How many placeholder cards to draw while loading. */
+	@Input() skeletonCards: number = 6;
+
 	@Output() onSelectedItem: EventEmitter<any> = new EventEmitter<any>();
 	@Output() scroll: EventEmitter<any> = new EventEmitter<any>();
 	selected: any = { isSelected: false, data: null };

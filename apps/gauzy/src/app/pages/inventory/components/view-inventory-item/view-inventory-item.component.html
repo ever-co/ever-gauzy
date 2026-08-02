@@ -86,6 +86,7 @@
 					<div class="row mt-5">
 						<div class="table-scroll-container">
 							<angular2-smart-table
+								[class.ga-table-loading]="loading"
 								[settings]="settingsSmartTable"
 								[source]="smartTableSource"
 								#variantTable

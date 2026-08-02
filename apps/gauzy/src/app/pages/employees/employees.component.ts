@@ -271,6 +271,25 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		}
 	}
 	/**
+	 * Navigates to the read-only View of the selected employee.
+	 *
+	 * An employee is a large record — profile, employment, rates, location,
+	 * networks — so its View is a page rather than a drawer.
+	 *
+	 * @param selectedItem The employee view model to open
+	 */
+	view(selectedItem?: EmployeeViewModel): void {
+		if (selectedItem) {
+			this.selectEmployee({ isSelected: true, data: selectedItem });
+		}
+
+		const employee = selectedItem ?? this.selectedEmployee;
+		if (employee) {
+			this._router.navigate(['/pages/employees/view', employee.id]);
+		}
+	}
+
+	/**
 	 * Navigates to the edit page for the selected employee if available.
 	 * If no employee is selected, navigates to the default edit page.
 	 * @param selectedItem The employee view model to edit

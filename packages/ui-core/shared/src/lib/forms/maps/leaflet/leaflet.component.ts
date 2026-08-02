@@ -46,7 +46,7 @@ export class LeafletMapComponent implements AfterViewInit {
 		this._icon = val;
 	}
 	get icon() {
-		return this._icon || 'assets/leafelt/marker-icon.png';
+		return this._icon || 'assets/leaflet/marker-icon.png';
 	}
 
 	@Input()
@@ -123,6 +123,18 @@ export class LeafletMapComponent implements AfterViewInit {
 	}
 	onMapMouseOut(map: any) {
 		// Do stuff with map
+	}
+
+	/**
+	 * Re-measures the map against its container.
+	 *
+	 * Leaflet caches the container size when the map is created, and the map is
+	 * created on a timer — a host whose layout is still settling (data arriving,
+	 * a panel above it growing) ends up with tiles sized for a box that no longer
+	 * exists. Callers that resize the map's box invoke this afterwards.
+	 */
+	invalidateSize() {
+		this.map?.invalidateSize();
 	}
 
 	/*

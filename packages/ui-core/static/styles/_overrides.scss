@@ -685,6 +685,42 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
   nb-accordion-item-body .item-body {
     overflow-x: hidden;
   }
+
+  // ── Card / page title type step ──────────────────────────────────────────
+  // A heading dropped straight into an `nb-card-header` IS that card's title:
+  // the page title on a page card, the dialog title on a dialog. Nothing sized
+  // those, so each fell back to Nebular's `text-heading-N` — a bare <h4> came
+  // out at 1.5rem/700 and an <h3> larger still, which is why "Add New Contact"
+  // and its ~150 siblings shouted. `ngx-header-title` was pulled off that step
+  // long ago; the headings that DON'T use it are brought onto the same one
+  // here, so there is a single answer for the whole app instead of a private
+  // `h4 { font-size: 24px }` per page (those duplicates are now removed).
+  //
+  // It lives in this mixin, not at file scope, because `nb-theme()` may only
+  // be called inside `nb-install()`. Nebular emits its own typography as a
+  // bare `h4, .h4`, so the descendant selector here out-ranks it.
+  //
+  // What it does NOT out-rank is a component stylesheet: emulated
+  // encapsulation makes a page's own `h4` rule `h4[_ngcontent-x]`, one class
+  // step above this. Every page that restated the old 24px has therefore had
+  // that rule DELETED rather than left to lose a specificity race it wins.
+  //
+  // h6 is deliberately excluded: at 1rem it already sits BELOW this step and
+  // is what templates reach for when a card header carries a SUB-heading
+  // (the file-storage provider blocks, the dashboard team panels). Pulling it
+  // up would make those louder rather than quieter.
+  nb-card-header {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5 {
+      font-size: nb-theme(gauzy-page-title-font-size);
+      font-weight: nb-theme(gauzy-page-title-font-weight);
+      line-height: nb-theme(gauzy-page-title-line-height);
+      letter-spacing: nb-theme(gauzy-page-title-letter-spacing);
+    }
+  }
 }
 
 @mixin f-window-mode($padding-top) {
@@ -1193,6 +1229,56 @@ angular2-smart-table {
     .ng-arrow {
       transform: rotate(180deg);
     }
+  }
+}
+
+// ── Appended dropdown panels size to their options, not to the trigger ───────
+//
+// `appendTo="body"` gets the panel OUT of a clipping ancestor (a card, a
+// `.table-scroll-container`), but ng-select then pins the panel to the trigger's
+// box: `NgDropdownPanelComponent._updateXPosition()` writes
+// `left: <offset>px; right: auto; width: <trigger>px; min-width: <trigger>px`
+// inline on the panel, once, when it appends it. In an `angular2-smart-table`
+// filter row the trigger is one narrow column, so a Tags filter rendered its
+// options as "Ur…", "Cr…", "Br…" with the rest of the row empty.
+//
+// The fix keeps ng-select's inline `left` (the panel stays anchored under its
+// trigger) and its inline `min-width` (the panel is never NARROWER than the
+// trigger), and replaces only the inline `width` with the classic
+// absolutely-positioned "auto width between left and right" resolution:
+//
+//   left       ng-select's inline offset                       — the anchor
+//   right      1rem from the initial containing block          — the viewport edge
+//   width      auto  -> tentative used width = right - left, i.e. all the room
+//              there is between the trigger and the edge of the screen
+//   max-width  max-content -> shrunk straight back to exactly what the widest
+//              option needs, whenever that is less than the room available
+//   min-width  ng-select's inline trigger width. Per CSS 2.1 §10.4 min-width is
+//              applied AFTER max-width and wins, so a wide form select still
+//              gets a panel exactly as wide as its input — unchanged.
+//
+// The result is "as wide as the options, capped at the screen edge" with no JS:
+// nothing to re-run on scroll, resize, or when the option list changes.
+//
+// Scoped to `body > ng-dropdown-panel` because only an APPENDED panel carries
+// the inline `left`/`width`. A non-appended panel is `width: 100%` of its
+// `.ng-select` (which is the containing block), and giving that one a `right`
+// would make the browser solve for `left` instead and slide it sideways.
+//
+// `html:not([dir='rtl'])` mirrors ng-select's own RTL test
+// (`document.documentElement.dir === 'rtl'`): in RTL it anchors the panel on
+// `right` and sets `left: auto`, and forcing `right` there would tear it off its
+// trigger. `@supports` so that a browser without `max-content` keeps today's
+// behaviour rather than getting a panel stretched to the screen edge.
+//
+// `!important` on the two properties that have to beat an INLINE style; the
+// note above the `.ng-dropdown-panel` block in `nb-overrides()` explains why the
+// rest of this file needs it too.
+@supports (max-width: max-content) {
+  html:not([dir='rtl']) > body > ng-dropdown-panel.ng-dropdown-panel {
+    width: auto !important;
+    right: 1rem !important;
+    max-width: max-content;
   }
 }
 

@@ -167,6 +167,7 @@
 					</nb-card>
 				} @else {
 					<ngx-no-data-message
+						[loading]="loading"
 						[message]="'REPORT_PAGE.NO_DATA.CLIENT_BUDGET' | translate"
 					></ngx-no-data-message>
 				}

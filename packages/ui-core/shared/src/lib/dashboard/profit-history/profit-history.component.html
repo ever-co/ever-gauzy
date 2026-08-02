@@ -43,6 +43,7 @@
   <nb-card-body>
     <div class="table-scroll-container">
       <angular2-smart-table
+        [class.ga-table-loading]="loading"
         class="table"
         [settings]="smartTableSettings"
         [source]="smartTableSource"

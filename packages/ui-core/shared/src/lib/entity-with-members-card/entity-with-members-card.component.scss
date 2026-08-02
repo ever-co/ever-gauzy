@@ -18,21 +18,9 @@
     flex-direction: column;
     justify-content: space-between;
 
-    .name-container {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-
-      .image-container {
-        width: 70px;
-        height: 50px;
-        display: flex;
-
-        img {
-          height: 100%;
-          max-width: 70px;
-        }
-      }
+    // Members are rendered by `ngx-people-list`, which owns its own metrics.
+    .members {
+      min-width: 0;
     }
 
     .button-container {

@@ -57,12 +57,6 @@ nb-badge {
     display: block;
   }
 }
-h4 {
-  font-size: 24px;
-  font-weight: 500;
-  line-height: 30px;
-  letter-spacing: 0em;
-}
 
 :host {
   @include nb-card-overrides(

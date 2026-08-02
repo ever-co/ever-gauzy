@@ -111,6 +111,7 @@
 					} } @else {
 					<div class="no-data">
 						<ngx-no-data-message
+							[loading]="loading"
 							[title]="'INTEGRATIONS.MESSAGE.NO_INTEGRATIONS' | translate"
 						></ngx-no-data-message>
 					</div>

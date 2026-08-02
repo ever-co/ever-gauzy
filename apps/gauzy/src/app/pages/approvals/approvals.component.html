@@ -37,6 +37,7 @@
     @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
       <div class="table-scroll-container">
         <angular2-smart-table
+          [class.ga-table-loading]="loading"
           (userRowSelect)="selectRequestApproval($event)"
           [settings]="settingsSmartTable"
           [source]="smartTableSource"
@@ -52,6 +53,7 @@
       </div>
     } @else {
       <ga-card-grid
+        [loading]="loading"
         [totalItems]="pagination?.totalItems"
         (scroll)="onScroll()"
         (onSelectedItem)="selectRequestApproval($event)"
@@ -70,17 +72,19 @@
         >
       </ngx-request-approval-action>
     }
-    <button
-      nbButton
-      status="basic"
-      class="action secondary"
-      [disabled]="!selectedItem && disableButton"
-      size="small"
-      underConstruction
-      >
-      <nb-icon icon="eye-outline"></nb-icon>
-      {{ 'BUTTONS.VIEW' | translate }}
-    </button>
+    <ng-template ngxPermissionsOnly="REQUEST_APPROVAL_VIEW">
+      <button
+        nbButton
+        status="basic"
+        class="action secondary"
+        [disabled]="!selectedItem && disableButton"
+        size="small"
+        (click)="view(selectedItem)"
+        >
+        <nb-icon icon="eye-outline"></nb-icon>
+        {{ 'BUTTONS.VIEW' | translate }}
+      </button>
+    </ng-template>
     <ng-template ngxPermissionsOnly="REQUEST_APPROVAL_EDIT">
       <button
         (click)="save(false, selectedItem)"
@@ -115,3 +119,16 @@
       </button>
     </ng-template>
   </ng-template>
+
+<!-- Read-only View. The projected content is gated here (not inside the drawer)
+     so the record renderer is built fresh for each request that is opened. -->
+<ngx-record-view-drawer
+  [open]="!!viewedRequestApproval"
+  heading="APPROVAL_REQUEST_PAGE.HEADER"
+  [subtitle]="viewedRequestApproval?.name"
+  (closed)="closeView()"
+  >
+  @if (viewedRequestApproval) {
+    <ngx-record-view [record]="viewedRequestApproval" [sections]="viewSections"></ngx-record-view>
+  }
+</ngx-record-view-drawer>
