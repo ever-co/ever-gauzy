@@ -91,12 +91,23 @@
   padding-right: 10px;
   max-width: 49% !important;
 }
-// Removed `.active { background: #ffffff; }`. In this template `active` is only
-// ever bound on the aside-nav `<li>` items (`[class.active]="general?.expanded"`
-// and its nine siblings), and `.aside-nav ul li.active` above already paints
-// those with `nb-theme(background-basic-color-1)` at higher specificity — so the
-// bare rule could never win, and a hard white would have been wrong on the dark
-// themes if it had.
+// Removed `.active { background: #ffffff; }`, which was NOT dead — it was the bug.
+//
+// `active` is bound here in two ways. The visible one is the aside-nav `<li>`
+// items (`[class.active]="general?.expanded"` and nine siblings), which
+// `.aside-nav ul li.active` above already paints with
+// `nb-theme(background-basic-color-1)` at higher specificity. The one that is
+// easy to miss is that this template also holds 19 `<nb-option>` elements, and
+// Nebular host-binds `class.active` onto them at RUNTIME as the keyboard manager
+// moves — nothing a grep of the template can see.
+//
+// Those options are authored here, so they carry this component's `_ngcontent`
+// attribute even after `nb-select` portals them into the CDK overlay, and the
+// compiled `.active[_ngcontent-x]` (0,2,0) outranks Nebular's own
+// `nb-option-list nb-option.active` (0,1,2). The hard white therefore won: the
+// highlighted item in every dropdown on this page was painted #ffffff on all
+// eight themes, including the near-black ones. Dropping the rule hands the
+// styling back to Nebular, which resolves per theme.
 
 // start of nb-overrides
 nb-accordion {

@@ -17,9 +17,13 @@
       <div class="col-sm-12 button-imports">
         <div class="button-import">
           <!--
-            `shape="round"` was dropped: this was the only one of the four
-            buttons in this row that asked for a pill, so it sat next to three
-            rectangles.
+            `shape="round"` was dropped: this was the only button in this row
+            that asked for a pill, so it sat next to rectangles. (The row holds
+            up to four — Migrate To Cloud is behind `!environment.DEMO` and the
+            MIGRATE_GAUZY_CLOUD permission, so on a demo build there are fewer.)
+
+            This is a deliberate restyle of something that did render, not the
+            removal of a rule that never applied.
           -->
           <button
             class="action"

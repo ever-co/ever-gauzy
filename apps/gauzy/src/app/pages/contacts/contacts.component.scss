@@ -4,7 +4,7 @@
  * REMOVED: the `.contact-list` block (`.member-card`, `.contact-info`,
  * `.info-line`, `.info-value`, `.info-list-item`).
  *
- * `contact-list` appears nowhere in the worktree outside this file — the card
+ * `contact-list` appears nowhere in the repository outside this file — the card
  * layout is rendered by `ga-card-grid`, a CHILD component, whose elements carry
  * ITS `_ngcontent` attribute, so these rules could never have reached them under
  * the default emulated encapsulation. (`ga-card-grid` styles its own `.info-line`
