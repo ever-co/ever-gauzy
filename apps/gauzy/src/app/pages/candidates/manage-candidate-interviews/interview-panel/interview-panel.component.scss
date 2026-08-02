@@ -51,10 +51,12 @@
 // `.info-line { color: darkgray }`), the bare `.badge` box and the
 // `.badge-warning` / `.badge-primary` fills `#fa0` / `#0095ff`.
 //
-// All dead: this template renders its grid view through `<ga-card-grid>` and
-// none of those class names appears in any template in the repo. Component
-// styles are view-encapsulated, so they could not reach the card grid's own
-// markup either.
+// All dead, but not because the names are unused — `.card-header` and
+// `.card-body` DO appear in this template. They were nested inside
+// `:host .card-container`, and nothing here is a `.card-container`, so the
+// nested rules never matched. The grid view renders through `<ga-card-grid>`,
+// whose markup these styles cannot reach anyway: they are view-encapsulated to
+// this component's own template.
 
 :host {
   @include card-overrides(unset, calc($default-card-height), $default-radius);
