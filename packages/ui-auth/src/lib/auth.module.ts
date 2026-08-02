@@ -19,6 +19,7 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+	AuthService,
 	ElectronService,
 	InviteService,
 	NoAuthGuard,
@@ -114,7 +115,10 @@ const COMPONENTS = [
 			multi: true
 		},
 		InviteService,
-		RoleService
+		RoleService,
+		// Read by the register and accept-invite forms to fetch the legal
+		// documents they must pin an acceptance to.
+		AuthService
 	]
 })
 export class NgxAuthModule {
