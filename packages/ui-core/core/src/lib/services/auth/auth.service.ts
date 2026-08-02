@@ -9,6 +9,7 @@ import {
 	IUserRegistrationInput,
 	IUserSigninWorkspaceResponse,
 	IUserTokenInput,
+	ITermsAcceptanceDocument,
 	PermissionsEnum,
 	RolesEnum
 } from '@gauzy/contracts';
@@ -104,6 +105,20 @@ export class AuthService {
 
 	register(input: IUserRegistrationInput): Observable<IUser> {
 		return this.http.post<IUser>(`${API_PREFIX}/auth/register`, input);
+	}
+
+	/**
+	 * The legal documents a new account must accept, as currently published.
+	 *
+	 * Fetched rather than hard-coded so the version and the sha256 the user is
+	 * shown are the ones the server will accept — and so the object that gates
+	 * the submit button is the same object that gets posted back. Hard-coding a
+	 * version in the client is how a checkbox ends up meaning nothing.
+	 */
+	getRequiredTermsDocuments(locale?: string): Observable<ITermsAcceptanceDocument[]> {
+		return this.http.get<ITermsAcceptanceDocument[]>(`${API_PREFIX}/terms/required`, {
+			params: toParams(locale ? { locale } : {})
+		});
 	}
 
 	requestPassword(requestPasswordInput): Observable<{ id?: string; token?: string }> {

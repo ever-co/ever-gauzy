@@ -14,6 +14,7 @@ import { IRelationalImageAsset } from './image-asset.model';
 import { IOrganization, TimeFormatEnum } from './organization.model';
 import { ISocialAccount } from './social-account.model';
 import { IOrganizationTeam } from './organization-team.model';
+import { ITermsAcceptanceInput } from './terms-acceptance.model';
 
 // Define the UserStats type
 export interface UserStats {
@@ -94,7 +95,15 @@ export interface IUserFindInput extends IBasePerTenantEntityModel {
 	preferredLanguage?: LanguagesEnum;
 }
 
-export interface IUserRegistrationInput {
+/**
+ * Registration input.
+ *
+ * Extends {@link ITermsAcceptanceInput}, so the `terms` claims a signup form
+ * collected travel with the payload instead of being dropped on the floor. Both
+ * entry points that create a user — `POST /auth/register` and the four
+ * invite-acceptance handlers — funnel through this shape.
+ */
+export interface IUserRegistrationInput extends ITermsAcceptanceInput {
 	user: IUser;
 	password?: string;
 	confirmPassword?: string;

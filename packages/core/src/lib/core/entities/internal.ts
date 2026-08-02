@@ -155,6 +155,7 @@ export * from '../../auth/oauth-client/oauth-client.entity';
 export * from '../../token/entities/token.entity';
 export * from '../../tenant/tenant-setting/tenant-setting.entity';
 export * from '../../tenant/tenant.entity';
+export * from '../../terms-acceptance/terms-acceptance.entity';
 export * from '../../time-off-policy/time-off-policy.entity';
 export * from '../../time-off-request/time-off-request.entity';
 export * from '../../time-tracking/activity/activity.entity';
