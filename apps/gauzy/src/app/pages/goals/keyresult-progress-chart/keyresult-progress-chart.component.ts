@@ -60,13 +60,24 @@ export class KeyResultProgressChartComponent extends TranslationBaseComponent im
 		this.themeService
 			.onThemeChange()
 			.pipe(untilDestroyed(this))
-			.subscribe((theme) => {
+			.subscribe(async (theme) => {
 				const name = theme?.name;
 				if (!name || name === this.renderedTheme) {
 					return;
 				}
+				// Marked rendered only AFTER the rebuild succeeds. Setting it up front
+				// meant a failed `getAllTimeFrames` left the chart in the old theme's
+				// colours while the guard believed the new theme was drawn, so every
+				// later emission for that theme was skipped and the chart never
+				// recovered.
+				const previous = this.renderedTheme;
 				this.renderedTheme = name;
-				this.updateChart(this.keyResult);
+				try {
+					await this.updateChart(this.keyResult);
+				} catch (error) {
+					this.renderedTheme = previous;
+					throw error;
+				}
 			});
 	}
 
