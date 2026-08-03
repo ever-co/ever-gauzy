@@ -4526,7 +4526,9 @@
 	"GAUZY_MAINTENANCE": "crwdns10034:0crwdne10034:0",
 	"LEGAL": {
 		"PRIVACY_POLICY": "crwdns9998:0crwdne9998:0",
-		"TERMS_AND_CONDITIONS": "crwdns10000:0crwdne10000:0"
+		"TERMS_AND_CONDITIONS": "crwdns10000:0crwdne10000:0",
+		"DOCUMENT_VERSION": "Version {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "In force from {{ date }}"
 	},
 	"LOADING": "crwdns10002:0crwdne10002:0",
 	"ACCOUNTING_TEMPLATES_PAGE": {

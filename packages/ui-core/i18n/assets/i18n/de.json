@@ -5152,7 +5152,9 @@
 	"GAUZY_MAINTENANCE": "{{ companySite }} @ Wartung",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Datenschutzerklärung",
-		"TERMS_AND_CONDITIONS": "Allgemeine Geschäftsbedingungen"
+		"TERMS_AND_CONDITIONS": "Allgemeine Geschäftsbedingungen",
+		"DOCUMENT_VERSION": "Version {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "In Kraft ab {{ date }}"
 	},
 	"LOADING": "Laden, bitte warten...",
 	"ACCOUNTING_TEMPLATES_PAGE": {

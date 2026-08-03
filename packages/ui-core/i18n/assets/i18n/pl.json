@@ -5155,7 +5155,9 @@
 	"GAUZY_MAINTENANCE": "{{ companySite }} @ Utrzymanie",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Polityka prywatności",
-		"TERMS_AND_CONDITIONS": "Regulamin"
+		"TERMS_AND_CONDITIONS": "Regulamin",
+		"DOCUMENT_VERSION": "Wersja {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "Obowiązuje od {{ date }}"
 	},
 	"LOADING": "Ładowanie, proszę czekać..",
 	"ACCOUNTING_TEMPLATES_PAGE": {
