@@ -39,6 +39,8 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	 * `''` is the "All" entry, i.e. no filter.
 	 */
 	selectedFilterValue: string = '';
+	/** Bumped per refresh so a superseded load stops before clobbering fresher data. */
+	private loadGeneration = 0;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -70,8 +72,13 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 			.pipe(
 				debounceTime(300),
 				tap(() => (this.loading = true)),
-				tap(() => this.getTags()),
-				tap(() => this.getTagTypes()),
+				// Sequential on purpose. Both are async and neither was awaited, so they
+				// raced: `getTagTypes()` ends by reconciling the selected filter chip
+				// against `allTags`, which `getTags()` is what refreshes. When the
+				// tag-types response won, the reconcile reloaded the PREVIOUS
+				// organization's tags. Awaiting inside one tap orders them without
+				// changing what downstream operators see (they never waited either).
+				tap(() => this.loadTagsThenTypes()),
 				tap(() => this.clearItem()),
 				untilDestroyed(this)
 			)
@@ -348,6 +355,29 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 			this._isFiltered = false;
 			this.smartTableSource.load(this.allTags);
 		}
+	}
+
+	/**
+	 * Loads the tags, then the tag types, in that order.
+	 *
+	 * Ordered because `getTagTypes()` finishes by reconciling the selected filter chip
+	 * against `allTags`, which `getTags()` is what refreshes; un-awaited they raced and
+	 * the reconcile could run against the previous organization's tags.
+	 *
+	 * The generation check drops the second half of a pass that a newer refresh has
+	 * already superseded — a pagination, search or organization change arriving while
+	 * the first request is still in flight. It does not abort the in-flight HTTP call
+	 * (these are promises, not cancellable observables), and overlapping refreshes
+	 * were possible before this too, since both loads were fired un-awaited; this
+	 * closes the specific window the reconcile depends on.
+	 */
+	private async loadTagsThenTypes(): Promise<void> {
+		const generation = ++this.loadGeneration;
+		await this.getTags();
+		if (generation !== this.loadGeneration) {
+			return;
+		}
+		await this.getTagTypes();
 	}
 
 	async getTags() {

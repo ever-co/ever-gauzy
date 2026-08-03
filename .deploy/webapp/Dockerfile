@@ -123,6 +123,20 @@ COPY --chown=node:node patches ./patches
 # skipped). Registry rewrite, install and .npmrc/.yarnrc cleanup happen in ONE RUN so the
 # token never persists in any layer.
 # Must be without --production because we need dev deps installed.
+#
+# This image's final stage is `FROM nginx:alpine` and copies nothing but the compiled
+# Angular bundle out of `build` — no Node runtime, no database. `better-sqlite3` and
+# `bcrypt` exist only inside these throwaway stages, so the postinstall guard that
+# normally fails a build when a native package produces no binary must not apply here:
+# it would reject an image over a package the image never ships. It fired for real when
+# a transient `unofficial-builds.nodejs.org` header fetch stopped node-gyp mid-compile
+# and took the stage web image down with it.
+#
+# The api and worker images deliberately leave this unset and keep the strict default —
+# the api sets `ENV DB_TYPE=better-sqlite3`, so a missing binary there is fatal at runtime
+# and the build SHOULD stop.
+ENV REQUIRE_NATIVE_BINARIES=""
+
 ARG VERDACCIO_REGISTRY=""
 RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
 	VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
