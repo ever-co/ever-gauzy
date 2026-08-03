@@ -121,6 +121,20 @@ export const enterDateInputData = async () => {
 	await clearField(PaymentsPage.dateInputCss);
 	const date = dayjs().format('MMM D, YYYY');
 	await enterInput(PaymentsPage.dateInputCss, date);
+	// Typing into the Nebular datepicker leaves its calendar overlay open with focus
+	// still in the field — the failure snapshot shows `textbox "Payment Date" [active]`
+	// with the Payment Method select immediately below it still closed on its
+	// placeholder, and no `.option-list` anywhere. The next step clicks that select,
+	// the open overlay eats it, and the spec then times out waiting for an option
+	// list that was never opened. It failed all three retries, so it is deterministic
+	// rather than flaky.
+	//
+	// Dismissed with the same in-dialog outside-click this file already uses for the
+	// project dropdown: the inert dialog TITLE. NOT Escape — the payment dialog is
+	// opened with NbDialog defaults (closeOnEsc = true), so a document-level Escape
+	// closes the WHOLE form, which is a failure mode this suite has already hit.
+	await getPage().locator(PaymentsPage.cardBodyCss).first().click({ force: true }).catch(() => {});
+	await getPage().waitForTimeout(300);
 };
 
 export const paymentMethodDropdownVisible = async () => {
