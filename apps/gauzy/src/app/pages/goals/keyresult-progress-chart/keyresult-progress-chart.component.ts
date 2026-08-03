@@ -31,6 +31,9 @@ export class KeyResultProgressChartComponent extends TranslationBaseComponent im
 	private readonly elementRef = inject(ElementRef);
 	private readonly themeService = inject(NbThemeService);
 
+	/** Theme the current datasets were coloured for; guards the replayed emission. */
+	private renderedTheme?: string;
+
 	constructor(
 		private goalSettingsService: GoalSettingsService,
 		private store: Store,
@@ -40,6 +43,7 @@ export class KeyResultProgressChartComponent extends TranslationBaseComponent im
 	}
 
 	ngOnInit() {
+		this.renderedTheme = this.themeService.currentTheme;
 		this.updateChart(this.keyResult);
 
 		// Chart.js copies concrete colour strings into the dataset; it cannot hold a
@@ -47,10 +51,34 @@ export class KeyResultProgressChartComponent extends TranslationBaseComponent im
 		// otherwise leave both lines painted in the colours of the theme that was
 		// active when the chart was built — the exact contrast problem the tokens were
 		// introduced to solve. Rebuilding on theme change re-reads them.
+		//
+		// Compared against the theme already drawn rather than piped through `skip(1)`:
+		// `onThemeChange()` REPLAYS the current theme to a new subscriber, so a bare
+		// subscription rebuilt the chart immediately and fired `getAllTimeFrames` a
+		// second time for every key result on screen. A name comparison drops that
+		// replay without assuming the replay is always there.
 		this.themeService
 			.onThemeChange()
 			.pipe(untilDestroyed(this))
-			.subscribe(() => this.updateChart(this.keyResult));
+			.subscribe(async (theme) => {
+				const name = theme?.name;
+				if (!name || name === this.renderedTheme) {
+					return;
+				}
+				// Marked rendered only AFTER the rebuild succeeds. Setting it up front
+				// meant a failed `getAllTimeFrames` left the chart in the old theme's
+				// colours while the guard believed the new theme was drawn, so every
+				// later emission for that theme was skipped and the chart never
+				// recovered.
+				const previous = this.renderedTheme;
+				this.renderedTheme = name;
+				try {
+					await this.updateChart(this.keyResult);
+				} catch (error) {
+					this.renderedTheme = previous;
+					throw error;
+				}
+			});
 	}
 
 	public async updateChart(keyResult: IKeyResult) {
