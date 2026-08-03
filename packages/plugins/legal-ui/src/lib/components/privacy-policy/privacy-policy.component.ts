@@ -1,74 +1,59 @@
-
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
+import { ILegalDocument } from '../../models/legal-document.model';
 import { LegalService } from '../../providers/legal.service';
 
-export const PRIVACY_POLICY_ENDPOINT = 'https://www.iubenda.com/api/privacy-policy/18120170';
-export const COOKIE_PRIVACY_POLICY_ENDPOINT = 'https://www.iubenda.com/api/privacy-policy/18120170/cookie-policy';
-
 @Component({
-    templateUrl: './privacy-policy.component.html',
-    styleUrls: ['./privacy-policy.component.scss'],
-    standalone: false
+	templateUrl: './privacy-policy.component.html',
+	styleUrls: ['./privacy-policy.component.scss'],
+	standalone: false
 })
 export class PrivacyPolicyComponent implements OnInit, OnDestroy {
+	/** Rendered HTML of the Privacy Policy. Bundled with the application, never fetched. */
 	public privacy_policy: string;
+
+	/** Rendered HTML of the Cookie Policy. Bundled with the application, never fetched. */
 	public cookie_policy: string;
 
-	constructor(private readonly legalService: LegalService, @Inject(DOCUMENT) private readonly _document: Document) {}
+	/** Metadata of the Privacy Policy - title, version, effective date, publishing entity. */
+	public privacy: ILegalDocument | null = null;
 
-	/**
-	 * Load privacy policy from iubenda
-	 */
+	/** Metadata of the Cookie Policy - title, version, effective date, publishing entity. */
+	public cookies: ILegalDocument | null = null;
+
+	constructor(
+		private readonly legalService: LegalService,
+		private readonly translateService: TranslateService,
+		@Inject(DOCUMENT) private readonly _document: Document
+	) {}
+
 	ngOnInit(): void {
-		// Get privacy policy from iubenda
-		this.getPrivacyPolicyJsonFromUrl(PRIVACY_POLICY_ENDPOINT);
-		this.getCookiePolicyJsonFromUrl(COOKIE_PRIVACY_POLICY_ENDPOINT);
+		// Read the privacy and cookie policies from the bundled corpus
+		this.loadPolicies();
 
 		// Add class to body to display privacy policy
 		this._document.body.classList.add('privacy-container');
 	}
 
 	/**
-	 * Load privacy policy from iubenda
+	 * Loads the Privacy Policy and the Cookie Policy from the corpus bundled into the application.
 	 *
-	 * @param url https://www.iubenda.com/api/privacy-policy/18120170
+	 * The text is vendored from `@ever-co/legal` at build time, so this is a synchronous lookup
+	 * that cannot fail because of a network problem or a lapsed third-party subscription.
 	 */
-	async getPrivacyPolicyJsonFromUrl(url: string) {
-		try {
-			// Get privacy policy from iubenda
-			const data: any = await this.legalService.getContentFromFromUrl(PRIVACY_POLICY_ENDPOINT);
+	private loadPolicies(): void {
+		const locale = this.translateService.currentLang;
 
-			// Add privacy policy to component
-			if (data?.content) {
-				this.privacy_policy = data.content;
-			}
-		} catch (error) {
-			console.error('Error fetching privacy policy:', error);
-		}
+		this.privacy = this.legalService.getDocument('privacy', locale);
+		this.privacy_policy = this.privacy?.html ?? '';
+
+		this.cookies = this.legalService.getDocument('cookies', locale);
+		this.cookie_policy = this.cookies?.html ?? '';
 	}
 
 	/**
-	 * Load cookie policy from iubenda
-	 *
-	 * @param url https://www.iubenda.com/api/privacy-policy/18120170/cookie-policy
-	 */
-	async getCookiePolicyJsonFromUrl(url: string) {
-		try {
-			// Get cookie policy from iubenda
-			const data: any = await this.legalService.getContentFromFromUrl(COOKIE_PRIVACY_POLICY_ENDPOINT);
-
-			// Add cookie policy to component
-			if (data?.content) {
-				this.cookie_policy = data.content;
-			}
-		} catch (error) {
-			console.error('Error fetching cookie policy:', error);
-		}
-	}
-
-	/**
-	 * Remove class to body to hide privacy policy
+	 * Remove class from body to hide privacy policy
 	 */
 	ngOnDestroy() {
 		this._document.body.classList.remove('privacy-container');

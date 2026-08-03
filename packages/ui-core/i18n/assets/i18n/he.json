@@ -5147,7 +5147,9 @@
 	"GAUZY_MAINTENANCE": "{{ companySite }} @ Maintenance",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Privacy Policy",
-		"TERMS_AND_CONDITIONS": "Terms & Conditions"
+		"TERMS_AND_CONDITIONS": "Terms & Conditions",
+		"DOCUMENT_VERSION": "Version {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "In force from {{ date }}"
 	},
 	"LOADING": "Loading, please hold....",
 	"ACCOUNTING_TEMPLATES_PAGE": {
