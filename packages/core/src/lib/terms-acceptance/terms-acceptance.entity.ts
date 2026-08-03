@@ -1,4 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PrimaryKey } from '@mikro-orm/core';
+import { PrimaryColumn } from 'typeorm';
 import { termsAcceptanceEntitySchema } from 'terms-acceptance/typeorm';
 import type { TermsAcceptanceEntity as ITermsAcceptanceRow } from 'terms-acceptance/typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
@@ -74,9 +76,23 @@ function acceptedAtColumnType(): 'timestamptz' | 'datetime' {
  */
 @MultiORMEntity('terms_acceptance', { mikroOrmRepository: () => MikroOrmTermsAcceptanceRepository })
 export class TermsAcceptance implements ITermsAcceptanceRow {
-	/** Identifier minted by `terms-acceptance`, e.g. `ta_m8k2p10000a1b2c3d4e5f6`. */
+	/**
+	 * Identifier minted by `terms-acceptance`, e.g. `ta_m8k2p10000a1b2c3d4e5f6`.
+	 *
+	 * Declared with both ORMs' own primary-key decorators rather than
+	 * `@MultiORMColumn({ primary: true })`. That option only ever reached TypeORM:
+	 * `MultiORMColumn` forwards its options to `@Column()` but always emits a plain
+	 * MikroORM `@Property()`, so MikroORM saw a table with no primary key and
+	 * `discoverEntities` refused to boot the API with
+	 * `MetadataError: TermsAcceptance entity is missing @PrimaryKey()`.
+	 *
+	 * `BaseEntity` stacks the two decorators the same way; it is the pattern in this
+	 * codebase for a primary key. The id is supplied on insert, not generated, so
+	 * this is `@PrimaryColumn` rather than `@PrimaryGeneratedColumn`.
+	 */
 	@ApiProperty({ type: () => String })
-	@MultiORMColumn({ primary: true, type: String, length: len('id', 128) })
+	@PrimaryKey({ type: 'string', length: len('id', 128) })
+	@PrimaryColumn({ type: String, length: len('id', 128) })
 	id: string;
 
 	/** The user the acceptance belongs to. Not an FK — see the class comment. */
