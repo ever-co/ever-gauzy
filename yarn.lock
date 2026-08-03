@@ -5923,6 +5923,11 @@
     "@eslint/core" "^0.17.0"
     levn "^0.4.1"
 
+"@ever-co/legal@^0.1.0":
+  version "0.1.2"
+  resolved "https://registry.npmjs.org/@ever-co/legal/-/legal-0.1.2.tgz#586ac467d2bb62d4296808b0790459ccd6f593c1"
+  integrity sha512-TbnRbXD2AhGBI0F/odq+TC5eCFrp4eTDziDy3gJhautda9td5Po23GRCQ6PfvW58J8xQrZXNMBIKYle36Kv1/g==
+
 "@ever-gauzy/plugin-integration-plane-api@^0.1.6":
   version "0.1.6"
   resolved "https://registry.npmjs.org/@ever-gauzy/plugin-integration-plane-api/-/plugin-integration-plane-api-0.1.6.tgz#beec9de448ea06050c49a9897c234fb015a4dfa1"
@@ -43345,6 +43350,11 @@ term-size@^2.1.0:
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/term-size/-/term-size-2.2.1.tgz#2a6a54840432c2fb6320fea0f415531e90189f54"
   integrity sha512-wK0Ri4fOGjv/XPy8SBHZChl8CM7uMc5VML7SqiQ0zG7+J5Vr+RMQDoHa2CNT6KHUnTGIXH34UDMkPzAUyapBZg==
+
+terms-acceptance@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.npmjs.org/terms-acceptance/-/terms-acceptance-0.1.0.tgz#4d3651f8f3eb04181b299679e260ad10414f9b98"
+  integrity sha512-UAf6OzWTjX76LVlTMPrzZffDw9GHvoSpbX95nzWUgkiIxeaOFDsdjGt9Cb2DxI40oRmshYWhBmdAi20wlhjP7w==
 
 terser-webpack-plugin@^5.3.11:
   version "5.4.0"
