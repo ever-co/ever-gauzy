@@ -122,8 +122,8 @@ export const enterDateInputData = async () => {
 	const date = dayjs().format('MMM D, YYYY');
 	await enterInput(PaymentsPage.dateInputCss, date);
 	// Typing into the Nebular datepicker leaves its calendar overlay open with focus
-	// still in the field — the failure snapshot shows `textbox "Payment Date" [active]`
-	// with the Payment Method select immediately below it still closed on its
+	// still in the field — the failure snapshot shows the Payment Date field marked
+	// active, with the Payment Method select immediately below it still closed on its
 	// placeholder, and no `.option-list` anywhere. The next step clicks that select,
 	// the open overlay eats it, and the spec then times out waiting for an option
 	// list that was never opened. It failed all three retries, so it is deterministic
