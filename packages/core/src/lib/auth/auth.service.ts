@@ -97,6 +97,7 @@ import { createClient } from 'redis';
 import { EVER_REDIS_CLIENT } from '../redis/redis.module';
 import { OAuthClientService } from './oauth-client/oauth-client.service';
 import { OAuthClient } from './oauth-client/oauth-client.entity';
+import { TermsAcceptanceService } from '../terms-acceptance/terms-acceptance.service';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -132,7 +133,8 @@ export class AuthService extends SocialAuthService {
 		private readonly accessTokenService: AccessTokenService,
 		private readonly typeOrmPasswordResetRepository: TypeOrmPasswordResetRepository,
 		private readonly mikroOrmPasswordResetRepository: MikroOrmPasswordResetRepository,
-		private readonly oauthClientService: OAuthClientService
+		private readonly oauthClientService: OAuthClientService,
+		private readonly termsAcceptanceService: TermsAcceptanceService
 	) {
 		super();
 	}
@@ -1050,6 +1052,20 @@ export class AuthService extends SocialAuthService {
 		let tenant = input.user.tenant;
 		const { organizationId } = input;
 
+		// 0. Validate the terms acceptance BEFORE anything irreversible happens.
+		//
+		// The register form gates its submit button on a hard-required terms
+		// checkbox, and until now the value went nowhere: no field on the DTO,
+		// no column, no row. The invite-acceptance form had the identical
+		// defect. Checking the claims here — ahead of user creation — means a
+		// missing, malformed or unpublished claim rejects the registration
+		// outright rather than leaving a half-created account behind. The check
+		// is pure and synchronous (no storage, no clock, no network), so it is
+		// cheap enough for the hot path.
+		if (isNotEmpty(input.terms)) {
+			this.termsAcceptanceService.assertClaimsArePublished(input.terms);
+		}
+
 		// 1. If createdByUserId is provided, get the creating user and use their tenant
 		if (input.createdByUserId) {
 			const creatingUser = await this.userService.findOneByIdString(input.createdByUserId, {
@@ -1139,6 +1155,44 @@ export class AuthService extends SocialAuthService {
 			}
 			default:
 				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+
+		// 5b. Record the terms acceptance, now that the user has an id.
+		//
+		// This is the whole point of the change: the tick becomes a row that
+		// says which document, at which version, of which exact text (pinned by
+		// sha256 to the published legal corpus), in which language, and by what
+		// mechanism. `method` distinguishes the two paths that reach this
+		// function — a checkbox during signup and a checkbox on an invite
+		// acceptance are legally different events, and "we can't tell which
+		// happened" is not a position worth defending.
+		//
+		// Failures are logged and swallowed deliberately. The claims were
+		// already validated against the corpus in step 0, so anything that goes
+		// wrong here is an infrastructure fault, and by this point the user row
+		// exists: throwing would abandon a created account and send the person
+		// back to a form that will now tell them their email is taken. The
+		// write is idempotent, so a retry is safe.
+		if (isNotEmpty(input.terms)) {
+			try {
+				const request = RequestContext.currentRequest();
+
+				await this.termsAcceptanceService.record(user.id, input.terms, {
+					tenantId: tenant?.id ?? null,
+					method: input.inviteId ? 'invite-accept' : 'signup-checkbox',
+					// `hashIp` salts and digests this; the address itself is
+					// never stored. Without TERMS_IP_SALT nothing is recorded.
+					ip: request?.ip ?? null,
+					userAgent: request?.headers?.['user-agent'] ?? null
+				});
+			} catch (error) {
+				this.logger.error(
+					`Failed to record terms acceptance for user ${user.id}: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+					error instanceof Error ? error.stack : undefined
+				);
+			}
 		}
 
 		// 6. If organizationId is provided, add the user to the organization
