@@ -1,4 +1,5 @@
-import { Injectable, signal, Type } from '@angular/core';
+import { inject, Injectable, signal, Type } from '@angular/core';
+import { Location } from '@angular/common';
 
 /**
  * Configuration for a chat sidebar panel.
@@ -25,6 +26,30 @@ const CHAT_SIDEBAR_WIDTH_KEY = 'gauzy_chat_sidebar_width';
 const DEFAULT_CHAT_WIDTH = 384;
 export const MIN_CHAT_WIDTH = 300;
 export const MAX_CHAT_WIDTH = 860;
+
+/**
+ * Router path of the standalone ("detached") chat window.
+ *
+ * It is registered at the app root (see `apps/gauzy/src/app/app.routes.ts`)
+ * rather than through the page route registry: every registry location is a
+ * child of `/pages`, which renders the `PagesComponent` shell (nav menu
+ * sidebar + header + footer), and the detached window must show the chat
+ * alone.
+ */
+export const CHAT_DETACHED_WINDOW_PATH = '/ai-chat/window';
+
+/**
+ * `window.open` target name. A constant (not `_blank`) so re-opening reuses
+ * the same window instead of stacking one popup per click.
+ */
+const CHAT_DETACHED_WINDOW_NAME = 'gauzy-ai-chat';
+
+/**
+ * `window.open` features: a resizable popup roughly the width of the docked
+ * panel and tall enough to hold a conversation, which the user can then drag
+ * onto another monitor.
+ */
+const CHAT_DETACHED_WINDOW_FEATURES = 'popup=yes,resizable=yes,scrollbars=yes,width=460,height=860';
 
 /**
  * ChatSidebarService
@@ -70,6 +95,20 @@ export class ChatSidebarService {
 	 * and header render the chat sidebar/toggle only when this is true.
 	 */
 	readonly available = signal<boolean>(false);
+
+	/**
+	 * True only inside the detached chat window (the standalone
+	 * `/ai-chat/window` route sets it). The panel then drops the controls that
+	 * describe a docked panel — dock side, maximize, collapse, detach and the
+	 * drag-to-resize grip — because there is no layout around it any more.
+	 */
+	readonly detachedView = signal<boolean>(false);
+
+	/** Handle to the detached chat window, so a second detach focuses it. */
+	private detachedWindow: Window | null = null;
+
+	/** Angular's Location — used to build the detached window's external URL. */
+	private readonly location = inject(Location);
 
 	/** Update chat availability (permission + backend configuration). */
 	setAvailable(available: boolean): void {
@@ -137,6 +176,34 @@ export class ChatSidebarService {
 		this.maximized.set(!this.maximized());
 		if (this.maximized()) {
 			this.expanded.set(true);
+		}
+	}
+
+	/**
+	 * Open the chat in its own browser window (so it can live on a second
+	 * monitor) and close the docked panel, so the same conversation is never
+	 * running in two places at once.
+	 *
+	 * If the popup is blocked the docked panel is left open — otherwise the
+	 * chat would simply disappear with nothing to replace it.
+	 */
+	detach(): void {
+		if (typeof window === 'undefined') {
+			return;
+		}
+
+		if (this.detachedWindow && !this.detachedWindow.closed) {
+			this.detachedWindow.focus();
+		} else {
+			// `prepareExternalUrl` applies both the base href and the app's
+			// hash location strategy (`useHash: true` in app.module.ts), so the
+			// popup opens `/#/ai-chat/window` and survives a manual reload.
+			const url = this.location.prepareExternalUrl(CHAT_DETACHED_WINDOW_PATH);
+			this.detachedWindow = window.open(url, CHAT_DETACHED_WINDOW_NAME, CHAT_DETACHED_WINDOW_FEATURES);
+		}
+
+		if (this.detachedWindow) {
+			this.collapse();
 		}
 	}
 

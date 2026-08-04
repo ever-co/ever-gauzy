@@ -26,6 +26,16 @@ export const appRoutes: Routes = [
 		canActivate: [AuthGuard, AppModuleGuard]
 	},
 	{
+		// Detached AI chat window (opened with window.open by
+		// ChatSidebarService.detach()). It lives here rather than under
+		// 'pages' on purpose: 'pages' renders the PagesComponent shell
+		// (nav menu sidebar + header + footer) and this window must show
+		// only the chat, so it can sit on a second monitor.
+		path: 'ai-chat',
+		loadChildren: () => import('@gauzy/plugin-ai-chat-react-ui').then((m) => m.AI_CHAT_WINDOW_ROUTES),
+		canActivate: [AuthGuard, AppModuleGuard]
+	},
+	{
 		path: 'share',
 		loadChildren: () => import('@gauzy/plugin-public-layout-ui').then((m) => m.PublicLayoutModule),
 		canActivate: []
