@@ -203,13 +203,39 @@ nb-sidebar[tag='menu-sidebar'] {
   min-height: 3.25rem;
   padding: 0.75rem;
   overflow: hidden;
+  // Assistant launcher: a small icon-only button on the brand row, immediately
+  // right of the workspace switcher and centered against it — the placement
+  // ever.works uses. It must not read as a second, competing control, so it
+  // borrows the switcher header's own hover fill (background-basic-color-3 in
+  // gauzy-logo.component.scss) and the row's hint color, and only picks up the
+  // primary color on hover.
   button.ai-agent-launch {
     flex: 0 0 auto;
-    padding: 0 0.5rem;
+    // A 1.625rem square: Nebular's `size="small"` padding would push the icon
+    // out of a box this narrow, so center it with flex instead of padding.
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     height: 1.625rem;
     width: 1.625rem;
+    min-width: 1.625rem;
     margin: 0;
-    color: nb-theme(color-primary-default);
+    border: none;
+    background-color: transparent;
+    border-radius: nb-theme(border-radius);
+    color: nb-theme(text-hint-color);
+    transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+
+    i {
+      font-size: 0.875rem;
+      line-height: 1;
+    }
+
+    &:hover {
+      background-color: nb-theme(background-basic-color-3);
+      color: nb-theme(color-primary-default);
+    }
   }
   // The tenant switcher takes the remaining row width and SHRINKS
   // (min-width: 0) instead of pushing the buttons or wrapping.
@@ -247,12 +273,20 @@ nb-sidebar[tag='menu-sidebar'] {
   }
   &.compacted {
     width: nb-theme(sidebar-width-compact);
+    // The compacted rail is too narrow for [avatar][button] side by side, so the
+    // row becomes a centered column instead. The launcher used to be hidden here
+    // and the header chat toggle stood in for it; that toggle no longer exists
+    // (see header.component.html), so hiding it would leave no way to open the
+    // assistant from a collapsed sidebar. It stacks UNDER the avatar, so the
+    // avatar itself keeps its position when the sidebar collapses or expands.
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    // No room for the AI launcher in the compacted rail — the header
-    // chat toggle remains available.
-    button.ai-agent-launch {
-      display: none;
+    gap: 0.375rem;
+    // The `flex: 1 1 auto` above is meant for the horizontal row; in a column it
+    // would let the switcher stretch vertically away from the launcher.
+    ngx-gauzy-logo {
+      flex: 0 0 auto;
     }
     ::ng-deep .accordion.workspace {
       box-shadow: none;
