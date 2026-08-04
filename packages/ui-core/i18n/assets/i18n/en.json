@@ -879,6 +879,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "You must be employee in order to be able to track time, create split expenses and use other employees related features."
 	},
 	"MENU": {
+		"ADD_ITEM": "Add {{ name }}",
 		"BREADCRUMB": "Breadcrumb",
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Dashboard",
@@ -4110,6 +4111,7 @@
 		"DOCK_RIGHT": "Dock to the right",
 		"MAXIMIZE": "Maximize",
 		"RESTORE": "Restore width",
+		"DETACH": "Open in a new window",
 		"COLLAPSE": "Collapse",
 		"RESIZE": "Drag to resize",
 		"WELCOME_SUBTITLE": "Ask anything about your workspace, tasks, or projects.",
@@ -4450,10 +4452,14 @@
 		"BY": "by",
 		"RIGHTS_RESERVED": "All rights reserved.",
 		"PRESENT": "Present",
+		"LEGAL": "Legal",
 		"TERMS_OF_SERVICE": "Terms Of Service",
 		"PRIVACY_POLICY": "Privacy Policy",
-		"VERSION": "Release version — open on GitHub",
-		"COMMIT": "Deployed commit — open on GitHub",
+		"COOKIE_POLICY": "Cookie Policy",
+		"VERSION": "Version",
+		"VERSION_HINT": "Release version — open on GitHub",
+		"COMMIT": "Commit",
+		"COMMIT_HINT": "Deployed commit — open on GitHub",
 		"WEB": "Web",
 		"API": "API"
 	},

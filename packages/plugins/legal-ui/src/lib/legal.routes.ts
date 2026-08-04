@@ -26,7 +26,16 @@ export const createLegalRoutes = (_pageRouteRegistryService: PageRouteRegistrySe
 			},
 			{
 				path: 'privacy',
-				component: PrivacyPolicyComponent
+				component: PrivacyPolicyComponent,
+				data: { documents: ['privacy'] }
+			},
+			{
+				// The Cookie Policy is its own page. `PrivacyPolicyComponent` already renders the
+				// cookie document from the bundled corpus, so the route reuses it and selects the
+				// section through `data.documents` rather than duplicating the markup.
+				path: 'cookies',
+				component: PrivacyPolicyComponent,
+				data: { documents: ['cookies'] }
 			}
 		]
 	}

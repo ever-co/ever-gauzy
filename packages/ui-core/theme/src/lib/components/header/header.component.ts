@@ -23,7 +23,6 @@ import { environment } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import {
-	ChatSidebarService,
 	DEFAULT_SELECTOR_VISIBILITY,
 	DateRangePickerBuilderService,
 	EmployeeStore,
@@ -70,7 +69,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	showDateSelector: boolean = true;
 	theme: string;
 	createQuickActionsMenu: NbMenuItem[];
-	supportContextMenu: NbMenuItem[];
 	showExtraActions = false;
 	actions = {
 		START_TIMER: 'START_TIMER',
@@ -137,7 +135,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		public readonly navigationBuilderService: NavigationBuilderService,
-		public readonly chatSidebarService: ChatSidebarService,
 		private readonly dateRangeService: DateRangePickerBuilderService,
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly organizationProjectStore: OrganizationProjectStore,
@@ -690,26 +687,9 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	 * Load context menus
 	 */
 	private _loadContextMenus() {
-		this.supportContextMenu = [
-			{
-				title: this.getTranslation('CONTEXT_MENU.CHAT'),
-				icon: 'message-square-outline'
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.FAQ'),
-				icon: 'clipboard-outline'
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.HELP'),
-				icon: 'question-mark-circle-outline',
-				link: 'pages/help'
-			},
-			{
-				title: this.getTranslation('MENU.ABOUT'),
-				icon: 'droplet-outline',
-				link: 'pages/about'
-			}
-		];
+		// The support menu (Support Chat / FAQ / Help / About) was built here and
+		// rendered by the speech-bubble header action. It now lives in the Quick
+		// Settings panel, see ThemeSettingsComponent.
 		this.createQuickActionsMenu = [
 			// Divider (Accounting)
 			...(this.store.hasAnyPermission(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
@@ -1242,7 +1222,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				tap(() => {
 					// this.createContextMenu = [];
 					this.createQuickActionsMenu = [];
-					this.supportContextMenu = [];
 					this._loadContextMenus();
 				}),
 				untilDestroyed(this)

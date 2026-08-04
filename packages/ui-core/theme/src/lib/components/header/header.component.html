@@ -81,13 +81,9 @@
         (click)="toggleExtraActions()"
       ></nb-action>
 
-      @if (supportContextMenu) {
-        <nb-action
-          icon="message-circle-outline"
-          class="toggle-layout help"
-          [nbContextMenu]="supportContextMenu"
-        ></nb-action>
-      }
+      <!-- The speech-bubble help menu (Support Chat / FAQ / Help / About) used
+           to sit here. Those entries now live in the Quick Settings panel
+           (ngx-theme-settings), which is reached from the gear action below. -->
 
       @if (isEnabledTimeTracking()) {
         <nb-action class="timer-action" (click)="toggleTimerWindow()">
@@ -97,28 +93,9 @@
         </nb-action>
       }
 
-      <!-- AI assistant entry point. An unlabelled speech bubble among five other
-           header icons read as "some other chat"; the name sits next to the icon
-           (hidden below `lg`, where the whole action cluster collapses) and the
-           open state is drawn as a filled pill so "is it on?" is answerable at a
-           glance. Behaviour is unchanged: one click still toggles the panel. -->
-      @if (chatSidebarService.config() && chatSidebarService.available()) {
-        <nb-action
-          class="toggle-layout ai-chat-toggle"
-          [class.active]="chatSidebarService.expanded()"
-          [nbTooltip]="(chatSidebarService.expanded() ? 'AI_ASSISTANT.CLOSE' : 'AI_ASSISTANT.OPEN') | translate"
-          tabindex="0"
-          role="button"
-          [attr.aria-pressed]="chatSidebarService.expanded()"
-          [attr.aria-label]="(chatSidebarService.expanded() ? 'AI_ASSISTANT.CLOSE' : 'AI_ASSISTANT.OPEN') | translate"
-          (click)="chatSidebarService.toggle()"
-          (keydown.enter)="chatSidebarService.toggle()"
-          (keydown.space)="$event.preventDefault(); chatSidebarService.toggle()"
-        >
-          <nb-icon icon="message-square-outline"></nb-icon>
-          <span class="ai-chat-label">{{ 'HEADER.AI_CHAT' | translate }}</span>
-        </nb-action>
-      }
+      <!-- The AI assistant entry point lives on the sidebar's brand row
+           (`.ai-agent-launch` in one-column.layout.html); a second copy here was
+           redundant, so the header no longer carries a chat control. -->
 
       @for (action of navigationBuilderService.sidebarActions$ | async; track action) {
         <nb-action

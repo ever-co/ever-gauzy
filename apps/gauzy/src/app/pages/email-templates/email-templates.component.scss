@@ -1,6 +1,128 @@
 @use 'gauzy/_gauzy-overrides' as *;
 
-$height: calc(100vh - 25.5rem);
+// ── Page frame ─────────────────────────────────────────────────────────────
+// Both columns used to size themselves off the viewport: `$height: calc(100vh -
+// 25.5rem)` drove the Ace editor and the preview box here, and the Accounting
+// Templates sheet — the only other file that `@use`s this one — added 3.5rem /
+// 1.3rem back on top of it. Neither constant left room for the footer.
+//
+// Nothing is overlaying the footer, and nothing needs to reserve space for it:
+// Nebular's `nb-layout-footer` is `display: block; margin-top: auto` (see
+// @nebular/theme/components/layout/layout.component.scss — the `fixed`
+// attribute in one-column.layout.html is a no-op in this version, which the
+// note in styles/_overrides.scss also records), so it is the last in-flow child
+// of `.content` and the content column is already short by its height. The
+// fault is on this page: these cards asked for more height than the column had,
+// neither `.settings-content` nor Nebular's `.columns` declares an `overflow` of
+// its own, and `nb-card-body` here is `overflow: unset` (below) instead of
+// Nebular's `auto` — so the excess PAINTED downwards over the footer rather than
+// scrolling, and the copyright line, the version text and the social icons ended
+// up behind the editor and the preview.
+//
+// The content pane already has the right height, so the page now fills it
+// instead of guessing at it: every wrapper from the host down to the two scroll
+// boxes is a flex column that is allowed to shrink (`min-height: 0`), and the
+// editor and the preview take whatever is left. That is the same shape
+// `@shared/_pg-card` gives every list page. No viewport constant is left to
+// under-count the chrome.
+//
+// `height: 100%` is what makes that chain definite. Both pages are CHILDREN of
+// the settings shell (see settings.routes.ts), so they render inside
+// `.settings-content`, which is `height: 100%` of `.settings-shell` — they are
+// NOT the `nb-layout-column > router-outlet + *` element that the page frame in
+// styles/_overrides.scss hands a flex height to. Without this the host would be
+// auto-height, the flex bases below would all resolve to content, and Ace —
+// whose own DOM is absolutely positioned, so it measures ~0 tall — would
+// collapse. The Monitoring settings page pins its host the same way, for the
+// same reason.
+// NOTE: `display: flex` on this host DOES NOT APPLY. `pages.component.scss` has
+// `::ng-deep router-outlet + * { display: block }`, and `::ng-deep` leaks it into
+// nested outlets, so it matches this page's host inside the settings shell at
+// specificity (0,1,1) — beating a component's own `:host` (0,1,0). Verified with
+// CDP `CSS.getMatchedStylesForNode`. It is left declared because it is correct
+// for any mount where that rule does not apply, but nothing may DEPEND on it.
+//
+// What the frame actually rests on is `height: 100%` here plus `height: 100%` on
+// the root `> form` below: a block box with a definite height resolves a
+// percentage height on its child, so the flex chain simply begins one level down.
+// Without the form's own height it sized to content and overflowed the pane,
+// painting over the footer — the bug this file is meant to fix.
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    // Definite height, not just a flex basis — see the note above; the host is
+    // forced to `display: block`, so `flex: 1 1 auto` alone does nothing here.
+    height: 100%;
+    min-height: 0;
+
+    > nb-card {
+      flex: 1 1 auto;
+      min-height: 0;
+
+      > nb-card-body {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+
+        > .row {
+          flex: 1 1 auto;
+          min-height: 0;
+          // Bootstrap's `.row` is `flex-wrap: wrap`, and a wrapped flex LINE sizes
+          // to its tallest item — so `align-items: stretch` cannot hold the columns
+          // to the row's height, and a tall preview grew the line instead.
+          // Measured: row 660px, column 845px, i.e. 185px escaping downwards onto
+          // the footer. The row's height IS definite here (it is a flex item of a
+          // definite-height column), so pinning the columns to 100% of it works.
+          //
+          // Safe against the wrap case because these are `col-6`, not `col-md-6`:
+          // 50% at every breakpoint, so the row is always a single line and
+          // `height: 100%` can never stack into 2x the available height.
+          > [class*='col-'] {
+            height: 100%;
+            min-height: 0;
+          }
+        }
+      }
+    }
+  }
+
+  .email-template-column {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+
+    > nb-card {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+  }
+
+  // The two panel bodies. Their fixed rows — the label chip on the left, the
+  // "Template preview" strip on the right — keep their own height and the
+  // scroll box below takes the rest. `:last-child` is the right group on both
+  // pages: Email templates has a subject editor in a `.form-group` above this
+  // one, Accounting templates has only this one.
+  nb-card-body.editor,
+  .email-template-right > nb-card-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+
+    > .form-group:last-child {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+      margin-bottom: 0;
+    }
+  }
+}
 
 .main-form {
   .template-save {
@@ -21,7 +143,10 @@ $height: calc(100vh - 25.5rem);
   justify-content: flex-start;
   width: 100%;
   overflow: auto;
-  height: $height;
+  // Takes what the flex column above leaves and scrolls the rendered template
+  // inside itself. Was `height: $height` — see the page-frame note at the top.
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .email-content {
@@ -77,7 +202,11 @@ $height: calc(100vh - 25.5rem);
       }
 
       .ace-editor {
-        height: calc($height - 1.7rem);
+        // Takes what the flex column above leaves; Ace scrolls the document
+        // inside itself. Was `calc($height - 1.7rem)` — see the page-frame note
+        // at the top.
+        flex: 1 1 auto;
+        min-height: 0;
         font-size: medium;
       }
 

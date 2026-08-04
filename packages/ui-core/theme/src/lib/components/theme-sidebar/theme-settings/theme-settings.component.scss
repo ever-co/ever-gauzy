@@ -57,6 +57,29 @@
     }
   }
 
+  // Support / help entries, moved here from the speech-bubble header menu.
+  // A left aligned stack of ghost rows, so they read as menu items instead of
+  // four buttons competing with the primary Settings action below them.
+  .support-links {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.125rem;
+
+    .support-link {
+      width: 100%;
+      justify-content: flex-start;
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+      text-transform: none;
+
+      nb-icon {
+        @include nb-ltr(margin-right, 0.5rem);
+        @include nb-rtl(margin-left, 0.5rem);
+      }
+    }
+  }
+
   .settings-row {
     display: flex;
     flex-direction: row;

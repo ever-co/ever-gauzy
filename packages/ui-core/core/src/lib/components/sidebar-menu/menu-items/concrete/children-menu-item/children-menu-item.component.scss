@@ -9,12 +9,85 @@
 // <ga-children-menu-item> here.
 @use '../menu-item/menu-item.component';
 
-// Inline "add" control on a child row. It sits inside a flat menu row, so it
-// is a ghost icon button: no outline, no fill, it only brightens on hover.
+// ─────────────────────────────────────────────────────────────────────────────
+// Inline "add" control on a child row. It sits inside a flat menu row, so it is
+// a ghost icon button: no outline, no fill, it only brightens on hover.
+//
+// ── Where it sits ────────────────────────────────────────────────────────────
+// The parent rows' expand/collapse chevron is `nb-icon.expansion-indicator`,
+// which Nebular pins at `position: absolute; right: 1rem`.
+//
+// Its size is MEASURED, not derived. Reading the stylesheets suggests a 1rem
+// box (nb-icon is `width: 1em; height: 1em` and ../menu-item/menu-item.component.scss
+// sets `font-size: 1rem`), which would put the optical centre at 1.5rem. In the
+// browser it is not: the rendered chevron is a **28px (1.75rem) box at
+// `right: 16px`**, i.e. an optical centre **1.875rem** in from the row's
+// trailing edge, and its computed font-size is 20px — so that `font-size: 1rem`
+// rule is NOT winning. An earlier version of this file trusted the derivation
+// and left the button 6px inboard of the chevron column.
+//
+// A child row is exactly as wide as a parent row (`.item-body` carries no
+// horizontal padding — verified: both rows end at the same x), so sharing the
+// chevron's optical column means centring this button 1.875rem from the row's
+// trailing edge: `$plus-inset + $plus-size / 2` = 1.125rem + 0.75rem. That is
+// comfortably inside the row rather than hanging off its edge, which is the
+// point of the change.
+//
+// If the `font-size: 1rem` rule on `.expansion-indicator` is ever made to
+// apply, the chevron column moves and `$plus-inset` must be re-measured.
+//
+// It previously had no inset at all: `.info` is `flex: 1 1 auto`, so it absorbs
+// every spare pixel and pinned the button flush against the row's trailing edge
+// — 1rem further out than the chevron it sits under, which is what made the
+// sidebar's right edge look wasted. (The `float-right` class the button carried
+// did nothing either way: floats do not apply to flex items.)
+//
+// ── How big it is ────────────────────────────────────────────────────────────
+// Nebular's `.size-tiny.appearance-outline` contributes
+// `padding: 0.3125rem 0.625rem`, `font-size: 0.625rem`, `line-height: 0.75rem`
+// and a `0.0625rem` border. The old override replaced only the padding
+// (0.125rem 0.25rem) and the border and then ENLARGED the glyph to 0.75rem.
+// Font Awesome 7 gives every `.fas` a `width: 1.25em; line-height: 1` box, so
+// that worked out to 4 + 15 + 4 = 23px wide by 2 + 12 + 2 = 16px tall, with a
+// 12px plus out-inking the 1rem chevron — exactly backwards for a secondary
+// affordance.
+//
+// Everything Nebular contributes to the box is now reset explicitly and the
+// button is a fixed 1.5rem square (24px, the WCAG 2.5.8 minimum target size,
+// and still well inside the 2.25rem row) carrying a 0.625rem glyph. The square
+// itself is invisible — transparent, borderless — so what the eye compares is
+// 0.625rem of plus against 1rem of chevron.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// `$plus-inset` is measured against the RENDERED chevron (see above), not
+// computed from the stylesheets — the two disagree. Re-measure if Nebular's
+// accordion indicator changes size or inset.
+$plus-size: 1.5rem;
+$plus-inset: 1.125rem;
+$plus-glyph-size: 0.625rem;
+
 [nbButton].plus.appearance-outline.size-tiny {
-  padding: 0.125rem 0.25rem;
+  // Never grow, never shrink — a fixed square is what the alignment above
+  // depends on.
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: $plus-size;
+  height: $plus-size;
+  // A flex item's automatic minimum size is already capped by its specified
+  // width, but be explicit: nothing may widen this button from the inside.
+  min-width: 0;
+  padding: 0;
+  // Logical, not `margin-right`: it flips with the inherited `direction`, which
+  // is where Nebular puts the chevron in RTL (`left: 1rem`).
+  margin-inline-end: $plus-inset;
   border: none;
+  // Only ever visible through the focus outline, which follows the radius.
+  // KEEP IN SYNC with `$menu-row-radius` in ../menu-item/menu-item.component.scss.
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
   background-color: transparent;
+  line-height: 1;
   // `inherit`, not nb-theme(gauzy-text-color-2): that token is undefined in the
   // material-* themes, and it would also freeze the button at the RESTING label
   // colour while the row around it brightens on hover/selection. Inheriting from
@@ -26,11 +99,20 @@
     color: nb-theme(text-basic-color);
   }
 
+  // Nebular paints focus on an outline-appearance button as
+  // `box-shadow: <ring>, inset 0 0 0 100vmax <colour>` — on a 1.5rem square that
+  // inset floods the entire button with a tint, and because it hangs off `:focus`
+  // it also survives an ordinary mouse click. Drop it; the keyboard indicator
+  // below is a real outline.
+  &:focus {
+    box-shadow: none;
+    background-color: transparent;
+  }
+
   // Keyboard focus needs a NON-colour indicator: the hover treatment is a
   // brightness shift only, which on its own fails WCAG 1.4.11 / 2.4.7. The
   // outline is inset so it never widens the row.
   &:focus-visible {
-    background-color: transparent;
     color: nb-theme(text-basic-color);
     outline: 2px solid nb-theme(color-primary-default);
     outline-offset: -2px;
@@ -38,6 +120,23 @@
 
   i.fa-plus {
     margin: 0;
-    font-size: 0.75rem;
+    // Deliberately well under the chevron's 1rem — this is the secondary action
+    // on the row, not the primary one.
+    font-size: $plus-glyph-size;
+    line-height: 1;
   }
+}
+
+// The control's inset IS the row's trailing padding, so `.info` has to give up
+// its own or a label on an "add" row would truncate 0.75rem earlier than the
+// same label on any other row. Rows with no add control are untouched, and a
+// browser without `:has()` also keeps theirs — which only ever truncates
+// earlier, never overlaps.
+//
+// Note that Angular's style shim scopes the compound but NOT the argument: this
+// emits `.sub-item[_ngcontent-x]:has(.plus) .info[_ngcontent-x]` (ShadowCss only
+// recurses into `:is()`/`:where()`). Harmless — `.plus` is styled nowhere else
+// in the app, and `.sub-item` is already scoped to this component.
+:host .sub-item:has(.plus) .info {
+  padding-inline-end: 0;
 }

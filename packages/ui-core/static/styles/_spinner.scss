@@ -1,18 +1,46 @@
+/*
+ * Boot skeleton for `#nb-global-spinner` in `apps/gauzy/src/index.html`. It is
+ * painted before Angular boots, so Nebular's `.nb-theme-*` class is not on
+ * `<body>` yet and none of the theme variables resolve. The surfaces here
+ * therefore have to be literals, keyed off the `data-skeleton-theme` attribute
+ * the inline script at the end of `index.html` sets from the persisted theme
+ * name.
+ *
+ * Because they are literals they DRIFT: these values were the pre-dark-canvas
+ * palette, so `gauzy-dark` booted into a rgb(32, 32, 35) app that then repainted
+ * itself to rgb(9, 9, 11). Anything changed in the `gauzy-light` / `gauzy-dark`
+ * maps in `themes.scss` has to be mirrored here and in
+ * `dashboard-skeleton.component.scss`.
+ *
+ * Three surfaces, matching the three the loaded app actually has:
+ *   --skeleton-canvas      `layout-background-color`   the page behind everything
+ *   --skeleton-bg          `gauzy-card-1`              panels / cards / controls
+ *   --skeleton-sidebar-bg  `gauzy-sidebar-background-2` the menu rail
+ */
 body {
   /* === GAUZY LIGHT (default) === */
+  --skeleton-canvas: #ffffff;
   --skeleton-bg: rgb(255, 255, 255);
   --skeleton-sidebar-bg: rgba(251, 251, 251, 1);
-  --skeleton-border-basic-color-2: #f5f5f5;
   --skeleton-border-radius: 0.625rem;
   --skeleton-button-rectangle-border-radius: 2rem;
   --skeleton-card-bg: rgba(50, 50, 50, 0.03);
+
+  /*
+   * Placeholder bar and its moving highlight. Both are translucent NEUTRALS,
+   * not per-theme literals: they composite with whichever surface is behind
+   * them, so one pair works on white and on near-black. A light literal (this
+   * used to sweep towards #f5f5f5 on the material themes) glows on dark.
+   */
+  --skeleton-fill: rgba(126, 126, 143, 0.2);
+  --skeleton-shimmer: rgba(126, 126, 143, 0.28);
 }
 
 /* === GAUZY DARK === */
 body[data-skeleton-theme='gauzy-dark'] {
-  --skeleton-bg: rgb(32, 32, 35);
-  --skeleton-sidebar-bg: rgb(38, 38, 46);
-  --skeleton-border-basic-color-2: #303030;
+  --skeleton-canvas: rgb(9, 9, 11);
+  --skeleton-bg: rgb(18, 18, 20);
+  --skeleton-sidebar-bg: rgb(12, 12, 14);
   --skeleton-border-radius: 0.625rem;
   --skeleton-button-rectangle-border-radius: 2rem;
   --skeleton-card-bg: rgba(16, 16, 20, 0.3);
@@ -20,9 +48,9 @@ body[data-skeleton-theme='gauzy-dark'] {
 
 /* === DEFAULT THEME === */
 body[data-skeleton-theme='default'] {
+  --skeleton-canvas: #edf1f7;
   --skeleton-bg: #ffffff;
   --skeleton-sidebar-bg: #ffffff;
-  --skeleton-border-basic-color-2: #f5f5f5;
   --skeleton-border-radius: 0.25rem;
   --skeleton-button-rectangle-border-radius: 0.25rem;
   --skeleton-card-bg: rgba(50, 50, 50, 0.03);
@@ -30,9 +58,9 @@ body[data-skeleton-theme='default'] {
 
 /* === DARK THEME === */
 body[data-skeleton-theme='dark'] {
+  --skeleton-canvas: #151a30;
   --skeleton-bg: #222b45;
   --skeleton-sidebar-bg: rgb(32, 41, 67);
-  --skeleton-border-basic-color-2: #303030;
   --skeleton-border-radius: 0.25rem;
   --skeleton-button-rectangle-border-radius: 0.25rem;
   --skeleton-card-bg: rgba(16, 16, 20, 0.3);
@@ -40,9 +68,9 @@ body[data-skeleton-theme='dark'] {
 
 /* === COSMIC THEME === */
 body[data-skeleton-theme='cosmic'] {
+  --skeleton-canvas: #1b1b38;
   --skeleton-bg: #323259;
   --skeleton-sidebar-bg: rgb(45, 47, 86);
-  --skeleton-border-basic-color-2: #303030;
   --skeleton-border-radius: 0.5rem;
   --skeleton-button-rectangle-border-radius: 1rem;
   --skeleton-card-bg: rgba(39, 39, 78, 0.5);
@@ -50,9 +78,9 @@ body[data-skeleton-theme='cosmic'] {
 
 /* === CORPORATE THEME === */
 body[data-skeleton-theme='corporate'] {
+  --skeleton-canvas: #edf1f7;
   --skeleton-bg: rgba(255, 255, 255, 1);
   --skeleton-sidebar-bg: rgba(251, 251, 251, 1);
-  --skeleton-border-basic-color-2: #f5f5f5;
   --skeleton-border-radius: 0.375rem;
   --skeleton-button-rectangle-border-radius: 0.375rem;
   --skeleton-card-bg: rgba(50, 50, 50, 0.03);
@@ -60,9 +88,9 @@ body[data-skeleton-theme='corporate'] {
 
 /* === MATERIAL LIGHT === */
 body[data-skeleton-theme='material'] {
+  --skeleton-canvas: #fafafa;
   --skeleton-bg: #ffffff;
   --skeleton-sidebar-bg: rgb(51, 51, 51);
-  --skeleton-border-basic-color-2: #f5f5f5;
   --skeleton-border-radius: 0.25rem;
   --skeleton-button-rectangle-border-radius: 0.375rem;
   --skeleton-card-bg: rgba(50, 50, 50, 0.03);
@@ -70,23 +98,30 @@ body[data-skeleton-theme='material'] {
 
 /* === MATERIAL DARK === */
 body[data-skeleton-theme='material-dark'] {
+  --skeleton-canvas: #303030;
   --skeleton-bg: #303030;
   --skeleton-sidebar-bg: rgb(51, 51, 51);
-  --skeleton-border-basic-color-2: #f5f5f5;
   --skeleton-border-radius: 0.25rem;
   --skeleton-button-rectangle-border-radius: 0.375rem;
   --skeleton-card-bg: rgba(50, 50, 50, 0.03);
 }
 
+/*
+ * A placeholder block: a translucent neutral FILL with a translucent neutral
+ * highlight sweeping across it. The surface behind stays visible through both,
+ * which is the whole point — the previous ramp was
+ * `--skeleton-bg` -> `--skeleton-border-basic-color-2` -> `--skeleton-bg`, two
+ * OPAQUE literals, so every bar repainted the surface it sat on and the loading
+ * state could not match the loaded one.
+ *
+ * `background-color` survives here because the shorthand is not used; a plain
+ * `background:` would reset it.
+ */
 @mixin skeleton-element($width: 100%, $height: 16px) {
   width: $width;
   height: $height;
-  background: linear-gradient(
-    90deg,
-    var(--skeleton-bg) 0%,
-    var(--skeleton-border-basic-color-2) 50%,
-    var(--skeleton-bg) 100%
-  );
+  background-color: var(--skeleton-fill);
+  background-image: linear-gradient(90deg, transparent 0%, var(--skeleton-shimmer) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 2s ease-in-out infinite;
   border-radius: var(--skeleton-border-radius, 0.4rem);
@@ -100,7 +135,11 @@ body[data-skeleton-theme='material-dark'] {
   height: 100%;
   z-index: var(--z-index-overlay, 1003);
   display: flex;
-  background: var(--skeleton-bg, #fff);
+  /*
+   * The page CANVAS, not the panel colour. Only the two gauzy themes declare
+   * `--skeleton-canvas`; for the rest the fallback keeps the previous value.
+   */
+  background: var(--skeleton-canvas, var(--skeleton-bg, #fff));
 }
 
 .skeleton-sidebar {
@@ -186,7 +225,8 @@ body[data-skeleton-theme='material-dark'] {
   flex: 1;
   padding: 1rem;
   overflow-y: auto;
-  background-color: var(--skeleton-card-bg);
+  /* Same canvas the loaded content column sits on — see `.skeleton-layout`. */
+  background-color: var(--skeleton-canvas, var(--skeleton-card-bg));
 }
 
 .skeleton-top-header {
