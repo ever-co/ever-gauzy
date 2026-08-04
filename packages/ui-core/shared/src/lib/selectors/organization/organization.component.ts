@@ -318,13 +318,6 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	}
 
 	/**
-	 * event fired on model change.
-	 */
-	onChange() {
-		this.isOpen = false;
-	}
-
-	/**
 	 * Creates a new organization entry and navigates to the organization's page to open the add dialog.
 	 *
 	 * @param name - The name of the new organization to be created.

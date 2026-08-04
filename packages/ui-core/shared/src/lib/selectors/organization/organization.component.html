@@ -24,6 +24,11 @@
 		that directive here is a bonus — it declares its output as an emitter of MouseEvent
 		but actually emits a boolean, and the old handler worked only because of the
 		mismatch.
+
+		Dismissal, measured after the change and identical to the employee selector:
+		clicking the control BODY while open lands in the search input and keeps it open,
+		clicking the ARROW closes it, and Escape, an outside click or picking an item all
+		close it too.
 	-->
 	<ng-select
 		#select
@@ -32,7 +37,7 @@
 		[clearable]="false"
 		[items]="organizations"
 		bindLabel="name"
-		(change)="selectOrganization($event); select.blur(); onChange()"
+		(change)="selectOrganization($event); select.blur()"
 		(clear)="select.blur()"
 		[(ngModel)]="selectedOrganization"
 		[placeholder]="'FORM.PLACEHOLDERS.SELECT_COMPANY' | translate"
