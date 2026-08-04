@@ -34,6 +34,18 @@ export class ThemeSettingsComponent implements AfterViewChecked, OnDestroy {
 	 */
 	public readonly isSupportChatAvailable: boolean = !!environment.CHATWOOT_SDK_TOKEN;
 
+	/**
+	 * Destination for the FAQ entry.
+	 *
+	 * There is no in-app `faq` route — the entry carried neither a link nor a click
+	 * handler in the header menu it came from, so it had always been dead. The only
+	 * FAQ that actually exists is the published one on the docs site
+	 * (`ever-gauzy-docs/website/docs/reference/faq.md`; that Docusaurus site is
+	 * configured with `baseUrl: '/'` and `routeBasePath: '/'`, hence no `/docs`
+	 * segment in the URL).
+	 */
+	public readonly faqUrl: string = 'https://docs.gauzy.co/reference/faq';
+
 	constructor(private readonly sidebarService: NbSidebarService, private readonly router: Router) {}
 
 	ngAfterViewChecked(): void {
