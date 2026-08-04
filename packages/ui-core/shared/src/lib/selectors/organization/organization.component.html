@@ -1,27 +1,29 @@
 @if (organizations) {
 <div>
 	<!--
-		`isOpen` is REPORTED by ng-select via (open)/(close); it must never be BOUND back
-		in with [isOpen]. Binding it puts ng-select into `_manualOpen`, which early-returns
-		out of open(), close(), _handleSpace and _handleArrowDown — so the component keeps
-		the control in the tab order while making it impossible to operate:
+		The isOpen flag is REPORTED by ng-select through its open and close outputs. It must
+		never be fed back in through the isOpen input: doing so puts ng-select into its
+		_manualOpen mode, which early-returns out of open, close, _handleSpace and
+		_handleArrowDown. The control then stays in the tab order while being impossible to
+		operate. Measured against the sibling employee selector, which does not feed it back:
 
-		  measured, this selector vs the sibling employee selector (no [isOpen])
-		    opens on mousedown   organization 0/3   employee 3/3
-		    Enter / Space / ArrowDown        all fail       all work
-		    Escape closes                    never (stuck open 3/3)   works
+		  opens on mousedown          organization 0 of 3      employee 3 of 3
+		  Enter, Space, ArrowDown     all fail                 all work
+		  Escape closes               never, stuck open 3 of 3 works
 
-		That is a WCAG 2.1.1 (Level A) failure. It also made this the only control in the
-		app that needs a complete, well-formed `click` to open at all: with
-		[searchable]="isOpen" it is non-searchable while closed, so mousedown took the
-		toggle() path and did nothing, and the panel opened solely from a template (click).
+		That is a WCAG 2.1.1 Level A failure. It also made this the only control in the app
+		needing a complete, well-formed click to open at all: because the searchable input
+		is driven from the same flag, the control is non-searchable while closed, so
+		mousedown took the toggle path, early-returned, and did nothing — leaving the
+		template's own click handler as the only way to open it.
 
-		`isOpen` is still needed — [searchable], [addTag] and [class.close] read it — so it
-		stays as a mirror FED BY ng-select rather than a source of truth fighting it.
-		`gauzyOutside`/(clickOutside) went with it: ng-select closes on outside click by
-		itself once it owns its state. (That directive is also worth avoiding here — it
-		declares EventEmitter<MouseEvent> but emits a boolean, and the old handler only
-		worked because of the mismatch.)
+		The flag is still needed, since the searchable, addTag and close-class bindings all
+		read it, so it stays as a mirror FED BY ng-select rather than a second source of
+		truth fighting it. The gauzyOutside directive went away with the manual state:
+		ng-select dismisses itself on an outside click once it owns that state. Avoiding
+		that directive here is a bonus — it declares its output as an emitter of MouseEvent
+		but actually emits a boolean, and the old handler worked only because of the
+		mismatch.
 	-->
 	<ng-select
 		#select
