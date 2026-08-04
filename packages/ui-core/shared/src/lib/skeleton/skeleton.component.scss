@@ -1,9 +1,21 @@
 @use 'themes' as *;
 
-// Colours come from the theme map only. A hard-coded grey reads as a light-grey
-// smear on the near-black themes, which is exactly the bug this component is
-// meant to avoid drawing attention to.
-$bar-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
+// The bar is a TRANSLUCENT neutral, never an opaque colour: it composites with
+// whatever surface it is drawn on, so the same value works on the white card of
+// `gauzy-light` and the rgb(9, 9, 11) card of `gauzy-dark` without ever painting
+// a surface of its own. rgba(126, 126, 143, …) is the neutral this repo already
+// uses for surface-agnostic tints — `gauzy-border-default-color` and
+// `tag-filled-basic-background-color` in `themes.scss`, `$action-hairline` in
+// `gauzy/_gauzy-table.scss`.
+//
+// It was `var(--gauzy-card-2)`, which on `gauzy-dark` is rgba(255, 255, 255,
+// 0.02) — 2 % white over a near-black card, i.e. a bar that was effectively
+// invisible once the card surface below it was corrected.
+$bar-color: rgba(126, 126, 143, 0.2);
+// One step denser than the bar, so the sweep reads as a moving band ACROSS the
+// bar rather than as a second colour. Deliberately not a light literal: white at
+// any alpha glows on the near-black themes.
+$bar-sweep-color: rgba(126, 126, 143, 0.28);
 $bar-radius: var(--gauzy-radius-sm, 0.375rem);
 
 :host {
@@ -37,9 +49,9 @@ $bar-radius: var(--gauzy-radius-sm, 0.375rem);
   background-color: $bar-color;
   overflow: hidden;
 
-  // The moving highlight. `currentColor` is unusable here (the bar has no
-  // text), so the sweep reuses the same token at a second alpha via a gradient
-  // over the bar's own background — no new colour is introduced.
+  // The moving highlight, layered OVER the bar's own background rather than
+  // replacing it: the gradient runs transparent -> neutral -> transparent, so
+  // the bar colour is what shows through at both ends of the sweep.
   &::after {
     content: '';
     position: absolute;
@@ -47,7 +59,7 @@ $bar-radius: var(--gauzy-radius-sm, 0.375rem);
     bottom: 0;
     left: 0;
     width: 60%;
-    background: linear-gradient(90deg, transparent 0%, $bar-color 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, $bar-sweep-color 50%, transparent 100%);
     animation: ga-skeleton-sweep 1.6s linear infinite;
   }
 }
@@ -87,7 +99,12 @@ $bar-radius: var(--gauzy-radius-sm, 0.375rem);
     min-height: 7.5rem;
     padding: 1rem;
     border-radius: nb-theme(border-radius);
-    background-color: nb-theme(gauzy-card-1);
+    // Same token as the real card: `card-grid.component.scss` paints
+    // `.card-item` / `.card-body` with `nb-theme(background-basic-color-3)`.
+    // This was `gauzy-card-1`, a DIFFERENT surface — on `gauzy-dark` that is
+    // rgb(18, 18, 20) against the real card's rgb(9, 9, 11), i.e. the
+    // placeholder was visibly lighter than the cards it stood in for.
+    background-color: nb-theme(background-basic-color-3);
   }
 
   .ga-skeleton__bar {
