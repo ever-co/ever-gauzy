@@ -18,28 +18,51 @@
 // now sizes the two panels from the content column via flex, and that shared
 // chain also covers this page's one-editor layout.
 :host {
-  // The flex frame has to be re-declared HERE, even though the `@use` above pulls in
-  // the email-templates sheet. Measured in a real render (1600x950): this page's
-  // descendants DO pick up that chain — `form` and `nb-card` come out
-  // `display: flex; flex-direction: column; flex: 1 1 auto` — but the host itself
-  // stayed `display: block`. A block host makes `flex` on those children inert:
-  // nothing constrains them, `overflow` is visible, and the card grew to 991px
-  // inside an 806px host and painted its 185px of excess straight over the footer
-  // (footer band 902-950; card bottom 1087). That is the exact bug this branch is
-  // meant to fix, still reproducing after the first attempt.
+  // A settings page CANNOT set its own `display`. `pages.component.scss` carries
+  //
+  //     ::ng-deep router-outlet + * { display: block; animation: fade 1s; }
+  //
+  // and `::ng-deep` leaks it into NESTED outlets, so it also matches this page's
+  // host inside the settings shell. Its specificity is (0,1,1) —
+  // `[_nghost-pages] router-outlet + *` — against (0,1,0) for a component's own
+  // `:host`, so `display: flex` here loses. Confirmed with CDP
+  // `CSS.getMatchedStylesForNode`: both `:host` rules declare `display: flex`
+  // and the winning declaration is `display: block` from that shared rule.
+  // (Only `display` was overridden, which is why `flex-direction`/`min-height`
+  // from the same block appeared to work and made this look like a build issue.)
+  //
+  // That rule is deliberately left alone: nested routed hosts are unknown
+  // elements and default to `display: inline`, so dropping it would risk every
+  // nested-router page in the app.
+  //
+  // So instead of fighting for the host's display, give it a definite height and
+  // let the page's ROOT ELEMENT carry the frame (see `:host > form` below). A
+  // block box with a definite height resolves a percentage height on its child
+  // perfectly well — the flex container simply starts one level lower.
   //
   // This component declares no `selector`, so its host renders as `<ng-component>` —
   // worth knowing when reading a DOM dump and looking for a page-named element.
-  display: flex;
-  flex-direction: column;
   height: 100%;
-  // Allow the host to shrink below its content, or the chain below it cannot.
   min-height: 0;
 
   ::ng-deep {
     .ng-select .ng-select-container {
       background-color: nb-theme(select-outline-basic-background-color);
     }
+  }
+
+  // The frame the host cannot carry. `form` already gets
+  // `display: flex; flex-direction: column; flex: 1 1 auto` from the chain the
+  // `@use` above brings in; what it lacked was a DEFINITE height, so it sized to
+  // content (991px) inside an 806px host and the excess painted over the footer.
+  // `height: 100%` of a block host with a definite height fixes that, and the
+  // existing `min-height: 0` chain below it then scrolls internally as intended.
+  //
+  // `:host > form` is (0,1,1) but targets a DIFFERENT element than the
+  // `router-outlet + *` rule, so there is no specificity fight to lose here.
+  > form {
+    height: 100%;
+    min-height: 0;
   }
 
   .custom-preview-template {
