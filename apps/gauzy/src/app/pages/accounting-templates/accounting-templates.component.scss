@@ -1,25 +1,27 @@
 // The email-templates sheet `@use`s the theme module, which keeps it private to
-// that file — loading it here brings in `$height` but not `nb-theme`. Sass passes
-// an unknown function through as plain CSS, so the two rules at the bottom of this
-// file shipped as the literal text `nb-theme(...)` and the browser dropped them:
-// the language/template selects lost their background, and — the visible one —
-// the rendered template preview never had `color: text-basic-color` applied, so
-// it kept the seeded HTML's own near-black text on the dark themes' dark panel.
+// that file — `@use`ing that sheet here re-emits its CSS but does NOT bring
+// `nb-theme` into this file's scope. Sass passes an unknown function through as
+// plain CSS, so the two rules at the bottom of this file shipped as the literal
+// text `nb-theme(...)` and the browser dropped them: the language/template
+// selects lost their background, and — the visible one — the rendered template
+// preview never had `color: text-basic-color` applied, so it kept the seeded
+// HTML's own near-black text on the dark themes' dark panel. Hence `@use
+// 'themes'` as well; the email-templates `@use` is here purely for its CSS (it
+// exports no Sass members) and must stay.
 @use 'themes' as *;
 @use '../email-templates/email-templates.component' as *;
 
+// This page carried two `!important` height overrides — `calc($height + 3.5rem)`
+// on the Ace editor and `calc($height + 1.3rem)` on the preview box — which
+// added even more to a `100vh` constant that already ignored the footer, which
+// is why the overlap showed up worst here. Both are gone: email-templates.scss
+// now sizes the two panels from the content column via flex, and that shared
+// chain also covers this page's one-editor layout.
 :host {
   ::ng-deep {
     .ng-select .ng-select-container {
       background-color: nb-theme(select-outline-basic-background-color);
     }
-  }
-  .ace-editor {
-    height: calc($height + 3.5rem) !important;
-  }
-
-  .custom-parent-email-content {
-    height: calc($height + 1.3rem) !important;
   }
 
   .custom-preview-template {
