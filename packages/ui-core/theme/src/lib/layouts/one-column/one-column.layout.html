@@ -32,13 +32,21 @@
 						></ngx-gauzy-logo>
 
 						<!-- AI agent launcher — visible whenever the chat is available
-						     but collapsed, so the agent is always one click away. -->
+						     but collapsed, so the agent is always one click away.
+						     This is now the ONLY entry point (the header copy was
+						     removed as redundant), so it stays reachable in the
+						     compacted rail too — see one-column.layout.scss.
+						     `ghost` (not `outline`): a quiet icon-only button next to
+						     the workspace name, the way ever.works places it, instead
+						     of a bordered control competing with the switcher. -->
 						@if (chatSidebarService.available() && !chatSidebarService.expanded()) {
 							<button
 								class="ai-agent-launch"
-								outline
 								nbButton
+								ghost
+								status="basic"
 								size="small"
+								type="button"
 								[title]="'HEADER.AI_CHAT' | translate"
 								[attr.aria-label]="'HEADER.AI_CHAT' | translate"
 								(click)="chatSidebarService.expand()"
