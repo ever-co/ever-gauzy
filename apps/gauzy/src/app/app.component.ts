@@ -168,9 +168,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 	private loadChatwoot(document: Document, tagName: string) {
 		const chatwootBaseUrl = 'https://app.chatwoot.com';
 
-		// Hide the launcher bubble; the widget is opened programmatically instead
+		// Hide the launcher bubble; the widget is opened programmatically instead.
+		// Spreading an undefined value in an object literal is already a no-op, so
+		// no `?? {}` guard is needed here.
 		window['chatwootSettings'] = {
-			...(window['chatwootSettings'] ?? {}),
+			...window['chatwootSettings'],
 			hideMessageBubble: true
 		};
 

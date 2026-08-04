@@ -18,11 +18,10 @@
 // now sizes the two panels from the content column via flex, and that shared
 // chain also covers this page's one-editor layout.
 :host {
-  // A settings page CANNOT set its own `display`. `pages.component.scss` carries
-  //
-  //     ::ng-deep router-outlet + * { display: block; animation: fade 1s; }
-  //
-  // and `::ng-deep` leaks it into NESTED outlets, so it also matches this page's
+  // A settings page CANNOT set its own `display`. `pages.component.scss` carries a
+  // deep-scoped rule on the adjacent sibling of a router-outlet, forcing it to
+  // display block and giving it the page fade animation. Being deep-scoped, that
+  // rule leaks into NESTED outlets, so it also matches this page's
   // host inside the settings shell. Its specificity is (0,1,1) —
   // `[_nghost-pages] router-outlet + *` — against (0,1,0) for a component's own
   // `:host`, so `display: flex` here loses. Confirmed with CDP
@@ -51,9 +50,9 @@
     }
   }
 
-  // The frame the host cannot carry. `form` already gets
-  // `display: flex; flex-direction: column; flex: 1 1 auto` from the chain the
-  // `@use` above brings in; what it lacked was a DEFINITE height, so it sized to
+  // The frame the host cannot carry. `form` is already made a shrinkable flex
+  // column by the chain the `@use` above brings in — what it lacked was a
+  // DEFINITE height, so it sized to
   // content (991px) inside an 806px host and the excess painted over the footer.
   // `height: 100%` of a block host with a definite height fixes that, and the
   // existing `min-height: 0` chain below it then scrolls internally as intended.

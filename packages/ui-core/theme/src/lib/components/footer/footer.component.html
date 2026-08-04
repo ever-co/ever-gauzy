@@ -9,9 +9,10 @@
   <div class="right-side">
     <!--
       Both footer menus are the SAME primitive: one compact icon + word trigger that opens a
-      small popover. `nbPopoverPlacement="top"` opens the panel upwards because the footer sits
-      at the bottom of the viewport, and `nbPopoverAdjustment="noop"` keeps it there: the default
-      adjustment is allowed to flip the panel to the opposite side, which here would push it
+      small popover. The popover placement is set to top so the panel opens upwards, because the
+      footer sits at the bottom of the viewport, and the popover adjustment is set to noop so it
+      stays there: the default adjustment is allowed to flip the panel to the opposite side,
+      which here would push it
       below the viewport edge and clip it.
 
       Each trigger exports its own directive instance (`#…Popover="nbPopover"`) so the two are
@@ -90,7 +91,7 @@
 
 <!--
   Content of the "Version" popover: the build info that used to run inline across the footer
-  as `WEB <sha> | API v<x> • <sha>`, laid out as labelled rows instead.
+  as a single run of web sha, then API version and its sha, laid out as labelled rows instead.
 
   The drift handling is unchanged, only relocated: when the web build and the running API
   report the same build (or only one of them is known at all) the card collapses to a
