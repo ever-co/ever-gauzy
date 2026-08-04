@@ -303,9 +303,9 @@ nb-sidebar[tag='menu-sidebar'] {
   // panel — which is why opening one closes the other in TypeScript rather than
   // being resolved here.
   nb-layout .layout .layout-container nb-sidebar.settings-sidebar.expanded .main-container-fixed {
-    top: calc(var(--header-height, 4.5rem) + 0.5rem);
+    top: calc(var(--gz-header-height, var(--header-height, 4.5rem)) + 0.5rem);
     height: auto;
-    max-height: calc(100vh - var(--header-height, 4.5rem) - 1rem);
+    max-height: calc(100vh - var(--gz-header-height, var(--header-height, 4.5rem)) - 1rem);
     width: 22.5rem !important;
     // Never wider than the viewport allows, so the panel cannot be cut off at
     // the trailing edge on narrow windows. `max-width` still wins over an
