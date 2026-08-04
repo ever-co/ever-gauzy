@@ -6,104 +6,57 @@
     >. {{ 'FOOTER.RIGHTS_RESERVED' | translate }}
   </span>
 
-  @if (hasVersionInfo) {
-    <span class="app-version">
-      @if (!isVersionMismatch) {
-        @if (primary.version) {
-          <a
-            [href]="releaseUrl(primary.version)"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="ver"
-            [title]="'FOOTER.VERSION' | translate"
-            >{{ primary.version }}</a
-          >
-        }
-        @if (primary.version && primary.commit) {
-          <span class="bullet">•</span>
-        }
-        @if (primary.commit) {
-          <a
-            [href]="commitUrl(primary.commit)"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="sha"
-            [title]="'FOOTER.COMMIT' | translate"
-            >{{ shortCommit(primary.commit) }}</a
-          >
-        }
-      } @else {
-        <span class="scope">
-          <span class="scope-label">{{ 'FOOTER.WEB' | translate }}</span>
-          @if (web.version) {
-            <a
-              [href]="releaseUrl(web.version)"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="ver"
-              [title]="'FOOTER.VERSION' | translate"
-              >{{ web.version }}</a
-            >
-          }
-          @if (web.version && web.commit) {
-            <span class="bullet">•</span>
-          }
-          @if (web.commit) {
-            <a
-              [href]="commitUrl(web.commit)"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="sha"
-              [title]="'FOOTER.COMMIT' | translate"
-              >{{ shortCommit(web.commit) }}</a
-            >
-          }
-        </span>
-        @if (api) {
-          <span class="scope">
-            <span class="scope-label">{{ 'FOOTER.API' | translate }}</span>
-            @if (api.version) {
-              <a
-                [href]="releaseUrl(api.version)"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="ver"
-                [title]="'FOOTER.VERSION' | translate"
-                >{{ api.version }}</a
-              >
-            }
-            @if (api.version && api.commit) {
-              <span class="bullet">•</span>
-            }
-            @if (api.commit) {
-              <a
-                [href]="commitUrl(api.commit)"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="sha"
-                [title]="'FOOTER.COMMIT' | translate"
-                >{{ shortCommit(api.commit) }}</a
-              >
-            }
-          </span>
-        }
-      }
-    </span>
-  }
-
   <div class="right-side">
-    @if (user) {
-      <div class="mr-2">
-        <a [routerLink]="['legal/terms']">{{
-          'FOOTER.TERMS_OF_SERVICE' | translate
-        }}</a>
-        <span class="mx-3"></span>
-        <a [routerLink]="['legal/privacy']">{{
-          'FOOTER.PRIVACY_POLICY' | translate
-        }}</a>
-        <span class="mx-3"></span>
-      </div>
-    }
+    <!--
+      Both footer menus are the SAME primitive: one compact icon + word trigger that opens a
+      small popover. `nbPopoverPlacement="top"` opens the panel upwards because the footer sits
+      at the bottom of the viewport, and `nbPopoverAdjustment="noop"` keeps it there: the default
+      adjustment is allowed to flip the panel to the opposite side, which here would push it
+      below the viewport edge and clip it.
+
+      Each trigger exports its own directive instance (`#…Popover="nbPopover"`) so the two are
+      addressed individually instead of by template order.
+
+      `aria-expanded` is driven by the directive's own `nbPopoverShowStateChange` output, never
+      by a flag flipped in the click handler: Nebular also closes the panel on an outside click
+      and on Escape, and only the output reports those.
+    -->
+    <div class="footer-menus">
+      @if (hasVersionInfo) {
+        <button
+          type="button"
+          class="footer-menu-trigger"
+          #versionPopover="nbPopover"
+          [nbPopover]="versionMenu"
+          nbPopoverTrigger="click"
+          nbPopoverPlacement="top"
+          nbPopoverAdjustment="noop"
+          (nbPopoverShowStateChange)="isVersionMenuShown = $event.isShown"
+          aria-haspopup="true"
+          [attr.aria-expanded]="isVersionMenuShown"
+        >
+          <nb-icon icon="info-outline"></nb-icon>
+          <span>{{ 'FOOTER.VERSION' | translate }}</span>
+        </button>
+      }
+      @if (user) {
+        <button
+          type="button"
+          class="footer-menu-trigger"
+          #legalPopover="nbPopover"
+          [nbPopover]="legalMenu"
+          nbPopoverTrigger="click"
+          nbPopoverPlacement="top"
+          nbPopoverAdjustment="noop"
+          (nbPopoverShowStateChange)="isLegalMenuShown = $event.isShown"
+          aria-haspopup="true"
+          [attr.aria-expanded]="isLegalMenuShown"
+        >
+          <nb-icon icon="file-text-outline"></nb-icon>
+          <span>{{ 'FOOTER.LEGAL' | translate }}</span>
+        </button>
+      }
+    </div>
     <div class="socials">
       <a
         href="{{ companyGithubLink }}"
@@ -134,3 +87,132 @@
       ></a>
     </div>
   </div>
+
+<!--
+  Content of the "Version" popover: the build info that used to run inline across the footer
+  as `WEB <sha> | API v<x> • <sha>`, laid out as labelled rows instead.
+
+  The drift handling is unchanged, only relocated: when the web build and the running API
+  report the same build (or only one of them is known at all) the card collapses to a
+  Version row and a Commit row; when they differ it lists each side on its own row. Every
+  version still links to its GitHub release and every SHA to its GitHub commit.
+
+  The links are `target="_blank"`, so they do not close the popover - unlike the "Legal"
+  links below, they navigate away from this document rather than within it, and hiding the
+  overlay from a click handler on the anchor itself risks tearing the anchor out of the DOM
+  before the browser follows it.
+-->
+<ng-template #versionMenu>
+  <div class="footer-version-card" role="group" [attr.aria-label]="'FOOTER.VERSION' | translate">
+    @if (!isVersionMismatch) {
+      @if (primary.version) {
+        <div class="version-row">
+          <span class="version-label">{{ 'FOOTER.VERSION' | translate }}</span>
+          <span class="version-value">
+            <a
+              [href]="releaseUrl(primary.version)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="ver"
+              [title]="'FOOTER.VERSION_HINT' | translate"
+              >{{ primary.version }}</a
+            >
+          </span>
+        </div>
+      }
+      @if (primary.commit) {
+        <div class="version-row">
+          <span class="version-label">{{ 'FOOTER.COMMIT' | translate }}</span>
+          <span class="version-value">
+            <a
+              [href]="commitUrl(primary.commit)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="sha"
+              [title]="'FOOTER.COMMIT_HINT' | translate"
+              >{{ shortCommit(primary.commit) }}</a
+            >
+          </span>
+        </div>
+      }
+    } @else {
+      <div class="version-row">
+        <span class="version-label">{{ 'FOOTER.WEB' | translate }}</span>
+        <span class="version-value">
+          @if (web.version) {
+            <a
+              [href]="releaseUrl(web.version)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="ver"
+              [title]="'FOOTER.VERSION_HINT' | translate"
+              >{{ web.version }}</a
+            >
+          }
+          @if (web.version && web.commit) {
+            <span class="bullet">•</span>
+          }
+          @if (web.commit) {
+            <a
+              [href]="commitUrl(web.commit)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="sha"
+              [title]="'FOOTER.COMMIT_HINT' | translate"
+              >{{ shortCommit(web.commit) }}</a
+            >
+          }
+        </span>
+      </div>
+      @if (api) {
+        <div class="version-row">
+          <span class="version-label">{{ 'FOOTER.API' | translate }}</span>
+          <span class="version-value">
+            @if (api.version) {
+              <a
+                [href]="releaseUrl(api.version)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="ver"
+                [title]="'FOOTER.VERSION_HINT' | translate"
+                >{{ api.version }}</a
+              >
+            }
+            @if (api.version && api.commit) {
+              <span class="bullet">•</span>
+            }
+            @if (api.commit) {
+              <a
+                [href]="commitUrl(api.commit)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="sha"
+                [title]="'FOOTER.COMMIT_HINT' | translate"
+                >{{ shortCommit(api.commit) }}</a
+              >
+            }
+          </span>
+        </div>
+      }
+    }
+  </div>
+</ng-template>
+
+<!--
+  Content of the "Legal" popover. Nebular renders this template into the CDK overlay
+  container at the <body> level, which is why `.footer-legal-menu` is styled by a global
+  rule at the bottom of the sibling stylesheet rather than by a host-scoped one.
+-->
+<ng-template #legalMenu>
+  <nav class="footer-legal-menu" [attr.aria-label]="'FOOTER.LEGAL' | translate">
+    <a [routerLink]="['legal/terms']" (click)="closeFooterMenus()">{{
+      'FOOTER.TERMS_OF_SERVICE' | translate
+    }}</a>
+    <a [routerLink]="['legal/privacy']" (click)="closeFooterMenus()">{{
+      'FOOTER.PRIVACY_POLICY' | translate
+    }}</a>
+    <a [routerLink]="['legal/cookies']" (click)="closeFooterMenus()">{{
+      'FOOTER.COOKIE_POLICY' | translate
+    }}</a>
+  </nav>
+</ng-template>
