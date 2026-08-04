@@ -73,6 +73,20 @@
         > .row {
           flex: 1 1 auto;
           min-height: 0;
+          // Bootstrap's `.row` is `flex-wrap: wrap`, and a wrapped flex LINE sizes
+          // to its tallest item — so `align-items: stretch` cannot hold the columns
+          // to the row's height, and a tall preview grew the line instead.
+          // Measured: row 660px, column 845px, i.e. 185px escaping downwards onto
+          // the footer. The row's height IS definite here (it is a flex item of a
+          // definite-height column), so pinning the columns to 100% of it works.
+          //
+          // Safe against the wrap case because these are `col-6`, not `col-md-6`:
+          // 50% at every breakpoint, so the row is always a single line and
+          // `height: 100%` can never stack into 2x the available height.
+          > [class*='col-'] {
+            height: 100%;
+            min-height: 0;
+          }
         }
       }
     }
