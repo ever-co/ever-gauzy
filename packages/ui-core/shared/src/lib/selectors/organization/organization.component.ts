@@ -354,15 +354,6 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	};
 
 	/**
-	 * Closes the component when a click occurs outside of it.
-	 *
-	 * @param event - The click event.
-	 */
-	onClickOutside(event: Event): void {
-		if (this.isOpen && !event) this.isOpen = false;
-	}
-
-	/**
 	 * Selects an organization by its ID.
 	 *
 	 * @param organizationId - The ID of the organization to select.
