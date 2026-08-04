@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@gauzy/ui-config';
 import { IEmployee, IUser, IEmployeeUpdateInput } from '@gauzy/contracts';
@@ -13,7 +13,7 @@ import { BehaviorSubject, tap, Observable, filter, firstValueFrom } from 'rxjs';
     styleUrls: ['./user-menu.component.scss'],
     standalone: false
 })
-export class UserMenuComponent implements OnInit {
+export class UserMenuComponent implements OnInit, OnDestroy {
 	private _user$: Observable<IUser>;
 	private _employee$: BehaviorSubject<IEmployee>;
 	private _isSubmit$: BehaviorSubject<boolean>;
@@ -22,7 +22,16 @@ export class UserMenuComponent implements OnInit {
 	@Output()
 	public close: EventEmitter<any> = new EventEmitter<any>(null);
 
-	public clicks: boolean[] = [];
+	/**
+	 * Whether an outside click is allowed to close this panel yet. Same reason
+	 * as `gauzy-workspace-menu`: `gauzyOutside` listens on `document`, so arming
+	 * has to be deferred past the click that opened the panel. This replaces a
+	 * counter that required TWO outside clicks to dismiss — the first was
+	 * swallowed by the panel (576x288 over the lower-left of the page) and did
+	 * nothing at all, which is one of the "clicks do nothing" reports.
+	 */
+	private armed = false;
+	private armTimer: ReturnType<typeof setTimeout> | undefined;
 
 	public downloadApps = [
 		{
@@ -58,6 +67,8 @@ export class UserMenuComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
+		this.armTimer = setTimeout(() => (this.armed = true));
+
 		this.user$
 			.pipe(
 				distinctUntilChange(),
@@ -78,9 +89,14 @@ export class UserMenuComponent implements OnInit {
 		this.close.emit();
 	}
 
-	public onClickOutside(event: boolean) {
-		this.clicks.push(event);
-		if (!event && this.clicks.length > 1) this.onClick();
+	public onClickOutside(clickedInside: boolean) {
+		if (!clickedInside && this.armed) {
+			this.onClick();
+		}
+	}
+
+	ngOnDestroy(): void {
+		clearTimeout(this.armTimer);
 	}
 
 	public async onChangeStatus(): Promise<void> {

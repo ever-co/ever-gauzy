@@ -27,6 +27,7 @@
 					>
 						<ngx-gauzy-logo
 							[controlled]="trigger()"
+							[isWorkspaceOpen]="isWorkspaceOpen()"
 							(onCollapsed)="onCollapse($event)"
 							(onWorkspaceToggle)="onWorkspaceToggle($event)"
 						></ngx-gauzy-logo>
