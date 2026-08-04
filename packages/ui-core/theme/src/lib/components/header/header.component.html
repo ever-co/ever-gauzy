@@ -81,13 +81,9 @@
         (click)="toggleExtraActions()"
       ></nb-action>
 
-      @if (supportContextMenu) {
-        <nb-action
-          icon="message-circle-outline"
-          class="toggle-layout help"
-          [nbContextMenu]="supportContextMenu"
-        ></nb-action>
-      }
+      <!-- The speech-bubble help menu (Support Chat / FAQ / Help / About) used
+           to sit here. Those entries now live in the Quick Settings panel
+           (ngx-theme-settings), which is reached from the gear action below. -->
 
       @if (isEnabledTimeTracking()) {
         <nb-action class="timer-action" (click)="toggleTimerWindow()">

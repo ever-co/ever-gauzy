@@ -13,7 +13,14 @@ import { HttpClient } from '@angular/common/http';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService, NbMenuItem, NbMenuService, NbPopoverDirective, NbTabComponent } from '@nebular/theme';
+import {
+	NbDialogService,
+	NbMenuItem,
+	NbMenuService,
+	NbPopoverDirective,
+	NbSidebarService,
+	NbTabComponent
+} from '@nebular/theme';
 import {
 	IInvoice,
 	ITag,
@@ -61,6 +68,7 @@ import {
 	generateCsv,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
+import { QUICK_SETTINGS_SIDEBAR_TAG } from '@gauzy/ui-core/theme';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoicePaidComponent } from './table-components';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
@@ -125,6 +133,9 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	@ViewChildren(NbPopoverDirective)
 	public popups: QueryList<NbPopoverDirective>;
 
+	/** Mirrors whether the Quick Settings panel is currently expanded. */
+	private isQuickSettingsExpanded = false;
+
 	/*
 	 * Search Tab Form
 	 */
@@ -172,7 +183,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		private readonly nbMenuService: NbMenuService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
-		private readonly httpClient: HttpClient
+		private readonly httpClient: HttpClient,
+		private readonly sidebarService: NbSidebarService
 	) {
 		super(translateService);
 		this.setView();
@@ -183,6 +195,74 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
 		this.loadMenu();
+		this.watchQuickSettingsSidebar();
+	}
+
+	/**
+	 * Tracks the header's Quick Settings panel and closes this page's popovers
+	 * whenever it opens. The panel and these popovers cover the same top right
+	 * corner and sit in different stacking layers, so only one may be open.
+	 *
+	 * The header gear TOGGLES the sidebar, so the toggle event alone does not say
+	 * whether the panel ended up open; the expand/collapse events keep the mirror
+	 * honest and the toggle event flips it. Closing the popovers only on the way
+	 * to "expanded" matters: closing the panel is also what happens when one of
+	 * this page's popovers has just been opened, and reacting to that would hide
+	 * the popover again straight away.
+	 */
+	private watchQuickSettingsSidebar() {
+		const tag = QUICK_SETTINGS_SIDEBAR_TAG;
+
+		this.sidebarService
+			.onExpand()
+			.pipe(
+				filter((event) => event.tag === tag),
+				tap(() => this.setQuickSettingsExpanded(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		this.sidebarService
+			.onCollapse()
+			.pipe(
+				filter((event) => event.tag === tag),
+				tap(() => this.setQuickSettingsExpanded(false)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		this.sidebarService
+			.onToggle()
+			.pipe(
+				filter((event) => event.tag === tag),
+				tap(() => this.setQuickSettingsExpanded(!this.isQuickSettingsExpanded)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Records the Quick Settings panel state and hides this page's popovers when
+	 * the panel opens.
+	 *
+	 * @param expanded whether the Quick Settings panel is now open
+	 */
+	private setQuickSettingsExpanded(expanded: boolean) {
+		this.isQuickSettingsExpanded = expanded;
+
+		if (expanded) {
+			this.popups?.forEach((popover: NbPopoverDirective) => popover.hide());
+		}
+	}
+
+	/**
+	 * Collapses the header's Quick Settings panel so it cannot stay open next to
+	 * a popover this page is about to show.
+	 */
+	private closeQuickSettingsSidebar() {
+		if (this.isQuickSettingsExpanded) {
+			this.sidebarService.collapse(QUICK_SETTINGS_SIDEBAR_TAG);
+		}
 	}
 
 	ngAfterViewInit() {
@@ -1129,11 +1209,13 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	}
 
 	toggleActionsPopover() {
+		this.closeQuickSettingsSidebar();
 		this.popups.last.toggle();
 		this.popups.first.hide();
 	}
 
 	toggleTableSettingsPopover() {
+		this.closeQuickSettingsSidebar();
 		this.popups.first.toggle();
 		if (this.popups.length > 1) {
 			this.popups.last.hide();
