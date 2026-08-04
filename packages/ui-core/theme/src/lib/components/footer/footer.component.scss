@@ -81,9 +81,84 @@
     padding: 0 1rem 0;
   }
 
+  // Compact trigger that replaced the two full-length policy links.
+  .legal-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.375rem;
+    border: 0;
+    border-radius: var(--gauzy-radius-sm, 6px);
+    background-color: transparent;
+    color: nb-theme(text-hint-color);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1;
+    cursor: pointer;
+    transition: color ease-out 0.1s, background-color ease-out 0.1s;
+
+    nb-icon {
+      width: 1em;
+      height: 1em;
+      font-size: 0.875rem;
+
+      svg {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    &:hover,
+    &:focus-visible {
+      color: nb-theme(text-basic-color);
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    }
+  }
+
   @include media-breakpoint-down(is) {
     .socials {
       font-size: 1rem;
+    }
+  }
+}
+
+// ── "Legal" popover content ───────────────────────────────────────────────────
+// Nebular renders popover content into `.cdk-overlay-container` at the <body> level, so a
+// rule nested inside `nb-install-component()` (which scopes everything to `:host`) can never
+// reach it. A TOP-LEVEL `::ng-deep` is the way out: Angular strips the `::ng-deep` from a
+// component stylesheet and emits the remainder as a global rule. The `.cdk-overlay-container`
+// prefix is the same specificity trick `_overlays.scss` uses so these rules are not lost to
+// the broader overlay rules loaded from there.
+//
+// The panel chrome itself - opaque background, hairline border, shadow, radius - already
+// comes from `_overlays.scss` (`.cdk-overlay-container nb-popover`), so only the rows are
+// styled here. Colors resolve theme custom properties and always carry a literal fallback,
+// because the `--gauzy-*` names are not registered by the material-* themes.
+::ng-deep .cdk-overlay-container .footer-legal-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 10rem;
+  padding: 4px;
+
+  a {
+    display: block;
+    padding: 0.375rem 0.625rem;
+    border-radius: var(--gauzy-radius-sm, 6px);
+    color: var(--text-basic-color, #222b45);
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.25rem;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.12s ease-in-out, color 0.12s ease-in-out;
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+      color: var(--text-basic-color, #222b45);
+      text-decoration: none;
     }
   }
 }

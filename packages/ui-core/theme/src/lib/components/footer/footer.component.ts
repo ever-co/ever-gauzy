@@ -1,5 +1,6 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, HostListener, Inject, OnInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { NbPopoverDirective } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { IAppVersionInfo, IUser } from '@gauzy/contracts';
@@ -40,6 +41,15 @@ export class FooterComponent extends TranslationBaseComponent implements OnInit 
 
 	/** The running API's version + commit (fetched from `/api/version`); null until/if it loads. */
 	api: IVersionDisplay | null = null;
+
+	/**
+	 * The "Legal" popover in the footer.
+	 *
+	 * Nebular's click trigger already opens it, toggles it and closes it on an outside click;
+	 * this reference exists so the popover can also be closed on Escape and after one of its
+	 * links is followed (following a link does not close the overlay on its own).
+	 */
+	@ViewChild(NbPopoverDirective) legalPopover?: NbPopoverDirective;
 
 	constructor(
 		public translationService: TranslateService,
@@ -82,6 +92,17 @@ export class FooterComponent extends TranslationBaseComponent implements OnInit 
 				})
 			)
 			.subscribe();
+	}
+
+	/** Closes the "Legal" popover. Safe to call when it is already closed. */
+	closeLegalMenu(): void {
+		this.legalPopover?.hide();
+	}
+
+	/** Escape closes the "Legal" popover, which Nebular's click trigger does not do by itself. */
+	@HostListener('document:keydown.escape')
+	onEscapeKeydown(): void {
+		this.closeLegalMenu();
 	}
 
 	/** Whether there is any build info at all to display. */

@@ -94,13 +94,25 @@
   <div class="right-side">
     @if (user) {
       <div class="mr-2">
-        <a [routerLink]="['legal/terms']">{{
-          'FOOTER.TERMS_OF_SERVICE' | translate
-        }}</a>
-        <span class="mx-3"></span>
-        <a [routerLink]="['legal/privacy']">{{
-          'FOOTER.PRIVACY_POLICY' | translate
-        }}</a>
+        <!--
+          One compact trigger instead of two full-length policy links.
+          `nbPopoverPlacement="top"` opens the panel upwards because the footer sits at the
+          bottom of the viewport, and `nbPopoverAdjustment="noop"` keeps it there: the default
+          adjustment is allowed to flip the panel to the opposite side, which here would push it
+          below the viewport edge and clip it.
+        -->
+        <button
+          type="button"
+          class="legal-trigger"
+          [nbPopover]="legalMenu"
+          nbPopoverTrigger="click"
+          nbPopoverPlacement="top"
+          nbPopoverAdjustment="noop"
+          aria-haspopup="true"
+        >
+          <nb-icon icon="file-text-outline"></nb-icon>
+          <span>{{ 'FOOTER.LEGAL' | translate }}</span>
+        </button>
         <span class="mx-3"></span>
       </div>
     }
@@ -134,3 +146,22 @@
       ></a>
     </div>
   </div>
+
+<!--
+  Content of the "Legal" popover. Nebular renders this template into the CDK overlay
+  container at the <body> level, which is why `.footer-legal-menu` is styled by a global
+  rule at the bottom of the sibling stylesheet rather than by a host-scoped one.
+-->
+<ng-template #legalMenu>
+  <nav class="footer-legal-menu" [attr.aria-label]="'FOOTER.LEGAL' | translate">
+    <a [routerLink]="['legal/terms']" (click)="closeLegalMenu()">{{
+      'FOOTER.TERMS_OF_SERVICE' | translate
+    }}</a>
+    <a [routerLink]="['legal/privacy']" (click)="closeLegalMenu()">{{
+      'FOOTER.PRIVACY_POLICY' | translate
+    }}</a>
+    <a [routerLink]="['legal/cookies']" (click)="closeLegalMenu()">{{
+      'FOOTER.COOKIE_POLICY' | translate
+    }}</a>
+  </nav>
+</ng-template>
