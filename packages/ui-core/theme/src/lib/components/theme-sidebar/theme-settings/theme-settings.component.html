@@ -22,7 +22,7 @@
 		<nb-list-item>
 			<div class="support-links theme">
 				@if (isSupportChatAvailable) {
-					<button nbButton ghost size="small" class="support-link" (click)="openSupportChat()">
+					<button type="button" nbButton ghost size="small" class="support-link" (click)="openSupportChat()">
 						<nb-icon icon="message-square-outline"></nb-icon>
 						<span>{{ 'CONTEXT_MENU.CHAT' | translate }}</span>
 					</button>
@@ -46,11 +46,11 @@
 					<nb-icon icon="clipboard-outline"></nb-icon>
 					<span>{{ 'CONTEXT_MENU.FAQ' | translate }}</span>
 				</a>
-				<button nbButton ghost size="small" class="support-link" (click)="navigateTo(['/pages/help'])">
+				<button type="button" nbButton ghost size="small" class="support-link" (click)="navigateTo(['/pages/help'])">
 					<nb-icon icon="question-mark-circle-outline"></nb-icon>
 					<span>{{ 'CONTEXT_MENU.HELP' | translate }}</span>
 				</button>
-				<button nbButton ghost size="small" class="support-link" (click)="navigateTo(['/pages/about'])">
+				<button type="button" nbButton ghost size="small" class="support-link" (click)="navigateTo(['/pages/about'])">
 					<nb-icon icon="droplet-outline"></nb-icon>
 					<span>{{ 'MENU.ABOUT' | translate }}</span>
 				</button>

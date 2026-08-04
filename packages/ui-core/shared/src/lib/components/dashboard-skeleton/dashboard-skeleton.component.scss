@@ -45,6 +45,7 @@
 
 // === DEFAULT THEME ===
 :host-context([data-skeleton-theme='default']) {
+  --skeleton-canvas: #edf1f7;
   --background-basic-color-1: #ffffff;
   --border-radius: 0.25rem;
   --button-rectangle-border-radius: 0.25rem;
@@ -54,6 +55,7 @@
 
 // === DARK THEME ===
 :host-context([data-skeleton-theme='dark']) {
+  --skeleton-canvas: #151a30;
   --background-basic-color-1: #222b45;
   --border-radius: 0.25rem;
   --button-rectangle-border-radius: 0.25rem;
@@ -63,6 +65,7 @@
 
 // === COSMIC THEME ===
 :host-context([data-skeleton-theme='cosmic']) {
+  --skeleton-canvas: #1b1b38;
   --background-basic-color-1: #323259;
   --border-radius: 0.5rem;
   --button-rectangle-border-radius: 1rem;
@@ -72,6 +75,7 @@
 
 // === CORPORATE THEME ===
 :host-context([data-skeleton-theme='corporate']) {
+  --skeleton-canvas: #edf1f7;
   --background-basic-color-1: rgba(255, 255, 255, 1);
   --border-radius: 0.375rem;
   --button-rectangle-border-radius: 0.375rem;
@@ -81,6 +85,7 @@
 
 // === MATERIAL LIGHT ===
 :host-context([data-skeleton-theme='material']) {
+  --skeleton-canvas: #fafafa;
   --background-basic-color-1: #ffffff;
   --border-radius: 0.25rem;
   --button-rectangle-border-radius: 0.375rem;
@@ -90,6 +95,7 @@
 
 // === MATERIAL DARK ===
 :host-context([data-skeleton-theme='material-dark']) {
+  --skeleton-canvas: #303030;
   --background-basic-color-1: #303030;
   --border-radius: 0.25rem;
   --button-rectangle-border-radius: 0.375rem;

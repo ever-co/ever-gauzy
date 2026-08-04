@@ -133,9 +133,6 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	@ViewChildren(NbPopoverDirective)
 	public popups: QueryList<NbPopoverDirective>;
 
-	/** Mirrors whether the Quick Settings panel is currently expanded. */
-	private isQuickSettingsExpanded = false;
-
 	/*
 	 * Search Tab Form
 	 */
@@ -199,16 +196,20 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	}
 
 	/**
-	 * Tracks the header's Quick Settings panel and closes this page's popovers
-	 * whenever it opens. The panel and these popovers cover the same top right
-	 * corner and sit in different stacking layers, so only one may be open.
+	 * Closes this page's popovers whenever the header's Quick Settings panel opens.
+	 * The panel and these popovers cover the same top right corner and sit in
+	 * different stacking layers, so only one may be open.
 	 *
-	 * The header gear TOGGLES the sidebar, so the toggle event alone does not say
-	 * whether the panel ended up open; the expand/collapse events keep the mirror
-	 * honest and the toggle event flips it. Closing the popovers only on the way
-	 * to "expanded" matters: closing the panel is also what happens when one of
-	 * this page's popovers has just been opened, and reacting to that would hide
-	 * the popover again straight away.
+	 * Deliberately does NOT mirror the panel's state into a local flag. `onToggle`
+	 * reports only that a toggle happened, not the state it ended in, so a
+	 * `toggle(compact)` would compact the panel while the mirror recorded
+	 * "expanded" — and a stale mirror then leaves overlapping UI open on the next
+	 * action. There is no need for one: `NbSidebarService.collapse(tag)` is
+	 * idempotent, so the close path can simply always call it.
+	 *
+	 * Only `onExpand` is observed. Reacting to `onCollapse` would be wrong:
+	 * collapsing the panel is also what happens when one of this page's popovers
+	 * has just been opened, so it would immediately hide the popover again.
 	 */
 	private watchQuickSettingsSidebar() {
 		const tag = QUICK_SETTINGS_SIDEBAR_TAG;
@@ -217,52 +218,20 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			.onExpand()
 			.pipe(
 				filter((event) => event.tag === tag),
-				tap(() => this.setQuickSettingsExpanded(true)),
+				tap(() => this.popups?.forEach((popover: NbPopoverDirective) => popover.hide())),
 				untilDestroyed(this)
 			)
 			.subscribe();
-
-		this.sidebarService
-			.onCollapse()
-			.pipe(
-				filter((event) => event.tag === tag),
-				tap(() => this.setQuickSettingsExpanded(false)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-
-		this.sidebarService
-			.onToggle()
-			.pipe(
-				filter((event) => event.tag === tag),
-				tap(() => this.setQuickSettingsExpanded(!this.isQuickSettingsExpanded)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	/**
-	 * Records the Quick Settings panel state and hides this page's popovers when
-	 * the panel opens.
-	 *
-	 * @param expanded whether the Quick Settings panel is now open
-	 */
-	private setQuickSettingsExpanded(expanded: boolean) {
-		this.isQuickSettingsExpanded = expanded;
-
-		if (expanded) {
-			this.popups?.forEach((popover: NbPopoverDirective) => popover.hide());
-		}
 	}
 
 	/**
 	 * Collapses the header's Quick Settings panel so it cannot stay open next to
-	 * a popover this page is about to show.
+	 * a popover this page is about to show. Unconditional — `collapse()` is
+	 * idempotent, and guarding it on a mirrored flag is what made the flag able
+	 * to go stale in the first place.
 	 */
 	private closeQuickSettingsSidebar() {
-		if (this.isQuickSettingsExpanded) {
-			this.sidebarService.collapse(QUICK_SETTINGS_SIDEBAR_TAG);
-		}
+		this.sidebarService.collapse(QUICK_SETTINGS_SIDEBAR_TAG);
 	}
 
 	ngAfterViewInit() {
@@ -1211,7 +1180,13 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	toggleActionsPopover() {
 		this.closeQuickSettingsSidebar();
 		this.popups.last.toggle();
-		this.popups.first.hide();
+		// Same guard as toggleTableSettingsPopover: when the page renders a single
+		// NbPopoverDirective, `first` and `last` are the SAME instance, so hiding
+		// `first` unconditionally would undo the toggle above and the actions
+		// popover would never open. onClickOutside routes through here too.
+		if (this.popups.length > 1) {
+			this.popups.first.hide();
+		}
 	}
 
 	toggleTableSettingsPopover() {

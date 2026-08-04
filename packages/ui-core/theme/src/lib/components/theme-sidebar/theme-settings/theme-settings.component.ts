@@ -106,13 +106,24 @@ export class ThemeSettingsComponent implements AfterViewChecked, OnDestroy {
 	 * loaded, and it never appears at all when no website token is configured.
 	 */
 	public openSupportChat() {
-		const widget = (window as unknown as { $chatwoot?: IChatwootWidget }).$chatwoot;
+		const chatwoot = () => (window as unknown as { $chatwoot?: IChatwootWidget }).$chatwoot;
+		const widget = chatwoot();
 
-		if (!widget) {
+		if (widget) {
+			widget.toggle('open');
+			this.closeSidebar();
 			return;
 		}
 
-		widget.toggle('open');
+		// Not loaded YET is different from not configured. Without this branch a click
+		// that lands before sdk.js finishes is silently swallowed — a dead click, and
+		// the launcher bubble is hidden so this entry is the only way in. The SDK
+		// dispatches `chatwoot:ready` once `$chatwoot` is usable; wait for it once.
+		if (!this.isSupportChatAvailable) {
+			return;
+		}
+
+		window.addEventListener('chatwoot:ready', () => chatwoot()?.toggle('open'), { once: true });
 		this.closeSidebar();
 	}
 }

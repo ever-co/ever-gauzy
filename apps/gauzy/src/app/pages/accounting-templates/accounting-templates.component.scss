@@ -50,9 +50,11 @@
     }
   }
 
-  // The frame the host cannot carry. `form` is already made a shrinkable flex
-  // column by the chain the `@use` above brings in — what it lacked was a
-  // DEFINITE height, so it sized to
+  // The frame the host cannot carry. A deliberate LOCAL RESTATEMENT: the shared
+  // sheet pulled in by the `@use` above now declares the same height on its own
+  // `> form`, so this is redundant today — it is kept so this page keeps a
+  // definite height even if that shared chain is later re-scoped to selectors
+  // this page's markup does not match. Without a definite height the form sized to
   // content (991px) inside an 806px host and the excess painted over the footer.
   // `height: 100%` of a block host with a definite height fixes that, and the
   // existing `min-height: 0` chain below it then scrolls internally as intended.
