@@ -67,6 +67,9 @@ export function AiChatPanel() {
 	// (e.g. collapsing clears maximized), so a live bridge is required.
 	const dockSide = useAngularSignal(injector, chatSidebar.position);
 	const isMaximized = useAngularSignal(injector, chatSidebar.maximized);
+	// True in the detached window (`/ai-chat/window`): there is no sidebar to
+	// dock, maximize, resize or collapse there, so those controls are dropped.
+	const isDetachedView = useAngularSignal(injector, chatSidebar.detachedView);
 	const rootRef = useRef<HTMLDivElement>(null);
 
 	const authHeaders = useCallback(
@@ -150,6 +153,10 @@ export function AiChatPanel() {
 	const handleMoveSide = useCallback(() => chatSidebar.togglePosition(), [chatSidebar]);
 
 	const handleToggleMaximize = useCallback(() => chatSidebar.toggleMaximized(), [chatSidebar]);
+
+	// Opens the chat in its own browser window and closes the docked panel,
+	// so the conversation is never live in two places at once.
+	const handleDetach = useCallback(() => chatSidebar.detach(), [chatSidebar]);
 
 	// ── Drag-to-resize (grip on the canvas-facing edge) ──────────
 	// Window listeners are tracked in a ref so a drag interrupted by
@@ -458,133 +465,165 @@ export function AiChatPanel() {
 							<span className="gz-ai-chat-btn-label">{t('AI_ASSISTANT.NEW_CHAT', 'New chat')}</span>
 						</button>
 					)}
-					<button
-						type="button"
-						onClick={handleMoveSide}
-						className="gz-ai-chat-head-btn"
-						style={headerBtnStyle}
-						title={
-							dockSide === 'start'
-								? t('AI_ASSISTANT.DOCK_RIGHT', 'Dock to the right')
-								: t('AI_ASSISTANT.DOCK_LEFT', 'Dock to the left')
-						}
-						aria-label={
-							dockSide === 'start'
-								? t('AI_ASSISTANT.DOCK_RIGHT', 'Dock to the right')
-								: t('AI_ASSISTANT.DOCK_LEFT', 'Dock to the left')
-						}
-					>
-						{/* Arrow pointing toward the side the chat will move to */}
-						{dockSide === 'start' ? (
-							<svg
-								width="13"
-								height="13"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
+					{/* Dock side / maximize / detach / close all describe the DOCKED
+					    panel — in the detached window there is no sidebar to move,
+					    grow or close, so the whole cluster is dropped there. */}
+					{!isDetachedView && (
+						<>
+							<button
+								type="button"
+								onClick={handleMoveSide}
+								className="gz-ai-chat-head-btn"
+								style={headerBtnStyle}
+								title={
+									dockSide === 'start'
+										? t('AI_ASSISTANT.DOCK_RIGHT', 'Dock to the right')
+										: t('AI_ASSISTANT.DOCK_LEFT', 'Dock to the left')
+								}
+								aria-label={
+									dockSide === 'start'
+										? t('AI_ASSISTANT.DOCK_RIGHT', 'Dock to the right')
+										: t('AI_ASSISTANT.DOCK_LEFT', 'Dock to the left')
+								}
 							>
-								<line x1="3" y1="12" x2="15" y2="12" />
-								<polyline points="10 7 15 12 10 17" />
-								<line x1="20" y1="4" x2="20" y2="20" />
-							</svg>
-						) : (
-							<svg
-								width="13"
-								height="13"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
+								{/* Arrow pointing toward the side the chat will move to */}
+								{dockSide === 'start' ? (
+									<svg
+										width="13"
+										height="13"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<line x1="3" y1="12" x2="15" y2="12" />
+										<polyline points="10 7 15 12 10 17" />
+										<line x1="20" y1="4" x2="20" y2="20" />
+									</svg>
+								) : (
+									<svg
+										width="13"
+										height="13"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<line x1="21" y1="12" x2="9" y2="12" />
+										<polyline points="14 7 9 12 14 17" />
+										<line x1="4" y1="4" x2="4" y2="20" />
+									</svg>
+								)}
+							</button>
+							<button
+								type="button"
+								onClick={handleToggleMaximize}
+								className="gz-ai-chat-head-btn"
+								style={headerBtnStyle}
+								title={
+									isMaximized
+										? t('AI_ASSISTANT.RESTORE', 'Restore width')
+										: t('AI_ASSISTANT.MAXIMIZE', 'Maximize')
+								}
+								aria-label={
+									isMaximized
+										? t('AI_ASSISTANT.RESTORE', 'Restore width')
+										: t('AI_ASSISTANT.MAXIMIZE', 'Maximize')
+								}
+								aria-pressed={isMaximized}
 							>
-								<line x1="21" y1="12" x2="9" y2="12" />
-								<polyline points="14 7 9 12 14 17" />
-								<line x1="4" y1="4" x2="4" y2="20" />
-							</svg>
-						)}
-					</button>
-					<button
-						type="button"
-						onClick={handleToggleMaximize}
-						className="gz-ai-chat-head-btn"
-						style={headerBtnStyle}
-						title={
-							isMaximized
-								? t('AI_ASSISTANT.RESTORE', 'Restore width')
-								: t('AI_ASSISTANT.MAXIMIZE', 'Maximize')
-						}
-						aria-label={
-							isMaximized
-								? t('AI_ASSISTANT.RESTORE', 'Restore width')
-								: t('AI_ASSISTANT.MAXIMIZE', 'Maximize')
-						}
-						aria-pressed={isMaximized}
-					>
-						{isMaximized ? (
-							<svg
-								width="13"
-								height="13"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
+								{isMaximized ? (
+									<svg
+										width="13"
+										height="13"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<polyline points="4 14 10 14 10 20" />
+										<polyline points="20 10 14 10 14 4" />
+										<line x1="14" y1="10" x2="21" y2="3" />
+										<line x1="3" y1="21" x2="10" y2="14" />
+									</svg>
+								) : (
+									<svg
+										width="13"
+										height="13"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<polyline points="15 3 21 3 21 9" />
+										<polyline points="9 21 3 21 3 15" />
+										<line x1="21" y1="3" x2="14" y2="10" />
+										<line x1="3" y1="21" x2="10" y2="14" />
+									</svg>
+								)}
+							</button>
+							<button
+								type="button"
+								onClick={handleDetach}
+								className="gz-ai-chat-head-btn"
+								style={headerBtnStyle}
+								title={t('AI_ASSISTANT.DETACH', 'Open in a new window')}
+								aria-label={t('AI_ASSISTANT.DETACH', 'Open in a new window')}
 							>
-								<polyline points="4 14 10 14 10 20" />
-								<polyline points="20 10 14 10 14 4" />
-								<line x1="14" y1="10" x2="21" y2="3" />
-								<line x1="3" y1="21" x2="10" y2="14" />
-							</svg>
-						) : (
-							<svg
-								width="13"
-								height="13"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
+								{/* A window with an arrow leaving it — the chat moves out of
+								    the page and into a window of its own. */}
+								<svg
+									width="13"
+									height="13"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								>
+									<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+									<polyline points="15 3 21 3 21 9" />
+									<line x1="10" y1="14" x2="21" y2="3" />
+								</svg>
+							</button>
+							<button
+								type="button"
+								onClick={handleCollapse}
+								className="gz-ai-chat-head-btn"
+								style={headerBtnStyle}
+								title={t('AI_ASSISTANT.CLOSE', 'Close AI Assistant')}
+								aria-label={t('AI_ASSISTANT.CLOSE', 'Close AI Assistant')}
 							>
-								<polyline points="15 3 21 3 21 9" />
-								<polyline points="9 21 3 21 3 15" />
-								<line x1="21" y1="3" x2="14" y2="10" />
-								<line x1="3" y1="21" x2="10" y2="14" />
-							</svg>
-						)}
-					</button>
-					<button
-						type="button"
-						onClick={handleCollapse}
-						className="gz-ai-chat-head-btn"
-						style={headerBtnStyle}
-						title={t('AI_ASSISTANT.CLOSE', 'Close AI Assistant')}
-						aria-label={t('AI_ASSISTANT.CLOSE', 'Close AI Assistant')}
-					>
-						{/* The chevron points the way the panel actually leaves — it used
-						    to point left even when the chat was docked on the right. */}
-						<svg
-							width="14"
-							height="14"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-						>
-							{dockSide === 'start' ? (
-								<polyline points="15 18 9 12 15 6" />
-							) : (
-								<polyline points="9 18 15 12 9 6" />
-							)}
-						</svg>
-					</button>
+								{/* The chevron points the way the panel actually leaves — it used
+								    to point left even when the chat was docked on the right. */}
+								<svg
+									width="14"
+									height="14"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								>
+									{dockSide === 'start' ? (
+										<polyline points="15 18 9 12 15 6" />
+									) : (
+										<polyline points="9 18 15 12 9 6" />
+									)}
+								</svg>
+							</button>
+						</>
+					)}
 				</span>
 			</div>
 
@@ -643,7 +682,9 @@ export function AiChatPanel() {
 					</div>
 				)}
 
-				{/* Input area */}
+				{/* Input area. Escape closes the docked panel; in the detached window
+				    it must do nothing — collapse() persists the docked state for the
+				    next page load, and there is no panel here to close. */}
 				<ChatInput
 					value={input}
 					isBusy={isBusy}
@@ -651,12 +692,13 @@ export function AiChatPanel() {
 					onChange={setInput}
 					onSubmit={handleSubmit}
 					onStop={() => void stop()}
-					onEscape={handleCollapse}
+					onEscape={isDetachedView ? undefined : handleCollapse}
 				/>
 			</div>
 
-			{/* Drag-to-resize grip on the canvas-facing edge */}
-			{!isMaximized && (
+			{/* Drag-to-resize grip on the canvas-facing edge. The detached window
+			    is resized by the OS window chrome, not by this grip. */}
+			{!isMaximized && !isDetachedView && (
 				<div
 					className="gz-ai-chat-resize"
 					style={resizeHandleStyle}

@@ -81,8 +81,10 @@ export class OneColumnLayoutComponent {
 			const hostRef = this.chatSidebarHost();
 			this.chatHostResizeObserver?.disconnect();
 			this.chatHostResizeObserver = undefined;
-			if (!hostRef || typeof ResizeObserver === 'undefined') return;
-			const host = hostRef.nativeElement as HTMLElement;
+			const host = hostRef?.nativeElement as HTMLElement | undefined;
+			// `observe()` throws on a non-Element, which would take the whole
+			// effect (and the width mirror with it) down silently.
+			if (!host || typeof ResizeObserver === 'undefined') return;
 			const apply = () => host.style.setProperty('--gz-chat-live-width', `${host.getBoundingClientRect().width}px`);
 			this.chatHostResizeObserver = new ResizeObserver(apply);
 			this.chatHostResizeObserver.observe(host);
@@ -101,8 +103,18 @@ export class OneColumnLayoutComponent {
 		});
 	}
 
-	/** The chat sidebar host element (present only while the chat renders). */
-	readonly chatSidebarHost = viewChild<ElementRef<HTMLElement>>('chatSidebarHost');
+	/**
+	 * The chat sidebar host ELEMENT (present only while the chat renders).
+	 *
+	 * `read: ElementRef` is required, not cosmetic: `#chatSidebarHost` sits on
+	 * `<nb-sidebar>`, and a template reference variable on a component element
+	 * resolves to the component instance by default — so without it the query
+	 * returned an NbSidebarComponent, `.nativeElement` was undefined, and the
+	 * ResizeObserver effect in the constructor never published
+	 * `--gz-chat-live-width`. The panel then fell back to the docked chat
+	 * width, which is why maximizing looked inert.
+	 */
+	readonly chatSidebarHost = viewChild('chatSidebarHost', { read: ElementRef });
 
 	/**
 	 * Horizontal padding the fixed header needs on the given side so its

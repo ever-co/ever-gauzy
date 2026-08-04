@@ -13,6 +13,7 @@ export { AiChatReactUiPlugin } from './lib/ai-chat-react-ui.plugin';
 
 // Angular bridge components
 export { AiChatSidebarComponent } from './lib/ai-chat-sidebar.component';
+export { AiChatWindowComponent } from './lib/ai-chat-window.component';
 export { PlaygroundPageComponent } from './lib/playground-page.component';
 export { PlaygroundChatSidebarComponent } from './lib/playground-chat-sidebar.component';
 
@@ -29,6 +30,10 @@ export {
 
 // Route config
 export { PLAYGROUND_PATH, PLAYGROUND_ROUTE } from './lib/playground.routes';
+
+// Detached chat window routes — wired into the app's ROOT routes so the window
+// renders without the /pages shell (nav menu sidebar, header, footer)
+export { AI_CHAT_WINDOW_PATH, AI_CHAT_WINDOW_ROUTES } from './lib/ai-chat-window.routes';
 
 // AI Providers (BYOK) settings page — component, service, and route config
 export {

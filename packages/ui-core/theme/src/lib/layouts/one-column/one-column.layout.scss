@@ -78,6 +78,18 @@
     &.chat-sidebar-maximized {
       flex: 1 1 auto !important;
       width: auto !important;
+      min-width: 0 !important;
+      max-width: none !important;
+
+      // The visible panel is the fixed `.main-container` below, whose width
+      // comes from --gz-chat-live-width. Its fallback is the DOCKED chat
+      // width, so whenever that variable is missing the host would grow while
+      // the panel stayed narrow — which is exactly what "maximize does
+      // nothing" looks like. Maximized falls back to the viewport instead.
+      ::ng-deep .main-container {
+        width: var(--gz-chat-live-width, 100vw) !important;
+        max-width: 100vw !important;
+      }
     }
 
     &.collapsed {
@@ -327,9 +339,14 @@ nb-sidebar[tag='menu-sidebar'] {
   // of being covered or display:none'd — the page stays alive and restoring
   // simply gives the space back. (All nb-sidebars are projected before the
   // .content column inside .layout-container.)
+  // flex-grow is 0 (not just a 0 basis) and max-width clamps the result, so
+  // the canvas cannot claim any leftover space back — "fully hidden" has to
+  // hold even when the chat host stops growing for whatever reason.
   nb-layout .layout .layout-container nb-sidebar.chat-sidebar.chat-sidebar-maximized ~ .content {
-    flex: 0 1 0% !important;
+    flex: 0 0 0% !important;
+    width: 0 !important;
     min-width: 0 !important;
+    max-width: 0 !important;
     overflow: hidden !important;
   }
 }

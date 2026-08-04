@@ -4110,6 +4110,7 @@
 		"DOCK_RIGHT": "Dock to the right",
 		"MAXIMIZE": "Maximize",
 		"RESTORE": "Restore width",
+		"DETACH": "Open in a new window",
 		"COLLAPSE": "Collapse",
 		"RESIZE": "Drag to resize",
 		"WELCOME_SUBTITLE": "Ask anything about your workspace, tasks, or projects.",
