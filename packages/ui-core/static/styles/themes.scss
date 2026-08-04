@@ -670,6 +670,23 @@ $nb-themes: nb-register-theme(
     input-border-width: 0,
     select-outline-border-width: 0,
     select-outline-basic-border-color: transparent,
+    // ── Loading veil ──────────────────────────────────────────────────────
+    // The backdrop `[nbSpinner]` lays over a card / table while its request is
+    // in flight. Nebular's default for every status is
+    // `color-basic-transparent-200` = rgba(143, 155, 179, 0.16), a BLUE-GREY
+    // tint — so a loading panel was a different colour from the same panel one
+    // frame later. This is `gauzy-card-1` at 72 %: the surface keeps its own
+    // colour and the content below just fades back.
+    // Nebular emits `nb-spinner.status-#{$status}` per status (see
+    // `@nebular/theme/components/spinner/_spinner.component.theme.scss`), so
+    // every status has to be set — there is no single backdrop token.
+    spinner-basic-background-color: rgba(255, 255, 255, 0.72),
+    spinner-primary-background-color: rgba(255, 255, 255, 0.72),
+    spinner-info-background-color: rgba(255, 255, 255, 0.72),
+    spinner-success-background-color: rgba(255, 255, 255, 0.72),
+    spinner-warning-background-color: rgba(255, 255, 255, 0.72),
+    spinner-danger-background-color: rgba(255, 255, 255, 0.72),
+    spinner-control-background-color: rgba(255, 255, 255, 0.72),
     // Gauzy
     gauzy-card-1: rgba(255, 255, 255, 1),
     // Neutral near-white sidebar (zinc-100), shadcn-like
@@ -800,6 +817,20 @@ $nb-themes: nb-register-theme(
     color-danger-default: #dc2626,
     color-warning-default: rgba(255, 171, 45, 1),
     gauzy-background-transparent: rgba(110, 73, 232, 0.5),
+    // ── Loading veil ──────────────────────────────────────────────────────
+    // `gauzy-card-1` at 72 %, the dark counterpart of the same block in
+    // `gauzy-light` — see the note there. The inherited
+    // `color-basic-transparent-200` is rgba(143, 155, 179, 0.16), a LIGHT
+    // blue-grey, which over the rgb(18, 18, 20) panel composites to about
+    // rgb(38, 40, 45): every table and card visibly brightened while it loaded
+    // and then dropped back once the rows arrived.
+    spinner-basic-background-color: rgba(18, 18, 20, 0.72),
+    spinner-primary-background-color: rgba(18, 18, 20, 0.72),
+    spinner-info-background-color: rgba(18, 18, 20, 0.72),
+    spinner-success-background-color: rgba(18, 18, 20, 0.72),
+    spinner-warning-background-color: rgba(18, 18, 20, 0.72),
+    spinner-danger-background-color: rgba(18, 18, 20, 0.72),
+    spinner-control-background-color: rgba(18, 18, 20, 0.72),
     // Panel / card surface — one visible step above the near-black canvas.
     gauzy-card-1: rgba(18, 18, 20, 1),
     // Tints layered ON TOP of a panel. Inherited from the `dark` map these were

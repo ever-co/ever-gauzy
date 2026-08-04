@@ -20,12 +20,19 @@
 // binding for the same class, so a page whose flag is still `false` would cancel
 // the settling window it is meant to extend.
 //
-// Colours are theme tokens only — a literal grey is a light smear on the
-// near-black themes.
+// Colours are TRANSLUCENT neutrals, so they composite with the table surface
+// instead of painting one: an opaque literal is a light smear on the near-black
+// themes. Same two values as `skeleton.component.scss`, so a `ngx-skeleton` and
+// a settling smart table on the same page read as one thing.
+//
+// The fill was `var(--gauzy-card-2)`, which on `gauzy-dark` is rgba(255, 255,
+// 255, 0.02) — 2 % white over a near-black table body, i.e. bands that were
+// effectively invisible.
 
 $ga-table-skeleton-row-height: 2rem;
 $ga-table-skeleton-rows: 5;
-$ga-table-skeleton-fill: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
+$ga-table-skeleton-fill: rgba(126, 126, 143, 0.2);
+$ga-table-skeleton-sweep: rgba(126, 126, 143, 0.28);
 
 angular2-smart-table.ga-table-settling,
 angular2-smart-table.ga-table-loading {
@@ -59,7 +66,7 @@ angular2-smart-table.ga-table-loading {
       bottom: 0;
       left: 0;
       width: 35%;
-      background: linear-gradient(90deg, transparent 0%, #{$ga-table-skeleton-fill} 50%, transparent 100%);
+      background: linear-gradient(90deg, transparent 0%, #{$ga-table-skeleton-sweep} 50%, transparent 100%);
       animation: ga-table-skeleton-sweep 1.6s linear infinite;
     }
   }

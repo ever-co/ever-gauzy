@@ -9,20 +9,34 @@
   overflow-y: hidden;
 
   // === GAUZY LIGHT (default) ===
+  // `--skeleton-canvas` is the page background (`layout-background-color`),
+  // which is NOT the same surface as `--background-basic-color-1` (the panel /
+  // card colour): on `gauzy-dark` the canvas is rgb(9, 9, 11) and the panel is
+  // rgb(18, 18, 20). Painting the whole loading screen with the panel colour is
+  // what made it read lighter than the app it hands over to.
+  --skeleton-canvas: #ffffff;
   --background-basic-color-1: rgb(255, 255, 255);
-  --border-basic-color-2: #f5f5f5;
   --border-radius: 0.5rem;
   --button-rectangle-border-radius: 0.375rem;
   --gauzy-sidebar-background-2: rgba(251, 251, 251, 1);
   --gauzy-card-2: rgba(50, 50, 50, 0.03);
+
+  // Placeholder bar and its moving highlight — translucent NEUTRALS, declared
+  // once rather than per theme, because they composite with whatever surface is
+  // behind them. The bar used to be an opaque per-theme ramp, which meant every
+  // bar repainted its surface; on `material-dark` it swept towards #f5f5f5,
+  // i.e. a near-white glow on a dark screen.
+  --skeleton-fill: rgba(126, 126, 143, 0.2);
+  --skeleton-shimmer: rgba(126, 126, 143, 0.28);
 }
 
 // === GAUZY DARK ===
 // Mirrors the `gauzy-dark` map in `static/styles/themes.scss`; if these drift,
 // the loading skeleton flashes the previous palette before the app paints.
+// `_spinner.scss` holds the same literals for the pre-Angular boot skeleton.
 :host-context([data-skeleton-theme='gauzy-dark']) {
+  --skeleton-canvas: rgb(9, 9, 11);
   --background-basic-color-1: rgb(18, 18, 20);
-  --border-basic-color-2: rgba(255, 255, 255, 0.08);
   --border-radius: 0.5rem;
   --button-rectangle-border-radius: 0.375rem;
   --gauzy-sidebar-background-2: rgb(12, 12, 14);
@@ -31,8 +45,8 @@
 
 // === DEFAULT THEME ===
 :host-context([data-skeleton-theme='default']) {
+  --skeleton-canvas: #edf1f7;
   --background-basic-color-1: #ffffff;
-  --border-basic-color-2: #f5f5f5;
   --border-radius: 0.25rem;
   --button-rectangle-border-radius: 0.25rem;
   --gauzy-sidebar-background-2: #ffffff;
@@ -41,8 +55,8 @@
 
 // === DARK THEME ===
 :host-context([data-skeleton-theme='dark']) {
+  --skeleton-canvas: #151a30;
   --background-basic-color-1: #222b45;
-  --border-basic-color-2: #303030;
   --border-radius: 0.25rem;
   --button-rectangle-border-radius: 0.25rem;
   --gauzy-sidebar-background-2: rgb(32, 41, 67);
@@ -51,8 +65,8 @@
 
 // === COSMIC THEME ===
 :host-context([data-skeleton-theme='cosmic']) {
+  --skeleton-canvas: #1b1b38;
   --background-basic-color-1: #323259;
-  --border-basic-color-2: #303030;
   --border-radius: 0.5rem;
   --button-rectangle-border-radius: 1rem;
   --gauzy-sidebar-background-2: rgb(45, 47, 86);
@@ -61,8 +75,8 @@
 
 // === CORPORATE THEME ===
 :host-context([data-skeleton-theme='corporate']) {
+  --skeleton-canvas: #edf1f7;
   --background-basic-color-1: rgba(255, 255, 255, 1);
-  --border-basic-color-2: #f5f5f5;
   --border-radius: 0.375rem;
   --button-rectangle-border-radius: 0.375rem;
   --gauzy-sidebar-background-2: rgba(251, 251, 251, 1);
@@ -71,8 +85,8 @@
 
 // === MATERIAL LIGHT ===
 :host-context([data-skeleton-theme='material']) {
+  --skeleton-canvas: #fafafa;
   --background-basic-color-1: #ffffff;
-  --border-basic-color-2: #f5f5f5;
   --border-radius: 0.25rem;
   --button-rectangle-border-radius: 0.375rem;
   --gauzy-sidebar-background-2: rgb(51, 51, 51);
@@ -81,23 +95,22 @@
 
 // === MATERIAL DARK ===
 :host-context([data-skeleton-theme='material-dark']) {
+  --skeleton-canvas: #303030;
   --background-basic-color-1: #303030;
-  --border-basic-color-2: #f5f5f5;
   --border-radius: 0.25rem;
   --button-rectangle-border-radius: 0.375rem;
   --gauzy-sidebar-background-2: rgb(51, 51, 51);
   --gauzy-card-2: rgba(50, 50, 50, 0.03);
 }
 
+// A translucent fill with a translucent highlight sweeping across it, so the
+// surface behind stays visible through both. `background-color` survives here
+// only because the shorthand is not used — a plain `background:` would reset it.
 @mixin skeleton-element($width: 100%, $height: 16px) {
   width: $width;
   height: $height;
-  background: linear-gradient(
-    90deg,
-    var(--background-basic-color-1) 0%,
-    var(--border-basic-color-2) 50%,
-    var(--background-basic-color-1) 100%
-  );
+  background-color: var(--skeleton-fill);
+  background-image: linear-gradient(90deg, transparent 0%, var(--skeleton-shimmer) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 2s ease-in-out infinite;
   border-radius: 4px;
@@ -107,7 +120,9 @@
   display: flex;
   width: 100%;
   height: 100vh;
-  background-color: var(--background-basic-color-1);
+  // The page canvas. Only the two gauzy themes declare `--skeleton-canvas`; for
+  // the rest the fallback keeps the previous value.
+  background-color: var(--skeleton-canvas, var(--background-basic-color-1));
 }
 
 .skeleton-sidebar {
@@ -193,7 +208,8 @@
   flex: 1;
   padding: 1rem;
   overflow-y: auto;
-  background-color: var(--gauzy-card-2);
+  // Same canvas the loaded content column sits on — see `.skeleton-app-layout`.
+  background-color: var(--skeleton-canvas, var(--gauzy-card-2));
 }
 
 .skeleton-top-header {

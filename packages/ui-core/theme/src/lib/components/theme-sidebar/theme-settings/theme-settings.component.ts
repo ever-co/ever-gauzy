@@ -3,6 +3,19 @@ import { Router } from '@angular/router';
 import { NbSidebarService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
+import { environment } from '@gauzy/ui-config';
+
+/**
+ * Minimal surface of the Chatwoot browser SDK that this component uses.
+ * The SDK is loaded at runtime by the shell (see AppComponent.loadChatwoot),
+ * so it may legitimately be absent.
+ */
+interface IChatwootWidget {
+	toggle(state?: 'open' | 'close'): void;
+}
+
+/** Tag of the Nebular sidebar this component is rendered into. */
+export const QUICK_SETTINGS_SIDEBAR_TAG = 'settings_sidebar';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -14,11 +27,30 @@ import { tap } from 'rxjs/operators';
 export class ThemeSettingsComponent implements AfterViewChecked, OnDestroy {
 	private state: boolean;
 
+	/**
+	 * Support chat is only offered when this deployment configured a Chatwoot
+	 * website token: AppComponent only injects the SDK in that case, so without
+	 * a token there would be no widget to open.
+	 */
+	public readonly isSupportChatAvailable: boolean = !!environment.CHATWOOT_SDK_TOKEN;
+
+	/**
+	 * Destination for the FAQ entry.
+	 *
+	 * There is no in-app `faq` route — the entry carried neither a link nor a click
+	 * handler in the header menu it came from, so it had always been dead. The only
+	 * FAQ that actually exists is the published one on the docs site
+	 * (`ever-gauzy-docs/website/docs/reference/faq.md`; that Docusaurus site is
+	 * configured with `baseUrl: '/'` and `routeBasePath: '/'`, hence no `/docs`
+	 * segment in the URL).
+	 */
+	public readonly faqUrl: string = 'https://docs.gauzy.co/reference/faq';
+
 	constructor(private readonly sidebarService: NbSidebarService, private readonly router: Router) {}
 
 	ngAfterViewChecked(): void {
 		this.sidebarService
-			.getSidebarState('settings_sidebar')
+			.getSidebarState(QUICK_SETTINGS_SIDEBAR_TAG)
 			.pipe(
 				tap((state) => (this.state = state === 'expanded' ? true : false)),
 				untilDestroyed(this)
@@ -29,10 +61,14 @@ export class ThemeSettingsComponent implements AfterViewChecked, OnDestroy {
 	ngOnDestroy(): void {}
 
 	/**
+	 * Closes the quick settings sidebar.
 	 *
+	 * Collapses rather than toggles: this is only ever called to close the panel
+	 * (the X button and the outside click), and pages that need to know whether
+	 * the panel opened or closed listen to the sidebar's expand/collapse events.
 	 */
 	public closeSidebar() {
-		this.sidebarService.toggle(false, 'settings_sidebar');
+		this.sidebarService.collapse(QUICK_SETTINGS_SIDEBAR_TAG);
 	}
 
 	/**
@@ -48,6 +84,46 @@ export class ThemeSettingsComponent implements AfterViewChecked, OnDestroy {
 	 */
 	public navigateToSettings() {
 		this.router.navigate(['/pages/settings']);
+		this.closeSidebar();
+	}
+
+	/**
+	 * Navigates to an application route and closes the quick settings sidebar.
+	 *
+	 * @param commands router commands, e.g. ['/pages/help']
+	 */
+	public navigateTo(commands: string[]) {
+		this.router.navigate(commands);
+		this.closeSidebar();
+	}
+
+	/**
+	 * Opens the Chatwoot support conversation.
+	 *
+	 * The widget's launcher bubble is suppressed (`hideMessageBubble`), so this
+	 * entry is the only way in. Reading `$chatwoot` off the window rather than
+	 * caching it matters: the SDK assigns it asynchronously once its script has
+	 * loaded, and it never appears at all when no website token is configured.
+	 */
+	public openSupportChat() {
+		const chatwoot = () => (window as unknown as { $chatwoot?: IChatwootWidget }).$chatwoot;
+		const widget = chatwoot();
+
+		if (widget) {
+			widget.toggle('open');
+			this.closeSidebar();
+			return;
+		}
+
+		// Not loaded YET is different from not configured. Without this branch a click
+		// that lands before sdk.js finishes is silently swallowed — a dead click, and
+		// the launcher bubble is hidden so this entry is the only way in. The SDK
+		// dispatches `chatwoot:ready` once `$chatwoot` is usable; wait for it once.
+		if (!this.isSupportChatAvailable) {
+			return;
+		}
+
+		window.addEventListener('chatwoot:ready', () => chatwoot()?.toggle('open'), { once: true });
 		this.closeSidebar();
 	}
 }

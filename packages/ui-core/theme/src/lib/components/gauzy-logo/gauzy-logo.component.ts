@@ -31,7 +31,6 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	public theme: string;
 	public isCollapse = true;
 	public logoUrl: SafeResourceUrl;
-	public isWorkspaceOpen = false;
 
 	/** Active tenant (workspace) shown by the sidebar switcher. */
 	public tenantName = '';
@@ -49,6 +48,19 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	}
 
 	@Input() isAccordion = true;
+
+	/**
+	 * Whether the workspace panel is currently open.
+	 *
+	 * Owned by the parent layout, which is what actually renders the panel
+	 * (`@if (isWorkspaceOpen())` in `one-column.layout.html`). This used to be a
+	 * private boolean flipped only by `toggleWorkspace()`, which went stale as
+	 * soon as the panel closed itself on an outside click — the switcher then
+	 * still believed it was open and the next click on it emitted `false`, so
+	 * the panel did not reopen and the click read as dead. Reading the parent's
+	 * state keeps one source of truth.
+	 */
+	@Input() isWorkspaceOpen = false;
 	@Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
 	@Output() onWorkspaceToggle: EventEmitter<boolean> = new EventEmitter<boolean>();
 
@@ -116,8 +128,9 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	 * Toggles the workspace dropdown.
 	 */
 	toggleWorkspace(): void {
-		this.isWorkspaceOpen = !this.isWorkspaceOpen;
-		this.onWorkspaceToggle.emit(this.isWorkspaceOpen);
+		// Derived from the parent's state, never from a local copy — see the
+		// `isWorkspaceOpen` input above.
+		this.onWorkspaceToggle.emit(!this.isWorkspaceOpen);
 	}
 
 	/**

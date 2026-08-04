@@ -1,25 +1,69 @@
 // The email-templates sheet `@use`s the theme module, which keeps it private to
-// that file — loading it here brings in `$height` but not `nb-theme`. Sass passes
-// an unknown function through as plain CSS, so the two rules at the bottom of this
-// file shipped as the literal text `nb-theme(...)` and the browser dropped them:
-// the language/template selects lost their background, and — the visible one —
-// the rendered template preview never had `color: text-basic-color` applied, so
-// it kept the seeded HTML's own near-black text on the dark themes' dark panel.
+// that file — `@use`ing that sheet here re-emits its CSS but does NOT bring
+// `nb-theme` into this file's scope. Sass passes an unknown function through as
+// plain CSS, so the two rules at the bottom of this file shipped as the literal
+// text `nb-theme(...)` and the browser dropped them: the language/template
+// selects lost their background, and — the visible one — the rendered template
+// preview never had `color: text-basic-color` applied, so it kept the seeded
+// HTML's own near-black text on the dark themes' dark panel. Hence `@use
+// 'themes'` as well; the email-templates `@use` is here purely for its CSS (it
+// exports no Sass members) and must stay.
 @use 'themes' as *;
 @use '../email-templates/email-templates.component' as *;
 
+// This page carried two `!important` height overrides — `calc($height + 3.5rem)`
+// on the Ace editor and `calc($height + 1.3rem)` on the preview box — which
+// added even more to a `100vh` constant that already ignored the footer, which
+// is why the overlap showed up worst here. Both are gone: email-templates.scss
+// now sizes the two panels from the content column via flex, and that shared
+// chain also covers this page's one-editor layout.
 :host {
+  // A settings page CANNOT set its own `display`. `pages.component.scss` carries a
+  // deep-scoped rule on the adjacent sibling of a router-outlet, forcing it to
+  // display block and giving it the page fade animation. Being deep-scoped, that
+  // rule leaks into NESTED outlets, so it also matches this page's
+  // host inside the settings shell. Its specificity is (0,1,1) —
+  // `[_nghost-pages] router-outlet + *` — against (0,1,0) for a component's own
+  // `:host`, so `display: flex` here loses. Confirmed with CDP
+  // `CSS.getMatchedStylesForNode`: both `:host` rules declare `display: flex`
+  // and the winning declaration is `display: block` from that shared rule.
+  // (Only `display` was overridden, which is why `flex-direction`/`min-height`
+  // from the same block appeared to work and made this look like a build issue.)
+  //
+  // That rule is deliberately left alone: nested routed hosts are unknown
+  // elements and default to `display: inline`, so dropping it would risk every
+  // nested-router page in the app.
+  //
+  // So instead of fighting for the host's display, give it a definite height and
+  // let the page's ROOT ELEMENT carry the frame (see `:host > form` below). A
+  // block box with a definite height resolves a percentage height on its child
+  // perfectly well — the flex container simply starts one level lower.
+  //
+  // This component declares no `selector`, so its host renders as `<ng-component>` —
+  // worth knowing when reading a DOM dump and looking for a page-named element.
+  height: 100%;
+  min-height: 0;
+
   ::ng-deep {
     .ng-select .ng-select-container {
       background-color: nb-theme(select-outline-basic-background-color);
     }
   }
-  .ace-editor {
-    height: calc($height + 3.5rem) !important;
-  }
 
-  .custom-parent-email-content {
-    height: calc($height + 1.3rem) !important;
+  // The frame the host cannot carry. A deliberate LOCAL RESTATEMENT: the shared
+  // sheet pulled in by the `@use` above now declares the same height on its own
+  // `> form`, so this is redundant today — it is kept so this page keeps a
+  // definite height even if that shared chain is later re-scoped to selectors
+  // this page's markup does not match. Without a definite height the form sized to
+  // content (991px) inside an 806px host and the excess painted over the footer.
+  // `height: 100%` of a block host with a definite height fixes that, and the
+  // existing `min-height: 0` chain below it then scrolls internally as intended.
+  //
+  // `:host > form` is (0,1,1) but targets a DIFFERENT element than the
+  // `router-outlet + *` rule, so there is no specificity fight to lose here.
+  > form {
+    height: 100%;
+    min-height: 0;
   }
 
   .custom-preview-template {
