@@ -9,7 +9,7 @@ import { catchError, filter, tap } from 'rxjs/operators';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 import { Store } from '@gauzy/ui-core/core';
 
-/** Version + commit of one side (web or api) for the footer build-info line. */
+/** Version + commit of one side (web or api) for the footer's "Version" popover. */
 interface IVersionDisplay {
 	version: string;
 	commit: string;
@@ -43,13 +43,31 @@ export class FooterComponent extends TranslationBaseComponent implements OnInit 
 	api: IVersionDisplay | null = null;
 
 	/**
-	 * The "Legal" popover in the footer.
+	 * The two footer popovers, queried by the template reference each trigger exports
+	 * (`#versionPopover="nbPopover"` / `#legalPopover="nbPopover"`).
 	 *
-	 * Nebular's click trigger already opens it, toggles it and closes it on an outside click;
-	 * this reference exists so the popover can also be closed on Escape and after one of its
-	 * links is followed (following a link does not close the overlay on its own).
+	 * Nebular's click trigger already opens each one, toggles it, and closes it on a click that
+	 * lands outside its own trigger and panel — which is also what closes one panel when the
+	 * other trigger is clicked, so the two never end up open together. These references exist
+	 * only so both can additionally be closed on Escape and after one of the "Legal" links is
+	 * followed (following a routerLink does not close the overlay on its own).
+	 *
+	 * They are queried BY NAME, not by directive type: an untargeted `@ViewChild(NbPopoverDirective)`
+	 * silently binds to whichever popover comes first in the template, so the other one would
+	 * never be closed and reordering the markup would quietly swap which one is.
 	 */
-	@ViewChild(NbPopoverDirective) legalPopover?: NbPopoverDirective;
+	@ViewChild('versionPopover') versionPopover?: NbPopoverDirective;
+	@ViewChild('legalPopover') legalPopover?: NbPopoverDirective;
+
+	/**
+	 * Open/closed state of each popover, mirrored from the directive's own
+	 * `nbPopoverShowStateChange` output so `aria-expanded` stays truthful.
+	 *
+	 * These are never set from a click handler: Nebular also closes a panel on an outside click
+	 * and on Escape, and a locally toggled flag would miss both and go stale.
+	 */
+	isVersionMenuShown = false;
+	isLegalMenuShown = false;
 
 	constructor(
 		public translationService: TranslateService,
@@ -94,15 +112,16 @@ export class FooterComponent extends TranslationBaseComponent implements OnInit 
 			.subscribe();
 	}
 
-	/** Closes the "Legal" popover. Safe to call when it is already closed. */
-	closeLegalMenu(): void {
+	/** Closes whichever footer popover is open. Safe to call when they are both already closed. */
+	closeFooterMenus(): void {
+		this.versionPopover?.hide();
 		this.legalPopover?.hide();
 	}
 
-	/** Escape closes the "Legal" popover, which Nebular's click trigger does not do by itself. */
+	/** Escape closes the footer popovers, which Nebular's click trigger does not do by itself. */
 	@HostListener('document:keydown.escape')
 	onEscapeKeydown(): void {
-		this.closeLegalMenu();
+		this.closeFooterMenus();
 	}
 
 	/** Whether there is any build info at all to display. */
@@ -112,7 +131,8 @@ export class FooterComponent extends TranslationBaseComponent implements OnInit 
 
 	/**
 	 * True when the web and API report different builds (both known and not equal).
-	 * When true the footer lists Web and API separately; otherwise it shows one line.
+	 * When true the "Version" popover lists Web and API on their own rows; otherwise it
+	 * collapses to a single Version row plus a Commit row.
 	 */
 	get isVersionMismatch(): boolean {
 		return (

@@ -4454,8 +4454,10 @@
 		"TERMS_OF_SERVICE": "Terms Of Service",
 		"PRIVACY_POLICY": "Privacy Policy",
 		"COOKIE_POLICY": "Cookie Policy",
-		"VERSION": "Release version — open on GitHub",
-		"COMMIT": "Deployed commit — open on GitHub",
+		"VERSION": "Version",
+		"VERSION_HINT": "Release version — open on GitHub",
+		"COMMIT": "Commit",
+		"COMMIT_HINT": "Deployed commit — open on GitHub",
 		"WEB": "Web",
 		"API": "API"
 	},
