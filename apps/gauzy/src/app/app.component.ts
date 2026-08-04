@@ -155,11 +155,24 @@ export class AppComponent implements OnInit, AfterViewInit {
 	/**
 	 * Dynamically loads the Chatwoot SDK.
 	 *
+	 * The widget is loaded but not shown: `hideMessageBubble` suppresses the
+	 * floating launcher that used to sit permanently in the bottom right corner.
+	 * The conversation is opened on demand from the "Support Chat" entry in the
+	 * Quick Settings panel, which calls `window.$chatwoot.toggle('open')`.
+	 * `window.chatwootSettings` has to be assigned before the SDK runs, which is
+	 * why it is set here rather than after `run()`.
+	 *
 	 * @param document - The document object.
 	 * @param tagName - The HTML tag name.
 	 */
 	private loadChatwoot(document: Document, tagName: string) {
 		const chatwootBaseUrl = 'https://app.chatwoot.com';
+
+		// Hide the launcher bubble; the widget is opened programmatically instead
+		window['chatwootSettings'] = {
+			...(window['chatwootSettings'] ?? {}),
+			hideMessageBubble: true
+		};
 
 		// Create a script element
 		const scriptElement = document.createElement(tagName) as HTMLScriptElement;

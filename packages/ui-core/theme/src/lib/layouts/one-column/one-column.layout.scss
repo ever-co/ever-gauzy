@@ -10,6 +10,11 @@
     padding-top: 0.1rem !important;
   }
 
+  // The nb-sidebar HOST of the Quick Settings panel. Nebular gives a `[fixed]`
+  // sidebar `position: fixed; z-index: 999`, so the host is a stacking context
+  // and THIS z-index — not the one on `.main-container-fixed` further down — is
+  // what orders the panel against the fixed header (1040) and the CDK overlay
+  // container (1050). Keep it between the two.
   .settings-sidebar.expanded {
     width: 22.5rem !important;
     height: fit-content;
@@ -280,18 +285,44 @@ nb-sidebar[tag='menu-sidebar'] {
     height: 100vh;
     z-index: 1041;
   }
+  // Quick Settings panel (ngx-theme-settings), opened by the gear action in the
+  // header. It is not anchored to that trigger by an overlay — it is an
+  // `nb-sidebar [fixed] [end]`, so its position is whatever this rule says.
+  //
+  // It used to say `top: 10px`, a hardcoded offset that ignores the header band
+  // entirely: the panel overlapped the fixed header, and `max-height: 100vh`
+  // measured from 10px let it run past the bottom of the viewport while
+  // `.scrollable { overflow: unset }` meant the overflow could not be scrolled
+  // to. Anchor it under the header instead and bound it to the space left.
+  //
+  // The z-order is deliberate: this panel stays BELOW `.cdk-overlay-container`
+  // (z-index 1050, set in ui-core/static/styles/_overrides.scss). Its own theme,
+  // language and layout dropdowns are Nebular overlays rendered into that
+  // container and have to paint on top of the panel that opened them. Page level
+  // popovers live in the same container, so a page popover would also cover this
+  // panel — which is why opening one closes the other in TypeScript rather than
+  // being resolved here.
   nb-layout .layout .layout-container nb-sidebar.settings-sidebar.expanded .main-container-fixed {
-    top: 10px;
-    height: fit-content;
-    max-height: 100vh;
+    top: calc(var(--header-height, 4.5rem) + 0.5rem);
+    height: auto;
+    max-height: calc(100vh - var(--header-height, 4.5rem) - 1rem);
     width: 22.5rem !important;
+    // Never wider than the viewport allows, so the panel cannot be cut off at
+    // the trailing edge on narrow windows. `max-width` still wins over an
+    // `!important` width, which is why the width above can stay as it was.
+    max-width: calc(100vw - 2.5rem);
     box-shadow: 0px 6px 30px 0px rgba(0, 0, 0, 0.2);
     z-index: 1041;
     border-radius: nb-theme(border-radius);
+    // Opaque against the page behind it: the rounded box itself carries the
+    // surface color, not only the scroll area inside it.
+    background-color: nb-theme(background-basic-color-1);
+    overflow: hidden;
     .scrollable {
       background-color: nb-theme(background-basic-color-1);
       border-radius: nb-theme(border-radius);
-      overflow: unset;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
   }
   nb-layout .layout .layout-container nb-sidebar.changelog-sidebar.expanded .main-container-fixed {
