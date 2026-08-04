@@ -46,6 +46,15 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
+
+    // Both triggers are conditional (Legal needs a user, Version needs build info), so
+    // this row can render with nothing in it. As a flex ITEM of .right-side it would
+    // still take that container's 1.25rem gap and leave a visible hole before the social
+    // icons. Comments do not count against :empty, so the comment anchors Angular's @if
+    // leaves behind are fine here.
+    &:empty {
+      display: none;
+    }
   }
 
   // ONE class for BOTH triggers. They sit side by side, so any drift in padding, font size,
