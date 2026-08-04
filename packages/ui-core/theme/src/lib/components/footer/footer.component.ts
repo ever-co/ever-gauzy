@@ -52,7 +52,7 @@ export class FooterComponent extends TranslationBaseComponent implements OnInit 
 	 * only so both can additionally be closed on Escape and after one of the "Legal" links is
 	 * followed (following a routerLink does not close the overlay on its own).
 	 *
-	 * They are queried BY NAME, not by directive type: an untargeted `@ViewChild(NbPopoverDirective)`
+	 * They are queried BY NAME, not by directive type: a bare `@ViewChild(NbPopoverDirective)`
 	 * silently binds to whichever popover comes first in the template, so the other one would
 	 * never be closed and reordering the markup would quietly swap which one is.
 	 */
