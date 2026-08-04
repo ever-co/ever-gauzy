@@ -318,13 +318,6 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	}
 
 	/**
-	 * event fired on model change.
-	 */
-	onChange() {
-		this.isOpen = false;
-	}
-
-	/**
 	 * Creates a new organization entry and navigates to the organization's page to open the add dialog.
 	 *
 	 * @param name - The name of the new organization to be created.
@@ -352,15 +345,6 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			this._toastrService.error(error);
 		}
 	};
-
-	/**
-	 * Closes the component when a click occurs outside of it.
-	 *
-	 * @param event - The click event.
-	 */
-	onClickOutside(event: Event): void {
-		if (this.isOpen && !event) this.isOpen = false;
-	}
 
 	/**
 	 * Selects an organization by its ID.
