@@ -18,6 +18,24 @@
 // now sizes the two panels from the content column via flex, and that shared
 // chain also covers this page's one-editor layout.
 :host {
+  // The flex frame has to be re-declared HERE, even though the `@use` above pulls in
+  // the email-templates sheet. Measured in a real render (1600x950): this page's
+  // descendants DO pick up that chain — `form` and `nb-card` come out
+  // `display: flex; flex-direction: column; flex: 1 1 auto` — but the host itself
+  // stayed `display: block`. A block host makes `flex` on those children inert:
+  // nothing constrains them, `overflow` is visible, and the card grew to 991px
+  // inside an 806px host and painted its 185px of excess straight over the footer
+  // (footer band 902-950; card bottom 1087). That is the exact bug this branch is
+  // meant to fix, still reproducing after the first attempt.
+  //
+  // This component declares no `selector`, so its host renders as `<ng-component>` —
+  // worth knowing when reading a DOM dump and looking for a page-named element.
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  // Allow the host to shrink below its content, or the chain below it cannot.
+  min-height: 0;
+
   ::ng-deep {
     .ng-select .ng-select-container {
       background-color: nb-theme(select-outline-basic-background-color);
