@@ -94,12 +94,14 @@ export class OneColumnLayoutComponent {
 		// Runs only in the browser, after the first render — replaces ngAfterViewInit + isPlatformBrowser
 		afterNextRender(() => {
 			this.windowModeBlockScrollService.register(this.layout());
+			this.observeHeaderHeight();
 		});
 
 		this.destroyRef.onDestroy(() => {
 			this.navigationBuilderService.clearSidebars();
 			this.navigationBuilderService.clearActionBars();
 			this.chatHostResizeObserver?.disconnect();
+			this.headerResizeObserver?.disconnect();
 		});
 	}
 
@@ -130,6 +132,35 @@ export class OneColumnLayoutComponent {
 	}
 
 	private chatHostResizeObserver?: ResizeObserver;
+	private headerResizeObserver?: ResizeObserver;
+
+	/**
+	 * Publish the header's REAL rendered height as `--gz-header-height`.
+	 *
+	 * Nebular's `--header-height` is a theme CONSTANT (4.5rem = 72px). The header
+	 * is content-driven, so it does not always agree: measured at 1600x950 it
+	 * renders 98px, and anything anchored to the constant then sits ~26px too
+	 * high and tucks under the real header. That is what put the Quick Settings
+	 * panel behind the header — it is not visible at 4.5rem-tall headers, which
+	 * is why it survived review.
+	 *
+	 * Mirrors the `--gz-chat-live-width` observer above: measure the box the
+	 * browser actually produced, rather than restating a constant that the layout
+	 * is free to exceed.
+	 */
+	private observeHeaderHeight(): void {
+		if (typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
+		const header = document.querySelector('nb-layout-header') as HTMLElement | null;
+		if (!header) return;
+		const apply = () =>
+			document.documentElement.style.setProperty(
+				'--gz-header-height',
+				`${Math.round(header.getBoundingClientRect().height)}px`
+			);
+		this.headerResizeObserver = new ResizeObserver(apply);
+		this.headerResizeObserver.observe(header);
+		apply();
+	}
 
 	/**
 	 * Toggles the expansion state of the sidebar.
