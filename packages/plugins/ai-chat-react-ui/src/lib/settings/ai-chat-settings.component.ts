@@ -189,6 +189,15 @@ export class AiChatSettingsComponent implements OnInit {
 	 * detection. Plain map, not a signal: it is a cache of a derived value, never a source of truth.
 	 */
 	private readonly modelOptionsCache = new Map<string, { source: IAiChatModel[]; options: IAiChatModel[] }>();
+	/**
+	 * Per-provider generation counter, bumped by {@link invalidateCatalogue}.
+	 *
+	 * Dropping the cached entry is not enough on its own: a fetch that was already in flight when the
+	 * credential changed still resolves, and storing THAT answer re-caches the pre-change list — and
+	 * the `has(providerId)` guard then blocks the refetch it was invalidated for. A response whose
+	 * generation no longer matches is discarded instead.
+	 */
+	private readonly catalogueGeneration = new Map<string, number>();
 
 	/** The provider object for the config view. */
 	readonly selectedProvider = computed<IAiChatProvider | null>(
@@ -492,6 +501,7 @@ export class AiChatSettingsComponent implements OnInit {
 		if (this.modelCatalogues().has(providerId) || this.loadingModels().has(providerId)) {
 			return;
 		}
+		const generation = this.catalogueGeneration.get(providerId) ?? 0;
 		this.loadingModels.update((current) => new Set(current).add(providerId));
 		this.settingsService
 			.getProviderModels(providerId)
@@ -508,7 +518,10 @@ export class AiChatSettingsComponent implements OnInit {
 				})
 			)
 			.subscribe((catalogue) => {
-				if (!catalogue) {
+				// A credential changed while this was in flight, so this answer is about a key that is
+				// no longer configured. Dropping it leaves the map empty, which is what makes the next
+				// visit fetch again.
+				if (!catalogue || (this.catalogueGeneration.get(providerId) ?? 0) !== generation) {
 					return;
 				}
 				this.modelCatalogues.update((current) => new Map(current).set(providerId, catalogue));
@@ -532,6 +545,7 @@ export class AiChatSettingsComponent implements OnInit {
 	 * longer applies.
 	 */
 	private invalidateCatalogue(providerId: string): void {
+		this.catalogueGeneration.set(providerId, (this.catalogueGeneration.get(providerId) ?? 0) + 1);
 		this.modelOptionsCache.delete(providerId);
 		this.modelCatalogues.update((current) => {
 			if (!current.has(providerId)) {
