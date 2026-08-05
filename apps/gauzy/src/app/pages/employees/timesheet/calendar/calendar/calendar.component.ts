@@ -376,7 +376,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 			.pipe(
 				filter((timeLog: ITimeLog) => !!timeLog),
 				tap((timeLog: ITimeLog) =>
-					this.dateRangePickerBuilderService.refreshDateRangePicker(moment(timeLog.startedAt))
+					this.dateRangePickerBuilderService.refreshDateRangePicker(moment(timeLog.startedAt), this.timeZoneService.currentTimeZone)
 				),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
