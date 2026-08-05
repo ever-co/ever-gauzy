@@ -399,7 +399,7 @@ const selectRowFor = async (toolbarBtnCss: string) => {
 	// DIFFERENT DAY than the one the time log was written to, so `?date=` names the bug outright.
 	if ((await getPage().locator(TimesheetsPage.timeLogRowCss).count()) === 0) {
 		throw new Error(
-			`Daily grid rendered NO time-log rows ("No Data") after ${2} reloads, so there is nothing to ` +
+			`Daily grid rendered NO time-log rows ("No Data") after 2 reloads, so there is nothing to ` +
 				`select. The log we created is not inside the day the grid is querying — check the day in ` +
 				`the URL against the log's startedAt. URL=${getPage().url()}`
 		);

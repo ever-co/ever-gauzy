@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { toTimezone } from '@gauzy/ui-core/common';
+import { toUtcOffset } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService } from './date-range-picker-builder.service';
 
 /**
@@ -47,7 +47,18 @@ describe('DateRangePickerBuilderService — day selection across timezones', () 
 		it('brackets the instant so the record is inside the queried range', () => {
 			service.refreshDateRangePicker(midnightTaipei5Aug, 'Asia/Taipei');
 			const { startDate, endDate } = service.selectedDateRange;
-			// The whole point: the day chosen must CONTAIN the log that was just created.
+			// Assert CONTAINMENT, not merely that both ends format to the right day — an interval
+			// inside 2026-08-05 that did not cover the instant would satisfy the latter and still
+			// query a window the record is absent from, which is the entire bug.
+			//
+			// Containment must be checked on the CONVERTED range, not the raw browser-local one. The
+			// picker deliberately holds a wall-clock day; the request layer turns it into instants with
+			// toUtcOffset(range, orgTimeZone) (base-selector-filter.component.ts). For Asia/Taipei that
+			// yields 2026-08-04T16:00Z → 2026-08-05T15:59Z — precisely the window observed in the CI
+			// network trace — and the instant sits at its lower bound.
+			const queriedFrom = toUtcOffset(startDate, 'Asia/Taipei');
+			const queriedTo = toUtcOffset(endDate, 'Asia/Taipei');
+			expect(midnightTaipei5Aug.isBetween(queriedFrom, queriedTo, undefined, '[]')).toBe(true);
 			expect(moment(startDate).format('YYYY-MM-DD')).toBe('2026-08-05');
 			expect(moment(endDate).format('YYYY-MM-DD')).toBe('2026-08-05');
 		});
