@@ -121,6 +121,64 @@ describe('TimerRangePickerComponent', () => {
 			expect(end.toISOString()).toBe(stored.end.toISOString());
 		});
 
+		it('does NOT roll the end when a fall-back offset change inverts the pair', () => {
+			// America/New_York, 1 Nov 2026: 02:00 EDT falls back to 01:00 EST, so 01:xx happens twice.
+			// This is a real 30-minute log — 01:30 EDT to 02:00 EDT — but read back it renders as
+			// 01:30 then 01:00, because the second instant is already on standard time.
+			//
+			// Treating that inversion as a midnight crossing turned half an hour into twenty-four and a
+			// half, written the moment the dialog opened, with the user only editing the description.
+			component = build('America/New_York');
+			component.writeValue({
+				start: new Date('2026-11-01T05:30:00.000Z'),
+				end: new Date('2026-11-01T06:00:00.000Z')
+			});
+
+			const { start, end } = component.composeRange();
+
+			expect(component.startTime).toBe('01:30');
+			expect(component.endTime).toBe('01:00');
+			// Under a day either way. The pair still reads inverted — one date and two ambiguous wall
+			// clocks cannot express this range — but the dialog then shows a zero period and refuses to
+			// save, which is a problem the user can see, not one written to the database behind them.
+			expect(end.getTime() - start.getTime()).toBeLessThan(24 * 60 * 60 * 1000);
+		});
+
+		it('does NOT roll the end when a spring-forward gap pushes the start past it', () => {
+			// 8 Mar 2026, America/New_York: 02:00 EST jumps to 03:00 EDT, so 02:30 does not exist.
+			// The picker still offers it, and moment-timezone normalises it forward to 03:30 — past an
+			// end of 03:00. Rolling that produced a 23.5-hour range for a 30-minute entry.
+			component = build('America/New_York');
+			component.date = moment('2026-03-08', 'YYYY-MM-DD').toDate();
+			component.startTime = '02:30';
+			component.endTime = '03:00';
+
+			const { start, end } = component.composeRange();
+
+			// The pair comes back inverted — 02:30 does not exist, so it normalises past the end — and
+			// the dialog then shows a zero period and refuses to save. That is the honest outcome for an
+			// input the picker should not have offered. Rolling instead produced 23.5 hours, saved
+			// without a murmur.
+			expect(Math.abs(end.getTime() - start.getTime())).toBeLessThan(12 * 60 * 60 * 1000);
+		});
+
+		it('keeps an explicit offset exactly, even for a wall clock inside the ambient zone gap', () => {
+			// manage-appointment sets BOTH [timezoneOffset] and moment's default zone. Parsing the wall
+			// clock in that ambient zone first normalised 02:30 on a spring-forward day to 03:30 before
+			// the offset was stamped, so the offset was kept and the time was not.
+			timezone.tz.setDefault('America/New_York');
+			component = build();
+			component.timezoneOffset = '-05:00';
+			component.date = moment('2026-03-08', 'YYYY-MM-DD').toDate();
+			component.startTime = '02:30';
+			component.endTime = '02:45';
+
+			const { start, end } = component.composeRange();
+
+			expect(start.toISOString()).toBe('2026-03-08T07:30:00.000Z');
+			expect(end.toISOString()).toBe('2026-03-08T07:45:00.000Z');
+		});
+
 		it('composes each end independently, so one unreadable time does not null the other', () => {
 			component.writeValue(STORED);
 			component.endTime = '';

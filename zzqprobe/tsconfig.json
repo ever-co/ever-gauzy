@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"target": "es2022",
+		"module": "preserve",
+		"moduleResolution": "bundler",
+		"lib": ["es2022", "dom"],
+		"types": ["jest", "node"],
+		"experimentalDecorators": true,
+		"useDefineForClassFields": false,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"isolatedModules": true,
+		"strict": false,
+		"skipLibCheck": true
+	},
+	"include": ["**/*.ts"]
+}

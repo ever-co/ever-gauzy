@@ -10,6 +10,16 @@ import { debounceTime } from 'rxjs/operators';
 // untestable in isolation.
 import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter/time-zone.service';
 
+/**
+ * How much wall-clock inversion is still explainable by a timezone offset change rather than by a
+ * range crossing midnight.
+ *
+ * Real offset changes are 30, 60 or (rarely) 120 minutes. A genuine overnight range inverts by far
+ * more — 23:00 to 01:00 inverts by twenty-two hours — so three hours separates the two cases with
+ * room to spare in both directions.
+ */
+const MAX_OFFSET_INVERSION_MINUTES = 3 * 60;
+
 @Component({
 	selector: 'ngx-timer-range-picker',
 	templateUrl: './timer-range-picker.component.html',
@@ -141,11 +151,21 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 		}
 		const wallClock = `${day} ${time}`;
 		const composed = this.timezoneOffset
-			? // `utcOffset(x, true)` KEEPS the wall clock and changes the offset, which is what a fixed
-				// supplied offset means here — as opposed to shifting the instant.
-				moment(wallClock, 'YYYY-MM-DD HH:mm').utcOffset(this.timezoneOffset, true)
+			? // Parsed in UTC, not the ambient zone. `utcOffset(x, true)` keeps the wall clock and
+				// restamps the offset — but a plain `moment(...)` parse happens in whatever zone is
+				// ambient first, and `manage-appointment` calls `moment.tz.setDefault(zone)`. A wall
+				// clock inside THAT zone's spring-forward gap is normalised an hour later before the
+				// restamp ever runs, so the offset is kept and the time is not. UTC has no gaps.
+				moment.utc(wallClock, 'YYYY-MM-DD HH:mm').utcOffset(this.timezoneOffset, true)
 			: timezone.tz(wallClock, 'YYYY-MM-DD HH:mm', this.timeZoneService.currentTimeZone);
 		return composed.isValid() ? composed.toDate() : null;
+	}
+
+	/** Wall-clock `HH:mm` as minutes past midnight, or `null` when it is not a time. */
+	private static toMinutes(time: string): number | null {
+		const parsed = /^(\d{1,2}):(\d{2})$/.exec(time ?? '');
+		if (!parsed) return null;
+		return Number(parsed[1]) * 60 + Number(parsed[2]);
 	}
 
 	/**
@@ -161,10 +181,22 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 		const start = this.composeInstant(day, this.startTime);
 		let end = this.composeInstant(day, this.endTime);
 
-		// An end that reads EARLIER than its start crosses midnight — the picker holds one date for
-		// both, so that end belongs to the following day. Composed against that day rather than by
-		// adding 24 hours, because a DST transition in between makes those two different answers.
-		if (start && end && end.getTime() < start.getTime()) {
+		// An end whose CLOCK READING is well before the start's crosses midnight: the picker holds one
+		// date for both, so that end belongs to the following day. Composed against that day rather
+		// than by adding 24 hours, because a DST transition in between makes those different answers.
+		//
+		// Decided on the wall clock and only past a threshold, NOT on "the composed end is earlier
+		// than the composed start". That weaker test is also true when an offset change inverts the
+		// pair — on a fall-back day 01:30 (still DST) to 01:00 (already standard) is a real 30-minute
+		// log whose instants invert — and rolling THAT to the next day turns half an hour into
+		// twenty-four and a half, silently, just from opening the dialog. An offset change moves a
+		// clock by at most two hours anywhere on earth; a genuine overnight range inverts by many.
+		const startMinutes = TimerRangePickerComponent.toMinutes(this.startTime);
+		const endMinutes = TimerRangePickerComponent.toMinutes(this.endTime);
+		const crossesMidnight =
+			startMinutes !== null && endMinutes !== null && startMinutes - endMinutes > MAX_OFFSET_INVERSION_MINUTES;
+
+		if (start && end && crossesMidnight) {
 			end = this.composeInstant(moment(day, 'YYYY-MM-DD').add(1, 'day').format('YYYY-MM-DD'), this.endTime);
 		}
 
@@ -220,18 +252,31 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 			});
 	}
 
+	/**
+	 * Recompute the selectable slot bounds, and seed empty fields, for the day being edited.
+	 *
+	 * Everything here is in the DISPLAYED zone. It used to be the browser's, which had two costs once
+	 * the fields themselves moved to the configured zone: the bounds could exclude the very time on
+	 * screen (a zone three hours ahead offered no end slot at or after the value shown, so the user
+	 * could not re-pick their own value), and on the create path it PREFILLED start/end from the
+	 * browser clock while `composeInstant` then filed those digits as configured-zone wall clock — a
+	 * brand-new manual log written at an instant nobody chose.
+	 */
 	updateTimePickerLimit(date: Date) {
-		let mTime = moment(date);
+		const now = this.toDisplayZone(new Date());
+		let mTime = this.toDisplayZone(date ?? new Date());
 
-		if (mTime.isSame(new Date(), 'day')) {
+		if (mTime.isSame(now, 'day')) {
 			mTime = mTime.set({
-				hour: moment().get('hour'),
-				minute: moment().get('minute') - (moment().minutes() % 10),
+				hour: now.get('hour'),
+				minute: now.get('minute') - (now.minutes() % 10),
 				second: 0,
 				millisecond: 0
 			});
 			if (!this.date) {
-				this.date = mTime.toDate();
+				// Browser-local midnight of the displayed day: the date input and `composeRange` both
+				// read this back with a plain `moment()`, so what has to survive is the calendar day.
+				this.date = moment(mTime.format('YYYY-MM-DD'), 'YYYY-MM-DD').toDate();
 			}
 			if (!this.startTime) {
 				this.startTime = mTime.clone().subtract(30, 'minutes').format('HH:mm');
@@ -241,7 +286,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 			}
 		}
 
-		if (mTime.isSame(new Date(), 'day')) {
+		if (mTime.isSame(now, 'day')) {
 			this.minSlotStartTime = '00:00';
 			this.maxSlotStartTime = mTime.clone().subtract(10, 'minutes').format('HH:mm');
 			this.maxSlotEndTime = mTime.format('HH:mm');
