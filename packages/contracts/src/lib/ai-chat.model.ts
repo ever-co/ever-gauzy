@@ -37,17 +37,26 @@ export type AiProviderConnectType = 'openrouter-pkce';
  */
 export const AI_CHAT_RATE_LIMIT_CODE = 'ai-chat/rate-limited';
 
+/**
+ * Where the credential in use came from.
+ *
+ * `'platform'` is the shared, product-supplied free tier: resolved LAST — below the tenant's own key
+ * and below the operator's own environment key — and the only source restricted to free models. The
+ * key itself never reaches the client; only this label does.
+ */
+export type AiCredentialSource = 'tenant' | 'environment' | 'platform';
+
 /** Structured rate-limit payload, JSON-encoded into the stream's single error-text channel. */
 export interface IAiChatRateLimitEnvelope {
 	code: typeof AI_CHAT_RATE_LIMIT_CODE;
 	/** Which provider ran out of quota, so the UI can name it and deep-link to its settings. */
 	providerId: string;
 	/**
-	 * Which credential hit the limit. `'platform'` is the shared free key — the user can fix it by
-	 * bringing their own. `'tenant'` means their OWN key is limited, where "connect your own
-	 * account" would be the wrong advice.
+	 * Which credential hit the limit — it changes the advice. On `'platform'` the user can fix it by
+	 * bringing their own key; on `'tenant'` their OWN key is limited, where "connect your own
+	 * account" would be wrong.
 	 */
-	credentialSource: 'tenant' | 'environment' | 'platform';
+	credentialSource: AiCredentialSource;
 	/** Seconds until the limit resets, when the provider says so. */
 	retryAfterSeconds?: number;
 }
@@ -78,14 +87,7 @@ export interface IAiChatProvider {
 	 */
 	configured: boolean;
 	/** Where the active credential comes from. */
-	/**
-	 * Where the credential in use came from.
-	 *
-	 * `'platform'` is the shared, Ever-provided free tier: it is the LAST resort, below both the
-	 * tenant's own key and the operator's own environment key, and it is the only source that is
-	 * restricted to free models. The key itself is never sent to the client — only this label.
-	 */
-	credentialSource?: 'tenant' | 'environment' | 'platform';
+	credentialSource?: AiCredentialSource;
 	/** Display ordering (ascending) in provider lists/catalogs. */
 	order?: number;
 	/** Provider marketing/home page. */

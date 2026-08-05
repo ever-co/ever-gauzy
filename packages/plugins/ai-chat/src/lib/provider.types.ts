@@ -68,6 +68,18 @@ export interface IAiChatProviderDefinition {
 	readonly platformDefaultModel?: string;
 	/** Display ordering (ascending) in provider lists/catalogs. Unset sorts last. */
 	readonly order?: number;
+	/**
+	 * Whether this provider can actually serve a chat model. Defaults to true.
+	 *
+	 * Having a credential is NOT proof of that. A provider registered as a placeholder — one whose
+	 * `createModel` still throws — can otherwise be selected the moment ANY credential resolves for
+	 * it, including a tenant BYOK key the user saved themselves, and then fails on every turn.
+	 * Removing its env vars only closes the environment route, because tenant credentials are
+	 * resolved first.
+	 *
+	 * Set this to false until `createModel` returns a real model.
+	 */
+	readonly chatCapable?: boolean;
 	/** Provider marketing/home page (shown in the settings UI). */
 	readonly websiteUrl?: string;
 	/** Page where the user can create/manage API keys ("Get API key" link). */

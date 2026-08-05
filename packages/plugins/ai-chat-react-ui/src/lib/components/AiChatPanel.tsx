@@ -88,7 +88,7 @@ export function AiChatPanel() {
 	 * Chat only requires AI_CHAT_ACCESS, but the settings route is guarded by AI_CHAT_SETTINGS — so
 	 * navigating a chat-only user there would silently bounce them to the settings index.
 	 */
-	const canOpenAiSettings = useMemo(
+	const canOpenAiSettings = useCallback(
 		() =>
 			(store.userRolePermissions ?? []).some(
 				(rolePermission) =>
@@ -212,7 +212,7 @@ export function AiChatPanel() {
 		// Only navigate if the user could actually do anything there: the chat needs AI_CHAT_ACCESS
 		// while the settings route is guarded by AI_CHAT_SETTINGS, so a chat-only user would just be
 		// bounced to the settings index. The message above already tells them what to ask for.
-		if (!canOpenAiSettings) return;
+		if (!canOpenAiSettings()) return;
 		void injector
 			.get(AgentPageBridgeService)
 			.openPage('/pages/settings/ai', { provider: envelope.providerId })

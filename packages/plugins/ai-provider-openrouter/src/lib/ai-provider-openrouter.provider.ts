@@ -58,11 +58,16 @@ const labelFor = (id: string, name?: string): string => {
 const listFreeModels = async (): Promise<IAiChatModel[]> => {
 	const override = process.env.OPENROUTER_FREE_MODELS;
 	if (override) {
+		// The override is an ALLOWLIST for the shared key, so it is held to the same rule as the
+		// fetched list: a paid slug here would otherwise be spendable on the platform account, which
+		// is exactly what this tier exists to prevent. Anything without the free suffix is dropped,
+		// and if that leaves nothing we return empty — which DISABLES the platform tier rather than
+		// silently falling back to models nobody vetted.
 		const ids = override
 			.split(',')
-			.map((s) => s.trim())
-			.filter(Boolean);
-		if (ids.length) return ids.map((id) => ({ id, label: labelFor(id), providerId: PROVIDER_ID }));
+			.map((entry) => entry.trim())
+			.filter((id) => id.endsWith(FREE_SUFFIX));
+		return ids.map((id) => ({ id, label: labelFor(id), providerId: PROVIDER_ID }));
 	}
 
 	const cached = freeModelCache;
