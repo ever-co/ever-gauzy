@@ -5,7 +5,10 @@ import { NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { IDateRange } from '@gauzy/contracts';
 import { merge } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
+// The service's own file, not the folder barrel: that barrel also exports the filter COMPONENT,
+// which pulls in `@gauzy/ui-core` and, with it, half the app — enough to make this component
+// untestable in isolation.
+import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter/time-zone.service';
 
 @Component({
 	selector: 'ngx-timer-range-picker',
@@ -90,7 +93,10 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	 */
 	private hasExplicitTimezoneOffset = false;
 
-	constructor(private cd: ChangeDetectorRef, private readonly timeZoneService: TimeZoneService) {}
+	constructor(
+		private cd: ChangeDetectorRef,
+		private readonly timeZoneService: TimeZoneService
+	) {}
 
 	/**
 	 * The UTC offset used to turn the picked wall-clock time into an instant.
@@ -117,6 +123,42 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 		}
 		const on = moment(date ?? new Date()).format('YYYY-MM-DD');
 		return timezone.tz(on, this.timeZoneService.currentTimeZone).format('Z');
+	}
+
+	/**
+	 * Re-express an instant in the zone this picker DISPLAYS, so the wall-clock time shown is the one
+	 * {@link resolveTimezoneOffset} will read back.
+	 *
+	 * The inverse of the write path, and it has to be: `writeValue` used to read an existing range
+	 * with a plain `moment()`, i.e. in the BROWSER's zone, while the write composes the instant from
+	 * the configured Gauzy zone. Opening a saved log for edit then showed times shifted by the
+	 * difference — and where that shift moved the start past the end (a log recorded near midnight in
+	 * a zone ahead of the browser's), the period computed as zero and the dialog refused to save an
+	 * edit that changed nothing but the description.
+	 *
+	 * Reads `timezoneOffset` directly rather than via `hasExplicitTimezoneOffset`: Angular calls
+	 * `writeValue` while binding the control, which is BEFORE `ngAfterViewInit` records that flag.
+	 *
+	 * @param value - The instant to convert.
+	 * @returns The same instant, expressed in the displayed zone.
+	 */
+	private toDisplayZone(value: Date | string): moment.Moment {
+		if (this.timezoneOffset) {
+			return moment(value).utcOffset(this.timezoneOffset);
+		}
+		return timezone.tz(value, this.timeZoneService.currentTimeZone);
+	}
+
+	/**
+	 * A displayed instant as the `HH:mm` the time picker offers.
+	 *
+	 * Snapped DOWN to the picker's 10-minute slots (except for appointments, which use 5-minute
+	 * precision and keep the exact minute), and zero-padded — the picker's options are `HH:mm`, so a
+	 * `9:0` without the leading zeros matches none of them and the field renders blank.
+	 */
+	private toSlotTime(value: moment.Moment): string {
+		const minute = this.fromEmployeeAppointment ? value.minute() : value.minute() - (value.minute() % 10);
+		return `${String(value.hour()).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 	}
 
 	onChange: any = () => {};
@@ -226,19 +268,21 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 				value.end = moment().toDate();
 			}
 
-			const start = moment(value.start);
-			let hour = start.get('hour');
-			let minute = this.fromEmployeeAppointment
-				? start.get('minute')
-				: start.get('minute') - (start.minutes() % 10);
-			this.startTime = `${hour}:${minute}`;
+			const start = this.toDisplayZone(value.start);
+			const end = this.toDisplayZone(value.end);
 
-			const end = moment(value.end);
-			hour = end.get('hour');
-			minute = this.fromEmployeeAppointment ? end.get('minute') : end.get('minute') - (end.minutes() % 10);
-			this.endTime = `${hour}:${minute}`;
+			this.startTime = this.toSlotTime(start);
+			this.endTime = this.toSlotTime(end);
 
-			this.date = end.toDate();
+			// The DAY comes from the start, not the end. The write path composes BOTH times onto this
+			// one date (`day + startTime`, `day + endTime`), so for a log whose start and end fall on
+			// different days in the displayed zone, taking the end's day would place the start after
+			// the end, and the range could no longer be saved. For an ordinary same-day log the two agree.
+			//
+			// Rebuilt as browser-local midnight of that calendar day rather than passed through as an
+			// instant: the date input and `resolveTimezoneOffset` both read this with a plain
+			// `moment()`, so what has to survive is the CALENDAR DAY, not the instant.
+			this.date = moment(start.format('YYYY-MM-DD'), 'YYYY-MM-DD').toDate();
 		}
 		this._selectedRange = value;
 		//this.updateTimePickerLimit(value.start)-
