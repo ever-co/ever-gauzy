@@ -10,16 +10,6 @@ import { debounceTime } from 'rxjs/operators';
 // untestable in isolation.
 import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter/time-zone.service';
 
-/**
- * How much wall-clock inversion is still explainable by a timezone offset change rather than by a
- * range crossing midnight.
- *
- * Real offset changes are 30, 60 or (rarely) 120 minutes. A genuine overnight range inverts by far
- * more — 23:00 to 01:00 inverts by twenty-two hours — so three hours separates the two cases with
- * room to spare in both directions.
- */
-const MAX_OFFSET_INVERSION_MINUTES = 3 * 60;
-
 @Component({
 	selector: 'ngx-timer-range-picker',
 	templateUrl: './timer-range-picker.component.html',
@@ -161,6 +151,27 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 		return composed.isValid() ? composed.toDate() : null;
 	}
 
+	/**
+	 * How far the displayed zone's UTC offset moves across a calendar day, in minutes.
+	 *
+	 * Zero on all but two days a year. It is the budget for explaining an inverted pair of clock
+	 * readings as a timezone artefact rather than a midnight crossing.
+	 *
+	 * Measured across the DAY, not between the two composed instants: on a fall-back day both
+	 * readings of the repeated hour resolve to the FIRST pass, so the two instants report the same
+	 * offset and the change that caused the inversion is invisible from them.
+	 *
+	 * @param day - Calendar day as `YYYY-MM-DD`.
+	 */
+	private offsetShiftAcross(day: string): number {
+		const dayStart = this.composeInstant(day, '00:00');
+		const dayEnd = this.composeInstant(day, '23:59');
+		if (!dayStart || !dayEnd) {
+			return 0;
+		}
+		return Math.abs(this.toDisplayZone(dayStart).utcOffset() - this.toDisplayZone(dayEnd).utcOffset());
+	}
+
 	/** Wall-clock `HH:mm` as minutes past midnight, or `null` when it is not a time. */
 	private static toMinutes(time: string): number | null {
 		const parsed = /^(\d{1,2}):(\d{2})$/.exec(time ?? '');
@@ -181,23 +192,28 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 		const start = this.composeInstant(day, this.startTime);
 		let end = this.composeInstant(day, this.endTime);
 
-		// An end whose CLOCK READING is well before the start's crosses midnight: the picker holds one
-		// date for both, so that end belongs to the following day. Composed against that day rather
-		// than by adding 24 hours, because a DST transition in between makes those different answers.
+		// An end whose CLOCK READING is before the start's crosses midnight: the picker holds one date
+		// for both, so that end belongs to the following day. Composed against that day rather than by
+		// adding 24 hours, because a DST transition in between makes those different answers.
 		//
-		// Decided on the wall clock and only past a threshold, NOT on "the composed end is earlier
-		// than the composed start". That weaker test is also true when an offset change inverts the
-		// pair — on a fall-back day 01:30 (still DST) to 01:00 (already standard) is a real 30-minute
-		// log whose instants invert — and rolling THAT to the next day turns half an hour into
-		// twenty-four and a half, silently, just from opening the dialog. An offset change moves a
-		// clock by at most two hours anywhere on earth; a genuine overnight range inverts by many.
+		// The question is which inversions are REAL. "The composed end is earlier than the composed
+		// start" is too weak: an offset change inverts the pair on its own — on a fall-back day 01:30
+		// (still DST) to 01:00 (already standard) is a genuine 30-minute log whose instants invert —
+		// and rolling that turns half an hour into twenty-four and a half, silently, just from opening
+		// the dialog. A fixed threshold is too blunt in the other direction: 02:30 to 00:30 inverts by
+		// only two hours and is a perfectly ordinary overnight range.
+		//
+		// So compare the inversion against the offset change available on that day to explain it — zero
+		// on all but two days a year. Beyond that budget the clock cannot account for it and the range
+		// really does cross midnight. Equal is left unrolled: genuinely ambiguous, and refusing to save
+		// beats writing a day-long log.
 		const startMinutes = TimerRangePickerComponent.toMinutes(this.startTime);
 		const endMinutes = TimerRangePickerComponent.toMinutes(this.endTime);
-		const crossesMidnight =
-			startMinutes !== null && endMinutes !== null && startMinutes - endMinutes > MAX_OFFSET_INVERSION_MINUTES;
 
-		if (start && end && crossesMidnight) {
-			end = this.composeInstant(moment(day, 'YYYY-MM-DD').add(1, 'day').format('YYYY-MM-DD'), this.endTime);
+		if (start && end && startMinutes !== null && endMinutes !== null) {
+			if (startMinutes - endMinutes > this.offsetShiftAcross(day)) {
+				end = this.composeInstant(moment(day, 'YYYY-MM-DD').add(1, 'day').format('YYYY-MM-DD'), this.endTime);
+			}
 		}
 
 		return { start, end };

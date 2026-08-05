@@ -183,6 +183,21 @@ describe('TimerRangePickerComponent', () => {
 			expect(end.toISOString()).toBe(stored.end.toISOString());
 		});
 
+		it('rolls a genuine overnight range whose inversion is small', () => {
+			// 02:30 to 00:30 inverts by only two hours, and a fixed "an offset change is at most N
+			// hours" threshold rejected it — a perfectly ordinary overnight range, composed backwards.
+			// In UTC no offset change exists to explain any inversion, so this one must be real.
+			component = build('Etc/UTC');
+			component.date = moment('2026-08-05', 'YYYY-MM-DD').toDate();
+			component.startTime = '02:30';
+			component.endTime = '00:30';
+
+			const { start, end } = component.composeRange();
+
+			expect(start.toISOString()).toBe('2026-08-05T02:30:00.000Z');
+			expect(end.toISOString()).toBe('2026-08-06T00:30:00.000Z');
+		});
+
 		it('does NOT roll the end when a fall-back offset change inverts the pair', () => {
 			// America/New_York, 1 Nov 2026: 02:00 EDT falls back to 01:00 EST, so 01:xx happens twice.
 			// This is a real 30-minute log — 01:30 EDT to 02:00 EDT — but read back it renders as
