@@ -266,6 +266,16 @@ export const clickSaveTimeLogButton = async () => {
 			}, TimesheetsPage.saveTimeButtonCss)
 			.catch(() => false);
 
+	// BOTH submit paths are no-ops while the button is disabled — requestSubmit() honours the gate, and
+	// a click (forced or not) on a disabled button performs no default action — so "enabled" is the
+	// shared precondition, not something a fallback can work around. An unreadable state just keeps us
+	// waiting, which is safe here: only the end-state check below decides success.
+	const saveBtnEnabled = async () => {
+		const btn = page.locator(TimesheetsPage.saveTimeButtonCss).first();
+		if ((await btn.count().catch(() => 0)) === 0) return false;
+		return btn.isEnabled().catch(() => false);
+	};
+
 	for (let attempt = 0; attempt < 3; attempt++) {
 		// Check the END STATE before acting: a dialog that closed while we were waiting is a success,
 		// not a reason to submit again into whatever screen replaced it.
@@ -278,15 +288,25 @@ export const clickSaveTimeLogButton = async () => {
 			.waitFor({ state: 'attached', timeout: 20_000 })
 			.catch(() => undefined);
 
+		for (let i = 0; i < 20 && !(await saveBtnEnabled()); i++) {
+			if (await dialogGone()) return;
+			await page.waitForTimeout(500);
+		}
+
 		if (await dialogGone()) return;
 
-		// Last attempt falls back to a real click, which performs the button's native default action.
-		if (!(await submitOnce()) && attempt === 2) {
+		// Final attempt uses a REAL click so the button's own native default action runs, in case the
+		// synthetic submit is being swallowed. Unconditional rather than a fallback on submitOnce()'s
+		// return: the case worth retrying differently is "submit fired but the dialog never closed",
+		// and there submitOnce() returns true. Not forced — we just waited for it to be enabled.
+		if (attempt === 2) {
 			await page
 				.locator(TimesheetsPage.saveTimeButtonCss)
 				.first()
-				.click({ force: true })
+				.click()
 				.catch(() => undefined);
+		} else {
+			await submitOnce();
 		}
 
 		for (let i = 0; i < 24; i++) {
