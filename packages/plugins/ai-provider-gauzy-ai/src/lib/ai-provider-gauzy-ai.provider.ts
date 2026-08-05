@@ -29,6 +29,16 @@ export const gauzyAiProviderDefinition: IAiChatProviderDefinition = {
 	 * Restore the variable in the same change that makes `createModel` return a real model.
 	 */
 	apiKeyEnvVars: [],
+	/**
+	 * Not chat-capable while `createModel` throws.
+	 *
+	 * Emptying `apiKeyEnvVars` above only closes the ENVIRONMENT route. Credentials are resolved
+	 * tenant-first, so a tenant that saves a Gauzy AI key through the BYOK settings page would still
+	 * mark this provider `configured`, let it win default selection (it sorts first at order 10), and
+	 * then fail every turn with 'not implemented yet'. Capability is a separate question from
+	 * credentials, so it gets its own flag.
+	 */
+	chatCapable: false,
 	baseUrlEnvVar: 'GAUZY_AI_BASE_URL',
 	models: [],
 	defaultModel: '',
