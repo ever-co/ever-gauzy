@@ -54,7 +54,14 @@ export interface IAiChatProvider {
 	 */
 	configured: boolean;
 	/** Where the active credential comes from. */
-	credentialSource?: 'tenant' | 'environment';
+	/**
+	 * Where the credential in use came from.
+	 *
+	 * `'platform'` is the shared, Ever-provided free tier: it is the LAST resort, below both the
+	 * tenant's own key and the operator's own environment key, and it is the only source that is
+	 * restricted to free models. The key itself is never sent to the client — only this label.
+	 */
+	credentialSource?: 'tenant' | 'environment' | 'platform';
 	/** Display ordering (ascending) in provider lists/catalogs. */
 	order?: number;
 	/** Provider marketing/home page. */

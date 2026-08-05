@@ -1,7 +1,7 @@
 import { Injectable, Logger, ServiceUnavailableException, BadRequestException } from '@nestjs/common';
 import type { Response } from 'express';
 import type { UIMessage, LanguageModel } from 'ai';
-import { IAiChatConfig, IAiChatProvider } from '@gauzy/contracts';
+import { IAiChatConfig, IAiChatModel, IAiChatProvider } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { loadAiSdk } from './esm-loader';
 import { AiProviderRegistry } from './provider-registry';
@@ -181,10 +181,14 @@ export class AiChatService {
 
 		for (const definition of definitions) {
 			const credentials = await this.resolveCredentials(definition);
+			// Narrow the advertised models SERVER-side when the shared free key is in play, so the
+			// settings chips, the default-model select and the playground selector all follow with no
+			// frontend change — and so the UI never offers a model resolveModel would then reject.
+			const platformModels = credentials ? await this.resolvePlatformModels(definition, credentials) : null;
 			providers.push({
 				id: definition.id,
 				label: definition.label,
-				models: definition.models,
+				models: platformModels ?? definition.models,
 				configured: credentials !== null,
 				...(credentials ? { credentialSource: credentials.source } : {}),
 				...(definition.order !== undefined ? { order: definition.order } : {}),
@@ -273,6 +277,35 @@ export class AiChatService {
 			throw new ServiceUnavailableException(`AI provider '${definition.id}' has no usable credentials.`);
 		}
 
+		const platformModels = await this.resolvePlatformModels(definition, credentials);
+		if (platformModels) {
+			// Running on the shared free key: the model list is an ALLOWLIST, not a suggestion.
+			if (!platformModels.length) {
+				throw new ServiceUnavailableException(
+					`AI provider '${definition.id}' has no free models available right now. ` +
+						`Add your own API key in Settings → AI Providers to continue.`
+				);
+			}
+			const allowed = new Set(platformModels.map((m) => m.id));
+			if (requestedModelId && !allowed.has(requestedModelId)) {
+				// Reject rather than silently substituting: the client's selector only offers allowed
+				// ids, so a mismatch means a stale client or a hand-crafted request, and quietly
+				// answering from a different model than the caller asked for is its own bug.
+				throw new BadRequestException(
+					`Model '${requestedModelId}' is not available on the free tier. ` +
+						`Choose one of: ${platformModels.map((m) => m.id).join(', ')} — ` +
+						`or add your own '${definition.id}' API key in Settings → AI Providers for full access.`
+				);
+			}
+			// GAUZY_AI_CHAT_DEFAULT_MODEL is deliberately NOT consulted here: it is provider-agnostic
+			// (.env.sample ships an Anthropic-native slug) and would name a model this provider would
+			// reject. A tenant default cannot apply either — a usable tenant credential would have
+			// produced source:'tenant' and never reached this branch.
+			const modelId = requestedModelId || definition.platformDefaultModel || platformModels[0].id;
+			const model = await definition.createModel(modelId, credentials);
+			return { model, providerId: definition.id, modelId };
+		}
+
 		const tenantCredential = await this.getTenantCredential(definition.id);
 		const modelId =
 			requestedModelId ||
@@ -284,7 +317,14 @@ export class AiChatService {
 		return { model, providerId: definition.id, modelId };
 	}
 
-	/** Tenant BYOK credential first, then server environment variables. */
+	/**
+	 * Tenant BYOK credential, then the operator's own environment key, then the shared platform key.
+	 *
+	 * The order is the whole design. The platform key is a free tier the product supplies so the AI
+	 * agent works with no setup, and it is the ONLY source restricted to free models — so it must be
+	 * reached only when nothing else applies. An operator who deliberately sets the provider's own
+	 * env var keeps unrestricted access, and a tenant that brings its own key always wins outright.
+	 */
 	private async resolveCredentials(definition: IAiChatProviderDefinition): Promise<IAiProviderCredentials | null> {
 		const tenantCredential = await this.getTenantCredential(definition.id);
 		if (tenantCredential?.apiKey) {
@@ -304,7 +344,41 @@ export class AiChatService {
 				};
 			}
 		}
+		if (definition.platformApiKeyEnvVar) {
+			const apiKey = process.env[definition.platformApiKeyEnvVar];
+			if (apiKey) {
+				return {
+					apiKey,
+					baseUrl: definition.baseUrlEnvVar ? process.env[definition.baseUrlEnvVar] : undefined,
+					source: 'platform'
+				};
+			}
+		}
 		return null;
+	}
+
+	/**
+	 * Models permitted for this credential — the full catalogue, or the free subset on the platform
+	 * key.
+	 *
+	 * Returns `null` when there is no restriction, so callers can distinguish "unrestricted" from
+	 * "restricted to nothing" (the latter disables the tier rather than silently allowing anything).
+	 */
+	private async resolvePlatformModels(
+		definition: IAiChatProviderDefinition,
+		credentials: IAiProviderCredentials
+	): Promise<IAiChatModel[] | null> {
+		if (credentials.source !== 'platform' || !definition.listPlatformModels) return null;
+		try {
+			return await definition.listPlatformModels();
+		} catch (error) {
+			// A provider that cannot list its free models must not fall open onto the shared key.
+			this.logger.error(
+				`[ai-chat] Could not list platform models for '${definition.id}'; refusing the platform tier.`,
+				error instanceof Error ? error.stack : String(error)
+			);
+			return [];
+		}
 	}
 
 	private async getTenantCredential(providerId: string) {
