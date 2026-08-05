@@ -26,10 +26,10 @@ const MODELS: IAiChatModel[] = [
  * `OPENROUTER_FREE_MODELS` lets an operator correct drift with a restart instead of a release.
  */
 const FALLBACK_FREE_MODELS: IAiChatModel[] = [
-	{ id: 'deepseek/deepseek-r1:free', label: 'DeepSeek R1 (free)', providerId: PROVIDER_ID },
-	{ id: 'meta-llama/llama-3.3-70b-instruct:free', label: 'Llama 3.3 70B (free)', providerId: PROVIDER_ID },
-	{ id: 'google/gemma-3-27b-it:free', label: 'Gemma 3 27B (free)', providerId: PROVIDER_ID },
-	{ id: 'qwen/qwen-2.5-72b-instruct:free', label: 'Qwen 2.5 72B (free)', providerId: PROVIDER_ID }
+	{ id: 'openai/gpt-oss-20b:free', label: 'GPT-OSS 20B (free)', providerId: PROVIDER_ID },
+	{ id: 'google/gemma-4-31b-it:free', label: 'Gemma 4 31B (free)', providerId: PROVIDER_ID },
+	{ id: 'nvidia/nemotron-3-super-120b-a12b:free', label: 'Nemotron 3 Super 120B (free)', providerId: PROVIDER_ID },
+	{ id: 'inclusionai/ling-3.0-flash:free', label: 'Ling 3.0 Flash (free)', providerId: PROVIDER_ID }
 ];
 
 /** OpenRouter marks free models with a `:free` suffix on the slug. */
