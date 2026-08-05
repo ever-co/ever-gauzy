@@ -558,12 +558,46 @@ export function getMigrationsConfig() {
 	};
 }
 
+/** Connection-option keys that must never be written to stdout. */
+const DB_CONFIG_SECRET_KEYS = ['password', 'ssl', 'sslKey', 'sslCert', 'sslCA', 'sslca', 'key', 'cert', 'ca'];
+
+const REDACTED = '[REDACTED]';
+
+/**
+ * Returns a copy of `value` with every credential-bearing field replaced by a placeholder.
+ * Recurses into plain objects and arrays so nested config (`extra`, `replication`, …) is covered too.
+ */
+function redactDBSecrets(value: unknown, depth = 0): unknown {
+	// Guard against pathological/cyclic config; 6 levels is far deeper than any real DB config.
+	if (depth > 6) return value;
+
+	if (Array.isArray(value)) return value.map((item) => redactDBSecrets(item, depth + 1));
+	if (value === null || typeof value !== 'object') return value;
+
+	return Object.fromEntries(
+		Object.entries(value as Record<string, unknown>).map(([key, val]) => {
+			if (val === undefined || val === null) return [key, val];
+			if (DB_CONFIG_SECRET_KEYS.includes(key)) return [key, REDACTED];
+			// A connection URL can embed `user:password@host` in its userinfo section.
+			if ((key === 'url' || key === 'connectionString') && typeof val === 'string') {
+				return [key, val.replace(/\/\/[^@/]*@/, `//${REDACTED}@`)];
+			}
+			return [key, redactDBSecrets(val, depth + 1)];
+		})
+	);
+}
+
 /**
  * Logs the current database configuration for debugging or informational purposes.
  * Excludes entities and subscribers arrays to keep the output readable.
+ *
+ * ⚠️ This writes to stdout, which on Kubernetes is readable by anyone who can run
+ * `kubectl logs` on the namespace, and is shipped to whatever log backend is configured.
+ * Every credential-bearing field is therefore redacted before it is serialised —
+ * do not reintroduce a raw `JSON.stringify` of the connection options here.
  */
 function logDBConfig(config: ApplicationPluginConfig): void {
 	// Destructure to exclude entities and subscribers from the log output
 	const { entities, subscribers, ...dbConfigWithoutEntities } = config.dbConnectionOptions;
-	console.log(chalk.green(`DB Config: ${JSON.stringify(dbConfigWithoutEntities)}`));
+	console.log(chalk.green(`DB Config: ${JSON.stringify(redactDBSecrets(dbConfigWithoutEntities))}`));
 }
