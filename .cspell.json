@@ -3,8 +3,6 @@
     "language": "en",
     "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
     "ignoreRegExpList": [
-        "dall",
-        "davinci",
         "GHSA-[A-Za-z0-9-]+"
     ],
     "words": [
@@ -152,11 +150,13 @@
         "CUBEJS",
         "cust",
         "CWE",
+        "dall",
         "datatables",
         "Datepicker",
         "daterangepicker",
         "datetime",
         "datname",
+        "davinci",
         "daygrid",
         "dbname",
         "DDTHH",
@@ -448,6 +448,7 @@
         "loopback",
         "lparam",
         "lresult",
+        "lyria",
         "macbook",
         "MAINDB",
         "MAINLOADSPLASH",
@@ -536,6 +537,7 @@
         "nums",
         "nuxt",
         "oidc",
+        "omni",
         "openai",
         "OPENAI",
         "openapi",

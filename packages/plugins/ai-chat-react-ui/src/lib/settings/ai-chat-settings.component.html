@@ -126,7 +126,13 @@
 								}
 							</span>
 							<span class="cell actions-col">
-								<button nbButton ghost status="primary" size="small" (click)="showConfigure(provider.id)">
+								<button
+									nbButton
+									ghost
+									status="primary"
+									size="small"
+									(click)="showConfigure(provider.id)"
+								>
 									<nb-icon icon="settings-2-outline"></nb-icon>
 									{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.CONFIGURE' | translate }}
 								</button>
@@ -186,7 +192,9 @@
 							</span>
 						}
 						@if (provider.connectType) {
-							<span class="connect-chip">{{ 'AI_CHAT_UI.SETTINGS.CATALOG.SUPPORTS_CONNECT' | translate }}</span>
+							<span class="connect-chip">{{
+								'AI_CHAT_UI.SETTINGS.CATALOG.SUPPORTS_CONNECT' | translate
+							}}</span>
 						}
 					</button>
 				}
@@ -280,7 +288,9 @@
 									) | translate
 								"
 							>
-								<nb-icon [icon]="isKeyRevealed(provider.id) ? 'eye-off-outline' : 'eye-outline'"></nb-icon>
+								<nb-icon
+									[icon]="isKeyRevealed(provider.id) ? 'eye-off-outline' : 'eye-outline'"
+								></nb-icon>
 							</button>
 						</nb-form-field>
 						@if (getCredential(provider.id)) {
@@ -323,6 +333,7 @@
 							[loading]="isLoadingModels(provider.id)"
 							[clearable]="true"
 							[searchable]="true"
+							[searchFn]="searchModel"
 							[virtualScroll]="true"
 							[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_NONE' | translate"
 							[notFoundText]="'AI_CHAT_UI.SETTINGS.FORM.MODELS_NOT_FOUND' | translate"

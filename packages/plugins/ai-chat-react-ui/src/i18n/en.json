@@ -44,6 +44,7 @@
 			"MODELS_NOT_FOUND": "No matching model — pick \"Custom model…\" to type an id.",
 			"MODELS_PLATFORM": "Limited to the free models available on the shared key. Add your own API key to use any model.",
 			"MODELS_PLATFORM_UNAVAILABLE": "The shared free-tier model list could not be loaded, so no model can be selected. Add your own API key to use this provider.",
+			"MODELS_CUSTOM_ENDPOINT": "This provider uses a custom base URL, so its model list is not fetched — your key belongs to that endpoint, not to the vendor. Pick \"Custom model…\" to enter a model id.",
 			"MODELS_CURATED_NO_KEY": "Showing known models. Save an API key to load everything this provider offers.",
 			"MODELS_CURATED_UNAVAILABLE": "Showing known models — the provider's full list could not be loaded just now.",
 			"MODELS_STALE": "Showing the last known list — the provider's catalogue could not be refreshed.",

@@ -96,7 +96,8 @@ const CONNECT_SESSION_KEY = 'gauzy_ai_provider_connect';
 interface ProviderCredentialForm {
 	apiKey: FormControl<string>;
 	baseUrl: FormControl<string>;
-	defaultModel: FormControl<string>;
+	/** Nullable: `null` is "no default model", which ng-select renders as its placeholder. */
+	defaultModel: FormControl<string | null>;
 	customModel: FormControl<string>;
 	enabled: FormControl<boolean>;
 }
@@ -183,6 +184,11 @@ export class AiChatSettingsComponent implements OnInit {
 	 * going back to A fired a duplicate request.
 	 */
 	private readonly loadingModels = signal<ReadonlySet<string>>(new Set());
+	/**
+	 * Memoised picker items per provider, so `[items]` is referentially stable across change
+	 * detection. Plain map, not a signal: it is a cache of a derived value, never a source of truth.
+	 */
+	private readonly modelOptionsCache = new Map<string, { source: IAiChatModel[]; options: IAiChatModel[] }>();
 
 	/** The provider object for the config view. */
 	readonly selectedProvider = computed<IAiChatProvider | null>(
@@ -518,6 +524,7 @@ export class AiChatSettingsComponent implements OnInit {
 	 * longer applies.
 	 */
 	private invalidateCatalogue(providerId: string): void {
+		this.modelOptionsCache.delete(providerId);
 		this.modelCatalogues.update((current) => {
 			if (!current.has(providerId)) {
 				return current;
@@ -545,15 +552,40 @@ export class AiChatSettingsComponent implements OnInit {
 	 * so there has to be a way to type an id in by hand.
 	 */
 	modelOptions(provider: IAiChatProvider): IAiChatModel[] {
-		return [
-			...this.modelsFor(provider),
+		// Memoised per (provider, source list). The template binds this into ng-select's `[items]`, and
+		// a fresh array on every change-detection pass makes ng-select rebuild its ItemsList each time
+		// — which resets the keyboard-marked item, so arrow keys could not move through the list at
+		// all. Keyed on the array identity rather than deep equality: `modelsFor` returns either the
+		// catalogue's array or the provider's, both of which are stable until they are replaced.
+		const models = this.modelsFor(provider);
+		const cached = this.modelOptionsCache.get(provider.id);
+		if (cached && cached.source === models) {
+			return cached.options;
+		}
+		const options = [
+			...models,
 			{
 				id: CUSTOM_MODEL,
 				label: this.translateService.instant('AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_CUSTOM'),
 				providerId: provider.id
 			}
 		];
+		this.modelOptionsCache.set(provider.id, { source: models, options });
+		return options;
 	}
+
+	/**
+	 * Search a model by its ID as well as its label.
+	 *
+	 * ng-select's default search only looks at the label, and on the routing providers the label is a
+	 * display name ("Anthropic: Claude Sonnet 5") while the id is the slug
+	 * (`anthropic/claude-sonnet-5`). Pasting the id you were handed — the thing the empty-state text
+	 * tells you to type — matched nothing and reported the model as absent while it sat in the list.
+	 */
+	readonly searchModel = (term: string, model: IAiChatModel): boolean => {
+		const needle = term.toLowerCase();
+		return model.id.toLowerCase().includes(needle) || (model.label ?? '').toLowerCase().includes(needle);
+	};
 
 	/**
 	 * The note under the model picker explaining where its list came from, or `null` when the list is
@@ -573,8 +605,14 @@ export class AiChatSettingsComponent implements OnInit {
 				: 'AI_CHAT_UI.SETTINGS.FORM.MODELS_PLATFORM_UNAVAILABLE';
 		}
 		if (catalogue.source === 'curated') {
-			// Two different situations reach 'curated', and they need opposite advice. Telling a user
-			// whose key IS saved to "save an API key" reads as the page not knowing what it is doing.
+			// A custom base URL means the server DELIBERATELY made no request: the key belongs to that
+			// endpoint, not to the vendor. Reporting that as "could not be loaded just now" invites a
+			// retry for a fetch that was never attempted and never will be.
+			if (this.getCredential(provider.id)?.baseUrl) {
+				return 'AI_CHAT_UI.SETTINGS.FORM.MODELS_CUSTOM_ENDPOINT';
+			}
+			// The remaining two situations need opposite advice. Telling a user whose key IS saved to
+			// "save an API key" reads as the page not knowing what it is doing.
 			return provider.configured
 				? 'AI_CHAT_UI.SETTINGS.FORM.MODELS_CURATED_UNAVAILABLE'
 				: 'AI_CHAT_UI.SETTINGS.FORM.MODELS_CURATED_NO_KEY';
@@ -932,8 +970,13 @@ export class AiChatSettingsComponent implements OnInit {
 					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.DELETED', { provider: provider.label }),
 					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
 				);
-				// Removing the tenant key drops the provider back to whatever resolves next.
+				// Removing the tenant key drops the provider back to whatever resolves next. Delete does
+				// not navigate away, so nothing else would re-fetch: without this the config view keeps
+				// showing the curated fallback, with no hint, looking like a complete live list.
 				this.invalidateCatalogue(provider.id);
+				if (this.view() === 'config' && this.selectedProviderId() === provider.id) {
+					this.loadModels(provider.id);
+				}
 				this.load();
 				// Deleting the last credential takes the chat away again.
 				this.refreshChatAvailability();
@@ -959,8 +1002,11 @@ export class AiChatSettingsComponent implements OnInit {
 						baseUrl: this.fb.nonNullable.control(credential?.baseUrl ?? '', [
 							Validators.pattern(/^https?:\/\/.+/)
 						]),
-						defaultModel: this.fb.nonNullable.control(
-							credential?.defaultModel ? (knownModel ? credential.defaultModel : CUSTOM_MODEL) : ''
+						// `null`, not `''`. ng-select accepts '' as a real value in single-select mode and
+						// fabricates a selected item for it, so the "Provider default" placeholder never
+						// rendered and the field sat blank with a clear (x) button on it.
+						defaultModel: this.fb.control<string | null>(
+							credential?.defaultModel ? (knownModel ? credential.defaultModel : CUSTOM_MODEL) : null
 						),
 						customModel: this.fb.nonNullable.control(knownModel ? '' : (credential?.defaultModel ?? '')),
 						enabled: this.fb.nonNullable.control(credential?.enabled ?? true)

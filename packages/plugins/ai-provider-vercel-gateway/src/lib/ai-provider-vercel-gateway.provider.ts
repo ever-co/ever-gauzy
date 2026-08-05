@@ -24,6 +24,19 @@ const MODELS: IAiChatModel[] = [
 	{ id: 'google/gemini-3.5-flash', label: 'Gemini 3.5 Flash', providerId: PROVIDER_ID }
 ];
 
+/**
+ * Whether a `deprecated_at` stamp has actually passed.
+ *
+ * The field is a SCHEDULE, not a tombstone: the gateway sets it ahead of the retirement date and the
+ * model keeps working until then. Treating any value as "gone" hid a model a tenant might already
+ * have configured, leaving their own saved default missing from their own picker.
+ */
+const isRetired = (deprecatedAt?: string | number | null): boolean => {
+	if (!deprecatedAt) return false;
+	const at = typeof deprecatedAt === 'number' ? deprecatedAt : Date.parse(deprecatedAt);
+	return Number.isFinite(at) && at <= Date.now();
+};
+
 /** Model catalogue cache. The gateway publishes its catalogue publicly, so no credential is needed. */
 const catalogueCache = createCatalogueCache<IAiChatModel[]>();
 
@@ -54,7 +67,7 @@ const listCatalogue = async (): Promise<IAiChatModelList> =>
 					(m) =>
 						typeof m?.id === 'string' &&
 						m.type === 'language' &&
-						!m.deprecated_at &&
+						!isRetired(m.deprecated_at) &&
 						(m.supported_parameters ?? []).includes('tools')
 				)
 				.map((m) => ({ id: m.id, label: m.name ?? m.id, providerId: PROVIDER_ID }));

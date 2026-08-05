@@ -38,7 +38,9 @@ const NON_CHAT_PATTERNS = [
 	/^whisper/,
 	/^tts-/,
 	/^dall-e/,
-	/^gpt-image/,
+	// Unanchored: OpenAI also ships `chatgpt-image-latest`, which `^gpt-image` never matched — the
+	// same anchoring mistake the note below flags for the legacy completion families.
+	/gpt-image/,
 	/moderation/,
 	// The legacy completion families are listed as `text-davinci-003`, `code-davinci-002` and so on,
 	// so anchoring to the start of the id misses every one of them.

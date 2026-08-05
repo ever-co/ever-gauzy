@@ -7,6 +7,7 @@ import {
 	fetchCatalogueJson,
 	importEsm,
 	keyedCatalogue,
+	mergeCatalogue,
 	prettifyModelId
 } from '@gauzy/plugin-ai-chat';
 
@@ -22,10 +23,29 @@ const MODELS: IAiChatModel[] = [{ id: 'gemini-3.5-flash', label: 'Gemini 3.5 Fla
 /**
  * Model families that answer `generateContent` but cannot drive the agent.
  *
- * `supportedGenerationMethods` gates *chat*, not *tools* — image, video and embedding-adjacent models
- * pass it too — so this trims what that filter cannot.
+ * `supportedGenerationMethods` gates *chat*, not *tools* — image, video, music, robotics and
+ * research-preview models pass it too — and the Gemini API exposes no tool-capability field at all,
+ * so this list IS the filter for everything except what {@link listCatalogue} merges below the
+ * curated entries.
  */
-const NON_AGENT_PATTERNS = [/embedding/, /^aqa/, /^imagen/, /^veo/, /-image(-|$)/, /^learnlm/, /-tts(-|$)/];
+const NON_AGENT_PATTERNS = [
+	/embedding/,
+	/^aqa/,
+	/^imagen/,
+	/^veo/,
+	/-image(-|$)/,
+	/^learnlm/,
+	/-tts(-|$)/,
+	// Music generation.
+	/^lyria/,
+	// Embodied/robotics and the standalone research + agent previews: all chat-shaped, none of them
+	// a model the agent can drive.
+	/robotics/,
+	/^deep-research/,
+	/^antigravity/,
+	// The omni models are multimodal generators (text + video out) and do not accept tools.
+	/-omni-/
+];
 
 /** Model catalogue cache, keyed per credential: model availability varies by API-key project. */
 const catalogueCache = createCatalogueCache<IAiChatModel[]>();
@@ -49,21 +69,22 @@ const listCatalogue = async (credentials: IAiProviderCredentials | null): Promis
 			}>('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000', {
 				headers: { 'x-goog-api-key': resolved.apiKey }
 			});
-			return (
-				(body.models ?? [])
-					.filter(
-						(m) => typeof m?.name === 'string' && m.supportedGenerationMethods?.includes('generateContent')
-					)
-					// The API returns fully-qualified resource names ('models/gemini-3.5-flash'); the SDK
-					// wants the bare id.
-					.map((m) => ({ id: (m.name as string).replace(/^models\//, ''), displayName: m.displayName }))
-					.filter((m) => !NON_AGENT_PATTERNS.some((pattern) => pattern.test(m.id)))
-					.map((m) => ({
-						id: m.id,
-						label: m.displayName ?? prettifyModelId(m.id),
-						providerId: PROVIDER_ID
-					}))
-			);
+			const fetched = (body.models ?? [])
+				.filter((m) => typeof m?.name === 'string' && m.supportedGenerationMethods?.includes('generateContent'))
+				// The API returns fully-qualified resource names ('models/gemini-3.5-flash'); the SDK
+				// wants the bare id.
+				.map((m) => ({ id: (m.name as string).replace(/^models\//, ''), displayName: m.displayName }))
+				.filter((m) => !NON_AGENT_PATTERNS.some((pattern) => pattern.test(m.id)))
+				.map((m) => ({
+					id: m.id,
+					label: m.displayName ?? prettifyModelId(m.id),
+					providerId: PROVIDER_ID
+				}));
+			// Merged BELOW the curated entries rather than replacing them, exactly as for OpenAI and for
+			// the same reason: the Gemini API exposes no tool-capability field, so a denylist can only
+			// remove the families we already know about. The curated entries are the ones actually
+			// verified against the agent's tool use, so they lead.
+			return mergeCatalogue(MODELS, fetched);
 		}
 	});
 
