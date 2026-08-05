@@ -1,6 +1,9 @@
 <nb-layout windowMode>
-	<!-- Header — its content shifts aside for the expanded AI chat panel
-	     (the chat is a full-height column; it must displace content, not cover it) -->
+	<!-- Header — belongs to the CANVAS, not to the whole window.
+	     The layout is three full-height columns: Menu | Chat | Canvas. The menu sidebar already
+	     spans the full height (its logo sits above the header band), and the chat does the same, so
+	     the header must start where the canvas starts. Nebular renders a `fixed` header at full
+	     width, so it is inset by the width of whatever columns precede the canvas. -->
 	@if (user()) {
 		<nb-layout-header
 			fixed
@@ -87,8 +90,11 @@
 	     Single @if (like the menu sidebar above): nesting control-flow blocks breaks
 	     nb-layout's select-based content projection for nb-sidebar. -->
 	@if (user() && chatSidebarService.available() && chatSidebarComponent(); as chatComponent) {
+		<!-- A FULL-HEIGHT column, like the nav menu: nothing sits above it, so the panel owns its
+		     own top edge (its title row and icons) instead of starting under the header band.
+		     That needs Nebular's default fixed `.main-container` — see the scss for why COLLAPSED
+		     must then be `display: none` rather than merely zero-width. -->
 		<nb-sidebar
-			#chatSidebarHost
 			class="chat-sidebar"
 			[class]="chatSidebarService.config()?.class ?? ''"
 			[class.chat-sidebar-end]="chatSidebarService.position() === 'end'"

@@ -80,34 +80,56 @@
 
     // Maximized: take all space except the nav menu (Menu | Chat);
     // the canvas is hidden (components stay alive) until restored.
+    //
+    // The fixed panel's horizontal start is its STATIC position — i.e. wherever the host lands in
+    // the flex row — so pinning `right: 0` and letting the width compute keeps it exactly between
+    // the nav menu and the viewport edge, with no measured width to mirror.
     &.chat-sidebar-maximized {
       flex: 1 1 auto !important;
       width: auto !important;
       min-width: 0 !important;
       max-width: none !important;
 
-      // The visible panel is the fixed `.main-container` below, whose width
-      // comes from --gz-chat-live-width. Its fallback is the DOCKED chat
-      // width, so whenever that variable is missing the host would grow while
-      // the panel stayed narrow — which is exactly what "maximize does
-      // nothing" looks like. Maximized falls back to the viewport instead.
       ::ng-deep .main-container {
-        width: var(--gz-chat-live-width, 100vw) !important;
-        max-width: 100vw !important;
+        right: 0;
+        width: auto !important;
       }
     }
 
+    // COLLAPSED MUST REMOVE THE PANEL, not merely narrow it.
+    //
+    // `.main-container` is `position: fixed`, and a fixed descendant is NOT clipped by an
+    // ancestor's `overflow: hidden` — so a host at `width: 0` cannot hide it. Any residual width
+    // survives as an invisible, full-height, click-eating strip: measured at 1280x720 it was
+    // 384x720 at x=256, and document.elementFromPoint over the org selector and the left third of
+    // the canvas returned `div.main-container` instead of the page. That is the "intermittent
+    // click-blocking across the UI" report.
+    //
+    // Width alone is not a safe lever here (the width declaration did not always win the cascade),
+    // so take the element out of rendering entirely. `display: none` cannot be overridden by a
+    // stale width and cannot receive a hit test.
     &.collapsed {
       width: 0 !important;
       overflow: hidden;
+
+      ::ng-deep .main-container {
+        display: none !important;
+      }
     }
 
+    // Pinned to the viewport's top so the chat is a FULL-HEIGHT column with nothing above it: the
+    // panel owns its own top edge (title row + icons), exactly like the nav menu owns the logo.
+    // The header is inset around it instead (see chatHeaderPad in the layout component), so header
+    // dropdowns open over the canvas, never over the chat.
+    //
+    // Width comes straight from `--gz-chat-width` (the user's chosen/persisted width) rather than
+    // from a ResizeObserver mirroring the host: one source of truth, and nothing to go stale.
     ::ng-deep .main-container {
-      width: var(--gz-chat-live-width, var(--gz-chat-width, 24rem)) !important;
+      width: var(--gz-chat-width, 24rem);
       max-width: none;
       top: 0 !important;
       height: 100vh !important;
-      z-index: 1041; // same layer as the nav menu sidebar — covers the header band
+      z-index: 1041; // same layer as the nav menu sidebar
       transition: width 0.2s ease;
       overflow: hidden;
 

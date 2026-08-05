@@ -10,10 +10,8 @@
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ever-co/ever-gauzy)
 
 ## 💡 What's New
-
-We released [Ever Teams](https://github.com/ever-co/ever-teams) platform for Work & Project Management.
-Please check <https://github.com/ever-co/ever-teams> and make it ⭐ on GitHub!
-It's built with a React (NextJs) / ReactNative (Expo) stack and connects to headless [Ever Gauzy Platform APIs](https://api.gauzy.co/docs).
+- 🔥🔥🔥 we just released [Ever Works](https://github.com/ever-works/ever-works) - An open agentic runtime that autonomously researches, ships, and maintains entire businesses, 24/7. Please grab it now from <https://github.com/ever-works/ever-works> and make it ⭐⭐⭐ on GitHub!
+- if you like Gauzy, you should also like [Ever Teams](https://github.com/ever-co/ever-teams) - Open Work & Productivity Platform. Please check <https://github.com/ever-co/ever-teams> and make it ⭐ on GitHub! It's built with a React (NextJs) / ReactNative (Expo) stack and connects to headless [Ever Gauzy Platform APIs](https://api.gauzy.co/docs).
 
 ## 🌟 What is it
 

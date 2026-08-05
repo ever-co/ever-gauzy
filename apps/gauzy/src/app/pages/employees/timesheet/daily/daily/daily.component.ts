@@ -290,7 +290,10 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 				filter((timeLog: ITimeLog) => !!timeLog),
 				// Tap to refresh the date range picker
 				tap((timeLog: ITimeLog) => {
-					this.dateRangePickerBuilderService.refreshDateRangePicker(moment(timeLog.startedAt));
+					this.dateRangePickerBuilderService.refreshDateRangePicker(
+						moment(timeLog.startedAt),
+						this.timeZoneService.currentTimeZone
+					);
 				}),
 				// Tap to notify subscribers
 				tap(() => this.refreshTrigger$.next(true)),
@@ -317,7 +320,10 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 				filter((editedTimeLog: ITimeLog) => !!editedTimeLog),
 				// Tap to refresh the date range picker
 				tap((editedTimeLog: ITimeLog) => {
-					this.dateRangePickerBuilderService.refreshDateRangePicker(moment(editedTimeLog.startedAt));
+					this.dateRangePickerBuilderService.refreshDateRangePicker(
+						moment(editedTimeLog.startedAt),
+						this.timeZoneService.currentTimeZone
+					);
 				}),
 				// Tap to notify subscribers
 				tap(() => this.refreshTrigger$.next(true)),

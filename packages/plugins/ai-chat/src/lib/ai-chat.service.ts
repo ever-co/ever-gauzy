@@ -1,7 +1,7 @@
 import { Injectable, Logger, ServiceUnavailableException, BadRequestException } from '@nestjs/common';
 import type { Response } from 'express';
 import type { UIMessage, LanguageModel } from 'ai';
-import { IAiChatConfig, IAiChatProvider } from '@gauzy/contracts';
+import { IAiChatConfig, IAiChatModel, IAiChatProvider } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { loadAiSdk } from './esm-loader';
 import { AiProviderRegistry } from './provider-registry';
@@ -13,6 +13,7 @@ import { buildClientTools, CLIENT_TOOLS_REQUIRING_APPROVAL } from './tools/clien
 import { createMcpTools } from './tools/mcp-tools';
 import { AiProviderCredentialService } from './credentials/ai-provider-credential.service';
 import { AiChatConversationService } from './conversations/ai-chat-conversation.service';
+import { buildRateLimitEnvelope, isRateLimitError, rateLimitRetryAfter, RATE_LIMIT_CODE } from './rate-limit';
 
 /** Maximum agent steps (model turns incl. tool calls) per user message. */
 const MAX_STEPS = 12;
@@ -65,7 +66,10 @@ export class AiChatService {
 		}
 
 		const ai = await loadAiSdk();
-		const { model } = await this.resolveModel(args.providerId, args.modelId);
+		const { model, providerId, modelId, credentialSource } = await this.resolveModel(
+			args.providerId,
+			args.modelId
+		);
 
 		const user = RequestContext.currentUser();
 		const requestDefaults = {
@@ -126,8 +130,15 @@ export class AiChatService {
 				onEnd: async () => {
 					await mcp?.close();
 				},
-				onError: (error: unknown) => {
-					this.logger.error(`streamText error: ${error instanceof Error ? error.message : error}`);
+				// AI SDK 7 invokes this as `onError({ error })`, NOT `onError(error)`. Typed as
+				// `(error: unknown)` and stringified, every provider failure logged as
+				// "[object Object]" — the `as any` on this options object is why tsc never said so.
+				onError: (event: unknown) => {
+					const error = (event as { error?: unknown })?.error ?? event;
+					this.logger.error(
+						`streamText error [provider=${providerId} model=${modelId} credential=${credentialSource}]: ` +
+							`${error instanceof Error ? error.message : JSON.stringify(error)}`
+					);
 				}
 			} as any);
 		} catch (error) {
@@ -149,6 +160,25 @@ export class AiChatService {
 				stream: (result as any).stream,
 				// Keeps message ids stable across tool-call round-trips.
 				originalMessages: args.messages,
+				/**
+				 * Let ONLY rate limits through, as structured JSON.
+				 *
+				 * Without an onError the SDK substitutes the constant "An error occurred." for every
+				 * failure, so a 429 — the defining failure of a free tier — reached the browser
+				 * indistinguishable from a bug. Widening that mask generally would leak provider
+				 * internals, so everything else keeps the generic string; this is also used for
+				 * tool-output-error text, which the same selectivity handles correctly.
+				 */
+				onError: (error: unknown) => {
+					if (!isRateLimitError(error)) return 'An error occurred.';
+					const retryAfterSeconds = rateLimitRetryAfter(error);
+					return buildRateLimitEnvelope({
+						code: RATE_LIMIT_CODE,
+						providerId,
+						credentialSource,
+						...(retryAfterSeconds !== undefined ? { retryAfterSeconds } : {})
+					});
+				},
 				onEnd: async ({ messages }: { messages: UIMessage[] }) => {
 					if (!args.conversationId || !persistFor.userId || !persistFor.tenantId) return;
 					try {
@@ -181,11 +211,18 @@ export class AiChatService {
 
 		for (const definition of definitions) {
 			const credentials = await this.resolveCredentials(definition);
+			// Narrow the advertised models SERVER-side when the shared free key is in play, so the
+			// settings chips, the default-model select and the playground selector all follow with no
+			// frontend change — and so the UI never offers a model resolveModel would then reject.
+			const platformModels = credentials ? await this.resolvePlatformModels(definition, credentials) : null;
 			providers.push({
 				id: definition.id,
 				label: definition.label,
-				models: definition.models,
-				configured: credentials !== null,
+				models: platformModels ?? definition.models,
+				// "Configured" must mean USABLE. A placeholder provider whose createModel throws is not,
+				// however many credentials resolve for it — otherwise /config advertises it, the
+				// settings UI shows it as ready, and it can be chosen as the tenant default.
+				configured: credentials !== null && definition.chatCapable !== false,
 				...(credentials ? { credentialSource: credentials.source } : {}),
 				...(definition.order !== undefined ? { order: definition.order } : {}),
 				...(definition.websiteUrl ? { websiteUrl: definition.websiteUrl } : {}),
@@ -223,7 +260,12 @@ export class AiChatService {
 	private async resolveModel(
 		requestedProviderId?: string,
 		requestedModelId?: string
-	): Promise<{ model: LanguageModel; providerId: string; modelId: string }> {
+	): Promise<{
+		model: LanguageModel;
+		providerId: string;
+		modelId: string;
+		credentialSource: IAiProviderCredentials['source'];
+	}> {
 		const definitions = AiProviderRegistry.list();
 		if (!definitions.length) {
 			throw new ServiceUnavailableException('No AI providers are registered.');
@@ -236,17 +278,37 @@ export class AiChatService {
 				throw new BadRequestException(`Unknown AI provider '${requestedProviderId}'.`);
 			}
 		} else {
-			const defaults = await this.resolveDefaultProvider(definitions.map((d) => d.id));
-			definition = defaults ? AiProviderRegistry.get(defaults.defaultProvider) : undefined;
-			// Last resort: first provider that has credentials.
-			if (!definition) {
-				for (const candidate of definitions) {
-					if (await this.resolveCredentials(candidate)) {
-						definition = candidate;
-						break;
-					}
-				}
-			}
+			// Only a provider that actually HAS credentials may be defaulted to.
+			//
+			// This used to pass every REGISTERED provider — `definitions.map(d => d.id)` — while
+			// getConfig() (above) correctly passes only the configured ones. That asymmetry was a
+			// live outage: resolveDefaultProvider's last step is `const first = configuredIds[0]`,
+			// returned WITHOUT a credential check, and AiProviderRegistry.list() sorts ascending by
+			// `order`, where gauzy-ai is 10 — always first. So on any install with no tenant-level
+			// default, `definition` became gauzy-ai. Being non-null, it also skipped the
+			// "first provider that has credentials" search that used to sit here, and the request
+			// then died at the `no usable credentials` throw below — or, if GAUZY_AI_API_KEY happened
+			// to be set (the unrelated integration-ai plugin shares that exact variable), at
+			// gauzy-ai's createModel, which throws 'not implemented yet' unconditionally.
+			// Meanwhile GET /config advertised a healthy default, so the UI looked configured and
+			// every single turn failed.
+			// Credentials alone are not enough: a placeholder provider whose createModel still throws
+			// must never be defaulted to, and emptying its env vars does not achieve that because a
+			// tenant BYOK credential is resolved FIRST. Gate on the capability too.
+			//
+			// Resolved in parallel — these are independent, and each one can cost a database read plus
+			// a decryption, so doing them in series put up to one round trip per registered provider on
+			// the critical path of every chat request.
+			const selectable = definitions.filter((candidate) => candidate.chatCapable !== false);
+			const configured = (
+				await Promise.all(
+					selectable.map(async (candidate) => ((await this.resolveCredentials(candidate)) ? candidate : null))
+				)
+			).filter((candidate): candidate is IAiChatProviderDefinition => candidate !== null);
+			const defaults = await this.resolveDefaultProvider(configured.map((d) => d.id));
+			// resolveDefaultProvider already falls back to configuredIds[0], so this covers the
+			// old explicit "last resort" loop; it returns null only when nothing is configured.
+			definition = defaults ? AiProviderRegistry.get(defaults.defaultProvider) : configured[0];
 		}
 
 		if (!definition) {
@@ -260,6 +322,35 @@ export class AiChatService {
 			throw new ServiceUnavailableException(`AI provider '${definition.id}' has no usable credentials.`);
 		}
 
+		const platformModels = await this.resolvePlatformModels(definition, credentials);
+		if (platformModels) {
+			// Running on the shared free key: the model list is an ALLOWLIST, not a suggestion.
+			if (!platformModels.length) {
+				throw new ServiceUnavailableException(
+					`AI provider '${definition.id}' has no free models available right now. ` +
+						`Add your own API key in Settings → AI Providers to continue.`
+				);
+			}
+			const allowed = new Set(platformModels.map((m) => m.id));
+			if (requestedModelId && !allowed.has(requestedModelId)) {
+				// Reject rather than silently substituting: the client's selector only offers allowed
+				// ids, so a mismatch means a stale client or a hand-crafted request, and quietly
+				// answering from a different model than the caller asked for is its own bug.
+				throw new BadRequestException(
+					`Model '${requestedModelId}' is not available on the free tier. ` +
+						`Choose one of: ${platformModels.map((m) => m.id).join(', ')} — ` +
+						`or add your own '${definition.id}' API key in Settings → AI Providers for full access.`
+				);
+			}
+			// GAUZY_AI_CHAT_DEFAULT_MODEL is deliberately NOT consulted here: it is provider-agnostic
+			// (.env.sample ships an Anthropic-native slug) and would name a model this provider would
+			// reject. A tenant default cannot apply either — a usable tenant credential would have
+			// produced source:'tenant' and never reached this branch.
+			const modelId = requestedModelId || definition.platformDefaultModel || platformModels[0].id;
+			const model = await definition.createModel(modelId, credentials);
+			return { model, providerId: definition.id, modelId, credentialSource: credentials.source };
+		}
+
 		const tenantCredential = await this.getTenantCredential(definition.id);
 		const modelId =
 			requestedModelId ||
@@ -268,10 +359,17 @@ export class AiChatService {
 			definition.defaultModel;
 
 		const model = await definition.createModel(modelId, credentials);
-		return { model, providerId: definition.id, modelId };
+		return { model, providerId: definition.id, modelId, credentialSource: credentials.source };
 	}
 
-	/** Tenant BYOK credential first, then server environment variables. */
+	/**
+	 * Tenant BYOK credential, then the operator's own environment key, then the shared platform key.
+	 *
+	 * The order is the whole design. The platform key is a free tier the product supplies so the AI
+	 * agent works with no setup, and it is the ONLY source restricted to free models — so it must be
+	 * reached only when nothing else applies. An operator who deliberately sets the provider's own
+	 * env var keeps unrestricted access, and a tenant that brings its own key always wins outright.
+	 */
 	private async resolveCredentials(definition: IAiChatProviderDefinition): Promise<IAiProviderCredentials | null> {
 		const tenantCredential = await this.getTenantCredential(definition.id);
 		if (tenantCredential?.apiKey) {
@@ -291,7 +389,41 @@ export class AiChatService {
 				};
 			}
 		}
+		if (definition.platformApiKeyEnvVar) {
+			const apiKey = process.env[definition.platformApiKeyEnvVar];
+			if (apiKey) {
+				return {
+					apiKey,
+					baseUrl: definition.baseUrlEnvVar ? process.env[definition.baseUrlEnvVar] : undefined,
+					source: 'platform'
+				};
+			}
+		}
 		return null;
+	}
+
+	/**
+	 * Models permitted for this credential — the full catalogue, or the free subset on the platform
+	 * key.
+	 *
+	 * Returns `null` when there is no restriction, so callers can distinguish "unrestricted" from
+	 * "restricted to nothing" (the latter disables the tier rather than silently allowing anything).
+	 */
+	private async resolvePlatformModels(
+		definition: IAiChatProviderDefinition,
+		credentials: IAiProviderCredentials
+	): Promise<IAiChatModel[] | null> {
+		if (credentials.source !== 'platform' || !definition.listPlatformModels) return null;
+		try {
+			return await definition.listPlatformModels();
+		} catch (error) {
+			// A provider that cannot list its free models must not fall open onto the shared key.
+			this.logger.error(
+				`[ai-chat] Could not list platform models for '${definition.id}'; refusing the platform tier.`,
+				error instanceof Error ? error.stack : String(error)
+			);
+			return [];
+		}
 	}
 
 	private async getTenantCredential(providerId: string) {

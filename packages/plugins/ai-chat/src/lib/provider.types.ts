@@ -10,8 +10,17 @@ export interface IAiProviderCredentials {
 	apiKey: string;
 	/** Optional custom base URL (self-hosted / proxy endpoints). */
 	baseUrl?: string;
-	/** Where the credential came from. */
-	source: 'tenant' | 'environment';
+	/**
+	 * Where the credential came from.
+	 *
+	 * `'platform'` is a shared key the PRODUCT supplies so the AI agent works with no setup. It is
+	 * resolved last — after the tenant's own key and after the operator's own environment key — and
+	 * it is the only source that is restricted to the provider's free models. Keeping it distinct
+	 * from `'environment'` is what makes that restriction safe: if the two shared one variable, a
+	 * self-hoster who set their own paid key would be indistinguishable from the shared free key and
+	 * would be silently downgraded.
+	 */
+	source: 'tenant' | 'environment' | 'platform';
 }
 
 /**
@@ -38,8 +47,39 @@ export interface IAiChatProviderDefinition {
 	readonly models: IAiChatModel[];
 	/** Default model id when the caller does not specify one. */
 	readonly defaultModel: string;
+	/**
+	 * Env var holding a PLATFORM-supplied key: a shared key the product provides so the AI agent
+	 * works with no setup, resolved only after every other source has come up empty.
+	 *
+	 * Deliberately separate from {@link apiKeyEnvVars} — see `IAiProviderCredentials.source` for why
+	 * collapsing the two would silently downgrade self-hosters who bring their own paid key.
+	 * Providers with no free tier leave this unset, which disables the platform tier for them.
+	 */
+	readonly platformApiKeyEnvVar?: string;
+	/**
+	 * The models usable on the platform key, resolved lazily so a provider can DISCOVER its free
+	 * models at runtime rather than pinning a list that goes stale.
+	 *
+	 * This must be ENFORCED, not merely displayed: nothing else validates a requested model id, and
+	 * the settings UI ships a free-text model field. An empty result disables the platform tier.
+	 */
+	listPlatformModels?(): Promise<IAiChatModel[]>;
+	/** Default model id on the platform key. Falls back to the first entry of listPlatformModels(). */
+	readonly platformDefaultModel?: string;
 	/** Display ordering (ascending) in provider lists/catalogs. Unset sorts last. */
 	readonly order?: number;
+	/**
+	 * Whether this provider can actually serve a chat model. Defaults to true.
+	 *
+	 * Having a credential is NOT proof of that. A provider registered as a placeholder — one whose
+	 * `createModel` still throws — can otherwise be selected the moment ANY credential resolves for
+	 * it, including a tenant BYOK key the user saved themselves, and then fails on every turn.
+	 * Removing its env vars only closes the environment route, because tenant credentials are
+	 * resolved first.
+	 *
+	 * Set this to false until `createModel` returns a real model.
+	 */
+	readonly chatCapable?: boolean;
 	/** Provider marketing/home page (shown in the settings UI). */
 	readonly websiteUrl?: string;
 	/** Page where the user can create/manage API keys ("Get API key" link). */
