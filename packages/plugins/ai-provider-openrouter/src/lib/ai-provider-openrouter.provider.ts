@@ -35,6 +35,14 @@ const FALLBACK_FREE_MODELS: IAiChatModel[] = [
 /** OpenRouter marks free models with a `:free` suffix on the slug. */
 const FREE_SUFFIX = ':free';
 
+/**
+ * Hard cap on the server-side fallback list handed to OpenRouter.
+ *
+ * OpenRouter rejects the entire request with `'models' array must have 3 items or fewer.`
+ * if more are sent — so this is a limit of theirs, not a preference of ours.
+ */
+const MAX_FALLBACK_MODELS = 3;
+
 /** Cache the fetched catalogue: this is consulted on every /config call and every turn. */
 const FREE_MODEL_TTL_MS = 30 * 60 * 1000;
 let freeModelCache: { models: IAiChatModel[]; fetchedAt: number } | null = null;
@@ -163,9 +171,15 @@ export const openRouterProviderDefinition: IAiChatProviderDefinition = {
 		// that is rate limited or momentarily unavailable then fails over INSIDE OpenRouter, before
 		// any error reaches us — which is the cheapest possible reduction in 429s on a tier whose
 		// whole characteristic is being rate limited.
+		//
+		// Capped at MAX_FALLBACK_MODELS: OpenRouter refuses a longer `models` array outright, so an
+		// uncapped list fails every turn as soon as the free catalogue exceeds four slugs.
 		let settings: { models?: string[] } | undefined;
 		if (credentials.source === 'platform') {
-			const alternates = (await listFreeModels()).map((m) => m.id).filter((id) => id !== modelId);
+			const alternates = (await listFreeModels())
+				.map((m) => m.id)
+				.filter((id) => id !== modelId)
+				.slice(0, MAX_FALLBACK_MODELS);
 			if (alternates.length) settings = { models: alternates };
 		}
 
