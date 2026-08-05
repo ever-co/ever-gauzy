@@ -215,13 +215,10 @@
 							[status]="getBadgeStatus(provider)"
 						></nb-badge>
 					</div>
-					@if (provider.models.length) {
-						<div class="provider-models">
-							<span class="models-label">{{ 'AI_CHAT_UI.SETTINGS.MODELS' | translate }}:</span>
-							@for (model of provider.models; track model.id) {
-								<span class="model-chip" [nbTooltip]="model.id">{{ model.label }}</span>
-							}
-						</div>
+					@if (isOnPlatformKey(provider)) {
+						<!-- The badge alone would leave the user wondering why a provider they never
+						     configured is working. Say it plainly, and point at the way out. -->
+						<p class="platform-notice">{{ 'AI_CHAT_UI.SETTINGS.PLATFORM_NOTICE' | translate }}</p>
 					}
 				</div>
 			</div>

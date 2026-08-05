@@ -464,14 +464,26 @@ export class AiChatSettingsComponent implements OnInit {
 		}
 	}
 
-	/** Returns the translation key for a provider's configuration badge. */
+	/**
+	 * Returns the translation key for a provider's configuration badge.
+	 *
+	 * Every credential source needs its OWN badge. This used to branch on 'environment' and fall
+	 * through to TENANT_KEY, which meant a tenant running on the shared platform key was told it had
+	 * entered its own — the one message that is both false and the opposite of the nudge we want,
+	 * since bringing your own key is exactly how you escape the shared rate limit.
+	 */
 	getBadgeKey(provider: IAiChatProvider): string {
 		if (!provider.configured) {
 			return 'AI_CHAT_UI.SETTINGS.BADGE.NOT_CONFIGURED';
 		}
-		return provider.credentialSource === 'environment'
-			? 'AI_CHAT_UI.SETTINGS.BADGE.SERVER_ENV'
-			: 'AI_CHAT_UI.SETTINGS.BADGE.TENANT_KEY';
+		switch (provider.credentialSource) {
+			case 'environment':
+				return 'AI_CHAT_UI.SETTINGS.BADGE.SERVER_ENV';
+			case 'platform':
+				return 'AI_CHAT_UI.SETTINGS.BADGE.PLATFORM_FREE';
+			default:
+				return 'AI_CHAT_UI.SETTINGS.BADGE.TENANT_KEY';
+		}
 	}
 
 	/** Returns the badge status color for a provider's configuration state. */
@@ -479,7 +491,21 @@ export class AiChatSettingsComponent implements OnInit {
 		if (!provider.configured) {
 			return 'basic';
 		}
-		return provider.credentialSource === 'environment' ? 'info' : 'success';
+		switch (provider.credentialSource) {
+			case 'environment':
+				return 'info';
+			// Working, but not the end state we want the user to sit on: it is rate limited and
+			// shared. 'warning' reads as "usable, with a caveat" rather than "all set".
+			case 'platform':
+				return 'warning';
+			default:
+				return 'success';
+		}
+	}
+
+	/** True when this provider is running on the shared, product-supplied free key. */
+	isOnPlatformKey(provider: IAiChatProvider): boolean {
+		return provider.configured && provider.credentialSource === 'platform';
 	}
 
 	// ── List view actions ──────────────────────────────────────────────

@@ -20,9 +20,11 @@
 		"DESCRIPTION": "Bring your own API keys: configure per-tenant credentials for the registered AI providers used by the AI chat.",
 		"NO_PROVIDERS": "No AI providers are registered on the server.",
 		"MODELS": "Models",
+		"PLATFORM_NOTICE": "You are using the shared free tier — no API key of your own is configured. Free models are rate limited and the limit is shared with everyone else using it. Connect your own account or enter an API key below for uninterrupted access and the full model list.",
 		"BADGE": {
 			"TENANT_KEY": "Tenant key",
 			"SERVER_ENV": "Server environment",
+			"PLATFORM_FREE": "Free tier",
 			"NOT_CONFIGURED": "Not configured"
 		},
 		"FORM": {
