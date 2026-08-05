@@ -28,6 +28,30 @@ export type AiProviderConnectType = 'openrouter-pkce';
 /**
  * A chat model offered by a registered AI provider.
  */
+/**
+ * Discriminator for a provider rate-limit (HTTP 429) reported through the chat stream.
+ *
+ * Lives in contracts because BOTH sides need the runtime value: the API writes the envelope into the
+ * stream's error channel, and the browser matches on it. It must not come from the backend plugin —
+ * importing that into the web bundle would pull NestJS along with it.
+ */
+export const AI_CHAT_RATE_LIMIT_CODE = 'ai-chat/rate-limited';
+
+/** Structured rate-limit payload, JSON-encoded into the stream's single error-text channel. */
+export interface IAiChatRateLimitEnvelope {
+	code: typeof AI_CHAT_RATE_LIMIT_CODE;
+	/** Which provider ran out of quota, so the UI can name it and deep-link to its settings. */
+	providerId: string;
+	/**
+	 * Which credential hit the limit. `'platform'` is the shared free key — the user can fix it by
+	 * bringing their own. `'tenant'` means their OWN key is limited, where "connect your own
+	 * account" would be the wrong advice.
+	 */
+	credentialSource: 'tenant' | 'environment' | 'platform';
+	/** Seconds until the limit resets, when the provider says so. */
+	retryAfterSeconds?: number;
+}
+
 export interface IAiChatModel {
 	/** Model identifier as understood by the provider (e.g. 'claude-sonnet-5'). */
 	id: string;

@@ -14,7 +14,8 @@ import {
 	lastAssistantMessageIsCompleteWithToolCalls
 } from 'ai';
 import { useInjector } from '@gauzy/ui-react';
-import { ChatSidebarService, Store } from '@gauzy/ui-core/core';
+import { AgentPageBridgeService, ChatSidebarService, Store } from '@gauzy/ui-core/core';
+import { AI_CHAT_RATE_LIMIT_CODE, PermissionsEnum, type IAiChatRateLimitEnvelope } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
 import { executeClientTool, isClientTool } from '../chat-client-tools';
 import { useAngularSignal } from '../use-angular-signal';
@@ -81,6 +82,21 @@ export function AiChatPanel() {
 		[store]
 	);
 
+	/**
+	 * May this user open the AI Providers settings page?
+	 *
+	 * Chat only requires AI_CHAT_ACCESS, but the settings route is guarded by AI_CHAT_SETTINGS — so
+	 * navigating a chat-only user there would silently bounce them to the settings index.
+	 */
+	const canOpenAiSettings = useMemo(
+		() =>
+			(store.userRolePermissions ?? []).some(
+				(rolePermission) =>
+					rolePermission.permission === PermissionsEnum.AI_CHAT_SETTINGS && rolePermission.enabled
+			),
+		[store]
+	);
+
 	const transport = useMemo(
 		() =>
 			new DefaultChatTransport({
@@ -90,6 +106,15 @@ export function AiChatPanel() {
 			}),
 		[authHeaders]
 	);
+
+	/**
+	 * Indirection for the stream error handler.
+	 *
+	 * `useChat`'s `onError` needs `setMessages`, which `useChat` itself returns — a cycle. The ref is
+	 * assigned right after the hook, and `onError` can only fire once a request is in flight, so it
+	 * is always populated by the time it is read.
+	 */
+	const handleStreamErrorRef = useRef<((error: unknown) => void) | null>(null);
 
 	const chat = useChat({
 		transport,
@@ -118,10 +143,81 @@ export function AiChatPanel() {
 						errorText: error instanceof Error ? error.message : String(error)
 					})
 				);
-		}
+		},
+		onError: (streamError: unknown) => handleStreamErrorRef.current?.(streamError)
 	});
 
 	const { messages, sendMessage, status, stop, error, regenerate, setMessages, addToolApprovalResponse } = chat;
+
+	/**
+	 * The settings page has been opened for a rate limit already this session.
+	 *
+	 * Every rate limit gets the explanatory message, but the canvas is only taken over ONCE — hitting
+	 * a free-tier limit repeatedly is normal, and yanking the user's page away each time would be its
+	 * own bug.
+	 */
+	const rateLimitPageOpenedRef = useRef(false);
+
+	/**
+	 * Turn a rate-limited turn into something the user can act on.
+	 *
+	 * The server sends a JSON envelope through the stream's error channel (the only channel that
+	 * exists for this) and masks everything else as a generic string, so anything that does not parse
+	 * as our envelope is left to the existing error bar.
+	 */
+	handleStreamErrorRef.current = (streamError: unknown) => {
+		const raw = streamError instanceof Error ? streamError.message : String(streamError ?? '');
+		let envelope: IAiChatRateLimitEnvelope | null = null;
+		try {
+			const parsed = JSON.parse(raw);
+			if (parsed?.code === AI_CHAT_RATE_LIMIT_CODE) envelope = parsed as IAiChatRateLimitEnvelope;
+		} catch {
+			// Not our envelope — a normal error, already handled by the error bar.
+		}
+		if (!envelope) return;
+
+		// On the shared free key the user can fix this themselves; on their OWN key they cannot, so
+		// telling them to "connect your account" would be wrong.
+		const onSharedKey = envelope.credentialSource === 'platform';
+		const wait = envelope.retryAfterSeconds
+			? t('AI_ASSISTANT.RATE_LIMIT_RETRY_IN', 'You can try again in about {{seconds}}s.').replace(
+					'{{seconds}}',
+					String(envelope.retryAfterSeconds)
+			  )
+			: '';
+		const notice = onSharedKey
+			? t(
+					'AI_ASSISTANT.RATE_LIMITED_SHARED',
+					'The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.'
+			  )
+			: t(
+					'AI_ASSISTANT.RATE_LIMITED_OWN',
+					'Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.'
+			  );
+
+		// Rendered as a normal assistant message so it flows through the existing markdown renderer
+		// with no new UI. It is client-only and deliberately not persisted: it describes the state of
+		// this attempt, not part of the conversation.
+		setMessages((current) => [
+			...(current as never[]),
+			{
+				id: `rate-limit-${Date.now()}`,
+				role: 'assistant',
+				parts: [{ type: 'text', text: [notice, wait].filter(Boolean).join(' ') }]
+			} as never
+		]);
+
+		if (!onSharedKey || rateLimitPageOpenedRef.current) return;
+		rateLimitPageOpenedRef.current = true;
+		// Only navigate if the user could actually do anything there: the chat needs AI_CHAT_ACCESS
+		// while the settings route is guarded by AI_CHAT_SETTINGS, so a chat-only user would just be
+		// bounced to the settings index. The message above already tells them what to ask for.
+		if (!canOpenAiSettings) return;
+		void injector
+			.get(AgentPageBridgeService)
+			.openPage('/pages/settings/ai', { provider: envelope.providerId })
+			.catch(() => undefined);
+	};
 
 	const isBusy = status === 'submitted' || status === 'streaming';
 	const hasMessages = messages.length > 0;

@@ -3659,7 +3659,10 @@
 		"SEND": "Enviar mensaje",
 		"STOP": "Detener la generación",
 		"ERROR": "Algo salió mal.",
-		"RETRY": "Reintentar"
+		"RETRY": "Reintentar",
+		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
+		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
+		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
 	},
 	"HEADER_TITLE": {
 		"FOR": "para",

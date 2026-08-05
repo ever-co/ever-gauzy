@@ -3657,7 +3657,10 @@
 		"SEND": "发送消息",
 		"STOP": "停止生成",
 		"ERROR": "出了点问题。",
-		"RETRY": "重试"
+		"RETRY": "重试",
+		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
+		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
+		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
 	},
 	"HEADER_TITLE": {
 		"FOR": "为了",

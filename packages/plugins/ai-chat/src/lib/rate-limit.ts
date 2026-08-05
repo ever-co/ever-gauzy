@@ -9,23 +9,15 @@
  * and everything else keeps the generic string.
  */
 
-/** Discriminator the client matches on. Kept stable — the UI branches on it. */
-export const RATE_LIMIT_CODE = 'ai-chat/rate-limited';
+import { AI_CHAT_RATE_LIMIT_CODE, IAiChatRateLimitEnvelope } from '@gauzy/contracts';
 
-/** Structured payload smuggled through the stream's single error-text channel as JSON. */
-export interface IAiChatRateLimitEnvelope {
-	code: typeof RATE_LIMIT_CODE;
-	/** Which provider ran out of quota, so the UI can name it. */
-	providerId: string;
-	/**
-	 * Which credential produced it. `'platform'` means the shared free key, i.e. the user can fix
-	 * this by bringing their own; `'tenant'` means their OWN key is rate limited and the advice
-	 * "connect your own account" would be wrong.
-	 */
-	credentialSource: 'tenant' | 'environment' | 'platform';
-	/** Seconds until the limit resets, when the provider says so. */
-	retryAfterSeconds?: number;
-}
+/**
+ * Re-exported for backend callers. The definitions live in @gauzy/contracts because the browser
+ * needs the same runtime constant, and it must not import this plugin (that would pull NestJS into
+ * the web bundle).
+ */
+export { AI_CHAT_RATE_LIMIT_CODE as RATE_LIMIT_CODE };
+export type { IAiChatRateLimitEnvelope };
 
 /** Unwrap the wrappers an error can arrive in before it is inspected. */
 const unwrap = (error: unknown): unknown[] => {
