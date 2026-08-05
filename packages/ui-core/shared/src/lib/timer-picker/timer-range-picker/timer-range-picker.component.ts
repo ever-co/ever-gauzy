@@ -86,58 +86,20 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	maxSlotEndTime: string;
 	minSlotEndTime: string;
 
-	/**
-	 * True when the host bound `[timezoneOffset]` explicitly (manage-appointment does,
-	 * from the appointment's own timezone). Recorded before the default is applied so
-	 * a supplied offset is never mistaken for a derived one.
-	 */
-	private hasExplicitTimezoneOffset = false;
-
 	constructor(
 		private cd: ChangeDetectorRef,
 		private readonly timeZoneService: TimeZoneService
 	) {}
 
 	/**
-	 * The UTC offset used to turn the picked wall-clock time into an instant.
+	 * Re-express an instant in the zone this picker DISPLAYS.
 	 *
-	 * This used to be the BROWSER's offset (`timezone.tz.guess()`), while every read of
-	 * time logs filters by the configured Gauzy timezone (`TimeZoneService`, consumed in
-	 * `BaseSelectorFilterComponent`). When the two differ, a log created near a day
-	 * boundary is written at an instant that falls outside the day the grid asks for, and
-	 * it silently disappears: the POST returns 201, and the GET that follows comes back
-	 * empty. Deriving from the same service the read path uses keeps write and read on
-	 * one clock.
-	 *
-	 * Resolved per call rather than once, and against the date being edited rather than
-	 * "now", because a zone's offset changes across a DST boundary — asking for today's
-	 * offset while entering time for the other side of that boundary files the log an
-	 * hour out.
-	 *
-	 * @param date - The date the entry is being made for.
-	 * @returns A `±HH:mm` offset string.
-	 */
-	private resolveTimezoneOffset(date: Date | string): string {
-		if (this.hasExplicitTimezoneOffset && this.timezoneOffset) {
-			return this.timezoneOffset;
-		}
-		const on = moment(date ?? new Date()).format('YYYY-MM-DD');
-		return timezone.tz(on, this.timeZoneService.currentTimeZone).format('Z');
-	}
-
-	/**
-	 * Re-express an instant in the zone this picker DISPLAYS, so the wall-clock time shown is the one
-	 * {@link resolveTimezoneOffset} will read back.
-	 *
-	 * The inverse of the write path, and it has to be: `writeValue` used to read an existing range
-	 * with a plain `moment()`, i.e. in the BROWSER's zone, while the write composes the instant from
-	 * the configured Gauzy zone. Opening a saved log for edit then showed times shifted by the
-	 * difference — and where that shift moved the start past the end (a log recorded near midnight in
-	 * a zone ahead of the browser's), the period computed as zero and the dialog refused to save an
-	 * edit that changed nothing but the description.
-	 *
-	 * Reads `timezoneOffset` directly rather than via `hasExplicitTimezoneOffset`: Angular calls
-	 * `writeValue` while binding the control, which is BEFORE `ngAfterViewInit` records that flag.
+	 * The exact inverse of {@link composeInstant}, and it has to be. `writeValue` used to read an
+	 * existing range with a plain `moment()`, i.e. in the BROWSER's zone, while the write composes the
+	 * instant from the configured Gauzy zone. Opening a saved log for edit then showed times shifted
+	 * by the difference — and where that shift moved the start past the end (a log recorded near
+	 * midnight in a zone ahead of the browser's), the period computed as zero and the dialog refused
+	 * to save an edit that changed nothing but the description.
 	 *
 	 * @param value - The instant to convert.
 	 * @returns The same instant, expressed in the displayed zone.
@@ -147,6 +109,66 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 			return moment(value).utcOffset(this.timezoneOffset);
 		}
 		return timezone.tz(value, this.timeZoneService.currentTimeZone);
+	}
+
+	/**
+	 * Turn a picked calendar day + wall-clock time into an instant, in the zone this picker displays.
+	 *
+	 * The zone used to be the BROWSER's (`timezone.tz.guess()`), while every read of time logs filters
+	 * by the configured Gauzy timezone (`TimeZoneService`, consumed in `BaseSelectorFilterComponent`).
+	 * When the two differ, a log created near a day boundary is written at an instant outside the day
+	 * the grid asks for and silently disappears: the POST returns 201, the GET that follows comes back
+	 * empty.
+	 *
+	 * Resolved AT THE WALL-CLOCK TIME, not once per day. The previous version derived a single `±HH:mm`
+	 * offset from the day's midnight and appended it to every time on that day; on a DST transition day
+	 * the offset at midnight is not the offset at 03:30, so an entry on the far side of the transition
+	 * was filed an hour out. Now that the read path shows the offset in effect at the stored instant,
+	 * that mismatch would also move a log by an hour just for being opened and re-saved unchanged.
+	 * Handing the whole wall-clock string to moment-timezone lets it pick the right offset itself.
+	 *
+	 * Reads `timezoneOffset` directly rather than through a flag recorded in `ngAfterViewInit`: the
+	 * read side runs during `writeValue`, which Angular calls while binding the control — earlier than
+	 * any such flag could be set. Both sides must answer the same question the same way.
+	 *
+	 * @param day - Calendar day as `YYYY-MM-DD`.
+	 * @param time - Wall-clock time as `HH:mm`.
+	 * @returns The instant, or `null` when either part is missing or cannot be parsed.
+	 */
+	private composeInstant(day: string, time: string): Date | null {
+		if (!day || !time) {
+			return null;
+		}
+		const wallClock = `${day} ${time}`;
+		const composed = this.timezoneOffset
+			? // `utcOffset(x, true)` KEEPS the wall clock and changes the offset, which is what a fixed
+				// supplied offset means here — as opposed to shifting the instant.
+				moment(wallClock, 'YYYY-MM-DD HH:mm').utcOffset(this.timezoneOffset, true)
+			: timezone.tz(wallClock, 'YYYY-MM-DD HH:mm', this.timeZoneService.currentTimeZone);
+		return composed.isValid() ? composed.toDate() : null;
+	}
+
+	/**
+	 * The range the picker currently represents — the single source of the value it emits.
+	 *
+	 * Public so a test can assert the REAL composition rather than re-deriving it: a test that rebuilds
+	 * the same `moment`/`timezone.tz` calls passes no matter what this method does.
+	 *
+	 * @returns The composed range; either end is `null` when its inputs are incomplete.
+	 */
+	composeRange(): IDateRange {
+		const day = moment(this.date).format('YYYY-MM-DD');
+		const start = this.composeInstant(day, this.startTime);
+		let end = this.composeInstant(day, this.endTime);
+
+		// An end that reads EARLIER than its start crosses midnight — the picker holds one date for
+		// both, so that end belongs to the following day. Composed against that day rather than by
+		// adding 24 hours, because a DST transition in between makes those two different answers.
+		if (start && end && end.getTime() < start.getTime()) {
+			end = this.composeInstant(moment(day, 'YYYY-MM-DD').add(1, 'day').format('YYYY-MM-DD'), this.endTime);
+		}
+
+		return { start, end };
 	}
 
 	/**
@@ -178,15 +200,9 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	}
 
 	ngAfterViewInit() {
-		this.hasExplicitTimezoneOffset = !!this.timezoneOffset;
 		merge(this.dateModel.valueChanges, this.startTimeModel.valueChanges, this.endTimeModel.valueChanges)
 			.pipe(debounceTime(10))
-			.subscribe((data) => {
-				const day = moment(this.date).format('YYYY-MM-DD');
-				const offset = this.resolveTimezoneOffset(this.date);
-				const start = new Date(day + ' ' + this.startTime + offset);
-				const end = new Date(day + ' ' + this.endTime + offset);
-
+			.subscribe(() => {
 				if (this.slotStartTime && this.slotEndTime && this.allowedDuration) {
 					this.minSlotStartTime = moment(this.slotStartTime).clone().format('HH:mm');
 					this.maxSlotStartTime = moment(this.slotEndTime)
@@ -196,10 +212,10 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 					this.endTime = moment(this.startTime, 'HH:mm').add(this.allowedDuration, 'minutes').format('HH:mm');
 				}
 
-				this.selectedRange = {
-					start: isNaN(start.getTime()) ? null : start,
-					end: isNaN(start.getTime()) ? null : end
-				};
+				// Composed AFTER the slot adjustment above, which can rewrite `endTime`. Composing first
+				// (as this used to) emitted a range whose end did not match the end on screen; it only
+				// converged because rewriting `endTime` triggers another valueChanges round.
+				this.selectedRange = this.composeRange();
 				this.cd.detectChanges();
 			});
 	}

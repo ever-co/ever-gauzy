@@ -165,10 +165,11 @@ export const enterDateData = async () => {
 	//   new Date(moment(this.date).format('YYYY-MM-DD') + ' ' + this.startTime + tzOffset)
 	// (timer-range-picker.component.ts). clearField() nulls `this.date`, and re-typing a
 	// 'MMM D, YYYY' string doesn't parse under the picker's 'YYYY-MM-DD' nbDatepicker format, so
-	// `this.date` goes invalid → start/end become NaN → `selectedRange = { start: null, end: null }`.
-	// addTime() has NO form validators (buildForm declares none, so form.invalid is always false) and
-	// then does toUTC(null) on save → the request errors, an error toast shows and the dialog stays
-	// OPEN → the time log is never created → the next step's row-select finds no row and times out.
+	// `this.date` goes invalid → start/end become null → `selectedRange = { start: null, end: null }`.
+	// Nothing catches that: `selectedRange` carries no validator (see the note above bestEffortPick for
+	// where this form's validators DO come from), so `addTime()` proceeds and does toUTC(null) on save
+	// → the request errors, an error toast shows and the dialog stays OPEN → the time log is never
+	// created → the next step's row-select finds no row and times out.
 	// The default range is exactly what we want (today), so leave the field untouched — this makes the
 	// save deterministically valid in both the create AND edit steps. (ROUND 8 (a): prove the record
 	// persists — the create/edit form must stay valid.)

@@ -15,6 +15,12 @@ describe('TimerRangePickerComponent', () => {
 
 	let component: TimerRangePickerComponent;
 
+	/** A log entered as 00:00–18:00 on 5 Aug in Asia/Istanbul (+03). */
+	const STORED = {
+		start: new Date('2026-08-04T21:00:00.000Z'),
+		end: new Date('2026-08-05T15:00:00.000Z')
+	};
+
 	const build = (currentTimeZone = ORG_TIMEZONE): TimerRangePickerComponent =>
 		new TimerRangePickerComponent(
 			{ detectChanges: () => undefined } as ChangeDetectorRef,
@@ -40,12 +46,6 @@ describe('TimerRangePickerComponent', () => {
 	});
 
 	describe('writeValue', () => {
-		// A log entered as 00:00–18:00 on 5 Aug in Asia/Istanbul (+03).
-		const STORED = {
-			start: new Date('2026-08-04T21:00:00.000Z'),
-			end: new Date('2026-08-05T15:00:00.000Z')
-		};
-
 		it('shows the wall-clock time of the CONFIGURED zone, not the browser zone', () => {
 			component.writeValue(STORED);
 
@@ -62,17 +62,15 @@ describe('TimerRangePickerComponent', () => {
 			expect(component.startTime < component.endTime).toBe(true);
 		});
 
-		it('round-trips: the composed instants match what was written in', () => {
+		it('round-trips: what the picker composes back equals what was written in', () => {
 			component.writeValue(STORED);
 
-			// Exactly how `ngAfterViewInit` composes the value it emits.
-			const day = moment(component.date).format('YYYY-MM-DD');
-			const offset = timezone.tz(day, ORG_TIMEZONE).format('Z');
-			const start = new Date(`${day} ${component.startTime}${offset}`);
-			const end = new Date(`${day} ${component.endTime}${offset}`);
+			// The component's REAL composition, not a re-derivation of it: a test that rebuilds the
+			// same moment/timezone calls passes no matter what the component does.
+			const { start, end } = component.composeRange();
 
-			expect(start.toISOString()).toBe(STORED.start.toISOString());
-			expect(end.toISOString()).toBe(STORED.end.toISOString());
+			expect(start?.toISOString()).toBe(STORED.start.toISOString());
+			expect(end?.toISOString()).toBe(STORED.end.toISOString());
 		});
 
 		it('takes the day from the start, so a range spanning midnight stays ordered', () => {
@@ -84,6 +82,53 @@ describe('TimerRangePickerComponent', () => {
 
 			expect(moment(component.date).format('YYYY-MM-DD')).toBe('2026-08-05');
 			expect(component.startTime).toBe('23:00');
+			expect(component.endTime).toBe('01:00');
+		});
+	});
+
+	describe('composeRange', () => {
+		it('rolls the end onto the next day when it reads earlier than the start', () => {
+			// The picker holds ONE date for both times, so a midnight-spanning range can only be
+			// represented by putting the end on the following day. Composing both on the start's day
+			// emits an end 22 hours BEFORE the start, which the modal rejects as a zero period.
+			component.writeValue({
+				start: new Date('2026-08-05T20:00:00.000Z'),
+				end: new Date('2026-08-05T22:00:00.000Z')
+			});
+
+			const { start, end } = component.composeRange();
+
+			expect(start.toISOString()).toBe('2026-08-05T20:00:00.000Z');
+			expect(end.toISOString()).toBe('2026-08-05T22:00:00.000Z');
+			expect(end.getTime()).toBeGreaterThan(start.getTime());
+		});
+
+		it('survives a DST transition inside the edited day', () => {
+			// 8 Mar 2026, America/New_York: 02:00 EST jumps to 03:00 EDT. A log at 03:30 EDT is
+			// -04:00, but the day's MIDNIGHT is still -05:00 — deriving one offset per day (as this
+			// used to) re-saved an untouched log an hour out.
+			component = build('America/New_York');
+			const stored = {
+				start: new Date('2026-03-08T07:30:00.000Z'), // 03:30 EDT
+				end: new Date('2026-03-08T09:30:00.000Z') // 05:30 EDT
+			};
+
+			component.writeValue(stored);
+			const { start, end } = component.composeRange();
+
+			expect(component.startTime).toBe('03:30');
+			expect(start.toISOString()).toBe(stored.start.toISOString());
+			expect(end.toISOString()).toBe(stored.end.toISOString());
+		});
+
+		it('composes each end independently, so one unreadable time does not null the other', () => {
+			component.writeValue(STORED);
+			component.endTime = '';
+
+			const { start, end } = component.composeRange();
+
+			expect(start?.toISOString()).toBe(STORED.start.toISOString());
+			expect(end).toBeNull();
 		});
 
 		it('zero-pads, because the picker offers HH:mm options', () => {
