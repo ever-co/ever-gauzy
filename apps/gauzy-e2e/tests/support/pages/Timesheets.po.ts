@@ -48,15 +48,20 @@ const openNgSelect = async (selector: string, typeahead?: string) => {
 	}
 };
 
-// Best-effort ng-option pick. The Add-Time dialog's project/client/task selects are DECORATIVE for a
-// valid save: edit-time-log-modal.buildForm() declares NO Validators, so `form.invalid` is effectively
-// always false, and addTime() persists using the constructor's default 1-hour `selectedRange` and an
-// employeeId fallback to the current user — i.e. the time log is created whether or not these dropdowns
-// were filled. So a slow/absent option must NOT hard-fail the flow (the old clickElementByText/
-// clickButtonByIndex used a 60s force-timeout — the round-6 failure was exactly this hanging on the
-// 'Gauzy Web Site' option). Pick by text if present within a short window, else by index, else Escape
-// and move on so the flow still reaches Save and the record persists. (ROUND 7 (a) — prove the record
-// persists rather than blocking on optional decoration.)
+// Best-effort ng-option pick: a slow or absent option must not hard-fail the flow. (The old
+// clickElementByText/clickButtonByIndex used a 60s force-timeout, and the round-6 failure was exactly
+// that hanging on the 'Gauzy Web Site' option.) Pick by text if it shows up within a short window,
+// else by index, else Escape and move on so the flow still reaches Save.
+//
+// Whether these dropdowns are optional is the ORGANISATION's call, not the form's. Reading
+// `edit-time-log-modal.buildForm()` alone says "no Validators anywhere, so `form.invalid` is always
+// false" — but validators also arrive from the TEMPLATE: `employeeId` carries a bare `required`, and
+// client/project/task/description/reason carry `[required]="organization?.requireX"`. Under the
+// default seed those flags are off and only the employee is required (and `addTime()` falls back to
+// the current user's employee id anyway), which is why skipping them still saves. On an organisation
+// that sets any `require*` flag it would not, and Save is a SILENT no-op — `addTime()` opens with
+// `if (this.form.invalid) return;`. `clickSaveTimeLogButton` below reports which controls are still
+// invalid for exactly that reason.
 const bestEffortPick = async (text?: string, index = 0) => {
 	const page = getPage();
 	const options = page.locator(TimesheetsPage.dropdownOptionCss);
