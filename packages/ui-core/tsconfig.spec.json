@@ -6,7 +6,9 @@
 		"target": "es2016",
 		"types": ["jest", "node"],
 		"moduleResolution": "bundler",
-		"isolatedModules": true
+		"isolatedModules": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true
 	},
 	"files": ["src/test-setup.ts"],
 	"include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]

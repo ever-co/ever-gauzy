@@ -368,10 +368,13 @@ const ensureOurRowRendered = async () => {
 	const ours = page.locator(TimesheetsPage.timeLogRowCss).filter({ hasText: TimesheetsPageData.defaultDescription });
 	for (let attempt = 0; attempt < 2; attempt++) {
 		if ((await ours.count().catch(() => 0)) > 0) return;
-		await page.reload();
+		// Bound both waits. `reload()` and `waitForLoadState('networkidle')` inherit the (long)
+		// navigation/global timeout otherwise, which is how this helper's worst case reached minutes
+		// rather than seconds — util.ts:131 already bounds networkidle for the same reason.
+		await page.reload({ timeout: 20_000 }).catch(() => undefined);
 		await page.waitForTimeout(1500);
 		await waitForSpinnerGone();
-		await page.waitForLoadState('networkidle').catch(() => {});
+		await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
 		await page.waitForTimeout(1500);
 	}
 };
@@ -383,6 +386,25 @@ const selectRowFor = async (toolbarBtnCss: string) => {
 	// Already selected (e.g. left selected after the View dialog closed)? Don't toggle it off.
 	if (await toolbarBtnReady(toolbarBtnCss)) return;
 	await ensureOurRowRendered();
+
+	// Fail HERE, immediately, when the grid rendered nothing.
+	//
+	// Without this the loop below spends the entire 240s test budget "observing" a locator that
+	// matches zero elements — `locator.evaluate()` auto-waits, so every probe burns the full
+	// `actionTimeout` (24s) and returns `undefined`, which the loop correctly treats as "unknown" and
+	// waits out. Six of those is ~144s, the test dies at 240s, and the diagnostic below never runs:
+	// the timeout masks the very message written to explain the failure.
+	//
+	// The URL matters more than the message: this state is reached when the daily grid is querying a
+	// DIFFERENT DAY than the one the time log was written to, so `?date=` names the bug outright.
+	if ((await getPage().locator(TimesheetsPage.timeLogRowCss).count()) === 0) {
+		throw new Error(
+			`Daily grid rendered NO time-log rows ("No Data") after ${2} reloads, so there is nothing to ` +
+				`select. The log we created is not inside the day the grid is querying — check the day in ` +
+				`the URL against the log's startedAt. URL=${getPage().url()}`
+		);
+	}
+
 	const ours = getPage()
 		.locator(TimesheetsPage.timeLogRowCss)
 		.filter({ hasText: TimesheetsPageData.defaultDescription })
@@ -413,8 +435,16 @@ const selectRowFor = async (toolbarBtnCss: string) => {
 	 * "unselected", and collapsing the two would click an already-selected row and
 	 * reintroduce the very oscillation this loop exists to prevent.
 	 */
-	const isSelected = async (): Promise<boolean | undefined> =>
-		row.evaluate((el) => el.classList.contains('selected')).catch(() => undefined);
+	const isSelected = async (): Promise<boolean | undefined> => {
+		// `locator.evaluate()` AUTO-WAITS for the element, so an unmatched locator costs the full
+		// `actionTimeout` (24s, playwright.config.ts:66) per call — a "cheap observation" that is
+		// anything but. Short-circuit on count() first, and bound the read itself, so a probe stays a
+		// probe: worst case ~1s instead of 24s.
+		if ((await row.count().catch(() => 0)) === 0) return undefined;
+		return row
+			.evaluate((el) => el.classList.contains('selected'), undefined, { timeout: 1_000 })
+			.catch(() => undefined);
+	};
 
 	for (let i = 0; i < 6; i++) {
 		if (await toolbarBtnReady(toolbarBtnCss)) return; // selected AND toolbar enabled
