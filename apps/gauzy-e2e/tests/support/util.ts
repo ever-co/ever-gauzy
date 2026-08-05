@@ -129,6 +129,21 @@ export const dispatchClickWhenSettled = async (selector: string, confirmSelector
 		// Bounded on purpose: this is a settle attempt, not a gate. waitForLoadState defaults to the
 		// 60s navigationTimeout, and a page that never goes idle must not cost a minute per click.
 		await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+
+		// Check the desired END STATE before dispatching, not only after. The previous version
+		// documented this ("an already-open dialog is not opened twice") but did not do it: the
+		// confirm was only ever read AFTER the dispatch, so a retry fired a second click into an
+		// already-open dialog. `dispatchEvent` targets the element directly and ignores hit-testing,
+		// so that second click reached the trigger THROUGH the dialog backdrop and re-ran the open
+		// handler — which is why organization-tags saw `#inputName` pass its visibility check and
+		// then vanish before `clear()` could act on it (failing all 3 CI attempts, so not a flake).
+		//
+		// This can only ever skip work that is already done: when the confirm target is absent the
+		// behaviour below is unchanged.
+		if (confirmSelector && (await loc(confirmSelector).first().isVisible().catch(() => false))) {
+			return;
+		}
+
 		const target = loc(selector).first();
 		await target.waitFor({ state: 'visible', timeout: defaultCommandTimeout });
 		await target.dispatchEvent('click');
@@ -137,8 +152,7 @@ export const dispatchClickWhenSettled = async (selector: string, confirmSelector
 			await loc(confirmSelector).first().waitFor({ state: 'visible', timeout: 12_000 });
 			return;
 		} catch {
-			/* the click was swallowed — settle again and re-dispatch. Never re-dispatch blindly: the
-			   confirm target is checked first, so an already-open dialog is not opened twice. */
+			/* the click was swallowed — settle and try again, re-checking the end state first. */
 		}
 	}
 };
