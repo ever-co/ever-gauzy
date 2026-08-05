@@ -65,9 +65,11 @@ const listFreeModels = async (): Promise<IAiChatModel[]> => {
 		if (ids.length) return ids.map((id) => ({ id, label: labelFor(id), providerId: PROVIDER_ID }));
 	}
 
-	const fresh = freeModelCache && Date.now() - freeModelCache.fetchedAt < FREE_MODEL_TTL_MS;
-	if (fresh && freeModelCache) return freeModelCache.models;
-	if (freeModelInFlight) return freeModelInFlight;
+	const cached = freeModelCache;
+	if (cached && Date.now() - cached.fetchedAt < FREE_MODEL_TTL_MS) return cached.models;
+	// Explicit null check rather than truthiness: a Promise is ALWAYS truthy, so `if (inFlight)`
+	// reads like a forgotten `await` (and is flagged as one — typescript:S6544).
+	if (freeModelInFlight !== null) return freeModelInFlight;
 
 	freeModelInFlight = (async () => {
 		try {
