@@ -333,18 +333,31 @@ const selectRowFor = async (toolbarBtnCss: string) => {
 	 * eaten by whatever occupies that point — which is how this spec failed in CI
 	 * ("locator.click: Timeout" on a row that was present).
 	 */
-	const isSelected = async () =>
-		row
-			.evaluate((el) => el.classList.contains('selected'))
-			.catch(() => false);
+	/**
+	 * `undefined` when the state could not be READ (a transient re-render detaches
+	 * the node and `evaluate` throws). Deliberately not `false`: "unknown" is not
+	 * "unselected", and collapsing the two would click an already-selected row and
+	 * reintroduce the very oscillation this loop exists to prevent.
+	 */
+	const isSelected = async (): Promise<boolean | undefined> =>
+		row.evaluate((el) => el.classList.contains('selected')).catch(() => undefined);
 
 	for (let i = 0; i < 6; i++) {
 		if (await toolbarBtnReady(toolbarBtnCss)) return; // selected AND toolbar enabled
-		if (!(await isSelected())) {
+		// Click ONLY on an explicit `false`. On `undefined` wait and re-observe.
+		if ((await isSelected()) === false) {
 			await row.dispatchEvent('click').catch(() => undefined);
 		}
 		await getPage().waitForTimeout(800);
 	}
+
+	// Fail HERE rather than letting the caller's generic visibility assertion time
+	// out: "the toolbar never enabled" and "the button is missing" have different
+	// causes, and the caller's message cannot tell them apart.
+	throw new Error(
+		`Timesheet row selection never enabled the toolbar after 6 attempts (${toolbarBtnCss}); ` +
+			`row selected=${await isSelected()}`
+	);
 };
 
 export const viewEmployeeTimeLogButtonVisible = async () => {
