@@ -127,8 +127,8 @@ export class MenuItemComponent implements OnInit {
 		// Subject that Nebular broadcasts synchronously to EVERY mounted sidebar — so the work was
 		// app-wide, not local, and multiplied by the dozens of menu items in the tree. Subscriptions
 		// grew without bound for as long as the app stayed open, making change detection steadily more
-		// expensive until clicks stopped getting a frame. It also called detectChanges() re-entrantly
-		// from inside ngAfterViewChecked, which can schedule the very check that re-enters the hook.
+		// expensive until clicks stopped getting a frame. The detectChanges() call was re-entrant too:
+		// running it from inside ngAfterViewChecked can schedule the very check that re-enters the hook.
 		//
 		// Re-query only when the sidebar ACTUALLY changes. Every path that changes it goes through the
 		// service (the layout's toggle()/expand(), and this component's own toggle below), and this
@@ -143,7 +143,9 @@ export class MenuItemComponent implements OnInit {
 			this._sidebarService.onCompact()
 		)
 			.pipe(
-				filter(({ tag }) => !tag || tag === MENU_SIDEBAR_TAG),
+				// Tagged-only, matching how NbSidebarComponent itself filters: a sidebar that HAS a tag
+				// ignores untagged events, so reacting to them here would just re-query for nothing.
+				filter(({ tag }) => tag === MENU_SIDEBAR_TAG),
 				untilDestroyed(this)
 			)
 			.subscribe(() => this.syncSidebarState());

@@ -68,7 +68,9 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 			this.sidebarService.onCompact()
 		)
 			.pipe(
-				filter(({ tag }) => !tag || tag === QUICK_SETTINGS_SIDEBAR_TAG),
+				// Tagged-only, matching how NbSidebarComponent itself filters: a sidebar that HAS a tag
+				// ignores untagged events, so reacting to them here would just re-query for nothing.
+				filter(({ tag }) => tag === QUICK_SETTINGS_SIDEBAR_TAG),
 				untilDestroyed(this)
 			)
 			.subscribe(() => this.syncState());
