@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
 	IAiChatConfig,
+	IAiChatModelCatalogue,
 	IAiProviderCredential,
 	IAiProviderCredentialCreateInput,
 	IAiProviderCredentialUpdateInput,
@@ -41,6 +42,23 @@ export class AiChatSettingsService {
 	 */
 	getConfig(): Observable<IAiChatConfig> {
 		return this.http.get<IAiChatConfig>(`${this.API_URL}/config`);
+	}
+
+	/**
+	 * Retrieves one provider's model catalogue, fetched live from that provider where possible.
+	 *
+	 * Separate from {@link getConfig} on purpose: `/config` runs at app bootstrap for every user with
+	 * chat access and loops every registered provider, so folding keyed upstream calls into it would
+	 * put the app shell behind six third-party APIs on every login. This is called only when a single
+	 * provider's config view is opened.
+	 *
+	 * @param providerId - The provider whose models to list.
+	 * @returns An observable emitting the {@link IAiChatModelCatalogue}.
+	 */
+	getProviderModels(providerId: string): Observable<IAiChatModelCatalogue> {
+		return this.http.get<IAiChatModelCatalogue>(
+			`${this.API_URL}/providers/${encodeURIComponent(providerId)}/models`
+		);
 	}
 
 	/**

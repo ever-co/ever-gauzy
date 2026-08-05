@@ -1,5 +1,14 @@
 import { AiProviderEnum, IAiChatModel } from '@gauzy/contracts';
-import { IAiChatProviderDefinition, IAiProviderCredentials, importEsm } from '@gauzy/plugin-ai-chat';
+import {
+	IAiChatProviderDefinition,
+	IAiProviderCredentials,
+	createCatalogueCache,
+	fetchCatalogueJson,
+	importEsm,
+	keyedCatalogue,
+	mergeCatalogue,
+	prettifyModelId
+} from '@gauzy/plugin-ai-chat';
 
 /** Stable provider id used by the registry, the UI and BYOK credentials. */
 const PROVIDER_ID = AiProviderEnum.OPENAI;
@@ -16,6 +25,53 @@ const MODELS: IAiChatModel[] = [
 ];
 
 /**
+ * Non-chat model families listed by `/v1/models` alongside the chat models.
+ *
+ * A denylist, not an allowlist: `/v1/models` reports no capability fields, and an allowlist of known
+ * prefixes would hide the next model family on the day it ships — which is precisely when someone
+ * comes looking for it in this dropdown. The cost of the other direction is a stray entry that fails
+ * if selected, which the curated list ordering above already steers people away from.
+ */
+const NON_CHAT_PATTERNS = [
+	/embedding/,
+	/^whisper/,
+	/^tts-/,
+	/^dall-e/,
+	/^gpt-image/,
+	/moderation/,
+	/^(davinci|babbage|curie|ada)/,
+	/-(audio|realtime|transcribe|tts)\b/,
+	/-search-preview/
+];
+
+/** Model catalogue cache, keyed per credential: model access is account-specific on OpenAI. */
+const catalogueCache = createCatalogueCache<IAiChatModel[]>();
+
+/**
+ * The OpenAI models this API key can address, minus the families that are not chat models.
+ *
+ * This is the weakest of the six catalogues — `/v1/models` returns `{id, owned_by, created}` and
+ * nothing about capabilities — so the fetched list is merged BELOW the curated one rather than
+ * replacing it: the curated entries are the models actually verified against the agent's tool use.
+ */
+const listCatalogue = async (credentials: IAiProviderCredentials | null): Promise<IAiChatModel[]> =>
+	keyedCatalogue({
+		credentials,
+		curated: MODELS,
+		cache: catalogueCache,
+		load: async (resolved) => {
+			const body = await fetchCatalogueJson<{ data?: { id: string }[] }>('https://api.openai.com/v1/models', {
+				headers: { authorization: `Bearer ${resolved.apiKey}` }
+			});
+			const fetched = (body.data ?? [])
+				.filter((m) => typeof m?.id === 'string' && !NON_CHAT_PATTERNS.some((pattern) => pattern.test(m.id)))
+				.map((m) => ({ id: m.id, label: prettifyModelId(m.id), providerId: PROVIDER_ID }))
+				.sort((a, b) => a.id.localeCompare(b.id));
+			return mergeCatalogue(MODELS, fetched);
+		}
+	});
+
+/**
  * OpenAI (GPT) provider definition for the AI chat engine.
  *
  * Registered with the {@link AiProviderRegistry} by {@link AiProviderOpenAiPlugin}.
@@ -29,6 +85,7 @@ export const openAiProviderDefinition: IAiChatProviderDefinition = {
 	baseUrlEnvVar: 'OPENAI_BASE_URL',
 	models: MODELS,
 	defaultModel: 'gpt-5.5',
+	listModels: listCatalogue,
 	order: 50,
 	websiteUrl: 'https://openai.com',
 	apiKeysUrl: 'https://platform.openai.com/api-keys',

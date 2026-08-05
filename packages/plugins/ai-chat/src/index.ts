@@ -12,6 +12,18 @@ export { BaseAiProviderPlugin } from './lib/base-ai-provider.plugin';
 export type { IAiChatProviderDefinition, IAiProviderCredentials } from './lib/provider.types';
 export { importEsm, loadAiSdk } from './lib/esm-loader';
 
+// Shared plumbing for provider model catalogues: bounded fetch, credential-keyed cache, fail-open.
+export {
+	createCatalogueCache,
+	credentialCacheKey,
+	fetchCatalogueJson,
+	keyedCatalogue,
+	mergeCatalogue,
+	prettifyModelId,
+	publicCatalogue
+} from './lib/model-catalogue';
+export type { ICatalogueCache, ICatalogueResult } from './lib/model-catalogue';
+
 // Rate-limit classification + the envelope the chat client parses out of the stream's error channel.
 export { RATE_LIMIT_CODE, isRateLimitError, rateLimitRetryAfter, buildRateLimitEnvelope } from './lib/rate-limit';
 export type { IAiChatRateLimitEnvelope } from './lib/rate-limit';

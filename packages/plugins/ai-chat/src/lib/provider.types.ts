@@ -66,6 +66,27 @@ export interface IAiChatProviderDefinition {
 	listPlatformModels?(): Promise<IAiChatModel[]>;
 	/** Default model id on the platform key. Falls back to the first entry of listPlatformModels(). */
 	readonly platformDefaultModel?: string;
+	/**
+	 * The provider's model CATALOGUE, for the settings model picker.
+	 *
+	 * DISPLAY ONLY — the exact opposite of {@link listPlatformModels}, which is an enforced allowlist.
+	 * Nothing validates a returned id and the picker keeps a free-text path, so this list is a
+	 * convenience and MUST FAIL OPEN: on any error an implementation returns its curated
+	 * {@link models} rather than throwing or returning `[]`. An empty array would empty the user's
+	 * dropdown; it must never be how "the fetch failed" is expressed.
+	 *
+	 * Because of that asymmetry the two hooks must not be defined in terms of each other. Chaining
+	 * them either widens the shared-key allowlist when a fetch fails, or empties the dropdown on a
+	 * network blip. They may share a fetch and a cache; they must not share a failure mode.
+	 *
+	 * Implementations filter to models supporting TOOL CALLING — the agent calls tools every turn, so
+	 * a model without them is useless here. Where a provider's API exposes no tool-capability field,
+	 * the curated list IS the filter, and the implementation should say so.
+	 *
+	 * @param credentials Resolved credentials, or `null` when none exist yet. Providers with a public
+	 *                    catalogue ignore this; the rest return their curated list when it is null.
+	 */
+	listModels?(credentials: IAiProviderCredentials | null): Promise<IAiChatModel[]>;
 	/** Display ordering (ascending) in provider lists/catalogs. Unset sorts last. */
 	readonly order?: number;
 	/**

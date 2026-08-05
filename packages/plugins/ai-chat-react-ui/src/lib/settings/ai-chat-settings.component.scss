@@ -447,6 +447,24 @@
 			margin-top: 0.5rem;
 		}
 
+		// The routing providers list hundreds of models, so each row carries the id under the
+		// display name — 'Claude Sonnet 5' appears under several vendors and the id is what
+		// disambiguates.
+		.model-select {
+			display: block;
+
+			.model-label {
+				display: block;
+			}
+
+			.model-id {
+				display: block;
+				font-size: 0.6875rem;
+				font-family: var(--font-family-mono, monospace);
+				opacity: 0.6;
+			}
+		}
+
 		&.toggles {
 			display: flex;
 			flex-wrap: wrap;

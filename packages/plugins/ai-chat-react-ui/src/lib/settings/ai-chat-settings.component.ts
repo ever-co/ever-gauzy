@@ -21,16 +21,18 @@ import {
 	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
-	NbSelectModule,
 	NbSpinnerModule,
 	NbToastrService,
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { EMPTY, forkJoin, of } from 'rxjs';
 import { catchError, filter, finalize, switchMap } from 'rxjs/operators';
 import {
+	IAiChatModel,
+	IAiChatModelCatalogue,
 	IAiChatProvider,
 	IAiProviderCredential,
 	IAiProviderCredentialCreateInput,
@@ -133,10 +135,12 @@ interface ProviderCredentialForm {
 		NbFormFieldModule,
 		NbIconModule,
 		NbInputModule,
-		NbSelectModule,
 		NbSpinnerModule,
 		NbToggleModule,
-		NbTooltipModule
+		NbTooltipModule,
+		// The model list runs to hundreds of entries on the routing providers, so the picker has to be
+		// searchable — nb-select is not.
+		NgSelectModule
 	],
 	templateUrl: './ai-chat-settings.component.html',
 	styleUrls: ['./ai-chat-settings.component.scss'],
@@ -163,6 +167,16 @@ export class AiChatSettingsComponent implements OnInit {
 	readonly view = signal<'list' | 'catalog' | 'config'>('list');
 	/** Provider selected in the config view. */
 	readonly selectedProviderId = signal<string | null>(null);
+
+	/**
+	 * Live model catalogues, indexed by provider id, fetched when a provider's config view opens.
+	 *
+	 * Absent until then — {@link modelsFor} falls back to the curated list carried by `/config`, so
+	 * the picker is never empty while this is loading or if it fails.
+	 */
+	private readonly modelCatalogues = signal<Map<string, IAiChatModelCatalogue>>(new Map());
+	/** Provider id whose catalogue is currently being fetched (or `null`). */
+	readonly loadingModels = signal<string | null>(null);
 
 	/** The provider object for the config view. */
 	readonly selectedProvider = computed<IAiChatProvider | null>(
@@ -312,6 +326,8 @@ export class AiChatSettingsComponent implements OnInit {
 			if (providerId) {
 				this.selectedProviderId.set(providerId);
 				this.view.set('config');
+				// Only this view needs the catalogue, and only for this one provider.
+				this.loadModels(providerId);
 			} else if (params.get('add') !== null) {
 				this.view.set('catalog');
 			} else {
@@ -440,6 +456,110 @@ export class AiChatSettingsComponent implements OnInit {
 			.map((word) => word.charAt(0))
 			.join('');
 		return (initials || id.slice(0, 2) || '?').toUpperCase();
+	}
+
+	// ── Model catalogue (config view) ──────────────────────────────────
+
+	/**
+	 * Fetches a provider's model catalogue for the picker.
+	 *
+	 * Fails soft in both directions: an error leaves the curated list in place (the endpoint itself
+	 * already degrades to curated rather than erroring, so this only catches transport failures), and
+	 * a second visit to the same provider re-uses what was already fetched instead of re-calling an
+	 * upstream API on every back-and-forth between the list and the config view.
+	 */
+	loadModels(providerId: string): void {
+		if (this.modelCatalogues().has(providerId) || this.loadingModels() === providerId) {
+			return;
+		}
+		this.loadingModels.set(providerId);
+		this.settingsService
+			.getProviderModels(providerId)
+			.pipe(
+				takeUntilDestroyed(this.destroyRef),
+				catchError(() => of(null)),
+				finalize(() => {
+					this.loadingModels.set(null);
+					this.cdr.markForCheck();
+				})
+			)
+			.subscribe((catalogue) => {
+				if (!catalogue) {
+					return;
+				}
+				this.modelCatalogues.update((current) => new Map(current).set(providerId, catalogue));
+				this.reconcileModelSelection(providerId);
+				this.cdr.markForCheck();
+			});
+	}
+
+	/**
+	 * The models to offer for a provider: the fetched catalogue when there is one, else the curated
+	 * list that came with `/config`.
+	 */
+	modelsFor(provider: IAiChatProvider): IAiChatModel[] {
+		const catalogue = this.modelCatalogues().get(provider.id);
+		return catalogue?.models.length ? catalogue.models : provider.models;
+	}
+
+	/**
+	 * Picker items: the models plus the "Custom model…" sentinel.
+	 *
+	 * The sentinel stays even with a live catalogue. Providers ship models faster than any catalogue
+	 * endpoint reflects them, and a paid model can be addressable by a key long before it is listed —
+	 * so there has to be a way to type an id in by hand.
+	 */
+	modelOptions(provider: IAiChatProvider): IAiChatModel[] {
+		return [
+			...this.modelsFor(provider),
+			{
+				id: CUSTOM_MODEL,
+				label: this.translateService.instant('AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_CUSTOM'),
+				providerId: provider.id
+			}
+		];
+	}
+
+	/**
+	 * The note under the model picker explaining where its list came from, or `null` when the list is
+	 * live and complete (the ordinary case needs no explanation).
+	 */
+	modelSourceKey(provider: IAiChatProvider): string | null {
+		const catalogue = this.modelCatalogues().get(provider.id);
+		if (!catalogue) {
+			return null;
+		}
+		if (catalogue.source === 'platform') {
+			return 'AI_CHAT_UI.SETTINGS.FORM.MODELS_PLATFORM';
+		}
+		if (catalogue.source === 'curated') {
+			return 'AI_CHAT_UI.SETTINGS.FORM.MODELS_CURATED';
+		}
+		return catalogue.stale ? 'AI_CHAT_UI.SETTINGS.FORM.MODELS_STALE' : null;
+	}
+
+	/**
+	 * Re-decides "known model vs custom" once the catalogue arrives.
+	 *
+	 * {@link buildForms} runs before the fetch and can only compare against the curated list, so a
+	 * saved model that is real but simply not curated starts out shown as a custom id. Left alone it
+	 * would stay that way — a text box next to a dropdown that in fact contains the very model.
+	 */
+	private reconcileModelSelection(providerId: string): void {
+		const form = this.forms.get(providerId);
+		if (!form || form.controls.defaultModel.value !== CUSTOM_MODEL) {
+			return;
+		}
+		const typed = form.controls.customModel.value?.trim();
+		if (!typed) {
+			return;
+		}
+		const known = this.modelCatalogues()
+			.get(providerId)
+			?.models.some((model) => model.id === typed);
+		if (known) {
+			form.patchValue({ defaultModel: typed, customModel: '' }, { emitEvent: false });
+		}
 	}
 
 	/** Returns the credential form for a provider. */
@@ -770,7 +890,9 @@ export class AiChatSettingsComponent implements OnInit {
 		this.forms = new Map(
 			this.providers().map((provider) => {
 				const credential = this.getCredential(provider.id);
-				const knownModel = provider.models.some((model) => model.id === credential?.defaultModel);
+				// Against the catalogue when one has already been fetched, so a save-and-return does
+				// not demote a perfectly ordinary model back to "custom".
+				const knownModel = this.modelsFor(provider).some((model) => model.id === credential?.defaultModel);
 				return [
 					provider.id,
 					this.fb.nonNullable.group<ProviderCredentialForm>({

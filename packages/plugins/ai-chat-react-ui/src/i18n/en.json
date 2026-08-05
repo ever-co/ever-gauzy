@@ -41,6 +41,10 @@
 			"DEFAULT_MODEL_NONE": "Provider default",
 			"DEFAULT_MODEL_CUSTOM": "Custom model…",
 			"CUSTOM_MODEL_PLACEHOLDER": "Enter a model id (e.g. claude-sonnet-5)",
+			"MODELS_NOT_FOUND": "No matching model — pick \"Custom model…\" to type an id.",
+			"MODELS_PLATFORM": "Limited to the free models available on the shared key. Add your own API key to use any model.",
+			"MODELS_CURATED": "Showing known models — the provider's full list is unavailable. Save an API key to load it.",
+			"MODELS_STALE": "Showing the last known list — the provider's catalogue could not be refreshed.",
 			"ENABLED": "Enabled",
 			"USE_AS_DEFAULT": "Use as default provider",
 			"GET_KEY": "Get API key"

@@ -3,6 +3,8 @@
     "language": "en",
     "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
     "ignoreRegExpList": [
+        "dall",
+        "davinci",
         "GHSA-[A-Za-z0-9-]+"
     ],
     "words": [
@@ -305,6 +307,7 @@
         "ilammy",
         "ILIKE",
         "ilinked",
+        "imagen",
         "immer",
         "initdb",
         "initialisation",
@@ -412,6 +415,7 @@
         "Lask",
         "latlng",
         "leafelt",
+        "learnlm",
         "letsencrypt",
         "libaom",
         "libappindicator",
@@ -494,6 +498,7 @@
         "nbinput",
         "ncipollo",
         "NEEDRESTART",
+        "nemotron",
         "nestjs",
         "nestjsx",
         "networkidle",
@@ -649,6 +654,7 @@
         "repoint",
         "repointed",
         "repos",
+        "reranking",
         "resave",
         "responsibile",
         "retriable",

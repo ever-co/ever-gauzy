@@ -310,22 +310,42 @@
 					</div>
 
 					<div class="form-group">
-						<label class="label">{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL' | translate }}</label>
-						<nb-select
-							fullWidth
+						<label class="label" [for]="'ai-chat-model-' + provider.id">
+							{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL' | translate }}
+						</label>
+						<ng-select
+							class="model-select"
+							[labelForId]="'ai-chat-model-' + provider.id"
 							formControlName="defaultModel"
+							bindValue="id"
+							bindLabel="label"
+							[items]="modelOptions(provider)"
+							[loading]="loadingModels() === provider.id"
+							[clearable]="true"
+							[searchable]="true"
+							[virtualScroll]="true"
 							[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_NONE' | translate"
+							[notFoundText]="'AI_CHAT_UI.SETTINGS.FORM.MODELS_NOT_FOUND' | translate"
 						>
-							<nb-option value="">
-								{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_NONE' | translate }}
-							</nb-option>
-							@for (model of provider.models; track model.id) {
-								<nb-option [value]="model.id">{{ model.label }}</nb-option>
-							}
-							<nb-option [value]="CUSTOM_MODEL">
-								{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_CUSTOM' | translate }}
-							</nb-option>
-						</nb-select>
+							<!--
+								Every row is two lines, including the "Custom model…" sentinel: ng-select's
+								virtual scroll measures one item and applies that height to all of them, so a
+								single short row would smear the scroll offset across a 250-entry list.
+							-->
+							<ng-template ng-option-tmp let-model="item">
+								<span class="model-label">{{ model.label }}</span>
+								<span class="model-id">
+									{{
+										model.id === CUSTOM_MODEL
+											? ('AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate)
+											: model.id
+									}}
+								</span>
+							</ng-template>
+						</ng-select>
+						@if (modelSourceKey(provider); as sourceKey) {
+							<span class="hint">{{ sourceKey | translate }}</span>
+						}
 						@if (form.controls.defaultModel.value === CUSTOM_MODEL) {
 							<input
 								nbInput
