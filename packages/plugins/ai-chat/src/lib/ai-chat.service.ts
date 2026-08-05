@@ -13,6 +13,7 @@ import { buildClientTools, CLIENT_TOOLS_REQUIRING_APPROVAL } from './tools/clien
 import { createMcpTools } from './tools/mcp-tools';
 import { AiProviderCredentialService } from './credentials/ai-provider-credential.service';
 import { AiChatConversationService } from './conversations/ai-chat-conversation.service';
+import { buildRateLimitEnvelope, isRateLimitError, rateLimitRetryAfter, RATE_LIMIT_CODE } from './rate-limit';
 
 /** Maximum agent steps (model turns incl. tool calls) per user message. */
 const MAX_STEPS = 12;
@@ -65,7 +66,10 @@ export class AiChatService {
 		}
 
 		const ai = await loadAiSdk();
-		const { model } = await this.resolveModel(args.providerId, args.modelId);
+		const { model, providerId, modelId, credentialSource } = await this.resolveModel(
+			args.providerId,
+			args.modelId
+		);
 
 		const user = RequestContext.currentUser();
 		const requestDefaults = {
@@ -126,8 +130,15 @@ export class AiChatService {
 				onEnd: async () => {
 					await mcp?.close();
 				},
-				onError: (error: unknown) => {
-					this.logger.error(`streamText error: ${error instanceof Error ? error.message : error}`);
+				// AI SDK 7 invokes this as `onError({ error })`, NOT `onError(error)`. Typed as
+				// `(error: unknown)` and stringified, every provider failure logged as
+				// "[object Object]" — the `as any` on this options object is why tsc never said so.
+				onError: (event: unknown) => {
+					const error = (event as { error?: unknown })?.error ?? event;
+					this.logger.error(
+						`streamText error [provider=${providerId} model=${modelId} credential=${credentialSource}]: ` +
+							`${error instanceof Error ? error.message : JSON.stringify(error)}`
+					);
 				}
 			} as any);
 		} catch (error) {
@@ -149,6 +160,25 @@ export class AiChatService {
 				stream: (result as any).stream,
 				// Keeps message ids stable across tool-call round-trips.
 				originalMessages: args.messages,
+				/**
+				 * Let ONLY rate limits through, as structured JSON.
+				 *
+				 * Without an onError the SDK substitutes the constant "An error occurred." for every
+				 * failure, so a 429 — the defining failure of a free tier — reached the browser
+				 * indistinguishable from a bug. Widening that mask generally would leak provider
+				 * internals, so everything else keeps the generic string; this is also used for
+				 * tool-output-error text, which the same selectivity handles correctly.
+				 */
+				onError: (error: unknown) => {
+					if (!isRateLimitError(error)) return 'An error occurred.';
+					const retryAfterSeconds = rateLimitRetryAfter(error);
+					return buildRateLimitEnvelope({
+						code: RATE_LIMIT_CODE,
+						providerId,
+						credentialSource,
+						...(retryAfterSeconds !== undefined ? { retryAfterSeconds } : {})
+					});
+				},
 				onEnd: async ({ messages }: { messages: UIMessage[] }) => {
 					if (!args.conversationId || !persistFor.userId || !persistFor.tenantId) return;
 					try {
@@ -227,7 +257,12 @@ export class AiChatService {
 	private async resolveModel(
 		requestedProviderId?: string,
 		requestedModelId?: string
-	): Promise<{ model: LanguageModel; providerId: string; modelId: string }> {
+	): Promise<{
+		model: LanguageModel;
+		providerId: string;
+		modelId: string;
+		credentialSource: IAiProviderCredentials['source'];
+	}> {
 		const definitions = AiProviderRegistry.list();
 		if (!definitions.length) {
 			throw new ServiceUnavailableException('No AI providers are registered.');
@@ -303,7 +338,7 @@ export class AiChatService {
 			// produced source:'tenant' and never reached this branch.
 			const modelId = requestedModelId || definition.platformDefaultModel || platformModels[0].id;
 			const model = await definition.createModel(modelId, credentials);
-			return { model, providerId: definition.id, modelId };
+			return { model, providerId: definition.id, modelId, credentialSource: credentials.source };
 		}
 
 		const tenantCredential = await this.getTenantCredential(definition.id);
@@ -314,7 +349,7 @@ export class AiChatService {
 			definition.defaultModel;
 
 		const model = await definition.createModel(modelId, credentials);
-		return { model, providerId: definition.id, modelId };
+		return { model, providerId: definition.id, modelId, credentialSource: credentials.source };
 	}
 
 	/**

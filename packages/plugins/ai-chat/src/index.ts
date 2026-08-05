@@ -12,6 +12,10 @@ export { BaseAiProviderPlugin } from './lib/base-ai-provider.plugin';
 export type { IAiChatProviderDefinition, IAiProviderCredentials } from './lib/provider.types';
 export { importEsm, loadAiSdk } from './lib/esm-loader';
 
+// Rate-limit classification + the envelope the chat client parses out of the stream's error channel.
+export { RATE_LIMIT_CODE, isRateLimitError, rateLimitRetryAfter, buildRateLimitEnvelope } from './lib/rate-limit';
+export type { IAiChatRateLimitEnvelope } from './lib/rate-limit';
+
 // BYOK credentials
 export { AiProviderCredential } from './lib/credentials/ai-provider-credential.entity';
 export { AiProviderCredentialService } from './lib/credentials/ai-provider-credential.service';
