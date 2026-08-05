@@ -314,14 +314,36 @@ const selectRowFor = async (toolbarBtnCss: string) => {
 		.filter({ hasText: TimesheetsPageData.defaultDescription })
 		.first();
 	const row = (await ours.count()) > 0 ? ours : getPage().locator(TimesheetsPage.timeLogRowCss).first();
-	await row.click({ force: true });
-	for (let i = 0; i < 5; i++) {
-		if (await toolbarBtnReady(toolbarBtnCss)) return; // selected + enabled
-		await getPage().waitForTimeout(800);
-		// Still not ready after settling — selection was lost; toggle it back on.
-		if (!(await toolbarBtnReady(toolbarBtnCss))) {
-			await row.click({ force: true });
+
+	/**
+	 * The row click TOGGLES selection (`(click)="userRowSelect(log)"`), so a retry
+	 * loop that re-clicks whenever the toolbar "is not ready yet" will happily
+	 * DESELECT a correctly-selected row and oscillate. The previous loop did exactly
+	 * that: check, wait 800ms, check again, click again — with the toolbar only
+	 * appearing after Angular renders `#actionButtons`, that races on every run and
+	 * could finish deselected.
+	 *
+	 * The row carries `[class.selected]="log?.isSelected"`, so selection is
+	 * observable directly. Drive to the desired STATE instead of blind-toggling:
+	 * only click when the row is not selected, and treat "selected but toolbar not
+	 * rendered yet" as something to wait out, never to click again.
+	 *
+	 * `dispatchEvent('click')` rather than `click({ force: true })`: force only skips
+	 * the actionability CHECK, the event is still delivered at coordinates and can be
+	 * eaten by whatever occupies that point — which is how this spec failed in CI
+	 * ("locator.click: Timeout" on a row that was present).
+	 */
+	const isSelected = async () =>
+		row
+			.evaluate((el) => el.classList.contains('selected'))
+			.catch(() => false);
+
+	for (let i = 0; i < 6; i++) {
+		if (await toolbarBtnReady(toolbarBtnCss)) return; // selected AND toolbar enabled
+		if (!(await isSelected())) {
+			await row.dispatchEvent('click').catch(() => undefined);
 		}
+		await getPage().waitForTimeout(800);
 	}
 };
 
