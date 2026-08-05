@@ -227,32 +227,86 @@ export const saveTimeLogButtonVisible = async () => verifyElementIsVisible(Times
 // "No Data", the next step's row click then timed out). Trigger the real submit instead: call
 // requestSubmit() on the dialog's <form> (fires the (submit) handler regardless of any fading backdrop
 // and still gates on the disabled/spinner state), with a real-click fallback.
+// The dialog's own <form>. Scoped by the Save button it contains rather than by the component tag, so
+// it keeps matching if the modal is renamed. Only one such dialog is ever open at a time.
+const timeLogFormCss = `form:has(${TimesheetsPage.saveTimeButtonCss})`;
+
+/**
+ * Submit the Add/Edit Time Log dialog and wait until it has actually been accepted.
+ *
+ * Two SILENT no-ops make "I clicked Save" a much weaker claim than it looks here, and both were
+ * observed in CI run 30987411046 (shard 4, all three attempts):
+ *
+ *  1. `addTime()` opens with `if (this.form.invalid) return;` — no toast, no error, no visual change.
+ *     The employee select is `required`, so until it commits its value the form is invalid and Save
+ *     does NOTHING. Snapshot: the filled "Add Time Logs" dialog still up and no new row.
+ *  2. `requestSubmit()` honours the submit button's `[disabled]="loading"` gate, so it also silently
+ *     does nothing while a previous save is in flight.
+ *
+ * The old code returned "submitted" as soon as it found the <form>, so both no-ops read as success.
+ * The spec then failed two steps later with "row not found" / "eye-outline not visible", which names
+ * neither cause. So: wait for the form to be genuinely submittable, then treat the dialog CLOSING as
+ * the success signal (that is what `addTime()` does on success), and report which controls are still
+ * invalid if it never does.
+ */
 export const clickSaveTimeLogButton = async () => {
 	await waitForSpinnerGone();
 	const page = getPage();
-	const submitted = await page
-		.evaluate((btnSel) => {
-			try {
+
+	const dialogGone = async () => (await page.locator(timeLogFormCss).count().catch(() => 1)) === 0;
+
+	const submitOnce = async () =>
+		page
+			.evaluate((btnSel) => {
 				const btn = document.querySelector(btnSel) as HTMLButtonElement | null;
 				const form = btn?.closest('form') as HTMLFormElement | null;
-				if (!form) return false;
-				// requestSubmit() respects the submit button (its [disabled] gate) and dispatches the
-				// native 'submit' event that Angular's (submit)="addTime()" listens for.
-				if (typeof form.requestSubmit === 'function') {
-					form.requestSubmit(btn ?? undefined);
-				} else {
-					form.submit();
-				}
+				if (!form || btn?.disabled) return false;
+				form.requestSubmit(btn ?? undefined);
 				return true;
-			} catch {
-				return false;
-			}
-		}, TimesheetsPage.saveTimeButtonCss)
-		.catch(() => false);
-	if (!submitted) {
-		// Fallback: a real Playwright click performs the button's default action (native form submit).
-		await page.locator(TimesheetsPage.saveTimeButtonCss).first().click({ force: true });
+			}, TimesheetsPage.saveTimeButtonCss)
+			.catch(() => false);
+
+	for (let attempt = 0; attempt < 3; attempt++) {
+		// Check the END STATE before acting: a dialog that closed while we were waiting is a success,
+		// not a reason to submit again into whatever screen replaced it.
+		if (await dialogGone()) return;
+
+		// Angular puts ng-valid/ng-invalid on the [formGroup] host, so form validity — the thing
+		// `addTime()` actually gates on — is readable from the DOM.
+		await page
+			.locator(`${timeLogFormCss}.ng-valid`)
+			.waitFor({ state: 'attached', timeout: 20_000 })
+			.catch(() => undefined);
+
+		if (await dialogGone()) return;
+
+		// Last attempt falls back to a real click, which performs the button's native default action.
+		if (!(await submitOnce()) && attempt === 2) {
+			await page
+				.locator(TimesheetsPage.saveTimeButtonCss)
+				.first()
+				.click({ force: true })
+				.catch(() => undefined);
+		}
+
+		for (let i = 0; i < 24; i++) {
+			if (await dialogGone()) return;
+			await page.waitForTimeout(500);
+		}
 	}
+
+	// One last look: the final 500ms wait may be exactly when the dialog closed.
+	if (await dialogGone()) return;
+
+	const invalid = await page
+		.$$eval(`${timeLogFormCss} .ng-invalid[formcontrolname]`, (els: Element[]) =>
+			els.map((el) => el.getAttribute('formcontrolname'))
+		)
+		.catch(() => [] as (string | null)[]);
+	throw new Error(
+		`Add/Edit Time Log dialog never closed after 3 submit attempts, so no time log was written. ` +
+			`Controls still invalid: [${invalid.join(', ') || 'none — check for a save error toast'}]`
+	);
 };
 
 export const closeAddTimeLogPopoverButtonVisible = async () =>
