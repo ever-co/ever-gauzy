@@ -28,16 +28,33 @@ export const clickMessageButton = async () => {
 	await waitForSpinnerGone();
 
 	const candidates = page.locator(MessageButton.toggleActionCss);
+	const panel = page.locator(MessageButton.panelCss).first();
 	const count = await candidates.count();
 
 	for (let i = 0; i < count; i++) {
 		await candidates.nth(i).dispatchEvent('click');
-		try {
-			await page.locator(MessageButton.panelCss).first().waitFor({ state: 'visible', timeout: 6_000 });
-			return;
-		} catch {
-			// Wrong panel (or none). Collapse whatever opened so the next candidate is
-			// not clicked through an open overlay, then continue.
+
+		const opened = await panel
+			.waitFor({ state: 'visible', timeout: 8_000 })
+			.then(() => true)
+			.catch(() => false);
+		if (opened) return;
+
+		// A timeout means "not visible YET" — it does not mean "wrong candidate".
+		// Re-check once before concluding, because mistaking a slow render for the
+		// wrong control and then clicking again would toggle the correctly-open
+		// panel shut. (That is the same conflation this branch fixes in
+		// `dispatchClickWhenSettled`; it must not be reintroduced here.)
+		if (await panel.isVisible().catch(() => false)) return;
+
+		// Only collapse when something ELSE actually opened — never blind-toggle the
+		// candidate. If the click opened nothing, a second click could open it late,
+		// leaving an unexpected overlay for the next candidate to be clicked through.
+		const otherOpen = await page
+			.locator('nb-sidebar.expanded:not(.settings-sidebar)')
+			.count()
+			.catch(() => 0);
+		if (otherOpen > 0) {
 			await candidates.nth(i).dispatchEvent('click').catch(() => undefined);
 			await page.waitForTimeout(400);
 		}
