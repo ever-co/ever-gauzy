@@ -86,6 +86,68 @@ describe('TimerRangePickerComponent', () => {
 		});
 	});
 
+	/**
+	 * The e2e suite seeds each organisation with a RANDOM timezone
+	 * (organization.seed.ts picks one with `faker.helpers.arrayElement(timezone.tz.names())`), which is
+	 * why `timesheets.feature` behaved like a coin flip: whether it passed depended on which zone the
+	 * run happened to draw. Sweeping every zone is the only way to say the spec is deterministic now
+	 * rather than lucky again.
+	 */
+	describe('every IANA zone', () => {
+		const zones = timezone.tz.names();
+
+		it('sweeps a non-trivial number of zones', () => {
+			// Guards the sweep itself: a moment-timezone install without its data file would make the
+			// two tests below pass vacuously.
+			expect(zones.length).toBeGreaterThan(300);
+		});
+
+		it('round-trips a 00:00-18:00 log — the range the e2e suite creates — in every zone', () => {
+			const broken: string[] = [];
+
+			for (const zone of zones) {
+				const picker = build(zone);
+				// The instants a log entered as 00:00-18:00 on 5 Aug in THAT zone would be stored as.
+				const start = timezone.tz('2026-08-05 00:00', 'YYYY-MM-DD HH:mm', zone).toDate();
+				const end = timezone.tz('2026-08-05 18:00', 'YYYY-MM-DD HH:mm', zone).toDate();
+
+				picker.writeValue({ start, end });
+				const composed = picker.composeRange();
+
+				if (
+					picker.startTime !== '00:00' ||
+					picker.endTime !== '18:00' ||
+					composed.start?.getTime() !== start.getTime() ||
+					composed.end?.getTime() !== end.getTime()
+				) {
+					broken.push(`${zone} (${picker.startTime}-${picker.endTime})`);
+				}
+			}
+
+			expect(broken).toEqual([]);
+		});
+
+		it('never composes an end BEFORE its start in any zone', () => {
+			// The failure that made the edit unsaveable. Checked against the same fixed pair of instants
+			// for every zone, so a zone ahead of UTC, behind it, or on a half-hour offset all count.
+			const inverted: string[] = [];
+
+			for (const zone of zones) {
+				const picker = build(zone);
+				picker.writeValue({
+					start: new Date('2026-08-04T21:00:00.000Z'),
+					end: new Date('2026-08-05T15:00:00.000Z')
+				});
+				const { start, end } = picker.composeRange();
+				if (!start || !end || end.getTime() <= start.getTime()) {
+					inverted.push(`${zone} (${picker.startTime}-${picker.endTime})`);
+				}
+			}
+
+			expect(inverted).toEqual([]);
+		});
+	});
+
 	describe('composeRange', () => {
 		it('rolls the end onto the next day when it reads earlier than the start', () => {
 			// The picker holds ONE date for both times, so a midnight-spanning range can only be
