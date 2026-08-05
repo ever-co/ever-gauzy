@@ -16,7 +16,19 @@ const PROVIDER_ID = AiProviderEnum.GAUZY_AI;
 export const gauzyAiProviderDefinition: IAiChatProviderDefinition = {
 	id: PROVIDER_ID,
 	label: 'Gauzy AI',
-	apiKeyEnvVars: ['GAUZY_AI_API_KEY'],
+	/**
+	 * Deliberately EMPTY while `createModel` still throws.
+	 *
+	 * This used to be `['GAUZY_AI_API_KEY']`, which let this provider report itself
+	 * `configured: true` — but that variable belongs to the unrelated `integration-ai`
+	 * plugin (`packages/plugins/integration-ai/src/lib/config/gauzy-ai.ts`), so any
+	 * operator using THAT integration silently made a non-functional chat provider look
+	 * usable. Combined with `order: 10` (first in the registry's ascending sort), it could
+	 * win default selection and fail every turn with 'not implemented yet'.
+	 *
+	 * Restore the variable in the same change that makes `createModel` return a real model.
+	 */
+	apiKeyEnvVars: [],
 	baseUrlEnvVar: 'GAUZY_AI_BASE_URL',
 	models: [],
 	defaultModel: '',
