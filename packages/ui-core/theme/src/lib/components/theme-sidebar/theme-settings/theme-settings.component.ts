@@ -2,8 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbSidebarService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import { merge } from 'rxjs';
-import { filter, take, tap } from 'rxjs/operators';
+import { asyncScheduler, merge } from 'rxjs';
+import { filter, observeOn, take, tap } from 'rxjs/operators';
 import { environment } from '@gauzy/ui-config';
 
 /**
@@ -71,6 +71,20 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 				// Tagged-only, matching how NbSidebarComponent itself filters: a sidebar that HAS a tag
 				// ignores untagged events, so reacting to them here would just re-query for nothing.
 				filter(({ tag }) => tag === QUICK_SETTINGS_SIDEBAR_TAG),
+				// DO NOT make this synchronous. The header gear calls sidebarService.toggle() from a
+				// click handler, and `OutsideDirective` listens on `document:click` WITHOUT capture, so
+				// it runs later in that same dispatch. If `state` were already true by then,
+				// onClickOutside() below would see "clicked outside && open" and immediately collapse
+				// the panel the gear just opened — verified: the trace read
+				//   toggle(settings_sidebar) -> state=true -> collapse(settings_sidebar) -> state=false
+				// and the panel became impossible to open.
+				//
+				// The old ngAfterViewChecked version only worked BECAUSE its value was stale for that
+				// tick, so "read the state on demand instead" reintroduces the same bug — by the time
+				// the document click runs, the sidebar really is expanded. The panel must simply not
+				// count as open during the click that opened it, so defer to a macro task. A microtask is
+				// NOT enough: microtask checkpoints drain between individual DOM listeners.
+				observeOn(asyncScheduler),
 				untilDestroyed(this)
 			)
 			.subscribe(() => this.syncState());

@@ -130,11 +130,22 @@ export class MenuItemComponent implements OnInit {
 		// expensive until clicks stopped getting a frame. The detectChanges() call was re-entrant too:
 		// running it from inside ngAfterViewChecked can schedule the very check that re-enters the hook.
 		//
-		// Re-query only when the sidebar ACTUALLY changes. Every path that changes it goes through the
-		// service (the layout's toggle()/expand(), and this component's own toggle below), and this
-		// sidebar is not `responsive`, so it never changes state on its own. Ordering is safe:
-		// NbSidebarComponent hosts these items, so its own subscription is registered first and has
-		// already applied the change by the time we re-read it.
+		// Re-query only when the sidebar ACTUALLY changes. Every path that changes it today goes
+		// through the service — the layout's toggle()/expand(), header.component, and this component's
+		// own toggle below — and getSidebarState() is answered by whichever NbSidebarComponent carries
+		// the tag, wherever it is mounted, which is why this also works for the menu rendered in the
+		// workspace-menu overlay (outside nb-layout, inside no sidebar at all). Ordering is safe
+		// because that tagged sidebar is created with the layout at boot, before any menu item renders.
+		//
+		// CAVEAT, deliberately not enforced here: this assumes the sidebar is not `responsive`.
+		// Nebular's subscribeToMediaQueryChange() and the `responsive` setter call
+		// compact()/collapse()/expand() on the component DIRECTLY, never through the service subjects,
+		// so a responsive sidebar would leave this value permanently stale. one-column.layout.html —
+		// the layout actually in use — does not set it, but two-columns/three-columns.layout.ts DO
+		// declare `<nb-sidebar class="menu-sidebar" tag="menu-sidebar" responsive>`. They are currently
+		// unreachable, but they are exported from ThemeModule, so if one is ever wired up this needs to
+		// move to deriving the value from NbSidebarComponent's `(stateChange)` output, which
+		// updateState() emits on EVERY path including the responsive ones.
 		this.syncSidebarState();
 		merge(
 			this._sidebarService.onToggle(),
