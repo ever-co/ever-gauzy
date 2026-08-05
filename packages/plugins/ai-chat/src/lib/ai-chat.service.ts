@@ -185,7 +185,10 @@ export class AiChatService {
 				id: definition.id,
 				label: definition.label,
 				models: definition.models,
-				configured: credentials !== null,
+				// "Configured" must mean USABLE. A placeholder provider whose createModel throws is not,
+				// however many credentials resolve for it — otherwise /config advertises it, the
+				// settings UI shows it as ready, and it can be chosen as the tenant default.
+				configured: credentials !== null && definition.chatCapable !== false,
 				...(credentials ? { credentialSource: credentials.source } : {}),
 				...(definition.order !== undefined ? { order: definition.order } : {}),
 				...(definition.websiteUrl ? { websiteUrl: definition.websiteUrl } : {}),
@@ -236,17 +239,37 @@ export class AiChatService {
 				throw new BadRequestException(`Unknown AI provider '${requestedProviderId}'.`);
 			}
 		} else {
-			const defaults = await this.resolveDefaultProvider(definitions.map((d) => d.id));
-			definition = defaults ? AiProviderRegistry.get(defaults.defaultProvider) : undefined;
-			// Last resort: first provider that has credentials.
-			if (!definition) {
-				for (const candidate of definitions) {
-					if (await this.resolveCredentials(candidate)) {
-						definition = candidate;
-						break;
-					}
-				}
-			}
+			// Only a provider that actually HAS credentials may be defaulted to.
+			//
+			// This used to pass every REGISTERED provider — `definitions.map(d => d.id)` — while
+			// getConfig() (above) correctly passes only the configured ones. That asymmetry was a
+			// live outage: resolveDefaultProvider's last step is `const first = configuredIds[0]`,
+			// returned WITHOUT a credential check, and AiProviderRegistry.list() sorts ascending by
+			// `order`, where gauzy-ai is 10 — always first. So on any install with no tenant-level
+			// default, `definition` became gauzy-ai. Being non-null, it also skipped the
+			// "first provider that has credentials" search that used to sit here, and the request
+			// then died at the `no usable credentials` throw below — or, if GAUZY_AI_API_KEY happened
+			// to be set (the unrelated integration-ai plugin shares that exact variable), at
+			// gauzy-ai's createModel, which throws 'not implemented yet' unconditionally.
+			// Meanwhile GET /config advertised a healthy default, so the UI looked configured and
+			// every single turn failed.
+			// Credentials alone are not enough: a placeholder provider whose createModel still throws
+			// must never be defaulted to, and emptying its env vars does not achieve that because a
+			// tenant BYOK credential is resolved FIRST. Gate on the capability too.
+			//
+			// Resolved in parallel — these are independent, and each one can cost a database read plus
+			// a decryption, so doing them in series put up to one round trip per registered provider on
+			// the critical path of every chat request.
+			const selectable = definitions.filter((candidate) => candidate.chatCapable !== false);
+			const configured = (
+				await Promise.all(
+					selectable.map(async (candidate) => ((await this.resolveCredentials(candidate)) ? candidate : null))
+				)
+			).filter((candidate): candidate is IAiChatProviderDefinition => candidate !== null);
+			const defaults = await this.resolveDefaultProvider(configured.map((d) => d.id));
+			// resolveDefaultProvider already falls back to configuredIds[0], so this covers the
+			// old explicit "last resort" loop; it returns null only when nothing is configured.
+			definition = defaults ? AiProviderRegistry.get(defaults.defaultProvider) : configured[0];
 		}
 
 		if (!definition) {
