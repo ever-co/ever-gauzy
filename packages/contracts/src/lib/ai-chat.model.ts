@@ -28,6 +28,39 @@ export type AiProviderConnectType = 'openrouter-pkce';
 /**
  * A chat model offered by a registered AI provider.
  */
+/**
+ * Discriminator for a provider rate-limit (HTTP 429) reported through the chat stream.
+ *
+ * Lives in contracts because BOTH sides need the runtime value: the API writes the envelope into the
+ * stream's error channel, and the browser matches on it. It must not come from the backend plugin —
+ * importing that into the web bundle would pull NestJS along with it.
+ */
+export const AI_CHAT_RATE_LIMIT_CODE = 'ai-chat/rate-limited';
+
+/**
+ * Where the credential in use came from.
+ *
+ * `'platform'` is the shared, product-supplied free tier: resolved LAST — below the tenant's own key
+ * and below the operator's own environment key — and the only source restricted to free models. The
+ * key itself never reaches the client; only this label does.
+ */
+export type AiCredentialSource = 'tenant' | 'environment' | 'platform';
+
+/** Structured rate-limit payload, JSON-encoded into the stream's single error-text channel. */
+export interface IAiChatRateLimitEnvelope {
+	code: typeof AI_CHAT_RATE_LIMIT_CODE;
+	/** Which provider ran out of quota, so the UI can name it and deep-link to its settings. */
+	providerId: string;
+	/**
+	 * Which credential hit the limit — it changes the advice. On `'platform'` the user can fix it by
+	 * bringing their own key; on `'tenant'` their OWN key is limited, where "connect your own
+	 * account" would be wrong.
+	 */
+	credentialSource: AiCredentialSource;
+	/** Seconds until the limit resets, when the provider says so. */
+	retryAfterSeconds?: number;
+}
+
 export interface IAiChatModel {
 	/** Model identifier as understood by the provider (e.g. 'claude-sonnet-5'). */
 	id: string;
@@ -54,7 +87,7 @@ export interface IAiChatProvider {
 	 */
 	configured: boolean;
 	/** Where the active credential comes from. */
-	credentialSource?: 'tenant' | 'environment';
+	credentialSource?: AiCredentialSource;
 	/** Display ordering (ascending) in provider lists/catalogs. */
 	order?: number;
 	/** Provider marketing/home page. */
