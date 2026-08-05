@@ -172,6 +172,34 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 		return Math.abs(this.toDisplayZone(dayStart).utcOffset() - this.toDisplayZone(dayEnd).utcOffset());
 	}
 
+	/**
+	 * Whether a wall-clock reading happens TWICE on this day — the repeated hour of a fall-back.
+	 *
+	 * This is the only situation in which an inverted pair of readings can be something other than a
+	 * midnight crossing, so it is what the allowance must be scoped to. A day-wide "an offset changed
+	 * somewhere today" test is too generous: on a spring-forward day 03:30 to 03:00 is inverted, both
+	 * readings are perfectly unambiguous, and the range genuinely does cross midnight.
+	 *
+	 * Detected by asking what the same instant reads as one offset-shift later: only inside the
+	 * repeated interval does the clock still say the same thing. Never true when a fixed
+	 * `[timezoneOffset]` is supplied — an offset has no transitions.
+	 *
+	 * @param day - Calendar day as `YYYY-MM-DD`.
+	 * @param time - Wall-clock time as `HH:mm`.
+	 */
+	private isRepeatedWallClock(day: string, time: string): boolean {
+		const shift = this.offsetShiftAcross(day);
+		if (shift <= 0 || this.timezoneOffset) {
+			return false;
+		}
+		const instant = this.composeInstant(day, time);
+		if (!instant) {
+			return false;
+		}
+		const later = moment(instant).add(shift, 'minutes').toDate();
+		return this.toDisplayZone(later).format('HH:mm') === this.toDisplayZone(instant).format('HH:mm');
+	}
+
 	/** Wall-clock `HH:mm` as minutes past midnight, or `null` when it is not a time. */
 	private static toMinutes(time: string): number | null {
 		const parsed = /^(\d{1,2}):(\d{2})$/.exec(time ?? '');
@@ -203,15 +231,23 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 		// the dialog. A fixed threshold is too blunt in the other direction: 02:30 to 00:30 inverts by
 		// only two hours and is a perfectly ordinary overnight range.
 		//
-		// So compare the inversion against the offset change available on that day to explain it — zero
-		// on all but two days a year. Beyond that budget the clock cannot account for it and the range
-		// really does cross midnight. Equal is left unrolled: genuinely ambiguous, and refusing to save
-		// beats writing a day-long log.
+		// So the inversion is only excused when the clock can actually account for it: the end's reading
+		// must be one this day gives TWICE (the repeated hour of a fall-back), and the inversion must
+		// fit inside that repetition. Anything else really does cross midnight. Inside the allowance
+		// the pair is left inverted — genuinely ambiguous, and refusing to save beats writing a
+		// day-long log.
 		const startMinutes = TimerRangePickerComponent.toMinutes(this.startTime);
 		const endMinutes = TimerRangePickerComponent.toMinutes(this.endTime);
 
 		if (start && end && startMinutes !== null && endMinutes !== null) {
-			if (startMinutes - endMinutes > this.offsetShiftAcross(day)) {
+			const inversion = startMinutes - endMinutes;
+			// The allowance applies ONLY when the end's reading is one the clock gives twice today, and
+			// only up to the size of that repetition. Everything else that reads inverted is a real
+			// crossing.
+			const explainedByTheClock =
+				this.isRepeatedWallClock(day, this.endTime) && inversion <= this.offsetShiftAcross(day);
+
+			if (inversion > 0 && !explainedByTheClock) {
 				end = this.composeInstant(moment(day, 'YYYY-MM-DD').add(1, 'day').format('YYYY-MM-DD'), this.endTime);
 			}
 		}

@@ -198,6 +198,35 @@ describe('TimerRangePickerComponent', () => {
 			expect(end.toISOString()).toBe('2026-08-06T00:30:00.000Z');
 		});
 
+		it('rolls an inverted pair on a spring-forward day, where nothing is ambiguous', () => {
+			// 8 Mar 2026, America/New_York: the gap is 02:00-03:00, so 03:30 and 03:00 each happen
+			// exactly once. The pair is inverted only because the range crosses midnight. A day-wide
+			// "an offset changed today" allowance excused it and composed the end backwards.
+			component = build('America/New_York');
+			component.date = moment('2026-03-08', 'YYYY-MM-DD').toDate();
+			component.startTime = '03:30';
+			component.endTime = '03:00';
+
+			const { start, end } = component.composeRange();
+
+			expect(end.getTime()).toBeGreaterThan(start.getTime());
+			expect(timezone.tz(end, 'America/New_York').format('YYYY-MM-DD HH:mm')).toBe('2026-03-09 03:00');
+		});
+
+		it('rolls a midnight crossing whose end lands in the repeated hour', () => {
+			// 23:00 on 31 Oct to 01:00 on 1 Nov. The end IS ambiguous, but the inversion (22 hours) is
+			// far larger than the repetition, so the allowance must not swallow it.
+			component = build('America/New_York');
+			component.date = moment('2026-10-31', 'YYYY-MM-DD').toDate();
+			component.startTime = '23:00';
+			component.endTime = '01:00';
+
+			const { start, end } = component.composeRange();
+
+			expect(end.getTime()).toBeGreaterThan(start.getTime());
+			expect(timezone.tz(end, 'America/New_York').format('YYYY-MM-DD HH:mm')).toBe('2026-11-01 01:00');
+		});
+
 		it('does NOT roll the end when a fall-back offset change inverts the pair', () => {
 			// America/New_York, 1 Nov 2026: 02:00 EDT falls back to 01:00 EST, so 01:xx happens twice.
 			// This is a real 30-minute log — 01:30 EDT to 02:00 EDT — but read back it renders as
