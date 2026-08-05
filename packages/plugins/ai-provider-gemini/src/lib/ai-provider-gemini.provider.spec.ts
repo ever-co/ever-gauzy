@@ -65,6 +65,26 @@ describe('geminiProviderDefinition.listModels', () => {
 		expect(result.models.some((model) => model.id === id)).toBe(kept);
 	});
 
+	it('drops a model that does not answer generateContent at all', async () => {
+		// The shared first filter. Every other case in this file stamps `generateContent` on, so
+		// without this the gate itself is never exercised.
+		jest.resetModules();
+		global.fetch = jest.fn().mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					models: [{ name: 'models/embedding-gecko-001', supportedGenerationMethods: ['embedText'] }]
+				}),
+				{ status: 200, headers: { 'content-type': 'application/json' } }
+			)
+		) as unknown as typeof fetch;
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
+		const { geminiProviderDefinition } = require('./ai-provider-gemini.provider');
+
+		const result = await geminiProviderDefinition.listModels(credentials());
+
+		expect(result.source).toBe('curated');
+	});
+
 	it('sends the key as a header, never in the URL', async () => {
 		const creds = credentials();
 		const { url, headers } = await load(['gemini-3.5-flash'], creds);

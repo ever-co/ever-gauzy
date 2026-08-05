@@ -76,7 +76,11 @@ const listCatalogue = async (credentials: IAiProviderCredentials | null): Promis
 				.filter((m) => typeof m?.id === 'string' && !NON_CHAT_PATTERNS.some((pattern) => pattern.test(m.id)))
 				.map((m) => ({ id: m.id, label: prettifyModelId(m.id), providerId: PROVIDER_ID }))
 				.sort((a, b) => a.id.localeCompare(b.id));
-			return mergeCatalogue(MODELS, fetched);
+			// An empty upstream list must NOT come back as `live`: merging always retains the curated
+			// entries, so a non-empty result would be reported as a complete live catalogue and the
+			// message explaining that nothing was fetched would never show. Empty in, empty out — the
+			// helper then labels it curated.
+			return fetched.length ? mergeCatalogue(MODELS, fetched) : [];
 		}
 	});
 

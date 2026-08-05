@@ -332,6 +332,14 @@ export class AiChatSettingsComponent implements OnInit {
 			this.load();
 		}
 
+		// The memoised picker items freeze the TRANSLATED "Custom model…" label, and neither of the
+		// cache's other invalidations (a credential change, a new source array) fires on a language
+		// switch — so without this the sentinel keeps rendering in the previous language.
+		this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+			this.modelOptionsCache.clear();
+			this.cdr.markForCheck();
+		});
+
 		// Keep the view in sync with the query params (back/forward navigation).
 		this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
 			const providerId = params.get('provider');
@@ -583,6 +591,12 @@ export class AiChatSettingsComponent implements OnInit {
 	 * tells you to type — matched nothing and reported the model as absent while it sat in the list.
 	 */
 	readonly searchModel = (term: string, model: IAiChatModel): boolean => {
+		// "Custom model…" always survives. It is the escape hatch for a model that is NOT in the list,
+		// so filtering it out on a search that matches nothing leaves the not-found text telling the
+		// user to pick an option that is no longer on screen.
+		if (model.id === CUSTOM_MODEL) {
+			return true;
+		}
 		const needle = term.toLowerCase();
 		return model.id.toLowerCase().includes(needle) || (model.label ?? '').toLowerCase().includes(needle);
 	};

@@ -84,7 +84,11 @@ const listCatalogue = async (credentials: IAiProviderCredentials | null): Promis
 			// the same reason: the Gemini API exposes no tool-capability field, so a denylist can only
 			// remove the families we already know about. The curated entries are the ones actually
 			// verified against the agent's tool use, so they lead.
-			return mergeCatalogue(MODELS, fetched);
+			// An empty upstream list must NOT come back as `live`: merging always retains the curated
+			// entries, so a non-empty result would be reported as a complete live catalogue and the
+			// message explaining that nothing was fetched would never show. Empty in, empty out — the
+			// helper then labels it curated.
+			return fetched.length ? mergeCatalogue(MODELS, fetched) : [];
 		}
 	});
 
