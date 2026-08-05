@@ -351,6 +351,12 @@ const selectRowFor = async (toolbarBtnCss: string) => {
 		await getPage().waitForTimeout(800);
 	}
 
+	// One last look before giving up: the loop's final wait may be exactly when the
+	// toolbar became ready, and throwing on the pre-wait observation would be the
+	// same "not observed yet means it did not happen" mistake this whole helper
+	// exists to remove.
+	if (await toolbarBtnReady(toolbarBtnCss)) return;
+
 	// Fail HERE rather than letting the caller's generic visibility assertion time
 	// out: "the toolbar never enabled" and "the button is missing" have different
 	// causes, and the caller's message cannot tell them apart.
