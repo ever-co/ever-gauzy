@@ -128,7 +128,7 @@ describe('TimerRangePickerComponent', () => {
 		});
 
 		it('never composes an end BEFORE its start in any zone', () => {
-			// The failure that made the edit unsaveable. Checked against the same fixed pair of instants
+			// The failure that blocked saving an edit. Checked against the same fixed pair of instants
 			// for every zone, so a zone ahead of UTC, behind it, or on a half-hour offset all count.
 			const inverted: string[] = [];
 
