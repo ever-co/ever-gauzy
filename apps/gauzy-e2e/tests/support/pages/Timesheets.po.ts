@@ -227,32 +227,106 @@ export const saveTimeLogButtonVisible = async () => verifyElementIsVisible(Times
 // "No Data", the next step's row click then timed out). Trigger the real submit instead: call
 // requestSubmit() on the dialog's <form> (fires the (submit) handler regardless of any fading backdrop
 // and still gates on the disabled/spinner state), with a real-click fallback.
+// The dialog's own <form>. Scoped by the Save button it contains rather than by the component tag, so
+// it keeps matching if the modal is renamed. Only one such dialog is ever open at a time.
+const timeLogFormCss = `form:has(${TimesheetsPage.saveTimeButtonCss})`;
+
+/**
+ * Submit the Add/Edit Time Log dialog and wait until it has actually been accepted.
+ *
+ * Two SILENT no-ops make "I clicked Save" a much weaker claim than it looks here, and both were
+ * observed in CI run 30987411046 (shard 4, all three attempts):
+ *
+ *  1. `addTime()` opens with `if (this.form.invalid) return;` — no toast, no error, no visual change.
+ *     The employee select is `required`, so until it commits its value the form is invalid and Save
+ *     does NOTHING. Snapshot: the filled "Add Time Logs" dialog still up and no new row.
+ *  2. `requestSubmit()` honours the submit button's `[disabled]="loading"` gate, so it also silently
+ *     does nothing while a previous save is in flight.
+ *
+ * The old code returned "submitted" as soon as it found the <form>, so both no-ops read as success.
+ * The spec then failed two steps later with "row not found" / "eye-outline not visible", which names
+ * neither cause. So: wait for the form to be genuinely submittable, then treat the dialog CLOSING as
+ * the success signal (that is what `addTime()` does on success), and report which controls are still
+ * invalid if it never does.
+ */
 export const clickSaveTimeLogButton = async () => {
 	await waitForSpinnerGone();
 	const page = getPage();
-	const submitted = await page
-		.evaluate((btnSel) => {
-			try {
+
+	const dialogGone = async () => (await page.locator(timeLogFormCss).count().catch(() => 1)) === 0;
+
+	const submitOnce = async () =>
+		page
+			.evaluate((btnSel) => {
 				const btn = document.querySelector(btnSel) as HTMLButtonElement | null;
 				const form = btn?.closest('form') as HTMLFormElement | null;
-				if (!form) return false;
-				// requestSubmit() respects the submit button (its [disabled] gate) and dispatches the
-				// native 'submit' event that Angular's (submit)="addTime()" listens for.
-				if (typeof form.requestSubmit === 'function') {
-					form.requestSubmit(btn ?? undefined);
-				} else {
-					form.submit();
-				}
+				if (!form || btn?.disabled) return false;
+				form.requestSubmit(btn ?? undefined);
 				return true;
-			} catch {
-				return false;
-			}
-		}, TimesheetsPage.saveTimeButtonCss)
-		.catch(() => false);
-	if (!submitted) {
-		// Fallback: a real Playwright click performs the button's default action (native form submit).
-		await page.locator(TimesheetsPage.saveTimeButtonCss).first().click({ force: true });
+			}, TimesheetsPage.saveTimeButtonCss)
+			.catch(() => false);
+
+	// BOTH submit paths are no-ops while the button is disabled — requestSubmit() honours the gate, and
+	// a click (forced or not) on a disabled button performs no default action — so "enabled" is the
+	// shared precondition, not something a fallback can work around. An unreadable state just keeps us
+	// waiting, which is safe here: only the end-state check below decides success.
+	const saveBtnEnabled = async () => {
+		const btn = page.locator(TimesheetsPage.saveTimeButtonCss).first();
+		if ((await btn.count().catch(() => 0)) === 0) return false;
+		return btn.isEnabled().catch(() => false);
+	};
+
+	for (let attempt = 0; attempt < 3; attempt++) {
+		// Check the END STATE before acting: a dialog that closed while we were waiting is a success,
+		// not a reason to submit again into whatever screen replaced it.
+		if (await dialogGone()) return;
+
+		// Angular puts ng-valid/ng-invalid on the [formGroup] host, so form validity — the thing
+		// `addTime()` actually gates on — is readable from the DOM.
+		await page
+			.locator(`${timeLogFormCss}.ng-valid`)
+			.waitFor({ state: 'attached', timeout: 20_000 })
+			.catch(() => undefined);
+
+		for (let i = 0; i < 20 && !(await saveBtnEnabled()); i++) {
+			if (await dialogGone()) return;
+			await page.waitForTimeout(500);
+		}
+
+		if (await dialogGone()) return;
+
+		// Final attempt uses a REAL click so the button's own native default action runs, in case the
+		// synthetic submit is being swallowed. Unconditional rather than a fallback on submitOnce()'s
+		// return: the case worth retrying differently is "submit fired but the dialog never closed",
+		// and there submitOnce() returns true. Not forced — we just waited for it to be enabled.
+		if (attempt === 2) {
+			await page
+				.locator(TimesheetsPage.saveTimeButtonCss)
+				.first()
+				.click()
+				.catch(() => undefined);
+		} else {
+			await submitOnce();
+		}
+
+		for (let i = 0; i < 24; i++) {
+			if (await dialogGone()) return;
+			await page.waitForTimeout(500);
+		}
 	}
+
+	// One last look: the final 500ms wait may be exactly when the dialog closed.
+	if (await dialogGone()) return;
+
+	const invalid = await page
+		.$$eval(`${timeLogFormCss} .ng-invalid[formcontrolname]`, (els: Element[]) =>
+			els.map((el) => el.getAttribute('formcontrolname'))
+		)
+		.catch(() => [] as (string | null)[]);
+	throw new Error(
+		`Add/Edit Time Log dialog never closed after 3 submit attempts, so no time log was written. ` +
+			`Controls still invalid: [${invalid.join(', ') || 'none — check for a save error toast'}]`
+	);
 };
 
 export const closeAddTimeLogPopoverButtonVisible = async () =>
@@ -314,15 +388,56 @@ const selectRowFor = async (toolbarBtnCss: string) => {
 		.filter({ hasText: TimesheetsPageData.defaultDescription })
 		.first();
 	const row = (await ours.count()) > 0 ? ours : getPage().locator(TimesheetsPage.timeLogRowCss).first();
-	await row.click({ force: true });
-	for (let i = 0; i < 5; i++) {
-		if (await toolbarBtnReady(toolbarBtnCss)) return; // selected + enabled
-		await getPage().waitForTimeout(800);
-		// Still not ready after settling — selection was lost; toggle it back on.
-		if (!(await toolbarBtnReady(toolbarBtnCss))) {
-			await row.click({ force: true });
+
+	/**
+	 * The row click TOGGLES selection (`(click)="userRowSelect(log)"`), so a retry
+	 * loop that re-clicks whenever the toolbar "is not ready yet" will happily
+	 * DESELECT a correctly-selected row and oscillate. The previous loop did exactly
+	 * that: check, wait 800ms, check again, click again — with the toolbar only
+	 * appearing after Angular renders `#actionButtons`, that races on every run and
+	 * could finish deselected.
+	 *
+	 * The row carries `[class.selected]="log?.isSelected"`, so selection is
+	 * observable directly. Drive to the desired STATE instead of blind-toggling:
+	 * only click when the row is not selected, and treat "selected but toolbar not
+	 * rendered yet" as something to wait out, never to click again.
+	 *
+	 * `dispatchEvent('click')` rather than `click({ force: true })`: force only skips
+	 * the actionability CHECK, the event is still delivered at coordinates and can be
+	 * eaten by whatever occupies that point — which is how this spec failed in CI
+	 * ("locator.click: Timeout" on a row that was present).
+	 */
+	/**
+	 * `undefined` when the state could not be READ (a transient re-render detaches
+	 * the node and `evaluate` throws). Deliberately not `false`: "unknown" is not
+	 * "unselected", and collapsing the two would click an already-selected row and
+	 * reintroduce the very oscillation this loop exists to prevent.
+	 */
+	const isSelected = async (): Promise<boolean | undefined> =>
+		row.evaluate((el) => el.classList.contains('selected')).catch(() => undefined);
+
+	for (let i = 0; i < 6; i++) {
+		if (await toolbarBtnReady(toolbarBtnCss)) return; // selected AND toolbar enabled
+		// Click ONLY on an explicit `false`. On `undefined` wait and re-observe.
+		if ((await isSelected()) === false) {
+			await row.dispatchEvent('click').catch(() => undefined);
 		}
+		await getPage().waitForTimeout(800);
 	}
+
+	// One last look before giving up: the loop's final wait may be exactly when the
+	// toolbar became ready, and throwing on the pre-wait observation would be the
+	// same "not observed yet means it did not happen" mistake this whole helper
+	// exists to remove.
+	if (await toolbarBtnReady(toolbarBtnCss)) return;
+
+	// Fail HERE rather than letting the caller's generic visibility assertion time
+	// out: "the toolbar never enabled" and "the button is missing" have different
+	// causes, and the caller's message cannot tell them apart.
+	throw new Error(
+		`Timesheet row selection never enabled the toolbar after 6 attempts (${toolbarBtnCss}); ` +
+			`row selected=${await isSelected()}`
+	);
 };
 
 export const viewEmployeeTimeLogButtonVisible = async () => {
