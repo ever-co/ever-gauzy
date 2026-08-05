@@ -48,15 +48,20 @@ const openNgSelect = async (selector: string, typeahead?: string) => {
 	}
 };
 
-// Best-effort ng-option pick. The Add-Time dialog's project/client/task selects are DECORATIVE for a
-// valid save: edit-time-log-modal.buildForm() declares NO Validators, so `form.invalid` is effectively
-// always false, and addTime() persists using the constructor's default 1-hour `selectedRange` and an
-// employeeId fallback to the current user — i.e. the time log is created whether or not these dropdowns
-// were filled. So a slow/absent option must NOT hard-fail the flow (the old clickElementByText/
-// clickButtonByIndex used a 60s force-timeout — the round-6 failure was exactly this hanging on the
-// 'Gauzy Web Site' option). Pick by text if present within a short window, else by index, else Escape
-// and move on so the flow still reaches Save and the record persists. (ROUND 7 (a) — prove the record
-// persists rather than blocking on optional decoration.)
+// Best-effort ng-option pick: a slow or absent option must not hard-fail the flow. (The old
+// clickElementByText/clickButtonByIndex used a 60s force-timeout, and the round-6 failure was exactly
+// that hanging on the 'Gauzy Web Site' option.) Pick by text if it shows up within a short window,
+// else by index, else Escape and move on so the flow still reaches Save.
+//
+// Whether these dropdowns are optional is the ORGANISATION's call, not the form's. Reading
+// `edit-time-log-modal.buildForm()` alone says "no Validators anywhere, so `form.invalid` is always
+// false" — but validators also arrive from the TEMPLATE: `employeeId` carries a bare `required`, and
+// client/project/task/description/reason carry `[required]="organization?.requireX"`. Under the
+// default seed those flags are off and only the employee is required (and `addTime()` falls back to
+// the current user's employee id anyway), which is why skipping them still saves. On an organisation
+// that sets any `require*` flag it would not, and Save is a SILENT no-op — `addTime()` opens with
+// `if (this.form.invalid) return;`. `clickSaveTimeLogButton` below reports which controls are still
+// invalid for exactly that reason.
 const bestEffortPick = async (text?: string, index = 0) => {
 	const page = getPage();
 	const options = page.locator(TimesheetsPage.dropdownOptionCss);
@@ -160,10 +165,11 @@ export const enterDateData = async () => {
 	//   new Date(moment(this.date).format('YYYY-MM-DD') + ' ' + this.startTime + tzOffset)
 	// (timer-range-picker.component.ts). clearField() nulls `this.date`, and re-typing a
 	// 'MMM D, YYYY' string doesn't parse under the picker's 'YYYY-MM-DD' nbDatepicker format, so
-	// `this.date` goes invalid → start/end become NaN → `selectedRange = { start: null, end: null }`.
-	// addTime() has NO form validators (buildForm declares none, so form.invalid is always false) and
-	// then does toUTC(null) on save → the request errors, an error toast shows and the dialog stays
-	// OPEN → the time log is never created → the next step's row-select finds no row and times out.
+	// `this.date` goes invalid → start/end become null → `selectedRange = { start: null, end: null }`.
+	// Nothing catches that: `selectedRange` carries no validator (see the note above bestEffortPick for
+	// where this form's validators DO come from), so `addTime()` proceeds and does toUTC(null) on save
+	// → the request errors, an error toast shows and the dialog stays OPEN → the time log is never
+	// created → the next step's row-select finds no row and times out.
 	// The default range is exactly what we want (today), so leave the field untouched — this makes the
 	// save deterministically valid in both the create AND edit steps. (ROUND 8 (a): prove the record
 	// persists — the create/edit form must stay valid.)
