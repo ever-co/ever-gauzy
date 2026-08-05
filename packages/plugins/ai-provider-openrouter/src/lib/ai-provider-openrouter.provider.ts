@@ -1,6 +1,7 @@
 import type { LanguageModel } from 'ai';
 import { AiProviderEnum, IAiChatModel } from '@gauzy/contracts';
 import {
+	IAiChatModelList,
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
 	createCatalogueCache,
@@ -140,7 +141,7 @@ const catalogueCache = createCatalogueCache<IAiChatModel[]>();
  * cheap guard against that query parameter being ignored or renamed, which would otherwise quietly
  * widen the list to models the agent cannot use.
  */
-const listCatalogue = async (): Promise<IAiChatModel[]> =>
+const listCatalogue = async (): Promise<IAiChatModelList> =>
 	publicCatalogue({
 		curated: MODELS,
 		cache: catalogueCache,

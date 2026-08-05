@@ -1,5 +1,6 @@
 import { AiProviderEnum, IAiChatModel } from '@gauzy/contracts';
 import {
+	IAiChatModelList,
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
 	createCatalogueCache,
@@ -37,7 +38,7 @@ const catalogueCache = createCatalogueCache<IAiChatModel[]>();
  * and the key goes in the `x-goog-api-key` **header**. Passing it as `?key=` would put a live
  * credential into request URLs, which land in proxy and access logs.
  */
-const listCatalogue = async (credentials: IAiProviderCredentials | null): Promise<IAiChatModel[]> =>
+const listCatalogue = async (credentials: IAiProviderCredentials | null): Promise<IAiChatModelList> =>
 	keyedCatalogue({
 		credentials,
 		curated: MODELS,

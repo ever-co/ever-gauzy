@@ -438,9 +438,19 @@ export class AiChatService {
 			return { providerId, models: definition.models, source: 'curated' };
 		}
 		try {
-			const models = await definition.listModels(credentials);
-			return models.length
-				? { providerId, models, source: 'live' }
+			const listed = await definition.listModels(credentials);
+			// The hook reports its own source, rather than this inferring `live` from "the array is not
+			// empty". Those are different questions: a provider with no key yet, and a provider whose
+			// fetch failed, both return a perfectly non-empty CURATED list — and calling that live left
+			// the settings page unable to say "save an API key to load the full list", which is the one
+			// thing the user needs to hear at that moment.
+			return listed.models.length
+				? {
+						providerId,
+						models: listed.models,
+						source: listed.source,
+						...(listed.stale ? { stale: true } : {})
+					}
 				: { providerId, models: definition.models, source: 'curated' };
 		} catch (error) {
 			this.logger.warn(

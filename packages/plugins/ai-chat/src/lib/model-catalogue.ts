@@ -11,7 +11,7 @@
  */
 
 import type { IAiChatModel } from '@gauzy/contracts';
-import type { IAiProviderCredentials } from './provider.types';
+import type { IAiChatModelList, IAiProviderCredentials } from './provider.types';
 
 /** How long a fetched catalogue stays fresh. Model lists change on the order of weeks. */
 const DEFAULT_TTL_MS = 30 * 60 * 1000;
@@ -119,6 +119,13 @@ export function createCatalogueCache<T>(options?: {
 					fetchedAt: cached?.fetchedAt ?? 0,
 					failedAt: Date.now()
 				});
+				// The caller that triggers the refresh is the one that must not be punished for it.
+				// Throwing here dropped it to the pinned fallback while every caller BEHIND it — inside
+				// the negative TTL — got served the real, slightly old list. Exactly backwards, and
+				// invisible in testing because the second call always looked right.
+				if (cached) {
+					return { value: cached.value, stale: true };
+				}
 				throw error;
 			} finally {
 				inFlight.delete(key);
@@ -165,11 +172,36 @@ export async function fetchCatalogueJson<T>(url: string, init?: { headers?: Reco
 		// credential, and error bodies have been known to echo request context back.
 		throw new Error(`Model catalogue request failed: ${response.status} ${response.statusText}`);
 	}
-	const length = Number(response.headers.get('content-length') ?? 0);
-	if (length > MAX_RESPONSE_BYTES) {
-		throw new Error(`Model catalogue response too large: ${length} bytes`);
+
+	// Cheap pre-check: when the header IS present and already too big, stop before reading a byte.
+	const declared = Number(response.headers.get('content-length') ?? 0);
+	if (declared > MAX_RESPONSE_BYTES) {
+		throw new Error(`Model catalogue response too large: ${declared} bytes`);
 	}
-	return (await response.json()) as T;
+
+	// The header is the hint, not the bound. Chunked and HTTP/2 responses carry no content-length at
+	// all, so checking only the header and then calling `response.json()` buffers whatever arrives —
+	// a cap that reads as enforced and is not. Count what is actually read and abandon the stream at
+	// the limit.
+	const reader = response.body?.getReader();
+	if (!reader) {
+		return (await response.json()) as T;
+	}
+	const decoder = new TextDecoder();
+	let text = '';
+	let received = 0;
+	for (;;) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		received += value.byteLength;
+		if (received > MAX_RESPONSE_BYTES) {
+			await reader.cancel().catch(() => undefined);
+			throw new Error(`Model catalogue response too large: over ${MAX_RESPONSE_BYTES} bytes`);
+		}
+		text += decoder.decode(value, { stream: true });
+	}
+	text += decoder.decode();
+	return JSON.parse(text) as T;
 }
 
 /**
@@ -181,12 +213,12 @@ export async function publicCatalogue(options: {
 	curated: IAiChatModel[];
 	cache: ICatalogueCache<IAiChatModel[]>;
 	load: () => Promise<IAiChatModel[]>;
-}): Promise<IAiChatModel[]> {
+}): Promise<IAiChatModelList> {
 	try {
-		const { value } = await options.cache.get('public', options.load);
-		return value.length ? value : options.curated;
+		const { value, stale } = await options.cache.get('public', options.load);
+		return value.length ? { models: value, source: 'live', stale } : { models: options.curated, source: 'curated' };
 	} catch {
-		return options.curated;
+		return { models: options.curated, source: 'curated' };
 	}
 }
 
@@ -211,14 +243,16 @@ export async function keyedCatalogue(options: {
 	curated: IAiChatModel[];
 	cache: ICatalogueCache<IAiChatModel[]>;
 	load: (credentials: IAiProviderCredentials) => Promise<IAiChatModel[]>;
-}): Promise<IAiChatModel[]> {
+}): Promise<IAiChatModelList> {
 	const { credentials, curated } = options;
-	if (!credentials?.apiKey || credentials.baseUrl) return curated;
+	if (!credentials?.apiKey || credentials.baseUrl) return { models: curated, source: 'curated' };
 	try {
-		const { value } = await options.cache.get(credentialCacheKey(credentials), () => options.load(credentials));
-		return value.length ? value : curated;
+		const { value, stale } = await options.cache.get(credentialCacheKey(credentials), () =>
+			options.load(credentials)
+		);
+		return value.length ? { models: value, source: 'live', stale } : { models: curated, source: 'curated' };
 	} catch {
-		return curated;
+		return { models: curated, source: 'curated' };
 	}
 }
 

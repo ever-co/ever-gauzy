@@ -175,8 +175,14 @@ export class AiChatSettingsComponent implements OnInit {
 	 * the picker is never empty while this is loading or if it fails.
 	 */
 	private readonly modelCatalogues = signal<Map<string, IAiChatModelCatalogue>>(new Map());
-	/** Provider id whose catalogue is currently being fetched (or `null`). */
-	readonly loadingModels = signal<string | null>(null);
+	/**
+	 * Provider ids whose catalogue is in flight.
+	 *
+	 * A SET, not one id. Switching from provider A to B before A returns had A's completion clear the
+	 * single slot, dropping B's spinner while B was still loading — and leaving A's guard open, so
+	 * going back to A fired a duplicate request.
+	 */
+	private readonly loadingModels = signal<ReadonlySet<string>>(new Set());
 
 	/** The provider object for the config view. */
 	readonly selectedProvider = computed<IAiChatProvider | null>(
@@ -469,17 +475,21 @@ export class AiChatSettingsComponent implements OnInit {
 	 * upstream API on every back-and-forth between the list and the config view.
 	 */
 	loadModels(providerId: string): void {
-		if (this.modelCatalogues().has(providerId) || this.loadingModels() === providerId) {
+		if (this.modelCatalogues().has(providerId) || this.loadingModels().has(providerId)) {
 			return;
 		}
-		this.loadingModels.set(providerId);
+		this.loadingModels.update((current) => new Set(current).add(providerId));
 		this.settingsService
 			.getProviderModels(providerId)
 			.pipe(
 				takeUntilDestroyed(this.destroyRef),
 				catchError(() => of(null)),
 				finalize(() => {
-					this.loadingModels.set(null);
+					this.loadingModels.update((current) => {
+						const next = new Set(current);
+						next.delete(providerId);
+						return next;
+					});
 					this.cdr.markForCheck();
 				})
 			)
@@ -491,6 +501,31 @@ export class AiChatSettingsComponent implements OnInit {
 				this.reconcileModelSelection(providerId);
 				this.cdr.markForCheck();
 			});
+	}
+
+	/** Whether this provider's catalogue is being fetched right now. */
+	isLoadingModels(providerId: string): boolean {
+		return this.loadingModels().has(providerId);
+	}
+
+	/**
+	 * Forget a provider's cached catalogue, so the next visit re-fetches it.
+	 *
+	 * Called whenever the CREDENTIAL changes, because the catalogue depends on it. Without this, the
+	 * flow the whole feature exists to fix reappears one step later: a provider running on the shared
+	 * free key shows the free-tier list, the user saves their own key in that very form, and on
+	 * returning they are still offered the four free models — the cached answer to a question that no
+	 * longer applies.
+	 */
+	private invalidateCatalogue(providerId: string): void {
+		this.modelCatalogues.update((current) => {
+			if (!current.has(providerId)) {
+				return current;
+			}
+			const next = new Map(current);
+			next.delete(providerId);
+			return next;
+		});
 	}
 
 	/**
@@ -530,10 +565,19 @@ export class AiChatSettingsComponent implements OnInit {
 			return null;
 		}
 		if (catalogue.source === 'platform') {
-			return 'AI_CHAT_UI.SETTINGS.FORM.MODELS_PLATFORM';
+			// An EMPTY platform list is not "limited to the free models" — it means the free list could
+			// not be determined, and the server will refuse every model until it can. Saying the former
+			// in front of an empty dropdown reads as a UI bug.
+			return catalogue.models.length
+				? 'AI_CHAT_UI.SETTINGS.FORM.MODELS_PLATFORM'
+				: 'AI_CHAT_UI.SETTINGS.FORM.MODELS_PLATFORM_UNAVAILABLE';
 		}
 		if (catalogue.source === 'curated') {
-			return 'AI_CHAT_UI.SETTINGS.FORM.MODELS_CURATED';
+			// Two different situations reach 'curated', and they need opposite advice. Telling a user
+			// whose key IS saved to "save an API key" reads as the page not knowing what it is doing.
+			return provider.configured
+				? 'AI_CHAT_UI.SETTINGS.FORM.MODELS_CURATED_UNAVAILABLE'
+				: 'AI_CHAT_UI.SETTINGS.FORM.MODELS_CURATED_NO_KEY';
 		}
 		return catalogue.stale ? 'AI_CHAT_UI.SETTINGS.FORM.MODELS_STALE' : null;
 	}
@@ -648,6 +692,9 @@ export class AiChatSettingsComponent implements OnInit {
 			)
 			.subscribe({
 				next: () => {
+					// Disabling a tenant key can hand the provider back to the shared platform key, which
+					// has a different (narrower) model list.
+					this.invalidateCatalogue(provider.id);
 					this.load();
 					// Disabling the last enabled credential takes the chat away —
 					// and enabling one brings it back. Both must be reflected now.
@@ -750,6 +797,13 @@ export class AiChatSettingsComponent implements OnInit {
 	 */
 	private finishConnect(): void {
 		void this.router.navigate([], { relativeTo: this.route, queryParams: {} });
+		// Connect writes a tenant key, so the catalogue it replaces is now wrong. Unconditional
+		// because this also runs on the failure path, where re-fetching costs one call and being
+		// wrong costs the user their full model list.
+		const pending = this.selectedProviderId();
+		if (pending) {
+			this.invalidateCatalogue(pending);
+		}
 		this.load();
 		// A successful Connect changes the chat's verdict, so the gate has to be
 		// re-evaluated or the chat stays hidden until a full reload.
@@ -826,6 +880,9 @@ export class AiChatSettingsComponent implements OnInit {
 						this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SAVED', { provider: provider.label }),
 						this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
 					);
+					// The saved key IS the catalogue's input — a tenant key that just replaced the shared
+					// free one unlocks the provider's full list.
+					this.invalidateCatalogue(provider.id);
 					this.load();
 					// The very first provider turns the chat on — the list view the
 					// user lands on must already say so.
@@ -875,6 +932,8 @@ export class AiChatSettingsComponent implements OnInit {
 					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.DELETED', { provider: provider.label }),
 					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
 				);
+				// Removing the tenant key drops the provider back to whatever resolves next.
+				this.invalidateCatalogue(provider.id);
 				this.load();
 				// Deleting the last credential takes the chat away again.
 				this.refreshChatAvailability();

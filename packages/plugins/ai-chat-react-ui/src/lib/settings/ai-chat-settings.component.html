@@ -320,7 +320,7 @@
 							bindValue="id"
 							bindLabel="label"
 							[items]="modelOptions(provider)"
-							[loading]="loadingModels() === provider.id"
+							[loading]="isLoadingModels(provider.id)"
 							[clearable]="true"
 							[searchable]="true"
 							[virtualScroll]="true"

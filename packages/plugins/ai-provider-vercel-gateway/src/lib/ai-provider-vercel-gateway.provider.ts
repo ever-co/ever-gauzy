@@ -1,5 +1,6 @@
 import { AiProviderEnum, IAiChatModel } from '@gauzy/contracts';
 import {
+	IAiChatModelList,
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
 	createCatalogueCache,
@@ -34,7 +35,7 @@ const catalogueCache = createCatalogueCache<IAiChatModel[]>();
  * (`supported_parameters`, which agrees exactly with the `tool-use` tag), and retired models stay
  * listed with a `deprecated_at` stamp.
  */
-const listCatalogue = async (): Promise<IAiChatModel[]> =>
+const listCatalogue = async (): Promise<IAiChatModelList> =>
 	publicCatalogue({
 		curated: MODELS,
 		cache: catalogueCache,

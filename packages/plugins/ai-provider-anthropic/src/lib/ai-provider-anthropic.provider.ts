@@ -1,5 +1,6 @@
 import { AiProviderEnum, IAiChatModel } from '@gauzy/contracts';
 import {
+	IAiChatModelList,
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
 	createCatalogueCache,
@@ -44,7 +45,7 @@ const catalogueCache = createCatalogueCache<IAiChatModel[]>();
  * pinned high, otherwise a picker silently loses models), and it requires the `anthropic-version`
  * header or answers 400.
  */
-const listCatalogue = async (credentials: IAiProviderCredentials | null): Promise<IAiChatModel[]> =>
+const listCatalogue = async (credentials: IAiProviderCredentials | null): Promise<IAiChatModelList> =>
 	keyedCatalogue({
 		credentials,
 		curated: MODELS,

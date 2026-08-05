@@ -24,6 +24,22 @@ export interface IAiProviderCredentials {
 }
 
 /**
+ * What a provider's {@link IAiChatProviderDefinition.listModels} hands back.
+ *
+ * Carries WHERE the list came from, not just the list. Returning a bare array made a curated
+ * fallback indistinguishable from a live fetch, so the settings page reported every list as live —
+ * including the one it shows before any key is saved, and including a cached list served after a
+ * failed refresh. The UI has a message for each of those and could never reach either.
+ */
+export interface IAiChatModelList {
+	models: IAiChatModel[];
+	/** `'live'` came from the provider; `'curated'` is the pinned fallback. */
+	source: 'live' | 'curated';
+	/** Set when `'live'` models came from a cache whose refresh failed. */
+	stale?: boolean;
+}
+
+/**
  * Contract implemented by AI provider plugins
  * (`@gauzy/plugin-ai-provider-anthropic`, `-openai`, `-openrouter`, …).
  *
@@ -86,7 +102,7 @@ export interface IAiChatProviderDefinition {
 	 * @param credentials Resolved credentials, or `null` when none exist yet. Providers with a public
 	 *                    catalogue ignore this; the rest return their curated list when it is null.
 	 */
-	listModels?(credentials: IAiProviderCredentials | null): Promise<IAiChatModel[]>;
+	listModels?(credentials: IAiProviderCredentials | null): Promise<IAiChatModelList>;
 	/** Display ordering (ascending) in provider lists/catalogs. Unset sorts last. */
 	readonly order?: number;
 	/**

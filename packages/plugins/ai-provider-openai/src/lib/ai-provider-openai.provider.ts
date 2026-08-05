@@ -1,5 +1,6 @@
 import { AiProviderEnum, IAiChatModel } from '@gauzy/contracts';
 import {
+	IAiChatModelList,
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
 	createCatalogueCache,
@@ -39,9 +40,15 @@ const NON_CHAT_PATTERNS = [
 	/^dall-e/,
 	/^gpt-image/,
 	/moderation/,
-	/^(davinci|babbage|curie|ada)/,
+	// The legacy completion families are listed as `text-davinci-003`, `code-davinci-002` and so on,
+	// so anchoring to the start of the id misses every one of them.
+	/(^|[-_])(davinci|babbage|curie|ada)/,
 	/-(audio|realtime|transcribe|tts)\b/,
-	/-search-preview/
+	/-search-preview/,
+	// `gpt-3.5-turbo-instruct` is Completions-only: it has no tool calling, so it would be offered
+	// here and then fail on the agent's very first turn. On OpenAI the `-instruct` suffix marks
+	// exactly that family (it is other vendors' hosted Llama/Qwen builds that use it more broadly).
+	/-instruct(-|$)/
 ];
 
 /** Model catalogue cache, keyed per credential: model access is account-specific on OpenAI. */
@@ -54,7 +61,7 @@ const catalogueCache = createCatalogueCache<IAiChatModel[]>();
  * nothing about capabilities — so the fetched list is merged BELOW the curated one rather than
  * replacing it: the curated entries are the models actually verified against the agent's tool use.
  */
-const listCatalogue = async (credentials: IAiProviderCredentials | null): Promise<IAiChatModel[]> =>
+const listCatalogue = async (credentials: IAiProviderCredentials | null): Promise<IAiChatModelList> =>
 	keyedCatalogue({
 		credentials,
 		curated: MODELS,

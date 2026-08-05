@@ -9,7 +9,7 @@ export { AiChatController } from './lib/ai-chat.controller';
 // Provider SPI — implemented by @gauzy/plugin-ai-provider-* plugins
 export { AiProviderRegistry } from './lib/provider-registry';
 export { BaseAiProviderPlugin } from './lib/base-ai-provider.plugin';
-export type { IAiChatProviderDefinition, IAiProviderCredentials } from './lib/provider.types';
+export type { IAiChatModelList, IAiChatProviderDefinition, IAiProviderCredentials } from './lib/provider.types';
 export { importEsm, loadAiSdk } from './lib/esm-loader';
 
 // Shared plumbing for provider model catalogues: bounded fetch, credential-keyed cache, fail-open.

@@ -1,5 +1,6 @@
 import { AiProviderEnum, IAiChatModel } from '@gauzy/contracts';
 import {
+	IAiChatModelList,
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
 	createCatalogueCache,
@@ -29,7 +30,7 @@ const catalogueCache = createCatalogueCache<IAiChatModel[]>();
  * every other OpenAI-shaped endpoint uses; reading `data` yields an empty list, which would look like
  * "no models" rather than a parsing mistake.
  */
-const listCatalogue = async (credentials: IAiProviderCredentials | null): Promise<IAiChatModel[]> =>
+const listCatalogue = async (credentials: IAiProviderCredentials | null): Promise<IAiChatModelList> =>
 	keyedCatalogue({
 		credentials,
 		curated: MODELS,
