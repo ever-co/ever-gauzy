@@ -1,4 +1,4 @@
-import { Component, ElementRef, effect, inject, viewChild, afterNextRender, DestroyRef, signal, Type } from '@angular/core';
+import { Component, effect, inject, viewChild, afterNextRender, DestroyRef, signal, Type } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
 import { ChatSidebarService, LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
@@ -74,22 +74,9 @@ export class OneColumnLayoutComponent {
 
 		this.themeLanguageSelectorService.initialize();
 
-		// Track the chat sidebar HOST width (flex-computed: normal, maximized
-		// or collapsed) and mirror it to --gz-chat-live-width so the fixed
-		// .main-container always matches the space the host reserves.
-		effect(() => {
-			const hostRef = this.chatSidebarHost();
-			this.chatHostResizeObserver?.disconnect();
-			this.chatHostResizeObserver = undefined;
-			const host = hostRef?.nativeElement as HTMLElement | undefined;
-			// `observe()` throws on a non-Element, which would take the whole
-			// effect (and the width mirror with it) down silently.
-			if (!host || typeof ResizeObserver === 'undefined') return;
-			const apply = () => host.style.setProperty('--gz-chat-live-width', `${host.getBoundingClientRect().width}px`);
-			this.chatHostResizeObserver = new ResizeObserver(apply);
-			this.chatHostResizeObserver.observe(host);
-			apply();
-		});
+		// No ResizeObserver mirroring the chat width any more: the panel takes its width straight from
+		// `--gz-chat-width` (the persisted user width), so there is a single source of truth and
+		// nothing that can go stale. See one-column.layout.scss.
 
 		// Runs only in the browser, after the first render — replaces ngAfterViewInit + isPlatformBrowser
 		afterNextRender(() => {
@@ -100,29 +87,19 @@ export class OneColumnLayoutComponent {
 		this.destroyRef.onDestroy(() => {
 			this.navigationBuilderService.clearSidebars();
 			this.navigationBuilderService.clearActionBars();
-			this.chatHostResizeObserver?.disconnect();
 			this.headerResizeObserver?.disconnect();
 		});
 	}
 
 	/**
-	 * The chat sidebar host ELEMENT (present only while the chat renders).
+	 * Horizontal inset the header needs so it starts where the CANVAS starts.
 	 *
-	 * `read: ElementRef` is required, not cosmetic: `#chatSidebarHost` sits on
-	 * `<nb-sidebar>`, and a template reference variable on a component element
-	 * resolves to the component instance by default — so without it the query
-	 * returned an NbSidebarComponent, `.nativeElement` was undefined, and the
-	 * ResizeObserver effect in the constructor never published
-	 * `--gz-chat-live-width`. The panel then fell back to the docked chat
-	 * width, which is why maximizing looked inert.
-	 */
-	readonly chatSidebarHost = viewChild('chatSidebarHost', { read: ElementRef });
-
-	/**
-	 * Horizontal padding the fixed header needs on the given side so its
-	 * content moves aside for the expanded chat column instead of being
-	 * covered by it. Null when the chat is collapsed, docked to the other
-	 * side, or maximized (maximized covers the header band entirely).
+	 * The layout is three full-height columns — Menu | Chat | Canvas — and the header belongs to the
+	 * canvas alone, so it must not run across the chat. Nebular renders a `fixed` header at full
+	 * viewport width, so the inset is applied as padding on the side the chat is docked to.
+	 *
+	 * Null when there is nothing to inset around: collapsed, docked to the other side, or maximized
+	 * (maximized deliberately covers the header band, since the canvas is hidden anyway).
 	 */
 	chatHeaderPad(side: 'start' | 'end'): number | null {
 		const chat = this.chatSidebarService;
@@ -131,7 +108,6 @@ export class OneColumnLayoutComponent {
 			: null;
 	}
 
-	private chatHostResizeObserver?: ResizeObserver;
 	private headerResizeObserver?: ResizeObserver;
 
 	/**
@@ -144,9 +120,8 @@ export class OneColumnLayoutComponent {
 	 * panel behind the header — it is not visible at 4.5rem-tall headers, which
 	 * is why it survived review.
 	 *
-	 * Mirrors the `--gz-chat-live-width` observer above: measure the box the
-	 * browser actually produced, rather than restating a constant that the layout
-	 * is free to exceed.
+	 * The principle: measure the box the browser actually produced, rather than restating a
+	 * constant that the layout is free to exceed.
 	 */
 	private observeHeaderHeight(): void {
 		if (typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
