@@ -462,3 +462,27 @@ nb-sidebar[tag='menu-sidebar'] {
   @include nb-ltr(right, 20px);
   @include nb-rtl(left, 20px);
 }
+
+// ── The header band belongs to the CANVAS ────────────────────────────────────
+//
+// Nebular renders `nb-layout-header.fixed` at `left: 0; width: 100%`, i.e. across every column.
+// The chat panel is `position: fixed` at `z-index: 1041`, one above the header's 1040, so any
+// header content sharing that horizontal range is COVERED — measured on demo at 1280px: nav
+// sidebar 0-256, chat 256-640, header content starting at 384, so 256px of it (the demo banner's
+// opening words, the first filter) sat underneath the panel.
+//
+// This used to be handled with `padding-left` on the header equal to the chat's width. Two
+// problems: the number was wrong (it ignored the nav sidebar in front of the chat), and padding is
+// the wrong lever anyway — it moves only what is inside the header box, so anything outside it is
+// behind the chat again. Insetting the BAND makes the overlap impossible rather than arithmetically
+// avoided.
+//
+// `--gz-canvas-left` is measured off `nb-layout-column` — the real canvas edge, after whatever
+// sidebars precede it, at whatever width the user has dragged the chat to. See the layout ts.
+:host ::ng-deep nb-layout-header.fixed {
+  @include nb-ltr(left, var(--gz-canvas-left, 0px));
+  @include nb-ltr(right, 0);
+  @include nb-rtl(right, var(--gz-canvas-left, 0px));
+  @include nb-rtl(left, 0);
+  width: auto;
+}

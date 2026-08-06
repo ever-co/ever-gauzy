@@ -82,30 +82,16 @@ export class OneColumnLayoutComponent {
 		afterNextRender(() => {
 			this.windowModeBlockScrollService.register(this.layout());
 			this.observeHeaderHeight();
+			this.observeCanvasLeft();
 		});
 
 		this.destroyRef.onDestroy(() => {
 			this.navigationBuilderService.clearSidebars();
 			this.navigationBuilderService.clearActionBars();
 			this.headerResizeObserver?.disconnect();
+			this.canvasResizeObserver?.disconnect();
+			if (this.canvasLeftOnResize) window.removeEventListener('resize', this.canvasLeftOnResize);
 		});
-	}
-
-	/**
-	 * Horizontal inset the header needs so it starts where the CANVAS starts.
-	 *
-	 * The layout is three full-height columns — Menu | Chat | Canvas — and the header belongs to the
-	 * canvas alone, so it must not run across the chat. Nebular renders a `fixed` header at full
-	 * viewport width, so the inset is applied as padding on the side the chat is docked to.
-	 *
-	 * Null when there is nothing to inset around: collapsed, docked to the other side, or maximized
-	 * (maximized deliberately covers the header band, since the canvas is hidden anyway).
-	 */
-	chatHeaderPad(side: 'start' | 'end'): number | null {
-		const chat = this.chatSidebarService;
-		return chat.available() && chat.expanded() && !chat.maximized() && chat.position() === side
-			? chat.width()
-			: null;
 	}
 
 	private headerResizeObserver?: ResizeObserver;
@@ -136,6 +122,47 @@ export class OneColumnLayoutComponent {
 		this.headerResizeObserver.observe(header);
 		apply();
 	}
+
+	private canvasResizeObserver?: ResizeObserver;
+
+	/**
+	 * Publish where the CANVAS starts, as `--gz-canvas-left`, so the fixed header band can begin
+	 * there instead of running underneath the columns in front of it.
+	 *
+	 * The header used to be full width and merely PAD its content aside by the chat's width. That
+	 * arithmetic was wrong, and measurably so: on demo at 1280px the nav sidebar occupies 0-256 and
+	 * the chat 256-640, so the canvas starts at 640 — but the padding was the chat's width alone,
+	 * 384, leaving 256px of header content (the demo banner, the first filter) underneath a panel
+	 * whose z-index is one higher. The banner rendered with its first words clipped.
+	 *
+	 * Padding is the wrong lever regardless of the number: it only moves what is INSIDE the header,
+	 * so anything that escapes that box, or any future element added outside it, is behind the chat
+	 * again. Insetting the band means nothing in the header can overlap the chat by construction.
+	 *
+	 * MEASURED off the layout column rather than computed from sidebar + chat widths, because those
+	 * are Nebular's numbers and change with collapse, compaction and the user's own chat width — the
+	 * derivation is exactly what went wrong. The column is in normal flow after both sidebars, so its
+	 * left edge IS the canvas. Observing it is safe: the header is fixed and out of flow, so moving
+	 * it cannot feed back into the column's geometry.
+	 */
+	private observeCanvasLeft(): void {
+		if (typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
+		const column = document.querySelector('nb-layout-column') as HTMLElement | null;
+		if (!column) return;
+		const apply = () =>
+			document.documentElement.style.setProperty(
+				'--gz-canvas-left',
+				`${Math.round(column.getBoundingClientRect().left)}px`
+			);
+		this.canvasResizeObserver = new ResizeObserver(apply);
+		this.canvasResizeObserver.observe(column);
+		// The column's own box does not change when the window does, so track that too.
+		window.addEventListener('resize', apply);
+		this.canvasLeftOnResize = apply;
+		apply();
+	}
+
+	private canvasLeftOnResize?: () => void;
 
 	/**
 	 * Toggles the expansion state of the sidebar.
