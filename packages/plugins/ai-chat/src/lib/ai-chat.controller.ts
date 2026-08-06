@@ -1,9 +1,21 @@
-import { Body, Controller, Get, Headers, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	Headers,
+	Param,
+	Post,
+	Req,
+	Res,
+	UploadedFile,
+	UseGuards,
+	UseInterceptors
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import type { UIMessage } from 'ai';
 import { IAiChatConfig, IAiChatModelCatalogue, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { LazyFileInterceptor, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { AiChatService } from './ai-chat.service';
 
 /** Request body sent by the `useChat` client (Vercel AI SDK UI). */
@@ -82,6 +94,29 @@ export class AiChatController {
 	@ApiOperation({ summary: "A provider's available models" })
 	@ApiResponse({ status: 200, description: 'Model catalogue.' })
 	@ApiResponse({ status: 400, description: 'Unknown provider.' })
+	/**
+	 * Speech to text for the chat's dictation control.
+	 *
+	 * `AI_CHAT_ACCESS` only: dictation is a way of typing a message, so anyone who may use the chat
+	 * may dictate into it. Requiring AI_CHAT_SETTINGS here would gate an input method behind an
+	 * administrative permission.
+	 *
+	 * The size cap is the real guard — audio is user-supplied and would otherwise be bounded only by
+	 * how long someone holds the button. 25 MB matches what the upstream speech APIs accept, so a
+	 * larger upload could never have succeeded anyway.
+	 */
+	@ApiOperation({ summary: 'Transcribe recorded speech' })
+	@ApiResponse({ status: 200, description: 'Transcript.' })
+	@ApiResponse({ status: 400, description: 'No audio uploaded.' })
+	@ApiResponse({ status: 503, description: 'No provider available to transcribe.' })
+	@Permissions(PermissionsEnum.AI_CHAT_ACCESS)
+	@Post('/transcribe')
+	@UseInterceptors(LazyFileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
+	async transcribe(@UploadedFile() file: { buffer: Buffer; mimetype: string }): Promise<{ text: string }> {
+		const text = await this.aiChatService.transcribe(file?.buffer, file?.mimetype ?? 'audio/webm');
+		return { text };
+	}
+
 	@Permissions(PermissionsEnum.AI_CHAT_ACCESS, PermissionsEnum.AI_CHAT_SETTINGS)
 	@Get('/providers/:providerId/models')
 	async providerModels(@Param('providerId') providerId: string): Promise<IAiChatModelCatalogue> {

@@ -103,6 +103,19 @@ export interface IAiChatProviderDefinition {
 	 *                    catalogue ignore this; the rest return their curated list when it is null.
 	 */
 	listModels?(credentials: IAiProviderCredentials | null): Promise<IAiChatModelList>;
+	/**
+	 * Transcribe recorded speech to text, for the chat's dictation control.
+	 *
+	 * Optional: providers without a speech model leave it unset and the endpoint falls through to
+	 * the next configured provider that has one, so dictation works as long as ANY of the tenant's
+	 * providers can transcribe — the user should not have to know which.
+	 *
+	 * @param audio Raw recorded bytes as received from the browser's MediaRecorder.
+	 * @param mimeType The container the browser produced (`audio/webm;codecs=opus`, `audio/mp4`, …).
+	 * @param credentials Resolved credentials for this provider.
+	 * @returns The transcript. An empty string is a valid answer for silence.
+	 */
+	transcribe?(audio: Buffer, mimeType: string, credentials: IAiProviderCredentials): Promise<string>;
 	/** Display ordering (ascending) in provider lists/catalogs. Unset sorts last. */
 	readonly order?: number;
 	/**

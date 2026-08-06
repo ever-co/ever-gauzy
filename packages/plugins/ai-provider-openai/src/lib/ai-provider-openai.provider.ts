@@ -53,6 +53,17 @@ const NON_CHAT_PATTERNS = [
 	/-instruct(-|$)/
 ];
 
+/** Speech model for dictation. Cheaper and faster than whisper-1, and the current default. */
+const TRANSCRIBE_MODEL = 'gpt-4o-mini-transcribe';
+
+/**
+ * Upstream budget for a transcription.
+ *
+ * Longer than a catalogue fetch on purpose: a minute of speech takes real time to process, and the
+ * user is watching a spinner they started deliberately rather than a background refresh.
+ */
+const TRANSCRIBE_TIMEOUT_MS = 60_000;
+
 /** Model catalogue cache, keyed per credential: model access is account-specific on OpenAI. */
 const catalogueCache = createCatalogueCache<IAiChatModel[]>();
 
@@ -85,6 +96,44 @@ const listCatalogue = async (credentials: IAiProviderCredentials | null): Promis
 	});
 
 /**
+ * Speech-to-text for the chat's dictation control.
+ *
+ * `/v1/audio/transcriptions` is multipart, and the filename EXTENSION is what OpenAI uses to decide
+ * the container — a generic name is rejected with "Invalid file format" even when the bytes are
+ * fine — so it is derived from the MIME type the browser actually recorded.
+ *
+ * A custom base URL is honoured here, unlike the model catalogue: the caller explicitly configured
+ * that endpoint as their OpenAI, and this is a request they asked for rather than a background
+ * fetch, so there is no credential going anywhere the user did not choose.
+ */
+const transcribeAudio = async (
+	audio: Buffer,
+	mimeType: string,
+	credentials: IAiProviderCredentials
+): Promise<string> => {
+	const extension =
+		mimeType.includes('mp4') || mimeType.includes('mpeg') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+	const form = new FormData();
+	form.append('file', new Blob([new Uint8Array(audio)], { type: mimeType }), `dictation.${extension}`);
+	form.append('model', TRANSCRIBE_MODEL);
+	// `text` avoids parsing a JSON envelope for a single string.
+	form.append('response_format', 'text');
+
+	const base = credentials.baseUrl?.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
+	const response = await fetch(`${base}/audio/transcriptions`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${credentials.apiKey}` },
+		body: form,
+		signal: AbortSignal.timeout(TRANSCRIBE_TIMEOUT_MS)
+	});
+	if (!response.ok) {
+		// No body echo: this request carries a credential.
+		throw new Error(`OpenAI transcription failed: ${response.status} ${response.statusText}`);
+	}
+	return (await response.text()).trim();
+};
+
+/**
  * OpenAI (GPT) provider definition for the AI chat engine.
  *
  * Registered with the {@link AiProviderRegistry} by {@link AiProviderOpenAiPlugin}.
@@ -99,6 +148,7 @@ export const openAiProviderDefinition: IAiChatProviderDefinition = {
 	models: MODELS,
 	defaultModel: 'gpt-5.5',
 	listModels: listCatalogue,
+	transcribe: transcribeAudio,
 	order: 50,
 	websiteUrl: 'https://openai.com',
 	apiKeysUrl: 'https://platform.openai.com/api-keys',

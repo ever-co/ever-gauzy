@@ -462,6 +462,55 @@ export class AiChatService {
 	}
 
 	/**
+	 * Transcribe recorded speech for the chat's dictation control.
+	 *
+	 * Tries every registered provider that CAN transcribe, in display order, and uses the first one
+	 * the tenant actually has a credential for. Dictation is a property of the workspace, not of the
+	 * chat model: a tenant whose chat runs on Anthropic (no speech model) should still be able to
+	 * dictate if they also have an OpenAI key, without being told to go and change their chat
+	 * provider.
+	 *
+	 * @param audio Bytes as recorded by the browser.
+	 * @param mimeType Container the browser produced.
+	 * @returns The transcript, which may legitimately be empty for silence.
+	 */
+	async transcribe(audio: Buffer, mimeType: string): Promise<string> {
+		if (!audio?.length) {
+			throw new BadRequestException('No audio was uploaded.');
+		}
+
+		const capable = AiProviderRegistry.list()
+			.filter((definition) => typeof definition.transcribe === 'function')
+			.sort((a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER));
+
+		if (!capable.length) {
+			throw new ServiceUnavailableException('No AI provider on this server can transcribe speech.');
+		}
+
+		const attempted: string[] = [];
+		for (const definition of capable) {
+			const credentials = await this.resolveCredentials(definition);
+			if (!credentials) continue;
+			attempted.push(definition.id);
+			try {
+				return await definition.transcribe(audio, mimeType, credentials);
+			} catch (error) {
+				// Try the next provider rather than failing the whole dictation on one bad key.
+				this.logger.warn(
+					`[ai-chat] Transcription via '${definition.id}' failed: ` +
+						`${error instanceof Error ? error.message : error}`
+				);
+			}
+		}
+
+		throw new ServiceUnavailableException(
+			attempted.length
+				? `Transcription failed on ${attempted.join(', ')}. Check the provider's API key in Settings → AI Providers.`
+				: 'Add an API key for a provider that supports speech (e.g. OpenAI) to dictate messages.'
+		);
+	}
+
+	/**
 	 * Models permitted for this credential — the full catalogue, or the free subset on the platform
 	 * key.
 	 *
