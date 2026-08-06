@@ -479,10 +479,11 @@ nb-sidebar[tag='menu-sidebar'] {
 //
 // `--gz-canvas-left` is measured off `nb-layout-column` — the real canvas edge, after whatever
 // sidebars precede it, at whatever width the user has dragged the chat to. See the layout ts.
+// Both edges are pinned to the canvas, not just the leading one: the chat docks to either side, so
+// an end-docked panel would otherwise sit on top of the header's trailing edge exactly as the
+// start-docked one did.
 :host ::ng-deep nb-layout-header.fixed {
-  @include nb-ltr(left, var(--gz-canvas-left, 0px));
-  @include nb-ltr(right, 0);
-  @include nb-rtl(right, var(--gz-canvas-left, 0px));
-  @include nb-rtl(left, 0);
+  left: var(--gz-canvas-left, 0px);
+  right: var(--gz-canvas-right, 0px);
   width: auto;
 }

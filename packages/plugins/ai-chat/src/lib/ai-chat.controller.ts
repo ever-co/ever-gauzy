@@ -91,9 +91,6 @@ export class AiChatController {
 	 * Same two-permission rule as `/config`: an admin holding only AI_CHAT_SETTINGS must be able to
 	 * use the settings page. Exposes no secrets — model ids and labels only.
 	 */
-	@ApiOperation({ summary: "A provider's available models" })
-	@ApiResponse({ status: 200, description: 'Model catalogue.' })
-	@ApiResponse({ status: 400, description: 'Unknown provider.' })
 	/**
 	 * Speech to text for the chat's dictation control.
 	 *
@@ -117,6 +114,9 @@ export class AiChatController {
 		return { text };
 	}
 
+	@ApiOperation({ summary: "A provider's available models" })
+	@ApiResponse({ status: 200, description: 'Model catalogue.' })
+	@ApiResponse({ status: 400, description: 'Unknown provider.' })
 	@Permissions(PermissionsEnum.AI_CHAT_ACCESS, PermissionsEnum.AI_CHAT_SETTINGS)
 	@Get('/providers/:providerId/models')
 	async providerModels(@Param('providerId') providerId: string): Promise<IAiChatModelCatalogue> {

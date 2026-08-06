@@ -24,7 +24,11 @@ export interface ChatInputProps {
 	/** `t(key, fallback)` from the panel — see `useChatTranslate`. */
 	translate?: ChatTranslate;
 	onChange: (value: string) => void;
-	onSubmit: () => void;
+	/**
+	 * Send the message. Dictation passes the transcript EXPLICITLY, because `onChange` is
+	 * asynchronous and the parent would otherwise submit its pre-dictation state.
+	 */
+	onSubmit: (text?: string) => void;
 	onStop: () => void;
 	/** Called when the user presses Escape (collapse the sidebar). */
 	onEscape?: () => void;
@@ -90,6 +94,26 @@ export function ChatInput({
 	const recorderRef = useRef<MediaRecorder | null>(null);
 	const chunksRef = useRef<BlobPart[]>([]);
 	/**
+	 * The live input text, for the recorder's callbacks.
+	 *
+	 * `recorder.onstop` is attached when the take STARTS, so it closes over the value from that
+	 * moment. The field stays editable throughout, so reading the closed-over copy would overwrite
+	 * anything typed while speaking.
+	 */
+	const valueRef = useRef(value);
+	valueRef.current = value;
+	/**
+	 * Identifies the current take. Bumped whenever one is abandoned — Cancel, or the panel closing.
+	 *
+	 * Stopping the tracks is not enough on its own: `onstop` still fires, a `getUserMedia` already
+	 * in flight still resolves, and a transcription already posted still returns. Each of those
+	 * checks this counter and drops out if it has moved, so a closed panel cannot transcribe, submit,
+	 * or leave a second recorder holding the microphone.
+	 */
+	const sessionRef = useRef(0);
+	/** Guards the `await getUserMedia` window, where `dictation` is still 'idle'. */
+	const startingRef = useRef(false);
+	/**
 	 * Set by Cancel so the `stop` handler discards instead of transcribing.
 	 *
 	 * A ref, not state: `stop` fires from the recorder's own event and would otherwise read the
@@ -123,14 +147,40 @@ export function ChatInput({
 		recorderRef.current = null;
 	}, []);
 
-	// A panel unmounted mid-take (sidebar collapsed, route change) must not hold the microphone.
-	useEffect(() => releaseRecorder, [releaseRecorder]);
+	// A panel unmounted mid-take (sidebar collapsed, route change) must not hold the microphone, and
+	// must not go on to transcribe or send what it captured. Invalidating the session is what stops
+	// the in-flight callbacks; releasing the recorder only stops the hardware.
+	useEffect(
+		() => () => {
+			sessionRef.current += 1;
+			cancelledRef.current = true;
+			try {
+				recorderRef.current?.stop();
+			} catch {
+				// Already inactive — nothing to stop.
+			}
+			releaseRecorder();
+		},
+		[releaseRecorder]
+	);
 
 	const startDictation = useCallback(async () => {
-		if (!onTranscribe || dictation !== 'idle') return;
+		// `dictation` is still 'idle' while the permission prompt is up, so it cannot guard this on
+		// its own: a second click during the prompt would start a second recorder sharing `chunksRef`,
+		// and only the last one would ever be released.
+		if (!onTranscribe || dictation !== 'idle' || startingRef.current) return;
+		startingRef.current = true;
 		setDictationError(null);
+
+		const session = sessionRef.current;
 		try {
 			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+			// The panel may have closed while the prompt was up. Take the microphone straight back.
+			if (session !== sessionRef.current) {
+				stream.getTracks().forEach((track) => track.stop());
+				return;
+			}
+
 			const mimeType = pickRecorderMimeType();
 			const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
 			chunksRef.current = [];
@@ -143,29 +193,38 @@ export function ChatInput({
 				const audio = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
 				chunksRef.current = [];
 				releaseRecorder();
-				if (cancelledRef.current || audio.size === 0) {
+				if (cancelledRef.current || session !== sessionRef.current || audio.size === 0) {
 					setDictation('idle');
 					return;
 				}
 				setDictation('transcribing');
 				onTranscribe(audio)
 					.then((text) => {
+						// Transcription outlives a panel the user closed while waiting.
+						if (session !== sessionRef.current) return;
 						const spoken = text.trim();
 						if (!spoken) return;
-						// APPENDED, not replaced: dictation is an input method, so anything already
-						// typed stays and the spoken text joins it.
-						const next = value.trim() ? `${value.trim()} ${spoken}` : spoken;
+						// Read the CURRENT draft, not the one captured when recording began — the field
+						// stays editable while speaking. APPENDED, because dictation is an input method
+						// rather than a replacement for one.
+						const draft = valueRef.current.trim();
+						const next = draft ? `${draft} ${spoken}` : spoken;
 						onChange(next);
-						if (autoSendRef.current && !isBusy) onSubmit();
+						// The transcript goes to the parent EXPLICITLY: `onChange` has not been applied
+						// yet, so submitting without it would send the pre-dictation text.
+						if (autoSendRef.current && !isBusy) onSubmit(next);
 					})
 					.catch((error: unknown) => {
+						if (session !== sessionRef.current) return;
 						setDictationError(
 							error instanceof Error
 								? error.message
 								: t('AI_ASSISTANT.DICTATION_FAILED', 'Could not transcribe the recording.')
 						);
 					})
-					.finally(() => setDictation('idle'));
+					.finally(() => {
+						if (session === sessionRef.current) setDictation('idle');
+					});
 			};
 
 			recorderRef.current = recorder;
@@ -182,8 +241,10 @@ export function ChatInput({
 					? t('AI_ASSISTANT.MIC_DENIED', 'Microphone access was denied.')
 					: t('AI_ASSISTANT.MIC_UNAVAILABLE', 'No microphone is available.')
 			);
+		} finally {
+			startingRef.current = false;
 		}
-	}, [onTranscribe, dictation, releaseRecorder, onChange, onSubmit, isBusy, value, t]);
+	}, [onTranscribe, dictation, releaseRecorder, onChange, onSubmit, isBusy, t]);
 
 	const finishDictation = useCallback(() => {
 		if (dictation !== 'recording') return;
@@ -194,6 +255,8 @@ export function ChatInput({
 	const cancelDictation = useCallback(() => {
 		if (dictation !== 'recording') return;
 		cancelledRef.current = true;
+		// Invalidate too, so a transcription already posted for this take is discarded on arrival.
+		sessionRef.current += 1;
 		recorderRef.current?.stop();
 	}, [dictation]);
 

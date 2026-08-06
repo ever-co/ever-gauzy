@@ -116,8 +116,8 @@ const transcribeAudio = async (
 	const form = new FormData();
 	form.append('file', new Blob([new Uint8Array(audio)], { type: mimeType }), `dictation.${extension}`);
 	form.append('model', TRANSCRIBE_MODEL);
-	// `text` avoids parsing a JSON envelope for a single string.
-	form.append('response_format', 'text');
+	// No `response_format`: this model accepts ONLY `json`, which is the default. Asking for `text`
+	// — which whisper-1 does support — is rejected outright, so every dictation would have failed.
 
 	const base = credentials.baseUrl?.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
 	const response = await fetch(`${base}/audio/transcriptions`, {
@@ -130,7 +130,8 @@ const transcribeAudio = async (
 		// No body echo: this request carries a credential.
 		throw new Error(`OpenAI transcription failed: ${response.status} ${response.statusText}`);
 	}
-	return (await response.text()).trim();
+	const body = (await response.json()) as { text?: string };
+	return (body.text ?? '').trim();
 };
 
 /**

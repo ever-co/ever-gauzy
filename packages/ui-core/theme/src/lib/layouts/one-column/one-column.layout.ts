@@ -126,8 +126,8 @@ export class OneColumnLayoutComponent {
 	private canvasResizeObserver?: ResizeObserver;
 
 	/**
-	 * Publish where the CANVAS starts, as `--gz-canvas-left`, so the fixed header band can begin
-	 * there instead of running underneath the columns in front of it.
+	 * Publish where the CANVAS begins and ends, as `--gz-canvas-left` / `--gz-canvas-right`, so the
+	 * fixed header band can span exactly that instead of running underneath the columns beside it.
 	 *
 	 * The header used to be full width and merely PAD its content aside by the chat's width. That
 	 * arithmetic was wrong, and measurably so: on demo at 1280px the nav sidebar occupies 0-256 and
@@ -149,11 +149,16 @@ export class OneColumnLayoutComponent {
 		if (typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
 		const column = document.querySelector('nb-layout-column') as HTMLElement | null;
 		if (!column) return;
-		const apply = () =>
-			document.documentElement.style.setProperty(
-				'--gz-canvas-left',
-				`${Math.round(column.getBoundingClientRect().left)}px`
-			);
+		const apply = () => {
+			const rect = column.getBoundingClientRect();
+			const root = document.documentElement.style;
+			root.setProperty('--gz-canvas-left', `${Math.round(rect.left)}px`);
+			// BOTH edges, because the canvas does not always run to the viewport. The chat docks to
+			// either side (`chat-sidebar-end`), and an RTL layout anchors the header from the right —
+			// so a single left-hand number applied to `right` would put the band back under the panel,
+			// which is the regression this whole change exists to remove.
+			root.setProperty('--gz-canvas-right', `${Math.round(window.innerWidth - rect.right)}px`);
+		};
 		this.canvasResizeObserver = new ResizeObserver(apply);
 		this.canvasResizeObserver.observe(column);
 		// The column's own box does not change when the window does, so track that too.

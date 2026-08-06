@@ -254,12 +254,23 @@ export function AiChatPanel() {
 	const isBusy = status === 'submitted' || status === 'streaming';
 	const hasMessages = messages.length > 0;
 
-	const handleSubmit = useCallback(() => {
-		const text = input.trim();
-		if (!text || isBusy) return;
-		setInput('');
-		void sendMessage({ text });
-	}, [input, isBusy, sendMessage]);
+	/**
+	 * Send a message.
+	 *
+	 * `override` exists for dictation: the transcript is handed straight here rather than being read
+	 * back out of `input`. `setInput` is asynchronous, so auto-send fired immediately after it would
+	 * otherwise submit the PRE-dictation text — an empty draft sending nothing, a non-empty one
+	 * sending only what was typed before the user spoke.
+	 */
+	const handleSubmit = useCallback(
+		(override?: string) => {
+			const text = (override ?? input).trim();
+			if (!text || isBusy) return;
+			setInput('');
+			void sendMessage({ text });
+		},
+		[input, isBusy, sendMessage]
+	);
 
 	const handleNewChat = useCallback(() => {
 		void stop();
