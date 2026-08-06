@@ -26,9 +26,6 @@ export enum AiProviderEnum {
 export type AiProviderConnectType = 'openrouter-pkce';
 
 /**
- * A chat model offered by a registered AI provider.
- */
-/**
  * Discriminator for a provider rate-limit (HTTP 429) reported through the chat stream.
  *
  * Lives in contracts because BOTH sides need the runtime value: the API writes the envelope into the
@@ -61,6 +58,24 @@ export interface IAiChatRateLimitEnvelope {
 	retryAfterSeconds?: number;
 }
 
+/**
+ * A provider's model catalogue, returned by `GET /api/ai-chat/providers/:providerId/models`.
+ *
+ * Deliberately NOT part of `IAiChatConfig`: that endpoint is fetched at app bootstrap for every user
+ * with chat access and already loops every registered provider, so putting keyed upstream calls in it
+ * would put the app shell behind six third-party APIs on every login. This is fetched lazily, when a
+ * single provider's config view is opened.
+ */
+export interface IAiChatModelCatalogue {
+	providerId: string;
+	models: IAiChatModel[];
+	/** Where the list came from, so the UI can explain a short or stale list. */
+	source: 'live' | 'curated' | 'platform';
+	/** True when a live refresh failed and a previously cached list is being served. */
+	stale?: boolean;
+}
+
+/** A chat model offered by a registered AI provider. */
 export interface IAiChatModel {
 	/** Model identifier as understood by the provider (e.g. 'claude-sonnet-5'). */
 	id: string;
@@ -145,8 +160,7 @@ export interface IAiProviderCredentialFindInput extends IBasePerTenantAndOrganiz
 	providerId?: string;
 }
 
-export interface IAiProviderCredentialCreateInput
-	extends Omit<IAiProviderCredential, 'apiKey'> {
+export interface IAiProviderCredentialCreateInput extends Omit<IAiProviderCredential, 'apiKey'> {
 	/** Secret API key — required when creating a credential. */
 	apiKey: string;
 }
