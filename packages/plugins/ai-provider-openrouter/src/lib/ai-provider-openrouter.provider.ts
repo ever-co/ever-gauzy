@@ -1,6 +1,14 @@
 import type { LanguageModel } from 'ai';
 import { AiProviderEnum, IAiChatModel } from '@gauzy/contracts';
-import { IAiChatProviderDefinition, IAiProviderCredentials, importEsm } from '@gauzy/plugin-ai-chat';
+import {
+	IAiChatModelList,
+	IAiChatProviderDefinition,
+	IAiProviderCredentials,
+	createCatalogueCache,
+	fetchCatalogueJson,
+	importEsm,
+	publicCatalogue
+} from '@gauzy/plugin-ai-chat';
 
 /** Stable provider id used by the registry, the UI and BYOK credentials. */
 const PROVIDER_ID = AiProviderEnum.OPENROUTER;
@@ -26,14 +34,29 @@ const MODELS: IAiChatModel[] = [
  * `OPENROUTER_FREE_MODELS` lets an operator correct drift with a restart instead of a release.
  */
 const FALLBACK_FREE_MODELS: IAiChatModel[] = [
-	{ id: 'deepseek/deepseek-r1:free', label: 'DeepSeek R1 (free)', providerId: PROVIDER_ID },
-	{ id: 'meta-llama/llama-3.3-70b-instruct:free', label: 'Llama 3.3 70B (free)', providerId: PROVIDER_ID },
-	{ id: 'google/gemma-3-27b-it:free', label: 'Gemma 3 27B (free)', providerId: PROVIDER_ID },
-	{ id: 'qwen/qwen-2.5-72b-instruct:free', label: 'Qwen 2.5 72B (free)', providerId: PROVIDER_ID }
+	{ id: 'openai/gpt-oss-20b:free', label: 'GPT-OSS 20B (free)', providerId: PROVIDER_ID },
+	{ id: 'google/gemma-4-31b-it:free', label: 'Gemma 4 31B (free)', providerId: PROVIDER_ID },
+	{ id: 'nvidia/nemotron-3-super-120b-a12b:free', label: 'Nemotron 3 Super 120B (free)', providerId: PROVIDER_ID },
+	{ id: 'inclusionai/ling-3.0-flash:free', label: 'Ling 3.0 Flash (free)', providerId: PROVIDER_ID }
 ];
 
 /** OpenRouter marks free models with a `:free` suffix on the slug. */
 const FREE_SUFFIX = ':free';
+
+/**
+ * Tool calling is not optional here: the agent's whole job is to call Gauzy tools, so a model without
+ * it produces a confident, tool-less answer to every question. OpenRouter reports the capability per
+ * model, so both lists filter on it.
+ */
+const TOOLS_PARAMETER = 'tools';
+
+/**
+ * Hard cap on the server-side fallback list handed to OpenRouter.
+ *
+ * OpenRouter rejects the entire request with `'models' array must have 3 items or fewer.`
+ * if more are sent — so this is a limit of theirs, not a preference of ours.
+ */
+const MAX_FALLBACK_MODELS = 3;
 
 /** Cache the fetched catalogue: this is consulted on every /config call and every turn. */
 const FREE_MODEL_TTL_MS = 30 * 60 * 1000;
@@ -84,11 +107,20 @@ const listFreeModels = async (): Promise<IAiChatModel[]> => {
 				signal: AbortSignal.timeout(8000)
 			});
 			if (!response.ok) throw new Error(`OpenRouter /models returned ${response.status}`);
-			const body = (await response.json()) as { data?: { id: string; name?: string }[] };
+			const body = (await response.json()) as {
+				data?: { id: string; name?: string; supported_parameters?: string[] }[];
+			};
 			const models = (body.data ?? [])
-				.filter((m) => typeof m?.id === 'string' && m.id.endsWith(FREE_SUFFIX))
+				.filter(
+					(m) =>
+						typeof m?.id === 'string' &&
+						m.id.endsWith(FREE_SUFFIX) &&
+						// Free models are a mixed bag — the list currently includes a content-safety
+						// classifier that cannot call tools and would fail every single agent turn.
+						(m.supported_parameters ?? []).includes(TOOLS_PARAMETER)
+				)
 				.map((m) => ({ id: m.id, label: labelFor(m.id, m.name), providerId: PROVIDER_ID }));
-			if (!models.length) throw new Error('OpenRouter /models listed no :free models');
+			if (!models.length) throw new Error('OpenRouter /models listed no tool-capable :free models');
 			freeModelCache = { models, fetchedAt: Date.now() };
 			return models;
 		} catch {
@@ -101,6 +133,35 @@ const listFreeModels = async (): Promise<IAiChatModel[]> => {
 
 	return freeModelInFlight;
 };
+
+/**
+ * The full catalogue shown in the settings model picker — separate cache from the free list above.
+ *
+ * Sharing a cache would mean sharing a failure mode, and the two need opposite ones: the free list is
+ * an ENFORCED allowlist that must fail closed, this is a DISPLAY list that must fail open.
+ */
+const catalogueCache = createCatalogueCache<IAiChatModel[]>();
+
+/**
+ * Every OpenRouter model that can call tools.
+ *
+ * OpenRouter filters server-side via `?supported_parameters=tools`; the client-side re-check is a
+ * cheap guard against that query parameter being ignored or renamed, which would otherwise quietly
+ * widen the list to models the agent cannot use.
+ */
+const listCatalogue = async (): Promise<IAiChatModelList> =>
+	publicCatalogue({
+		curated: MODELS,
+		cache: catalogueCache,
+		load: async () => {
+			const body = await fetchCatalogueJson<{
+				data?: { id: string; name?: string; supported_parameters?: string[] }[];
+			}>(`https://openrouter.ai/api/v1/models?supported_parameters=${TOOLS_PARAMETER}`);
+			return (body.data ?? [])
+				.filter((m) => typeof m?.id === 'string' && (m.supported_parameters ?? []).includes(TOOLS_PARAMETER))
+				.map((m) => ({ id: m.id, label: m.name ?? m.id, providerId: PROVIDER_ID }));
+		}
+	});
 
 /**
  * OpenRouter provider definition for the AI chat engine.
@@ -125,6 +186,7 @@ export const openRouterProviderDefinition: IAiChatProviderDefinition = {
 	 */
 	platformApiKeyEnvVar: 'OPENROUTER_PLATFORM_API_KEY',
 	listPlatformModels: listFreeModels,
+	listModels: listCatalogue,
 	order: 20,
 	websiteUrl: 'https://openrouter.ai',
 	apiKeysUrl: 'https://openrouter.ai/keys',
@@ -151,9 +213,8 @@ export const openRouterProviderDefinition: IAiChatProviderDefinition = {
 			);
 		}
 
-		const { createOpenRouter } = await importEsm<typeof import('@openrouter/ai-sdk-provider')>(
-			'@openrouter/ai-sdk-provider'
-		);
+		const { createOpenRouter } =
+			await importEsm<typeof import('@openrouter/ai-sdk-provider')>('@openrouter/ai-sdk-provider');
 		const provider = createOpenRouter({
 			apiKey: credentials.apiKey,
 			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {})
@@ -163,9 +224,15 @@ export const openRouterProviderDefinition: IAiChatProviderDefinition = {
 		// that is rate limited or momentarily unavailable then fails over INSIDE OpenRouter, before
 		// any error reaches us — which is the cheapest possible reduction in 429s on a tier whose
 		// whole characteristic is being rate limited.
+		//
+		// Capped at MAX_FALLBACK_MODELS: OpenRouter refuses a longer `models` array outright, so an
+		// uncapped list fails every turn as soon as the free catalogue exceeds four slugs.
 		let settings: { models?: string[] } | undefined;
 		if (credentials.source === 'platform') {
-			const alternates = (await listFreeModels()).map((m) => m.id).filter((id) => id !== modelId);
+			const alternates = (await listFreeModels())
+				.map((m) => m.id)
+				.filter((id) => id !== modelId)
+				.slice(0, MAX_FALLBACK_MODELS);
 			if (alternates.length) settings = { models: alternates };
 		}
 

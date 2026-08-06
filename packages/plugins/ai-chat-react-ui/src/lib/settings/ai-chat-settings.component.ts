@@ -21,16 +21,18 @@ import {
 	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
-	NbSelectModule,
 	NbSpinnerModule,
 	NbToastrService,
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { EMPTY, forkJoin, of } from 'rxjs';
 import { catchError, filter, finalize, switchMap } from 'rxjs/operators';
 import {
+	IAiChatModel,
+	IAiChatModelCatalogue,
 	IAiChatProvider,
 	IAiProviderCredential,
 	IAiProviderCredentialCreateInput,
@@ -94,7 +96,8 @@ const CONNECT_SESSION_KEY = 'gauzy_ai_provider_connect';
 interface ProviderCredentialForm {
 	apiKey: FormControl<string>;
 	baseUrl: FormControl<string>;
-	defaultModel: FormControl<string>;
+	/** Nullable: `null` is "no default model", which ng-select renders as its placeholder. */
+	defaultModel: FormControl<string | null>;
 	customModel: FormControl<string>;
 	enabled: FormControl<boolean>;
 }
@@ -133,10 +136,12 @@ interface ProviderCredentialForm {
 		NbFormFieldModule,
 		NbIconModule,
 		NbInputModule,
-		NbSelectModule,
 		NbSpinnerModule,
 		NbToggleModule,
-		NbTooltipModule
+		NbTooltipModule,
+		// The model list runs to hundreds of entries on the routing providers, so the picker has to be
+		// searchable — nb-select is not.
+		NgSelectModule
 	],
 	templateUrl: './ai-chat-settings.component.html',
 	styleUrls: ['./ai-chat-settings.component.scss'],
@@ -163,6 +168,36 @@ export class AiChatSettingsComponent implements OnInit {
 	readonly view = signal<'list' | 'catalog' | 'config'>('list');
 	/** Provider selected in the config view. */
 	readonly selectedProviderId = signal<string | null>(null);
+
+	/**
+	 * Live model catalogues, indexed by provider id, fetched when a provider's config view opens.
+	 *
+	 * Absent until then — {@link modelsFor} falls back to the curated list carried by `/config`, so
+	 * the picker is never empty while this is loading or if it fails.
+	 */
+	private readonly modelCatalogues = signal<Map<string, IAiChatModelCatalogue>>(new Map());
+	/**
+	 * Provider ids whose catalogue is in flight.
+	 *
+	 * A SET, not one id. Switching from provider A to B before A returns had A's completion clear the
+	 * single slot, dropping B's spinner while B was still loading — and leaving A's guard open, so
+	 * going back to A fired a duplicate request.
+	 */
+	private readonly loadingModels = signal<ReadonlySet<string>>(new Set());
+	/**
+	 * Memoised picker items per provider, so `[items]` is referentially stable across change
+	 * detection. Plain map, not a signal: it is a cache of a derived value, never a source of truth.
+	 */
+	private readonly modelOptionsCache = new Map<string, { source: IAiChatModel[]; options: IAiChatModel[] }>();
+	/**
+	 * Per-provider generation counter, bumped by {@link invalidateCatalogue}.
+	 *
+	 * Dropping the cached entry is not enough on its own: a fetch that was already in flight when the
+	 * credential changed still resolves, and storing THAT answer re-caches the pre-change list — and
+	 * the `has(providerId)` guard then blocks the refetch it was invalidated for. A response whose
+	 * generation no longer matches is discarded instead.
+	 */
+	private readonly catalogueGeneration = new Map<string, number>();
 
 	/** The provider object for the config view. */
 	readonly selectedProvider = computed<IAiChatProvider | null>(
@@ -306,12 +341,22 @@ export class AiChatSettingsComponent implements OnInit {
 			this.load();
 		}
 
+		// The memoised picker items freeze the TRANSLATED "Custom model…" label, and neither of the
+		// cache's other invalidations (a credential change, a new source array) fires on a language
+		// switch — so without this the sentinel keeps rendering in the previous language.
+		this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+			this.modelOptionsCache.clear();
+			this.cdr.markForCheck();
+		});
+
 		// Keep the view in sync with the query params (back/forward navigation).
 		this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
 			const providerId = params.get('provider');
 			if (providerId) {
 				this.selectedProviderId.set(providerId);
 				this.view.set('config');
+				// Only this view needs the catalogue, and only for this one provider.
+				this.loadModels(providerId);
 			} else if (params.get('add') !== null) {
 				this.view.set('catalog');
 			} else {
@@ -442,6 +487,191 @@ export class AiChatSettingsComponent implements OnInit {
 		return (initials || id.slice(0, 2) || '?').toUpperCase();
 	}
 
+	// ── Model catalogue (config view) ──────────────────────────────────
+
+	/**
+	 * Fetches a provider's model catalogue for the picker.
+	 *
+	 * Fails soft in both directions: an error leaves the curated list in place (the endpoint itself
+	 * already degrades to curated rather than erroring, so this only catches transport failures), and
+	 * a second visit to the same provider re-uses what was already fetched instead of re-calling an
+	 * upstream API on every back-and-forth between the list and the config view.
+	 */
+	loadModels(providerId: string): void {
+		if (this.modelCatalogues().has(providerId) || this.loadingModels().has(providerId)) {
+			return;
+		}
+		const generation = this.catalogueGeneration.get(providerId) ?? 0;
+		this.loadingModels.update((current) => new Set(current).add(providerId));
+		this.settingsService
+			.getProviderModels(providerId)
+			.pipe(
+				takeUntilDestroyed(this.destroyRef),
+				catchError(() => of(null)),
+				finalize(() => {
+					this.loadingModels.update((current) => {
+						const next = new Set(current);
+						next.delete(providerId);
+						return next;
+					});
+					this.cdr.markForCheck();
+				})
+			)
+			.subscribe((catalogue) => {
+				// A credential changed while this was in flight, so this answer is about a key that is
+				// no longer configured. Dropping it leaves the map empty, which is what makes the next
+				// visit fetch again.
+				if (!catalogue || (this.catalogueGeneration.get(providerId) ?? 0) !== generation) {
+					return;
+				}
+				this.modelCatalogues.update((current) => new Map(current).set(providerId, catalogue));
+				this.reconcileModelSelection(providerId);
+				this.cdr.markForCheck();
+			});
+	}
+
+	/** Whether this provider's catalogue is being fetched right now. */
+	isLoadingModels(providerId: string): boolean {
+		return this.loadingModels().has(providerId);
+	}
+
+	/**
+	 * Forget a provider's cached catalogue, so the next visit re-fetches it.
+	 *
+	 * Called whenever the CREDENTIAL changes, because the catalogue depends on it. Without this, the
+	 * flow the whole feature exists to fix reappears one step later: a provider running on the shared
+	 * free key shows the free-tier list, the user saves their own key in that very form, and on
+	 * returning they are still offered the four free models — the cached answer to a question that no
+	 * longer applies.
+	 */
+	private invalidateCatalogue(providerId: string): void {
+		this.catalogueGeneration.set(providerId, (this.catalogueGeneration.get(providerId) ?? 0) + 1);
+		this.modelOptionsCache.delete(providerId);
+		this.modelCatalogues.update((current) => {
+			if (!current.has(providerId)) {
+				return current;
+			}
+			const next = new Map(current);
+			next.delete(providerId);
+			return next;
+		});
+	}
+
+	/**
+	 * The models to offer for a provider: the fetched catalogue when there is one, else the curated
+	 * list that came with `/config`.
+	 */
+	modelsFor(provider: IAiChatProvider): IAiChatModel[] {
+		const catalogue = this.modelCatalogues().get(provider.id);
+		return catalogue?.models.length ? catalogue.models : provider.models;
+	}
+
+	/**
+	 * Picker items: the models plus the "Custom model…" sentinel.
+	 *
+	 * The sentinel stays even with a live catalogue. Providers ship models faster than any catalogue
+	 * endpoint reflects them, and a paid model can be addressable by a key long before it is listed —
+	 * so there has to be a way to type an id in by hand.
+	 */
+	modelOptions(provider: IAiChatProvider): IAiChatModel[] {
+		// Memoised per (provider, source list). The template binds this into ng-select's `[items]`, and
+		// a fresh array on every change-detection pass makes ng-select rebuild its ItemsList each time
+		// — which resets the keyboard-marked item, so arrow keys could not move through the list at
+		// all. Keyed on the array identity rather than deep equality: `modelsFor` returns either the
+		// catalogue's array or the provider's, both of which are stable until they are replaced.
+		const models = this.modelsFor(provider);
+		const cached = this.modelOptionsCache.get(provider.id);
+		if (cached && cached.source === models) {
+			return cached.options;
+		}
+		const options = [
+			...models,
+			{
+				id: CUSTOM_MODEL,
+				label: this.translateService.instant('AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_CUSTOM'),
+				providerId: provider.id
+			}
+		];
+		this.modelOptionsCache.set(provider.id, { source: models, options });
+		return options;
+	}
+
+	/**
+	 * Search a model by its ID as well as its label.
+	 *
+	 * ng-select's default search only looks at the label, and on the routing providers the label is a
+	 * display name ("Anthropic: Claude Sonnet 5") while the id is the slug
+	 * (`anthropic/claude-sonnet-5`). Pasting the id you were handed — the thing the empty-state text
+	 * tells you to type — matched nothing and reported the model as absent while it sat in the list.
+	 */
+	readonly searchModel = (term: string, model: IAiChatModel): boolean => {
+		// "Custom model…" always survives. It is the escape hatch for a model that is NOT in the list,
+		// so filtering it out on a search that matches nothing leaves the not-found text telling the
+		// user to pick an option that is no longer on screen.
+		if (model.id === CUSTOM_MODEL) {
+			return true;
+		}
+		const needle = term.toLowerCase();
+		return model.id.toLowerCase().includes(needle) || (model.label ?? '').toLowerCase().includes(needle);
+	};
+
+	/**
+	 * The note under the model picker explaining where its list came from, or `null` when the list is
+	 * live and complete (the ordinary case needs no explanation).
+	 */
+	modelSourceKey(provider: IAiChatProvider): string | null {
+		const catalogue = this.modelCatalogues().get(provider.id);
+		if (!catalogue) {
+			return null;
+		}
+		if (catalogue.source === 'platform') {
+			// An EMPTY platform list is not "limited to the free models" — it means the free list could
+			// not be determined, and the server will refuse every model until it can. Saying the former
+			// in front of an empty dropdown reads as a UI bug.
+			return catalogue.models.length
+				? 'AI_CHAT_UI.SETTINGS.FORM.MODELS_PLATFORM'
+				: 'AI_CHAT_UI.SETTINGS.FORM.MODELS_PLATFORM_UNAVAILABLE';
+		}
+		if (catalogue.source === 'curated') {
+			// A custom base URL means the server DELIBERATELY made no request: the key belongs to that
+			// endpoint, not to the vendor. Reporting that as "could not be loaded just now" invites a
+			// retry for a fetch that was never attempted and never will be.
+			if (this.getCredential(provider.id)?.baseUrl) {
+				return 'AI_CHAT_UI.SETTINGS.FORM.MODELS_CUSTOM_ENDPOINT';
+			}
+			// The remaining two situations need opposite advice. Telling a user whose key IS saved to
+			// "save an API key" reads as the page not knowing what it is doing.
+			return provider.configured
+				? 'AI_CHAT_UI.SETTINGS.FORM.MODELS_CURATED_UNAVAILABLE'
+				: 'AI_CHAT_UI.SETTINGS.FORM.MODELS_CURATED_NO_KEY';
+		}
+		return catalogue.stale ? 'AI_CHAT_UI.SETTINGS.FORM.MODELS_STALE' : null;
+	}
+
+	/**
+	 * Re-decides "known model vs custom" once the catalogue arrives.
+	 *
+	 * {@link buildForms} runs before the fetch and can only compare against the curated list, so a
+	 * saved model that is real but simply not curated starts out shown as a custom id. Left alone it
+	 * would stay that way — a text box next to a dropdown that in fact contains the very model.
+	 */
+	private reconcileModelSelection(providerId: string): void {
+		const form = this.forms.get(providerId);
+		if (!form || form.controls.defaultModel.value !== CUSTOM_MODEL) {
+			return;
+		}
+		const typed = form.controls.customModel.value?.trim();
+		if (!typed) {
+			return;
+		}
+		const known = this.modelCatalogues()
+			.get(providerId)
+			?.models.some((model) => model.id === typed);
+		if (known) {
+			form.patchValue({ defaultModel: typed, customModel: '' }, { emitEvent: false });
+		}
+	}
+
 	/** Returns the credential form for a provider. */
 	getForm(providerId: string): FormGroup<ProviderCredentialForm> {
 		return this.forms.get(providerId);
@@ -464,14 +694,26 @@ export class AiChatSettingsComponent implements OnInit {
 		}
 	}
 
-	/** Returns the translation key for a provider's configuration badge. */
+	/**
+	 * Returns the translation key for a provider's configuration badge.
+	 *
+	 * Every credential source needs its OWN badge. This used to branch on 'environment' and fall
+	 * through to TENANT_KEY, which meant a tenant running on the shared platform key was told it had
+	 * entered its own — the one message that is both false and the opposite of the nudge we want,
+	 * since bringing your own key is exactly how you escape the shared rate limit.
+	 */
 	getBadgeKey(provider: IAiChatProvider): string {
 		if (!provider.configured) {
 			return 'AI_CHAT_UI.SETTINGS.BADGE.NOT_CONFIGURED';
 		}
-		return provider.credentialSource === 'environment'
-			? 'AI_CHAT_UI.SETTINGS.BADGE.SERVER_ENV'
-			: 'AI_CHAT_UI.SETTINGS.BADGE.TENANT_KEY';
+		switch (provider.credentialSource) {
+			case 'environment':
+				return 'AI_CHAT_UI.SETTINGS.BADGE.SERVER_ENV';
+			case 'platform':
+				return 'AI_CHAT_UI.SETTINGS.BADGE.PLATFORM_FREE';
+			default:
+				return 'AI_CHAT_UI.SETTINGS.BADGE.TENANT_KEY';
+		}
 	}
 
 	/** Returns the badge status color for a provider's configuration state. */
@@ -479,7 +721,21 @@ export class AiChatSettingsComponent implements OnInit {
 		if (!provider.configured) {
 			return 'basic';
 		}
-		return provider.credentialSource === 'environment' ? 'info' : 'success';
+		switch (provider.credentialSource) {
+			case 'environment':
+				return 'info';
+			// Working, but not the end state we want the user to sit on: it is rate limited and
+			// shared. 'warning' reads as "usable, with a caveat" rather than "all set".
+			case 'platform':
+				return 'warning';
+			default:
+				return 'success';
+		}
+	}
+
+	/** True when this provider is running on the shared, product-supplied free key. */
+	isOnPlatformKey(provider: IAiChatProvider): boolean {
+		return provider.configured && provider.credentialSource === 'platform';
 	}
 
 	// ── List view actions ──────────────────────────────────────────────
@@ -502,6 +758,9 @@ export class AiChatSettingsComponent implements OnInit {
 			)
 			.subscribe({
 				next: () => {
+					// Disabling a tenant key can hand the provider back to the shared platform key, which
+					// has a different (narrower) model list.
+					this.invalidateCatalogue(provider.id);
 					this.load();
 					// Disabling the last enabled credential takes the chat away —
 					// and enabling one brings it back. Both must be reflected now.
@@ -604,6 +863,13 @@ export class AiChatSettingsComponent implements OnInit {
 	 */
 	private finishConnect(): void {
 		void this.router.navigate([], { relativeTo: this.route, queryParams: {} });
+		// Connect writes a tenant key, so the catalogue it replaces is now wrong. Unconditional
+		// because this also runs on the failure path, where re-fetching costs one call and being
+		// wrong costs the user their full model list.
+		const pending = this.selectedProviderId();
+		if (pending) {
+			this.invalidateCatalogue(pending);
+		}
 		this.load();
 		// A successful Connect changes the chat's verdict, so the gate has to be
 		// re-evaluated or the chat stays hidden until a full reload.
@@ -680,6 +946,9 @@ export class AiChatSettingsComponent implements OnInit {
 						this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SAVED', { provider: provider.label }),
 						this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
 					);
+					// The saved key IS the catalogue's input — a tenant key that just replaced the shared
+					// free one unlocks the provider's full list.
+					this.invalidateCatalogue(provider.id);
 					this.load();
 					// The very first provider turns the chat on — the list view the
 					// user lands on must already say so.
@@ -729,6 +998,13 @@ export class AiChatSettingsComponent implements OnInit {
 					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.DELETED', { provider: provider.label }),
 					this.translateService.instant('AI_CHAT_UI.SETTINGS.TOASTR.SUCCESS_TITLE')
 				);
+				// Removing the tenant key drops the provider back to whatever resolves next. Delete does
+				// not navigate away, so nothing else would re-fetch: without this the config view keeps
+				// showing the curated fallback, with no hint, looking like a complete live list.
+				this.invalidateCatalogue(provider.id);
+				if (this.view() === 'config' && this.selectedProviderId() === provider.id) {
+					this.loadModels(provider.id);
+				}
 				this.load();
 				// Deleting the last credential takes the chat away again.
 				this.refreshChatAvailability();
@@ -744,7 +1020,9 @@ export class AiChatSettingsComponent implements OnInit {
 		this.forms = new Map(
 			this.providers().map((provider) => {
 				const credential = this.getCredential(provider.id);
-				const knownModel = provider.models.some((model) => model.id === credential?.defaultModel);
+				// Against the catalogue when one has already been fetched, so a save-and-return does
+				// not demote a perfectly ordinary model back to "custom".
+				const knownModel = this.modelsFor(provider).some((model) => model.id === credential?.defaultModel);
 				return [
 					provider.id,
 					this.fb.nonNullable.group<ProviderCredentialForm>({
@@ -752,8 +1030,11 @@ export class AiChatSettingsComponent implements OnInit {
 						baseUrl: this.fb.nonNullable.control(credential?.baseUrl ?? '', [
 							Validators.pattern(/^https?:\/\/.+/)
 						]),
-						defaultModel: this.fb.nonNullable.control(
-							credential?.defaultModel ? (knownModel ? credential.defaultModel : CUSTOM_MODEL) : ''
+						// `null`, not `''`. ng-select accepts '' as a real value in single-select mode and
+						// fabricates a selected item for it, so the "Provider default" placeholder never
+						// rendered and the field sat blank with a clear (x) button on it.
+						defaultModel: this.fb.control<string | null>(
+							credential?.defaultModel ? (knownModel ? credential.defaultModel : CUSTOM_MODEL) : null
 						),
 						customModel: this.fb.nonNullable.control(knownModel ? '' : (credential?.defaultModel ?? '')),
 						enabled: this.fb.nonNullable.control(credential?.enabled ?? true)
