@@ -1,7 +1,7 @@
 import { Injectable, Logger, ServiceUnavailableException, BadRequestException } from '@nestjs/common';
 import type { Response } from 'express';
 import type { UIMessage, LanguageModel } from 'ai';
-import { IAiChatConfig, IAiChatModel, IAiChatProvider } from '@gauzy/contracts';
+import { IAiChatConfig, IAiChatModel, IAiChatModelCatalogue, IAiChatProvider } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { loadAiSdk } from './esm-loader';
 import { AiProviderRegistry } from './provider-registry';
@@ -66,10 +66,7 @@ export class AiChatService {
 		}
 
 		const ai = await loadAiSdk();
-		const { model, providerId, modelId, credentialSource } = await this.resolveModel(
-			args.providerId,
-			args.modelId
-		);
+		const { model, providerId, modelId, credentialSource } = await this.resolveModel(args.providerId, args.modelId);
 
 		const user = RequestContext.currentUser();
 		const requestDefaults = {
@@ -115,15 +112,17 @@ export class AiChatService {
 			result = ai.streamText({
 				model,
 				instructions,
-				messages: await ai.convertToModelMessages(args.messages, {
-					tools,
-					ignoreIncompleteToolCalls: true
-				}).catch((error: unknown) => {
-					// Malformed UI messages are a client error, not a server fault.
-					throw new BadRequestException(
-						`Invalid chat messages payload: ${error instanceof Error ? error.message : error}`
-					);
-				}),
+				messages: await ai
+					.convertToModelMessages(args.messages, {
+						tools,
+						ignoreIncompleteToolCalls: true
+					})
+					.catch((error: unknown) => {
+						// Malformed UI messages are a client error, not a server fault.
+						throw new BadRequestException(
+							`Invalid chat messages payload: ${error instanceof Error ? error.message : error}`
+						);
+					}),
 				tools,
 				stopWhen: ai.isStepCount(MAX_STEPS),
 				toolApproval: Object.fromEntries(approvalRequired.map((name) => [name, 'user-approval'])),
@@ -400,6 +399,66 @@ export class AiChatService {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * The provider's model catalogue for the settings picker.
+	 *
+	 * Deliberately NOT folded into getConfig(): that endpoint is fetched at app bootstrap for every
+	 * user with chat access and already loops every registered provider, so keyed upstream calls there
+	 * would put the app shell behind six third-party APIs on every login. This is called lazily, for
+	 * one provider, when its config view opens.
+	 *
+	 * DISPLAY ONLY, and it fails OPEN: any error degrades to the provider's curated list. A settings
+	 * page that cannot show a dropdown because a vendor is having a bad day is a worse outcome than a
+	 * slightly short list.
+	 */
+	async listProviderModels(providerId: string): Promise<IAiChatModelCatalogue> {
+		const definition = AiProviderRegistry.get(providerId);
+		if (!definition) {
+			throw new BadRequestException(`Unknown AI provider '${providerId}'.`);
+		}
+		// A placeholder provider has nothing to offer; say so explicitly rather than reporting a
+		// failed fetch.
+		if (definition.chatCapable === false) {
+			return { providerId, models: [], source: 'curated' };
+		}
+
+		const credentials = await this.resolveCredentials(definition);
+
+		// On the shared free key the picker must show EXACTLY the enforced allowlist. Anything wider
+		// and the UI offers models that resolveModel() then rejects — the same advertise-then-refuse
+		// asymmetry that made AI chat look configured while every turn failed.
+		const platformModels = credentials ? await this.resolvePlatformModels(definition, credentials) : null;
+		if (platformModels) {
+			return { providerId, models: platformModels, source: 'platform' };
+		}
+
+		if (!definition.listModels) {
+			return { providerId, models: definition.models, source: 'curated' };
+		}
+		try {
+			const listed = await definition.listModels(credentials);
+			// The hook reports its own source, rather than this inferring `live` from "the array is not
+			// empty". Those are different questions: a provider with no key yet, and a provider whose
+			// fetch failed, both return a perfectly non-empty CURATED list — and calling that live left
+			// the settings page unable to say "save an API key to load the full list", which is the one
+			// thing the user needs to hear at that moment.
+			return listed.models.length
+				? {
+						providerId,
+						models: listed.models,
+						source: listed.source,
+						...(listed.stale ? { stale: true } : {})
+					}
+				: { providerId, models: definition.models, source: 'curated' };
+		} catch (error) {
+			this.logger.warn(
+				`[ai-chat] Model catalogue fetch failed for '${providerId}'; serving the curated list: ` +
+					`${error instanceof Error ? error.message : error}`
+			);
+			return { providerId, models: definition.models, source: 'curated' };
+		}
 	}
 
 	/**

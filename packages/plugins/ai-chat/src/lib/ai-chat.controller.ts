@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Headers, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import type { UIMessage } from 'ai';
-import { IAiChatConfig, PermissionsEnum } from '@gauzy/contracts';
+import { IAiChatConfig, IAiChatModelCatalogue, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { AiChatService } from './ai-chat.service';
 
@@ -66,5 +66,25 @@ export class AiChatController {
 	@Get('/config')
 	async config(): Promise<IAiChatConfig> {
 		return this.aiChatService.getConfig();
+	}
+
+	/**
+	 * One provider's model catalogue, for the settings model picker.
+	 *
+	 * Separate from `/config` on purpose. `/config` is fetched at app bootstrap for every user with
+	 * chat access and loops every registered provider; fetching six upstream catalogues there would
+	 * put the app shell behind third-party APIs on every login. This is called lazily, for the one
+	 * provider whose config view was opened.
+	 *
+	 * Same two-permission rule as `/config`: an admin holding only AI_CHAT_SETTINGS must be able to
+	 * use the settings page. Exposes no secrets — model ids and labels only.
+	 */
+	@ApiOperation({ summary: "A provider's available models" })
+	@ApiResponse({ status: 200, description: 'Model catalogue.' })
+	@ApiResponse({ status: 400, description: 'Unknown provider.' })
+	@Permissions(PermissionsEnum.AI_CHAT_ACCESS, PermissionsEnum.AI_CHAT_SETTINGS)
+	@Get('/providers/:providerId/models')
+	async providerModels(@Param('providerId') providerId: string): Promise<IAiChatModelCatalogue> {
+		return this.aiChatService.listProviderModels(providerId);
 	}
 }

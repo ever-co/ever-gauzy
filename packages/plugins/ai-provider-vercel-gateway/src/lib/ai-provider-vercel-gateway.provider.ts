@@ -1,5 +1,13 @@
 import { AiProviderEnum, IAiChatModel } from '@gauzy/contracts';
-import { IAiChatProviderDefinition, IAiProviderCredentials, importEsm } from '@gauzy/plugin-ai-chat';
+import {
+	IAiChatModelList,
+	IAiChatProviderDefinition,
+	IAiProviderCredentials,
+	createCatalogueCache,
+	fetchCatalogueJson,
+	importEsm,
+	publicCatalogue
+} from '@gauzy/plugin-ai-chat';
 
 /** Stable provider id used by the registry, the UI and BYOK credentials. */
 const PROVIDER_ID = AiProviderEnum.VERCEL_GATEWAY;
@@ -17,6 +25,56 @@ const MODELS: IAiChatModel[] = [
 ];
 
 /**
+ * Whether a `deprecated_at` stamp has actually passed.
+ *
+ * The field is a SCHEDULE, not a tombstone: the gateway sets it ahead of the retirement date and the
+ * model keeps working until then. Treating any value as "gone" hid a model a tenant might already
+ * have configured, leaving their own saved default missing from their own picker.
+ */
+const isRetired = (deprecatedAt?: string | number | null): boolean => {
+	if (!deprecatedAt) return false;
+	const at = typeof deprecatedAt === 'number' ? deprecatedAt : Date.parse(deprecatedAt);
+	return Number.isFinite(at) && at <= Date.now();
+};
+
+/** Model catalogue cache. The gateway publishes its catalogue publicly, so no credential is needed. */
+const catalogueCache = createCatalogueCache<IAiChatModel[]>();
+
+/**
+ * Every gateway model that is a chat model AND can call tools.
+ *
+ * Three filters, each removing a distinct kind of unusable entry: the catalogue also lists embedding,
+ * image, video, speech and reranking models (`type`), some language models cannot call tools at all
+ * (`supported_parameters`, which agrees exactly with the `tool-use` tag), and retired models stay
+ * listed with a `deprecated_at` stamp.
+ */
+const listCatalogue = async (): Promise<IAiChatModelList> =>
+	publicCatalogue({
+		curated: MODELS,
+		cache: catalogueCache,
+		load: async () => {
+			const body = await fetchCatalogueJson<{
+				data?: {
+					id: string;
+					name?: string;
+					type?: string;
+					deprecated_at?: string | number | null;
+					supported_parameters?: string[];
+				}[];
+			}>('https://ai-gateway.vercel.sh/v1/models');
+			return (body.data ?? [])
+				.filter(
+					(m) =>
+						typeof m?.id === 'string' &&
+						m.type === 'language' &&
+						!isRetired(m.deprecated_at) &&
+						(m.supported_parameters ?? []).includes('tools')
+				)
+				.map((m) => ({ id: m.id, label: m.name ?? m.id, providerId: PROVIDER_ID }));
+		}
+	});
+
+/**
  * Vercel AI Gateway provider definition for the AI chat engine.
  *
  * Registered with the {@link AiProviderRegistry} by {@link AiProviderVercelGatewayPlugin}.
@@ -30,6 +88,7 @@ export const vercelGatewayProviderDefinition: IAiChatProviderDefinition = {
 	baseUrlEnvVar: 'AI_GATEWAY_BASE_URL',
 	models: MODELS,
 	defaultModel: 'anthropic/claude-sonnet-5',
+	listModels: listCatalogue,
 	order: 30,
 	websiteUrl: 'https://vercel.com/ai-gateway',
 	apiKeysUrl: 'https://vercel.com/dashboard',
