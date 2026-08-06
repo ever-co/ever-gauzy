@@ -51,16 +51,14 @@ describe('TimeZoneService — default time zone', () => {
 		});
 	});
 
-	describe('the offset consumers derive from it', () => {
+	describe('the instant consumers compose from it', () => {
 		/**
-		 * Reproduces how `TimerRangePickerComponent` turns a picked wall-clock time into the
-		 * instant that is POSTed: resolve the zone's offset for the day being edited, then
-		 * parse the wall-clock string against it.
+		 * Reproduces `TimerRangePickerComponent.composeInstant()`: hand the whole wall-clock
+		 * string to moment-timezone against the zone this service holds, and let it pick the
+		 * offset in effect at that reading.
 		 */
-		const composeInstant = (service: TimeZoneService, day: string, time: string): Date => {
-			const offset = moment.tz(day, service.currentTimeZone).format('Z');
-			return new Date(`${day} ${time}${offset}`);
-		};
+		const composeInstant = (service: TimeZoneService, day: string, time: string): Date =>
+			moment.tz(`${day} ${time}`, 'YYYY-MM-DD HH:mm', service.currentTimeZone).toDate();
 
 		it('files a manually entered time at the clock the user typed it on', () => {
 			withGuessedZone(BROWSER_ZONE);
