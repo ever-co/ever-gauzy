@@ -1,9 +1,22 @@
-import { Body, Controller, Get, Headers, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	Headers,
+	Param,
+	Post,
+	Req,
+	Res,
+	UploadedFile,
+	UseGuards,
+	UseInterceptors
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
+import { memoryStorage } from 'multer';
 import type { UIMessage } from 'ai';
 import { IAiChatConfig, IAiChatModelCatalogue, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { LazyFileInterceptor, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { AiChatService } from './ai-chat.service';
 
 /** Request body sent by the `useChat` client (Vercel AI SDK UI). */
@@ -66,6 +79,38 @@ export class AiChatController {
 	@Get('/config')
 	async config(): Promise<IAiChatConfig> {
 		return this.aiChatService.getConfig();
+	}
+
+	/**
+	 * Speech to text for the chat's dictation control.
+	 *
+	 * `AI_CHAT_ACCESS` only: dictation is a way of typing a message, so anyone who may use the chat
+	 * may dictate into it. Requiring AI_CHAT_SETTINGS here would gate an input method behind an
+	 * administrative permission.
+	 *
+	 * The size cap is the real guard — audio is user-supplied and would otherwise be bounded only by
+	 * how long someone holds the button. 25 MB matches what the upstream speech APIs accept, so a
+	 * larger upload could never have succeeded anyway.
+	 */
+	@ApiOperation({ summary: 'Transcribe recorded speech' })
+	@ApiResponse({ status: 200, description: 'Transcript.' })
+	@ApiResponse({ status: 400, description: 'No audio uploaded.' })
+	@ApiResponse({ status: 503, description: 'No provider available to transcribe.' })
+	@Permissions(PermissionsEnum.AI_CHAT_ACCESS)
+	@Post('/transcribe')
+	@UseInterceptors(
+		LazyFileInterceptor('file', {
+			// `storage` is REQUIRED even though the type marks it optional: the interceptor calls
+			// `localOptions.storage(context)` unconditionally, so omitting it throws a TypeError before
+			// multer ever runs and the endpoint answers 500. Memory specifically — the handler reads
+			// `file.buffer`, which only memoryStorage populates; a disk/FileStorage factory would leave
+			// it undefined and the service would reject the upload as empty.
+			storage: () => memoryStorage()
+		})
+	)
+	async transcribe(@UploadedFile() file: { buffer: Buffer; mimetype: string }): Promise<{ text: string }> {
+		const text = await this.aiChatService.transcribe(file?.buffer, file?.mimetype ?? 'audio/webm');
+		return { text };
 	}
 
 	/**

@@ -65,5 +65,9 @@ export const chatTheme = {
 
 	// ── Status colours ────────────────────────────────────────
 	green: '#00d68f',
-	red: '#ff3d71'
+	red: '#ff3d71',
+	/** Tinted red for an ACTIVE destructive-ish control (the mic while recording). */
+	redSoft: 'color-mix(in srgb, #ff3d71 16%, transparent)',
+	/** Quiet foreground for secondary controls, so they do not compete with Send. */
+	textMuted: 'color-mix(in srgb, currentColor 55%, transparent)'
 } as const;

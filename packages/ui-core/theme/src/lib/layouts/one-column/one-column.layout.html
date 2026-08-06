@@ -1,15 +1,11 @@
 <nb-layout windowMode>
 	<!-- Header — belongs to the CANVAS, not to the whole window.
-	     The layout is three full-height columns: Menu | Chat | Canvas. The menu sidebar already
-	     spans the full height (its logo sits above the header band), and the chat does the same, so
-	     the header must start where the canvas starts. Nebular renders a `fixed` header at full
-	     width, so it is inset by the width of whatever columns precede the canvas. -->
+	     Three full-height columns: Menu | Chat | Canvas. Nebular renders a `fixed` header at full
+	     width, so the BAND ITSELF is inset to where the canvas begins (see `--gz-canvas-left` in
+	     the layout ts and scss). It used to stay full width and pad its content aside instead,
+	     which put the demo banner and the first filter underneath the chat panel. -->
 	@if (user()) {
-		<nb-layout-header
-			fixed
-			[style.paddingLeft.px]="chatHeaderPad('start')"
-			[style.paddingRight.px]="chatHeaderPad('end')"
-		>
+		<nb-layout-header fixed>
 			<ngx-header [expanded]="isExpanded()"></ngx-header>
 		</nb-layout-header>
 	}
