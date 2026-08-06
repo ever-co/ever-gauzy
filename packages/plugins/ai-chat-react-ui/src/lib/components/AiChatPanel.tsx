@@ -833,6 +833,7 @@ export function AiChatPanel() {
 					onStop={() => void stop()}
 					onEscape={isDetachedView ? undefined : handleCollapse}
 					onTranscribe={transcribeAudio}
+					composingFor={activeConversationId}
 				/>
 			</div>
 

@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
+import { memoryStorage } from 'multer';
 import type { UIMessage } from 'ai';
 import { IAiChatConfig, IAiChatModelCatalogue, PermissionsEnum } from '@gauzy/contracts';
 import { LazyFileInterceptor, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
@@ -81,17 +82,6 @@ export class AiChatController {
 	}
 
 	/**
-	 * One provider's model catalogue, for the settings model picker.
-	 *
-	 * Separate from `/config` on purpose. `/config` is fetched at app bootstrap for every user with
-	 * chat access and loops every registered provider; fetching six upstream catalogues there would
-	 * put the app shell behind third-party APIs on every login. This is called lazily, for the one
-	 * provider whose config view was opened.
-	 *
-	 * Same two-permission rule as `/config`: an admin holding only AI_CHAT_SETTINGS must be able to
-	 * use the settings page. Exposes no secrets — model ids and labels only.
-	 */
-	/**
 	 * Speech to text for the chat's dictation control.
 	 *
 	 * `AI_CHAT_ACCESS` only: dictation is a way of typing a message, so anyone who may use the chat
@@ -108,12 +98,32 @@ export class AiChatController {
 	@ApiResponse({ status: 503, description: 'No provider available to transcribe.' })
 	@Permissions(PermissionsEnum.AI_CHAT_ACCESS)
 	@Post('/transcribe')
-	@UseInterceptors(LazyFileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
+	@UseInterceptors(
+		LazyFileInterceptor('file', {
+			// `storage` is REQUIRED even though the type marks it optional: the interceptor calls
+			// `localOptions.storage(context)` unconditionally, so omitting it throws a TypeError before
+			// multer ever runs and the endpoint answers 500. Memory specifically — the handler reads
+			// `file.buffer`, which only memoryStorage populates; a disk/FileStorage factory would leave
+			// it undefined and the service would reject the upload as empty.
+			storage: () => memoryStorage()
+		})
+	)
 	async transcribe(@UploadedFile() file: { buffer: Buffer; mimetype: string }): Promise<{ text: string }> {
 		const text = await this.aiChatService.transcribe(file?.buffer, file?.mimetype ?? 'audio/webm');
 		return { text };
 	}
 
+	/**
+	 * One provider's model catalogue, for the settings model picker.
+	 *
+	 * Separate from `/config` on purpose. `/config` is fetched at app bootstrap for every user with
+	 * chat access and loops every registered provider; fetching six upstream catalogues there would
+	 * put the app shell behind third-party APIs on every login. This is called lazily, for the one
+	 * provider whose config view was opened.
+	 *
+	 * Same two-permission rule as `/config`: an admin holding only AI_CHAT_SETTINGS must be able to
+	 * use the settings page. Exposes no secrets — model ids and labels only.
+	 */
 	@ApiOperation({ summary: "A provider's available models" })
 	@ApiResponse({ status: 200, description: 'Model catalogue.' })
 	@ApiResponse({ status: 400, description: 'Unknown provider.' })

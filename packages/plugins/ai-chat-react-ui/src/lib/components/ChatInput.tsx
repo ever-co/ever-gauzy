@@ -39,6 +39,14 @@ export interface ChatInputProps {
 	 * failing on click: a control that cannot work should not be offered.
 	 */
 	onTranscribe?: (audio: Blob) => Promise<string>;
+	/**
+	 * Identifies what the input is composing FOR — the active conversation.
+	 *
+	 * A take that outlives its conversation must not be delivered: switching chats while speaking, or
+	 * while the transcript is still in flight, would otherwise drop the words into whichever
+	 * conversation happens to be open when they arrive.
+	 */
+	composingFor?: string;
 }
 
 /** `0:07`, `1:23` — mm:ss, which is all a dictation take ever needs. */
@@ -81,9 +89,11 @@ export function ChatInput({
 	onSubmit,
 	onStop,
 	onEscape,
-	onTranscribe
+	onTranscribe,
+	composingFor
 }: ChatInputProps) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
+	const containerRef = useRef<HTMLDivElement>(null);
 	const [isFocused, setIsFocused] = useState(false);
 
 	const [dictation, setDictation] = useState<DictationState>('idle');
@@ -123,6 +133,21 @@ export function ChatInput({
 	/** Latest auto-send choice, for the same reason — the checkbox can change mid-take. */
 	const autoSendRef = useRef(false);
 	autoSendRef.current = autoSend;
+	/**
+	 * The rest of the props the recorder's callbacks need, for the same reason again.
+	 *
+	 * `recorder.onstop` is attached once, when the take starts. Reading `isBusy` or `onSubmit` from
+	 * that closure evaluates the auto-send guard against whatever was true a minute ago — refusing to
+	 * send because a since-finished response was streaming, or sending into one that has since begun.
+	 */
+	const isBusyRef = useRef(isBusy);
+	isBusyRef.current = isBusy;
+	const onSubmitRef = useRef(onSubmit);
+	onSubmitRef.current = onSubmit;
+	const onChangeRef = useRef(onChange);
+	onChangeRef.current = onChange;
+	const onTranscribeRef = useRef(onTranscribe);
+	onTranscribeRef.current = onTranscribe;
 
 	// Auto-resize textarea. The floor is the row height so a single line is vertically centred
 	// against the buttons rather than sitting hard against the bottom of the row.
@@ -182,7 +207,16 @@ export function ChatInput({
 			}
 
 			const mimeType = pickRecorderMimeType();
-			const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+			let recorder: MediaRecorder;
+			try {
+				recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+			} catch (constructionError) {
+				// `releaseRecorder` reads `recorderRef.current`, which is still null here — so the
+				// stream just acquired would never be stopped and the microphone would stay live for
+				// the life of the tab. Stop what we are actually holding.
+				stream.getTracks().forEach((track) => track.stop());
+				throw constructionError;
+			}
 			chunksRef.current = [];
 			cancelledRef.current = false;
 
@@ -209,10 +243,10 @@ export function ChatInput({
 						// rather than a replacement for one.
 						const draft = valueRef.current.trim();
 						const next = draft ? `${draft} ${spoken}` : spoken;
-						onChange(next);
+						onChangeRef.current(next);
 						// The transcript goes to the parent EXPLICITLY: `onChange` has not been applied
 						// yet, so submitting without it would send the pre-dictation text.
-						if (autoSendRef.current && !isBusy) onSubmit(next);
+						if (autoSendRef.current && !isBusyRef.current) onSubmitRef.current(next);
 					})
 					.catch((error: unknown) => {
 						if (session !== sessionRef.current) return;
@@ -244,13 +278,69 @@ export function ChatInput({
 		} finally {
 			startingRef.current = false;
 		}
-	}, [onTranscribe, dictation, releaseRecorder, onChange, onSubmit, isBusy, t]);
+		// Deliberately narrow: everything the async callbacks need is read through a ref, so the
+		// identity of this callback does not have to change when a prop does.
+	}, [onTranscribe, dictation, releaseRecorder, t]);
+
+	// A conversation switch abandons the take, for the same reason a collapse does: the words were
+	// meant for the chat that is no longer open.
+	useEffect(() => {
+		if (dictation === 'idle') return;
+		cancelledRef.current = true;
+		sessionRef.current += 1;
+		try {
+			recorderRef.current?.stop();
+		} catch {
+			// Already inactive.
+		}
+		releaseRecorder();
+		setDictation('idle');
+		// Deliberately keyed ONLY on the conversation: including `dictation` would abandon every take
+		// the moment it started.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [composingFor]);
+
+	// Collapsing the chat does NOT unmount this panel — the sidebar is hidden with `display: none` —
+	// so the unmount teardown never runs and a take would keep recording with its Cancel and Done
+	// buttons off screen. Losing visibility is treated as abandoning the take.
+	useEffect(() => {
+		if (dictation !== 'recording') return;
+		const root = containerRef.current;
+		if (!root || typeof IntersectionObserver === 'undefined') return;
+		const observer = new IntersectionObserver((entries) => {
+			// `display: none` yields a zero-area rect, which reads as not intersecting.
+			if (entries.some((entry) => !entry.isIntersecting)) {
+				cancelledRef.current = true;
+				sessionRef.current += 1;
+				try {
+					recorderRef.current?.stop();
+				} catch {
+					// Already inactive.
+				}
+				releaseRecorder();
+				setDictation('idle');
+			}
+		});
+		observer.observe(root);
+		return () => observer.disconnect();
+	}, [dictation, releaseRecorder]);
+
+	/**
+	 * Return focus to the composer.
+	 *
+	 * Done and Cancel remove the button that was focused, and the mic button is disabled in the same
+	 * instant, so focus would otherwise fall to `<body>` with nowhere sensible to resume.
+	 */
+	const restoreFocus = useCallback(() => {
+		textareaRef.current?.focus();
+	}, []);
 
 	const finishDictation = useCallback(() => {
 		if (dictation !== 'recording') return;
 		cancelledRef.current = false;
 		recorderRef.current?.stop();
-	}, [dictation]);
+		restoreFocus();
+	}, [dictation, restoreFocus]);
 
 	const cancelDictation = useCallback(() => {
 		if (dictation !== 'recording') return;
@@ -258,7 +348,8 @@ export function ChatInput({
 		// Invalidate too, so a transcription already posted for this take is discarded on arrival.
 		sessionRef.current += 1;
 		recorderRef.current?.stop();
-	}, [dictation]);
+		restoreFocus();
+	}, [dictation, restoreFocus]);
 
 	function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
 		// Ignore key events fired while an IME composition is active (e.g.
@@ -388,11 +479,14 @@ export function ChatInput({
 	const isTranscribing = dictation === 'transcribing';
 
 	return (
-		<div style={containerStyle}>
+		<div ref={containerRef} style={containerStyle}>
 			{/* Recording controls sit ABOVE the input, so starting a take never displaces the
 			    message the user may already have typed. */}
+			{/* NOT a live region. `role="status"` is implicitly `aria-atomic`, so a timer ticking inside
+			    it re-announces the entire panel — controls and all — once per second for the length of
+			    the take. The state change is announced once, by the mic button's `aria-pressed`. */}
 			{(isRecording || isTranscribing) && (
-				<div style={recordingPanelStyle} role="status" aria-live="polite">
+				<div style={recordingPanelStyle}>
 					<span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
 						<span
 							aria-hidden="true"
@@ -439,12 +533,33 @@ export function ChatInput({
 				<div
 					role="alert"
 					style={{
+						display: 'flex',
+						alignItems: 'flex-start',
+						gap: 6,
 						marginBottom: 6,
 						fontSize: chatTheme.fontSizeSmall,
 						color: chatTheme.red
 					}}
 				>
-					{dictationError}
+					<span style={{ flex: 1 }}>{dictationError}</span>
+					{/* Otherwise it sits above the composer until the next take, which the user may
+					    reasonably not want to start. */}
+					<button
+						type="button"
+						onClick={() => setDictationError(null)}
+						style={{
+							border: 'none',
+							background: 'transparent',
+							color: 'inherit',
+							cursor: 'pointer',
+							padding: 0,
+							lineHeight: 1
+						}}
+						title={t('AI_ASSISTANT.DISMISS', 'Dismiss')}
+						aria-label={t('AI_ASSISTANT.DISMISS', 'Dismiss')}
+					>
+						×
+					</button>
 				</div>
 			)}
 
@@ -457,9 +572,14 @@ export function ChatInput({
 			>
 				{/* Attach and library are placeholders on purpose — the control is shown so the
 				    affordance is discoverable, and disabled so it cannot fail silently when clicked. */}
+				{/* `aria-disabled`, NOT the native `disabled`: that removes the control from the tab
+				    order and suppresses its tooltip, so the "coming soon" hint the comment calls
+				    discoverable would be reachable by neither keyboard nor hover. This keeps it
+				    focusable and announced, and the no-op click keeps it inert. */}
 				<button
 					type="button"
-					disabled
+					aria-disabled="true"
+					onClick={(e) => e.preventDefault()}
 					style={toolButtonStyle(false, false)}
 					title={t('AI_ASSISTANT.ATTACH_SOON', 'Attach files or folders (coming soon)')}
 					aria-label={t('AI_ASSISTANT.ATTACH_SOON', 'Attach files or folders (coming soon)')}
@@ -480,7 +600,8 @@ export function ChatInput({
 
 				<button
 					type="button"
-					disabled
+					aria-disabled="true"
+					onClick={(e) => e.preventDefault()}
 					style={toolButtonStyle(false, false)}
 					title={t('AI_ASSISTANT.LIBRARY_SOON', 'Choose from the file library (coming soon)')}
 					aria-label={t('AI_ASSISTANT.LIBRARY_SOON', 'Choose from the file library (coming soon)')}

@@ -15,6 +15,13 @@ import { AiProviderCredentialService } from './credentials/ai-provider-credentia
 import { AiChatConversationService } from './conversations/ai-chat-conversation.service';
 import { buildRateLimitEnvelope, isRateLimitError, rateLimitRetryAfter, RATE_LIMIT_CODE } from './rate-limit';
 
+/**
+ * Largest dictation upload accepted, matching what the upstream speech APIs take anyway.
+ *
+ * Audio is user-supplied and otherwise bounded only by how long someone holds the button.
+ */
+const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+
 /** Maximum agent steps (model turns incl. tool calls) per user message. */
 const MAX_STEPS = 12;
 
@@ -477,6 +484,16 @@ export class AiChatService {
 	async transcribe(audio: Buffer, mimeType: string): Promise<string> {
 		if (!audio?.length) {
 			throw new BadRequestException('No audio was uploaded.');
+		}
+		// Enforced HERE, not through the interceptor's `limits`: LazyFileInterceptor spreads only
+		// `storage` and `fileFilter` into multer and drops `limits`, so a cap declared at the route
+		// would read as enforced while accepting anything. This is the only place that actually holds.
+		if (audio.length > MAX_AUDIO_BYTES) {
+			throw new BadRequestException(
+				`Recording is too large (${Math.round(audio.length / 1024 / 1024)}MB). The limit is ${
+					MAX_AUDIO_BYTES / 1024 / 1024
+				}MB.`
+			);
 		}
 
 		const capable = AiProviderRegistry.list()

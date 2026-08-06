@@ -1,4 +1,14 @@
-import { Component, effect, inject, viewChild, afterNextRender, DestroyRef, signal, Type } from '@angular/core';
+import {
+	Component,
+	effect,
+	inject,
+	viewChild,
+	afterNextRender,
+	DestroyRef,
+	Injector,
+	signal,
+	Type
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
 import { ChatSidebarService, LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
@@ -29,6 +39,7 @@ export class OneColumnLayoutComponent {
 	private readonly layoutService = inject(LayoutService);
 	private readonly themeLanguageSelectorService = inject(ThemeLanguageSelectorService);
 	private readonly destroyRef = inject(DestroyRef);
+	private readonly injector = inject(Injector);
 
 	/** User signal for template — derived from store observable. */
 	readonly user = toSignal(this.store.user$);
@@ -164,6 +175,22 @@ export class OneColumnLayoutComponent {
 		// The column's own box does not change when the window does, so track that too.
 		window.addEventListener('resize', apply);
 		this.canvasLeftOnResize = apply;
+
+		// A ResizeObserver fires on SIZE, and the two changes that matter most here move the column
+		// without resizing it: swapping the chat from one dock side to the other, and switching to an
+		// RTL language. Both leave the offsets stale and the band inset on the wrong side, so the
+		// signals that cause them are watched directly.
+		effect(
+			() => {
+				this.chatSidebarService.position();
+				this.chatSidebarService.expanded();
+				this.chatSidebarService.maximized();
+				this.chatSidebarService.width();
+				// After the layout has actually reflowed, not during this microtask.
+				requestAnimationFrame(apply);
+			},
+			{ injector: this.injector }
+		);
 		apply();
 	}
 
