@@ -109,6 +109,13 @@ export class AuthService extends SocialAuthService {
 	private static readonly OAUTH_REQUEST_CACHE_PREFIX = 'oauth_app_request:';
 	private static readonly OAUTH_REQUEST_TTL_MS = 10 * 60 * 1000;
 
+	/**
+	 * Authorization-code jti values already claimed by this process, used to make the non-Redis
+	 * token-exchange path single-use. Entries expire with the codes they guard. Deployments with
+	 * Redis wired use GETDEL instead and never touch this set.
+	 */
+	private readonly consumedOAuthCodes = new Set<string>();
+
 	constructor(
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
 		private readonly mikroOrmUserRepository: MikroOrmUserRepository,
@@ -382,8 +389,22 @@ export class AuthService extends SocialAuthService {
 		if (this.redisClient) {
 			// Atomic get-and-delete: prevents race conditions in multi-instance deployments
 			codeState = await this.redisClient.getDel(cacheKey);
+		} else if (this.consumedOAuthCodes.has(payload.jti)) {
+			// Already claimed by an exchange that is still in flight, or by one that completed.
+			codeState = null;
 		} else {
-			// Non-Redis fallback (single-instance safe)
+			// Non-Redis fallback, single instance only. `await get()` followed by `await del()` is
+			// NOT single-use safe on its own: the await between them yields the event loop, so two
+			// exchanges of the same code both observe it as live and both mint an access token —
+			// exactly what RFC 6749 forbids. Node runs one thread, so a SYNCHRONOUS check-and-insert
+			// is the atomic claim that the two-step cache dance cannot be. The claim is recorded
+			// BEFORE the first await, which is what closes the window.
+			this.consumedOAuthCodes.add(payload.jti);
+
+			// The jti cannot be replayed past its own expiry (checked above), so the set only needs
+			// to outlive the code itself. unref() keeps this timer from holding the process open.
+			setTimeout(() => this.consumedOAuthCodes.delete(payload.jti), AuthService.OAUTH_CODE_TTL_MS).unref();
+
 			codeState = (await this.cacheManager.get<string>(cacheKey)) ?? null;
 			await this.cacheManager.del(cacheKey);
 		}
@@ -1917,9 +1938,18 @@ export class AuthService extends SocialAuthService {
 
 			// Return the response if there are matching workspaces
 			if (response.total_workspaces > 0) {
-				// Invalidate the magic code immediately after successful validation.
-				// The signed JWT workspace tokens are the proof of auth from here on.
-				await this.userService.invalidateMagicCode(email, code);
+				// Claim the code before releasing the workspace tokens. The lookup above only READ
+				// it, so two requests carrying the same code are still running side by side here;
+				// the conditional update is what picks a winner, because its WHERE clause still
+				// contains the code and the loser therefore matches zero rows. Invalidating without
+				// checking the count — as this used to — meant both requests were handed valid
+				// signed workspace tokens from a single single-use code.
+				const claimed = await this.userService.invalidateMagicCode(email, code);
+
+				if (claimed === 0) {
+					throw new UnauthorizedException();
+				}
+
 				return response;
 			}
 

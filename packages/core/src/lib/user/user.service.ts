@@ -599,25 +599,32 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Invalidates the magic sign-in code for all users matching the given email and code.
-	 * Called after a successful workspace sign-in to prevent code reuse.
+	 * Atomically claims the magic sign-in code for every user matching the given email and code.
+	 *
+	 * The code stays in the WHERE clause, which is what makes this the single-use claim rather
+	 * than mere cleanup: the first caller nulls the code and gets a non-zero row count, and any
+	 * request racing it matches nothing and gets 0. One email can exist in several tenants, so a
+	 * winning claim may cover more than one row — hence a count rather than a boolean.
+	 *
+	 * Callers MUST gate on the return value before handing out sign-in tokens. Treating this as
+	 * fire-and-forget cleanup lets two concurrent requests both authenticate off one code.
 	 *
 	 * @param email - The email address used for the sign-in.
-	 * @param code  - The magic code that was consumed.
-	 * @returns A promise that resolves when the invalidation write completes.
+	 * @param code  - The magic code being consumed.
+	 * @returns The number of user rows claimed; 0 means the code was already consumed.
 	 */
-	async invalidateMagicCode(email: string, code: string): Promise<void> {
+	async invalidateMagicCode(email: string, code: string): Promise<number> {
 		// Common criteria and payload shared by both ORM adapters
 		const where = { email, code };
 		const update = { code: null, codeExpireAt: null };
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				await this.mikroOrmUserRepository.nativeUpdate(where, update);
-				break;
-			case MultiORMEnum.TypeORM:
-				await this.typeOrmUserRepository.update(where, update);
-				break;
+				return await this.mikroOrmUserRepository.nativeUpdate(where, update);
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmUserRepository.update(where, update);
+				return affected ?? 0;
+			}
 			default:
 				throw new Error(`ORM type not implemented: ${this.ormType}`);
 		}

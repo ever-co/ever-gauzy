@@ -5,7 +5,6 @@ import { IAppIntegrationConfig } from '@gauzy/common';
 import {
 	IEmployee,
 	IInvite,
-	InviteStatusEnum,
 	IOrganizationContact,
 	IOrganizationDepartment,
 	IOrganizationProject,
@@ -60,27 +59,43 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 			throw new Error('Organization no longer allows invites');
 		}
 
+		// Claim the invite BEFORE registering anyone — see InviteService.claimInvite. Everything
+		// above this line is a read, so two parallel acceptances of the same invite are both still
+		// live here; the conditional flip to ACCEPTED is what picks a single winner.
+		if (!(await this.inviteService.claimInvite(inviteId))) {
+			throw new Error('Invite has already been accepted');
+		}
+
 		let user: IUser;
 		let employee: IEmployee;
 
 		try {
-			// Find existing employee user
-			user = await this.findExistingEmployeeUser(invite);
+			// Inner try/catch is find-or-register control flow, not error handling: a missing
+			// employee user is the signal to create one.
+			try {
+				// Find existing employee user
+				user = await this.findExistingEmployeeUser(invite);
 
-			// Implementation to find an employee by user ID
-			employee = await this.findEmployee(user.id);
+				// Implementation to find an employee by user ID
+				employee = await this.findEmployee(user.id);
+			} catch (error) {
+				// New user registers before accepting the invitation
+				user = await this.registerNewUser(input, invite, languageCode);
+
+				// Create employee after creating user
+				employee = await this.createEmployee(invite, user);
+			}
+
+			// Implementation for updating employee memberships based on the invite details
+			await this.updateEmployeeMemberships(invite, employee);
 		} catch (error) {
-			// New user registers before accepting the invitation
-			user = await this.registerNewUser(input, invite, languageCode);
-
-			// Create employee after creating user
-			employee = await this.createEmployee(invite, user);
+			// Nothing consumed the invite after all — hand it back rather than stranding it as
+			// ACCEPTED with no employee attached.
+			await this.inviteService.releaseInvite(inviteId);
+			throw error;
 		}
 
-		// Implementation for updating employee memberships based on the invite details
-		await this.updateEmployeeMemberships(invite, employee);
-
-		// Accept invitation
+		// Attach the accepted user; the status itself was already claimed above.
 		await this.updateInviteStatus(inviteId, user.id);
 
 		return user;
@@ -183,14 +198,17 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	}
 
 	/**
-	 * Updates the status of an invite to accepted and associates it with a user.
+	 * Associates an already-claimed invite with the user who accepted it.
+	 *
+	 * The ACCEPTED status is set by `InviteService.claimInvite` before registration, so this only
+	 * records the resulting user — writing the status here as well would reopen the race it closes.
+	 *
 	 * @param inviteId The ID of the invite to update.
 	 * @param userId The ID of the user who accepted the invite.
 	 * @returns The updated invite or the update result.
 	 */
 	private async updateInviteStatus(inviteId: string, userId: string): Promise<IInvite | UpdateResult> {
 		return await this.inviteService.update(inviteId, {
-			status: InviteStatusEnum.ACCEPTED,
 			userId
 		});
 	}

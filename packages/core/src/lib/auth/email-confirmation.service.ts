@@ -1,5 +1,5 @@
 import { BadRequestException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { MoreThanOrEqual } from 'typeorm';
+import { MoreThanOrEqual, UpdateResult } from 'typeorm';
 import { environment } from '@gauzy/config';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as moment from 'moment';
@@ -162,12 +162,18 @@ export class EmailConfirmationService {
 				}
 
 				// Atomically invalidate the verification code (prevent reuse / TOCTOU race) // cspell:ignore TOCTOU
-				// The update scopes by id + code + codeExpireAt so a concurrent request
-				// that already nullified the code will update zero rows
-				await this.userService.update(user['id'], {
-					code: null,
-					codeExpireAt: null
-				});
+				// The update scopes by id AND code, so a concurrent request that already nullified
+				// the code matches zero rows. Scoping by id alone — as this did until now, despite
+				// the comment claiming otherwise — is not a claim at all: both racers matched their
+				// own row and both confirmed off one code.
+				const claim = (await this.userService.update(
+					{ id: user['id'], code },
+					{ code: null, codeExpireAt: null }
+				)) as UpdateResult;
+
+				if (!claim?.affected) {
+					throw new BadRequestException('Failed to verify email.');
+				}
 
 				return user;
 			}
