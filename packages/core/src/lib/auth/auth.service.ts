@@ -962,11 +962,55 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Atomically consumes a password-reset record, enforcing single use.
+	 *
+	 * The record is claimed with one conditional DELETE keyed on its primary key.
+	 * Whichever concurrent request wins the row lock deletes it and sees
+	 * `affected === 1`; every other request finds the row already gone and sees
+	 * `affected === 0`. Because the claim and the check are the same statement,
+	 * there is no window between them for a second request to slip through.
+	 *
+	 * This has to be a single statement rather than a lock-then-act pair:
+	 * `SELECT ... FOR UPDATE` throws `LockNotSupportedOnGivenDriverError` on
+	 * better-sqlite3 under TypeORM, and knex silently drops the lock clause for
+	 * sqlite under MikroORM — so pessimistic locking is not portable across the
+	 * databases we support, and better-sqlite3 is the default `DB_TYPE`.
+	 *
+	 * `affected` is a real row count on every driver reachable here (postgres
+	 * `rowCount`, mysql `affectedRows`, better-sqlite3 `changes`; MongoDB is
+	 * rejected at config time), so treating anything other than 1 as a lost race
+	 * fails closed.
+	 *
+	 * @param record - The password reset record to consume.
+	 * @returns `true` if this call claimed the record, `false` if it was already used.
+	 */
+	private async consumePasswordResetToken(record: IPasswordReset): Promise<boolean> {
+		// `id` is optional on IPasswordReset. A loaded record always has one, but an undefined value
+		// would widen the criteria and delete every row in the table, so refuse rather than risk it.
+		if (!record?.id) {
+			return false;
+		}
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const affected = await this.mikroOrmPasswordResetRepository.nativeDelete({ id: record.id });
+				return affected === 1;
+			}
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmPasswordResetRepository.delete({ id: record.id });
+				return affected === 1;
+			}
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+	}
+
+	/**
 	 * Resets the user's password based on a valid password reset token.
 	 *
 	 * @param request - The request object containing the new password and the reset token.
 	 * @returns A boolean indicating whether the password reset was successful.
-	 * @throws {BadRequestException} - If the password reset fails due to an invalid or expired token, or if there is an issue updating the password.
+	 * @throws {BadRequestException} - If the password reset fails due to an invalid, expired or already-used token, or if there is an issue updating the password.
 	 */
 	async resetPassword(request: IChangePasswordRequest) {
 		try {
@@ -1004,11 +1048,21 @@ export class AuthService extends SocialAuthService {
 				throw new NotFoundException('Password Reset Failed.');
 			}
 
+			// Claim the token BEFORE changing anything. The record was only read above, so up to
+			// this point two requests carrying the same token are still running side by side; the
+			// conditional delete is what picks a single winner. Doing it after changePassword — as
+			// this flow used to — meant both requests passed validation and both reset the password,
+			// with the last writer silently deciding the final credential.
+			if (!(await this.consumePasswordResetToken(record))) {
+				throw new BadRequestException('Password Reset Failed: Token has already been used.');
+			}
+
 			// Hash the new password using PasswordHashService and update it for the user
 			const hash = await this.passwordHashService.hash(password);
 			await this.userService.changePassword(user.id, hash);
 
-			// Invalidate the used password-reset record and all other records for this user
+			// Sweep up any other password-reset records for this user. The consumed record is already
+			// gone; this only clears leftovers, so a failure here is not worth failing the reset over.
 			try {
 				const deleteWhere = { email: user.email, ...(tenantId ? { tenantId } : {}) };
 				switch (this.ormType) {
