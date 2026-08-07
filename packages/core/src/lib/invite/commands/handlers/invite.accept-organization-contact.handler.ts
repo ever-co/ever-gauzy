@@ -1,4 +1,6 @@
+import { ConflictException } from '@nestjs/common';
 import {
+	InviteStatusEnum,
 	ContactOrganizationInviteStatus,
 	IInvite,
 	IOrganization,
@@ -50,7 +52,7 @@ export class InviteAcceptOrganizationContactHandler
 		// one invite would otherwise build two of each. The conditional flip to ACCEPTED is the
 		// only thing that serializes them, and it has to happen ahead of the first side effect.
 		if (!(await this.inviteService.claimInvite(inviteId))) {
-			throw new Error('Invite has already been accepted');
+			throw new ConflictException('Invite has already been accepted');
 		}
 
 		try {
@@ -136,9 +138,13 @@ export class InviteAcceptOrganizationContactHandler
 				inviteStatus: ContactOrganizationInviteStatus.ACCEPTED
 			});
 
-			// The invite is already ACCEPTED from the claim above; re-read it so the handler still
-			// returns the invite its callers expect.
-			return await this.inviteService.findOneByIdString(inviteId);
+			// Keep the original return shape. Re-reading the invite here would serialize the whole
+			// row — including its token — back to an unauthenticated caller on this public endpoint.
+			// The status write is redundant now that the claim above owns it, but it is idempotent
+			// and preserves exactly what callers of this handler received before.
+			return await this.inviteService.update(inviteId, {
+				status: InviteStatusEnum.ACCEPTED
+			});
 		} catch (error) {
 			// Provisioning failed, so nothing consumed the invite after all — hand it back rather
 			// than stranding it as ACCEPTED with no contact organization behind it.

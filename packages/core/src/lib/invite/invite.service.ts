@@ -68,7 +68,7 @@ import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository
 import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 import { Invite } from './invite.entity';
 import { InviteAcceptCommand } from './commands';
-import { inviteClaimWhere, inviteReleaseWhere } from '../shared/single-use/claim-criteria';
+import { inviteClaimWhere, inviteRejectWhere, inviteReleaseWhere } from '../shared/single-use/claim-criteria';
 
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
@@ -1381,6 +1381,36 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		if (userId) updateData.userId = userId;
 
 		const where: any = inviteClaimWhere(inviteId);
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return (await this.mikroOrmRepository.nativeUpdate(where, updateData)) > 0;
+			case MultiORMEnum.TypeORM:
+			default: {
+				const { affected } = await this.typeOrmRepository.update(where, updateData);
+				return (affected ?? 0) > 0;
+			}
+		}
+	}
+
+	/**
+	 * Atomically rejects an invite, flipping INVITED -> REJECTED.
+	 *
+	 * Same guard as {@link claimInvite}, for the same reason: rejection is the other exit from
+	 * INVITED, and an unguarded write by id would let a reject racing an accept overwrite an invite
+	 * that has already registered a user, destroying the record of who consumed it.
+	 *
+	 * Goes straight to the repositories rather than through `update()`. Invite rejection is a
+	 * PUBLIC endpoint, and passing object criteria to `TenantAwareCrudService.update` routes them
+	 * to `findOneByWhereOptions`, which dereferences `RequestContext.currentUser().tenantId` and
+	 * throws when there is no authenticated user.
+	 *
+	 * @param inviteId - The invite to reject.
+	 * @returns `true` if this call rejected the invite, `false` if it was no longer INVITED.
+	 */
+	async rejectInvite(inviteId: ID): Promise<boolean> {
+		const where: any = inviteRejectWhere(inviteId);
+		const updateData: any = { status: InviteStatusEnum.REJECTED };
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:

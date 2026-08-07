@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ConflictException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { IAppIntegrationConfig } from '@gauzy/common';
@@ -63,7 +63,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		// above this line is a read, so two parallel acceptances of the same invite are both still
 		// live here; the conditional flip to ACCEPTED is what picks a single winner.
 		if (!(await this.inviteService.claimInvite(inviteId))) {
-			throw new Error('Invite has already been accepted');
+			throw new ConflictException('Invite has already been accepted');
 		}
 
 		let user: IUser;

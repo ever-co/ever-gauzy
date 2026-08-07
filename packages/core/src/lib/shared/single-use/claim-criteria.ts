@@ -71,6 +71,15 @@ export const emailVerificationClaimWhereMikroOrm = (id: ID, code: string, tenant
 export const inviteClaimWhere = (id: ID) => ({ id, status: InviteStatusEnum.INVITED });
 
 /**
+ * Criteria for rejecting an invite.
+ *
+ * Rejection is the other way out of INVITED, and it needs the same guard as acceptance: without
+ * it, a reject racing an accept flips an invite that has ALREADY registered a user to REJECTED,
+ * losing the record of who consumed it.
+ */
+export const inviteRejectWhere = (id: ID) => ({ id, status: InviteStatusEnum.INVITED });
+
+/**
  * Criteria for releasing a claimed invite after acceptance failed part-way.
  *
  * Scoped to ACCEPTED so a release cannot resurrect an invite that was rejected or expired by some

@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
-import { IInvite, InviteStatusEnum } from '@gauzy/contracts';
+import { IInvite } from '@gauzy/contracts';
 import { InviteRejectCommand } from '../invite-reject.command';
 import { InviteService } from '../../invite.service';
 
@@ -41,7 +41,13 @@ export class InviteRejectHandler implements ICommandHandler<InviteRejectCommand>
 			if (!invite) {
 				throw new NotFoundException('Invite does not exist');
 			}
-			return await this.inviteService.update(invite.id, { status: InviteStatusEnum.REJECTED });
+			// Guarded transition: an unguarded write by id would let this reject overwrite an
+			// invite that a concurrent acceptance has already consumed and registered a user for.
+			if (!(await this.inviteService.rejectInvite(invite.id))) {
+				throw new ConflictException('Invite has already been accepted or rejected');
+			}
+
+			return invite;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

@@ -1,3 +1,4 @@
+import { ConflictException } from '@nestjs/common';
 import { IUser } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AuthService } from '../../../auth/auth.service';
@@ -40,7 +41,7 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 		// this handler used to — meant both racers passed validation and both ran a full
 		// registration off one invite.
 		if (!(await this.inviteService.claimInvite(inviteId))) {
-			throw Error('Invite has already been accepted');
+			throw new ConflictException('Invite has already been accepted');
 		}
 
 		let user: IUser;

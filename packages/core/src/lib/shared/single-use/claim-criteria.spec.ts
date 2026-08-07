@@ -3,6 +3,7 @@ import { InviteStatusEnum } from '@gauzy/contracts';
 import {
 	emailVerificationClaimWhere,
 	inviteClaimWhere,
+	inviteRejectWhere,
 	inviteReleaseWhere,
 	magicCodeClaimWhere,
 	passwordResetConsumeWhere
@@ -268,6 +269,45 @@ describe('single-use claim criteria', () => {
 			});
 
 			expect(affected).toBe(0);
+		});
+
+		it('a reject racing an accept cannot overwrite the winner', async () => {
+			// Rejection is the other exit from INVITED. Unguarded, it would flip an invite that has
+			// already registered a user to REJECTED, losing the record of who consumed it.
+			const inv = await invites.save({ email: 'race@ever.co', status: InviteStatusEnum.INVITED });
+
+			const accept = invites.update(inviteClaimWhere(inv.id), {
+				status: InviteStatusEnum.ACCEPTED,
+				userId: 'user-1'
+			});
+			const reject = invites.update(inviteRejectWhere(inv.id), { status: InviteStatusEnum.REJECTED });
+			const [a, r] = await Promise.all([accept, reject]);
+
+			// Exactly one transition out of INVITED wins; the loser changes nothing.
+			expect((a.affected ?? 0) + (r.affected ?? 0)).toBe(1);
+
+			const final = await invites.findOne({ where: { id: inv.id } });
+			if ((a.affected ?? 0) === 1) {
+				expect(final.status).toBe(InviteStatusEnum.ACCEPTED);
+				expect(final.userId).toBe('user-1');
+			} else {
+				expect(final.status).toBe(InviteStatusEnum.REJECTED);
+			}
+		});
+
+		it('CONTROL: an unguarded reject overwrites an already-accepted invite', async () => {
+			const inv = await invites.save({ email: 'ovr@ever.co', status: InviteStatusEnum.INVITED });
+			await invites.update(inviteClaimWhere(inv.id), {
+				status: InviteStatusEnum.ACCEPTED,
+				userId: 'user-2'
+			});
+
+			// The pre-fix reject: keyed on id, with no status guard.
+			const { affected } = await invites.update({ id: inv.id }, { status: InviteStatusEnum.REJECTED });
+			const final = await invites.findOne({ where: { id: inv.id } });
+
+			expect(affected).toBe(1);
+			expect(final.status).toBe(InviteStatusEnum.REJECTED); // the accepted user is now orphaned
 		});
 
 		it('CONTROL: flipping status by id alone lets BOTH acceptances through', async () => {

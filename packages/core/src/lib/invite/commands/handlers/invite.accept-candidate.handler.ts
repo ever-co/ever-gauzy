@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { IInvite, IUser, RolesEnum } from '@gauzy/contracts';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
@@ -45,7 +45,7 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 		// Claim the invite BEFORE registering anyone — see InviteService.claimInvite. Everything
 		// above is a read, so two parallel acceptances are both still live at this point.
 		if (!(await this.inviteService.claimInvite(inviteId))) {
-			throw Error('Invite has already been accepted');
+			throw new ConflictException('Invite has already been accepted');
 		}
 
 		let user: IUser;
