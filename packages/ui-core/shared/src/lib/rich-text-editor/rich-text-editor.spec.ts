@@ -109,7 +109,10 @@ describe('rich-text-editor presets', () => {
 			expect(html).toContain('<s>struck</s>');
 			expect(html).toContain('<sub>sub</sub>');
 			expect(html).toContain('<sup>sup</sup>');
-			expect(html).toContain('color: #e74c3c');
+			// The colour survives, but the DOM canonicalizes hex notation to `rgb()` when
+			// the style is read back — `#e74c3c` === `rgb(231, 76, 60)`. Notation is not
+			// content; the corpus suite normalizes both sides before diffing.
+			expect(html).toContain('color: rgb(231, 76, 60)');
 			expect(html).toContain('font-family: Georgia');
 			expect(html).toContain('<ul');
 			expect(html).toContain('start="3"');
@@ -131,7 +134,8 @@ describe('rich-text-editor presets', () => {
 			);
 			const html = generateHTML(json, extensions);
 			expect(html).toContain('legacy font');
-			expect(html).toContain('color: #ff0000');
+			// `#ff0000` read back through the DOM as `rgb(255, 0, 0)` — same colour.
+			expect(html).toContain('color: rgb(255, 0, 0)');
 			expect(html).toContain('Verdana');
 		});
 

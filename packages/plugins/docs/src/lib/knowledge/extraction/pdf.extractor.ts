@@ -37,8 +37,19 @@ export class PdfExtractor implements IDocumentExtractor {
 
 		let pageCount = 0;
 		try {
+			// `pdf-parse` drives pdf.js through an in-process loopback "worker" whose
+			// structured-clone shim re-wraps the input as `new input.constructor(input)`.
+			// For a Node `Buffer` that is the legacy `new Buffer(…)` path, which for inputs
+			// under Node's 4 KiB pool threshold returns a POOLED buffer — one whose
+			// `.buffer` is the shared 8 KiB allocation pool. pdf.js resolves every xref
+			// offset against `bytes.buffer`, so it reads from the pool base instead of the
+			// file and the parse dies with "bad XRef entry". Whether it happens depends on
+			// the pool's fill level, so small PDFs fail non-deterministically. A standalone
+			// `Uint8Array` clones to `byteOffset: 0` and parses reliably at any size.
+			const bytes = new Uint8Array(buffer);
+
 			// `pagerender` collects per-page text so `## Page N` locators can be emitted.
-			const result = await (pdfParse as any)(buffer, {
+			const result = await (pdfParse as any)(bytes, {
 				pagerender: async (pageData: any) => {
 					const textContent = await pageData.getTextContent({
 						normalizeWhitespace: true,
