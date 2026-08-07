@@ -18,7 +18,8 @@ import {
 	TenantAwareCrudService,
 	BaseQueryDTO,
 	prepareSQLQuery as p,
-	LIKE_OPERATOR
+	LIKE_OPERATOR,
+	sanitizeRichHtml
 } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/utils';
 import {
@@ -44,6 +45,21 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		private readonly versionService: HelpCenterArticleVersionService
 	) {
 		super(typeOrmHelpCenterArticleRepository, mikroOrmHelpCenterArticleRepository);
+	}
+
+	/**
+	 * Creates a Help Center article, sanitizing the legacy rich-text `data` HTML column through
+	 * the shared server-side allowlist before persisting — the column is re-rendered with
+	 * `[innerHTML]` in the Help Center reader (see `sanitizeRichHtml`).
+	 *
+	 * @param entity - The article data to persist.
+	 * @returns The persisted article.
+	 */
+	public async create(entity: DeepPartial<HelpCenterArticle>): Promise<HelpCenterArticle> {
+		if (typeof entity.data === 'string') {
+			entity.data = sanitizeRichHtml(entity.data);
+		}
+		return await super.create(entity);
 	}
 
 	async getArticlesByCategoryId(categoryId: ID): Promise<HelpCenterArticle[]> {
@@ -229,6 +245,10 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	 * Update an article by ID.
 	 */
 	public async updateArticleById(id: ID, input: IHelpCenterArticleUpdate): Promise<void> {
+		// Sanitize the legacy rich-text `data` HTML column through the shared server-side allowlist.
+		if (typeof input.data === 'string') {
+			input.data = sanitizeRichHtml(input.data);
+		}
 		await super.update(id, input);
 	}
 
@@ -249,6 +269,11 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		input: IHelpCenterArticleUpdate,
 		ownedById?: ID
 	): Promise<{ article: IHelpCenterArticle; version: IHelpCenterArticleVersion }> {
+		// Sanitize the legacy rich-text `data` HTML column through the shared server-side allowlist.
+		if (typeof input.data === 'string') {
+			input.data = sanitizeRichHtml(input.data);
+		}
+
 		// 1. Get current article state
 		const { record: currentArticle } = await this.findOneOrFailByIdString(id);
 
