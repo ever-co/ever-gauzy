@@ -287,6 +287,16 @@ export class AiChatService {
 			if (!definition) {
 				throw new BadRequestException(`Unknown AI provider '${requestedProviderId}'.`);
 			}
+			// The capability gate must hold on the EXPLICIT path too, not only when defaulting. The
+			// default path below filters placeholders out, but a request that names one directly —
+			// easy to send once /config advertises the provider, and reachable whenever a tenant has
+			// saved a BYOK key for it — would sail through to createModel() and surface its raw
+			// not-implemented error as a failed turn. Same controlled 503 either way.
+			if (definition.chatCapable === false) {
+				throw new ServiceUnavailableException(
+					`AI provider '${definition.label}' cannot serve chat yet — select another provider.`
+				);
+			}
 		} else {
 			// Only a provider that actually HAS credentials may be defaulted to.
 			//
