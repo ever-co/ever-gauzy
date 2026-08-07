@@ -520,7 +520,12 @@ export class AiChatService {
 				// Try the next provider rather than failing the whole dictation on one bad key.
 				const message = error instanceof Error ? error.message : String(error);
 				this.logger.warn(`[ai-chat] Transcription via '${definition.id}' failed: ${message}`);
-				failures.push(message);
+				// Boundary defense for the user-visible join below: an empty Error message or a thrown
+				// non-Error ('[object Object]') would otherwise put a blank or noise where the old text
+				// at least named the provider — so fall back to naming it, and bound the length here
+				// rather than trusting every provider hook to.
+				const usable = message.trim() && message !== '[object Object]';
+				failures.push(usable ? message.slice(0, 400) : `Transcription via '${definition.id}' failed.`);
 			}
 		}
 

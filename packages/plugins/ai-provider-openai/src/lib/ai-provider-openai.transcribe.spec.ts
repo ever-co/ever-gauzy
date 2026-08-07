@@ -146,4 +146,23 @@ describe('openAiProviderDefinition.transcribe', () => {
 		await expect(transcribe()).rejects.toThrow(/Invalid file format/);
 		await expect(transcribe()).rejects.not.toThrow(/sk-oops-leaked/);
 	});
+
+	it('redacts the exact key in use even when it is not sk-shaped', async () => {
+		// Custom base URLs (Azure, proxies) issue keys with no recognizable prefix, so shape-based
+		// redaction alone would relay exactly the secret it exists to protect.
+		capture({ error: { message: 'key azure-key-123 is over quota' } }, { status: 429 });
+
+		const creds = credentials({ apiKey: 'azure-key-123', baseUrl: 'https://proxy.example.com/v1' });
+		await expect(transcribe('audio/webm', creds)).rejects.toThrow(/rate or quota limit/);
+		await expect(transcribe('audio/webm', creds)).rejects.not.toThrow(/azure-key-123/);
+	});
+
+	it('never relays upstream statusText', async () => {
+		// statusText is upstream-controlled prose; with a custom base URL, upstream is whatever the
+		// tenant configured. The classified reason uses the status NUMBER only.
+		capture({ error: { message: 'teapot' } }, { status: 418, statusText: 'secret-in-status sk-via-status' });
+
+		await expect(transcribe()).rejects.toThrow(/HTTP 418/);
+		await expect(transcribe()).rejects.not.toThrow(/secret-in-status/);
+	});
 });

@@ -68,6 +68,52 @@ const TRANSCRIBE_TIMEOUT_MS = 60_000;
 const catalogueCache = createCatalogueCache<IAiChatModel[]>();
 
 /**
+ * Upper bound on the upstream error body read for a diagnostic message.
+ *
+ * Far more than any real OpenAI error needs, and small enough that a custom base URL answering with
+ * an arbitrarily large body cannot make this process buffer it: `response.text()` reads EVERYTHING
+ * before a display-side `slice` ever runs, so the bound has to be applied while reading.
+ */
+const MAX_ERROR_DETAIL_BYTES = 2048;
+
+/** Read at most `maxBytes` of a response body, then cancel the rest of the stream. */
+const readBounded = async (response: globalThis.Response, maxBytes: number): Promise<string> => {
+	const reader = response.body?.getReader();
+	if (!reader) return '';
+	const chunks: Uint8Array[] = [];
+	let total = 0;
+	try {
+		while (total < maxBytes) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			chunks.push(value);
+			total += value.byteLength;
+		}
+	} catch {
+		/* a broken error-body stream must not mask the error being reported */
+	} finally {
+		reader.cancel().catch(() => undefined);
+	}
+	const merged = new Uint8Array(total);
+	let offset = 0;
+	for (const chunk of chunks) {
+		merged.set(chunk, offset);
+		offset += chunk.byteLength;
+	}
+	return new TextDecoder().decode(merged.subarray(0, maxBytes)).trim();
+};
+
+/**
+ * Strip the credential in use and anything key-shaped from text bound for the user.
+ *
+ * Both patterns matter: OpenAI keys are `sk-…`, but a custom base URL (Azure, a proxy) issues keys
+ * with no recognizable prefix — only redacting by shape would relay exactly the secret this exists
+ * to protect. Display-truncated at the end so the redaction cannot be sliced through mid-token.
+ */
+const redactSecret = (text: string, apiKey: string): string =>
+	(apiKey ? text.split(apiKey).join('[redacted]') : text).replace(/sk-[A-Za-z0-9_-]+/g, 'sk-***').slice(0, 300).trim();
+
+/**
  * The OpenAI models this API key can address, minus the families that are not chat models.
  *
  * This is the weakest of the six catalogues — `/v1/models` returns `{id, owned_by, created}` and
@@ -145,7 +191,9 @@ const transcribeAudio = async (
 	});
 	if (!response.ok) {
 		// The bare status code was reaching the user as "check your API key" for EVERY failure class,
-		// including quota and bad audio. Classify by status so the message is actionable.
+		// including quota and bad audio. Classify by status so the message is actionable. The status
+		// NUMBER only — statusText is upstream-controlled prose, and a custom base URL means upstream
+		// is whatever the tenant configured, so it gets no free ride into a user-visible message.
 		const credentialFailure = response.status === 401 || response.status === 403;
 		const reason = credentialFailure
 			? 'the API key was rejected'
@@ -153,17 +201,15 @@ const transcribeAudio = async (
 			? 'the rate or quota limit was hit'
 			: response.status === 400
 			? 'the audio was rejected (unsupported or empty recording)'
-			: `HTTP ${response.status} ${response.statusText}`;
+			: `HTTP ${response.status}`;
 		// The response body is genuinely diagnostic for format/limit errors ("Invalid file format"),
 		// so it is relayed — but NEVER on a credential failure, whose body echoes the API key back
-		// ("Incorrect API key provided: sk-…"), and always redacted and truncated in case a proxy
-		// routes a secret into some other status. This error's message reaches the chat user verbatim.
+		// ("Incorrect API key provided: sk-…"). Redacted of both key-shaped tokens AND the exact key
+		// in use (custom endpoints issue keys with no sk- prefix), and read BOUNDED: `.text()` would
+		// buffer however much the upstream cares to send before the display truncation ever ran.
 		const detail = credentialFailure
 			? ''
-			: (await response.text().catch(() => ''))
-					.replace(/sk-[A-Za-z0-9_-]+/g, 'sk-***')
-					.slice(0, 300)
-					.trim();
+			: redactSecret(await readBounded(response, MAX_ERROR_DETAIL_BYTES), credentials.apiKey);
 		throw new Error(`OpenAI transcription failed: ${reason}${detail ? ` — ${detail}` : ''}`);
 	}
 	const body = (await response.json()) as { text?: string };
