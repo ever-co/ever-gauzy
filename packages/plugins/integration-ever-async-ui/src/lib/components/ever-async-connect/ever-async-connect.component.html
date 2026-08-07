@@ -1,0 +1,132 @@
+<nb-card class="card-scroll">
+	<nb-card-header class="d-flex">
+		<button
+			(click)="goBack()"
+			nbButton
+			status="primary"
+			type="button"
+			size="small"
+			outline
+			[attr.aria-label]="'BUTTONS.BACK' | translate"
+		>
+			<nb-icon icon="arrow-back-outline"></nb-icon>
+		</button>
+		<h5 class="ml-4">{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.TITLE' | translate }}</h5>
+	</nb-card-header>
+
+	<nb-card-body>
+		<form class="col-xl-6 col-12" [formGroup]="form" (ngSubmit)="connect()">
+			<div class="hint">
+				<nb-icon icon="info-outline"></nb-icon>
+				{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.SETUP_INFO' | translate }}
+			</div>
+
+			<div class="form-group">
+				<label class="label" for="serverUrl">
+					{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.SERVER_URL' | translate }} *
+				</label>
+				<input
+					fullWidth
+					id="serverUrl"
+					formControlName="serverUrl"
+					type="url"
+					nbInput
+					required
+					aria-required="true"
+					autocomplete="url"
+					[attr.aria-invalid]="
+						form.get('serverUrl')?.invalid &&
+						(form.get('serverUrl')?.touched || form.get('serverUrl')?.dirty)
+					"
+					[attr.aria-describedby]="
+						form.get('serverUrl')?.invalid &&
+						(form.get('serverUrl')?.touched || form.get('serverUrl')?.dirty)
+							? 'serverUrl-error'
+							: null
+					"
+					[placeholder]="'INTEGRATIONS.EVER_ASYNC_PAGE.SERVER_URL_PLACEHOLDER' | translate"
+				/>
+				@if (form.get('serverUrl')?.invalid && (form.get('serverUrl')?.touched || form.get('serverUrl')?.dirty))
+				{
+					<p class="text-danger caption" id="serverUrl-error" role="alert">
+						@if (form.get('serverUrl')?.errors?.['required']) {
+							{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.URL_REQUIRED' | translate }}
+						} @else if (form.get('serverUrl')?.errors?.['pattern']) {
+							{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.URL_INVALID' | translate }}
+						}
+					</p>
+				}
+			</div>
+
+			<div class="form-group">
+				<label class="label" for="apiToken">
+					{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.API_TOKEN' | translate }} *
+				</label>
+				<input
+					fullWidth
+					id="apiToken"
+					formControlName="apiToken"
+					type="password"
+					nbInput
+					required
+					aria-required="true"
+					autocomplete="off"
+					[attr.aria-invalid]="
+						form.get('apiToken')?.invalid &&
+						(form.get('apiToken')?.touched || form.get('apiToken')?.dirty)
+					"
+					[attr.aria-describedby]="
+						form.get('apiToken')?.invalid &&
+						(form.get('apiToken')?.touched || form.get('apiToken')?.dirty)
+							? 'apiToken-error'
+							: null
+					"
+					[placeholder]="'INTEGRATIONS.EVER_ASYNC_PAGE.API_TOKEN_PLACEHOLDER' | translate"
+				/>
+				@if (form.get('apiToken')?.invalid && (form.get('apiToken')?.touched || form.get('apiToken')?.dirty)) {
+					<p class="text-danger caption" id="apiToken-error" role="alert">
+						{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.TOKEN_REQUIRED' | translate }}
+					</p>
+				}
+				<p class="caption hint">
+					{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.API_TOKEN_HINT' | translate }}
+				</p>
+			</div>
+
+			<div class="actions">
+				<button
+					nbButton
+					status="basic"
+					type="button"
+					size="small"
+					outline
+					[disabled]="verifying()"
+					(click)="testConnection()"
+				>
+					@if (verifying()) {
+						<nb-icon icon="loader-outline"></nb-icon>
+					} @else if (connectionOk() === true) {
+						<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
+					} @else if (connectionOk() === false) {
+						<nb-icon icon="close-circle-outline" status="danger"></nb-icon>
+					}
+					{{ 'INTEGRATIONS.EVER_ASYNC_PAGE.TEST_CONNECTION' | translate }}
+				</button>
+
+				<button
+					nbButton
+					status="primary"
+					type="submit"
+					size="small"
+					outline
+					[disabled]="form.invalid || loading()"
+				>
+					@if (loading()) {
+						<nb-icon icon="loader-outline"></nb-icon>
+					}
+					{{ 'BUTTONS.NEXT' | translate }}
+				</button>
+			</div>
+		</form>
+	</nb-card-body>
+</nb-card>
