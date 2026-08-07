@@ -1,0 +1,73 @@
+.docs-tree {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	font-size: 0.875rem;
+	min-height: 0;
+}
+
+.docs-tree-section-title {
+	font-size: 0.6875rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--text-hint-color);
+	margin-bottom: 0.25rem;
+}
+
+.docs-tree-link {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.125rem 0.25rem;
+	border-radius: 0.25rem;
+	cursor: pointer;
+	color: var(--text-basic-color);
+	text-decoration: none;
+
+	&:hover {
+		background: var(--background-basic-color-2);
+	}
+
+	.docs-tree-link-name {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+.docs-tree-main {
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.docs-tree-empty {
+	color: var(--text-hint-color);
+	padding: 0.5rem 0.25rem;
+}
+
+.docs-tree-node {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	max-width: 100%;
+
+	.docs-tree-node-name {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.docs-tree-node-badge {
+		color: var(--text-hint-color);
+	}
+
+	.docs-tree-node-menu {
+		visibility: hidden;
+	}
+
+	&:hover .docs-tree-node-menu,
+	.docs-tree-node-menu:focus {
+		visibility: visible;
+	}
+}

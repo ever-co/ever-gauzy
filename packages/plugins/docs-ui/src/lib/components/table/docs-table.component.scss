@@ -1,0 +1,7 @@
+.docs-table {
+	min-height: 12rem;
+
+	::ng-deep table {
+		width: 100%;
+	}
+}

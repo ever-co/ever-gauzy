@@ -1,0 +1,26 @@
+.docs-filter-bar {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.docs-filter-search {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+
+	input {
+		min-width: 16rem;
+	}
+}
+
+.docs-filter-facets {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.docs-filter-range {
+	max-width: 11rem;
+}

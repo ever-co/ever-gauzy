@@ -1,0 +1,24 @@
+// Shared plugin styles for @gauzy/plugin-docs-ui.
+// Theme values come exclusively from Nebular CSS custom properties so
+// dark/cosmic themes work unmodified.
+
+:root {
+	// Detail side panel width (shell flex-basis reads this).
+	--docs-detail-width: 26rem;
+}
+
+// Badge palette semantics (referenced by badge cell components):
+// processing → color-info, ready → color-success, failed → color-danger,
+// indexed → color-primary, review-pending → color-warning.
+
+.docs-chip {
+	font-size: 0.6875rem;
+	border-radius: 1rem;
+	padding: 0 0.5rem;
+	white-space: nowrap;
+}
+
+.docs-tree-row-active {
+	background: var(--color-primary-transparent-100, rgba(51, 102, 255, 0.08));
+	border-radius: 0.25rem;
+}
