@@ -48,6 +48,7 @@
 			"MODELS_CURATED_NO_KEY": "Showing known models. Save an API key to load everything this provider offers.",
 			"MODELS_CURATED_UNAVAILABLE": "Showing known models — the provider's full list could not be loaded just now.",
 			"MODELS_STALE": "Showing the last known list — the provider's catalogue could not be refreshed.",
+			"MODELS_NOT_CHAT_CAPABLE": "Chat through this provider is not available yet — pick another provider to chat. A key saved here takes effect once support ships.",
 			"ENABLED": "Enabled",
 			"USE_AS_DEFAULT": "Use as default provider",
 			"GET_KEY": "Get API key"

@@ -13,6 +13,7 @@ import {
 	verifyTextNotExisting,
 	waitUntil,
 	dispatchClick,
+	dispatchClickWhenSettled,
 	waitForSpinnerGone
 } from '../util';
 import { getPage } from '../page-context';
@@ -450,7 +451,19 @@ export const keyResultOwnerDropdownVisible = async () => {
 };
 
 export const clickKeyResultOwnerDropdown = async () => {
-	await clickButton(GoalsPage.keyResultOwnerCss);
+	// Target the nb-select INSIDE the wrapper, not the wrapper itself. `id="key-result-owner"` sits on
+	// <ga-employee-multi-select>, which CONTAINS the control rather than being it, and that component
+	// renders its <nb-select> only under `@if (loaded)` — i.e. after the employees request resolves.
+	// The wrapper therefore exists (and is clickable) while it is still an empty box, so the old
+	// coordinate click could be delivered to nothing at all; it only ever worked because hit-testing
+	// happened to reach the inner button once the fetch had landed.
+	//
+	// Waiting for the inner nb-select makes `loaded` an explicit precondition, and dispatching at it
+	// satisfies Nebular's trigger strategy (which requires the event target to be inside the host).
+	//
+	// Worth confirming rather than assuming: ownerId is REQUIRED, so a missed open leaves the form
+	// invalid, Save silently no-ops, and every later step operating on that key result fails downstream.
+	await dispatchClickWhenSettled('#key-result-owner nb-select', GoalsPage.dropdownOptionCss);
 };
 
 export const selectKeyResultOwnerFromDropdown = async (index) => {
