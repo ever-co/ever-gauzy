@@ -405,7 +405,16 @@ export class AuthService extends SocialAuthService {
 			// to outlive the code itself. unref() keeps this timer from holding the process open.
 			setTimeout(() => this.consumedOAuthCodes.delete(payload.jti), AuthService.OAUTH_CODE_TTL_MS).unref();
 
-			codeState = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+			try {
+				codeState = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+			} catch (error) {
+				// The read failed, so this claim guards a code we never proved was live. Hand it
+				// back, or a transient cache error would lock a legitimate first exchange out for
+				// the code's whole lifetime.
+				this.consumedOAuthCodes.delete(payload.jti);
+				throw error;
+			}
+
 			await this.cacheManager.del(cacheKey);
 		}
 

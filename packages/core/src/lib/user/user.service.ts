@@ -12,7 +12,8 @@ import {
 	In,
 	UpdateResult,
 	DeleteResult,
-	MoreThan
+	MoreThan,
+	MoreThanOrEqual
 } from 'typeorm';
 import { JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
@@ -595,6 +596,46 @@ export class UserService extends TenantAwareCrudService<User> {
 			console.log(`[setLastOrganizationAndTeam] Successfully updated preferences for user ${userId}`);
 		} catch (error) {
 			console.error(`[setLastOrganizationAndTeam] Error while updating preferences for user ${userId}:`, error);
+		}
+	}
+
+	/**
+	 * Atomically claims a user's email-verification code, enforcing single use.
+	 *
+	 * The code and its expiry stay in the WHERE clause, so the write is its own check: the first
+	 * caller nulls the code and gets 1, and a request racing it matches nothing and gets 0. Keeping
+	 * `codeExpireAt` in the predicate also closes the window where a lookup and a claim straddle
+	 * the expiry boundary, which a claim scoped only by id and code would let through.
+	 *
+	 * This deliberately goes straight to the repositories rather than through `update()`. Email
+	 * confirmation is a PUBLIC endpoint, and `TenantAwareCrudService.update` routes object criteria
+	 * to `findOneByWhereOptions`, which dereferences `RequestContext.currentUser().tenantId` — on an
+	 * unauthenticated request there is no current user, so that path throws. The tenant comes from
+	 * the verified payload instead, which is both safe here and stricter than an id-only claim.
+	 *
+	 * @param id - The user whose code is being claimed.
+	 * @param code - The verification code being consumed.
+	 * @param tenantId - The tenant the code was issued for.
+	 * @returns 1 if this call claimed the code, 0 if it was already used or has expired.
+	 */
+	async claimEmailVerificationCode(id: ID, code: string, tenantId: ID): Promise<number> {
+		const now = new Date();
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmUserRepository.nativeUpdate(
+					{ id, code, tenantId, codeExpireAt: { $gte: now } } as any,
+					{ code: null, codeExpireAt: null } as any
+				);
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmUserRepository.update(
+					{ id, code, tenantId, codeExpireAt: MoreThanOrEqual(now) },
+					{ code: null, codeExpireAt: null }
+				);
+				return affected ?? 0;
+			}
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
 		}
 	}
 

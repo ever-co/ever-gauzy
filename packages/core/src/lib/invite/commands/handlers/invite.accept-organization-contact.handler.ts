@@ -48,7 +48,7 @@ export class InviteAcceptOrganizationContactHandler
 		// 0. Claim the invite BEFORE creating anything — see InviteService.claimInvite. This handler
 		// provisions a whole tenant, organization and user account, so two parallel acceptances of
 		// one invite would otherwise build two of each. The conditional flip to ACCEPTED is the
-		// only thing that serialises them, and it has to happen ahead of the first side effect.
+		// only thing that serializes them, and it has to happen ahead of the first side effect.
 		if (!(await this.inviteService.claimInvite(inviteId))) {
 			throw new Error('Invite has already been accepted');
 		}
