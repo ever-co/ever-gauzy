@@ -19,7 +19,7 @@ export const inviteButtonVisible = async () => verifyElementIsVisible(InviteUser
 // button's coordinates, landed on the overlay, and the dialog never opened (#emails not found).
 // Settle, dispatch straight at the button, and confirm the dialog opened.
 export const clickInviteButton = async () =>
-	// Style only: a braceless `=> dispatchClickWhenSettled(...)` already RETURNS the promise (this was
+	// Style only: an arrow body without braces already RETURNS the promise (this was
 	// never floating — the step awaits it), so this `await` changes nothing at runtime. It stays
 	// because the explicit form is what every sibling helper uses, and because a future edit that adds
 	// braces to the arrow would otherwise silently orphan the promise.
