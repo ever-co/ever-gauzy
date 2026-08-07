@@ -509,6 +509,7 @@ export class AiChatService {
 		}
 
 		const attempted: string[] = [];
+		const failures: string[] = [];
 		for (const definition of capable) {
 			const credentials = await this.resolveCredentials(definition);
 			if (!credentials) continue;
@@ -517,16 +518,21 @@ export class AiChatService {
 				return await definition.transcribe(audio, mimeType, credentials);
 			} catch (error) {
 				// Try the next provider rather than failing the whole dictation on one bad key.
-				this.logger.warn(
-					`[ai-chat] Transcription via '${definition.id}' failed: ` +
-						`${error instanceof Error ? error.message : error}`
-				);
+				const message = error instanceof Error ? error.message : String(error);
+				this.logger.warn(`[ai-chat] Transcription via '${definition.id}' failed: ${message}`);
+				failures.push(message);
 			}
 		}
 
+		// The chat panel shows this message verbatim, so it must not over-diagnose. The old text
+		// appended "Check the provider's API key" to EVERY failure — a quota hit, a rejected
+		// recording and a provider outage all read as a credential problem. Relay what the provider
+		// hook actually reported (providers classify by status and never echo a response body), and
+		// point at Settings only when the failure is credential-shaped.
+		const keyProblem = failures.some((failure) => /api key/i.test(failure));
 		throw new ServiceUnavailableException(
 			attempted.length
-				? `Transcription failed on ${attempted.join(', ')}. Check the provider's API key in Settings → AI Providers.`
+				? `${failures.join('; ')}${keyProblem ? ' Update the key in Settings → AI Providers.' : ''}`
 				: 'Add an API key for a provider that supports speech (e.g. OpenAI) to dictate messages.'
 		);
 	}

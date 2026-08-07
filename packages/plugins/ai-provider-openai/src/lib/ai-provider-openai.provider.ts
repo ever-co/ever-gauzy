@@ -114,12 +114,21 @@ const transcribeAudio = async (
 	// `audio/mpeg` is MP3, not MP4 — lumping it in with `mp4` named MP3 bytes `dictation.mp4`, and the
 	// extension is exactly what OpenAI trusts to identify the container. MediaRecorder never produces
 	// audio/mpeg, which is why this survived: it only bites when a caller feeds a pre-recorded file.
+	// wav/flac/m4a are covered for the same caller class — every container OpenAI accepts that a MIME
+	// type can name. What remains falling to `.webm` (e.g. raw `audio/aac`) has no extension in
+	// OpenAI's accepted set at all, so no mapping could save it.
 	const extension = mimeType.includes('mp4')
 		? 'mp4'
 		: mimeType.includes('mpeg')
 		? 'mp3'
 		: mimeType.includes('ogg')
 		? 'ogg'
+		: mimeType.includes('wav')
+		? 'wav'
+		: mimeType.includes('flac')
+		? 'flac'
+		: mimeType.includes('m4a') // audio/m4a and audio/x-m4a
+		? 'm4a'
 		: 'webm';
 	const form = new FormData();
 	form.append('file', new Blob([new Uint8Array(audio)], { type: mimeType }), `dictation.${extension}`);
@@ -135,8 +144,18 @@ const transcribeAudio = async (
 		signal: AbortSignal.timeout(TRANSCRIBE_TIMEOUT_MS)
 	});
 	if (!response.ok) {
-		// No body echo: this request carries a credential.
-		throw new Error(`OpenAI transcription failed: ${response.status} ${response.statusText}`);
+		// No body echo — this request carries a credential — but the bare status code was reaching the
+		// user as "check your API key" for EVERY failure class, including quota and bad audio. Classify
+		// by status instead: same security posture, an answer the user can actually act on.
+		const reason =
+			response.status === 401 || response.status === 403
+				? 'the API key was rejected'
+				: response.status === 429
+				? 'the rate or quota limit was hit'
+				: response.status === 400
+				? 'the audio was rejected (unsupported or empty recording)'
+				: `HTTP ${response.status} ${response.statusText}`;
+		throw new Error(`OpenAI transcription failed: ${reason}`);
 	}
 	const body = (await response.json()) as { text?: string };
 	return (body.text ?? '').trim();

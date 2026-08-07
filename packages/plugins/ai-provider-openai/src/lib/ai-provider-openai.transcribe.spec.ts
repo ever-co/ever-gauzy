@@ -77,6 +77,12 @@ describe('openAiProviderDefinition.transcribe', () => {
 		['audio/mp4', 'dictation.mp4'],
 		['audio/mpeg', 'dictation.mp3'],
 		['audio/ogg;codecs=opus', 'dictation.ogg'],
+		// The rest of the pre-recorded-file class: every container OpenAI accepts that a MIME type can
+		// name. Raw `audio/aac` stays on the webm fallback — OpenAI's accepted set has no extension
+		// for it, so no mapping could save it.
+		['audio/wav', 'dictation.wav'],
+		['audio/flac', 'dictation.flac'],
+		['audio/x-m4a', 'dictation.m4a'],
 		['', 'dictation.webm']
 	])('names the upload from the %s container', async (mimeType, expected) => {
 		const fetchMock = capture({ text: 'ok' });
@@ -107,10 +113,19 @@ describe('openAiProviderDefinition.transcribe', () => {
 		expect(requestOf(fetchMock).url).toBe('https://proxy.example.com/v1/audio/transcriptions');
 	});
 
-	it('fails without echoing the upstream body, which carries the credential', async () => {
+	it('classifies a failure by status without echoing the upstream body, which carries the credential', async () => {
 		capture({ error: { message: 'Incorrect API key provided: sk-test-transcribe' } }, { status: 401 });
 
-		await expect(transcribe()).rejects.toThrow(/401/);
+		// Classified, not the bare status: the chat panel shows this verbatim, and "401" told the user
+		// nothing while "check your API key" was being appended to every failure class downstream.
+		await expect(transcribe()).rejects.toThrow(/API key was rejected/);
 		await expect(transcribe()).rejects.not.toThrow(/sk-test-transcribe/);
+	});
+
+	it('does not blame the API key for a quota failure', async () => {
+		capture({ error: { message: 'Rate limit reached' } }, { status: 429 });
+
+		await expect(transcribe()).rejects.toThrow(/rate or quota limit/);
+		await expect(transcribe()).rejects.not.toThrow(/API key/);
 	});
 });
