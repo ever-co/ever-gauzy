@@ -508,12 +508,12 @@ export class AiChatService {
 			throw new ServiceUnavailableException('No AI provider on this server can transcribe speech.');
 		}
 
-		const attempted: string[] = [];
+		// One entry per attempted provider: every attempt either returns out of the function or pushes
+		// its failure here, so `failures` doubles as the "was anything attempted" signal at the throw.
 		const failures: string[] = [];
 		for (const definition of capable) {
 			const credentials = await this.resolveCredentials(definition);
 			if (!credentials) continue;
-			attempted.push(definition.id);
 			try {
 				return await definition.transcribe(audio, mimeType, credentials);
 			} catch (error) {
@@ -531,7 +531,7 @@ export class AiChatService {
 		// point at Settings only when the failure is credential-shaped.
 		const keyProblem = failures.some((failure) => /api key/i.test(failure));
 		throw new ServiceUnavailableException(
-			attempted.length
+			failures.length
 				? `${failures.join('; ')}${keyProblem ? ' Update the key in Settings → AI Providers.' : ''}`
 				: 'Add an API key for a provider that supports speech (e.g. OpenAI) to dictate messages.'
 		);
