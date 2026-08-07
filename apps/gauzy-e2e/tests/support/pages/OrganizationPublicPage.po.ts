@@ -13,7 +13,8 @@ import {
 	waitUntil,
 	clickButtonByIndex,
 	verifyText,
-	getLastElement
+	getLastElement,
+	dispatchClickWhenSettled
 } from '../util';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { OrganizationPublicPage } from '../../../src/support/Base/pageobjects/OrganizationPublicPagePageObject';
@@ -323,7 +324,18 @@ export const addBtnExists = async () => {
 };
 
 export const addBtnClick = async () => {
-	await clickButton(OrganizationPublicPage.addButtonCss);
+	// Confirm the mutation dialog actually mounted rather than assuming the click landed. The grid card
+	// is `[nbSpinner]="loading"` and the toolbar sits inside ngx-gauzy-button-action's slide-in, so a
+	// coordinate click issued ~800ms after the hash navigation can be delivered to the overlay instead
+	// of the button. Nothing downstream notices: the next step is `clearField(organizationNameField)`,
+	// which then burns the full 24s actionTimeout waiting for an input that was never opened.
+	//
+	// The sibling page object driving this same dialog (AddOrganization.po.ts) already confirms; this
+	// copy was simply never updated.
+	await dispatchClickWhenSettled(
+		OrganizationPublicPage.addButtonCss,
+		OrganizationPublicPage.organizationNameFieldCss
+	);
 };
 
 export const verifyOrganisationNameField = async () => {
