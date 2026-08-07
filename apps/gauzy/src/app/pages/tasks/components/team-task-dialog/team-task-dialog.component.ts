@@ -13,9 +13,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { CKEditor4 } from 'ckeditor4-angular';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { richTextCKEditorConfig } from '@gauzy/ui-core/shared';
 import {
 	EmployeesService,
 	ErrorHandlingService,
@@ -62,7 +60,6 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 	organizationId: string;
 	tenantId: string;
 	tags: ITag[] = [];
-	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
 	@Input() task: Partial<ITask> = {};
 
 	public form: UntypedFormGroup = TeamTaskDialogComponent.buildForm(this.fb);
@@ -118,7 +115,6 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 	}
 
 	async ngOnInit() {
-		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		this.tenantId = this.store.user.tenantId;
 		this.organizationId = this._organizationsStore.selectedOrganization.id;
 

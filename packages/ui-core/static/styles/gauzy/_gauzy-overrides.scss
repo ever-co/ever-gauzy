@@ -3,10 +3,11 @@
 @use 'themes' as *;
 @use 'sass:list';
 @use 'sass:map';
+@use 'rich-text-editor' as *;
 
 // ── Control edge ───────────────────────────────────────────────────────────
 // Every control in the app (input, textarea, nb-select trigger, ng-select
-// trigger, ckeditor chrome) draws `border: none` and relies on a shadow to say
+// trigger, rich-text editor chrome) draws `border: none` and relies on a shadow to say
 // "this is a field". That shadow used to be `--gauzy-shadow`, i.e.
 // `0 1px 1px 0 rgb(0 0 0 / 35%)` — a black drop shadow, which is invisible on a
 // near-black canvas and reads as a smudge on a light one. A 1px INSET ring is a
@@ -336,82 +337,13 @@ $default-box-shadow: $control-hairline;
 * Override nb-stepper
 */
 
-/*
-* Begin
-* Override ck-editor
-*/
-@mixin ck-editor() {
-  ckeditor .cke_top.cke_reset_all {
-    background-color: var(--gauzy-sidebar-background-4);
-    border-radius: var(--border-radius);
-  }
-
-  ckeditor .cke_chrome {
-    border: none;
-    border-radius: var(--border-radius);
-    padding: 12px;
-    box-shadow: var(--gauzy-shadow) inset;
-    background: var(--gauzy-card-1);
-    width: calc(100% - 20px) !important;
-  }
-
-  ckeditor .cke_top {
-    border-bottom: none;
-  }
-
-  ckeditor .cke_inner.cke_reset {
-    border-radius: var(--border-radius);
-  }
-
-  ckeditor .cke_bottom {
-    border: none;
-    border-radius: var(--border-radius);
-    background-color: var(--gauzy-sidebar-background-4);
-  }
-
-  ckeditor .cke_inner {
-    background: transparent;
-  }
-
-  .nb-theme-gauzy-light {
-    ckeditor .cke_button_icon {
-      filter: brightness(0) invert(0);
-    }
-  }
-
-  .nb-theme-gauzy-dark {
-    ckeditor .cke_button_icon {
-      filter: brightness(0) invert(1);
-    }
-  }
-
-  ckeditor {
-    a.cke_button_off:hover,
-    a.cke_button_on,
-    a.cke_button_off:focus,
-    a.cke_button_off:active {
-      background: var(--gauzy-card-1);
-      border: none;
-      border-radius: var(--border-radius);
-    }
-  }
-
-  ckeditor .cke_button_label {
-    color: var(--text-basic-color);
-  }
-}
-
-/*
-* End
-*/
-
 @mixin gauzy-overrides() {
   @include nb-select-overrides($default-height, $default-radius, $default-box-shadow-inset);
   @include text-inputs-overrides;
   @include ng-select-overrides($default-height, $default-radius, $default-box-shadow-inset);
   @include nb-stepper;
   @include full-calendar();
-  @include ck-editor();
+  @include rich-text-editor();
   @include input-appearance($default-height, var(--gauzy-card-1));
   @include nb-tabset-overrides;
   @include ng-select-text-alignment();

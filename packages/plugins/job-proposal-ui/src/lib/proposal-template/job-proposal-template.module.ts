@@ -1,6 +1,5 @@
 import { inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	applyDeclarativeRegistrations,
@@ -16,6 +15,7 @@ import {
 	DialogsModule,
 	EmployeeMultiSelectModule,
 	NebularModule,
+	RichTextEditorModule,
 	SharedModule,
 	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
@@ -28,7 +28,7 @@ import { ProposalTemplateFormComponent } from './components/proposal-template-fo
 	imports: [
 		RouterModule.forChild([]),
 		NebularModule,
-		CKEditorModule,
+		RichTextEditorModule,
 		TranslateModule.forChild(),
 		SharedModule,
 		SmartDataViewLayoutModule,

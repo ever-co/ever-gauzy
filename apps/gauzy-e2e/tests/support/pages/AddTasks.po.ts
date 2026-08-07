@@ -20,13 +20,12 @@ import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { AddTaskPage } from '../../../src/support/Base/pageobjects/AddTasksPageObject';
 
-// The task form's Description is a CKEditor 4 widget (ckeditor4-angular: <ckeditor [config]="ckConfig">),
-// whose editable lives inside a wysiwyg <iframe> — the [formControlName="description"] host itself is
-// NOT an <input>/<textarea>/[contenteditable], so clearField()/enterInput() throw
-// "Element is not an <input>...". The shared fillCkEditor() helper targets a CKEditor 5
-// .ck-editor__editable contenteditable, which does not exist here. Type into the iframe body instead,
-// mirroring the proven JobsProposals.po pattern. (Description is optional, so this never blocks Save.)
-const ckeditorIframeCss = 'iframe[class="cke_wysiwyg_frame cke_reset"]';
+// The task form's Description is the shared <ga-rich-text-editor> (TipTap v3) — its editable is a
+// plain contenteditable div (.ProseMirror) in the MAIN frame (no iframe: the legacy editor's
+// wysiwyg iframe is gone). The [formControlName="description"] host itself is NOT an
+// <input>/<textarea>, so clearField()/enterInput() throw "Element is not an <input>..." — fill the
+// .ProseMirror editable instead. (Description is optional, so this never blocks Save.)
+const richTextEditorCss = 'ga-rich-text-editor .ProseMirror';
 
 // The Tasks screen's card header ("Tasks for <org>") — its <h4> text is unique to this route: the
 // Manage Employees grid we can drift onto reads "Manage Employees", the teams grid "Teams", etc. Used
@@ -293,22 +292,24 @@ export const enterEstimateMinutesInputData = async (mins) => {
 };
 
 export const taskDescriptionTextareaVisible = async () => {
-	// Assert the CKEditor 4 host is present. (The host renders; the editable is inside its iframe.)
+	// Assert the ga-rich-text-editor host is present. (The .ProseMirror editable renders inside it.)
 	await verifyElementIsVisible(AddTaskPage.descriptionTextareaCss);
 };
 
 export const enterTaskDescriptionTextareaData = async (data) => {
-	// Description is a CKEditor 4 widget — the [formControlName="description"] host is not fillable.
-	// Type into the editor body inside its wysiwyg iframe. The iframe + its body load async, so wait
-	// for the frame's body before filling; best-effort because description is optional (Save never
-	// depends on it) and we must not hang the run if the CKEditor instance is slow to attach.
+	// Description is a ga-rich-text-editor — the [formControlName="description"] host is not fillable.
+	// Fill the .ProseMirror contenteditable instead (main frame — no iframe). The editor instantiates
+	// async (its preset extensions load as a lazy chunk), so wait for the editable first; best-effort
+	// because description is optional (Save never depends on it) and we must not hang the run if the
+	// editor is slow to attach. ProseMirror consumes the native input events, so the CVA syncs the
+	// bound form control.
 	const page = getPage();
 	try {
-		const body = page.frameLocator(ckeditorIframeCss).first().locator('body');
-		await body.waitFor({ state: 'visible', timeout: 8000 });
-		await body.fill(String(data));
+		const editable = page.locator(richTextEditorCss).first();
+		await editable.waitFor({ state: 'visible', timeout: 8000 });
+		await editable.fill(String(data));
 	} catch {
-		// CKEditor iframe didn't attach in time — leave description empty and continue.
+		// Editor didn't attach in time — leave description empty and continue.
 	}
 };
 

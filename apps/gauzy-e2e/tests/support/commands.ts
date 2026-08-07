@@ -499,11 +499,11 @@ export const CustomCommands = {
 		await loginPage.verifyLoginText();
 	},
 	getIframeBody: (index: number) => {
-		// CKEditor iframe; Playwright addresses frames via frameLocator.
-		return getPage()
-			.frameLocator('iframe.cke_wysiwyg_frame.cke_reset')
-			.nth(index)
-			.locator('body');
+		// Legacy name kept for compatibility: the rich-text editor is now the shared
+		// <ga-rich-text-editor> (TipTap v3) whose editable is a plain contenteditable div
+		// (.ProseMirror) in the MAIN frame — no iframe traversal (the legacy editor's
+		// wysiwyg iframe is gone). Returns the nth editor's editable root on the page.
+		return getPage().locator('ga-rich-text-editor .ProseMirror').nth(index);
 	},
 	loginAsEmployee: async (loginPage: any, dashboardPage: any, empEmail: string, empPassword: string) => {
 		await loginPage.verifyLoginText();

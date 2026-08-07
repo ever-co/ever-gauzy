@@ -1,9 +1,7 @@
 import { Component, OnInit, Input, inject } from '@angular/core';
 import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
-import { CKEditor4 } from 'ckeditor4-angular';
 import { CandidatesService } from '@gauzy/ui-core/core';
-import { ckEditorConfig } from '../../../../ckeditor.config';
 
 @Component({
 	selector: 'ga-candidate-email',
@@ -26,7 +24,6 @@ export class CandidateEmailComponent implements OnInit {
 	emailText: string;
 	candidateNameTemplate: string;
 	textTemplate: string;
-	ckConfig: CKEditor4.Config = ckEditorConfig;
 
 	ngOnInit() {
 		this.loadFormData();
