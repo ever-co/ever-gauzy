@@ -98,6 +98,7 @@ import { EVER_REDIS_CLIENT } from '../redis/redis.module';
 import { OAuthClientService } from './oauth-client/oauth-client.service';
 import { OAuthClient } from './oauth-client/oauth-client.entity';
 import { TermsAcceptanceService } from '../terms-acceptance/terms-acceptance.service';
+import { passwordResetConsumeWhere } from '../shared/single-use/claim-criteria';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -1023,11 +1024,13 @@ export class AuthService extends SocialAuthService {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const affected = await this.mikroOrmPasswordResetRepository.nativeDelete({ id: record.id });
+				const affected = await this.mikroOrmPasswordResetRepository.nativeDelete(
+					passwordResetConsumeWhere(record.id) as any
+				);
 				return affected === 1;
 			}
 			case MultiORMEnum.TypeORM: {
-				const { affected } = await this.typeOrmPasswordResetRepository.delete({ id: record.id });
+				const { affected } = await this.typeOrmPasswordResetRepository.delete(passwordResetConsumeWhere(record.id));
 				return affected === 1;
 			}
 			default:

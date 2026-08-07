@@ -68,6 +68,7 @@ import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository
 import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 import { Invite } from './invite.entity';
 import { InviteAcceptCommand } from './commands';
+import { inviteClaimWhere, inviteReleaseWhere } from '../shared/single-use/claim-criteria';
 
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
@@ -1379,7 +1380,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const updateData: any = { status: InviteStatusEnum.ACCEPTED };
 		if (userId) updateData.userId = userId;
 
-		const where: any = { id: inviteId, status: InviteStatusEnum.INVITED };
+		const where: any = inviteClaimWhere(inviteId);
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
@@ -1403,7 +1404,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * @param inviteId - The invite to release.
 	 */
 	async releaseInvite(inviteId: ID): Promise<void> {
-		const where: any = { id: inviteId, status: InviteStatusEnum.ACCEPTED };
+		const where: any = inviteReleaseWhere(inviteId);
 		const updateData: any = { status: InviteStatusEnum.INVITED, userId: null };
 
 		try {

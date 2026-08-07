@@ -12,8 +12,7 @@ import {
 	In,
 	UpdateResult,
 	DeleteResult,
-	MoreThan,
-	MoreThanOrEqual
+	MoreThan
 } from 'typeorm';
 import { JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
@@ -40,6 +39,11 @@ import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
 import { validateUserDeletion } from './default-protected-users';
 import { PasswordHashService } from '../password-hash/password-hash.service';
+import {
+	emailVerificationClaimWhere,
+	emailVerificationClaimWhereMikroOrm,
+	magicCodeClaimWhere
+} from '../shared/single-use/claim-criteria';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -624,12 +628,12 @@ export class UserService extends TenantAwareCrudService<User> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmUserRepository.nativeUpdate(
-					{ id, code, tenantId, codeExpireAt: { $gte: now } } as any,
+					emailVerificationClaimWhereMikroOrm(id, code, tenantId, now) as any,
 					{ code: null, codeExpireAt: null } as any
 				);
 			case MultiORMEnum.TypeORM: {
 				const { affected } = await this.typeOrmUserRepository.update(
-					{ id, code, tenantId, codeExpireAt: MoreThanOrEqual(now) },
+					emailVerificationClaimWhere(id, code, tenantId, now),
 					{ code: null, codeExpireAt: null }
 				);
 				return affected ?? 0;
@@ -656,7 +660,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	async invalidateMagicCode(email: string, code: string): Promise<number> {
 		// Common criteria and payload shared by both ORM adapters
-		const where = { email, code };
+		const where = magicCodeClaimWhere(email, code);
 		const update = { code: null, codeExpireAt: null };
 
 		switch (this.ormType) {
