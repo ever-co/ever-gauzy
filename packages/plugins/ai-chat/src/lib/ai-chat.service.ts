@@ -19,8 +19,10 @@ import { buildRateLimitEnvelope, isRateLimitError, rateLimitRetryAfter, RATE_LIM
  * Largest dictation upload accepted, matching what the upstream speech APIs take anyway.
  *
  * Audio is user-supplied and otherwise bounded only by how long someone holds the button.
+ * Exported so the controller can declare the SAME cap as a multer `limits` on the route — one
+ * constant, two enforcement points that cannot drift.
  */
-const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+export const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
 /** Maximum agent steps (model turns incl. tool calls) per user message. */
 const MAX_STEPS = 12;
@@ -485,9 +487,11 @@ export class AiChatService {
 		if (!audio?.length) {
 			throw new BadRequestException('No audio was uploaded.');
 		}
-		// Enforced HERE, not through the interceptor's `limits`: LazyFileInterceptor spreads only
-		// `storage` and `fileFilter` into multer and drops `limits`, so a cap declared at the route
-		// would read as enforced while accepting anything. This is the only place that actually holds.
+		// Second line of defense. The route declares the same MAX_AUDIO_BYTES as a multer `limits`,
+		// which rejects an oversized upload BEFORE memoryStorage buffers it — but this check stays:
+		// it guards any future caller that does not arrive through that interceptor, and it survives
+		// the interceptor's history of silently dropping options (forwarding `limits` at all is a fix
+		// from this same change; for a while a declared cap read as enforced while holding nothing).
 		if (audio.length > MAX_AUDIO_BYTES) {
 			throw new BadRequestException(
 				`Recording is too large (${Math.round(audio.length / 1024 / 1024)}MB). The limit is ${
@@ -504,25 +508,36 @@ export class AiChatService {
 			throw new ServiceUnavailableException('No AI provider on this server can transcribe speech.');
 		}
 
-		const attempted: string[] = [];
+		// One entry per attempted provider: every attempt either returns out of the function or pushes
+		// its failure here, so `failures` doubles as the "was anything attempted" signal at the throw.
+		const failures: string[] = [];
 		for (const definition of capable) {
 			const credentials = await this.resolveCredentials(definition);
 			if (!credentials) continue;
-			attempted.push(definition.id);
 			try {
 				return await definition.transcribe(audio, mimeType, credentials);
 			} catch (error) {
 				// Try the next provider rather than failing the whole dictation on one bad key.
-				this.logger.warn(
-					`[ai-chat] Transcription via '${definition.id}' failed: ` +
-						`${error instanceof Error ? error.message : error}`
-				);
+				const message = error instanceof Error ? error.message : String(error);
+				this.logger.warn(`[ai-chat] Transcription via '${definition.id}' failed: ${message}`);
+				// Boundary defense for the user-visible join below: an empty Error message or a thrown
+				// non-Error ('[object Object]') would otherwise put a blank or noise where the old text
+				// at least named the provider — so fall back to naming it, and bound the length here
+				// rather than trusting every provider hook to.
+				const usable = message.trim() && message !== '[object Object]';
+				failures.push(usable ? message.slice(0, 400) : `Transcription via '${definition.id}' failed.`);
 			}
 		}
 
+		// The chat panel shows this message verbatim, so it must not over-diagnose. The old text
+		// appended "Check the provider's API key" to EVERY failure — a quota hit, a rejected
+		// recording and a provider outage all read as a credential problem. Relay what the provider
+		// hook actually reported (providers classify by status and never echo a response body), and
+		// point at Settings only when the failure is credential-shaped.
+		const keyProblem = failures.some((failure) => /api key/i.test(failure));
 		throw new ServiceUnavailableException(
-			attempted.length
-				? `Transcription failed on ${attempted.join(', ')}. Check the provider's API key in Settings → AI Providers.`
+			failures.length
+				? `${failures.join('; ')}${keyProblem ? ' Update the key in Settings → AI Providers.' : ''}`
 				: 'Add an API key for a provider that supports speech (e.g. OpenAI) to dictate messages.'
 		);
 	}
