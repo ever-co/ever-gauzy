@@ -101,6 +101,13 @@ export interface IAiChatProvider {
 	 * i.e. a tenant (BYOK) credential or a server env credential exists.
 	 */
 	configured: boolean;
+	/**
+	 * `false` when the provider is a registered PLACEHOLDER whose chat routing is not implemented yet
+	 * (its `createModel` still throws). Distinct from `configured`, which conflates "no credential"
+	 * with "not capable": the settings UI needs to tell those apart, because the remedy it suggests
+	 * for one — "save an API key" — is a lie for the other. Absent means capable.
+	 */
+	chatCapable?: boolean;
 	/** Where the active credential comes from. */
 	credentialSource?: AiCredentialSource;
 	/** Display ordering (ascending) in provider lists/catalogs. */
