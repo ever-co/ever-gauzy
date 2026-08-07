@@ -100,11 +100,12 @@ export class AiChatController {
 	@Post('/transcribe')
 	@UseInterceptors(
 		LazyFileInterceptor('file', {
-			// `storage` is REQUIRED even though the type marks it optional: the interceptor calls
-			// `localOptions.storage(context)` unconditionally, so omitting it throws a TypeError before
-			// multer ever runs and the endpoint answers 500. Memory specifically — the handler reads
-			// `file.buffer`, which only memoryStorage populates; a disk/FileStorage factory would leave
-			// it undefined and the service would reject the upload as empty.
+			// Memory specifically: the handler reads `file.buffer`, which only memoryStorage populates.
+			// A disk/FileStorage factory would leave it undefined and the service would then reject the
+			// upload as empty — the audio never touches disk, it is forwarded straight upstream.
+			//
+			// (`storage` being omitted entirely is what broke this endpoint originally. It is now
+			// required by LazyFileInterceptor's own signature, so that mistake no longer compiles.)
 			storage: () => memoryStorage()
 		})
 	)

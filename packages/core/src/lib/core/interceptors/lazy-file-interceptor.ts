@@ -1,4 +1,13 @@
-import { CallHandler, ExecutionContext, Inject, Logger, mixin, NestInterceptor, Optional, Type } from '@nestjs/common';
+import {
+	CallHandler,
+	ExecutionContext,
+	Inject,
+	Logger,
+	mixin,
+	NestInterceptor,
+	Optional,
+	Type
+} from '@nestjs/common';
 import { MulterModuleOptions } from '@nestjs/platform-express';
 import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import { MULTER_MODULE_OPTIONS } from '@nestjs/platform-express/multer/files.constants';
@@ -8,7 +17,22 @@ import { Observable } from 'rxjs';
 
 type MulterInstance = any;
 
-export function LazyFileInterceptor(fieldName: string, localOptions?: MulterOptions): Type<NestInterceptor> {
+/**
+ * Options for {@link LazyFileInterceptor}.
+ *
+ * `storage` is a FACTORY, not a `StorageEngine` — that is the whole point of this interceptor, which
+ * resolves the destination per request (tenant folder, provider, …) rather than once at module load.
+ * It is REQUIRED and typed as such: `MulterOptions.storage` is `any`, so the previous signature both
+ * accepted a caller that omitted it and accepted one that passed an engine instead of a factory.
+ * Either mistake compiles and then throws a TypeError on the first upload — the route answers 500
+ * with nothing pointing at the cause. That is not hypothetical: it shipped on the chat's dictation
+ * endpoint and broke every attempt to use it.
+ */
+export type LazyFileInterceptorOptions = Omit<MulterOptions, 'storage'> & {
+	storage: (context: ExecutionContext) => multer.StorageEngine;
+};
+
+export function LazyFileInterceptor(fieldName: string, localOptions: LazyFileInterceptorOptions): Type<NestInterceptor> {
 	class MixinInterceptor implements NestInterceptor {
 		protected multer: MulterInstance;
 		private readonly logger = new Logger('LazyFileInterceptor');
@@ -28,7 +52,13 @@ export function LazyFileInterceptor(fieldName: string, localOptions?: MulterOpti
 				...{
 					storage,
 					// Pass through a per-route fileFilter when provided (e.g. to block executable/SVG uploads).
-					...(localOptions?.fileFilter ? { fileFilter: localOptions.fileFilter } : {})
+					...(localOptions?.fileFilter ? { fileFilter: localOptions.fileFilter } : {}),
+					// …and `limits` likewise. Dropping it was the same silent-no-op trap as the missing
+					// storage factory, one step further along: a route declaring `limits: { fileSize }`
+					// read as capped while accepting uploads of any size, and nothing failed to say so.
+					// No caller relies on the old behaviour — none currently declare `limits` — so this
+					// only changes what happens the next time someone reasonably expects it to work.
+					...(localOptions?.limits ? { limits: localOptions.limits } : {})
 				}
 			});
 			await new Promise<void>((resolve, reject) =>
