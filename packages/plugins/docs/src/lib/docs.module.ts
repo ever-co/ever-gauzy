@@ -4,6 +4,11 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RolePermissionModule, TenantSettingModule } from '@gauzy/core';
 import { SchedulerModule } from '@gauzy/scheduler';
+import { ChatCaptureSubscriber } from './capture/chat-capture.subscriber';
+import { GenericSignedWebhookAdapter } from './capture/generic-signed-webhook.adapter';
+import { InboundEmailController } from './capture/inbound-email.controller';
+import { InboundEmailService } from './capture/inbound-email.service';
+import { DOCS_INBOUND_EMAIL_ADAPTER } from './capture/inbound-email.types';
 import { CommandHandlers } from './commands/handlers';
 import { Controllers } from './controllers';
 import { ALL_DOC_ENTITIES } from './entities';
@@ -19,12 +24,16 @@ import { DocsProcessingWorker } from './knowledge/queue/docs-processing.worker';
 import { DocsQueueService } from './knowledge/queue/docs-queue.service';
 import { DocsRecoveryService } from './knowledge/queue/docs-recovery.service';
 import { DocumentKnowledgeSearchService } from './knowledge/retrieval/retrieval.service';
+import { LegacyImportController } from './legacy-import/legacy-import.controller';
+import { LegacyImportService } from './legacy-import/legacy-import.service';
 import { LexicalStoreProvider } from './knowledge/vector-store/providers/lexical.provider';
 import { PgVectorStoreProvider } from './knowledge/vector-store/providers/pgvector.provider';
 import { DocumentVectorStoreRegistry } from './knowledge/vector-store/vector-store.registry';
 import { QueryHandlers } from './queries/handlers';
 import { TypeOrmRepositories } from './repositories';
 import { Services } from './services';
+import { RetrievalLogService } from './telemetry/retrieval-log.service';
+import { DOCS_RETRIEVAL_LOG } from './telemetry/retrieval-log.types';
 
 /** The AI-knowledge providers of the plugin (classification, embedding, indexing, retrieval). */
 const KnowledgeProviders = [
@@ -48,7 +57,10 @@ const KnowledgeProviders = [
 		// the worker host + `@ScheduledJob` reconcile are ordinary providers below.
 		SchedulerModule.forFeature({ queues: [DOCS_PROCESSING_QUEUE] })
 	],
-	controllers: [...Controllers],
+	// The legacy-import and inbound-email controllers are declared first: their static
+	// `/migrations/...` and `/inbound-email` segments must never be swallowed by the generic
+	// `/documents/:id` routes of the document controllers.
+	controllers: [LegacyImportController, InboundEmailController, ...Controllers],
 	// The subscribers are registered globally through the `@Plugin({ subscribers })` metadata —
 	// they must observe saves regardless of which module performs them.
 	providers: [
@@ -61,18 +73,37 @@ const KnowledgeProviders = [
 		DocsQueueService,
 		DocsProcessingWorker,
 		DocsRecoveryService,
+		// M4 consolidation: reads the legacy Organization-Documents / Help-Center tables
+		// (from @gauzy/core and @gauzy/plugin-knowledge-base) strictly read-only.
+		LegacyImportService,
 		// Registers docs_search / docs_read with the AI chat engine's tool registry
 		// (no-op when @gauzy/plugin-ai-chat is absent or GAUZY_DOCS_AI_ENABLED is false).
 		DocsChatToolsService,
 		// The chat tools consume the retrieval service through this optional token.
-		{ provide: DOCS_KNOWLEDGE_SEARCH_SERVICE, useExisting: DocumentKnowledgeSearchService }
+		{ provide: DOCS_KNOWLEDGE_SEARCH_SERVICE, useExisting: DocumentKnowledgeSearchService },
+		// M5 telemetry groundwork (07 §16): structured-log sink today, table-backed in P2 —
+		// the token is the swap point, no call site changes.
+		RetrievalLogService,
+		{ provide: DOCS_RETRIEVAL_LOG, useExisting: RetrievalLogService },
+		// M5 capture channels (07 §17): inbound email (public signed webhook, disabled unless
+		// GAUZY_DOCS_INBOUND_EMAIL_ENABLED=true) and AI-chat attachments (registered no-op
+		// until the chat plugin exports its attachment event).
+		GenericSignedWebhookAdapter,
+		{ provide: DOCS_INBOUND_EMAIL_ADAPTER, useExisting: GenericSignedWebhookAdapter },
+		InboundEmailService,
+		ChatCaptureSubscriber
 	],
 	exports: [
 		...Services,
 		...ExtractionProviders,
 		...KnowledgeProviders,
 		DocsQueueService,
-		DocsRecoveryService
+		DocsRecoveryService,
+		LegacyImportService,
+		RetrievalLogService,
+		DOCS_RETRIEVAL_LOG,
+		InboundEmailService,
+		ChatCaptureSubscriber
 	]
 })
 export class DocsModule implements OnModuleInit, OnModuleDestroy {

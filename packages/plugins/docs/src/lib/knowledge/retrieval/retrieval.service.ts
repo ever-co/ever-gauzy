@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { In } from 'typeorm';
 import { ID, IDocumentChunkMetadata, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
@@ -6,6 +6,8 @@ import { getDocsConfig } from '../../docs.config';
 import { DEFAULT_DOCS_RETRIEVAL_TOPK } from '../../docs.constants';
 import { TypeOrmDocumentCategoryRepository } from '../../repositories/type-orm-document-category.repository';
 import { TypeOrmDocumentRepository } from '../../repositories/type-orm-document.repository';
+import { DocumentAccessService } from '../../services/document-access.service';
+import { DOCS_RETRIEVAL_LOG, IDocsRetrievalLog, IDocsRetrievalLogEvent } from '../../telemetry/retrieval-log.types';
 import { EmbeddingService } from '../embedding/embedding.service';
 import { DOCS_LEXICAL_CONFIDENCE_FLOOR, VECTOR_STORE_LEXICAL } from '../knowledge.constants';
 import {
@@ -86,17 +88,30 @@ export class DocumentKnowledgeSearchService {
 	constructor(
 		private readonly typeOrmDocumentRepository: TypeOrmDocumentRepository,
 		private readonly typeOrmDocumentCategoryRepository: TypeOrmDocumentCategoryRepository,
-		private readonly embeddingService: EmbeddingService
+		private readonly embeddingService: EmbeddingService,
+		private readonly documentAccessService: DocumentAccessService,
+		/**
+		 * Telemetry sink (§16) — optional by design so the retrieval path works with the
+		 * token unbound, and swappable for the P2 table-backed implementation.
+		 */
+		@Optional()
+		@Inject(DOCS_RETRIEVAL_LOG)
+		private readonly retrievalLog?: IDocsRetrievalLog
 	) {}
 
 	/**
 	 * Runs one knowledge search for the requesting user.
 	 */
 	public async search(input: IKnowledgeSearchInput): Promise<IKnowledgeSearchResult> {
+		const startedAt = Date.now();
 		const tenantId = RequestContext.currentTenantId() as ID;
 		const organizationId = (RequestContext.currentOrganizationId() ?? (input as any).organizationId) as ID;
 		const userId = RequestContext.currentUserId() as ID;
+		// The share overlay is employee/team scoped (08 §3.3) — without it, PRIVATE documents
+		// shared with the requester would be invisible to retrieval but visible in the list.
+		const employeeId = this.documentAccessService.currentEmployeeId() ?? undefined;
 		const hasManagePermission = RequestContext.hasPermission(PermissionsEnum.DOCS_MANAGE);
+		const consumerKind = input.consumerKind ?? 'knowledge-search';
 
 		const config = getDocsConfig();
 		const topK = Math.min(Math.max(input.topK ?? DEFAULT_DOCS_RETRIEVAL_TOPK, 1), config.retrievalTopKMax);
@@ -111,6 +126,19 @@ export class DocumentKnowledgeSearchService {
 			categoryIds = categories.map((category) => category.id);
 			if (!categoryIds.length) {
 				// Unknown slugs would silently widen the search — return the honest empty set.
+				this.logRetrieval({
+					tenantId,
+					organizationId,
+					consumerKind,
+					queryLength: input.query?.length ?? 0,
+					resultCount: 0,
+					documentCount: 0,
+					latencyMs: Date.now() - startedAt,
+					mode: 'lexical-only',
+					topScore: null,
+					lowConfidence: true,
+					storeId: null
+				});
 				return { hits: [], lowConfidence: true, degraded: 'lexical-only' };
 			}
 		}
@@ -118,6 +146,7 @@ export class DocumentKnowledgeSearchService {
 
 		const filters: IVectorStoreQueryFilters = {
 			userId,
+			employeeId,
 			hasManagePermission,
 			documentIds: input.documentIds,
 			categoryIds,
@@ -164,6 +193,20 @@ export class DocumentKnowledgeSearchService {
 		);
 
 		if (!fused.length) {
+			// A zero-result search is the knowledge-gap signal — the ONLY place it is captured.
+			this.logRetrieval({
+				tenantId,
+				organizationId,
+				consumerKind,
+				queryLength: input.query?.length ?? 0,
+				resultCount: 0,
+				documentCount: 0,
+				latencyMs: Date.now() - startedAt,
+				mode: vectorLegRan ? 'hybrid' : 'lexical-only',
+				topScore: null,
+				lowConfidence: true,
+				storeId: vectorLegRan ? store?.id ?? null : lexicalStore?.id ?? null
+			});
 			return { hits: [], lowConfidence: true, degraded };
 		}
 
@@ -174,7 +217,37 @@ export class DocumentKnowledgeSearchService {
 			: Math.max(...lexicalHits.map((hit) => hit.score), 0) < DOCS_LEXICAL_CONFIDENCE_FLOOR;
 
 		const hits = await this.hydrateHits(fused.map((entry) => ({ ...(entry.hit as IVectorStoreHit), score: entry.score })));
+
+		this.logRetrieval({
+			tenantId,
+			organizationId,
+			consumerKind,
+			queryLength: input.query?.length ?? 0,
+			resultCount: hits.length,
+			documentCount: new Set(hits.map((hit) => hit.documentId)).size,
+			latencyMs: Date.now() - startedAt,
+			mode: vectorLegRan ? 'hybrid' : 'lexical-only',
+			topScore: hits.length ? hits[0].score : null,
+			lowConfidence,
+			storeId: vectorLegRan ? store?.id ?? null : lexicalStore?.id ?? null
+		});
+
 		return { hits, lowConfidence, degraded };
+	}
+
+	/**
+	 * Hands one retrieval event to the telemetry sink. Fire-and-forget by contract —
+	 * telemetry must never slow or fail a search, so the call is fully guarded here on top
+	 * of the sink's own guards.
+	 *
+	 * @param event The content-free retrieval event.
+	 */
+	private logRetrieval(event: IDocsRetrievalLogEvent): void {
+		try {
+			this.retrievalLog?.recordRetrieval(event);
+		} catch (error) {
+			this.logger.debug(`Retrieval telemetry failed: ${(error as Error).message}`);
+		}
 	}
 
 	/**

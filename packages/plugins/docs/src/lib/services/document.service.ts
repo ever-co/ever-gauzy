@@ -41,6 +41,7 @@ import { Document } from '../entities/document.entity';
 import { DocumentEvent, IDocumentEventContext } from '../events/document.event';
 import { MikroOrmDocumentRepository } from '../repositories/mikro-orm-document.repository';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
+import { DocumentAccessService } from './document-access.service';
 import { DocumentVersionService } from './document-version.service';
 
 /**
@@ -96,14 +97,21 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		public readonly typeOrmDocumentRepository: TypeOrmDocumentRepository,
 		public readonly mikroOrmDocumentRepository: MikroOrmDocumentRepository,
 		private readonly documentVersionService: DocumentVersionService,
+		private readonly documentAccessService: DocumentAccessService,
 		private readonly _eventBus: EventBus
 	) {
 		super(typeOrmDocumentRepository, mikroOrmDocumentRepository);
 	}
 
 	/**
-	 * Applies the Documents visibility rule to a query builder: `PRIVATE` rows are visible only
-	 * to their creator and to holders of `DOCS_MANAGE` (P1 adds `DocumentShare` grantees).
+	 * Applies the Documents visibility + share composition rule to a query builder
+	 * (`08-permissions-security.md` §3.4): `PRIVATE` rows are visible only to their creator,
+	 * to holders of `DOCS_MANAGE`, and to `DocumentShare` grantees (employee grant, or a team
+	 * the requester currently belongs to — resolved in the same SQL predicate so lists,
+	 * facets, tree browsing and retrieval stay single-query and consistent).
+	 *
+	 * The route guard has already proven `DOCS_READ`; this method adds the row-level half of
+	 * `permission AND (visibility OR ownership OR adminOverride OR share)`.
 	 *
 	 * @param qb The query (or where expression) builder to scope.
 	 * @param alias The `document` alias in the query.
@@ -121,12 +129,15 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 				if (userId) {
 					web.orWhere(p(`"${alias}"."createdByUserId" = :visibilityUserId`), { visibilityUserId: userId });
 				}
+				// Additive share overlay — never subtracts rights, no-op without an employee identity.
+				this.documentAccessService.applyShareScope(web, alias);
 			})
 		);
 	}
 
 	/**
-	 * Loads a document by id within the caller's tenant/organization + visibility scope.
+	 * Loads a document by id within the caller's tenant/organization + visibility scope
+	 * (visibility OR ownership OR `DOCS_MANAGE` OR a share grant, per §3.4).
 	 * A cross-tenant, cross-org, or invisible id resolves to 404, never 403 (no existence oracle).
 	 *
 	 * @param id The document id.
@@ -134,19 +145,29 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 * @returns The scoped document entity.
 	 */
 	async findOneScoped(id: ID, relations: string[] = []): Promise<Document> {
+		let document: Document;
 		try {
-			const document = await this.findOneByIdString(id, { relations });
-			if (
-				document.visibility === DocumentVisibilityEnum.PRIVATE &&
-				!RequestContext.hasPermission(PermissionsEnum.DOCS_MANAGE) &&
-				document.createdByUserId !== RequestContext.currentUserId()
-			) {
-				throw new NotFoundException(`Document ${id} was not found`);
-			}
-			return document;
+			document = await this.findOneByIdString(id, { relations });
 		} catch (error) {
 			throw new NotFoundException(`Document ${id} was not found`);
 		}
+
+		if (
+			document.visibility === DocumentVisibilityEnum.PRIVATE &&
+			!RequestContext.hasPermission(PermissionsEnum.DOCS_MANAGE) &&
+			document.createdByUserId !== RequestContext.currentUserId()
+		) {
+			// Last gate: the share overlay. Only reached for someone else's PRIVATE document,
+			// so the extra lookup never touches the common read paths.
+			const shared = await this.documentAccessService.canRead(
+				{ createdByUserId: document.createdByUserId, visibility: document.visibility },
+				document.id
+			);
+			if (!shared) {
+				throw new NotFoundException(`Document ${id} was not found`);
+			}
+		}
+		return document;
 	}
 
 	/**

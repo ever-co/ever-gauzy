@@ -3,8 +3,10 @@ import { In } from 'typeorm';
 import { DocumentVisibilityEnum, ID } from '@gauzy/contracts';
 import { RequestContext, TenantSettingService } from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
-import { DOCS_SETTING_PREFIX } from '../docs.constants';
+import { DOCS_SETTING_PREFIX, DOCS_SETTING_QUOTA_BYTES } from '../docs.constants';
 import { DocumentSettingsDTO, IDocumentSettings, IDocumentSettingsDefaults } from '../dto/document-settings.dto';
+import { DocumentQuotaService } from './document-quota.service';
+import { resolveQuotaBytes } from './quota.calculator';
 
 /**
  * File types accepted by the upload endpoint (sniffed, never trusted from the client header).
@@ -34,16 +36,22 @@ const DOCS_ACCEPTED_TYPES = [
 export class DocumentSettingsService {
 	private readonly logger = new Logger(DocumentSettingsService.name);
 
-	constructor(private readonly tenantSettingService: TenantSettingService) {}
+	constructor(
+		private readonly tenantSettingService: TenantSettingService,
+		private readonly documentQuotaService: DocumentQuotaService
+	) {}
 
 	/**
-	 * Reads the org defaults + deployment capabilities.
+	 * Reads the org defaults + deployment capabilities + the live storage-quota state.
 	 *
 	 * @param organizationId The organization scope.
 	 * @returns The settings envelope.
 	 */
 	async getSettings(organizationId: ID): Promise<IDocumentSettings> {
-		const defaults = await this.getDefaults(organizationId);
+		const [defaults, quota] = await Promise.all([
+			this.getDefaults(organizationId),
+			this.documentQuotaService.getQuotaState(organizationId)
+		]);
 		const config = getDocsConfig();
 
 		return {
@@ -55,8 +63,10 @@ export class DocumentSettingsService {
 				vectorSearch: false,
 				embeddingModel: config.embeddingModel,
 				maxFileSize: config.maxFileSize,
-				acceptedTypes: DOCS_ACCEPTED_TYPES
-			}
+				acceptedTypes: DOCS_ACCEPTED_TYPES,
+				inboundEmailEnabled: config.inboundEmailEnabled
+			},
+			quota
 		};
 	}
 
@@ -80,6 +90,10 @@ export class DocumentSettingsService {
 		if (input.autoClassify !== undefined) {
 			settings[this.key(organizationId, 'autoClassify')] = String(input.autoClassify);
 		}
+		if (input.quotaBytes !== undefined) {
+			// Stored verbatim (including an explicit "0" = unlimited for this organization).
+			settings[this.key(organizationId, DOCS_SETTING_QUOTA_BYTES)] = String(input.quotaBytes);
+		}
 
 		if (Object.keys(settings).length > 0) {
 			await this.tenantSettingService.saveSettings(settings, tenantId);
@@ -96,8 +110,8 @@ export class DocumentSettingsService {
 	 */
 	async getDefaults(organizationId: ID): Promise<IDocumentSettingsDefaults> {
 		const tenantId = RequestContext.currentTenantId();
-		const names = ['importToKnowledgeDefault', 'defaultVisibility', 'autoClassify'].map((key) =>
-			this.key(organizationId, key)
+		const names = ['importToKnowledgeDefault', 'defaultVisibility', 'autoClassify', DOCS_SETTING_QUOTA_BYTES].map(
+			(key) => this.key(organizationId, key)
 		);
 
 		let stored: Record<string, any> = {};
@@ -112,7 +126,11 @@ export class DocumentSettingsService {
 			defaultVisibility:
 				(stored[this.key(organizationId, 'defaultVisibility')] as DocumentVisibilityEnum) ??
 				DocumentVisibilityEnum.ORGANIZATION,
-			autoClassify: stored[this.key(organizationId, 'autoClassify')] !== 'false'
+			autoClassify: stored[this.key(organizationId, 'autoClassify')] !== 'false',
+			quotaBytes: resolveQuotaBytes(
+				stored[this.key(organizationId, DOCS_SETTING_QUOTA_BYTES)],
+				getDocsConfig().orgQuotaBytes
+			)
 		};
 	}
 

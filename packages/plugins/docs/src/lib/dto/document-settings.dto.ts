@@ -1,10 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsOptional, Min } from 'class-validator';
 import { DocumentVisibilityEnum } from '@gauzy/contracts';
+import { IDocumentQuotaState } from '../services/quota.calculator';
 
 /**
  * Org-defaults block accepted by `PUT /api/plugins/docs/settings` (partial update).
- * The read-only `capabilities` block of the GET response is never writable.
+ * The read-only `capabilities` and `quota` blocks of the GET response are never writable
+ * (`quotaBytes` below is the ONE writable quota field — the usage numbers are computed).
  */
 export class DocumentSettingsDTO {
 	/** Default for the upload form's "Import to AI knowledge" toggle. */
@@ -24,6 +26,16 @@ export class DocumentSettingsDTO {
 	@IsOptional()
 	@IsBoolean()
 	readonly autoClassify?: boolean;
+
+	/**
+	 * Per-organization storage quota in bytes; `0` = unlimited (08 §5.7). Overrides the
+	 * deployment default `GAUZY_DOCS_ORG_QUOTA_BYTES`.
+	 */
+	@ApiPropertyOptional({ type: () => Number, minimum: 0 })
+	@IsOptional()
+	@IsInt()
+	@Min(0)
+	readonly quotaBytes?: number;
 }
 
 /**
@@ -33,6 +45,8 @@ export interface IDocumentSettingsDefaults {
 	importToKnowledgeDefault: boolean;
 	defaultVisibility: DocumentVisibilityEnum;
 	autoClassify: boolean;
+	/** Effective organization storage quota in bytes; `0` = unlimited. */
+	quotaBytes: number;
 }
 
 /**
@@ -44,6 +58,8 @@ export interface IDocumentSettingsCapabilities {
 	embeddingModel: string;
 	maxFileSize: number;
 	acceptedTypes: string[];
+	/** Whether the inbound-email capture webhook is enabled in this deployment (07 §17.2). */
+	inboundEmailEnabled: boolean;
 }
 
 /**
@@ -52,4 +68,6 @@ export interface IDocumentSettingsCapabilities {
 export interface IDocumentSettings {
 	defaults: IDocumentSettingsDefaults;
 	capabilities: IDocumentSettingsCapabilities;
+	/** Live storage-quota state (quota, usage, remaining) — read-only, never writable. */
+	quota: IDocumentQuotaState;
 }

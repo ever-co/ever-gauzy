@@ -16,9 +16,24 @@ export { DocumentUploadService } from './lib/services/document-upload.service';
 export { DocumentProcessingService } from './lib/services/document-processing.service';
 export { DocumentKnowledgeService } from './lib/services/document-knowledge.service';
 export { DocumentReviewService } from './lib/services/document-review.service';
+export { DocumentShareService } from './lib/services/document-share.service';
+export { DocumentAccessService } from './lib/services/document-access.service';
+export { DocumentQuotaService } from './lib/services/document-quota.service';
+
+// Visibility + share composition (08 §3) — the pure truth-table predicates and their SQL
+// mirror, exported so other surfaces can never re-derive a different rule.
+export * from './lib/services/document-access.predicate';
+export { buildShareGrantExistsSql, IShareScopeParameters } from './lib/services/document-access.sql';
+
+// Organization storage-quota arithmetic (08 §5.7) — pure, unit-tested.
+export * from './lib/services/quota.calculator';
 
 // Events
 export * from './lib/events/document.event';
+
+// M4 consolidation: the legacy Organization-Documents / Help-Center import (types, pure
+// mappers, service). Legacy tables are only ever read — provenance lives on the new side.
+export * from './lib/legacy-import';
 
 // Commands intended for cross-plugin dispatch
 export { CreateDocumentCommand } from './lib/commands/create-document.command';
@@ -89,6 +104,15 @@ export * from './lib/knowledge/queue/docs-recovery.predicate';
 
 // Pipeline error classification
 export * from './lib/knowledge/errors';
+
+// Telemetry seam (07 §16): the swappable retrieval/AI-usage log. P1 ships the structured
+// logger; P2 binds a table-backed implementation to the same `DOCS_RETRIEVAL_LOG` token.
+export * from './lib/telemetry';
+
+// Capture channels (07 §17): the importer contract + registry that integration plugins
+// implement, the provider-agnostic inbound-email adapter seam with its reference
+// implementation, and the AI-chat attachment subscriber.
+export * from './lib/capture';
 
 // Extraction provider registry — third parties add providers via
 // `ExtractionRegistryService.register()`

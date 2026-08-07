@@ -11,7 +11,7 @@
 		}
 	},
 	"tags": [],
-	"implicitDependencies": ["contracts", "core", "plugin", "plugin-ai-chat", "scheduler"],
+	"implicitDependencies": ["contracts", "core", "plugin", "plugin-ai-chat", "plugin-knowledge-base", "scheduler"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",

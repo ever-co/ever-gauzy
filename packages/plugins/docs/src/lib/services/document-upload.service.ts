@@ -16,6 +16,7 @@ import {
 	DOCS_FILE_TOO_LARGE,
 	DOCS_FILE_TYPE_REJECTED,
 	DOCS_PARENT_NOT_CONTAINER,
+	DOCS_QUOTA_EXCEEDED,
 	DOCS_SOURCE_RESERVED
 } from '../docs.constants';
 import {
@@ -27,12 +28,19 @@ import {
 import { Document } from '../entities/document.entity';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
 import { DocumentProcessingService } from './document-processing.service';
+import { DocumentQuotaService } from './document-quota.service';
 import { DocumentService } from './document.service';
 import { DocumentSettingsService } from './document-settings.service';
 import { canonicalExtension, sniffFile } from './file-sniffer';
 
 /** Sources a client may claim on the upload endpoint — everything else is reserved. */
 const UPLOAD_SOURCE_ALLOWLIST = [DocumentSourceEnum.UPLOAD, DocumentSourceEnum.CHAT, DocumentSourceEnum.EDITOR];
+
+/**
+ * Sources that are system-originated captures: over quota they WARN and proceed, so
+ * automated intake never silently drops a business record (08 §5.7).
+ */
+const QUOTA_WARN_ONLY_SOURCES = [DocumentSourceEnum.CHAT, DocumentSourceEnum.EMAIL];
 
 /**
  * The upload gauntlet of the Documents plugin: per-file magic-byte sniffing against the
@@ -52,6 +60,7 @@ export class DocumentUploadService {
 		private readonly typeOrmDocumentRepository: TypeOrmDocumentRepository,
 		private readonly documentService: DocumentService,
 		private readonly documentSettingsService: DocumentSettingsService,
+		private readonly documentQuotaService: DocumentQuotaService,
 		private readonly processingService: DocumentProcessingService
 	) {}
 
@@ -103,6 +112,12 @@ export class DocumentUploadService {
 		const importToKnowledge = input.importToKnowledge ?? defaults.importToKnowledgeDefault;
 		const defaultVisibility = input.visibility ?? defaults.defaultVisibility;
 
+		// Organization storage quota (08 §5.7) — resolved ONCE per batch; the accepted bytes
+		// of this batch accumulate into `quotaState.usedBytes` so a batch cannot slip past
+		// the limit by being counted against a stale usage number.
+		const quotaState = await this.documentQuotaService.getQuotaState(organizationId);
+		const quotaWarnOnly = QUOTA_WARN_ONLY_SOURCES.includes(source);
+
 		const results: IDocumentUploadResult[] = [];
 		const rejected: IDocumentUploadRejection[] = [];
 		let oversizeCount = 0;
@@ -120,6 +135,27 @@ export class DocumentUploadService {
 						message: `File exceeds the ${config.maxFileSize}-byte limit`
 					});
 					continue;
+				}
+
+				// 1b) Organization storage quota. System captures warn and proceed.
+				if (this.documentQuotaService.exceeds(file.size, quotaState)) {
+					if (quotaWarnOnly) {
+						this.logger.warn(
+							`Organization ${organizationId} is over its documents storage quota ` +
+								`(${quotaState.usedBytes}/${quotaState.quotaBytes} bytes) — accepting the ` +
+								`${source} capture anyway so automated intake never drops a record.`
+						);
+					} else {
+						await this.cleanupOne(provider, file);
+						rejected.push({
+							fileName,
+							code: DOCS_QUOTA_EXCEEDED,
+							message:
+								`The organization storage quota of ${quotaState.quotaBytes} bytes would be ` +
+								`exceeded (currently using ${quotaState.usedBytes} bytes)`
+						});
+						continue;
+					}
 				}
 
 				// 2) Content sniffing — never trust the client MIME.
@@ -179,6 +215,9 @@ export class DocumentUploadService {
 
 				// 5) Enqueue extraction with the explicit tenant snapshot.
 				await this.processingService.enqueueExtract(document, 'upload');
+
+				// The accepted bytes count against the remaining quota of this same batch.
+				quotaState.usedBytes += file.size;
 
 				results.push({ document, duplicateOfId: duplicate?.id });
 			} catch (error) {

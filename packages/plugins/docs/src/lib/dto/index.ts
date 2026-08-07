@@ -4,6 +4,7 @@ export * from './delete-document.dto';
 export * from './document-category.dto';
 export * from './document-link.dto';
 export * from './document-settings.dto';
+export * from './document-share.dto';
 export * from './duplicate-document.dto';
 export * from './get-documents-query.dto';
 export * from './knowledge-reindex.dto';

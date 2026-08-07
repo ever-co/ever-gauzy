@@ -8,6 +8,7 @@ import {
 import { prepareSQLQuery as p } from '@gauzy/core';
 import { DocumentChunk } from '../../entities/document-chunk.entity';
 import { Document } from '../../entities/document.entity';
+import { buildShareGrantExistsSql } from '../../services/document-access.sql';
 import { IVectorStoreQuery } from '../vector-store/vector-store.interface';
 
 /**
@@ -70,18 +71,22 @@ export function applyRetrievalFilters(
 	// Content searchable.
 	qb.andWhere(p(`"doc"."searchable" = :searchableFlag`), { searchableFlag: true });
 
-	// Visibility: ORGANIZATION docs, own docs, or DOCS_MANAGE sees all.
+	// Visibility + share composition (08 §3.4): ORGANIZATION docs, own docs, share grantees,
+	// or DOCS_MANAGE sees all. The share leg is evaluated in the SAME SQL predicate as
+	// visibility so retrieval can never diverge from the list/tree paths.
 	if (!filters.hasManagePermission) {
+		const legs: string[] = [p(`"doc"."visibility" = :orgVisibility`)];
+		const parameters: Record<string, any> = { orgVisibility: DocumentVisibilityEnum.ORGANIZATION };
 		if (filters.userId) {
-			qb.andWhere(
-				p(`("doc"."visibility" = :orgVisibility OR "doc"."createdByUserId" = :visibilityUserId)`),
-				{ orgVisibility: DocumentVisibilityEnum.ORGANIZATION, visibilityUserId: filters.userId }
-			);
-		} else {
-			qb.andWhere(p(`"doc"."visibility" = :orgVisibility`), {
-				orgVisibility: DocumentVisibilityEnum.ORGANIZATION
-			});
+			legs.push(p(`"doc"."createdByUserId" = :visibilityUserId`));
+			parameters['visibilityUserId'] = filters.userId;
 		}
+		if (filters.employeeId) {
+			legs.push(buildShareGrantExistsSql('doc'));
+			parameters['shareEmployeeId'] = filters.employeeId;
+			parameters['shareTenantId'] = query.tenantId;
+		}
+		qb.andWhere(`(${legs.join(' OR ')})`, parameters);
 	}
 
 	// Optional facets.

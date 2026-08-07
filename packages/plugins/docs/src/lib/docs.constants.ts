@@ -27,6 +27,22 @@ export const DOCS_SHARE_TARGET = 'DOCS_SHARE_TARGET';
 export const DOCS_SHARE_NOT_PRIVATE = 'DOCS_SHARE_NOT_PRIVATE';
 export const DOCS_BULK_ACTION_UNSUPPORTED = 'DOCS_BULK_ACTION_UNSUPPORTED';
 export const DOCS_NOT_INDEXABLE = 'DOCS_NOT_INDEXABLE';
+/** A share row for the same (document, employee|team) target already exists. */
+export const DOCS_SHARE_EXISTS = 'DOCS_SHARE_EXISTS';
+/** The caller is neither the document's creator nor a `DOCS_MANAGE` holder. */
+export const DOCS_SHARE_FORBIDDEN = 'DOCS_SHARE_FORBIDDEN';
+/** The organization storage quota would be exceeded by this upload. */
+export const DOCS_QUOTA_EXCEEDED = 'DOCS_QUOTA_EXCEEDED';
+/** The inbound-email webhook is not enabled in this deployment. */
+export const DOCS_INBOUND_DISABLED = 'DOCS_INBOUND_DISABLED';
+/** The inbound-email webhook signature did not verify. */
+export const DOCS_INBOUND_SIGNATURE_INVALID = 'DOCS_INBOUND_SIGNATURE_INVALID';
+/** No organization owns the recipient capture token. */
+export const DOCS_INBOUND_UNKNOWN_RECIPIENT = 'DOCS_INBOUND_UNKNOWN_RECIPIENT';
+/** The inbound message exceeded the configured per-message size cap. */
+export const DOCS_INBOUND_TOO_LARGE = 'DOCS_INBOUND_TOO_LARGE';
+/** The inbound message carried no importable attachment. */
+export const DOCS_INBOUND_NO_ATTACHMENTS = 'DOCS_INBOUND_NO_ATTACHMENTS';
 
 /**
  * Environment variable keys read by `docs.config.ts`.
@@ -48,6 +64,12 @@ export const ENV_GAUZY_DOCS_EMBED_BATCH_SIZE = 'GAUZY_DOCS_EMBED_BATCH_SIZE';
 export const ENV_GAUZY_DOCS_RETRIEVAL_TOPK_MAX = 'GAUZY_DOCS_RETRIEVAL_TOPK_MAX';
 export const ENV_GAUZY_DOCS_AUTO_REINDEX_ON_MODEL_CHANGE = 'GAUZY_DOCS_AUTO_REINDEX_ON_MODEL_CHANGE';
 export const ENV_GAUZY_DOCS_VECTOR_STORE = 'GAUZY_DOCS_VECTOR_STORE';
+export const ENV_GAUZY_DOCS_ORG_QUOTA_BYTES = 'GAUZY_DOCS_ORG_QUOTA_BYTES';
+export const ENV_GAUZY_DOCS_RETRIEVAL_LOG_ENABLED = 'GAUZY_DOCS_RETRIEVAL_LOG_ENABLED';
+export const ENV_GAUZY_DOCS_INBOUND_EMAIL_ENABLED = 'GAUZY_DOCS_INBOUND_EMAIL_ENABLED';
+export const ENV_GAUZY_DOCS_INBOUND_WEBHOOK_SECRET = 'GAUZY_DOCS_INBOUND_WEBHOOK_SECRET';
+export const ENV_GAUZY_DOCS_INBOUND_MAX_MESSAGE_BYTES = 'GAUZY_DOCS_INBOUND_MAX_MESSAGE_BYTES';
+export const ENV_GAUZY_DOCS_INBOUND_DOMAIN = 'GAUZY_DOCS_INBOUND_DOMAIN';
 
 /**
  * Defaults for the environment variables above.
@@ -67,6 +89,10 @@ export const DEFAULT_DOCS_CLASSIFY_SAMPLE_CHARS = 4000;
 export const DEFAULT_DOCS_EMBED_BATCH_SIZE = 64;
 export const DEFAULT_DOCS_RETRIEVAL_TOPK_MAX = 12;
 export const DEFAULT_DOCS_RETRIEVAL_TOPK = 6;
+/** 0 = unlimited organization storage (the documented default). */
+export const DEFAULT_DOCS_ORG_QUOTA_BYTES = 0;
+/** Per-message cap for the inbound-email webhook (25 MB). */
+export const DEFAULT_DOCS_INBOUND_MAX_MESSAGE_BYTES = 26214400;
 
 /**
  * Maximum number of ids accepted by the bulk endpoint.
@@ -99,3 +125,20 @@ export const DOCS_RECOVERY_FAILED_AFTER_HOURS = 24; // PROCESSING stuck longer t
  * (`docs.<organizationId>.<key>`).
  */
 export const DOCS_SETTING_PREFIX = 'docs';
+
+/**
+ * Org-setting keys (namespaced under `docs.<organizationId>.`) owned by the M5 features:
+ * the storage-quota override and the inbound-email capture token.
+ */
+export const DOCS_SETTING_QUOTA_BYTES = 'quotaBytes';
+export const DOCS_SETTING_INBOUND_TOKEN = 'inboundToken';
+
+/**
+ * Replay window for the generic signed inbound-email webhook adapter — a signed request
+ * older than this is rejected even when its HMAC verifies.
+ */
+export const DOCS_INBOUND_SIGNATURE_TOLERANCE_MS = 300_000; // 5 minutes
+
+/** Header names read by the generic signed-webhook reference adapter. */
+export const DOCS_INBOUND_SIGNATURE_HEADER = 'x-gauzy-docs-signature';
+export const DOCS_INBOUND_TIMESTAMP_HEADER = 'x-gauzy-docs-timestamp';

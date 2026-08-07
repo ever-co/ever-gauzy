@@ -34,6 +34,12 @@ export interface IVectorStoreChunk {
 export interface IVectorStoreQueryFilters {
 	/** Requesting user id (visibility scope). */
 	userId?: ID;
+	/**
+	 * Requesting employee id — the share overlay of `08-permissions-security.md` §3.3 is
+	 * employee/team scoped, so PRIVATE documents shared with the requester stay retrievable.
+	 * Absent = no share grants are considered.
+	 */
+	employeeId?: ID;
 	/** True when the caller holds `DOCS_MANAGE` (sees PRIVATE documents). */
 	hasManagePermission?: boolean;
 	/** Restriction to specific documents (≤ 20). */
