@@ -155,6 +155,15 @@ export const dispatchClickWhenSettled = async (selector: string, confirmSelector
 			/* the click was swallowed — settle and try again, re-checking the end state first. */
 		}
 	}
+	// Fail HERE, naming the trigger, rather than returning as if the click landed. A silent return
+	// just moves the failure to whatever the caller does next — a 24s timeout on an input inside a
+	// dialog that never opened, i.e. the exact illegible error this helper exists to eliminate. When
+	// the confirm target genuinely cannot appear the scenario was going to fail either way; this way
+	// the report says which button was pressed and what never showed up.
+	throw new Error(
+		`dispatchClickWhenSettled: clicked '${selector}' ${attempts}x but '${confirmSelector}' never appeared — ` +
+			`the click's effect did not happen (or the confirm selector is wrong).`
+	);
 };
 
 /**
