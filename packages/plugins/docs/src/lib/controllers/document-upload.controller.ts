@@ -2,14 +2,17 @@ import {
 	Body,
 	Controller,
 	ExecutionContext,
+	Get,
 	HttpStatus,
 	Param,
 	Post,
+	Res,
 	UseGuards,
 	UseInterceptors
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
 import * as path from 'path';
 import { v4 as uuid } from 'uuid';
 import { FeatureFlag } from '@gauzy/common';
@@ -30,6 +33,16 @@ import { IDocumentUploadResponse, ReprocessDocumentDTO, UploadDocumentsDTO } fro
 import { LazyFilesInterceptor, UploadedFilesStorage } from '../interceptors';
 import { ReprocessDocumentCommand } from '../commands/reprocess-document.command';
 import { UploadDocumentsCommand } from '../commands/upload-documents.command';
+import { DocumentUploadService } from '../services/document-upload.service';
+
+/**
+ * Object-name extensions that a static file server would happily render in the browser. The
+ * canonical type is kept on `document.mimeType` (and in `metadata.upload.canonicalExtension`),
+ * so the stored object can safely carry a neutral extension instead — that keeps the LOCAL
+ * provider's unauthenticated `/public/` path from becoming a same-origin XSS sink for an
+ * uploaded `.html` file. Bytes are always served through `/documents/:id/raw`.
+ */
+const RENDERABLE_KEY_EXTENSIONS = new Set(['html', 'htm', 'xhtml', 'xml', 'svg', 'svgz', 'js', 'mjs', 'css']);
 
 /**
  * Builds the per-request storage engine of the upload endpoint. Keys land under the
@@ -50,7 +63,12 @@ const documentsStorage = (ctx: ExecutionContext) => {
 			const safeExtension = String(extension ?? '')
 				.toLowerCase()
 				.replace(/[^a-z0-9]/g, '');
-			return safeExtension ? `${uuid()}.${safeExtension}` : `${uuid()}`;
+			if (!safeExtension) {
+				return `${uuid()}`;
+			}
+			// Never let a browser-renderable extension onto the stored object name.
+			const storedExtension = RENDERABLE_KEY_EXTENSIONS.has(safeExtension) ? 'bin' : safeExtension;
+			return `${uuid()}.${storedExtension}`;
 		}
 	});
 };
@@ -60,7 +78,10 @@ const documentsStorage = (ctx: ExecutionContext) => {
 @FeatureFlag(FeatureEnum.FEATURE_DOCUMENTS)
 @Controller('/plugins/docs/documents')
 export class DocumentUploadController {
-	constructor(private readonly commandBus: CommandBus) {}
+	constructor(
+		private readonly commandBus: CommandBus,
+		private readonly documentUploadService: DocumentUploadService
+	) {}
 
 	/**
 	 * Multi-file upload (field `files`, 1–10 files) with per-file accept/reject results.
@@ -95,6 +116,50 @@ export class DocumentUploadController {
 		@UploadedFilesStorage() files: UploadedFile[]
 	): Promise<IDocumentUploadResponse> {
 		return this.commandBus.execute(new UploadDocumentsCommand(input, files));
+	}
+
+	/**
+	 * Resolves a provider URL for the stored blob and returns `{ url }` — signed with the
+	 * provider's `expiresIn` ceiling on S3-compatible storage, minted per request and never
+	 * cached. FILE documents only (409 `DOCS_NOT_A_FILE` otherwise); an id outside the
+	 * caller's tenant/organization/visibility scope is a 404.
+	 */
+	@ApiOperation({ summary: 'Get a short-lived download URL for a FILE document.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Download URL resolved successfully.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Document not found or has no stored file.' })
+	@Permissions(PermissionsEnum.DOCS_READ)
+	@Get('/:id/download')
+	public async download(@Param('id', UUIDValidationPipe) id: ID): Promise<{ url: string }> {
+		return this.documentUploadService.getDownloadUrl(id);
+	}
+
+	/**
+	 * Authenticated byte stream of the stored blob — the path used by the preview modal and by
+	 * every image embedded in a wiki page.
+	 *
+	 * Hardening per `08-permissions-security.md` §5.5: `X-Content-Type-Options: nosniff` always,
+	 * the stored (sniffed) content type only for the render-safe allowlist, and `attachment` +
+	 * `application/octet-stream` for everything else — stored `text/html` is never served as
+	 * `text/html` from the API origin.
+	 */
+	@ApiOperation({ summary: 'Stream the stored bytes of a FILE document.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'File streamed successfully.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Document not found or has no stored file.' })
+	@Permissions(PermissionsEnum.DOCS_READ)
+	@Get('/:id/raw')
+	public async raw(@Param('id', UUIDValidationPipe) id: ID, @Res() res: Response): Promise<void> {
+		const file = await this.documentUploadService.getRawFile(id);
+
+		// Set explicitly rather than via `@Header()`: the handler owns the response object here.
+		res.setHeader('X-Content-Type-Options', 'nosniff');
+		res.setHeader('Cache-Control', 'private, no-store');
+		res.setHeader('Content-Type', file.contentType);
+		res.setHeader('Content-Length', file.buffer.length);
+		res.setHeader(
+			'Content-Disposition',
+			`${file.disposition}; filename="${file.fileName}"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`
+		);
+		res.end(file.buffer);
 	}
 
 	/**

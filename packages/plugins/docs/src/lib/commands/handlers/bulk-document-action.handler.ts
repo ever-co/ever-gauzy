@@ -1,8 +1,8 @@
-import { ForbiddenException, HttpException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ID, ITag, IDocumentCategory, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
-import { DOCS_BULK_ACTION_UNSUPPORTED } from '../../docs.constants';
+import { DOCS_BULK_ACTION_UNSUPPORTED, DOCS_BULK_MOVE_PARENT_REQUIRED } from '../../docs.constants';
 import { DocumentBulkActionEnum, IDocumentBulkResult, IDocumentBulkResultItem } from '../../dto/bulk-action.dto';
 import { DocumentService } from '../../services/document.service';
 import { DocumentKnowledgeService } from '../../services/document-knowledge.service';
@@ -34,6 +34,7 @@ export class BulkDocumentActionHandler implements ICommandHandler<BulkDocumentAc
 	public async execute(command: BulkDocumentActionCommand): Promise<IDocumentBulkResult> {
 		const { input } = command;
 		this.assertActionPermissions(input.action);
+		this.assertActionPayload(input.action, input);
 
 		const results: IDocumentBulkResultItem[] = [];
 		for (const id of input.ids) {
@@ -82,6 +83,21 @@ export class BulkDocumentActionHandler implements ICommandHandler<BulkDocumentAc
 	}
 
 	/**
+	 * Enforces the per-action payload preconditions that a per-id failure could not express
+	 * safely. `MOVE` is the dangerous one: an omitted `parentId` used to coerce to `null` and
+	 * move the whole selection to the root, which is both destructive and indistinguishable
+	 * from success. `null` stays a legal value — it just has to be sent on purpose.
+	 */
+	private assertActionPayload(action: DocumentBulkActionEnum, input: BulkDocumentActionCommand['input']): void {
+		if (action === DocumentBulkActionEnum.MOVE && input.parentId === undefined) {
+			throw new BadRequestException({
+				message: 'A bulk MOVE requires an explicit parentId (send null to move to the root)',
+				code: DOCS_BULK_MOVE_PARENT_REQUIRED
+			});
+		}
+	}
+
+	/**
 	 * Applies one action to one id (per-id failures are collected by the caller).
 	 */
 	private async applyAction(id: ID, command: BulkDocumentActionCommand): Promise<void> {
@@ -90,22 +106,26 @@ export class BulkDocumentActionHandler implements ICommandHandler<BulkDocumentAc
 		switch (action) {
 			case DocumentBulkActionEnum.ARCHIVE: {
 				const document = await this.documentService.findOneScoped(id);
+				await this.documentService.assertCanWrite(document);
 				await this.documentTreeService.archiveSubtree(document); // idempotent-success
 				return;
 			}
 			case DocumentBulkActionEnum.UNARCHIVE: {
 				const document = await this.documentService.findOneScoped(id);
+				await this.documentService.assertCanWrite(document);
 				await this.documentTreeService.unarchiveSubtree(document); // idempotent-success
 				return;
 			}
 			case DocumentBulkActionEnum.SET_CATEGORIES: {
 				const document = await this.documentService.findOneScoped(id, ['categories']);
+				await this.documentService.assertCanWrite(document);
 				document.categories = (categoryIds ?? []).map((categoryId: ID) => ({ id: categoryId })) as IDocumentCategory[];
 				await this.documentService.save(document);
 				return;
 			}
 			case DocumentBulkActionEnum.ADD_TAGS: {
 				const document = await this.documentService.findOneScoped(id, ['tags']);
+				await this.documentService.assertCanWrite(document);
 				const existing = new Set((document.tags ?? []).map((tag: ITag) => tag.id));
 				const additions = (tagIds ?? []).filter((tagId: ID) => !existing.has(tagId));
 				document.tags = [...(document.tags ?? []), ...additions.map((tagId: ID) => ({ id: tagId }) as ITag)];
@@ -114,6 +134,7 @@ export class BulkDocumentActionHandler implements ICommandHandler<BulkDocumentAc
 			}
 			case DocumentBulkActionEnum.REMOVE_TAGS: {
 				const document = await this.documentService.findOneScoped(id, ['tags']);
+				await this.documentService.assertCanWrite(document);
 				const removals = new Set(tagIds ?? []);
 				document.tags = (document.tags ?? []).filter((tag: ITag) => !removals.has(tag.id));
 				await this.documentService.save(document);
@@ -121,11 +142,15 @@ export class BulkDocumentActionHandler implements ICommandHandler<BulkDocumentAc
 			}
 			case DocumentBulkActionEnum.MOVE: {
 				const document = await this.documentService.findOneScoped(id);
-				await this.documentTreeService.moveDocument(document, parentId ?? null);
+				await this.documentService.assertCanWrite(document);
+				// `assertActionPayload` already rejected an omitted parentId, so this is an
+				// explicit target (a document id, or `null` meaning "the root").
+				await this.documentTreeService.moveDocument(document, parentId as ID | null);
 				return;
 			}
 			case DocumentBulkActionEnum.DELETE: {
 				const document = await this.documentService.findOneScoped(id);
+				await this.documentService.assertCanWrite(document);
 				const deleted = await this.documentTreeService.deleteDocument(document, 'subtree');
 				this.documentService.emitDocumentEvent(deleted, 'deleted');
 				return;

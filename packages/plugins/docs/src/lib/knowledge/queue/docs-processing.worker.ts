@@ -84,7 +84,7 @@ export class DocsProcessingWorker extends QueueWorkerHost {
 		// `keepExtractedText` runs skip classification entirely (human-correction guard) —
 		// they enter the knowledge chain directly.
 		if (job.data.keepExtractedText) {
-			if (document.knowledgeStatus === DocumentKnowledgeStatusEnum.QUEUED) {
+			if (this.isInKnowledgeSystem(document)) {
 				await this.enqueueChained(DOCS_JOB_CHUNK, this.baseOf(job.data), job);
 			}
 			return;
@@ -107,7 +107,7 @@ export class DocsProcessingWorker extends QueueWorkerHost {
 		const outcome = await this.classifierService.classify(document, job.data);
 		this.logger.log(`docs.classify outcome for document ${document.id}: ${outcome}`);
 
-		if (document.knowledgeStatus === DocumentKnowledgeStatusEnum.QUEUED) {
+		if (this.isInKnowledgeSystem(document)) {
 			await this.enqueueChained(DOCS_JOB_CHUNK, this.baseOf(job.data), job);
 		}
 	}
@@ -204,14 +204,28 @@ export class DocsProcessingWorker extends QueueWorkerHost {
 	}
 
 	/**
+	 * True when the document participates in the AI knowledge system at all — i.e. its
+	 * `knowledgeStatus` is neither `NONE` nor `EXCLUDED`.
+	 *
+	 * This, and not `=== QUEUED`, is the gate that opens the knowledge chain after extract
+	 * and classify: a reprocess/re-import of an already-`INDEXED` (or `INDEXING`/`FAILED`)
+	 * document re-extracts its text, and gating on `QUEUED` would leave the index holding
+	 * the superseded extraction forever. `docs.chunk` still short-circuits on an unchanged
+	 * `contentHash`, so a no-op reprocess costs nothing.
+	 */
+	private isInKnowledgeSystem(document: Document): boolean {
+		return (
+			document.knowledgeStatus !== DocumentKnowledgeStatusEnum.NONE &&
+			document.knowledgeStatus !== DocumentKnowledgeStatusEnum.EXCLUDED
+		);
+	}
+
+	/**
 	 * A document excluded/reset while its knowledge chain was in flight aborts the chain
 	 * silently (skipping is not an error).
 	 */
 	private knowledgeChainAborted(document: Document, jobName: string): boolean {
-		if (
-			document.knowledgeStatus === DocumentKnowledgeStatusEnum.NONE ||
-			document.knowledgeStatus === DocumentKnowledgeStatusEnum.EXCLUDED
-		) {
+		if (!this.isInKnowledgeSystem(document)) {
 			this.logger.log(
 				`${jobName} skipped for document ${document.id} — knowledgeStatus is ${document.knowledgeStatus}`
 			);

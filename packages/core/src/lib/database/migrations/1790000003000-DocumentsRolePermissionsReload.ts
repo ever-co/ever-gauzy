@@ -17,6 +17,13 @@ export class DocumentsRolePermissionsReload1790000003000 implements MigrationInt
 	 * the current defaults) — it never disables or removes an existing grant — so it is
 	 * safe to re-run. New tenants get the rows through the normal seeded path.
 	 *
+	 * MySQL is handled by the very same helper: every statement it issues goes through
+	 * `prepareSQLQuery` (double quotes → backticks) and `replacePlaceholders` ($n → ?),
+	 * and both `getInsertPayload` and `insertRolePermissions` carry an explicit MySQL
+	 * branch (the row id is generated in JS because MySQL has no UUID column default).
+	 * Skipping MySQL here would leave every role without the `DOCS_*` permissions, which
+	 * makes the whole feature inaccessible on a MySQL deployment.
+	 *
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<void> {
@@ -26,14 +33,12 @@ export class DocumentsRolePermissionsReload1790000003000 implements MigrationInt
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 			case DatabaseTypeEnum.postgres:
+			case DatabaseTypeEnum.mysql:
 				try {
 					await RolePermissionUtils.migrateRolePermissions(queryRunner);
 				} catch (error) {
 					console.log(chalk.red(`Error while migrating missing role permissions: ${error}`));
 				}
-				break;
-			case DatabaseTypeEnum.mysql:
-				console.log('role permission migration is not supported for mysql yet');
 				break;
 			default:
 				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);

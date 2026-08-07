@@ -1,4 +1,11 @@
-import { BadRequestException, Injectable, Logger, PayloadTooLargeException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ConflictException,
+	Injectable,
+	Logger,
+	NotFoundException,
+	PayloadTooLargeException
+} from '@nestjs/common';
 import { createHash } from 'crypto';
 import {
 	DocumentKindEnum,
@@ -15,6 +22,7 @@ import { getDocsConfig } from '../docs.config';
 import {
 	DOCS_FILE_TOO_LARGE,
 	DOCS_FILE_TYPE_REJECTED,
+	DOCS_NOT_A_FILE,
 	DOCS_PARENT_NOT_CONTAINER,
 	DOCS_QUOTA_EXCEEDED,
 	DOCS_SOURCE_RESERVED
@@ -41,6 +49,51 @@ const UPLOAD_SOURCE_ALLOWLIST = [DocumentSourceEnum.UPLOAD, DocumentSourceEnum.C
  * automated intake never silently drops a business record (08 §5.7).
  */
 const QUOTA_WARN_ONLY_SOURCES = [DocumentSourceEnum.CHAT, DocumentSourceEnum.EMAIL];
+
+/**
+ * The ONLY stored types a byte response may render in the browser tab (`08 §5.5`). Everything
+ * else — Office formats, csv/txt/md, and above all `text/html` — is served as an attachment
+ * with a neutral content type, so the API origin can never execute stored markup.
+ */
+const INLINE_SAFE_MIME_TYPES = new Set([
+	'application/pdf',
+	'image/png',
+	'image/jpeg',
+	'image/webp',
+	'image/gif'
+]);
+
+/**
+ * Key-shape guard (`08 §5.3`) — runs before every provider `getFile`/`url` call.
+ *
+ * The prefix itself is deliberately NOT pinned: keys are provider- and ingress-dependent
+ * (the LOCAL provider emits Windows separators, the capture and legacy-import paths use their
+ * own prefixes). What is pinned is the part that can actually escape the bucket: a traversal
+ * segment, an absolute path, a drive letter, or a NUL byte.
+ *
+ * @param storageKey The persisted storage key.
+ * @returns True when the key is safe to hand to a storage provider.
+ */
+const isSafeStorageKey = (storageKey: string): boolean => {
+	const normalized = storageKey.replace(/\\/g, '/');
+	if (!normalized || /[\u0000-\u001F\u007F]/.test(normalized)) {
+		return false;
+	}
+	if (normalized.startsWith('/') || /^[A-Za-z]:/.test(normalized)) {
+		return false;
+	}
+	return !normalized.split('/').includes('..');
+};
+
+/** The byte payload of `GET /documents/:id/raw`, already hardened for the wire. */
+export interface IDocumentRawFile {
+	buffer: Buffer;
+	/** Never the stored `text/html`; see `INLINE_SAFE_MIME_TYPES`. */
+	contentType: string;
+	disposition: 'inline' | 'attachment';
+	/** Sanitized, RFC 5987-encodable download name. */
+	fileName: string;
+}
 
 /**
  * The upload gauntlet of the Documents plugin: per-file magic-byte sniffing against the
@@ -248,6 +301,92 @@ export class DocumentUploadService {
 		}
 
 		return { results, rejected };
+	}
+
+	/**
+	 * `GET /documents/:id/download` — resolves a provider URL for the stored blob and returns
+	 * `{ url }`; the client navigates/streams from there. S3-compatible providers sign the URL
+	 * (`expiresIn: 3600`, existing provider behavior), so it is minted per request and never
+	 * persisted or cached.
+	 *
+	 * @param id The FILE document id.
+	 * @returns The resolved provider URL.
+	 */
+	async getDownloadUrl(id: ID): Promise<{ url: string }> {
+		const document = await this.requireFileDocument(id);
+		const provider = new FileStorage().setProvider(document.storageProvider).getProviderInstance();
+
+		const url = await provider.url(document.storageKey);
+		if (!url) {
+			throw new NotFoundException(`Document ${id} has no retrievable file`);
+		}
+		return { url };
+	}
+
+	/**
+	 * `GET /documents/:id/raw` — the authenticated byte path used by previews and by every
+	 * image embedded in a wiki page. Returns the blob together with the response hardening the
+	 * caller must apply (`08 §5.5`): a safe content type, and `inline` only for the small
+	 * render-safe allowlist.
+	 *
+	 * Stored `text/html` is deliberately never returned as `text/html` — serving it inline from
+	 * the API origin would turn an upload into same-origin stored XSS. HTML previews render the
+	 * sanitized copy instead.
+	 *
+	 * @param id The FILE document id.
+	 * @returns The blob plus its hardened response metadata.
+	 */
+	async getRawFile(id: ID): Promise<IDocumentRawFile> {
+		const document = await this.requireFileDocument(id);
+		const provider = new FileStorage().setProvider(document.storageProvider).getProviderInstance();
+
+		const buffer = (await provider.getFile(document.storageKey)) as Buffer;
+		if (!buffer) {
+			throw new NotFoundException(`Document ${id} has no retrievable file`);
+		}
+
+		const storedMimeType = document.mimeType ?? '';
+		const inlineSafe = INLINE_SAFE_MIME_TYPES.has(storedMimeType);
+		return {
+			buffer,
+			contentType: inlineSafe ? storedMimeType : 'application/octet-stream',
+			disposition: inlineSafe ? 'inline' : 'attachment',
+			fileName: this.safeFileName(document.originalFilename ?? document.name ?? 'document')
+		};
+	}
+
+	/**
+	 * Resolves a FILE document through the read scope (404 on a cross-org / invisible id) and
+	 * validates its storage key shape before any provider call.
+	 */
+	private async requireFileDocument(id: ID): Promise<Document> {
+		const document = await this.documentService.findOneScoped(id);
+
+		if (document.kind !== DocumentKindEnum.FILE) {
+			throw new ConflictException({
+				message: 'Only FILE documents carry stored bytes',
+				code: DOCS_NOT_A_FILE
+			});
+		}
+		if (!document.storageKey || !document.storageProvider) {
+			throw new NotFoundException(`Document ${id} has no retrievable file`);
+		}
+		if (!isSafeStorageKey(document.storageKey)) {
+			// Never hand a traversal / absolute-path key to a provider (08 §5.3).
+			this.logger.error(`Refusing provider access for document ${id}: unexpected storage key shape`);
+			throw new NotFoundException(`Document ${id} has no retrievable file`);
+		}
+		return document;
+	}
+
+	/**
+	 * Strips CR/LF, quotes, semicolons and non-printable characters out of a name before it can
+	 * reach a `Content-Disposition` header (08 §5.3).
+	 */
+	private safeFileName(name: string): string {
+		// eslint-disable-next-line no-control-regex
+		const stripped = name.replace(/[\r\n"'\\;\u0000-\u001F\u007F]/g, '').trim();
+		return stripped.slice(0, 255) || 'document';
 	}
 
 	/**

@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Inject, Injectable, Logger, NotFoundException, Optional, PayloadTooLargeException } from '@nestjs/common';
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { Like } from 'typeorm';
 import {
 	DocumentKindEnum,
@@ -211,7 +211,10 @@ export class InboundEmailService {
 
 		try {
 			const provider = new FileStorage().getProvider();
-			const stored = await provider.putFile(attachment.content, `documents/inbound/${fileName}`);
+			const stored = await provider.putFile(
+				attachment.content,
+				this.buildStorageKey(scope, sniff.type.mimeType)
+			);
 			const sha256 = createHash('sha256').update(attachment.content).digest('hex');
 
 			const document = await this.typeOrmDocumentRepository.save(
@@ -255,6 +258,31 @@ export class InboundEmailService {
 			this.logger.error(`Inbound-email attachment import failed: ${(error as Error).message}`);
 			return { fileName, accepted: false, code: DOCS_INBOUND_NO_ATTACHMENTS };
 		}
+	}
+
+	/**
+	 * Builds the storage key of an inbound attachment — **exactly** the shape the upload
+	 * endpoint uses (`DocumentUploadController.documentsStorage`):
+	 * `documents/<tenantId>/<organizationId>/<uuid>.<canonicalExtension>`.
+	 *
+	 * The client-supplied attachment name NEVER enters the key. It is attacker-controlled
+	 * on the least trusted input surface this plugin has, and putting it in the key was
+	 * three bugs in one: objects of different tenants sharing one flat `documents/inbound/`
+	 * prefix collided and overwrote each other, the name carried whatever extension the
+	 * sender chose rather than the sniffed one, and a storage adapter that does not
+	 * normalize its keys could be walked out of the prefix with `../`. The original name
+	 * survives on `name` / `originalFilename`, which are data, not paths.
+	 *
+	 * @param scope The resolved tenant/organization.
+	 * @param mimeType The SNIFFED canonical MIME (never the declared one).
+	 * @returns The server-generated storage key.
+	 */
+	private buildStorageKey(scope: { tenantId: ID; organizationId: ID }, mimeType: string): string {
+		// The ids are UUID columns, but a key segment is never built from an unvalidated value.
+		// (`randomUUID` rather than the `uuid` package: same v4 shape, no ESM-only dependency.)
+		const segment = (value: ID): string => String(value ?? '').replace(/[^a-zA-Z0-9-]/g, '') || randomUUID();
+		const extension = canonicalExtension(mimeType);
+		return `documents/${segment(scope.tenantId)}/${segment(scope.organizationId)}/${randomUUID()}.${extension}`;
 	}
 
 	/**

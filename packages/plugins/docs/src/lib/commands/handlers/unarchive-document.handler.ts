@@ -20,6 +20,7 @@ export class UnarchiveDocumentHandler implements ICommandHandler<UnarchiveDocume
 	 */
 	public async execute(command: UnarchiveDocumentCommand): Promise<IDocument> {
 		const document = await this.documentService.findOneScoped(command.id);
+		await this.documentService.assertCanWrite(document);
 		await this.documentTreeService.unarchiveSubtree(document);
 		const unarchived = await this.documentService.findOneScoped(command.id);
 		this.documentService.emitDocumentEvent(unarchived, 'updated');

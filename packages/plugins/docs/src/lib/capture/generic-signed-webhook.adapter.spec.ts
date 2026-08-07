@@ -135,6 +135,57 @@ describe('GenericSignedWebhookAdapter (spec 07 §17.2)', () => {
 			expect(adapter.verifySignature(undefined as any)).toBe(false);
 		});
 
+		it('rejects a REPLAY of a valid, still-fresh delivery', () => {
+			// The freshness window is not replay protection: without a seen-signature set a
+			// captured delivery could be resubmitted at will inside the tolerance, and each
+			// replay creates another copy of the same attachments as new documents.
+			const request = signedRequest({ recipient: 'docs-abc@example.com' });
+
+			expect(adapter.verifySignature(request)).toBe(true);
+			expect(adapter.verifySignature(request)).toBe(false);
+			expect(adapter.verifySignature({ ...request })).toBe(false);
+		});
+
+		it('still accepts a DIFFERENT delivery signed in the same window', () => {
+			expect(adapter.verifySignature(signedRequest({ recipient: 'docs-abc@example.com' }))).toBe(true);
+			expect(adapter.verifySignature(signedRequest({ recipient: 'docs-def@example.com' }))).toBe(true);
+		});
+
+		it('does not record UNVERIFIED signatures (a bad secret cannot poison the replay set)', () => {
+			const body = { recipient: 'docs-abc@example.com' };
+			const timestamp = Date.now();
+			const rawBody = JSON.stringify(body);
+			const forged: IInboundWebhookRequest = {
+				headers: {
+					[DOCS_INBOUND_SIGNATURE_HEADER]: sign(timestamp, rawBody, 'wrong-key'),
+					[DOCS_INBOUND_TIMESTAMP_HEADER]: String(timestamp)
+				},
+				body,
+				rawBody
+			};
+
+			expect(adapter.verifySignature(forged)).toBe(false);
+			// The genuine delivery of the same message must still get through.
+			expect(adapter.verifySignature(signedRequest(body, { timestamp }))).toBe(true);
+		});
+
+		it('bounds the replay set by the freshness window (stale entries are pruned)', () => {
+			const request = signedRequest({ recipient: 'docs-abc@example.com' });
+			expect(adapter.verifySignature(request)).toBe(true);
+			expect((adapter as any).seenSignatures.size).toBe(1);
+
+			// Past the tolerance the old entry buys nothing — `isFresh` already rejects that
+			// request — so the next verified delivery prunes it instead of accumulating.
+			jest.useFakeTimers().setSystemTime(Date.now() + DOCS_INBOUND_SIGNATURE_TOLERANCE_MS + 60_000);
+			try {
+				expect(adapter.verifySignature(request)).toBe(false); // stale — replay window closed
+				expect(adapter.verifySignature(signedRequest({ recipient: 'docs-ghi@example.com' }))).toBe(true);
+				expect((adapter as any).seenSignatures.size).toBe(1);
+			} finally {
+				jest.useRealTimers();
+			}
+		});
+
 		it('verifies against the canonical JSON fallback when rawBody is absent', () => {
 			const body = { recipient: 'docs-abc@example.com' };
 			const timestamp = Date.now();

@@ -1,7 +1,18 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsInt, IsOptional, Min } from 'class-validator';
 import { DocumentVisibilityEnum } from '@gauzy/contracts';
+import { TenantOrganizationBaseDTO } from '@gauzy/core';
 import { IDocumentQuotaState } from '../services/quota.calculator';
+
+/**
+ * Query params of `GET`/`PUT /api/plugins/docs/settings`.
+ *
+ * `organizationId` used to be a raw `@Query()` string, which let any `DOCS_READ` holder name an
+ * organization they do not belong to and read its settings. Extending a partial
+ * `TenantOrganizationBaseDTO` reuses the platform's `@IsOrganizationBelongsToUser()` ownership
+ * check; when omitted, the controller falls back to the requester's current organization.
+ */
+export class DocumentSettingsQueryDTO extends PartialType(TenantOrganizationBaseDTO) {}
 
 /**
  * Org-defaults block accepted by `PUT /api/plugins/docs/settings` (partial update).

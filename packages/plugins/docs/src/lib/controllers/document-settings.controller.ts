@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpStatus, Put, Query, UseGuards } from '@nestj
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FeatureFlag } from '@gauzy/common';
-import { FeatureEnum, ID, PermissionsEnum } from '@gauzy/contracts';
+import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
 import {
 	FeatureFlagGuard,
 	PermissionGuard,
@@ -12,7 +12,7 @@ import {
 	UseValidationPipe
 } from '@gauzy/core';
 import { UpdateDocumentSettingsCommand } from '../commands/update-document-settings.command';
-import { DocumentSettingsDTO, IDocumentSettings } from '../dto/document-settings.dto';
+import { DocumentSettingsDTO, DocumentSettingsQueryDTO, IDocumentSettings } from '../dto/document-settings.dto';
 import { GetDocumentSettingsQuery } from '../queries/get-document-settings.query';
 
 @ApiTags('Documents Plugin')
@@ -28,10 +28,11 @@ export class DocumentSettingsController {
 	@ApiOperation({ summary: 'Get the Documents org defaults and deployment capabilities.' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Settings retrieved successfully.' })
 	@Permissions(PermissionsEnum.DOCS_READ)
+	@UseValidationPipe({ whitelist: true, transform: true })
 	@Get('/')
-	public async getSettings(@Query('organizationId') organizationId?: ID): Promise<IDocumentSettings> {
+	public async getSettings(@Query() query: DocumentSettingsQueryDTO): Promise<IDocumentSettings> {
 		return this.queryBus.execute(
-			new GetDocumentSettingsQuery(organizationId ?? RequestContext.currentOrganizationId())
+			new GetDocumentSettingsQuery(query?.organizationId ?? RequestContext.currentOrganizationId())
 		);
 	}
 
@@ -45,10 +46,10 @@ export class DocumentSettingsController {
 	@Put('/')
 	public async updateSettings(
 		@Body() input: DocumentSettingsDTO,
-		@Query('organizationId') organizationId?: ID
+		@Query() query?: DocumentSettingsQueryDTO
 	): Promise<IDocumentSettings> {
 		return this.commandBus.execute(
-			new UpdateDocumentSettingsCommand(organizationId ?? RequestContext.currentOrganizationId(), input)
+			new UpdateDocumentSettingsCommand(query?.organizationId ?? RequestContext.currentOrganizationId(), input)
 		);
 	}
 }

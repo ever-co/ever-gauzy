@@ -20,6 +20,7 @@ export class MoveDocumentHandler implements ICommandHandler<MoveDocumentCommand>
 	 */
 	public async execute(command: MoveDocumentCommand): Promise<IDocument> {
 		const document = await this.documentService.findOneScoped(command.id);
+		await this.documentService.assertCanWrite(document);
 		const moved = await this.documentTreeService.moveDocument(document, command.input.parentId, command.input.index);
 		this.documentService.emitDocumentEvent(moved, 'updated');
 		return moved;

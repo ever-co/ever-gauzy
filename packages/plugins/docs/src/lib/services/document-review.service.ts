@@ -39,6 +39,8 @@ export class DocumentReviewService {
 	 */
 	public async requestReview(id: ID, input: RequestReviewDTO = {}): Promise<IDocument> {
 		const document = await this.documentService.findOneScoped(id);
+		// A review request mutates the document's review state — read access is not enough.
+		await this.documentService.assertCanWrite(document);
 		if (document.reviewStatus === DocumentReviewStatusEnum.PENDING) {
 			return document;
 		}

@@ -2,7 +2,13 @@ import { BadRequestException, ConflictException, Injectable, Logger, NotFoundExc
 import { In, IsNull } from 'typeorm';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { DocumentKindEnum, DocumentKnowledgeStatusEnum, DocumentReviewStatusEnum, ID } from '@gauzy/contracts';
-import { DOCS_DELETE_REQUIRES_ARCHIVE, DOCS_PARENT_NOT_CONTAINER, DOCS_REORDER_MIXED_PARENTS, DOCS_TREE_CYCLE } from '../docs.constants';
+import {
+	DOCS_DELETE_REQUIRES_ARCHIVE,
+	DOCS_PARENT_NOT_CONTAINER,
+	DOCS_REORDER_MIXED_PARENTS,
+	DOCS_SUBTREE_NOT_ARCHIVED,
+	DOCS_TREE_CYCLE
+} from '../docs.constants';
 import { Document } from '../entities/document.entity';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
 
@@ -58,7 +64,10 @@ export class DocumentTreeService {
 			throw new ConflictException({ message: 'A document cannot be its own parent', code: DOCS_TREE_CYCLE });
 		}
 
-		// Walk the new ancestor chain up to the root
+		// Walk the new ancestor chain up to the root. `visited` is the defensive stop: a cycle
+		// already present in the data (written by any path that re-parents without this guard)
+		// would otherwise spin this loop forever instead of failing the request.
+		const visited = new Set<ID>();
 		let cursorId: ID | null = newParentId;
 		while (cursorId) {
 			if (cursorId === document.id) {
@@ -67,6 +76,13 @@ export class DocumentTreeService {
 					code: DOCS_TREE_CYCLE
 				});
 			}
+			if (visited.has(cursorId)) {
+				throw new ConflictException({
+					message: 'The document tree already contains a cycle above the target parent',
+					code: DOCS_TREE_CYCLE
+				});
+			}
+			visited.add(cursorId);
 			const cursor = await this.typeOrmDocumentRepository.findOne({
 				select: { id: true, parentId: true },
 				where: { id: cursorId, tenantId: document.tenantId, organizationId: document.organizationId }
@@ -101,29 +117,54 @@ export class DocumentTreeService {
 			await this.assertNoCycle(document, parentId);
 		}
 
+		const sourceParentId = document.parentId ?? null;
+		const targetParentId = parentId ?? null;
+
 		// Load the target sibling list (without the moved node), splice, and rewrite indexes
-		const siblings = await this.typeOrmDocumentRepository.find({
-			select: { id: true, index: true },
-			where: {
-				parentId: parentId ?? IsNull(),
-				tenantId: document.tenantId,
-				organizationId: document.organizationId
-			},
-			order: { index: 'ASC' }
-		});
-		const orderedIds = siblings.map((sibling: Document) => sibling.id).filter((id: ID) => id !== document.id);
+		const orderedIds = (await this.loadSiblingIds(targetParentId, document)).filter((id: ID) => id !== document.id);
 		const insertAt = index === undefined || index > orderedIds.length ? orderedIds.length : Math.max(0, index);
 		orderedIds.splice(insertAt, 0, document.id);
 
 		await this.typeOrmDocumentRepository.update(
 			{ id: document.id, tenantId: document.tenantId },
-			{ parentId: parentId ?? null }
+			{ parentId: targetParentId }
 		);
 		await this.rewriteSiblingIndexes(orderedIds, document.tenantId);
+
+		// The node left a hole in its previous sibling list — compact that list too, otherwise
+		// the source parent keeps a gap and later inserts (which append at `length`) collide
+		// with an index that is still in use.
+		if (sourceParentId !== targetParentId) {
+			const sourceIds = (await this.loadSiblingIds(sourceParentId, document)).filter(
+				(id: ID) => id !== document.id
+			);
+			await this.rewriteSiblingIndexes(sourceIds, document.tenantId);
+		}
 
 		return this.typeOrmDocumentRepository.findOne({
 			where: { id: document.id, tenantId: document.tenantId }
 		});
+	}
+
+	/**
+	 * Loads the ids of one parent's children (`null` = root siblings) in `index` order, scoped
+	 * to the reference document's tenant + organization.
+	 *
+	 * @param parentId The parent whose children to load, or null for the root list.
+	 * @param scope A document carrying the tenant/organization scope.
+	 * @returns The sibling ids in `index` order.
+	 */
+	private async loadSiblingIds(parentId: ID | null, scope: Document): Promise<ID[]> {
+		const siblings = await this.typeOrmDocumentRepository.find({
+			select: { id: true, index: true },
+			where: {
+				parentId: parentId ?? IsNull(),
+				tenantId: scope.tenantId,
+				organizationId: scope.organizationId
+			},
+			order: { index: 'ASC' }
+		});
+		return siblings.map((sibling: Document) => sibling.id);
 	}
 
 	/**
@@ -199,9 +240,12 @@ export class DocumentTreeService {
 	async unarchiveSubtree(document: Document): Promise<number> {
 		const ids = await this.collectSubtreeIds(document);
 
-		// Ancestors needed for reachability
+		// Ancestors needed for reachability. `visited` is the defensive stop — a pre-existing
+		// cycle in the ancestor chain must abort the walk, not hang the request forever.
+		const visited = new Set<ID>(ids);
 		let cursorId: ID | null = document.parentId ?? null;
-		while (cursorId) {
+		while (cursorId && !visited.has(cursorId)) {
+			visited.add(cursorId);
 			ids.push(cursorId);
 			const cursor = await this.typeOrmDocumentRepository.findOne({
 				select: { id: true, parentId: true },
@@ -237,20 +281,29 @@ export class DocumentTreeService {
 
 		if (strategy === 'promote-children') {
 			// Re-parent children to the deleted node's parent, preserving relative order
-			const children = await this.typeOrmDocumentRepository.find({
-				select: { id: true },
-				where: { parentId: document.id, tenantId: document.tenantId, organizationId: document.organizationId },
-				order: { index: 'ASC' }
-			});
-			for (const child of children) {
+			const promotedIds = await this.loadSiblingIds(document.id, document);
+			for (const childId of promotedIds) {
 				await this.typeOrmDocumentRepository.update(
-					{ id: child.id, tenantId: document.tenantId },
+					{ id: childId, tenantId: document.tenantId },
 					{ parentId: document.parentId ?? null }
 				);
 			}
 			await this.typeOrmDocumentRepository.softDelete({ id: document.id, tenantId: document.tenantId });
+
+			// The promoted children join their grandparent's sibling list, and the deleted node
+			// vacates its own slot — renumber the destination list so the merged order is a
+			// dense 0..n-1 sequence instead of two interleaved index ranges.
+			const destinationIds = (await this.loadSiblingIds(document.parentId ?? null, document)).filter(
+				(id: ID) => id !== document.id
+			);
+			await this.rewriteSiblingIndexes(destinationIds, document.tenantId);
 		} else {
-			// Subtree delete: stamp the batch id, then soft-delete every row
+			// Subtree delete: the archive-first workflow applies to the WHOLE subtree, not just
+			// its root — otherwise deleting an archived folder silently trashes live children
+			// that were never archived (and never appeared in the archive view).
+			await this.assertSubtreeArchived(document);
+
+			// Stamp the batch id, then soft-delete every row
 			const ids = await this.collectSubtreeIds(document);
 			const batchId = `${document.id}:${Date.now()}`;
 			const rows = await this.typeOrmDocumentRepository.find({
@@ -271,23 +324,46 @@ export class DocumentTreeService {
 	}
 
 	/**
+	 * Asserts that every node of a subtree is archived before a `subtree` delete.
+	 *
+	 * @param document The subtree root (already known to be archived).
+	 */
+	private async assertSubtreeArchived(document: Document): Promise<void> {
+		const ids = await this.collectSubtreeIds(document);
+		const live = await this.typeOrmDocumentRepository.find({
+			select: { id: true, name: true },
+			where: { id: In(ids), tenantId: document.tenantId, isArchived: false }
+		});
+		if (live.length > 0) {
+			const names = live.slice(0, 5).map((row: Document) => row.name ?? row.id);
+			throw new ConflictException({
+				message:
+					`This document has ${live.length} descendant(s) that are not archived and would be ` +
+					`deleted silently: ${names.join(', ')}${live.length > names.length ? ', …' : ''}. ` +
+					`Archive the whole subtree first, or delete with strategy=promote-children.`,
+				code: DOCS_SUBTREE_NOT_ARCHIVED,
+				documentIds: live.map((row: Document) => row.id)
+			});
+		}
+	}
+
+	/**
 	 * Restores a soft-deleted document (and the rows deleted in the same batch, when it was a
 	 * subtree delete). Re-parents to root if the original parent is still deleted; the document
 	 * returns in archived state.
 	 *
-	 * @param id The document id.
-	 * @param tenantId Tenant scope.
+	 * The caller **must** hand in a row it already resolved through the read scope
+	 * (`DocumentService.findOneDeletedScoped`) — this method takes the entity, not an id, so a
+	 * tenant-only lookup can never be the thing that authorizes an un-delete.
+	 *
+	 * @param document The soft-deleted document, already resolved within the caller's scope.
 	 * @returns The recovered document.
 	 */
-	async recoverDocument(id: ID, tenantId: ID): Promise<Document> {
-		const document = await this.typeOrmDocumentRepository.findOne({
-			where: { id, tenantId },
-			withDeleted: true
-		});
-		if (!document || !document.deletedAt) {
-			throw new NotFoundException(`Deleted document ${id} was not found`);
+	async recoverDocument(document: Document): Promise<Document> {
+		if (!document.deletedAt) {
+			throw new NotFoundException(`Deleted document ${document.id} was not found`);
 		}
-		const { organizationId } = document;
+		const { id, tenantId, organizationId } = document;
 
 		// Restore the whole deletion batch when present, else just the node
 		const metadata = this.parseMetadata(document.metadata);

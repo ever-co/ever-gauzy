@@ -31,6 +31,14 @@ export const DOCS_NOT_INDEXABLE = 'DOCS_NOT_INDEXABLE';
 export const DOCS_SHARE_EXISTS = 'DOCS_SHARE_EXISTS';
 /** The caller is neither the document's creator nor a `DOCS_MANAGE` holder. */
 export const DOCS_SHARE_FORBIDDEN = 'DOCS_SHARE_FORBIDDEN';
+/** The caller may read the document but holds no write right on it (§3.4 ownership / `EDIT` share). */
+export const DOCS_WRITE_FORBIDDEN = 'DOCS_WRITE_FORBIDDEN';
+/** No organization scope could be resolved for the request (neither payload nor request context). */
+export const DOCS_ORGANIZATION_REQUIRED = 'DOCS_ORGANIZATION_REQUIRED';
+/** A `subtree` delete was requested while some descendants are still live (not archived). */
+export const DOCS_SUBTREE_NOT_ARCHIVED = 'DOCS_SUBTREE_NOT_ARCHIVED';
+/** A bulk `MOVE` was requested without an explicit `parentId` (`null` = root is an opt-in). */
+export const DOCS_BULK_MOVE_PARENT_REQUIRED = 'DOCS_BULK_MOVE_PARENT_REQUIRED';
 /** The organization storage quota would be exceeded by this upload. */
 export const DOCS_QUOTA_EXCEEDED = 'DOCS_QUOTA_EXCEEDED';
 /** The inbound-email webhook is not enabled in this deployment. */

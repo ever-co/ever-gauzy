@@ -20,6 +20,7 @@ export class ArchiveDocumentHandler implements ICommandHandler<ArchiveDocumentCo
 	 */
 	public async execute(command: ArchiveDocumentCommand): Promise<IDocument> {
 		const document = await this.documentService.findOneScoped(command.id);
+		await this.documentService.assertCanWrite(document);
 		await this.documentTreeService.archiveSubtree(document);
 		const archived = await this.documentService.findOneScoped(command.id);
 		this.documentService.emitDocumentEvent(archived, 'updated');

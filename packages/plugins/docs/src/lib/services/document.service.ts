@@ -1,13 +1,14 @@
 import {
 	BadRequestException,
 	ConflictException,
+	ForbiddenException,
 	HttpException,
 	HttpStatus,
 	Injectable,
 	Logger,
 	NotFoundException
 } from '@nestjs/common';
-import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindOneOptions, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import {
 	BaseEntityEnum,
 	DocumentKindEnum,
@@ -25,16 +26,19 @@ import {
 	FavoriteService,
 	RequestContext,
 	TenantAwareCrudService,
-	prepareSQLQuery as p
+	prepareSQLQuery as p,
+	sanitizeRichHtml
 } from '@gauzy/core';
 import {
 	DOCS_CONTENT_CONFLICT,
 	DOCS_FILE_VIA_UPLOAD,
 	DOCS_LOCKED,
 	DOCS_NOT_A_PAGE,
+	DOCS_ORGANIZATION_REQUIRED,
 	DOCS_PARENT_NOT_CONTAINER,
 	DOCS_QUERY_TOO_SHORT,
-	DOCS_SOURCE_RESERVED
+	DOCS_SOURCE_RESERVED,
+	DOCS_WRITE_FORBIDDEN
 } from '../docs.constants';
 import { CreateDocumentDTO, GetDocumentsQueryDTO, UpdateDocumentContentDTO, UpdateDocumentDTO } from '../dto';
 import { Document } from '../entities/document.entity';
@@ -48,7 +52,7 @@ import { DocumentVersionService } from './document-version.service';
  * Columns safe for list projections — the content columns (`contentJson`, `contentHtml`,
  * `contentBinary`, `extractedText`) are never selected by list/facet queries.
  */
-const DOCUMENT_LIST_COLUMNS = [
+export const DOCUMENT_LIST_COLUMNS = [
 	'id',
 	'createdAt',
 	'updatedAt',
@@ -136,19 +140,99 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	}
 
 	/**
+	 * Resolves the organization scope of a request: the explicit payload value first, then the
+	 * `where` envelope of the query DTOs, then the requester's current organization.
+	 *
+	 * `whitelist: true` strips any property the DTO does not declare, so a filter set can reach
+	 * the service with no `organizationId` at all — falling back to "no organization filter"
+	 * would list the whole tenant, so an unresolvable scope is a hard 400 instead.
+	 *
+	 * @param params An optional payload carrying an organization scope.
+	 * @returns The resolved organization id.
+	 */
+	public resolveOrganizationId(params?: { organizationId?: ID; where?: { organizationId?: ID } }): ID {
+		const organizationId =
+			(params as any)?.organizationId ??
+			(params?.where as any)?.organizationId ??
+			RequestContext.currentOrganizationId();
+		if (!organizationId) {
+			throw new BadRequestException({
+				message: 'An organization scope is required for this request',
+				code: DOCS_ORGANIZATION_REQUIRED
+			});
+		}
+		return organizationId;
+	}
+
+	/**
 	 * Loads a document by id within the caller's tenant/organization + visibility scope
 	 * (visibility OR ownership OR `DOCS_MANAGE` OR a share grant, per §3.4).
 	 * A cross-tenant, cross-org, or invisible id resolves to 404, never 403 (no existence oracle).
+	 *
+	 * The tenant + organization pair is applied explicitly here: the inherited
+	 * `findOneByIdString` merges the **tenant only**, which would otherwise resolve any
+	 * organization's document inside the tenant.
 	 *
 	 * @param id The document id.
 	 * @param relations Optional relations to join.
 	 * @returns The scoped document entity.
 	 */
 	async findOneScoped(id: ID, relations: string[] = []): Promise<Document> {
-		let document: Document;
-		try {
-			document = await this.findOneByIdString(id, { relations });
-		} catch (error) {
+		return this.findOneWithinScope(id, { relations });
+	}
+
+	/**
+	 * Same scope as `findOneScoped`, but soft-deleted rows are visible — the recovery path
+	 * needs the trashed row and must not be able to reach another organization's trash.
+	 *
+	 * @param id The document id.
+	 * @returns The scoped (possibly soft-deleted) document entity.
+	 */
+	async findOneDeletedScoped(id: ID): Promise<Document> {
+		return this.findOneWithinScope(id, { withDeleted: true });
+	}
+
+	/**
+	 * Asserts that the requester may MUTATE the given row (§1.6 ownership + the `EDIT` share
+	 * level). The route guard only proves the verb permission — this adds the row-level half,
+	 * so a `VIEW`/`COMMENT` grantee can read a shared document but never write it.
+	 *
+	 * @param document The document about to be mutated.
+	 */
+	public async assertCanWrite(document: Document): Promise<void> {
+		const permitted = await this.documentAccessService.canWrite(
+			{
+				createdByUserId: document.createdByUserId,
+				visibility: document.visibility,
+				isLocked: document.isLocked
+			},
+			document.id
+		);
+		if (!permitted) {
+			throw new ForbiddenException({
+				message: 'You do not have write access to this document',
+				code: DOCS_WRITE_FORBIDDEN
+			});
+		}
+	}
+
+	/**
+	 * The shared tenant + organization + visibility resolution behind `findOneScoped` and
+	 * `findOneDeletedScoped`.
+	 */
+	private async findOneWithinScope(
+		id: ID,
+		options: { relations?: string[]; withDeleted?: boolean } = {}
+	): Promise<Document> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = this.resolveOrganizationId();
+
+		const document = await this.typeOrmRepository.findOne({
+			where: { id, tenantId, organizationId },
+			...(options.relations?.length ? { relations: options.relations } : {}),
+			...(options.withDeleted ? { withDeleted: true } : {})
+		} as FindOneOptions<Document>);
+		if (!document) {
 			throw new NotFoundException(`Document ${id} was not found`);
 		}
 
@@ -231,6 +315,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 */
 	async updateDocument(id: ID, input: UpdateDocumentDTO): Promise<Document> {
 		const document = await this.findOneScoped(id);
+		await this.assertCanWrite(document);
 
 		const updated = await this.save({
 			...document,
@@ -252,6 +337,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 */
 	async updateContent(id: ID, input: UpdateDocumentContentDTO): Promise<Document> {
 		const document = await this.findOneScoped(id);
+		await this.assertCanWrite(document);
 
 		if (document.kind !== DocumentKindEnum.PAGE) {
 			throw new ConflictException({ message: 'Content saves apply to PAGE documents only', code: DOCS_NOT_A_PAGE });
@@ -480,13 +566,14 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 */
 	private buildFilteredQuery(params: GetDocumentsQueryDTO): SelectQueryBuilder<Document> {
 		const tenantId = RequestContext.currentTenantId();
-		const organizationId = (params as any).organizationId ?? (params.where as any)?.organizationId;
+		// NEVER optional: `whitelist: true` strips an unexpected `organizationId` off the query
+		// DTO, so a missing scope must fall back to the request context (or 400) — treating it
+		// as "no filter" would list every organization of the tenant.
+		const organizationId = this.resolveOrganizationId(params as any);
 
 		const qb = this.typeOrmRepository.createQueryBuilder('document');
 		qb.where(p(`"document"."tenantId" = :tenantId`), { tenantId });
-		if (organizationId) {
-			qb.andWhere(p(`"document"."organizationId" = :organizationId`), { organizationId });
-		}
+		qb.andWhere(p(`"document"."organizationId" = :organizationId`), { organizationId });
 
 		this.applyVisibilityScope(qb);
 
@@ -663,15 +750,12 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	}
 
 	/**
-	 * Conservative server-side HTML sanitization for the `contentHtml` render cache: strips
-	 * script/style/iframe blocks, `javascript:` URLs, and inline event handlers. `contentJson`
-	 * stays canonical — this cache is regenerated on every save.
+	 * Server-side sanitization of the `contentHtml` render cache. Delegates to the shared
+	 * **allowlist** sanitizer of `@gauzy/core` (`core/html-sanitizer`) — a denylist of regexes
+	 * is bypassable by construction, so the platform keeps exactly one parser-backed
+	 * implementation. `contentJson` stays canonical; this cache is regenerated on every save.
 	 */
 	private sanitizeHtml(html: string): string {
-		return html
-			.replace(/<(script|style|iframe|object|embed)\b[\s\S]*?<\/\1>/gi, '')
-			.replace(/<(script|style|iframe|object|embed)\b[^>]*\/?>/gi, '')
-			.replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-			.replace(/(href|src)\s*=\s*(["']?)\s*javascript:[^"'>\s]*\2/gi, '');
+		return sanitizeRichHtml(html);
 	}
 }

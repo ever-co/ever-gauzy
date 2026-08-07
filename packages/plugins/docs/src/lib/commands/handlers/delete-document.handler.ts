@@ -20,6 +20,7 @@ export class DeleteDocumentHandler implements ICommandHandler<DeleteDocumentComm
 	 */
 	public async execute(command: DeleteDocumentCommand): Promise<IDocument> {
 		const document = await this.documentService.findOneScoped(command.id);
+		await this.documentService.assertCanWrite(document);
 		const deleted = await this.documentTreeService.deleteDocument(document, command.strategy);
 		this.documentService.emitDocumentEvent(deleted, 'deleted');
 		return deleted;

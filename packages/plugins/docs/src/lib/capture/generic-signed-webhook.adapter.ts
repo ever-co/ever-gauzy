@@ -28,15 +28,35 @@ import {
  *
  * Hardening:
  * - **Constant-time** comparison (`timingSafeEqual`) after a length check — no early-exit oracle.
- * - **Replay window** of 5 minutes on the timestamp; a valid HMAC with a stale timestamp fails.
+ * - **Freshness window** of 5 minutes on the timestamp; a valid HMAC with a stale timestamp fails.
+ * - **Single-use signatures**: a freshness window alone is not replay protection — inside the
+ *   tolerance a captured-but-valid delivery could be resubmitted without limit, and every
+ *   replay creates another copy of the same attachments as new documents. Each accepted
+ *   `(timestamp, signature)` pair is therefore remembered until its own freshness window
+ *   expires, and a repeat is rejected. The set is bounded by that window (plus a hard entry
+ *   cap) so it cannot grow without limit, and only VERIFIED signatures are recorded — an
+ *   attacker cannot fill it with garbage.
  * - **Fail closed**: no secret configured ⇒ every request is rejected. Malformed input returns
  *   `false`, never an exception (an adapter must not turn a hostile body into a 500).
+ *
+ * Replay-store caveat: the seen-signature set is **per process**. It stops the practical
+ * attack (a captured delivery resubmitted at any rate) but a deployment running several API
+ * replicas behind a load balancer can still admit one replay per replica. A deployment that
+ * needs cluster-wide exactly-once should bind an adapter backed by a shared cache
+ * (Redis `SET NX EX <tolerance>` on the signature) — the seam is this class.
  *
  * Raw-body caveat: signature schemes are defined over the exact received bytes. When the
  * deployment does not preserve `rawBody`, this adapter falls back to `JSON.stringify(body)`,
  * which only verifies if the sender signed that same canonical form. Preserve the raw body
  * in the HTTP layer for byte-exact verification.
  */
+/**
+ * Hard cap on remembered signatures, so a burst of legitimate traffic cannot grow the set
+ * without bound between prunes. At the 5-minute window this is far above any real inbound
+ * mail rate; when it is hit the oldest entries (insertion order) are dropped first.
+ */
+const REPLAY_CACHE_MAX_ENTRIES = 10_000;
+
 @Injectable()
 export class GenericSignedWebhookAdapter implements IInboundEmailAdapter {
 	public readonly id = 'generic-signed-webhook';
@@ -44,10 +64,20 @@ export class GenericSignedWebhookAdapter implements IInboundEmailAdapter {
 	private readonly logger = new Logger(GenericSignedWebhookAdapter.name);
 
 	/**
-	 * Verifies the HMAC signature and the replay window.
+	 * Signatures already accepted, mapped to the epoch-ms instant at which they may be
+	 * forgotten (the end of their own freshness window). A `Map` keeps insertion order,
+	 * which is what the entry-cap eviction uses.
+	 */
+	private readonly seenSignatures = new Map<string, number>();
+
+	/**
+	 * Verifies the HMAC signature, the freshness window, and single use.
+	 *
+	 * NOTE: a successful call has the side effect of consuming the signature — calling it
+	 * twice for the same delivery returns `false` the second time, by design.
 	 *
 	 * @param request The inbound webhook request.
-	 * @returns True when the request is authentic and fresh.
+	 * @returns True when the request is authentic, fresh, and not a replay.
 	 */
 	public verifySignature(request: IInboundWebhookRequest): boolean {
 		try {
@@ -63,13 +93,21 @@ export class GenericSignedWebhookAdapter implements IInboundEmailAdapter {
 			if (!signature || !timestamp) {
 				return false;
 			}
-			if (!this.isFresh(timestamp)) {
+			const signedAt = this.timestampMillis(timestamp);
+			if (signedAt === null || Math.abs(Date.now() - signedAt) > DOCS_INBOUND_SIGNATURE_TOLERANCE_MS) {
 				return false;
 			}
 
 			const payload = `${timestamp}.${this.rawBody(request)}`;
 			const expected = createHmac('sha256', secret).update(payload, 'utf8').digest('hex');
-			return this.constantTimeEquals(expected, signature.trim().toLowerCase());
+			const normalized = signature.trim().toLowerCase();
+			if (!this.constantTimeEquals(expected, normalized)) {
+				return false;
+			}
+
+			// Authenticity established — now (and only now) burn the signature. Recording
+			// unverified input would let anyone fill the set with junk.
+			return this.consumeSignature(`${timestamp}.${normalized}`, signedAt);
 		} catch (error) {
 			// A hostile body must never become a 500 — an unverifiable request is simply not verified.
 			this.logger.debug(`Inbound-email signature verification failed: ${(error as Error).message}`);
@@ -155,16 +193,61 @@ export class GenericSignedWebhookAdapter implements IInboundEmailAdapter {
 	}
 
 	/**
-	 * Replay guard — accepts Unix seconds or milliseconds within the tolerance window.
+	 * Single-use guard: records a verified signature and reports whether it is new.
+	 *
+	 * Expired entries are pruned on every call, so the set never holds more than one
+	 * freshness window of traffic; the entry cap is the backstop for a pathological burst.
+	 *
+	 * @param key The `<timestamp>.<signature>` pair identifying one delivery.
+	 * @param signedAt The delivery's own timestamp, in epoch ms.
+	 * @returns True when the signature had not been seen (i.e. the request may proceed).
 	 */
-	private isFresh(timestamp: string): boolean {
-		const parsed = Number.parseInt(timestamp, 10);
-		if (!Number.isFinite(parsed) || parsed <= 0) {
+	private consumeSignature(key: string, signedAt: number): boolean {
+		const now = Date.now();
+
+		// Prune everything whose freshness window has closed — those requests are now
+		// rejected by `isFresh` anyway, so remembering them buys nothing.
+		for (const [seen, expiresAt] of this.seenSignatures) {
+			if (expiresAt <= now) {
+				this.seenSignatures.delete(seen);
+			}
+		}
+
+		if (this.seenSignatures.has(key)) {
+			this.logger.warn('Rejecting a replayed inbound-email webhook delivery (signature already used).');
 			return false;
 		}
+
+		// Backstop: drop the oldest entries rather than grow without bound.
+		while (this.seenSignatures.size >= REPLAY_CACHE_MAX_ENTRIES) {
+			const oldest = this.seenSignatures.keys().next();
+			if (oldest.done) {
+				break;
+			}
+			this.seenSignatures.delete(oldest.value);
+		}
+
+		// The entry must outlive the request's own freshness window, not ours: a
+		// tolerance-early (clock-skewed, future-dated) timestamp stays acceptable to the
+		// freshness check until `signedAt + tolerance`, and forgetting it before then would
+		// reopen the replay window.
+		this.seenSignatures.set(key, Math.max(now, signedAt) + DOCS_INBOUND_SIGNATURE_TOLERANCE_MS);
+		return true;
+	}
+
+	/**
+	 * Parses a webhook timestamp header into epoch milliseconds.
+	 *
+	 * @param timestamp The raw header value (Unix seconds or milliseconds).
+	 * @returns Epoch ms, or null when the value is not a usable timestamp.
+	 */
+	private timestampMillis(timestamp: string): number | null {
+		const parsed = Number.parseInt(timestamp, 10);
+		if (!Number.isFinite(parsed) || parsed <= 0) {
+			return null;
+		}
 		// Heuristic: 10-digit values are seconds, 13-digit values are milliseconds.
-		const millis = timestamp.trim().length <= 10 ? parsed * 1000 : parsed;
-		return Math.abs(Date.now() - millis) <= DOCS_INBOUND_SIGNATURE_TOLERANCE_MS;
+		return timestamp.trim().length <= 10 ? parsed * 1000 : parsed;
 	}
 
 	/**

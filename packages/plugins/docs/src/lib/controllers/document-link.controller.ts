@@ -34,7 +34,13 @@ export class DocumentLinkController {
 	@UseValidationPipe({ whitelist: true, transform: true })
 	@Get('/links')
 	public async findForEntity(@Query() query: GetDocumentLinksQueryDTO): Promise<IPagination<IDocumentLink>> {
-		return this.queryBus.execute(new GetDocumentLinksQuery({ entity: query.entity, entityId: query.entityId }));
+		return this.queryBus.execute(
+			new GetDocumentLinksQuery({
+				entity: query.entity,
+				entityId: query.entityId,
+				organizationId: query.organizationId
+			})
+		);
 	}
 
 	/**

@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsUUID } from 'class-validator';
 import { BaseEntityEnum, ID, IDocumentLinkCreateInput, JsonData } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
@@ -28,8 +28,13 @@ export class CreateDocumentLinkDTO extends TenantOrganizationBaseDTO implements 
 
 /**
  * Query params for `GET /api/plugins/docs/links` — the "Documents panel" reverse lookup.
+ *
+ * Extends a partial `TenantOrganizationBaseDTO` so `organizationId` carries the same
+ * `@IsOrganizationBelongsToUser()` ownership check as the sibling write DTO: a caller can never
+ * name an organization they do not belong to. It stays **optional** — the service falls back to
+ * the requester's current organization when it is omitted.
  */
-export class GetDocumentLinksQueryDTO {
+export class GetDocumentLinksQueryDTO extends PartialType(TenantOrganizationBaseDTO) {
 	@ApiProperty({ type: () => String, enum: BaseEntityEnum })
 	@IsEnum(BaseEntityEnum)
 	readonly entity: BaseEntityEnum;

@@ -33,8 +33,13 @@ const DRIFT_SWEEP_MAX_ENQUEUES = 200;
  *
  * The DB row is the source of truth; the queue is not. BullMQ persists jobs in Redis so
  * most restarts resume without the scan — the scan covers Redis data loss and rows saved
- * `PROCESSING` before a crash mid-handler. Re-enqueues carry `reason: 'recovery'` and
- * deduplicate via the deterministic `docs:<stage>:<documentId>` job ids.
+ * `PROCESSING` before a crash mid-handler. Re-enqueues carry `reason: 'recovery'` and a
+ * **run-unique** job id (`docs:<stage>:<documentId>:<runId>`): the plain deterministic id
+ * is silently DISCARDED by BullMQ while a job with that id still sits in the retained
+ * completed set, which is exactly the state a stuck document is in — the safety net would
+ * report success and do nothing. One `runId` per sweep still coalesces duplicates inside a
+ * single scan, the same way the other deliberate re-run sites work (`reprocess`,
+ * `reindexDocument`, `regenerateSummary`, the drift sweep below).
  */
 @Injectable()
 export class DocsRecoveryService {
@@ -112,6 +117,9 @@ export class DocsRecoveryService {
 		};
 		const now = new Date();
 		const staleBefore = new Date(now.getTime() - thresholds.uploadedStaleMinutes * 60_000);
+		// One id suffix per sweep: duplicates INSIDE a scan still coalesce, while every new
+		// scan gets ids BullMQ has never retained — see the class doc.
+		const runId = now.getTime();
 
 		// One bounded query: every row that could possibly need recovery.
 		const candidates = await this.typeOrmDocumentRepository.find({
@@ -136,12 +144,16 @@ export class DocsRecoveryService {
 			const action = classifyRecoveryAction(document, now, thresholds);
 			switch (action) {
 				case 'reenqueue-extract': {
-					await this.docsQueueService.enqueue(DOCS_JOB_EXTRACT, this.recoverySnapshot(document));
+					await this.docsQueueService.enqueue(DOCS_JOB_EXTRACT, this.recoverySnapshot(document), {
+						jobId: this.recoveryJobId(DOCS_JOB_EXTRACT, document.id, runId)
+					});
 					counters['reenqueue-extract']++;
 					break;
 				}
 				case 'reenqueue-chunk': {
-					await this.docsQueueService.enqueue(DOCS_JOB_CHUNK, this.recoverySnapshot(document));
+					await this.docsQueueService.enqueue(DOCS_JOB_CHUNK, this.recoverySnapshot(document), {
+						jobId: this.recoveryJobId(DOCS_JOB_CHUNK, document.id, runId)
+					});
 					counters['reenqueue-chunk']++;
 					break;
 				}
@@ -233,6 +245,7 @@ export class DocsRecoveryService {
 			.limit(DRIFT_SWEEP_MAX_ENQUEUES)
 			.getRawMany();
 
+		const runId = Date.now();
 		for (const row of rows) {
 			await this.docsQueueService.enqueue(
 				DOCS_JOB_CHUNK,
@@ -242,11 +255,26 @@ export class DocsRecoveryService {
 					organizationId: row.organizationId,
 					reason: 'model-changed' as const
 				},
-				{ jobId: `docs:chunk:${row.documentId}:${Date.now()}`, priority: 10 }
+				{ jobId: this.recoveryJobId(DOCS_JOB_CHUNK, row.documentId, runId), priority: 10 }
 			);
 		}
 		this.logger.log(`Model-drift auto re-index enqueued ${rows.length}/${driftedTotal} documents`);
 		return driftedTotal;
+	}
+
+	/**
+	 * Builds the run-unique BullMQ job id of a recovery re-enqueue.
+	 *
+	 * The plain `docs:<stage>:<documentId>` id is not usable here: a stuck document usually
+	 * still HAS that id retained in the completed set, and BullMQ drops an `add()` for an
+	 * existing id without an error — the enqueue would report success while nothing runs.
+	 *
+	 * @param jobName The `DOCS_JOB_*` stage constant.
+	 * @param documentId The document being recovered.
+	 * @param runId The per-sweep stamp shared by every enqueue of one scan.
+	 */
+	private recoveryJobId(jobName: string, documentId: string, runId: number): string {
+		return `${this.docsQueueService.jobIdFor(jobName, documentId)}:${runId}`;
 	}
 
 	/**

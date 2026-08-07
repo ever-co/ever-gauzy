@@ -200,6 +200,7 @@ export class DocumentProcessingService {
 	 */
 	async reprocess(id: ID, input: ReprocessDocumentDTO): Promise<IDocument> {
 		const document = await this.documentService.findOneScoped(id);
+		await this.documentService.assertCanWrite(document);
 
 		if (document.kind !== DocumentKindEnum.FILE) {
 			throw new ConflictException({
@@ -244,6 +245,7 @@ export class DocumentProcessingService {
 	 */
 	async updateExtractedText(id: ID, input: UpdateExtractedTextDTO): Promise<IDocument> {
 		const document = await this.documentService.findOneScoped(id);
+		await this.documentService.assertCanWrite(document);
 
 		if (document.kind !== DocumentKindEnum.FILE) {
 			throw new ConflictException({
