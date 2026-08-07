@@ -19,9 +19,10 @@ export const inviteButtonVisible = async () => verifyElementIsVisible(InviteUser
 // button's coordinates, landed on the overlay, and the dialog never opened (#emails not found).
 // Settle, dispatch straight at the button, and confirm the dialog opened.
 export const clickInviteButton = async () =>
-	// The `await` matters: without it this was a floating promise — the settle/confirm ran CONCURRENTLY
-	// with the next step, and now that the helper throws when the dialog never opens, a call without
-	// `await` would surface as an unhandled rejection instead of failing the scenario at this line.
+	// Style only: a braceless `=> dispatchClickWhenSettled(...)` already RETURNS the promise (this was
+	// never floating — the step awaits it), so this `await` changes nothing at runtime. It stays
+	// because the explicit form is what every sibling helper uses, and because a future edit that adds
+	// braces to the arrow would otherwise silently orphan the promise.
 	await dispatchClickWhenSettled(InviteUserPage.inviteButtonCss, InviteUserPage.emailInputCss);
 
 export const emailInputVisible = async () => verifyElementIsVisible(InviteUserPage.emailInputCss);

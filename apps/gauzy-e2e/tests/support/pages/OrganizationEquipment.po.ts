@@ -405,6 +405,13 @@ export const clickEmployeeDropdown = async () => {
 	// abort the scenario in precisely the state the picker below was written to survive. The panel
 	// renders even with zero options (Nebular's nb-option-list is a bare ul.option-list around
 	// ng-content), so its appearance still proves the click landed.
+	//
+	// Deliberately NOT scoped to the component (e.g. 'ga-employee-multi-select nb-option-list'):
+	// Nebular renders the panel into the document-level OVERLAY CONTAINER, not inside the select's
+	// host, so a component-scoped selector would never match anything and the helper would throw on
+	// every run. The residual risk — a previous select's panel pre-satisfying the end-state check —
+	// is bounded: picking an option detaches its panel synchronously, and the helper settles
+	// (spinner + network idle) before it looks.
 	await dispatchClickWhenSettled(OrganizationEquipmentPage.selectEmployeeDropdownCss, 'nb-option-list');
 };
 
