@@ -11,6 +11,7 @@ import { GauzyApiClient } from './tools/gauzy-api-client';
 import { buildGauzyTools, GAUZY_TOOLS_REQUIRING_APPROVAL } from './tools/gauzy-tools';
 import { buildClientTools, CLIENT_TOOLS_REQUIRING_APPROVAL } from './tools/client-tools';
 import { createMcpTools } from './tools/mcp-tools';
+import { AiChatToolRegistry } from './tools/tool-registry';
 import { AiProviderCredentialService } from './credentials/ai-provider-credential.service';
 import { AiChatConversationService } from './conversations/ai-chat-conversation.service';
 import { buildRateLimitEnvelope, isRateLimitError, rateLimitRetryAfter, RATE_LIMIT_CODE } from './rate-limit';
@@ -86,10 +87,22 @@ export class AiChatService {
 			...(requestDefaults.tenantId ? { 'Tenant-Id': requestDefaults.tenantId } : {}),
 			...(requestDefaults.organizationId ? { 'Organization-Id': requestDefaults.organizationId } : {})
 		});
-		const [gauzyTools, clientTools, mcp] = await Promise.all([
+		// Contributions from OTHER plugins (e.g. @gauzy/plugin-docs' docs_search/docs_read),
+		// resolved through the static AiChatToolRegistry. resolveAll() is error-isolated per
+		// factory and returns an empty contribution when nothing is registered, so behavior is
+		// unchanged on installs without contributing plugins.
+		const [gauzyTools, clientTools, mcp, registryContribution] = await Promise.all([
 			buildGauzyTools(apiClient, requestDefaults),
 			buildClientTools(),
-			createMcpTools(args.authorizationHeader)
+			createMcpTools(args.authorizationHeader),
+			AiChatToolRegistry.resolveAll({
+				tenantId: requestDefaults.tenantId,
+				organizationId: requestDefaults.organizationId,
+				employeeId: requestDefaults.employeeId,
+				userId: RequestContext.currentUserId() ?? undefined,
+				authorizationHeader: args.authorizationHeader,
+				languageCode: args.languageCode
+			})
 		]);
 
 		const instructions = buildSystemPrompt({
@@ -100,19 +113,29 @@ export class AiChatService {
 		});
 
 		const mcpToolNames = Object.keys((mcp?.tools as object) ?? {});
-		// MCP tools are external — we cannot know which ones mutate state, so
-		// EVERY MCP tool requires the user's explicit in-chat approval.
-		const approvalRequired = [
-			...GAUZY_TOOLS_REQUIRING_APPROVAL,
-			...CLIENT_TOOLS_REQUIRING_APPROVAL,
-			...mcpToolNames
-		];
 
+		// Registry contributions merge FIRST so the engine's own tools always win a name
+		// collision — a plugin must never be able to shadow a built-in tool.
 		const tools = {
+			...registryContribution.tools,
 			...gauzyTools,
 			...clientTools,
 			...((mcp?.tools as any) ?? {})
 		} as any;
+
+		// MCP tools are external — we cannot know which ones mutate state, so
+		// EVERY MCP tool requires the user's explicit in-chat approval.
+		// Registry approval names count only when the registry's tool actually survived the
+		// merge (a built-in that shadows it carries its own approval policy).
+		const registryApproval = (registryContribution.requireApproval ?? []).filter(
+			(name) => tools[name] === registryContribution.tools[name]
+		);
+		const approvalRequired = [
+			...GAUZY_TOOLS_REQUIRING_APPROVAL,
+			...CLIENT_TOOLS_REQUIRING_APPROVAL,
+			...mcpToolNames,
+			...registryApproval
+		];
 
 		let result: any;
 		try {

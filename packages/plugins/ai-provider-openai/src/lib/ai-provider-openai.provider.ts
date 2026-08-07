@@ -168,5 +168,24 @@ export const openAiProviderDefinition: IAiChatProviderDefinition = {
 			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {})
 		});
 		return provider(modelId);
+	},
+
+	/**
+	 * Create an OpenAI `EmbeddingModel` for the Documents knowledge pipeline
+	 * (`@gauzy/plugin-docs` chunk/query embeddings).
+	 *
+	 * Same lazy-ESM pattern as {@link createModel}; callers feature-detect this hook and
+	 * degrade to lexical-only retrieval when a provider does not implement it.
+	 *
+	 * @param modelId Embedding model id (e.g. 'text-embedding-3-small').
+	 * @param credentials Resolved credentials (tenant BYOK, environment, or platform).
+	 */
+	async createEmbeddingModel(modelId: string, credentials: IAiProviderCredentials) {
+		const { createOpenAI } = await importEsm<typeof import('@ai-sdk/openai')>('@ai-sdk/openai');
+		const provider = createOpenAI({
+			apiKey: credentials.apiKey,
+			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {})
+		});
+		return provider.textEmbeddingModel(modelId);
 	}
 };

@@ -35,6 +35,8 @@ import {
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
+import { IPartialEntity } from './../core/crud/icrud.service';
+import { sanitizeRichHtml } from './../core/html-sanitizer';
 import { MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from './../core/utils';
 import { addBetween, LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
@@ -72,6 +74,21 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
+	 * Creates a task, sanitizing the rich-text `description` HTML through the shared
+	 * server-side allowlist before persisting (see `sanitizeRichHtml`).
+	 *
+	 * @param entity - The task creation input
+	 * @returns The created task
+	 */
+	public async create(entity: IPartialEntity<Task>): Promise<Task> {
+		const input = entity as { description?: string };
+		if (typeof input.description === 'string') {
+			input.description = sanitizeRichHtml(input.description);
+		}
+		return await super.create(entity);
+	}
+
+	/**
 	 * Update task, if already exist
 	 *
 	 * @param id - The ID of the task to update
@@ -80,6 +97,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 */
 	async update(id: ID, input: Partial<ITaskUpdateInput>): Promise<ITask> {
 		try {
+			// Sanitize the rich-text description HTML before it reaches the persistence path below.
+			if (typeof input.description === 'string') {
+				input.description = sanitizeRichHtml(input.description);
+			}
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const userId = RequestContext.currentUserId();
 
