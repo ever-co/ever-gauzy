@@ -97,6 +97,36 @@ export function AiChatPanel() {
 		[store]
 	);
 
+	/**
+	 * Send a dictation take to the server for transcription.
+	 *
+	 * `FormData` deliberately WITHOUT a Content-Type header: the browser has to set it, because only
+	 * it knows the multipart boundary. Setting it by hand produces a body the server cannot parse.
+	 */
+	const transcribeAudio = useCallback(
+		async (audio: Blob): Promise<string> => {
+			const form = new FormData();
+			form.append('file', audio, 'dictation');
+			const response = await fetch(`${environment.API_BASE_URL}/api/ai-chat/transcribe`, {
+				method: 'POST',
+				headers: authHeaders(),
+				body: form
+			});
+			if (!response.ok) {
+				// The server's message names the actual problem — no speech-capable provider, a
+				// rejected key — so it is worth more to the user than a status code.
+				const detail = await response
+					.json()
+					.then((body: { message?: string }) => body?.message)
+					.catch(() => undefined);
+				throw new Error(detail || `Transcription failed (HTTP ${response.status})`);
+			}
+			const body = (await response.json()) as { text?: string };
+			return body.text ?? '';
+		},
+		[authHeaders]
+	);
+
 	const transport = useMemo(
 		() =>
 			new DefaultChatTransport({
@@ -124,7 +154,11 @@ export function AiChatPanel() {
 			lastAssistantMessageIsCompleteWithApprovalResponses(options),
 		// Client ("canvas") tools run here, in the browser.
 		onToolCall: ({ toolCall }) => {
-			const { toolName, toolCallId, input: toolInput } = toolCall as {
+			const {
+				toolName,
+				toolCallId,
+				input: toolInput
+			} = toolCall as {
 				toolName: string;
 				toolCallId: string;
 				input: unknown;
@@ -132,9 +166,7 @@ export function AiChatPanel() {
 			if (!isClientTool(toolName)) return;
 			// Deliberately not awaited — awaiting inside onToolCall deadlocks the stream.
 			executeClientTool(injector, toolName, toolInput)
-				.then((output) =>
-					chat.addToolOutput({ tool: toolName as never, toolCallId, output: output as never })
-				)
+				.then((output) => chat.addToolOutput({ tool: toolName as never, toolCallId, output: output as never }))
 				.catch((error: unknown) =>
 					chat.addToolOutput({
 						state: 'output-error',
@@ -183,17 +215,17 @@ export function AiChatPanel() {
 			? t('AI_ASSISTANT.RATE_LIMIT_RETRY_IN', 'You can try again in about {{seconds}}s.').replace(
 					'{{seconds}}',
 					String(envelope.retryAfterSeconds)
-			  )
+				)
 			: '';
 		const notice = onSharedKey
 			? t(
 					'AI_ASSISTANT.RATE_LIMITED_SHARED',
 					'The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.'
-			  )
+				)
 			: t(
 					'AI_ASSISTANT.RATE_LIMITED_OWN',
 					'Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.'
-			  );
+				);
 
 		// Rendered as a normal assistant message so it flows through the existing markdown renderer
 		// with no new UI. It is client-only and deliberately not persisted: it describes the state of
@@ -222,12 +254,23 @@ export function AiChatPanel() {
 	const isBusy = status === 'submitted' || status === 'streaming';
 	const hasMessages = messages.length > 0;
 
-	const handleSubmit = useCallback(() => {
-		const text = input.trim();
-		if (!text || isBusy) return;
-		setInput('');
-		void sendMessage({ text });
-	}, [input, isBusy, sendMessage]);
+	/**
+	 * Send a message.
+	 *
+	 * `override` exists for dictation: the transcript is handed straight here rather than being read
+	 * back out of `input`. `setInput` is asynchronous, so auto-send fired immediately after it would
+	 * otherwise submit the PRE-dictation text — an empty draft sending nothing, a non-empty one
+	 * sending only what was typed before the user spoke.
+	 */
+	const handleSubmit = useCallback(
+		(override?: string) => {
+			const text = (override ?? input).trim();
+			if (!text || isBusy) return;
+			setInput('');
+			void sendMessage({ text });
+		},
+		[input, isBusy, sendMessage]
+	);
 
 	const handleNewChat = useCallback(() => {
 		void stop();
@@ -295,7 +338,7 @@ export function AiChatPanel() {
 		setHistoryLoading(true);
 		fetch(conversationsUrl, { headers: authHeaders() })
 			.then((response) => (response.ok ? response.json() : []))
-			.then((items) => setHistory(Array.isArray(items) ? items : items?.items ?? []))
+			.then((items) => setHistory(Array.isArray(items) ? items : (items?.items ?? [])))
 			.catch(() => setHistory([]))
 			.finally(() => setHistoryLoading(false));
 	}, [conversationsUrl, authHeaders]);
@@ -789,6 +832,8 @@ export function AiChatPanel() {
 					onSubmit={handleSubmit}
 					onStop={() => void stop()}
 					onEscape={isDetachedView ? undefined : handleCollapse}
+					onTranscribe={transcribeAudio}
+					composingFor={activeConversationId}
 				/>
 			</div>
 

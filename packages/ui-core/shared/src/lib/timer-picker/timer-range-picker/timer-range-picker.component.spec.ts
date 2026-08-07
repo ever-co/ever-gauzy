@@ -148,6 +148,26 @@ describe('TimerRangePickerComponent', () => {
 		});
 	});
 
+	describe('updateTimePickerLimit', () => {
+		it('leaves the slots unbounded when there is no maximum', () => {
+			// `edit-time-log-modal` binds [maxDate]="futureDateAllowed ? null : today", so null is how
+			// an organisation that permits future time entry says so. Reading null as "today" clamped
+			// the pickers to the current time and blocked the very entries that flag allows.
+			component.updateTimePickerLimit(null as unknown as Date);
+
+			expect(component.minSlotStartTime).toBe('00:00');
+			expect(component.maxSlotStartTime).toBe('23:59');
+			expect(component.maxSlotEndTime).toBe('23:59');
+		});
+
+		it('clamps to now when the maximum IS today', () => {
+			component.updateTimePickerLimit(new Date());
+
+			// Bounded by the current time rather than the end of the day.
+			expect(component.maxSlotEndTime < '23:59').toBe(true);
+		});
+	});
+
 	describe('composeRange', () => {
 		it('rolls the end onto the next day when it reads earlier than the start', () => {
 			// The picker holds ONE date for both times, so a midnight-spanning range can only be

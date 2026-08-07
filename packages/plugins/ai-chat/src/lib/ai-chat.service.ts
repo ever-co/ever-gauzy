@@ -15,6 +15,13 @@ import { AiProviderCredentialService } from './credentials/ai-provider-credentia
 import { AiChatConversationService } from './conversations/ai-chat-conversation.service';
 import { buildRateLimitEnvelope, isRateLimitError, rateLimitRetryAfter, RATE_LIMIT_CODE } from './rate-limit';
 
+/**
+ * Largest dictation upload accepted, matching what the upstream speech APIs take anyway.
+ *
+ * Audio is user-supplied and otherwise bounded only by how long someone holds the button.
+ */
+const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+
 /** Maximum agent steps (model turns incl. tool calls) per user message. */
 const MAX_STEPS = 12;
 
@@ -459,6 +466,65 @@ export class AiChatService {
 			);
 			return { providerId, models: definition.models, source: 'curated' };
 		}
+	}
+
+	/**
+	 * Transcribe recorded speech for the chat's dictation control.
+	 *
+	 * Tries every registered provider that CAN transcribe, in display order, and uses the first one
+	 * the tenant actually has a credential for. Dictation is a property of the workspace, not of the
+	 * chat model: a tenant whose chat runs on Anthropic (no speech model) should still be able to
+	 * dictate if they also have an OpenAI key, without being told to go and change their chat
+	 * provider.
+	 *
+	 * @param audio Bytes as recorded by the browser.
+	 * @param mimeType Container the browser produced.
+	 * @returns The transcript, which may legitimately be empty for silence.
+	 */
+	async transcribe(audio: Buffer, mimeType: string): Promise<string> {
+		if (!audio?.length) {
+			throw new BadRequestException('No audio was uploaded.');
+		}
+		// Enforced HERE, not through the interceptor's `limits`: LazyFileInterceptor spreads only
+		// `storage` and `fileFilter` into multer and drops `limits`, so a cap declared at the route
+		// would read as enforced while accepting anything. This is the only place that actually holds.
+		if (audio.length > MAX_AUDIO_BYTES) {
+			throw new BadRequestException(
+				`Recording is too large (${Math.round(audio.length / 1024 / 1024)}MB). The limit is ${
+					MAX_AUDIO_BYTES / 1024 / 1024
+				}MB.`
+			);
+		}
+
+		const capable = AiProviderRegistry.list()
+			.filter((definition) => typeof definition.transcribe === 'function')
+			.sort((a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER));
+
+		if (!capable.length) {
+			throw new ServiceUnavailableException('No AI provider on this server can transcribe speech.');
+		}
+
+		const attempted: string[] = [];
+		for (const definition of capable) {
+			const credentials = await this.resolveCredentials(definition);
+			if (!credentials) continue;
+			attempted.push(definition.id);
+			try {
+				return await definition.transcribe(audio, mimeType, credentials);
+			} catch (error) {
+				// Try the next provider rather than failing the whole dictation on one bad key.
+				this.logger.warn(
+					`[ai-chat] Transcription via '${definition.id}' failed: ` +
+						`${error instanceof Error ? error.message : error}`
+				);
+			}
+		}
+
+		throw new ServiceUnavailableException(
+			attempted.length
+				? `Transcription failed on ${attempted.join(', ')}. Check the provider's API key in Settings → AI Providers.`
+				: 'Add an API key for a provider that supports speech (e.g. OpenAI) to dictate messages.'
+		);
 	}
 
 	/**
