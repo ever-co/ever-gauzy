@@ -11,9 +11,9 @@ jest.mock('uuid', () => {
 import { QueryRunner } from 'typeorm';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { FeatureEnum } from '@gauzy/contracts';
-import { RolePermissionUtils } from '../../role-permission/utils';
-import { DocumentsRolePermissionsReload1790000003000 } from './1790000003000-DocumentsRolePermissionsReload';
-import { SeedDocumentsFeature1790000004000 } from './1790000004000-SeedDocumentsFeature';
+import { RolePermissionUtils } from '../role-permission/utils';
+import { DocumentsRolePermissionsReload1790000003000 } from './migrations/1790000003000-DocumentsRolePermissionsReload';
+import { SeedDocumentsFeature1790000004000 } from './migrations/1790000004000-SeedDocumentsFeature';
 
 type ExecutedQuery = { sql: string; parameters: any[] };
 
