@@ -462,3 +462,55 @@ nb-sidebar[tag='menu-sidebar'] {
   @include nb-ltr(right, 20px);
   @include nb-rtl(left, 20px);
 }
+
+// ── The header band belongs to the CANVAS ────────────────────────────────────
+//
+// Nebular renders `nb-layout-header.fixed` at `left: 0; width: 100%`, i.e. across every column.
+// The chat panel is `position: fixed` at `z-index: 1041`, one above the header's 1040, so any
+// header content sharing that horizontal range is COVERED — measured on demo at 1280px: nav
+// sidebar 0-256, chat 256-640, header content starting at 384, so 256px of it (the demo banner's
+// opening words, the first filter) sat underneath the panel.
+//
+// This used to be handled with `padding-left` on the header equal to the chat's width. Two
+// problems: the number was wrong (it ignored the nav sidebar in front of the chat), and padding is
+// the wrong lever anyway — it moves only what is inside the header box, so anything outside it is
+// behind the chat again. Insetting the BAND makes the overlap impossible rather than arithmetically
+// avoided.
+//
+// `--gz-canvas-left` is measured off `nb-layout-column` — the real canvas edge, after whatever
+// sidebars precede it, at whatever width the user has dragged the chat to. See the layout ts.
+// Both edges are pinned to the canvas, not just the leading one: the chat docks to either side, so
+// an end-docked panel would otherwise sit on top of the header's trailing edge exactly as the
+// start-docked one did.
+//
+// The selector deliberately mirrors Nebular's own — `nb-layout.window-mode .layout nb-layout-header`
+// sets `width: 100%; max-width: 1920px; margin: 0 auto` at specificity (0,2,2). A plain
+// `nb-layout-header.fixed` is (0,2,1) and LOSES the width, which leaves the band full-viewport-wide
+// and merely translated right by the inset — pushing the header's actions off the screen edge
+// instead of fitting them to the canvas. Matching the full selector wins on specificity rather than
+// on stylesheet order.
+//
+// `max-width` and the auto margins go with it: they exist to cap and centre a full-width band, and
+// both offsets are already measured off `nb-layout-column`, which has that centring baked into its
+// own left edge. Pinning to the column matches the content exactly; re-capping would not.
+:host ::ng-deep nb-layout.window-mode .layout nb-layout-header.fixed,
+:host ::ng-deep nb-layout .layout nb-layout-header.fixed {
+  left: var(--gz-canvas-left, 0px);
+  right: var(--gz-canvas-right, 0px);
+  width: auto;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+// The footer has the SAME shape of problem and the same fix — Nebular renders it fixed and full
+// width, so an expanded chat covers its leading edge exactly as it covered the header's.
+:host ::ng-deep nb-layout.window-mode .layout nb-layout-footer.fixed,
+:host ::ng-deep nb-layout .layout nb-layout-footer.fixed {
+  left: var(--gz-canvas-left, 0px);
+  right: var(--gz-canvas-right, 0px);
+  width: auto;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}

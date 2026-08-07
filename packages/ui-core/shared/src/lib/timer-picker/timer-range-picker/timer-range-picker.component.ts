@@ -316,7 +316,21 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	 */
 	updateTimePickerLimit(date: Date) {
 		const now = this.toDisplayZone(new Date());
-		let mTime = this.toDisplayZone(date ?? new Date());
+		// A NULL limit means "no limit", and it must stay that way. `edit-time-log-modal` binds
+		// `[maxDate]="futureDateAllowed ? null : today"`, so null is how an organisation that permits
+		// future time entry says so. The previous `moment(date)` produced an INVALID moment for null,
+		// which failed the same-day test and fell through to the unbounded branch — accidentally
+		// correct. Substituting `new Date()` for null made it read as "today" and clamped the slot
+		// pickers to the current time, silently blocking exactly the entries that flag allows.
+		if (!date) {
+			this.minSlotStartTime = '00:00';
+			this.maxSlotStartTime = '23:59';
+			this.maxSlotEndTime = '23:59';
+			this.updateEndTimeSlot(this.startTime);
+			return;
+		}
+
+		let mTime = this.toDisplayZone(date);
 
 		if (mTime.isSame(now, 'day')) {
 			mTime = mTime.set({

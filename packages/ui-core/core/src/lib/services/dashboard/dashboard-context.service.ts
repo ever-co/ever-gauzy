@@ -20,7 +20,8 @@ import { DateRangePickerBuilderService } from '../selector-builder/date-range-pi
 
 /**
  * Time zone used when neither the organization nor the user declares one.
- * Matches the default of the timesheet `TimeZoneService`.
+ * Matches `TimezoneFilterComponent.getMomentTimezone()`, which resolves the
+ * ORG_TIMEZONE option to UTC when the organization has not set a zone.
  */
 export const DEFAULT_DASHBOARD_TIME_ZONE = 'Etc/UTC';
 
@@ -65,11 +66,12 @@ export interface IDashboardTimeZoneSource {
  * `TimeZoneService` is itself a root singleton, so a root alias is correct.
  * Only register it once the dashboard actually renders `<ga-timezone-filter>`:
  * that filter is what pushes a real selection into `TimeZoneService`, and
- * without it the service sits on its `Etc/UTC` construction default and widgets
- * would report different totals than the standard dashboard. When the token is
- * absent, {@link DashboardContextService} instead reproduces the defaults the
- * filter applies on init (organization zone for users who may switch employees,
- * personal zone otherwise), which is the correct answer for a filter-less page.
+ * without it the service sits on its construction default — the BROWSER's zone,
+ * which for a manager is not the organization zone the standard dashboard
+ * reports in. When the token is absent, {@link DashboardContextService} instead
+ * reproduces the defaults the filter applies on init (organization zone for
+ * users who may switch employees, personal zone otherwise), which is the
+ * correct answer for a filter-less page.
  */
 export const DASHBOARD_TIME_ZONE_SOURCE = new InjectionToken<IDashboardTimeZoneSource>('DASHBOARD_TIME_ZONE_SOURCE');
 
