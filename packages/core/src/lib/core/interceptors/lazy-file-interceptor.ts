@@ -51,14 +51,18 @@ export function LazyFileInterceptor(fieldName: string, localOptions: LazyFileInt
 				...this.options,
 				...{
 					storage,
+					// No optional chaining on `localOptions` here: it is a REQUIRED parameter (the call
+					// above already dereferences it), and a `?.` would imply otherwise — DeepScan rightly
+					// flags the inconsistency (INSUFFICIENT_NULL_CHECK).
+					//
 					// Pass through a per-route fileFilter when provided (e.g. to block executable/SVG uploads).
-					...(localOptions?.fileFilter ? { fileFilter: localOptions.fileFilter } : {}),
+					...(localOptions.fileFilter ? { fileFilter: localOptions.fileFilter } : {}),
 					// …and `limits` likewise. Dropping it was the same silent-no-op trap as the missing
 					// storage factory, one step further along: a route declaring `limits: { fileSize }`
 					// read as capped while accepting uploads of any size, and nothing failed to say so.
 					// No caller relies on the old behaviour — none currently declare `limits` — so this
 					// only changes what happens the next time someone reasonably expects it to work.
-					...(localOptions?.limits ? { limits: localOptions.limits } : {})
+					...(localOptions.limits ? { limits: localOptions.limits } : {})
 				}
 			});
 			await new Promise<void>((resolve, reject) =>
