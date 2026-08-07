@@ -229,6 +229,10 @@ export class AiChatService {
 				// however many credentials resolve for it — otherwise /config advertises it, the
 				// settings UI shows it as ready, and it can be chosen as the tenant default.
 				configured: credentials !== null && definition.chatCapable !== false,
+				// Surfaced separately from `configured` so the UI can distinguish "save a key" (fixable
+				// by the user) from "chat is not implemented for this provider yet" (not fixable by any
+				// key). Only ever emitted as false — absent means capable.
+				...(definition.chatCapable === false ? { chatCapable: false } : {}),
 				...(credentials ? { credentialSource: credentials.source } : {}),
 				...(definition.order !== undefined ? { order: definition.order } : {}),
 				...(definition.websiteUrl ? { websiteUrl: definition.websiteUrl } : {}),
