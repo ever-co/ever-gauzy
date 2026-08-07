@@ -39,6 +39,9 @@ describe('AiChatService chatCapable boundary', () => {
 		models: [],
 		defaultModel: '',
 		chatCapable: false,
+		// Sorts FIRST, like the real placeholder (gauzy-ai is order 10): the outage this file guards
+		// against depended on exactly that — the placeholder winning default selection by sort order.
+		order: 10,
 		async createModel(): Promise<never> {
 			throw new Error('raw not-implemented error that must never reach a user');
 		}
@@ -50,6 +53,7 @@ describe('AiChatService chatCapable boundary', () => {
 		apiKeyEnvVars: ['TEST_CAPABLE_API_KEY'],
 		models: [{ id: 'test-model', label: 'Test Model', providerId: 'test-capable' }],
 		defaultModel: 'test-model',
+		order: 50,
 		async createModel() {
 			return {} as never;
 		}
@@ -104,5 +108,21 @@ describe('AiChatService chatCapable boundary', () => {
 
 		expect(byId.get('test-placeholder')?.configured).toBe(false);
 		expect(byId.get('test-capable')?.configured).toBe(true);
+	});
+
+	it('never DEFAULTS to a placeholder — the filter whose absence was a live outage', async () => {
+		// The placeholder sorts first and has a resolvable credential, i.e. the exact state that once
+		// made every chat turn fail: default selection picked it by sort order, and its createModel
+		// threw unconditionally while /config advertised a healthy default. The other tests would all
+		// still pass if the `chatCapable !== false` filter in the default path were reverted — this
+		// one fails on that revert (the placeholder's raw error replaces the resolved capable model).
+		const instance = service();
+		(instance as unknown as { resolveDefaultProvider: unknown }).resolveDefaultProvider = async () => null;
+
+		const resolved = await (
+			instance as unknown as { resolveModel(providerId?: string): Promise<{ providerId: string }> }
+		).resolveModel();
+
+		expect(resolved.providerId).toBe('test-capable');
 	});
 });
