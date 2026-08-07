@@ -315,6 +315,13 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 			view,
 			selectedIds: []
 		});
+		// Seed the pagination base with the restored values. `pagination$` is a
+		// BehaviorSubject holding the class defaults (page 1 / 10 rows): without
+		// this write its very next emission — the replay to the subscription set up
+		// right after this call — would dispatch those defaults straight back over
+		// the deep link, so `?page=` / `?pageSize=` never survived and the cards
+		// view always asked for 10 rows instead of 24.
+		this.setPagination({ ...this.getPagination(), activePage: page, itemsPerPage: pageSize });
 		this.actions.dispatch(DocumentsActions.loadDocuments());
 	}
 

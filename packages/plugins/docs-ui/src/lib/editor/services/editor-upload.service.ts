@@ -158,20 +158,29 @@ export class EditorUploadService {
 				next: (event) => {
 					if (event.type === HttpEventType.UploadProgress && event.total) {
 						upload.progress = Math.round((event.loaded / event.total) * 100);
-					} else if (event.type === HttpEventType.Response && event.body) {
-						this.zone.run(() => this.swap(editor, upload, event.body as IDocument));
+					} else if (event.type === HttpEventType.Response) {
+						const outcome = readUploadOutcome(event.body);
+						this.zone.run(() => {
+							if (outcome.document) this.swap(editor, upload, outcome.document);
+							// A per-file rejection rides a 201, not an error response —
+							// the placeholder must still flip to its failed state.
+							else this.fail(editor, upload, outcome.message);
+						});
 					}
 				},
 				error: (error) => {
-					this.zone.run(() => {
-						upload.status = 'error';
-						upload.error = error?.error?.message ?? 'upload failed';
-						this.emitPending();
-						// Nudge node views to re-render their error state.
-						editor.view.dispatch(editor.view.state.tr.setMeta('gzUploadStateChanged', upload.uploadId));
-					});
+					this.zone.run(() => this.fail(editor, upload, error?.error?.message));
 				}
 			});
+	}
+
+	/** Flips a placeholder to its retryable error state and re-renders its node view. */
+	private fail(editor: Editor, upload: IEditorUpload, message?: string): void {
+		upload.status = 'error';
+		upload.error = message ?? 'upload failed';
+		this.emitPending();
+		// Nudge node views to re-render their error state.
+		editor.view.dispatch(editor.view.state.tr.setMeta('gzUploadStateChanged', upload.uploadId));
 	}
 
 	/** One transaction swaps placeholder attrs to the final child-FILE document (spec 05 §6.6 step 5). */
@@ -217,6 +226,32 @@ export class EditorUploadService {
 	private emitPending(): void {
 		this._pendingCount$.next(this.uploads.size);
 	}
+}
+
+/**
+ * Reads the terminal response of a one-file editor upload.
+ *
+ * `POST /documents/upload` takes the multipart field **`files`** and answers **201 with the
+ * batch envelope** `{ results: [{ document, duplicateOfId? }], rejected: [{ fileName, code,
+ * message }] }` (`document-upload.controller.ts` → `IDocumentUploadResponse`) — a per-file
+ * rejection (magic-byte mismatch, oversize, quota) rides that 201 and is *not* an HTTP error.
+ * `DocumentsService.upload()` normalizes the one-file case back to a bare `IDocument` body
+ * and re-throws a rejection as an `HttpErrorResponse`, so both shapes are read here: the
+ * normalized document, and the raw envelope if this ever receives one directly.
+ */
+function readUploadOutcome(body: unknown): { document?: IDocument; message?: string } {
+	const envelope = body as {
+		results?: { document?: IDocument }[];
+		rejected?: { message?: string; code?: string }[];
+		id?: unknown;
+	} | null;
+	if (!envelope) return {};
+	const accepted = envelope.results?.[0]?.document;
+	if (accepted) return { document: accepted };
+	const rejection = envelope.rejected?.[0];
+	if (rejection) return { message: rejection.message ?? rejection.code };
+	// Legacy single-document body.
+	return envelope.id ? { document: envelope as unknown as IDocument } : {};
 }
 
 /**

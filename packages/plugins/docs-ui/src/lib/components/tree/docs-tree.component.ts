@@ -168,10 +168,17 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 		if (this.canUpdate) {
 			items.push(
 				{ title: this.getTranslation('DOCS.TREE.RENAME'), data: { action: 'rename' } },
-				{ title: this.getTranslation('DOCS.TREE.MOVE'), data: { action: 'move' } },
-				{ title: this.getTranslation('DOCS.TREE.DUPLICATE'), data: { action: 'duplicate' } },
-				{ title: this.getTranslation('DOCS.TREE.ARCHIVE'), data: { action: 'archive' } }
+				{ title: this.getTranslation('DOCS.TREE.MOVE'), data: { action: 'move' } }
 			);
+		}
+		// Duplicating writes a new node: `POST /documents/:id/duplicate` is
+		// `@Permissions(DOCS_CREATE)` (document-tree.controller.ts), so gating it on
+		// DOCS_UPDATE offered the action to users the backend answers with a 403.
+		if (this.canCreate) {
+			items.push({ title: this.getTranslation('DOCS.TREE.DUPLICATE'), data: { action: 'duplicate' } });
+		}
+		if (this.canUpdate) {
+			items.push({ title: this.getTranslation('DOCS.TREE.ARCHIVE'), data: { action: 'archive' } });
 		}
 		return items;
 	}

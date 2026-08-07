@@ -107,6 +107,8 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges, OnDest
 	/** Value written before the editor exists (SSR / early `writeValue`) — applied at instantiation. */
 	private _pendingValue: string | JSONContent | null | undefined;
 	private _hasPendingValue = false;
+	/** A queued `setContent(value, true)` still owes the form its notification. */
+	private _pendingEmitUpdate = false;
 	/** Guard against write→update→write feedback loops when the form patches back the emitted value. */
 	private _lastEmittedValue: string | JSONContent | null = null;
 	private _destroyed = false;
@@ -164,6 +166,8 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges, OnDest
 		if (!this.editor) {
 			this._pendingValue = value;
 			this._hasPendingValue = true;
+			// A form write is the source of truth already — applying it must not echo back.
+			this._pendingEmitUpdate = false;
 			if (
 				!isPlatformBrowser(this._platformId) &&
 				this.outputFormat === 'html' &&
@@ -203,8 +207,12 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges, OnDest
 	 */
 	setContent(value: string | JSONContent, emitUpdate = true): void {
 		if (!this.editor) {
+			// Called before instantiation (a seed from `ngOnInit`, or SSR): queue the
+			// value *and* the caller's intent to emit — dropping the emit silently
+			// applied the content while the bound control kept its old value.
 			this._pendingValue = value;
 			this._hasPendingValue = true;
+			this._pendingEmitUpdate = emitUpdate;
 			return;
 		}
 		const content = typeof value === 'string' ? normalizeLegacyHtml(value) : value;
@@ -301,9 +309,16 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges, OnDest
 		});
 
 		if (this._hasPendingValue) {
+			const emitUpdate = this._pendingEmitUpdate;
 			this._applyValue(this._pendingValue);
 			this._pendingValue = undefined;
 			this._hasPendingValue = false;
+			this._pendingEmitUpdate = false;
+			// Honour the queued `setContent(value, true)`: the content was applied
+			// with `emitUpdate: false`, so the CVA notification has to be issued here.
+			if (emitUpdate && this.editor) {
+				this._handleUpdate(this.editor);
+			}
 		}
 
 		this._refreshCounts();

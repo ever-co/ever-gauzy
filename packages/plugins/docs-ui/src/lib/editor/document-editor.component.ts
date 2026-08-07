@@ -22,7 +22,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Editor, Extension } from '@tiptap/core';
 import { firstValueFrom } from 'rxjs';
-import { IDocument, JsonData } from '@gauzy/contracts';
+import { ID, IDocument, JsonData } from '@gauzy/contracts';
 import { stripDataUrlImages } from './extensions/base64-guard.plugin';
 import { createDocumentEditorExtensions } from './extensions/document-extensions';
 import { FloatingBlockMenuComponent } from './menus/floating-block-menu.component';
@@ -95,6 +95,9 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	public editor: Editor | null = null;
 	public invisiblesVisible = false;
 
+	/** The document the live TipTap view and the autosave session were built for. */
+	private currentDocumentId: ID | null = null;
+
 	constructor() {
 		// A real DOM is required — construct only in the browser (spec 05 §3.8).
 		afterNextRender(() => {
@@ -112,15 +115,17 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 		}
 		if (changes['document'] && this.document) {
 			this.uploadService.parentDocumentId = this.document.id ?? null;
+			// The `page/:id` route reuses this component instance across documents:
+			// without a rebuild the view keeps rendering the previous document and
+			// autosave keeps writing into its id (spec 05 §9.2).
+			if (this.editor && (this.document.id ?? null) !== this.currentDocumentId) {
+				this.rebuildEditor();
+			}
 		}
 	}
 
 	ngOnDestroy(): void {
-		this.suggestionHost.close();
-		this.uploadService.destroy();
-		// Unconditional destroy — leaked ProseMirror views hold DOM references (spec 05 §3.8).
-		this.editor?.destroy();
-		this.editor = null;
+		this.teardownEditor();
 	}
 
 	// ─── Public API (page chrome) ────────────────────────────────
@@ -150,6 +155,14 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	/** Manual flush (Ctrl/Cmd+S, route leave). */
 	flush(options: { forceSnapshot?: boolean } = {}): Promise<boolean> {
 		return this.autosave.flush(options);
+	}
+
+	/**
+	 * The page released the lock — resume autosaving. The 423 freeze has no
+	 * self-clearing path, so nothing short of a reload would lift it otherwise.
+	 */
+	lockReleased(document?: IDocument): void {
+		this.autosave.lockReleased((document ?? this.document)?.updatedAt as never);
 	}
 
 	/** Replaces content without emitting (conflict reload / version restore). */
@@ -182,6 +195,21 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	}
 
 	// ─── Editor construction ─────────────────────────────────────
+
+	/** Swaps the whole editor stack over to `this.document` (route ':id' change). */
+	private rebuildEditor(): void {
+		this.teardownEditor();
+		if (isPlatformBrowser(this.platformId)) this.createEditor();
+	}
+
+	private teardownEditor(): void {
+		this.suggestionHost.close();
+		this.uploadService.destroy();
+		// Unconditional destroy — leaked ProseMirror views hold DOM references (spec 05 §3.8).
+		this.editor?.destroy();
+		this.editor = null;
+		this.currentDocumentId = null;
+	}
 
 	private createEditor(): void {
 		const extensions = createDocumentEditorExtensions({
@@ -245,6 +273,7 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 			});
 		});
 
+		this.currentDocumentId = this.document?.id ?? null;
 		this.autosave.init(this.document.id, this.document.updatedAt as never, () => this.buildPayload());
 		this.cdr.markForCheck();
 	}

@@ -14,6 +14,12 @@ import {
 import { IDocumentUploadOptions } from '../models/docs-api.model';
 import { DocumentsService } from './documents.service';
 
+/**
+ * Consecutive failed status fetches after which a pending id is abandoned.
+ * At `DOCS_PROCESSING_POLL_MS` that is a bounded ~30s of retrying, not forever.
+ */
+const DOCS_POLL_MAX_FAILURES = 6;
+
 export type UploadQueueItemState = 'uploading' | 'done' | 'error';
 
 export interface UploadQueueItem {
@@ -76,6 +82,8 @@ export class UploadQueueService implements OnDestroy {
 
 	/** Uploaded document ids whose processing has not settled yet. */
 	private readonly pendingIds = new Set<string>();
+	/** documentId → consecutive failed status fetches (see `recordPollFailure`). */
+	private readonly pollFailures = new Map<string, number>();
 	private pollSubscription: Subscription | null = null;
 	private processingVisible = false;
 	private processingSubscription: Subscription;
@@ -196,6 +204,9 @@ export class UploadQueueService implements OnDestroy {
 				if (event.type === HttpEventType.UploadProgress && event.total) {
 					this.patch(key, { progress: Math.round((event.loaded / event.total) * 100) });
 				} else if (event.type === HttpEventType.Response) {
+					// `DocumentsService.upload()` has already unwrapped the batch
+					// `{ results, rejected }` envelope; a per-file rejection arrives on
+					// the error channel below, never here with an empty body.
 					const document = event.body as IDocument;
 					const settled = this.isSettled(document);
 					this.patch(key, {
@@ -262,10 +273,19 @@ export class UploadQueueService implements OnDestroy {
 				.getById(id, ['categories', 'tags'])
 				.pipe(catchError(() => of(null)))
 				.subscribe((document) => {
-					if (!document) return;
+					if (!document) {
+						// 🛑 Terminal path. An id whose fetch keeps failing (deleted row,
+						// revoked visibility, a persistent 5xx) used to stay pending
+						// forever, and the 5s timer with it — a background request every
+						// 5 seconds for the life of the page. Give up after a bounded
+						// number of consecutive failures.
+						this.recordPollFailure(id);
+						return;
+					}
+					this.pollFailures.delete(String(id));
 					this.actions.dispatch(DocumentsActions.rowChanged(document));
 					if (this.isSettled(document)) {
-						this.pendingIds.delete(String(document.id));
+						this.forgetPending(document.id as ID);
 						if (document.status === DocumentStatusEnum.READY) {
 							this._documentReady$.next(document);
 							// Classification may have assigned categories/tags — refresh facets once.
@@ -275,6 +295,33 @@ export class UploadQueueService implements OnDestroy {
 						this.stopPollingIfSettled();
 					}
 				});
+		}
+		this.stopPollingIfSettled();
+	}
+
+	/** Drops a pending id and its failure counter. */
+	private forgetPending(id: ID): void {
+		this.pendingIds.delete(String(id));
+		this.pollFailures.delete(String(id));
+	}
+
+	/**
+	 * Counts a failed status fetch and gives up on the id once
+	 * `DOCS_POLL_MAX_FAILURES` consecutive attempts have failed. The queue row is
+	 * marked errored so the user sees *something* rather than a spinner that
+	 * never resolves.
+	 */
+	private recordPollFailure(id: ID): void {
+		const key = String(id);
+		const failures = (this.pollFailures.get(key) ?? 0) + 1;
+		if (failures < DOCS_POLL_MAX_FAILURES) {
+			this.pollFailures.set(key, failures);
+			return;
+		}
+		this.forgetPending(id);
+		const item = this._items$.value.find((entry) => String(entry.documentId) === key);
+		if (item && item.state !== 'error') {
+			this.patch(item.key, { state: 'error', error: 'status-unavailable' });
 		}
 		this.stopPollingIfSettled();
 	}

@@ -1,4 +1,4 @@
-import { HttpClient, HttpEvent } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpEvent, HttpEventType, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import {
@@ -16,6 +16,7 @@ import {
 	BaseEntityEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import {
 	IDocumentBulkInput,
 	IDocumentBulkResult,
@@ -25,7 +26,10 @@ import {
 	IDocumentSettings,
 	IDocumentSettingsDefaults,
 	IDocumentUploadOptions,
-	IKnowledgeStatus
+	IDocumentUploadResponse,
+	IDocumentsQueryParams,
+	IKnowledgeStatus,
+	toDocumentsQueryParams
 } from '../models/docs-api.model';
 import { IDocumentShareCreateInput, IDocumentShareUpdateInput } from '../models/docs-share.model';
 
@@ -33,25 +37,56 @@ import { IDocumentShareCreateInput, IDocumentShareUpdateInput } from '../models/
  * HTTP client for the Documents backend plugin (`@gauzy/plugin-docs`).
  * One method per endpoint — `03-backend-plugin.md` is authoritative for DTO
  * shapes and query params; provided at module level so it dies with the chunk.
+ *
+ * 🛑 The list/count/facets trio funnels every caller through
+ * `toDocumentsQueryParams()` (models/docs-api.model.ts) rather than passing the
+ * caller's object to `toParams()` verbatim: `GetDocumentsQueryDTO` runs under
+ * `ValidationPipe({ whitelist: true })`, where a *known* param with the wrong
+ * shape (a boolean `archived`, a composite `sort`, an array `kind`) is a 400
+ * that blanks the hub, and an *unknown* param is dropped silently.
  */
 @Injectable()
 export class DocumentsService {
 	private readonly API_URL = `${API_PREFIX}/plugins/docs`;
 
-	constructor(private readonly http: HttpClient) {}
+	constructor(private readonly http: HttpClient, private readonly store: Store) {}
 
 	// ─── Documents: read ─────────────────────────────────────────
 
-	getAll(params: IDocumentFindInput & { skip?: number; take?: number }): Observable<IPagination<IDocument>> {
-		return this.http.get<IPagination<IDocument>>(`${this.API_URL}/documents`, { params: toParams(params) });
+	getAll(params: IDocumentFindInput = {}): Observable<IPagination<IDocument>> {
+		return this.http.get<IPagination<IDocument>>(`${this.API_URL}/documents`, {
+			params: toParams(this.toQueryParams(params))
+		});
 	}
 
-	getCount(params: IDocumentFindInput): Observable<number> {
-		return this.http.get<number>(`${this.API_URL}/documents/count`, { params: toParams(params) });
+	getCount(params: IDocumentFindInput = {}): Observable<number> {
+		return this.http.get<number>(`${this.API_URL}/documents/count`, {
+			params: toParams(this.toQueryParams(params))
+		});
 	}
 
-	getFacets(params: IDocumentFindInput): Observable<IDocumentFacets> {
-		return this.http.get<IDocumentFacets>(`${this.API_URL}/documents/facets`, { params: toParams(params) });
+	getFacets(params: IDocumentFindInput = {}): Observable<IDocumentFacets> {
+		return this.http.get<IDocumentFacets>(`${this.API_URL}/documents/facets`, {
+			params: toParams(this.toQueryParams(params))
+		});
+	}
+
+	/**
+	 * Normalizes a caller's filter input into the wire DTO, defaulting the
+	 * organization scope from the selected organization.
+	 *
+	 * The scope is NOT optional: `BaseQueryDTO.where` is `@IsNotEmpty()`, and
+	 * `DocumentService.resolveOrganizationId()` reads the organization out of
+	 * `where` because a top-level `organizationId` is not declared on the query
+	 * DTO and `whitelist: true` strips it.
+	 */
+	private toQueryParams(params: IDocumentFindInput): IDocumentsQueryParams {
+		const organization = this.store.selectedOrganization;
+		return toDocumentsQueryParams({
+			...params,
+			organizationId: params.organizationId ?? (organization?.id as ID),
+			tenantId: params.tenantId ?? (organization?.tenantId as ID)
+		});
 	}
 
 	getById(id: ID, relations: string[] = []): Observable<IDocument> {
@@ -68,21 +103,101 @@ export class DocumentsService {
 		return this.http.put<IDocument>(`${this.API_URL}/documents/${id}`, input);
 	}
 
-	/** Multipart upload with progress events — one request per file. */
-	upload(file: File, options: IDocumentUploadOptions): Observable<HttpEvent<IDocument>> {
+	/**
+	 * Multipart batch upload with progress events.
+	 *
+	 * 🛑 The multipart field is **`files`** (that is what `LazyFilesInterceptor`
+	 * binds) and the 201 body is the `{ results, rejected }` envelope — never a
+	 * bare document. Only fields `UploadDocumentsDTO` declares are appended;
+	 * anything else would be stripped by `whitelist: true` anyway, and appending
+	 * it would only make a dead control look alive.
+	 */
+	uploadMany(files: File[], options: IDocumentUploadOptions): Observable<HttpEvent<IDocumentUploadResponse>> {
 		const formData = new FormData();
-		formData.append('file', file, file.name);
-		Object.entries(options ?? {}).forEach(([key, value]) => {
+		files.forEach((file) => formData.append('files', file, file.name));
+
+		const organization = this.store.selectedOrganization;
+		const fields: Record<string, unknown> = {
+			parentId: options?.parentId,
+			visibility: options?.visibility,
+			categoryIds: options?.categoryIds,
+			tagIds: options?.tagIds,
+			importToKnowledge: options?.importToKnowledge,
+			source: options?.source,
+			// `TenantOrganizationBaseDTO` requires an organization — the dialogs do not carry one.
+			organizationId: options?.organizationId ?? organization?.id,
+			tenantId: options?.tenantId ?? organization?.tenantId
+		};
+		Object.entries(fields).forEach(([key, value]) => {
 			if (value === undefined || value === null) return;
-			formData.append(key, Array.isArray(value) ? value.join(',') : String(value));
+			if (Array.isArray(value)) {
+				if (!value.length) return;
+				formData.append(key, value.join(','));
+				return;
+			}
+			formData.append(key, String(value));
 		});
-		return this.http.post<IDocument>(`${this.API_URL}/documents/upload`, formData, {
+
+		return this.http.post<IDocumentUploadResponse>(`${this.API_URL}/documents/upload`, formData, {
 			reportProgress: true,
 			observe: 'events'
 		});
 	}
 
-	/** Resolves the signed download URL redirect endpoint for a document. */
+	/**
+	 * Single-file convenience over `uploadMany()`: progress events pass through
+	 * untouched and the terminal response is rewritten to carry the accepted
+	 * document, so callers keep their `HttpEvent<IDocument>` contract.
+	 *
+	 * A per-file rejection is surfaced as an `HttpErrorResponse` carrying the
+	 * backend's `{ code, message }` — the batch endpoint answers 201 even when it
+	 * accepted nothing, so without this a rejected file would look like a success
+	 * with an undefined document.
+	 */
+	upload(file: File, options: IDocumentUploadOptions): Observable<HttpEvent<IDocument>> {
+		return this.uploadMany([file], options).pipe(
+			map((event) => {
+				if (event.type !== HttpEventType.Response) return event as HttpEvent<IDocument>;
+				const response = event as HttpResponse<IDocumentUploadResponse>;
+				const accepted = response.body?.results?.[0];
+				if (!accepted?.document) {
+					const rejection = response.body?.rejected?.[0];
+					throw new HttpErrorResponse({
+						status: response.status,
+						statusText: response.statusText,
+						url: response.url ?? undefined,
+						error: {
+							code: rejection?.code ?? 'DOCS_UPLOAD_REJECTED',
+							message: rejection?.message ?? 'The file was rejected by the server'
+						}
+					});
+				}
+				return response.clone({ body: accepted.document }) as HttpEvent<IDocument>;
+			})
+		);
+	}
+
+	/**
+	 * Resolves a short-lived provider URL for a FILE document's bytes.
+	 *
+	 * `GET /:id/download` answers `{ url }` **as JSON behind the JWT guard** — it
+	 * is not a redirect, so it can only be reached through the authenticated
+	 * `HttpClient`; navigating to it directly (`window.open`) sends no token and
+	 * lands on a 401 page.
+	 */
+	getDownloadUrl(id: ID): Observable<string> {
+		return this.http
+			.get<{ url: string }>(`${this.API_URL}/documents/${id}/download`)
+			.pipe(map((result) => result?.url ?? ''));
+	}
+
+	/**
+	 * Endpoint path of the download route.
+	 *
+	 * @deprecated Not navigable — see {@link getDownloadUrl}. Kept only for
+	 * templates that still bind it to an `href`; those bindings resolve to a 401
+	 * and must move to `getDownloadUrl()` + `window.open(url, '_blank')`.
+	 */
 	downloadUrl(id: ID): string {
 		return `${this.API_URL}/documents/${id}/download`;
 	}
@@ -128,9 +243,21 @@ export class DocumentsService {
 		return this.http.put<IDocument>(`${this.API_URL}/documents/${id}/extracted-text`, { extractedText });
 	}
 
-	/** PAGE content endpoint. */
+	/**
+	 * PAGE content.
+	 *
+	 * 🛑 There is **no `GET /documents/:id/content`** — the content route is
+	 * `PUT`-only (`DocumentController.updateContent`). The columns ride along on
+	 * the single-document read instead: `GET /documents/:id` returns the full
+	 * entity, unlike the *list* projection, which deliberately never selects
+	 * `contentJson`/`contentHtml`. Reading the missing route 404'd, and every
+	 * caller swallowed it — which is how export and print silently produced
+	 * empty output for pages that were not open in an editor.
+	 */
 	getContent(id: ID): Observable<{ contentJson?: unknown; contentHtml?: string }> {
-		return this.http.get<{ contentJson?: unknown; contentHtml?: string }>(`${this.API_URL}/documents/${id}/content`);
+		return this.getById(id).pipe(
+			map((document) => ({ contentJson: document?.contentJson, contentHtml: document?.contentHtml }))
+		);
 	}
 
 	/**
@@ -218,12 +345,29 @@ export class DocumentsService {
 
 	// ─── Links ───────────────────────────────────────────────────
 
+	/** Links of one document. The endpoint answers `IPagination<IDocumentLink>` — unwrapped here. */
 	getLinks(id: ID): Observable<IDocumentLink[]> {
-		return this.http.get<IDocumentLink[]>(`${this.API_URL}/documents/${id}/links`);
+		return this.http
+			.get<IPagination<IDocumentLink>>(`${this.API_URL}/documents/${id}/links`)
+			.pipe(map((result) => result?.items ?? []));
 	}
 
+	/**
+	 * Links of a business record. `GetDocumentLinksQueryDTO` carries the
+	 * organization scope, and the endpoint answers a pagination envelope.
+	 */
 	findLinks(entity: BaseEntityEnum, entityId: ID): Observable<IDocumentLink[]> {
-		return this.http.get<IDocumentLink[]>(`${this.API_URL}/links`, { params: toParams({ entity, entityId }) });
+		const organization = this.store.selectedOrganization;
+		return this.http
+			.get<IPagination<IDocumentLink>>(`${this.API_URL}/links`, {
+				params: toParams({
+					entity,
+					entityId,
+					...(organization?.id ? { organizationId: organization.id } : {}),
+					...(organization?.tenantId ? { tenantId: organization.tenantId } : {})
+				})
+			})
+			.pipe(map((result) => result?.items ?? []));
 	}
 
 	createLink(input: IDocumentLinkCreateInput): Observable<IDocumentLink> {
@@ -269,8 +413,18 @@ export class DocumentsService {
 
 	// ─── Bulk ────────────────────────────────────────────────────
 
+	/**
+	 * 🛑 `POST /documents/bulk` validates with `forbidNonWhitelisted: true`, and
+	 * `BulkDocumentActionDTO` declares **no organization scope** (the handler
+	 * takes it from the request context). An `organizationId`/`tenantId` on the
+	 * body is therefore a 400 for the whole batch, not a stripped extra — they
+	 * are dropped here so no caller can smuggle one in.
+	 */
 	bulk(input: IDocumentBulkInput): Observable<IDocumentBulkResult> {
-		return this.http.post<IDocumentBulkResult>(`${this.API_URL}/documents/bulk`, input);
+		const { organizationId, tenantId, ...payload } = input ?? ({} as IDocumentBulkInput);
+		void organizationId;
+		void tenantId;
+		return this.http.post<IDocumentBulkResult>(`${this.API_URL}/documents/bulk`, payload);
 	}
 
 	// ─── Categories ──────────────────────────────────────────────

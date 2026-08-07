@@ -2,10 +2,15 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"outDir": "../../../dist/out-tsc",
-		"module": "commonjs",
-		"moduleResolution": "node10",
+		"module": "preserve",
+		"moduleResolution": "bundler",
 		"target": "es2016",
-		"types": ["jest", "node"]
+		"types": ["jest", "node"],
+		// Matches `packages/ui-core` — without it ts-jest falls back to a resolution
+		// mode that cannot see Angular's `exports` map (`@angular/common/http`).
+		"isolatedModules": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true
 	},
 	"files": ["src/test-setup.ts"],
 	"include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]

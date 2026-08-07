@@ -45,6 +45,27 @@ export const uiPluginConfig = {
 Routes contributed by other plugins at the `'documents-sections'` page-route
 location render inside the Documents shell automatically.
 
+### Required global stylesheet — KaTeX
+
+The editor renders mathematics with `@tiptap/extension-mathematics`, which draws
+KaTeX markup into the ProseMirror DOM at runtime. Because that markup is created
+by ProseMirror rather than by an Angular template it never carries a component's
+`_ngcontent-*` attribute, so KaTeX **must** be loaded as a global stylesheet —
+an inlined component style would be rewritten by view encapsulation and match
+nothing. The host app adds it to its build `styles` (all browser targets):
+
+```jsonc
+// apps/gauzy/project.json — targets.{build,desktop-ui,server-ui}.options.styles
+"styles": [
+	/* … */
+	"node_modules/katex/dist/katex.min.css"
+]
+```
+
+Referencing the package's own stylesheet keeps its `url(fonts/…)` declarations
+resolvable (they are relative to `node_modules/katex/dist`) so the bundler emits
+the KaTeX web fonts automatically — no `assets` entry and no vendored copy.
+
 ## Building
 
 ```bash

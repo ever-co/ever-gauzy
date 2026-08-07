@@ -49,6 +49,12 @@ export class DocumentAutosaveService implements OnDestroy {
 	/** The `updatedAt` last loaded/saved — the optimistic-concurrency token. */
 	private expectedUpdatedAt: string | null = null;
 	private payloadProvider: (() => IAutosavePayload | null) | null = null;
+	/**
+	 * Bumped by every `init()`. A save started for the previous document may land
+	 * after the editor was rebuilt for another `:id`; its result must never write
+	 * the new session's token or unblock its single-flight latch.
+	 */
+	private session = 0;
 
 	private dirty = false;
 	private frozen = false;
@@ -71,12 +77,22 @@ export class DocumentAutosaveService implements OnDestroy {
 		return this.expectedUpdatedAt;
 	}
 
+	/**
+	 * Starts (or restarts) an autosave session. Restarting is what the editor does
+	 * when the route ':id' changes: every timer, latch and freeze of the previous
+	 * document is dropped so nothing from it can write into the new one.
+	 */
 	init(documentId: ID, updatedAt: string | Date | undefined, payloadProvider: () => IAutosavePayload | null): void {
+		this.clearTimers();
+		this.session += 1;
 		this.documentId = documentId;
 		this.expectedUpdatedAt = updatedAt ? new Date(updatedAt).toISOString() : null;
 		this.payloadProvider = payloadProvider;
 		this.dirty = false;
 		this.frozen = false;
+		// A save still in flight belongs to the previous session — it is ignored on
+		// arrival (session guard in `flush`), so it must not hold this one's latch.
+		this.inFlight = false;
 		this.retryCount = 0;
 		this._conflict$.next(null);
 		this._state$.next('idle');
@@ -87,22 +103,29 @@ export class DocumentAutosaveService implements OnDestroy {
 		if (this.frozen || !this.documentId) return;
 		this.dirty = true;
 		if (this.state !== 'saving') this._state$.next('dirty');
-		if (this.debounceTimer) clearTimeout(this.debounceTimer);
-		this.debounceTimer = this.schedule(() => void this.flush(), DEBOUNCE_MS);
-		if (!this.ceilingTimer) {
-			this.ceilingTimer = this.schedule(() => void this.flush(), MAX_DIRTY_MS);
-		}
+		this.armSaveTimers();
 	}
 
 	/** Manual flush (Ctrl/Cmd+S, blur, visibility change, route leave). */
 	async flush(options: { forceSnapshot?: boolean } = {}): Promise<boolean> {
 		if (!this.documentId || this.frozen) return false;
 		if (!this.dirty && !options.forceSnapshot) return true;
-		if (this.inFlight) return false; // single-flight; next flush picks up the latest state
+		// Every early return below leaves work on the table, so it must leave a timer
+		// armed too — a fired timer nulls its own handle, so without re-arming here
+		// the 15 s ceiling would never fire again and the edits would sit unsaved.
+		if (this.inFlight) {
+			this.armSaveTimers(); // single-flight; the next flush picks up the latest state
+			return false;
+		}
 
 		const payload = this.payloadProvider?.();
-		if (!payload) return false; // uploads pending — skip (spec 05 §6.6 step 6)
+		if (!payload) {
+			this.armSaveTimers(); // uploads pending — retry, don't drop (spec 05 §6.6 step 6)
+			return false;
+		}
 
+		const session = this.session;
+		const documentId = this.documentId;
 		this.clearTimers();
 		this.inFlight = true;
 		this.dirty = false;
@@ -110,7 +133,7 @@ export class DocumentAutosaveService implements OnDestroy {
 
 		try {
 			const saved: IDocument = await firstValueFrom(
-				this.documentsService.updateContent(this.documentId, {
+				this.documentsService.updateContent(documentId, {
 					contentJson: payload.contentJson,
 					contentHtml: payload.contentHtml,
 					mentionEmployeeIds: payload.mentionEmployeeIds,
@@ -118,17 +141,21 @@ export class DocumentAutosaveService implements OnDestroy {
 					forceSnapshot: options.forceSnapshot
 				})
 			);
+			// The editor moved on to another document while this was in flight —
+			// its token and state belong to a session that no longer exists.
+			if (session !== this.session) return false;
 			this.expectedUpdatedAt = saved?.updatedAt ? new Date(saved.updatedAt).toISOString() : this.expectedUpdatedAt;
 			this.retryCount = 0;
 			this.inFlight = false;
 			if (this.dirty) {
 				this._state$.next('dirty');
-				this.debounceTimer = this.schedule(() => void this.flush(), DEBOUNCE_MS);
+				this.armSaveTimers();
 			} else {
 				this._state$.next('saved');
 			}
 			return true;
 		} catch (error) {
+			if (session !== this.session) return false;
 			this.inFlight = false;
 			this.dirty = true;
 			this.handleError(error as HttpErrorResponse);
@@ -144,6 +171,18 @@ export class DocumentAutosaveService implements OnDestroy {
 		this.dirty = options.discardLocal ? false : this.dirty;
 		this._state$.next(this.dirty ? 'dirty' : 'idle');
 		if (this.dirty) this.markDirty();
+	}
+
+	/**
+	 * The lock was released (the page's own lock toggle, or a refetch that came
+	 * back unlocked). A 423 freeze has no self-clearing path, so without this the
+	 * editor stays read-only until a full reload (spec 05 §9.2 "lock respect").
+	 * A `conflict` freeze is deliberately untouched — only the page's conflict
+	 * actions resolve that one.
+	 */
+	lockReleased(updatedAt?: string | Date): void {
+		if (this.state !== 'locked') return;
+		this.resolve(updatedAt ?? this.expectedUpdatedAt ?? undefined);
 	}
 
 	/** Manual retry from the error pill. */
@@ -180,10 +219,32 @@ export class DocumentAutosaveService implements OnDestroy {
 			this.retryCount += 1;
 			this._state$.next('offline');
 			if (this.retryTimer) clearTimeout(this.retryTimer);
-			this.retryTimer = this.schedule(() => void this.flush(), delay);
+			this.retryTimer = this.schedule(() => {
+				this.retryTimer = null;
+				void this.flush();
+			}, delay);
 			return;
 		}
 		this._state$.next('error');
+	}
+
+	/**
+	 * Arms the 2 s debounce and — unless one is already running — the 15 s max-dirty
+	 * ceiling. Each timer nulls its own handle when it fires, so "already running"
+	 * stays truthful and the ceiling can always be re-armed.
+	 */
+	private armSaveTimers(): void {
+		if (this.debounceTimer) clearTimeout(this.debounceTimer);
+		this.debounceTimer = this.schedule(() => {
+			this.debounceTimer = null;
+			void this.flush();
+		}, DEBOUNCE_MS);
+		if (!this.ceilingTimer) {
+			this.ceilingTimer = this.schedule(() => {
+				this.ceilingTimer = null;
+				void this.flush();
+			}, MAX_DIRTY_MS);
+		}
 	}
 
 	private schedule(callback: () => void, delay: number): ReturnType<typeof setTimeout> {

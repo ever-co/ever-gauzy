@@ -309,17 +309,19 @@ export class DocumentsEffects {
 	 *    not silently truncate an appended grid back to one page.
 	 *  - `'facets'` — no window at all (facet counts are computed over the filter).
 	 */
-	private buildFindInput(
-		window: 'page' | 'accumulated' | 'facets' = 'page'
-	): IDocumentFindInput & { skip?: number; take?: number } {
+	private buildFindInput(window: 'page' | 'accumulated' | 'facets' = 'page'): IDocumentFindInput {
 		const { filter, folderId, pagination, view } = this.documentsStore.state;
 		const { organizationId, tenantId } = this.orgContext();
-		const input: IDocumentFindInput & { skip?: number; take?: number } = {
+		const input: IDocumentFindInput = {
 			organizationId,
 			tenantId,
+			// 🛑 `GetDocumentsQueryDTO.archived` is `@IsIn(['exclude','include','only'])`
+			// — the service maps this boolean, never send it raw.
 			archived: filter.archived,
 			relations: ['categories', 'tags']
 		};
+		// 🛑 The DTO's `kind` is a scalar `@IsEnum`. A multi-kind selection cannot be
+		// expressed server-side, so the service drops it (a wider result set beats a 400).
 		if (filter.kind.length) input.kind = filter.kind;
 		if (filter.status.length) input.status = filter.status;
 		if (filter.knowledgeStatus.length) input.knowledgeStatus = filter.knowledgeStatus;
@@ -334,14 +336,24 @@ export class DocumentsEffects {
 			// Folder scope applies only without a search — search results are flat.
 			input.parentId = folderId;
 		}
-		if (filter.createdFrom) input.createdFrom = filter.createdFrom;
-		if (filter.createdTo) input.createdTo = filter.createdTo;
-		if (filter.updatedFrom) input.updatedFrom = filter.updatedFrom;
-		if (filter.updatedTo) input.updatedTo = filter.updatedTo;
-		if (filter.sort) input.sort = `${filter.sort.field}:${filter.sort.order.toLowerCase()}`;
+		// The DTO names are `createdAt*`/`updatedAt*`; the URL param names
+		// (`createdFrom`…) are the shareable-link contract and stay as they are.
+		if (filter.createdFrom) input.createdAtFrom = filter.createdFrom;
+		if (filter.createdTo) input.createdAtTo = filter.createdTo;
+		if (filter.updatedFrom) input.updatedAtFrom = filter.updatedFrom;
+		if (filter.updatedTo) input.updatedAtTo = filter.updatedTo;
+		// Two separate params — a composite `updatedAt:desc` fails `@IsIn` on `sort`.
+		if (filter.sort) {
+			input.sort = filter.sort.field;
+			input.sortOrder = filter.sort.order;
+		}
 		if (window !== 'facets') {
 			const accumulate = window === 'accumulated' && view === 'cards' && pagination.page > 1;
-			input.skip = accumulate ? 0 : (pagination.page - 1) * pagination.pageSize;
+			// 🛑 `skip` is a 1-based PAGE NUMBER, not an offset: the API computes
+			// `offset = take × (skip − 1)`, so sending a row offset paged in steps of
+			// `pageSize²` (page 2 of 10 landed on rows 91-100). The accumulated window
+			// is one big page-1 request; the service clamps `take` to the DTO's `@Max(100)`.
+			input.skip = accumulate ? 1 : pagination.page;
 			input.take = accumulate ? pagination.page * pagination.pageSize : pagination.pageSize;
 		}
 		return input;

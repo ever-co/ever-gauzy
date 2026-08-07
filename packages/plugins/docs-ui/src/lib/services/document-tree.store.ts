@@ -3,6 +3,9 @@ import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import { DocumentKindEnum, ID, IDocument } from '@gauzy/contracts';
 import { DocumentsService } from './documents.service';
 
+/** Children fetched per branch — the query DTO caps `take` at 100. */
+const DOCS_TREE_PAGE_SIZE = 100;
+
 /** Lightweight tree node derived from IDocument (shared by tree, move dialog, breadcrumbs). */
 export interface IDocsTreeNode {
 	id: ID;
@@ -43,8 +46,12 @@ export class DocumentTreeStore {
 		const cached = this._children.get(key);
 		if (cached) return cached;
 
+		// 🛑 `'root'`, not `null`: an omitted `parentId` is a FLAT search across the
+		// whole tree, and the literal string "null" fails the DTO's `@IsUUID`. No
+		// `sort` either — `index` is not in the DTO's `@IsIn` allowlist, and tree
+		// browse (`parentId` present) already defaults to `index ASC` server-side.
 		const { items } = await firstValueFrom(
-			this.documentsService.getAll({ parentId: parentId ?? null, archived: false, sort: 'index:asc' })
+			this.documentsService.getAll({ parentId: parentId ?? 'root', archived: false, take: DOCS_TREE_PAGE_SIZE })
 		);
 		const nodes = (items ?? []).map((doc) => this.toNode(doc));
 		this._children.set(key, nodes);
@@ -96,17 +103,33 @@ export class DocumentTreeStore {
 
 	// ─── Mutation events ─────────────────────────────────────────
 
-	/** Drops the cached children of a parent (and the root list when null). */
+	/**
+	 * Drops the cached children of a parent (and the root list when null) **and
+	 * re-fetches them**.
+	 *
+	 * Dropping alone emitted an empty list — `emit()` publishes
+	 * `_children.get('')`, which is exactly what was just deleted — and nothing
+	 * else ever reloaded the roots, so `invalidate(null)` after a move/create
+	 * blanked the sidebar until a full page reload. `loadChildren` re-emits when
+	 * it settles, so the empty frame lasts only for the round trip.
+	 */
 	invalidate(parentId?: ID | null): void {
-		this._children.delete(this.keyOf(parentId ?? null));
+		const key = this.keyOf(parentId ?? null);
+		const wasLoaded = this._children.has(key);
+		this._children.delete(key);
 		this.emit();
+		// Only reload what was actually cached: invalidating a never-opened branch
+		// must not eagerly expand it.
+		if (wasLoaded) void this.loadChildren(parentId ?? null).catch(() => undefined);
 	}
 
-	/** Full cache reset (org switch, bulk mutations). */
+	/** Full cache reset (org switch, bulk mutations) — the roots are reloaded. */
 	invalidateAll(): void {
+		const hadRoots = this._children.has('');
 		this._children.clear();
 		this._byId.clear();
 		this.emit();
+		if (hadRoots) void this.loadRoots().catch(() => undefined);
 	}
 
 	/** Optimistic local re-parent; call `invalidate` on API error to revert. */

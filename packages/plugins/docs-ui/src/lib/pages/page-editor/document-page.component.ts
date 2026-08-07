@@ -1,5 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import {
+	ChangeDetectorRef,
+	Component,
+	DestroyRef,
+	HostListener,
+	OnDestroy,
+	OnInit,
+	ViewChild,
+	inject
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
@@ -14,7 +24,7 @@ import {
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Actions } from '@ngneat/effects-ng';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { firstValueFrom } from 'rxjs';
+import { distinctUntilChanged, filter, firstValueFrom, map } from 'rxjs';
 import {
 	BaseEntityEnum,
 	DocumentKindEnum,
@@ -83,6 +93,7 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	private readonly store = inject(Store);
 	private readonly actions = inject(Actions);
 	private readonly cdr = inject(ChangeDetectorRef);
+	private readonly destroyRef = inject(DestroyRef);
 
 	public readonly favoriteEntity = BaseEntityEnum.Document;
 	public readonly PermissionsEnum = PermissionsEnum;
@@ -137,7 +148,18 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
-		void this.load();
+		// The route parameter is the single trigger for loading. Angular reuses this
+		// component instance across `page/:id` navigations (duplicate, breadcrumb, a
+		// mention link), so anything that navigates only has to navigate — the old
+		// `setTimeout(() => load())` hacks raced the router and are gone.
+		this.route.paramMap
+			.pipe(
+				map((params) => params.get('id')),
+				filter((id): id is string => !!id),
+				distinctUntilChanged(),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe((id) => void this.load(id));
 	}
 
 	ngOnDestroy(): void {
@@ -161,11 +183,23 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 
 	// ─── Loading ─────────────────────────────────────────────────
 
-	async load(): Promise<void> {
-		const id = this.route.snapshot.paramMap.get('id');
+	async load(id: string | null = this.route.snapshot.paramMap.get('id')): Promise<void> {
 		if (!id) return;
+		const switching = !!this.document && String(this.document.id) !== String(id);
+		// Pending edits belong to the document being left — save them while the
+		// editor still holds it, never after the input has been swapped.
+		if (switching) await this.editorComponent?.flush();
 		this.loading = true;
 		this.loadError = false;
+		if (switching) {
+			// Per-document chrome must not survive the swap.
+			this.saveState = 'idle';
+			this.stats = null;
+			this.tocAnchors = [];
+			this.breadcrumbs = [];
+			this.versionsOpen = false;
+			this.menuOpen = false;
+		}
 		try {
 			this.document = await firstValueFrom(this.documentsService.getById(id, ['categories', 'tags']));
 			this.titleDraft = this.document?.name ?? '';
@@ -261,6 +295,9 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 				// `isLocked` is accepted by the metadata update endpoint (UpdateDocumentDTO).
 				this.documentsService.update(this.document.id, { isLocked: !this.document.isLocked } as never)
 			);
+			// A save that hit the lock froze autosave with a 423; releasing the lock
+			// here is the only thing short of a reload that can thaw it.
+			if (!this.document?.isLocked) this.editorComponent?.lockReleased(this.document);
 			this.toastrService.success(this.translate.instant('DOCS.TOASTS.UPDATED'));
 		} catch {
 			this.toastrService.danger(this.translate.instant('DOCS.ERRORS.GENERIC_RETRY'));
@@ -348,9 +385,8 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			const copy = await firstValueFrom(this.documentsService.duplicate(this.document.id));
 			this.treeStore.invalidate(this.document.parentId ?? null);
 			this.toastrService.success(this.translate.instant('DOCS.TOASTS.DUPLICATED'));
+			// The ':id' change is what reloads — see `ngOnInit`.
 			void this.router.navigate(['..', copy.id], { relativeTo: this.route });
-			// Reload for the new id.
-			setTimeout(() => void this.load());
 		} catch {
 			this.toastrService.danger(this.translate.instant('DOCS.ERRORS.GENERIC_RETRY'));
 		}
@@ -462,8 +498,8 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 
 	openBreadcrumb(node: IDocsTreeNode): void {
 		if (node.kind === DocumentKindEnum.PAGE) {
+			// The ':id' change is what reloads — see `ngOnInit`.
 			void this.router.navigate(['..', node.id], { relativeTo: this.route });
-			setTimeout(() => void this.load());
 		} else {
 			void this.router.navigate(['../..'], { relativeTo: this.route, queryParams: { folder: node.id } });
 		}
