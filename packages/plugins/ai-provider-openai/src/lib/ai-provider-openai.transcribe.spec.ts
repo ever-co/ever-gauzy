@@ -29,11 +29,18 @@ describe('openAiProviderDefinition.transcribe', () => {
 
 	/** Capture the request the provider makes, answering with `body`. */
 	const capture = (body: unknown, init: ResponseInit = { status: 200 }) => {
-		const fetchMock = jest.fn().mockResolvedValue(
-			new Response(JSON.stringify(body), {
-				headers: { 'content-type': 'application/json' },
-				...init
-			})
+		// A FRESH Response per call: a Response body is one-shot, and `mockResolvedValue` would hand
+		// every call the same instance — the second read then rejects with undici's credential-free
+		// "Body is unusable", which made the credential-leak assertion below pass against an
+		// implementation that echoes the body. (Mutation-tested: `mockResolvedValue` let exactly that
+		// defect through.)
+		const fetchMock = jest.fn().mockImplementation(() =>
+			Promise.resolve(
+				new Response(JSON.stringify(body), {
+					headers: { 'content-type': 'application/json' },
+					...init
+				})
+			)
 		);
 		global.fetch = fetchMock as unknown as typeof fetch;
 		return fetchMock;
@@ -127,5 +134,16 @@ describe('openAiProviderDefinition.transcribe', () => {
 
 		await expect(transcribe()).rejects.toThrow(/rate or quota limit/);
 		await expect(transcribe()).rejects.not.toThrow(/API key/);
+	});
+
+	it('relays the diagnostic body for a format failure, with key-shaped tokens redacted', async () => {
+		// Non-credential failures DO include the upstream body — "Invalid file format" is the one
+		// message that tells the user what to change — but defensively redacted: a proxy that routes
+		// a secret into a 400 must not put it on screen.
+		capture({ error: { message: 'Invalid file format for sk-oops-leaked' } }, { status: 400 });
+
+		await expect(transcribe()).rejects.toThrow(/audio was rejected/);
+		await expect(transcribe()).rejects.toThrow(/Invalid file format/);
+		await expect(transcribe()).rejects.not.toThrow(/sk-oops-leaked/);
 	});
 });

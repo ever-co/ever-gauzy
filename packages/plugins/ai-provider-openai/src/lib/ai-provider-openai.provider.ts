@@ -144,18 +144,27 @@ const transcribeAudio = async (
 		signal: AbortSignal.timeout(TRANSCRIBE_TIMEOUT_MS)
 	});
 	if (!response.ok) {
-		// No body echo — this request carries a credential — but the bare status code was reaching the
-		// user as "check your API key" for EVERY failure class, including quota and bad audio. Classify
-		// by status instead: same security posture, an answer the user can actually act on.
-		const reason =
-			response.status === 401 || response.status === 403
-				? 'the API key was rejected'
-				: response.status === 429
-				? 'the rate or quota limit was hit'
-				: response.status === 400
-				? 'the audio was rejected (unsupported or empty recording)'
-				: `HTTP ${response.status} ${response.statusText}`;
-		throw new Error(`OpenAI transcription failed: ${reason}`);
+		// The bare status code was reaching the user as "check your API key" for EVERY failure class,
+		// including quota and bad audio. Classify by status so the message is actionable.
+		const credentialFailure = response.status === 401 || response.status === 403;
+		const reason = credentialFailure
+			? 'the API key was rejected'
+			: response.status === 429
+			? 'the rate or quota limit was hit'
+			: response.status === 400
+			? 'the audio was rejected (unsupported or empty recording)'
+			: `HTTP ${response.status} ${response.statusText}`;
+		// The response body is genuinely diagnostic for format/limit errors ("Invalid file format"),
+		// so it is relayed — but NEVER on a credential failure, whose body echoes the API key back
+		// ("Incorrect API key provided: sk-…"), and always redacted and truncated in case a proxy
+		// routes a secret into some other status. This error's message reaches the chat user verbatim.
+		const detail = credentialFailure
+			? ''
+			: (await response.text().catch(() => ''))
+					.replace(/sk-[A-Za-z0-9_-]+/g, 'sk-***')
+					.slice(0, 300)
+					.trim();
+		throw new Error(`OpenAI transcription failed: ${reason}${detail ? ` — ${detail}` : ''}`);
 	}
 	const body = (await response.json()) as { text?: string };
 	return (body.text ?? '').trim();
