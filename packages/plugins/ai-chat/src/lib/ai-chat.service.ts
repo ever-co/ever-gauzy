@@ -19,8 +19,10 @@ import { buildRateLimitEnvelope, isRateLimitError, rateLimitRetryAfter, RATE_LIM
  * Largest dictation upload accepted, matching what the upstream speech APIs take anyway.
  *
  * Audio is user-supplied and otherwise bounded only by how long someone holds the button.
+ * Exported so the controller can declare the SAME cap as a multer `limits` on the route — one
+ * constant, two enforcement points that cannot drift.
  */
-const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+export const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
 /** Maximum agent steps (model turns incl. tool calls) per user message. */
 const MAX_STEPS = 12;
@@ -485,9 +487,11 @@ export class AiChatService {
 		if (!audio?.length) {
 			throw new BadRequestException('No audio was uploaded.');
 		}
-		// Enforced HERE, not through the interceptor's `limits`: LazyFileInterceptor spreads only
-		// `storage` and `fileFilter` into multer and drops `limits`, so a cap declared at the route
-		// would read as enforced while accepting anything. This is the only place that actually holds.
+		// Second line of defense. The route declares the same MAX_AUDIO_BYTES as a multer `limits`,
+		// which rejects an oversized upload BEFORE memoryStorage buffers it — but this check stays:
+		// it guards any future caller that does not arrive through that interceptor, and it survives
+		// the interceptor's history of silently dropping options (forwarding `limits` at all is a fix
+		// from this same change; for a while a declared cap read as enforced while holding nothing).
 		if (audio.length > MAX_AUDIO_BYTES) {
 			throw new BadRequestException(
 				`Recording is too large (${Math.round(audio.length / 1024 / 1024)}MB). The limit is ${

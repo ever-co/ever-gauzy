@@ -69,11 +69,13 @@ describe('openAiProviderDefinition.transcribe', () => {
 
 	it.each([
 		// [browser mimeType, expected filename] — OpenAI reads the CONTAINER off the extension, so a
-		// generic name is rejected even when the bytes are valid. These are the three containers a
-		// MediaRecorder actually produces across Chrome/Firefox (webm) and Safari (mp4).
+		// generic name is rejected even when the bytes are valid. webm/mp4/ogg are what MediaRecorder
+		// actually produces across Chrome/Firefox and Safari; audio/mpeg (an MP3 fed in by a future
+		// file-upload path) must map to .mp3 — the first version of this table expected .mp4 for it,
+		// which would have told OpenAI that MP3 bytes were an MP4 container.
 		['audio/webm;codecs=opus', 'dictation.webm'],
 		['audio/mp4', 'dictation.mp4'],
-		['audio/mpeg', 'dictation.mp4'],
+		['audio/mpeg', 'dictation.mp3'],
 		['audio/ogg;codecs=opus', 'dictation.ogg'],
 		['', 'dictation.webm']
 	])('names the upload from the %s container', async (mimeType, expected) => {

@@ -111,8 +111,16 @@ const transcribeAudio = async (
 	mimeType: string,
 	credentials: IAiProviderCredentials
 ): Promise<string> => {
-	const extension =
-		mimeType.includes('mp4') || mimeType.includes('mpeg') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+	// `audio/mpeg` is MP3, not MP4 — lumping it in with `mp4` named MP3 bytes `dictation.mp4`, and the
+	// extension is exactly what OpenAI trusts to identify the container. MediaRecorder never produces
+	// audio/mpeg, which is why this survived: it only bites when a caller feeds a pre-recorded file.
+	const extension = mimeType.includes('mp4')
+		? 'mp4'
+		: mimeType.includes('mpeg')
+		? 'mp3'
+		: mimeType.includes('ogg')
+		? 'ogg'
+		: 'webm';
 	const form = new FormData();
 	form.append('file', new Blob([new Uint8Array(audio)], { type: mimeType }), `dictation.${extension}`);
 	form.append('model', TRANSCRIBE_MODEL);
