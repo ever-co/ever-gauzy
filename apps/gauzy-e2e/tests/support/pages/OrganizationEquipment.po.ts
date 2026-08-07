@@ -398,12 +398,14 @@ export const selectEmployeeDropdownVisible = async () => {
 };
 
 export const clickEmployeeDropdown = async () => {
-	// As above. The employee list is fetched (org members "working" in the header range), so of the
-	// three this is the most likely to render late.
-	await dispatchClickWhenSettled(
-		OrganizationEquipmentPage.selectEmployeeDropdownCss,
-		OrganizationEquipmentPage.selectEmployeeDropdownOptionCss
-	);
+	// As above — but confirm on the PANEL ('nb-option-list'), NOT on '.option-list nb-option'. The
+	// employee list (org members "working" in the header date range) can legitimately be EMPTY — see
+	// selectEmployeeFromDropdown below, which is best-effort for exactly that state — and now that
+	// dispatchClickWhenSettled THROWS when its confirm never appears, an option-level confirm would
+	// abort the scenario in precisely the state the picker below was written to survive. The panel
+	// renders even with zero options (Nebular's nb-option-list is a bare ul.option-list around
+	// ng-content), so its appearance still proves the click landed.
+	await dispatchClickWhenSettled(OrganizationEquipmentPage.selectEmployeeDropdownCss, 'nb-option-list');
 };
 
 export const selectEmployeeFromDropdown = async (index: number) => {
