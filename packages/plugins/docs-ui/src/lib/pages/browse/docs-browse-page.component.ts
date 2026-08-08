@@ -258,7 +258,14 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 		}
 		try {
 			const document = await firstValueFrom(this.documentsService.getById(folderId, ['parent']));
-			const parent = document?.parent;
+			// The `?.` below used to sit next to a bare `document.id`/`document.name`: the
+			// guard admitted a nullish response and the very next line dereferenced it, so an
+			// empty body threw a TypeError that only the catch made look intentional.
+			if (!document) {
+				this.breadcrumb = [];
+				return;
+			}
+			const parent = document.parent;
 			this.breadcrumb = [
 				...(parent ? [{ id: parent.id as ID, name: parent.name }] : []),
 				{ id: document.id as ID, name: document.name }

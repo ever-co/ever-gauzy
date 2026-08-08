@@ -366,7 +366,15 @@ export class DocumentProcessingService {
 	private emitEvent(document: Document, type: 'created' | 'updated' | 'deleted', context: IDocumentEventContext): void {
 		try {
 			const ctx = RequestContext.currentRequestContext();
-			this._eventBus.publish(new DocumentEvent(ctx, document, type, context));
+			// `EventBus.publish` is `async`, so the catch below can only ever see a
+			// synchronous throw (the context read, the event construction) — a rejected
+			// publish would sail straight past it as an unhandled rejection. Emission is
+			// best-effort by contract, so the promise is terminated on its own channel.
+			this._eventBus
+				.publish(new DocumentEvent(ctx, document, type, context))
+				.catch((error) =>
+					this.logger.warn(`Failed to publish DocumentEvent (${type}): ${(error as Error).message}`)
+				);
 		} catch (error) {
 			this.logger.warn(`Failed to publish DocumentEvent (${type}): ${(error as Error).message}`);
 		}

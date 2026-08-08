@@ -151,5 +151,29 @@ describe('file-sniffer', () => {
 			expect(zipHasEntry(zip, (name) => name.startsWith('word/'))).toBe(true);
 			expect(zipHasEntry(zip, (name) => name.startsWith('xl/'))).toBe(false);
 		});
+
+		// The scan bounds `offset`, but reads at `index + 26` — and `indexOf` can land far
+		// past `offset`. A signature inside the trailing 29 bytes used to throw RangeError.
+		it('does not read past the end when a signature sits in the trailing bytes', () => {
+			const truncated = Buffer.alloc(120);
+			Buffer.from([0x50, 0x4b, 0x03, 0x04]).copy(truncated, 0);
+			Buffer.from([0x50, 0x4b, 0x03, 0x04]).copy(truncated, 100);
+			expect(() => zipHasEntry(truncated, () => true)).not.toThrow();
+			expect(zipHasEntry(truncated, (name) => name.startsWith('word/'))).toBe(false);
+		});
+	});
+
+	describe('truncated ZIP containers', () => {
+		// `readOdfMimetype` verified only the 4-byte signature before reading offsets
+		// 18/26/28, so a 4–29 byte buffer threw RangeError straight out of `sniffFile`.
+		// The inbound-email path calls `sniffFile` outside its try/catch, which turned one
+		// malformed attachment into a 500 for the whole webhook delivery.
+		it.each([4, 5, 16, 29])('rejects a %i-byte PK buffer without throwing', (size) => {
+			const truncated = Buffer.alloc(size);
+			Buffer.from([0x50, 0x4b, 0x03, 0x04]).copy(truncated, 0);
+			let result: ReturnType<typeof sniffFile>;
+			expect(() => (result = sniffFile(truncated, 'broken.docx', 'application/zip'))).not.toThrow();
+			expect(result.ok).toBe(false);
+		});
 	});
 });

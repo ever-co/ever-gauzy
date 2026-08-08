@@ -142,7 +142,17 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges, OnDest
 		if (!isPlatformBrowser(this._platformId)) {
 			return;
 		}
-		void this._createEditor();
+		// Fire-and-forget by necessity (a lifecycle hook cannot be awaited), so the promise
+		// has to be terminated here: `_createEditor` opens with dynamic `import()`s, which
+		// reject on a chunk-load failure — routine when a deploy invalidates hashed chunk
+		// names while a tab is open. Left floating that surfaced only as an unhandled
+		// rejection and a permanently blank editor.
+		void this._createEditor().catch((error) => {
+			console.error('[RichTextEditor] Failed to initialize the editor', error);
+			// Keep the SSR/preview markup (or the empty box) rather than a half-built view,
+			// and let the host re-render.
+			this._cdr.markForCheck();
+		});
 	}
 
 	ngOnChanges(changes: SimpleChanges): void {

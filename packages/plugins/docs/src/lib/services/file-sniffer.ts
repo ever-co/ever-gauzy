@@ -250,6 +250,14 @@ export function zipHasEntry(buffer: Buffer, predicate: (name: string) => boolean
 		if (index === -1) {
 			return false;
 		}
+		// 🛑 The loop guard bounds `offset`, but the read is at `index + 26` and `indexOf`
+		// can land arbitrarily far past `offset`. A `PK\x03\x04` sequence inside the last
+		// 29 bytes therefore made `readUInt16LE` throw RangeError instead of the sniffer
+		// simply reporting "no match". A truncated header cannot carry an entry name, and
+		// any later signature is nearer the end still, so the scan is finished.
+		if (index + 30 > buffer.length) {
+			return false;
+		}
 		const nameLength = buffer.readUInt16LE(index + 26);
 		const nameStart = index + 30;
 		if (nameStart + nameLength <= buffer.length && nameLength > 0 && nameLength < 512) {
@@ -267,7 +275,12 @@ export function zipHasEntry(buffer: Buffer, predicate: (name: string) => boolean
  * Reads the ODF `mimetype` entry (stored uncompressed as the first ZIP entry by spec).
  */
 function readOdfMimetype(buffer: Buffer): string | null {
-	if (!startsWith(buffer, [0x50, 0x4b, 0x03, 0x04])) {
+	// 🛑 `startsWith` proves only the 4-byte signature, but the fixed part of a ZIP local
+	// file header is 30 bytes and the reads below sit at offsets 18/26/28. Without the
+	// length guard a 4–29 byte buffer opening with `PK\x03\x04` threw RangeError out of
+	// `sniffFile` — and the inbound-email path calls that outside its try/catch, turning
+	// one malformed attachment into a 500 for the whole webhook delivery.
+	if (buffer.length < 30 || !startsWith(buffer, [0x50, 0x4b, 0x03, 0x04])) {
 		return null;
 	}
 	const nameLength = buffer.readUInt16LE(26);

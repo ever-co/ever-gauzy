@@ -551,7 +551,13 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	): void {
 		try {
 			const ctx = RequestContext.currentRequestContext();
-			this._eventBus.publish(new DocumentEvent(ctx, entity, type, context, input));
+			// `EventBus.publish` is `async` — see `DocumentProcessingService.emitEvent`: the
+			// catch below never sees a rejection, so terminate the promise explicitly.
+			this._eventBus
+				.publish(new DocumentEvent(ctx, entity, type, context, input))
+				.catch((error) =>
+					this.logger.warn(`Failed to publish DocumentEvent (${type}): ${(error as Error).message}`)
+				);
 		} catch (error) {
 			this.logger.warn(`Failed to publish DocumentEvent (${type}): ${(error as Error).message}`);
 		}

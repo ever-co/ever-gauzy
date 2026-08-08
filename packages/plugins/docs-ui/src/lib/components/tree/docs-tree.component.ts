@@ -87,7 +87,12 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 		this.treeStore.nodes$.pipe(untilDestroyed(this)).subscribe((nodes) => {
 			this.nodes = nodes.map((node) => ({ ...node }));
 		});
-		void this.treeStore.loadRoots();
+		// Fire-and-forget, but the promise must still be terminated: `loadRoots()` →
+		// `loadChildren()` → `firstValueFrom(getAll(...))` carries no internal catch, so a
+		// failed roots fetch would escape as an unhandled rejection. An empty sidebar is
+		// the same degradation the store already applies to its own reloads
+		// (`document-tree.store.ts` `invalidate` / `invalidateAll`).
+		void this.treeStore.loadRoots().catch(() => undefined);
 
 		// Starred documents from the shared favorites store, filtered to Documents links.
 		this.favorites$ = this.favoriteStore.favoriteItems$.pipe(
@@ -104,7 +109,9 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 			)
 			.subscribe(({ tag, item }) => {
 				const nodeId = tag.slice(TREE_MENU_TAG_PREFIX.length);
-				this.onContextAction((item as NbMenuItem & { data?: { action?: string } }).data?.action, nodeId);
+				// Deliberate fire-and-forget (a menu click cannot be awaited) — `void` is safe
+				// only because `onContextAction` now owns its failure path and never rejects.
+				void this.onContextAction((item as NbMenuItem & { data?: { action?: string } }).data?.action, nodeId);
 			});
 	}
 
@@ -183,48 +190,61 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 		return items;
 	}
 
+	/**
+	 * Runs one context-menu action.
+	 *
+	 * 🛑 **Never rejects.** The only caller is the `nbMenuService.onItemClick()` subscription,
+	 * which cannot await it, so an escaping rejection would be an unhandled one. The
+	 * `new-page` / `new-folder` / `rename` / `move` branches all `await firstValueFrom(…onClose)`
+	 * with no local guard, so the outer catch below is what actually terminates them — the
+	 * `duplicate` / `archive` branches keep their own catch and never reach it.
+	 */
 	private async onContextAction(action: string | undefined, nodeId: string): Promise<void> {
 		if (!action) return;
 		const node = this.treeStore.getNode(nodeId);
-		switch (action) {
-			case 'new-page':
-				await this.createChild(nodeId, DocumentKindEnum.PAGE);
-				break;
-			case 'new-folder':
-				await this.createChild(nodeId, DocumentKindEnum.FOLDER);
-				break;
-			case 'upload-here':
-				this.router.navigate([], {
-					relativeTo: this.route,
-					queryParams: { upload: 1, folder: nodeId },
-					queryParamsHandling: 'merge'
-				});
-				break;
-			case 'rename':
-				await this.rename(nodeId);
-				break;
-			case 'move':
-				await this.openMoveDialog(nodeId);
-				break;
-			case 'duplicate':
-				try {
-					await firstValueFrom(this.documentsService.duplicate(nodeId));
-					this.treeStore.invalidate(node?.parentId ?? null);
-					this.toastrService.success(this.getTranslation('DOCS.TOASTS.DUPLICATED'));
-				} catch (error) {
-					this.toastrService.danger(error);
-				}
-				break;
-			case 'archive':
-				try {
-					await firstValueFrom(this.documentsService.archive(nodeId));
-					this.treeStore.invalidate(node?.parentId ?? null);
-					this.actions.dispatch(DocumentsActions.rowRemoved(nodeId));
-					this.toastrService.success(this.getTranslation('DOCS.TOASTS.ARCHIVED'));
-				} catch (error) {
-					this.toastrService.danger(error);
-				}
-				break;
+		try {
+			switch (action) {
+				case 'new-page':
+					await this.createChild(nodeId, DocumentKindEnum.PAGE);
+					break;
+				case 'new-folder':
+					await this.createChild(nodeId, DocumentKindEnum.FOLDER);
+					break;
+				case 'upload-here':
+					this.router.navigate([], {
+						relativeTo: this.route,
+						queryParams: { upload: 1, folder: nodeId },
+						queryParamsHandling: 'merge'
+					});
+					break;
+				case 'rename':
+					await this.rename(nodeId);
+					break;
+				case 'move':
+					await this.openMoveDialog(nodeId);
+					break;
+				case 'duplicate':
+					try {
+						await firstValueFrom(this.documentsService.duplicate(nodeId));
+						this.treeStore.invalidate(node?.parentId ?? null);
+						this.toastrService.success(this.getTranslation('DOCS.TOASTS.DUPLICATED'));
+					} catch (error) {
+						this.toastrService.danger(error);
+					}
+					break;
+				case 'archive':
+					try {
+						await firstValueFrom(this.documentsService.archive(nodeId));
+						this.treeStore.invalidate(node?.parentId ?? null);
+						this.actions.dispatch(DocumentsActions.rowRemoved(nodeId));
+						this.toastrService.success(this.getTranslation('DOCS.TOASTS.ARCHIVED'));
+					} catch (error) {
+						this.toastrService.danger(error);
+					}
+					break;
+			}
+		} catch (error) {
+			this.toastrService.danger(error);
 		}
 	}
 

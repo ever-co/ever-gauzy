@@ -153,9 +153,15 @@ export const SLASH_COMMANDS: ISlashCommand[] = [
 		keywords: ['video', 'embed'],
 		action: (editor, range, deps) => {
 			chain(editor, range).run();
-			void deps.promptUrl('DOCS.EDITOR.SLASH.VIDEO').then((url) => {
-				if (url) editor.chain().focus().setYoutubeVideo({ src: url }).run();
-			});
+			// `.then()` alone leaves the rejection channel open: `promptUrl` awaits
+			// `firstValueFrom(ref.onClose)`, which rejects with `EmptyError` when the overlay
+			// is disposed rather than closed, and the TipTap chain below can throw too.
+			void deps
+				.promptUrl('DOCS.EDITOR.SLASH.VIDEO')
+				.then((url) => {
+					if (url) editor.chain().focus().setYoutubeVideo({ src: url }).run();
+				})
+				.catch(() => undefined);
 		}
 	},
 	{
@@ -166,9 +172,13 @@ export const SLASH_COMMANDS: ISlashCommand[] = [
 		keywords: ['embed', 'bookmark', 'url'],
 		action: (editor, range, deps) => {
 			chain(editor, range).run();
-			void deps.promptUrl('DOCS.EDITOR.SLASH.EMBED').then((url) => {
-				if (url) editor.chain().focus().insertEmbedCard({ url }).run();
-			});
+			// Same rejection channel as the `video` item above.
+			void deps
+				.promptUrl('DOCS.EDITOR.SLASH.EMBED')
+				.then((url) => {
+					if (url) editor.chain().focus().insertEmbedCard({ url }).run();
+				})
+				.catch(() => undefined);
 		}
 	},
 	{

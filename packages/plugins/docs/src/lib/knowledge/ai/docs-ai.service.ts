@@ -176,7 +176,11 @@ export class DocsAiService {
 				`durationMs=${payload.durationMs} success=${payload.success} tenant=${payload.tenantId}`
 		);
 		try {
-			void this.eventBus.publish(new DocsAiUsageEvent(payload));
+			// `void` alone left the rejection channel open — `EventBus.publish` is `async`, so
+			// the catch below only covers the synchronous event construction.
+			this.eventBus
+				.publish(new DocsAiUsageEvent(payload))
+				.catch((error) => this.logger.debug(`DocsAiUsageEvent publish failed: ${(error as Error).message}`));
 		} catch (error) {
 			this.logger.debug(`DocsAiUsageEvent publish failed: ${(error as Error).message}`);
 		}

@@ -274,7 +274,13 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 		});
 
 		this.currentDocumentId = this.document?.id ?? null;
-		this.autosave.init(this.document.id, this.document.updatedAt as never, () => this.buildPayload());
+		// `content`, `aria-label` and `currentDocumentId` above all optional-chain
+		// `this.document`; this line dereferenced it bare, so the one path those guards
+		// exist for (constructed via `afterNextRender` before the input is bound) threw
+		// here instead. Skip the autosave session rather than start one with no id.
+		if (this.document) {
+			this.autosave.init(this.document.id, this.document.updatedAt as never, () => this.buildPayload());
+		}
 		this.cdr.markForCheck();
 	}
 

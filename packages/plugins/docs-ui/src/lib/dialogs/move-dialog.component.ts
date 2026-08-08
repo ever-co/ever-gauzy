@@ -125,17 +125,32 @@ export class MoveDialogComponent extends TranslationBaseComponent implements OnI
 		super(translateService);
 	}
 
-	async ngOnInit(): Promise<void> {
-		const roots = await this.treeStore.loadRoots();
-		this.destinations = [
-			{
-				id: null,
-				name: this.getTranslation('DOCS.CARDS.BREADCRUMB_ROOT'),
-				depth: 0,
-				disabled: false
-			},
-			...this.flatten(roots, 1)
-		];
+	ngOnInit(): void {
+		void this.loadDestinations();
+	}
+
+	/**
+	 * Builds the destination list.
+	 *
+	 * 🛑 **Never rejects.** This used to be an `async ngOnInit`, whose promise Angular simply
+	 * discards: `loadRoots()` carries no internal catch, so a failed tree fetch was an
+	 * unhandled rejection *and* left `destinations` empty — the dialog then offered nothing
+	 * selectable at all, not even the root.
+	 */
+	private async loadDestinations(): Promise<void> {
+		const root: IMoveDestination = {
+			id: null,
+			name: this.getTranslation('DOCS.CARDS.BREADCRUMB_ROOT'),
+			depth: 0,
+			disabled: false
+		};
+		try {
+			const roots = await this.treeStore.loadRoots();
+			this.destinations = [root, ...this.flatten(roots, 1)];
+		} catch {
+			// The tree is unavailable — moving to the root is still a valid destination.
+			this.destinations = [root];
+		}
 	}
 
 	get filtered(): IMoveDestination[] {

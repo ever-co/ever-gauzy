@@ -1250,9 +1250,13 @@ export class LegacyImportService {
 	 */
 	private emitEvent(document: Document, type: 'created' | 'deleted'): void {
 		try {
-			this._eventBus.publish(
-				new DocumentEvent(RequestContext.currentRequestContext(), document, type, { phase: 'crud' })
-			);
+			// `EventBus.publish` is `async` — see `DocumentProcessingService.emitEvent`: the
+			// catch below never sees a rejection, so terminate the promise explicitly.
+			this._eventBus
+				.publish(new DocumentEvent(RequestContext.currentRequestContext(), document, type, { phase: 'crud' }))
+				.catch((error) =>
+					this.logger.warn(`Failed to publish DocumentEvent (${type}): ${(error as Error).message}`)
+				);
 		} catch (error) {
 			this.logger.warn(`Failed to publish DocumentEvent (${type}): ${(error as Error).message}`);
 		}
