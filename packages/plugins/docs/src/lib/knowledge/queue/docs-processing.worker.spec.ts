@@ -1,5 +1,5 @@
 /**
- * Knowledge-chain gate regression tests for the `docs-processing` worker.
+ * Knowledge-chain gate regression tests for the `docs-processing` pipeline.
  *
  * `handleExtract` (the `keepExtractedText` branch) and `handleClassify` decide whether the
  * freshly extracted text continues into `docs.chunk`. Gating that on
@@ -8,8 +8,12 @@
  * SUPERSEDED extraction forever. The gate is "in the knowledge system at all" — anything
  * other than `NONE`/`EXCLUDED`.
  *
+ * The stage logic now lives in `DocsPipelineService` (one definition, two dispatchers), so
+ * these tests drive it through `DocsProcessingWorker` — the BullMQ adapter — proving the
+ * queue path still reaches the same code.
+ *
  * `@gauzy/scheduler` and the collaborating services are mocked at the module boundary; the
- * worker under test is real.
+ * pipeline and worker under test are real.
  */
 jest.mock(
 	'@gauzy/scheduler',
@@ -30,6 +34,7 @@ jest.mock('../../docs.config', () => ({ getDocsConfig: () => ({ queueConcurrency
 
 import { DocumentKnowledgeStatusEnum } from '@gauzy/contracts';
 import { DOCS_JOB_CHUNK, DOCS_JOB_CLASSIFY } from './constants';
+import { DocsPipelineService } from './docs-pipeline.service';
 import { DocsProcessingWorker } from './docs-processing.worker';
 
 /** Every knowledge status that means "this document is in the knowledge system". */
@@ -44,7 +49,8 @@ const IN_KNOWLEDGE = [
 const OUT_OF_KNOWLEDGE = [DocumentKnowledgeStatusEnum.NONE, DocumentKnowledgeStatusEnum.EXCLUDED];
 
 /**
- * Builds the worker with stub collaborators over a document in the given knowledge status.
+ * Builds the worker (over a real pipeline with stub collaborators) for a document in the
+ * given knowledge status.
  */
 const buildWorker = (knowledgeStatus: DocumentKnowledgeStatusEnum, indexService: any = {}) => {
 	const document: any = { id: 'doc-1', tenantId: 'tenant-1', organizationId: 'org-1', knowledgeStatus };
@@ -60,14 +66,15 @@ const buildWorker = (knowledgeStatus: DocumentKnowledgeStatusEnum, indexService:
 	};
 	const classifierService: any = { classify: jest.fn().mockResolvedValue('classified') };
 
-	const worker = new DocsProcessingWorker(
+	const pipeline = new DocsPipelineService(
 		processingService,
 		queueService,
 		{} as any,
 		classifierService,
 		indexService
 	);
-	return { worker, enqueue, document };
+	const worker = new DocsProcessingWorker(pipeline);
+	return { worker, pipeline, enqueue, document };
 };
 
 /** A minimal BullMQ job stand-in. */
@@ -137,5 +144,17 @@ describe('DocsProcessingWorker — knowledge-chain gate', () => {
 
 		// INDEXED is "in the knowledge system", so the stage runs rather than aborting.
 		expect(runChunkStage).toHaveBeenCalledWith(document, expect.objectContaining({ reason: 'content-changed' }));
+	});
+
+	it('carries the BullMQ retry policy through to the stage-error handler (transient → rethrow)', async () => {
+		// `attempts: 3`, `attemptsMade: 0` → not the final attempt, so a transient error must
+		// propagate out of the worker for BullMQ to retry with backoff.
+		const transient = Object.assign(new Error('ECONNRESET'), { code: 'ECONNRESET' });
+		const runChunkStage = jest.fn().mockRejectedValue(transient);
+		const { worker, pipeline } = buildWorker(DocumentKnowledgeStatusEnum.QUEUED, { runChunkStage });
+		(pipeline as any).processingService.markKnowledgeFailed = jest.fn().mockResolvedValue(undefined);
+
+		await expect(worker.handleChunk(jobOf(DOCS_JOB_CHUNK))).rejects.toThrow('ECONNRESET');
+		expect((pipeline as any).processingService.markKnowledgeFailed).not.toHaveBeenCalled();
 	});
 });

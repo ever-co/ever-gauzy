@@ -100,6 +100,10 @@ export * from './lib/knowledge/queue/constants';
 export * from './lib/knowledge/queue/docs-job.types';
 export { DocsQueueService } from './lib/knowledge/queue/docs-queue.service';
 export { DocsRecoveryService } from './lib/knowledge/queue/docs-recovery.service';
+// The single definition of every pipeline stage + the transport-neutral job surface both the
+// BullMQ worker host and the inline runner dispatch through.
+export { DocsPipelineService } from './lib/knowledge/queue/docs-pipeline.service';
+export * from './lib/knowledge/queue/docs-pipeline.types';
 export * from './lib/knowledge/queue/docs-recovery.predicate';
 
 // Pipeline error classification

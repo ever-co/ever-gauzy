@@ -20,6 +20,13 @@ export { EVER_REDIS_CLIENT, RedisModule } from './lib/redis';
 export * from './lib/shared';
 
 export { PasswordHashModule, PasswordHashService } from './lib/password-hash';
+// `FeatureFlagGuard` is public API (exported from `./lib/shared`), so the module that provides
+// its `FeatureService` dependency has to be public too — otherwise any plugin whose controllers
+// carry `@UseGuards(..., FeatureFlagGuard)` cannot satisfy it and the whole API fails to
+// bootstrap with an `UnknownDependenciesException`.
+export { FeatureModule } from './lib/feature/feature.module';
+export { FeatureService } from './lib/feature/feature.service';
+export { FeatureOrganizationService } from './lib/feature/feature-organization.service';
 export { RoleModule, RoleService } from './lib/role';
 export { RolePermissionModule, RolePermissionService } from './lib/role-permission';
 export * from './lib/tenant';

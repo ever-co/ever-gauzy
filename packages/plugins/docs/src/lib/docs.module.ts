@@ -2,9 +2,10 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Logger, Module, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RolePermissionModule, TenantSettingModule } from '@gauzy/core';
+import { EventBusModule, FeatureModule, RolePermissionModule, TenantSettingModule } from '@gauzy/core';
 import { SchedulerModule } from '@gauzy/scheduler';
 import { ChatCaptureSubscriber } from './capture/chat-capture.subscriber';
+import { isDocsQueueEnabled } from './docs.config';
 import { GenericSignedWebhookAdapter } from './capture/generic-signed-webhook.adapter';
 import { InboundEmailController } from './capture/inbound-email.controller';
 import { InboundEmailService } from './capture/inbound-email.service';
@@ -20,6 +21,8 @@ import { EmbeddingService } from './knowledge/embedding/embedding.service';
 import { ExtractionProviders } from './knowledge/extraction';
 import { DocumentIndexService } from './knowledge/indexing/document-index.service';
 import { DOCS_PROCESSING_QUEUE } from './knowledge/queue/constants';
+import { DocsPipelineService } from './knowledge/queue/docs-pipeline.service';
+import { DOCS_PIPELINE_RUNNER } from './knowledge/queue/docs-pipeline.types';
 import { DocsProcessingWorker } from './knowledge/queue/docs-processing.worker';
 import { DocsQueueService } from './knowledge/queue/docs-queue.service';
 import { DocsRecoveryService } from './knowledge/queue/docs-recovery.service';
@@ -46,16 +49,37 @@ const KnowledgeProviders = [
 	LexicalStoreProvider
 ];
 
+/**
+ * Whether this process runs the BullMQ side of the pipeline (queue registration + worker host)
+ * or dispatches every stage inline.
+ *
+ * Evaluated once, at module-definition time, because Nest module metadata is static.
+ *
+ * 🛑 The BullMQ pieces are GATED, not unconditional: `SchedulerModule.forRoot()` is imported
+ * only by `apps/worker`, so in an API process there is no Bull root — `registerQueue()` would
+ * still build a `Queue`/`Worker` pair against BullMQ's default `localhost:6379` and retry that
+ * connection forever. `DocsQueueService` covers the gap by running stages in-process.
+ */
+const QUEUE_ENABLED = isDocsQueueEnabled();
+
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([...ALL_DOC_ENTITIES]),
 		MikroOrmModule.forFeature([...ALL_DOC_ENTITIES]),
 		RolePermissionModule, // required for TenantPermissionGuard/PermissionGuard resolution
+		// Every controller here is `@UseGuards(..., FeatureFlagGuard)` + `@FeatureFlag(FEATURE_DOCUMENTS)`,
+		// and that guard injects `FeatureService`. Without this import the guard cannot be constructed
+		// and the whole API fails to bootstrap — guards are resolved from the DECLARING module's
+		// injector, so importing the guard's class is not enough.
+		FeatureModule,
 		TenantSettingModule, // org defaults persist as namespaced tenant_setting rows
+		EventBusModule, // provides the core RxJS EventBus that DocumentService publishes DocumentEvent on
 		CqrsModule,
-		// Registers the `docs-processing` BullMQ queue against the core Redis connection;
-		// the worker host + `@ScheduledJob` reconcile are ordinary providers below.
-		SchedulerModule.forFeature({ queues: [DOCS_PROCESSING_QUEUE] })
+		// Registers the `docs-processing` BullMQ queue against the core Redis connection —
+		// only where a scheduler root with queueing can exist (see `QUEUE_ENABLED`). The
+		// `@ScheduledJob` reconcile is an ordinary provider below and is discovered by the
+		// scheduler when one is present.
+		...(QUEUE_ENABLED ? [SchedulerModule.forFeature({ queues: [DOCS_PROCESSING_QUEUE] })] : [])
 	],
 	// The legacy-import and inbound-email controllers are declared first: their static
 	// `/migrations/...` and `/inbound-email` segments must never be swallowed by the generic
@@ -71,7 +95,16 @@ const KnowledgeProviders = [
 		...CommandHandlers,
 		...QueryHandlers,
 		DocsQueueService,
-		DocsProcessingWorker,
+		// The ONE definition of every pipeline stage. Both dispatchers call it: the BullMQ
+		// worker host (queue mode) and `DocsQueueService`'s inline runner (no-scheduler mode).
+		DocsPipelineService,
+		// Token indirection so `DocsQueueService` can resolve the runner lazily without
+		// importing the class — the pipeline injects the queue service, so a direct dependency
+		// would be a DI (and CommonJS require) cycle.
+		{ provide: DOCS_PIPELINE_RUNNER, useExisting: DocsPipelineService },
+		// Only meaningful with a BullMQ root — a `@Processor` registered without one opens a
+		// stray Redis worker connection in every API process.
+		...(QUEUE_ENABLED ? [DocsProcessingWorker] : []),
 		DocsRecoveryService,
 		// M4 consolidation: reads the legacy Organization-Documents / Help-Center tables
 		// (from @gauzy/core and @gauzy/plugin-knowledge-base) strictly read-only.
@@ -98,6 +131,7 @@ const KnowledgeProviders = [
 		...ExtractionProviders,
 		...KnowledgeProviders,
 		DocsQueueService,
+		DocsPipelineService,
 		DocsRecoveryService,
 		LegacyImportService,
 		RetrievalLogService,

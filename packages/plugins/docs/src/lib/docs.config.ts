@@ -32,6 +32,7 @@ import {
 	ENV_GAUZY_DOCS_MAX_FILE_SIZE,
 	ENV_GAUZY_DOCS_ORG_QUOTA_BYTES,
 	ENV_GAUZY_DOCS_QUEUE_CONCURRENCY,
+	ENV_GAUZY_DOCS_QUEUE_ENABLED,
 	ENV_GAUZY_DOCS_RETRIEVAL_LOG_ENABLED,
 	ENV_GAUZY_DOCS_RETRIEVAL_TOPK_MAX,
 	ENV_GAUZY_DOCS_STUCK_THRESHOLD_MINUTES,
@@ -172,3 +173,22 @@ export const getDocsConfig = (): IDocsConfig => ({
 	),
 	inboundDomain: process.env[ENV_GAUZY_DOCS_INBOUND_DOMAIN] || undefined
 });
+
+/**
+ * Whether this process should register the BullMQ side of the `docs-processing` pipeline —
+ * the `docs-processing` queue and the `DocsProcessingWorker` host.
+ *
+ * Read at module-definition time by `DocsModule` (Nest module metadata is static), which is
+ * why it is a standalone helper rather than a field of {@link IDocsConfig}.
+ *
+ * Defaults to `REDIS_ENABLED === 'true'`, the same signal `@gauzy/scheduler` uses for its own
+ * `enableQueueing` default. That matters for more than tidiness: `BullModule.registerQueue()`
+ * without a `BullModule.forRoot()` connection instantiates a `Queue` (and the explorer a
+ * `Worker`) against BullMQ's default `localhost:6379`, so an API process with no Redis would
+ * open a stray, endlessly-retrying connection. When this returns false the plugin dispatches
+ * every stage inline instead — see `DocsQueueService`.
+ *
+ * @returns True when the queue + worker host should be registered.
+ */
+export const isDocsQueueEnabled = (): boolean =>
+	parseBoolEnv(ENV_GAUZY_DOCS_QUEUE_ENABLED, process.env['REDIS_ENABLED'] === 'true');
