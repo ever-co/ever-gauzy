@@ -13,7 +13,6 @@
 			"dependsOn": [
 				{
 					"target": "setup-env",
-					"projects": "self",
 					"params": "forward"
 				}
 			],
