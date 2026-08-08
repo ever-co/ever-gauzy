@@ -194,14 +194,18 @@ export const getDocsConfig = (): IDocsConfig => ({
  * Read at module-definition time by `DocsModule` (Nest module metadata is static), which is
  * why it is a standalone helper rather than a field of {@link IDocsConfig}.
  *
- * Defaults to `REDIS_ENABLED === 'true'`, the same signal `@gauzy/scheduler` uses for its own
- * `enableQueueing` default. That matters for more than tidiness: `BullModule.registerQueue()`
- * without a `BullModule.forRoot()` connection instantiates a `Queue` (and the explorer a
- * `Worker`) against BullMQ's default `localhost:6379`, so an API process with no Redis would
- * open a stray, endlessly-retrying connection. When this returns false the plugin dispatches
- * every stage inline instead — see `DocsQueueService`.
+ * 🛑 Defaults to FALSE, and the precondition is NOT "Redis is reachable" — it is "a
+ * `BullModule.forRoot()` connection is registered in THIS process". Those are different, and
+ * conflating them takes the API down: `@nestjs/bullmq`'s registrar builds a `Worker` for every
+ * `@Processor` at `onModuleInit`, and with no root it throws `Worker requires a connection`,
+ * which fails the whole Nest bootstrap. `SchedulerModule.forRoot()` is imported only by
+ * `apps/worker`, and that app does not load the plugin list — so no process that loads this
+ * plugin has a root today, whatever `REDIS_ENABLED` says.
+ *
+ * Leave it off unless you have added a Bull root to the process you are enabling it in; the
+ * plugin dispatches every stage inline instead, which is the supported path — see
+ * `DocsQueueService`.
  *
  * @returns True when the queue + worker host should be registered.
  */
-export const isDocsQueueEnabled = (): boolean =>
-	parseBoolEnv(ENV_GAUZY_DOCS_QUEUE_ENABLED, process.env['REDIS_ENABLED'] === 'true');
+export const isDocsQueueEnabled = (): boolean => parseBoolEnv(ENV_GAUZY_DOCS_QUEUE_ENABLED, false);
