@@ -1,4 +1,4 @@
-import type { LanguageModel } from 'ai';
+import type { EmbeddingModel, LanguageModel } from 'ai';
 import { AiProviderConnectType, IAiChatModel } from '@gauzy/contracts';
 
 /**
@@ -150,4 +150,21 @@ export interface IAiChatProviderDefinition {
 	 * Implementations lazily import their ESM-only provider package.
 	 */
 	createModel(modelId: string, credentials: IAiProviderCredentials): Promise<LanguageModel>;
+	/**
+	 * Optional embedding capability, used by the Documents knowledge pipeline
+	 * (`@gauzy/plugin-docs`) for chunk and query embeddings.
+	 *
+	 * Providers that support text embeddings return a Vercel AI SDK `EmbeddingModel` for the
+	 * given model id and resolved credentials, following the same lazy-ESM import pattern as
+	 * {@link createModel}. Providers without an embedding endpoint simply leave this unset —
+	 * callers MUST feature-detect (`typeof definition.createEmbeddingModel === 'function'`)
+	 * and degrade to lexical-only behavior rather than erroring.
+	 *
+	 * NOTE: in AI SDK 7 `EmbeddingModel` (from `ai`) is a non-generic union
+	 * (`string | EmbeddingModelV4 | …`) — earlier SDK majors typed it `EmbeddingModel<string>`.
+	 *
+	 * @param modelId Embedding model id (e.g. 'text-embedding-3-small').
+	 * @param credentials Resolved credentials (tenant BYOK, environment, or platform).
+	 */
+	createEmbeddingModel?(modelId: string, credentials: IAiProviderCredentials): Promise<EmbeddingModel>;
 }

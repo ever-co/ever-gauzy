@@ -467,16 +467,27 @@ export const enterInputByIndex = async (selector: string, data: string, index: n
 
 export const clearFieldByIndex = async (selector: string, index: number) => loc(selector).nth(index).clear();
 
-// Fill a CKEditor 5 rich-text field. Forms bind e.g. [formControlName="description"] to a <ckeditor>
-// host whose real editable is a nested contenteditable div (.ck-editor__editable), NOT an <input>, so
-// enterInput/clearField (.fill()/.clear()) throw "Element is not an <input>, <textarea>...". Pass the
-// ckeditor host (or any ancestor) selector; this clicks into the editable, clears it, and types text.
-export const fillCkEditor = async (selector: string, text: string) => {
-	const root = loc(selector).first();
-	const inner = root.locator('.ck-editor__editable').first();
-	const editable = (await inner.count()) > 0 ? inner : root;
+// Fill the shared <ga-rich-text-editor> rich-text form control (TipTap v3). Forms bind e.g.
+// [formControlName="description"] to a <ga-rich-text-editor> host whose real editable is a plain
+// contenteditable div (.ProseMirror) rendered in the MAIN frame — no iframe traversal (the legacy
+// editor's wysiwyg iframe is gone). The host itself is NOT an <input>, so enterInput/clearField
+// (.fill()/.clear()) throw "Element is not an <input>, <textarea>...". Pass any ancestor selector
+// scoping the target editor ('' targets the first editor on the page; use `index` when a form hosts
+// several editors). Clicks into the editable, clears it, types the text, and asserts the content
+// rendered — ProseMirror consumes the native beforeinput/keyboard events, so the component's
+// ControlValueAccessor syncs the bound form control (unlike the old iframe-body fill, which never
+// fired the legacy editor's change event).
+export const fillRichTextEditor = async (scopeSelector: string, text: string, index = 0) => {
+	const editorCss = scopeSelector
+		? `${scopeSelector} ga-rich-text-editor .ProseMirror`
+		: 'ga-rich-text-editor .ProseMirror';
+	const editable = loc(editorCss).nth(index);
+	// The editor instantiates async (preset extensions are a lazy chunk) — wait for the editable.
+	await editable.waitFor({ state: 'visible', timeout: defaultCommandTimeout });
 	await editable.click({ timeout: taskTimeout });
 	await getPage().keyboard.press('Control+A');
 	await getPage().keyboard.press('Delete');
 	await editable.pressSequentially(String(text), { timeout: taskTimeout });
+	// Assert the typed content actually landed in the editor document (and therefore the CVA value).
+	await expect(editable).toContainText(String(text), { timeout: defaultCommandTimeout });
 };

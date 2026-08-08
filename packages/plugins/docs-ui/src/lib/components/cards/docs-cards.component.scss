@@ -1,0 +1,120 @@
+:host {
+	display: block;
+}
+
+.docs-cards-breadcrumb {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.125rem;
+	margin-bottom: 0.75rem;
+
+	.docs-crumb-sep {
+		font-size: 0.875rem;
+		color: var(--text-hint-color);
+	}
+}
+
+.docs-cards-flat-hint {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	margin-bottom: 0.75rem;
+	padding: 0.375rem 0.625rem;
+	border-radius: var(--border-radius);
+	background: var(--background-basic-color-2);
+	color: var(--text-hint-color);
+	font-size: 0.8125rem;
+}
+
+.docs-cards-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+	gap: 0.75rem;
+}
+
+.docs-card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.75rem;
+	border: 1px solid var(--divider-color);
+	border-radius: var(--border-radius);
+	background: var(--background-basic-color-1);
+	cursor: pointer;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+	&:hover,
+	&:focus-visible {
+		border-color: var(--color-primary-default);
+		box-shadow: var(--shadow);
+		outline: none;
+	}
+
+	&.active {
+		border-color: var(--color-primary-default);
+	}
+
+	&.archived {
+		opacity: 0.6;
+	}
+}
+
+.docs-card-head {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-width: 0;
+
+	.docs-card-emoji {
+		font-size: 1.125rem;
+		line-height: 1;
+	}
+
+	.docs-card-name {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-weight: 600;
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	// Default-open affordance: revealed on hover/focus, always present for a11y.
+	.docs-card-open {
+		flex: 0 0 auto;
+		opacity: 0;
+		padding: 0;
+	}
+}
+
+.docs-card:hover .docs-card-open,
+.docs-card:focus-within .docs-card-open {
+	opacity: 1;
+}
+
+.docs-card-badges {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	min-height: 1.25rem;
+}
+
+.docs-card-chips {
+	min-height: 1rem;
+}
+
+.docs-card-footer {
+	display: flex;
+	justify-content: space-between;
+	margin-top: auto;
+	font-size: 0.75rem;
+	color: var(--text-hint-color);
+}
+
+.docs-cards-more {
+	display: flex;
+	justify-content: center;
+	margin-top: 1rem;
+}

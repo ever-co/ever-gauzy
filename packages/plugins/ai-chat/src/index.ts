@@ -12,6 +12,10 @@ export { BaseAiProviderPlugin } from './lib/base-ai-provider.plugin';
 export type { IAiChatModelList, IAiChatProviderDefinition, IAiProviderCredentials } from './lib/provider.types';
 export { importEsm, loadAiSdk } from './lib/esm-loader';
 
+// Chat-tool extension SPI — other plugins (e.g. @gauzy/plugin-docs) contribute per-turn tools
+export { AiChatToolRegistry } from './lib/tools/tool-registry';
+export type { AiChatToolFactory, IAiChatToolContext, IAiChatToolContribution } from './lib/tools/tool-registry';
+
 // Shared plumbing for provider model catalogues: bounded fetch, credential-keyed cache, fail-open.
 export {
 	createCatalogueCache,

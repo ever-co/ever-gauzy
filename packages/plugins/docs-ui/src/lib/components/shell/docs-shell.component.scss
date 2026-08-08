@@ -1,0 +1,66 @@
+@use 'themes' as *;
+
+:host {
+	display: block;
+	height: 100%;
+}
+
+.docs-shell {
+	display: flex;
+	align-items: stretch;
+	gap: 1rem;
+	height: 100%;
+	min-height: 0;
+}
+
+.docs-tree-column {
+	flex: 0 0 16rem;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	border-right: 1px solid nb-theme(divider-color);
+	padding-right: 0.5rem;
+	overflow-y: auto;
+
+	&.collapsed {
+		flex-basis: 2.25rem;
+	}
+
+	.docs-tree-column-header {
+		display: flex;
+		justify-content: flex-end;
+	}
+}
+
+.docs-content {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow-y: auto;
+}
+
+.docs-detail-column {
+	flex: 0 0 var(--docs-detail-width, 26rem);
+	min-width: 0;
+	border-left: 1px solid nb-theme(divider-color);
+	overflow-y: auto;
+}
+
+@media (max-width: 1200px) {
+	.docs-tree-column {
+		flex-basis: 2.25rem;
+
+		&:not(.collapsed) {
+			flex-basis: 14rem;
+		}
+	}
+
+	.docs-detail-column {
+		position: absolute;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		z-index: 10;
+		background: nb-theme(background-basic-color-1);
+		box-shadow: nb-theme(shadow);
+	}
+}

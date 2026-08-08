@@ -607,5 +607,15 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		isEnabled: features.FEATURE_ROLES_PERMISSION,
 		icon: 'home-outline',
 		status: 'primary'
+	},
+	{
+		name: 'Documents',
+		code: FeatureEnum.FEATURE_DOCUMENTS,
+		description: 'Central hub for company documents: uploads, wiki pages, review, and AI knowledge',
+		image: 'documents.png',
+		link: 'pages/documents',
+		isEnabled: features.FEATURE_DOCUMENTS,
+		icon: 'fas fa-book',
+		status: 'info'
 	}
 ];

@@ -9,6 +9,7 @@ import { AiProviderGauzyAiPlugin } from '@gauzy/plugin-ai-provider-gauzy-ai';
 import { AiProviderGeminiPlugin } from '@gauzy/plugin-ai-provider-gemini';
 import { AiProviderGrokPlugin } from '@gauzy/plugin-ai-provider-grok';
 import { ChangelogPlugin } from '@gauzy/plugin-changelog';
+import { DocsPlugin } from '@gauzy/plugin-docs';
 import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
 import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
 import { IntegrationJiraPlugin } from '@gauzy/plugin-integration-jira';
@@ -64,6 +65,8 @@ export const plugins = [
 	AiProviderGauzyAiPlugin,
 	AiProviderGeminiPlugin,
 	AiProviderGrokPlugin,
+	// Documents hub plugin — registered after the AI chat/provider plugins so the provider registry is populated first.
+	DocsPlugin,
 	// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
 	ChangelogPlugin,
 	// Indicates the inclusion or intention to use the IntegrationActivepiecesPlugin in the codebase.

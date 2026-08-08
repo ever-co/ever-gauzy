@@ -35,6 +35,7 @@ export type ComponentRegistryLocationId = 'table' | 'tab' | 'route';
  * - 'timesheet-details-sections': A sub-page under the timesheet section.
  * - 'integrations-sections': The integrations section of the application.
  * - 'accounting-sections': Children under /pages/accounting.
+ * - 'documents-sections': Children under /pages/documents.
  * - 'employees-sections': Children under /pages/employees.
  * - 'organization-sections': Children under /pages/organization.
  * - 'goals-sections': Children under /pages/goals.
@@ -57,6 +58,7 @@ export type PageRouteLocationId =
 	| 'timesheet-details-sections'
 	| 'integrations-sections'
 	| 'accounting-sections'
+	| 'documents-sections'
 	| 'employees-sections'
 	| 'organization-sections'
 	| 'goals-sections'
