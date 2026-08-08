@@ -42,6 +42,8 @@ import { DocumentsQuery } from './+state/documents.query';
 import { DocumentsStore } from './+state/documents.store';
 import { BulkBarComponent } from './components/bulk/bulk-bar.component';
 import { DocsCardsComponent } from './components/cards/docs-cards.component';
+import { CommentComposerComponent } from './components/comments/comment-composer.component';
+import { DocumentCommentsComponent } from './components/comments/document-comments.component';
 import { DocsDetailPanelComponent } from './components/detail/docs-detail-panel.component';
 import { EmptyStateComponent } from './components/empty/empty-state.component';
 import { FacetMultiselectComponent } from './components/filter-bar/facet-multiselect.component';
@@ -64,6 +66,8 @@ import { UploadProgressComponent } from './components/upload/upload-progress.com
 import { ClassificationDialogComponent } from './dialogs/classification-dialog.component';
 import { CreateDialogComponent } from './dialogs/create-dialog.component';
 import { ExtractedTextDialogComponent } from './dialogs/extracted-text-dialog.component';
+import { LegacyImportDialogComponent } from './dialogs/legacy-import-dialog.component';
+import { LegacyImportService } from './dialogs/legacy-import.service';
 import { DocumentLinkDialogComponent } from './dialogs/link-dialog.component';
 import { MoveDialogComponent } from './dialogs/move-dialog.component';
 import { RejectDialogComponent } from './dialogs/reject-dialog.component';
@@ -107,11 +111,14 @@ import { UploadQueueService } from './services/upload-queue.service';
 		UploadDropzoneDirective,
 		UploadProgressComponent,
 		DocsDetailPanelComponent,
+		DocumentCommentsComponent,
+		CommentComposerComponent,
 		BulkBarComponent,
 		EmptyStateComponent,
 		ClassificationDialogComponent,
 		CreateDialogComponent,
 		ExtractedTextDialogComponent,
+		LegacyImportDialogComponent,
 		MoveDialogComponent,
 		RejectDialogComponent,
 		RequestReviewDialogComponent,
@@ -168,7 +175,8 @@ import { UploadQueueService } from './services/upload-queue.service';
 		DocumentTreeStore,
 		UploadQueueService,
 		DocsExportService,
-		DocsSavedViewsService
+		DocsSavedViewsService,
+		LegacyImportService
 	]
 })
 export class DocsUiModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {

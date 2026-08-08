@@ -55,7 +55,8 @@ import { CsvExtractor } from '../knowledge/extraction/csv.extractor';
 import { DocxExtractor } from '../knowledge/extraction/docx.extractor';
 import { ExtractionRegistryService } from '../knowledge/extraction/extraction-registry.service';
 import { HtmlExtractor } from '../knowledge/extraction/html.extractor';
-import { PdfExtractor } from '../knowledge/extraction/pdf.extractor';
+import { IMAGE_OCR_UNAVAILABLE_MESSAGE, ImageExtractor } from '../knowledge/extraction/image.extractor';
+import { PDF_OCR_UNAVAILABLE_MESSAGE, PdfExtractor } from '../knowledge/extraction/pdf.extractor';
 import { TextExtractor } from '../knowledge/extraction/text.extractor';
 import { XlsxExtractor } from '../knowledge/extraction/xlsx.extractor';
 import { DocumentProcessingService } from './document-processing.service';
@@ -85,7 +86,7 @@ const documentRow = (overrides: Record<string, any> = {}): any => ({
  * Builds the service with the real extraction registry and a recording repository.
  * `getFile` returns whichever fixture bytes the test supplies.
  */
-const buildService = (fileBytes: Buffer) => {
+const buildService = (fileBytes: Buffer, ocrService?: any) => {
 	const updates: any[] = [];
 	const repository: any = {
 		update: jest.fn(async (_criteria: any, patch: any) => {
@@ -94,12 +95,13 @@ const buildService = (fileBytes: Buffer) => {
 		})
 	};
 	const registry = new ExtractionRegistryService(
-		new PdfExtractor(),
+		new PdfExtractor(ocrService),
 		new DocxExtractor(),
 		new XlsxExtractor(),
 		new CsvExtractor(),
 		new TextExtractor(),
-		new HtmlExtractor()
+		new HtmlExtractor(),
+		new ImageExtractor(ocrService)
 	);
 	const service = new DocumentProcessingService(
 		repository,
@@ -169,6 +171,116 @@ describe('DocumentProcessingService — extraction status/review transitions', (
 		});
 	});
 
+	/**
+	 * OCR (07 §4 rows 2 and 8) changes two things about a successful extraction and nothing
+	 * else: the text is a *transcription*, so the row is flagged for review, and the
+	 * provenance is recorded so the reviewer knows why. Status still reaches `READY`, which
+	 * is what lets `DocsPipelineService` continue the normal classify → chunk → embed → index
+	 * chain — the review flag gates AI *retrieval*, not indexing.
+	 */
+	describe('OCR-derived extraction → READY + PENDING / low-confidence', () => {
+		/** An OCR service stub that transcribes anything handed to it. */
+		const workingOcr = (overrides: Record<string, any> = {}) => ({
+			isEnabled: () => true,
+			transcribeImage: jest.fn(async () => ({
+				markdown: 'Invoice 12345\n\nTotal: 99.00',
+				provenance: {
+					pageCount: 1,
+					pagesTranscribed: 1,
+					capped: false,
+					providerId: 'openai',
+					model: 'gpt-4o-mini',
+					transcribedAt: '2026-08-08T00:00:00.000Z'
+				},
+				warnings: []
+			})),
+			transcribePdf: jest.fn(async () => ({
+				markdown: '## Page 1\n\nScanned line one',
+				provenance: {
+					pageCount: 42,
+					pagesTranscribed: 20,
+					capped: true,
+					providerId: 'openai',
+					model: 'gpt-4o-mini',
+					transcribedAt: '2026-08-08T00:00:00.000Z'
+				},
+				warnings: ['_Only the first 20 of 42 pages were transcribed._']
+			})),
+			...overrides
+		});
+
+		it('stores the transcription, reaches READY, and gates the row for review (image)', async () => {
+			const { service, updates } = buildService(createPng(), workingOcr());
+			const document = documentRow({ originalFilename: 'invoice.png', mimeType: 'image/png' });
+
+			const wrote = await service.runExtraction(document, {
+				documentId: 'doc-1',
+				tenantId: 'tenant-1',
+				organizationId: 'org-1'
+			} as any);
+
+			expect(wrote).toBe(true);
+			expect(updates[1]).toMatchObject({
+				status: DocumentStatusEnum.READY,
+				statusMessage: null,
+				reviewStatus: DocumentReviewStatusEnum.PENDING,
+				reviewReason: DocumentReviewReasonEnum.LOW_CONFIDENCE
+			});
+			expect(updates[1].extractedText).toContain('Invoice 12345');
+			// READY is the flag `handleExtract` reads to continue the chain.
+			expect(document.status).toBe(DocumentStatusEnum.READY);
+			expect(document.reviewStatus).toBe(DocumentReviewStatusEnum.PENDING);
+		});
+
+		it('records the OCR provenance (and the page cap) under metadata.extraction.ocr', async () => {
+			const { service, updates } = buildService(createScannedPdf(), workingOcr());
+			const document = documentRow({ originalFilename: 'scan.pdf', mimeType: 'application/pdf' });
+
+			await service.runExtraction(document, {
+				documentId: 'doc-1',
+				tenantId: 'tenant-1',
+				organizationId: 'org-1'
+			} as any);
+
+			expect(updates[1].metadata.extraction).toEqual(
+				expect.objectContaining({
+					pageCount: 42,
+					truncated: true,
+					warnings: ['_Only the first 20 of 42 pages were transcribed._'],
+					ocr: expect.objectContaining({ pagesTranscribed: 20, capped: true, providerId: 'openai' })
+				})
+			);
+		});
+
+		it('hands the OCR path the JOB tenant snapshot, never a request context', async () => {
+			const ocr = workingOcr();
+			const { service } = buildService(createPng(), ocr);
+			const document = documentRow({ originalFilename: 'invoice.png', mimeType: 'image/png' });
+
+			await service.runExtraction(document, {
+				documentId: 'doc-1',
+				tenantId: 'tenant-from-job',
+				organizationId: 'org-from-job'
+			} as any);
+
+			expect(ocr.transcribeImage).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({ tenantId: 'tenant-from-job', organizationId: 'org-from-job' })
+			);
+		});
+
+		it('leaves a NON-OCR extraction unflagged (the review gate is provenance-driven)', async () => {
+			const { service, updates } = buildService(createTextLayerPdf(TEXT_LAYER_PDF_PAGES), workingOcr());
+			const document = documentRow();
+
+			await service.runExtraction(document, { documentId: 'doc-1' } as any);
+
+			expect(updates[1].reviewStatus).toBeUndefined();
+			expect(updates[1].metadata.extraction.ocr).toBeUndefined();
+			expect(document.reviewStatus).toBe(DocumentReviewStatusEnum.NONE);
+		});
+	});
+
 	describe('failure path → FAILED + PENDING / extraction-failed', () => {
 		/**
 		 * The three fixture shapes that make an extractor signal a permanent failure.
@@ -195,10 +307,10 @@ describe('DocumentProcessingService — extraction status/review transitions', (
 				message: /scanned/i
 			},
 			{
-				label: 'png (no extractor — OCR is P1/M5)',
+				label: 'png with OCR unavailable',
 				bytes: createPng,
 				mimeType: 'image/png',
-				message: /No extractor supports this file type/i
+				message: /Text recognition \(OCR\) is not enabled/i
 			}
 		];
 

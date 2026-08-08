@@ -9,6 +9,7 @@ import {
 	DEFAULT_DOCS_MAX_BINARY_BYTES,
 	DEFAULT_DOCS_MAX_EXTRACTED_CHARS,
 	DEFAULT_DOCS_MAX_FILE_SIZE,
+	DEFAULT_DOCS_OCR_MAX_PAGES,
 	DEFAULT_DOCS_ORG_QUOTA_BYTES,
 	DEFAULT_DOCS_QUEUE_CONCURRENCY,
 	DEFAULT_DOCS_RETRIEVAL_TOPK_MAX,
@@ -30,6 +31,8 @@ import {
 	ENV_GAUZY_DOCS_MAX_BINARY_BYTES,
 	ENV_GAUZY_DOCS_MAX_EXTRACTED_CHARS,
 	ENV_GAUZY_DOCS_MAX_FILE_SIZE,
+	ENV_GAUZY_DOCS_OCR_ENABLED,
+	ENV_GAUZY_DOCS_OCR_MAX_PAGES,
 	ENV_GAUZY_DOCS_ORG_QUOTA_BYTES,
 	ENV_GAUZY_DOCS_QUEUE_CONCURRENCY,
 	ENV_GAUZY_DOCS_QUEUE_ENABLED,
@@ -93,6 +96,14 @@ export interface IDocsConfig {
 	inboundMaxMessageBytes: number;
 	/** Capture-address domain (`docs-<token>@<domain>`) — informational, reported in settings. */
 	inboundDomain?: string;
+	/**
+	 * Master switch for provider-vision OCR (scanned PDFs + image uploads). Off by default:
+	 * OCR is one LLM call per page, so it is opt-in spend. Also gated by {@link aiEnabled} —
+	 * OCR runs through the same provider seam as classification.
+	 */
+	ocrEnabled: boolean;
+	/** Hard cap on the pages OCR transcribes per document — the cost fuse of the OCR path. */
+	ocrMaxPages: number;
 }
 
 /**
@@ -171,7 +182,9 @@ export const getDocsConfig = (): IDocsConfig => ({
 		ENV_GAUZY_DOCS_INBOUND_MAX_MESSAGE_BYTES,
 		DEFAULT_DOCS_INBOUND_MAX_MESSAGE_BYTES
 	),
-	inboundDomain: process.env[ENV_GAUZY_DOCS_INBOUND_DOMAIN] || undefined
+	inboundDomain: process.env[ENV_GAUZY_DOCS_INBOUND_DOMAIN] || undefined,
+	ocrEnabled: parseBoolEnv(ENV_GAUZY_DOCS_OCR_ENABLED, false),
+	ocrMaxPages: parseIntEnv(ENV_GAUZY_DOCS_OCR_MAX_PAGES, DEFAULT_DOCS_OCR_MAX_PAGES)
 });
 
 /**

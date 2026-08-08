@@ -104,6 +104,30 @@ export class DocsAiService {
 	}
 
 	/**
+	 * Resolves the model OCR transcribes with — the same chat model classification uses, and
+	 * therefore the **same credential order** (tenant BYOK → environment → platform).
+	 *
+	 * Two gates come first, and both return `null` rather than throwing: the AI master switch
+	 * (`GAUZY_DOCS_AI_ENABLED`) and the OCR switch (`GAUZY_DOCS_OCR_ENABLED`). `null` means
+	 * "no vision model is available", and every caller treats that as *today's* behavior —
+	 * a scanned PDF / an image stays a permanent extraction failure. Turning OCR on is
+	 * therefore the only thing that can change an existing deployment's outcome.
+	 *
+	 * There is no separate `GAUZY_DOCS_OCR_MODEL`: the spec's environment table (§14) lists
+	 * exactly two OCR variables, and the chat default of a modern provider is vision-capable.
+	 * A deployment that wants a different model points `GAUZY_DOCS_CLASSIFY_MODEL` at it.
+	 *
+	 * @param tenantId The tenant snapshot of the job (never `RequestContext`).
+	 */
+	public async resolveVisionModel(tenantId: ID): Promise<IResolvedChatModel | null> {
+		const config = getDocsConfig();
+		if (!config.aiEnabled || !config.ocrEnabled) {
+			return null;
+		}
+		return this.resolveChatModel(tenantId);
+	}
+
+	/**
 	 * Resolves the embedding model (`GAUZY_DOCS_EMBEDDING_MODEL`) from the first provider
 	 * that (a) implements `createEmbeddingModel` (feature-detected) and (b) has usable
 	 * credentials for the tenant. No match ⇒ `null` ⇒ lexical-only indexing — never an error.

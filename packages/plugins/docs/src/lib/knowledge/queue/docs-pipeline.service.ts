@@ -6,13 +6,16 @@ import { DocumentProcessingService } from '../../services/document-processing.se
 import { DocumentClassifierService } from '../classification/document-classifier.service';
 import { DocumentIndexService } from '../indexing/document-index.service';
 import { isTransientError } from '../errors';
+import { DocumentThumbnailService } from '../thumbnail/document-thumbnail.service';
+import { isThumbnailableMime } from '../thumbnail/thumbnail.constants';
 import {
 	DOCS_JOB_CHUNK,
 	DOCS_JOB_CLASSIFY,
 	DOCS_JOB_EMBED,
 	DOCS_JOB_EXTRACT,
 	DOCS_JOB_INDEX,
-	DOCS_JOB_RECONCILE
+	DOCS_JOB_RECONCILE,
+	DOCS_JOB_THUMBNAIL
 } from './constants';
 import {
 	IDocsChunkJob,
@@ -21,7 +24,8 @@ import {
 	IDocsExtractJob,
 	IDocsIndexJob,
 	IDocsJobBase,
-	IDocsReconcileJob
+	IDocsReconcileJob,
+	IDocsThumbnailJob
 } from './docs-job.types';
 import { IDocsPipelineRunner, IDocsStageJob } from './docs-pipeline.types';
 import { DocsRecoveryService } from './docs-recovery.service';
@@ -61,7 +65,8 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 		private readonly docsQueueService: DocsQueueService,
 		private readonly recoveryService: DocsRecoveryService,
 		private readonly classifierService: DocumentClassifierService,
-		private readonly documentIndexService: DocumentIndexService
+		private readonly documentIndexService: DocumentIndexService,
+		private readonly thumbnailService: DocumentThumbnailService
 	) {}
 
 	/**
@@ -85,6 +90,8 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 				return this.handleEmbed(job as IDocsStageJob<IDocsEmbedJob>);
 			case DOCS_JOB_INDEX:
 				return this.handleIndex(job as IDocsStageJob<IDocsIndexJob>);
+			case DOCS_JOB_THUMBNAIL:
+				return this.handleThumbnail(job as IDocsStageJob<IDocsThumbnailJob>);
 			case DOCS_JOB_RECONCILE:
 				return this.handleReconcile(job as unknown as IDocsStageJob<IDocsReconcileJob>);
 			default:
@@ -128,6 +135,10 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 			await this.handleStageError(job, document, error, 'extract');
 			return;
 		}
+
+		// Best-effort, and deliberately BEFORE the classification branch so every successful
+		// extract gets one, whichever way the chain continues.
+		await this.enqueueThumbnail(document, job);
 
 		// Two runs skip classification and enter the knowledge chain directly:
 		//  - `keepExtractedText` — the human-correction guard; and
@@ -245,6 +256,31 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 	}
 
 	/**
+	 * `docs.thumbnail` — grid preview for images and the first page of PDFs (§4.4).
+	 *
+	 * 🛑 **It cannot fail a document.** The service already swallows its own errors, and this
+	 * handler swallows anything left (a snapshot load that blew up, say), because the stage
+	 * runs *after* the document is `READY`: letting a resize error reach the stage-error
+	 * policy would dead-letter a perfectly good upload over a missing 320px image. There is
+	 * no retry worth the risk here — the next reprocess regenerates it.
+	 */
+	public async handleThumbnail(job: IDocsStageJob<IDocsThumbnailJob>): Promise<void> {
+		try {
+			const document = await this.loadOrComplete(job.data, DOCS_JOB_THUMBNAIL);
+			if (!document) {
+				return;
+			}
+			const outcome = await this.thumbnailService.generate(document, job.data);
+			this.logger.log(`docs.thumbnail outcome for document ${document.id}: ${outcome}`);
+		} catch (error) {
+			this.logger.warn(
+				`docs.thumbnail failed for document ${job.data?.documentId}: ${(error as Error).message} ` +
+					'(cosmetic — the document is unaffected)'
+			);
+		}
+	}
+
+	/**
 	 * `docs.reconcile` — the every-10-minutes recovery + model-drift sweep (also enqueued
 	 * at startup).
 	 */
@@ -301,6 +337,38 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 		await this.docsQueueService.enqueue(jobName, payload, {
 			jobId: `${this.docsQueueService.jobIdFor(jobName, payload.documentId)}:${suffix}`
 		});
+	}
+
+	/**
+	 * Enqueues `docs.thumbnail` after a successful extract — best-effort in every sense.
+	 *
+	 * Two guards, both deliberate:
+	 * - formats that cannot produce a thumbnail (docx, csv, txt, html, xlsx, and every PAGE)
+	 *   are never enqueued at all, so the queue carries no work that would immediately no-op;
+	 * - the enqueue itself is wrapped, because it is the ONE part of this stage that runs on
+	 *   the extract job's error budget. An unavailable queue must not turn a successfully
+	 *   extracted document into a `FAILED` one.
+	 *
+	 * `force` is derived from the run reason: bytes that changed (`replace`) or an explicit
+	 * redo (`reindex`) regenerate; everything else honors the existing `thumbKey`.
+	 */
+	private async enqueueThumbnail(document: Document, job: IDocsStageJob<IDocsExtractJob>): Promise<void> {
+		if (!isThumbnailableMime(document.mimeType)) {
+			return;
+		}
+		try {
+			const force = job.data.reason === 'replace' || job.data.reason === 'reindex';
+			await this.enqueueChained<IDocsThumbnailJob>(
+				DOCS_JOB_THUMBNAIL,
+				{ ...this.baseOf(job.data), force },
+				job
+			);
+		} catch (error) {
+			this.logger.warn(
+				`Could not enqueue docs.thumbnail for document ${document.id}: ${(error as Error).message} ` +
+					'(cosmetic — extraction is unaffected)'
+			);
+		}
 	}
 
 	/**
@@ -392,6 +460,13 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 		);
 
 		if (jobName === DOCS_JOB_RECONCILE || !payload?.documentId) {
+			return;
+		}
+
+		// A thumbnail is cosmetic: it has no terminal state to record. Dead-lettering it as a
+		// knowledge failure would put a red `knowledgeStatus` (and a `statusMessage`) on a
+		// document whose text was extracted, chunked and indexed perfectly.
+		if (jobName === DOCS_JOB_THUMBNAIL) {
 			return;
 		}
 

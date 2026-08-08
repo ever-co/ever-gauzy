@@ -64,11 +64,28 @@
 			(dblclick)="onDefaultOpen(doc, $event)"
 			(keydown.enter)="onCardClick(doc)"
 		>
-			<div class="docs-card-head">
-				<span class="docs-card-emoji" *ngIf="doc.icon; else docEva">{{ doc.icon }}</span>
-				<ng-template #docEva>
-					<nb-icon [icon]="kindIcon(doc)" [style.color]="doc.color || null"></nb-icon>
+			<!-- Preview tile. The box is ALWAYS rendered at a fixed height, whether or not a
+			     thumbnail exists: `thumbUrl` only appears once the P1 thumbnail job has run, so
+			     a box that materialised with the image would reflow the whole grid on the next
+			     processing poll. Without one (or when the image fails to load) the tile holds
+			     the same kind icon the card used to show inline. -->
+			<div class="docs-card-thumb">
+				<img
+					*ngIf="thumbnailUrl(doc) as thumbnail; else docThumbFallback"
+					class="docs-card-thumb-image"
+					[src]="thumbnail"
+					alt=""
+					loading="lazy"
+					(error)="onThumbnailError(doc)"
+				/>
+				<ng-template #docThumbFallback>
+					<span class="docs-card-emoji" *ngIf="doc.icon; else docEva">{{ doc.icon }}</span>
+					<ng-template #docEva>
+						<nb-icon [icon]="kindIcon(doc)" [style.color]="doc.color || null"></nb-icon>
+					</ng-template>
 				</ng-template>
+			</div>
+			<div class="docs-card-head">
 				<span class="docs-card-name" [nbTooltip]="doc.summary || doc.originalFilename || doc.name">
 					{{ doc.name }}
 				</span>

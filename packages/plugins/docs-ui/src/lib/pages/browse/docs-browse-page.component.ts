@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,6 +24,10 @@ import { IDocsCardsCrumb } from '../../components/cards/docs-cards.component';
 import { DocsPreviewModalComponent } from '../../components/preview/docs-preview-modal.component';
 import { ClassificationDialogComponent } from '../../dialogs/classification-dialog.component';
 import { CreateDialogComponent } from '../../dialogs/create-dialog.component';
+import {
+	ILegacyImportDialogResult,
+	LegacyImportDialogComponent
+} from '../../dialogs/legacy-import-dialog.component';
 import { IDocumentUploadOptions } from '../../models/docs-api.model';
 import {
 	createInitialDocsFilterState,
@@ -64,6 +68,14 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 	public breadcrumb: IDocsCardsCrumb[] = [];
 	/** Live query params, handed to the saved-views control (UX spec §5). */
 	public urlParams: Params = {};
+	/** Nebular menu tag of the header overflow menu — scopes its click stream to this page. */
+	public readonly overflowMenuTag = 'docs-browse-overflow';
+	/**
+	 * Header overflow items (`DOCS_MANAGE`-only). Rebuilt on language change rather than
+	 * recomputed in the binding: `nbContextMenu` reacts to a new array reference, so a getter
+	 * would rebuild the overlay on every change-detection pass.
+	 */
+	public overflowMenu: NbMenuItem[] = [];
 
 	private readonly search$ = new Subject<string>();
 	private pendingUploadFolder: ID | null = null;
@@ -81,6 +93,7 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 		private readonly documentTreeStore: DocumentTreeStore,
 		public readonly uploadQueue: UploadQueueService,
 		private readonly dialogService: NbDialogService,
+		private readonly nbMenuService: NbMenuService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store
 	) {
@@ -168,6 +181,25 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 		});
 
 		this.canManage = this.store.hasPermission(PermissionsEnum.DOCS_MANAGE);
+
+		// 9) Header overflow menu: build it, keep it translated, and act on its clicks.
+		this.buildOverflowMenu();
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => this.buildOverflowMenu());
+		this.nbMenuService
+			.onItemClick()
+			.pipe(
+				filter(({ tag }) => tag === this.overflowMenuTag),
+				untilDestroyed(this)
+			)
+			.subscribe(({ item }) => {
+				const action = (item as NbMenuItem & { data?: { action?: string } }).data?.action;
+				if (action === 'import-legacy') {
+					// A menu click cannot be awaited; the dialog owns its own failure path.
+					void this.openLegacyImportDialog();
+				}
+			});
 	}
 
 	ngOnDestroy(): void {
@@ -461,6 +493,43 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 
 	goToReviewQueue(): void {
 		this.router.navigate(['review'], { relativeTo: this.route });
+	}
+
+	// ─── Header overflow menu ────────────────────────────────────
+
+	/** The single admin action so far — kept in a method so the labels re-translate. */
+	private buildOverflowMenu(): void {
+		this.overflowMenu = [
+			{
+				title: this.getTranslation('DOCS.MIGRATION.MENU_ITEM'),
+				icon: 'swap-outline',
+				data: { action: 'import-legacy' }
+			}
+		];
+	}
+
+	/**
+	 * Legacy consolidation dialog (`09-consolidation-migration.md` §10.4).
+	 *
+	 * The list and the tree are re-queried only when the run actually wrote something: a dry
+	 * run, a cancelled confirmation or a rollback that removed nothing all leave the hub
+	 * exactly as it was. A dialog **dismissed** with `Esc` resolves `undefined` instead of a
+	 * result, and that case refreshes — the alternative is leaving a freshly imported tree
+	 * invisible until the next navigation.
+	 *
+	 * Backdrop clicks are disabled: a run takes as long as the legacy data is big, and losing
+	 * the report to a stray click outside the card would mean re-running to see it again.
+	 */
+	async openLegacyImportDialog(): Promise<void> {
+		const result: ILegacyImportDialogResult | undefined = await firstValueFrom(
+			this.dialogService.open(LegacyImportDialogComponent, {
+				closeOnBackdropClick: false,
+				closeOnEsc: true
+			}).onClose
+		);
+		if (result && !result.changed) return;
+		this.documentTreeStore.invalidateAll();
+		this.actions.dispatch(DocumentsActions.loadDocuments());
 	}
 
 	/** Byte formatter for upload toasts (same rounding as the detail panel). */
