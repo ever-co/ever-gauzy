@@ -116,8 +116,31 @@ export function countWords(markdown: string): number {
 }
 
 /**
- * Escapes a cell value for a GitHub-style pipe table: pipes and newlines neutralized.
+ * Every character a markdown reader treats as a line ending inside a table row.
+ *
+ * The old pattern was `/\r?\n/g`, which requires an LF — but CommonMark counts a LONE CR as a
+ * line ending, so a bare `\r` walked through and split the row. U+2028 / U+2029 end a line for
+ * enough renderers (and for downstream line-splitting consumers) to be worth folding in too;
+ * they are written as escapes so no invisible byte lives in this source file.
+ *
+ * The `\r\n` alternative comes first so a CRLF collapses to ONE space, exactly as it always did.
+ */
+const CELL_LINE_BREAKS = /\r\n|[\r\n\u2028\u2029]/g;
+
+/**
+ * Escapes a cell value for a GitHub-style pipe table: pipes and line breaks neutralized.
+ *
+ * 🛑 The backslash is escaped FIRST, and that order is the whole point. This used to be
+ * `.replace(/\|/g, '\\|')` alone, so a cell whose *data* already contained `\|` came out as
+ * `\\|` — markdown reads that as "an escaped backslash, then a LIVE column separator", and one
+ * crafted value silently restructured the table (CodeQL `js/incomplete-sanitization`). Escaping
+ * the escape character first makes the encoding total: after this pass every `\` and every `|`
+ * in the output is one the function put there. A trailing backslash is covered by the same
+ * rule — unescaped, it would have escaped the table's own closing delimiter.
+ *
+ * Cell values come from attacker-supplied uploads (CSV/XLSX/DOCX/HTML), so this is the only
+ * thing keeping the extracted markdown's table structure faithful to the source data.
  */
 export function escapeTableCell(value: string): string {
-	return (value ?? '').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ').trim();
+	return (value ?? '').replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(CELL_LINE_BREAKS, ' ').trim();
 }

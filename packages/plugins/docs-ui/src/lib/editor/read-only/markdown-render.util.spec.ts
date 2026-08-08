@@ -12,9 +12,16 @@
  * neutralizes a `javascript:` URL by rewriting it to `unsafe:javascript:…` rather than
  * deleting it, so a naive `not.toContain('javascript:')` would fail while the markup is in
  * fact inert.
+ *
+ * 🛑 And `javascript:` is not the property to test for. Angular's URL check is a DENYLIST of
+ * that one scheme, so a test that only asks "did the `javascript:` go away?" passes while
+ * `data:text/html`, `data:image/svg+xml` and `vbscript:` render untouched. The dangerous-URL
+ * assertions below therefore go through `isAllowedUrl` — the app's scheme ALLOWLIST — and the
+ * matrix at the bottom pins exactly where Angular stops and the allowlist takes over.
  */
 import { DomSanitizer, ɵDomSanitizerImpl as DomSanitizerImpl } from '@angular/platform-browser';
 import { renderMarkdownToSanitizedHtml, sanitizeHtml } from './markdown-render.util';
+import { isAllowedUrl } from './safe-url.util';
 
 describe('read-only render sanitization', () => {
 	/**
@@ -69,9 +76,11 @@ describe('read-only render sanitization', () => {
 
 		it('neutralizes a javascript: URL', () => {
 			const result = sanitizeHtml('<a href="javascript:alert(1)">click</a>', sanitizer);
-			const href = parse(result).querySelector('a')?.getAttribute('href') ?? '';
+			const anchor = parse(result).querySelector('a');
 
-			expect(href.toLowerCase().startsWith('javascript:')).toBe(false);
+			// The attribute is dropped outright now, so there is nothing left to resolve.
+			expect(anchor?.hasAttribute('href')).toBe(false);
+			expect(isAllowedUrl(anchor?.getAttribute('href'))).toBe(false);
 			expect(parse(result).textContent).toContain('click');
 		});
 
@@ -85,6 +94,44 @@ describe('read-only render sanitization', () => {
 			expect(dom.querySelector('[onclick]')).toBeNull();
 			expect(dom.querySelector('[onmouseover]')).toBeNull();
 			expect(dom.querySelector('[onload]')).toBeNull();
+		});
+
+		it.each([
+			['data:text/html', '<a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==">click</a>'],
+			['vbscript:', '<a href="vbscript:msgbox(1)">click</a>'],
+			['uppercase VBScript:', '<a href="VBScript:msgbox(1)">click</a>'],
+			['entity-encoded javascript:', '<a href="&#106;avascript:alert(1)">click</a>'],
+			['tab-split javascript:', '<a href="jav&#9;ascript:alert(1)">click</a>'],
+			['newline-padded javascript:', '<a href="&#10; javascript:alert(1)">click</a>'],
+			['leading-whitespace javascript:', '<a href="   javascript:alert(1)">click</a>'],
+			['file:', '<a href="file:///etc/passwd">click</a>']
+		])('drops a %s href', (_label, html) => {
+			const anchor = parse(sanitizeHtml(html, sanitizer)).querySelector('a');
+
+			expect(anchor?.hasAttribute('href')).toBe(false);
+			// The link text survives — the content is rendered, only the URL is refused.
+			expect(anchor?.textContent).toContain('click');
+		});
+
+		it('drops a scriptable data: image source but keeps a raster one', () => {
+			const scriptable = parse(
+				sanitizeHtml('<img src="data:image/svg+xml,%3Csvg%20onload%3Dalert(1)%3E" alt="a">', sanitizer)
+			).querySelector('img');
+			const raster = parse(
+				sanitizeHtml('<img src="data:image/png;base64,iVBORw0KGgo=" alt="a">', sanitizer)
+			).querySelector('img');
+
+			expect(scriptable?.hasAttribute('src')).toBe(false);
+			expect(raster?.getAttribute('src')).toBe('data:image/png;base64,iVBORw0KGgo=');
+		});
+
+		it('drops a srcset whose candidate list smuggles a dangerous scheme', () => {
+			const image = parse(
+				sanitizeHtml('<img src="https://cdn.ever.co/a.png" srcset="vbscript:msgbox(1) 2x">', sanitizer)
+			).querySelector('img');
+
+			expect(image?.hasAttribute('srcset')).toBe(false);
+			expect(image?.getAttribute('src')).toBe('https://cdn.ever.co/a.png');
 		});
 
 		it('collapses to null when nothing survives sanitization', () => {
@@ -119,9 +166,49 @@ describe('read-only render sanitization', () => {
 
 		it('neutralizes a javascript: URL written as a markdown link', () => {
 			const dom = parse(renderMarkdownToSanitizedHtml('[click](javascript:alert(1))', sanitizer));
-			const href = dom.querySelector('a')?.getAttribute('href') ?? '';
+			const anchor = dom.querySelector('a');
 
-			expect(href.toLowerCase().startsWith('javascript:')).toBe(false);
+			expect(anchor?.hasAttribute('href')).toBe(false);
+			expect(isAllowedUrl(anchor?.getAttribute('href'))).toBe(false);
+		});
+
+		it.each([
+			['data:text/html', '[click](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)'],
+			['data:image/svg+xml', '[click](data:image/svg+xml,%3Csvg%20onload%3Dalert%281%29%3E)'],
+			['vbscript:', '[click](vbscript:msgbox%281%29)'],
+			['uppercase JavaScript:', '[click](JaVaScRiPt:alert%281%29)'],
+			['file:', '[click](file:///etc/passwd)']
+		])('drops a %s markdown link, which Angular alone lets through', (_label, markdown) => {
+			const anchor = parse(renderMarkdownToSanitizedHtml(markdown, sanitizer)).querySelector('a');
+
+			expect(anchor?.hasAttribute('href')).toBe(false);
+			expect(parse(renderMarkdownToSanitizedHtml(markdown, sanitizer)).textContent).toContain('click');
+		});
+
+		it('drops a data:image/svg+xml image source', () => {
+			const dom = parse(
+				renderMarkdownToSanitizedHtml(
+					'![x](data:image/svg+xml,%3Csvg%20onload%3Dalert%281%29%3E)',
+					sanitizer
+				)
+			);
+
+			expect(dom.querySelector('img')?.hasAttribute('src')).toBe(false);
+		});
+
+		it('keeps the links and images real content is made of', () => {
+			const dom = parse(
+				renderMarkdownToSanitizedHtml(
+					'[site](https://ever.co/a?b=1#c) [mail](mailto:ever@ever.co) [rel](/api/documents/1)' +
+						'\n\n![shot](https://cdn.ever.co/a.png)\n\n![inline](data:image/png;base64,iVBORw0KGgo=)',
+					sanitizer
+				)
+			);
+			const hrefs = Array.from(dom.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+			const sources = Array.from(dom.querySelectorAll('img')).map((img) => img.getAttribute('src'));
+
+			expect(hrefs).toEqual(['https://ever.co/a?b=1#c', 'mailto:ever@ever.co', '/api/documents/1']);
+			expect(sources).toEqual(['https://cdn.ever.co/a.png', 'data:image/png;base64,iVBORw0KGgo=']);
 		});
 
 		it('returns null for empty input', () => {

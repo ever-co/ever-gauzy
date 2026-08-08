@@ -1,3 +1,4 @@
+import * as sanitizeHtml from 'sanitize-html';
 import {
 	DocumentReviewReasonEnum,
 	DocumentReviewStatusEnum,
@@ -148,26 +149,88 @@ export function inferMimeTypeFromKey(keyOrFilename?: string | null): string | nu
 }
 
 /**
- * Conservative server-side HTML sanitization for migrated legacy content — same rule set as
- * the `DocumentService` render-cache sanitizer: strips script/style/iframe/object/embed
- * blocks, inline event handlers, and `javascript:` URLs. The canonical content remains
- * `contentJson`; this guards the `contentHtml` fidelity copy.
+ * The allowlist the migrated `contentHtml` is held to.
+ *
+ * Mirrors `RICH_HTML_SANITIZE_OPTIONS` of `@gauzy/core` (`core/html-sanitizer`) — the policy
+ * `DocumentService` runs every `contentHtml` write through — so an article that arrives via the
+ * legacy import is sanitized exactly like one saved through the API, and re-saving an imported
+ * article is a no-op. It is restated here rather than imported because this module is
+ * deliberately free of the `@gauzy/core` (Nest + TypeORM) graph so the mapping rules stay
+ * unit-testable without an application context; keep the two in step.
+ */
+const LEGACY_HTML_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+	allowedTags: [
+		// Structural
+		'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'br', 'hr',
+		// Formatting marks
+		'strong', 'b', 'em', 'i', 'u', 's', 'sub', 'sup', 'code', 'pre', 'mark', 'span',
+		// Lists / quotes / links / images
+		'ul', 'ol', 'li', 'blockquote', 'a', 'img',
+		// Tables
+		'table', 'thead', 'tbody', 'tr', 'th', 'td', 'colgroup', 'col'
+	],
+	allowedAttributes: {
+		a: ['href', 'target', 'rel'],
+		img: ['src', 'alt', 'width', 'height'],
+		ol: ['start'],
+		th: ['colspan', 'rowspan'],
+		td: ['colspan', 'rowspan'],
+		col: ['span'],
+		'*': ['style']
+	},
+	// `style` is allowed as an attribute but restricted to this safe subset of properties.
+	allowedStyles: {
+		'*': {
+			'text-align': [/^(left|right|center|justify)$/],
+			color: [/^#[0-9a-f]{3,8}$/i],
+			'background-color': [/^#[0-9a-f]{3,8}$/i],
+			'font-family': [/^[\w\s,'"-]+$/]
+		}
+	},
+	// Link schemes: http/https/mailto/tel only (no javascript:, no data:, no vbscript:).
+	allowedSchemes: ['http', 'https', 'mailto', 'tel'],
+	// Image sources: http/https only — no data:, no blob:.
+	allowedSchemesByTag: { img: ['https', 'http'] },
+	disallowedTagsMode: 'discard',
+	// Force rel="noopener noreferrer" on every link (tab-nabbing hardening).
+	transformTags: { a: sanitizeHtml.simpleTransform('a', { rel: 'noopener noreferrer' }, true) }
+};
+
+/**
+ * Server-side sanitization of migrated legacy content. The canonical content remains
+ * `contentJson`; this guards the `contentHtml` fidelity copy, which is re-rendered with
+ * `[innerHTML]`.
+ *
+ * 🛑 Parser-backed **allowlist**, never a denylist of regexes. This used to be a chain of
+ * `.replace()` calls (strip `<script|style|iframe|object|embed>` blocks, then their opening
+ * tags, then ` on*=` handlers, then `javascript:` URLs) and every one of those passes was
+ * bypassable — legacy HTML comes from an untrusted export, so all of these were reachable:
+ *
+ * - **A removal spliced a new tag together.** `<scr<style>ipt>alert(1)</script>` has no
+ *   `</style>`, so the block pass did nothing; the opening-tag pass then deleted `<style>`,
+ *   joining `<scr` to `ipt>` — the function *emitted* `<script>alert(1)</script>`. Each pass
+ *   edits the string the next one reads, and a `g` flag does not help: the cursor has already
+ *   moved past the splice point. (CodeQL `js/incomplete-multi-character-sanitization`.)
+ * - **`/` separates attributes too.** ` on\w+=` required leading whitespace, so
+ *   `<img src=x/onerror=alert(1)>` kept its handler.
+ * - **Browsers decode entities before resolving a URL.** `href="&#106;avascript:alert(1)"`
+ *   and `href="jav&Tab;ascript:alert(1)"` never matched the literal `javascript:` the regex
+ *   compared against.
+ * - **The denylist only listed what someone thought of.** `data:text/html`, `vbscript:`,
+ *   `<svg><animate onbegin=…>`, `<form>`/`<input>` were all passed straight through.
+ *
+ * A parser sees the same tags, attributes and URLs the browser will, so none of the above
+ * survives; an allowlist additionally fails closed on constructs nobody enumerated.
  *
  * @param html The raw legacy HTML.
  * @returns The sanitized HTML.
  */
 export function sanitizeLegacyHtml(html: string): string {
-	return String(html ?? '')
-		.replace(/<(script|style|iframe|object|embed)\b[\s\S]*?<\/\1>/gi, '')
-		.replace(/<(script|style|iframe|object|embed)\b[^>]*\/?>/gi, '')
-		.replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-		// `\s*(["']?)\s*` used to put two unbounded whitespace runs next to each other: when the
-		// optional quote matched empty, every way of splitting a run of spaces between them was
-		// retried, which is quadratic (~6s for an 80 KB run of spaces, measured locally) on
-		// attacker-supplied legacy HTML. Folding the whitespace into the optional quote group
-		// removes the ambiguity without changing what is matched — an unquoted `javascript:`
-		// URL still matches, and `\2` on a non-participating group still matches empty.
-		.replace(/(href|src)\s*=\s*(?:(["'])\s*)?javascript:[^"'>\s]*\2/gi, '');
+	const raw = String(html ?? '');
+	if (!raw) {
+		return '';
+	}
+	return sanitizeHtml(raw, LEGACY_HTML_SANITIZE_OPTIONS);
 }
 
 /**

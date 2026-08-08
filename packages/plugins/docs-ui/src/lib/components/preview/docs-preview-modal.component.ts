@@ -8,6 +8,7 @@ import { DocumentKindEnum, ID, IDocument } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DocumentsActions } from '../../+state/documents.actions';
 import { renderMarkdownToSanitizedHtml } from '../../editor/read-only/markdown-render.util';
+import { sanitizeMediaUrl } from '../../editor/read-only/safe-url.util';
 import { DocumentsService } from '../../services/documents.service';
 import { PdfViewerComponent } from './pdf-viewer.component';
 
@@ -48,10 +49,13 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 	 * The `blob:` object URL for the img/video/audio viewers, bound as a plain string.
 	 *
 	 * Not wrapped in `bypassSecurityTrustUrl`: `URL.createObjectURL` always returns
-	 * `blob:<origin>/<uuid>`, which Angular's URL sanitizer already passes through untouched
-	 * (it rejects only `javascript:`). The bypass was therefore doing nothing except
-	 * disabling the check that would catch this binding if the source of the URL ever
-	 * changed to something attacker-influenced.
+	 * `blob:<origin>/<uuid>`, which Angular's URL sanitizer passes through untouched. The
+	 * bypass was therefore doing nothing except disabling the check that would catch this
+	 * binding if the source of the URL ever changed to something attacker-influenced.
+	 *
+	 * 🛑 And Angular's check alone would not be enough if it did: it rejects `javascript:` and
+	 * nothing else, so `data:text/html`/`vbscript:` would sail into `<img|video|audio [src]>`.
+	 * The value is therefore assigned through `sanitizeMediaUrl`, the app's scheme allowlist.
 	 */
 	public mediaUrl: string | null = null;
 	/** Sanitized HTML, bound with `[innerHTML]` so Angular sanitizes it again on binding. */
@@ -169,7 +173,7 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 				case 'audio': {
 					this.blob = await firstValueFrom(this.documentsService.getRawBlob(this.document.id as ID));
 					this.objectUrl = URL.createObjectURL(this.blob);
-					this.mediaUrl = this.objectUrl;
+					this.mediaUrl = sanitizeMediaUrl(this.objectUrl);
 					break;
 				}
 				case 'text':

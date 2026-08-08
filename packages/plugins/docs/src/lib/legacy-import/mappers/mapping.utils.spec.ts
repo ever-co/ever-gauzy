@@ -142,6 +142,108 @@ describe('legacy-import mapping utils', () => {
 		});
 	});
 
+	/**
+	 * Bypasses of the regex denylist this function used to be (CodeQL
+	 * `js/incomplete-multi-character-sanitization` ×3).
+	 *
+	 * Every case below produced live markup out of the old chain of `.replace()` calls. They are
+	 * kept as regression tests now that the implementation is the shared parser-backed allowlist:
+	 * a denylist of regexes cannot be made complete, because each pass edits the string the next
+	 * pass reads — and a removal can splice a *new* construct together behind the cursor.
+	 */
+	describe('sanitizeLegacyHtml — bypasses of the old regex denylist', () => {
+		it('does not let a removed tag splice a live <script> together', () => {
+			// The old chain: pass 1 (`<tag>…</tag>` blocks) found no `</style>` so it did nothing;
+			// pass 2 (`<tag …>`) then deleted `<style>` — which joined `<scr` to `ipt>` and handed
+			// the output a complete, executable `<script>alert(1)</script>`.
+			const sanitized = sanitizeLegacyHtml('<scr<style>ipt>alert(1)</script>');
+
+			expect(sanitized.toLowerCase()).not.toContain('<script');
+			// What is left is inert text, not markup: the parser escapes the stray `>`.
+			expect(sanitized).not.toContain('>alert(1)');
+			expect(sanitized).toContain('&gt;');
+		});
+
+		it('does not let a removed tag splice a live <iframe> together', () => {
+			const sanitized = sanitizeLegacyHtml('<<style>iframe src="https://evil.example/x"></iframe>');
+
+			expect(sanitized.toLowerCase()).not.toContain('<iframe');
+		});
+
+		it('strips an event handler introduced by a slash instead of whitespace', () => {
+			// The handler pass required `\s` before `on…`. An HTML tokenizer also starts a new
+			// attribute after `/`, so this fired on render while the regex saw nothing.
+			// (Verified against a spec-compliant parser: `onerror` really is an attribute here.)
+			const sanitized = sanitizeLegacyHtml('<img/onerror=alert(1) src=x>');
+
+			expect(sanitized.toLowerCase()).not.toContain('onerror');
+		});
+
+		it('strips an event handler butted straight against a quoted attribute value', () => {
+			// `"` is not `\s` either, and every browser recovers from the missing separator by
+			// starting a new attribute — so `onerror` was live here too.
+			const sanitized = sanitizeLegacyHtml('<img src="x"onerror=alert(1)>');
+
+			expect(sanitized.toLowerCase()).not.toContain('onerror');
+		});
+
+		it('neutralizes an entity-encoded javascript: URL', () => {
+			// The browser decodes `&#106;` before resolving the URL; the regex compared bytes.
+			const sanitized = sanitizeLegacyHtml('<a href="&#106;avascript:alert(1)">x</a>');
+
+			expect(sanitized.toLowerCase()).not.toContain('javascript:');
+			expect(sanitized).not.toContain('&#106;avascript');
+		});
+
+		it('neutralizes a javascript: URL split by an embedded tab', () => {
+			const sanitized = sanitizeLegacyHtml('<a href="jav\tascript:alert(1)">x</a>');
+
+			expect(sanitized.replace(/\s/g, '').toLowerCase()).not.toContain('javascript:');
+		});
+
+		it('drops data: and vbscript: URLs, which the denylist never looked for', () => {
+			expect(sanitizeLegacyHtml('<a href="data:text/html;base64,PHNjcmlwdD4=">x</a>')).not.toContain('data:');
+			expect(sanitizeLegacyHtml('<a href="vbscript:msgbox(1)">x</a>')).not.toContain('vbscript:');
+			expect(sanitizeLegacyHtml('<img src="data:image/svg+xml,%3Csvg%20onload%3Dalert(1)%3E">')).not.toContain(
+				'data:'
+			);
+		});
+
+		it('drops svg/math payloads and form widgets the denylist did not enumerate', () => {
+			const sanitized = sanitizeLegacyHtml(
+				'<svg><animate onbegin="alert(1)"/></svg><form><input name="x"></form>'
+			);
+
+			expect(sanitized.toLowerCase()).not.toContain('<svg');
+			expect(sanitized.toLowerCase()).not.toContain('onbegin');
+			expect(sanitized.toLowerCase()).not.toContain('<form');
+			expect(sanitized.toLowerCase()).not.toContain('<input');
+		});
+
+		it('keeps the legitimate legacy article markup it is there to preserve', () => {
+			const sanitized = sanitizeLegacyHtml(
+				'<h2>Title</h2><p><strong>Bold</strong> and <em>italic</em></p>' +
+					'<ul><li>one</li></ul><a href="https://ever.co">link</a>' +
+					'<img src="https://cdn.ever.co/a.png" alt="a">' +
+					'<table><tr><td>cell</td></tr></table>'
+			);
+
+			expect(sanitized).toContain('<h2>Title</h2>');
+			expect(sanitized).toContain('<strong>Bold</strong>');
+			expect(sanitized).toContain('<em>italic</em>');
+			expect(sanitized).toContain('<li>one</li>');
+			expect(sanitized).toContain('https://ever.co');
+			expect(sanitized).toContain('https://cdn.ever.co/a.png');
+			expect(sanitized).toContain('cell');
+		});
+
+		it('is idempotent, so re-importing an already-migrated article is a no-op', () => {
+			const once = sanitizeLegacyHtml('<p onclick="x()">Hi <a href="https://ever.co">link</a></p>');
+
+			expect(sanitizeLegacyHtml(once)).toBe(once);
+		});
+	});
+
 	describe('legacy HTML sanitization cost (ReDoS regression)', () => {
 		/**
 		 * Legacy HTML arrives from an untrusted export and is sanitized on the request thread.

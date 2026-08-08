@@ -2,6 +2,7 @@ import { Injectable, SecurityContext, inject } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { DocumentKindEnum, ID, IDocument } from '@gauzy/contracts';
+import { stripUnsafeUrls } from '../editor/read-only/safe-url.util';
 import { DocumentsService } from './documents.service';
 
 /** What the caller already has in hand, so the service does not refetch it. */
@@ -187,16 +188,29 @@ export class DocsExportService {
 		}
 	}
 
+	/**
+	 * The exported/printed document carries the same attacker-controlled content the read view
+	 * does, so it gets the same two passes: Angular's structural allowlist, then the app's URL
+	 * scheme allowlist — Angular's own URL check only rejects `javascript:`, which would leave a
+	 * `data:text/html` or `vbscript:` link live in the exported file (see `safe-url.util.ts`).
+	 */
 	private sanitize(html: string): string {
-		return this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '';
+		return stripUnsafeUrls(this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '');
 	}
 
+	/**
+	 * HTML-escapes a text value. `&` is replaced FIRST so the escapes below cannot be
+	 * re-escaped, and the single quote is included so the result is safe in a single-quoted
+	 * attribute too — an escaper that covers only some of the characters in its class is the
+	 * bug this file should not repeat.
+	 */
 	private escape(text: string): string {
 		return text
 			.replace(/&/g, '&amp;')
 			.replace(/</g, '&lt;')
 			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;');
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
 	}
 
 	/** Print stylesheet mirrors the editor's reading column (spec 05 §9.1 tier 3). */

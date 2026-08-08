@@ -11,7 +11,7 @@
  * These tests pin both halves of that change: the normalization semantics are unchanged
  * (only spaces and tabs go, and only from the end of a line), and the cost stays linear.
  */
-import { normalizeMarkdown } from './extractor.interface';
+import { escapeTableCell, normalizeMarkdown } from './extractor.interface';
 
 /** Characters built from char codes so no invisible bytes live in this source file. */
 const ch = (code: number) => String.fromCharCode(code);
@@ -19,6 +19,9 @@ const NUL = ch(0x00);
 const BOM = ch(0xfeff);
 const VERTICAL_TAB = ch(0x0b);
 const FORM_FEED = ch(0x0c);
+const CR = ch(0x0d);
+const LINE_SEPARATOR = ch(0x2028);
+const PARAGRAPH_SEPARATOR = ch(0x2029);
 
 describe('normalizeMarkdown', () => {
 	it('strips a leading BOM and every NUL byte', () => {
@@ -77,5 +80,66 @@ describe('normalizeMarkdown', () => {
 		expect(elapsed).toBeLessThan(100);
 		// `.trim()` removes the leading run; the `x` survives.
 		expect(result).toBe('x');
+	});
+});
+
+/**
+ * `escapeTableCell` is the ONLY thing standing between an attacker-supplied cell value and the
+ * structure of the pipe table every table-producing extractor (CSV, XLSX, DOCX, HTML) emits.
+ *
+ * It escaped `|` with a backslash but never escaped the backslash itself, so `\|` in the source
+ * data came out as `\\|` — which markdown reads as "an escaped backslash, then a LIVE cell
+ * separator" (CodeQL `js/incomplete-sanitization`). It also only removed `\r\n`/`\n`, leaving a
+ * lone `\r` — a line ending in CommonMark — free to split the row.
+ */
+describe('escapeTableCell', () => {
+	/**
+	 * Counts pipes that markdown would read as cell separators: a backslash escapes exactly the
+	 * character that follows it, so a pipe is live only when an even number of backslashes
+	 * precedes it. This is the property that matters, rather than the exact escaped spelling.
+	 */
+	const liveSeparators = (cell: string): number => {
+		let count = 0;
+		for (let index = 0; index < cell.length; index++) {
+			if (cell[index] === '\\') {
+				index++; // the next character is escaped, whatever it is
+				continue;
+			}
+			if (cell[index] === '|') {
+				count++;
+			}
+		}
+		return count;
+	};
+
+	it('escapes a plain pipe', () => {
+		expect(liveSeparators(escapeTableCell('a|b'))).toBe(0);
+	});
+
+	it('escapes the backslash, so a pre-escaped pipe cannot re-open the cell', () => {
+		// Source value: a \ | b. The old output `a\\|b` renders as a literal backslash followed
+		// by a real column break — one crafted cell silently restructured the whole table.
+		expect(liveSeparators(escapeTableCell('a\\|b'))).toBe(0);
+	});
+
+	it('escapes a trailing backslash, which would otherwise escape the cell delimiter itself', () => {
+		// Rendered as `| a\ |`, the trailing backslash escapes the table's own closing pipe.
+		expect(escapeTableCell('a\\').endsWith('\\\\')).toBe(true);
+	});
+
+	it('removes every line ending, not just \\n and \\r\\n', () => {
+		const escaped = escapeTableCell(`a${CR}b\nc\r\nd${LINE_SEPARATOR}e${PARAGRAPH_SEPARATOR}f`);
+
+		expect(escaped).not.toContain(CR);
+		expect(escaped).not.toContain('\n');
+		expect(escaped).not.toContain(LINE_SEPARATOR);
+		expect(escaped).not.toContain(PARAGRAPH_SEPARATOR);
+		expect(escaped).toContain('a b c d e f');
+	});
+
+	it('leaves ordinary text untouched', () => {
+		expect(escapeTableCell('  plain value  ')).toBe('plain value');
+		expect(escapeTableCell(null as unknown as string)).toBe('');
+		expect(escapeTableCell(undefined as unknown as string)).toBe('');
 	});
 });

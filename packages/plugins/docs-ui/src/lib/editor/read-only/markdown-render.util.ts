@@ -1,6 +1,7 @@
 import { SecurityContext } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { marked } from 'marked';
+import { stripUnsafeUrls } from './safe-url.util';
 
 /**
  * Shared read-only markdown render path (`01-ux-spec.md` §9, `05-editor-spec.md`
@@ -41,11 +42,19 @@ export function renderMarkdownToSanitizedHtml(
  * neutralized output and so an empty result collapses to `null`) and Angular's own on
  * binding. Allowlist sanitization is idempotent, so the rendered output is unchanged.
  *
+ * 🛑 Angular's pass is NOT sufficient on its own for URLs. Its URL check is a denylist of a
+ * single scheme (`javascript:`), so `data:text/html;base64,…`, `data:image/svg+xml,…` and
+ * `vbscript:…` all come back untouched — see `safe-url.util.ts`, which holds the app's
+ * scheme ALLOWLIST and is applied here to every `href`/`src` Angular let through. Running it
+ * after Angular means it works on parsed, already-structurally-safe markup.
+ *
  * @param html Untrusted HTML.
  * @param sanitizer Angular's `DomSanitizer`.
  * @returns Sanitized HTML — or `null` when nothing survives sanitization.
  */
 export function sanitizeHtml(html: string | null | undefined, sanitizer: DomSanitizer): string | null {
 	if (!html) return null;
-	return sanitizer.sanitize(SecurityContext.HTML, html) || null;
+	const sanitized = sanitizer.sanitize(SecurityContext.HTML, html);
+	if (!sanitized) return null;
+	return stripUnsafeUrls(sanitized) || null;
 }
