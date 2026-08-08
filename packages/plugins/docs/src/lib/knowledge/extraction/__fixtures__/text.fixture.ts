@@ -27,7 +27,7 @@ export const CSV_EDGE_CASES = [
 /** The same data as {@link CSV_EDGE_CASES} but semicolon-delimited (European export). */
 export const CSV_SEMICOLON = ['name;amount;owner', 'Acme;120;ana', '"Smith; Jones";45;bo'].join('\n');
 
-/** Tab-separated variant — the third delimiter the detector has to recognise. */
+/** Tab-separated variant — the third delimiter the detector has to recognize. */
 export const CSV_TAB = ['name\tamount\towner', 'Acme\t120\tana'].join('\n');
 
 /**
@@ -87,7 +87,7 @@ export const HTML_REQUIRING_SANITIZATION = [
 
 /**
  * HTML with a header-less table — the shape Word exports and hand-written pages use.
- * `turndown-plugin-gfm` only recognises a table whose first row is `<th>`, so this is the
+ * `turndown-plugin-gfm` only recognizes a table whose first row is `<th>`, so this is the
  * fixture that proves header-less tables still become markdown rather than raw HTML.
  */
 export const HTML_HEADERLESS_TABLE = [
