@@ -31,13 +31,13 @@
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
-		"@nestjs/swagger": "^11.2.6",
+		"@nestjs/swagger": "^11.4.4",
 		"ai": "^7.0.15",
 		"@ai-sdk/mcp": "^2.0.7",
 		"chalk": "^4.1.0",
 		"express": "^5.2.1",
 		"rxjs": "^7.8.2",
-		"zod": "^4.1.13"
+		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
@@ -45,8 +45,8 @@
 		"typescript": "^5.9.3"
 	},
 	"peerDependencies": {
-		"@nestjs/common": "^11.1.14",
-		"@nestjs/core": "^11.1.14"
+		"@nestjs/common": "^11.1.26",
+		"@nestjs/core": "^11.1.26"
 	},
 	"keywords": [
 		"Ever Gauzy",

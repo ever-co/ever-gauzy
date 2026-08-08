@@ -53,7 +53,7 @@
 		"uuid": "^14.0.0"
 	},
 	"devDependencies": {
-		"@types/express": "^5.0.1",
+		"@types/express": "^5.0.3",
 		"@types/fs-extra": "5.0.2",
 		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
@@ -78,5 +78,3 @@
 	},
 	"sideEffects": false
 }
-
-
