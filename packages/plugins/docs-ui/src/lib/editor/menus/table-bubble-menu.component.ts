@@ -6,7 +6,9 @@ import {
 	ElementRef,
 	Input,
 	NgZone,
+	OnChanges,
 	OnDestroy,
+	SimpleChanges,
 	ViewChild,
 	inject
 } from '@angular/core';
@@ -118,7 +120,7 @@ const pluginKey = new PluginKey('gzTableBubbleMenu');
 		`
 	]
 })
-export class TableBubbleMenuComponent implements AfterViewInit, OnDestroy {
+export class TableBubbleMenuComponent implements AfterViewInit, OnChanges, OnDestroy {
 	@Input({ required: true }) editor!: Editor;
 
 	@ViewChild('menu', { static: true }) menuRef!: ElementRef<HTMLElement>;
@@ -127,6 +129,13 @@ export class TableBubbleMenuComponent implements AfterViewInit, OnDestroy {
 	private readonly zone = inject(NgZone);
 
 	private readonly onTransaction = () => this.zone.run(() => this.cdr.markForCheck());
+
+	/**
+	 * The `Editor` this component's ProseMirror plugin and listener are currently
+	 * registered against — deliberately *not* read back off `this.editor`, which the
+	 * parent re-points before the teardown of the previous registration can run.
+	 */
+	private attached: Editor | null = null;
 
 	get canMerge(): boolean {
 		return this.editor?.can().mergeCells() ?? false;
@@ -137,22 +146,56 @@ export class TableBubbleMenuComponent implements AfterViewInit, OnDestroy {
 	}
 
 	ngAfterViewInit(): void {
-		this.editor.registerPlugin(
-			BubbleMenuPlugin({
-				pluginKey,
-				editor: this.editor,
-				element: this.menuRef.nativeElement,
-				updateDelay: 150,
-				options: { placement: 'top', offset: 10 },
-				shouldShow: ({ editor }) => editor.isEditable && editor.isActive('table')
-			} as never)
-		);
-		this.editor.on('transaction', this.onTransaction);
+		this.attach();
+	}
+
+	/**
+	 * `DocumentEditorComponent.rebuildEditor()` (route `page/:id` change) destroys the
+	 * old `Editor` and builds the replacement **synchronously**, so the `*ngIf="editor"`
+	 * wrapping this component never goes falsy and this view is never torn down and
+	 * recreated — only the `[editor]` binding changes. Without re-registering here the
+	 * table chrome stays bound to a destroyed editor and never appears again after
+	 * switching documents (spec 05 §6.7).
+	 */
+	ngOnChanges(changes: SimpleChanges): void {
+		const change = changes['editor'];
+		// The very first binding is registered by `ngAfterViewInit` instead: `ngOnChanges`
+		// runs before `ngOnInit`, where the static view query for the menu element is
+		// not guaranteed to be resolved yet.
+		if (!change || change.firstChange) return;
+		this.detach();
+		this.attach();
 	}
 
 	ngOnDestroy(): void {
-		this.editor.off('transaction', this.onTransaction);
-		this.editor.unregisterPlugin(pluginKey);
+		this.detach();
+	}
+
+	private attach(): void {
+		const editor = this.editor;
+		if (!editor || this.attached === editor) return;
+		editor.registerPlugin(
+			BubbleMenuPlugin({
+				pluginKey,
+				editor,
+				element: this.menuRef.nativeElement,
+				updateDelay: 150,
+				options: { placement: 'top', offset: 10 },
+				shouldShow: ({ editor: active }) => active.isEditable && active.isActive('table')
+			} as never)
+		);
+		editor.on('transaction', this.onTransaction);
+		this.attached = editor;
+	}
+
+	private detach(): void {
+		const editor = this.attached;
+		if (!editor) return;
+		this.attached = null;
+		editor.off('transaction', this.onTransaction);
+		// A rebuild destroys the previous editor before this runs; its ProseMirror view
+		// (and with it the plugin) is already gone.
+		if (!editor.isDestroyed) editor.unregisterPlugin(pluginKey);
 	}
 
 	exec(

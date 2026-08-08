@@ -4,7 +4,9 @@ import {
 	Component,
 	ElementRef,
 	Input,
+	OnChanges,
 	OnDestroy,
+	SimpleChanges,
 	ViewChild
 } from '@angular/core';
 import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
@@ -53,20 +55,54 @@ const pluginKey = new PluginKey('gzFloatingBlockMenu');
 		`
 	]
 })
-export class FloatingBlockMenuComponent implements AfterViewInit, OnDestroy {
+export class FloatingBlockMenuComponent implements AfterViewInit, OnChanges, OnDestroy {
 	@Input({ required: true }) editor!: Editor;
 
 	@ViewChild('menu', { static: true }) menuRef!: ElementRef<HTMLElement>;
 
+	/**
+	 * The `Editor` this component's ProseMirror plugin is currently registered against
+	 * — deliberately *not* read back off `this.editor`, which the parent re-points
+	 * before the teardown of the previous registration can run.
+	 */
+	private attached: Editor | null = null;
+
 	ngAfterViewInit(): void {
-		this.editor.registerPlugin(
+		this.attach();
+	}
+
+	/**
+	 * `DocumentEditorComponent.rebuildEditor()` (route `page/:id` change) destroys the
+	 * old `Editor` and builds the replacement **synchronously**, so the `*ngIf="editor"`
+	 * wrapping this component never goes falsy and this view is never torn down and
+	 * recreated — only the `[editor]` binding changes. Without re-registering here the
+	 * empty-line "+" never appears again after switching documents (spec 05 §6.5).
+	 */
+	ngOnChanges(changes: SimpleChanges): void {
+		const change = changes['editor'];
+		// The very first binding is registered by `ngAfterViewInit` instead: `ngOnChanges`
+		// runs before `ngOnInit`, where the static view query for the menu element is
+		// not guaranteed to be resolved yet.
+		if (!change || change.firstChange) return;
+		this.detach();
+		this.attach();
+	}
+
+	ngOnDestroy(): void {
+		this.detach();
+	}
+
+	private attach(): void {
+		const editor = this.editor;
+		if (!editor || this.attached === editor) return;
+		editor.registerPlugin(
 			FloatingMenuPlugin({
 				pluginKey,
-				editor: this.editor,
+				editor,
 				element: this.menuRef.nativeElement,
 				options: { placement: 'left', offset: 8 },
-				shouldShow: ({ editor, state }) => {
-					if (!editor.isEditable) return false;
+				shouldShow: ({ editor: active, state }) => {
+					if (!active.isEditable) return false;
 					const { $anchor, empty } = state.selection;
 					const isEmptyParagraph =
 						$anchor.parent.type.name === 'paragraph' && $anchor.parent.content.size === 0;
@@ -74,10 +110,16 @@ export class FloatingBlockMenuComponent implements AfterViewInit, OnDestroy {
 				}
 			} as never)
 		);
+		this.attached = editor;
 	}
 
-	ngOnDestroy(): void {
-		this.editor.unregisterPlugin(pluginKey);
+	private detach(): void {
+		const editor = this.attached;
+		if (!editor) return;
+		this.attached = null;
+		// A rebuild destroys the previous editor before this runs; its ProseMirror view
+		// (and with it the plugin) is already gone.
+		if (!editor.isDestroyed) editor.unregisterPlugin(pluginKey);
 	}
 
 	openSlashMenu(): void {

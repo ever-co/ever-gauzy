@@ -1,6 +1,6 @@
-import { Injectable, NgZone, inject } from '@angular/core';
+import { Injectable, NgZone, OnDestroy, inject } from '@angular/core';
 import { HttpEventType } from '@angular/common/http';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { Editor } from '@tiptap/core';
 import { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { TranslateService } from '@ngx-translate/core';
@@ -37,13 +37,22 @@ const ALLOWED_EXTENSIONS = new Set(
  * Base64 never enters the doc; autosave skips while `hasPending`.
  */
 @Injectable()
-export class EditorUploadService {
+export class EditorUploadService implements OnDestroy {
 	private readonly documentsService = inject(DocumentsService);
 	private readonly toastrService = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
 	private readonly zone = inject(NgZone);
 
 	private readonly uploads = new Map<string, IEditorUpload>();
+	/** The still-open HTTP request behind each in-flight upload, keyed by `uploadId`. */
+	private readonly requests = new Map<string, Subscription>();
+	/**
+	 * Bumped by every `destroy()`. The editor this service dispatches into is torn
+	 * down and rebuilt whenever the `page/:id` route changes, so a response that
+	 * arrives afterwards belongs to a session whose `Editor` — and whose ProseMirror
+	 * view — no longer exists. Mirrors `DocumentAutosaveService`'s session guard.
+	 */
+	private session = 0;
 	private readonly _pendingCount$ = new BehaviorSubject<number>(0);
 	/** Number of in-flight or failed placeholders still in the doc. */
 	public readonly pendingCount$ = this._pendingCount$.asObservable();
@@ -80,6 +89,9 @@ export class EditorUploadService {
 	}
 
 	remove(editor: Editor, uploadId: string): void {
+		// The placeholder is about to leave the doc — a response for it would have
+		// nothing left to swap, so stop paying for the transfer.
+		this.cancelRequest(uploadId);
 		const upload = this.uploads.get(uploadId);
 		if (upload?.objectUrl) URL.revokeObjectURL(upload.objectUrl);
 		this.uploads.delete(uploadId);
@@ -91,12 +103,27 @@ export class EditorUploadService {
 		}
 	}
 
+	/**
+	 * Tears the pipeline down for the editor being destroyed (component destroy, or a
+	 * `page/:id` rebuild). Revoking the object URLs is not enough on its own: an
+	 * un-cancelled request answers into `swap()`/`fail()`, which dispatch straight at
+	 * `editor.view` — by then a destroyed ProseMirror view belonging to another
+	 * document. Cancel first, then drop the placeholders.
+	 */
 	destroy(): void {
+		this.session += 1;
+		this.requests.forEach((subscription) => subscription.unsubscribe());
+		this.requests.clear();
 		this.uploads.forEach((upload) => {
 			if (upload.objectUrl) URL.revokeObjectURL(upload.objectUrl);
 		});
 		this.uploads.clear();
 		this._pendingCount$.next(0);
+	}
+
+	/** Provided per `gz-document-editor`; Angular destroys it with the component. */
+	ngOnDestroy(): void {
+		this.destroy();
 	}
 
 	// ─── Internals ───────────────────────────────────────────────
@@ -149,19 +176,32 @@ export class EditorUploadService {
 	}
 
 	private performUpload(editor: Editor, upload: IEditorUpload): void {
-		this.documentsService
+		// Captured at dispatch time so the terminal handlers can tell whether they still
+		// belong to the live editor: `destroy()` bumps the session, and the page re-points
+		// `parentDocumentId` the moment the route ':id' changes.
+		const session = this.session;
+		const parentDocumentId = this.parentDocumentId;
+
+		// A retry re-issues the same `uploadId` — never leave its predecessor open.
+		this.cancelRequest(upload.uploadId);
+
+		const subscription = this.documentsService
 			.upload(upload.file, {
-				parentId: this.parentDocumentId ?? undefined,
+				parentId: parentDocumentId ?? undefined,
 				source: DocumentSourceEnum.EDITOR,
 				importToKnowledge: false
 			})
 			.subscribe({
 				next: (event) => {
+					if (this.isStale(session, parentDocumentId)) return;
 					if (event.type === HttpEventType.UploadProgress && event.total) {
 						upload.progress = Math.round((event.loaded / event.total) * 100);
 					} else if (event.type === HttpEventType.Response) {
 						const outcome = readUploadOutcome(event.body);
 						this.zone.run(() => {
+							// Re-checked inside the zone hop: the swap only runs if this is
+							// still the document the upload was started for.
+							if (this.isStale(session, parentDocumentId)) return;
 							if (outcome.document) this.swap(editor, upload, outcome.document);
 							// A per-file rejection rides a 201, not an error response —
 							// the placeholder must still flip to its failed state.
@@ -170,9 +210,31 @@ export class EditorUploadService {
 					}
 				},
 				error: (error) => {
+					this.requests.delete(upload.uploadId);
+					if (this.isStale(session, parentDocumentId)) return;
 					this.zone.run(() => this.fail(editor, upload, error?.error?.message));
-				}
+				},
+				complete: () => this.requests.delete(upload.uploadId)
 			});
+
+		// A synchronous observable is already closed here — tracking it would only
+		// leave a dead entry behind for `destroy()` and `retry()` to trip over.
+		if (!subscription.closed) this.requests.set(upload.uploadId, subscription);
+	}
+
+	/**
+	 * True once this upload's response can no longer be applied: the editor was torn
+	 * down (`destroy()` bumped the session), or the page moved to another document.
+	 */
+	private isStale(session: number, parentDocumentId: ID | null): boolean {
+		return session !== this.session || parentDocumentId !== this.parentDocumentId;
+	}
+
+	private cancelRequest(uploadId: string): void {
+		const subscription = this.requests.get(uploadId);
+		if (!subscription) return;
+		this.requests.delete(uploadId);
+		subscription.unsubscribe();
 	}
 
 	/** Flips a placeholder to its retryable error state and re-renders its node view. */
