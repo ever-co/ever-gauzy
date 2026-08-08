@@ -73,6 +73,17 @@ export interface IDocsIndexJob extends IDocsJobBase {
 	embeddingDims: number | null;
 }
 
+/** Payload of `docs.thumbnail`. */
+export interface IDocsThumbnailJob extends IDocsJobBase {
+	/**
+	 * True regenerates a thumbnail that already exists. Set by the runs that changed the
+	 * bytes (`replace`) or were explicitly asked to redo the work (`reindex`); every other
+	 * run skips a document whose `thumbKey` is already set, so a recovery sweep or a
+	 * duplicate enqueue costs nothing.
+	 */
+	force?: boolean;
+}
+
 /** Payload of the periodic `docs.reconcile` sweep. */
 export interface IDocsReconcileJob {
 	/** ISO timestamp of the enqueue, for log correlation. */

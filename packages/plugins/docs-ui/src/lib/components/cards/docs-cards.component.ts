@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentKindEnum, ID, IDocument } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { sanitizeMediaUrl } from '../../editor/read-only/safe-url.util';
 
 /** Breadcrumb segment above the grid ("All documents / Finance / Invoices"). */
 export interface IDocsCardsCrumb {
@@ -55,6 +56,13 @@ export class DocsCardsComponent extends TranslationBaseComponent {
 
 	public readonly kindEnum = DocumentKindEnum;
 
+	/**
+	 * Documents whose thumbnail failed to load — a signed provider URL that expired between
+	 * the list response and the `<img>` fetch, or a thumbnail deleted from storage. Recorded
+	 * per card so the row falls back to its kind icon instead of rendering a broken image.
+	 */
+	private readonly failedThumbnails = new Set<string>();
+
 	get folderCards(): DocsCardRow[] {
 		return this.flat ? [] : this.rows.filter((row) => row.kind === DocumentKindEnum.FOLDER);
 	}
@@ -104,6 +112,28 @@ export class DocsCardsComponent extends TranslationBaseComponent {
 			default:
 				return this.fileIcon(row.mimeType);
 		}
+	}
+
+	/**
+	 * The card's preview image, or `null` when it must fall back to the kind icon.
+	 *
+	 * `thumbUrl` is a **virtual** column the backend resolves from `storageProvider` +
+	 * `thumbKey` (`document.subscriber.ts`), so it is absent until the P1 thumbnail job has
+	 * run — most rows will never have one, and every row must look finished without it.
+	 *
+	 * 🛑 The URL is provider-supplied and goes straight into `<img [src]>`, so it goes through
+	 * the app's scheme allowlist first. Angular's own URL check is a denylist of exactly one
+	 * scheme (see `editor/read-only/safe-url.util.ts`), which would let a stored
+	 * `data:text/html` or `vbscript:` value through untouched.
+	 */
+	thumbnailUrl(row: DocsCardRow): string | null {
+		if (!row?.thumbUrl || this.failedThumbnails.has(String(row.id))) return null;
+		return sanitizeMediaUrl(row.thumbUrl);
+	}
+
+	/** A thumbnail that 404s or expires degrades to the kind icon rather than a broken image. */
+	onThumbnailError(row: DocsCardRow): void {
+		this.failedThumbnails.add(String(row.id));
 	}
 
 	humanizeSize(bytes?: number): string {

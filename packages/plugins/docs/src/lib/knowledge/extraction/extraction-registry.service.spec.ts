@@ -1,9 +1,16 @@
+// The OCR service reaches the AI seam and, through it, the whole `@gauzy/core` module graph.
+// These are pure resolution tests, and both OCR-capable extractors take it `@Optional()` —
+// stubbing it at the module boundary keeps the suite dependency-free AND exercises the
+// "no OCR available" shape, which is what a deployment with OCR switched off looks like.
+jest.mock('./document-ocr.service', () => ({ DocumentOcrService: class {} }));
+
 import { DocsPermanentError } from '../errors';
 import { CsvExtractor } from './csv.extractor';
 import { DocxExtractor } from './docx.extractor';
 import { ExtractionRegistryService } from './extraction-registry.service';
 import { IDocumentExtractor } from './extractor.interface';
 import { HtmlExtractor } from './html.extractor';
+import { ImageExtractor } from './image.extractor';
 import { PdfExtractor } from './pdf.extractor';
 import { TextExtractor } from './text.extractor';
 import { XlsxExtractor } from './xlsx.extractor';
@@ -15,7 +22,8 @@ const buildRegistry = () =>
 		new XlsxExtractor(),
 		new CsvExtractor(),
 		new TextExtractor(),
-		new HtmlExtractor()
+		new HtmlExtractor(),
+		new ImageExtractor()
 	);
 
 describe('ExtractionRegistryService', () => {
@@ -32,12 +40,16 @@ describe('ExtractionRegistryService', () => {
 		expect(registry.resolve('text/plain', 'a.txt')).toBeInstanceOf(TextExtractor);
 		expect(registry.resolve('text/markdown', 'a.md')).toBeInstanceOf(TextExtractor);
 		expect(registry.resolve('text/html', 'a.html')).toBeInstanceOf(HtmlExtractor);
+		expect(registry.resolve('image/png', 'pic.png')).toBeInstanceOf(ImageExtractor);
+		expect(registry.resolve('image/jpeg', 'pic.jpg')).toBeInstanceOf(ImageExtractor);
+		expect(registry.resolve('image/webp', 'pic.webp')).toBeInstanceOf(ImageExtractor);
+		expect(registry.resolve('image/gif', 'pic.gif')).toBeInstanceOf(ImageExtractor);
 	});
 
 	it('returns null for unsupported MIME types', () => {
 		const registry = buildRegistry();
 		expect(registry.resolve('video/mp4', 'clip.mp4')).toBeNull();
-		expect(registry.resolve('image/png', 'pic.png')).toBeNull(); // image OCR is P1 (M5)
+		expect(registry.resolve('application/zip', 'bundle.zip')).toBeNull();
 	});
 
 	it('lets a later registration win over a built-in (first-match, third-party override)', async () => {

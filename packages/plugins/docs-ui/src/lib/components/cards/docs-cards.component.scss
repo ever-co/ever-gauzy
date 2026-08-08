@@ -60,6 +60,36 @@
 	}
 }
 
+// Preview tile of a document card. The height is FIXED and the tile always renders — a
+// thumbnail appears later (the P1 job runs after upload, and the hub polls while a document
+// is still processing), so reserving the space is what keeps the grid from jumping when one
+// finally loads. The icon fallback occupies exactly the same box.
+.docs-card-thumb {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 6.25rem;
+	overflow: hidden;
+	border-radius: var(--border-radius);
+	background: var(--background-basic-color-2);
+
+	.docs-card-thumb-image {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.docs-card-emoji {
+		font-size: 2rem;
+		line-height: 1;
+	}
+
+	nb-icon {
+		font-size: 2rem;
+		color: var(--text-hint-color);
+	}
+}
+
 .docs-card-head {
 	display: flex;
 	align-items: center;

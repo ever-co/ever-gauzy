@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { DocsPermanentError } from '../errors';
 import { CsvExtractor } from './csv.extractor';
 import { DocxExtractor } from './docx.extractor';
@@ -8,6 +8,7 @@ import {
 	IDocumentExtractor
 } from './extractor.interface';
 import { HtmlExtractor } from './html.extractor';
+import { ImageExtractor } from './image.extractor';
 import { PdfExtractor } from './pdf.extractor';
 import { TextExtractor } from './text.extractor';
 import { XlsxExtractor } from './xlsx.extractor';
@@ -31,10 +32,23 @@ export class ExtractionRegistryService {
 		xlsxExtractor: XlsxExtractor,
 		csvExtractor: CsvExtractor,
 		textExtractor: TextExtractor,
-		htmlExtractor: HtmlExtractor
+		htmlExtractor: HtmlExtractor,
+		// `@Optional()` keeps six-argument construction (the pre-image-OCR shape) valid; the
+		// filter below then drops the missing slot instead of putting `undefined` in the
+		// resolution list, where `supports()` would throw on the first lookup.
+		@Optional() imageExtractor?: ImageExtractor
 	) {
 		// Built-in provider order (consulted after any third-party registrations).
-		this.extractors.push(pdfExtractor, docxExtractor, xlsxExtractor, csvExtractor, textExtractor, htmlExtractor);
+		const builtIns: (IDocumentExtractor | undefined)[] = [
+			pdfExtractor,
+			docxExtractor,
+			xlsxExtractor,
+			csvExtractor,
+			textExtractor,
+			htmlExtractor,
+			imageExtractor
+		];
+		this.extractors.push(...builtIns.filter((extractor): extractor is IDocumentExtractor => Boolean(extractor)));
 	}
 
 	/**
