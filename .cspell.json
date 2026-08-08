@@ -61,6 +61,7 @@
         "badal",
         "basicstyles",
         "bddgen",
+        "beforeinput",
         "Behaviour",
         "billrate",
         "binutils",
@@ -69,6 +70,7 @@
         "blockified",
         "bluehalo",
         "bmap",
+        "browsable",
         "browserslist",
         "btns",
         "Buildable",
@@ -708,6 +710,7 @@
         "reference",
         "refetches",
         "Registerables",
+        "reindex",
         "rels",
         "relver",
         "Rememberd",
@@ -791,6 +794,7 @@
         "slugified",
         "Smee",
         "SNAPCRAFT",
+        "snapshotting",
         "snyk",
         "socicon",
         "solidvar",
@@ -1105,6 +1109,7 @@
         "**/agent/src/assets/images/**",
         "./qodo/**",
         "**/rules",
-        ".codacy"
+        ".codacy",
+        "packages/plugins/docs-ui/src/lib/editor/styles/_katex.scss"
     ]
 }

@@ -18,7 +18,7 @@ export const DocumentsHubPageData = {
 	uploadFileExtension: '.txt',
 	uploadFileMimeType: 'text/plain',
 	/**
-	 * File body. Plain UTF-8 text so the server's magic-byte sniffer canonicalises it to text/plain
+	 * File body. Plain UTF-8 text so the server's magic-byte sniffer canonicalizes it to text/plain
 	 * (a mismatch would be REJECTED at the upload endpoint, never reaching the processing pipeline)
 	 * and the extractor has something real to turn into markdown.
 	 */
