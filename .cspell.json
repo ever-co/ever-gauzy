@@ -1109,7 +1109,6 @@
         "**/agent/src/assets/images/**",
         "./qodo/**",
         "**/rules",
-        ".codacy",
-        "packages/plugins/docs-ui/src/lib/editor/styles/_katex.scss"
+        ".codacy"
     ]
 }
