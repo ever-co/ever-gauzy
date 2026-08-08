@@ -315,10 +315,13 @@
 			</div>
 		</section>
 
-		<!-- Comments (shared thread component lands with the collaboration wiring) -->
-		<section class="docs-detail-section">
+		<!-- Comments — the platform's generic comment API bound to
+		     (BaseEntityEnum.Document, id) (spec 08 §1). Reading follows document
+		     read access, so the section itself is DOCS_READ-gated; the composer
+		     gates itself further (see the thread component). -->
+		<section class="docs-detail-section" *ngxPermissionsOnly="[permissions.DOCS_READ]">
 			<h6>{{ 'DOCS.DETAIL.COMMENTS' | translate }}</h6>
-			<p class="muted">—</p>
+			<gz-docs-detail-comments [documentId]="doc.id" [documentName]="doc.name"></gz-docs-detail-comments>
 		</section>
 
 		<!-- Activity -->

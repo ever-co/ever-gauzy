@@ -9,6 +9,7 @@ import {
 	DOCS_JOB_EXTRACT,
 	DOCS_JOB_INDEX,
 	DOCS_JOB_RECONCILE,
+	DOCS_JOB_THUMBNAIL,
 	DOCS_PROCESSING_QUEUE
 } from './constants';
 import {
@@ -17,7 +18,8 @@ import {
 	IDocsEmbedJob,
 	IDocsExtractJob,
 	IDocsIndexJob,
-	IDocsReconcileJob
+	IDocsReconcileJob,
+	IDocsThumbnailJob
 } from './docs-job.types';
 import { DocsPipelineService } from './docs-pipeline.service';
 import { fromBullJob } from './docs-pipeline.types';
@@ -76,6 +78,17 @@ export class DocsProcessingWorker extends QueueWorkerHost {
 	@QueueJobHandler(DOCS_JOB_INDEX)
 	public async handleIndex(job: Job<IDocsIndexJob>): Promise<void> {
 		await this.pipeline.handleIndex(fromBullJob(job));
+	}
+
+	/**
+	 * `docs.thumbnail` → {@link DocsPipelineService.handleThumbnail}.
+	 *
+	 * The one handler here that cannot reject: the stage swallows its own failures, so BullMQ
+	 * never retries a cosmetic job and never records one as failed.
+	 */
+	@QueueJobHandler(DOCS_JOB_THUMBNAIL)
+	public async handleThumbnail(job: Job<IDocsThumbnailJob>): Promise<void> {
+		await this.pipeline.handleThumbnail(fromBullJob(job));
 	}
 
 	/** `docs.reconcile` → {@link DocsPipelineService.handleReconcile}. */

@@ -30,6 +30,9 @@ jest.mock('../classification/document-classifier.service', () => ({ DocumentClas
 jest.mock('../indexing/document-index.service', () => ({ DocumentIndexService: class {} }));
 jest.mock('./docs-recovery.service', () => ({ DocsRecoveryService: class {} }));
 jest.mock('./docs-queue.service', () => ({ DocsQueueService: class {} }));
+// The thumbnail service reaches `FileStorage` (and through it the whole `@gauzy/core` graph);
+// these tests are about the knowledge-chain gate, so it is stubbed at the module boundary.
+jest.mock('../thumbnail/document-thumbnail.service', () => ({ DocumentThumbnailService: class {} }));
 jest.mock('../../docs.config', () => ({ getDocsConfig: () => ({ queueConcurrency: 1 }) }));
 
 import { DocumentKnowledgeStatusEnum } from '@gauzy/contracts';
@@ -71,7 +74,8 @@ const buildWorker = (knowledgeStatus: DocumentKnowledgeStatusEnum, indexService:
 		queueService,
 		{} as any,
 		classifierService,
-		indexService
+		indexService,
+		{ generate: jest.fn().mockResolvedValue('skipped-unsupported') } as any
 	);
 	const worker = new DocsProcessingWorker(pipeline);
 	return { worker, pipeline, enqueue, document };

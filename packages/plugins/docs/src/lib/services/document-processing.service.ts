@@ -94,24 +94,48 @@ export class DocumentProcessingService {
 			filename: document.originalFilename ?? document.name,
 			mimeType: document.mimeType,
 			maxChars: config.maxExtractedChars,
-			forceOcr: job.forceOcr
+			forceOcr: job.forceOcr,
+			// The OCR path resolves provider credentials from these. They come off the JOB,
+			// never `RequestContext` — extraction runs on queue and background threads.
+			tenantId: job.tenantId ?? document.tenantId,
+			organizationId: job.organizationId ?? document.organizationId
 		});
 
 		const metadata = this.mergeExtractionMetadata(document, result);
+		const patch: Partial<Document> = {
+			extractedText: result.markdown,
+			status: DocumentStatusEnum.READY,
+			statusMessage: null,
+			// `.update()` bypasses entity subscribers, so the sqlite text-column
+			// serialization the DocumentSubscriber normally performs happens here.
+			metadata: (isSqlite() || isBetterSqlite3() ? JSON.stringify(metadata) : metadata) as any
+		};
+
+		// OCR-derived text is a transcription, not a parse: it can silently drop or garble
+		// content no downstream stage can detect. So it enters the review circuit breaker on
+		// arrival — indexed and searchable, but withheld from AI retrieval until a human
+		// approves it. The document still continues the normal chain from here.
+		if (result.metadata?.ocr) {
+			patch.reviewStatus = DocumentReviewStatusEnum.PENDING;
+			patch.reviewReason = DocumentReviewReasonEnum.LOW_CONFIDENCE;
+		}
+
 		await this.typeOrmDocumentRepository.update(
 			{ id: document.id, tenantId: document.tenantId, organizationId: document.organizationId },
-			{
-				extractedText: result.markdown,
-				status: DocumentStatusEnum.READY,
-				statusMessage: null,
-				// `.update()` bypasses entity subscribers, so the sqlite text-column
-				// serialization the DocumentSubscriber normally performs happens here.
-				metadata: isSqlite() || isBetterSqlite3() ? (JSON.stringify(metadata) as any) : metadata
-			}
+			patch
 		);
 		document.extractedText = result.markdown;
 		document.status = DocumentStatusEnum.READY;
 		document.metadata = metadata;
+		if (result.metadata?.ocr) {
+			document.reviewStatus = DocumentReviewStatusEnum.PENDING;
+			document.reviewReason = DocumentReviewReasonEnum.LOW_CONFIDENCE;
+			this.logger.log(
+				`Extraction for document ${document.id} came from OCR ` +
+					`(${result.metadata.ocr.pagesTranscribed}/${result.metadata.ocr.pageCount} pages via ` +
+					`${result.metadata.ocr.providerId}) — flagged for review.`
+			);
+		}
 
 		this.emitEvent(document, 'updated', {
 			phase: 'status',
@@ -354,6 +378,9 @@ export class DocumentProcessingService {
 				truncated: result.metadata?.truncated ?? false,
 				warnings: result.metadata?.warnings,
 				wordCount: result.metadata?.wordCount,
+				// Present ONLY on OCR-derived text — its presence is the provenance flag the
+				// review queue and the detail panel read to say "transcribed, not parsed".
+				ocr: result.metadata?.ocr,
 				extractedAt: new Date().toISOString()
 			}
 		};

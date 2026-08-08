@@ -81,6 +81,14 @@ export const ENV_GAUZY_DOCS_AUTO_REINDEX_ON_MODEL_CHANGE = 'GAUZY_DOCS_AUTO_REIN
 export const ENV_GAUZY_DOCS_VECTOR_STORE = 'GAUZY_DOCS_VECTOR_STORE';
 export const ENV_GAUZY_DOCS_ORG_QUOTA_BYTES = 'GAUZY_DOCS_ORG_QUOTA_BYTES';
 export const ENV_GAUZY_DOCS_RETRIEVAL_LOG_ENABLED = 'GAUZY_DOCS_RETRIEVAL_LOG_ENABLED';
+/**
+ * Master switch for provider-vision OCR (scanned PDFs + images). Off by default: OCR is a
+ * per-page LLM call, so it is opt-in spend. When off, a PDF with no usable text layer and an
+ * image upload both fail permanently exactly as they did before OCR existed.
+ */
+export const ENV_GAUZY_DOCS_OCR_ENABLED = 'GAUZY_DOCS_OCR_ENABLED';
+/** Hard cap on OCR'd pages per document — the cost fuse of the OCR path. */
+export const ENV_GAUZY_DOCS_OCR_MAX_PAGES = 'GAUZY_DOCS_OCR_MAX_PAGES';
 export const ENV_GAUZY_DOCS_INBOUND_EMAIL_ENABLED = 'GAUZY_DOCS_INBOUND_EMAIL_ENABLED';
 export const ENV_GAUZY_DOCS_INBOUND_WEBHOOK_SECRET = 'GAUZY_DOCS_INBOUND_WEBHOOK_SECRET';
 export const ENV_GAUZY_DOCS_INBOUND_MAX_MESSAGE_BYTES = 'GAUZY_DOCS_INBOUND_MAX_MESSAGE_BYTES';
@@ -106,6 +114,8 @@ export const DEFAULT_DOCS_RETRIEVAL_TOPK_MAX = 12;
 export const DEFAULT_DOCS_RETRIEVAL_TOPK = 6;
 /** 0 = unlimited organization storage (the documented default). */
 export const DEFAULT_DOCS_ORG_QUOTA_BYTES = 0;
+/** OCR page cap per document (07 §4 row 2) — pages beyond it are dropped with a visible note. */
+export const DEFAULT_DOCS_OCR_MAX_PAGES = 20;
 /** Per-message cap for the inbound-email webhook (25 MB). */
 export const DEFAULT_DOCS_INBOUND_MAX_MESSAGE_BYTES = 26214400;
 

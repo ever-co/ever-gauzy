@@ -7,6 +7,8 @@
  * registry resolves providers in registration order, first match wins.
  */
 
+import { ID } from '@gauzy/contracts';
+
 /** Context handed to an extractor run (never the raw request — extractors are pure). */
 export interface IDocumentExtractionContext {
 	/** Original (client) filename — used for extension hints and sheet naming. */
@@ -17,6 +19,16 @@ export interface IDocumentExtractionContext {
 	maxChars?: number;
 	/** P1 (M5) — request the OCR path where supported. */
 	forceOcr?: boolean;
+	/**
+	 * Tenant snapshot of the run — the OCR path resolves provider credentials with it
+	 * (tenant BYOK → environment → platform), exactly as classification does. Absent on
+	 * pure-parsing calls, which never touch a provider.
+	 *
+	 * 🛑 It is a SNAPSHOT, never `RequestContext`: extraction runs on queue threads.
+	 */
+	tenantId?: ID;
+	/** Organization snapshot of the run — carried into the OCR cost-accounting event. */
+	organizationId?: ID;
 }
 
 /** The result contract every extractor must honor (§4.1 of the AI-knowledge spec). */
@@ -33,7 +45,30 @@ export interface IDocumentExtractionResult {
 		warnings?: string[];
 		/** Approximate word count of the produced markdown. */
 		wordCount?: number;
+		/**
+		 * Set ONLY when the markdown came out of provider-vision OCR rather than a text
+		 * layer. Its presence is the provenance flag: `DocumentProcessingService` copies it
+		 * to `metadata.extraction.ocr` and gates the document for review, because a
+		 * transcription is inherently lower-confidence than parsed text.
+		 */
+		ocr?: IDocumentOcrProvenance;
 	};
+}
+
+/** What one OCR run transcribed, persisted under `metadata.extraction.ocr`. */
+export interface IDocumentOcrProvenance {
+	/** Total pages in the source (1 for images). */
+	pageCount: number;
+	/** Pages actually transcribed — below `pageCount` when the page cap bit. */
+	pagesTranscribed: number;
+	/** True when the page cap dropped pages from the transcription. */
+	capped: boolean;
+	/** AI provider id that served the transcription. */
+	providerId: string;
+	/** Vision model id that served the transcription. */
+	model: string;
+	/** ISO timestamp of the run. */
+	transcribedAt: string;
 }
 
 /**

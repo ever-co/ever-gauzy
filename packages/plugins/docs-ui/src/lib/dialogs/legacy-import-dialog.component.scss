@@ -1,0 +1,219 @@
+.docs-migration-dialog {
+	min-width: 34rem;
+	max-width: 46rem;
+	max-height: 90vh;
+}
+
+.docs-migration-description {
+	margin-bottom: 0.75rem;
+	color: var(--text-hint-color);
+}
+
+.docs-migration-sources {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	margin-bottom: 0.5rem;
+
+	.label {
+		width: 100%;
+		margin-bottom: 0.25rem;
+		padding: 0;
+	}
+}
+
+.docs-migration-hint {
+	margin-bottom: 0.5rem;
+	font-size: 0.75rem;
+	color: var(--text-hint-color);
+
+	&--warning {
+		color: var(--color-warning-default);
+	}
+}
+
+.docs-migration-progress,
+.docs-migration-error {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	margin: 0.75rem 0;
+	padding: 0.5rem 0.625rem;
+	border-radius: var(--border-radius);
+	background: var(--background-basic-color-2);
+	font-size: 0.8125rem;
+}
+
+.docs-migration-error {
+	color: var(--color-danger-default);
+}
+
+.docs-migration-confirm {
+	margin: 0.75rem 0;
+	padding: 0.75rem;
+	border: 1px solid var(--color-primary-default);
+	border-radius: var(--border-radius);
+	background: var(--background-basic-color-2);
+
+	&--danger {
+		border-color: var(--color-danger-default);
+	}
+
+	.docs-migration-confirm-title {
+		font-weight: 600;
+	}
+
+	.docs-migration-confirm-note {
+		margin-top: 0.25rem;
+		font-size: 0.75rem;
+		color: var(--text-hint-color);
+	}
+
+	.docs-migration-confirm-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 0.5rem;
+		margin-top: 0.75rem;
+	}
+}
+
+.docs-migration-report {
+	margin-top: 1rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid var(--divider-color);
+
+	.docs-migration-report-head {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 0.5rem;
+
+		h6 {
+			margin: 0;
+		}
+
+		// The badges render in normal flow next to the heading rather than pinned
+		// to the card corner, which is where `nb-badge` places itself by default.
+		nb-badge {
+			position: static;
+		}
+	}
+
+	.docs-migration-summary {
+		margin-bottom: 0.5rem;
+		font-size: 0.8125rem;
+	}
+}
+
+// Wide report tables scroll inside their own box — the dialog never scrolls sideways.
+.docs-migration-table-wrap {
+	overflow-x: auto;
+}
+
+.docs-migration-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.8125rem;
+
+	th,
+	td {
+		padding: 0.25rem 0.5rem;
+		border-bottom: 1px solid var(--divider-color);
+		text-align: right;
+		white-space: nowrap;
+	}
+
+	thead th:first-child,
+	tbody th {
+		text-align: left;
+		font-weight: 500;
+	}
+
+	.docs-migration-cell--danger {
+		color: var(--color-danger-default);
+		font-weight: 600;
+	}
+}
+
+.docs-migration-panel {
+	margin-top: 0.5rem;
+}
+
+.docs-migration-list {
+	margin: 0.25rem 0 0;
+	padding: 0;
+	list-style: none;
+	max-height: 14rem;
+	overflow-y: auto;
+	font-size: 0.8125rem;
+
+	li {
+		display: flex;
+		align-items: baseline;
+		gap: 0.5rem;
+		padding: 0.125rem 0;
+	}
+
+	.docs-migration-count {
+		min-width: 2.5rem;
+		color: var(--text-hint-color);
+		text-align: right;
+	}
+}
+
+.docs-migration-failure {
+	display: block;
+	padding: 0.375rem 0;
+	border-bottom: 1px solid var(--divider-color);
+
+	.docs-migration-failure-head {
+		display: flex;
+		align-items: baseline;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+
+		.docs-migration-record-name {
+			font-weight: 600;
+		}
+
+		.docs-migration-record-source,
+		code {
+			font-size: 0.75rem;
+			color: var(--text-hint-color);
+		}
+	}
+
+	.docs-migration-failure-body {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+
+		.docs-migration-error-code {
+			color: var(--color-danger-default);
+		}
+
+		.docs-migration-error-detail {
+			color: var(--text-hint-color);
+			word-break: break-word;
+		}
+	}
+
+	.docs-migration-failure-warnings {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.375rem;
+		font-size: 0.75rem;
+		color: var(--color-warning-default);
+	}
+}
+
+.docs-dialog-footer {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.docs-migration-footer-spacer {
+	flex: 1 1 auto;
+}

@@ -31,6 +31,7 @@ import { LegacyImportController } from './legacy-import/legacy-import.controller
 import { LegacyImportService } from './legacy-import/legacy-import.service';
 import { LexicalStoreProvider } from './knowledge/vector-store/providers/lexical.provider';
 import { PgVectorStoreProvider } from './knowledge/vector-store/providers/pgvector.provider';
+import { ThumbnailProviders } from './knowledge/thumbnail';
 import { DocumentVectorStoreRegistry } from './knowledge/vector-store/vector-store.registry';
 import { QueryHandlers } from './queries/handlers';
 import { TypeOrmRepositories } from './repositories';
@@ -90,6 +91,7 @@ const QUEUE_ENABLED = isDocsQueueEnabled();
 	providers: [
 		...Services,
 		...ExtractionProviders,
+		...ThumbnailProviders,
 		...KnowledgeProviders,
 		...TypeOrmRepositories,
 		...CommandHandlers,
@@ -129,6 +131,7 @@ const QUEUE_ENABLED = isDocsQueueEnabled();
 	exports: [
 		...Services,
 		...ExtractionProviders,
+		...ThumbnailProviders,
 		...KnowledgeProviders,
 		DocsQueueService,
 		DocsPipelineService,

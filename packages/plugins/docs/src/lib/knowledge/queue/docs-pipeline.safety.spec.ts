@@ -16,6 +16,8 @@ jest.mock('../classification/document-classifier.service', () => ({ DocumentClas
 jest.mock('../indexing/document-index.service', () => ({ DocumentIndexService: class {} }));
 jest.mock('./docs-recovery.service', () => ({ DocsRecoveryService: class {} }));
 jest.mock('./docs-queue.service', () => ({ DocsQueueService: class {} }));
+// The thumbnail service reaches `FileStorage` (and through it the whole `@gauzy/core` graph).
+jest.mock('../thumbnail/document-thumbnail.service', () => ({ DocumentThumbnailService: class {} }));
 
 import { DocumentKnowledgeStatusEnum } from '@gauzy/contracts';
 import { DOCS_JOB_CHUNK, DOCS_JOB_CLASSIFY, DOCS_JOB_EXTRACT, DOCS_JOB_RECONCILE } from './constants';
@@ -32,7 +34,9 @@ const PAYLOAD = {
 /**
  * Builds the pipeline with stub collaborators.
  */
-const buildPipeline = (overrides: { indexService?: any; classifierService?: any; processing?: any } = {}) => {
+const buildPipeline = (
+	overrides: { indexService?: any; classifierService?: any; processing?: any; thumbnailService?: any } = {}
+) => {
 	const document: any = {
 		id: 'doc-1',
 		tenantId: 'tenant-1',
@@ -56,17 +60,22 @@ const buildPipeline = (overrides: { indexService?: any; classifierService?: any;
 		classify: jest.fn().mockResolvedValue('classified')
 	};
 
+	const thumbnailService: any = overrides.thumbnailService ?? {
+		generate: jest.fn().mockResolvedValue('generated')
+	};
+
 	const pipeline = new DocsPipelineService(
 		processingService,
 		queueService,
 		recoveryService,
 		classifierService,
-		overrides.indexService ?? {}
+		overrides.indexService ?? {},
+		thumbnailService
 	);
 	jest.spyOn((pipeline as any).logger, 'error').mockImplementation(() => undefined);
 	jest.spyOn((pipeline as any).logger, 'log').mockImplementation(() => undefined);
 
-	return { pipeline, processingService, queueService, recoveryService, classifierService, document };
+	return { pipeline, processingService, queueService, recoveryService, classifierService, thumbnailService, document };
 };
 
 describe('DocsPipelineService — runStage dispatch', () => {

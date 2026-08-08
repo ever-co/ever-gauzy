@@ -1,0 +1,235 @@
+<nb-card class="docs-dialog docs-migration-dialog">
+	<nb-card-header>
+		{{ 'DOCS.MIGRATION.TITLE' | translate }}
+	</nb-card-header>
+
+	<nb-card-body [nbSpinner]="!!busy" nbSpinnerStatus="primary">
+		<p class="docs-migration-description">{{ 'DOCS.MIGRATION.DESCRIPTION' | translate }}</p>
+
+		<!-- Sources. `<fieldset>` is the semantic grouping element; the inline rules only
+		     neutralise the user-agent chrome, exactly like the browse-page view toggle. -->
+		<fieldset
+			class="docs-migration-sources"
+			style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"
+			[attr.aria-label]="'DOCS.MIGRATION.SOURCES_LABEL' | translate"
+		>
+			<legend class="label">{{ 'DOCS.MIGRATION.SOURCES_LABEL' | translate }}</legend>
+			<nb-checkbox
+				*ngFor="let source of sourceOptions"
+				[checked]="isSourceSelected(source)"
+				[disabled]="!!busy || !canManage"
+				(checkedChange)="toggleSource(source, $event)"
+			>
+				{{ sourceLabelKeys[source] | translate }}
+			</nb-checkbox>
+		</fieldset>
+		<div class="docs-migration-hint docs-migration-hint--warning" *ngIf="!selectedSources.length">
+			{{ 'DOCS.MIGRATION.SOURCES_REQUIRED' | translate }}
+		</div>
+
+		<!-- Dry-run-first explanation + the state of the gate -->
+		<div class="docs-migration-hint">{{ 'DOCS.MIGRATION.DRY_RUN_HINT' | translate }}</div>
+		<div class="docs-migration-hint docs-migration-hint--warning" *ngIf="dryRunStale">
+			{{ 'DOCS.MIGRATION.DRY_RUN_STALE' | translate }}
+		</div>
+		<div class="docs-migration-hint" *ngIf="!dryRunReport && !importReport && !rollbackReport">
+			{{ 'DOCS.MIGRATION.DRY_RUN_REQUIRED' | translate }}
+		</div>
+
+		<!-- In-flight -->
+		<div class="docs-migration-progress" *ngIf="busy" role="status">
+			<nb-icon icon="loader-outline"></nb-icon>
+			<span>{{ 'DOCS.MIGRATION.IN_PROGRESS' | translate }}</span>
+		</div>
+
+		<!-- Failure of the request itself (the per-record failures live in the report below) -->
+		<div class="docs-migration-error" *ngIf="errorMessage" role="alert">
+			<nb-icon icon="alert-triangle-outline"></nb-icon>
+			<span>{{ errorMessage }}</span>
+		</div>
+
+		<!-- Confirmation: real import -->
+		<div class="docs-migration-confirm" *ngIf="confirmingImport">
+			<p class="docs-migration-confirm-title">
+				{{ 'DOCS.MIGRATION.RUN_CONFIRM' | translate : { count: plannedCreateCount } }}
+			</p>
+			<p class="docs-migration-confirm-note">{{ 'DOCS.MIGRATION.RUN_CONFIRM_NOTE' | translate }}</p>
+			<div class="docs-migration-confirm-actions">
+				<button nbButton ghost size="small" [disabled]="!!busy" (click)="cancelImport()">
+					{{ 'DOCS.MIGRATION.CANCEL' | translate }}
+				</button>
+				<button nbButton size="small" status="primary" [disabled]="!canRunImport" (click)="confirmImport()">
+					{{ 'DOCS.MIGRATION.RUN_CONFIRM_BUTTON' | translate }}
+				</button>
+			</div>
+		</div>
+
+		<!-- Confirmation: rollback -->
+		<div class="docs-migration-confirm docs-migration-confirm--danger" *ngIf="confirmingRollback">
+			<p class="docs-migration-confirm-title">{{ 'DOCS.MIGRATION.ROLLBACK.CONFIRM' | translate }}</p>
+			<p class="docs-migration-confirm-note">{{ 'DOCS.MIGRATION.ROLLBACK.EXPLAIN' | translate }}</p>
+			<div class="docs-migration-confirm-actions">
+				<button nbButton ghost size="small" [disabled]="!!busy" (click)="cancelRollback()">
+					{{ 'DOCS.MIGRATION.CANCEL' | translate }}
+				</button>
+				<button
+					nbButton
+					size="small"
+					status="danger"
+					[disabled]="!canConfirmRollback"
+					(click)="confirmRollback()"
+				>
+					{{ 'DOCS.MIGRATION.ROLLBACK.RUN' | translate }}
+				</button>
+			</div>
+		</div>
+
+		<!-- Import report (dry run or real run) -->
+		<section class="docs-migration-report" *ngIf="report as current">
+			<header class="docs-migration-report-head">
+				<h6>{{ 'DOCS.MIGRATION.REPORT_TITLE' | translate }}</h6>
+				<nb-badge
+					*ngIf="current.dryRun; else realRunBadge"
+					status="info"
+					[text]="'DOCS.MIGRATION.DRY_RUN_BADGE' | translate"
+				></nb-badge>
+				<ng-template #realRunBadge>
+					<nb-badge status="success" [text]="'DOCS.MIGRATION.COMPLETED' | translate"></nb-badge>
+				</ng-template>
+			</header>
+
+			<p class="docs-migration-summary">
+				{{
+					'DOCS.MIGRATION.REPORT_SUMMARY'
+						| translate
+							: {
+									created: combinedTotals.created,
+									skipped: combinedTotals.skipped,
+									failed: combinedTotals.failed
+							  }
+				}}
+			</p>
+
+			<div class="docs-migration-hint" *ngIf="reportIsEmpty">
+				{{ 'DOCS.MIGRATION.REPORT.NOTHING_TO_IMPORT' | translate }}
+			</div>
+
+			<div class="docs-migration-table-wrap">
+				<table class="docs-migration-table">
+					<thead>
+						<tr>
+							<th scope="col">{{ 'DOCS.MIGRATION.REPORT.SOURCE' | translate }}</th>
+							<th scope="col">{{ 'DOCS.MIGRATION.REPORT.SCANNED' | translate }}</th>
+							<th scope="col">{{ 'DOCS.MIGRATION.REPORT.CREATED' | translate }}</th>
+							<th scope="col">{{ 'DOCS.MIGRATION.REPORT.SKIPPED' | translate }}</th>
+							<th scope="col">{{ 'DOCS.MIGRATION.REPORT.FAILED' | translate }}</th>
+							<th scope="col">{{ 'DOCS.MIGRATION.REPORT.WARNINGS' | translate }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr *ngFor="let row of totalsRows">
+							<th scope="row">{{ row.labelKey | translate }}</th>
+							<td>{{ current.totals[row.key]?.scanned ?? 0 }}</td>
+							<td>{{ current.totals[row.key]?.created ?? 0 }}</td>
+							<td>{{ current.totals[row.key]?.skipped ?? 0 }}</td>
+							<td [class.docs-migration-cell--danger]="(current.totals[row.key]?.failed ?? 0) > 0">
+								{{ current.totals[row.key]?.failed ?? 0 }}
+							</td>
+							<td>{{ current.totals[row.key]?.warnings ?? 0 }}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+
+			<!-- Warnings, grouped by code -->
+			<div class="docs-migration-panel" *ngIf="warnings.length">
+				<button nbButton ghost size="tiny" (click)="warningsExpanded = !warningsExpanded">
+					<nb-icon [icon]="warningsExpanded ? 'chevron-up-outline' : 'chevron-down-outline'"></nb-icon>
+					{{ 'DOCS.MIGRATION.REPORT.WARNINGS_TITLE' | translate }} ({{ warnings.length }})
+				</button>
+				<ul class="docs-migration-list" *ngIf="warningsExpanded">
+					<li *ngFor="let warning of warnings; trackBy: trackWarning">
+						<span class="docs-migration-count">{{ warning.count }}×</span>
+						<span>{{ warningLabelKey(warning.code) | translate }}</span>
+					</li>
+				</ul>
+			</div>
+
+			<!-- Per-record failures -->
+			<div class="docs-migration-panel" *ngIf="failures.length">
+				<button nbButton ghost size="tiny" (click)="errorsExpanded = !errorsExpanded">
+					<nb-icon [icon]="errorsExpanded ? 'chevron-up-outline' : 'chevron-down-outline'"></nb-icon>
+					{{ 'DOCS.MIGRATION.REPORT.ERRORS_TITLE' | translate }} ({{ failures.length }})
+				</button>
+				<ul class="docs-migration-list" *ngIf="errorsExpanded">
+					<li class="docs-migration-failure" *ngFor="let record of failures; trackBy: trackRecord">
+						<div class="docs-migration-failure-head">
+							<span class="docs-migration-record-name">
+								{{ record.legacyName || ('DOCS.MIGRATION.REPORT.RECORD_UNNAMED' | translate) }}
+							</span>
+							<span class="docs-migration-record-source">
+								{{ recordSourceLabelKey(record) | translate }}
+							</span>
+							<code>{{ record.externalId }}</code>
+						</div>
+						<div class="docs-migration-failure-body">
+							<span class="docs-migration-error-code">{{ errorLabelKey(record) | translate }}</span>
+							<span class="docs-migration-error-detail" *ngIf="record.error?.message">
+								{{ record.error?.message }}
+							</span>
+						</div>
+						<div class="docs-migration-failure-warnings" *ngIf="record.warnings?.length">
+							<span *ngFor="let warning of record.warnings">{{ warningLabelKey(warning) | translate }}</span>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</section>
+
+		<!-- Rollback report -->
+		<section class="docs-migration-report" *ngIf="rollbackReport as rollback">
+			<header class="docs-migration-report-head">
+				<h6>{{ 'DOCS.MIGRATION.ROLLBACK.TITLE' | translate }}</h6>
+				<nb-badge status="success" [text]="'DOCS.MIGRATION.ROLLBACK.COMPLETED' | translate"></nb-badge>
+			</header>
+			<div class="docs-migration-hint" *ngIf="!rollback.totals.scanned">
+				{{ 'DOCS.MIGRATION.ROLLBACK.NOTHING' | translate }}
+			</div>
+			<ul class="docs-migration-list">
+				<li *ngFor="let row of rollbackTotalsRows">
+					<span class="docs-migration-count">{{ rollback.totals[row.key] }}</span>
+					<span>{{ row.labelKey | translate }}</span>
+				</li>
+			</ul>
+		</section>
+	</nb-card-body>
+
+	<nb-card-footer class="docs-dialog-footer">
+		<button nbButton ghost size="small" (click)="close()">{{ 'DOCS.MIGRATION.CLOSE' | translate }}</button>
+		<span class="docs-migration-footer-spacer"></span>
+		<button
+			*ngIf="canRollback"
+			nbButton
+			size="small"
+			status="danger"
+			appearance="outline"
+			[disabled]="!canConfirmRollback"
+			(click)="requestRollback()"
+		>
+			{{ 'DOCS.MIGRATION.ROLLBACK.TITLE' | translate }}
+		</button>
+		<button nbButton size="small" appearance="outline" [disabled]="!canRunDryRun" (click)="runDryRun()">
+			{{ 'DOCS.MIGRATION.DRY_RUN' | translate }}
+		</button>
+		<button
+			nbButton
+			size="small"
+			status="primary"
+			[disabled]="!canRunImport"
+			[nbTooltip]="canRunImport ? '' : ('DOCS.MIGRATION.DRY_RUN_REQUIRED' | translate)"
+			(click)="requestImport()"
+		>
+			{{ 'DOCS.MIGRATION.RUN' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

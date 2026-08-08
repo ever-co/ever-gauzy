@@ -119,8 +119,14 @@ export * from './lib/telemetry';
 export * from './lib/capture';
 
 // Extraction provider registry — third parties add providers via
-// `ExtractionRegistryService.register()`
+// `ExtractionRegistryService.register()`. Also carries the provider-vision OCR seam
+// (scanned PDFs + images) and the shared PDF rasterizer.
 export * from './lib/knowledge/extraction';
+
+// Thumbnail generation (07 §4.4) — images + the first page of PDFs, written through the
+// FileStorage provider onto `document.thumbKey`. Cosmetic by contract: it never changes
+// `status` or `knowledgeStatus`.
+export * from './lib/knowledge/thumbnail';
 
 // Upload helpers (multi-file interceptor + decorator, magic-byte sniffing)
 export * from './lib/interceptors';
