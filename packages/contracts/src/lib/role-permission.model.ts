@@ -254,6 +254,15 @@ export enum PermissionsEnum {
 	AI_CHAT_ACCESS = 'AI_CHAT_ACCESS',
 	AI_CHAT_SETTINGS = 'AI_CHAT_SETTINGS',
 	/** AI Chat Permissions End */
+	/** Documents Permissions Start */
+	DOCS_READ = 'DOCS_READ',
+	DOCS_CREATE = 'DOCS_CREATE',
+	DOCS_UPDATE = 'DOCS_UPDATE',
+	DOCS_DELETE = 'DOCS_DELETE',
+	DOCS_MANAGE = 'DOCS_MANAGE',
+	DOCS_REVIEW = 'DOCS_REVIEW',
+	DOCS_AI_IMPORT = 'DOCS_AI_IMPORT',
+	/** Documents Permissions End */
 	/**
 	 * Plugin Permissions
 	 */
@@ -468,6 +477,11 @@ export const PermissionGroups = {
 		/** Organization Strategic Initiative Permissions Start */
 		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
 		/** Organization Strategic Initiative Permissions End */
+		/** Documents Permissions Start */
+		PermissionsEnum.DOCS_READ,
+		PermissionsEnum.DOCS_CREATE,
+		PermissionsEnum.DOCS_UPDATE
+		/** Documents Permissions End */
 	],
 
 	//Readonly permissions, are only enabled for Super Admin/Admin role
@@ -497,6 +511,12 @@ export const PermissionGroups = {
 		PermissionsEnum.TENANT_API_KEY_DELETE,
 		/** OAuth App Client Registry */
 		PermissionsEnum.OAUTH_CLIENT_VIEW,
-		PermissionsEnum.OAUTH_CLIENT_EDIT
+		PermissionsEnum.OAUTH_CLIENT_EDIT,
+		/** Documents Permissions Start */
+		PermissionsEnum.DOCS_DELETE,
+		PermissionsEnum.DOCS_MANAGE,
+		PermissionsEnum.DOCS_REVIEW,
+		PermissionsEnum.DOCS_AI_IMPORT
+		/** Documents Permissions End */
 	]
 };

@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { DeepPartial, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	ID,
 	IEmployeeProposalTemplate,
 	IEmployeeProposalTemplateMakeDefaultInput,
 	IPagination
 } from '@gauzy/contracts';
-import { BaseQueryDTO, TenantAwareCrudService } from '@gauzy/core';
+import { BaseQueryDTO, TenantAwareCrudService, sanitizeRichHtml } from '@gauzy/core';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 import { MikroOrmEmployeeProposalTemplateRepository } from './repository/mikro-orm-employee-proposal-template.repository';
 import { TypeOrmEmployeeProposalTemplateRepository } from './repository/type-orm-employee-proposal-template.repository';
@@ -17,6 +19,40 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 		readonly mikroOrmEmployeeProposalTemplateRepository: MikroOrmEmployeeProposalTemplateRepository
 	) {
 		super(typeOrmEmployeeProposalTemplateRepository, mikroOrmEmployeeProposalTemplateRepository);
+	}
+
+	/**
+	 * Creates a proposal template, sanitizing the rich-text `content` HTML through the shared
+	 * server-side allowlist before persisting — the content is re-rendered in template views and
+	 * fed into Gauzy AI proposal generation (see `sanitizeRichHtml`).
+	 *
+	 * @param entity - The proposal template data to persist.
+	 * @returns The persisted proposal template.
+	 */
+	public async create(entity: DeepPartial<EmployeeProposalTemplate>): Promise<EmployeeProposalTemplate> {
+		if (typeof entity.content === 'string') {
+			entity.content = sanitizeRichHtml(entity.content);
+		}
+		return await super.create(entity);
+	}
+
+	/**
+	 * Updates a proposal template, sanitizing the rich-text `content` HTML through the shared
+	 * server-side allowlist before persisting (see `create`).
+	 *
+	 * @param id - The template ID (or where-criteria) to update.
+	 * @param partialEntity - The partial update payload.
+	 * @returns The updated template or the TypeORM update result.
+	 */
+	public async update(
+		id: string | FindOptionsWhere<EmployeeProposalTemplate>,
+		partialEntity: QueryDeepPartialEntity<EmployeeProposalTemplate>
+	): Promise<EmployeeProposalTemplate | UpdateResult> {
+		const input = partialEntity as { content?: string };
+		if (typeof input.content === 'string') {
+			input.content = sanitizeRichHtml(input.content);
+		}
+		return await super.update(id, partialEntity);
 	}
 
 	/**

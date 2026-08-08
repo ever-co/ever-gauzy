@@ -23,7 +23,6 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { LanguagesService, PageRouteRegistryService, SkillsService } from '@gauzy/ui-core/core';
 import {
@@ -34,6 +33,7 @@ import {
 	LanguageSelectorModule,
 	ManageAppointmentModule,
 	MiscellaneousModule,
+	RichTextEditorModule,
 	SelectorsModule,
 	SharedModule,
 	SkillsInputModule,
@@ -72,7 +72,6 @@ const NB_MODULES = [
  * Third Party Modules
  */
 const THIRD_PARTY_MODULES = [
-	CKEditorModule,
 	NgSelectModule,
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forChild()
@@ -89,6 +88,7 @@ const FEATURE_MODULES = [
 	LanguageSelectorModule,
 	ManageAppointmentModule,
 	MiscellaneousModule,
+	RichTextEditorModule,
 	SelectorsModule,
 	SharedModule,
 	SkillsInputModule,

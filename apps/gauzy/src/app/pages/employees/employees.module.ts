@@ -17,7 +17,6 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
@@ -46,6 +45,7 @@ import {
 	RecurringExpenseDeleteConfirmationModule,
 	RecurringExpenseMutationModule,
 	RecordViewModule,
+	RichTextEditorModule,
 	SharedModule,
 	SkillsInputModule,
 	TableComponentsModule,
@@ -104,7 +104,7 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
-		CKEditorModule,
+		RichTextEditorModule,
 		NbAccordionModule,
 		NbActionsModule,
 		NbBadgeModule,

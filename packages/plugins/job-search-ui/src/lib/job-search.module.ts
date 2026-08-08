@@ -1,7 +1,6 @@
 import { inject, NgModule } from '@angular/core';
 import { RouterModule, ROUTES } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { MomentModule } from 'ngx-moment';
 import { FileUploadModule } from 'ng2-file-upload';
 import { Subject, of } from 'rxjs';
@@ -26,6 +25,7 @@ import {
 	DialogsModule,
 	NebularModule,
 	ProposalTemplateSelectModule,
+	RichTextEditorModule,
 	SelectorsModule,
 	SharedModule,
 	StatusBadgeModule
@@ -39,13 +39,13 @@ import { COMPONENTS } from './components';
 	imports: [
 		RouterModule.forChild([]),
 		NebularModule,
-		CKEditorModule,
 		FileUploadModule,
 		MomentModule,
 		TranslateModule.forChild(),
 		SmartDataViewLayoutModule,
 		DialogsModule,
 		ProposalTemplateSelectModule,
+		RichTextEditorModule,
 		SelectorsModule,
 		SharedModule,
 		StatusBadgeModule

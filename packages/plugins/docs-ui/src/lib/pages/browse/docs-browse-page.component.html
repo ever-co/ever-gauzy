@@ -1,0 +1,164 @@
+<div class="docs-browse" gzDocsUploadDropzone (filesDropped)="onFilesPicked($event)" (dragActiveChange)="onDropActiveChange($event)">
+	<!-- Page-wide drop overlay -->
+	<div class="docs-drop-overlay" *ngIf="dropActive">
+		<nb-icon icon="cloud-upload-outline"></nb-icon>
+		<span>{{ 'DOCS.UPLOAD.DROP_HINT' | translate }}</span>
+	</div>
+
+	<!-- Hidden multi file input -->
+	<input
+		#fileInput
+		id="docs-browse-file-input"
+		type="file"
+		multiple
+		hidden
+		[accept]="uploadAccept"
+		[attr.aria-label]="'DOCS.UPLOAD.BUTTON' | translate"
+		(change)="onFilesPicked(fileInput.files)"
+	/>
+
+	<!-- Header -->
+	<div class="docs-browse-header">
+		<h4 class="docs-browse-title">{{ 'DOCS.TITLE' | translate }}</h4>
+		<div class="docs-browse-actions">
+			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_REVIEW]">
+				<button nbButton size="small" appearance="ghost" (click)="goToReviewQueue()">
+					<nb-icon icon="checkmark-circle-outline"></nb-icon>
+					{{ 'DOCS.REVIEW.QUEUE_TITLE' | translate }}
+				</button>
+			</ng-template>
+			<!-- View toggle — persisted via ComponentEnum.DOCUMENTS_HUB.
+			     `<fieldset>` is the semantic grouping element (implicit `group` role); the inline
+			     rules only neutralise the user-agent fieldset chrome so the layout is unchanged. -->
+			<fieldset
+				class="docs-view-toggle"
+				style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"
+				[attr.aria-label]="'DOCS.VIEWS.TOGGLE_LABEL' | translate"
+			>
+				<button
+					nbButton
+					size="small"
+					[status]="isCardsView ? 'basic' : 'primary'"
+					[appearance]="isCardsView ? 'outline' : 'filled'"
+					[attr.aria-pressed]="!isCardsView"
+					[nbTooltip]="'DOCS.VIEWS.TABLE' | translate"
+					(click)="setLayout(layoutStyles.TABLE)"
+				>
+					<nb-icon icon="list-outline"></nb-icon>
+				</button>
+				<button
+					nbButton
+					size="small"
+					[status]="isCardsView ? 'primary' : 'basic'"
+					[appearance]="isCardsView ? 'filled' : 'outline'"
+					[attr.aria-pressed]="isCardsView"
+					[nbTooltip]="'DOCS.VIEWS.CARDS' | translate"
+					(click)="setLayout(layoutStyles.CARDS_GRID)"
+				>
+					<nb-icon icon="grid-outline"></nb-icon>
+				</button>
+			</fieldset>
+			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_CREATE]">
+				<button nbButton size="small" appearance="outline" (click)="openNewPageDialog()">
+					<nb-icon icon="file-add-outline"></nb-icon>
+					{{ 'DOCS.TREE.NEW_PAGE' | translate }}
+				</button>
+				<button nbButton size="small" status="primary" (click)="openUploadFlow()">
+					<nb-icon icon="upload-outline"></nb-icon>
+					{{ 'DOCS.UPLOAD.BUTTON' | translate }}
+				</button>
+			</ng-template>
+		</div>
+	</div>
+
+	<!-- Preset chips -->
+	<gz-docs-preset-chips
+		[counts]="query.presetCounts$ | async"
+		[active]="(query.filter$ | async)?.preset"
+		(presetToggled)="onPresetToggled($event)"
+	></gz-docs-preset-chips>
+
+	<!-- Filter bar -->
+	<gz-docs-filter-bar
+		[facets]="query.facets$ | async"
+		[value]="query.filter$ | async"
+		[urlParams]="urlParams"
+		(filterChange)="onFilterChange($event)"
+		(searchChange)="onSearchChange($event)"
+		(clearAll)="onClearAll()"
+		(applyView)="onApplySavedView($event)"
+	></gz-docs-filter-bar>
+
+	<!-- Upload progress -->
+	<gz-docs-upload-progress
+		[items]="uploadQueue.items$ | async"
+		(retry)="uploadQueue.retry($event)"
+		(dismiss)="uploadQueue.dismiss($event)"
+		(clearFinished)="uploadQueue.clearFinished()"
+	></gz-docs-upload-progress>
+
+	<!-- Content -->
+	<ng-container *ngIf="query.rows$ | async as rows">
+		<ng-container *ngIf="rows.length; else emptyState">
+			<!-- Cards view -->
+			<gz-docs-cards
+				*ngIf="isCardsView; else tableView"
+				[rows]="rows"
+				[totalCount]="(query.totalCount$ | async) || 0"
+				[loading]="(query.loading$ | async) === true"
+				[flat]="isFlat(query.filter$ | async)"
+				[breadcrumb]="breadcrumb"
+				[activeId]="query.detailId$ | async"
+				(open)="onRowClicked($event)"
+				(preview)="openPreview($event)"
+				(openEditor)="openEditor($event)"
+				(drillIn)="onDrillIn($event)"
+				(loadMore)="onLoadMore()"
+			></gz-docs-cards>
+
+			<!-- Table view -->
+			<ng-template #tableView>
+				<gz-docs-table
+					[rows]="rows"
+					[loading]="(query.loading$ | async) === true"
+					[selectable]="canManage"
+					(rowClicked)="onRowClicked($event)"
+					(folderOpened)="onFolderOpened($event)"
+					(selectionChanged)="onSelectionChanged($event)"
+					(sortChanged)="onSortChanged($event)"
+					(retryRequested)="onRetryRequested($event)"
+					(previewRequested)="openPreview($event)"
+					(editorRequested)="openEditor($event)"
+				></gz-docs-table>
+
+				<div class="pagination-container">
+					<ga-pagination
+						[totalItems]="pagination?.totalItems"
+						[activePage]="pagination?.activePage"
+						[itemsPerPage]="pagination?.itemsPerPage"
+						[doEmit]="false"
+						(selectedOption)="onUpdateOption($event)"
+						(selectedPage)="onPageChange($event)"
+					></ga-pagination>
+				</div>
+			</ng-template>
+		</ng-container>
+
+		<ng-template #emptyState>
+			<div [nbSpinner]="(query.loading$ | async) === true" nbSpinnerStatus="primary" class="docs-empty-host">
+				<gz-docs-empty-state
+					*ngIf="(query.loading$ | async) !== true"
+					[variant]="emptyVariant(rows, (query.error$ | async) === true)"
+					(primaryAction)="onEmptyAction($event)"
+				></gz-docs-empty-state>
+			</div>
+		</ng-template>
+	</ng-container>
+
+	<!-- Bulk bar -->
+	<gz-docs-bulk-bar
+		[selectedIds]="(query.selection$ | async) || []"
+		(completed)="onBulkCompleted($event)"
+		(cleared)="onClearSelection()"
+	></gz-docs-bulk-bar>
+</div>

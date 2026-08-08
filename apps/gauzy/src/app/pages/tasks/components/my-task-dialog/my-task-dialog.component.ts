@@ -1,13 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { IEmployee, IOrganizationProject, ITag, ITask, TaskStatusEnum } from '@gauzy/contracts';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { CKEditor4 } from 'ckeditor4-angular';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { firstValueFrom } from 'rxjs';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { richTextCKEditorConfig } from '@gauzy/ui-core/shared';
 import {
 	EmployeesService,
 	ErrorHandlingService,
@@ -46,7 +44,6 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 	employeeId;
 	tags: ITag[] = [];
 	@Input() task: Partial<ITask> = {};
-	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
 	public form: UntypedFormGroup = MyTaskDialogComponent.buildForm(this.fb);
 
 	constructor(
@@ -115,7 +112,6 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 	}
 
 	async ngOnInit() {
-		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		await this.loadProjects();
 		await this.loadEmployees();
 		this.initializeForm(Object.assign({}, initialTaskValue, this.selectedTask || this.task));

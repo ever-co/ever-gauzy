@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import {
@@ -31,6 +30,7 @@ import {
 	FavoriteToggleModule,
 	GauzyEditableGridModule,
 	ProjectSelectModule,
+	RichTextEditorModule,
 	SharedModule,
 	TableFiltersModule,
 	TagsColorInputModule,
@@ -82,7 +82,7 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		NgSelectModule,
 		DragDropModule,
 		NgxPermissionsModule.forChild(),
-		CKEditorModule,
+		RichTextEditorModule,
 		TranslateModule.forChild(),
 		TasksRoutingModule,
 		TableComponentsModule,

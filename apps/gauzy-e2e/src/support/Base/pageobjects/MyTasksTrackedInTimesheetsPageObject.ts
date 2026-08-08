@@ -24,10 +24,11 @@ export const MyTasksTrackedInTimesheets = {
 	estimateDaysInputCss: '[formControlName="estimateDays"]',
 	estimateHoursInputCss: '[formControlName="estimateHours"]',
 	estimateMinsInputCss: '[formControlName="estimateMinutes"]',
-	// Description is a CKEditor 4 widget (<ckeditor formControlName="description">) whose editable lives in a
-	// wysiwyg iframe — the host is NOT fillable. Assert on the host; type into the iframe body (see .po).
+	// Description is the shared rich-text editor (<ga-rich-text-editor formControlName="description">) whose
+	// editable is a plain contenteditable div (.ProseMirror) in the MAIN frame — the host is NOT fillable.
+	// Assert on the host; fill the .ProseMirror editable (see .po).
 	descriptionTextareaCss: '[formControlName="description"]',
-	ckeditorIframeCss: 'iframe[class="cke_wysiwyg_frame cke_reset"]',
+	richTextEditorCss: 'ga-rich-text-editor .ProseMirror',
 	// Dialog footer Save (nb-card-footer button[status="success"]). Gated on form validity + employeeId,
 	// which is populated because we run this logged in AS the employee.
 	saveNewTaskButtonCss: 'nb-card-footer button[status="success"]',

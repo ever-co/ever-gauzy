@@ -1,0 +1,14 @@
+<div
+	class="docs-table"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	(dblclick)="onRowDoubleClick($event)"
+>
+	<angular2-smart-table
+		[settings]="settings"
+		[source]="source"
+		(userRowSelect)="onUserRowSelect($event)"
+		style="cursor: pointer"
+	></angular2-smart-table>
+</div>

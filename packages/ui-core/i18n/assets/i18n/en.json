@@ -884,6 +884,7 @@
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Dashboards",
+		"DOCUMENTS": "Documents",
 		"APPOINTMENTS": "Appointments",
 		"FAVORITES": "Favorites",
 		"ACCOUNTING": "Accounting",
@@ -6737,5 +6738,56 @@
 			"DELETE_FAILED": "Failed to revoke OAuth client",
 			"COPY_FAILED": "Failed to copy to clipboard"
 		}
+	},
+	"RICH_TEXT_EDITOR": {
+		"TOOLBAR": {
+			"LABEL": "Text formatting",
+			"UNDO": "Undo",
+			"REDO": "Redo",
+			"PARAGRAPH": "Paragraph",
+			"HEADING": "Heading {{level}}",
+			"BOLD": "Bold",
+			"ITALIC": "Italic",
+			"UNDERLINE": "Underline",
+			"STRIKE": "Strikethrough",
+			"CODE": "Inline code",
+			"CODE_BLOCK": "Code block",
+			"SUBSCRIPT": "Subscript",
+			"SUPERSCRIPT": "Superscript",
+			"TEXT_COLOR": "Text color",
+			"HIGHLIGHT": "Highlight",
+			"FONT_FAMILY": "Font",
+			"ALIGN_LEFT": "Align left",
+			"ALIGN_CENTER": "Center",
+			"ALIGN_RIGHT": "Align right",
+			"ALIGN_JUSTIFY": "Justify",
+			"BULLET_LIST": "Bullet list",
+			"ORDERED_LIST": "Numbered list",
+			"TASK_LIST": "Task list",
+			"BLOCKQUOTE": "Quote",
+			"HORIZONTAL_RULE": "Divider",
+			"LINK": "Add link",
+			"UNLINK": "Remove link",
+			"TABLE": "Insert table",
+			"IMAGE": "Insert image",
+			"CLEAR_FORMAT": "Clear formatting"
+		},
+		"TABLE": {
+			"ROW_ADD_ABOVE": "Add row above",
+			"ROW_ADD_BELOW": "Add row below",
+			"ROW_DELETE": "Delete row",
+			"COL_ADD_LEFT": "Add column left",
+			"COL_ADD_RIGHT": "Add column right",
+			"COL_DELETE": "Delete column",
+			"HEADER_ROW": "Toggle header row",
+			"DELETE": "Delete table"
+		},
+		"LINK_DIALOG": {
+			"URL": "URL",
+			"APPLY": "Apply",
+			"REMOVE": "Remove"
+		},
+		"CHARACTERS": "{{count}} characters",
+		"WORDS": "{{count}} words"
 	}
 }

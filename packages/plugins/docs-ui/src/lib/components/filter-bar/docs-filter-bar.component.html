@@ -1,0 +1,107 @@
+<div class="docs-filter-bar">
+	<div class="docs-filter-search">
+		<nb-icon icon="search-outline"></nb-icon>
+		<input
+			nbInput
+			size="small"
+			type="text"
+			id="docs-filter-search"
+			[placeholder]="'DOCS.FILTERS.SEARCH_PLACEHOLDER' | translate"
+			[attr.aria-label]="'DOCS.FILTERS.SEARCH_PLACEHOLDER' | translate"
+			[ngModel]="value?.q"
+			(ngModelChange)="onSearchInput($event)"
+		/>
+		<nb-toggle
+			labelPosition="end"
+			[checked]="value?.searchIn === 'content'"
+			[disabled]="contentSearchDisabled && value?.searchIn !== 'content'"
+			(checkedChange)="onSearchScopeToggle($event)"
+			[nbTooltip]="
+				(contentSearchDisabled ? 'DOCS.FILTERS.SEARCH_CONTENT_DISABLED' : 'DOCS.FILTERS.SEARCH_CONTENT_HINT')
+					| translate: { min: contentSearchMinChars }
+			"
+		>
+			{{ 'DOCS.FILTERS.SEARCH_CONTENT' | translate }}
+		</nb-toggle>
+	</div>
+
+	<div class="docs-filter-facets">
+		<gz-docs-facet-multiselect
+			labelKey="DOCS.FILTERS.KIND"
+			[buckets]="kindBuckets"
+			[selected]="value?.kind || []"
+			[labelFor]="kindLabel"
+			(selectionChange)="onFacet('kind', $event)"
+		></gz-docs-facet-multiselect>
+
+		<gz-docs-facet-multiselect
+			labelKey="DOCS.FILTERS.STATUS"
+			[buckets]="statusBuckets"
+			[selected]="value?.status || []"
+			[labelFor]="statusLabel"
+			(selectionChange)="onFacet('status', $event)"
+		></gz-docs-facet-multiselect>
+
+		<gz-docs-facet-multiselect
+			labelKey="DOCS.FILTERS.KNOWLEDGE"
+			[buckets]="knowledgeBuckets"
+			[selected]="value?.knowledgeStatus || []"
+			[labelFor]="knowledgeLabel"
+			(selectionChange)="onFacet('knowledgeStatus', $event)"
+		></gz-docs-facet-multiselect>
+
+		<gz-docs-facet-multiselect
+			labelKey="DOCS.FILTERS.SOURCE"
+			[buckets]="sourceBuckets"
+			[selected]="value?.source || []"
+			[labelFor]="sourceLabel"
+			(selectionChange)="onFacet('source', $event)"
+		></gz-docs-facet-multiselect>
+
+		<gz-docs-facet-multiselect
+			labelKey="DOCS.FILTERS.CATEGORY"
+			[buckets]="categoryBuckets"
+			[selected]="value?.categoryIds || []"
+			(selectionChange)="onFacet('categoryIds', $event)"
+		></gz-docs-facet-multiselect>
+
+		<gz-docs-facet-multiselect
+			labelKey="DOCS.FILTERS.TAG"
+			[buckets]="tagBuckets"
+			[selected]="value?.tagIds || []"
+			(selectionChange)="onFacet('tagIds', $event)"
+		></gz-docs-facet-multiselect>
+
+		<!-- Created range -->
+		<input
+			nbInput
+			size="small"
+			class="docs-filter-range"
+			id="docs-filter-created-range"
+			[placeholder]="'DOCS.FILTERS.CREATED_RANGE' | translate"
+			[attr.aria-label]="'DOCS.FILTERS.CREATED_RANGE' | translate"
+			[nbDatepicker]="createdRange"
+		/>
+		<nb-rangepicker #createdRange (rangeChange)="onCreatedRange($event)"></nb-rangepicker>
+
+		<!-- Updated range -->
+		<input
+			nbInput
+			size="small"
+			class="docs-filter-range"
+			id="docs-filter-updated-range"
+			[placeholder]="'DOCS.FILTERS.UPDATED_RANGE' | translate"
+			[attr.aria-label]="'DOCS.FILTERS.UPDATED_RANGE' | translate"
+			[nbDatepicker]="updatedRange"
+		/>
+		<nb-rangepicker #updatedRange (rangeChange)="onUpdatedRange($event)"></nb-rangepicker>
+
+		<!-- Saved views (device-local, UX spec §5) -->
+		<gz-docs-saved-views [params]="urlParams" (applyView)="applyView.emit($event)"></gz-docs-saved-views>
+
+		<button nbButton ghost size="small" (click)="onClearAll()">
+			<nb-icon icon="close-circle-outline"></nb-icon>
+			{{ 'DOCS.FILTERS.CLEAR_ALL' | translate }}
+		</button>
+	</div>
+</div>

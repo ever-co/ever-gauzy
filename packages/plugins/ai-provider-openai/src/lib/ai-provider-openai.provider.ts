@@ -142,11 +142,48 @@ const listCatalogue = async (credentials: IAiProviderCredentials | null): Promis
 	});
 
 /**
+ * Container extension for the multipart filename, derived from the MIME type the browser recorded.
+ *
+ * `/v1/audio/transcriptions` decides the container from the filename EXTENSION, so a generic name is
+ * rejected with "Invalid file format" even when the bytes are fine. `webm` is the fallback: it is
+ * what `MediaRecorder` produces by default everywhere except Safari.
+ */
+const resolveAudioExtension = (mimeType: string): string => {
+	// `audio/mpeg` is MP3, not MP4 — lumping it in with `mp4` named MP3 bytes `dictation.mp4`, and the
+	// extension is exactly what OpenAI trusts to identify the container. MediaRecorder never produces
+	// audio/mpeg, which is why this survived: it only bites when a caller feeds a pre-recorded file.
+	// wav/flac/m4a are covered for the same caller class — every container OpenAI accepts that a MIME
+	// type can name. What remains falling to `.webm` (e.g. raw `audio/aac`) has no extension in
+	// OpenAI's accepted set at all, so no mapping could save it.
+	if (mimeType.includes('mp4')) {
+		return 'mp4';
+	}
+	if (mimeType.includes('mpeg')) {
+		return 'mp3';
+	}
+	if (mimeType.includes('ogg')) {
+		return 'ogg';
+	}
+	if (mimeType.includes('wav')) {
+		return 'wav';
+	}
+	if (mimeType.includes('flac')) {
+		return 'flac';
+	}
+	if (mimeType.includes('m4a')) {
+		// audio/m4a and audio/x-m4a
+		return 'm4a';
+	}
+	return 'webm';
+};
+
+/**
  * Speech-to-text for the chat's dictation control.
  *
  * `/v1/audio/transcriptions` is multipart, and the filename EXTENSION is what OpenAI uses to decide
  * the container — a generic name is rejected with "Invalid file format" even when the bytes are
- * fine — so it is derived from the MIME type the browser actually recorded.
+ * fine — so it is derived from the MIME type the browser actually recorded
+ * (see {@link resolveAudioExtension}).
  *
  * A custom base URL is honoured here, unlike the model catalogue: the caller explicitly configured
  * that endpoint as their OpenAI, and this is a request they asked for rather than a background
@@ -157,25 +194,7 @@ const transcribeAudio = async (
 	mimeType: string,
 	credentials: IAiProviderCredentials
 ): Promise<string> => {
-	// `audio/mpeg` is MP3, not MP4 — lumping it in with `mp4` named MP3 bytes `dictation.mp4`, and the
-	// extension is exactly what OpenAI trusts to identify the container. MediaRecorder never produces
-	// audio/mpeg, which is why this survived: it only bites when a caller feeds a pre-recorded file.
-	// wav/flac/m4a are covered for the same caller class — every container OpenAI accepts that a MIME
-	// type can name. What remains falling to `.webm` (e.g. raw `audio/aac`) has no extension in
-	// OpenAI's accepted set at all, so no mapping could save it.
-	const extension = mimeType.includes('mp4')
-		? 'mp4'
-		: mimeType.includes('mpeg')
-		? 'mp3'
-		: mimeType.includes('ogg')
-		? 'ogg'
-		: mimeType.includes('wav')
-		? 'wav'
-		: mimeType.includes('flac')
-		? 'flac'
-		: mimeType.includes('m4a') // audio/m4a and audio/x-m4a
-		? 'm4a'
-		: 'webm';
+	const extension = resolveAudioExtension(mimeType);
 	const form = new FormData();
 	form.append('file', new Blob([new Uint8Array(audio)], { type: mimeType }), `dictation.${extension}`);
 	form.append('model', TRANSCRIBE_MODEL);
@@ -250,5 +269,24 @@ export const openAiProviderDefinition: IAiChatProviderDefinition = {
 			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {})
 		});
 		return provider(modelId);
+	},
+
+	/**
+	 * Create an OpenAI `EmbeddingModel` for the Documents knowledge pipeline
+	 * (`@gauzy/plugin-docs` chunk/query embeddings).
+	 *
+	 * Same lazy-ESM pattern as {@link createModel}; callers feature-detect this hook and
+	 * degrade to lexical-only retrieval when a provider does not implement it.
+	 *
+	 * @param modelId Embedding model id (e.g. 'text-embedding-3-small').
+	 * @param credentials Resolved credentials (tenant BYOK, environment, or platform).
+	 */
+	async createEmbeddingModel(modelId: string, credentials: IAiProviderCredentials) {
+		const { createOpenAI } = await importEsm<typeof import('@ai-sdk/openai')>('@ai-sdk/openai');
+		const provider = createOpenAI({
+			apiKey: credentials.apiKey,
+			...(credentials.baseUrl ? { baseURL: credentials.baseUrl } : {})
+		});
+		return provider.textEmbeddingModel(modelId);
 	}
 };

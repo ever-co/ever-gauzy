@@ -1,0 +1,67 @@
+<div class="docs-tree">
+	<!-- Favorites -->
+	<ng-container *ngIf="favorites$ | async as favorites">
+		<div class="docs-tree-section" *ngIf="favorites.length">
+			<div class="docs-tree-section-title">{{ 'DOCS.TREE.FAVORITES' | translate }}</div>
+			<a class="docs-tree-link" *ngFor="let favorite of favorites" (click)="openFavorite(favorite)">
+				<nb-icon icon="star-outline" size="tiny"></nb-icon>
+				<span class="docs-tree-link-name">{{ favorite.title }}</span>
+			</a>
+		</div>
+	</ng-container>
+
+	<!-- Recents -->
+	<div class="docs-tree-section" *ngIf="recents.length">
+		<div class="docs-tree-section-title">{{ 'DOCS.TREE.RECENTS' | translate }}</div>
+		<a class="docs-tree-link" *ngFor="let recent of recents" (click)="openRecent(recent)">
+			<nb-icon
+				[icon]="recent.kind === kindEnum.FOLDER ? 'folder-outline' : recent.kind === kindEnum.PAGE ? 'file-text-outline' : 'file-outline'"
+				size="tiny"
+			></nb-icon>
+			<span class="docs-tree-link-name">{{ recent.name }}</span>
+		</a>
+	</div>
+
+	<!-- Tree -->
+	<div class="docs-tree-section docs-tree-main">
+		<div class="docs-tree-section-title">{{ 'DOCS.TREE.ALL_DOCUMENTS' | translate }}</div>
+		<div class="docs-tree-empty" *ngIf="!nodes.length">{{ 'DOCS.TREE.EMPTY' | translate }}</div>
+		<tree-root #tree [nodes]="nodes" [options]="options" (moveNode)="onMoveNode($event)" (activate)="onNodeActivate($event)">
+			<ng-template #treeNodeTemplate let-node let-index="index">
+				<span class="docs-tree-node">
+					<span class="docs-tree-node-icon" *ngIf="node.data.icon; else defaultIcon">{{ node.data.icon }}</span>
+					<ng-template #defaultIcon>
+						<nb-icon [icon]="kindIcon(node.data)" size="tiny" [style.color]="node.data.color || null"></nb-icon>
+					</ng-template>
+					<span class="docs-tree-node-name">{{ node.data.name }}</span>
+					<nb-icon
+						*ngIf="node.data.isLocked"
+						icon="lock-outline"
+						size="tiny"
+						class="docs-tree-node-badge"
+					></nb-icon>
+					<nb-icon
+						*ngIf="node.data.visibility === 'PRIVATE'"
+						icon="eye-off-outline"
+						size="tiny"
+						class="docs-tree-node-badge"
+						[nbTooltip]="'DOCS.VISIBILITY.PRIVATE' | translate"
+					></nb-icon>
+					<button
+						*ngIf="menuItemsFor(node.data).length"
+						nbButton
+						ghost
+						size="tiny"
+						class="docs-tree-node-menu"
+						[nbContextMenu]="menuItemsFor(node.data)"
+						[nbContextMenuTag]="menuTag(node.data)"
+						(click)="$event.stopPropagation()"
+						[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
+					>
+						<nb-icon icon="more-horizontal-outline" size="tiny"></nb-icon>
+					</button>
+				</span>
+			</ng-template>
+		</tree-root>
+	</div>
+</div>

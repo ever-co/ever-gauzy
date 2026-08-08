@@ -61,12 +61,14 @@
                     <p class="label">
                       {{ 'FORM.LABELS.DESCRIPTION' | translate }}
                     </p>
-                    <div class="ck-editor">
-                      <ckeditor
+                    <div class="rich-text-editor-wrap">
+                      <ga-rich-text-editor
                         [formControl]="form.get('description')"
                         class="description"
-                        [config]="ckConfig"
-                      ></ckeditor>
+                        preset="standard"
+                        outputFormat="html"
+                        minHeight="200px"
+                      ></ga-rich-text-editor>
                     </div>
                   </div>
                 </div>

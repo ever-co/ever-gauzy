@@ -44,6 +44,7 @@ export * from './lib/dashboard.model';
 export * from './lib/date-picker.model';
 export * from './lib/deal.model';
 export * from './lib/desktop-timer.model';
+export * from './lib/document.model';
 export * from './lib/email-reset.model';
 export * from './lib/email-template.model';
 export * from './lib/email.model';
