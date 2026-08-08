@@ -17,7 +17,7 @@ import { memoryStorage } from 'multer';
 import type { UIMessage } from 'ai';
 import { IAiChatConfig, IAiChatModelCatalogue, PermissionsEnum } from '@gauzy/contracts';
 import { LazyFileInterceptor, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
-import { AiChatService } from './ai-chat.service';
+import { AiChatService, MAX_AUDIO_BYTES } from './ai-chat.service';
 
 /** Request body sent by the `useChat` client (Vercel AI SDK UI). */
 export interface IAiChatRequestBody {
@@ -95,17 +95,26 @@ export class AiChatController {
 	@ApiOperation({ summary: 'Transcribe recorded speech' })
 	@ApiResponse({ status: 200, description: 'Transcript.' })
 	@ApiResponse({ status: 400, description: 'No audio uploaded.' })
+	// multer's LIMIT_FILE_SIZE surfaces as PayloadTooLargeException via transformException.
+	@ApiResponse({ status: 413, description: 'Recording exceeds the 25 MB limit.' })
 	@ApiResponse({ status: 503, description: 'No provider available to transcribe.' })
 	@Permissions(PermissionsEnum.AI_CHAT_ACCESS)
 	@Post('/transcribe')
 	@UseInterceptors(
 		LazyFileInterceptor('file', {
-			// `storage` is REQUIRED even though the type marks it optional: the interceptor calls
-			// `localOptions.storage(context)` unconditionally, so omitting it throws a TypeError before
-			// multer ever runs and the endpoint answers 500. Memory specifically — the handler reads
-			// `file.buffer`, which only memoryStorage populates; a disk/FileStorage factory would leave
-			// it undefined and the service would reject the upload as empty.
-			storage: () => memoryStorage()
+			// Memory specifically: the handler reads `file.buffer`, which only memoryStorage populates.
+			// A disk/FileStorage factory would leave it undefined and the service would then reject the
+			// upload as empty — the audio never touches disk, it is forwarded straight upstream.
+			//
+			// (`storage` being omitted entirely is what broke this endpoint originally. It is now
+			// required by LazyFileInterceptor's own signature, so that mistake no longer compiles.)
+			storage: () => memoryStorage(),
+			// The same constant the service checks — declared here too so an oversized upload is
+			// rejected by multer BEFORE memoryStorage buffers all of it in RAM. The service check
+			// remains as the second line of defense (and covers callers that bypass this route).
+			// Forwarding `limits` at all is part of this change; declaring it earlier would have
+			// silently held nothing.
+			limits: { fileSize: MAX_AUDIO_BYTES }
 		})
 	)
 	async transcribe(@UploadedFile() file: { buffer: Buffer; mimetype: string }): Promise<{ text: string }> {

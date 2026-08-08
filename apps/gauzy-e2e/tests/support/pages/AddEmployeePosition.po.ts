@@ -8,6 +8,7 @@ import {
 	waitElementToHide,
 	verifyValue,
 	dispatchClick,
+	dispatchClickWhenSettled,
 	waitForSpinnerGone,
 	wait
 } from '../util';
@@ -172,8 +173,19 @@ export const selectPositionRowByText = async (text: string) => {
 };
 
 export const clickEditEmployeePositionButton = async () => {
-	// Edit dialog opens via dispatch so a fading backdrop can't swallow the click (row already selected).
-	await dispatchClick(AddEmployeePositionPage.editEmployeePositionButtonCss);
+	// Edit opens via dispatch so a fading backdrop can't swallow the click (row already selected) — and
+	// CONFIRMS the editable form rendered. Dispatching alone was not enough: the Edit button lives in
+	// ngx-gauzy-button-action's slide-in action bar, and this fires right after waitMessageToHide plus a
+	// row click, i.e. while a toastr is still fading. When the click is lost, the next call
+	// (`verifyValue`/`clearField` on editPositionInputCss) waits the full 24s and the scenario dies with
+	// a timeout that names the input rather than the button that was never pressed.
+	//
+	// Confirming on the very selector the dependent step waits for makes a wrong-selector stall
+	// impossible: if it can't appear, the old code would have hung on it anyway.
+	await dispatchClickWhenSettled(
+		AddEmployeePositionPage.editEmployeePositionButtonCss,
+		AddEmployeePositionPage.editPositionInputCss
+	);
 };
 
 export const selectPositionToEdit = async () => {

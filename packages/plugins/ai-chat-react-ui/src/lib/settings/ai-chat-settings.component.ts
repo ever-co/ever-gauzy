@@ -620,6 +620,14 @@ export class AiChatSettingsComponent implements OnInit {
 	 * live and complete (the ordinary case needs no explanation).
 	 */
 	modelSourceKey(provider: IAiChatProvider): string | null {
+		// Before anything catalogue-shaped: a placeholder provider (chat routing not implemented; its
+		// catalogue is deliberately empty) must not fall through to the 'curated' advice below, which
+		// tells the user to save an API key — the one remedy that cannot help here. Checked first and
+		// independent of the fetch, because the provider is a placeholder whether or not the catalogue
+		// has arrived.
+		if (provider.chatCapable === false) {
+			return 'AI_CHAT_UI.SETTINGS.FORM.MODELS_NOT_CHAT_CAPABLE';
+		}
 		const catalogue = this.modelCatalogues().get(provider.id);
 		if (!catalogue) {
 			return null;
