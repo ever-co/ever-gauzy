@@ -43,9 +43,13 @@ ${[1, 2, 3]
 	.join('\n')}
 </w:styles>`;
 
+/** The `<w:pPr>` block naming a paragraph style; empty for an unstyled paragraph. */
+const paragraphProperties = (style?: string): string =>
+	style ? `<w:pPr><w:pStyle w:val="${style}"/></w:pPr>` : '';
+
 /** A paragraph with an optional named style and optional run properties. */
 const paragraph = (text: string, style?: string, runProperties = ''): string =>
-	`<w:p>${style ? `<w:pPr><w:pStyle w:val="${style}"/></w:pPr>` : ''}` +
+	`<w:p>${paragraphProperties(style)}` +
 	`<w:r>${runProperties}<w:t xml:space="preserve">${text}</w:t></w:r></w:p>`;
 
 /** A table cell wrapping a single paragraph (Word never puts bare text in a `<w:tc>`). */

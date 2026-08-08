@@ -18,10 +18,10 @@
 		<router-outlet></router-outlet>
 	</main>
 
+	<!-- `<aside>` already exposes the implicit `complementary` role — no explicit role needed. -->
 	<aside
 		class="docs-detail-column"
 		*ngIf="detailId$ | async as detailId"
-		role="complementary"
 		[attr.aria-label]="'DOCS.A11Y.DETAIL_PANEL_LABEL' | translate"
 	>
 		<gz-docs-detail-panel

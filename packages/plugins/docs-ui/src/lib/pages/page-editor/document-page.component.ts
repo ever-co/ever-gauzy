@@ -472,7 +472,9 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		if (!this.document || !this.editorComponent) return;
 		try {
 			const { id: organizationId, tenantId } = this.store.selectedOrganization ?? ({} as never);
-			const copy = await firstValueFrom(
+			// The copy is created for its side effect only — the editor stays on this
+			// document and reloads the server's version below.
+			await firstValueFrom(
 				this.documentsService.create({
 					kind: DocumentKindEnum.PAGE,
 					name: `${this.document.name} (${this.translate.instant('DOCS.EDITOR.CONFLICT_COPY_SUFFIX')})`,
@@ -486,7 +488,6 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			this.treeStore.invalidate(this.document.parentId ?? null);
 			this.toastrService.success(this.translate.instant('DOCS.TOASTS.CREATED'));
 			await this.conflictReload();
-			void copy;
 		} catch {
 			this.toastrService.danger(this.translate.instant('DOCS.ERRORS.GENERIC_RETRY'));
 		}

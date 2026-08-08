@@ -28,12 +28,15 @@ export function normalizeLegacyHtml(html: string): string {
 	const body = doc.body;
 
 	// Strip HTML comments (protected-source markers, conditional comments, …).
+	// Collected into a plain array first, then removed: mutating the tree mid-walk would
+	// invalidate the walker. `remove()` is a no-op on an already-detached node, which is
+	// exactly what the previous `parentNode?.removeChild(...)` guard expressed.
 	const walker = doc.createTreeWalker(body, NodeFilter.SHOW_COMMENT);
-	const comments: Node[] = [];
+	const comments: Comment[] = [];
 	while (walker.nextNode()) {
-		comments.push(walker.currentNode);
+		comments.push(walker.currentNode as Comment);
 	}
-	comments.forEach((comment) => comment.parentNode?.removeChild(comment));
+	comments.forEach((comment) => comment.remove());
 
 	// Strip editor-namespace artifacts: cke_* classes and data-cke-* attributes.
 	body.querySelectorAll('[class]').forEach((element) => {

@@ -90,7 +90,7 @@ export class DocumentCategoryService extends TenantAwareCrudService<DocumentCate
 	async updateCategory(id: ID, input: UpdateDocumentCategoryDTO): Promise<DocumentCategory> {
 		const category = await this.findOneByIdString(id);
 
-		const slug = category.isSystem ? category.slug : input.slug ?? (input.name ? this.slugify(input.name) : category.slug);
+		const slug = this.resolveUpdatedSlug(category, input);
 		if (input.name && input.name.toLowerCase() !== category.name.toLowerCase()) {
 			await this.assertUnique(input.name, slug !== category.slug ? slug : undefined, category.tenantId, category.organizationId);
 		}
@@ -185,6 +185,28 @@ export class DocumentCategoryService extends TenantAwareCrudService<DocumentCate
 		await this.softDelete(source.id);
 		this.logger.log(`Merged document category ${source.id} into ${target.id}`);
 		return target;
+	}
+
+	/**
+	 * Resolves the slug an update should persist:
+	 * - `isSystem` rows keep their slug — it is immutable;
+	 * - an explicitly supplied `slug` wins (including an empty string — only `null`/`undefined`
+	 *   count as "not supplied");
+	 * - otherwise a renamed category re-derives its slug from the new name;
+	 * - a category that is neither re-slugged nor renamed keeps the stored slug.
+	 *
+	 * @param category The stored category.
+	 * @param input The update payload.
+	 * @returns The slug to persist.
+	 */
+	private resolveUpdatedSlug(category: DocumentCategory, input: UpdateDocumentCategoryDTO): string {
+		if (category.isSystem) {
+			return category.slug;
+		}
+		if (input.slug !== null && input.slug !== undefined) {
+			return input.slug;
+		}
+		return input.name ? this.slugify(input.name) : category.slug;
 	}
 
 	/**

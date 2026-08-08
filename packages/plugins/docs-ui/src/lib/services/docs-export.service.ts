@@ -255,14 +255,29 @@ export class DocsExportService {
 
 	/** Filesystem-safe filename stem; never empty. */
 	private slug(name: string): string {
-		const slug = (name ?? '')
+		const cleaned = (name ?? '')
 			.normalize('NFKD')
 			.replace(/[^\w\s.-]/g, '')
 			.trim()
 			.replace(/\s+/g, '-')
-			.replace(/-{2,}/g, '-')
-			.replace(/^[.-]+|[.-]+$/g, '')
-			.slice(0, 80);
-		return slug || 'document';
+			.replace(/-{2,}/g, '-');
+		return this.trimDotsAndDashes(cleaned).slice(0, 80) || 'document';
+	}
+
+	/**
+	 * Strips leading and trailing `.`/`-` characters.
+	 *
+	 * Replaces `/^[.-]+|[.-]+$/g`, whose `[.-]+$` branch retried the trailing-run match from
+	 * every position inside the run and so cost O(n²) on a name made of dots (dots survive the
+	 * character filter above, and unlike dashes they are not collapsed by the `-{2,}` pass).
+	 * Two index walks touch each character at most once.
+	 */
+	private trimDotsAndDashes(value: string): string {
+		const isTrimmable = (char: string) => char === '.' || char === '-';
+		let start = 0;
+		let end = value.length;
+		while (start < end && isTrimmable(value[start])) start++;
+		while (end > start && isTrimmable(value[end - 1])) end--;
+		return value.slice(start, end);
 	}
 }

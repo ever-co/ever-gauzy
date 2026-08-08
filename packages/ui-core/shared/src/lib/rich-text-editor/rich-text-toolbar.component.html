@@ -459,8 +459,10 @@
 					nbInput
 					fieldSize="small"
 					type="url"
+					id="rich-text-link-url"
 					name="rich-text-link-url"
 					[placeholder]="'RICH_TEXT_EDITOR.LINK_DIALOG.URL' | translate"
+					[attr.aria-label]="'RICH_TEXT_EDITOR.TOOLBAR.LINK' | translate"
 					[(ngModel)]="linkUrl"
 					(keyup.enter)="applyLink()"
 				/>
@@ -478,8 +480,10 @@
 					nbInput
 					fieldSize="small"
 					type="url"
+					id="rich-text-image-url"
 					name="rich-text-image-url"
 					[placeholder]="'RICH_TEXT_EDITOR.LINK_DIALOG.URL' | translate"
+					[attr.aria-label]="'RICH_TEXT_EDITOR.TOOLBAR.IMAGE' | translate"
 					[(ngModel)]="imageUrl"
 					(keyup.enter)="applyImage()"
 				/>

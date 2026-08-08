@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
-import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID, IDocument, IDocumentVersion, IEmployee, JsonData } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -12,6 +11,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
 import { MikroOrmDocumentVersionRepository } from '../repositories/mikro-orm-document-version.repository';
+import { binaryColumnType, jsonColumnType } from './column-types';
 import { Document } from './document.entity';
 
 @MultiORMEntity('document_version', { mikroOrmRepository: () => MikroOrmDocumentVersionRepository })
@@ -33,7 +33,7 @@ export class DocumentVersion extends TenantOrganizationBaseEntity implements IDo
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	@MultiORMColumn({ type: jsonColumnType(), nullable: true })
 	contentJson?: JsonData;
 
 	/**
@@ -50,7 +50,7 @@ export class DocumentVersion extends TenantOrganizationBaseEntity implements IDo
 	 */
 	@ApiPropertyOptional({ type: () => 'string', format: 'binary' })
 	@IsOptional()
-	@MultiORMColumn({ type: isPostgres() ? 'bytea' : isMySQL() ? 'longblob' : 'blob', nullable: true })
+	@MultiORMColumn({ type: binaryColumnType(), nullable: true })
 	contentBinary?: Buffer;
 
 	/**

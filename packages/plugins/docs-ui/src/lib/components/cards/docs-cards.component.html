@@ -19,16 +19,19 @@
 	</div>
 
 	<div class="docs-cards-grid">
-		<!-- Folder cards first -->
-		<div
+		<!-- Folder cards first. A real <button> replaces the former `role="button"` div, so
+		     focus, Enter and Space come from the platform (the explicit tabindex/keydown pair
+		     is what a native button already does — keeping it would fire the handler twice).
+		     The inline rules only undo the user-agent button chrome `.docs-card` does not
+		     already override, so the card renders exactly as before. -->
+		<button
+			type="button"
 			class="docs-card docs-card-folder"
 			*ngFor="let folder of folderCards; trackBy: trackById"
 			[class.active]="isActive(folder)"
 			[class.archived]="folder.isArchived"
-			role="button"
-			tabindex="0"
+			style="width: 100%; align-items: stretch; text-align: inherit; font: inherit; color: inherit"
 			(click)="onCardClick(folder)"
-			(keydown.enter)="onCardClick(folder)"
 		>
 			<div class="docs-card-head">
 				<span class="docs-card-emoji" *ngIf="folder.icon; else folderEva">{{ folder.icon }}</span>
@@ -40,9 +43,16 @@
 			<div class="docs-card-footer">
 				<span>{{ 'DOCS.CARDS.ITEMS_COUNT' | translate : { count: folder.childrenCount ?? 0 } }}</span>
 			</div>
-		</div>
+		</button>
 
-		<!-- Document cards -->
+		<!-- Document cards.
+		     Deliberately still `role="button"` on a div, unlike the folder card above: this card
+		     CONTAINS the `.docs-card-open` button (below), and `<button>` may not contain
+		     interactive content — nesting one would be invalid HTML that browsers reparent, which
+		     is worse for assistive tech than the explicit role. The div is keyboard-operable
+		     (`tabindex="0"` + `keydown.enter`), so the accessible behaviour is already correct.
+		     Making this native needs `.docs-card-open` lifted out of the card into an
+		     absolutely-positioned sibling — a layout change, not a markup fix. -->
 		<div
 			class="docs-card"
 			*ngFor="let doc of documentCards; trackBy: trackById"

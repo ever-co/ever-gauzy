@@ -96,11 +96,29 @@ const listCatalogue = async (credentials: IAiProviderCredentials | null): Promis
 	});
 
 /**
+ * Container extension for the multipart filename, derived from the MIME type the browser recorded.
+ *
+ * `/v1/audio/transcriptions` decides the container from the filename EXTENSION, so a generic name is
+ * rejected with "Invalid file format" even when the bytes are fine. `webm` is the fallback: it is
+ * what `MediaRecorder` produces by default everywhere except Safari.
+ */
+const resolveAudioExtension = (mimeType: string): string => {
+	if (mimeType.includes('mp4') || mimeType.includes('mpeg')) {
+		return 'mp4';
+	}
+	if (mimeType.includes('ogg')) {
+		return 'ogg';
+	}
+	return 'webm';
+};
+
+/**
  * Speech-to-text for the chat's dictation control.
  *
  * `/v1/audio/transcriptions` is multipart, and the filename EXTENSION is what OpenAI uses to decide
  * the container — a generic name is rejected with "Invalid file format" even when the bytes are
- * fine — so it is derived from the MIME type the browser actually recorded.
+ * fine — so it is derived from the MIME type the browser actually recorded
+ * (see {@link resolveAudioExtension}).
  *
  * A custom base URL is honoured here, unlike the model catalogue: the caller explicitly configured
  * that endpoint as their OpenAI, and this is a request they asked for rather than a background
@@ -111,8 +129,7 @@ const transcribeAudio = async (
 	mimeType: string,
 	credentials: IAiProviderCredentials
 ): Promise<string> => {
-	const extension =
-		mimeType.includes('mp4') || mimeType.includes('mpeg') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+	const extension = resolveAudioExtension(mimeType);
 	const form = new FormData();
 	form.append('file', new Blob([new Uint8Array(audio)], { type: mimeType }), `dictation.${extension}`);
 	form.append('model', TRANSCRIBE_MODEL);

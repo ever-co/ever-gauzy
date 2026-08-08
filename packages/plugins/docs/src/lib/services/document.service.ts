@@ -408,7 +408,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		);
 
 		// Sorting
-		const order = params.sortOrder === 'ASC' ? 'ASC' : params.sortOrder === 'DESC' ? 'DESC' : undefined;
+		const order = this.resolveSortOrder(params.sortOrder);
 		if (params.sort) {
 			const sortColumn = params.sort === 'size' ? 'fileSize' : params.sort;
 			qb.orderBy(`document.${sortColumn}`, order ?? 'ASC');
@@ -577,14 +577,33 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 
 		this.applyVisibilityScope(qb);
 
-		// Archived handling (default exclude)
+		this.applyArchivedFilter(qb, params);
+		this.applyAttributeFilters(qb, params);
+		this.applyDateRangeFilters(qb, params);
+		this.applyTreeFilter(qb, params);
+		this.applyTaxonomyFilters(qb, params);
+		this.applySearchFilter(qb, params);
+
+		return qb;
+	}
+
+	/**
+	 * Archived handling (default exclude): `exclude` hides archived rows, `only` keeps just
+	 * them, and any other value (`include`) leaves the flag unfiltered.
+	 */
+	private applyArchivedFilter(qb: SelectQueryBuilder<Document>, params: GetDocumentsQueryDTO): void {
 		const archived = params.archived ?? 'exclude';
 		if (archived === 'exclude') {
 			qb.andWhere(p(`"document"."isArchived" = :isArchived`), { isArchived: false });
 		} else if (archived === 'only') {
 			qb.andWhere(p(`"document"."isArchived" = :isArchived`), { isArchived: true });
 		}
+	}
 
+	/**
+	 * The scalar/enum column filters of the DTO (kind, statuses, source, visibility, searchable).
+	 */
+	private applyAttributeFilters(qb: SelectQueryBuilder<Document>, params: GetDocumentsQueryDTO): void {
 		if (params.kind) {
 			qb.andWhere(p(`"document"."kind" = :kind`), { kind: params.kind });
 		}
@@ -613,6 +632,12 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		if (typeof params.searchable === 'boolean') {
 			qb.andWhere(p(`"document"."searchable" = :searchableFlag`), { searchableFlag: params.searchable });
 		}
+	}
+
+	/**
+	 * The `createdAt` / `updatedAt` range bounds; date-only `To` bounds cover the whole day.
+	 */
+	private applyDateRangeFilters(qb: SelectQueryBuilder<Document>, params: GetDocumentsQueryDTO): void {
 		if (params.createdAtFrom) {
 			qb.andWhere(p(`"document"."createdAt" >= :createdAtFrom`), { createdAtFrom: params.createdAtFrom });
 		}
@@ -629,15 +654,24 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 				updatedAtTo: this.endOfDayIfDateOnly(params.updatedAtTo)
 			});
 		}
+	}
 
-		// Tree browse vs flat search
+	/**
+	 * Tree browse vs flat search: `parentId: 'root'` scopes to the roots, any other id scopes
+	 * to that node's direct children, and an absent `parentId` searches the whole organization.
+	 */
+	private applyTreeFilter(qb: SelectQueryBuilder<Document>, params: GetDocumentsQueryDTO): void {
 		if (params.parentId === 'root') {
 			qb.andWhere(p(`"document"."parentId" IS NULL`));
 		} else if (params.parentId) {
 			qb.andWhere(p(`"document"."parentId" = :parentId`), { parentId: params.parentId });
 		}
+	}
 
-		// ANY-match M2M filters via pivot EXISTS subqueries
+	/**
+	 * ANY-match M2M filters (categories, tags) via pivot EXISTS subqueries.
+	 */
+	private applyTaxonomyFilters(qb: SelectQueryBuilder<Document>, params: GetDocumentsQueryDTO): void {
 		if (params.categoryIds?.length) {
 			qb.andWhere(
 				p(
@@ -654,39 +688,59 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 				{ filterTagIds: params.tagIds }
 			);
 		}
+	}
 
-		// Name / content search
-		if (params.q) {
-			if (params.searchIn === 'content') {
-				assertContentSearchQueryLength(params.q);
-				qb.andWhere(
-					new Brackets((web: WhereExpressionBuilder) => {
-						web.where(p(`LOWER("document"."name") LIKE :q`), { q: `%${params.q.toLowerCase()}%` });
-						web.orWhere(
-							new Brackets((content: WhereExpressionBuilder) => {
-								content.where(p(`"document"."searchable" = :contentSearchable`), {
-									contentSearchable: true
+	/**
+	 * Name / content search. `searchIn: 'content'` widens the name match with the content
+	 * columns — gated on the row's own `searchable` flag, and only after the query-length
+	 * guard has accepted the term.
+	 */
+	private applySearchFilter(qb: SelectQueryBuilder<Document>, params: GetDocumentsQueryDTO): void {
+		if (!params.q) {
+			return;
+		}
+		if (params.searchIn !== 'content') {
+			qb.andWhere(p(`LOWER("document"."name") LIKE :q`), { q: `%${params.q.toLowerCase()}%` });
+			return;
+		}
+
+		assertContentSearchQueryLength(params.q);
+		qb.andWhere(
+			new Brackets((web: WhereExpressionBuilder) => {
+				web.where(p(`LOWER("document"."name") LIKE :q`), { q: `%${params.q.toLowerCase()}%` });
+				web.orWhere(
+					new Brackets((content: WhereExpressionBuilder) => {
+						content.where(p(`"document"."searchable" = :contentSearchable`), {
+							contentSearchable: true
+						});
+						content.andWhere(
+							new Brackets((cols: WhereExpressionBuilder) => {
+								cols.where(p(`LOWER("document"."contentHtml") LIKE :q`), {
+									q: `%${params.q.toLowerCase()}%`
 								});
-								content.andWhere(
-									new Brackets((cols: WhereExpressionBuilder) => {
-										cols.where(p(`LOWER("document"."contentHtml") LIKE :q`), {
-											q: `%${params.q.toLowerCase()}%`
-										});
-										cols.orWhere(p(`LOWER("document"."extractedText") LIKE :q`), {
-											q: `%${params.q.toLowerCase()}%`
-										});
-									})
-								);
+								cols.orWhere(p(`LOWER("document"."extractedText") LIKE :q`), {
+									q: `%${params.q.toLowerCase()}%`
+								});
 							})
 						);
 					})
 				);
-			} else {
-				qb.andWhere(p(`LOWER("document"."name") LIKE :q`), { q: `%${params.q.toLowerCase()}%` });
-			}
-		}
+			})
+		);
+	}
 
-		return qb;
+	/**
+	 * Normalizes the requested sort direction; anything other than `ASC`/`DESC` leaves the
+	 * direction unset so the caller's own default applies.
+	 */
+	private resolveSortOrder(sortOrder: GetDocumentsQueryDTO['sortOrder']): 'ASC' | 'DESC' | undefined {
+		if (sortOrder === 'ASC') {
+			return 'ASC';
+		}
+		if (sortOrder === 'DESC') {
+			return 'DESC';
+		}
+		return undefined;
 	}
 
 	/**

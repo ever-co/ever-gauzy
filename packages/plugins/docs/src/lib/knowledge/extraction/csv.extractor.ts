@@ -47,6 +47,69 @@ export function detectDelimiter(text: string): string {
 }
 
 /**
+ * Accumulator of the CSV scan: owns the completed rows plus the row/field currently being
+ * built, so the scanner itself stays a flat character dispatch.
+ */
+class CsvRowAccumulator {
+	/** The rows completed so far — the array handed back to the caller. */
+	readonly rows: string[][] = [];
+	private row: string[] = [];
+	private field = '';
+
+	/** Appends one character to the field under construction. */
+	appendChar(ch: string): void {
+		this.field += ch;
+	}
+
+	/** Closes the field under construction and starts a new one. */
+	pushField(): void {
+		this.row.push(this.field);
+		this.field = '';
+	}
+
+	/** Closes the current field and row; fully-empty trailing rows are skipped. */
+	pushRow(): void {
+		this.pushField();
+		// Skip fully-empty trailing rows
+		if (this.row.length > 1 || this.row[0].trim() !== '') {
+			this.rows.push(this.row);
+		}
+		this.row = [];
+	}
+
+	/** True while a field or row is still under construction (an unterminated last line). */
+	get hasPendingInput(): boolean {
+		return this.field.length > 0 || this.row.length > 0;
+	}
+}
+
+/**
+ * Consumes the body of a quoted field into `accumulator`, starting at the first character
+ * after the opening quote. `""` is an escaped quote; a lone `"` closes the field.
+ *
+ * @param text The CSV text.
+ * @param start Index of the first character inside the quotes.
+ * @param accumulator The row accumulator receiving the decoded characters.
+ * @returns The index of the closing quote, or `text.length` when the quote is never closed.
+ */
+function consumeQuotedField(text: string, start: number, accumulator: CsvRowAccumulator): number {
+	let i = start;
+	while (i < text.length) {
+		const ch = text[i];
+		if (ch !== '"') {
+			accumulator.appendChar(ch);
+			i++;
+		} else if (text[i + 1] === '"') {
+			accumulator.appendChar('"'); // escaped quote
+			i += 2;
+		} else {
+			return i; // a lone quote closes the field
+		}
+	}
+	return i;
+}
+
+/**
  * Lenient RFC-4180-style CSV parse: quoted fields, escaped quotes (`""`), delimiter
  * auto-detected by the caller. Pure and deterministic — no dependencies.
  *
@@ -56,58 +119,30 @@ export function detectDelimiter(text: string): string {
  * @returns The parsed rows plus a flag for capped input.
  */
 export function parseCsv(text: string, delimiter: string, maxRows: number): { rows: string[][]; capped: boolean } {
-	const rows: string[][] = [];
-	let row: string[] = [];
-	let field = '';
-	let inQuotes = false;
+	const accumulator = new CsvRowAccumulator();
 	let capped = false;
-
-	const pushField = () => {
-		row.push(field);
-		field = '';
-	};
-	const pushRow = () => {
-		pushField();
-		// Skip fully-empty trailing rows
-		if (row.length > 1 || row[0].trim() !== '') {
-			rows.push(row);
-		}
-		row = [];
-	};
 
 	for (let i = 0; i < text.length; i++) {
 		const ch = text[i];
-		if (inQuotes) {
-			if (ch === '"') {
-				if (text[i + 1] === '"') {
-					field += '"';
-					i++;
-				} else {
-					inQuotes = false;
-				}
-			} else {
-				field += ch;
-			}
-			continue;
-		}
 		if (ch === '"') {
-			inQuotes = true;
+			// The scan resumes on the closing quote; the loop's own `i++` steps past it.
+			i = consumeQuotedField(text, i + 1, accumulator);
 		} else if (ch === delimiter) {
-			pushField();
+			accumulator.pushField();
 		} else if (ch === '\n') {
-			pushRow();
-			if (rows.length > maxRows) {
+			accumulator.pushRow();
+			if (accumulator.rows.length > maxRows) {
 				capped = true;
 				break;
 			}
 		} else if (ch !== '\r') {
-			field += ch;
+			accumulator.appendChar(ch);
 		}
 	}
-	if (!capped && (field.length > 0 || row.length > 0)) {
-		pushRow();
+	if (!capped && accumulator.hasPendingInput) {
+		accumulator.pushRow();
 	}
-	return { rows, capped };
+	return { rows: accumulator.rows, capped };
 }
 
 /**

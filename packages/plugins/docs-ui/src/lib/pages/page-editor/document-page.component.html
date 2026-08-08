@@ -22,12 +22,12 @@
 			</nav>
 
 			<div class="gz-page-header-actions">
-				<!-- Autosave pill (UX spec §10.6) -->
-				<span
+				<!-- Autosave pill (UX spec §10.6). `<output>` carries the implicit `status`
+				     role, so no explicit `role` attribute is needed. -->
+				<output
 					class="gz-save-pill"
 					[class.warning]="saveState === 'offline'"
 					[class.danger]="saveState === 'error' || saveState === 'conflict'"
-					role="status"
 					[attr.aria-label]="'DOCS.A11Y.AUTOSAVE_STATUS' | translate"
 				>
 					<ng-container [ngSwitch]="saveState">
@@ -50,7 +50,7 @@
 							<nb-icon icon="checkmark-outline"></nb-icon> {{ 'DOCS.EDITOR.SAVED' | translate }}
 						</ng-container>
 					</ng-container>
-				</span>
+				</output>
 
 				<ngx-favorite-toggle
 					*ngIf="document"
@@ -177,7 +177,9 @@
 						nbInput
 						fieldSize="small"
 						maxlength="4"
+						id="gz-doc-icon-input"
 						[placeholder]="'DOCS.EDITOR.ICON_PLACEHOLDER' | translate"
+						[attr.aria-label]="'DOCS.EDITOR.ICON_PLACEHOLDER' | translate"
 						[(ngModel)]="iconDraft"
 						(keydown.enter)="saveIcon()"
 					/>
@@ -188,7 +190,9 @@
 			</div>
 			<input
 				class="gz-title-input"
+				id="gz-doc-title-input"
 				[placeholder]="'DOCS.EDITOR.UNTITLED' | translate"
+				[attr.aria-label]="'DOCS.TABLE.COLUMNS.NAME' | translate"
 				[(ngModel)]="titleDraft"
 				[disabled]="!canUpdate || isLocked"
 				(blur)="saveTitle()"

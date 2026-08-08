@@ -39,6 +39,35 @@ export interface IOrgDocumentMapResult {
 }
 
 /**
+ * How one legacy row resolves against its `ImageAsset` / URL columns. The four values are
+ * kept distinct even though two of them share an outcome, because the report semantics
+ * differ: `missing-asset-row` means "there was an asset and we lost it", `no-asset-at-all`
+ * means "the legacy row never carried a file".
+ */
+type LegacyAssetCase = 'usable-asset' | 'missing-asset-row' | 'external-url' | 'no-asset-at-all';
+
+/**
+ * Classifies a legacy row into its §6.2 / §7 asset case. The order of the checks is the
+ * contract — an asset row always outranks a `documentUrl` on the same record.
+ *
+ * @param legacy The legacy row.
+ * @param asset The eager `ImageAsset` of the row (or null).
+ * @returns The asset case driving the mapping.
+ */
+function resolveAssetCase(legacy: ILegacyOrgDocumentInput, asset: ILegacyOrgDocumentInput['document']): LegacyAssetCase {
+	if (asset && asset.url) {
+		return 'usable-asset';
+	}
+	if (legacy.documentId || (asset && !asset.url)) {
+		return 'missing-asset-row';
+	}
+	if (legacy.documentUrl) {
+		return 'external-url';
+	}
+	return 'no-asset-at-all';
+}
+
+/**
  * Maps one `organization_document` row to `Document` fields per §6.2, including the §7
  * edge cases: asset-backed FILE (storage key/provider reuse — no byte copy), missing asset
  * (`status: FAILED` + review flag), and external-URL reference (review flag).
@@ -52,7 +81,6 @@ export interface IOrgDocumentMapResult {
 export function mapOrganizationDocument(legacy: ILegacyOrgDocumentInput): IOrgDocumentMapResult {
 	const warnings: LegacyImportWarning[] = [];
 	const asset = legacy.document ?? null;
-	const hasUsableAsset = Boolean(asset && asset.url);
 
 	const legacyMetadata: Record<string, any> = {};
 	if (legacy.updatedAt) {
@@ -75,37 +103,39 @@ export function mapOrganizationDocument(legacy: ILegacyOrgDocumentInput): IOrgDo
 		metadata: { legacy: legacyMetadata }
 	};
 
-	if (hasUsableAsset) {
-		// §6.2 — same provider, same key, no byte copy.
-		fields.storageProvider = asset.storageProvider ?? null;
-		fields.storageKey = asset.url;
-		fields.fileSize = asset.size ?? null;
-		fields.originalFilename = asset.name ?? null;
-		fields.mimeType = inferMimeTypeFromKey(asset.url) ?? inferMimeTypeFromKey(asset.name);
-		if (asset.thumb) {
-			legacyMetadata.thumbKey = asset.thumb;
-		}
-	} else if (legacy.documentId || (asset && !asset.url)) {
+	switch (resolveAssetCase(legacy, asset)) {
+		case 'usable-asset':
+			// §6.2 — same provider, same key, no byte copy.
+			fields.storageProvider = asset.storageProvider ?? null;
+			fields.storageKey = asset.url;
+			fields.fileSize = asset.size ?? null;
+			fields.originalFilename = asset.name ?? null;
+			fields.mimeType = inferMimeTypeFromKey(asset.url) ?? inferMimeTypeFromKey(asset.name);
+			if (asset.thumb) {
+				legacyMetadata.thumbKey = asset.thumb;
+			}
+			break;
+
+		case 'external-url':
+			// §7 case 3 — external URL reference: bytes are not under our control, review-flagged.
+			fields.metadata.externalUrl = legacy.documentUrl;
+			fields.mimeType = inferMimeTypeFromKey(legacy.documentUrl);
+			fields.reviewStatus = DocumentReviewStatusEnum.PENDING;
+			fields.reviewReason = DocumentReviewReasonEnum.MANUAL;
+			warnings.push('external-url-reference');
+			break;
+
 		// §7 case 2 — asset row missing or empty storage key: import anyway, flagged for review.
-		fields.status = DocumentStatusEnum.FAILED;
-		fields.statusMessage = 'Legacy file asset missing';
-		fields.reviewStatus = DocumentReviewStatusEnum.PENDING;
-		fields.reviewReason = DocumentReviewReasonEnum.MANUAL;
-		warnings.push('missing-file-asset');
-	} else if (legacy.documentUrl) {
-		// §7 case 3 — external URL reference: bytes are not under our control, review-flagged.
-		fields.metadata.externalUrl = legacy.documentUrl;
-		fields.mimeType = inferMimeTypeFromKey(legacy.documentUrl);
-		fields.reviewStatus = DocumentReviewStatusEnum.PENDING;
-		fields.reviewReason = DocumentReviewReasonEnum.MANUAL;
-		warnings.push('external-url-reference');
-	} else {
+		case 'missing-asset-row':
 		// No asset and no URL at all — treated as the missing-asset case.
-		fields.status = DocumentStatusEnum.FAILED;
-		fields.statusMessage = 'Legacy file asset missing';
-		fields.reviewStatus = DocumentReviewStatusEnum.PENDING;
-		fields.reviewReason = DocumentReviewReasonEnum.MANUAL;
-		warnings.push('missing-file-asset');
+		case 'no-asset-at-all':
+		default:
+			fields.status = DocumentStatusEnum.FAILED;
+			fields.statusMessage = 'Legacy file asset missing';
+			fields.reviewStatus = DocumentReviewStatusEnum.PENDING;
+			fields.reviewReason = DocumentReviewReasonEnum.MANUAL;
+			warnings.push('missing-file-asset');
+			break;
 	}
 
 	return { fields, warnings };

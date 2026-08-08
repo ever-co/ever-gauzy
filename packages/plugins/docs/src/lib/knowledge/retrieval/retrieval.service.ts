@@ -104,45 +104,33 @@ export class DocumentKnowledgeSearchService {
 	 */
 	public async search(input: IKnowledgeSearchInput): Promise<IKnowledgeSearchResult> {
 		const startedAt = Date.now();
-		const tenantId = RequestContext.currentTenantId() as ID;
-		const organizationId = (RequestContext.currentOrganizationId() ?? (input as any).organizationId) as ID;
-		const userId = RequestContext.currentUserId() as ID;
-		// The share overlay is employee/team scoped (08 §3.3) — without it, PRIVATE documents
-		// shared with the requester would be invisible to retrieval but visible in the list.
-		const employeeId = this.documentAccessService.currentEmployeeId() ?? undefined;
-		const hasManagePermission = RequestContext.hasPermission(PermissionsEnum.DOCS_MANAGE);
-		const consumerKind = input.consumerKind ?? 'knowledge-search';
+		const { tenantId, organizationId, userId, employeeId, hasManagePermission, consumerKind } =
+			this.resolveRequestScope(input);
+		const queryLength = input.query?.length ?? 0;
 
 		const config = getDocsConfig();
 		const topK = Math.min(Math.max(input.topK ?? DEFAULT_DOCS_RETRIEVAL_TOPK, 1), config.retrievalTopKMax);
 		const oversample = topK * 2;
 
 		// Chat-tool facets (§11.2): slugs → catalog ids; single kind → kinds array.
-		let categoryIds = input.categoryIds;
-		if (!categoryIds?.length && input.categorySlugs?.length) {
-			const categories = await this.typeOrmDocumentCategoryRepository.find({
-				where: { tenantId, organizationId, slug: In(input.categorySlugs) }
+		const { categoryIds, unknownSlugs } = await this.resolveCategoryIds(input, tenantId, organizationId);
+		if (unknownSlugs) {
+			// Unknown slugs would silently widen the search — return the honest empty set.
+			this.logRetrieval({
+				tenantId,
+				organizationId,
+				consumerKind,
+				queryLength,
+				resultCount: 0,
+				documentCount: 0,
+				latencyMs: Date.now() - startedAt,
+				mode: 'lexical-only',
+				topScore: null,
+				lowConfidence: true,
+				storeId: null
 			});
-			categoryIds = categories.map((category) => category.id);
-			if (!categoryIds.length) {
-				// Unknown slugs would silently widen the search — return the honest empty set.
-				this.logRetrieval({
-					tenantId,
-					organizationId,
-					consumerKind,
-					queryLength: input.query?.length ?? 0,
-					resultCount: 0,
-					documentCount: 0,
-					latencyMs: Date.now() - startedAt,
-					mode: 'lexical-only',
-					topScore: null,
-					lowConfidence: true,
-					storeId: null
-				});
-				return { hits: [], lowConfidence: true, degraded: 'lexical-only' };
-			}
+			return { hits: [], lowConfidence: true, degraded: 'lexical-only' };
 		}
-		const kinds = input.kinds?.length ? input.kinds : input.kind ? [input.kind] : undefined;
 
 		const filters: IVectorStoreQueryFilters = {
 			userId,
@@ -151,7 +139,7 @@ export class DocumentKnowledgeSearchService {
 			documentIds: input.documentIds,
 			categoryIds,
 			tagIds: input.tagIds,
-			kinds,
+			kinds: this.resolveKinds(input),
 			entity: input.entity,
 			entityId: input.entityId
 		};
@@ -163,28 +151,19 @@ export class DocumentKnowledgeSearchService {
 		const lexicalStore = DocumentVectorStoreRegistry.get(VECTOR_STORE_LEXICAL) ?? store;
 
 		// Lexical leg — always runs (the floor of the ladder).
-		const lexicalHits = lexicalStore
-			? await this.safeQuery(lexicalStore, { ...scope, text: input.query, topK: oversample })
-			: [];
+		const lexicalHits = await this.runLexicalLeg(lexicalStore, scope, input.query, oversample);
 
-		// Vector leg — best-effort.
-		let vectorHits: IVectorStoreHit[] = [];
-		let vectorLegRan = false;
-		if (store && store.id !== VECTOR_STORE_LEXICAL && config.aiEnabled) {
-			const resolved = await this.embeddingService.resolve(tenantId);
-			if (resolved) {
-				const embedding = await this.embeddingService.embedQuery(resolved, input.query, {
-					tenantId,
-					organizationId
-				});
-				if (embedding) {
-					vectorHits = await this.safeQuery(store, { ...scope, embedding, topK: oversample });
-					vectorLegRan = true;
-				}
-			}
-		}
+		// Vector leg — best-effort; `null` means the leg never ran.
+		const vectorHits = await this.runVectorLeg(store, scope, {
+			aiEnabled: config.aiEnabled,
+			query: input.query,
+			topK: oversample
+		});
+		const vectorLegRan = vectorHits !== null;
 
 		const degraded: 'none' | 'lexical-only' = vectorLegRan ? 'none' : 'lexical-only';
+		const mode: 'hybrid' | 'lexical-only' = vectorLegRan ? 'hybrid' : 'lexical-only';
+		const storeId = this.resolveLoggedStoreId(vectorLegRan, store, lexicalStore);
 
 		// RRF fusion (k = 60), deduped by chunk id, truncated to topK.
 		const fused = fuseRrf(
@@ -198,14 +177,14 @@ export class DocumentKnowledgeSearchService {
 				tenantId,
 				organizationId,
 				consumerKind,
-				queryLength: input.query?.length ?? 0,
+				queryLength,
 				resultCount: 0,
 				documentCount: 0,
 				latencyMs: Date.now() - startedAt,
-				mode: vectorLegRan ? 'hybrid' : 'lexical-only',
+				mode,
 				topScore: null,
 				lowConfidence: true,
-				storeId: vectorLegRan ? store?.id ?? null : lexicalStore?.id ?? null
+				storeId
 			});
 			return { hits: [], lowConfidence: true, degraded };
 		}
@@ -222,17 +201,135 @@ export class DocumentKnowledgeSearchService {
 			tenantId,
 			organizationId,
 			consumerKind,
-			queryLength: input.query?.length ?? 0,
+			queryLength,
 			resultCount: hits.length,
 			documentCount: new Set(hits.map((hit) => hit.documentId)).size,
 			latencyMs: Date.now() - startedAt,
-			mode: vectorLegRan ? 'hybrid' : 'lexical-only',
+			mode,
 			topScore: hits.length ? hits[0].score : null,
 			lowConfidence,
-			storeId: vectorLegRan ? store?.id ?? null : lexicalStore?.id ?? null
+			storeId
 		});
 
 		return { hits, lowConfidence, degraded };
+	}
+
+	/**
+	 * Resolves the tenant/organization/user scope of the request. Retrieval runs on the HTTP
+	 * request path, so everything but the fallback organization comes from `RequestContext`.
+	 *
+	 * @param input The caller-facing search input.
+	 * @returns The resolved scope plus the telemetry consumer tag.
+	 */
+	private resolveRequestScope(input: IKnowledgeSearchInput): {
+		tenantId: ID;
+		organizationId: ID;
+		userId: ID;
+		employeeId: ID | undefined;
+		hasManagePermission: boolean;
+		consumerKind: NonNullable<IKnowledgeSearchInput['consumerKind']>;
+	} {
+		return {
+			tenantId: RequestContext.currentTenantId() as ID,
+			organizationId: (RequestContext.currentOrganizationId() ?? (input as any).organizationId) as ID,
+			userId: RequestContext.currentUserId() as ID,
+			// The share overlay is employee/team scoped (08 §3.3) — without it, PRIVATE documents
+			// shared with the requester would be invisible to retrieval but visible in the list.
+			employeeId: this.documentAccessService.currentEmployeeId() ?? undefined,
+			hasManagePermission: RequestContext.hasPermission(PermissionsEnum.DOCS_MANAGE),
+			consumerKind: input.consumerKind ?? 'knowledge-search'
+		};
+	}
+
+	/**
+	 * Chat-tool facet (§11.2): resolves `categorySlugs` against the tenant catalog, but only
+	 * when the caller did not already pass explicit `categoryIds`.
+	 *
+	 * @returns The category ids to filter on, plus `unknownSlugs` — true when slugs were given
+	 *          and NONE of them exists in the catalog, which must yield the honest empty set
+	 *          rather than a silently unfiltered search.
+	 */
+	private async resolveCategoryIds(
+		input: IKnowledgeSearchInput,
+		tenantId: ID,
+		organizationId: ID
+	): Promise<{ categoryIds: ID[] | undefined; unknownSlugs: boolean }> {
+		if (input.categoryIds?.length || !input.categorySlugs?.length) {
+			return { categoryIds: input.categoryIds, unknownSlugs: false };
+		}
+		const categories = await this.typeOrmDocumentCategoryRepository.find({
+			where: { tenantId, organizationId, slug: In(input.categorySlugs) }
+		});
+		const categoryIds = categories.map((category) => category.id);
+		return { categoryIds, unknownSlugs: !categoryIds.length };
+	}
+
+	/**
+	 * Chat-tool facet (§11.2): the single `kind` is normalized into the `kinds` array so the
+	 * tools and the HTTP endpoint share one filter shape.
+	 */
+	private resolveKinds(input: IKnowledgeSearchInput): any[] | undefined {
+		if (input.kinds?.length) {
+			return input.kinds;
+		}
+		return input.kind ? [input.kind] : undefined;
+	}
+
+	/**
+	 * Lexical leg — always runs (the floor of the ladder); contributes nothing when no lexical
+	 * store is registered at all.
+	 */
+	private async runLexicalLeg(
+		lexicalStore: IDocumentVectorStore | null | undefined,
+		scope: { tenantId: ID; organizationId: ID; filters: IVectorStoreQueryFilters },
+		query: string,
+		topK: number
+	): Promise<IVectorStoreHit[]> {
+		if (!lexicalStore) {
+			return [];
+		}
+		return this.safeQuery(lexicalStore, { ...scope, text: query, topK });
+	}
+
+	/**
+	 * Vector leg — best-effort (§10). It is skipped (and the response degrades to
+	 * `lexical-only`) when pgvector is absent, AI is disabled, no embedding provider resolves
+	 * for the tenant, or the query-embed call fails.
+	 *
+	 * @returns The vector hits, or `null` when the leg did not run.
+	 */
+	private async runVectorLeg(
+		store: IDocumentVectorStore | null | undefined,
+		scope: { tenantId: ID; organizationId: ID; filters: IVectorStoreQueryFilters },
+		options: { aiEnabled: boolean; query: string; topK: number }
+	): Promise<IVectorStoreHit[] | null> {
+		if (!store || store.id === VECTOR_STORE_LEXICAL || !options.aiEnabled) {
+			return null;
+		}
+		const resolved = await this.embeddingService.resolve(scope.tenantId);
+		if (!resolved) {
+			return null;
+		}
+		const embedding = await this.embeddingService.embedQuery(resolved, options.query, {
+			tenantId: scope.tenantId,
+			organizationId: scope.organizationId
+		});
+		if (!embedding) {
+			return null;
+		}
+		return this.safeQuery(store, { ...scope, embedding, topK: options.topK });
+	}
+
+	/**
+	 * The store id recorded on the retrieval event: the vector store when the hybrid leg ran,
+	 * the lexical store otherwise.
+	 */
+	private resolveLoggedStoreId(
+		vectorLegRan: boolean,
+		store: IDocumentVectorStore | null | undefined,
+		lexicalStore: IDocumentVectorStore | null | undefined
+	): string | null {
+		return vectorLegRan ? store?.id ?? null : lexicalStore?.id ?? null;
 	}
 
 	/**

@@ -18,6 +18,7 @@ import {
 	ActorTypeEnum,
 	ID,
 	IEmployee,
+	IUser,
 	IGetTaskOptions,
 	IGetTasksByViewFilters,
 	IPagination,
@@ -173,72 +174,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Synchronize mentions (only if mentionEmployeeIds is provided)
 			if (data.description && mentionEmployeeIds) {
-				try {
-					await this._mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionEmployeeIds);
-				} catch (error) {
-					console.error('Error synchronizing mentions:', error);
-				}
+				await this.syncTaskMentions(id, mentionEmployeeIds);
 			}
 
 			const { organizationId } = updatedTask;
 
 			// Unsubscribe members who were unassigned from task
-			if (removedMembers.length > 0) {
-				try {
-					await Promise.all(
-						removedMembers.map(
-							async (member) =>
-								await this._entitySubscriptionService.delete({
-									entity: BaseEntityEnum.Task,
-									entityId: updatedTask.id,
-									employeeId: member.id,
-									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
-									organizationId,
-									tenantId
-								})
-						)
-					);
-				} catch (error) {
-					console.error('Error unsubscribing members from the task:', error);
-				}
-			}
+			await this.unsubscribeRemovedMembers(removedMembers, updatedTask.id, organizationId, tenantId);
 
 			// Subscribe the new assignees to the task
-			if (newMembers.length) {
-				try {
-					await Promise.all(
-						newMembers.map((member: IEmployee) => {
-							this._eventBus.publish(
-								new CreateEntitySubscriptionEvent({
-									entity: BaseEntityEnum.Task,
-									entityId: updatedTask.id,
-									employeeId: member.id,
-									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
-									organizationId,
-									tenantId
-								})
-							);
-
-							this._employeeNotificationService.publishNotificationEvent(
-								{
-									entity: BaseEntityEnum.Task,
-									entityId: task.id,
-									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
-									organizationId,
-									tenantId,
-									receiverEmployeeId: member.id,
-									sentByEmployeeId: user?.employeeId
-								},
-								NotificationActionTypeEnum.Assigned,
-								task.title,
-								user?.name
-							);
-						})
-					);
-				} catch (error) {
-					console.error('Error publishing CreateSubscriptionEvent:', error);
-				}
-			}
+			await this.subscribeNewMembers(newMembers, task, updatedTask.id, organizationId, tenantId, user);
 
 			// Generate the activity log
 			this._activityLogService.logActivity<Task>(
@@ -259,6 +204,123 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		} catch (error) {
 			console.error(`Error while updating task: ${error.message}`, error.message);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Synchronizes the task's mention records with the employees mentioned in the update.
+	 *
+	 * Best-effort by design: the task itself is already persisted by the time this runs, so a
+	 * mention-sync failure is logged and swallowed instead of failing the update.
+	 *
+	 * @param taskId - The ID of the updated task
+	 * @param mentionEmployeeIds - The IDs of the employees mentioned in the description
+	 */
+	private async syncTaskMentions(taskId: ID, mentionEmployeeIds: ID[]): Promise<void> {
+		try {
+			await this._mentionService.updateEntityMentions(BaseEntityEnum.Task, taskId, mentionEmployeeIds);
+		} catch (error) {
+			console.error('Error synchronizing mentions:', error);
+		}
+	}
+
+	/**
+	 * Unsubscribes the members who were unassigned from the task.
+	 *
+	 * Best-effort by design: failures are logged and swallowed so subscription cleanup can never
+	 * fail an update that already succeeded.
+	 *
+	 * @param members - The members that are no longer assigned to the task
+	 * @param taskId - The ID of the updated task
+	 * @param organizationId - The organization of the updated task
+	 * @param tenantId - The tenant of the updated task
+	 */
+	private async unsubscribeRemovedMembers(
+		members: IEmployee[],
+		taskId: ID,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<void> {
+		if (members.length === 0) {
+			return;
+		}
+
+		try {
+			await Promise.all(
+				members.map(
+					async (member) =>
+						await this._entitySubscriptionService.delete({
+							entity: BaseEntityEnum.Task,
+							entityId: taskId,
+							employeeId: member.id,
+							type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+							organizationId,
+							tenantId
+						})
+				)
+			);
+		} catch (error) {
+			console.error('Error unsubscribing members from the task:', error);
+		}
+	}
+
+	/**
+	 * Subscribes the newly assigned members to the task and notifies them of the assignment.
+	 *
+	 * Best-effort by design: failures are logged and swallowed so the subscription/notification
+	 * path can never fail an update that already succeeded.
+	 *
+	 * @param members - The members newly assigned to the task
+	 * @param task - The task as loaded BEFORE the update (source of the notified id and title)
+	 * @param updatedTaskId - The ID of the updated task (subscription target)
+	 * @param organizationId - The organization of the updated task
+	 * @param tenantId - The tenant of the updated task
+	 * @param user - The user performing the update
+	 */
+	private async subscribeNewMembers(
+		members: IEmployee[],
+		task: Task,
+		updatedTaskId: ID,
+		organizationId: ID,
+		tenantId: ID,
+		user: IUser
+	): Promise<void> {
+		if (!members.length) {
+			return;
+		}
+
+		try {
+			await Promise.all(
+				members.map((member: IEmployee) => {
+					this._eventBus.publish(
+						new CreateEntitySubscriptionEvent({
+							entity: BaseEntityEnum.Task,
+							entityId: updatedTaskId,
+							employeeId: member.id,
+							type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+							organizationId,
+							tenantId
+						})
+					);
+
+					this._employeeNotificationService.publishNotificationEvent(
+						{
+							entity: BaseEntityEnum.Task,
+							entityId: task.id,
+							type: EmployeeNotificationTypeEnum.ASSIGNMENT,
+							organizationId,
+							tenantId,
+							receiverEmployeeId: member.id,
+							sentByEmployeeId: user?.employeeId
+						},
+						NotificationActionTypeEnum.Assigned,
+						task.title,
+						user?.name
+					);
+				})
+			);
+		} catch (error) {
+			console.error('Error publishing CreateSubscriptionEvent:', error);
 		}
 	}
 

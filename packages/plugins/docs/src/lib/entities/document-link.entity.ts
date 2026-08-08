@@ -1,10 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsUUID } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
-import { isMySQL, isPostgres } from '@gauzy/config';
 import { BaseEntityEnum, ID, IDocument, IDocumentLink, JsonData } from '@gauzy/contracts';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { MikroOrmDocumentLinkRepository } from '../repositories/mikro-orm-document-link.repository';
+import { jsonColumnType } from './column-types';
 import { Document } from './document.entity';
 
 @MultiORMEntity('document_link', { mikroOrmRepository: () => MikroOrmDocumentLinkRepository })
@@ -36,7 +36,7 @@ export class DocumentLink extends TenantOrganizationBaseEntity implements IDocum
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	@MultiORMColumn({ type: jsonColumnType(), nullable: true })
 	metadata?: JsonData;
 
 	/*

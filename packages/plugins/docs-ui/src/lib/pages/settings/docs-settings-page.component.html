@@ -83,8 +83,11 @@
 				</div>
 
 				<div class="docs-settings-row">
-					<label class="label">{{ 'DOCS.VISIBILITY.LABEL' | translate }}</label>
+					<label class="label" for="docs-settings-default-visibility">
+						{{ 'DOCS.VISIBILITY.LABEL' | translate }}
+					</label>
 					<nb-select
+						id="docs-settings-default-visibility"
 						size="small"
 						[selected]="orgDefaults.defaultVisibility"
 						[disabled]="savingDefaults"

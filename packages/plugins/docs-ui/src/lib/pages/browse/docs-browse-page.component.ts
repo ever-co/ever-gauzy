@@ -298,7 +298,7 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 
 		// `?view=` wins over the persisted layout for this load only; with no
 		// param the layout subscription's value (already applied) stands.
-		const urlView = params['view'] === 'cards' ? 'cards' : params['view'] === 'table' ? 'table' : null;
+		const urlView = this.parseViewParam(params['view']);
 		const view = urlView ?? this.documentsQuery.view;
 		if (urlView) {
 			// Render the requested view without writing it to the persisted layout.
@@ -323,6 +323,13 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 		// view always asked for 10 rows instead of 24.
 		this.setPagination({ ...this.getPagination(), activePage: page, itemsPerPage: pageSize });
 		this.actions.dispatch(DocumentsActions.loadDocuments());
+	}
+
+	/** `?view=` carries only the two canonical layout ids; anything else means "no override". */
+	private parseViewParam(value: unknown): 'cards' | 'table' | null {
+		if (value === 'cards') return 'cards';
+		if (value === 'table') return 'table';
+		return null;
 	}
 
 	/**

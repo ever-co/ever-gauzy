@@ -35,12 +35,14 @@ export const Callout = Node.create({
 		return {
 			type: {
 				default: 'info' as CalloutType,
-				parseHTML: (element) => (element.getAttribute('data-callout-type') as CalloutType) || 'info',
+				parseHTML: (element) => (element.dataset.calloutType as CalloutType) || 'info',
 				renderHTML: (attributes) => ({ 'data-callout-type': attributes['type'] })
 			},
 			emoji: {
+				// `?? null` keeps the absent-attribute value the `null` default expects
+				// (`dataset` answers `undefined` where `getAttribute` answered `null`).
 				default: null,
-				parseHTML: (element) => element.getAttribute('data-callout-emoji'),
+				parseHTML: (element) => element.dataset.calloutEmoji ?? null,
 				renderHTML: (attributes) =>
 					attributes['emoji'] ? { 'data-callout-emoji': attributes['emoji'] } : {}
 			}

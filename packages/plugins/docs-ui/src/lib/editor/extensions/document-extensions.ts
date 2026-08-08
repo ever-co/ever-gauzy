@@ -99,7 +99,9 @@ const DocsImage = Image.extend({
 			...this.parent?.(),
 			documentId: {
 				default: null,
-				parseHTML: (element: HTMLElement) => element.getAttribute('data-document-id'),
+				// `?? null` on the data-* reads below: `dataset` answers `undefined`
+				// where `getAttribute` answered `null`, and both defaults are `null`.
+				parseHTML: (element: HTMLElement) => element.dataset.documentId ?? null,
 				renderHTML: (attributes: Record<string, unknown>) =>
 					attributes['documentId'] ? { 'data-document-id': attributes['documentId'] } : {}
 			},
@@ -111,7 +113,7 @@ const DocsImage = Image.extend({
 			},
 			align: {
 				default: null,
-				parseHTML: (element: HTMLElement) => element.getAttribute('data-align'),
+				parseHTML: (element: HTMLElement) => element.dataset.align ?? null,
 				renderHTML: (attributes: Record<string, unknown>) =>
 					attributes['align'] ? { 'data-align': attributes['align'] } : {}
 			},

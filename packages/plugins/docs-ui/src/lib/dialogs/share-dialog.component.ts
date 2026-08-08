@@ -308,18 +308,24 @@ export class DocumentShareDialogComponent extends TranslationBaseComponent imple
 
 	private toRow(share: IDocumentShare): IShareRow {
 		const kind: DocsShareTargetKind = share.teamId ? 'team' : 'employee';
-		const label =
-			kind === 'team'
-				? share.team?.name ??
-				  this.teams.find((team) => String(team.id) === String(share.teamId))?.name ??
-				  String(share.teamId ?? '')
-				: share.employee
-				? this.employeeLabel(share.employee)
-				: this.employeeLabel(
-						this.employees.find((employee) => String(employee.id) === String(share.employeeId)) ??
-							({ id: share.employeeId } as IEmployee)
-				  );
+		const label = kind === 'team' ? this.teamShareLabel(share) : this.employeeShareLabel(share);
 		return { share, label, kind, busy: false };
+	}
+
+	/** Team name off the share, then the loaded catalog, then the bare id. */
+	private teamShareLabel(share: IDocumentShare): string {
+		return (
+			share.team?.name ??
+			this.teams.find((team) => String(team.id) === String(share.teamId))?.name ??
+			String(share.teamId ?? '')
+		);
+	}
+
+	/** Employee off the share, else the loaded catalog, else an id-only stub. */
+	private employeeShareLabel(share: IDocumentShare): string {
+		if (share.employee) return this.employeeLabel(share.employee);
+		const employee = this.employees.find((candidate) => String(candidate.id) === String(share.employeeId));
+		return this.employeeLabel(employee ?? ({ id: share.employeeId } as IEmployee));
 	}
 
 	/** Maps the documented share error codes onto readable copy; falls back to the raw error. */

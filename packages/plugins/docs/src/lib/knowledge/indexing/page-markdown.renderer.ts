@@ -69,35 +69,57 @@ function walkTipTapNode(node: any): string[] {
 	const children: any[] = Array.isArray(node.content) ? node.content : [];
 
 	switch (node.type) {
-		case 'heading': {
-			const level = Math.min(Math.max(Number(node.attrs?.level) || 1, 1), 6);
-			const text = children.flatMap(walkTipTapNode).join('');
-			return text ? [`${'#'.repeat(level)} ${text}`] : [];
-		}
-		case 'paragraph': {
-			const text = children.flatMap(walkTipTapNode).join('');
-			return text ? [text] : [];
-		}
+		case 'heading':
+			return renderHeading(node, children);
+		case 'paragraph':
+			return asBlock(joinInline(children));
 		case 'bulletList':
-		case 'orderedList': {
-			const items = children
-				.map((item: any, index: number) => {
-					const text = (Array.isArray(item?.content) ? item.content : []).flatMap(walkTipTapNode).join(' ');
-					const marker = node.type === 'orderedList' ? `${index + 1}.` : '-';
-					return text ? `${marker} ${text}` : '';
-				})
-				.filter(Boolean);
-			return items.length ? [items.join('\n')] : [];
-		}
-		case 'codeBlock': {
-			const text = children.flatMap(walkTipTapNode).join('');
-			return text ? ['```\n' + text + '\n```'] : [];
-		}
-		case 'blockquote': {
-			const inner = children.flatMap(walkTipTapNode);
-			return inner.length ? [inner.map((line) => `> ${line}`).join('\n')] : [];
-		}
+		case 'orderedList':
+			return renderList(node.type, children);
+		case 'codeBlock':
+			return renderCodeBlock(children);
+		case 'blockquote':
+			return renderBlockquote(children);
 		default:
 			return children.flatMap(walkTipTapNode);
 	}
+}
+
+/** Renders the inline content of a block node as one string. */
+function joinInline(children: any[]): string {
+	return children.flatMap(walkTipTapNode).join('');
+}
+
+/** Wraps a rendered block in the single-element array the walk returns; empty text yields none. */
+function asBlock(text: string): string[] {
+	return text ? [text] : [];
+}
+
+/** `# … ######` — the level is clamped into the 1–6 markdown range. */
+function renderHeading(node: any, children: any[]): string[] {
+	const level = Math.min(Math.max(Number(node.attrs?.level) || 1, 1), 6);
+	return asBlock(joinInline(children)).map((text) => `${'#'.repeat(level)} ${text}`);
+}
+
+/** A bullet (`-`) or ordered (`1.`) list; empty items are dropped. */
+function renderList(type: 'bulletList' | 'orderedList', children: any[]): string[] {
+	const items = children
+		.map((item: any, index: number) => {
+			const text = (Array.isArray(item?.content) ? item.content : []).flatMap(walkTipTapNode).join(' ');
+			const marker = type === 'orderedList' ? `${index + 1}.` : '-';
+			return text ? `${marker} ${text}` : '';
+		})
+		.filter(Boolean);
+	return items.length ? [items.join('\n')] : [];
+}
+
+/** A fenced code block (no language hint — the TipTap attrs are not carried into the index). */
+function renderCodeBlock(children: any[]): string[] {
+	return asBlock(joinInline(children)).map((text) => '```\n' + text + '\n```');
+}
+
+/** A block quote — every rendered inner line gets the `> ` prefix. */
+function renderBlockquote(children: any[]): string[] {
+	const inner = children.flatMap(walkTipTapNode);
+	return inner.length ? [inner.map((line) => `> ${line}`).join('\n')] : [];
 }

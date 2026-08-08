@@ -7,11 +7,27 @@ import { IDocument, IPagination } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import { DOCS_CARDS_PAGE_SIZE, DOCS_DEFAULT_PAGE_SIZE, DOCS_FILTER_DEBOUNCE_MS } from '../docs.constants';
 import { IDocumentFindInput } from '../models/docs-api.model';
-import { applyPreset, createInitialDocsFilterState, docsFilterToParams } from '../models/docs-filter.model';
+import {
+	applyPreset,
+	createInitialDocsFilterState,
+	DocsFilterState,
+	docsFilterToParams
+} from '../models/docs-filter.model';
 import { DocumentsService } from '../services/documents.service';
 import { DocumentsActions } from './documents.actions';
 import { DocumentsQuery } from './documents.query';
-import { DocumentsStore } from './documents.store';
+import { DocsState, DocumentsStore } from './documents.store';
+
+/**
+ * Which slice of the result set a list query asks for.
+ *
+ * - `'page'` — exactly the current page slice (table paging, cards Load more).
+ * - `'accumulated'` — in the cards view past page 1, the whole loaded window
+ *   (`skip: 0`, `take: page × pageSize`) so a reload or a poll refresh does
+ *   not silently truncate an appended grid back to one page.
+ * - `'facets'` — no window at all (facet counts are computed over the filter).
+ */
+type DocsFindWindow = 'page' | 'accumulated' | 'facets';
 
 /**
  * Effects for the Documents hub browse state: debounced loads, stale-response
@@ -21,6 +37,25 @@ import { DocumentsStore } from './documents.store';
  */
 @Injectable()
 export class DocumentsEffects {
+	/** Multi-select facet keys — same name on `DocsFilterState` and `IDocumentFindInput`. */
+	private static readonly FACET_FILTER_KEYS = [
+		'kind',
+		'status',
+		'knowledgeStatus',
+		'reviewStatus',
+		'source',
+		'categoryIds',
+		'tagIds'
+	] as const;
+
+	/** `DocsFilterState` date key → the `GetDocumentsQueryDTO` name it maps to. */
+	private static readonly DATE_FILTER_KEYS = [
+		['createdFrom', 'createdAtFrom'],
+		['createdTo', 'createdAtTo'],
+		['updatedFrom', 'updatedAtFrom'],
+		['updatedTo', 'updatedAtTo']
+	] as const;
+
 	constructor(
 		private readonly action$: Actions,
 		private readonly documentsStore: DocumentsStore,
@@ -300,63 +335,83 @@ export class DocumentsEffects {
 	// ─── Internals ───────────────────────────────────────────────
 
 	/**
-	 * Builds the list query.
+	 * Builds the list query. Each block below contributes only the keys it can
+	 * actually express — an omitted key is a filter the DTO never sees.
 	 *
-	 * @param window
-	 *  - `'page'` — exactly the current page slice (table paging, cards Load more).
-	 *  - `'accumulated'` — in the cards view past page 1, the whole loaded window
-	 *    (`skip: 0`, `take: page × pageSize`) so a reload or a poll refresh does
-	 *    not silently truncate an appended grid back to one page.
-	 *  - `'facets'` — no window at all (facet counts are computed over the filter).
+	 * @param window which slice to ask for — see `DocsFindWindow`.
 	 */
-	private buildFindInput(window: 'page' | 'accumulated' | 'facets' = 'page'): IDocumentFindInput {
+	private buildFindInput(window: DocsFindWindow = 'page'): IDocumentFindInput {
 		const { filter, folderId, pagination, view } = this.documentsStore.state;
 		const { organizationId, tenantId } = this.orgContext();
-		const input: IDocumentFindInput = {
+		return {
 			organizationId,
 			tenantId,
 			// 🛑 `GetDocumentsQueryDTO.archived` is `@IsIn(['exclude','include','only'])`
 			// — the service maps this boolean, never send it raw.
 			archived: filter.archived,
-			relations: ['categories', 'tags']
+			relations: ['categories', 'tags'],
+			...this.buildFacetFilters(filter),
+			...this.buildSearchScope(filter, folderId),
+			...this.buildDateFilters(filter),
+			...this.buildSortParams(filter),
+			...this.buildWindowParams(window, pagination, view)
 		};
-		// 🛑 The DTO's `kind` is a scalar `@IsEnum`. A multi-kind selection cannot be
-		// expressed server-side, so the service drops it (a wider result set beats a 400).
-		if (filter.kind.length) input.kind = filter.kind;
-		if (filter.status.length) input.status = filter.status;
-		if (filter.knowledgeStatus.length) input.knowledgeStatus = filter.knowledgeStatus;
-		if (filter.reviewStatus.length) input.reviewStatus = filter.reviewStatus;
-		if (filter.source.length) input.source = filter.source;
-		if (filter.categoryIds.length) input.categoryIds = filter.categoryIds;
-		if (filter.tagIds.length) input.tagIds = filter.tagIds;
-		if (filter.q) {
-			input.q = filter.q;
-			input.searchIn = filter.searchIn;
-		} else if (folderId) {
-			// Folder scope applies only without a search — search results are flat.
-			input.parentId = folderId;
-		}
-		// The DTO names are `createdAt*`/`updatedAt*`; the URL param names
-		// (`createdFrom`…) are the shareable-link contract and stay as they are.
-		if (filter.createdFrom) input.createdAtFrom = filter.createdFrom;
-		if (filter.createdTo) input.createdAtTo = filter.createdTo;
-		if (filter.updatedFrom) input.updatedAtFrom = filter.updatedFrom;
-		if (filter.updatedTo) input.updatedAtTo = filter.updatedTo;
-		// Two separate params — a composite `updatedAt:desc` fails `@IsIn` on `sort`.
-		if (filter.sort) {
-			input.sort = filter.sort.field;
-			input.sortOrder = filter.sort.order;
-		}
-		if (window !== 'facets') {
-			const accumulate = window === 'accumulated' && view === 'cards' && pagination.page > 1;
-			// 🛑 `skip` is a 1-based PAGE NUMBER, not an offset: the API computes
-			// `offset = take × (skip − 1)`, so sending a row offset paged in steps of
-			// `pageSize²` (page 2 of 10 landed on rows 91-100). The accumulated window
-			// is one big page-1 request; the service clamps `take` to the DTO's `@Max(100)`.
-			input.skip = accumulate ? 1 : pagination.page;
-			input.take = accumulate ? pagination.page * pagination.pageSize : pagination.pageSize;
+	}
+
+	/**
+	 * The multi-select facets, each copied through only when it carries a selection.
+	 *
+	 * 🛑 The DTO's `kind` is a scalar `@IsEnum`. A multi-kind selection cannot be
+	 * expressed server-side, so the service drops it (a wider result set beats a 400).
+	 */
+	private buildFacetFilters(filter: DocsFilterState): IDocumentFindInput {
+		const input: IDocumentFindInput = {};
+		for (const key of DocumentsEffects.FACET_FILTER_KEYS) {
+			if (filter[key].length) (input as Record<string, unknown>)[key] = filter[key];
 		}
 		return input;
+	}
+
+	/** A query and a folder scope are mutually exclusive — search results are flat. */
+	private buildSearchScope(filter: DocsFilterState, folderId: DocsState['folderId']): IDocumentFindInput {
+		if (filter.q) return { q: filter.q, searchIn: filter.searchIn };
+		return folderId ? { parentId: folderId } : {};
+	}
+
+	/**
+	 * The DTO names are `createdAt*`/`updatedAt*`; the URL param names
+	 * (`createdFrom`…) are the shareable-link contract and stay as they are.
+	 */
+	private buildDateFilters(filter: DocsFilterState): IDocumentFindInput {
+		const input: IDocumentFindInput = {};
+		for (const [filterKey, dtoKey] of DocumentsEffects.DATE_FILTER_KEYS) {
+			if (filter[filterKey]) (input as Record<string, unknown>)[dtoKey] = filter[filterKey];
+		}
+		return input;
+	}
+
+	/** Two separate params — a composite `updatedAt:desc` fails `@IsIn` on `sort`. */
+	private buildSortParams(filter: DocsFilterState): IDocumentFindInput {
+		return filter.sort ? { sort: filter.sort.field, sortOrder: filter.sort.order } : {};
+	}
+
+	/**
+	 * 🛑 `skip` is a 1-based PAGE NUMBER, not an offset: the API computes
+	 * `offset = take × (skip − 1)`, so sending a row offset paged in steps of
+	 * `pageSize²` (page 2 of 10 landed on rows 91-100). The accumulated window
+	 * is one big page-1 request; the service clamps `take` to the DTO's `@Max(100)`.
+	 */
+	private buildWindowParams(
+		window: DocsFindWindow,
+		pagination: DocsState['pagination'],
+		view: DocsState['view']
+	): IDocumentFindInput {
+		if (window === 'facets') return {};
+		const accumulate = window === 'accumulated' && view === 'cards' && pagination.page > 1;
+		return {
+			skip: accumulate ? 1 : pagination.page,
+			take: accumulate ? pagination.page * pagination.pageSize : pagination.pageSize
+		};
 	}
 
 	private orgContext(): { organizationId?: string; tenantId?: string } {

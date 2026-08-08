@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, Input, OnChanges, inject } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import { renderToHTMLString } from '@tiptap/static-renderer';
 import { createStaticExtensions } from '../extensions/document-extensions';
-import { renderMarkdownToSafeHtml, sanitizeToSafeHtml } from './markdown-render.util';
+import { renderMarkdownToSanitizedHtml, sanitizeHtml } from './markdown-render.util';
 
 /**
  * Static read-only render (spec 05 §9.1): TipTap JSON → HTML via
@@ -37,16 +37,17 @@ export class DocumentStaticViewComponent implements OnChanges {
 
 	private readonly sanitizer = inject(DomSanitizer);
 
-	public safeHtml: SafeHtml | null = null;
+	/** Sanitized HTML, bound with `[innerHTML]` so Angular sanitizes it again on binding. */
+	public safeHtml: string | null = null;
 
 	ngOnChanges(): void {
 		this.safeHtml = this.render();
 	}
 
-	private render(): SafeHtml | null {
+	private render(): string | null {
 		if (this.contentJson) {
 			try {
-				return sanitizeToSafeHtml(
+				return sanitizeHtml(
 					renderToHTMLString({
 						extensions: createStaticExtensions(),
 						content: this.contentJson as never
@@ -54,13 +55,13 @@ export class DocumentStaticViewComponent implements OnChanges {
 					this.sanitizer
 				);
 			} catch {
-				return sanitizeToSafeHtml(this.contentHtml, this.sanitizer);
+				return sanitizeHtml(this.contentHtml, this.sanitizer);
 			}
 		}
 		if (this.markdown) {
 			// Same renderer the file preview modal uses (`markdown-render.util.ts`).
-			return renderMarkdownToSafeHtml(this.markdown, this.sanitizer);
+			return renderMarkdownToSanitizedHtml(this.markdown, this.sanitizer);
 		}
-		return sanitizeToSafeHtml(this.contentHtml, this.sanitizer);
+		return sanitizeHtml(this.contentHtml, this.sanitizer);
 	}
 }

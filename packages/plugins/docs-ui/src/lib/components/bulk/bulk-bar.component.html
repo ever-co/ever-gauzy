@@ -29,7 +29,9 @@
 					nbInput
 					size="tiny"
 					type="text"
+					id="docs-bulk-tags-input"
 					[placeholder]="'DOCS.DETAIL.TAGS' | translate"
+					[attr.aria-label]="'DOCS.DETAIL.TAGS' | translate"
 					[(ngModel)]="tagsInput"
 				/>
 				<button nbButton size="tiny" [disabled]="busy" (click)="addTags()">

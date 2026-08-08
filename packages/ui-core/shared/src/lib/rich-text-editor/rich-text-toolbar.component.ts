@@ -306,16 +306,27 @@ export class RichTextToolbarComponent implements OnDestroy {
 			alignRight: editor.isActive({ textAlign: 'right' }),
 			alignJustify: editor.isActive({ textAlign: 'justify' })
 		};
-		this.blockFormat = editor.isActive('heading', { level: 1 })
-			? 'h1'
-			: editor.isActive('heading', { level: 2 })
-			? 'h2'
-			: editor.isActive('heading', { level: 3 })
-			? 'h3'
-			: 'paragraph';
+		this.blockFormat = this._resolveBlockFormat(editor);
 		this.currentFontFamily = (editor.getAttributes('textStyle') as { fontFamily?: string })?.fontFamily ?? '';
 		this.canUndo = editor.can().undo();
 		this.canRedo = editor.can().redo();
 		this._cdr.markForCheck();
+	}
+
+	/**
+	 * Value shown by the block-format dropdown: the first active heading level the toolbar
+	 * offers, falling back to `paragraph` when none of them is active.
+	 */
+	private _resolveBlockFormat(editor: Editor): BlockFormat {
+		if (editor.isActive('heading', { level: 1 })) {
+			return 'h1';
+		}
+		if (editor.isActive('heading', { level: 2 })) {
+			return 'h2';
+		}
+		if (editor.isActive('heading', { level: 3 })) {
+			return 'h3';
+		}
+		return 'paragraph';
 	}
 }

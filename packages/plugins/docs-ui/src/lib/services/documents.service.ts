@@ -425,9 +425,9 @@ export class DocumentsService {
 	 * are dropped here so no caller can smuggle one in.
 	 */
 	bulk(input: IDocumentBulkInput): Observable<IDocumentBulkResult> {
-		const { organizationId, tenantId, ...payload } = input ?? ({} as IDocumentBulkInput);
-		void organizationId;
-		void tenantId;
+		const payload = { ...(input ?? ({} as IDocumentBulkInput)) };
+		delete payload.organizationId;
+		delete payload.tenantId;
 		return this.http.post<IDocumentBulkResult>(`${this.API_URL}/documents/bulk`, payload);
 	}
 

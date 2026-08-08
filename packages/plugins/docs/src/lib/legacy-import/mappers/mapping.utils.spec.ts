@@ -131,6 +131,50 @@ describe('legacy-import mapping utils', () => {
 		it('neutralizes javascript: URLs', () => {
 			expect(sanitizeLegacyHtml('<a href="javascript:alert(1)">x</a>')).not.toContain('javascript:');
 		});
+
+		it('still neutralizes javascript: URLs written with odd spacing and quoting', () => {
+			// The whitespace/quote handling was restructured to kill quadratic backtracking, so
+			// pin the variants that restructuring could plausibly have broken.
+			expect(sanitizeLegacyHtml('<a href = "javascript:alert(1)">x</a>')).not.toContain('javascript:');
+			expect(sanitizeLegacyHtml("<a href='javascript:alert(1)'>x</a>")).not.toContain('javascript:');
+			expect(sanitizeLegacyHtml('<a href=javascript:alert(1)>x</a>')).not.toContain('javascript:');
+			expect(sanitizeLegacyHtml('<img SRC="  javascript:alert(1)">')).not.toContain('javascript:');
+		});
+	});
+
+	describe('legacy HTML sanitization cost (ReDoS regression)', () => {
+		/**
+		 * Legacy HTML arrives from an untrusted export and is sanitized on the request thread.
+		 * `\s*(["']?)\s*javascript:` and `<[^>]*>` were both quadratic — 80 KB of the right
+		 * padding cost seconds — so these inputs pin the linear behaviour. The budget is
+		 * generous; a linear pass does them in single-digit milliseconds.
+		 */
+		const BUDGET_MS = 100;
+
+		const elapsed = (fn: () => void): number => {
+			const started = Date.now();
+			fn();
+			return Date.now() - started;
+		};
+
+		it('sanitizes an attribute padded with a huge whitespace run in linear time', () => {
+			const hostile = `<a href=${' '.repeat(200_000)}x>y</a>`;
+
+			expect(elapsed(() => sanitizeLegacyHtml(hostile))).toBeLessThan(BUDGET_MS);
+		});
+
+		it('detects emptiness on a run of unterminated tags in linear time', () => {
+			const hostile = '<'.repeat(200_000);
+			let empty: boolean | undefined;
+
+			const took = elapsed(() => {
+				empty = isEmptyHtml(hostile);
+			});
+
+			expect(took).toBeLessThan(BUDGET_MS);
+			// Unterminated `<` is not a tag, so it survives as visible text — unchanged behaviour.
+			expect(empty).toBe(false);
+		});
 	});
 
 	describe('isEmptyHtml (09 §7 case 4)', () => {

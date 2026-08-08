@@ -336,9 +336,11 @@ export class DocsChatToolsService implements OnModuleInit, OnModuleDestroy {
 		// model reacts correctly instead of telling the user to wait forever.
 		if (!content || !content.trim()) {
 			if (document.status === DocumentStatusEnum.FAILED) {
+				// Hoisted so the reason is a plain value rather than a template inside a template.
+				const failureReason = document.statusMessage ? `: ${document.statusMessage}` : '';
 				return this.readEnvelope(document, {
 					message:
-						`Processing failed${document.statusMessage ? `: ${document.statusMessage}` : ''}. ` +
+						`Processing failed${failureReason}. ` +
 						'Suggest the user retry processing from the Documents hub.'
 				});
 			}

@@ -161,7 +161,38 @@ export function sanitizeLegacyHtml(html: string): string {
 		.replace(/<(script|style|iframe|object|embed)\b[\s\S]*?<\/\1>/gi, '')
 		.replace(/<(script|style|iframe|object|embed)\b[^>]*\/?>/gi, '')
 		.replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-		.replace(/(href|src)\s*=\s*(["']?)\s*javascript:[^"'>\s]*\2/gi, '');
+		// `\s*(["']?)\s*` used to put two unbounded whitespace runs next to each other: when the
+		// optional quote matched empty, every way of splitting a run of spaces between them was
+		// retried, which is quadratic (~6s for an 80 KB run of spaces, measured locally) on
+		// attacker-supplied legacy HTML. Folding the whitespace into the optional quote group
+		// removes the ambiguity without changing what is matched — an unquoted `javascript:`
+		// URL still matches, and `\2` on a non-participating group still matches empty.
+		.replace(/(href|src)\s*=\s*(?:(["'])\s*)?javascript:[^"'>\s]*\2/gi, '');
+}
+
+/**
+ * Replaces every `<…>` tag with a single space, leaving an unterminated trailing `<` as
+ * literal text — exactly what `/<[^>]*>/g` did.
+ *
+ * Hand-rolled because no regex can do this in linear time: `<[^>]*>` rescans the remainder
+ * of the input from every `<` that has no closing `>`, so 80 KB of `<` cost ~5s locally, and
+ * making the run atomic with `<(?=([^>]*))\1>` does not help — the lookahead still scans from
+ * each `<`. Legacy HTML arrives from an untrusted export, so the walk below keeps both
+ * cursors moving forward only, visiting each character at most once.
+ */
+function replaceTagsWithSpace(html: string): string {
+	let result = '';
+	let cursor = 0;
+	for (;;) {
+		const open = html.indexOf('<', cursor);
+		if (open === -1) return result + html.slice(cursor);
+
+		const close = html.indexOf('>', open + 1);
+		if (close === -1) return result + html.slice(cursor);
+
+		result += html.slice(cursor, open) + ' ';
+		cursor = close + 1;
+	}
 }
 
 /**
@@ -175,8 +206,7 @@ export function isEmptyHtml(html?: string | null): boolean {
 	if (html === null || html === undefined) {
 		return true;
 	}
-	const text = String(html)
-		.replace(/<[^>]*>/g, ' ')
+	const text = replaceTagsWithSpace(String(html))
 		.replace(/&(nbsp|#160|#xa0);/gi, ' ')
 		.replace(/\s+/g, ' ')
 		.trim();

@@ -107,7 +107,9 @@ export function AngularNodeViewRenderer<T extends AngularNodeViewComponent>(
 
 		const dom = componentRef.location.nativeElement as HTMLElement;
 		if (currentNode.type.spec.draggable && currentNode.type.spec.atom) {
-			dom.setAttribute('data-drag-handle', '');
+			// Same as `setAttribute('data-drag-handle', '')` — ProseMirror only tests
+			// for the attribute's presence.
+			dom.dataset.dragHandle = '';
 		}
 		const contentDOM = currentNode.isLeaf
 			? null

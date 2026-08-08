@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomInt } from 'crypto';
 import { DataSource } from 'typeorm';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import {
@@ -164,7 +165,10 @@ export class DocsSeederService {
 				})
 			);
 
-			const fileCount = 3 + Math.floor(Math.random() * 4); // 3–6 files
+			// How many demo files this folder gets. Cosmetic variety in seed data only — never a
+			// secret or an access decision — but drawn from the CSPRNG so rule S2245 does not
+			// have to be re-litigated at every future reader.
+			const fileCount = randomInt(3, 7); // 3–6 files
 			for (let fileIndex = 0; fileIndex < fileCount; fileIndex++) {
 				await documentRepository.save(
 					documentRepository.create({

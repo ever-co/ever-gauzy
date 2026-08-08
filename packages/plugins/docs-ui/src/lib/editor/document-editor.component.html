@@ -9,6 +9,17 @@
 		<gz-floating-block-menu [editor]="editor"></gz-floating-block-menu>
 	</ng-container>
 
-	<!-- Hidden picker feeding the upload pipeline (slash image/attachment commands) -->
-	<input #fileInput type="file" multiple class="gz-editor-file-input" tabindex="-1" aria-hidden="true" />
+	<!-- Hidden picker feeding the upload pipeline (slash image/attachment commands).
+	     `aria-hidden` keeps it out of the accessibility tree — the label is a static
+	     fallback only (this standalone component does not import `TranslateModule`). -->
+	<input
+		#fileInput
+		id="gz-editor-file-input"
+		type="file"
+		multiple
+		class="gz-editor-file-input"
+		tabindex="-1"
+		aria-hidden="true"
+		aria-label="Upload files"
+	/>
 </div>

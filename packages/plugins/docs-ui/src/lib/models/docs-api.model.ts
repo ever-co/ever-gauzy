@@ -125,6 +125,69 @@ export interface IDocumentsQueryParams {
 /** Keeps only a non-empty array (an empty one would serialize to nothing anyway). */
 const listOrUndefined = <T>(values: T[] | undefined): T[] | undefined => (values?.length ? values : undefined);
 
+/** Keeps only a non-empty string — `''` and `undefined` both mean "no value" here. */
+const textOrUndefined = (value: string | undefined): string | undefined => value || undefined;
+
+/** The wire values of `GetDocumentsQueryDTO.archived` (`@IsIn`-validated). */
+const DOCUMENT_ARCHIVED_FILTERS: readonly DocumentArchivedFilter[] = ['exclude', 'include', 'only'];
+
+/**
+ * The DTO's `kind` is a **scalar** `@IsEnum`: a single-element selection unwraps
+ * to it, a multi-kind one cannot be expressed and is dropped (a wider result set
+ * beats a 400).
+ */
+function normalizeKind(kind: IDocumentFindInput['kind']): DocumentKindEnum | undefined {
+	if (!Array.isArray(kind)) return kind;
+	return kind.length === 1 ? kind[0] : undefined;
+}
+
+/** `true`/`false` map onto the DTO enum; an unrecognized value is dropped, not sent. */
+function normalizeArchived(archived: IDocumentFindInput['archived']): DocumentArchivedFilter | undefined {
+	if (typeof archived === 'boolean') return archived ? 'only' : 'exclude';
+	if (archived && DOCUMENT_ARCHIVED_FILTERS.includes(archived)) return archived;
+	return undefined;
+}
+
+/**
+ * `searchIn` only ever travels with a query, and a content search below the
+ * backend minimum is a 400 — degrade it to a name search instead.
+ */
+function normalizeSearchIn(
+	q: string | undefined,
+	searchIn: IDocumentFindInput['searchIn']
+): IDocumentsQueryParams['searchIn'] {
+	if (!q) return undefined;
+	return searchIn === 'content' && q.length >= DOCUMENT_CONTENT_SEARCH_MIN_CHARS ? 'content' : 'name';
+}
+
+/**
+ * Page window as `PaginationQueryDTO` accepts it: `skip` is a 1-based page number
+ * and `take` is `@Max(100)` — a larger window is a 400, not a bigger page.
+ */
+function normalizeWindow(skip?: number, take?: number): { skip?: number; take?: number } {
+	return {
+		skip: typeof skip === 'number' && skip > 0 ? Math.floor(skip) : undefined,
+		take: typeof take === 'number' && take > 0 ? Math.min(Math.floor(take), DOCUMENT_MAX_TAKE) : undefined
+	};
+}
+
+/**
+ * Only ever sent WITH an organization: `TenantOrganizationBaseDTO` requires
+ * `organizationId` (or an `organization` object), so a tenant-only `where` is a 400.
+ */
+function buildQueryScope(organizationId?: ID, tenantId?: ID): IDocumentsQueryParams['where'] {
+	if (!organizationId) return undefined;
+	return tenantId ? { organizationId, tenantId } : { organizationId };
+}
+
+/** `toParams()` serializes `undefined` as the literal string "undefined" — prune first. */
+function pruneUndefined(params: IDocumentsQueryParams): IDocumentsQueryParams {
+	(Object.keys(params) as (keyof IDocumentsQueryParams)[]).forEach((key) => {
+		if (params[key] === undefined) delete params[key];
+	});
+	return params;
+}
+
 /** Splits `'updatedAt:desc'` / `{ field, order }` / `'updatedAt'` into the two wire params. */
 function normalizeSort(
 	sort: IDocumentFindInput['sort'],
@@ -150,27 +213,9 @@ function normalizeSort(
  * one is an empty hub.
  */
 export function toDocumentsQueryParams(input: IDocumentFindInput = {}): IDocumentsQueryParams {
-	const kind = Array.isArray(input.kind) ? (input.kind.length === 1 ? input.kind[0] : undefined) : input.kind;
-	const archived =
-		typeof input.archived === 'boolean'
-			? input.archived
-				? 'only'
-				: 'exclude'
-			: input.archived && ['exclude', 'include', 'only'].includes(input.archived)
-			? input.archived
-			: undefined;
-
-	const q = input.q?.trim() || undefined;
-	// Content search below the backend minimum is a 400 — degrade to a name search.
-	const searchIn =
-		q && input.searchIn === 'content' && q.length >= DOCUMENT_CONTENT_SEARCH_MIN_CHARS
-			? 'content'
-			: q
-			? 'name'
-			: undefined;
-
+	const q = textOrUndefined(input.q?.trim());
 	const params: IDocumentsQueryParams = {
-		kind,
+		kind: normalizeKind(input.kind),
 		status: listOrUndefined(input.status),
 		knowledgeStatus: listOrUndefined(input.knowledgeStatus),
 		reviewStatus: listOrUndefined(input.reviewStatus),
@@ -178,35 +223,23 @@ export function toDocumentsQueryParams(input: IDocumentFindInput = {}): IDocumen
 		categoryIds: listOrUndefined(input.categoryIds),
 		tagIds: listOrUndefined(input.tagIds),
 		visibility: input.visibility,
-		archived,
+		archived: normalizeArchived(input.archived),
 		searchable: typeof input.searchable === 'boolean' ? input.searchable : undefined,
 		// `null` means "no folder scope" (flat search); only `'root'` is the top level.
 		parentId: input.parentId === null ? undefined : input.parentId,
 		q,
-		searchIn,
-		createdAtFrom: input.createdAtFrom || undefined,
-		createdAtTo: input.createdAtTo || undefined,
-		updatedAtFrom: input.updatedAtFrom || undefined,
-		updatedAtTo: input.updatedAtTo || undefined,
+		searchIn: normalizeSearchIn(q, input.searchIn),
+		createdAtFrom: textOrUndefined(input.createdAtFrom),
+		createdAtTo: textOrUndefined(input.createdAtTo),
+		updatedAtFrom: textOrUndefined(input.updatedAtFrom),
+		updatedAtTo: textOrUndefined(input.updatedAtTo),
 		...normalizeSort(input.sort, input.sortOrder),
 		relations: listOrUndefined(input.relations),
-		skip: typeof input.skip === 'number' && input.skip > 0 ? Math.floor(input.skip) : undefined,
-		take:
-			typeof input.take === 'number' && input.take > 0
-				? Math.min(Math.floor(input.take), DOCUMENT_MAX_TAKE)
-				: undefined,
-		// Only ever sent WITH an organization: `TenantOrganizationBaseDTO` requires
-		// `organizationId` (or an `organization` object), so a tenant-only `where` is a 400.
-		where: input.organizationId
-			? { organizationId: input.organizationId, ...(input.tenantId ? { tenantId: input.tenantId } : {}) }
-			: undefined
+		...normalizeWindow(input.skip, input.take),
+		where: buildQueryScope(input.organizationId, input.tenantId)
 	};
 
-	// `toParams()` serializes `undefined` as the literal string "undefined" — prune first.
-	Object.keys(params).forEach((key) => {
-		if (params[key as keyof IDocumentsQueryParams] === undefined) delete params[key as keyof IDocumentsQueryParams];
-	});
-	return params;
+	return pruneUndefined(params);
 }
 
 /** One facet bucket: value + display label + count under current filters. */

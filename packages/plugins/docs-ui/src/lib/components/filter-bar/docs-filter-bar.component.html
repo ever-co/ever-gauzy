@@ -5,7 +5,9 @@
 			nbInput
 			size="small"
 			type="text"
+			id="docs-filter-search"
 			[placeholder]="'DOCS.FILTERS.SEARCH_PLACEHOLDER' | translate"
+			[attr.aria-label]="'DOCS.FILTERS.SEARCH_PLACEHOLDER' | translate"
 			[ngModel]="value?.q"
 			(ngModelChange)="onSearchInput($event)"
 		/>
@@ -75,7 +77,9 @@
 			nbInput
 			size="small"
 			class="docs-filter-range"
+			id="docs-filter-created-range"
 			[placeholder]="'DOCS.FILTERS.CREATED_RANGE' | translate"
+			[attr.aria-label]="'DOCS.FILTERS.CREATED_RANGE' | translate"
 			[nbDatepicker]="createdRange"
 		/>
 		<nb-rangepicker #createdRange (rangeChange)="onCreatedRange($event)"></nb-rangepicker>
@@ -85,7 +89,9 @@
 			nbInput
 			size="small"
 			class="docs-filter-range"
+			id="docs-filter-updated-range"
 			[placeholder]="'DOCS.FILTERS.UPDATED_RANGE' | translate"
+			[attr.aria-label]="'DOCS.FILTERS.UPDATED_RANGE' | translate"
 			[nbDatepicker]="updatedRange"
 		/>
 		<nb-rangepicker #updatedRange (rangeChange)="onUpdatedRange($event)"></nb-rangepicker>

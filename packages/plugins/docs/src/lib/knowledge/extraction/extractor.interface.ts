@@ -46,18 +46,45 @@ export interface IDocumentExtractor {
 	extract(buffer: Buffer, ctx: IDocumentExtractionContext): Promise<IDocumentExtractionResult>;
 }
 
+/** NUL, as a code unit rather than a literal control character inside a pattern. */
+const NUL = String.fromCharCode(0);
+
+/**
+ * Drops trailing spaces and tabs from every line.
+ *
+ * Deliberately NOT `/[ \t]+$/gm`: that pattern restarts the trailing-run match at every
+ * position inside a run of spaces, which makes it quadratic in the length of the run.
+ * This normalizer runs over UNTRUSTED extracted document text on the request thread, so a
+ * single long line of spaces in an uploaded file was enough to stall it (~19s for an 80 KB
+ * run, measured locally). Splitting on newlines and walking each line backwards touches
+ * every character at most twice.
+ *
+ * Only spaces and tabs are removed - `String.prototype.trimEnd` would additionally strip
+ * vertical tab, form feed and Unicode spaces, which the original pattern preserved.
+ */
+function trimTrailingSpacesAndTabs(text: string): string {
+	return text
+		.split('\n')
+		.map((line) => {
+			let end = line.length;
+			while (end > 0 && (line[end - 1] === ' ' || line[end - 1] === '\t')) end--;
+			return end === line.length ? line : line.slice(0, end);
+		})
+		.join('\n');
+}
+
 /**
  * Shared markdown normalization every extractor applies before returning: strips NUL
  * bytes and a leading BOM, converts CRLF/CR to LF, and trims trailing whitespace lines.
  */
 export function normalizeMarkdown(markdown: string): string {
-	return (markdown ?? '')
+	const normalized = (markdown ?? '')
 		.replace(/^\uFEFF/, '')
-		.replace(/\u0000/g, '')
+		.split(NUL)
+		.join('')
 		.replace(/\r\n/g, '\n')
-		.replace(/\r/g, '\n')
-		.replace(/[ \t]+$/gm, '')
-		.trim();
+		.replace(/\r/g, '\n');
+	return trimTrailingSpacesAndTabs(normalized).trim();
 }
 
 /**

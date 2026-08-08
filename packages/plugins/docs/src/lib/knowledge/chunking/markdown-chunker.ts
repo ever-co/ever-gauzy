@@ -49,7 +49,14 @@ export interface IChunkingOptions {
 /** Locator-heading shapes of §4.1 — recognized by exact pattern. */
 const PAGE_HEADING = /^## Page (\d+)$/;
 const SHEET_HEADING = /^## Sheet: (.+)$/;
-const MARKDOWN_HEADING = /^(#{1,3})\s+(.*)$/;
+/**
+ * `(?=(\s+))\2` is the leading-whitespace run matched atomically: the lookahead captures the
+ * maximal run and the backreference replays it, and a backreference cannot give characters
+ * back. Written as a plain `\s+(.*)$` the two quantifiers both accept spaces, so every way of
+ * splitting a run between them is retried whenever `$` fails — quadratic on a long line.
+ * Named groups keep the two operands readable now that the run occupies a numbered group.
+ */
+const MARKDOWN_HEADING = /^(?<hashes>#{1,3})(?=(\s+))\2(?<text>.*)$/;
 
 interface IBlock {
 	text: string;
@@ -62,6 +69,39 @@ interface IBlock {
 	sheet: string | null;
 }
 
+/** The chunking knobs after the documented defaults have been applied. */
+interface IResolvedChunkingOptions {
+	counter: ITokenCounter;
+	chunkTokens: number;
+	overlapTokens: number;
+}
+
+/**
+ * Applies the documented defaults to a caller's partial options: a 512-token window, a
+ * 64-token overlap, and the process-wide counter. An absent or out-of-range override falls
+ * back to its default rather than disabling windowing.
+ */
+function resolveChunkingOptions(options: IChunkingOptions): IResolvedChunkingOptions {
+	return {
+		counter: options.counter ?? getTokenCounter(),
+		chunkTokens: options.chunkTokens !== undefined && options.chunkTokens > 0 ? options.chunkTokens : 512,
+		overlapTokens: options.overlapTokens !== undefined && options.overlapTokens >= 0 ? options.overlapTokens : 64
+	};
+}
+
+/**
+ * Projects one block's citation locators onto a chunk's char range. The locators always come
+ * from the chunk's anchor block, never from an overlap tail carried in from the block before.
+ */
+function locatorMetadata(block: IBlock, start: number, end: number): IDocumentChunkMetadata {
+	return {
+		headingPath: block.headingPath,
+		page: block.page ?? undefined,
+		sheet: block.sheet ?? undefined,
+		charRange: { start, end }
+	};
+}
+
 /**
  * Chunks normalized markdown into heading-aware token windows with locator metadata.
  *
@@ -70,10 +110,7 @@ interface IBlock {
  * @returns The deterministic chunk list plus the counter identity used.
  */
 export function chunkMarkdown(markdown: string, options: IChunkingOptions = {}): IChunkingResult {
-	const counter = options.counter ?? getTokenCounter();
-	const chunkTokens = options.chunkTokens !== undefined && options.chunkTokens > 0 ? options.chunkTokens : 512;
-	const overlapTokens =
-		options.overlapTokens !== undefined && options.overlapTokens >= 0 ? options.overlapTokens : 64;
+	const { counter, chunkTokens, overlapTokens } = resolveChunkingOptions(options);
 
 	const source = markdown ?? '';
 	if (!source.trim()) {
@@ -100,77 +137,181 @@ export function chunkMarkdown(markdown: string, options: IChunkingOptions = {}):
 		};
 	}
 
-	const blocks = splitBlocks(source);
-	const chunks: IMarkdownChunk[] = [];
+	const packer = new ChunkPacker(source, chunkTokens, overlapTokens, counter);
+	for (const block of splitBlocks(source)) {
+		packer.accept(block);
+	}
+	packer.flush();
 
+	return { chunks: packer.chunks, tokenCounter: counter.kind };
+}
+
+/**
+ * The greedy packing state of one `chunkMarkdown` run: the blocks accumulated into the current
+ * window, the overlap tail carried into the next emitted chunk, and the chunks emitted so far.
+ *
+ * Held as one small mutable object rather than a nest of closures so that each packing decision
+ * — window flush, oversized-table slicing, hard-split packing — reads as its own step.
+ */
+class ChunkPacker {
+	/** Chunks emitted so far, in document order. */
+	readonly chunks: IMarkdownChunk[] = [];
 	/** Blocks accumulated into the current window. */
-	let window: IBlock[] = [];
-	let windowTokens = 0;
+	private window: IBlock[] = [];
+	private windowTokens = 0;
 	/** Overlap text carried into the next emitted chunk ('' after a table slice). */
-	let pendingOverlap = '';
+	private pendingOverlap = '';
 
-	const emitWindow = (): void => {
-		if (!window.length) {
-			return;
-		}
-		const anchor = window[0];
-		const slice = source.slice(anchor.start, window[window.length - 1].end);
-		const content = pendingOverlap ? `${pendingOverlap}\n\n${slice}` : slice;
-		chunks.push({
-			chunkIndex: chunks.length,
-			content,
-			tokenCount: counter.count(content),
-			metadata: {
-				headingPath: anchor.headingPath,
-				page: anchor.page ?? undefined,
-				sheet: anchor.sheet ?? undefined,
-				charRange: { start: anchor.start, end: window[window.length - 1].end }
-			}
-		});
-		pendingOverlap = overlapTokens > 0 ? takeTailByTokens(slice, overlapTokens, counter) : '';
-		window = [];
-		windowTokens = 0;
-	};
+	constructor(
+		private readonly source: string,
+		private readonly chunkTokens: number,
+		private readonly overlapTokens: number,
+		private readonly counter: ITokenCounter
+	) {}
 
-	for (const block of blocks) {
-		const blockTokens = counter.count(block.text);
+	/**
+	 * Routes one block into the window: an oversized pipe table becomes row-boundary slices of
+	 * its own, an oversized non-table block is hard-split first, everything else packs as-is.
+	 */
+	accept(block: IBlock): void {
+		const blockTokens = this.counter.count(block.text);
 
 		// Oversized pipe table → row-boundary slices with the header repeated; no overlap.
-		if (block.kind === 'table' && blockTokens > chunkTokens) {
-			emitWindow();
-			pendingOverlap = '';
-			for (const slice of sliceTable(block, chunkTokens, counter)) {
-				chunks.push({
-					chunkIndex: chunks.length,
-					content: slice.content,
-					tokenCount: counter.count(slice.content),
-					metadata: {
-						headingPath: block.headingPath,
-						page: block.page ?? undefined,
-						sheet: block.sheet ?? undefined,
-						charRange: { start: slice.start, end: slice.end }
-					}
-				});
-			}
-			continue;
+		if (block.kind === 'table' && blockTokens > this.chunkTokens) {
+			this.emitTableSlices(block);
+			return;
 		}
 
 		// A single non-table block longer than a whole window → hard-split pieces that then
 		// pack like ordinary blocks.
-		const pieces: IBlock[] = blockTokens > chunkTokens ? hardSplitBlock(block, chunkTokens, counter) : [block];
+		const pieces: IBlock[] =
+			blockTokens > this.chunkTokens ? hardSplitBlock(block, this.chunkTokens, this.counter) : [block];
 
 		for (const piece of pieces) {
-			const pieceTokens = counter.count(piece.text);
-			if (window.length && windowTokens + pieceTokens > chunkTokens) {
-				emitWindow();
-			}
-			window.push(piece);
-			windowTokens += pieceTokens;
+			this.pack(piece);
 		}
 	}
-	emitWindow();
 
-	return { chunks, tokenCounter: counter.kind };
+	/**
+	 * Emits the accumulated window as one chunk (overlap prefix + anchored source slice) and
+	 * arms the overlap tail for the next chunk. A no-op when nothing is accumulated.
+	 */
+	flush(): void {
+		if (!this.window.length) {
+			return;
+		}
+		const anchor = this.window[0];
+		const end = this.window[this.window.length - 1].end;
+		const slice = this.source.slice(anchor.start, end);
+		const content = this.pendingOverlap ? `${this.pendingOverlap}\n\n${slice}` : slice;
+		this.chunks.push({
+			chunkIndex: this.chunks.length,
+			content,
+			tokenCount: this.counter.count(content),
+			metadata: locatorMetadata(anchor, anchor.start, end)
+		});
+		this.pendingOverlap = this.overlapTokens > 0 ? takeTailByTokens(slice, this.overlapTokens, this.counter) : '';
+		this.window = [];
+		this.windowTokens = 0;
+	}
+
+	/**
+	 * Greedily adds one window-sized piece, flushing the current window first once the piece no
+	 * longer fits into it.
+	 */
+	private pack(piece: IBlock): void {
+		const pieceTokens = this.counter.count(piece.text);
+		if (this.window.length && this.windowTokens + pieceTokens > this.chunkTokens) {
+			this.flush();
+		}
+		this.window.push(piece);
+		this.windowTokens += pieceTokens;
+	}
+
+	/**
+	 * Flushes the window, then emits one chunk per row-boundary slice of an oversized table.
+	 * Table slices deliberately carry no generic overlap — the repeated header is their context.
+	 */
+	private emitTableSlices(block: IBlock): void {
+		this.flush();
+		this.pendingOverlap = '';
+		for (const slice of sliceTable(block, this.chunkTokens, this.counter)) {
+			this.chunks.push({
+				chunkIndex: this.chunks.length,
+				content: slice.content,
+				tokenCount: this.counter.count(slice.content),
+				metadata: locatorMetadata(block, slice.start, slice.end)
+			});
+		}
+	}
+}
+
+/** One level of the enclosing-heading stack. */
+interface IHeadingEntry {
+	level: number;
+	text: string;
+}
+
+/** The locator state carried line by line through `splitBlocks` (§4.1). */
+interface ILocatorState {
+	headingStack: IHeadingEntry[];
+	page: number | null;
+	sheet: string | null;
+}
+
+/**
+ * Snapshots the locator state onto a block. The heading path is copied out of the stack — the
+ * stack itself keeps mutating as the document is walked.
+ */
+function locatorSnapshot(state: ILocatorState): Pick<IBlock, 'headingPath' | 'page' | 'sheet'> {
+	return {
+		headingPath: state.headingStack.map((entry) => entry.text),
+		page: state.page,
+		sheet: state.sheet
+	};
+}
+
+/**
+ * End offset of the block that closes on the line before `lineStart`: the LF preceding the
+ * boundary line is not part of it, except at the very start of the document where none exists.
+ */
+function blockEndBefore(lineStart: number): number {
+	return lineStart > 0 ? lineStart - 1 : lineStart;
+}
+
+/**
+ * A run of at least two lines that all start with a pipe is a markdown table (an oversized one
+ * later slices on row boundaries); anything else is an ordinary paragraph.
+ */
+function paragraphKind(paraLines: string[]): IBlock['kind'] {
+	const isTable = paraLines.length >= 2 && paraLines.every((line) => line.trimStart().startsWith('|'));
+	return isTable ? 'table' : 'paragraph';
+}
+
+/**
+ * Applies one heading line to the locator state. The §4.1 locator headings (`## Page N`,
+ * `## Sheet: <name>`) set `page`/`sheet` and are deliberately excluded from `headingPath`;
+ * every other heading pops the stack down to its own level and then pushes itself.
+ */
+function applyHeadingLine(line: string, headingMatch: RegExpExecArray, state: ILocatorState): void {
+	const pageMatch = PAGE_HEADING.exec(line);
+	if (pageMatch) {
+		state.page = Number.parseInt(pageMatch[1], 10);
+		return;
+	}
+
+	const sheetMatch = SHEET_HEADING.exec(line);
+	if (sheetMatch) {
+		state.sheet = sheetMatch[1];
+		return;
+	}
+
+	const level = headingMatch.groups.hashes.length;
+	const stack = state.headingStack;
+	while (stack.length && stack[stack.length - 1].level >= level) {
+		stack.pop();
+	}
+	stack.push({ level, text: headingMatch.groups.text.trim() });
 }
 
 /**
@@ -179,9 +320,7 @@ export function chunkMarkdown(markdown: string, options: IChunkingOptions = {}):
  */
 function splitBlocks(source: string): IBlock[] {
 	const blocks: IBlock[] = [];
-	const headingStack: Array<{ level: number; text: string }> = [];
-	let page: number | null = null;
-	let sheet: string | null = null;
+	const locators: ILocatorState = { headingStack: [], page: null, sheet: null };
 
 	const lines = source.split('\n');
 	let offset = 0;
@@ -190,25 +329,16 @@ function splitBlocks(source: string): IBlock[] {
 	let paraStart = -1;
 	let paraLines: string[] = [];
 
-	const snapshotPath = (): string[] => headingStack.map((entry) => entry.text);
-
 	const flushParagraph = (endOffset: number): void => {
-		if (paraStart < 0 || !paraLines.length) {
-			paraStart = -1;
-			paraLines = [];
-			return;
+		if (paraStart >= 0 && paraLines.length) {
+			blocks.push({
+				text: paraLines.join('\n'),
+				start: paraStart,
+				end: endOffset,
+				kind: paragraphKind(paraLines),
+				...locatorSnapshot(locators)
+			});
 		}
-		const text = paraLines.join('\n');
-		const isTable = paraLines.length >= 2 && paraLines.every((line) => line.trimStart().startsWith('|'));
-		blocks.push({
-			text,
-			start: paraStart,
-			end: endOffset,
-			kind: isTable ? 'table' : 'paragraph',
-			headingPath: snapshotPath(),
-			page,
-			sheet
-		});
 		paraStart = -1;
 		paraLines = [];
 	};
@@ -220,36 +350,21 @@ function splitBlocks(source: string): IBlock[] {
 
 		const headingMatch = MARKDOWN_HEADING.exec(line);
 		if (headingMatch) {
-			flushParagraph(lineStart > 0 ? lineStart - 1 : lineStart);
-
-			const pageMatch = PAGE_HEADING.exec(line);
-			const sheetMatch = SHEET_HEADING.exec(line);
-			if (pageMatch) {
-				page = Number.parseInt(pageMatch[1], 10);
-			} else if (sheetMatch) {
-				sheet = sheetMatch[1];
-			} else {
-				const level = headingMatch[1].length;
-				while (headingStack.length && headingStack[headingStack.length - 1].level >= level) {
-					headingStack.pop();
-				}
-				headingStack.push({ level, text: headingMatch[2].trim() });
-			}
-
+			flushParagraph(blockEndBefore(lineStart));
+			// The locator update runs BEFORE the snapshot: a heading block carries its own path.
+			applyHeadingLine(line, headingMatch, locators);
 			blocks.push({
 				text: line,
 				start: lineStart,
 				end: lineEnd,
 				kind: 'heading',
-				headingPath: snapshotPath(),
-				page,
-				sheet
+				...locatorSnapshot(locators)
 			});
 			continue;
 		}
 
 		if (!line.trim()) {
-			flushParagraph(lineStart > 0 ? lineStart - 1 : lineStart);
+			flushParagraph(blockEndBefore(lineStart));
 			continue;
 		}
 

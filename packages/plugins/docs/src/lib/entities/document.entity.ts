@@ -49,6 +49,7 @@ import {
 	VirtualMultiOrmColumn
 } from '@gauzy/core';
 import { MikroOrmDocumentRepository } from '../repositories/mikro-orm-document.repository';
+import { binaryColumnType, floatColumnType, jsonColumnType } from './column-types';
 import { DocumentCategory } from './document-category.entity';
 import { DocumentLink } from './document-link.entity';
 import { DocumentShare } from './document-share.entity';
@@ -130,7 +131,7 @@ export class Document extends TenantOrganizationBaseEntity implements IDocument 
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	@MultiORMColumn({ type: jsonColumnType(), nullable: true })
 	contentJson?: JsonData;
 
 	/**
@@ -149,7 +150,7 @@ export class Document extends TenantOrganizationBaseEntity implements IDocument 
 	 */
 	@ApiPropertyOptional({ type: () => 'string', format: 'binary' })
 	@IsOptional()
-	@MultiORMColumn({ type: isPostgres() ? 'bytea' : isMySQL() ? 'longblob' : 'blob', nullable: true })
+	@MultiORMColumn({ type: binaryColumnType(), nullable: true })
 	contentBinary?: Buffer;
 
 	/**
@@ -316,7 +317,7 @@ export class Document extends TenantOrganizationBaseEntity implements IDocument 
 	@IsNumber()
 	@Min(0)
 	@Max(1)
-	@MultiORMColumn({ type: isPostgres() ? 'double precision' : isMySQL() ? 'double' : 'real', nullable: true })
+	@MultiORMColumn({ type: floatColumnType(), nullable: true })
 	aiConfidence?: number;
 
 	/**
@@ -390,7 +391,7 @@ export class Document extends TenantOrganizationBaseEntity implements IDocument 
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	@MultiORMColumn({ type: jsonColumnType(), nullable: true })
 	metadata?: JsonData;
 
 	/** Additional virtual columns */

@@ -126,6 +126,66 @@ export function isMarkupContent(buffer: Buffer): boolean {
 	return buffer[i] === 0x3c; // '<'
 }
 
+/** `readUtf8Sequence`: the sequence is malformed — the buffer is not UTF-8 text. */
+const UTF8_SEQUENCE_INVALID = -1;
+/** `readUtf8Sequence`: the sequence is cut off by the sniff-window edge — tolerated. */
+const UTF8_SEQUENCE_AT_WINDOW_EDGE = -2;
+
+/**
+ * True when the buffer opens with a UTF-16/32 BOM — the wide-encoding masquerade surface,
+ * which disqualifies the content from the UTF-8 text heuristic.
+ */
+function hasWideEncodingBom(window: Buffer): boolean {
+	return (
+		startsWith(window, [0xff, 0xfe]) ||
+		startsWith(window, [0xfe, 0xff]) ||
+		startsWith(window, [0x00, 0x00, 0xfe, 0xff])
+	);
+}
+
+/**
+ * Number of continuation bytes a UTF-8 lead byte announces, or `null` when the byte is not a
+ * valid multi-byte lead. Only called for bytes ≥ 0x80 (ASCII never reaches here).
+ */
+function utf8ContinuationCount(byte: number): number | null {
+	if ((byte & 0xe0) === 0xc0) {
+		return 1;
+	}
+	if ((byte & 0xf0) === 0xe0) {
+		return 2;
+	}
+	if ((byte & 0xf8) === 0xf0) {
+		return 3;
+	}
+	return null; // invalid lead byte
+}
+
+/**
+ * Validates the multi-byte UTF-8 sequence starting at `index`.
+ *
+ * @param window The sniff window.
+ * @param index Index of the lead byte.
+ * @returns The index just past the sequence, {@link UTF8_SEQUENCE_AT_WINDOW_EDGE} when the
+ *          sequence is cut off by the window edge (≤3 bytes missing — tolerated), or
+ *          {@link UTF8_SEQUENCE_INVALID} on a bad lead/continuation byte.
+ */
+function readUtf8Sequence(window: Buffer, index: number): number {
+	const extra = utf8ContinuationCount(window[index]);
+	if (extra === null) {
+		return UTF8_SEQUENCE_INVALID; // invalid lead byte
+	}
+	// Tolerate a sequence cut off by the sniff-window edge (≤3 bytes missing).
+	if (index + extra >= window.length && window.length === SNIFF_WINDOW_BYTES) {
+		return UTF8_SEQUENCE_AT_WINDOW_EDGE;
+	}
+	for (let k = 1; k <= extra; k++) {
+		if (index + k >= window.length || (window[index + k] & 0xc0) !== 0x80) {
+			return UTF8_SEQUENCE_INVALID; // invalid continuation byte
+		}
+	}
+	return index + extra + 1;
+}
+
 /**
  * Strict UTF-8 text heuristic for csv/txt/md/html acceptance: no NUL bytes, no UTF-16/32
  * BOM, and valid UTF-8 within the sniff window (with a ≤3-byte trim tolerance for a
@@ -141,11 +201,7 @@ export function isProbablyUtf8Text(buffer: Buffer): boolean {
 	const window = buffer.subarray(0, SNIFF_WINDOW_BYTES);
 
 	// UTF-16/32 BOMs disqualify (wide-encoding masquerade surface).
-	if (
-		startsWith(window, [0xff, 0xfe]) ||
-		startsWith(window, [0xfe, 0xff]) ||
-		startsWith(window, [0x00, 0x00, 0xfe, 0xff])
-	) {
+	if (hasWideEncodingBom(window)) {
 		return false;
 	}
 
@@ -159,27 +215,14 @@ export function isProbablyUtf8Text(buffer: Buffer): boolean {
 			i++;
 			continue;
 		}
-		// Determine the multi-byte sequence length.
-		let extra: number;
-		if ((byte & 0xe0) === 0xc0) {
-			extra = 1;
-		} else if ((byte & 0xf0) === 0xe0) {
-			extra = 2;
-		} else if ((byte & 0xf8) === 0xf0) {
-			extra = 3;
-		} else {
-			return false; // invalid lead byte
-		}
-		// Tolerate a sequence cut off by the sniff-window edge (≤3 bytes missing).
-		if (i + extra >= window.length && window.length === SNIFF_WINDOW_BYTES) {
+		const next = readUtf8Sequence(window, i);
+		if (next === UTF8_SEQUENCE_AT_WINDOW_EDGE) {
 			return true;
 		}
-		for (let k = 1; k <= extra; k++) {
-			if (i + k >= window.length || (window[i + k] & 0xc0) !== 0x80) {
-				return false; // invalid continuation byte
-			}
+		if (next === UTF8_SEQUENCE_INVALID) {
+			return false;
 		}
-		i += extra + 1;
+		i = next;
 	}
 	return true;
 }
@@ -326,28 +369,42 @@ export function sniffFile(buffer: Buffer, filename: string, declaredMime?: strin
 
 	// 2) Text heuristic — csv / txt / md / html discriminated by extension.
 	if (isProbablyUtf8Text(buffer)) {
-		if (extension === 'html' || extension === 'htm') {
-			// Accepted; sanitized server-side before any storage of derived HTML.
-			return acceptWithConsistency({ mimeType: 'text/html', extension: 'html' }, extension, declaredMime);
-		}
-		if (isMarkupContent(buffer)) {
-			// Markup under a non-HTML text name (e.g. shape.svg renamed notes.txt) — reject.
-			return reject('DOCS_FILE_TYPE_REJECTED', 'Markup content is only accepted as .html');
-		}
-		if (extension === 'csv') {
-			return acceptWithConsistency({ mimeType: 'text/csv', extension: 'csv' }, extension, declaredMime);
-		}
-		if (extension === 'md') {
-			return acceptWithConsistency({ mimeType: 'text/markdown', extension: 'md' }, extension, declaredMime);
-		}
-		if (extension === 'txt' || extension === '') {
-			return acceptWithConsistency({ mimeType: 'text/plain', extension: 'txt' }, extension, declaredMime);
-		}
-		// A text payload under a binary extension (e.g. .png containing HTML) is a masquerade.
-		return reject('DOCS_FILE_TYPE_REJECTED', `Content does not match the .${extension} file type`);
+		return sniffTextPayload(buffer, extension, declaredMime);
 	}
 
 	return reject('DOCS_FILE_TYPE_REJECTED', 'Unsupported or unrecognized file type');
+}
+
+/**
+ * Resolves a payload that already passed the UTF-8 text heuristic into its canonical text
+ * type. csv / txt / md / html are discriminated by the filename extension — the bytes alone
+ * cannot tell them apart — and markup is only ever accepted under `.html`/`.htm`.
+ *
+ * @param buffer The stored file bytes.
+ * @param extension The lowercase extension of the original filename (empty when absent).
+ * @param declaredMime The client-declared MIME (advisory only).
+ * @returns Accept/reject with the canonical type or a stable error code.
+ */
+function sniffTextPayload(buffer: Buffer, extension: string, declaredMime?: string): ISniffResult {
+	if (extension === 'html' || extension === 'htm') {
+		// Accepted; sanitized server-side before any storage of derived HTML.
+		return acceptWithConsistency({ mimeType: 'text/html', extension: 'html' }, extension, declaredMime);
+	}
+	if (isMarkupContent(buffer)) {
+		// Markup under a non-HTML text name (e.g. shape.svg renamed notes.txt) — reject.
+		return reject('DOCS_FILE_TYPE_REJECTED', 'Markup content is only accepted as .html');
+	}
+	if (extension === 'csv') {
+		return acceptWithConsistency({ mimeType: 'text/csv', extension: 'csv' }, extension, declaredMime);
+	}
+	if (extension === 'md') {
+		return acceptWithConsistency({ mimeType: 'text/markdown', extension: 'md' }, extension, declaredMime);
+	}
+	if (extension === 'txt' || extension === '') {
+		return acceptWithConsistency({ mimeType: 'text/plain', extension: 'txt' }, extension, declaredMime);
+	}
+	// A text payload under a binary extension (e.g. .png containing HTML) is a masquerade.
+	return reject('DOCS_FILE_TYPE_REJECTED', `Content does not match the .${extension} file type`);
 }
 
 /**

@@ -31,23 +31,25 @@ export const EmbedCard = Node.create({
 		return {
 			url: {
 				default: '',
-				parseHTML: (element) => element.getAttribute('href') ?? element.getAttribute('data-url') ?? '',
+				parseHTML: (element) => element.getAttribute('href') ?? element.dataset.url ?? '',
 				renderHTML: () => ({})
 			},
+			// `?? null` on every optional attribute below: `dataset` answers `undefined`
+			// where `getAttribute` answered `null`, and these defaults are `null`.
 			title: {
 				default: null,
-				parseHTML: (element) => element.getAttribute('data-title'),
+				parseHTML: (element) => element.dataset.title ?? null,
 				renderHTML: (attributes) => (attributes['title'] ? { 'data-title': attributes['title'] } : {})
 			},
 			description: {
 				default: null,
-				parseHTML: (element) => element.getAttribute('data-description'),
+				parseHTML: (element) => element.dataset.description ?? null,
 				renderHTML: (attributes) =>
 					attributes['description'] ? { 'data-description': attributes['description'] } : {}
 			},
 			imageUrl: {
 				default: null,
-				parseHTML: (element) => element.getAttribute('data-image-url'),
+				parseHTML: (element) => element.dataset.imageUrl ?? null,
 				renderHTML: (attributes) =>
 					attributes['imageUrl'] ? { 'data-image-url': attributes['imageUrl'] } : {}
 			}

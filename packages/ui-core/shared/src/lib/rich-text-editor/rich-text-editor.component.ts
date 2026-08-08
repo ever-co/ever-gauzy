@@ -346,14 +346,21 @@ export class RichTextEditorComponent implements AfterViewInit, OnChanges, OnDest
 		this._cdr.markForCheck();
 	}
 
+	/**
+	 * Serialize the editor's document into the value the CVA / `changed` output carries.
+	 *
+	 * Empty-document normalization: an empty doc emits '' — never '<p></p>' —
+	 * so `Validators.required` on existing forms keeps working unchanged.
+	 */
+	private _serializeValue(editor: Editor): string | JSONContent {
+		if (editor.isEmpty) {
+			return '';
+		}
+		return this.outputFormat === 'json' ? (editor.getJSON() as JSONContent) : editor.getHTML();
+	}
+
 	private _handleUpdate(editor: Editor): void {
-		// Empty-document normalization: an empty doc emits '' — never '<p></p>' —
-		// so `Validators.required` on existing forms keeps working unchanged.
-		const value: string | JSONContent = editor.isEmpty
-			? ''
-			: this.outputFormat === 'json'
-			? (editor.getJSON() as JSONContent)
-			: editor.getHTML();
+		const value: string | JSONContent = this._serializeValue(editor);
 
 		this._lastEmittedValue = value;
 		this._onChange(value);

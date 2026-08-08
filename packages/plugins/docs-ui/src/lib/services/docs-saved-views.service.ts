@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Params } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
+import { randomIdToken } from './local-id.util';
 import {
 	DOCS_SAVED_VIEWS_KEY_PREFIX,
 	DOCS_SAVED_VIEWS_LIMIT,
@@ -158,7 +159,7 @@ export class DocsSavedViewsService {
 	}
 
 	private nextId(): string {
-		return `view-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+		return `view-${Date.now().toString(36)}-${randomIdToken(6)}`;
 	}
 
 	/** Tolerates absent / malformed / partially-shaped storage without throwing. */

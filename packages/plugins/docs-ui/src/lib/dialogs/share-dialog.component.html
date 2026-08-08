@@ -87,7 +87,13 @@
 
 			<!-- Add share (DOCS_UPDATE only; inert while ORGANIZATION-visible) -->
 			<div class="docs-share-add" *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
-				<div class="docs-share-target-toggle" role="group" [attr.aria-label]="'DOCS.SHARE.ADD' | translate">
+				<!-- `<fieldset>` is the semantic grouping element (implicit `group` role); the inline
+				     rules only neutralise the user-agent fieldset chrome so the layout is unchanged. -->
+				<fieldset
+					class="docs-share-target-toggle"
+					style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"
+					[attr.aria-label]="'DOCS.SHARE.ADD' | translate"
+				>
 					<button
 						nbButton
 						size="tiny"
@@ -112,7 +118,7 @@
 						<nb-icon icon="people-outline"></nb-icon>
 						{{ 'DOCS.SHARE.TARGET_TEAM' | translate }}
 					</button>
-				</div>
+				</fieldset>
 
 				<div class="docs-share-picker">
 					<!-- Employee picker: local nb-select — see the component doc for why

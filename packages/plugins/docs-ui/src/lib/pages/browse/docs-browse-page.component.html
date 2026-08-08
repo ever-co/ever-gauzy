@@ -8,10 +8,12 @@
 	<!-- Hidden multi file input -->
 	<input
 		#fileInput
+		id="docs-browse-file-input"
 		type="file"
 		multiple
 		hidden
 		[accept]="uploadAccept"
+		[attr.aria-label]="'DOCS.UPLOAD.BUTTON' | translate"
 		(change)="onFilesPicked(fileInput.files)"
 	/>
 
@@ -25,8 +27,14 @@
 					{{ 'DOCS.REVIEW.QUEUE_TITLE' | translate }}
 				</button>
 			</ng-template>
-			<!-- View toggle — persisted via ComponentEnum.DOCUMENTS_HUB -->
-			<div class="docs-view-toggle" role="group" [attr.aria-label]="'DOCS.VIEWS.TOGGLE_LABEL' | translate">
+			<!-- View toggle — persisted via ComponentEnum.DOCUMENTS_HUB.
+			     `<fieldset>` is the semantic grouping element (implicit `group` role); the inline
+			     rules only neutralise the user-agent fieldset chrome so the layout is unchanged. -->
+			<fieldset
+				class="docs-view-toggle"
+				style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"
+				[attr.aria-label]="'DOCS.VIEWS.TOGGLE_LABEL' | translate"
+			>
 				<button
 					nbButton
 					size="small"
@@ -49,7 +57,7 @@
 				>
 					<nb-icon icon="grid-outline"></nb-icon>
 				</button>
-			</div>
+			</fieldset>
 			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_CREATE]">
 				<button nbButton size="small" appearance="outline" (click)="openNewPageDialog()">
 					<nb-icon icon="file-add-outline"></nb-icon>

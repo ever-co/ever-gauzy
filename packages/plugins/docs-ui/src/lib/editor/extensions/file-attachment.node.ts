@@ -35,23 +35,25 @@ export const FileAttachment = Node.create({
 		return {
 			documentId: {
 				default: null,
-				parseHTML: (element) => element.getAttribute('data-document-id'),
+				// `?? null`: `dataset` answers `undefined` where `getAttribute` answered
+				// `null`, and this attribute's default is `null`.
+				parseHTML: (element) => element.dataset.documentId ?? null,
 				renderHTML: (attributes) =>
 					attributes['documentId'] ? { 'data-document-id': attributes['documentId'] } : {}
 			},
 			name: {
 				default: '',
-				parseHTML: (element) => element.getAttribute('data-name') ?? element.textContent ?? '',
+				parseHTML: (element) => element.dataset.name ?? element.textContent ?? '',
 				renderHTML: (attributes) => ({ 'data-name': attributes['name'] })
 			},
 			size: {
 				default: 0,
-				parseHTML: (element) => Number(element.getAttribute('data-size') ?? 0),
+				parseHTML: (element) => Number(element.dataset.size ?? 0),
 				renderHTML: (attributes) => ({ 'data-size': String(attributes['size'] ?? 0) })
 			},
 			mimeType: {
 				default: '',
-				parseHTML: (element) => element.getAttribute('data-mime-type') ?? '',
+				parseHTML: (element) => element.dataset.mimeType ?? '',
 				renderHTML: (attributes) => ({ 'data-mime-type': attributes['mimeType'] })
 			},
 			// Transient — never persisted (stripped by sanitizeContentJson, spec 05 §6.6).

@@ -29,6 +29,21 @@ import { GetDocumentCountQuery } from '../queries/get-document-count.query';
 import { GetDocumentFacetsQuery } from '../queries/get-document-facets.query';
 import { GetDocumentsQuery } from '../queries/get-documents.query';
 
+/**
+ * Normalizes the `relations` query parameter into the array the query handler expects.
+ * Express hands over a string for one `?relations=` occurrence and an array for several;
+ * an absent (or empty) value means "no relations".
+ *
+ * @param relations The raw query-parameter value.
+ * @returns The relation names to join.
+ */
+function toRelationList(relations?: string | string[]): string[] {
+	if (Array.isArray(relations)) {
+		return relations;
+	}
+	return relations ? [relations] : [];
+}
+
 @ApiTags('Documents Plugin')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FeatureEnum.FEATURE_DOCUMENTS)
@@ -141,7 +156,6 @@ export class DocumentController {
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query('relations') relations?: string | string[]
 	): Promise<IDocument> {
-		const relationList = Array.isArray(relations) ? relations : relations ? [relations] : [];
-		return this.queryBus.execute(new GetDocumentQuery(id, relationList));
+		return this.queryBus.execute(new GetDocumentQuery(id, toRelationList(relations)));
 	}
 }

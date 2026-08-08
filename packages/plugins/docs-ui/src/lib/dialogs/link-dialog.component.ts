@@ -131,8 +131,7 @@ export class DocumentLinkDialogComponent extends TranslationBaseComponent implem
 				);
 				return (result?.items ?? []).map((task: ITask) => ({
 					id: task.id as ID,
-					// `prefix`/`number` render the human task key (e.g. "EG-42") when present.
-					label: task.number ? `${task.prefix ? `${task.prefix}-` : '#'}${task.number} · ${task.title}` : task.title
+					label: this.taskLabel(task)
 				}));
 			}
 			case BaseEntityEnum.OrganizationProject: {
@@ -181,6 +180,18 @@ export class DocumentLinkDialogComponent extends TranslationBaseComponent implem
 			default:
 				return [];
 		}
+	}
+
+	/**
+	 * Picker label for a task: the human task key plus the title (e.g.
+	 * `"EG-42 · Fix the thing"`). `prefix`/`number` are both optional — a task
+	 * without a number is shown by title alone, one without a project prefix
+	 * falls back to `#`.
+	 */
+	private taskLabel(task: ITask): string {
+		if (!task.number) return task.title;
+		const key = task.prefix ? `${task.prefix}-` : '#';
+		return `${key}${task.number} · ${task.title}`;
 	}
 
 	// ─── Picker ──────────────────────────────────────────────────

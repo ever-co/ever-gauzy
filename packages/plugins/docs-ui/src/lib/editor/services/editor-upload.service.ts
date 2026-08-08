@@ -7,6 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DocumentSourceEnum, ID, IDocument } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
 import { DocumentsService } from '../../services/documents.service';
+import { randomIdToken } from '../../services/local-id.util';
 import {
 	DOCS_DEFAULT_MAX_FILE_SIZE_BYTES,
 	DOCS_UPLOAD_ACCEPT
@@ -119,7 +120,7 @@ export class EditorUploadService {
 	}
 
 	private startUpload(editor: Editor, file: File, pos?: number): void {
-		const uploadId = `upl_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+		const uploadId = `upl_${Date.now()}_${randomIdToken(7)}`;
 		const isImage = file.type.startsWith('image/');
 		const upload: IEditorUpload = {
 			uploadId,

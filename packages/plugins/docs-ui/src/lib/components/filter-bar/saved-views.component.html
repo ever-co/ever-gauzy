@@ -21,8 +21,10 @@
 				nbInput
 				fieldSize="small"
 				type="text"
+				id="docs-saved-view-name"
 				[maxlength]="nameMaxLength"
 				[placeholder]="'DOCS.SAVED_VIEWS.NAME_PLACEHOLDER' | translate"
+				[attr.aria-label]="'DOCS.SAVED_VIEWS.NAME_PLACEHOLDER' | translate"
 				[(ngModel)]="draftName"
 				(keydown.enter)="save()"
 			/>
@@ -51,11 +53,14 @@
 			<li class="docs-saved-views-item" *ngFor="let view of views; trackBy: trackView">
 				<!-- Inline rename -->
 				<ng-container *ngIf="renamingId === view.id; else viewRow">
+					<!-- Only one row can be in rename mode at a time, so the id stays unique. -->
 					<input
 						nbInput
 						fieldSize="tiny"
 						type="text"
+						id="docs-saved-view-rename"
 						[maxlength]="nameMaxLength"
+						[attr.aria-label]="'DOCS.SAVED_VIEWS.RENAME' | translate"
 						[(ngModel)]="renameDraft"
 						(keydown.enter)="commitRename(view)"
 						(keydown.escape)="cancelRename()"

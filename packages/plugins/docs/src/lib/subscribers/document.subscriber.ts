@@ -69,27 +69,48 @@ export class DocumentSubscriber extends BaseEntityEventSubscriber<Document> {
 			return; // Exit if the entity is not a Document instance
 		}
 
-		if (isSqlite() || isBetterSqlite3()) {
-			// Parse the `contentJson` field if it's a string
-			if (entity.contentJson && typeof entity.contentJson === 'string') {
-				try {
-					entity.contentJson = JSON.parse(entity.contentJson);
-				} catch (error) {
-					this.logger.warn('contentJson is not valid JSON:', (error as Error).message);
-				}
-			}
+		this.parseJsonFieldsForSQLite(entity);
+		await this.resolveVirtualUrls(entity);
+	}
 
-			// Parse the `metadata` field if it's a string
-			if (entity.metadata && typeof entity.metadata === 'string') {
-				try {
-					entity.metadata = JSON.parse(entity.metadata);
-				} catch (error) {
-					this.logger.warn('metadata is not valid JSON:', (error as Error).message);
-				}
+	/**
+	 * Parses the `json`-shorthand columns back into objects on SQLite, where they are stored as
+	 * plain text by `serializeJsonFieldsForSQLite`. Invalid JSON is left as-is (warn only) —
+	 * a malformed cache must never fail an entity load.
+	 *
+	 * @param entity The Document entity that was loaded.
+	 */
+	private parseJsonFieldsForSQLite(entity: Document): void {
+		if (!isSqlite() && !isBetterSqlite3()) {
+			return;
+		}
+
+		// Parse the `contentJson` field if it's a string
+		if (entity.contentJson && typeof entity.contentJson === 'string') {
+			try {
+				entity.contentJson = JSON.parse(entity.contentJson);
+			} catch (error) {
+				this.logger.warn('contentJson is not valid JSON:', (error as Error).message);
 			}
 		}
 
-		// Resolve the virtual URL columns from the storage provider (FILE documents only)
+		// Parse the `metadata` field if it's a string
+		if (entity.metadata && typeof entity.metadata === 'string') {
+			try {
+				entity.metadata = JSON.parse(entity.metadata);
+			} catch (error) {
+				this.logger.warn('metadata is not valid JSON:', (error as Error).message);
+			}
+		}
+	}
+
+	/**
+	 * Resolves the virtual `fileUrl`/`thumbUrl` from the storage provider (signed URL where the
+	 * provider supports it), for FILE documents only. Errors degrade to `null`, never throw.
+	 *
+	 * @param entity The Document entity that was loaded.
+	 */
+	private async resolveVirtualUrls(entity: Document): Promise<void> {
 		try {
 			const { storageProvider, storageKey, thumbKey } = entity;
 			if (storageProvider && storageKey) {

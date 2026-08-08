@@ -232,56 +232,17 @@ export class LegacyImportService {
 				: [];
 
 			for (const document of migrated) {
-				const record: ILegacyRollbackRecord = {
-					source: document.externalSource,
-					externalId: document.externalId ?? null,
-					legacyName: document.name ?? null,
-					action: 'deleted',
-					documentId: document.id,
-					warnings: []
-				};
-
-				if (!force && blockedByChildren.has(document.id)) {
-					record.action = 'skipped-has-children';
-					report.totals.skippedHasChildren++;
-					report.records.push(record);
-					continue;
-				}
-				if (!force && this.wasModifiedAfterImport(document, versionRows)) {
-					record.action = 'skipped-modified';
-					report.totals.skippedModified++;
-					report.records.push(record);
-					continue;
-				}
-
-				if (!dryRun) {
-					try {
-						await this.dataSource.transaction(async (manager: EntityManager) => {
-							if (force) {
-								// Promote-children semantics — foreign descendants are never deleted.
-								await manager
-									.getRepository(Document)
-									.createQueryBuilder()
-									.update(Document)
-									.set({ parentId: null })
-									.where(p('"parentId" = :parentId'), { parentId: document.id })
-									.andWhere(p('"id" NOT IN (:...migratedIds)'), {
-										migratedIds: [...migratedIds]
-									})
-									.execute();
-							}
-							await manager.getRepository(Document).softDelete({ id: document.id, tenantId });
-						});
-						this.emitEvent(document, 'deleted');
-					} catch (error) {
-						record.warnings.push(`soft-delete-failed: ${(error as Error).message}`);
-						report.records.push(record);
-						continue;
-					}
-				}
-
-				report.totals.deleted++;
-				report.records.push(record);
+				report.records.push(
+					await this.rollbackOneDocument(document, {
+						tenantId,
+						dryRun,
+						force,
+						migratedIds,
+						blockedByChildren,
+						versionRows,
+						totals: report.totals
+					})
+				);
 			}
 
 			report.finishedAt = new Date().toISOString();
@@ -294,6 +255,98 @@ export class LegacyImportService {
 		} finally {
 			this.locks.delete(lockKey);
 		}
+	}
+
+	/**
+	 * Applies the §8 rollback rails to one migrated document and, when they pass, soft-deletes
+	 * it. The matching counter is moved here; the caller only appends the returned record.
+	 *
+	 * A failed soft-delete is reported as a warning on the record — the action stays `deleted`
+	 * but `totals.deleted` is deliberately NOT incremented, so the totals never over-report.
+	 *
+	 * @param document The migrated document being rolled back.
+	 * @param context The per-run rollback state.
+	 * @returns The report record for this document.
+	 */
+	private async rollbackOneDocument(
+		document: Document,
+		context: {
+			tenantId: ID;
+			dryRun: boolean;
+			force: boolean;
+			migratedIds: Set<ID>;
+			blockedByChildren: Set<ID>;
+			versionRows: { documentId: ID; createdAt?: Date }[];
+			totals: ILegacyRollbackReport['totals'];
+		}
+	): Promise<ILegacyRollbackRecord> {
+		const { tenantId, dryRun, force, migratedIds, blockedByChildren, versionRows, totals } = context;
+
+		const record: ILegacyRollbackRecord = {
+			source: document.externalSource,
+			externalId: document.externalId ?? null,
+			legacyName: document.name ?? null,
+			action: 'deleted',
+			documentId: document.id,
+			warnings: []
+		};
+
+		if (!force && blockedByChildren.has(document.id)) {
+			record.action = 'skipped-has-children';
+			totals.skippedHasChildren++;
+			return record;
+		}
+		if (!force && this.wasModifiedAfterImport(document, versionRows)) {
+			record.action = 'skipped-modified';
+			totals.skippedModified++;
+			return record;
+		}
+
+		if (!dryRun) {
+			try {
+				await this.softDeleteMigratedDocument(document, tenantId, force, migratedIds);
+				this.emitEvent(document, 'deleted');
+			} catch (error) {
+				record.warnings.push(`soft-delete-failed: ${(error as Error).message}`);
+				return record;
+			}
+		}
+
+		totals.deleted++;
+		return record;
+	}
+
+	/**
+	 * Soft-deletes one migrated document inside its own transaction. With `force`, its foreign
+	 * (non-migrated) children are first promoted to the root — they are never deleted (§8).
+	 *
+	 * @param document The document to soft-delete.
+	 * @param tenantId The run's tenant scope.
+	 * @param force Whether the promote-children semantics apply.
+	 * @param migratedIds Every document id this rollback owns (its children stay parented).
+	 */
+	private async softDeleteMigratedDocument(
+		document: Document,
+		tenantId: ID,
+		force: boolean,
+		migratedIds: Set<ID>
+	): Promise<void> {
+		await this.dataSource.transaction(async (manager: EntityManager) => {
+			if (force) {
+				// Promote-children semantics — foreign descendants are never deleted.
+				await manager
+					.getRepository(Document)
+					.createQueryBuilder()
+					.update(Document)
+					.set({ parentId: null })
+					.where(p('"parentId" = :parentId'), { parentId: document.id })
+					.andWhere(p('"id" NOT IN (:...migratedIds)'), {
+						migratedIds: [...migratedIds]
+					})
+					.execute();
+			}
+			await manager.getRepository(Document).softDelete({ id: document.id, tenantId });
+		});
 	}
 
 	/*
@@ -677,21 +730,8 @@ export class LegacyImportService {
 		const byId = new Map<string, HelpCenterArticle>(articles.map((article) => [article.id as string, article]));
 
 		for (const article of articles) {
-			const articleId = article.id as string;
-			if (!article.parentId || article.deletedAt || !ctx.createdArticleIds.has(articleId)) {
-				continue;
-			}
-			const target = ctx.placed.get(article.parentId);
-			if (!target?.documentId) {
-				continue; // unresolvable — keep the pass-A placement
-			}
-			if (this.hasNestingCycle(articleId, byId)) {
-				this.logger.warn(`Legacy import ${ctx.reportId}: article ${articleId} nesting cycle — keeping category placement`);
-				continue;
-			}
-
-			const self = ctx.placed.get(articleId);
-			if (!self?.documentId || self.documentId === target.documentId) {
+			const move = this.resolveNestedArticleMove(ctx, article, byId);
+			if (!move) {
 				continue;
 			}
 
@@ -699,10 +739,10 @@ export class LegacyImportService {
 				try {
 					await this.dataSource
 						.getRepository(Document)
-						.update({ id: self.documentId, tenantId: ctx.tenantId }, { parentId: target.documentId });
+						.update({ id: move.documentId, tenantId: ctx.tenantId }, { parentId: move.parentDocumentId });
 				} catch (error) {
 					this.logger.warn(
-						`Legacy import ${ctx.reportId}: re-parent of ${self.documentId} failed — ${(error as Error).message}`
+						`Legacy import ${ctx.reportId}: re-parent of ${move.documentId} failed — ${(error as Error).message}`
 					);
 					continue;
 				}
@@ -710,12 +750,50 @@ export class LegacyImportService {
 
 			// Reflect the final placement in the already-emitted record.
 			const record = ctx.report.records.find(
-				(candidate) => candidate.source === 'help-center-article' && candidate.externalId === articleId
+				(candidate) => candidate.source === 'help-center-article' && candidate.externalId === move.articleId
 			);
 			if (record) {
-				record.parentDocumentId = target.documentId;
+				record.parentDocumentId = move.parentDocumentId;
 			}
 		}
+	}
+
+	/**
+	 * Decides whether one article moves under its own `parentId` (§6.4 pass B), and to where.
+	 *
+	 * Returns `null` — the pass-A category placement stands — when the article was not created
+	 * in this run, its nesting target is unresolvable, its nesting chain loops (§7 case 10), or
+	 * it already sits under that parent.
+	 *
+	 * @param ctx The run context.
+	 * @param article The legacy article row.
+	 * @param byId Every scanned article by legacy id (cycle detection).
+	 * @returns The move to apply, or null to keep the pass-A placement.
+	 */
+	private resolveNestedArticleMove(
+		ctx: IImportContext,
+		article: HelpCenterArticle,
+		byId: Map<string, HelpCenterArticle>
+	): { articleId: string; documentId: ID; parentDocumentId: ID } | null {
+		const articleId = article.id as string;
+		if (!article.parentId || article.deletedAt || !ctx.createdArticleIds.has(articleId)) {
+			return null;
+		}
+		const target = ctx.placed.get(article.parentId);
+		if (!target?.documentId) {
+			return null; // unresolvable — keep the pass-A placement
+		}
+		if (this.hasNestingCycle(articleId, byId)) {
+			this.logger.warn(`Legacy import ${ctx.reportId}: article ${articleId} nesting cycle — keeping category placement`);
+			return null;
+		}
+
+		const self = ctx.placed.get(articleId);
+		if (!self?.documentId || self.documentId === target.documentId) {
+			return null;
+		}
+
+		return { articleId, documentId: self.documentId, parentDocumentId: target.documentId };
 	}
 
 	/*

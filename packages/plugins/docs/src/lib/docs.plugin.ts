@@ -24,7 +24,7 @@ import { DocumentVersionSubscriber } from './subscribers/document-version.subscr
 })
 export class DocsPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable {
 	// We disable by default additional logging for each event to avoid cluttering the logs
-	private logEnabled = true;
+	private readonly logEnabled = true;
 
 	constructor(
 		private readonly docsSeederService: DocsSeederService,

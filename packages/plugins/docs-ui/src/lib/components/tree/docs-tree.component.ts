@@ -38,7 +38,7 @@ const TREE_MENU_TAG_PREFIX = 'gz-docs-tree-node-';
 	standalone: false
 })
 export class DocsTreeComponent extends TranslationBaseComponent implements OnInit {
-	@ViewChild(TreeComponent) private tree: TreeComponent;
+	@ViewChild(TreeComponent) private readonly tree: TreeComponent;
 
 	public nodes: IDocsTreeNode[] = [];
 	public recents: IRecentEntry[] = [];

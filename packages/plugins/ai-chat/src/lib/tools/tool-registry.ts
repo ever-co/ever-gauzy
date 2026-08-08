@@ -110,26 +110,8 @@ export class AiChatToolRegistry {
 
 		for (const [id, factory] of this.factories) {
 			try {
-				const result = await factory(context);
-				const contribution: IAiChatToolContribution =
-					result && typeof result === 'object' && 'tools' in result && typeof (result as any).tools === 'object'
-						? (result as IAiChatToolContribution)
-						: { tools: (result ?? {}) as Record<string, Tool> };
-
-				for (const [name, tool] of Object.entries(contribution.tools ?? {})) {
-					if (name in merged) {
-						this.logger.warn(
-							`Tool '${name}' from factory '${id}' collides with an earlier registration — dropped.`
-						);
-						continue;
-					}
-					merged[name] = tool;
-				}
-				for (const name of contribution.requireApproval ?? []) {
-					if (name in contribution.tools) {
-						requireApproval.add(name);
-					}
-				}
+				const contribution = this.normalizeContribution(await factory(context));
+				this.mergeContribution(id, contribution, merged, requireApproval);
 			} catch (error) {
 				// One broken contribution must not break the chat turn or the other factories.
 				this.logger.warn(
@@ -140,5 +122,54 @@ export class AiChatToolRegistry {
 		}
 
 		return { tools: merged, requireApproval: [...requireApproval] };
+	}
+
+	/**
+	 * Coerce whatever a factory returned into a full contribution.
+	 *
+	 * A bare tool map (anything without an object-valued `tools` key) is the documented shorthand
+	 * for "nothing here needs approval".
+	 */
+	private static normalizeContribution(
+		result: IAiChatToolContribution | Record<string, Tool>
+	): IAiChatToolContribution {
+		const isContribution =
+			result && typeof result === 'object' && 'tools' in result && typeof (result as any).tools === 'object';
+
+		return isContribution ? (result as IAiChatToolContribution) : { tools: (result ?? {}) as Record<string, Tool> };
+	}
+
+	/**
+	 * Fold one factory's contribution into the per-turn accumulators.
+	 *
+	 * On a tool-name collision the earlier registration wins and the duplicate is dropped with a
+	 * warning (silent override would make tool behavior depend on plugin load order). Only names
+	 * that are actually part of this contribution's tool map can require approval.
+	 *
+	 * @param id The contributing factory's registration id (used only for the warning).
+	 * @param contribution The normalized contribution to merge.
+	 * @param merged Accumulator of the merged tool map — mutated in place.
+	 * @param requireApproval Accumulator of approval-required tool names — mutated in place.
+	 */
+	private static mergeContribution(
+		id: string,
+		contribution: IAiChatToolContribution,
+		merged: Record<string, Tool>,
+		requireApproval: Set<string>
+	): void {
+		for (const [name, tool] of Object.entries(contribution.tools ?? {})) {
+			if (name in merged) {
+				this.logger.warn(
+					`Tool '${name}' from factory '${id}' collides with an earlier registration — dropped.`
+				);
+				continue;
+			}
+			merged[name] = tool;
+		}
+		for (const name of contribution.requireApproval ?? []) {
+			if (name in contribution.tools) {
+				requireApproval.add(name);
+			}
+		}
 	}
 }

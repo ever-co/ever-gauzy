@@ -1,5 +1,5 @@
 import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { DomSanitizer, SafeHtml, SafeUrl } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,7 +7,7 @@ import { firstValueFrom } from 'rxjs';
 import { DocumentKindEnum, ID, IDocument } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DocumentsActions } from '../../+state/documents.actions';
-import { renderMarkdownToSafeHtml } from '../../editor/read-only/markdown-render.util';
+import { renderMarkdownToSanitizedHtml } from '../../editor/read-only/markdown-render.util';
 import { DocumentsService } from '../../services/documents.service';
 import { PdfViewerComponent } from './pdf-viewer.component';
 
@@ -44,8 +44,18 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 	public viewer: DocsPreviewViewer = 'fallback';
 	public loading = false;
 	public blob: Blob | null = null;
-	public mediaUrl: SafeUrl | null = null;
-	public textHtml: SafeHtml | null = null;
+	/**
+	 * The `blob:` object URL for the img/video/audio viewers, bound as a plain string.
+	 *
+	 * Not wrapped in `bypassSecurityTrustUrl`: `URL.createObjectURL` always returns
+	 * `blob:<origin>/<uuid>`, which Angular's URL sanitizer already passes through untouched
+	 * (it rejects only `javascript:`). The bypass was therefore doing nothing except
+	 * disabling the check that would catch this binding if the source of the URL ever
+	 * changed to something attacker-influenced.
+	 */
+	public mediaUrl: string | null = null;
+	/** Sanitized HTML, bound with `[innerHTML]` so Angular sanitizes it again on binding. */
+	public textHtml: string | null = null;
 	public plainText: string | null = null;
 	public pdfPage = 0;
 	public pdfTotal = 0;
@@ -159,7 +169,7 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 				case 'audio': {
 					this.blob = await firstValueFrom(this.documentsService.getRawBlob(this.document.id as ID));
 					this.objectUrl = URL.createObjectURL(this.blob);
-					this.mediaUrl = this.sanitizer.bypassSecurityTrustUrl(this.objectUrl);
+					this.mediaUrl = this.objectUrl;
 					break;
 				}
 				case 'text':
@@ -190,6 +200,6 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 			this.plainText = text;
 			return;
 		}
-		this.textHtml = renderMarkdownToSafeHtml(text, this.sanitizer);
+		this.textHtml = renderMarkdownToSanitizedHtml(text, this.sanitizer);
 	}
 }

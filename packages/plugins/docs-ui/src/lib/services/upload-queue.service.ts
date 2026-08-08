@@ -86,8 +86,9 @@ export class UploadQueueService implements OnDestroy {
 	private readonly pollFailures = new Map<string, number>();
 	private pollSubscription: Subscription | null = null;
 	private processingVisible = false;
-	private processingSubscription: Subscription;
-	private uploadSubscriptions = new Map<string, Subscription>();
+	private readonly processingSubscription: Subscription;
+	/** upload key → in-flight request (unsubscribed on dismiss / destroy). */
+	private readonly uploadSubscriptions = new Map<string, Subscription>();
 	private keySeq = 0;
 
 	public maxFileSizeBytes = DOCS_DEFAULT_MAX_FILE_SIZE_BYTES;

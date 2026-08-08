@@ -1,5 +1,5 @@
 import { SecurityContext } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import { marked } from 'marked';
 
 /**
@@ -14,23 +14,38 @@ import { marked } from 'marked';
  *
  * @param markdown Raw markdown (extracted text, or a page exported to markdown).
  * @param sanitizer Angular's `DomSanitizer`.
- * @returns Sanitized, bindable HTML — or `null` when there is nothing to render.
+ * @returns Sanitized HTML — or `null` when there is nothing to render.
  */
-export function renderMarkdownToSafeHtml(
+export function renderMarkdownToSanitizedHtml(
 	markdown: string | null | undefined,
 	sanitizer: DomSanitizer
-): SafeHtml | null {
+): string | null {
 	if (!markdown) return null;
 	const html = marked.parse(markdown, { async: false }) as string;
-	return sanitizeToSafeHtml(html, sanitizer);
+	return sanitizeHtml(html, sanitizer);
 }
 
 /**
- * Sanitizes an already-rendered HTML string and marks the result bindable.
- * Shared by the markdown path above and the TipTap static render.
+ * Sanitizes an already-rendered HTML string. Shared by the markdown path above and the
+ * TipTap static render.
+ *
+ * 🛑 Returns a PLAIN STRING, not a `SafeHtml`, and that is deliberate. Everything reaching
+ * this function is attacker-controlled — an uploaded HTML/markdown file, or a page authored
+ * by another tenant user — so it must never be marked as trusted. This used to end with
+ * `bypassSecurityTrustHtml(sanitized)`, which bought nothing: the value is bound with
+ * `[innerHTML]`, so Angular sanitizes it on binding anyway. The bypass only removed the
+ * second, authoritative check while leaving the result indistinguishable from genuinely
+ * trusted markup to anyone reading the call site.
+ *
+ * Binding a plain string keeps BOTH passes: the explicit one here (so callers can test the
+ * neutralized output and so an empty result collapses to `null`) and Angular's own on
+ * binding. Allowlist sanitization is idempotent, so the rendered output is unchanged.
+ *
+ * @param html Untrusted HTML.
+ * @param sanitizer Angular's `DomSanitizer`.
+ * @returns Sanitized HTML — or `null` when nothing survives sanitization.
  */
-export function sanitizeToSafeHtml(html: string | null | undefined, sanitizer: DomSanitizer): SafeHtml | null {
+export function sanitizeHtml(html: string | null | undefined, sanitizer: DomSanitizer): string | null {
 	if (!html) return null;
-	const sanitized = sanitizer.sanitize(SecurityContext.HTML, html);
-	return sanitized ? sanitizer.bypassSecurityTrustHtml(sanitized) : null;
+	return sanitizer.sanitize(SecurityContext.HTML, html) || null;
 }

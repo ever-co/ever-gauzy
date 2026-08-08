@@ -6,8 +6,6 @@ import { transformException } from '@nestjs/platform-express/multer/multer/multe
 import * as multer from 'multer';
 import { Observable } from 'rxjs';
 
-type MulterInstance = any;
-
 /**
  * Multi-file (≤ N) variant of the core `LazyFileInterceptor` (videos-plugin precedent):
  * the storage engine is constructed lazily **per request** so it sees `RequestContext`
@@ -24,13 +22,14 @@ export function LazyFilesInterceptor(
 	localOptions?: MulterOptions
 ): Type<NestInterceptor> {
 	class MixinInterceptor implements NestInterceptor {
-		protected multer: MulterInstance;
+		/** The multer instance built per request (the storage engine is resolved lazily). */
+		protected multer: any;
 		private readonly logger = new Logger('LazyFilesInterceptor');
 
 		constructor(
 			@Optional()
 			@Inject(MULTER_MODULE_OPTIONS)
-			private options: MulterModuleOptions = {}
+			private readonly options: MulterModuleOptions = {}
 		) {}
 
 		async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
