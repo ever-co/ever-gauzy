@@ -54,7 +54,7 @@
 	"devDependencies": {
 		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
-		"typescript": "~6.0.3",
+		"typescript": "^5.9.3",
 		"zapier-platform-cli": "^18.4.0"
 	},
 	"keywords": [

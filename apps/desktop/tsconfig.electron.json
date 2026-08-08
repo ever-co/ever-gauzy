@@ -1,23 +1,25 @@
 {
-	"compilerOptions": {
-		"outDir": "../../dist/apps/desktop",
-		"sourceMap": true,
-		"declaration": false,
-		"moduleResolution": "node",
-		"emitDecoratorMetadata": true,
-		"experimentalDecorators": true,
-		"downlevelIteration": true,
-		"module": "commonjs",
-		"target": "ES2022",
-		"types": [],
-		"skipLibCheck": true,
-		"strict": false,
-		"noUncheckedSideEffectImports": false,
-		"esModuleInterop": false,
-		"ignoreDeprecations": "6.0",
-		"rootDir": "src"
-	},
-	"files": ["global.d.ts"],
-	"include": ["src/index.ts", "src/preload/*.ts"],
-	"exclude": ["jest.config.ts"]
+    "compilerOptions": {
+        "outDir": "../../dist/apps/desktop",
+        "sourceMap": true,
+        "declaration": false,
+        "moduleResolution": "node",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "downlevelIteration": true,
+        "module": "commonjs",
+        "target": "ES2022",
+        "types": [],
+		"skipLibCheck": true
+    },
+    "files": [
+        "global.d.ts"
+    ],
+    "include": [
+        "src/index.ts",
+        "src/preload/*.ts"
+    ],
+    "exclude": [
+        "jest.config.ts"
+    ]
 }

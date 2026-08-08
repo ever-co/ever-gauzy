@@ -8,8 +8,7 @@
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitReturns": false,
 		"noFallthroughCasesInSwitch": false,
-		"types": ["node"],
-		"ignoreDeprecations": "6.0"
+		"types": ["node"]
 	},
 	"extends": "../../tsconfig.base.json",
 	"files": [],

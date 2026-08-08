@@ -9,8 +9,7 @@
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
 		"module": "preserve",
-		"moduleResolution": "bundler",
-		"ignoreDeprecations": "6.0"
+		"moduleResolution": "bundler"
 	},
 	"files": [],
 	"include": [],

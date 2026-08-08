@@ -8,8 +8,7 @@
 		"noImplicitOverride": true,
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
-		"noPropertyAccessFromIndexSignature": true,
-		"ignoreDeprecations": "6.0"
+		"noPropertyAccessFromIndexSignature": true
 	},
 	"files": [],
 	"include": [],

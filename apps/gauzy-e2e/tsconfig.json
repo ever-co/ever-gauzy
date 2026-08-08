@@ -1,8 +1,10 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"types": ["node", "@playwright/test"],
-		"ignoreDeprecations": "6.0"
+		"types": [
+			"node",
+			"@playwright/test"
+		]
 	},
 	"include": ["**/*.ts"]
 }

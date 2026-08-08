@@ -8,8 +8,7 @@
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
 		"module": "preserve",
-		"jsx": "react-jsx",
-		"ignoreDeprecations": "6.0"
+		"jsx": "react-jsx"
 	},
 	"angularCompilerOptions": {
 		"enableI18nLegacyMessageIdFormat": false,

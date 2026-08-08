@@ -10,8 +10,7 @@
 		"noFallthroughCasesInSwitch": false,
 		"module": "preserve",
 		"moduleResolution": "bundler",
-		"jsx": "react-jsx",
-		"ignoreDeprecations": "6.0"
+		"jsx": "react-jsx"
 	},
 	"files": [],
 	"include": [],

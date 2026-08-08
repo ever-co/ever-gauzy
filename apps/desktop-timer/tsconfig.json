@@ -11,8 +11,7 @@
 		"skipLibCheck": true,
 		"types": ["node", "google.maps"],
 		"module": "preserve",
-		"moduleResolution": "bundler",
-		"ignoreDeprecations": "6.0"
+		"moduleResolution": "bundler"
 	},
 	"files": [],
 	"include": [],

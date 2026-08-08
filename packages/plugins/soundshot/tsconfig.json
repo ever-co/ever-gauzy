@@ -6,8 +6,7 @@
 		"noImplicitOverride": false,
 		"noImplicitReturns": false,
 		"noFallthroughCasesInSwitch": false,
-		"noPropertyAccessFromIndexSignature": false,
-		"ignoreDeprecations": "6.0"
+		"noPropertyAccessFromIndexSignature": false
 	},
 	"files": [],
 	"include": [],

@@ -14,8 +14,7 @@
 			"@gauzy/ui-config": ["./../../dist/packages/ui-config"]
 		},
 		"module": "preserve",
-		"moduleResolution": "bundler",
-		"ignoreDeprecations": "6.0"
+		"moduleResolution": "bundler"
 	},
 	"files": [],
 	"include": [],
