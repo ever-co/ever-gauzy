@@ -138,7 +138,7 @@
 		"SEARCH_IN_CONTENT": "Content",
 		"SEARCH_CONTENT": "Search in content",
 		"SEARCH_CONTENT_HINT": "Searches extracted text and page content",
-		"SEARCH_CONTENT_DISABLED": "Type at least 2 characters to search content",
+		"SEARCH_CONTENT_DISABLED": "Type at least {{ min }} characters to search content",
 		"CLEAR_ALL": "Clear all"
 	},
 	"SAVED_VIEWS": {

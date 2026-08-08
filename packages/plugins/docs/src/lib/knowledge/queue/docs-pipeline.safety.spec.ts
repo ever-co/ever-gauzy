@@ -92,6 +92,61 @@ describe('DocsPipelineService — runStage dispatch', () => {
 	});
 });
 
+/**
+ * The "Classify with AI" toggle of the upload dialog is a per-upload override of the org
+ * `autoClassify` default. It reaches the pipeline as `classify` on the `docs.extract`
+ * payload (resolved on the request thread, where `RequestContext` still has a tenant), and
+ * THIS is where honoring it happens — the toggle used to be collected by the dialog and
+ * dropped on the floor, so classification ran no matter what the user chose.
+ */
+describe('DocsPipelineService — the classification opt-out', () => {
+	const extractJob = (id: string, data: Record<string, unknown>) => inlineStageJob(id, { ...PAYLOAD, ...data });
+	const enqueuedStages = (queueService: any): string[] => queueService.enqueue.mock.calls.map(([name]: any[]) => name);
+
+	it('skips `docs.classify` when the upload opted out', async () => {
+		const { pipeline, queueService, classifierService } = buildPipeline();
+
+		await pipeline.handleExtract(extractJob('docs:extract:doc-1', { classify: false }) as any);
+
+		expect(enqueuedStages(queueService)).not.toContain(DOCS_JOB_CLASSIFY);
+		expect(classifierService.classify).not.toHaveBeenCalled();
+	});
+
+	it('still runs the knowledge chain for an opted-out document (only classification is skipped)', async () => {
+		const { pipeline, queueService, processingService } = buildPipeline();
+
+		await pipeline.handleExtract(extractJob('docs:extract:doc-1', { classify: false }) as any);
+
+		expect(processingService.runExtraction).toHaveBeenCalledTimes(1);
+		expect(enqueuedStages(queueService)).toEqual([DOCS_JOB_CHUNK]);
+	});
+
+	it('classifies when the upload opted in', async () => {
+		const { pipeline, queueService } = buildPipeline();
+
+		await pipeline.handleExtract(extractJob('docs:extract:doc-1', { classify: true }) as any);
+
+		expect(enqueuedStages(queueService)).toEqual([DOCS_JOB_CLASSIFY]);
+	});
+
+	it('classifies when the payload expresses no opinion (pre-existing jobs, reprocess, capture)', async () => {
+		const { pipeline, queueService } = buildPipeline();
+
+		await pipeline.handleExtract(extractJob('docs:extract:doc-1', {}) as any);
+
+		expect(enqueuedStages(queueService)).toEqual([DOCS_JOB_CLASSIFY]);
+	});
+
+	it('leaves a document outside the knowledge system alone entirely', async () => {
+		const { pipeline, queueService, document } = buildPipeline();
+		document.knowledgeStatus = DocumentKnowledgeStatusEnum.NONE;
+
+		await pipeline.handleExtract(extractJob('docs:extract:doc-1', { classify: false }) as any);
+
+		expect(queueService.enqueue).not.toHaveBeenCalled();
+	});
+});
+
 describe('DocsPipelineService — inline single-attempt policy', () => {
 	it('dead-letters a TRANSIENT knowledge failure instead of rethrowing (attempts = 1)', async () => {
 		const transient = Object.assign(new Error('ETIMEDOUT'), { code: 'ETIMEDOUT' });

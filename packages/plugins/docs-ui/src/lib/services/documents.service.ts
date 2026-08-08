@@ -110,7 +110,10 @@ export class DocumentsService {
 	 * binds) and the 201 body is the `{ results, rejected }` envelope — never a
 	 * bare document. Only fields `UploadDocumentsDTO` declares are appended;
 	 * anything else would be stripped by `whitelist: true` anyway, and appending
-	 * it would only make a dead control look alive.
+	 * it would only make a dead control look alive. Conversely, every toggle the
+	 * classification dialog offers MUST be listed here: `importToKnowledge` and
+	 * `classifyWithAi` are both real DTO fields, and a toggle that is not sent is
+	 * a control that does nothing.
 	 */
 	uploadMany(files: File[], options: IDocumentUploadOptions): Observable<HttpEvent<IDocumentUploadResponse>> {
 		const formData = new FormData();
@@ -123,6 +126,7 @@ export class DocumentsService {
 			categoryIds: options?.categoryIds,
 			tagIds: options?.tagIds,
 			importToKnowledge: options?.importToKnowledge,
+			classifyWithAi: options?.classifyWithAi,
 			source: options?.source,
 			// `TenantOrganizationBaseDTO` requires an organization — the dialogs do not carry one.
 			organizationId: options?.organizationId ?? organization?.id,

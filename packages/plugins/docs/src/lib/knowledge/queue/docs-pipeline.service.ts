@@ -129,9 +129,16 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 			return;
 		}
 
-		// `keepExtractedText` runs skip classification entirely (human-correction guard) —
-		// they enter the knowledge chain directly.
-		if (job.data.keepExtractedText) {
+		// Two runs skip classification and enter the knowledge chain directly:
+		//  - `keepExtractedText` — the human-correction guard; and
+		//  - `classify: false` — the uploader turned "Classify with AI" off (or the org
+		//    default `autoClassify` is off). Resolved on the request thread; `undefined`
+		//    means "no opinion" and classifies as before.
+		if (job.data.keepExtractedText || job.data.classify === false) {
+			this.logger.log(
+				`docs.extract: skipping classification for document ${document.id} ` +
+					`(${job.data.keepExtractedText ? 'extracted text preserved' : 'AI classification opted out'})`
+			);
 			if (this.isInKnowledgeSystem(document)) {
 				await this.enqueueChained(DOCS_JOB_CHUNK, this.baseOf(job.data), job);
 			}

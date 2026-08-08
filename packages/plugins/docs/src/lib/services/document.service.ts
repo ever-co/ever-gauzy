@@ -36,7 +36,6 @@ import {
 	DOCS_NOT_A_PAGE,
 	DOCS_ORGANIZATION_REQUIRED,
 	DOCS_PARENT_NOT_CONTAINER,
-	DOCS_QUERY_TOO_SHORT,
 	DOCS_SOURCE_RESERVED,
 	DOCS_WRITE_FORBIDDEN
 } from '../docs.constants';
@@ -45,6 +44,7 @@ import { Document } from '../entities/document.entity';
 import { DocumentEvent, IDocumentEventContext } from '../events/document.event';
 import { MikroOrmDocumentRepository } from '../repositories/mikro-orm-document.repository';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
+import { assertContentSearchQueryLength } from './content-search.guard';
 import { DocumentAccessService } from './document-access.service';
 import { DocumentVersionService } from './document-version.service';
 
@@ -658,12 +658,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		// Name / content search
 		if (params.q) {
 			if (params.searchIn === 'content') {
-				if (params.q.length < 3) {
-					throw new BadRequestException({
-						message: 'Content search requires at least 3 characters',
-						code: DOCS_QUERY_TOO_SHORT
-					});
-				}
+				assertContentSearchQueryLength(params.q);
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
 						web.where(p(`LOWER("document"."name") LIKE :q`), { q: `%${params.q.toLowerCase()}%` });

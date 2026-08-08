@@ -17,7 +17,7 @@ import { DOCUMENT_MAX_TAKE, toDocumentsQueryParams } from './docs-api.model';
  * - a **known** param with the wrong shape (boolean `archived`, composite `sort`,
  *   array `kind`) is a 400 — the list, the count and the facets all fail, so the
  *   hub can never render a single row; and
- * - an **unknown** param (`createdFrom`, `classifyWithAi`) is stripped in
+ * - an **unknown** param (`createdFrom`, a top-level `organizationId`) is stripped in
  *   silence — the filter simply stops filtering, which is worse than an error
  *   because it looks like it works.
  */

@@ -88,9 +88,10 @@ export class DocumentUploadController {
 	 *
 	 * The magic-byte gauntlet never trusts the client MIME: sniffed canonical types only,
 	 * markup-in-image rejected, no SVG under any name. Oversize → per-file rejection with
-	 * 413 only when every file is oversize. `importToKnowledge` defaults to the org
-	 * setting; accepted files are born `status: UPLOADED` and enter the pipeline at
-	 * `docs.extract`.
+	 * 413 only when every file is oversize. `importToKnowledge` and `classifyWithAi` are
+	 * per-upload overrides of the org settings `importToKnowledgeDefault` / `autoClassify`
+	 * (omitted = follow the organization); accepted files are born `status: UPLOADED` and
+	 * enter the pipeline at `docs.extract`.
 	 */
 	@ApiOperation({ summary: 'Upload 1–10 FILE documents (multipart field `files`).' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Per-file upload results returned.' })

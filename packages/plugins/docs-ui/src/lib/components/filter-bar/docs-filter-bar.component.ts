@@ -15,7 +15,8 @@ import { DocsFilterState } from '../../models/docs-filter.model';
 /**
  * Filter bar: multi-select facet dropdowns (with live counts), created/updated
  * date-range pickers, the name-vs-content search scope toggle (content search
- * needs ≥ 2 characters) and clear-all. Emits a single `filterChange` per
+ * needs ≥ `DOCS_CONTENT_SEARCH_MIN_CHARS` characters — the backend's own minimum,
+ * never a locally chosen one) and clear-all. Emits a single `filterChange` per
  * mutation; the browse page owns debouncing + URL sync.
  */
 @Component({
@@ -35,6 +36,7 @@ export class DocsFilterBarComponent extends TranslationBaseComponent {
 	/** A saved view was applied — payload is the query-param merge patch. */
 	@Output() applyView = new EventEmitter<Params>();
 
+	/** Interpolated into `DOCS.FILTERS.SEARCH_CONTENT_DISABLED` so the hint can never quote a stale number. */
 	public readonly contentSearchMinChars = DOCS_CONTENT_SEARCH_MIN_CHARS;
 
 	constructor(public readonly translateService: TranslateService) {

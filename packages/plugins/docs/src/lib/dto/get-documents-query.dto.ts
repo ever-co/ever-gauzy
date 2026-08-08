@@ -145,7 +145,11 @@ export class GetDocumentsQueryDTO extends BaseQueryDTO<Document> {
 	@MaxLength(256)
 	readonly q?: string;
 
-	/** `content` additionally matches `contentHtml`-derived text and `extractedText` (requires `q.length >= 3`). */
+	/**
+	 * `content` additionally matches `contentHtml`-derived text and `extractedText`; it requires
+	 * `q.length >= DOCS_CONTENT_SEARCH_MIN_CHARS` (3) and is otherwise a 400 `DOCS_QUERY_TOO_SHORT`
+	 * — the client mirrors the same minimum in its search gate.
+	 */
 	@ApiPropertyOptional({ type: () => String, enum: ['name', 'content'] })
 	@IsOptional()
 	@IsIn(['name', 'content'])

@@ -16,7 +16,7 @@
 			(checkedChange)="onSearchScopeToggle($event)"
 			[nbTooltip]="
 				(contentSearchDisabled ? 'DOCS.FILTERS.SEARCH_CONTENT_DISABLED' : 'DOCS.FILTERS.SEARCH_CONTENT_HINT')
-					| translate
+					| translate: { min: contentSearchMinChars }
 			"
 		>
 			{{ 'DOCS.FILTERS.SEARCH_CONTENT' | translate }}

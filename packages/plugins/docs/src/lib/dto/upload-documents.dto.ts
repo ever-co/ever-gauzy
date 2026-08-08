@@ -73,6 +73,18 @@ export class UploadDocumentsDTO extends TenantOrganizationBaseDTO {
 	@IsBoolean()
 	readonly importToKnowledge?: boolean;
 
+	/**
+	 * Per-upload override of the org setting `autoClassify` — the "Classify with AI" toggle of
+	 * the classification dialog (`01-ux-spec.md` §7.2). `false` skips the `docs.classify` stage
+	 * for every file of this batch (extraction and, when the document is in knowledge, the
+	 * chunk→embed→index chain still run). Omitted = follow the organization default.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@Transform(toBoolean)
+	@IsBoolean()
+	readonly classifyWithAi?: boolean;
+
 	@ApiPropertyOptional({ type: () => String, enum: DocumentSourceEnum })
 	@IsOptional()
 	@IsEnum(DocumentSourceEnum)

@@ -160,10 +160,15 @@ export class DocumentUploadService {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = input.organizationId;
 
-		// Defaults follow the org settings (`importToKnowledgeDefault`, `defaultVisibility`).
+		// Defaults follow the org settings (`importToKnowledgeDefault`, `defaultVisibility`,
+		// `autoClassify`); each form field is a per-upload override of its own default.
 		const defaults = await this.documentSettingsService.getDefaults(organizationId);
 		const importToKnowledge = input.importToKnowledge ?? defaults.importToKnowledgeDefault;
 		const defaultVisibility = input.visibility ?? defaults.defaultVisibility;
+		// 🛑 Resolved HERE, on the request thread: `getDefaults()` reads the tenant off
+		// `RequestContext`, which the queue/inline pipeline threads do not have. The answer
+		// rides on the `docs.extract` payload instead of being re-derived in the worker.
+		const classifyWithAi = input.classifyWithAi ?? defaults.autoClassify;
 
 		// Organization storage quota (08 §5.7) — resolved ONCE per batch; the accepted bytes
 		// of this batch accumulate into `quotaState.usedBytes` so a batch cannot slip past
@@ -266,8 +271,9 @@ export class DocumentUploadService {
 
 				this.documentService.emitDocumentEvent(document, 'created', { phase: 'crud' });
 
-				// 5) Enqueue extraction with the explicit tenant snapshot.
-				await this.processingService.enqueueExtract(document, 'upload');
+				// 5) Enqueue extraction with the explicit tenant snapshot, carrying this
+				// batch's classification decision to the pipeline.
+				await this.processingService.enqueueExtract(document, 'upload', { classify: classifyWithAi });
 
 				// The accepted bytes count against the remaining quota of this same batch.
 				quotaState.usedBytes += file.size;

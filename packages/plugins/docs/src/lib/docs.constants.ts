@@ -110,6 +110,19 @@ export const DEFAULT_DOCS_ORG_QUOTA_BYTES = 0;
 export const DEFAULT_DOCS_INBOUND_MAX_MESSAGE_BYTES = 26214400;
 
 /**
+ * Minimum `q` length accepted by a content search (`searchIn=content`) on the documents
+ * list — shorter queries are rejected with 400 `DOCS_QUERY_TOO_SHORT`.
+ *
+ * 🛑 **This number is a contract, not a tuning knob.** A 1–2 character substring makes every
+ * `contentHtml`/`extractedText` row a candidate for a result set nobody can use, so the server
+ * refuses it. `01-ux-spec.md` §5 states the same 3, and the client mirrors it verbatim in
+ * `DOCUMENT_CONTENT_SEARCH_MIN_CHARS` / `DOCS_CONTENT_SEARCH_MIN_CHARS`
+ * (`@gauzy/plugin-docs-ui`) — its search gate, its tooltip and this guard must agree, or the
+ * UI invites a query the API rejects.
+ */
+export const DOCS_CONTENT_SEARCH_MIN_CHARS = 3;
+
+/**
  * Maximum number of ids accepted by the bulk endpoint.
  */
 export const DOCS_BULK_MAX_IDS = 200;

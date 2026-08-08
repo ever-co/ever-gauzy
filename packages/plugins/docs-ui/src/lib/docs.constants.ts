@@ -1,4 +1,5 @@
 import { NbDialogConfig } from '@nebular/theme';
+import { DOCUMENT_CONTENT_SEARCH_MIN_CHARS } from './models/docs-api.model';
 
 /**
  * Shared constants for the Documents hub UI (`@gauzy/plugin-docs-ui`).
@@ -25,8 +26,15 @@ export const DOCS_FILTER_DEBOUNCE_MS = 300;
 /** Debounce for the free-text search input. */
 export const DOCS_SEARCH_DEBOUNCE_MS = 500;
 
-/** Minimum query length for content search (`searchIn=content`). */
-export const DOCS_CONTENT_SEARCH_MIN_CHARS = 2;
+/**
+ * Minimum query length for content search (`searchIn=content`).
+ *
+ * Re-exported from the API model on purpose: the backend rejects a shorter query with 400
+ * `DOCS_QUERY_TOO_SHORT`, so the UI gate, the tooltip and the request builder must all read
+ * the *same* number. This constant used to carry an independent `2` and silently disagreed
+ * with the wire contract.
+ */
+export const DOCS_CONTENT_SEARCH_MIN_CHARS = DOCUMENT_CONTENT_SEARCH_MIN_CHARS;
 
 /** Default table page size. */
 export const DOCS_DEFAULT_PAGE_SIZE = 10;

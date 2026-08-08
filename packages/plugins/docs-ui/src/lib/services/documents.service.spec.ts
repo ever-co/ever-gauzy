@@ -129,12 +129,42 @@ describe('DocumentsService — backend wire contract', () => {
 			expect(body.get('organizationId')).toBe(ORGANIZATION_ID);
 		});
 
-		it('never sends `classifyWithAi` — the upload DTO has no such field', () => {
+		// Every toggle the classification dialog renders has to survive the trip: the upload
+		// route validates with `whitelist: true`, so a field the client never appends (or one
+		// the DTO never declares) is silently dropped and the control does nothing. That was
+		// exactly the `classifyWithAi` defect — the dialog collected it and nobody sent it.
+		it('sends `classifyWithAi: false` so the toggle can override the org `autoClassify`', () => {
 			http.response = uploadResponse({ results: [{ document: documentFixture() }], rejected: [] });
 
 			service.upload(new File(['x'], 'a.pdf'), { classifyWithAi: false }).subscribe();
 
-			expect((http.last.body as FormData).get('classifyWithAi')).toBeNull();
+			expect((http.last.body as FormData).get('classifyWithAi')).toBe('false');
+		});
+
+		it('sends `classifyWithAi: true` as an explicit opt-in', () => {
+			http.response = uploadResponse({ results: [{ document: documentFixture() }], rejected: [] });
+
+			service.upload(new File(['x'], 'a.pdf'), { classifyWithAi: true }).subscribe();
+
+			expect((http.last.body as FormData).get('classifyWithAi')).toBe('true');
+		});
+
+		it('sends `importToKnowledge: false` too — an off toggle is a decision, not an absence', () => {
+			http.response = uploadResponse({ results: [{ document: documentFixture() }], rejected: [] });
+
+			service.upload(new File(['x'], 'a.pdf'), { importToKnowledge: false }).subscribe();
+
+			expect((http.last.body as FormData).get('importToKnowledge')).toBe('false');
+		});
+
+		it('omits an option nobody set, so the organization default applies server-side', () => {
+			http.response = uploadResponse({ results: [{ document: documentFixture() }], rejected: [] });
+
+			service.upload(new File(['x'], 'a.pdf'), {}).subscribe();
+
+			const body = http.last.body as FormData;
+			expect(body.get('classifyWithAi')).toBeNull();
+			expect(body.get('importToKnowledge')).toBeNull();
 		});
 
 		it('unwraps the `{ results, rejected }` envelope into the accepted document', async () => {

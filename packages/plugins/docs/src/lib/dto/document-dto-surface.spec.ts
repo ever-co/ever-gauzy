@@ -30,6 +30,7 @@ import { getMetadataStorage } from 'class-validator';
 import { DocumentSettingsQueryDTO } from './document-settings.dto';
 import { GetDocumentLinksQueryDTO } from './document-link.dto';
 import { UpdateDocumentDTO } from './update-document.dto';
+import { UploadDocumentsDTO } from './upload-documents.dto';
 
 /** Every property class-validator knows about for a DTO, inherited members included. */
 const validatedPropertiesOf = (target: any): string[] => [
@@ -60,6 +61,29 @@ describe('UpdateDocumentDTO — re-parenting is not a metadata update', () => {
 		for (const omitted of ['kind', 'contentJson', 'contentHtml', 'importToKnowledge']) {
 			expect(properties).not.toContain(omitted);
 		}
+	});
+});
+
+/**
+ * The upload route validates with `whitelist: true`: a field the DTO does not declare is
+ * stripped in silence, so the control that collected it does nothing and nothing tells
+ * anyone. That is precisely how the classification dialog's "Classify with AI" toggle came
+ * to be decorative — the client offered the choice, the DTO had no `classifyWithAi`, and
+ * every upload classified according to the org default regardless.
+ */
+describe('UploadDocumentsDTO — every dialog toggle is a declared field', () => {
+	it('declares both classification toggles (whitelist: true drops anything else)', () => {
+		const properties = validatedPropertiesOf(UploadDocumentsDTO);
+
+		expect(properties).toEqual(expect.arrayContaining(['classifyWithAi', 'importToKnowledge']));
+	});
+
+	it('still declares the rest of the dialog surface', () => {
+		const properties = validatedPropertiesOf(UploadDocumentsDTO);
+
+		expect(properties).toEqual(
+			expect.arrayContaining(['parentId', 'visibility', 'categoryIds', 'tagIds', 'source'])
+		);
 	});
 });
 

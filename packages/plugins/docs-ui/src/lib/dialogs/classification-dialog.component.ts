@@ -12,6 +12,16 @@ import { DocumentsService } from '../services/documents.service';
  * "add to AI knowledge" toggles (defaults from org settings), visibility.
  * Closes with an `IDocumentUploadOptions` (or `null` on cancel); "Upload with
  * defaults" skips straight through.
+ *
+ * 🛑 Both toggles are **per-upload overrides of the org defaults**, and both are real
+ * `UploadDocumentsDTO` fields (`classifyWithAi`, `importToKnowledge`) that
+ * `DocumentsService.uploadMany()` appends to the multipart body. Adding a control here
+ * without adding the field on both sides gives the user a switch that does nothing —
+ * `classifyWithAi` shipped that way once.
+ *
+ * The AI-classification toggle is hidden when the deployment reports `aiEnabled: false`
+ * (`01-ux-spec.md` §7.2): with no provider the classify stage no-ops, so offering the
+ * choice would be a second dead control.
  */
 @Component({
 	selector: 'gz-docs-classification-dialog',
@@ -34,7 +44,7 @@ import { DocumentsService } from '../services/documents.service';
 						(selectedTagsEvent)="tags = $event"
 					></ga-tags-color-input>
 				</div>
-				<div class="docs-dialog-field">
+				<div class="docs-dialog-field" *ngIf="aiEnabled">
 					<nb-toggle [(checked)]="classifyWithAi" labelPosition="end">
 						{{ 'DOCS.UPLOAD.AI_CLASSIFY_TOGGLE' | translate }}
 					</nb-toggle>
@@ -96,6 +106,8 @@ export class ClassificationDialogComponent extends TranslationBaseComponent impl
 	public importToKnowledge = false;
 	public visibility: DocumentVisibilityEnum = DocumentVisibilityEnum.ORGANIZATION;
 	public readonly visibilityEnum = DocumentVisibilityEnum;
+	/** Optimistic until `GET /settings` answers — a settings failure must not hide the toggle. */
+	public aiEnabled = true;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -110,7 +122,8 @@ export class ClassificationDialogComponent extends TranslationBaseComponent impl
 			.getCategories()
 			.pipe(catchError(() => of([])))
 			.subscribe((categories) => (this.categories = categories ?? []));
-		// Defaults from org settings (cosmetic; fail silently).
+		// Seed the toggles from the org defaults (fail silently — the server applies the very
+		// same defaults for any field this dialog ends up not sending).
 		this.documentsService
 			.getSettings()
 			.pipe(catchError(() => of(null)))
@@ -119,6 +132,9 @@ export class ClassificationDialogComponent extends TranslationBaseComponent impl
 					this.classifyWithAi = settings.defaults.autoClassify;
 					this.importToKnowledge = settings.defaults.importToKnowledgeDefault;
 					this.visibility = settings.defaults.defaultVisibility ?? this.visibility;
+				}
+				if (typeof settings?.capabilities?.aiEnabled === 'boolean') {
+					this.aiEnabled = settings.capabilities.aiEnabled;
 				}
 			});
 	}

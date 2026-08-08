@@ -28,7 +28,16 @@ export type DocumentArchivedFilter = 'exclude' | 'include' | 'only';
 export const DOCUMENT_SORT_FIELDS = ['name', 'updatedAt', 'createdAt', 'size', 'kind'] as const;
 export type DocumentSortField = (typeof DOCUMENT_SORT_FIELDS)[number];
 
-/** Minimum `q` length the backend requires for `searchIn=content` (else 400 `DOCS_QUERY_TOO_SHORT`). */
+/**
+ * Minimum `q` length the backend requires for `searchIn=content` (else 400
+ * `DOCS_QUERY_TOO_SHORT`).
+ *
+ * 🛑 **The single client-side definition of that number** — `DOCS_CONTENT_SEARCH_MIN_CHARS`
+ * in `docs.constants.ts` re-exports this one, and the filter bar's Content gate, its tooltip
+ * (`DOCS.FILTERS.SEARCH_CONTENT_DISABLED`, which interpolates it) and the downgrade below all
+ * read from here. A second, disagreeing copy is exactly how the gate came to advertise 2
+ * while `DocumentService.buildFilters()` rejected anything under 3.
+ */
 export const DOCUMENT_CONTENT_SEARCH_MIN_CHARS = 3;
 
 /** `PaginationQueryDTO.take` is `@Max(100)` — a larger window is a 400, not a bigger page. */
@@ -236,10 +245,9 @@ export interface IDocumentUploadOptions {
 	categoryIds?: ID[];
 	tagIds?: ID[];
 	/**
-	 * ⚠️ **Client-only — never transmitted.** The upload DTO has no per-file AI
-	 * switch: classification is governed by the organization setting
-	 * `autoClassify` (Documents settings page). Kept so the classification dialog
-	 * still type-checks; see the dialog TODO in the Wave-9 report.
+	 * Real DTO field — the "Classify with AI" toggle of the classification dialog.
+	 * Per-upload override of the org setting `autoClassify`: `false` skips the
+	 * `docs.classify` stage for this batch, omitted follows the organization.
 	 */
 	classifyWithAi?: boolean;
 	/** Real DTO field. Default = org setting `importToKnowledgeDefault`. */

@@ -38,6 +38,16 @@ export interface IDocsExtractJob extends IDocsJobBase {
 	keepExtractedText?: boolean;
 	/** P1 (M5) — bypass the text-layer fast path (PDF/images). */
 	forceOcr?: boolean;
+	/**
+	 * Whether the `docs.classify` stage may run for this document.
+	 *
+	 * Resolved on the **request** thread (`classifyWithAi` of the upload form ?? the org
+	 * `autoClassify` default) because `DocumentSettingsService` reads the tenant off
+	 * `RequestContext`, which queue threads do not have. `false` skips classification;
+	 * `undefined` (every pre-existing payload, and every enqueue that expresses no opinion)
+	 * classifies exactly as before.
+	 */
+	classify?: boolean;
 }
 
 /** Payload of `docs.classify`. */
