@@ -3,6 +3,7 @@ import type { Extensions } from '@tiptap/core';
 import { createEmailPreset } from './presets/email.preset';
 import { createStandardPreset } from './presets/standard.preset';
 import { normalizeLegacyHtml } from './legacy-html.util';
+import { canonicalize, canonicalStyle } from './legacy-html-canonical.util';
 
 /**
  * Legacy-HTML round-trip corpora (10-implementation-plan.md §8.4, contract in
@@ -26,153 +27,12 @@ const roundTrip = (html: string, extensions: Extensions = STANDARD): string =>
 
 // ---------------------------------------------------------------------------
 // Normalization: the "normalize" step of load → serialize → normalize → diff.
+//
+// `canonicalize()` / `canonicalStyle()` live in `legacy-html-canonical.util.ts` because the
+// §4.4 removal gate (`tools/scripts/legacy-rich-text-audit.ts`) has to compare rows in the
+// *same* canonical form this suite does — otherwise the audit and this suite could silently
+// disagree about what counts as loss.
 // ---------------------------------------------------------------------------
-
-/** Legacy tags TipTap canonicalizes to a single spelling; both sides get the canonical one. */
-const TAG_ALIASES: Record<string, string> = {
-	B: 'strong',
-	I: 'em',
-	STRIKE: 's',
-	DEL: 's',
-	DIV: 'p'
-};
-
-/** Structural attributes ProseMirror always writes out but that carry no author intent. */
-const NOISE_ATTRIBUTES = new Set(['class', 'id', 'rel', 'data-pm-slice']);
-
-/** Converts `rgb(r, g, b)` (what the DOM gives back for a hex colour) to `#rrggbb`. */
-function canonicalColor(value: string): string {
-	return value.replace(/rgb\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)\s*\)/gi, (_match, r, g, b) =>
-		`#${[r, g, b].map((part: string) => Number(part).toString(16).padStart(2, '0')).join('')}`
-	);
-}
-
-/**
- * Canonicalizes an inline `style` attribute: drops the resizable-table `min-width`
- * scaffolding, normalizes colour notation and whitespace, and sorts declarations so
- * declaration order can never fail a diff.
- */
-function canonicalStyle(style: string): string {
-	return style
-		.split(';')
-		.map((declaration) => declaration.trim())
-		.filter(Boolean)
-		.map((declaration) => {
-			const separator = declaration.indexOf(':');
-			const property = declaration.slice(0, separator).trim().toLowerCase();
-			const value = canonicalColor(declaration.slice(separator + 1).trim().toLowerCase());
-			return `${property}: ${value}`;
-		})
-		// TableKit's resize handles write min-width on the table and every <col>.
-		.filter((declaration) => !declaration.startsWith('min-width:'))
-		.sort()
-		.join('; ');
-}
-
-/** Recursively renames a tag, preserving children and attributes. */
-function renameTags(root: Element, from: string, to: string): void {
-	root.querySelectorAll(from.toLowerCase()).forEach((element) => {
-		const replacement = element.ownerDocument.createElement(to);
-		Array.from(element.attributes).forEach((attribute) =>
-			replacement.setAttribute(attribute.name, attribute.value)
-		);
-		while (element.firstChild) {
-			replacement.appendChild(element.firstChild);
-		}
-		element.replaceWith(replacement);
-	});
-}
-
-/** Serializes an element tree with attributes in a stable (sorted) order. */
-function serialize(node: Node): string {
-	if (node.nodeType === Node.TEXT_NODE) {
-		// Re-encode through a throwaway element so both sides use one entity spelling.
-		const holder = node.ownerDocument!.createElement('span');
-		holder.textContent = node.nodeValue ?? '';
-		return holder.innerHTML;
-	}
-	if (node.nodeType !== Node.ELEMENT_NODE) {
-		return '';
-	}
-	const element = node as Element;
-	const tag = element.tagName.toLowerCase();
-	const attributes = Array.from(element.attributes)
-		.filter((attribute) => !NOISE_ATTRIBUTES.has(attribute.name))
-		.map((attribute) => {
-			const value = attribute.name === 'style' ? canonicalStyle(attribute.value) : attribute.value;
-			return { name: attribute.name, value };
-		})
-		.filter((attribute) => attribute.value !== '')
-		.sort((a, b) => a.name.localeCompare(b.name))
-		.map((attribute) => ` ${attribute.name}="${attribute.value}"`)
-		.join('');
-
-	const children = Array.from(element.childNodes).map(serialize).join('');
-	return `<${tag}${attributes}>${children}</${tag}>`;
-}
-
-/**
- * Reduces HTML to the canonical semantic form both sides of the diff are compared in.
- *
- * It removes only differences the compatibility contract explicitly tolerates
- * ("attribute order/whitespace may differ, content and formatting may not"):
- * tag aliases, ProseMirror's table scaffolding, the `<p>` wrapper ProseMirror puts inside
- * list items and table cells, `colspan="1"`/`rowspan="1"`, colour notation, declaration
- * and attribute order. Anything else that differs is real content loss.
- */
-export function canonicalize(html: string): string {
-	const document = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
-	const body = document.body;
-
-	Object.entries(TAG_ALIASES).forEach(([from, to]) => renameTags(body, from, to));
-
-	// `<pre>text</pre>` is stored as a code block, i.e. `<pre><code>text</code></pre>`.
-	body.querySelectorAll('pre').forEach((pre) => {
-		if (!pre.querySelector('code')) {
-			const code = document.createElement('code');
-			while (pre.firstChild) {
-				code.appendChild(pre.firstChild);
-			}
-			pre.appendChild(code);
-		}
-	});
-
-	// TableKit renders every row inside a single <tbody> and adds a <colgroup>.
-	body.querySelectorAll('table').forEach((table) => {
-		table.querySelectorAll('colgroup').forEach((colgroup) => colgroup.remove());
-		const rows = Array.from(table.querySelectorAll('tr'));
-		table.querySelectorAll('thead, tfoot, tbody').forEach((section) => section.remove());
-		const tbody = document.createElement('tbody');
-		rows.forEach((row) => tbody.appendChild(row));
-		table.appendChild(tbody);
-	});
-
-	// The Link extension applies a uniform safety policy to every anchor: hardened `rel`
-	// (stripped as noise above) and `target="_blank"`. Both are additive — a bare legacy
-	// `<a href>` gains them — so they are normalized away here and asserted on their own
-	// in the construct-coverage and intentional-behaviour blocks below.
-	body.querySelectorAll('a[target="_blank"]').forEach((anchor) => anchor.removeAttribute('target'));
-
-	// Implicit spans are always written explicitly by ProseMirror.
-	body.querySelectorAll('td, th').forEach((cell) => {
-		['colspan', 'rowspan'].forEach((attribute) => {
-			if (cell.getAttribute(attribute) === '1') {
-				cell.removeAttribute(attribute);
-			}
-		});
-	});
-
-	// ProseMirror wraps list-item and table-cell content in a paragraph.
-	body.querySelectorAll('li > p:only-child, td > p:only-child, th > p:only-child').forEach((paragraph) => {
-		paragraph.replaceWith(...Array.from(paragraph.childNodes));
-	});
-	// A list item whose first child is a paragraph followed by a nested list.
-	body.querySelectorAll('li > p:first-child').forEach((paragraph) => {
-		paragraph.replaceWith(...Array.from(paragraph.childNodes));
-	});
-
-	return Array.from(body.childNodes).map(serialize).join('');
-}
 
 // ---------------------------------------------------------------------------
 // Corpora — one per replaced field family (06-ckeditor-removal.md §3.1).

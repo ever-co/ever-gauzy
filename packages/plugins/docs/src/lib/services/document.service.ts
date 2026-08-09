@@ -55,6 +55,9 @@ import {
 	UpdateDocumentContentDTO,
 	UpdateDocumentDTO
 } from '../dto';
+// Deep import on purpose: this is a pure helper, not a DTO class, so it must not depend on the
+// barrel (which drags in every DTO — and with them `@gauzy/core` — for one function).
+import { resolveTagIds } from '../dto/document-tag-reference';
 import { Document } from '../entities/document.entity';
 import { DocumentLink } from '../entities/document-link.entity';
 import { DocumentEvent, IDocumentEventContext } from '../events/document.event';
@@ -1111,7 +1114,8 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 
 	/**
 	 * Maps the writable metadata fields of the create/update DTOs onto entity fields
-	 * (including tag/category id arrays → relation stubs).
+	 * (including tag/category id arrays → relation stubs). Tags arrive as `tagIds`, as the
+	 * contracts-published `tags` references, or both — see `resolveTagIds`.
 	 */
 	private buildAssignableFields(input: Partial<CreateDocumentDTO> & Partial<UpdateDocumentDTO>): Partial<Document> {
 		const fields: Partial<Document> = {};
@@ -1151,8 +1155,11 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		if (input.categoryIds !== undefined) {
 			fields.categories = input.categoryIds.map((id: ID) => ({ id })) as any;
 		}
-		if (input.tagIds !== undefined) {
-			fields.tags = input.tagIds.map((id: ID) => ({ id })) as any;
+		// `tagIds` and the contracts-published `tags?: ITag[]` are the same operation, so the two
+		// shapes are folded into one de-duplicated id list here rather than at every call site.
+		const tagIds = resolveTagIds(input);
+		if (tagIds !== undefined) {
+			fields.tags = tagIds.map((id: ID) => ({ id })) as any;
 		}
 		return fields;
 	}

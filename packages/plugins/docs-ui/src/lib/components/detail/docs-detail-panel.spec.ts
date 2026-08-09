@@ -62,8 +62,19 @@ function createPanel(overrides: Record<string, unknown> = {}) {
 		create: jest.fn((input: Partial<ITag>) => of({ id: 'tag-new', ...input } as ITag))
 	};
 	const store = { selectedOrganization: { id: 'org', tenantId: 'tenant' } };
+	/** Ownership scope (spec 08 §1.7); permissive by default so the existing cases are unaffected. */
+	const documentPermission: Record<string, jest.Mock> = { canMutate: jest.fn(() => true) };
 
-	const deps = { documentsService, toastrService, actions, documentTreeStore, tagsService, store, ...overrides };
+	const deps = {
+		documentsService,
+		toastrService,
+		actions,
+		documentTreeStore,
+		tagsService,
+		documentPermission,
+		store,
+		...overrides
+	};
 
 	const component = new DocsDetailPanelComponent(
 		{ instant: (key: string) => key } as never,
@@ -76,6 +87,7 @@ function createPanel(overrides: Record<string, unknown> = {}) {
 		{ duplicateNoticeFor: jest.fn(() => null) } as never,
 		deps.documentTreeStore as never,
 		deps.tagsService as never,
+		deps.documentPermission as never,
 		deps.store as never
 	);
 	component.documentId = DOCUMENT_ID;
@@ -174,6 +186,22 @@ describe('DocsDetailPanelComponent — metadata, location and AI suggested tags'
 
 			expect(component.loadError).toBe(false);
 			expect(component.location).toEqual([{ id: PARENT_ID, name: 'Acme' }]);
+		});
+	});
+
+	describe('ownership scoping (08 §1.7)', () => {
+		// The template ANDs `canMutate` onto every `ngxPermissionsOnly` write gate, so this
+		// getter is what decides whether a DOCS_UPDATE holder is offered edit/archive/delete
+		// on a document they may not write.
+		it('delegates to DocumentPermissionService for the open document', () => {
+			const { component, documentPermission } = createPanel();
+			component.document = doc();
+
+			expect(component.canMutate).toBe(true);
+			expect(documentPermission.canMutate).toHaveBeenCalledWith(component.document);
+
+			documentPermission.canMutate = jest.fn(() => false);
+			expect(component.canMutate).toBe(false);
 		});
 	});
 

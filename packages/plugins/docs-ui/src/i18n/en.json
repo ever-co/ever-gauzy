@@ -45,6 +45,7 @@
 		"HINT": "Private documents are visible to you, admins and people you share them with"
 	},
 	"REVIEW": {
+		"NONE": "Not reviewed",
 		"PENDING": "Needs review",
 		"APPROVED": "Approved",
 		"REJECTED": "Rejected",

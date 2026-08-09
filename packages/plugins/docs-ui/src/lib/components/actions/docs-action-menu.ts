@@ -66,6 +66,17 @@ export interface IDocsActionMenuContext {
 	surface: 'tree' | 'row';
 	/** Star state; flips the label between Favorite and Unfavorite. */
 	isFavorite?: boolean;
+	/**
+	 * Row-level ownership scope from `DocumentPermissionService.canMutate()`
+	 * (`08-permissions-security.md` §1.7/§1.8) — `DOCS_MANAGE` holder or the document's own
+	 * creator.
+	 *
+	 * 🛑 Independent of `permissions.update`, exactly as on the server: the write rule is
+	 * `DOCS_UPDATE AND (DOCS_MANAGE OR creator OR EDIT share)`, so both halves have to hold.
+	 * Left `undefined` (a caller that has not resolved it yet) it defaults to permissive, which
+	 * keeps the pre-ownership behaviour rather than silently emptying a menu.
+	 */
+	canMutate?: boolean;
 }
 
 /** Documents whose knowledge state means "already in" — the menu then offers Exclude. */
@@ -94,6 +105,9 @@ export function buildDocsActionMenu(target: IDocsActionTarget, context: IDocsAct
 
 	const container = isContainer(target.kind);
 	const archived = !!target.isArchived;
+	// Ownership half of the write rule (§1.7). Absent = permissive, so a caller that never
+	// resolved it keeps the previous item set.
+	const mutable = context.canMutate !== false;
 
 	// ─── Open ────────────────────────────────────────────────────
 	push('open', 'DOCS.TREE.OPEN');
@@ -112,7 +126,9 @@ export function buildDocsActionMenu(target: IDocsActionTarget, context: IDocsAct
 	}
 
 	// ─── Edit / relocate ─────────────────────────────────────────
-	if (permissions.update && !archived) {
+	// `mutable` is the ownership half: `01-ux-spec.md` §3.5 offers these to a DOCS_UPDATE
+	// holder, but §1.8 scopes edit and tree ops to **own** documents for everyone below ADMIN.
+	if (permissions.update && mutable && !archived) {
 		push('rename', 'DOCS.TREE.RENAME');
 		push('move', 'DOCS.TREE.MOVE');
 	}
@@ -146,13 +162,15 @@ export function buildDocsActionMenu(target: IDocsActionTarget, context: IDocsAct
 	}
 
 	// ─── Destructive, last ───────────────────────────────────────
-	if (permissions.update) {
+	// Archive/unarchive and delete are both **own**-scoped below ADMIN (§1.8), so they carry
+	// the ownership half too.
+	if (permissions.update && mutable) {
 		push(archived ? 'restore' : 'archive', archived ? 'DOCS.TREE.RESTORE' : 'DOCS.TREE.ARCHIVE');
 	}
 	// Archive-first rule: `DELETE /documents/:id` answers 409
 	// `DOCS_DELETE_REQUIRES_ARCHIVE` for anything still live, so the item is
 	// offered only where it can succeed.
-	if (permissions.delete && archived) {
+	if (permissions.delete && mutable && archived) {
 		push('delete', 'DOCS.TREE.DELETE');
 	}
 
@@ -200,6 +218,7 @@ export function docsActionMenuSignature(target: IDocsActionTarget, context: IDoc
 		target.isArchived ? '1' : '0',
 		target.knowledgeStatus ?? '',
 		context.isFavorite ? '1' : '0',
+		context.canMutate === false ? '0' : '1',
 		context.surface,
 		permissions.create ? '1' : '0',
 		permissions.update ? '1' : '0',

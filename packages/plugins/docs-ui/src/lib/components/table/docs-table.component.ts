@@ -14,6 +14,7 @@ import {
 	IDocsActionMenuContext
 } from '../actions/docs-action-menu';
 import { DocsRowActionsService } from '../actions/docs-row-actions.service';
+import { DocumentPermissionService } from '../../services/document-permission.service';
 import { RowActionsComponent } from './cells/row-actions.component';
 import {
 	DOCS_TABLE_COLUMN_KEYS,
@@ -93,6 +94,7 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	constructor(
 		public readonly translateService: TranslateService,
 		private readonly rowActions: DocsRowActionsService,
+		private readonly documentPermission: DocumentPermissionService,
 		private readonly nbMenuService: NbMenuService,
 		private readonly permissionsService: NgxPermissionsService
 	) {
@@ -237,6 +239,9 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 			surface: 'row',
 			translate: (key: string) => this.getTranslation(key),
 			isFavorite: this.rowActions.isFavorite(row?.id as ID),
+			// Ownership half of the write rule (spec 08 §1.7). `createdByUserId` and
+			// `visibility` are both in the list projection, so the row already carries it.
+			canMutate: this.documentPermission.canMutate(row),
 			permissions: this.permissions
 		};
 	}

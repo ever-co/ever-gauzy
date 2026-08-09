@@ -15,5 +15,6 @@ export * from './lib/models/docs-share.model';
 export * from './lib/services/documents.service';
 export * from './lib/services/docs-export.service';
 export * from './lib/services/docs-saved-views.service';
+export * from './lib/services/document-permission.service';
 export * from './lib/services/document-tree.store';
 export * from './lib/services/upload-queue.service';

@@ -45,6 +45,7 @@ import { MoveDialogComponent } from '../../dialogs/move-dialog.component';
 import { RequestReviewDialogComponent } from '../../dialogs/request-review-dialog.component';
 import { DocumentShareDialogComponent } from '../../dialogs/share-dialog.component';
 import { DocsExportService } from '../../services/docs-export.service';
+import { DocumentPermissionService } from '../../services/document-permission.service';
 import { DocumentTreeStore, IDocsTreeNode } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
 
@@ -95,6 +96,7 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	private readonly documentsService = inject(DocumentsService);
 	private readonly exportService = inject(DocsExportService);
 	private readonly treeStore = inject(DocumentTreeStore);
+	private readonly documentPermission = inject(DocumentPermissionService);
 	private readonly dialogService = inject(NbDialogService);
 	private readonly toastrService = inject(ToastrService);
 	private readonly translate = inject(TranslateService);
@@ -141,12 +143,32 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		return this.store.hasAnyPermission(PermissionsEnum.DOCS_UPDATE);
 	}
 
+	/**
+	 * Row-level ownership scope of the open document (`08-permissions-security.md` §1.7):
+	 * `DOCS_MANAGE` holder or its creator.
+	 */
+	get canMutate(): boolean {
+		return this.documentPermission.canMutate(this.document);
+	}
+
+	/**
+	 * Both halves of the server's write rule — `DOCS_UPDATE` **and** the ownership scope.
+	 *
+	 * 🛑 The permission alone is not enough: `assertCanWrite()` (`plugins/docs/.../
+	 * document.service.ts`) answers `403 DOCS_WRITE_FORBIDDEN` for a non-creator without
+	 * `DOCS_MANAGE`, so gating the chrome on `canUpdate` alone opened a fully live editor whose
+	 * every autosave failed. This is what the read-only banner and the write controls read.
+	 */
+	get canWrite(): boolean {
+		return this.canUpdate && this.canMutate;
+	}
+
 	get isLocked(): boolean {
 		return !!this.document?.isLocked || this.saveState === 'locked';
 	}
 
 	get editable(): boolean {
-		return this.canUpdate && !this.isLocked && this.saveState !== 'conflict' && !this.document?.archivedAt;
+		return this.canWrite && !this.isLocked && this.saveState !== 'conflict' && !this.document?.archivedAt;
 	}
 
 	get isPage(): boolean {

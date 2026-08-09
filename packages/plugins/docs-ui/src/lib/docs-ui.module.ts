@@ -86,6 +86,7 @@ import { DocsBrowsePageComponent } from './pages/browse/docs-browse-page.compone
 import { ReviewPageComponent } from './pages/review/review-page.component';
 import { DocsExportService } from './services/docs-export.service';
 import { DocsSavedViewsService } from './services/docs-saved-views.service';
+import { DocumentPermissionService } from './services/document-permission.service';
 import { DocumentTreeStore } from './services/document-tree.store';
 import { DocumentsService } from './services/documents.service';
 import { UploadQueueService } from './services/upload-queue.service';
@@ -187,6 +188,11 @@ import { UploadQueueService } from './services/upload-queue.service';
 		DocumentsQuery,
 		DocumentsService,
 		DocumentTreeStore,
+		// Row-level ownership scoping of the mutating affordances (spec 08 §1.7). Provided
+		// here, next to the surfaces that consume it: the tree/table/cards kebabs, the detail
+		// panel and the (standalone, route-loaded) page editor all resolve it through this
+		// module's injector.
+		DocumentPermissionService,
 		UploadQueueService,
 		DocsExportService,
 		DocsRowActionsService,
