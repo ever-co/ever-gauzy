@@ -25,40 +25,18 @@ import { ChatInput } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
 import { DocsAttachPicker } from './DocsAttachPicker';
+import { buildAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
 import { chatTheme } from '../chat-theme';
 
-/** One attachment staged for the next message. */
-interface IStagedAttachment {
-	/** Set when the user picked an EXISTING document — the handle `docs_read` takes. */
-	documentId?: string;
-	/** Display name, and the only handle an uploaded file has until capture finishes. */
-	name: string;
-}
-
 /**
- * The preamble that tells the assistant what the user attached.
- *
- * Attachments travel as ordinary message text on purpose. The tool surface the assistant has is
- * `docs_read(documentId)` / `docs_search(query)`, so naming the ids is precisely what makes an
- * attachment actionable; a side channel the model never sees would be decoration.
- *
- * An uploaded file has no id yet — capture into Documents happens asynchronously on the server —
- * so it is named instead, with an explicit instruction to search for it rather than to claim it
- * cannot be found.
- *
- * @param attachments The staged attachments.
- * @returns The preamble, or an empty string when nothing is attached.
+ * What the docs upload endpoint answers with (the slice this panel reads).
+ * Mirrored rather than imported: `IDocumentUploadResponse` lives in the backend docs plugin,
+ * which must not be pulled into the browser bundle.
  */
-function buildAttachmentPreamble(attachments: IStagedAttachment[]): string {
-	if (!attachments.length) {
-		return '';
-	}
-	const lines = attachments.map((attachment) =>
-		attachment.documentId
-			? `- "${attachment.name}" (document id: ${attachment.documentId}) — read it with docs_read.`
-			: `- "${attachment.name}" — just uploaded to Documents; find it with docs_search (processing may still be in flight).`
-	);
-	return ['Attached documents for this message:', ...lines].join('\n');
+interface IDocsUploadResponseSlice {
+	results?: { document?: { id?: string; name?: string } }[];
+	rejected?: { fileName?: string; message?: string }[];
+	message?: string;
 }
 
 /**
@@ -355,20 +333,63 @@ export function AiChatPanel() {
 	);
 
 	/**
-	 * Upload a file the user picked and attach it to this conversation.
+	 * Upload a file the user picked and attach it to this conversation — ID FIRST.
+	 *
+	 * The upload goes straight to the Documents feature (`source: CHAT`), which answers
+	 * synchronously with the created document — so the chip carries a `documentId` and the
+	 * assistant can `docs_read` the file in the very message it was attached to. The previous
+	 * design uploaded to chat-local storage and relied on the Documents plugin capturing an
+	 * event LATER: the chip was name-only, and the preamble sent the assistant to `docs_search`
+	 * — which can never find a chat capture (they are deliberately never auto-indexed), and a
+	 * file the sniffer rejected got a chip anyway while the capture silently dropped it.
+	 *
+	 * The chat-local endpoint remains as the FALLBACK for installs where Documents is absent,
+	 * disabled, or the user lacks `DOCS_CREATE` (403/404 from the docs route) — there the docs
+	 * tools do not exist either, so a name-only mention is the honest ceiling.
 	 *
 	 * `FormData` deliberately WITHOUT a Content-Type header — the browser has to set it, because
 	 * only it knows the multipart boundary (the same rule as dictation above).
-	 *
-	 * The server stores the bytes and publishes `AiChatAttachmentSavedEvent`; the Documents
-	 * plugin captures that into a `Document { source: CHAT }` and runs extraction. That is
-	 * ASYNCHRONOUS, so the attachment is carried by name — the assistant finds it with
-	 * `docs_search` once processing finishes, which the preamble tells it to do.
 	 */
 	const handleAttachFile = useCallback(
 		async (file: File): Promise<void> => {
 			setIsAttaching(true);
+			setAttachmentError(null);
 			try {
+				const docsForm = new FormData();
+				docsForm.append('files', file, file.name);
+				docsForm.append('source', 'CHAT');
+				const docsResponse = await fetch(`${environment.API_BASE_URL}/api/plugins/docs/documents/upload`, {
+					method: 'POST',
+					headers: authHeaders(),
+					body: docsForm
+				});
+
+				if (docsResponse.ok) {
+					const body = (await docsResponse.json().catch(() => null)) as IDocsUploadResponseSlice | null;
+					const document = body?.results?.[0]?.document;
+					if (document?.id) {
+						setAttachments((current) => [
+							...current,
+							{ documentId: document.id, name: document.name || file.name }
+						]);
+						return;
+					}
+					// A 2xx with no accepted document means the file itself was rejected (type/size)
+					// — surface the server's reason instead of staging a chip for a file that does
+					// not exist anywhere.
+					throw new Error(body?.rejected?.[0]?.message || `'${file.name}' was rejected.`);
+				}
+
+				// Not-found / forbidden = the Documents feature is not available to this user or
+				// install — fall back to chat-local storage. Anything else is a real failure.
+				if (docsResponse.status !== 403 && docsResponse.status !== 404) {
+					const detail = await docsResponse
+						.json()
+						.then((body: { message?: string }) => body?.message)
+						.catch(() => undefined);
+					throw new Error(detail || `Attachment failed (HTTP ${docsResponse.status})`);
+				}
+
 				const form = new FormData();
 				form.append('file', file, file.name);
 				if (conversationIdRef.current) {
