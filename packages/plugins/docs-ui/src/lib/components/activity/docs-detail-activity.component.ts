@@ -45,7 +45,7 @@ export class DocsDetailActivityComponent extends TranslationBaseComponent implem
 	/** Full match count reported by the API — decides whether "Show more" is offered. */
 	public total = 0;
 
-	/** 1-based page number; the DTO's `skip` is a page, not an offset. */
+	/** 1-based page number; the DTO `skip` is a page, not an offset. */
 	private page = 1;
 
 	constructor(

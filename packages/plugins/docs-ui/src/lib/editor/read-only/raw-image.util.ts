@@ -1,5 +1,5 @@
 /**
- * Recognises the authenticated inline-stream URL persisted as an embedded image's
+ * Recognizes the authenticated inline-stream URL persisted as an embedded image's
  * `src` (spec 05 §6.6 step 5 — `/api/plugins/docs/documents/{id}/raw`).
  *
  * 🛑 That route sits behind `@Permissions(DOCS_READ)` and the JWT strategy reads the

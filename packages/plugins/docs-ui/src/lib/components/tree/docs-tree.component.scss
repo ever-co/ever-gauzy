@@ -42,7 +42,7 @@
 }
 
 /* The "All documents" title is a real <button> (it navigates to the root scope);
-   these rules only neutralise the user-agent button chrome so it still reads as
+   these rules only neutralize the user-agent button chrome so it still reads as
    the section label it shares its class with. */
 .docs-tree-root {
 	display: block;

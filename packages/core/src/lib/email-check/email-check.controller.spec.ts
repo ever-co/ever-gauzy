@@ -72,7 +72,7 @@ describe('EmailCheckController', () => {
 	 * — which does not execute when the method is invoked in-process. Both resolved to
 	 * `{ exists: undefined }` instead of throwing.
 	 *
-	 * The real contract is the DTO's constraints, so assert those directly. That keeps the coverage
+	 * The real contract is the constraints declared on the DTO, so assert those directly. That keeps the coverage
 	 * the tests were reaching for, and fails if `@IsEmail()` / `@IsNotEmpty()` is ever dropped.
 	 */
 	describe('CheckEmailDTO validation', () => {

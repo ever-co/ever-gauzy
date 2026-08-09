@@ -9,7 +9,7 @@ import { docsUnsavedChangesGuard } from './docs-unsaved-changes.guard';
  * 🛑 The bug this closes: `page/:id` had no `canDeactivate` at all. Leaving fired a
  * fire-and-forget `void flush()` in `ngOnDestroy` while the autosave service's own
  * `ngOnDestroy` cleared the retry timer in the same teardown — a save that failed on the way
- * out was never retried and the user was never told. So the two behaviours that matter are:
+ * out was never retried and the user was never told. So the two behaviors that matter are:
  * leaving WAITS for the flush, and a flush that could not land ASKS before discarding.
  */
 describe('docsUnsavedChangesGuard', () => {
