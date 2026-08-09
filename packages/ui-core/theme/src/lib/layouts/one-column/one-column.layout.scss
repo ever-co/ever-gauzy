@@ -119,8 +119,9 @@
 
     // Pinned to the viewport's top so the chat is a FULL-HEIGHT column with nothing above it: the
     // panel owns its own top edge (title row + icons), exactly like the nav menu owns the logo.
-    // The header is inset around it instead (see chatHeaderPad in the layout component), so header
-    // dropdowns open over the canvas, never over the chat.
+    // The header is inset around it instead (observeCanvasLeft in the layout component publishes
+    // --gz-canvas-left/right, which the fixed-header rules above consume), so header dropdowns open
+    // over the canvas, never over the chat.
     //
     // Width comes straight from `--gz-chat-width` (the user's chosen/persisted width) rather than
     // from a ResizeObserver mirroring the host: one source of truth, and nothing to go stale.
