@@ -13,6 +13,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DocumentsActions } from '../../+state/documents.actions';
 import { CreateDialogComponent } from '../../dialogs/create-dialog.component';
 import { DOCS_PAGE_LINK, DOCS_RECENTS_KEY_PREFIX, DOCS_RECENTS_LIMIT } from '../../docs.constants';
+import { DocumentPermissionService } from '../../services/document-permission.service';
 import { DocumentTreeStore, IDocsTreeNode } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
 import {
@@ -134,6 +135,7 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 		private readonly treeStore: DocumentTreeStore,
 		private readonly documentsService: DocumentsService,
 		private readonly rowActions: DocsRowActionsService,
+		private readonly documentPermission: DocumentPermissionService,
 		private readonly toastrService: ToastrService,
 		private readonly dialogService: NbDialogService,
 		private readonly nbMenuService: NbMenuService,
@@ -316,6 +318,9 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 			surface: 'tree',
 			translate: (key: string) => this.getTranslation(key),
 			isFavorite: node ? this.rowActions.isFavorite(node.id) : false,
+			// Ownership half of the write rule (spec 08 §1.7) — the node carries
+			// `createdByUserId`/`visibility` from the list projection, so this costs no read.
+			canMutate: this.documentPermission.canMutate(node),
 			permissions: {
 				create: this.canCreate,
 				update: this.canUpdate,

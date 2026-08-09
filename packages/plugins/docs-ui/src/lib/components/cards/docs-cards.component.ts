@@ -15,6 +15,7 @@ import {
 	IDocsActionMenuContext
 } from '../actions/docs-action-menu';
 import { DocsRowActionsService } from '../actions/docs-row-actions.service';
+import { DocumentPermissionService } from '../../services/document-permission.service';
 
 /** Nebular menu-tag prefix for the per-card kebab; the suffix is the document id. */
 const CARD_MENU_TAG_PREFIX = 'gz-docs-card-actions-';
@@ -78,6 +79,7 @@ export class DocsCardsComponent extends TranslationBaseComponent implements OnIn
 	constructor(
 		public readonly translateService: TranslateService,
 		private readonly rowActions: DocsRowActionsService,
+		private readonly documentPermission: DocumentPermissionService,
 		private readonly nbMenuService: NbMenuService,
 		private readonly permissionsService: NgxPermissionsService
 	) {
@@ -141,6 +143,9 @@ export class DocsCardsComponent extends TranslationBaseComponent implements OnIn
 			surface: 'row',
 			translate: (key: string) => this.getTranslation(key),
 			isFavorite: this.rowActions.isFavorite(row?.id as ID),
+			// Ownership half of the write rule (spec 08 §1.7) — same list projection the
+			// table reads it from.
+			canMutate: this.documentPermission.canMutate(row),
 			permissions: this.permissions
 		};
 	}

@@ -26,6 +26,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DocumentsActions } from '../../+state/documents.actions';
 import { findLinkEntityDescriptor } from '../../models/docs-link.model';
 import { DocsExportService } from '../../services/docs-export.service';
+import { DocumentPermissionService } from '../../services/document-permission.service';
 import { DocumentTreeStore } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
 import { UploadDuplicateNotice, UploadQueueService } from '../../services/upload-queue.service';
@@ -126,6 +127,7 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 		private readonly uploadQueue: UploadQueueService,
 		private readonly documentTreeStore: DocumentTreeStore,
 		private readonly tagsService: TagsService,
+		private readonly documentPermission: DocumentPermissionService,
 		private readonly store: Store
 	) {
 		super(translateService);
@@ -184,6 +186,18 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 
 	get isArchived(): boolean {
 		return !!(this.document as IDocument & { isArchived?: boolean })?.isArchived;
+	}
+
+	/**
+	 * Row-level ownership scope of the open document (`08-permissions-security.md` §1.7).
+	 *
+	 * 🛑 ANDed with the template's `ngxPermissionsOnly` gates, never a replacement for them: the
+	 * server rule is `DOCS_UPDATE AND (DOCS_MANAGE OR creator OR EDIT share)`, so a `DOCS_UPDATE`
+	 * holder who is not the creator was being shown edit/archive/delete on every document and
+	 * only found out from a `403 DOCS_WRITE_FORBIDDEN`.
+	 */
+	get canMutate(): boolean {
+		return this.documentPermission.canMutate(this.document);
 	}
 
 	get isSettledFile(): boolean {

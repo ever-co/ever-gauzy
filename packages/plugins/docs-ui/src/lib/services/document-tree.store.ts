@@ -17,6 +17,13 @@ export interface IDocsTreeNode {
 	isLocked?: boolean;
 	visibility?: string;
 	/**
+	 * Creator of the node — the ownership half of the write rule
+	 * (`DocumentPermissionService.canMutate`, spec 08 §1.7). Carried on the node so the tree
+	 * context menu can scope edit/move/archive/delete without re-reading the document; it is
+	 * part of the list projection (`DOCUMENT_LIST_COLUMNS`).
+	 */
+	createdByUserId?: ID | null;
+	/**
 	 * Whether the node CAN hold children — this drives the tree's expander, so it
 	 * stays a per-kind capability rather than the real count (a folder that is
 	 * empty today must still be expandable the moment something is created in it).
@@ -176,6 +183,7 @@ export class DocumentTreeStore {
 			color: doc.color,
 			isLocked: doc.isLocked,
 			visibility: doc.visibility,
+			createdByUserId: doc.createdByUserId ?? null,
 			// FILE nodes are leaves; FOLDER/PAGE may have lazily loaded children.
 			hasChildren: doc.kind !== DocumentKindEnum.FILE,
 			// Virtual columns of the list projection (`document.service.ts`), carried
