@@ -38,6 +38,15 @@
 	}
 }
 
+.docs-duplicate-notice {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-size: 0.8125rem;
+	color: var(--text-hint-color);
+	padding: 0.25rem 0;
+}
+
 .docs-review-banner {
 	border: 1px solid var(--color-warning-default);
 	border-radius: 0.375rem;

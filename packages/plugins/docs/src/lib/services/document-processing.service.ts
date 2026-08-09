@@ -140,7 +140,8 @@ export class DocumentProcessingService {
 		this.emitEvent(document, 'updated', {
 			phase: 'status',
 			previous: DocumentStatusEnum.PROCESSING,
-			next: DocumentStatusEnum.READY
+			next: DocumentStatusEnum.READY,
+			actor: 'system'
 		});
 		return true;
 	}
@@ -170,7 +171,8 @@ export class DocumentProcessingService {
 		this.emitEvent(document, 'updated', {
 			phase: 'status',
 			previous: DocumentStatusEnum.PROCESSING,
-			next: DocumentStatusEnum.FAILED
+			next: DocumentStatusEnum.FAILED,
+			actor: 'system'
 		});
 	}
 
@@ -197,7 +199,8 @@ export class DocumentProcessingService {
 		this.emitEvent(document, 'updated', {
 			phase: 'knowledge',
 			previous,
-			next: DocumentKnowledgeStatusEnum.FAILED
+			next: DocumentKnowledgeStatusEnum.FAILED,
+			actor: 'system'
 		});
 	}
 
@@ -211,7 +214,7 @@ export class DocumentProcessingService {
 			{ knowledgeStatus: next }
 		);
 		document.knowledgeStatus = next;
-		this.emitEvent(document, 'updated', { phase: 'knowledge', previous, next });
+		this.emitEvent(document, 'updated', { phase: 'knowledge', previous, next, actor: 'system' });
 	}
 
 	/**
@@ -363,7 +366,7 @@ export class DocumentProcessingService {
 			patch as any
 		);
 		document.status = patch.status;
-		this.emitEvent(document, 'updated', { phase: 'status', previous, next: patch.status });
+		this.emitEvent(document, 'updated', { phase: 'status', previous, next: patch.status, actor: 'system' });
 	}
 
 	/**

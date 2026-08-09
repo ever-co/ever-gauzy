@@ -5,6 +5,7 @@ import { IEmployee, IPagination } from '@gauzy/contracts';
 import { Employee } from './../../core/entities/internal';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { parseFindOptionsRelations } from '../../core/utils';
+import { PUBLIC_EMPLOYEE_HTML_FIELDS, sanitizePublicRichTextFields } from '../public-html-sanitizer';
 
 /**
  * Display-safe field allowlist for the public employee profile.
@@ -81,6 +82,18 @@ function applyEmployeeVisibility<T extends Partial<IEmployee>>(employee: T): T {
 	return employee;
 }
 
+/**
+ * Sanitizes the rich-text HTML this endpoint serves, on the way OUT — see
+ * `sanitizePublicRichTextFields` for why the write-path pass is not enough on an unauthenticated
+ * endpoint. Idempotent, so a row already clean round-trips byte-for-byte.
+ *
+ * @param employee - The loaded (already field-projected and visibility-filtered) employee.
+ * @returns The same employee with its HTML fields sanitized.
+ */
+function sanitizeEmployeeHtml<T extends Partial<IEmployee>>(employee: T): T {
+	return sanitizePublicRichTextFields(employee, PUBLIC_EMPLOYEE_HTML_FIELDS);
+}
+
 @Injectable()
 export class PublicEmployeeService {
 	constructor(
@@ -106,7 +119,7 @@ export class PublicEmployeeService {
 				// Restrict the response to display-safe fields only (GHSA-49ff-8859-537j).
 				select: PUBLIC_EMPLOYEE_SELECT
 			});
-			return { items: items.map(applyEmployeeVisibility), total };
+			return { items: items.map(applyEmployeeVisibility).map(sanitizeEmployeeHtml), total };
 		} catch (error) {
 			throw new BadRequestException(error, `Error while getting public employees`);
 		}
@@ -127,7 +140,7 @@ export class PublicEmployeeService {
 				// Restrict the response to display-safe fields only (GHSA-49ff-8859-537j).
 				select: PUBLIC_EMPLOYEE_SELECT
 			});
-			return applyEmployeeVisibility(employee);
+			return sanitizeEmployeeHtml(applyEmployeeVisibility(employee));
 		} catch (error) {
 			throw new NotFoundException(`The requested record was not found`);
 		}

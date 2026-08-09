@@ -4,6 +4,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EventBusModule, FeatureModule, RolePermissionModule, TenantSettingModule } from '@gauzy/core';
 import { SchedulerModule } from '@gauzy/scheduler';
+import { DocumentActivityLogSubscriber } from './activity/document-activity-log.subscriber';
 import { ChatCaptureSubscriber } from './capture/chat-capture.subscriber';
 import { isDocsQueueEnabled } from './docs.config';
 import { GenericSignedWebhookAdapter } from './capture/generic-signed-webhook.adapter';
@@ -126,7 +127,10 @@ const QUEUE_ENABLED = isDocsQueueEnabled();
 		GenericSignedWebhookAdapter,
 		{ provide: DOCS_INBOUND_EMAIL_ADAPTER, useExisting: GenericSignedWebhookAdapter },
 		InboundEmailService,
-		ChatCaptureSubscriber
+		ChatCaptureSubscriber,
+		// R-COL-03: turns every `DocumentEvent` into an activity-log entry through the platform's
+		// own `ActivityLogService` (both modules it needs are `@Global()` in core, so no import).
+		DocumentActivityLogSubscriber
 	],
 	exports: [
 		...Services,
@@ -140,7 +144,8 @@ const QUEUE_ENABLED = isDocsQueueEnabled();
 		RetrievalLogService,
 		DOCS_RETRIEVAL_LOG,
 		InboundEmailService,
-		ChatCaptureSubscriber
+		ChatCaptureSubscriber,
+		DocumentActivityLogSubscriber
 	]
 })
 export class DocsModule implements OnModuleInit, OnModuleDestroy {

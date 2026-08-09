@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
-import { ID, PermissionsEnum } from '@gauzy/contracts';
+import { ID, ITag, PermissionsEnum } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DOCS_BULK_MAX_IDS, DOCS_BULK_MAX_INLINE_ERRORS } from '../../docs.constants';
@@ -17,6 +17,7 @@ const DOCS_DESTRUCTIVE_BULK_ACTIONS: DocumentBulkAction[] = [
 	'REVIEW_APPROVE',
 	'REVIEW_REJECT'
 ];
+import { BulkCategoriesDialogComponent } from '../../dialogs/bulk-categories-dialog.component';
 import { MoveDialogComponent } from '../../dialogs/move-dialog.component';
 import { RejectDialogComponent } from '../../dialogs/reject-dialog.component';
 import { DocumentsService } from '../../services/documents.service';
@@ -44,7 +45,15 @@ export class BulkBarComponent extends TranslationBaseComponent {
 	public busy = false;
 	public errors: IDocumentBulkResultItem[] = [];
 	public errorsExpanded = false;
-	public tagsInput = '';
+	/**
+	 * Tags for the add/remove actions, picked with the platform tag control.
+	 *
+	 * 🛑 The bulk endpoint takes **tag ids**, and this used to be a free-text box
+	 * whose comma-separated words were sent as `tagIds` — every id was bogus, so
+	 * the call either no-opped or failed per id. Ids can only come from a real
+	 * picker.
+	 */
+	public tags: ITag[] = [];
 
 	public readonly permissions = PermissionsEnum;
 	public readonly maxIds = DOCS_BULK_MAX_IDS;
@@ -119,14 +128,27 @@ export class BulkBarComponent extends TranslationBaseComponent {
 		if (moved) this.completed.emit({ destructive: true });
 	}
 
+	/**
+	 * Bulk "Set categories" (`R-BLK-01`). The dialog carries the REPLACE warning;
+	 * an empty array is a deliberate "clear them all", so only a cancelled dialog
+	 * (`null`) skips the call.
+	 */
+	async setCategories(): Promise<void> {
+		const categoryIds: ID[] | null = await firstValueFrom(
+			this.dialogService.open(BulkCategoriesDialogComponent).onClose
+		);
+		if (!categoryIds) return;
+		await this.run('SET_CATEGORIES', { categoryIds });
+	}
+
 	addTags(): void {
-		const tags = this.parseTags();
-		if (tags.length) void this.run('ADD_TAGS', { tagIds: tags });
+		const tagIds = this.selectedTagIds();
+		if (tagIds.length) void this.run('ADD_TAGS', { tagIds });
 	}
 
 	removeTags(): void {
-		const tags = this.parseTags();
-		if (tags.length) void this.run('REMOVE_TAGS', { tagIds: tags });
+		const tagIds = this.selectedTagIds();
+		if (tagIds.length) void this.run('REMOVE_TAGS', { tagIds });
 	}
 
 	async copyReport(): Promise<void> {
@@ -139,10 +161,7 @@ export class BulkBarComponent extends TranslationBaseComponent {
 		}
 	}
 
-	private parseTags(): string[] {
-		return this.tagsInput
-			.split(',')
-			.map((value) => value.trim())
-			.filter((value) => !!value);
+	private selectedTagIds(): ID[] {
+		return (this.tags ?? []).map((tag) => tag.id as ID).filter((id) => !!id);
 	}
 }

@@ -1,7 +1,9 @@
 import { createHash } from 'crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { DocumentKnowledgeStatusEnum } from '@gauzy/contracts';
+import { DOCS_FEATURE_DISABLED_PARK_DELAY_MS } from '../../docs.constants';
 import { Document } from '../../entities/document.entity';
+import { DocsFeatureService } from '../../services/docs-feature.service';
 import { DocumentProcessingService } from '../../services/document-processing.service';
 import { DocumentClassifierService } from '../classification/document-classifier.service';
 import { DocumentIndexService } from '../indexing/document-index.service';
@@ -66,7 +68,8 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 		private readonly recoveryService: DocsRecoveryService,
 		private readonly classifierService: DocumentClassifierService,
 		private readonly documentIndexService: DocumentIndexService,
-		private readonly thumbnailService: DocumentThumbnailService
+		private readonly thumbnailService: DocumentThumbnailService,
+		private readonly docsFeatureService: DocsFeatureService
 	) {}
 
 	/**
@@ -75,10 +78,16 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 	 * Rejections propagate — the BullMQ path needs them to drive its retry/backoff policy.
 	 * Inline callers use {@link runStageSafely} instead.
 	 *
+	 * Every document-bearing stage passes the `FEATURE_DOCUMENTS` gate first: with the feature
+	 * off for the job's tenant the stage is parked (re-queued with a delay), not processed.
+	 *
 	 * @param jobName A `DOCS_JOB_*` constant.
 	 * @param job The stage job (BullMQ-backed or synthetic).
 	 */
 	public async runStage(jobName: string, job: IDocsStageJob): Promise<void> {
+		if (await this.parkWhileFeatureDisabled(jobName, job)) {
+			return;
+		}
 		switch (jobName) {
 			case DOCS_JOB_EXTRACT:
 				return this.handleExtract(job as IDocsStageJob<IDocsExtractJob>);
@@ -287,6 +296,52 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 	public async handleReconcile(job: IDocsStageJob<IDocsReconcileJob>): Promise<void> {
 		this.logger.log(`Reconcile sweep requested at ${job.data?.requestedAt ?? 'unknown'}`);
 		await this.recoveryService.runScan('reconcile');
+	}
+
+	/**
+	 * The `FEATURE_DOCUMENTS` gate of the pipeline.
+	 *
+	 * The REST layer refuses every route with `FeatureFlagGuard` the moment an admin turns the
+	 * feature off, but jobs enqueued while it was on keep flowing — and the reconcile sweep keeps
+	 * re-driving stale rows. So a stage whose tenant has the feature disabled is **parked**: the
+	 * exact same job is re-queued `DOCS_FEATURE_DISABLED_PARK_DELAY_MS` later (run-unique id, so
+	 * a retained completed job cannot swallow it) and the handler returns without touching the
+	 * document. Nothing is dropped and nothing is dead-lettered, so re-enabling the feature
+	 * resumes every parked document by itself.
+	 *
+	 * `docs.reconcile` is exempt — it carries no document and no tenant snapshot, and its own
+	 * per-document enqueues go through this gate anyway.
+	 *
+	 * @param jobName A `DOCS_JOB_*` constant.
+	 * @param job The stage job.
+	 * @returns True when the stage was parked and must not run.
+	 */
+	private async parkWhileFeatureDisabled(jobName: string, job: IDocsStageJob): Promise<boolean> {
+		const payload = job?.data as IDocsJobBase | undefined;
+		if (jobName === DOCS_JOB_RECONCILE || !payload?.documentId || !payload?.tenantId) {
+			return false;
+		}
+		if (await this.docsFeatureService.isEnabledFor(payload.tenantId, payload.organizationId)) {
+			return false;
+		}
+
+		this.logger.log(
+			`${jobName} parked for document ${payload.documentId} — FEATURE_DOCUMENTS is disabled for ` +
+				`tenant ${payload.tenantId}; re-queued in ${DOCS_FEATURE_DISABLED_PARK_DELAY_MS}ms.`
+		);
+		try {
+			await this.docsQueueService.enqueue(jobName, this.baseOf(payload), {
+				delay: DOCS_FEATURE_DISABLED_PARK_DELAY_MS,
+				jobId: `${this.docsQueueService.jobIdFor(jobName, payload.documentId)}:parked:${Date.now()}`
+			});
+		} catch (error) {
+			// Losing the re-queue costs a wait, not the document: the recovery sweep re-drives
+			// stale rows once the feature is back on.
+			this.logger.warn(
+				`Could not park ${jobName} for document ${payload.documentId}: ${(error as Error).message}`
+			);
+		}
+		return true;
 	}
 
 	/**

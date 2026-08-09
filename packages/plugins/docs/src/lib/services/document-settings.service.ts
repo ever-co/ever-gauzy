@@ -5,6 +5,8 @@ import { RequestContext, TenantSettingService } from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
 import { DOCS_SETTING_PREFIX, DOCS_SETTING_QUOTA_BYTES } from '../docs.constants';
 import { DocumentSettingsDTO, IDocumentSettings, IDocumentSettingsDefaults } from '../dto/document-settings.dto';
+import { VECTOR_STORE_LEXICAL } from '../knowledge/knowledge.constants';
+import { DocumentVectorStoreRegistry } from '../knowledge/vector-store/vector-store.registry';
 import { DocumentQuotaService } from './document-quota.service';
 import { resolveQuotaBytes } from './quota.calculator';
 
@@ -48,9 +50,10 @@ export class DocumentSettingsService {
 	 * @returns The settings envelope.
 	 */
 	async getSettings(organizationId: ID): Promise<IDocumentSettings> {
-		const [defaults, quota] = await Promise.all([
+		const [defaults, quota, vectorSearch] = await Promise.all([
 			this.getDefaults(organizationId),
-			this.documentQuotaService.getQuotaState(organizationId)
+			this.documentQuotaService.getQuotaState(organizationId),
+			this.isVectorSearchAvailable()
 		]);
 		const config = getDocsConfig();
 
@@ -58,9 +61,7 @@ export class DocumentSettingsService {
 			defaults,
 			capabilities: {
 				aiEnabled: config.aiEnabled,
-				// pgvector capability probing arrives with the knowledge service (M3);
-				// until then the deployment honestly reports lexical-only.
-				vectorSearch: false,
+				vectorSearch,
 				embeddingModel: config.embeddingModel,
 				maxFileSize: config.maxFileSize,
 				acceptedTypes: DOCS_ACCEPTED_TYPES,
@@ -100,6 +101,29 @@ export class DocumentSettingsService {
 		}
 
 		return this.getSettings(organizationId);
+	}
+
+	/**
+	 * Whether this deployment can actually answer a *vector* similarity query — i.e. the store
+	 * the registry would resolve right now is a vector store, not the lexical floor.
+	 *
+	 * Deliberately resolved rather than probed provider-by-provider: `GAUZY_DOCS_VECTOR_STORE`
+	 * can pin a third-party store, and an unavailable pgvector falls through to `lexical`. The
+	 * capability block has to report what retrieval will really do, so it asks the same
+	 * `resolve()` the retrieval path asks (`false` ⇒ lexical-only degradation, per the spec's
+	 * "pgvector available" line).
+	 *
+	 * @returns True when the resolved store is vector-capable.
+	 */
+	private async isVectorSearchAvailable(): Promise<boolean> {
+		try {
+			const store = await DocumentVectorStoreRegistry.resolve();
+			return Boolean(store) && store.id !== VECTOR_STORE_LEXICAL;
+		} catch (error) {
+			// A capability probe must never fail the settings read — report the honest floor.
+			this.logger.warn(`Vector-search capability probe failed: ${(error as Error).message}`);
+			return false;
+		}
 	}
 
 	/**

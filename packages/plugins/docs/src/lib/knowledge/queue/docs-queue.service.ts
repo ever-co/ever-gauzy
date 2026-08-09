@@ -102,7 +102,7 @@ export class DocsQueueService implements OnModuleInit {
 		const jobId = (options.jobId as string) ?? this.jobIdFor(jobName, payload.documentId);
 
 		if (!this.schedulerQueueService) {
-			return this.dispatchInline(jobName, payload, jobId);
+			return this.dispatchInline(jobName, payload, jobId, Number(options.delay) || 0);
 		}
 
 		try {
@@ -136,7 +136,7 @@ export class DocsQueueService implements OnModuleInit {
 					'docs-processing dispatch mode: degrading to INLINE — the configured queue rejected an enqueue.'
 				);
 			}
-			return this.dispatchInline(jobName, payload, jobId);
+			return this.dispatchInline(jobName, payload, jobId, Number(options.delay) || 0);
 		}
 	}
 
@@ -156,10 +156,21 @@ export class DocsQueueService implements OnModuleInit {
 	 * reprocess, reindex) which must return as soon as the work is accepted, exactly as it
 	 * does when the job goes to Redis.
 	 *
+	 * `delayMs` is the inline stand-in for BullMQ's `delay` option — without it, a caller that
+	 * parks a stage (the `FEATURE_DOCUMENTS` gate re-queuing itself) would re-dispatch on the
+	 * very next tick and spin. The timer is `unref`'d so a parked stage never holds the process
+	 * open, and the in-flight guard stays claimed for the whole wait so the parked stage cannot
+	 * pile up behind itself.
+	 *
 	 * @returns True — accepted. (A coalesced duplicate is also "accepted": the stage is
 	 *          already running for that document.)
 	 */
-	private dispatchInline<T extends IDocsJobBase>(jobName: string, payload: T, jobId: string): boolean {
+	private dispatchInline<T extends IDocsJobBase>(
+		jobName: string,
+		payload: T,
+		jobId: string,
+		delayMs = 0
+	): boolean {
 		// `docs.reconcile` carries no document; key the guard on the stage alone.
 		const key = payload?.documentId ? this.jobIdFor(jobName, payload.documentId) : jobName;
 
@@ -173,14 +184,20 @@ export class DocsQueueService implements OnModuleInit {
 
 		this.logger.log(
 			`Dispatching ${jobName} inline for document ${payload?.documentId ?? 'n/a'} ` +
-				`(tenant ${payload?.tenantId}, reason ${payload?.reason})`
+				`(tenant ${payload?.tenantId}, reason ${payload?.reason}` +
+				`${delayMs > 0 ? `, delayed ${delayMs}ms` : ''})`
 		);
 
-		// `setImmediate` (not `await`) so the request path returns straight away; `void` marks
-		// the deliberate floating promise — `runInline` never rejects.
-		setImmediate(() => {
+		// `setImmediate`/`setTimeout` (not `await`) so the request path returns straight away;
+		// `void` marks the deliberate floating promise — `runInline` never rejects.
+		const run = () => {
 			void this.runInline(jobName, payload, jobId, key);
-		});
+		};
+		if (delayMs > 0) {
+			setTimeout(run, delayMs).unref?.();
+		} else {
+			setImmediate(run);
+		}
 		return true;
 	}
 

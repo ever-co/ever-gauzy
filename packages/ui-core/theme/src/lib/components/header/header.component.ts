@@ -1209,6 +1209,36 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							}
 						}
 					]
+				: []),
+			// Divider (Documents) — `@gauzy/plugin-docs-ui`, `01-ux-spec.md` §1. Both entries
+			// are one-shot deep links the hub consumes and strips from the URL on arrival;
+			// the hub's own route guards re-check the feature flag, so a tenant without
+			// FEATURE_DOCUMENTS lands back on /pages rather than on a broken screen.
+			...(this.store.hasPermission(PermissionsEnum.DOCS_CREATE)
+				? [
+						{
+							title: this.getTranslation('QUICK_ACTIONS_MENU.DOCUMENTS.NEW_PAGE'),
+							icon: 'file-add-outline',
+							link: 'pages/documents',
+							queryParams: {
+								newPage: 1
+							},
+							data: {
+								action: 'newDocumentPage'
+							}
+						},
+						{
+							title: this.getTranslation('QUICK_ACTIONS_MENU.DOCUMENTS.UPLOAD'),
+							icon: 'upload-outline',
+							link: 'pages/documents',
+							queryParams: {
+								upload: 1
+							},
+							data: {
+								action: 'uploadDocuments'
+							}
+						}
+					]
 				: [])
 		];
 	}

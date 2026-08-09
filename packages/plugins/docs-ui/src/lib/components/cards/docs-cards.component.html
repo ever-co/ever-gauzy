@@ -112,6 +112,22 @@
 				>
 					<nb-icon icon="external-link-outline"></nb-icon>
 				</button>
+				<!-- Row actions kebab (`01-ux-spec.md` §4.2: "kebab with the same row
+				     actions"), built by the same builder as the table column and the
+				     tree context menu. -->
+				<button
+					*ngIf="menuItemsFor(doc).length"
+					nbButton
+					ghost
+					size="tiny"
+					class="docs-card-open docs-card-actions"
+					[nbContextMenu]="menuItemsFor(doc)"
+					[nbContextMenuTag]="menuTag(doc)"
+					(click)="$event.stopPropagation()"
+					[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
+				>
+					<nb-icon icon="more-horizontal-outline"></nb-icon>
+				</button>
 			</div>
 			<div class="docs-card-badges">
 				<gz-docs-status-badge *ngIf="doc.kind === kindEnum.FILE" [rowData]="doc"></gz-docs-status-badge>

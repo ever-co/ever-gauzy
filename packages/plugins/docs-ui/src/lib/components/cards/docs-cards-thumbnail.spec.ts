@@ -3,6 +3,20 @@
  * `TranslationBaseComponent` to exist so the class can be constructed directly (no `TestBed`,
  * no Angular module graph) — same reason as `components/filter-bar/content-search-min.spec.ts`.
  */
+/**
+ * `@gauzy/ui-core/core` is a barrel over the whole app core. `DocsCardsComponent` reaches it
+ * through `DocsRowActionsService`, and loading it for real drags unrelated services (and their
+ * untranspiled ESM dependencies) into the CommonJS test runtime — which fails the suite at LOAD
+ * time, so it reads as "no tests here" rather than "coverage is zero". Same stub-the-injected-
+ * shapes approach as `components/actions/docs-row-actions.spec.ts`.
+ */
+jest.mock('@gauzy/ui-core/core', () => ({
+	Store: class Store {},
+	ToastrService: class ToastrService {},
+	FavoriteStoreService: class FavoriteStoreService {},
+	GenericFavoriteService: class GenericFavoriteService {}
+}));
+
 jest.mock('@gauzy/ui-core/i18n', () => ({
 	TranslationBaseComponent: class {
 		constructor(public readonly translateService: unknown) {}

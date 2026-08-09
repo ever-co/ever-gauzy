@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
-import { DocumentKindEnum, ID, IDocument } from '@gauzy/contracts';
+import { DocumentKindEnum, DocumentKnowledgeStatusEnum, ID, IDocument } from '@gauzy/contracts';
 import { DocumentsService } from './documents.service';
 
 /** Children fetched per branch — the query DTO caps `take` at 100. */
@@ -16,7 +16,18 @@ export interface IDocsTreeNode {
 	color?: string;
 	isLocked?: boolean;
 	visibility?: string;
+	/**
+	 * Whether the node CAN hold children — this drives the tree's expander, so it
+	 * stays a per-kind capability rather than the real count (a folder that is
+	 * empty today must still be expandable the moment something is created in it).
+	 * The real count is `childrenCount`.
+	 */
 	hasChildren: boolean;
+	/** Real child count from the list projection — drives the delete subtree prompt. */
+	childrenCount?: number;
+	/** Decides whether the context menu offers "Add to"/"Exclude from" AI knowledge. */
+	knowledgeStatus?: DocumentKnowledgeStatusEnum;
+	isArchived?: boolean;
 	children?: IDocsTreeNode[];
 }
 
@@ -166,7 +177,13 @@ export class DocumentTreeStore {
 			isLocked: doc.isLocked,
 			visibility: doc.visibility,
 			// FILE nodes are leaves; FOLDER/PAGE may have lazily loaded children.
-			hasChildren: doc.kind !== DocumentKindEnum.FILE
+			hasChildren: doc.kind !== DocumentKindEnum.FILE,
+			// Virtual columns of the list projection (`document.service.ts`), carried
+			// so the context menu does not have to re-read the document to decide
+			// what it may offer.
+			childrenCount: (doc as IDocument & { childrenCount?: number }).childrenCount,
+			knowledgeStatus: doc.knowledgeStatus,
+			isArchived: doc.isArchived
 		};
 	}
 

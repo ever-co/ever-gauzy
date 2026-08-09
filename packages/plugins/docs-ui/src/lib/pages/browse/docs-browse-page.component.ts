@@ -1,12 +1,19 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
+import { NbDialogService, NbMenuItem, NbMenuService, NbToastrService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs/operators';
-import { ComponentLayoutStyleEnum, DocumentKindEnum, ID, IDocument, PermissionsEnum } from '@gauzy/contracts';
+import { debounceTime, distinctUntilChanged, filter, take, tap } from 'rxjs/operators';
+import {
+	ComponentLayoutStyleEnum,
+	DocumentKindEnum,
+	DocumentReviewStatusEnum,
+	ID,
+	IDocument,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
@@ -17,18 +24,21 @@ import {
 	DOCS_CARDS_PAGE_SIZE,
 	DOCS_DEFAULT_PAGE_SIZE,
 	DOCS_PREVIEW_DIALOG_CONFIG,
+	DOCS_REVIEW_TOAST_DURATION_MS,
 	DOCS_SEARCH_DEBOUNCE_MS,
 	DOCS_UPLOAD_ACCEPT
 } from '../../docs.constants';
 import { IDocsCardsCrumb } from '../../components/cards/docs-cards.component';
 import { DocsPreviewModalComponent } from '../../components/preview/docs-preview-modal.component';
-import { ClassificationDialogComponent } from '../../dialogs/classification-dialog.component';
+import {
+	ClassificationDialogComponent,
+	IDocsUploadDialogResult
+} from '../../dialogs/classification-dialog.component';
 import { CreateDialogComponent } from '../../dialogs/create-dialog.component';
 import {
 	ILegacyImportDialogResult,
 	LegacyImportDialogComponent
 } from '../../dialogs/legacy-import-dialog.component';
-import { IDocumentUploadOptions } from '../../models/docs-api.model';
 import {
 	createInitialDocsFilterState,
 	DocsFilterState,
@@ -95,6 +105,9 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 		private readonly dialogService: NbDialogService,
 		private readonly nbMenuService: NbMenuService,
 		private readonly toastrService: ToastrService,
+		// Only the review handoff toast needs the raw Nebular service — see
+		// `notifyIfNeedsReview()`; everything else goes through `toastrService`.
+		private readonly nbToastrService: NbToastrService,
 		private readonly store: Store
 	) {
 		super(translateService);
@@ -179,6 +192,12 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 					break;
 			}
 		});
+
+		// 8b) A single upload that finishes READY but PENDING review gets an actionable
+		//     toast straight to the review queue (§7.3).
+		this.uploadQueue.documentReady$
+			.pipe(untilDestroyed(this))
+			.subscribe((document) => this.notifyIfNeedsReview(document));
 
 		this.canManage = this.store.hasPermission(PermissionsEnum.DOCS_MANAGE);
 
@@ -468,16 +487,40 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 			);
 			return;
 		}
-		// Classification dialog (skippable — cancel aborts, defaults path uploads as-is).
-		const options: IDocumentUploadOptions | null = await firstValueFrom(
+		// Upload & classify dialog (§7.2). It owns the batch from here: the user can
+		// drop individual files in it, so the *dialog's* list is what gets enqueued —
+		// never the originally picked one.
+		const result: IDocsUploadDialogResult | null = await firstValueFrom(
 			this.dialogService.open(ClassificationDialogComponent, {
-				context: { parentId: this.pendingUploadFolder ?? this.documentsQuery.folderId }
+				context: { files, parentId: this.pendingUploadFolder ?? this.documentsQuery.folderId }
 			}).onClose
 		);
 		this.pendingUploadFolder = null;
-		if (!options) return;
-		this.uploadQueue.enqueue(files, options);
+		if (!result?.files?.length) return;
+		this.uploadQueue.enqueue(result.files, result.options);
 		this.toastrService.info(this.getTranslation('DOCS.TOASTS.UPLOAD_STARTED'), '');
+	}
+
+	/**
+	 * Single-file upload that lands READY but PENDING review (`01-ux-spec.md` §7.3).
+	 *
+	 * The toast IS the action — clicking it opens the review queue — which is why it
+	 * goes through `NbToastrService` directly: the shared `ToastrService` wrapper
+	 * returns void and drops the `NbToastRef` this needs. Restricted to single-file
+	 * batches so a ten-file drop cannot raise ten toasts.
+	 */
+	private notifyIfNeedsReview(document: IDocument): void {
+		if (document?.reviewStatus !== DocumentReviewStatusEnum.PENDING) return;
+		if (!this.uploadQueue.isSingleFileUpload(document.id as ID)) return;
+		const toastRef = this.nbToastrService.warning(
+			this.getTranslation('DOCS.TOASTS.UPLOADED_NEEDS_REVIEW'),
+			this.getTranslation('DOCS.TOASTS.UPLOADED_NEEDS_REVIEW_ACTION'),
+			{ duration: DOCS_REVIEW_TOAST_DURATION_MS, destroyByClick: true }
+		);
+		toastRef
+			.onClick()
+			.pipe(take(1), untilDestroyed(this))
+			.subscribe(() => this.goToReviewQueue());
 	}
 
 	async openNewPageDialog(): Promise<void> {

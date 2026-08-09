@@ -20,6 +20,12 @@ export { EVER_REDIS_CLIENT, RedisModule } from './lib/redis';
 export * from './lib/shared';
 
 export { PasswordHashModule, PasswordHashService } from './lib/password-hash';
+// `ActivityLogModule` and `MentionModule` are `@Global()`, so a plugin can inject these services
+// without importing either module — but it still needs the classes as DI tokens/types. Exporting
+// them is what lets a plugin write its own activity-log timeline and @mention fan-out through the
+// platform mechanisms instead of re-implementing them.
+export { ActivityLogService } from './lib/activity-log/activity-log.service';
+export { MentionService } from './lib/mention/mention.service';
 // `FeatureFlagGuard` is public API (exported from `./lib/shared`), so the module that provides
 // its `FeatureService` dependency has to be public too — otherwise any plugin whose controllers
 // carry `@UseGuards(..., FeatureFlagGuard)` cannot satisfy it and the whole API fails to

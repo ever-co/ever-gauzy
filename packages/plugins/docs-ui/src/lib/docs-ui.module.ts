@@ -15,6 +15,7 @@ import {
 	NbInputModule,
 	NbPopoverModule,
 	NbProgressBarModule,
+	NbRadioModule,
 	NbSelectModule,
 	NbSpinnerModule,
 	NbToggleModule,
@@ -41,11 +42,13 @@ import { DocumentsEffects } from './+state/documents.effects';
 import { DocumentsQuery } from './+state/documents.query';
 import { DocumentsStore } from './+state/documents.store';
 import { BulkBarComponent } from './components/bulk/bulk-bar.component';
+import { DocsRowActionsService } from './components/actions/docs-row-actions.service';
 import { DocsCardsComponent } from './components/cards/docs-cards.component';
 import { CommentComposerComponent } from './components/comments/comment-composer.component';
 import { DocumentCommentsComponent } from './components/comments/document-comments.component';
 import { DocsDetailPanelComponent } from './components/detail/docs-detail-panel.component';
 import { EmptyStateComponent } from './components/empty/empty-state.component';
+import { DocsFolderPickerComponent } from './components/folder-picker/docs-folder-picker.component';
 import { FacetMultiselectComponent } from './components/filter-bar/facet-multiselect.component';
 import { DocsFilterBarComponent } from './components/filter-bar/docs-filter-bar.component';
 import { PresetChipsComponent } from './components/filter-bar/preset-chips.component';
@@ -58,17 +61,20 @@ import { KnowledgeBadgeComponent } from './components/table/cells/knowledge-badg
 import { NameCellComponent } from './components/table/cells/name-cell.component';
 import { SourceBadgeComponent } from './components/table/cells/source-badge.component';
 import { StatusBadgeComponent } from './components/table/cells/status-badge.component';
+import { RowActionsComponent } from './components/table/cells/row-actions.component';
 import { TagChipsComponent } from './components/table/cells/tag-chips.component';
 import { DocsTableComponent } from './components/table/docs-table.component';
 import { DocsTreeComponent } from './components/tree/docs-tree.component';
 import { UploadDropzoneDirective } from './components/upload/upload-dropzone.directive';
 import { UploadProgressComponent } from './components/upload/upload-progress.component';
+import { BulkCategoriesDialogComponent } from './dialogs/bulk-categories-dialog.component';
 import { ClassificationDialogComponent } from './dialogs/classification-dialog.component';
 import { CreateDialogComponent } from './dialogs/create-dialog.component';
 import { ExtractedTextDialogComponent } from './dialogs/extracted-text-dialog.component';
 import { LegacyImportDialogComponent } from './dialogs/legacy-import-dialog.component';
 import { LegacyImportService } from './dialogs/legacy-import.service';
 import { DocumentLinkDialogComponent } from './dialogs/link-dialog.component';
+import { DocsDeleteDialogComponent } from './dialogs/delete-dialog.component';
 import { MoveDialogComponent } from './dialogs/move-dialog.component';
 import { RejectDialogComponent } from './dialogs/reject-dialog.component';
 import { RequestReviewDialogComponent } from './dialogs/request-review-dialog.component';
@@ -104,6 +110,7 @@ import { UploadQueueService } from './services/upload-queue.service';
 		SourceBadgeComponent,
 		CategoryChipsComponent,
 		TagChipsComponent,
+		RowActionsComponent,
 		DocsFilterBarComponent,
 		PresetChipsComponent,
 		SavedViewsComponent,
@@ -115,11 +122,14 @@ import { UploadQueueService } from './services/upload-queue.service';
 		CommentComposerComponent,
 		BulkBarComponent,
 		EmptyStateComponent,
+		DocsFolderPickerComponent,
+		BulkCategoriesDialogComponent,
 		ClassificationDialogComponent,
 		CreateDialogComponent,
 		ExtractedTextDialogComponent,
 		LegacyImportDialogComponent,
 		MoveDialogComponent,
+		DocsDeleteDialogComponent,
 		RejectDialogComponent,
 		RequestReviewDialogComponent,
 		DocumentShareDialogComponent,
@@ -144,6 +154,7 @@ import { UploadQueueService } from './services/upload-queue.service';
 		NbInputModule,
 		NbPopoverModule,
 		NbProgressBarModule,
+		NbRadioModule,
 		NbSelectModule,
 		NbSpinnerModule,
 		NbToggleModule,
@@ -175,6 +186,7 @@ import { UploadQueueService } from './services/upload-queue.service';
 		DocumentTreeStore,
 		UploadQueueService,
 		DocsExportService,
+		DocsRowActionsService,
 		DocsSavedViewsService,
 		LegacyImportService
 	]

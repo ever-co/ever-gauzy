@@ -152,6 +152,22 @@ export const DOCS_JOB_REMOVE_ON_COMPLETE = 500;
 export const DOCS_JOB_REMOVE_ON_FAIL = 1000;
 
 /**
+ * How long a resolved `FEATURE_DOCUMENTS` answer is memoized per tenant/organization, so a burst
+ * of pipeline stages costs one flag lookup instead of one per stage. Short on purpose: turning
+ * the feature back on should un-park the pipeline within a minute, not a deploy.
+ */
+export const DOCS_FEATURE_CACHE_TTL_MS = 60_000;
+
+/**
+ * How long a pipeline stage is parked when `FEATURE_DOCUMENTS` is disabled for its tenant.
+ *
+ * 🛑 The stage is **re-queued with this delay, never dropped**. A document that was mid-pipeline
+ * when an admin turned the feature off must resume — not silently stay `UPLOADED` forever — the
+ * moment it is turned back on. One delayed job per stage+document is the whole cost of waiting.
+ */
+export const DOCS_FEATURE_DISABLED_PARK_DELAY_MS = 900_000; // 15 minutes
+
+/**
  * Startup-recovery / reconcile sweep timing (§7.5 of the backend spec).
  */
 export const DOCS_RECOVERY_STARTUP_DELAY_MS = 15_000; // settle delay after boot

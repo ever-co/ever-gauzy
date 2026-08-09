@@ -21,9 +21,16 @@ export class UnarchiveDocumentHandler implements ICommandHandler<UnarchiveDocume
 	public async execute(command: UnarchiveDocumentCommand): Promise<IDocument> {
 		const document = await this.documentService.findOneScoped(command.id);
 		await this.documentService.assertCanWrite(document);
+		const wasArchived = document.isArchived === true;
 		await this.documentTreeService.unarchiveSubtree(document);
 		const unarchived = await this.documentService.findOneScoped(command.id);
-		this.documentService.emitDocumentEvent(unarchived, 'updated');
+		// `field` + before/after so the activity timeline records the unarchive (R-COL-03).
+		this.documentService.emitDocumentEvent(unarchived, 'updated', {
+			phase: 'crud',
+			field: 'isArchived',
+			previous: String(wasArchived),
+			next: String(unarchived.isArchived === true)
+		});
 		return unarchived;
 	}
 }
