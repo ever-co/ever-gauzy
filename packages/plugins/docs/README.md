@@ -33,7 +33,8 @@ error, not a silent DOM fallback.
 | `GAUZY_DOCS_CLASSIFY_MODEL` | *(chat default)* | Classification model id |
 | `GAUZY_DOCS_VERSION_DEBOUNCE_MINUTES` | `10` | Server-side debounce window for PAGE version snapshots |
 | `GAUZY_DOCS_QUEUE_CONCURRENCY` | `2` | `docs-processing` worker concurrency per process (queued mode only) |
-| `GAUZY_DOCS_QUEUE_ENABLED` | *(follows `REDIS_ENABLED`)* | Register the BullMQ queue + worker host. Off ⇒ the pipeline runs **inline** |
+| `GAUZY_DOCS_QUEUE_ENABLED` | *(follows `isSchedulerQueueRootEnabled()`)* | Register the BullMQ queue. Off ⇒ the pipeline runs **inline** |
+| `GAUZY_DOCS_QUEUE_WORKER_ENABLED` | `true` | Also run the `docs-processing` consumer here. Set `false` on the API when a dedicated `apps/worker` is deployed |
 
 ## Pipeline dispatch: queued vs inline
 
@@ -41,11 +42,16 @@ The `extract → classify → chunk → embed → index` pipeline has **one** de
 (`DocsPipelineService`) and **two** dispatchers:
 
 - **Queued** — `DocsProcessingWorker`, the BullMQ worker host. Requires a `@gauzy/scheduler` root
-  (`SchedulerModule.forRoot({ enableQueueing: true })`) in the process, which today only
-  `apps/worker` imports. Jobs get `attempts: 3` with exponential backoff from a 120 s base and a
-  deterministic `docs:<stage>:<documentId>` job id, so duplicate triggers coalesce in Redis.
+  (`SchedulerModule.forRoot({ enableQueueing: true })`) in the process. Every process that loads
+  the plugin list registers one under the same condition — `@gauzy/core`'s `AppModule` (the API)
+  and `SeederModule.forPlugins()` (the `yarn seed` CLI) register a **producer-only** root
+  (`{ enabled: false, enableQueueing: true }` — queueing on, cron off), and `apps/worker`
+  registers both halves because it also consumes. Jobs get `attempts: 3` with exponential backoff
+  from a 120 s base and a deterministic `docs:<stage>:<documentId>` job id, so duplicate triggers
+  coalesce in Redis.
 - **Inline** — `DocsQueueService` runs the same stage handlers **in-process on a background task**
-  when no scheduler root is present (the API), so the HTTP request is never blocked. Inline runs get
+  when no scheduler root is present (any deployment without Redis: single-container, dev, or
+  `SCHEDULER_QUEUE_ENABLED=false`), so the HTTP request is never blocked. Inline runs get
   a single immediate attempt; a failure dead-letters onto the document row (`FAILED` +
   `statusMessage`) exactly like the queue's final attempt, and an in-flight guard keyed on
   `docs:<stage>:<documentId>` stops a duplicate trigger from running the same stage twice at once.
@@ -53,6 +59,13 @@ The `extract → classify → chunk → embed → index` pipeline has **one** de
 `SchedulerQueueService` is injected `@Optional()` for exactly this reason — a required dependency
 made the whole API fail to bootstrap the moment this plugin was registered. The active mode is
 logged once at startup by `DocsQueueService` (`docs-processing dispatch mode: QUEUED|INLINE`).
+
+### Turning it off
+
+`SCHEDULER_QUEUE_ENABLED=false` removes the BullMQ root from every process at once and puts the
+whole fleet back on the inline path; `GAUZY_DOCS_QUEUE_ENABLED=false` does the same for this
+plugin alone. Either is a safe, reversible rollback — inline dispatch is a supported mode, not a
+degraded one.
 
 ## Building
 
