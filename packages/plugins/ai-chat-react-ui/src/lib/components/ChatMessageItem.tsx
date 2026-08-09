@@ -21,11 +21,14 @@ import { chatTheme } from '../chat-theme';
  */
 function UserAttachmentChips({
 	attachments,
-	onOpen
+	onOpen,
+	translate
 }: {
 	attachments: IStagedAttachment[];
 	onOpen?: (citation: IDocsCitation) => void;
+	translate?: (key: string, fallback: string) => string;
 }) {
+	const t = translate ?? ((_key: string, fallback: string) => fallback);
 	const chipStyle: CSSProperties = {
 		display: 'inline-flex',
 		alignItems: 'center',
@@ -51,10 +54,16 @@ function UserAttachmentChips({
 						type="button"
 						style={{ ...chipStyle, cursor: 'pointer', font: 'inherit', fontSize: chatTheme.fontSizeSmall }}
 						title={attachment.name}
+						aria-label={t('AI_ASSISTANT.ATTACH_OPEN', 'Open attached document') + `: ${attachment.name}`}
 						onClick={() =>
 							onOpen({
 								documentId: attachment.documentId!,
-								url: `/pages/documents?id=${attachment.documentId}`,
+								// Same deep-link split the server's citation chips use: a PAGE opens
+								// at its editor route, everything else in the file browser.
+								url:
+									attachment.kind === 'PAGE'
+										? `/pages/documents/page/${attachment.documentId}`
+										: `/pages/documents?id=${attachment.documentId}`,
 								name: attachment.name
 							})
 						}
@@ -142,6 +151,7 @@ export function ChatMessageItem({
 									<UserAttachmentChips
 										attachments={attachmentView.attachments}
 										{...(onOpenCitation ? { onOpen: onOpenCitation } : {})}
+										{...(translate ? { translate } : {})}
 									/>
 									{attachmentView.text ? (
 										<span style={{ whiteSpace: 'pre-wrap' }}>{attachmentView.text}</span>

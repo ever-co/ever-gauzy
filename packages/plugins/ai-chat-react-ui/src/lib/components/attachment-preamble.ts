@@ -14,7 +14,9 @@
  * format {@link buildAttachmentPreamble} emits (plus the legacy wording earlier builds produced)
  * and renders chips + the user's own words. Parsing only ever affects DISPLAY — the model always
  * sees the full text — so a user hand-typing something preamble-shaped merely gets it rendered
- * as chips, which is harmless.
+ * as chips, which is harmless. Parsing is deliberately regex-free on the name segment: the input
+ * is uncontrolled message text, and a backtracking quantifier over embedded quotes is exactly the
+ * polynomial-ReDoS shape CodeQL flags. Everything here is single-pass `indexOf` work.
  */
 
 /** One attachment staged on the next message. */
@@ -23,10 +25,37 @@ export interface IStagedAttachment {
 	documentId?: string;
 	/** Display name, and the only handle an attachment has when Documents is unavailable. */
 	name: string;
+	/**
+	 * `PAGE` when the attachment is a Documents PAGE (a written page opens at its editor route,
+	 * not the file browser). Anything else — including absent, as in all legacy history — is
+	 * treated as a file for linking purposes.
+	 */
+	kind?: 'FILE' | 'PAGE';
 }
 
 /** First line of every preamble. EXACT — parsing keys on it, and old history carries it. */
 const PREAMBLE_HEADER = 'Attached documents for this message:';
+
+/** `(document id: …` opener on an attachment line — after the name's closing quote. */
+const ID_MARKER = '" (document id: ';
+
+/** Name/instruction separator on a name-only attachment line. */
+const NAME_MARKER = '" — ';
+
+/** Marks a PAGE document inside the id parenthetical, so history chips link to the right route. */
+const PAGE_SUFFIX = ', page';
+
+/** Anchored, fixed-length UUID check — linear, unlike a quantified group over user text. */
+const UUID_SHAPE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+/**
+ * A name flattened to one line, so it cannot break the one-attachment-per-line format.
+ *
+ * Document names normally have no line breaks, but the type does not forbid them — and a name
+ * with `\n` would fabricate extra preamble lines: the parser then stops early and the transcript
+ * falls back to showing the raw preamble.
+ */
+const flattenName = (name: string): string => name.replace(/[\r\n]+[ \t]*/g, ' ').trim();
 
 /**
  * Build the preamble for the staged attachments.
@@ -34,7 +63,9 @@ const PREAMBLE_HEADER = 'Attached documents for this message:';
  * Two line shapes:
  * - With an id — the document is in Documents (picked from the library, or uploaded id-first):
  *   the assistant is told to read exactly that document. `docs_read` itself explains the
- *   still-processing state for a fresh upload, so no hedging is needed here.
+ *   still-processing state for a fresh upload, so no hedging is needed here. PAGE documents get
+ *   a `, page` marker inside the parenthetical so a chip rebuilt from history can link to the
+ *   page editor rather than the file browser; the model reads straight past it.
  * - Without an id — Documents is unavailable on this install (the id-first upload fell back to
  *   plain chat storage), which also means the `docs_*` tools are not registered. The line only
  *   STATES the attachment; earlier builds told the assistant to `docs_search` for it, which
@@ -48,11 +79,14 @@ export function buildAttachmentPreamble(attachments: IStagedAttachment[]): strin
 	if (!attachments.length) {
 		return '';
 	}
-	const lines = attachments.map((attachment) =>
-		attachment.documentId
-			? `- "${attachment.name}" (document id: ${attachment.documentId}) — read it with docs_read.`
-			: `- "${attachment.name}" — attached to this conversation.`
-	);
+	const lines = attachments.map((attachment) => {
+		const name = flattenName(attachment.name);
+		if (!attachment.documentId) {
+			return `- "${name}" — attached to this conversation.`;
+		}
+		const pageMarker = attachment.kind === 'PAGE' ? PAGE_SUFFIX : '';
+		return `- "${name}" (document id: ${attachment.documentId}${pageMarker}) — read it with docs_read.`;
+	});
 	return [PREAMBLE_HEADER, ...lines].join('\n');
 }
 
@@ -65,13 +99,43 @@ export interface IParsedAttachmentPreamble {
 }
 
 /**
- * Attachment line, both shapes. Name first (greedy, so embedded quotes survive), then the
- * optional `(document id: …)` suffix, then the em-dash instruction — which is deliberately
- * unanchored beyond its shape: it differs between the current and legacy builders, and pinning
- * the wording would silently stop old history from rendering as chips.
+ * Parse one attachment line, or return `null` when the line is not one.
+ *
+ * Mirrors the builder's two shapes, tolerant on the instruction wording (it differs between the
+ * current and legacy builders, and pinning it would silently stop old history from rendering as
+ * chips). The name is recovered with `lastIndexOf` — the same longest-name semantics a greedy
+ * quantifier would give, without the backtracking.
  */
-const ID_LINE = /^- "(.+)" \(document id: ([0-9a-fA-F-]{36})\) — .+$/;
-const NAME_LINE = /^- "(.+)" — .+$/;
+function parseAttachmentLine(line: string): IStagedAttachment | null {
+	if (!line.startsWith('- "')) {
+		return null;
+	}
+
+	// Id shape: - "NAME" (document id: UUID[, page]) — instruction
+	const idAt = line.lastIndexOf(ID_MARKER);
+	if (idAt > 3) {
+		const parenthetical = line.slice(idAt + ID_MARKER.length);
+		const close = parenthetical.indexOf(') — ');
+		if (close > 0 && parenthetical.length > close + ') — '.length) {
+			let idPart = parenthetical.slice(0, close);
+			let kind: IStagedAttachment['kind'];
+			if (idPart.endsWith(PAGE_SUFFIX)) {
+				kind = 'PAGE';
+				idPart = idPart.slice(0, -PAGE_SUFFIX.length);
+			}
+			if (UUID_SHAPE.test(idPart)) {
+				return { name: line.slice(3, idAt), documentId: idPart, ...(kind ? { kind } : {}) };
+			}
+		}
+	}
+
+	// Name-only shape: - "NAME" — instruction
+	const nameAt = line.lastIndexOf(NAME_MARKER);
+	if (nameAt > 3 && line.length > nameAt + NAME_MARKER.length) {
+		return { name: line.slice(3, nameAt) };
+	}
+	return null;
+}
 
 /**
  * Recognize a message that starts with an attachment preamble.
@@ -91,18 +155,11 @@ export function parseAttachmentPreamble(messageText: string): IParsedAttachmentP
 	const attachments: IStagedAttachment[] = [];
 	let index = 1;
 	for (; index < lines.length; index++) {
-		const line = lines[index];
-		const withId = ID_LINE.exec(line);
-		if (withId) {
-			attachments.push({ name: withId[1], documentId: withId[2] });
-			continue;
+		const attachment = parseAttachmentLine(lines[index]);
+		if (!attachment) {
+			break;
 		}
-		const nameOnly = NAME_LINE.exec(line);
-		if (nameOnly) {
-			attachments.push({ name: nameOnly[1] });
-			continue;
-		}
-		break;
+		attachments.push(attachment);
 	}
 	if (!attachments.length) {
 		return null;

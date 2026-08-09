@@ -34,7 +34,7 @@ import { chatTheme } from '../chat-theme';
  * which must not be pulled into the browser bundle.
  */
 interface IDocsUploadResponseSlice {
-	results?: { document?: { id?: string; name?: string } }[];
+	results?: { document?: { id?: string; name?: string; kind?: string } }[];
 	rejected?: { fileName?: string; message?: string }[];
 	message?: string;
 }
@@ -370,14 +370,26 @@ export function AiChatPanel() {
 					if (document?.id) {
 						setAttachments((current) => [
 							...current,
-							{ documentId: document.id, name: document.name || file.name }
+							{
+								documentId: document.id,
+								name: document.name || file.name,
+								...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {})
+							}
 						]);
 						return;
 					}
-					// A 2xx with no accepted document means the file itself was rejected (type/size)
-					// — surface the server's reason instead of staging a chip for a file that does
-					// not exist anywhere.
-					throw new Error(body?.rejected?.[0]?.message || `'${file.name}' was rejected.`);
+					// Three distinct 2xx outcomes, told apart so the user is never told "rejected"
+					// about a file the server may in fact have created:
+					// a genuine per-file rejection carries the server's reason; a body that did not
+					// parse, or one with no readable document id, is a response-shape problem — the
+					// document may exist, so point at the Documents page rather than blaming the file.
+					const rejection = body?.rejected?.[0];
+					if (rejection) {
+						throw new Error(rejection.message || `'${file.name}' was rejected.`);
+					}
+					throw new Error(
+						`The upload response for '${file.name}' could not be read — check the Documents page before retrying.`
+					);
 				}
 
 				// Not-found / forbidden = the Documents feature is not available to this user or
@@ -419,8 +431,17 @@ export function AiChatPanel() {
 	);
 
 	/** Attach an existing document by id — what makes `docs_read` able to open exactly that one. */
-	const handlePickDocument = useCallback((document: { id: string; name: string }) => {
-		setAttachments((current) => [...current, { documentId: document.id, name: document.name }]);
+	const handlePickDocument = useCallback((document: { id: string; name: string; kind?: string }) => {
+		setAttachments((current) => [
+			...current,
+			{
+				documentId: document.id,
+				name: document.name,
+				// Carried so the chip (and the one rebuilt from history) links a PAGE to its page
+				// editor route rather than the file browser.
+				...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {})
+			}
+		]);
 		setShowAttachPicker(false);
 	}, []);
 

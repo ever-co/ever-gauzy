@@ -64,6 +64,36 @@ describe('attachment preamble', () => {
 		expect(parseAttachmentPreamble('intro\nAttached documents for this message:\n- "a" — attached to this conversation.')).toBeNull();
 	});
 
+	it('round-trips a PAGE document with its kind, so history chips link to the page route', () => {
+		const attachments = [{ documentId: DOC_ID, name: 'Handbook', kind: 'PAGE' as const }];
+		const message = `${buildAttachmentPreamble(attachments)}\n\nSummarize it.`;
+
+		const parsed = parseAttachmentPreamble(message);
+		expect(parsed!.attachments).toEqual(attachments);
+	});
+
+	it('flattens line breaks in names so they cannot fabricate preamble lines', () => {
+		// A name with \n would break the one-attachment-per-line format: the parser stops early and
+		// the transcript falls back to showing the raw preamble.
+		const message = `${buildAttachmentPreamble([
+			{ documentId: DOC_ID, name: 'annual\r\n  report.pdf' }
+		])}\n\nthoughts?`;
+
+		const parsed = parseAttachmentPreamble(message);
+		expect(parsed!.attachments).toEqual([{ documentId: DOC_ID, name: 'annual report.pdf' }]);
+		expect(parsed!.text).toBe('thoughts?');
+	});
+
+	it('parses quote-heavy hostile lines correctly (the parser is single-pass, not backtracking)', () => {
+		// CodeQL flagged the previous regex parser as polynomial on exactly this shape: many
+		// repetitions of `a" — ` inside an attachment line. The line is still a VALID name-only
+		// attachment (longest-name semantics), and parsing it must be linear work.
+		const hostile = `- "${'a" — '.repeat(500)}tail" — attached to this conversation.`;
+		const parsed = parseAttachmentPreamble(`Attached documents for this message:\n${hostile}`);
+		expect(parsed!.attachments).toHaveLength(1);
+		expect(parsed!.attachments[0].name.endsWith('tail')).toBe(true);
+	});
+
 	it('emits no docs_search instruction for name-only attachments', () => {
 		// The old wording sent the assistant to a tool that cannot find chat captures (they are
 		// never auto-indexed) and does not even exist on installs where the name-only path runs.

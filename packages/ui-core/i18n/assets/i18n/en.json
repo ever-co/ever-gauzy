@@ -4107,6 +4107,7 @@
 		"LIBRARY_SOON": "Choose from the file library (coming soon)",
 		"ATTACH": "Attach a file",
 		"ATTACH_FROM_DOCUMENTS": "Attach from Documents",
+		"ATTACH_OPEN": "Open attached document",
 		"ATTACH_SEARCH": "Search documents…",
 		"ATTACH_NO_RESULTS": "No matching documents.",
 		"ATTACH_UNAVAILABLE": "Documents are not available in this workspace.",
