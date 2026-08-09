@@ -21,6 +21,7 @@ jest.mock('./docs-recovery.service', () => ({ DocsRecoveryService: class {} }));
 jest.mock('./docs-queue.service', () => ({ DocsQueueService: class {} }));
 // Reaches `FileStorage` and, through it, the whole `@gauzy/core` graph.
 jest.mock('../thumbnail/document-thumbnail.service', () => ({ DocumentThumbnailService: class {} }));
+jest.mock('../../services/docs-feature.service', () => ({ DocsFeatureService: class {} }));
 
 import { DocumentKnowledgeStatusEnum } from '@gauzy/contracts';
 import { DOCS_JOB_CLASSIFY, DOCS_JOB_EXTRACT, DOCS_JOB_THUMBNAIL } from './constants';
@@ -70,7 +71,8 @@ const buildPipeline = (
 		{ runScan: jest.fn() } as any,
 		{ classify: jest.fn().mockResolvedValue('classified') } as any,
 		{} as any,
-		thumbnailService
+		thumbnailService,
+		{ isEnabledFor: jest.fn().mockResolvedValue(true) } as any
 	);
 	jest.spyOn((pipeline as any).logger, 'error').mockImplementation(() => undefined);
 	jest.spyOn((pipeline as any).logger, 'warn').mockImplementation(() => undefined);

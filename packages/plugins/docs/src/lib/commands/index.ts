@@ -11,6 +11,7 @@ export * from './merge-document-category.command';
 export * from './move-document.command';
 export * from './recover-document.command';
 export * from './reorder-documents.command';
+export * from './replace-document-file.command';
 export * from './reprocess-document.command';
 export * from './restore-document-version.command';
 export * from './unarchive-document.command';

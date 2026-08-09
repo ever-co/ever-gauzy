@@ -11,7 +11,8 @@ import {
 	applyPreset,
 	createInitialDocsFilterState,
 	DocsFilterState,
-	docsFilterToParams
+	docsFilterToParams,
+	expandStatusFilterForApi
 } from '../models/docs-filter.model';
 import { DocumentsService } from '../services/documents.service';
 import { DocumentsActions } from './documents.actions';
@@ -369,6 +370,10 @@ export class DocumentsEffects {
 		for (const key of DocumentsEffects.FACET_FILTER_KEYS) {
 			if (filter[key].length) (input as Record<string, unknown>)[key] = filter[key];
 		}
+		// 🛑 "Processing" is a two-phase truth: the badge, the facet and the URL all
+		// hide UPLOADED behind PROCESSING, so the query has to ask for both or a
+		// freshly uploaded row vanishes from the filter that claims to list it.
+		if (input.status?.length) input.status = expandStatusFilterForApi(input.status);
 		return input;
 	}
 

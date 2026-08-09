@@ -69,6 +69,7 @@
 	},
 	"TREE": {
 		"ALL_DOCUMENTS": "All documents",
+		"OPEN": "Open",
 		"FAVORITES": "Favorites",
 		"RECENTS": "Recents",
 		"EMPTY": "No documents yet",
@@ -156,6 +157,9 @@
 		"BUTTON": "Upload",
 		"DROP_HINT": "Drop files anywhere to upload",
 		"DIALOG_TITLE": "Upload documents",
+		"FILES": "Files ({{ count }})",
+		"NO_FILES": "No files left in this upload",
+		"REMOVE_FILE": "Remove \"{{ name }}\" from this upload",
 		"DESTINATION": "Destination folder",
 		"CATEGORIES": "Categories",
 		"TAGS": "Tags",
@@ -172,7 +176,9 @@
 		"PROGRESS_DONE": "Done",
 		"PROGRESS_ERROR": "Failed",
 		"RETRY": "Retry",
-		"CLEAR_FINISHED": "Clear finished"
+		"CLEAR_FINISHED": "Clear finished",
+		"DUPLICATE_NOTICE": "Possible duplicate of \"{{ name }}\"",
+		"DUPLICATE_NOTICE_UNKNOWN": "Possible duplicate of an existing document"
 	},
 	"DETAIL": {
 		"METADATA": "Details",
@@ -420,6 +426,7 @@
 		"DELETE_TITLE": "Delete document",
 		"DELETE_SUBTREE_OPTION": "Delete everything inside it",
 		"DELETE_PROMOTE_OPTION": "Keep children and move them up one level",
+		"DELETE_BODY": "Delete \"{{ name }}\"? It leaves the hub — an administrator can still recover it.",
 		"ARCHIVE_FOLDER_WARNING": "Archiving a folder archives everything inside it",
 		"SET_CATEGORIES_WARNING": "This replaces each document's full category set",
 		"CREATE_TITLE": "Create",
@@ -478,6 +485,7 @@
 		"DELETED": "Document deleted",
 		"UPLOAD_STARTED": "Upload started",
 		"UPLOADED_NEEDS_REVIEW": "Uploaded — waiting for review",
+		"UPLOADED_NEEDS_REVIEW_ACTION": "Open review",
 		"KNOWLEDGE_IMPORTED": "Added to AI knowledge",
 		"KNOWLEDGE_EXCLUDED": "Excluded from AI knowledge",
 		"REVIEW_APPROVED": "Document approved",

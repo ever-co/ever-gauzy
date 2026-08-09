@@ -12,7 +12,11 @@ export default {
 			}
 		]
 	},
-	transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+	// `@ngneat/effects` and `@datorama/akita` both ship ESM from plain `.js` entries, so the
+	// original `.mjs`-only exception left them untransformed: every suite that reaches `Actions`
+	// (`DocsRowActionsService`) or the ui-core `Store` failed to LOAD rather than fail an
+	// assertion — which reads as "no tests here" instead of "coverage is zero".
+	transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$|(?:.*/)?(@ngneat|@datorama)/)'],
 	snapshotSerializers: [
 		'jest-preset-angular/build/serializers/no-ng-attributes',
 		'jest-preset-angular/build/serializers/ng-snapshot',

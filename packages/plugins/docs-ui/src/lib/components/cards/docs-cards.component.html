@@ -66,7 +66,7 @@
 		>
 			<!-- Preview tile. The box is ALWAYS rendered at a fixed height, whether or not a
 			     thumbnail exists: `thumbUrl` only appears once the P1 thumbnail job has run, so
-			     a box that materialised with the image would reflow the whole grid on the next
+			     a box that materialized with the image would reflow the whole grid on the next
 			     processing poll. Without one (or when the image fails to load) the tile holds
 			     the same kind icon the card used to show inline. -->
 			<div class="docs-card-thumb">
@@ -111,6 +111,22 @@
 					[nbTooltip]="'DOCS.EDITOR.TITLE' | translate"
 				>
 					<nb-icon icon="external-link-outline"></nb-icon>
+				</button>
+				<!-- Row actions kebab (`01-ux-spec.md` §4.2: "kebab with the same row
+				     actions"), built by the same builder as the table column and the
+				     tree context menu. -->
+				<button
+					*ngIf="menuItemsFor(doc).length"
+					nbButton
+					ghost
+					size="tiny"
+					class="docs-card-open docs-card-actions"
+					[nbContextMenu]="menuItemsFor(doc)"
+					[nbContextMenuTag]="menuTag(doc)"
+					(click)="$event.stopPropagation()"
+					[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
+				>
+					<nb-icon icon="more-horizontal-outline"></nb-icon>
 				</button>
 			</div>
 			<div class="docs-card-badges">

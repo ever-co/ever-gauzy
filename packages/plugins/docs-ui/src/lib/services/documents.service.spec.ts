@@ -231,6 +231,26 @@ describe('DocumentsService — backend wire contract', () => {
 		});
 	});
 
+	describe('delete', () => {
+		// `DeleteDocumentQueryDTO` declares `strategy`, and the route validates with
+		// `whitelist: true`: the old `mode` param was stripped without an error and the
+		// handler fell back to `strategy ?? 'subtree'`, so the caller's choice was a lie.
+		it('sends the strategy under the name the DTO declares', () => {
+			service.delete(DOCUMENT_ID, { strategy: 'promote-children' }).subscribe();
+
+			expect(http.last.method).toBe('DELETE');
+			expect(http.last.url).toMatch(/\/documents\/[^/]+$/);
+			expect(http.params.get('strategy')).toBe('promote-children');
+			expect(http.params.get('mode')).toBeNull();
+		});
+
+		it('sends `subtree` verbatim rather than relying on the server default', () => {
+			service.delete(DOCUMENT_ID, { strategy: 'subtree' }).subscribe();
+
+			expect(http.params.get('strategy')).toBe('subtree');
+		});
+	});
+
 	describe('getDownloadUrl', () => {
 		it('resolves the provider URL through the authenticated client', async () => {
 			http.response = { url: 'https://files.example/doc.pdf' };

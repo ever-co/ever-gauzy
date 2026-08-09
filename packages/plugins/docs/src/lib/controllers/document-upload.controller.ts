@@ -29,8 +29,9 @@ import {
 } from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
 import { DOCS_UPLOAD_MAX_FILES } from '../docs.constants';
-import { IDocumentUploadResponse, ReprocessDocumentDTO, UploadDocumentsDTO } from '../dto';
+import { IDocumentUploadResponse, ReplaceDocumentFileDTO, ReprocessDocumentDTO, UploadDocumentsDTO } from '../dto';
 import { LazyFilesInterceptor, UploadedFilesStorage } from '../interceptors';
+import { ReplaceDocumentFileCommand } from '../commands/replace-document-file.command';
 import { ReprocessDocumentCommand } from '../commands/reprocess-document.command';
 import { UploadDocumentsCommand } from '../commands/upload-documents.command';
 import { DocumentUploadService } from '../services/document-upload.service';
@@ -117,6 +118,44 @@ export class DocumentUploadController {
 		@UploadedFilesStorage() files: UploadedFile[]
 	): Promise<IDocumentUploadResponse> {
 		return this.commandBus.execute(new UploadDocumentsCommand(input, files));
+	}
+
+	/**
+	 * Replace-in-place (R-UPL-05): swaps the stored blob of an existing FILE document for the
+	 * single uploaded file (multipart field `file`).
+	 *
+	 * The document id, name, parent, visibility, categories, tags, links, comments and favorites
+	 * are preserved by construction — only the blob and the columns derived from it change.
+	 * `version` increments, the extraction state resets, and the pipeline re-runs from
+	 * `docs.extract` (`reason: 'replace'`, which also forces a fresh thumbnail). The new bytes
+	 * face the same gauntlet as an upload; a rejected replacement leaves the document untouched
+	 * and its blob deleted. A PAGE/FOLDER target is a 409 `DOCS_NOT_A_FILE`.
+	 */
+	@ApiOperation({ summary: 'Replace the stored file of a FILE document in place (multipart field `file`).' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'File replaced; the pipeline was re-enqueued.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The target document is not a FILE.' })
+	@ApiResponse({ status: HttpStatus.PAYLOAD_TOO_LARGE, description: 'The replacement file is oversize.' })
+	@ApiConsumes('multipart/form-data')
+	@Permissions(PermissionsEnum.DOCS_UPDATE)
+	@UseValidationPipe({ whitelist: true, transform: true })
+	@UseInterceptors(
+		LazyFilesInterceptor('file', 1, {
+			storage: documentsStorage,
+			limits: {
+				files: 1,
+				// DoS backstop only — the real cap is enforced in the service so the rejection
+				// carries the plugin's own `DOCS_FILE_TOO_LARGE` code.
+				fileSize: getDocsConfig().maxFileSize + 10 * 1024 * 1024
+			}
+		})
+	)
+	@Post('/:id/file')
+	public async replaceFile(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() input: ReplaceDocumentFileDTO,
+		@UploadedFilesStorage() files: UploadedFile[]
+	): Promise<IDocument> {
+		return this.commandBus.execute(new ReplaceDocumentFileCommand(id, input, files?.[0]));
 	}
 
 	/**

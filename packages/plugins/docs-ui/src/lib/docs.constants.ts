@@ -75,6 +75,23 @@ export const DOCS_PREVIEW_DIALOG_CONFIG: Partial<NbDialogConfig> = {
 /** localStorage key — tree column collapsed state. */
 export const DOCS_TREE_COLLAPSED_KEY = 'gauzy_docs_tree_collapsed';
 
+/** localStorage key — per-user table column visibility (`01-ux-spec.md` §4.1). */
+export const DOCS_TABLE_COLUMNS_KEY = 'gauzy_docs_columns';
+
+/**
+ * Viewport width (px) below which the table drops its low-priority columns by
+ * default (`01-ux-spec.md` §14 — the Nebular `lg` breakpoint). A stored column
+ * preference still wins, so the chooser can bring any of them back.
+ */
+export const DOCS_NARROW_BREAKPOINT_PX = 992;
+
+/**
+ * How long the "uploaded — needs review" toast stays up (`01-ux-spec.md` §7.3).
+ * Longer than a plain confirmation because the toast IS the action: clicking it
+ * opens the review queue.
+ */
+export const DOCS_REVIEW_TOAST_DURATION_MS = 10000;
+
 /** localStorage key prefix — recently opened document ids (per organization). */
 export const DOCS_RECENTS_KEY_PREFIX = 'gauzy_docs_recents_';
 

@@ -1,3 +1,4 @@
+import { DocsFeatureService } from './docs-feature.service';
 import { DocumentService } from './document.service';
 import { DocumentAccessService } from './document-access.service';
 import { DocumentCategoryService } from './document-category.service';
@@ -12,6 +13,7 @@ import { DocumentTreeService } from './document-tree.service';
 import { DocumentUploadService } from './document-upload.service';
 import { DocumentVersionService } from './document-version.service';
 
+export * from './docs-feature.service';
 export * from './document.service';
 export * from './document-access.predicate';
 export * from './document-access.service';
@@ -37,6 +39,7 @@ export * from './quota.calculator';
  * that `DocumentService` (and through it, everything else) depends on.
  */
 export const Services = [
+	DocsFeatureService,
 	DocumentAccessService,
 	DocumentQuotaService,
 	DocumentService,

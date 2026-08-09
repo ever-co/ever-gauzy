@@ -24,6 +24,7 @@ import {
 import {
 	EventBus,
 	FavoriteService,
+	MentionService,
 	RequestContext,
 	TenantAwareCrudService,
 	prepareSQLQuery as p,
@@ -102,7 +103,8 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		public readonly mikroOrmDocumentRepository: MikroOrmDocumentRepository,
 		private readonly documentVersionService: DocumentVersionService,
 		private readonly documentAccessService: DocumentAccessService,
-		private readonly _eventBus: EventBus
+		private readonly _eventBus: EventBus,
+		private readonly _mentionService: MentionService
 	) {
 		super(typeOrmDocumentRepository, mikroOrmDocumentRepository);
 	}
@@ -371,16 +373,36 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			contentHtml: input.contentHtml ? this.sanitizeHtml(input.contentHtml) : document.contentHtml
 		});
 
-		// Mention diff-sync on content save.
-		// NOTE: `MentionService` is not part of the public `@gauzy/core` API surface yet — once it
-		// is exported, wire `updateEntityMentions(BaseEntityEnum.Document, id, mentionEmployeeIds)`
-		// here. Best-effort by contract: a failure must never roll back the content save.
-		if (Array.isArray(input.mentionEmployeeIds)) {
-			this.logger.debug(`Mention sync requested for document ${id} (${input.mentionEmployeeIds.length} ids)`);
-		}
+		// Mention diff-sync on content save — the same platform mechanism task comments use
+		// (`MentionService.updateEntityMentions`: publish the newly added ids, delete the ones the
+		// editor dropped). Awaited so the fan-out is done before the response, but best-effort by
+		// contract: a failure logs and never rolls back the content save.
+		await this.syncMentions(document.id, input.mentionEmployeeIds);
 
 		this.emitDocumentEvent(updated, 'updated', { phase: 'crud' }, input as any);
 		return updated;
+	}
+
+	/**
+	 * Diff-syncs the `Document` mention rows against the editor's current mention id set.
+	 *
+	 * An **omitted** `mentionEmployeeIds` means "the client has no opinion" and is a no-op; an
+	 * explicit empty array means "this save removed every mention" and clears them. That is the
+	 * same distinction the task-comment path draws, and it is what keeps a client that does not
+	 * send the field from silently wiping a page's mentions.
+	 *
+	 * @param documentId The document the mentions belong to.
+	 * @param mentionEmployeeIds The editor's current mention id set (omitted = no-op).
+	 */
+	private async syncMentions(documentId: ID, mentionEmployeeIds?: ID[]): Promise<void> {
+		if (!Array.isArray(mentionEmployeeIds)) {
+			return;
+		}
+		try {
+			await this._mentionService.updateEntityMentions(BaseEntityEnum.Document, documentId, mentionEmployeeIds);
+		} catch (error) {
+			this.logger.warn(`Failed to sync mentions for document ${documentId}: ${(error as Error).message}`);
+		}
 	}
 
 	/**
@@ -533,10 +555,10 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 * Publishes a `DocumentEvent` on the core RxJS event bus. Best-effort: a failure logs and
 	 * never rolls back the primary mutation.
 	 *
-	 * Activity-log + entity-subscription publication rides the same seam.
-	 * NOTE: `ActivityLogService` / `CreateEntitySubscriptionEvent` are not part of the public
-	 * `@gauzy/core` API surface yet — wire `logActivity<Document>(...)` and the subscription
-	 * event here as soon as the core barrel exports them.
+	 * 🛑 This is also the **only** seam the activity log is written from:
+	 * `DocumentActivityLogSubscriber` listens on `eventBus.ofType(DocumentEvent)` and turns each
+	 * event into an `ActivityLog` row (R-COL-03). A mutation that skips this method is a
+	 * mutation the detail panel's timeline will never show.
 	 *
 	 * @param entity The document the event describes.
 	 * @param type The CRUD event type.
@@ -610,8 +632,8 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 * The scalar/enum column filters of the DTO (kind, statuses, source, visibility, searchable).
 	 */
 	private applyAttributeFilters(qb: SelectQueryBuilder<Document>, params: GetDocumentsQueryDTO): void {
-		if (params.kind) {
-			qb.andWhere(p(`"document"."kind" = :kind`), { kind: params.kind });
+		if (params.kind?.length) {
+			qb.andWhere(p(`"document"."kind" IN (:...kinds)`), { kinds: params.kind });
 		}
 		if (params.status?.length) {
 			qb.andWhere(p(`"document"."status" IN (:...statuses)`), { statuses: params.status });

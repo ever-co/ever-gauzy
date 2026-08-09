@@ -43,6 +43,7 @@ import {
 } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { COMPONENTS } from './components';
+import { SanitizeHtmlPipe } from './pipes';
 import { createPublicLayoutRoutes } from './public-layout.routes';
 
 // Nebular Modules
@@ -100,7 +101,15 @@ const FEATURE_MODULES = [
 
 @NgModule({
 	declarations: [...COMPONENTS],
-	imports: [RouterModule.forChild([]), ...NB_MODULES, ...THIRD_PARTY_MODULES, ...FEATURE_MODULES],
+	imports: [
+		RouterModule.forChild([]),
+		...NB_MODULES,
+		...THIRD_PARTY_MODULES,
+		...FEATURE_MODULES,
+		// Standalone: the public pages render editor-authored HTML for anonymous visitors, so
+		// they sanitize it themselves instead of reaching for the shared `safeHtml` bypass.
+		SanitizeHtmlPipe
+	],
 	exports: [...COMPONENTS],
 	providers: [
 		LanguagesService,

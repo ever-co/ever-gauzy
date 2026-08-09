@@ -28,6 +28,7 @@ jest.mock(
 	() => ({
 		FavoriteService: () => () => undefined,
 		EventBus: class {},
+		MentionService: class {},
 		RequestContext: {
 			currentTenantId: () => requestContext.tenantId,
 			currentOrganizationId: () => requestContext.organizationId,
@@ -111,8 +112,16 @@ const buildService = (rows: any[] = [], access: { canRead?: boolean; canWrite?: 
 		canWrite: jest.fn(async () => access.canWrite ?? false),
 		applyShareScope: jest.fn(() => false)
 	};
-	const service = new DocumentService(repository, {} as any, {} as any, accessService, { publish: jest.fn() } as any);
-	return { service, repository, accessService, queryBuilder, findOne };
+	const mentionService: any = { updateEntityMentions: jest.fn().mockResolvedValue(undefined) };
+	const service = new DocumentService(
+		repository,
+		{} as any,
+		{} as any,
+		accessService,
+		{ publish: jest.fn() } as any,
+		mentionService
+	);
+	return { service, repository, accessService, queryBuilder, findOne, mentionService };
 };
 
 beforeEach(() => {

@@ -27,6 +27,8 @@
 		<gz-docs-detail-panel
 			[documentId]="detailId"
 			(closed)="onDetailClosed()"
+			(changed)="onDetailChanged($event)"
+			(deleted)="onDetailDeleted($event)"
 			(openEditor)="onOpenEditor($event)"
 			(openPreview)="onOpenPreview($event)"
 		></gz-docs-detail-panel>

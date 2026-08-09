@@ -11,6 +11,7 @@ export * from './knowledge-reindex.dto';
 export * from './knowledge-search.dto';
 export * from './move-document.dto';
 export * from './reorder-documents.dto';
+export * from './replace-document-file.dto';
 export * from './reprocess-document.dto';
 export * from './review-decision.dto';
 export * from './update-document.dto';

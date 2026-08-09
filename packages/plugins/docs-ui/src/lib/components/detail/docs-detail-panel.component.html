@@ -40,6 +40,18 @@
 			</div>
 		</header>
 
+		<!-- Dedup notice (R-UPL-04): advisory only — the upload was never dropped -->
+		<div class="docs-duplicate-notice" *ngIf="duplicateNotice as duplicate">
+			<nb-icon icon="copy-outline"></nb-icon>
+			<span>
+				{{
+					duplicate.name
+						? ('DOCS.UPLOAD.DUPLICATE_NOTICE' | translate : { name: duplicate.name })
+						: ('DOCS.UPLOAD.DUPLICATE_NOTICE_UNKNOWN' | translate)
+				}}
+			</span>
+		</div>
+
 		<!-- Review banner -->
 		<div class="docs-review-banner" *ngIf="showReviewBanner">
 			<div class="docs-review-banner-head">
@@ -77,7 +89,13 @@
 				<nb-icon icon="eye-outline"></nb-icon>
 				{{ 'DOCS.PREVIEW.TITLE' | translate }}
 			</button>
-			<button *ngIf="doc.kind === kindEnum.FILE" nbButton size="tiny" (click)="download()">
+			<button
+				*ngIf="doc.kind === kindEnum.FILE"
+				nbButton
+				size="tiny"
+				[disabled]="downloading"
+				(click)="download()"
+			>
 				<nb-icon icon="download-outline"></nb-icon>
 				{{ 'DOCS.PREVIEW.DOWNLOAD' | translate }}
 			</button>

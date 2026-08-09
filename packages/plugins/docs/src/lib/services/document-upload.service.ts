@@ -10,6 +10,7 @@ import { createHash } from 'crypto';
 import {
 	DocumentKindEnum,
 	DocumentKnowledgeStatusEnum,
+	DocumentReviewReasonEnum,
 	DocumentReviewStatusEnum,
 	DocumentSourceEnum,
 	DocumentStatusEnum,
@@ -18,6 +19,7 @@ import {
 	ID,
 	UploadedFile
 } from '@gauzy/contracts';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { FileStorage, RequestContext } from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
 import {
@@ -32,6 +34,7 @@ import {
 	IDocumentUploadRejection,
 	IDocumentUploadResponse,
 	IDocumentUploadResult,
+	ReplaceDocumentFileDTO,
 	UploadDocumentsDTO
 } from '../dto';
 import { Document } from '../entities/document.entity';
@@ -497,6 +500,183 @@ export class DocumentUploadService {
 			code: DOCS_FILE_TYPE_REJECTED,
 			rejected
 		});
+	}
+
+	/**
+	 * `POST /documents/:id/file` — **replace in place** (R-UPL-05).
+	 *
+	 * The document row is never recreated, so its id, name, parent, visibility, categories, tags,
+	 * links, comments and favorites survive untouched: only the blob and the columns derived from
+	 * it change. `version` increments, the extraction state resets, and the pipeline re-runs from
+	 * `docs.extract` with `reason: 'replace'` (which is also what forces a fresh thumbnail).
+	 *
+	 * The new bytes go through the same gauntlet as an upload — size cap, quota, magic-byte
+	 * sniffing — and a rejected file's blob is dropped before the rejection is thrown, so a
+	 * refused replacement leaves both the document and the storage bucket exactly as they were.
+	 *
+	 * @param id The FILE document id (RBAC/visibility-scoped, then row-level write-checked).
+	 * @param file The single stored upload.
+	 * @param input The multipart form fields.
+	 * @returns The document after the swap.
+	 */
+	async replaceFile(id: ID, file: UploadedFile, input: ReplaceDocumentFileDTO = {}): Promise<Document> {
+		const provider = new FileStorage().getProvider();
+
+		if (!file?.key) {
+			throw new BadRequestException({
+				message: 'Exactly one file is required to replace a document',
+				code: DOCS_FILE_TYPE_REJECTED
+			});
+		}
+
+		let document: Document;
+		try {
+			document = await this.documentService.findOneScoped(id);
+			await this.documentService.assertCanWrite(document);
+
+			if (document.kind !== DocumentKindEnum.FILE) {
+				throw new ConflictException({
+					message: 'Only FILE documents carry stored bytes',
+					code: DOCS_NOT_A_FILE
+				});
+			}
+		} catch (error) {
+			// The interceptor already streamed the replacement into storage — never leave it
+			// behind when the target turns out to be unreachable, unwritable or not a FILE.
+			await this.cleanupOne(provider, file);
+			throw error;
+		}
+
+		const previousStorageKey = document.storageKey;
+		const previousProvider = document.storageProvider;
+
+		try {
+			const config = getDocsConfig();
+			if (file.size > config.maxFileSize) {
+				throw new PayloadTooLargeException({
+					message: `File exceeds the ${config.maxFileSize}-byte limit`,
+					code: DOCS_FILE_TOO_LARGE
+				});
+			}
+
+			// Only the GROWTH counts against the quota: the bytes the outgoing blob occupied are
+			// released by this very swap, so a same-size (or smaller) replacement can never be
+			// refused by a quota the document already fits inside.
+			const growth = file.size - (document.fileSize ?? 0);
+			if (growth > 0) {
+				const quotaState = await this.documentQuotaService.getQuotaState(document.organizationId);
+				if (this.documentQuotaService.exceeds(growth, quotaState)) {
+					throw new BadRequestException({
+						message:
+							`The organization storage quota of ${quotaState.quotaBytes} bytes would be ` +
+							`exceeded (currently using ${quotaState.usedBytes} bytes)`,
+						code: DOCS_QUOTA_EXCEEDED
+					});
+				}
+			}
+
+			const fileName = (file.originalname ?? file.filename ?? document.name ?? 'file').slice(0, 255);
+			const buffer = (await provider.getFile(file.key)) as Buffer;
+			const sniff = sniffFile(buffer, fileName, file.mimetype);
+			if (!sniff.ok) {
+				throw new BadRequestException({ message: sniff.message, code: sniff.code });
+			}
+
+			await this.persistReplacedFile(document, file, fileName, sniff, createHash('sha256').update(buffer).digest('hex'), provider);
+		} catch (error) {
+			await this.cleanupOne(provider, file);
+			throw error;
+		}
+
+		// The swap is committed; the superseded blob is now unreferenced. Best-effort by
+		// design — an orphaned object costs storage, a thrown cleanup would cost the swap.
+		if (previousStorageKey && previousStorageKey !== file.key) {
+			await this.cleanupOne(new FileStorage().getProvider(previousProvider), { key: previousStorageKey } as any);
+		}
+
+		this.documentService.emitDocumentEvent(document, 'updated', {
+			phase: 'crud',
+			field: 'version',
+			previous: String(document.version - 1),
+			next: String(document.version)
+		});
+
+		// New bytes ⇒ a genuinely new extraction. `keepExtractedText: false` is explicit, and
+		// `extractedTextEdited` was cleared above, so the human-correction guard cannot preserve
+		// a correction that describes the *previous* file. A run-unique job id bypasses the
+		// deterministic-id coalescing against a retained completed job.
+		await this.processingService.enqueueExtract(
+			document,
+			'replace',
+			{ keepExtractedText: false, classify: input.classifyWithAi },
+			{ jobId: `docs:extract:${document.id}:${Date.now()}` }
+		);
+
+		return document;
+	}
+
+	/**
+	 * Writes the replacement's columns onto the existing row and mirrors them onto the in-memory
+	 * entity. Everything the spec calls "extraction state" is reset here, so the document cannot
+	 * keep serving text that describes the file it no longer holds.
+	 */
+	private async persistReplacedFile(
+		document: Document,
+		file: UploadedFile,
+		fileName: string,
+		sniff: ISniffResult,
+		sha256: string,
+		provider: any
+	): Promise<void> {
+		const existingMetadata = (
+			document.metadata && typeof document.metadata === 'object' ? document.metadata : {}
+		) as any;
+		const metadata = {
+			...existingMetadata,
+			upload: {
+				declaredMimeType: file.mimetype ?? null,
+				canonicalExtension: canonicalExtension(sniff.type.mimeType),
+				replacedAt: new Date().toISOString()
+			}
+		};
+
+		const patch: Partial<Document> = {
+			storageProvider: provider.name.toUpperCase() as FileStorageProviderEnum,
+			storageKey: file.key,
+			mimeType: sniff.type.mimeType,
+			fileSize: file.size,
+			sha256,
+			originalFilename: fileName,
+			version: (document.version ?? 1) + 1,
+			// Extraction state reset — the old text/summary/confidence describe the old bytes.
+			extractedText: null,
+			extractedTextEdited: false,
+			summary: null,
+			aiConfidence: null,
+			// The thumbnail is regenerated by the `reason: 'replace'` run; drop the stale one so
+			// no preview shows the previous file in the meantime.
+			thumbKey: null,
+			status: DocumentStatusEnum.UPLOADED,
+			statusMessage: null,
+			// `.update()` bypasses entity subscribers, so the sqlite text-column serialization
+			// the DocumentSubscriber normally performs happens here.
+			metadata: (isSqlite() || isBetterSqlite3() ? JSON.stringify(metadata) : metadata) as any
+		};
+
+		// A review flag raised by the PREVIOUS file's failed extraction is meaningless now.
+		if (
+			document.reviewStatus === DocumentReviewStatusEnum.PENDING &&
+			document.reviewReason === DocumentReviewReasonEnum.EXTRACTION_FAILED
+		) {
+			patch.reviewStatus = DocumentReviewStatusEnum.NONE;
+			patch.reviewReason = null;
+		}
+
+		await this.typeOrmDocumentRepository.update(
+			{ id: document.id, tenantId: document.tenantId, organizationId: document.organizationId },
+			patch as any
+		);
+		Object.assign(document, patch, { metadata });
 	}
 
 	/**

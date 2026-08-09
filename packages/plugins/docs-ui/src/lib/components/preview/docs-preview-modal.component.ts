@@ -63,6 +63,8 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 	public plainText: string | null = null;
 	public pdfPage = 0;
 	public pdfTotal = 0;
+	/** True while the signed download URL is being resolved. */
+	public downloading = false;
 
 	private objectUrl: string | null = null;
 
@@ -91,9 +93,24 @@ export class DocsPreviewModalComponent extends TranslationBaseComponent implemen
 		this.dialogRef.close();
 	}
 
-	download(): void {
-		if (this.document) {
-			window.open(this.documentsService.downloadUrl(this.document.id as ID), '_blank');
+	/**
+	 * 🛑 `GET /:id/download` answers `{ url }` **as JSON behind the JWT guard** — it
+	 * is not a redirect, so it can only be reached through the authenticated
+	 * `HttpClient`. Navigating to the route directly sent no bearer token and put a
+	 * 401 page in the new tab, which also made the fallback card's primary button
+	 * (the only way to get the bytes for an unpreviewable file) dead.
+	 */
+	async download(): Promise<void> {
+		if (!this.document || this.downloading) return;
+		this.downloading = true;
+		try {
+			const url = await firstValueFrom(this.documentsService.getDownloadUrl(this.document.id as ID));
+			if (url) window.open(url, '_blank', 'noopener');
+		} catch {
+			// The card already states the file could not be rendered; a failed URL
+			// resolve leaves it exactly as it was.
+		} finally {
+			this.downloading = false;
 		}
 	}
 

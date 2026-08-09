@@ -69,6 +69,34 @@ export class DocsShellComponent extends TranslationBaseComponent implements OnIn
 		this.actions.dispatch(DocumentsActions.detailClosed());
 	}
 
+	/**
+	 * Every panel edit — taxonomy chips, archive/unarchive, knowledge toggle,
+	 * reprocess, extracted-text save, share/visibility — lands here.
+	 *
+	 * The panel used to emit into nothing: the row behind it kept the values it was
+	 * listed with, and the facets and preset counts (which are what the filter bar
+	 * and the "Needs review" / "Not in knowledge" chips are derived from) went
+	 * stale until the next full reload. `rowChanged` patches the row in place and
+	 * `refreshFacets` re-counts, exactly as the panel's own review-request path
+	 * already did for itself.
+	 */
+	onDetailChanged(document: IDocument): void {
+		if (!document) return;
+		this.actions.dispatch(DocumentsActions.rowChanged(document));
+		this.actions.dispatch(DocumentsActions.refreshFacets());
+	}
+
+	/**
+	 * The document behind the open panel is gone. `rowRemoved` drops it from the
+	 * list and — because the effect closes a detail panel pointing at the removed
+	 * id — also closes this panel, so nothing is left pointing at a 404.
+	 */
+	onDetailDeleted(id: ID): void {
+		if (!id) return;
+		this.actions.dispatch(DocumentsActions.rowRemoved(id));
+		this.actions.dispatch(DocumentsActions.refreshFacets());
+	}
+
 	onOpenEditor(id: ID): void {
 		this.router.navigate(['page', id], { relativeTo: this.route });
 	}
