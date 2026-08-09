@@ -23,6 +23,13 @@
 				"assets": ["packages/scheduler/*.md"]
 			}
 		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/scheduler/jest.config.ts"
+			}
+		},
 		"nx-release-publish": {
 			"options": {
 				"packageRoot": "dist/{projectRoot}"

@@ -15,6 +15,16 @@ export interface ResolvedScheduledJobOptions {
 	queueName?: string;
 	queueJobName?: string;
 	queueJobOptions?: JobsOptions;
+	/**
+	 * Set when the job is well-formed but cannot be scheduled in THIS process — today only when it
+	 * fans out to a queue and this process has no queueing. The job is still registered (so it
+	 * remains introspectable and manually runnable); `registerSchedules()` skips it and warns.
+	 *
+	 * This exists so one plugin's optional scheduled fan-out cannot stop a whole process from
+	 * booting. It used to `throw` here, which meant `apps/worker` could not start at all whenever
+	 * `REDIS_ENABLED` was not `true`.
+	 */
+	unschedulableReason?: string;
 }
 
 export interface DiscoveredScheduledJob {

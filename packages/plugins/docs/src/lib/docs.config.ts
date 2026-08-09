@@ -41,6 +41,7 @@ import {
 	ENV_GAUZY_DOCS_ORG_QUOTA_BYTES,
 	ENV_GAUZY_DOCS_QUEUE_CONCURRENCY,
 	ENV_GAUZY_DOCS_QUEUE_ENABLED,
+	ENV_GAUZY_DOCS_QUEUE_WORKER_ENABLED,
 	ENV_GAUZY_DOCS_RETRIEVAL_LOG_ENABLED,
 	ENV_GAUZY_DOCS_RETRIEVAL_TOPK_MAX,
 	ENV_GAUZY_DOCS_SEARCH_RATE_LIMIT,
@@ -49,6 +50,7 @@ import {
 	ENV_GAUZY_DOCS_VECTOR_STORE,
 	ENV_GAUZY_DOCS_VERSION_DEBOUNCE_MINUTES
 } from './docs.constants';
+import { isSchedulerQueueRootEnabled } from '@gauzy/scheduler';
 
 /**
  * Typed configuration object parsed from the `GAUZY_DOCS_*` environment variables.
@@ -257,18 +259,61 @@ export const docsRateLimit = (limit: number) => ({
  * Read at module-definition time by `DocsModule` (Nest module metadata is static), which is
  * why it is a standalone helper rather than a field of {@link IDocsConfig}.
  *
- * 🛑 Defaults to FALSE, and the precondition is NOT "Redis is reachable" — it is "a
- * `BullModule.forRoot()` connection is registered in THIS process". Those are different, and
- * conflating them takes the API down: `@nestjs/bullmq`'s registrar builds a `Worker` for every
- * `@Processor` at `onModuleInit`, and with no root it throws `Worker requires a connection`,
- * which fails the whole Nest bootstrap. `SchedulerModule.forRoot()` is imported only by
- * `apps/worker`, and that app does not load the plugin list — so no process that loads this
- * plugin has a root today, whatever `REDIS_ENABLED` says.
+ * 🛑 The precondition is NOT "Redis is reachable" — it is "a `BullModule.forRoot()` connection
+ * is registered in THIS process". Those are different questions, and conflating them takes the
+ * API down: `@nestjs/bullmq`'s registrar builds a `Worker` for every `@Processor` at
+ * `onModuleInit`, and with no root it throws `Worker requires a connection`, which fails the
+ * whole Nest bootstrap. That is precisely what crash-looped demo and stage when the default was
+ * a bare `REDIS_ENABLED === 'true'`: Redis was reachable everywhere, but NO process that loaded
+ * this plugin had a root.
  *
- * Leave it off unless you have added a Bull root to the process you are enabling it in; the
- * plugin dispatches every stage inline instead, which is the supported path — see
+ * That second question is now answerable, which is why the default is no longer a flat `false`.
+ * `isSchedulerQueueRootEnabled()` is the ONE expression that decides whether a root is
+ * registered, and every process that loads the plugin list imports it:
+ *
+ * - `@gauzy/core` `AppModule`               → the API (producer-only: queueing on, cron off)
+ * - `@gauzy/core` `SeederModule.forPlugins()` → the `yarn seed` CLI (same producer-only shape)
+ * - `apps/worker` `AppModule`               → the worker (queueing AND cron on; it consumes)
+ *
+ * So the distinction survives: this does not ask "is Redis on?", it asks "did the modules that
+ * build this process's graph register a root?" — and it answers by evaluating the very same
+ * predicate they did, rather than by trusting a second env var an operator has to keep in sync.
+ * With no root anywhere (`REDIS_ENABLED` unset, or `SCHEDULER_QUEUE_ENABLED=false`) this returns
+ * false and the plugin dispatches every stage inline, which stays a fully supported path — see
  * `DocsQueueService`.
+ *
+ * `GAUZY_DOCS_QUEUE_ENABLED` remains the explicit per-deployment override in BOTH directions and
+ * still wins outright.
+ *
+ * ⚠️ `apps/worker` also narrows its own root with the older `WORKER_QUEUE_ENABLED`. That flag is
+ * read INSIDE `isSchedulerQueueRootEnabled()` for exactly this reason — a verification boot with
+ * `WORKER_QUEUE_ENABLED=false` and Redis on produced a worker with no root while this gate still
+ * said "queued", and the process died on
+ * `Job "docs-reconcile-schedule" targets queue "docs-processing" but queueing is disabled.`
+ * Both sides now read both flags, so they cannot disagree.
  *
  * @returns True when the queue + worker host should be registered.
  */
-export const isDocsQueueEnabled = (): boolean => parseBoolEnv(ENV_GAUZY_DOCS_QUEUE_ENABLED, false);
+export const isDocsQueueEnabled = (): boolean =>
+	parseBoolEnv(ENV_GAUZY_DOCS_QUEUE_ENABLED, isSchedulerQueueRootEnabled());
+
+/**
+ * Whether this process should additionally run the `docs-processing` CONSUMER — the
+ * `DocsProcessingWorker` `@Processor` host that actually executes the stages.
+ *
+ * Defaults to ON wherever {@link isDocsQueueEnabled} is on, and that default is deliberate:
+ * turning it off by default would mean a deployment that enables the queue but runs no separate
+ * worker enqueues jobs nothing ever picks up, and documents would sit in `UPLOADED` forever —
+ * strictly worse than the inline fallback. Producing without consuming must be an explicit choice.
+ *
+ * Set `GAUZY_DOCS_QUEUE_WORKER_ENABLED=false` on the API deployment (and leave it unset on
+ * `apps/worker`) to make the API a pure PRODUCER, which is the point of running a dedicated
+ * worker: the heavy extraction, OCR and embedding work then happens only there.
+ *
+ * 🛑 Never true without {@link isDocsQueueEnabled} — `DocsModule` ANDs the two. A `@Processor`
+ * registered without a queue/root is the `Worker requires a connection` crash.
+ *
+ * @returns True when the `DocsProcessingWorker` host should be registered.
+ */
+export const isDocsQueueWorkerEnabled = (): boolean =>
+	isDocsQueueEnabled() && parseBoolEnv(ENV_GAUZY_DOCS_QUEUE_WORKER_ENABLED, true);

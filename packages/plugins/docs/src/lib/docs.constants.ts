@@ -67,14 +67,26 @@ export const ENV_GAUZY_DOCS_CLASSIFY_MODEL = 'GAUZY_DOCS_CLASSIFY_MODEL';
 export const ENV_GAUZY_DOCS_VERSION_DEBOUNCE_MINUTES = 'GAUZY_DOCS_VERSION_DEBOUNCE_MINUTES';
 export const ENV_GAUZY_DOCS_QUEUE_CONCURRENCY = 'GAUZY_DOCS_QUEUE_CONCURRENCY';
 /**
- * Master switch for BullMQ-backed pipeline dispatch. Off unless explicitly set.
+ * Master switch for BullMQ-backed pipeline dispatch. Defaults to whatever
+ * `isSchedulerQueueRootEnabled()` says — i.e. ON exactly where a `SchedulerModule.forRoot()`
+ * BullMQ root is registered (`REDIS_ENABLED=true` and `SCHEDULER_QUEUE_ENABLED` not `false`).
+ * Set it explicitly to force either direction; an explicit value always wins.
  *
- * 🛑 Only turn this on in a process that registers a `BullModule.forRoot()` connection — Redis
- * being reachable is not enough. Without a root, `@nestjs/bullmq` throws
+ * 🛑 Only turn this on by hand in a process that registers a `BullModule.forRoot()` connection —
+ * Redis being reachable is not enough. Without a root, `@nestjs/bullmq` throws
  * `Worker requires a connection` while building the `@Processor` and the whole API fails to
  * boot. When off, the pipeline runs inline (see `DocsQueueService`).
  */
 export const ENV_GAUZY_DOCS_QUEUE_ENABLED = 'GAUZY_DOCS_QUEUE_ENABLED';
+
+/**
+ * Consumer half of the queue gate: whether THIS process runs the `DocsProcessingWorker`
+ * `@Processor` in addition to enqueueing. Defaults to true wherever
+ * `GAUZY_DOCS_QUEUE_ENABLED` resolves on, so a single-process deployment still drains its own
+ * queue. Set to `false` on the API when a dedicated `apps/worker` is deployed — that makes the
+ * API a pure producer and moves extraction/OCR/embedding off the request-serving pods.
+ */
+export const ENV_GAUZY_DOCS_QUEUE_WORKER_ENABLED = 'GAUZY_DOCS_QUEUE_WORKER_ENABLED';
 export const ENV_GAUZY_DOCS_MAX_EXTRACTED_CHARS = 'GAUZY_DOCS_MAX_EXTRACTED_CHARS';
 export const ENV_GAUZY_DOCS_STUCK_THRESHOLD_MINUTES = 'GAUZY_DOCS_STUCK_THRESHOLD_MINUTES';
 export const ENV_GAUZY_DOCS_EMBEDDING_DIMS = 'GAUZY_DOCS_EMBEDDING_DIMS';

@@ -64,14 +64,14 @@ describe('Documents sub-feature defaults', () => {
 	});
 
 	describe('explicit opt-out still wins', () => {
-		it.each([
+		it.each<[string, 'aiEnabled' | 'ocrEnabled' | 'inboundEmailEnabled']>([
 			[ENV_GAUZY_DOCS_AI_ENABLED, 'aiEnabled'],
 			[ENV_GAUZY_DOCS_OCR_ENABLED, 'ocrEnabled'],
 			[ENV_GAUZY_DOCS_INBOUND_EMAIL_ENABLED, 'inboundEmailEnabled']
-		])('%s=false turns %s off', (key: string, field: string) => {
+		])('%s=false turns %s off', (key, field) => {
 			process.env[key] = 'false';
 
-			expect(getDocsConfig()[field as 'aiEnabled']).toBe(false);
+			expect(getDocsConfig()[field]).toBe(false);
 		});
 
 		it('GAUZY_DOCS_QUEUE_ENABLED=true is still honoured for a process that really has a Bull root', () => {
