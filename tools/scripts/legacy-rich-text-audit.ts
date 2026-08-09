@@ -82,6 +82,17 @@ import { writeFileSync } from 'fs';
 import { normalizeLegacyHtml } from '../../packages/ui-core/shared/src/lib/rich-text-editor/legacy-html.util';
 import { createStandardPreset } from '../../packages/ui-core/shared/src/lib/rich-text-editor/presets/standard.preset';
 
+/**
+ * Deterministic string ordering for every sort in this file.
+ *
+ * `Array.prototype.sort()` with no comparator is flagged (rightly) as unreliable, but the usual
+ * remedy — `localeCompare` — is the WRONG one here. Every sort below feeds either a canonical form
+ * used to decide whether two HTML strings are equivalent, or a report meant to be diffed between
+ * runs. `localeCompare` is locale-sensitive, so the same row could canonicalize differently on two
+ * machines and manufacture a "loss" that does not exist. Code-unit order is stable everywhere.
+ */
+const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
 // ---------------------------------------------------------------------------
 // Field inventory — 06-ckeditor-removal.md §5.1, one entry per row of the table.
 // Table names come from the `@MultiORMEntity(...)` decorator of each entity; column names
@@ -286,7 +297,7 @@ function canonicalStyle(style: string): string {
 			})
 			// TableKit's resize handles write min-width on the table and every <col>.
 			.filter((declaration) => !declaration.startsWith('min-width:'))
-			.sort()
+			.sort(byCodeUnit)
 			.join('; ')
 	);
 }
@@ -669,7 +680,7 @@ function runSelfTest(): number {
 
 	SELF_TEST_CASES.forEach((testCase) => {
 		const verdict = classifyRow(testCase.html);
-		const droppedTags = Object.keys(verdict.dropped).sort();
+		const droppedTags = Object.keys(verdict.dropped).sort(byCodeUnit);
 		const categoryOk = verdict.category === testCase.expected;
 		const droppedOk = !testCase.expectDropped || testCase.expectDropped.every((tag) => droppedTags.includes(tag));
 		const ok = categoryOk && droppedOk;
@@ -864,8 +875,8 @@ function toJson(reports: FieldReport[]) {
 		generatedAt: new Date().toISOString(),
 		spec: '06-ckeditor-removal.md §4.4 (gate), §4.2 (coverage contract), §7 slice S6',
 		acceptedDrops: {
-			deliberateNonCoverage: Array.from(DELIBERATE_NON_COVERAGE).sort(),
-			acceptedNormalizations: Array.from(ACCEPTED_NORMALIZATIONS).sort()
+			deliberateNonCoverage: Array.from(DELIBERATE_NON_COVERAGE).sort(byCodeUnit),
+			acceptedNormalizations: Array.from(ACCEPTED_NORMALIZATIONS).sort(byCodeUnit)
 		},
 		fields: reports.map((report) => ({
 			id: report.field.id,
