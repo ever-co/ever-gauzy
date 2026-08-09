@@ -2,12 +2,18 @@
 	<nb-card-header>{{ 'DOCS.LINKS.ATTACH_DIALOG_TITLE' | translate }}</nb-card-header>
 
 	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary">
+		<!--
+			The field has no visible label by design (the card header names the dialog), so it needs
+			an explicit accessible name — a placeholder is not one: it is not exposed as the
+			accessible name by every screen reader and it disappears as soon as the user types.
+		-->
 		<input
 			id="docs-attach-search"
 			nbInput
 			fullWidth
 			size="small"
 			type="text"
+			[attr.aria-label]="'DOCS.LINKS.ATTACH_SEARCH_PLACEHOLDER' | translate"
 			[placeholder]="'DOCS.LINKS.ATTACH_SEARCH_PLACEHOLDER' | translate"
 			[disabled]="saving"
 			[ngModel]="search"

@@ -24,10 +24,18 @@
 					<nb-icon icon="upload-outline"></nb-icon>
 					{{ 'DOCS.LINKS.UPLOAD_NEW' | translate }}
 				</button>
+				<!--
+					Visually hidden and driven entirely by the button above, so it carries an id and
+					an explicit accessible name, and is taken out of the tab order: a focusable
+					control the user cannot see is a keyboard trap, and the button is the real one.
+				-->
 				<input
 					#fileInput
+					id="docs-links-panel-file-input"
 					type="file"
+					tabindex="-1"
 					class="docs-links-panel-file"
+					[attr.aria-label]="'DOCS.LINKS.UPLOAD_NEW' | translate"
 					[accept]="accept"
 					(change)="uploadNew(fileInput)"
 				/>

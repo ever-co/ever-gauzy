@@ -20,9 +20,17 @@ jest.mock('@gauzy/core', () => ({
 	parseFindOptionsSelect: (value: any) => value,
 	prepareSQLQuery: (value: string) => value,
 	LIKE_OPERATOR: 'ILIKE',
-	// Strips anything that is not a paragraph — enough of a stand-in to make "did the read path
-	// sanitize?" observable without re-testing the real allowlist.
-	sanitizeRichHtml: jest.fn((html: string) => html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ''))
+	// 🛑 Returns a FIXED string; it deliberately does not attempt to strip anything.
+	//
+	// This double previously faked the allowlist with `html.replace(/<script...>/gi, '')`. That is
+	// the exact shape of an unsafe sanitizer — CodeQL flagged it as "Incomplete multi-character
+	// sanitization" and "Bad HTML filtering regexp", correctly: `</script >` walks straight
+	// through it. Even in a test it is worth nothing and worth copying, which is the danger.
+	//
+	// Returning a constant proves what this suite is actually about — that the READ path delegates
+	// to the allowlist and heals the row exactly once — without re-implementing sanitization. The
+	// real policy is covered by `packages/core/src/lib/core/html-sanitizer/rich-html-sanitizer.spec.ts`.
+	sanitizeRichHtml: jest.fn(() => '<p>hello</p>')
 }));
 
 jest.mock('./help-center-article.entity', () => ({ HelpCenterArticle: class HelpCenterArticle {} }));
