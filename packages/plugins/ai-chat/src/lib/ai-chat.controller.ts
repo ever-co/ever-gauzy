@@ -1,6 +1,7 @@
 import {
 	Body,
 	Controller,
+	ExecutionContext,
 	Get,
 	Headers,
 	Param,
@@ -11,13 +12,58 @@ import {
 	UseGuards,
 	UseInterceptors
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { randomUUID } from 'crypto';
 import type { Request, Response } from 'express';
 import { memoryStorage } from 'multer';
+import * as path from 'path';
 import type { UIMessage } from 'ai';
-import { IAiChatConfig, IAiChatModelCatalogue, PermissionsEnum } from '@gauzy/contracts';
-import { LazyFileInterceptor, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import {
+	IAiChatConfig,
+	IAiChatModelCatalogue,
+	PermissionsEnum,
+	UploadedFile as IUploadedFile
+} from '@gauzy/contracts';
+import {
+	FileStorage,
+	LazyFileInterceptor,
+	PermissionGuard,
+	Permissions,
+	RequestContext,
+	TenantPermissionGuard
+} from '@gauzy/core';
 import { AiChatService, MAX_AUDIO_BYTES } from './ai-chat.service';
+import {
+	AiChatAttachmentService,
+	IAiChatAttachmentResult,
+	MAX_ATTACHMENT_BYTES
+} from './attachments/ai-chat-attachment.service';
+
+/**
+ * Per-request storage engine of the attachment endpoint.
+ *
+ * Keys land under `ai-chat/<tenantId>/<organizationId>/` with a SERVER-GENERATED object name —
+ * the client filename never enters the key, and the extension is stripped down to alphanumerics.
+ * Mirrors the Documents upload endpoint, which is the other place user-supplied files are stored.
+ */
+const attachmentsStorage = (ctx: ExecutionContext) => {
+	const request: any = ctx.switchToHttp().getRequest();
+	const tenantId = RequestContext.currentTenantId() || randomUUID();
+	const rawOrganizationId: string = request?.headers?.['organization-id'] || randomUUID();
+	// Path-sanitize: ids are UUIDs, but never trust a header verbatim.
+	const organizationId = String(rawOrganizationId).replace(/[^a-zA-Z0-9-]/g, '') || randomUUID();
+
+	return new FileStorage().storage({
+		dest: () => path.join('ai-chat', tenantId, organizationId),
+		prefix: 'ai-chat',
+		filename: (_file: any, extension: string) => {
+			const safeExtension = String(extension ?? '')
+				.toLowerCase()
+				.replace(/[^a-z0-9]/g, '');
+			return safeExtension ? `${randomUUID()}.${safeExtension}` : `${randomUUID()}`;
+		}
+	});
+};
 
 /** Request body sent by the `useChat` client (Vercel AI SDK UI). */
 export interface IAiChatRequestBody {
@@ -34,7 +80,10 @@ export interface IAiChatRequestBody {
 @Permissions(PermissionsEnum.AI_CHAT_ACCESS)
 @Controller('/ai-chat')
 export class AiChatController {
-	constructor(private readonly aiChatService: AiChatService) {}
+	constructor(
+		private readonly aiChatService: AiChatService,
+		private readonly attachmentService: AiChatAttachmentService
+	) {}
 
 	/**
 	 * Stream one chat turn as a Vercel AI SDK UI message stream (SSE).
@@ -120,6 +169,42 @@ export class AiChatController {
 	async transcribe(@UploadedFile() file: { buffer: Buffer; mimetype: string }): Promise<{ text: string }> {
 		const text = await this.aiChatService.transcribe(file?.buffer, file?.mimetype ?? 'audio/webm');
 		return { text };
+	}
+
+	/**
+	 * Attach a file to a chat conversation.
+	 *
+	 * The bytes are streamed straight into the configured `FileStorage` provider (never buffered
+	 * in memory — unlike dictation, which forwards the audio upstream and so must hold it), and
+	 * the save is announced as `AiChatAttachmentSavedEvent`. `@gauzy/plugin-docs` subscribes to
+	 * that event and turns the attachment into a `Document { source: CHAT }`, after which the
+	 * chat's own `docs_search` / `docs_read` tools can read it. Installs without that plugin
+	 * simply have no subscriber.
+	 *
+	 * `AI_CHAT_ACCESS` only, for the same reason as dictation: attaching a file is part of
+	 * composing a message, not an administrative act.
+	 */
+	@ApiOperation({ summary: 'Attach a file to a chat conversation' })
+	@ApiConsumes('multipart/form-data')
+	@ApiResponse({ status: 201, description: 'The stored attachment descriptor.' })
+	@ApiResponse({ status: 400, description: 'No file uploaded, or no organization scope.' })
+	// multer's LIMIT_FILE_SIZE surfaces as PayloadTooLargeException via transformException.
+	@ApiResponse({ status: 413, description: 'Attachment exceeds the 25 MB limit.' })
+	@Permissions(PermissionsEnum.AI_CHAT_ACCESS)
+	@Post('/attachments')
+	@UseInterceptors(
+		LazyFileInterceptor('file', {
+			storage: (ctx: ExecutionContext) => attachmentsStorage(ctx),
+			// The same constant the service's cap derives from, declared here so an oversized
+			// upload is rejected by multer BEFORE the provider stores any of it.
+			limits: { fileSize: MAX_ATTACHMENT_BYTES }
+		})
+	)
+	async attach(
+		@UploadedFile() file: IUploadedFile,
+		@Body() body: { conversationId?: string }
+	): Promise<IAiChatAttachmentResult> {
+		return this.attachmentService.save(file, body?.conversationId);
 	}
 
 	/**

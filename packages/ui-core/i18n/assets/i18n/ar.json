@@ -3300,7 +3300,11 @@
 		"STOP_TIMER": "إيقاف المؤقت",
 		"TIME_LOG": "سجل الوقت",
 		"VIEW_APPOINTMENTS": "عرض المواعيد",
-		"VIEW_TIME_ACTIVITY": "عرض نشاط الوقت"
+		"VIEW_TIME_ACTIVITY": "عرض نشاط الوقت",
+		"DOCUMENTS": {
+			"NEW_PAGE": "صفحة جديدة",
+			"UPLOAD": "رفع"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "المحاسبة",
@@ -3308,7 +3312,8 @@
 		"PROJECT_MANAGEMENT": "إدارة المشروع",
 		"JOBS": "الوظائف",
 		"CONTACTS": "جهات الاتصال",
-		"TIME_TRACKING": "تتبع الوقت"
+		"TIME_TRACKING": "تتبع الوقت",
+		"DOCUMENTS": "المستندات"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "الاسم الأول",

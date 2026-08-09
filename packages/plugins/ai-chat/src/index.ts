@@ -14,7 +14,15 @@ export { importEsm, loadAiSdk } from './lib/esm-loader';
 
 // Chat-tool extension SPI — other plugins (e.g. @gauzy/plugin-docs) contribute per-turn tools
 export { AiChatToolRegistry } from './lib/tools/tool-registry';
-export type { AiChatToolFactory, IAiChatToolContext, IAiChatToolContribution } from './lib/tools/tool-registry';
+export type {
+	AiChatDataPartWriter,
+	AiChatToolFactory,
+	IAiChatDataPart,
+	IAiChatToolContext,
+	IAiChatToolContribution
+} from './lib/tools/tool-registry';
+export { createDeferredDataPartWriter } from './lib/tools/data-parts';
+export type { IDeferredDataPartWriter } from './lib/tools/data-parts';
 
 // Shared plumbing for provider model catalogues: bounded fetch, credential-keyed cache, fail-open.
 export {
@@ -36,6 +44,17 @@ export type { IAiChatRateLimitEnvelope } from './lib/rate-limit';
 export { AiProviderCredential } from './lib/credentials/ai-provider-credential.entity';
 export { AiProviderCredentialService } from './lib/credentials/ai-provider-credential.service';
 export { AiProviderCredentialModule } from './lib/credentials/ai-provider-credential.module';
+
+// Chat attachments — the event `@gauzy/plugin-docs` captures into the Documents hub.
+// 🛑 `AiChatAttachmentSavedEvent` is resolved BY NAME at runtime by that plugin's
+// `ChatCaptureSubscriber`; removing or renaming this export silently disables chat capture.
+export { AiChatAttachmentSavedEvent } from './lib/attachments/ai-chat-attachment.event';
+export type {
+	IAiChatAttachmentFile,
+	IAiChatAttachmentSavedPayload
+} from './lib/attachments/ai-chat-attachment.event';
+export { AiChatAttachmentService, MAX_ATTACHMENT_BYTES } from './lib/attachments/ai-chat-attachment.service';
+export type { IAiChatAttachmentResult } from './lib/attachments/ai-chat-attachment.service';
 
 // Chat history (per-user conversations)
 export { AiChatConversation } from './lib/conversations/ai-chat-conversation.entity';

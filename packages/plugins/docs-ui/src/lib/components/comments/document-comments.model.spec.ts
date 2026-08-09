@@ -3,9 +3,15 @@ import {
 	applyMentionPick,
 	buildCommentThread,
 	collectMentionEmployeeIds,
+	commentBlockId,
+	commentBody,
 	detectMentionToken,
 	employeeMentionLabel,
-	filterMentionCandidates
+	filterMentionCandidates,
+	groupCommentsByBlock,
+	openBlockAnchors,
+	parseBlockAnchor,
+	withBlockAnchor
 } from './document-comments.model';
 
 const comment = (id: string, createdAt: string, parentId?: string): IComment =>
@@ -112,5 +118,69 @@ describe('employeeMentionLabel', () => {
 		);
 		expect(employeeMentionLabel({ id: 'e3', user: { email: 'a@b.c' } } as IEmployee)).toBe('a@b.c');
 		expect(employeeMentionLabel({ id: 'e4' } as IEmployee)).toBe('e4');
+	});
+});
+
+/**
+ * Block anchoring (spec 05 §8).
+ *
+ * 🛑 The anchor rides in the comment body because the platform `Comment` entity has no
+ * `metadata` column and its DTO whitelists unknown properties away — so the two invariants
+ * worth pinning are that the marker never survives into anything a human reads, and that an
+ * edit (which re-sends the whole body) cannot silently detach a comment from its block.
+ */
+describe('block anchors', () => {
+	const anchored = (body: string, resolved = false): IComment =>
+		({ id: body, comment: body, resolved, createdAt: new Date('2026-01-01T10:00:00Z') } as unknown as IComment);
+
+	it('splits a stored body into its anchor and its text', () => {
+		expect(parseBlockAnchor('[[block:abc-123]]\nLooks wrong here')).toEqual({
+			blockId: 'abc-123',
+			body: 'Looks wrong here'
+		});
+	});
+
+	it('treats an unanchored body as document-level', () => {
+		expect(parseBlockAnchor('Plain comment')).toEqual({ blockId: null, body: 'Plain comment' });
+		expect(parseBlockAnchor(undefined)).toEqual({ blockId: null, body: '' });
+	});
+
+	it('only honours the marker at the very start — prose about blocks is not an anchor', () => {
+		expect(commentBlockId({ comment: 'see [[block:abc]] above' } as IComment)).toBeNull();
+	});
+
+	it('never shows the marker to a reader', () => {
+		expect(commentBody({ comment: '[[block:abc]]\nhello' } as IComment)).toBe('hello');
+	});
+
+	it('re-stamping an already-stripped body keeps exactly one marker', () => {
+		const once = withBlockAnchor('abc', 'hello');
+		const twice = withBlockAnchor('abc', withBlockAnchor('abc', 'hello'));
+		expect(twice).toBe(once);
+		expect(commentBody({ comment: twice } as IComment)).toBe('hello');
+	});
+
+	it('writes a plain body when there is no block to anchor to', () => {
+		expect(withBlockAnchor(null, 'hello')).toBe('hello');
+	});
+
+	it('reports only anchors that still have an unresolved comment', () => {
+		const open = openBlockAnchors([
+			anchored('[[block:a]]\nopen'),
+			anchored('[[block:b]]\ndone', true),
+			anchored('no anchor')
+		]);
+		expect(open).toEqual(['a']);
+	});
+
+	it('groups anchored comments by block and ignores document-level ones', () => {
+		const grouped = groupCommentsByBlock([
+			anchored('[[block:a]]\none'),
+			anchored('[[block:a]]\ntwo'),
+			anchored('[[block:b]]\nthree'),
+			anchored('loose')
+		]);
+		expect([...grouped.keys()]).toEqual(['a', 'b']);
+		expect(grouped.get('a')).toHaveLength(2);
 	});
 });

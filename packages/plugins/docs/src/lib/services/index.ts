@@ -4,6 +4,7 @@ import { DocumentAccessService } from './document-access.service';
 import { DocumentCategoryService } from './document-category.service';
 import { DocumentKnowledgeService } from './document-knowledge.service';
 import { DocumentLinkService } from './document-link.service';
+import { DocumentPathService } from './document-path.service';
 import { DocumentProcessingService } from './document-processing.service';
 import { DocumentQuotaService } from './document-quota.service';
 import { DocumentReviewService } from './document-review.service';
@@ -21,6 +22,7 @@ export * from './document-access.sql';
 export * from './document-category.service';
 export * from './document-knowledge.service';
 export * from './document-link.service';
+export * from './document-path.service';
 export * from './document-processing.service';
 export * from './document-quota.service';
 export * from './document-review.service';
@@ -43,6 +45,7 @@ export const Services = [
 	DocumentAccessService,
 	DocumentQuotaService,
 	DocumentService,
+	DocumentPathService,
 	DocumentTreeService,
 	DocumentCategoryService,
 	DocumentVersionService,

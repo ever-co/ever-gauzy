@@ -51,6 +51,10 @@ export const DOCS_INBOUND_UNKNOWN_RECIPIENT = 'DOCS_INBOUND_UNKNOWN_RECIPIENT';
 export const DOCS_INBOUND_TOO_LARGE = 'DOCS_INBOUND_TOO_LARGE';
 /** The inbound message carried no importable attachment. */
 export const DOCS_INBOUND_NO_ATTACHMENTS = 'DOCS_INBOUND_NO_ATTACHMENTS';
+/** The submitted `contentJson` is not a schema-valid TipTap document (`08` §6.1). */
+export const DOCS_CONTENT_SCHEMA_INVALID = 'DOCS_CONTENT_SCHEMA_INVALID';
+/** The submitted `contentBinary` exceeds `GAUZY_DOCS_MAX_BINARY_BYTES` (`10` §7.1 P6). */
+export const DOCS_CONTENT_BINARY_TOO_LARGE = 'DOCS_CONTENT_BINARY_TOO_LARGE';
 
 /**
  * Environment variable keys read by `docs.config.ts`.
@@ -89,6 +93,14 @@ export const ENV_GAUZY_DOCS_RETRIEVAL_LOG_ENABLED = 'GAUZY_DOCS_RETRIEVAL_LOG_EN
 export const ENV_GAUZY_DOCS_OCR_ENABLED = 'GAUZY_DOCS_OCR_ENABLED';
 /** Hard cap on OCR'd pages per document — the cost fuse of the OCR path. */
 export const ENV_GAUZY_DOCS_OCR_MAX_PAGES = 'GAUZY_DOCS_OCR_MAX_PAGES';
+/**
+ * Per-route rate limits (`08-permissions-security.md` §9), in requests per minute. They are
+ * applied as named `@Throttle` overrides on the abuse-relevant routes only — plain CRUD reads
+ * stay on the platform's global defaults.
+ */
+export const ENV_GAUZY_DOCS_UPLOAD_RATE_LIMIT = 'GAUZY_DOCS_UPLOAD_RATE_LIMIT';
+export const ENV_GAUZY_DOCS_SEARCH_RATE_LIMIT = 'GAUZY_DOCS_SEARCH_RATE_LIMIT';
+export const ENV_GAUZY_DOCS_ADMIN_OPS_RATE_LIMIT = 'GAUZY_DOCS_ADMIN_OPS_RATE_LIMIT';
 export const ENV_GAUZY_DOCS_INBOUND_EMAIL_ENABLED = 'GAUZY_DOCS_INBOUND_EMAIL_ENABLED';
 export const ENV_GAUZY_DOCS_INBOUND_WEBHOOK_SECRET = 'GAUZY_DOCS_INBOUND_WEBHOOK_SECRET';
 export const ENV_GAUZY_DOCS_INBOUND_MAX_MESSAGE_BYTES = 'GAUZY_DOCS_INBOUND_MAX_MESSAGE_BYTES';
@@ -118,6 +130,21 @@ export const DEFAULT_DOCS_ORG_QUOTA_BYTES = 0;
 export const DEFAULT_DOCS_OCR_MAX_PAGES = 20;
 /** Per-message cap for the inbound-email webhook (25 MB). */
 export const DEFAULT_DOCS_INBOUND_MAX_MESSAGE_BYTES = 26214400;
+/** Requests/minute on the intake path — upload costs storage + pipeline + AI spend (§9). */
+export const DEFAULT_DOCS_UPLOAD_RATE_LIMIT = 20;
+/** Requests/minute on knowledge search — every query fans out to a query embedding (§9). */
+export const DEFAULT_DOCS_SEARCH_RATE_LIMIT = 60;
+/** Requests/minute on the fan-out admin operations (bulk actions, per-document re-index) (§9). */
+export const DEFAULT_DOCS_ADMIN_OPS_RATE_LIMIT = 10;
+
+/**
+ * Window the per-route rate limits are expressed over, in milliseconds.
+ *
+ * 🛑 A contract with `docs.constants`' `*_RATE_LIMIT` values, which the spec states in
+ * **requests per minute** — changing this without restating the limits silently rescales all
+ * three of them.
+ */
+export const DOCS_RATE_LIMIT_WINDOW_MS = 60_000;
 
 /**
  * Minimum `q` length accepted by a content search (`searchIn=content`) on the documents

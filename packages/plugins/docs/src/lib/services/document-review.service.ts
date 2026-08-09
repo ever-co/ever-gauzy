@@ -3,6 +3,7 @@ import {
 	DocumentKnowledgeStatusEnum,
 	DocumentReviewReasonEnum,
 	DocumentReviewStatusEnum,
+	EntitySubscriptionTypeEnum,
 	ID,
 	IDocument
 } from '@gauzy/contracts';
@@ -55,6 +56,9 @@ export class DocumentReviewService {
 		if (input.reason) {
 			await this.mergeReviewMetadata(document, { requestReason: input.reason.slice(0, 1000) });
 		}
+		// §8/§9.4 — whoever asked for the review is the person who needs to hear about its
+		// outcome, so the request itself subscribes them to the document.
+		this.documentService.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.MANUAL);
 		this.emit(document, previous, DocumentReviewStatusEnum.PENDING);
 		return document;
 	}

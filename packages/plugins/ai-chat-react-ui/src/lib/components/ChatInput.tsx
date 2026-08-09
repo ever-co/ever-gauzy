@@ -40,6 +40,17 @@ export interface ChatInputProps {
 	 */
 	onTranscribe?: (audio: Blob) => Promise<string>;
 	/**
+	 * Upload a file the user picked and attach it to this conversation.
+	 *
+	 * Absent ⇒ the paperclip stays the inert "coming soon" affordance it has always been. Same
+	 * rule as `onTranscribe`: a control that cannot work is never offered as if it could.
+	 */
+	onAttachFile?: (file: File) => Promise<void>;
+	/** Open the "attach from Documents" picker. Absent ⇒ the library button stays inert. */
+	onAttachFromDocuments?: () => void;
+	/** True while an attachment upload is in flight (both attach controls are disabled). */
+	isAttaching?: boolean;
+	/**
 	 * Identifies what the input is composing FOR — the active conversation.
 	 *
 	 * A take that outlives its conversation must not be delivered: switching chats while speaking, or
@@ -90,10 +101,14 @@ export function ChatInput({
 	onStop,
 	onEscape,
 	onTranscribe,
+	onAttachFile,
+	onAttachFromDocuments,
+	isAttaching = false,
 	composingFor
 }: ChatInputProps) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [isFocused, setIsFocused] = useState(false);
 
 	const [dictation, setDictation] = useState<DictationState>('idle');
@@ -570,19 +585,44 @@ export function ChatInput({
 				}}
 				style={formStyle}
 			>
-				{/* Attach and library are placeholders on purpose — the control is shown so the
-				    affordance is discoverable, and disabled so it cannot fail silently when clicked. */}
-				{/* `aria-disabled`, NOT the native `disabled`: that removes the control from the tab
-				    order and suppresses its tooltip, so the "coming soon" hint the comment calls
-				    discoverable would be reachable by neither keyboard nor hover. This keeps it
-				    focusable and announced, and the no-op click keeps it inert. */}
+				{/* Attach and library become LIVE controls once the panel supplies their handlers;
+				    without them they stay the inert "coming soon" affordance they have always been.
+				    Same rule as dictation: a control that cannot work is never offered as if it could. */}
+				{/* `aria-disabled`, NOT the native `disabled`, in the inert case: that removes the
+				    control from the tab order and suppresses its tooltip, so the "coming soon" hint the
+				    comment calls discoverable would be reachable by neither keyboard nor hover. This
+				    keeps it focusable and announced, and the no-op click keeps it inert. */}
+				{onAttachFile && (
+					<input
+						ref={fileInputRef}
+						type="file"
+						style={{ display: 'none' }}
+						onChange={(event) => {
+							const file = event.target.files?.[0];
+							// Reset first: picking the SAME file twice fires no change event
+							// otherwise, so a failed attachment could never be retried.
+							event.target.value = '';
+							if (file) void onAttachFile(file);
+						}}
+					/>
+				)}
+
 				<button
 					type="button"
-					aria-disabled="true"
-					onClick={(e) => e.preventDefault()}
-					style={toolButtonStyle(false, false)}
-					title={t('AI_ASSISTANT.ATTACH_SOON', 'Attach files or folders (coming soon)')}
-					aria-label={t('AI_ASSISTANT.ATTACH_SOON', 'Attach files or folders (coming soon)')}
+					{...(onAttachFile && !isAttaching
+						? { onClick: () => fileInputRef.current?.click() }
+						: { 'aria-disabled': true as const, onClick: (e: { preventDefault: () => void }) => e.preventDefault() })}
+					style={toolButtonStyle(false, Boolean(onAttachFile) && !isAttaching)}
+					title={
+						onAttachFile
+							? t('AI_ASSISTANT.ATTACH', 'Attach a file')
+							: t('AI_ASSISTANT.ATTACH_SOON', 'Attach files or folders (coming soon)')
+					}
+					aria-label={
+						onAttachFile
+							? t('AI_ASSISTANT.ATTACH', 'Attach a file')
+							: t('AI_ASSISTANT.ATTACH_SOON', 'Attach files or folders (coming soon)')
+					}
 				>
 					<svg
 						width="16"
@@ -600,11 +640,20 @@ export function ChatInput({
 
 				<button
 					type="button"
-					aria-disabled="true"
-					onClick={(e) => e.preventDefault()}
-					style={toolButtonStyle(false, false)}
-					title={t('AI_ASSISTANT.LIBRARY_SOON', 'Choose from the file library (coming soon)')}
-					aria-label={t('AI_ASSISTANT.LIBRARY_SOON', 'Choose from the file library (coming soon)')}
+					{...(onAttachFromDocuments && !isAttaching
+						? { onClick: () => onAttachFromDocuments() }
+						: { 'aria-disabled': true as const, onClick: (e: { preventDefault: () => void }) => e.preventDefault() })}
+					style={toolButtonStyle(false, Boolean(onAttachFromDocuments) && !isAttaching)}
+					title={
+						onAttachFromDocuments
+							? t('AI_ASSISTANT.ATTACH_FROM_DOCUMENTS', 'Attach from Documents')
+							: t('AI_ASSISTANT.LIBRARY_SOON', 'Choose from the file library (coming soon)')
+					}
+					aria-label={
+						onAttachFromDocuments
+							? t('AI_ASSISTANT.ATTACH_FROM_DOCUMENTS', 'Attach from Documents')
+							: t('AI_ASSISTANT.LIBRARY_SOON', 'Choose from the file library (coming soon)')
+					}
 				>
 					<svg
 						width="16"

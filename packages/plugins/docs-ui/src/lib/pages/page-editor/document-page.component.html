@@ -233,6 +233,13 @@
 			{{ 'DOCS.EDITOR.READ_ONLY_BANNER' | translate }}
 		</div>
 
+		<!-- Content written by a newer extension set (spec 05 §9.1 `metadata.schemaVersion`):
+		     saving from this build would silently drop node types it does not know. -->
+		<div class="gz-banner gz-banner-conflict" *ngIf="schemaAhead" role="alert">
+			<nb-icon icon="alert-triangle-outline"></nb-icon>
+			{{ 'DOCS.EDITOR.SCHEMA_AHEAD' | translate }}
+		</div>
+
 		<!-- ─── Editor canvas + right rail ──────────────────────────────── -->
 		<div class="gz-page-layout" *ngIf="document && !loadError">
 			<div class="gz-editor-canvas" [class.full-width]="fullWidth">
@@ -244,6 +251,8 @@
 					(saveStateChanged)="onSaveStateChanged($event)"
 					(statsChanged)="onStatsChanged($event)"
 					(tocChanged)="onTocChanged($event)"
+					(commentRequested)="openCommentsFor($event)"
+					(schemaVersionChanged)="onSchemaVersionChanged($event)"
 				></gz-document-editor>
 
 				<!-- FILE: static extracted-text preview (spec 05 §9.1) -->
@@ -288,6 +297,21 @@
 						>
 							{{ 'DOCS.EDITOR.INFO' | translate }}
 						</button>
+						<!-- Block-anchored comment threads (spec 01 §10.5 / spec 05 §8).
+						     PAGE only: a FILE has no editor blocks to anchor to. -->
+						<button
+							*ngIf="isPage"
+							nbButton
+							ghost
+							size="tiny"
+							type="button"
+							role="tab"
+							[attr.aria-selected]="railTab === 'comments'"
+							[class.active]="railTab === 'comments'"
+							(click)="openCommentsTab()"
+						>
+							{{ 'DOCS.COMMENTS.TITLE' | translate }}
+						</button>
 					</div>
 
 					<!-- ToC panel (UX spec §10.3) -->
@@ -325,6 +349,36 @@
 							<dt>{{ 'DOCS.FILTERS.CREATED_RANGE' | translate }}</dt>
 							<dd>{{ document.createdAt | date : 'medium' }}</dd>
 						</dl>
+					</div>
+
+					<!-- Comments panel (spec 05 §8). Standalone component, so the page can
+					     mount it without touching the module's declarations.
+
+					     🛑 `[hidden]`, not `*ngIf`, on the tab condition: this panel owns the
+					     only comment fetch, and its `openBlocksChanged` is what draws the
+					     editor's gutter markers. Behind an `*ngIf` the markers would not
+					     appear until the user happened to open this tab. -->
+					<div class="gz-rail-panel" *ngIf="isPage" [hidden]="railTab !== 'comments'">
+						<button
+							*ngIf="commentBlockId"
+							nbButton
+							ghost
+							size="tiny"
+							type="button"
+							class="gz-comments-all"
+							(click)="openCommentsTab()"
+						>
+							<nb-icon icon="arrow-back-outline"></nb-icon>
+							{{ 'DOCS.COMMENTS.ALL_THREADS' | translate }}
+						</button>
+						<gz-docs-block-comments
+							[documentId]="document.id"
+							[documentName]="document.name"
+							[blockId]="commentBlockId"
+							[knownBlockIds]="knownBlockIds"
+							(openBlocksChanged)="onOpenCommentBlocks($event)"
+							(blockFocused)="onCommentBlockFocused($event)"
+						></gz-docs-block-comments>
 					</div>
 				</ng-template>
 			</aside>

@@ -1,6 +1,7 @@
 import { useRef, useEffect, type CSSProperties } from 'react';
 import type { UIMessage } from 'ai';
 import { ChatMessageItem } from './ChatMessageItem';
+import type { IDocsCitation } from './DocsCitationChips';
 import { chatTheme } from '../chat-theme';
 
 export interface ChatMessageListProps {
@@ -9,6 +10,10 @@ export interface ChatMessageListProps {
 	status: string;
 	/** Respond to a pending tool approval request. */
 	onApprovalResponse?: (approvalId: string, approved: boolean) => void;
+	/** Open a document citation chip (router navigation supplied by the panel). */
+	onOpenCitation?: (citation: IDocsCitation) => void;
+	/** `t(key, fallback)` from the panel. */
+	translate?: (key: string, fallback: string) => string;
 }
 
 /**
@@ -18,7 +23,13 @@ export interface ChatMessageListProps {
  * the bottom when new content streams in. Compact layout
  * optimised for the narrow sidebar width.
  */
-export function ChatMessageList({ messages, status, onApprovalResponse }: ChatMessageListProps) {
+export function ChatMessageList({
+	messages,
+	status,
+	onApprovalResponse,
+	onOpenCitation,
+	translate
+}: ChatMessageListProps) {
 	const scrollRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -51,6 +62,8 @@ export function ChatMessageList({ messages, status, onApprovalResponse }: ChatMe
 					message={message}
 					isStreaming={isStreaming && message === lastMessage && message.role === 'assistant'}
 					onApprovalResponse={onApprovalResponse}
+					onOpenCitation={onOpenCitation}
+					translate={translate}
 				/>
 			))}
 

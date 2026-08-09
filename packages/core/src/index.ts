@@ -26,6 +26,17 @@ export { PasswordHashModule, PasswordHashService } from './lib/password-hash';
 // platform mechanisms instead of re-implementing them.
 export { ActivityLogService } from './lib/activity-log/activity-log.service';
 export { MentionService } from './lib/mention/mention.service';
+// 🛑 `@Global()` means "available everywhere ONCE IMPORTED", not "always present". The API gets
+// both modules through core's own `AppModule`; a host that builds its own module graph —
+// `apps/worker`, which runs the plugin pipelines without core's HTTP `AppModule` — has to import
+// them itself or it fails DI at boot on the first plugin that injects either service.
+export { ActivityLogModule } from './lib/activity-log/activity-log.module';
+export { MentionModule } from './lib/mention/mention.module';
+// Same rationale as `MentionService` above, for the entity-subscription fan-out: the handler is
+// registered by core, but a plugin that wants an author subscribed to the entity they just created
+// (the pattern `CommentService` uses) needs the event CLASS to publish — `@nestjs/cqrs` dispatches
+// on the constructor, so a structurally identical local copy would never reach the handler.
+export { CreateEntitySubscriptionEvent } from './lib/entity-subscription/events/entity-subscription.create.event';
 // `FeatureFlagGuard` is public API (exported from `./lib/shared`), so the module that provides
 // its `FeatureService` dependency has to be public too — otherwise any plugin whose controllers
 // carry `@UseGuards(..., FeatureFlagGuard)` cannot satisfy it and the whole API fails to
@@ -123,6 +134,11 @@ export { TimerModule } from './lib/time-tracking/timer/timer.module';
 export { TimerService } from './lib/time-tracking/timer/timer.service';
 
 export * from './lib/database/database.module';
+// Export-archive opt-out for plugin entities holding DERIVED data (extracted text, embeddings,
+// caches). Public API because the entities that need it live in plugins — without it every plugin
+// entity is registered for export automatically, which is right for authored records and wrong for
+// tables the platform rebuilds after an import.
+export { isExportSkipped, SKIP_EXPORT_METADATA, SkipExport, skipExport } from './lib/export-import/skip-export.decorator';
 export { ExpenseCreateCommand, ExpenseModule, ExpenseService } from './lib/expense';
 export {
 	ExpenseCategoriesModule,

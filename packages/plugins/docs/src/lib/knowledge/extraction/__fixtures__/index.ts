@@ -16,11 +16,15 @@
  * | `text/markdown` | {@link MARKDOWN_SOURCE} |
  * | `text/html` | {@link HTML_REQUIRING_SANITIZATION}, {@link HTML_HEADERLESS_TABLE} |
  * | `image/png` (no-text path) | {@link createPng} |
- *
- * `.pptx` and `.odt` fixtures land with their M4 extractors, per the plan.
+ * | `…presentationml.presentation` | {@link createPptxFixture}, {@link createUnorderedPptxFixture} |
+ * | `…opendocument.text` | {@link createOdtFixture} |
+ * | `…opendocument.spreadsheet` | {@link createOdsFixture}, {@link createOversizedOdsFixture} |
+ * | unreadable office package | {@link createSlidelessPptxFixture}, {@link createContentlessOdfFixture}, {@link createNonZipOfficeFixture} |
  */
 export * from './zip.util';
 export * from './pdf.fixture';
 export * from './docx.fixture';
 export * from './xlsx.fixture';
+export * from './pptx.fixture';
+export * from './odf.fixture';
 export * from './text.fixture';

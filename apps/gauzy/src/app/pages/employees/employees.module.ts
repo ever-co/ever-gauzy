@@ -55,6 +55,7 @@ import {
 } from '@gauzy/ui-core/shared';
 import {
 	EditEmployeeContactComponent,
+	EditEmployeeDocumentsComponent,
 	EditEmployeeEmploymentComponent,
 	EditEmployeeHiringComponent,
 	EditEmployeeLocationComponent,
@@ -78,6 +79,7 @@ import {
 } from './table-components';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
 import { ViewEmployeeComponent } from './view-employee/view-employee.component';
+import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 
 const COMPONENTS = [
 	EmployeesComponent,
@@ -99,7 +101,8 @@ const COMPONENTS = [
 	EditEmployeeLocationComponent,
 	EditEmployeeEmploymentComponent,
 	EditEmployeeNetworksComponent,
-	EditEmployeeOtherSettingsComponent
+	EditEmployeeOtherSettingsComponent,
+	EditEmployeeDocumentsComponent
 ];
 
 @NgModule({
@@ -147,7 +150,10 @@ const COMPONENTS = [
 		SmartDataViewLayoutModule,
 		CardGridModule,
 		TimeZoneSelectorModule,
-		DynamicTabsModule
+		DynamicTabsModule,
+		// Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
+		// imported directly — the Documents hub module is never pulled in here.
+		DocumentLinksPanelComponent
 	],
 	declarations: [...COMPONENTS],
 	providers: [OrganizationsService, InviteGuard, CandidatesService, OrganizationEmploymentTypesService, SkillsService]

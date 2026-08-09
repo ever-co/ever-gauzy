@@ -19,10 +19,22 @@ import { DocsRowActionsService } from '../actions/docs-row-actions.service';
 /** Nebular menu-tag prefix for the per-card kebab; the suffix is the document id. */
 const CARD_MENU_TAG_PREFIX = 'gz-docs-card-actions-';
 
-/** Breadcrumb segment above the grid ("All documents / Finance / Invoices"). */
+/**
+ * Breadcrumb segment of the current tree location ("All documents / Finance / Invoices").
+ *
+ * Rendered by the **browse page header**, not by this component: both layouts and
+ * the empty-folder state need it, and only the header sits outside the
+ * `rows.length` switch (`00-product-spec.md` §6.9 R-TRE-01). The type stays here
+ * because the cards view is where the crumb row originated.
+ *
+ * 🛑 `id` is nullable and `restricted` marks an ancestor the caller may not read
+ * (`08-permissions-security.md` §3.2) — such a segment renders as
+ * `DOCS.BREADCRUMB.RESTRICTED` and must NOT be clickable.
+ */
 export interface IDocsCardsCrumb {
 	id: ID | null;
 	name: string;
+	restricted?: boolean;
 }
 
 /** List rows carry `childrenCount`/`hasChildren` (backend list projection). */
@@ -49,7 +61,14 @@ export class DocsCardsComponent extends TranslationBaseComponent implements OnIn
 	@Input() loading = false;
 	/** Flat results mode: search or a non-All preset active — folder cards hidden. */
 	@Input() flat = false;
-	/** Ancestor chain of the current tree location; empty = root. */
+	/**
+	 * Ancestor chain of the current tree location; empty = root.
+	 *
+	 * The grid no longer renders it — the browse page header does, so the crumbs
+	 * survive the table layout and an empty folder. Kept as an input (with
+	 * {@link onCrumbClick}) so an embedder that renders the grid on its own can
+	 * still drive `drillIn` from a crumb.
+	 */
 	@Input() breadcrumb: IDocsCardsCrumb[] = [];
 	/** Card whose detail panel is open gets `active` styling. */
 	@Input() activeId: ID | null = null;
@@ -193,7 +212,9 @@ export class DocsCardsComponent extends TranslationBaseComponent implements OnIn
 		}
 	}
 
+	/** Crumb → drill-in. A redacted segment has no id to drill into and is ignored. */
 	onCrumbClick(crumb: IDocsCardsCrumb): void {
+		if (crumb?.restricted) return;
 		this.drillIn.emit(crumb.id);
 	}
 

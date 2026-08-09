@@ -3777,7 +3777,11 @@
 		"STOP_TIMER": "Stop Timer",
 		"TIME_LOG": "Time Log",
 		"VIEW_APPOINTMENTS": "View Appointments",
-		"VIEW_TIME_ACTIVITY": "View Time Activity"
+		"VIEW_TIME_ACTIVITY": "View Time Activity",
+		"DOCUMENTS": {
+			"NEW_PAGE": "New Page",
+			"UPLOAD": "Upload"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Accounting",
@@ -3785,7 +3789,8 @@
 		"PROJECT_MANAGEMENT": "Project Management",
 		"JOBS": "Jobs",
 		"CONTACTS": "Contacts",
-		"TIME_TRACKING": "Time Tracking"
+		"TIME_TRACKING": "Time Tracking",
+		"DOCUMENTS": "Documents"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "First Name",
@@ -4100,6 +4105,18 @@
 		"TITLE": "AI Assistant",
 		"ATTACH_SOON": "Attach files or folders (coming soon)",
 		"LIBRARY_SOON": "Choose from the file library (coming soon)",
+		"ATTACH": "Attach a file",
+		"ATTACH_FROM_DOCUMENTS": "Attach from Documents",
+		"ATTACH_SEARCH": "Search documents…",
+		"ATTACH_NO_RESULTS": "No matching documents.",
+		"ATTACH_UNAVAILABLE": "Documents are not available in this workspace.",
+		"ATTACH_REMOVE": "Remove attachment",
+		"CITATIONS": {
+			"LABEL": "Sources:",
+			"OPEN": "Open source document",
+			"LOW_CONFIDENCE": "(weak matches — verify before relying on these)",
+			"UNTITLED": "Untitled document"
+		},
 		"DICTATE": "Dictate a message",
 		"STOP_DICTATION": "Stop dictation",
 		"TRANSCRIBING": "Transcribing…",
@@ -6780,7 +6797,8 @@
 			"COL_ADD_RIGHT": "Add column right",
 			"COL_DELETE": "Delete column",
 			"HEADER_ROW": "Toggle header row",
-			"DELETE": "Delete table"
+			"DELETE": "Delete table",
+			"TOOLBAR_LABEL": "Table tools"
 		},
 		"LINK_DIALOG": {
 			"URL": "URL",

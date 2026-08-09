@@ -27,19 +27,27 @@ import { Markdown } from '@tiptap/markdown';
 import { PluginKey } from '@tiptap/pm/state';
 import { createLowlight } from 'lowlight';
 import bash from 'highlight.js/lib/languages/bash';
+import csharp from 'highlight.js/lib/languages/csharp';
 import css from 'highlight.js/lib/languages/css';
+import dockerfile from 'highlight.js/lib/languages/dockerfile';
+import java from 'highlight.js/lib/languages/java';
 import javascript from 'highlight.js/lib/languages/javascript';
 import json from 'highlight.js/lib/languages/json';
+import markdown from 'highlight.js/lib/languages/markdown';
+import php from 'highlight.js/lib/languages/php';
 import plaintext from 'highlight.js/lib/languages/plaintext';
 import python from 'highlight.js/lib/languages/python';
+import scss from 'highlight.js/lib/languages/scss';
 import sql from 'highlight.js/lib/languages/sql';
 import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
+import yaml from 'highlight.js/lib/languages/yaml';
 import { TranslateService } from '@ngx-translate/core';
 import { AngularNodeViewRenderer } from '../node-view/angular-node-view-renderer';
 import { CalloutNodeViewComponent } from '../node-views/callout-node-view.component';
 import { EmbedCardNodeViewComponent } from '../node-views/embed-card-node-view.component';
 import { FileAttachmentNodeViewComponent } from '../node-views/file-attachment-node-view.component';
+import { ImageNodeViewComponent } from '../node-views/image-node-view.component';
 import { EditorUploadService } from '../services/editor-upload.service';
 import { SuggestionHostService } from '../suggestion/suggestion-host.service';
 import { ISuggestionItem } from '../suggestion/suggestion-list.component';
@@ -48,6 +56,7 @@ import { createSlashCommandExtension } from '../suggestion/slash-command.extensi
 import { createEmployeeMention } from '../suggestion/employee-mention.suggestion';
 import { createDocumentMention } from '../suggestion/document-mention.suggestion';
 import { Base64Guard } from './base64-guard.plugin';
+import { BlockComments } from './block-comments.plugin';
 import { Callout } from './callout.node';
 import { EmbedCard } from './embed-card.node';
 import { FileAttachment } from './file-attachment.node';
@@ -55,10 +64,32 @@ import { FileAttachment } from './file-attachment.node';
 /**
  * Trimmed lowlight language set (spec 05 §12 — registration dominates code-block
  * cost; adding a language is a code change with a bundle-budget review).
+ *
+ * The 16 grammars below are exactly the §12 list — never `lowlight/common` or the
+ * full bundle. `xml` covers HTML; `plaintext` is the code block's default language.
  */
+export const DOCS_LOWLIGHT_LANGUAGES = {
+	typescript,
+	javascript,
+	xml,
+	css,
+	scss,
+	json,
+	bash,
+	sql,
+	python,
+	java,
+	csharp,
+	php,
+	yaml,
+	dockerfile,
+	markdown,
+	plaintext
+};
+
 export function createDocsLowlight() {
 	const lowlight = createLowlight();
-	lowlight.register({ typescript, javascript, xml, css, json, bash, sql, python, plaintext });
+	lowlight.register(DOCS_LOWLIGHT_LANGUAGES);
 	return lowlight;
 }
 
@@ -70,6 +101,8 @@ export interface IDocumentEditorExtensionDeps {
 	slashCommandDeps: ISlashCommandDeps;
 	/** ToC anchors sink (feeds the page's ToC side panel). */
 	onTocUpdate(anchors: unknown[]): void;
+	/** A block's comment gutter marker was activated — opens that thread in the rail (spec 05 §8). */
+	onOpenCommentThread?(blockId: string): void;
 	/** Realtime co-editing flag — MUST disable StarterKit undoRedo when true (spec 05 §11). */
 	collab?: boolean;
 }
@@ -244,6 +277,12 @@ export function createDocumentEditorExtensions(deps: IDocumentEditorExtensionDep
 		InvisibleCharacters.configure({ visible: false }),
 		Markdown.configure({ html: false } as never),
 		Base64Guard,
+		// Gutter markers for blocks with an open comment thread (spec 05 §8). The anchor set
+		// is pushed in by the page's Comments rail via `setCommentedBlocks()`.
+		BlockComments.configure({
+			onOpenThread: (blockId: string) => deps.onOpenCommentThread?.(blockId),
+			markerLabel: translate.instant('DOCS.EDITOR.COMMENT.MARKER_ARIA')
+		}),
 		createSlashCommandExtension({
 			host: deps.suggestionHost,
 			translate,
@@ -283,6 +322,14 @@ export function createDocumentEditorExtensions(deps: IDocumentEditorExtensionDep
 				return (extension as typeof FileAttachment).extend({
 					addNodeView: () =>
 						AngularNodeViewRenderer(FileAttachmentNodeViewComponent, { injector: deps.injector })
+				});
+			// 🛑 Without this the persisted `/raw` src is handed straight to the browser as
+			// `<img src>`, which sends no Authorization header and 401s — every embedded
+			// image rendered broken. The node view fetches the bytes authenticated instead
+			// (spec 05 §6.6 step 5).
+			case 'image':
+				return (extension as typeof DocsImage).extend({
+					addNodeView: () => AngularNodeViewRenderer(ImageNodeViewComponent, { injector: deps.injector })
 				});
 			case 'embedCard':
 				return (extension as typeof EmbedCard).extend({

@@ -2,6 +2,25 @@ import { Logger } from '@nestjs/common';
 import type { Tool } from 'ai';
 
 /**
+ * One custom data part a contribution can push onto the UI message stream.
+ *
+ * `type` MUST be `data-<name>`: that prefix is what the AI SDK uses to route the chunk into
+ * `message.parts` as a data part on the client. `id` makes the part addressable, so writing the
+ * same id again REPLACES the earlier part instead of appending a second one (reconciliation) —
+ * omit it for append-only parts. `transient: true` streams the part to the client without
+ * persisting it on the message.
+ */
+export interface IAiChatDataPart<DATA = unknown> {
+	type: `data-${string}`;
+	id?: string;
+	data: DATA;
+	transient?: boolean;
+}
+
+/** Writes one {@link IAiChatDataPart} onto the current turn's UI message stream. */
+export type AiChatDataPartWriter = (part: IAiChatDataPart) => void;
+
+/**
  * Per-turn context handed to every registered tool factory.
  *
  * This is a SNAPSHOT taken at the start of the chat turn, while the HTTP request context is
@@ -11,6 +30,19 @@ import type { Tool } from 'ai';
  * RBAC, never with elevated service credentials.
  */
 export interface IAiChatToolContext {
+	/**
+	 * Per-turn emitter for CUSTOM DATA PARTS on the UI message stream.
+	 *
+	 * A tool's return value goes to the MODEL; anything the *browser* needs (citation chips,
+	 * previews, deep links) has to travel as a `data-*` part instead, because tool output is not
+	 * addressable from the message list in a structured way. Contributions call this from inside
+	 * `execute` and the part lands on the same assistant message, in stream order — and, because
+	 * data parts are ordinary `UIMessage` parts, it is persisted with the turn.
+	 *
+	 * OPTIONAL by contract: a factory must work when it is absent (an older engine, or a caller
+	 * that resolves tools outside a stream), so always call it as `context.writeData?.(…)`.
+	 */
+	writeData?: AiChatDataPartWriter;
 	/** Tenant of the requesting user (undefined only when the request carries no tenant). */
 	tenantId?: string;
 	/** Organization of the requesting user. */

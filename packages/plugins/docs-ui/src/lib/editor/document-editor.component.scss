@@ -35,6 +35,9 @@
 :host ::ng-deep .gz-document-editor {
 	.ProseMirror {
 		outline: none;
+		// Containing block for the block-comment gutter markers below (their `top` stays
+		// `auto`, so each one keeps the static position of the block it precedes).
+		position: relative;
 		min-height: 16rem;
 		padding: 0.25rem 0;
 		color: var(--text-basic-color);
@@ -237,6 +240,45 @@
 			border-radius: 0.125rem;
 		}
 
+		// ─── Block comments (spec 05 §8) ───────────────────────────
+		// A block with an open thread carries a left rule; the gutter marker is a widget
+		// decoration rendered just before it, absolutely positioned out into the margin so
+		// it never takes part in the text flow.
+		.gz-block-commented {
+			border-left: 2px solid var(--color-warning-default);
+			padding-left: 0.5rem;
+			margin-left: -0.625rem;
+		}
+
+		.gz-block-comment-marker {
+			position: absolute;
+			left: -1.75rem;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 1.25rem;
+			height: 1.25rem;
+			padding: 0;
+			border: 0;
+			border-radius: 0.25rem;
+			background: transparent;
+			font-size: 0.75rem;
+			line-height: 1;
+			cursor: pointer;
+			opacity: 0.75;
+
+			&:hover,
+			&:focus-visible {
+				opacity: 1;
+				background: var(--background-basic-color-2);
+			}
+		}
+
+		// Deep-link flash (`?block=…`) — self-clearing, applied by `highlightBlock()`.
+		.gz-block-flash {
+			animation: gz-block-flash 2s ease-out;
+		}
+
 		// Invisible characters toggle
 		.Tiptap-invisible-character {
 			color: var(--text-hint-color);
@@ -262,5 +304,16 @@
 			border-radius: 50%;
 			background: var(--text-hint-color);
 		}
+	}
+}
+
+// Declared outside the `::ng-deep` block: keyframes are global by name and Angular's
+// emulated encapsulation does not rewrite them, so nesting them would only obscure that.
+@keyframes gz-block-flash {
+	0% {
+		background: var(--color-warning-transparent-300);
+	}
+	100% {
+		background: transparent;
 	}
 }

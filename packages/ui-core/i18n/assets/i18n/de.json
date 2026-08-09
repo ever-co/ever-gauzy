@@ -3311,7 +3311,11 @@
 		"STOP_TIMER": "Timer stoppen",
 		"TIME_LOG": "Zeiterfassung",
 		"VIEW_APPOINTMENTS": "Termine anzeigen",
-		"VIEW_TIME_ACTIVITY": "Zeitaktivität anzeigen"
+		"VIEW_TIME_ACTIVITY": "Zeitaktivität anzeigen",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Neue Seite",
+			"UPLOAD": "Hochladen"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Buchhaltung",
@@ -3319,7 +3323,8 @@
 		"PROJECT_MANAGEMENT": "Projektmanagement",
 		"JOBS": "Jobs",
 		"CONTACTS": "Kontakte",
-		"TIME_TRACKING": "Zeiterfassung"
+		"TIME_TRACKING": "Zeiterfassung",
+		"DOCUMENTS": "Dokumente"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Vorname",

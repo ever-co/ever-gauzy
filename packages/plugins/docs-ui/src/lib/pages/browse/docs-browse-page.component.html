@@ -59,9 +59,22 @@
 				</button>
 			</fieldset>
 			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_CREATE]">
-				<button nbButton size="small" appearance="outline" (click)="openNewPageDialog()">
-					<nb-icon icon="file-add-outline"></nb-icon>
-					{{ 'DOCS.TREE.NEW_PAGE' | translate }}
+				<!-- `New ▾` (`01-ux-spec.md` §2): Folder | Page. A folder was previously
+				     unreachable from here, so a brand-new organization — whose tree is empty and
+				     whose only other create affordance is a node context menu that needs an
+				     existing node — had no way to create its first folder at all. -->
+				<button
+					#newMenuTrigger
+					nbButton
+					size="small"
+					appearance="outline"
+					[nbContextMenu]="newMenu"
+					[nbContextMenuTag]="newMenuTag"
+					[attr.aria-label]="'DOCS.A11Y.NEW_MENU' | translate"
+				>
+					<nb-icon icon="plus-outline"></nb-icon>
+					{{ 'DOCS.TREE.NEW' | translate }}
+					<nb-icon icon="chevron-down-outline"></nb-icon>
 				</button>
 				<button nbButton size="small" status="primary" (click)="openUploadFlow()">
 					<nb-icon icon="upload-outline"></nb-icon>
@@ -85,6 +98,38 @@
 			</ng-template>
 		</div>
 	</div>
+
+	<!-- Location breadcrumb (`00-product-spec.md` §6.9 R-TRE-01 / `01-ux-spec.md` §2).
+	     Page-level on purpose: it used to live inside `gz-docs-cards`, which meant it
+	     vanished in the table layout (the default) and on an empty folder — both of
+	     which render below the `rows.length` switch — leaving a drilled-in user with no
+	     indication of where they were and no way back to the root.
+	     Hidden in flat-results mode: a search drops the folder scope server-side, so a
+	     path would misrepresent the rows (same rule the cards row applied). -->
+	<nav
+		class="docs-browse-breadcrumb"
+		*ngIf="!isFlat(query.filter$ | async)"
+		[attr.aria-label]="'DOCS.A11Y.BREADCRUMB' | translate"
+	>
+		<button nbButton ghost size="tiny" [disabled]="!breadcrumb.length" (click)="onDrillIn(null)">
+			{{ 'DOCS.CARDS.BREADCRUMB_ROOT' | translate }}
+		</button>
+		<ng-container *ngFor="let crumb of breadcrumb; let last = last">
+			<nb-icon icon="chevron-right-outline" class="docs-crumb-sep"></nb-icon>
+			<!-- A redacted ancestor keeps the depth of the path but never its name, and
+			     is not navigable — the caller has no read access to it. -->
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				[disabled]="last || crumb.restricted || !crumb.id"
+				[class.docs-crumb-restricted]="crumb.restricted"
+				(click)="onCrumbClick(crumb)"
+			>
+				{{ crumb.restricted ? ('DOCS.BREADCRUMB.RESTRICTED' | translate) : crumb.name }}
+			</button>
+		</ng-container>
+	</nav>
 
 	<!-- Preset chips -->
 	<gz-docs-preset-chips
@@ -122,7 +167,6 @@
 				[totalCount]="(query.totalCount$ | async) || 0"
 				[loading]="(query.loading$ | async) === true"
 				[flat]="isFlat(query.filter$ | async)"
-				[breadcrumb]="breadcrumb"
 				[activeId]="query.detailId$ | async"
 				(open)="onRowClicked($event)"
 				(preview)="openPreview($event)"

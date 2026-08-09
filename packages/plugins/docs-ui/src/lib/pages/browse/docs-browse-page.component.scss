@@ -46,6 +46,27 @@
 	}
 }
 
+/* Location breadcrumb — page-level so it survives the table layout and an empty
+   folder (it used to be rendered by `gz-docs-cards`, hence the shared crumb rules). */
+.docs-browse-breadcrumb {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.125rem;
+
+	.docs-crumb-sep {
+		font-size: 0.875rem;
+		color: var(--text-hint-color);
+	}
+
+	/* A redacted ancestor is a placeholder, not a name — render it as hint text so it
+	   reads as "something you cannot see" rather than a folder called "Restricted". */
+	.docs-crumb-restricted {
+		font-style: italic;
+		color: var(--text-hint-color);
+	}
+}
+
 .docs-view-toggle {
 	display: inline-flex;
 	align-items: center;

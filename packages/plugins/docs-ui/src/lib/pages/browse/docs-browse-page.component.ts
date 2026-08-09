@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbDialogService, NbMenuItem, NbMenuService, NbToastrService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -49,12 +49,15 @@ import { DocsEmptyVariant } from '../../components/empty/empty-state.component';
 import { DocumentTreeStore } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
 import { UploadQueueService } from '../../services/upload-queue.service';
+import { toDocsBreadcrumb } from './docs-breadcrumb.util';
+import { DOCS_BROWSE_OVERLAY_SELECTOR, DOCS_SEARCH_INPUT_ID, docsBrowseShortcutOf } from './docs-browse-shortcuts';
 
 /**
  * Browse page orchestrator: owns URL restore, the table ↔ cards view toggle
  * (persisted via `ComponentEnum.DOCUMENTS_HUB`, `?view=` overrides for one load),
- * the cards breadcrumb + "Load more" paging, the preview modal, the upload flow
- * (`?upload=1` / `?newPage=1` one-shot deep links), selection and the processing
+ * the location breadcrumb + "Load more" paging, the create menu (`New ▾`), the
+ * preview modal, the upload flow (`?upload=1` / `?newPage=1` / `?newFolder=1`
+ * one-shot deep links), selection, the keyboard shortcut map and the processing
  * poll wiring.
  */
 @UntilDestroy({ checkProperties: true })
@@ -66,6 +69,8 @@ import { UploadQueueService } from '../../services/upload-queue.service';
 })
 export class DocsBrowsePageComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	@ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
+	/** `New ▾` trigger — the `n` shortcut opens the menu by clicking it. */
+	@ViewChild('newMenuTrigger', { read: ElementRef }) newMenuTrigger: ElementRef<HTMLElement>;
 
 	public readonly query = this.documentsQuery;
 	public readonly uploadAccept = DOCS_UPLOAD_ACCEPT;
@@ -74,18 +79,24 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 	public dataLayoutStyle: ComponentLayoutStyleEnum = ComponentLayoutStyleEnum.TABLE;
 	public dropActive = false;
 	public canManage = false;
-	/** Ancestor chain of the current tree location, rendered above the cards grid. */
+	/** `DOCS_CREATE` — gates the `u` (upload) and `n` (New ▾) shortcuts. */
+	public canCreate = false;
+	/** Ancestor chain of the current tree location, rendered in the page header. */
 	public breadcrumb: IDocsCardsCrumb[] = [];
 	/** Live query params, handed to the saved-views control (UX spec §5). */
 	public urlParams: Params = {};
 	/** Nebular menu tag of the header overflow menu — scopes its click stream to this page. */
 	public readonly overflowMenuTag = 'docs-browse-overflow';
+	/** Nebular menu tag of the `New ▾` split menu. */
+	public readonly newMenuTag = 'docs-browse-new';
 	/**
 	 * Header overflow items (`DOCS_MANAGE`-only). Rebuilt on language change rather than
 	 * recomputed in the binding: `nbContextMenu` reacts to a new array reference, so a getter
 	 * would rebuild the overlay on every change-detection pass.
 	 */
 	public overflowMenu: NbMenuItem[] = [];
+	/** `New ▾` items — Folder, then Page (`01-ux-spec.md` §2). Rebuilt on language change. */
+	public newMenu: NbMenuItem[] = [];
 
 	private readonly search$ = new Subject<string>();
 	private pendingUploadFolder: ID | null = null;
@@ -159,8 +170,18 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 			)
 			.subscribe();
 
-		// 7) Mirror the live query string for the saved-views control.
-		this.route.queryParams.pipe(untilDestroyed(this)).subscribe((params) => (this.urlParams = params ?? {}));
+		// 7) Mirror the live query string for the saved-views control, and consume the
+		//    one-shot action deep links off the SAME stream.
+		//
+		//    🛑 Not the initial snapshot: `DocsRowActionsService.uploadHere()` and the tree's
+		//    empty-state buttons merge `?upload=1` / `?newPage=1` / `?newFolder=1` into the URL
+		//    while this page is already mounted, and a snapshot-only read (which is what
+		//    `restoreFromUrl()` did) never saw them — so "Upload here" did nothing whenever the
+		//    hub was the current route, which is every time it is raised from the sidebar.
+		this.route.queryParams.pipe(untilDestroyed(this)).subscribe((params) => {
+			this.urlParams = params ?? {};
+			this.consumeOneShotParams(this.urlParams);
+		});
 
 		// 8) Server-side upload rejections get a readable toast. The per-file row
 		//    already shows the failure; the toast exists because a quota rejection
@@ -200,29 +221,97 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 			.subscribe((document) => this.notifyIfNeedsReview(document));
 
 		this.canManage = this.store.hasPermission(PermissionsEnum.DOCS_MANAGE);
+		this.canCreate = this.store.hasPermission(PermissionsEnum.DOCS_CREATE);
 
-		// 9) Header overflow menu: build it, keep it translated, and act on its clicks.
-		this.buildOverflowMenu();
-		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => this.buildOverflowMenu());
+		// 9) Header menus: build them, keep them translated, and act on their clicks.
+		this.buildHeaderMenus();
+		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => this.buildHeaderMenus());
 		this.nbMenuService
 			.onItemClick()
 			.pipe(
-				filter(({ tag }) => tag === this.overflowMenuTag),
+				filter(({ tag }) => tag === this.overflowMenuTag || tag === this.newMenuTag),
 				untilDestroyed(this)
 			)
 			.subscribe(({ item }) => {
 				const action = (item as NbMenuItem & { data?: { action?: string } }).data?.action;
-				if (action === 'import-legacy') {
-					// A menu click cannot be awaited; the dialog owns its own failure path.
-					void this.openLegacyImportDialog();
+				// A menu click cannot be awaited; every branch owns its own failure path.
+				switch (action) {
+					case 'import-legacy':
+						void this.openLegacyImportDialog();
+						break;
+					case 'new-folder':
+						void this.openNewFolderDialog();
+						break;
+					case 'new-page':
+						void this.openNewPageDialog();
+						break;
 				}
 			});
 	}
 
 	ngOnDestroy(): void {
 		// UntilDestroy handles subscriptions.
+	}
+
+	// ─── Keyboard shortcuts (`01-ux-spec.md` §16/§17) ────────────
+
+	/**
+	 * Document-level shortcut map: `/` search, `u` upload, `n` New ▾, `v` layout
+	 * toggle, `Esc` clear selection → close the detail panel.
+	 *
+	 * Bound on `document` rather than the host because the surface the shortcuts act
+	 * on spans three sibling components (the sidebar tree, this page and the detail
+	 * panel) and the user is rarely focused inside this component's subtree.
+	 * {@link docsBrowseShortcutOf} owns every "keep your hands off this key" rule;
+	 * the open-overlay probe below is the one guard it cannot make, because a
+	 * context menu does not move focus and so never shows up on `event.target`.
+	 */
+	@HostListener('document:keydown', ['$event'])
+	onDocumentKeydown(event: KeyboardEvent): void {
+		const shortcut = docsBrowseShortcutOf(event);
+		if (!shortcut) return;
+		if (document.querySelector(DOCS_BROWSE_OVERLAY_SELECTOR)) return;
+
+		switch (shortcut) {
+			case 'search':
+				this.focusSearch();
+				break;
+			case 'upload':
+				if (!this.canCreate) return;
+				this.openUploadFlow();
+				break;
+			case 'new':
+				if (!this.canCreate) return;
+				// `[nbContextMenu]` has no imperative open handle — clicking the trigger is
+				// the directive's own entry point, so the menu opens anchored exactly as it
+				// does on a pointer click.
+				this.newMenuTrigger?.nativeElement?.click();
+				break;
+			case 'toggle-view':
+				this.setLayout(
+					this.isCardsView ? ComponentLayoutStyleEnum.TABLE : ComponentLayoutStyleEnum.CARDS_GRID
+				);
+				break;
+			case 'dismiss':
+				// Selection first: `Esc` on a multi-select is "never mind", and closing the
+				// panel out from under a pending bulk action would be the wrong undo.
+				if (this.documentsQuery.selectedIds.length) {
+					this.onClearSelection();
+				} else if (this.documentsQuery.detailId) {
+					this.actions.dispatch(DocumentsActions.detailClosed());
+				} else {
+					return;
+				}
+				break;
+		}
+		event.preventDefault();
+	}
+
+	/** `/` — the filter bar owns the input; the page only moves focus into it. */
+	private focusSearch(): void {
+		const input = document.getElementById(DOCS_SEARCH_INPUT_ID) as HTMLInputElement | null;
+		input?.focus();
+		input?.select?.();
 	}
 
 	// ─── View toggle (ComponentEnum.DOCUMENTS_HUB) ───────────────
@@ -283,6 +372,16 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 		this.actions.dispatch(DocumentsActions.folderChanged(folderId));
 	}
 
+	/**
+	 * Breadcrumb segment click. A redacted ancestor carries no id — the template
+	 * already disables it, and this second guard keeps a stray dispatch from
+	 * scoping the list to `null` (i.e. silently jumping to the root).
+	 */
+	onCrumbClick(crumb: IDocsCardsCrumb): void {
+		if (!crumb || crumb.restricted || !crumb.id) return;
+		this.onDrillIn(crumb.id);
+	}
+
 	openPreview(document: IDocument): void {
 		this.dialogService.open(DocsPreviewModalComponent, { ...DOCS_PREVIEW_DIALOG_CONFIG, context: { document } });
 	}
@@ -292,14 +391,24 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 	}
 
 	/**
-	 * Resolves the breadcrumb for the current tree location from the shared node
-	 * cache; when the ancestors were never loaded (deep link straight into a
-	 * folder) it falls back to the document itself plus its `parent` relation.
-	 * Unresolvable ancestors are not invented — the root crumb still gets back out.
+	 * Resolves the breadcrumb for the current tree location.
+	 *
+	 * Preferred source is `GET /documents/:id/path`: it is the only one that can say
+	 * an ancestor exists but is *unreadable* (`08-permissions-security.md` §3.2) —
+	 * a client-side walk simply loses that folder and silently shortens the path.
+	 * Falls back to the shared node cache and then to the document plus its `parent`
+	 * relation, so a deployment without the route (or a transient failure) still
+	 * renders a usable trail. Unresolvable ancestors are not invented — the root
+	 * crumb always gets back out.
 	 */
 	private async refreshBreadcrumb(folderId: ID | null): Promise<void> {
 		if (!folderId) {
 			this.breadcrumb = [];
+			return;
+		}
+		const serverPath = await this.resolveServerBreadcrumb(folderId);
+		if (serverPath) {
+			this.breadcrumb = serverPath;
 			return;
 		}
 		const path = this.documentTreeStore.pathOf(folderId);
@@ -326,21 +435,61 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 		}
 	}
 
+	/**
+	 * Server-resolved crumbs, or `null` when the route could not answer.
+	 *
+	 * `null` (not `[]`) is the "fall back" signal — an empty array is a legitimate
+	 * answer for a root-level folder and must not send the caller down the local
+	 * path, which would produce a different (shorter) trail.
+	 *
+	 * Deliberately tolerant of both plausible server contracts: the response is
+	 * expected to end at the folder itself, and when it carries ancestors only, the
+	 * current folder is appended from the node cache so the trail still shows where
+	 * the user is standing.
+	 */
+	private async resolveServerBreadcrumb(folderId: ID): Promise<IDocsCardsCrumb[] | null> {
+		try {
+			const segments = await firstValueFrom(this.documentsService.getPath(folderId));
+			return toDocsBreadcrumb(segments, folderId, (id) => this.documentTreeStore.getNode(id)?.name);
+		} catch {
+			// 404 on a deployment that predates the route, or a transient failure —
+			// either way the local chain is a better answer than no breadcrumb.
+			return null;
+		}
+	}
+
 	// ─── URL restore ─────────────────────────────────────────────
 
 	private restoreFromUrl(): void {
-		const params = this.route.snapshot.queryParams;
-		this.applyStateFromParams(params);
+		// The one-shot action params are consumed off the live `queryParams` stream
+		// (ngOnInit step 7), which replays the current snapshot on subscribe — so the
+		// cold-load case is still covered, and a param merged in later works too.
+		this.applyStateFromParams(this.route.snapshot.queryParams);
+	}
 
-		// One-shot deep links: consume + strip with a replaceUrl write.
+	/**
+	 * One-shot action deep links (`?upload=1` / `?newPage=1` / `?newFolder=1`):
+	 * consume, strip with a `replaceUrl` write, then run the action.
+	 *
+	 * The strip is what makes this safe to run on every emission — the follow-up
+	 * emission carries the nulled params and matches nothing. Actions are deferred a
+	 * tick so the dialog opens after the current navigation has settled.
+	 */
+	private consumeOneShotParams(params: Params): void {
 		if (params['upload'] === '1') {
-			// `?upload=1` uploads into the folder the URL scoped us to.
-			this.pendingUploadFolder = this.documentsQuery.folderId;
+			// `?upload=1&folder=` uploads into the folder the LINK named, which is not
+			// necessarily the one the list is scoped to — the tree's "Upload here" raises
+			// this for an arbitrary node without moving the list.
+			const folder = typeof params['folder'] === 'string' && params['folder'] ? (params['folder'] as ID) : null;
+			this.pendingUploadFolder = folder ?? this.documentsQuery.folderId;
 			this.stripOneShotParams();
 			setTimeout(() => this.openUploadFlow());
 		} else if (params['newPage'] === '1') {
 			this.stripOneShotParams();
-			setTimeout(() => this.openNewPageDialog());
+			setTimeout(() => void this.openNewPageDialog());
+		} else if (params['newFolder'] === '1') {
+			this.stripOneShotParams();
+			setTimeout(() => void this.openNewFolderDialog());
 		}
 	}
 
@@ -408,7 +557,7 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 	private stripOneShotParams(): void {
 		this.router.navigate([], {
 			relativeTo: this.route,
-			queryParams: { upload: null, newPage: null },
+			queryParams: { upload: null, newPage: null, newFolder: null },
 			queryParamsHandling: 'merge',
 			replaceUrl: true
 		});
@@ -524,24 +673,64 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 	}
 
 	async openNewPageDialog(): Promise<void> {
+		const folderId = this.documentsQuery.folderId;
 		const created = await firstValueFrom(
 			this.dialogService.open(CreateDialogComponent, {
-				context: { kind: DocumentKindEnum.PAGE, parentId: this.documentsQuery.folderId }
+				context: { kind: DocumentKindEnum.PAGE, parentId: folderId }
 			}).onClose
 		);
-		if (created) {
-			this.router.navigate(['page', created.id], { relativeTo: this.route });
-		}
+		if (!created) return;
+		// The sidebar branch the page landed in still holds its pre-create memo; the
+		// tree outlives this navigation (it lives in the shell), so it has to be told.
+		this.documentTreeStore.invalidate(folderId);
+		this.router.navigate(['page', created.id], { relativeTo: this.route });
+	}
+
+	/**
+	 * New folder at the current tree location (`00-product-spec.md` §5.2 E-2).
+	 *
+	 * Unlike a page, a folder is created **in place**: there is nothing to open, so
+	 * the list re-queries and the sidebar branch drops its memo instead of
+	 * navigating. Before this existed the only folder-create affordance was a node's
+	 * context menu — which needs a node — so a brand-new organization, whose tree is
+	 * empty by definition, could never create its first folder.
+	 */
+	async openNewFolderDialog(): Promise<void> {
+		const folderId = this.documentsQuery.folderId;
+		const created = await firstValueFrom(
+			this.dialogService.open(CreateDialogComponent, {
+				context: { kind: DocumentKindEnum.FOLDER, parentId: folderId }
+			}).onClose
+		);
+		if (!created) return;
+		this.documentTreeStore.invalidate(folderId);
+		this.actions.dispatch(DocumentsActions.loadDocuments());
 	}
 
 	goToReviewQueue(): void {
 		this.router.navigate(['review'], { relativeTo: this.route });
 	}
 
-	// ─── Header overflow menu ────────────────────────────────────
+	// ─── Header menus ────────────────────────────────────────────
 
-	/** The single admin action so far — kept in a method so the labels re-translate. */
-	private buildOverflowMenu(): void {
+	/**
+	 * `New ▾` + the admin overflow. Kept in a method (rather than a getter bound in
+	 * the template) so the labels re-translate on a language switch without handing
+	 * `[nbContextMenu]` a new array reference on every change-detection pass.
+	 */
+	private buildHeaderMenus(): void {
+		this.newMenu = [
+			{
+				title: this.getTranslation('DOCS.TREE.NEW_FOLDER'),
+				icon: 'folder-add-outline',
+				data: { action: 'new-folder' }
+			},
+			{
+				title: this.getTranslation('DOCS.TREE.NEW_PAGE'),
+				icon: 'file-add-outline',
+				data: { action: 'new-page' }
+			}
+		];
 		this.overflowMenu = [
 			{
 				title: this.getTranslation('DOCS.MIGRATION.MENU_ITEM'),
@@ -600,6 +789,9 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 				break;
 			case 'new-page':
 				void this.openNewPageDialog();
+				break;
+			case 'new-folder':
+				void this.openNewFolderDialog();
 				break;
 			case 'clear-filters':
 				this.onClearAll();
