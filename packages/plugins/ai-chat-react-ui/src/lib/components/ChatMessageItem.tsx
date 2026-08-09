@@ -2,6 +2,12 @@ import { type CSSProperties } from 'react';
 import type { UIMessage } from 'ai';
 import { MarkdownContent } from './MarkdownContent';
 import { ToolCallCard } from './ToolCallCard';
+import {
+	DocsCitationChips,
+	DOCS_CITATIONS_PART_TYPE,
+	type IDocsCitation,
+	type IDocsCitationsData
+} from './DocsCitationChips';
 import { chatTheme } from '../chat-theme';
 
 export interface ChatMessageItemProps {
@@ -10,6 +16,10 @@ export interface ChatMessageItemProps {
 	isStreaming?: boolean;
 	/** Respond to a pending tool approval request. */
 	onApprovalResponse?: (approvalId: string, approved: boolean) => void;
+	/** Open a document citation chip (router navigation supplied by the panel). */
+	onOpenCitation?: (citation: IDocsCitation) => void;
+	/** `t(key, fallback)` from the panel. */
+	translate?: (key: string, fallback: string) => string;
 }
 
 /**
@@ -20,10 +30,18 @@ export interface ChatMessageItemProps {
  * - tool parts (`tool-*` / `dynamic-tool`) → compact ToolCallCard chips with
  *   live state, expandable details and Approve/Reject when the tool awaits
  *   the user's approval.
+ * - `data-docs-citations` parts (contributed by @gauzy/plugin-docs) → clickable
+ *   source chips deep-linking into the Documents hub.
  * Other part kinds (step markers, reasoning) are not rendered in the
  * compact sidebar view.
  */
-export function ChatMessageItem({ message, isStreaming, onApprovalResponse }: ChatMessageItemProps) {
+export function ChatMessageItem({
+	message,
+	isStreaming,
+	onApprovalResponse,
+	onOpenCitation,
+	translate
+}: ChatMessageItemProps) {
 	const isUser = message.role === 'user';
 
 	const rowStyle: CSSProperties = {
@@ -60,6 +78,22 @@ export function ChatMessageItem({ message, isStreaming, onApprovalResponse }: Ch
 								)}
 							</div>
 						</div>
+					);
+				}
+
+				// Citation chips contributed by the Documents plugin. Rendered from the data
+				// part, never from the tool result, so a chip always points at a document
+				// retrieval really returned for THIS user.
+				if (part.type === DOCS_CITATIONS_PART_TYPE) {
+					const citationData = (part as { data?: IDocsCitationsData }).data;
+					if (!citationData?.citations?.length) return null;
+					return (
+						<DocsCitationChips
+							key={`${message.id}-${index}`}
+							data={citationData}
+							{...(onOpenCitation ? { onOpen: onOpenCitation } : {})}
+							{...(translate ? { translate } : {})}
+						/>
 					);
 				}
 

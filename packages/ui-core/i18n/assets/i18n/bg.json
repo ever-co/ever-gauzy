@@ -3368,7 +3368,11 @@
 		"STOP_TIMER": "Спиране на таймер",
 		"TIME_LOG": "Запис на времето",
 		"VIEW_APPOINTMENTS": "Преглед на срещи",
-		"VIEW_TIME_ACTIVITY": "Преглед на активността по време"
+		"VIEW_TIME_ACTIVITY": "Преглед на активността по време",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Нова страница",
+			"UPLOAD": "Качване"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Счетоводство",
@@ -3376,7 +3380,8 @@
 		"PROJECT_MANAGEMENT": "Управление на проекти",
 		"JOBS": "Работи",
 		"CONTACTS": "Контакти",
-		"TIME_TRACKING": "Следене на времето"
+		"TIME_TRACKING": "Следене на времето",
+		"DOCUMENTS": "Документи"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Име",

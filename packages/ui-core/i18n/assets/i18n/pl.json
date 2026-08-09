@@ -3314,7 +3314,11 @@
 		"STOP_TIMER": "Zatrzymaj pomiar czasu",
 		"TIME_LOG": "Rejestracja czasu",
 		"VIEW_APPOINTMENTS": "Wyświetl spotkania",
-		"VIEW_TIME_ACTIVITY": "Wyświetl aktywność czasu"
+		"VIEW_TIME_ACTIVITY": "Wyświetl aktywność czasu",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Nowa strona",
+			"UPLOAD": "Prześlij"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Księgowość",
@@ -3322,7 +3326,8 @@
 		"PROJECT_MANAGEMENT": "Zarządzanie projektami",
 		"JOBS": "Praca",
 		"CONTACTS": "Kontakty",
-		"TIME_TRACKING": "Śledzenie czasu"
+		"TIME_TRACKING": "Śledzenie czasu",
+		"DOCUMENTS": "Dokumenty"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Imię",

@@ -28,7 +28,8 @@ import {
 	applyDeclarativeRegistrations,
 	IOnPluginUiBootstrap,
 	IOnPluginUiDestroy,
-	PLUGIN_DEFINITION
+	PLUGIN_DEFINITION,
+	PLUGIN_TRANSLATE_SERVICE
 } from '@gauzy/plugin-ui';
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import {
@@ -41,6 +42,7 @@ import {
 import { DocumentsEffects } from './+state/documents.effects';
 import { DocumentsQuery } from './+state/documents.query';
 import { DocumentsStore } from './+state/documents.store';
+import { DocsDetailActivityComponent } from './components/activity/docs-detail-activity.component';
 import { BulkBarComponent } from './components/bulk/bulk-bar.component';
 import { DocsRowActionsService } from './components/actions/docs-row-actions.service';
 import { DocsCardsComponent } from './components/cards/docs-cards.component';
@@ -118,6 +120,7 @@ import { UploadQueueService } from './services/upload-queue.service';
 		UploadDropzoneDirective,
 		UploadProgressComponent,
 		DocsDetailPanelComponent,
+		DocsDetailActivityComponent,
 		DocumentCommentsComponent,
 		CommentComposerComponent,
 		BulkBarComponent,
@@ -198,6 +201,10 @@ export class DocsUiModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
 	private readonly _navMenuBuilderService = inject(NavMenuBuilderService);
 	private readonly _pageRouteRegistryService = inject(PageRouteRegistryService);
 	private readonly _pluginDefinition = inject(PLUGIN_DEFINITION, { optional: true });
+	// The host binds this token to `TranslateAdapterService` in `PluginUiModule.init()`. Optional
+	// so the module still boots in a test harness (or the standalone playground) that never calls
+	// `init()` — the translation merge is then simply skipped.
+	private readonly _translateService = inject(PLUGIN_TRANSLATE_SERVICE, { optional: true });
 
 	// ─── Plugin Lifecycle ─────────────────────────────────────────
 
@@ -215,13 +222,23 @@ export class DocsUiModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {
 
 	// ─── Registration ─────────────────────────────────────────────
 
-	/** Applies routes and nav from the plugin definition. Guarded to run once per app lifecycle. */
+	/**
+	 * Applies routes, nav and the `DOCS` translation bundle from the plugin definition.
+	 * Guarded to run once per app lifecycle.
+	 *
+	 * 🛑 `translateService` is not optional in practice. `DocsUiPlugin` declares
+	 * `translations: { en }` + `translationNamespace: 'DOCS'`, but it is a **module** plugin, and
+	 * `PluginUiModule.bootstrapDeclarativePlugins()` runs the translation-merging `bootstrap`
+	 * callback only for plugins with no `module`/`loadModule`. Without passing the service here,
+	 * nothing ever merges `en.json` and every `DOCS.*` key in the hub renders as its raw key.
+	 */
 	private _applyDeclarativeRegistrations(): void {
 		if (DocsUiModule._hasAppliedRegistrations || !this._pluginDefinition) return;
 
 		applyDeclarativeRegistrations(this._pluginDefinition, {
 			navBuilder: this._navMenuBuilderService,
-			pageRouteRegistry: this._pageRouteRegistryService
+			pageRouteRegistry: this._pageRouteRegistryService,
+			translateService: this._translateService
 		});
 
 		DocsUiModule._hasAppliedRegistrations = true;

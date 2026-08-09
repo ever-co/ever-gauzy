@@ -9,7 +9,9 @@ import {
 } from './extractor.interface';
 import { HtmlExtractor } from './html.extractor';
 import { ImageExtractor } from './image.extractor';
+import { OdfExtractor } from './odf.extractor';
 import { PdfExtractor } from './pdf.extractor';
+import { PptxExtractor } from './pptx.extractor';
 import { TextExtractor } from './text.extractor';
 import { XlsxExtractor } from './xlsx.extractor';
 
@@ -35,8 +37,11 @@ export class ExtractionRegistryService {
 		htmlExtractor: HtmlExtractor,
 		// `@Optional()` keeps six-argument construction (the pre-image-OCR shape) valid; the
 		// filter below then drops the missing slot instead of putting `undefined` in the
-		// resolution list, where `supports()` would throw on the first lookup.
-		@Optional() imageExtractor?: ImageExtractor
+		// resolution list, where `supports()` would throw on the first lookup. The same applies
+		// to the two office providers appended after it.
+		@Optional() imageExtractor?: ImageExtractor,
+		@Optional() pptxExtractor?: PptxExtractor,
+		@Optional() odfExtractor?: OdfExtractor
 	) {
 		// Built-in provider order (consulted after any third-party registrations).
 		const builtIns: (IDocumentExtractor | undefined)[] = [
@@ -46,7 +51,9 @@ export class ExtractionRegistryService {
 			csvExtractor,
 			textExtractor,
 			htmlExtractor,
-			imageExtractor
+			imageExtractor,
+			pptxExtractor,
+			odfExtractor
 		];
 		this.extractors.push(...builtIns.filter((extractor): extractor is IDocumentExtractor => Boolean(extractor)));
 	}

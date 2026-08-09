@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import {
+	ActionTypeEnum,
 	DocumentKindEnum,
 	DocumentKnowledgeStatusEnum,
 	DocumentReviewReasonEnum,
@@ -50,7 +51,14 @@ const DYNAMIC_PREFIXES = new Set([
 	'DOCS.SHARE.ACCESS',
 	'DOCS.REVIEW.REASONS',
 	'DOCS.LINKS.ENTITY',
-	'DOCS.EDITOR.SLASH'
+	'DOCS.EDITOR.SLASH',
+	// `actionLabelKeyOf()` builds `DOCS.ACTIVITY.ACTION.${action.toUpperCase()}`; the suffixes are
+	// covered by the `ActionTypeEnum` expectation below.
+	'DOCS.ACTIVITY.ACTION',
+	// `DOCS_ACTIVITY_VALUE_KEY_PREFIXES` interpolates a `reviewStatus` value onto `DOCS.REVIEW.`.
+	// Deliberately NOT enum-asserted: `DocumentReviewStatusEnum.NONE` has no label, and
+	// `translateOrRaw()` is specified to render the raw enum for exactly that case.
+	'DOCS.REVIEW'
 ]);
 
 function collectSourceFiles(directory: string): string[] {
@@ -126,6 +134,13 @@ describe('DOCS i18n namespace', () => {
 	])('translates every enum value interpolated under %s', (prefix, values) => {
 		for (const value of values) {
 			expect(typeof resolveKey(`${prefix}.${value}`)).toBe('string');
+		}
+	});
+
+	it('translates every activity action once the stored value is upper-cased', () => {
+		for (const action of Object.values(ActionTypeEnum)) {
+			// `actionLabelKeyOf()` upper-cases the stored PascalCase value ('Created' → 'CREATED').
+			expect(typeof resolveKey(`DOCS.ACTIVITY.ACTION.${action.toUpperCase()}`)).toBe('string');
 		}
 	});
 

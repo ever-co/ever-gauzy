@@ -34,3 +34,9 @@
   $height: calc(100vh - 18rem);
   @include nb-card_overrides(unset, $height, $default-radius);
 }
+
+// Record-side Documents panel: its own card, separated from the invoice body.
+.invoice-documents {
+  display: block;
+  margin-top: 1rem;
+}

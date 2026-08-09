@@ -26,7 +26,14 @@ export const DOCS_LINK_ENTITIES: IDocsLinkEntityDescriptor[] = [
 		entity: BaseEntityEnum.Task,
 		labelKey: 'DOCS.LINKS.ENTITY.TASK',
 		icon: 'checkmark-square-outline',
-		route: (id) => `/pages/tasks/dashboard/${id}`
+		// 🛑 No per-task detail route exists. `tasks-routing.module.ts` declares only `dashboard`,
+		// `team`, `me` and `settings/:id` — there is no `dashboard/:id`, so the previous
+		// `/pages/tasks/dashboard/${id}` matched nothing and the row was a dead link. `settings/:id`
+		// is not a substitute: it is gated on ALL_ORG_EDIT/ORG_PROJECT_EDIT and bounces a
+		// read-only user back to the dashboard. `null` is the contract for "no detail route" —
+		// the linked-records row then renders the task as plain text instead. Give this a real
+		// route the moment a task detail page exists.
+		route: () => null
 	},
 	{
 		entity: BaseEntityEnum.OrganizationProject,

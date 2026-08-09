@@ -3,6 +3,7 @@ export * from './get-document-categories.query';
 export * from './get-document-count.query';
 export * from './get-document-facets.query';
 export * from './get-document-links.query';
+export * from './get-document-path.query';
 export * from './get-document-settings.query';
 export * from './get-document-version.query';
 export * from './get-document-versions.query';

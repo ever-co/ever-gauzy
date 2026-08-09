@@ -7,9 +7,12 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { CommentComposerComponent, ICommentDraft } from './comment-composer.component';
 import {
 	buildCommentThread,
+	commentBlockId,
+	commentBody,
 	employeeMentionLabel,
 	ICommentThreadNode,
-	IMentionCandidate
+	IMentionCandidate,
+	withBlockAnchor
 } from './document-comments.model';
 import { DocumentCommentsService } from './document-comments.service';
 import { MentionDirectoryService } from './mention-directory.service';
@@ -210,8 +213,9 @@ export class DocumentCommentsComponent extends TranslationBaseComponent implemen
 	async startEdit(comment: IComment): Promise<void> {
 		this.editingId = String(comment.id);
 		this.replyingTo = null;
-		// Seed the picks from the saved body — an edit re-sends the whole array.
-		this.editingPicked = await firstValueFrom(this.directory.matchInText(comment.comment ?? '')).catch(() => []);
+		// Seed the picks from the saved body — an edit re-sends the whole array. The block
+		// anchor is stripped first: it is machinery, never part of the text being matched.
+		this.editingPicked = await firstValueFrom(this.directory.matchInText(this.body(comment))).catch(() => []);
 	}
 
 	cancelEdit(): void {
@@ -229,7 +233,9 @@ export class DocumentCommentsComponent extends TranslationBaseComponent implemen
 		try {
 			const updated = await firstValueFrom(
 				this.commentsService.update(comment.id as ID, {
-					comment: draft.comment,
+					// Re-stamp the anchor the composer never saw — an edit that dropped it
+					// would silently detach the comment from its block.
+					comment: withBlockAnchor(commentBlockId(comment), draft.comment),
 					mentionEmployeeIds: draft.mentionEmployeeIds,
 					editedAt: new Date()
 				})
@@ -289,6 +295,20 @@ export class DocumentCommentsComponent extends TranslationBaseComponent implemen
 
 	authorLabel(comment: IComment): string {
 		return employeeMentionLabel(comment?.employee) || this.getTranslation('DOCS.COMMENTS.UNKNOWN_AUTHOR');
+	}
+
+	/**
+	 * The readable body. Comments posted from the editor's block threads carry a
+	 * `[[block:…]]` marker as their first line (see `document-comments.model.ts`); this panel
+	 * shows the whole document's thread, so it must strip it rather than print machinery.
+	 */
+	body(comment: IComment): string {
+		return commentBody(comment);
+	}
+
+	/** True when the comment is anchored to an editor block rather than the document. */
+	isBlockAnchored(comment: IComment): boolean {
+		return !!commentBlockId(comment);
 	}
 
 	trackNode(_: number, node: ICommentThreadNode): string {

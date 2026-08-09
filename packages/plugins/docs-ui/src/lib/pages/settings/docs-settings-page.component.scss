@@ -41,6 +41,25 @@
 	}
 }
 
+.docs-storage-quota {
+	margin-top: 1rem;
+
+	.docs-storage-quota-field {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+
+		input {
+			width: 8rem;
+		}
+	}
+
+	.docs-storage-quota-unit {
+		color: var(--text-hint-color);
+		font-size: 0.875rem;
+	}
+}
+
 .label {
 	display: block;
 	margin-bottom: 0.25rem;

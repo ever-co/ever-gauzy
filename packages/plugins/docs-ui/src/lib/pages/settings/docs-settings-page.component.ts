@@ -38,6 +38,13 @@ import { DocumentsService } from '../../services/documents.service';
 type DocsCategoryRow = IDocumentCategory & { documentCount?: number };
 
 /**
+ * Divisor for the quota editor. The wire field is bytes (`@IsInt() @Min(0)`), but an
+ * org quota is a GiB-scale number and nobody should have to type ten digits — the
+ * field edits GiB and converts on the way in and out.
+ */
+const BYTES_PER_GIB = 1024 * 1024 * 1024;
+
+/**
  * Documents settings page, registered at the `settings-sections` location so it
  * renders inside the core settings shell (`04-frontend-plugin.md` §2.1).
  *
@@ -124,12 +131,14 @@ export class DocsSettingsPageComponent extends TranslationBaseComponent implemen
 			]);
 			this.settings = settings;
 			this.storage = normalizeDocumentStorage(settings);
+			this.quotaGib = this.toGib(settings?.defaults?.quotaBytes);
 			this.knowledge = knowledge;
 			this.categories = (categories ?? []) as DocsCategoryRow[];
 		} catch {
 			this.loadError = true;
 			this.settings = null;
 			this.storage = null;
+			this.quotaGib = null;
 		} finally {
 			this.loading = false;
 		}
@@ -141,18 +150,30 @@ export class DocsSettingsPageComponent extends TranslationBaseComponent implemen
 		return this.settings?.defaults ?? null;
 	}
 
-	/** Partial PUT of the defaults block only — `capabilities` is never writable. */
+	/**
+	 * Partial PUT of the defaults block only — `capabilities` and the computed
+	 * `quota` usage numbers are never writable.
+	 *
+	 * The response is re-normalized into {@link storage}: a `quotaBytes` write moves
+	 * the meter, and rebinding only `settings` would leave the card showing the old
+	 * limit until the next full page load.
+	 */
 	async saveDefaults(partial: Partial<IDocumentSettingsDefaults>): Promise<void> {
 		if (!this.settings || this.savingDefaults) return;
 		const previous = this.settings;
+		const previousStorage = this.storage;
 		// Optimistic: the toggles must not lag a round trip.
 		this.settings = { ...previous, defaults: { ...previous.defaults, ...partial } };
 		this.savingDefaults = true;
 		try {
 			this.settings = await firstValueFrom(this.documentsService.updateSettings(partial));
+			this.storage = normalizeDocumentStorage(this.settings);
+			this.quotaGib = this.toGib(this.settings?.defaults?.quotaBytes);
 			this.toastrService.success(this.getTranslation('DOCS.TOASTS.UPDATED'));
 		} catch (error) {
 			this.settings = previous; // revert
+			this.storage = previousStorage;
+			this.quotaGib = this.toGib(previous?.defaults?.quotaBytes);
 			this.toastrService.danger(error);
 		} finally {
 			this.savingDefaults = false;
@@ -195,6 +216,60 @@ export class DocsSettingsPageComponent extends TranslationBaseComponent implemen
 		if (percent >= 95) return 'danger';
 		if (percent >= 80) return 'warning';
 		return 'info';
+	}
+
+	// ─── Quota editor (the one writable quota field) ─────────────
+
+	/**
+	 * Bound to the quota input, in GiB; `0` = unlimited, `null` = the deployment
+	 * does not expose a writable quota (the field is not rendered then).
+	 */
+	public quotaGib: number | null = null;
+
+	/** True while the quota PUT is in flight — the field and its button are disabled. */
+	public savingQuota = false;
+
+	/**
+	 * Whether this deployment reports a writable org quota at all.
+	 *
+	 * Keyed on `defaults.quotaBytes` — the field the PUT accepts — NOT on the
+	 * computed usage block: a deployment can report usage without accepting a
+	 * per-organization override, and an input bound to a field the server would
+	 * strip is a control that silently does nothing.
+	 */
+	get canEditQuota(): boolean {
+		return typeof this.settings?.defaults?.quotaBytes === 'number';
+	}
+
+	/** True once the field differs from what the server currently holds. */
+	get quotaDirty(): boolean {
+		if (!this.canEditQuota) return false;
+		return this.toBytes(this.quotaGib) !== (this.settings?.defaults?.quotaBytes ?? 0);
+	}
+
+	/** Persists the quota through the shared defaults PUT (`quotaBytes`, bytes, `0` = unlimited). */
+	async saveQuota(): Promise<void> {
+		if (!this.canEditQuota || this.savingQuota || !this.quotaDirty) return;
+		this.savingQuota = true;
+		try {
+			await this.saveDefaults({ quotaBytes: this.toBytes(this.quotaGib) });
+		} finally {
+			this.savingQuota = false;
+		}
+	}
+
+	/** Bytes → GiB for the editor; `undefined` (unsupported) stays `null`. */
+	private toGib(bytes: number | undefined | null): number | null {
+		if (typeof bytes !== 'number' || !Number.isFinite(bytes)) return null;
+		if (bytes <= 0) return 0;
+		// Two decimals keeps a 512 MiB quota editable without turning into 0.
+		return Math.round((bytes / BYTES_PER_GIB) * 100) / 100;
+	}
+
+	/** GiB → bytes for the wire. Anything unusable (blank, negative, NaN) means unlimited. */
+	private toBytes(gib: number | null): number {
+		if (typeof gib !== 'number' || !Number.isFinite(gib) || gib <= 0) return 0;
+		return Math.round(gib * BYTES_PER_GIB);
 	}
 
 	humanizeSize(bytes?: number | null): string {

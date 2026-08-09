@@ -1,4 +1,5 @@
 import {
+	DEFAULT_DOCS_ADMIN_OPS_RATE_LIMIT,
 	DEFAULT_DOCS_CHUNK_OVERLAP_TOKENS,
 	DEFAULT_DOCS_CHUNK_TOKENS,
 	DEFAULT_DOCS_CLASSIFY_SAMPLE_CHARS,
@@ -13,8 +14,12 @@ import {
 	DEFAULT_DOCS_ORG_QUOTA_BYTES,
 	DEFAULT_DOCS_QUEUE_CONCURRENCY,
 	DEFAULT_DOCS_RETRIEVAL_TOPK_MAX,
+	DEFAULT_DOCS_SEARCH_RATE_LIMIT,
 	DEFAULT_DOCS_STUCK_THRESHOLD_MINUTES,
+	DEFAULT_DOCS_UPLOAD_RATE_LIMIT,
 	DEFAULT_DOCS_VERSION_DEBOUNCE_MINUTES,
+	DOCS_RATE_LIMIT_WINDOW_MS,
+	ENV_GAUZY_DOCS_ADMIN_OPS_RATE_LIMIT,
 	ENV_GAUZY_DOCS_AI_ENABLED,
 	ENV_GAUZY_DOCS_AUTO_REINDEX_ON_MODEL_CHANGE,
 	ENV_GAUZY_DOCS_CHUNK_OVERLAP_TOKENS,
@@ -38,7 +43,9 @@ import {
 	ENV_GAUZY_DOCS_QUEUE_ENABLED,
 	ENV_GAUZY_DOCS_RETRIEVAL_LOG_ENABLED,
 	ENV_GAUZY_DOCS_RETRIEVAL_TOPK_MAX,
+	ENV_GAUZY_DOCS_SEARCH_RATE_LIMIT,
 	ENV_GAUZY_DOCS_STUCK_THRESHOLD_MINUTES,
+	ENV_GAUZY_DOCS_UPLOAD_RATE_LIMIT,
 	ENV_GAUZY_DOCS_VECTOR_STORE,
 	ENV_GAUZY_DOCS_VERSION_DEBOUNCE_MINUTES
 } from './docs.constants';
@@ -104,6 +111,12 @@ export interface IDocsConfig {
 	ocrEnabled: boolean;
 	/** Hard cap on the pages OCR transcribes per document — the cost fuse of the OCR path. */
 	ocrMaxPages: number;
+	/** Requests per minute allowed on the upload / replace-file routes (§9). */
+	uploadRateLimit: number;
+	/** Requests per minute allowed on the knowledge-search route (§9). */
+	searchRateLimit: number;
+	/** Requests per minute allowed on the bulk / re-index admin routes (§9). */
+	adminOpsRateLimit: number;
 }
 
 /**
@@ -184,7 +197,45 @@ export const getDocsConfig = (): IDocsConfig => ({
 	),
 	inboundDomain: process.env[ENV_GAUZY_DOCS_INBOUND_DOMAIN] || undefined,
 	ocrEnabled: parseBoolEnv(ENV_GAUZY_DOCS_OCR_ENABLED, false),
-	ocrMaxPages: parseIntEnv(ENV_GAUZY_DOCS_OCR_MAX_PAGES, DEFAULT_DOCS_OCR_MAX_PAGES)
+	ocrMaxPages: parseIntEnv(ENV_GAUZY_DOCS_OCR_MAX_PAGES, DEFAULT_DOCS_OCR_MAX_PAGES),
+	uploadRateLimit: parseIntEnv(ENV_GAUZY_DOCS_UPLOAD_RATE_LIMIT, DEFAULT_DOCS_UPLOAD_RATE_LIMIT),
+	searchRateLimit: parseIntEnv(ENV_GAUZY_DOCS_SEARCH_RATE_LIMIT, DEFAULT_DOCS_SEARCH_RATE_LIMIT),
+	adminOpsRateLimit: parseIntEnv(ENV_GAUZY_DOCS_ADMIN_OPS_RATE_LIMIT, DEFAULT_DOCS_ADMIN_OPS_RATE_LIMIT)
+});
+
+/**
+ * Builds the `@Throttle()` override of one abuse-relevant Documents route
+ * (`08-permissions-security.md` §9).
+ *
+ * Two things this deliberately does NOT do:
+ *
+ * - It does not register a guard. The platform owns the throttler: `ThrottlerModule` +
+ *   `ThrottlerBehindProxyGuard` are wired globally in `@gauzy/core`'s `AppModule` behind
+ *   `THROTTLE_ENABLED`. `@Throttle()` is pure route metadata, so these overrides bind to that
+ *   guard where it exists and are an inert no-op where it does not — a plugin-local guard
+ *   would instead fail to construct (no `THROTTLER_OPTIONS` provider) in every deployment
+ *   that has throttling switched off.
+ * - It does not emit `Retry-After` by hand — `ThrottlerGuard` already sets it (plus the
+ *   `X-RateLimit-*` trio) when a bucket is exhausted.
+ *
+ * The tracker is the per-user key the spec asks for (`tenantId:userId`) rather than the
+ * platform default of a client IP, so one tenant's burst cannot exhaust another tenant's
+ * budget behind a shared egress address. An unauthenticated request (there is none on these
+ * guarded routes today) degrades to the request IP instead of sharing one global bucket.
+ *
+ * @param limit Requests allowed per {@link DOCS_RATE_LIMIT_WINDOW_MS} window.
+ * @returns The `@Throttle()` options for the platform's `default` named throttler.
+ */
+export const docsRateLimit = (limit: number) => ({
+	default: {
+		limit,
+		ttl: DOCS_RATE_LIMIT_WINDOW_MS,
+		getTracker: (req: Record<string, any>): string => {
+			const tenantId = req?.user?.tenantId ?? req?.headers?.['tenant-id'] ?? 'no-tenant';
+			const userId = req?.user?.id ?? req?.ip ?? 'anonymous';
+			return `docs:${tenantId}:${userId}`;
+		}
+	}
 });
 
 /**

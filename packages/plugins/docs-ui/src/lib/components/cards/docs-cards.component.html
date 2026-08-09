@@ -1,16 +1,7 @@
 <div class="docs-cards" [nbSpinner]="loading" nbSpinnerStatus="primary">
-	<!-- Breadcrumb row (hidden in flat results mode) -->
-	<nav class="docs-cards-breadcrumb" *ngIf="!flat">
-		<button nbButton ghost size="tiny" (click)="drillIn.emit(null)">
-			{{ 'DOCS.CARDS.BREADCRUMB_ROOT' | translate }}
-		</button>
-		<ng-container *ngFor="let crumb of breadcrumb; let last = last">
-			<nb-icon icon="chevron-right-outline" class="docs-crumb-sep"></nb-icon>
-			<button nbButton ghost size="tiny" [disabled]="last" (click)="onCrumbClick(crumb)">
-				{{ crumb.name }}
-			</button>
-		</ng-container>
-	</nav>
+	<!-- The breadcrumb row moved to the browse page header (`00-product-spec.md` §6.9
+	     R-TRE-01): it has to render in the table layout and on an empty folder too,
+	     and both of those sit outside this component. -->
 
 	<!-- Flat results hint (search / non-All preset active) -->
 	<div class="docs-cards-flat-hint" *ngIf="flat">

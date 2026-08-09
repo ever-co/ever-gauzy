@@ -12,6 +12,17 @@
         [isEstimate]="isEstimate"
         [buttonsOutlet]="buttons"
       ></ga-invoice-view-inner>
+      <!--
+        Record-side Documents panel (spec 00 §6.14 R-LNK-02). It gates itself on
+        DOCS_READ + FEATURE_DOCUMENTS, so on a deployment without the Documents
+        feature this renders nothing at all.
+      -->
+      <gz-document-links-panel
+        class="invoice-documents"
+        [entity]="documentEntity"
+        [entityId]="invoice.id"
+        [entityLabel]="documentLabel(invoice)"
+      ></gz-document-links-panel>
     }
   </nb-card-body>
 </nb-card>

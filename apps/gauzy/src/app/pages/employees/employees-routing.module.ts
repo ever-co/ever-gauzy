@@ -7,6 +7,7 @@ import { ManageEmployeeInviteComponent } from './manage-employee-invite/manage-e
 import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
 import {
 	EditEmployeeContactComponent,
+	EditEmployeeDocumentsComponent,
 	EditEmployeeEmploymentComponent,
 	EditEmployeeHiringComponent,
 	EditEmployeeLocationComponent,
@@ -139,6 +140,15 @@ const routes: Routes = [
 			{
 				path: 'settings',
 				component: EditEmployeeOtherSettingsComponent,
+				data: { selectors }
+			},
+			{
+				// Record-side Documents panel (spec 00 §6.14 R-LNK-02). Deliberately
+				// NOT permission-guarded here: the panel gates itself on DOCS_READ +
+				// FEATURE_DOCUMENTS, and a route guard would redirect the whole
+				// employee page to the dashboard instead of hiding one tab.
+				path: 'documents',
+				component: EditEmployeeDocumentsComponent,
 				data: { selectors }
 			}
 		]

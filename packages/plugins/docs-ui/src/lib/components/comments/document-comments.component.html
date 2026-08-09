@@ -63,10 +63,14 @@
 				status="success"
 				[text]="'DOCS.COMMENTS.RESOLVED' | translate"
 			></nb-badge>
+			<!-- Posted from the editor's block thread — this panel shows the whole document. -->
+			<span class="gz-comment-anchor" *ngIf="isBlockAnchored(comment)">
+				<nb-icon icon="pin-outline"></nb-icon>{{ 'DOCS.COMMENTS.ON_BLOCK' | translate }}
+			</span>
 		</header>
 
 		<ng-container *ngIf="!isEditing(comment); else editor">
-			<p class="gz-comment-body">{{ comment.comment }}</p>
+			<p class="gz-comment-body">{{ body(comment) }}</p>
 
 			<div class="gz-comment-actions">
 				<button
@@ -122,7 +126,7 @@
 				[compact]="true"
 				[cancellable]="true"
 				submitLabelKey="DOCS.COMMENTS.SAVE"
-				[value]="comment.comment"
+				[value]="body(comment)"
 				[picked]="editingPicked"
 				[pending]="isBusy(comment)"
 				(submitted)="saveEdit(comment, $event)"

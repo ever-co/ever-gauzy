@@ -62,10 +62,62 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		return await super.create(entity);
 	}
 
+	/**
+	 * Get every article in a category, sanitizing the legacy rich-text `data` column on the way out.
+	 *
+	 * 🛑 Sanitizing on write is not enough here. `data` is a CKEditor-4 era corpus: every row written
+	 * before `sanitizeRichHtml` shipped went to disk unfiltered, and those rows are re-rendered with
+	 * `[innerHtml]` in the Help Center reader. So the read path re-runs the same allowlist and, when a
+	 * row actually changes, lazily re-saves the clean HTML so the corpus heals one read at a time.
+	 * The allowlist is idempotent, so already-clean rows compare equal and are never re-written.
+	 *
+	 * @param categoryId - The category whose articles to load.
+	 * @returns The articles, with `data` guaranteed to have passed the allowlist.
+	 */
 	async getArticlesByCategoryId(categoryId: ID): Promise<HelpCenterArticle[]> {
-		return await this.find({
+		const articles = await this.find({
 			where: { categoryId } as FindOptionsWhere<HelpCenterArticle>
 		});
+		return await this.sanitizeArticlesData(articles);
+	}
+
+	/**
+	 * Re-run the shared rich-text allowlist over each article's legacy `data` column and lazily
+	 * persist the cleaned HTML for the rows that were not already clean.
+	 *
+	 * The re-save is best-effort: a failure to heal the stored row must never fail the read, because
+	 * the value handed back to the caller is already sanitized either way.
+	 *
+	 * @param articles - The articles to sanitize in place.
+	 * @returns The same array, with sanitized `data`.
+	 */
+	private async sanitizeArticlesData(articles: HelpCenterArticle[]): Promise<HelpCenterArticle[]> {
+		const healed: ID[] = [];
+
+		for (const article of articles) {
+			if (typeof article.data !== 'string' || !article.data) {
+				continue;
+			}
+			const sanitized = sanitizeRichHtml(article.data);
+			if (sanitized !== article.data) {
+				article.data = sanitized;
+				healed.push(article.id);
+			}
+		}
+
+		// Lazily heal the stored corpus — never let this break the read.
+		await Promise.all(
+			healed.map(async (id) => {
+				const article = articles.find((a) => a.id === id);
+				try {
+					await this.typeOrmHelpCenterArticleRepository.update(id, { data: article.data });
+				} catch (error) {
+					console.error(`Failed to persist sanitized Help Center article data for id ${id}`, error);
+				}
+			})
+		);
+
+		return articles;
 	}
 
 	/**

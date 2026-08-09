@@ -115,9 +115,10 @@
 	</nb-card>
 
 	<!-- 3. Storage usage (P1 quota — DOCS_MANAGE only, spec 08 §5.7).
-	     Rendered only when the deployment actually reports usage. -->
-	<nb-card *ngIf="storage as usage" class="docs-settings-card">
-		<ng-container *ngxPermissionsOnly="[permissions.DOCS_MANAGE]">
+	     Rendered only when the deployment actually reports usage. The permission gate
+	     wraps the whole card: nested inside it, a non-manager saw an empty card shell. -->
+	<ng-container *ngxPermissionsOnly="[permissions.DOCS_MANAGE]">
+		<nb-card *ngIf="storage as usage" class="docs-settings-card">
 			<nb-card-header>{{ 'DOCS.SETTINGS.STORAGE' | translate }}</nb-card-header>
 			<nb-card-body>
 				<div class="docs-storage-line">
@@ -150,9 +151,40 @@
 				<p class="hint warn" *ngIf="storagePercent !== null && storagePercent >= 80">
 					{{ 'DOCS.SETTINGS.STORAGE_NEAR_LIMIT' | translate }}
 				</p>
+
+				<!-- The one writable quota field (`DocumentSettingsDTO.quotaBytes`). Edited in
+				     GiB, sent in bytes; 0 = unlimited for this organization. -->
+				<div class="docs-settings-row docs-storage-quota" *ngIf="canEditQuota">
+					<label class="label" for="docs-settings-quota">
+						{{ 'DOCS.SETTINGS.STORAGE_QUOTA' | translate }}
+					</label>
+					<div class="docs-storage-quota-field">
+						<input
+							id="docs-settings-quota"
+							nbInput
+							fieldSize="small"
+							type="number"
+							min="0"
+							step="0.5"
+							[(ngModel)]="quotaGib"
+							[disabled]="savingDefaults || savingQuota"
+						/>
+						<span class="docs-storage-quota-unit">{{ 'DOCS.SETTINGS.STORAGE_QUOTA_UNIT' | translate }}</span>
+						<button
+							nbButton
+							size="small"
+							status="primary"
+							[disabled]="!quotaDirty || savingDefaults || savingQuota"
+							(click)="saveQuota()"
+						>
+							{{ 'BUTTONS.SAVE' | translate }}
+						</button>
+					</div>
+					<div class="hint">{{ 'DOCS.SETTINGS.STORAGE_QUOTA_HINT' | translate }}</div>
+				</div>
 			</nb-card-body>
-		</ng-container>
-	</nb-card>
+		</nb-card>
+	</ng-container>
 
 	<!-- 4. Category catalog -->
 	<nb-card class="docs-settings-card">

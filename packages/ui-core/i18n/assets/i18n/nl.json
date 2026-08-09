@@ -3315,7 +3315,11 @@
 		"STOP_TIMER": "Stop timer",
 		"TIME_LOG": "Tijdregistratie",
 		"VIEW_APPOINTMENTS": "Afspraken bekijken",
-		"VIEW_TIME_ACTIVITY": "Tijdactiviteit bekijken"
+		"VIEW_TIME_ACTIVITY": "Tijdactiviteit bekijken",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Nieuwe pagina",
+			"UPLOAD": "Uploaden"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Boekhouding",
@@ -3323,7 +3327,8 @@
 		"PROJECT_MANAGEMENT": "Projectbeheer",
 		"JOBS": "Banen",
 		"CONTACTS": "Contacten",
-		"TIME_TRACKING": "Tijdregistratie"
+		"TIME_TRACKING": "Tijdregistratie",
+		"DOCUMENTS": "Documenten"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Voornaam",

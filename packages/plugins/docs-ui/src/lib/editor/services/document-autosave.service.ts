@@ -2,15 +2,40 @@ import { Injectable, NgZone, OnDestroy, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { ID, IDocument, JsonData } from '@gauzy/contracts';
+import { IDocumentContentUpdateInput } from '../../models/docs-api.model';
 import { DocumentsService } from '../../services/documents.service';
 
 /** Autosave pill states (spec 05 §9.2 + UX spec §10.6). */
 export type DocsSaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'conflict' | 'locked' | 'offline' | 'error';
 
+/** Content-save metadata the editor stamps (spec 05 §9.1). */
+export interface IDocumentContentMetadata {
+	/** Extension-set version the JSON was produced with — the loader shim's discriminator. */
+	schemaVersion: number;
+}
+
 export interface IAutosavePayload {
 	contentJson: JsonData;
 	contentHtml: string;
 	mentionEmployeeIds: string[];
+	/** Stamped on every save so a future schema migration has something to branch on. */
+	metadata?: IDocumentContentMetadata;
+	/** Base64 Yjs seed for the reserved `contentBinary` column (spec 05 §9.1/§11). */
+	contentBinary?: string | null;
+}
+
+/**
+ * The wire body of `PUT /documents/:id/content`.
+ *
+ * 🛑 `metadata` and `contentBinary` are declared here rather than on
+ * `IDocumentContentUpdateInput` because that model file belongs to the plugin-surface area;
+ * the fields are additive and this intersection becomes redundant (not wrong) once they land
+ * there. They only take effect once `UpdateDocumentContentDTO` accepts them — the DTO runs
+ * under `whitelist: true`, which **silently strips** unknown properties rather than erroring.
+ */
+export interface IDocumentContentSaveBody extends IDocumentContentUpdateInput {
+	metadata?: IDocumentContentMetadata;
+	contentBinary?: string;
 }
 
 export interface IConflictInfo {
@@ -131,16 +156,20 @@ export class DocumentAutosaveService implements OnDestroy {
 		this.dirty = false;
 		this._state$.next('saving');
 
+		const body: IDocumentContentSaveBody = {
+			contentJson: payload.contentJson,
+			contentHtml: payload.contentHtml,
+			mentionEmployeeIds: payload.mentionEmployeeIds,
+			expectedUpdatedAt: this.expectedUpdatedAt ?? new Date(0).toISOString(),
+			forceSnapshot: options.forceSnapshot
+		};
+		if (payload.metadata) body.metadata = payload.metadata;
+		// Omitted rather than sent as null: the column is reserved, and an absent field is
+		// the one shape every server version — with or without the DTO property — accepts.
+		if (payload.contentBinary) body.contentBinary = payload.contentBinary;
+
 		try {
-			const saved: IDocument = await firstValueFrom(
-				this.documentsService.updateContent(documentId, {
-					contentJson: payload.contentJson,
-					contentHtml: payload.contentHtml,
-					mentionEmployeeIds: payload.mentionEmployeeIds,
-					expectedUpdatedAt: this.expectedUpdatedAt ?? new Date(0).toISOString(),
-					forceSnapshot: options.forceSnapshot
-				})
-			);
+			const saved: IDocument = await firstValueFrom(this.documentsService.updateContent(documentId, body));
 			// The editor moved on to another document while this was in flight —
 			// its token and state belong to a session that no longer exists.
 			if (session !== this.session) return false;

@@ -24,8 +24,29 @@
 
 	<!-- Tree -->
 	<div class="docs-tree-section docs-tree-main">
-		<div class="docs-tree-section-title">{{ 'DOCS.TREE.ALL_DOCUMENTS' | translate }}</div>
-		<div class="docs-tree-empty" *ngIf="!nodes.length">{{ 'DOCS.TREE.EMPTY' | translate }}</div>
+		<!-- The section title doubles as the root crumb: drilled into a folder, this is the
+		     sidebar's way back to "everything" (`00-product-spec.md` §6.9 R-TRE-01). A real
+		     <button> so focus, Enter and Space come from the platform; the SCSS only undoes
+		     the user-agent chrome, so it still renders as the section label it always was. -->
+		<button type="button" class="docs-tree-section-title docs-tree-root" (click)="goToRoot()">
+			{{ 'DOCS.TREE.ALL_DOCUMENTS' | translate }}
+		</button>
+		<div class="docs-tree-empty" *ngIf="!nodes.length">
+			<span>{{ 'DOCS.TREE.EMPTY' | translate }}</span>
+			<!-- An empty tree has no node to raise a context menu on, so without these the
+			     first folder/page of a brand-new organization is unreachable from the sidebar. -->
+			<div class="docs-tree-empty-actions" *ngIf="canCreate">
+				<button nbButton ghost size="tiny" (click)="createAtRoot(kindEnum.FOLDER)">
+					{{ 'DOCS.TREE.NEW_FOLDER' | translate }}
+				</button>
+				<button nbButton ghost size="tiny" (click)="createAtRoot(kindEnum.PAGE)">
+					{{ 'DOCS.TREE.NEW_PAGE' | translate }}
+				</button>
+				<button nbButton ghost size="tiny" (click)="uploadHere()">
+					{{ 'DOCS.UPLOAD.BUTTON' | translate }}
+				</button>
+			</div>
+		</div>
 		<tree-root #tree [nodes]="nodes" [options]="options" (moveNode)="onMoveNode($event)" (activate)="onNodeActivate($event)">
 			<ng-template #treeNodeTemplate let-node let-index="index">
 				<span class="docs-tree-node">
@@ -55,6 +76,7 @@
 						class="docs-tree-node-menu"
 						[nbContextMenu]="menuItemsFor(node.data)"
 						[nbContextMenuTag]="menuTag(node.data)"
+						[attr.data-docs-node-menu]="node.data.id"
 						(click)="$event.stopPropagation()"
 						[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
 					>

@@ -29,6 +29,7 @@ jest.mock(
 import { getMetadataStorage } from 'class-validator';
 import { DocumentSettingsQueryDTO } from './document-settings.dto';
 import { GetDocumentLinksQueryDTO } from './document-link.dto';
+import { UpdateDocumentContentDTO, UpdateDocumentContentMetadataDTO } from './update-document-content.dto';
 import { UpdateDocumentDTO } from './update-document.dto';
 import { UploadDocumentsDTO } from './upload-documents.dto';
 
@@ -84,6 +85,32 @@ describe('UploadDocumentsDTO — every dialog toggle is a declared field', () =>
 		expect(properties).toEqual(
 			expect.arrayContaining(['parentId', 'visibility', 'categoryIds', 'tagIds', 'source'])
 		);
+	});
+});
+
+/**
+ * The same `whitelist: true` trap on the content route: the editor stamps
+ * `metadata.schemaVersion` on every save and (P6) sends the CRDT state, and both are dropped in
+ * silence unless the DTO declares them. `metadata` is a NESTED DTO on purpose — an open object
+ * would let an autosave replace the row's `ai`/`migration`/`review` provenance.
+ */
+describe('UpdateDocumentContentDTO — the editor payload is fully declared', () => {
+	it('declares the content, concurrency and sync fields', () => {
+		expect(validatedPropertiesOf(UpdateDocumentContentDTO)).toEqual(
+			expect.arrayContaining([
+				'contentJson',
+				'contentHtml',
+				'contentBinary',
+				'expectedUpdatedAt',
+				'forceSnapshot',
+				'mentionEmployeeIds',
+				'metadata'
+			])
+		);
+	});
+
+	it('restricts the metadata block to `schemaVersion`', () => {
+		expect(validatedPropertiesOf(UpdateDocumentContentMetadataDTO)).toEqual(['schemaVersion']);
 	});
 });
 

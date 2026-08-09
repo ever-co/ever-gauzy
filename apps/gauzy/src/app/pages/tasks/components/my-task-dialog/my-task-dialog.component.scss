@@ -26,3 +26,9 @@
 .nb-radio {
   display: inline-block;
 }
+
+// Record-side Documents panel: its own card under the task form.
+.task-documents {
+  display: block;
+  margin-top: 1rem;
+}

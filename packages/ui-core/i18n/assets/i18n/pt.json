@@ -3315,7 +3315,11 @@
 		"STOP_TIMER": "Parar Temporizador",
 		"TIME_LOG": "Registo de Tempo",
 		"VIEW_APPOINTMENTS": "Ver compromissos",
-		"VIEW_TIME_ACTIVITY": "Ver atividade de tempo"
+		"VIEW_TIME_ACTIVITY": "Ver atividade de tempo",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Nova página",
+			"UPLOAD": "Carregar"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Contabilidade",
@@ -3323,7 +3327,8 @@
 		"PROJECT_MANAGEMENT": "Gestão de Projetos",
 		"JOBS": "Empregos",
 		"CONTACTS": "Contatos",
-		"TIME_TRACKING": "Rastreamento de Tempo"
+		"TIME_TRACKING": "Rastreamento de Tempo",
+		"DOCUMENTS": "Documentos"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Nome próprio",

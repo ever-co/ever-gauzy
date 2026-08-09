@@ -1,0 +1,47 @@
+<div class="docs-activity" [nbSpinner]="loading" nbSpinnerStatus="primary">
+	<!-- Error state — mirrors the panel's own retry affordance; the rows already
+	     loaded stay on screen so a failed "Show more" costs nothing. -->
+	<div class="docs-activity-error" *ngIf="loadError">
+		<span>{{ 'DOCS.ACTIVITY.LOAD_ERROR' | translate }}</span>
+		<button nbButton size="tiny" status="primary" type="button" (click)="retry()">
+			{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}
+		</button>
+	</div>
+
+	<!-- Empty state -->
+	<p class="muted" *ngIf="!loading && !loadError && !entries.length">{{ 'DOCS.ACTIVITY.EMPTY' | translate }}</p>
+
+	<!-- Timeline, newest first -->
+	<ol class="docs-activity-list" *ngIf="entries.length">
+		<li class="docs-activity-entry" *ngFor="let entry of entries; trackBy: trackEntry">
+			<div class="docs-activity-head">
+				<span class="docs-activity-actor">{{ actorLabel(entry) }}</span>
+				<span class="docs-activity-action">{{ actionLabel(entry) }}</span>
+				<span class="docs-activity-date">{{ entry.createdAt | date : 'medium' }}</span>
+			</div>
+			<ul class="docs-activity-changes" *ngIf="entry.changes.length">
+				<li *ngFor="let change of entry.changes; trackBy: trackChange">
+					<span class="docs-activity-field">{{ fieldLabel(change) }}</span>
+					<ng-container *ngIf="hasValues(change)">
+						<span class="docs-activity-value">{{ valueLabel(change, change.previous) }}</span>
+						<nb-icon icon="arrow-forward-outline"></nb-icon>
+						<span class="docs-activity-value">{{ valueLabel(change, change.next) }}</span>
+					</ng-container>
+				</li>
+			</ul>
+		</li>
+	</ol>
+
+	<button
+		*ngIf="canShowMore"
+		nbButton
+		ghost
+		size="tiny"
+		type="button"
+		class="docs-activity-more"
+		[disabled]="loading"
+		(click)="showMore()"
+	>
+		{{ 'DOCS.DETAIL.SHOW_MORE' | translate }}
+	</button>
+</div>

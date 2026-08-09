@@ -138,3 +138,18 @@ export interface ILegacyRollbackReport {
 	};
 	records: ILegacyRollbackRecord[];
 }
+
+/**
+ * Response of `GET /api/plugins/docs/migrations/status` (§5.1).
+ *
+ * The per-organization run lock of §5.2 lives in the API process, so this is the only way an
+ * admin who received `409 migration-in-progress` can watch for it to clear.
+ */
+export interface ILegacyMigrationStatus {
+	/** Whether a run currently holds this organization's lock. */
+	locked: boolean;
+	/** When the held lock expires, ISO-8601; null when nothing holds it. */
+	lockedUntil: string | null;
+	/** The last report this process produced for the organization, import or rollback. */
+	lastReport: ILegacyImportReport | ILegacyRollbackReport | null;
+}

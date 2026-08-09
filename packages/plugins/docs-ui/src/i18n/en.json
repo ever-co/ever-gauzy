@@ -75,6 +75,7 @@
 		"EMPTY": "No documents yet",
 		"EMPTY_NODE": "Empty",
 		"LOAD_ERROR": "Couldn't load this folder",
+		"NEW": "New",
 		"NEW_FOLDER": "New folder",
 		"NEW_PAGE": "New page",
 		"UPLOAD_HERE": "Upload here",
@@ -183,6 +184,7 @@
 	"DETAIL": {
 		"METADATA": "Details",
 		"LOCATION": "Location",
+		"CREATED": "Created",
 		"MIME": "Type",
 		"LANGUAGE": "Language",
 		"CONFIDENCE": "AI confidence",
@@ -191,6 +193,8 @@
 		"REGENERATE_SUMMARY": "Regenerate summary",
 		"CATEGORIES": "Categories",
 		"TAGS": "Tags",
+		"SUGGESTED_TAGS": "Suggested tags",
+		"SUGGESTED_TAGS_HINT": "AI keyword suggestions — click one to add it as a tag",
 		"SEARCHABLE_TOGGLE": "Searchable content",
 		"SEARCHABLE_HINT": "When off, only the name and metadata are searchable",
 		"KNOWLEDGE_TOGGLE": "In AI knowledge",
@@ -207,6 +211,7 @@
 		"EXTRACTED_SAVE": "Save & re-index"
 	},
 	"COMMENTS": {
+		"TITLE": "Comments",
 		"EMPTY": "No comments yet",
 		"LOAD_ERROR": "Couldn't load comments",
 		"PLACEHOLDER": "Add a comment…",
@@ -221,6 +226,11 @@
 		"REOPEN": "Reopen",
 		"RESOLVED": "Resolved",
 		"EDITED": "edited",
+		"ON_BLOCK": "on a block",
+		"ALL_THREADS": "All threads",
+		"BLOCK_THREAD": "Go to block",
+		"BLOCK_EMPTY": "No block comments yet. Select text and use the comment action to start a thread.",
+		"BLOCK_PICK_HINT": "Pick a thread to reply to it.",
 		"UNKNOWN_AUTHOR": "Unknown",
 		"MENTION_HINT": "Type @ to mention someone",
 		"MENTION_ARIA": "Mention suggestions",
@@ -230,6 +240,26 @@
 		"TOAST_DELETED": "Comment deleted",
 		"TOAST_RESOLVED": "Comment resolved",
 		"TOAST_REOPENED": "Comment reopened"
+	},
+	"ACTIVITY": {
+		"EMPTY": "No activity yet",
+		"LOAD_ERROR": "Couldn't load the activity",
+		"SYSTEM": "System",
+		"UNKNOWN_ACTOR": "Unknown",
+		"ACTION": {
+			"CREATED": "created this",
+			"UPDATED": "updated this",
+			"DELETED": "deleted this"
+		},
+		"FIELD": {
+			"REVIEW_STATUS": "Review",
+			"ARCHIVED": "Archived",
+			"VERSION": "Version"
+		},
+		"VALUE": {
+			"TRUE": "Yes",
+			"FALSE": "No"
+		}
 	},
 	"SHARE": {
 		"ACTION": "Share",
@@ -260,6 +290,14 @@
 		"TOAST_REVOKED": "Access removed"
 	},
 	"LINKS": {
+		"PANEL_TITLE": "Documents",
+		"PANEL_EMPTY": "No documents attached to this record yet",
+		"PANEL_LOAD_ERROR": "Couldn't load the attached documents",
+		"ATTACH_EXISTING": "Attach existing…",
+		"UPLOAD_NEW": "Upload new",
+		"ATTACH_DIALOG_TITLE": "Attach a document",
+		"ATTACH_SEARCH_PLACEHOLDER": "Search documents…",
+		"ATTACH_NO_DOCUMENTS": "No documents found",
 		"DIALOG_TITLE": "Link a record",
 		"ENTITY_TYPE": "Record type",
 		"RECORD": "Record",
@@ -305,6 +343,10 @@
 		"SAVE_FAILED": "Save failed",
 		"RETRY_SAVE": "Retry",
 		"DISCARD_CONFIRM": "You have unsaved changes. Leave anyway?",
+		"UNSAVED_TITLE": "Unsaved changes",
+		"UNSAVED_STAY": "Stay on this page",
+		"UNSAVED_LEAVE": "Leave and discard",
+		"SCHEMA_AHEAD": "This page was written with a newer version of the editor. Editing it here may drop content — reload the app to get the latest version.",
 		"TOC": "Contents",
 		"INFO": "Info",
 		"WORD_COUNT": "Words",
@@ -404,6 +446,15 @@
 			"TEXT_COLOR": "Text color",
 			"TURN_INTO": "Turn into"
 		},
+		"IMAGE": {
+			"LOADING": "Loading image…",
+			"UNAVAILABLE": "This image is no longer available"
+		},
+		"COMMENT": {
+			"ADD": "Comment on this block",
+			"MARKER_ARIA": "Open the comments on this block",
+			"DETACHED": "The block this thread was anchored to was deleted"
+		},
 		"ATTACHMENT": {
 			"MISSING": "This file is no longer available",
 			"DOWNLOAD": "Download",
@@ -494,6 +545,7 @@
 		"LINK_COPIED": "Link copied",
 		"MARKDOWN_COPIED": "Markdown copied",
 		"VISIBILITY_UPDATED": "Visibility updated",
+		"TAG_ADDED": "Tag added",
 		"NOT_FOUND": "Document not found"
 	},
 	"SETTINGS": {
@@ -508,6 +560,9 @@
 		"STORAGE_HINT": "Counts every uploaded file, including archived ones — their bytes still exist.",
 		"STORAGE_UNLIMITED_HINT": "This organization has no storage limit.",
 		"STORAGE_NEAR_LIMIT": "You are close to the limit. New uploads will be rejected once it is reached.",
+		"STORAGE_QUOTA": "Storage quota",
+		"STORAGE_QUOTA_UNIT": "GiB",
+		"STORAGE_QUOTA_HINT": "0 means unlimited. Uploads are rejected once the organization reaches this limit.",
 		"LOAD_ERROR": "Couldn't load the Documents settings",
 		"KNOWLEDGE_STATUS": "AI knowledge status",
 		"VECTOR_CAPABLE": "Vector search is available",
@@ -622,6 +677,8 @@
 		"NODE_ACTIONS": "Node actions",
 		"PAGE_ACTIONS": "Documents page actions",
 		"DETAIL_PANEL_LABEL": "Document details",
+		"NEW_MENU": "Create new",
+		"BREADCRUMB": "Location",
 		"PRESET_COUNT": "{{ preset }}, {{ count }} documents",
 		"UPLOAD_PROGRESS": "Upload progress",
 		"AUTOSAVE_STATUS": "Autosave status",

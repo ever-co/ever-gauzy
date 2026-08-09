@@ -35,7 +35,9 @@ import {
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { FavoriteToggleModule } from '@gauzy/ui-core/shared';
 import { DocumentsActions } from '../../+state/documents.actions';
+import { BlockCommentThreadComponent } from '../../editor/comments/block-comment-thread.component';
 import { DocumentEditorComponent, IEditorStats, ITocAnchor } from '../../editor/document-editor.component';
+import { DOCS_EDITOR_SCHEMA_VERSION } from '../../editor/editor.constants';
 import { DocsSaveState } from '../../editor/services/document-autosave.service';
 import { DocumentStaticViewComponent } from '../../editor/read-only/document-static-view.component';
 import { VersionHistoryPanelComponent } from '../../editor/version-history/version-history-panel.component';
@@ -46,7 +48,11 @@ import { DocsExportService } from '../../services/docs-export.service';
 import { DocumentTreeStore, IDocsTreeNode } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
 
-type RailTab = 'toc' | 'info';
+type RailTab = 'toc' | 'info' | 'comments';
+
+/** How long to keep retrying a `?block=` deep link while the editor paints (spec 05 §8). */
+const BLOCK_ANCHOR_RETRIES = 10;
+const BLOCK_ANCHOR_RETRY_MS = 150;
 
 /**
  * Page editor chrome (UX spec §10 / spec 04 §4.8) hosting `gz-document-editor`:
@@ -72,6 +78,7 @@ type RailTab = 'toc' | 'info';
 		NbSpinnerModule,
 		NbTooltipModule,
 		FavoriteToggleModule,
+		BlockCommentThreadComponent,
 		DocumentEditorComponent,
 		DocumentStaticViewComponent,
 		VersionHistoryPanelComponent
@@ -81,6 +88,7 @@ type RailTab = 'toc' | 'info';
 })
 export class DocumentPageComponent implements OnInit, OnDestroy {
 	@ViewChild(DocumentEditorComponent) editorComponent?: DocumentEditorComponent;
+	@ViewChild(BlockCommentThreadComponent) commentsPanel?: BlockCommentThreadComponent;
 
 	private readonly route = inject(ActivatedRoute);
 	private readonly router = inject(Router);
@@ -116,6 +124,18 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 
 	public titleDraft = '';
 	public iconDraft = '';
+
+	// ─── Block comments (spec 05 §8) ─────────────────────────────
+
+	/** The block whose thread the Comments rail is showing; `null` lists them all. */
+	public commentBlockId: string | null = null;
+	/** `blockId`s the editor currently holds — lets the rail flag detached threads. */
+	public knownBlockIds: string[] = [];
+	/** A `?block=` deep link waiting for the editor to paint. */
+	private pendingBlockAnchor: string | null = null;
+
+	/** `metadata.schemaVersion` of the loaded content — drives the "newer format" banner. */
+	public contentSchemaVersion: number | null = null;
 
 	get canUpdate(): boolean {
 		return this.store.hasAnyPermission(PermissionsEnum.DOCS_UPDATE);
@@ -160,11 +180,50 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe((id) => void this.load(id));
+
+		// `?block=` deep link (spec 05 §8): scroll to the block, flash it, and open its
+		// thread. Tracked separately from `:id` so a link to another block of the SAME
+		// document still fires (the `:id` stream is `distinctUntilChanged`).
+		this.route.queryParamMap
+			.pipe(
+				map((params) => params.get('block')),
+				distinctUntilChanged(),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe((blockId) => {
+				this.pendingBlockAnchor = blockId;
+				if (!blockId) return;
+				this.openCommentsFor(blockId);
+				// Also fire here, not only from `load()`: a link to another block of the SAME
+				// document leaves `:id` untouched, so nothing would reload and the scroll
+				// would never run. Bounded retries, and the first one to succeed clears the
+				// pending anchor, so the two chains cannot fight.
+				this.applyPendingBlockAnchor();
+			});
 	}
 
 	ngOnDestroy(): void {
-		// Best-effort flush of pending edits when leaving the route.
+		// Best-effort flush of pending edits when leaving the route. The route's
+		// `canDeactivate` guard is what actually *waits* for it — this only covers the
+		// paths that bypass the router (see `docs-unsaved-changes.guard.ts`).
 		void this.editorComponent?.flush();
+	}
+
+	// ─── Unsaved-changes guard API (spec 04 §3.3 / spec 05 §9.2) ──
+
+	/** True while the editor holds edits the server has not acknowledged. */
+	get hasUnsavedChanges(): boolean {
+		return !!this.editorComponent?.autosave.isDirty;
+	}
+
+	/**
+	 * Flushes pending edits and reports whether they landed.
+	 *
+	 * `false` means the guard must ask before discarding — a 409 conflict freeze, a 423
+	 * lock, or an offline backoff all leave the content only in the browser.
+	 */
+	flushPendingChanges(): Promise<boolean> {
+		return this.editorComponent ? this.editorComponent.flush() : Promise.resolve(true);
 	}
 
 	/** Flush while dirty on tab close (spec 05 §9.2 beforeunload guard). */
@@ -199,6 +258,8 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			this.breadcrumbs = [];
 			this.versionsOpen = false;
 			this.menuOpen = false;
+			this.commentBlockId = null;
+			this.knownBlockIds = [];
 		}
 		try {
 			this.document = await firstValueFrom(this.documentsService.getById(id, ['categories', 'tags']));
@@ -210,6 +271,7 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		} finally {
 			this.loading = false;
 			this.cdr.markForCheck();
+			this.applyPendingBlockAnchor();
 		}
 	}
 
@@ -249,8 +311,93 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		this.cdr.markForCheck();
 	}
 
+	/**
+	 * The loaded content's `metadata.schemaVersion` (spec 05 §9.1). `null` = saved before the
+	 * stamp existed, which is older than v1, never newer.
+	 */
+	onSchemaVersionChanged(version: number | null): void {
+		this.contentSchemaVersion = version;
+		this.cdr.markForCheck();
+	}
+
+	/**
+	 * True when this build's extension set is OLDER than the one that wrote the content.
+	 *
+	 * 🛑 Saving here would round-trip the JSON through a schema that does not know the newer
+	 * node types and quietly drop them (spec 05 §9.1: "unknown node types throw on JSON load
+	 * — never ship a schema change without a loader shim"). The banner is the warning; the
+	 * shim itself belongs to whichever release bumps the version.
+	 */
+	get schemaAhead(): boolean {
+		return (this.contentSchemaVersion ?? 0) > DOCS_EDITOR_SCHEMA_VERSION;
+	}
+
 	scrollToAnchor(anchor: ITocAnchor): void {
 		anchor.dom?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	}
+
+	// ─── Comments rail (spec 01 §10.5 / spec 05 §8) ──────────────
+
+	/** Opens the Comments tab. Without a block in focus it lists every anchored thread. */
+	openCommentsTab(): void {
+		this.railTab = 'comments';
+		this.railOpen = true;
+		this.versionsOpen = false;
+		this.commentBlockId = null;
+		this.refreshKnownBlocks();
+	}
+
+	/** The bubble menu's comment action, a gutter marker, or a `?block=` deep link. */
+	openCommentsFor(blockId: string): void {
+		this.railTab = 'comments';
+		this.railOpen = true;
+		this.versionsOpen = false;
+		this.commentBlockId = blockId;
+		this.refreshKnownBlocks();
+		this.cdr.markForCheck();
+	}
+
+	/**
+	 * The rail reports which blocks still have an open thread; the editor turns them into
+	 * gutter markers. One fetch, one source of truth — the editor never queries comments.
+	 */
+	onOpenCommentBlocks(blockIds: string[]): void {
+		this.editorComponent?.setCommentedBlocks(blockIds);
+	}
+
+	/** A thread header was clicked — jump to its block in the canvas. */
+	onCommentBlockFocused(blockId: string): void {
+		this.editorComponent?.highlightBlock(blockId);
+	}
+
+	/**
+	 * Re-reads the editor's block ids so the rail can tell a live thread from one whose
+	 * block was deleted. Cheap (a single doc walk) and only run when the rail is opened.
+	 */
+	private refreshKnownBlocks(): void {
+		this.knownBlockIds = this.editorComponent?.getBlockIds() ?? [];
+	}
+
+	/**
+	 * Retries the `?block=` scroll until the editor has painted the block.
+	 *
+	 * The editor is constructed in `afterNextRender` and the document JSON only reaches it
+	 * once `load()` resolves, so the element a deep link points at does not exist when the
+	 * query param arrives. Bounded retries, then give up quietly — a stale link to a deleted
+	 * block must not spin.
+	 */
+	private applyPendingBlockAnchor(attempt = 0): void {
+		const blockId = this.pendingBlockAnchor;
+		if (!blockId || !this.isPage) return;
+		if (this.editorComponent?.highlightBlock(blockId)) {
+			this.pendingBlockAnchor = null;
+			return;
+		}
+		if (attempt >= BLOCK_ANCHOR_RETRIES) {
+			this.pendingBlockAnchor = null;
+			return;
+		}
+		setTimeout(() => this.applyPendingBlockAnchor(attempt + 1), BLOCK_ANCHOR_RETRY_MS);
 	}
 
 	// ─── Title / icon (autosaved separately from content — rename never bumps content versions) ──
@@ -450,6 +597,9 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 	onVersionRestored(document: IDocument): void {
 		this.document = { ...this.document, ...document };
 		this.editorComponent?.applyRemoteContent(document);
+		// The restored revision has a different set of blocks, so every anchored thread's
+		// "detached" verdict has to be re-derived (spec 05 §8).
+		this.refreshKnownBlocks();
 		this.cdr.markForCheck();
 	}
 
@@ -461,6 +611,10 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			const fresh = await firstValueFrom(this.documentsService.getById(this.document.id));
 			this.document = fresh;
 			this.editorComponent?.applyRemoteContent(fresh);
+			// Someone else's edit may have deleted a commented block — re-derive the
+			// anchors and re-read the thread rather than leaving a stale verdict.
+			this.refreshKnownBlocks();
+			void this.commentsPanel?.reload();
 		} catch {
 			this.toastrService.danger(this.translate.instant('DOCS.ERRORS.GENERIC_RETRY'));
 		}

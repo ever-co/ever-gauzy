@@ -3339,7 +3339,11 @@
 		"STOP_TIMER": "Остановить таймер",
 		"TIME_LOG": "Журнал времени",
 		"VIEW_APPOINTMENTS": "Просмотреть встречи",
-		"VIEW_TIME_ACTIVITY": "Просмотреть активность по времени"
+		"VIEW_TIME_ACTIVITY": "Просмотреть активность по времени",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Новая страница",
+			"UPLOAD": "Загрузить"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Бухгалтерия",
@@ -3347,7 +3351,8 @@
 		"PROJECT_MANAGEMENT": "Управление проектами",
 		"JOBS": "Работа",
 		"CONTACTS": "Контакты",
-		"TIME_TRACKING": "Учет времени"
+		"TIME_TRACKING": "Учет времени",
+		"DOCUMENTS": "Документы"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Имя",

@@ -34,6 +34,7 @@
 		"@gauzy/plugin-ai-chat": "^0.1.0",
 		"@gauzy/plugin-knowledge-base": "^0.1.0",
 		"@gauzy/scheduler": "^0.1.0",
+		"@nestjs/throttler": "^6.5.0",
 		"ai": "^7.0.15",
 		"bullmq": "^5.70.1",
 		"js-tiktoken": "^1.0.21",

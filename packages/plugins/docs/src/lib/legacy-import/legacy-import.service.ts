@@ -20,11 +20,12 @@ import { Document } from '../entities/document.entity';
 import { DocumentLink } from '../entities/document-link.entity';
 import { DocumentVersion } from '../entities/document-version.entity';
 import { DocumentEvent } from '../events/document.event';
-import { ImportLegacyDTO, RollbackLegacyDTO } from './dto';
+import { ImportLegacyDTO, LegacyMigrationStatusQueryDTO, RollbackLegacyDTO } from './dto';
 import {
 	ILegacyImportRecord,
 	ILegacyImportReport,
 	ILegacyImportTotals,
+	ILegacyMigrationStatus,
 	ILegacyRollbackRecord,
 	ILegacyRollbackReport,
 	LEGACY_CONTAINER_EXTERNAL_ID,
@@ -117,6 +118,16 @@ export class LegacyImportService {
 	 */
 	private readonly locks = new Map<string, number>();
 
+	/**
+	 * Last finished report per organization (`key → report`), so `GET /migrations/status` can
+	 * answer "what did the run that just held this lock do?".
+	 *
+	 * In-process and deliberately un-persisted, exactly like {@link locks}: the durable record of a
+	 * migration is the `metadata.migration.reportId` stamped on every row it created. This map only
+	 * saves the admin who is polling from re-running a dry run to find out.
+	 */
+	private readonly lastReports = new Map<string, ILegacyImportReport | ILegacyRollbackReport>();
+
 	constructor(
 		@InjectDataSource() private readonly dataSource: DataSource,
 		private readonly _eventBus: EventBus
@@ -156,10 +167,39 @@ export class LegacyImportService {
 				`Legacy import ${ctx.reportId} (${dryRun ? 'dry-run' : 'real'}) finished for org ${organizationId}: ` +
 					`${ctx.report.records.length} records`
 			);
+			this.lastReports.set(lockKey, ctx.report);
 			return ctx.report;
 		} finally {
 			this.locks.delete(lockKey);
 		}
+	}
+
+	/**
+	 * `GET /migrations/status` — whether a migration currently holds this organization's lock, and
+	 * the report of the last one that finished in this process (§5.1).
+	 *
+	 * The lock of §5.2 is in-process and, until this endpoint existed, entirely unobservable: an
+	 * admin who hit `409 migration-in-progress` had no way to poll for it clearing other than
+	 * re-issuing the import. Read-only and side-effect free — polling it never takes the lock.
+	 *
+	 * @param input The (optional) tenant/organization scope; both fall back to the request context.
+	 * @returns The lock state and the last report this process produced.
+	 */
+	getStatus(input: LegacyMigrationStatusQueryDTO = {}): ILegacyMigrationStatus {
+		const tenantId = input.tenantId || RequestContext.currentTenantId();
+		const organizationId = input.organizationId || RequestContext.currentOrganizationId();
+		if (!tenantId || !organizationId) {
+			throw new BadRequestException('Both `tenantId` and `organizationId` are required');
+		}
+
+		const lockKey = this.lockKey(tenantId, organizationId);
+		const heldUntil = this.locks.get(lockKey);
+		const locked = Boolean(heldUntil && heldUntil > Date.now());
+		return {
+			locked,
+			lockedUntil: locked ? new Date(heldUntil as number).toISOString() : null,
+			lastReport: this.lastReports.get(lockKey) ?? null
+		};
 	}
 
 	/**
@@ -251,6 +291,7 @@ export class LegacyImportService {
 					`${report.totals.deleted} soft-deleted, ${report.totals.skippedModified} modified, ` +
 					`${report.totals.skippedHasChildren} with foreign children`
 			);
+			this.lastReports.set(lockKey, report);
 			return report;
 		} finally {
 			this.locks.delete(lockKey);

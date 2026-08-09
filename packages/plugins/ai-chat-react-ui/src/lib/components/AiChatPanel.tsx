@@ -24,7 +24,42 @@ import { ChatMessageList } from './ChatMessageList';
 import { ChatInput } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
+import { DocsAttachPicker } from './DocsAttachPicker';
 import { chatTheme } from '../chat-theme';
+
+/** One attachment staged for the next message. */
+interface IStagedAttachment {
+	/** Set when the user picked an EXISTING document — the handle `docs_read` takes. */
+	documentId?: string;
+	/** Display name, and the only handle an uploaded file has until capture finishes. */
+	name: string;
+}
+
+/**
+ * The preamble that tells the assistant what the user attached.
+ *
+ * Attachments travel as ordinary message text on purpose. The tool surface the assistant has is
+ * `docs_read(documentId)` / `docs_search(query)`, so naming the ids is precisely what makes an
+ * attachment actionable; a side channel the model never sees would be decoration.
+ *
+ * An uploaded file has no id yet — capture into Documents happens asynchronously on the server —
+ * so it is named instead, with an explicit instruction to search for it rather than to claim it
+ * cannot be found.
+ *
+ * @param attachments The staged attachments.
+ * @returns The preamble, or an empty string when nothing is attached.
+ */
+function buildAttachmentPreamble(attachments: IStagedAttachment[]): string {
+	if (!attachments.length) {
+		return '';
+	}
+	const lines = attachments.map((attachment) =>
+		attachment.documentId
+			? `- "${attachment.name}" (document id: ${attachment.documentId}) — read it with docs_read.`
+			: `- "${attachment.name}" — just uploaded to Documents; find it with docs_search (processing may still be in flight).`
+	);
+	return ['Attached documents for this message:', ...lines].join('\n');
+}
 
 /**
  * Client-generated conversation id (UUID v4, crypto-secure).
@@ -62,6 +97,14 @@ export function AiChatPanel() {
 	const [showHistory, setShowHistory] = useState(false);
 	const [history, setHistory] = useState<IChatHistoryItem[]>([]);
 	const [historyLoading, setHistoryLoading] = useState(false);
+
+	// Attachments staged for the NEXT message: a picked Documents entry carries its id (so
+	// `docs_read` can open exactly that one), an uploaded file only its name (the capture into
+	// Documents is asynchronous, so no id exists yet when the upload returns).
+	const [attachments, setAttachments] = useState<IStagedAttachment[]>([]);
+	const [showAttachPicker, setShowAttachPicker] = useState(false);
+	const [isAttaching, setIsAttaching] = useState(false);
+	const [attachmentError, setAttachmentError] = useState<string | null>(null);
 
 	// Docking / maximize state comes straight from the Angular
 	// ChatSidebarService signals — they also change outside this panel
@@ -267,9 +310,15 @@ export function AiChatPanel() {
 			const text = (override ?? input).trim();
 			if (!text || isBusy) return;
 			setInput('');
-			void sendMessage({ text });
+			// Attachments ride along as a plain preamble rather than as a hidden channel: the
+			// assistant's `docs_read` tool takes a document id, so naming the ids in the turn is
+			// what lets it actually open what the user attached. Cleared on send — an attachment
+			// belongs to the message it was attached to, not to the conversation.
+			const preamble = buildAttachmentPreamble(attachments);
+			setAttachments([]);
+			void sendMessage({ text: preamble ? `${preamble}\n\n${text}` : text });
 		},
-		[input, isBusy, sendMessage]
+		[attachments, input, isBusy, sendMessage]
 	);
 
 	const handleNewChat = useCallback(() => {
@@ -286,6 +335,73 @@ export function AiChatPanel() {
 		},
 		[addToolApprovalResponse]
 	);
+
+	/**
+	 * Open a Documents citation chip.
+	 *
+	 * Routed through `AgentPageBridgeService` (the same bridge the `open_page` canvas tool uses)
+	 * rather than through an `<a href>`: the citation url is an in-app path, so navigating with
+	 * the Angular router keeps the SPA — and this chat panel with its in-flight turn — alive.
+	 */
+	const handleOpenCitation = useCallback(
+		(citation: { url?: string }) => {
+			if (!citation?.url) return;
+			void injector
+				.get(AgentPageBridgeService)
+				.openPage(citation.url)
+				.catch(() => undefined);
+		},
+		[injector]
+	);
+
+	/**
+	 * Upload a file the user picked and attach it to this conversation.
+	 *
+	 * `FormData` deliberately WITHOUT a Content-Type header — the browser has to set it, because
+	 * only it knows the multipart boundary (the same rule as dictation above).
+	 *
+	 * The server stores the bytes and publishes `AiChatAttachmentSavedEvent`; the Documents
+	 * plugin captures that into a `Document { source: CHAT }` and runs extraction. That is
+	 * ASYNCHRONOUS, so the attachment is carried by name — the assistant finds it with
+	 * `docs_search` once processing finishes, which the preamble tells it to do.
+	 */
+	const handleAttachFile = useCallback(
+		async (file: File): Promise<void> => {
+			setIsAttaching(true);
+			try {
+				const form = new FormData();
+				form.append('file', file, file.name);
+				if (conversationIdRef.current) {
+					form.append('conversationId', conversationIdRef.current);
+				}
+				const response = await fetch(`${environment.API_BASE_URL}/api/ai-chat/attachments`, {
+					method: 'POST',
+					headers: authHeaders(),
+					body: form
+				});
+				if (!response.ok) {
+					const detail = await response
+						.json()
+						.then((body: { message?: string }) => body?.message)
+						.catch(() => undefined);
+					throw new Error(detail || `Attachment failed (HTTP ${response.status})`);
+				}
+				const saved = (await response.json()) as { name?: string };
+				setAttachments((current) => [...current, { name: saved?.name || file.name }]);
+			} catch (attachError) {
+				setAttachmentError(attachError instanceof Error ? attachError.message : String(attachError));
+			} finally {
+				setIsAttaching(false);
+			}
+		},
+		[authHeaders]
+	);
+
+	/** Attach an existing document by id — what makes `docs_read` able to open exactly that one. */
+	const handlePickDocument = useCallback((document: { id: string; name: string }) => {
+		setAttachments((current) => [...current, { documentId: document.id, name: document.name }]);
+		setShowAttachPicker(false);
+	}, []);
 
 	const handleCollapse = useCallback(() => chatSidebar.collapse(), [chatSidebar]);
 
@@ -779,10 +895,27 @@ export function AiChatPanel() {
 				/>
 			)}
 
+			{/* "Attach from Documents" overlay — same full-panel treatment as history. */}
+			{showAttachPicker && (
+				<DocsAttachPicker
+					apiBaseUrl={environment.API_BASE_URL}
+					headers={authHeaders}
+					translate={t}
+					onPick={handlePickDocument}
+					onClose={() => setShowAttachPicker(false)}
+				/>
+			)}
+
 			{/* Chat body — fills remaining height */}
 			<div style={bodyStyle}>
 				{hasMessages ? (
-					<ChatMessageList messages={messages} status={status} onApprovalResponse={handleApprovalResponse} />
+					<ChatMessageList
+						messages={messages}
+						status={status}
+						onApprovalResponse={handleApprovalResponse}
+						onOpenCitation={handleOpenCitation}
+						translate={t}
+					/>
 				) : (
 					<ChatWelcome translate={t} />
 				)}
@@ -824,6 +957,69 @@ export function AiChatPanel() {
 				{/* Input area. Escape closes the docked panel; in the detached window
 				    it must do nothing — collapse() persists the docked state for the
 				    next page load, and there is no panel here to close. */}
+				{/* Staged attachments — removable until the message is sent. */}
+				{(attachments.length > 0 || attachmentError) && (
+					<div
+						style={{
+							display: 'flex',
+							flexWrap: 'wrap',
+							alignItems: 'center',
+							gap: 4,
+							padding: '6px 10px 0'
+						}}
+					>
+						{attachments.map((attachment, index) => (
+							<span
+								key={`${attachment.documentId ?? attachment.name}-${index}`}
+								style={{
+									display: 'inline-flex',
+									alignItems: 'center',
+									gap: 4,
+									maxWidth: '100%',
+									padding: '3px 8px',
+									borderRadius: 999,
+									border: `1px solid ${chatTheme.border}`,
+									backgroundColor: chatTheme.surface,
+									color: chatTheme.textPrimary,
+									fontSize: chatTheme.fontSizeSmall
+								}}
+							>
+								<span aria-hidden="true">📎</span>
+								<span
+									style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+									title={attachment.name}
+								>
+									{attachment.name}
+								</span>
+								<button
+									type="button"
+									onClick={() =>
+										setAttachments((current) =>
+											current.filter((_entry, entryIndex) => entryIndex !== index)
+										)
+									}
+									aria-label={`${t('AI_ASSISTANT.ATTACH_REMOVE', 'Remove attachment')}: ${attachment.name}`}
+									style={{
+										background: 'none',
+										border: 'none',
+										color: chatTheme.textSecondary,
+										cursor: 'pointer',
+										padding: 0,
+										lineHeight: 1
+									}}
+								>
+									×
+								</button>
+							</span>
+						))}
+						{attachmentError && (
+							<span style={{ color: chatTheme.red, fontSize: chatTheme.fontSizeSmall }}>
+								{attachmentError}
+							</span>
+						)}
+					</div>
+				)}
+
 				<ChatInput
 					value={input}
 					isBusy={isBusy}
@@ -833,6 +1029,12 @@ export function AiChatPanel() {
 					onStop={() => void stop()}
 					onEscape={isDetachedView ? undefined : handleCollapse}
 					onTranscribe={transcribeAudio}
+					onAttachFile={handleAttachFile}
+					onAttachFromDocuments={() => {
+						setAttachmentError(null);
+						setShowAttachPicker(true);
+					}}
+					isAttaching={isAttaching}
 					composingFor={activeConversationId}
 				/>
 			</div>
