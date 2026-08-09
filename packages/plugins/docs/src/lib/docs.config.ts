@@ -170,7 +170,11 @@ const parseBoolEnv = (key: string, fallback: boolean): boolean => {
 export const getDocsConfig = (): IDocsConfig => ({
 	maxFileSize: parseIntEnv(ENV_GAUZY_DOCS_MAX_FILE_SIZE, DEFAULT_DOCS_MAX_FILE_SIZE),
 	maxBinaryBytes: parseIntEnv(ENV_GAUZY_DOCS_MAX_BINARY_BYTES, DEFAULT_DOCS_MAX_BINARY_BYTES),
-	aiEnabled: parseBoolEnv(ENV_GAUZY_DOCS_AI_ENABLED, false),
+	// Default ON (owner, 2026-08-09). Safe without any AI configuration: `DocsAiService.isAiAvailable()`
+	// is `aiEnabled && registryList().length > 0`, so with no provider registered the pipeline simply
+	// skips the classify/embed stages and extraction + search keep working. Set to `false` to keep the
+	// AI stages off even where a provider IS configured.
+	aiEnabled: parseBoolEnv(ENV_GAUZY_DOCS_AI_ENABLED, true),
 	embeddingModel: process.env[ENV_GAUZY_DOCS_EMBEDDING_MODEL] || DEFAULT_DOCS_EMBEDDING_MODEL,
 	classifyModel: process.env[ENV_GAUZY_DOCS_CLASSIFY_MODEL] || undefined,
 	versionDebounceMinutes: parseIntEnv(ENV_GAUZY_DOCS_VERSION_DEBOUNCE_MINUTES, DEFAULT_DOCS_VERSION_DEBOUNCE_MINUTES),
@@ -189,14 +193,22 @@ export const getDocsConfig = (): IDocsConfig => ({
 	// 0 must survive as "unlimited" — hence the non-negative parser.
 	orgQuotaBytes: parseNonNegativeIntEnv(ENV_GAUZY_DOCS_ORG_QUOTA_BYTES, DEFAULT_DOCS_ORG_QUOTA_BYTES),
 	retrievalLogEnabled: parseBoolEnv(ENV_GAUZY_DOCS_RETRIEVAL_LOG_ENABLED, true),
-	inboundEmailEnabled: parseBoolEnv(ENV_GAUZY_DOCS_INBOUND_EMAIL_ENABLED, false),
+	// Default ON (owner, 2026-08-09). Safe without a secret: `GenericSignedWebhookAdapter.verifySignature()`
+	// FAILS CLOSED when `inboundWebhookSecret` is unset — it logs and rejects, so the route accepts nothing
+	// until a secret is configured. It also enforces a timestamp tolerance, a constant-time compare and
+	// replay consumption.
+	inboundEmailEnabled: parseBoolEnv(ENV_GAUZY_DOCS_INBOUND_EMAIL_ENABLED, true),
 	inboundWebhookSecret: process.env[ENV_GAUZY_DOCS_INBOUND_WEBHOOK_SECRET] || undefined,
 	inboundMaxMessageBytes: parseIntEnv(
 		ENV_GAUZY_DOCS_INBOUND_MAX_MESSAGE_BYTES,
 		DEFAULT_DOCS_INBOUND_MAX_MESSAGE_BYTES
 	),
 	inboundDomain: process.env[ENV_GAUZY_DOCS_INBOUND_DOMAIN] || undefined,
-	ocrEnabled: parseBoolEnv(ENV_GAUZY_DOCS_OCR_ENABLED, false),
+	// Default ON (owner, 2026-08-09). Doubly gated: `resolveVisionModel()` returns null unless BOTH
+	// `aiEnabled` and `ocrEnabled` are set AND a provider has credentials, so a deployment with no AI
+	// configured never transcribes anything. Capped by `ocrMaxPages`; transcribed text is marked
+	// OCR-derived and routed to review, because it is a machine reading rather than an authored document.
+	ocrEnabled: parseBoolEnv(ENV_GAUZY_DOCS_OCR_ENABLED, true),
 	ocrMaxPages: parseIntEnv(ENV_GAUZY_DOCS_OCR_MAX_PAGES, DEFAULT_DOCS_OCR_MAX_PAGES),
 	uploadRateLimit: parseIntEnv(ENV_GAUZY_DOCS_UPLOAD_RATE_LIMIT, DEFAULT_DOCS_UPLOAD_RATE_LIMIT),
 	searchRateLimit: parseIntEnv(ENV_GAUZY_DOCS_SEARCH_RATE_LIMIT, DEFAULT_DOCS_SEARCH_RATE_LIMIT),
