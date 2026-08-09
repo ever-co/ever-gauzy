@@ -13,6 +13,7 @@
         "ascript",
         "Automocking",
         "canonicalization",
+        "canonicalize",
         "canonicalizes",
         "colwidth",
         "Contentless",
