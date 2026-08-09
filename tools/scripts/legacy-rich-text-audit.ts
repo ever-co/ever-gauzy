@@ -80,18 +80,12 @@ import { generateHTML, generateJSON } from '@tiptap/html';
 import type { DataSource } from 'typeorm';
 import { writeFileSync } from 'fs';
 import { normalizeLegacyHtml } from '../../packages/ui-core/shared/src/lib/rich-text-editor/legacy-html.util';
+import {
+	byCodeUnit,
+	canonicalBody,
+	serializeBody
+} from '../../packages/ui-core/shared/src/lib/rich-text-editor/legacy-html-canonical.util';
 import { createStandardPreset } from '../../packages/ui-core/shared/src/lib/rich-text-editor/presets/standard.preset';
-
-/**
- * Deterministic string ordering for every sort in this file.
- *
- * `Array.prototype.sort()` with no comparator is flagged (rightly) as unreliable, but the usual
- * remedy — `localeCompare` — is the WRONG one here. Every sort below feeds either a canonical form
- * used to decide whether two HTML strings are equivalent, or a report meant to be diffed between
- * runs. `localeCompare` is locale-sensitive, so the same row could canonicalize differently on two
- * machines and manufacture a "loss" that does not exist. Code-unit order is stable everywhere.
- */
-const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 // ---------------------------------------------------------------------------
 // Field inventory — 06-ckeditor-removal.md §5.1, one entry per row of the table.
@@ -242,167 +236,18 @@ const isAcceptedDrop = (tag: string): boolean => DELIBERATE_NON_COVERAGE.has(tag
 // ---------------------------------------------------------------------------
 // Round-trip + canonicalization.
 //
-// The canonical form below mirrors `legacy-html-corpus.spec.ts` deliberately: the audit
-// must call "loss" exactly what the unit suite calls loss, or the gate and the regression
-// tests would disagree. It is re-implemented rather than imported because that file is a
-// Jest spec — importing it would execute `describe()` outside a test runner.
+// The canonical form is imported from the shipped
+// `packages/ui-core/shared/src/lib/rich-text-editor/legacy-html-canonical.util.ts`, the same
+// module `legacy-html-corpus.spec.ts` uses: the audit must call "loss" exactly what the unit
+// suite calls loss, or the gate and the regression tests would disagree. `canonicalBody()`
+// returns the canonical `<body>` so this file can take both a census and a serialization from
+// one parse; `serializeBody()` is the string form the diff compares.
 // ---------------------------------------------------------------------------
 
 const STANDARD: Extensions = createStandardPreset().extensions;
 
 /** Load into the schema and serialize back out — exactly what the CVA does on save. */
 const roundTrip = (html: string): string => generateHTML(generateJSON(normalizeLegacyHtml(html), STANDARD), STANDARD);
-
-/** Legacy tags TipTap canonicalizes to a single spelling; both sides get the canonical one. */
-const TAG_ALIASES: Record<string, string> = {
-	B: 'strong',
-	I: 'em',
-	STRIKE: 's',
-	DEL: 's',
-	DIV: 'p'
-};
-
-/** Structural attributes ProseMirror always writes out but that carry no author intent. */
-const NOISE_ATTRIBUTES = new Set(['class', 'id', 'rel', 'data-pm-slice']);
-
-/** Converts `rgb(r, g, b)` (what the DOM gives back for a hex colour) to `#rrggbb`. */
-function canonicalColor(value: string): string {
-	return value.replace(
-		/rgb\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)\s*\)/gi,
-		(_match, r, g, b) => `#${[r, g, b].map((part: string) => Number(part).toString(16).padStart(2, '0')).join('')}`
-	);
-}
-
-/**
- * Canonicalizes an inline `style` attribute: drops the resizable-table `min-width`
- * scaffolding, normalizes colour notation and whitespace, and sorts declarations so
- * declaration order can never fail a diff.
- */
-function canonicalStyle(style: string): string {
-	return (
-		style
-			.split(';')
-			.map((declaration) => declaration.trim())
-			.filter(Boolean)
-			.map((declaration) => {
-				const separator = declaration.indexOf(':');
-				const property = declaration.slice(0, separator).trim().toLowerCase();
-				const value = canonicalColor(
-					declaration
-						.slice(separator + 1)
-						.trim()
-						.toLowerCase()
-				);
-				return `${property}: ${value}`;
-			})
-			// TableKit's resize handles write min-width on the table and every <col>.
-			.filter((declaration) => !declaration.startsWith('min-width:'))
-			.sort(byCodeUnit)
-			.join('; ')
-	);
-}
-
-/** Recursively renames a tag, preserving children and attributes. */
-function renameTags(root: Element, from: string, to: string): void {
-	root.querySelectorAll(from.toLowerCase()).forEach((element) => {
-		const replacement = element.ownerDocument.createElement(to);
-		Array.from(element.attributes).forEach((attribute) =>
-			replacement.setAttribute(attribute.name, attribute.value)
-		);
-		while (element.firstChild) {
-			replacement.appendChild(element.firstChild);
-		}
-		element.replaceWith(replacement);
-	});
-}
-
-/** Serializes an element tree with attributes in a stable (sorted) order. */
-function serialize(node: Node): string {
-	if (node.nodeType === Node.TEXT_NODE) {
-		// Re-encode through a throwaway element so both sides use one entity spelling.
-		const holder = node.ownerDocument!.createElement('span');
-		holder.textContent = node.nodeValue ?? '';
-		return holder.innerHTML;
-	}
-	if (node.nodeType !== Node.ELEMENT_NODE) {
-		return '';
-	}
-	const element = node as Element;
-	const tag = element.tagName.toLowerCase();
-	const attributes = Array.from(element.attributes)
-		.filter((attribute) => !NOISE_ATTRIBUTES.has(attribute.name))
-		.map((attribute) => {
-			const value = attribute.name === 'style' ? canonicalStyle(attribute.value) : attribute.value;
-			return { name: attribute.name, value };
-		})
-		.filter((attribute) => attribute.value !== '')
-		.sort((a, b) => a.name.localeCompare(b.name))
-		.map((attribute) => ` ${attribute.name}="${attribute.value}"`)
-		.join('');
-
-	const children = Array.from(element.childNodes).map(serialize).join('');
-	return `<${tag}${attributes}>${children}</${tag}>`;
-}
-
-/**
- * Reduces HTML to the canonical semantic form both sides of the diff are compared in,
- * removing only the differences the §4.2 compatibility contract explicitly tolerates.
- * Returns the canonical `<body>` so the caller can take both a census and a serialization
- * from one parse.
- */
-function canonicalBody(html: string): HTMLElement {
-	const parsed = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
-	const body = parsed.body;
-
-	Object.entries(TAG_ALIASES).forEach(([from, to]) => renameTags(body, from, to));
-
-	// `<pre>text</pre>` is stored as a code block, i.e. `<pre><code>text</code></pre>`.
-	body.querySelectorAll('pre').forEach((pre) => {
-		if (!pre.querySelector('code')) {
-			const code = parsed.createElement('code');
-			while (pre.firstChild) {
-				code.appendChild(pre.firstChild);
-			}
-			pre.appendChild(code);
-		}
-	});
-
-	// TableKit renders every row inside a single <tbody> and adds a <colgroup>.
-	body.querySelectorAll('table').forEach((table) => {
-		table.querySelectorAll('colgroup').forEach((colgroup) => colgroup.remove());
-		const rows = Array.from(table.querySelectorAll('tr'));
-		table.querySelectorAll('thead, tfoot, tbody').forEach((section) => section.remove());
-		const tbody = parsed.createElement('tbody');
-		rows.forEach((row) => tbody.appendChild(row));
-		table.appendChild(tbody);
-	});
-
-	// The Link extension applies a uniform safety policy to every anchor: hardened `rel`
-	// (stripped as noise during serialization) and `target="_blank"`. Both are additive.
-	body.querySelectorAll('a[target="_blank"]').forEach((anchor) => anchor.removeAttribute('target'));
-
-	// Implicit spans are always written explicitly by ProseMirror.
-	body.querySelectorAll('td, th').forEach((cell) => {
-		['colspan', 'rowspan'].forEach((attribute) => {
-			if (cell.getAttribute(attribute) === '1') {
-				cell.removeAttribute(attribute);
-			}
-		});
-	});
-
-	// ProseMirror wraps list-item and table-cell content in a paragraph.
-	body.querySelectorAll('li > p:only-child, td > p:only-child, th > p:only-child').forEach((paragraph) => {
-		paragraph.replaceWith(...Array.from(paragraph.childNodes));
-	});
-	// A list item whose first child is a paragraph followed by a nested list.
-	body.querySelectorAll('li > p:first-child').forEach((paragraph) => {
-		paragraph.replaceWith(...Array.from(paragraph.childNodes));
-	});
-
-	return body;
-}
-
-const serializeBody = (body: HTMLElement): string => Array.from(body.childNodes).map(serialize).join('');
 
 /** Element census: `tag -> occurrences`, taken from the canonical tree. */
 function census(body: HTMLElement): Map<string, number> {
