@@ -102,6 +102,37 @@ describe('buildDocsActionMenu — one action set for tree, table and cards', () 
 		});
 	});
 
+	// `08-permissions-security.md` §1.7/§1.8: the verb permission and the row-level ownership
+	// scope are two independent conditions, exactly as in `isDocumentWritable` on the server.
+	describe('ownership scoping (canMutate)', () => {
+		it('drops edit / relocate / archive for a DOCS_UPDATE holder who may not mutate this row', () => {
+			const items = actionsOf(buildDocsActionMenu(target(), context({ canMutate: false })));
+
+			expect(items).not.toContain('rename');
+			expect(items).not.toContain('move');
+			expect(items).not.toContain('archive');
+		});
+
+		it('drops Delete on an archived row the user may not mutate', () => {
+			const items = actionsOf(buildDocsActionMenu(target({ isArchived: true }), context({ canMutate: false })));
+
+			expect(items).not.toContain('delete');
+			expect(items).not.toContain('restore');
+		});
+
+		// Duplicate WRITES a new document, so it follows DOCS_CREATE and is never ownership
+		// scoped (§1.8 "Duplicate a readable document" — ✓, not **own**).
+		it('keeps the read-only affordances and Duplicate', () => {
+			const items = actionsOf(buildDocsActionMenu(target(), context({ canMutate: false })));
+
+			expect(items).toEqual(expect.arrayContaining(['open', 'favorite', 'copy-link', 'duplicate']));
+		});
+
+		it('defaults to permissive when the caller has not resolved ownership', () => {
+			expect(actionsOf(buildDocsActionMenu(target(), context()))).toContain('rename');
+		});
+	});
+
 	describe('archive-first delete rule', () => {
 		it('offers Archive on a live row and Restore on an archived one — never both', () => {
 			const live = actionsOf(buildDocsActionMenu(target(), context()));
@@ -207,6 +238,9 @@ describe('docsActionMenuSignature — the memo key the kebab bindings rely on', 
 		expect(docsActionMenuSignature(target(), context({ permissions: NO_PERMISSIONS }))).not.toBe(base);
 		expect(docsActionMenuSignature(target(), context({ isFavorite: true }))).not.toBe(base);
 		expect(docsActionMenuSignature(target(), context({ surface: 'row' }))).not.toBe(base);
+		// Ownership flips per row and per user; a signature that ignored it would serve a
+		// creator's menu from the memo for someone else's document.
+		expect(docsActionMenuSignature(target(), context({ canMutate: false }))).not.toBe(base);
 	});
 
 	it('is stable for an unchanged row (otherwise the memo never hits)', () => {

@@ -133,43 +133,53 @@
 				</button>
 			</ng-container>
 
-			<!-- Share / visibility (spec 08 §3) — DOCS_UPDATE, same as the mutations below. -->
-			<button *ngxPermissionsOnly="[permissions.DOCS_UPDATE]" nbButton size="tiny" (click)="openShare()">
-				<nb-icon icon="share-outline"></nb-icon>
-				{{ 'DOCS.SHARE.ACTION' | translate }}
-			</button>
+			<!-- Share / visibility (spec 08 §3) — DOCS_UPDATE, same as the mutations below.
+			     `canMutate` is the ownership half: administering shares is creator-or-DOCS_MANAGE
+			     only (§3.3 / §1.5), which is exactly what `canMutate` answers. -->
+			<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+				<button *ngIf="canMutate" nbButton size="tiny" (click)="openShare()">
+					<nb-icon icon="share-outline"></nb-icon>
+					{{ 'DOCS.SHARE.ACTION' | translate }}
+				</button>
+			</ng-container>
 
+			<!-- Every control below writes the document, so each carries BOTH halves of the
+			     server's write rule: the DOCS_UPDATE gate and the `canMutate` ownership scope
+			     (`08-permissions-security.md` §1.7/§1.8 — edit/move/archive are **own** for
+			     everyone below ADMIN). -->
 			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_UPDATE]">
-				<button *ngIf="isSettledFile" nbButton size="tiny" (click)="openExtractedText()">
-					{{ 'DOCS.DETAIL.EDIT_EXTRACTED_TEXT' | translate }}
-				</button>
-				<button *ngIf="doc.kind === kindEnum.FILE" nbButton size="tiny" (click)="reprocess()">
-					<nb-icon icon="refresh-outline"></nb-icon>
-					{{ 'DOCS.UPLOAD.RETRY' | translate }}
-				</button>
-				<!-- Manual review request (spec 01 §11) — the only way into the review
-				     queue when AI is disabled. Hidden while PENDING (the banner above is
-				     that state) and on archived documents. -->
-				<button
-					*ngIf="canRequestReview"
-					nbButton
-					size="tiny"
-					status="warning"
-					appearance="outline"
-					[nbTooltip]="'DOCS.REVIEW.REQUEST_HINT' | translate"
-					(click)="requestReview()"
-				>
-					<nb-icon icon="alert-circle-outline"></nb-icon>
-					{{ 'DOCS.REVIEW.REQUEST' | translate }}
-				</button>
-				<button nbButton size="tiny" (click)="toggleArchive()">
-					<nb-icon [icon]="isArchived ? 'undo-outline' : 'archive-outline'"></nb-icon>
-					{{ (isArchived ? 'DOCS.TREE.RESTORE' : 'DOCS.TREE.ARCHIVE') | translate }}
-				</button>
+				<ng-container *ngIf="canMutate">
+					<button *ngIf="isSettledFile" nbButton size="tiny" (click)="openExtractedText()">
+						{{ 'DOCS.DETAIL.EDIT_EXTRACTED_TEXT' | translate }}
+					</button>
+					<button *ngIf="doc.kind === kindEnum.FILE" nbButton size="tiny" (click)="reprocess()">
+						<nb-icon icon="refresh-outline"></nb-icon>
+						{{ 'DOCS.UPLOAD.RETRY' | translate }}
+					</button>
+					<!-- Manual review request (spec 01 §11) — the only way into the review
+					     queue when AI is disabled. Hidden while PENDING (the banner above is
+					     that state) and on archived documents. -->
+					<button
+						*ngIf="canRequestReview"
+						nbButton
+						size="tiny"
+						status="warning"
+						appearance="outline"
+						[nbTooltip]="'DOCS.REVIEW.REQUEST_HINT' | translate"
+						(click)="requestReview()"
+					>
+						<nb-icon icon="alert-circle-outline"></nb-icon>
+						{{ 'DOCS.REVIEW.REQUEST' | translate }}
+					</button>
+					<button nbButton size="tiny" (click)="toggleArchive()">
+						<nb-icon [icon]="isArchived ? 'undo-outline' : 'archive-outline'"></nb-icon>
+						{{ (isArchived ? 'DOCS.TREE.RESTORE' : 'DOCS.TREE.ARCHIVE') | translate }}
+					</button>
+				</ng-container>
 			</ng-template>
 			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_DELETE]">
 				<button
-					*ngIf="isArchived"
+					*ngIf="isArchived && canMutate"
 					nbButton
 					size="tiny"
 					status="danger"
@@ -210,7 +220,7 @@
 			     creates tag rows itself. Writing tags needs DOCS_UPDATE, same as the taxonomy
 			     editor below. -->
 			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_UPDATE]">
-				<div class="docs-suggested-tags" *ngIf="suggestedTags.length">
+				<div class="docs-suggested-tags" *ngIf="suggestedTags.length && canMutate">
 					<span class="docs-suggested-tags-label" [nbTooltip]="'DOCS.DETAIL.SUGGESTED_TAGS_HINT' | translate">
 						{{ 'DOCS.DETAIL.SUGGESTED_TAGS' | translate }}
 					</span>
@@ -277,26 +287,29 @@
 			</dl>
 		</section>
 
-		<!-- Taxonomy -->
-		<section class="docs-detail-section" *ngxPermissionsOnly="[permissions.DOCS_UPDATE]; else taxonomyReadonly">
-			<h6>{{ 'DOCS.DETAIL.CATEGORIES' | translate }}</h6>
-			<nb-select
-				multiple
-				fullWidth
-				size="small"
-				[selected]="selectedCategoryIds"
-				(selectedChange)="onCategoriesChange($event)"
-			>
-				<nb-option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</nb-option>
-			</nb-select>
-			<h6>{{ 'DOCS.DETAIL.TAGS' | translate }}</h6>
-			<ga-tags-color-input
-				[multiple]="true"
-				[isOrgLevel]="true"
-				[selectedTags]="doc.tags || []"
-				(selectedTagsEvent)="onTagsChange($event)"
-			></ga-tags-color-input>
-		</section>
+		<!-- Taxonomy — the editable form needs DOCS_UPDATE **and** the ownership scope; either
+		     one missing falls back to the same read-only chips (spec 08 §1.7). -->
+		<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]; else taxonomyReadonly">
+			<section class="docs-detail-section" *ngIf="canMutate; else taxonomyReadonly">
+				<h6>{{ 'DOCS.DETAIL.CATEGORIES' | translate }}</h6>
+				<nb-select
+					multiple
+					fullWidth
+					size="small"
+					[selected]="selectedCategoryIds"
+					(selectedChange)="onCategoriesChange($event)"
+				>
+					<nb-option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</nb-option>
+				</nb-select>
+				<h6>{{ 'DOCS.DETAIL.TAGS' | translate }}</h6>
+				<ga-tags-color-input
+					[multiple]="true"
+					[isOrgLevel]="true"
+					[selectedTags]="doc.tags || []"
+					(selectedTagsEvent)="onTagsChange($event)"
+				></ga-tags-color-input>
+			</section>
+		</ng-container>
 		<ng-template #taxonomyReadonly>
 			<section class="docs-detail-section">
 				<h6>{{ 'DOCS.DETAIL.CATEGORIES' | translate }}</h6>
@@ -308,12 +321,16 @@
 
 		<!-- Toggles -->
 		<section class="docs-detail-section">
-			<div class="docs-detail-toggle" *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
-				<nb-toggle [checked]="doc.searchable" (checkedChange)="onSearchableToggle($event)" labelPosition="end">
-					{{ 'DOCS.DETAIL.SEARCHABLE_TOGGLE' | translate }}
-				</nb-toggle>
-				<div class="hint">{{ 'DOCS.DETAIL.SEARCHABLE_HINT' | translate }}</div>
-			</div>
+			<!-- `searchable` is a document write (§1.8 "Edit metadata … `searchable` toggle" —
+			     own), so it carries the ownership scope on top of DOCS_UPDATE. -->
+			<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+				<div class="docs-detail-toggle" *ngIf="canMutate">
+					<nb-toggle [checked]="doc.searchable" (checkedChange)="onSearchableToggle($event)" labelPosition="end">
+						{{ 'DOCS.DETAIL.SEARCHABLE_TOGGLE' | translate }}
+					</nb-toggle>
+					<div class="hint">{{ 'DOCS.DETAIL.SEARCHABLE_HINT' | translate }}</div>
+				</div>
+			</ng-container>
 			<div class="docs-detail-toggle" *ngxPermissionsOnly="[permissions.DOCS_AI_IMPORT]">
 				<nb-toggle [checked]="inKnowledge" (checkedChange)="onKnowledgeToggle($event)" labelPosition="end">
 					{{ 'DOCS.KNOWLEDGE.TOGGLE_LABEL' | translate }}
@@ -350,10 +367,13 @@
 		<section class="docs-detail-section">
 			<h6 class="docs-detail-section-head">
 				<span>{{ 'DOCS.DETAIL.LINKS' | translate }}</span>
-				<button *ngxPermissionsOnly="[permissions.DOCS_UPDATE]" nbButton ghost size="tiny" (click)="addLink()">
-					<nb-icon icon="plus-outline"></nb-icon>
-					{{ 'DOCS.DETAIL.LINK_RECORD' | translate }}
-				</button>
+				<!-- Link/unlink is a document write, scoped to **own** below ADMIN (§1.8). -->
+				<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+					<button *ngIf="canMutate" nbButton ghost size="tiny" (click)="addLink()">
+						<nb-icon icon="plus-outline"></nb-icon>
+						{{ 'DOCS.DETAIL.LINK_RECORD' | translate }}
+					</button>
+				</ng-container>
 			</h6>
 			<p class="muted" *ngIf="!links.length">{{ 'DOCS.DETAIL.NO_LINKS' | translate }}</p>
 			<div class="docs-detail-link" *ngFor="let link of links">
@@ -371,17 +391,19 @@
 				<ng-template #linkPlain>
 					<span class="docs-detail-link-label">{{ linkLabel(link) }}</span>
 				</ng-template>
-				<button
-					*ngxPermissionsOnly="[permissions.DOCS_UPDATE]"
-					nbButton
-					ghost
-					size="tiny"
-					status="danger"
-					[nbTooltip]="'DOCS.LINKS.REMOVE' | translate"
-					(click)="removeLink(link)"
-				>
-					<nb-icon icon="close-outline"></nb-icon>
-				</button>
+				<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+					<button
+						*ngIf="canMutate"
+						nbButton
+						ghost
+						size="tiny"
+						status="danger"
+						[nbTooltip]="'DOCS.LINKS.REMOVE' | translate"
+						(click)="removeLink(link)"
+					>
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
+				</ng-container>
 			</div>
 		</section>
 

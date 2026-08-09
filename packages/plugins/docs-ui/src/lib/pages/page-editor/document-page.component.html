@@ -61,17 +61,21 @@
 					spacing="list"
 				></ngx-favorite-toggle>
 
-				<button
-					*ngxPermissionsOnly="PermissionsEnum.DOCS_UPDATE"
-					nbButton
-					ghost
-					size="small"
-					type="button"
-					[nbTooltip]="(isLocked ? 'DOCS.EDITOR.UNLOCK' : 'DOCS.EDITOR.LOCK') | translate"
-					(click)="toggleLock()"
-				>
-					<nb-icon [icon]="isLocked ? 'lock' : 'unlock-outline'"></nb-icon>
-				</button>
+				<!-- Lock/unlock is **own**-scoped below ADMIN (spec 08 §1.8), so the permission
+				     gate carries the ownership half with it. -->
+				<ng-container *ngxPermissionsOnly="PermissionsEnum.DOCS_UPDATE">
+					<button
+						*ngIf="canMutate"
+						nbButton
+						ghost
+						size="small"
+						type="button"
+						[nbTooltip]="(isLocked ? 'DOCS.EDITOR.UNLOCK' : 'DOCS.EDITOR.LOCK') | translate"
+						(click)="toggleLock()"
+					>
+						<nb-icon [icon]="isLocked ? 'lock' : 'unlock-outline'"></nb-icon>
+					</button>
+				</ng-container>
 
 				<button
 					nbButton
@@ -106,18 +110,21 @@
 						<button type="button" role="menuitem" (click)="print()">
 							<nb-icon icon="printer-outline"></nb-icon>{{ 'DOCS.EXPORT.PRINT' | translate }}
 						</button>
+						<!-- Administering shares is creator-or-DOCS_MANAGE only (spec 08 §3.3 / §1.5). -->
 						<ng-container *ngxPermissionsOnly="PermissionsEnum.DOCS_UPDATE">
-							<button type="button" role="menuitem" (click)="openShareDialog()">
+							<button *ngIf="canMutate" type="button" role="menuitem" (click)="openShareDialog()">
 								<nb-icon icon="share-outline"></nb-icon>{{ 'DOCS.SHARE.ACTION' | translate }}
 							</button>
 						</ng-container>
 						<ng-container *ngxPermissionsOnly="PermissionsEnum.DOCS_UPDATE">
-							<button type="button" role="menuitem" [disabled]="!editable" (click)="saveVersionNow()">
-								<nb-icon icon="save-outline"></nb-icon>{{ 'DOCS.EDITOR.SAVE_VERSION_NOW' | translate }}
-							</button>
-							<button type="button" role="menuitem" [disabled]="!editable" (click)="toggleInvisibles()">
-								<nb-icon icon="eye-outline"></nb-icon>{{ 'DOCS.EDITOR.INVISIBLES' | translate }}
-							</button>
+							<ng-container *ngIf="canMutate">
+								<button type="button" role="menuitem" [disabled]="!editable" (click)="saveVersionNow()">
+									<nb-icon icon="save-outline"></nb-icon>{{ 'DOCS.EDITOR.SAVE_VERSION_NOW' | translate }}
+								</button>
+								<button type="button" role="menuitem" [disabled]="!editable" (click)="toggleInvisibles()">
+									<nb-icon icon="eye-outline"></nb-icon>{{ 'DOCS.EDITOR.INVISIBLES' | translate }}
+								</button>
+							</ng-container>
 						</ng-container>
 						<hr />
 						<button type="button" role="menuitem" (click)="openVersions()">
@@ -128,29 +135,32 @@
 								<nb-icon icon="copy-outline"></nb-icon>{{ 'DOCS.TREE.DUPLICATE' | translate }}
 							</button>
 						</ng-container>
+						<!-- Move / request review / archive are all **own**-scoped below ADMIN (§1.8). -->
 						<ng-container *ngxPermissionsOnly="PermissionsEnum.DOCS_UPDATE">
-							<button type="button" role="menuitem" [disabled]="isLocked" (click)="openMoveDialog()">
-								<nb-icon icon="corner-down-right-outline"></nb-icon>{{ 'DOCS.TREE.MOVE' | translate }}
-							</button>
-							<!-- Manual review request (spec 01 §11) — the only route into the
-							     review queue when AI is disabled. Already-PENDING shows the
-							     state instead of an action the backend would no-op. -->
-							<button
-								*ngIf="canRequestReview; else pendingReviewItem"
-								type="button"
-								role="menuitem"
-								(click)="requestReview()"
-							>
-								<nb-icon icon="alert-circle-outline"></nb-icon>{{ 'DOCS.REVIEW.REQUEST' | translate }}
-							</button>
-							<ng-template #pendingReviewItem>
-								<button *ngIf="isPendingReview" type="button" role="menuitem" disabled>
-									<nb-icon icon="alert-circle-outline"></nb-icon>{{ 'DOCS.REVIEW.PENDING' | translate }}
+							<ng-container *ngIf="canMutate">
+								<button type="button" role="menuitem" [disabled]="isLocked" (click)="openMoveDialog()">
+									<nb-icon icon="corner-down-right-outline"></nb-icon>{{ 'DOCS.TREE.MOVE' | translate }}
 								</button>
-							</ng-template>
-							<button type="button" role="menuitem" class="danger" (click)="archive()">
-								<nb-icon icon="archive-outline"></nb-icon>{{ 'DOCS.TREE.ARCHIVE' | translate }}
-							</button>
+								<!-- Manual review request (spec 01 §11) — the only route into the
+								     review queue when AI is disabled. Already-PENDING shows the
+								     state instead of an action the backend would no-op. -->
+								<button
+									*ngIf="canRequestReview; else pendingReviewItem"
+									type="button"
+									role="menuitem"
+									(click)="requestReview()"
+								>
+									<nb-icon icon="alert-circle-outline"></nb-icon>{{ 'DOCS.REVIEW.REQUEST' | translate }}
+								</button>
+								<ng-template #pendingReviewItem>
+									<button *ngIf="isPendingReview" type="button" role="menuitem" disabled>
+										<nb-icon icon="alert-circle-outline"></nb-icon>{{ 'DOCS.REVIEW.PENDING' | translate }}
+									</button>
+								</ng-template>
+								<button type="button" role="menuitem" class="danger" (click)="archive()">
+									<nb-icon icon="archive-outline"></nb-icon>{{ 'DOCS.TREE.ARCHIVE' | translate }}
+								</button>
+							</ng-container>
 						</ng-container>
 					</div>
 				</div>
@@ -166,7 +176,7 @@
 					size="small"
 					type="button"
 					class="gz-doc-icon"
-					[disabled]="!canUpdate"
+					[disabled]="!canWrite"
 					(click)="iconPickerOpen = !iconPickerOpen"
 				>
 					<span *ngIf="document.icon; else defaultIcon">{{ document.icon }}</span>
@@ -194,7 +204,7 @@
 				[placeholder]="'DOCS.EDITOR.UNTITLED' | translate"
 				[attr.aria-label]="'DOCS.TABLE.COLUMNS.NAME' | translate"
 				[(ngModel)]="titleDraft"
-				[disabled]="!canUpdate || isLocked"
+				[disabled]="!canWrite || isLocked"
 				(blur)="saveTitle()"
 				(keydown.enter)="saveTitle()"
 			/>
@@ -228,7 +238,9 @@
 			{{ 'DOCS.EDITOR.LOCKED_BANNER' | translate }}
 		</div>
 
-		<div class="gz-banner gz-banner-readonly" *ngIf="!canUpdate && !loadError && document">
+		<!-- Read-only covers both halves of the write rule: no DOCS_UPDATE, or DOCS_UPDATE on
+		     someone else's document without DOCS_MANAGE (spec 08 §1.7). -->
+		<div class="gz-banner gz-banner-readonly" *ngIf="!canWrite && !loadError && document">
 			<nb-icon icon="eye-outline"></nb-icon>
 			{{ 'DOCS.EDITOR.READ_ONLY_BANNER' | translate }}
 		</div>

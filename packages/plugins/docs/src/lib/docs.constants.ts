@@ -179,6 +179,36 @@ export const DOCS_JOB_REMOVE_ON_COMPLETE = 500;
 export const DOCS_JOB_REMOVE_ON_FAIL = 1000;
 
 /**
+ * How many AI-heavy stages (`docs.classify`, `docs.embed`) one tenant may hold on a worker at a
+ * time (`07-ai-knowledge.md` §3.1/§15 — "serialized per tenant").
+ *
+ * The worker concurrency (`GAUZY_DOCS_QUEUE_CONCURRENCY`) is a *process* budget and knows nothing
+ * about who queued the work: without this cap one tenant's 500-file import fills every slot and
+ * every other tenant's classification waits behind it — and, worse, monopolizes the shared
+ * provider rate limit. A tenant at the cap does not block the worker: its job is moved back to
+ * the delayed set (never failed, never dropped) so the slot goes to somebody else.
+ */
+export const DOCS_TENANT_AI_CONCURRENCY = 1;
+
+/**
+ * How long a `docs.classify` / `docs.embed` job waits before it is retried when its tenant is
+ * already at {@link DOCS_TENANT_AI_CONCURRENCY}.
+ *
+ * Short enough that a single-tenant deployment (the common case) barely notices the hand-off,
+ * long enough that a 500-job import does not re-enter the worker in a hot loop.
+ */
+export const DOCS_TENANT_BUSY_DEFER_DELAY_MS = 5_000;
+
+/**
+ * BullMQ `priority` of pipeline jobs sourced from a bulk import (`reason: 'import'`).
+ *
+ * Higher number = lower priority in BullMQ, and un-prioritized jobs (`priority` unset) are served
+ * first — so interactive work (an upload, a page save, an explicit re-index) overtakes a bulk
+ * import that is already in the queue. Matches the value the model-drift sweep uses.
+ */
+export const DOCS_BULK_IMPORT_JOB_PRIORITY = 10;
+
+/**
  * How long a resolved `FEATURE_DOCUMENTS` answer is memoized per tenant/organization, so a burst
  * of pipeline stages costs one flag lookup instead of one per stage. Short on purpose: turning
  * the feature back on should un-park the pipeline within a minute, not a deploy.

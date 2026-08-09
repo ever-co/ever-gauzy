@@ -3,6 +3,7 @@ import { ModuleRef } from '@nestjs/core';
 import { JobsOptions } from 'bullmq';
 import { SchedulerQueueService } from '@gauzy/scheduler';
 import {
+	DOCS_BULK_IMPORT_JOB_PRIORITY,
 	DOCS_JOB_ATTEMPTS,
 	DOCS_JOB_BACKOFF_DELAY_MS,
 	DOCS_JOB_REMOVE_ON_COMPLETE,
@@ -116,6 +117,7 @@ export class DocsQueueService implements OnModuleInit {
 					backoff: { type: 'exponential', delay: DOCS_JOB_BACKOFF_DELAY_MS },
 					removeOnComplete: DOCS_JOB_REMOVE_ON_COMPLETE,
 					removeOnFail: DOCS_JOB_REMOVE_ON_FAIL,
+					...this.priorityFor(payload),
 					...options
 				}
 			});
@@ -138,6 +140,22 @@ export class DocsQueueService implements OnModuleInit {
 			}
 			return this.dispatchInline(jobName, payload, jobId, Number(options.delay) || 0);
 		}
+	}
+
+	/**
+	 * Default queue priority for a payload (`07-ai-knowledge.md` §3.1/§15).
+	 *
+	 * A bulk import (`reason: 'import'`) is background work by definition: it must never overtake
+	 * an interactive upload, a page save or an explicit re-index — the fairness half that the
+	 * worker's per-tenant in-flight cap cannot provide, because ordering is decided in Redis
+	 * before any worker sees the job. Every other reason keeps BullMQ's default (unprioritized,
+	 * served first), and an explicit `options.priority` from the caller still wins.
+	 *
+	 * @param payload The job payload.
+	 * @returns `{ priority }` for bulk-import work, an empty object otherwise.
+	 */
+	private priorityFor<T extends IDocsJobBase>(payload: T): { priority?: number } {
+		return payload?.reason === 'import' ? { priority: DOCS_BULK_IMPORT_JOB_PRIORITY } : {};
 	}
 
 	/**
