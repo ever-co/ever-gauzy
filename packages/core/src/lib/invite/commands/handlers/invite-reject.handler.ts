@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, NotFoundException } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
 import { IInvite } from '@gauzy/contracts';
 import { InviteRejectCommand } from '../invite-reject.command';
@@ -49,6 +49,11 @@ export class InviteRejectHandler implements ICommandHandler<InviteRejectCommand>
 
 			return invite;
 		} catch (error) {
+			// Preserve deliberate HTTP responses — the 409 from a lost race and the 404 from a
+			// missing invite must not be flattened into a generic 400 by this catch-all.
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new BadRequestException(error);
 		}
 	}

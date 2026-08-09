@@ -146,9 +146,13 @@ export class InviteAcceptOrganizationContactHandler
 				status: InviteStatusEnum.ACCEPTED
 			});
 		} catch (error) {
-			// Provisioning failed, so nothing consumed the invite after all — hand it back rather
-			// than stranding it as ACCEPTED with no contact organization behind it.
-			await this.inviteService.releaseInvite(inviteId);
+			// Deliberately do NOT release the invite here. Unlike the find-or-create handlers, this
+			// one provisions a whole tenant, organization and role in separate un-rolled-back writes;
+			// by the time a later step throws, those records are already committed. Returning to INVITED
+			// would let a retry provision a SECOND tenant for the same contact. Leaving it ACCEPTED
+			// blocks that — recovering a half-provisioned contact is a deliberate admin action, which
+			// is the safe default for orphaned provisioning and strictly safer than the pre-claim
+			// behaviour, where a failure left the invite INVITED and every retry re-provisioned.
 			throw error;
 		}
 	}
