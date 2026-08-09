@@ -204,6 +204,29 @@
 			<span class="docs-confidence" *ngIf="doc.aiConfidence !== undefined && doc.aiConfidence !== null">
 				{{ 'DOCS.DETAIL.CONFIDENCE' | translate }}: {{ doc.aiConfidence | percent }}
 			</span>
+
+			<!-- AI suggested tags (spec 07 §5.2) — accept chips are the ONLY path from
+			     `metadata.ai.suggestedTags` to a real Tag: the pipeline deliberately never
+			     creates tag rows itself. Writing tags needs DOCS_UPDATE, same as the taxonomy
+			     editor below. -->
+			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_UPDATE]">
+				<div class="docs-suggested-tags" *ngIf="suggestedTags.length">
+					<span class="docs-suggested-tags-label" [nbTooltip]="'DOCS.DETAIL.SUGGESTED_TAGS_HINT' | translate">
+						{{ 'DOCS.DETAIL.SUGGESTED_TAGS' | translate }}
+					</span>
+					<button
+						*ngFor="let suggestion of suggestedTags"
+						type="button"
+						class="docs-suggested-tag"
+						[disabled]="!!acceptingTag"
+						[attr.aria-busy]="acceptingTag === suggestion"
+						(click)="acceptSuggestedTag(suggestion)"
+					>
+						<nb-icon icon="plus-outline"></nb-icon>
+						{{ suggestion }}
+					</button>
+				</div>
+			</ng-template>
 		</section>
 
 		<!-- Metadata -->
@@ -220,8 +243,37 @@
 				<dd>{{ 'DOCS.SOURCE.' + doc.source | translate }}</dd>
 				<dt>{{ 'DOCS.VISIBILITY.LABEL' | translate }}</dt>
 				<dd>{{ 'DOCS.VISIBILITY.' + doc.visibility | translate }}</dd>
+				<!-- Created / Updated carry the person as well as the moment (spec 01 §8.4).
+				     The name is appended only when the relation actually came back — an
+				     "unknown" placeholder reads like a real attribution. -->
+				<dt>{{ 'DOCS.DETAIL.CREATED' | translate }}</dt>
+				<dd>
+					{{ doc.createdAt | date : 'medium' }}
+					<span class="docs-detail-actor" *ngIf="userLabel(doc.createdByUser) as creator">
+						· {{ creator }}
+					</span>
+				</dd>
 				<dt>{{ 'DOCS.TABLE.COLUMNS.UPDATED' | translate }}</dt>
-				<dd>{{ doc.updatedAt | date : 'medium' }}</dd>
+				<dd>
+					{{ doc.updatedAt | date : 'medium' }}
+					<span class="docs-detail-actor" *ngIf="userLabel(doc.updatedByUser) as updater">
+						· {{ updater }}
+					</span>
+				</dd>
+				<!-- Location: the "where does this live" affordance a `?id=` deep link has no
+				     other way to answer. Each crumb drills the browse list into that folder. -->
+				<dt>{{ 'DOCS.DETAIL.LOCATION' | translate }}</dt>
+				<dd class="docs-detail-location">
+					<button type="button" class="docs-detail-crumb" (click)="openLocation(null)">
+						{{ 'DOCS.TREE.ALL_DOCUMENTS' | translate }}
+					</button>
+					<ng-container *ngFor="let crumb of location">
+						<span class="docs-detail-crumb-sep">/</span>
+						<button type="button" class="docs-detail-crumb" (click)="openLocation(crumb.id)">
+							{{ crumb.name }}
+						</button>
+					</ng-container>
+				</dd>
 			</dl>
 		</section>
 
@@ -342,12 +394,13 @@
 			<gz-docs-detail-comments [documentId]="doc.id" [documentName]="doc.name"></gz-docs-detail-comments>
 		</section>
 
-		<!-- Activity -->
+		<!-- Activity — the core activity log bound to (BaseEntityEnum.Document, id)
+		     (R-COL-03). Newest first, "Show more" paging, system transitions attributed
+		     to "System"; the section is fault-isolated inside the child component so a
+		     failing read never takes the panel down. -->
 		<section class="docs-detail-section">
 			<h6>{{ 'DOCS.DETAIL.ACTIVITY' | translate }}</h6>
-			<p class="muted">
-				{{ doc.updatedAt | date : 'medium' }}
-			</p>
+			<gz-docs-detail-activity [documentId]="doc.id"></gz-docs-detail-activity>
 		</section>
 	</ng-container>
 </div>

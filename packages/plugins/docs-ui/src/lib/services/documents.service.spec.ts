@@ -206,6 +206,37 @@ describe('DocumentsService — backend wire contract', () => {
 		});
 	});
 
+	describe('getPath', () => {
+		it('reads the ancestor chain from the dedicated route', async () => {
+			http.response = [
+				{ id: 'folder-1', name: 'Finance' },
+				{ id: DOCUMENT_ID, name: 'Invoices' }
+			];
+
+			await expect(firstValueFrom(service.getPath(DOCUMENT_ID))).resolves.toEqual(http.response);
+			expect(http.last.method).toBe('GET');
+			expect(http.last.url).toMatch(/\/documents\/.+\/path$/);
+		});
+
+		it('carries a redacted ancestor through untouched, so the caller can render it', async () => {
+			// The whole point of the route: an ancestor outside the caller's visibility
+			// scope arrives as a placeholder rather than disappearing from the chain.
+			http.response = [{ id: null, restricted: true }, { id: DOCUMENT_ID, name: 'Invoices' }];
+
+			const segments = await firstValueFrom(service.getPath(DOCUMENT_ID));
+
+			expect(segments[0]).toEqual({ id: null, restricted: true });
+		});
+
+		it('accepts a pagination envelope as well as a bare array', async () => {
+			http.response = { items: [{ id: DOCUMENT_ID, name: 'Invoices' }], total: 1 };
+
+			await expect(firstValueFrom(service.getPath(DOCUMENT_ID))).resolves.toEqual([
+				{ id: DOCUMENT_ID, name: 'Invoices' }
+			]);
+		});
+	});
+
 	describe('getContent', () => {
 		it('reads the content off the document — there is no GET /:id/content route', async () => {
 			http.response = documentFixture({ contentJson: { type: 'doc' }, contentHtml: '<p>hi</p>' } as never);

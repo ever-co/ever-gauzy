@@ -88,6 +88,9 @@ import {
 	PaymentMutationComponent
 } from './invoice-payments';
 import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
+// Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
+// imported directly — the Documents hub module is never pulled in here.
+import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 
 @NgModule({
 	imports: [
@@ -127,7 +130,8 @@ import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
 		ProjectSelectModule,
 		SharedModule,
 		NbAccordionModule,
-		InvoiceViewInnerModule
+		InvoiceViewInnerModule,
+		DocumentLinksPanelComponent
 	],
 	providers: [
 		InvoicesService,

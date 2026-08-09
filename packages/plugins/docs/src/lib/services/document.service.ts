@@ -8,7 +8,8 @@ import {
 	Logger,
 	NotFoundException
 } from '@nestjs/common';
-import { Brackets, FindOneOptions, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { CommandBus, EventBus as CqrsEventBus } from '@nestjs/cqrs';
+import { Brackets, FindOneOptions, In, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import {
 	BaseEntityEnum,
 	DocumentKindEnum,
@@ -17,11 +18,13 @@ import {
 	DocumentSourceEnum,
 	DocumentStatusEnum,
 	DocumentVisibilityEnum,
+	EntitySubscriptionTypeEnum,
 	ID,
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import {
+	CreateEntitySubscriptionEvent,
 	EventBus,
 	FavoriteService,
 	MentionService,
@@ -30,8 +33,13 @@ import {
 	prepareSQLQuery as p,
 	sanitizeRichHtml
 } from '@gauzy/core';
+import { CreateDocumentLinkCommand } from '../commands/create-document-link.command';
+import { DeleteDocumentLinkCommand } from '../commands/delete-document-link.command';
+import { getDocsConfig } from '../docs.config';
 import {
+	DOCS_CONTENT_BINARY_TOO_LARGE,
 	DOCS_CONTENT_CONFLICT,
+	DOCS_CONTENT_JSON_REQUIRED,
 	DOCS_FILE_VIA_UPLOAD,
 	DOCS_LOCKED,
 	DOCS_NOT_A_PAGE,
@@ -40,13 +48,28 @@ import {
 	DOCS_SOURCE_RESERVED,
 	DOCS_WRITE_FORBIDDEN
 } from '../docs.constants';
-import { CreateDocumentDTO, GetDocumentsQueryDTO, UpdateDocumentContentDTO, UpdateDocumentDTO } from '../dto';
+import {
+	CreateDocumentDTO,
+	CreateDocumentLinkDTO,
+	GetDocumentsQueryDTO,
+	UpdateDocumentContentDTO,
+	UpdateDocumentDTO
+} from '../dto';
 import { Document } from '../entities/document.entity';
+import { DocumentLink } from '../entities/document-link.entity';
 import { DocumentEvent, IDocumentEventContext } from '../events/document.event';
 import { MikroOrmDocumentRepository } from '../repositories/mikro-orm-document.repository';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
+import { TypeOrmDocumentLinkRepository } from '../repositories/type-orm-document-link.repository';
+import {
+	collectDocumentMentionIds,
+	generateDocumentHtml,
+	stripTransientAttributes,
+	validateTiptapDocument
+} from '../validation';
 import { assertContentSearchQueryLength } from './content-search.guard';
 import { DocumentAccessService } from './document-access.service';
+import { DocumentSettingsService } from './document-settings.service';
 import { DocumentVersionService } from './document-version.service';
 
 /**
@@ -101,9 +124,15 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	constructor(
 		public readonly typeOrmDocumentRepository: TypeOrmDocumentRepository,
 		public readonly mikroOrmDocumentRepository: MikroOrmDocumentRepository,
+		private readonly typeOrmDocumentLinkRepository: TypeOrmDocumentLinkRepository,
 		private readonly documentVersionService: DocumentVersionService,
 		private readonly documentAccessService: DocumentAccessService,
+		private readonly documentSettingsService: DocumentSettingsService,
 		private readonly _eventBus: EventBus,
+		// The platform's `EntitySubscription` fan-out listens on the CQRS bus, not the RxJS one
+		// above — the two are different buses and `DocumentEvent` travels on the other.
+		private readonly _cqrsEventBus: CqrsEventBus,
+		private readonly _commandBus: CommandBus,
 		private readonly _mentionService: MentionService
 	) {
 		super(typeOrmDocumentRepository, mikroOrmDocumentRepository);
@@ -253,7 +282,43 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 				throw new NotFoundException(`Document ${id} was not found`);
 			}
 		}
+
+		// 🛑 The gate above proves the REQUESTED row is readable — it says nothing about the rows
+		// TypeORM joined in alongside it. `?relations=parent` (and, before the controller
+		// allowlist, `?relations=children`) hands back whole sibling documents with their
+		// `contentJson`/`contentHtml`, bypassing §3.4 entirely. Every joined document row is
+		// therefore put through the same read predicate and masked when it fails.
+		await this.maskUnreadableDocumentRelations(document);
 		return document;
+	}
+
+	/**
+	 * Replaces any joined `parent`/`children` document the requester may not read with the
+	 * `{ id: null, restricted: true }` masking shape of `08-permissions-security.md` §3.2 — no
+	 * name, no id, and above all no content.
+	 *
+	 * @param document The freshly loaded document, with whatever relations were requested.
+	 */
+	private async maskUnreadableDocumentRelations(document: Document): Promise<void> {
+		const restrict = async (related: any): Promise<any> => {
+			if (!related?.id) {
+				return related;
+			}
+			const readable = await this.documentAccessService.canRead(
+				{ createdByUserId: related.createdByUserId, visibility: related.visibility },
+				related.id
+			);
+			return readable ? related : { id: null, restricted: true };
+		};
+
+		if ((document as any).parent) {
+			(document as any).parent = await restrict((document as any).parent);
+		}
+		if (Array.isArray((document as any).children)) {
+			(document as any).children = await Promise.all(
+				((document as any).children as any[]).map((child: any) => restrict(child))
+			);
+		}
 	}
 
 	/**
@@ -291,20 +356,95 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			}
 		}
 
+		// Schema-validate the initial content exactly like a later save would — a page created
+		// with content the editor cannot load is content nobody can ever fix.
+		const contentJson = input.contentJson ? this.validateContentJson(input.contentJson) : null;
+
+		const organizationId = this.resolveOrganizationId(input as any);
 		const document = await this.create({
 			...this.buildAssignableFields(input),
 			kind: input.kind,
-			contentJson: input.contentJson ?? null,
-			contentHtml: input.contentHtml ? this.sanitizeHtml(input.contentHtml) : null,
+			contentJson,
+			contentHtml: this.resolveContentHtml(input.contentHtml, contentJson, null),
 			status: DocumentStatusEnum.READY,
 			source,
 			knowledgeStatus: DocumentKnowledgeStatusEnum.NONE,
 			reviewStatus: DocumentReviewStatusEnum.NONE,
-			visibility: input.visibility ?? DocumentVisibilityEnum.ORGANIZATION
+			// §4.3/§4.14 — the organization default is the whole point of the setting; hardcoding
+			// ORGANIZATION here meant an org that chose PRIVATE got ORGANIZATION for 100% of the
+			// content its people authored (the upload path already honours it).
+			visibility: input.visibility ?? (await this.resolveDefaultVisibility(organizationId))
 		});
+
+		// The create DTO accepts `mentionEmployeeIds`, so it has to mean something: without this
+		// the field was whitelisted, parsed and silently dropped.
+		await this.syncMentions(document.id, input.mentionEmployeeIds);
+		await this.syncDocumentLinks(document, contentJson);
+		this.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.CREATED_ENTITY);
 
 		this.emitDocumentEvent(document, 'created', { phase: 'crud' }, input);
 		return document;
+	}
+
+	/**
+	 * Reads the organization's `defaultVisibility` setting, degrading to `ORGANIZATION`.
+	 *
+	 * Best-effort by contract: a settings read failure must not fail document creation, and the
+	 * documented fallback of `getDefaults()` is the same `ORGANIZATION` value.
+	 *
+	 * @param organizationId The organization scope.
+	 * @returns The visibility a new document should be born with.
+	 */
+	private async resolveDefaultVisibility(organizationId: ID): Promise<DocumentVisibilityEnum> {
+		try {
+			const defaults = await this.documentSettingsService.getDefaults(organizationId);
+			return defaults.defaultVisibility ?? DocumentVisibilityEnum.ORGANIZATION;
+		} catch (error) {
+			this.logger.warn(
+				`Failed to resolve the default visibility for organization ${organizationId}: ${
+					(error as Error).message
+				}`
+			);
+			return DocumentVisibilityEnum.ORGANIZATION;
+		}
+	}
+
+	/**
+	 * Subscribes the acting employee to a document through the platform's `EntitySubscription`
+	 * fan-out (`03-backend-plugin.md` §8/§9.4).
+	 *
+	 * Without this, a page author who is never @-mentioned in their own document is not subscribed
+	 * to it and receives none of the comment fan-out — the exact hole the platform's own
+	 * `CommentService` closes the same way.
+	 *
+	 * Best-effort: a subscription failure never rolls back the mutation that triggered it.
+	 *
+	 * @param document The document to subscribe to.
+	 * @param type Why the subscription is created.
+	 */
+	public subscribeRequesterToDocument(document: Document, type: EntitySubscriptionTypeEnum): void {
+		const employeeId = RequestContext.currentEmployeeId();
+		if (!employeeId) {
+			return; // no employee identity on this request — there is nobody to subscribe
+		}
+		try {
+			this._cqrsEventBus.publish(
+				new CreateEntitySubscriptionEvent({
+					entity: BaseEntityEnum.Document,
+					entityId: document.id,
+					employeeId,
+					type,
+					organizationId: document.organizationId,
+					tenantId: document.tenantId
+				})
+			);
+		} catch (error) {
+			this.logger.warn(
+				`Failed to publish CreateEntitySubscriptionEvent for document ${document.id}: ${
+					(error as Error).message
+				}`
+			);
+		}
 	}
 
 	/**
@@ -338,6 +478,16 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 * @returns The updated document.
 	 */
 	async updateContent(id: ID, input: UpdateDocumentContentDTO): Promise<Document> {
+		// §4.3/§11 — `contentJson` is canonical: HTML alone would leave the two columns describing
+		// different documents. `@IsDefined()` alone answers with a bare class-validator 400 with no
+		// `code`, so the machine code the rest of the plugin's errors carry is raised here instead.
+		if (input.contentHtml !== undefined && input.contentJson === undefined) {
+			throw new BadRequestException({
+				message: 'A content save must carry the canonical `contentJson`',
+				code: DOCS_CONTENT_JSON_REQUIRED
+			});
+		}
+
 		const document = await this.findOneScoped(id);
 		await this.assertCanWrite(document);
 
@@ -361,6 +511,10 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			});
 		}
 
+		// §6.1 step 1 — the TipTap schema is the first line of defense. Validated BEFORE the
+		// version snapshot so a rejected payload cannot burn a version slot.
+		const contentJson = this.validateContentJson(input.contentJson);
+
 		// Debounced pre-update snapshot (bypassed with forceSnapshot)
 		await this.documentVersionService.captureSnapshotIfNeeded(document, {
 			force: input.forceSnapshot === true
@@ -369,8 +523,15 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		const updated = await this.save({
 			...document,
 			id: document.id,
-			contentJson: input.contentJson,
-			contentHtml: input.contentHtml ? this.sanitizeHtml(input.contentHtml) : document.contentHtml
+			contentJson,
+			// 🛑 NOT `?? document.contentHtml`: reusing the stored HTML when the client omits it
+			// leaves the render cache describing the PREVIOUS revision, which is what read-only
+			// views render and what `searchIn=content` matches on.
+			contentHtml: this.resolveContentHtml(input.contentHtml, contentJson, document.contentHtml ?? null),
+			...(input.contentBinary !== undefined
+				? { contentBinary: this.decodeContentBinary(input.contentBinary) }
+				: {}),
+			metadata: this.mergeContentMetadata(document, input)
 		});
 
 		// Mention diff-sync on content save — the same platform mechanism task comments use
@@ -378,9 +539,179 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		// editor dropped). Awaited so the fan-out is done before the response, but best-effort by
 		// contract: a failure logs and never rolls back the content save.
 		await this.syncMentions(document.id, input.mentionEmployeeIds);
+		// The `+` cross-link half of the same idea (`05-editor-spec.md` §7.2).
+		await this.syncDocumentLinks(updated, contentJson);
 
 		this.emitDocumentEvent(updated, 'updated', { phase: 'crud' }, input as any);
 		return updated;
+	}
+
+	/**
+	 * Validates a `contentJson` payload against the editor schema and strips the transient
+	 * editor-only attributes before it is persisted (`08-permissions-security.md` §6.1,
+	 * `05-editor-spec.md` §6.6).
+	 *
+	 * @param contentJson The payload as it arrived.
+	 * @returns The document to persist.
+	 * @throws BadRequestException `DOCS_CONTENT_SCHEMA_INVALID` when the payload is not schema-valid.
+	 */
+	private validateContentJson(contentJson: any): any {
+		return stripTransientAttributes(validateTiptapDocument(contentJson));
+	}
+
+	/**
+	 * Resolves the `contentHtml` render cache of a save.
+	 *
+	 * The client value wins (sanitized), because it comes from the very editor instance that
+	 * produced the JSON. When it is absent the cache is **derived from the validated JSON** — the
+	 * previous HTML is never carried forward, since it describes content that no longer exists.
+	 *
+	 * @param provided The `contentHtml` the client sent, if any.
+	 * @param contentJson The validated canonical document.
+	 * @param fallback The value to keep when there is no JSON to derive from either.
+	 * @returns The HTML to persist.
+	 */
+	private resolveContentHtml(provided: string | undefined, contentJson: any, fallback: string | null): string | null {
+		if (provided) {
+			return this.sanitizeHtml(provided);
+		}
+		if (!contentJson) {
+			return fallback;
+		}
+		try {
+			// Sanitized as well: the derivation is schema-constrained, but the platform keeps
+			// exactly one gate in front of every stored HTML string.
+			return this.sanitizeHtml(generateDocumentHtml(contentJson));
+		} catch (error) {
+			this.logger.warn(`Failed to derive contentHtml from contentJson: ${(error as Error).message}`);
+			return fallback;
+		}
+	}
+
+	/**
+	 * Decodes the optional base64 CRDT payload of a content save, enforcing
+	 * `GAUZY_DOCS_MAX_BINARY_BYTES` (`docs.config.ts`).
+	 *
+	 * @param encoded The base64 payload (empty string clears the column).
+	 * @returns The buffer to persist, or null.
+	 * @throws BadRequestException `DOCS_CONTENT_BINARY_TOO_LARGE` above the configured cap.
+	 */
+	private decodeContentBinary(encoded: string): Buffer | null {
+		if (!encoded) {
+			return null;
+		}
+		const buffer = Buffer.from(encoded, 'base64');
+		const maxBinaryBytes = getDocsConfig().maxBinaryBytes;
+		if (buffer.length > maxBinaryBytes) {
+			throw new BadRequestException({
+				message: `The collaboration state exceeds the ${maxBinaryBytes} byte limit`,
+				code: DOCS_CONTENT_BINARY_TOO_LARGE
+			});
+		}
+		return buffer;
+	}
+
+	/**
+	 * Merges the content save's `metadata` block into the row's existing metadata.
+	 *
+	 * A **merge**, never a replace: `document.metadata` is a shared provenance dictionary
+	 * (`email`, `chat`, `migration`, `deletion`, `review`, `ai`), and an autosave that replaced it
+	 * would wipe the AI classification and the migration provenance of the row.
+	 *
+	 * @param document The document being saved.
+	 * @param input The content payload.
+	 * @returns The metadata value to persist.
+	 */
+	private mergeContentMetadata(document: Document, input: UpdateDocumentContentDTO): any {
+		if (!input.metadata || Object.keys(input.metadata).length === 0) {
+			return document.metadata ?? null;
+		}
+		const existing =
+			document.metadata && typeof document.metadata === 'object' ? (document.metadata as any) : {};
+		return { ...existing, ...input.metadata };
+	}
+
+	/**
+	 * Diff-syncs the `DocumentLink` rows that represent the editor's `+` cross-links
+	 * (`05-editor-spec.md` §7.2): every `documentMention` node in the saved content becomes a link
+	 * with `entity: BaseEntityEnum.Document`, and links whose mention the save removed are pruned.
+	 *
+	 * Only mentions that resolve to a document **the requester can actually read** are linked —
+	 * otherwise a hand-crafted payload could mint links to arbitrary ids and the linked-records
+	 * panel would leak their existence. Links to other entity types are never touched: this diff
+	 * owns exactly the `Document → Document` rows.
+	 *
+	 * Best-effort: a link-sync failure logs and never rolls back the content save.
+	 *
+	 * @param document The document whose content was just saved.
+	 * @param contentJson The validated content.
+	 */
+	private async syncDocumentLinks(document: Document, contentJson: any): Promise<void> {
+		if (!contentJson) {
+			return;
+		}
+		try {
+			const mentioned = collectDocumentMentionIds(contentJson).filter((id: string) => id !== document.id);
+			const desired = mentioned.length ? await this.filterReadableDocumentIds(mentioned) : [];
+
+			const existing = await this.typeOrmDocumentLinkRepository.find({
+				where: {
+					documentId: document.id,
+					entity: BaseEntityEnum.Document,
+					tenantId: document.tenantId,
+					organizationId: document.organizationId
+				}
+			});
+			const existingIds = new Set<ID>(existing.map((link: DocumentLink) => link.entityId));
+
+			for (const entityId of desired) {
+				if (!existingIds.has(entityId)) {
+					await this._commandBus.execute(
+						new CreateDocumentLinkCommand({
+							tenantId: document.tenantId,
+							organizationId: document.organizationId,
+							documentId: document.id,
+							entity: BaseEntityEnum.Document,
+							entityId,
+							metadata: { origin: 'editor-mention' }
+						} as unknown as CreateDocumentLinkDTO)
+					);
+				}
+			}
+
+			const desiredIds = new Set<ID>(desired);
+			for (const link of existing) {
+				if (!desiredIds.has(link.entityId)) {
+					await this._commandBus.execute(new DeleteDocumentLinkCommand(link.id));
+				}
+			}
+		} catch (error) {
+			this.logger.warn(
+				`Failed to sync document cross-links for document ${document.id}: ${(error as Error).message}`
+			);
+		}
+	}
+
+	/**
+	 * Narrows a set of document ids to those the requester may read, in the caller's
+	 * tenant/organization scope (the same single-query predicate every list path uses).
+	 *
+	 * @param ids The candidate document ids.
+	 * @returns The subset that resolves inside the read scope.
+	 */
+	private async filterReadableDocumentIds(ids: ID[]): Promise<ID[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = this.resolveOrganizationId();
+
+		const qb = this.typeOrmRepository.createQueryBuilder('document');
+		qb.select('document.id', 'id');
+		qb.where(p(`"document"."tenantId" = :tenantId`), { tenantId });
+		qb.andWhere(p(`"document"."organizationId" = :organizationId`), { organizationId });
+		qb.andWhere({ id: In(ids) });
+		this.applyVisibilityScope(qb);
+
+		const rows = await qb.getRawMany();
+		return rows.map((row: any) => row.id as ID);
 	}
 
 	/**

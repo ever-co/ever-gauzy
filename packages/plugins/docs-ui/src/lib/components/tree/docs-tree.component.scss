@@ -41,9 +41,41 @@
 	min-height: 0;
 }
 
+/* The "All documents" title is a real <button> (it navigates to the root scope);
+   these rules only neutralize the user-agent button chrome so it still reads as
+   the section label it shares its class with. */
+.docs-tree-root {
+	display: block;
+	width: 100%;
+	padding: 0;
+	border: 0;
+	background: none;
+	/* Family/line-height only — the size, weight, casing and colour still come from
+	   `.docs-tree-section-title`, which this element also carries. A `font: inherit`
+	   shorthand here would win on source order and flatten all of them. */
+	font-family: inherit;
+	line-height: inherit;
+	text-align: inherit;
+	cursor: pointer;
+
+	&:hover {
+		color: var(--text-basic-color);
+	}
+}
+
 .docs-tree-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.25rem;
 	color: var(--text-hint-color);
 	padding: 0.5rem 0.25rem;
+
+	.docs-tree-empty-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem;
+	}
 }
 
 .docs-tree-node {

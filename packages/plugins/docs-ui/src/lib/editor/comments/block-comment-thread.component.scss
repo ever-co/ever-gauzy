@@ -1,0 +1,160 @@
+.gz-block-comments {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	min-height: 3rem;
+	font-size: 0.8125rem;
+
+	.muted {
+		margin: 0;
+		color: var(--text-hint-color);
+	}
+}
+
+.gz-block-comments-error {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	color: var(--text-hint-color);
+}
+
+.gz-block-thread {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+	padding-bottom: 0.5rem;
+	border-bottom: 1px solid var(--border-basic-color-3);
+
+	&:last-of-type {
+		border-bottom: 0;
+	}
+}
+
+.gz-block-thread-head {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	flex-wrap: wrap;
+}
+
+.gz-block-detached {
+	font-size: 0.6875rem;
+	color: var(--text-hint-color);
+	font-style: italic;
+}
+
+.gz-block-comments-list,
+.gz-block-comment-replies {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.gz-block-comment-replies {
+	margin-top: 0.5rem;
+	padding-left: 0.75rem;
+	border-left: 2px solid var(--border-basic-color-3);
+}
+
+.gz-block-comment {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+
+	// A resolved comment stays readable but stops competing with open ones.
+	&.resolved {
+		opacity: 0.65;
+	}
+}
+
+.gz-block-comment-head {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	flex-wrap: wrap;
+
+	.gz-block-comment-author {
+		font-weight: 600;
+	}
+
+	.gz-block-comment-date {
+		font-size: 0.6875rem;
+		color: var(--text-hint-color);
+	}
+}
+
+.gz-block-comment-body {
+	margin: 0;
+	// Plain text — the author's newlines are meaningful and a pasted URL must wrap.
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.gz-block-comment-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.125rem;
+}
+
+.gz-block-composer {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+
+	textarea {
+		resize: vertical;
+	}
+}
+
+.gz-block-composer-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+}
+
+.gz-block-hint {
+	flex: 1 1 auto;
+	font-size: 0.6875rem;
+	color: var(--text-hint-color);
+}
+
+.gz-block-mentions {
+	position: absolute;
+	z-index: 10;
+	top: 100%;
+	left: 0;
+	right: 0;
+	margin: 0.125rem 0 0;
+	padding: 0.25rem;
+	list-style: none;
+	max-height: 12rem;
+	overflow-y: auto;
+	border: 1px solid var(--border-basic-color-3);
+	border-radius: 0.375rem;
+	background: var(--background-basic-color-1);
+	box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12);
+
+	button {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		width: 100%;
+		padding: 0.25rem 0.375rem;
+		border: 0;
+		border-radius: 0.25rem;
+		background: transparent;
+		color: var(--text-basic-color);
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+
+		&:hover,
+		&.active {
+			background: var(--background-basic-color-2);
+		}
+	}
+}

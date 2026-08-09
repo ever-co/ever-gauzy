@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { FeatureFlag } from '@gauzy/common';
 import { FeatureEnum, ID, IDocument, PermissionsEnum } from '@gauzy/contracts';
 import {
@@ -10,6 +11,7 @@ import {
 	UseValidationPipe,
 	UUIDValidationPipe
 } from '@gauzy/core';
+import { docsRateLimit, getDocsConfig } from '../docs.config';
 import { BulkKnowledgeReindexDTO, KnowledgeSearchDTO, ReindexDocumentKnowledgeDTO } from '../dto';
 import {
 	DocumentKnowledgeSearchService,
@@ -44,6 +46,8 @@ export class DocumentKnowledgeController {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Ranked chunk hits with citation locators.' })
 	@Permissions(PermissionsEnum.DOCS_READ)
 	@UseValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })
+	// Every query fans out to a provider query-embedding call (`08-permissions-security.md` §9).
+	@Throttle(docsRateLimit(getDocsConfig().searchRateLimit))
 	@HttpCode(HttpStatus.OK)
 	@Post('/knowledge/search')
 	public async search(@Body() input: KnowledgeSearchDTO): Promise<IKnowledgeSearchResult> {
@@ -57,6 +61,8 @@ export class DocumentKnowledgeController {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Affected-document count (enqueued unless dryRun).' })
 	@Permissions(PermissionsEnum.DOCS_AI_IMPORT)
 	@UseValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })
+	// One request can enqueue the whole organization's corpus (§9).
+	@Throttle(docsRateLimit(getDocsConfig().adminOpsRateLimit))
 	@HttpCode(HttpStatus.OK)
 	@Post('/knowledge/reindex')
 	public async bulkReindex(@Body() input: BulkKnowledgeReindexDTO): Promise<IBulkReindexResult> {
@@ -109,6 +115,8 @@ export class DocumentKnowledgeController {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Re-index queued.' })
 	@Permissions(PermissionsEnum.DOCS_AI_IMPORT)
 	@UseValidationPipe({ whitelist: true, transform: true })
+	// Re-chunk + re-embed of a whole document (§9).
+	@Throttle(docsRateLimit(getDocsConfig().adminOpsRateLimit))
 	@HttpCode(HttpStatus.OK)
 	@Post('/documents/:id/knowledge/reindex')
 	public async reindexDocument(

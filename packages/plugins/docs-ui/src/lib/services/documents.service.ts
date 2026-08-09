@@ -35,6 +35,22 @@ import {
 import { IDocumentShareCreateInput, IDocumentShareUpdateInput } from '../models/docs-share.model';
 
 /**
+ * One segment of the server-resolved ancestor chain (`GET /documents/:id/path`).
+ *
+ * 🛑 `id` is **nullable**: an ancestor the caller may not read is redacted to
+ * `{ id: null, restricted: true }` rather than omitted, so the breadcrumb keeps
+ * its depth without leaking the folder's name (`08-permissions-security.md`
+ * §3.2). A consumer that treats a segment as clickable must check `restricted`
+ * (and a present `id`) first.
+ */
+export interface IDocumentPathSegment {
+	/** `null` when the segment is redacted. */
+	id: ID | null;
+	name?: string;
+	restricted?: boolean;
+}
+
+/**
  * HTTP client for the Documents backend plugin (`@gauzy/plugin-docs`).
  * One method per endpoint — `03-backend-plugin.md` is authoritative for DTO
  * shapes and query params; provided at module level so it dies with the chunk.
@@ -92,6 +108,25 @@ export class DocumentsService {
 
 	getById(id: ID, relations: string[] = []): Observable<IDocument> {
 		return this.http.get<IDocument>(`${this.API_URL}/documents/${id}`, { params: toParams({ relations }) });
+	}
+
+	/**
+	 * Ancestor chain of one document, **root → the document itself**.
+	 *
+	 * Resolving it client-side needs one `GET /documents/:id` per level and still
+	 * cannot represent an ancestor the caller may not read — it simply disappears,
+	 * which silently shortens the path. The server walks the chain in one call and
+	 * substitutes `{ id: null, restricted: true }` for every redacted segment
+	 * (`08-permissions-security.md` §3.2).
+	 *
+	 * 🛑 Deployments that predate the route answer 404, so every caller MUST keep a
+	 * local fallback — losing the breadcrumb also loses the only way back out of a
+	 * deep-linked folder.
+	 */
+	getPath(id: ID): Observable<IDocumentPathSegment[]> {
+		return this.http
+			.get<IDocumentPathSegment[] | IPagination<IDocumentPathSegment>>(`${this.API_URL}/documents/${id}/path`)
+			.pipe(map((result) => (Array.isArray(result) ? result : result?.items ?? [])));
 	}
 
 	// ─── Documents: write ────────────────────────────────────────

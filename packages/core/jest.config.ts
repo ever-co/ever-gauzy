@@ -6,14 +6,21 @@ module.exports = {
 		'^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }]
 	},
 	moduleFileExtensions: ['ts', 'js', 'html'],
-	// `sanitize-html` resolves an ESM-only `htmlparser2` build, which Jest cannot `require`.
-	// Without this exception BOTH server-side sanitization suites — `rich-html-sanitizer.spec.ts`
-	// (every legacy rich-text field) and `public-html-sanitizer.spec.ts` (the anonymous
-	// `/public/*` responses) — fail to LOAD, so they report as suite errors rather than
-	// assertion failures and the XSS policy they pin goes completely unverified.
-	// Transforming that dependency subtree is what makes those specs actually execute.
+	// Dependencies that ship ESM-only builds Jest cannot `require`. A suite that reaches one of
+	// them fails to LOAD rather than failing an assertion — Jest reports that as a suite error,
+	// which reads like "no tests here" instead of "coverage is zero", so the tests silently stop
+	// running. That is how both server-side sanitization suites, every time-tracking suite and
+	// both email-check suites came to contribute nothing.
+	//
+	// Keep this list to packages actually reached by a spec, and add whole dependency subtrees
+	// (walk for `"type": "module"`) rather than one package per failing run:
+	//   sanitize-html + its parser stack -> rich-html-sanitizer / public-html-sanitizer
+	//   uuid                             -> time-tracking + email-check suites
+	//   camelcase                        -> time-tracking suites
+	//   @faker-js/faker                  -> reached through the entity graph (core/seeds)
+	//   @nestjs/axios                    -> ships a raw `index.ts` that re-exports `./dist`
 	transformIgnorePatterns: [
-		'node_modules/(?!(?:.*/)?(sanitize-html|htmlparser2|domelementtype|domhandler|domutils|dom-serializer|entities|nanoid|parse-srcset)/)'
+		'node_modules/(?!(?:.*/)?(sanitize-html|htmlparser2|domelementtype|domhandler|domutils|dom-serializer|entities|nanoid|parse-srcset|uuid|camelcase|@faker-js|@nestjs/axios)/)'
 	],
 	coverageDirectory: '../../coverage/packages/core'
 };

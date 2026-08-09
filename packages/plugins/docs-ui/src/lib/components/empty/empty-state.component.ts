@@ -21,6 +21,11 @@ export type DocsEmptyVariant = 'first-run' | 'empty-folder' | 'no-results' | 're
 					<button nbButton size="small" appearance="outline" (click)="primaryAction.emit('new-page')">
 						{{ 'DOCS.TREE.NEW_PAGE' | translate }}
 					</button>
+					<!-- First run is exactly the state where no node exists to hang a "New
+					     folder" context menu off, so this is the only path to the first folder. -->
+					<button nbButton size="small" appearance="outline" (click)="primaryAction.emit('new-folder')">
+						{{ 'DOCS.TREE.NEW_FOLDER' | translate }}
+					</button>
 				</div>
 			</ng-container>
 
@@ -30,6 +35,10 @@ export type DocsEmptyVariant = 'first-run' | 'empty-folder' | 'no-results' | 're
 				<div class="docs-empty-actions" *ngxPermissionsOnly="[permissions.DOCS_CREATE]">
 					<button nbButton size="small" (click)="primaryAction.emit('new-page')">
 						{{ 'DOCS.TREE.NEW_PAGE' | translate }}
+					</button>
+					<!-- A sub-folder is created into the folder currently being viewed. -->
+					<button nbButton size="small" (click)="primaryAction.emit('new-folder')">
+						{{ 'DOCS.TREE.NEW_FOLDER' | translate }}
 					</button>
 					<button nbButton size="small" (click)="primaryAction.emit('upload')">
 						{{ 'DOCS.TREE.UPLOAD_HERE' | translate }}
@@ -81,6 +90,8 @@ export type DocsEmptyVariant = 'first-run' | 'empty-folder' | 'no-results' | 're
 			}
 			.docs-empty-actions {
 				display: flex;
+				flex-wrap: wrap;
+				justify-content: center;
 				gap: 0.5rem;
 			}
 		`

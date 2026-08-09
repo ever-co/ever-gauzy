@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FeatureFlag } from '@gauzy/common';
 import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
@@ -9,8 +9,8 @@ import {
 	TenantPermissionGuard,
 	UseValidationPipe
 } from '@gauzy/core';
-import { ImportLegacyDTO, RollbackLegacyDTO } from './dto';
-import { ILegacyImportReport, ILegacyRollbackReport } from './legacy-import.types';
+import { ImportLegacyDTO, LegacyMigrationStatusQueryDTO, RollbackLegacyDTO } from './dto';
+import { ILegacyImportReport, ILegacyMigrationStatus, ILegacyRollbackReport } from './legacy-import.types';
 import { LegacyImportService } from './legacy-import.service';
 
 /**
@@ -26,6 +26,25 @@ import { LegacyImportService } from './legacy-import.service';
 @Controller('/plugins/docs/migrations')
 export class LegacyImportController {
 	constructor(private readonly legacyImportService: LegacyImportService) {}
+
+	/**
+	 * Reports whether a migration currently holds this organization's run lock, and the report of
+	 * the last one that finished in this process (§5.1).
+	 *
+	 * The lock is what makes a concurrent run answer `409 migration-in-progress`; without an
+	 * observable status an admin who hits that 409 has no way to poll for it clearing other than
+	 * firing the import again. Read-only: polling never takes the lock.
+	 *
+	 * Declared before the `@Post` routes so its static `/status` segment is unambiguous.
+	 */
+	@ApiOperation({ summary: 'Report the legacy-migration lock state and the last report.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The current migration status.' })
+	@Permissions(PermissionsEnum.DOCS_MANAGE)
+	@UseValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })
+	@Get('/status')
+	public async status(@Query() query: LegacyMigrationStatusQueryDTO): Promise<ILegacyMigrationStatus> {
+		return this.legacyImportService.getStatus(query);
+	}
 
 	/**
 	 * Runs — or, by default, dry-runs — the legacy import for the caller's organization.

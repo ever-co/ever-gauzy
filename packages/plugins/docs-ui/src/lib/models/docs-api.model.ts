@@ -387,6 +387,15 @@ export interface IDocumentSettingsDefaults {
 	importToKnowledgeDefault: boolean;
 	defaultVisibility: DocumentVisibilityEnum;
 	autoClassify: boolean;
+	/**
+	 * Effective organization storage quota in bytes; `0` = unlimited (08 §5.7).
+	 *
+	 * The ONE writable quota field — `DocumentSettingsDTO.quotaBytes` accepts it on
+	 * `PUT /settings` (`@IsInt() @Min(0)`), the usage numbers in {@link IDocumentSettingsQuota}
+	 * are computed and never sent back. Optional because a deployment that predates
+	 * §5.7 omits it from the defaults block entirely.
+	 */
+	quotaBytes?: number;
 }
 
 /** Read-only deployment capabilities reported by `GET /settings` (never writable). */
@@ -396,10 +405,34 @@ export interface IDocumentSettingsCapabilities {
 	embeddingModel: string;
 	maxFileSize: number;
 	acceptedTypes: string[];
+	/** Whether the inbound-email capture webhook is enabled in this deployment (07 §17.2). */
+	inboundEmailEnabled?: boolean;
 }
 
 /**
- * Per-organization storage usage block (`08-permissions-security.md` §5.7, P1).
+ * The live quota block the server actually emits — `IDocumentQuotaState` in
+ * `packages/plugins/docs/src/lib/services/quota.calculator.ts`, returned under the
+ * key **`quota`** by `DocumentSettingsService.getSettings()`.
+ *
+ * 🛑 This is the wire shape. {@link IDocumentSettingsStorage} below is the *normalized
+ * view* the settings card binds to; they are not the same object and the client used
+ * to read only a `storage` key the server has never sent, which kept the usage meter
+ * permanently hidden.
+ */
+export interface IDocumentSettingsQuota {
+	/** Effective quota in bytes; `0` = unlimited. */
+	quotaBytes: number;
+	/** `SUM(fileSize)` over all non-purged documents (archived + trashed included). */
+	usedBytes: number;
+	/** Bytes left, or `null` when unlimited. */
+	remainingBytes: number | null;
+	/** Convenience mirror of `quotaBytes === 0`. */
+	unlimited: boolean;
+}
+
+/**
+ * Per-organization storage usage block (`08-permissions-security.md` §5.7, P1),
+ * **normalized for the UI** by {@link normalizeDocumentStorage}.
  *
  * 🛑 **Optional on purpose.** Quota is a P1 backend feature: a deployment whose
  * `GET /settings` predates it simply omits the block and every quota affordance
@@ -417,28 +450,41 @@ export interface IDocumentSettingsStorage {
 export interface IDocumentSettings {
 	defaults: IDocumentSettingsDefaults;
 	capabilities: IDocumentSettingsCapabilities;
-	/** P1 quota block — absent on deployments that predate §5.7. */
+	/**
+	 * The live quota block — **this is the key the server sends** (`{ defaults,
+	 * capabilities, quota }`). Optional: a deployment that predates §5.7 omits it.
+	 */
+	quota?: IDocumentSettingsQuota;
+	/**
+	 * Legacy/alternative alias for the same numbers. Kept because
+	 * {@link normalizeDocumentStorage} has always accepted it and a third-party
+	 * deployment may still answer in this shape; `quota` wins when both are present.
+	 */
 	storage?: IDocumentSettingsStorage;
 }
 
 /**
- * Reads the storage block out of a settings response tolerantly.
+ * Reads the usage numbers out of a settings response tolerantly and returns the
+ * normalized view the settings card binds to.
  *
- * The backend wave lands `storage` alongside `capabilities`; older/alternative
- * shapes have been seen flattening it onto `capabilities`, so both are accepted.
- * Returns `null` — meaning "this deployment does not report quota" — unless a
- * real numeric `usedBytes` is present. A quota of `0`/absent means *unlimited*
- * (§5.7), which is normalized to `quotaBytes: null` so callers only have to test
- * for null.
+ * Three accepted wire shapes, in precedence order:
+ *  1. **`quota`** — what `DocumentSettingsService.getSettings()` actually emits
+ *     (`{ quotaBytes, usedBytes, remainingBytes, unlimited }`);
+ *  2. `storage` — the alias this function was originally written against;
+ *  3. `capabilities.storage{Used,Quota}Bytes` — the flattened variant.
+ *
+ * Returns `null` — meaning "this deployment does not report usage" — unless a real
+ * numeric `usedBytes` is present. A quota of `0`/absent means *unlimited* (§5.7),
+ * normalized to `quotaBytes: null` so callers only have to test for null.
  */
 export function normalizeDocumentStorage(
 	settings: IDocumentSettings | null | undefined
 ): IDocumentSettingsStorage | null {
 	if (!settings) return null;
 	const flat = settings.capabilities as Partial<Record<'storageUsedBytes' | 'storageQuotaBytes', unknown>> | undefined;
-	const used = settings.storage?.usedBytes ?? flat?.storageUsedBytes;
+	const used = settings.quota?.usedBytes ?? settings.storage?.usedBytes ?? flat?.storageUsedBytes;
 	if (typeof used !== 'number' || !Number.isFinite(used) || used < 0) return null;
-	const rawQuota = settings.storage?.quotaBytes ?? flat?.storageQuotaBytes;
+	const rawQuota = settings.quota?.quotaBytes ?? settings.storage?.quotaBytes ?? flat?.storageQuotaBytes;
 	const quotaBytes = typeof rawQuota === 'number' && Number.isFinite(rawQuota) && rawQuota > 0 ? rawQuota : null;
 	return { usedBytes: used, quotaBytes };
 }

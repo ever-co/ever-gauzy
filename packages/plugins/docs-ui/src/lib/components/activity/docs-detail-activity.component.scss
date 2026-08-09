@@ -1,0 +1,77 @@
+.docs-activity {
+	min-height: 2rem;
+
+	.muted {
+		color: var(--text-hint-color);
+		margin: 0;
+	}
+}
+
+.docs-activity-error {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.8125rem;
+	margin-bottom: 0.5rem;
+}
+
+.docs-activity-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.docs-activity-entry {
+	font-size: 0.8125rem;
+	border-left: 2px solid var(--border-basic-color-4);
+	padding-left: 0.5rem;
+}
+
+.docs-activity-head {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 0.375rem;
+
+	.docs-activity-actor {
+		font-weight: 600;
+	}
+
+	.docs-activity-date {
+		margin-left: auto;
+		color: var(--text-hint-color);
+		font-size: 0.75rem;
+		white-space: nowrap;
+	}
+}
+
+.docs-activity-changes {
+	list-style: none;
+	margin: 0.125rem 0 0;
+	padding: 0;
+	color: var(--text-hint-color);
+	font-size: 0.75rem;
+
+	li {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		flex-wrap: wrap;
+	}
+
+	nb-icon {
+		font-size: 0.75rem;
+	}
+
+	.docs-activity-field {
+		font-weight: 600;
+	}
+}
+
+.docs-activity-more {
+	margin-top: 0.375rem;
+	padding-left: 0;
+}

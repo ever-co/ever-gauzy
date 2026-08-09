@@ -20,6 +20,7 @@ const requestContext = {
 	tenantId: 'tenant-1' as string | null,
 	organizationId: 'org-1' as string | null,
 	userId: 'user-1' as string | null,
+	employeeId: 'employee-1' as string | null,
 	permissions: [] as string[]
 };
 
@@ -29,10 +30,14 @@ jest.mock(
 		FavoriteService: () => () => undefined,
 		EventBus: class {},
 		MentionService: class {},
+		CreateEntitySubscriptionEvent: class {
+			constructor(public readonly input: any) {}
+		},
 		RequestContext: {
 			currentTenantId: () => requestContext.tenantId,
 			currentOrganizationId: () => requestContext.organizationId,
 			currentUserId: () => requestContext.userId,
+			currentEmployeeId: () => requestContext.employeeId,
 			currentRequestContext: () => ({}),
 			hasPermission: (permission: string) => requestContext.permissions.includes(permission)
 		},
@@ -48,11 +53,14 @@ jest.mock(
 	{ virtual: true }
 );
 jest.mock('../entities/document.entity', () => ({ Document: class {} }));
+jest.mock('../entities/document-link.entity', () => ({ DocumentLink: class {} }));
 jest.mock('../events/document.event', () => ({ DocumentEvent: class {} }));
 jest.mock('../repositories/type-orm-document.repository', () => ({ TypeOrmDocumentRepository: class {} }));
+jest.mock('../repositories/type-orm-document-link.repository', () => ({ TypeOrmDocumentLinkRepository: class {} }));
 jest.mock('../repositories/mikro-orm-document.repository', () => ({ MikroOrmDocumentRepository: class {} }));
 jest.mock('./document-version.service', () => ({ DocumentVersionService: class {} }));
 jest.mock('./document-access.service', () => ({ DocumentAccessService: class {} }));
+jest.mock('./document-settings.service', () => ({ DocumentSettingsService: class {} }));
 jest.mock('../dto', () => ({}));
 
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
@@ -113,24 +121,49 @@ const buildService = (rows: any[] = [], access: { canRead?: boolean; canWrite?: 
 		applyShareScope: jest.fn(() => false)
 	};
 	const mentionService: any = { updateEntityMentions: jest.fn().mockResolvedValue(undefined) };
+	const linkRepository: any = { find: jest.fn(async () => []) };
+	const settingsService: any = {
+		getDefaults: jest.fn(async () => ({ defaultVisibility: DocumentVisibilityEnum.ORGANIZATION }))
+	};
+	const cqrsEventBus: any = { publish: jest.fn() };
+	const commandBus: any = { execute: jest.fn(async () => undefined) };
 	const service = new DocumentService(
 		repository,
 		{} as any,
+		linkRepository,
 		{} as any,
 		accessService,
+		settingsService,
 		{ publish: jest.fn() } as any,
+		cqrsEventBus,
+		commandBus,
 		mentionService
 	);
-	return { service, repository, accessService, queryBuilder, findOne, mentionService };
+	return {
+		service,
+		repository,
+		accessService,
+		queryBuilder,
+		findOne,
+		mentionService,
+		linkRepository,
+		settingsService,
+		cqrsEventBus,
+		commandBus
+	};
 };
 
 beforeEach(() => {
 	requestContext.tenantId = 'tenant-1';
 	requestContext.organizationId = 'org-1';
 	requestContext.userId = 'user-1';
+	requestContext.employeeId = 'employee-1';
 	requestContext.permissions = [PermissionsEnum.DOCS_READ, PermissionsEnum.DOCS_UPDATE];
 	sanitizeRichHtmlMock.mockClear();
 });
+
+/** The smallest schema-valid TipTap document the content validator accepts. */
+const emptyDoc = () => ({ type: 'doc', content: [] });
 
 describe('DocumentService — organization scope', () => {
 	it('resolves a document that belongs to the requester organization', async () => {
@@ -206,6 +239,54 @@ describe('DocumentService — organization scope', () => {
 	});
 });
 
+/**
+ * P0 regression: `?relations=children` returned every child of a readable folder — including other
+ * people's PRIVATE pages with `contentJson`/`contentHtml` in full. The route guard proves the
+ * REQUESTED row is readable; it says nothing about the rows joined in alongside it
+ * (`08-permissions-security.md` §3.4 row 6 — unreadable is a 404, never a payload).
+ */
+describe('DocumentService — joined relations are scoped too', () => {
+	const privateSibling = (id: string) => ({
+		id,
+		name: `secret-${id}`,
+		visibility: DocumentVisibilityEnum.PRIVATE,
+		createdByUserId: 'user-2',
+		contentJson: { type: 'doc', content: [] },
+		contentHtml: '<p>confidential</p>'
+	});
+
+	it('masks an unreadable joined `parent` instead of returning its content', async () => {
+		const { service } = buildService([documentRow({ parent: privateSibling('parent-1') })], { canRead: false });
+
+		const document: any = await service.findOneScoped('doc-1', ['parent']);
+
+		expect(document.parent).toEqual({ id: null, restricted: true });
+		expect(JSON.stringify(document)).not.toContain('confidential');
+	});
+
+	it('masks unreadable joined `children` one by one, keeping the readable ones', async () => {
+		const { service, accessService } = buildService([
+			documentRow({ children: [privateSibling('child-1'), { id: 'child-2', name: 'public' }] })
+		]);
+		accessService.canRead.mockImplementation(async (_projection: any, id: string) => id === 'child-2');
+
+		const document: any = await service.findOneScoped('doc-1', ['children']);
+
+		expect(document.children[0]).toEqual({ id: null, restricted: true });
+		expect(document.children[1]).toMatchObject({ id: 'child-2' });
+	});
+
+	it('leaves a readable joined relation untouched', async () => {
+		const { service } = buildService([documentRow({ parent: { id: 'parent-1', name: 'Handbook' } })], {
+			canRead: true
+		});
+
+		const document: any = await service.findOneScoped('doc-1', ['parent']);
+
+		expect(document.parent).toMatchObject({ id: 'parent-1', name: 'Handbook' });
+	});
+});
+
 describe('DocumentService — write access', () => {
 	it('rejects a mutation the share overlay only grants VIEW for', async () => {
 		const { service } = buildService([], { canWrite: false });
@@ -241,7 +322,7 @@ describe('DocumentService — write access', () => {
 		const { service } = buildService([documentRow()], { canWrite: false });
 		(service as any).save = jest.fn();
 
-		await expect(service.updateContent('doc-1', { contentJson: {} } as any)).rejects.toBeInstanceOf(
+		await expect(service.updateContent('doc-1', { contentJson: emptyDoc() } as any)).rejects.toBeInstanceOf(
 			ForbiddenException
 		);
 		expect((service as any).save).not.toHaveBeenCalled();
@@ -264,7 +345,7 @@ describe('DocumentService — HTML sanitization', () => {
 		(service as any).save = jest.fn(async (input: any) => input);
 		(service as any).documentVersionService = { captureSnapshotIfNeeded: jest.fn() };
 
-		await service.updateContent('doc-1', { contentJson: {}, contentHtml: '<b>x</b>' } as any);
+		await service.updateContent('doc-1', { contentJson: emptyDoc(), contentHtml: '<b>x</b>' } as any);
 
 		expect(sanitizeRichHtmlMock).toHaveBeenCalledWith('<b>x</b>');
 		expect((service as any).save.mock.calls[0][0].contentHtml).toBe('sanitized(<b>x</b>)');

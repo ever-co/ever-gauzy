@@ -11,6 +11,7 @@ import { GauzyApiClient } from './tools/gauzy-api-client';
 import { buildGauzyTools, GAUZY_TOOLS_REQUIRING_APPROVAL } from './tools/gauzy-tools';
 import { buildClientTools, CLIENT_TOOLS_REQUIRING_APPROVAL } from './tools/client-tools';
 import { createMcpTools } from './tools/mcp-tools';
+import { createDeferredDataPartWriter } from './tools/data-parts';
 import { AiChatToolRegistry } from './tools/tool-registry';
 import { AiProviderCredentialService } from './credentials/ai-provider-credential.service';
 import { AiChatConversationService } from './conversations/ai-chat-conversation.service';
@@ -89,6 +90,11 @@ export class AiChatService {
 			...(requestDefaults.tenantId ? { 'Tenant-Id': requestDefaults.tenantId } : {}),
 			...(requestDefaults.organizationId ? { 'Organization-Id': requestDefaults.organizationId } : {})
 		});
+		// Contributed tools may push custom `data-*` parts at the browser (e.g. the Documents
+		// plugin's citation chips). The real stream writer only exists inside
+		// `createUIMessageStream`'s execute callback below, which runs AFTER the tool map has to
+		// be built — so factories get this buffering writer now and it is bound there.
+		const dataParts = createDeferredDataPartWriter();
 		// Contributions from OTHER plugins (e.g. @gauzy/plugin-docs' docs_search/docs_read),
 		// resolved through the static AiChatToolRegistry. resolveAll() is error-isolated per
 		// factory and returns an empty contribution when nothing is registered, so behavior is
@@ -98,6 +104,7 @@ export class AiChatService {
 			buildClientTools(),
 			createMcpTools(args.authorizationHeader),
 			AiChatToolRegistry.resolveAll({
+				writeData: dataParts.write,
 				tenantId: requestDefaults.tenantId,
 				organizationId: requestDefaults.organizationId,
 				employeeId: requestDefaults.employeeId,
@@ -185,48 +192,72 @@ export class AiChatService {
 			organizationId: requestDefaults.organizationId
 		};
 
+		/**
+		 * Let ONLY rate limits through, as structured JSON.
+		 *
+		 * Without an onError the SDK substitutes the constant "An error occurred." for every
+		 * failure, so a 429 — the defining failure of a free tier — reached the browser
+		 * indistinguishable from a bug. Widening that mask generally would leak provider
+		 * internals, so everything else keeps the generic string; this is also used for
+		 * tool-output-error text, which the same selectivity handles correctly.
+		 *
+		 * Hoisted to a const because BOTH streams below need it: the inner model stream and the
+		 * outer wrapper each mask independently, and leaving the wrapper on its default would
+		 * re-flatten a rate-limit envelope that failed on the wrapper's side.
+		 */
+		const maskError = (error: unknown): string => {
+			if (!isRateLimitError(error)) return 'An error occurred.';
+			const retryAfterSeconds = rateLimitRetryAfter(error);
+			return buildRateLimitEnvelope({
+				code: RATE_LIMIT_CODE,
+				providerId,
+				credentialSource,
+				...(retryAfterSeconds !== undefined ? { retryAfterSeconds } : {})
+			});
+		};
+
+		// The model stream, exactly as before — ids stay stable across tool-call round-trips and
+		// the finished turn is persisted here.
+		const modelStream = ai.toUIMessageStream({
+			stream: (result as any).stream,
+			// Keeps message ids stable across tool-call round-trips.
+			originalMessages: args.messages,
+			onError: maskError,
+			onEnd: async ({ messages }: { messages: UIMessage[] }) => {
+				// The turn is over: later data-part writes would throw into a closed controller.
+				dataParts.release();
+				if (!args.conversationId || !persistFor.userId || !persistFor.tenantId) return;
+				try {
+					await this.conversationService.saveTurn({
+						conversationId: args.conversationId,
+						userId: persistFor.userId,
+						tenantId: persistFor.tenantId,
+						organizationId: persistFor.organizationId,
+						messages
+					});
+				} catch (error) {
+					this.logger.warn(
+						`Failed to persist conversation ${args.conversationId}: ${
+							error instanceof Error ? error.message : error
+						}`
+					);
+				}
+			}
+		} as any);
+
+		// Wrapped in a UI message stream so contributed tools can also write custom `data-*`
+		// parts onto the SAME assistant message (citation chips and the like). The wrapper only
+		// merges the model stream through — every chunk, id and callback above is unchanged — so
+		// an install with no contributing plugin streams byte-identical output.
 		ai.pipeUIMessageStreamToResponse({
 			response: args.response,
-			stream: ai.toUIMessageStream({
-				stream: (result as any).stream,
-				// Keeps message ids stable across tool-call round-trips.
-				originalMessages: args.messages,
-				/**
-				 * Let ONLY rate limits through, as structured JSON.
-				 *
-				 * Without an onError the SDK substitutes the constant "An error occurred." for every
-				 * failure, so a 429 — the defining failure of a free tier — reached the browser
-				 * indistinguishable from a bug. Widening that mask generally would leak provider
-				 * internals, so everything else keeps the generic string; this is also used for
-				 * tool-output-error text, which the same selectivity handles correctly.
-				 */
-				onError: (error: unknown) => {
-					if (!isRateLimitError(error)) return 'An error occurred.';
-					const retryAfterSeconds = rateLimitRetryAfter(error);
-					return buildRateLimitEnvelope({
-						code: RATE_LIMIT_CODE,
-						providerId,
-						credentialSource,
-						...(retryAfterSeconds !== undefined ? { retryAfterSeconds } : {})
-					});
-				},
-				onEnd: async ({ messages }: { messages: UIMessage[] }) => {
-					if (!args.conversationId || !persistFor.userId || !persistFor.tenantId) return;
-					try {
-						await this.conversationService.saveTurn({
-							conversationId: args.conversationId,
-							userId: persistFor.userId,
-							tenantId: persistFor.tenantId,
-							organizationId: persistFor.organizationId,
-							messages
-						});
-					} catch (error) {
-						this.logger.warn(
-							`Failed to persist conversation ${args.conversationId}: ${
-								error instanceof Error ? error.message : error
-							}`
-						);
-					}
+			stream: ai.createUIMessageStream({
+				onError: maskError,
+				execute: ({ writer }: { writer: any }) => {
+					// Bound BEFORE the merge: a tool can emit its first data part as soon as the
+					// model calls it, which happens inside the stream being merged.
+					dataParts.bind(writer);
+					writer.merge(modelStream);
 				}
 			} as any)
 		} as any);

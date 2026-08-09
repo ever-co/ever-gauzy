@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import * as path from 'path';
 import { v4 as uuid } from 'uuid';
@@ -27,7 +28,7 @@ import {
 	UseValidationPipe,
 	UUIDValidationPipe
 } from '@gauzy/core';
-import { getDocsConfig } from '../docs.config';
+import { docsRateLimit, getDocsConfig } from '../docs.config';
 import { DOCS_UPLOAD_MAX_FILES } from '../docs.constants';
 import { IDocumentUploadResponse, ReplaceDocumentFileDTO, ReprocessDocumentDTO, UploadDocumentsDTO } from '../dto';
 import { LazyFilesInterceptor, UploadedFilesStorage } from '../interceptors';
@@ -101,6 +102,8 @@ export class DocumentUploadController {
 	@ApiConsumes('multipart/form-data')
 	@Permissions(PermissionsEnum.DOCS_CREATE)
 	@UseValidationPipe({ whitelist: true, transform: true })
+	// The expensive intake path — storage + pipeline + AI spend (`08-permissions-security.md` §9).
+	@Throttle(docsRateLimit(getDocsConfig().uploadRateLimit))
 	@UseInterceptors(
 		LazyFilesInterceptor('files', DOCS_UPLOAD_MAX_FILES, {
 			storage: documentsStorage,
@@ -138,6 +141,8 @@ export class DocumentUploadController {
 	@ApiConsumes('multipart/form-data')
 	@Permissions(PermissionsEnum.DOCS_UPDATE)
 	@UseValidationPipe({ whitelist: true, transform: true })
+	// Replace-in-place is the same intake cost as an upload, so it shares its budget (§9).
+	@Throttle(docsRateLimit(getDocsConfig().uploadRateLimit))
 	@UseInterceptors(
 		LazyFilesInterceptor('file', 1, {
 			storage: documentsStorage,

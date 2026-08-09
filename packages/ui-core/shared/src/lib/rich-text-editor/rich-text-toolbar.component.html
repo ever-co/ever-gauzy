@@ -513,8 +513,17 @@
 	</ng-container>
 </div>
 
-<!-- Table row/column operations: contextual second row while the caret is inside a table -->
-<div *ngIf="active['table'] && hasNode('table')" class="rich-text-toolbar rich-text-toolbar--table-ops">
+<!--
+	Table row/column operations: contextual second row while the caret is inside a table.
+	Its own `role="toolbar"` — and therefore its own roving tabindex ring — so appearing does not
+	add eight more tab stops between the main toolbar and the editor body.
+-->
+<div
+	*ngIf="active['table'] && hasNode('table')"
+	class="rich-text-toolbar rich-text-toolbar--table-ops"
+	role="toolbar"
+	[attr.aria-label]="'RICH_TEXT_EDITOR.TABLE.TOOLBAR_LABEL' | translate"
+>
 	<div class="rich-text-toolbar__group">
 		<button
 			nbButton

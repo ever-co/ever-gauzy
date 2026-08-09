@@ -1,7 +1,10 @@
 import {
+	AfterViewChecked,
 	ChangeDetectionStrategy,
 	ChangeDetectorRef,
 	Component,
+	ElementRef,
+	HostListener,
 	Input,
 	NgZone,
 	OnDestroy
@@ -22,6 +25,11 @@ interface FontStack {
  * `ToolbarGroup[]`; individual buttons additionally gate on schema membership so
  * a cluster never renders a command its editor cannot execute. Active state is
  * re-read on every editor transaction (re-entered into Angular's zone).
+ *
+ * Keyboard model (05-editor-spec.md §13 / §3.10): each `role="toolbar"` row is a single
+ * composite widget — ONE tab stop, with ←/→/Home/End moving between its controls — so Tab
+ * from the field before the editor lands on the toolbar once and Tab again enters
+ * `.ProseMirror`, instead of walking ~25 separate stops.
  */
 @Component({
 	selector: 'ga-rich-text-toolbar',
@@ -30,7 +38,7 @@ interface FontStack {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	standalone: false
 })
-export class RichTextToolbarComponent implements OnDestroy {
+export class RichTextToolbarComponent implements AfterViewChecked, OnDestroy {
 	@Input() set editor(value: Editor | null) {
 		this._detachFromEditor();
 		this._editor = value;
@@ -89,15 +97,158 @@ export class RichTextToolbarComponent implements OnDestroy {
 		{ label: 'Trebuchet', value: '"Trebuchet MS", Helvetica, sans-serif' }
 	];
 
+	/**
+	 * The controls that take part in a toolbar row's roving tabindex.
+	 *
+	 * 🛑 Matched with `>` on purpose: the link / image / colour popovers live INSIDE
+	 * `.rich-text-toolbar__group` but are separate widgets with their own inputs and buttons, and
+	 * a descendant selector would swallow them into the arrow-key ring. `nb-select` contributes
+	 * its internal trigger button, which is the element that actually takes focus.
+	 */
+	private static readonly ROVING_ITEM_SELECTOR =
+		'.rich-text-toolbar__group > button:not([disabled]), .rich-text-toolbar__group > nb-select button:not([disabled])';
+
 	private _editor: Editor | null = null;
 	private readonly _transactionHandler = (): void => {
 		this._zone.run(() => this._updateState());
 	};
 
-	constructor(private readonly _zone: NgZone, private readonly _cdr: ChangeDetectorRef) {}
+	/**
+	 * Active item index per toolbar row. Keyed by the row element rather than held as a single
+	 * field because the contextual table-operations row is a second, independent `role="toolbar"`.
+	 * A `WeakMap` so the entry for that row disappears with it when the caret leaves the table.
+	 */
+	private readonly _activeIndex = new WeakMap<HTMLElement, number>();
+
+	constructor(
+		private readonly _zone: NgZone,
+		private readonly _cdr: ChangeDetectorRef,
+		private readonly _host: ElementRef<HTMLElement>
+	) {}
+
+	ngAfterViewChecked(): void {
+		this._syncRovingTabIndex();
+	}
 
 	ngOnDestroy(): void {
 		this._detachFromEditor();
+	}
+
+	// -------------------------------------------------------------------------
+	// Keyboard navigation (roving tabindex)
+	// -------------------------------------------------------------------------
+
+	/**
+	 * ←/→ wrap around the row, Home/End jump to its ends.
+	 *
+	 * Only keys pressed on a control that is part of the ring are handled — a keystroke inside a
+	 * popover input keeps its native behaviour, and Tab is never intercepted so it still exits the
+	 * toolbar into `.ProseMirror`.
+	 */
+	@HostListener('keydown', ['$event'])
+	onToolbarKeydown(event: KeyboardEvent): void {
+		if (event.altKey || event.ctrlKey || event.metaKey) {
+			return;
+		}
+		if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') {
+			return;
+		}
+
+		const toolbar = this._toolbarOf(event.target);
+		if (!toolbar) {
+			return;
+		}
+		const items = this._itemsOf(toolbar);
+		const current = items.indexOf(event.target as HTMLElement);
+		if (current === -1) {
+			return;
+		}
+
+		let next: number;
+		switch (event.key) {
+			case 'ArrowRight':
+				next = (current + 1) % items.length;
+				break;
+			case 'ArrowLeft':
+				next = (current - 1 + items.length) % items.length;
+				break;
+			case 'Home':
+				next = 0;
+				break;
+			default:
+				next = items.length - 1;
+				break;
+		}
+
+		// Swallowed even when the index does not move, so Home/End never scroll the page instead.
+		event.preventDefault();
+		this._activeIndex.set(toolbar, next);
+		items[current].tabIndex = -1;
+		items[next].tabIndex = 0;
+		items[next].focus();
+	}
+
+	/**
+	 * Adopts whatever the user focused — by click or by tabbing in — as the row's tab stop, so the
+	 * next Tab-out / Tab-in round-trip returns to where they left off.
+	 */
+	@HostListener('focusin', ['$event'])
+	onToolbarFocusIn(event: FocusEvent): void {
+		const toolbar = this._toolbarOf(event.target);
+		if (!toolbar) {
+			return;
+		}
+		const index = this._itemsOf(toolbar).indexOf(event.target as HTMLElement);
+		if (index === -1) {
+			return;
+		}
+		this._activeIndex.set(toolbar, index);
+		this._syncRovingTabIndex();
+	}
+
+	/** The `role="toolbar"` row owning `target`, or `null` when it is outside this component. */
+	private _toolbarOf(target: EventTarget | null): HTMLElement | null {
+		const element = target as HTMLElement | null;
+		if (!element || typeof element.closest !== 'function') {
+			return null;
+		}
+		const toolbar = element.closest<HTMLElement>('.rich-text-toolbar');
+		return toolbar && this._host.nativeElement.contains(toolbar) ? toolbar : null;
+	}
+
+	/** The focusable controls of one toolbar row, in DOM order. */
+	private _itemsOf(toolbar: HTMLElement): HTMLElement[] {
+		return Array.from(toolbar.querySelectorAll<HTMLElement>(RichTextToolbarComponent.ROVING_ITEM_SELECTOR));
+	}
+
+	/**
+	 * Gives each toolbar row exactly one item with `tabindex="0"` and `-1` for the rest.
+	 *
+	 * Driven from the DOM after every check rather than bound per button because nearly every
+	 * button sits behind an `*ngIf` (preset cluster, schema membership, `canUndo`/`canRedo`): a
+	 * template-bound index would drift the moment a preset drops a cluster or a command becomes
+	 * unavailable. Writes are diffed, so a keystroke that only refreshes active state touches
+	 * nothing.
+	 */
+	private _syncRovingTabIndex(): void {
+		const toolbars = this._host.nativeElement.querySelectorAll<HTMLElement>('.rich-text-toolbar');
+
+		toolbars.forEach((toolbar) => {
+			const items = this._itemsOf(toolbar);
+			if (!items.length) {
+				return;
+			}
+			// Clamp: the previously active control may have been removed or disabled since.
+			const active = Math.min(this._activeIndex.get(toolbar) ?? 0, items.length - 1);
+			this._activeIndex.set(toolbar, active);
+
+			items.forEach((item, index) => {
+				const tabIndex = index === active ? 0 : -1;
+				if (item.tabIndex !== tabIndex) {
+					item.tabIndex = tabIndex;
+				}
+			});
+		});
 	}
 
 	// -------------------------------------------------------------------------

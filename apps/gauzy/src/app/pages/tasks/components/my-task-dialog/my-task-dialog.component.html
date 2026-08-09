@@ -212,6 +212,22 @@
                   </div>
                 </div>
               </form>
+
+              <!--
+                Record-side Documents panel (spec 00 §6.14 R-LNK-02). Outside the
+                form: it writes through its own endpoints, not through `onSave()`.
+                Only for an EXISTING task — a task that has not been created yet has
+                no id to attach anything to. The panel gates itself on DOCS_READ +
+                FEATURE_DOCUMENTS.
+              -->
+              @if (selectedTask?.id) {
+                <gz-document-links-panel
+                  class="task-documents"
+                  [entity]="documentEntity"
+                  [entityId]="selectedTask.id"
+                  [entityLabel]="selectedTask.title"
+                ></gz-document-links-panel>
+              }
             </nb-card-body>
             <nb-card-footer>
               <button

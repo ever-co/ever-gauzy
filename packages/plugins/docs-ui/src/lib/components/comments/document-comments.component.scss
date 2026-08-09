@@ -61,6 +61,19 @@
 		font-size: 0.6875rem;
 		color: var(--text-hint-color);
 	}
+
+	// "Anchored to a block" hint — the editor's rail owns the block thread itself.
+	.gz-comment-anchor {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.125rem;
+		font-size: 0.6875rem;
+		color: var(--text-hint-color);
+
+		nb-icon {
+			font-size: 0.75rem;
+		}
+	}
 }
 
 .gz-comment-body {

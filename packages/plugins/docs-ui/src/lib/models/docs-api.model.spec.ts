@@ -4,7 +4,7 @@ import {
 	DocumentStatusEnum,
 	DocumentVisibilityEnum
 } from '@gauzy/contracts';
-import { DOCUMENT_MAX_TAKE, toDocumentsQueryParams } from './docs-api.model';
+import { DOCUMENT_MAX_TAKE, normalizeDocumentStorage, toDocumentsQueryParams } from './docs-api.model';
 
 /**
  * `toDocumentsQueryParams()` is the single reconciliation point between the hub's
@@ -193,5 +193,80 @@ describe('toDocumentsQueryParams — GetDocumentsQueryDTO reconciliation', () =>
 				relations: ['categories', 'tags']
 			});
 		});
+	});
+});
+
+/**
+ * `normalizeDocumentStorage()` is the seam between the settings endpoint's wire
+ * shape and the storage-usage card.
+ *
+ * 🛑 The server answers `{ defaults, capabilities, quota }`
+ * (`DocumentSettingsService.getSettings()`); this function used to read only a
+ * `storage` key that the server has never sent, so `storage` was always `null` and
+ * the meter was `*ngIf`'d out on every deployment. The `quota` case below is that
+ * regression — the other two shapes stay covered because they were the documented
+ * tolerance and dropping them would be a silent narrowing.
+ */
+describe('normalizeDocumentStorage — GET /settings usage block', () => {
+	const capabilities = {
+		aiEnabled: true,
+		vectorSearch: true,
+		embeddingModel: 'text-embedding-3-small',
+		maxFileSize: 50 * 1024 * 1024,
+		acceptedTypes: ['pdf']
+	};
+	const defaults = {
+		importToKnowledgeDefault: false,
+		defaultVisibility: DocumentVisibilityEnum.ORGANIZATION,
+		autoClassify: true
+	};
+
+	it('reads the `quota` block the server actually emits', () => {
+		expect(
+			normalizeDocumentStorage({
+				defaults,
+				capabilities,
+				quota: { quotaBytes: 1000, usedBytes: 250, remainingBytes: 750, unlimited: false }
+			})
+		).toEqual({ usedBytes: 250, quotaBytes: 1000 });
+	});
+
+	it('treats a zero quota as unlimited rather than as a full bar', () => {
+		expect(
+			normalizeDocumentStorage({
+				defaults,
+				capabilities,
+				quota: { quotaBytes: 0, usedBytes: 42, remainingBytes: null, unlimited: true }
+			})
+		).toEqual({ usedBytes: 42, quotaBytes: null });
+	});
+
+	it('still accepts the `storage` alias and the flattened capabilities variant', () => {
+		expect(
+			normalizeDocumentStorage({ defaults, capabilities, storage: { usedBytes: 7, quotaBytes: 70 } })
+		).toEqual({ usedBytes: 7, quotaBytes: 70 });
+
+		expect(
+			normalizeDocumentStorage({
+				defaults,
+				capabilities: { ...capabilities, storageUsedBytes: 9, storageQuotaBytes: 90 } as never
+			})
+		).toEqual({ usedBytes: 9, quotaBytes: 90 });
+	});
+
+	it('prefers `quota` when a response carries both blocks', () => {
+		expect(
+			normalizeDocumentStorage({
+				defaults,
+				capabilities,
+				quota: { quotaBytes: 100, usedBytes: 10, remainingBytes: 90, unlimited: false },
+				storage: { usedBytes: 999, quotaBytes: 999 }
+			})
+		).toEqual({ usedBytes: 10, quotaBytes: 100 });
+	});
+
+	it('returns null when the deployment reports no usage at all', () => {
+		expect(normalizeDocumentStorage(null)).toBeNull();
+		expect(normalizeDocumentStorage({ defaults, capabilities })).toBeNull();
 	});
 });

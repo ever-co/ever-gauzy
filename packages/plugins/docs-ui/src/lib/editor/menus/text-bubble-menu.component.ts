@@ -5,10 +5,12 @@ import {
 	ChangeDetectorRef,
 	Component,
 	ElementRef,
+	EventEmitter,
 	Input,
 	NgZone,
 	OnChanges,
 	OnDestroy,
+	Output,
 	SimpleChanges,
 	ViewChild,
 	inject
@@ -19,6 +21,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Editor } from '@tiptap/core';
 import { BubbleMenuPlugin } from '@tiptap/extension-bubble-menu';
 import { NodeSelection, PluginKey } from '@tiptap/pm/state';
+import { enclosingBlockId } from '../extensions/block-comments.plugin';
 import { SuggestionHostService } from '../suggestion/suggestion-host.service';
 
 const pluginKey = new PluginKey('gzTextBubbleMenu');
@@ -158,6 +161,18 @@ type TurnInto =
 					(click)="colorOpen = !colorOpen; highlightOpen = false; turnIntoOpen = false"
 				>
 					<i class="fas fa-font"></i>
+				</button>
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					type="button"
+					class="gz-comment-action"
+					[disabled]="!canComment"
+					[nbTooltip]="'DOCS.EDITOR.COMMENT.ADD' | translate"
+					(click)="comment()"
+				>
+					<nb-icon icon="message-square-outline"></nb-icon>
 				</button>
 				<span class="gz-bubble-divider"></span>
 				<button
@@ -305,6 +320,13 @@ type TurnInto =
 export class TextBubbleMenuComponent implements AfterViewInit, OnChanges, OnDestroy {
 	@Input({ required: true }) editor!: Editor;
 
+	/**
+	 * The user asked to comment on the current selection's block (spec 05 §8). The menu
+	 * only resolves the anchor — the thread itself lives in the page's Comments rail, which
+	 * owns the `/api/comment` calls.
+	 */
+	@Output() commentRequested = new EventEmitter<string>();
+
 	@ViewChild('menu', { static: true }) menuRef!: ElementRef<HTMLElement>;
 
 	private readonly suggestionHost = inject(SuggestionHostService);
@@ -392,6 +414,19 @@ export class TextBubbleMenuComponent implements AfterViewInit, OnChanges, OnDest
 
 	isActive(name: string): boolean {
 		return this.editor?.isActive(name) ?? false;
+	}
+
+	/**
+	 * False until UniqueID has stamped the enclosing block — a comment with no anchor could
+	 * never be shown next to anything, so the action is disabled rather than silently lost.
+	 */
+	get canComment(): boolean {
+		return !!enclosingBlockId(this.editor);
+	}
+
+	comment(): void {
+		const blockId = enclosingBlockId(this.editor);
+		if (blockId) this.commentRequested.emit(blockId);
 	}
 
 	run(command: 'toggleBold' | 'toggleItalic' | 'toggleUnderline' | 'toggleStrike' | 'toggleCode'): void {

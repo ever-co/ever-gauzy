@@ -161,4 +161,38 @@ describe('DocumentAutosaveService', () => {
 			expect.objectContaining({ expectedUpdatedAt: secondLoadedAt })
 		);
 	}));
+
+	/**
+	 * Wire shape of the two fields added for spec 05 §9.1 (`metadata.schemaVersion`) and
+	 * §9.1/§11 (`contentBinary`).
+	 *
+	 * 🛑 The route validates with `whitelist: true`, which SILENTLY STRIPS unknown properties,
+	 * so "the field reaches the request body" is the only thing this side can assert — and a
+	 * field the editor could not produce must be **absent**, not `null`: a null is a value the
+	 * DTO would have to accept rather than a property it can simply not declare.
+	 */
+	describe('content-save extras', () => {
+		it('carries the schema version and the CRDT seed through to the request body', fakeAsync(() => {
+			service.init('doc-1', LOADED_AT, () => ({
+				...payload(),
+				metadata: { schemaVersion: 1 },
+				contentBinary: 'AQID'
+			}));
+			service.markDirty();
+			tick(2_000);
+
+			expect(updateContent).toHaveBeenCalledWith(
+				'doc-1',
+				expect.objectContaining({ metadata: { schemaVersion: 1 }, contentBinary: 'AQID' })
+			);
+		}));
+
+		it('omits contentBinary entirely when the editor could not produce one', fakeAsync(() => {
+			service.init('doc-1', LOADED_AT, () => ({ ...payload(), contentBinary: null }));
+			service.markDirty();
+			tick(2_000);
+
+			expect(Object.keys(updateContent.mock.calls[0][1])).not.toContain('contentBinary');
+		}));
+	});
 });

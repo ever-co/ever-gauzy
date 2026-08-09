@@ -25,7 +25,6 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -59,14 +58,22 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		private readonly toastrService: ToastrService,
 		private helpCenterAuthorService: HelpCenterAuthorService,
 		private employeeService: EmployeesService,
-		private readonly store: Store,
-		private sanitizer: DomSanitizer
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	public expandedArticles: Set<string> = new Set();
-	public articleContent: Map<string, SafeHtml | string> = new Map();
+	/**
+	 * Article body HTML, keyed by article id, held as a PLAIN STRING and bound with `[innerHtml]`.
+	 *
+	 * 🛑 Never mark these values as trusted. `HelpCenterArticle.data` is a legacy CKEditor-4 corpus
+	 * authored by other tenant users; only writes made since `sanitizeRichHtml` shipped are known to
+	 * be clean, so every row predating it is still attacker-controlled. Binding a plain string keeps
+	 * Angular's own sanitizer in the loop on top of the server-side allowlist — same reasoning as the
+	 * docs-ui static renderer (`markdown-render.util.ts`).
+	 */
+	public articleContent: Map<string, string> = new Map();
 	public employees: IEmployee[] = [];
 	public articleList: IHelpCenterArticle[] = [];
 	public isResetSelect = false;
@@ -140,7 +147,7 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 				this.articleList = result;
 				for (const article of this.articleList) {
 					if (article.data) {
-						this.articleContent.set(article.id, this.sanitizer.bypassSecurityTrustHtml(article.data));
+						this.articleContent.set(article.id, article.data);
 					}
 				}
 			}

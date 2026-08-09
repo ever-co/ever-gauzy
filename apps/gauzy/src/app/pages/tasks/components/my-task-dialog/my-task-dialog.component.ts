@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { IEmployee, IOrganizationProject, ITag, ITask, TaskStatusEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, IEmployee, IOrganizationProject, ITag, ITask, TaskStatusEnum } from '@gauzy/contracts';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -38,6 +38,9 @@ export class MyTaskDialogComponent extends TranslationBaseComponent implements O
 	employees: IEmployee[] = [];
 	selectedMembers: string[];
 	selectedTask: ITask;
+
+	/** Entity type the record-side Documents panel attaches its links to. */
+	readonly documentEntity = BaseEntityEnum.Task;
 	organizationId: string;
 	selectedTags: any;
 	participants = 'employees';

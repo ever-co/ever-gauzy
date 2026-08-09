@@ -1,0 +1,91 @@
+<!--
+	Record-side Documents panel (spec 00 §6.14 R-LNK-02). The whole card disappears
+	for a user without DOCS_READ or on an organization with FEATURE_DOCUMENTS off —
+	the component decides, not the five host templates.
+
+	The action gates are `*ngIf` over Store checks rather than `*ngxPermissionsOnly`:
+	uploading needs DOCS_CREATE **and** DOCS_UPDATE (a document write followed by a
+	link write), and `ngxPermissionsOnly` with a list is an OR — it would offer the
+	button to someone who can only do half of it and leave the file unattached.
+-->
+<nb-card *ngIf="visible" class="docs-links-panel">
+	<nb-card-header class="docs-links-panel-header">
+		<span>{{ 'DOCS.LINKS.PANEL_TITLE' | translate }}</span>
+		<span class="docs-links-panel-count" *ngIf="links.length">{{ links.length }}</span>
+
+		<span class="docs-links-panel-actions">
+			<button *ngIf="canLink" nbButton ghost size="tiny" (click)="attachExisting()">
+				<nb-icon icon="link-2-outline"></nb-icon>
+				{{ 'DOCS.LINKS.ATTACH_EXISTING' | translate }}
+			</button>
+
+			<ng-container *ngIf="canUpload">
+				<button nbButton ghost size="tiny" [disabled]="uploading" (click)="fileInput.click()">
+					<nb-icon icon="upload-outline"></nb-icon>
+					{{ 'DOCS.LINKS.UPLOAD_NEW' | translate }}
+				</button>
+				<!--
+					Visually hidden and driven entirely by the button above, so it carries an id and
+					an explicit accessible name, and is taken out of the tab order: a focusable
+					control the user cannot see is a keyboard trap, and the button is the real one.
+				-->
+				<input
+					#fileInput
+					id="docs-links-panel-file-input"
+					type="file"
+					tabindex="-1"
+					class="docs-links-panel-file"
+					[attr.aria-label]="'DOCS.LINKS.UPLOAD_NEW' | translate"
+					[accept]="accept"
+					(change)="uploadNew(fileInput)"
+				/>
+			</ng-container>
+		</span>
+	</nb-card-header>
+
+	<nb-card-body [nbSpinner]="loading || uploading" nbSpinnerStatus="primary">
+		<div class="docs-links-panel-error" *ngIf="loadError">
+			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
+			<span>{{ 'DOCS.LINKS.PANEL_LOAD_ERROR' | translate }}</span>
+			<button nbButton size="tiny" (click)="load()">{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}</button>
+		</div>
+
+		<p class="muted" *ngIf="!loading && !loadError && !links.length">
+			{{ 'DOCS.LINKS.PANEL_EMPTY' | translate }}
+		</p>
+
+		<div class="docs-links-row" *ngFor="let link of links; trackBy: trackByLink">
+			<nb-icon [icon]="iconOf(link)" size="tiny"></nb-icon>
+
+			<button type="button" class="docs-links-row-open" [title]="labelOf(link)" (click)="open(link)">
+				{{ labelOf(link) }}
+			</button>
+
+			<span class="docs-links-row-meta" *ngIf="sizeOf(link)">{{ sizeOf(link) }}</span>
+
+			<span class="docs-links-row-actions">
+				<button
+					*ngIf="isFile(link)"
+					nbButton
+					ghost
+					size="tiny"
+					[nbTooltip]="'DOCS.PREVIEW.DOWNLOAD' | translate"
+					(click)="download(link)"
+				>
+					<nb-icon icon="download-outline"></nb-icon>
+				</button>
+				<button
+					*ngIf="canLink"
+					nbButton
+					ghost
+					size="tiny"
+					status="danger"
+					[nbTooltip]="'DOCS.LINKS.REMOVE' | translate"
+					(click)="unlink(link)"
+				>
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			</span>
+		</div>
+	</nb-card-body>
+</nb-card>

@@ -4,8 +4,10 @@ import { DocxExtractor } from './docx.extractor';
 import { ExtractionRegistryService } from './extraction-registry.service';
 import { HtmlExtractor } from './html.extractor';
 import { ImageExtractor } from './image.extractor';
+import { OdfExtractor } from './odf.extractor';
 import { PdfExtractor } from './pdf.extractor';
 import { PdfRasterizerService } from './pdf-rasterizer.service';
+import { PptxExtractor } from './pptx.extractor';
 import { TextExtractor } from './text.extractor';
 import { XlsxExtractor } from './xlsx.extractor';
 
@@ -15,6 +17,11 @@ export * from './pdf.extractor';
 export * from './pdf-rasterizer.service';
 export * from './docx.extractor';
 export * from './xlsx.extractor';
+export * from './pptx.extractor';
+export * from './odf.extractor';
+export * from './office-markdown.util';
+export * from './office-package.util';
+export * from './office-xml.util';
 export * from './csv.extractor';
 export * from './text.extractor';
 export * from './html.extractor';
@@ -37,6 +44,8 @@ export const ExtractionProviders = [
 	PdfExtractor,
 	DocxExtractor,
 	XlsxExtractor,
+	PptxExtractor,
+	OdfExtractor,
 	CsvExtractor,
 	TextExtractor,
 	HtmlExtractor,

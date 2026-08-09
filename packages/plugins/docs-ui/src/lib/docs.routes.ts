@@ -4,6 +4,7 @@ import { PageRouteRegistryService, PermissionsGuard } from '@gauzy/ui-core/core'
 import { DocsShellComponent } from './components/shell/docs-shell.component';
 import { DOCS_PAGE_LINK, DOCS_SECTIONS_LOCATION } from './docs.constants';
 import { docsFeatureGuard } from './guards/docs-feature.guard';
+import { docsUnsavedChangesGuard } from './guards/docs-unsaved-changes.guard';
 import { DocsBrowsePageComponent } from './pages/browse/docs-browse-page.component';
 import { ReviewPageComponent } from './pages/review/review-page.component';
 
@@ -43,6 +44,9 @@ export function createDocsRoutes(registry: PageRouteRegistryService): Route[] {
 					path: 'page/:id',
 					loadComponent: () =>
 						import('./pages/page-editor/document-page.component').then((m) => m.DocumentPageComponent),
+					// Leaving a dirty page flushes first and asks before discarding when the
+					// flush fails — `ngOnDestroy`'s fire-and-forget flush cannot (spec 05 §9.2).
+					canDeactivate: [docsUnsavedChangesGuard],
 					data: { title: 'DOCS.EDITOR.TITLE' }
 				},
 				{

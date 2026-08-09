@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import {
+	BaseEntityEnum,
 	IEmployee,
 	IOrganizationProject,
 	IOrganizationProjectModule,
@@ -56,6 +57,9 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 	selectedTeams: string[];
 	selectedModules: string[] = [];
 	selectedTask: ITask;
+
+	/** Entity type the record-side Documents panel attaches its links to. */
+	readonly documentEntity = BaseEntityEnum.Task;
 	availableModules: IOrganizationProjectModule[] = [];
 	organizationId: string;
 	tenantId: string;

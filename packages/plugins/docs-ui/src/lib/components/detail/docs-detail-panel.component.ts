@@ -15,14 +15,18 @@ import {
 	IDocument,
 	IDocumentCategory,
 	IDocumentLink,
+	IDocumentUpdateInput,
 	ITag,
+	ITagCreateInput,
+	IUser,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { ToastrService } from '@gauzy/ui-core/core';
+import { Store, TagsService, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DocumentsActions } from '../../+state/documents.actions';
 import { findLinkEntityDescriptor } from '../../models/docs-link.model';
 import { DocsExportService } from '../../services/docs-export.service';
+import { DocumentTreeStore } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
 import { UploadDuplicateNotice, UploadQueueService } from '../../services/upload-queue.service';
 import {
@@ -33,6 +37,33 @@ import { ExtractedTextDialogComponent } from '../../dialogs/extracted-text-dialo
 import { DocumentLinkDialogComponent } from '../../dialogs/link-dialog.component';
 import { RequestReviewDialogComponent } from '../../dialogs/request-review-dialog.component';
 import { DocumentShareDialogComponent } from '../../dialogs/share-dialog.component';
+
+/**
+ * Relations the panel needs on the detail read.
+ *
+ * `createdByUser` / `updatedByUser` back the Created/Updated rows of the metadata grid
+ * (`01-ux-spec.md` §8.4) — only the id columns are stored on the row, so the names have to be
+ * joined. 🛑 They must stay on the server-side relation allowlist (`document.controller.ts`
+ * `toRelationList`); a relation that is filtered out silently degrades those rows to a bare
+ * timestamp rather than erroring.
+ */
+export const DOCS_DETAIL_RELATIONS = [
+	'categories',
+	'tags',
+	'parent',
+	'reviewedBy',
+	'createdByUser',
+	'updatedByUser'
+];
+
+/**
+ * Palette the accept-chip picks a colour from when it has to create a `Tag`.
+ *
+ * Deterministic (hashed from the name) rather than random: accepting the same suggestion on two
+ * documents in two organizations produces the same colour, and the plugin does not have to take
+ * a dependency on `randomcolor` for it.
+ */
+const SUGGESTED_TAG_COLORS = ['#3366FF', '#00D68F', '#FFAA00', '#FF3D71', '#8B5CF6', '#0095FF', '#00B383'];
 
 /**
  * Right-side detail panel for any document kind. Re-fetches by id on open
@@ -63,6 +94,13 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 	public loadError = false;
 	/** Hidden after a 403 from approve/reject. */
 	public reviewForbidden = false;
+	/**
+	 * Ancestor chain of the open document, root → parent (`01-ux-spec.md` §8.4 "Location").
+	 * Empty for a root-level document, which renders the "All documents" crumb instead.
+	 */
+	public location: Array<{ id: ID; name: string }> = [];
+	/** The suggested tag currently being accepted — one chip at a time, so clicks cannot race. */
+	public acceptingTag: string | null = null;
 
 	public readonly kindEnum = DocumentKindEnum;
 	public readonly statusEnum = DocumentStatusEnum;
@@ -85,7 +123,10 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 		private readonly dialogService: NbDialogService,
 		private readonly actions: Actions,
 		private readonly router: Router,
-		private readonly uploadQueue: UploadQueueService
+		private readonly uploadQueue: UploadQueueService,
+		private readonly documentTreeStore: DocumentTreeStore,
+		private readonly tagsService: TagsService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
@@ -105,6 +146,8 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['documentId'] && this.documentId) {
 			this.reviewForbidden = false;
+			this.acceptingTag = null;
+			this.location = [];
 			void this.reload();
 		}
 	}
@@ -114,18 +157,20 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 		this.loadError = false;
 		try {
 			const [document, links, categories] = await Promise.all([
-				firstValueFrom(
-					this.documentsService.getById(this.documentId, ['categories', 'tags', 'parent', 'reviewedBy'])
-				),
+				firstValueFrom(this.documentsService.getById(this.documentId, DOCS_DETAIL_RELATIONS)),
 				firstValueFrom(this.documentsService.getLinks(this.documentId).pipe(catchError(() => of([])))),
 				firstValueFrom(this.documentsService.getCategories().pipe(catchError(() => of([]))))
 			]);
 			this.document = document;
 			this.links = links ?? [];
 			this.categories = categories ?? [];
+			// Fault-isolated like the links/categories legs above: no ancestor chain is a
+			// missing "Location" row, never a failed panel.
+			void this.refreshLocation(document);
 		} catch {
 			this.loadError = true;
 			this.document = null;
+			this.location = [];
 		} finally {
 			this.loading = false;
 		}
@@ -265,15 +310,140 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 	async onTagsChange(tags: ITag[]): Promise<void> {
 		if (!this.document) return;
 		try {
-			const document = await firstValueFrom(this.documentsService.update(this.document.id as ID, { tags }));
+			const document = await firstValueFrom(
+				this.documentsService.update(this.document.id as ID, this.toTagIdsInput(tags))
+			);
 			this.applyChange({ ...document, tags });
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
 	}
 
+	/**
+	 * Builds the tag half of a `PUT /documents/:id` body.
+	 *
+	 * 🛑 The server DTO whitelists **`tagIds`**, not `tags` (`create-document.dto.ts:83-87`), and
+	 * the route runs with `forbidNonWhitelisted: true` — so sending the `ITag[]` that
+	 * `IDocumentUpdateInput` advertises is a **400**, not a silently ignored field. The FE
+	 * contract and the DTO disagree here; the DTO wins, and the cast documents why.
+	 */
+	private toTagIdsInput(tags: ITag[]): IDocumentUpdateInput {
+		const input: IDocumentUpdateInput & { tagIds: ID[] } = {
+			tagIds: (tags ?? []).map((tag) => tag.id as ID).filter(Boolean)
+		};
+		return input;
+	}
+
 	get selectedCategoryIds(): ID[] {
 		return (this.document?.categories ?? []).map((category) => category.id as ID);
+	}
+
+	// ─── AI suggested tags (spec 07 §5.2) ────────────────────────
+
+	/**
+	 * `metadata` as an object.
+	 *
+	 * The column is `jsonb` on postgres but **text** on sqlite; `DocumentSubscriber.afterEntityLoad`
+	 * normally parses that back, but it logs-and-leaves the raw string when the parse fails — and
+	 * the classifier writes the column through a raw `.update()` that bypasses the subscribers
+	 * entirely. So the string shape can reach this client, and reading it wrong means the accept
+	 * chips silently never appear.
+	 */
+	private get metadata(): Record<string, unknown> | null {
+		const raw = this.document?.metadata as unknown;
+		if (typeof raw === 'string') {
+			try {
+				const parsed = JSON.parse(raw);
+				return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null;
+			} catch {
+				return null;
+			}
+		}
+		return raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : null;
+	}
+
+	/**
+	 * AI keyword suggestions that are not already applied.
+	 *
+	 * The pipeline deliberately never creates `Tag` rows itself (catalog hygiene, spec 07 §5.2),
+	 * so these chips are the ONLY path from `metadata.ai.suggestedTags` to a real tag. A chip
+	 * disappears as soon as its name is on the document, which is what makes "accept" feel like
+	 * an accept rather than a toggle.
+	 */
+	get suggestedTags(): string[] {
+		const ai = this.metadata?.['ai'] as { suggestedTags?: unknown } | undefined;
+		const suggestions = Array.isArray(ai?.suggestedTags) ? ai?.suggestedTags : [];
+		const applied = new Set(
+			(this.document?.tags ?? []).map((tag) => String(tag?.name ?? '').trim().toLowerCase())
+		);
+		const seen = new Set<string>();
+		return (suggestions as unknown[])
+			.filter((entry): entry is string => typeof entry === 'string')
+			.map((entry) => entry.trim())
+			.filter((entry) => {
+				const key = entry.toLowerCase();
+				if (!entry || applied.has(key) || seen.has(key)) return false;
+				seen.add(key);
+				return true;
+			});
+	}
+
+	/**
+	 * Accepts one suggestion: resolve-or-create the `Tag` by name, then PUT the merged id list.
+	 *
+	 * Reuse comes first on purpose — a suggestion that matches an existing organization tag must
+	 * attach that tag, not mint a near-duplicate the catalog then has to live with.
+	 */
+	async acceptSuggestedTag(name: string): Promise<void> {
+		if (!this.document || this.acceptingTag) return;
+		this.acceptingTag = name;
+		try {
+			const tag = await this.resolveOrCreateTag(name);
+			const tags = [...(this.document.tags ?? []), tag];
+			const document = await firstValueFrom(
+				this.documentsService.update(this.document.id as ID, this.toTagIdsInput(tags))
+			);
+			// `applyChange` merges, so the local `tags` array is what removes the chip — the PUT
+			// response carries no `tags` relation.
+			this.applyChange({ ...document, tags });
+			this.toastrService.success(this.getTranslation('DOCS.TOASTS.TAG_ADDED'));
+		} catch (error) {
+			this.toastrService.danger(error);
+		} finally {
+			this.acceptingTag = null;
+		}
+	}
+
+	/** Case-insensitive lookup in the organization's tag catalog, creating the tag only on a miss. */
+	private async resolveOrCreateTag(name: string): Promise<ITag> {
+		const organization = this.store.selectedOrganization;
+		const organizationId = organization?.id as ID;
+		const tenantId = organization?.tenantId as ID;
+		const label = name.trim();
+		const normalized = label.toLowerCase();
+
+		const { items } = await this.tagsService.getTagsByLevel({ organizationId, tenantId });
+		const existing = (items ?? []).find((tag) => String(tag?.name ?? '').trim().toLowerCase() === normalized);
+		if (existing) return existing;
+
+		return firstValueFrom(
+			this.tagsService.create({
+				name: label,
+				color: this.colorForTag(normalized),
+				description: '',
+				organizationId,
+				tenantId
+			} as ITagCreateInput)
+		);
+	}
+
+	/** Stable colour for a tag name — see `SUGGESTED_TAG_COLORS`. */
+	private colorForTag(normalized: string): string {
+		let hash = 0;
+		for (let index = 0; index < normalized.length; index++) {
+			hash = (hash * 31 + normalized.charCodeAt(index)) % 100003;
+		}
+		return SUGGESTED_TAG_COLORS[hash % SUGGESTED_TAG_COLORS.length];
 	}
 
 	// ─── Toggles ─────────────────────────────────────────────────
@@ -528,6 +698,68 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 
 	hasLinkRoute(link: IDocumentLink): boolean {
 		return !!findLinkEntityDescriptor(link.entity)?.route(link.entityId as ID);
+	}
+
+	// ─── Location / people (spec 01 §8.4) ────────────────────────
+
+	/**
+	 * Resolves the ancestor chain of the open document for the "Location" row.
+	 *
+	 * The shared node cache answers it for free whenever the tree has been walked; a deep link
+	 * straight into `?id=` has walked nothing, so it falls back to one read of the parent with
+	 * its own parent — the same two-step the browse breadcrumb uses. Ancestors that cannot be
+	 * resolved are NOT invented: the chain is simply shorter, and the "All documents" crumb still
+	 * gets the user back out.
+	 */
+	private async refreshLocation(document: IDocument | null): Promise<void> {
+		const parentId = document?.parentId as ID | undefined;
+		if (!parentId) {
+			this.location = [];
+			return;
+		}
+		const path = this.documentTreeStore.pathOf(parentId);
+		if (path.length) {
+			this.location = path.map((node) => ({ id: node.id, name: node.name }));
+			return;
+		}
+		try {
+			// One level deeper than the `parent` the panel already holds: re-reading the parent
+			// *with its own parent* is what buys the second crumb on a cold deep link.
+			const parent = await firstValueFrom(this.documentsService.getById(parentId, ['parent']));
+			this.location = this.chainOf(parent ?? document?.parent);
+		} catch {
+			this.location = this.chainOf(document?.parent);
+		}
+	}
+
+	/** `[grandparent, parent]` — or just `[parent]`, or nothing at all. */
+	private chainOf(parent?: IDocument | null): Array<{ id: ID; name: string }> {
+		if (!parent) return [];
+		const grandParent = parent.parent;
+		return [
+			...(grandParent ? [{ id: grandParent.id as ID, name: grandParent.name }] : []),
+			{ id: parent.id as ID, name: parent.name }
+		];
+	}
+
+	/** Drills the browse list into a folder of the Location chain (`null` = root). */
+	openLocation(folderId: ID | null): void {
+		this.actions.dispatch(DocumentsActions.folderChanged(folderId));
+	}
+
+	/**
+	 * Display name of a user behind `createdByUser` / `updatedByUser`.
+	 *
+	 * Empty when the relation is absent — the row then shows the timestamp alone rather than a
+	 * placeholder that reads like a real name.
+	 */
+	userLabel(user?: IUser | null): string {
+		return (
+			user?.name ||
+			[user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
+			user?.email ||
+			''
+		);
 	}
 
 	// ─── Helpers ─────────────────────────────────────────────────

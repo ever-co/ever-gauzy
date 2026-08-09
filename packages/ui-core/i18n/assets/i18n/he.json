@@ -3333,7 +3333,11 @@
 		"STOP_TIMER": "עצור טיימר",
 		"TIME_LOG": "יומן זמן",
 		"VIEW_APPOINTMENTS": "צפייה בפגישות",
-		"VIEW_TIME_ACTIVITY": "צפייה בפעילות זמן"
+		"VIEW_TIME_ACTIVITY": "צפייה בפעילות זמן",
+		"DOCUMENTS": {
+			"NEW_PAGE": "עמוד חדש",
+			"UPLOAD": "העלה"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "חשבונאות",
@@ -3341,7 +3345,8 @@
 		"PROJECT_MANAGEMENT": "ניהול פרויקטים",
 		"JOBS": "משרות",
 		"CONTACTS": "אנשי קשר",
-		"TIME_TRACKING": "מעקב זמן"
+		"TIME_TRACKING": "מעקב זמן",
+		"DOCUMENTS": "מסמכים"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "שם פרטי",
