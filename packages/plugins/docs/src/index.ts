@@ -10,6 +10,7 @@ export * from './lib/docs.constants';
 export * from './lib/entities';
 
 // Public services (available via DocsModule exports)
+export { DocsFeatureService } from './lib/services/docs-feature.service';
 export { DocumentService } from './lib/services/document.service';
 export { DocumentLinkService } from './lib/services/document-link.service';
 export { DocumentUploadService } from './lib/services/document-upload.service';
@@ -31,6 +32,10 @@ export * from './lib/services/quota.calculator';
 // Events
 export * from './lib/events/document.event';
 
+// Activity log (R-COL-03) — the `DocumentEvent` subscriber that writes the detail panel's
+// timeline through the platform's own `ActivityLogService`.
+export * from './lib/activity';
+
 // M4 consolidation: the legacy Organization-Documents / Help-Center import (types, pure
 // mappers, service). Legacy tables are only ever read — provenance lives on the new side.
 export * from './lib/legacy-import';
@@ -38,6 +43,7 @@ export * from './lib/legacy-import';
 // Commands intended for cross-plugin dispatch
 export { CreateDocumentCommand } from './lib/commands/create-document.command';
 export { CreateDocumentLinkCommand } from './lib/commands/create-document-link.command';
+export { ReplaceDocumentFileCommand } from './lib/commands/replace-document-file.command';
 export { UploadDocumentsCommand } from './lib/commands/upload-documents.command';
 
 // AI-chat tool contribution (docs_search / docs_read) + the retrieval-service seam

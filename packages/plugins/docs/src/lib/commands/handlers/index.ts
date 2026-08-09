@@ -11,6 +11,7 @@ import { MergeDocumentCategoryHandler } from './merge-document-category.handler'
 import { MoveDocumentHandler } from './move-document.handler';
 import { RecoverDocumentHandler } from './recover-document.handler';
 import { ReorderDocumentsHandler } from './reorder-documents.handler';
+import { ReplaceDocumentFileHandler } from './replace-document-file.handler';
 import { ReprocessDocumentHandler } from './reprocess-document.handler';
 import { RestoreDocumentVersionHandler } from './restore-document-version.handler';
 import { UnarchiveDocumentHandler } from './unarchive-document.handler';
@@ -35,6 +36,7 @@ export const CommandHandlers = [
 	MoveDocumentHandler,
 	RecoverDocumentHandler,
 	ReorderDocumentsHandler,
+	ReplaceDocumentFileHandler,
 	ReprocessDocumentHandler,
 	RestoreDocumentVersionHandler,
 	UnarchiveDocumentHandler,

@@ -42,10 +42,11 @@ const parseBooleanParam = ({ value }: TransformFnParams): boolean | undefined =>
  * All params optional; array params accepted as repeated params or CSV.
  */
 export class GetDocumentsQueryDTO extends BaseQueryDTO<Document> {
-	@ApiPropertyOptional({ type: () => String, enum: DocumentKindEnum })
+	@ApiPropertyOptional({ type: () => Array, enum: DocumentKindEnum, isArray: true })
 	@IsOptional()
-	@IsEnum(DocumentKindEnum)
-	readonly kind?: DocumentKindEnum;
+	@Transform(parseArrayParam)
+	@IsEnum(DocumentKindEnum, { each: true })
+	readonly kind?: DocumentKindEnum[];
 
 	@ApiPropertyOptional({ type: () => Array, enum: DocumentStatusEnum, isArray: true })
 	@IsOptional()

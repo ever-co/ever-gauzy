@@ -20,6 +20,15 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 					<div class="docs-upload-meta">
 						<span class="docs-upload-name" [nbTooltip]="item.file.name">{{ item.file.name }}</span>
 						<span class="docs-upload-size">{{ humanize(item.file.size) }}</span>
+						<!-- Dedup notice (R-UPL-04) — advisory only, the upload still went through -->
+						<span class="docs-upload-duplicate" *ngIf="item.duplicateOfId">
+							<nb-icon icon="copy-outline" size="tiny"></nb-icon>
+							{{
+								item.duplicateOfName
+									? ('DOCS.UPLOAD.DUPLICATE_NOTICE' | translate : { name: item.duplicateOfName })
+									: ('DOCS.UPLOAD.DUPLICATE_NOTICE_UNKNOWN' | translate)
+							}}
+						</span>
 					</div>
 					<nb-progress-bar
 						*ngIf="item.state === 'uploading'"
@@ -78,6 +87,14 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 			.docs-upload-size {
 				color: var(--text-hint-color);
 				font-size: 0.75rem;
+			}
+			.docs-upload-duplicate {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.25rem;
+				color: var(--color-warning-default);
+				font-size: 0.75rem;
+				white-space: nowrap;
 			}
 			.docs-upload-state.done {
 				color: var(--color-success-default);

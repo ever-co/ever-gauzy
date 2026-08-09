@@ -10,7 +10,7 @@ import {
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DOCS_CONTENT_SEARCH_MIN_CHARS } from '../../docs.constants';
 import { IDocumentFacetBucket, IDocumentFacets } from '../../models/docs-api.model';
-import { DocsFilterState } from '../../models/docs-filter.model';
+import { DocsFilterState, foldStatusFacetBuckets } from '../../models/docs-filter.model';
 
 /**
  * Filter bar: multi-select facet dropdowns (with live counts), created/updated
@@ -50,12 +50,10 @@ export class DocsFilterBarComponent extends TranslationBaseComponent {
 	}
 
 	get statusBuckets(): IDocumentFacetBucket[] {
-		// UPLOADED folds into PROCESSING — filters offer only READY/PROCESSING/FAILED.
+		// UPLOADED folds into PROCESSING — filters offer only READY/PROCESSING/FAILED,
+		// and the Processing count carries the still-UPLOADED rows with it (R-STA-02).
 		const values = [DocumentStatusEnum.READY, DocumentStatusEnum.PROCESSING, DocumentStatusEnum.FAILED];
-		return this.bucketsOrEnum(
-			this.facets?.status?.filter((bucket) => bucket.value !== DocumentStatusEnum.UPLOADED),
-			values
-		);
+		return this.bucketsOrEnum(foldStatusFacetBuckets(this.facets?.status), values);
 	}
 
 	get knowledgeBuckets(): IDocumentFacetBucket[] {

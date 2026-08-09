@@ -12,6 +12,23 @@ export interface IDocumentEventContext {
 	phase: 'crud' | 'status' | 'knowledge' | 'review';
 	previous?: string;
 	next?: string;
+	/**
+	 * The document column the transition changed. Each phase has an obvious default
+	 * (`status` / `knowledgeStatus` / `reviewStatus`), so this only has to be set for the
+	 * `crud` transitions that still carry a before/after pair — move (`parentId`) and
+	 * archive (`isArchived`) — so the activity timeline names the right field.
+	 */
+	field?: string;
+	/**
+	 * Who drove the transition. Omitted = infer from the request identity (a request thread has
+	 * a user, a queue thread does not).
+	 *
+	 * 🛑 Set it explicitly to `'system'` on every pipeline-owned transition: the inline dispatch
+	 * mode runs stages on a `setImmediate` **inside the originating request's async context**, so
+	 * inference alone would attribute the extractor's own status writes to whoever happened to
+	 * upload the file. `R-COL-03` requires system actions to read as "System".
+	 */
+	actor?: 'user' | 'system';
 }
 
 /**

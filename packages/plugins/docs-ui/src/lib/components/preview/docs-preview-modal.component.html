@@ -24,7 +24,7 @@
 					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 				</button>
 			</ng-container>
-			<button nbButton ghost size="small" (click)="download()">
+			<button nbButton ghost size="small" [disabled]="downloading" (click)="download()">
 				<nb-icon icon="download-outline"></nb-icon>
 				{{ 'DOCS.PREVIEW.DOWNLOAD' | translate }}
 			</button>
@@ -88,7 +88,7 @@
 					{{ document?.originalFilename || document?.name }}
 					<span *ngIf="document?.fileSize"> · {{ humanizeSize(document?.fileSize) }}</span>
 				</p>
-				<button nbButton status="primary" (click)="download()">
+				<button nbButton status="primary" [disabled]="downloading" (click)="download()">
 					<nb-icon icon="download-outline"></nb-icon>
 					{{ 'DOCS.PREVIEW.DOWNLOAD' | translate }}
 				</button>

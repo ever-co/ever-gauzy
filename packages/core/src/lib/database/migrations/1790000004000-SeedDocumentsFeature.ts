@@ -103,10 +103,23 @@ export class SeedDocumentsFeature1790000004000 implements MigrationInterface {
 	 */
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		const { name, code, description, image, link, status, icon } = this.feature;
+		/**
+		 * 🛑 `$2` MUST carry an explicit cast. It is the only parameter used twice, and in an
+		 * `INSERT ... SELECT ... WHERE`, Postgres resolves the SELECT target list on its own —
+		 * *before* matching it to the INSERT columns — so the occurrence below deduced `unknown`
+		 * while `"code" = $2` deduced the column's type. Postgres rejects the whole statement
+		 * with `inconsistent types deduced for parameter $2`, the migration throws, and because
+		 * migrations run at API boot the entire API crash-loops.
+		 *
+		 * This does NOT reproduce on SQLite — positional `?` parameters are untyped there — so a
+		 * SQLite-only migration check passes while every Postgres environment (stage and
+		 * production) fails. It took stage down for 18h. The remaining parameters appear once, in
+		 * the target list only, where `unknown` is coerced to the INSERT column type as usual.
+		 */
 		await queryRunner.query(
 			`INSERT INTO "feature" ("id", "name", "code", "description", "image", "link", "status", "icon")
-			 SELECT gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7
-			 WHERE NOT EXISTS (SELECT 1 FROM "feature" WHERE "code" = $2)`,
+			 SELECT gen_random_uuid(), $1, $2::varchar, $3, $4, $5, $6, $7
+			 WHERE NOT EXISTS (SELECT 1 FROM "feature" WHERE "code" = $2::varchar)`,
 			[name, code, description, image, link, status, icon]
 		);
 

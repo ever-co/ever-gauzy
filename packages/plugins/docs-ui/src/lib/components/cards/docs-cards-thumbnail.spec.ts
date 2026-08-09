@@ -3,6 +3,20 @@
  * `TranslationBaseComponent` to exist so the class can be constructed directly (no `TestBed`,
  * no Angular module graph) — same reason as `components/filter-bar/content-search-min.spec.ts`.
  */
+/**
+ * `@gauzy/ui-core/core` is a barrel over the whole app core. `DocsCardsComponent` reaches it
+ * through `DocsRowActionsService`, and loading it for real drags unrelated services (and their
+ * untranspiled ESM dependencies) into the CommonJS test runtime — which fails the suite at LOAD
+ * time, so it reads as "no tests here" rather than "coverage is zero". Same stub-the-injected-
+ * shapes approach as `components/actions/docs-row-actions.spec.ts`.
+ */
+jest.mock('@gauzy/ui-core/core', () => ({
+	Store: class Store {},
+	ToastrService: class ToastrService {},
+	FavoriteStoreService: class FavoriteStoreService {},
+	GenericFavoriteService: class GenericFavoriteService {}
+}));
+
 jest.mock('@gauzy/ui-core/i18n', () => ({
 	TranslationBaseComponent: class {
 		constructor(public readonly translateService: unknown) {}
@@ -28,7 +42,7 @@ import { DocsCardsComponent } from './docs-cards.component';
  *     also *stop* resolving (an expired signed URL, a deleted object), which the browser only
  *     reports as an `error` event on the `<img>`.
  *  2. **The tile is reserved whether or not there is an image.** A thumbnail appears on a
- *     later processing poll, not on first render; a tile that materialised with the image
+ *     later processing poll, not on first render; a tile that materialized with the image
  *     would reflow the whole grid under the user's cursor.
  *
  * The URL is also attacker-influenced in principle (it is stored data rendered into

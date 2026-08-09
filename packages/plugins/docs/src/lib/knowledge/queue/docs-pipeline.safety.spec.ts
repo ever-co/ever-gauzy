@@ -18,6 +18,7 @@ jest.mock('./docs-recovery.service', () => ({ DocsRecoveryService: class {} }));
 jest.mock('./docs-queue.service', () => ({ DocsQueueService: class {} }));
 // The thumbnail service reaches `FileStorage` (and through it the whole `@gauzy/core` graph).
 jest.mock('../thumbnail/document-thumbnail.service', () => ({ DocumentThumbnailService: class {} }));
+jest.mock('../../services/docs-feature.service', () => ({ DocsFeatureService: class {} }));
 
 import { DocumentKnowledgeStatusEnum } from '@gauzy/contracts';
 import { DOCS_JOB_CHUNK, DOCS_JOB_CLASSIFY, DOCS_JOB_EXTRACT, DOCS_JOB_RECONCILE } from './constants';
@@ -35,7 +36,13 @@ const PAYLOAD = {
  * Builds the pipeline with stub collaborators.
  */
 const buildPipeline = (
-	overrides: { indexService?: any; classifierService?: any; processing?: any; thumbnailService?: any } = {}
+	overrides: {
+		indexService?: any;
+		classifierService?: any;
+		processing?: any;
+		thumbnailService?: any;
+		featureEnabled?: boolean;
+	} = {}
 ) => {
 	const document: any = {
 		id: 'doc-1',
@@ -63,6 +70,9 @@ const buildPipeline = (
 	const thumbnailService: any = overrides.thumbnailService ?? {
 		generate: jest.fn().mockResolvedValue('generated')
 	};
+	const docsFeatureService: any = {
+		isEnabledFor: jest.fn().mockResolvedValue(overrides.featureEnabled ?? true)
+	};
 
 	const pipeline = new DocsPipelineService(
 		processingService,
@@ -70,12 +80,23 @@ const buildPipeline = (
 		recoveryService,
 		classifierService,
 		overrides.indexService ?? {},
-		thumbnailService
+		thumbnailService,
+		docsFeatureService
 	);
 	jest.spyOn((pipeline as any).logger, 'error').mockImplementation(() => undefined);
 	jest.spyOn((pipeline as any).logger, 'log').mockImplementation(() => undefined);
+	jest.spyOn((pipeline as any).logger, 'warn').mockImplementation(() => undefined);
 
-	return { pipeline, processingService, queueService, recoveryService, classifierService, thumbnailService, document };
+	return {
+		pipeline,
+		processingService,
+		queueService,
+		recoveryService,
+		classifierService,
+		thumbnailService,
+		docsFeatureService,
+		document
+	};
 };
 
 describe('DocsPipelineService — runStage dispatch', () => {

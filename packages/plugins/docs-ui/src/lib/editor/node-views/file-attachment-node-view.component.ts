@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbButtonModule, NbIconModule, NbProgressBarModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
 import { DocumentsService } from '../../services/documents.service';
 import { AngularNodeViewComponent } from '../node-view/angular-node-view-renderer';
 import { EditorUploadService, IEditorUpload } from '../services/editor-upload.service';
@@ -48,17 +49,17 @@ import { EditorUploadService, IEditorUpload } from '../services/editor-upload.se
 			</div>
 			<div class="gz-attachment-actions">
 				<ng-container *ngIf="documentId">
-					<a
+					<button
 						nbButton
 						ghost
 						size="tiny"
-						[href]="downloadHref"
-						target="_blank"
-						rel="noopener noreferrer"
+						type="button"
+						[disabled]="downloading"
+						(click)="download()"
 						[attr.aria-label]="'DOCS.EDITOR.ATTACHMENT.DOWNLOAD' | translate"
 					>
 						<nb-icon icon="download-outline"></nb-icon>
-					</a>
+					</button>
 					<button
 						nbButton
 						ghost
@@ -139,6 +140,10 @@ export class FileAttachmentNodeViewComponent extends AngularNodeViewComponent {
 	private readonly documentsService = inject(DocumentsService);
 	private readonly uploadService = inject(EditorUploadService, { optional: true });
 	private readonly router = inject(Router);
+	private readonly changeDetectorRef = inject(ChangeDetectorRef);
+
+	/** True while the signed download URL is being resolved (`OnPush` — flagged explicitly). */
+	public downloading = false;
 
 	get documentId(): string | null {
 		return (this.node().attrs['documentId'] as string | null) ?? null;
@@ -173,8 +178,28 @@ export class FileAttachmentNodeViewComponent extends AngularNodeViewComponent {
 		return 'file-outline';
 	}
 
-	get downloadHref(): string {
-		return this.documentId ? this.documentsService.downloadUrl(this.documentId) : '';
+	/**
+	 * Downloads the attachment.
+	 *
+	 * 🛑 This was an `<a [href]>` straight at `GET /:id/download`. That route is a
+	 * JWT-guarded JSON endpoint answering `{ url }` — a plain navigation carries no
+	 * bearer token, so every attachment download landed on a 401. The signed
+	 * provider URL is resolved through the authenticated client first, then opened.
+	 */
+	async download(): Promise<void> {
+		const id = this.documentId;
+		if (!id || this.downloading) return;
+		this.downloading = true;
+		this.changeDetectorRef.markForCheck();
+		try {
+			const url = await firstValueFrom(this.documentsService.getDownloadUrl(id));
+			if (url) window.open(url, '_blank', 'noopener');
+		} catch {
+			// A missing/expired blob is already reflected by the card's own states.
+		} finally {
+			this.downloading = false;
+			this.changeDetectorRef.markForCheck();
+		}
 	}
 
 	openInDocuments(): void {

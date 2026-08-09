@@ -20,11 +20,15 @@ import {
 } from '@gauzy/contracts';
 import { ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 import { DocumentsActions } from '../../+state/documents.actions';
 import { findLinkEntityDescriptor } from '../../models/docs-link.model';
 import { DocsExportService } from '../../services/docs-export.service';
 import { DocumentsService } from '../../services/documents.service';
+import { UploadDuplicateNotice, UploadQueueService } from '../../services/upload-queue.service';
+import {
+	DocsDeleteDialogComponent,
+	IDocsDeleteDialogResult
+} from '../../dialogs/delete-dialog.component';
 import { ExtractedTextDialogComponent } from '../../dialogs/extracted-text-dialog.component';
 import { DocumentLinkDialogComponent } from '../../dialogs/link-dialog.component';
 import { RequestReviewDialogComponent } from '../../dialogs/request-review-dialog.component';
@@ -70,6 +74,8 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 
 	/** True while a markdown/print export is resolving (dialog-free async work). */
 	public exporting = false;
+	/** True while the signed download URL is being resolved. */
+	public downloading = false;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -78,9 +84,22 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 		private readonly toastrService: ToastrService,
 		private readonly dialogService: NbDialogService,
 		private readonly actions: Actions,
-		private readonly router: Router
+		private readonly router: Router,
+		private readonly uploadQueue: UploadQueueService
 	) {
 		super(translateService);
+	}
+
+	/**
+	 * Dedup notice for the open document (`R-UPL-04`).
+	 *
+	 * 🛑 `duplicateOfId` is reported on the **upload response only** — it is not a
+	 * column on the document — so the upload queue is the only place that knows it.
+	 * A document opened on a later page load therefore correctly shows nothing;
+	 * that is the storage model, not a missing render.
+	 */
+	get duplicateNotice(): UploadDuplicateNotice | null {
+		return this.uploadQueue.duplicateNoticeFor(this.document?.id as ID);
 	}
 
 	ngOnChanges(changes: SimpleChanges): void {
@@ -129,9 +148,26 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 		);
 	}
 
-	download(): void {
-		if (this.document) {
-			window.open(this.documentsService.downloadUrl(this.document.id as ID), '_blank');
+	/**
+	 * Resolves the short-lived provider URL, then opens it.
+	 *
+	 * 🛑 `GET /:id/download` is a **JWT-guarded JSON endpoint** answering
+	 * `{ url }`, not a redirect: navigating straight to it sends no bearer token
+	 * and lands on a 401 page. The signed URL therefore has to come back through
+	 * the authenticated `HttpClient` first — which is exactly what
+	 * `getDownloadUrl()` is for.
+	 */
+	async download(): Promise<void> {
+		if (!this.document || this.downloading) return;
+		this.downloading = true;
+		try {
+			const url = await firstValueFrom(this.documentsService.getDownloadUrl(this.document.id as ID));
+			if (url) window.open(url, '_blank', 'noopener');
+			else this.toastrService.warning(this.getTranslation('DOCS.PREVIEW.FALLBACK_BODY'));
+		} catch (error) {
+			this.toastrService.danger(error);
+		} finally {
+			this.downloading = false;
 		}
 	}
 
@@ -173,18 +209,28 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 		}
 	}
 
-	/** Delete is allowed only from the archived state (archive-first flow). */
+	/**
+	 * Delete is allowed only from the archived state (archive-first flow).
+	 *
+	 * The prompt (`01-ux-spec.md` §10.11) is what decides the strategy: a node with
+	 * children offers subtree-vs-promote, a leaf just confirms. This used to open
+	 * the generic confirmation and then hardcode `promote-children` — under a query
+	 * param the backend does not declare, so the request was stripped to the
+	 * `subtree` default and did the opposite of what the code claimed.
+	 */
 	async remove(): Promise<void> {
 		if (!this.document || !this.isArchived) return;
 		const id = this.document.id as ID;
-		const confirmed = await firstValueFrom(
-			this.dialogService.open(DeleteConfirmationComponent, {
-				context: { recordType: this.getTranslation(`DOCS.KIND.${this.document.kind}`) }
+		const result: IDocsDeleteDialogResult | null = await firstValueFrom(
+			this.dialogService.open(DocsDeleteDialogComponent, {
+				context: {
+					target: { id, name: this.document.name, kind: this.document.kind }
+				}
 			}).onClose
 		);
-		if (!confirmed) return;
+		if (!result?.strategy) return;
 		try {
-			await firstValueFrom(this.documentsService.delete(id, { mode: 'promote-children' }));
+			await firstValueFrom(this.documentsService.delete(id, { strategy: result.strategy }));
 			this.toastrService.success(this.getTranslation('DOCS.TOASTS.DELETED'));
 			this.deleted.emit(id);
 		} catch (error) {

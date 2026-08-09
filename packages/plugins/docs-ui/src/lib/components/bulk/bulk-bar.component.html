@@ -24,16 +24,18 @@
 			<button nbButton size="tiny" [disabled]="busy" (click)="move()">
 				{{ 'DOCS.BULK.MOVE' | translate }}
 			</button>
+			<!-- Set categories: a REPLACE, so it goes through a dialog that says so -->
+			<button nbButton size="tiny" [disabled]="busy" (click)="setCategories()">
+				{{ 'DOCS.BULK.CATEGORIES' | translate }}
+			</button>
 			<span class="docs-bulk-tags">
-				<input
-					nbInput
-					size="tiny"
-					type="text"
-					id="docs-bulk-tags-input"
-					[placeholder]="'DOCS.DETAIL.TAGS' | translate"
-					[attr.aria-label]="'DOCS.DETAIL.TAGS' | translate"
-					[(ngModel)]="tagsInput"
-				/>
+				<ga-tags-color-input
+					class="docs-bulk-tags-picker"
+					[multiple]="true"
+					[isOrgLevel]="true"
+					[selectedTags]="tags"
+					(selectedTagsEvent)="tags = $event"
+				></ga-tags-color-input>
 				<button nbButton size="tiny" [disabled]="busy" (click)="addTags()">
 					{{ 'DOCS.BULK.TAGS_ADD' | translate }}
 				</button>

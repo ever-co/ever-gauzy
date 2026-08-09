@@ -11,7 +11,7 @@ import {
 	DOCS_PROCESSING_POLL_MS,
 	DOCS_UPLOAD_ACCEPT
 } from '../docs.constants';
-import { IDocumentUploadOptions } from '../models/docs-api.model';
+import { IDocumentUploadOptions, IDocumentUploadResult } from '../models/docs-api.model';
 import { DocumentsService } from './documents.service';
 
 /**
@@ -31,6 +31,25 @@ export interface UploadQueueItem {
 	state: UploadQueueItemState;
 	documentId?: ID;
 	error?: string;
+	/**
+	 * Advisory in-organization sha256 match reported by the upload response
+	 * (`R-UPL-04`). The upload is never blocked or dropped — this only drives the
+	 * "possible duplicate of X" notice on the progress row and in the detail panel.
+	 *
+	 * 🛑 It exists **only** on the upload envelope, never as a column on the
+	 * document, so this queue is the single place that remembers it.
+	 */
+	duplicateOfId?: ID;
+	/** Name of `duplicateOfId`, resolved lazily; absent when the lookup failed. */
+	duplicateOfName?: string;
+	/** Files in the enqueue batch this item belonged to (§7.3 single-upload toast). */
+	batchSize: number;
+}
+
+/** What the detail panel needs to render the dedup notice for a document. */
+export interface UploadDuplicateNotice {
+	id: ID;
+	name?: string;
 }
 
 export interface UploadValidationError {
@@ -135,6 +154,7 @@ export class UploadQueueService implements OnDestroy {
 			return false;
 		}
 		const errors: UploadValidationError[] = [];
+		const batchSize = files.length;
 		for (const file of files) {
 			const key = `upload-${++this.keySeq}`;
 			const validation = this.validate(file);
@@ -146,11 +166,12 @@ export class UploadQueueService implements OnDestroy {
 					options,
 					progress: 0,
 					state: 'error',
-					error: validation.reason
+					error: validation.reason,
+					batchSize
 				});
 				continue;
 			}
-			this.upsert({ key, file, options, progress: 0, state: 'uploading' });
+			this.upsert({ key, file, options, progress: 0, state: 'uploading', batchSize });
 			this.startUpload(key, file, options);
 		}
 		if (errors.length) this._validationErrors$.next(errors);
@@ -200,21 +221,25 @@ export class UploadQueueService implements OnDestroy {
 	}
 
 	private startUpload(key: string, file: File, options: IDocumentUploadOptions): void {
-		const subscription = this.documentsService.upload(file, options).subscribe({
+		const subscription = this.documentsService.uploadOne(file, options).subscribe({
 			next: (event) => {
 				if (event.type === HttpEventType.UploadProgress && event.total) {
 					this.patch(key, { progress: Math.round((event.loaded / event.total) * 100) });
 				} else if (event.type === HttpEventType.Response) {
-					// `DocumentsService.upload()` has already unwrapped the batch
-					// `{ results, rejected }` envelope; a per-file rejection arrives on
-					// the error channel below, never here with an empty body.
-					const document = event.body as IDocument;
+					// `DocumentsService.uploadOne()` has already unwrapped the batch
+					// `{ results, rejected }` envelope down to this file's result; a
+					// per-file rejection arrives on the error channel below, never here
+					// with an empty body.
+					const result = event.body as IDocumentUploadResult;
+					const document = result?.document;
 					const settled = this.isSettled(document);
 					this.patch(key, {
 						state: 'done',
 						progress: 100,
-						documentId: document?.id as ID
+						documentId: document?.id as ID,
+						duplicateOfId: result?.duplicateOfId
 					});
+					if (result?.duplicateOfId) this.resolveDuplicateName(key, result.duplicateOfId);
 					if (document && !settled) {
 						this.pendingIds.add(String(document.id));
 						this.ensurePolling();
@@ -230,6 +255,43 @@ export class UploadQueueService implements OnDestroy {
 			}
 		});
 		this.uploadSubscriptions.set(key, subscription);
+	}
+
+	/**
+	 * Resolves the duplicate's display name. Cosmetic and fault-isolated: a failed
+	 * lookup (deleted, or not visible to this user) leaves the notice generic
+	 * rather than printing a raw id — the upload itself is unaffected either way.
+	 */
+	private resolveDuplicateName(key: string, duplicateOfId: ID): void {
+		this.documentsService
+			.getById(duplicateOfId)
+			.pipe(catchError(() => of(null)))
+			.subscribe((duplicate) => {
+				if (duplicate?.name) this.patch(key, { duplicateOfName: duplicate.name });
+			});
+	}
+
+	/**
+	 * The dedup notice for an uploaded document (`R-UPL-04`), or `null` when this
+	 * session did not upload it — `duplicateOfId` is upload-response-only, so a
+	 * document opened on a later page load simply has no notice to show.
+	 */
+	duplicateNoticeFor(documentId: ID | null | undefined): UploadDuplicateNotice | null {
+		if (!documentId) return null;
+		const item = this._items$.value.find((entry) => String(entry.documentId) === String(documentId));
+		if (!item?.duplicateOfId) return null;
+		return { id: item.duplicateOfId, name: item.duplicateOfName };
+	}
+
+	/**
+	 * True when the document arrived through a batch of exactly one file — the
+	 * condition §7.3 puts on the "uploaded, needs review" toast (a ten-file drop
+	 * must not raise ten toasts).
+	 */
+	isSingleFileUpload(documentId: ID | null | undefined): boolean {
+		if (!documentId) return false;
+		const item = this._items$.value.find((entry) => String(entry.documentId) === String(documentId));
+		return item?.batchSize === 1;
 	}
 
 	/**

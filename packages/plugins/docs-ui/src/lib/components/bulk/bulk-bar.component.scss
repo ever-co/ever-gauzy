@@ -25,8 +25,12 @@
 		align-items: center;
 		gap: 0.25rem;
 
-		input {
-			max-width: 10rem;
+		// The platform tag picker has no intrinsic width — cap it so the bar keeps
+		// its single-row layout until it genuinely has to wrap.
+		.docs-bulk-tags-picker {
+			display: inline-block;
+			min-width: 10rem;
+			max-width: 18rem;
 		}
 	}
 }

@@ -8,6 +8,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { DOCS_DEFAULT_PAGE_SIZE } from '../docs.constants';
+import { IDocumentFacetBucket } from './docs-api.model';
 
 /**
  * Canonical filter state for the browse view. The URL is the single source of
@@ -89,6 +90,43 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** UPLOADED never appears in the URL — it folds into PROCESSING for users. */
 const URL_STATUS_WHITELIST = [DocumentStatusEnum.READY, DocumentStatusEnum.PROCESSING, DocumentStatusEnum.FAILED];
+
+/**
+ * Expands a status selection for the API (`R-STA-02`).
+ *
+ * 🛑 UPLOADED is an internal first phase the user is never shown: the badge, the
+ * facet dropdown and the URL all say "Processing". Filtering must fold the same
+ * way — sending a bare `status=PROCESSING` hides every row that is still in
+ * UPLOADED, i.e. the freshly uploaded files the filter most obviously promises.
+ * The API keeps all four states; only the UI speaks two.
+ */
+export function expandStatusFilterForApi(status: DocumentStatusEnum[]): DocumentStatusEnum[] {
+	if (!status.includes(DocumentStatusEnum.PROCESSING) || status.includes(DocumentStatusEnum.UPLOADED)) {
+		return status;
+	}
+	return [...status, DocumentStatusEnum.UPLOADED];
+}
+
+/**
+ * Folds the UPLOADED facet bucket into PROCESSING for display — the same
+ * two-phase truth as {@link expandStatusFilterForApi}, from the other direction.
+ * Dropping the bucket instead (what the filter bar used to do) understated the
+ * Processing count by exactly the rows that had only just arrived.
+ */
+export function foldStatusFacetBuckets(buckets: IDocumentFacetBucket[] | undefined): IDocumentFacetBucket[] {
+	if (!buckets?.length) return [];
+	const uploaded = buckets.find((bucket) => bucket.value === DocumentStatusEnum.UPLOADED);
+	const folded = buckets.filter((bucket) => bucket.value !== DocumentStatusEnum.UPLOADED);
+	if (!uploaded?.count) return folded;
+	const processing = folded.find((bucket) => bucket.value === DocumentStatusEnum.PROCESSING);
+	if (processing) {
+		return folded.map((bucket) =>
+			bucket === processing ? { ...bucket, count: (bucket.count ?? 0) + uploaded.count } : bucket
+		);
+	}
+	// No PROCESSING bucket came back at all — the uploaded rows ARE the processing ones.
+	return [...folded, { ...uploaded, value: DocumentStatusEnum.PROCESSING }];
+}
 
 function parseCsvEnum<T extends string>(raw: string | undefined | null, allowed: readonly T[]): T[] {
 	if (!raw) return [];

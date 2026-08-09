@@ -21,8 +21,16 @@ export class MoveDocumentHandler implements ICommandHandler<MoveDocumentCommand>
 	public async execute(command: MoveDocumentCommand): Promise<IDocument> {
 		const document = await this.documentService.findOneScoped(command.id);
 		await this.documentService.assertCanWrite(document);
+		const previousParentId = document.parentId ?? null;
 		const moved = await this.documentTreeService.moveDocument(document, command.input.parentId, command.input.index);
-		this.documentService.emitDocumentEvent(moved, 'updated');
+		// `field` + before/after so the activity timeline records the re-parenting (R-COL-03),
+		// not just "the document was updated".
+		this.documentService.emitDocumentEvent(moved, 'updated', {
+			phase: 'crud',
+			field: 'parentId',
+			previous: previousParentId ?? 'root',
+			next: moved.parentId ?? 'root'
+		});
 		return moved;
 	}
 }

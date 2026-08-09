@@ -27,6 +27,7 @@ import {
 	IDocumentSettingsDefaults,
 	IDocumentUploadOptions,
 	IDocumentUploadResponse,
+	IDocumentUploadResult,
 	IDocumentsQueryParams,
 	IKnowledgeStatus,
 	toDocumentsQueryParams
@@ -149,19 +150,24 @@ export class DocumentsService {
 	}
 
 	/**
-	 * Single-file convenience over `uploadMany()`: progress events pass through
-	 * untouched and the terminal response is rewritten to carry the accepted
-	 * document, so callers keep their `HttpEvent<IDocument>` contract.
+	 * Single-file upload keeping the batch envelope's **per-file result**: progress
+	 * events pass through untouched and the terminal response carries
+	 * `{ document, duplicateOfId? }`.
+	 *
+	 * 🛑 `duplicateOfId` (the advisory in-org sha256 match, `R-UPL-04`) lives ONLY
+	 * on this envelope — it is not a column on the document — so anything that wants
+	 * to show the "possible duplicate" notice has to read it here. {@link upload}
+	 * narrows the same stream to the bare document for callers that only need the row.
 	 *
 	 * A per-file rejection is surfaced as an `HttpErrorResponse` carrying the
 	 * backend's `{ code, message }` — the batch endpoint answers 201 even when it
 	 * accepted nothing, so without this a rejected file would look like a success
 	 * with an undefined document.
 	 */
-	upload(file: File, options: IDocumentUploadOptions): Observable<HttpEvent<IDocument>> {
+	uploadOne(file: File, options: IDocumentUploadOptions): Observable<HttpEvent<IDocumentUploadResult>> {
 		return this.uploadMany([file], options).pipe(
 			map((event) => {
-				if (event.type !== HttpEventType.Response) return event as HttpEvent<IDocument>;
+				if (event.type !== HttpEventType.Response) return event as HttpEvent<IDocumentUploadResult>;
 				const response = event as HttpResponse<IDocumentUploadResponse>;
 				const accepted = response.body?.results?.[0];
 				if (!accepted?.document) {
@@ -176,7 +182,22 @@ export class DocumentsService {
 						}
 					});
 				}
-				return response.clone({ body: accepted.document }) as HttpEvent<IDocument>;
+				return response.clone({ body: accepted }) as HttpEvent<IDocumentUploadResult>;
+			})
+		);
+	}
+
+	/**
+	 * Single-file convenience over {@link uploadOne}: the terminal response is
+	 * rewritten to carry just the accepted document, so callers keep their
+	 * `HttpEvent<IDocument>` contract.
+	 */
+	upload(file: File, options: IDocumentUploadOptions): Observable<HttpEvent<IDocument>> {
+		return this.uploadOne(file, options).pipe(
+			map((event) => {
+				if (event.type !== HttpEventType.Response) return event as HttpEvent<IDocument>;
+				const response = event as HttpResponse<IDocumentUploadResult>;
+				return response.clone({ body: response.body?.document }) as HttpEvent<IDocument>;
 			})
 		);
 	}
@@ -195,17 +216,6 @@ export class DocumentsService {
 			.pipe(map((result) => result?.url ?? ''));
 	}
 
-	/**
-	 * Endpoint path of the download route.
-	 *
-	 * @deprecated Not navigable — see {@link getDownloadUrl}. Kept only for
-	 * templates that still bind it to an `href`; those bindings resolve to a 401
-	 * and must move to `getDownloadUrl()` + `window.open(url, '_blank')`.
-	 */
-	downloadUrl(id: ID): string {
-		return `${this.API_URL}/documents/${id}/download`;
-	}
-
 	move(id: ID, input: IDocumentMoveInput): Observable<IDocument> {
 		return this.http.post<IDocument>(`${this.API_URL}/documents/${id}/move`, input);
 	}
@@ -222,8 +232,16 @@ export class DocumentsService {
 		return this.http.post<IDocument>(`${this.API_URL}/documents/${id}/unarchive`, {});
 	}
 
-	/** Archived-only. `mode` decides subtree deletion vs child promotion. */
-	delete(id: ID, options: { mode: 'subtree' | 'promote-children' }): Observable<void> {
+	/**
+	 * Archived-only. `strategy` decides subtree deletion vs child promotion.
+	 *
+	 * 🛑 The param is **`strategy`** — that is what `DeleteDocumentQueryDTO`
+	 * declares, and the route runs under `ValidationPipe({ whitelist: true })`, so
+	 * any other name (this used to send `mode`) is stripped without an error and
+	 * the handler falls back to `strategy ?? 'subtree'`. The caller's choice then
+	 * looks honoured while every delete silently cascades over the subtree.
+	 */
+	delete(id: ID, options: { strategy: 'subtree' | 'promote-children' }): Observable<void> {
 		return this.http.delete<void>(`${this.API_URL}/documents/${id}`, { params: toParams(options) });
 	}
 

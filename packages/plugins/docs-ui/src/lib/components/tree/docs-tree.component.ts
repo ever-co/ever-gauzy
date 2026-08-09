@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ITreeOptions, TreeComponent } from '@ali-hm/angular-tree-component';
-import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
+import { NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Actions } from '@ngneat/effects-ng';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,10 +12,16 @@ import { FavoriteStoreService, Store, ToastrService } from '@gauzy/ui-core/core'
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DocumentsActions } from '../../+state/documents.actions';
 import { DOCS_PAGE_LINK, DOCS_RECENTS_KEY_PREFIX, DOCS_RECENTS_LIMIT } from '../../docs.constants';
-import { CreateDialogComponent } from '../../dialogs/create-dialog.component';
-import { MoveDialogComponent } from '../../dialogs/move-dialog.component';
 import { DocumentTreeStore, IDocsTreeNode } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
+import {
+	buildDocsActionMenu,
+	docsActionMenuSignature,
+	docsActionOf,
+	DocsActionId,
+	IDocsActionMenuContext
+} from '../actions/docs-action-menu';
+import { DocsRowActionsService } from '../actions/docs-row-actions.service';
 
 interface IRecentEntry {
 	id: string;
@@ -47,6 +53,11 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 
 	private canCreate = false;
 	private canUpdate = false;
+	private canDelete = false;
+	private canAiImport = false;
+
+	/** nodeId → last built menu, keyed by the signature it was built from. */
+	private readonly menuCache = new Map<string, { signature: string; items: NbMenuItem[] }>();
 
 	public options: ITreeOptions = {
 		childrenField: 'children',
@@ -68,8 +79,8 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 		private readonly actions: Actions,
 		private readonly treeStore: DocumentTreeStore,
 		private readonly documentsService: DocumentsService,
+		private readonly rowActions: DocsRowActionsService,
 		private readonly toastrService: ToastrService,
-		private readonly dialogService: NbDialogService,
 		private readonly nbMenuService: NbMenuService,
 		private readonly permissionsService: NgxPermissionsService,
 		private readonly favoriteStore: FavoriteStoreService,
@@ -82,7 +93,15 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 		this.permissionsService.permissions$.pipe(untilDestroyed(this)).subscribe((permissions) => {
 			this.canCreate = !!permissions[PermissionsEnum.DOCS_CREATE];
 			this.canUpdate = !!permissions[PermissionsEnum.DOCS_UPDATE];
+			this.canDelete = !!permissions[PermissionsEnum.DOCS_DELETE];
+			this.canAiImport = !!permissions[PermissionsEnum.DOCS_AI_IMPORT];
+			this.menuCache.clear();
 		});
+
+		// Menu labels are baked in at build time, so a language switch (and a star
+		// toggled anywhere in the app) has to drop the memo.
+		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => this.menuCache.clear());
+		this.rowActions.favoriteIds$.pipe(untilDestroyed(this)).subscribe(() => this.menuCache.clear());
 
 		this.treeStore.nodes$.pipe(untilDestroyed(this)).subscribe((nodes) => {
 			this.nodes = nodes.map((node) => ({ ...node }));
@@ -111,7 +130,7 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 				const nodeId = tag.slice(TREE_MENU_TAG_PREFIX.length);
 				// Deliberate fire-and-forget (a menu click cannot be awaited) — `void` is safe
 				// only because `onContextAction` now owns its failure path and never rejects.
-				void this.onContextAction((item as NbMenuItem & { data?: { action?: string } }).data?.action, nodeId);
+				void this.onContextAction(docsActionOf(item), nodeId);
 			});
 	}
 
@@ -162,125 +181,60 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 		return `${TREE_MENU_TAG_PREFIX}${node.id}`;
 	}
 
+	/**
+	 * Per-kind, permission-filtered menu for one node (`01-ux-spec.md` §3.5),
+	 * built by the SAME builder the table and cards kebabs use.
+	 *
+	 * 🛑 Memoized. The template calls this from a binding, and `[nbContextMenu]`
+	 * rebuilds its overlay whenever the bound array is a new reference — an
+	 * un-memoized builder would rebuild every open menu on every change-detection
+	 * pass. The signature covers everything the item set is derived from, so a
+	 * kind/archive/knowledge/favorite/permission change still produces a new array.
+	 */
 	menuItemsFor(node: IDocsTreeNode): NbMenuItem[] {
-		const items: NbMenuItem[] = [];
-		const container = node.kind !== DocumentKindEnum.FILE;
-		if (this.canCreate && container) {
-			items.push(
-				{ title: this.getTranslation('DOCS.TREE.NEW_PAGE'), data: { action: 'new-page' } },
-				{ title: this.getTranslation('DOCS.TREE.NEW_FOLDER'), data: { action: 'new-folder' } },
-				{ title: this.getTranslation('DOCS.TREE.UPLOAD_HERE'), data: { action: 'upload-here' } }
-			);
-		}
-		if (this.canUpdate) {
-			items.push(
-				{ title: this.getTranslation('DOCS.TREE.RENAME'), data: { action: 'rename' } },
-				{ title: this.getTranslation('DOCS.TREE.MOVE'), data: { action: 'move' } }
-			);
-		}
-		// Duplicating writes a new node: `POST /documents/:id/duplicate` is
-		// `@Permissions(DOCS_CREATE)` (document-tree.controller.ts), so gating it on
-		// DOCS_UPDATE offered the action to users the backend answers with a 403.
-		if (this.canCreate) {
-			items.push({ title: this.getTranslation('DOCS.TREE.DUPLICATE'), data: { action: 'duplicate' } });
-		}
-		if (this.canUpdate) {
-			items.push({ title: this.getTranslation('DOCS.TREE.ARCHIVE'), data: { action: 'archive' } });
-		}
+		const context = this.menuContext(node);
+		const signature = docsActionMenuSignature(node, context);
+		const cached = this.menuCache.get(String(node.id));
+		if (cached?.signature === signature) return cached.items;
+		const items = buildDocsActionMenu(node, context);
+		this.menuCache.set(String(node.id), { signature, items });
 		return items;
+	}
+
+	private menuContext(node?: IDocsTreeNode): IDocsActionMenuContext {
+		return {
+			surface: 'tree',
+			translate: (key: string) => this.getTranslation(key),
+			isFavorite: node ? this.rowActions.isFavorite(node.id) : false,
+			permissions: {
+				create: this.canCreate,
+				update: this.canUpdate,
+				delete: this.canDelete,
+				aiImport: this.canAiImport
+			}
+		};
 	}
 
 	/**
 	 * Runs one context-menu action.
 	 *
 	 * 🛑 **Never rejects.** The only caller is the `nbMenuService.onItemClick()` subscription,
-	 * which cannot await it, so an escaping rejection would be an unhandled one. The
-	 * `new-page` / `new-folder` / `rename` / `move` branches all `await firstValueFrom(…onClose)`
-	 * with no local guard, so the outer catch below is what actually terminates them — the
-	 * `duplicate` / `archive` branches keep their own catch and never reach it.
+	 * which cannot await it, so an escaping rejection would be an unhandled one.
+	 * `DocsRowActionsService.execute()` owns its failure path for every mutation; the
+	 * `open` branch below is the only tree-local one and cannot throw.
 	 */
-	private async onContextAction(action: string | undefined, nodeId: string): Promise<void> {
+	private async onContextAction(action: DocsActionId | undefined, nodeId: string): Promise<void> {
 		if (!action) return;
 		const node = this.treeStore.getNode(nodeId);
-		try {
-			switch (action) {
-				case 'new-page':
-					await this.createChild(nodeId, DocumentKindEnum.PAGE);
-					break;
-				case 'new-folder':
-					await this.createChild(nodeId, DocumentKindEnum.FOLDER);
-					break;
-				case 'upload-here':
-					this.router.navigate([], {
-						relativeTo: this.route,
-						queryParams: { upload: 1, folder: nodeId },
-						queryParamsHandling: 'merge'
-					});
-					break;
-				case 'rename':
-					await this.rename(nodeId);
-					break;
-				case 'move':
-					await this.openMoveDialog(nodeId);
-					break;
-				case 'duplicate':
-					try {
-						await firstValueFrom(this.documentsService.duplicate(nodeId));
-						this.treeStore.invalidate(node?.parentId ?? null);
-						this.toastrService.success(this.getTranslation('DOCS.TOASTS.DUPLICATED'));
-					} catch (error) {
-						this.toastrService.danger(error);
-					}
-					break;
-				case 'archive':
-					try {
-						await firstValueFrom(this.documentsService.archive(nodeId));
-						this.treeStore.invalidate(node?.parentId ?? null);
-						this.actions.dispatch(DocumentsActions.rowRemoved(nodeId));
-						this.toastrService.success(this.getTranslation('DOCS.TOASTS.ARCHIVED'));
-					} catch (error) {
-						this.toastrService.danger(error);
-					}
-					break;
-			}
-		} catch (error) {
-			this.toastrService.danger(error);
-		}
-	}
-
-	private async createChild(parentId: ID, kind: DocumentKindEnum): Promise<void> {
-		const created = await firstValueFrom(
-			this.dialogService.open(CreateDialogComponent, { context: { kind, parentId } }).onClose
-		);
-		if (created) {
-			this.treeStore.invalidate(parentId);
-			this.actions.dispatch(DocumentsActions.loadDocuments());
-		}
-	}
-
-	private async rename(nodeId: ID): Promise<void> {
-		const node = this.treeStore.getNode(nodeId);
 		if (!node) return;
-		const renamed = await firstValueFrom(
-			this.dialogService.open(CreateDialogComponent, {
-				context: { kind: node.kind, parentId: node.parentId ?? null, renameId: nodeId, initialName: node.name }
-			}).onClose
-		);
-		if (renamed) {
-			this.treeStore.invalidate(node.parentId ?? null);
-			this.actions.dispatch(DocumentsActions.loadDocuments());
+		if (action === 'open') {
+			this.onNodeActivate({ node: { data: node } });
+			return;
 		}
-	}
-
-	private async openMoveDialog(nodeId: ID): Promise<void> {
-		const node = this.treeStore.getNode(nodeId);
-		const moved = await firstValueFrom(
-			this.dialogService.open(MoveDialogComponent, { context: { documentIds: [nodeId] } }).onClose
-		);
-		if (moved) {
-			this.treeStore.invalidate(node?.parentId ?? null);
-			this.actions.dispatch(DocumentsActions.loadDocuments());
-		}
+		const changed = await this.rowActions.execute(action, node);
+		// A rename/archive/delete changes the label or the membership of the branch
+		// the node lives in; the cached menu was built from the pre-mutation node.
+		if (changed) this.menuCache.delete(String(nodeId));
 	}
 
 	// ─── Node rendering helpers ──────────────────────────────────
