@@ -42,7 +42,7 @@ import { DocsCardsComponent } from './docs-cards.component';
  *     also *stop* resolving (an expired signed URL, a deleted object), which the browser only
  *     reports as an `error` event on the `<img>`.
  *  2. **The tile is reserved whether or not there is an image.** A thumbnail appears on a
- *     later processing poll, not on first render; a tile that materialised with the image
+ *     later processing poll, not on first render; a tile that materialized with the image
  *     would reflow the whole grid under the user's cursor.
  *
  * The URL is also attacker-influenced in principle (it is stored data rendered into
