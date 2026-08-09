@@ -68,6 +68,7 @@ import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository
 import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 import { Invite } from './invite.entity';
 import { InviteAcceptCommand } from './commands';
+import { inviteClaimWhere, inviteRejectWhere, inviteReleaseWhere } from '../shared/single-use/claim-criteria';
 
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
@@ -1066,49 +1067,61 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				 * Current user is already part of invited tenant as separate user
 				 */
 				if (invitedTenantUser) {
-					let employee: IEmployee | null;
-					switch (this.ormType) {
-						case MultiORMEnum.MikroORM:
-							employee = await this.mikroOrmEmployeeRepository.findOneOrFail({ userId: invitedTenantUser.id } as any);
-							break;
-						case MultiORMEnum.TypeORM:
-						default:
-							employee = await this.typeOrmEmployeeRepository.findOneOrFail({
-								where: { userId: invitedTenantUser.id }
-							});
-							break;
+					// Claim BEFORE adding the employee to the team — see claimInvite. Without it two
+					// parallel acceptances both add the membership and both mark the invite accepted.
+					if (!(await this.claimInvite(inviteId))) {
+						throw new BadRequestException('Invite has already been accepted');
 					}
-					if (employee) {
-						const [team] = teams;
-						/**
-						 * Add employee to invited team
-						 */
+
+					try {
+						let employee: IEmployee | null;
 						switch (this.ormType) {
-							case MultiORMEnum.MikroORM: {
-								const em = this.mikroOrmOrganizationTeamEmployeeRepository.getEntityManager();
-								const teamEmployee = em.create('OrganizationTeamEmployee', {
-									employeeId: employee.id,
-									organizationTeamId: team.id,
-									roleId: invitedTenantUser.roleId,
-									tenantId,
-									organizationId
-								} as any);
-								await em.persistAndFlush(teamEmployee);
+							case MultiORMEnum.MikroORM:
+								employee = await this.mikroOrmEmployeeRepository.findOneOrFail({ userId: invitedTenantUser.id } as any);
 								break;
-							}
 							case MultiORMEnum.TypeORM:
 							default:
-								await this.typeOrmOrganizationTeamEmployeeRepository.save({
-									employeeId: employee.id,
-									organizationTeamId: team.id,
-									roleId: invitedTenantUser.roleId,
-									tenantId,
-									organizationId
+								employee = await this.typeOrmEmployeeRepository.findOneOrFail({
+									where: { userId: invitedTenantUser.id }
 								});
 								break;
 						}
+						if (employee) {
+							const [team] = teams;
+							/**
+							 * Add employee to invited team
+							 */
+							switch (this.ormType) {
+								case MultiORMEnum.MikroORM: {
+									const em = this.mikroOrmOrganizationTeamEmployeeRepository.getEntityManager();
+									const teamEmployee = em.create('OrganizationTeamEmployee', {
+										employeeId: employee.id,
+										organizationTeamId: team.id,
+										roleId: invitedTenantUser.roleId,
+										tenantId,
+										organizationId
+									} as any);
+									await em.persistAndFlush(teamEmployee);
+									break;
+								}
+								case MultiORMEnum.TypeORM:
+								default:
+									await this.typeOrmOrganizationTeamEmployeeRepository.save({
+										employeeId: employee.id,
+										organizationTeamId: team.id,
+										roleId: invitedTenantUser.roleId,
+										tenantId,
+										organizationId
+									});
+									break;
+							}
 
-						await this.updateInviteStatus(inviteId, InviteStatusEnum.ACCEPTED, invitedTenantUser.id);
+							await this.updateInviteStatus(inviteId, InviteStatusEnum.ACCEPTED, invitedTenantUser.id);
+						}
+					} catch (error) {
+						// Nothing consumed the invite after all — hand it back.
+						await this.releaseInvite(inviteId);
+						throw error;
 					}
 				}
 
@@ -1117,25 +1130,38 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				 * Current user is not belong to invited tenant & current user email with invited tenant is not present
 				 */
 				if (user.tenantId !== tenantId && !invitedTenantUser) {
-					const [team] = teams;
-					const names = fullName?.split(' ');
-					const newTenantUser = await this.createUser(
-						{
-							user: {
-								firstName: (names && names.length && names[0]) || '',
-								lastName: (names && names.length && names[1]) || '',
-								email: email,
-								tenant: tenant,
-								role: role
+					// Claim BEFORE creating the user — see claimInvite. Everything up to here is a
+					// read, so without the claim two parallel acceptances of one invite would each
+					// create their own tenant user.
+					if (!(await this.claimInvite(inviteId))) {
+						throw new BadRequestException('Invite has already been accepted');
+					}
+
+					try {
+						const [team] = teams;
+						const names = fullName?.split(' ');
+						const newTenantUser = await this.createUser(
+							{
+								user: {
+									firstName: (names && names.length && names[0]) || '',
+									lastName: (names && names.length && names[1]) || '',
+									email: email,
+									tenant: tenant,
+									role: role
+								},
+								organizationId,
+								inviteId,
+								createdByUserId: invitedByUserId
 							},
-							organizationId,
-							inviteId,
-							createdByUserId: invitedByUserId
-						},
-						team.id,
-						languageCode
-					);
-					await this.updateInviteStatus(inviteId, InviteStatusEnum.ACCEPTED, newTenantUser.id);
+							team.id,
+							languageCode
+						);
+						await this.updateInviteStatus(inviteId, InviteStatusEnum.ACCEPTED, newTenantUser.id);
+					} catch (error) {
+						// Nothing consumed the invite after all — hand it back.
+						await this.releaseInvite(inviteId);
+						throw error;
+					}
 				}
 			}
 
@@ -1332,6 +1358,98 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, integration);
 		return user;
+	}
+
+	/**
+	 * Atomically claims an invite for acceptance, flipping INVITED -> ACCEPTED.
+	 *
+	 * The expected prior status stays in the WHERE clause, which makes the write its own check:
+	 * whichever concurrent acceptance wins the row updates it and gets a non-zero count, and every
+	 * other one matches nothing and gets 0.
+	 *
+	 * Callers MUST claim BEFORE registering a user or creating any membership. Validating the
+	 * invite and only marking it accepted afterwards — as these flows used to — let two parallel
+	 * acceptances of one invite each run a full registration, because neither had committed
+	 * anything the other could see.
+	 *
+	 * @param inviteId - The invite to claim.
+	 * @param userId - Optional user ID to associate with the invite.
+	 * @returns `true` if this call claimed the invite, `false` if it was no longer INVITED.
+	 */
+	async claimInvite(inviteId: ID, userId?: ID): Promise<boolean> {
+		const updateData: any = { status: InviteStatusEnum.ACCEPTED };
+		if (userId) updateData.userId = userId;
+
+		const where: any = inviteClaimWhere(inviteId);
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return (await this.mikroOrmRepository.nativeUpdate(where, updateData)) > 0;
+			case MultiORMEnum.TypeORM:
+			default: {
+				const { affected } = await this.typeOrmRepository.update(where, updateData);
+				return (affected ?? 0) > 0;
+			}
+		}
+	}
+
+	/**
+	 * Atomically rejects an invite, flipping INVITED -> REJECTED.
+	 *
+	 * Same guard as {@link claimInvite}, for the same reason: rejection is the other exit from
+	 * INVITED, and an unguarded write by id would let a reject racing an accept overwrite an invite
+	 * that has already registered a user, destroying the record of who consumed it.
+	 *
+	 * Goes straight to the repositories rather than through `update()`. Invite rejection is a
+	 * PUBLIC endpoint, and passing object criteria to `TenantAwareCrudService.update` routes them
+	 * to `findOneByWhereOptions`, which dereferences `RequestContext.currentUser().tenantId` and
+	 * throws when there is no authenticated user.
+	 *
+	 * @param inviteId - The invite to reject.
+	 * @returns `true` if this call rejected the invite, `false` if it was no longer INVITED.
+	 */
+	async rejectInvite(inviteId: ID): Promise<boolean> {
+		const where: any = inviteRejectWhere(inviteId);
+		const updateData: any = { status: InviteStatusEnum.REJECTED };
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return (await this.mikroOrmRepository.nativeUpdate(where, updateData)) > 0;
+			case MultiORMEnum.TypeORM:
+			default: {
+				const { affected } = await this.typeOrmRepository.update(where, updateData);
+				return (affected ?? 0) > 0;
+			}
+		}
+	}
+
+	/**
+	 * Hands a claimed invite back to INVITED after acceptance failed part-way through.
+	 *
+	 * Claiming up front is what guarantees single use, but it also means a registration that then
+	 * throws would strand the invite as ACCEPTED with nobody attached, forcing an admin to re-issue
+	 * it. This restores it instead. Best-effort by design: a failed release costs a re-invite,
+	 * whereas a failed claim would cost a duplicate acceptance, so only the claim may block.
+	 *
+	 * @param inviteId - The invite to release.
+	 */
+	async releaseInvite(inviteId: ID): Promise<void> {
+		const where: any = inviteReleaseWhere(inviteId);
+		const updateData: any = { status: InviteStatusEnum.INVITED, userId: null };
+
+		try {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					await this.mikroOrmRepository.nativeUpdate(where, updateData);
+					break;
+				case MultiORMEnum.TypeORM:
+				default:
+					await this.typeOrmRepository.update(where, updateData);
+					break;
+			}
+		} catch (error) {
+			console.error(`Failed to release invite ${inviteId} after a failed acceptance:`, error);
+		}
 	}
 
 	/**
