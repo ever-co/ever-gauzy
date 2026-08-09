@@ -6,7 +6,7 @@ import { EventBusModule, FeatureModule, RolePermissionModule, TenantSettingModul
 import { SchedulerModule } from '@gauzy/scheduler';
 import { DocumentActivityLogSubscriber } from './activity/document-activity-log.subscriber';
 import { ChatCaptureSubscriber } from './capture/chat-capture.subscriber';
-import { isDocsQueueEnabled } from './docs.config';
+import { isDocsQueueEnabled, isDocsQueueWorkerEnabled } from './docs.config';
 import { GenericSignedWebhookAdapter } from './capture/generic-signed-webhook.adapter';
 import { InboundEmailController } from './capture/inbound-email.controller';
 import { InboundEmailService } from './capture/inbound-email.service';
@@ -57,12 +57,25 @@ const KnowledgeProviders = [
  *
  * Evaluated once, at module-definition time, because Nest module metadata is static.
  *
- * 🛑 The BullMQ pieces are GATED, not unconditional: `SchedulerModule.forRoot()` is imported
- * only by `apps/worker`, so in an API process there is no Bull root — `registerQueue()` would
- * still build a `Queue`/`Worker` pair against BullMQ's default `localhost:6379` and retry that
- * connection forever. `DocsQueueService` covers the gap by running stages in-process.
+ * 🛑 The BullMQ pieces are GATED, not unconditional. Where no `SchedulerModule.forRoot()` was
+ * imported there is no Bull root, and `registerQueue()` would still build a `Queue`/`Worker`
+ * pair against BullMQ's default `localhost:6379` and retry that connection forever — while the
+ * `@Processor` host would throw `Worker requires a connection` outright and fail the bootstrap.
+ * `DocsQueueService` covers the gap by running stages in-process.
+ *
+ * The gate is derived, not guessed: `isDocsQueueEnabled()` evaluates the SAME predicate the
+ * modules that build this process's graph used to decide whether to register a root — see the
+ * long note on it in `docs.config.ts`.
  */
 const QUEUE_ENABLED = isDocsQueueEnabled();
+
+/**
+ * Whether this process also CONSUMES (`DocsProcessingWorker`), or only enqueues.
+ *
+ * Always a subset of {@link QUEUE_ENABLED} — `isDocsQueueWorkerEnabled()` ANDs the two, so a
+ * `@Processor` can never be registered without the queue it reads from.
+ */
+const QUEUE_WORKER_ENABLED = isDocsQueueWorkerEnabled();
 
 @Module({
 	imports: [
@@ -106,8 +119,12 @@ const QUEUE_ENABLED = isDocsQueueEnabled();
 		// would be a DI (and CommonJS require) cycle.
 		{ provide: DOCS_PIPELINE_RUNNER, useExisting: DocsPipelineService },
 		// Only meaningful with a BullMQ root — a `@Processor` registered without one opens a
-		// stray Redis worker connection in every API process.
-		...(QUEUE_ENABLED ? [DocsProcessingWorker] : []),
+		// stray Redis worker connection in every API process (and throws
+		// `Worker requires a connection` at `onModuleInit`).
+		// Separately gated from the queue itself so a deployment running a dedicated
+		// `apps/worker` can set `GAUZY_DOCS_QUEUE_WORKER_ENABLED=false` here and keep the API a
+		// pure producer.
+		...(QUEUE_WORKER_ENABLED ? [DocsProcessingWorker] : []),
 		DocsRecoveryService,
 		// M4 consolidation: reads the legacy Organization-Documents / Help-Center tables
 		// (from @gauzy/core and @gauzy/plugin-knowledge-base) strictly read-only.

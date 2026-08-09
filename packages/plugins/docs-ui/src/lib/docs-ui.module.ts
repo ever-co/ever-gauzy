@@ -21,7 +21,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
+import { provideEffects } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
@@ -182,7 +182,15 @@ import { UploadQueueService } from './services/upload-queue.service';
 			deps: [PageRouteRegistryService],
 			multi: true
 		},
-		provideEffectsManager(),
+		// 🛑 Do NOT call provideEffectsManager() here. `@ngneat/effects-ng` documents it as
+		// "Must be called at the root level" — it runs `initEffects()`, which creates the effects
+		// manager and subscribes it to the GLOBAL `actions` stream. The app root already provides
+		// it (apps/gauzy/src/app/bootstrap.module.ts). Providing it again in this LAZY-loaded
+		// module stood up a SECOND manager on the same global stream, and on first navigation to
+		// /pages/documents that re-entered synchronously and pegged the main thread — the route
+		// wedged before any HTTP (before the guards' /api/auth/permissions call even fired), so
+		// every unit test passed while the hub was unreachable in a browser. A feature module must
+		// contribute ONLY its effects via provideEffects(); the manager is the root's job.
 		provideEffects(DocumentsEffects),
 		DocumentsStore,
 		DocumentsQuery,
