@@ -3,7 +3,21 @@
  */
 export { bootstrap, registerPluginConfig } from './lib/bootstrap';
 export * from './lib/core';
-export { FileStorage, FileStorageFactory, UploadedFileStorage } from './lib/core/file-storage';
+export {
+	ALLOWED_AUDIO_MIME_TYPES,
+	ALLOWED_IMAGE_MIME_TYPES,
+	ALLOWED_VIDEO_MIME_TYPES,
+	BLOCKED_UPLOAD_EXTENSIONS,
+	FileStorage,
+	FileStorageFactory,
+	UploadedFileStorage,
+	assertNotMarkupContent,
+	audioUploadFileFilter,
+	createUploadFileFilter,
+	imageUploadFileFilter,
+	isMarkupContent,
+	videoUploadFileFilter
+} from './lib/core/file-storage';
 export { LazyFileInterceptor } from './lib/core/interceptors';
 export * from './lib/core/seeds';
 export {

@@ -1,6 +1,9 @@
 import { ID, IPagination, ISoundshot, PermissionsEnum } from '@gauzy/contracts';
 import {
+	assertNotMarkupContent,
+	audioUploadFileFilter,
 	BaseQueryDTO,
+	FileStorage,
 	FileStorageFactory,
 	FindOptionsQueryDTO,
 	LazyFileInterceptor,
@@ -129,7 +132,11 @@ export class SoundshotController {
 		// Use LazyFileInterceptor for handling file uploads with custom storage settings
 		LazyFileInterceptor('file', {
 			// Define storage settings for uploaded files
-			storage: () => FileStorageFactory.create('soundshots')
+			storage: () => FileStorageFactory.create('soundshots'),
+			// Soundshots are served unauthenticated from `/public/<key>` with a Content-Type derived from
+			// the stored extension, and the DTO's `mimetype` is an unconstrained optional string — so an
+			// `.svg`/`.html` upload would execute script in the app origin (GHSA-p334-cm7f-php5 class).
+			fileFilter: audioUploadFileFilter
 		})
 	)
 	@Post()
@@ -137,6 +144,20 @@ export class SoundshotController {
 		// Check if the file key is empty
 		if (!file.key) {
 			throw new BadRequestException('Soundshot file key is empty');
+		}
+		// The fileFilter above only sees the client-supplied MIME type and filename, both spoofable.
+		// Re-check the stored bytes and drop the file before any record is created — `/public` serves
+		// straight from disk regardless of the DB row (GHSA-p334-cm7f-php5 class).
+		const provider = new FileStorage().getProvider();
+		try {
+			assertNotMarkupContent(await provider.getFile(file.key));
+		} catch (error) {
+			try {
+				await provider.deleteFile(file.key);
+			} catch {
+				// best-effort cleanup; the rejection below is what matters
+			}
+			throw error;
 		}
 		// Try to create a new soundshot record
 		try {

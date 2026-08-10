@@ -1,8 +1,10 @@
 import { FileStorageProviderEnum, ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
+	assertNotMarkupContent,
 	FileStorage,
 	FileStorageFactory,
 	LazyFileInterceptor,
+	videoUploadFileFilter,
 	BaseQueryDTO,
 	PermissionGuard,
 	Permissions,
@@ -109,7 +111,11 @@ export class VideosController {
 		// Use LazyFileInterceptor for handling file uploads with custom storage settings
 		LazyFileInterceptor('file', {
 			// Define storage settings for uploaded files
-			storage: () => FileStorageFactory.create('videos')
+			storage: () => FileStorageFactory.create('videos'),
+			// Videos are served unauthenticated from `/public/<key>` with a Content-Type derived from the
+			// stored extension, so an `.svg`/`.html` upload claiming `video/mp4` would execute script in
+			// the app origin (GHSA-p334-cm7f-php5 class).
+			fileFilter: videoUploadFileFilter
 		})
 	)
 	@Post()
@@ -132,6 +138,15 @@ export class VideosController {
 				await provider.deleteFile(file.key);
 				// Throw a bad request exception with the validation errors
 				throw new BadRequestException(errors);
+			}
+
+			// The fileFilter and the DTO both judge the spoofable client MIME type; re-check the stored
+			// bytes so markup can never survive on disk (GHSA-p334-cm7f-php5 class).
+			try {
+				assertNotMarkupContent(await provider.getFile(file.key));
+			} catch (error) {
+				await provider.deleteFile(file.key);
+				throw error;
 			}
 
 			// Extract necessary properties from the request body
