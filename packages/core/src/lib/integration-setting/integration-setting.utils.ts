@@ -30,14 +30,15 @@ export const nonSecretSettingKeys = [
  *
  * @param keysToWrap - An array of keys to be wrapped.
  * @param secrets - The object containing the sensitive data.
- * @param percentage - Retained for backward compatibility; masking is no longer partial.
+ * @param _percentage - Ignored. Masking is total; kept only to preserve the positional signature
+ *                      for existing callers (see {@link maskSecret}).
  * @param character - The character used for replacement.
  * @returns The object with specified keys wrapped.
  */
 export function keysToWrapSecrets(
 	keysToWrap: string[],
 	secrets: Record<string, any>,
-	percentage = 35,
+	_percentage = 35,
 	character = '*'
 ) {
 	// Checks if a value is an object

@@ -39,11 +39,12 @@ export function maskSecret(value: unknown, character = '*'): string {
  *
  * @param secrets - The object containing the sensitive data.
  * @param targets - The target class or classes with metadata.
- * @param percentage - Retained for backward compatibility; masking is no longer partial.
+ * @param _percentage - Ignored. Masking is total; kept only to preserve the positional signature
+ *                      for existing callers (see {@link maskSecret}).
  * @param character - The character used for replacement.
  * @returns The object with specified keys wrapped.
  */
-export function WrapSecrets(secrets: Record<string, any>, targets: any | any[], percentage = 35, character = '*') {
+export function WrapSecrets(secrets: Record<string, any>, targets: any | any[], _percentage = 35, character = '*') {
 	// Check if found class target, convert it into array to use for loop
 	if (isClassInstance(targets)) {
 		targets = [targets];
