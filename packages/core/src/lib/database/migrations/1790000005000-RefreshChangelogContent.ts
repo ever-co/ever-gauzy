@@ -72,14 +72,32 @@ export class RefreshChangelogContent1790000005000 implements MigrationInterface 
 	}
 
 	/**
+	 * True only for the engine's "table/relation does not exist" error — the
+	 * single failure the probe below is allowed to swallow. Anything else
+	 * (permissions, connectivity, ...) must fail the migration run visibly.
+	 */
+	private isMissingTableError(error: unknown): boolean {
+		const e = error as { code?: string; errno?: number; message?: string };
+		return (
+			e?.code === '42P01' || // postgres: undefined_table
+			e?.code === 'ER_NO_SUCH_TABLE' || // mysql
+			e?.errno === 1146 || // mysql (numeric)
+			/no such table/i.test(e?.message ?? '') || // sqlite
+			/relation .* does not exist/i.test(e?.message ?? '') // postgres (message fallback)
+		);
+	}
+
+	/**
 	 * Replace-known-rows, shared by all three databases. `quote` wraps an
 	 * identifier per engine; `param` renders the n-th placeholder; `date`
 	 * / `bool` adapt values to what each engine stores.
 	 *
-	 * Only the table-existence probe swallows its error (the table exists only
-	 * when the changelog plugin is enabled). Delete/insert failures propagate:
-	 * migrations run with `transaction: 'each'`, so a partial refresh rolls
-	 * back atomically instead of leaving the table half-filled.
+	 * Everything runs through `queryRunner.query` — NOT
+	 * `queryRunner.connection.manager` — because only the query runner carries
+	 * the migration's transaction (`transaction: 'each'`); the connection
+	 * manager would silently execute outside it. Delete/insert failures
+	 * propagate, so a partial refresh rolls back atomically instead of leaving
+	 * the table half-filled.
 	 */
 	private async refresh(
 		queryRunner: QueryRunner,
@@ -90,14 +108,17 @@ export class RefreshChangelogContent1790000005000 implements MigrationInterface 
 	): Promise<void> {
 		const table = quote('changelog');
 		try {
-			await queryRunner.connection.manager.query(`SELECT 1 FROM ${table} LIMIT 1`);
-		} catch {
-			console.log('Changelog table not present, skipping content refresh.');
-			return;
+			await queryRunner.query(`SELECT 1 FROM ${table} LIMIT 1`);
+		} catch (error) {
+			if (this.isMissingTableError(error)) {
+				console.log('Changelog table not present, skipping content refresh.');
+				return;
+			}
+			throw error;
 		}
 
 		const titles = [...this.seededTitles, ...this.entries.map(([, title]) => title)];
-		await queryRunner.connection.manager.query(
+		await queryRunner.query(
 			`DELETE FROM ${table} WHERE ${quote('title')} IN (${titles.map((_, i) => param(i + 1)).join(', ')})`,
 			titles
 		);
@@ -107,7 +128,7 @@ export class RefreshChangelogContent1790000005000 implements MigrationInterface 
 			.map((_, i) => param(i + 1))
 			.join(', ')})`;
 		for (const [icon, title, isoDate, isFeature, content, learnMoreUrl, imageUrl] of this.entries) {
-			await queryRunner.connection.manager.query(insertQuery, [
+			await queryRunner.query(insertQuery, [
 				icon,
 				title,
 				date(isoDate),

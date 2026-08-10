@@ -16,7 +16,7 @@
 		{{ entry.content }}
 	</p>
 	@if (entry.imageUrl) {
-		<img class="entry-img" [src]="entry.imageUrl" [alt]="entry.title" />
+		<img class="entry-img" [src]="entry.imageUrl" [alt]="entry.title || ''" />
 	}
 	@if (entry.learnMoreUrl) {
 		<span class="learn-more-hint">{{ 'CHANGELOG_MENU.LEARN_MORE_URL' | translate }}</span>
