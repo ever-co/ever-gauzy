@@ -2,15 +2,7 @@ import * as chalk from 'chalk';
 import { SeederModule, skipExport } from '@gauzy/core';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
 import { DocsModule } from './docs.module';
-import {
-	Document,
-	DocumentCategory,
-	DocumentChunk,
-	DocumentIndexState,
-	DocumentLink,
-	DocumentShare,
-	DocumentVersion
-} from './entities';
+import { ALL_DOC_ENTITIES, DocumentChunk, DocumentIndexState } from './entities';
 import { DocsRecoveryService } from './knowledge/queue/docs-recovery.service';
 import { DocsSeederService } from './seeds/docs-seeder.service';
 import { DocumentSubscriber } from './subscribers/document.subscriber';
@@ -37,7 +29,12 @@ skipExport(DocumentChunk, DocumentIndexState);
 
 @Plugin({
 	imports: [DocsModule, SeederModule],
-	entities: [Document, DocumentCategory, DocumentVersion, DocumentChunk, DocumentIndexState, DocumentShare, DocumentLink],
+	// 🛑 Use ALL_DOC_ENTITIES, never a hand-written list. This array WAS hand-written and drifted:
+	// `DocumentInboundAddress` was added to the ORM feature modules but not here, and MikroORM
+	// discovers entities from exactly this registration — so the API crash-looped at boot with
+	// "Metadata for entity DocumentInboundAddress not found". A hand-maintained duplicate of a list
+	// that already exists is a latent outage; there is now only one list.
+	entities: [...ALL_DOC_ENTITIES],
 	subscribers: [DocumentSubscriber, DocumentVersionSubscriber],
 	providers: [DocsSeederService]
 })
