@@ -74,3 +74,60 @@ Run `yarn nx build plugin-docs` to build the library.
 ## Running unit tests
 
 Run `yarn nx test plugin-docs` to execute the unit tests via [Jest](https://jestjs.io).
+
+## Inbound email capture
+
+Documents emailed to an organization's capture address land in Documents as `source: EMAIL`,
+`reviewStatus: PENDING`, `knowledgeStatus: NONE` — a human approves them before anything reaches the
+AI knowledge base.
+
+### Two kinds of address
+
+| Kind | Address | Armed when |
+|---|---|---|
+| `PLATFORM` | `docs-<128-bit hex>@$GAUZY_DOCS_INBOUND_DOMAIN` | immediately — minted on first read of `GET /plugins/docs/inbound-addresses` |
+| `CUSTOM_DOMAIN` | `<mailbox>@<the tenant's own domain>` | only once `_gauzy-docs.<domain> IN TXT` carries the value the settings UI shows |
+
+A platform address is unguessable, so the address *is* the credential. A custom-domain mailbox name
+is chosen by the tenant and therefore guessable, which is why that kind stays inert until domain
+ownership is proven. Re-verifying a `VERIFIED` domain whose record has disappeared moves it to
+`FAILED` and it stops accepting mail — a domain that changes hands does not keep delivering.
+
+### How a delivery proves itself
+
+Either proof is sufficient:
+
+1. **Deployment-wide HMAC** — `hex(HMAC_SHA256(secret, "<timestamp>.<rawBody>"))` in
+   `x-gauzy-docs-signature`, with `x-gauzy-docs-timestamp`. Fails closed when
+   `GAUZY_DOCS_INBOUND_WEBHOOK_SECRET` is unset; enforces a 5-minute tolerance, a constant-time
+   compare, and single-use replay consumption.
+2. **Per-address relay secret** — presented in `x-gauzy-docs-address-secret`, issued once at creation
+   or rotation and stored only as SHA-256. Prefer this for tenant-owned domains: the deployment-wide
+   secret can post as *any* tenant, a per-address secret only as one.
+
+🛑 The HMAC is computed over the **raw request bytes**. `packages/core/src/lib/bootstrap/index.ts`
+preserves them via the body-parser `verify` hook; the adapter falls back to canonical JSON only when
+they are absent, and that fallback will not match a real provider's signature.
+
+🛑 **Failure ordering is deliberate.** "No valid proof" (403) is raised *before* "unknown address"
+(404), because a per-address secret cannot be checked until the address has been resolved. If the
+404 came first, an unauthenticated caller could sweep addresses and learn which ones exist.
+
+### Gates, in order
+
+1. Channel enabled (`GAUZY_DOCS_INBOUND_EMAIL_ENABLED`) — otherwise 404, as if the route did not exist
+2. Authentication — either proof above, else 403
+3. Recipient resolves to an armed address — else 404
+4. SPF/DKIM verdicts, when the provider reports them
+5. Sender allowlist — empty means "any sender that passed gate 4"; matches a full address or a whole
+   domain, compared exactly (`acme.com` admits neither `evil-acme.com` nor `acme.com.evil.tld`)
+6. Size caps, per message and per attachment
+7. Attachments only, then the same magic-byte sniffing the upload endpoint runs
+
+### Operational notes
+
+- Addresses live in `document_inbound_address`, with a **deployment-wide UNIQUE index on `address`**.
+  That is a security control, not an optimization: routing is by recipient alone, so two rows sharing
+  an address would make the destination tenant depend on row order.
+- Rotating a platform address changes the address itself; the previous one stops resolving at once.
+- Setting an address inactive rejects mail while keeping its history — capture data is never deleted.
