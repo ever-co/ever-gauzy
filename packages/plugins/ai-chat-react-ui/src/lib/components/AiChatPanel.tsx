@@ -25,40 +25,18 @@ import { ChatInput } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
 import { DocsAttachPicker } from './DocsAttachPicker';
+import { buildAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
 import { chatTheme } from '../chat-theme';
 
-/** One attachment staged for the next message. */
-interface IStagedAttachment {
-	/** Set when the user picked an EXISTING document — the handle `docs_read` takes. */
-	documentId?: string;
-	/** Display name, and the only handle an uploaded file has until capture finishes. */
-	name: string;
-}
-
 /**
- * The preamble that tells the assistant what the user attached.
- *
- * Attachments travel as ordinary message text on purpose. The tool surface the assistant has is
- * `docs_read(documentId)` / `docs_search(query)`, so naming the ids is precisely what makes an
- * attachment actionable; a side channel the model never sees would be decoration.
- *
- * An uploaded file has no id yet — capture into Documents happens asynchronously on the server —
- * so it is named instead, with an explicit instruction to search for it rather than to claim it
- * cannot be found.
- *
- * @param attachments The staged attachments.
- * @returns The preamble, or an empty string when nothing is attached.
+ * What the docs upload endpoint answers with (the slice this panel reads).
+ * Mirrored rather than imported: `IDocumentUploadResponse` lives in the backend docs plugin,
+ * which must not be pulled into the browser bundle.
  */
-function buildAttachmentPreamble(attachments: IStagedAttachment[]): string {
-	if (!attachments.length) {
-		return '';
-	}
-	const lines = attachments.map((attachment) =>
-		attachment.documentId
-			? `- "${attachment.name}" (document id: ${attachment.documentId}) — read it with docs_read.`
-			: `- "${attachment.name}" — just uploaded to Documents; find it with docs_search (processing may still be in flight).`
-	);
-	return ['Attached documents for this message:', ...lines].join('\n');
+interface IDocsUploadResponseSlice {
+	results?: { document?: { id?: string; name?: string; kind?: string } }[];
+	rejected?: { fileName?: string; message?: string }[];
+	message?: string;
 }
 
 /**
@@ -121,6 +99,21 @@ export function AiChatPanel() {
 			Authorization: `Bearer ${store.token}`,
 			...(store.tenantId ? { 'Tenant-Id': store.tenantId } : {}),
 			...(store.organizationId ? { 'Organization-Id': store.organizationId } : {})
+		}),
+		[store]
+	);
+
+	/**
+	 * The tenant/organization scope the Documents endpoints require IN THE REQUEST ITSELF —
+	 * `where[organizationId]` on the list, an `organizationId` part in the upload body. The
+	 * Tenant-Id/Organization-Id HEADERS do not satisfy those DTO validators
+	 * (`TenantOrganizationBaseDTO`), which is exactly how the picker first shipped broken:
+	 * every request answered 400 and the UI misread it as "Documents unavailable".
+	 */
+	const attachScope = useCallback(
+		(): { organizationId?: string; tenantId?: string } => ({
+			...(store.organizationId ? { organizationId: store.organizationId } : {}),
+			...(store.tenantId ? { tenantId: store.tenantId } : {})
 		}),
 		[store]
 	);
@@ -355,20 +348,85 @@ export function AiChatPanel() {
 	);
 
 	/**
-	 * Upload a file the user picked and attach it to this conversation.
+	 * Upload a file the user picked and attach it to this conversation — ID FIRST.
+	 *
+	 * The upload goes straight to the Documents feature (`source: CHAT`), which answers
+	 * synchronously with the created document — so the chip carries a `documentId` and the
+	 * assistant can `docs_read` the file in the very message it was attached to. The previous
+	 * design uploaded to chat-local storage and relied on the Documents plugin capturing an
+	 * event LATER: the chip was name-only, and the preamble sent the assistant to `docs_search`
+	 * — which can never find a chat capture (they are deliberately never auto-indexed), and a
+	 * file the sniffer rejected got a chip anyway while the capture silently dropped it.
+	 *
+	 * The chat-local endpoint remains as the FALLBACK for installs where Documents is absent,
+	 * disabled, or the user lacks `DOCS_CREATE` (403/404 from the docs route) — there the docs
+	 * tools do not exist either, so a name-only mention is the honest ceiling.
 	 *
 	 * `FormData` deliberately WITHOUT a Content-Type header — the browser has to set it, because
 	 * only it knows the multipart boundary (the same rule as dictation above).
-	 *
-	 * The server stores the bytes and publishes `AiChatAttachmentSavedEvent`; the Documents
-	 * plugin captures that into a `Document { source: CHAT }` and runs extraction. That is
-	 * ASYNCHRONOUS, so the attachment is carried by name — the assistant finds it with
-	 * `docs_search` once processing finishes, which the preamble tells it to do.
 	 */
 	const handleAttachFile = useCallback(
 		async (file: File): Promise<void> => {
 			setIsAttaching(true);
+			setAttachmentError(null);
 			try {
+				const docsForm = new FormData();
+				docsForm.append('files', file, file.name);
+				docsForm.append('source', 'CHAT');
+				// Required by UploadDocumentsDTO (TenantOrganizationBaseDTO): the org must be in the
+				// BODY — headers alone fail validation with "organizationId must be a UUID".
+				const scope = attachScope();
+				if (scope.organizationId) docsForm.append('organizationId', scope.organizationId);
+				if (scope.tenantId) docsForm.append('tenantId', scope.tenantId);
+				const docsResponse = await fetch(`${environment.API_BASE_URL}/api/plugins/docs/documents/upload`, {
+					method: 'POST',
+					headers: authHeaders(),
+					body: docsForm
+				});
+
+				if (docsResponse.ok) {
+					const body = (await docsResponse.json().catch(() => null)) as IDocsUploadResponseSlice | null;
+					const document = body?.results?.[0]?.document;
+					if (document?.id) {
+						setAttachments((current) => [
+							...current,
+							{
+								documentId: document.id,
+								name: document.name || file.name,
+								...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {})
+							}
+						]);
+						return;
+					}
+					// Three distinct 2xx outcomes, told apart so the user is never told "rejected"
+					// about a file the server may in fact have created:
+					// a genuine per-file rejection carries the server's reason; a body that did not
+					// parse, or one with no readable document id, is a response-shape problem — the
+					// document may exist, so point at the Documents page rather than blaming the file.
+					const rejection = body?.rejected?.[0];
+					if (rejection) {
+						throw new Error(
+							rejection.message || `${t('AI_ASSISTANT.ATTACH_REJECTED', 'The file was rejected')}: ${file.name}`
+						);
+					}
+					throw new Error(
+						`${t(
+							'AI_ASSISTANT.ATTACH_RESPONSE_UNREADABLE',
+							'The upload response could not be read — check the Documents page before retrying'
+						)}: ${file.name}`
+					);
+				}
+
+				// Not-found / forbidden = the Documents feature is not available to this user or
+				// install — fall back to chat-local storage. Anything else is a real failure.
+				if (docsResponse.status !== 403 && docsResponse.status !== 404) {
+					const detail = await docsResponse
+						.json()
+						.then((body: { message?: string }) => body?.message)
+						.catch(() => undefined);
+					throw new Error(detail || `Attachment failed (HTTP ${docsResponse.status})`);
+				}
+
 				const form = new FormData();
 				form.append('file', file, file.name);
 				if (conversationIdRef.current) {
@@ -394,12 +452,21 @@ export function AiChatPanel() {
 				setIsAttaching(false);
 			}
 		},
-		[authHeaders]
+		[authHeaders, attachScope]
 	);
 
 	/** Attach an existing document by id — what makes `docs_read` able to open exactly that one. */
-	const handlePickDocument = useCallback((document: { id: string; name: string }) => {
-		setAttachments((current) => [...current, { documentId: document.id, name: document.name }]);
+	const handlePickDocument = useCallback((document: { id: string; name: string; kind?: string }) => {
+		setAttachments((current) => [
+			...current,
+			{
+				documentId: document.id,
+				name: document.name,
+				// Carried so the chip (and the one rebuilt from history) links a PAGE to its page
+				// editor route rather than the file browser.
+				...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {})
+			}
+		]);
 		setShowAttachPicker(false);
 	}, []);
 
@@ -565,7 +632,10 @@ export function AiChatPanel() {
 		display: 'flex',
 		flexDirection: 'column',
 		overflow: 'hidden',
-		minWidth: 0
+		minWidth: 0,
+		// The positioning context for the history and attach-picker overlays: `inset: 0` must
+		// resolve against the BODY, so an overlay can never cover the panel's own header row.
+		position: 'relative'
 	};
 
 	const resizeHandleStyle: CSSProperties = {
@@ -882,32 +952,34 @@ export function AiChatPanel() {
 				</span>
 			</div>
 
-			{/* Conversation history overlay */}
-			{showHistory && (
-				<ChatHistoryPanel
-					items={history}
-					loading={historyLoading}
-					activeId={activeConversationId}
-					translate={t}
-					onSelect={handleSelectConversation}
-					onDelete={handleDeleteConversation}
-					onClose={() => setShowHistory(false)}
-				/>
-			)}
-
-			{/* "Attach from Documents" overlay — same full-panel treatment as history. */}
-			{showAttachPicker && (
-				<DocsAttachPicker
-					apiBaseUrl={environment.API_BASE_URL}
-					headers={authHeaders}
-					translate={t}
-					onPick={handlePickDocument}
-					onClose={() => setShowAttachPicker(false)}
-				/>
-			)}
-
-			{/* Chat body — fills remaining height */}
+			{/* Chat body — fills remaining height. The overlays mount INSIDE it so they cover the
+			    conversation area only, never the panel's own header (which stays operable — the
+			    user can still collapse/detach while a picker is open). */}
 			<div style={bodyStyle}>
+				{/* Conversation history overlay */}
+				{showHistory && (
+					<ChatHistoryPanel
+						items={history}
+						loading={historyLoading}
+						activeId={activeConversationId}
+						translate={t}
+						onSelect={handleSelectConversation}
+						onDelete={handleDeleteConversation}
+						onClose={() => setShowHistory(false)}
+					/>
+				)}
+
+				{/* "Attach from Documents" overlay */}
+				{showAttachPicker && (
+					<DocsAttachPicker
+						apiBaseUrl={environment.API_BASE_URL}
+						headers={authHeaders}
+						scope={attachScope}
+						translate={t}
+						onPick={handlePickDocument}
+						onClose={() => setShowAttachPicker(false)}
+					/>
+				)}
 				{hasMessages ? (
 					<ChatMessageList
 						messages={messages}

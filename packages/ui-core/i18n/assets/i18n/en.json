@@ -4107,8 +4107,12 @@
 		"LIBRARY_SOON": "Choose from the file library (coming soon)",
 		"ATTACH": "Attach a file",
 		"ATTACH_FROM_DOCUMENTS": "Attach from Documents",
+		"ATTACH_OPEN": "Open attached document",
+		"ATTACH_REJECTED": "The file was rejected",
+		"ATTACH_RESPONSE_UNREADABLE": "The upload response could not be read — check the Documents page before retrying",
 		"ATTACH_SEARCH": "Search documents…",
 		"ATTACH_NO_RESULTS": "No matching documents.",
+		"ATTACH_LOAD_FAILED": "The document list could not be loaded — please try again.",
 		"ATTACH_UNAVAILABLE": "Documents are not available in this workspace.",
 		"ATTACH_REMOVE": "Remove attachment",
 		"CITATIONS": {
@@ -4165,6 +4169,21 @@
 		"REDIRECT_TO_HOME": "You'll be redirected to home page soon"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Find documentation, get answers, and reach the team behind Gauzy.",
+		"DOCUMENTATION": "Documentation",
+		"DOCUMENTATION_DESC": "Guides and reference for every Gauzy feature.",
+		"FAQ": "FAQ",
+		"FAQ_DESC": "Answers to the most common questions.",
+		"SUPPORT_CHAT": "Support Chat",
+		"SUPPORT_CHAT_DESC": "Chat with our support team.",
+		"REPORT_ISSUE": "Report an Issue",
+		"REPORT_ISSUE_DESC": "Found a bug? Open an issue on GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Source code, releases, and discussions.",
+		"WEBSITE": "Gauzy Website",
+		"WEBSITE_DESC": "Learn more about the Gauzy platform.",
+		"ABOUT_LINK": "About Gauzy",
+		"ABOUT_LINK_DESC": "Version details, license, and links.",
 		"HELP": "Help",
 		"KNOWLEDGE_BASE": "Knowledge base",
 		"CHOSE_ICON": "Chose icon to set",
@@ -4479,6 +4498,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. All rights reserved.",
+		"DESCRIPTION": "Ever® Gauzy™ is an Open Business Management Platform for Collaborative, On-Demand and Sharing Economies — ERP, CRM, HRM, ATS and Project Management with integrated time tracking.",
+		"LICENSE": "Open source, released under the",
+		"VERSION_DETAILS": "Version Details",
+		"VERSION_MISMATCH": "The web app and the API were built from different commits — a deployment may still be rolling out.",
+		"WEB_APP": "Web App",
+		"API": "API",
+		"UNTAGGED": "untagged build",
+		"API_UNAVAILABLE": "API version unavailable",
+		"LEARN_MORE": "Learn More",
 		"ABOUT": "About"
 	},
 	"FOOTER": {

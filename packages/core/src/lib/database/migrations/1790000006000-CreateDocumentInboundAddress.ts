@@ -16,8 +16,8 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  * migration once reused a single bind parameter across two clauses and PostgreSQL could not infer
  * its type, which took stage down; this migration deliberately has no parameters at all.)
  */
-export class CreateDocumentInboundAddress1790000005000 implements MigrationInterface {
-	name = 'CreateDocumentInboundAddress1790000005000';
+export class CreateDocumentInboundAddress1790000006000 implements MigrationInterface {
+	name = 'CreateDocumentInboundAddress1790000006000';
 
 	/**
 	 * Up Migration

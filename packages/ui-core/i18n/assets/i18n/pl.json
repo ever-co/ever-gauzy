@@ -3677,6 +3677,21 @@
 		"REDIRECT_TO_HOME": "Za chwilę zostaniesz przekierowany na stronę główną"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Znajdź dokumentację, uzyskaj odpowiedzi i skontaktuj się z zespołem Gauzy.",
+		"DOCUMENTATION": "Dokumentacja",
+		"DOCUMENTATION_DESC": "Przewodniki i dokumentacja każdej funkcji Gauzy.",
+		"FAQ": "FAQ",
+		"FAQ_DESC": "Odpowiedzi na najczęściej zadawane pytania.",
+		"SUPPORT_CHAT": "Czat wsparcia",
+		"SUPPORT_CHAT_DESC": "Porozmawiaj z naszym zespołem wsparcia.",
+		"REPORT_ISSUE": "Zgłoś problem",
+		"REPORT_ISSUE_DESC": "Znalazłeś błąd? Otwórz zgłoszenie na GitHubie.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Kod źródłowy, wydania i dyskusje.",
+		"WEBSITE": "Strona Gauzy",
+		"WEBSITE_DESC": "Dowiedz się więcej o platformie Gauzy.",
+		"ABOUT_LINK": "O Gauzy",
+		"ABOUT_LINK_DESC": "Szczegóły wersji, licencja i linki.",
 		"HELP": "Pomoc",
 		"KNOWLEDGE_BASE": "Baza wiedzy",
 		"CHOSE_ICON": "Wybierz ikonę do ustawienia",
@@ -3987,6 +4002,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. Wszelkie prawa zastrzeżone.",
+		"DESCRIPTION": "Ever® Gauzy™ to otwarta platforma do zarządzania biznesem dla gospodarek współpracy, na żądanie i współdzielenia — ERP, CRM, HRM, ATS i zarządzanie projektami ze zintegrowanym śledzeniem czasu.",
+		"LICENSE": "Open source, wydane na licencji",
+		"VERSION_DETAILS": "Szczegóły wersji",
+		"VERSION_MISMATCH": "Aplikacja webowa i API zostały zbudowane z różnych commitów — możliwe, że trwa wdrożenie.",
+		"WEB_APP": "Aplikacja webowa",
+		"API": "API",
+		"UNTAGGED": "build bez tagu",
+		"API_UNAVAILABLE": "Wersja API niedostępna",
+		"LEARN_MORE": "Dowiedz się więcej",
 		"ABOUT": "O nas"
 	},
 	"FOOTER": {

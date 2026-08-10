@@ -1,26 +1,10 @@
 <section class="section-wrapper">
-  <div class="whats-new-wrapper">
-    <h3 class="main-header">
-      {{ 'CHANGELOG_MENU.HEADER' | translate }}
-    </h3>
-    @for (item of items$ | async; track item) {
-      <div class="entry">
-        <div class="entry-headings-wrapper">
-          <nb-icon [icon]="item.icon" class="icon"></nb-icon>
-          <div class="entry-headings">
-            <div class="entry-header">{{ item.title }}</div>
-            <div class="entry-header-date">{{ item.date | date }}</div>
-          </div>
-        </div>
-        <p class="paragraph">
-          {{ item.content }}
-        </p>
-      </div>
-    }
-  </div>
-  @if (learnMore) {
-    <a nbButton outline status="primary" class="learn-more" [href]="learnMore">
-      {{ 'CHANGELOG_MENU.LEARN_MORE_URL' | translate }}
-    </a>
-  }
+	<div class="whats-new-wrapper">
+		<h3 class="main-header">
+			{{ 'CHANGELOG_MENU.HEADER' | translate }}
+		</h3>
+		@for (item of items$ | async; track item.id) {
+			<ngx-changelog-entry [entry]="item" />
+		}
+	</div>
 </section>

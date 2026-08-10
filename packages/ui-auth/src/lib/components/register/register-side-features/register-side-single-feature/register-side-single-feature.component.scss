@@ -9,6 +9,13 @@
   align-items: center;
   padding-right: 10px;
   padding-left: 10px;
+  // The wrapper is an anchor when the feature carries a learnMoreUrl —
+  // keep the text styling identical either way.
+  color: inherit;
+  text-decoration: none;
+  &.linked {
+    cursor: pointer;
+  }
 }
 .headings-wrapper {
   width: 100%;
