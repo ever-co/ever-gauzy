@@ -55,9 +55,10 @@
   // (Menu | Chat | Canvas, or Menu | Canvas | Chat when docked right).
   // The HOST stays in the flex flow and reserves the width; Nebular's
   // .main-container is position:fixed in windowMode, so it is pinned to the
-  // full viewport height (top 0 → nothing above or below it) and follows the
-  // host's flex-computed width via --gz-chat-live-width (set by the layout's
-  // ResizeObserver — covers normal, user-resized, maximized and collapsed).
+  // full viewport height (top 0 → nothing above or below it). Host and panel
+  // BOTH size from --gz-chat-width (the persisted user width, bound inline on
+  // the host by the layout template) with the same 24rem fallback — one source
+  // of truth, and the two can never disagree.
   nb-sidebar.chat-sidebar {
     order: 0 !important;
     align-self: stretch;

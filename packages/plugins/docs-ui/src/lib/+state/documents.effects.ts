@@ -436,6 +436,27 @@ export class DocumentsEffects {
 	}
 
 	private mergeUrlParams(params: Params): void {
+		// `navigate([], …)` targets the CURRENT url — and these effects live on the GLOBAL effects
+		// manager, so once the lazy Documents module has loaded they run for the rest of the
+		// session, on every page, on debounced timers. Two guards keep that from hijacking the
+		// router:
+		//
+		// 1. Only write while the Documents page is the ACTIVE route. After the user leaves, the
+		//    URL belongs to whatever page they navigated to — a background docs write there is
+		//    state leakage at best.
+		// 2. Never write while ANOTHER navigation is in flight. A same-URL navigate issued
+		//    mid-navigation silently SUPERSEDES it (NavigationCancel → NavigationSkipped, no
+		//    error, no URL change) — which is exactly how every sidebar click on demo died the
+		//    moment the docs module had loaded: the click's imperative navigation was cancelled
+		//    by this funnel, while popstate/hash navigations (already past the URL change) kept
+		//    working. The dropped write is safe: every effect that lands here re-derives the full
+		//    param set from the store, so the next write carries the complete state anyway.
+		if (!this.router.url.startsWith('/pages/documents')) {
+			return;
+		}
+		if (this.router.getCurrentNavigation()) {
+			return;
+		}
 		this.router.navigate([], {
 			queryParams: params,
 			queryParamsHandling: 'merge',
