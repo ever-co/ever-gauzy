@@ -8,7 +8,7 @@ import { IDocument, IDocumentCategory } from '@gauzy/contracts';
 		<span class="docs-chips">
 			<span
 				class="docs-chip"
-				*ngFor="let category of visible"
+				*ngFor="let category of visible; trackBy: trackById"
 				[style.border-color]="category.color || null"
 				[nbTooltip]="category.description || category.name"
 				nbTooltipStatus="basic"
@@ -44,15 +44,36 @@ export class CategoryChipsComponent {
 	@Input() value: IDocumentCategory[];
 	@Input() max = 3;
 
+	/** Cache so `visible` keeps a stable array reference across change-detection cycles. */
+	private visibleCache: { source: IDocumentCategory[] | undefined; max: number; result: IDocumentCategory[] } = {
+		source: undefined,
+		max: -1,
+		result: []
+	};
+
 	get categories(): IDocumentCategory[] {
 		return this.value ?? this.rowData?.categories ?? [];
 	}
 
+	/**
+	 * Rendered per table row on every browse-list change detection. `slice()` mints a new array
+	 * identity each call; memoizing it (keyed on the source array reference + `max`) keeps the
+	 * `*ngFor` reference stable, and `trackById` keeps the chip DOM stable when the content is
+	 * unchanged — the same reference-stability discipline as `FacetMultiselectComponent`.
+	 */
 	get visible(): IDocumentCategory[] {
-		return this.categories.slice(0, this.max);
+		const source = this.categories;
+		if (this.visibleCache.source !== source || this.visibleCache.max !== this.max) {
+			this.visibleCache = { source, max: this.max, result: source.slice(0, this.max) };
+		}
+		return this.visibleCache.result;
 	}
 
 	get overflow(): number {
 		return Math.max(0, this.categories.length - this.max);
+	}
+
+	trackById(_index: number, category: IDocumentCategory): string {
+		return category.id;
 	}
 }
