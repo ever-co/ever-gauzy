@@ -6,6 +6,7 @@ import {
 	HttpCode,
 	Post,
 	Body,
+	Delete,
 	Param,
 	Put,
 	Query,
@@ -13,14 +14,21 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { IChangelog, IChangelogCreateInput, IChangelogUpdateInput, ID, IPagination } from '@gauzy/contracts';
-import { AuthGuard, CrudController, UUIDValidationPipe } from '@gauzy/core';
+import { IChangelog, IChangelogCreateInput, IChangelogUpdateInput, ID, IPagination, RolesEnum } from '@gauzy/contracts';
+import { AuthGuard, CrudController, RoleGuard, Roles, UUIDValidationPipe } from '@gauzy/core';
 import { Public } from '@gauzy/common';
+import { DeleteResult } from 'typeorm';
 import { Changelog } from './changelog.entity';
 import { ChangelogService } from './changelog.service';
 import { ChangelogCreateCommand, ChangelogUpdateCommand } from './commands';
 import { ChangelogQueryDTO } from './dto/changelog-query.dto';
 
+/**
+ * Changelog is PLATFORM-level content: the public GET feeds the "What's New"
+ * sidebar plus the login/register pages, and every write is a broadcast to all
+ * of them. Writes are therefore SUPER_ADMIN-only — before this guard any
+ * authenticated user could rewrite what every visitor sees on the login page.
+ */
 @ApiTags('Changelog')
 @UseGuards(AuthGuard)
 @Controller('/changelog')
@@ -30,6 +38,9 @@ export class ChangelogController extends CrudController<Changelog> {
 	}
 
 	/**
+	 * Public list of changelog entries, newest first (see the service for the
+	 * ordering/cap). `whitelist` matters here: the DTO'd query goes straight
+	 * into a TypeORM `where`, so unknown params must be stripped, not passed.
 	 *
 	 * @param options
 	 * @returns
@@ -47,9 +58,9 @@ export class ChangelogController extends CrudController<Changelog> {
 	@Public()
 	@Get('/')
 	async findChangelog(
-		@Query(new ValidationPipe({ transform: true })) options: ChangelogQueryDTO
+		@Query(new ValidationPipe({ transform: true, whitelist: true })) options: ChangelogQueryDTO
 	): Promise<IPagination<IChangelog>> {
-		return await this.changelogService.findAllChangelogs({ where: options });
+		return await this.changelogService.findAllChangelogs(options);
 	}
 
 	/**
@@ -67,6 +78,8 @@ export class ChangelogController extends CrudController<Changelog> {
 		description: 'Invalid input'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
 	@Post('/')
 	async create(@Body() entity: IChangelogCreateInput): Promise<IChangelog> {
 		return await this.commandBus.execute(new ChangelogCreateCommand(entity));
@@ -92,8 +105,66 @@ export class ChangelogController extends CrudController<Changelog> {
 		description: 'Invalid input'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
 	@Put('/:id')
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: IChangelogUpdateInput): Promise<IChangelog> {
 		return await this.commandBus.execute(new ChangelogUpdateCommand({ ...entity, id }));
+	}
+
+	/**
+	 * Overrides the inherited CRUD delete purely to attach the SUPER_ADMIN
+	 * guard — the base route ships with class-level AuthGuard only.
+	 *
+	 * @param id
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'Record has been successfully deleted.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
+	@Delete('/:id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
+		return await this.changelogService.delete(id);
+	}
+
+	/**
+	 * Same guard-only override for the inherited soft-delete route.
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: 'Record soft deleted successfully'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
+	@Delete('/:id/soft')
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID): Promise<Changelog> {
+		return await this.changelogService.softRemove(id);
+	}
+
+	/**
+	 * Same guard-only override for the inherited soft-recover route.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: 'Record restored successfully'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
+	@Put('/:id/recover')
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID): Promise<Changelog> {
+		return await this.changelogService.softRecover(id);
 	}
 }

@@ -7,6 +7,7 @@ export * from './breadcrumb/breadcrumb.component';
 export * from './breadcrumb/breadcrumb-tail.service';
 export * from './dashboard-skeleton/dashboard-skeleton.component';
 export * from './date-range-title/date-range-title.component';
+export * from './changelog-entry/changelog-entry.component';
 export * from './header-title/header-title.component';
 export * from './layout-selector/layout-selector.component';
 export * from './popup/popup.component';
