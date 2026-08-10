@@ -44,32 +44,57 @@ export class DocsFilterBarComponent extends TranslationBaseComponent {
 	}
 
 	// ─── Facet buckets (fall back to full enums when facets are unloaded) ───
+	//
+	// 🛑 These are consumed as `[buckets]="kindBuckets"` template bindings, which Angular
+	// re-evaluates on EVERY change-detection cycle. They must therefore return a STABLE array
+	// reference while `facets` is unchanged — a fresh `Object.values(...).map(...)` each cycle
+	// fed the downstream `<nb-select>`/`FacetMultiselectComponent` a new identity every tick,
+	// which recreated its `<nb-option>` children and self-retriggered change detection (the
+	// Documents-hub main-thread wedge). The cache below is keyed on the `facets` INPUT REFERENCE:
+	// the parent (browse page) replaces `facets` wholesale on each load, so identity equality is
+	// the correct and cheap invalidation signal.
+
+	private bucketsCache: { source: IDocumentFacets | null; buckets: Record<string, IDocumentFacetBucket[]> } = {
+		source: undefined as unknown as IDocumentFacets | null,
+		buckets: {}
+	};
+
+	private facetBuckets(key: string, compute: () => IDocumentFacetBucket[]): IDocumentFacetBucket[] {
+		if (this.bucketsCache.source !== this.facets) {
+			this.bucketsCache = { source: this.facets, buckets: {} };
+		}
+		return (this.bucketsCache.buckets[key] ??= compute());
+	}
 
 	get kindBuckets(): IDocumentFacetBucket[] {
-		return this.bucketsOrEnum(this.facets?.kind, Object.values(DocumentKindEnum));
+		return this.facetBuckets('kind', () => this.bucketsOrEnum(this.facets?.kind, Object.values(DocumentKindEnum)));
 	}
 
 	get statusBuckets(): IDocumentFacetBucket[] {
 		// UPLOADED folds into PROCESSING — filters offer only READY/PROCESSING/FAILED,
 		// and the Processing count carries the still-UPLOADED rows with it (R-STA-02).
 		const values = [DocumentStatusEnum.READY, DocumentStatusEnum.PROCESSING, DocumentStatusEnum.FAILED];
-		return this.bucketsOrEnum(foldStatusFacetBuckets(this.facets?.status), values);
+		return this.facetBuckets('status', () => this.bucketsOrEnum(foldStatusFacetBuckets(this.facets?.status), values));
 	}
 
 	get knowledgeBuckets(): IDocumentFacetBucket[] {
-		return this.bucketsOrEnum(this.facets?.knowledgeStatus, Object.values(DocumentKnowledgeStatusEnum));
+		return this.facetBuckets('knowledge', () =>
+			this.bucketsOrEnum(this.facets?.knowledgeStatus, Object.values(DocumentKnowledgeStatusEnum))
+		);
 	}
 
 	get sourceBuckets(): IDocumentFacetBucket[] {
-		return this.bucketsOrEnum(this.facets?.source, Object.values(DocumentSourceEnum));
+		return this.facetBuckets('source', () =>
+			this.bucketsOrEnum(this.facets?.source, Object.values(DocumentSourceEnum))
+		);
 	}
 
 	get categoryBuckets(): IDocumentFacetBucket[] {
-		return this.facets?.categories ?? [];
+		return this.facetBuckets('categories', () => this.facets?.categories ?? []);
 	}
 
 	get tagBuckets(): IDocumentFacetBucket[] {
-		return this.facets?.tags ?? [];
+		return this.facetBuckets('tags', () => this.facets?.tags ?? []);
 	}
 
 	kindLabel = (value: string): string => this.getTranslation(`DOCS.KIND.${value}`);
