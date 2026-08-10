@@ -2,6 +2,22 @@ const fs = require('fs');
 const simpleGit = require('simple-git');
 const git = simpleGit();
 
+// Windows Authenticode: engage electron-updater publisher verification ONLY when a publisher name
+// is provided (i.e. a publicly-trusted certificate is configured via WIN_CSC_LINK in CI). With no
+// publisher name, electron-updater skips signature verification, so unsigned or self-signed interim
+// builds are never stranded. Signing itself is driven by WIN_CSC_LINK / WIN_CSC_KEY_PASSWORD env.
+function applyWindowsSigning(pkg) {
+	const publisherName = process.env.WINDOWS_PUBLISHER_NAME;
+	if (!publisherName) return;
+	pkg.build = pkg.build || {};
+	pkg.build.win = pkg.build.win || {};
+	pkg.build.win.signtoolOptions = {
+		...(pkg.build.win.signtoolOptions || {}),
+		publisherName,
+		rfc3161TimeStampServer: "http://timestamp.digicert.com"
+	};
+}
+
 async function getLatestTag(repoURL) {
 	try {
 		// Fetch remote tags
@@ -147,6 +163,7 @@ module.exports.serverapi = async (isProd) => {
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/server-api/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/server-api/src/package.json');
@@ -215,6 +232,7 @@ module.exports.server = async (isProd) => {
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/server/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/server/src/package.json');
@@ -283,6 +301,7 @@ module.exports.servermcp = async (isProd) => {
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/server-mcp/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/server-mcp/src/package.json');
@@ -351,6 +370,7 @@ module.exports.desktop = async (isProd) => {
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/desktop/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/desktop/src/package.json');
@@ -419,6 +439,7 @@ module.exports.desktopTimer = async (isProd) => {
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/desktop-timer/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/desktop-timer/src/package.json');
@@ -487,6 +508,7 @@ module.exports.agent = async (isProd) => {
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/agent/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/agent/src/package.json');
