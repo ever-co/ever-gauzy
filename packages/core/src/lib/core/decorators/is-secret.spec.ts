@@ -35,9 +35,16 @@ describe('maskSecret', () => {
 		expect(maskSecret('secret-value-TAIL')).toBe('*'.repeat(13) + 'TAIL');
 	});
 
-	it('fully masks values at or below the hint length', () => {
-		expect(maskSecret('x')).toBe('*');
-		expect(maskSecret('TAIL')).toBe('****');
+	it('fully masks short secrets rather than exposing most of them', () => {
+		// A fixed four-character hint is a percentage of the value, and on short credentials that
+		// percentage is most of the secret: an eight-character SMTP password would be half visible.
+		for (const secret of ['x', 'TAIL', 'abcde', 'passwd', 'password', 'passwords11']) {
+			expect(maskSecret(secret)).toBe('*'.repeat(secret.length));
+		}
+	});
+
+	it('starts revealing the hint only once the secret is long enough for it to be a small part', () => {
+		expect(maskSecret('passwordTAIL')).toBe('*'.repeat(8) + 'TAIL'); // 12 chars: hint is a third
 	});
 
 	it('masks the real tail rather than an earlier identical run', () => {

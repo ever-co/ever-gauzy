@@ -13,12 +13,14 @@ export {
 	BLOCKED_UPLOAD_EXTENSIONS,
 	FileStorage,
 	FileStorageFactory,
+	MARKUP_SCAN_MAX_BYTES,
 	UploadedFileStorage,
 	assertNotMarkupContent,
 	audioUploadFileFilter,
 	createUploadFileFilter,
 	imageUploadFileFilter,
 	isMarkupContent,
+	shouldScanForMarkup,
 	videoUploadFileFilter
 } from './lib/core/file-storage';
 export { LazyFileInterceptor } from './lib/core/interceptors';

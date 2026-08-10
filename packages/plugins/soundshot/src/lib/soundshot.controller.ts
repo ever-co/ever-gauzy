@@ -7,6 +7,7 @@ import {
 	FileStorageFactory,
 	FindOptionsQueryDTO,
 	LazyFileInterceptor,
+	shouldScanForMarkup,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -148,16 +149,20 @@ export class SoundshotController {
 		// The fileFilter above only sees the MIME type and filename the client sent, both of which it controls.
 		// Re-check the stored bytes and drop the file before any record is created — `/public` serves
 		// straight from disk regardless of the DB row (GHSA-p334-cm7f-php5 class).
+		// Skipped for large uploads, which would have to be held in memory to read — see
+		// shouldScanForMarkup; the extension allowlist carries the protection on its own there.
 		const provider = new FileStorage().getProvider();
-		try {
-			assertNotMarkupContent(await provider.getFile(file.key));
-		} catch (error) {
+		if (shouldScanForMarkup(file.size)) {
 			try {
-				await provider.deleteFile(file.key);
-			} catch {
-				// best-effort cleanup; the rejection below is what matters
+				assertNotMarkupContent(await provider.getFile(file.key));
+			} catch (error) {
+				try {
+					await provider.deleteFile(file.key);
+				} catch {
+					// best-effort cleanup; the rejection below is what matters
+				}
+				throw error;
 			}
-			throw error;
 		}
 		// Try to create a new soundshot record
 		try {

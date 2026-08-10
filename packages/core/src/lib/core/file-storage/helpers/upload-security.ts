@@ -134,22 +134,45 @@ export function isMarkupContent(content: Buffer | string): boolean {
 	}
 
 	if (wideBomLength > 0) {
-		let i = wideBomLength;
 		// One character of padding is at most 3 NULs; bound the scan so a binary file that merely
 		// happens to open with those two bytes is not searched indefinitely for a `<`.
 		const limit = Math.min(buffer.length, wideBomLength + 8);
-		while (i < limit && (buffer[i] === 0x00 || isWhitespace(buffer[i]))) {
-			i++;
+		let wide = wideBomLength;
+		while (wide < limit && (buffer[wide] === 0x00 || isWhitespace(buffer[wide]))) {
+			wide++;
 		}
-		return buffer[i] === LESS_THAN;
+		return buffer[wide] === LESS_THAN;
 	}
 
 	// UTF-8 (optional BOM): first non-whitespace byte is `<`.
-	let i = startsWith(0xef, 0xbb, 0xbf) ? 3 : 0;
-	while (i < buffer.length && isWhitespace(buffer[i])) {
-		i++;
+	let index = startsWith(0xef, 0xbb, 0xbf) ? 3 : 0;
+	while (index < buffer.length && isWhitespace(buffer[index])) {
+		index++;
 	}
-	return buffer[i] === LESS_THAN;
+	return buffer[index] === LESS_THAN;
+}
+
+/**
+ * Largest stored upload that is read back in full for the markup check.
+ *
+ * The check only ever inspects the first few bytes, but the storage providers expose whole-object
+ * reads (`getFile`) with no ranged variant, so scanning a 2 GB video would mean holding it in
+ * memory on the request path. Beyond this size the scan is skipped and the extension allowlist in
+ * {@link createUploadFileFilter} carries the protection on its own — which it can, because
+ * `/public` derives `Content-Type` from the stored extension and sends `nosniff`, so a `.mp4` is
+ * never executed as markup whatever its bytes contain.
+ */
+export const MARKUP_SCAN_MAX_BYTES = 5 * 1024 * 1024;
+
+/**
+ * Whether an upload of the given size should be read back and scanned for markup.
+ *
+ * @param size - The stored size in bytes, if known. An unknown size is scanned.
+ * @returns `true` when the file is small enough to read in full.
+ */
+export function shouldScanForMarkup(size?: number): boolean {
+	// `Number.isFinite` is already false for a non-number, so it covers the unknown-size case too.
+	return !Number.isFinite(size) || (size as number) <= MARKUP_SCAN_MAX_BYTES;
 }
 
 /**

@@ -16,7 +16,17 @@ export function IsSecret(boolean: boolean = true): PropertyDecorator {
 const SECRET_HINT_LENGTH = 4;
 
 /**
- * Masks a secret value, leaving only a short trailing hint visible.
+ * Shortest secret that still gets a trailing hint.
+ *
+ * A fixed-size hint is a percentage of the value, and that percentage explodes as the value gets
+ * shorter: on an 8-character SMTP password four visible characters is half the secret, and on a
+ * five-character one it is 80%. Anything below this length is therefore masked completely — the
+ * hint exists to tell two long tokens apart, which is not a need short passwords have.
+ */
+const SECRET_HINT_MIN_LENGTH = 12;
+
+/**
+ * Masks a secret value, leaving at most a short trailing hint visible.
  *
  * The previous implementation starred a percentage of the value from each end and left everything
  * between them in cleartext — at 25% that returned roughly half of a 40-character OAuth token
@@ -26,11 +36,11 @@ const SECRET_HINT_LENGTH = 4;
  *
  * @param value - The sensitive value to mask.
  * @param character - The character used for replacement.
- * @returns The masked value: all but the last few characters replaced.
+ * @returns The masked value: fully masked, or all but the last few characters when long enough.
  */
 export function maskSecret(value: unknown, character = '*'): string {
 	const secret = String(value ?? '');
-	const visible = secret.length <= SECRET_HINT_LENGTH ? 0 : SECRET_HINT_LENGTH;
+	const visible = secret.length >= SECRET_HINT_MIN_LENGTH ? SECRET_HINT_LENGTH : 0;
 	return character.repeat(Math.max(secret.length - visible, 0)) + secret.slice(secret.length - visible);
 }
 

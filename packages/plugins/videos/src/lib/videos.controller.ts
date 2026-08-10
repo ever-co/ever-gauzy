@@ -4,6 +4,7 @@ import {
 	FileStorage,
 	FileStorageFactory,
 	LazyFileInterceptor,
+	shouldScanForMarkup,
 	videoUploadFileFilter,
 	BaseQueryDTO,
 	PermissionGuard,
@@ -141,12 +142,19 @@ export class VideosController {
 			}
 
 			// The fileFilter and the DTO both judge the client-sent MIME type; re-check the stored
-			// bytes so markup can never survive on disk (GHSA-p334-cm7f-php5 class).
-			try {
-				assertNotMarkupContent(await provider.getFile(file.key));
-			} catch (error) {
-				await provider.deleteFile(file.key);
-				throw error;
+			// bytes so markup can never survive on disk (GHSA-p334-cm7f-php5 class). Skipped for
+			// large uploads, which would have to be held in memory to read — see shouldScanForMarkup.
+			if (shouldScanForMarkup(file.size)) {
+				try {
+					assertNotMarkupContent(await provider.getFile(file.key));
+				} catch (error) {
+					try {
+						await provider.deleteFile(file.key);
+					} catch {
+						// Best-effort cleanup: a failed delete must not replace the rejection below.
+					}
+					throw error;
+				}
 			}
 
 			// Extract necessary properties from the request body
