@@ -4112,6 +4112,7 @@
 		"ATTACH_RESPONSE_UNREADABLE": "The upload response could not be read — check the Documents page before retrying",
 		"ATTACH_SEARCH": "Search documents…",
 		"ATTACH_NO_RESULTS": "No matching documents.",
+		"ATTACH_LOAD_FAILED": "The document list could not be loaded — please try again.",
 		"ATTACH_UNAVAILABLE": "Documents are not available in this workspace.",
 		"ATTACH_REMOVE": "Remove attachment",
 		"CITATIONS": {

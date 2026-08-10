@@ -143,6 +143,10 @@
         // Same surface as the nav menu sidebar; the chat panel's design
         // tokens derive from currentColor, so set the themed text color here.
         background: nb-theme(gauzy-sidebar-background-2);
+        // Published as a CSS var so the React panel's overlays (history, attach picker) can paint
+        // an OPAQUE surface: the chat theme's own surface tokens are currentColor tints over
+        // transparent, and an overlay using them lets the conversation bleed through.
+        --gz-chat-surface: #{nb-theme(gauzy-sidebar-background-2)};
         color: nb-theme(text-basic-color);
         border-right: 1px solid nb-theme(divider-color);
       }
