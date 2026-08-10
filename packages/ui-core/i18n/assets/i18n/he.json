@@ -3701,6 +3701,21 @@
 		"REDIRECT_TO_HOME": "תופנה לדף הבית בקרוב"
 	},
 	"HELP_PAGE": {
+		"INTRO": "מצאו תיעוד, קבלו תשובות וצרו קשר עם הצוות שמאחורי Gauzy.",
+		"DOCUMENTATION": "תיעוד",
+		"DOCUMENTATION_DESC": "מדריכים ותיעוד לכל יכולת ב-Gauzy.",
+		"FAQ": "שאלות נפוצות",
+		"FAQ_DESC": "תשובות לשאלות הנפוצות ביותר.",
+		"SUPPORT_CHAT": "צ'אט תמיכה",
+		"SUPPORT_CHAT_DESC": "שוחחו עם צוות התמיכה שלנו.",
+		"REPORT_ISSUE": "דיווח על תקלה",
+		"REPORT_ISSUE_DESC": "מצאתם באג? פתחו issue ב-GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "קוד מקור, גרסאות ודיונים.",
+		"WEBSITE": "אתר Gauzy",
+		"WEBSITE_DESC": "מידע נוסף על פלטפורמת Gauzy.",
+		"ABOUT_LINK": "אודות Gauzy",
+		"ABOUT_LINK_DESC": "פרטי גרסה, רישיון וקישורים.",
 		"HELP": "עזרה",
 		"KNOWLEDGE_BASE": "Knowledge base",
 		"CHOSE_ICON": "Chose icon to set",
@@ -4005,6 +4020,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "‏Copyright © 2019-{{year}}, Ever Co. LTD. כל הזכויות שמורות.",
+		"DESCRIPTION": "‏Ever® Gauzy™ היא פלטפורמה פתוחה לניהול עסקי עבור כלכלות שיתופיות ולפי דרישה — ERP, CRM, HRM, ATS וניהול פרויקטים עם מעקב זמן מובנה.",
+		"LICENSE": "קוד פתוח, משוחרר תחת רישיון",
+		"VERSION_DETAILS": "פרטי גרסה",
+		"VERSION_MISMATCH": "אפליקציית הווב וה-API נבנו מקומיטים שונים — ייתכן שפריסה מתבצעת כעת.",
+		"WEB_APP": "אפליקציית ווב",
+		"API": "API",
+		"UNTAGGED": "גרסה ללא תג",
+		"API_UNAVAILABLE": "גרסת ה-API אינה זמינה",
+		"LEARN_MORE": "מידע נוסף",
 		"ABOUT": "עלינו"
 	},
 	"FOOTER": {
