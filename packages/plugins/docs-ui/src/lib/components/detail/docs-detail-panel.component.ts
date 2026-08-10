@@ -348,8 +348,24 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 		return input;
 	}
 
+	/** Cache so `selectedCategoryIds` keeps a stable reference across change-detection cycles. */
+	private selectedCategoryIdsCache: { source: unknown; result: ID[] } = { source: undefined, result: [] };
+
+	/**
+	 * Feeds `[selected]` on an `<nb-select>`, re-read every change-detection cycle while the panel
+	 * is open. `.map()` mints a new array identity each call; memoizing it (keyed on the
+	 * `document.categories` reference) keeps that reference stable so nb-select does not re-reconcile
+	 * its selection model every cycle — the same discipline as `FacetMultiselectComponent`.
+	 */
 	get selectedCategoryIds(): ID[] {
-		return (this.document?.categories ?? []).map((category) => category.id as ID);
+		const source = this.document?.categories;
+		if (this.selectedCategoryIdsCache.source !== source) {
+			this.selectedCategoryIdsCache = {
+				source,
+				result: (source ?? []).map((category) => category.id as ID)
+			};
+		}
+		return this.selectedCategoryIdsCache.result;
 	}
 
 	// ─── AI suggested tags (spec 07 §5.2) ────────────────────────
@@ -384,14 +400,30 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 	 * disappears as soon as its name is on the document, which is what makes "accept" feel like
 	 * an accept rather than a toggle.
 	 */
+	/** Cache so `suggestedTags` keeps a stable reference (and skips the Set-building work) per CD. */
+	private suggestedTagsCache: { suggestions: unknown; appliedTags: unknown; result: string[] } = {
+		suggestions: undefined,
+		appliedTags: undefined,
+		result: []
+	};
+
+	/**
+	 * Rebuilds a new array plus two `Set`s on every call and is read each change-detection cycle
+	 * while the panel is open. Memoized on its two source references (the AI `suggestedTags` array
+	 * and the applied `document.tags`) so it returns a stable array — the `trackBy` on its `*ngFor`
+	 * then keeps the suggestion buttons stable. Same reference-stability discipline as the facet fix.
+	 */
 	get suggestedTags(): string[] {
 		const ai = this.metadata?.['ai'] as { suggestedTags?: unknown } | undefined;
 		const suggestions = Array.isArray(ai?.suggestedTags) ? ai?.suggestedTags : [];
-		const applied = new Set(
-			(this.document?.tags ?? []).map((tag) => String(tag?.name ?? '').trim().toLowerCase())
-		);
+		const appliedTags = this.document?.tags;
+		if (this.suggestedTagsCache.suggestions === suggestions && this.suggestedTagsCache.appliedTags === appliedTags) {
+			return this.suggestedTagsCache.result;
+		}
+
+		const applied = new Set((appliedTags ?? []).map((tag) => String(tag?.name ?? '').trim().toLowerCase()));
 		const seen = new Set<string>();
-		return (suggestions as unknown[])
+		const result = (suggestions as unknown[])
 			.filter((entry): entry is string => typeof entry === 'string')
 			.map((entry) => entry.trim())
 			.filter((entry) => {
@@ -400,6 +432,13 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 				seen.add(key);
 				return true;
 			});
+
+		this.suggestedTagsCache = { suggestions, appliedTags, result };
+		return result;
+	}
+
+	trackBySuggestion(_index: number, suggestion: string): string {
+		return suggestion;
 	}
 
 	/**

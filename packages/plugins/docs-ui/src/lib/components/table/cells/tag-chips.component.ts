@@ -6,7 +6,11 @@ import { IDocument, ITag } from '@gauzy/contracts';
 	selector: 'gz-docs-tag-chips',
 	template: `
 		<span class="docs-chips">
-			<span class="docs-chip" *ngFor="let tag of visible" [style.background-color]="tag.color || null">
+			<span
+				class="docs-chip"
+				*ngFor="let tag of visible; trackBy: trackById"
+				[style.background-color]="tag.color || null"
+			>
 				{{ tag.name }}
 			</span>
 			<span class="docs-chip overflow" *ngIf="overflow > 0">+{{ overflow }}</span>
@@ -40,15 +44,36 @@ export class TagChipsComponent {
 	@Input() value: ITag[];
 	@Input() max = 3;
 
+	/** Cache so `visible` keeps a stable array reference across change-detection cycles. */
+	private visibleCache: { source: ITag[] | undefined; max: number; result: ITag[] } = {
+		source: undefined,
+		max: -1,
+		result: []
+	};
+
 	get tags(): ITag[] {
 		return this.value ?? this.rowData?.tags ?? [];
 	}
 
+	/**
+	 * Rendered per table row on every browse-list change detection. `slice()` mints a new array
+	 * identity each call; memoizing it (keyed on the source array reference + `max`) keeps the
+	 * `*ngFor` reference stable, and `trackById` keeps the chip DOM stable when the content is
+	 * unchanged — the same reference-stability discipline as `FacetMultiselectComponent`.
+	 */
 	get visible(): ITag[] {
-		return this.tags.slice(0, this.max);
+		const source = this.tags;
+		if (this.visibleCache.source !== source || this.visibleCache.max !== this.max) {
+			this.visibleCache = { source, max: this.max, result: source.slice(0, this.max) };
+		}
+		return this.visibleCache.result;
 	}
 
 	get overflow(): number {
 		return Math.max(0, this.tags.length - this.max);
+	}
+
+	trackById(_index: number, tag: ITag): string {
+		return tag.id;
 	}
 }

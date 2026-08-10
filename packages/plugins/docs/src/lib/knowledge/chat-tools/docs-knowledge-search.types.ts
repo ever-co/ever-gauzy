@@ -5,18 +5,17 @@ import { ID } from '@gauzy/contracts';
  * (spec `07-ai-knowledge.md` §9 — file `knowledge/retrieval/retrieval.service.ts`,
  * class `DocumentKnowledgeSearchService`), typed against the §9.5 response contract.
  *
- * The retrieval service is landed by the knowledge-pipeline surface. The chat tools
- * depend on it ONLY through this interface plus the {@link DOCS_KNOWLEDGE_SEARCH_SERVICE}
- * optional injection token, so this module compiles and degrades gracefully while the
- * implementation is in flight.
+ * The chat tools depend on the retrieval service ONLY through this interface plus the
+ * {@link DOCS_KNOWLEDGE_SEARCH_SERVICE} optional injection token, so this folder never
+ * imports the implementation and degrades gracefully in a process that does not provide it.
  *
- * TODO(docs-knowledge): when `DocumentKnowledgeSearchService` lands, bind it in
- * `docs.module.ts` with
- * `{ provide: DOCS_KNOWLEDGE_SEARCH_SERVICE, useExisting: DocumentKnowledgeSearchService }`
- * — nothing else in this folder needs to change.
+ * `DocumentKnowledgeSearchService` has landed and IS bound — `docs.module.ts` provides
+ * `{ provide: DOCS_KNOWLEDGE_SEARCH_SERVICE, useExisting: DocumentKnowledgeSearchService }`.
+ * Keep that binding in place: because the injection is `@Optional()`, dropping it does not
+ * fail at boot — the chat tools would silently answer with no results instead.
  */
 
-/** Optional-injection token under which the retrieval service is (to be) bound. */
+/** Optional-injection token under which the retrieval service is bound. */
 export const DOCS_KNOWLEDGE_SEARCH_SERVICE = 'DOCS_KNOWLEDGE_SEARCH_SERVICE';
 
 /** Where a hit sits inside its document (citation locator, §9.5). */
