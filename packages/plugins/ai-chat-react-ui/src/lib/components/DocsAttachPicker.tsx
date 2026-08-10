@@ -21,6 +21,14 @@ export interface DocsAttachPickerProps {
 	apiBaseUrl: string;
 	/** Auth + tenant headers for the request (the panel already builds these for every call). */
 	headers: () => Record<string, string>;
+	/**
+	 * Tenant/organization scope for the QUERY. The docs list endpoint validates a `where` object
+	 * (`where[organizationId]` is required) — the Tenant-Id/Organization-Id headers do not satisfy
+	 * it, and flat `organizationId` params are whitelisted away. Without this the endpoint answers
+	 * 400 for every request, which the first version of this picker misreported as "Documents are
+	 * not available in this workspace".
+	 */
+	scope: () => { organizationId?: string; tenantId?: string };
 	/** The user chose a document. */
 	onPick: (document: IAttachableDocument) => void;
 	/** Dismiss without choosing. */
@@ -44,12 +52,12 @@ export interface DocsAttachPickerProps {
  * tool takes a document id, so the assistant can open exactly what the user pointed at rather
  * than searching for something with a similar name.
  */
-export function DocsAttachPicker({ apiBaseUrl, headers, onPick, onClose, translate }: DocsAttachPickerProps) {
+export function DocsAttachPicker({ apiBaseUrl, headers, scope, onPick, onClose, translate }: DocsAttachPickerProps) {
 	const t = translate ?? ((_key: string, fallback: string) => fallback);
 	const [query, setQuery] = useState('');
 	const [documents, setDocuments] = useState<IAttachableDocument[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
-	const [failed, setFailed] = useState(false);
+	const [failure, setFailure] = useState<'unavailable' | 'error' | null>(null);
 	const searchRef = useRef<HTMLInputElement>(null);
 	// Bumped on every request so a slow earlier response can never overwrite a newer one.
 	const requestSeq = useRef(0);
@@ -62,9 +70,14 @@ export function DocsAttachPicker({ apiBaseUrl, headers, onPick, onClose, transla
 		(search: string) => {
 			const seq = ++requestSeq.current;
 			setIsLoading(true);
-			setFailed(false);
+			setFailure(null);
 
 			const params = new URLSearchParams({ take: String(PAGE_SIZE), sort: 'updatedAt', sortOrder: 'DESC' });
+			// The endpoint's DTO requires the scope inside a `where` object (bracket syntax — the
+			// API's extended query parser reassembles it into the nested shape the validator wants).
+			const { organizationId, tenantId } = scope();
+			if (organizationId) params.set('where[organizationId]', organizationId);
+			if (tenantId) params.set('where[tenantId]', tenantId);
 			// Folders hold no readable content — offering one would attach nothing.
 			params.set('kind', 'FILE,PAGE');
 			if (search.trim()) {
@@ -77,18 +90,22 @@ export function DocsAttachPicker({ apiBaseUrl, headers, onPick, onClose, transla
 					if (seq !== requestSeq.current) return;
 					setDocuments(Array.isArray(page?.items) ? page.items : []);
 				})
-				.catch(() => {
+				.catch((error: unknown) => {
 					if (seq !== requestSeq.current) return;
-					// The Documents plugin may not be installed at all, in which case this 404s.
-					// Either way the honest answer is "nothing to offer", not a broken list.
 					setDocuments([]);
-					setFailed(true);
+					// Only "the feature is not here for you" statuses may claim unavailability:
+					// 404 = docs plugin not installed, 403 = no DOCS_READ / feature disabled.
+					// Anything else is a FAILURE and must say so — the first version showed
+					// "Documents are not available" for its own 400s, hiding a plain bug behind
+					// a message that blamed the workspace.
+					const status = error instanceof Error ? error.message : '';
+					setFailure(status === '403' || status === '404' ? 'unavailable' : 'error');
 				})
 				.finally(() => {
 					if (seq === requestSeq.current) setIsLoading(false);
 				});
 		},
-		[apiBaseUrl, headers]
+		[apiBaseUrl, headers, scope]
 	);
 
 	useEffect(() => {
@@ -97,12 +114,19 @@ export function DocsAttachPicker({ apiBaseUrl, headers, onPick, onClose, transla
 	}, [query, load]);
 
 	const overlayStyle: CSSProperties = {
+		// Fills the chat BODY (the panel mounts this inside its position:relative body container),
+		// so the panel's own header row stays visible and operable above it.
 		position: 'absolute',
 		inset: 0,
 		zIndex: 6,
 		display: 'flex',
 		flexDirection: 'column',
-		backgroundColor: chatTheme.surface,
+		// The chat theme has no opaque surface token (surfaces are currentColor tints over
+		// transparent — the Angular layout paints the real background), so a tint alone let the
+		// conversation show through the picker. The layout publishes its sidebar surface as
+		// --gz-chat-surface; the blur is the fallback for hosts that do not (detached window).
+		backgroundColor: 'var(--gz-chat-surface, transparent)',
+		backdropFilter: 'blur(12px)',
 		animation: 'fadeIn 0.15s ease'
 	};
 
@@ -198,8 +222,10 @@ export function DocsAttachPicker({ apiBaseUrl, headers, onPick, onClose, transla
 
 				{!isLoading && !documents.length && (
 					<div style={emptyStyle}>
-						{failed
+						{failure === 'unavailable'
 							? t('AI_ASSISTANT.ATTACH_UNAVAILABLE', 'Documents are not available in this workspace.')
+							: failure === 'error'
+							? t('AI_ASSISTANT.ATTACH_LOAD_FAILED', 'The document list could not be loaded — please try again.')
 							: t('AI_ASSISTANT.ATTACH_NO_RESULTS', 'No matching documents.')}
 					</div>
 				)}

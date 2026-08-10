@@ -104,6 +104,21 @@ export function AiChatPanel() {
 	);
 
 	/**
+	 * The tenant/organization scope the Documents endpoints require IN THE REQUEST ITSELF —
+	 * `where[organizationId]` on the list, an `organizationId` part in the upload body. The
+	 * Tenant-Id/Organization-Id HEADERS do not satisfy those DTO validators
+	 * (`TenantOrganizationBaseDTO`), which is exactly how the picker first shipped broken:
+	 * every request answered 400 and the UI misread it as "Documents unavailable".
+	 */
+	const attachScope = useCallback(
+		(): { organizationId?: string; tenantId?: string } => ({
+			...(store.organizationId ? { organizationId: store.organizationId } : {}),
+			...(store.tenantId ? { tenantId: store.tenantId } : {})
+		}),
+		[store]
+	);
+
+	/**
 	 * May this user open the AI Providers settings page?
 	 *
 	 * Chat only requires AI_CHAT_ACCESS, but the settings route is guarded by AI_CHAT_SETTINGS — so
@@ -358,6 +373,11 @@ export function AiChatPanel() {
 				const docsForm = new FormData();
 				docsForm.append('files', file, file.name);
 				docsForm.append('source', 'CHAT');
+				// Required by UploadDocumentsDTO (TenantOrganizationBaseDTO): the org must be in the
+				// BODY — headers alone fail validation with "organizationId must be a UUID".
+				const scope = attachScope();
+				if (scope.organizationId) docsForm.append('organizationId', scope.organizationId);
+				if (scope.tenantId) docsForm.append('tenantId', scope.tenantId);
 				const docsResponse = await fetch(`${environment.API_BASE_URL}/api/plugins/docs/documents/upload`, {
 					method: 'POST',
 					headers: authHeaders(),
@@ -432,7 +452,7 @@ export function AiChatPanel() {
 				setIsAttaching(false);
 			}
 		},
-		[authHeaders]
+		[authHeaders, attachScope]
 	);
 
 	/** Attach an existing document by id — what makes `docs_read` able to open exactly that one. */
@@ -612,7 +632,10 @@ export function AiChatPanel() {
 		display: 'flex',
 		flexDirection: 'column',
 		overflow: 'hidden',
-		minWidth: 0
+		minWidth: 0,
+		// The positioning context for the history and attach-picker overlays: `inset: 0` must
+		// resolve against the BODY, so an overlay can never cover the panel's own header row.
+		position: 'relative'
 	};
 
 	const resizeHandleStyle: CSSProperties = {
@@ -929,32 +952,34 @@ export function AiChatPanel() {
 				</span>
 			</div>
 
-			{/* Conversation history overlay */}
-			{showHistory && (
-				<ChatHistoryPanel
-					items={history}
-					loading={historyLoading}
-					activeId={activeConversationId}
-					translate={t}
-					onSelect={handleSelectConversation}
-					onDelete={handleDeleteConversation}
-					onClose={() => setShowHistory(false)}
-				/>
-			)}
-
-			{/* "Attach from Documents" overlay — same full-panel treatment as history. */}
-			{showAttachPicker && (
-				<DocsAttachPicker
-					apiBaseUrl={environment.API_BASE_URL}
-					headers={authHeaders}
-					translate={t}
-					onPick={handlePickDocument}
-					onClose={() => setShowAttachPicker(false)}
-				/>
-			)}
-
-			{/* Chat body — fills remaining height */}
+			{/* Chat body — fills remaining height. The overlays mount INSIDE it so they cover the
+			    conversation area only, never the panel's own header (which stays operable — the
+			    user can still collapse/detach while a picker is open). */}
 			<div style={bodyStyle}>
+				{/* Conversation history overlay */}
+				{showHistory && (
+					<ChatHistoryPanel
+						items={history}
+						loading={historyLoading}
+						activeId={activeConversationId}
+						translate={t}
+						onSelect={handleSelectConversation}
+						onDelete={handleDeleteConversation}
+						onClose={() => setShowHistory(false)}
+					/>
+				)}
+
+				{/* "Attach from Documents" overlay */}
+				{showAttachPicker && (
+					<DocsAttachPicker
+						apiBaseUrl={environment.API_BASE_URL}
+						headers={authHeaders}
+						scope={attachScope}
+						translate={t}
+						onPick={handlePickDocument}
+						onClose={() => setShowAttachPicker(false)}
+					/>
+				)}
 				{hasMessages ? (
 					<ChatMessageList
 						messages={messages}
