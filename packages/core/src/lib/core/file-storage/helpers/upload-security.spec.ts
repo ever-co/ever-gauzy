@@ -60,6 +60,14 @@ describe('upload security — file filters', () => {
 			expect(runFilter(imageUploadFileFilter, 'application/octet-stream', 'photo.png').accepted).toBe(false);
 		});
 
+		it('rejects extensions that are merely absent from the denylist', () => {
+			// The extension is allowlisted, not denylisted: `/public` derives Content-Type from it, so
+			// anything not known-inert must be refused rather than only the handful we thought to name.
+			for (const name of ['evil.mhtml', 'evil.xsl', 'evil.shtml', 'evil.xht', 'evil.pdf', 'evil']) {
+				expect(runFilter(imageUploadFileFilter, 'image/png', name).accepted).toBe(false);
+			}
+		});
+
 		it('rejects a file with no MIME type or name', () => {
 			expect(runFilter(imageUploadFileFilter, undefined as any, undefined as any).accepted).toBe(false);
 		});
@@ -79,6 +87,10 @@ describe('upload security — file filters', () => {
 			expect(runFilter(audioUploadFileFilter, 'audio/mpeg', 'evil.html').accepted).toBe(false);
 			expect(runFilter(audioUploadFileFilter, 'text/html', 'note.mp3').accepted).toBe(false);
 		});
+
+		it('accepts the audio/webm the soundshot recorder actually sends', () => {
+			expect(runFilter(audioUploadFileFilter, 'audio/webm', 'project-demo-2024.webm').accepted).toBe(true);
+		});
 	});
 });
 
@@ -97,11 +109,25 @@ describe('upload security — content sniffing', () => {
 		expect(isMarkupContent(Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('<svg/>')]))).toBe(true);
 	});
 
-	it('detects wide-encoding markup by its BOM (UTF-16/UTF-32 bypass)', () => {
-		expect(isMarkupContent(Buffer.from([0xff, 0xfe, 0x3c, 0x00]))).toBe(true); // UTF-16 LE
-		expect(isMarkupContent(Buffer.from([0xfe, 0xff, 0x00, 0x3c]))).toBe(true); // UTF-16 BE
-		expect(isMarkupContent(Buffer.from([0xff, 0xfe, 0x00, 0x00]))).toBe(true); // UTF-32 LE
-		expect(isMarkupContent(Buffer.from([0x00, 0x00, 0xfe, 0xff]))).toBe(true); // UTF-32 BE
+	it('detects wide-encoding markup (the UTF-16/UTF-32 bypass)', () => {
+		expect(isMarkupContent(Buffer.from([0xff, 0xfe, 0x3c, 0x00]))).toBe(true); // UTF-16 LE  <
+		expect(isMarkupContent(Buffer.from([0xfe, 0xff, 0x00, 0x3c]))).toBe(true); // UTF-16 BE  <
+		expect(isMarkupContent(Buffer.from([0xff, 0xfe, 0x00, 0x00, 0x3c, 0x00, 0x00, 0x00]))).toBe(true); // UTF-32 LE
+		expect(isMarkupContent(Buffer.from([0x00, 0x00, 0xfe, 0xff, 0x00, 0x00, 0x00, 0x3c]))).toBe(true); // UTF-32 BE
+	});
+
+	it('does not flag an MP4 whose first box header ends in 0x3C', () => {
+		// A 60-byte leading box is literally `00 00 00 3C` followed by 'ftyp'. This is why BOM-less
+		// UTF-16 is not detected: doing so would reject valid video on the videos endpoint.
+		const mp4 = Buffer.from([0x00, 0x00, 0x00, 0x3c, 0x66, 0x74, 0x79, 0x70]);
+		expect(isMarkupContent(mp4)).toBe(false);
+	});
+
+	it('does not treat a bare UTF-16 LE BOM as markup — it is also an MPEG audio frame header', () => {
+		// 0xFF 0xFE is a valid MPEG-1 Layer I sync word. Rejecting on the BOM alone would refuse
+		// legitimate audio uploads on the soundshot endpoint.
+		const mpegFrame = Buffer.from([0xff, 0xfe, 0x18, 0xc4, 0x00, 0x00, 0x00, 0x00]);
+		expect(isMarkupContent(mpegFrame)).toBe(false);
 	});
 
 	it('detects HTML and XML documents', () => {

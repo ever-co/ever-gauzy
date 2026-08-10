@@ -4,8 +4,11 @@
 export { bootstrap, registerPluginConfig } from './lib/bootstrap';
 export * from './lib/core';
 export {
+	ALLOWED_AUDIO_EXTENSIONS,
 	ALLOWED_AUDIO_MIME_TYPES,
+	ALLOWED_IMAGE_EXTENSIONS,
 	ALLOWED_IMAGE_MIME_TYPES,
+	ALLOWED_VIDEO_EXTENSIONS,
 	ALLOWED_VIDEO_MIME_TYPES,
 	BLOCKED_UPLOAD_EXTENSIONS,
 	FileStorage,
