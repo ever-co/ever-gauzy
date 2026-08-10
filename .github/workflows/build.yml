@@ -1,0 +1,132 @@
+name: Build
+
+# Replaces the CircleCI `build` workflow, which could not complete on that plan: a cold
+# `yarn install` for this monorepo takes ~46 minutes and saving the node_modules cache another ~9,
+# which exceeds the 60-minute job cap — so the cache was never written and every run started cold.
+# Self-hosted runners have no such cap.
+#
+# Job names and the commands they run mirror .circleci/config.yml one-for-one so PR-time build
+# coverage is unchanged.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - stage
+      - master
+
+# Unique to this workflow and ref. Deliberately NOT a group shared with other workflows: a shared
+# group serialises unrelated builds and silently cancels them (see the image-build starvation
+# incident). Superseded PR runs are cancelled; pushes to the long-lived branches are not.
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Mirrors the CircleCI `defaults` block. The `ng:*` scripts already set the heap themselves via
+  # cross-env, so this covers everything outside them.
+  NODE_OPTIONS: --max-old-space-size=12288
+  NG_CLI_ANALYTICS: false
+  # Nx Cloud is disabled for this org; without this `nx run-many` hard-fails with
+  # "Nx Cloud: Workspace is unable to be authorized. Exiting run."
+  NX_NO_CLOUD: true
+
+jobs:
+  build-monorepo-root:
+    name: build-monorepo-root
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+
+      - name: Run postinstall manually
+        run: yarn postinstall.manual
+
+  build-api:
+    name: build-api
+    needs: build-monorepo-root
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+
+      - name: Run postinstall manually
+        run: yarn postinstall.manual
+
+      - name: Build packages
+        run: yarn build:package:all
+
+      - name: Build API
+        run: yarn build:api:prod:ci
+
+  build-web:
+    name: build-web
+    needs: build-monorepo-root
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+
+      - name: Run postinstall manually
+        run: yarn postinstall.manual
+
+      - name: Build packages
+        run: yarn build:package:all
+
+      - name: Build web
+        run: yarn build:gauzy:prod:ci
+
+  build-desktop:
+    name: build-desktop
+    needs: build-monorepo-root
+    # Matches the CircleCI branch filter: desktop was never built on ordinary PR branches.
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/stage' || github.ref == 'refs/heads/master'
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install system dependencies for Electron
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential icnsutils graphicsmagick binutils libappindicator3-1 || true
+
+      - name: Install dependencies
+        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+
+      - name: Run postinstall manually
+        run: yarn postinstall.manual
+
+      - name: Build desktop
+        run: yarn build:desktop
