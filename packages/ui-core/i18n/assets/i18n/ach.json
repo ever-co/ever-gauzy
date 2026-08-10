@@ -3714,6 +3714,7 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. All rights reserved.",
 		"DESCRIPTION": "Ever® Gauzy™ is an Open Business Management Platform for Collaborative, On-Demand and Sharing Economies — ERP, CRM, HRM, ATS and Project Management with integrated time tracking.",
 		"LICENSE": "Open source, released under the",
 		"VERSION_DETAILS": "Version Details",

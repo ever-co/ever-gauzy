@@ -21,6 +21,9 @@ export class AboutComponent implements OnInit {
 	readonly web: IVersionRow;
 	/** API build info — fetched from the public /api/version endpoint. `null` until it answers. */
 	api: IVersionRow | null = null;
+	/** True only once the /api/version request has actually failed — while it is
+	 *  still pending the template shows a placeholder, not "unavailable". */
+	apiFailed = false;
 
 	/** GitHub repo base, for release/commit deep links. */
 	readonly repoBaseUrl: string;
@@ -37,7 +40,10 @@ export class AboutComponent implements OnInit {
 		this.http
 			.get<IAppVersionInfo>(`${this.environment.API_BASE_URL}/api/version`)
 			.pipe(
-				catchError(() => of(null)),
+				catchError(() => {
+					this.apiFailed = true;
+					return of(null);
+				}),
 				tap((info) => {
 					this.api = info ? { version: info.version ?? '', commit: info.commit ?? '' } : null;
 				})

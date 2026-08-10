@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnDestroy } from '@angular/core';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 
 /**
@@ -16,12 +16,17 @@ interface IChatwootWidget {
 	styleUrls: ['./help.component.scss'],
 	standalone: false
 })
-export class HelpComponent {
+export class HelpComponent implements OnDestroy {
 	/** Support chat is only offered when this deployment configured a Chatwoot website token. */
 	readonly isSupportChatAvailable: boolean;
 
 	/** GitHub repo base, for the source / issue links. */
 	readonly repoBaseUrl: string;
+
+	/** The one pending `chatwoot:ready` handler, kept so repeated clicks don't
+	 *  stack listeners and navigating away removes it (`once` only cleans up
+	 *  after the event actually fires). */
+	private pendingOpen: (() => void) | null = null;
 
 	constructor(@Inject(GAUZY_ENV) readonly environment: Environment) {
 		this.isSupportChatAvailable = !!environment.CHATWOOT_SDK_TOKEN;
@@ -43,9 +48,20 @@ export class HelpComponent {
 			widget.toggle('open');
 			return;
 		}
-		if (!this.isSupportChatAvailable) {
+		if (!this.isSupportChatAvailable || this.pendingOpen) {
 			return;
 		}
-		window.addEventListener('chatwoot:ready', () => chatwoot()?.toggle('open'), { once: true });
+		this.pendingOpen = () => {
+			this.pendingOpen = null;
+			chatwoot()?.toggle('open');
+		};
+		window.addEventListener('chatwoot:ready', this.pendingOpen, { once: true });
+	}
+
+	ngOnDestroy(): void {
+		if (this.pendingOpen) {
+			window.removeEventListener('chatwoot:ready', this.pendingOpen);
+			this.pendingOpen = null;
+		}
 	}
 }

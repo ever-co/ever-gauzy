@@ -58,8 +58,11 @@
 								</a>
 							}
 						</td>
-					} @else {
+					} @else if (apiFailed) {
 						<td colspan="2" class="muted">{{ 'ABOUT_PAGE.API_UNAVAILABLE' | translate }}</td>
+					} @else {
+						<!-- Request still in flight — placeholder, not "unavailable". -->
+						<td colspan="2" class="muted">…</td>
 					}
 				</tr>
 			</table>
@@ -75,6 +78,6 @@
 			</ul>
 		</section>
 
-		<p class="copyright">Copyright © 2019-{{ currentYear }}, Ever Co. LTD. All rights reserved.</p>
+		<p class="copyright">{{ 'ABOUT_PAGE.COPYRIGHT' | translate: { year: currentYear } }}</p>
 	</nb-card-body>
 </nb-card>
