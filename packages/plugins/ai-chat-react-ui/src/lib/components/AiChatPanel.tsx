@@ -385,10 +385,15 @@ export function AiChatPanel() {
 					// document may exist, so point at the Documents page rather than blaming the file.
 					const rejection = body?.rejected?.[0];
 					if (rejection) {
-						throw new Error(rejection.message || `'${file.name}' was rejected.`);
+						throw new Error(
+							rejection.message || `${t('AI_ASSISTANT.ATTACH_REJECTED', 'The file was rejected')}: ${file.name}`
+						);
 					}
 					throw new Error(
-						`The upload response for '${file.name}' could not be read — check the Documents page before retrying.`
+						`${t(
+							'AI_ASSISTANT.ATTACH_RESPONSE_UNREADABLE',
+							'The upload response could not be read — check the Documents page before retrying'
+						)}: ${file.name}`
 					);
 				}
 
