@@ -225,7 +225,7 @@
 						{{ 'DOCS.DETAIL.SUGGESTED_TAGS' | translate }}
 					</span>
 					<button
-						*ngFor="let suggestion of suggestedTags"
+						*ngFor="let suggestion of suggestedTags; trackBy: trackBySuggestion"
 						type="button"
 						class="docs-suggested-tag"
 						[disabled]="!!acceptingTag"
