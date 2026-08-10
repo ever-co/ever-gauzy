@@ -127,48 +127,73 @@ export class RefreshChangelogContent1790000005000 implements MigrationInterface 
 	public async down(queryRunner: QueryRunner): Promise<void> {}
 
 	/**
-	 * Delete-then-insert, shared by all three databases. `insertDate` adapts the
-	 * ISO date to what each engine stores; `insertBool` adapts the boolean.
+	 * Titles of the rows the Dec-2021 seed/migration created. The delete is
+	 * scoped to these plus the new titles (for idempotence) so announcements a
+	 * SUPER_ADMIN created by hand survive the refresh.
+	 */
+	private readonly seededTitles = [
+		'See new features',
+		'Ready to give Gauzy a try?',
+		'Visit our website for more information.',
+		'New CRM',
+		'Most popular in 20 countries',
+		'Visit our website'
+	];
+
+	/**
+	 * Replace-known-rows, shared by all three databases. `quote` wraps an
+	 * identifier per engine; `param` renders the n-th placeholder; `insertDate`
+	 * / `insertBool` adapt values to what each engine stores.
+	 *
+	 * Only the table-existence probe swallows its error (the table exists only
+	 * when the changelog plugin is enabled). Delete/insert failures propagate:
+	 * migrations run with `transaction: 'each'`, so a partial refresh rolls
+	 * back atomically instead of leaving the table half-filled.
 	 */
 	private async refresh(
 		queryRunner: QueryRunner,
-		deleteQuery: string,
-		buildQuery: (columns: string[]) => string,
+		quote: (identifier: string) => string,
+		param: (n: number) => string,
 		insertDate: (iso: string) => unknown,
 		insertBool: (value: boolean) => unknown
 	): Promise<void> {
+		const table = quote('changelog');
 		try {
-			// The table holds platform-level seed content only (writes were just
-			// locked down to SUPER_ADMIN), so a full replace is safe.
-			await queryRunner.connection.manager.query(deleteQuery);
+			await queryRunner.connection.manager.query(`SELECT 1 FROM ${table} LIMIT 1`);
+		} catch {
+			console.log('Changelog table not present, skipping content refresh.');
+			return;
+		}
 
-			const columns = ['icon', 'title', 'date', 'isFeature', 'content', 'learnMoreUrl', 'imageUrl', 'id'];
-			const insertQuery = buildQuery(columns);
-			for (const entry of this.entries) {
-				await queryRunner.connection.manager.query(insertQuery, [
-					entry.icon,
-					entry.title,
-					insertDate(entry.date),
-					insertBool(entry.isFeature),
-					entry.content,
-					entry.learnMoreUrl,
-					entry.imageUrl,
-					uuidV4()
-				]);
-			}
-		} catch (error) {
-			// The changelog table only exists when the plugin is enabled — never
-			// fail the migration run over optional content.
-			console.log('Error while refreshing changelog content, ignoring...', error);
+		const titles = [...this.seededTitles, ...this.entries.map((entry) => entry.title)];
+		await queryRunner.connection.manager.query(
+			`DELETE FROM ${table} WHERE ${quote('title')} IN (${titles.map((_, i) => param(i + 1)).join(', ')})`,
+			titles
+		);
+
+		const columns = ['icon', 'title', 'date', 'isFeature', 'content', 'learnMoreUrl', 'imageUrl', 'id'];
+		const insertQuery = `INSERT INTO ${table} (${columns.map(quote).join(', ')}) VALUES(${columns
+			.map((_, i) => param(i + 1))
+			.join(', ')})`;
+		for (const entry of this.entries) {
+			await queryRunner.connection.manager.query(insertQuery, [
+				entry.icon,
+				entry.title,
+				insertDate(entry.date),
+				insertBool(entry.isFeature),
+				entry.content,
+				entry.learnMoreUrl,
+				entry.imageUrl,
+				uuidV4()
+			]);
 		}
 	}
 
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await this.refresh(
 			queryRunner,
-			`DELETE FROM "changelog"`,
-			(columns) =>
-				`INSERT INTO "changelog" (${columns.map((c) => `"${c}"`).join(', ')}) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
+			(identifier) => `"${identifier}"`,
+			() => '?',
 			// TypeORM stores sqlite datetime as 'YYYY-MM-DD HH:MM:SS'
 			(iso) => iso.slice(0, 19).replace('T', ' '),
 			(value) => (value ? 1 : 0)
@@ -178,9 +203,8 @@ export class RefreshChangelogContent1790000005000 implements MigrationInterface 
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await this.refresh(
 			queryRunner,
-			`DELETE FROM "changelog"`,
-			(columns) =>
-				`INSERT INTO "changelog" (${columns.map((c) => `"${c}"`).join(', ')}) VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
+			(identifier) => `"${identifier}"`,
+			(n) => `$${n}`,
 			(iso) => new Date(iso),
 			(value) => value
 		);
@@ -189,9 +213,8 @@ export class RefreshChangelogContent1790000005000 implements MigrationInterface 
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await this.refresh(
 			queryRunner,
-			'DELETE FROM `changelog`',
-			(columns) =>
-				`INSERT INTO \`changelog\` (${columns.map((c) => `\`${c}\``).join(', ')}) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
+			(identifier) => `\`${identifier}\``,
+			() => '?',
 			// MySQL DATETIME rejects the trailing 'Z' on older versions
 			(iso) => iso.slice(0, 19).replace('T', ' '),
 			(value) => (value ? 1 : 0)
