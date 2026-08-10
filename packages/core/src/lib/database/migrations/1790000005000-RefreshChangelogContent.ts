@@ -112,7 +112,7 @@ export class RefreshChangelogContent1790000005000 implements MigrationInterface 
 				await this.mysqlUpQueryRunner(queryRunner);
 				break;
 			default:
-				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+				throw new Error(`Unsupported database: ${queryRunner.connection.options.type}`);
 		}
 	}
 
@@ -124,7 +124,9 @@ export class RefreshChangelogContent1790000005000 implements MigrationInterface 
 	 *
 	 * @param queryRunner
 	 */
-	public async down(queryRunner: QueryRunner): Promise<void> {}
+	public async down(queryRunner: QueryRunner): Promise<void> {
+		// Intentionally empty — content-only migration, nothing worth restoring.
+	}
 
 	/**
 	 * Titles of the rows the Dec-2021 seed/migration created. The delete is
