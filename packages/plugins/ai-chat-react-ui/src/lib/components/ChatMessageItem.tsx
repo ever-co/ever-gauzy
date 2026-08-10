@@ -8,7 +8,77 @@ import {
 	type IDocsCitation,
 	type IDocsCitationsData
 } from './DocsCitationChips';
+import { parseAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
 import { chatTheme } from '../chat-theme';
+
+/**
+ * The attachment chips shown on a USER message in place of the raw preamble text.
+ *
+ * A chip with a `documentId` deep-links into the Documents hub through the same bridge the
+ * assistant's citation chips use — and through the same shape (`IDocsCitation` is `{documentId,
+ * url, …}`), so the panel's existing `onOpenCitation` handler serves both. A name-only chip
+ * (Documents unavailable on this install) has nowhere to link and renders inert.
+ */
+function UserAttachmentChips({
+	attachments,
+	onOpen,
+	translate
+}: {
+	attachments: IStagedAttachment[];
+	onOpen?: (citation: IDocsCitation) => void;
+	translate?: (key: string, fallback: string) => string;
+}) {
+	const t = translate ?? ((_key: string, fallback: string) => fallback);
+	const chipStyle: CSSProperties = {
+		display: 'inline-flex',
+		alignItems: 'center',
+		gap: 4,
+		maxWidth: '100%',
+		padding: '2px 8px',
+		borderRadius: 999,
+		border: '1px solid rgba(255, 255, 255, 0.35)',
+		backgroundColor: 'rgba(255, 255, 255, 0.15)',
+		color: 'inherit',
+		fontSize: chatTheme.fontSizeSmall,
+		lineHeight: 1.4,
+		overflow: 'hidden',
+		textOverflow: 'ellipsis',
+		whiteSpace: 'nowrap'
+	};
+	return (
+		<span style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+			{attachments.map((attachment, chipIndex) =>
+				attachment.documentId && onOpen ? (
+					<button
+						key={`${attachment.documentId}-${chipIndex}`}
+						type="button"
+						style={{ ...chipStyle, cursor: 'pointer', font: 'inherit', fontSize: chatTheme.fontSizeSmall }}
+						title={attachment.name}
+						aria-label={t('AI_ASSISTANT.ATTACH_OPEN', 'Open attached document') + `: ${attachment.name}`}
+						onClick={() =>
+							onOpen({
+								documentId: attachment.documentId!,
+								// Same deep-link split the server's citation chips use: a PAGE opens
+								// at its editor route, everything else in the file browser.
+								url:
+									attachment.kind === 'PAGE'
+										? `/pages/documents/page/${attachment.documentId}`
+										: `/pages/documents?id=${attachment.documentId}`,
+								name: attachment.name
+							})
+						}
+					>
+						📎 {attachment.name}
+					</button>
+				) : (
+					<span key={`${attachment.name}-${chipIndex}`} style={chipStyle} title={attachment.name}>
+						📎 {attachment.name}
+					</span>
+				)
+			)}
+		</span>
+	);
+}
 
 export interface ChatMessageItemProps {
 	message: UIMessage;
@@ -68,6 +138,28 @@ export function ChatMessageItem({
 			{message.parts.map((part, index) => {
 				if (part.type === 'text') {
 					if (!part.text) return null;
+					// A user message that carries attachments starts with the preamble the panel
+					// composed. The MODEL needs that text (it is what makes `docs_read` actionable
+					// and keeps the attachment context alive across turns); the READER does not —
+					// render chips + the user's own words instead. Display-only: the message text
+					// is never altered.
+					const attachmentView = isUser ? parseAttachmentPreamble(part.text) : null;
+					if (attachmentView) {
+						return (
+							<div style={rowStyle} key={`${message.id}-${index}`}>
+								<div style={{ ...bubbleStyle, display: 'flex', flexDirection: 'column', gap: 6 }}>
+									<UserAttachmentChips
+										attachments={attachmentView.attachments}
+										{...(onOpenCitation ? { onOpen: onOpenCitation } : {})}
+										{...(translate ? { translate } : {})}
+									/>
+									{attachmentView.text ? (
+										<span style={{ whiteSpace: 'pre-wrap' }}>{attachmentView.text}</span>
+									) : null}
+								</div>
+							</div>
+						);
+					}
 					return (
 						<div style={rowStyle} key={`${message.id}-${index}`}>
 							<div style={bubbleStyle}>
