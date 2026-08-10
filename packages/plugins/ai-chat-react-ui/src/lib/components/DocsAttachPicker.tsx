@@ -85,7 +85,12 @@ export function DocsAttachPicker({ apiBaseUrl, headers, scope, onPick, onClose, 
 			}
 
 			fetch(`${apiBaseUrl}/api/plugins/docs/documents?${params.toString()}`, { headers: headers() })
-				.then((response) => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
+				.then((response) => {
+					if (response.ok) return response.json();
+					// The status rides the rejection as a typed field — classifying on a
+					// stringified message would couple the catch to this throw-site's wording.
+					return Promise.reject(Object.assign(new Error(`docs list failed (${response.status})`), { status: response.status }));
+				})
 				.then((page: { items?: IAttachableDocument[] }) => {
 					if (seq !== requestSeq.current) return;
 					setDocuments(Array.isArray(page?.items) ? page.items : []);
@@ -98,8 +103,8 @@ export function DocsAttachPicker({ apiBaseUrl, headers, scope, onPick, onClose, 
 					// Anything else is a FAILURE and must say so — the first version showed
 					// "Documents are not available" for its own 400s, hiding a plain bug behind
 					// a message that blamed the workspace.
-					const status = error instanceof Error ? error.message : '';
-					setFailure(status === '403' || status === '404' ? 'unavailable' : 'error');
+					const status = (error as { status?: number })?.status;
+					setFailure(status === 403 || status === 404 ? 'unavailable' : 'error');
 				})
 				.finally(() => {
 					if (seq === requestSeq.current) setIsLoading(false);
