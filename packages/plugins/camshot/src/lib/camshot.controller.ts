@@ -123,7 +123,7 @@ export class CamshotController {
 			// Define storage settings for uploaded files
 			storage: () => FileStorageFactory.create('camshots'),
 			// Camshots are served unauthenticated from `/public/<key>` with a Content-Type derived from
-			// the stored extension. The DTO's `@Matches(/^image\/png$/)` only checks the spoofable
+			// the stored extension. The DTO's `@Matches(/^image\/png$/)` only checks the client-supplied
 			// client MIME and is optional, so an `.svg` upload would execute script in the app origin
 			// (GHSA-p334-cm7f-php5 class).
 			fileFilter: imageUploadFileFilter
@@ -135,7 +135,7 @@ export class CamshotController {
 		if (!file.key) {
 			throw new BadRequestException('Camshot file key is empty');
 		}
-		// The fileFilter above only sees the client-supplied MIME type and filename, both spoofable.
+		// The fileFilter above only sees the MIME type and filename the client sent, both of which it controls.
 		// Re-check the stored bytes and drop the file before any record is created — `/public` serves
 		// straight from disk regardless of the DB row (GHSA-p334-cm7f-php5 class).
 		const provider = new FileStorage().getProvider();

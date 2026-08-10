@@ -34,7 +34,7 @@ export async function resolveServeStaticPath(config: ConfigService): Promise<Ser
 			serveStaticOptions: {
 				setHeaders: (res: any) => {
 					// Everything under `/public/` is user-uploaded and served unauthenticated, with a
-					// Content-Type derived from the on-disk extension. These two headers neutralise the
+					// Content-Type derived from the on-disk extension. These two headers neutralize the
 					// stored-XSS class (GHSA-p334-cm7f-php5) for every asset, independently of the
 					// per-endpoint upload filters:
 					//   - nosniff stops a mistyped file being re-interpreted as active content;

@@ -140,7 +140,7 @@ export class VideosController {
 				throw new BadRequestException(errors);
 			}
 
-			// The fileFilter and the DTO both judge the spoofable client MIME type; re-check the stored
+			// The fileFilter and the DTO both judge the client-sent MIME type; re-check the stored
 			// bytes so markup can never survive on disk (GHSA-p334-cm7f-php5 class).
 			try {
 				assertNotMarkupContent(await provider.getFile(file.key));

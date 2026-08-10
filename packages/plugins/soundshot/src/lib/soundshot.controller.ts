@@ -145,7 +145,7 @@ export class SoundshotController {
 		if (!file.key) {
 			throw new BadRequestException('Soundshot file key is empty');
 		}
-		// The fileFilter above only sees the client-supplied MIME type and filename, both spoofable.
+		// The fileFilter above only sees the MIME type and filename the client sent, both of which it controls.
 		// Re-check the stored bytes and drop the file before any record is created — `/public` serves
 		// straight from disk regardless of the DB row (GHSA-p334-cm7f-php5 class).
 		const provider = new FileStorage().getProvider();

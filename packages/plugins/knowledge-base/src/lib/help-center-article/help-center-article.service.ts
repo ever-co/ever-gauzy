@@ -205,7 +205,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 					// it is present), and both the column and the direction are interpolated into the
 					// query here rather than mapped through entity metadata. Clamp each against an
 					// explicit allowlist so a request can never place arbitrary text in the ORDER BY
-					// position — the same defence applied to the plugin marketplace search
+					// position — the same defense applied to the plugin marketplace search
 					// (GHSA-xqcf-j9jr-7w59).
 					if (options.order) {
 						for (const [key, direction] of Object.entries(options.order)) {
