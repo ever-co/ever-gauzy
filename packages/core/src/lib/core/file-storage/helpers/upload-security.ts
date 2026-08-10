@@ -64,13 +64,17 @@ export type MulterFileFilterCallback = (error: Error | null, acceptFile: boolean
  * @returns A multer-compatible `fileFilter`.
  */
 export function createUploadFileFilter(allowedMimeTypes: readonly string[], allowedExtensions: readonly string[]) {
+	// Subtract the blocklist once, here, rather than re-testing it on every request: with an
+	// allowlist the per-request blocklist check is dead code, but applying it at construction still
+	// guarantees a dangerous extension cannot enter service by being added to an allowlist later.
+	const acceptedExtensions = allowedExtensions.filter(
+		(extension) => !(BLOCKED_UPLOAD_EXTENSIONS as readonly string[]).includes(extension)
+	);
+
 	return (_req: any, file: any, callback: MulterFileFilterCallback): void => {
 		const extension = path.extname(file?.originalname || '').toLowerCase();
-		const isAllowedMime = allowedMimeTypes.includes(file?.mimetype);
-		const isAllowedExtension = allowedExtensions.includes(extension);
-		const isBlockedExtension = (BLOCKED_UPLOAD_EXTENSIONS as readonly string[]).includes(extension);
 
-		if (isAllowedMime && isAllowedExtension && !isBlockedExtension) {
+		if (allowedMimeTypes.includes(file?.mimetype) && acceptedExtensions.includes(extension)) {
 			callback(null, true);
 		} else {
 			callback(

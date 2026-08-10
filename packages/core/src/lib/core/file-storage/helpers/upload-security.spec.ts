@@ -1,6 +1,7 @@
 import {
 	assertNotMarkupContent,
 	audioUploadFileFilter,
+	createUploadFileFilter,
 	imageUploadFileFilter,
 	isMarkupContent,
 	videoUploadFileFilter
@@ -70,6 +71,15 @@ describe('upload security — file filters', () => {
 
 		it('rejects a file with no MIME type or name', () => {
 			expect(runFilter(imageUploadFileFilter, undefined as any, undefined as any).accepted).toBe(false);
+		});
+	});
+
+	describe('createUploadFileFilter', () => {
+		it('refuses a blocked extension even when an allowlist wrongly contains it', () => {
+			// The blocklist is subtracted when the filter is built, so a dangerous extension cannot
+			// enter service by being added to an allowlist later.
+			const filter = createUploadFileFilter(['image/svg+xml'], ['.svg', '.png']);
+			expect(runFilter(filter, 'image/svg+xml', 'evil.svg').accepted).toBe(false);
 		});
 	});
 
