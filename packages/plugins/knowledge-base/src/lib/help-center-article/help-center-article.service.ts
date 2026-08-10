@@ -37,6 +37,24 @@ import { HelpCenterArticleVersionService } from './help-center-article-version.s
 import { TypeOrmHelpCenterArticleRepository } from './repository/type-orm-help-center-article.repository';
 import { MikroOrmHelpCenterArticleRepository } from './repository/mikro-orm-help-center-article.repository';
 
+/**
+ * Columns a caller may sort help-center articles by.
+ *
+ * The MikroORM/Knex branch interpolates the order key into the query instead of resolving it
+ * through entity metadata, so the accepted keys must be enumerated explicitly.
+ */
+export const HELP_CENTER_ARTICLE_SORTABLE_FIELDS = [
+	'name',
+	'index',
+	'draft',
+	'privacy',
+	'isLocked',
+	'color',
+	'categoryId',
+	'createdAt',
+	'updatedAt'
+] as const;
+
 @Injectable()
 export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterArticle> {
 	constructor(
@@ -181,10 +199,21 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 						if (advIsLocked !== undefined) qb = qb.andWhere('kba.isLocked', advIsLocked);
 					}
 
-					// Apply ordering
+					// Apply ordering.
+					//
+					// `options.order` comes straight from the request (BaseQueryDTO validates only that
+					// it is present), and both the column and the direction are interpolated into the
+					// query here rather than mapped through entity metadata. Clamp each against an
+					// explicit allowlist so a request can never place arbitrary text in the ORDER BY
+					// position — the same defense applied to the plugin marketplace search
+					// (GHSA-xqcf-j9jr-7w59).
 					if (options.order) {
 						for (const [key, direction] of Object.entries(options.order)) {
-							qb = qb.orderBy(`kba.${key}`, direction as string);
+							if (!(HELP_CENTER_ARTICLE_SORTABLE_FIELDS as readonly string[]).includes(key)) {
+								continue;
+							}
+							const normalized = String(direction).toUpperCase() === 'ASC' ? 'asc' : 'desc';
+							qb = qb.orderBy(`kba.${key}`, normalized);
 						}
 					}
 
