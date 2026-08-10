@@ -9,8 +9,9 @@ import { ChatCaptureSubscriber } from './capture/chat-capture.subscriber';
 import { isDocsQueueEnabled, isDocsQueueWorkerEnabled } from './docs.config';
 import { GenericSignedWebhookAdapter } from './capture/generic-signed-webhook.adapter';
 import { InboundEmailController } from './capture/inbound-email.controller';
+import { InboundAddressService } from './capture/inbound-address.service';
 import { InboundEmailService } from './capture/inbound-email.service';
-import { DOCS_INBOUND_EMAIL_ADAPTER } from './capture/inbound-email.types';
+import { DOCS_INBOUND_ADDRESS_RESOLVER, DOCS_INBOUND_EMAIL_ADAPTER } from './capture/inbound-email.types';
 import { CommandHandlers } from './commands/handlers';
 import { Controllers } from './controllers';
 import { ALL_DOC_ENTITIES } from './entities';
@@ -143,6 +144,8 @@ const QUEUE_WORKER_ENABLED = isDocsQueueWorkerEnabled();
 		// until the chat plugin exports its attachment event).
 		GenericSignedWebhookAdapter,
 		{ provide: DOCS_INBOUND_EMAIL_ADAPTER, useExisting: GenericSignedWebhookAdapter },
+		{ provide: DOCS_INBOUND_ADDRESS_RESOLVER, useExisting: InboundAddressService },
+		InboundAddressService,
 		InboundEmailService,
 		ChatCaptureSubscriber,
 		// R-COL-03: turns every `DocumentEvent` into an activity-log entry through the platform's
@@ -160,6 +163,7 @@ const QUEUE_WORKER_ENABLED = isDocsQueueWorkerEnabled();
 		LegacyImportService,
 		RetrievalLogService,
 		DOCS_RETRIEVAL_LOG,
+		InboundAddressService,
 		InboundEmailService,
 		ChatCaptureSubscriber,
 		DocumentActivityLogSubscriber

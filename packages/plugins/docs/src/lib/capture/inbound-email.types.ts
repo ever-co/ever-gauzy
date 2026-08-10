@@ -7,6 +7,8 @@
  * through the `DOCS_INBOUND_EMAIL_ADAPTER` token.
  */
 
+import { IDocumentInboundAddress } from '@gauzy/contracts';
+
 /** DI token the inbound-email controller resolves its adapter through. */
 export const DOCS_INBOUND_EMAIL_ADAPTER = 'DOCS_INBOUND_EMAIL_ADAPTER';
 
@@ -68,4 +70,41 @@ export interface IInboundEmailAdapter {
 	verifySignature(request: IInboundWebhookRequest): boolean;
 	/** Normalizes a verified request into the canonical message shape. */
 	parse(request: IInboundWebhookRequest): ParsedInboundEmail | Promise<ParsedInboundEmail>;
+}
+
+/** DI token for {@link IInboundAddressResolver}. */
+export const DOCS_INBOUND_ADDRESS_RESOLVER = 'DOCS_INBOUND_ADDRESS_RESOLVER';
+
+/**
+ * The two questions the delivery path asks about a recipient — "whose address is this?" and
+ * "is this sender allowed?" — plus a delivery counter.
+ *
+ * Deliberately a token-bound seam, mirroring {@link IInboundEmailAdapter}, rather than a direct
+ * dependency on `InboundAddressService`. Two reasons:
+ *
+ * 1. **Storage stays out of the delivery path.** The delivery path should not know or care that
+ *    addresses live in a table; swapping the store is a rebind of one token.
+ * 2. **It keeps the service testable.** Importing the concrete service pulls in the entity, and
+ *    the entity pulls in the MikroORM repository, whose base class is undefined under jest —
+ *    a pre-existing limitation that is why no spec in this package loads an entity.
+ */
+export interface IInboundAddressResolver {
+	/**
+	 * Resolves a recipient to its armed address row.
+	 *
+	 * @returns `null` for anything not armed — unknown, inactive, or an unverified custom domain —
+	 * so the caller can answer with the same 404 it gives an unknown route.
+	 */
+	resolveByAddress(recipient?: string): Promise<IDocumentInboundAddress | null>;
+	/** Whether the sender passes this address's allowlist. Empty allowlist ⇒ always true. */
+	isSenderAllowed(row: IDocumentInboundAddress, sender?: string): boolean;
+	/**
+	 * Constant-time check of a presented per-address relay secret against the stored hash.
+	 *
+	 * @returns `false` when the address carries no per-address secret — meaning "not proven here",
+	 * so the caller falls back to the deployment-wide signature.
+	 */
+	verifySecret(row: IDocumentInboundAddress, presented?: string): boolean;
+	/** Records a successful delivery. Best-effort — must never fail an accepted message. */
+	recordDelivery(row: IDocumentInboundAddress): Promise<void>;
 }

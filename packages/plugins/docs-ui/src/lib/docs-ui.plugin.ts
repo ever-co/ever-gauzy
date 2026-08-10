@@ -1,11 +1,25 @@
 import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
 import { PluginNavItemInput, PluginRouteInput, PluginUiDefinition } from '@gauzy/plugin-ui';
 import { PermissionsGuard } from '@gauzy/ui-core/core';
-import { DOCS_PAGE_LINK, DOCS_SECTIONS_LOCATION, DOCS_SETTINGS_LINK, DOCS_SETTINGS_PATH } from './docs.constants';
+import {
+	DOCS_INBOUND_SETTINGS_LINK,
+	DOCS_INBOUND_SETTINGS_PATH,
+	DOCS_PAGE_LINK,
+	DOCS_SECTIONS_LOCATION,
+	DOCS_SETTINGS_LINK,
+	DOCS_SETTINGS_PATH
+} from './docs.constants';
 import { DocsUiModule } from './docs-ui.module';
 import en from '../i18n/en.json';
 
-export { DOCS_PAGE_LINK, DOCS_SECTIONS_LOCATION, DOCS_SETTINGS_LINK, DOCS_SETTINGS_PATH };
+export {
+	DOCS_INBOUND_SETTINGS_LINK,
+	DOCS_INBOUND_SETTINGS_PATH,
+	DOCS_PAGE_LINK,
+	DOCS_SECTIONS_LOCATION,
+	DOCS_SETTINGS_LINK,
+	DOCS_SETTINGS_PATH
+};
 
 /** Route registration for the Documents hub at /pages/documents. */
 export const DOCS_PAGE_ROUTE: PluginRouteInput = {
@@ -27,6 +41,38 @@ export const DOCS_SETTINGS_ROUTE: PluginRouteInput = {
 	path: DOCS_SETTINGS_PATH,
 	loadComponent: () =>
 		import('./pages/settings/docs-settings-page.component').then((m) => m.DocsSettingsPageComponent),
+	canActivate: [PermissionsGuard],
+	data: {
+		permissions: {
+			only: [PermissionsEnum.DOCS_MANAGE],
+			redirectTo: '/pages/settings'
+		},
+		selectors: {
+			project: false,
+			team: false,
+			employee: false,
+			date: false
+		}
+	}
+};
+
+/**
+ * Inbound email capture settings at /pages/settings/documents-inbound (spec 07 §17.2).
+ *
+ * Same shape as {@link DOCS_SETTINGS_ROUTE} — a sibling `settings-sections` child, standalone
+ * and `loadComponent`-ed so the capture surface (and the two dialogs it opens) stay out of both
+ * the browse chunk and the defaults-settings chunk.
+ *
+ * `DOCS_MANAGE` rather than `DOCS_READ`: adding a capture address opens an ingestion channel
+ * into the organization, which is exactly how the backend controller gates its mutations.
+ */
+export const DOCS_INBOUND_SETTINGS_ROUTE: PluginRouteInput = {
+	location: 'settings-sections',
+	path: DOCS_INBOUND_SETTINGS_PATH,
+	loadComponent: () =>
+		import('./pages/settings/docs-inbound-settings-page.component').then(
+			(m) => m.DocsInboundSettingsPageComponent
+		),
 	canActivate: [PermissionsGuard],
 	data: {
 		permissions: {
@@ -66,7 +112,7 @@ export const DocsUiPlugin: PluginUiDefinition = {
 	module: DocsUiModule,
 
 	// ── Routes ───────────────────────────────────────────────────
-	routes: [DOCS_PAGE_ROUTE, DOCS_SETTINGS_ROUTE],
+	routes: [DOCS_PAGE_ROUTE, DOCS_SETTINGS_ROUTE, DOCS_INBOUND_SETTINGS_ROUTE],
 
 	// ── Navigation ───────────────────────────────────────────────
 	navMenu: [
@@ -104,6 +150,22 @@ export const DocsUiPlugin: PluginUiDefinition = {
 					link: DOCS_SETTINGS_LINK,
 					data: {
 						translationKey: 'MENU.DOCUMENTS',
+						featureKey: FeatureEnum.FEATURE_DOCUMENTS,
+						permissionKeys: [PermissionsEnum.DOCS_MANAGE]
+					}
+				} as PluginNavItemInput,
+				{
+					// Inbound email capture (spec 07 §17.2). `translationKey` points at the
+					// plugin's OWN namespace rather than `MENU.*`: the nav renderer translates
+					// whatever key it is given (`base-nav-menu.component.ts` already mixes
+					// `MENU.*` with `DASHBOARD_PAGE.*`), and `en.json` here is the one file
+					// that has to stay in step — the 14 app-wide bundles carry no DOCS keys.
+					id: 'settings-documents-inbound',
+					title: 'Inbound email',
+					icon: 'fas fa-envelope',
+					link: DOCS_INBOUND_SETTINGS_LINK,
+					data: {
+						translationKey: 'DOCS.INBOUND.MENU',
 						featureKey: FeatureEnum.FEATURE_DOCUMENTS,
 						permissionKeys: [PermissionsEnum.DOCS_MANAGE]
 					}

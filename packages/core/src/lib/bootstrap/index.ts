@@ -38,6 +38,7 @@ import * as chalk from 'chalk';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { urlencoded, json } from 'express';
+import { IncomingMessage } from 'node:http';
 import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, defineConfig, environment } from '@gauzy/config';
@@ -108,9 +109,23 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		process.on('unhandledRejection', handleUnhandledRejection);
 	}
 
-	// Set JSON and URL-encoded body parsers with a size limit
-	app.use(json({ limit: '50mb' }));
-	app.use(urlencoded({ extended: true, limit: '50mb' }));
+	// Set JSON and URL-encoded body parsers with a size limit.
+	//
+	// The `verify` hook stashes the raw request bytes on `request.rawBody`. Webhook receivers that
+	// verify an HMAC signature MUST hash exactly what the sender hashed, and `JSON.stringify(body)`
+	// is not that: key order, whitespace and number/unicode formatting all survive the wire but not
+	// a parse/re-serialize round trip. Without this, the Documents inbound-email adapter silently
+	// fell back to re-serialized JSON, which happens to work only when the sender canonicalizes its
+	// body the same way Node does — i.e. not with a real mail provider.
+	//
+	// Cost is one Buffer reference per request; the buffer already exists, so nothing is copied.
+	const captureRawBody = (request: IncomingMessage & { rawBody?: Buffer }, _response: unknown, buffer: Buffer) => {
+		if (buffer?.length) {
+			request.rawBody = buffer;
+		}
+	};
+	app.use(json({ limit: '50mb', verify: captureRawBody }));
+	app.use(urlencoded({ extended: true, limit: '50mb', verify: captureRawBody }));
 
 	// Enable CORS with specific settings
 	// In production, ALLOWED_ORIGINS should be set to a comma-separated list of trusted origins.

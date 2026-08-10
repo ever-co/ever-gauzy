@@ -45,10 +45,12 @@ export const DOCS_QUOTA_EXCEEDED = 'DOCS_QUOTA_EXCEEDED';
 export const DOCS_INBOUND_DISABLED = 'DOCS_INBOUND_DISABLED';
 /** The inbound-email webhook signature did not verify. */
 export const DOCS_INBOUND_SIGNATURE_INVALID = 'DOCS_INBOUND_SIGNATURE_INVALID';
-/** No organization owns the recipient capture token. */
+/** No armed capture address matches the recipient (unknown, inactive, or domain unverified). */
 export const DOCS_INBOUND_UNKNOWN_RECIPIENT = 'DOCS_INBOUND_UNKNOWN_RECIPIENT';
 /** The inbound message exceeded the configured per-message size cap. */
 export const DOCS_INBOUND_TOO_LARGE = 'DOCS_INBOUND_TOO_LARGE';
+/** The sender is not on the address's allowlist (spec 07 §17.2). */
+export const DOCS_INBOUND_SENDER_NOT_ALLOWED = 'DOCS_INBOUND_SENDER_NOT_ALLOWED';
 /** The inbound message carried no importable attachment. */
 export const DOCS_INBOUND_NO_ATTACHMENTS = 'DOCS_INBOUND_NO_ATTACHMENTS';
 /** The submitted `contentJson` is not a schema-valid TipTap document (`08` §6.1). */
@@ -267,3 +269,35 @@ export const DOCS_INBOUND_SIGNATURE_TOLERANCE_MS = 300_000; // 5 minutes
 /** Header names read by the generic signed-webhook reference adapter. */
 export const DOCS_INBOUND_SIGNATURE_HEADER = 'x-gauzy-docs-signature';
 export const DOCS_INBOUND_TIMESTAMP_HEADER = 'x-gauzy-docs-timestamp';
+
+/**
+ * Header carrying a per-address relay secret, as an alternative proof to the deployment-wide HMAC
+ * signature. Presented rather than used as an HMAC key because only the secret's SHA-256 is stored.
+ */
+export const DOCS_INBOUND_ADDRESS_SECRET_HEADER = 'x-gauzy-docs-address-secret';
+
+/**
+ * Local-part prefix of a PLATFORM capture address: `docs-<token>@<platform domain>`.
+ * Kept as a constant because the address parser and the minter must agree exactly.
+ */
+export const DOCS_INBOUND_PLATFORM_LOCAL_PREFIX = 'docs-';
+
+/**
+ * DNS label an organization publishes to prove it controls a custom inbound domain — the record
+ * is `_gauzy-docs.<domain> IN TXT "gauzy-docs-verify=<token>"`. Underscore-prefixed so it cannot
+ * collide with a real hostname.
+ */
+export const DOCS_INBOUND_DOMAIN_TXT_PREFIX = '_gauzy-docs';
+
+/**
+ * Ceiling on a domain-verification DNS lookup. A tenant-triggered lookup queries a name *they*
+ * control, so it must never be able to hold a request thread open indefinitely.
+ */
+export const DOCS_INBOUND_DNS_TIMEOUT_MS = 5_000;
+
+/**
+ * Permitted mailbox names for a custom-domain address. Deliberately narrower than RFC 5321: no
+ * quoted strings, no dots at the edges, no consecutive dots — the shapes that make address
+ * comparison ambiguous, which is exactly what routing depends on here.
+ */
+export const DOCS_INBOUND_LOCAL_PART_PATTERN = /^[a-z0-9]([a-z0-9._-]{0,62}[a-z0-9])?$/;

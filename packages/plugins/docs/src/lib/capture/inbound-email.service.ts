@@ -1,6 +1,5 @@
 import { BadRequestException, ForbiddenException, Inject, Injectable, Logger, NotFoundException, Optional, PayloadTooLargeException } from '@nestjs/common';
 import { createHash, randomUUID } from 'crypto';
-import { Like } from 'typeorm';
 import {
 	DocumentKindEnum,
 	DocumentKnowledgeStatusEnum,
@@ -12,28 +11,36 @@ import {
 	FileStorageProviderEnum,
 	ID
 } from '@gauzy/contracts';
-import { FileStorage, TenantSetting } from '@gauzy/core';
+import { FileStorage } from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
 import {
 	DOCS_INBOUND_DISABLED,
 	DOCS_INBOUND_NO_ATTACHMENTS,
 	DOCS_INBOUND_SIGNATURE_INVALID,
 	DOCS_INBOUND_TOO_LARGE,
-	DOCS_INBOUND_UNKNOWN_RECIPIENT,
-	DOCS_SETTING_INBOUND_TOKEN,
-	DOCS_SETTING_PREFIX
+	DOCS_INBOUND_ADDRESS_SECRET_HEADER,
+	DOCS_INBOUND_SENDER_NOT_ALLOWED,
+	DOCS_INBOUND_UNKNOWN_RECIPIENT
 } from '../docs.constants';
 import { Document } from '../entities/document.entity';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
 import { canonicalExtension, sniffFile } from '../services/file-sniffer';
 import { DocumentProcessingService } from '../services/document-processing.service';
 import {
+	DOCS_INBOUND_ADDRESS_RESOLVER,
 	DOCS_INBOUND_EMAIL_ADAPTER,
+	IInboundAddressResolver,
 	IInboundEmailAdapter,
 	IInboundEmailAttachment,
 	IInboundWebhookRequest,
 	ParsedInboundEmail
 } from './inbound-email.types';
+
+/** Tenant/organization snapshot resolved from the recipient address. */
+export interface IInboundScope {
+	tenantId: ID;
+	organizationId: ID;
+}
 
 /** The per-attachment result reported back to the provider. */
 export interface IInboundEmailImportResult {
@@ -62,11 +69,14 @@ export interface IInboundEmailResponse {
  * Mandatory gates, in order (every one of them fails closed):
  *
  * 1. **Feature switch** — env off ⇒ 404.
- * 2. **Signature** — the bound adapter verifies the provider signature ⇒ 403 otherwise.
- * 3. **Recipient token match** — the capture address is `docs-<token>@<domain>`; the token
- *    must equal the org setting `docs.<organizationId>.inboundToken`. No match ⇒ 404
- *    (an unknown token must not reveal which organizations exist).
+ * 2. **Authentication** — EITHER the deployment-wide HMAC signature the adapter verifies, OR a
+ *    per-address relay secret in `x-gauzy-docs-address-secret`. Neither ⇒ 403, raised before the
+ *    unknown-address 404 so a caller with no secret cannot enumerate real capture addresses.
+ * 3. **Recipient address match** — the whole address is looked up in `document_inbound_address`
+ *    (unique index). Unknown, inactive, or an unverified custom domain ⇒ 404 — identical to
+ *    "no such route", so probing cannot enumerate organizations.
  * 4. **SPF/DKIM** — when the provider reports verdicts, both must pass.
+ * 4b. **Sender allowlist** — per-address; empty means "any sender that passed gate 4".
  * 5. **Size caps** — per message (`GAUZY_DOCS_INBOUND_MAX_MESSAGE_BYTES`) and per attachment
  *    (`GAUZY_DOCS_MAX_FILE_SIZE`).
  * 6. **Attachments only** — the body is discarded; a message with no attachment is rejected.
@@ -77,7 +87,7 @@ export interface IInboundEmailResponse {
  * knowledge base**. A human approves them in the review queue first.
  *
  * There is no `RequestContext` on a webhook thread, so every write carries the explicit
- * tenant/organization snapshot resolved from the capture token.
+ * tenant/organization snapshot resolved from the recipient address.
  */
 @Injectable()
 export class InboundEmailService {
@@ -86,6 +96,9 @@ export class InboundEmailService {
 	constructor(
 		private readonly typeOrmDocumentRepository: TypeOrmDocumentRepository,
 		private readonly processingService: DocumentProcessingService,
+		/** Address resolution + allowlist, behind a token so storage stays out of this path. */
+		@Inject(DOCS_INBOUND_ADDRESS_RESOLVER)
+		private readonly inboundAddressService: IInboundAddressResolver,
 		/** The provider adapter; the generic signed-webhook reference adapter is the default binding. */
 		@Optional()
 		@Inject(DOCS_INBOUND_EMAIL_ADAPTER)
@@ -115,32 +128,68 @@ export class InboundEmailService {
 			});
 		}
 
-		// Gate 2 — signature.
-		if (!this.adapter.verifySignature(request)) {
+		// Gate 2 — authentication. Two independent proofs are accepted:
+		//
+		//   (a) the deployment-wide HMAC signature the adapter verifies, and
+		//   (b) a per-address relay secret presented in `x-gauzy-docs-address-secret`.
+		//
+		// (b) exists because one global secret means a single leak lets an attacker post mail *as
+		// any tenant*. A per-address secret contains that to one organization. It is presented
+		// rather than used as an HMAC key because only its SHA-256 is stored — a database read
+		// therefore cannot forge a delivery for the address.
+		//
+		// 🛑 Ordering matters for enumeration. The address must be resolved BEFORE (b) can be
+		// checked, so resolution happens on unauthenticated input; the failure for "no valid proof"
+		// is therefore raised BEFORE the unknown-address 404. Without that, a caller with no secret
+		// at all could tell a real capture address (403) from a fake one (404) and enumerate them.
+		// `parse` is documented and tested to be total — it never throws on hostile input.
+		const globalSignatureOk = this.adapter.verifySignature(request);
+		const message = await this.adapter.parse(request);
+
+		const inboundAddress = await this.inboundAddressService.resolveByAddress(message.recipient);
+		const presentedSecret = this.readAddressSecretHeader(request);
+		const perAddressSecretOk = inboundAddress
+			? this.inboundAddressService.verifySecret(inboundAddress, presentedSecret)
+			: false;
+
+		if (!globalSignatureOk && !perAddressSecretOk) {
 			throw new ForbiddenException({
 				message: 'Invalid inbound-email webhook signature',
 				code: DOCS_INBOUND_SIGNATURE_INVALID
 			});
 		}
 
-		const message = await this.adapter.parse(request);
-
-		// Gate 3 — per-org recipient token match.
-		const token = this.extractCaptureToken(message.recipient);
-		const scope = token ? await this.resolveScopeByToken(token) : null;
-		if (!scope) {
-			// Deliberately identical to "no such route" — an unknown token reveals nothing.
+		// Gate 3 — recipient address match. Resolved against `document_inbound_address` on a unique
+		// index over the WHOLE address, so the domain is now load-bearing: the previous parser threw
+		// the domain away, which meant `docs-<token>@anything-at-all` resolved exactly as well as
+		// the real capture domain.
+		if (!inboundAddress) {
+			// Deliberately identical to "no such route" — an unknown address reveals nothing.
 			throw new NotFoundException({
 				message: 'Unknown capture address',
 				code: DOCS_INBOUND_UNKNOWN_RECIPIENT
 			});
 		}
+		const scope: IInboundScope = {
+			tenantId: inboundAddress.tenantId as ID,
+			organizationId: inboundAddress.organizationId as ID
+		};
 
 		// Gate 4 — authentication verdicts, when the provider reports them.
 		if (message.spfPass === false || message.dkimPass === false) {
 			throw new ForbiddenException({
 				message: 'The message failed SPF/DKIM verification',
 				code: DOCS_INBOUND_SIGNATURE_INVALID
+			});
+		}
+
+		// Gate 4b — sender allowlist (spec 07 §17.2). Mandated but previously unimplemented, and it
+		// is what keeps a *guessable* custom-domain address (`docs@acme.com`) from being an open
+		// drop-box. An empty allowlist means "any sender that got past SPF/DKIM".
+		if (!this.inboundAddressService.isSenderAllowed(inboundAddress, message.sender)) {
+			throw new ForbiddenException({
+				message: 'The sender is not on this address’s allowlist',
+				code: DOCS_INBOUND_SENDER_NOT_ALLOWED
 			});
 		}
 
@@ -168,6 +217,9 @@ export class InboundEmailService {
 		}
 
 		const accepted = results.filter((result) => result.accepted).length;
+		if (accepted > 0) {
+			await this.inboundAddressService.recordDelivery(inboundAddress);
+		}
 		this.logger.log(
 			`Inbound-email capture for organization ${scope.organizationId}: ${accepted}/${results.length} attachment(s) imported.`
 		);
@@ -286,57 +338,35 @@ export class InboundEmailService {
 	}
 
 	/**
-	 * Extracts the capture token from a `docs-<token>@<domain>` recipient address.
-	 *
-	 * @param recipient The recipient address.
-	 * @returns The token, or null when the address is not a capture address.
+	 * Reads the per-address relay secret header, case-insensitively, tolerating the array form a
+	 * repeated header produces. Returns undefined when absent — the caller then relies on the
+	 * deployment-wide signature instead.
 	 */
-	public extractCaptureToken(recipient?: string): string | null {
-		if (!recipient) {
-			return null;
-		}
-		const local = String(recipient).trim().toLowerCase().split('@')[0];
-		// Plus-addressing (`docs-<token>+anything@…`) is tolerated; the token is the stem.
-		const match = /^docs-([a-z0-9]{16,128})(\+.*)?$/.exec(local);
-		return match ? match[1] : null;
-	}
-
-	/**
-	 * Resolves the organization that owns a capture token by scanning the namespaced
-	 * `docs.<organizationId>.inboundToken` settings rows.
-	 *
-	 * There is no request context on a webhook thread, so the lookup is deliberately
-	 * untenanted and the tenant is taken FROM the matched row.
-	 *
-	 * @param token The capture token.
-	 * @returns The tenant/organization scope, or null when no organization owns the token.
-	 */
-	private async resolveScopeByToken(token: string): Promise<{ tenantId: ID; organizationId: ID } | null> {
-		try {
-			const rows = await this.typeOrmDocumentRepository.manager.find(TenantSetting, {
-				where: {
-					name: Like(`${DOCS_SETTING_PREFIX}.%.${DOCS_SETTING_INBOUND_TOKEN}`),
-					value: token
-				}
-			});
-			for (const row of rows) {
-				const organizationId = this.organizationIdOfSettingName(row.name);
-				if (organizationId && row.tenantId) {
-					return { tenantId: row.tenantId as ID, organizationId };
-				}
+	private readAddressSecretHeader(request: IInboundWebhookRequest): string | undefined {
+		const headers = (request?.headers ?? {}) as Record<string, string | string[] | undefined>;
+		for (const [key, value] of Object.entries(headers)) {
+			if (key.toLowerCase() === DOCS_INBOUND_ADDRESS_SECRET_HEADER) {
+				const raw = Array.isArray(value) ? value[0] : value;
+				const trimmed = String(raw ?? '').trim();
+				return trimmed.length ? trimmed : undefined;
 			}
-			return null;
-		} catch (error) {
-			this.logger.warn(`Capture-token lookup failed: ${(error as Error).message}`);
-			return null;
 		}
+		return undefined;
 	}
 
 	/**
-	 * Pulls the organization id out of a `docs.<organizationId>.<key>` setting name.
+	 * Resolution now lives in {@link InboundAddressService}, which matches the whole recipient
+	 * address against a unique index on `document_inbound_address`.
+	 *
+	 * The previous implementation parsed a token out of the local part and scanned `tenant_setting`
+	 * with `LIKE 'docs.%.inboundToken'`. It is gone for three reasons, all load-bearing:
+	 *
+	 * - **It could never succeed.** Nothing in the codebase ever wrote that setting, so every real
+	 *   delivery 404'd; only a test that stubbed the row made it look functional.
+	 * - **It ignored the domain.** `split('@')[0]` discarded it, so `docs-<token>@attacker.example`
+	 *   resolved exactly as well as the configured capture domain.
+	 * - **It could not be unique.** `tenant_setting` has no index or unique constraint on
+	 *   `name`/`value`, so two organizations could hold one token and the destination tenant would
+	 *   depend on row order.
 	 */
-	private organizationIdOfSettingName(name: string): ID | null {
-		const parts = String(name).split('.');
-		return parts.length === 3 ? (parts[1] as ID) : null;
-	}
 }

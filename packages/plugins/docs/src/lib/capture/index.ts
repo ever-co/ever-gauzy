@@ -7,6 +7,7 @@
 export * from './document-importer.interface';
 export * from './inbound-email.types';
 export * from './generic-signed-webhook.adapter';
+export * from './inbound-address.service';
 export * from './inbound-email.service';
 export * from './inbound-email.controller';
 export * from './chat-capture.subscriber';

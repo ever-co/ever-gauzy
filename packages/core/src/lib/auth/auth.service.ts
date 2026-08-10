@@ -1153,6 +1153,18 @@ export class AuthService extends SocialAuthService {
 			this.termsAcceptanceService.assertClaimsArePublished(input.terms);
 		}
 
+		// 0.1 Keep the flat `roleId` column consistent with the `role` relation.
+		//
+		// Every privileged user-creation path funnels through here, and the entity carries both a
+		// `role` relation and a `roleId` FK column that wins when the row is persisted. Callers that
+		// resolve a trusted role server-side (invite accept, organization-contact accept, employee
+		// create) set only `role`, so a caller-supplied `roleId` left in the spread below would
+		// override it and escalate the new account. Where a trusted role object is present it is the
+		// single source of truth; where it is absent, `roleId` has already been authorized upstream.
+		if (input.user?.role?.id) {
+			input.user.roleId = input.user.role.id;
+		}
+
 		// 1. If createdByUserId is provided, get the creating user and use their tenant
 		if (input.createdByUserId) {
 			const creatingUser = await this.userService.findOneByIdString(input.createdByUserId, {
