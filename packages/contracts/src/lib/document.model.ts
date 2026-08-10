@@ -311,3 +311,117 @@ export interface IDocumentLinkCreateInput extends IBasePerTenantAndOrganizationE
 	entityId: ID;
 	metadata?: JsonData;
 }
+
+/**
+ * How an organization's inbound capture address is hosted.
+ *
+ * `PLATFORM` — the zero-config default. The address lives on the deployment-wide inbound domain
+ * (`GAUZY_DOCS_INBOUND_DOMAIN`) and is distinguished only by an unguessable per-organization token:
+ * `docs-<token>@<platform domain>`. One relay, one webhook secret, every tenant served.
+ *
+ * `CUSTOM_DOMAIN` — the organization publishes its own domain and routes it at us. The address is
+ * `<localPart>@<domain>` with a local part they choose, so it can be `docs@acme.com`. Because the
+ * local part is then guessable, ownership of the domain must be proven before the address is armed.
+ */
+export enum DocumentInboundAddressKindEnum {
+	PLATFORM = 'PLATFORM',
+	CUSTOM_DOMAIN = 'CUSTOM_DOMAIN'
+}
+
+/**
+ * Lifecycle of a `CUSTOM_DOMAIN` address. `PLATFORM` addresses are born `VERIFIED` — there is
+ * nothing to prove, the platform already owns the domain.
+ */
+export enum DocumentInboundDomainStatusEnum {
+	/** Created, DNS record not yet observed. Mail to this address is REJECTED. */
+	PENDING = 'PENDING',
+	/** The expected TXT record was observed. Mail is accepted. */
+	VERIFIED = 'VERIFIED',
+	/** Previously verified, but the record has since disappeared. Mail is REJECTED again. */
+	FAILED = 'FAILED'
+}
+
+/**
+ * An organization's inbound email capture address.
+ *
+ * One row per organization per address. Replaces the previous `tenant_setting`-encoded token, which
+ * had no `organizationId` column (the id was parsed out of the setting *name*), no uniqueness
+ * guarantee, and no index — making every delivery a full-table `LIKE` scan.
+ */
+export interface IDocumentInboundAddress extends IBasePerTenantAndOrganizationEntityModel {
+	kind: DocumentInboundAddressKindEnum;
+	/** Unguessable stem for `PLATFORM` addresses; null for `CUSTOM_DOMAIN`. */
+	token?: string | null;
+	/** Lower-cased domain for `CUSTOM_DOMAIN`; null for `PLATFORM` (the platform domain applies). */
+	domain?: string | null;
+	/** Chosen local part for `CUSTOM_DOMAIN` (e.g. `docs`); null for `PLATFORM`. */
+	localPart?: string | null;
+	/** The resolved address, maintained by the server. Unique across the deployment. */
+	address: string;
+	domainStatus: DocumentInboundDomainStatusEnum;
+	/** Value the organization must publish at `_gauzy-docs.<domain>` in TXT. Never a secret. */
+	domainVerificationToken?: string | null;
+	domainVerifiedAt?: Date | null;
+	domainLastCheckedAt?: Date | null;
+	/**
+	 * SHA-256 of a per-address relay secret. The plaintext is returned exactly once, at creation or
+	 * rotation, and is never recoverable afterwards.
+	 */
+	webhookSecretHash?: string | null;
+	/**
+	 * Addresses/domains permitted to send here. Empty or absent means "accept any sender that passes
+	 * SPF/DKIM" — mandated by spec 07 §17.2 and previously unimplemented.
+	 */
+	senderAllowlist?: string[] | null;
+	/** Import the message body as a note alongside attachments (spec 07 §17.2). */
+	importBodyAsNote?: boolean;
+	/** A disabled address rejects mail without being deleted. */
+	isActive?: boolean;
+	lastMessageAt?: Date | null;
+	messageCount?: number;
+}
+
+/**
+ * Create input. `kind` decides which fields are required: `PLATFORM` takes none of them (the server
+ * mints the token), `CUSTOM_DOMAIN` requires `domain` and `localPart`.
+ */
+export interface IDocumentInboundAddressCreateInput extends IBasePerTenantAndOrganizationEntityModel {
+	kind: DocumentInboundAddressKindEnum;
+	domain?: string;
+	localPart?: string;
+	senderAllowlist?: string[];
+	importBodyAsNote?: boolean;
+}
+
+/**
+ * Update input. `kind`, `token` and `address` are server-owned and deliberately absent — changing an
+ * address is a rotation, not an edit.
+ */
+export interface IDocumentInboundAddressUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
+	senderAllowlist?: string[];
+	importBodyAsNote?: boolean;
+	isActive?: boolean;
+}
+
+/**
+ * Returned once when an address is created or its secret rotated. `webhookSecret` is plaintext here
+ * and nowhere else.
+ */
+export interface IDocumentInboundAddressSecret {
+	address: string;
+	webhookSecret: string;
+}
+
+/**
+ * The DNS record an organization must publish to prove it controls a `CUSTOM_DOMAIN`.
+ */
+export interface IDocumentInboundDomainVerification {
+	recordType: 'TXT';
+	recordName: string;
+	recordValue: string;
+	status: DocumentInboundDomainStatusEnum;
+	verifiedAt?: Date | null;
+	lastCheckedAt?: Date | null;
+	/** Populated when a verification attempt fails, so the UI can say why. */
+	message?: string;
+}

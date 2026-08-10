@@ -62,8 +62,13 @@ const pdfAttachment = (fileName: string) => ({
 });
 
 /**
- * Builds the service over a stub adapter that returns the given attachments, plus a
- * repository stub that resolves the capture token to a fixed tenant/organization.
+ * Builds the service over a stub adapter that returns the given attachments, plus an
+ * `InboundAddressService` stub that resolves the recipient to a fixed tenant/organization.
+ *
+ * Resolution moved out of this service into `InboundAddressService`, so what used to be a
+ * `tenant_setting` repository stub is now an address-service stub. The seam is narrower on
+ * purpose: the delivery path asks two questions ("whose address is this?" and "is this sender
+ * allowed?") and nothing about how either is stored.
  */
 const buildService = (attachments: any[], scope = { tenantId: TENANT_ID, organizationId: ORGANIZATION_ID }) => {
 	const message: ParsedInboundEmail = {
@@ -90,20 +95,25 @@ const buildService = (attachments: any[], scope = { tenantId: TENANT_ID, organiz
 		save: async (row: any) => {
 			saved.push(row);
 			return { ...row, id: `doc-${saved.length}` };
-		},
-		manager: {
-			find: async () => [
-				{
-					name: `docs.${scope.organizationId}.inboundToken`,
-					value: '0123456789abcdef',
-					tenantId: scope.tenantId
-				}
-			]
 		}
 	};
 	const processingService: any = { enqueueExtract: jest.fn().mockResolvedValue(true) };
+	const inboundAddressService: any = {
+		resolveByAddress: async () => ({
+			id: 'addr-1',
+			tenantId: scope.tenantId,
+			organizationId: scope.organizationId,
+			address: 'docs-0123456789abcdef@example.com',
+			messageCount: 0
+		}),
+		isSenderAllowed: () => true,
+		recordDelivery: jest.fn().mockResolvedValue(undefined)
+	};
 
-	return { service: new InboundEmailService(repository, processingService, adapter), saved };
+	return {
+		service: new InboundEmailService(repository, processingService, inboundAddressService, adapter),
+		saved
+	};
 };
 
 describe('InboundEmailService — attachment storage keys', () => {

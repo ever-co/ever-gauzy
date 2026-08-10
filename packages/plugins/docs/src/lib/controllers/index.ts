@@ -3,6 +3,7 @@ import { DocumentCategoryController } from './document-category.controller';
 import { DocumentKnowledgeController } from './document-knowledge.controller';
 import { DocumentLinkController } from './document-link.controller';
 import { DocumentReviewController } from './document-review.controller';
+import { DocumentInboundAddressController } from './document-inbound-address.controller';
 import { DocumentSettingsController } from './document-settings.controller';
 import { DocumentShareController } from './document-share.controller';
 import { DocumentTreeController } from './document-tree.controller';
@@ -14,6 +15,7 @@ export * from './document-category.controller';
 export * from './document-knowledge.controller';
 export * from './document-link.controller';
 export * from './document-review.controller';
+export * from './document-inbound-address.controller';
 export * from './document-settings.controller';
 export * from './document-share.controller';
 export * from './document-tree.controller';
@@ -43,5 +45,6 @@ export const Controllers = [
 	DocumentCategoryController,
 	DocumentShareController,
 	DocumentLinkController,
-	DocumentSettingsController
+	DocumentSettingsController,
+	DocumentInboundAddressController
 ];

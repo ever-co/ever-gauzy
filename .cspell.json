@@ -6,6 +6,9 @@
         "GHSA-[A-Za-z0-9-]+"
     ],
     "words": [
+        "CSPRNG",
+        "NXDOMAIN",
+        "unrepresentable",
         "ababa",
         "APAC",
         "apos",
