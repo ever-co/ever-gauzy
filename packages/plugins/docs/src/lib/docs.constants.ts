@@ -271,6 +271,12 @@ export const DOCS_INBOUND_SIGNATURE_HEADER = 'x-gauzy-docs-signature';
 export const DOCS_INBOUND_TIMESTAMP_HEADER = 'x-gauzy-docs-timestamp';
 
 /**
+ * Header carrying a per-address relay secret, as an alternative proof to the deployment-wide HMAC
+ * signature. Presented rather than used as an HMAC key because only the secret's SHA-256 is stored.
+ */
+export const DOCS_INBOUND_ADDRESS_SECRET_HEADER = 'x-gauzy-docs-address-secret';
+
+/**
  * Local-part prefix of a PLATFORM capture address: `docs-<token>@<platform domain>`.
  * Kept as a constant because the address parser and the minter must agree exactly.
  */

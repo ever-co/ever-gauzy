@@ -98,6 +98,13 @@ export interface IInboundAddressResolver {
 	resolveByAddress(recipient?: string): Promise<IDocumentInboundAddress | null>;
 	/** Whether the sender passes this address's allowlist. Empty allowlist ⇒ always true. */
 	isSenderAllowed(row: IDocumentInboundAddress, sender?: string): boolean;
+	/**
+	 * Constant-time check of a presented per-address relay secret against the stored hash.
+	 *
+	 * @returns `false` when the address carries no per-address secret — meaning "not proven here",
+	 * so the caller falls back to the deployment-wide signature.
+	 */
+	verifySecret(row: IDocumentInboundAddress, presented?: string): boolean;
 	/** Records a successful delivery. Best-effort — must never fail an accepted message. */
 	recordDelivery(row: IDocumentInboundAddress): Promise<void>;
 }

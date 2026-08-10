@@ -18,6 +18,7 @@ import {
 	DOCS_INBOUND_NO_ATTACHMENTS,
 	DOCS_INBOUND_SIGNATURE_INVALID,
 	DOCS_INBOUND_TOO_LARGE,
+	DOCS_INBOUND_ADDRESS_SECRET_HEADER,
 	DOCS_INBOUND_SENDER_NOT_ALLOWED,
 	DOCS_INBOUND_UNKNOWN_RECIPIENT
 } from '../docs.constants';
@@ -68,7 +69,9 @@ export interface IInboundEmailResponse {
  * Mandatory gates, in order (every one of them fails closed):
  *
  * 1. **Feature switch** — env off ⇒ 404.
- * 2. **Signature** — the bound adapter verifies the provider signature ⇒ 403 otherwise.
+ * 2. **Authentication** — EITHER the deployment-wide HMAC signature the adapter verifies, OR a
+ *    per-address relay secret in `x-gauzy-docs-address-secret`. Neither ⇒ 403, raised before the
+ *    unknown-address 404 so a caller with no secret cannot enumerate real capture addresses.
  * 3. **Recipient address match** — the whole address is looked up in `document_inbound_address`
  *    (unique index). Unknown, inactive, or an unverified custom domain ⇒ 404 — identical to
  *    "no such route", so probing cannot enumerate organizations.
@@ -125,21 +128,41 @@ export class InboundEmailService {
 			});
 		}
 
-		// Gate 2 — signature.
-		if (!this.adapter.verifySignature(request)) {
+		// Gate 2 — authentication. Two independent proofs are accepted:
+		//
+		//   (a) the deployment-wide HMAC signature the adapter verifies, and
+		//   (b) a per-address relay secret presented in `x-gauzy-docs-address-secret`.
+		//
+		// (b) exists because one global secret means a single leak lets an attacker post mail *as
+		// any tenant*. A per-address secret contains that to one organization. It is presented
+		// rather than used as an HMAC key because only its SHA-256 is stored — a database read
+		// therefore cannot forge a delivery for the address.
+		//
+		// 🛑 Ordering matters for enumeration. The address must be resolved BEFORE (b) can be
+		// checked, so resolution happens on unauthenticated input; the failure for "no valid proof"
+		// is therefore raised BEFORE the unknown-address 404. Without that, a caller with no secret
+		// at all could tell a real capture address (403) from a fake one (404) and enumerate them.
+		// `parse` is documented and tested to be total — it never throws on hostile input.
+		const globalSignatureOk = this.adapter.verifySignature(request);
+		const message = await this.adapter.parse(request);
+
+		const inboundAddress = await this.inboundAddressService.resolveByAddress(message.recipient);
+		const presentedSecret = this.readAddressSecretHeader(request);
+		const perAddressSecretOk = inboundAddress
+			? this.inboundAddressService.verifySecret(inboundAddress, presentedSecret)
+			: false;
+
+		if (!globalSignatureOk && !perAddressSecretOk) {
 			throw new ForbiddenException({
 				message: 'Invalid inbound-email webhook signature',
 				code: DOCS_INBOUND_SIGNATURE_INVALID
 			});
 		}
 
-		const message = await this.adapter.parse(request);
-
 		// Gate 3 — recipient address match. Resolved against `document_inbound_address` on a unique
 		// index over the WHOLE address, so the domain is now load-bearing: the previous parser threw
 		// the domain away, which meant `docs-<token>@anything-at-all` resolved exactly as well as
 		// the real capture domain.
-		const inboundAddress = await this.inboundAddressService.resolveByAddress(message.recipient);
 		if (!inboundAddress) {
 			// Deliberately identical to "no such route" — an unknown address reveals nothing.
 			throw new NotFoundException({
@@ -312,6 +335,23 @@ export class InboundEmailService {
 		const segment = (value: ID): string => String(value ?? '').replace(/[^a-zA-Z0-9-]/g, '') || randomUUID();
 		const extension = canonicalExtension(mimeType);
 		return `documents/${segment(scope.tenantId)}/${segment(scope.organizationId)}/${randomUUID()}.${extension}`;
+	}
+
+	/**
+	 * Reads the per-address relay secret header, case-insensitively, tolerating the array form a
+	 * repeated header produces. Returns undefined when absent — the caller then relies on the
+	 * deployment-wide signature instead.
+	 */
+	private readAddressSecretHeader(request: IInboundWebhookRequest): string | undefined {
+		const headers = (request?.headers ?? {}) as Record<string, string | string[] | undefined>;
+		for (const [key, value] of Object.entries(headers)) {
+			if (key.toLowerCase() === DOCS_INBOUND_ADDRESS_SECRET_HEADER) {
+				const raw = Array.isArray(value) ? value[0] : value;
+				const trimmed = String(raw ?? '').trim();
+				return trimmed.length ? trimmed : undefined;
+			}
+		}
+		return undefined;
 	}
 
 	/**
