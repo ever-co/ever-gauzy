@@ -101,6 +101,7 @@ export class OneColumnLayoutComponent {
 			this.navigationBuilderService.clearActionBars();
 			this.headerResizeObserver?.disconnect();
 			this.canvasResizeObserver?.disconnect();
+			this.chatClassObserver?.disconnect();
 			if (this.canvasLeftOnResize) window.removeEventListener('resize', this.canvasLeftOnResize);
 		});
 	}
@@ -158,9 +159,11 @@ export class OneColumnLayoutComponent {
 	 */
 	private observeCanvasLeft(): void {
 		if (typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
-		const column = document.querySelector('nb-layout-column') as HTMLElement | null;
-		if (!column) return;
 		const apply = () => {
+			// Queried FRESH on every call — a captured node can go stale across layout re-renders,
+			// and a stale node measures its old box while looking perfectly alive.
+			const column = document.querySelector('nb-layout-column') as HTMLElement | null;
+			if (!column) return;
 			const rect = column.getBoundingClientRect();
 			const root = document.documentElement.style;
 			root.setProperty('--gz-canvas-left', `${Math.round(rect.left)}px`);
@@ -170,8 +173,20 @@ export class OneColumnLayoutComponent {
 			// which is the regression this whole change exists to remove.
 			root.setProperty('--gz-canvas-right', `${Math.round(window.innerWidth - rect.right)}px`);
 		};
-		this.canvasResizeObserver = new ResizeObserver(apply);
-		this.canvasResizeObserver.observe(column);
+		// The chat panel animates its width (0.2s transition), so a single measurement lands
+		// mid-animation and freezes the header at a stale inset. Settle over the transition:
+		// idempotent style writes make the extra ticks free.
+		const applySettled = () => {
+			requestAnimationFrame(apply);
+			setTimeout(apply, 120);
+			setTimeout(apply, 400);
+		};
+
+		const column = document.querySelector('nb-layout-column') as HTMLElement | null;
+		if (column) {
+			this.canvasResizeObserver = new ResizeObserver(apply);
+			this.canvasResizeObserver.observe(column);
+		}
 		// The column's own box does not change when the window does, so track that too.
 		window.addEventListener('resize', apply);
 		this.canvasLeftOnResize = apply;
@@ -186,13 +201,26 @@ export class OneColumnLayoutComponent {
 				this.chatSidebarService.expanded();
 				this.chatSidebarService.maximized();
 				this.chatSidebarService.width();
-				// After the layout has actually reflowed, not during this microtask.
-				requestAnimationFrame(apply);
+				applySettled();
 			},
 			{ injector: this.injector }
 		);
+
+		// DOM-level belt-and-braces, deliberately independent of Angular's reactive machinery:
+		// measured LIVE on demo, expanding the chat moved the column (256 → 640) while neither the
+		// effect above nor the ResizeObserver ever refreshed the vars — the header stayed pinned
+		// under the chat until an unrelated window resize. Nebular stamps expanded/collapsed onto
+		// the sidebar host as CLASSES, so a MutationObserver on that attribute fires on every
+		// state change no matter which observer mechanism is having a bad day.
+		const chatHost = document.querySelector('nb-sidebar.chat-sidebar');
+		if (chatHost && typeof MutationObserver !== 'undefined') {
+			this.chatClassObserver = new MutationObserver(applySettled);
+			this.chatClassObserver.observe(chatHost, { attributes: true, attributeFilter: ['class'] });
+		}
 		apply();
 	}
+
+	private chatClassObserver?: MutationObserver;
 
 	private canvasLeftOnResize?: () => void;
 

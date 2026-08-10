@@ -55,9 +55,10 @@
   // (Menu | Chat | Canvas, or Menu | Canvas | Chat when docked right).
   // The HOST stays in the flex flow and reserves the width; Nebular's
   // .main-container is position:fixed in windowMode, so it is pinned to the
-  // full viewport height (top 0 → nothing above or below it) and follows the
-  // host's flex-computed width via --gz-chat-live-width (set by the layout's
-  // ResizeObserver — covers normal, user-resized, maximized and collapsed).
+  // full viewport height (top 0 → nothing above or below it). Host and panel
+  // BOTH size from --gz-chat-width (the persisted user width, bound inline on
+  // the host by the layout template) with the same 24rem fallback — one source
+  // of truth, and the two can never disagree.
   nb-sidebar.chat-sidebar {
     order: 0 !important;
     align-self: stretch;
@@ -143,6 +144,10 @@
         // Same surface as the nav menu sidebar; the chat panel's design
         // tokens derive from currentColor, so set the themed text color here.
         background: nb-theme(gauzy-sidebar-background-2);
+        // Published as a CSS var so the React panel's overlays (history, attach picker) can paint
+        // an OPAQUE surface: the chat theme's own surface tokens are currentColor tints over
+        // transparent, and an overlay using them lets the conversation bleed through.
+        --gz-chat-surface: #{nb-theme(gauzy-sidebar-background-2)};
         color: nb-theme(text-basic-color);
         border-right: 1px solid nb-theme(divider-color);
       }

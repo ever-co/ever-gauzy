@@ -7,7 +7,7 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter, map, mergeMap, take, tap } from 'rxjs';
+import { filter, map, switchMap, take, tap } from 'rxjs';
 import { pluck, union } from 'underscore';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
@@ -226,8 +226,12 @@ export class AppComponent implements OnInit, AfterViewInit {
 				}),
 				// Filter for routes in the primary outlet
 				filter((route) => route.outlet === 'primary'),
-				// MergeMap to the route data
-				mergeMap((route) => route.data),
+				// switchMap, NOT mergeMap: `route.data` never completes, so mergeMap leaked one
+				// live inner subscription per navigation for the life of the app — each of which
+				// re-ran the selector/date-picker/URL writes below whenever a retained route's
+				// data re-emitted. switchMap drops the previous route's stream on every
+				// navigation, so exactly one route's data is ever live.
+				switchMap((route) => route.data),
 				/**
 				 * Set Date Range Picker Default Unit and Config
 				 */
