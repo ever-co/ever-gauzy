@@ -62,8 +62,13 @@ const pdfAttachment = (fileName: string) => ({
 });
 
 /**
- * Builds the service over a stub adapter that returns the given attachments, plus a
- * repository stub that resolves the capture token to a fixed tenant/organization.
+ * Builds the service over a stub adapter that returns the given attachments, plus an
+ * `InboundAddressService` stub that resolves the recipient to a fixed tenant/organization.
+ *
+ * Resolution moved out of this service into `InboundAddressService`, so what used to be a
+ * `tenant_setting` repository stub is now an address-service stub. The seam is narrower on
+ * purpose: the delivery path asks two questions ("whose address is this?" and "is this sender
+ * allowed?") and nothing about how either is stored.
  */
 const buildService = (attachments: any[], scope = { tenantId: TENANT_ID, organizationId: ORGANIZATION_ID }) => {
 	const message: ParsedInboundEmail = {
@@ -90,20 +95,26 @@ const buildService = (attachments: any[], scope = { tenantId: TENANT_ID, organiz
 		save: async (row: any) => {
 			saved.push(row);
 			return { ...row, id: `doc-${saved.length}` };
-		},
-		manager: {
-			find: async () => [
-				{
-					name: `docs.${scope.organizationId}.inboundToken`,
-					value: '0123456789abcdef',
-					tenantId: scope.tenantId
-				}
-			]
 		}
 	};
 	const processingService: any = { enqueueExtract: jest.fn().mockResolvedValue(true) };
+	const inboundAddressService: any = {
+		resolveByAddress: async () => ({
+			id: 'addr-1',
+			tenantId: scope.tenantId,
+			organizationId: scope.organizationId,
+			address: 'docs-0123456789abcdef@example.com',
+			messageCount: 0
+		}),
+		isSenderAllowed: () => true,
+		verifySecret: () => false,
+		recordDelivery: jest.fn().mockResolvedValue(undefined)
+	};
 
-	return { service: new InboundEmailService(repository, processingService, adapter), saved };
+	return {
+		service: new InboundEmailService(repository, processingService, inboundAddressService, adapter),
+		saved
+	};
 };
 
 describe('InboundEmailService — attachment storage keys', () => {
@@ -165,5 +176,99 @@ describe('InboundEmailService — attachment storage keys', () => {
 		expect(putFile.mock.calls[0][1]).toMatch(KEY_SHAPE);
 		expect(putFile.mock.calls[1][1]).toMatch(keyShape(otherTenant, otherOrganization));
 		expect(putFile.mock.calls[0][1]).not.toBe(putFile.mock.calls[1][1]);
+	});
+});
+
+/**
+ * Gate 2 accepts EITHER the deployment-wide HMAC signature OR a per-address relay secret.
+ *
+ * The ordering is the security-relevant part: because the address must be resolved before a
+ * per-address secret can be checked, resolution necessarily happens on unauthenticated input. The
+ * "no valid proof" 403 is therefore raised BEFORE the unknown-address 404 — otherwise a caller
+ * holding no secret at all could distinguish a real capture address from a fake one and enumerate
+ * every organization's address.
+ */
+describe('InboundEmailService — gate 2 authentication', () => {
+	const buildAuthService = (options: {
+		globalSignatureOk: boolean;
+		addressExists: boolean;
+		perAddressSecretOk: boolean;
+	}) => {
+		const message: ParsedInboundEmail = {
+			recipient: 'docs-0123456789abcdef@example.com',
+			sender: 'someone@example.com',
+			receivedAt: new Date(),
+			sizeBytes: 14,
+			spfPass: true,
+			dkimPass: true,
+			attachments: [pdfAttachment('invoice.pdf')]
+		} as ParsedInboundEmail;
+
+		const adapter: IInboundEmailAdapter = {
+			id: 'test-adapter',
+			verifySignature: () => options.globalSignatureOk,
+			parse: (_request: IInboundWebhookRequest) => message
+		};
+		const repository: any = { create: (row: any) => row, save: async (row: any) => ({ ...row, id: 'doc-1' }) };
+		const processingService: any = { enqueueExtract: jest.fn().mockResolvedValue(true) };
+		const inboundAddressService: any = {
+			resolveByAddress: async () =>
+				options.addressExists
+					? {
+							id: 'addr-1',
+							tenantId: TENANT_ID,
+							organizationId: ORGANIZATION_ID,
+							address: 'docs-0123456789abcdef@example.com',
+							messageCount: 0
+					  }
+					: null,
+			isSenderAllowed: () => true,
+			verifySecret: () => options.perAddressSecretOk,
+			recordDelivery: jest.fn().mockResolvedValue(undefined)
+		};
+		return new InboundEmailService(repository, processingService, inboundAddressService, adapter);
+	};
+
+	beforeEach(() => {
+		putFile.mockReset();
+		putFile.mockImplementation(async (_content: Buffer, key: string) => ({ key }));
+	});
+
+	it('accepts a delivery proved by the deployment-wide signature alone', async () => {
+		const service = buildAuthService({ globalSignatureOk: true, addressExists: true, perAddressSecretOk: false });
+
+		const response = await service.handleWebhook({ headers: {}, body: {} });
+
+		expect(response.accepted).toBe(1);
+	});
+
+	it('accepts a delivery proved by the per-address secret alone', async () => {
+		// The whole point of per-address secrets: a relay can post for ONE organization without
+		// holding the deployment-wide secret.
+		const service = buildAuthService({ globalSignatureOk: false, addressExists: true, perAddressSecretOk: true });
+
+		const response = await service.handleWebhook({ headers: {}, body: {} });
+
+		expect(response.accepted).toBe(1);
+	});
+
+	it('rejects with 403 when neither proof is presented, even though the address is REAL', async () => {
+		const service = buildAuthService({ globalSignatureOk: false, addressExists: true, perAddressSecretOk: false });
+
+		await expect(service.handleWebhook({ headers: {}, body: {} })).rejects.toMatchObject({ status: 403 });
+	});
+
+	it('rejects an unknown address with the SAME 403 — no enumeration oracle', async () => {
+		// Identical status to the real-address case above. If this were a 404, an unauthenticated
+		// caller could sweep addresses and learn which ones exist.
+		const service = buildAuthService({ globalSignatureOk: false, addressExists: false, perAddressSecretOk: false });
+
+		await expect(service.handleWebhook({ headers: {}, body: {} })).rejects.toMatchObject({ status: 403 });
+	});
+
+	it('only reveals "unknown address" (404) to a caller that already proved itself', async () => {
+		const service = buildAuthService({ globalSignatureOk: true, addressExists: false, perAddressSecretOk: false });
+
+		await expect(service.handleWebhook({ headers: {}, body: {} })).rejects.toMatchObject({ status: 404 });
 	});
 });

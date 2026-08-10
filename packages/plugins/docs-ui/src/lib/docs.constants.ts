@@ -17,6 +17,19 @@ export const DOCS_SETTINGS_PATH = 'documents';
 /** Absolute link to the Documents settings page (nav item under the Settings section). */
 export const DOCS_SETTINGS_LINK = `/pages/settings/${DOCS_SETTINGS_PATH}`;
 
+/**
+ * Inbound email capture settings path, RELATIVE to /pages/settings.
+ *
+ * A sibling of {@link DOCS_SETTINGS_PATH} rather than a child of it: the core settings shell
+ * registers `settings-sections` children as a flat list, and the capture surface is big enough
+ * (a shared address, per-domain DNS verification, per-address allowlists) that folding it into
+ * the defaults page would bury both.
+ */
+export const DOCS_INBOUND_SETTINGS_PATH = 'documents-inbound';
+
+/** Absolute link to the inbound email settings page (nav item under the Settings section). */
+export const DOCS_INBOUND_SETTINGS_LINK = `/pages/settings/${DOCS_INBOUND_SETTINGS_PATH}`;
+
 /** Silent refresh interval while any visible document is still processing/indexing. */
 export const DOCS_PROCESSING_POLL_MS = 5000;
 
