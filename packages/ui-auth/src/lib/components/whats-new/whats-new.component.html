@@ -1,26 +1,36 @@
 <section class="section-wrapper">
-  <div class="whats-new-wrapper">
-    <h3 class="main-header">
-      {{ 'CHANGELOG_MENU.HEADER' | translate }}
-    </h3>
-    @for (item of items$ | async; track item) {
-      <div class="entry">
-        <div class="entry-headings-wrapper">
-          <nb-icon [icon]="item.icon" class="icon"></nb-icon>
-          <div class="entry-headings">
-            <div class="entry-header">{{ item.title }}</div>
-            <div class="entry-header-date">{{ item.date | date }}</div>
-          </div>
-        </div>
-        <p class="paragraph">
-          {{ item.content }}
-        </p>
-      </div>
-    }
-  </div>
-  @if (learnMore) {
-    <a nbButton outline status="primary" class="learn-more" [href]="learnMore">
-      {{ 'CHANGELOG_MENU.LEARN_MORE_URL' | translate }}
-    </a>
-  }
+	<div class="whats-new-wrapper">
+		<h3 class="main-header">
+			{{ 'CHANGELOG_MENU.HEADER' | translate }}
+		</h3>
+		<!-- Entries with a learnMoreUrl are whole-card links opening in a new tab;
+		     the attr bindings keep plain entries as inert anchors (no href = not
+		     focusable/clickable), so one element serves both variants. -->
+		@for (item of items$ | async; track item.id) {
+			<a
+				class="entry"
+				[class.linked]="item.learnMoreUrl"
+				[attr.href]="item.learnMoreUrl || null"
+				[attr.target]="item.learnMoreUrl ? '_blank' : null"
+				[attr.rel]="item.learnMoreUrl ? 'noopener noreferrer' : null"
+			>
+				<div class="entry-headings-wrapper">
+					<nb-icon [icon]="item.icon" class="icon"></nb-icon>
+					<div class="entry-headings">
+						<div class="entry-header">{{ item.title }}</div>
+						<div class="entry-header-date">{{ item.date | date }}</div>
+					</div>
+				</div>
+				<p class="paragraph">
+					{{ item.content }}
+				</p>
+				@if (item.imageUrl) {
+					<img class="entry-img" [src]="item.imageUrl" [alt]="item.title" />
+				}
+				@if (item.learnMoreUrl) {
+					<span class="learn-more-hint">{{ 'CHANGELOG_MENU.LEARN_MORE_URL' | translate }}</span>
+				}
+			</a>
+		}
+	</div>
 </section>

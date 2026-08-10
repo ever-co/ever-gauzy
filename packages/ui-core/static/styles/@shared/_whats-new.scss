@@ -39,6 +39,31 @@
     border-bottom: 1px solid lightgray;
     padding-left: 5px;
     padding-right: 5px;
+    // Entries with a learnMoreUrl render as anchors (whole card opens the link
+    // in a new tab); these keep the linked and plain variants looking the same.
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    &.linked {
+      cursor: pointer;
+      border-radius: nb-theme(border-radius);
+      &:hover {
+        background: rgba(245, 109, 88, 0.08);
+      }
+    }
+    & .entry-img {
+      display: block;
+      max-width: 100%;
+      border-radius: nb-theme(border-radius);
+      margin: 5px 0 10px;
+    }
+    & .learn-more-hint {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      color: nb-theme(color-primary-default);
+      margin-bottom: 10px;
+    }
     &:last-of-type {
       margin-bottom: 83px;
       @include mobile-screen {
