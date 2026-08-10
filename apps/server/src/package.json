@@ -85,7 +85,6 @@
 		"win": {
 			"target": "nsis",
 			"icon": "icon.ico",
-			"verifyUpdateCodeSignature": false,
 			"requestedExecutionLevel": "requireAdministrator"
 		},
 		"snap": {

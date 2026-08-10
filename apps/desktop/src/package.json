@@ -83,8 +83,7 @@
 		},
 		"win": {
 			"target": "nsis",
-			"icon": "icon.ico",
-			"verifyUpdateCodeSignature": false
+			"icon": "icon.ico"
 		},
 		"snap": {
 			"base": "core22"
