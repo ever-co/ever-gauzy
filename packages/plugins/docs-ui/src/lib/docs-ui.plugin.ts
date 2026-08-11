@@ -132,7 +132,10 @@ export const DocsUiPlugin: PluginUiDefinition = {
 					permissionKeys: [PermissionsEnum.DOCS_READ],
 					add: `${DOCS_PAGE_LINK}?upload=1`
 				},
-				items: []
+				// 🛑 No `items` key at all. An empty children array can make Nebular treat the entry as an
+				// expandable GROUP, so clicking it toggles expansion instead of routing — which presents
+				// exactly as "clicking Documents does nothing" (item highlights, URL never changes).
+				// Warm in-app navigation to the same link via the router works, so the route is fine.
 			} as PluginNavItemInput,
 			before: 'focus'
 		},
