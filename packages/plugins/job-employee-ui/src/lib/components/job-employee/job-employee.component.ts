@@ -59,6 +59,22 @@ export enum JobSearchTabsEnum {
 	standalone: false
 })
 export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
+	/**
+	 * Stable permission array for `*ngxPermissionsOnly`.
+	 * 🛑 Never inline the literal in the binding: a new array on every change-detection
+	 * cycle makes ngx-permissions re-validate forever under default change detection,
+	 * which pins the main thread and the view never finishes rendering.
+	 */
+	public readonly permGateOrgJobEmployeeView = Object.freeze(['ORG_JOB_EMPLOYEE_VIEW']) as string[];
+
+	/**
+	 * Stable permission array for `*ngxPermissionsOnly`.
+	 * 🛑 Never inline the literal in the binding: a new array on every change-detection
+	 * cycle makes ngx-permissions re-validate forever under default change detection,
+	 * which pins the main thread and the view never finishes rendering.
+	 */
+	public readonly permGateOrgJobEmployeeViewOrgEmployeesEdit = Object.freeze(['ORG_JOB_EMPLOYEE_VIEW', 'ORG_EMPLOYEES_EDIT']) as string[];
+
 	private readonly _http = inject(HttpClient);
 	private readonly _route = inject(ActivatedRoute);
 	private readonly _router = inject(Router);
