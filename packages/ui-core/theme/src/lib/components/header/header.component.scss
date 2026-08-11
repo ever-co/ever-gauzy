@@ -92,6 +92,26 @@ $orange: #f56d58;
       display: flex;
       align-items: center;
       width: auto;
+      // 🛑 A flex item defaults to `min-width: auto`, so without this it can never shrink below
+      // its content width. The parent uses `justify-content: flex-end`, so the excess overflows
+      // to the LEFT — out of the header band entirely and underneath anything docked beside it.
+      // Opening the AI chat panel narrows this band from ~1219px to 896px, and the "+ Create"
+      // button and the team selector ended up rendering under the panel (measured at x=317 and
+      // x=425 while the band itself started at x=640). They were still in the DOM and still
+      // "visible" to the accessibility tree — just covered.
+      //
+      // `min-width: 0` lets the row shrink, `max-width: 100%` keeps it inside the band, and
+      // `overflow-x: auto` keeps every control reachable when space genuinely runs out instead of
+      // silently hiding the leading ones. Nebular renders select/date popups through a CDK overlay
+      // attached to the body, so this scroll container does not clip them.
+      min-width: 0;
+      max-width: 100%;
+      overflow-x: auto;
+      // Hide the scrollbar chrome; the row stays scrollable by wheel/trackpad/touch.
+      scrollbar-width: none;
+      &::-webkit-scrollbar {
+        display: none;
+      }
       z-index: 5;
 
       .sidebar-toggle {
