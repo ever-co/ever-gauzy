@@ -6,7 +6,6 @@ import {
 	DialogConfirmInstallDownload,
 	DialogConfirmUpgradeDownload,
 	DialogLocalUpdate,
-	DigitalOceanCdn,
 	GithubCdn
 } from './decorators';
 import { DesktopDialog } from './desktop-dialog';
@@ -28,13 +27,28 @@ export class DesktopUpdater {
 
 	constructor(config: IUpdaterConfig) {
 		this._updateContext = new UpdateContext();
-		this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(config));
 		this._updateServer = new DesktopLocalUpdateServer();
 		this._strategy = new GithubCdn(new CdnUpdate(config));
+		// The DigitalOcean Spaces CDN update feed (ever.sfo3.cdn.digitaloceanspaces.com) was
+		// decommissioned; GitHub Releases is the only live feed. Default the active strategy to
+		// GitHub so no install is stranded on the dead CDN — including apps that never call
+		// checkUpdate() explicitly (e.g. agent) and rely solely on the automatic update loop.
+		this._updateContext.strategy = this._strategy;
 		this._automaticUpdate = new AutomaticUpdate(this._updateContext, this.settingWindow);
 		this._config = config;
 		this._mainProcess();
 		this._updaterProcess();
+		// GithubCdn resolves its feed URL asynchronously in initialize(); start the automatic
+		// update loop only after that completes so the first check targets a valid feed.
+		void this._startAutomaticUpdate();
+	}
+
+	private async _startAutomaticUpdate(): Promise<void> {
+		try {
+			await this._strategy.initialize();
+		} catch (error) {
+			console.log('Error initializing default update strategy:', error);
+		}
 		this._automaticUpdate.start();
 	}
 
@@ -79,11 +93,11 @@ export class DesktopUpdater {
 		});
 
 		ipcMain.on('change_update_strategy', async (event, args) => {
-			if (args.github) {
+			if (args.github || args.digitalOcean) {
+				// The DigitalOcean Spaces CDN feed is dead; route the (deprecated) digitalOcean
+				// option to the live GitHub feed as well so the toggle can never select it.
 				await this._strategy.initialize();
 				this._updateContext.strategy = this._strategy;
-			} else if (args.digitalOcean) {
-				this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(this._config));
 			}
 			if (!args.local) {
 				try {
@@ -218,11 +232,12 @@ export class DesktopUpdater {
 		const settings: any = LocalStore.getStore('appSetting');
 
 		if (settings && settings.cdnUpdater) {
-			if (settings.cdnUpdater.github) {
+			// GitHub Releases is the only live feed. A persisted `digitalOcean: true` (the old
+			// shipped default) would otherwise pin the install to the dead DigitalOcean Spaces
+			// CDN, so resolve both options to GitHub.
+			if (settings.cdnUpdater.github || settings.cdnUpdater.digitalOcean) {
 				await this._strategy.initialize();
 				this._updateContext.strategy = this._strategy;
-			} else if (settings.cdnUpdater.digitalOcean) {
-				this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(this._config));
 			}
 		}
 

@@ -41,13 +41,6 @@
 				"provider": "github",
 				"repo": "ever-gauzy-agent",
 				"releaseType": "release"
-			},
-			{
-				"provider": "spaces",
-				"name": "ever",
-				"region": "sfo3",
-				"path": "/ever-gauzy-agent",
-				"acl": "public-read"
 			}
 		],
 		"mac": {
