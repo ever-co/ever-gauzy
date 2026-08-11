@@ -50,13 +50,6 @@
 				"provider": "github",
 				"repo": "ever-gauzy-mcp-server",
 				"releaseType": "release"
-			},
-			{
-				"provider": "spaces",
-				"name": "ever",
-				"region": "sfo3",
-				"path": "/ever-gauzy-mcp-server",
-				"acl": "public-read"
 			}
 		],
 		"mac": {

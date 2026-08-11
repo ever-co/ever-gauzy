@@ -46,13 +46,6 @@
 				"provider": "github",
 				"repo": "ever-gauzy-desktop-timer",
 				"releaseType": "release"
-			},
-			{
-				"provider": "spaces",
-				"name": "ever",
-				"region": "sfo3",
-				"path": "/ever-gauzy-desktop-timer",
-				"acl": "public-read"
 			}
 		],
 		"mac": {
