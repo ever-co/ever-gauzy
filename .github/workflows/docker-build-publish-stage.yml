@@ -41,10 +41,19 @@ jobs:
       - name: Resolve release version
         id: relver
         run: |
-          # Only the tag that points AT the built commit — no `git describe` fallback,
-          # which would surface a stale ancestor tag as this build's version. When the
-          # commit is untagged the footer shows the commit alone (accurate).
+          # Version shown in the app footer. Resolution order:
+          #   1. a tag pointing AT this exact commit  -> "v111.32.3"      (a real release)
+          #   2. otherwise `git describe --long`       -> "v111.32.3-4-gbb20466"
+          #      i.e. 4 commits after v111.32.3, at bb20466 — unambiguous, and it can never be
+          #      mistaken for the release itself.
+          #   3. no tags reachable at all             -> "" (footer falls back to the commit)
+          #
+          # 🛑 Do NOT use a bare `git describe --abbrev=0` fallback here. It prints the nearest
+          # ancestor tag with nothing to mark the distance, so an untagged build renders as if it
+          # WERE that release. That is what made web and api look like two different versions
+          # (v111.32.2 vs v111.32.3) while they were simply mid-roll on adjacent commits.
           VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
+          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --long 2>/dev/null || echo ""); fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Release version: ${VERSION:-<none>}"
 
@@ -145,10 +154,19 @@ jobs:
       - name: Resolve release version
         id: relver
         run: |
-          # Only the tag that points AT the built commit — no `git describe` fallback,
-          # which would surface a stale ancestor tag as this build's version. When the
-          # commit is untagged the footer shows the commit alone (accurate).
+          # Version shown in the app footer. Resolution order:
+          #   1. a tag pointing AT this exact commit  -> "v111.32.3"      (a real release)
+          #   2. otherwise `git describe --long`       -> "v111.32.3-4-gbb20466"
+          #      i.e. 4 commits after v111.32.3, at bb20466 — unambiguous, and it can never be
+          #      mistaken for the release itself.
+          #   3. no tags reachable at all             -> "" (footer falls back to the commit)
+          #
+          # 🛑 Do NOT use a bare `git describe --abbrev=0` fallback here. It prints the nearest
+          # ancestor tag with nothing to mark the distance, so an untagged build renders as if it
+          # WERE that release. That is what made web and api look like two different versions
+          # (v111.32.2 vs v111.32.3) while they were simply mid-roll on adjacent commits.
           VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
+          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --long 2>/dev/null || echo ""); fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Release version: ${VERSION:-<none>}"
 
@@ -247,10 +265,19 @@ jobs:
       - name: Resolve release version
         id: relver
         run: |
-          # Only the tag that points AT the built commit — no `git describe` fallback,
-          # which would surface a stale ancestor tag as this build's version. When the
-          # commit is untagged the footer shows the commit alone (accurate).
+          # Version shown in the app footer. Resolution order:
+          #   1. a tag pointing AT this exact commit  -> "v111.32.3"      (a real release)
+          #   2. otherwise `git describe --long`       -> "v111.32.3-4-gbb20466"
+          #      i.e. 4 commits after v111.32.3, at bb20466 — unambiguous, and it can never be
+          #      mistaken for the release itself.
+          #   3. no tags reachable at all             -> "" (footer falls back to the commit)
+          #
+          # 🛑 Do NOT use a bare `git describe --abbrev=0` fallback here. It prints the nearest
+          # ancestor tag with nothing to mark the distance, so an untagged build renders as if it
+          # WERE that release. That is what made web and api look like two different versions
+          # (v111.32.2 vs v111.32.3) while they were simply mid-roll on adjacent commits.
           VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
+          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --long 2>/dev/null || echo ""); fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Release version: ${VERSION:-<none>}"
 
