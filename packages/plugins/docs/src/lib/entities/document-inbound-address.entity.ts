@@ -29,6 +29,15 @@ import { MikroOrmDocumentInboundAddressRepository } from '../repositories/mikro-
  * routed purely by its recipient address, so two rows sharing one address would make the destination
  * tenant depend on row order — a cross-tenant delivery. The database is the right place to make that
  * unrepresentable.
+ *
+ * ## 🛑 Only `varchar` and `text` are declared explicitly
+ *
+ * Dates, booleans and integers deliberately carry NO `type:` — TypeORM infers them from the
+ * TypeScript type and maps each database appropriately. Writing `type: 'timestamp'` looks harmless
+ * and passes every Postgres check, but **better-sqlite3 rejects it outright**
+ * (`DataTypeNotSupportedError`) and the API crash-loops at boot. Demo runs SQLite while stage and
+ * production run PostgreSQL, so this cannot be caught by testing one of them. No other entity in
+ * this plugin declares anything but `varchar`/`text`; keep it that way.
  */
 @MultiORMEntity('document_inbound_address', {
 	mikroOrmRepository: () => MikroOrmDocumentInboundAddressRepository
@@ -104,12 +113,12 @@ export class DocumentInboundAddress extends TenantOrganizationBaseEntity impleme
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamp', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	domainVerifiedAt?: Date | null;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamp', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	domainLastCheckedAt?: Date | null;
 
 	/**
@@ -140,7 +149,7 @@ export class DocumentInboundAddress extends TenantOrganizationBaseEntity impleme
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@MultiORMColumn({ type: 'boolean', default: false })
+	@MultiORMColumn({ default: false })
 	importBodyAsNote?: boolean;
 
 	/**
@@ -149,17 +158,17 @@ export class DocumentInboundAddress extends TenantOrganizationBaseEntity impleme
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@MultiORMColumn({ type: 'boolean', default: true })
+	@MultiORMColumn({ default: true })
 	isActive?: boolean;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@MultiORMColumn({ type: 'timestamp', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	lastMessageAt?: Date | null;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
-	@MultiORMColumn({ type: 'int', default: 0 })
+	@MultiORMColumn({ default: 0 })
 	messageCount?: number;
 
 	/**
