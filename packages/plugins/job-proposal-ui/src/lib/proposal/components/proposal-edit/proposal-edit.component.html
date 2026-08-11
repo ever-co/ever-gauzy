@@ -53,10 +53,12 @@
 								<label class="label">
 									{{ 'PROPOSALS_PAGE.EDIT_PROPOSAL.JOB_POST_CONTENT' | translate }}
 								</label>
-								<ckeditor
+								<ga-rich-text-editor
 									formControlName="jobPostContent"
-									[config]="ckConfig"
-								></ckeditor>
+									preset="standard"
+									outputFormat="html"
+									minHeight="320px"
+								></ga-rich-text-editor>
 							</div>
 						</div>
 						<div class="col-sm-6">
@@ -64,10 +66,12 @@
 								<label class="label">
 									{{ 'PROPOSALS_PAGE.EDIT_PROPOSAL.PROPOSAL_CONTENT' | translate }}
 								</label>
-								<ckeditor
+								<ga-rich-text-editor
 									formControlName="proposalContent"
-									[config]="ckConfig"
-								></ckeditor>
+									preset="standard"
+									outputFormat="html"
+									minHeight="320px"
+								></ga-rich-text-editor>
 							</div>
 						</div>
 					</div>

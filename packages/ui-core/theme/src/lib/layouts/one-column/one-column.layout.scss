@@ -55,9 +55,10 @@
   // (Menu | Chat | Canvas, or Menu | Canvas | Chat when docked right).
   // The HOST stays in the flex flow and reserves the width; Nebular's
   // .main-container is position:fixed in windowMode, so it is pinned to the
-  // full viewport height (top 0 → nothing above or below it) and follows the
-  // host's flex-computed width via --gz-chat-live-width (set by the layout's
-  // ResizeObserver — covers normal, user-resized, maximized and collapsed).
+  // full viewport height (top 0 → nothing above or below it). Host and panel
+  // BOTH size from --gz-chat-width (the persisted user width, bound inline on
+  // the host by the layout template) with the same 24rem fallback — one source
+  // of truth, and the two can never disagree.
   nb-sidebar.chat-sidebar {
     order: 0 !important;
     align-self: stretch;
@@ -80,34 +81,57 @@
 
     // Maximized: take all space except the nav menu (Menu | Chat);
     // the canvas is hidden (components stay alive) until restored.
+    //
+    // The fixed panel's horizontal start is its STATIC position — i.e. wherever the host lands in
+    // the flex row — so pinning `right: 0` and letting the width compute keeps it exactly between
+    // the nav menu and the viewport edge, with no measured width to mirror.
     &.chat-sidebar-maximized {
       flex: 1 1 auto !important;
       width: auto !important;
       min-width: 0 !important;
       max-width: none !important;
 
-      // The visible panel is the fixed `.main-container` below, whose width
-      // comes from --gz-chat-live-width. Its fallback is the DOCKED chat
-      // width, so whenever that variable is missing the host would grow while
-      // the panel stayed narrow — which is exactly what "maximize does
-      // nothing" looks like. Maximized falls back to the viewport instead.
       ::ng-deep .main-container {
-        width: var(--gz-chat-live-width, 100vw) !important;
-        max-width: 100vw !important;
+        right: 0;
+        width: auto !important;
       }
     }
 
+    // COLLAPSED MUST REMOVE THE PANEL, not merely narrow it.
+    //
+    // `.main-container` is `position: fixed`, and a fixed descendant is NOT clipped by an
+    // ancestor's `overflow: hidden` — so a host at `width: 0` cannot hide it. Any residual width
+    // survives as an invisible, full-height, click-eating strip: measured at 1280x720 it was
+    // 384x720 at x=256, and document.elementFromPoint over the org selector and the left third of
+    // the canvas returned `div.main-container` instead of the page. That is the "intermittent
+    // click-blocking across the UI" report.
+    //
+    // Width alone is not a safe lever here (the width declaration did not always win the cascade),
+    // so take the element out of rendering entirely. `display: none` cannot be overridden by a
+    // stale width and cannot receive a hit test.
     &.collapsed {
       width: 0 !important;
       overflow: hidden;
+
+      ::ng-deep .main-container {
+        display: none !important;
+      }
     }
 
+    // Pinned to the viewport's top so the chat is a FULL-HEIGHT column with nothing above it: the
+    // panel owns its own top edge (title row + icons), exactly like the nav menu owns the logo.
+    // The header is inset around it instead (observeCanvasLeft in the layout component publishes
+    // --gz-canvas-left/right, which the fixed-header rules above consume), so header dropdowns open
+    // over the canvas, never over the chat.
+    //
+    // Width comes straight from `--gz-chat-width` (the user's chosen/persisted width) rather than
+    // from a ResizeObserver mirroring the host: one source of truth, and nothing to go stale.
     ::ng-deep .main-container {
-      width: var(--gz-chat-live-width, var(--gz-chat-width, 24rem)) !important;
+      width: var(--gz-chat-width, 24rem);
       max-width: none;
       top: 0 !important;
       height: 100vh !important;
-      z-index: 1041; // same layer as the nav menu sidebar — covers the header band
+      z-index: 1041; // same layer as the nav menu sidebar
       transition: width 0.2s ease;
       overflow: hidden;
 
@@ -120,6 +144,10 @@
         // Same surface as the nav menu sidebar; the chat panel's design
         // tokens derive from currentColor, so set the themed text color here.
         background: nb-theme(gauzy-sidebar-background-2);
+        // Published as a CSS var so the React panel's overlays (history, attach picker) can paint
+        // an OPAQUE surface: the chat theme's own surface tokens are currentColor tints over
+        // transparent, and an overlay using them lets the conversation bleed through.
+        --gz-chat-surface: #{nb-theme(gauzy-sidebar-background-2)};
         color: nb-theme(text-basic-color);
         border-right: 1px solid nb-theme(divider-color);
       }
@@ -439,4 +467,56 @@ nb-sidebar[tag='menu-sidebar'] {
 :host ::ng-deep nb-layout .layout .layout-container nb-sidebar.settings-sidebar.expanded .main-container-fixed {
   @include nb-ltr(right, 20px);
   @include nb-rtl(left, 20px);
+}
+
+// ── The header band belongs to the CANVAS ────────────────────────────────────
+//
+// Nebular renders `nb-layout-header.fixed` at `left: 0; width: 100%`, i.e. across every column.
+// The chat panel is `position: fixed` at `z-index: 1041`, one above the header's 1040, so any
+// header content sharing that horizontal range is COVERED — measured on demo at 1280px: nav
+// sidebar 0-256, chat 256-640, header content starting at 384, so 256px of it (the demo banner's
+// opening words, the first filter) sat underneath the panel.
+//
+// This used to be handled with `padding-left` on the header equal to the chat's width. Two
+// problems: the number was wrong (it ignored the nav sidebar in front of the chat), and padding is
+// the wrong lever anyway — it moves only what is inside the header box, so anything outside it is
+// behind the chat again. Insetting the BAND makes the overlap impossible rather than arithmetically
+// avoided.
+//
+// `--gz-canvas-left` is measured off `nb-layout-column` — the real canvas edge, after whatever
+// sidebars precede it, at whatever width the user has dragged the chat to. See the layout ts.
+// Both edges are pinned to the canvas, not just the leading one: the chat docks to either side, so
+// an end-docked panel would otherwise sit on top of the header's trailing edge exactly as the
+// start-docked one did.
+//
+// The selector deliberately mirrors Nebular's own — `nb-layout.window-mode .layout nb-layout-header`
+// sets `width: 100%; max-width: 1920px; margin: 0 auto` at specificity (0,2,2). A plain
+// `nb-layout-header.fixed` is (0,2,1) and LOSES the width, which leaves the band full-viewport-wide
+// and merely translated right by the inset — pushing the header's actions off the screen edge
+// instead of fitting them to the canvas. Matching the full selector wins on specificity rather than
+// on stylesheet order.
+//
+// `max-width` and the auto margins go with it: they exist to cap and centre a full-width band, and
+// both offsets are already measured off `nb-layout-column`, which has that centring baked into its
+// own left edge. Pinning to the column matches the content exactly; re-capping would not.
+:host ::ng-deep nb-layout.window-mode .layout nb-layout-header.fixed,
+:host ::ng-deep nb-layout .layout nb-layout-header.fixed {
+  left: var(--gz-canvas-left, 0px);
+  right: var(--gz-canvas-right, 0px);
+  width: auto;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+// The footer has the SAME shape of problem and the same fix — Nebular renders it fixed and full
+// width, so an expanded chat covers its leading edge exactly as it covered the header's.
+:host ::ng-deep nb-layout.window-mode .layout nb-layout-footer.fixed,
+:host ::ng-deep nb-layout .layout nb-layout-footer.fixed {
+  left: var(--gz-canvas-left, 0px);
+  right: var(--gz-canvas-right, 0px);
+  width: auto;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
 }

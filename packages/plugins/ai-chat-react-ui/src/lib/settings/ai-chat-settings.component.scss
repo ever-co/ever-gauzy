@@ -363,26 +363,14 @@
 		gap: 0.75rem;
 	}
 
-	.provider-models {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 0.25rem;
-		margin-top: 0.5rem;
-
-		.models-label {
-			font-size: 0.75rem;
-			opacity: 0.7;
-		}
-
-		.model-chip {
-			font-size: 0.75rem;
-			line-height: 1.25;
-			padding: 0.125rem 0.5rem;
-			border-radius: 1rem;
-			background: var(--color-basic-transparent-200);
-			white-space: nowrap;
-		}
+	// Replaces the old "Models: chip chip chip" row, which advertised a hardcoded handful of slugs as
+	// though it were the provider's catalogue. The model picker below lists the real one.
+	.platform-notice {
+		margin: 0.5rem 0 0;
+		max-width: 42rem;
+		font-size: 0.75rem;
+		line-height: 1.4;
+		opacity: 0.85;
 	}
 
 	.connect-box {
@@ -457,6 +445,24 @@
 
 		.custom-model {
 			margin-top: 0.5rem;
+		}
+
+		// The routing providers list hundreds of models, so each row carries the id under the
+		// display name — 'Claude Sonnet 5' appears under several vendors and the id is what
+		// disambiguates.
+		.model-select {
+			display: block;
+
+			.model-label {
+				display: block;
+			}
+
+			.model-id {
+				display: block;
+				font-size: 0.6875rem;
+				font-family: var(--font-family-mono, monospace);
+				opacity: 0.6;
+			}
 		}
 
 		&.toggles {

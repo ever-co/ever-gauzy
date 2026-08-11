@@ -1,5 +1,14 @@
 import { AiProviderEnum, IAiChatModel } from '@gauzy/contracts';
-import { IAiChatProviderDefinition, IAiProviderCredentials, importEsm } from '@gauzy/plugin-ai-chat';
+import {
+	IAiChatModelList,
+	IAiChatProviderDefinition,
+	IAiProviderCredentials,
+	createCatalogueCache,
+	fetchCatalogueJson,
+	importEsm,
+	keyedCatalogue,
+	prettifyModelId
+} from '@gauzy/plugin-ai-chat';
 
 /** Stable provider id used by the registry, the UI and BYOK credentials. */
 const PROVIDER_ID = AiProviderEnum.GROK;
@@ -9,6 +18,33 @@ const PROVIDER_ID = AiProviderEnum.GROK;
  * Model ids as accepted by `@ai-sdk/xai`.
  */
 const MODELS: IAiChatModel[] = [{ id: 'grok-4.3', label: 'Grok 4.3', providerId: PROVIDER_ID }];
+
+/** Model catalogue cache, keyed per credential. */
+const catalogueCache = createCatalogueCache<IAiChatModel[]>();
+
+/**
+ * The Grok language models this API key can address.
+ *
+ * xAI splits its catalogue by modality — `/v1/language-models` already excludes the image models, so
+ * no capability filtering is needed here. Note the response key is `models`, **not** the `data` that
+ * every other OpenAI-shaped endpoint uses; reading `data` yields an empty list, which would look like
+ * "no models" rather than a parsing mistake.
+ */
+const listCatalogue = async (credentials: IAiProviderCredentials | null): Promise<IAiChatModelList> =>
+	keyedCatalogue({
+		credentials,
+		curated: MODELS,
+		cache: catalogueCache,
+		load: async (resolved) => {
+			const body = await fetchCatalogueJson<{ models?: { id: string }[] }>(
+				'https://api.x.ai/v1/language-models',
+				{ headers: { authorization: `Bearer ${resolved.apiKey}` } }
+			);
+			return (body.models ?? [])
+				.filter((m) => typeof m?.id === 'string')
+				.map((m) => ({ id: m.id, label: prettifyModelId(m.id), providerId: PROVIDER_ID }));
+		}
+	});
 
 /**
  * Grok provider definition for the AI chat engine.
@@ -24,6 +60,7 @@ export const grokProviderDefinition: IAiChatProviderDefinition = {
 	baseUrlEnvVar: 'XAI_BASE_URL',
 	models: MODELS,
 	defaultModel: 'grok-4.3',
+	listModels: listCatalogue,
 	order: 70,
 	websiteUrl: 'https://x.ai',
 	apiKeysUrl: 'https://console.x.ai',

@@ -1,0 +1,83 @@
+.docs-browse {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding: 1rem;
+	min-height: 100%;
+}
+
+.docs-drop-overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 20;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	border: 2px dashed var(--color-primary-default);
+	border-radius: 0.5rem;
+	background: var(--color-primary-transparent-100, rgba(51, 102, 255, 0.08));
+	color: var(--color-primary-default);
+	font-weight: 600;
+	pointer-events: none;
+
+	nb-icon {
+		font-size: 2.5rem;
+	}
+}
+
+.docs-browse-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+
+	.docs-browse-title {
+		margin: 0;
+	}
+
+	.docs-browse-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+	}
+}
+
+/* Location breadcrumb — page-level so it survives the table layout and an empty
+   folder (it used to be rendered by `gz-docs-cards`, hence the shared crumb rules). */
+.docs-browse-breadcrumb {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.125rem;
+
+	.docs-crumb-sep {
+		font-size: 0.875rem;
+		color: var(--text-hint-color);
+	}
+
+	/* A redacted ancestor is a placeholder, not a name — render it as hint text so it
+	   reads as "something you cannot see" rather than a folder called "Restricted". */
+	.docs-crumb-restricted {
+		font-style: italic;
+		color: var(--text-hint-color);
+	}
+}
+
+.docs-view-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.125rem;
+}
+
+.pagination-container {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.docs-empty-host {
+	min-height: 12rem;
+}

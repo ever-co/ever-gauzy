@@ -1,0 +1,148 @@
+<div class="docs-cards" [nbSpinner]="loading" nbSpinnerStatus="primary">
+	<!-- The breadcrumb row moved to the browse page header (`00-product-spec.md` §6.9
+	     R-TRE-01): it has to render in the table layout and on an empty folder too,
+	     and both of those sit outside this component. -->
+
+	<!-- Flat results hint (search / non-All preset active) -->
+	<div class="docs-cards-flat-hint" *ngIf="flat">
+		<nb-icon icon="funnel-outline"></nb-icon>
+		<span>{{ 'DOCS.CARDS.FLAT_RESULTS_HINT' | translate }}</span>
+	</div>
+
+	<div class="docs-cards-grid">
+		<!-- Folder cards first. A real <button> replaces the former `role="button"` div, so
+		     focus, Enter and Space come from the platform (the explicit tabindex/keydown pair
+		     is what a native button already does — keeping it would fire the handler twice).
+		     The inline rules only undo the user-agent button chrome `.docs-card` does not
+		     already override, so the card renders exactly as before. -->
+		<button
+			type="button"
+			class="docs-card docs-card-folder"
+			*ngFor="let folder of folderCards; trackBy: trackById"
+			[class.active]="isActive(folder)"
+			[class.archived]="folder.isArchived"
+			style="width: 100%; align-items: stretch; text-align: inherit; font: inherit; color: inherit"
+			(click)="onCardClick(folder)"
+		>
+			<div class="docs-card-head">
+				<span class="docs-card-emoji" *ngIf="folder.icon; else folderEva">{{ folder.icon }}</span>
+				<ng-template #folderEva>
+					<nb-icon icon="folder-outline" [style.color]="folder.color || null"></nb-icon>
+				</ng-template>
+				<span class="docs-card-name" [nbTooltip]="folder.name">{{ folder.name }}</span>
+			</div>
+			<div class="docs-card-footer">
+				<span>{{ 'DOCS.CARDS.ITEMS_COUNT' | translate : { count: folder.childrenCount ?? 0 } }}</span>
+			</div>
+		</button>
+
+		<!-- Document cards.
+		     Deliberately still `role="button"` on a div, unlike the folder card above: this card
+		     CONTAINS the `.docs-card-open` button (below), and `<button>` may not contain
+		     interactive content — nesting one would be invalid HTML that browsers reparent, which
+		     is worse for assistive tech than the explicit role. The div is keyboard-operable
+		     (`tabindex="0"` + `keydown.enter`), so the accessible behaviour is already correct.
+		     Making this native needs `.docs-card-open` lifted out of the card into an
+		     absolutely-positioned sibling — a layout change, not a markup fix. -->
+		<div
+			class="docs-card"
+			*ngFor="let doc of documentCards; trackBy: trackById"
+			[class.active]="isActive(doc)"
+			[class.archived]="doc.isArchived"
+			role="button"
+			tabindex="0"
+			(click)="onCardClick(doc)"
+			(dblclick)="onDefaultOpen(doc, $event)"
+			(keydown.enter)="onCardClick(doc)"
+		>
+			<!-- Preview tile. The box is ALWAYS rendered at a fixed height, whether or not a
+			     thumbnail exists: `thumbUrl` only appears once the P1 thumbnail job has run, so
+			     a box that materialized with the image would reflow the whole grid on the next
+			     processing poll. Without one (or when the image fails to load) the tile holds
+			     the same kind icon the card used to show inline. -->
+			<div class="docs-card-thumb">
+				<img
+					*ngIf="thumbnailUrl(doc) as thumbnail; else docThumbFallback"
+					class="docs-card-thumb-image"
+					[src]="thumbnail"
+					alt=""
+					loading="lazy"
+					(error)="onThumbnailError(doc)"
+				/>
+				<ng-template #docThumbFallback>
+					<span class="docs-card-emoji" *ngIf="doc.icon; else docEva">{{ doc.icon }}</span>
+					<ng-template #docEva>
+						<nb-icon [icon]="kindIcon(doc)" [style.color]="doc.color || null"></nb-icon>
+					</ng-template>
+				</ng-template>
+			</div>
+			<div class="docs-card-head">
+				<span class="docs-card-name" [nbTooltip]="doc.summary || doc.originalFilename || doc.name">
+					{{ doc.name }}
+				</span>
+				<!-- Per-kind default open: FILE → preview modal, PAGE → editor -->
+				<button
+					*ngIf="doc.kind === kindEnum.FILE"
+					nbButton
+					ghost
+					size="tiny"
+					class="docs-card-open"
+					(click)="onDefaultOpen(doc, $event)"
+					[nbTooltip]="'DOCS.PREVIEW.TITLE' | translate"
+				>
+					<nb-icon icon="eye-outline"></nb-icon>
+				</button>
+				<button
+					*ngIf="doc.kind === kindEnum.PAGE"
+					nbButton
+					ghost
+					size="tiny"
+					class="docs-card-open"
+					(click)="onDefaultOpen(doc, $event)"
+					[nbTooltip]="'DOCS.EDITOR.TITLE' | translate"
+				>
+					<nb-icon icon="external-link-outline"></nb-icon>
+				</button>
+				<!-- Row actions kebab (`01-ux-spec.md` §4.2: "kebab with the same row
+				     actions"), built by the same builder as the table column and the
+				     tree context menu. -->
+				<button
+					*ngIf="menuItemsFor(doc).length"
+					nbButton
+					ghost
+					size="tiny"
+					class="docs-card-open docs-card-actions"
+					[nbContextMenu]="menuItemsFor(doc)"
+					[nbContextMenuTag]="menuTag(doc)"
+					(click)="$event.stopPropagation()"
+					[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
+				>
+					<nb-icon icon="more-horizontal-outline"></nb-icon>
+				</button>
+			</div>
+			<div class="docs-card-badges">
+				<gz-docs-status-badge *ngIf="doc.kind === kindEnum.FILE" [rowData]="doc"></gz-docs-status-badge>
+				<gz-docs-knowledge-badge [rowData]="doc"></gz-docs-knowledge-badge>
+				<nb-badge
+					*ngIf="doc.reviewStatus === 'PENDING'"
+					status="warning"
+					[text]="'DOCS.REVIEW.PENDING' | translate"
+				></nb-badge>
+			</div>
+			<div class="docs-card-chips">
+				<gz-docs-category-chips [rowData]="doc"></gz-docs-category-chips>
+			</div>
+			<div class="docs-card-footer">
+				<span>{{ doc.updatedAt | date : 'mediumDate' }}</span>
+				<span *ngIf="doc.fileSize">{{ humanizeSize(doc.fileSize) }}</span>
+			</div>
+		</div>
+	</div>
+
+	<!-- Load more -->
+	<div class="docs-cards-more" *ngIf="hasMore">
+		<button nbButton size="small" appearance="outline" [disabled]="loading" (click)="loadMore.emit()">
+			{{ 'DOCS.CARDS.LOAD_MORE' | translate }}
+		</button>
+	</div>
+</div>

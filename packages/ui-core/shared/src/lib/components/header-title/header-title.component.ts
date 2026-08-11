@@ -135,6 +135,19 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit, OnDestroy {
 		this._allowEmployee = value;
 	}
 
+	/**
+	 * Whether the "for <Organization>" suffix renders after the title. Defaults to true — most
+	 * pages show org-scoped data. Product-level pages (About, Help) opt out: their content has
+	 * nothing to do with the selected organization, and the suffix read as a mistake there.
+	 */
+	_allowOrganization: boolean = true;
+	get allowOrganization(): boolean {
+		return this._allowOrganization;
+	}
+	@Input() set allowOrganization(value: boolean) {
+		this._allowOrganization = value;
+	}
+
 	constructor(
 		private readonly store: Store,
 		private readonly crd: ChangeDetectorRef

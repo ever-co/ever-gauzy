@@ -1,0 +1,428 @@
+<div class="docs-detail" [nbSpinner]="loading" nbSpinnerStatus="primary">
+	<!-- Error state -->
+	<div class="docs-detail-error" *ngIf="loadError">
+		<p>{{ 'DOCS.ERRORS.PANEL_LOAD' | translate }}</p>
+		<button nbButton size="small" status="primary" (click)="reload()">
+			{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}
+		</button>
+	</div>
+
+	<ng-container *ngIf="document as doc">
+		<!-- Header -->
+		<header class="docs-detail-header">
+			<div class="docs-detail-title">
+				<span class="docs-detail-icon" *ngIf="doc.icon; else headerEva">{{ doc.icon }}</span>
+				<ng-template #headerEva>
+					<nb-icon
+						[icon]="doc.kind === kindEnum.FOLDER ? 'folder-outline' : doc.kind === kindEnum.PAGE ? 'file-text-outline' : 'file-outline'"
+					></nb-icon>
+				</ng-template>
+				<h5 class="docs-detail-name" [nbTooltip]="doc.originalFilename || doc.name">{{ doc.name }}</h5>
+				<ngx-favorite-toggle
+					[entityType]="favoriteEntityType"
+					[entityId]="doc.id"
+					[entityName]="doc.name"
+					size="small"
+					spacing="detail"
+				></ngx-favorite-toggle>
+				<button nbButton ghost size="small" class="docs-detail-close" (click)="close()">
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			</div>
+			<div class="docs-detail-badges">
+				<nb-badge status="basic" [text]="'DOCS.KIND.' + doc.kind | translate"></nb-badge>
+				<gz-docs-status-badge *ngIf="doc.kind === kindEnum.FILE" [rowData]="doc"></gz-docs-status-badge>
+				<gz-docs-knowledge-badge [rowData]="doc"></gz-docs-knowledge-badge>
+				<gz-docs-source-badge [rowData]="doc"></gz-docs-source-badge>
+				<nb-badge *ngIf="isArchived" status="warning" [text]="'DOCS.FILTERS.PRESET_ARCHIVED' | translate"></nb-badge>
+				<nb-badge *ngIf="doc.visibility === 'PRIVATE'" status="basic" [text]="'DOCS.VISIBILITY.PRIVATE' | translate"></nb-badge>
+				<span class="docs-detail-version" *ngIf="doc.version > 1">v{{ doc.version }}</span>
+			</div>
+		</header>
+
+		<!-- Dedup notice (R-UPL-04): advisory only — the upload was never dropped -->
+		<div class="docs-duplicate-notice" *ngIf="duplicateNotice as duplicate">
+			<nb-icon icon="copy-outline"></nb-icon>
+			<span>
+				{{
+					duplicate.name
+						? ('DOCS.UPLOAD.DUPLICATE_NOTICE' | translate : { name: duplicate.name })
+						: ('DOCS.UPLOAD.DUPLICATE_NOTICE_UNKNOWN' | translate)
+				}}
+			</span>
+		</div>
+
+		<!-- Review banner -->
+		<div class="docs-review-banner" *ngIf="showReviewBanner">
+			<div class="docs-review-banner-head">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
+				<strong>{{ 'DOCS.REVIEW.BANNER_TITLE' | translate }}</strong>
+				<nb-badge
+					*ngIf="doc.reviewReason"
+					status="warning"
+					[text]="'DOCS.REVIEW.REASONS.' + (doc.reviewReason || '').toUpperCase().split('-').join('_') | translate"
+				></nb-badge>
+			</div>
+			<p>{{ 'DOCS.REVIEW.BANNER_BODY' | translate }}</p>
+			<div class="docs-review-banner-actions" *ngxPermissionsOnly="[permissions.DOCS_REVIEW]">
+				<button nbButton size="tiny" status="success" (click)="approveReview()">
+					{{ 'DOCS.REVIEW.APPROVE' | translate }}
+				</button>
+				<button nbButton size="tiny" status="danger" appearance="outline" (click)="rejectReview()">
+					{{ 'DOCS.REVIEW.REJECT' | translate }}
+				</button>
+				<button
+					*ngIf="isSettledFile"
+					nbButton
+					size="tiny"
+					ghost
+					(click)="openExtractedText()"
+				>
+					{{ 'DOCS.DETAIL.EDIT_EXTRACTED_TEXT' | translate }}
+				</button>
+			</div>
+		</div>
+
+		<!-- Actions -->
+		<div class="docs-detail-actions">
+			<button *ngIf="doc.kind === kindEnum.FILE" nbButton size="tiny" status="primary" (click)="preview()">
+				<nb-icon icon="eye-outline"></nb-icon>
+				{{ 'DOCS.PREVIEW.TITLE' | translate }}
+			</button>
+			<button
+				*ngIf="doc.kind === kindEnum.FILE"
+				nbButton
+				size="tiny"
+				[disabled]="downloading"
+				(click)="download()"
+			>
+				<nb-icon icon="download-outline"></nb-icon>
+				{{ 'DOCS.PREVIEW.DOWNLOAD' | translate }}
+			</button>
+			<button *ngIf="doc.kind === kindEnum.PAGE" nbButton size="tiny" status="primary" (click)="onOpenEditor()">
+				<nb-icon icon="edit-2-outline"></nb-icon>
+				{{ 'DOCS.EDITOR.TITLE' | translate }}
+			</button>
+
+			<!-- Export actions — PAGE only; FILE keeps the Download action above
+			     (spec 01 §10.9 / 05 §9.1). -->
+			<ng-container *ngIf="isPage">
+				<button nbButton size="tiny" [disabled]="exporting" (click)="copyMarkdown()">
+					<nb-icon icon="clipboard-outline"></nb-icon>
+					{{ 'DOCS.EDITOR.COPY_MARKDOWN' | translate }}
+				</button>
+				<button
+					nbButton
+					size="tiny"
+					[disabled]="exporting"
+					[nbTooltip]="'DOCS.EXPORT.MARKDOWN_HINT' | translate"
+					(click)="exportMarkdown()"
+				>
+					<nb-icon icon="download-outline"></nb-icon>
+					{{ 'DOCS.EXPORT.MARKDOWN' | translate }}
+				</button>
+				<button
+					nbButton
+					size="tiny"
+					[disabled]="exporting"
+					[nbTooltip]="'DOCS.EXPORT.PRINT_HINT' | translate"
+					(click)="print()"
+				>
+					<nb-icon icon="printer-outline"></nb-icon>
+					{{ 'DOCS.EXPORT.PRINT' | translate }}
+				</button>
+			</ng-container>
+
+			<!-- Share / visibility (spec 08 §3) — DOCS_UPDATE, same as the mutations below.
+			     `canMutate` is the ownership half: administering shares is creator-or-DOCS_MANAGE
+			     only (§3.3 / §1.5), which is exactly what `canMutate` answers. -->
+			<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+				<button *ngIf="canMutate" nbButton size="tiny" (click)="openShare()">
+					<nb-icon icon="share-outline"></nb-icon>
+					{{ 'DOCS.SHARE.ACTION' | translate }}
+				</button>
+			</ng-container>
+
+			<!-- Every control below writes the document, so each carries BOTH halves of the
+			     server's write rule: the DOCS_UPDATE gate and the `canMutate` ownership scope
+			     (`08-permissions-security.md` §1.7/§1.8 — edit/move/archive are **own** for
+			     everyone below ADMIN). -->
+			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_UPDATE]">
+				<ng-container *ngIf="canMutate">
+					<button *ngIf="isSettledFile" nbButton size="tiny" (click)="openExtractedText()">
+						{{ 'DOCS.DETAIL.EDIT_EXTRACTED_TEXT' | translate }}
+					</button>
+					<button *ngIf="doc.kind === kindEnum.FILE" nbButton size="tiny" (click)="reprocess()">
+						<nb-icon icon="refresh-outline"></nb-icon>
+						{{ 'DOCS.UPLOAD.RETRY' | translate }}
+					</button>
+					<!-- Manual review request (spec 01 §11) — the only way into the review
+					     queue when AI is disabled. Hidden while PENDING (the banner above is
+					     that state) and on archived documents. -->
+					<button
+						*ngIf="canRequestReview"
+						nbButton
+						size="tiny"
+						status="warning"
+						appearance="outline"
+						[nbTooltip]="'DOCS.REVIEW.REQUEST_HINT' | translate"
+						(click)="requestReview()"
+					>
+						<nb-icon icon="alert-circle-outline"></nb-icon>
+						{{ 'DOCS.REVIEW.REQUEST' | translate }}
+					</button>
+					<button nbButton size="tiny" (click)="toggleArchive()">
+						<nb-icon [icon]="isArchived ? 'undo-outline' : 'archive-outline'"></nb-icon>
+						{{ (isArchived ? 'DOCS.TREE.RESTORE' : 'DOCS.TREE.ARCHIVE') | translate }}
+					</button>
+				</ng-container>
+			</ng-template>
+			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_DELETE]">
+				<button
+					*ngIf="isArchived && canMutate"
+					nbButton
+					size="tiny"
+					status="danger"
+					appearance="outline"
+					(click)="remove()"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
+					{{ 'DOCS.TREE.DELETE' | translate }}
+				</button>
+			</ng-template>
+		</div>
+
+		<!-- AI summary -->
+		<section class="docs-detail-section">
+			<h6>
+				{{ 'DOCS.DETAIL.SUMMARY' | translate }}
+				<button
+					*ngxPermissionsOnly="[permissions.DOCS_AI_IMPORT]"
+					nbButton
+					ghost
+					size="tiny"
+					(click)="regenerateSummary()"
+					[nbTooltip]="'DOCS.DETAIL.REGENERATE_SUMMARY' | translate"
+				>
+					<nb-icon icon="refresh-outline"></nb-icon>
+				</button>
+			</h6>
+			<p *ngIf="doc.summary; else noSummary">{{ doc.summary }}</p>
+			<ng-template #noSummary>
+				<p class="muted">{{ 'DOCS.DETAIL.NO_SUMMARY' | translate }}</p>
+			</ng-template>
+			<span class="docs-confidence" *ngIf="doc.aiConfidence !== undefined && doc.aiConfidence !== null">
+				{{ 'DOCS.DETAIL.CONFIDENCE' | translate }}: {{ doc.aiConfidence | percent }}
+			</span>
+
+			<!-- AI suggested tags (spec 07 §5.2) — accept chips are the ONLY path from
+			     `metadata.ai.suggestedTags` to a real Tag: the pipeline deliberately never
+			     creates tag rows itself. Writing tags needs DOCS_UPDATE, same as the taxonomy
+			     editor below. -->
+			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_UPDATE]">
+				<div class="docs-suggested-tags" *ngIf="suggestedTags.length && canMutate">
+					<span class="docs-suggested-tags-label" [nbTooltip]="'DOCS.DETAIL.SUGGESTED_TAGS_HINT' | translate">
+						{{ 'DOCS.DETAIL.SUGGESTED_TAGS' | translate }}
+					</span>
+					<button
+						*ngFor="let suggestion of suggestedTags; trackBy: trackBySuggestion"
+						type="button"
+						class="docs-suggested-tag"
+						[disabled]="!!acceptingTag"
+						[attr.aria-busy]="acceptingTag === suggestion"
+						(click)="acceptSuggestedTag(suggestion)"
+					>
+						<nb-icon icon="plus-outline"></nb-icon>
+						{{ suggestion }}
+					</button>
+				</div>
+			</ng-template>
+		</section>
+
+		<!-- Metadata -->
+		<section class="docs-detail-section">
+			<h6>{{ 'DOCS.DETAIL.METADATA' | translate }}</h6>
+			<dl class="docs-detail-meta">
+				<ng-container *ngIf="doc.kind === kindEnum.FILE">
+					<dt>{{ 'DOCS.DETAIL.MIME' | translate }}</dt>
+					<dd>{{ doc.mimeType || '—' }}</dd>
+					<dt>{{ 'DOCS.TABLE.COLUMNS.SIZE' | translate }}</dt>
+					<dd>{{ humanizeSize(doc.fileSize) }}</dd>
+				</ng-container>
+				<dt>{{ 'DOCS.TABLE.COLUMNS.SOURCE' | translate }}</dt>
+				<dd>{{ 'DOCS.SOURCE.' + doc.source | translate }}</dd>
+				<dt>{{ 'DOCS.VISIBILITY.LABEL' | translate }}</dt>
+				<dd>{{ 'DOCS.VISIBILITY.' + doc.visibility | translate }}</dd>
+				<!-- Created / Updated carry the person as well as the moment (spec 01 §8.4).
+				     The name is appended only when the relation actually came back — an
+				     "unknown" placeholder reads like a real attribution. -->
+				<dt>{{ 'DOCS.DETAIL.CREATED' | translate }}</dt>
+				<dd>
+					{{ doc.createdAt | date : 'medium' }}
+					<span class="docs-detail-actor" *ngIf="userLabel(doc.createdByUser) as creator">
+						· {{ creator }}
+					</span>
+				</dd>
+				<dt>{{ 'DOCS.TABLE.COLUMNS.UPDATED' | translate }}</dt>
+				<dd>
+					{{ doc.updatedAt | date : 'medium' }}
+					<span class="docs-detail-actor" *ngIf="userLabel(doc.updatedByUser) as updater">
+						· {{ updater }}
+					</span>
+				</dd>
+				<!-- Location: the "where does this live" affordance a `?id=` deep link has no
+				     other way to answer. Each crumb drills the browse list into that folder. -->
+				<dt>{{ 'DOCS.DETAIL.LOCATION' | translate }}</dt>
+				<dd class="docs-detail-location">
+					<button type="button" class="docs-detail-crumb" (click)="openLocation(null)">
+						{{ 'DOCS.TREE.ALL_DOCUMENTS' | translate }}
+					</button>
+					<ng-container *ngFor="let crumb of location">
+						<span class="docs-detail-crumb-sep">/</span>
+						<button type="button" class="docs-detail-crumb" (click)="openLocation(crumb.id)">
+							{{ crumb.name }}
+						</button>
+					</ng-container>
+				</dd>
+			</dl>
+		</section>
+
+		<!-- Taxonomy — the editable form needs DOCS_UPDATE **and** the ownership scope; either
+		     one missing falls back to the same read-only chips (spec 08 §1.7). -->
+		<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]; else taxonomyReadonly">
+			<section class="docs-detail-section" *ngIf="canMutate; else taxonomyReadonly">
+				<h6>{{ 'DOCS.DETAIL.CATEGORIES' | translate }}</h6>
+				<nb-select
+					multiple
+					fullWidth
+					size="small"
+					[selected]="selectedCategoryIds"
+					(selectedChange)="onCategoriesChange($event)"
+				>
+					<nb-option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</nb-option>
+				</nb-select>
+				<h6>{{ 'DOCS.DETAIL.TAGS' | translate }}</h6>
+				<ga-tags-color-input
+					[multiple]="true"
+					[isOrgLevel]="true"
+					[selectedTags]="doc.tags || []"
+					(selectedTagsEvent)="onTagsChange($event)"
+				></ga-tags-color-input>
+			</section>
+		</ng-container>
+		<ng-template #taxonomyReadonly>
+			<section class="docs-detail-section">
+				<h6>{{ 'DOCS.DETAIL.CATEGORIES' | translate }}</h6>
+				<gz-docs-category-chips [rowData]="doc" [max]="99"></gz-docs-category-chips>
+				<h6>{{ 'DOCS.DETAIL.TAGS' | translate }}</h6>
+				<gz-docs-tag-chips [rowData]="doc" [max]="99"></gz-docs-tag-chips>
+			</section>
+		</ng-template>
+
+		<!-- Toggles -->
+		<section class="docs-detail-section">
+			<!-- `searchable` is a document write (§1.8 "Edit metadata … `searchable` toggle" —
+			     own), so it carries the ownership scope on top of DOCS_UPDATE. -->
+			<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+				<div class="docs-detail-toggle" *ngIf="canMutate">
+					<nb-toggle [checked]="doc.searchable" (checkedChange)="onSearchableToggle($event)" labelPosition="end">
+						{{ 'DOCS.DETAIL.SEARCHABLE_TOGGLE' | translate }}
+					</nb-toggle>
+					<div class="hint">{{ 'DOCS.DETAIL.SEARCHABLE_HINT' | translate }}</div>
+				</div>
+			</ng-container>
+			<div class="docs-detail-toggle" *ngxPermissionsOnly="[permissions.DOCS_AI_IMPORT]">
+				<nb-toggle [checked]="inKnowledge" (checkedChange)="onKnowledgeToggle($event)" labelPosition="end">
+					{{ 'DOCS.KNOWLEDGE.TOGGLE_LABEL' | translate }}
+				</nb-toggle>
+				<div class="hint">{{ 'DOCS.KNOWLEDGE.TOGGLE_HINT' | translate }}</div>
+				<!-- Live knowledge status: badge + in-flight spinner + FAILED retry -->
+				<div class="docs-knowledge-status">
+					<gz-docs-knowledge-badge [rowData]="doc"></gz-docs-knowledge-badge>
+					<nb-icon *ngIf="knowledgeInFlight" icon="loader-outline" class="docs-knowledge-spinner"></nb-icon>
+					<button
+						*ngIf="doc.knowledgeStatus === knowledgeEnum.FAILED"
+						nbButton
+						ghost
+						size="tiny"
+						status="danger"
+						(click)="retryKnowledge()"
+					>
+						{{ 'DOCS.UPLOAD.RETRY' | translate }}
+					</button>
+					<button
+						*ngIf="doc.knowledgeStatus === knowledgeEnum.INDEXED"
+						nbButton
+						ghost
+						size="tiny"
+						(click)="reindex()"
+					>
+						{{ 'DOCS.KNOWLEDGE.REINDEX_ACTION' | translate }}
+					</button>
+				</div>
+			</div>
+		</section>
+
+		<!-- Linked records (spec 01 §8.9) -->
+		<section class="docs-detail-section">
+			<h6 class="docs-detail-section-head">
+				<span>{{ 'DOCS.DETAIL.LINKS' | translate }}</span>
+				<!-- Link/unlink is a document write, scoped to **own** below ADMIN (§1.8). -->
+				<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+					<button *ngIf="canMutate" nbButton ghost size="tiny" (click)="addLink()">
+						<nb-icon icon="plus-outline"></nb-icon>
+						{{ 'DOCS.DETAIL.LINK_RECORD' | translate }}
+					</button>
+				</ng-container>
+			</h6>
+			<p class="muted" *ngIf="!links.length">{{ 'DOCS.DETAIL.NO_LINKS' | translate }}</p>
+			<div class="docs-detail-link" *ngFor="let link of links">
+				<nb-icon [icon]="linkIcon(link)" size="tiny" [nbTooltip]="linkTypeLabel(link)"></nb-icon>
+				<!-- Deep link when the entity has a detail route; plain text otherwise
+				     (a dead link is worse than no link). -->
+				<button
+					*ngIf="hasLinkRoute(link); else linkPlain"
+					type="button"
+					class="docs-detail-link-open"
+					(click)="openLink(link)"
+				>
+					{{ linkLabel(link) }}
+				</button>
+				<ng-template #linkPlain>
+					<span class="docs-detail-link-label">{{ linkLabel(link) }}</span>
+				</ng-template>
+				<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+					<button
+						*ngIf="canMutate"
+						nbButton
+						ghost
+						size="tiny"
+						status="danger"
+						[nbTooltip]="'DOCS.LINKS.REMOVE' | translate"
+						(click)="removeLink(link)"
+					>
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
+				</ng-container>
+			</div>
+		</section>
+
+		<!-- Comments — the platform's generic comment API bound to
+		     (BaseEntityEnum.Document, id) (spec 08 §1). Reading follows document
+		     read access, so the section itself is DOCS_READ-gated; the composer
+		     gates itself further (see the thread component). -->
+		<section class="docs-detail-section" *ngxPermissionsOnly="[permissions.DOCS_READ]">
+			<h6>{{ 'DOCS.DETAIL.COMMENTS' | translate }}</h6>
+			<gz-docs-detail-comments [documentId]="doc.id" [documentName]="doc.name"></gz-docs-detail-comments>
+		</section>
+
+		<!-- Activity — the core activity log bound to (BaseEntityEnum.Document, id)
+		     (R-COL-03). Newest first, "Show more" paging, system transitions attributed
+		     to "System"; the section is fault-isolated inside the child component so a
+		     failing read never takes the panel down. -->
+		<section class="docs-detail-section">
+			<h6>{{ 'DOCS.DETAIL.ACTIVITY' | translate }}</h6>
+			<gz-docs-detail-activity [documentId]="doc.id"></gz-docs-detail-activity>
+		</section>
+	</ng-container>
+</div>

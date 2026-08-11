@@ -3368,7 +3368,11 @@
 		"STOP_TIMER": "Спиране на таймер",
 		"TIME_LOG": "Запис на времето",
 		"VIEW_APPOINTMENTS": "Преглед на срещи",
-		"VIEW_TIME_ACTIVITY": "Преглед на активността по време"
+		"VIEW_TIME_ACTIVITY": "Преглед на активността по време",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Нова страница",
+			"UPLOAD": "Качване"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Счетоводство",
@@ -3376,7 +3380,8 @@
 		"PROJECT_MANAGEMENT": "Управление на проекти",
 		"JOBS": "Работи",
 		"CONTACTS": "Контакти",
-		"TIME_TRACKING": "Следене на времето"
+		"TIME_TRACKING": "Следене на времето",
+		"DOCUMENTS": "Документи"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Име",
@@ -3715,7 +3720,10 @@
 		"SEND": "Изпращане на съобщението",
 		"STOP": "Спиране на генерирането",
 		"ERROR": "Нещо се обърка.",
-		"RETRY": "Опитайте отново"
+		"RETRY": "Опитайте отново",
+		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
+		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
+		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
 	},
 	"HEADER_TITLE": {
 		"FOR": "за",
@@ -3728,6 +3736,21 @@
 		"REDIRECT_TO_HOME": "You'll be redirected to home page soon"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Намерете документация, получете отговори и се свържете с екипа зад Gauzy.",
+		"DOCUMENTATION": "Документация",
+		"DOCUMENTATION_DESC": "Ръководства и справочник за всяка функция на Gauzy.",
+		"FAQ": "Често задавани въпроси",
+		"FAQ_DESC": "Отговори на най-често задаваните въпроси.",
+		"SUPPORT_CHAT": "Чат за поддръжка",
+		"SUPPORT_CHAT_DESC": "Разговаряйте с нашия екип по поддръжка.",
+		"REPORT_ISSUE": "Докладвайте проблем",
+		"REPORT_ISSUE_DESC": "Открихте грешка? Отворете issue в GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Изходен код, версии и дискусии.",
+		"WEBSITE": "Уебсайт на Gauzy",
+		"WEBSITE_DESC": "Научете повече за платформата Gauzy.",
+		"ABOUT_LINK": "За Gauzy",
+		"ABOUT_LINK_DESC": "Данни за версията, лиценз и връзки.",
 		"HELP": "Помощ",
 		"KNOWLEDGE_BASE": "Knowledge base",
 		"CHOSE_ICON": "Chose icon to set",
@@ -4032,6 +4055,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. Всички права запазени.",
+		"DESCRIPTION": "Ever® Gauzy™ е отворена платформа за управление на бизнеса за споделена икономика и икономика при поискване — ERP, CRM, HRM, ATS и управление на проекти с вградено отчитане на времето.",
+		"LICENSE": "Отворен код, разпространяван под лиценз",
+		"VERSION_DETAILS": "Данни за версията",
+		"VERSION_MISMATCH": "Уеб приложението и API са изградени от различни комита — възможно е да тече внедряване.",
+		"WEB_APP": "Уеб приложение",
+		"API": "API",
+		"UNTAGGED": "билд без таг",
+		"API_UNAVAILABLE": "Версията на API не е налична",
+		"LEARN_MORE": "Научете повече",
 		"ABOUT": "За нас"
 	},
 	"FOOTER": {

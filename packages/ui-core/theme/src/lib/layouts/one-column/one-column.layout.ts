@@ -1,4 +1,14 @@
-import { Component, ElementRef, effect, inject, viewChild, afterNextRender, DestroyRef, signal, Type } from '@angular/core';
+import {
+	Component,
+	effect,
+	inject,
+	viewChild,
+	afterNextRender,
+	DestroyRef,
+	Injector,
+	signal,
+	Type
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
 import { ChatSidebarService, LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
@@ -29,6 +39,7 @@ export class OneColumnLayoutComponent {
 	private readonly layoutService = inject(LayoutService);
 	private readonly themeLanguageSelectorService = inject(ThemeLanguageSelectorService);
 	private readonly destroyRef = inject(DestroyRef);
+	private readonly injector = inject(Injector);
 
 	/** User signal for template — derived from store observable. */
 	readonly user = toSignal(this.store.user$);
@@ -74,64 +85,27 @@ export class OneColumnLayoutComponent {
 
 		this.themeLanguageSelectorService.initialize();
 
-		// Track the chat sidebar HOST width (flex-computed: normal, maximized
-		// or collapsed) and mirror it to --gz-chat-live-width so the fixed
-		// .main-container always matches the space the host reserves.
-		effect(() => {
-			const hostRef = this.chatSidebarHost();
-			this.chatHostResizeObserver?.disconnect();
-			this.chatHostResizeObserver = undefined;
-			const host = hostRef?.nativeElement as HTMLElement | undefined;
-			// `observe()` throws on a non-Element, which would take the whole
-			// effect (and the width mirror with it) down silently.
-			if (!host || typeof ResizeObserver === 'undefined') return;
-			const apply = () => host.style.setProperty('--gz-chat-live-width', `${host.getBoundingClientRect().width}px`);
-			this.chatHostResizeObserver = new ResizeObserver(apply);
-			this.chatHostResizeObserver.observe(host);
-			apply();
-		});
+		// No ResizeObserver mirroring the chat width any more: the panel takes its width straight from
+		// `--gz-chat-width` (the persisted user width), so there is a single source of truth and
+		// nothing that can go stale. See one-column.layout.scss.
 
 		// Runs only in the browser, after the first render — replaces ngAfterViewInit + isPlatformBrowser
 		afterNextRender(() => {
 			this.windowModeBlockScrollService.register(this.layout());
 			this.observeHeaderHeight();
+			this.observeCanvasLeft();
 		});
 
 		this.destroyRef.onDestroy(() => {
 			this.navigationBuilderService.clearSidebars();
 			this.navigationBuilderService.clearActionBars();
-			this.chatHostResizeObserver?.disconnect();
 			this.headerResizeObserver?.disconnect();
+			this.canvasResizeObserver?.disconnect();
+			this.chatClassObserver?.disconnect();
+			if (this.canvasLeftOnResize) window.removeEventListener('resize', this.canvasLeftOnResize);
 		});
 	}
 
-	/**
-	 * The chat sidebar host ELEMENT (present only while the chat renders).
-	 *
-	 * `read: ElementRef` is required, not cosmetic: `#chatSidebarHost` sits on
-	 * `<nb-sidebar>`, and a template reference variable on a component element
-	 * resolves to the component instance by default — so without it the query
-	 * returned an NbSidebarComponent, `.nativeElement` was undefined, and the
-	 * ResizeObserver effect in the constructor never published
-	 * `--gz-chat-live-width`. The panel then fell back to the docked chat
-	 * width, which is why maximizing looked inert.
-	 */
-	readonly chatSidebarHost = viewChild('chatSidebarHost', { read: ElementRef });
-
-	/**
-	 * Horizontal padding the fixed header needs on the given side so its
-	 * content moves aside for the expanded chat column instead of being
-	 * covered by it. Null when the chat is collapsed, docked to the other
-	 * side, or maximized (maximized covers the header band entirely).
-	 */
-	chatHeaderPad(side: 'start' | 'end'): number | null {
-		const chat = this.chatSidebarService;
-		return chat.available() && chat.expanded() && !chat.maximized() && chat.position() === side
-			? chat.width()
-			: null;
-	}
-
-	private chatHostResizeObserver?: ResizeObserver;
 	private headerResizeObserver?: ResizeObserver;
 
 	/**
@@ -144,9 +118,8 @@ export class OneColumnLayoutComponent {
 	 * panel behind the header — it is not visible at 4.5rem-tall headers, which
 	 * is why it survived review.
 	 *
-	 * Mirrors the `--gz-chat-live-width` observer above: measure the box the
-	 * browser actually produced, rather than restating a constant that the layout
-	 * is free to exceed.
+	 * The principle: measure the box the browser actually produced, rather than restating a
+	 * constant that the layout is free to exceed.
 	 */
 	private observeHeaderHeight(): void {
 		if (typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
@@ -161,6 +134,95 @@ export class OneColumnLayoutComponent {
 		this.headerResizeObserver.observe(header);
 		apply();
 	}
+
+	private canvasResizeObserver?: ResizeObserver;
+
+	/**
+	 * Publish where the CANVAS begins and ends, as `--gz-canvas-left` / `--gz-canvas-right`, so the
+	 * fixed header band can span exactly that instead of running underneath the columns beside it.
+	 *
+	 * The header used to be full width and merely PAD its content aside by the chat's width. That
+	 * arithmetic was wrong, and measurably so: on demo at 1280px the nav sidebar occupies 0-256 and
+	 * the chat 256-640, so the canvas starts at 640 — but the padding was the chat's width alone,
+	 * 384, leaving 256px of header content (the demo banner, the first filter) underneath a panel
+	 * whose z-index is one higher. The banner rendered with its first words clipped.
+	 *
+	 * Padding is the wrong lever regardless of the number: it only moves what is INSIDE the header,
+	 * so anything that escapes that box, or any future element added outside it, is behind the chat
+	 * again. Insetting the band means nothing in the header can overlap the chat by construction.
+	 *
+	 * MEASURED off the layout column rather than computed from sidebar + chat widths, because those
+	 * are Nebular's numbers and change with collapse, compaction and the user's own chat width — the
+	 * derivation is exactly what went wrong. The column is in normal flow after both sidebars, so its
+	 * left edge IS the canvas. Observing it is safe: the header is fixed and out of flow, so moving
+	 * it cannot feed back into the column's geometry.
+	 */
+	private observeCanvasLeft(): void {
+		if (typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
+		const apply = () => {
+			// Queried FRESH on every call — a captured node can go stale across layout re-renders,
+			// and a stale node measures its old box while looking perfectly alive.
+			const column = document.querySelector('nb-layout-column') as HTMLElement | null;
+			if (!column) return;
+			const rect = column.getBoundingClientRect();
+			const root = document.documentElement.style;
+			root.setProperty('--gz-canvas-left', `${Math.round(rect.left)}px`);
+			// BOTH edges, because the canvas does not always run to the viewport. The chat docks to
+			// either side (`chat-sidebar-end`), and an RTL layout anchors the header from the right —
+			// so a single left-hand number applied to `right` would put the band back under the panel,
+			// which is the regression this whole change exists to remove.
+			root.setProperty('--gz-canvas-right', `${Math.round(window.innerWidth - rect.right)}px`);
+		};
+		// The chat panel animates its width (0.2s transition), so a single measurement lands
+		// mid-animation and freezes the header at a stale inset. Settle over the transition:
+		// idempotent style writes make the extra ticks free.
+		const applySettled = () => {
+			requestAnimationFrame(apply);
+			setTimeout(apply, 120);
+			setTimeout(apply, 400);
+		};
+
+		const column = document.querySelector('nb-layout-column') as HTMLElement | null;
+		if (column) {
+			this.canvasResizeObserver = new ResizeObserver(apply);
+			this.canvasResizeObserver.observe(column);
+		}
+		// The column's own box does not change when the window does, so track that too.
+		window.addEventListener('resize', apply);
+		this.canvasLeftOnResize = apply;
+
+		// A ResizeObserver fires on SIZE, and the two changes that matter most here move the column
+		// without resizing it: swapping the chat from one dock side to the other, and switching to an
+		// RTL language. Both leave the offsets stale and the band inset on the wrong side, so the
+		// signals that cause them are watched directly.
+		effect(
+			() => {
+				this.chatSidebarService.position();
+				this.chatSidebarService.expanded();
+				this.chatSidebarService.maximized();
+				this.chatSidebarService.width();
+				applySettled();
+			},
+			{ injector: this.injector }
+		);
+
+		// DOM-level belt-and-braces, deliberately independent of Angular's reactive machinery:
+		// measured LIVE on demo, expanding the chat moved the column (256 → 640) while neither the
+		// effect above nor the ResizeObserver ever refreshed the vars — the header stayed pinned
+		// under the chat until an unrelated window resize. Nebular stamps expanded/collapsed onto
+		// the sidebar host as CLASSES, so a MutationObserver on that attribute fires on every
+		// state change no matter which observer mechanism is having a bad day.
+		const chatHost = document.querySelector('nb-sidebar.chat-sidebar');
+		if (chatHost && typeof MutationObserver !== 'undefined') {
+			this.chatClassObserver = new MutationObserver(applySettled);
+			this.chatClassObserver.observe(chatHost, { attributes: true, attributeFilter: ['class'] });
+		}
+		apply();
+	}
+
+	private chatClassObserver?: MutationObserver;
+
+	private canvasLeftOnResize?: () => void;
 
 	/**
 	 * Toggles the expansion state of the sidebar.

@@ -28,7 +28,11 @@
 				"./packages/plugins/ai-provider-vercel-gateway/src/index.ts"
 			],
 			"@gauzy/plugin-ai-provider-gauzy-ai": ["./packages/plugins/ai-provider-gauzy-ai/src/index.ts"],
+			"@gauzy/plugin-ai-provider-gemini": ["./packages/plugins/ai-provider-gemini/src/index.ts"],
+			"@gauzy/plugin-ai-provider-grok": ["./packages/plugins/ai-provider-grok/src/index.ts"],
 			"@gauzy/plugin-changelog": ["./packages/plugins/changelog/src/index.ts"],
+			"@gauzy/plugin-docs": ["./packages/plugins/docs/src/index.ts"],
+			"@gauzy/plugin-docs-ui": ["./packages/plugins/docs-ui/src/index.ts"],
 			"@gauzy/plugin-integration-activepieces": ["./packages/plugins/integration-activepieces/src/index.ts"],
 			"@gauzy/plugin-integration-activepieces-ui": [
 				"./packages/plugins/integration-activepieces-ui/src/index.ts"

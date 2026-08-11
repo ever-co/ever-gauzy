@@ -1,0 +1,46 @@
+<div
+	class="docs-table"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+	(dblclick)="onRowDoubleClick($event)"
+>
+	<!-- Column chooser — header kebab, persisted to localStorage['gauzy_docs_columns'] -->
+	<div class="docs-table-toolbar" *ngIf="!reviewMode">
+		<button
+			nbButton
+			ghost
+			size="tiny"
+			class="docs-column-chooser-toggle"
+			[nbPopover]="columnChooser"
+			nbPopoverTrigger="click"
+			nbPopoverPlacement="bottom"
+			[nbTooltip]="'DOCS.TABLE.COLUMN_CHOOSER' | translate"
+			[attr.aria-label]="'DOCS.TABLE.COLUMN_CHOOSER' | translate"
+		>
+			<nb-icon icon="more-vertical-outline"></nb-icon>
+		</button>
+	</div>
+
+	<angular2-smart-table
+		[settings]="settings"
+		[source]="source"
+		(userRowSelect)="onUserRowSelect($event)"
+		style="cursor: pointer"
+	></angular2-smart-table>
+</div>
+
+<ng-template #columnChooser>
+	<nb-card class="docs-column-chooser">
+		<nb-card-header>{{ 'DOCS.TABLE.COLUMN_CHOOSER' | translate }}</nb-card-header>
+		<nb-card-body>
+			<nb-checkbox
+				*ngFor="let column of selectableColumns"
+				[checked]="isColumnVisible(column)"
+				(checkedChange)="toggleColumn(column, $event)"
+			>
+				{{ columnTitleKey(column) | translate }}
+			</nb-checkbox>
+		</nb-card-body>
+	</nb-card>
+</ng-template>

@@ -20,9 +20,11 @@
 		"DESCRIPTION": "Bring your own API keys: configure per-tenant credentials for the registered AI providers used by the AI chat.",
 		"NO_PROVIDERS": "No AI providers are registered on the server.",
 		"MODELS": "Models",
+		"PLATFORM_NOTICE": "You are using the shared free tier — no API key of your own is configured. Free models are rate limited and the limit is shared with everyone else using it. Connect your own account or enter an API key below for uninterrupted access and the full model list.",
 		"BADGE": {
 			"TENANT_KEY": "Tenant key",
 			"SERVER_ENV": "Server environment",
+			"PLATFORM_FREE": "Free tier",
 			"NOT_CONFIGURED": "Not configured"
 		},
 		"FORM": {
@@ -39,6 +41,14 @@
 			"DEFAULT_MODEL_NONE": "Provider default",
 			"DEFAULT_MODEL_CUSTOM": "Custom model…",
 			"CUSTOM_MODEL_PLACEHOLDER": "Enter a model id (e.g. claude-sonnet-5)",
+			"MODELS_NOT_FOUND": "No matching model — pick \"Custom model…\" to type an id.",
+			"MODELS_PLATFORM": "Limited to the free models available on the shared key. Add your own API key to use any model.",
+			"MODELS_PLATFORM_UNAVAILABLE": "The shared free-tier model list could not be loaded, so no model can be selected. Add your own API key to use this provider.",
+			"MODELS_CUSTOM_ENDPOINT": "This provider uses a custom base URL, so its model list is not fetched — your key belongs to that endpoint, not to the vendor. Pick \"Custom model…\" to enter a model id.",
+			"MODELS_CURATED_NO_KEY": "Showing known models. Save an API key to load everything this provider offers.",
+			"MODELS_CURATED_UNAVAILABLE": "Showing known models — the provider's full list could not be loaded just now.",
+			"MODELS_STALE": "Showing the last known list — the provider's catalogue could not be refreshed.",
+			"MODELS_NOT_CHAT_CAPABLE": "Chat through this provider is not available yet — pick another provider to chat. A key saved here takes effect once support ships.",
 			"ENABLED": "Enabled",
 			"USE_AS_DEFAULT": "Use as default provider",
 			"GET_KEY": "Get API key"

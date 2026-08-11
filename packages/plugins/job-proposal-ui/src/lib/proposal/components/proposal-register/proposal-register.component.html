@@ -94,7 +94,12 @@
 								{{ 'PROPOSALS_PAGE.REGISTER.JOB_POST_CONTENT' | translate }}
 							</nb-card-header>
 							<nb-card-body>
-								<ckeditor formControlName="jobPostContent" [config]="ckConfig"></ckeditor>
+								<ga-rich-text-editor
+									formControlName="jobPostContent"
+									preset="standard"
+									outputFormat="html"
+									minHeight="320px"
+								></ga-rich-text-editor>
 							</nb-card-body>
 						</nb-card>
 					</div>
@@ -104,7 +109,12 @@
 								{{ 'PROPOSALS_PAGE.REGISTER.PROPOSALS_CONTENT' | translate }}
 							</nb-card-header>
 							<nb-card-body>
-								<ckeditor formControlName="proposalContent" [config]="ckConfig"></ckeditor>
+								<ga-rich-text-editor
+									formControlName="proposalContent"
+									preset="standard"
+									outputFormat="html"
+									minHeight="320px"
+								></ga-rich-text-editor>
 							</nb-card-body>
 						</nb-card>
 					</div>

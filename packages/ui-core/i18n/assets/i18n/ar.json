@@ -3300,7 +3300,11 @@
 		"STOP_TIMER": "إيقاف المؤقت",
 		"TIME_LOG": "سجل الوقت",
 		"VIEW_APPOINTMENTS": "عرض المواعيد",
-		"VIEW_TIME_ACTIVITY": "عرض نشاط الوقت"
+		"VIEW_TIME_ACTIVITY": "عرض نشاط الوقت",
+		"DOCUMENTS": {
+			"NEW_PAGE": "صفحة جديدة",
+			"UPLOAD": "رفع"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "المحاسبة",
@@ -3308,7 +3312,8 @@
 		"PROJECT_MANAGEMENT": "إدارة المشروع",
 		"JOBS": "الوظائف",
 		"CONTACTS": "جهات الاتصال",
-		"TIME_TRACKING": "تتبع الوقت"
+		"TIME_TRACKING": "تتبع الوقت",
+		"DOCUMENTS": "المستندات"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "الاسم الأول",
@@ -3642,7 +3647,10 @@
 		"SEND": "إرسال الرسالة",
 		"STOP": "إيقاف التوليد",
 		"ERROR": "حدث خطأ ما.",
-		"RETRY": "إعادة المحاولة"
+		"RETRY": "إعادة المحاولة",
+		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
+		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
+		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
 	},
 	"HEADER_TITLE": {
 		"FOR": "لـ",
@@ -3655,6 +3663,21 @@
 		"REDIRECT_TO_HOME": "سيتم توجيهك إلى الصفحة الرئيسية قريباً"
 	},
 	"HELP_PAGE": {
+		"INTRO": "اعثر على الوثائق واحصل على إجابات وتواصل مع فريق Gauzy.",
+		"DOCUMENTATION": "الوثائق",
+		"DOCUMENTATION_DESC": "أدلة ومراجع لكل ميزة في Gauzy.",
+		"FAQ": "الأسئلة الشائعة",
+		"FAQ_DESC": "إجابات على الأسئلة الأكثر شيوعًا.",
+		"SUPPORT_CHAT": "دردشة الدعم",
+		"SUPPORT_CHAT_DESC": "تحدث مع فريق الدعم لدينا.",
+		"REPORT_ISSUE": "الإبلاغ عن مشكلة",
+		"REPORT_ISSUE_DESC": "وجدت خطأ؟ افتح مشكلة على GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "الكود المصدري والإصدارات والنقاشات.",
+		"WEBSITE": "موقع Gauzy",
+		"WEBSITE_DESC": "اعرف المزيد عن منصة Gauzy.",
+		"ABOUT_LINK": "حول Gauzy",
+		"ABOUT_LINK_DESC": "تفاصيل الإصدار والترخيص والروابط.",
 		"HELP": "مساعدة",
 		"KNOWLEDGE_BASE": "قاعدة المعرفة",
 		"CHOSE_ICON": "اختر أيقونة للتعيين",
@@ -3965,6 +3988,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "‏Copyright © 2019-{{year}}, Ever Co. LTD. جميع الحقوق محفوظة.",
+		"DESCRIPTION": "‏Ever® Gauzy™ هي منصة مفتوحة لإدارة الأعمال للاقتصادات التعاونية وعند الطلب والتشاركية — ERP وCRM وHRM وATS وإدارة المشاريع مع تتبع الوقت المدمج.",
+		"LICENSE": "مفتوحة المصدر، صادرة بموجب ترخيص",
+		"VERSION_DETAILS": "تفاصيل الإصدار",
+		"VERSION_MISMATCH": "تم بناء تطبيق الويب وواجهة API من commits مختلفة — قد يكون هناك نشر قيد التنفيذ.",
+		"WEB_APP": "تطبيق الويب",
+		"API": "API",
+		"UNTAGGED": "إصدار بدون وسم",
+		"API_UNAVAILABLE": "إصدار API غير متاح",
+		"LEARN_MORE": "اعرف المزيد",
 		"ABOUT": "حول"
 	},
 	"FOOTER": {

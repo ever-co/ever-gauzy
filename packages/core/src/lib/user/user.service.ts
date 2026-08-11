@@ -39,6 +39,11 @@ import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
 import { validateUserDeletion } from './default-protected-users';
 import { PasswordHashService } from '../password-hash/password-hash.service';
+import {
+	emailVerificationClaimWhere,
+	emailVerificationClaimWhereMikroOrm,
+	magicCodeClaimWhere
+} from '../shared/single-use/claim-criteria';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -599,25 +604,72 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Invalidates the magic sign-in code for all users matching the given email and code.
-	 * Called after a successful workspace sign-in to prevent code reuse.
+	 * Atomically claims a user's email-verification code, enforcing single use.
+	 *
+	 * The code and its expiry stay in the WHERE clause, so the write is its own check: the first
+	 * caller nulls the code and gets 1, and a request racing it matches nothing and gets 0. Keeping
+	 * `codeExpireAt` in the predicate also closes the window where a lookup and a claim straddle
+	 * the expiry boundary, which a claim scoped only by id and code would let through.
+	 *
+	 * This deliberately goes straight to the repositories rather than through `update()`. Email
+	 * confirmation is a PUBLIC endpoint, and `TenantAwareCrudService.update` routes object criteria
+	 * to `findOneByWhereOptions`, which dereferences `RequestContext.currentUser().tenantId` — on an
+	 * unauthenticated request there is no current user, so that path throws. The tenant comes from
+	 * the verified payload instead, which is both safe here and stricter than an id-only claim.
+	 *
+	 * @param id - The user whose code is being claimed.
+	 * @param code - The verification code being consumed.
+	 * @param tenantId - The tenant the code was issued for.
+	 * @returns 1 if this call claimed the code, 0 if it was already used or has expired.
+	 */
+	async claimEmailVerificationCode(id: ID, code: string, tenantId: ID): Promise<number> {
+		const now = new Date();
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmUserRepository.nativeUpdate(
+					emailVerificationClaimWhereMikroOrm(id, code, tenantId, now) as any,
+					{ code: null, codeExpireAt: null } as any
+				);
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmUserRepository.update(
+					emailVerificationClaimWhere(id, code, tenantId, now),
+					{ code: null, codeExpireAt: null }
+				);
+				return affected ?? 0;
+			}
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Atomically claims the magic sign-in code for every user matching the given email and code.
+	 *
+	 * The code stays in the WHERE clause, which is what makes this the single-use claim rather
+	 * than mere cleanup: the first caller nulls the code and gets a non-zero row count, and any
+	 * request racing it matches nothing and gets 0. One email can exist in several tenants, so a
+	 * winning claim may cover more than one row — hence a count rather than a boolean.
+	 *
+	 * Callers MUST gate on the return value before handing out sign-in tokens. Treating this as
+	 * fire-and-forget cleanup lets two concurrent requests both authenticate off one code.
 	 *
 	 * @param email - The email address used for the sign-in.
-	 * @param code  - The magic code that was consumed.
-	 * @returns A promise that resolves when the invalidation write completes.
+	 * @param code  - The magic code being consumed.
+	 * @returns The number of user rows claimed; 0 means the code was already consumed.
 	 */
-	async invalidateMagicCode(email: string, code: string): Promise<void> {
+	async invalidateMagicCode(email: string, code: string): Promise<number> {
 		// Common criteria and payload shared by both ORM adapters
-		const where = { email, code };
+		const where = magicCodeClaimWhere(email, code);
 		const update = { code: null, codeExpireAt: null };
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				await this.mikroOrmUserRepository.nativeUpdate(where, update);
-				break;
-			case MultiORMEnum.TypeORM:
-				await this.typeOrmUserRepository.update(where, update);
-				break;
+				return await this.mikroOrmUserRepository.nativeUpdate(where, update);
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmUserRepository.update(where, update);
+				return affected ?? 0;
+			}
 			default:
 				throw new Error(`ORM type not implemented: ${this.ormType}`);
 		}

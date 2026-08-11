@@ -884,6 +884,7 @@
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Dashboards",
+		"DOCUMENTS": "Documents",
 		"APPOINTMENTS": "Appointments",
 		"FAVORITES": "Favorites",
 		"ACCOUNTING": "Accounting",
@@ -3776,7 +3777,11 @@
 		"STOP_TIMER": "Stop Timer",
 		"TIME_LOG": "Time Log",
 		"VIEW_APPOINTMENTS": "View Appointments",
-		"VIEW_TIME_ACTIVITY": "View Time Activity"
+		"VIEW_TIME_ACTIVITY": "View Time Activity",
+		"DOCUMENTS": {
+			"NEW_PAGE": "New Page",
+			"UPLOAD": "Upload"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Accounting",
@@ -3784,7 +3789,8 @@
 		"PROJECT_MANAGEMENT": "Project Management",
 		"JOBS": "Jobs",
 		"CONTACTS": "Contacts",
-		"TIME_TRACKING": "Time Tracking"
+		"TIME_TRACKING": "Time Tracking",
+		"DOCUMENTS": "Documents"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "First Name",
@@ -4097,6 +4103,34 @@
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI Assistant",
+		"ATTACH_SOON": "Attach files or folders (coming soon)",
+		"LIBRARY_SOON": "Choose from the file library (coming soon)",
+		"ATTACH": "Attach a file",
+		"ATTACH_FROM_DOCUMENTS": "Attach from Documents",
+		"ATTACH_OPEN": "Open attached document",
+		"ATTACH_REJECTED": "The file was rejected",
+		"ATTACH_RESPONSE_UNREADABLE": "The upload response could not be read — check the Documents page before retrying",
+		"ATTACH_SEARCH": "Search documents…",
+		"ATTACH_NO_RESULTS": "No matching documents.",
+		"ATTACH_LOAD_FAILED": "The document list could not be loaded — please try again.",
+		"ATTACH_UNAVAILABLE": "Documents are not available in this workspace.",
+		"ATTACH_REMOVE": "Remove attachment",
+		"CITATIONS": {
+			"LABEL": "Sources:",
+			"OPEN": "Open source document",
+			"LOW_CONFIDENCE": "(weak matches — verify before relying on these)",
+			"UNTITLED": "Untitled document"
+		},
+		"DICTATE": "Dictate a message",
+		"STOP_DICTATION": "Stop dictation",
+		"TRANSCRIBING": "Transcribing…",
+		"AUTO_SEND": "Auto-send",
+		"CANCEL": "Cancel",
+		"DONE": "Done",
+		"DISMISS": "Dismiss",
+		"DICTATION_FAILED": "Could not transcribe the recording.",
+		"MIC_DENIED": "Microphone access was denied.",
+		"MIC_UNAVAILABLE": "No microphone is available.",
 		"OPEN": "Open AI Assistant",
 		"CLOSE": "Close AI Assistant",
 		"HISTORY": "History",
@@ -4119,7 +4153,10 @@
 		"SEND": "Send message",
 		"STOP": "Stop generating",
 		"ERROR": "Something went wrong.",
-		"RETRY": "Retry"
+		"RETRY": "Retry",
+		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
+		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
+		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -4132,6 +4169,21 @@
 		"REDIRECT_TO_HOME": "You'll be redirected to home page soon"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Find documentation, get answers, and reach the team behind Gauzy.",
+		"DOCUMENTATION": "Documentation",
+		"DOCUMENTATION_DESC": "Guides and reference for every Gauzy feature.",
+		"FAQ": "FAQ",
+		"FAQ_DESC": "Answers to the most common questions.",
+		"SUPPORT_CHAT": "Support Chat",
+		"SUPPORT_CHAT_DESC": "Chat with our support team.",
+		"REPORT_ISSUE": "Report an Issue",
+		"REPORT_ISSUE_DESC": "Found a bug? Open an issue on GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Source code, releases, and discussions.",
+		"WEBSITE": "Gauzy Website",
+		"WEBSITE_DESC": "Learn more about the Gauzy platform.",
+		"ABOUT_LINK": "About Gauzy",
+		"ABOUT_LINK_DESC": "Version details, license, and links.",
 		"HELP": "Help",
 		"KNOWLEDGE_BASE": "Knowledge base",
 		"CHOSE_ICON": "Chose icon to set",
@@ -4446,6 +4498,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. All rights reserved.",
+		"DESCRIPTION": "Ever® Gauzy™ is an Open Business Management Platform for Collaborative, On-Demand and Sharing Economies — ERP, CRM, HRM, ATS and Project Management with integrated time tracking.",
+		"LICENSE": "Open source, released under the",
+		"VERSION_DETAILS": "Version Details",
+		"VERSION_MISMATCH": "The web app and the API were built from different commits — a deployment may still be rolling out.",
+		"WEB_APP": "Web App",
+		"API": "API",
+		"UNTAGGED": "untagged build",
+		"API_UNAVAILABLE": "API version unavailable",
+		"LEARN_MORE": "Learn More",
 		"ABOUT": "About"
 	},
 	"FOOTER": {
@@ -6722,5 +6784,57 @@
 			"DELETE_FAILED": "Failed to revoke OAuth client",
 			"COPY_FAILED": "Failed to copy to clipboard"
 		}
+	},
+	"RICH_TEXT_EDITOR": {
+		"TOOLBAR": {
+			"LABEL": "Text formatting",
+			"UNDO": "Undo",
+			"REDO": "Redo",
+			"PARAGRAPH": "Paragraph",
+			"HEADING": "Heading {{level}}",
+			"BOLD": "Bold",
+			"ITALIC": "Italic",
+			"UNDERLINE": "Underline",
+			"STRIKE": "Strikethrough",
+			"CODE": "Inline code",
+			"CODE_BLOCK": "Code block",
+			"SUBSCRIPT": "Subscript",
+			"SUPERSCRIPT": "Superscript",
+			"TEXT_COLOR": "Text color",
+			"HIGHLIGHT": "Highlight",
+			"FONT_FAMILY": "Font",
+			"ALIGN_LEFT": "Align left",
+			"ALIGN_CENTER": "Center",
+			"ALIGN_RIGHT": "Align right",
+			"ALIGN_JUSTIFY": "Justify",
+			"BULLET_LIST": "Bullet list",
+			"ORDERED_LIST": "Numbered list",
+			"TASK_LIST": "Task list",
+			"BLOCKQUOTE": "Quote",
+			"HORIZONTAL_RULE": "Divider",
+			"LINK": "Add link",
+			"UNLINK": "Remove link",
+			"TABLE": "Insert table",
+			"IMAGE": "Insert image",
+			"CLEAR_FORMAT": "Clear formatting"
+		},
+		"TABLE": {
+			"ROW_ADD_ABOVE": "Add row above",
+			"ROW_ADD_BELOW": "Add row below",
+			"ROW_DELETE": "Delete row",
+			"COL_ADD_LEFT": "Add column left",
+			"COL_ADD_RIGHT": "Add column right",
+			"COL_DELETE": "Delete column",
+			"HEADER_ROW": "Toggle header row",
+			"DELETE": "Delete table",
+			"TOOLBAR_LABEL": "Table tools"
+		},
+		"LINK_DIALOG": {
+			"URL": "URL",
+			"APPLY": "Apply",
+			"REMOVE": "Remove"
+		},
+		"CHARACTERS": "{{count}} characters",
+		"WORDS": "{{count}} words"
 	}
 }

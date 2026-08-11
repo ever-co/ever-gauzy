@@ -50,7 +50,12 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 			const { role } = await this.inviteService.findOneByIdString(inviteId, {
 				relations: { role: true }
 			});
+			// Pin BOTH the relation and its foreign key to the role stored on the invite. The request
+			// body is attacker-controlled on this @Public() route, and the flat `roleId` column wins
+			// over the `role` relation when the user row is persisted — so setting only `role` here
+			// would let an invitee accept with `user.roleId` of any role (e.g. SUPER_ADMIN).
 			input['user']['role'] = role;
+			input['user']['roleId'] = role.id;
 			input['inviteId'] = inviteId;
 
 			// Invite accept for employee, candidate & user

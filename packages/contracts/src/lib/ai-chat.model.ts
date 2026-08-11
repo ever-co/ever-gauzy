@@ -26,8 +26,56 @@ export enum AiProviderEnum {
 export type AiProviderConnectType = 'openrouter-pkce';
 
 /**
- * A chat model offered by a registered AI provider.
+ * Discriminator for a provider rate-limit (HTTP 429) reported through the chat stream.
+ *
+ * Lives in contracts because BOTH sides need the runtime value: the API writes the envelope into the
+ * stream's error channel, and the browser matches on it. It must not come from the backend plugin —
+ * importing that into the web bundle would pull NestJS along with it.
  */
+export const AI_CHAT_RATE_LIMIT_CODE = 'ai-chat/rate-limited';
+
+/**
+ * Where the credential in use came from.
+ *
+ * `'platform'` is the shared, product-supplied free tier: resolved LAST — below the tenant's own key
+ * and below the operator's own environment key — and the only source restricted to free models. The
+ * key itself never reaches the client; only this label does.
+ */
+export type AiCredentialSource = 'tenant' | 'environment' | 'platform';
+
+/** Structured rate-limit payload, JSON-encoded into the stream's single error-text channel. */
+export interface IAiChatRateLimitEnvelope {
+	code: typeof AI_CHAT_RATE_LIMIT_CODE;
+	/** Which provider ran out of quota, so the UI can name it and deep-link to its settings. */
+	providerId: string;
+	/**
+	 * Which credential hit the limit — it changes the advice. On `'platform'` the user can fix it by
+	 * bringing their own key; on `'tenant'` their OWN key is limited, where "connect your own
+	 * account" would be wrong.
+	 */
+	credentialSource: AiCredentialSource;
+	/** Seconds until the limit resets, when the provider says so. */
+	retryAfterSeconds?: number;
+}
+
+/**
+ * A provider's model catalogue, returned by `GET /api/ai-chat/providers/:providerId/models`.
+ *
+ * Deliberately NOT part of `IAiChatConfig`: that endpoint is fetched at app bootstrap for every user
+ * with chat access and already loops every registered provider, so putting keyed upstream calls in it
+ * would put the app shell behind six third-party APIs on every login. This is fetched lazily, when a
+ * single provider's config view is opened.
+ */
+export interface IAiChatModelCatalogue {
+	providerId: string;
+	models: IAiChatModel[];
+	/** Where the list came from, so the UI can explain a short or stale list. */
+	source: 'live' | 'curated' | 'platform';
+	/** True when a live refresh failed and a previously cached list is being served. */
+	stale?: boolean;
+}
+
+/** A chat model offered by a registered AI provider. */
 export interface IAiChatModel {
 	/** Model identifier as understood by the provider (e.g. 'claude-sonnet-5'). */
 	id: string;
@@ -53,8 +101,15 @@ export interface IAiChatProvider {
 	 * i.e. a tenant (BYOK) credential or a server env credential exists.
 	 */
 	configured: boolean;
+	/**
+	 * `false` when the provider is a registered PLACEHOLDER whose chat routing is not implemented yet
+	 * (its `createModel` still throws). Distinct from `configured`, which conflates "no credential"
+	 * with "not capable": the settings UI needs to tell those apart, because the remedy it suggests
+	 * for one — "save an API key" — is a lie for the other. Absent means capable.
+	 */
+	chatCapable?: boolean;
 	/** Where the active credential comes from. */
-	credentialSource?: 'tenant' | 'environment';
+	credentialSource?: AiCredentialSource;
 	/** Display ordering (ascending) in provider lists/catalogs. */
 	order?: number;
 	/** Provider marketing/home page. */
@@ -112,8 +167,7 @@ export interface IAiProviderCredentialFindInput extends IBasePerTenantAndOrganiz
 	providerId?: string;
 }
 
-export interface IAiProviderCredentialCreateInput
-	extends Omit<IAiProviderCredential, 'apiKey'> {
+export interface IAiProviderCredentialCreateInput extends Omit<IAiProviderCredential, 'apiKey'> {
 	/** Secret API key — required when creating a credential. */
 	apiKey: string;
 }

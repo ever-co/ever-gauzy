@@ -3315,7 +3315,11 @@
 		"STOP_TIMER": "Stop timer",
 		"TIME_LOG": "Tijdregistratie",
 		"VIEW_APPOINTMENTS": "Afspraken bekijken",
-		"VIEW_TIME_ACTIVITY": "Tijdactiviteit bekijken"
+		"VIEW_TIME_ACTIVITY": "Tijdactiviteit bekijken",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Nieuwe pagina",
+			"UPLOAD": "Uploaden"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Boekhouding",
@@ -3323,7 +3327,8 @@
 		"PROJECT_MANAGEMENT": "Projectbeheer",
 		"JOBS": "Banen",
 		"CONTACTS": "Contacten",
-		"TIME_TRACKING": "Tijdregistratie"
+		"TIME_TRACKING": "Tijdregistratie",
+		"DOCUMENTS": "Documenten"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Voornaam",
@@ -3657,7 +3662,10 @@
 		"SEND": "Bericht verzenden",
 		"STOP": "Genereren stoppen",
 		"ERROR": "Er is iets misgegaan.",
-		"RETRY": "Opnieuw proberen"
+		"RETRY": "Opnieuw proberen",
+		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
+		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
+		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
 	},
 	"HEADER_TITLE": {
 		"FOR": "voor",
@@ -3670,6 +3678,21 @@
 		"REDIRECT_TO_HOME": "U wordt binnenkort doorgestuurd naar de startpagina"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Vind documentatie, krijg antwoorden en bereik het team achter Gauzy.",
+		"DOCUMENTATION": "Documentatie",
+		"DOCUMENTATION_DESC": "Handleidingen en referentie voor elke Gauzy-functie.",
+		"FAQ": "FAQ",
+		"FAQ_DESC": "Antwoorden op de meest gestelde vragen.",
+		"SUPPORT_CHAT": "Supportchat",
+		"SUPPORT_CHAT_DESC": "Chat met ons supportteam.",
+		"REPORT_ISSUE": "Probleem melden",
+		"REPORT_ISSUE_DESC": "Bug gevonden? Open een issue op GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Broncode, releases en discussies.",
+		"WEBSITE": "Gauzy-website",
+		"WEBSITE_DESC": "Lees meer over het Gauzy-platform.",
+		"ABOUT_LINK": "Over Gauzy",
+		"ABOUT_LINK_DESC": "Versiedetails, licentie en links.",
 		"HELP": "Help",
 		"KNOWLEDGE_BASE": "Kennisbank",
 		"CHOSE_ICON": "Kies een pictogram om in te stellen.",
@@ -3980,6 +4003,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. Alle rechten voorbehouden.",
+		"DESCRIPTION": "Ever® Gauzy™ is een open platform voor bedrijfsbeheer voor collaboratieve, on-demand en deeleconomieën — ERP, CRM, HRM, ATS en projectmanagement met geïntegreerde tijdregistratie.",
+		"LICENSE": "Open source, uitgebracht onder de licentie",
+		"VERSION_DETAILS": "Versiedetails",
+		"VERSION_MISMATCH": "De webapp en de API zijn gebouwd vanaf verschillende commits — mogelijk is er een deployment bezig.",
+		"WEB_APP": "Webapp",
+		"API": "API",
+		"UNTAGGED": "build zonder tag",
+		"API_UNAVAILABLE": "API-versie niet beschikbaar",
+		"LEARN_MORE": "Meer informatie",
 		"ABOUT": "Over"
 	},
 	"FOOTER": {

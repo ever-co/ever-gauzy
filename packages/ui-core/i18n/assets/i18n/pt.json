@@ -3315,7 +3315,11 @@
 		"STOP_TIMER": "Parar Temporizador",
 		"TIME_LOG": "Registo de Tempo",
 		"VIEW_APPOINTMENTS": "Ver compromissos",
-		"VIEW_TIME_ACTIVITY": "Ver atividade de tempo"
+		"VIEW_TIME_ACTIVITY": "Ver atividade de tempo",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Nova página",
+			"UPLOAD": "Carregar"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Contabilidade",
@@ -3323,7 +3327,8 @@
 		"PROJECT_MANAGEMENT": "Gestão de Projetos",
 		"JOBS": "Empregos",
 		"CONTACTS": "Contatos",
-		"TIME_TRACKING": "Rastreamento de Tempo"
+		"TIME_TRACKING": "Rastreamento de Tempo",
+		"DOCUMENTS": "Documentos"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Nome próprio",
@@ -3657,7 +3662,10 @@
 		"SEND": "Enviar mensagem",
 		"STOP": "Parar a geração",
 		"ERROR": "Algo deu errado.",
-		"RETRY": "Tentar novamente"
+		"RETRY": "Tentar novamente",
+		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
+		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
+		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
 	},
 	"HEADER_TITLE": {
 		"FOR": "para",
@@ -3670,6 +3678,21 @@
 		"REDIRECT_TO_HOME": "Será redirecionado para a página inicial em breve"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Encontre documentação, obtenha respostas e fale com a equipe por trás do Gauzy.",
+		"DOCUMENTATION": "Documentação",
+		"DOCUMENTATION_DESC": "Guias e referência para cada funcionalidade do Gauzy.",
+		"FAQ": "Perguntas frequentes",
+		"FAQ_DESC": "Respostas às perguntas mais frequentes.",
+		"SUPPORT_CHAT": "Chat de suporte",
+		"SUPPORT_CHAT_DESC": "Converse com nossa equipe de suporte.",
+		"REPORT_ISSUE": "Relatar um problema",
+		"REPORT_ISSUE_DESC": "Encontrou um bug? Abra uma issue no GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Código-fonte, versões e discussões.",
+		"WEBSITE": "Site do Gauzy",
+		"WEBSITE_DESC": "Saiba mais sobre a plataforma Gauzy.",
+		"ABOUT_LINK": "Sobre o Gauzy",
+		"ABOUT_LINK_DESC": "Detalhes da versão, licença e links.",
 		"HELP": "Ajuda.",
 		"KNOWLEDGE_BASE": "Base de conhecimento",
 		"CHOSE_ICON": "Escolha o ícone para definir.",
@@ -3980,6 +4003,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. Todos os direitos reservados.",
+		"DESCRIPTION": "Ever® Gauzy™ é uma plataforma aberta de gestão empresarial para economias colaborativas, sob demanda e compartilhadas — ERP, CRM, HRM, ATS e gestão de projetos com controle de tempo integrado.",
+		"LICENSE": "Código aberto, lançado sob a licença",
+		"VERSION_DETAILS": "Detalhes da versão",
+		"VERSION_MISMATCH": "O aplicativo web e a API foram compilados a partir de commits diferentes — uma implantação pode estar em andamento.",
+		"WEB_APP": "Aplicativo web",
+		"API": "API",
+		"UNTAGGED": "build sem tag",
+		"API_UNAVAILABLE": "Versão da API indisponível",
+		"LEARN_MORE": "Saiba mais",
 		"ABOUT": "Sobre"
 	},
 	"FOOTER": {

@@ -783,6 +783,8 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_DOCUMENT,
+							// Superseded by the Documents hub when FEATURE_DOCUMENTS is on (gate, never delete)
+							hide: () => this._store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS),
 							...this._addLink(
 								'/pages/organization/documents?openAddDialog=true',
 								PermissionsEnum.ALL_ORG_EDIT
@@ -827,7 +829,9 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						link: '/pages/organization/help-center',
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER',
-							featureKey: FeatureEnum.FEATURE_ORGANIZATION_HELP_CENTER
+							featureKey: FeatureEnum.FEATURE_ORGANIZATION_HELP_CENTER,
+							// Superseded by the Documents hub when FEATURE_DOCUMENTS is on (gate, never delete)
+							hide: () => this._store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS)
 						}
 					}
 				]

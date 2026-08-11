@@ -200,10 +200,33 @@
                 <div class="row">
                   <div class="col-sm-12">
                     <label class="label">{{ 'TASKS_PAGE.TASKS_DESCRIPTION' | translate }}</label>
-                    <ckeditor [config]="ckConfig" class="description" formControlName="description"></ckeditor>
+                    <ga-rich-text-editor
+                      class="description"
+                      formControlName="description"
+                      preset="standard"
+                      outputFormat="html"
+                      [placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
+                      minHeight="320px"
+                    ></ga-rich-text-editor>
                   </div>
                 </div>
               </form>
+
+              <!--
+                Record-side Documents panel (spec 00 §6.14 R-LNK-02). Outside the
+                form: it writes through its own endpoints, not through `onSave()`.
+                Only for an EXISTING task — a task that has not been created yet has
+                no id to attach anything to. The panel gates itself on DOCS_READ +
+                FEATURE_DOCUMENTS.
+              -->
+              @if (selectedTask?.id) {
+                <gz-document-links-panel
+                  class="task-documents"
+                  [entity]="documentEntity"
+                  [entityId]="selectedTask.id"
+                  [entityLabel]="selectedTask.title"
+                ></gz-document-links-panel>
+              }
             </nb-card-body>
             <nb-card-footer class="text-left">
               <button (click)="dialogRef.close()" class="mr-3" nbButton outline status="basic">

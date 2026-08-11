@@ -1,0 +1,84 @@
+<div class="docs-review">
+	<div class="docs-review-header">
+		<h4>{{ 'DOCS.REVIEW.QUEUE_TITLE' | translate }}</h4>
+		<button nbButton ghost size="small" (click)="load()">
+			<nb-icon icon="refresh-outline"></nb-icon>
+		</button>
+	</div>
+
+	<ng-container *ngIf="rows$ | async as rows">
+		<ng-container *ngIf="rows.length; else emptyState">
+			<!-- Bulk bar: DOCS_REVIEW holders see approve/reject only (reviewMode) -->
+			<gz-docs-bulk-bar
+				[selectedIds]="selectedIds"
+				[reviewMode]="true"
+				(completed)="onBulkCompleted()"
+				(cleared)="onClearSelection()"
+			></gz-docs-bulk-bar>
+
+			<div class="docs-review-list" [nbSpinner]="loading" nbSpinnerStatus="primary">
+				<div class="docs-review-row docs-review-row-head">
+					<nb-checkbox
+						[checked]="allSelected"
+						(checkedChange)="toggleSelectAll($event)"
+						[attr.aria-label]="'DOCS.A11Y.SELECTION_STATUS' | translate"
+					></nb-checkbox>
+					<span class="docs-review-head-name">{{ 'DOCS.TABLE.COLUMNS.NAME' | translate }}</span>
+				</div>
+				<div class="docs-review-row" *ngFor="let row of rows; trackBy: trackById">
+					<nb-checkbox
+						[checked]="isSelected(row)"
+						(checkedChange)="toggleSelected(row, $event)"
+						[attr.aria-label]="row.name"
+					></nb-checkbox>
+					<gz-docs-name-cell class="docs-review-name" [rowData]="row"></gz-docs-name-cell>
+					<nb-badge
+						[status]="reasonStatus(row)"
+						[text]="
+							(reasonKey(row) | translate) +
+							(confidencePercent(row) ? ' · ' + confidencePercent(row) : '')
+						"
+					></nb-badge>
+					<gz-docs-source-badge [rowData]="row"></gz-docs-source-badge>
+					<gz-docs-category-chips [rowData]="row"></gz-docs-category-chips>
+					<span class="docs-review-date">{{ row.updatedAt | date : 'medium' }}</span>
+					<span class="docs-review-actions">
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							(click)="openDetails(row)"
+							[nbTooltip]="'DOCS.PREVIEW.OPEN_DETAILS' | translate"
+						>
+							<nb-icon icon="info-outline"></nb-icon>
+						</button>
+						<button
+							*ngIf="row.kind === kindEnum.FILE"
+							nbButton
+							ghost
+							size="tiny"
+							(click)="openPreview(row)"
+							[nbTooltip]="'DOCS.PREVIEW.TITLE' | translate"
+						>
+							<nb-icon icon="eye-outline"></nb-icon>
+						</button>
+						<ng-template [ngxPermissionsOnly]="[permissions.DOCS_REVIEW]">
+							<button nbButton size="tiny" status="success" (click)="approve(row)">
+								{{ 'DOCS.REVIEW.APPROVE' | translate }}
+							</button>
+							<button nbButton size="tiny" status="danger" appearance="outline" (click)="reject(row)">
+								{{ 'DOCS.REVIEW.REJECT' | translate }}
+							</button>
+						</ng-template>
+					</span>
+				</div>
+			</div>
+		</ng-container>
+
+		<ng-template #emptyState>
+			<div [nbSpinner]="loading" nbSpinnerStatus="primary" class="docs-review-empty-host">
+				<gz-docs-empty-state *ngIf="!loading" [variant]="error ? 'error' : 'review-empty'" (primaryAction)="load()"></gz-docs-empty-state>
+			</div>
+		</ng-template>
+	</ng-container>
+</div>

@@ -3,7 +3,6 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { CKEditor4 } from 'ckeditor4-angular';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { IProposal, ITag } from '@gauzy/contracts';
 import {
@@ -15,7 +14,6 @@ import {
 } from '@gauzy/ui-core/core';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,7 +24,6 @@ import { ckEditorConfig } from '@gauzy/ui-core/shared';
 })
 export class ProposalEditComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
 	public proposal: IProposal;
-	public ckConfig: CKEditor4.Config = ckEditorConfig;
 
 	/*
 	 * Proposal Mutation Form

@@ -3315,7 +3315,11 @@
 		"STOP_TIMER": "停止计时器",
 		"TIME_LOG": "时间记录",
 		"VIEW_APPOINTMENTS": "查看预约",
-		"VIEW_TIME_ACTIVITY": "查看时间活动"
+		"VIEW_TIME_ACTIVITY": "查看时间活动",
+		"DOCUMENTS": {
+			"NEW_PAGE": "新建页面",
+			"UPLOAD": "上传"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "会计",
@@ -3323,7 +3327,8 @@
 		"PROJECT_MANAGEMENT": "项目管理",
 		"JOBS": "工作",
 		"CONTACTS": "联系人",
-		"TIME_TRACKING": "时间跟踪"
+		"TIME_TRACKING": "时间跟踪",
+		"DOCUMENTS": "文件"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "名字 (Míngzì)",
@@ -3657,7 +3662,10 @@
 		"SEND": "发送消息",
 		"STOP": "停止生成",
 		"ERROR": "出了点问题。",
-		"RETRY": "重试"
+		"RETRY": "重试",
+		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
+		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
+		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
 	},
 	"HEADER_TITLE": {
 		"FOR": "为了",
@@ -3670,6 +3678,21 @@
 		"REDIRECT_TO_HOME": "您将很快被重定向到主页"
 	},
 	"HELP_PAGE": {
+		"INTRO": "查找文档、获取解答并联系 Gauzy 团队。",
+		"DOCUMENTATION": "文档",
+		"DOCUMENTATION_DESC": "涵盖 Gauzy 每项功能的指南与参考。",
+		"FAQ": "常见问题",
+		"FAQ_DESC": "最常见问题的解答。",
+		"SUPPORT_CHAT": "支持聊天",
+		"SUPPORT_CHAT_DESC": "与我们的支持团队交流。",
+		"REPORT_ISSUE": "报告问题",
+		"REPORT_ISSUE_DESC": "发现了 Bug？请在 GitHub 上提交 issue。",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "源代码、版本发布与讨论。",
+		"WEBSITE": "Gauzy 官网",
+		"WEBSITE_DESC": "进一步了解 Gauzy 平台。",
+		"ABOUT_LINK": "关于 Gauzy",
+		"ABOUT_LINK_DESC": "版本详情、许可证与链接。",
 		"HELP": "帮助",
 		"KNOWLEDGE_BASE": "知识库",
 		"CHOSE_ICON": "选择图标进行设置",
@@ -3980,6 +4003,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. 保留所有权利。",
+		"DESCRIPTION": "Ever® Gauzy™ 是一个面向协作、按需与共享经济的开放式业务管理平台 — 集 ERP、CRM、HRM、ATS 与项目管理于一体，并内置时间跟踪。",
+		"LICENSE": "开源软件，发布许可证为",
+		"VERSION_DETAILS": "版本详情",
+		"VERSION_MISMATCH": "Web 应用与 API 构建自不同的提交 — 部署可能正在进行中。",
+		"WEB_APP": "Web 应用",
+		"API": "API",
+		"UNTAGGED": "无标签构建",
+		"API_UNAVAILABLE": "API 版本不可用",
+		"LEARN_MORE": "了解更多",
 		"ABOUT": "关于"
 	},
 	"FOOTER": {

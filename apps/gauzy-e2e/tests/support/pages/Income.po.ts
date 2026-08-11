@@ -141,8 +141,8 @@ export const selectTagFromDropdown = async (index: number) => {
 export const notesTextareaVisible = async () => verifyElementIsVisible(IncomePage.notesInputCss);
 
 export const enterNotesInputData = async (data: string) => {
-	// notes is a plain <textarea formcontrolname="notes"> in the income-mutation form (NOT ckeditor), so
-	// clearField/enterInput (.clear()/.fill()) work directly.
+	// notes is a plain <textarea formcontrolname="notes"> in the income-mutation form (NOT a rich-text
+	// editor widget), so clearField/enterInput (.clear()/.fill()) work directly.
 	await clearField(IncomePage.notesInputCss);
 	await enterInput(IncomePage.notesInputCss, data);
 };

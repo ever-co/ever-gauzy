@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import {
@@ -31,6 +30,7 @@ import {
 	FavoriteToggleModule,
 	GauzyEditableGridModule,
 	ProjectSelectModule,
+	RichTextEditorModule,
 	SharedModule,
 	TableFiltersModule,
 	TagsColorInputModule,
@@ -42,6 +42,9 @@ import {
 	UserFormsModule,
 	TableComponentsModule
 } from '@gauzy/ui-core/shared';
+// Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
+// imported directly — the Documents hub module is never pulled in here.
+import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 import { TaskComponent } from './components/task/task.component';
 import { TasksRoutingModule } from './tasks-routing.module';
 import { MyTaskDialogComponent } from './components/my-task-dialog/my-task-dialog.component';
@@ -82,7 +85,7 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		NgSelectModule,
 		DragDropModule,
 		NgxPermissionsModule.forChild(),
-		CKEditorModule,
+		RichTextEditorModule,
 		TranslateModule.forChild(),
 		TasksRoutingModule,
 		TableComponentsModule,
@@ -101,7 +104,8 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		TaskPrioritySelectModule,
 		TaskSizeSelectModule,
 		TaskStatusSelectModule,
-		TaskNumberFieldModule
+		TaskNumberFieldModule,
+		DocumentLinksPanelComponent
 	]
 })
 export class TasksModule {}

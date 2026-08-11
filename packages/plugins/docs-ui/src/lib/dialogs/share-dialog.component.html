@@ -1,0 +1,178 @@
+<nb-card class="docs-dialog docs-share-dialog" [nbSpinner]="loading" nbSpinnerStatus="primary">
+	<nb-card-header class="docs-share-header">
+		<span>{{ 'DOCS.SHARE.TITLE' | translate }}</span>
+		<span class="docs-share-doc" *ngIf="document">{{ document.name }}</span>
+	</nb-card-header>
+
+	<nb-card-body>
+		<!-- ─── Visibility (ORGANIZATION ⇄ PRIVATE) ─────────────────── -->
+		<section class="docs-share-section">
+			<label class="label" for="docs-share-visibility">{{ 'DOCS.VISIBILITY.LABEL' | translate }}</label>
+			<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]; else visibilityReadonly">
+				<nb-select
+					id="docs-share-visibility"
+					size="small"
+					fullWidth
+					[selected]="visibility"
+					[disabled]="saving"
+					(selectedChange)="onVisibilityChange($event)"
+				>
+					<nb-option *ngFor="let option of visibilities" [value]="option">
+						{{ 'DOCS.VISIBILITY.' + option | translate }}
+					</nb-option>
+				</nb-select>
+			</ng-container>
+			<ng-template #visibilityReadonly>
+				<div class="docs-share-readonly">{{ 'DOCS.VISIBILITY.' + visibility | translate }}</div>
+			</ng-template>
+			<p class="hint">
+				{{
+					(isPrivate ? 'DOCS.SHARE.VISIBILITY_HINT_PRIVATE' : 'DOCS.SHARE.VISIBILITY_HINT_ORGANIZATION')
+						| translate
+				}}
+			</p>
+		</section>
+
+		<!-- ─── Endpoint absent (P1 not deployed) ────────────────────── -->
+		<div class="docs-share-notice" *ngIf="unsupported">
+			<nb-icon icon="info-outline"></nb-icon>
+			<span>{{ 'DOCS.SHARE.UNAVAILABLE' | translate }}</span>
+		</div>
+
+		<!-- ─── Shares ───────────────────────────────────────────────── -->
+		<section class="docs-share-section" *ngIf="!unsupported">
+			<h6 class="docs-share-heading">{{ 'DOCS.SHARE.PEOPLE' | translate }}</h6>
+
+			<!-- ORGANIZATION documents: the block stays visible but inert, with the reason. -->
+			<div class="docs-share-notice" *ngIf="!isPrivate">
+				<nb-icon icon="globe-2-outline"></nb-icon>
+				<span>{{ 'DOCS.SHARE.ORG_VISIBLE_NOTICE' | translate }}</span>
+			</div>
+
+			<p class="muted" *ngIf="isPrivate && !rows.length">{{ 'DOCS.SHARE.EMPTY' | translate }}</p>
+
+			<ul class="docs-share-list" *ngIf="rows.length">
+				<li class="docs-share-row" *ngFor="let row of rows; trackBy: trackRow" [class.disabled]="!isPrivate">
+					<nb-icon [icon]="row.kind === 'team' ? 'people-outline' : 'person-outline'" size="tiny"></nb-icon>
+					<span class="docs-share-label" [nbTooltip]="row.label">{{ row.label }}</span>
+
+					<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]; else accessReadonly">
+						<nb-select
+							size="tiny"
+							[selected]="row.share.access"
+							[disabled]="row.busy || !isPrivate"
+							(selectedChange)="changeAccess(row, $event)"
+						>
+							<nb-option *ngFor="let level of accessLevels" [value]="level">
+								{{ 'DOCS.SHARE.ACCESS.' + level | translate }}
+							</nb-option>
+						</nb-select>
+						<button
+							nbButton
+							ghost
+							size="tiny"
+							status="danger"
+							[disabled]="row.busy"
+							[nbTooltip]="'DOCS.SHARE.REVOKE' | translate"
+							(click)="revoke(row)"
+						>
+							<nb-icon icon="close-outline"></nb-icon>
+						</button>
+					</ng-container>
+					<ng-template #accessReadonly>
+						<span class="docs-share-access">{{ 'DOCS.SHARE.ACCESS.' + row.share.access | translate }}</span>
+					</ng-template>
+				</li>
+			</ul>
+
+			<!-- Add share (DOCS_UPDATE only; inert while ORGANIZATION-visible) -->
+			<div class="docs-share-add" *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+				<!-- `<fieldset>` is the semantic grouping element (implicit `group` role); the inline
+				     rules only neutralise the user-agent fieldset chrome so the layout is unchanged. -->
+				<fieldset
+					class="docs-share-target-toggle"
+					style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"
+					[attr.aria-label]="'DOCS.SHARE.ADD' | translate"
+				>
+					<button
+						nbButton
+						size="tiny"
+						[status]="targetKind === 'employee' ? 'primary' : 'basic'"
+						[appearance]="targetKind === 'employee' ? 'filled' : 'outline'"
+						[attr.aria-pressed]="targetKind === 'employee'"
+						[disabled]="!isPrivate"
+						(click)="onTargetKindChange('employee')"
+					>
+						<nb-icon icon="person-outline"></nb-icon>
+						{{ 'DOCS.SHARE.TARGET_EMPLOYEE' | translate }}
+					</button>
+					<button
+						nbButton
+						size="tiny"
+						[status]="targetKind === 'team' ? 'primary' : 'basic'"
+						[appearance]="targetKind === 'team' ? 'filled' : 'outline'"
+						[attr.aria-pressed]="targetKind === 'team'"
+						[disabled]="!isPrivate"
+						(click)="onTargetKindChange('team')"
+					>
+						<nb-icon icon="people-outline"></nb-icon>
+						{{ 'DOCS.SHARE.TARGET_TEAM' | translate }}
+					</button>
+				</fieldset>
+
+				<div class="docs-share-picker">
+					<!-- Employee picker: local nb-select — see the component doc for why
+					     `ga-employee-multi-select` is not reused on Documents routes. -->
+					<nb-select
+						*ngIf="targetKind === 'employee'"
+						size="small"
+						fullWidth
+						[selected]="selectedEmployeeId"
+						[disabled]="!isPrivate || saving"
+						[placeholder]="'DOCS.SHARE.PICK_EMPLOYEE' | translate"
+						(selectedChange)="selectedEmployeeId = $event"
+					>
+						<nb-option *ngFor="let employee of availableEmployees" [value]="employee.id">
+							{{ employeeLabel(employee) }}
+						</nb-option>
+					</nb-select>
+
+					<!-- Team picker: reuses the shared ui-core selector. -->
+					<ga-team-selector
+						*ngIf="targetKind === 'team'"
+						class="docs-share-team-selector"
+						[multiple]="false"
+						[showAllOption]="false"
+						[defaultSelected]="false"
+						[skipGlobalChange]="true"
+						[disabled]="!isPrivate || saving"
+						[placeholder]="'DOCS.SHARE.PICK_TEAM' | translate"
+						(onChanged)="onTeamPicked($event)"
+					></ga-team-selector>
+
+					<nb-select
+						size="small"
+						[selected]="newAccess"
+						[disabled]="!isPrivate || saving"
+						(selectedChange)="newAccess = $event"
+					>
+						<nb-option *ngFor="let level of accessLevels" [value]="level">
+							{{ 'DOCS.SHARE.ACCESS.' + level | translate }}
+						</nb-option>
+					</nb-select>
+
+					<button nbButton size="small" status="primary" [disabled]="!canAdd" (click)="addShare()">
+						<nb-icon icon="plus-outline"></nb-icon>
+						{{ 'DOCS.SHARE.ADD' | translate }}
+					</button>
+				</div>
+
+				<p class="hint">{{ 'DOCS.SHARE.ACCESS_HINT' | translate }}</p>
+			</div>
+		</section>
+	</nb-card-body>
+
+	<nb-card-footer class="docs-dialog-footer">
+		<button nbButton status="primary" (click)="close()">{{ 'DOCS.SHARE.DONE' | translate }}</button>
+	</nb-card-footer>
+</nb-card>

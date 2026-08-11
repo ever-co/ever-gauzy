@@ -1,0 +1,51 @@
+.docs-bulk-bar {
+	position: sticky;
+	bottom: 0;
+	z-index: 5;
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	flex-wrap: wrap;
+	padding: 0.5rem 0.75rem;
+	border-radius: 0.375rem;
+	background: var(--background-basic-color-2);
+	box-shadow: var(--shadow);
+
+	.docs-bulk-count {
+		font-weight: 600;
+	}
+
+	.docs-bulk-limit {
+		color: var(--color-danger-default);
+		font-size: 0.75rem;
+	}
+
+	.docs-bulk-tags {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+
+		// The platform tag picker has no intrinsic width — cap it so the bar keeps
+		// its single-row layout until it genuinely has to wrap.
+		.docs-bulk-tags-picker {
+			display: inline-block;
+			min-width: 10rem;
+			max-width: 18rem;
+		}
+	}
+}
+
+.docs-bulk-errors {
+	margin-top: 0.5rem;
+
+	.docs-bulk-error-row {
+		display: flex;
+		gap: 0.5rem;
+		font-size: 0.8125rem;
+		padding: 0.125rem 0;
+
+		code {
+			color: var(--text-hint-color);
+		}
+	}
+}

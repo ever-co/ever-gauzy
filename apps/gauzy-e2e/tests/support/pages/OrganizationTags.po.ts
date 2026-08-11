@@ -122,7 +122,14 @@ export const editTagButtonVisible = async () => {
 };
 
 export const clickEditTagButton = async () => {
-	await clickButton(OrganizationTagsPage.editTagButtonCss);
+	// Same treatment as the Add button above, for the same reason and against the same evidence:
+	// CI run 31053943459 (shard 3) failed here with `locator.clear: Timeout 24000ms exceeded —
+	// waiting for locator('#inputName')`, i.e. the click returned but the dialog had not rendered,
+	// and the very next line typed into a field that did not exist yet. It passed on retry, so the
+	// suite reported "1 flaky" and stayed green — a pass bought with a retry.
+	//
+	// Confirming on the dialog's own input is what makes "I clicked Edit" mean the dialog is open.
+	await dispatchClickWhenSettled(OrganizationTagsPage.editTagButtonCss, OrganizationTagsPage.tagNameInputCss);
 };
 
 export const deleteTagButtonVisible = async () => {

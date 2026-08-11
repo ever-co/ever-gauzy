@@ -14,7 +14,8 @@ import {
 	lastAssistantMessageIsCompleteWithToolCalls
 } from 'ai';
 import { useInjector } from '@gauzy/ui-react';
-import { ChatSidebarService, Store } from '@gauzy/ui-core/core';
+import { AgentPageBridgeService, ChatSidebarService, Store } from '@gauzy/ui-core/core';
+import { AI_CHAT_RATE_LIMIT_CODE, PermissionsEnum, type IAiChatRateLimitEnvelope } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
 import { executeClientTool, isClientTool } from '../chat-client-tools';
 import { useAngularSignal } from '../use-angular-signal';
@@ -23,7 +24,20 @@ import { ChatMessageList } from './ChatMessageList';
 import { ChatInput } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
+import { DocsAttachPicker } from './DocsAttachPicker';
+import { buildAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
 import { chatTheme } from '../chat-theme';
+
+/**
+ * What the docs upload endpoint answers with (the slice this panel reads).
+ * Mirrored rather than imported: `IDocumentUploadResponse` lives in the backend docs plugin,
+ * which must not be pulled into the browser bundle.
+ */
+interface IDocsUploadResponseSlice {
+	results?: { document?: { id?: string; name?: string; kind?: string } }[];
+	rejected?: { fileName?: string; message?: string }[];
+	message?: string;
+}
 
 /**
  * Client-generated conversation id (UUID v4, crypto-secure).
@@ -62,6 +76,14 @@ export function AiChatPanel() {
 	const [history, setHistory] = useState<IChatHistoryItem[]>([]);
 	const [historyLoading, setHistoryLoading] = useState(false);
 
+	// Attachments staged for the NEXT message: a picked Documents entry carries its id (so
+	// `docs_read` can open exactly that one), an uploaded file only its name (the capture into
+	// Documents is asynchronous, so no id exists yet when the upload returns).
+	const [attachments, setAttachments] = useState<IStagedAttachment[]>([]);
+	const [showAttachPicker, setShowAttachPicker] = useState(false);
+	const [isAttaching, setIsAttaching] = useState(false);
+	const [attachmentError, setAttachmentError] = useState<string | null>(null);
+
 	// Docking / maximize state comes straight from the Angular
 	// ChatSidebarService signals — they also change outside this panel
 	// (e.g. collapsing clears maximized), so a live bridge is required.
@@ -81,6 +103,66 @@ export function AiChatPanel() {
 		[store]
 	);
 
+	/**
+	 * The tenant/organization scope the Documents endpoints require IN THE REQUEST ITSELF —
+	 * `where[organizationId]` on the list, an `organizationId` part in the upload body. The
+	 * Tenant-Id/Organization-Id HEADERS do not satisfy those DTO validators
+	 * (`TenantOrganizationBaseDTO`), which is exactly how the picker first shipped broken:
+	 * every request answered 400 and the UI misread it as "Documents unavailable".
+	 */
+	const attachScope = useCallback(
+		(): { organizationId?: string; tenantId?: string } => ({
+			...(store.organizationId ? { organizationId: store.organizationId } : {}),
+			...(store.tenantId ? { tenantId: store.tenantId } : {})
+		}),
+		[store]
+	);
+
+	/**
+	 * May this user open the AI Providers settings page?
+	 *
+	 * Chat only requires AI_CHAT_ACCESS, but the settings route is guarded by AI_CHAT_SETTINGS — so
+	 * navigating a chat-only user there would silently bounce them to the settings index.
+	 */
+	const canOpenAiSettings = useCallback(
+		() =>
+			(store.userRolePermissions ?? []).some(
+				(rolePermission) =>
+					rolePermission.permission === PermissionsEnum.AI_CHAT_SETTINGS && rolePermission.enabled
+			),
+		[store]
+	);
+
+	/**
+	 * Send a dictation take to the server for transcription.
+	 *
+	 * `FormData` deliberately WITHOUT a Content-Type header: the browser has to set it, because only
+	 * it knows the multipart boundary. Setting it by hand produces a body the server cannot parse.
+	 */
+	const transcribeAudio = useCallback(
+		async (audio: Blob): Promise<string> => {
+			const form = new FormData();
+			form.append('file', audio, 'dictation');
+			const response = await fetch(`${environment.API_BASE_URL}/api/ai-chat/transcribe`, {
+				method: 'POST',
+				headers: authHeaders(),
+				body: form
+			});
+			if (!response.ok) {
+				// The server's message names the actual problem — no speech-capable provider, a
+				// rejected key — so it is worth more to the user than a status code.
+				const detail = await response
+					.json()
+					.then((body: { message?: string }) => body?.message)
+					.catch(() => undefined);
+				throw new Error(detail || `Transcription failed (HTTP ${response.status})`);
+			}
+			const body = (await response.json()) as { text?: string };
+			return body.text ?? '';
+		},
+		[authHeaders]
+	);
+
 	const transport = useMemo(
 		() =>
 			new DefaultChatTransport({
@@ -91,6 +173,15 @@ export function AiChatPanel() {
 		[authHeaders]
 	);
 
+	/**
+	 * Indirection for the stream error handler.
+	 *
+	 * `useChat`'s `onError` needs `setMessages`, which `useChat` itself returns — a cycle. The ref is
+	 * assigned right after the hook, and `onError` can only fire once a request is in flight, so it
+	 * is always populated by the time it is read.
+	 */
+	const handleStreamErrorRef = useRef<((error: unknown) => void) | null>(null);
+
 	const chat = useChat({
 		transport,
 		// Resume the agent loop once all client tool results / approvals are in.
@@ -99,7 +190,11 @@ export function AiChatPanel() {
 			lastAssistantMessageIsCompleteWithApprovalResponses(options),
 		// Client ("canvas") tools run here, in the browser.
 		onToolCall: ({ toolCall }) => {
-			const { toolName, toolCallId, input: toolInput } = toolCall as {
+			const {
+				toolName,
+				toolCallId,
+				input: toolInput
+			} = toolCall as {
 				toolName: string;
 				toolCallId: string;
 				input: unknown;
@@ -107,9 +202,7 @@ export function AiChatPanel() {
 			if (!isClientTool(toolName)) return;
 			// Deliberately not awaited — awaiting inside onToolCall deadlocks the stream.
 			executeClientTool(injector, toolName, toolInput)
-				.then((output) =>
-					chat.addToolOutput({ tool: toolName as never, toolCallId, output: output as never })
-				)
+				.then((output) => chat.addToolOutput({ tool: toolName as never, toolCallId, output: output as never }))
 				.catch((error: unknown) =>
 					chat.addToolOutput({
 						state: 'output-error',
@@ -118,20 +211,108 @@ export function AiChatPanel() {
 						errorText: error instanceof Error ? error.message : String(error)
 					})
 				);
-		}
+		},
+		onError: (streamError: unknown) => handleStreamErrorRef.current?.(streamError)
 	});
 
 	const { messages, sendMessage, status, stop, error, regenerate, setMessages, addToolApprovalResponse } = chat;
 
+	/**
+	 * The settings page has been opened for a rate limit already this session.
+	 *
+	 * Every rate limit gets the explanatory message, but the canvas is only taken over ONCE — hitting
+	 * a free-tier limit repeatedly is normal, and yanking the user's page away each time would be its
+	 * own bug.
+	 */
+	const rateLimitPageOpenedRef = useRef(false);
+
+	/**
+	 * Turn a rate-limited turn into something the user can act on.
+	 *
+	 * The server sends a JSON envelope through the stream's error channel (the only channel that
+	 * exists for this) and masks everything else as a generic string, so anything that does not parse
+	 * as our envelope is left to the existing error bar.
+	 */
+	handleStreamErrorRef.current = (streamError: unknown) => {
+		const raw = streamError instanceof Error ? streamError.message : String(streamError ?? '');
+		let envelope: IAiChatRateLimitEnvelope | null = null;
+		try {
+			const parsed = JSON.parse(raw);
+			if (parsed?.code === AI_CHAT_RATE_LIMIT_CODE) envelope = parsed as IAiChatRateLimitEnvelope;
+		} catch {
+			// Not our envelope — a normal error, already handled by the error bar.
+		}
+		if (!envelope) return;
+
+		// On the shared free key the user can fix this themselves; on their OWN key they cannot, so
+		// telling them to "connect your account" would be wrong.
+		const onSharedKey = envelope.credentialSource === 'platform';
+		const wait = envelope.retryAfterSeconds
+			? t('AI_ASSISTANT.RATE_LIMIT_RETRY_IN', 'You can try again in about {{seconds}}s.').replace(
+					'{{seconds}}',
+					String(envelope.retryAfterSeconds)
+				)
+			: '';
+		const notice = onSharedKey
+			? t(
+					'AI_ASSISTANT.RATE_LIMITED_SHARED',
+					'The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.'
+				)
+			: t(
+					'AI_ASSISTANT.RATE_LIMITED_OWN',
+					'Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.'
+				);
+
+		// Rendered as a normal assistant message so it flows through the existing markdown renderer
+		// with no new UI. It is client-only and deliberately not persisted: it describes the state of
+		// this attempt, not part of the conversation.
+		setMessages((current) => [
+			...(current as never[]),
+			{
+				id: `rate-limit-${Date.now()}`,
+				role: 'assistant',
+				parts: [{ type: 'text', text: [notice, wait].filter(Boolean).join(' ') }]
+			} as never
+		]);
+
+		if (!onSharedKey || rateLimitPageOpenedRef.current) return;
+		rateLimitPageOpenedRef.current = true;
+		// Only navigate if the user could actually do anything there: the chat needs AI_CHAT_ACCESS
+		// while the settings route is guarded by AI_CHAT_SETTINGS, so a chat-only user would just be
+		// bounced to the settings index. The message above already tells them what to ask for.
+		if (!canOpenAiSettings()) return;
+		void injector
+			.get(AgentPageBridgeService)
+			.openPage('/pages/settings/ai', { provider: envelope.providerId })
+			.catch(() => undefined);
+	};
+
 	const isBusy = status === 'submitted' || status === 'streaming';
 	const hasMessages = messages.length > 0;
 
-	const handleSubmit = useCallback(() => {
-		const text = input.trim();
-		if (!text || isBusy) return;
-		setInput('');
-		void sendMessage({ text });
-	}, [input, isBusy, sendMessage]);
+	/**
+	 * Send a message.
+	 *
+	 * `override` exists for dictation: the transcript is handed straight here rather than being read
+	 * back out of `input`. `setInput` is asynchronous, so auto-send fired immediately after it would
+	 * otherwise submit the PRE-dictation text — an empty draft sending nothing, a non-empty one
+	 * sending only what was typed before the user spoke.
+	 */
+	const handleSubmit = useCallback(
+		(override?: string) => {
+			const text = (override ?? input).trim();
+			if (!text || isBusy) return;
+			setInput('');
+			// Attachments ride along as a plain preamble rather than as a hidden channel: the
+			// assistant's `docs_read` tool takes a document id, so naming the ids in the turn is
+			// what lets it actually open what the user attached. Cleared on send — an attachment
+			// belongs to the message it was attached to, not to the conversation.
+			const preamble = buildAttachmentPreamble(attachments);
+			setAttachments([]);
+			void sendMessage({ text: preamble ? `${preamble}\n\n${text}` : text });
+		},
+		[attachments, input, isBusy, sendMessage]
+	);
 
 	const handleNewChat = useCallback(() => {
 		void stop();
@@ -147,6 +328,147 @@ export function AiChatPanel() {
 		},
 		[addToolApprovalResponse]
 	);
+
+	/**
+	 * Open a Documents citation chip.
+	 *
+	 * Routed through `AgentPageBridgeService` (the same bridge the `open_page` canvas tool uses)
+	 * rather than through an `<a href>`: the citation url is an in-app path, so navigating with
+	 * the Angular router keeps the SPA — and this chat panel with its in-flight turn — alive.
+	 */
+	const handleOpenCitation = useCallback(
+		(citation: { url?: string }) => {
+			if (!citation?.url) return;
+			void injector
+				.get(AgentPageBridgeService)
+				.openPage(citation.url)
+				.catch(() => undefined);
+		},
+		[injector]
+	);
+
+	/**
+	 * Upload a file the user picked and attach it to this conversation — ID FIRST.
+	 *
+	 * The upload goes straight to the Documents feature (`source: CHAT`), which answers
+	 * synchronously with the created document — so the chip carries a `documentId` and the
+	 * assistant can `docs_read` the file in the very message it was attached to. The previous
+	 * design uploaded to chat-local storage and relied on the Documents plugin capturing an
+	 * event LATER: the chip was name-only, and the preamble sent the assistant to `docs_search`
+	 * — which can never find a chat capture (they are deliberately never auto-indexed), and a
+	 * file the sniffer rejected got a chip anyway while the capture silently dropped it.
+	 *
+	 * The chat-local endpoint remains as the FALLBACK for installs where Documents is absent,
+	 * disabled, or the user lacks `DOCS_CREATE` (403/404 from the docs route) — there the docs
+	 * tools do not exist either, so a name-only mention is the honest ceiling.
+	 *
+	 * `FormData` deliberately WITHOUT a Content-Type header — the browser has to set it, because
+	 * only it knows the multipart boundary (the same rule as dictation above).
+	 */
+	const handleAttachFile = useCallback(
+		async (file: File): Promise<void> => {
+			setIsAttaching(true);
+			setAttachmentError(null);
+			try {
+				const docsForm = new FormData();
+				docsForm.append('files', file, file.name);
+				docsForm.append('source', 'CHAT');
+				// Required by UploadDocumentsDTO (TenantOrganizationBaseDTO): the org must be in the
+				// BODY — headers alone fail validation with "organizationId must be a UUID".
+				const scope = attachScope();
+				if (scope.organizationId) docsForm.append('organizationId', scope.organizationId);
+				if (scope.tenantId) docsForm.append('tenantId', scope.tenantId);
+				const docsResponse = await fetch(`${environment.API_BASE_URL}/api/plugins/docs/documents/upload`, {
+					method: 'POST',
+					headers: authHeaders(),
+					body: docsForm
+				});
+
+				if (docsResponse.ok) {
+					const body = (await docsResponse.json().catch(() => null)) as IDocsUploadResponseSlice | null;
+					const document = body?.results?.[0]?.document;
+					if (document?.id) {
+						setAttachments((current) => [
+							...current,
+							{
+								documentId: document.id,
+								name: document.name || file.name,
+								...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {})
+							}
+						]);
+						return;
+					}
+					// Three distinct 2xx outcomes, told apart so the user is never told "rejected"
+					// about a file the server may in fact have created:
+					// a genuine per-file rejection carries the server's reason; a body that did not
+					// parse, or one with no readable document id, is a response-shape problem — the
+					// document may exist, so point at the Documents page rather than blaming the file.
+					const rejection = body?.rejected?.[0];
+					if (rejection) {
+						throw new Error(
+							rejection.message || `${t('AI_ASSISTANT.ATTACH_REJECTED', 'The file was rejected')}: ${file.name}`
+						);
+					}
+					throw new Error(
+						`${t(
+							'AI_ASSISTANT.ATTACH_RESPONSE_UNREADABLE',
+							'The upload response could not be read — check the Documents page before retrying'
+						)}: ${file.name}`
+					);
+				}
+
+				// Not-found / forbidden = the Documents feature is not available to this user or
+				// install — fall back to chat-local storage. Anything else is a real failure.
+				if (docsResponse.status !== 403 && docsResponse.status !== 404) {
+					const detail = await docsResponse
+						.json()
+						.then((body: { message?: string }) => body?.message)
+						.catch(() => undefined);
+					throw new Error(detail || `Attachment failed (HTTP ${docsResponse.status})`);
+				}
+
+				const form = new FormData();
+				form.append('file', file, file.name);
+				if (conversationIdRef.current) {
+					form.append('conversationId', conversationIdRef.current);
+				}
+				const response = await fetch(`${environment.API_BASE_URL}/api/ai-chat/attachments`, {
+					method: 'POST',
+					headers: authHeaders(),
+					body: form
+				});
+				if (!response.ok) {
+					const detail = await response
+						.json()
+						.then((body: { message?: string }) => body?.message)
+						.catch(() => undefined);
+					throw new Error(detail || `Attachment failed (HTTP ${response.status})`);
+				}
+				const saved = (await response.json()) as { name?: string };
+				setAttachments((current) => [...current, { name: saved?.name || file.name }]);
+			} catch (attachError) {
+				setAttachmentError(attachError instanceof Error ? attachError.message : String(attachError));
+			} finally {
+				setIsAttaching(false);
+			}
+		},
+		[authHeaders, attachScope]
+	);
+
+	/** Attach an existing document by id — what makes `docs_read` able to open exactly that one. */
+	const handlePickDocument = useCallback((document: { id: string; name: string; kind?: string }) => {
+		setAttachments((current) => [
+			...current,
+			{
+				documentId: document.id,
+				name: document.name,
+				// Carried so the chip (and the one rebuilt from history) links a PAGE to its page
+				// editor route rather than the file browser.
+				...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {})
+			}
+		]);
+		setShowAttachPicker(false);
+	}, []);
 
 	const handleCollapse = useCallback(() => chatSidebar.collapse(), [chatSidebar]);
 
@@ -199,7 +521,7 @@ export function AiChatPanel() {
 		setHistoryLoading(true);
 		fetch(conversationsUrl, { headers: authHeaders() })
 			.then((response) => (response.ok ? response.json() : []))
-			.then((items) => setHistory(Array.isArray(items) ? items : items?.items ?? []))
+			.then((items) => setHistory(Array.isArray(items) ? items : (items?.items ?? [])))
 			.catch(() => setHistory([]))
 			.finally(() => setHistoryLoading(false));
 	}, [conversationsUrl, authHeaders]);
@@ -310,7 +632,10 @@ export function AiChatPanel() {
 		display: 'flex',
 		flexDirection: 'column',
 		overflow: 'hidden',
-		minWidth: 0
+		minWidth: 0,
+		// The positioning context for the history and attach-picker overlays: `inset: 0` must
+		// resolve against the BODY, so an overlay can never cover the panel's own header row.
+		position: 'relative'
 	};
 
 	const resizeHandleStyle: CSSProperties = {
@@ -627,23 +952,42 @@ export function AiChatPanel() {
 				</span>
 			</div>
 
-			{/* Conversation history overlay */}
-			{showHistory && (
-				<ChatHistoryPanel
-					items={history}
-					loading={historyLoading}
-					activeId={activeConversationId}
-					translate={t}
-					onSelect={handleSelectConversation}
-					onDelete={handleDeleteConversation}
-					onClose={() => setShowHistory(false)}
-				/>
-			)}
-
-			{/* Chat body — fills remaining height */}
+			{/* Chat body — fills remaining height. The overlays mount INSIDE it so they cover the
+			    conversation area only, never the panel's own header (which stays operable — the
+			    user can still collapse/detach while a picker is open). */}
 			<div style={bodyStyle}>
+				{/* Conversation history overlay */}
+				{showHistory && (
+					<ChatHistoryPanel
+						items={history}
+						loading={historyLoading}
+						activeId={activeConversationId}
+						translate={t}
+						onSelect={handleSelectConversation}
+						onDelete={handleDeleteConversation}
+						onClose={() => setShowHistory(false)}
+					/>
+				)}
+
+				{/* "Attach from Documents" overlay */}
+				{showAttachPicker && (
+					<DocsAttachPicker
+						apiBaseUrl={environment.API_BASE_URL}
+						headers={authHeaders}
+						scope={attachScope}
+						translate={t}
+						onPick={handlePickDocument}
+						onClose={() => setShowAttachPicker(false)}
+					/>
+				)}
 				{hasMessages ? (
-					<ChatMessageList messages={messages} status={status} onApprovalResponse={handleApprovalResponse} />
+					<ChatMessageList
+						messages={messages}
+						status={status}
+						onApprovalResponse={handleApprovalResponse}
+						onOpenCitation={handleOpenCitation}
+						translate={t}
+					/>
 				) : (
 					<ChatWelcome translate={t} />
 				)}
@@ -685,6 +1029,69 @@ export function AiChatPanel() {
 				{/* Input area. Escape closes the docked panel; in the detached window
 				    it must do nothing — collapse() persists the docked state for the
 				    next page load, and there is no panel here to close. */}
+				{/* Staged attachments — removable until the message is sent. */}
+				{(attachments.length > 0 || attachmentError) && (
+					<div
+						style={{
+							display: 'flex',
+							flexWrap: 'wrap',
+							alignItems: 'center',
+							gap: 4,
+							padding: '6px 10px 0'
+						}}
+					>
+						{attachments.map((attachment, index) => (
+							<span
+								key={`${attachment.documentId ?? attachment.name}-${index}`}
+								style={{
+									display: 'inline-flex',
+									alignItems: 'center',
+									gap: 4,
+									maxWidth: '100%',
+									padding: '3px 8px',
+									borderRadius: 999,
+									border: `1px solid ${chatTheme.border}`,
+									backgroundColor: chatTheme.surface,
+									color: chatTheme.textPrimary,
+									fontSize: chatTheme.fontSizeSmall
+								}}
+							>
+								<span aria-hidden="true">📎</span>
+								<span
+									style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+									title={attachment.name}
+								>
+									{attachment.name}
+								</span>
+								<button
+									type="button"
+									onClick={() =>
+										setAttachments((current) =>
+											current.filter((_entry, entryIndex) => entryIndex !== index)
+										)
+									}
+									aria-label={`${t('AI_ASSISTANT.ATTACH_REMOVE', 'Remove attachment')}: ${attachment.name}`}
+									style={{
+										background: 'none',
+										border: 'none',
+										color: chatTheme.textSecondary,
+										cursor: 'pointer',
+										padding: 0,
+										lineHeight: 1
+									}}
+								>
+									×
+								</button>
+							</span>
+						))}
+						{attachmentError && (
+							<span style={{ color: chatTheme.red, fontSize: chatTheme.fontSizeSmall }}>
+								{attachmentError}
+							</span>
+						)}
+					</div>
+				)}
+
 				<ChatInput
 					value={input}
 					isBusy={isBusy}
@@ -693,6 +1100,14 @@ export function AiChatPanel() {
 					onSubmit={handleSubmit}
 					onStop={() => void stop()}
 					onEscape={isDetachedView ? undefined : handleCollapse}
+					onTranscribe={transcribeAudio}
+					onAttachFile={handleAttachFile}
+					onAttachFromDocuments={() => {
+						setAttachmentError(null);
+						setShowAttachPicker(true);
+					}}
+					isAttaching={isAttaching}
+					composingFor={activeConversationId}
 				/>
 			</div>
 

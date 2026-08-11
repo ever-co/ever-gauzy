@@ -3,6 +3,12 @@
 	"compilerOptions": {
 		"outDir": "../../dist/out-tsc",
 		"module": "commonjs",
+		// Required for the `transformIgnorePatterns` exception in `jest.config.ts` to do anything:
+		// ts-jest hands a `.js` file back UNCHANGED when `allowJs` is false, so the ESM-only
+		// `htmlparser2` build behind `sanitize-html` reached Jest as raw ESM and both HTML
+		// sanitization suites failed to load. `checkJs` stays off — these dependencies are
+		// compiled to CommonJS, not type-checked.
+		"allowJs": true,
 		"types": ["jest", "node"]
 	},
 	"include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]

@@ -12,8 +12,8 @@ import {
 	NbSelectModule,
 	NbToastrModule
 } from '@nebular/theme';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { AddTaskDialogComponent } from './add-task-dialog.component';
+import { RichTextEditorModule } from '../../rich-text-editor/rich-text-editor.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
@@ -30,7 +30,7 @@ import { TaskSelectModule } from '../task-select/task-select.module';
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		CKEditorModule,
+		RichTextEditorModule,
 		NbButtonModule,
 		NbCardModule,
 		NbDatepickerModule,

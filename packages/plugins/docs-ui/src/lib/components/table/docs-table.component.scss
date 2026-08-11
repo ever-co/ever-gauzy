@@ -1,0 +1,23 @@
+.docs-table {
+	min-height: 12rem;
+
+	::ng-deep table {
+		width: 100%;
+	}
+}
+
+.docs-table-toolbar {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.docs-column-chooser {
+	margin: 0;
+	min-width: 12rem;
+
+	nb-card-body {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+}

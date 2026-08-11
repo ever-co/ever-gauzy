@@ -22,6 +22,7 @@ import { CustomEmbeddedFieldConfig } from '@gauzy/common';
 import { isNotEmpty } from '@gauzy/utils';
 import { RelationsQueryDTO } from '../shared/dto';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
+import { sanitizeRichHtml } from '../core/html-sanitizer';
 import { RequestContext } from '../core/context';
 import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { OrganizationProjectEmployee } from '../core/entities/internal';
@@ -63,6 +64,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @returns A Promise resolving to the created organization project.
 	 */
 	async create(input: IOrganizationProjectCreateInput): Promise<IOrganizationProject> {
+		// Sanitize the rich-text description HTML through the shared server-side allowlist.
+		if (typeof input.description === 'string') {
+			input.description = sanitizeRichHtml(input.description);
+		}
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 		const employeeId = RequestContext.currentEmployeeId();
 		const currentRoleId = RequestContext.currentRoleId();
@@ -179,6 +184,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @returns A Promise resolving to the updated organization project.
 	 */
 	async update(id: ID, input: IOrganizationProjectUpdateInput): Promise<IOrganizationProject> {
+		// Sanitize the rich-text description HTML through the shared server-side allowlist.
+		if (typeof input.description === 'string') {
+			input.description = sanitizeRichHtml(input.description);
+		}
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 		const { memberIds, managerIds, organizationId, ...entity } = input;
 

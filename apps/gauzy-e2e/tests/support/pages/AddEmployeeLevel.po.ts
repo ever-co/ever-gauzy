@@ -8,6 +8,7 @@ import {
 	waitElementToHide,
 	verifyValue,
 	dispatchClick,
+	dispatchClickWhenSettled,
 	waitForSpinnerGone
 } from '../util';
 import { selectNgOption } from '../ng-select';
@@ -193,7 +194,13 @@ export const clickRowEmployeeLevelToDelete = async () => {
 };
 
 export const clickEditEmployeeLevelButton = async () => {
-	await dispatchClick(AddEmployeeLevelPage.editEmployeeLevelButtonCss);
+	// Same shape as the sibling Positions page: dispatch so a fading toastr/backdrop can't swallow the
+	// click, and CONFIRM the edit dialog rendered. Without the confirm a lost click surfaces 24s later
+	// as a timeout on editLevelInputCss — naming the input, not the button that was never pressed.
+	await dispatchClickWhenSettled(
+		AddEmployeeLevelPage.editEmployeeLevelButtonCss,
+		AddEmployeeLevelPage.editLevelInputCss
+	);
 };
 
 export const editEmployeeLevelInpuVisible = async () => {
