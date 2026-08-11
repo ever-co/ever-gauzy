@@ -558,33 +558,61 @@ export function getMigrationsConfig() {
 	};
 }
 
-/** Connection-option keys that must never be written to stdout. */
-const DB_CONFIG_SECRET_KEYS = ['password', 'ssl', 'sslKey', 'sslCert', 'sslCA', 'sslca', 'key', 'cert', 'ca'];
+/**
+ * Connection-option keys that must never be written to stdout. Compared case-insensitively, so
+ * `sslCA`, `sslca` and `SSLCA` are all covered — driver options differ in casing between drivers.
+ */
+const DB_CONFIG_SECRET_KEYS = new Set(
+	['password', 'passphrase', 'ssl', 'sslkey', 'sslcert', 'sslca', 'key', 'cert', 'ca', 'pfx', 'secret', 'token'].map(
+		(key) => key.toLowerCase()
+	)
+);
 
 const REDACTED = '[REDACTED]';
+const CIRCULAR = '[CIRCULAR]';
 
 /**
  * Returns a copy of `value` with every credential-bearing field replaced by a placeholder.
  * Recurses into plain objects and arrays so nested config (`extra`, `replication`, …) is covered too.
+ *
+ * Fails closed by design: anything past the depth limit is replaced wholesale rather than passed
+ * through unchecked, and repeated object references are collapsed so that a cyclic config cannot
+ * make the `JSON.stringify` in `logDBConfig` throw and abort startup.
  */
-function redactDBSecrets(value: unknown, depth = 0): unknown {
-	// Guard against pathological/cyclic config; 6 levels is far deeper than any real DB config.
-	if (depth > 6) return value;
-
-	if (Array.isArray(value)) return value.map((item) => redactDBSecrets(item, depth + 1));
+function redactDBSecrets(value: unknown, depth = 0, seen: WeakSet<object> = new WeakSet()): unknown {
+	// 6 levels is far deeper than any real DB config; redact rather than emit unchecked data.
+	if (depth > 6) return REDACTED;
 	if (value === null || typeof value !== 'object') return value;
 
-	return Object.fromEntries(
-		Object.entries(value as Record<string, unknown>).map(([key, val]) => {
-			if (val === undefined || val === null) return [key, val];
-			if (DB_CONFIG_SECRET_KEYS.includes(key)) return [key, REDACTED];
-			// A connection URL can embed `user:password@host` in its userinfo section.
-			if ((key === 'url' || key === 'connectionString') && typeof val === 'string') {
-				return [key, val.replace(/\/\/[^@/]*@/, `//${REDACTED}@`)];
-			}
-			return [key, redactDBSecrets(val, depth + 1)];
-		})
-	);
+	// Break reference cycles - without this, JSON.stringify() would throw on a cyclic config.
+	if (seen.has(value as object)) return CIRCULAR;
+	seen.add(value as object);
+
+	try {
+		if (Array.isArray(value)) return value.map((item) => redactDBSecrets(item, depth + 1, seen));
+
+		return Object.fromEntries(
+			Object.entries(value as Record<string, unknown>).map(([key, val]) => {
+				if (val === undefined || val === null) return [key, val];
+				if (DB_CONFIG_SECRET_KEYS.has(key.toLowerCase())) return [key, REDACTED];
+				// A connection URL can embed `user:password@host` in its userinfo section. Keep the
+				// username - it is a useful diagnostic - and redact only the password.
+				if ((key === 'url' || key === 'connectionString') && typeof val === 'string') {
+					return [
+						key,
+						val.replace(/\/\/([^:@/]*)(:[^@/]*)?@/, (match, user, password) =>
+							password ? `//${user}:${REDACTED}@` : match
+						)
+					];
+				}
+				return [key, redactDBSecrets(val, depth + 1, seen)];
+			})
+		);
+	} finally {
+		// Only a true ancestor cycle should collapse; a value referenced twice in sibling
+		// branches is not a cycle and should still be rendered in full.
+		seen.delete(value as object);
+	}
 }
 
 /**
