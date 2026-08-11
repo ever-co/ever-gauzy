@@ -17,7 +17,7 @@ on:
       - master
 
 # Unique to this workflow and ref. Deliberately NOT a group shared with other workflows: a shared
-# group serialises unrelated builds and silently cancels them (see the image-build starvation
+# group serializes unrelated builds and silently cancels them (see the image-build starvation
 # incident). Superseded PR runs are cancelled; pushes to the long-lived branches are not.
 concurrency:
   group: build-${{ github.workflow }}-${{ github.ref }}
