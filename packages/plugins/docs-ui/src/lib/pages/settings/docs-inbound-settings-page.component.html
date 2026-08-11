@@ -63,7 +63,7 @@
 						</dd>
 					</dl>
 
-					<ng-container *ngxPermissionsOnly="[permissions.DOCS_MANAGE]">
+					<ng-container *ngxPermissionsOnly="docsPermissions.manage">
 						<!-- Shared controls: allowlist, body import, active flag. -->
 						<ng-container *ngTemplateOutlet="addressControls; context: row.context"></ng-container>
 
@@ -114,7 +114,7 @@
 			<nb-card-header class="docs-inbound-card-header">
 				<span>{{ 'DOCS.INBOUND.CUSTOM' | translate }}</span>
 				<button
-					*ngxPermissionsOnly="[permissions.DOCS_MANAGE]"
+					*ngxPermissionsOnly="docsPermissions.manage"
 					nbButton
 					size="small"
 					status="primary"
@@ -210,7 +210,7 @@
 							</dl>
 
 							<button
-								*ngxPermissionsOnly="[permissions.DOCS_MANAGE]"
+								*ngxPermissionsOnly="docsPermissions.manage"
 								nbButton
 								size="small"
 								status="primary"
@@ -240,7 +240,7 @@
 						</dd>
 					</dl>
 
-					<ng-container *ngxPermissionsOnly="[permissions.DOCS_MANAGE]">
+					<ng-container *ngxPermissionsOnly="docsPermissions.manage">
 						<!-- Shared controls: allowlist, body import, active flag. -->
 						<ng-container *ngTemplateOutlet="addressControls; context: row.context"></ng-container>
 

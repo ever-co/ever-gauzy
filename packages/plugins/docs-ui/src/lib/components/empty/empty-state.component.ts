@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { DOCS_PERMISSIONS } from '../../docs-permission-groups';
 
 export type DocsEmptyVariant = 'first-run' | 'empty-folder' | 'no-results' | 'review-empty' | 'error';
 
@@ -14,7 +15,7 @@ export type DocsEmptyVariant = 'first-run' | 'empty-folder' | 'no-results' | 're
 				<nb-icon icon="file-add-outline" class="docs-empty-icon"></nb-icon>
 				<h6>{{ 'DOCS.EMPTY.NO_DOCUMENTS' | translate }}</h6>
 				<p>{{ 'DOCS.EMPTY.NO_DOCUMENTS_CTA' | translate }}</p>
-				<div class="docs-empty-actions" *ngxPermissionsOnly="[permissions.DOCS_CREATE]">
+				<div class="docs-empty-actions" *ngxPermissionsOnly="docsPermissions.create">
 					<button nbButton size="small" status="primary" (click)="primaryAction.emit('upload')">
 						{{ 'DOCS.UPLOAD.BUTTON' | translate }}
 					</button>
@@ -32,7 +33,7 @@ export type DocsEmptyVariant = 'first-run' | 'empty-folder' | 'no-results' | 're
 			<ng-container *ngSwitchCase="'empty-folder'">
 				<nb-icon icon="folder-outline" class="docs-empty-icon"></nb-icon>
 				<h6>{{ 'DOCS.EMPTY.FOLDER' | translate }}</h6>
-				<div class="docs-empty-actions" *ngxPermissionsOnly="[permissions.DOCS_CREATE]">
+				<div class="docs-empty-actions" *ngxPermissionsOnly="docsPermissions.create">
 					<button nbButton size="small" (click)="primaryAction.emit('new-page')">
 						{{ 'DOCS.TREE.NEW_PAGE' | translate }}
 					</button>
@@ -103,4 +104,11 @@ export class EmptyStateComponent {
 	@Output() primaryAction = new EventEmitter<string>();
 
 	public readonly permissions = PermissionsEnum;
+
+	/**
+	 * Stable permission arrays for the template's `*ngxPermissionsOnly` gates.
+	 * 🛑 Never inline `[permissions.X]` in a binding — a fresh array each change-detection cycle
+	 * makes ngx-permissions re-validate forever and wedges the main thread.
+	 */
+	public readonly docsPermissions = DOCS_PERMISSIONS;
 }

@@ -57,7 +57,7 @@
 	<nb-card *ngIf="defaults as orgDefaults" class="docs-settings-card">
 		<nb-card-header>{{ 'DOCS.SETTINGS.DEFAULTS' | translate }}</nb-card-header>
 		<nb-card-body>
-			<ng-container *ngxPermissionsOnly="[permissions.DOCS_MANAGE]; else defaultsReadonly">
+			<ng-container *ngxPermissionsOnly="docsPermissions.manage; else defaultsReadonly">
 				<div class="docs-settings-row">
 					<nb-toggle
 						labelPosition="end"
@@ -117,7 +117,7 @@
 	<!-- 3. Storage usage (P1 quota — DOCS_MANAGE only, spec 08 §5.7).
 	     Rendered only when the deployment actually reports usage. The permission gate
 	     wraps the whole card: nested inside it, a non-manager saw an empty card shell. -->
-	<ng-container *ngxPermissionsOnly="[permissions.DOCS_MANAGE]">
+	<ng-container *ngxPermissionsOnly="docsPermissions.manage">
 		<nb-card *ngIf="storage as usage" class="docs-settings-card">
 			<nb-card-header>{{ 'DOCS.SETTINGS.STORAGE' | translate }}</nb-card-header>
 			<nb-card-body>
@@ -191,7 +191,7 @@
 		<nb-card-header class="docs-settings-card-header">
 			<span>{{ 'DOCS.SETTINGS.CATEGORIES' | translate }}</span>
 			<button
-				*ngxPermissionsOnly="[permissions.DOCS_MANAGE]"
+				*ngxPermissionsOnly="docsPermissions.manage"
 				nbButton
 				size="small"
 				status="primary"
@@ -228,7 +228,7 @@
 						<td class="numeric">{{ category.documentCount ?? 0 }}</td>
 						<!-- The cell always renders (column alignment); only the controls are gated. -->
 						<td class="actions">
-							<ng-container *ngxPermissionsOnly="[permissions.DOCS_MANAGE]">
+							<ng-container *ngxPermissionsOnly="docsPermissions.manage">
 							<button
 								nbButton
 								ghost

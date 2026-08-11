@@ -44,6 +44,7 @@ import {
 } from '../../models/docs-inbound.model';
 import { DocumentInboundAddressService } from '../../services/document-inbound-address.service';
 import { DocumentsService } from '../../services/documents.service';
+import { DOCS_PERMISSIONS } from '../../docs-permission-groups';
 
 /** Which destructive action a row is currently asking the user to confirm. */
 export type DocsInboundConfirm = 'secret' | 'address' | null;
@@ -126,6 +127,13 @@ export interface IDocsInboundAddressRow {
 	styleUrls: ['./docs-inbound-settings-page.component.scss']
 })
 export class DocsInboundSettingsPageComponent extends TranslationBaseComponent implements OnInit {
+	/**
+	 * Stable permission arrays for the template's `*ngxPermissionsOnly` gates.
+	 * 🛑 Never inline `[permissions.X]` in a binding — a fresh array each change-detection cycle
+	 * makes ngx-permissions re-validate forever and wedges the main thread.
+	 */
+	public readonly docsPermissions = DOCS_PERMISSIONS;
+
 	/** The organization's PLATFORM row, or `null` when the deployment mints none. */
 	public platform: IDocsInboundAddressRow | null = null;
 

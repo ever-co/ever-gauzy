@@ -64,7 +64,7 @@
 				></nb-badge>
 			</div>
 			<p>{{ 'DOCS.REVIEW.BANNER_BODY' | translate }}</p>
-			<div class="docs-review-banner-actions" *ngxPermissionsOnly="[permissions.DOCS_REVIEW]">
+			<div class="docs-review-banner-actions" *ngxPermissionsOnly="docsPermissions.review">
 				<button nbButton size="tiny" status="success" (click)="approveReview()">
 					{{ 'DOCS.REVIEW.APPROVE' | translate }}
 				</button>
@@ -136,7 +136,7 @@
 			<!-- Share / visibility (spec 08 §3) — DOCS_UPDATE, same as the mutations below.
 			     `canMutate` is the ownership half: administering shares is creator-or-DOCS_MANAGE
 			     only (§3.3 / §1.5), which is exactly what `canMutate` answers. -->
-			<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+			<ng-container *ngxPermissionsOnly="docsPermissions.update">
 				<button *ngIf="canMutate" nbButton size="tiny" (click)="openShare()">
 					<nb-icon icon="share-outline"></nb-icon>
 					{{ 'DOCS.SHARE.ACTION' | translate }}
@@ -147,7 +147,7 @@
 			     server's write rule: the DOCS_UPDATE gate and the `canMutate` ownership scope
 			     (`08-permissions-security.md` §1.7/§1.8 — edit/move/archive are **own** for
 			     everyone below ADMIN). -->
-			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_UPDATE]">
+			<ng-template [ngxPermissionsOnly]="docsPermissions.update">
 				<ng-container *ngIf="canMutate">
 					<button *ngIf="isSettledFile" nbButton size="tiny" (click)="openExtractedText()">
 						{{ 'DOCS.DETAIL.EDIT_EXTRACTED_TEXT' | translate }}
@@ -177,7 +177,7 @@
 					</button>
 				</ng-container>
 			</ng-template>
-			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_DELETE]">
+			<ng-template [ngxPermissionsOnly]="docsPermissions.delete">
 				<button
 					*ngIf="isArchived && canMutate"
 					nbButton
@@ -197,7 +197,7 @@
 			<h6>
 				{{ 'DOCS.DETAIL.SUMMARY' | translate }}
 				<button
-					*ngxPermissionsOnly="[permissions.DOCS_AI_IMPORT]"
+					*ngxPermissionsOnly="docsPermissions.aiImport"
 					nbButton
 					ghost
 					size="tiny"
@@ -219,7 +219,7 @@
 			     `metadata.ai.suggestedTags` to a real Tag: the pipeline deliberately never
 			     creates tag rows itself. Writing tags needs DOCS_UPDATE, same as the taxonomy
 			     editor below. -->
-			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_UPDATE]">
+			<ng-template [ngxPermissionsOnly]="docsPermissions.update">
 				<div class="docs-suggested-tags" *ngIf="suggestedTags.length && canMutate">
 					<span class="docs-suggested-tags-label" [nbTooltip]="'DOCS.DETAIL.SUGGESTED_TAGS_HINT' | translate">
 						{{ 'DOCS.DETAIL.SUGGESTED_TAGS' | translate }}
@@ -289,7 +289,7 @@
 
 		<!-- Taxonomy — the editable form needs DOCS_UPDATE **and** the ownership scope; either
 		     one missing falls back to the same read-only chips (spec 08 §1.7). -->
-		<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]; else taxonomyReadonly">
+		<ng-container *ngxPermissionsOnly="docsPermissions.update; else taxonomyReadonly">
 			<section class="docs-detail-section" *ngIf="canMutate; else taxonomyReadonly">
 				<h6>{{ 'DOCS.DETAIL.CATEGORIES' | translate }}</h6>
 				<nb-select
@@ -323,7 +323,7 @@
 		<section class="docs-detail-section">
 			<!-- `searchable` is a document write (§1.8 "Edit metadata … `searchable` toggle" —
 			     own), so it carries the ownership scope on top of DOCS_UPDATE. -->
-			<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+			<ng-container *ngxPermissionsOnly="docsPermissions.update">
 				<div class="docs-detail-toggle" *ngIf="canMutate">
 					<nb-toggle [checked]="doc.searchable" (checkedChange)="onSearchableToggle($event)" labelPosition="end">
 						{{ 'DOCS.DETAIL.SEARCHABLE_TOGGLE' | translate }}
@@ -331,7 +331,7 @@
 					<div class="hint">{{ 'DOCS.DETAIL.SEARCHABLE_HINT' | translate }}</div>
 				</div>
 			</ng-container>
-			<div class="docs-detail-toggle" *ngxPermissionsOnly="[permissions.DOCS_AI_IMPORT]">
+			<div class="docs-detail-toggle" *ngxPermissionsOnly="docsPermissions.aiImport">
 				<nb-toggle [checked]="inKnowledge" (checkedChange)="onKnowledgeToggle($event)" labelPosition="end">
 					{{ 'DOCS.KNOWLEDGE.TOGGLE_LABEL' | translate }}
 				</nb-toggle>
@@ -368,7 +368,7 @@
 			<h6 class="docs-detail-section-head">
 				<span>{{ 'DOCS.DETAIL.LINKS' | translate }}</span>
 				<!-- Link/unlink is a document write, scoped to **own** below ADMIN (§1.8). -->
-				<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+				<ng-container *ngxPermissionsOnly="docsPermissions.update">
 					<button *ngIf="canMutate" nbButton ghost size="tiny" (click)="addLink()">
 						<nb-icon icon="plus-outline"></nb-icon>
 						{{ 'DOCS.DETAIL.LINK_RECORD' | translate }}
@@ -391,7 +391,7 @@
 				<ng-template #linkPlain>
 					<span class="docs-detail-link-label">{{ linkLabel(link) }}</span>
 				</ng-template>
-				<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+				<ng-container *ngxPermissionsOnly="docsPermissions.update">
 					<button
 						*ngIf="canMutate"
 						nbButton
@@ -411,7 +411,7 @@
 		     (BaseEntityEnum.Document, id) (spec 08 §1). Reading follows document
 		     read access, so the section itself is DOCS_READ-gated; the composer
 		     gates itself further (see the thread component). -->
-		<section class="docs-detail-section" *ngxPermissionsOnly="[permissions.DOCS_READ]">
+		<section class="docs-detail-section" *ngxPermissionsOnly="docsPermissions.read">
 			<h6>{{ 'DOCS.DETAIL.COMMENTS' | translate }}</h6>
 			<gz-docs-detail-comments [documentId]="doc.id" [documentName]="doc.name"></gz-docs-detail-comments>
 		</section>
