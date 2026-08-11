@@ -12,7 +12,7 @@
     </div>
     <div>
       <div>
-        <ng-template [ngxPermissionsOnly]="['INTEGRATION_EDIT']">
+        <ng-template [ngxPermissionsOnly]="integrationEditPermission">
           <button
             nbButton
             status="primary"
@@ -50,7 +50,7 @@
       <nb-tab [tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.SETTINGS' | translate" [tabIcon]="'settings-outline'">
         @if (organization$ | async) {
           <nb-card>
-            <ng-template [ngxPermissionsOnly]="['INTEGRATION_EDIT']">
+            <ng-template [ngxPermissionsOnly]="integrationEditPermission">
               <nb-card-body>
                 <form>
                   <div class="fields">
