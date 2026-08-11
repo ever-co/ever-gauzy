@@ -51,6 +51,7 @@ import { DocumentsService } from '../../services/documents.service';
 import { UploadQueueService } from '../../services/upload-queue.service';
 import { toDocsBreadcrumb } from './docs-breadcrumb.util';
 import { DOCS_BROWSE_OVERLAY_SELECTOR, DOCS_SEARCH_INPUT_ID, docsBrowseShortcutOf } from './docs-browse-shortcuts';
+import { DOCS_PERMISSIONS } from '../../docs-permission-groups';
 
 /**
  * Browse page orchestrator: owns URL restore, the table ↔ cards view toggle
@@ -68,6 +69,13 @@ import { DOCS_BROWSE_OVERLAY_SELECTOR, DOCS_SEARCH_INPUT_ID, docsBrowseShortcutO
 	standalone: false
 })
 export class DocsBrowsePageComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+	/**
+	 * Stable permission arrays for the template's `*ngxPermissionsOnly` gates.
+	 * 🛑 Never inline `[permissions.X]` in a binding — a fresh array each change-detection cycle
+	 * makes ngx-permissions re-validate forever and wedges the main thread.
+	 */
+	public readonly docsPermissions = DOCS_PERMISSIONS;
+
 	@ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
 	/** `New ▾` trigger — the `n` shortcut opens the menu by clicking it. */
 	@ViewChild('newMenuTrigger', { read: ElementRef }) newMenuTrigger: ElementRef<HTMLElement>;

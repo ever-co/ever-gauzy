@@ -8,7 +8,7 @@
 		<!-- ─── Visibility (ORGANIZATION ⇄ PRIVATE) ─────────────────── -->
 		<section class="docs-share-section">
 			<label class="label" for="docs-share-visibility">{{ 'DOCS.VISIBILITY.LABEL' | translate }}</label>
-			<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]; else visibilityReadonly">
+			<ng-container *ngxPermissionsOnly="docsPermissions.update; else visibilityReadonly">
 				<nb-select
 					id="docs-share-visibility"
 					size="small"
@@ -56,7 +56,7 @@
 					<nb-icon [icon]="row.kind === 'team' ? 'people-outline' : 'person-outline'" size="tiny"></nb-icon>
 					<span class="docs-share-label" [nbTooltip]="row.label">{{ row.label }}</span>
 
-					<ng-container *ngxPermissionsOnly="[permissions.DOCS_UPDATE]; else accessReadonly">
+					<ng-container *ngxPermissionsOnly="docsPermissions.update; else accessReadonly">
 						<nb-select
 							size="tiny"
 							[selected]="row.share.access"
@@ -86,9 +86,9 @@
 			</ul>
 
 			<!-- Add share (DOCS_UPDATE only; inert while ORGANIZATION-visible) -->
-			<div class="docs-share-add" *ngxPermissionsOnly="[permissions.DOCS_UPDATE]">
+			<div class="docs-share-add" *ngxPermissionsOnly="docsPermissions.update">
 				<!-- `<fieldset>` is the semantic grouping element (implicit `group` role); the inline
-				     rules only neutralise the user-agent fieldset chrome so the layout is unchanged. -->
+				     rules only neutralize the user-agent fieldset chrome so the layout is unchanged. -->
 				<fieldset
 					class="docs-share-target-toggle"
 					style="border: 0; padding: 0; margin-inline: 0; min-inline-size: 0"

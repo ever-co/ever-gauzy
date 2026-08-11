@@ -21,6 +21,7 @@ import {
 	IDocumentShareCreateInput
 } from '../models/docs-share.model';
 import { DocumentsService } from '../services/documents.service';
+import { DOCS_PERMISSIONS } from '../docs-permission-groups';
 
 /** Row projection: the share plus a resolved display label for its subject. */
 interface IShareRow {
@@ -72,6 +73,13 @@ interface IShareRow {
 	standalone: false
 })
 export class DocumentShareDialogComponent extends TranslationBaseComponent implements OnInit {
+	/**
+	 * Stable permission arrays for the template's `*ngxPermissionsOnly` gates.
+	 * 🛑 Never inline `[permissions.X]` in a binding — a fresh array each change-detection cycle
+	 * makes ngx-permissions re-validate forever and wedges the main thread.
+	 */
+	public readonly docsPermissions = DOCS_PERMISSIONS;
+
 	/** The document to share. Required. */
 	@Input() document!: IDocument;
 

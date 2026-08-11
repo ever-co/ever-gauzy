@@ -21,7 +21,7 @@
 	<div class="docs-browse-header">
 		<h4 class="docs-browse-title">{{ 'DOCS.TITLE' | translate }}</h4>
 		<div class="docs-browse-actions">
-			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_REVIEW]">
+			<ng-template [ngxPermissionsOnly]="docsPermissions.review">
 				<button nbButton size="small" appearance="ghost" (click)="goToReviewQueue()">
 					<nb-icon icon="checkmark-circle-outline"></nb-icon>
 					{{ 'DOCS.REVIEW.QUEUE_TITLE' | translate }}
@@ -58,7 +58,7 @@
 					<nb-icon icon="grid-outline"></nb-icon>
 				</button>
 			</fieldset>
-			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_CREATE]">
+			<ng-template [ngxPermissionsOnly]="docsPermissions.create">
 				<!-- `New ▾` (`01-ux-spec.md` §2): Folder | Page. A folder was previously
 				     unreachable from here, so a brand-new organization — whose tree is empty and
 				     whose only other create affordance is a node context menu that needs an
@@ -83,7 +83,7 @@
 			</ng-template>
 			<!-- Header overflow menu — admin-only actions that are not part of the daily flow.
 			     "Import legacy data" lives here per `09-consolidation-migration.md` §10.4. -->
-			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_MANAGE]">
+			<ng-template [ngxPermissionsOnly]="docsPermissions.manage">
 				<button
 					nbButton
 					size="small"

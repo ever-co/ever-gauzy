@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { DocumentStatusEnum, IDocument, PermissionsEnum } from '@gauzy/contracts';
+import { DOCS_PERMISSIONS } from '../../../docs-permission-groups';
 
 /**
  * Processing status badge. UPLOADED folds into the "Processing" style with an
@@ -14,7 +15,7 @@ import { DocumentStatusEnum, IDocument, PermissionsEnum } from '@gauzy/contracts
 			<span class="docs-badge-dot" *ngIf="!isProcessing"></span>
 			{{ labelKey | translate }}
 			<a
-				*ngxPermissionsOnly="[permissions.DOCS_UPDATE]"
+				*ngxPermissionsOnly="docsPermissions.update"
 				class="docs-badge-retry"
 				href="javascript:void(0)"
 				(click)="onRetry($event)"
@@ -73,6 +74,13 @@ export class StatusBadgeComponent {
 
 	public readonly statusEnum = DocumentStatusEnum;
 	public readonly permissions = PermissionsEnum;
+
+	/**
+	 * Stable permission arrays for the template's `*ngxPermissionsOnly` gates.
+	 * 🛑 Never inline `[permissions.X]` in a binding — a fresh array each change-detection cycle
+	 * makes ngx-permissions re-validate forever and wedges the main thread.
+	 */
+	public readonly docsPermissions = DOCS_PERMISSIONS;
 
 	get status(): DocumentStatusEnum {
 		return this.value ?? this.rowData?.status;
