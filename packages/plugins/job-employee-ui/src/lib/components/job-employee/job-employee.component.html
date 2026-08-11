@@ -24,7 +24,7 @@
 <!-- Table Layout Template -->
 <ng-template #tableLayout>
 	<!-- Check if the user has the 'ORG_JOB_EMPLOYEE_VIEW' permission -->
-	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW']">
+	<ng-template [ngxPermissionsOnly]="permGateOrgJobEmployeeView">
 		<div class="table-scroll-container">
 			<!-- Smart Table Component -->
 			<angular2-smart-table
@@ -63,7 +63,7 @@
 </ng-template>
 
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
-	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW', 'ORG_EMPLOYEES_EDIT']">
+	<ng-template [ngxPermissionsOnly]="permGateOrgJobEmployeeViewOrgEmployeesEdit">
 		<div class="btn-group actions">
 			<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
 				<button size="small" status="basic" class="action primary cursor-pointer" nbButton underConstruction>
