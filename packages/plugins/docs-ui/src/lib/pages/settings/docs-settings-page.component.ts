@@ -33,6 +33,7 @@ import {
 	normalizeDocumentStorage
 } from '../../models/docs-api.model';
 import { DocumentsService } from '../../services/documents.service';
+import { DOCS_PERMISSIONS } from '../../docs-permission-groups';
 
 /** Catalog rows carry a `documentCount` projection the shared entity does not declare. */
 type DocsCategoryRow = IDocumentCategory & { documentCount?: number };
@@ -84,6 +85,13 @@ const BYTES_PER_GIB = 1024 * 1024 * 1024;
 	styleUrls: ['./docs-settings-page.component.scss']
 })
 export class DocsSettingsPageComponent extends TranslationBaseComponent implements OnInit {
+	/**
+	 * Stable permission arrays for the template's `*ngxPermissionsOnly` gates.
+	 * 🛑 Never inline `[permissions.X]` in a binding — a fresh array each change-detection cycle
+	 * makes ngx-permissions re-validate forever and wedges the main thread.
+	 */
+	public readonly docsPermissions = DOCS_PERMISSIONS;
+
 	public settings: IDocumentSettings | null = null;
 	public knowledge: IKnowledgeStatus | null = null;
 	public categories: DocsCategoryRow[] = [];

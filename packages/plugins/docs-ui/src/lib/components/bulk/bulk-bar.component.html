@@ -3,7 +3,7 @@
 	<span class="docs-bulk-limit" *ngIf="overLimit">{{ 'DOCS.BULK.LIMIT_REACHED' | translate : { max: maxIds } }}</span>
 
 	<ng-container *ngIf="reviewMode; else manageActions">
-		<ng-template [ngxPermissionsOnly]="[permissions.DOCS_REVIEW]">
+		<ng-template [ngxPermissionsOnly]="docsPermissions.review">
 			<button nbButton size="tiny" status="success" [disabled]="busy" (click)="run('REVIEW_APPROVE')">
 				{{ 'DOCS.BULK.APPROVE' | translate }}
 			</button>
@@ -14,7 +14,7 @@
 	</ng-container>
 
 	<ng-template #manageActions>
-		<ng-template [ngxPermissionsOnly]="[permissions.DOCS_MANAGE]">
+		<ng-template [ngxPermissionsOnly]="docsPermissions.manage">
 			<button nbButton size="tiny" [disabled]="busy" (click)="run('ARCHIVE')">
 				{{ 'DOCS.BULK.ARCHIVE' | translate }}
 			</button>
@@ -43,7 +43,7 @@
 					{{ 'DOCS.BULK.TAGS_REMOVE' | translate }}
 				</button>
 			</span>
-			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_AI_IMPORT]">
+			<ng-template [ngxPermissionsOnly]="docsPermissions.aiImport">
 				<button nbButton size="tiny" [disabled]="busy" (click)="run('KNOWLEDGE_IMPORT')">
 					{{ 'DOCS.BULK.KNOWLEDGE_IMPORT' | translate }}
 				</button>
@@ -51,7 +51,7 @@
 					{{ 'DOCS.BULK.KNOWLEDGE_EXCLUDE' | translate }}
 				</button>
 			</ng-template>
-			<ng-template [ngxPermissionsOnly]="[permissions.DOCS_DELETE]">
+			<ng-template [ngxPermissionsOnly]="docsPermissions.delete">
 				<button nbButton size="tiny" status="danger" appearance="outline" [disabled]="busy" (click)="run('DELETE')">
 					{{ 'DOCS.BULK.DELETE' | translate }}
 				</button>

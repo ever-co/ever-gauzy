@@ -21,6 +21,7 @@ import { DOCS_PREVIEW_DIALOG_CONFIG } from '../../docs.constants';
 import { DocsPreviewModalComponent } from '../../components/preview/docs-preview-modal.component';
 import { RejectDialogComponent } from '../../dialogs/reject-dialog.component';
 import { DocumentsService } from '../../services/documents.service';
+import { DOCS_PERMISSIONS } from '../../docs-permission-groups';
 
 /**
  * Review queue (`01-ux-spec.md` §11): PENDING documents with reason badges,
@@ -36,6 +37,13 @@ import { DocumentsService } from '../../services/documents.service';
 	standalone: false
 })
 export class ReviewPageComponent extends TranslationBaseComponent implements OnInit {
+	/**
+	 * Stable permission arrays for the template's `*ngxPermissionsOnly` gates.
+	 * 🛑 Never inline `[permissions.X]` in a binding — a fresh array each change-detection cycle
+	 * makes ngx-permissions re-validate forever and wedges the main thread.
+	 */
+	public readonly docsPermissions = DOCS_PERMISSIONS;
+
 	public rows$ = new BehaviorSubject<IDocument[]>([]);
 	public loading = false;
 	public error = false;

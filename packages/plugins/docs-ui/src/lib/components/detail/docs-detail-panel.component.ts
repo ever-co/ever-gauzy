@@ -38,6 +38,7 @@ import { ExtractedTextDialogComponent } from '../../dialogs/extracted-text-dialo
 import { DocumentLinkDialogComponent } from '../../dialogs/link-dialog.component';
 import { RequestReviewDialogComponent } from '../../dialogs/request-review-dialog.component';
 import { DocumentShareDialogComponent } from '../../dialogs/share-dialog.component';
+import { DOCS_PERMISSIONS } from '../../docs-permission-groups';
 
 /**
  * Relations the panel needs on the detail read.
@@ -79,6 +80,13 @@ const SUGGESTED_TAG_COLORS = ['#3366FF', '#00D68F', '#FFAA00', '#FF3D71', '#8B5C
 	standalone: false
 })
 export class DocsDetailPanelComponent extends TranslationBaseComponent implements OnChanges {
+	/**
+	 * Stable permission arrays for the template's `*ngxPermissionsOnly` gates.
+	 * 🛑 Never inline `[permissions.X]` in a binding — a fresh array each change-detection cycle
+	 * makes ngx-permissions re-validate forever and wedges the main thread.
+	 */
+	public readonly docsPermissions = DOCS_PERMISSIONS;
+
 	@Input() documentId: ID;
 
 	@Output() closed = new EventEmitter<void>();

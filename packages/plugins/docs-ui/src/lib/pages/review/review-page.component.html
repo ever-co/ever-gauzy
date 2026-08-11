@@ -62,7 +62,7 @@
 						>
 							<nb-icon icon="eye-outline"></nb-icon>
 						</button>
-						<ng-template [ngxPermissionsOnly]="[permissions.DOCS_REVIEW]">
+						<ng-template [ngxPermissionsOnly]="docsPermissions.review">
 							<button nbButton size="tiny" status="success" (click)="approve(row)">
 								{{ 'DOCS.REVIEW.APPROVE' | translate }}
 							</button>

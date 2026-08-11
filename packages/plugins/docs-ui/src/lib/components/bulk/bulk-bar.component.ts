@@ -21,6 +21,7 @@ import { BulkCategoriesDialogComponent } from '../../dialogs/bulk-categories-dia
 import { MoveDialogComponent } from '../../dialogs/move-dialog.component';
 import { RejectDialogComponent } from '../../dialogs/reject-dialog.component';
 import { DocumentsService } from '../../services/documents.service';
+import { DOCS_PERMISSIONS } from '../../docs-permission-groups';
 
 /**
  * Sticky bulk bar shown while the selection is non-empty. Actions map 1:1 to
@@ -35,6 +36,13 @@ import { DocumentsService } from '../../services/documents.service';
 	standalone: false
 })
 export class BulkBarComponent extends TranslationBaseComponent {
+	/**
+	 * Stable permission arrays for the template's `*ngxPermissionsOnly` gates.
+	 * 🛑 Never inline `[permissions.X]` in a binding — a fresh array each change-detection cycle
+	 * makes ngx-permissions re-validate forever and wedges the main thread.
+	 */
+	public readonly docsPermissions = DOCS_PERMISSIONS;
+
 	@Input() selectedIds: ID[] = [];
 	/** Review-queue mode: only approve/reject (DOCS_REVIEW). */
 	@Input() reviewMode = false;
