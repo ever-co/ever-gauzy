@@ -45,11 +45,10 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 
 			/* Chips inside a table cell — kept in step with the shared
 			   table-density tokens ($gauzy-density in themes.scss); the
-			   literals are CSS-var fallbacks only. */
+			   literals are CSS-var fallbacks only. The chips carry no margins:
+			   .badges-block / .tags own all spacing via flex gap. */
 			.color {
 				position: static;
-				margin-top: var(--gauzy-table-chip-gap, 0.1875rem);
-				margin-right: var(--gauzy-table-chip-gap, 0.1875rem);
 				display: inline-block;
 				font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
 				font-weight: 600;

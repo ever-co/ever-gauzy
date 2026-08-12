@@ -17,7 +17,7 @@
         [class.right]="position === 'inverse'"
         class="show-large-up"
         >
-        <button nbButton class="button create" status="warning" size="small" (click)="openQuickActions()">
+        <button nbButton class="button create" status="primary" size="small" (click)="openQuickActions()">
           + {{ 'BUTTONS.CREATE' | translate }}
         </button>
       </nb-action>
@@ -57,7 +57,9 @@
       }
 
       @if (showDateSelector && !showExtraActions && selectorsVisibility?.date) {
-        <nb-action>
+        <!-- .date-range-action: styled `position: static` so the picker's INLINE dropdown
+             escapes the .header-container scroll clip — see header.component.scss. -->
+        <nb-action class="date-range-action">
           @if (organization?.id) {
             <ngx-date-range-picker
               [firstDayOfWeek]="organization.startWeekOn"

@@ -5,12 +5,11 @@ import {
 	viewChild,
 	afterNextRender,
 	DestroyRef,
-	Injector,
 	signal,
 	Type
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { NbLayoutComponent, NbLayoutDirectionService, NbSidebarService } from '@nebular/theme';
 import { ChatSidebarService, LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
@@ -39,7 +38,7 @@ export class OneColumnLayoutComponent {
 	private readonly layoutService = inject(LayoutService);
 	private readonly themeLanguageSelectorService = inject(ThemeLanguageSelectorService);
 	private readonly destroyRef = inject(DestroyRef);
-	private readonly injector = inject(Injector);
+	private readonly directionService = inject(NbLayoutDirectionService);
 
 	/** User signal for template — derived from store observable. */
 	readonly user = toSignal(this.store.user$);
@@ -93,16 +92,16 @@ export class OneColumnLayoutComponent {
 		afterNextRender(() => {
 			this.windowModeBlockScrollService.register(this.layout());
 			this.observeHeaderHeight();
-			this.observeCanvasLeft();
+			this.observeHeaderBand();
 		});
 
 		this.destroyRef.onDestroy(() => {
 			this.navigationBuilderService.clearSidebars();
 			this.navigationBuilderService.clearActionBars();
 			this.headerResizeObserver?.disconnect();
-			this.canvasResizeObserver?.disconnect();
-			this.chatClassObserver?.disconnect();
-			if (this.canvasLeftOnResize) window.removeEventListener('resize', this.canvasLeftOnResize);
+			this.bandResizeObserver?.disconnect();
+			this.menuClassObserver?.disconnect();
+			if (this.bandOnResize) window.removeEventListener('resize', this.bandOnResize);
 		});
 	}
 
@@ -135,45 +134,53 @@ export class OneColumnLayoutComponent {
 		apply();
 	}
 
-	private canvasResizeObserver?: ResizeObserver;
+	private bandResizeObserver?: ResizeObserver;
 
 	/**
-	 * Publish where the CANVAS begins and ends, as `--gz-canvas-left` / `--gz-canvas-right`, so the
-	 * fixed header band can span exactly that instead of running underneath the columns beside it.
+	 * Publish where the fixed HEADER BAND begins and ends, as `--gz-band-left` /
+	 * `--gz-band-right`: from the nav menu sidebar's trailing edge to the layout's far edge. The
+	 * band runs OVER the chat column (the chat sits below it at z 1039, its top at
+	 * `--gz-header-height`), so unlike the old `--gz-canvas-left/right` — which measured
+	 * `nb-layout-column`, i.e. the edge AFTER menu + chat — the band depends only on the menu
+	 * sidebar's geometry. That is the point: the header chasing the chat's edge at 60Hz is where
+	 * the whole staleness-bug class came from (see 536fa7fced), and a band that ignores chat state
+	 * has nothing to go stale against.
 	 *
-	 * The header used to be full width and merely PAD its content aside by the chat's width. That
-	 * arithmetic was wrong, and measurably so: on demo at 1280px the nav sidebar occupies 0-256 and
-	 * the chat 256-640, so the canvas starts at 640 — but the padding was the chat's width alone,
-	 * 384, leaving 256px of header content (the demo banner, the first filter) underneath a panel
-	 * whose z-index is one higher. The banner rendered with its first words clipped.
-	 *
-	 * Padding is the wrong lever regardless of the number: it only moves what is INSIDE the header,
-	 * so anything that escapes that box, or any future element added outside it, is behind the chat
-	 * again. Insetting the band means nothing in the header can overlap the chat by construction.
-	 *
-	 * MEASURED off the layout column rather than computed from sidebar + chat widths, because those
-	 * are Nebular's numbers and change with collapse, compaction and the user's own chat width — the
-	 * derivation is exactly what went wrong. The column is in normal flow after both sidebars, so its
-	 * left edge IS the canvas. Observing it is safe: the header is fixed and out of flow, so moving
-	 * it cannot feed back into the column's geometry.
+	 * MEASURED, not derived from Nebular's width tokens: collapse, compaction and window-mode
+	 * centring all move the real edges, and the derivation going wrong is what killed the previous
+	 * design. Measuring the layout container (rather than assuming 0/viewport edges) keeps the
+	 * >1920px centred window mode correct for free. The menu block is every in-flow sidebar on the
+	 * leading side — `menu-sidebar` today, `user-workspace` if a layout ever renders it (none does
+	 * currently) — attributed to left or right by which container edge it hugs, so RTL (menu at the
+	 * trailing edge) falls out of the same arithmetic.
 	 */
-	private observeCanvasLeft(): void {
+	private observeHeaderBand(): void {
 		if (typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
 		const apply = () => {
 			// Queried FRESH on every call — a captured node can go stale across layout re-renders,
 			// and a stale node measures its old box while looking perfectly alive.
-			const column = document.querySelector('nb-layout-column') as HTMLElement | null;
-			if (!column) return;
-			const rect = column.getBoundingClientRect();
+			const container = document.querySelector('nb-layout .layout .layout-container') as HTMLElement | null;
+			if (!container) return;
+			const containerRect = container.getBoundingClientRect();
+			let left = containerRect.left;
+			let right = window.innerWidth - containerRect.right;
+			const blocks = Array.from(
+				document.querySelectorAll('nb-sidebar.menu-sidebar, nb-sidebar.user-workspace')
+			) as HTMLElement[];
+			for (const block of blocks) {
+				const rect = block.getBoundingClientRect();
+				if (rect.width <= 0) continue; // collapsed → width 0, contributes nothing
+				// Nearer the container's leading edge → it insets the band's left; RTL puts the
+				// menu at the trailing edge, where it insets the band's right instead.
+				const onLeft = rect.left - containerRect.left <= containerRect.right - rect.right;
+				if (onLeft) left = Math.max(left, rect.right);
+				else right = Math.max(right, window.innerWidth - rect.left);
+			}
 			const root = document.documentElement.style;
-			root.setProperty('--gz-canvas-left', `${Math.round(rect.left)}px`);
-			// BOTH edges, because the canvas does not always run to the viewport. The chat docks to
-			// either side (`chat-sidebar-end`), and an RTL layout anchors the header from the right —
-			// so a single left-hand number applied to `right` would put the band back under the panel,
-			// which is the regression this whole change exists to remove.
-			root.setProperty('--gz-canvas-right', `${Math.round(window.innerWidth - rect.right)}px`);
+			root.setProperty('--gz-band-left', `${Math.round(left)}px`);
+			root.setProperty('--gz-band-right', `${Math.round(right)}px`);
 		};
-		// The chat panel animates its width (0.2s transition), so a single measurement lands
+		// The menu sidebar animates its collapse/compaction, so a single measurement lands
 		// mid-animation and freezes the header at a stale inset. Settle over the transition:
 		// idempotent style writes make the extra ticks free.
 		const applySettled = () => {
@@ -182,47 +189,35 @@ export class OneColumnLayoutComponent {
 			setTimeout(apply, 400);
 		};
 
-		const column = document.querySelector('nb-layout-column') as HTMLElement | null;
-		if (column) {
-			this.canvasResizeObserver = new ResizeObserver(apply);
-			this.canvasResizeObserver.observe(column);
+		const menuHost = document.querySelector('nb-sidebar.menu-sidebar') as HTMLElement | null;
+		if (menuHost) {
+			this.bandResizeObserver = new ResizeObserver(apply);
+			this.bandResizeObserver.observe(menuHost);
 		}
-		// The column's own box does not change when the window does, so track that too.
+		// The menu's own box does not change when the window does, so track that too.
 		window.addEventListener('resize', apply);
-		this.canvasLeftOnResize = apply;
+		this.bandOnResize = apply;
 
-		// A ResizeObserver fires on SIZE, and the two changes that matter most here move the column
-		// without resizing it: swapping the chat from one dock side to the other, and switching to an
-		// RTL language. Both leave the offsets stale and the band inset on the wrong side, so the
-		// signals that cause them are watched directly.
-		effect(
-			() => {
-				this.chatSidebarService.position();
-				this.chatSidebarService.expanded();
-				this.chatSidebarService.maximized();
-				this.chatSidebarService.width();
-				applySettled();
-			},
-			{ injector: this.injector }
-		);
-
-		// DOM-level belt-and-braces, deliberately independent of Angular's reactive machinery:
-		// measured LIVE on demo, expanding the chat moved the column (256 → 640) while neither the
-		// effect above nor the ResizeObserver ever refreshed the vars — the header stayed pinned
-		// under the chat until an unrelated window resize. Nebular stamps expanded/collapsed onto
-		// the sidebar host as CLASSES, so a MutationObserver on that attribute fires on every
-		// state change no matter which observer mechanism is having a bad day.
-		const chatHost = document.querySelector('nb-sidebar.chat-sidebar');
-		if (chatHost && typeof MutationObserver !== 'undefined') {
-			this.chatClassObserver = new MutationObserver(applySettled);
-			this.chatClassObserver.observe(chatHost, { attributes: true, attributeFilter: ['class'] });
+		// A ResizeObserver fires on SIZE, and Nebular's expand/compact/collapse are stamped onto
+		// the sidebar host as CLASSES — a MutationObserver on that attribute fires on every state
+		// change no matter which observer mechanism is having a bad day. (Same belt-and-braces
+		// pattern 536fa7fced added for the chat host, re-aimed at the menu.)
+		if (menuHost && typeof MutationObserver !== 'undefined') {
+			this.menuClassObserver = new MutationObserver(applySettled);
+			this.menuClassObserver.observe(menuHost, { attributes: true, attributeFilter: ['class'] });
 		}
+		// An RTL flip moves the menu to the other edge WITHOUT resizing it, so neither observer
+		// above fires — watch the direction change directly.
+		this.directionService
+			.onDirectionChange()
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe(() => applySettled());
 		apply();
 	}
 
-	private chatClassObserver?: MutationObserver;
+	private menuClassObserver?: MutationObserver;
 
-	private canvasLeftOnResize?: () => void;
+	private bandOnResize?: () => void;
 
 	/**
 	 * Toggles the expansion state of the sidebar.

@@ -1,9 +1,9 @@
 <nb-layout windowMode>
-	<!-- Header — belongs to the CANVAS, not to the whole window.
-	     Three full-height columns: Menu | Chat | Canvas. Nebular renders a `fixed` header at full
-	     width, so the BAND ITSELF is inset to where the canvas begins (see `--gz-canvas-left` in
-	     the layout ts and scss). It used to stay full width and pad its content aside instead,
-	     which put the demo banner and the first filter underneath the chat panel. -->
+	<!-- Header — spans everything right of the nav menu, INCLUDING the chat column.
+	     Nebular renders a `fixed` header at full width, so the BAND ITSELF is inset to the menu
+	     sidebar's trailing edge (see `--gz-band-left/right` in the layout ts and scss); the chat
+	     panel tucks UNDER it (top = `--gz-header-height`, z one below the header's), exactly like
+	     the canvas does. -->
 	@if (user()) {
 		<nb-layout-header fixed>
 			<ngx-header [expanded]="isExpanded()"></ngx-header>
@@ -86,10 +86,10 @@
 	     Single @if (like the menu sidebar above): nesting control-flow blocks breaks
 	     nb-layout's select-based content projection for nb-sidebar. -->
 	@if (user() && chatSidebarService.available() && chatSidebarComponent(); as chatComponent) {
-		<!-- A FULL-HEIGHT column, like the nav menu: nothing sits above it, so the panel owns its
-		     own top edge (its title row and icons) instead of starting under the header band.
-		     That needs Nebular's default fixed `.main-container` — see the scss for why COLLAPSED
-		     must then be `display: none` rather than merely zero-width. -->
+		<!-- A column that starts UNDER the fixed header band (top = the band's measured height)
+		     and runs to the viewport bottom, in both docks. It still uses Nebular's default fixed
+		     `.main-container` — see the scss for why COLLAPSED must then be `display: none`
+		     rather than merely zero-width. -->
 		<nb-sidebar
 			class="chat-sidebar"
 			[class]="chatSidebarService.config()?.class ?? ''"
