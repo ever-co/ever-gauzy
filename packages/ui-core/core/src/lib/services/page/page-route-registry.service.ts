@@ -101,6 +101,22 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 			throw new Error('Page route configuration must have a location property');
 		}
 
+		// A route with no navigation target is not merely useless — Angular throws
+		// NG04014 while recognizing the LAZY PARENT config it ends up in, which
+		// silently kills every navigation into that whole subtree at click time.
+		// Fail loudly at registration instead, where the offending plugin is on
+		// the stack. The target may live on the config itself or in the `route`
+		// passthrough object.
+		const targets: (keyof Route)[] = ['component', 'loadComponent', 'loadChildren', 'redirectTo', 'children'];
+		const hasTarget = targets.some((key) => config[key] != null || config.route?.[key] != null);
+		if (!hasTarget) {
+			throw new Error(
+				`Page route registration for location "${config.location}", path "${config.path}" provides no ` +
+					`navigation target (component, loadComponent, loadChildren, redirectTo or children). ` +
+					`Such a route would invalidate its entire parent route subtree at navigation time (NG04014).`
+			);
+		}
+
 		// For section routes: reject reserved core paths and duplicate registrations
 		if (config.location === PAGE_SECTIONS_LOCATION) {
 			if (RESERVED_PAGE_SECTION_PATHS.has(config.path)) {
@@ -200,10 +216,17 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 				canActivate: config.canActivate || [] // Add canActivate property if it exists
 			};
 
-			// Check if the route configuration has a component or loadChildren property
+			// Copy the route's navigation target. `loadComponent` matters: dropping it
+			// produces a route with NO target, and Angular then throws NG04014 while
+			// RECOGNIZING the parent lazy config — which kills every navigation into the
+			// whole subtree (e.g. /pages/settings/**) with no visible error. That is
+			// exactly what a registered-but-uncopied `loadComponent` did to Settings.
 			if (config.component) {
 				// Set the component property to the config object
 				route.component = config.component;
+			} else if (config.loadComponent) {
+				// Set the loadComponent property to the config object (standalone lazy component)
+				route.loadComponent = config.loadComponent;
 			} else if (config.loadChildren) {
 				// Set the loadChildren property to the config object
 				route.loadChildren = config.loadChildren;
