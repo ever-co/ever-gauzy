@@ -1,0 +1,17 @@
+<div class="docs-stats-line" *ngIf="visible" role="group" [attr.aria-label]="'DOCS.STATS.ARIA' | translate">
+	<nb-card
+		class="docs-stat-tile"
+		*ngFor="let tile of tiles; trackBy: trackByLabel"
+		[nbSpinner]="loading"
+		nbSpinnerSize="tiny"
+		nbSpinnerStatus="primary"
+	>
+		<nb-card-body>
+			<ga-single-statistic
+				[title]="tile.labelKey | translate"
+				[value]="tile.value"
+				[color]="tile.color"
+			></ga-single-statistic>
+		</nb-card-body>
+	</nb-card>
+</div>

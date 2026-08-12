@@ -5,7 +5,9 @@ import {
 	DocumentKindEnum,
 	DocumentKnowledgeStatusEnum,
 	DocumentSourceEnum,
-	DocumentStatusEnum
+	DocumentStatusEnum,
+	ID,
+	ITag
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DOCS_CONTENT_SEARCH_MIN_CHARS } from '../../docs.constants';
@@ -13,11 +15,11 @@ import { IDocumentFacetBucket, IDocumentFacets } from '../../models/docs-api.mod
 import { DocsFilterState, foldStatusFacetBuckets } from '../../models/docs-filter.model';
 
 /**
- * Filter bar: multi-select facet dropdowns (with live counts), created/updated
- * date-range pickers, the name-vs-content search scope toggle (content search
- * needs ≥ `DOCS_CONTENT_SEARCH_MIN_CHARS` characters — the backend's own minimum,
- * never a locally chosen one) and clear-all. Emits a single `filterChange` per
- * mutation; the browse page owns debouncing + URL sync.
+ * Filter bar: multi-select facet dropdowns (with live counts), the create-capable
+ * tag selector, created/updated date-range pickers, the name-vs-content search
+ * scope toggle (content search needs ≥ `DOCS_CONTENT_SEARCH_MIN_CHARS` characters
+ * — the backend's own minimum, never a locally chosen one) and clear-all. Emits a
+ * single `filterChange` per mutation; the browse page owns debouncing + URL sync.
  */
 @Component({
 	selector: 'gz-docs-filter-bar',
@@ -48,11 +50,11 @@ export class DocsFilterBarComponent extends TranslationBaseComponent {
 	// 🛑 These are consumed as `[buckets]="kindBuckets"` template bindings, which Angular
 	// re-evaluates on EVERY change-detection cycle. They must therefore return a STABLE array
 	// reference while `facets` is unchanged — a fresh `Object.values(...).map(...)` each cycle
-	// fed the downstream `<nb-select>`/`FacetMultiselectComponent` a new identity every tick,
-	// which recreated its `<nb-option>` children and self-retriggered change detection (the
-	// Documents-hub main-thread wedge). The cache below is keyed on the `facets` INPUT REFERENCE:
-	// the parent (browse page) replaces `facets` wholesale on each load, so identity equality is
-	// the correct and cheap invalidation signal.
+	// fed the downstream select a new identity every tick, which recreated its option children
+	// and self-retriggered change detection (the Documents-hub main-thread wedge). The cache
+	// below is keyed on the `facets` INPUT REFERENCE: the parent (browse page) replaces
+	// `facets` wholesale on each load, so identity equality is the correct and cheap
+	// invalidation signal.
 
 	private bucketsCache: { source: IDocumentFacets | null; buckets: Record<string, IDocumentFacetBucket[]> } = {
 		source: undefined as unknown as IDocumentFacets | null,
@@ -102,6 +104,47 @@ export class DocsFilterBarComponent extends TranslationBaseComponent {
 	knowledgeLabel = (value: string): string => this.getTranslation(`DOCS.KNOWLEDGE.${value}`);
 	sourceLabel = (value: string): string => this.getTranslation(`DOCS.SOURCE.${value}`);
 
+	// ─── Tag filter (ga-tags-color-input ↔ tagIds mapping) ──────
+	//
+	// The shared selector works in `ITag[]` while the filter state carries bare
+	// ids (`tagIds` — the URL codec's `tags` CSV param). The getter below derives
+	// ITag stubs from the ids, resolving names from the facet buckets and full
+	// entities from whatever the selector last emitted (so a store round-trip
+	// keeps chip colors). Same stable-reference rule as the buckets above:
+	// `[selectedTags]` re-evaluates every cycle and the selector's input is a
+	// plain setter, so a fresh array each cycle would re-enter it forever.
+
+	private readonly tagEntityCache = new Map<string, ITag>();
+	private tagStubsCache: { signature: string; tags: ITag[] } = { signature: '', tags: [] };
+
+	get selectedTagEntities(): ITag[] {
+		const ids = this.value?.tagIds ?? [];
+		const buckets = this.tagBuckets;
+		const signature = JSON.stringify([ids, buckets.map((bucket) => [bucket.value, bucket.label])]);
+		if (signature !== this.tagStubsCache.signature) {
+			this.tagStubsCache = {
+				signature,
+				tags: ids.map((id) => {
+					const known = this.tagEntityCache.get(String(id));
+					if (known) return known;
+					const bucket = buckets.find((b) => String(b.value) === String(id));
+					// Deep-linked ids without a facet match stay selectable — a neutral
+					// chip beats silently dropping the filter.
+					return { id, name: bucket?.label ?? String(id) } as ITag;
+				})
+			};
+		}
+		return this.tagStubsCache.tags;
+	}
+
+	onTagsChange(tags: ITag[]): void {
+		const next = tags ?? [];
+		next.forEach((tag) => {
+			if (tag?.id) this.tagEntityCache.set(String(tag.id), tag);
+		});
+		this.filterChange.emit({ tagIds: next.map((tag) => tag.id as ID) });
+	}
+
 	// ─── Emitters ────────────────────────────────────────────────
 
 	onSearchInput(q: string): void {
@@ -128,6 +171,27 @@ export class DocsFilterBarComponent extends TranslationBaseComponent {
 			updatedFrom: this.toIsoDate(range?.start),
 			updatedTo: this.toIsoDate(range?.end)
 		});
+	}
+
+	get hasCreatedRange(): boolean {
+		return !!(this.value?.createdFrom || this.value?.createdTo);
+	}
+
+	get hasUpdatedRange(): boolean {
+		return !!(this.value?.updatedFrom || this.value?.updatedTo);
+	}
+
+	// The rangepicker directive owns the input's text, so clearing the state
+	// alone would leave stale text behind — blank the input alongside the emit.
+
+	clearCreatedRange(input: HTMLInputElement): void {
+		input.value = '';
+		this.onCreatedRange({});
+	}
+
+	clearUpdatedRange(input: HTMLInputElement): void {
+		input.value = '';
+		this.onUpdatedRange({});
 	}
 
 	onClearAll(): void {

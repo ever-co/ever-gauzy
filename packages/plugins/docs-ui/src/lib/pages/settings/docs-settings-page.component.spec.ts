@@ -2,7 +2,7 @@
  * `@gauzy/ui-core/i18n`, `@gauzy/ui-core/core` and `@gauzy/ui-core/shared` are barrels
  * over the whole app: importing them pulls Akita's untranspiled ESM (and every shared
  * component) into the CommonJS test runtime. The page is constructed directly with
- * doubles — no `TestBed` (see `legacy-import-dialog.component.spec.ts`).
+ * doubles — no `TestBed`.
  */
 jest.mock('@gauzy/ui-core/i18n', () => ({
 	TranslationBaseComponent: class {

@@ -78,6 +78,28 @@ describe('FacetMultiselectComponent — option reference stability', () => {
 	});
 
 	it('exposes a value-based trackBy so unchanged options are never recreated', () => {
-		expect(component.trackByValue(0, { value: 'FILE' })).toBe('FILE');
+		expect(component.trackByValue({ value: 'FILE' })).toBe('FILE');
+	});
+
+	it('keeps the SAME selectedValues reference while the selection content is unchanged', () => {
+		applyInputs(['FOLDER', 'PAGE'], ['FOLDER']);
+		const first = component.selectedValues;
+
+		applyInputs(['FOLDER', 'PAGE'], ['FOLDER']);
+		applyInputs(['FOLDER', 'PAGE'], ['FOLDER']);
+
+		expect(component.selectedValues).toBe(first);
+		expect(first).toEqual(['FOLDER']);
+	});
+
+	it('syncs selectedValues on a user change without waiting for the store round-trip', () => {
+		applyInputs(['FOLDER', 'PAGE'], []);
+		component.onSelectedChange(['PAGE']);
+		const emitted = component.selectedValues;
+
+		// The store echoes the same content back as a new array — no rebuild.
+		applyInputs(['FOLDER', 'PAGE'], ['PAGE']);
+
+		expect(component.selectedValues).toBe(emitted);
 	});
 });

@@ -7,19 +7,22 @@
 	uploading needs DOCS_CREATE **and** DOCS_UPDATE (a document write followed by a
 	link write), and `ngxPermissionsOnly` with a list is an OR — it would offer the
 	button to someone who can only do half of it and leave the file unattached.
+
+	`readonly` hosts (the invoice/estimate VIEW page) additionally drop the
+	attach / upload / unlink affordances — open and download stay.
 -->
-<nb-card *ngIf="visible" class="docs-links-panel">
+<nb-card *ngIf="shown" class="docs-links-panel">
 	<nb-card-header class="docs-links-panel-header">
 		<span>{{ 'DOCS.LINKS.PANEL_TITLE' | translate }}</span>
 		<span class="docs-links-panel-count" *ngIf="links.length">{{ links.length }}</span>
 
 		<span class="docs-links-panel-actions">
-			<button *ngIf="canLink" nbButton ghost size="tiny" (click)="attachExisting()">
+			<button *ngIf="!readonly && canLink" nbButton ghost size="tiny" (click)="attachExisting()">
 				<nb-icon icon="link-2-outline"></nb-icon>
 				{{ 'DOCS.LINKS.ATTACH_EXISTING' | translate }}
 			</button>
 
-			<ng-container *ngIf="canUpload">
+			<ng-container *ngIf="!readonly && canUpload">
 				<button nbButton ghost size="tiny" [disabled]="uploading" (click)="fileInput.click()">
 					<nb-icon icon="upload-outline"></nb-icon>
 					{{ 'DOCS.LINKS.UPLOAD_NEW' | translate }}
@@ -75,7 +78,7 @@
 					<nb-icon icon="download-outline"></nb-icon>
 				</button>
 				<button
-					*ngIf="canLink"
+					*ngIf="!readonly && canLink"
 					nbButton
 					ghost
 					size="tiny"
