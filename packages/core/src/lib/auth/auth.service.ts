@@ -529,7 +529,20 @@ export class AuthService extends SocialAuthService {
 			const { user: selectedUser, employee } = userValidations[0];
 
 			// Determine organization context for tokens
-			const organizationId = employee?.organizationId || selectedUser.lastOrganizationId;
+			let organizationId = employee?.organizationId || selectedUser.lastOrganizationId;
+
+			// A non-employee user whose preference was never persisted (e.g. a freshly seeded
+			// super admin) has neither source, and a token without an organization claim fails
+			// every consumer of `RequestContext.currentOrganizationId()`. Fall back to the user's
+			// first active organization membership and persist it so subsequent logins skip the
+			// extra lookup. Best-effort: an unresolvable membership issues the token exactly as
+			// before.
+			if (!organizationId) {
+				organizationId = await this.resolveDefaultOrganizationId(selectedUser.id, selectedUser.tenantId);
+				if (organizationId) {
+					await this.userService.setLastOrganizationAndTeam(selectedUser.id, organizationId);
+				}
+			}
 
 			// Generate both access and refresh tokens concurrently
 			const [access_token, refresh_token] = await Promise.all([
@@ -555,6 +568,34 @@ export class AuthService extends SocialAuthService {
 			// Log the error with a timestamp and the error message for debugging
 			this.logger.error(`Login failed at ${new Date().toISOString()}: ${error.message}`);
 			throw new UnauthorizedException();
+		}
+	}
+
+	/**
+	 * Last-resort organization scope for a token: the user's first active `UserOrganization`
+	 * membership.
+	 *
+	 * Only consulted when both `employee.organizationId` and `user.lastOrganizationId` are null
+	 * (a non-employee user — e.g. a freshly seeded super admin — whose preference was never
+	 * persisted), so the common login paths never pay for the extra query. Runs outside an
+	 * authenticated request context, which is why the tenant is pinned explicitly in the `where`.
+	 * Defensive by contract: any lookup failure resolves to null and the token is issued without
+	 * an organization claim, exactly as it was before this fallback existed.
+	 *
+	 * @param userId The user to resolve a membership for.
+	 * @param tenantId The tenant the membership must belong to.
+	 * @returns The organization id of the user's first active membership, or null.
+	 */
+	private async resolveDefaultOrganizationId(userId: ID, tenantId: ID): Promise<ID | null> {
+		try {
+			const userOrganization = await this.userOrganizationService.findOneByOptions({
+				where: { userId, tenantId, isActive: true, isArchived: false },
+				order: { createdAt: 'ASC' }
+			});
+			return userOrganization?.organizationId ?? null;
+		} catch {
+			// `findOneByOptions` throws when no membership exists — no membership, no claim.
+			return null;
 		}
 	}
 
@@ -2049,7 +2090,14 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Determine organization context for tokens
-			const organizationId = lastOrganizationId ?? user.lastOrganizationId ?? employee?.organizationId;
+			let organizationId = lastOrganizationId ?? user.lastOrganizationId ?? employee?.organizationId;
+
+			// Same backfill as `login()`: a non-employee user with no persisted preference gets
+			// their first active organization membership so the token carries a usable scope.
+			// `setLastOrganizationAndTeam` below persists whatever is resolved here.
+			if (!organizationId) {
+				organizationId = await this.resolveDefaultOrganizationId(user.id, user.tenantId);
+			}
 
 			// Generate access and refresh tokens concurrently
 			const [accessToken, refreshToken] = await Promise.all([
