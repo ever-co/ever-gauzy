@@ -95,4 +95,26 @@ export class UpdateDocumentContentDTO {
 	@ValidateNested()
 	@Type(() => UpdateDocumentContentMetadataDTO)
 	readonly metadata?: UpdateDocumentContentMetadataDTO;
+
+	/**
+	 * The editor's selected organization. Without it the save is scoped by the token's
+	 * `lastOrganizationId` — null for a non-employee user (400, autosave dies), stale when the
+	 * editor has another organization of the tenant open (404). Optional on purpose: extending
+	 * `TenantOrganizationBaseDTO` would make the scope REQUIRED and break older clients, and the
+	 * route validates with `forbidNonWhitelisted`, so an undeclared field is a 400, not a strip.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	readonly organizationId?: ID;
+
+	/**
+	 * Accepted only so a client sending its standard `{ organizationId, tenantId }` scope pair
+	 * does not trip `forbidNonWhitelisted` — NEVER read: the tenant always comes from the
+	 * request context, not from the client.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	readonly tenantId?: ID;
 }

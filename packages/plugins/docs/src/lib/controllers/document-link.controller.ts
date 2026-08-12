@@ -13,7 +13,7 @@ import {
 } from '@gauzy/core';
 import { CreateDocumentLinkCommand } from '../commands/create-document-link.command';
 import { DeleteDocumentLinkCommand } from '../commands/delete-document-link.command';
-import { CreateDocumentLinkDTO, GetDocumentLinksQueryDTO } from '../dto';
+import { CreateDocumentLinkDTO, DocumentScopeQueryDTO, GetDocumentLinksQueryDTO } from '../dto';
 import { DocumentLink } from '../entities/document-link.entity';
 import { GetDocumentLinksQuery } from '../queries/get-document-links.query';
 
@@ -70,12 +70,22 @@ export class DocumentLinkController {
 
 	/**
 	 * The reverse direction: everything one document is attached to.
+	 *
+	 * `organizationId` is the client's selected organization — the document read behind this
+	 * route otherwise falls back to the token's org, which is null for non-employee users (400)
+	 * and stale when the client browses another organization of the tenant (404).
 	 */
 	@ApiOperation({ summary: 'List everything one document is linked to.' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Links retrieved successfully.' })
 	@Permissions(PermissionsEnum.DOCS_READ)
+	@UseValidationPipe({ whitelist: true, transform: true })
 	@Get('/documents/:id/links')
-	public async findForDocument(@Param('id', UUIDValidationPipe) id: ID): Promise<IPagination<IDocumentLink>> {
-		return this.queryBus.execute(new GetDocumentLinksQuery({ documentId: id }));
+	public async findForDocument(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() query?: DocumentScopeQueryDTO
+	): Promise<IPagination<IDocumentLink>> {
+		return this.queryBus.execute(
+			new GetDocumentLinksQuery({ documentId: id, organizationId: query?.organizationId })
+		);
 	}
 }

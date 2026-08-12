@@ -27,6 +27,7 @@ jest.mock(
 );
 
 import { getMetadataStorage } from 'class-validator';
+import { DocumentScopeQueryDTO } from './document-scope-query.dto';
 import { DocumentSettingsQueryDTO } from './document-settings.dto';
 import { GetDocumentLinksQueryDTO } from './document-link.dto';
 import { UpdateDocumentContentDTO, UpdateDocumentContentMetadataDTO } from './update-document-content.dto';
@@ -112,6 +113,15 @@ describe('UpdateDocumentContentDTO — the editor payload is fully declared', ()
 	it('restricts the metadata block to `schemaVersion`', () => {
 		expect(validatedPropertiesOf(UpdateDocumentContentMetadataDTO)).toEqual(['schemaVersion']);
 	});
+
+	// The route validates with `forbidNonWhitelisted: true`, so the editor's organization scope
+	// must be DECLARED here or every scoped save is a 400 — and without the scope, a token that
+	// carries no organization claim 400s the save anyway (autosave silently dying on demo).
+	it('declares the optional organization scope of a save', () => {
+		expect(validatedPropertiesOf(UpdateDocumentContentDTO)).toEqual(
+			expect.arrayContaining(['organizationId', 'tenantId'])
+		);
+	});
 });
 
 describe('Query DTOs carry an organization scope', () => {
@@ -123,5 +133,9 @@ describe('Query DTOs carry an organization scope', () => {
 
 	it('exposes organizationId on the settings query', () => {
 		expect(validatedPropertiesOf(DocumentSettingsQueryDTO)).toContain('organizationId');
+	});
+
+	it('exposes organizationId on the single-document scope query (detail read + document links)', () => {
+		expect(validatedPropertiesOf(DocumentScopeQueryDTO)).toContain('organizationId');
 	});
 });

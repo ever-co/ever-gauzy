@@ -29,8 +29,6 @@ import { DocsProcessingWorker } from './knowledge/queue/docs-processing.worker';
 import { DocsQueueService } from './knowledge/queue/docs-queue.service';
 import { DocsRecoveryService } from './knowledge/queue/docs-recovery.service';
 import { DocumentKnowledgeSearchService } from './knowledge/retrieval/retrieval.service';
-import { LegacyImportController } from './legacy-import/legacy-import.controller';
-import { LegacyImportService } from './legacy-import/legacy-import.service';
 import { LexicalStoreProvider } from './knowledge/vector-store/providers/lexical.provider';
 import { PgVectorStoreProvider } from './knowledge/vector-store/providers/pgvector.provider';
 import { ThumbnailProviders } from './knowledge/thumbnail';
@@ -97,10 +95,10 @@ const QUEUE_WORKER_ENABLED = isDocsQueueWorkerEnabled();
 		// scheduler when one is present.
 		...(QUEUE_ENABLED ? [SchedulerModule.forFeature({ queues: [DOCS_PROCESSING_QUEUE] })] : [])
 	],
-	// The legacy-import and inbound-email controllers are declared first: their static
-	// `/migrations/...` and `/inbound-email` segments must never be swallowed by the generic
-	// `/documents/:id` routes of the document controllers.
-	controllers: [LegacyImportController, InboundEmailController, ...Controllers],
+	// The inbound-email controller is declared first: its static `/inbound-email`
+	// segment must never be swallowed by the generic `/documents/:id` routes of
+	// the document controllers.
+	controllers: [InboundEmailController, ...Controllers],
 	// The subscribers are registered globally through the `@Plugin({ subscribers })` metadata —
 	// they must observe saves regardless of which module performs them.
 	providers: [
@@ -127,9 +125,6 @@ const QUEUE_WORKER_ENABLED = isDocsQueueWorkerEnabled();
 		// pure producer.
 		...(QUEUE_WORKER_ENABLED ? [DocsProcessingWorker] : []),
 		DocsRecoveryService,
-		// M4 consolidation: reads the legacy Organization-Documents / Help-Center tables
-		// (from @gauzy/core and @gauzy/plugin-knowledge-base) strictly read-only.
-		LegacyImportService,
 		// Registers docs_search / docs_read with the AI chat engine's tool registry
 		// (no-op when @gauzy/plugin-ai-chat is absent or GAUZY_DOCS_AI_ENABLED is false).
 		DocsChatToolsService,
@@ -160,7 +155,6 @@ const QUEUE_WORKER_ENABLED = isDocsQueueWorkerEnabled();
 		DocsQueueService,
 		DocsPipelineService,
 		DocsRecoveryService,
-		LegacyImportService,
 		RetrievalLogService,
 		DOCS_RETRIEVAL_LOG,
 		InboundAddressService,

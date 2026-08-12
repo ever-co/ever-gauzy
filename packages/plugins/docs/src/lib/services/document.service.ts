@@ -209,10 +209,12 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 *
 	 * @param id The document id.
 	 * @param relations Optional relations to join.
+	 * @param organizationId Explicit organization scope (the client's selected organization);
+	 * when omitted the request context's organization applies, as before.
 	 * @returns The scoped document entity.
 	 */
-	async findOneScoped(id: ID, relations: string[] = []): Promise<Document> {
-		return this.findOneWithinScope(id, { relations });
+	async findOneScoped(id: ID, relations: string[] = [], organizationId?: ID): Promise<Document> {
+		return this.findOneWithinScope(id, { relations, organizationId });
 	}
 
 	/**
@@ -256,10 +258,14 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 */
 	private async findOneWithinScope(
 		id: ID,
-		options: { relations?: string[]; withDeleted?: boolean } = {}
+		options: { relations?: string[]; withDeleted?: boolean; organizationId?: ID } = {}
 	): Promise<Document> {
 		const tenantId = RequestContext.currentTenantId();
-		const organizationId = this.resolveOrganizationId();
+		// An explicit scope (the client's selected organization) wins over the request context:
+		// the context carries the token's `lastOrganizationId`, which is null for non-employee
+		// users and stale when the client browses another organization of the tenant. The
+		// tenant, by contrast, is ALWAYS the request context's — never client input.
+		const organizationId = this.resolveOrganizationId(options);
 
 		const document = await this.typeOrmRepository.findOne({
 			where: { id, tenantId, organizationId },
@@ -491,7 +497,9 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			});
 		}
 
-		const document = await this.findOneScoped(id);
+		// The DTO's optional organizationId is the editor's selected organization — without it a
+		// save is scoped by the token's org (null for non-employee users → 400, autosave dies).
+		const document = await this.findOneScoped(id, [], input.organizationId);
 		await this.assertCanWrite(document);
 
 		if (document.kind !== DocumentKindEnum.PAGE) {

@@ -237,6 +237,37 @@ describe('DocumentService — organization scope', () => {
 		expect(service.resolveOrganizationId({ where: { organizationId: 'org-8' } } as any)).toBe('org-8');
 		expect(service.resolveOrganizationId()).toBe('org-1');
 	});
+
+	// The detail routes thread the client's selected organization down to here: the request
+	// context carries the token's `lastOrganizationId`, which is null for a non-employee user
+	// (the demo super admin — every detail read 400'd) and stale when the client browses another
+	// organization of the tenant (404 on rows the list just showed).
+	it('lets an explicitly passed organization win over the request context on the single read', async () => {
+		const { service, findOne } = buildService([documentRow({ organizationId: 'org-2' })]);
+
+		await expect(service.findOneScoped('doc-1', [], 'org-2')).resolves.toMatchObject({ id: 'doc-1' });
+		expect(findOne).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { id: 'doc-1', tenantId: 'tenant-1', organizationId: 'org-2' }
+			})
+		);
+	});
+
+	it('resolves the single read for a requester whose context carries no organization at all', async () => {
+		requestContext.organizationId = null;
+		const { service } = buildService([documentRow()]);
+
+		await expect(service.findOneScoped('doc-1', [], 'org-1')).resolves.toMatchObject({ id: 'doc-1' });
+	});
+
+	it('still 400s the single read when neither an explicit nor a context organization exists', async () => {
+		requestContext.organizationId = null;
+		const { service } = buildService([documentRow()]);
+
+		await expect(service.findOneScoped('doc-1')).rejects.toMatchObject({
+			response: { code: DOCS_ORGANIZATION_REQUIRED }
+		});
+	});
 });
 
 /**
@@ -325,6 +356,45 @@ describe('DocumentService — write access', () => {
 		await expect(service.updateContent('doc-1', { contentJson: emptyDoc() } as any)).rejects.toBeInstanceOf(
 			ForbiddenException
 		);
+		expect((service as any).save).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * The save half of the same defect: `PUT /:id/content` resolves the row through
+ * `findOneScoped`, so a token without an organization claim 400'd every autosave even after the
+ * read path was fixed. The DTO's optional `organizationId` (the editor's selected organization)
+ * must reach the row lookup.
+ */
+describe('DocumentService — content save scope', () => {
+	it('threads the DTO organization into the row lookup so a save works without a context org', async () => {
+		requestContext.organizationId = null;
+		const { service, findOne } = buildService([documentRow({ kind: 'PAGE', updatedAt: new Date(0) })], {
+			canWrite: true
+		});
+		(service as any).save = jest.fn(async (input: any) => input);
+		(service as any).documentVersionService = { captureSnapshotIfNeeded: jest.fn() };
+
+		await expect(
+			service.updateContent('doc-1', { contentJson: emptyDoc(), organizationId: 'org-1' } as any)
+		).resolves.toBeDefined();
+		expect(findOne).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { id: 'doc-1', tenantId: 'tenant-1', organizationId: 'org-1' }
+			})
+		);
+	});
+
+	it('still 400s a save that carries no organization when the context has none either', async () => {
+		requestContext.organizationId = null;
+		const { service } = buildService([documentRow({ kind: 'PAGE', updatedAt: new Date(0) })], {
+			canWrite: true
+		});
+		(service as any).save = jest.fn();
+
+		await expect(service.updateContent('doc-1', { contentJson: emptyDoc() } as any)).rejects.toMatchObject({
+			response: { code: DOCS_ORGANIZATION_REQUIRED }
+		});
 		expect((service as any).save).not.toHaveBeenCalled();
 	});
 });
