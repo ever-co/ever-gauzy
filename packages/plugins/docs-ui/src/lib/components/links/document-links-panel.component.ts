@@ -82,6 +82,22 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	 */
 	@Input() entityLabel?: string;
 
+	/**
+	 * Read-only hosting: hides the attach / upload / unlink affordances while
+	 * keeping open and download. For surfaces that present the record itself as
+	 * read-only (the invoice/estimate VIEW page) — mutating attachments belongs on
+	 * the edit surface there. A host choice, not a permission: `canLink` /
+	 * `canUpload` are untouched.
+	 */
+	@Input() readonly = false;
+
+	/**
+	 * When set, the whole card renders only once at least one link exists — on a
+	 * read-only host an empty "Documents" card is pure noise. Off by default so
+	 * the existing hosts keep offering "attach" on an empty panel.
+	 */
+	@Input() hideWhenEmpty = false;
+
 	/** Emits the current link count after every load/mutation (host badge counters). */
 	@Output() countChanged = new EventEmitter<number>();
 
@@ -132,6 +148,16 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 			this.store.hasPermission(PermissionsEnum.DOCS_READ) &&
 			this.store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS)
 		);
+	}
+
+	/**
+	 * The template's root gate: `visible`, narrowed by `hideWhenEmpty` to "only
+	 * once at least one link has actually loaded". A load in flight or a failed
+	 * load keeps the card up regardless — hiding it there would hide the error
+	 * state and the retry affordance with it.
+	 */
+	get shown(): boolean {
+		return this.visible && (!this.hideWhenEmpty || this.loading || this.loadError || this.links.length > 0);
 	}
 
 	/** Attaching and detaching are both `DOCS_UPDATE` (`POST`/`DELETE /links`). */

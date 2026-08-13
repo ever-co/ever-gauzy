@@ -8,6 +8,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
+	BaseEntityEnum,
 	IInvoice,
 	IOrganizationContact,
 	IInvoiceItem,
@@ -59,6 +60,12 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	form: UntypedFormGroup;
 	invoice: IInvoice;
 	organization: IOrganization;
+
+	/**
+	 * Entity type the record-side Documents panel attaches to. An estimate is an
+	 * `Invoice` row with `isEstimate` set, so both share one `DocumentLink.entity`.
+	 */
+	public readonly documentEntity = BaseEntityEnum.Invoice;
 	itemsToDelete: string[] = [];
 	invoiceItems: IInvoiceItem[] = [];
 	selectedOrganizationContact: IOrganizationContact;
@@ -87,6 +94,17 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	}
 	get isEstimate() {
 		return this._isEstimate;
+	}
+
+	/**
+	 * Label persisted into `DocumentLink.metadata.label` when a document is attached,
+	 * so the Documents hub can name this record without re-fetching it.
+	 *
+	 * @param invoice The invoice being edited.
+	 * @returns The invoice number prefixed with `#`, falling back to the id.
+	 */
+	documentLabel(invoice: IInvoice): string {
+		return `#${invoice?.invoiceNumber ?? invoice?.id}`;
 	}
 
 	constructor(

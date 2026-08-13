@@ -17,7 +17,7 @@ import { IDocumentInboundAddressCreateResult, IDocumentInboundAddressView } from
 /**
  * HTTP client for the inbound email capture settings (`@gauzy/plugin-docs`,
  * `DocumentInboundAddressController`). One method per endpoint, scoped to its consumer the
- * same way `document-activity.service.ts` and `legacy-import.service.ts` are.
+ * same way `document-activity.service.ts` is.
  *
  * 🛑 **The scope is a plain `organizationId` — never a `where[…]`, never a `tenantId`.**
  * Every route on this controller binds a flat DTO (`DocumentInboundAddressQueryDTO`,

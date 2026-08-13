@@ -417,6 +417,20 @@
                           </div>
                         </div>
                       }
+                      <!--
+                        Record-side Documents panel (spec 00 §6.14 R-LNK-02): the edit
+                        surface carries the full panel — attach existing, upload new,
+                        unlink — while the view page mounts it read-only. It gates
+                        itself on DOCS_READ + FEATURE_DOCUMENTS.
+                      -->
+                      @if (invoice) {
+                        <gz-document-links-panel
+                          class="invoice-documents"
+                          [entity]="documentEntity"
+                          [entityId]="invoice.id"
+                          [entityLabel]="documentLabel(invoice)"
+                        ></gz-document-links-panel>
+                      }
                     </nb-card-body>
                     <nb-card-footer>
                       @if (!duplicate) {

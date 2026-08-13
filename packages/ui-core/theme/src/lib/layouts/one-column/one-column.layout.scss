@@ -1,6 +1,12 @@
 @use '@nebular/theme/styles/global/breakpoints' as *;
 @use 'themes' as *;
 
+// Same hairline as cards, overlays and the user/workspace menus — a translucent
+// grey that darkens light surfaces and lightens dark ones, so ONE value is
+// visible in all 8 themes. `divider-color` is not: it resolves to #edf1f7 on
+// the light themes, invisible against the chat surface.
+$chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
 
 @include nb-install-component() {
   .menu-sidebar ::ng-deep .scrollable {
@@ -51,14 +57,14 @@
     order: 0 !important;
   }
 
-  // AI Chat sidebar — a full-height vertical block like the nav menu sidebar
-  // (Menu | Chat | Canvas, or Menu | Canvas | Chat when docked right).
-  // The HOST stays in the flex flow and reserves the width; Nebular's
-  // .main-container is position:fixed in windowMode, so it is pinned to the
-  // full viewport height (top 0 → nothing above or below it). Host and panel
-  // BOTH size from --gz-chat-width (the persisted user width, bound inline on
-  // the host by the layout template) with the same 24rem fallback — one source
-  // of truth, and the two can never disagree.
+  // AI Chat sidebar — a vertical column between the nav menu and the canvas
+  // (Menu | Chat | Canvas, or Menu | Canvas | Chat when docked right) that
+  // starts BELOW the fixed header band: the band (+ Create, the filter combos)
+  // spans everything right of the nav menu, and the chat tucks under it like
+  // the canvas does. The HOST stays in the flex flow and reserves the width.
+  // Host and panel BOTH size from --gz-chat-width (the persisted user width,
+  // bound inline on the host by the layout template) with the same 24rem
+  // fallback — one source of truth, and the two can never disagree.
   nb-sidebar.chat-sidebar {
     order: 0 !important;
     align-self: stretch;
@@ -66,13 +72,11 @@
     // Docked to the right of the canvas: Menu | Canvas | Chat.
     // .layout (the content column) has default order 0, so order 2 places
     // the host after it (same trick as .menu-sidebar-rtl).
+    // (No per-dock border override: the panel carries a hairline on BOTH
+    // vertical edges unconditionally — see the .scrollable frame below —
+    // which also makes RTL correct for free.)
     &.chat-sidebar-end {
       order: 2 !important;
-
-      ::ng-deep .main-container .scrollable {
-        border-right: none;
-        border-left: 1px solid nb-theme(divider-color);
-      }
     }
 
     &.expanded {
@@ -118,20 +122,28 @@
       }
     }
 
-    // Pinned to the viewport's top so the chat is a FULL-HEIGHT column with nothing above it: the
-    // panel owns its own top edge (title row + icons), exactly like the nav menu owns the logo.
-    // The header is inset around it instead (observeCanvasLeft in the layout component publishes
-    // --gz-canvas-left/right, which the fixed-header rules above consume), so header dropdowns open
-    // over the canvas, never over the chat.
+    // Pinned UNDER the fixed header band: the band owns the top edge in every
+    // column right of the nav menu, and the chat starts at its bottom —
+    // `--gz-header-height` is the band's REAL rendered height (published by a
+    // ResizeObserver in the layout ts), so a wrapping two-row band moves the
+    // chat down with it. `!important` stays on top/height: _overrides.scss
+    // still pins every .main-container-fixed to the 4.5rem constant.
+    //
+    // z-index 1039 — one BELOW the header's 1040 (the nav menu stays at 1041
+    // and still owns its full column). The two no longer overlap geometrically,
+    // but two things must resolve header-on-top: the one-frame window where the
+    // band wraps/unwraps before --gz-header-height republishes, and header
+    // dropdowns that render INLINE in the band's stacking context (the
+    // date-range picker) opening over the chat column.
     //
     // Width comes straight from `--gz-chat-width` (the user's chosen/persisted width) rather than
     // from a ResizeObserver mirroring the host: one source of truth, and nothing to go stale.
     ::ng-deep .main-container {
       width: var(--gz-chat-width, 24rem);
       max-width: none;
-      top: 0 !important;
-      height: 100vh !important;
-      z-index: 1041; // same layer as the nav menu sidebar
+      top: var(--gz-header-height, var(--header-height, 4.5rem)) !important;
+      height: calc(100vh - var(--gz-header-height, var(--header-height, 4.5rem))) !important;
+      z-index: 1039; // one below the fixed header's 1040 — see comment above
       transition: width 0.2s ease;
       overflow: hidden;
 
@@ -149,7 +161,14 @@
         // transparent, and an overlay using them lets the conversation bleed through.
         --gz-chat-surface: #{nb-theme(gauzy-sidebar-background-2)};
         color: nb-theme(text-basic-color);
-        border-right: 1px solid nb-theme(divider-color);
+        // A hairline FRAME on every edge that ever meets another surface:
+        // left (nav rail in the start dock), right (canvas — or the viewport
+        // edge in the end dock, harmless), top (the chat/header seam). No
+        // bottom — that edge is the viewport's. The frame is unconditional,
+        // so dock flips and RTL need no per-side overrides.
+        border-right: 1px solid #{$chat-hairline};
+        border-left: 1px solid #{$chat-hairline};
+        border-top: 1px solid #{$chat-hairline};
       }
     }
   }
@@ -415,7 +434,10 @@ nb-sidebar[tag='menu-sidebar'] {
   }
 
   @media screen and (min-width: 1940px) {
-    nb-layout.window-mode nb-layout-header.fixed ~ .layout-container nb-sidebar .main-container-fixed {
+    // :not(.chat-sidebar): the chat starts UNDER the header band at every
+    // viewport width — a generic top:0/100vh re-pin aimed at it here would be
+    // a trap (the chat rule's !important wins today, but only accidentally).
+    nb-layout.window-mode nb-layout-header.fixed ~ .layout-container nb-sidebar:not(.chat-sidebar) .main-container-fixed {
       top: 0;
       height: 100vh;
       z-index: 1041;
@@ -469,52 +491,54 @@ nb-sidebar[tag='menu-sidebar'] {
   @include nb-rtl(left, 20px);
 }
 
-// ── The header band belongs to the CANVAS ────────────────────────────────────
+// ── The header band spans everything right of the nav menu ──────────────────
 //
-// Nebular renders `nb-layout-header.fixed` at `left: 0; width: 100%`, i.e. across every column.
-// The chat panel is `position: fixed` at `z-index: 1041`, one above the header's 1040, so any
-// header content sharing that horizontal range is COVERED — measured on demo at 1280px: nav
-// sidebar 0-256, chat 256-640, header content starting at 384, so 256px of it (the demo banner's
-// opening words, the first filter) sat underneath the panel.
+// Nebular renders `nb-layout-header.fixed` at `left: 0; width: 100%`, i.e. across every column —
+// including the nav menu sidebar, whose top rows (logo, tenant switcher) it would cover. The band
+// is therefore inset to start at the menu's trailing edge. It deliberately RUNS OVER the chat
+// column: the chat panel sits at z-index 1039 (one below the header's 1040) with its top at the
+// band's measured bottom (`--gz-header-height`), so the band owns the top edge of both the chat
+// and the canvas, and header dropdowns may open over either.
 //
-// This used to be handled with `padding-left` on the header equal to the chat's width. Two
-// problems: the number was wrong (it ignored the nav sidebar in front of the chat), and padding is
-// the wrong lever anyway — it moves only what is inside the header box, so anything outside it is
-// behind the chat again. Insetting the BAND makes the overlap impossible rather than arithmetically
-// avoided.
+// (Historical note: the band used to be inset to the CANVAS instead — `--gz-canvas-left/right`
+// measured off `nb-layout-column` — with the chat a full-height column at z 1041 beside it. That
+// made the header's geometry depend on chat state, which is where the whole staleness-bug class
+// came from; the vars were renamed on the semantics flip so a stale producer fails loudly to 0px
+// instead of silently winning.)
 //
-// `--gz-canvas-left` is measured off `nb-layout-column` — the real canvas edge, after whatever
-// sidebars precede it, at whatever width the user has dragged the chat to. See the layout ts.
-// Both edges are pinned to the canvas, not just the leading one: the chat docks to either side, so
-// an end-docked panel would otherwise sit on top of the header's trailing edge exactly as the
-// start-docked one did.
+// `--gz-band-left/right` are measured off the layout container and the menu sidebar host — see
+// observeHeaderBand() in the layout ts. Both edges are published because RTL puts the menu at the
+// trailing edge.
 //
 // The selector deliberately mirrors Nebular's own — `nb-layout.window-mode .layout nb-layout-header`
 // sets `width: 100%; max-width: 1920px; margin: 0 auto` at specificity (0,2,2). A plain
 // `nb-layout-header.fixed` is (0,2,1) and LOSES the width, which leaves the band full-viewport-wide
 // and merely translated right by the inset — pushing the header's actions off the screen edge
-// instead of fitting them to the canvas. Matching the full selector wins on specificity rather than
+// instead of fitting them to the band. Matching the full selector wins on specificity rather than
 // on stylesheet order.
 //
 // `max-width` and the auto margins go with it: they exist to cap and centre a full-width band, and
-// both offsets are already measured off `nb-layout-column`, which has that centring baked into its
-// own left edge. Pinning to the column matches the content exactly; re-capping would not.
+// both offsets are already measured off the layout container, which has that centring baked into
+// its own edges. Pinning to the container matches the content exactly; re-capping would not.
 :host ::ng-deep nb-layout.window-mode .layout nb-layout-header.fixed,
 :host ::ng-deep nb-layout .layout nb-layout-header.fixed {
-  left: var(--gz-canvas-left, 0px);
-  right: var(--gz-canvas-right, 0px);
+  left: var(--gz-band-left, 0px);
+  right: var(--gz-band-right, 0px);
   width: auto;
   max-width: none;
   margin-left: 0;
   margin-right: 0;
 }
 
-// The footer has the SAME shape of problem and the same fix — Nebular renders it fixed and full
-// width, so an expanded chat covers its leading edge exactly as it covered the header's.
+// INERT today: in this Nebular version the footer's `fixed` attribute is a no-op — the footer is
+// `display: block; margin-top: auto` IN FLOW inside the `.content` column, so `left/right` on it
+// do nothing and it can never extend under the chat (it starts after the chat host in the flex
+// row). Kept only so a future genuinely-fixed footer inherits the band inset instead of
+// resurrecting the full-width overlap.
 :host ::ng-deep nb-layout.window-mode .layout nb-layout-footer.fixed,
 :host ::ng-deep nb-layout .layout nb-layout-footer.fixed {
-  left: var(--gz-canvas-left, 0px);
-  right: var(--gz-canvas-right, 0px);
+  left: var(--gz-band-left, 0px);
+  right: var(--gz-band-right, 0px);
   width: auto;
   max-width: none;
   margin-left: 0;

@@ -329,6 +329,9 @@ $nb-themes: nb-register-theme(
     tabset-tab-focus-underline-color: none,
     tabset-tab-text-transform: capitalize,
     button-filled-text-transform: none,
+    // Ghost buttons were the one appearance still inheriting Nebular's stock
+    // UPPERCASE (dialog Cancel vs filled Create read as two different apps).
+    button-ghost-text-transform: none,
     font-family-primary: string.unquote('Inter, sans-serif'),
     font-family-secondary: string.unquote('Inter, sans-serif'),
     button-outline-text-transform: none,
@@ -470,6 +473,9 @@ $nb-themes: nb-register-theme(
     tabset-tab-focus-underline-color: none,
     tabset-tab-text-transform: capitalize,
     button-filled-text-transform: none,
+    // Ghost buttons were the one appearance still inheriting Nebular's stock
+    // UPPERCASE (dialog Cancel vs filled Create read as two different apps).
+    button-ghost-text-transform: none,
     font-family-primary: string.unquote('Inter, sans-serif'),
     font-family-secondary: string.unquote('Inter, sans-serif'),
     button-outline-text-transform: none,

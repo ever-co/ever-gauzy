@@ -91,6 +91,15 @@ export class UploadQueueService implements OnDestroy {
 	private readonly _documentReady$ = new Subject<IDocument>();
 	public readonly documentReady$: Observable<IDocument> = this._documentReady$.asObservable();
 
+	/**
+	 * Emits each document whose processing settles, REGARDLESS of outcome —
+	 * `documentReady$` is the READY-only subset. The stats tiles hang off this
+	 * one: a document that settles FAILED moves the Failed count exactly as much
+	 * as a READY one moves Ready.
+	 */
+	private readonly _documentSettled$ = new Subject<IDocument>();
+	public readonly documentSettled$: Observable<IDocument> = this._documentSettled$.asObservable();
+
 	/** Client-side validation failures from the last `enqueue` call. */
 	private readonly _validationErrors$ = new Subject<UploadValidationError[]>();
 	public readonly validationErrors$: Observable<UploadValidationError[]> = this._validationErrors$.asObservable();
@@ -349,6 +358,7 @@ export class UploadQueueService implements OnDestroy {
 					this.actions.dispatch(DocumentsActions.rowChanged(document));
 					if (this.isSettled(document)) {
 						this.forgetPending(document.id as ID);
+						this._documentSettled$.next(document);
 						if (document.status === DocumentStatusEnum.READY) {
 							this._documentReady$.next(document);
 							// Classification may have assigned categories/tags — refresh facets once.

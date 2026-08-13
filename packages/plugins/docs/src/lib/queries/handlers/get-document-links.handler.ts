@@ -17,7 +17,7 @@ export class GetDocumentLinksHandler implements IQueryHandler<GetDocumentLinksQu
 	public async execute(query: GetDocumentLinksQuery): Promise<IPagination<IDocumentLink>> {
 		const { entity, entityId, documentId, organizationId } = query.filter;
 		if (documentId) {
-			return this.documentLinkService.getLinksForDocument(documentId);
+			return this.documentLinkService.getLinksForDocument(documentId, organizationId);
 		}
 		return this.documentLinkService.getLinksForEntity(entity, entityId, organizationId);
 	}

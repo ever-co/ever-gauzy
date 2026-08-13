@@ -78,6 +78,49 @@ describe('FacetMultiselectComponent — option reference stability', () => {
 	});
 
 	it('exposes a value-based trackBy so unchanged options are never recreated', () => {
-		expect(component.trackByValue(0, { value: 'FILE' })).toBe('FILE');
+		expect(component.trackByValue({ value: 'FILE' })).toBe('FILE');
+	});
+
+	it('rebuilds options when the RESOLVED labels change (locale switch) even though the buckets are identical', () => {
+		// Enum facets carry no `label`; the option label comes from `labelFor` (a
+		// translation). A locale switch changes that result while the bucket content
+		// stays byte-identical — the fingerprint must see the resolved label or the
+		// dropdown keeps serving the previous language.
+		let locale = 'en';
+		component.labelFor = (value: string) => `${locale}:${value}`;
+		component.buckets = [bucket('READY')];
+		component.selected = [];
+		component.ngOnChanges();
+		const before = component.options;
+		expect(before[0].label).toBe('en:READY');
+
+		locale = 'de';
+		component.buckets = [bucket('READY')];
+		component.ngOnChanges();
+
+		expect(component.options).not.toBe(before);
+		expect(component.options[0].label).toBe('de:READY');
+	});
+
+	it('keeps the SAME selectedValues reference while the selection content is unchanged', () => {
+		applyInputs(['FOLDER', 'PAGE'], ['FOLDER']);
+		const first = component.selectedValues;
+
+		applyInputs(['FOLDER', 'PAGE'], ['FOLDER']);
+		applyInputs(['FOLDER', 'PAGE'], ['FOLDER']);
+
+		expect(component.selectedValues).toBe(first);
+		expect(first).toEqual(['FOLDER']);
+	});
+
+	it('syncs selectedValues on a user change without waiting for the store round-trip', () => {
+		applyInputs(['FOLDER', 'PAGE'], []);
+		component.onSelectedChange(['PAGE']);
+		const emitted = component.selectedValues;
+
+		// The store echoes the same content back as a new array — no rebuild.
+		applyInputs(['FOLDER', 'PAGE'], ['PAGE']);
+
+		expect(component.selectedValues).toBe(emitted);
 	});
 });

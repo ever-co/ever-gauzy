@@ -130,6 +130,10 @@ $gauzy-density: (
 	gauzy-table-chip-padding-y: 0.0625rem,
 	gauzy-table-chip-padding-x: 0.375rem,
 	gauzy-table-chip-gap: 0.1875rem,
+	// Vertical breathing room between a cell's text line and the chip row under
+	// it. Distinct from `gauzy-table-chip-gap` (chip↔chip): collapsing the two
+	// into one token is what let the chips ride up into the text.
+	gauzy-table-chip-block-gap: 0.25rem,
 	// A status pill should cost a row exactly one line box and no more.
 	gauzy-table-badge-height: 1.25rem,
 	// ── People lists inside cells (`ngx-people-list`) ───────────────────────

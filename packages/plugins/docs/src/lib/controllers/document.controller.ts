@@ -20,6 +20,7 @@ import { UpdateDocumentContentCommand } from '../commands/update-document-conten
 import {
 	BulkDocumentActionDTO,
 	CreateDocumentDTO,
+	DocumentScopeQueryDTO,
 	GetDocumentsQueryDTO,
 	IDocumentBulkResult,
 	UpdateDocumentContentDTO,
@@ -202,16 +203,24 @@ export class DocumentController {
 
 	/**
 	 * Retrieves a single document by id (`relations` query param honored).
+	 *
+	 * `organizationId` is the client's selected organization. Without it the scope is resolved
+	 * from the token's `lastOrganizationId`, which is null for non-employee users (400) and stale
+	 * when the client browses another organization of the tenant (404 on rows the list showed).
+	 * `relations` stays a raw `@Query('relations')` extraction on purpose: its metatype is not a
+	 * DTO class, so the route's ValidationPipe skips it and `toRelationList` remains the gate.
 	 */
 	@ApiOperation({ summary: 'Get document by ID.' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Document retrieved successfully.', type: Document })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Document not found.' })
 	@Permissions(PermissionsEnum.DOCS_READ)
+	@UseValidationPipe({ whitelist: true, transform: true })
 	@Get('/:id')
 	public async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query('relations') relations?: string | string[]
+		@Query('relations') relations?: string | string[],
+		@Query() query?: DocumentScopeQueryDTO
 	): Promise<IDocument> {
-		return this.queryBus.execute(new GetDocumentQuery(id, toRelationList(relations)));
+		return this.queryBus.execute(new GetDocumentQuery(id, toRelationList(relations), query?.organizationId));
 	}
 }

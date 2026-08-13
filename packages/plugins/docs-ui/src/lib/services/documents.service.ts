@@ -22,14 +22,17 @@ import {
 	IDocumentBulkResult,
 	IDocumentContentUpdateInput,
 	IDocumentFacets,
+	IDocumentFacetsWire,
 	IDocumentFindInput,
 	IDocumentSettings,
 	IDocumentSettingsDefaults,
+	IDocumentStats,
 	IDocumentUploadOptions,
 	IDocumentUploadResponse,
 	IDocumentUploadResult,
 	IDocumentsQueryParams,
 	IKnowledgeStatus,
+	normalizeDocumentFacets,
 	toDocumentsQueryParams
 } from '../models/docs-api.model';
 import { IDocumentShareCreateInput, IDocumentShareUpdateInput } from '../models/docs-share.model';
@@ -82,8 +85,29 @@ export class DocumentsService {
 		});
 	}
 
+	/**
+	 * 🛑 Mapped through `normalizeDocumentFacets`: the endpoint answers enum facets
+	 * as `Record<value, count>` maps and categories/tags as `{ id, name, count }`
+	 * rows — this single funnel is what keeps every consumer on `{ value, label,
+	 * count }` buckets (stored raw, per-option counts never rendered and the
+	 * Category/Tag options bound `undefined` values).
+	 */
 	getFacets(params: IDocumentFindInput = {}): Observable<IDocumentFacets> {
-		return this.http.get<IDocumentFacets>(`${this.API_URL}/documents/facets`, {
+		return this.http
+			.get<IDocumentFacetsWire>(`${this.API_URL}/documents/facets`, {
+				params: toParams(this.toQueryParams(params))
+			})
+			.pipe(map(normalizeDocumentFacets));
+	}
+
+	/**
+	 * Org-global stats for the hub tiles (`GET /documents/stats`). The endpoint
+	 * ignores filters beyond the mandatory `where` scope — tile numbers stay put
+	 * while the user filters. Callers treat any failure (incl. 404 on a deployment
+	 * that predates the route) as "hide the tiles", never as an error surface.
+	 */
+	getStats(params: IDocumentFindInput = {}): Observable<IDocumentStats> {
+		return this.http.get<IDocumentStats>(`${this.API_URL}/documents/stats`, {
 			params: toParams(this.toQueryParams(params))
 		});
 	}
@@ -106,8 +130,26 @@ export class DocumentsService {
 		});
 	}
 
+	/**
+	 * The selected organization's scope as wire params for the DETAIL endpoints (single read,
+	 * settings, links). Unlike the list trio, those endpoints fall back to the token's
+	 * organization when none is sent — null for a non-employee admin (400
+	 * `DOCS_ORGANIZATION_REQUIRED` on every detail read), stale when the UI browses another
+	 * organization of the tenant (404 on rows the list just showed). Absent values are omitted
+	 * entirely: `toParams()` serializes `undefined` as the literal string "undefined".
+	 */
+	private organizationScope(): { organizationId?: ID; tenantId?: ID } {
+		const organization = this.store.selectedOrganization;
+		return {
+			...(organization?.id ? { organizationId: organization.id as ID } : {}),
+			...(organization?.tenantId ? { tenantId: organization.tenantId as ID } : {})
+		};
+	}
+
 	getById(id: ID, relations: string[] = []): Observable<IDocument> {
-		return this.http.get<IDocument>(`${this.API_URL}/documents/${id}`, { params: toParams({ relations }) });
+		return this.http.get<IDocument>(`${this.API_URL}/documents/${id}`, {
+			params: toParams({ relations, ...this.organizationScope() })
+		});
 	}
 
 	/**
@@ -132,7 +174,16 @@ export class DocumentsService {
 	// ─── Documents: write ────────────────────────────────────────
 
 	create(input: IDocumentCreateInput): Observable<IDocument> {
-		return this.http.post<IDocument>(`${this.API_URL}/documents`, input);
+		// `CreateDocumentDTO` extends `TenantOrganizationBaseDTO`, whose `organizationId`
+		// is required when no `organization` object is sent — the dialogs do not carry one,
+		// so default the scope from the selected organization (same as `uploadMany`).
+		// Without it every "New folder" / "New page" is a validation 400.
+		const organization = this.store.selectedOrganization;
+		return this.http.post<IDocument>(`${this.API_URL}/documents`, {
+			...input,
+			organizationId: input.organizationId ?? (organization?.id as ID),
+			tenantId: input.tenantId ?? (organization?.tenantId as ID)
+		});
 	}
 
 	update(id: ID, input: IDocumentUpdateInput): Observable<IDocument> {
@@ -323,7 +374,16 @@ export class DocumentsService {
 	 * document → 423 `DOCS_LOCKED`. `forceSnapshot` bypasses the version debounce.
 	 */
 	updateContent(id: ID, input: IDocumentContentUpdateInput): Observable<IDocument> {
-		return this.http.put<IDocument>(`${this.API_URL}/documents/${id}/content`, input);
+		// The content route resolves its scope from the token when the body carries none — the
+		// same null/stale token-org failure as `getById`, but on the SAVE path, where it surfaces
+		// as autosave silently dying. Body fields rather than query params: JSON serialization
+		// drops `undefined`, so an absent scope is simply not sent.
+		const organization = this.store.selectedOrganization;
+		return this.http.put<IDocument>(`${this.API_URL}/documents/${id}/content`, {
+			...input,
+			organizationId: input.organizationId ?? (organization?.id as ID),
+			tenantId: input.tenantId ?? (organization?.tenantId as ID)
+		});
 	}
 
 	/** Stable app-relative authenticated inline stream URL (spec 05 §6.6 — persisted as image `src`). */
@@ -405,7 +465,9 @@ export class DocumentsService {
 	/** Links of one document. The endpoint answers `IPagination<IDocumentLink>` — unwrapped here. */
 	getLinks(id: ID): Observable<IDocumentLink[]> {
 		return this.http
-			.get<IPagination<IDocumentLink>>(`${this.API_URL}/documents/${id}/links`)
+			.get<IPagination<IDocumentLink>>(`${this.API_URL}/documents/${id}/links`, {
+				params: toParams(this.organizationScope())
+			})
 			.pipe(map((result) => result?.items ?? []));
 	}
 
@@ -414,15 +476,9 @@ export class DocumentsService {
 	 * organization scope, and the endpoint answers a pagination envelope.
 	 */
 	findLinks(entity: BaseEntityEnum, entityId: ID): Observable<IDocumentLink[]> {
-		const organization = this.store.selectedOrganization;
 		return this.http
 			.get<IPagination<IDocumentLink>>(`${this.API_URL}/links`, {
-				params: toParams({
-					entity,
-					entityId,
-					...(organization?.id ? { organizationId: organization.id } : {}),
-					...(organization?.tenantId ? { tenantId: organization.tenantId } : {})
-				})
+				params: toParams({ entity, entityId, ...this.organizationScope() })
 			})
 			.pipe(map((result) => result?.items ?? []));
 	}
@@ -511,13 +567,21 @@ export class DocumentsService {
 
 	// ─── Settings ────────────────────────────────────────────────
 
-	/** Org defaults + read-only deployment capabilities (spec 03 §4.14). */
+	/**
+	 * Org defaults + read-only deployment capabilities (spec 03 §4.14). The scope params matter:
+	 * `DocumentSettingsQueryDTO` accepts them, and without them the controller falls back to the
+	 * token's organization — null for a non-employee admin, which blanks the settings page.
+	 */
 	getSettings(): Observable<IDocumentSettings> {
-		return this.http.get<IDocumentSettings>(`${this.API_URL}/settings`);
+		return this.http.get<IDocumentSettings>(`${this.API_URL}/settings`, {
+			params: toParams(this.organizationScope())
+		});
 	}
 
 	/** Partial update of the org-defaults block only (`capabilities` is never writable). */
 	updateSettings(input: Partial<IDocumentSettingsDefaults>): Observable<IDocumentSettings> {
-		return this.http.put<IDocumentSettings>(`${this.API_URL}/settings`, input);
+		return this.http.put<IDocumentSettings>(`${this.API_URL}/settings`, input, {
+			params: toParams(this.organizationScope())
+		});
 	}
 }

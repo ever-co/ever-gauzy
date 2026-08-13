@@ -81,21 +81,6 @@
 					{{ 'DOCS.UPLOAD.BUTTON' | translate }}
 				</button>
 			</ng-template>
-			<!-- Header overflow menu — admin-only actions that are not part of the daily flow.
-			     "Import legacy data" lives here per `09-consolidation-migration.md` §10.4. -->
-			<ng-template [ngxPermissionsOnly]="docsPermissions.manage">
-				<button
-					nbButton
-					size="small"
-					appearance="ghost"
-					class="docs-browse-overflow"
-					[nbContextMenu]="overflowMenu"
-					[nbContextMenuTag]="overflowMenuTag"
-					[attr.aria-label]="'DOCS.A11Y.PAGE_ACTIONS' | translate"
-				>
-					<nb-icon icon="more-vertical-outline"></nb-icon>
-				</button>
-			</ng-template>
 		</div>
 	</div>
 
@@ -131,6 +116,10 @@
 		</ng-container>
 	</nav>
 
+	<!-- Stats tiles — org-global on purpose (the preset chips' counts are the
+	     filter-relative numbers); hides itself when the endpoint is unavailable. -->
+	<gz-docs-stats-line #statsLine></gz-docs-stats-line>
+
 	<!-- Preset chips -->
 	<gz-docs-preset-chips
 		[counts]="query.presetCounts$ | async"
@@ -148,6 +137,19 @@
 		(clearAll)="onClearAll()"
 		(applyView)="onApplySavedView($event)"
 	></gz-docs-filter-bar>
+
+	<!-- Always-visible drop strip. VISUAL-ONLY: the page-root gzDocsUploadDropzone
+	     owns every drop (a second directive instance would double-fire); the strip
+	     mirrors its drag state and clicks through to the same upload flow. -->
+	<ng-template [ngxPermissionsOnly]="docsPermissions.create">
+		<gz-docs-drop-strip
+			[active]="dropActive"
+			[maxFileSizeBytes]="uploadQueue.maxFileSizeBytes"
+			[maxFiles]="uploadQueue.maxFilesPerUpload"
+			[accept]="uploadAccept"
+			(browse)="openUploadFlow()"
+		></gz-docs-drop-strip>
+	</ng-template>
 
 	<!-- Upload progress -->
 	<gz-docs-upload-progress

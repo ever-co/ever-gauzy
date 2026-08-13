@@ -6,6 +6,7 @@ import { DocumentReviewController } from './document-review.controller';
 import { DocumentInboundAddressController } from './document-inbound-address.controller';
 import { DocumentSettingsController } from './document-settings.controller';
 import { DocumentShareController } from './document-share.controller';
+import { DocumentStatsController } from './document-stats.controller';
 import { DocumentTreeController } from './document-tree.controller';
 import { DocumentUploadController } from './document-upload.controller';
 import { DocumentVersionController } from './document-version.controller';
@@ -18,6 +19,7 @@ export * from './document-review.controller';
 export * from './document-inbound-address.controller';
 export * from './document-settings.controller';
 export * from './document-share.controller';
+export * from './document-stats.controller';
 export * from './document-tree.controller';
 export * from './document-upload.controller';
 export * from './document-version.controller';
@@ -39,6 +41,8 @@ export const Controllers = [
 	DocumentUploadController,
 	DocumentKnowledgeController,
 	DocumentReviewController,
+	// Before DocumentController: its static `/documents/stats` must beat `/documents/:id`.
+	DocumentStatsController,
 	DocumentController,
 	DocumentTreeController,
 	DocumentVersionController,

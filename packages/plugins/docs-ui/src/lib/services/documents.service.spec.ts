@@ -8,7 +8,7 @@ jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {} }));
 
 import { HttpErrorResponse, HttpEventType, HttpParams, HttpResponse } from '@angular/common/http';
 import { firstValueFrom, Observable, of } from 'rxjs';
-import { DocumentKindEnum, ID, IDocument } from '@gauzy/contracts';
+import { BaseEntityEnum, DocumentKindEnum, ID, IDocument } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import { DocumentsService } from './documents.service';
 
@@ -88,7 +88,10 @@ describe('DocumentsService — backend wire contract', () => {
 
 			expect(http.last.url).toMatch(/\/plugins\/docs\/documents$/);
 			expect(http.params.get('archived')).toBe('exclude');
-			expect(http.params.get('kind')).toBe(DocumentKindEnum.PAGE);
+			// `kind` is an ARRAY on the wire (multi-select filter; the DTO accepts
+			// repeated params) — `toParams()` serializes arrays with indexed keys.
+			expect(http.params.get('kind[0]')).toBe(DocumentKindEnum.PAGE);
+			expect(http.params.get('kind')).toBeNull();
 			expect(http.params.get('sort')).toBe('updatedAt');
 			expect(http.params.get('sortOrder')).toBe('DESC');
 			// The organization scope rides in `where`; a top-level one is whitelisted away.
@@ -111,6 +114,33 @@ describe('DocumentsService — backend wire contract', () => {
 			service.getAll({ status: [], q: '' }).subscribe();
 
 			expect(http.params.keys()).toEqual(['where[organizationId]', 'where[tenantId]']);
+		});
+	});
+
+	describe('create', () => {
+		it('defaults the organization scope from the selected organization', () => {
+			http.response = documentFixture();
+
+			service.create({ kind: DocumentKindEnum.FOLDER, name: 'Reports' }).subscribe();
+
+			expect(http.last.url).toMatch(/\/plugins\/docs\/documents$/);
+			const body = http.last.body as Record<string, unknown>;
+			expect(body['kind']).toBe(DocumentKindEnum.FOLDER);
+			expect(body['name']).toBe('Reports');
+			// `CreateDocumentDTO` extends `TenantOrganizationBaseDTO` — without the
+			// scope the ValidationPipe answers 400 before the handler runs.
+			expect(body['organizationId']).toBe(ORGANIZATION_ID);
+			expect(body['tenantId']).toBe(TENANT_ID);
+		});
+
+		it('never overwrites an explicitly passed organization scope', () => {
+			http.response = documentFixture();
+			const explicitOrg = 'bbbbbbbb-1111-4111-8111-111111111111' as ID;
+
+			service.create({ kind: DocumentKindEnum.PAGE, name: 'Spec', organizationId: explicitOrg }).subscribe();
+
+			const body = http.last.body as Record<string, unknown>;
+			expect(body['organizationId']).toBe(explicitOrg);
 		});
 	});
 
@@ -203,6 +233,97 @@ describe('DocumentsService — backend wire contract', () => {
 
 			await expect(firstValueFrom(service.getLinks(DOCUMENT_ID))).resolves.toEqual([{ id: 'link-1' }]);
 			expect(http.last.url).toMatch(/\/documents\/.+\/links$/);
+		});
+	});
+
+	/**
+	 * The DETAIL endpoints resolve their scope from the token when none is sent — null for a
+	 * non-employee admin (400 `DOCS_ORGANIZATION_REQUIRED`, the demo "Couldn't load the editor"
+	 * banner), stale when the UI browses another organization of the tenant (404 on rows the
+	 * list just showed). Every detail read/save must therefore carry the selected organization,
+	 * exactly like the list trio.
+	 */
+	describe('detail endpoints — organization scope', () => {
+		it('getById sends the selected organization scope alongside the relations', () => {
+			http.response = documentFixture();
+
+			service.getById(DOCUMENT_ID, ['categories', 'tags']).subscribe();
+
+			expect(http.last.url).toMatch(/\/documents\/[^/]+$/);
+			// `toParams()` serializes arrays as indexed keys (Express folds them back together).
+			expect(http.params.get('relations[0]')).toBe('categories');
+			expect(http.params.get('relations[1]')).toBe('tags');
+			expect(http.params.get('organizationId')).toBe(ORGANIZATION_ID);
+			expect(http.params.get('tenantId')).toBe(TENANT_ID);
+		});
+
+		it('getById omits the scope entirely when no organization is selected — never "undefined"', () => {
+			http.response = documentFixture();
+			const bare = new DocumentsService(http as never, { selectedOrganization: null } as unknown as Store);
+
+			bare.getById(DOCUMENT_ID).subscribe();
+
+			expect(http.params.get('organizationId')).toBeNull();
+			expect(http.params.get('tenantId')).toBeNull();
+		});
+
+		it('getSettings sends the selected organization scope', () => {
+			http.response = { defaults: {}, capabilities: {}, quota: {} };
+
+			service.getSettings().subscribe();
+
+			expect(http.last.url).toMatch(/\/settings$/);
+			expect(http.params.get('organizationId')).toBe(ORGANIZATION_ID);
+		});
+
+		it('getLinks sends the selected organization scope', () => {
+			http.response = { items: [], total: 0 };
+
+			service.getLinks(DOCUMENT_ID).subscribe();
+
+			expect(http.params.get('organizationId')).toBe(ORGANIZATION_ID);
+		});
+
+		it('findLinks sends the selected organization scope', () => {
+			http.response = { items: [], total: 0 };
+
+			service.findLinks(BaseEntityEnum.Task, DOCUMENT_ID).subscribe();
+
+			expect(http.last.url).toMatch(/\/links$/);
+			expect(http.params.get('entity')).toBe(BaseEntityEnum.Task);
+			expect(http.params.get('organizationId')).toBe(ORGANIZATION_ID);
+		});
+
+		it('updateContent carries the selected organization scope in the save body', () => {
+			http.response = documentFixture();
+
+			service
+				.updateContent(DOCUMENT_ID, {
+					contentJson: { type: 'doc' },
+					expectedUpdatedAt: '2026-01-01T00:00:00.000Z'
+				})
+				.subscribe();
+
+			expect(http.last.method).toBe('PUT');
+			expect(http.last.url).toMatch(/\/documents\/[^/]+\/content$/);
+			const body = http.last.body as Record<string, unknown>;
+			expect(body['organizationId']).toBe(ORGANIZATION_ID);
+			expect(body['tenantId']).toBe(TENANT_ID);
+		});
+
+		it('updateContent never overwrites an explicitly passed organization scope', () => {
+			http.response = documentFixture();
+			const explicitOrg = 'bbbbbbbb-1111-4111-8111-111111111111' as ID;
+
+			service
+				.updateContent(DOCUMENT_ID, {
+					contentJson: { type: 'doc' },
+					expectedUpdatedAt: '2026-01-01T00:00:00.000Z',
+					organizationId: explicitOrg
+				})
+				.subscribe();
+
+			expect((http.last.body as Record<string, unknown>)['organizationId']).toBe(explicitOrg);
 		});
 	});
 
