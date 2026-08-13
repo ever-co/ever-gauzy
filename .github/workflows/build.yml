@@ -5,8 +5,22 @@ name: Build
 # which exceeds the 60-minute job cap — so the cache was never written and every run started cold.
 # Self-hosted runners have no such cap.
 #
-# Job names and the commands they run mirror .circleci/config.yml one-for-one so PR-time build
-# coverage is unchanged.
+# LATENCY IS A CORRECTNESS PROPERTY OF THIS GATE. The 2026-08-13 template-error incident was not
+# a coverage gap — build-web caught the error — but its verdict landed 74 minutes AFTER the PR
+# had been merged on a still-pending check (~3h19m push-to-verdict). Two structural causes fixed
+# here:
+#   1. `build-libs` is its own job: `build:package:all` is where every LIBRARY's strict template
+#      check runs (each lib's tsconfig sets strictTemplates — the app tsconfig is lax in every
+#      configuration), so the verdict that catches template errors now reports as its own named
+#      check ~install+~20min after push instead of at the end of the longest job. Treat a
+#      pending/cancelled `build-libs`/`build-web` as a red: NEVER merge on yellow — the PR
+#      concurrency group cancels superseded runs, so "no failure" often just means "never ran".
+#   2. The `needs: build-monorepo-root` edges are gone: that job produces nothing the others
+#      consume (each re-installs from scratch), so the edge only added its full ~90 minutes as
+#      serial latency in front of every build.
+# The dev-config "Build packages" pre-step was removed from build-api/build-web: the app builds
+# rebuild their dependency libraries themselves (Nx `dependsOn: ^build`, production config), and
+# the strict library verdict lives in `build-libs`.
 
 on:
   pull_request:
@@ -51,9 +65,12 @@ jobs:
       - name: Run postinstall manually
         run: yarn postinstall.manual
 
-  build-api:
-    name: build-api
-    needs: build-monorepo-root
+  # The strict library verdict, as its own early-reporting check: this is the task set whose
+  # per-library `strictTemplates` tsconfigs catch template type errors (the class that broke the
+  # demo webapp image). It has no `needs` edge and no app build behind it, so it reports as soon
+  # as install + the 71 library builds finish.
+  build-libs:
+    name: build-libs
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -72,13 +89,30 @@ jobs:
 
       - name: Build packages
         run: yarn build:package:all
+
+  build-api:
+    name: build-api
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+
+      - name: Run postinstall manually
+        run: yarn postinstall.manual
 
       - name: Build API
         run: yarn build:api:prod:ci
 
   build-web:
     name: build-web
-    needs: build-monorepo-root
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -95,15 +129,11 @@ jobs:
       - name: Run postinstall manually
         run: yarn postinstall.manual
 
-      - name: Build packages
-        run: yarn build:package:all
-
       - name: Build web
         run: yarn build:gauzy:prod:ci
 
   build-desktop:
     name: build-desktop
-    needs: build-monorepo-root
     # Matches the CircleCI branch filter: desktop was never built on ordinary PR branches.
     if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/stage' || github.ref == 'refs/heads/master'
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
