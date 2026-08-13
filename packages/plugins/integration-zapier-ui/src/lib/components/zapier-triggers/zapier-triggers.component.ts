@@ -4,6 +4,7 @@ import { tap, catchError, finalize, switchMap, map, distinctUntilChanged } from 
 import { EMPTY } from 'rxjs';
 import { ZapierService, ToastrService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { IRecordViewSection } from '@gauzy/ui-core/shared';
 import { TranslateService } from '@ngx-translate/core';
 import { IZapierEndpoint, IOrganization, ID } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -20,6 +21,13 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 
 	/** List of available Zapier triggers/endpoints */
 	public triggers: IZapierEndpoint[] = [];
+
+	/*
+	 * Read-only View: a trigger is a tiny record (endpoint metadata), so it
+	 * opens in the right-side drawer rather than on a page of its own.
+	 */
+	public viewedTrigger: IZapierEndpoint | null = null;
+	public viewSections: IRecordViewSection[] = [];
 
 	/** Current organization data */
 	public organization: IOrganization | null = null;
@@ -82,6 +90,10 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 			return;
 		}
 
+		// The list is about to be reloaded, so whatever the drawer is showing is
+		// about to go stale — close it rather than leave a detached record open.
+		this.closeView();
+
 		this.loading = true;
 
 		// Step 1: Get stored OAuth token using integration ID from route
@@ -136,9 +148,37 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 	}
 
 	/**
-	 * Open trigger details
+	 * Opens the read-only View of a trigger in the right-side drawer.
+	 *
+	 * @param trigger - The trigger row the action was invoked from.
 	 */
-	openTriggerDetails() {
-		// TODO: Implement trigger details view
+	openTriggerDetails(trigger: IZapierEndpoint): void {
+		if (!trigger) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections();
+		this.viewedTrigger = trigger;
+	}
+
+	closeView(): void {
+		this.viewedTrigger = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer — the list row fields first, then the
+	 * identifiers Zapier reports for the endpoint.
+	 */
+	private buildViewSections(): IRecordViewSection[] {
+		return [
+			{
+				fields: [
+					{ label: 'SM_TABLE.NAME', key: 'name' },
+					{ label: 'SM_TABLE.DESCRIPTION', key: 'description', type: 'multiline', wide: true },
+					{ label: 'FORM.PLACEHOLDERS.CODE', key: 'slug' },
+					{ label: 'TASKS_PAGE.TASK_ID', key: 'id' }
+				]
+			}
+		];
 	}
 }

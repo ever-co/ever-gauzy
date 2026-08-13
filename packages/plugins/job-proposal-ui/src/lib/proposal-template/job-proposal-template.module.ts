@@ -15,6 +15,7 @@ import {
 	DialogsModule,
 	EmployeeMultiSelectModule,
 	NebularModule,
+	RecordViewModule,
 	RichTextEditorModule,
 	SharedModule,
 	StatusBadgeModule
@@ -34,7 +35,8 @@ import { ProposalTemplateFormComponent } from './components/proposal-template-fo
 		SmartDataViewLayoutModule,
 		StatusBadgeModule,
 		EmployeeMultiSelectModule,
-		DialogsModule
+		DialogsModule,
+		RecordViewModule
 	],
 	providers: [
 		{

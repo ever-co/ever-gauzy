@@ -14,6 +14,7 @@ import {
 	RolesEnum,
 	IUser,
 	ComponentLayoutStyleEnum,
+	IRole,
 	IRolePermission,
 	IUserViewModel,
 	IUserOrganization,
@@ -33,6 +34,7 @@ import {
 	DeleteConfirmationComponent,
 	EmailComponent,
 	IPaginationBase,
+	IRecordViewSection,
 	InviteMutationComponent,
 	PaginationFilterBaseComponent,
 	PictureNameTagsComponent,
@@ -65,6 +67,14 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	public organization: IOrganization;
+
+	/*
+	 * Read-only View: a user row is a small flat record, so it opens in the
+	 * right-side drawer rather than on a page of its own.
+	 */
+	public viewedUser: IUserViewModel;
+	public viewSections: IRecordViewSection[] = [];
+
 	private _refresh$: Subject<any> = new Subject();
 
 	constructor(
@@ -89,6 +99,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		this.subject$
 			.pipe(
 				debounceTime(300),
+				tap(() => this.clearItem()),
 				tap(() => this.getUsers()),
 				tap(() => this.cancel()),
 				untilDestroyed(this)
@@ -279,6 +290,57 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 
 		// Wait for the dialog to close and handle any resulting actions (if needed)
 		await firstValueFrom(dialog.onClose);
+	}
+
+	/**
+	 * Opens the read-only View of the selected user in the right-side drawer.
+	 *
+	 * The action bar template exposes no row context (`let-selectedItem`), so the
+	 * record always comes from the current selection.
+	 */
+	view(): void {
+		const user = this.selectedUser;
+		if (!user) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections(user);
+		this.viewedUser = user;
+	}
+
+	closeView(): void {
+		this.viewedUser = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer — the grid columns, read vertically.
+	 */
+	private buildViewSections(user: IUserViewModel): IRecordViewSection[] {
+		// The view model types `role` as a string, but getUsers() keeps the full
+		// IRole relation on the row — read the name off what the row actually holds.
+		const role = user.role as unknown as IRole;
+		return [
+			{
+				fields: [
+					// The row itself is the person: `toPerson` reads the view model's
+					// own fullName/imageUrl, matching the grid's first column.
+					{ label: 'SM_TABLE.FULL_NAME', type: 'person', value: user },
+					{ label: 'SM_TABLE.EMAIL', key: 'email', type: 'email' },
+					{ label: 'SM_TABLE.ROLE', value: role?.name?.replace(/_/g, ' ') },
+					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', wide: true },
+					{ label: 'USERS_PAGE.ACTIVE', key: 'isActive', type: 'boolean' }
+				]
+			},
+			{
+				fields: [
+					{ label: 'SM_TABLE.EMPLOYEE', type: 'boolean', value: !!user.employeeId },
+					// Employee-only rows: empty for plain users, so they hide by default.
+					{ label: 'SM_TABLE.START_DATE', key: 'startedWorkOn', type: 'date' },
+					{ label: 'SM_TABLE.END_DATE', key: 'endWork', type: 'date' },
+					{ label: 'SM_TABLE.TIME_TRACKING', key: 'isTrackingEnabled', type: 'boolean' }
+				]
+			}
+		];
 	}
 
 	/**
@@ -605,6 +667,9 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	 * Clear selected item
 	 */
 	clearItem() {
+		// The list is about to be reloaded, so whatever the drawer is showing is
+		// about to go stale — close it rather than leave a detached record open.
+		this.closeView();
 		this.selectUser({
 			isSelected: false,
 			data: null

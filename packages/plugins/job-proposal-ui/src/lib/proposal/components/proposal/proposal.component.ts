@@ -65,8 +65,10 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 	public viewComponentName: ComponentEnum = ComponentEnum.PROPOSALS;
 	public selectedProposal: IProposalViewModel;
 	public proposalStatusEnum = ProposalStatusEnum;
-	public successRate: string;
-	public totalProposals: number;
+	// Initialized so the header stat cards never render a blank value while
+	// the first page of data is still loading.
+	public successRate: string = '0 %';
+	public totalProposals: number = 0;
 	public countAccepted: number = 0;
 	public loading: boolean = false;
 	public disableButton: boolean = true;

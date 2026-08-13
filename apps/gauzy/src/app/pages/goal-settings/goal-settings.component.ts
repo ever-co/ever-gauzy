@@ -12,12 +12,21 @@ import {
 	AlertModalComponent,
 	DateViewComponent,
 	GoalTemplatesComponent,
+	IRecordViewSection,
 	PaginationFilterBaseComponent,
 	StatusBadgeComponent,
 	ValueWithUnitComponent
 } from '@gauzy/ui-core/shared';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
-import { ComponentLayoutStyleEnum, GoalOwnershipEnum, IGoalGeneralSetting, IOrganization } from '@gauzy/contracts';
+import {
+	ComponentLayoutStyleEnum,
+	GoalOwnershipEnum,
+	IGoalGeneralSetting,
+	IKPI,
+	IOrganization,
+	KpiMetricEnum,
+	KpiOperatorEnum
+} from '@gauzy/contracts';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -34,6 +43,16 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 	selectedTimeFrame: any = null;
 	selectedKPI: any = null;
 	selectedTab: string;
+
+	/*
+	 * Read-only View: KPIs and Time Frames are both small records, so one
+	 * right-side drawer serves the two tabs — the sections are rebuilt for the
+	 * record's own tab each time one is opened.
+	 */
+	viewedRecord: any = null;
+	viewHeading: string;
+	viewSections: IRecordViewSection[] = [];
+
 	selectedOrganizationId: string;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -120,6 +139,7 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 				untilDestroyed(this)
 			)
 			.subscribe(() => {
+				this.closeView();
 				this.selectedKPI = null;
 				this.selectedTimeFrame = null;
 			});
@@ -143,6 +163,8 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 		this._loadTableData(e.tabId);
 		this._refresh$.next(true);
 		this.smartTableData.empty();
+		// The drawer's record belongs to the tab being left — close it.
+		this.closeView();
 		this.selectedKPI = null;
 		this.selectedTimeFrame = null;
 	}
@@ -158,6 +180,108 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 			}
 		}
 		this.disableButton = !isSelected;
+	}
+
+	/**
+	 * Opens the read-only View of the selected KPI or Time Frame in the
+	 * right-side drawer.
+	 *
+	 * @param selectedItem - Row the action was invoked from, when it came from the grid.
+	 */
+	view(selectedItem?: any): void {
+		if (selectedItem) {
+			this.selectRow({ isSelected: true, data: selectedItem });
+		}
+
+		if (this.selectedTab === 'kpi') {
+			const kpi = selectedItem ?? this.selectedKPI;
+			if (!kpi) {
+				return;
+			}
+			this.viewHeading = 'GOALS_PAGE.SETTINGS.KPI';
+			this.viewSections = this.buildKpiViewSections(kpi);
+			this.viewedRecord = kpi;
+		} else if (this.selectedTab === 'timeframe') {
+			const timeFrame = selectedItem ?? this.selectedTimeFrame;
+			if (!timeFrame) {
+				return;
+			}
+			this.viewHeading = 'GOALS_PAGE.SETTINGS.TIME_FRAME_PAGE_TITLE';
+			this.viewSections = this.buildTimeFrameViewSections();
+			this.viewedRecord = timeFrame;
+		}
+	}
+
+	closeView(): void {
+		this.viewedRecord = null;
+	}
+
+	/**
+	 * Field descriptors for a KPI — the grid columns, read vertically, then the
+	 * fields the grid has no room for.
+	 */
+	private buildKpiViewSections(kpi: IKPI): IRecordViewSection[] {
+		return [
+			{
+				fields: [
+					{ label: 'SM_TABLE.NAME', key: 'name' },
+					// The grid renders these through ValueWithUnitComponent — the
+					// value followed by the KPI's unit — so the View reads the same.
+					{ label: 'SM_TABLE.CURRENT_VALUE', value: this.withUnit(kpi.currentValue, kpi.unit) },
+					{ label: 'SM_TABLE.TARGET_VALUE', value: this.withUnit(kpi.targetValue, kpi.unit) },
+					{ label: 'SM_TABLE.LAST_UPDATED', key: 'updatedAt', type: 'date' }
+				]
+			},
+			{
+				fields: [
+					{ label: 'FORM.LABELS.DESCRIPTION', key: 'description', type: 'multiline', wide: true },
+					{
+						label: 'GOALS_PAGE.FORM.LABELS.KPI_METRIC',
+						value: this.translateEnum(kpi.type, KpiMetricEnum, 'GOALS_PAGE.KPI_METRIC')
+					},
+					{
+						label: 'GOALS_PAGE.FORM.LABELS.KPI_SHOULD_BE',
+						value: this.translateEnum(kpi.operator, KpiOperatorEnum, 'GOALS_PAGE.KPI_OPERATOR')
+					},
+					{ label: 'GOALS_PAGE.FORM.LABELS.LEAD', key: 'lead', type: 'person' }
+				]
+			}
+		];
+	}
+
+	/**
+	 * Field descriptors for a Time Frame — the grid columns, read vertically.
+	 */
+	private buildTimeFrameViewSections(): IRecordViewSection[] {
+		return [
+			{
+				fields: [
+					{ label: 'SM_TABLE.NAME', key: 'name' },
+					{ label: 'SM_TABLE.START_DATE', key: 'startDate', type: 'date' },
+					{ label: 'SM_TABLE.END_DATE', key: 'endDate', type: 'date' },
+					// `status` was replaced by `statusMapper` when the rows were
+					// loaded, so it is already the `{ text, class }` a badge expects.
+					{ label: 'SM_TABLE.STATUS', key: 'status', type: 'badge' }
+				]
+			}
+		];
+	}
+
+	/** Mirrors ValueWithUnitComponent: the value followed by the KPI's unit. */
+	private withUnit(value: number, unit?: string): string | number | undefined {
+		if (value === null || value === undefined) {
+			return undefined;
+		}
+		return unit ? `${value} ${unit}` : value;
+	}
+
+	/**
+	 * The record stores the enum VALUE ('Numerical', '>=') while the i18n keys
+	 * are indexed by the enum KEY — reverse-map before translating.
+	 */
+	private translateEnum(value: string, enumType: Record<string, string>, i18nPrefix: string): string {
+		const key = Object.keys(enumType).find((enumKey) => enumType[enumKey] === value);
+		return key ? this.getTranslation(`${i18nPrefix}.${key}`) : value;
 	}
 
 	private async _loadTableData(tab) {
@@ -472,6 +596,9 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 	 * Clear selected item
 	 */
 	clearItem() {
+		// The list is about to be reloaded, so whatever the drawer is showing is
+		// about to go stale — close it rather than leave a detached record open.
+		this.closeView();
 		this.selectRow({
 			isSelected: false,
 			data: null

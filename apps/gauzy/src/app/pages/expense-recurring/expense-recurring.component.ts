@@ -22,7 +22,11 @@ import {
 } from '@gauzy/ui-core/core';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { RecurringExpenseDeleteConfirmationComponent, RecurringExpenseMutationComponent } from '@gauzy/ui-core/shared';
+import {
+	IRecordViewSection,
+	RecurringExpenseDeleteConfirmationComponent,
+	RecurringExpenseMutationComponent
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -44,6 +48,13 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 		data: null,
 		index: null
 	};
+
+	/*
+	 * Read-only View: a recurring expense is a small record, so it opens in the
+	 * right-side drawer rather than on a page of its own.
+	 */
+	viewedRecurringExpense: IOrganizationRecurringExpense;
+	viewSections: IRecordViewSection[] = [];
 
 	showHistory: boolean = false;
 
@@ -172,6 +183,43 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 		}
 	}
 
+	/**
+	 * Opens the read-only View of the selected recurring expense in the right-side drawer.
+	 */
+	viewOrganizationRecurringExpense(): void {
+		const expense: IOrganizationRecurringExpense = this.selectedRecurringExpense.data;
+		if (!expense) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections(expense);
+		this.viewedRecurringExpense = expense;
+	}
+
+	closeView(): void {
+		this.viewedRecurringExpense = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer — the block row's columns, read vertically,
+	 * then the fields the row has no room for.
+	 */
+	private buildViewSections(expense: IOrganizationRecurringExpense): IRecordViewSection[] {
+		return [
+			{
+				fields: [
+					// Default categories are stored as enum keys — show them translated,
+					// exactly as the block row does.
+					{ label: 'POP_UPS.CATEGORY_NAME', value: this.getCategoryName(expense.categoryName) },
+					{ label: 'POP_UPS.DATE', key: 'startDate', type: 'date' },
+					{ label: 'POP_UPS.EXPENSE_VALUE', key: 'value', type: 'money' },
+					{ label: 'EXPENSES_PAGE.SPLIT_EXPENSE', key: 'splitExpense', type: 'boolean' },
+					{ label: 'SM_TABLE.END_DATE', key: 'endDate', type: 'date' }
+				]
+			}
+		];
+	}
+
 	async editOrganizationRecurringExpense() {
 		const result = await firstValueFrom(
 			this.dialogService.open(RecurringExpenseMutationComponent, {
@@ -203,6 +251,10 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 		if (!this.organization) {
 			return;
 		}
+
+		// The list is about to be reloaded, so whatever the drawer is showing is
+		// about to go stale — close it rather than leave a detached record open.
+		this.closeView();
 
 		this.loading = true;
 

@@ -19,6 +19,7 @@ import {
 import {
 	DeleteConfirmationComponent,
 	IPaginationBase,
+	IRecordViewSection,
 	OrganizationWithTagsComponent,
 	OrganizationsMutationComponent,
 	PaginationFilterBaseComponent
@@ -38,6 +39,15 @@ import {
 export class OrganizationsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	settingsSmartTable: object;
 	selectedOrganization: IOrganization;
+
+	/*
+	 * Read-only View: a summary of the grid columns plus the identity fields
+	 * opens in the right-side drawer — full management already lives on the
+	 * edit page, so the record does not warrant a page of its own.
+	 */
+	viewedOrganization: IOrganization;
+	viewSections: IRecordViewSection[] = [];
+
 	smartTableSource = new LocalDataSource();
 	organizations: IOrganization[] = [];
 	viewComponentName: ComponentEnum;
@@ -130,6 +140,81 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 	selectOrganization({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedOrganization = isSelected ? data : null;
+	}
+
+	/**
+	 * Opens the read-only View of an organization in the right-side drawer.
+	 *
+	 * @param selectedItem - Row the action was invoked from, when it came from the grid.
+	 */
+	viewOrganization(selectedItem?: IOrganization): void {
+		if (selectedItem) {
+			this.selectOrganization({ isSelected: true, data: selectedItem });
+		}
+
+		const organization = selectedItem ?? this.selectedOrganization;
+		if (!organization) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections(organization);
+		this.viewedOrganization = organization;
+	}
+
+	closeView(): void {
+		this.viewedOrganization = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer — the grid columns read vertically, then
+	 * the identity fields the grid has no room for. Takes the record because
+	 * some values are derived (employee count, mapped status, translated enums)
+	 * rather than read off a dot path.
+	 */
+	private buildViewSections(organization: IOrganization): IRecordViewSection[] {
+		return [
+			{
+				fields: [
+					{ label: 'FORM.LABELS.ORGANIZATION_NAME', key: 'name' },
+					// Computed in _loadSmartTable (active employees only), not a persisted field.
+					{ label: 'SM_TABLE.EMPLOYEES', value: organization.totalEmployees },
+					{ label: 'SM_TABLE.CURRENCY', key: 'currency' },
+					{
+						label: 'SM_TABLE.STATUS',
+						type: 'badge',
+						value: {
+							text: this.getTranslation(
+								organization.isActive ? 'ORGANIZATIONS_PAGE.ACTIVE' : 'ORGANIZATIONS_PAGE.ARCHIVED'
+							),
+							class: organization.isActive ? 'success' : 'danger'
+						}
+					}
+				]
+			},
+			{
+				fields: [
+					{ label: 'FORM.LABELS.OFFICIAL_NAME', key: 'officialName' },
+					{ label: 'FORM.LABELS.WEBSITE', key: 'website', type: 'link' },
+					{ label: 'FORM.LABELS.TAX_ID', key: 'taxId' },
+					{ label: 'FORM.LABELS.REGISTRATION_DATE', key: 'registrationDate', type: 'date' },
+					// Enum values go through the same SM_TABLE.<VALUE> keys the org forms use.
+					{
+						label: 'FORM.LABELS.START_WEEK_ON',
+						value: organization.startWeekOn
+							? this.getTranslation(`SM_TABLE.${organization.startWeekOn}`)
+							: null
+					},
+					{
+						label: 'FORM.LABELS.DATE_TYPE',
+						value: organization.defaultValueDateType
+							? this.getTranslation(`SM_TABLE.${organization.defaultValueDateType}`)
+							: null
+					},
+					{ label: 'TIMESHEET.TIME_ZONE', key: 'timeZone' },
+					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', wide: true }
+				]
+			}
+		];
 	}
 
 	private _loadSmartTableSettings() {
@@ -325,6 +410,9 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 	 * Clear selected item
 	 */
 	clearItem() {
+		// The record the drawer is showing follows the selection — a delete or
+		// reload must not leave a detached record open.
+		this.closeView();
 		this.selectOrganization({
 			isSelected: false,
 			data: null

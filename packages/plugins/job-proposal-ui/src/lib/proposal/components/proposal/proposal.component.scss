@@ -1,23 +1,35 @@
 @forward '@shared/_pg-card';
 
+// Header-band statistics: three compact stat cards (big value over a muted
+// label). Theme tokens only, so the cards read in every light AND dark theme;
+// paddings kept tight so the header band gains no height over the old strip.
 .statistics {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0.75rem 0.5625rem 0.8125rem;
-  background: rgba(0, 136, 254, 0.05);
-  border-radius: nb-theme(border-radius);
+  align-items: stretch;
+  gap: 0.5rem;
   margin-top: 1rem;
-  .custom-container {
+
+  .stat-card {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 40%;
-    > div > span {
-      &:last-child {
-        font-size: 1.0625rem;
-      }
-    }
+    flex-direction: column;
+    justify-content: center;
+    min-width: 7rem;
+    padding: 0.3125rem 0.75rem;
+    background: var(--gauzy-card-2);
+    border-radius: var(--gauzy-radius-sm);
+  }
+
+  .stat-value {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    color: var(--text-basic-color);
+  }
+
+  .stat-label {
+    font-size: 0.6875rem;
+    line-height: 0.875rem;
+    color: var(--text-hint-color);
   }
 }
 

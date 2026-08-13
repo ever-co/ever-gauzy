@@ -66,7 +66,13 @@
 	<ng-template [ngxPermissionsOnly]="permGateOrgJobEmployeeViewOrgEmployeesEdit">
 		<div class="btn-group actions">
 			<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
-				<button size="small" status="basic" class="action primary cursor-pointer" nbButton underConstruction>
+				<button
+					(click)="view(selectedItem)"
+					size="small"
+					status="basic"
+					class="action primary cursor-pointer"
+					nbButton
+				>
 					<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 					<span> {{ 'BUTTONS.VIEW' | translate }} </span>
 				</button>
@@ -108,3 +114,16 @@
 		</button>
 	</ng-template>
 </ng-template>
+
+<!-- Read-only View. The projected content is gated here (not inside the drawer)
+     so the record renderer is built fresh for each entry that is opened. -->
+<ngx-record-view-drawer
+	[open]="!!viewedEmployee"
+	heading="JOB_EMPLOYEE.EMPLOYEE"
+	[subtitle]="viewedEmployee?.user?.name"
+	(closed)="closeView()"
+>
+	@if (viewedEmployee) {
+		<ngx-record-view [record]="viewedEmployee" [sections]="viewSections"></ngx-record-view>
+	}
+</ngx-record-view-drawer>
