@@ -897,7 +897,16 @@ nb-card-header.ga-page-header {
   > .ga-page-header-main {
     // Takes the free space, which is what pushes the buttons to the far edge —
     // no auto margin, so this works unchanged in RTL.
-    flex: 1 1 auto;
+    //
+    // Basis ZERO, not auto: with `auto`, a title block whose content is wide
+    // (a relocated full-width breadcrumb trail, a secondary header button as on
+    // the proposals page) reports a full-row hypothetical size, and the flex
+    // line then wraps the ACTION block under the title — the exact stack this
+    // rule exists to remove. From zero, the block only ever grows into the
+    // space the actions leave, so the actions can never be pushed off the line;
+    // the title's own content wraps inside the block instead (it is a wrapping
+    // flex row itself, and min-width keeps it shrinkable).
+    flex: 1 1 0%;
     // Any `width: 100%` a page set while this block had a row to itself would
     // come back as the flex basis and push the buttons onto a second line.
     width: auto;
@@ -909,6 +918,12 @@ nb-card-header.ga-page-header {
     // Shrinkable, so a narrow viewport squeezes the buttons (which wrap inside
     // their own container) rather than overflowing the card.
     flex: 0 1 auto;
+
+    // Pins the block to the END of its line — on the title's line this is a
+    // no-op (the growing main block already pushes it there), but when an
+    // expanded action strip wraps the row on a narrow viewport, the wrapped
+    // line would otherwise lay it out at the START.
+    margin-inline-start: auto;
 
     // The shared `.gauzy-button-container` is `width: 100%` — on a row of its own
     // that is how the buttons ended up right-aligned. Beside the title it would

@@ -3,7 +3,7 @@
  * importing them pulls Akita's untranspiled ESM into the CommonJS test runtime.
  * The panel only needs `TranslationBaseComponent` to exist and `Store` to answer
  * permission/feature questions, so both are stubbed and the component is
- * constructed directly — no `TestBed` (see `legacy-import-dialog.component.spec.ts`).
+ * constructed directly — no `TestBed`.
  */
 jest.mock('@gauzy/ui-core/i18n', () => ({
 	TranslationBaseComponent: class {
@@ -138,6 +138,72 @@ describe('DocumentLinksPanelComponent — record-side Documents panel (spec 00 �
 				createPanel({ permissions: [PermissionsEnum.DOCS_READ, PermissionsEnum.DOCS_UPDATE] }).panel.canUpload
 			).toBe(false);
 			expect(createPanel().panel.canUpload).toBe(true);
+		});
+	});
+
+	describe('read-only + hide-when-empty hosting (invoice/estimate view page)', () => {
+		it('defaults both inputs off — the existing hosts keep the full, always-present panel', () => {
+			const { panel } = createPanel();
+
+			expect(panel.readonly).toBe(false);
+			expect(panel.hideWhenEmpty).toBe(false);
+			// Zero links, hideWhenEmpty off → the card still renders (so "attach" is offered).
+			expect(panel.shown).toBe(true);
+		});
+
+		it('with hideWhenEmpty the card stays hidden at zero links and appears once links load', async () => {
+			const { panel } = createPanel({ links: of([fileLink()]) });
+			panel.hideWhenEmpty = true;
+
+			expect(panel.shown).toBe(false);
+			await panel.load();
+			expect(panel.shown).toBe(true);
+
+			// …and goes away again with the last link.
+			await panel.unlink(panel.links[0]);
+			expect(panel.shown).toBe(false);
+		});
+
+		it('with hideWhenEmpty a FAILED load keeps the card up — the error and retry must stay reachable', async () => {
+			// `load()` clears `links` on failure; gating on links alone would hide the
+			// panel exactly when it has something to say (the error + retry button).
+			const { panel } = createPanel({ links: throwError(() => new Error('boom')) });
+			panel.hideWhenEmpty = true;
+
+			await panel.load();
+
+			expect(panel.loadError).toBe(true);
+			expect(panel.links).toEqual([]);
+			expect(panel.shown).toBe(true);
+		});
+
+		it('with hideWhenEmpty a load in flight keeps the card up (spinner host)', () => {
+			const { panel } = createPanel();
+			panel.hideWhenEmpty = true;
+			panel.loading = true;
+
+			expect(panel.shown).toBe(true);
+		});
+
+		it('hideWhenEmpty never overrides the DOCS_READ / feature gate', async () => {
+			const { panel } = createPanel({ permissions: [], links: of([fileLink()]) });
+			panel.hideWhenEmpty = true;
+			await panel.load();
+
+			expect(panel.shown).toBe(false);
+		});
+
+		it('readonly keeps the panel shown and the permissions intact — only the template affordances go', () => {
+			// The template gates attach/upload/unlink on `!readonly && can*`, so a
+			// readonly host drops the write affordances while open/download stay.
+			// `readonly` is a host choice, not a permission: `canLink`/`canUpload`
+			// must not flip, or a later non-readonly rebind would mis-render.
+			const { panel } = createPanel();
+			panel.readonly = true;
+
+			expect(panel.shown).toBe(true);
+			expect(panel.canLink).toBe(true);
+			expect(panel.canUpload).toBe(true);
 		});
 	});
 

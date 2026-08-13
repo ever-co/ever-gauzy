@@ -5,6 +5,7 @@ import { GetDocumentFacetsHandler } from './get-document-facets.handler';
 import { GetDocumentLinksHandler } from './get-document-links.handler';
 import { GetDocumentPathHandler } from './get-document-path.handler';
 import { GetDocumentSettingsHandler } from './get-document-settings.handler';
+import { GetDocumentStatsHandler } from './get-document-stats.handler';
 import { GetDocumentVersionHandler } from './get-document-version.handler';
 import { GetDocumentVersionsHandler } from './get-document-versions.handler';
 import { GetDocumentsHandler } from './get-documents.handler';
@@ -17,6 +18,7 @@ export const QueryHandlers = [
 	GetDocumentLinksHandler,
 	GetDocumentPathHandler,
 	GetDocumentSettingsHandler,
+	GetDocumentStatsHandler,
 	GetDocumentVersionHandler,
 	GetDocumentVersionsHandler,
 	GetDocumentsHandler

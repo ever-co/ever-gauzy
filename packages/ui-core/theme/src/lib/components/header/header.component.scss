@@ -2,8 +2,6 @@
 @use 'themes' as *;
 
 
-$orange: #f56d58;
-
 @include nb-install-component() {
   width: 100%;
   .notification-header {
@@ -83,6 +81,19 @@ $orange: #f56d58;
 
     nb-actions.size-small nb-action {
       padding: 0.5625rem;
+    }
+
+    // The date-range picker's dropdown (.md-drppicker) is NOT a CDK overlay:
+    // ngx-daterangepicker-material renders it inline, position:absolute, next
+    // to the input. Nebular gives every nb-action `position: relative`, which
+    // made this nb-action the dropdown's containing block — INSIDE the
+    // `.header-container` scroll clip below, which cut the panel to a sliver.
+    // `static` re-homes the containing block to `nb-layout-header.fixed`
+    // (positioned, outside the clip), so the panel escapes it and still paints
+    // in the header's fixed z-1040 stacking context — above the canvas AND
+    // above the chat column (1039) it may open over.
+    nb-action.date-range-action {
+      position: static;
     }
     ::ng-deep nb-search button {
       padding: 0 !important;
@@ -241,15 +252,13 @@ $orange: #f56d58;
   max-width: auto;
 }
 
+// The "+ Create" quick-actions button is a filled `status="primary"` nb-button,
+// so it takes the theme purple (`color-primary-500`) with Nebular's own
+// hover/focus/active states. It used to force a hardcoded salmon (#f56d58)
+// here, which no theme token knew about.
 .button.create {
-  background: $orange;
-  box-shadow: var(--gauzy-shadow);
   &[nbButton].appearance-filled {
     border-width: 0;
-  }
-  &:hover,
-  &:focus {
-    background: $orange;
   }
 }
 

@@ -209,10 +209,12 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 *
 	 * @param id The document id.
 	 * @param relations Optional relations to join.
+	 * @param organizationId Explicit organization scope (the client's selected organization);
+	 * when omitted the request context's organization applies, as before.
 	 * @returns The scoped document entity.
 	 */
-	async findOneScoped(id: ID, relations: string[] = []): Promise<Document> {
-		return this.findOneWithinScope(id, { relations });
+	async findOneScoped(id: ID, relations: string[] = [], organizationId?: ID): Promise<Document> {
+		return this.findOneWithinScope(id, { relations, organizationId });
 	}
 
 	/**
@@ -256,10 +258,14 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 */
 	private async findOneWithinScope(
 		id: ID,
-		options: { relations?: string[]; withDeleted?: boolean } = {}
+		options: { relations?: string[]; withDeleted?: boolean; organizationId?: ID } = {}
 	): Promise<Document> {
 		const tenantId = RequestContext.currentTenantId();
-		const organizationId = this.resolveOrganizationId();
+		// An explicit scope (the client's selected organization) wins over the request context:
+		// the context carries the token's `lastOrganizationId`, which is null for non-employee
+		// users and stale when the client browses another organization of the tenant. The
+		// tenant, by contrast, is ALWAYS the request context's — never client input.
+		const organizationId = this.resolveOrganizationId(options);
 
 		const document = await this.typeOrmRepository.findOne({
 			where: { id, tenantId, organizationId },
@@ -491,7 +497,9 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			});
 		}
 
-		const document = await this.findOneScoped(id);
+		// The DTO's optional organizationId is the editor's selected organization — without it a
+		// save is scoped by the token's org (null for non-employee users → 400, autosave dies).
+		const document = await this.findOneScoped(id, [], input.organizationId);
 		await this.assertCanWrite(document);
 
 		if (document.kind !== DocumentKindEnum.PAGE) {
@@ -655,7 +663,13 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		}
 		try {
 			const mentioned = collectDocumentMentionIds(contentJson).filter((id: string) => id !== document.id);
-			const desired = mentioned.length ? await this.filterReadableDocumentIds(mentioned) : [];
+			// Scoped to the DOCUMENT's organization, not the request context's: the save may
+			// have been scoped by the DTO's explicit organizationId (see `updateContent`), and
+			// filtering in a different — or null — token organization would resolve zero
+			// readable mentions and prune every existing cross-link of the saved document.
+			const desired = mentioned.length
+				? await this.filterReadableDocumentIds(mentioned, document.organizationId)
+				: [];
 
 			const existing = await this.typeOrmDocumentLinkRepository.find({
 				where: {
@@ -697,14 +711,15 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 
 	/**
 	 * Narrows a set of document ids to those the requester may read, in the caller's
-	 * tenant/organization scope (the same single-query predicate every list path uses).
+	 * tenant scope and the GIVEN organization (the same single-query predicate every
+	 * list path uses).
 	 *
 	 * @param ids The candidate document ids.
+	 * @param organizationId The organization to filter in — the saved document's own scope.
 	 * @returns The subset that resolves inside the read scope.
 	 */
-	private async filterReadableDocumentIds(ids: ID[]): Promise<ID[]> {
+	private async filterReadableDocumentIds(ids: ID[], organizationId: ID): Promise<ID[]> {
 		const tenantId = RequestContext.currentTenantId();
-		const organizationId = this.resolveOrganizationId();
 
 		const qb = this.typeOrmRepository.createQueryBuilder('document');
 		qb.select('document.id', 'id');

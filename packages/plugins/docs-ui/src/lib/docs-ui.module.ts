@@ -11,6 +11,7 @@ import {
 	NbContextMenuModule,
 	NbDatepickerModule,
 	NbDialogModule,
+	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
 	NbPopoverModule,
@@ -21,6 +22,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { provideEffects } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -35,6 +37,7 @@ import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '
 import {
 	FavoriteToggleModule,
 	SharedModule,
+	SingleStatisticModule,
 	SmartDataViewLayoutModule,
 	TagsColorInputModule,
 	TeamSelectModule
@@ -58,6 +61,7 @@ import { SavedViewsComponent } from './components/filter-bar/saved-views.compone
 import { DocsPreviewModalComponent } from './components/preview/docs-preview-modal.component';
 import { PdfViewerComponent } from './components/preview/pdf-viewer.component';
 import { DocsShellComponent } from './components/shell/docs-shell.component';
+import { DocsStatsLineComponent } from './components/stats/docs-stats-line.component';
 import { CategoryChipsComponent } from './components/table/cells/category-chips.component';
 import { KnowledgeBadgeComponent } from './components/table/cells/knowledge-badge.component';
 import { NameCellComponent } from './components/table/cells/name-cell.component';
@@ -67,14 +71,13 @@ import { RowActionsComponent } from './components/table/cells/row-actions.compon
 import { TagChipsComponent } from './components/table/cells/tag-chips.component';
 import { DocsTableComponent } from './components/table/docs-table.component';
 import { DocsTreeComponent } from './components/tree/docs-tree.component';
+import { DocsDropStripComponent } from './components/upload/docs-drop-strip.component';
 import { UploadDropzoneDirective } from './components/upload/upload-dropzone.directive';
 import { UploadProgressComponent } from './components/upload/upload-progress.component';
 import { BulkCategoriesDialogComponent } from './dialogs/bulk-categories-dialog.component';
 import { ClassificationDialogComponent } from './dialogs/classification-dialog.component';
 import { CreateDialogComponent } from './dialogs/create-dialog.component';
 import { ExtractedTextDialogComponent } from './dialogs/extracted-text-dialog.component';
-import { LegacyImportDialogComponent } from './dialogs/legacy-import-dialog.component';
-import { LegacyImportService } from './dialogs/legacy-import.service';
 import { DocumentLinkDialogComponent } from './dialogs/link-dialog.component';
 import { DocsDeleteDialogComponent } from './dialogs/delete-dialog.component';
 import { MoveDialogComponent } from './dialogs/move-dialog.component';
@@ -118,6 +121,8 @@ import { UploadQueueService } from './services/upload-queue.service';
 		PresetChipsComponent,
 		SavedViewsComponent,
 		FacetMultiselectComponent,
+		DocsStatsLineComponent,
+		DocsDropStripComponent,
 		UploadDropzoneDirective,
 		UploadProgressComponent,
 		DocsDetailPanelComponent,
@@ -131,7 +136,6 @@ import { UploadQueueService } from './services/upload-queue.service';
 		ClassificationDialogComponent,
 		CreateDialogComponent,
 		ExtractedTextDialogComponent,
-		LegacyImportDialogComponent,
 		MoveDialogComponent,
 		DocsDeleteDialogComponent,
 		RejectDialogComponent,
@@ -154,6 +158,7 @@ import { UploadQueueService } from './services/upload-queue.service';
 		NbContextMenuModule,
 		NbDatepickerModule,
 		NbDialogModule.forChild(),
+		NbFormFieldModule,
 		NbIconModule,
 		NbInputModule,
 		NbPopoverModule,
@@ -163,8 +168,12 @@ import { UploadQueueService } from './services/upload-queue.service';
 		NbSpinnerModule,
 		NbToggleModule,
 		NbTooltipModule,
+		// The rebuilt facet dropdowns are ng-select — the app-wide overrides give
+		// them their geometry, and the compact filter-bar pin relies on it.
+		NgSelectModule,
 		FavoriteToggleModule,
 		SharedModule,
+		SingleStatisticModule,
 		SmartDataViewLayoutModule,
 		TagsColorInputModule,
 		// Only the team selector is pulled in from ui-core: the full `SelectorsModule`
@@ -204,8 +213,7 @@ import { UploadQueueService } from './services/upload-queue.service';
 		UploadQueueService,
 		DocsExportService,
 		DocsRowActionsService,
-		DocsSavedViewsService,
-		LegacyImportService
+		DocsSavedViewsService
 	]
 })
 export class DocsUiModule implements IOnPluginUiBootstrap, IOnPluginUiDestroy {

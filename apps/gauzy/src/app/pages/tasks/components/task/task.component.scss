@@ -42,3 +42,14 @@ nb-card-body {
     @include nb-rtl(padding-left, 0.5rem);
   }
 }
+
+// The ID column (first in the grid, fixed 90px in _loadSmartTableSettings) must
+// keep values like "#GAU-7777" on one line — they would otherwise wrap at the
+// hyphen. Scoped to this page's table because HashNumberPipe is shared and must
+// stay presentation-free; card grid and sprint views render no such cells.
+:host ::ng-deep angular2-smart-table {
+  th:first-child,
+  td:first-child {
+    white-space: nowrap;
+  }
+}

@@ -4,7 +4,7 @@ import { Component, Input } from '@angular/core';
     selector: 'ngx-date-view',
     template: `
 		<span>
-		  {{ value | dateFormat }}
+		  <span [nbTooltip]="value | dateFormat">{{ value | dateFormat : null : 'll' }}</span>
 		  @if (rowData?.recurring) {
 		    <nb-icon
 		      [nbTooltip]="'POP_UPS.RECURRING_EXPENSE' | translate"

@@ -9,6 +9,7 @@ import {
 	LocaleConfig
 } from 'ngx-daterangepicker-material';
 import moment from 'moment';
+import { NbLayoutDirectionService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import {
@@ -49,6 +50,18 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	private arrow: Arrow = new Arrow();
 	private next: Next = new Next();
 	private previous: Previous = new Previous();
+
+	/**
+	 * Which way the dropdown hangs off the input. The panel (~600px double
+	 * calendar) is wider than the space between the input and the trailing
+	 * viewport edge, so it must open TOWARD the canvas: the library aligns the
+	 * panel's trailing edge to the input for 'left', mirrored under RTL. (The
+	 * old -130%/-146% margin hack did the same job against a containing-block
+	 * layout that no longer exists.)
+	 */
+	public get opens(): 'left' | 'right' {
+		return this._directionService.isRtl() ? 'right' : 'left';
+	}
 
 	/**
 	 * Locale configuration for the component.
@@ -217,7 +230,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		private readonly _timesheetFilterService: TimesheetFilterService,
 		private readonly _navigationService: NavigationService,
 		private readonly _selectorBuilderService: SelectorBuilderService,
-		private readonly _timeZoneService: TimeZoneService
+		private readonly _timeZoneService: TimeZoneService,
+		private readonly _directionService: NbLayoutDirectionService
 	) {
 		super(translateService);
 	}

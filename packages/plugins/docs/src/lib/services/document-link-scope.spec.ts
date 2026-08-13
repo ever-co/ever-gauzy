@@ -150,7 +150,17 @@ describe('DocumentLinkService — forward lookup scope', () => {
 
 		await service.getLinksForDocument('doc-1');
 
-		expect(documentService.findOneScoped).toHaveBeenCalledWith('doc-1');
+		expect(documentService.findOneScoped).toHaveBeenCalledWith('doc-1', [], undefined);
+	});
+
+	it('threads the client-selected organization into the document read', async () => {
+		// Without it the read falls back to the token's organization — null for a non-employee
+		// user (400 on the whole links panel), stale when another organization is being browsed.
+		const { service, documentService } = buildService();
+
+		await service.getLinksForDocument('doc-1', 'org-7');
+
+		expect(documentService.findOneScoped).toHaveBeenCalledWith('doc-1', [], 'org-7');
 	});
 
 	it('404s instead of revealing that links exist on an unreadable document', async () => {

@@ -10,6 +10,7 @@ import { DocumentQuotaService } from './document-quota.service';
 import { DocumentReviewService } from './document-review.service';
 import { DocumentSettingsService } from './document-settings.service';
 import { DocumentShareService } from './document-share.service';
+import { DocumentStatsService } from './document-stats.service';
 import { DocumentTreeService } from './document-tree.service';
 import { DocumentUploadService } from './document-upload.service';
 import { DocumentVersionService } from './document-version.service';
@@ -28,6 +29,7 @@ export * from './document-quota.service';
 export * from './document-review.service';
 export * from './document-settings.service';
 export * from './document-share.service';
+export * from './document-stats.service';
 export * from './document-tree.service';
 export * from './document-upload.service';
 export * from './document-version.service';
@@ -52,6 +54,7 @@ export const Services = [
 	DocumentLinkService,
 	DocumentShareService,
 	DocumentSettingsService,
+	DocumentStatsService,
 	DocumentProcessingService,
 	DocumentUploadService,
 	DocumentKnowledgeService,

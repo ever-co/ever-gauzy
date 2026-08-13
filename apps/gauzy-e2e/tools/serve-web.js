@@ -46,7 +46,7 @@ function sendIndex(res) {
 			res.end('index.html not found in ' + root);
 			return;
 		}
-		res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+		res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
 		res.end(data);
 	});
 }
@@ -70,7 +70,9 @@ const server = http.createServer((req, res) => {
 			return;
 		}
 		const ext = path.extname(filePath).toLowerCase();
-		res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+		// Dev bundles have UNHASHED chunk names; without this the browser's
+		// heuristic cache keeps serving a prior build's chunks after a rebuild.
+		res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'no-store' });
 		res.end(data);
 	});
 });

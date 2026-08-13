@@ -72,7 +72,7 @@ const INLINE_SAFE_MIME_TYPES = new Set([
  * Key-shape guard (`08 §5.3`) — runs before every provider `getFile`/`url` call.
  *
  * The prefix itself is deliberately NOT pinned: keys are provider- and ingress-dependent
- * (the LOCAL provider emits Windows separators, the capture and legacy-import paths use their
+ * (the LOCAL provider emits Windows separators, the capture paths use their
  * own prefixes). What is pinned is the part that can actually escape the bucket: a traversal
  * segment, an absolute path, a drive letter, or a NUL byte.
  *

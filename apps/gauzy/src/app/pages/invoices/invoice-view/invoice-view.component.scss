@@ -32,7 +32,11 @@
   // to 100vh in styles/_overrides.scss) and put the whole PAGE into a scroll
   // instead of scrolling its own content.
   $height: calc(100vh - 18rem);
-  @include nb-card_overrides(unset, $height, $default-radius);
+  // Body overflow must stay `auto` (Nebular's own default), not `unset`: the
+  // copyright footer sits in flow below the card, so a body that opts out of
+  // internal scrolling paints its content straight through it. With `auto` the
+  // items, totals and Documents card scroll inside the card, above the footer.
+  @include nb-card_overrides(auto, $height, $default-radius);
 }
 
 // Record-side Documents panel: its own card, separated from the invoice body.

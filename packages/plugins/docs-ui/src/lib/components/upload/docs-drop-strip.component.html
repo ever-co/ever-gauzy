@@ -1,0 +1,19 @@
+<!-- role=button + tabindex: the whole strip is one click/keyboard target whose
+     accessible name is its visible copy (no aria-label override needed). -->
+<div
+	class="docs-drop-strip"
+	role="button"
+	tabindex="0"
+	[class.docs-drop-strip--active]="active"
+	(click)="browse.emit()"
+	(keydown.enter)="browse.emit()"
+	(keydown.space)="onSpace($any($event))"
+>
+	<nb-icon icon="cloud-upload-outline"></nb-icon>
+	<div class="docs-drop-strip-copy">
+		<span class="docs-drop-strip-title">{{ 'DOCS.UPLOAD.DROP_STRIP_TITLE' | translate }}</span>
+		<span class="docs-drop-strip-hint">{{
+			'DOCS.UPLOAD.DROP_STRIP_HINT' | translate: { formats: formats, max: maxFileSize, files: maxFiles }
+		}}</span>
+	</div>
+</div>
