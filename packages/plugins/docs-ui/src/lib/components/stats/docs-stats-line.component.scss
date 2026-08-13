@@ -1,0 +1,21 @@
+.docs-stats-line {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.docs-stat-tile {
+	flex: 1 1 9rem;
+	min-width: 9rem;
+	margin: 0;
+	background: var(--gauzy-card-1);
+	border-radius: var(--gauzy-radius-sm);
+	// Hairline ring instead of Nebular's card border/shadow — same vocabulary as
+	// the header pills, so the strip reads as a control band, not a card grid.
+	border: none;
+	box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
+	nb-card-body {
+		padding: 0.5rem 0.75rem;
+	}
+}

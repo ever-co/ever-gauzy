@@ -1,0 +1,53 @@
+.docs-drop-strip {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.625rem 1rem;
+	border: 1px dashed var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.35));
+	border-radius: var(--gauzy-radius-sm);
+	background: var(--gauzy-card-1);
+	color: var(--text-hint-color);
+	cursor: pointer;
+	user-select: none;
+
+	nb-icon {
+		font-size: 1.5rem;
+		flex-shrink: 0;
+	}
+
+	&:hover {
+		background: var(--gauzy-hover-tint, var(--gauzy-card-2));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-primary-default);
+		outline-offset: 2px;
+	}
+
+	// Same active vocabulary as the page-wide `.docs-drop-overlay`.
+	&--active {
+		border-color: var(--color-primary-default);
+		background: var(--color-primary-transparent-100, rgba(51, 102, 255, 0.08));
+		color: var(--color-primary-default);
+	}
+}
+
+.docs-drop-strip-copy {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+	min-width: 0;
+}
+
+.docs-drop-strip-title {
+	font-weight: 600;
+	color: var(--text-basic-color);
+}
+
+.docs-drop-strip--active .docs-drop-strip-title {
+	color: inherit;
+}
+
+.docs-drop-strip-hint {
+	font-size: 0.75rem;
+}

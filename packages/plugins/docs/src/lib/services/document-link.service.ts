@@ -88,10 +88,12 @@ export class DocumentLinkService extends TenantAwareCrudService<DocumentLink> {
 	 * on another organization's document, would leak through this endpoint.
 	 *
 	 * @param documentId The document id.
+	 * @param organizationId Explicit organization scope for the document read (falls back to the
+	 * requester's current organization when omitted).
 	 * @returns The matching links.
 	 */
-	async getLinksForDocument(documentId: ID): Promise<IPagination<DocumentLink>> {
-		const document = await this.documentService.findOneScoped(documentId);
+	async getLinksForDocument(documentId: ID, organizationId?: ID): Promise<IPagination<DocumentLink>> {
+		const document = await this.documentService.findOneScoped(documentId, [], organizationId);
 
 		const qb = this.buildScopedLinkQuery(document.organizationId);
 		qb.andWhere(p(`"document_link"."documentId" = :documentId`), { documentId });

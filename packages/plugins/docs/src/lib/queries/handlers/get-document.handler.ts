@@ -9,12 +9,13 @@ export class GetDocumentHandler implements IQueryHandler<GetDocumentQuery> {
 
 	/**
 	 * Handles the `GetDocumentQuery`: single document with optional relations, tenant/org +
-	 * visibility scoped (invisible ids resolve to 404, never 403).
+	 * visibility scoped (invisible ids resolve to 404, never 403). An explicit `organizationId`
+	 * (the client's selected organization) wins over the request context's.
 	 *
-	 * @param query - The query carrying the id and relations.
+	 * @param query - The query carrying the id, relations and optional organization scope.
 	 * @returns The scoped document.
 	 */
 	public async execute(query: GetDocumentQuery): Promise<IDocument> {
-		return this.documentService.findOneScoped(query.id, query.relations);
+		return this.documentService.findOneScoped(query.id, query.relations, query.organizationId);
 	}
 }

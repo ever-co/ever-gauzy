@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
 	IsArray,
@@ -15,6 +15,7 @@ import {
 	ValidateNested
 } from 'class-validator';
 import { ID, JsonData } from '@gauzy/contracts';
+import { TenantOrganizationBaseDTO } from '@gauzy/core';
 
 /**
  * The `metadata` keys a content save may write.
@@ -48,8 +49,29 @@ export class UpdateDocumentContentMetadataDTO {
  * the render cache; when it is omitted the server derives the cache from the validated JSON rather
  * than keeping the previous (now stale) HTML. A stale `expectedUpdatedAt` yields **409** with
  * `{ code: 'DOCS_CONTENT_CONFLICT', currentUpdatedAt }`; a locked document yields **423**.
+ *
+ * Extends a partial `TenantOrganizationBaseDTO` — the same shape as `DocumentScopeQueryDTO` on
+ * the detail reads — for the editor's OPTIONAL selected-organization scope. Without it the save
+ * is scoped by the token's `lastOrganizationId` (null for a non-employee user → 400, autosave
+ * dies; stale when another organization of the tenant is open → 404). The inherited fields carry
+ * the platform's `@IsOrganizationBelongsToUser()` ownership check, so a caller can never name an
+ * organization they do not belong to — a plain `@IsUUID` here was a same-tenant
+ * cross-organization write hole.
  */
-export class UpdateDocumentContentDTO {
+export class UpdateDocumentContentDTO extends PartialType(TenantOrganizationBaseDTO) {
+	/**
+	 * Re-declared (not only inherited) so its validator metadata provably lives on THIS class:
+	 * the route validates with `forbidNonWhitelisted`, and a client sending its standard
+	 * `{ organizationId, tenantId }` scope pair must never 400 on the pair's second half because
+	 * mapped-type metadata copying missed a grandparent field. Accepted but NEVER read — the
+	 * tenant always comes from the request context, so validating more than the shape here
+	 * would be theater.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	override readonly tenantId?: ID;
+
 	@ApiProperty({ type: () => Object, description: 'Canonical TipTap JSON document' })
 	@IsDefined()
 	readonly contentJson: JsonData;

@@ -36,10 +36,6 @@ export * from './lib/events/document.event';
 // timeline through the platform's own `ActivityLogService`.
 export * from './lib/activity';
 
-// M4 consolidation: the legacy Organization-Documents / Help-Center import (types, pure
-// mappers, service). Legacy tables are only ever read — provenance lives on the new side.
-export * from './lib/legacy-import';
-
 // Commands intended for cross-plugin dispatch
 export { CreateDocumentCommand } from './lib/commands/create-document.command';
 export { CreateDocumentLinkCommand } from './lib/commands/create-document-link.command';

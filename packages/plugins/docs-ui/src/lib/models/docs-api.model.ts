@@ -49,7 +49,7 @@ export const DOCUMENT_MAX_TAKE = 100;
  * single place that reconciles it with `GetDocumentsQueryDTO`.
  */
 export interface IDocumentFindInput {
-	/** 🛑 The DTO's `kind` is a **scalar** — a multi-kind selection cannot be expressed server-side. */
+	/** Scalar or array — the DTO's `kind` is an array (CSV/repeated params), so both normalize to a list. */
 	kind?: DocumentKindEnum | DocumentKindEnum[];
 	status?: DocumentStatusEnum[];
 	knowledgeStatus?: DocumentKnowledgeStatusEnum[];
@@ -90,7 +90,7 @@ export interface IDocumentFindInput {
  * a *known* key with the wrong shape is a 400 that empties the hub.
  */
 export interface IDocumentsQueryParams {
-	kind?: DocumentKindEnum;
+	kind?: DocumentKindEnum[];
 	status?: DocumentStatusEnum[];
 	knowledgeStatus?: DocumentKnowledgeStatusEnum[];
 	reviewStatus?: DocumentReviewStatusEnum[];
@@ -132,13 +132,14 @@ const textOrUndefined = (value: string | undefined): string | undefined => value
 const DOCUMENT_ARCHIVED_FILTERS: readonly DocumentArchivedFilter[] = ['exclude', 'include', 'only'];
 
 /**
- * The DTO's `kind` is a **scalar** `@IsEnum`: a single-element selection unwraps
- * to it, a multi-kind one cannot be expressed and is dropped (a wider result set
- * beats a 400).
+ * The DTO's `kind` is an **array** (`@IsEnum(..., { each: true })`, CSV or
+ * repeated params; the service filters `kind IN (...)`). The scalar-unwrap this
+ * used to do silently DROPPED every multi-kind selection — the filter widened
+ * the result set with no error.
  */
-function normalizeKind(kind: IDocumentFindInput['kind']): DocumentKindEnum | undefined {
-	if (!Array.isArray(kind)) return kind;
-	return kind.length === 1 ? kind[0] : undefined;
+function normalizeKind(kind: IDocumentFindInput['kind']): DocumentKindEnum[] | undefined {
+	if (!kind) return undefined;
+	return listOrUndefined(Array.isArray(kind) ? kind : [kind]);
 }
 
 /** `true`/`false` map onto the DTO enum; an unrecognized value is dropped, not sent. */
@@ -267,6 +268,73 @@ export interface IDocumentFacets {
 }
 
 /**
+ * What `GET /documents/facets` actually sends (`DocumentService.getDocumentFacets`):
+ * enum facets as `Record<value, count>` maps, categories/tags as `{ id, name, count }`
+ * rows. Only `presets` matches the client model as-is. Bucket arrays are also
+ * accepted so an already-normalized response stays valid.
+ */
+export interface IDocumentFacetsWire {
+	kind?: Record<string, number> | IDocumentFacetBucket[];
+	status?: Record<string, number> | IDocumentFacetBucket[];
+	knowledgeStatus?: Record<string, number> | IDocumentFacetBucket[];
+	reviewStatus?: Record<string, number> | IDocumentFacetBucket[];
+	source?: Record<string, number> | IDocumentFacetBucket[];
+	categories?: { id: string; name: string; count: number }[] | IDocumentFacetBucket[];
+	tags?: { id: string; name: string; count: number }[] | IDocumentFacetBucket[];
+	presets?: IDocumentFacets['presets'];
+}
+
+/**
+ * Normalizes the facets wire shape into the `{ value, label, count }[]` buckets
+ * every consumer binds.
+ *
+ * 🛑 The response used to be stored RAW: `bucketsOrEnum()` saw a non-array for
+ * every enum facet and silently fell back to bare enum lists (per-option counts
+ * never rendered), while Category/Tag options were built from rows whose
+ * `.value`/`.label` were `undefined`. `DocumentsService.getFacets` is the single
+ * funnel through this function — effects and the store stay shape-agnostic.
+ */
+export function normalizeDocumentFacets(raw: IDocumentFacetsWire | null | undefined): IDocumentFacets {
+	const enumBuckets = (facet?: Record<string, number> | IDocumentFacetBucket[]): IDocumentFacetBucket[] => {
+		if (Array.isArray(facet)) return facet;
+		if (!facet || typeof facet !== 'object') return [];
+		return Object.entries(facet).map(([value, count]) => ({ value, count: Number(count) }));
+	};
+	const rowBuckets = (
+		rows?: { id: string; name: string; count: number }[] | IDocumentFacetBucket[]
+	): IDocumentFacetBucket[] => {
+		if (!Array.isArray(rows)) return [];
+		return rows.map((row) =>
+			'value' in row ? row : { value: row.id, label: row.name, count: Number(row.count) }
+		);
+	};
+	return {
+		kind: enumBuckets(raw?.kind),
+		status: enumBuckets(raw?.status),
+		knowledgeStatus: enumBuckets(raw?.knowledgeStatus),
+		reviewStatus: enumBuckets(raw?.reviewStatus),
+		source: enumBuckets(raw?.source),
+		categories: rowBuckets(raw?.categories),
+		tags: rowBuckets(raw?.tags),
+		presets: raw?.presets
+	};
+}
+
+/**
+ * Response of `GET /documents/stats` — org-global counts for the stats tiles
+ * (mirrors `IDocumentStats` in the backend's `document-stats.service.ts`).
+ * `byStatus` carries the RAW four-state enum; the UI folds UPLOADED into
+ * PROCESSING the same way the status facet does.
+ */
+export interface IDocumentStats {
+	total: number;
+	byStatus: Partial<Record<DocumentStatusEnum, number>>;
+	needsReview: number;
+	/** Same shape as the settings quota block; `quotaBytes: 0` = unlimited. */
+	storage?: IDocumentSettingsQuota;
+}
+
+/**
  * Options collected by the classification dialog and sent with each upload.
  *
  * 🛑 Only the fields `UploadDocumentsDTO` declares reach the server — the upload
@@ -328,6 +396,14 @@ export interface IDocumentContentUpdateInput {
 	forceSnapshot?: boolean;
 	/** Distinct employee-mention ids currently in the doc (mention diff-sync). */
 	mentionEmployeeIds?: ID[];
+	/**
+	 * Explicit organization scope — defaulted from the selected organization by the service.
+	 * Without it the save is scoped by the token's organization, which is null for non-employee
+	 * users (400, autosave dies) and stale when another organization is being browsed.
+	 */
+	organizationId?: ID;
+	/** Sent for symmetry with `organizationId`; the server always uses the request context's tenant. */
+	tenantId?: ID;
 }
 
 /**

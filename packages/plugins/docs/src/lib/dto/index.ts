@@ -4,6 +4,7 @@ export * from './delete-document.dto';
 export * from './document-category.dto';
 export * from './document-link.dto';
 export * from './document-inbound-address.dto';
+export * from './document-scope-query.dto';
 export * from './document-settings.dto';
 export * from './document-share.dto';
 export * from './document-tag-reference';

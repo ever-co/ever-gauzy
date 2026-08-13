@@ -30,15 +30,12 @@ import {
 } from '../../docs.constants';
 import { IDocsCardsCrumb } from '../../components/cards/docs-cards.component';
 import { DocsPreviewModalComponent } from '../../components/preview/docs-preview-modal.component';
+import { DocsStatsLineComponent } from '../../components/stats/docs-stats-line.component';
 import {
 	ClassificationDialogComponent,
 	IDocsUploadDialogResult
 } from '../../dialogs/classification-dialog.component';
 import { CreateDialogComponent } from '../../dialogs/create-dialog.component';
-import {
-	ILegacyImportDialogResult,
-	LegacyImportDialogComponent
-} from '../../dialogs/legacy-import-dialog.component';
 import {
 	createInitialDocsFilterState,
 	DocsFilterState,
@@ -46,6 +43,7 @@ import {
 	parseDocsFilterFromParams
 } from '../../models/docs-filter.model';
 import { DocsEmptyVariant } from '../../components/empty/empty-state.component';
+import { humanizeBytes } from '../../models/docs-format.util';
 import { DocumentTreeStore } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
 import { UploadQueueService } from '../../services/upload-queue.service';
@@ -79,6 +77,8 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 	@ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
 	/** `New ▾` trigger — the `n` shortcut opens the menu by clicking it. */
 	@ViewChild('newMenuTrigger', { read: ElementRef }) newMenuTrigger: ElementRef<HTMLElement>;
+	/** Stats tiles — re-pulled when uploads/bulk actions change the counts. */
+	@ViewChild('statsLine') statsLine?: DocsStatsLineComponent;
 
 	public readonly query = this.documentsQuery;
 	public readonly uploadAccept = DOCS_UPLOAD_ACCEPT;
@@ -93,16 +93,8 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 	public breadcrumb: IDocsCardsCrumb[] = [];
 	/** Live query params, handed to the saved-views control (UX spec §5). */
 	public urlParams: Params = {};
-	/** Nebular menu tag of the header overflow menu — scopes its click stream to this page. */
-	public readonly overflowMenuTag = 'docs-browse-overflow';
 	/** Nebular menu tag of the `New ▾` split menu. */
 	public readonly newMenuTag = 'docs-browse-new';
-	/**
-	 * Header overflow items (`DOCS_MANAGE`-only). Rebuilt on language change rather than
-	 * recomputed in the binding: `nbContextMenu` reacts to a new array reference, so a getter
-	 * would rebuild the overlay on every change-detection pass.
-	 */
-	public overflowMenu: NbMenuItem[] = [];
 	/** `New ▾` items — Folder, then Page (`01-ux-spec.md` §2). Rebuilt on language change. */
 	public newMenu: NbMenuItem[] = [];
 
@@ -206,7 +198,7 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 					this.toastrService.warning(
 						this.getTranslation('DOCS.UPLOAD.FILE_TOO_LARGE', {
 							name: rejection.file.name,
-							max: this.humanizeBytes(this.uploadQueue.maxFileSizeBytes)
+							max: humanizeBytes(this.uploadQueue.maxFileSizeBytes)
 						})
 					);
 					break;
@@ -224,9 +216,16 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 
 		// 8b) A single upload that finishes READY but PENDING review gets an actionable
 		//     toast straight to the review queue (§7.3).
-		this.uploadQueue.documentReady$
-			.pipe(untilDestroyed(this))
-			.subscribe((document) => this.notifyIfNeedsReview(document));
+		this.uploadQueue.documentReady$.pipe(untilDestroyed(this)).subscribe((document) => {
+			this.notifyIfNeedsReview(document);
+		});
+
+		// 8c) EVERY settled upload moves the stats tiles — a document that settles
+		//     FAILED moves the Failed count just as a READY one moves Ready, so this
+		//     rides the outcome-agnostic stream, not the READY-only one above.
+		this.uploadQueue.documentSettled$.pipe(untilDestroyed(this)).subscribe(() => {
+			this.statsLine?.reload();
+		});
 
 		this.canManage = this.store.hasPermission(PermissionsEnum.DOCS_MANAGE);
 		this.canCreate = this.store.hasPermission(PermissionsEnum.DOCS_CREATE);
@@ -237,16 +236,13 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 		this.nbMenuService
 			.onItemClick()
 			.pipe(
-				filter(({ tag }) => tag === this.overflowMenuTag || tag === this.newMenuTag),
+				filter(({ tag }) => tag === this.newMenuTag),
 				untilDestroyed(this)
 			)
 			.subscribe(({ item }) => {
 				const action = (item as NbMenuItem & { data?: { action?: string } }).data?.action;
 				// A menu click cannot be awaited; every branch owns its own failure path.
 				switch (action) {
-					case 'import-legacy':
-						void this.openLegacyImportDialog();
-						break;
 					case 'new-folder':
 						void this.openNewFolderDialog();
 						break;
@@ -618,6 +614,8 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 
 	onBulkCompleted(event: { destructive: boolean }): void {
 		this.actions.dispatch(DocumentsActions.bulkCompleted({ destructive: event.destructive }));
+		// Archive/delete/review bulk actions move the tile counts.
+		this.statsLine?.reload();
 	}
 
 	onClearSelection(): void {
@@ -722,8 +720,8 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 	// ─── Header menus ────────────────────────────────────────────
 
 	/**
-	 * `New ▾` + the admin overflow. Kept in a method (rather than a getter bound in
-	 * the template) so the labels re-translate on a language switch without handing
+	 * `New ▾`. Kept in a method (rather than a getter bound in the template) so
+	 * the labels re-translate on a language switch without handing
 	 * `[nbContextMenu]` a new array reference on every change-detection pass.
 	 */
 	private buildHeaderMenus(): void {
@@ -739,46 +737,6 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 				data: { action: 'new-page' }
 			}
 		];
-		this.overflowMenu = [
-			{
-				title: this.getTranslation('DOCS.MIGRATION.MENU_ITEM'),
-				icon: 'swap-outline',
-				data: { action: 'import-legacy' }
-			}
-		];
-	}
-
-	/**
-	 * Legacy consolidation dialog (`09-consolidation-migration.md` §10.4).
-	 *
-	 * The list and the tree are re-queried only when the run actually wrote something: a dry
-	 * run, a cancelled confirmation or a rollback that removed nothing all leave the hub
-	 * exactly as it was. A dialog **dismissed** with `Esc` resolves `undefined` instead of a
-	 * result, and that case refreshes — the alternative is leaving a freshly imported tree
-	 * invisible until the next navigation.
-	 *
-	 * Backdrop clicks are disabled: a run takes as long as the legacy data is big, and losing
-	 * the report to a stray click outside the card would mean re-running to see it again.
-	 */
-	async openLegacyImportDialog(): Promise<void> {
-		const result: ILegacyImportDialogResult | undefined = await firstValueFrom(
-			this.dialogService.open(LegacyImportDialogComponent, {
-				closeOnBackdropClick: false,
-				closeOnEsc: true
-			}).onClose
-		);
-		if (result && !result.changed) return;
-		this.documentTreeStore.invalidateAll();
-		this.actions.dispatch(DocumentsActions.loadDocuments());
-	}
-
-	/** Byte formatter for upload toasts (same rounding as the detail panel). */
-	private humanizeBytes(bytes: number): string {
-		if (!bytes) return '—';
-		const units = ['B', 'KB', 'MB', 'GB'];
-		const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-		const value = bytes / Math.pow(1024, exponent);
-		return `${value >= 10 || exponent === 0 ? Math.round(value) : value.toFixed(1)} ${units[exponent]}`;
 	}
 
 	// ─── Empty state ─────────────────────────────────────────────

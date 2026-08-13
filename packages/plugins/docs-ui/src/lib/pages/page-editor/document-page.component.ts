@@ -288,7 +288,12 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			this.titleDraft = this.document?.name ?? '';
 			this.iconDraft = this.document?.icon ?? '';
 			await this.loadBreadcrumbs();
-		} catch {
+		} catch (error) {
+			// Every failure mode lands on the same banner — an org-scope 400, a 403, a genuine
+			// 404 and a 500 are indistinguishable to the user. Keep the HttpErrorResponse in the
+			// console so the actual cause stays diagnosable instead of masquerading as a bundle
+			// failure.
+			console.error('Document load failed', error);
 			this.loadError = true;
 		} finally {
 			this.loading = false;

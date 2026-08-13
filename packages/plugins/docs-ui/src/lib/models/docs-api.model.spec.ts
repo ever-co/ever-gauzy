@@ -4,7 +4,12 @@ import {
 	DocumentStatusEnum,
 	DocumentVisibilityEnum
 } from '@gauzy/contracts';
-import { DOCUMENT_MAX_TAKE, normalizeDocumentStorage, toDocumentsQueryParams } from './docs-api.model';
+import {
+	DOCUMENT_MAX_TAKE,
+	normalizeDocumentFacets,
+	normalizeDocumentStorage,
+	toDocumentsQueryParams
+} from './docs-api.model';
 
 /**
  * `toDocumentsQueryParams()` is the single reconciliation point between the hub's
@@ -68,17 +73,29 @@ describe('toDocumentsQueryParams — GetDocumentsQueryDTO reconciliation', () =>
 	});
 
 	describe('kind', () => {
-		it('unwraps a single-element array into the DTO scalar', () => {
-			expect(toDocumentsQueryParams({ ...scope, kind: [DocumentKindEnum.PAGE] }).kind).toBe(DocumentKindEnum.PAGE);
+		it('keeps a selection as the array the DTO accepts (CSV/repeated params)', () => {
+			expect(toDocumentsQueryParams({ ...scope, kind: [DocumentKindEnum.PAGE] }).kind).toEqual([
+				DocumentKindEnum.PAGE
+			]);
 		});
 
-		it('drops a multi-kind selection the scalar DTO cannot express', () => {
+		it('keeps a multi-kind selection — dropping it silently widened the result set', () => {
 			const params = toDocumentsQueryParams({
 				...scope,
 				kind: [DocumentKindEnum.PAGE, DocumentKindEnum.FILE]
 			});
 
-			expect(params.kind).toBeUndefined();
+			expect(params.kind).toEqual([DocumentKindEnum.PAGE, DocumentKindEnum.FILE]);
+		});
+
+		it('wraps a scalar caller value into the array shape', () => {
+			expect(toDocumentsQueryParams({ ...scope, kind: DocumentKindEnum.FILE }).kind).toEqual([
+				DocumentKindEnum.FILE
+			]);
+		});
+
+		it('omits an empty selection entirely', () => {
+			expect(toDocumentsQueryParams({ ...scope, kind: [] })).not.toHaveProperty('kind');
 		});
 	});
 
@@ -193,6 +210,63 @@ describe('toDocumentsQueryParams — GetDocumentsQueryDTO reconciliation', () =>
 				relations: ['categories', 'tags']
 			});
 		});
+	});
+});
+
+/**
+ * `normalizeDocumentFacets()` is the seam between the facets endpoint's wire
+ * shape and the filter bar.
+ *
+ * 🛑 The backend answers enum facets as `Record<value, count>` maps and
+ * categories/tags as `{ id, name, count }` rows (`DocumentService.getDocumentFacets`);
+ * the UI consumes `{ value, label, count }[]` buckets. The response used to be
+ * stored raw, so `bucketsOrEnum()` saw a non-array for every enum facet (counts
+ * never rendered) and Category/Tag options bound `value: undefined`.
+ */
+describe('normalizeDocumentFacets — GET /documents/facets wire shape', () => {
+	it('maps enum Record facets into { value, count } buckets', () => {
+		const facets = normalizeDocumentFacets({
+			kind: { FOLDER: 3, FILE: 12 },
+			status: { READY: 10, PROCESSING: 2 }
+		});
+
+		expect(facets.kind).toEqual([
+			{ value: 'FOLDER', count: 3 },
+			{ value: 'FILE', count: 12 }
+		]);
+		expect(facets.status).toEqual([
+			{ value: 'READY', count: 10 },
+			{ value: 'PROCESSING', count: 2 }
+		]);
+	});
+
+	it('maps category/tag { id, name, count } rows into { value, label, count } buckets', () => {
+		const facets = normalizeDocumentFacets({
+			tags: [{ id: 'tag-1', name: 'Legal', count: 4 }],
+			categories: [{ id: 'cat-1', name: 'Invoices', count: 7 }]
+		});
+
+		expect(facets.tags).toEqual([{ value: 'tag-1', label: 'Legal', count: 4 }]);
+		expect(facets.categories).toEqual([{ value: 'cat-1', label: 'Invoices', count: 7 }]);
+	});
+
+	it('passes already-bucketed arrays and the presets block through untouched', () => {
+		const kind = [{ value: 'PAGE', count: 5 }];
+		const presets = { all: 20, needsReview: 3, notInKnowledge: 2, archived: 1 };
+		const facets = normalizeDocumentFacets({ kind, presets });
+
+		expect(facets.kind).toBe(kind);
+		expect(facets.presets).toBe(presets);
+	});
+
+	it('normalizes an empty/absent response to empty buckets (never undefined)', () => {
+		const facets = normalizeDocumentFacets(null);
+
+		expect(facets.kind).toEqual([]);
+		expect(facets.status).toEqual([]);
+		expect(facets.categories).toEqual([]);
+		expect(facets.tags).toEqual([]);
+		expect(facets.presets).toBeUndefined();
 	});
 });
 

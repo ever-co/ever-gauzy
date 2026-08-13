@@ -15,13 +15,17 @@
       <!--
         Record-side Documents panel (spec 00 §6.14 R-LNK-02). It gates itself on
         DOCS_READ + FEATURE_DOCUMENTS, so on a deployment without the Documents
-        feature this renders nothing at all.
+        feature this renders nothing at all. The VIEW page is a read-only
+        surface: no attach/upload/unlink here (those live on the edit page),
+        and the card only appears once the record actually has attachments.
       -->
       <gz-document-links-panel
         class="invoice-documents"
         [entity]="documentEntity"
         [entityId]="invoice.id"
         [entityLabel]="documentLabel(invoice)"
+        [readonly]="true"
+        [hideWhenEmpty]="true"
       ></gz-document-links-panel>
     }
   </nb-card-body>

@@ -97,7 +97,12 @@ export class CreateDialogComponent extends TranslationBaseComponent {
 			}
 			this.dialogRef.close(document);
 		} catch (error) {
-			this.toastrService.danger(error);
+			// The raw HttpErrorResponse renders as "Http failure response … 400 OK" —
+			// log it for diagnosis, show the user a human sentence.
+			console.error('Document create/rename failed', error);
+			this.toastrService.danger(
+				this.getTranslation(this.renameId ? 'DOCS.ERRORS.RENAME_FAILED' : 'DOCS.ERRORS.CREATE_FAILED')
+			);
 			this.saving = false;
 		}
 	}

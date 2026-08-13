@@ -361,9 +361,8 @@ export class DocumentsEffects {
 
 	/**
 	 * The multi-select facets, each copied through only when it carries a selection.
-	 *
-	 * 🛑 The DTO's `kind` is a scalar `@IsEnum`. A multi-kind selection cannot be
-	 * expressed server-side, so the service drops it (a wider result set beats a 400).
+	 * All of them (incl. `kind`) travel as the arrays the DTO accepts — CSV or
+	 * repeated params, `IN (...)` server-side.
 	 */
 	private buildFacetFilters(filter: DocsFilterState): IDocumentFindInput {
 		const input: IDocumentFindInput = {};
