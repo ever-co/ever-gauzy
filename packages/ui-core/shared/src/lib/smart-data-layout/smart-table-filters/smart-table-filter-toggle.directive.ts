@@ -64,7 +64,7 @@ export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, O
 	private observer: MutationObserver | null = null;
 	/** Delegated input/change listeners on the filter row, for the active dot. */
 	private teardownFns: Array<() => void> = [];
-	/** Row currently carrying the delegated listeners, so teardown can unmark it. */
+	/** Row currently carrying the delegated listeners, so teardown can forget it. */
 	private listenedRow: HTMLElement | null = null;
 
 	/**
@@ -262,9 +262,9 @@ export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, O
 	private detachButton(): void {
 		this.teardownFns.forEach((teardown) => teardown());
 		this.teardownFns = [];
-		// The delegated listeners just died with their teardowns — forget the
-		// row they were on, or a re-render of the same row never re-registers
-		// them and the indicator dot stops tracking typed values.
+		// The delegated listeners just died with the callbacks above — forget
+		// the row they were on, or a re-render of the same row never
+		// re-registers them and the indicator dot stops tracking typed values.
 		this.listenedRow = null;
 		if (this.button?.parentElement) {
 			this.renderer.removeChild(this.button.parentElement, this.button);
