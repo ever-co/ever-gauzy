@@ -24,7 +24,11 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { RecurringExpenseMutationComponent, RecurringExpenseDeleteConfirmationComponent } from '@gauzy/ui-core/shared';
+import {
+	IRecordViewSection,
+	RecurringExpenseMutationComponent,
+	RecurringExpenseDeleteConfirmationComponent
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -50,6 +54,13 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		data: null,
 		index: null
 	};
+
+	/*
+	 * Read-only View: a recurring expense is a small record, so it opens in the
+	 * right-side drawer rather than on a page of its own.
+	 */
+	viewedRecurringExpense: IEmployeeRecurringExpense;
+	viewSections: IRecordViewSection[] = [];
 
 	showHistory: boolean = false;
 
@@ -172,6 +183,43 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		}
 	}
 
+	/**
+	 * Opens the read-only View of the selected recurring expense in the right-side drawer.
+	 */
+	viewEmployeeRecurringExpense(): void {
+		const expense: IEmployeeRecurringExpense = this.selectedRecurringExpense.data;
+		if (!expense) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections(expense);
+		this.viewedRecurringExpense = expense;
+	}
+
+	closeView(): void {
+		this.viewedRecurringExpense = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer — the block row's columns, read vertically,
+	 * then the fields the row has no room for.
+	 */
+	private buildViewSections(expense: IEmployeeRecurringExpense): IRecordViewSection[] {
+		return [
+			{
+				fields: [
+					{ label: 'POP_UPS.EMPLOYEE', key: 'employee', type: 'person' },
+					// Default categories are stored as enum keys — show them translated,
+					// exactly as the block row does.
+					{ label: 'POP_UPS.CATEGORY_NAME', value: this.getCategoryName(expense.categoryName) },
+					{ label: 'POP_UPS.STARTS_ON', key: 'startDate', type: 'date' },
+					{ label: 'POP_UPS.EXPENSE_VALUE', key: 'value', type: 'money' },
+					{ label: 'SM_TABLE.END_DATE', key: 'endDate', type: 'date' }
+				]
+			}
+		];
+	}
+
 	async editEmployeeRecurringExpense() {
 		const result = await firstValueFrom(
 			this.dialogService.open(RecurringExpenseMutationComponent, {
@@ -271,6 +319,12 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 			return;
 		}
 
+		// The list is about to be reloaded: close the drawer AND drop the
+		// selection — a kept selection would leave the toolbar enabled and let
+		// View reopen a record object the reload has already detached.
+		this.closeView();
+		this.selectedRecurringExpense = { isSelected: false, data: null, index: null };
+
 		const { startDate, endDate } = this.selectedDateRange;
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
@@ -332,6 +386,8 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	}
 
 	selectRecurringExpense(recurringExpense: IEmployeeRecurringExpense, i: number) {
+		// Whatever the drawer is showing no longer matches the selection.
+		this.closeView();
 		this.showHistory = false;
 		this.selectedRecurringExpense =
 			this.selectedRecurringExpense.data && recurringExpense.id === this.selectedRecurringExpense.data.id

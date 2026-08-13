@@ -27,6 +27,7 @@ import {
 	EmployeeMultiSelectModule,
 	GoalCustomUnitModule,
 	GoalTemplatesModule,
+	RecordViewModule,
 	SharedModule
 } from '@gauzy/ui-core/shared';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
@@ -54,6 +55,7 @@ import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 		NbToggleModule,
 		GoalCustomUnitModule,
 		GoalTemplatesModule,
+		RecordViewModule,
 		NbFormFieldModule,
 		NbSpinnerModule,
 		NbDialogModule.forChild(),

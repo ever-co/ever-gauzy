@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40">
+	<defs>
+		<path id="s" d="M0,-1 0.588,0.809 -0.951,-0.309 0.951,-0.309 -0.588,0.809 Z" fill="#FFDE00"/>
+	</defs>
+	<rect width="60" height="40" fill="#DE2910"/>
+	<use href="#s" transform="translate(12,10) scale(6)"/>
+	<use href="#s" transform="translate(22,4) scale(2)"/>
+	<use href="#s" transform="translate(25,9) scale(2)"/>
+	<use href="#s" transform="translate(25,15) scale(2)"/>
+	<use href="#s" transform="translate(22,20) scale(2)"/>
+</svg>

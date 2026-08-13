@@ -114,10 +114,10 @@
 				<button
 					nbButton
 					status="basic"
+					(click)="viewTask(selectedItem)"
 					class="action secondary"
 					[disabled]="disableButton"
 					size="small"
-					underConstruction
 				>
 					<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 					{{ 'BUTTONS.VIEW' | translate }}
@@ -173,3 +173,16 @@
 		</button>
 	</ng-template>
 </ng-template>
+
+<!-- Read-only View. The projected content is gated here (not inside the drawer)
+     so the record renderer is built fresh for each task that is opened. -->
+<ngx-record-view-drawer
+	[open]="!!viewedTask"
+	[heading]="viewHeadingKey"
+	[subtitle]="viewedTask?.title"
+	(closed)="closeView()"
+>
+	@if (viewedTask) {
+		<ngx-record-view [record]="viewedTask" [sections]="viewSections"></ngx-record-view>
+	}
+</ngx-record-view-drawer>
