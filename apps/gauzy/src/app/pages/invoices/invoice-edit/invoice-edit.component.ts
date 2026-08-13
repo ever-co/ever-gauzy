@@ -242,20 +242,24 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			// The old '<i class="nb-*">' markup relied on Nebular's long-removed icon
+			// font, so every row action rendered as a bare colored dot. FontAwesome is
+			// loaded globally; native `title` (not nbTooltip) because these strings are
+			// injected via [innerHTML], where directives never bind.
 			add: {
-				addButtonContent: '<i class="nb-plus"></i>',
-				createButtonContent: '<i class="nb-checkmark"></i>',
-				cancelButtonContent: '<i class="nb-close"></i>',
+				addButtonContent: `<i class="fas fa-plus" title="${this.getTranslation('BUTTONS.ADD')}"></i>`,
+				createButtonContent: `<i class="fas fa-check" title="${this.getTranslation('BUTTONS.SAVE')}"></i>`,
+				cancelButtonContent: `<i class="fas fa-times" title="${this.getTranslation('BUTTONS.CANCEL')}"></i>`,
 				confirmCreate: true
 			},
 			edit: {
-				editButtonContent: '<i class="nb-edit"></i>',
-				saveButtonContent: '<i class="nb-checkmark"></i>',
-				cancelButtonContent: '<i class="nb-close"></i>',
+				editButtonContent: `<i class="fas fa-edit" title="${this.getTranslation('BUTTONS.EDIT')}"></i>`,
+				saveButtonContent: `<i class="fas fa-check" title="${this.getTranslation('BUTTONS.SAVE')}"></i>`,
+				cancelButtonContent: `<i class="fas fa-times" title="${this.getTranslation('BUTTONS.CANCEL')}"></i>`,
 				confirmSave: true
 			},
 			delete: {
-				deleteButtonContent: '<i class="nb-trash"></i>',
+				deleteButtonContent: `<i class="fas fa-trash" title="${this.getTranslation('BUTTONS.DELETE')}"></i>`,
 				confirmDelete: true
 			},
 			columns: {}
