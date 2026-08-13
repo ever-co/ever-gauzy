@@ -98,6 +98,12 @@ export class OneColumnLayoutComponent {
 		});
 
 		this.destroyRef.onDestroy(() => {
+			// Flipped FIRST: the settle passes schedule rAF/timeout ticks (up to 400ms
+			// out) that outlive the component. The guard makes every late tick inert —
+			// without it a post-destroy tick re-enters apply, constructs a fresh
+			// ResizeObserver no cleanup path ever disconnects, and keeps writing the
+			// --gz-* vars for a layout that no longer exists.
+			this.destroyed = true;
 			this.navigationBuilderService.clearSidebars();
 			this.navigationBuilderService.clearActionBars();
 			this.headerResizeObserver?.disconnect();
@@ -106,6 +112,9 @@ export class OneColumnLayoutComponent {
 			if (this.bandOnResize) window.removeEventListener('resize', this.bandOnResize);
 		});
 	}
+
+	/** Set on destroy; gates the delayed settle ticks (see onDestroy above). */
+	private destroyed = false;
 
 	private headerResizeObserver?: ResizeObserver;
 
@@ -126,6 +135,7 @@ export class OneColumnLayoutComponent {
 		if (typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
 		let observed: HTMLElement | null = null;
 		const apply = () => {
+			if (this.destroyed) return;
 			// Queried FRESH and re-observed on identity change: `@if (user())`
 			// re-creates `nb-layout-header` across auth transitions, and an
 			// observer captured once ends up watching a DETACHED node — the var
@@ -187,11 +197,38 @@ export class OneColumnLayoutComponent {
 	 */
 	private observeHeaderBand(): void {
 		if (typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
+		let observedMenuHost: HTMLElement | null = null;
 		const apply = () => {
+			if (this.destroyed) return;
 			// Queried FRESH on every call — a captured node can go stale across layout re-renders,
 			// and a stale node measures its old box while looking perfectly alive.
 			const container = document.querySelector('nb-layout .layout .layout-container') as HTMLElement | null;
 			if (!container) return;
+
+			// Re-homed on identity change, the same freshness rule the header-height
+			// observer follows: `@if (user())` creates the menu sidebar AFTER a cold
+			// first pass (nothing to observe yet) and REPLACES it across auth
+			// transitions (the old host detaches while the observers keep watching
+			// it). Both cases land here via the settle ticks below.
+			const menuHost = document.querySelector('nb-sidebar.menu-sidebar') as HTMLElement | null;
+			if (menuHost !== observedMenuHost) {
+				this.bandResizeObserver?.disconnect();
+				this.menuClassObserver?.disconnect();
+				if (menuHost) {
+					this.bandResizeObserver = new ResizeObserver(apply);
+					this.bandResizeObserver.observe(menuHost);
+					// A ResizeObserver fires on SIZE, and Nebular's expand/compact/collapse
+					// are stamped onto the sidebar host as CLASSES — a MutationObserver on
+					// that attribute fires on every state change no matter which observer
+					// mechanism is having a bad day. (Same belt-and-braces pattern
+					// 536fa7fced added for the chat host, re-aimed at the menu.)
+					if (typeof MutationObserver !== 'undefined') {
+						this.menuClassObserver = new MutationObserver(applySettled);
+						this.menuClassObserver.observe(menuHost, { attributes: true, attributeFilter: ['class'] });
+					}
+				}
+				observedMenuHost = menuHost;
+			}
 			const containerRect = container.getBoundingClientRect();
 			let left = containerRect.left;
 			let right = window.innerWidth - containerRect.right;
@@ -226,23 +263,21 @@ export class OneColumnLayoutComponent {
 			setTimeout(applyAll, 400);
 		};
 
-		const menuHost = document.querySelector('nb-sidebar.menu-sidebar') as HTMLElement | null;
-		if (menuHost) {
-			this.bandResizeObserver = new ResizeObserver(apply);
-			this.bandResizeObserver.observe(menuHost);
-		}
 		// The menu's own box does not change when the window does, so track that too.
 		window.addEventListener('resize', apply);
 		this.bandOnResize = apply;
 
-		// A ResizeObserver fires on SIZE, and Nebular's expand/compact/collapse are stamped onto
-		// the sidebar host as CLASSES — a MutationObserver on that attribute fires on every state
-		// change no matter which observer mechanism is having a bad day. (Same belt-and-braces
-		// pattern 536fa7fced added for the chat host, re-aimed at the menu.)
-		if (menuHost && typeof MutationObserver !== 'undefined') {
-			this.menuClassObserver = new MutationObserver(applySettled);
-			this.menuClassObserver.observe(menuHost, { attributes: true, attributeFilter: ['class'] });
-		}
+		// The sidebar's own CREATION is invisible to the observers above — they are
+		// attached to the host, not to its parent. `@if (user())` is the creation
+		// trigger, so settle over the render it causes: the ticks re-enter `apply`,
+		// which re-homes the observers onto the freshly created host and re-measures.
+		effect(
+			() => {
+				this.user();
+				applySettled();
+			},
+			{ injector: this.injector }
+		);
 		// An RTL flip moves the menu to the other edge WITHOUT resizing it, so neither observer
 		// above fires — watch the direction change directly.
 		this.directionService
