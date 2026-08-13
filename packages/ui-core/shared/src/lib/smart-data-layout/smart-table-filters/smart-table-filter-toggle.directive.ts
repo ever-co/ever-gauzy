@@ -62,8 +62,14 @@ export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, O
 
 	private button: HTMLButtonElement | null = null;
 	private observer: MutationObserver | null = null;
-	/** Delegated input/change listeners on the filter row, for the active dot. */
+	/** Teardown callbacks that live as long as the directive (button, lang sub). */
 	private teardownFns: Array<() => void> = [];
+	/**
+	 * Teardown callbacks for the delegated listeners on the CURRENT filter row,
+	 * disposed separately: the library rebuilds thead rows wholesale, and rolling
+	 * these into the long-lived list would grow it by a listener pair per rebuild.
+	 */
+	private rowTeardownFns: Array<() => void> = [];
 	/** Row currently carrying the delegated listeners, so teardown can forget it. */
 	private listenedRow: HTMLElement | null = null;
 
@@ -171,11 +177,16 @@ export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, O
 		// The dot tracks values typed into the row; delegated, so re-rendered
 		// widgets stay covered without re-subscribing per input.
 		if (this.listenedRow !== filters) {
+			this.rowTeardownFns.forEach((teardown) => teardown());
+			this.rowTeardownFns = [];
 			this.listenedRow = filters;
 			this.zone.runOutsideAngular(() => {
 				const update = () => this.reflectActiveState();
-				this.teardownFns.push(this.renderer.listen(filters, 'input', update));
-				this.teardownFns.push(this.renderer.listen(filters, 'change', update));
+				this.rowTeardownFns.push(this.renderer.listen(filters, 'input', update));
+				this.rowTeardownFns.push(this.renderer.listen(filters, 'change', update));
+				// Button-based widgets (the accept/deny toggle filter) fire neither
+				// input nor change — only a click reveals their state moved.
+				this.rowTeardownFns.push(this.renderer.listen(filters, 'click', update));
 			});
 		}
 
@@ -240,10 +251,13 @@ export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, O
 			return true;
 		}
 		// ng-select marks its host; nb-select marks the ABSENCE of a value with
-		// `.placeholder` on its trigger button (never on the host).
+		// `.placeholder` on its trigger button (never on the host); the
+		// accept/deny toggle filter marks its active CHOICE button with `.on`
+		// (`.na.on` means "no filter", so only check/deny count).
 		return (
 			!!filters.querySelector('.ng-select.ng-has-value') ||
-			!!filters.querySelector('nb-select .select-button:not(.placeholder)')
+			!!filters.querySelector('nb-select .select-button:not(.placeholder)') ||
+			!!filters.querySelector('button.check.on, button.deny.on')
 		);
 	}
 
@@ -262,6 +276,8 @@ export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, O
 	private detachButton(): void {
 		this.teardownFns.forEach((teardown) => teardown());
 		this.teardownFns = [];
+		this.rowTeardownFns.forEach((teardown) => teardown());
+		this.rowTeardownFns = [];
 		// The delegated listeners just died with the callbacks above — forget
 		// the row they were on, or a re-render of the same row never
 		// re-registers them and the indicator dot stops tracking typed values.

@@ -12,8 +12,8 @@ export const ChangeLanguagePageData = {
 	// no code prefix) in a DB-driven order, so we pick options by the flag asset in their <img src>
 	// — the only locale-invariant marker now that the code prefix is gone (language→country mapping
 	// mirrors getLanguageFlagUrl in @gauzy/ui-core/shared).
-	codeEnglish: 'flags/gb.svg',
-	codeBulgarian: 'flags/bg.svg',
-	codeRussian: 'flags/ru.svg',
-	codeHebrew: 'flags/il.svg'
+	flagEnglish: 'flags/gb.svg',
+	flagBulgarian: 'flags/bg.svg',
+	flagRussian: 'flags/ru.svg',
+	flagHebrew: 'flags/il.svg'
 };

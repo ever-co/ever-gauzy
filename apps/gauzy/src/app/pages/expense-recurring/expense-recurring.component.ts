@@ -252,9 +252,11 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 			return;
 		}
 
-		// The list is about to be reloaded, so whatever the drawer is showing is
-		// about to go stale — close it rather than leave a detached record open.
+		// The list is about to be reloaded: close the drawer AND drop the
+		// selection — a kept selection would leave the toolbar enabled and let
+		// View reopen a record object the reload has already detached.
 		this.closeView();
+		this.selectedRecurringExpense = { isSelected: false, data: null, index: null };
 
 		this.loading = true;
 

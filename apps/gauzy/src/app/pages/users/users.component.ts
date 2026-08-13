@@ -125,6 +125,13 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 			)
 			.subscribe(() => {
 				this.hasSuperAdminPermission = this.store.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT);
+				// A permission change mid-session re-derives the gate for the
+				// currently selected row; selectUser() keeps it fresh otherwise.
+				// Same cast as buildViewSections: the view model types `role` as a
+				// string but getUsers() keeps the full relation on the row.
+				this.restrictedRow =
+					(this.selectedUser?.role as unknown as IRole)?.name === RolesEnum.SUPER_ADMIN &&
+					!this.hasSuperAdminPermission;
 			});
 		this.route.queryParamMap
 			.pipe(

@@ -70,6 +70,8 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 	public successRate: string = '0 %';
 	public totalProposals: number = 0;
 	public countAccepted: number = 0;
+	/** Monotonic guard so an older statistics response cannot overwrite a newer one. */
+	private statisticsRequestId = 0;
 	public loading: boolean = false;
 	public disableButton: boolean = true;
 	public organization: IOrganization;
@@ -613,6 +615,9 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 		}
 		const { id: organizationId, tenantId } = this.organization;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
+		// Overlapping refreshes resolve out of order; only the newest request
+		// may write the cards, or stale criteria overwrite fresh values.
+		const requestId = ++this.statisticsRequestId;
 
 		try {
 			const { items, total } = await this._proposalsService.getAll([], {
@@ -622,9 +627,15 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 				valueDate: {
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
-				}
+				},
+				// The same column filters the table query applies — without them
+				// the cards would describe a different proposal set than the rows.
+				...(this.filters.where ? this.filters.where : {})
 			} as any);
 
+			if (requestId !== this.statisticsRequestId) {
+				return;
+			}
 			this.totalProposals = total;
 			this.countAccepted = items.filter((proposal) => proposal.status === ProposalStatusEnum.ACCEPTED).length;
 			this.successRate = this.totalProposals

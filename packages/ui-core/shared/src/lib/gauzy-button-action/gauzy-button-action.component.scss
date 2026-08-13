@@ -34,12 +34,17 @@
   max-width: 0;
   opacity: 0;
   overflow: hidden;
-  transition: max-width 0.2s ease-in, opacity 0.15s ease-in;
+  // Not just invisible: without this, keyboard users could still tab into
+  // the clipped, aria-hidden buttons. The delay holds visibility through the
+  // closing animation so the strip does not vanish mid-slide.
+  visibility: hidden;
+  transition: max-width 0.2s ease-in, opacity 0.15s ease-in, visibility 0s linear 0.2s;
 
   &.open {
     max-width: 80rem;
     opacity: 1;
-    transition: max-width 0.25s ease-out, opacity 0.2s ease-out;
+    visibility: visible;
+    transition: max-width 0.25s ease-out, opacity 0.2s ease-out, visibility 0s;
   }
 }
 

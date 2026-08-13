@@ -5,6 +5,9 @@
 // paddings kept tight so the header band gains no height over the old strip.
 .statistics {
   display: flex;
+  // A card floor of 7rem cannot shrink — on a narrow page the row wraps
+  // instead of pushing the header into horizontal overflow.
+  flex-wrap: wrap;
   align-items: stretch;
   gap: 0.5rem;
   margin-top: 1rem;

@@ -816,10 +816,14 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	 * class follows the severity mapping of the grid's `StatusViewComponent`.
 	 */
 	private toStatusBadge(task: ITask): { text: string; class: string } {
-		const text = task.taskStatus?.name || task.status;
-		if (!text) {
+		const raw = task.taskStatus?.name || task.status;
+		if (!raw) {
 			return null;
 		}
+		// A standard status arrives as its enum slug ('in-progress'); a
+		// tenant-defined one is already a display name. De-slug either way —
+		// spaces are a no-op on real names.
+		const text = raw.replace(/-/g, ' ');
 		switch (task.status) {
 			case TaskStatusEnum.COMPLETED:
 				return { text, class: 'success' };
@@ -830,7 +834,9 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			case TaskStatusEnum.IN_REVIEW:
 				return { text, class: 'info' };
 			default:
-				return { text, class: 'primary' };
+				// 'basic', matching the grid renderer's default for OPEN and
+				// any unlisted status, so drawer and list read the same.
+				return { text, class: 'basic' };
 		}
 	}
 
