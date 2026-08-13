@@ -10,37 +10,41 @@
   padding: 1rem 0;
 }
 
-:host .transition-container {
-  overflow-x: hidden;
+:host .visible-slot {
+  background: var(--gauzy-card-2);
   border-radius: var(--border-radius);
-  span {
-    background: var(--gauzy-card-2);
-    border-radius: var(--border-radius);
-    padding: 2px 4px;
-    @include nb-ltr(margin-right, 10px);
-    @include nb-rtl(margin-left, 10px);
+  padding: 2px 4px;
+  @include nb-ltr(margin-right, 10px);
+  @include nb-rtl(margin-left, 10px);
+}
+
+// Collapsed = zero LAYOUT width, not just zero visibility: the block's width is
+// what decides whether the whole action row fits on the page title's line (see
+// .ga-page-header in styles/_overrides.scss). max-width is the animatable stand-in
+// for `width: auto`; the cap just needs to exceed the widest real strip.
+:host .actions-slide {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-width 0.2s ease-in, opacity 0.15s ease-in;
+
+  &.open {
+    max-width: 80rem;
+    opacity: 1;
+    transition: max-width 0.25s ease-out, opacity 0.2s ease-out;
   }
 }
 
-:host .transition {
+:host .actions-slide-inner {
   display: flex;
-  &.hide {
-    @include nb-rtl(transform, translateX(-100%));
-    @include nb-ltr(transform, translateX(100%));
-    transition: all 0.1s ease-in;
-  }
-  &.show {
-    opacity: 1;
-    transform: translateX(0%);
-    transition: all 0.2s ease-out;
-  }
-  &.show-button{
-    @include nb-rtl(transform, translateX(100%));
-    @include nb-ltr(transform, translateX(-100%));
-    transition: all 0.15s ease-out;
-  }
+  align-items: center;
+  // The strip must keep its natural one-line width while the clip animates,
+  // otherwise the buttons would reflow vertically during the transition.
+  white-space: nowrap;
+  width: max-content;
 }
-:host ga-layout-selector{
+
+:host ga-layout-selector {
   @include nb-ltr(margin-left, 20px);
   @include nb-rtl(margin-right, 20px);
 }

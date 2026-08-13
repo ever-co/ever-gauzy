@@ -1,10 +1,17 @@
 <div class="actions-container">
-	<div class="transition-container">
-		<div class="transition" [class.show]="!isDisable()" [class.hide]="isDisable()">
-			<span class="transition" [class.show]="!isDisable()" [class.show-button]="isDisable()">
-				<ng-content select="[buttonTemplateVisible]" />
-				<ng-container [ngTemplateOutlet]="buttonTemplateVisible()" />
-			</span>
+	<span class="visible-slot">
+		<ng-content select="[buttonTemplateVisible]" />
+		<ng-container [ngTemplateOutlet]="buttonTemplateVisible()" />
+	</span>
+	<!--
+		The selection actions collapse to ZERO layout width while disabled. The old
+		treatment slid them away with translateX + overflow hidden, which removed
+		them from view but NOT from layout: the block kept the full strip's width,
+		so on pages with wide action sets it could never fit beside the page title
+		and wrapped onto its own line, with the visible button stranded mid-page.
+	-->
+	<div class="actions-slide" [class.open]="!isDisable()" [attr.aria-hidden]="isDisable()">
+		<div class="actions-slide-inner">
 			<ng-container [ngTemplateOutlet]="buttonTemplate()" />
 			<ng-content select="[buttonTemplate]" />
 		</div>
