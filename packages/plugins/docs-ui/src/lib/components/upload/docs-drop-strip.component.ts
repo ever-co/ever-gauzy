@@ -47,4 +47,18 @@ export class DocsDropStripComponent {
 	get maxFileSize(): string {
 		return humanizeBytes(this.maxFileSizeBytes);
 	}
+
+	/**
+	 * Space activates the strip like a button — without scrolling the page
+	 * (preventDefault) and without key-repeat machine-gunning the file picker.
+	 * A typed METHOD rather than template statements: for `keydown.space`
+	 * pseudo-key bindings the strict template checker types `$event` too
+	 * narrowly to reach `KeyboardEvent.repeat` — it fails the PRODUCTION
+	 * (full-compilation) build only, which is exactly how it slipped past the
+	 * dev-config PR checks and broke the demo webapp image.
+	 */
+	onSpace(event: KeyboardEvent): void {
+		event.preventDefault();
+		if (!event.repeat) this.browse.emit();
+	}
 }
