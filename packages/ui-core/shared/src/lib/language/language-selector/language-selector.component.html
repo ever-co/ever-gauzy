@@ -13,6 +13,18 @@
     [placeholder]="placeholder"
     [(ngModel)]="selectedLanguageCode"
     >
+    <ng-template ng-label-tmp let-item="item">
+      @if (getFlagUrl(item?.code); as flagUrl) {
+        <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
+      }
+      {{ item?.name }}
+    </ng-template>
+    <ng-template ng-option-tmp let-item="item">
+      @if (getFlagUrl(item?.code); as flagUrl) {
+        <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
+      }
+      {{ item?.name }}
+    </ng-template>
     <ng-template ng-tag-tmp let-newLanguageName="searchTerm">
       <b>{{ 'LANGUAGE_PAGE.ADD_NEW_LANGUAGE' | translate }}</b
         >: {{ newLanguageName }}
@@ -26,11 +38,19 @@
       [placeholder]="placeholder"
       [(ngModel)]="selectedLanguageCode"
       >
+      <nb-select-label>
+        @if (getFlagUrl(selectedLanguage?.code); as flagUrl) {
+          <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
+        }
+        {{ selectedLanguage?.name }}
+      </nb-select-label>
       @for (language of languages; track language) {
         <nb-option [value]="language.code">
+          @if (getFlagUrl(language.code); as flagUrl) {
+            <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
+          }
           {{ language.name }}
         </nb-option >
       }
     </nb-select>
   }
-

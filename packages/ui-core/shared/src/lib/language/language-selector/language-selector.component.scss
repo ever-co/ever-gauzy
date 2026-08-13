@@ -12,3 +12,12 @@
   display: unset;
   margin-right: 0.7em;
 }
+
+.flag-icon {
+  width: 1.125rem;
+  height: 0.75rem;
+  margin-inline-end: 0.375rem;
+  border-radius: 2px;
+  object-fit: cover;
+  vertical-align: middle;
+}

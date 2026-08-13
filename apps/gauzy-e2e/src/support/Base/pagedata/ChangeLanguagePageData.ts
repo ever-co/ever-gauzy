@@ -8,11 +8,12 @@ export const ChangeLanguagePageData = {
 	English: 'Create',
 	Russian: 'Создать',
 	Hebrew: 'צור',
-	// Language-select option prefixes. Options render as "EN (English)" / "BG (Български)" etc.
-	// (code + translated name) in a DB-driven order, so we pick options BY CODE PREFIX rather than by
-	// the Cypress index (which assumed a fixed alphabetical order that the backend does not guarantee).
-	codeEnglish: 'EN ',
-	codeBulgarian: 'BG ',
-	codeRussian: 'RU ',
-	codeHebrew: 'HE '
+	// Language-select option hooks. Options render as "[flag] Name" (flag <img> + translated name,
+	// no code prefix) in a DB-driven order, so we pick options by the flag asset in their <img src>
+	// — the only locale-invariant marker now that the code prefix is gone (language→country mapping
+	// mirrors getLanguageFlagUrl in @gauzy/ui-core/shared).
+	codeEnglish: 'flags/gb.svg',
+	codeBulgarian: 'flags/bg.svg',
+	codeRussian: 'flags/ru.svg',
+	codeHebrew: 'flags/il.svg'
 };

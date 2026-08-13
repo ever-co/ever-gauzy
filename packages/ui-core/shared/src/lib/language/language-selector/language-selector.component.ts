@@ -8,6 +8,7 @@ import { filter, tap } from 'rxjs/operators';
 import { NbComponentSize } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { getLanguageFlagUrl } from './language-flag';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -191,5 +192,26 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 
 	getLanguageByCode(code: ILanguage['code']) {
 		return this.languages.find((language: ILanguage) => code === language.code);
+	}
+
+	/**
+	 * Currently selected language (drives the flag + name shown in the closed nb-select trigger).
+	 */
+	get selectedLanguage(): ILanguage {
+		return this.languages?.find((language: ILanguage) => language.code === this._selectedLanguageCode);
+	}
+
+	/**
+	 * Flag asset URL for a language code (null when no flag is vendored).
+	 */
+	getFlagUrl(code: ILanguage['code']): string | null {
+		return getLanguageFlagUrl(code);
+	}
+
+	/**
+	 * Hides a flag image that failed to load, leaving the plain language name.
+	 */
+	onFlagError(event: Event) {
+		(event.target as HTMLImageElement).style.display = 'none';
 	}
 }
