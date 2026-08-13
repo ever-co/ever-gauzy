@@ -1,8 +1,7 @@
 <div class="actions-container">
-	<span class="visible-slot">
-		<ng-content select="[buttonTemplateVisible]" />
-		<ng-container [ngTemplateOutlet]="buttonTemplateVisible()" />
-	</span>
+	<!-- Kept on ONE line: the empty-slot rule below relies on :empty, which any
+		template whitespace text node would defeat. -->
+	<span class="visible-slot"><ng-content select="[buttonTemplateVisible]" /><ng-container [ngTemplateOutlet]="buttonTemplateVisible()" /></span>
 	<!--
 		The selection actions collapse to ZERO layout width while disabled. The old
 		treatment slid them away with translateX + overflow hidden, which removed

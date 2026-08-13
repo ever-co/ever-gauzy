@@ -295,6 +295,8 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent implemen
 	}
 
 	selectRecurringExpense(recurringExpense: IOrganizationRecurringExpense, i: number) {
+		// Whatever the drawer is showing no longer matches the selection.
+		this.closeView();
 		this.showHistory = false;
 		this.selectedRecurringExpense =
 			this.selectedRecurringExpense.data && recurringExpense.id === this.selectedRecurringExpense.data.id

@@ -60,6 +60,8 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	public userName = 'User';
 	public loading: boolean;
 	public hasSuperAdminPermission: boolean = false;
+	/** True while the selected row is a SUPER_ADMIN the viewer may not mutate. */
+	public restrictedRow: boolean = false;
 	public organizationInvitesAllowed: boolean = false;
 	public showAddCard: boolean;
 	public disableButton = true;
@@ -206,6 +208,9 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	 * @param param0.data - The data object of the selected user.
 	 */
 	selectUser({ isSelected, data }: { isSelected: boolean; data: any }): void {
+		// Whatever the drawer is showing no longer matches the selection.
+		this.closeView();
+
 		// Toggle the button state and update the selected user
 		this.disableButton = !isSelected;
 		this.selectedUser = isSelected ? data : null;
@@ -213,11 +218,14 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		// Set the user's display name or default to 'User'
 		this.userName = data?.fullName?.trim() || 'User';
 
-		// Handle SUPER_ADMIN role-specific logic
-		if (data?.role?.name === RolesEnum.SUPER_ADMIN) {
-			this.disableButton = this.hasSuperAdminPermission;
-			this.selectedUser = this.hasSuperAdminPermission ? this.selectedUser : null;
-		}
+		// A SUPER_ADMIN row may only be MUTATED by a SUPER_ADMIN_EDIT holder.
+		// The selection itself stays: View is a read (the row is already on
+		// screen under ORG_USERS_VIEW), so only the mutation buttons key off
+		// this flag. The old logic cleared the selection instead — which also
+		// silently no-op'ed every action for the unauthorized case — and set
+		// `disableButton` to the PRESENCE of the permission, locking the
+		// toolbar for exactly the people allowed to use it.
+		this.restrictedRow = data?.role?.name === RolesEnum.SUPER_ADMIN && !this.hasSuperAdminPermission;
 	}
 
 	/**

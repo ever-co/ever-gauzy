@@ -47,7 +47,7 @@
 }
 
 // Outside nb-install-component on purpose: nb-option content renders in the
-// overlay (outside the host element), where :host-scoped rules can't reach.
+// overlay (outside the host element), where :host-scoped rules cannot reach.
 .flag-icon {
   width: 1.125rem;
   height: 0.75rem;

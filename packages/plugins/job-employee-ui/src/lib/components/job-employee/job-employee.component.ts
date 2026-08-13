@@ -467,9 +467,9 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				// font, so the anchor rendered as a bare green dot. FontAwesome is
 				// loaded globally; native `title` (not nbTooltip) because these strings
 				// are injected via [innerHTML], where directives never bind.
-				editButtonContent: `<i class="fas fa-edit" title="${this.getTranslation('BUTTONS.EDIT')}"></i>`,
-				saveButtonContent: `<i class="fas fa-check" title="${this.getTranslation('BUTTONS.SAVE')}"></i>`,
-				cancelButtonContent: `<i class="fas fa-times" title="${this.getTranslation('BUTTONS.CANCEL')}"></i>`,
+				editButtonContent: `<i class="fas fa-edit" aria-hidden="true" title="${this.getTranslation('BUTTONS.EDIT')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.EDIT')}</span>`,
+				saveButtonContent: `<i class="fas fa-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
+				cancelButtonContent: `<i class="fas fa-times" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
 				confirmSave: true
 			},
 			columns: {
@@ -555,6 +555,8 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	 * @returns void
 	 */
 	onSelectEmployee({ isSelected, data }: { isSelected: boolean; data: IEmployee }): void {
+		// Whatever the drawer is showing no longer matches the selection.
+		this.closeView();
 		this.disableButton = !isSelected;
 		this.selectedEmployee = isSelected ? data : null;
 	}

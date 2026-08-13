@@ -16,6 +16,14 @@
   padding: 2px 4px;
   @include nb-ltr(margin-right, 10px);
   @include nb-rtl(margin-left, 10px);
+
+  // `buttonTemplateVisible` is optional: without it the slot would still paint
+  // a blank control-shaped pill. Angular's comment anchors do not defeat
+  // :empty; the template keeps the slot's content on one line so no whitespace
+  // text node does either.
+  &:empty {
+    display: none;
+  }
 }
 
 // Collapsed = zero LAYOUT width, not just zero visibility: the block's width is
@@ -42,6 +50,15 @@
   // otherwise the buttons would reflow vertically during the transition.
   white-space: nowrap;
   width: max-content;
+}
+
+// Once fully open the clip cap is far above any real strip, so wrapping is the
+// overflow story: on a viewport too narrow for the whole strip the trailing
+// buttons drop to a second row instead of being clipped out of reach.
+:host .actions-slide.open .actions-slide-inner {
+  flex-wrap: wrap;
+  width: auto;
+  max-width: 100%;
 }
 
 :host ga-layout-selector {

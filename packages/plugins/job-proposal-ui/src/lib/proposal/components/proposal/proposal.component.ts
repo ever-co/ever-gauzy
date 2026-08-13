@@ -600,27 +600,40 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 
 	/**
 	 * Calculates and updates statistics related to proposals.
+	 *
+	 * Over the whole filtered set, not the current page: the old version read
+	 * `smartTableSource.getData()`, so with server pagination the cards
+	 * described whichever page happened to be loaded. One relation-free query
+	 * scoped by the same org/employee/date-range window the table uses keeps
+	 * the numbers honest; it is bounded by the selected date range.
 	 */
-	private calculateStatistics(): void {
-		// Reset the count of accepted proposals
-		this.countAccepted = 0;
+	private async calculateStatistics(): Promise<void> {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId, tenantId } = this.organization;
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 
-		// Retrieve the proposals from the smart table source
-		const proposals = this.smartTableSource.getData();
+		try {
+			const { items, total } = await this._proposalsService.getAll([], {
+				organizationId,
+				tenantId,
+				...(this.selectedEmployeeId ? { employeeId: this.selectedEmployeeId } : {}),
+				valueDate: {
+					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+				}
+			} as any);
 
-		// Count the accepted proposals using Array.reduce
-		this.countAccepted = proposals.reduce(
-			(count, proposal) => count + (proposal.status === ProposalStatusEnum.ACCEPTED ? 1 : 0),
-			0
-		);
-
-		// Update the total number of proposals
-		this.totalProposals = proposals.length;
-
-		// Calculate the success rate
-		this.successRate = this.totalProposals
-			? `${((this.countAccepted / this.totalProposals) * 100).toFixed(0)} %`
-			: '0 %';
+			this.totalProposals = total;
+			this.countAccepted = items.filter((proposal) => proposal.status === ProposalStatusEnum.ACCEPTED).length;
+			this.successRate = this.totalProposals
+				? `${((this.countAccepted / this.totalProposals) * 100).toFixed(0)} %`
+				: '0 %';
+		} catch {
+			// The cards are decoration on a list page — a failed aggregate must
+			// never take the table down with it. The last shown values stay.
+		}
 	}
 
 	/**

@@ -598,6 +598,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		}
 		let dialog;
 		if (this.isTasksPage()) {
+		// Whatever the drawer is showing no longer matches the selection.
+		this.closeView();
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
 					selectedTask: this.selectedTask

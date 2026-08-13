@@ -170,6 +170,8 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 	}
 
 	selectRow({ isSelected, data }) {
+		// Whatever the drawer is showing no longer matches the selection.
+		this.closeView();
 		this.selectedKPI = null;
 		this.selectedTimeFrame = null;
 		if (isSelected) {

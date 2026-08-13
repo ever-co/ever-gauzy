@@ -212,19 +212,19 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			// loaded globally; native `title` (not nbTooltip) because these strings are
 			// injected via [innerHTML], where directives never bind.
 			add: {
-				addButtonContent: `<i class="fas fa-plus" title="${this.getTranslation('BUTTONS.ADD')}"></i>`,
-				createButtonContent: `<i class="fas fa-check" title="${this.getTranslation('BUTTONS.SAVE')}"></i>`,
-				cancelButtonContent: `<i class="fas fa-times" title="${this.getTranslation('BUTTONS.CANCEL')}"></i>`,
+				addButtonContent: `<i class="fas fa-plus" aria-hidden="true" title="${this.getTranslation('BUTTONS.ADD')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.ADD')}</span>`,
+				createButtonContent: `<i class="fas fa-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
+				cancelButtonContent: `<i class="fas fa-times" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
 				confirmCreate: true
 			},
 			edit: {
-				editButtonContent: `<i class="fas fa-edit" title="${this.getTranslation('BUTTONS.EDIT')}"></i>`,
-				saveButtonContent: `<i class="fas fa-check" title="${this.getTranslation('BUTTONS.SAVE')}"></i>`,
-				cancelButtonContent: `<i class="fas fa-times" title="${this.getTranslation('BUTTONS.CANCEL')}"></i>`,
+				editButtonContent: `<i class="fas fa-edit" aria-hidden="true" title="${this.getTranslation('BUTTONS.EDIT')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.EDIT')}</span>`,
+				saveButtonContent: `<i class="fas fa-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
+				cancelButtonContent: `<i class="fas fa-times" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
 				confirmSave: true
 			},
 			delete: {
-				deleteButtonContent: `<i class="fas fa-trash" title="${this.getTranslation('BUTTONS.DELETE')}"></i>`,
+				deleteButtonContent: `<i class="fas fa-trash" aria-hidden="true" title="${this.getTranslation('BUTTONS.DELETE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.DELETE')}</span>`,
 				confirmDelete: true
 			},
 			columns: {}

@@ -175,8 +175,9 @@ export class ZapierTriggersComponent extends TranslationBaseComponent implements
 				fields: [
 					{ label: 'SM_TABLE.NAME', key: 'name' },
 					{ label: 'SM_TABLE.DESCRIPTION', key: 'description', type: 'multiline', wide: true },
-					{ label: 'FORM.PLACEHOLDERS.CODE', key: 'slug' },
-					{ label: 'TASKS_PAGE.TASK_ID', key: 'id' }
+					// The record's raw UUID adds nothing a user can act on, and no generic
+					// ID label key exists — the slug is the endpoint's real identifier.
+					{ label: 'FORM.PLACEHOLDERS.CODE', key: 'slug' }
 				]
 			}
 		];

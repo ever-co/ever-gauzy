@@ -104,7 +104,7 @@
 		<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
 			<button
 				nbButton
-				[disabled]="disableButton"
+				[disabled]="disableButton || restrictedRow"
 				(click)="edit(selectedItem)"
 				status="basic"
 				class="action primary"
@@ -115,7 +115,7 @@
 			</button>
 			<button
 				nbButton
-				[disabled]="disableButton || isEmployee()"
+				[disabled]="disableButton || restrictedRow || isEmployee()"
 				(click)="convertUserToEmployee()"
 				status="basic"
 				class="action primary"
@@ -126,7 +126,7 @@
 			</button>
 			<button
 				nbButton
-				[disabled]="disableButton"
+				[disabled]="disableButton || restrictedRow"
 				(click)="removeUserFromOrganization(selectedUser, selectedItem)"
 				status="basic"
 				class="action"

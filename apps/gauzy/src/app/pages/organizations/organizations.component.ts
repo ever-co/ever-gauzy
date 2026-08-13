@@ -138,6 +138,8 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 	}
 
 	selectOrganization({ isSelected, data }) {
+		// Whatever the drawer is showing no longer matches the selection.
+		this.closeView();
 		this.disableButton = !isSelected;
 		this.selectedOrganization = isSelected ? data : null;
 	}

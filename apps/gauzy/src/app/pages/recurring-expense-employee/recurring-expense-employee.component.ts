@@ -384,6 +384,8 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	}
 
 	selectRecurringExpense(recurringExpense: IEmployeeRecurringExpense, i: number) {
+		// Whatever the drawer is showing no longer matches the selection.
+		this.closeView();
 		this.showHistory = false;
 		this.selectedRecurringExpense =
 			this.selectedRecurringExpense.data && recurringExpense.id === this.selectedRecurringExpense.data.id

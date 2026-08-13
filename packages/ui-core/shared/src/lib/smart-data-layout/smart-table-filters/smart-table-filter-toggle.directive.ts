@@ -43,7 +43,13 @@ import { TranslateService } from '@ngx-translate/core';
 	standalone: false
 })
 export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, OnDestroy {
-	/** One app-wide preference: 'open' | 'closed'. */
+	/**
+	 * One app-wide preference: 'open' | 'closed'.
+	 *
+	 * Mirrored as a literal in the e2e fixtures (apps/gauzy-e2e/tests/support/
+	 * fixtures.ts and bdd.ts) — they run in a separate build that cannot import
+	 * this class. Rename both sides together.
+	 */
 	static readonly STORAGE_KEY = 'gauzy.smartTable.filtersOpen';
 
 	@HostBinding('class.ga-filters-collapsed') collapsed = true;
@@ -58,6 +64,8 @@ export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, O
 	private observer: MutationObserver | null = null;
 	/** Delegated input/change listeners on the filter row, for the active dot. */
 	private teardownFns: Array<() => void> = [];
+	/** Row currently carrying the delegated listeners, so teardown can unmark it. */
+	private listenedRow: HTMLElement | null = null;
 
 	/**
 	 * The stored preference is applied BEFORE the first render (OnInit), so the
@@ -162,8 +170,8 @@ export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, O
 
 		// The dot tracks values typed into the row; delegated, so re-rendered
 		// widgets stay covered without re-subscribing per input.
-		if (!(filters as any).gaFilterListener) {
-			(filters as any).gaFilterListener = true;
+		if (this.listenedRow !== filters) {
+			this.listenedRow = filters;
 			this.zone.runOutsideAngular(() => {
 				const update = () => this.reflectActiveState();
 				this.teardownFns.push(this.renderer.listen(filters, 'input', update));
@@ -184,11 +192,20 @@ export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, O
 			'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">' +
 			'<path d="M13.9 22a1 1 0 0 1-.6-.2l-4-3.05a1 1 0 0 1-.39-.8v-3.27l-4.8-9.22A1 1 0 0 1 5 4h14a1 1 0 0 1 .89 1.46l-4.8 9.22V21a1 1 0 0 1-1 1zm-3-4.54 2 1.53v-4.55a1 1 0 0 1 .11-.46L17.35 6h-10.7l4.14 7.98a1 1 0 0 1 .11.46z"/>' +
 			'</svg>';
+		this.applyLabel(button);
+		// instant() may have run before translations loaded, and the user can
+		// switch language with the table mounted.
+		const langSub = this.translate.onLangChange.subscribe(() => this.applyLabel(button));
+		this.teardownFns.push(() => langSub.unsubscribe());
+		this.syncAria(button);
+		return button;
+	}
+
+	/** (Re-)translates the button's accessible name and tooltip. */
+	private applyLabel(button: HTMLButtonElement): void {
 		const label = this.translate.instant('BUTTONS.FILTER');
 		button.setAttribute('aria-label', label);
 		button.setAttribute('title', label);
-		this.syncAria(button);
-		return button;
 	}
 
 	private toggle(): void {
@@ -222,8 +239,12 @@ export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, O
 		if (selects.some((select) => select.selectedIndex > 0)) {
 			return true;
 		}
-		// ng-select marks itself when it holds a selection.
-		return !!filters.querySelector('.ng-select.ng-has-value');
+		// ng-select marks its host; nb-select marks the ABSENCE of a value with
+		// `.placeholder` on its trigger button (never on the host).
+		return (
+			!!filters.querySelector('.ng-select.ng-has-value') ||
+			!!filters.querySelector('nb-select .select-button:not(.placeholder)')
+		);
 	}
 
 	private reflectActiveState(): void {
@@ -241,6 +262,10 @@ export class SmartTableFilterToggleDirective implements OnInit, AfterViewInit, O
 	private detachButton(): void {
 		this.teardownFns.forEach((teardown) => teardown());
 		this.teardownFns = [];
+		// The delegated listeners just died with their teardowns — forget the
+		// row they were on, or a re-render of the same row never re-registers
+		// them and the indicator dot stops tracking typed values.
+		this.listenedRow = null;
 		if (this.button?.parentElement) {
 			this.renderer.removeChild(this.button.parentElement, this.button);
 		}
