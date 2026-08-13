@@ -5,6 +5,7 @@ import {
 	viewChild,
 	afterNextRender,
 	DestroyRef,
+	Injector,
 	signal,
 	Type
 } from '@angular/core';
@@ -39,6 +40,7 @@ export class OneColumnLayoutComponent {
 	private readonly themeLanguageSelectorService = inject(ThemeLanguageSelectorService);
 	private readonly destroyRef = inject(DestroyRef);
 	private readonly directionService = inject(NbLayoutDirectionService);
+	private readonly injector = inject(Injector);
 
 	/** User signal for template — derived from store observable. */
 	readonly user = toSignal(this.store.user$);
@@ -122,17 +124,46 @@ export class OneColumnLayoutComponent {
 	 */
 	private observeHeaderHeight(): void {
 		if (typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
-		const header = document.querySelector('nb-layout-header') as HTMLElement | null;
-		if (!header) return;
-		const apply = () =>
+		let observed: HTMLElement | null = null;
+		const apply = () => {
+			// Queried FRESH and re-observed on identity change: `@if (user())`
+			// re-creates `nb-layout-header` across auth transitions, and an
+			// observer captured once ends up watching a DETACHED node — the var
+			// freezes at the last pre-detach height. Measured live: the var held
+			// 88px while the re-created header rendered 98px once the demo
+			// banner appeared, and everything anchored to it (the chat column's
+			// top edge) tucked 10px under the band.
+			const header = document.querySelector('nb-layout-header') as HTMLElement | null;
+			if (!header) return;
+			if (header !== observed) {
+				this.headerResizeObserver?.disconnect();
+				this.headerResizeObserver = new ResizeObserver(apply);
+				this.headerResizeObserver.observe(header);
+				observed = header;
+			}
 			document.documentElement.style.setProperty(
 				'--gz-header-height',
 				`${Math.round(header.getBoundingClientRect().height)}px`
 			);
-		this.headerResizeObserver = new ResizeObserver(apply);
-		this.headerResizeObserver.observe(header);
+		};
+		this.applyHeaderHeight = apply;
+		// The re-creation trigger itself: settle over the render the `user()`
+		// flip causes (idempotent re-applies are free; the ResizeObserver only
+		// covers the node it is attached to, never the swap).
+		effect(
+			() => {
+				this.user();
+				requestAnimationFrame(apply);
+				setTimeout(apply, 120);
+				setTimeout(apply, 400);
+			},
+			{ injector: this.injector }
+		);
 		apply();
 	}
+
+	/** Re-applied from the band observer's settle ticks — see observeHeaderBand. */
+	private applyHeaderHeight?: () => void;
 
 	private bandResizeObserver?: ResizeObserver;
 
@@ -182,11 +213,17 @@ export class OneColumnLayoutComponent {
 		};
 		// The menu sidebar animates its collapse/compaction, so a single measurement lands
 		// mid-animation and freezes the header at a stale inset. Settle over the transition:
-		// idempotent style writes make the extra ticks free.
+		// idempotent style writes make the extra ticks free. The header height rides along —
+		// anything that reflows the band (menu state, window size, direction) can wrap or
+		// unwrap it, and the chat column's top edge hangs off that var.
 		const applySettled = () => {
-			requestAnimationFrame(apply);
-			setTimeout(apply, 120);
-			setTimeout(apply, 400);
+			const applyAll = () => {
+				apply();
+				this.applyHeaderHeight?.();
+			};
+			requestAnimationFrame(applyAll);
+			setTimeout(applyAll, 120);
+			setTimeout(applyAll, 400);
 		};
 
 		const menuHost = document.querySelector('nb-sidebar.menu-sidebar') as HTMLElement | null;
