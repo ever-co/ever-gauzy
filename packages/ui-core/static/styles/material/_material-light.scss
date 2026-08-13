@@ -4,10 +4,14 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  */
 @use 'sass:string';
+@use 'sass:map';
 // @nebular theming framework
 @use '@nebular/theme/styles/theming' as *;
 // @nebular out of the box themes
 @use '@nebular/theme/styles/themes' as *;
+// Shared gauzy token maps — without them every gauzy-* custom property this
+// theme emits is EMPTY, and all the modern surfaces render broken on it.
+@use '../gauzy-theme-maps' as gz;
 
 $theme: (
   color-primary-100: #e8cbfe,
@@ -361,8 +365,11 @@ $theme: (
   card-shadow: shadow,
   header-shadow:
     string.unquote('0 3px 5px -1px rgba(0,0,0,.2), 0 6px 10px 0 rgba(0,0,0,.14), 0 1px 18px 0 rgba(0,0,0,.12)'),
-  header-background-color: color-primary-default,
-  footer-background-color: color-primary-default,
+  // Surface-coloured chrome like every other registered theme: the Material
+  // violet stays the ACCENT (buttons, links, focus) instead of painting the
+  // whole header/footer band.
+  header-background-color: background-basic-color-1,
+  footer-background-color: background-basic-color-1,
   header-text-color: text-alternate-color,
   footer-text-color: text-alternate-color,
   footer-text-highlight-color: footer-text-color,
@@ -483,4 +490,8 @@ $theme: (
   option-giant-text-font-weight: material-regular-font-weight
 );
 
-$nb-themes: nb-register-theme($theme, material-light, default);
+$nb-themes: nb-register-theme(
+	map.merge(map.merge($theme, gz.$gauzy-canvas-light), gz.$gauzy-shared-light),
+	material-light,
+	default
+);
