@@ -600,6 +600,30 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Whether `userId` holds an active, non-archived membership of `organizationId` —
+	 * the same criteria `switchOrganization` enforces before scoping a token.
+	 *
+	 * Used to vet a CLIENT-REQUESTED organization before it may become the token's
+	 * `organizationId` claim: the server-persisted preferences never pass through here.
+	 *
+	 * @param userId The user whose membership is checked.
+	 * @param organizationId The requested organization.
+	 * @param tenantId The tenant the membership must belong to.
+	 * @returns True when an active membership backs the request.
+	 */
+	private async hasActiveOrganizationMembership(userId: ID, organizationId: ID, tenantId: ID): Promise<boolean> {
+		try {
+			const membership = await this.userOrganizationService.findOneByOptions({
+				where: { userId, organizationId, tenantId, isActive: true, isArchived: false }
+			});
+			return !!membership;
+		} catch {
+			// `findOneByOptions` throws when no membership exists.
+			return false;
+		}
+	}
+
+	/**
 	 * Authenticate a user by email and password and return user workspaces.
 	 *
 	 * @param email - The user's email.
@@ -2089,8 +2113,20 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException();
 			}
 
-			// Determine organization context for tokens
-			let organizationId = lastOrganizationId ?? user.lastOrganizationId ?? employee?.organizationId;
+			// Determine organization context for tokens. The REQUESTED organization is a
+			// client-supplied hint, not an entitlement: unlike the server-persisted fallbacks
+			// it must be backed by an active membership (the same criteria `switchOrganization`
+			// enforces) before it may scope the token — otherwise any workspace-token holder
+			// could mint a token claiming a sibling organization of the tenant. An unbacked
+			// hint (e.g. a stale client cache after the membership was revoked) falls back to
+			// the persisted values instead of failing the whole signin.
+			let organizationId = user.lastOrganizationId ?? employee?.organizationId;
+			if (
+				lastOrganizationId &&
+				(await this.hasActiveOrganizationMembership(user.id, lastOrganizationId, user.tenantId))
+			) {
+				organizationId = lastOrganizationId;
+			}
 
 			// Same backfill as `login()`: a non-employee user with no persisted preference gets
 			// their first active organization membership so the token carries a usable scope.

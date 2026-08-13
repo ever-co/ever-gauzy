@@ -7,7 +7,7 @@
 	[class.docs-drop-strip--active]="active"
 	(click)="browse.emit()"
 	(keydown.enter)="browse.emit()"
-	(keydown.space)="$event.preventDefault(); browse.emit()"
+	(keydown.space)="$event.preventDefault(); !$event.repeat && browse.emit()"
 >
 	<nb-icon icon="cloud-upload-outline"></nb-icon>
 	<div class="docs-drop-strip-copy">

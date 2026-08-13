@@ -166,7 +166,7 @@
 		<div class="docs-filter-field docs-filter-field--actions">
 			<gz-docs-saved-views [params]="urlParams" (applyView)="applyView.emit($event)"></gz-docs-saved-views>
 
-			<button nbButton ghost size="small" (click)="onClearAll()">
+			<button type="button" nbButton ghost size="small" (click)="onClearAll()">
 				<nb-icon icon="close-circle-outline"></nb-icon>
 				{{ 'DOCS.FILTERS.CLEAR_ALL' | translate }}
 			</button>

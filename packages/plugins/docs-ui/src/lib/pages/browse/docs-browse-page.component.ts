@@ -215,10 +215,15 @@ export class DocsBrowsePageComponent extends PaginationFilterBaseComponent imple
 		});
 
 		// 8b) A single upload that finishes READY but PENDING review gets an actionable
-		//     toast straight to the review queue (§7.3). Every settled upload also
-		//     moves the stats tiles.
+		//     toast straight to the review queue (§7.3).
 		this.uploadQueue.documentReady$.pipe(untilDestroyed(this)).subscribe((document) => {
 			this.notifyIfNeedsReview(document);
+		});
+
+		// 8c) EVERY settled upload moves the stats tiles — a document that settles
+		//     FAILED moves the Failed count just as a READY one moves Ready, so this
+		//     rides the outcome-agnostic stream, not the READY-only one above.
+		this.uploadQueue.documentSettled$.pipe(untilDestroyed(this)).subscribe(() => {
 			this.statsLine?.reload();
 		});
 

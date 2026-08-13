@@ -152,10 +152,12 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 
 	/**
 	 * The template's root gate: `visible`, narrowed by `hideWhenEmpty` to "only
-	 * once at least one link has actually loaded".
+	 * once at least one link has actually loaded". A load in flight or a failed
+	 * load keeps the card up regardless — hiding it there would hide the error
+	 * state and the retry affordance with it.
 	 */
 	get shown(): boolean {
-		return this.visible && (!this.hideWhenEmpty || this.links.length > 0);
+		return this.visible && (!this.hideWhenEmpty || this.loading || this.loadError || this.links.length > 0);
 	}
 
 	/** Attaching and detaching are both `DOCS_UPDATE` (`POST`/`DELETE /links`). */

@@ -17,6 +17,7 @@ import { IDocumentFacetBucket } from '../../models/docs-api.model';
 			[items]="options"
 			bindLabel="label"
 			bindValue="value"
+			[trackByFn]="trackByValue"
 			[multiple]="true"
 			[closeOnSelect]="false"
 			[searchable]="false"
@@ -81,9 +82,13 @@ export class FacetMultiselectComponent implements OnChanges {
 		const known = new Set(buckets.map((bucket) => bucket.value));
 		const stale = selected.filter((value) => !known.has(value));
 
+		// The RESOLVED labels are part of the fingerprint, not the raw bucket labels:
+		// enum facets resolve through `labelFor` (a translation), and a locale switch
+		// changes that result while the bucket content stays identical — a raw-content
+		// fingerprint would keep serving the previous language's options.
 		const signature = JSON.stringify([
-			buckets.map((bucket) => [bucket.value, bucket.label, bucket.count]),
-			stale
+			buckets.map((bucket) => [bucket.value, this.resolveLabel(bucket.value, bucket.label), bucket.count]),
+			stale.map((value) => [value, this.resolveLabel(value)])
 		]);
 		if (signature !== this.optionsSignature) {
 			this.optionsSignature = signature;

@@ -230,6 +230,18 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 			} else if (config.loadChildren) {
 				// Set the loadChildren property to the config object
 				route.loadChildren = config.loadChildren;
+			} else if (config.redirectTo != null) {
+				// A pure redirect route is a valid navigation target too — registration
+				// accepts it, so the mapper must carry it or the generated route has no
+				// target at all (the exact NG04014 failure described above).
+				route.redirectTo = config.redirectTo;
+			}
+
+			// `children` can accompany any of the targets above (a componentless parent
+			// with children is itself a valid target), so it is copied independently of
+			// the else-chain rather than competing with it.
+			if (config.children) {
+				route.children = config.children;
 			}
 
 			// Check if the route configuration has a resolve property

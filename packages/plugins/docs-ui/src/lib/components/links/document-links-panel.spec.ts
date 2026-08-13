@@ -164,6 +164,27 @@ describe('DocumentLinksPanelComponent — record-side Documents panel (spec 00 �
 			expect(panel.shown).toBe(false);
 		});
 
+		it('with hideWhenEmpty a FAILED load keeps the card up — the error and retry must stay reachable', async () => {
+			// `load()` clears `links` on failure; gating on links alone would hide the
+			// panel exactly when it has something to say (the error + retry button).
+			const { panel } = createPanel({ links: throwError(() => new Error('boom')) });
+			panel.hideWhenEmpty = true;
+
+			await panel.load();
+
+			expect(panel.loadError).toBe(true);
+			expect(panel.links).toEqual([]);
+			expect(panel.shown).toBe(true);
+		});
+
+		it('with hideWhenEmpty a load in flight keeps the card up (spinner host)', () => {
+			const { panel } = createPanel();
+			panel.hideWhenEmpty = true;
+			panel.loading = true;
+
+			expect(panel.shown).toBe(true);
+		});
+
 		it('hideWhenEmpty never overrides the DOCS_READ / feature gate', async () => {
 			const { panel } = createPanel({ permissions: [], links: of([fileLink()]) });
 			panel.hideWhenEmpty = true;

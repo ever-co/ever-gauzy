@@ -129,8 +129,11 @@ export class DocsFilterBarComponent extends TranslationBaseComponent {
 					if (known) return known;
 					const bucket = buckets.find((b) => String(b.value) === String(id));
 					// Deep-linked ids without a facet match stay selectable — a neutral
-					// chip beats silently dropping the filter.
-					return { id, name: bucket?.label ?? String(id) } as ITag;
+					// chip beats silently dropping the filter. The color is explicit:
+					// the shared selector's `background()` maps a missing color to
+					// #000000, so a colorless stub rendered as a black chip. (Nebular's
+					// basic-600 gray — facet buckets carry no color to resolve from.)
+					return { id, name: bucket?.label ?? String(id), color: '#8f9bb3' } as ITag;
 				})
 			};
 		}
