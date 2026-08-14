@@ -7,13 +7,6 @@
 						{{ 'REPORT_PAGE.PROJECT_BUDGET_REPORTS' | translate }}
 					</ngx-header-title>
 				</h4>
-				@if (request?.startDate && request?.endDate) {
-					<ngx-date-range-title
-						[start]="request?.startDate"
-						[end]="request?.endDate"
-						[format]="'dddd, LL'"
-					></ngx-date-range-title>
-				}
 			</div>
 		</div>
 		<div class="row">
@@ -184,6 +177,7 @@
 					</nb-card>
 				} @else {
 					<ngx-no-data-message
+						[loading]="loading"
 						[message]="'REPORT_PAGE.NO_DATA.PROJECT_BUDGET' | translate"
 					></ngx-no-data-message>
 				}

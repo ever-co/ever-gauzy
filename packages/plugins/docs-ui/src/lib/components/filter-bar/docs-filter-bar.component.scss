@@ -1,0 +1,92 @@
+:host {
+	// The one height every control-band control shares ($gauzy-density,
+	// themes.scss); the fallback mirrors the token's current value.
+	--docs-filter-control-height: var(--gauzy-header-control-height, 2rem);
+}
+
+.docs-filter-bar {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.docs-filter-row {
+	display: flex;
+	align-items: flex-end;
+	gap: 0.5rem 0.75rem;
+	flex-wrap: wrap;
+}
+
+.docs-filter-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 0;
+}
+
+.docs-filter-label {
+	margin: 0;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	color: var(--text-hint-color);
+}
+
+// Saved views + Clear all sit on the control line, not under a label.
+.docs-filter-field--actions {
+	flex-direction: row;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.docs-filter-search {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+
+	input {
+		min-width: 16rem;
+	}
+}
+
+// ─── Compact pills ───────────────────────────────────────────────
+// `text-inputs-overrides()` floors every bare `input` to $default-height and
+// `nb-select-overrides()` floors the nb-select button the same way (both global,
+// ui-core/_gauzy-overrides.scss) — that floor is what defeated `size="small"`
+// here. Neither floor is `!important`, so these scoped, higher-specificity pins
+// to the header-band token win without touching the global rules — the same
+// recipe the page header's selectors use (header.component.scss).
+.docs-filter-row {
+	input[nbInput] {
+		height: var(--docs-filter-control-height);
+		min-height: var(--docs-filter-control-height);
+	}
+
+	::ng-deep .ng-select .ng-select-container {
+		// min-height only — multi-select chips may wrap taller than one row.
+		min-height: var(--docs-filter-control-height);
+		background-color: var(--gauzy-card-1);
+		border-radius: var(--gauzy-radius-sm) !important;
+		box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+	}
+
+	// The suffix button must not stretch the compact date fields.
+	::ng-deep .docs-filter-range-field button[nbSuffix] {
+		height: var(--docs-filter-control-height);
+		min-height: var(--docs-filter-control-height);
+	}
+}
+
+.docs-filter-range-field {
+	max-width: 13rem;
+}
+
+.docs-filter-range {
+	max-width: 11rem;
+}
+
+.docs-filter-tags {
+	display: block;
+	min-width: 12rem;
+}

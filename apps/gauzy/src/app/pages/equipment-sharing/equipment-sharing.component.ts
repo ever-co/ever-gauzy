@@ -95,9 +95,13 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 				debounceTime(300),
 				filter(([user, organization]) => !!user && !!organization),
 				distinctUntilChange(),
-				tap(([user, organization, employee]) => {
+				tap(([, organization, employee]) => {
 					this.organization = organization;
-					this.selectedEmployeeId = user.employee ? user.employee.id : employee ? employee.id : null;
+					// Follow the header employee selector, like every other grid. Preferring the current
+					// user's own employee record pinned the grid to that employee while the selector still
+					// read "All Employees" — and the permission gate already lives in the selector, which
+					// only offers "All Employees" to users with CHANGE_SELECTED_EMPLOYEE.
+					this.selectedEmployeeId = employee ? employee.id : null;
 				}),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.equipmentSharing$.next(true)),
@@ -448,12 +452,8 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 		const { id: organizationId, tenantId } = this.organization;
 
 		// Prepare request object with organization and tenant details
+		// (the endpoint filters on `employeeIds`; a singular `employeeId` is ignored server-side)
 		const request: any = { organizationId, tenantId };
-
-		// Add selected employee ID to the request if available
-		if (this.selectedEmployeeId) {
-			request.employeeId = this.selectedEmployeeId;
-		}
 
 		// Create a new ServerDataSource for Smart Table
 		this.smartTableSource = new ServerDataSource(this.http, {

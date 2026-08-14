@@ -12,7 +12,7 @@
 		</div>
 		<div>
 			<div>
-				<ng-template [ngxPermissionsOnly]="['INTEGRATION_EDIT']">
+				<ng-template [ngxPermissionsOnly]="permGateIntegrationEdit">
 					<button nbButton status="primary" class="mr-2" size="small" (click)="navigateToResetIntegration()">
 						<div class="sync-container">
 							<nb-icon class="sync" icon="sync-outline"></nb-icon>
@@ -93,6 +93,7 @@
 								</h6>
 							</div>
 							<angular2-smart-table
+								[class.ga-table-loading]="loading"
 								[settings]="settingsSmartTableProjects"
 								[source]="projects$ | async"
 								style="cursor: pointer"
@@ -155,6 +156,7 @@
 					<nb-card-body>
 						<div class="table-scroll-container">
 							<angular2-smart-table
+								[class.ga-table-loading]="loading"
 								[settings]="settingsSmartTableIssues"
 								[source]="issues"
 								(userRowSelect)="selectIssues($event)"

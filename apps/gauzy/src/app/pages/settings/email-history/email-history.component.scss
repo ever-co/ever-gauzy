@@ -177,8 +177,15 @@
         > span {
           display: flex;
 
+          // From / To / Subject / Language / Template labels. `width: 90px` alone
+          // is only a flex BASIS: the value beside it (an email address, a long
+          // template title) has a wide content base of its own, so when the pair
+          // overflowed the line both shrank in proportion — the label lost width
+          // and wrapped, and it did so by a different amount on each of the five
+          // rows, so the label column never lined up. Fixing the basis and
+          // forbidding the shrink keeps one straight column.
           .col-fixed {
-            width: 90px;
+            flex: 0 0 90px;
             display: block;
           }
         }
@@ -220,14 +227,8 @@
   }
 }
 
-h4 {
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 30px;
-  letter-spacing: 0em;
-  text-align: left;
-
-  .menu-setting {
-    font-weight: 400;
-  }
+// "Settings/" ahead of the page name, inside `ngx-header-title` — it inherits
+// that component's size, and only the weight makes it recede.
+.menu-setting {
+  font-weight: 400;
 }

@@ -12,6 +12,7 @@ import {
 	dispatchClick,
 	waitForSpinnerGone
 } from '../util';
+import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { OrganizationProjectsPage } from '../../../src/support/Base/pageobjects/OrganizationProjectsPageObject';
@@ -93,16 +94,15 @@ export const clickTagsMultiSelect = async () => {
 };
 
 export const selectTagsFromDropdown = async (index) => {
-	// Pick the option from the body-appended panel. dispatchClick avoids any fading overlay swallowing
-	// the coordinate click; ng-select keeps the panel open (closeOnSelect=false) so the next step still
-	// works. Best-effort: tags can be empty on a fresh tenant, so don't hard-fail.
-	const option = getPage().locator(OrganizationProjectsPage.tagsSelectOptionCss);
-	try {
-		await option.nth(index).waitFor({ state: 'visible', timeout: 6000 });
-		await option.nth(index).dispatchEvent('click');
-	} catch {
-		await getPage().keyboard.press('Escape').catch(() => undefined);
-	}
+	// Routed through the ONE shared ng-select driver (tests/support/ng-select.ts). It counts only REAL
+	// options: a bare `div.ng-option` ALSO matches ng-select's disabled "No items found" / "Loading…"
+	// rows, so the old wait-then-click was satisfied by an EMPTY list and then clicked a row ng-select
+	// ignores — a silent no-op that left this field unset. It re-opens the panel via the control's own
+	// container until real options render (NEVER Escape: nb-dialog opens with closeOnEsc and that closed
+	// the whole form), and it confirms the pick against `div.ng-value`, the only node that exists once a
+	// value is really bound. Still best-effort — the tag is optional here — but it can no longer
+	// half-succeed, and it can no longer kill the dialog on a slow list.
+	await selectNgOption(OrganizationProjectsPage.tagsSelectCss, OrganizationProjectsPage.tagsSelectOptionCss, index);
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode) => {

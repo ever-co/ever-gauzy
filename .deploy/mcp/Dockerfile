@@ -129,7 +129,7 @@ RUN if [ -n "$VERDACCIO_REGISTRY" ]; then \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
+RUN yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts \
     && yarn postinstall.manual \
     && yarn cache clean
 
@@ -211,7 +211,7 @@ RUN if [ -n "$VERDACCIO_REGISTRY" ]; then \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
+RUN yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts --production \
     && yarn postinstall.manual \
     && yarn cache clean
 

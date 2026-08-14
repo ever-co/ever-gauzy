@@ -152,13 +152,13 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 			do {
 				this.generateCharts();
 			} while (!this.aggregatedEmployeeStatistics.chart.length);
-
-			// Set loading state to false
-			this.loading = false;
 		} catch (error) {
 			// Handle errors
 			console.log('Error while retrieving employee aggregate statistics', error);
 			this.toastrService.danger(error);
+		} finally {
+			// Always drop the spinner, otherwise a failed request leaves the card covered forever
+			this.loading = false;
 		}
 	}
 

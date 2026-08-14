@@ -1,5 +1,7 @@
-import { Injectable } from '@angular/core';
-import { IWidgetRegistry, WidgetPageLocationId, WidgetRegistryConfig } from './widget-registry.types';
+import { Injectable, Type, isDevMode } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { IWidgetRegistry, WidgetCategory, WidgetPageLocationId, WidgetRegistryConfig } from './widget-registry.types';
 
 @Injectable({
 	providedIn: 'root'
@@ -12,6 +14,23 @@ export class WidgetRegistryService implements IWidgetRegistry {
 	 * This Map stores arrays of WidgetRegistryConfig objects, keyed by WidgetPageLocationId.
 	 */
 	private readonly registry = new Map<WidgetPageLocationId, WidgetRegistryConfig[]>();
+
+	/**
+	 * Global `widgetId` -> config index, so a persisted placement can resolve
+	 * its widget without knowing which location registered it.
+	 */
+	private readonly byId = new Map<string, WidgetRegistryConfig>();
+
+	/** Resolved component cache, so a widget dropped twice only loads once. */
+	private readonly componentCache = new Map<string, Promise<Type<any>>>();
+
+	private readonly _widgets$ = new BehaviorSubject<WidgetRegistryConfig[]>([]);
+
+	/**
+	 * All registered widgets, emitting again whenever registrations change
+	 * (plugins register during app initialization and may be enabled later).
+	 */
+	public readonly widgets$: Observable<WidgetRegistryConfig[]> = this._widgets$.asObservable();
 
 	/**
 	 * Retrieves the current widget registry.
@@ -66,6 +85,131 @@ export class WidgetRegistryService implements IWidgetRegistry {
 
 		// Update the registry with the new or updated list of widgets for the specified location.
 		this.registry.set(config.location, widgets);
+
+		// `widgetId` is the key persisted on every dashboard placement, so it has
+		// to be unique across ALL locations — not just within one. Registering the
+		// same id at a second location silently re-points every saved placement.
+		// Warn instead of throwing: registration runs during app bootstrap, where
+		// a throw would abort the remaining widgets too.
+		const existing = this.byId.get(config.widgetId);
+		if (existing && existing.location !== config.location && isDevMode()) {
+			console.warn(
+				`[WidgetRegistryService] Widget "${config.widgetId}" is already registered at location "${existing.location}"; the "${config.location}" registration now wins.`
+			);
+		}
+
+		// Index globally by id and publish the change to palette subscribers.
+		this.byId.set(config.widgetId, config);
+		// A replaced entry may declare a different `loadComponent`, so the memoized
+		// component class must go with it.
+		this.componentCache.delete(config.widgetId);
+		this.publish();
+	}
+
+	/**
+	 * Registers a widget, replacing any existing registration with the same id.
+	 *
+	 * Unlike {@link registerWidget} this never throws on duplicates, which makes
+	 * it safe for hot module replacement and for plugins that re-register when
+	 * they are toggled on and off at runtime.
+	 *
+	 * @param config - The configuration object for the widget.
+	 */
+	public registerOrReplaceWidget(config: WidgetRegistryConfig): void {
+		if (!config?.location || !config?.widgetId) {
+			throw new Error('A widget configuration must have location and widgetId properties');
+		}
+
+		// Drop the id from EVERY location first: a re-registration may move the
+		// widget to a different location, and leaving the old entry behind makes
+		// location-based consumers render stale metadata.
+		for (const [location, registered] of this.registry) {
+			this.registry.set(
+				location,
+				registered.filter((widget: WidgetRegistryConfig) => widget.widgetId !== config.widgetId)
+			);
+		}
+
+		const widgets = this.registry.get(config.location) || [];
+		widgets.push(config);
+		this.registry.set(config.location, widgets);
+		this.byId.set(config.widgetId, config);
+		this.componentCache.delete(config.widgetId);
+		this.publish();
+	}
+
+	/**
+	 * Retrieves a widget configuration by its global id, regardless of the
+	 * location it was registered at.
+	 *
+	 * @param widgetId - The registry key persisted on a dashboard placement.
+	 * @returns The widget configuration, or `undefined` when it is not registered
+	 *          (e.g. its plugin is disabled, or the widget was removed).
+	 */
+	public getWidget(widgetId: string): WidgetRegistryConfig | undefined {
+		return this.byId.get(widgetId);
+	}
+
+	/**
+	 * Streams the registered widgets, optionally narrowed to one palette category.
+	 *
+	 * @param category - Optional category filter.
+	 */
+	public getWidgets$(category?: WidgetCategory): Observable<WidgetRegistryConfig[]> {
+		return this.widgets$.pipe(
+			map((widgets: WidgetRegistryConfig[]) =>
+				category ? widgets.filter((widget) => (widget.category ?? 'other') === category) : widgets
+			)
+		);
+	}
+
+	/**
+	 * Resolves (and caches) the component class backing a widget.
+	 *
+	 * @param widgetId - The widget's registry key.
+	 * @returns The component type, or `null` when the widget is unknown or
+	 *          declares no component.
+	 */
+	public resolveComponent(widgetId: string): Promise<Type<any> | null> {
+		// Explicit `!== undefined` rather than truthiness: the cached value is a
+		// Promise, and a Promise in a boolean conditional is ALWAYS truthy — the
+		// check would read as "is it resolved?" while meaning "is it cached?".
+		const cached = this.componentCache.get(widgetId);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const config = this.byId.get(widgetId);
+		if (!config?.loadComponent) {
+			return Promise.resolve(null);
+		}
+
+		// `try` (not just `Promise.resolve(...)`): a loader that throws
+		// SYNCHRONOUSLY would otherwise escape before the promise chain exists,
+		// leaving the widget host stuck on its loading skeleton instead of
+		// showing the error state with its Retry button.
+		let loading: Promise<Type<any>>;
+		try {
+			loading = Promise.resolve(config.loadComponent());
+		} catch (error) {
+			return Promise.reject(error);
+		}
+
+		this.componentCache.set(widgetId, loading);
+		// A failed load must not poison the cache — the next render retries. Only
+		// evict OUR entry: a re-registration may already have replaced it, and
+		// dropping that would discard a healthy load.
+		loading.catch(() => {
+			if (this.componentCache.get(widgetId) === loading) {
+				this.componentCache.delete(widgetId);
+			}
+		});
+		return loading;
+	}
+
+	/** Emits the flattened registry to `widgets$` subscribers. */
+	private publish(): void {
+		this._widgets$.next(Array.from(this.byId.values()));
 	}
 
 	/**

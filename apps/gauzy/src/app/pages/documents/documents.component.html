@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" class="card-scroll">
+<nb-card class="card-scroll">
 	<nb-card-header class="pb-0">
 		<div class="main-header">
 			<h4>
@@ -16,7 +16,7 @@
 			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary">
 		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE && documentList?.length) {
 		<div class="table-scroll-container">
 			@for (document of documentList; track document.id) {
@@ -28,7 +28,13 @@
 				>
 					<div>
 						<nb-icon icon="file-text-outline"></nb-icon>
-						<a [href]="document.documentUrl">
+						<!--
+							The target is an uploaded file on another origin, and the row it sits
+							in also handles the click to SELECT the document — following the link
+							in place threw the whole app away to open an attachment. `noopener`
+							keeps the opened tab from reaching back through `window.opener`.
+						-->
+						<a [href]="document.documentUrl" target="_blank" rel="noopener noreferrer">
 							{{ document.name }}
 						</a>
 					</div>
@@ -47,6 +53,7 @@
 		</div>
 		} @else if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && documentList?.length) {
 		<ga-card-grid
+			[loading]="loading"
 			[totalItems]="pagination?.totalItems"
 			[settings]="settingsSmartTable"
 			[source]="documentList"

@@ -12,9 +12,18 @@
         outline
         optionsListClass="fit-content"
         >
+        <nb-select-label>
+          @if (getFlagUrl(selectedLanguage?.code); as flagUrl) {
+            <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
+          }
+          {{ selectedLanguage?.name | translate }}
+        </nb-select-label>
         @for (lang of languages; track lang) {
           <nb-option [value]="lang.value">
-            {{ lang.value | uppercase }} ({{ lang.name | translate }})
+            @if (getFlagUrl(lang.code); as flagUrl) {
+              <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
+            }
+            {{ lang.name | translate }}
           </nb-option>
         }
       </nb-select>

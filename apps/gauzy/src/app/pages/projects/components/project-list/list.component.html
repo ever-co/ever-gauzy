@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
   <nb-card-header class="main-header pb-0">
     <div class="main-header">
       <h4>
@@ -16,13 +16,14 @@
       ></ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body>
+  <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
     <ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_PROJECT_VIEW]">
       @switch (dataLayoutStyle) {
         <!-- Table View -->
         @case (componentLayoutStyleEnum.TABLE) {
           <div class="table-scroll-container">
             <angular2-smart-table
+              [class.ga-table-loading]="loading"
               style="cursor: pointer"
               (userRowSelect)="selectProject($event)"
               [settings]="settingsSmartTable"
@@ -38,6 +39,7 @@
         <!-- Card Grid View -->
         @case (componentLayoutStyleEnum.CARDS_GRID) {
           <ga-card-grid
+            [loading]="loading"
             [totalItems]="pagination?.totalItems"
             (onSelectedItem)="selectProject($event)"
             (scroll)="onScroll()"

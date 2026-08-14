@@ -1,8 +1,10 @@
 <nb-card class="card-scroll">
 	<nb-card-header>
 		<h4>
-			<span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/ </span
-			>{{ 'SETTINGS_MONITORING.HEADER' | translate }}
+			<ngx-header-title [allowEmployee]="false">
+				<span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/ </span
+				>{{ 'SETTINGS_MONITORING.HEADER' | translate }}
+			</ngx-header-title>
 		</h4>
 	</nb-card-header>
 	<nb-card-body>

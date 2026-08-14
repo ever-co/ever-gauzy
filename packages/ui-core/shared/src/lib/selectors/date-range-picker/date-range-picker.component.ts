@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, combineLatest, of, Subject, switchMap, take } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	DaterangepickerComponent as NgxDateRangePickerComponent,
@@ -9,6 +9,7 @@ import {
 	LocaleConfig
 } from 'ngx-daterangepicker-material';
 import moment from 'moment';
+import { NbLayoutDirectionService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import {
@@ -49,6 +50,18 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	private arrow: Arrow = new Arrow();
 	private next: Next = new Next();
 	private previous: Previous = new Previous();
+
+	/**
+	 * Which way the dropdown hangs off the input. The panel (~600px double
+	 * calendar) is wider than the space between the input and the trailing
+	 * viewport edge, so it must open TOWARD the canvas: the library aligns the
+	 * panel's trailing edge to the input for 'left', mirrored under RTL. (The
+	 * old -130%/-146% margin hack did the same job against a containing-block
+	 * layout that no longer exists.)
+	 */
+	public get opens(): 'left' | 'right' {
+		return this._directionService.isRtl() ? 'right' : 'left';
+	}
 
 	/**
 	 * Locale configuration for the component.
@@ -217,7 +230,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		private readonly _timesheetFilterService: TimesheetFilterService,
 		private readonly _navigationService: NavigationService,
 		private readonly _selectorBuilderService: SelectorBuilderService,
-		private readonly _timeZoneService: TimeZoneService
+		private readonly _timeZoneService: TimeZoneService,
+		private readonly _directionService: NbLayoutDirectionService
 	) {
 		super(translateService);
 	}
@@ -225,7 +239,15 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	ngOnInit(): void {
 		const storeOrganization$ = this._store.selectedOrganization$;
 		const storeDatePickerConfig$ = this._dateRangePickerBuilderService.datePickerConfig$;
-		const queryParams$ = this._route.queryParams;
+		// This pipeline consumes ONLY `unit_of_time` from the query string. The raw
+		// queryParams stream re-emits on every date/org/team write the picker itself
+		// issues through the router (replaceState never made it emit), and each
+		// emission costs an organization round-trip plus a re-derivation — narrow +
+		// distinct so only an actual unit change (or the first load) wakes it.
+		const queryParamsUnitOfTime$ = this._route.queryParams.pipe(
+			map((params) => params['unit_of_time'] as moment.unitOfTime.Base | undefined),
+			distinctUntilChanged()
+		);
 
 		// Subscribe to the timeZone$ observable
 		const timeZone$ = this._timeZoneService.timeZone$.pipe(
@@ -242,10 +264,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			})
 		);
 
-		combineLatest([storeOrganization$, storeDatePickerConfig$, queryParams$, timeZone$])
+		combineLatest([storeOrganization$, storeDatePickerConfig$, queryParamsUnitOfTime$, timeZone$])
 			.pipe(
 				filter(([organization, datePickerConfig]) => !!organization && !!datePickerConfig),
-				switchMap(([organization, datePickerConfig, queryParams, timeZone]) =>
+				switchMap(([organization, datePickerConfig, unitOfTimeFromQuery, timeZone]) =>
 					combineLatest([
 						this._organizationService.getById(organization.id, [], {
 							id: true,
@@ -254,11 +276,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 							startWeekOn: true
 						}),
 						of(datePickerConfig),
-						of(queryParams), // Emit queryParams as part of the inner observable
+						of(unitOfTimeFromQuery), // Emit the narrowed unit as part of the inner observable
 						of(timeZone)
 					])
 				),
-				tap(([organization, datePickerConfig, queryParams, timeZone]) => {
+				tap(([organization, datePickerConfig, unitOfTimeFromQuery, timeZone]) => {
 					this.organization = organization; // Update the organization
 					this.futureDateAllowed = organization.futureDateAllowed; // Update the future date allowed
 					this.timeZone = timeZone; // Update the time zone
@@ -271,8 +293,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					this.isLockDatePicker = isLockDatePicker;
 					this.isSingleDatePicker = isSingleDatePicker;
 
-					const { unit_of_time: unitOfTime = datePickerConfig.unitOfTime } = queryParams;
-					this.unitOfTime = unitOfTime;
+					// Query-param values are `string | undefined`, never null — the explicit
+					// `??` keeps the ROUTE-CONFIG unit as the fallback (the setter's own
+					// internal fallback is the global default, wrong for month routes).
+					this.unitOfTime = unitOfTimeFromQuery ?? datePickerConfig.unitOfTime;
 				}),
 				tap(() => {
 					this.createDateRangeMenus();

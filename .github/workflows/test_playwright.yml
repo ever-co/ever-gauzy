@@ -2,16 +2,34 @@ name: Playwright Tests
 
 # Replaces the dormant Cypress workflows (test_cypress.yml / test_currents.yml, which trigger on
 # branch `nope`). Runs the migrated Playwright e2e suite against a locally-started API + Web.
+#
+# JOB GRAPH — deps ──► build ──► e2e (shard 1..4)
+#
+# This used to be ONE job that bootstrapped the monorepo, built every package, built the Angular
+# app AND ran the 79-spec suite. It never once reached the tests: the self-hosted ARC (k8s) pods
+# drop off GitHub on long heavy jobs, so the run always died mid-way. Measured on develop:
+#
+#   run 30594240884  bootstrap 88 min  → died 23 min into the web build (~2 h in)
+#   run 30267765989  bootstrap 3 h 28  → died 47 min into the web build (~4.5 h in)
+#   run 30224003351  bootstrap 1 h 40  → died 24 min into the web build (~2.2 h in)
+#   run 30330950619  bootstrap failed after 9 min
+#
+# So the split follows the cost: `yarn bootstrap` (8.9 GB / ~900k files) is isolated in its own
+# job and published to the Actions cache, the two compile steps run in a second job, and the test
+# jobs compile NOTHING — they download the prebuilt bundles, boot them and run one shard each.
+# An evicted pod now costs a single phase, and a re-run of a failed job reuses the cached
+# node_modules + the uploaded bundles instead of redoing everything.
 on:
   # Run the e2e suite ONLY when code lands on develop (merge/push). Deliberately NOT on pull_request or
-  # any other branch: the suite is long (~1.3h) and shared-DB flaky, so it's gated to the integration
+  # any other branch: the suite is long and shared-DB flaky, so it's gated to the integration
   # branch. Use the manual "Run workflow" button (workflow_dispatch) to run it on demand from any ref.
   push:
     branches: [develop]
   workflow_dispatch:
 
-# Least-privilege GITHUB_TOKEN (CodeQL: a workflow should limit the token's permissions). This job only
-# checks out code and runs tests against a locally-started stack — it needs no write scopes.
+# Least-privilege GITHUB_TOKEN (CodeQL: a workflow should limit the token's permissions). These jobs
+# only check out code and run tests against a locally-started stack — they need no write scopes.
+# (Same-run artifact upload/download authenticates with the Actions runtime token, not this one.)
 permissions:
   contents: read
 
@@ -20,21 +38,149 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  e2e-playwright:
+  # ---------------------------------------------------------------------------------------------
+  # 1) deps — pay `yarn bootstrap` ONCE per lockfile and hand node_modules to every other job.
+  # ---------------------------------------------------------------------------------------------
+  deps:
+    name: Install dependencies
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
-    timeout-minutes: 360
+    # Cold path (cache miss) is the whole budget: bootstrap alone has been measured at 88 min and
+    # once at 3 h 28 on these runners, plus the cache save of a ~9 GB tree. Warm path is a no-op
+    # (~2 min). Nothing else runs here, so an eviction costs only the install.
+    timeout-minutes: 240
+    outputs:
+      # Single source of truth for the cache key — every downstream job restores with this exact
+      # value, so a key change can never silently split the cache.
+      node-modules-key: ${{ steps.cache-key.outputs.value }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Compute node_modules cache key
+        id: cache-key
+        shell: bash
+        run: echo "value=${{ runner.os }}-${{ runner.arch }}-e2e-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore node_modules cache
+        id: cache
+        uses: actions/cache/restore@v5
+        with:
+          # yarn workspaces hoist to the root, but package.json `nohoist` (@angular*, @ngtools,
+          # @types/jasmine*) keeps per-workspace copies — cache those too or the restored tree is
+          # incomplete and Angular builds fail. Exact key only, never restore-keys: a partially
+          # matching node_modules is worse than no node_modules.
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            packages/plugins/*/node_modules
+            tools/node_modules
+          key: ${{ steps.cache-key.outputs.value }}
+
       - name: Install Packages & Bootstrap
-        run: yarn bootstrap
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        # Retry once: run 30330950619 died here after 9 min. A transient registry/FS hiccup on
+        # these container runners is common and the second attempt reuses whatever yarn already
+        # unpacked. (A pod eviction can't be retried in-step — that's what the job split is for.)
+        run: |
+          yarn bootstrap \
+            || { echo "::warning::yarn bootstrap failed — retry 1"; yarn bootstrap; }
+
+      - name: Save node_modules cache
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        # Explicit save (not the combined actions/cache post-step) so a FAILED bootstrap can never
+        # publish a half-installed tree: this step only runs when every step above succeeded.
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            packages/plugins/*/node_modules
+            tools/node_modules
+          key: ${{ steps.cache-key.outputs.value }}
+
+  # ---------------------------------------------------------------------------------------------
+  # 2) build — compile the API bundle and the static web bundle. No tests run here.
+  # ---------------------------------------------------------------------------------------------
+  build:
+    name: Build API + Web
+    needs: deps
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    # Observed: build:package:all 7-13 min, web build >47 min (it never finished before the pod
+    # died). 120 min is a realistic ceiling once node_modules comes from the cache; if it is
+    # exceeded the right answer is another split, not a bigger budget.
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Restore node_modules cache
+        id: cache
+        uses: actions/cache/restore@v5
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            packages/plugins/*/node_modules
+            tools/node_modules
+          key: ${{ needs.deps.outputs.node-modules-key }}
+
+      - name: Install Packages & Bootstrap (cache fallback)
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        # Safety net only — `deps` just populated this key. A miss here means the Actions cache
+        # service is not usable from these runners, which is worth shouting about because every
+        # job then pays the full install again.
+        run: |
+          echo "::warning::node_modules cache miss — falling back to a full bootstrap (1-3 h on these runners)."
+          yarn bootstrap \
+            || { echo "::warning::yarn bootstrap failed — retry 1"; yarn bootstrap; }
+
+      - name: Size the Node heap to this container
+        shell: bash
+        # The old fixed `--max-old-space-size=24576` is a prime suspect for the web build dying in
+        # three of the last four runs: these ARC pods are memory-limited, and a heap ceiling above
+        # the cgroup limit lets V8 grow until the kernel OOM-kills the pod — which surfaces on
+        # GitHub as a job that simply stops with its step still "pending". Derive the ceiling from
+        # the container's real limit instead, keeping ~25% for webpack workers + the runner agent.
+        # Capped at the previous 24 GB so a large machine is no worse off than before.
+        run: |
+          # true only for a non-empty, all-digits value
+          is_number() { [ -n "$1" ] && [ -z "${1//[0-9]/}" ]; }
+
+          limit_mb=''
+          limit_bytes=$(cat /sys/fs/cgroup/memory.max 2>/dev/null || cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null || true)
+          if is_number "$limit_bytes"; then limit_mb=$((limit_bytes / 1024 / 1024)); fi
+          # An unlimited cgroup reports "max" or a host-sized number — fall back to real RAM.
+          if ! is_number "$limit_mb" || [ "$limit_mb" -eq 0 ] || [ "$limit_mb" -gt 262144 ]; then
+            limit_mb=$(free -m 2>/dev/null | awk '/^Mem:/{print $2}' || true)
+          fi
+          if is_number "$limit_mb" && [ "$limit_mb" -gt 0 ]; then
+            heap_mb=$((limit_mb * 3 / 4))
+            if [ "$heap_mb" -gt 24576 ]; then heap_mb=24576; fi
+            if [ "$heap_mb" -lt 4096 ]; then heap_mb=4096; fi
+          else
+            # Neither source answered. Fall back to the heap the API has always run with rather
+            # than to the floor — this step must never be the thing that fails a build.
+            echo "::warning::could not determine this container's memory limit — defaulting the Node heap to 12288 MB"
+            heap_mb=12288
+          fi
+          echo "container memory: ${limit_mb:-unknown} MB, cpus: $(nproc 2>/dev/null || echo '?') -> node heap ${heap_mb} MB"
+          free -h || true
+          echo "NODE_OPTIONS=--max-old-space-size=${heap_mb}" >> "$GITHUB_ENV"
+          # Also published on its own so the web build can pass the flag directly on the node
+          # command line. NODE_OPTIONS alone was demonstrably not enough — see that step.
+          echo "NODE_HEAP_MB=${heap_mb}" >> "$GITHUB_ENV"
 
       - name: Build all packages
         shell: bash
-        # --parallel=1: the self-hosted Windows runner kills large lib builds (core:build, exit 130)
-        # under parallel pressure ("flaky task"). core builds fine alone (verified locally), so build
+        # --parallel=1: the self-hosted runner kills large lib builds (core:build, exit 130) under
+        # parallel pressure ("flaky task"). core builds fine alone (verified locally), so build
         # serially — cached libs skip fast, only cache-misses rebuild. Once core caches, reruns are
         # fast. Retry once for any residual flake (nx cache makes the retry cheap).
         run: |
@@ -42,31 +188,232 @@ jobs:
             || { echo "::warning::build:package:all failed — retry 1 (nx cache skips built projects)"; yarn build:package:all --parallel=1; }
         env:
           NX_NO_CLOUD: true
-          # Self-hosted Windows runner: Nx isolated plugin workers fail to spawn
-          # ("Failed to start plugin worker") → run plugins in-process and skip the daemon.
+          # Nx isolated plugin workers fail to spawn on this runner ("Failed to start plugin
+          # worker") → run plugins in-process and skip the daemon.
           NX_ISOLATE_PLUGINS: 'false'
           NX_DAEMON: 'false'
 
       - name: Generate dev config
+        # Writes packages/ui-config/src/lib/environments/environment.ts (gitignored), which the web
+        # bundle compiles in — so it must precede the gauzy build. Kept in its original position,
+        # right after build:package:all.
         run: yarn config:dev
 
+      - name: Build API (bundle) for the test jobs
+        shell: bash
+        # The test job used to get its API from `yarn start:api:forever` (= forever + `nx serve
+        # api`), i.e. it webpack-compiled the whole API itself. `nx serve api` is just
+        # `nx build api -c development` followed by `node dist/apps/api/main.js`, so building that
+        # same bundle here — once — lets every shard skip the compile and run without a webpack
+        # watcher competing for the pod's RAM. The build also copies the built @gauzy/* packages
+        # into dist/apps/api/node_modules/@gauzy (apps/api/config/custom-webpack.config.js), so the
+        # tarball carries everything the bundle resolves at runtime.
+        run: |
+          yarn nx build api -c development --parallel=1 \
+            || { echo "::warning::api build failed — retry 1 (nx cache skips built deps)"; yarn nx build api -c development --parallel=1; }
+        env:
+          NX_NO_CLOUD: true
+          NX_ISOLATE_PLUGINS: 'false'
+          NX_DAEMON: 'false'
+
+      - name: Build Web (gauzy) for static serving
+        # The Angular dev server (nx serve gauzy) OOMs over a long e2e run. Build once and serve the
+        # static output instead — stable + low memory. The app uses hash routing + an absolute API
+        # URL baked into the bundle, so a plain static file server is sufficient (no proxy/SPA fallback).
+        #
+        # Builds the `ci` configuration, which is `local` with `sourceMap: false` — that is what makes
+        # this build FIT. Source maps are the single largest memory consumer in an Angular build, and
+        # run 30633937038 died twice with
+        #   "FATAL ERROR: Ineffective mark-compacts near heap limit — JavaScript heap out of memory"
+        # on a 16384 MB container (heap capped at 12288 MB). They are also pure waste here: the suite
+        # drives headless Chromium, which only fetches `.map` with devtools open, and the `Pack build
+        # output` step below already excludes `*.map` from the tarball — so they were being generated
+        # at peak memory cost and thrown away one step later.
+        #
+        # This is a separate configuration rather than `-c local --source-map=false` because nx
+        # forwards raw CLI flags to dependency tasks, and ui-config's executor rejects the unknown
+        # option outright ("NX  'source-map' is not found in schema"). A configuration NAME is not
+        # forwarded — dependencies fall back to their own default — so it is the safe lever here.
+        # Keeping `local` untouched also leaves `serve:local` (the dev server) with its source maps.
+        #
+        # The heap flag is passed on the node command line rather than left to NODE_OPTIONS, because
+        # NODE_OPTIONS demonstrably did not reach this build. Both run 30633937038 (NODE_OPTIONS=12288)
+        # and the run before it (24576) died with the SAME ~4 GB ceiling in the GC trace:
+        #   "Scavenge (interleaved) 3983.7 (4051.6) -> 3978.9 (4052.1) MB"
+        #   "FATAL ERROR: Ineffective mark-compacts near heap limit"
+        # ~4 GB is node's default old-space on a 64-bit host — i.e. the process that ran out was on
+        # defaults, whatever NODE_OPTIONS said. The probe below prints what node actually sees so the
+        # next run answers this definitively instead of by inference.
+        shell: bash
+        run: |
+          heap_mb="${NODE_HEAP_MB:-12288}"
+          echo "--- heap probe -------------------------------------------------"
+          echo "NODE_OPTIONS=${NODE_OPTIONS:-(unset)}"
+          node -e "console.log('a plain node process sees heap_size_limit =', Math.round(require('v8').getHeapStatistics().heap_size_limit/1048576), 'MB')"
+          node --max-old-space-size=$heap_mb -e "console.log('with the flag on the command line   =', Math.round(require('v8').getHeapStatistics().heap_size_limit/1048576), 'MB')"
+          echo "----------------------------------------------------------------"
+          # Drive nx through node directly so the ceiling cannot be lost in a wrapper.
+          build() { node --max-old-space-size=$heap_mb ./node_modules/nx/bin/nx.js build gauzy -c ci; }
+          build || { echo "::warning::gauzy build failed — retry 1 (nx cache skips done deps)"; build; }
+          # The bundle bakes the API URL as http://localhost:3000; the API runs on :3001 in the test
+          # job (this shared runner's :3000 is taken by other dev processes), so repoint the built
+          # bundle at :3001 BEFORE it is packed — the test job serves this artifact verbatim.
+          matches=$(grep -rl 'localhost:3000' dist/apps/gauzy --include='*.js' || true)
+          if [ -n "$matches" ]; then
+            printf '%s\n' "$matches" | xargs -r sed -i 's#localhost:3000#localhost:3001#g'
+            echo "repointed $(printf '%s\n' "$matches" | wc -l) bundle file(s) at :3001"
+          fi
+          # Assert the END STATE rather than the edit: the whole suite fails at login if the served
+          # bundle talks to the wrong port, and that must not be discovered 79 specs later.
+          if grep -rq 'localhost:3000' dist/apps/gauzy --include='*.js'; then
+            echo "::error::dist/apps/gauzy still references localhost:3000 after the rewrite"; exit 1
+          fi
+          if ! grep -rq 'localhost:3001' dist/apps/gauzy --include='*.js'; then
+            echo "::error::dist/apps/gauzy references no API URL on :3001 — the built bundle would never reach the e2e API"; exit 1
+          fi
+        env:
+          NX_NO_CLOUD: true
+          NX_ISOLATE_PLUGINS: 'false'
+          NX_DAEMON: 'false'
+
+      - name: Pack build output
+        shell: bash
+        # One tarball per app instead of raw directories: dist/apps/api alone is ~17k files (the
+        # copied @gauzy/* packages) and upload/download-artifact is far slower per-file than
+        # per-byte. Source maps are dropped — nothing in an e2e run reads them (headless Chromium
+        # only fetches .map with devtools open, node only with --enable-source-maps) and they are
+        # roughly half the payload.
+        run: |
+          tar --exclude='*.map' -cf api-dist.tar dist/apps/api
+          tar --exclude='*.map' -cf web-dist.tar dist/apps/gauzy
+          ls -lh api-dist.tar web-dist.tar
+
+      - name: Upload prebuilt API + Web bundles
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-dist
+          path: |
+            api-dist.tar
+            web-dist.tar
+          # Consumed by the e2e jobs of this same run only — no reason to keep it around.
+          retention-days: 1
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------------------------
+  # 3) e2e — boot the prebuilt stack and run one Playwright shard. Compiles nothing.
+  # ---------------------------------------------------------------------------------------------
+  e2e-playwright:
+    name: e2e (shard ${{ matrix.shard }})
+    needs: [deps, build]
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    # Fixed cost per shard is ~25 min (cache restore + artifact download + browser install + the
+    # API's fresh-DB seed); the shard's own tests are capped at 75 min by the step timeout below,
+    # which leaves the job room to still upload its report before this ceiling.
+    timeout-minutes: 120
+    strategy:
+      # One evicted / failing shard must not cancel the others — a partial result set can still be
+      # triaged, a cancelled one cannot.
+      fail-fast: false
+      matrix:
+        # playwright.config.ts pins workers:1 in CI (one accumulating sqlite DB per runner), so
+        # wall-clock only comes down by splitting across containers, exactly as that config says
+        # ("shard across CI containers instead"). Each shard gets its OWN API + freshly seeded DB,
+        # so shards cannot pollute each other. `strategy.job-total` used below is this list's
+        # length, so the shard count lives in one place.
+        shard: [1, 2, 3, 4]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Restore node_modules cache
+        id: cache
+        uses: actions/cache/restore@v5
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            packages/plugins/*/node_modules
+            tools/node_modules
+          key: ${{ needs.deps.outputs.node-modules-key }}
+
+      - name: Install Packages & Bootstrap (cache fallback)
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        # node_modules is still needed at runtime here: the API bundle keeps third-party deps
+        # external, and Playwright/playwright-bdd run from it.
+        run: |
+          echo "::warning::node_modules cache miss — falling back to a full bootstrap (1-3 h on these runners)."
+          yarn bootstrap \
+            || { echo "::warning::yarn bootstrap failed — retry 1"; yarn bootstrap; }
+
       - name: Install forever package
-        run: npm install forever -g
+        shell: bash
+        # The k8s ARC container runners' system npm prefix (/usr/lib) is root-owned and there
+        # is no sudo - route npm -g installs to a user-writable prefix (harmless on VM runners).
+        #
+        # Retried because a single failed request here costs the whole shard: in run
+        # 30646106163 shard 3 died with
+        #   npm error network request to https://registry.npmjs.org/forever failed
+        # before a single test ran, while the other three shards completed. Registry blips
+        # on these runners are common enough that one attempt is not worth a lost shard.
+        run: |
+          npm config set prefix "$HOME/.npm-global"
+          for attempt in 1 2 3; do
+            npm install forever -g && break
+            echo "::warning::npm install forever -g failed (attempt ${attempt}/3)"
+            [ "$attempt" = 3 ] && exit 1
+            sleep $((attempt * 10))
+          done
 
       - name: Add npm global bin to PATH
         shell: bash
-        run: echo "$(npm prefix -g)" >> "$GITHUB_PATH"
+        run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
+
+      - name: Download prebuilt API + Web bundles
+        uses: actions/download-artifact@v8
+        with:
+          name: e2e-dist
+          path: .artifacts
+
+      - name: Unpack prebuilt API + Web bundles
+        shell: bash
+        # Both tarballs carry workspace-root-relative paths, so they land exactly where the API
+        # (dist/apps/api) and the static server (dist/apps/gauzy) expect them. Clear the targets
+        # first: this runner's filesystem persists between runs (same reason the DB is reset
+        # below), and tar only overwrites — leftovers from an older build would linger.
+        run: |
+          rm -rf dist/apps/api dist/apps/gauzy
+          tar -xf .artifacts/api-dist.tar
+          tar -xf .artifacts/web-dist.tar
+          test -f dist/apps/api/main.js || { echo "::error::dist/apps/api/main.js missing after unpack"; exit 1; }
+          test -f dist/apps/gauzy/index.html || { echo "::error::dist/apps/gauzy/index.html missing after unpack"; exit 1; }
+          # The bundle this job is about to serve must point at the API port this job starts.
+          if grep -rq 'localhost:3000' dist/apps/gauzy --include='*.js'; then
+            echo "::error::served web bundle still references localhost:3000 — the :3001 rewrite did not survive the build job"; exit 1
+          fi
+          echo "✅ unpacked API + web bundles (web repointed at :3001)"
 
       - name: Reset DB for a clean, deterministic seed
         shell: bash
         # The self-hosted runner persists the filesystem; a stale/accumulated DB from a prior run
         # causes flaky failures (duplicate names, wrong grid counts) or a demo-state onboarding
         # redirect. Start each run from an empty DB so the API auto-seeds the default org/admin.
+        # MUST stay in the job that runs the tests, immediately before the API boots.
         run: rm -f apps/api/data/gauzy.sqlite3*
 
       - name: Run API in background
-        run: yarn start:api:forever
+        shell: bash
+        # Was `yarn start:api:forever` (forever + `nx serve api`). `nx serve` only builds and then
+        # runs dist/apps/api/main.js, and that build now happens in the `build` job — so run the
+        # prebuilt bundle directly. Same file, same workspace-root cwd — which is what both the
+        # .env lookup and the sqlite path in @gauzy/config resolve against — minus the webpack
+        # watcher.
+        run: forever start dist/apps/api/main.js
         env:
+          # The heap ceiling `start:api:forever` used.
+          NODE_OPTIONS: --max-old-space-size=12288
           DEMO: 'false'
           # MUST be set in the process env (not just .env) before the API starts: the sqlite-vs-postgres
           # column-type guards (isBetterSqlite3() in @gauzy/config) are captured at module load, before
@@ -78,27 +425,18 @@ jobs:
           API_PORT: '3001'
           API_BASE_URL: 'http://localhost:3001'
 
-      - name: Build Web (gauzy) for static serving
-        # The Angular dev server (nx serve gauzy) OOMs over a long e2e run. Build once and serve the
-        # static output instead — stable + low memory. The app uses hash routing + an absolute API
-        # URL baked into the bundle, so a plain static file server is sufficient (no proxy/SPA fallback).
-        shell: bash
-        run: |
-          yarn nx build gauzy -c local || { echo "::warning::gauzy build failed — retry 1 (nx cache skips done deps)"; yarn nx build gauzy -c local; }
-          # The bundle bakes the API URL as http://localhost:3000; the API runs on :3001 here (shared
-          # runner), so repoint the built bundle at :3001 to match.
-          grep -rl 'localhost:3000' dist/apps/gauzy --include='*.js' | xargs -r sed -i 's#localhost:3000#localhost:3001#g'
-        env:
-          NX_NO_CLOUD: true
-          NX_ISOLATE_PLUGINS: 'false'
-          NX_DAEMON: 'false'
-          NODE_OPTIONS: --max-old-space-size=24576
-
       - name: Serve Web (static) in background
         run: forever start apps/gauzy-e2e/tools/serve-web.js dist/apps/gauzy 4200
 
       - name: Install Playwright browser (chromium)
-        run: npx playwright install --with-deps chromium
+        shell: bash
+        # `--with-deps` shells out to apt-get via sudo, which the k8s ARC container runners do not
+        # have (same constraint as the npm global prefix above). Fall back to the browser-only
+        # install rather than losing the whole shard — the runner image already carries the shared
+        # libraries chromium needs.
+        run: |
+          npx playwright install --with-deps chromium \
+            || { echo "::warning::playwright install --with-deps failed (no sudo/apt?) — installing the browser only"; npx playwright install chromium; }
 
       - name: Wait for API and Web to be ready
         shell: bash
@@ -137,9 +475,14 @@ jobs:
         # MUST be bash: `run:` defaults to PowerShell on this Windows self-hosted runner, where `&&` is a
         # parse error (FullyQualifiedErrorId: InvalidEndOfLine) — so the chained command never runs.
         shell: bash
+        # Step budget deliberately below the job's, so a shard that overruns still reaches the
+        # report upload below instead of being killed together with the job.
+        timeout-minutes: 75
         # bddgen regenerates the Playwright specs from the .feature (Gherkin) files + step definitions
         # before the run; the plain *.spec.ts and the generated BDD specs run together (see playwright.config).
-        run: npx bddgen && npx playwright test
+        # --shard splits the FULL suite across the matrix jobs — no spec is skipped or filtered, each
+        # shard runs its slice with the same retries/timeouts as before.
+        run: npx bddgen && npx playwright test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
         env:
           CI: 'true'
           E2E_BASE_URL: http://localhost:4200
@@ -148,6 +491,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-report
+          # One report per shard — download all four to triage a full run.
+          name: playwright-report-shard-${{ matrix.shard }}
           path: apps/gauzy-e2e/playwright-report
           retention-days: 14

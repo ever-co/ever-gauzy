@@ -14,43 +14,57 @@
   margin-left: 8%;
 }
 
-.progress-bar {
-  background-color: rgba(126, 126, 143, 0.2);
-  height: 32px;
-  width: 200px;
-  border-radius: 3px;
+// The paid meter. Previously a 32px slab with the caption absolutely positioned
+// on top of it in a hard-coded `#ffffff` — unreadable against the pale track
+// wherever the green fill had not reached, which is most of the bar for most
+// invoices. The caption is now a sibling (see the template) so its colour is just
+// body text, and the bar itself is a meter on the shared radius rather than a
+// 3px-cornered block.
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin-top: 10px;
+}
+
+.progress-bar {
+  position: relative;
+  background-color: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
+  height: 0.75rem;
+  width: 200px;
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
+  overflow: hidden;
 }
 
 .progress-bar-inner {
   display: block;
-  height: 32px;
-  background-color: rgba(0, 214, 143, 1);
-  border-radius: 3px;
-  position: relative;
+  height: 100%;
+  background-color: nb-theme(color-success-default);
+  border-radius: inherit;
 }
 
 .paid-percent {
-  position: absolute;
-  z-index: 1;
-  margin-left: 1%;
-  color: #ffffff;
-  font-weight: bold;
+  color: var(--gauzy-text-color-1);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .custom-container {
   margin-top: 32px;
   background-color: var(--gauzy-card-2);
   padding: 0 12px 12px 12px;
-  border-radius: 8px;
-  .gauzy-button-container{
+  // Was an 8px literal; the card this sits inside is drawn on `--border-radius`.
+  border-radius: var(--border-radius);
+  .gauzy-button-container {
     display: flex;
     justify-content: flex-end;
   }
 }
-.body{
+
+.body {
   background-color: var(--gauzy-card-2);
-  border-radius: 0 0 8px 8px;
+  // Same: the body has to finish the card's own corners, not 8px ones.
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
 }
 
 .first-column {

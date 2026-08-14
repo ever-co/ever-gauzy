@@ -1,10 +1,44 @@
+// Status pills for the employees STATUS and TIME TRACKING columns
+// (`employee-time-tracking-status` points its `styleUrls` at this file too).
+//
+// This cell can render several pills at once — "Active" + "Not Started" is the
+// common pair — and it used to cost 66px of content for two of them:
+//   * every pill sits in its own wrapper `<div>`, and the `div` rule below gave
+//     BOTH the wrapper and the pill `margin: 4px 0`, i.e. 16px of vertical
+//     margin per pill;
+//   * `display: flex` made each wrapper a block-level box, so the pills were
+//     forced to stack one per line even when there was room for both.
+// Sizes now come from the shared table-density tokens (`$gauzy-density` in
+// `themes.scss`); the literals are CSS-var fallbacks only.
+
+// The "Not Started" pill. Unlike `.badge-danger` / `.badge-success` this is not
+// a Bootstrap class, so it never got Bootstrap's `color: #fff` and the label
+// inherits the cell's text colour — which on `gauzy-dark` is #fafafa. Against
+// the opaque light grey `#ccc` that was 1.6:1, i.e. an unreadable pill on the
+// one theme where the surrounding text is light.
+//
+// A translucent neutral instead: it darkens a light surface and lightens a dark
+// one, so a single value reads on every theme (the same reasoning as
+// `gauzy-hover-tint` in themes.scss), paired with the muted text colour, which
+// is the right rank for a "no state yet" label.
 .badge-disabled {
-  background-color: #ccc;
+  background-color: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
+  color: var(--text-hint-color, rgba(113, 113, 122, 1));
 }
 
+// The pill is sized by padding alone rather than a `min-height`: padding
+// centres the label for free, whereas a min-height only looks right where the
+// box also happens to be a flex container with `align-items: center`. At
+// 15px line + 1px padding the pill is 17px, i.e. it fits inside the cell's 20px
+// line box and stops being the thing that decides the row height at all.
 .badge {
   text-align: center;
-  padding: 4px 8px;
+  padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
+  // The pill wraps as a WHOLE to the next line rather than breaking its own
+  // label across two lines, which is what "Not Started" did in a narrow column.
+  // The label is never clipped: the pill just widens, and the smart table's own
+  // `overflow-x: auto` wrapper absorbs it.
+  white-space: nowrap;
 }
 
 div {
@@ -14,20 +48,38 @@ div {
 
   border-radius: 0.25rem;
   align-content: center;
-  display: flex;
+  // `inline-flex`, not `flex`: as block-level flex containers the wrappers each
+  // claimed a line of their own. Inline-level boxes sit side by side and wrap
+  // only when they genuinely do not fit.
+  display: inline-flex;
   justify-content: center;
   align-items: center;
+  // Keeps the pill row centred on the cell's text line instead of hanging below
+  // the baseline and adding descender space to the line box.
+  vertical-align: middle;
   width: auto;
   /* Inside auto layout */
 
   flex: none;
   order: 0;
   flex-grow: 0;
-  margin: 4px 0px;
+  // Was `4px 0px`. A horizontal gap is what a row of pills needs; the vertical
+  // one only mattered while they were stacked.
+  margin: var(--gauzy-table-chip-gap, 0.1875rem) var(--gauzy-table-chip-gap, 0.1875rem)
+    var(--gauzy-table-chip-gap, 0.1875rem) 0;
   /* Typography */
-  font-size: 12px;
+  font-size: var(--gauzy-table-header-font-size, 0.75rem);
   font-weight: 600;
-  line-height: 15px;
+  line-height: var(--gauzy-table-header-line-height, 0.9375rem);
   letter-spacing: 0em;
   text-align: left;
+}
+
+// A wrapper and the pill inside it are two nested `div`s, so the rule above
+// charged the gap twice per pill. Only the outer one pays for the vertical
+// part; the inner keeps its right margin, which is the gap between the
+// "Work ended" pill and the date range printed next to it.
+div > div {
+  margin-top: 0;
+  margin-bottom: 0;
 }

@@ -43,8 +43,21 @@ export default defineConfig({
 	 * A retry re-creates only the spec's OWN uniquely-named data (its scoped selectors ignore foreign
 	 * rows), so it does not worsen cross-spec pollution. Local stays 0 for a clean signal (E2E_RETRY=1). */
 	retries: process.env.CI ? 2 : process.env.E2E_RETRY ? 1 : 0,
-	/* Opt out of parallel within a file; shard across CI containers instead. */
-	workers: process.env.CI ? 1 : undefined,
+	/* ALWAYS one worker — locally too, not just in CI.
+	 *
+	 * This suite is built around ONE accumulating database and ONE shared `admin@ever.co` login: specs
+	 * create data other specs consume, and several mutate account-wide state that is persisted server
+	 * side. Running two workers means two browser contexts driving the same account concurrently, and
+	 * the state one spec sets leaks into whatever happens to be running alongside it. That is not
+	 * hypothetical: with `undefined` (= half the CPU cores) locally, `change-language` switched the
+	 * account's preferredLanguage while `clients` and `contacts-leads` were mid-run, so their toolbars
+	 * rendered in Bulgarian/Hebrew and every english-text selector missed — two failures that had
+	 * nothing to do with the specs themselves.
+	 *
+	 * Serial execution roughly doubles local wall-clock (~47min -> ~90min); running this suite in
+	 * parallel needs per-worker accounts/organizations, not a worker count. Shard across CI containers
+	 * instead. */
+	workers: 1,
 	reporter: process.env.CI
 		? [['list'], ['html', { open: 'never' }], ['junit', { outputFile: '../../dist/playwright/apps/gauzy-e2e/junit.xml' }]]
 		: [['list'], ['html', { open: 'never' }]],

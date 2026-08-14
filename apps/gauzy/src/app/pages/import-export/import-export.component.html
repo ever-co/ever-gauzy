@@ -6,18 +6,28 @@
   >
   <nb-card-header>
     <h4>
-      <span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/</span>
-      {{ 'MENU.IMPORT_EXPORT.IMPORT_EXPORT_DATA' | translate }}
+      <ngx-header-title [allowEmployee]="false">
+        <span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/</span>
+        {{ 'MENU.IMPORT_EXPORT.IMPORT_EXPORT_DATA' | translate }}
+      </ngx-header-title>
     </h4>
   </nb-card-header>
   <nb-card-body>
     <div class="row">
       <div class="col-sm-12 button-imports">
         <div class="button-import">
+          <!--
+            `shape="round"` was dropped: this was the only button in this row
+            that asked for a pill, so it sat next to rectangles. (The row holds
+            up to four — Migrate To Cloud is behind `!environment.DEMO` and the
+            MIGRATE_GAUZY_CLOUD permission, so on a demo build there are fewer.)
+
+            This is a deliberate restyle of something that did render, not the
+            removal of a rule that never applied.
+          -->
           <button
             class="action"
             nbButton
-            shape="round"
             status="success"
             size="small"
             (click)="importPage()"

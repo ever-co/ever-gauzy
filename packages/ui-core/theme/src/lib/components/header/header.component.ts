@@ -9,6 +9,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import hotkeys, { HotkeysEvent } from 'hotkeys-js';
 import {
 	CrudActionEnum,
+	FeatureEnum,
 	IDateRangePicker,
 	IEmployee,
 	IOrganization,
@@ -23,7 +24,6 @@ import { environment } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import {
-	ChatSidebarService,
 	DEFAULT_SELECTOR_VISIBILITY,
 	DateRangePickerBuilderService,
 	EmployeeStore,
@@ -70,7 +70,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	showDateSelector: boolean = true;
 	theme: string;
 	createQuickActionsMenu: NbMenuItem[];
-	supportContextMenu: NbMenuItem[];
 	showExtraActions = false;
 	actions = {
 		START_TIMER: 'START_TIMER',
@@ -137,7 +136,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		public readonly navigationBuilderService: NavigationBuilderService,
-		public readonly chatSidebarService: ChatSidebarService,
 		private readonly dateRangeService: DateRangePickerBuilderService,
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly organizationProjectStore: OrganizationProjectStore,
@@ -690,26 +688,9 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	 * Load context menus
 	 */
 	private _loadContextMenus() {
-		this.supportContextMenu = [
-			{
-				title: this.getTranslation('CONTEXT_MENU.CHAT'),
-				icon: 'message-square-outline'
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.FAQ'),
-				icon: 'clipboard-outline'
-			},
-			{
-				title: this.getTranslation('CONTEXT_MENU.HELP'),
-				icon: 'question-mark-circle-outline',
-				link: 'pages/help'
-			},
-			{
-				title: this.getTranslation('MENU.ABOUT'),
-				icon: 'droplet-outline',
-				link: 'pages/about'
-			}
-		];
+		// The support menu (Support Chat / FAQ / Help / About) was built here and
+		// rendered by the speech-bubble header action. It now lives in the Quick
+		// Settings panel, see ThemeSettingsComponent.
 		this.createQuickActionsMenu = [
 			// Divider (Accounting)
 			...(this.store.hasAnyPermission(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
@@ -1229,6 +1210,39 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							}
 						}
 					]
+				: []),
+			// Divider (Documents) — `@gauzy/plugin-docs-ui`, `01-ux-spec.md` §1. Both entries
+			// are one-shot deep links the hub consumes and strips from the URL on arrival.
+			// The hub's own route guards re-check the feature flag, but relying on that alone
+			// left a feature-disabled org staring at two live menu entries that bounce straight
+			// back to the dashboard — so the flag is checked here too. `_loadContextMenus()`
+			// already re-runs on organization change, which is when the flag can flip.
+			...(this.store.hasPermission(PermissionsEnum.DOCS_CREATE) &&
+			this.store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS)
+				? [
+						{
+							title: this.getTranslation('QUICK_ACTIONS_MENU.DOCUMENTS.NEW_PAGE'),
+							icon: 'file-add-outline',
+							link: 'pages/documents',
+							queryParams: {
+								newPage: 1
+							},
+							data: {
+								action: 'newDocumentPage'
+							}
+						},
+						{
+							title: this.getTranslation('QUICK_ACTIONS_MENU.DOCUMENTS.UPLOAD'),
+							icon: 'upload-outline',
+							link: 'pages/documents',
+							queryParams: {
+								upload: 1
+							},
+							data: {
+								action: 'uploadDocuments'
+							}
+						}
+					]
 				: [])
 		];
 	}
@@ -1242,7 +1256,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				tap(() => {
 					// this.createContextMenu = [];
 					this.createQuickActionsMenu = [];
-					this.supportContextMenu = [];
 					this._loadContextMenus();
 				}),
 				untilDestroyed(this)

@@ -1,9 +1,9 @@
 <nb-card class="main">
   <nb-card-header class="header">
     <ngx-back-navigation></ngx-back-navigation>
-    <h3 class="title">
+    <h4 class="title">
       {{ (isEstimate ? 'INVOICES_PAGE.VIEW_ESTIMATE' : 'INVOICES_PAGE.VIEW_INVOICE') | translate }}
-    </h3>
+    </h4>
   </nb-card-header>
   <nb-card-body>
     @if (invoice$ | async; as invoice) {
@@ -12,6 +12,21 @@
         [isEstimate]="isEstimate"
         [buttonsOutlet]="buttons"
       ></ga-invoice-view-inner>
+      <!--
+        Record-side Documents panel (spec 00 §6.14 R-LNK-02). It gates itself on
+        DOCS_READ + FEATURE_DOCUMENTS, so on a deployment without the Documents
+        feature this renders nothing at all. The VIEW page is a read-only
+        surface: no attach/upload/unlink here (those live on the edit page),
+        and the card only appears once the record actually has attachments.
+      -->
+      <gz-document-links-panel
+        class="invoice-documents"
+        [entity]="documentEntity"
+        [entityId]="invoice.id"
+        [entityLabel]="documentLabel(invoice)"
+        [readonly]="true"
+        [hideWhenEmpty]="true"
+      ></gz-document-links-panel>
     }
   </nb-card-body>
 </nb-card>

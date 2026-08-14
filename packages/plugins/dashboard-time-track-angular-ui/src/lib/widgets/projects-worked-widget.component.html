@@ -1,0 +1,9 @@
+<gz-time-track-counter-card
+	color="success"
+	[value]="projectsWorked().toString()"
+	[counterValue]="projectsWorked()"
+	[total]="totalProjects()"
+	[loading]="loading()"
+	[error]="errorMessage()"
+	(retry)="refresh()"
+></gz-time-track-counter-card>

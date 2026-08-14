@@ -1,0 +1,80 @@
+<div class="docs-bulk-bar" *ngIf="count > 0" [attr.aria-label]="'DOCS.A11Y.SELECTION_STATUS' | translate">
+	<span class="docs-bulk-count">{{ 'DOCS.BULK.SELECTED' | translate : { count: count } }}</span>
+	<span class="docs-bulk-limit" *ngIf="overLimit">{{ 'DOCS.BULK.LIMIT_REACHED' | translate : { max: maxIds } }}</span>
+
+	<ng-container *ngIf="reviewMode; else manageActions">
+		<ng-template [ngxPermissionsOnly]="docsPermissions.review">
+			<button nbButton size="tiny" status="success" [disabled]="busy" (click)="run('REVIEW_APPROVE')">
+				{{ 'DOCS.BULK.APPROVE' | translate }}
+			</button>
+			<button nbButton size="tiny" status="danger" appearance="outline" [disabled]="busy" (click)="reject()">
+				{{ 'DOCS.BULK.REJECT' | translate }}
+			</button>
+		</ng-template>
+	</ng-container>
+
+	<ng-template #manageActions>
+		<ng-template [ngxPermissionsOnly]="docsPermissions.manage">
+			<button nbButton size="tiny" [disabled]="busy" (click)="run('ARCHIVE')">
+				{{ 'DOCS.BULK.ARCHIVE' | translate }}
+			</button>
+			<button nbButton size="tiny" [disabled]="busy" (click)="run('UNARCHIVE')">
+				{{ 'DOCS.BULK.RESTORE' | translate }}
+			</button>
+			<button nbButton size="tiny" [disabled]="busy" (click)="move()">
+				{{ 'DOCS.BULK.MOVE' | translate }}
+			</button>
+			<!-- Set categories: a REPLACE, so it goes through a dialog that says so -->
+			<button nbButton size="tiny" [disabled]="busy" (click)="setCategories()">
+				{{ 'DOCS.BULK.CATEGORIES' | translate }}
+			</button>
+			<span class="docs-bulk-tags">
+				<ga-tags-color-input
+					class="docs-bulk-tags-picker"
+					[multiple]="true"
+					[isOrgLevel]="true"
+					[selectedTags]="tags"
+					(selectedTagsEvent)="tags = $event"
+				></ga-tags-color-input>
+				<button nbButton size="tiny" [disabled]="busy" (click)="addTags()">
+					{{ 'DOCS.BULK.TAGS_ADD' | translate }}
+				</button>
+				<button nbButton size="tiny" [disabled]="busy" (click)="removeTags()">
+					{{ 'DOCS.BULK.TAGS_REMOVE' | translate }}
+				</button>
+			</span>
+			<ng-template [ngxPermissionsOnly]="docsPermissions.aiImport">
+				<button nbButton size="tiny" [disabled]="busy" (click)="run('KNOWLEDGE_IMPORT')">
+					{{ 'DOCS.BULK.KNOWLEDGE_IMPORT' | translate }}
+				</button>
+				<button nbButton size="tiny" [disabled]="busy" (click)="run('KNOWLEDGE_EXCLUDE')">
+					{{ 'DOCS.BULK.KNOWLEDGE_EXCLUDE' | translate }}
+				</button>
+			</ng-template>
+			<ng-template [ngxPermissionsOnly]="docsPermissions.delete">
+				<button nbButton size="tiny" status="danger" appearance="outline" [disabled]="busy" (click)="run('DELETE')">
+					{{ 'DOCS.BULK.DELETE' | translate }}
+				</button>
+			</ng-template>
+		</ng-template>
+	</ng-template>
+
+	<button nbButton ghost size="tiny" (click)="clear()">{{ 'DOCS.BULK.CLEAR' | translate }}</button>
+</div>
+
+<!-- Per-id error panel -->
+<div class="docs-bulk-errors" *ngIf="errors.length">
+	<button nbButton ghost size="tiny" (click)="errorsExpanded = !errorsExpanded">
+		<nb-icon [icon]="errorsExpanded ? 'chevron-up-outline' : 'chevron-down-outline'"></nb-icon>
+		{{ 'DOCS.BULK.RESULT_ERRORS_TITLE' | translate }} ({{ errors.length }})
+	</button>
+	<ng-container *ngIf="errorsExpanded">
+		<div class="docs-bulk-error-row" *ngFor="let error of inlineErrors">
+			<code>{{ error.id }}</code>
+			<span>{{ error.code }}</span>
+		</div>
+		<button nbButton ghost size="tiny" (click)="copyReport()">
+			{{ 'DOCS.BULK.COPY_REPORT' | translate }}
+		</button>
+	</ng-container>
+</div>

@@ -93,9 +93,12 @@
     padding-bottom: 0;
   }
 
+  // `unset, auto`: the dashboard page owns the single scrollbar now (see
+  // `../dashboard.component.scss`), so this card must not open a second one —
+  // it grows with its content instead. Matches the Time Tracking tab.
   @include card_overrides(
-    auto,
     unset,
+    auto,
     0 $default-radius $default-radius $default-radius
   );
 
@@ -108,6 +111,10 @@
 
   .card {
     background-color: var(--gauzy-card-2);
+    // Must stay AFTER `card_overrides`, which emits its own `:host .card` with
+    // `height: 100%` at the same specificity — the later block wins. That 100%
+    // is what boxed the body into a viewport-sized area and forced it to scroll.
+    height: auto;
 
     .card-header {
       background-color: unset;

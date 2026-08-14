@@ -1,0 +1,36 @@
+<div class="docs-shell">
+	<aside class="docs-tree-column" [class.collapsed]="treeCollapsed" [attr.aria-label]="'DOCS.A11Y.TREE_LABEL' | translate">
+		<div class="docs-tree-column-header">
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				(click)="toggleTree()"
+				[nbTooltip]="(treeCollapsed ? 'DOCS.TREE.EXPAND_SIDEBAR' : 'DOCS.TREE.COLLAPSE_SIDEBAR') | translate"
+			>
+				<nb-icon [icon]="treeCollapsed ? 'chevron-right-outline' : 'chevron-left-outline'"></nb-icon>
+			</button>
+		</div>
+		<gz-docs-tree *ngIf="!treeCollapsed"></gz-docs-tree>
+	</aside>
+
+	<main class="docs-content">
+		<router-outlet></router-outlet>
+	</main>
+
+	<!-- `<aside>` already exposes the implicit `complementary` role — no explicit role needed. -->
+	<aside
+		class="docs-detail-column"
+		*ngIf="detailId$ | async as detailId"
+		[attr.aria-label]="'DOCS.A11Y.DETAIL_PANEL_LABEL' | translate"
+	>
+		<gz-docs-detail-panel
+			[documentId]="detailId"
+			(closed)="onDetailClosed()"
+			(changed)="onDetailChanged($event)"
+			(deleted)="onDetailDeleted($event)"
+			(openEditor)="onOpenEditor($event)"
+			(openPreview)="onOpenPreview($event)"
+		></gz-docs-detail-panel>
+	</aside>
+</div>

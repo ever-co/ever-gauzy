@@ -1,19 +1,33 @@
+// Tag chips render inside smart-table cells, so their box is part of the row
+// height. They follow the shared table-density tokens (`$gauzy-density` in
+// `themes.scss`) so a density change moves the chips with the cells instead of
+// leaving the old 24px-per-chip footprint behind. Literals are CSS-var
+// fallbacks only.
 .color {
   position: static;
-  margin-top: 5px;
-  margin-right: 5px;
   display: inline-block;
-  font-size: 11px;
+  font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
   font-weight: 600;
-  line-height: 13px;
+  line-height: var(--gauzy-table-chip-line-height, 0.875rem);
   letter-spacing: 0em;
-  padding: 3px 8px;
+  padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
 }
 
 .tags {
-  // display: flex;
-  // width: 100px;
+  // A flex row makes chip geometry deterministic: `gap` owns chip↔chip spacing
+  // (the chips carry no margins of their own), flex items blockify, and the
+  // old `line-height: 0` hack — which let chip descenders overflow the box and
+  // ride up into the value line above — is unnecessary.
+  display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--gauzy-table-chip-gap, 0.1875rem);
+  // Text→chips separation is its own token, NOT the chip↔chip gap: the density
+  // pass collapsed the two and the chips ended up 3px under the text. The
+  // template tags this element with Bootstrap's `.mt-2` utility, which is
+  // `!important`, so `!important` is unavoidable here to resolve the tug-of-war
+  // in the token's favor.
+  margin-top: var(--gauzy-table-chip-block-gap, 0.25rem) !important;
 }
 
 .tags-right {

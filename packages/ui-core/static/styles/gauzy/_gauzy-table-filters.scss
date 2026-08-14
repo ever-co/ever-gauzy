@@ -1,0 +1,128 @@
+// ── Smart-table filter row: collapsed by default, compact when open ─────────
+//
+// Companion to `SmartTableFilterToggleDirective` (ui-core/shared,
+// smart-data-layout): the directive decides open/closed and injects the funnel
+// button; everything visual lives here. Three concerns:
+//
+//  1. the collapse itself (`.ga-filters-collapsed` on the table host);
+//  2. one compact metric for every widget the filter row can hold — the row
+//     used to mix bare inputs, `nb-select` buttons and `ng-select` hosts, each
+//     at its own height and font size;
+//  3. a neutral sort affordance on sortable-but-unsorted columns — the library
+//     only ever marked the ACTIVE sort (▲/▼ via its own `.asc`/`.desc` rules),
+//     so nothing told the user the other columns were sortable at all.
+//
+// Colours and radii are theme tokens (CSS custom properties) only — this file
+// is `@use`d outside `nb-install`, exactly like `_gauzy-skeleton.scss`.
+
+@use 'var' as *;
+
+angular2-smart-table.ga-filters-collapsed thead tr.angular2-smart-filters {
+  display: none;
+}
+
+angular2-smart-table thead tr.angular2-smart-filters {
+  th,
+  td {
+    // The band's height comes from the widgets; the cell only frames them.
+    padding: 0.25rem 0.5rem 0.375rem;
+  }
+
+  .angular2-smart-filter {
+    // One metric for every widget kind the columns plug in here.
+    --ga-filter-height: 1.875rem;
+    font-size: 0.8125rem;
+
+    input,
+    select,
+    textarea {
+      font-size: inherit;
+      height: var(--ga-filter-height);
+      min-height: var(--ga-filter-height);
+      padding: 0.125rem 0.5rem;
+    }
+
+    // ng-select sizes from its inner containers, not the host input.
+    .ng-select .ng-select-container {
+      font-size: inherit;
+      height: var(--ga-filter-height);
+      min-height: var(--ga-filter-height);
+    }
+
+    // nb-select renders a button; align it to the same box.
+    nb-select .select-button {
+      font-size: inherit;
+      min-width: unset;
+      height: var(--ga-filter-height);
+      min-height: var(--ga-filter-height);
+      padding-top: 0.125rem;
+      padding-bottom: 0.125rem;
+      line-height: 1.25;
+    }
+  }
+}
+
+// Sortable-but-unsorted columns get a dimmed two-way arrow; the library's own
+// rules keep painting ▲/▼ once a direction is chosen, so this only fills the
+// idle state and never doubles up.
+angular2-smart-table thead tr.angular2-smart-titles a.angular2-smart-sort-link:not(.asc):not(.desc)::after {
+  content: '\2195';
+  opacity: 0.35;
+  font-size: 0.75em;
+  @include nb-ltr(margin-left, 0.25rem);
+  @include nb-rtl(margin-right, 0.25rem);
+}
+
+// ── The funnel toggle ────────────────────────────────────────────────────────
+// Injected into the title row's LAST header cell; the cell reserves room so a
+// long column title cannot run under the button.
+angular2-smart-table thead th.ga-has-filter-toggle {
+  position: relative;
+  @include nb-ltr(padding-right, 2.25rem);
+  @include nb-rtl(padding-left, 2.25rem);
+}
+
+angular2-smart-table button.ga-table-filter-toggle {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  @include nb-ltr(right, 0.375rem);
+  @include nb-rtl(left, 0.375rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-hint-color);
+  cursor: pointer;
+  // Above the sticky header machinery the scroll containers set up.
+  z-index: 3;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--text-basic-color);
+    background: var(--gauzy-card-2);
+  }
+
+  // "Filters are set" dot — visible even while the row itself is collapsed,
+  // so a hidden filter can never silently constrain the data.
+  &.ga-active {
+    color: var(--color-primary-default);
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0.125rem;
+      @include nb-ltr(right, 0.125rem);
+      @include nb-rtl(left, 0.125rem);
+      width: 0.375rem;
+      height: 0.375rem;
+      border-radius: 50%;
+      background: var(--color-primary-default);
+    }
+  }
+}

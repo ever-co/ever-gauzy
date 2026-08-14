@@ -29,8 +29,20 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 		const { employeeId, hours } = command;
 		const tenantId = RequestContext.currentTenantId();
 
-		// Determine total work hours, calculate if not provided
-		const totalWorkHours = (await this.calculateTotalWorkHours(employeeId, tenantId)) || hours;
+		// Determine total work hours, falling back to the provided value only when it could not be calculated.
+		// A calculated total of 0 is a legitimate result (an employee with no time logs yet); `||` discarded it
+		// and fell through to the optional `hours`, which no caller passes. `Math.floor(undefined)` is NaN, and
+		// TypeORM writes NaN into the statement as a bare SQL literal that drivers reject
+		// ("no such column: NaN" on SQLite), failing the whole enclosing request — creating a
+		// manual time log, among others.
+		const calculated = await this.calculateTotalWorkHours(employeeId, tenantId);
+		const totalWorkHours = Number.isFinite(calculated) ? calculated : hours;
+
+		// Nothing meaningful to store
+		if (!Number.isFinite(totalWorkHours)) {
+			return;
+		}
+
 		console.log('Updated Employee Total Worked Hours: %s', Math.floor(totalWorkHours));
 
 		// Update employee's total worked hours

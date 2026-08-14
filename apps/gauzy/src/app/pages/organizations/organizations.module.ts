@@ -22,11 +22,13 @@ import {
 	DirectivesModule,
 	ImageUploaderModule,
 	OrganizationsMutationModule,
+	RecordViewModule,
 	RecurringExpenseBlockModule,
 	RecurringExpenseDeleteConfirmationModule,
 	RecurringExpenseHistoryModule,
 	RecurringExpenseMutationModule,
 	RemoveLodashModule,
+	SharedModule,
 	TableComponentsModule,
 	UserFormsModule
 } from '@gauzy/ui-core/shared';
@@ -53,6 +55,7 @@ import {
 		NbIconModule,
 		NbDialogModule.forChild(),
 		OrganizationsMutationModule,
+		RecordViewModule,
 		UserFormsModule,
 		ImageUploaderModule,
 		NbSelectModule,
@@ -70,7 +73,8 @@ import {
 		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule,
 		CardGridModule,
-		DirectivesModule
+		DirectivesModule,
+		SharedModule
 	],
 	declarations: [
 		OrganizationsComponent,

@@ -20,8 +20,11 @@
 
 // Files that DON'T need Bootstrap can use @use
 @use './overrides' as *;
+@use './overlays' as *;
 @use './material/material-overrides' as *;
 @use './gauzy/gauzy-overrides' as *;
+@use './gauzy/gauzy-skeleton' as *; // "still loading", so no page claims "No Data" mid-request
+@use './gauzy/gauzy-table-filters' as *; // collapsed-by-default filter row + sort affordances
 
 @use './site-menu.scss' as *;
 
@@ -60,4 +63,7 @@
   @include nb-overrides();
   @include material-overrides();
   @include gauzy-overrides();
+  // Last, so the shadcn container/item split wins over the older overlay rules
+  // above (and over the `::ng-deep` leaks coming from component stylesheets).
+  @include gauzy-overlay-menus();
 }

@@ -12,7 +12,7 @@
 		</div>
 		<div>
 			<div>
-				<ng-template [ngxPermissionsOnly]="['INTEGRATION_EDIT']">
+				<ng-template [ngxPermissionsOnly]="permGateIntegrationEdit">
 					<button nbButton status="primary" class="mr-2" size="small" (click)="navigateToResetIntegration()">
 						<div class="sync-container">
 							<nb-icon class="sync" icon="sync-outline"></nb-icon>
@@ -54,6 +54,7 @@
 				appendTo="body"
 			></ng-select>
 			<angular2-smart-table
+				[class.ga-table-loading]="loading"
 				[settings]="settingsSmartTable"
 				[source]="projects$ | async"
 				(userRowSelect)="selectProject($event)"

@@ -3,10 +3,11 @@
 $radius: nb-theme(button-rectangle-border-radius);
 
 ng-select {
+  // No `height: 100%` — the parent box is auto-height, so it always resolved to
+  // `auto`; the trigger centres its own content now (see `ng-select-overrides`).
   .selector-template {
     display: flex;
     align-items: center;
-    height: 100%;
   }
   img {
     margin-right: 0.25rem;
@@ -24,16 +25,12 @@ ng-select {
     opacity: 1;
   }
   &.ng-select {
-    .ng-select-container {
-      .ng-value-container {
-        padding-left: 0;
-      }
-    }
-    .ng-arrow-wrapper {
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-    }
+    // The text inset and the chevron's alignment belong to the trigger now
+    // (`ng-select-overrides` / `_overrides.scss`). This block used to zero the
+    // inset — leaving the organization name on a different x from the selectors
+    // beside it — and align the arrow wrapper on `baseline`, which on a
+    // zero-height wrapper dropped the chevron ~4px below centre, far enough for
+    // the container's `overflow: hidden` to clip it.
     &.close.ng-select .ng-select-container .ng-value-container {
       span {
         display: none;

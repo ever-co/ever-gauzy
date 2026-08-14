@@ -66,34 +66,26 @@
     }
 }
 
-// old styles
-.edit-icon {
-    margin-left: 30px;
-    position: relative;
-    width: 36px;
-
-    svg {
-        position: absolute;
-    }
-
-    nb-icon {
-        position: absolute;
-    }
-}
-
-.org-details {
-    .edit-public-page {
-        cursor: pointer;
-        color: #027ad6;
-        padding-top: 3px;
-    }
-}
-
-.setting-name {
-    font-size: 24px;
-    font-weight: bold;
-}
-
+// Removed most of a block of old styles — but NOT all of it, because this
+// stylesheet is not scoped to one template. `accounting.component.ts` lists it in
+// its own `styleUrls` alongside `accounting.component.scss`, so every selector
+// here is compiled a SECOND time carrying the Accounting template's `_ngcontent`
+// attribute. "Dead in edit-organization" therefore does not mean dead.
+//
+// Checked against both templates. Dead in each, and gone: `.edit-icon`,
+// `.setting-name`, `.transparent`, `.settings-body`, `.header-content` (with its
+// nested `.header-info`), `.org-details .edit-public-page` (a literal `#027ad6`,
+// and in edit-organization's own markup `.edit-public-page` is a SIBLING of
+// `.org-details`, never a descendant), and `.mutation-card.setting-block` (a
+// literal `#eaf3fc` fill — Accounting has `setting-block` but never
+// `mutation-card`, so the compound selector matches nothing there either).
+//
+// KEPT, because Accounting really renders them: `.body-header`
+// (accounting.component.html line 3) and `.sub-header` (line 83, as
+// `setting-block sub-header`). accounting.component.scss re-declares
+// `.body-header` but sets no `margin-bottom`, and it is loaded after this file,
+// so dropping these would have silently pulled 35px out from under the Accounting
+// page header and dropped the bold from its section headings.
 .body-header {
     display: flex;
     justify-content: space-between;
@@ -101,32 +93,9 @@
     margin-bottom: 35px;
 }
 
-.mutation-card.setting-block {
-    background: #eaf3fc;
-}
-
-.transparent {
-    opacity: 0.7;
-}
-
-.settings-body {
-    padding: 35px;
-}
-
 .sub-header {
     margin-bottom: 20px;
     font-weight: bold;
-}
-
-.header-content {
-    display: flex;
-    .header-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 560px;
-        padding-left: 30px;
-    }
 }
 
 @include respond(sm) {
@@ -143,5 +112,10 @@
     nb-card{
         height: unset;
     }
-    @include ga-overrides.input-appearance(42px, var(--gauzy-card-1));
+    // `--gauzy-card-1` is not emitted by every registered theme, and a bare
+    // `var()` with no fallback drops the whole `background-color` declaration
+    // there, leaving every input on this page transparent. `--card-background-color`
+    // is a core Nebular token present in all of them, and it is exactly what
+    // `gauzy-card-1` is aliased to in most themes anyway.
+    @include ga-overrides.input-appearance(42px, var(--gauzy-card-1, var(--card-background-color)));
 }

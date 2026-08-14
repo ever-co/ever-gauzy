@@ -733,6 +733,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "crwdns11507:0crwdne11507:0"
 	},
 	"MENU": {
+		"BREADCRUMB": "Breadcrumb",
 		"PIPELINES": "crwdns4734:0crwdne4734:0",
 		"DASHBOARD": "crwdns174:0crwdne174:0",
 		"DASHBOARDS": "crwdns11523:0crwdne11523:0",
@@ -3353,7 +3354,36 @@
 		"SELECT_EMPLOYEE": "crwdns2639:0crwdne2639:0",
 		"SELECT_A_DATE": "crwdns2641:0crwdne2641:0",
 		"SELECT_AN_ORGANIZATION": "crwdns2643:0crwdne2643:0",
-		"SELECT_PROJECT": "crwdns8704:0crwdne8704:0"
+		"SELECT_PROJECT": "crwdns8704:0crwdne8704:0",
+		"AI_CHAT": "Lok ki AI"
+	},
+	"AI_ASSISTANT": {
+		"TITLE": "Lakony me AI",
+		"OPEN": "Yab Lakony me AI",
+		"CLOSE": "Lor Lakony me AI",
+		"HISTORY": "Tekwaro",
+		"HISTORY_HINT": "Nen lok ma kigwoko",
+		"HISTORY_CLOSE": "Lor tekwaro",
+		"HISTORY_EMPTY": "Pe tye lok mo ma kigwoko.",
+		"NEW_CHAT": "Lok manyen",
+		"NEW_CHAT_HINT": "Cak lok manyen",
+		"DELETE_CONVERSATION": "Kwany lok",
+		"LOADING": "Tye ka cano…",
+		"DOCK_LEFT": "Ket i tung acam",
+		"DOCK_RIGHT": "Ket i tung acuc",
+		"MAXIMIZE": "Dite",
+		"RESTORE": "Dwok lac",
+		"COLLAPSE": "Kan",
+		"RESIZE": "Ywa me loko lac",
+		"WELCOME_SUBTITLE": "Peny gin mo keken ikom kabedo tici, tic ni, onyo yub ni.",
+		"PLACEHOLDER": "Coo kwena…",
+		"SEND": "Cwal kwena",
+		"STOP": "Cung tyeko",
+		"ERROR": "Gin mo pe otimme maber.",
+		"RETRY": "Tem doki",
+		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
+		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
+		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
 	},
 	"HEADER_TITLE": {
 		"FOR": "crwdns10284:0crwdne10284:0",
@@ -3365,6 +3395,21 @@
 		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "crwdns2253:0crwdne2253:0"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Find documentation, get answers, and reach the team behind Gauzy.",
+		"DOCUMENTATION": "Documentation",
+		"DOCUMENTATION_DESC": "Guides and reference for every Gauzy feature.",
+		"FAQ": "FAQ",
+		"FAQ_DESC": "Answers to the most common questions.",
+		"SUPPORT_CHAT": "Support Chat",
+		"SUPPORT_CHAT_DESC": "Chat with our support team.",
+		"REPORT_ISSUE": "Report an Issue",
+		"REPORT_ISSUE_DESC": "Found a bug? Open an issue on GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Source code, releases, and discussions.",
+		"WEBSITE": "Gauzy Website",
+		"WEBSITE_DESC": "Learn more about the Gauzy platform.",
+		"ABOUT_LINK": "About Gauzy",
+		"ABOUT_LINK_DESC": "Version details, license, and links.",
 		"HELP": "crwdns2255:0crwdne2255:0",
 		"KNOWLEDGE_BASE": "crwdns6960:0crwdne6960:0",
 		"CHOSE_ICON": "crwdns4230:0crwdne4230:0",
@@ -3669,6 +3714,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. All rights reserved.",
+		"DESCRIPTION": "Ever® Gauzy™ is an Open Business Management Platform for Collaborative, On-Demand and Sharing Economies — ERP, CRM, HRM, ATS and Project Management with integrated time tracking.",
+		"LICENSE": "Open source, released under the",
+		"VERSION_DETAILS": "Version Details",
+		"VERSION_MISMATCH": "The web app and the API were built from different commits — a deployment may still be rolling out.",
+		"WEB_APP": "Web App",
+		"API": "API",
+		"UNTAGGED": "untagged build",
+		"API_UNAVAILABLE": "API version unavailable",
+		"LEARN_MORE": "Learn More",
 		"ABOUT": "crwdns2257:0crwdne2257:0"
 	},
 	"FOOTER": {
@@ -4526,7 +4581,9 @@
 	"GAUZY_MAINTENANCE": "crwdns10034:0crwdne10034:0",
 	"LEGAL": {
 		"PRIVACY_POLICY": "crwdns9998:0crwdne9998:0",
-		"TERMS_AND_CONDITIONS": "crwdns10000:0crwdne10000:0"
+		"TERMS_AND_CONDITIONS": "crwdns10000:0crwdne10000:0",
+		"DOCUMENT_VERSION": "Version {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "In force from {{ date }}"
 	},
 	"LOADING": "crwdns10002:0crwdne10002:0",
 	"ACCOUNTING_TEMPLATES_PAGE": {

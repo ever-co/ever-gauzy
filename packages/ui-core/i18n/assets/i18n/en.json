@@ -4,6 +4,7 @@
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_NEW": "Add New",
 		"ADD": "Add",
+		"NEW": "New",
 		"ADD_INTEGRATION": "Add Integration",
 		"RESET_INTEGRATION": "Reset Integration",
 		"CREATE": "Create",
@@ -431,12 +432,12 @@
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"EMAIL_INVITATION": "Enter email to send invitation",
-			"SELECT_EQUIPMENT": "Select equipment",
-			"SELECT_SHARE_REQUEST_DATE": "Select request date",
-			"SELECT_SHARE_START_DATE": "Select start date",
-			"SELECT_SHARE_END_DATE": "Select end date",
-			"SELECT_EMPLOYEE": "Select Employee",
-			"SELECT_TEAM": "Select Team",
+			"SELECT_EQUIPMENT": "Equipment",
+			"SELECT_SHARE_REQUEST_DATE": "Request date",
+			"SELECT_SHARE_START_DATE": "Start date",
+			"SELECT_SHARE_END_DATE": "End date",
+			"SELECT_EMPLOYEE": "Employee",
+			"SELECT_TEAM": "Team",
 			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
 			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
 			"REGISTRATION_DATE": "Registration Date",
@@ -484,7 +485,7 @@
 			"OPEN_SOURCE_PROJECT_URL": "Open-Source Project URL",
 			"EMPLOYEE_LEVEL": "Employee Level",
 			"UNIT": "Unit",
-			"SELECT_EXISTING_OBJECTIVE": "Select Existing Objective",
+			"SELECT_EXISTING_OBJECTIVE": "Existing Objective",
 			"LENGTH": "Length",
 			"DATE_START": "Start date",
 			"END_DATE": "End Date",
@@ -531,7 +532,7 @@
 		"PLACEHOLDERS": {
 			"NAME": "Name",
 			"PHONE_NUMBER": "Phone Number",
-			"DEFAULT": "Select Default",
+			"DEFAULT": "Default",
 			"FIRST_NAME": "First Name",
 			"LAST_NAME": "Last Name",
 			"COMPANY_NAME": "Company name",
@@ -581,7 +582,7 @@
 			"BILL_RATE_MIN": "Minimum Billing Rate (per hour)",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
 			"EMAILS": "Type an email address and press enter",
-			"ROLE": "Select Role",
+			"ROLE": "Role",
 			"PROJECTS": "Choose Projects",
 			"CHOOSE_FORMAT": "Choose Format",
 			"CHOOSE_TIME_ZONE": "Choose Time Zone",
@@ -592,8 +593,8 @@
 			"ALIGN_LOGO_TO": "Align Logo To",
 			"DEPARTMENTS": "Departments",
 			"TEAMS": "Teams",
-			"NUMBER_FORMAT": "Select Number Format",
-			"REGIONS": "Select Region",
+			"NUMBER_FORMAT": "Number Format",
+			"REGIONS": "Region",
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "Image",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
@@ -602,15 +603,15 @@
 			"ADD_REMOVE_TEAMS": "Add or Remove Teams",
 			"ADD_REMOVE_CANDIDATE": "Add Candidate",
 			"ADD_REMOVE_EMPLOYEE": "Add Interviewer",
-			"ADD_REMOVE_INTERVIEWER": "Select interviewer",
+			"ADD_REMOVE_INTERVIEWER": "Interviewer",
 			"ADD_REMOVE_CANDIDATES": "Add or Remove Candidates",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"ADD_ORGANIZATIONS": "Add Organizations",
 			"DATE": "Date",
 			"VALUE": "Value",
-			"SELECT_CURRENCY": "Select Currency",
-			"TYPE_OF_BONUS": "Select Type of Bonus",
+			"SELECT_CURRENCY": "Currency",
+			"TYPE_OF_BONUS": "Type of Bonus",
 			"BONUS_PERCENTAGE": "Bonus Percentage",
 			"ENABLE_INVITES": "Enable Invites",
 			"INVITE_EXPIRY_PERIOD": "Invites valid upto",
@@ -621,13 +622,13 @@
 			"EMPLOYMENT_TYPES": "Employment Type",
 			"REGISTRATION_DATE": "Organization Registration Date",
 			"ORGANIZATIONS": "Choose Organizations",
-			"ORGANIZATION": "Select Organization",
+			"ORGANIZATION": "Organization",
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"OWNER": "Owner",
 			"TASK_VIEW_MODE": "Task view mode",
-			"SELECT_STATUS": "Select Status",
+			"SELECT_STATUS": "Status",
 			"LINKEDIN": "LinkedIn",
 			"FACEBOOK": "Facebook",
 			"INSTAGRAM": "Instagram",
@@ -687,7 +688,7 @@
 				"LATITUDE": "Latitude",
 				"LONGITUDE": "Longitude"
 			},
-			"SELECT_EXPENSE": "Select Expense",
+			"SELECT_EXPENSE": "Expense",
 			"ADD_TITLE": "Add title",
 			"ALL_PROJECTS": "All Projects",
 			"ALL_TEAMS": "All Teams",
@@ -697,16 +698,16 @@
 			"GAUZY_API_SECRET": "Gauzy AI Secret",
 			"OPEN_AI_API_SECRET_KEY": "Open AI Secret Key",
 			"OPEN_AI_ORGANIZATION_ID": "Open AI Organization ID",
-			"SELECT_COMPANY": "Select Company",
+			"SELECT_COMPANY": "Company",
 			"TYPE_SEARCH_REQUEST": "Type your search request here...",
-			"SELECT_ICON": "Select Icon",
+			"SELECT_ICON": "Icon",
 			"SELECT": "Select",
 			"SPRINT_LENGTH": "Sprint length",
 			"SPRINT_START_DATE": "Sprint start date",
 			"SPRINT_END_DATE": "Sprint end date",
 			"SPRINT_GOAL": "Sprint goal",
 			"POLICY_NAME": "Policy Name",
-			"SELECT_DATE": "Select Date",
+			"SELECT_DATE": "Date",
 			"DAYS_UNTIL_DUE": "Days Until Due",
 			"TEMPLATES": "Templates",
 			"INVOICE_TEMPLATE": "Invoice Template",
@@ -724,8 +725,8 @@
 			"LINKEDIN_ID": "LinkedIn ID",
 			"AUTO_SYNC_TASKS": "Auto Sync Tasks",
 			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Auto-sync Tasks On Label",
-			"AUTO_SYNC_TAG": "Select Auto-sync Label",
-			"SELECT_PROJECT": "Select Project",
+			"AUTO_SYNC_TAG": "Auto-sync Label",
+			"SELECT_PROJECT": "Project",
 			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Enable Jobs Search & Matching Analysis",
 			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Enable Employee Performance Analysis",
 			"STANDARD_WORK_HOURS_PER_DAY": "Enter the number of standard work hours per day (e.g., 8)"
@@ -878,9 +879,12 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "You must be employee in order to be able to track time, create split expenses and use other employees related features."
 	},
 	"MENU": {
+		"ADD_ITEM": "Add {{ name }}",
+		"BREADCRUMB": "Breadcrumb",
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Dashboards",
+		"DOCUMENTS": "Documents",
 		"APPOINTMENTS": "Appointments",
 		"FAVORITES": "Favorites",
 		"ACCOUNTING": "Accounting",
@@ -1232,6 +1236,7 @@
 		"CARDS_GRID": "Cards Grid",
 		"SPRINT_VIEW": "Sprint View",
 		"QUICK_SETTINGS": "Quick Settings",
+		"SETTINGS": "Settings",
 		"NO_LAYOUT": "No data layout available"
 	},
 	"CHANGELOG_MENU": {
@@ -1315,7 +1320,7 @@
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
 			"TITLE": "Hubstaff",
-			"SELECT_ORGANIZATION": "Select Organization",
+			"SELECT_ORGANIZATION": "Organization",
 			"SYNCED_PROJECTS": "Projects synced",
 			"SETTINGS_UPDATED": "Updated settings for integration",
 			"SYNCED_ENTITIES": "Auto synced entities",
@@ -1337,7 +1342,7 @@
 			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy.",
 			"CONTRACTS": "Contracts",
 			"SYNCED_CONTRACTS": "Synced Contracts",
-			"SELECT_DATE": "Select Date",
+			"SELECT_DATE": "Date",
 			"ONLY_CONTRACTS": "Only Contracts",
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
@@ -1574,7 +1579,7 @@
 		"GITHUB_PAGE": {
 			"TITLE": "GitHub Integration",
 			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
-			"SELECT_REPOSITORY": "Select repository",
+			"SELECT_REPOSITORY": "Repository",
 			"SEARCH_REPOSITORY": "Type to search repository",
 			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",
 			"HAS_SYNCED_ENABLED": "'{{repository}}' sync successfully enabled",
@@ -1764,7 +1769,7 @@
 				"ACTIVE_TITLE": "Active Event Triggers",
 				"DESCRIPTION": "Configure automatic workflow triggers. When a platform event occurs, the mapped SIM workflow will execute automatically.",
 				"EVENT": "Event",
-				"SELECT_EVENT": "Select an event",
+				"SELECT_EVENT": "Event",
 				"WORKFLOW_ID": "Workflow ID",
 				"WORKFLOW_ID_PLACEHOLDER": "Enter the SIM workflow ID to trigger",
 				"ADD": "Add",
@@ -1801,6 +1806,11 @@
 			"REGENERATE_KEY_LABEL": "API Key & Secret",
 			"CONFIRM_DELETE": "Are you sure you want to remove this Plane integration? This will revoke the API key.",
 			"CONFIRM_REGENERATE": "Are you sure you want to regenerate the API key? The current key will be invalidated.",
+			"SETTINGS_SAVED": "Plane settings saved.",
+			"INTEGRATION_REMOVED": "Plane integration removed.",
+			"SESSION_EXPIRED": "Your session has expired. Please sign in again to open Plane.",
+			"LOAD_FAILED": "Couldn't load the Plane integration settings.",
+			"RETRY": "Retry",
 			"API_KEY_DIALOG": {
 				"TITLE": "API Credentials",
 				"WARNING": "Copy these credentials now. The API secret will not be shown again.",
@@ -1814,7 +1824,7 @@
 		"PAID_LABEL": "Paid",
 		"RE_INTEGRATE": "Re-integrate",
 		"SETTINGS": "Settings",
-		"SELECT_GROUPS": "Select Groups",
+		"SELECT_GROUPS": "Groups",
 		"FILTER_INTEGRATIONS": "Filter integrations",
 		"SEARCH_INTEGRATIONS": "Search integrations",
 		"PAID": "Paid",
@@ -1842,6 +1852,309 @@
 		}
 	},
 	"DASHBOARD_PAGE": {
+		"CUSTOM": {
+			"STANDARD": "Standard",
+			"NEW_DASHBOARD": "New Dashboard",
+			"DUPLICATE_DASHBOARD": "Duplicate Dashboard",
+			"RENAME_DASHBOARD": "Rename Dashboard",
+			"SET_AS_DEFAULT": "Set as Default",
+			"DELETE_DASHBOARD": "Delete Dashboard",
+			"EDIT_DASHBOARD": "Edit Dashboard",
+			"NAME_LABEL": "Dashboard name",
+			"NAME_PLACEHOLDER": "Enter dashboard name",
+			"COPY_SUFFIX": "(Copy)",
+			"CREATED": "Dashboard \"{{ name }}\" created",
+			"UPDATED": "Dashboard \"{{ name }}\" updated",
+			"DELETED": "Dashboard \"{{ name }}\" deleted",
+			"SET_DEFAULT_SUCCESS": "\"{{ name }}\" is now your default dashboard",
+			"LAYOUT_SAVED": "Dashboard layout saved",
+			"DELETE_CONFIRM": "Are you sure you want to delete the dashboard \"{{ name }}\"? This cannot be undone.",
+			"EDIT_HINT": "Drag & drop widgets to rearrange them, or use the Manage Widget menu to show/hide widgets. Click Save to persist this layout.",
+			"DISCARD_CHANGES": "Discard unsaved changes?",
+			"DISCARD_CONFIRM": "You have unsaved layout changes. Switching dashboards will discard them. Continue?"
+		},
+		"BUILDER": {
+			"EDIT_HINT": "Drag widgets from the panel on the right onto the canvas, use the grip to rearrange them, then click Save above.",
+			"UNSAVED_CHANGES": "Unsaved changes",
+			"HOST": {
+				"WIDGET_MENU": "Widget menu",
+				"CONFIGURE": "Configure",
+				"WIDTH": "Width",
+				"WIDTH_COLUMNS": "Width: {{ count }} columns",
+				"REMOVE": "Remove",
+				"RETRY": "Retry",
+				"LOADING": "Loading widget",
+				"HIDDEN": "Hidden",
+				"UNTITLED_WIDGET": "Untitled widget",
+				"LOAD_FAILED": "This widget failed to load",
+				"UNAVAILABLE": "Widget unavailable",
+				"UNAVAILABLE_HINT": "This widget is no longer registered. The plugin that provides it may be disabled.",
+				"NO_ACCESS": "No access",
+				"NO_ACCESS_HINT": "You do not have permission to view this widget."
+			},
+			"CONFIG": {
+				"TITLE": "Widget settings",
+				"HINT": "These settings apply to this widget only."
+			},
+			"CANVAS": {
+				"DRAG_HANDLE": "Drag to move this widget",
+				"EMPTY_TITLE": "Your canvas is empty",
+				"EMPTY_HINT": "Drag widgets from the panel on the right, or click one to add it.",
+				"EMPTY_HINT_READONLY": "Click \"Edit Dashboard\" to start adding widgets to this tab."
+			},
+			"PALETTE": {
+				"TITLE": "Widgets",
+				"HINT": "Drag a widget onto the canvas, or click it to add it.",
+				"SEARCH_PLACEHOLDER": "Search widgets",
+				"CLEAR_SEARCH": "Clear search",
+				"ADD_WIDGET": "Add \"{{ name }}\" to the dashboard",
+				"NO_RESULTS": "No widgets match \"{{ term }}\".",
+				"NO_WIDGETS": "No widgets are available for your permissions."
+			},
+			"TABS": {
+				"TITLE": "Dashboard tabs",
+				"DEFAULT_NAME": "Overview",
+				"ADD_TAB": "Add tab",
+				"RENAME_TAB": "Rename tab",
+				"DUPLICATE_TAB": "Duplicate tab",
+				"DELETE_TAB": "Delete tab",
+				"DELETE_CONFIRM": "Are you sure you want to delete the tab \"{{ name }}\" and all of its widgets?",
+				"TAB_ACTIONS": "Actions for tab {{ name }}",
+				"NAME_LABEL": "Tab name",
+				"NAME_PLACEHOLDER": "Enter tab name",
+				"COPY_SUFFIX": "(Copy)"
+			},
+			"CATEGORIES": {
+				"TIME_TRACKING": "Time Tracking",
+				"ACCOUNTING": "Accounting",
+				"HR": "Human Resources",
+				"TEAMS": "Teams",
+				"PROJECT_MANAGEMENT": "Project Management",
+				"PLUGIN": "Plugins",
+				"OTHER": "Other"
+			},
+			"WIDGETS": {
+				"LOADING": "Loading widget data",
+				"ERROR": "Could not load this widget",
+				"RETRY": "Retry",
+				"MEMBERS_WORKED": {
+					"TITLE": "Members Worked",
+					"DESCRIPTION": "How many members logged time in the selected period, against your total head count."
+				},
+				"PROJECTS_WORKED": {
+					"TITLE": "Projects Worked",
+					"DESCRIPTION": "How many projects received logged time in the selected period, against your total projects."
+				},
+				"TODAY_ACTIVITY": {
+					"TITLE": "Today's Activity",
+					"DESCRIPTION": "Overall activity percentage recorded today."
+				},
+				"WORKED_TODAY": {
+					"TITLE": "Worked Today",
+					"DESCRIPTION": "Total time logged today across the current selection."
+				},
+				"WORKED_THIS_WEEK": {
+					"TITLE": "Worked This Week",
+					"DESCRIPTION": "Total time logged over the selected period; defaults to the current week."
+				},
+				"WEEKLY_ACTIVITY": {
+					"TITLE": "Weekly Activity",
+					"DESCRIPTION": "Overall activity percentage over the selected period; defaults to the current week."
+				},
+				"TIME_TRACKING_RECENT_ACTIVITIES": {
+					"TITLE": "Recent Activities",
+					"DESCRIPTION": "Screenshot carousel of the time slots each member recorded in the selected period."
+				},
+				"TIME_TRACKING_MANUAL_TIME": {
+					"TITLE": "Manual Time",
+					"DESCRIPTION": "Time entries that were added by hand rather than tracked, with who logged them and against which project."
+				},
+				"TIME_TRACKING_TASKS": {
+					"TITLE": "Tasks",
+					"DESCRIPTION": "The tasks that absorbed the most tracked time in the selected period, with each one's share."
+				},
+				"TIME_TRACKING_PROJECTS": {
+					"TITLE": "Projects Breakdown",
+					"DESCRIPTION": "How the tracked time of the selected period splits across projects, with each one's share."
+				},
+				"TIME_TRACKING_APPS_URLS": {
+					"TITLE": "Apps & URLs",
+					"DESCRIPTION": "Which applications and websites the tracked time was spent in, with each one's share."
+				},
+				"TIME_TRACKING_MEMBERS": {
+					"TITLE": "Members Breakdown",
+					"DESCRIPTION": "Per member: time logged and activity today, and over the selected period."
+				},
+				"TEAMS_COUNT": {
+					"TITLE": "Teams",
+					"DESCRIPTION": "How many of your teams had somebody working in the selected period."
+				},
+				"TEAMS_MEMBERS_WORKED": {
+					"TITLE": "Team Members Worked",
+					"DESCRIPTION": "How many team members logged time in the selected period, against everyone on those teams."
+				},
+				"TEAMS_PROJECTS_WORKED": {
+					"TITLE": "Team Projects Worked",
+					"DESCRIPTION": "How many projects your teams logged time against, out of all projects."
+				},
+				"TEAMS_ACTIVITY": {
+					"TITLE": "Team Activity",
+					"DESCRIPTION": "Overall activity percentage of your teams over the selected period."
+				},
+				"TEAM_CARDS": {
+					"TITLE": "Team Cards",
+					"DESCRIPTION": "One card per team: members working, and the working now / working today / not working split."
+				},
+				"TEAM_MEMBERS": {
+					"TITLE": "Team Members",
+					"DESCRIPTION": "Every team member with their status, time logged and activity for the selected period.",
+					"EMPTY": "None of your teams have members yet."
+				},
+				"TEAM_OVERVIEW": {
+					"TITLE": "Team Overview",
+					"DESCRIPTION": "One card per team with its headline numbers and the members behind them.",
+					"EMPTY": "No teams in the selected scope.",
+					"NO_MEMBERS": "This team has no members yet."
+				},
+				"TEAM_MEMBER_DETAILS": {
+					"TITLE": "Team Member Details",
+					"DESCRIPTION": "Every team member with the tasks they logged time against, measured against each task's estimate.",
+					"EMPTY": "None of your teams have members yet."
+				},
+				"TEAM_STATUS_CHART": {
+					"TITLE": "Team Status",
+					"DESCRIPTION": "Doughnut chart splitting your teams into working now, working today and not working.",
+					"EMPTY": "No team activity in the selected period."
+				},
+				"DATA_ENTRY_SHORTCUTS": {
+					"TITLE": "Data Entry Shortcuts",
+					"DESCRIPTION": "Jump straight into adding an income, an expense or a recurring expense.",
+					"ORGANIZATION_RECURRING": "Organization Recurring Expense",
+					"EMPLOYEE_RECURRING": "Employee Recurring Expense",
+					"NO_ACCESS": "You do not have permission to add income or expenses."
+				},
+				"ACCOUNTING_TOTAL_INCOME": {
+					"TITLE": "Total Income",
+					"DESCRIPTION": "All income booked across the organization over the selected period."
+				},
+				"ACCOUNTING_TOTAL_EXPENSES": {
+					"TITLE": "Total Expenses",
+					"DESCRIPTION": "All expenses booked across the organization over the selected period."
+				},
+				"ACCOUNTING_PROFIT": {
+					"TITLE": "Profit",
+					"DESCRIPTION": "Income minus expenses across the organization over the selected period."
+				},
+				"ACCOUNTING_TOTAL_BONUS": {
+					"TITLE": "Total Bonus",
+					"DESCRIPTION": "Total bonus paid across the organization over the selected period.",
+					"NOT_CONFIGURED": "This organization has no bonus type configured."
+				},
+				"HR": {
+					"NO_EMPLOYEE": "No employee selected",
+					"NO_EMPLOYEE_HINT": "Pick an employee in the header selector to see their figures.",
+					"UNAVAILABLE": "Not available",
+					"NO_BONUS_TYPE": "This organization has no bonus type configured.",
+					"NOT_PROFIT_BASED": "This organization does not use a profit-based bonus.",
+					"NOT_REVENUE_BASED": "This organization does not use a revenue-based bonus.",
+					"TOTAL_INCOME": {
+						"TITLE": "Employee Total Income",
+						"DESCRIPTION": "Everything the selected employee brought in, split into earned income and direct bonus."
+					},
+					"INCOME": {
+						"TITLE": "Employee Income",
+						"DESCRIPTION": "The selected employee's income, excluding any direct bonus.",
+						"META": "Income excluding the direct income bonus"
+					},
+					"DIRECT_INCOME": {
+						"TITLE": "Employee Direct Income",
+						"DESCRIPTION": "The part of the selected employee's income that came from a direct bonus."
+					},
+					"EXPENSES_WITHOUT_SALARY": {
+						"TITLE": "Employee Expenses without Salary",
+						"DESCRIPTION": "What the selected employee cost, salary aside: expenses, split expenses and recurring."
+					},
+					"TOTAL_EXPENSES": {
+						"TITLE": "Employee Total Expenses",
+						"DESCRIPTION": "The full cost of the selected employee, salary included."
+					},
+					"PROFIT": {
+						"TITLE": "Employee Profit",
+						"DESCRIPTION": "The selected employee's income minus their expenses. Opens the profit history."
+					},
+					"TOTAL_DIRECT_BONUS": {
+						"TITLE": "Employee Direct Income Bonus",
+						"DESCRIPTION": "Bonus equal to the selected employee's direct income."
+					},
+					"PROFIT_BONUS": {
+						"TITLE": "Employee Profit Bonus",
+						"DESCRIPTION": "Bonus owed on a profit-based rule: a percentage of the employee's profit."
+					},
+					"REVENUE_BONUS": {
+						"TITLE": "Employee Income Bonus",
+						"DESCRIPTION": "Bonus owed on a revenue-based rule: a percentage of the employee's income."
+					}
+				},
+				"EMPLOYEE_STATISTICS_CHART": {
+					"TITLE": "Employee Statistics Chart",
+					"DESCRIPTION": "The selected employee's revenue, expenses, profit and bonus, as a bar, doughnut or stacked chart."
+				},
+				"EMPLOYEE_BAR_CHART": {
+					"TITLE": "Employee Statistics by Month",
+					"DESCRIPTION": "Bar chart of the selected employee's revenue, expenses, profit and bonus, month by month."
+				},
+				"EMPLOYEE_DOUGHNUT_CHART": {
+					"TITLE": "Employee Statistics Breakdown",
+					"DESCRIPTION": "Doughnut chart splitting the selected employee's revenue, expenses, bonus and profit."
+				},
+				"EMPLOYEE_STACKED_BAR_CHART": {
+					"TITLE": "Employee Statistics Composition",
+					"DESCRIPTION": "Stacked chart of how each month's expenses, bonus and profit divide the selected employee's revenue."
+				},
+				"ACCOUNTING_CASH_FLOW": {
+					"TITLE": "Cash Flow",
+					"DESCRIPTION": "Income, expenses, profit and bonus plotted across the selected period.",
+					"EMPTY": "No cash flow was recorded in this period."
+				},
+				"ACCOUNTING_EMPLOYEE_STATISTICS": {
+					"TITLE": "Employee Statistics",
+					"DESCRIPTION": "Income, expenses, profit and bonus per employee over the selected period.",
+					"EMPTY": "No employee has figures in this period."
+				},
+				"ACCOUNTING_RECORDS_HISTORY": {
+					"TITLE": "Records History",
+					"DESCRIPTION": "The selected employee's individual income or expense records for the period.",
+					"HISTORY_TYPE": "Records to show"
+				},
+				"ACCOUNTING_PROFIT_HISTORY": {
+					"TITLE": "Profit History",
+					"DESCRIPTION": "The selected employee's income and expense records side by side, with their totals."
+				},
+				"PROJECT_MANAGEMENT": {
+					"SHOWING": "Showing {{ shown }} of {{ total }}",
+					"MY_TASKS": {
+						"TITLE": "My Tasks",
+						"DESCRIPTION": "Your tasks by due date, with their status. Follows the employee and project selectors.",
+						"EMPTY": "No tasks for the current selection."
+					},
+					"MOST_VIEWED_PROJECTS": {
+						"TITLE": "Most Viewed Projects",
+						"DESCRIPTION": "The projects your tasks belong to, busiest first.",
+						"EMPTY": "None of these tasks belong to a project yet."
+					},
+					"RECENTLY_ASSIGNED": {
+						"TITLE": "Recently Assigned",
+						"DESCRIPTION": "Open tasks with their tags, most recently assigned first.",
+						"EMPTY": "No open tasks assigned."
+					},
+					"INBOX": {
+						"TITLE": "Inbox",
+						"DESCRIPTION": "Placeholder for the upcoming task inbox. It has nothing to show yet.",
+						"EMPTY": "The inbox is coming soon."
+					}
+				}
+			}
+		},
 		"ACCOUNTING": "Accounting",
 		"HUMAN_RESOURCES": "Human Resources",
 		"TIME_TRACKING": "Time Tracking",
@@ -2222,9 +2535,9 @@
 				"STATUS": "Status",
 				"WEIGHT": "Weight",
 				"TYPE": "Type",
-				"SELECT_PROJECT": "Select Project",
-				"SELECT_TASK": "Select Task",
-				"SELECT_KPI": "Select KPI",
+				"SELECT_PROJECT": "Project",
+				"SELECT_TASK": "Task",
+				"SELECT_KPI": "KPI",
 				"ASSIGN_AS_OBJECTIVE": "Assign as objective"
 			},
 			"PLACEHOLDERS": {
@@ -2668,7 +2981,7 @@
 			"TIME_OFF_POLICY_VIEW": "View Time Off Policy",
 			"TIME_OFF_POLICY_EDIT": "Edit Time Off Policy",
 			"TIME_OFF_POLICY_DELETE": "Delete Time Off Policy",
-			"SELECT_EMPLOYEE": "Select Employee",
+			"SELECT_EMPLOYEE": "Employee",
 			"CHANGE_SELECTED_EMPLOYEE": "Change Selected Employee",
 			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",
@@ -2960,12 +3273,12 @@
 		"ADD_HOLIDAYS": "Add Holidays",
 		"DISPLAY_HOLIDAYS": "Display Holidays",
 		"HOLIDAY_NAME": "Holiday name",
-		"SELECT_EMPLOYEES": "Select Employees",
+		"SELECT_EMPLOYEES": "Employees",
 		"SETTINGS": "Settings",
 		"EDI": "Edit Time Off record",
-		"SELECT_HOLIDAY_NAME": "Select Holiday name",
+		"SELECT_HOLIDAY_NAME": "Holiday name",
 		"ADD_OR_REMOVE_EMPLOYEES": "Add or Remove Employees",
-		"SELECT_TIME_OFF_POLICY": "Select Time-off Policy",
+		"SELECT_TIME_OFF_POLICY": "Time-off Policy",
 		"ADD_A_DESCRIPTION": "Add a description",
 		"DESCRIPTION": "Description",
 		"START_DATE": "Start Date",
@@ -3030,7 +3343,7 @@
 		"ADD_NEW_TAG": "Add new Tag",
 		"TENANT_LEVEL": "Tenant level",
 		"TAGS_TYPE": "Tags type",
-		"TAGS_SELECT_TYPE": "Select tag type"
+		"TAGS_SELECT_TYPE": "Tag type"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
@@ -3362,8 +3675,8 @@
 		"PROPOSAL_TEMPLATE": "Proposal Template",
 		"EDIT_PROPOSAL_TEMPLATE": "Edit Proposal Template",
 		"ADD_PROPOSAL_TEMPLATE": "Add Proposal Template",
-		"SELECT_PROPOSAL_TEMPLATE": "Select Proposal Template",
-		"SELECT_EMPLOYEE": "Select employee",
+		"SELECT_PROPOSAL_TEMPLATE": "Proposal Template",
+		"SELECT_EMPLOYEE": "Employee",
 		"NAME": "Name",
 		"CONTENT": "Content",
 		"EMPLOYEE": "Employee",
@@ -3464,7 +3777,11 @@
 		"STOP_TIMER": "Stop Timer",
 		"TIME_LOG": "Time Log",
 		"VIEW_APPOINTMENTS": "View Appointments",
-		"VIEW_TIME_ACTIVITY": "View Time Activity"
+		"VIEW_TIME_ACTIVITY": "View Time Activity",
+		"DOCUMENTS": {
+			"NEW_PAGE": "New Page",
+			"UPLOAD": "Upload"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Accounting",
@@ -3472,7 +3789,8 @@
 		"PROJECT_MANAGEMENT": "Project Management",
 		"JOBS": "Jobs",
 		"CONTACTS": "Contacts",
-		"TIME_TRACKING": "Time Tracking"
+		"TIME_TRACKING": "Time Tracking",
+		"DOCUMENTS": "Documents"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "First Name",
@@ -3555,10 +3873,10 @@
 		"EDIT_ESTIMATE": "Edit Estimate",
 		"VIEW_INVOICE": "View Invoice",
 		"VIEW_ESTIMATE": "View Estimate",
-		"SELECT_EMPLOYEE": "Select Employee",
-		"SELECT_PROJECT": "Select Project",
-		"SELECT_TASK": "Select Task",
-		"SELECT_PRODUCT": "Select Product",
+		"SELECT_EMPLOYEE": "Employee",
+		"SELECT_PROJECT": "Project",
+		"SELECT_TASK": "Task",
+		"SELECT_PRODUCT": "Product",
 		"INVALID_DATES": "Invalid Dates",
 		"INVOICE_NUMBER_DUPLICATE": "Invoice Number already exists",
 		"DISCOUNT_TYPE": "Discount Type",
@@ -3620,12 +3938,12 @@
 			"BY_PRODUCTS": "By Products",
 			"BY_EXPENSES": "By Expenses",
 			"DETAILED_ITEMS": "Detailed Items",
-			"SELECT_INVOICE_TYPE": "Select an invoice type",
-			"SELECT_ESTIMATE_TYPE": "Select an estimate type",
-			"SELECT_PROJECTS": "Select projects",
-			"SELECT_TASKS": "Select tasks",
-			"SELECT_PRODUCTS": "Select products",
-			"SELECT_EXPENSES": "Select expenses"
+			"SELECT_INVOICE_TYPE": "Invoice type",
+			"SELECT_ESTIMATE_TYPE": "Estimate type",
+			"SELECT_PROJECTS": "Projects",
+			"SELECT_TASKS": "Tasks",
+			"SELECT_PRODUCTS": "Products",
+			"SELECT_EXPENSES": "Expenses"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Item Number",
@@ -3710,7 +4028,7 @@
 			"NO_PAYMENTS_RECORDED": "No payments recorded",
 			"LEFT_TO_PAY": "Left to pay",
 			"PAYMENT_METHOD": "Payment Method",
-			"SELECT_INVOICE": "Select Invoice",
+			"SELECT_INVOICE": "Invoice",
 			"PAYMENT_AMOUNT_ADDED": "Payment of {{ amount }} {{ currency }} added",
 			"PAYMENT": "Payment",
 			"BANK_TRANSFER": "Bank Transfer",
@@ -3776,12 +4094,69 @@
 		"TAGS": "Tags"
 	},
 	"HEADER": {
-		"SELECT_EMPLOYEE": "Select Employee",
-		"SELECT_A_DATE": "Select A Date",
-		"SELECT_AN_ORGANIZATION": "Select An Organization",
-		"SELECT_PROJECT": "Select Project",
-		"SELECT_TEAM": "Select Team",
+		"SELECT_EMPLOYEE": "Employee",
+		"SELECT_A_DATE": "Date",
+		"SELECT_AN_ORGANIZATION": "Organization",
+		"SELECT_PROJECT": "Project",
+		"SELECT_TEAM": "Team",
 		"AI_CHAT": "AI Chat"
+	},
+	"AI_ASSISTANT": {
+		"TITLE": "AI Assistant",
+		"ATTACH_SOON": "Attach files or folders (coming soon)",
+		"LIBRARY_SOON": "Choose from the file library (coming soon)",
+		"ATTACH": "Attach a file",
+		"ATTACH_FROM_DOCUMENTS": "Attach from Documents",
+		"ATTACH_OPEN": "Open attached document",
+		"ATTACH_REJECTED": "The file was rejected",
+		"ATTACH_RESPONSE_UNREADABLE": "The upload response could not be read — check the Documents page before retrying",
+		"ATTACH_SEARCH": "Search documents…",
+		"ATTACH_NO_RESULTS": "No matching documents.",
+		"ATTACH_LOAD_FAILED": "The document list could not be loaded — please try again.",
+		"ATTACH_UNAVAILABLE": "Documents are not available in this workspace.",
+		"ATTACH_REMOVE": "Remove attachment",
+		"CITATIONS": {
+			"LABEL": "Sources:",
+			"OPEN": "Open source document",
+			"LOW_CONFIDENCE": "(weak matches — verify before relying on these)",
+			"UNTITLED": "Untitled document"
+		},
+		"DICTATE": "Dictate a message",
+		"STOP_DICTATION": "Stop dictation",
+		"TRANSCRIBING": "Transcribing…",
+		"AUTO_SEND": "Auto-send",
+		"CANCEL": "Cancel",
+		"DONE": "Done",
+		"DISMISS": "Dismiss",
+		"DICTATION_FAILED": "Could not transcribe the recording.",
+		"MIC_DENIED": "Microphone access was denied.",
+		"MIC_UNAVAILABLE": "No microphone is available.",
+		"OPEN": "Open AI Assistant",
+		"CLOSE": "Close AI Assistant",
+		"HISTORY": "History",
+		"HISTORY_HINT": "Browse saved conversations",
+		"HISTORY_CLOSE": "Close history",
+		"HISTORY_EMPTY": "No saved conversations yet.",
+		"NEW_CHAT": "New chat",
+		"NEW_CHAT_HINT": "Start a new conversation",
+		"DELETE_CONVERSATION": "Delete conversation",
+		"LOADING": "Loading…",
+		"DOCK_LEFT": "Dock to the left",
+		"DOCK_RIGHT": "Dock to the right",
+		"MAXIMIZE": "Maximize",
+		"RESTORE": "Restore width",
+		"DETACH": "Open in a new window",
+		"COLLAPSE": "Collapse",
+		"RESIZE": "Drag to resize",
+		"WELCOME_SUBTITLE": "Ask anything about your workspace, tasks, or projects.",
+		"PLACEHOLDER": "Type a message…",
+		"SEND": "Send message",
+		"STOP": "Stop generating",
+		"ERROR": "Something went wrong.",
+		"RETRY": "Retry",
+		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
+		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
+		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -3794,6 +4169,21 @@
 		"REDIRECT_TO_HOME": "You'll be redirected to home page soon"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Find documentation, get answers, and reach the team behind Gauzy.",
+		"DOCUMENTATION": "Documentation",
+		"DOCUMENTATION_DESC": "Guides and reference for every Gauzy feature.",
+		"FAQ": "FAQ",
+		"FAQ_DESC": "Answers to the most common questions.",
+		"SUPPORT_CHAT": "Support Chat",
+		"SUPPORT_CHAT_DESC": "Chat with our support team.",
+		"REPORT_ISSUE": "Report an Issue",
+		"REPORT_ISSUE_DESC": "Found a bug? Open an issue on GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Source code, releases, and discussions.",
+		"WEBSITE": "Gauzy Website",
+		"WEBSITE_DESC": "Learn more about the Gauzy platform.",
+		"ABOUT_LINK": "About Gauzy",
+		"ABOUT_LINK_DESC": "Version details, license, and links.",
 		"HELP": "Help",
 		"KNOWLEDGE_BASE": "Knowledge base",
 		"CHOSE_ICON": "Chose icon to set",
@@ -3842,25 +4232,25 @@
 		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data.",
 		"PROJECT_MODULE": {
 			"PROJECT": "Project",
-			"SELECT_PROJECT": "Select a project",
+			"SELECT_PROJECT": "Project",
 			"STATUS": "Status",
 			"TEAM_MEMBERS": "Team Members",
 			"TEAMS": "Teams",
-			"SELECT_TEAMS": "Select Teams",
+			"SELECT_TEAMS": "Teams",
 			"CHOOSE_TEAMS": "Choose teams",
 			"NAME": "Module Name",
 			"ENTER_NAME": "Enter the module name",
 			"PARENT_MODULE": "Parent Module",
-			"SELECT_PARENT": "Select a parent module",
+			"SELECT_PARENT": "Parent module",
 			"START_DATE": "Start Date",
-			"SELECT_START_DATE": "Select start date",
+			"SELECT_START_DATE": "Start date",
 			"END_DATE": "End Date",
-			"SELECT_END_DATE": "Select end date",
+			"SELECT_END_DATE": "End date",
 			"DESCRIPTION": "Description",
 			"MANAGER": "Manager",
-			"SELECT_MANAGER": "Select a manager",
+			"SELECT_MANAGER": "Manager",
 			"ORGANIZATION_SPRINTS": "Organization Sprints",
-			"SELECT_SPRINTS": "Select sprints",
+			"SELECT_SPRINTS": "Sprints",
 			"IS_FAVORITE": "Favorite"
 		}
 	},
@@ -4108,16 +4498,30 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. All rights reserved.",
+		"DESCRIPTION": "Ever® Gauzy™ is an Open Business Management Platform for Collaborative, On-Demand and Sharing Economies — ERP, CRM, HRM, ATS and Project Management with integrated time tracking.",
+		"LICENSE": "Open source, released under the",
+		"VERSION_DETAILS": "Version Details",
+		"VERSION_MISMATCH": "The web app and the API were built from different commits — a deployment may still be rolling out.",
+		"WEB_APP": "Web App",
+		"API": "API",
+		"UNTAGGED": "untagged build",
+		"API_UNAVAILABLE": "API version unavailable",
+		"LEARN_MORE": "Learn More",
 		"ABOUT": "About"
 	},
 	"FOOTER": {
 		"BY": "by",
 		"RIGHTS_RESERVED": "All rights reserved.",
 		"PRESENT": "Present",
+		"LEGAL": "Legal",
 		"TERMS_OF_SERVICE": "Terms Of Service",
 		"PRIVACY_POLICY": "Privacy Policy",
-		"VERSION": "Release version — open on GitHub",
-		"COMMIT": "Deployed commit — open on GitHub",
+		"COOKIE_POLICY": "Cookie Policy",
+		"VERSION": "Version",
+		"VERSION_HINT": "Release version — open on GitHub",
+		"COMMIT": "Commit",
+		"COMMIT_HINT": "Deployed commit — open on GitHub",
 		"WEB": "Web",
 		"API": "API"
 	},
@@ -4515,10 +4919,10 @@
 		"TIMER": "Timer",
 		"MANUAL": "Manual",
 		"MANUAL_NOT_ALLOW": "Manual time not allowed",
-		"SELECT_PROJECT": "Select Project",
-		"SELECT_TASK": "Select Task",
-		"SELECT_CLIENT": "Select Client",
-		"SELECT_TEAM": "Select Team",
+		"SELECT_PROJECT": "Project",
+		"SELECT_TASK": "Task",
+		"SELECT_CLIENT": "Client",
+		"SELECT_TEAM": "Team",
 		"DATE": "Date",
 		"START_TIME": "Start Time",
 		"END_TIME": "End Time",
@@ -4611,7 +5015,7 @@
 			"AUTOMATIC_UPDATE_CHECK": "Automatic Update Check",
 			"ENABLE_AUTOMATIC_UPDATE_LABEL": "Enable automatic update check, in order to run a request to check if a new version is available and notify",
 			"SET_UPDATE_INTERVAL_DURATION": "Set update check interval duration",
-			"SELECT_DELAY": "Select Delay",
+			"SELECT_DELAY": "Delay",
 			"ENABLE_AUTOMATIC_UPDATE": "Enable Automatic Update",
 			"UPDATE_SERVER": "Updater Server",
 			"SELECT_DEFAULT_CDN": "Select default CDN server for update",
@@ -4891,11 +5295,11 @@
 		"SUBMIT_SUCCESS": "Timesheet Successfully Submitted",
 		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit",
 		"DELETE_TIMELOG": "Are you sure you want to delete Timelog?",
-		"SELECT_EMPLOYEE": "Select Employee",
+		"SELECT_EMPLOYEE": "Employee",
 		"ALL_EMPLOYEE": "All Employees",
-		"SELECT_SOURCE": "Select Source",
-		"SELECT_ACTIVITY_LEVEL": "Select Activity Level",
-		"SELECT_LOG_TYPE": "Select Log Type",
+		"SELECT_SOURCE": "Source",
+		"SELECT_ACTIVITY_LEVEL": "Activity Level",
+		"SELECT_LOG_TYPE": "Log Type",
 		"ADD_TIME_LOGS": "Add Time Logs",
 		"EDIT_TIME_LOGS": "Edit Time Logs",
 		"VIEW_TIME_LOGS": "Time Logs",
@@ -5195,9 +5599,9 @@
 	},
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Create Deal | Pipeline: '{{ name }}'",
-		"SELECT_STAGE": "Select Stage",
+		"SELECT_STAGE": "Stage",
 		"PROBABILITY": "Probability",
-		"SELECT_CLIENT": "Select Client"
+		"SELECT_CLIENT": "Client"
 	},
 	"DIALOG": {
 		"CONFIRM": "Confirm",
@@ -5364,7 +5768,9 @@
 	"GAUZY_MAINTENANCE": "{{ companySite }} @ Maintenance",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Privacy Policy",
-		"TERMS_AND_CONDITIONS": "Terms & Conditions"
+		"TERMS_AND_CONDITIONS": "Terms & Conditions",
+		"DOCUMENT_VERSION": "Version {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "In force from {{ date }}"
 	},
 	"LOADING": "Loading, please hold....",
 	"ACCOUNTING_TEMPLATES_PAGE": {
@@ -5725,7 +6131,7 @@
 			},
 			"SUBMISSION_ERROR": "An error occurred while submitting the form",
 			"TYPE": "Plugin Type",
-			"TYPE_PLACEHOLDER": "Select plugin type",
+			"TYPE_PLACEHOLDER": "Plugin type",
 			"TYPES": {
 				"DESKTOP": "Desktop",
 				"WEB": "Web",
@@ -5820,7 +6226,7 @@
 				"DESCRIPTION": "Create and manage subscription plans for your plugin. Define pricing tiers, features, and limitations for each plan.",
 				"PLAN": "Plan",
 				"TYPE": "Plan Type",
-				"SELECT_TYPE": "Select plan type",
+				"SELECT_TYPE": "Plan type",
 				"NAME": "Plan Name",
 				"NAME_PLACEHOLDER": "e.g., Basic, Professional, Enterprise",
 				"PLAN_DESCRIPTION": "Plan Description",
@@ -6177,7 +6583,7 @@
 		},
 		"ASSIGNMENT_DIALOG": {
 			"TITLE": "Assign Users to Plugin",
-			"SELECT_USERS": "Select Users",
+			"SELECT_USERS": "Users",
 			"SELECT_USERS_PLACEHOLDER": "Choose users to assign",
 			"SELECTED_COUNT": "{{count}} user(s) selected",
 			"USERS_REQUIRED": "Please select at least one user",
@@ -6378,5 +6784,57 @@
 			"DELETE_FAILED": "Failed to revoke OAuth client",
 			"COPY_FAILED": "Failed to copy to clipboard"
 		}
+	},
+	"RICH_TEXT_EDITOR": {
+		"TOOLBAR": {
+			"LABEL": "Text formatting",
+			"UNDO": "Undo",
+			"REDO": "Redo",
+			"PARAGRAPH": "Paragraph",
+			"HEADING": "Heading {{level}}",
+			"BOLD": "Bold",
+			"ITALIC": "Italic",
+			"UNDERLINE": "Underline",
+			"STRIKE": "Strikethrough",
+			"CODE": "Inline code",
+			"CODE_BLOCK": "Code block",
+			"SUBSCRIPT": "Subscript",
+			"SUPERSCRIPT": "Superscript",
+			"TEXT_COLOR": "Text color",
+			"HIGHLIGHT": "Highlight",
+			"FONT_FAMILY": "Font",
+			"ALIGN_LEFT": "Align left",
+			"ALIGN_CENTER": "Center",
+			"ALIGN_RIGHT": "Align right",
+			"ALIGN_JUSTIFY": "Justify",
+			"BULLET_LIST": "Bullet list",
+			"ORDERED_LIST": "Numbered list",
+			"TASK_LIST": "Task list",
+			"BLOCKQUOTE": "Quote",
+			"HORIZONTAL_RULE": "Divider",
+			"LINK": "Add link",
+			"UNLINK": "Remove link",
+			"TABLE": "Insert table",
+			"IMAGE": "Insert image",
+			"CLEAR_FORMAT": "Clear formatting"
+		},
+		"TABLE": {
+			"ROW_ADD_ABOVE": "Add row above",
+			"ROW_ADD_BELOW": "Add row below",
+			"ROW_DELETE": "Delete row",
+			"COL_ADD_LEFT": "Add column left",
+			"COL_ADD_RIGHT": "Add column right",
+			"COL_DELETE": "Delete column",
+			"HEADER_ROW": "Toggle header row",
+			"DELETE": "Delete table",
+			"TOOLBAR_LABEL": "Table tools"
+		},
+		"LINK_DIALOG": {
+			"URL": "URL",
+			"APPLY": "Apply",
+			"REMOVE": "Remove"
+		},
+		"CHARACTERS": "{{count}} characters",
+		"WORDS": "{{count}} words"
 	}
 }

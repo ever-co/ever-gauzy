@@ -18,10 +18,15 @@
 }
 .card-container {
   background: nb-theme(gauzy-card-2);
-  margin-top: 10px;
+  margin-top: 8px;
   border-radius: nb-theme(border-radius);
+  // Compact option: small thumbnail on the left, theme name on the right
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  height: 48px;
+  overflow: hidden;
+  cursor: pointer;
   &.selected {
     .check {
       display: flex;
@@ -37,26 +42,30 @@
     }
   }
   .image-container {
-    object-fit: cover;
-    min-width: 200px;
-    width: 100%;
-    height: 100px;
+    order: -1; // thumbnail sits left of the name (markup keeps the name first)
+    flex: 0 0 auto;
+    width: 120px;
+    height: 100%;
     overflow: hidden;
     position: relative;
     img {
       position: absolute;
-      left: 1rem;
-      top: 1rem;
-      height: 150px;
-      border-radius: calc(nb-theme(border-radius) - 4px);
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: left top;
     }
   }
   span {
-    padding: 6px;
+    padding: 0 8px;
     font-size: 13px;
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     display: flex;
     flex-direction: row;
+    align-items: center;
     justify-content: space-between;
   }
   .check {

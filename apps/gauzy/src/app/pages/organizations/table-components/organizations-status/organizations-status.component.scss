@@ -1,26 +1,35 @@
 @use 'themes' as *;
 
+// Same status-pill pattern as `employee-work-status`: an outer `.badge` wrapper
+// with its own padding around an inner coloured pill that has padding again, so
+// the cell paid for two boxes. Sized from the shared table-density tokens
+// (`$gauzy-density` in `themes.scss`); the literals are CSS-var fallbacks only.
+// `text-align: flex-start` was dropped from both pills below: `flex-start` is
+// not one of the values `text-align` accepts, so the browser threw the whole
+// declaration away and the pills have always taken their alignment from what
+// they inherit. Removing it changes nothing on screen; it only stops the rule
+// from claiming to do something it never did.
 .badge-danger {
-	text-align: flex-start;
-	padding: 5px;
+	padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
 	background-color: nb-theme(color-danger-default);
-	margin-bottom: 5px;
+	margin-bottom: var(--gauzy-table-chip-gap, 0.1875rem);
 }
 
 .badge-success {
-	text-align: flex-start;
-	padding: 5px;
+	padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
 	background-color: nb-theme(color-success-default);
 }
 
 .badge {
 	width: fit-content;
-	font-size: 12px;
+	font-size: var(--gauzy-table-header-font-size, 0.75rem);
 	font-weight: 600;
-	line-height: 15px;
+	line-height: var(--gauzy-table-header-line-height, 0.9375rem);
 	letter-spacing: 0em;
 	text-align: left;
-	padding: 4px 8px;
+	// The wrapper is only a positioning box around the pill; the pill above owns
+	// the padding, so charging it here again just made the cell taller.
+	padding: 0;
 
 	>div {
 		border-radius: 4px;

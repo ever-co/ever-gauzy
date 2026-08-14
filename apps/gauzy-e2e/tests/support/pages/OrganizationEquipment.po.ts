@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 import {
 	enterInput,
 	verifyElementIsVisible,
+	dispatchClickWhenSettled,
 	clickButton,
 	clearField,
 	clickKeyboardBtnByKeycode,
@@ -13,6 +14,7 @@ import {
 	dispatchClick,
 	waitForSpinnerGone
 } from '../util';
+import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
 // Selectors + data are framework-agnostic — reused from the Cypress tree during migration.
 import { OrganizationEquipmentPage } from '../../../src/support/Base/pageobjects/OrganizationEquipmentPageObject';
@@ -167,7 +169,15 @@ export const clickTagsDropdown = async () => {
 };
 
 export const selectTagFromDropdown = async (index: number) => {
-	await clickButtonByIndex(OrganizationEquipmentPage.tagsDropdownOption, index);
+	// Routed through the ONE shared ng-select driver (tests/support/ng-select.ts). It counts only REAL
+	// options: a bare `div.ng-option` ALSO matches ng-select's disabled "No items found" / "Loading…"
+	// rows, so the old wait-then-click was satisfied by an EMPTY list and then clicked a row ng-select
+	// ignores — a silent no-op that left this field unset. It re-opens the panel via the control's own
+	// container until real options render (NEVER Escape: nb-dialog opens with closeOnEsc and that closed
+	// the whole form), and it confirms the pick against `div.ng-value`, the only node that exists once a
+	// value is really bound. Still best-effort — the tag is optional here — but it can no longer
+	// half-succeed, and it can no longer kill the dialog on a slow list.
+	await selectNgOption(OrganizationEquipmentPage.addTagsDropdownCss, OrganizationEquipmentPage.tagsDropdownOption, index);
 };
 
 export const clickCardBody = async () => {
@@ -330,7 +340,18 @@ export const selectEquipmentDropdownVisible = async () => {
 };
 
 export const clickEquipmentDropdown = async () => {
-	await clickButton(OrganizationEquipmentPage.selectEquipmentDropdownCss);
+	// CONFIRM the panel opened rather than assuming the click landed. `clickButton` is a force-click,
+	// which only skips the actionability check — it still returns whether or not the option list
+	// rendered, and the very next step waits 24s for an option inside it.
+	//
+	// Observed in CI run 31119250876 (shard 3): `locator.waitFor: Timeout 24000ms exceeded — waiting
+	// for locator('.option-list nb-option').filter({ hasText: 'Equipment NrLaT58N' })`. It passed on
+	// retry, so the suite reported "1 flaky" and stayed green — a pass bought with a retry. Same
+	// shape, and same fix, as the tag Edit dialog in OrganizationTags.po.
+	await dispatchClickWhenSettled(
+		OrganizationEquipmentPage.selectEquipmentDropdownCss,
+		OrganizationEquipmentPage.selectEquipmentDropdownOptionCss
+	);
 };
 
 export const selectEquipmentFromDropdown = async (index: number) => {
@@ -359,7 +380,13 @@ export const approvalPolicyDropdownVisible = async () => {
 };
 
 export const clickSelectPolicyDropdown = async () => {
-	await clickButton(OrganizationEquipmentPage.selectPolicyDropdownCss);
+	// Same treatment as the equipment dropdown above. The evidence is for that one; this has the
+	// identical shape — force-click, then the next line picks an option out of a panel nobody
+	// confirmed had opened — so it is the same latent flake waiting for a slow render.
+	await dispatchClickWhenSettled(
+		OrganizationEquipmentPage.selectPolicyDropdownCss,
+		OrganizationEquipmentPage.selectPolicyDropdownOptionCss
+	);
 };
 
 export const selectPolicyFromDropdown = async (index: number) => {
@@ -371,7 +398,21 @@ export const selectEmployeeDropdownVisible = async () => {
 };
 
 export const clickEmployeeDropdown = async () => {
-	await clickButton(OrganizationEquipmentPage.selectEmployeeDropdownCss);
+	// As above — but confirm on the PANEL ('nb-option-list'), NOT on '.option-list nb-option'. The
+	// employee list (org members "working" in the header date range) can legitimately be EMPTY — see
+	// selectEmployeeFromDropdown below, which is best-effort for exactly that state — and now that
+	// dispatchClickWhenSettled THROWS when its confirm never appears, an option-level confirm would
+	// abort the scenario in precisely the state the picker below was written to survive. The panel
+	// renders even with zero options (Nebular's nb-option-list is a bare ul.option-list around
+	// ng-content), so its appearance still proves the click landed.
+	//
+	// Deliberately NOT scoped to the component (e.g. 'ga-employee-multi-select nb-option-list'):
+	// Nebular renders the panel into the document-level OVERLAY CONTAINER, not inside the select's
+	// host, so a component-scoped selector would never match anything and the helper would throw on
+	// every run. The residual risk — a previous select's panel pre-satisfying the end-state check —
+	// is bounded: picking an option detaches its panel synchronously, and the helper settles
+	// (spinner + network idle) before it looks.
+	await dispatchClickWhenSettled(OrganizationEquipmentPage.selectEmployeeDropdownCss, 'nb-option-list');
 };
 
 export const selectEmployeeFromDropdown = async (index: number) => {

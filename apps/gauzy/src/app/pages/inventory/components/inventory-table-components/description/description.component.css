@@ -4,5 +4,10 @@
 	line-height: 15px;
 	letter-spacing: 0em;
 	text-align: left;
-	color: var(--gauzy-color-text-2);
+	/* `--gauzy-color-text-2` is not a theme token — the registered name is
+	   `--gauzy-text-color-2` (styles/themes.scss). The old var() named nothing,
+	   so the declaration was dropped and the description inherited the cell
+	   colour instead of reading as a caption. The fallback covers the two
+	   material themes, which never define the gauzy text tokens. */
+	color: var(--gauzy-text-color-2, var(--text-hint-color));
 }

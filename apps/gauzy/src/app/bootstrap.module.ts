@@ -11,7 +11,14 @@ import {
 	PluginUiRegistryService,
 	TranslateAdapterService
 } from '@gauzy/plugin-ui';
-import { NavMenuBuilderService, PageRouteRegistryService, PageTabRegistryService, Store } from '@gauzy/ui-core/core';
+import { provideCoreDashboardWidgets } from '@gauzy/ui-core/shared';
+import {
+	NavMenuBuilderService,
+	PageRouteRegistryService,
+	PageTabRegistryService,
+	Store,
+	WidgetRegistryService
+} from '@gauzy/ui-core/core';
 import { provideEffectsManager } from '@ngneat/effects-ng';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { AppComponent } from './app.component';
@@ -38,6 +45,7 @@ import { AppModule } from './app.module';
 			navBuilder: NavMenuBuilderService,
 			routeRegistry: PageRouteRegistryService,
 			tabRegistry: PageTabRegistryService,
+			widgetRegistry: WidgetRegistryService,
 			translateService: TranslateAdapterService,
 			permissionChecker: PermissionAdapterService,
 			featureChecker: FeatureAdapterService
@@ -45,6 +53,10 @@ import { AppModule } from './app.module';
 		AppModule // Core application module (declares AppComponent + all app logic)
 	],
 	providers: [
+		// Core dashboard-builder widgets (Accounting, HR, charts, Teams).
+		// Must be registered from the ROOT injector — an initializer inside a
+		// lazily-created child EnvironmentInjector never runs.
+		provideCoreDashboardWidgets(),
 		{
 			provide: PLUGIN_UI_CONFIG,
 			useFactory: getPluginUiConfig

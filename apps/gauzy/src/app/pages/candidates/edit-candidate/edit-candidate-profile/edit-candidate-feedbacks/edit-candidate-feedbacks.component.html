@@ -5,10 +5,14 @@
 				@if (allFeedbacks?.length > 0) {
 					<div class="filters">
 						@if (dataLayoutStyle === 'CARDS_GRID') {
+							<!-- Was a hardcoded English `placeholder="Select interview"`:
+							     untranslated in every other locale, and still carrying the
+							     "Select …" prefix that was dropped from the app's other
+							     comboboxes. -->
 							<nb-select
 								[formControl]="selectInterview"
 								class="select mr-3 show"
-								placeholder="Select interview"
+								[placeholder]="'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW' | translate"
 								(selectedChange)="onInterviewSelected($event)"
 							>
 								<nb-option [value]="all">
@@ -220,6 +224,7 @@
 		@if (dataLayoutStyle === 'TABLE') {
 			<div class="table-scroll-container">
 				<angular2-smart-table
+					[class.ga-table-loading]="loading"
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					[source]="sourceSmartTable"
@@ -228,6 +233,7 @@
 			</div>
 		} @else if (feedbackList?.length && dataLayoutStyle === 'CARDS_GRID') {
 			<ga-card-grid
+				[loading]="loading"
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="feedbackList"

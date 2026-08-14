@@ -1,5 +1,6 @@
 import { ConfigService, environment } from '@gauzy/config';
 import { LanguagesEnum } from '@gauzy/contracts';
+import { isSchedulerQueueRootEnabled, SchedulerModule } from '@gauzy/scheduler';
 import { createKeyvNonBlocking } from '@keyv/redis';
 import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
 import { Module, OnModuleInit } from '@nestjs/common';
@@ -530,6 +531,41 @@ if (environment.THROTTLE_ENABLED) {
 		BroadcastModule,
 		OrganizationStrategicInitiativeModule,
 		PasswordHashModule,
+		/**
+		 * PRODUCER-ONLY BullMQ root for the API process.
+		 *
+		 * Why it exists: plugins that offload work (today the Documents pipeline) can only reach
+		 * BullMQ through `SchedulerQueueService`, and that provider only exists where a
+		 * `SchedulerModule.forRoot()` was imported. Until this line the API had none, so every
+		 * `extract → classify → chunk → embed → index` stage — plus OCR and thumbnails — ran
+		 * INLINE in the API process while `apps/worker` sat idle.
+		 *
+		 * The two halves are deliberately split:
+		 * - `enableQueueing: true`  → registers `BullModule.forRoot()`, i.e. the connection that
+		 *   makes `SchedulerQueueService` resolvable and lets this process ENQUEUE.
+		 * - 🛑 `enabled: false`     → the job-runner half stays OFF. `SchedulerDiscoveryService`
+		 *   still discovers `@ScheduledJob` methods but `registerSchedules()` skips every one of
+		 *   them (`if (!job.options.enabled || !this.moduleOptions.enabled) continue`), and
+		 *   `SchedulerJobRunnerService.execute()` returns immediately, which also neuters the
+		 *   `runOnStart` path. `apps/worker` owns scheduled jobs; if the API ran them too, every
+		 *   scheduled job would execute twice.
+		 * - `logRegisteredJobs: false` → discovery would otherwise log "Registered scheduled job"
+		 *   for jobs this process will never fire.
+		 *
+		 * 🛑 Conditional by design — with `REDIS_ENABLED` unset there is NO root at all and every
+		 * consumer keeps its in-process fallback (the Documents plugin dispatches stages inline).
+		 * That is the path single-container and dev setups run on and it must keep working.
+		 * `SCHEDULER_QUEUE_ENABLED=false` forces it off even where Redis is configured.
+		 */
+		...(isSchedulerQueueRootEnabled()
+			? [
+					SchedulerModule.forRoot({
+						enabled: false,
+						enableQueueing: true,
+						logRegisteredJobs: false
+					})
+			  ]
+			: []),
 		//Token cleanup scheduler is disabled by default; enable when ready
 		TokenModule.forRoot({ enableScheduler: false }),
 		AccessTokenModule,

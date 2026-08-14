@@ -1,75 +1,45 @@
 @use '@shared/_pg-card' as *;
 
-.action {
-  box-shadow: var(--gauzy-shadow);
+// `@shared/_pg-card` forwards `gauzy/_gauzy-table`, so the shared `.action`,
+// `.actions`, `button`, `.gauzy-button-container` and `.card-custom-header`
+// rules are ALREADY emitted into this component's sheet by the line above.
+//
+// This file (and, through `@forward`, product categories, merchants,
+// warehouses and the inventory items table) used to restate all of them, and
+// the copy had drifted away from the shared block it was taken from:
+//   * `.info` → a bare `background-color: #0088fe`, where the shared block
+//     resolves `color-info-default`, gates it on the filled/basic pair, and
+//     also sets a readable `color: white`. A button here would have got a raw
+//     blue fill with whatever text colour it inherited.
+//   * `.success` → `rgba(37, 184, 105, 1)`, the literal that
+//     `color-success-default` happens to hold in the two gauzy themes and in
+//     none of the other six.
+//   * `.warning` → `rgba(245, 109, 88, 1)`; `.primary.soft` →
+//     `rgba(110, 73, 232, 0.1)`.
+// Being second in the sheet, the copy won every one of those. Deleted, so the
+// themed definitions apply — including on any button these pages grow later.
+//
+// Whatever remains below is what genuinely differs from the shared defaults.
 
-  &[nbButton].appearance-filled.status-basic {
-    background-color: #ffffff;
-  }
-
-  &.info {
-    background-color: #0088fe;
-  }
-
-  &.secondary {
-    color: #7e7e8f;
-  }
-
-  &.success {
-    color: rgba(37, 184, 105, 1);
-  }
-
-  &.warning {
-    color: rgba(245, 109, 88, 1);
-  }
-
-  &.primary {
-    &[nbButton].appearance-filled.status-basic,
-    .appearance-filled.status-basic[nbButtonToggle] {
-      color: nb-theme(text-primary-color);
-    }
-
-    &.soft {
-      &[nbButton].appearance-filled.status-basic {
-        background-color: rgba(110, 73, 232, 0.1);
-      }
-    }
-  }
-
-  &.select-nb ::ng-deep {
-    box-shadow: none;
-
-    .select-button {
-      box-shadow: var(--gauzy-shadow);
-      background: rgba(245, 245, 245);
-    }
+// The one rule kept from the copy, and deliberately: the shared block writes
+// `.action.primary { color: … }` at (0,2,0), which does NOT out-rank Nebular's
+// own `[nbButton].appearance-filled.status-basic` text colour at (0,3,0). This
+// selector does, and the Edit button on these five tables (product types,
+// product categories, merchants, warehouses, inventory items) is styled by it.
+// Now resolves the same token the shared block names instead of a literal.
+.action.primary {
+  &[nbButton].appearance-filled.status-basic,
+  .appearance-filled.status-basic[nbButtonToggle] {
+    color: nb-theme(text-primary-color);
   }
 }
 
-button {
-  margin: 5px;
-}
-
+// The Edit/Delete group is inset from the card's right edge (the shared block
+// only sets the fill and radius). Note the shared `.actions` padding carries
+// `!important`, so the `padding: 0 1px` that used to sit here never applied.
 :host .actions {
-  background: var(--gauzy-card-2);
-  border-radius: nb-theme(button-rectangle-border-radius);
-  padding: 0 1px;
   @include nb-ltr(margin-right, 20px);
   @include nb-rtl(margin-left, 20px);
-}
-
-.gauzy-button-container {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-  padding-bottom: 0;
-}
-
-.card-custom-header {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  padding-bottom: 0;
 }
 
 nb-card-body {

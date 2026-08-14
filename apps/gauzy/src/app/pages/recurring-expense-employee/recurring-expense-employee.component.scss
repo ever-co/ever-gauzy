@@ -1,29 +1,40 @@
 @use 'gauzy/_gauzy-table' as *;
 
-.setting-name {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.body-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 35px;
-}
+// Removed `.setting-name` (font-size 24px / bold) and `.body-header` (flex row,
+// margin-bottom 35px). This stylesheet is emitted for exactly two templates —
+// recurring-expense-employee.component.html and, through the `@forward` in
+// expense-recurring.component.scss, expense-recurring.component.html — and
+// neither carries either class, so both blocks styled nothing.
 
 .sub-header {
   margin-bottom: 20px;
   font-weight: bold;
-  background-color: nb-theme(gauzy-card-3);
+  // `gauzy-card-3` / `gauzy-text-color-2` are not registered by the
+  // material-light and material-dark themes, and a bare `var(--…)` that
+  // resolves to nothing makes the whole declaration invalid, which would leave
+  // this band transparent with inherited text. The fallbacks are neutral
+  // translucent values that read correctly on a light and on a dark surface.
+  background-color: var(--gauzy-card-3, rgba(126, 126, 143, 0.12));
   padding: 0.75rem;
   border-radius: nb-theme(border-radius);
-  color: nb-theme(gauzy-text-color-2);
+  // Chained rather than a single literal: this fallback is reached only by
+  // material-light and material-dark, and no one fixed grey serves both — the
+  // old `rgba(126, 126, 143, 1)` is about 3.6:1 on a light band, under the 4.5:1
+  // needed for normal text (the same reason gauzy-light overrides this token to
+  // `rgba(91, 91, 107, 1)`; see themes.scss). Nebular defines `text-hint-color`
+  // in every theme and it adapts, so it takes the middle step.
+  color: var(--gauzy-text-color-2, var(--text-hint-color, rgba(113, 113, 122, 1)));
 }
 
 :host .header-content {
   display: flex;
-  margin: auto 8px auto 16px;
+  // Leading inset matched to the `.table-scroll` padding below (18px) so the
+  // column header band and its labels line up with the rows under it; it was
+  // 16px, i.e. 2px to the left of every row. The RTL override is new: the old
+  // shorthand kept the wide inset on the left in both directions. The `auto`
+  // top/bottom margins it also carried resolved to 0 in this block context.
+  margin: 0 8px 0 18px;
+  @include nb-rtl(margin, 0 18px 0 8px);
 
   .header-info {
     display: flex;
@@ -56,18 +67,18 @@
   }
 }
 
-.container {
-  padding: 0;
-}
-
-.container::-webkit-scrollbar {
-  display: none;
-}
+// Removed a first `.container { padding: 0 }` block that sat here: the second
+// `.container` block at the bottom of this file has the same specificity and
+// comes later, so its `padding: 0.5rem` always won. Its `::-webkit-scrollbar`
+// rule moved into that block too, rather than sitting loose up here.
 
 :host {
   nb-card,
   nb-card-header {
-    background-color: var(--gauzy-card-2);
+    // Fallback because `gauzy-card-2` is not registered by material-light /
+    // material-dark; without it the declaration is dropped there and the card
+    // paints transparent over the page canvas.
+    background-color: var(--gauzy-card-2, var(--card-background-color));
   }
 
   .settings-body {
@@ -86,13 +97,35 @@
     padding: 8px;
   }
 }
+// One `.container` rule. There were two — a `padding: 0` block a few lines up
+// that the later one silently overrode — plus a bare `.container::-webkit-scrollbar`
+// rule sitting between them. The two dead blocks that used to sit above them,
+// `.setting-name` and `.body-header`, matched nothing in either template that
+// uses this stylesheet.
+//
+// The rows are laid out with fixed column widths (~57rem), so this really does
+// need to scroll sideways on a narrow viewport; what it does NOT need is
+// `overflow-x: scroll`, which reserves a scrollbar gutter unconditionally. With
+// `auto` the bar only exists when there is something to scroll, and the two
+// hide-the-bar declarations now cover Firefox as well as WebKit rather than
+// WebKit alone.
 .container {
   padding: 0.5rem;
-  overflow-x: scroll;
+  // `scroll` kept a horizontal scrollbar reserved at all times. The
+  // `::-webkit-scrollbar` rule above hides it in Blink/WebKit but does nothing
+  // in Firefox, where an always-on bar sat under the list even when the rows
+  // fitted. `auto` only scrolls when the row width actually overflows.
+  overflow-x: auto;
+  scrollbar-width: none;
   height: 100%;
   margin: 0;
   max-width: unset;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
+
 .history {
   align-items: center;
   gap: 8px;

@@ -98,6 +98,13 @@ export class ToastrService {
 	 * @returns The extracted error message string.
 	 */
 	private extractErrorMessage(error: any): string {
+		// A NestJS ValidationPipe 400 carries `message` as an ARRAY of validator
+		// sentences. Before this branch existed those fell through to Angular's
+		// synthetic "Http failure response for <url>: 400 OK" — the least useful
+		// string in the whole object.
+		if (Array.isArray(error?.error?.message) && error.error.message.length) {
+			return error.error.message.join('; ');
+		}
 		if (error.error && error.error.message && typeof error.error.message === 'string') {
 			return error.error.message;
 		} else if (error.message && typeof error.message === 'string') {

@@ -47,7 +47,7 @@ export const navigateToTimeOff = async () => {
 	const page = getPage();
 	// ORG POLLUTION FIX: the suite shares one DB/browser context and the web app persists the
 	// last-selected organizationId (Store -> localStorage), so this spec frequently runs with a random
-	// faker org selected (the failure DOM showed "Time Off for Denesik Group"). Random orgs only have
+	// faker org selected (the failure DOM showed "Time Off for <a faker company>"). Random orgs only have
 	// "Policy 1".."Policy 10" — never the seeded "Default Policy" — so the hardcoded policy pick never
 	// lands, the request form stays invalid (Save [disabled]), nothing persists, and verifyPolicyExists
 	// times out. Force the header org selector back to "Default Company" (the only org seeded with
@@ -337,11 +337,43 @@ export const clickSelectEmployeeDropdown = async () => {
 	await getPage().waitForTimeout(500);
 };
 
+/**
+ * Collapse the "Add or Remove Employees" nb-select panel WITHOUT pressing Escape.
+ *
+ * A multiple nb-select keeps its panel open after a pick, and the panel hangs over the rest of the
+ * dialog, so it does have to be closed. Escape is the wrong tool: nb-dialog is opened with
+ * closeOnEsc, so the keystroke only dismisses the panel if the panel is still open to swallow it —
+ * otherwise it reaches the dialog and closes the WHOLE holiday form. That is what happened here: the
+ * Add Holidays form vanished mid-fill and the next field (`nb-select[id="policy"]`) was never found,
+ * with the plain Time Off grid underneath in the failure snapshot.
+ *
+ * Toggle the select shut through its own button instead (dispatched, so the panel we are closing
+ * cannot swallow the click) and confirm with nb-select's `open` class.
+ */
+const closeEmployeeSelect = async () => {
+	const page = getPage();
+	// Target whichever nb-select is currently OPEN rather than re-finding this one: nb-select puts an
+	// `open` class on its host while the panel is up, and its own caption changes as soon as employees
+	// are picked, so a `:has-text("Add or Remove Employees")` lookup stops matching exactly when we
+	// need it (and then costs a full action timeout per attempt).
+	const openSelect = page.locator('nb-select.open');
+	for (let attempt = 0; attempt < 5; attempt++) {
+		if ((await openSelect.count().catch(() => 0)) === 0) return;
+		await openSelect
+			.first()
+			.locator('button.select-button')
+			.first()
+			.dispatchEvent('click')
+			.catch(() => {});
+		await page.waitForTimeout(400);
+	}
+};
+
 export const selectEmployeeFromHolidayDropdown = async (index: number) => {
 	// Best-effort employee pick (mirror ContactsLeads.selectEmployeeDropdownOption): this nb-select's
 	// option list (.option-list nb-option) loads async and may be empty/closed. Since the open is now a
 	// dispatchClick that can be swallowed by a backdrop, RE-OPEN the nb-select up to a few times until an
-	// option renders, then click it. On miss, dismiss only the panel (Escape) and continue — a hard
+	// option renders, then click it. On miss, dismiss only the panel and continue — a hard
 	// option[index] click must not hang the 60s task timeout on an empty/closed list.
 	const page = getPage();
 	const option = page.locator(TimeOffPage.selectEmployeeDropdownOptionCss);
@@ -352,9 +384,9 @@ export const selectEmployeeFromHolidayDropdown = async (index: number) => {
 				.nth(index)
 				.dispatchEvent('click')
 				.catch(() => option.nth(index).click({ force: true }).catch(() => {}));
-			// Close the multi-select panel so it doesn't overlay the next control (nb-select multiple stays
-			// open after a pick). Escape only dismisses the panel, keeping the selection.
-			await page.keyboard.press('Escape').catch(() => {});
+			// Close the multi-select panel so it doesn't overlay the next control — never with Escape,
+			// which closes the dialog itself (see closeEmployeeSelect).
+			await closeEmployeeSelect();
 			return;
 		}
 		// Idempotent open: only (re)toggle when nothing is rendered, so we never close a mid-populating list.
@@ -364,7 +396,7 @@ export const selectEmployeeFromHolidayDropdown = async (index: number) => {
 		}
 		await page.waitForTimeout(900);
 	}
-	await page.keyboard.press('Escape').catch(() => {});
+	await closeEmployeeSelect();
 };
 
 export const startHolidayDateInputVisible = async () => verifyElementIsVisible(TimeOffPage.startHolidayDateCss);
@@ -515,7 +547,8 @@ export const waitMessageToHide = async () => waitElementToHide(TimeOffPage.toast
 
 export const verifyPolicyExists = async (text: string) => {
 	// Assert the policy name renders in a grid cell. Used for BOTH the request grid (Policy column, a
-	// custom ApprovalPolicyComponent that renders <div>{{ value.name }}</div>) and the settings grid
+	// custom ApprovalPolicyComponent that renders <div class="policy">{{ value.name }}</div>, or an
+	// em-dash in a <span class="empty"> when the request has no policy) and the settings grid
 	// (Name column, a type:'string' cell). The old 'div.ng-star-inserted' worked for the custom-render
 	// request cell but a plain string cell has no such wrapper div — so scope the verify to the smart-table
 	// CELL element (present in both grids) filtered by the exact name. This is pollution-safe (matches the

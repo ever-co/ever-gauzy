@@ -1,68 +1,24 @@
+// `@shared/_pg-card` forwards `gauzy/_gauzy-table`, so this page already receives
+// the shared `.action` / `.actions` / `.gauzy-button-container` /
+// `.card-custom-header` rules — the same ones Income, Payments and Received
+// invoices get. This file used to carry a near-verbatim copy of that block plus a
+// card-body height override on top of them. All of it is gone:
+//
+//   * `.action.info` (`#0088fe`), `.action.success` and `.action.warning` (literal
+//     greens and oranges) were hard-coded colours on classes this page's template
+//     never uses — its toolbar only carries `.action`, `.action.primary`,
+//     `.action.primary.soft` and `.action.secondary`.
+//   * `.actions { margin-right: 20px }` inset this page's toolbar 20px from the
+//     card edge; the sibling list pages, which take the shared `.actions`
+//     unmodified, sit flush.
+//   * `.card-custom-header`, `.gauzy-button-container` and `button` were
+//     character-for-character copies of the shared rules.
+//   * every `nb-theme(...)` call in the copy compiled to a plain CSS function and
+//     was dropped by the browser: this file only ever `@forward`ed, which
+//     re-exports to importers without bringing anything into its own scope.
+//   * `:host nb-card-body { overflow: unset; height: calc(100vh - 17.5rem)
+//     !important }` — a hand-tuned viewport constant that out-ranked the flex
+//     column `_pg-card` gives every other list page, so the Expenses table was a
+//     different height from its siblings and had back the problem the shared
+//     partial exists to solve (a gap under a short table, a clipped long one).
 @forward '@shared/_pg-card';
-
-.action {
-  box-shadow: var(--gauzy-shadow);
-  &[nbButton].appearance-filled.status-basic {
-    background-color: #ffffff;
-  }
-  &.info {
-    background-color: #0088fe;
-  }
-  &.secondary {
-    color: #7e7e8f;
-  }
-  &.success {
-    color: rgba(37, 184, 105, 1);
-  }
-  &.warning {
-    color: rgba(245, 109, 88, 1);
-  }
-  &.primary {
-    &[nbButton].appearance-filled.status-basic,
-    .appearance-filled.status-basic[nbButtonToggle] {
-      color: nb-theme(text-primary-color);
-    }
-    &.soft {
-      &[nbButton].appearance-filled.status-basic {
-        background-color: rgba(110, 73, 232, 0.1);
-      }
-    }
-  }
-  &.select-nb ::ng-deep {
-    box-shadow: none;
-    .select-button {
-      box-shadow: var(--gauzy-shadow);
-      background: rgba(245, 245, 245);
-    }
-  }
-}
-
-button {
-  margin: 5px;
-}
-
-.actions {
-  background: var(--gauzy-card-2);
-  border-radius: nb-theme(button-rectangle-border-radius);
-  padding: 0 1px;
-  margin-right: 20px;
-}
-
-.gauzy-button-container {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-  padding-bottom: 0;
-}
-
-.card-custom-header {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  padding-bottom: 0;
-}
-
-:host nb-card-body {
-  overflow: unset;
-  height: calc(100vh - 17.5rem) !important;
-}

@@ -1,8 +1,4 @@
-<nb-card
-  [nbSpinner]="loading"
-  [nbSpinnerStatus]="'primary'"
-  [nbSpinnerSize]="'large'"
-  >
+<nb-card>
   <nb-card-header class="flex flex-column">
     <div class="card-header-title">
       <h4>
@@ -20,7 +16,7 @@
       ></ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body class="settings-body">
+  <nb-card-body class="settings-body" [nbSpinner]="loading" [nbSpinnerStatus]="'primary'" [nbSpinnerSize]="'large'">
     <div class="container">
       @if (expenses?.length) {
         <div
@@ -68,6 +64,7 @@
       @if (!loading && expenses?.length == 0) {
         <div class="no-data">
           <ngx-no-data-message
+            [loading]="loading"
             [message]="'ORGANIZATIONS_PAGE.EXPENSE_NO_DATA_MESSAGE' | translate"
           ></ngx-no-data-message>
         </div>
@@ -94,10 +91,10 @@
     <ng-template ngxPermissionsOnly="ORG_EXPENSES_VIEW">
       <button
         nbButton
+        (click)="viewOrganizationRecurringExpense()"
         class="action secondary"
         size="small"
         status="basic"
-        underConstruction
         >
         <nb-icon icon="eye-outline"></nb-icon>
         {{ 'BUTTONS.VIEW' | translate }}
@@ -141,3 +138,16 @@
     </ng-template>
   </div>
 </ng-template>
+
+<!-- Read-only View. The projected content is gated here (not inside the drawer)
+     so the record renderer is built fresh for each entry that is opened. -->
+<ngx-record-view-drawer
+  [open]="!!viewedRecurringExpense"
+  heading="ORGANIZATIONS_PAGE.RECURRING_EXPENSE"
+  [subtitle]="getCategoryName(viewedRecurringExpense?.categoryName)"
+  (closed)="closeView()"
+  >
+  @if (viewedRecurringExpense) {
+    <ngx-record-view [record]="viewedRecurringExpense" [sections]="viewSections"></ngx-record-view>
+  }
+</ngx-record-view-drawer>

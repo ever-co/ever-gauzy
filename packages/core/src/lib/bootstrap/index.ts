@@ -38,6 +38,7 @@ import * as chalk from 'chalk';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { urlencoded, json } from 'express';
+import { IncomingMessage } from 'node:http';
 import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, defineConfig, environment } from '@gauzy/config';
@@ -108,9 +109,23 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		process.on('unhandledRejection', handleUnhandledRejection);
 	}
 
-	// Set JSON and URL-encoded body parsers with a size limit
-	app.use(json({ limit: '50mb' }));
-	app.use(urlencoded({ extended: true, limit: '50mb' }));
+	// Set JSON and URL-encoded body parsers with a size limit.
+	//
+	// The `verify` hook stashes the raw request bytes on `request.rawBody`. Webhook receivers that
+	// verify an HMAC signature MUST hash exactly what the sender hashed, and `JSON.stringify(body)`
+	// is not that: key order, whitespace and number/unicode formatting all survive the wire but not
+	// a parse/re-serialize round trip. Without this, the Documents inbound-email adapter silently
+	// fell back to re-serialized JSON, which happens to work only when the sender canonicalizes its
+	// body the same way Node does — i.e. not with a real mail provider.
+	//
+	// Cost is one Buffer reference per request; the buffer already exists, so nothing is copied.
+	const captureRawBody = (request: IncomingMessage & { rawBody?: Buffer }, _response: unknown, buffer: Buffer) => {
+		if (buffer?.length) {
+			request.rawBody = buffer;
+		}
+	};
+	app.use(json({ limit: '50mb', verify: captureRawBody }));
+	app.use(urlencoded({ extended: true, limit: '50mb', verify: captureRawBody }));
 
 	// Enable CORS with specific settings
 	// In production, ALLOWED_ORIGINS should be set to a comma-separated list of trusted origins.
@@ -559,11 +574,73 @@ export function getMigrationsConfig() {
 }
 
 /**
+ * Connection-option keys that must never be written to stdout. Compared case-insensitively, so
+ * `sslCA`, `sslca` and `SSLCA` are all covered — driver options differ in casing between drivers.
+ */
+const DB_CONFIG_SECRET_KEYS = new Set(
+	['password', 'passphrase', 'ssl', 'sslkey', 'sslcert', 'sslca', 'key', 'cert', 'ca', 'pfx', 'secret', 'token'].map(
+		(key) => key.toLowerCase()
+	)
+);
+
+const REDACTED = '[REDACTED]';
+const CIRCULAR = '[CIRCULAR]';
+
+/**
+ * Returns a copy of `value` with every credential-bearing field replaced by a placeholder.
+ * Recurses into plain objects and arrays so nested config (`extra`, `replication`, …) is covered too.
+ *
+ * Fails closed by design: anything past the depth limit is replaced wholesale rather than passed
+ * through unchecked, and repeated object references are collapsed so that a cyclic config cannot
+ * make the `JSON.stringify` in `logDBConfig` throw and abort startup.
+ */
+function redactDBSecrets(value: unknown, depth = 0, seen: WeakSet<object> = new WeakSet()): unknown {
+	// 6 levels is far deeper than any real DB config; redact rather than emit unchecked data.
+	if (depth > 6) return REDACTED;
+	if (value === null || typeof value !== 'object') return value;
+
+	// Break reference cycles - without this, JSON.stringify() would throw on a cyclic config.
+	if (seen.has(value as object)) return CIRCULAR;
+	seen.add(value as object);
+
+	try {
+		if (Array.isArray(value)) return value.map((item) => redactDBSecrets(item, depth + 1, seen));
+
+		return Object.fromEntries(
+			Object.entries(value as Record<string, unknown>).map(([key, val]) => {
+				if (val === undefined || val === null) return [key, val];
+				if (DB_CONFIG_SECRET_KEYS.has(key.toLowerCase())) return [key, REDACTED];
+				// A connection URL can embed `user:password@host` in its userinfo section. Keep the
+				// username - it is a useful diagnostic - and redact only the password.
+				if ((key === 'url' || key === 'connectionString') && typeof val === 'string') {
+					return [
+						key,
+						val.replace(/\/\/([^:@/]*)(:[^@/]*)?@/, (match, user, password) =>
+							password ? `//${user}:${REDACTED}@` : match
+						)
+					];
+				}
+				return [key, redactDBSecrets(val, depth + 1, seen)];
+			})
+		);
+	} finally {
+		// Only a true ancestor cycle should collapse; a value referenced twice in sibling
+		// branches is not a cycle and should still be rendered in full.
+		seen.delete(value as object);
+	}
+}
+
+/**
  * Logs the current database configuration for debugging or informational purposes.
  * Excludes entities and subscribers arrays to keep the output readable.
+ *
+ * ⚠️ This writes to stdout, which on Kubernetes is readable by anyone who can run
+ * `kubectl logs` on the namespace, and is shipped to whatever log backend is configured.
+ * Every credential-bearing field is therefore redacted before it is serialised —
+ * do not reintroduce a raw `JSON.stringify` of the connection options here.
  */
 function logDBConfig(config: ApplicationPluginConfig): void {
 	// Destructure to exclude entities and subscribers from the log output
 	const { entities, subscribers, ...dbConfigWithoutEntities } = config.dbConnectionOptions;
-	console.log(chalk.green(`DB Config: ${JSON.stringify(dbConfigWithoutEntities)}`));
+	console.log(chalk.green(`DB Config: ${JSON.stringify(redactDBSecrets(dbConfigWithoutEntities))}`));
 }

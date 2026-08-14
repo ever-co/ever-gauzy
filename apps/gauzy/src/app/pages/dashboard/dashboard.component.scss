@@ -1,5 +1,71 @@
 @use 'var' as *;
 
+/*
+ * ── The dashboard page is the ONE scroll surface ─────────────────────────────
+ *
+ * `packages/ui-core/static/styles/_overrides.scss` clamps
+ * `nb-layout:has(ga-dashboard-layout) .scrollable-container` to
+ * `overflow-y: hidden` so the fixed header and the app footer stay in view.
+ * Something inside this page therefore has to scroll, and it used to be every
+ * widget panel individually: each was pinned to `calc(100vh - header - footer -
+ * 11.5rem)` and scrolled internally, which put a second scrollbar inside the
+ * page ("no scrolling in that block where we display widgets!").
+ *
+ * That hand-tuned offset also stopped describing reality — the density pass
+ * changed the tab / card / button metrics and an always-visible chips row was
+ * added above the tabs — so the widget grid was both clipped AND scrollable.
+ *
+ * Now the page column scrolls and the widget blocks grow to their natural
+ * height (the clamps are gone from the time-track plugin page and from the
+ * custom-dashboard canvas). Nothing here depends on a measured chrome height:
+ * the container simply fills the layout column and scrolls whatever it holds.
+ */
+:host {
+	display: block;
+	height: 100%;
+	// Shrink with the layout column instead of forcing it open
+	min-height: 0;
+}
+
+.dashboard-container {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	overflow-y: auto;
+	// Horizontal overflow belongs to individual widgets, never to the page
+	overflow-x: hidden;
+
+	// The chips row and the tabs (which host the routed page) keep their natural
+	// height and the container scrolls past them — no flex child may be squeezed
+	// back into the viewport, or we are right back to a clipped widget grid.
+	> ga-dashboard-switcher,
+	> gz-dynamic-tabs {
+		flex: 0 0 auto;
+	}
+}
+
+/*
+ * A custom dashboard brings its own tab strip, so the STANDARD tabset's tab bar
+ * is hidden while one is open.
+ *
+ * Only the BAR. Nebular's `nb-route-tabset` template is
+ * `<ul class="route-tabset">` followed by `<router-outlet>`, so the routed page
+ * — the custom dashboard itself — renders INSIDE `gz-dynamic-tabs`. Hiding the
+ * host element would blank the very page the flag is set for.
+ *
+ * `display: none` (not `visibility` / zero height) so no empty band is left
+ * behind, and the rule lives here rather than borrowing a global `.hidden`
+ * utility: Bootstrap dropped `.hidden` after v3, which is why the binding was a
+ * no-op and the empty tab band survived.
+ */
+:host ::ng-deep gz-dynamic-tabs.hidden {
+	> nb-route-tabset > .route-tabset,
+	> nb-tabset > .tabset {
+		display: none;
+	}
+}
+
 .header {
   padding: 30px;
 
@@ -67,28 +133,35 @@
     height: 84px;
     border-radius: 4px;
     padding: 29px;
-    background-color: #f6f9fc;
+    // #f6f9fc / #333333 were a hard-coded light-blue tile with dark text on the
+    // landing route. They must move together or the tile becomes unreadable.
+    background-color: var(--gauzy-card-2);
     cursor: pointer;
     .info-text,
     .info-value {
       display: flex;
       font-size: 18px;
-      color: #333333;
+      color: var(--text-basic-color);
 
+      // Four literal status colours here resolved to two meanings: green for
+      // "profit up" / "income", orange-yellow for "profit down" / "expense".
+      // They were two slightly different greens and two slightly different
+      // yellows, none of which changed per theme. Mapped onto the status
+      // tokens, which do.
       .profit-positive-color {
-        color: #66de0b;
+        color: nb-theme(color-success-default);
       }
 
       .profit-negative-color {
-        color: #ff7b00;
+        color: nb-theme(color-warning-default);
       }
 
       .expense-color {
-        color: #dbc300;
+        color: nb-theme(color-warning-default);
       }
 
       .income-color {
-        color: #089c17;
+        color: nb-theme(color-success-default);
       }
     }
 
@@ -127,7 +200,7 @@
       :last-child {
         font-size: 46px;
         font-weight: bold;
-        color: #0091ff;
+        color: nb-theme(color-info-default);
       }
 
       .negative-bonus-color {

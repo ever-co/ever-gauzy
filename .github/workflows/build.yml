@@ -1,0 +1,162 @@
+name: Build
+
+# Replaces the CircleCI `build` workflow, which could not complete on that plan: a cold
+# `yarn install` for this monorepo takes ~46 minutes and saving the node_modules cache another ~9,
+# which exceeds the 60-minute job cap — so the cache was never written and every run started cold.
+# Self-hosted runners have no such cap.
+#
+# LATENCY IS A CORRECTNESS PROPERTY OF THIS GATE. The 2026-08-13 template-error incident was not
+# a coverage gap — build-web caught the error — but its verdict landed 74 minutes AFTER the PR
+# had been merged on a still-pending check (~3h19m push-to-verdict). Two structural causes fixed
+# here:
+#   1. `build-libs` is its own job: `build:package:all` is where every LIBRARY's strict template
+#      check runs (each lib's tsconfig sets strictTemplates — the app tsconfig is lax in every
+#      configuration), so the verdict that catches template errors now reports as its own named
+#      check ~install+~20min after push instead of at the end of the longest job. Treat a
+#      pending/cancelled `build-libs`/`build-web` as a red: NEVER merge on yellow — the PR
+#      concurrency group cancels superseded runs, so "no failure" often just means "never ran".
+#   2. The `needs: build-monorepo-root` edges are gone: that job produces nothing the others
+#      consume (each re-installs from scratch), so the edge only added its full ~90 minutes as
+#      serial latency in front of every build.
+# The dev-config "Build packages" pre-step was removed from build-api/build-web: the app builds
+# rebuild their dependency libraries themselves (Nx `dependsOn: ^build`, production config), and
+# the strict library verdict lives in `build-libs`.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - stage
+      - master
+
+# Unique to this workflow and ref. Deliberately NOT a group shared with other workflows: a shared
+# group serializes unrelated builds and silently cancels them (see the image-build starvation
+# incident). Superseded PR runs are cancelled; pushes to the long-lived branches are not.
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Mirrors the CircleCI `defaults` block. The `ng:*` scripts already set the heap themselves via
+  # cross-env, so this covers everything outside them.
+  NODE_OPTIONS: --max-old-space-size=12288
+  NG_CLI_ANALYTICS: false
+  # Nx Cloud is disabled for this org; without this `nx run-many` hard-fails with
+  # "Nx Cloud: Workspace is unable to be authorized. Exiting run."
+  NX_NO_CLOUD: true
+
+jobs:
+  build-monorepo-root:
+    name: build-monorepo-root
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+
+      - name: Run postinstall manually
+        run: yarn postinstall.manual
+
+  # The strict library verdict, as its own early-reporting check: this is the task set whose
+  # per-library `strictTemplates` tsconfigs catch template type errors (the class that broke the
+  # demo webapp image). It has no `needs` edge and no app build behind it, so it reports as soon
+  # as install + the 71 library builds finish.
+  build-libs:
+    name: build-libs
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+
+      - name: Run postinstall manually
+        run: yarn postinstall.manual
+
+      - name: Build packages
+        run: yarn build:package:all
+
+  build-api:
+    name: build-api
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+
+      - name: Run postinstall manually
+        run: yarn postinstall.manual
+
+      - name: Build API
+        run: yarn build:api:prod:ci
+
+  build-web:
+    name: build-web
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+
+      - name: Run postinstall manually
+        run: yarn postinstall.manual
+
+      - name: Build web
+        run: yarn build:gauzy:prod:ci
+
+  build-desktop:
+    name: build-desktop
+    # Matches the CircleCI branch filter: desktop was never built on ordinary PR branches.
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/stage' || github.ref == 'refs/heads/master'
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install system dependencies for Electron
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential icnsutils graphicsmagick binutils libappindicator3-1 || true
+
+      - name: Install dependencies
+        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+
+      - name: Run postinstall manually
+        run: yarn postinstall.manual
+
+      - name: Build desktop
+        run: yarn build:desktop

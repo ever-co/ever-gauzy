@@ -1,0 +1,9 @@
+<ga-teams-counter-card
+	[value]="teamsWorking().toString()"
+	[suffix]="'/' + teamsTotal()"
+	[counterValue]="teamsWorking()"
+	[total]="teamsTotal()"
+	[loading]="loading()"
+	[error]="error()"
+	(retry)="refresh()"
+></ga-teams-counter-card>

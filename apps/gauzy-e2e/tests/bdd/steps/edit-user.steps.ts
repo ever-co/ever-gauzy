@@ -51,12 +51,18 @@ When('I add a user to edit', async () => {
 	await addUserPage.confirmAddButtonVisible();
 	await addUserPage.clickConfirmAddButton();
 	await addUserPage.waitMessageToHide();
+	// Pollution-safe: the shared serial DB makes the users grid paginate ("1 - 10 of N"), so the user
+	// just added lands on page 2 and never renders. Filter the grid by the unique full name so it is
+	// the only data row on page 1 before verifying it exists (same as remove-user).
+	await editUserPage.filterByName(`${firstName} ${lastName}`);
 	await addUserPage.verifyUserExists(`${firstName} ${lastName}`);
 });
 
 When('I edit the user', async () => {
 	await editUserPage.gridButtonVisible();
 	await editUserPage.clickGridButton();
+	// Re-apply the filter (idempotent) so the row we select is the one this spec created.
+	await editUserPage.filterByName(`${firstName} ${lastName}`);
 	await editUserPage.tableRowVisible();
 	await editUserPage.selectTableRow(`${firstName} ${lastName}`);
 	await editUserPage.editButtonVisible();
@@ -94,5 +100,8 @@ When('I edit the user', async () => {
 	await editUserPage.chooseLanguage(EditUserPageData.preferredLanguage);
 	await editUserPage.saveBtnClick();
 	await addUserPage.waitMessageToHide();
+	// The rename means the grid's Full Name filter (still holding the OLD name) now excludes the very
+	// row we are about to assert on — re-filter on the new name before verifying.
+	await editUserPage.filterByName(`${editFirstName} ${editLastName}`);
 	await addUserPage.verifyUserExists(`${editFirstName} ${editLastName}`);
 });

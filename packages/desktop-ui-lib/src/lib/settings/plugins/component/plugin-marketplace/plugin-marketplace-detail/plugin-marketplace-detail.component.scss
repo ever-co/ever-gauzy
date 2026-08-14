@@ -8,7 +8,9 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  box-shadow: var(--gauzy-shadow);
+  // No `--gauzy-shadow`: it is a 1px ring on the dark canvas and this card
+  // already draws a 1px `--border-basic-color-3` border, so the two stacked into
+  // a doubled edge. The border is the hairline; the states below add the depth.
 
   &:hover {
     transform: translateY(-4px);
@@ -33,7 +35,7 @@
 
   &.verified {
     border-left: 4px solid var(--color-success-default);
-    box-shadow: -4px 0 12px rgba(0, 214, 143, 0.1), var(--gauzy-shadow);
+    box-shadow: -4px 0 12px rgba(0, 214, 143, 0.1);
   }
 
   // List view compact layout - Optimized for 336px x 214px

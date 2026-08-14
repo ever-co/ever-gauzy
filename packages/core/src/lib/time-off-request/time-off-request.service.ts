@@ -226,11 +226,17 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						query.setFindOptions({
 							skip: options.skip ? options.take * (options.skip - 1) : 0,
 							take: options.take ? options.take : 10,
-
-							...(options.join ? { join: options.join } : {}),
 							...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {})
 						});
 					}
+					/**
+					 * The `join` find-option was removed in TypeORM v1 (passing it throws, which surfaced as a
+					 * blanket 400 for every paginated request). Declare the aliases the raw predicates below
+					 * rely on explicitly instead.
+					 */
+					query.leftJoin(`${query.alias}.policy`, 'policy');
+					query.leftJoin(`${query.alias}.employees`, 'employees');
+					query.leftJoin('employees.user', 'user');
 					query.where((qb: SelectQueryBuilder<TimeOffRequest>) => {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {

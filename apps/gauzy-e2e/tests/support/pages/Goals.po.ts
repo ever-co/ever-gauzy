@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+import { expect } from '@playwright/test';
 import {
 	enterInput,
 	verifyElementIsVisible,
@@ -11,6 +13,7 @@ import {
 	verifyTextNotExisting,
 	waitUntil,
 	dispatchClick,
+	dispatchClickWhenSettled,
 	waitForSpinnerGone
 } from '../util';
 import { getPage } from '../page-context';
@@ -189,6 +192,44 @@ export const clickDeadlineDropdown = async () => {
 	await clickButton(GoalsPage.deadlineDropdownCss);
 };
 
+/**
+ * Create a goal time frame from inside the objective form.
+ *
+ * edit-objective.component.html renders `#objective-deadline` as an nb-select ONLY when
+ * `timeFrames.length > 0`; with zero time frames the SAME id is a plain "Add Time Frame" button that
+ * opens the EditTimeFrame dialog. So on an organization with no time frames, clickDeadlineDropdown()
+ * opens that dialog instead of an option list, and waiting for `.option-list nb-option` can only time
+ * out. The organization really can have none: goals-time-frame (which runs just before this spec)
+ * creates one and deletes it again, and the database has no seeded frames — `select count(*) from
+ * goal_time_frame` was 0 on the run this was diagnosed from.
+ *
+ * Fill the dialog the app itself opened. The dates matter: the later "add new deadline" step needs a
+ * frame that started in the PAST and ends in the FUTURE (key-result-details hides its update button
+ * unless both hold), so use the whole current year, which is also the shape of the seeded
+ * "Annual-<year>" frame this page object already prefers.
+ */
+const createTimeFrameFromObjectiveForm = async () => {
+	const page = getPage();
+	const dialog = page.locator(GoalsPage.timeFrameDialogCss).first();
+	await dialog.waitFor({ state: 'visible', timeout: 12_000 });
+
+	const year = new Date().getFullYear();
+	await clearField(GoalsPage.timeFrameNameInputCss);
+	await enterInput(GoalsPage.timeFrameNameInputCss, `Annual-${year}`);
+	await clearField(GoalsPage.timeFrameStartDateCss);
+	await enterInput(GoalsPage.timeFrameStartDateCss, dayjs().startOf('year').format('MMM D, YYYY'));
+	await clearField(GoalsPage.timeFrameEndDateCss);
+	await enterInput(GoalsPage.timeFrameEndDateCss, dayjs().endOf('year').format('MMM D, YYYY'));
+	// Commit the last date field so the reactive form re-validates and Save enables.
+	await page.keyboard.press('Tab').catch(() => {});
+	await waitForSpinnerGone();
+	await clickButton(GoalsPage.timeFrameSaveButtonCss);
+	// The dialog resolves and edit-objective re-runs getTimeFrames(), which swaps the button for the
+	// nb-select — wait for it to go before reopening the (now real) dropdown.
+	await dialog.waitFor({ state: 'detached', timeout: 12_000 }).catch(() => {});
+	await page.waitForTimeout(800);
+};
+
 export const selectDeadlineFromDropdown = async (index) => {
 	// Deadline is a plain nb-select bound via formControlName, so picking any option both fills the
 	// required control and enables Save.
@@ -203,7 +244,24 @@ export const selectDeadlineFromDropdown = async (index) => {
 	// Dec 31 (future) for the whole current year, so it is ALWAYS updatable. Prefer it; fall back to nth().
 	const page = getPage();
 	const option = page.locator(GoalsPage.dropdownOptionCss);
-	await option.first().waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
+	const optionsRendered = await option
+		.first()
+		.waitFor({ state: 'visible', timeout: 8000 })
+		.then(() => true)
+		.catch(() => false);
+
+	if (!optionsRendered) {
+		// No option list: the organization has no time frames, so the click landed on the
+		// "Add Time Frame" button and opened its dialog. Create the frame, then reopen the control —
+		// which is an nb-select now that timeFrames is non-empty.
+		await createTimeFrameFromObjectiveForm();
+		await clickButton(GoalsPage.deadlineDropdownCss);
+		await option
+			.first()
+			.waitFor({ state: 'visible', timeout: 12_000 })
+			.catch(() => {});
+	}
+
 	const annual = option.filter({ hasText: 'Annual' }).first();
 	if (await annual.isVisible().catch(() => false)) {
 		await annual.click({ force: true });
@@ -393,7 +451,19 @@ export const keyResultOwnerDropdownVisible = async () => {
 };
 
 export const clickKeyResultOwnerDropdown = async () => {
-	await clickButton(GoalsPage.keyResultOwnerCss);
+	// Target the nb-select INSIDE the wrapper, not the wrapper itself. `id="key-result-owner"` sits on
+	// <ga-employee-multi-select>, which CONTAINS the control rather than being it, and that component
+	// renders its <nb-select> only under `@if (loaded)` — i.e. after the employees request resolves.
+	// The wrapper therefore exists (and is clickable) while it is still an empty box, so the old
+	// coordinate click could be delivered to nothing at all; it only ever worked because hit-testing
+	// happened to reach the inner button once the fetch had landed.
+	//
+	// Waiting for the inner nb-select makes `loaded` an explicit precondition, and dispatching at it
+	// satisfies Nebular's trigger strategy (which requires the event target to be inside the host).
+	//
+	// Worth confirming rather than assuming: ownerId is REQUIRED, so a missed open leaves the form
+	// invalid, Save silently no-ops, and every later step operating on that key result fails downstream.
+	await dispatchClickWhenSettled('#key-result-owner nb-select', GoalsPage.dropdownOptionCss);
 };
 
 export const selectKeyResultOwnerFromDropdown = async (index) => {
@@ -471,12 +541,54 @@ export const enterUpdatedValueData = async (data) => {
 	await input.fill(String(data));
 };
 
+/**
+ * Confirm the key-result UPDATE dialog.
+ *
+ * Two things made the generic confirm silently no-op here, leaving BOTH the update dialog and the
+ * details dialog underneath it stacked over the page — which is why the next step could not reach the
+ * toolbar and `#key-result-weight` never appeared:
+ *
+ *  - the update dialog opens on top of the details dialog, so both are mounted and the generic
+ *    `nb-card-footer > button[status="success"]` is ambiguous; and
+ *  - the Update button is `[disabled]="!keyResultUpdateForm.valid"`, and a DISPATCHED click on a
+ *    disabled nbButton is swallowed by Nebular's own host listener (preventDefault +
+ *    stopImmediatePropagation), so it fires nothing at all and reports no error.
+ *
+ * Scope to the update dialog, wait for the button to actually be enabled, then prove the dialog went
+ * away rather than assuming it did.
+ */
+export const confirmUpdateKeyResultVisible = async () => {
+	await verifyElementIsVisible(GoalsPage.keyResultUpdateConfirmCss);
+};
+
+export const clickConfirmUpdateKeyResult = async () => {
+	const page = getPage();
+	const button = page.locator(GoalsPage.keyResultUpdateConfirmCss).first();
+	await expect(button).toBeEnabled({ timeout: 24_000 });
+	await waitForSpinnerGone();
+	await button.dispatchEvent('click').catch(() => {});
+	await page
+		.locator(GoalsPage.keyResultUpdateDialogCss)
+		.first()
+		.waitFor({ state: 'detached', timeout: 12_000 })
+		.catch(() => {});
+};
+
 export const saveDeadlineButtonVisible = async () => {
-	await verifyElementIsVisible(GoalsPage.saveDeadlineButtonCss);
+	await verifyElementIsVisible(GoalsPage.keyResultDetailsSaveCss);
 };
 
 export const clickSaveDeadlineButton = async () => {
-	await clickButton(GoalsPage.saveDeadlineButtonCss);
+	// Scoped to the DETAILS dialog (see above) and verified closed, so the next step's toolbar is
+	// actually reachable instead of sitting behind two leftover overlays.
+	const page = getPage();
+	await waitForSpinnerGone();
+	await dispatchClick(GoalsPage.keyResultDetailsSaveCss);
+	await page
+		.locator(GoalsPage.keyResultDetailsDialogCss)
+		.first()
+		.waitFor({ state: 'detached', timeout: 12_000 })
+		.catch(() => {});
 };
 
 export const weightTypeButtonVisible = async () => {

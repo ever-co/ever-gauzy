@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
   <nb-card-header class="d-flex flex-column pb-0">
     <div class="card-header-title d-flex justify-content-start">
       <ngx-back-navigation></ngx-back-navigation>
@@ -17,7 +17,7 @@
       ></ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body>
+  <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
     <!-- Check if the user has the 'TIME_OFF_POLICY_VIEW' permission -->
     <ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_POLICY_VIEW]">
       @switch (dataLayoutStyle) {
@@ -25,6 +25,7 @@
         @case (componentLayoutStyleEnum.TABLE) {
           <div class="table-scroll-container custom-table">
             <angular2-smart-table
+              [class.ga-table-loading]="loading"
               style="cursor: pointer"
               [settings]="smartTableSettings"
               [source]="smartTableSource"
@@ -38,6 +39,7 @@
         <!-- Card Grid View -->
         @case (componentLayoutStyleEnum.CARDS_GRID) {
           <ga-card-grid
+            [loading]="loading"
             [totalItems]="pagination?.totalItems"
             [settings]="smartTableSettings"
             [source]="timeOffPolicies"
@@ -55,8 +57,11 @@
     <!-- If the user does not have the 'ORG_JOB_EMPLOYEE_VIEW' permission -->
     <ng-template [ngxPermissionsExcept]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_POLICY_VIEW]">
       <div>
-        <!-- Content to display if the user does not have the 'TIME_OFF_POLICY_VIEW' permission -->
-        <p>You don't have permission to view this page</p>
+        <!-- Content to display if the user does not have the 'TIME_OFF_POLICY_VIEW' permission.
+             `TIME_OFF_PAGE.NO_PERMISSION` is the identical string the parent Time Off page
+             already uses; this copy was hardcoded English, so it stayed English in every
+             other locale. -->
+        <p>{{ 'TIME_OFF_PAGE.NO_PERMISSION' | translate }}</p>
       </div>
     </ng-template>
   </nb-card-body>

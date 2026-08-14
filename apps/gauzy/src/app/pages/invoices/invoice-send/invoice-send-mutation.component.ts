@@ -39,10 +39,20 @@ export class InvoiceSendMutationComponent extends TranslationBaseComponent imple
 	}
 
 	async send() {
-		await this.invoicesService.update(this.invoice.id, {
-			sentTo: this.invoice.organizationContactId,
-			status: InvoiceStatusTypesEnum.SENT
-		});
+		try {
+			/**
+			 * Status changes go through the dedicated action endpoint. A plain `PUT /invoices/:id`
+			 * validates against `UpdateInvoiceDTO`, which requires the full invoice
+			 * (invoiceNumber/invoiceDate/dueDate/currency) and therefore rejects this partial payload.
+			 */
+			await this.invoicesService.updateAction(this.invoice.id, {
+				sentTo: this.invoice.organizationContactId,
+				status: InvoiceStatusTypesEnum.SENT
+			});
+		} catch (error) {
+			this.toastrService.danger(error);
+			return;
+		}
 		this.dialogRef.close();
 
 		await this.invoiceEstimateHistoryService.add({

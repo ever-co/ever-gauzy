@@ -149,7 +149,7 @@
 		</nb-accordion>
 	} @else {
 		<div class="no-data">
-			<ngx-no-data-message>
+			<ngx-no-data-message [loading]="loading">
 				<div
 					message
 					[innerHTML]="

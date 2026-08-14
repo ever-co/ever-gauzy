@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { FindManyOptions, Between, Raw } from 'typeorm';
+import { FindManyOptions, Between, Raw, DeepPartial } from 'typeorm';
 import * as moment from 'moment';
 import { IPagination } from '@gauzy/contracts';
-import { LIKE_OPERATOR, TenantAwareCrudService } from '@gauzy/core';
+import { LIKE_OPERATOR, TenantAwareCrudService, sanitizeRichHtml } from '@gauzy/core';
 import { Proposal } from './proposal.entity';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
 import { TypeOrmProposalRepository } from './repository/type-orm-proposal.repository';
@@ -14,6 +14,25 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 		readonly mikroOrmProposalRepository: MikroOrmProposalRepository
 	) {
 		super(typeOrmProposalRepository, mikroOrmProposalRepository);
+	}
+
+	/**
+	 * Creates (or, via the proposal update command handler, upserts) a proposal, sanitizing the
+	 * rich-text `jobPostContent` and `proposalContent` HTML through the shared server-side
+	 * allowlist before persisting — both fields are re-rendered with `[innerHTML]` on the
+	 * proposal details view (see `sanitizeRichHtml`).
+	 *
+	 * @param entity - The proposal data to persist.
+	 * @returns The persisted proposal.
+	 */
+	public async create(entity: DeepPartial<Proposal>): Promise<Proposal> {
+		if (typeof entity.jobPostContent === 'string') {
+			entity.jobPostContent = sanitizeRichHtml(entity.jobPostContent);
+		}
+		if (typeof entity.proposalContent === 'string') {
+			entity.proposalContent = sanitizeRichHtml(entity.proposalContent);
+		}
+		return await super.create(entity);
 	}
 
 	/**

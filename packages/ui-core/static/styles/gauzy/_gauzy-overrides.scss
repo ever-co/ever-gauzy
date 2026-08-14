@@ -1,17 +1,106 @@
 // Forward themes so files importing this also get nb-theme() etc.
 @forward 'themes';
 @use 'themes' as *;
+@use 'sass:list';
+@use 'sass:map';
+@use 'rich-text-editor' as *;
 
-$default-box-shadow-inset: var(--gauzy-shadow) inset;
-$default-height: 42px;
+// ── Control edge ───────────────────────────────────────────────────────────
+// Every control in the app (input, textarea, nb-select trigger, ng-select
+// trigger, rich-text editor chrome) draws `border: none` and relies on a shadow to say
+// "this is a field". That shadow used to be `--gauzy-shadow`, i.e.
+// `0 1px 1px 0 rgb(0 0 0 / 35%)` — a black drop shadow, which is invisible on a
+// near-black canvas and reads as a smudge on a light one. A 1px INSET ring is a
+// hairline border that costs no layout box (so no field changes size, and no
+// control gains a second edge next to a `border` it may already have), and it
+// resolves the same `--gauzy-overlay-border-color` the overlay surfaces use, so
+// a field and the dropdown it opens are drawn with one line weight.
+//
+// The literal fallback is the alpha-neutral grey used everywhere else in this
+// codebase: it darkens a light surface and lightens a dark one, so one value
+// works in all 8 themes (and covers material-*, which never registered the
+// gauzy token set).
+$control-hairline: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
+// Kept under both historical names so the ~25 component stylesheets that pass
+// one of them into `nb-select-overrides()` / `ng-select-overrides()` keep
+// compiling — and now agree with each other. `--gauzy-shadow` itself is
+// untouched; it still means "elevation" for the handful of surfaces that float.
+$default-box-shadow-inset: $control-hairline;
+
+// ── Shared control geometry ────────────────────────────────────────────────
+// Derived from the density tokens rather than pinned in pixels. The density pass
+// moved `input-medium-padding` / `select-medium-*`, and every control that had
+// hard-coded its height stopped agreeing with the text inside it — a 42px pill
+// around a 13px line, an `ng-select` that silently fell back to the library's own
+// 36px, an `nb-select` that stayed at 42px. Keeping the height content-derived
+// means the next token change carries the controls with it.
+//
+// `$control-padding-y` is the block half of `input-medium-padding`, READ OUT of
+// the density map in `themes.scss` rather than copied. It cannot go through
+// `nb-theme()`: this build has Nebular's CSS-custom-properties mode on, so that
+// returns `var(--input-medium-padding)`, and a `var()` is opaque to Sass — there
+// is no way to take half of it. Slicing the map instead means retuning the token
+// carries this with it, and renaming the token fails the build rather than
+// leaving a stale copy behind.
+$control-padding-y: list.nth(map.get($gauzy-density, input-medium-padding), 1);
+// The inline half of `select-outline-medium-padding` (0.4375rem 1rem) — the
+// inset an `nb-select` button gives its own text, so an `ng-select` trigger
+// starts its text on the same x as the `nb-select` beside it.
+//
+// THE ONE HARDCODED VALUE IN THIS FILE, and deliberately so: that token is
+// defined in Nebular's own `_mapping.scss`, not in `themes.scss`, so there is no
+// Sass map here to slice — and `themes.scss` is not this change's to edit. It is
+// a framework constant rather than a knob the density pass turns, so the drift
+// risk is small; if a theme ever overrides `select-outline-medium-padding`, this
+// has to move with it.
+$control-padding-x: 1rem;
+// One line box plus both block insets — i.e. the height `nb-select` computes for
+// itself, so both combobox flavours land on the same size instead of 36 vs 42.
+$default-height: calc(#{nb-theme(select-medium-text-line-height)} + #{$control-padding-y} * 2);
 $default-radius: nb-theme(border-radius);
-$default-button-radius: calc(nb-theme(button-rectangle-border-radius) / 1.625);
-$default-box-shadow: var(--gauzy-shadow);
+// Was `calc(button-rectangle-border-radius / 1.625)` — an arithmetic dodge that
+// only existed to walk the old 2rem stadium back to something usable (~19.7px).
+// With the button radius now on the shared scale that divisor would take a
+// compact select down to ~3.7px, so this resolves the scale's control step
+// directly instead of deriving it.
+$default-button-radius: nb-theme(gauzy-radius-sm);
+$default-box-shadow: $control-hairline;
 
+// NOTE ON `!important` IN THIS MIXIN: `@ng-select/ng-select/themes/default.theme.css`
+// is listed AFTER `styles.scss` in the app's `styles` array (see the `styles`
+// block in `apps/gauzy/project.json`), and the library's own component styles are
+// injected later still, so both win every specificity tie against these rules.
+// Each `!important` below overrides one specific declaration from those sheets —
+// they are not blanket hammers.
 @mixin ng-select-overrides($height, $radius, $box-shadow) {
   .ng-select {
-    &.ng-select-single .ng-select-container {
-      height: $height;
+    // `ng-select` is third-party and carries no Nebular tokens, so it inherited
+    // `text-paragraph-font-size` and kept rendering 14px text while the density
+    // pass took every Nebular control down to 13px. Reading the same token
+    // `nb-select` reads is what makes the two match when they stand side by side
+    // in the page header.
+    font-size: nb-theme(select-medium-text-font-size);
+
+    // Sizing lives on the `single`/`multiple` variants rather than on the bare
+    // `.ng-select-container` on purpose. Those two classes are mutually exclusive
+    // and one is always present, so this covers every trigger — but at one step
+    // more specificity than the library theme's `min-height: 36px`, WITHOUT
+    // `!important`. That ordering matters: a consumer that deliberately pins a
+    // size (the page header runs its selectors at 2rem) has to keep winning, and
+    // an `!important` here would silently overrule it.
+    &.ng-select-single .ng-select-container,
+    &.ng-select-multiple .ng-select-container {
+      // `min-height`, not `height`: the trigger is sized by its content — one
+      // line box plus both block insets — so it follows the density tokens, and a
+      // taller value (an organization logo, multi-select chips) can no longer
+      // overflow the pill. It also clamps the theme's `height: 36px` up to the
+      // token-derived size without having to fight that declaration directly.
+      min-height: $height;
+      // Centre the content explicitly instead of relying on the value box
+      // happening to fill the pill, so a consumer-imposed fixed height keeps the
+      // text on the middle line rather than dropping it to the top.
+      align-items: center;
     }
 
     &.ng-select-opened > .ng-select-container:hover {
@@ -25,21 +114,60 @@ $default-box-shadow: var(--gauzy-shadow);
     .ng-select-container {
       border-radius: $radius;
       box-shadow: $box-shadow;
-      height: $height;
       border: none;
       &:hover {
         box-shadow: $box-shadow;
       }
 
+      .ng-value-container {
+        align-items: center;
+        // ONE inset for the whole trigger. Each selector used to set its own
+        // (0 / 5px / 10px) and the placeholder added another 15px on top, so the
+        // text jumped horizontally the moment a value was picked and the header
+        // selectors never shared a left edge with each other.
+        // A logical property rather than the `nb-ltr`/`nb-rtl` pair: those are
+        // gated on an explicit `[dir]` attribute, while `padding-inline-start`
+        // flips on its own and still overrides the library theme's physical
+        // `padding-left: 10px` through the normal cascade.
+        padding-inline-start: $control-padding-x !important;
+
+        // Cancels the 15px indent that `includes/_ng-select.scss` puts on the
+        // placeholder. Nothing sets a matching margin on `.ng-value`, so the text
+        // used to shift 15px to the left the moment a value was picked. Scoped to
+        // the placeholder for the same reason: `.ng-value` in a multi-select is a
+        // chip whose own margins do the chip spacing.
+        .ng-placeholder {
+          margin: 0 !important;
+        }
+      }
+
       input {
+        // The search field is a bare `<input>`, so every rule written for a
+        // form control lands on it and paints a second control inside the pill:
+        // the global `input` rule in `text-inputs-overrides` gives it a radius,
+        // an inset shadow and — since the height there became a `min-height`
+        // floor — a full control's worth of height. That last one is not
+        // cosmetic: `.ng-input` is absolutely positioned at the top of the
+        // trigger, so a control-height floor on it pushes the text being typed
+        // below the value it replaces, which is the exact misalignment this
+        // change exists to remove. Strip the control chrome; it has to read as
+        // the trigger's own text.
         height: unset;
+        // `!important` because `input-appearance`'s `::ng-deep input` rule is
+        // itself `!important`, and in a component stylesheet `::ng-deep` at the
+        // start of a selector emits an unscoped `input { ... !important }` —
+        // no specificity will beat it.
+        min-height: 0 !important;
+        border-radius: 0;
+        box-shadow: none;
+        font: inherit;
       }
     }
   }
 }
 
 @mixin dialog($card-background-color, $input-background-color) {
-  @include input-appearance(42px, $input-background-color);
+  @include input-appearance($default-height, $input-background-color);
   nb-card {
     background-color: $card-background-color;
   }
@@ -51,7 +179,9 @@ $default-box-shadow: var(--gauzy-shadow);
   ::ng-deep .ng-select .ng-select-container {
     background-color: $input-background-color !important;
     border: none;
-    height: $height !important;
+    // `min-height` so a control can still grow past the token-derived floor
+    // (multi-select chips, a wrapped label) instead of clipping its own content.
+    min-height: $height !important;
   }
 
   ::ng-deep .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder,
@@ -59,11 +189,16 @@ $default-box-shadow: var(--gauzy-shadow);
     top: unset !important;
   }
 
+  // Every form label in the app. `text-label-font-size` (0.75rem) is the density
+  // preset's own name for exactly this tier, and was being ignored in favour of
+  // a hard-coded 11px — one step off the scale, and in px, so it did not respond
+  // to the root font size. The line box is held at its previous 13px (now in
+  // rem) so no form grows.
   ::ng-deep label,
   ::ng-deep .label {
-    font-size: 11px;
+    font-size: nb-theme(text-label-font-size);
     font-weight: 600;
-    line-height: 13px;
+    line-height: 0.8125rem;
     letter-spacing: -0.01em;
     color: var(--gauzy-text-color-2);
   }
@@ -85,7 +220,9 @@ $default-box-shadow: var(--gauzy-shadow);
   input {
     border-radius: $default-radius;
     box-shadow: $default-box-shadow-inset;
-    height: $default-height;
+    // Same reasoning as the controls above: a floor, not a fixed size, so the
+    // field follows the density tokens and never crops its own text.
+    min-height: $default-height;
     background-color: nb-theme(select-outline-basic-background-color);
   }
 
@@ -102,10 +239,20 @@ $default-box-shadow: var(--gauzy-shadow);
   nb-select.shape-rectangle .select-button {
     border-radius: $radius;
     box-shadow: $box-shadow;
-    height: $height;
+    // Token-derived floor instead of the old flat 42px, which is what put an
+    // `nb-select` 6px taller than the `ng-select` next to it once the density
+    // pass shrank the control metrics.
+    min-height: $height;
     display: flex;
     align-items: center;
     border: none;
+  }
+
+  // Nebular compacted `select-medium-text-font-size` but not the matching
+  // placeholder token, so an empty select rendered its prompt one step larger
+  // than the value that replaces it — the text visibly shrinks on selection.
+  nb-select.size-medium .select-button.placeholder {
+    font-size: nb-theme(select-medium-text-font-size);
   }
 
   nb-select.appearance-outline.size-medium .select-button {
@@ -130,12 +277,14 @@ $default-box-shadow: var(--gauzy-shadow);
     border: unset;
   }
 
+  // Same tier as a form label, so the same token — the box is a fixed 24px
+  // square, so nothing here can move.
   nb-stepper .header .step .label-index {
     width: 24px;
     height: 24px;
-    font-size: 11px;
+    font-size: nb-theme(text-label-font-size);
     font-weight: 600;
-    line-height: 13px;
+    line-height: 0.8125rem;
     letter-spacing: -0.01em;
     text-align: left;
     margin: 0 !important;
@@ -188,84 +337,44 @@ $default-box-shadow: var(--gauzy-shadow);
 * Override nb-stepper
 */
 
-/*
-* Begin
-* Override ck-editor
-*/
-@mixin ck-editor() {
-  ckeditor .cke_top.cke_reset_all {
-    background-color: var(--gauzy-sidebar-background-4);
-    border-radius: var(--border-radius);
-  }
-
-  ckeditor .cke_chrome {
-    border: none;
-    border-radius: var(--border-radius);
-    padding: 12px;
-    box-shadow: var(--gauzy-shadow) inset;
-    background: var(--gauzy-card-1);
-    width: calc(100% - 20px) !important;
-  }
-
-  ckeditor .cke_top {
-    border-bottom: none;
-  }
-
-  ckeditor .cke_inner.cke_reset {
-    border-radius: var(--border-radius);
-  }
-
-  ckeditor .cke_bottom {
-    border: none;
-    border-radius: var(--border-radius);
-    background-color: var(--gauzy-sidebar-background-4);
-  }
-
-  ckeditor .cke_inner {
-    background: transparent;
-  }
-
-  .nb-theme-gauzy-light {
-    ckeditor .cke_button_icon {
-      filter: brightness(0) invert(0);
-    }
-  }
-
-  .nb-theme-gauzy-dark {
-    ckeditor .cke_button_icon {
-      filter: brightness(0) invert(1);
-    }
-  }
-
-  ckeditor {
-    a.cke_button_off:hover,
-    a.cke_button_on,
-    a.cke_button_off:focus,
-    a.cke_button_off:active {
-      background: var(--gauzy-card-1);
-      border: none;
-      border-radius: var(--border-radius);
-    }
-  }
-
-  ckeditor .cke_button_label {
-    color: var(--text-basic-color);
-  }
-}
-
-/*
-* End
-*/
-
 @mixin gauzy-overrides() {
   @include nb-select-overrides($default-height, $default-radius, $default-box-shadow-inset);
   @include text-inputs-overrides;
   @include ng-select-overrides($default-height, $default-radius, $default-box-shadow-inset);
   @include nb-stepper;
   @include full-calendar();
-  @include ck-editor();
-  @include input-appearance(42px, var(--gauzy-card-1));
+  @include rich-text-editor();
+  @include input-appearance($default-height, var(--gauzy-card-1));
   @include nb-tabset-overrides;
+  @include ng-select-text-alignment();
+}
+
+/// Vertically centres the text inside an `ng-select` trigger.
+///
+/// ng-select positions `.ng-placeholder` and `.ng-input` with `top: 5px`, tuned
+/// for its own default control height. Against our control height that lands the
+/// text high in the box — visible on the dashboard's "All Teams" / "All Projects"
+/// / "All Employees" selectors, and worst while typing, because `.ng-input` is a
+/// separate overlaid element from the value it replaces.
+///
+/// `input-appearance()` already contains these two rules, but every selector in
+/// that mixin is written `::ng-deep …`. Angular only strips `::ng-deep` from
+/// COMPONENT stylesheets; `gauzy-overrides()` is installed from the global
+/// `styles.scss`, where it survives into the output verbatim — and a browser
+/// treats `::ng-deep` as an unknown pseudo-element and discards the whole rule.
+/// The compiled `dist/apps/gauzy/styles.css` carries 10 such dead selectors.
+///
+/// So the alignment is restated here with plain selectors, which is what the
+/// global sheet needs: global CSS is unscoped, so it already reaches inside
+/// `ng-select` without any piercing combinator. Deliberately narrow — un-deadening
+/// the rest of `input-appearance` would newly apply `background-color … !important`
+/// and a `min-height` floor to every input in the app, which is a much larger
+/// change than the misalignment being fixed.
+@mixin ng-select-text-alignment() {
+  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder,
+  .ng-select.ng-select-single .ng-select-container .ng-value-container .ng-input {
+    top: unset;
+  }
 }
 
 @mixin full-calendar() {
@@ -275,10 +384,13 @@ $default-box-shadow: var(--gauzy-shadow);
     div.fc-header-toolbar {
       .fc-toolbar-chunk {
         h2.fc-toolbar-title {
-          /* Override title typography*/
-          font-size: 18px;
+          // The calendar month/week title. 18px was its own size, off the
+          // heading scale in both directions; `text-heading-6-font-size` (1rem)
+          // is the scale step this belongs to. Line box held at its previous
+          // 30px so the toolbar keeps its height.
+          font-size: nb-theme(text-heading-6-font-size);
           font-weight: 600;
-          line-height: 30px;
+          line-height: 1.875rem;
           letter-spacing: 0em;
           text-align: left;
         }
@@ -308,15 +420,17 @@ $default-box-shadow: var(--gauzy-shadow);
           .fc-timeGridDay-button,
           .fc-timeGridWeek-button,
           .fc-dayGridMonth-button {
-            border-color: rgba(126, 126, 143, 0.5);
+            border-color: var(--gauzy-border-default-color);
             border-width: 2px;
             background-color: transparent;
-            color: rgba(126, 126, 143, 1);
+            color: var(--text-hint-color);
             padding: 8px 16px;
             font-style: normal;
             font-weight: 600;
-            font-size: 12px;
-            line-height: 11px;
+            // Same 12px as before, resolved from the caption step of the scale
+            // instead of retyped in px.
+            font-size: nb-theme(text-caption-font-size);
+            line-height: 0.6875rem;
             border-radius: nb-theme(button-rectangle-border-radius);
             text-transform: capitalize;
             margin: 0 4px;
@@ -332,7 +446,7 @@ $default-box-shadow: var(--gauzy-shadow);
         .fc-next-button,
         .fc-prev-button {
           border-radius: nb-theme(button-rectangle-border-radius);
-          font-size: 12px;
+          font-size: nb-theme(text-caption-font-size);
           padding: 0;
           background-color: nb-theme(background-primary-color-1);
           border-color: nb-theme(background-primary-color-1);
@@ -347,15 +461,15 @@ $default-box-shadow: var(--gauzy-shadow);
         }
 
         .fc-today-button {
-          border-color: rgba(126, 126, 143, 0.5);
+          border-color: var(--gauzy-border-default-color);
           border-width: 2px;
           background-color: transparent;
-          color: rgba(126, 126, 143, 1);
+          color: var(--text-hint-color);
           padding: 8px 24px;
           font-style: normal;
           font-weight: 600;
-          font-size: 12px;
-          line-height: 11px;
+          font-size: nb-theme(text-caption-font-size);
+          line-height: 0.6875rem;
           border-radius: nb-theme(button-rectangle-border-radius);
           text-transform: capitalize;
         }
@@ -395,7 +509,9 @@ $default-box-shadow: var(--gauzy-shadow);
         th.fc-col-header-cell {
           border: none;
           border-radius: nb-theme(border-radius);
-          background-color: rgba($color: white, $alpha: 0.75);
+          // Was rgba(white, 0.75) — a near-white block on every column header,
+          // in every theme.
+          background-color: var(--gauzy-sidebar-background-3);
           padding: 11px 15px 11px 10px;
         }
 
@@ -407,13 +523,15 @@ $default-box-shadow: var(--gauzy-shadow);
           padding: 0;
         }
 
+        // Both were rgba(white, 0.25): every time lane and every day column
+        // rendered as a light-grey block regardless of theme.
         td.fc-timegrid-slot-lane {
-          background-color: rgba($color: white, $alpha: 0.25);
+          background-color: var(--gauzy-sidebar-background-4);
           border-radius: nb-theme(border-radius);
         }
 
         td[role='gridcell'].fc-timegrid-col {
-          background-color: rgba($color: white, $alpha: 0.25);
+          background-color: var(--gauzy-sidebar-background-4);
           border-radius: nb-theme(border-radius);
         }
       }
@@ -462,7 +580,7 @@ $default-box-shadow: var(--gauzy-shadow);
   }
 
   .fc-event {
-    background-color: rgba(126, 126, 143, 0.1);
+    background-color: var(--gauzy-card-3);
     border-radius: nb-theme(border-radius);
 
     &.fc-v-event {
@@ -494,7 +612,9 @@ $default-box-shadow: var(--gauzy-shadow);
   .fc .fc-timegrid-axis-frame,
   .fc .fc-daygrid-day-frame,
   .fc fc-timegrid-col-bg > * {
-    background-color: rgba($color: white, $alpha: 0.5);
+    // Was rgba(white, 0.5) — the day cells themselves, i.e. the largest area of
+    // the calendar, painted 50 % white in every theme.
+    background-color: var(--gauzy-card-2);
     border-radius: nb-theme(border-radius);
   }
 
@@ -503,17 +623,22 @@ $default-box-shadow: var(--gauzy-shadow);
   }
 }
 
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+// These four rules used to hard-code `font-size: 16px`, which SILENTLY beat the
+// `tabset-tab-text-font-size` / `route-tabset-tab-text-font-size` tokens the
+// density preset sets to 0.875rem — the tokens resolved correctly and were then
+// overwritten by a later rule with no error anywhere. The two tab bars are
+// split into their own rules (they were one selector) so each can resolve its
+// OWN token; a shared selector could only ever honour one of them.
+//
+// `line-height` is deliberately pinned to the value it already computed (1rem =
+// the old 16px) rather than raised to Nebular's `tabset-tab-text-line-height`:
+// that would add 8px to every tab bar in the app, and this pass is allowed to
+// change type sizes, not the boxes around them.
 @mixin nb-tabset-overrides() {
-  nb-tabset .tabset .tab.active a.tab-link,
-  nb-route-tabset .route-tabset .route-tab.active a.tab-link {
+  nb-tabset .tabset .tab.active a.tab-link {
+    @include tab-link-typography(nb-theme(tabset-tab-text-font-size), 600);
     border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-    display: flex;
-    align-items: center;
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 16px;
-    letter-spacing: 0em;
-    text-align: center;
     color: var(--text-primary-color);
 
     nb-icon {
@@ -523,31 +648,58 @@ $default-box-shadow: var(--gauzy-shadow);
     }
   }
 
-  nb-tabset .tabset .tab a.tab-link,
-  nb-route-tabset .route-tabset .route-tab a.tab-link {
-    display: flex;
-    align-items: center;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 16px;
-    letter-spacing: 0em;
-    text-align: center;
-    color: var(--gauzy-text-color-2);
+  nb-route-tabset .route-tabset .route-tab.active a.tab-link {
+    @include tab-link-typography(nb-theme(route-tabset-tab-text-font-size), 600);
+    border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
+    color: var(--text-primary-color);
 
     nb-icon {
       svg {
-        fill: var(--gauzy-text-color-2);
+        fill: var(--text-primary-color);
       }
     }
+  }
+
+  nb-tabset .tabset .tab a.tab-link {
+    @include tab-link-typography(nb-theme(tabset-tab-text-font-size), 400);
+    @include tab-link-colour(var(--gauzy-text-color-2));
 
     &:hover {
-      color: var(--text-primary-color);
+      @include tab-link-colour(var(--text-primary-color));
+    }
+  }
 
-      nb-icon {
-        svg {
-          fill: var(--text-primary-color);
-        }
-      }
+  nb-route-tabset .route-tabset .route-tab a.tab-link {
+    @include tab-link-typography(nb-theme(route-tabset-tab-text-font-size), 400);
+    @include tab-link-colour(var(--gauzy-text-color-2));
+
+    &:hover {
+      @include tab-link-colour(var(--text-primary-color));
+    }
+  }
+}
+
+@mixin tab-link-typography($font-size, $font-weight) {
+  display: flex;
+  align-items: center;
+  font-size: $font-size;
+  font-weight: $font-weight;
+  line-height: 1rem;
+  letter-spacing: 0em;
+  text-align: center;
+}
+
+// Takes the colour rather than nesting `&:hover` itself: a bare `&` at a mixin's
+// root has no scoping root of its own, so it only resolves once included — which
+// is true here, but it reads as unscoped to a static analyzer and is a genuine
+// trap if the mixin is ever included at the top level. The hover STATE is
+// selected by the caller; this mixin only says what a tab link's colour is.
+@mixin tab-link-colour($colour) {
+  color: $colour;
+
+  nb-icon {
+    svg {
+      fill: $colour;
     }
   }
 }

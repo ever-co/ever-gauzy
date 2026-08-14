@@ -244,11 +244,17 @@
 			</ng-container>
 			}
 			<div class="btn-wrapper">
+				<!--
+					`termsUnavailable` also gates submission: if the published
+					documents could not be loaded there is nothing to pin an
+					acceptance to, and registering anyway would reproduce the
+					very defect this replaces — a ticked box with no record.
+				-->
 				<button
 					nbButton
 					size="small"
 					class="submit-btn"
-					[disabled]="submitted || !form.valid || !user.terms"
+					[disabled]="submitted || !form.valid || !user.terms || termsUnavailable"
 					[class.btn-pulse]="submitted"
 				>
 					{{ 'BUTTONS.REGISTER' | translate }}

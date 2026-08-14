@@ -4,7 +4,7 @@ import { ICandidateCreateInput, BaseEntityEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { Candidate } from './candidate.entity';
 import { TenantAwareCrudService } from './../core/crud';
-import { MultiORMEnum } from './../core/utils';
+import { flatten, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmCandidateRepository } from './repository/type-orm-candidate.repository';
@@ -80,7 +80,7 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 					}
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
-						...(options?.relations ? { populate: Object.keys(options.relations) as any[] } : {}),
+						...(options?.relations ? { populate: flatten(options.relations) as any[] } : {}),
 						offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0,
 						limit: options?.take || 10
 					});
@@ -94,15 +94,16 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 						take: options && options.take ? options.take : 10,
 						...(options && options.relations
 							? {
-									relations: options.relations
-							  }
-							: {}),
-						...(options && options.join
-							? {
-									join: options.join
+									relations: parseFindOptionsRelations(options.relations)
 							  }
 							: {})
 					});
+					/**
+					 * The `join` find-option was removed in TypeORM v1 (passing it throws, which surfaced as a
+					 * blanket 400 for every paginated request). Declare the aliases the raw predicates below
+					 * rely on explicitly instead.
+					 */
+					query.leftJoin(`${query.alias}.user`, 'user');
 					query.where((qb: SelectQueryBuilder<Candidate>) => {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
@@ -178,7 +179,8 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 				}
 			}
 		} catch (error) {
-			throw new BadRequestException(error);
+			// Preserve the underlying reason, otherwise the client only ever sees `400 {}`.
+			throw new BadRequestException(error?.message ?? error);
 		}
 	}
 }

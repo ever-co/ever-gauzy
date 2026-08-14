@@ -1,0 +1,68 @@
+/*
+ * Layout shared by the three list-shaped Project Management widgets.
+ *
+ * A widget is created by `*ngComponentOutlet` directly inside the widget host's
+ * `nb-card-body`, so its own element is an unstyled inline box by default. The
+ * panel inside asks for `height: 100%`, which against an auto-height inline
+ * parent resolves to "as tall as the content" — the list would then grow past
+ * the card instead of scrolling inside it. Making the host a full-height block
+ * is what gives the panel a real box to measure.
+ *
+ * Referenced from several components on purpose: Angular compiles and scopes a
+ * shared stylesheet per component, so this stays N identical scoped rules rather
+ * than a global leak.
+ */
+@use 'themes' as *;
+
+:host {
+	display: block;
+	height: 100%;
+	width: 100%;
+	min-width: 0;
+}
+
+// Column of "scrolling list + optional footer". The panel — not the list — owns
+// the full height, so the footer stays pinned while only the rows scroll.
+.pm-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	height: 100%;
+	// Without this a flex item refuses to shrink below its content size, which
+	// is exactly what turns `overflow-y: auto` on the list into no scrolling at
+	// all and pushes the footer out of the card.
+	min-height: 0;
+}
+
+.pm-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	// Breathing room so a row's rounded corner is not clipped by the scrollbar.
+	padding-right: 0.25rem;
+}
+
+.pm-row {
+	padding: 0.5rem;
+	border-radius: nb-theme(border-radius);
+	background-color: nb-theme(background-basic-color-2);
+}
+
+.pm-title {
+	color: nb-theme(text-basic-color);
+	font-size: nb-theme(text-caption-font-size);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+// "Showing 50 of 340" — the honest counterpart of the legacy panel's infinite
+// scroll, which a canvas card has no room for.
+.pm-footer {
+	flex: 0 0 auto;
+	color: nb-theme(text-hint-color);
+	font-size: nb-theme(text-caption-font-size);
+}

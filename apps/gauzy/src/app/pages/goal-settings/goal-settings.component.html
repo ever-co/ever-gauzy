@@ -20,7 +20,7 @@
         </ngx-gauzy-button-action>
       </div>
     }
-    <nb-tabset class="nb-tabset" (changeTab)="tabChange($event)">
+    <nb-tabset (changeTab)="tabChange($event)">
       <nb-tab
         tabId="general"
         tabTitle="{{ 'GOALS_PAGE.SETTINGS.GENERAL' | translate }}"
@@ -259,32 +259,19 @@
       </ng-template>
       <ng-template #actionButtons let-selectedItem="selectedItem">
         <div class="btn-group actions">
-          @if (selectedTab === 'kpi') {
-            <button
-              nbButton
-              status="basic"
-              class="action secondary"
-              [disabled]="disableButton"
-              size="small"
-              underConstruction
-              >
-              <nb-icon icon="eye-outline" pack="eva"></nb-icon>
-              {{ 'BUTTONS.VIEW' | translate }}
-            </button>
-          }
-          @if (selectedTab !== 'kpi') {
-            <button
-              nbButton
-              status="basic"
-              class="action secondary"
-              [disabled]="disableButton"
-              size="small"
-              underConstruction
-              >
-              <nb-icon icon="eye-outline" pack="eva"></nb-icon>
-              {{ 'BUTTONS.VIEW' | translate }}
-            </button>
-          }
+          <!-- One View for both tabs — the route carries no view permission
+               (feature-gated only), so the button carries none either. -->
+          <button
+            nbButton
+            status="basic"
+            class="action secondary"
+            [disabled]="!selectedItem && disableButton"
+            (click)="view(selectedItem)"
+            size="small"
+            >
+            <nb-icon icon="eye-outline" pack="eva"></nb-icon>
+            {{ 'BUTTONS.VIEW' | translate }}
+          </button>
           @if (selectedTab !== 'kpi') {
             <button
               nbButton
@@ -341,6 +328,7 @@
       <ng-template #tableLayout>
         <div class="table-scroll-container">
           <angular2-smart-table
+            [class.ga-table-loading]="loading"
             [settings]="smartTableSettings"
             [source]="smartTableData"
             (userRowSelect)="selectRow($event)"
@@ -357,6 +345,7 @@
       </ng-template>
       <ng-template #gridLayout>
         <ga-card-grid
+          [loading]="loading"
           [totalItems]="pagination?.totalItems"
           [settings]="smartTableSettings"
           [source]="goalTimeFrames"
@@ -364,3 +353,16 @@
           (scroll)="onScroll()"
         ></ga-card-grid>
       </ng-template>
+
+      <!-- Read-only View. The projected content is gated here (not inside the drawer)
+           so the record renderer is built fresh for each entry that is opened. -->
+      <ngx-record-view-drawer
+        [open]="!!viewedRecord"
+        [heading]="viewHeading"
+        [subtitle]="viewedRecord?.name"
+        (closed)="closeView()"
+        >
+        @if (viewedRecord) {
+          <ngx-record-view [record]="viewedRecord" [sections]="viewSections"></ngx-record-view>
+        }
+      </ngx-record-view-drawer>

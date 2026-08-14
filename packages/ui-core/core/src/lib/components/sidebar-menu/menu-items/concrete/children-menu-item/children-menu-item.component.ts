@@ -4,6 +4,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateModule } from '@ngx-translate/core';
 import { IMenuItem, IMenuItemFocusChangeEvent } from '../../interface/menu-item.interface';
 import { NbButtonModule, NbTooltipModule } from '@nebular/theme';
 import { TooltipDirective } from '../../../../../directives/tooltip.directive';
@@ -14,7 +15,7 @@ import { TooltipDirective } from '../../../../../directives/tooltip.directive';
 	templateUrl: './children-menu-item.component.html',
 	styleUrls: ['./children-menu-item.component.scss'],
 	standalone: true,
-	imports: [CommonModule, NgxPermissionsModule, NbTooltipModule, NbButtonModule, TooltipDirective]
+	imports: [CommonModule, NgxPermissionsModule, NbTooltipModule, NbButtonModule, TooltipDirective, TranslateModule]
 })
 export class ChildrenMenuItemComponent implements OnInit {
 	private readonly router = inject(Router);
@@ -161,14 +162,5 @@ export class ChildrenMenuItemComponent implements OnInit {
 	public add(): void {
 		this.focusItemChange.emit({ children: this.item, parent: this.parent });
 		this.router.navigateByUrl(this.item.data.add);
-	}
-
-	/**
-	 * Checks if the current item is the last item among its siblings.
-	 * @returns A boolean indicating whether the current item is the last among its siblings.
-	 */
-	public isLast(): boolean {
-		const last = this.parent.children.slice(-1)[0];
-		return this.item === last;
 	}
 }

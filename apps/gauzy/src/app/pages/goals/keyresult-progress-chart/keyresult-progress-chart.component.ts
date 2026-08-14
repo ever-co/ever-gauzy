@@ -1,11 +1,14 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ElementRef, inject } from '@angular/core';
 import { IKeyResult, KeyResultDeadlineEnum, IKPI, IOrganization } from '@gauzy/contracts';
 import { GoalSettingsService } from '@gauzy/ui-core/core';
 import { differenceInCalendarDays, addMonths, compareDesc, addDays, addWeeks, addQuarters, isAfter } from 'date-fns';
 import { Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
+import { NbThemeService } from '@nebular/theme';
+import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ga-keyresult-progress-chart',
     templateUrl: './keyresult-progress-chart.component.html',
@@ -19,6 +22,18 @@ export class KeyResultProgressChartComponent extends TranslationBaseComponent im
 	@Input() keyResult: IKeyResult;
 	@Input() kpi: IKPI;
 	@Input() organization: IOrganization;
+
+	/**
+	 * Host element for theme colour lookups. Nebular emits its theme tokens as
+	 * CSS custom properties on the themed subtree (`.nb-theme-*` on `nb-layout`),
+	 * NOT on `<html>`, so they have to be resolved against an element inside it.
+	 */
+	private readonly elementRef = inject(ElementRef);
+	private readonly themeService = inject(NbThemeService);
+
+	/** Theme the current datasets were coloured for; guards the replayed emission. */
+	private renderedTheme?: string;
+
 	constructor(
 		private goalSettingsService: GoalSettingsService,
 		private store: Store,
@@ -28,7 +43,42 @@ export class KeyResultProgressChartComponent extends TranslationBaseComponent im
 	}
 
 	ngOnInit() {
+		this.renderedTheme = this.themeService.currentTheme;
 		this.updateChart(this.keyResult);
+
+		// Chart.js copies concrete colour strings into the dataset; it cannot hold a
+		// `var()` and re-resolve it. So a theme switch while this dialog is open would
+		// otherwise leave both lines painted in the colours of the theme that was
+		// active when the chart was built — the exact contrast problem the tokens were
+		// introduced to solve. Rebuilding on theme change re-reads them.
+		//
+		// Compared against the theme already drawn rather than piped through `skip(1)`:
+		// `onThemeChange()` REPLAYS the current theme to a new subscriber, so a bare
+		// subscription rebuilt the chart immediately and fired `getAllTimeFrames` a
+		// second time for every key result on screen. A name comparison drops that
+		// replay without assuming the replay is always there.
+		this.themeService
+			.onThemeChange()
+			.pipe(untilDestroyed(this))
+			.subscribe(async (theme) => {
+				const name = theme?.name;
+				if (!name || name === this.renderedTheme) {
+					return;
+				}
+				// Marked rendered only AFTER the rebuild succeeds. Setting it up front
+				// meant a failed `getAllTimeFrames` left the chart in the old theme's
+				// colours while the guard believed the new theme was drawn, so every
+				// later emission for that theme was skipped and the chart never
+				// recovered.
+				const previous = this.renderedTheme;
+				this.renderedTheme = name;
+				try {
+					await this.updateChart(this.keyResult);
+				} catch (error) {
+					this.renderedTheme = previous;
+					throw error;
+				}
+			});
 	}
 
 	public async updateChart(keyResult: IKeyResult) {
@@ -114,7 +164,12 @@ export class KeyResultProgressChartComponent extends TranslationBaseComponent im
 						labelsData
 					),
 					borderWidth: 4,
-					borderColor: 'rgb(76, 23, 33,0.25)',
+					// Was `rgb(76, 23, 33,0.25)` — four arguments in the legacy
+					// comma form, which is not a valid colour. The canvas keeps
+					// whatever `strokeStyle` it had, so the "expected" guide line
+					// was drawn in the default black: invisible on every dark
+					// theme. It is a guide, so it takes the muted text colour.
+					borderColor: this.themeColor('--text-hint-color', 'rgba(113, 113, 122, 1)'),
 					borderDash: [10, 5],
 					fill: false
 				},
@@ -122,11 +177,39 @@ export class KeyResultProgressChartComponent extends TranslationBaseComponent im
 					label: this.getTranslation('GOALS_PAGE.PROGRESS'),
 					data: this.progressData(keyResult, labelsData),
 					borderWidth: 4,
-					borderColor: '#00d68f',
+					// Was a hard-coded `#00d68f` — the old Nebular success green,
+					// the same in all eight themes and washed out on the light
+					// canvas. The theme's own success accent has a light and a
+					// dark value, so the line stays legible on both.
+					borderColor: this.themeColor('--gauzy-action-success-text', '#047857'),
 					fill: false
 				}
 			]
 		};
+	}
+
+	/**
+	 * Reads a colour off the active theme's CSS custom properties.
+	 *
+	 * Chart.js paints onto a canvas and cannot resolve `var()` itself, so the
+	 * value has to be looked up here. Guarded for non-browser platforms (SSR,
+	 * unit tests) where `getComputedStyle` does not exist — the chart must fall
+	 * back to a literal, not crash.
+	 *
+	 * @param name - Custom property name, including the leading `--`.
+	 * @param fallback - Colour to use when the property cannot be read.
+	 * @returns A non-empty CSS colour string.
+	 */
+	private themeColor(name: string, fallback: string): string {
+		const host: Element | null = this.elementRef.nativeElement ?? null;
+		if (!host || typeof window === 'undefined' || typeof window.getComputedStyle !== 'function') {
+			return fallback;
+		}
+		try {
+			return window.getComputedStyle(host).getPropertyValue(name).trim() || fallback;
+		} catch {
+			return fallback;
+		}
 	}
 
 	progressData(keyResult, labelsData) {

@@ -1,0 +1,87 @@
+@use 'themes' as *;
+
+// Carousel chrome for the Recent Activities widget. The shared list layout
+// (`time-track-list-widget.scss`) supplies `.list-panel` / `.list-scroll`; only
+// the per-member group and the Swiper strip are described here.
+//
+// Colours are theme tokens only — never a literal — because a canvas widget has
+// to read correctly in all eight Gauzy themes.
+
+.activity-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.5rem;
+	border-radius: nb-theme(border-radius);
+	background-color: nb-theme(background-basic-color-2);
+	// Without this the group's Swiper strip refuses to shrink below the intrinsic
+	// width of its slides, and the whole widget scrolls sideways.
+	min-width: 0;
+
+	& + .activity-group {
+		margin-top: 0.5rem;
+	}
+}
+
+.activity-group-header {
+	display: flex;
+	align-items: center;
+	// The avatar is permission-gated, so the actions have to push themselves to
+	// the end rather than rely on a preceding sibling being present.
+	justify-content: space-between;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+.activity-group-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	margin-left: auto;
+	flex: 0 0 auto;
+}
+
+// Same affordance as the legacy dashboard's swiper arrows, but as real buttons:
+// the originals were `<div (click)>`, i.e. not focusable and invisible to a
+// screen reader.
+.carousel-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 24px;
+	width: 24px;
+	padding: 0;
+	cursor: pointer;
+	border: 2px solid nb-theme(gauzy-background-transparent);
+	border-radius: nb-theme(border-radius);
+	background: transparent;
+	color: nb-theme(text-basic-color);
+
+	i {
+		font-weight: 900;
+	}
+
+	&:hover {
+		opacity: 0.8;
+	}
+
+	&:focus-visible {
+		outline: 2px solid nb-theme(color-primary-default);
+		outline-offset: 1px;
+	}
+}
+
+.activity-swiper {
+	display: block;
+	width: 100%;
+	min-width: 0;
+
+	// Fixed slide width, which is what makes `slides-per-view="auto"` adapt the
+	// visible count to whatever width the canvas gave the widget.
+	swiper-slide {
+		display: block;
+		width: 220px;
+		max-width: 100%;
+		height: auto;
+	}
+}

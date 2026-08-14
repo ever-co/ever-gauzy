@@ -5,6 +5,10 @@ import { ColumnType as TypeORMColumnType, ColumnOptions as TypeORMColumnOptions 
 type CommonColumnOptions<T> = Omit<MikroORMColumnOptions<T>, 'type' | 'default'> & Omit<TypeORMColumnOptions, 'type'> & {
     type?: ColumnDataType;
     relationId?: boolean; // Need to prevent Mikro-orm property decorator when relationId column
+    // Restated explicitly (both TypeORM's ColumnOptions and MikroORM's PropertyOptions already
+    // declare it) so the option is documented rather than silently inherited: MultiORMColumn
+    // honors it on BOTH sides - TypeORM's @Column({ primary: true }) and MikroORM's @PrimaryKey().
+    primary?: boolean;
 };
 
 // Represents MikroORM-specific column options, using MikroORM's PropertyOptions.

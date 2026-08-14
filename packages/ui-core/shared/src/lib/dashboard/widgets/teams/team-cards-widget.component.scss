@@ -1,0 +1,22 @@
+@use 'themes' as *;
+
+// Card chrome lives in `team-summary-card.component.scss` — this widget only
+// owns the grid the cards are laid out on.
+:host {
+	display: block;
+	height: 100%;
+	width: 100%;
+	min-width: 0;
+}
+
+// A grid rather than the legacy CSS columns: a canvas widget is resized to any
+// of 3/4/6/8/12 columns, and `column-count` would keep splitting a narrow widget
+// into unreadable slivers.
+.team-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 0.75rem;
+	height: 100%;
+	overflow-y: auto;
+	padding-right: 0.25rem;
+}

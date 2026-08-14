@@ -17,7 +17,8 @@ export const HumanResourcesPage = {
 	infoTextCss: '.info-block .info-text',
 	// The clickable card element carrying the (click)="handleClick()" handler that opens the popup.
 	infoBlockCss: '.info-block',
-	chartDropdownCss: '[placeholder="Select chart"]',
+	// Placeholder lost its "Select " prefix along with every other combobox placeholder.
+	chartDropdownCss: '[placeholder="Chart"]',
 	// nb-select options render into `.option-list nb-option`.
 	dropdownOptionCss: '.option-list nb-option',
 	// Records-history popup is `nb-card.records` with `<h5 class="title">` inside its header.

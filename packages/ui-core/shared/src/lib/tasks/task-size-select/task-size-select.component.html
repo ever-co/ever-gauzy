@@ -1,5 +1,6 @@
 <ng-select
 	#select
+	appendTo="body"
 	(change)="selectSize($event); select.blur()"
 	(clear)="select.blur()"
 	[(ngModel)]="size"

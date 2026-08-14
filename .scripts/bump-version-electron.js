@@ -2,6 +2,43 @@ const fs = require('fs');
 const simpleGit = require('simple-git');
 const git = simpleGit();
 
+// Windows Authenticode: engage electron-updater publisher verification ONLY when a publisher name
+// is provided (i.e. a publicly-trusted certificate is configured via WIN_CSC_LINK in CI). With no
+// publisher name, electron-updater skips signature verification, so unsigned or self-signed interim
+// builds are never stranded. Signing itself is driven by WIN_CSC_LINK / WIN_CSC_KEY_PASSWORD env.
+function applyWindowsSigning(pkg) {
+	const publisherName = process.env.WINDOWS_PUBLISHER_NAME;
+	if (!publisherName) return;
+
+	pkg.build = pkg.build || {};
+	pkg.build.win = pkg.build.win || {};
+
+	// Preferred path: Azure Artifact Signing (formerly Trusted Signing). Engaged only when a
+	// certificate profile name is supplied, i.e. the Azure identity validation has completed and
+	// a profile exists. electron-builder authenticates with AZURE_TENANT_ID / AZURE_CLIENT_ID /
+	// AZURE_CLIENT_SECRET from the environment (DefaultAzureCredential).
+	const certificateProfileName = process.env.AZURE_CERT_PROFILE_NAME;
+	if (certificateProfileName) {
+		pkg.build.win.azureSignOptions = {
+			...(pkg.build.win.azureSignOptions || {}),
+			publisherName,
+			endpoint: process.env.AZURE_CODE_SIGNING_ENDPOINT || 'https://eus.codesigning.azure.net/',
+			codeSigningAccountName: process.env.AZURE_CODE_SIGNING_ACCOUNT || 'ever',
+			certificateProfileName
+		};
+		// Azure signing supersedes the PFX/signtool path; drop it so only one signer is configured.
+		delete pkg.build.win.signtoolOptions;
+		return;
+	}
+
+	// Fallback: PFX via WIN_CSC_LINK / WIN_CSC_KEY_PASSWORD (signtool).
+	pkg.build.win.signtoolOptions = {
+		...(pkg.build.win.signtoolOptions || {}),
+		publisherName,
+		rfc3161TimeStampServer: "http://timestamp.digicert.com"
+	};
+}
+
 async function getLatestTag(repoURL) {
 	try {
 		// Fetch remote tags
@@ -147,6 +184,7 @@ module.exports.serverapi = async (isProd) => {
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/server-api/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/server-api/src/package.json');
@@ -215,6 +253,7 @@ module.exports.server = async (isProd) => {
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/server/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/server/src/package.json');
@@ -283,6 +322,7 @@ module.exports.servermcp = async (isProd) => {
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/server-mcp/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/server-mcp/src/package.json');
@@ -351,6 +391,7 @@ module.exports.desktop = async (isProd) => {
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/desktop/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/desktop/src/package.json');
@@ -419,6 +460,7 @@ module.exports.desktopTimer = async (isProd) => {
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/desktop-timer/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/desktop-timer/src/package.json');
@@ -487,6 +529,7 @@ module.exports.agent = async (isProd) => {
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/agent/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/agent/src/package.json');

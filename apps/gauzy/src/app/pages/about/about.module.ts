@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbCardModule, NbButtonModule, NbInputModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { SharedModule } from '@gauzy/ui-core/shared';
 import { AboutComponent } from './about.component';
 import { AboutRoutingModule } from './about-routing.module';
 
@@ -12,7 +13,8 @@ import { AboutRoutingModule } from './about-routing.module';
 		NbCardModule,
 		NbInputModule,
 		TranslateModule.forChild(),
-		AboutRoutingModule
+		AboutRoutingModule,
+		SharedModule
 	],
 	declarations: [AboutComponent]
 })

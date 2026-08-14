@@ -1,0 +1,175 @@
+<div class="docs-filter-bar">
+	<div class="docs-filter-row">
+		<!-- Search + content-scope toggle -->
+		<div class="docs-filter-field docs-filter-field--search">
+			<label class="docs-filter-label" for="docs-filter-search">{{ 'DOCS.FILTERS.SEARCH_LABEL' | translate }}</label>
+			<div class="docs-filter-search">
+				<nb-icon icon="search-outline"></nb-icon>
+				<input
+					nbInput
+					size="small"
+					type="text"
+					id="docs-filter-search"
+					[placeholder]="'DOCS.FILTERS.SEARCH_PLACEHOLDER' | translate"
+					[attr.aria-label]="'DOCS.FILTERS.SEARCH_PLACEHOLDER' | translate"
+					[ngModel]="value?.q"
+					(ngModelChange)="onSearchInput($event)"
+				/>
+				<nb-toggle
+					labelPosition="end"
+					[checked]="value?.searchIn === 'content'"
+					[disabled]="contentSearchDisabled && value?.searchIn !== 'content'"
+					(checkedChange)="onSearchScopeToggle($event)"
+					[nbTooltip]="
+						(contentSearchDisabled ? 'DOCS.FILTERS.SEARCH_CONTENT_DISABLED' : 'DOCS.FILTERS.SEARCH_CONTENT_HINT')
+							| translate: { min: contentSearchMinChars }
+					"
+				>
+					{{ 'DOCS.FILTERS.SEARCH_CONTENT' | translate }}
+				</nb-toggle>
+			</div>
+		</div>
+
+		<div class="docs-filter-field">
+			<label class="docs-filter-label">{{ 'DOCS.FILTERS.KIND' | translate }}</label>
+			<gz-docs-facet-multiselect
+				labelKey="DOCS.FILTERS.KIND"
+				[buckets]="kindBuckets"
+				[selected]="value?.kind || []"
+				[labelFor]="kindLabel"
+				(selectionChange)="onFacet('kind', $event)"
+			></gz-docs-facet-multiselect>
+		</div>
+
+		<div class="docs-filter-field">
+			<label class="docs-filter-label">{{ 'DOCS.FILTERS.STATUS' | translate }}</label>
+			<gz-docs-facet-multiselect
+				labelKey="DOCS.FILTERS.STATUS"
+				[buckets]="statusBuckets"
+				[selected]="value?.status || []"
+				[labelFor]="statusLabel"
+				(selectionChange)="onFacet('status', $event)"
+			></gz-docs-facet-multiselect>
+		</div>
+
+		<div class="docs-filter-field">
+			<label class="docs-filter-label">{{ 'DOCS.FILTERS.KNOWLEDGE' | translate }}</label>
+			<gz-docs-facet-multiselect
+				labelKey="DOCS.FILTERS.KNOWLEDGE"
+				[buckets]="knowledgeBuckets"
+				[selected]="value?.knowledgeStatus || []"
+				[labelFor]="knowledgeLabel"
+				(selectionChange)="onFacet('knowledgeStatus', $event)"
+			></gz-docs-facet-multiselect>
+		</div>
+
+		<div class="docs-filter-field">
+			<label class="docs-filter-label">{{ 'DOCS.FILTERS.SOURCE' | translate }}</label>
+			<gz-docs-facet-multiselect
+				labelKey="DOCS.FILTERS.SOURCE"
+				[buckets]="sourceBuckets"
+				[selected]="value?.source || []"
+				[labelFor]="sourceLabel"
+				(selectionChange)="onFacet('source', $event)"
+			></gz-docs-facet-multiselect>
+		</div>
+
+		<div class="docs-filter-field">
+			<label class="docs-filter-label">{{ 'DOCS.FILTERS.CATEGORY' | translate }}</label>
+			<gz-docs-facet-multiselect
+				labelKey="DOCS.FILTERS.CATEGORY"
+				[buckets]="categoryBuckets"
+				[selected]="value?.categoryIds || []"
+				(selectionChange)="onFacet('categoryIds', $event)"
+			></gz-docs-facet-multiselect>
+		</div>
+
+		<!-- Tag — the shared create-capable selector; the filter state stays ids-only
+		     (`tagIds`), the ITag[]↔ids mapping lives in the component class. -->
+		<div class="docs-filter-field docs-filter-field--tags">
+			<label class="docs-filter-label">{{ 'DOCS.FILTERS.TAG' | translate }}</label>
+			<ga-tags-color-input
+				class="docs-filter-tags"
+				[multiple]="true"
+				[isOrgLevel]="true"
+				[label]="false"
+				[selectedTags]="selectedTagEntities"
+				(selectedTagsEvent)="onTagsChange($event)"
+			></ga-tags-color-input>
+		</div>
+
+		<!-- Created range -->
+		<div class="docs-filter-field">
+			<label class="docs-filter-label" for="docs-filter-created-range">{{
+				'DOCS.FILTERS.CREATED_RANGE' | translate
+			}}</label>
+			<nb-form-field class="docs-filter-range-field">
+				<input
+					#createdInput
+					nbInput
+					size="small"
+					class="docs-filter-range"
+					id="docs-filter-created-range"
+					[placeholder]="'DOCS.FILTERS.CREATED_RANGE' | translate"
+					[attr.aria-label]="'DOCS.FILTERS.CREATED_RANGE' | translate"
+					[nbDatepicker]="createdRange"
+				/>
+				<!-- One suffix slot: calendar affordance while empty, clear once a range is set
+				     (a set range could previously only be cleared via Clear all). -->
+				<button
+					type="button"
+					nbSuffix
+					nbButton
+					ghost
+					size="small"
+					[attr.aria-label]="(hasCreatedRange ? 'DOCS.FILTERS.CLEAR_RANGE' : 'DOCS.FILTERS.OPEN_CALENDAR') | translate"
+					(click)="hasCreatedRange ? clearCreatedRange(createdInput) : createdInput.focus()"
+				>
+					<nb-icon [icon]="hasCreatedRange ? 'close-outline' : 'calendar-outline'"></nb-icon>
+				</button>
+			</nb-form-field>
+			<nb-rangepicker #createdRange (rangeChange)="onCreatedRange($event)"></nb-rangepicker>
+		</div>
+
+		<!-- Updated range -->
+		<div class="docs-filter-field">
+			<label class="docs-filter-label" for="docs-filter-updated-range">{{
+				'DOCS.FILTERS.UPDATED_RANGE' | translate
+			}}</label>
+			<nb-form-field class="docs-filter-range-field">
+				<input
+					#updatedInput
+					nbInput
+					size="small"
+					class="docs-filter-range"
+					id="docs-filter-updated-range"
+					[placeholder]="'DOCS.FILTERS.UPDATED_RANGE' | translate"
+					[attr.aria-label]="'DOCS.FILTERS.UPDATED_RANGE' | translate"
+					[nbDatepicker]="updatedRange"
+				/>
+				<button
+					type="button"
+					nbSuffix
+					nbButton
+					ghost
+					size="small"
+					[attr.aria-label]="(hasUpdatedRange ? 'DOCS.FILTERS.CLEAR_RANGE' : 'DOCS.FILTERS.OPEN_CALENDAR') | translate"
+					(click)="hasUpdatedRange ? clearUpdatedRange(updatedInput) : updatedInput.focus()"
+				>
+					<nb-icon [icon]="hasUpdatedRange ? 'close-outline' : 'calendar-outline'"></nb-icon>
+				</button>
+			</nb-form-field>
+			<nb-rangepicker #updatedRange (rangeChange)="onUpdatedRange($event)"></nb-rangepicker>
+		</div>
+
+		<!-- Saved views (device-local, UX spec §5) + clear all -->
+		<div class="docs-filter-field docs-filter-field--actions">
+			<gz-docs-saved-views [params]="urlParams" (applyView)="applyView.emit($event)"></gz-docs-saved-views>
+
+			<button type="button" nbButton ghost size="small" (click)="onClearAll()">
+				<nb-icon icon="close-circle-outline"></nb-icon>
+				{{ 'DOCS.FILTERS.CLEAR_ALL' | translate }}
+			</button>
+		</div>
+	</div>
+</div>

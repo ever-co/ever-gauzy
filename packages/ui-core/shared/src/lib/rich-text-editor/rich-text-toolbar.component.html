@@ -1,0 +1,624 @@
+<div class="rich-text-toolbar" role="toolbar" [attr.aria-label]="'RICH_TEXT_EDITOR.TOOLBAR.LABEL' | translate">
+	<!-- Undo / redo -->
+	<ng-container *ngIf="inGroup('history')">
+		<div class="rich-text-toolbar__group">
+			<button
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.UNDO' | translate"
+				[disabled]="disabled || !canUndo"
+				(click)="run('undo')"
+			>
+				<nb-icon icon="corner-up-left-outline"></nb-icon>
+			</button>
+			<button
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.REDO' | translate"
+				[disabled]="disabled || !canRedo"
+				(click)="run('redo')"
+			>
+				<nb-icon icon="corner-up-right-outline"></nb-icon>
+			</button>
+		</div>
+		<div class="rich-text-toolbar__divider"></div>
+	</ng-container>
+
+	<!-- Block format dropdown: Paragraph / H1 / H2 / H3 -->
+	<ng-container *ngIf="inGroup('blockFormat') && hasNode('heading')">
+		<div class="rich-text-toolbar__group rich-text-toolbar__group--select">
+			<nb-select
+				size="small"
+				class="rich-text-toolbar__select"
+				[selected]="blockFormat"
+				[disabled]="disabled"
+				(selectedChange)="setBlockFormat($event)"
+			>
+				<nb-option value="paragraph">{{ 'RICH_TEXT_EDITOR.TOOLBAR.PARAGRAPH' | translate }}</nb-option>
+				<nb-option value="h1">{{ 'RICH_TEXT_EDITOR.TOOLBAR.HEADING' | translate : { level: 1 } }}</nb-option>
+				<nb-option value="h2">{{ 'RICH_TEXT_EDITOR.TOOLBAR.HEADING' | translate : { level: 2 } }}</nb-option>
+				<nb-option value="h3">{{ 'RICH_TEXT_EDITOR.TOOLBAR.HEADING' | translate : { level: 3 } }}</nb-option>
+			</nb-select>
+		</div>
+		<div class="rich-text-toolbar__divider"></div>
+	</ng-container>
+
+	<!-- Basic marks -->
+	<ng-container *ngIf="inGroup('marks')">
+		<div class="rich-text-toolbar__group">
+			<button
+				*ngIf="hasMarkButton('bold')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.BOLD' | translate"
+				[attr.aria-pressed]="active['bold']"
+				[class.rich-text-toolbar__button--active]="active['bold']"
+				[disabled]="disabled"
+				(click)="run('toggleBold')"
+			>
+				<i class="fas fa-bold" aria-hidden="true"></i>
+			</button>
+			<button
+				*ngIf="hasMarkButton('italic')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.ITALIC' | translate"
+				[attr.aria-pressed]="active['italic']"
+				[class.rich-text-toolbar__button--active]="active['italic']"
+				[disabled]="disabled"
+				(click)="run('toggleItalic')"
+			>
+				<i class="fas fa-italic" aria-hidden="true"></i>
+			</button>
+			<button
+				*ngIf="hasMarkButton('underline')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.UNDERLINE' | translate"
+				[attr.aria-pressed]="active['underline']"
+				[class.rich-text-toolbar__button--active]="active['underline']"
+				[disabled]="disabled"
+				(click)="run('toggleUnderline')"
+			>
+				<i class="fas fa-underline" aria-hidden="true"></i>
+			</button>
+			<button
+				*ngIf="hasMarkButton('strike')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.STRIKE' | translate"
+				[attr.aria-pressed]="active['strike']"
+				[class.rich-text-toolbar__button--active]="active['strike']"
+				[disabled]="disabled"
+				(click)="run('toggleStrike')"
+			>
+				<i class="fas fa-strikethrough" aria-hidden="true"></i>
+			</button>
+		</div>
+		<div class="rich-text-toolbar__divider"></div>
+	</ng-container>
+
+	<!-- Code -->
+	<ng-container *ngIf="inGroup('code') && (hasMark('code') || hasNode('codeBlock'))">
+		<div class="rich-text-toolbar__group">
+			<button
+				*ngIf="hasMark('code')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.CODE' | translate"
+				[attr.aria-pressed]="active['code']"
+				[class.rich-text-toolbar__button--active]="active['code']"
+				[disabled]="disabled"
+				(click)="run('toggleCode')"
+			>
+				<nb-icon icon="code-outline"></nb-icon>
+			</button>
+			<button
+				*ngIf="inGroup('codeBlock') && hasNode('codeBlock')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.CODE_BLOCK' | translate"
+				[attr.aria-pressed]="active['codeBlock']"
+				[class.rich-text-toolbar__button--active]="active['codeBlock']"
+				[disabled]="disabled"
+				(click)="run('toggleCodeBlock')"
+			>
+				<nb-icon icon="code-download-outline"></nb-icon>
+			</button>
+		</div>
+		<div class="rich-text-toolbar__divider"></div>
+	</ng-container>
+
+	<!-- Sub / superscript -->
+	<ng-container *ngIf="inGroup('script') && hasMark('subscript')">
+		<div class="rich-text-toolbar__group">
+			<button
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.SUBSCRIPT' | translate"
+				[attr.aria-pressed]="active['subscript']"
+				[class.rich-text-toolbar__button--active]="active['subscript']"
+				[disabled]="disabled"
+				(click)="run('toggleSubscript')"
+			>
+				<i class="fas fa-subscript" aria-hidden="true"></i>
+			</button>
+			<button
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.SUPERSCRIPT' | translate"
+				[attr.aria-pressed]="active['superscript']"
+				[class.rich-text-toolbar__button--active]="active['superscript']"
+				[disabled]="disabled"
+				(click)="run('toggleSuperscript')"
+			>
+				<i class="fas fa-superscript" aria-hidden="true"></i>
+			</button>
+		</div>
+		<div class="rich-text-toolbar__divider"></div>
+	</ng-container>
+
+	<!-- Color: text color + highlight -->
+	<ng-container *ngIf="inGroup('color') && hasMark('textStyle')">
+		<div class="rich-text-toolbar__group rich-text-toolbar__group--popover-host">
+			<button
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.TEXT_COLOR' | translate"
+				[attr.aria-expanded]="textColorOpen"
+				[disabled]="disabled"
+				(click)="toggleTextColorPanel()"
+			>
+				<i class="fas fa-font" aria-hidden="true"></i>
+			</button>
+			<button
+				*ngIf="hasMark('highlight')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.HIGHLIGHT' | translate"
+				[attr.aria-pressed]="active['highlight']"
+				[class.rich-text-toolbar__button--active]="active['highlight']"
+				[attr.aria-expanded]="highlightOpen"
+				[disabled]="disabled"
+				(click)="toggleHighlightPanel()"
+			>
+				<i class="fas fa-highlighter" aria-hidden="true"></i>
+			</button>
+			<div *ngIf="textColorOpen" class="rich-text-toolbar__popover rich-text-toolbar__popover--swatches">
+				<button
+					*ngFor="let color of textColors"
+					type="button"
+					class="rich-text-toolbar__swatch"
+					[style.background]="color"
+					[attr.aria-label]="color"
+					(click)="setTextColor(color)"
+				></button>
+				<button
+					type="button"
+					class="rich-text-toolbar__swatch rich-text-toolbar__swatch--reset"
+					[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.CLEAR_FORMAT' | translate"
+					(click)="setTextColor(null)"
+				>
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			</div>
+			<div *ngIf="highlightOpen" class="rich-text-toolbar__popover rich-text-toolbar__popover--swatches">
+				<button
+					*ngFor="let color of highlightColors"
+					type="button"
+					class="rich-text-toolbar__swatch"
+					[style.background]="color"
+					[attr.aria-label]="color"
+					(click)="setHighlight(color)"
+				></button>
+				<button
+					type="button"
+					class="rich-text-toolbar__swatch rich-text-toolbar__swatch--reset"
+					[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.CLEAR_FORMAT' | translate"
+					(click)="setHighlight(null)"
+				>
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			</div>
+		</div>
+		<div class="rich-text-toolbar__divider"></div>
+	</ng-container>
+
+	<!-- Font family -->
+	<ng-container *ngIf="inGroup('font') && hasMark('textStyle')">
+		<div class="rich-text-toolbar__group rich-text-toolbar__group--select">
+			<nb-select
+				size="small"
+				class="rich-text-toolbar__select"
+				[placeholder]="'RICH_TEXT_EDITOR.TOOLBAR.FONT_FAMILY' | translate"
+				[selected]="currentFontFamily"
+				[disabled]="disabled"
+				(selectedChange)="setFontFamily($event)"
+			>
+				<nb-option value="">{{ 'RICH_TEXT_EDITOR.TOOLBAR.FONT_FAMILY' | translate }}</nb-option>
+				<nb-option *ngFor="let font of fontFamilies" [value]="font.value" [style.font-family]="font.value">
+					{{ font.label }}
+				</nb-option>
+			</nb-select>
+		</div>
+		<div class="rich-text-toolbar__divider"></div>
+	</ng-container>
+
+	<!-- Alignment -->
+	<ng-container *ngIf="inGroup('align') && options.alignments.length">
+		<div class="rich-text-toolbar__group">
+			<button
+				*ngIf="hasAlignment('left')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.ALIGN_LEFT' | translate"
+				[attr.aria-pressed]="active['alignLeft']"
+				[class.rich-text-toolbar__button--active]="active['alignLeft']"
+				[disabled]="disabled"
+				(click)="setAlignment('left')"
+			>
+				<i class="fas fa-align-left" aria-hidden="true"></i>
+			</button>
+			<button
+				*ngIf="hasAlignment('center')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.ALIGN_CENTER' | translate"
+				[attr.aria-pressed]="active['alignCenter']"
+				[class.rich-text-toolbar__button--active]="active['alignCenter']"
+				[disabled]="disabled"
+				(click)="setAlignment('center')"
+			>
+				<i class="fas fa-align-center" aria-hidden="true"></i>
+			</button>
+			<button
+				*ngIf="hasAlignment('right')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.ALIGN_RIGHT' | translate"
+				[attr.aria-pressed]="active['alignRight']"
+				[class.rich-text-toolbar__button--active]="active['alignRight']"
+				[disabled]="disabled"
+				(click)="setAlignment('right')"
+			>
+				<i class="fas fa-align-right" aria-hidden="true"></i>
+			</button>
+			<button
+				*ngIf="hasAlignment('justify')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.ALIGN_JUSTIFY' | translate"
+				[attr.aria-pressed]="active['alignJustify']"
+				[class.rich-text-toolbar__button--active]="active['alignJustify']"
+				[disabled]="disabled"
+				(click)="setAlignment('justify')"
+			>
+				<i class="fas fa-align-justify" aria-hidden="true"></i>
+			</button>
+		</div>
+		<div class="rich-text-toolbar__divider"></div>
+	</ng-container>
+
+	<!-- Lists -->
+	<ng-container *ngIf="inGroup('lists')">
+		<div class="rich-text-toolbar__group">
+			<button
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.BULLET_LIST' | translate"
+				[attr.aria-pressed]="active['bulletList']"
+				[class.rich-text-toolbar__button--active]="active['bulletList']"
+				[disabled]="disabled"
+				(click)="run('toggleBulletList')"
+			>
+				<nb-icon icon="list-outline"></nb-icon>
+			</button>
+			<button
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.ORDERED_LIST' | translate"
+				[attr.aria-pressed]="active['orderedList']"
+				[class.rich-text-toolbar__button--active]="active['orderedList']"
+				[disabled]="disabled"
+				(click)="run('toggleOrderedList')"
+			>
+				<i class="fas fa-list-ol" aria-hidden="true"></i>
+			</button>
+			<button
+				*ngIf="hasNode('taskList')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.TASK_LIST' | translate"
+				[attr.aria-pressed]="active['taskList']"
+				[class.rich-text-toolbar__button--active]="active['taskList']"
+				[disabled]="disabled"
+				(click)="run('toggleTaskList')"
+			>
+				<nb-icon icon="checkmark-square-2-outline"></nb-icon>
+			</button>
+		</div>
+		<div class="rich-text-toolbar__divider"></div>
+	</ng-container>
+
+	<!-- Blocks: quote, divider -->
+	<ng-container *ngIf="inGroup('blocks')">
+		<div class="rich-text-toolbar__group">
+			<button
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.BLOCKQUOTE' | translate"
+				[attr.aria-pressed]="active['blockquote']"
+				[class.rich-text-toolbar__button--active]="active['blockquote']"
+				[disabled]="disabled"
+				(click)="run('toggleBlockquote')"
+			>
+				<i class="fas fa-quote-right" aria-hidden="true"></i>
+			</button>
+			<button
+				*ngIf="hasNode('horizontalRule')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.HORIZONTAL_RULE' | translate"
+				[disabled]="disabled"
+				(click)="run('setHorizontalRule')"
+			>
+				<nb-icon icon="minus-outline"></nb-icon>
+			</button>
+		</div>
+		<div class="rich-text-toolbar__divider"></div>
+	</ng-container>
+
+	<!-- Insert: link, table, image -->
+	<ng-container *ngIf="inGroup('insert')">
+		<div class="rich-text-toolbar__group rich-text-toolbar__group--popover-host">
+			<button
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.LINK' | translate"
+				[attr.aria-pressed]="active['link']"
+				[class.rich-text-toolbar__button--active]="active['link']"
+				[attr.aria-expanded]="linkFormOpen"
+				[disabled]="disabled"
+				(click)="toggleLinkForm()"
+			>
+				<nb-icon icon="link-2-outline"></nb-icon>
+			</button>
+			<button
+				*ngIf="hasNode('table')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.TABLE' | translate"
+				[disabled]="disabled"
+				(click)="insertTable()"
+			>
+				<i class="fas fa-table" aria-hidden="true"></i>
+			</button>
+			<button
+				*ngIf="hasNode('image')"
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.IMAGE' | translate"
+				[attr.aria-expanded]="imageFormOpen"
+				[disabled]="disabled"
+				(click)="toggleImageForm()"
+			>
+				<nb-icon icon="image-outline"></nb-icon>
+			</button>
+
+			<!-- Inline link popover -->
+			<div *ngIf="linkFormOpen" class="rich-text-toolbar__popover">
+				<input
+					nbInput
+					fieldSize="small"
+					type="url"
+					id="rich-text-link-url"
+					name="rich-text-link-url"
+					[placeholder]="'RICH_TEXT_EDITOR.LINK_DIALOG.URL' | translate"
+					[attr.aria-label]="'RICH_TEXT_EDITOR.TOOLBAR.LINK' | translate"
+					[(ngModel)]="linkUrl"
+					(keyup.enter)="applyLink()"
+				/>
+				<button nbButton size="small" status="primary" type="button" (click)="applyLink()">
+					{{ 'RICH_TEXT_EDITOR.LINK_DIALOG.APPLY' | translate }}
+				</button>
+				<button nbButton ghost size="small" type="button" (click)="removeLink()">
+					{{ 'RICH_TEXT_EDITOR.LINK_DIALOG.REMOVE' | translate }}
+				</button>
+			</div>
+
+			<!-- Inline image-URL popover -->
+			<div *ngIf="imageFormOpen" class="rich-text-toolbar__popover">
+				<input
+					nbInput
+					fieldSize="small"
+					type="url"
+					id="rich-text-image-url"
+					name="rich-text-image-url"
+					[placeholder]="'RICH_TEXT_EDITOR.LINK_DIALOG.URL' | translate"
+					[attr.aria-label]="'RICH_TEXT_EDITOR.TOOLBAR.IMAGE' | translate"
+					[(ngModel)]="imageUrl"
+					(keyup.enter)="applyImage()"
+				/>
+				<button nbButton size="small" status="primary" type="button" (click)="applyImage()">
+					{{ 'RICH_TEXT_EDITOR.LINK_DIALOG.APPLY' | translate }}
+				</button>
+			</div>
+		</div>
+		<div class="rich-text-toolbar__divider"></div>
+	</ng-container>
+
+	<!-- Clear formatting -->
+	<ng-container *ngIf="inGroup('clearFormat')">
+		<div class="rich-text-toolbar__group">
+			<button
+				nbButton
+				ghost
+				size="small"
+				type="button"
+				[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.CLEAR_FORMAT' | translate"
+				[disabled]="disabled"
+				(click)="clearFormatting()"
+			>
+				<i class="fas fa-eraser" aria-hidden="true"></i>
+			</button>
+		</div>
+	</ng-container>
+</div>
+
+<!--
+	Table row/column operations: contextual second row while the caret is inside a table.
+	Its own `role="toolbar"` — and therefore its own roving tabindex ring — so appearing does not
+	add eight more tab stops between the main toolbar and the editor body.
+-->
+<div
+	*ngIf="active['table'] && hasNode('table')"
+	class="rich-text-toolbar rich-text-toolbar--table-ops"
+	role="toolbar"
+	[attr.aria-label]="'RICH_TEXT_EDITOR.TABLE.TOOLBAR_LABEL' | translate"
+>
+	<div class="rich-text-toolbar__group">
+		<button
+			nbButton
+			ghost
+			size="small"
+			type="button"
+			[nbTooltip]="'RICH_TEXT_EDITOR.TABLE.ROW_ADD_ABOVE' | translate"
+			[disabled]="disabled"
+			(click)="run('addRowBefore')"
+		>
+			<nb-icon icon="arrow-upward-outline"></nb-icon>
+		</button>
+		<button
+			nbButton
+			ghost
+			size="small"
+			type="button"
+			[nbTooltip]="'RICH_TEXT_EDITOR.TABLE.ROW_ADD_BELOW' | translate"
+			[disabled]="disabled"
+			(click)="run('addRowAfter')"
+		>
+			<nb-icon icon="arrow-downward-outline"></nb-icon>
+		</button>
+		<button
+			nbButton
+			ghost
+			size="small"
+			type="button"
+			[nbTooltip]="'RICH_TEXT_EDITOR.TABLE.ROW_DELETE' | translate"
+			[disabled]="disabled"
+			(click)="run('deleteRow')"
+		>
+			<nb-icon icon="collapse-outline"></nb-icon>
+		</button>
+	</div>
+	<div class="rich-text-toolbar__divider"></div>
+	<div class="rich-text-toolbar__group">
+		<button
+			nbButton
+			ghost
+			size="small"
+			type="button"
+			[nbTooltip]="'RICH_TEXT_EDITOR.TABLE.COL_ADD_LEFT' | translate"
+			[disabled]="disabled"
+			(click)="run('addColumnBefore')"
+		>
+			<nb-icon icon="arrow-back-outline"></nb-icon>
+		</button>
+		<button
+			nbButton
+			ghost
+			size="small"
+			type="button"
+			[nbTooltip]="'RICH_TEXT_EDITOR.TABLE.COL_ADD_RIGHT' | translate"
+			[disabled]="disabled"
+			(click)="run('addColumnAfter')"
+		>
+			<nb-icon icon="arrow-forward-outline"></nb-icon>
+		</button>
+		<button
+			nbButton
+			ghost
+			size="small"
+			type="button"
+			[nbTooltip]="'RICH_TEXT_EDITOR.TABLE.COL_DELETE' | translate"
+			[disabled]="disabled"
+			(click)="run('deleteColumn')"
+		>
+			<nb-icon icon="collapse-outline" class="rich-text-toolbar__icon--rotated"></nb-icon>
+		</button>
+	</div>
+	<div class="rich-text-toolbar__divider"></div>
+	<div class="rich-text-toolbar__group">
+		<button
+			nbButton
+			ghost
+			size="small"
+			type="button"
+			[nbTooltip]="'RICH_TEXT_EDITOR.TABLE.HEADER_ROW' | translate"
+			[disabled]="disabled"
+			(click)="run('toggleHeaderRow')"
+		>
+			<i class="fas fa-heading" aria-hidden="true"></i>
+		</button>
+		<button
+			nbButton
+			ghost
+			size="small"
+			status="danger"
+			type="button"
+			[nbTooltip]="'RICH_TEXT_EDITOR.TABLE.DELETE' | translate"
+			[disabled]="disabled"
+			(click)="run('deleteTable')"
+		>
+			<nb-icon icon="trash-2-outline"></nb-icon>
+		</button>
+	</div>
+</div>

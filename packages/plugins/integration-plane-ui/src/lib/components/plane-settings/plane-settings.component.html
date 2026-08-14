@@ -15,33 +15,35 @@
 			<h5 class="mb-0 ml-4">{{ 'INTEGRATIONS.PLANE_PAGE.TITLE' | translate }}</h5>
 		</div>
 		<div class="header-actions">
-			@if (!isEditing() && mode === 'custom') {
+			@if (!loadFailed()) {
+				@if (!isEditing() && mode === 'custom') {
+					<button
+						nbButton
+						size="small"
+						type="button"
+						status="basic"
+						outline
+						(click)="toggleEdit()"
+						nbTooltip="{{ 'BUTTONS.EDIT' | translate }}"
+						[attr.aria-label]="'BUTTONS.EDIT' | translate"
+					>
+						<nb-icon icon="edit-outline"></nb-icon>
+					</button>
+				}
 				<button
 					nbButton
-					size="small"
 					type="button"
-					status="basic"
+					size="small"
+					status="danger"
 					outline
-					(click)="toggleEdit()"
-					nbTooltip="{{ 'BUTTONS.EDIT' | translate }}"
-					[attr.aria-label]="'BUTTONS.EDIT' | translate"
+					(click)="removeIntegration()"
+					[disabled]="loading() || saving()"
+					nbTooltip="{{ 'BUTTONS.DELETE' | translate }}"
+					[attr.aria-label]="'BUTTONS.DELETE' | translate"
 				>
-					<nb-icon icon="edit-outline"></nb-icon>
+					<nb-icon icon="trash-2-outline"></nb-icon>
 				</button>
 			}
-			<button
-				nbButton
-				type="button"
-				size="small"
-				status="danger"
-				outline
-				(click)="removeIntegration()"
-				[disabled]="loading() || saving()"
-				nbTooltip="{{ 'BUTTONS.DELETE' | translate }}"
-				[attr.aria-label]="'BUTTONS.DELETE' | translate"
-			>
-				<nb-icon icon="trash-2-outline"></nb-icon>
-			</button>
 		</div>
 	</nb-card-header>
 
@@ -50,6 +52,23 @@
 			<div class="text-center p-4" role="status" aria-live="polite">
 				<nb-icon icon="loader-outline" class="spin"></nb-icon>
 				<span class="sr-only">{{ 'INTEGRATIONS.PLANE_PAGE.LOADING' | translate }}</span>
+			</div>
+		} @else if (loadFailed()) {
+			<div class="text-center p-4" role="alert">
+				<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
+				<p class="mt-2">{{ 'INTEGRATIONS.PLANE_PAGE.LOAD_FAILED' | translate }}</p>
+				<button
+					nbButton
+					status="primary"
+					size="small"
+					type="button"
+					outline
+					(click)="retryLoad()"
+					[disabled]="loading()"
+				>
+					<nb-icon icon="refresh-outline"></nb-icon>
+					{{ 'INTEGRATIONS.PLANE_PAGE.RETRY' | translate }}
+				</button>
 			</div>
 		} @else {
 			@if (mode === 'shared') {

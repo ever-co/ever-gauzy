@@ -5,11 +5,10 @@
   </div>
 }
 <div class="main-header">
-  <div class="header-container"
-    [class.left]="position === 'normal'"
-    [class.right]="position === 'inverse'"
-  ></div>
-
+  <!-- The breadcrumb trail used to live here. It now renders under the page
+       title (ngx-header-title): the header band is already dense with
+       selectors, and the trail was being squeezed to nothing on pages that
+       show every selector. -->
   <div class="header-container">
     @if (createQuickActionsMenu?.length > 0) {
       <nb-action
@@ -18,7 +17,7 @@
         [class.right]="position === 'inverse'"
         class="show-large-up"
         >
-        <button nbButton class="button create" status="warning" size="small" (click)="openQuickActions()">
+        <button type="button" nbButton class="button create" status="primary" size="small" (click)="openQuickActions()">
           + {{ 'BUTTONS.CREATE' | translate }}
         </button>
       </nb-action>
@@ -58,7 +57,9 @@
       }
 
       @if (showDateSelector && !showExtraActions && selectorsVisibility?.date) {
-        <nb-action>
+        <!-- .date-range-action: styled `position: static` so the picker's INLINE dropdown
+             escapes the .header-container scroll clip — see header.component.scss. -->
+        <nb-action class="date-range-action">
           @if (organization?.id) {
             <ngx-date-range-picker
               [firstDayOfWeek]="organization.startWeekOn"
@@ -82,13 +83,9 @@
         (click)="toggleExtraActions()"
       ></nb-action>
 
-      @if (supportContextMenu) {
-        <nb-action
-          icon="message-circle-outline"
-          class="toggle-layout help"
-          [nbContextMenu]="supportContextMenu"
-        ></nb-action>
-      }
+      <!-- The speech-bubble help menu (Support Chat / FAQ / Help / About) used
+           to sit here. Those entries now live in the Quick Settings panel
+           (ngx-theme-settings), which is reached from the gear action below. -->
 
       @if (isEnabledTimeTracking()) {
         <nb-action class="timer-action" (click)="toggleTimerWindow()">
@@ -98,20 +95,9 @@
         </nb-action>
       }
 
-      @if (chatSidebarService.config() && chatSidebarService.available()) {
-        <nb-action
-          icon="message-square-outline"
-          class="toggle-layout ai-chat-toggle"
-          [class.active]="chatSidebarService.expanded()"
-          [nbTooltip]="'HEADER.AI_CHAT' | translate"
-          tabindex="0"
-          role="button"
-          [attr.aria-label]="'HEADER.AI_CHAT' | translate"
-          (click)="chatSidebarService.toggle()"
-          (keydown.enter)="chatSidebarService.toggle()"
-          (keydown.space)="$event.preventDefault(); chatSidebarService.toggle()"
-        ></nb-action>
-      }
+      <!-- The AI assistant entry point lives on the sidebar's brand row
+           (`.ai-agent-launch` in one-column.layout.html); a second copy here was
+           redundant, so the header no longer carries a chat control. -->
 
       @for (action of navigationBuilderService.sidebarActions$ | async; track action) {
         <nb-action

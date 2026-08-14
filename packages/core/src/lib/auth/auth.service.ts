@@ -97,6 +97,8 @@ import { createClient } from 'redis';
 import { EVER_REDIS_CLIENT } from '../redis/redis.module';
 import { OAuthClientService } from './oauth-client/oauth-client.service';
 import { OAuthClient } from './oauth-client/oauth-client.entity';
+import { TermsAcceptanceService } from '../terms-acceptance/terms-acceptance.service';
+import { passwordResetConsumeWhere } from '../shared/single-use/claim-criteria';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -107,6 +109,13 @@ export class AuthService extends SocialAuthService {
 	private static readonly OAUTH_CODE_TTL_MS = 10 * 60 * 1000;
 	private static readonly OAUTH_REQUEST_CACHE_PREFIX = 'oauth_app_request:';
 	private static readonly OAUTH_REQUEST_TTL_MS = 10 * 60 * 1000;
+
+	/**
+	 * Authorization-code jti values already claimed by this process, used to make the non-Redis
+	 * token-exchange path single-use. Entries expire with the codes they guard. Deployments with
+	 * Redis wired use GETDEL instead and never touch this set.
+	 */
+	private readonly consumedOAuthCodes = new Set<string>();
 
 	constructor(
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
@@ -132,7 +141,8 @@ export class AuthService extends SocialAuthService {
 		private readonly accessTokenService: AccessTokenService,
 		private readonly typeOrmPasswordResetRepository: TypeOrmPasswordResetRepository,
 		private readonly mikroOrmPasswordResetRepository: MikroOrmPasswordResetRepository,
-		private readonly oauthClientService: OAuthClientService
+		private readonly oauthClientService: OAuthClientService,
+		private readonly termsAcceptanceService: TermsAcceptanceService
 	) {
 		super();
 	}
@@ -380,9 +390,32 @@ export class AuthService extends SocialAuthService {
 		if (this.redisClient) {
 			// Atomic get-and-delete: prevents race conditions in multi-instance deployments
 			codeState = await this.redisClient.getDel(cacheKey);
+		} else if (this.consumedOAuthCodes.has(payload.jti)) {
+			// Already claimed by an exchange that is still in flight, or by one that completed.
+			codeState = null;
 		} else {
-			// Non-Redis fallback (single-instance safe)
-			codeState = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+			// Non-Redis fallback, single instance only. `await get()` followed by `await del()` is
+			// NOT single-use safe on its own: the await between them yields the event loop, so two
+			// exchanges of the same code both observe it as live and both mint an access token —
+			// exactly what RFC 6749 forbids. Node runs one thread, so a SYNCHRONOUS check-and-insert
+			// is the atomic claim that the two-step cache dance cannot be. The claim is recorded
+			// BEFORE the first await, which is what closes the window.
+			this.consumedOAuthCodes.add(payload.jti);
+
+			// The jti cannot be replayed past its own expiry (checked above), so the set only needs
+			// to outlive the code itself. unref() keeps this timer from holding the process open.
+			setTimeout(() => this.consumedOAuthCodes.delete(payload.jti), AuthService.OAUTH_CODE_TTL_MS).unref();
+
+			try {
+				codeState = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+			} catch (error) {
+				// The read failed, so this claim guards a code we never proved was live. Hand it
+				// back, or a transient cache error would lock a legitimate first exchange out for
+				// the code's whole lifetime.
+				this.consumedOAuthCodes.delete(payload.jti);
+				throw error;
+			}
+
 			await this.cacheManager.del(cacheKey);
 		}
 
@@ -496,7 +529,20 @@ export class AuthService extends SocialAuthService {
 			const { user: selectedUser, employee } = userValidations[0];
 
 			// Determine organization context for tokens
-			const organizationId = employee?.organizationId || selectedUser.lastOrganizationId;
+			let organizationId = employee?.organizationId || selectedUser.lastOrganizationId;
+
+			// A non-employee user whose preference was never persisted (e.g. a freshly seeded
+			// super admin) has neither source, and a token without an organization claim fails
+			// every consumer of `RequestContext.currentOrganizationId()`. Fall back to the user's
+			// first active organization membership and persist it so subsequent logins skip the
+			// extra lookup. Best-effort: an unresolvable membership issues the token exactly as
+			// before.
+			if (!organizationId) {
+				organizationId = await this.resolveDefaultOrganizationId(selectedUser.id, selectedUser.tenantId);
+				if (organizationId) {
+					await this.userService.setLastOrganizationAndTeam(selectedUser.id, organizationId);
+				}
+			}
 
 			// Generate both access and refresh tokens concurrently
 			const [access_token, refresh_token] = await Promise.all([
@@ -522,6 +568,58 @@ export class AuthService extends SocialAuthService {
 			// Log the error with a timestamp and the error message for debugging
 			this.logger.error(`Login failed at ${new Date().toISOString()}: ${error.message}`);
 			throw new UnauthorizedException();
+		}
+	}
+
+	/**
+	 * Last-resort organization scope for a token: the user's first active `UserOrganization`
+	 * membership.
+	 *
+	 * Only consulted when both `employee.organizationId` and `user.lastOrganizationId` are null
+	 * (a non-employee user — e.g. a freshly seeded super admin — whose preference was never
+	 * persisted), so the common login paths never pay for the extra query. Runs outside an
+	 * authenticated request context, which is why the tenant is pinned explicitly in the `where`.
+	 * Defensive by contract: any lookup failure resolves to null and the token is issued without
+	 * an organization claim, exactly as it was before this fallback existed.
+	 *
+	 * @param userId The user to resolve a membership for.
+	 * @param tenantId The tenant the membership must belong to.
+	 * @returns The organization id of the user's first active membership, or null.
+	 */
+	private async resolveDefaultOrganizationId(userId: ID, tenantId: ID): Promise<ID | null> {
+		try {
+			const userOrganization = await this.userOrganizationService.findOneByOptions({
+				where: { userId, tenantId, isActive: true, isArchived: false },
+				order: { createdAt: 'ASC' }
+			});
+			return userOrganization?.organizationId ?? null;
+		} catch {
+			// `findOneByOptions` throws when no membership exists — no membership, no claim.
+			return null;
+		}
+	}
+
+	/**
+	 * Whether `userId` holds an active, non-archived membership of `organizationId` —
+	 * the same criteria `switchOrganization` enforces before scoping a token.
+	 *
+	 * Used to vet a CLIENT-REQUESTED organization before it may become the token's
+	 * `organizationId` claim: the server-persisted preferences never pass through here.
+	 *
+	 * @param userId The user whose membership is checked.
+	 * @param organizationId The requested organization.
+	 * @param tenantId The tenant the membership must belong to.
+	 * @returns True when an active membership backs the request.
+	 */
+	private async hasActiveOrganizationMembership(userId: ID, organizationId: ID, tenantId: ID): Promise<boolean> {
+		try {
+			const membership = await this.userOrganizationService.findOneByOptions({
+				where: { userId, organizationId, tenantId, isActive: true, isArchived: false }
+			});
+			return !!membership;
+		} catch {
+			// `findOneByOptions` throws when no membership exists.
+			return false;
 		}
 	}
 
@@ -960,11 +1058,57 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Atomically consumes a password-reset record, enforcing single use.
+	 *
+	 * The record is claimed with one conditional DELETE keyed on its primary key.
+	 * Whichever concurrent request wins the row lock deletes it and sees
+	 * `affected === 1`; every other request finds the row already gone and sees
+	 * `affected === 0`. Because the claim and the check are the same statement,
+	 * there is no window between them for a second request to slip through.
+	 *
+	 * This has to be a single statement rather than a lock-then-act pair:
+	 * `SELECT ... FOR UPDATE` throws `LockNotSupportedOnGivenDriverError` on
+	 * better-sqlite3 under TypeORM, and knex silently drops the lock clause for
+	 * sqlite under MikroORM — so pessimistic locking is not portable across the
+	 * databases we support, and better-sqlite3 is the default `DB_TYPE`.
+	 *
+	 * `affected` is a real row count on every driver reachable here (postgres
+	 * `rowCount`, mysql `affectedRows`, better-sqlite3 `changes`; MongoDB is
+	 * rejected at config time), so treating anything other than 1 as a lost race
+	 * fails closed.
+	 *
+	 * @param record - The password reset record to consume.
+	 * @returns `true` if this call claimed the record, `false` if it was already used.
+	 */
+	private async consumePasswordResetToken(record: IPasswordReset): Promise<boolean> {
+		// `id` is optional on IPasswordReset. A loaded record always has one, but an undefined value
+		// would widen the criteria and delete every row in the table, so refuse rather than risk it.
+		if (!record?.id) {
+			return false;
+		}
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const affected = await this.mikroOrmPasswordResetRepository.nativeDelete(
+					passwordResetConsumeWhere(record.id) as any
+				);
+				return affected === 1;
+			}
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmPasswordResetRepository.delete(passwordResetConsumeWhere(record.id));
+				return affected === 1;
+			}
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+	}
+
+	/**
 	 * Resets the user's password based on a valid password reset token.
 	 *
 	 * @param request - The request object containing the new password and the reset token.
 	 * @returns A boolean indicating whether the password reset was successful.
-	 * @throws {BadRequestException} - If the password reset fails due to an invalid or expired token, or if there is an issue updating the password.
+	 * @throws {BadRequestException} - If the password reset fails due to an invalid, expired or already-used token, or if there is an issue updating the password.
 	 */
 	async resetPassword(request: IChangePasswordRequest) {
 		try {
@@ -1002,11 +1146,21 @@ export class AuthService extends SocialAuthService {
 				throw new NotFoundException('Password Reset Failed.');
 			}
 
+			// Claim the token BEFORE changing anything. The record was only read above, so up to
+			// this point two requests carrying the same token are still running side by side; the
+			// conditional delete is what picks a single winner. Doing it after changePassword — as
+			// this flow used to — meant both requests passed validation and both reset the password,
+			// with the last writer silently deciding the final credential.
+			if (!(await this.consumePasswordResetToken(record))) {
+				throw new BadRequestException('Password Reset Failed: Token has already been used.');
+			}
+
 			// Hash the new password using PasswordHashService and update it for the user
 			const hash = await this.passwordHashService.hash(password);
 			await this.userService.changePassword(user.id, hash);
 
-			// Invalidate the used password-reset record and all other records for this user
+			// Sweep up any other password-reset records for this user. The consumed record is already
+			// gone; this only clears leftovers, so a failure here is not worth failing the reset over.
 			try {
 				const deleteWhere = { email: user.email, ...(tenantId ? { tenantId } : {}) };
 				switch (this.ormType) {
@@ -1049,6 +1203,32 @@ export class AuthService extends SocialAuthService {
 	): Promise<User> {
 		let tenant = input.user.tenant;
 		const { organizationId } = input;
+
+		// 0. Validate the terms acceptance BEFORE anything irreversible happens.
+		//
+		// The register form gates its submit button on a hard-required terms
+		// checkbox, and until now the value went nowhere: no field on the DTO,
+		// no column, no row. The invite-acceptance form had the identical
+		// defect. Checking the claims here — ahead of user creation — means a
+		// missing, malformed or unpublished claim rejects the registration
+		// outright rather than leaving a half-created account behind. The check
+		// is pure and synchronous (no storage, no clock, no network), so it is
+		// cheap enough for the hot path.
+		if (isNotEmpty(input.terms)) {
+			this.termsAcceptanceService.assertClaimsArePublished(input.terms);
+		}
+
+		// 0.1 Keep the flat `roleId` column consistent with the `role` relation.
+		//
+		// Every privileged user-creation path funnels through here, and the entity carries both a
+		// `role` relation and a `roleId` FK column that wins when the row is persisted. Callers that
+		// resolve a trusted role server-side (invite accept, organization-contact accept, employee
+		// create) set only `role`, so a caller-supplied `roleId` left in the spread below would
+		// override it and escalate the new account. Where a trusted role object is present it is the
+		// single source of truth; where it is absent, `roleId` has already been authorized upstream.
+		if (input.user?.role?.id) {
+			input.user.roleId = input.user.role.id;
+		}
 
 		// 1. If createdByUserId is provided, get the creating user and use their tenant
 		if (input.createdByUserId) {
@@ -1139,6 +1319,44 @@ export class AuthService extends SocialAuthService {
 			}
 			default:
 				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+
+		// 5b. Record the terms acceptance, now that the user has an id.
+		//
+		// This is the whole point of the change: the tick becomes a row that
+		// says which document, at which version, of which exact text (pinned by
+		// sha256 to the published legal corpus), in which language, and by what
+		// mechanism. `method` distinguishes the two paths that reach this
+		// function — a checkbox during signup and a checkbox on an invite
+		// acceptance are legally different events, and "we can't tell which
+		// happened" is not a position worth defending.
+		//
+		// Failures are logged and swallowed deliberately. The claims were
+		// already validated against the corpus in step 0, so anything that goes
+		// wrong here is an infrastructure fault, and by this point the user row
+		// exists: throwing would abandon a created account and send the person
+		// back to a form that will now tell them their email is taken. The
+		// write is idempotent, so a retry is safe.
+		if (isNotEmpty(input.terms)) {
+			try {
+				const request = RequestContext.currentRequest();
+
+				await this.termsAcceptanceService.record(user.id, input.terms, {
+					tenantId: tenant?.id ?? null,
+					method: input.inviteId ? 'invite-accept' : 'signup-checkbox',
+					// `hashIp` salts and digests this; the address itself is
+					// never stored. Without TERMS_IP_SALT nothing is recorded.
+					ip: request?.ip ?? null,
+					userAgent: request?.headers?.['user-agent'] ?? null
+				});
+			} catch (error) {
+				this.logger.error(
+					`Failed to record terms acceptance for user ${user.id}: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+					error instanceof Error ? error.stack : undefined
+				);
+			}
 		}
 
 		// 6. If organizationId is provided, add the user to the organization
@@ -1809,9 +2027,18 @@ export class AuthService extends SocialAuthService {
 
 			// Return the response if there are matching workspaces
 			if (response.total_workspaces > 0) {
-				// Invalidate the magic code immediately after successful validation.
-				// The signed JWT workspace tokens are the proof of auth from here on.
-				await this.userService.invalidateMagicCode(email, code);
+				// Claim the code before releasing the workspace tokens. The lookup above only READ
+				// it, so two requests carrying the same code are still running side by side here;
+				// the conditional update is what picks a winner, because its WHERE clause still
+				// contains the code and the loser therefore matches zero rows. Invalidating without
+				// checking the count — as this used to — meant both requests were handed valid
+				// signed workspace tokens from a single single-use code.
+				const claimed = await this.userService.invalidateMagicCode(email, code);
+
+				if (claimed === 0) {
+					throw new UnauthorizedException();
+				}
+
 				return response;
 			}
 
@@ -1886,8 +2113,27 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException();
 			}
 
-			// Determine organization context for tokens
-			const organizationId = lastOrganizationId ?? user.lastOrganizationId ?? employee?.organizationId;
+			// Determine organization context for tokens. The REQUESTED organization is a
+			// client-supplied hint, not an entitlement: unlike the server-persisted fallbacks
+			// it must be backed by an active membership (the same criteria `switchOrganization`
+			// enforces) before it may scope the token — otherwise any workspace-token holder
+			// could mint a token claiming a sibling organization of the tenant. An unbacked
+			// hint (e.g. a stale client cache after the membership was revoked) falls back to
+			// the persisted values instead of failing the whole signin.
+			let organizationId = user.lastOrganizationId ?? employee?.organizationId;
+			if (
+				lastOrganizationId &&
+				(await this.hasActiveOrganizationMembership(user.id, lastOrganizationId, user.tenantId))
+			) {
+				organizationId = lastOrganizationId;
+			}
+
+			// Same backfill as `login()`: a non-employee user with no persisted preference gets
+			// their first active organization membership so the token carries a usable scope.
+			// `setLastOrganizationAndTeam` below persists whatever is resolved here.
+			if (!organizationId) {
+				organizationId = await this.resolveDefaultOrganizationId(user.id, user.tenantId);
+			}
 
 			// Generate access and refresh tokens concurrently
 			const [accessToken, refreshToken] = await Promise.all([

@@ -47,7 +47,9 @@ export const ClientsPage = {
 	clientsTableData: 'td.ng-star-inserted',
 	clientsTableRow: 'tr[class="angular2-smart-row ng-star-inserted"]',
 	viewButtonCss: 'div.btn-group.actions button.action.secondary',
-	clientNameViewCss: 'div.profile-user-title-name',
-	clientTypeViewCss: 'div.profile-user-title-type',
+	// The contact view puts the name and the contact type on the card header line
+	// (they used to sit in a pill halfway down the left column).
+	clientNameViewCss: 'h4.identity-name',
+	clientTypeViewCss: 'span.identity-type',
 	backBtn: 'ngx-back-navigation > div > button[status="primary"]'
 };

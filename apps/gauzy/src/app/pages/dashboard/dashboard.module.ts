@@ -1,5 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule, ROUTES } from '@angular/router';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import {
 	NbAlertModule,
 	NbBadgeModule,
@@ -27,6 +28,8 @@ import { PageExtensionSlotComponent } from '@gauzy/plugin-ui';
 import {
 	ActivityItemModule,
 	CounterPointComponent,
+	DashboardWidgetHostComponent,
+	DialogsModule,
 	DynamicTabsModule,
 	GalleryModule,
 	InfoBlockModule,
@@ -45,6 +48,12 @@ import {
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { createDashboardRoutes } from './dashboard.routes';
 import { DashboardComponent } from './dashboard.component';
+import { DashboardSwitcherComponent } from './dashboard-switcher/dashboard-switcher.component';
+import { CustomDashboardComponent } from './custom-dashboard/custom-dashboard.component';
+import { DashboardCanvasComponent } from './custom-dashboard/dashboard-canvas.component';
+import { WidgetPaletteComponent } from './custom-dashboard/widget-palette.component';
+import { DashboardTabStripComponent } from './custom-dashboard/dashboard-tab-strip.component';
+import { WidgetConfigDialogComponent } from './custom-dashboard/widget-config-dialog.component';
 import { HumanResourcesComponent } from './human-resources/human-resources.component';
 import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
@@ -94,6 +103,14 @@ const THIRD_PARTY_MODULES = [
 // Components
 const COMPONENTS = [
 	DashboardComponent,
+	DashboardSwitcherComponent,
+	// Dashboard builder: canvas page, grid canvas, widget palette, tab strip
+	// and the per-widget settings dialog opened from a widget's kebab menu
+	CustomDashboardComponent,
+	DashboardCanvasComponent,
+	WidgetPaletteComponent,
+	DashboardTabStripComponent,
+	WidgetConfigDialogComponent,
 	AccountingComponent,
 	HumanResourcesComponent,
 	ProjectManagementComponent,
@@ -116,7 +133,12 @@ const COMPONENTS = [
 		...THIRD_PARTY_MODULES,
 		...STANDALONE_MODULES,
 		BaseChartDirective,
+		// Dashboard builder: CDK drag & drop (canvas + palette + tab strip)
+		// and the standalone widget host that instantiates palette widgets.
+		DragDropModule,
+		DashboardWidgetHostComponent,
 		// Feature Modules
+		DialogsModule,
 		RecordsHistoryModule,
 		ProfitHistoryModule,
 		SingleStatisticModule,

@@ -1,120 +1,363 @@
-<nb-card class="ai-chat-settings" [nbSpinner]="loading()" nbSpinnerStatus="primary">
-	<nb-card-header>
-		<div class="page-header">
-			<div>
-				<h5>{{ 'AI_CHAT_UI.SETTINGS.TITLE' | translate }}</h5>
-				<p class="description">{{ 'AI_CHAT_UI.SETTINGS.DESCRIPTION' | translate }}</p>
-			</div>
-		</div>
-	</nb-card-header>
-	<nb-card-body>
-		@if (!loading() && !providers().length) {
-		<p class="empty-state">{{ 'AI_CHAT_UI.SETTINGS.NO_PROVIDERS' | translate }}</p>
-		}
+<!--
+	Provider tile, shared by the list rows, the catalog cards and the config
+	header so one provider looks identical wherever it appears. Draws the
+	bundled brand mark when there is one and falls back to a monogram when
+	there is not, so a tile is never an empty box.
+-->
+<ng-template #providerTile let-provider let-large="large">
+	@if (providerLogo(provider.id); as logo) {
+		<span class="tile brand" [class.large]="large" [style.color]="logo.brandColor">
+			<svg
+				class="mark"
+				[attr.viewBox]="logo.viewBox"
+				preserveAspectRatio="xMidYMid meet"
+				aria-hidden="true"
+				focusable="false"
+			>
+				<g [attr.transform]="logo.transform">
+					@for (path of logo.paths; track $index) {
+						<path [attr.d]="path"></path>
+					}
+				</g>
+			</svg>
+		</span>
+	} @else {
+		<span class="tile monogram" [class.large]="large" aria-hidden="true">{{ tileMonogram(provider) }}</span>
+	}
+</ng-template>
 
-		<nb-radio-group class="providers" [formControl]="defaultProviderControl" name="defaultProvider">
-			@for (provider of providers(); track provider.id) {
-			<nb-card class="provider-card">
-				<nb-card-header>
-					<div class="provider-header">
-						<div class="provider-title">
-							<h6>{{ provider.label }}</h6>
-							<nb-badge
-								[text]="getBadgeKey(provider) | translate"
-								[status]="getBadgeStatus(provider)"
-								position="top right"
-							></nb-badge>
-						</div>
-						@if (provider.models.length) {
-						<div class="provider-models">
-							<span class="models-label">{{ 'AI_CHAT_UI.SETTINGS.MODELS' | translate }}:</span>
-							@for (model of provider.models; track model.id) {
-							<span class="model-chip" [nbTooltip]="model.id">{{ model.label }}</span>
-							}
-						</div>
-						}
+<nb-card class="ai-chat-settings" [nbSpinner]="loading() || connecting()" nbSpinnerStatus="primary">
+	<!-- ══════════════ LIST VIEW (default) ══════════════ -->
+	@if (view() === 'list') {
+		<nb-card-header>
+			<div class="page-header">
+				<div>
+					<h5>{{ 'AI_CHAT_UI.SETTINGS.TITLE' | translate }}</h5>
+					<p class="description">{{ 'AI_CHAT_UI.SETTINGS.DESCRIPTION' | translate }}</p>
+				</div>
+				<!-- Header action only once something is configured: with an empty list
+				     the centred call-to-action below is the single obvious next step,
+				     and showing both put two identical green buttons on one screen. -->
+				@if (configuredProviders().length) {
+					<button nbButton status="success" (click)="showCatalog()">
+						<nb-icon icon="plus-outline"></nb-icon>
+						{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.ADD_PROVIDER' | translate }}
+					</button>
+				}
+			</div>
+		</nb-card-header>
+		<nb-card-body>
+			<!-- Where is the chat? Answer it here — configuring a provider is the
+			     only place the user learns whether the chat turned on, and why not. -->
+			@if (chatNoticeMeta(); as notice) {
+				<div class="chat-notice" [ngClass]="notice.status" role="status">
+					<nb-icon [icon]="notice.icon" [status]="notice.status"></nb-icon>
+					<div class="notice-text">
+						<span class="notice-title">{{ notice.title | translate }}</span>
+						<span class="notice-hint">{{ notice.hint | translate }}</span>
 					</div>
-				</nb-card-header>
-				<nb-card-body>
-					@if (getForm(provider.id); as form) {
-					<form [formGroup]="form" (ngSubmit)="save(provider)">
-						<div class="form-group">
-							<label class="label" [for]="'apiKey-' + provider.id">
-								{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY' | translate }}
-							</label>
-							<nb-form-field>
-								<input
-									nbInput
-									fullWidth
-									[id]="'apiKey-' + provider.id"
-									formControlName="apiKey"
-									autocomplete="off"
-									[type]="isKeyRevealed(provider.id) ? 'text' : 'password'"
-									[placeholder]="
-										getCredential(provider.id)?.apiKey ||
-										('AI_CHAT_UI.SETTINGS.FORM.API_KEY_PLACEHOLDER' | translate)
-									"
-								/>
+					@if (chatNotice() === 'ready') {
+						<button nbButton size="small" status="success" class="notice-action" (click)="openChat()">
+							<nb-icon icon="message-circle-outline"></nb-icon>
+							{{ 'AI_CHAT_UI.SETTINGS.STATUS.OPEN_CHAT' | translate }}
+						</button>
+					}
+				</div>
+			}
+
+			@if (!loading() && !configuredProviders().length) {
+				<div class="empty-state">
+					<span class="empty-illustration" aria-hidden="true">
+						<nb-icon icon="cube-outline"></nb-icon>
+					</span>
+					<h6 class="empty-title">{{ 'AI_CHAT_UI.SETTINGS.LIST.EMPTY_TITLE' | translate }}</h6>
+					<p class="empty-hint">{{ 'AI_CHAT_UI.SETTINGS.LIST.EMPTY' | translate }}</p>
+					<button nbButton status="success" size="medium" (click)="showCatalog()">
+						<nb-icon icon="plus-outline"></nb-icon>
+						{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.ADD_PROVIDER' | translate }}
+					</button>
+					<!-- Name the providers on offer so the empty state teaches what this
+					     page is for, instead of only asking for a click. -->
+					<p class="empty-providers">{{ 'AI_CHAT_UI.SETTINGS.LIST.EMPTY_PROVIDERS' | translate }}</p>
+				</div>
+			}
+
+			@if (configuredProviders().length) {
+				<div class="provider-rows">
+					<div class="row-head">
+						<span>{{ 'AI_CHAT_UI.SETTINGS.LIST.NAME' | translate }}</span>
+						<span>{{ 'AI_CHAT_UI.SETTINGS.LIST.SOURCE' | translate }}</span>
+						<span>{{ 'AI_CHAT_UI.SETTINGS.LIST.ENABLED' | translate }}</span>
+						<span class="actions-col"></span>
+					</div>
+					@for (provider of configuredProviders(); track provider.id) {
+						<div class="row">
+							<span class="cell name">
+								<ng-container
+									[ngTemplateOutlet]="providerTile"
+									[ngTemplateOutletContext]="{ $implicit: provider }"
+								></ng-container>
+								<span class="label">
+									{{ provider.label }}
+									@if (defaultProviderId() === provider.id) {
+										<span class="default-chip">{{
+											'AI_CHAT_UI.SETTINGS.LIST.DEFAULT' | translate
+										}}</span>
+									}
+								</span>
+							</span>
+							<span class="cell">
+								<nb-badge
+									class="static-badge"
+									[text]="getBadgeKey(provider) | translate"
+									[status]="getBadgeStatus(provider)"
+								></nb-badge>
+							</span>
+							<span class="cell">
+								@if (getCredential(provider.id)?.id) {
+									<nb-toggle
+										status="primary"
+										[checked]="getCredential(provider.id)?.enabled ?? false"
+										[disabled]="saving() === provider.id"
+										(checkedChange)="toggleEnabled(provider, $event)"
+									></nb-toggle>
+								} @else {
+									<span class="env-note">{{ 'AI_CHAT_UI.SETTINGS.LIST.VIA_ENV' | translate }}</span>
+								}
+							</span>
+							<span class="cell actions-col">
 								<button
-									nbSuffix
 									nbButton
 									ghost
-									type="button"
+									status="primary"
 									size="small"
-									(click)="toggleKeyReveal(provider.id)"
-									[attr.aria-label]="
-										(isKeyRevealed(provider.id)
-											? 'AI_CHAT_UI.SETTINGS.FORM.HIDE_KEY'
-											: 'AI_CHAT_UI.SETTINGS.FORM.SHOW_KEY'
-										) | translate
-									"
+									(click)="showConfigure(provider.id)"
 								>
-									<nb-icon [icon]="isKeyRevealed(provider.id) ? 'eye-off-outline' : 'eye-outline'"></nb-icon>
+									<nb-icon icon="settings-2-outline"></nb-icon>
+									{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.CONFIGURE' | translate }}
 								</button>
-							</nb-form-field>
-							@if (getCredential(provider.id)) {
-							<span class="hint">{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY_KEEP' | translate }}</span>
-							} @if (form.controls.apiKey.touched && form.controls.apiKey.hasError('required')) {
-							<span class="error">{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY_REQUIRED' | translate }}</span>
-							}
+								@if (getCredential(provider.id)) {
+									<button
+										nbButton
+										ghost
+										status="danger"
+										size="small"
+										(click)="delete(provider)"
+										[disabled]="deleting() === provider.id"
+										[nbSpinner]="deleting() === provider.id"
+										nbSpinnerSize="tiny"
+										nbSpinnerStatus="danger"
+									>
+										<nb-icon icon="trash-2-outline"></nb-icon>
+									</button>
+								}
+							</span>
 						</div>
+					}
+				</div>
+			}
+		</nb-card-body>
+	}
 
-						<div class="form-group">
-							<label class="label" [for]="'baseUrl-' + provider.id">
-								{{ 'AI_CHAT_UI.SETTINGS.FORM.BASE_URL' | translate }}
-							</label>
+	<!-- ══════════════ CATALOG VIEW (?add=1) ══════════════ -->
+	@if (view() === 'catalog') {
+		<nb-card-header>
+			<div class="page-header">
+				<div>
+					<button nbButton ghost size="small" class="back" (click)="showList()">
+						<nb-icon icon="arrow-back-outline"></nb-icon>
+						{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.BACK' | translate }}
+					</button>
+					<h5>{{ 'AI_CHAT_UI.SETTINGS.CATALOG.TITLE' | translate }}</h5>
+					<p class="description">{{ 'AI_CHAT_UI.SETTINGS.CATALOG.DESCRIPTION' | translate }}</p>
+				</div>
+			</div>
+		</nb-card-header>
+		<nb-card-body>
+			@if (!loading() && !providers().length) {
+				<p class="empty-state">{{ 'AI_CHAT_UI.SETTINGS.NO_PROVIDERS' | translate }}</p>
+			}
+			<div class="catalog-grid">
+				@for (provider of providers(); track provider.id) {
+					<button type="button" class="catalog-card" (click)="showConfigure(provider.id)">
+						<ng-container
+							[ngTemplateOutlet]="providerTile"
+							[ngTemplateOutletContext]="{ $implicit: provider, large: true }"
+						></ng-container>
+						<span class="name">{{ provider.label }}</span>
+						@if (provider.configured) {
+							<span class="configured">
+								<nb-icon icon="checkmark-circle-2" status="success"></nb-icon>
+								{{ getBadgeKey(provider) | translate }}
+							</span>
+						}
+						@if (provider.connectType) {
+							<span class="connect-chip">{{
+								'AI_CHAT_UI.SETTINGS.CATALOG.SUPPORTS_CONNECT' | translate
+							}}</span>
+						}
+					</button>
+				}
+			</div>
+		</nb-card-body>
+	}
+
+	<!-- ══════════════ CONFIG VIEW (?provider=<id>) ══════════════ -->
+	@if (view() === 'config' && selectedProvider(); as provider) {
+		<nb-card-header>
+			<div class="page-header">
+				<div>
+					<button nbButton ghost size="small" class="back" (click)="showCatalog()">
+						<nb-icon icon="arrow-back-outline"></nb-icon>
+						{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.BACK' | translate }}
+					</button>
+					<div class="config-title">
+						<ng-container
+							[ngTemplateOutlet]="providerTile"
+							[ngTemplateOutletContext]="{ $implicit: provider }"
+						></ng-container>
+						<h5>{{ provider.label }}</h5>
+						<nb-badge
+							class="static-badge"
+							[text]="getBadgeKey(provider) | translate"
+							[status]="getBadgeStatus(provider)"
+						></nb-badge>
+					</div>
+					@if (isOnPlatformKey(provider)) {
+						<!-- The badge alone would leave the user wondering why a provider they never
+						     configured is working. Say it plainly, and point at the way out. -->
+						<p class="platform-notice">{{ 'AI_CHAT_UI.SETTINGS.PLATFORM_NOTICE' | translate }}</p>
+					}
+				</div>
+			</div>
+		</nb-card-header>
+		<nb-card-body>
+			<!-- Connect flow (providers that support it) -->
+			@if (provider.connectType) {
+				<div class="connect-box">
+					<button nbButton status="primary" (click)="connect(provider)">
+						<nb-icon icon="flash-outline"></nb-icon>
+						{{ 'AI_CHAT_UI.SETTINGS.CONNECT.BUTTON' | translate: { provider: provider.label } }}
+					</button>
+					<span class="hint">{{ 'AI_CHAT_UI.SETTINGS.CONNECT.HINT' | translate }}</span>
+					<div class="divider">
+						<span>{{ 'AI_CHAT_UI.SETTINGS.CONNECT.OR_MANUAL' | translate }}</span>
+					</div>
+				</div>
+			}
+
+			@if (getForm(provider.id); as form) {
+				<form [formGroup]="form" (ngSubmit)="save(provider)" class="config-form">
+					<div class="form-group">
+						<label class="label" [for]="'apiKey-' + provider.id">
+							{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY' | translate }}
+							@if (provider.apiKeysUrl) {
+								<a
+									class="get-key"
+									[href]="provider.apiKeysUrl"
+									target="_blank"
+									rel="noopener noreferrer"
+									>{{ 'AI_CHAT_UI.SETTINGS.FORM.GET_KEY' | translate }} ↗</a
+								>
+							}
+						</label>
+						<nb-form-field>
 							<input
 								nbInput
 								fullWidth
-								[id]="'baseUrl-' + provider.id"
-								formControlName="baseUrl"
-								type="url"
+								[id]="'apiKey-' + provider.id"
+								formControlName="apiKey"
 								autocomplete="off"
-								[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.BASE_URL_PLACEHOLDER' | translate"
+								[type]="isKeyRevealed(provider.id) ? 'text' : 'password'"
+								[placeholder]="
+									getCredential(provider.id)?.apiKey ||
+									('AI_CHAT_UI.SETTINGS.FORM.API_KEY_PLACEHOLDER' | translate)
+								"
 							/>
-							@if (form.controls.baseUrl.touched && form.controls.baseUrl.hasError('pattern')) {
-							<span class="error">{{ 'AI_CHAT_UI.SETTINGS.FORM.BASE_URL_INVALID' | translate }}</span>
-							}
-						</div>
-
-						<div class="form-group">
-							<label class="label">{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL' | translate }}</label>
-							<nb-select
-								fullWidth
-								formControlName="defaultModel"
-								[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_NONE' | translate"
+							<button
+								nbSuffix
+								nbButton
+								ghost
+								type="button"
+								size="small"
+								(click)="toggleKeyReveal(provider.id)"
+								[attr.aria-label]="
+									(isKeyRevealed(provider.id)
+										? 'AI_CHAT_UI.SETTINGS.FORM.HIDE_KEY'
+										: 'AI_CHAT_UI.SETTINGS.FORM.SHOW_KEY'
+									) | translate
+								"
 							>
-								<nb-option value="">
-									{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_NONE' | translate }}
-								</nb-option>
-								@for (model of provider.models; track model.id) {
-								<nb-option [value]="model.id">{{ model.label }}</nb-option>
-								}
-								<nb-option [value]="CUSTOM_MODEL">
-									{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_CUSTOM' | translate }}
-								</nb-option>
-							</nb-select>
-							@if (form.controls.defaultModel.value === CUSTOM_MODEL) {
+								<nb-icon
+									[icon]="isKeyRevealed(provider.id) ? 'eye-off-outline' : 'eye-outline'"
+								></nb-icon>
+							</button>
+						</nb-form-field>
+						@if (getCredential(provider.id)) {
+							<span class="hint">{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY_KEEP' | translate }}</span>
+						}
+						@if (form.controls.apiKey.touched && form.controls.apiKey.hasError('required')) {
+							<span class="error">{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY_REQUIRED' | translate }}</span>
+						}
+					</div>
+
+					<div class="form-group">
+						<label class="label" [for]="'baseUrl-' + provider.id">
+							{{ 'AI_CHAT_UI.SETTINGS.FORM.BASE_URL' | translate }}
+						</label>
+						<input
+							nbInput
+							fullWidth
+							[id]="'baseUrl-' + provider.id"
+							formControlName="baseUrl"
+							type="url"
+							autocomplete="off"
+							[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.BASE_URL_PLACEHOLDER' | translate"
+						/>
+						@if (form.controls.baseUrl.touched && form.controls.baseUrl.hasError('pattern')) {
+							<span class="error">{{ 'AI_CHAT_UI.SETTINGS.FORM.BASE_URL_INVALID' | translate }}</span>
+						}
+					</div>
+
+					<div class="form-group">
+						<label class="label" [for]="'ai-chat-model-' + provider.id">
+							{{ 'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL' | translate }}
+						</label>
+						<ng-select
+							class="model-select"
+							[labelForId]="'ai-chat-model-' + provider.id"
+							formControlName="defaultModel"
+							bindValue="id"
+							bindLabel="label"
+							[items]="modelOptions(provider)"
+							[loading]="isLoadingModels(provider.id)"
+							[clearable]="true"
+							[searchable]="true"
+							[searchFn]="searchModel"
+							[virtualScroll]="true"
+							[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_NONE' | translate"
+							[notFoundText]="'AI_CHAT_UI.SETTINGS.FORM.MODELS_NOT_FOUND' | translate"
+						>
+							<!--
+								Every row is two lines, including the "Custom model…" sentinel: ng-select's
+								virtual scroll measures one item and applies that height to all of them, so a
+								single short row would smear the scroll offset across a 250-entry list.
+							-->
+							<ng-template ng-option-tmp let-model="item">
+								<span class="model-label">{{ model.label }}</span>
+								<span class="model-id">
+									{{
+										model.id === CUSTOM_MODEL
+											? ('AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate)
+											: model.id
+									}}
+								</span>
+							</ng-template>
+						</ng-select>
+						@if (modelSourceKey(provider); as sourceKey) {
+							<span class="hint">{{ sourceKey | translate }}</span>
+						}
+						@if (form.controls.defaultModel.value === CUSTOM_MODEL) {
 							<input
 								nbInput
 								fullWidth
@@ -126,31 +369,41 @@
 								[attr.aria-label]="'AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate"
 								[placeholder]="'AI_CHAT_UI.SETTINGS.FORM.CUSTOM_MODEL_PLACEHOLDER' | translate"
 							/>
-							}
-						</div>
+						}
+					</div>
 
-						<div class="form-group toggles">
-							<nb-toggle formControlName="enabled" status="primary">
-								{{ 'AI_CHAT_UI.SETTINGS.FORM.ENABLED' | translate }}
-							</nb-toggle>
-							<nb-radio [value]="provider.id">
-								{{ 'AI_CHAT_UI.SETTINGS.FORM.USE_AS_DEFAULT' | translate }}
-							</nb-radio>
-						</div>
+					<div class="form-group toggles">
+						<nb-toggle formControlName="enabled" status="primary">
+							{{ 'AI_CHAT_UI.SETTINGS.FORM.ENABLED' | translate }}
+						</nb-toggle>
+						<label class="default-radio">
+							<input
+								type="radio"
+								name="defaultProvider"
+								[value]="provider.id"
+								[checked]="defaultProviderControl.value === provider.id"
+								(change)="defaultProviderControl.setValue(provider.id)"
+								[attr.aria-label]="
+									('AI_CHAT_UI.SETTINGS.FORM.USE_AS_DEFAULT' | translate) + ': ' + provider.label
+								"
+							/>
+							{{ 'AI_CHAT_UI.SETTINGS.FORM.USE_AS_DEFAULT' | translate }}
+						</label>
+					</div>
 
-						<div class="actions">
-							<button
-								nbButton
-								status="primary"
-								type="submit"
-								[disabled]="saving() === provider.id"
-								[nbSpinner]="saving() === provider.id"
-								nbSpinnerSize="tiny"
-								nbSpinnerStatus="control"
-							>
-								{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.SAVE' | translate }}
-							</button>
-							@if (getCredential(provider.id)) {
+					<div class="actions">
+						<button
+							nbButton
+							status="primary"
+							type="submit"
+							[disabled]="saving() === provider.id"
+							[nbSpinner]="saving() === provider.id"
+							nbSpinnerSize="tiny"
+							nbSpinnerStatus="control"
+						>
+							{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.SAVE' | translate }}
+						</button>
+						@if (getCredential(provider.id)) {
 							<button
 								nbButton
 								status="danger"
@@ -164,13 +417,10 @@
 							>
 								{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.DELETE' | translate }}
 							</button>
-							}
-						</div>
-					</form>
-					}
-				</nb-card-body>
-			</nb-card>
+						}
+					</div>
+				</form>
 			}
-		</nb-radio-group>
-	</nb-card-body>
+		</nb-card-body>
+	}
 </nb-card>

@@ -1,18 +1,27 @@
+@use 'themes' as *;
+
+// Status fills come from the theme's status palette, the same way
+// `organizations-status` takes them. The literals here before (#ff3d71 /
+// #00d68f / #0095ff / #fa0) were a snapshot of one theme's eva palette, so the
+// pills stayed on those four colours whichever of the eight themes was active.
 .badge-danger {
-  background-color: #ff3d71;
+  background-color: nb-theme(color-danger-default);
 }
 
 .badge-success {
-  background-color: #00d68f;
+  background-color: nb-theme(color-success-default);
 }
 
 .badge-primary {
-  background-color: #0095ff;
+  background-color: nb-theme(color-info-default);
 }
 
+// No `color` override: the label keeps Bootstrap's dark-on-amber pairing. White
+// on this fill measured ~2:1, i.e. the ARCHIVED pill was the one status label
+// you could not read — and unlike the other three, amber is a LIGHT fill, so it
+// wants dark text in every theme.
 .badge-warning {
-  background-color: #fa0;
-  color: #fff;
+  background-color: nb-theme(color-warning-default);
 }
 
 div {
@@ -22,12 +31,20 @@ div {
   justify-content: flex-start;
 }
 
+// Same status-pill pattern as `employee-work-status`, and this cell stacks the
+// rating above the pill, so the pill's box is pure row height. Sized from the
+// shared table-density tokens (`$gauzy-density` in `themes.scss`); the literals
+// are CSS-var fallbacks only.
 .badge {
   text-align: center;
-  padding: 4px 8px;
-  font-size: 12px;
+  // Padding, not `min-height`: padding centres the label for free, and a 17px
+  // pill fits inside the cell's 20px line box.
+  padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
+  // Wraps as a whole rather than breaking its own label; never clipped.
+  white-space: nowrap;
+  font-size: var(--gauzy-table-header-font-size, 0.75rem);
   font-weight: 600;
-  line-height: 15px;
+  line-height: var(--gauzy-table-header-line-height, 0.9375rem);
   letter-spacing: 0em;
   text-align: left;
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import {
 	ID,
@@ -8,10 +8,14 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { AiProviderRegistry } from '../provider-registry';
 import { AiProviderCredential } from './ai-provider-credential.entity';
 import { AiProviderCredentialEncryptionService } from './ai-provider-credential-encryption.service';
 import { MikroOrmAiProviderCredentialRepository } from './repositories/mikro-orm-ai-provider-credential.repository';
 import { TypeOrmAiProviderCredentialRepository } from './repositories/type-orm-ai-provider-credential.repository';
+
+/** OpenRouter's PKCE code→key exchange endpoint (see https://openrouter.ai/docs/use-cases/oauth-pke). */
+const OPENROUTER_KEY_EXCHANGE_URL = 'https://openrouter.ai/api/v1/auth/keys';
 
 /** Mask prefix used in place of the encrypted API key on read endpoints. */
 const API_KEY_MASK_PREFIX = '••••';
@@ -98,6 +102,68 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 			providerId: record.providerId,
 			...(record.defaultModel ? { defaultModel: record.defaultModel } : {})
 		};
+	}
+
+	/**
+	 * Complete a provider "Connect" flow: exchange the PKCE authorization
+	 * `code` + `codeVerifier` for an API key server-side and store it as the
+	 * tenant's BYOK credential for that provider. The key never touches the
+	 * browser. Currently supports OpenRouter's PKCE flow only.
+	 *
+	 * @param input - Provider id + the PKCE code and verifier from the callback.
+	 * @returns The persisted credential with a masked API key.
+	 */
+	async connectExchange(input: {
+		providerId: string;
+		code: string;
+		codeVerifier: string;
+		organizationId?: ID;
+	}): Promise<IAiProviderCredential> {
+		const providerId = input.providerId?.trim().toLowerCase();
+		const definition = AiProviderRegistry.get(providerId);
+		if (!definition) {
+			throw new BadRequestException(`Unknown AI provider '${providerId}'.`);
+		}
+		if (definition.connect?.type !== 'openrouter-pkce') {
+			throw new BadRequestException(`Provider '${providerId}' does not support a Connect flow.`);
+		}
+
+		let response: Response;
+		try {
+			response = await fetch(OPENROUTER_KEY_EXCHANGE_URL, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					code: input.code,
+					code_verifier: input.codeVerifier,
+					code_challenge_method: 'S256'
+				}),
+				signal: AbortSignal.timeout(30_000)
+			});
+		} catch (error) {
+			this.logger.error(`OpenRouter key exchange request failed: ${error}`);
+			throw new BadGatewayException('Could not reach OpenRouter to complete the connection. Please try again.');
+		}
+
+		if (!response.ok) {
+			const body = await response.text().catch(() => '');
+			this.logger.warn(`OpenRouter key exchange rejected (${response.status}): ${body.slice(0, 300)}`);
+			throw new BadGatewayException(
+				`OpenRouter rejected the connection (HTTP ${response.status}). The authorization may have expired — please try connecting again.`
+			);
+		}
+
+		const payload = (await response.json().catch(() => null)) as { key?: string } | null;
+		if (!payload?.key) {
+			throw new BadGatewayException('OpenRouter did not return an API key for this authorization.');
+		}
+
+		return await this.upsert({
+			providerId,
+			apiKey: payload.key,
+			enabled: true,
+			...(input.organizationId ? { organizationId: input.organizationId } : {})
+		});
 	}
 
 	/**

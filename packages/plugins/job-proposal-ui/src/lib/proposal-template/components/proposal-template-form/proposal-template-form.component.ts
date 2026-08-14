@@ -4,12 +4,10 @@ import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { CKEditor4 } from 'ckeditor4-angular';
 import { IEmployeeProposalTemplate, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { ErrorHandlingService, ProposalTemplateService, Store, ToastrService } from '@gauzy/ui-core/core';
-import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy()
 @Component({
@@ -20,7 +18,6 @@ import { ckEditorConfig } from '@gauzy/ui-core/shared';
 })
 export class ProposalTemplateFormComponent extends TranslationBaseComponent implements OnInit {
 	public organization: IOrganization;
-	public ckConfig: CKEditor4.Config = ckEditorConfig;
 
 	public form: UntypedFormGroup = ProposalTemplateFormComponent.buildForm(this._fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {

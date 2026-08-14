@@ -1,5 +1,6 @@
 import { type CSSProperties } from 'react';
 import { chatTheme } from '../chat-theme';
+import { type ChatTranslate, passthroughChatTranslate } from '../use-chat-translate';
 
 /** One conversation row as returned by GET /api/ai-chat/conversations. */
 export interface IChatHistoryItem {
@@ -12,6 +13,8 @@ export interface ChatHistoryPanelProps {
 	items: IChatHistoryItem[];
 	loading: boolean;
 	activeId?: string;
+	/** `t(key, fallback)` from the panel — see `useChatTranslate`. */
+	translate?: ChatTranslate;
 	onSelect: (id: string) => void;
 	onDelete: (id: string) => void;
 	onClose: () => void;
@@ -23,15 +26,28 @@ export interface ChatHistoryPanelProps {
  * Overlay list of the user's saved conversations (server-side history,
  * scoped to the current user + tenant). Click to resume, trash to delete.
  */
-export function ChatHistoryPanel({ items, loading, activeId, onSelect, onDelete, onClose }: ChatHistoryPanelProps) {
+export function ChatHistoryPanel({
+	items,
+	loading,
+	activeId,
+	translate: t = passthroughChatTranslate,
+	onSelect,
+	onDelete,
+	onClose
+}: ChatHistoryPanelProps) {
 	const containerStyle: CSSProperties = {
+		// Fills the chat BODY (the panel mounts this inside its position:relative body container),
+		// so the panel's own header row stays visible and operable above it.
 		position: 'absolute',
 		inset: 0,
 		display: 'flex',
 		flexDirection: 'column',
 		zIndex: 5,
-		backdropFilter: 'blur(2px)',
-		background: 'inherit'
+		// `inherit` resolved to transparent (the parent paints no background), so the conversation
+		// bled through. The layout publishes its sidebar surface as --gz-chat-surface; the blur is
+		// the fallback for hosts that do not (detached window).
+		backdropFilter: 'blur(12px)',
+		background: 'var(--gz-chat-surface, transparent)'
 	};
 
 	const headerStyle: CSSProperties = {
@@ -91,22 +107,54 @@ export function ChatHistoryPanel({ items, loading, activeId, onSelect, onDelete,
 		background: 'transparent',
 		color: chatTheme.textSecondary,
 		cursor: 'pointer',
-		padding: 4
+		padding: 4,
+		borderRadius: 6,
+		lineHeight: 1
 	};
 
 	return (
 		<div style={containerStyle}>
 			<div style={headerStyle}>
-				<span>History</span>
-				<button style={closeBtnStyle} onClick={onClose} title="Close history" aria-label="Close history">
+				{/* A clock glyph in front of the word, matching the header control
+				    that opened this overlay, so the two read as the same thing. */}
+				<svg
+					width="13"
+					height="13"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="2"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					style={{ flexShrink: 0, opacity: 0.7 }}
+					aria-hidden="true"
+				>
+					<circle cx="12" cy="12" r="10" />
+					<polyline points="12 6 12 12 16 14" />
+				</svg>
+				<span>{t('AI_ASSISTANT.HISTORY', 'History')}</span>
+				<button
+					type="button"
+					className="gz-ai-chat-head-btn"
+					style={closeBtnStyle}
+					onClick={onClose}
+					title={t('AI_ASSISTANT.HISTORY_CLOSE', 'Close history')}
+					aria-label={t('AI_ASSISTANT.HISTORY_CLOSE', 'Close history')}
+				>
 					✕
 				</button>
 			</div>
 
 			<div style={listStyle}>
-				{loading && <div style={{ padding: 12, color: chatTheme.textSecondary }}>Loading…</div>}
+				{loading && (
+					<div style={{ padding: 12, color: chatTheme.textSecondary }}>
+						{t('AI_ASSISTANT.LOADING', 'Loading…')}
+					</div>
+				)}
 				{!loading && items.length === 0 && (
-					<div style={{ padding: 12, color: chatTheme.textSecondary }}>No saved conversations yet.</div>
+					<div style={{ padding: 12, color: chatTheme.textSecondary }}>
+						{t('AI_ASSISTANT.HISTORY_EMPTY', 'No saved conversations yet.')}
+					</div>
 				)}
 				{items.map((item) => (
 					<div key={item.id} style={rowStyle(item.id === activeId)}>
@@ -127,9 +175,10 @@ export function ChatHistoryPanel({ items, loading, activeId, onSelect, onDelete,
 						</button>
 						<button
 							type="button"
+							className="gz-ai-chat-head-btn"
 							style={deleteBtnStyle}
-							title="Delete conversation"
-							aria-label={`Delete ${item.title}`}
+							title={t('AI_ASSISTANT.DELETE_CONVERSATION', 'Delete conversation')}
+							aria-label={`${t('AI_ASSISTANT.DELETE_CONVERSATION', 'Delete conversation')}: ${item.title}`}
 							onClick={() => onDelete(item.id)}
 						>
 							<svg

@@ -2,7 +2,13 @@ export const ManageEmployeesPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	inviteButtonCss: 'button.action[status="info"]',
 	emailsInputCss: '#emails',
+	// Invite dialog's "Date when started work" (the invite dialog is the only thing open at that point).
 	dateInputCss: '[formcontrolname="startedWorkOn"]',
+	// Add-Employee dialog's own start-work date. It has NO id, so the bare
+	// `[formcontrolname="startedWorkOn"]` matches this AND the invite dialog's field whenever the
+	// invite dialog is still mounted (e.g. its Send failed), and clearField()/enterInput() — which have
+	// no .first() — die on a Playwright strict-mode violation instead of reporting the real problem.
+	employeeDateInputCss: 'ga-employee-mutation [formcontrolname="startedWorkOn"]',
 	selectProjectDropdownCss: '#projectSelection',
 	selectProjectDropdownOptionCss: 'div.ng-option > span.ng-option-label',
 	sendInviteButtonCss: 'nb-card-footer > button[status="success"]',
@@ -25,7 +31,21 @@ export const ManageEmployeesPage = {
 	// ngx-password-form-field reflects id onto BOTH its host element and the inner input; scope to
 	// input# so enterInput's fill() (no .first()) doesn't hit a strict-mode violation.
 	passwordInputCss: 'input#password',
-	addTagsDropdownCss: '#addTags',
+	// MUST stay scoped to the Add-Employee dialog. The employees grid's Tags column filter is a
+	// TagsColorFilterComponent -> <ga-tags-color-input> -> <ng-select id="addTags">, i.e. a SECOND
+	// #addTags that sits EARLIER in the DOM than the dialog's (the dialog lives in the cdk-overlay
+	// container appended at the end of <body>), so a bare '#addTags' + .first() drove the GRID filter
+	// while the dialog was open. That is not merely "the tag went to the wrong control": when no tag
+	// exists yet in the org (edit-employee is the first spec in its shard and seeds its tag only AFTER
+	// this call), the option list stays empty and the ng-select driver falls into its re-open branch,
+	// `.ng-select-container.click({ force: true })`. force only skips the actionability CHECK — the
+	// click is still delivered at screen coordinates, which for a control BEHIND the modal means the
+	// dialog's cdk-overlay-backdrop; NbDialogService.open(EmployeeMutationComponent) takes the default
+	// closeOnBackdropClick: true, so the whole Add Employee form was dismissed mid-fill. The visible
+	// symptom was several steps later ("#inputImageUrl input[type=text]" not found), because the
+	// clickCardBody() in between is wrapped in .catch(). Same fix already applied to the candidates,
+	// payments, departments, income and teams page objects for this exact clash.
+	addTagsDropdownCss: 'ga-employee-mutation #addTags',
 	tagsDropdownOption: 'div.ng-option',
 	// ngx-file-uploader-input renders TWO inputs (text URL + hidden file); target the text one only,
 	// else enterInput's fill() (no .first()) hits a strict-mode violation.

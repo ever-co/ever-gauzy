@@ -1,0 +1,14 @@
+<ga-teams-widget-state
+	[loading]="loading()"
+	[error]="error()"
+	[empty]="members().length === 0"
+	[skeletonRows]="4"
+	emptyMessageKey="DASHBOARD_PAGE.BUILDER.WIDGETS.TEAM_MEMBERS.EMPTY"
+	(retry)="refresh()"
+>
+	<div class="member-list">
+		@for (member of members(); track member.id) {
+			<ga-team-member-row [member]="member" [showTeamName]="showTeamName()"></ga-team-member-row>
+		}
+	</div>
+</ga-teams-widget-state>

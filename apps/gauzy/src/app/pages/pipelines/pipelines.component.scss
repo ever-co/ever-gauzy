@@ -1,10 +1,13 @@
 @use '@shared/_pg-card' as *;
+@use 'gauzy/tabset-actions' as *;
 
 :host {
   height: 100%;
   nb-tab.content-active {
     padding: 1rem;
-    height: calc(100% - 3rem);
+    // NOTE: height is not set here — `tabset-fills-height` below lets the body
+    // take whatever the tab strip leaves (was a hand-measured `calc(100% - 3rem)`
+    // that assumed the pre-density strip).
     border-radius: 0 0 var(--border-radius) var(--border-radius);
     overflow: unset;
     display: flex;
@@ -17,11 +20,18 @@
     }
   }
   nb-tabset {
-    height: calc(100% - 1.5rem);
+    // Full height now that the tabset no longer carries a `mt-4` spacer to keep
+    // it clear of the action row (the action row shares the strip's box).
+    @include tabset-fills-height(100%);
   }
   nb-card,
   nb-tab.content-active {
-    background-color: var(--gauzy-card-2);
+    // Fallback required: `--gauzy-card-2` is undefined in material-light and
+    // material-dark — `themes.scss` registers those two against Nebular's own
+    // parent themes, so they never inherit the `gauzy-card-*` keys — and a
+    // `var()` without one makes the browser drop the whole declaration, which
+    // left the tab body unpainted there.
+    background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
   }
   nb-card-body {
     overflow: unset;
@@ -32,10 +42,7 @@
   }
 }
 :host .gauzy-button-container {
-  position: absolute;
-  @include nb-ltr(right, 18px);
-  @include nb-rtl(left, 18px);
-  top: 0;
+  @include tabset-action-row(18px);
 }
 nb-accordion-item-header ::ng-deep nb-icon {
   border: 1px solid nb-theme(border-basic-color-4);

@@ -20,6 +20,7 @@ import {
 	CurrencyModule,
 	LeafletMapModule,
 	LocationFormModule,
+	RecordViewModule,
 	SharedModule,
 	TagsColorInputModule
 } from '@gauzy/ui-core/shared';
@@ -57,6 +58,7 @@ const NB_MODULES = [
 		InventoryTableComponentsModule,
 		LeafletMapModule,
 		LocationFormModule,
+		RecordViewModule,
 		TagsColorInputModule
 	],
 	providers: []

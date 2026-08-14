@@ -1,11 +1,17 @@
 @use 'gauzy/_gauzy-cards' as *;
 
 :host {
-  @include nb-card_overrides(
-    auto,
-    calc($default-card-height + 2.5rem),
-    $default-radius
-  );
+  // `unset, auto`: the dashboard page owns the single scrollbar now (see
+  // `../dashboard.component.scss`), so this card must not open a second one.
+  // The viewport-derived height it used to be pinned to was a hand-tuned guess
+  // that the density pass and the new chips row both invalidated.
+  @include nb-card_overrides(unset, auto, $default-radius);
+  // Must stay AFTER `nb-card_overrides`, which emits its own `:host nb-card`
+  // with `height: 100%` at the same specificity — the later block wins.
+  nb-card {
+    height: auto;
+  }
+
   .card {
     background-color: var(--gauzy-card-2);
     .card-header {

@@ -1,27 +1,52 @@
 @use 'gauzy/_gauzy-dialogs' as *;
+@use 'gauzy/tabset-actions' as *;
 @forward '../expenses/expense-categories/expense-categories.component';
 
 :host {
     height: 100%;
     nb-tab.content-active {
-      height: calc(100vh - 16.75rem);;
+      // NOTE: height is not set here — `tabset-fills-height` below lets the body
+      // take whatever the tab strip leaves (was `calc(100vh - 16.75rem)`, a
+      // figure measured against the pre-density strip plus a `mt-4` spacer).
       border-radius: 0 0 var(--border-radius) var(--border-radius);
       overflow: unset;
       display: flex;
       flex-direction: column;
       @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
       @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
-      nb-accordion {
-        @include nb-ltr(margin-right, 0.625rem);
-        @include nb-rtl(margin-left, 0.625rem);
-      }
+      // Removed: `nb-accordion { margin-right/left: 0.625rem }`. Grepping this
+      // page for "accordion" matches only this stylesheet — the template
+      // (employment-types.component.html) renders nb-tabset > nb-card >
+      // ga-notes-with-tags / ga-card-grid, never an accordion, and the .ts adds
+      // no class or element bindings. With emulated encapsulation the selector
+      // could only ever have matched an nb-accordion in this component's own
+      // template, so it styled nothing.
     }
-    nb-tabset{
-      height: 100%;
+    nb-tabset {
+      // Card body height: the viewport less the app chrome above the tabset.
+      // `nb-card` here has no definite height, so a percentage collapses to the
+      // content height — the tab body would then run off the bottom of the page
+      // and `.table-scroll-container` (max-height: unset below) would never
+      // scroll. So this one has to be viewport-anchored.
+      //
+      // The fixed header is the part of that chrome that is a theme token, and
+      // it is NOT the same in every theme (4.5rem in gauzy/default/dark/cosmic/
+      // corporate, 4.75rem in material-*) — Nebular offsets the page by exactly
+      // `header-height`, so subtract the token rather than folding it into a
+      // constant. The 7.75rem remainder is the card header + layout padding,
+      // which are multi-value shorthands and so cannot be picked apart here.
+      // (7.75rem + 4.5rem == the 12.25rem this was measured at, so nothing
+      // changes in the six themes with a 4.5rem header; material-* self-corrects.)
+      @include tabset-fills-height(calc(100vh - #{nb-theme(header-height)} - 7.75rem));
     }
     nb-card,
     nb-tab.content-active {
-      background-color: var(--gauzy-card-2);
+      // material-light / material-dark register no `gauzy-card-2` (themes.scss
+      // gives them only gauzy-primary-background, gauzy-sidebar-background-*
+      // and gauzy-border-table), so a bare var() is invalid there and the whole
+      // declaration is dropped — the row cards lose their panel tint and sit
+      // flat on the tab body. Neutral translucent gray as the fallback.
+      background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
     }
     nb-card-body{
       overflow: unset;
@@ -37,18 +62,14 @@
   }
 
 :host .gauzy-button-container {
-    position: absolute;
-    @include nb-ltr(right, 16px);
-    @include nb-rtl(left, 16px);
-    top: 0;
+    @include tabset-action-row(16px);
 }
 
-nb-accordion-item-header ::ng-deep nb-icon {
-    border: 1px solid nb-theme(border-basic-color-4);
-    border-radius: nb-theme(input-rectangle-border-radius);
-    width: 1.75rem;
-    height: 1.75rem;
-}
+// Removed: `nb-accordion-item-header ::ng-deep nb-icon { border/radius/size }`.
+// Same reason as the nb-accordion rule above — this page has no accordion, and
+// the part of the selector before `::ng-deep` still carries this component's
+// encapsulation attribute, so it could only have matched an
+// nb-accordion-item-header in employment-types.component.html. There is none.
 
 nb-card-body {
     background: none;

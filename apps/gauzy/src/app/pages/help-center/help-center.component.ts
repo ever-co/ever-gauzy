@@ -25,7 +25,6 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -59,14 +58,22 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 		private readonly toastrService: ToastrService,
 		private helpCenterAuthorService: HelpCenterAuthorService,
 		private employeeService: EmployeesService,
-		private readonly store: Store,
-		private sanitizer: DomSanitizer
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	public expandedArticles: Set<string> = new Set();
-	public articleContent: Map<string, SafeHtml | string> = new Map();
+	/**
+	 * Article body HTML, keyed by article id, held as a PLAIN STRING and bound with `[innerHtml]`.
+	 *
+	 * 🛑 Never mark these values as trusted. `HelpCenterArticle.data` is a legacy CKEditor-4 corpus
+	 * authored by other tenant users; only writes made since `sanitizeRichHtml` shipped are known to
+	 * be clean, so every row predating it is still attacker-controlled. Binding a plain string keeps
+	 * Angular's own sanitizer in the loop on top of the server-side allowlist — same reasoning as the
+	 * docs-ui static renderer (`markdown-render.util.ts`).
+	 */
+	public articleContent: Map<string, string> = new Map();
 	public employees: IEmployee[] = [];
 	public articleList: IHelpCenterArticle[] = [];
 	public isResetSelect = false;
@@ -132,35 +139,41 @@ export class HelpCenterComponent extends TranslationBaseComponent implements OnD
 
 	async loadArticles(id) {
 		this.loading = true;
-		this.expandedArticles.clear();
-		this.articleContent.clear();
-		const result = await this.helpCenterArticleService.findByCategoryId(id);
-		if (result) {
-			this.articleList = result;
-			for (const article of this.articleList) {
-				if (article.data) {
-					this.articleContent.set(article.id, this.sanitizer.bypassSecurityTrustHtml(article.data));
+		try {
+			this.expandedArticles.clear();
+			this.articleContent.clear();
+			const result = await this.helpCenterArticleService.findByCategoryId(id);
+			if (result) {
+				this.articleList = result;
+				for (const article of this.articleList) {
+					if (article.data) {
+						this.articleContent.set(article.id, article.data);
+					}
 				}
 			}
-		}
-		this.filteredArticles = this.articleList;
-		const { id: organizationId, tenantId } = this.organization;
-		const res = await this.helpCenterAuthorService.getAll([], {
-			organizationId,
-			tenantId
-		});
-		if (res) {
-			this.authors = res.items;
-			for (const article of this.articleList) {
-				const employeesList = [];
-				this.authors.forEach((author) => {
-					this.employees.forEach((employee) => {
-						if (employee.id === author.employeeId && author.articleId === article.id)
-							employeesList.push(employee);
+			this.filteredArticles = this.articleList;
+			const { id: organizationId, tenantId } = this.organization;
+			const res = await this.helpCenterAuthorService.getAll([], {
+				organizationId,
+				tenantId
+			});
+			if (res) {
+				this.authors = res.items;
+				for (const article of this.articleList) {
+					const employeesList = [];
+					this.authors.forEach((author) => {
+						this.employees.forEach((employee) => {
+							if (employee.id === author.employeeId && author.articleId === article.id)
+								employeesList.push(employee);
+						});
 					});
-				});
-				article.employees = employeesList;
+					article.employees = employeesList;
+				}
 			}
+		} catch (error) {
+			console.error('Error while retrieving help center articles', error);
+			this.toastrService.danger(error);
+		} finally {
 			this.loading = false;
 		}
 	}

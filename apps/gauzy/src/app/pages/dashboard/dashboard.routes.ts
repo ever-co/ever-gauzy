@@ -1,8 +1,16 @@
 import { Route } from '@angular/router';
-import { BookmarkQueryParamsResolver, PageRouteRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
+import {
+	BookmarkQueryParamsResolver,
+	customDashboardGuard,
+	defaultDashboardGuard,
+	PageRouteRegistryService,
+	PermissionsGuard,
+	standardDashboardGuard
+} from '@gauzy/ui-core/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { DashboardComponent } from './dashboard.component';
+import { CustomDashboardComponent } from './custom-dashboard/custom-dashboard.component';
 import { HumanResourcesComponent } from './human-resources/human-resources.component';
 import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
@@ -27,13 +35,44 @@ export function createDashboardRoutes(_pageRouteRegistryService: PageRouteRegist
 			},
 			children: [
 				{
+					// Lands on the user's default custom dashboard when one exists,
+					// otherwise redirects to the standard time-tracking tab.
 					path: '',
-					redirectTo: 'time-tracking',
-					pathMatch: 'full'
+					pathMatch: 'full',
+					canActivate: [defaultDashboardGuard],
+					children: []
+				},
+				{
+					// Componentless intermediate hop used to force re-creation of the
+					// widget host when switching between two custom dashboards.
+					path: 'switching',
+					children: []
+				},
+				{
+					// A user-built custom dashboard: a canvas of freely placed widgets
+					// across user-created tabs. Owned by the core dashboard feature
+					// (it used to be registered by the time-track plugin, which made a
+					// custom dashboard a permutation of that plugin's page).
+					path: 'custom/:id',
+					component: CustomDashboardComponent,
+					canActivate: [customDashboardGuard],
+					data: {
+						selectors: {
+							project: false
+						},
+						datePicker: {
+							unitOfTime: 'week'
+						}
+					},
+					resolve: {
+						dates: DateRangePickerResolver,
+						bookmarkParams: BookmarkQueryParamsResolver
+					}
 				},
 				{
 					path: 'accounting',
 					component: AccountingComponent,
+					canActivate: [standardDashboardGuard],
 					data: {
 						selectors: {
 							project: false
@@ -50,6 +89,7 @@ export function createDashboardRoutes(_pageRouteRegistryService: PageRouteRegist
 				{
 					path: 'hr',
 					component: HumanResourcesComponent,
+					canActivate: [standardDashboardGuard],
 					data: {
 						selectors: {
 							project: false
@@ -67,7 +107,7 @@ export function createDashboardRoutes(_pageRouteRegistryService: PageRouteRegist
 				{
 					path: 'project-management',
 					component: ProjectManagementComponent,
-					canActivate: [PermissionsGuard],
+					canActivate: [PermissionsGuard, standardDashboardGuard],
 					data: {
 						datePicker: {
 							unitOfTime: 'month'
@@ -84,7 +124,7 @@ export function createDashboardRoutes(_pageRouteRegistryService: PageRouteRegist
 				{
 					path: 'teams',
 					component: TeamComponent,
-					canActivate: [PermissionsGuard],
+					canActivate: [PermissionsGuard, standardDashboardGuard],
 					data: {
 						datePicker: {
 							unitOfTime: 'day',

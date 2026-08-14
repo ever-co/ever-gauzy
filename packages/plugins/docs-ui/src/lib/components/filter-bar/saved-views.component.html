@@ -1,0 +1,112 @@
+<div class="docs-saved-views">
+	<button
+		nbButton
+		ghost
+		size="small"
+		type="button"
+		[class.active]="open"
+		[attr.aria-expanded]="open"
+		[nbTooltip]="'DOCS.SAVED_VIEWS.TOOLTIP' | translate"
+		(click)="toggle()"
+	>
+		<nb-icon icon="bookmark-outline"></nb-icon>
+		{{ activeLabel }}
+		<nb-icon [icon]="open ? 'chevron-up-outline' : 'chevron-down-outline'" size="tiny"></nb-icon>
+	</button>
+
+	<div class="docs-saved-views-panel" *ngIf="open" role="menu">
+		<!-- Save current view -->
+		<div class="docs-saved-views-save">
+			<input
+				nbInput
+				fieldSize="small"
+				type="text"
+				id="docs-saved-view-name"
+				[maxlength]="nameMaxLength"
+				[placeholder]="'DOCS.SAVED_VIEWS.NAME_PLACEHOLDER' | translate"
+				[attr.aria-label]="'DOCS.SAVED_VIEWS.NAME_PLACEHOLDER' | translate"
+				[(ngModel)]="draftName"
+				(keydown.enter)="save()"
+			/>
+			<button
+				nbButton
+				size="tiny"
+				status="primary"
+				type="button"
+				[disabled]="!draftName.trim() || atLimit"
+				(click)="save()"
+			>
+				{{ 'DOCS.SAVED_VIEWS.SAVE' | translate }}
+			</button>
+		</div>
+		<p class="docs-saved-views-hint">{{ 'DOCS.SAVED_VIEWS.SAVE_HINT' | translate }}</p>
+		<p class="docs-saved-views-hint warn" *ngIf="atLimit">
+			{{ 'DOCS.SAVED_VIEWS.LIMIT_REACHED' | translate : { max: limit } }}
+		</p>
+
+		<hr />
+
+		<!-- Stored views -->
+		<p class="docs-saved-views-hint" *ngIf="!views.length">{{ 'DOCS.SAVED_VIEWS.EMPTY' | translate }}</p>
+
+		<ul class="docs-saved-views-list" *ngIf="views.length">
+			<li class="docs-saved-views-item" *ngFor="let view of views; trackBy: trackView">
+				<!-- Inline rename -->
+				<ng-container *ngIf="renamingId === view.id; else viewRow">
+					<!-- Only one row can be in rename mode at a time, so the id stays unique. -->
+					<input
+						nbInput
+						fieldSize="tiny"
+						type="text"
+						id="docs-saved-view-rename"
+						[maxlength]="nameMaxLength"
+						[attr.aria-label]="'DOCS.SAVED_VIEWS.RENAME' | translate"
+						[(ngModel)]="renameDraft"
+						(keydown.enter)="commitRename(view)"
+						(keydown.escape)="cancelRename()"
+					/>
+					<button nbButton ghost size="tiny" type="button" (click)="commitRename(view)">
+						<nb-icon icon="checkmark-outline"></nb-icon>
+					</button>
+					<button nbButton ghost size="tiny" type="button" (click)="cancelRename()">
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
+				</ng-container>
+
+				<ng-template #viewRow>
+					<button
+						type="button"
+						class="docs-saved-views-apply"
+						role="menuitem"
+						[class.active]="isActive(view)"
+						(click)="apply(view)"
+					>
+						<nb-icon *ngIf="isActive(view)" icon="checkmark-outline" size="tiny"></nb-icon>
+						<span>{{ view.name }}</span>
+					</button>
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						type="button"
+						[nbTooltip]="'DOCS.SAVED_VIEWS.RENAME' | translate"
+						(click)="startRename(view, $event)"
+					>
+						<nb-icon icon="edit-outline"></nb-icon>
+					</button>
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						status="danger"
+						type="button"
+						[nbTooltip]="'DOCS.SAVED_VIEWS.DELETE' | translate"
+						(click)="remove(view, $event)"
+					>
+						<nb-icon icon="trash-2-outline"></nb-icon>
+					</button>
+				</ng-template>
+			</li>
+		</ul>
+	</div>
+</div>

@@ -32,6 +32,15 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	disableButton = true;
 	private allTags = [];
 	filterOptions: Array<any> = [];
+	/**
+	 * Which entry of `filterOptions` is currently filtering the table. Selecting
+	 * a type changed the table and left the rail looking untouched, so the only
+	 * way to tell what you were looking at was to remember what you clicked.
+	 * `''` is the "All" entry, i.e. no filter.
+	 */
+	selectedFilterValue: string = '';
+	/** Bumped per refresh so a superseded load stops before clobbering fresher data. */
+	private loadGeneration = 0;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -63,8 +72,13 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 			.pipe(
 				debounceTime(300),
 				tap(() => (this.loading = true)),
-				tap(() => this.getTags()),
-				tap(() => this.getTagTypes()),
+				// Sequential on purpose. Both are async and neither was awaited, so they
+				// raced: `getTagTypes()` ends by reconciling the selected filter chip
+				// against `allTags`, which `getTags()` is what refreshes. When the
+				// tag-types response won, the reconcile reloaded the PREVIOUS
+				// organization's tags. Awaiting inside one tap orders them without
+				// changing what downstream operators see (they never waited either).
+				tap(() => this.loadTagsThenTypes()),
 				tap(() => this.clearItem()),
 				untilDestroyed(this)
 			)
@@ -290,10 +304,11 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 
 	async getTagTypes() {
 		this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
 
 		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
 			const { items } = await this.tagTypesService.getTagTypes({
 				tenantId,
 				organizationId
@@ -309,44 +324,99 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 					};
 				})
 			);
-			this.loading = false;
 		} catch (error) {
-			this.loading = false;
+			console.error('Error while retrieving tag types', error);
 			this.toastrService.danger('TAGS_PAGE.TAGS_FETCH_FAILED', 'Error fetching tag types');
+		} finally {
+			this.reconcileSelectedFilter();
+			this.loading = false;
 		}
+	}
+
+	/**
+	 * Drops a filter selection that no longer exists.
+	 *
+	 * `getTags()` resets `filterOptions` to just "All" and this method refills it from
+	 * the current organization's tag types, so a chip that was selected a moment ago can
+	 * simply be gone — switching organization is the usual way. Left alone, the rail then
+	 * highlights nothing at all, not even "All".
+	 *
+	 * The table needs the same treatment. `getTags()` runs BEFORE this method and skips
+	 * reloading while `_isFiltered` is still set, so it will have kept the previous
+	 * organization's filtered rows on screen. Reloading `allTags` — which `getTags()` has
+	 * already refreshed — puts the rail and the table back in agreement.
+	 */
+	private reconcileSelectedFilter() {
+		if (this.filterOptions.some((option) => option.value === this.selectedFilterValue)) {
+			return;
+		}
+		this.selectedFilterValue = '';
+		if (this._isFiltered) {
+			this._isFiltered = false;
+			this.smartTableSource.load(this.allTags);
+		}
+	}
+
+	/**
+	 * Loads the tags, then the tag types, in that order.
+	 *
+	 * Ordered because `getTagTypes()` finishes by reconciling the selected filter chip
+	 * against `allTags`, which `getTags()` is what refreshes; un-awaited they raced and
+	 * the reconcile could run against the previous organization's tags.
+	 *
+	 * The generation check drops the second half of a pass that a newer refresh has
+	 * already superseded — a pagination, search or organization change arriving while
+	 * the first request is still in flight. It does not abort the in-flight HTTP call
+	 * (these are promises, not cancellable observables), and overlapping refreshes
+	 * were possible before this too, since both loads were fired un-awaited; this
+	 * closes the specific window the reconcile depends on.
+	 */
+	private async loadTagsThenTypes(): Promise<void> {
+		const generation = ++this.loadGeneration;
+		await this.getTags();
+		if (generation !== this.loadGeneration) {
+			return;
+		}
+		await this.getTagTypes();
 	}
 
 	async getTags() {
 		this.allTags = [];
 		this.filterOptions = [{ value: '', displayName: 'All' }];
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 
-		const { items } = await this.tagsService.getTags(
-			{
-				tenantId,
-				organizationId
-			},
-			['tagType']
-		);
+			const { items } = await this.tagsService.getTags(
+				{
+					tenantId,
+					organizationId
+				},
+				['tagType']
+			);
 
-		const { activePage, itemsPerPage } = this.getPagination();
+			const { activePage, itemsPerPage } = this.getPagination();
 
-		this.allTags = items;
+			this.allTags = items;
 
-		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-		if (!this._isFiltered) {
-			this.smartTableSource.load(this.allTags);
-		} else {
-			if (!this._isGridLayout) await this.smartTableSource.getElements();
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			if (!this._isFiltered) {
+				this.smartTableSource.load(this.allTags);
+			} else {
+				if (!this._isGridLayout) await this.smartTableSource.getElements();
+			}
+			this._loadDataLayoutCard();
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			});
+		} catch (error) {
+			console.error('Error while retrieving tags', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
 		}
-		this._loadDataLayoutCard();
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.smartTableSource.count()
-		});
-		this.loading = false;
 	}
 
 	private async _loadDataLayoutCard() {
@@ -368,6 +438,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	 * @returns
 	 */
 	selectedFilterOption(value: string) {
+		this.selectedFilterValue = value;
 		if (value === '') {
 			this._isFiltered = false;
 			this._refresh$.next(true);

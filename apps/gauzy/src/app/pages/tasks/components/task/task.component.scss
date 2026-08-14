@@ -25,9 +25,31 @@ nb-card-body {
   }
 }
 
+// The sprint board is the card body's scrolling child, exactly like
+// `.table-scroll-container` is in the grid layout — @shared/_pg-card makes the
+// body a definite-height flex column, so this wrapper only has to pass that
+// height through to `ga-tasks-sprint-view` (which sizes itself from here).
+.sprint-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 :host ::ng-deep .sprint-view {
   nb-accordion {
     @include nb-ltr(padding-right, 0.5rem);
     @include nb-rtl(padding-left, 0.5rem);
+  }
+}
+
+// The ID column (first in the grid, fixed 90px in _loadSmartTableSettings) must
+// keep values like "#GAU-7777" on one line — they would otherwise wrap at the
+// hyphen. Scoped to this page's table because HashNumberPipe is shared and must
+// stay presentation-free; card grid and sprint views render no such cells.
+:host ::ng-deep angular2-smart-table {
+  th:first-child,
+  td:first-child {
+    white-space: nowrap;
   }
 }

@@ -1,8 +1,4 @@
-<nb-card
-  [nbSpinner]="loading"
-  nbSpinnerStatus="primary"
-  nbSpinnerSize="large"
-  >
+<nb-card>
   <nb-card-header class="card-custom-header">
     <div class="col-auto">
       <h4>
@@ -10,7 +6,6 @@
           {{ 'INCOME_PAGE.INCOME' | translate }}
         </ngx-header-title>
       </h4>
-      <ngx-date-range-title [format]="'dddd, LL'"></ngx-date-range-title>
     </div>
     <div class="gauzy-button-container">
       <ngx-gauzy-button-action
@@ -21,10 +16,11 @@
       ></ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body class="custom-card">
+  <nb-card-body class="custom-card" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
     @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
       <div class="table-scroll-container">
         <angular2-smart-table
+          [class.ga-table-loading]="loading"
           style="cursor: pointer"
           (userRowSelect)="selectIncome($event)"
           [settings]="smartTableSettings"
@@ -40,6 +36,7 @@
       </div>
     } @else {
       <ga-card-grid
+        [loading]="loading"
         [totalItems]="pagination?.totalItems"
         [settings]="smartTableSettings"
         [source]="incomes"
@@ -47,15 +44,9 @@
         (scroll)="onScroll()"
       ></ga-card-grid>
     }
-    <ng-template #gridLayout>
-      <ga-card-grid
-        [totalItems]="pagination?.totalItems"
-        [settings]="smartTableSettings"
-        [source]="incomes"
-        (onSelectedItem)="selectIncome($event)"
-        (scroll)="onScroll()"
-      ></ga-card-grid>
-    </ng-template>
+    <!-- Removed an `<ng-template #gridLayout>` that repeated the card grid above:
+         `gridLayout` was referenced nowhere in this template or its component, so
+         it was never instantiated. The `@else` branch is the grid layout. -->
   </nb-card-body>
 </nb-card>
 
@@ -65,18 +56,23 @@
   let-selectedItem="selectedItem"
   >
   <div class="btn-group actions">
-    <ng-template ngxPermissionsOnly="ORG_INCOMES_EDIT">
+    <!-- View carries the record's OWN guard (the one the route enforces), not
+         the edit guard it used to sit behind — it shows nothing a reader of
+         this page cannot already see in the grid. -->
+    <ng-template ngxPermissionsOnly="ORG_INCOMES_VIEW">
       <button
         nbButton
         status="basic"
         class="action secondary"
-        [disabled]="disableButton"
+        [disabled]="!selectedItem && disableButton"
+        (click)="viewIncome(selectedItem)"
         size="small"
-        underConstruction
         >
         <nb-icon icon="eye-outline" pack="eva"></nb-icon>
         {{ 'BUTTONS.VIEW' | translate }}
       </button>
+    </ng-template>
+    <ng-template ngxPermissionsOnly="ORG_INCOMES_EDIT">
       <button
         nbButton
         status="basic"
@@ -115,3 +111,16 @@
       </button>
     </ng-template>
   </ng-template>
+
+  <!-- Read-only View. The projected content is gated here (not inside the drawer)
+       so the record renderer is built fresh for each entry that is opened. -->
+  <ngx-record-view-drawer
+    [open]="!!viewedIncome"
+    heading="INCOME_PAGE.INCOME"
+    [subtitle]="viewedIncome?.client?.name"
+    (closed)="closeView()"
+    >
+    @if (viewedIncome) {
+      <ngx-record-view [record]="viewedIncome" [sections]="viewSections"></ngx-record-view>
+    }
+  </ngx-record-view-drawer>

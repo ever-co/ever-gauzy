@@ -17,7 +17,7 @@
         [componentName]="viewComponentName"
       ></ngx-gauzy-button-action>
     </div>
-    <nb-tabset class="mt-4" (changeTab)="onChangeTab($event)">
+    <nb-tabset (changeTab)="onChangeTab($event)">
       <nb-tab [tabTitle]="'PIPELINES_PAGE.BROWSE' | translate" [tabId]="pipelineTabsEnum.ACTIONS">
         @if ((nbTab$ | async) === pipelineTabsEnum.ACTIONS) {
           <ng-template
@@ -188,6 +188,7 @@
     <ng-template #tableLayout>
       <div class="table-scroll-container">
         <angular2-smart-table
+          [class.ga-table-loading]="loading"
           style="cursor: pointer"
           (userRowSelect)="selectPipeline($event)"
           [settings]="smartTableSettings"
@@ -204,6 +205,7 @@
     <ng-template #gridLayout>
       <div class="grid">
         <ga-card-grid
+          [loading]="loading"
           [totalItems]="pagination?.totalItems"
           [settings]="smartTableSettings"
           [source]="pipelines"

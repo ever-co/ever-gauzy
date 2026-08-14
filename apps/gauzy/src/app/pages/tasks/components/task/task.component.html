@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
 	<nb-card-header class="card-customer-header pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -31,13 +31,14 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body [class.project]="selectedProject">
+	<nb-card-body [class.project]="selectedProject" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'ORG_TASK_VIEW']">
 			@switch (viewMode) {
 				@case (taskListTypeEnum.GRID) {
 					@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
 						<div class="table-scroll-container">
 							<angular2-smart-table
+								[class.ga-table-loading]="loading"
 								style="cursor: pointer"
 								[settings]="settingsSmartTable"
 								[source]="smartTableSource"
@@ -52,6 +53,7 @@
 						></ng-container>
 					} @else {
 						<ga-card-grid
+							[loading]="loading"
 							[totalItems]="pagination?.totalItems"
 							[settings]="settingsSmartTable"
 							[source]="availableTasks$ | async"
@@ -112,10 +114,10 @@
 				<button
 					nbButton
 					status="basic"
+					(click)="viewTask(selectedItem)"
 					class="action secondary"
 					[disabled]="disableButton"
 					size="small"
-					underConstruction
 				>
 					<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 					{{ 'BUTTONS.VIEW' | translate }}
@@ -171,3 +173,16 @@
 		</button>
 	</ng-template>
 </ng-template>
+
+<!-- Read-only View. The projected content is gated here (not inside the drawer)
+     so the record renderer is built fresh for each task that is opened. -->
+<ngx-record-view-drawer
+	[open]="!!viewedTask"
+	[heading]="viewHeadingKey"
+	[subtitle]="viewedTask?.title"
+	(closed)="closeView()"
+>
+	@if (viewedTask) {
+		<ngx-record-view [record]="viewedTask" [sections]="viewSections"></ngx-record-view>
+	}
+</ngx-record-view-drawer>

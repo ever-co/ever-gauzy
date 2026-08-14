@@ -20,9 +20,11 @@
 		"DESCRIPTION": "Bring your own API keys: configure per-tenant credentials for the registered AI providers used by the AI chat.",
 		"NO_PROVIDERS": "No AI providers are registered on the server.",
 		"MODELS": "Models",
+		"PLATFORM_NOTICE": "You are using the shared free tier — no API key of your own is configured. Free models are rate limited and the limit is shared with everyone else using it. Connect your own account or enter an API key below for uninterrupted access and the full model list.",
 		"BADGE": {
 			"TENANT_KEY": "Tenant key",
 			"SERVER_ENV": "Server environment",
+			"PLATFORM_FREE": "Free tier",
 			"NOT_CONFIGURED": "Not configured"
 		},
 		"FORM": {
@@ -39,12 +41,24 @@
 			"DEFAULT_MODEL_NONE": "Provider default",
 			"DEFAULT_MODEL_CUSTOM": "Custom model…",
 			"CUSTOM_MODEL_PLACEHOLDER": "Enter a model id (e.g. claude-sonnet-5)",
+			"MODELS_NOT_FOUND": "No matching model — pick \"Custom model…\" to type an id.",
+			"MODELS_PLATFORM": "Limited to the free models available on the shared key. Add your own API key to use any model.",
+			"MODELS_PLATFORM_UNAVAILABLE": "The shared free-tier model list could not be loaded, so no model can be selected. Add your own API key to use this provider.",
+			"MODELS_CUSTOM_ENDPOINT": "This provider uses a custom base URL, so its model list is not fetched — your key belongs to that endpoint, not to the vendor. Pick \"Custom model…\" to enter a model id.",
+			"MODELS_CURATED_NO_KEY": "Showing known models. Save an API key to load everything this provider offers.",
+			"MODELS_CURATED_UNAVAILABLE": "Showing known models — the provider's full list could not be loaded just now.",
+			"MODELS_STALE": "Showing the last known list — the provider's catalogue could not be refreshed.",
+			"MODELS_NOT_CHAT_CAPABLE": "Chat through this provider is not available yet — pick another provider to chat. A key saved here takes effect once support ships.",
 			"ENABLED": "Enabled",
-			"USE_AS_DEFAULT": "Use as default provider"
+			"USE_AS_DEFAULT": "Use as default provider",
+			"GET_KEY": "Get API key"
 		},
 		"ACTIONS": {
 			"SAVE": "Save",
-			"DELETE": "Delete"
+			"DELETE": "Delete",
+			"ADD_PROVIDER": "Add AI Provider",
+			"BACK": "Back",
+			"CONFIGURE": "Configure"
 		},
 		"DELETE_CONFIRM": {
 			"TITLE": "Delete credential",
@@ -55,7 +69,43 @@
 			"ERROR_TITLE": "Error",
 			"SAVED": "{{provider}} credential saved.",
 			"DELETED": "{{provider}} credential deleted.",
-			"ERROR": "Something went wrong. Please try again."
+			"ERROR": "Something went wrong. Please try again.",
+			"CONNECTED": "{{ provider }} connected successfully.",
+			"CONNECT_WORKSPACE_MISMATCH": "This Connect flow was started in a different workspace. Switch back to that workspace and try again.",
+			"CONNECT_SESSION_EXPIRED": "The Connect session has expired or was started in another tab. Please click Connect again."
+		},
+		"LIST": {
+			"EMPTY": "Connect a provider to enable the AI chat and assistant features.",
+			"NAME": "Provider",
+			"SOURCE": "Credential",
+			"ENABLED": "Enabled",
+			"DEFAULT": "Default",
+			"VIA_ENV": "Managed via server environment",
+			"EMPTY_TITLE": "No AI providers yet",
+			"EMPTY_PROVIDERS": "Gauzy AI · OpenRouter · Vercel AI Gateway · Anthropic · OpenAI · Gemini · Grok"
+		},
+		"CATALOG": {
+			"TITLE": "Add AI Provider",
+			"DESCRIPTION": "Choose a provider to connect or configure with your own API key.",
+			"SUPPORTS_CONNECT": "Connect"
+		},
+		"CONNECT": {
+			"BUTTON": "Connect {{ provider }}",
+			"HINT": "Opens the provider website — authorize there and you will be brought back with the connection ready. No copy/paste needed.",
+			"OR_MANUAL": "or enter an API key manually"
+		},
+		"STATUS": {
+			"READY_TITLE": "AI chat is ready",
+			"READY_HINT": "Open it any time from the \"AI Chat\" button in the header, at the top right of every page.",
+			"OPEN_CHAT": "Open AI chat",
+			"NO_PERMISSION_TITLE": "AI chat is configured, but hidden for your role",
+			"NO_PERMISSION_HINT": "Your role does not have AI chat access — ask an admin to enable the AI_CHAT_ACCESS permission.",
+			"GLOBALLY_DISABLED_TITLE": "AI chat is turned off on this server",
+			"GLOBALLY_DISABLED_HINT": "AI chat is disabled by server configuration (GAUZY_AI_CHAT_ENABLED). Ask your system administrator to enable it.",
+			"CREDENTIALS_UNUSABLE_TITLE": "Saved credentials cannot be used",
+			"CREDENTIALS_UNUSABLE_HINT": "A credential is saved, but the server cannot use it. Make sure the provider is enabled, then enter the API key again.",
+			"UNREACHABLE_TITLE": "AI chat status is unknown",
+			"UNREACHABLE_HINT": "The AI chat configuration could not be loaded. Reload the page or try again in a moment."
 		}
 	}
 }

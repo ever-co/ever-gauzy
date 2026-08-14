@@ -1,11 +1,21 @@
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/_gauzy-table' as *;
 
+/*
+ * Every `var(--gauzy-…)` below carries a fallback. `material-light` and
+ * `material-dark` register against Nebular's own material themes instead of the
+ * gauzy default, so none of the `gauzy-card-*` / `gauzy-shadow` /
+ * `gauzy-sidebar-background-*` keys reach them (themes.scss lines 501-554), and
+ * a `var()` that resolves to nothing takes its whole declaration with it — which
+ * is how the filter rail, the search field and the table card all lost their
+ * surfaces on two of the eight themes.
+ */
+
 :host .search {
   margin: 20px 0 0 0;
   align-items: center;
   display: flex;
-  background-color: var(--gauzy-sidebar-background-3);
+  background-color: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
   border-radius: 8px;
   height: 32px;
   padding: 0 8px;
@@ -26,17 +36,52 @@
   }
 }
 
-.tags-table {
-  padding-top: 10px;
+/*
+ * REMOVED: `.tags-table { padding-top: 10px }` — `tags-table` occurs nowhere in
+ * the repository except this declaration (the table lives in
+ * `.table-scroll-container`, which is styled further down).
+ */
+
+/*
+ * The tag-type filter chips.
+ *
+ * Base first, then hover, then selected, so the file reads in the order the
+ * browser resolves them — the resting rule used to be declared ~50 lines BELOW
+ * its own `:hover`.
+ */
+.filter-item {
+  padding: 10px 15px;
+  box-shadow: var(--gauzy-shadow, 0 1px 1px 0 rgba(0, 0, 0, 0.15));
+  background: var(--gauzy-card-3, rgba(126, 126, 143, 0.05));
+  border-radius: 20px;
+  height: 36px;
+  // `nb-list-item` draws a `list-item-divider` along its bottom edge — right for
+  // a stacked list, wrong for pills in a wrapping row, where it left a hairline
+  // hanging under each chip.
+  border: none;
 }
 
+// Underlining the label was the only hover feedback a chip had, which reads as a
+// link on something drawn as a pill; the pill itself never moved. The shared
+// tint does the whole job, and it is the one every other hover surface uses.
 .filter-item:hover {
-  text-decoration: underline;
   cursor: pointer;
+  background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+}
+
+// Which type is currently filtering the table. Selecting one used to change the
+// table and leave the rail looking untouched, so the only way to tell what you
+// were looking at was to remember what you clicked. Declared after `:hover` at
+// equal specificity, so a selected chip keeps reading as selected under the
+// pointer.
+.filter-item.selected {
+  background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+  color: nb-theme(text-basic-color);
+  font-weight: 600;
 }
 
 :host nb-card.filter {
-  background-color: var(--gauzy-card-2);
+  background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
   overflow: unset;
   @include nb-ltr(padding-right, 4px);
   @include nb-rtl(padding-left, 4px);
@@ -64,14 +109,6 @@
   gap: 10px;
 }
 
-.filter-item {
-  padding: 10px 15px;
-  box-shadow: var(--gauzy-shadow);
-  background: var(--gauzy-card-3);
-  border-radius: 20px;
-  height: 36px;
-}
-
 .gauzy-action {
   display: flex;
   justify-content: flex-end;
@@ -81,7 +118,7 @@
 :host {
   nb-card.tags-component,
   nb-card.tags-component nb-card-body {
-    background-color: var(--gauzy-card-2);
+    background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
     margin: 0;
     display: flex;
     flex-direction: column;

@@ -1,0 +1,42 @@
+<nb-card>
+	<nb-card-header class="d-flex flex-column pb-0">
+		<div class="card-header-title">
+			<!-- A record page is titled by the record. Using the employee's name
+			     also keeps this page free of new i18n keys, which would otherwise
+			     render raw in every language but English until the translation
+			     files catch up. -->
+			<h4>
+				<ngx-header-title [allowEmployee]="false">
+					{{ displayName }}
+				</ngx-header-title>
+			</h4>
+			<div class="btn-group actions">
+				<ngx-back-navigation></ngx-back-navigation>
+				<!-- The only action on a read-only page: hand over to the editor,
+				     behind the editor's own permission. -->
+				<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT]">
+					<button nbButton status="basic" class="action primary" size="small" (click)="edit()">
+						<nb-icon icon="edit-outline"></nb-icon>
+						{{ 'BUTTONS.EDIT' | translate }}
+					</button>
+				</ng-template>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		@if (employee) {
+			<div class="employee-identity">
+				@if (employee.user?.imageUrl) {
+					<img class="employee-avatar" [src]="employee.user.imageUrl" alt="" />
+				}
+				<div class="employee-identity-text">
+					<span class="employee-name">{{ displayName }}</span>
+					@if (employee.organizationPosition?.name) {
+						<span class="employee-position">{{ employee.organizationPosition.name }}</span>
+					}
+				</div>
+			</div>
+			<ngx-record-view [record]="employee" [sections]="sections"></ngx-record-view>
+		}
+	</nb-card-body>
+</nb-card>

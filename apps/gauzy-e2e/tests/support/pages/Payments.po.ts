@@ -13,6 +13,7 @@ import {
 	dispatchClick,
 	waitForSpinnerGone
 } from '../util';
+import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { PaymentsPage } from '../../../src/support/Base/pageobjects/PaymentsPageObject';
@@ -60,31 +61,15 @@ export const clickTagsDropdown = async (index: number) => {
 };
 
 export const selectTagFromDropdown = async (index: number) => {
-	// Best-effort tag pick. Tags are OPTIONAL on a payment (no validator on the `tags` control), and the
-	// org-tag list still loads async. Crucially, the tags ng-select panel is appendTo=body and sits over
-	// the nb-dialog's cdk-overlay-backdrop, so a COORDINATE click on an option (even {force:true}) can
-	// land on the dialog backdrop and DISMISS the whole payment form — the exact failure here: by the
-	// next step (clickCardBody) the dialog was already gone and the footer click timed out. So select via
-	// the KEYBOARD only (ArrowDown to highlight, Enter to toggle — multiple+closeOnSelect=false), which
-	// never touches the backdrop. We DON'T close the panel here — clickCardBody (next step) closes it by
-	// clicking the inert dialog title. If no option renders within ~8s, just continue — tags are optional.
-	const page = getPage();
-	const tagInput = page.locator(`${PaymentsPage.addTagsDropdownCss} input`).first();
-	const option = page.locator(PaymentsPage.tagsDropdownOption);
-	try {
-		await option.first().waitFor({ state: 'visible', timeout: 8000 });
-		await tagInput.focus().catch(() => {});
-		for (let i = 0; i <= index; i++) {
-			await page.keyboard.press('ArrowDown').catch(() => {});
-		}
-		await page.keyboard.press('Enter').catch(() => {});
-	} catch {
-		/* tag list never rendered — tags are optional, continue */
-	}
-	// Do NOT press Escape here (or anywhere in this flow): the payment dialog opens with Nebular's default
-	// closeOnEsc=true, so any document-level Escape closes the WHOLE form. The tags panel stays open
-	// (closeOnSelect=false); clickCardBody (the very next step) closes it by clicking the inert dialog
-	// title — an in-dialog outside-click that dismisses only the dropdown overlay, leaving the form intact.
+	// Routed through the ONE shared ng-select driver (tests/support/ng-select.ts). It counts only REAL
+	// options: a bare `div.ng-option` ALSO matches ng-select's disabled "No items found" / "Loading…"
+	// rows, so the old wait-then-click was satisfied by an EMPTY list and then clicked a row ng-select
+	// ignores — a silent no-op that left this field unset. It re-opens the panel via the control's own
+	// container until real options render (NEVER Escape: nb-dialog opens with closeOnEsc and that closed
+	// the whole form), and it confirms the pick against `div.ng-value`, the only node that exists once a
+	// value is really bound. Still best-effort — the tag is optional here — but it can no longer
+	// half-succeed, and it can no longer kill the dialog on a slow list.
+	await selectNgOption(PaymentsPage.addTagsDropdownCss, PaymentsPage.tagsDropdownOption, index);
 };
 
 export const projectDropdownVisible = async () => {
@@ -136,6 +121,20 @@ export const enterDateInputData = async () => {
 	await clearField(PaymentsPage.dateInputCss);
 	const date = dayjs().format('MMM D, YYYY');
 	await enterInput(PaymentsPage.dateInputCss, date);
+	// Typing into the Nebular datepicker leaves its calendar overlay open with focus
+	// still in the field — the failure snapshot shows the Payment Date field marked
+	// active, with the Payment Method select immediately below it still closed on its
+	// placeholder, and no `.option-list` anywhere. The next step clicks that select,
+	// the open overlay eats it, and the spec then times out waiting for an option
+	// list that was never opened. It failed all three retries, so it is deterministic
+	// rather than flaky.
+	//
+	// Dismissed with the same in-dialog outside-click this file already uses for the
+	// project dropdown: the inert dialog TITLE. NOT Escape — the payment dialog is
+	// opened with NbDialog defaults (closeOnEsc = true), so a document-level Escape
+	// closes the WHOLE form, which is a failure mode this suite has already hit.
+	await getPage().locator(PaymentsPage.cardBodyCss).first().click({ force: true }).catch(() => {});
+	await getPage().waitForTimeout(300);
 };
 
 export const paymentMethodDropdownVisible = async () => {

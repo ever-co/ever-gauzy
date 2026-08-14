@@ -24,10 +24,11 @@
 <!-- Table Layout Template -->
 <ng-template #tableLayout>
 	<!-- Check if the user has the 'ORG_JOB_EMPLOYEE_VIEW' permission -->
-	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW']">
+	<ng-template [ngxPermissionsOnly]="permGateOrgJobEmployeeView">
 		<div class="table-scroll-container">
 			<!-- Smart Table Component -->
 			<angular2-smart-table
+				[class.ga-table-loading]="loading"
 				class="cursor-pointer"
 				[settings]="settingsSmartTable"
 				[source]="smartTableSource"
@@ -62,10 +63,17 @@
 </ng-template>
 
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
-	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW', 'ORG_EMPLOYEES_EDIT']">
+	<ng-template [ngxPermissionsOnly]="permGateOrgJobEmployeeViewOrgEmployeesEdit">
 		<div class="btn-group actions">
 			<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
-				<button size="small" status="basic" class="action primary cursor-pointer" nbButton underConstruction>
+				<button
+					type="button"
+					(click)="view(selectedItem)"
+					size="small"
+					status="basic"
+					class="action primary cursor-pointer"
+					nbButton
+				>
 					<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 					<span> {{ 'BUTTONS.VIEW' | translate }} </span>
 				</button>
@@ -107,3 +115,16 @@
 		</button>
 	</ng-template>
 </ng-template>
+
+<!-- Read-only View. The projected content is gated here (not inside the drawer)
+     so the record renderer is built fresh for each entry that is opened. -->
+<ngx-record-view-drawer
+	[open]="!!viewedEmployee"
+	heading="JOB_EMPLOYEE.EMPLOYEE"
+	[subtitle]="viewedEmployee?.user?.name"
+	(closed)="closeView()"
+>
+	@if (viewedEmployee) {
+		<ngx-record-view [record]="viewedEmployee" [sections]="viewSections"></ngx-record-view>
+	}
+</ngx-record-view-drawer>

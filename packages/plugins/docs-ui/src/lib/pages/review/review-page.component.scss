@@ -1,0 +1,52 @@
+.docs-review {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding: 1rem;
+}
+
+.docs-review-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+
+	h4 {
+		margin: 0;
+	}
+}
+
+.docs-review-row {
+	display: grid;
+	grid-template-columns: auto minmax(0, 2fr) auto auto minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.5rem 0.25rem;
+	border-bottom: 1px solid var(--divider-color);
+
+	.docs-review-name {
+		min-width: 0;
+	}
+
+	.docs-review-date {
+		font-size: 0.75rem;
+		color: var(--text-hint-color);
+		white-space: nowrap;
+	}
+
+	.docs-review-actions {
+		display: inline-flex;
+		gap: 0.375rem;
+	}
+}
+
+.docs-review-row.docs-review-row-head {
+	grid-template-columns: auto minmax(0, 1fr);
+	font-size: 0.75rem;
+	color: var(--text-hint-color);
+	text-transform: uppercase;
+	border-bottom-width: 2px;
+}
+
+.docs-review-empty-host {
+	min-height: 10rem;
+}

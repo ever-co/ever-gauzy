@@ -1,74 +1,95 @@
-
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { ILegalDocument, LegalDocumentSlug } from '../../models/legal-document.model';
 import { LegalService } from '../../providers/legal.service';
 
-export const PRIVACY_POLICY_ENDPOINT = 'https://www.iubenda.com/api/privacy-policy/18120170';
-export const COOKIE_PRIVACY_POLICY_ENDPOINT = 'https://www.iubenda.com/api/privacy-policy/18120170/cookie-policy';
-
+/**
+ * Renders the Privacy Policy and/or the Cookie Policy from the bundled corpus.
+ *
+ * Which of the two it shows comes from the route's `data.documents`, so the `privacy` and
+ * `cookies` routes reuse this one component instead of duplicating the document markup.
+ * With no `data.documents` the component shows both, which is how it behaved when it was
+ * only mounted on the `privacy` route.
+ */
 @Component({
-    templateUrl: './privacy-policy.component.html',
-    styleUrls: ['./privacy-policy.component.scss'],
-    standalone: false
+	templateUrl: './privacy-policy.component.html',
+	styleUrls: ['./privacy-policy.component.scss'],
+	standalone: false
 })
 export class PrivacyPolicyComponent implements OnInit, OnDestroy {
+	/** Rendered HTML of the Privacy Policy. Bundled with the application, never fetched. */
 	public privacy_policy: string;
+
+	/** Rendered HTML of the Cookie Policy. Bundled with the application, never fetched. */
 	public cookie_policy: string;
 
-	constructor(private readonly legalService: LegalService, @Inject(DOCUMENT) private readonly _document: Document) {}
+	/** Metadata of the Privacy Policy - title, version, effective date, publishing entity. */
+	public privacy: ILegalDocument | null = null;
 
-	/**
-	 * Load privacy policy from iubenda
-	 */
+	/** Metadata of the Cookie Policy - title, version, effective date, publishing entity. */
+	public cookies: ILegalDocument | null = null;
+
+	/** Whether the Privacy Policy section is rendered. Driven by the route's `data.documents`. */
+	public showPrivacy = true;
+
+	/** Whether the Cookie Policy section is rendered. Driven by the route's `data.documents`. */
+	public showCookies = true;
+
+	constructor(
+		private readonly legalService: LegalService,
+		private readonly translateService: TranslateService,
+		private readonly route: ActivatedRoute,
+		@Inject(DOCUMENT) private readonly _document: Document
+	) {}
+
 	ngOnInit(): void {
-		// Get privacy policy from iubenda
-		this.getPrivacyPolicyJsonFromUrl(PRIVACY_POLICY_ENDPOINT);
-		this.getCookiePolicyJsonFromUrl(COOKIE_PRIVACY_POLICY_ENDPOINT);
+		// Pick the sections this route asked for
+		this.resolveSections();
+
+		// Read the privacy and cookie policies from the bundled corpus
+		this.loadPolicies();
 
 		// Add class to body to display privacy policy
 		this._document.body.classList.add('privacy-container');
 	}
 
 	/**
-	 * Load privacy policy from iubenda
+	 * Reads `data.documents` off the activated route and turns it into the section flags.
 	 *
-	 * @param url https://www.iubenda.com/api/privacy-policy/18120170
+	 * A route that does not declare `documents` keeps both sections, so mounting this component
+	 * without route data renders exactly what it rendered before the `cookies` route existed.
 	 */
-	async getPrivacyPolicyJsonFromUrl(url: string) {
-		try {
-			// Get privacy policy from iubenda
-			const data: any = await this.legalService.getContentFromFromUrl(PRIVACY_POLICY_ENDPOINT);
+	private resolveSections(): void {
+		const documents = this.route.snapshot.data['documents'] as LegalDocumentSlug[] | undefined;
 
-			// Add privacy policy to component
-			if (data?.content) {
-				this.privacy_policy = data.content;
-			}
-		} catch (error) {
-			console.error('Error fetching privacy policy:', error);
+		if (!documents?.length) {
+			return;
 		}
+
+		this.showPrivacy = documents.includes('privacy');
+		this.showCookies = documents.includes('cookies');
 	}
 
 	/**
-	 * Load cookie policy from iubenda
+	 * Loads the Privacy Policy and the Cookie Policy from the corpus bundled into the application.
 	 *
-	 * @param url https://www.iubenda.com/api/privacy-policy/18120170/cookie-policy
+	 * The text is vendored from `@ever-co/legal` at build time, so this is a synchronous lookup
+	 * that cannot fail because of a network problem or a lapsed third-party subscription.
 	 */
-	async getCookiePolicyJsonFromUrl(url: string) {
-		try {
-			// Get cookie policy from iubenda
-			const data: any = await this.legalService.getContentFromFromUrl(COOKIE_PRIVACY_POLICY_ENDPOINT);
+	private loadPolicies(): void {
+		const locale = this.translateService.currentLang;
 
-			// Add cookie policy to component
-			if (data?.content) {
-				this.cookie_policy = data.content;
-			}
-		} catch (error) {
-			console.error('Error fetching cookie policy:', error);
-		}
+		this.privacy = this.legalService.getDocument('privacy', locale);
+		this.privacy_policy = this.privacy?.html ?? '';
+
+		this.cookies = this.legalService.getDocument('cookies', locale);
+		this.cookie_policy = this.cookies?.html ?? '';
 	}
 
 	/**
-	 * Remove class to body to hide privacy policy
+	 * Remove class from body to hide privacy policy
 	 */
 	ngOnDestroy() {
 		this._document.body.classList.remove('privacy-container');

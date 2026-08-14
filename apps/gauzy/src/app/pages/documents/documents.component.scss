@@ -1,1 +1,67 @@
+// `@forward` re-exports for anyone importing THIS file; it does not bring
+// `nb-theme()` into scope here, so the theme module is also `@use`d. Sass loads
+// each module once, so this does not duplicate the emitted CSS.
+@use 'gauzy/_gauzy-cards' as *;
 @forward '../vendors/vendors.component';
+
+/*
+ * Everything above comes from the vendors sheet (which itself forwards
+ * `expense-categories`): the page frame, the dialog, and the row hover /
+ * selection treatment. Only the parts where this page's markup differs from
+ * vendors' are restated here.
+ */
+
+// A document row is `<div><nb-icon><a>name</a></div>` followed by
+// `<div>{{ updatedAt }}</div>`. Both are plain blocks, so the timestamp landed on
+// its own line under the file name, left-aligned, with the icon sitting on the
+// text baseline instead of beside it — one list entry cost two lines and read as
+// two unrelated values. Name on the leading edge, date on the trailing one.
+:host .custom-table {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  > div {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: 0;
+  }
+
+  // The date is the secondary value here, and it must not push the name out.
+  > div:last-child {
+    flex: 0 0 auto;
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
+    font-size: nb-theme(text-caption-font-size);
+  }
+
+  // `min-width: 0` as well as on the wrapper: a flex item's default
+  // `min-width: auto` is its content width, so without this the name never
+  // shrinks and the ellipsis never appears — it just pushes the date out.
+  a {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  nb-icon {
+    flex: 0 0 auto;
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
+  }
+}
+
+// The dialog's close control. `expense-categories` gives every `<i>` in
+// `.editable` a pointer cursor, which is what the vendors dialog uses — this one
+// is an `<nb-icon>`, so it was the one close button across these two pages that
+// gave no hint it could be clicked, at full icon size and full text contrast.
+.editable nb-icon {
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--gauzy-text-color-2, var(--text-hint-color));
+
+  &:hover {
+    color: nb-theme(text-basic-color);
+  }
+}

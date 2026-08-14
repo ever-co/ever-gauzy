@@ -1,6 +1,10 @@
 <nb-card [nbSpinner]="isLoading$ | async" class="card-scroll">
 	<nb-card-header>
-		<h4>{{ 'INTEGRATIONS.AVAILABLE_INTEGRATIONS' | translate }}</h4>
+		<h4>
+			<ngx-header-title [allowEmployee]="false">
+				{{ 'INTEGRATIONS.AVAILABLE_INTEGRATIONS' | translate }}
+			</ngx-header-title>
+		</h4>
 	</nb-card-header>
 	<nb-card-body>
 		<ng-template [ngxPermissionsOnly]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
@@ -87,11 +91,18 @@
 									[class.disabled]="integration.isComingSoon"
 									[routerLink]="['../', integration.redirectUrl]"
 								>
+									<!--
+										`alt` was the literal string "image not found", so a logo
+										that failed to load rendered those words inside the tile —
+										the broken-image state told the user nothing about which
+										integration the tile was. The integration name is both the
+										correct alternative text and a usable fallback.
+									-->
 									<img
 										[src]="integration.fullImgUrl"
 										width="100%"
 										height="100%"
-										alt="image not found"
+										[alt]="integration.name | replace: '_' : ' '"
 										[title]="integration.name | replace: '_' : ' '"
 									/>
 									@if (integration.isComingSoon) {

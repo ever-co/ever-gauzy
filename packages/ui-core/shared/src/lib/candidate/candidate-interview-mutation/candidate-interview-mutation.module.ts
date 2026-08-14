@@ -15,9 +15,9 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { CandidateTechnologiesService } from '@gauzy/ui-core/core';
+import { RichTextEditorModule } from '../../rich-text-editor/rich-text-editor.module';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { CandidateInterviewMutationComponent } from './candidate-interview-mutation.component';
@@ -42,7 +42,7 @@ import { CandidatePersonalQualitiesComponent } from './interview-criterions/cand
 		NbCheckboxModule,
 		NbCardModule,
 		NbInputModule,
-		CKEditorModule,
+		RichTextEditorModule,
 		NbButtonModule,
 		NbRadioModule,
 		NbIconModule,

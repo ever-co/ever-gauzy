@@ -8,9 +8,11 @@ import {
 	waitElementToHide,
 	verifyValue,
 	dispatchClick,
+	dispatchClickWhenSettled,
 	waitForSpinnerGone,
 	wait
 } from '../util';
+import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { AddEmployeePositionPage } from '../../../src/support/Base/pageobjects/AddEmployeePositionPageObject';
@@ -91,9 +93,15 @@ export const clickTagsMultiSelect = async () => {
 };
 
 export const selectTagsFromDropdown = async (index: number) => {
-	// ng-select options render in the body as div.ng-option (appendTo="body").
-	await verifyElementIsVisible(AddEmployeePositionPage.tagsSelectOptionCss);
-	await getPage().locator(AddEmployeePositionPage.tagsSelectOptionCss).nth(index).click({ force: true });
+	// Routed through the ONE shared ng-select driver (tests/support/ng-select.ts). It counts only REAL
+	// options: a bare `div.ng-option` ALSO matches ng-select's disabled "No items found" / "Loading…"
+	// rows, so the old wait-then-click was satisfied by an EMPTY list and then clicked a row ng-select
+	// ignores — a silent no-op that left this field unset. It re-opens the panel via the control's own
+	// container until real options render (NEVER Escape: nb-dialog opens with closeOnEsc and that closed
+	// the whole form), and it confirms the pick against `div.ng-value`, the only node that exists once a
+	// value is really bound. Still best-effort — the tag is optional here — but it can no longer
+	// half-succeed, and it can no longer kill the dialog on a slow list.
+	await selectNgOption(AddEmployeePositionPage.tagsSelectCss, AddEmployeePositionPage.tagsSelectOptionCss, index);
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode: number) => {
@@ -165,8 +173,19 @@ export const selectPositionRowByText = async (text: string) => {
 };
 
 export const clickEditEmployeePositionButton = async () => {
-	// Edit dialog opens via dispatch so a fading backdrop can't swallow the click (row already selected).
-	await dispatchClick(AddEmployeePositionPage.editEmployeePositionButtonCss);
+	// Edit opens via dispatch so a fading backdrop can't swallow the click (row already selected) — and
+	// CONFIRMS the editable form rendered. Dispatching alone was not enough: the Edit button lives in
+	// ngx-gauzy-button-action's slide-in action bar, and this fires right after waitMessageToHide plus a
+	// row click, i.e. while a toastr is still fading. When the click is lost, the next call
+	// (`verifyValue`/`clearField` on editPositionInputCss) waits the full 24s and the scenario dies with
+	// a timeout that names the input rather than the button that was never pressed.
+	//
+	// Confirming on the very selector the dependent step waits for makes a wrong-selector stall
+	// impossible: if it can't appear, the old code would have hung on it anyway.
+	await dispatchClickWhenSettled(
+		AddEmployeePositionPage.editEmployeePositionButtonCss,
+		AddEmployeePositionPage.editPositionInputCss
+	);
 };
 
 export const selectPositionToEdit = async () => {
