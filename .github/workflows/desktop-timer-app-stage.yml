@@ -597,6 +597,15 @@ jobs:
         shell: powershell
         run: npx nx reset
 
+      # Azure Trusted Signing runs Invoke-TrustedSigning, which installs the `sign` dotnet
+      # global tool. The self-hosted Windows runners have no .NET SDK, so that install fails
+      # ("sdk-not-found") and signing is skipped. Provision it here rather than on the host,
+      # so the requirement lives in Git and applies to every runner.
+      - name: Install .NET SDK (required by Azure Trusted Signing)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
       - name: Build Desktop Timer App
         shell: cmd
         run: 'yarn build:desktop-timer:windows:release:gh:x64'
@@ -794,6 +803,15 @@ jobs:
           "UV_THREADPOOL_SIZE=32" | Out-File -FilePath $env:GITHUB_ENV -Append
           # Patch graceful-fs to retry EMFILE errors with backoff
           node -e "try { var gfs = require('graceful-fs'); gfs.gracefulify(require('fs')); console.log('graceful-fs patched'); } catch(e) { console.log('graceful-fs not available, skipping'); }"
+
+      # Azure Trusted Signing runs Invoke-TrustedSigning, which installs the `sign` dotnet
+      # global tool. The self-hosted Windows runners have no .NET SDK, so that install fails
+      # ("sdk-not-found") and signing is skipped. Provision it here rather than on the host,
+      # so the requirement lives in Git and applies to every runner.
+      - name: Install .NET SDK (required by Azure Trusted Signing)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
       - name: Build Desktop Timer App
         shell: cmd
