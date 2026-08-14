@@ -9,8 +9,29 @@ const git = simpleGit();
 function applyWindowsSigning(pkg) {
 	const publisherName = process.env.WINDOWS_PUBLISHER_NAME;
 	if (!publisherName) return;
+
 	pkg.build = pkg.build || {};
 	pkg.build.win = pkg.build.win || {};
+
+	// Preferred path: Azure Artifact Signing (formerly Trusted Signing). Engaged only when a
+	// certificate profile name is supplied, i.e. the Azure identity validation has completed and
+	// a profile exists. electron-builder authenticates with AZURE_TENANT_ID / AZURE_CLIENT_ID /
+	// AZURE_CLIENT_SECRET from the environment (DefaultAzureCredential).
+	const certificateProfileName = process.env.AZURE_CERT_PROFILE_NAME;
+	if (certificateProfileName) {
+		pkg.build.win.azureSignOptions = {
+			...(pkg.build.win.azureSignOptions || {}),
+			publisherName,
+			endpoint: process.env.AZURE_CODE_SIGNING_ENDPOINT || 'https://eus.codesigning.azure.net/',
+			codeSigningAccountName: process.env.AZURE_CODE_SIGNING_ACCOUNT || 'ever',
+			certificateProfileName
+		};
+		// Azure signing supersedes the PFX/signtool path; drop it so only one signer is configured.
+		delete pkg.build.win.signtoolOptions;
+		return;
+	}
+
+	// Fallback: PFX via WIN_CSC_LINK / WIN_CSC_KEY_PASSWORD (signtool).
 	pkg.build.win.signtoolOptions = {
 		...(pkg.build.win.signtoolOptions || {}),
 		publisherName,
