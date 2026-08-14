@@ -538,6 +538,11 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.serverapi(false))
         env:
+          # Windows signing config must be visible to the BUMP step: this script writes build.win.azureSignOptions into package.json, which electron-builder reads later.
+          WINDOWS_PUBLISHER_NAME: ${{ secrets.WINDOWS_PUBLISHER_NAME }}
+          AZURE_CERT_PROFILE_NAME: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+          AZURE_CODE_SIGNING_ACCOUNT: ${{ vars.AZURE_CODE_SIGNING_ACCOUNT || 'ever' }}
+          AZURE_CODE_SIGNING_ENDPOINT: ${{ vars.AZURE_CODE_SIGNING_ENDPOINT || 'https://eus.codesigning.azure.net/' }}
           GAUZY_RELEASE_TAG: ${{ needs.check-release-tag.outputs.tag }}
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
           DESKTOP_API_SERVER_APP_NAME: 'gauzy-api-server'
@@ -605,6 +610,14 @@ jobs:
           WIN_CSC_LINK: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
           WINDOWS_PUBLISHER_NAME: ${{ secrets.WINDOWS_PUBLISHER_NAME }}
+          # Azure Artifact Signing (preferred once a certificate profile exists). Engaged only when
+          # AZURE_CERT_PROFILE_NAME is set; otherwise the PFX path above is used.
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_CERT_PROFILE_NAME: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+          AZURE_CODE_SIGNING_ACCOUNT: ${{ vars.AZURE_CODE_SIGNING_ACCOUNT || 'ever' }}
+          AZURE_CODE_SIGNING_ENDPOINT: ${{ vars.AZURE_CODE_SIGNING_ENDPOINT || 'https://eus.codesigning.azure.net/' }}
           EP_GH_IGNORE_TIME: true
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
@@ -723,6 +736,11 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.serverapi(false))
         env:
+          # Windows signing config must be visible to the BUMP step: this script writes build.win.azureSignOptions into package.json, which electron-builder reads later.
+          WINDOWS_PUBLISHER_NAME: ${{ secrets.WINDOWS_PUBLISHER_NAME }}
+          AZURE_CERT_PROFILE_NAME: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+          AZURE_CODE_SIGNING_ACCOUNT: ${{ vars.AZURE_CODE_SIGNING_ACCOUNT || 'ever' }}
+          AZURE_CODE_SIGNING_ENDPOINT: ${{ vars.AZURE_CODE_SIGNING_ENDPOINT || 'https://eus.codesigning.azure.net/' }}
           GAUZY_RELEASE_TAG: ${{ needs.check-release-tag.outputs.tag }}
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
           DESKTOP_API_SERVER_APP_NAME: 'gauzy-api-server'
@@ -786,6 +804,14 @@ jobs:
           WIN_CSC_LINK: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
           WINDOWS_PUBLISHER_NAME: ${{ secrets.WINDOWS_PUBLISHER_NAME }}
+          # Azure Artifact Signing (preferred once a certificate profile exists). Engaged only when
+          # AZURE_CERT_PROFILE_NAME is set; otherwise the PFX path above is used.
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_CERT_PROFILE_NAME: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+          AZURE_CODE_SIGNING_ACCOUNT: ${{ vars.AZURE_CODE_SIGNING_ACCOUNT || 'ever' }}
+          AZURE_CODE_SIGNING_ENDPOINT: ${{ vars.AZURE_CODE_SIGNING_ENDPOINT || 'https://eus.codesigning.azure.net/' }}
           EP_GH_IGNORE_TIME: true
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
