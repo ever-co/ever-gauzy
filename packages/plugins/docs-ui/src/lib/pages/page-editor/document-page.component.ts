@@ -284,7 +284,13 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			this.knownBlockIds = [];
 		}
 		try {
-			this.document = await firstValueFrom(this.documentsService.getById(id, ['categories', 'tags']));
+			const loaded = await firstValueFrom(this.documentsService.getById(id, ['categories', 'tags']));
+			// A 200 whose body is not a document (an API-side error serialised as `{ message }`)
+			// must NOT become an "Untitled" editor whose every save PUTs to `/documents/undefined`.
+			if (!loaded?.id) {
+				throw new Error(`Document ${id} could not be loaded: response carries no id`);
+			}
+			this.document = loaded;
 			this.titleDraft = this.document?.name ?? '';
 			this.iconDraft = this.document?.icon ?? '';
 			await this.loadBreadcrumbs();
