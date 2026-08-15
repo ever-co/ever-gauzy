@@ -48,15 +48,17 @@ on:
     paths:
       - '.github/workflows/external-uptime-monitor.yml'
 
-# Least privilege: we only need to read the repo and write issues. GITHUB_TOKEN is provided
-# automatically — this workflow requires NO new secrets.
+# Least privilege: the workflow default is read-only. `issues: write` is granted narrowly to the
+# one job that needs it (below). GITHUB_TOKEN is provided automatically — NO new secrets required.
 permissions:
   contents: read
-  issues: write
 
 concurrency:
-  # Never let two probe runs overlap and fight over the same alert issue.
-  group: external-uptime-monitor
+  # Scheduled and manual runs share one group so two live probes never overlap and fight over the
+  # same alert issue. Pull-request self-tests get their own per-ref group, so reviewing this file
+  # can never delay or displace a real production probe.
+  group: >-
+    external-uptime-monitor-${{ github.event_name == 'pull_request' && github.ref || 'live' }}
   cancel-in-progress: false
 
 jobs:
@@ -65,6 +67,11 @@ jobs:
     # 🛑 DO NOT CHANGE — see the header block. GitHub-hosted is the whole point.
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    permissions:
+      contents: read
+      # Needed only to open/comment/close the single rolling alert issue.
+      issues: write
 
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -264,7 +271,9 @@ jobs:
           FINGERPRINT: ${{ steps.probe.outputs.fingerprint }}
           EGRESS_IP: ${{ steps.egress.outputs.ip }}
         run: |
-          set -uo pipefail
+          # -e matters here: a silent failure in this step means an outage goes unreported, or a
+          # duplicate issue is opened. Both are worse than a red run.
+          set -euo pipefail
 
           BODY="${RUNNER_TEMP}/alert.md"
           {
@@ -299,8 +308,14 @@ jobs:
             echo "<!-- uptime-fingerprint: ${FINGERPRINT} -->"
           } > "$BODY"
 
-          NUM=$(gh issue list --repo "${GITHUB_REPOSITORY}" --label "${ALERT_LABEL}" \
-                  --state open --limit 1 --json number --jq '.[0].number // empty' 2>/dev/null || true)
+          # A FAILED lookup must never be mistaken for "no issue is open" — that would open a
+          # duplicate issue on every run during an API blip, which is exactly the spam that gets
+          # monitors muted. Distinguish command failure from an empty result.
+          if ! NUM=$(gh issue list --repo "${GITHUB_REPOSITORY}" --label "${ALERT_LABEL}" \
+                       --state open --limit 1 --json number --jq '.[0].number // empty'); then
+            echo "::error::Could not query existing ${ALERT_LABEL} issues. Refusing to create one, as it would likely be a duplicate."
+            exit 1
+          fi
 
           if [ -z "${NUM}" ]; then
             echo "No open alert issue — creating one."
@@ -310,8 +325,13 @@ jobs:
               --body-file "$BODY"
           else
             echo "Alert issue #${NUM} already open."
-            LAST=$(gh issue view "${NUM}" --repo "${GITHUB_REPOSITORY}" --json body,comments \
-                     --jq 'if (.comments | length) > 0 then .comments[-1].body else .body end' 2>/dev/null || true)
+            # Likewise: a failed read must not look like "the state changed", or every blip adds a
+            # comment to an already-open issue.
+            if ! LAST=$(gh issue view "${NUM}" --repo "${GITHUB_REPOSITORY}" --json body,comments \
+                          --jq 'if (.comments | length) > 0 then .comments[-1].body else .body end'); then
+              echo "::error::Could not read alert issue #${NUM}. The outage is already visible there, so skipping the comment rather than risking a duplicate."
+              exit 1
+            fi
             if printf '%s' "${LAST}" | grep -q "uptime-fingerprint: ${FINGERPRINT}"; then
               echo "State unchanged (fingerprint ${FINGERPRINT}) — not commenting, to avoid issue spam."
             else
@@ -326,10 +346,15 @@ jobs:
           FINGERPRINT: ${{ steps.probe.outputs.fingerprint }}
           EGRESS_IP: ${{ steps.egress.outputs.ip }}
         run: |
-          set -uo pipefail
+          # -e matters here too: silently failing to close a resolved alert leaves a stale red
+          # issue that trains people to ignore it.
+          set -euo pipefail
 
-          NUM=$(gh issue list --repo "${GITHUB_REPOSITORY}" --label "${ALERT_LABEL}" \
-                  --state open --limit 1 --json number --jq '.[0].number // empty' 2>/dev/null || true)
+          if ! NUM=$(gh issue list --repo "${GITHUB_REPOSITORY}" --label "${ALERT_LABEL}" \
+                       --state open --limit 1 --json number --jq '.[0].number // empty'); then
+            echo "::error::Could not query existing ${ALERT_LABEL} issues, so an open alert may have been left unclosed."
+            exit 1
+          fi
           if [ -z "${NUM}" ]; then
             echo "All critical endpoints healthy and no alert issue open — nothing to do."
             exit 0
