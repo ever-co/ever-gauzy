@@ -6,8 +6,15 @@
         "GHSA-[A-Za-z0-9-]+"
     ],
     "words": [
+        "dlib",
+        "codesign",
+        "codesigning",
         "CSPRNG",
+        "LASTEXITCODE",
+        "keychains",
         "NXDOMAIN",
+        "pipefail",
+        "productbuild",
         "unrepresentable",
         "ababa",
         "APAC",
@@ -678,6 +685,7 @@
         "OTLP",
         "oversampled",
         "oxsecurity",
+        "vswhere",
         "ɵcmp",
         "ɵcreate",
         "ɵmod",
