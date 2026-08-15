@@ -872,13 +872,12 @@ jobs:
           USE_HARD_LINKS: false
           ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          # Windows Authenticode signing (electron-builder auto-signs when WIN_CSC_LINK is set;
-          # empty secret => skipped). Verification engages only when WINDOWS_PUBLISHER_NAME is set.
-          WIN_CSC_LINK: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+          # WIN_CSC_LINK is deliberately NOT passed on ARM64. electron-builder auto-signs
+          # whenever it is set, independently of azureSignOptions, and then spawns a signtool
+          # that does not exist for ARM64 in its bundled winCodeSign package:
+          #   spawn ...\winCodeSign-2.6.0\windows-10\arm64\signtool.exe ENOENT
+          # ARM64 therefore ships unsigned (see the Bump step). x64 still signs via Azure.
           WINDOWS_PUBLISHER_NAME: ${{ secrets.WINDOWS_PUBLISHER_NAME }}
-          # Azure Artifact Signing (preferred once a certificate profile exists). Engaged only when
-          # AZURE_CERT_PROFILE_NAME is set; otherwise the PFX path above is used.
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
