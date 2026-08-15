@@ -38,3 +38,30 @@ export interface ITenantSetting
 		ICloudinaryFileStorageProviderConfig {
 	fileStorageProvider?: FileStorageProviderEnum;
 }
+
+/**
+ * The UI framework a tenant prefers for the surfaces that ship in BOTH flavours.
+ *
+ * Gauzy is progressively re-building pages in React next to their Angular originals; this
+ * tenant-wide switch decides which flavour every user of the tenant gets. It is a global
+ * preference (not per organization / user), persisted as the `preferredUi` tenant setting.
+ */
+export enum PreferredUiEnum {
+	/** The original Angular pages (default). */
+	ANGULAR = 'angular',
+	/** The React re-implementations, wherever one exists. */
+	REACT = 'react'
+}
+
+/** Name of the tenant setting row that stores the {@link PreferredUiEnum} choice. */
+export const PREFERRED_UI_SETTING_KEY = 'preferredUi';
+
+/** The tenant-wide UI preferences every signed-in user of the tenant may read. */
+export interface ITenantUiPreferences {
+	preferredUi: PreferredUiEnum;
+}
+
+/** Payload accepted when a tenant administrator changes the UI preferences. */
+export interface ITenantUiPreferencesUpdateInput {
+	preferredUi?: PreferredUiEnum;
+}

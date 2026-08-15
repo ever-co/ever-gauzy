@@ -1155,6 +1155,21 @@
 		"START_SERVER": "Uruchom serwer",
 		"STOP_SERVER": "Zatrzymaj serwer"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Interfejs użytkownika",
+			"DESCRIPTION": "Wybierz, którego interfejsu używają wszyscy użytkownicy tego najemcy dla stron dostępnych w obu wersjach.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (domyślny)",
+				"REACT": "React (nowy)"
+			},
+			"HINT": "Dotyczy całego najemcy, na każdym urządzeniu. Obecnie pulpit śledzenia czasu jest dostępny w obu interfejsach; kolejne strony wkrótce.",
+			"READ_ONLY": "Tylko administratorzy najemcy mogą zmienić to ustawienie.",
+			"SAVING": "Zapisywanie…",
+			"SAVED": "Preferencja interfejsu zapisana",
+			"SAVE_ERROR": "Nie udało się zapisać preferencji interfejsu."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Motywy",
 		"LIGHT": "Światło",

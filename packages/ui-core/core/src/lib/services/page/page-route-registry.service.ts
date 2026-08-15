@@ -130,15 +130,22 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 		// Get all registered routes for the specified location
 		const routes = this.registry.get(config.location) || [];
 
-		// Check if a route with the same location and path already exists (prevents overriding)
+		// Check if a route with the same location and path already exists (prevents overriding).
+		// The one sanctioned exception: several registrations of the SAME path that all carry a
+		// `canMatch` guard. That is plain Angular router semantics — the guards decide at match
+		// time which one takes the URL — and it is how a page that ships in two UI flavours
+		// (Angular and React) keeps a single, stable path.
 		const isMatchingRoute = routes.some(
-			(route: PageRouteRegistryConfig) => route.location === config.location && route.path === config.path
+			(route: PageRouteRegistryConfig) =>
+				route.location === config.location &&
+				route.path === config.path &&
+				!(hasCanMatchGuard(route) && hasCanMatchGuard(config))
 		);
 
 		if (isMatchingRoute) {
 			throw new Error(
 				`A page with the location "${config.location}" and path "${config.path}" has already been registered. ` +
-					`Cannot override an existing route.`
+					`Cannot override an existing route (register both with a \`canMatch\` guard to share a path).`
 			);
 		}
 
@@ -176,6 +183,11 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 
 		// Filter out duplicate configurations based on the location and path
 		return configs.filter((config: PageRouteRegistryConfig) => {
+			// `canMatch`-guarded registrations may legitimately share a path (see registerPageRoute).
+			if (hasCanMatchGuard(config)) {
+				return true;
+			}
+
 			// Create a unique identifier for the combination of location and path
 			const identifier = `${config.location}-${config.path}`;
 
@@ -215,6 +227,12 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 				data: config.data || {}, // Add data property if it exists
 				canActivate: config.canActivate || [] // Add canActivate property if it exists
 			};
+
+			// `canMatch` decides whether this registration takes part in matching at all — it is
+			// what lets two flavours of one page share a path, so it must reach the router.
+			if (config.canMatch?.length) {
+				route.canMatch = config.canMatch;
+			}
 
 			// Copy the route's navigation target. `loadComponent` matters: dropping it
 			// produces a route with NO target, and Angular then throws NG04014 while
@@ -259,4 +277,12 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 			return route;
 		});
 	}
+}
+
+/**
+ * Whether a registration carries a `canMatch` guard, either directly or via the `route`
+ * passthrough object.
+ */
+function hasCanMatchGuard(config: PageRouteRegistryConfig): boolean {
+	return (config.canMatch?.length ?? 0) > 0 || (config.route?.canMatch?.length ?? 0) > 0;
 }

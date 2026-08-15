@@ -1157,6 +1157,21 @@
 		"START_SERVER": "Démarrer le serveur",
 		"STOP_SERVER": "Arrêter le serveur"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Interface utilisateur",
+			"DESCRIPTION": "Choisissez l'interface utilisée par tous les membres de ce tenant pour les pages disponibles dans les deux versions.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (par défaut)",
+				"REACT": "React (nouveau)"
+			},
+			"HINT": "S'applique à tout le tenant, sur tous les appareils. Aujourd'hui, le tableau de bord de suivi du temps est disponible dans les deux interfaces ; d'autres pages suivront.",
+			"READ_ONLY": "Seuls les administrateurs du tenant peuvent modifier ce paramètre.",
+			"SAVING": "Enregistrement…",
+			"SAVED": "Préférence d'interface enregistrée",
+			"SAVE_ERROR": "La préférence d'interface n'a pas pu être enregistrée."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Thèmes",
 		"LIGHT": "Clair",

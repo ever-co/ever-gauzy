@@ -1156,6 +1156,21 @@
 		"START_SERVER": "开始服务器",
 		"STOP_SERVER": "停止服务器"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "用户界面",
+			"DESCRIPTION": "选择此租户中所有用户在同时提供两种版本的页面上使用哪种界面。",
+			"OPTIONS": {
+				"ANGULAR": "Angular（默认）",
+				"REACT": "React（新）"
+			},
+			"HINT": "适用于整个租户及所有设备。目前时间跟踪仪表板同时提供两种界面；更多页面即将推出。",
+			"READ_ONLY": "只有租户管理员可以更改此设置。",
+			"SAVING": "正在保存…",
+			"SAVED": "界面偏好已保存",
+			"SAVE_ERROR": "无法保存界面偏好。"
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "主题",
 		"LIGHT": "光",

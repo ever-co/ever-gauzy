@@ -1156,6 +1156,21 @@
 		"START_SERVER": "Avvia il server",
 		"STOP_SERVER": "Arresta il server"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Interfaccia utente",
+			"DESCRIPTION": "Scegli quale interfaccia usano tutti gli utenti di questo tenant per le pagine disponibili in entrambe le versioni.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (predefinito)",
+				"REACT": "React (nuovo)"
+			},
+			"HINT": "Si applica a tutto il tenant, su ogni dispositivo. Oggi la dashboard di monitoraggio del tempo è disponibile in entrambe le interfacce; seguiranno altre pagine.",
+			"READ_ONLY": "Solo gli amministratori del tenant possono modificare questa impostazione.",
+			"SAVING": "Salvataggio…",
+			"SAVED": "Preferenza dell'interfaccia salvata",
+			"SAVE_ERROR": "Impossibile salvare la preferenza dell'interfaccia."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Temi",
 		"LIGHT": "Luce",

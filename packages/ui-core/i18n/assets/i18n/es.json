@@ -1158,6 +1158,21 @@
 		"START_SERVER": "Iniciar servidor",
 		"STOP_SERVER": "Detener servidor."
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Interfaz de usuario",
+			"DESCRIPTION": "Elija qué interfaz usan todos los usuarios de este inquilino para las páginas disponibles en ambas variantes.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (predeterminado)",
+				"REACT": "React (nuevo)"
+			},
+			"HINT": "Se aplica a todo el inquilino, en todos los dispositivos. Hoy el panel de seguimiento de tiempo está disponible en ambas interfaces; seguirán más páginas.",
+			"READ_ONLY": "Solo los administradores del inquilino pueden cambiar esta configuración.",
+			"SAVING": "Guardando…",
+			"SAVED": "Preferencia de interfaz guardada",
+			"SAVE_ERROR": "No se pudo guardar la preferencia de interfaz."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Temas",
 		"LIGHT": "Luz",

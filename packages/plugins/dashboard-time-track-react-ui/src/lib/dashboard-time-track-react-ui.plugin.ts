@@ -112,18 +112,20 @@ export const DashboardTimeTrackReactUiPlugin = defineDeclarativePlugin('dashboar
 	},
 
 	// ── Dashboard Tab ────────────────────────────────────────────
+	// Same `tabId`, title, icon, order and path as the Angular flavour: the tab registry
+	// upserts by `tabId`, so both plugins contribute ONE "Time Tracking" tab, and the route
+	// registrations behind it (`preferredUiCanMatch`) pick the flavour the tenant selected.
 	tabs: [
 		{
 			tabsetId: 'dashboard-page',
-			tabId: 'react-time-tracking',
+			tabId: 'time-tracking',
 			tabsetType: 'route',
 			path: `/pages/dashboard/${DASHBOARD_TIME_TRACK_PATH}`,
-			tabTitle: (_i18n: IPluginI18nService) =>
-				_i18n.getTranslation('REACT_UI.DASHBOARD_PAGE.TABS.REACT_TIME_TRACKING'),
-			tabIcon: 'code-outline',
+			tabTitle: (_i18n: IPluginI18nService) => _i18n.getTranslation('TIMESHEET.TIME_TRACKING'),
+			tabIcon: 'clock-outline',
 			responsive: true,
 			activeLinkOptions: { exact: false },
-			order: 4,
+			order: 3,
 			permissions: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKING_DASHBOARD]
 		}
 	]

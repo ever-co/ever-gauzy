@@ -1156,6 +1156,21 @@
 		"START_SERVER": "Start de server",
 		"STOP_SERVER": "Stop server"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Gebruikersinterface",
+			"DESCRIPTION": "Kies welke interface iedereen in deze tenant gebruikt voor pagina's die in beide varianten beschikbaar zijn.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (standaard)",
+				"REACT": "React (nieuw)"
+			},
+			"HINT": "Geldt voor de hele tenant, op elk apparaat. Vandaag is het tijdregistratie-dashboard in beide interfaces beschikbaar; meer pagina's volgen.",
+			"READ_ONLY": "Alleen tenantbeheerders kunnen deze instelling wijzigen.",
+			"SAVING": "Opslaan…",
+			"SAVED": "Interfacevoorkeur opgeslagen",
+			"SAVE_ERROR": "De interfacevoorkeur kon niet worden opgeslagen."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Thema's",
 		"LIGHT": "Licht",
