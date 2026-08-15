@@ -4,6 +4,7 @@ import {
 	ExecutionContext,
 	CallHandler,
 	HttpException,
+	HttpStatus,
 	BadRequestException
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
@@ -30,8 +31,20 @@ export class TransformInterceptor implements NestInterceptor {
 				if (error instanceof BadRequestException) {
 					throw new BadRequestException(error.getResponse());
 				}
-				// For other errors, return a new instance of HttpException
-				throw new HttpException(error.message, error.status);
+				// Every other HTTP exception is re-thrown AS IS. Re-wrapping it as
+				// `new HttpException(error.message, error.status)` used to flatten a structured
+				// response body (e.g. the AI dictation 503 `{ message, code, settingsPath }`) down to
+				// `{ statusCode, message }`, so clients could never branch on anything but text.
+				if (error instanceof HttpException) {
+					throw error;
+				}
+				// A non-HTTP error (TypeORM, a plain Error, a thrown object). It must NOT become
+				// `new HttpException(message, undefined)`: with an undefined status Express kept the
+				// default 200 and the client received `{ message }` as a SUCCESSFUL response — the
+				// documents editor, for one, then opened an id-less "Untitled" page. Honour a numeric
+				// `status` if the error carries one, else it is a server error.
+				const status = Number.isInteger(error?.status) ? error.status : HttpStatus.INTERNAL_SERVER_ERROR;
+				throw new HttpException(error?.message ?? 'Internal server error', status);
 			})
 		);
 	}
