@@ -356,13 +356,18 @@ export const closeDetailPanel = async () => {
 // ─── Create a PAGE document ──────────────────────────────────────────────────────────────────────
 
 export const newPageButtonVisible = async () => {
-	await verifyElementIsVisible(DocumentsHubPage.newPageButtonCss);
+	// Assert the `New ▾` trigger, not the menu item: the item lives in an overlay that only exists
+	// once the menu is open.
+	await verifyElementIsVisible(DocumentsHubPage.newMenuTriggerCss);
 };
 
 export const clickNewPageButton = async () => {
-	// The browse card shows a full-card [nbSpinner] while the first list load runs; a coordinate click
-	// lands on that overlay and the dialog never opens. Settle, dispatch, and confirm on the dialog.
-	await dispatchClickWhenSettled(DocumentsHubPage.newPageButtonCss, DocumentsHubPage.createNameInputCss);
+	// Two hops now — open `New ▾`, then choose Page. The browse card shows a full-card [nbSpinner]
+	// while the first list load runs; a coordinate click lands on that overlay and nothing opens.
+	// Settle and dispatch each hop, confirming on what that hop is supposed to produce (the menu item,
+	// then the create dialog's name input) so a swallowed click fails here rather than 24s later.
+	await dispatchClickWhenSettled(DocumentsHubPage.newMenuTriggerCss, DocumentsHubPage.newMenuPageItemCss);
+	await dispatchClickWhenSettled(DocumentsHubPage.newMenuPageItemCss, DocumentsHubPage.createNameInputCss);
 };
 
 export const createDialogVisible = async () => {

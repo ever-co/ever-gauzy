@@ -48,7 +48,16 @@ export const DocumentsHubPage = {
 	browseActionsCss: '.docs-browse-actions',
 	// Keyed on the hard-coded `nb-icon` names rather than the translated labels (see file header).
 	uploadButtonCss: '.docs-browse-actions button:has(nb-icon[icon="upload-outline"])',
-	newPageButtonCss: '.docs-browse-actions button:has(nb-icon[icon="file-add-outline"])',
+	// Creating a page is no longer its own header button: the revamp folded Folder/Page behind a
+	// `New ▾` nb-contextMenu (a folder was otherwise unreachable on a brand-new org). The trigger is
+	// the only `plus-outline` in this header.
+	newMenuTriggerCss: '.docs-browse-actions button:has(nb-icon[icon="plus-outline"])',
+	// The menu items are NbMenuItem models, so their icons are `[config]`-bound — no `icon` attribute
+	// reaches the DOM and the icon-name convention above cannot be used here. Nebular renders each
+	// item as `<a [attr.title]>…<span class="menu-title">`, so match the label: Playwright's
+	// `:has-text()` is a case-insensitive SUBSTRING match, which absorbs the "New page"/"New Page"
+	// difference between the docs-ui and ui-core catalogues, and "New page" cannot match "New folder".
+	newMenuPageItemCss: 'nb-context-menu a:has-text("New page")',
 	reviewQueueButtonCss: '.docs-browse-actions button:has(nb-icon[icon="checkmark-circle-outline"])',
 	viewToggleCss: '.docs-view-toggle',
 	// The multi-file picker the Upload button proxies (`fileInput.nativeElement.click()`). It is
@@ -73,7 +82,11 @@ export const DocumentsHubPage = {
 	// text inputs (the two `nb-rangepicker` fields). Debounces 500 ms (DOCS_SEARCH_DEBOUNCE_MS).
 	searchInputCss: 'gz-docs-filter-bar .docs-filter-search input[type="text"]',
 	searchContentToggleCss: 'gz-docs-filter-bar .docs-filter-search nb-toggle',
-	clearAllButtonCss: 'gz-docs-filter-bar .docs-filter-facets button:has(nb-icon[icon="close-circle-outline"])',
+	// No call site yet, but the class it used to hang off (`.docs-filter-facets`) no longer exists
+	// anywhere in docs-ui — the clear-all button now lives in the filter bar's actions field. Corrected
+	// rather than left to mislead whoever wires this up.
+	clearAllButtonCss:
+		'gz-docs-filter-bar .docs-filter-field--actions button:has(nb-icon[icon="close-circle-outline"])',
 
 	// ── Upload flow (UX spec §7) ─────────────────────────────────────────────────────────────────
 	// Pre-upload classification dialog. NbDialogService mounts the component itself, so the component

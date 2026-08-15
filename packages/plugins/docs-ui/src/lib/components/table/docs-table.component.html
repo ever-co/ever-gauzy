@@ -3,6 +3,7 @@
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
+	(click)="onRowClick($event)"
 	(dblclick)="onRowDoubleClick($event)"
 >
 	<!-- Column chooser — header kebab, persisted to localStorage['gauzy_docs_columns'] -->

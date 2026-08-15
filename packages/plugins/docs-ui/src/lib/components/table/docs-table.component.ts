@@ -192,33 +192,63 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 		this.columnVisibility = resolveDocsTableColumns(this.columnPreferences, this.narrowViewport);
 	}
 
+	/**
+	 * SELECTION ONLY — opening a row is `onRowClick`'s job.
+	 *
+	 * This used to open the detail panel too, which meant the panel was unreachable by row click for
+	 * exactly the users most likely to want it. `angular2-smart-table` only emits `userRowSelect` for a
+	 * row-BODY click when `selectMode === 'single'` (`onUserSelectRow` early-returns otherwise), and
+	 * `buildSettings()` runs this grid in `'multi'` whenever `selectable` is on — i.e. for anyone with
+	 * DOCS_MANAGE. So an admin clicking a document row got nothing at all.
+	 *
+	 * The mirror-image defect: `onMultipleSelectRow` DOES emit it, so ticking a checkbox for a bulk
+	 * action also opened the detail panel. Both go away by making this handler do one thing.
+	 */
 	onUserRowSelect(event: { data?: IDocument | null; selected?: IDocument[] }): void {
 		if (event?.selected) {
 			this.selectionChanged.emit(event.selected.map((row) => row.id as ID));
 		}
-		if (event?.data) {
-			// FOLDER rows drill in; everything else opens the detail panel.
-			if (event.data.kind === DocumentKindEnum.FOLDER) {
-				this.folderOpened.emit(event.data);
-			} else {
-				this.rowClicked.emit(event.data);
-			}
+	}
+
+	/**
+	 * Single-click row open (`01-ux-spec.md` §4.1): folders drill in, everything else opens the detail
+	 * panel. Handled on the container for the reason above — the grid's own output is not delivered in
+	 * multi-select mode — resolving the row from DOM position exactly as `onRowDoubleClick` does.
+	 */
+	onRowClick(event: MouseEvent): void {
+		const target = event.target as HTMLElement | null;
+		// The multi-select cell selects; it must never also open. Interactive controls (the row kebab,
+		// the status Retry button) own their own click.
+		if (target?.closest?.('.angular2-smart-action-multiple-select, button, a, input, nb-checkbox')) return;
+		const data = this.resolveRowFrom(event);
+		if (!data) return;
+		if (data.kind === DocumentKindEnum.FOLDER) {
+			this.folderOpened.emit(data);
+		} else {
+			this.rowClicked.emit(data);
 		}
 	}
 
 	/**
-	 * Per-kind default open on double click (`01-ux-spec.md` §4.1) — folder drill,
-	 * page editor, file preview. `angular2-smart-table` exposes no dblclick output,
-	 * so the row is resolved from the DOM position of the clicked `<tr>` within the
-	 * rendered body; `this.rows` is exactly what was handed to the data source, in
-	 * order, so the index maps 1:1. Anything unresolvable is ignored (never guessed).
+	 * `angular2-smart-table` exposes no click/dblclick output carrying the row, so the row is resolved
+	 * from the DOM position of the clicked `<tr>` within the rendered body; `this.rows` is exactly what
+	 * was handed to the data source, in order, so the index maps 1:1. Anything unresolvable returns
+	 * undefined (never guessed).
 	 */
-	onRowDoubleClick(event: MouseEvent): void {
+	private resolveRowFrom(event: MouseEvent): IDocument | undefined {
 		const row = (event.target as HTMLElement)?.closest?.('tr');
 		const body = row?.parentElement;
-		if (!row || !body) return;
+		if (!row || !body) return undefined;
 		const index = Array.prototype.indexOf.call(body.children, row);
-		const data = index >= 0 ? this.rows?.[index] : undefined;
+		return index >= 0 ? this.rows?.[index] : undefined;
+	}
+
+	/**
+	 * Per-kind default open on double click (`01-ux-spec.md` §4.1) — folder drill,
+	 * page editor, file preview.
+	 */
+	onRowDoubleClick(event: MouseEvent): void {
+		const data = this.resolveRowFrom(event);
 		if (!data) return;
 		switch (data.kind) {
 			case DocumentKindEnum.FOLDER:
