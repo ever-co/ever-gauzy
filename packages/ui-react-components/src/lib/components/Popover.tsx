@@ -33,6 +33,11 @@ export interface PopoverProps {
 	display?: CSSProperties['display'];
 	/** z-index of the floating panel; defaults to Nebular's overlay level. */
 	zIndex?: number;
+	/**
+	 * Accessible name of the panel (`aria-label` on the `dialog`). Give one whenever the panel is
+	 * not self-describing — screen readers announce it when focus moves in.
+	 */
+	panelLabel?: string;
 }
 
 const POPOVER_CSS = `
@@ -117,7 +122,8 @@ export function Popover({
 	panelClassName,
 	panelStyle,
 	display = 'inline-flex',
-	zIndex = 1000
+	zIndex = 1000,
+	panelLabel
 }: PopoverProps) {
 	useInjectedStyles('gzrc-popover-styles', POPOVER_CSS);
 	const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
@@ -184,11 +190,25 @@ export function Popover({
 
 	return (
 		<>
+			{/* The wrapper is the click target for whatever trigger the caller renders (usually a
+			    button, which is already focusable). It publishes the disclosure state for AT and,
+			    when the child is NOT an interactive control, takes focus + Enter/Space itself. */}
 			<span
 				ref={triggerRef}
 				className={className}
 				style={{ display }}
+				aria-haspopup="dialog"
+				aria-expanded={isOpen}
 				onClick={() => setOpen(!isOpen)}
+				onKeyDown={(event) => {
+					if (event.target !== event.currentTarget) return;
+					if (event.key === 'Enter' || event.key === ' ') {
+						event.preventDefault();
+						setOpen(!isOpen);
+					}
+				}}
+				tabIndex={hasInteractiveChild(triggerRef.current) ? undefined : 0}
+				role={hasInteractiveChild(triggerRef.current) ? undefined : 'button'}
 			>
 				{children}
 			</span>
@@ -199,6 +219,7 @@ export function Popover({
 							className={`gzrc-popover-panel${panelClassName ? ` ${panelClassName}` : ''}`}
 							data-placement={placement}
 							role="dialog"
+							aria-label={panelLabel}
 							style={{
 								top: position?.top ?? 0,
 								left: position?.left ?? 0,
@@ -215,4 +236,11 @@ export function Popover({
 				: null}
 		</>
 	);
+}
+
+/** Whether the trigger wrapper already contains a natively focusable control (button, link, input…). */
+function hasInteractiveChild(element: HTMLElement | null): boolean {
+	// Before the first render there is nothing to inspect: assume the common case (a button child).
+	if (!element) return true;
+	return !!element.querySelector('button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
 }

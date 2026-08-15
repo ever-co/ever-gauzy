@@ -116,7 +116,7 @@ export function RecentActivitiesWindow(props: RecentActivitiesWindowProps) {
 		<WindowCard
 			title={t('TIMESHEET.RECENT_ACTIVITIES')}
 			loading={loading}
-			hasData={(timeSlotEmployees?.length ?? 0) > 0}
+			hasData={rows.length > 0}
 			emptyMessage={emptyMessage}
 			bodyClassName="gz-rtt-custom-card-body-inner"
 			emptyInBody

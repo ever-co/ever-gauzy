@@ -59,14 +59,28 @@ export function sanitizeUiPreferencesPatch(patch: unknown): IUserUiPreferencesUp
 		if (!isPlainObject(value)) {
 			throw new Error(`Feature "${feature}" must be an object`);
 		}
-		for (const key of Object.keys(value)) {
-			if (FORBIDDEN_KEYS.has(key)) {
-				throw new Error(`Illegal key "${key}" in feature "${feature}"`);
-			}
-		}
-		clean[feature] = { ...value };
+		clean[feature] = assertNoForbiddenKeys(value, feature);
 	}
 	return clean as IUserUiPreferencesUpdateInput;
+}
+
+/**
+ * Walks a feature object (bounded depth) and rejects `__proto__` / `constructor` / `prototype`
+ * at ANY level — a nested polluting key would survive a shallow check and reach the JSON column,
+ * from where a later deep merge could pick it up. Returns a fresh copy (own enumerable keys only).
+ */
+function assertNoForbiddenKeys(value: Record<string, unknown>, feature: string, depth = 0): Record<string, unknown> {
+	if (depth > 8) {
+		throw new Error(`Feature "${feature}" is nested too deeply`);
+	}
+	const copy: Record<string, unknown> = {};
+	for (const [key, item] of Object.entries(value)) {
+		if (FORBIDDEN_KEYS.has(key)) {
+			throw new Error(`Illegal key "${key}" in feature "${feature}"`);
+		}
+		copy[key] = isPlainObject(item) ? assertNoForbiddenKeys(item as Record<string, unknown>, feature, depth + 1) : item;
+	}
+	return copy;
 }
 
 /**

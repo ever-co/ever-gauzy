@@ -45,3 +45,17 @@ export const DASHBOARD_TIME_TRACK_ROUTE: PageRouteRegistryConfig = {
 		bookmarkParams: BookmarkQueryParamsResolver
 	}
 };
+
+/** The path this tab used to live at ("dashboard-time-track") before it shared the Angular one. */
+export const LEGACY_DASHBOARD_TIME_TRACK_PATH = 'dashboard-time-track';
+
+/**
+ * Compatibility redirect for bookmarks / links to the old React path — the flavour is decided by
+ * the tenant preference on the shared path, so both flavours' deep links keep working.
+ */
+export const LEGACY_DASHBOARD_TIME_TRACK_REDIRECT_ROUTE: PageRouteRegistryConfig = {
+	location: 'dashboard-sections',
+	path: LEGACY_DASHBOARD_TIME_TRACK_PATH,
+	redirectTo: `/pages/dashboard/${DASHBOARD_TIME_TRACK_PATH}`,
+	route: { pathMatch: 'full' }
+};

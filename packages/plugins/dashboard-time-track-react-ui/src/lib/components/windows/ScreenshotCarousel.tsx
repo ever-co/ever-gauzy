@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useImperativeHandle, useRef, type ReactNode } from 'react';
+import React, { forwardRef, useCallback, useImperativeHandle, useRef, type ReactNode } from 'react';
 
 /** Imperative handle mirroring the two Swiper calls the Angular template makes. */
 export interface ScreenshotCarouselHandle {
@@ -30,11 +30,14 @@ export const ScreenshotCarousel = forwardRef<ScreenshotCarouselHandle, Screensho
 		(direction: 1 | -1) => {
 			const scroller = scrollerRef.current;
 			if (!scroller) return;
-			// One group = the visible width (three slides + gaps).
-			const distance = scroller.clientWidth * direction;
+			// One group = `slidesPerView` slides — measured off the first slide, so a narrow
+			// canvas (where fewer, wider slides fit) still advances by whole slides.
+			const slide = scroller.querySelector<HTMLElement>('.gz-rtt-carousel-slide');
+			const gap = 16;
+			const distance = slide ? (slide.offsetWidth + gap) * slidesPerView * direction : scroller.clientWidth * direction;
 			scroller.scrollBy({ left: distance, behavior: 'smooth' });
 		},
-		[]
+		[slidesPerView]
 	);
 
 	useImperativeHandle(
@@ -47,7 +50,12 @@ export const ScreenshotCarousel = forwardRef<ScreenshotCarouselHandle, Screensho
 	);
 
 	return (
-		<div ref={scrollerRef} className={`gz-rtt-carousel${className ? ` ${className}` : ''}`} data-slides-per-view={slidesPerView}>
+		<div
+			ref={scrollerRef}
+			className={`gz-rtt-carousel${className ? ` ${className}` : ''}`}
+			style={{ '--gz-rtt-slides': slidesPerView } as React.CSSProperties}
+			data-slides-per-view={slidesPerView}
+		>
 			<div className="gz-rtt-carousel-track">{children}</div>
 		</div>
 	);

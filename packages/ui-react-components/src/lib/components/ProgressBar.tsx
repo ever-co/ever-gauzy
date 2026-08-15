@@ -16,6 +16,8 @@ export interface ProgressBarProps {
 	height?: string;
 	/** Renders the percentage text inside the bar (Nebular `displayValue`). */
 	displayValue?: boolean;
+	/** Accessible name — what this percentage measures ("Project share", "Weekly activity"). */
+	ariaLabel?: string;
 	className?: string;
 	style?: CSSProperties;
 }
@@ -32,6 +34,7 @@ export function ProgressBar({
 	size = 'tiny',
 	height,
 	displayValue = false,
+	ariaLabel,
 	className,
 	style
 }: ProgressBarProps) {
@@ -41,10 +44,12 @@ export function ProgressBar({
 		<div
 			className={className}
 			role="progressbar"
+			aria-label={ariaLabel}
 			aria-valuemin={0}
 			aria-valuemax={100}
 			aria-valuenow={percent}
 			style={{
+				position: 'relative',
 				width: '100%',
 				height: height ?? `var(--progress-bar-${size}-height)`,
 				background: `var(--progress-bar-${st}-background-color)`,
@@ -59,16 +64,30 @@ export function ProgressBar({
 					height: '100%',
 					background: `var(--progress-bar-${st}-filled-background-color)`,
 					borderRadius: 'var(--progress-bar-border-radius)',
-					transition: `width var(--progress-bar-animation-duration, 400ms) ease-in-out`,
-					color: `var(--progress-bar-${st}-text-color)`,
-					fontSize: `var(--progress-bar-${size}-text-font-size)`,
-					lineHeight: `var(--progress-bar-${size}-text-line-height)`,
-					textAlign: 'center',
-					whiteSpace: 'nowrap'
+					transition: `width var(--progress-bar-animation-duration, 400ms) ease-in-out`
 				}}
-			>
-				{displayValue ? `${Math.round(percent)}%` : null}
-			</div>
+			/>
+			{displayValue ? (
+				// The label spans the WHOLE track (not the fill), so it stays legible at 0 % and small
+				// values instead of being clipped inside a sliver of fill.
+				<span
+					aria-hidden="true"
+					style={{
+						position: 'absolute',
+						inset: 0,
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						color: percent >= 50 ? `var(--progress-bar-${st}-text-color)` : 'inherit',
+						fontSize: `var(--progress-bar-${size}-text-font-size)`,
+						lineHeight: `var(--progress-bar-${size}-text-line-height)`,
+						whiteSpace: 'nowrap',
+						pointerEvents: 'none'
+					}}
+				>
+					{`${Math.round(percent)}%`}
+				</span>
+			) : null}
 		</div>
 	);
 }

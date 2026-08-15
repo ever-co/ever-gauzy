@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ID, IEmployee, ISelectedEmployee, ITimeSlotStatistics, PermissionsEnum, TimeFormatEnum } from '@gauzy/contracts';
-import { EmployeesService, Store } from '@gauzy/ui-core/core';
-import { ALL_EMPLOYEES_SELECTED, TimeZoneService } from '@gauzy/ui-core/shared';
+import { EmployeesService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { TimeZoneService } from '@gauzy/ui-core/shared';
 import { useInjector, useObservable, useTranslation, useTypedEvent } from '@gauzy/ui-react';
 import './nebular-jsx';
 import { WidgetVisibilityChangedEvent } from '../dashboard-time-track-react-ui.events';
@@ -65,6 +65,7 @@ export function DashboardTimeTrackReactUiPage({ headerActionsHost, headerToolbar
 	const router = useMemo(() => injector.get(Router), [injector]);
 	const store = useMemo(() => injector.get(Store), [injector]);
 	const employeesService = useMemo(() => injector.get(EmployeesService, null), [injector]);
+	const toastr = useMemo(() => injector.get(ToastrService, null), [injector]);
 	const timeZoneService = useMemo(() => injector.get(TimeZoneService), [injector]);
 	const visibilityEvent = useTypedEvent(WidgetVisibilityChangedEvent);
 
@@ -142,23 +143,22 @@ export function DashboardTimeTrackReactUiPage({ headerActionsHost, headerToolbar
 			if (!employee?.id || !employeesService) return;
 			try {
 				const people: IEmployee = await firstValueFrom(employeesService.getEmployeeById(employee.id, ['user']));
-				store.selectedEmployee = employee.id
-					? ({
-							id: people.id,
-							firstName: people.user?.firstName,
-							lastName: people.user?.lastName,
-							imageUrl: people.user?.imageUrl,
-							employeeLevel: people.employeeLevel,
-							fullName: people.user?.name,
-							shortDescription: people.short_description
-						} as ISelectedEmployee)
-					: ALL_EMPLOYEES_SELECTED;
-				if (store.selectedEmployee) void router.navigate(['/pages/employees/activity/screenshots']);
+				store.selectedEmployee = {
+					id: people.id,
+					firstName: people.user?.firstName,
+					lastName: people.user?.lastName,
+					imageUrl: people.user?.imageUrl,
+					employeeLevel: people.employeeLevel,
+					fullName: people.user?.name,
+					shortDescription: people.short_description
+				} as ISelectedEmployee;
+				void router.navigate(['/pages/employees/activity/screenshots']);
 			} catch (error) {
-				console.log('Error while redirecting screenshots page.', error);
+				console.error('Error while redirecting to the screenshots page.', error);
+				toastr?.error((error as Error)?.message || 'Could not open the screenshots page.');
 			}
 		},
-		[employeesService, store, router]
+		[employeesService, store, router, toastr]
 	);
 	const redirectToTask = useCallback(() => void router.navigate(['pages/tasks/dashboard']), [router]);
 	const redirectToReport = useCallback(

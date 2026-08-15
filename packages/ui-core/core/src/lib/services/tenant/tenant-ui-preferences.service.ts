@@ -6,8 +6,8 @@ import { ITenantUiPreferences, ITenantUiPreferencesUpdateInput, PreferredUiEnum 
 import { API_PREFIX } from '@gauzy/ui-core/common';
 import { Store } from '../store/store.service';
 
-/** localStorage key that mirrors the last known preference so the very first paint already agrees with it. */
-const PREFERRED_UI_STORAGE_KEY = '_preferredUi';
+/** localStorage key prefix; the tenant id is appended so two tenants on one browser never share a mirror. */
+const PREFERRED_UI_STORAGE_PREFIX = '_preferredUi';
 
 /**
  * Tenant-wide UI preferences: which flavour (Angular or React) of a page that exists in both
@@ -15,7 +15,8 @@ const PREFERRED_UI_STORAGE_KEY = '_preferredUi';
  *
  * Read by everyone (routes pick their component with {@link preferredUiCanMatch}), written by
  * tenant administrators from Settings → General. The value is cached per tenant for the session
- * and mirrored to localStorage, so a reload never flashes the wrong flavour while the API answers.
+ * and mirrored to localStorage PER TENANT, so a reload never flashes the wrong flavour while the
+ * API answers — and a tenant switch never shows the previous tenant's flavour.
  */
 @Injectable({ providedIn: 'root' })
 export class TenantUiPreferencesService {
@@ -24,42 +25,65 @@ export class TenantUiPreferencesService {
 
 	private readonly API_URL = `${API_PREFIX}/tenant-ui-preferences`;
 
-	/** The tenant whose preference is currently loaded (a tenant switch invalidates the cache). */
+	/** The tenant whose preference the signal currently reflects (`null` = nothing loaded from the API yet). */
 	private loadedForTenantId: string | null = null;
-	private pending: Promise<PreferredUiEnum> | null = null;
+	/** The in-flight request and the tenant it was issued for — a completion for another tenant is ignored. */
+	private pending: { tenantId: string | null; promise: Promise<PreferredUiEnum> } | null = null;
 
-	/** The current preference — Angular until the API says otherwise. */
-	public readonly preferredUi = signal<PreferredUiEnum>(readStoredPreferredUi());
+	/** The current preference — Angular until the API (or the tenant's local mirror) says otherwise. */
+	public readonly preferredUi = signal<PreferredUiEnum>(PreferredUiEnum.ANGULAR);
 	public readonly preferredUi$ = toObservable(this.preferredUi);
 	/** `true` when the tenant asked for the React flavour. */
 	public readonly isReact = computed(() => this.preferredUi() === PreferredUiEnum.REACT);
 
+	constructor() {
+		// First paint: the mirror of the tenant that is signed in right now (if any).
+		this.preferredUi.set(readStoredPreferredUi(this.currentTenantId()));
+	}
+
 	/**
 	 * Resolves the preference for the signed-in tenant, fetching it once per tenant.
-	 * Concurrent callers (several `canMatch` guards of one navigation) share the same request.
+	 * Concurrent callers (several `canMatch` guards of one navigation) share the same request;
+	 * a tenant switch while a request is pending starts a new request for the new tenant and the
+	 * old response is discarded.
 	 */
 	public ensureLoaded(): Promise<PreferredUiEnum> {
-		const tenantId = this.store.tenantId ?? this.store.user?.tenantId ?? null;
-		if (this.loadedForTenantId === tenantId && this.loadedForTenantId !== null) {
+		const tenantId = this.currentTenantId();
+		if (tenantId !== null && this.loadedForTenantId === tenantId) {
 			return Promise.resolve(this.preferredUi());
 		}
-		if (this.pending) {
-			return this.pending;
+		if (this.pending && this.pending.tenantId === tenantId) {
+			return this.pending.promise;
 		}
-		this.pending = firstValueFrom(this.http.get<ITenantUiPreferences>(this.API_URL))
+		// The signal must never carry another tenant's value while this tenant's answer is on its
+		// way: seed it from THIS tenant's mirror (Angular when there is none).
+		if (this.loadedForTenantId !== null && this.loadedForTenantId !== tenantId) {
+			this.loadedForTenantId = null;
+			this.preferredUi.set(readStoredPreferredUi(tenantId));
+		}
+		const promise = firstValueFrom(this.http.get<ITenantUiPreferences>(this.API_URL))
 			.then((preferences) => {
-				this.loadedForTenantId = tenantId;
-				this.apply(preferences?.preferredUi);
+				// Stale completion (the tenant changed meanwhile) — do not touch the signal.
+				if (this.currentTenantId() === tenantId) {
+					this.loadedForTenantId = tenantId;
+					this.apply(tenantId, preferences?.preferredUi);
+				}
 				return this.preferredUi();
 			})
 			.catch(() => this.preferredUi()) // offline / 401 during logout: keep the last known value
-			.finally(() => (this.pending = null));
-		return this.pending;
+			.finally(() => {
+				if (this.pending?.promise === promise) {
+					this.pending = null;
+				}
+			});
+		this.pending = { tenantId, promise };
+		return promise;
 	}
 
 	/** Re-reads the preference from the API regardless of the cache. */
 	public reload(): Promise<PreferredUiEnum> {
 		this.loadedForTenantId = null;
+		this.pending = null;
 		return this.ensureLoaded();
 	}
 
@@ -68,32 +92,50 @@ export class TenantUiPreferencesService {
 	 * locally so the current session switches without a reload.
 	 */
 	public async update(input: ITenantUiPreferencesUpdateInput): Promise<ITenantUiPreferences> {
+		const tenantId = this.currentTenantId();
 		const preferences = await firstValueFrom(this.http.put<ITenantUiPreferences>(this.API_URL, input));
-		this.loadedForTenantId = this.store.tenantId ?? this.store.user?.tenantId ?? null;
-		this.apply(preferences?.preferredUi);
+		if (this.currentTenantId() === tenantId) {
+			this.loadedForTenantId = tenantId;
+			this.apply(tenantId, preferences?.preferredUi);
+		}
 		return preferences;
 	}
 
-	/** Forgets the cached preference (call on logout / tenant switch). */
+	/** Forgets the cached preference and this tenant's mirror (call on logout / tenant switch). */
 	public reset(): void {
+		const tenantId = this.currentTenantId();
 		this.loadedForTenantId = null;
 		this.pending = null;
+		try {
+			localStorage.removeItem(storageKey(tenantId));
+		} catch {
+			// storage unavailable — nothing mirrored to forget
+		}
+		this.preferredUi.set(PreferredUiEnum.ANGULAR);
 	}
 
-	private apply(value: PreferredUiEnum | undefined): void {
+	private currentTenantId(): string | null {
+		return this.store.tenantId ?? this.store.user?.tenantId ?? null;
+	}
+
+	private apply(tenantId: string | null, value: PreferredUiEnum | undefined): void {
 		const next = isPreferredUi(value) ? value : PreferredUiEnum.ANGULAR;
 		this.preferredUi.set(next);
 		try {
-			localStorage.setItem(PREFERRED_UI_STORAGE_KEY, next);
+			localStorage.setItem(storageKey(tenantId), next);
 		} catch {
 			// storage unavailable (private mode / quota) — the in-memory value still applies
 		}
 	}
 }
 
-function readStoredPreferredUi(): PreferredUiEnum {
+function storageKey(tenantId: string | null): string {
+	return tenantId ? `${PREFERRED_UI_STORAGE_PREFIX}_${tenantId}` : PREFERRED_UI_STORAGE_PREFIX;
+}
+
+function readStoredPreferredUi(tenantId: string | null): PreferredUiEnum {
 	try {
-		const stored = localStorage.getItem(PREFERRED_UI_STORAGE_KEY);
+		const stored = localStorage.getItem(storageKey(tenantId));
 		return isPreferredUi(stored) ? stored : PreferredUiEnum.ANGULAR;
 	} catch {
 		return PreferredUiEnum.ANGULAR;

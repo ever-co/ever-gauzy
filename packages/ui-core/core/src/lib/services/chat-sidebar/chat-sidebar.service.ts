@@ -434,11 +434,15 @@ export class ChatSidebarService {
 		}, PERSIST_DEBOUNCE_MS);
 	}
 
-	/** Drop any pending server write. */
+	/** Drop any pending server write — and the width mirror timer that would re-arm one. */
 	private cancelPersist(): void {
 		if (this.persistTimer !== null) {
 			clearTimeout(this.persistTimer);
 			this.persistTimer = null;
+		}
+		if (this.widthPersistTimer !== null) {
+			clearTimeout(this.widthPersistTimer);
+			this.widthPersistTimer = null;
 		}
 	}
 
@@ -520,7 +524,19 @@ export class ChatSidebarService {
 			if (keyed !== null) {
 				return keyed;
 			}
-			return this.userId ? localStorage.getItem(this.storageKey(field, null)) : null;
+			if (!this.userId) {
+				return null;
+			}
+			// One-time migration: the FIRST signed-in user inherits the pre-per-user value and the
+			// legacy key is consumed, so later accounts on this browser start from their own state
+			// (server, then defaults) instead of inheriting a stranger's layout.
+			const legacyKey = this.storageKey(field, null);
+			const legacy = localStorage.getItem(legacyKey);
+			if (legacy !== null) {
+				localStorage.setItem(this.storageKey(field), legacy);
+				localStorage.removeItem(legacyKey);
+			}
+			return legacy;
 		} catch {
 			return null;
 		}

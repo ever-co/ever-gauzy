@@ -46,8 +46,8 @@ export class UpdateUserUiPreferencesDTO implements IUserUiPreferencesUpdateInput
 	@IsObject()
 	@ValidateNested()
 	@Type(() => AiChatUiPreferencesDTO)
-	readonly aiChat?: AiChatUiPreferencesDTO;
+	readonly aiChat?: AiChatUiPreferencesDTO | null;
 
-	/** Any other feature's state object (see `IUserUiPreferences`). */
-	[feature: string]: unknown;
+	/** Any other feature's state object (see `IUserUiPreferences`); `null` removes it. */
+	[feature: string]: object | null | undefined;
 }

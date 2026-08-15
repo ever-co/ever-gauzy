@@ -40,9 +40,11 @@ const AVATAR_CSS = `
 .gzrc-avatar .gzrc-avatar-image.sm img { height: 32px; }
 .gzrc-avatar.activity .gzrc-avatar-image, .gzrc-avatar.activity .gzrc-avatar-image img { width: 28px; border-radius: 50%; }
 .gzrc-avatar.activity .gzrc-avatar-image img { height: 28px; }
-.gzrc-avatar .gzrc-avatar-status { position: absolute; width: 10px; height: 10px; border-radius: 8px; border: 2px solid #ebebeb; right: 0; top: 0; }
-.gzrc-avatar .gzrc-avatar-status.online { background-color: #4caf50; }
-.gzrc-avatar .gzrc-avatar-status.offline { background-color: #f44336; }
+.gzrc-avatar .gzrc-avatar-status { position: absolute; width: 10px; height: 10px; border-radius: 8px; border: 2px solid ${themeTokens.card1}; right: 0; top: 0; }
+.gzrc-avatar .gzrc-avatar-status.online { background-color: ${themeTokens.success}; }
+.gzrc-avatar .gzrc-avatar-status.offline { background-color: ${themeTokens.danger}; }
+.gzrc-avatar .gzrc-avatar-image[role='button'] { outline: none; }
+.gzrc-avatar .gzrc-avatar-image[role='button']:focus-visible { box-shadow: 0 0 0 2px ${themeTokens.primary}; }
 .gzrc-avatar .gzrc-avatar-names { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 100%; min-width: 0; }
 .gzrc-avatar .gzrc-avatar-name { display: block; cursor: pointer; text-decoration: none; font-style: normal; font-size: 14px; font-weight: 600;
 	line-height: 16px; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: ${themeTokens.text1}; background: none; border: 0; padding: 0; text-align: start; max-width: 100%; }
@@ -74,7 +76,23 @@ export function Avatar({
 		<div className={classes} style={style}>
 			<div className="gzrc-avatar-inner">
 				{src ? (
-					<div className={`gzrc-avatar-image ${size}`} onClick={onClick} role={onClick ? 'button' : undefined}>
+					<div
+						className={`gzrc-avatar-image ${size}`}
+						onClick={onClick}
+						role={onClick ? 'button' : undefined}
+						tabIndex={onClick ? 0 : undefined}
+						aria-label={onClick ? name : undefined}
+						onKeyDown={
+							onClick
+								? (event) => {
+										if (event.key === 'Enter' || event.key === ' ') {
+											event.preventDefault();
+											onClick();
+										}
+									}
+								: undefined
+						}
+					>
 						<img src={src} alt={name ?? ''} draggable={false} />
 						{presence ? <span className={`gzrc-avatar-status ${online ? 'online' : 'offline'}`} /> : null}
 					</div>

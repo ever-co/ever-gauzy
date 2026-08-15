@@ -56,9 +56,13 @@ export function restoreLayout(stored: unknown, count: number): LayoutItemState[]
 
 	const seen = new Set<number>();
 	const restored: LayoutItemState[] = [];
-	for (const raw of stored as PersistedLayoutItem[]) {
-		const position = Number(raw?.position);
-		if (!Number.isInteger(position) || position < 0 || position >= count || seen.has(position)) continue;
+	for (const raw of stored as (PersistedLayoutItem | null | undefined)[]) {
+		// Corrupted storage must never take the dashboard down: skip anything that is not a
+		// record with an integer `position` (`Number(null)` would be 0 — item 0 hijacked).
+		if (!raw || typeof raw !== 'object') continue;
+		const position = raw.position;
+		if (typeof position !== 'number' || !Number.isInteger(position) || position < 0 || position >= count) continue;
+		if (seen.has(position)) continue;
 		seen.add(position);
 		const isCollapse = raw.isCollapse === true || raw.isExpand === false;
 		restored.push({

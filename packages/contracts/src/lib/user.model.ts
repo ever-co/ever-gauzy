@@ -66,13 +66,18 @@ export interface IAiChatUiPreferences {
  */
 export interface IUserUiPreferences {
 	aiChat?: IAiChatUiPreferences;
-	[feature: string]: unknown;
+	/** Any other feature: ONE plain object per feature key. */
+	[feature: string]: object | undefined;
 }
 
 /**
- * Body of `PUT /user/ui-preferences`: one or more feature objects to replace.
+ * Body of `PUT /user/ui-preferences`: one or more feature objects to replace — a `null` value
+ * REMOVES that feature's stored state (the endpoint rejects primitives).
  */
-export type IUserUiPreferencesUpdateInput = Partial<IUserUiPreferences>;
+export interface IUserUiPreferencesUpdateInput {
+	aiChat?: IAiChatUiPreferences | null;
+	[feature: string]: object | null | undefined;
+}
 
 export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset {
 	thirdPartyId?: string;

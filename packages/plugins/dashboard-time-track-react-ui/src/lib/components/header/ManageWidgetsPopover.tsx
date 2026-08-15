@@ -45,8 +45,7 @@ export function ManageWidgetsPopover({ widgets, windows, widgetTitle, windowTitl
 					type="button"
 					key={item.position}
 					className="gz-rtt-title"
-					role="menuitemcheckbox"
-					aria-checked={!item.hide}
+					aria-pressed={!item.hide}
 					onClick={() => onToggled(item, layout.toggle(item.position))}
 				>
 					<i className="fas fa-check" style={{ visibility: item.hide ? 'hidden' : 'visible' }} />

@@ -151,9 +151,14 @@ describe('speech helpers', () => {
 			expect((error as SpeechProviderError).message).toMatch(/no answer within 5s/);
 		});
 
-		it('treats a 2xx without `text` as an empty transcript, and unreadable JSON as a response error', async () => {
+		it('treats a 2xx without a string `text` and unreadable JSON as response errors, never as an empty transcript', async () => {
 			capture({});
-			await expect(call()).resolves.toBe('');
+			const missing = await call().catch((e: unknown) => e);
+			expect((missing as SpeechProviderError).kind).toBe('response');
+			expect((missing as SpeechProviderError).message).toMatch(/no transcript text/);
+
+			capture({ text: '   spaced   ' });
+			await expect(call()).resolves.toBe('spaced');
 
 			capture('not json at all');
 			const error = await call().catch((e: unknown) => e);

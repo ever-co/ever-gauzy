@@ -49,6 +49,19 @@ export class UserSubscriber extends BaseEntityEventSubscriber<User> {
 	}
 
 	/**
+	 * After `save()` on SQLite the entity still holds the JSON STRING the before-hooks wrote for
+	 * persistence; parse it back so the returned/reused entity has the same shape as a loaded one.
+	 */
+	async afterEntityCreate(entity: User): Promise<void> {
+		this.parseUiPreferencesForSQLite(entity);
+	}
+
+	/** See {@link afterEntityCreate}. */
+	async afterEntityUpdate(entity: User): Promise<void> {
+		this.parseUiPreferencesForSQLite(entity);
+	}
+
+	/**
 	 * Called after the entity is loaded from the database.
 	 *
 	 * @param entity The User entity that has been loaded.

@@ -1,6 +1,10 @@
 import { PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, IPluginI18nService, PluginRouteInput } from '@gauzy/plugin-ui';
-import { DASHBOARD_TIME_TRACK_ROUTE, DASHBOARD_TIME_TRACK_PATH } from './dashboard-time-track-react-ui.routes';
+import {
+	DASHBOARD_TIME_TRACK_PATH,
+	DASHBOARD_TIME_TRACK_ROUTE,
+	LEGACY_DASHBOARD_TIME_TRACK_REDIRECT_ROUTE
+} from './dashboard-time-track-react-ui.routes';
 import en from '../i18n/en.json';
 
 /**
@@ -52,7 +56,7 @@ export const DashboardTimeTrackReactUiPlugin = defineDeclarativePlugin('dashboar
 	location: 'page-sections',
 
 	// ── Routes ───────────────────────────────────────────────────
-	routes: [DASHBOARD_TIME_TRACK_ROUTE as PluginRouteInput],
+	routes: [DASHBOARD_TIME_TRACK_ROUTE as PluginRouteInput, LEGACY_DASHBOARD_TIME_TRACK_REDIRECT_ROUTE as PluginRouteInput],
 
 	// ── Namespace-isolated translations ──────────────────────────
 	// The dashboard itself uses the global `TIMESHEET.*` / `BUTTONS.*` keys (same as the Angular

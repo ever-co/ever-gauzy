@@ -121,11 +121,14 @@ export function periodCapacity(
 	employeesCount: number | undefined
 ): number | undefined {
 	if (!range?.startDate || !range?.endDate || employeesCount === undefined || employeesCount === null) return undefined;
-	const endWork = moment(organization?.defaultEndTime, 'HH:mm');
-	const startWork = moment(organization?.defaultStartTime, 'HH:mm');
-	const duration = endWork.diff(startWork) / 1000;
+	// A missing work time must mean "a full day", not "now" (`moment(undefined, 'HH:mm')` is the
+	// current time, which would shrink the capacity to ~0).
+	const startWork = organization?.defaultStartTime ? moment(organization.defaultStartTime, 'HH:mm', true) : null;
+	const endWork = organization?.defaultEndTime ? moment(organization.defaultEndTime, 'HH:mm', true) : null;
+	const workDay =
+		startWork?.isValid() && endWork?.isValid() && endWork.isAfter(startWork) ? endWork.diff(startWork) / 1000 : 86400;
 	const dayCount = daysBetween(range) + 1;
-	return dayCount * (isNaN(duration) ? 86400 : duration) * employeesCount;
+	return dayCount * workDay * employeesCount;
 }
 
 /** Window titles by position (Angular `titleMapper(position, false)`). */

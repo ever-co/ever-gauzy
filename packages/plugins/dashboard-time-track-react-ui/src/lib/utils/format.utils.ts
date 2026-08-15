@@ -35,7 +35,7 @@ export interface DateFormatOptions {
  * @param options Format/locale.
  */
 export function dateFormat(value: Date | string | number | null | undefined, options: DateFormatOptions = {}): string {
-	if (!value) return '';
+	if (value === null || value === undefined || value === '') return '';
 	let date = moment(new Date(value));
 	if (!date.isValid()) date = moment.utc(value);
 	if (!date.isValid()) return '';

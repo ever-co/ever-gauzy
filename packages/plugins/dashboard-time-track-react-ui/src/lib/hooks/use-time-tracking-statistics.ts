@@ -150,14 +150,17 @@ export function useTimeTrackingStatistics(options: UseTimeTrackingStatisticsOpti
 			fallbackMessage: string
 		): Promise<void> => {
 			const generation = generationRef.current;
+			// A response from a superseded selection must neither paint its data NOR clear the
+			// spinner the CURRENT selection's request turned on.
+			const isCurrent = () => isMountedRef.current && generation === generationRef.current;
 			try {
 				setLoadingFlag(key, true);
 				const result = await request();
-				if (isMountedRef.current && generation === generationRef.current) apply(result);
+				if (isCurrent()) apply(result);
 			} catch (error) {
-				toastrService.error((error as Error)?.message || fallbackMessage);
+				if (isCurrent()) toastrService.error((error as Error)?.message || fallbackMessage);
 			} finally {
-				setLoadingFlag(key, false);
+				if (isCurrent()) setLoadingFlag(key, false);
 			}
 		},
 		[setLoadingFlag, toastrService]
@@ -314,8 +317,10 @@ export function useTimeTrackingStatistics(options: UseTimeTrackingStatisticsOpti
 	// Selection changed → new generation, reload the counters and (debounced) all statistics.
 	const payloadKey = selection?.payloadKey ?? null;
 	useEffect(() => {
-		if (!payloadKey) return;
+		// Bump FIRST: even a cleared selection must invalidate the requests still in flight for
+		// the previous one, or they would land after the fact.
 		generationRef.current += 1;
+		if (!payloadKey) return;
 		void loadCounters();
 		const handle = window.setTimeout(() => void refresh(), REFRESH_DEBOUNCE_MS);
 		return () => window.clearTimeout(handle);

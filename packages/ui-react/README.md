@@ -40,11 +40,17 @@ Renders a React component synchronously inside any Angular template. Selector: *
 <!-- host element receives the React tree -->
 <div [gaReactHost]="MyReactComponent" [props]="myProps"></div>
 
-<!-- with extra context values -->
-<div [gaReactHost]="MyReactComponent" [props]="myProps" [context]="{ theme: 'dark' }"></div>
+<!-- with extra context values (a component field, see below) -->
+<div [gaReactHost]="MyReactComponent" [props]="myProps" [context]="hostContext"></div>
 ```
 
-Build the `props` object **once** (e.g. in `ngOnInit`), not inline in the template — the directive re-renders the React root whenever the `props` / `context` reference changes, so a fresh object literal per change-detection pass re-renders on every tick.
+```ts
+// Both bound objects are built ONCE — never as inline literals in the template.
+readonly hostContext = { theme: 'dark' };
+myProps = { headerActionsHost: this.headerActions.nativeElement }; // e.g. in ngOnInit
+```
+
+Build the `props` and `context` objects **once** (e.g. as class fields or in `ngOnInit`), not inline in the template — the directive re-renders the React root whenever the `props` / `context` reference changes, so a fresh object literal per change-detection pass re-renders on every tick.
 
 ### `LazyReactHostDirective`
 

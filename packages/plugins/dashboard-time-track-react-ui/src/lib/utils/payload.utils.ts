@@ -63,10 +63,12 @@ export function buildStatisticsPayload(context: TimeTrackingContext, now: moment
  */
 export function withDurationPercentage(activities: IActivitiesStatistics[] | null | undefined): IActivitiesStatistics[] {
 	const list = activities || [];
-	const sum = list.reduce((memo, activity) => memo + parseInt(`${activity.duration}`, 10), 0);
+	// One numeric conversion for both the total and each share, so the shares add up to 100.
+	const seconds = (value: unknown) => Number(value) || 0;
+	const sum = list.reduce((memo, activity) => memo + seconds(activity.duration), 0);
 	return list.map((activity) => ({
 		...activity,
-		durationPercentage: sum ? (activity.duration * 100) / sum : 0
+		durationPercentage: sum ? (seconds(activity.duration) * 100) / sum : 0
 	}));
 }
 
@@ -80,10 +82,11 @@ export function normalizeMemberWeekHours(members: IMembersStatistics[] | null | 
 	return (members || []).map((member) => {
 		const byDay = new Map<number, { day: number; duration: number }>();
 		for (const entry of member.weekHours || []) byDay.set(Number(entry.day), entry);
-		const sum = (member.weekHours || []).reduce((memo, day) => memo + parseInt(`${day.duration}`, 10), 0);
+		const seconds = (value: unknown) => Number(value) || 0;
+		const sum = (member.weekHours || []).reduce((memo, day) => memo + seconds(day.duration), 0);
 		const weekHours = Array.from({ length: 7 }, (_, day) => {
 			const found = byDay.get(day);
-			return found ? { ...found, duration: sum ? (found.duration * 100) / sum : 0 } : { day, duration: 0 };
+			return found ? { ...found, duration: sum ? (seconds(found.duration) * 100) / sum : 0 } : { day, duration: 0 };
 		});
 		return { ...member, weekHours };
 	});

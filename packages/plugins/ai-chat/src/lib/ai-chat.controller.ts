@@ -177,7 +177,7 @@ export class AiChatController {
 		// Optional language hint (ISO-639-1 / BCP-47), sanitized to the tag grammar: it travels into a
 		// provider request as a form field, so anything else is dropped rather than forwarded.
 		const language =
-			typeof body?.language === 'string' && /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(body.language)
+			typeof body?.language === 'string' && /^[a-z]{2,3}(-[a-z0-9]{2,8})*$/i.test(body.language)
 				? body.language
 				: undefined;
 		const text = await this.aiChatService.transcribe(file?.buffer, file?.mimetype ?? 'audio/webm', {

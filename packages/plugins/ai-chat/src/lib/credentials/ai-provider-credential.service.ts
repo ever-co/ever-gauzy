@@ -339,7 +339,11 @@ export class AiProviderCredentialService extends TenantAwareCrudService<AiProvid
 			delete payload.apiKey;
 		}
 
-		this.assertBaseUrlSatisfied(existing.providerId, input.baseUrl ?? existing.baseUrl);
+		// An explicit `null` CLEARS the URL — validate what will actually be stored, not the old value.
+		this.assertBaseUrlSatisfied(
+			existing.providerId,
+			input.baseUrl === undefined ? existing.baseUrl : (input.baseUrl ?? undefined)
+		);
 
 		if (input.isDefault) {
 			await this.clearOtherDefaults(existing.tenantId, existing.id);

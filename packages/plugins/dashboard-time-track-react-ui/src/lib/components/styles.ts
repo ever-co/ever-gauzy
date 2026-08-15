@@ -164,7 +164,11 @@ export const TIME_TRACKING_STYLES = `
 .gz-rtt .gz-rtt-carousel { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none; }
 .gz-rtt .gz-rtt-carousel::-webkit-scrollbar { display: none; }
 .gz-rtt .gz-rtt-carousel-track { display: flex; gap: 16px; }
-.gz-rtt .gz-rtt-carousel-slide { flex: 0 0 calc((100% - 32px) / 3); min-width: 0; scroll-snap-align: start; }
+.gz-rtt .gz-rtt-carousel { --gz-rtt-slides: 3; --gz-rtt-slide-gap: 16px; }
+/* Slide width follows slidesPerView (a CSS var the component sets) but never drops below the
+   screenshot card's own minimum: on a narrow canvas fewer slides show and the track scrolls,
+   instead of three boxes shrinking under the cards and overlapping. */
+.gz-rtt .gz-rtt-carousel-slide { flex: 0 0 max(calc((100% - (var(--gz-rtt-slides) - 1) * var(--gz-rtt-slide-gap)) / var(--gz-rtt-slides)), 189px); min-width: 0; scroll-snap-align: start; }
 .gz-rtt .gz-rtt-avatar-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 1rem; }
 .gz-rtt .gz-rtt-avatar-row > .gzrc-avatar { width: auto; min-width: 0; }
 .gz-rtt .gz-rtt-view-all { display: flex; align-items: center; }

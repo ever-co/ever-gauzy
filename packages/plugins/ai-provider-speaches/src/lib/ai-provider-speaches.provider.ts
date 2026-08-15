@@ -57,11 +57,10 @@ const listCatalogue = async (credentials: IAiProviderCredentials | null): Promis
 				resolved?.apiKey ? { headers: { authorization: `Bearer ${resolved.apiKey}` } } : undefined
 			);
 			return (body.data ?? [])
-				.filter(
-					(m) =>
-						typeof m?.id === 'string' &&
-						(m.task ? m.task === 'automatic-speech-recognition' : /whisper/i.test(m.id))
-				)
+				// Speaches tags each model with a `task`; keep the ASR ones. A model that carries NO
+				// task is kept too (a custom CTranslate2 model, an older server) — the id is not
+				// evidence either way, and dropping it would hide the tenant's own model.
+				.filter((m) => typeof m?.id === 'string' && (!m.task || m.task === 'automatic-speech-recognition'))
 				.map((m) => ({ id: m.id, label: prettifyModelId(m.id), providerId: PROVIDER_ID }));
 		}
 	});

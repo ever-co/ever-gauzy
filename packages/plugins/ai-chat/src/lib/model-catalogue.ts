@@ -279,7 +279,11 @@ export async function selfHostedCatalogue(options: {
 	load: (baseUrl: string, credentials: IAiProviderCredentials | null) => Promise<IAiChatModel[]>;
 }): Promise<IAiChatModelList> {
 	const { credentials, curated } = options;
-	const baseUrl = credentials?.baseUrl || options.defaultBaseUrl;
+	// Fetch ONLY for a configured server: an explicit base URL, or the provider's conventional
+	// address once the tenant/operator has actually opted in (a credential row / env exists).
+	// With no credentials at all, nothing is fetched — otherwise every unconfigured local
+	// provider would make the settings page wait on a localhost timeout.
+	const baseUrl = credentials ? credentials.baseUrl || options.defaultBaseUrl : undefined;
 	if (!baseUrl) return { models: curated, source: 'curated' };
 	try {
 		const key = `${baseUrl}|${credentialCacheKey(credentials)}`;

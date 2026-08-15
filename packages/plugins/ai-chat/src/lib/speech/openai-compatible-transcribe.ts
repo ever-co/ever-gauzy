@@ -38,8 +38,11 @@ export const readBounded = async (response: globalThis.Response, maxBytes: numbe
 		while (total < maxBytes) {
 			const { done, value } = await reader.read();
 			if (done) break;
-			chunks.push(value);
-			total += value.byteLength;
+			// One chunk may be larger than the remaining budget: keep only what fits.
+			const remaining = maxBytes - total;
+			const part = value.byteLength > remaining ? value.subarray(0, remaining) : value;
+			chunks.push(part);
+			total += part.byteLength;
 		}
 	} catch {
 		/* a broken error-body stream must not mask the error being reported */
@@ -125,7 +128,11 @@ export const classifySpeechHttpFailure = (status: number): { kind: SpeechProvide
 };
 
 /** Trim a trailing slash so `${base}/path` never doubles it. */
-export const trimTrailingSlash = (url: string): string => url.replace(/\/+$/, '');
+export const trimTrailingSlash = (url: string): string => {
+	let end = url.length;
+	while (end > 0 && url.charCodeAt(end - 1) === 47 /* '/' */) end -= 1;
+	return url.slice(0, end);
+};
 
 /** Base arguments shared by every speech request helper. */
 export interface ISpeechRequestBase {
@@ -188,8 +195,8 @@ export async function speechRequest(args: ISpeechRequestArgs): Promise<string> {
 		// ("Incorrect API key provided: sk-…"). Redacted of both key-shaped tokens AND the exact key
 		// in use (custom endpoints issue keys with no sk- prefix), and read BOUNDED: `.text()` would
 		// buffer however much the upstream cares to send before the display truncation ever ran.
-		const detail =
-			kind === 'key-rejected' ? '' : redactSecret(await readBounded(response, MAX_ERROR_DETAIL_BYTES), apiKey);
+		const bounded = await readBounded(response, MAX_ERROR_DETAIL_BYTES);
+		const detail = kind === 'key-rejected' ? '' : redactSecret(bounded, apiKey);
 		throw new SpeechProviderError(
 			`${providerLabel} transcription failed: ${reason}${detail ? ` — ${detail}` : ''}`,
 			kind,
@@ -210,7 +217,10 @@ export async function speechRequest(args: ISpeechRequestArgs): Promise<string> {
 		);
 	}
 	try {
-		const text = parse ? parse(body) : String((body as { text?: unknown })?.text ?? '');
+		const text = parse ? parse(body) : (body as { text?: unknown })?.text;
+		if (typeof text !== 'string') {
+			throw new Error('the response carries no transcript text');
+		}
 		return text.trim();
 	} catch (error) {
 		throw new SpeechProviderError(
