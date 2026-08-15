@@ -424,6 +424,35 @@ jobs:
         shell: bash
         run: mkdir -p dist/packages
 
+      # macOS signing: build the keychain ourselves instead of letting electron-builder do it.
+      # app-builder-lib passes the p12 password to `security set-key-partition-list -k`, which
+      # expects the KEYCHAIN password — fatal on the current runner image, and still unfixed in
+      # the latest release. With CSC_LINK unset, electron-builder skips its own keychain code and
+      # uses CSC_KEYCHAIN (macPackager.js:25-48), so this sidesteps the bug without patching deps.
+      - name: Import Apple signing certificate into a keychain
+        env:
+          CSC_LINK_BASE64: ${{ secrets.CSC_LINK_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/ever-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 32)"
+          CERT="$RUNNER_TEMP/ever-signing-cert.p12"
+          printf '%s' "$CSC_LINK_BASE64" | base64 --decode > "$CERT"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$CERT" -k "$KEYCHAIN" -P "$CSC_KEY_PASSWORD" \
+            -T /usr/bin/codesign -T /usr/bin/productbuild -T /usr/bin/security
+          # The KEYCHAIN password here — this is the exact call app-builder-lib gets wrong.
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | xargs)
+          rm -f "$CERT"
+          # Fail loudly here rather than silently shipping an unsigned app later.
+          security find-identity -v -p codesigning "$KEYCHAIN" | tee /tmp/identities.txt
+          grep -q "Developer ID Application" /tmp/identities.txt
+
       - name: Build Server
         run: 'yarn build:gauzy-api-server:mac:release'
         env:
@@ -442,7 +471,9 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_APP_PASSWORD: ${{ secrets.APPLE_ID_APP_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          CSC_LINK: ${{ secrets.CSC_LINK_BASE64 }}
+          # CSC_LINK deliberately NOT set: that is what makes electron-builder build its own
+          # (broken) keychain. Point it at the one imported above instead.
+          CSC_KEYCHAIN: ${{ runner.temp }}/ever-signing.keychain-db
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           APPLE_API_KEY: /tmp/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
