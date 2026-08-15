@@ -696,9 +696,10 @@ export class AiChatService {
 		// The chat panel shows this message verbatim, so it must not over-diagnose. Relay what the
 		// provider hook actually reported (providers classify by status and never echo a response
 		// body), and point at Settings only when a provider actually rejected the credential.
+		const detail = failures.join('; ').replace(/[.\s]+$/, '');
 		throw this.speechUnavailable(
 			keyRejected ? AiSpeechErrorCode.KEY_REJECTED : AiSpeechErrorCode.FAILED,
-			`${failures.join('; ')}${keyRejected ? ' Update the key on the AI Providers settings page.' : ''}`,
+			`${detail}.${keyRejected ? ' Update the key on the AI Providers settings page.' : ''}`,
 			attempted
 		);
 	}
