@@ -301,9 +301,35 @@ $default-box-shadow: $control-hairline;
 
   nb-stepper .header .step .label {
     display: none;
+    // For the steppers that switch the label back on (the contact wizard names
+    // its four steps): the label is the one shrinkable part of a step, so it has
+    // to be allowed to — Nebular gives it `width: max-content`, and a flex item
+    // whose specified width IS its content can never shrink below it. Capped to
+    // the step and ellipsized, a name that has no room truncates instead of
+    // running out of the header (which is what clipped step 4 of that wizard).
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   nb-stepper.horizontal .header .step {
+    // Nebular's theme (`_stepper.component.theme.scss`) gives every horizontal
+    // step `width: stepper-step-index-width` = 2rem and centres the label under
+    // it by letting it overflow that box on both sides. Nothing here ever
+    // overrode the WIDTH — only the margin — so a step stayed a 32px flex item
+    // whatever it held, and a step that shows its label ran past the header's
+    // right edge (there is no connector after the last step to hide behind).
+    // A step is sized by its content and may shrink; the connectors between
+    // them take the slack (below).
+    width: auto;
+    flex: 0 1 auto;
+    // Not 0: the 24px index chip is centred in this box, and the connector that
+    // follows a step is pulled 5px back under the chip's edge (`margin-left:
+    // -5px` below), which relies on the 4px of clearance a 2rem box leaves on
+    // either side of the chip. A step with a label is wider than this anyway.
+    min-width: 2rem;
     margin: 0;
     display: flex;
     align-items: center;
@@ -332,7 +358,12 @@ $default-box-shadow: $control-hairline;
   }
 
   nb-stepper .header .connector {
-    flex: auto;
+    // Grows into whatever the steps leave, and shrinks first when they do not
+    // fit (a 1rem basis and shrink factor 1 against steps whose basis is their
+    // content), down to a floor that still reads as a bar. `flex: auto` had a
+    // content basis of 0 and could vanish entirely under a wide step.
+    flex: 1 1 1rem;
+    min-width: 0.5rem;
     background-color: var(--gauzy-sidebar-background-3);
     height: 10px !important;
     margin: 0px 10px 0 -5px !important;

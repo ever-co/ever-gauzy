@@ -107,6 +107,8 @@ nb-card-body, nb-card-header {
   gap: 4px;
 }
 
-.main-card{
-  min-width: 500px;
+.main-card {
+  // Was `min-width: 500px`: a floor the layout column cannot honour once the AI
+  // chat is expanded, so the card overflowed the canvas instead of shrinking.
+  min-width: 0;
 }

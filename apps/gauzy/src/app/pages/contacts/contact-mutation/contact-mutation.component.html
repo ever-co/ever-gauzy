@@ -16,7 +16,7 @@
 			<nb-step [stepControl]="contMainForm" [label]="'CONTACTS_PAGE.MAIN' | translate">
 				<div class="custom-card">
 					<form [formGroup]="contMainForm" (ngSubmit)="contMainForm.markAsDirty()" class="contact-form">
-						<div class="contact-columns d-flex flex-nowrap justify-content-between">
+						<div class="contact-columns d-flex flex-wrap justify-content-between">
 							<div class="contact-container">
 								<div class="contact-photo">
 									<ngx-image-uploader

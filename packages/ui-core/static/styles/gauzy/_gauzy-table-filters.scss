@@ -21,44 +21,136 @@ angular2-smart-table.ga-filters-collapsed thead tr.angular2-smart-filters {
   display: none;
 }
 
-angular2-smart-table thead tr.angular2-smart-filters {
-  th,
-  td {
-    // The band's height comes from the widgets; the cell only frames them.
-    padding: 0.25rem 0.5rem 0.375rem;
+// ── Filter widgets: ONE metric, ONE place ────────────────────────────────────
+//
+// The cell padding is NOT set here: it comes from the density block in
+// `_overrides.scss` (`gauzy-table-filter-padding-y` × `gauzy-table-cell-padding-x`,
+// on a `:root`-prefixed selector that out-ranks anything this file could say).
+// The row therefore measures `control height + 2 × filter padding`, exactly as
+// the token comment in `_gauzy-theme-maps.scss` promises.
+//
+// WHY `:root` AND WHY `!important` (each one names what it beats):
+//
+// * `angular2-smart-table` ships emulated CSS for the filter cell —
+//   `:host .angular2-smart-filter ::ng-deep input { line-height: normal;
+//   padding: .375em .75em }` — which compiles to
+//   `[_nghost-x] .angular2-smart-filter[_ngcontent-x] input`, i.e. (0,3,1).
+//   Every plain selector this file could write is (0,2,n) and LOSES: the
+//   library's padding applied, ours never did, and nothing set a line-height at
+//   all. Leading with `:root` costs one pseudo-class and takes the block to
+//   (0,3,4)+, which wins outright — no `!important` needed for that.
+// * `input-appearance()` in `_gauzy-overrides.scss` is written `::ng-deep input
+//   { min-height: <control height> !important }`. Included at the top of a
+//   COMPONENT stylesheet (warehouse-products-table, select-product-form,
+//   edit-user-profile, theme-settings …) that emits an UNSCOPED
+//   `input { min-height: 34px !important }` into <head>, where it stays for the
+//   rest of the session. Only an `!important` of our own can hold the widget at
+//   the row's height once such a page has been visited — so `min-height` (and
+//   only `min-height`) carries one, on the input, on the ng-select trigger and
+//   on the nb-select button alike (the mixin floors all three).
+//
+// The height itself is the design token, read through a local alias so the
+// widget rules stay short. There used to be a second literal here (1.875rem)
+// that disagreed with the token (1.75rem) — the token is the value.
+:root angular2-smart-table thead tr.angular2-smart-filters .angular2-smart-filter {
+  --ga-filter-height: var(--gauzy-table-control-height, 1.75rem);
+  font-size: var(--gauzy-table-font-size, 0.8125rem);
+  line-height: var(--gauzy-table-line-height, 1.25rem);
+
+  // Bare text controls. `:not(.ng-select input)` keeps the ng-select's own
+  // search field out of this: it is an overlay INSIDE the trigger and must keep
+  // the trigger's metrics (reset further down), or the text being typed jumps
+  // 0.5rem to the right of the placeholder it replaces. A checkbox filter is
+  // not a text box either.
+  input:not(.ng-select input):not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    box-sizing: border-box;
+    font-size: inherit;
+    height: var(--ga-filter-height);
+    min-height: var(--ga-filter-height) !important;
+    // Height == line box: with the border removed by `_overrides.scss` and no
+    // block padding, the text sits on the middle line at every zoom level.
+    line-height: var(--ga-filter-height);
+    padding: 0 0.5rem;
+    margin: 0;
   }
 
-  .angular2-smart-filter {
-    // One metric for every widget kind the columns plug in here.
-    --ga-filter-height: 1.875rem;
-    font-size: 0.8125rem;
+  // ng-select sizes from its trigger, not from the host element. The trigger,
+  // its value box and its arrow are all flex-centred on the same axis; the
+  // library's own centring already exists but at a specificity the leaked
+  // `!important` floors above could out-grow.
+  .ng-select {
+    font-size: inherit;
+    line-height: inherit;
 
-    input,
-    select,
-    textarea {
+    .ng-select-container {
+      display: flex;
+      align-items: center;
+      box-sizing: border-box;
       font-size: inherit;
       height: var(--ga-filter-height);
-      min-height: var(--ga-filter-height);
-      padding: 0.125rem 0.5rem;
-    }
+      min-height: var(--ga-filter-height) !important;
 
-    // ng-select sizes from its inner containers, not the host input.
-    .ng-select .ng-select-container {
-      font-size: inherit;
-      height: var(--ga-filter-height);
-      min-height: var(--ga-filter-height);
-    }
+      .ng-value-container {
+        display: flex;
+        align-items: center;
+        // The 1rem form inset (`ng-select-overrides`) is too deep for a filter
+        // cell; match the bare input beside it.
+        padding-inline-start: 0.5rem !important;
+        line-height: inherit;
 
-    // nb-select renders a button; align it to the same box.
-    nb-select .select-button {
-      font-size: inherit;
-      min-width: unset;
-      height: var(--ga-filter-height);
-      min-height: var(--ga-filter-height);
-      padding-top: 0.125rem;
-      padding-bottom: 0.125rem;
-      line-height: 1.25;
+        .ng-placeholder,
+        .ng-value {
+          line-height: inherit;
+          font-size: inherit;
+        }
+
+        // ng-select absolutely positions the search field and pins it `top: 5px`
+        // for its own 36px trigger (default theme). `top: auto` = its static
+        // position, which — as the sole item of a centred flex box — IS the
+        // middle line; `padding-left` matches the value box inset so typed text
+        // and placeholder share an x. `!important` against the default theme's
+        // `.ng-select-single … .ng-input { top: 5px; padding-left: 10px }`, which
+        // loads AFTER this sheet.
+        .ng-input {
+          top: auto !important;
+          padding-left: 0 !important;
+          padding-right: 2rem !important;
+
+          > input {
+            // Trigger metrics, not the bare-input metrics above.
+            height: auto;
+            min-height: 0 !important;
+            line-height: inherit;
+            padding: 0;
+            font-size: inherit;
+          }
+        }
+      }
+
+      .ng-arrow-wrapper,
+      .ng-clear-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        align-self: stretch;
+      }
     }
+  }
+
+  // nb-select renders a button; align it to the same box.
+  nb-select .select-button {
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    font-size: inherit;
+    line-height: inherit;
+    min-width: unset;
+    height: var(--ga-filter-height);
+    min-height: var(--ga-filter-height) !important;
+    padding-top: 0;
+    padding-bottom: 0;
   }
 }
 
