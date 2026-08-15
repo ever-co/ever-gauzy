@@ -44,7 +44,7 @@ export class AddUiPreferencesAndVoiceProviderColumns1790000007000 implements Mig
 		sqlite: {
 			up: [
 				`ALTER TABLE "user" ADD COLUMN "uiPreferences" text`,
-				`ALTER TABLE "ai_provider_credential" ADD "isVoiceDefault" boolean NOT NULL DEFAULT (0)`,
+				`ALTER TABLE "ai_provider_credential" ADD "isVoiceDefault" boolean NOT NULL DEFAULT 0`,
 				`ALTER TABLE "ai_provider_credential" ADD "speechModel" varchar`
 			],
 			down: [
