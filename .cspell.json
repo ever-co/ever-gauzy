@@ -6,6 +6,7 @@
         "GHSA-[A-Za-z0-9-]+"
     ],
     "words": [
+        "dlib",
         "codesign",
         "codesigning",
         "CSPRNG",
