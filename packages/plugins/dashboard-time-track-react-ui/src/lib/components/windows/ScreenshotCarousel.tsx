@@ -33,7 +33,8 @@ export const ScreenshotCarousel = forwardRef<ScreenshotCarouselHandle, Screensho
 			// One group = `slidesPerView` slides — measured off the first slide, so a narrow
 			// canvas (where fewer, wider slides fit) still advances by whole slides.
 			const slide = scroller.querySelector<HTMLElement>('.gz-rtt-carousel-slide');
-			const gap = 16;
+			// The gap lives in ONE place — the `--gz-rtt-slide-gap` custom property in styles.ts.
+			const gap = parseFloat(getComputedStyle(scroller).getPropertyValue('--gz-rtt-slide-gap')) || 16;
 			const distance = slide ? (slide.offsetWidth + gap) * slidesPerView * direction : scroller.clientWidth * direction;
 			scroller.scrollBy({ left: distance, behavior: 'smooth' });
 		},

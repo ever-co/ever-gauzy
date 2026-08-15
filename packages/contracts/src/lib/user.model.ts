@@ -46,7 +46,7 @@ export interface IRelationalUser {
  * missing field means "no preference recorded", and the client falls back to
  * its local mirror and then to the plugin default.
  */
-export interface IAiChatUiPreferences {
+export type IAiChatUiPreferences = {
 	/** Whether the docked panel is open. */
 	expanded?: boolean;
 	/** Which side of the canvas the panel docks to. */
@@ -55,7 +55,10 @@ export interface IAiChatUiPreferences {
 	width?: number;
 	/** Whether the panel fills the canvas (`Menu | Chat`). */
 	maximized?: boolean;
-}
+};
+
+/** A feature's state: a plain JSON object (the API rejects arrays and primitives at the top level). */
+export type UiPreferenceFeature = { [key: string]: unknown };
 
 /**
  * Free-form, per-user UI preferences persisted on the `user` row as JSON.
@@ -66,8 +69,8 @@ export interface IAiChatUiPreferences {
  */
 export interface IUserUiPreferences {
 	aiChat?: IAiChatUiPreferences;
-	/** Any other feature: ONE plain object per feature key. */
-	[feature: string]: object | undefined;
+	/** Any other feature: ONE plain (non-array) object per feature key. */
+	[feature: string]: UiPreferenceFeature | undefined;
 }
 
 /**
@@ -76,7 +79,7 @@ export interface IUserUiPreferences {
  */
 export interface IUserUiPreferencesUpdateInput {
 	aiChat?: IAiChatUiPreferences | null;
-	[feature: string]: object | null | undefined;
+	[feature: string]: UiPreferenceFeature | null | undefined;
 }
 
 export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset {

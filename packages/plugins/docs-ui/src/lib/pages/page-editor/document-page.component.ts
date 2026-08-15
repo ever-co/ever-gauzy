@@ -300,11 +300,14 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			// console so the actual cause stays diagnosable instead of masquerading as a bundle
 			// failure.
 			console.error('Document load failed', error);
-			// The route already points at the NEW id: never leave the previous document behind
-			// as `this.document`, or the chrome actions (rename, lock, archive…) would hit it.
-			this.document = null;
-			this.titleDraft = '';
-			this.iconDraft = '';
+			// When SWITCHING documents the route already points at the NEW id: never leave the
+			// previous document behind as `this.document`, or the chrome actions (rename, lock,
+			// archive…) would hit it. A failed same-id reload (Retry, a move) keeps what is loaded.
+			if (switching) {
+				this.document = null;
+				this.titleDraft = '';
+				this.iconDraft = '';
+			}
 			this.loadError = true;
 		} finally {
 			this.loading = false;

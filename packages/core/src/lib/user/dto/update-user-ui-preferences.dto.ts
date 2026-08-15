@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsObject, IsOptional, Max, Min, ValidateNested } from 'class-validator';
-import { IAiChatUiPreferences, IUserUiPreferencesUpdateInput } from '@gauzy/contracts';
+import { IAiChatUiPreferences, IUserUiPreferencesUpdateInput, UiPreferenceFeature } from '@gauzy/contracts';
 
 /**
  * Nested validation for the AI chat panel state.
@@ -30,6 +30,9 @@ export class AiChatUiPreferencesDTO implements IAiChatUiPreferences {
 	@IsOptional()
 	@IsBoolean()
 	readonly maximized?: boolean;
+
+	/** Structural compatibility with `UiPreferenceFeature` (a plain JSON object); extra keys pass through. */
+	[key: string]: unknown;
 }
 
 /**
@@ -49,5 +52,5 @@ export class UpdateUserUiPreferencesDTO implements IUserUiPreferencesUpdateInput
 	readonly aiChat?: AiChatUiPreferencesDTO | null;
 
 	/** Any other feature's state object (see `IUserUiPreferences`); `null` removes it. */
-	[feature: string]: object | null | undefined;
+	[feature: string]: UiPreferenceFeature | null | undefined;
 }

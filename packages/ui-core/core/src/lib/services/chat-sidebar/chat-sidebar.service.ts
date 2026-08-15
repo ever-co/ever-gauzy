@@ -25,12 +25,12 @@ export type ChatSidebarPosition = 'start' | 'end';
  * `detachedView` is deliberately NOT part of it (it describes the window, not
  * the user's preference).
  */
-export interface IChatSidebarState {
+export type IChatSidebarState = {
 	expanded: boolean;
 	position: ChatSidebarPosition;
 	width: number;
 	maximized: boolean;
-}
+};
 
 /**
  * localStorage key prefix. Two generations of keys exist:
@@ -206,7 +206,7 @@ export class ChatSidebarService {
 	 * Unregister the chat sidebar (e.g. on plugin teardown).
 	 */
 	unregister(): void {
-		this.cancelPersist();
+		this.cancelAllTimers();
 		this.config.set(null);
 		this.expanded.set(false);
 		this.maximized.set(false);
@@ -340,7 +340,7 @@ export class ChatSidebarService {
 
 		if (userChanged) {
 			// Never carry a pending write (or a "known server state") across users.
-			this.cancelPersist();
+			this.cancelAllTimers();
 			this.userId = nextUserId;
 			this.serverState = remote;
 			if (this.config()) {
@@ -434,12 +434,17 @@ export class ChatSidebarService {
 		}, PERSIST_DEBOUNCE_MS);
 	}
 
-	/** Drop any pending server write — and the width mirror timer that would re-arm one. */
+	/** Drop any pending server write (the width MIRROR timer keeps running — its write must land). */
 	private cancelPersist(): void {
 		if (this.persistTimer !== null) {
 			clearTimeout(this.persistTimer);
 			this.persistTimer = null;
 		}
+	}
+
+	/** Teardown / user switch: nothing may fire afterwards, the width mirror timer included. */
+	private cancelAllTimers(): void {
+		this.cancelPersist();
 		if (this.widthPersistTimer !== null) {
 			clearTimeout(this.widthPersistTimer);
 			this.widthPersistTimer = null;

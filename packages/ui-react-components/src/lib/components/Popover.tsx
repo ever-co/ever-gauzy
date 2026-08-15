@@ -166,6 +166,19 @@ export function Popover({
 		reposition();
 	}, [isOpen, reposition, content]);
 
+	// Decide AFTER mount whether the caller rendered a real control (button, link, input…) — the
+	// ref is null during the first render — and publish the disclosure state on THAT control,
+	// which is what receives focus; the wrapper only takes over for a non-interactive child.
+	const [interactiveChild, setInteractiveChild] = useState(true);
+	useLayoutEffect(() => {
+		const control = findInteractiveChild(triggerRef.current);
+		setInteractiveChild(!!control);
+		if (control) {
+			control.setAttribute('aria-haspopup', 'dialog');
+			control.setAttribute('aria-expanded', String(isOpen));
+		}
+	}, [children, isOpen]);
+
 	useEffect(() => {
 		if (!isOpen) return;
 		const onPointerDown = (event: MouseEvent) => {
@@ -197,8 +210,8 @@ export function Popover({
 				ref={triggerRef}
 				className={className}
 				style={{ display }}
-				aria-haspopup="dialog"
-				aria-expanded={isOpen}
+				aria-haspopup={interactiveChild ? undefined : 'dialog'}
+				aria-expanded={interactiveChild ? undefined : isOpen}
 				onClick={() => setOpen(!isOpen)}
 				onKeyDown={(event) => {
 					if (event.target !== event.currentTarget) return;
@@ -207,8 +220,8 @@ export function Popover({
 						setOpen(!isOpen);
 					}
 				}}
-				tabIndex={hasInteractiveChild(triggerRef.current) ? undefined : 0}
-				role={hasInteractiveChild(triggerRef.current) ? undefined : 'button'}
+				tabIndex={interactiveChild ? undefined : 0}
+				role={interactiveChild ? undefined : 'button'}
 			>
 				{children}
 			</span>
@@ -238,9 +251,7 @@ export function Popover({
 	);
 }
 
-/** Whether the trigger wrapper already contains a natively focusable control (button, link, input…). */
-function hasInteractiveChild(element: HTMLElement | null): boolean {
-	// Before the first render there is nothing to inspect: assume the common case (a button child).
-	if (!element) return true;
-	return !!element.querySelector('button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+/** The first natively focusable control (button, link, input…) inside the trigger wrapper, if any. */
+function findInteractiveChild(element: HTMLElement | null): HTMLElement | null {
+	return element?.querySelector<HTMLElement>('button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])') ?? null;
 }

@@ -64,6 +64,14 @@ export function sanitizeUiPreferencesPatch(patch: unknown): IUserUiPreferencesUp
 	return clean as IUserUiPreferencesUpdateInput;
 }
 
+/** Arrays are walked too: an object nested inside an array is still an object we will store. */
+function sanitizeNested(item: unknown, feature: string, depth: number): unknown {
+	if (Array.isArray(item)) {
+		return item.map((element) => sanitizeNested(element, feature, depth + 1));
+	}
+	return isPlainObject(item) ? assertNoForbiddenKeys(item as Record<string, unknown>, feature, depth) : item;
+}
+
 /**
  * Walks a feature object (bounded depth) and rejects `__proto__` / `constructor` / `prototype`
  * at ANY level — a nested polluting key would survive a shallow check and reach the JSON column,
@@ -78,7 +86,7 @@ function assertNoForbiddenKeys(value: Record<string, unknown>, feature: string, 
 		if (FORBIDDEN_KEYS.has(key)) {
 			throw new Error(`Illegal key "${key}" in feature "${feature}"`);
 		}
-		copy[key] = isPlainObject(item) ? assertNoForbiddenKeys(item as Record<string, unknown>, feature, depth + 1) : item;
+		copy[key] = sanitizeNested(item, feature, depth + 1);
 	}
 	return copy;
 }

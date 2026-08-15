@@ -18,6 +18,8 @@ export interface AvatarProps {
 	presence?: { isOnline?: boolean; isAway?: boolean } | null;
 	/** Fired when the image or the name is clicked (Angular navigates to the employee edit page). */
 	onClick?: () => void;
+	/** Accessible name of the clickable image when there is no `name` (defaults to "Open profile"). */
+	imageLabel?: string;
 	/**
 	 * `dashboard` = the `.avatar-dashboard` look (full-width chip, 32px image, 14px/600 name);
 	 * `activity` adds the `.activity` circle variant (28px round image).
@@ -60,6 +62,7 @@ const AVATAR_CSS = `
 export function Avatar({
 	name,
 	src,
+	imageLabel = 'Open profile',
 	caption,
 	appendCaption,
 	size = 'md',
@@ -81,7 +84,7 @@ export function Avatar({
 						onClick={onClick}
 						role={onClick ? 'button' : undefined}
 						tabIndex={onClick ? 0 : undefined}
-						aria-label={onClick ? name : undefined}
+						aria-label={onClick ? name || imageLabel : undefined}
 						onKeyDown={
 							onClick
 								? (event) => {

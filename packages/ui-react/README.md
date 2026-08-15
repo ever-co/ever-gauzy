@@ -47,7 +47,12 @@ Renders a React component synchronously inside any Angular template. Selector: *
 ```ts
 // Both bound objects are built ONCE — never as inline literals in the template.
 readonly hostContext = { theme: 'dark' };
-myProps = { headerActionsHost: this.headerActions.nativeElement }; // e.g. in ngOnInit
+myProps: MyProps = {};
+
+ngOnInit(): void {
+	// `@ViewChild(..., { static: true })` references exist here, not at field-initialiser time.
+	this.myProps = { headerActionsHost: this.headerActions.nativeElement };
+}
 ```
 
 Build the `props` and `context` objects **once** (e.g. as class fields or in `ngOnInit`), not inline in the template — the directive re-renders the React root whenever the `props` / `context` reference changes, so a fresh object literal per change-detection pass re-renders on every tick.

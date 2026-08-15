@@ -27,6 +27,8 @@ export class TenantUiPreferencesService {
 
 	/** The tenant whose preference the signal currently reflects (`null` = nothing loaded from the API yet). */
 	private loadedForTenantId: string | null = null;
+	/** The tenant whose local mirror last seeded the signal — re-seed whenever the signed-in tenant differs. */
+	private seededForTenantId: string | null = null;
 	/** The in-flight request and the tenant it was issued for — a completion for another tenant is ignored. */
 	private pending: { tenantId: string | null; promise: Promise<PreferredUiEnum> } | null = null;
 
@@ -38,7 +40,8 @@ export class TenantUiPreferencesService {
 
 	constructor() {
 		// First paint: the mirror of the tenant that is signed in right now (if any).
-		this.preferredUi.set(readStoredPreferredUi(this.currentTenantId()));
+		this.seededForTenantId = this.currentTenantId();
+		this.preferredUi.set(readStoredPreferredUi(this.seededForTenantId));
 	}
 
 	/**
@@ -56,9 +59,12 @@ export class TenantUiPreferencesService {
 			return this.pending.promise;
 		}
 		// The signal must never carry another tenant's value while this tenant's answer is on its
-		// way: seed it from THIS tenant's mirror (Angular when there is none).
-		if (this.loadedForTenantId !== null && this.loadedForTenantId !== tenantId) {
+		// way (nor after a failed request): whenever the signed-in tenant differs from the one that
+		// seeded the signal — including "nobody yet" → first tenant — re-seed from THIS tenant's
+		// mirror (Angular when there is none).
+		if (this.seededForTenantId !== tenantId) {
 			this.loadedForTenantId = null;
+			this.seededForTenantId = tenantId;
 			this.preferredUi.set(readStoredPreferredUi(tenantId));
 		}
 		const promise = firstValueFrom(this.http.get<ITenantUiPreferences>(this.API_URL))
@@ -105,6 +111,7 @@ export class TenantUiPreferencesService {
 	public reset(): void {
 		const tenantId = this.currentTenantId();
 		this.loadedForTenantId = null;
+		this.seededForTenantId = null;
 		this.pending = null;
 		try {
 			localStorage.removeItem(storageKey(tenantId));
@@ -120,6 +127,7 @@ export class TenantUiPreferencesService {
 
 	private apply(tenantId: string | null, value: PreferredUiEnum | undefined): void {
 		const next = isPreferredUi(value) ? value : PreferredUiEnum.ANGULAR;
+		this.seededForTenantId = tenantId;
 		this.preferredUi.set(next);
 		try {
 			localStorage.setItem(storageKey(tenantId), next);
