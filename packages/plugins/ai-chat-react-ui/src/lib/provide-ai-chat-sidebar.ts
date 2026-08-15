@@ -31,10 +31,14 @@ export function provideAiChatSidebar(): EnvironmentProviders {
 		const pageBridge = inject(AgentPageBridgeService);
 		const availability = inject(AiChatAvailabilityService);
 
+		// Open by default: the assistant is meant to be present from the first
+		// paint, not discovered. Only applies to users with NO stored preference —
+		// the service resolves server state (`user.uiPreferences.aiChat`) first,
+		// then the browser's local mirror, and only then this default.
 		chatSidebar.register({
 			loadComponent: () => AiChatSidebarComponent,
 			class: 'ai-chat-sidebar',
-			defaultExpanded: false
+			defaultExpanded: true
 		});
 
 		pageBridge.registerPages(GAUZY_PAGE_REGISTRY);

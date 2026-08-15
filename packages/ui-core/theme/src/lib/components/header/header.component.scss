@@ -23,48 +23,21 @@
 
   .main-header {
     display: flex;
-    // The band holds nothing but the action cluster now that the breadcrumb
-    // trail moved into the page: park it on the trailing edge directly instead
-    // of relying on `space-between` against an empty left-hand spacer.
-    justify-content: flex-end;
+    // The band holds the "+ Create" CTA and the selector/actions cluster. The
+    // row (`.header-container` below) fills the whole band and does its own
+    // placement: the CTA is pinned to the LEADING edge (right after the nav
+    // sidebar, whatever page is open) and the cluster to the trailing edge, so
+    // `justify-content` here is just the natural start alignment.
+    justify-content: flex-start;
     width: 100%;
     background-color: transparent;
     .show-large-down {
       display: none;
     }
 
-    .logo-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      //width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
-      max-width: nb-theme(sidebar-width);
-      width: nb-theme(sidebar-width);
-      margin-left: nb-theme(sidebar-width-compact);
-      ngx-gauzy-logo {
-        width: 100%;
-      }
-      &.compacted {
-        width: nb-theme(sidebar-width-compact);
-        justify-content: space-around;
-        align-items: center;
-        ::ng-deep .accordion.workspace {
-          box-shadow: none;
-          width: 1.75rem;
-          height: auto;
-          .tenant {
-            display: none;
-          }
-          nb-accordion-item-header {
-            padding: 0px;
-            nb-icon {
-              border: none;
-              left: 0rem;
-            }
-          }
-        }
-      }
-    }
+    // (A stale copy of the sidebar's `.logo-container` rules used to live
+    // here; the header has not rendered a logo since the tenant switcher moved
+    // into the sidebar's brand row — see one-column.layout.scss.)
 
     nb-action {
       height: auto;
@@ -102,14 +75,19 @@
     .header-container {
       display: flex;
       align-items: center;
-      width: auto;
+      // Fill the band. It used to be `width: auto` inside a `flex-end` parent, which
+      // shrink-wrapped the row and parked it hard-right — on pages that hide the
+      // selectors (AI Providers, Settings → General) the lone "+ Create" button sat at
+      // the far right with the whole band empty on the left. Now the row is the band
+      // and the two auto margins below decide who sits where.
+      flex: 1 1 auto;
+      width: 100%;
       // 🛑 A flex item defaults to `min-width: auto`, so without this it can never shrink below
-      // its content width. The parent uses `justify-content: flex-end`, so the excess overflows
-      // to the LEFT — out of the header band entirely and underneath anything docked beside it.
-      // Opening the AI chat panel narrows this band from ~1219px to 896px, and the "+ Create"
-      // button and the team selector ended up rendering under the panel (measured at x=317 and
-      // x=425 while the band itself started at x=640). They were still in the DOM and still
-      // "visible" to the accessibility tree — just covered.
+      // its content width and the excess would overflow out of the header band and underneath
+      // anything docked beside it. Opening the AI chat panel narrows this band from ~1219px to
+      // 896px, and the "+ Create" button and the team selector ended up rendering under the
+      // panel (measured at x=317 and x=425 while the band itself started at x=640). They were
+      // still in the DOM and still "visible" to the accessibility tree — just covered.
       //
       // `min-width: 0` lets the row shrink, `max-width: 100%` keeps it inside the band, and
       // `overflow-x: auto` keeps every control reachable when space genuinely runs out instead of
@@ -124,6 +102,22 @@
         display: none;
       }
       z-index: 5;
+
+      // "+ Create" is ALWAYS the leading element of the band, flush with the sidebar
+      // edge (`--gz-band-left`), whether or not any selector is shown: its trailing
+      // auto margin soaks up the free space. Logical property, so RTL mirrors it.
+      // Overrides the generic `nb-action` margin above (higher specificity, no
+      // `!important`). When the row overflows (chat open + every selector on) auto
+      // margins collapse to 0 and the row simply scrolls, as before.
+      > nb-action.create-action {
+        margin-inline-end: auto;
+      }
+      // …and the selector/actions pill keeps its trailing-edge placement, including
+      // below the `lg` breakpoint where the CTA is hidden (`.show-large-up`) and there
+      // is nothing else to push it right.
+      > .actions {
+        margin-inline-start: auto;
+      }
 
       .sidebar-toggle {
         @include nb-ltr(padding-right, 1.25rem);
