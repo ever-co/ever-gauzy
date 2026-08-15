@@ -224,6 +224,12 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 			// Update component state with fetched issues
 			tap((logs: ITimeLog[]) => {
 				this.logs = logs;
+				// A re-query replaces every log OBJECT, so a selection captured from the previous array
+				// describes a row that no longer exists. Drop it with its data: otherwise `selectedLog.data`
+				// keeps `@if (selectedItem)` true, and a later checkbox tick — which opens the strip via
+				// `isCheckboxSelected()` — would surface View/Edit/Delete wired to a time log that is not
+				// on screen. Row highlight and toolbar state now clear together.
+				this.selectTimeLog({ isSelected: false, data: null });
 			}),
 			// Finalize to set loading to false
 			finalize(() => {
