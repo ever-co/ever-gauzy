@@ -853,7 +853,27 @@ jobs:
       - name: Install Visual Studio 2022 Build Tools (VCTools with ARM64)
         shell: powershell
         run: |
-          choco install -y visualstudio2022buildtools --execution-timeout=21600 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --includeRecommended --passive --norestart"
+          # The runner image normally ships VS with the VC ARM64 toolset. Only reach for
+          # Chocolatey if it is genuinely missing — community.chocolatey.org returning 504
+          # has failed this job before ("Chocolatey installed 0/0 packages"), and installing
+          # something already present costs ~6 min for nothing.
+          $ErrorActionPreference = "Continue"
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $have = $false
+          if (Test-Path $vswhere) {
+            $found = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.ARM64 -property installationPath 2>$null
+            if ($found) { $have = $true; Write-Host "VC ARM64 toolset already present: $found" }
+          }
+          if (-not $have) {
+            Write-Host "VC ARM64 toolset not found - installing via Chocolatey"
+            choco install -y visualstudio2022buildtools --execution-timeout=21600 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --includeRecommended --passive --norestart"
+            if ($LASTEXITCODE -ne 0) {
+              # Do not fail the job on a Chocolatey feed outage; the next step (msvc-dev-cmd)
+              # will either find a usable toolchain or fail with an unambiguous message.
+              Write-Warning "Chocolatey install failed (exit $LASTEXITCODE) - continuing; the MSVC setup step will report definitively."
+            }
+          }
+          exit 0
 
       - name: Configure node-gyp to use VS 2022
         shell: powershell
