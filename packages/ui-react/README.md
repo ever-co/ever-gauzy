@@ -50,7 +50,7 @@ readonly hostContext = { theme: 'dark' };
 myProps: MyProps = {};
 
 ngOnInit(): void {
-	// `@ViewChild(..., { static: true })` references exist here, not at field-initialiser time.
+	// `@ViewChild(..., { static: true })` references exist here, not at field-initializer time.
 	this.myProps = { headerActionsHost: this.headerActions.nativeElement };
 }
 ```
