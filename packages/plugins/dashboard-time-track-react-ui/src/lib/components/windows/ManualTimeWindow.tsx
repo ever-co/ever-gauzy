@@ -23,8 +23,10 @@ export interface ManualTimeWindowProps {
  */
 export function ManualTimeWindow({ manualTimes, loading, emptyMessage, dateFormatOptions, onViewReport, onOpenEmployee }: ManualTimeWindowProps) {
 	const { t } = useTranslation();
+	// The statistics hook hands over `null` while a request is in flight — normalise once.
+	const rows = manualTimes ?? [];
 	return (
-		<WindowCard title={t('TIMESHEET.MANUAL_TIME')} loading={loading} hasData={(manualTimes?.length ?? 0) > 0} emptyMessage={emptyMessage} flexHeader>
+		<WindowCard title={t('TIMESHEET.MANUAL_TIME')} loading={loading} hasData={rows.length > 0} emptyMessage={emptyMessage} flexHeader>
 			<div className="gz-rtt-custom-card-button">
 				<NbButton appearance="outline" status="primary" size="small" onClick={onViewReport}>
 					{t('BUTTONS.VIEW_REPORT')}
@@ -41,7 +43,7 @@ export function ManualTimeWindow({ manualTimes, loading, emptyMessage, dateForma
 						</div>
 					</div>
 				</nb-list-item>
-				{manualTimes.map((manualTime) => (
+				{rows.map((manualTime) => (
 					<nb-list-item key={manualTime.id}>
 						<div className="gz-rtt-w-100">
 							<div className="gz-rtt-row">

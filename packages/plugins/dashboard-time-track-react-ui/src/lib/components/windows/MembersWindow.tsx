@@ -23,11 +23,13 @@ export interface MembersWindowProps {
  */
 export function MembersWindow({ members, loading, emptyMessage, selectedPeriod, moreThanWeek, onOpenEmployee }: MembersWindowProps) {
 	const { t } = useTranslation();
+	// The statistics hook hands over `null` while a request is in flight — normalise once.
+	const rows = members ?? [];
 	return (
 		<WindowCard
 			title={t('TIMESHEET.MEMBERS')}
 			loading={loading}
-			hasData={(members?.length ?? 0) > 0}
+			hasData={rows.length > 0}
 			emptyMessage={emptyMessage}
 			className="gz-rtt-member-list"
 			emptyInBody
@@ -45,7 +47,7 @@ export function MembersWindow({ members, loading, emptyMessage, selectedPeriod, 
 							</div>
 						</div>
 					</nb-list-item>
-					{members.map((member) => {
+					{rows.map((member) => {
 						const todayOverall = member.todayTime?.overall || 0;
 						const weekOverall = member.weekTime?.overall || 0;
 						return (

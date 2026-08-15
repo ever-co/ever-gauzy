@@ -1,6 +1,6 @@
 import { inject, Injectable, signal, Type } from '@angular/core';
 import { Location } from '@angular/common';
-import { IAiChatUiPreferences, IUser } from '@gauzy/contracts';
+import { IUser } from '@gauzy/contracts';
 import { Store } from '../store/store.service';
 import { UsersService } from '../users/users.service';
 

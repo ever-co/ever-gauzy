@@ -40,15 +40,17 @@ export interface AppsUrlsWindowProps {
  */
 export function AppsUrlsWindow({ activities, loading, emptyMessage, onViewReport }: AppsUrlsWindowProps) {
 	const { t } = useTranslation();
+	// The statistics hook hands over `null` while a request is in flight — normalise once.
+	const rows = activities ?? [];
 	return (
-		<WindowCard title={t('TIMESHEET.APPS_URLS')} loading={loading} hasData={(activities?.length ?? 0) > 0} emptyMessage={emptyMessage} flexHeader>
+		<WindowCard title={t('TIMESHEET.APPS_URLS')} loading={loading} hasData={rows.length > 0} emptyMessage={emptyMessage} flexHeader>
 			<div className="gz-rtt-custom-card-button">
 				<NbButton appearance="outline" status="primary" size="small" onClick={onViewReport}>
 					{t('BUTTONS.VIEW_REPORT')}
 				</NbButton>
 			</div>
 			<nb-list>
-				{activities.map((activity, index) => (
+				{rows.map((activity, index) => (
 					<nb-list-item key={`${activity.title ?? ''}-${index}`}>
 						<div className="gz-rtt-w-100">
 							<ActivityItem item={activity} />
