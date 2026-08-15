@@ -9,8 +9,38 @@ export { AiChatController } from './lib/ai-chat.controller';
 // Provider SPI — implemented by @gauzy/plugin-ai-provider-* plugins
 export { AiProviderRegistry } from './lib/provider-registry';
 export { BaseAiProviderPlugin } from './lib/base-ai-provider.plugin';
-export type { IAiChatModelList, IAiChatProviderDefinition, IAiProviderCredentials } from './lib/provider.types';
+export type {
+	IAiChatModelList,
+	IAiChatProviderDefinition,
+	IAiProviderCredentials,
+	IAiSpeechCatalogue,
+	IAiTranscribeOptions
+} from './lib/provider.types';
 export { importEsm, loadAiSdk } from './lib/esm-loader';
+
+// Speech-to-text SPI: the shared multipart/JSON transcription request, its error classification and
+// the typed error the chat engine maps onto the wire-level AiSpeechErrorCode.
+export {
+	MAX_ERROR_DETAIL_BYTES,
+	SpeechProviderError,
+	TRANSCRIBE_TIMEOUT_MS,
+	classifySpeechHttpFailure,
+	isSpeechProviderError,
+	readBounded,
+	redactSecret,
+	resolveAudioExtension,
+	speechRequest,
+	transcribeMultipart,
+	transcribeViaOpenAiCompatible,
+	trimTrailingSlash
+} from './lib/speech';
+export type {
+	ISpeechRequestArgs,
+	ISpeechRequestBase,
+	ITranscribeMultipartArgs,
+	ITranscribeViaOpenAiCompatibleArgs,
+	SpeechProviderErrorKind
+} from './lib/speech';
 
 // Chat-tool extension SPI — other plugins (e.g. @gauzy/plugin-docs) contribute per-turn tools
 export { AiChatToolRegistry } from './lib/tools/tool-registry';
@@ -32,7 +62,8 @@ export {
 	keyedCatalogue,
 	mergeCatalogue,
 	prettifyModelId,
-	publicCatalogue
+	publicCatalogue,
+	selfHostedCatalogue
 } from './lib/model-catalogue';
 export type { ICatalogueCache, ICatalogueResult } from './lib/model-catalogue';
 

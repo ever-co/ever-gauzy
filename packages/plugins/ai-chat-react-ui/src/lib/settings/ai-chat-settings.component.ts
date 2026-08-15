@@ -100,7 +100,13 @@ interface ProviderCredentialForm {
 	defaultModel: FormControl<string | null>;
 	customModel: FormControl<string>;
 	enabled: FormControl<boolean>;
+	/** Speech-to-text model for dictation (speech-capable providers). `null` = provider default. */
+	speechModel: FormControl<string | null>;
+	customSpeechModel: FormControl<string>;
 }
+
+/** Which providers the catalog view offers: everything, or only the ones that can transcribe. */
+type CatalogFilter = 'all' | 'voice';
 
 /**
  * AiChatSettingsComponent
@@ -112,12 +118,19 @@ interface ProviderCredentialForm {
  * - **list** (default): providers that are already configured (tenant key
  *   or server env) with status/default badges, quick enable toggle and
  *   Configure/Delete actions, plus a "+ Add AI Provider" button.
- * - **catalog** (`?add=1`): all registered providers as logo cards in
- *   their defined order — click one to configure it.
+ * - **catalog** (`?add=1`, or `?add=voice` for the speech-capable subset —
+ *   the "+ Add AI Voice Provider" button): all registered providers as logo
+ *   cards in their defined order with capability chips (Chat / Speech-to-text
+ *   / Local) — click one to configure it.
  * - **config** (`?provider=<id>`): the credential form for one provider
- *   (API key, base URL, default model, enabled, default provider), plus a
- *   "Connect" button for providers that support a connect flow (OpenRouter
- *   PKCE) and a "Get API key" link.
+ *   (API key, base URL, default model, enabled, default provider; for
+ *   speech-capable providers also the speech model and "use as default voice
+ *   provider"), plus a "Connect" button for providers that support a connect
+ *   flow (OpenRouter PKCE) and a "Get API key" link. Local servers may be
+ *   saved without an API key.
+ *
+ * The list view also has a **Voice (dictation)** section: which configured
+ * providers can transcribe and which one is the tenant's voice default.
  *
  * The OpenRouter PKCE callback also lands here (`?code=...`): the code +
  * the sessionStorage verifier are exchanged server-side for an API key.
@@ -163,9 +176,15 @@ export class AiChatSettingsComponent implements OnInit {
 	readonly providers = signal<IAiChatProvider[]>([]);
 	/** The tenant's current default provider id (from the backend config). */
 	readonly defaultProviderId = signal<string | null>(null);
+	/** The tenant's current default VOICE (dictation) provider id (from the backend config). */
+	readonly defaultVoiceProviderId = signal<string | null>(null);
+	/** Whether the backend can transcribe for this tenant right now (`config.speechConfigured`). */
+	readonly speechConfigured = signal<boolean>(false);
 
 	/** Current view: driven by the route query params. */
 	readonly view = signal<'list' | 'catalog' | 'config'>('list');
+	/** What the catalog view offers (`?add=1` → all, `?add=voice` → speech-capable only). */
+	readonly catalogFilter = signal<CatalogFilter>('all');
 	/** Provider selected in the config view. */
 	readonly selectedProviderId = signal<string | null>(null);
 
@@ -210,6 +229,31 @@ export class AiChatSettingsComponent implements OnInit {
 	);
 
 	/**
+	 * Providers that can transcribe AND have credentials — the "Voice (dictation)" rows.
+	 *
+	 * Not `configured`: that is the CHAT verdict, and a voice-only provider (Deepgram, a local
+	 * whisper server) is never chat-configured. `credentialSource` is emitted whenever credentials
+	 * resolve, capability aside, so it is the speech-side "configured". Sorted so the tenant's voice
+	 * default leads — that is the order dictation tries them in.
+	 */
+	readonly voiceProviders = computed<IAiChatProvider[]>(() => {
+		const voiceDefault = this.defaultVoiceProviderId();
+		return this.providers()
+			.filter((provider) => provider.speechCapable && !!provider.credentialSource)
+			.sort((a, b) => (a.id === voiceDefault ? -1 : b.id === voiceDefault ? 1 : 0));
+	});
+
+	/** All speech-capable providers (configured or not) — the voice catalog. */
+	readonly speechCapableProviders = computed<IAiChatProvider[]>(() =>
+		this.providers().filter((provider) => provider.speechCapable)
+	);
+
+	/** Providers offered by the catalog view under the current filter. */
+	readonly catalogProviders = computed<IAiChatProvider[]>(() =>
+		this.catalogFilter() === 'voice' ? this.speechCapableProviders() : this.providers()
+	);
+
+	/**
 	 * Tenant credentials indexed by provider id (API keys masked).
 	 * A signal because {@link chatNotice} has to react to it: a saved-but-unusable
 	 * credential is exactly the case the notice exists to explain.
@@ -222,6 +266,12 @@ export class AiChatSettingsComponent implements OnInit {
 
 	/** Radio control: which provider is the tenant's default for chat. */
 	readonly defaultProviderControl = new FormControl<string | null>(null);
+	/**
+	 * Which provider is the tenant's default for VOICE (dictation). Independent of the chat default:
+	 * a tenant may chat through Anthropic and dictate through a local whisper server. `null` means
+	 * "no pin" — dictation then walks the speech-capable providers in order.
+	 */
+	readonly voiceDefaultControl = new FormControl<string | null>(null);
 
 	private readonly fb = inject(FormBuilder);
 	private readonly store = inject(Store);
@@ -346,6 +396,7 @@ export class AiChatSettingsComponent implements OnInit {
 		// switch — so without this the sentinel keeps rendering in the previous language.
 		this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
 			this.modelOptionsCache.clear();
+			this.speechModelOptionsCache.clear();
 			this.cdr.markForCheck();
 		});
 
@@ -359,6 +410,7 @@ export class AiChatSettingsComponent implements OnInit {
 				this.loadModels(providerId);
 			} else if (params.get('add') !== null) {
 				this.view.set('catalog');
+				this.catalogFilter.set(params.get('add') === 'voice' ? 'voice' : 'all');
 			} else {
 				this.view.set('list');
 			}
@@ -376,8 +428,35 @@ export class AiChatSettingsComponent implements OnInit {
 		void this.router.navigate([], { relativeTo: this.route, queryParams: { add: 1 } });
 	}
 
+	/** The catalog narrowed to providers that can transcribe — the "+ Add AI Voice Provider" flow. */
+	showVoiceCatalog(): void {
+		void this.router.navigate([], { relativeTo: this.route, queryParams: { add: 'voice' } });
+	}
+
 	showConfigure(providerId: string): void {
 		void this.router.navigate([], { relativeTo: this.route, queryParams: { provider: providerId } });
+	}
+
+	/**
+	 * Back from the config view: to the voice catalog for a voice-only provider (that is where the
+	 * user came from), otherwise to the full catalog.
+	 */
+	backFromConfigure(provider: IAiChatProvider): void {
+		if (this.isVoiceOnly(provider) || this.catalogFilter() === 'voice') {
+			this.showVoiceCatalog();
+		} else {
+			this.showCatalog();
+		}
+	}
+
+	/** True for a provider that transcribes but cannot chat (Deepgram, a local whisper server …). */
+	isVoiceOnly(provider: IAiChatProvider): boolean {
+		return provider.speechCapable && provider.chatCapable === false;
+	}
+
+	/** True when a speech-capable provider has credentials — i.e. it can serve dictation now. */
+	isVoiceConfigured(provider: IAiChatProvider): boolean {
+		return provider.speechCapable && !!provider.credentialSource;
 	}
 
 	// ── Data loading ───────────────────────────────────────────────────
@@ -418,6 +497,8 @@ export class AiChatSettingsComponent implements OnInit {
 				);
 				this.providers.set(config?.providers ?? []);
 				this.defaultProviderId.set(config?.defaultProvider ?? null);
+				this.defaultVoiceProviderId.set(config?.defaultVoiceProvider ?? null);
+				this.speechConfigured.set(config?.speechConfigured ?? false);
 				this.buildForms();
 				// Unknown ?provider= deep link → fall back to the catalog
 				// instead of a blank config view.
@@ -680,6 +761,47 @@ export class AiChatSettingsComponent implements OnInit {
 		}
 	}
 
+	// ── Speech model picker (config view, speech-capable providers) ────
+
+	/**
+	 * Picker items for the speech model: the provider's speech catalogue plus the "Custom…"
+	 * sentinel. Memoised per provider like {@link modelOptions}, for the same ng-select reason.
+	 */
+	speechModelOptions(provider: IAiChatProvider): IAiChatModel[] {
+		const models = provider.speechModels ?? [];
+		const cached = this.speechModelOptionsCache.get(provider.id);
+		if (cached && cached.source === models) {
+			return cached.options;
+		}
+		const options = [
+			...models,
+			{
+				id: CUSTOM_MODEL,
+				label: this.translateService.instant('AI_CHAT_UI.SETTINGS.FORM.SPEECH_MODEL_CUSTOM'),
+				providerId: provider.id
+			}
+		];
+		this.speechModelOptionsCache.set(provider.id, { source: models, options });
+		return options;
+	}
+
+	/** Memoised speech-model picker items per provider (see {@link modelOptionsCache}). */
+	private readonly speechModelOptionsCache = new Map<string, { source: IAiChatModel[]; options: IAiChatModel[] }>();
+
+	/**
+	 * Whether the API key input may be left blank for this provider — local servers
+	 * (`requiresApiKey: false`), or an existing credential whose stored key is kept on a blank
+	 * update.
+	 */
+	isApiKeyOptional(provider: IAiChatProvider): boolean {
+		return provider.requiresApiKey === false || !!this.getCredential(provider.id);
+	}
+
+	/** Placeholder for the base URL input: the provider's conventional address, else a generic one. */
+	baseUrlPlaceholder(provider: IAiChatProvider): string {
+		return provider.defaultBaseUrl ?? this.translateService.instant('AI_CHAT_UI.SETTINGS.FORM.BASE_URL_PLACEHOLDER');
+	}
+
 	/** Returns the credential form for a provider. */
 	getForm(providerId: string): FormGroup<ProviderCredentialForm> {
 		return this.forms.get(providerId);
@@ -744,6 +866,42 @@ export class AiChatSettingsComponent implements OnInit {
 	/** True when this provider is running on the shared, product-supplied free key. */
 	isOnPlatformKey(provider: IAiChatProvider): boolean {
 		return provider.configured && provider.credentialSource === 'platform';
+	}
+
+	/**
+	 * Credential badge for the VOICE rows: same sources as {@link getBadgeKey}, but keyed on
+	 * "credentials resolve" rather than on the chat verdict — a voice-only provider is never
+	 * chat-`configured` and would otherwise always read "Not configured" while transcribing fine.
+	 */
+	getVoiceBadgeKey(provider: IAiChatProvider): string {
+		if (!provider.credentialSource) {
+			return 'AI_CHAT_UI.SETTINGS.BADGE.NOT_CONFIGURED';
+		}
+		switch (provider.credentialSource) {
+			case 'environment':
+				return 'AI_CHAT_UI.SETTINGS.BADGE.SERVER_ENV';
+			case 'platform':
+				return 'AI_CHAT_UI.SETTINGS.BADGE.PLATFORM_FREE';
+			default:
+				return provider.requiresApiKey === false && !this.getCredential(provider.id)?.apiKey
+					? 'AI_CHAT_UI.SETTINGS.BADGE.TENANT_URL'
+					: 'AI_CHAT_UI.SETTINGS.BADGE.TENANT_KEY';
+		}
+	}
+
+	/** Badge status colour for the voice rows (see {@link getVoiceBadgeKey}). */
+	getVoiceBadgeStatus(provider: IAiChatProvider): string {
+		if (!provider.credentialSource) {
+			return 'basic';
+		}
+		switch (provider.credentialSource) {
+			case 'environment':
+				return 'info';
+			case 'platform':
+				return 'warning';
+			default:
+				return 'success';
+		}
 	}
 
 	// ── List view actions ──────────────────────────────────────────────
@@ -928,19 +1086,30 @@ export class AiChatSettingsComponent implements OnInit {
 		const value = form.getRawValue();
 		const apiKey = value.apiKey?.trim();
 		const defaultModel = (value.defaultModel === CUSTOM_MODEL ? value.customModel : value.defaultModel)?.trim();
+		const speechModel = (
+			value.speechModel === CUSTOM_MODEL ? value.customSpeechModel : value.speechModel
+		)?.trim();
 		const payload: IAiProviderCredentialUpdateInput = {
 			providerId: provider.id,
 			baseUrl: value.baseUrl?.trim() || undefined,
 			enabled: value.enabled,
 			isDefault: this.defaultProviderControl.value === provider.id,
 			defaultModel: defaultModel || undefined,
+			// Voice: only meaningful for speech-capable providers, but harmless (false / unset) otherwise.
+			isVoiceDefault: provider.speechCapable && this.voiceDefaultControl.value === provider.id,
+			speechModel: provider.speechCapable && speechModel ? speechModel : undefined,
 			organizationId: this.store.organizationId ?? undefined
 		};
 
 		const credential = this.getCredential(provider.id);
+		// On create the key goes in whenever typed; a local server may legitimately be saved without
+		// one (`requiresApiKey: false`) — the backend rejects a key-less create for every other provider.
 		const request$ = credential?.id
 			? this.settingsService.updateCredential(credential.id, apiKey ? { ...payload, apiKey } : payload)
-			: this.settingsService.upsertCredential({ ...payload, apiKey } as IAiProviderCredentialCreateInput);
+			: this.settingsService.upsertCredential({
+					...payload,
+					...(apiKey ? { apiKey } : {})
+				} as IAiProviderCredentialCreateInput);
 
 		this.saving.set(provider.id);
 		request$
@@ -1031,12 +1200,24 @@ export class AiChatSettingsComponent implements OnInit {
 				// Against the catalogue when one has already been fetched, so a save-and-return does
 				// not demote a perfectly ordinary model back to "custom".
 				const knownModel = this.modelsFor(provider).some((model) => model.id === credential?.defaultModel);
+				const knownSpeechModel = (provider.speechModels ?? []).some(
+					(model) => model.id === credential?.speechModel
+				);
+				// The key is required on create — except for providers that run without one (local
+				// servers), where the base URL is the whole credential.
+				const keyRequired = !credential && provider.requiresApiKey !== false;
+				// A generic gateway has no default host, so its base URL is required; local servers get
+				// their conventional address prefilled (a key-less credential needs SOMETHING to save,
+				// and it is what the user will most likely keep). Cloud providers are NOT prefilled: a
+				// stored base URL would switch their model catalogue to "custom endpoint" mode.
+				const prefilledBaseUrl = credential?.baseUrl ?? (provider.local ? (provider.defaultBaseUrl ?? '') : '');
 				return [
 					provider.id,
 					this.fb.nonNullable.group<ProviderCredentialForm>({
-						apiKey: this.fb.nonNullable.control('', credential ? [] : [Validators.required]),
-						baseUrl: this.fb.nonNullable.control(credential?.baseUrl ?? '', [
-							Validators.pattern(/^https?:\/\/.+/)
+						apiKey: this.fb.nonNullable.control('', keyRequired ? [Validators.required] : []),
+						baseUrl: this.fb.nonNullable.control(prefilledBaseUrl, [
+							Validators.pattern(/^https?:\/\/.+/),
+							...(provider.requiresBaseUrl ? [Validators.required] : [])
 						]),
 						// `null`, not `''`. ng-select accepts '' as a real value in single-select mode and
 						// fabricates a selected item for it, so the "Provider default" placeholder never
@@ -1045,14 +1226,32 @@ export class AiChatSettingsComponent implements OnInit {
 							credential?.defaultModel ? (knownModel ? credential.defaultModel : CUSTOM_MODEL) : null
 						),
 						customModel: this.fb.nonNullable.control(knownModel ? '' : (credential?.defaultModel ?? '')),
-						enabled: this.fb.nonNullable.control(credential?.enabled ?? true)
+						enabled: this.fb.nonNullable.control(credential?.enabled ?? true),
+						speechModel: this.fb.control<string | null>(
+							credential?.speechModel ? (knownSpeechModel ? credential.speechModel : CUSTOM_MODEL) : null
+						),
+						customSpeechModel: this.fb.nonNullable.control(
+							knownSpeechModel ? '' : (credential?.speechModel ?? '')
+						)
 					})
 				];
 			})
 		);
 
-		const defaultCredential = [...this.credentialsByProvider().values()].find((credential) => credential.isDefault);
+		const credentials = [...this.credentialsByProvider().values()];
+		const defaultCredential = credentials.find((credential) => credential.isDefault);
 		this.defaultProviderControl.setValue(defaultCredential?.providerId ?? null, { emitEvent: false });
+		const voiceDefaultCredential = credentials.find((credential) => credential.isVoiceDefault);
+		this.voiceDefaultControl.setValue(voiceDefaultCredential?.providerId ?? null, { emitEvent: false });
+	}
+
+	/**
+	 * Toggle handler for "Use as default voice provider": exclusive (ticking here unticks the
+	 * previous voice default), and unticking clears the pin — the toggle is only ever ON for the
+	 * provider currently held by the control, so `false` can only mean "this one, off".
+	 */
+	setVoiceDefault(provider: IAiChatProvider, checked: boolean): void {
+		this.voiceDefaultControl.setValue(checked ? provider.id : null);
 	}
 
 	/**

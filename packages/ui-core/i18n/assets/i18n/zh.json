@@ -3678,6 +3678,12 @@
 		"STOP": "停止生成",
 		"ERROR": "出了点问题。",
 		"RETRY": "重试",
+		"DICTATION_FAILED": "无法转录录音。",
+		"DICTATION_NOT_CONFIGURED": "听写需要语音提供商。请在“AI 提供商”设置页面添加一个。",
+		"DICTATION_ASK_ADMIN": "听写需要语音提供商——请管理员在“设置 → AI 提供商”中添加。",
+		"DICTATION_KEY_REJECTED": "语音提供商拒绝了其 API 密钥。请在“AI 提供商”设置页面更新。",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "语音提供商拒绝了其 API 密钥——请管理员在“设置 → AI 提供商”中更新。",
+		"DICTATION_OPEN_SETTINGS": "打开 AI 提供商",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."

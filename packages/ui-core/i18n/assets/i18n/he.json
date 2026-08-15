@@ -3701,6 +3701,12 @@
 		"STOP": "עצירת היצירה",
 		"ERROR": "משהו השתבש.",
 		"RETRY": "נסה שוב",
+		"DICTATION_FAILED": "לא ניתן היה לתמלל את ההקלטה.",
+		"DICTATION_NOT_CONFIGURED": "ההכתבה זקוקה לספק קול. הוסיפו אחד בעמוד ההגדרות „ספקי AI”.",
+		"DICTATION_ASK_ADMIN": "ההכתבה זקוקה לספק קול — בקשו ממנהל מערכת להוסיף אחד בהגדרות ← ספקי AI.",
+		"DICTATION_KEY_REJECTED": "ספק הקול דחה את מפתח ה-API שלו. עדכנו אותו בעמוד ההגדרות „ספקי AI”.",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "ספק הקול דחה את מפתח ה-API שלו — בקשו ממנהל מערכת לעדכן אותו בהגדרות ← ספקי AI.",
+		"DICTATION_OPEN_SETTINGS": "פתח ספקי AI",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."

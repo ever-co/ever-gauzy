@@ -257,6 +257,40 @@ export async function keyedCatalogue(options: {
 }
 
 /**
+ * Resolve the catalogue of a SELF-HOSTED / local server (Speaches, LocalAI, whisper.cpp, an
+ * OpenAI-compatible gateway) — the exact case {@link keyedCatalogue} deliberately refuses.
+ *
+ * `keyedCatalogue` returns curated whenever a custom `baseUrl` is set, because for a VENDOR provider
+ * the key then belongs to that endpoint and must not be sent to the vendor's official catalogue host.
+ * For a local server there is no vendor host: the tenant's base URL IS the server, and its `/models`
+ * is the only list worth showing (which whisper models are actually installed, which chat models are
+ * loaded). So this calls `load(baseUrl, credentials)` against that base URL — and NOTHING is fetched
+ * when there is no base URL to fetch from.
+ *
+ * Fails open like the others: any error yields `curated`. The cache key includes the base URL as
+ * well as the (hashed) key, since two tenants can point at two different servers.
+ */
+export async function selfHostedCatalogue(options: {
+	credentials: IAiProviderCredentials | null;
+	/** Address used when the credential carries none (a provider's conventional local default). */
+	defaultBaseUrl?: string;
+	curated: IAiChatModel[];
+	cache: ICatalogueCache<IAiChatModel[]>;
+	load: (baseUrl: string, credentials: IAiProviderCredentials | null) => Promise<IAiChatModel[]>;
+}): Promise<IAiChatModelList> {
+	const { credentials, curated } = options;
+	const baseUrl = credentials?.baseUrl || options.defaultBaseUrl;
+	if (!baseUrl) return { models: curated, source: 'curated' };
+	try {
+		const key = `${baseUrl}|${credentialCacheKey(credentials)}`;
+		const { value, stale } = await options.cache.get(key, () => options.load(baseUrl, credentials));
+		return value.length ? { models: value, source: 'live', stale } : { models: curated, source: 'curated' };
+	} catch {
+		return { models: curated, source: 'curated' };
+	}
+}
+
+/**
  * Merge a curated list with a fetched one, curated first and ids de-duplicated.
  *
  * For providers whose catalogue endpoint cannot express "supports tool calling": the curated entries

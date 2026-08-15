@@ -3677,6 +3677,12 @@
 		"STOP": "Zatrzymaj generowanie",
 		"ERROR": "Coś poszło nie tak.",
 		"RETRY": "Spróbuj ponownie",
+		"DICTATION_FAILED": "Nie udało się przepisać nagrania.",
+		"DICTATION_NOT_CONFIGURED": "Dyktowanie wymaga dostawcy głosu. Dodaj go na stronie ustawień „Dostawcy AI”.",
+		"DICTATION_ASK_ADMIN": "Dyktowanie wymaga dostawcy głosu — poproś administratora o dodanie go w Ustawienia → Dostawcy AI.",
+		"DICTATION_KEY_REJECTED": "Dostawca głosu odrzucił swój klucz API. Zaktualizuj go na stronie ustawień „Dostawcy AI”.",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Dostawca głosu odrzucił swój klucz API — poproś administratora o jego aktualizację w Ustawienia → Dostawcy AI.",
+		"DICTATION_OPEN_SETTINGS": "Otwórz Dostawców AI",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."

@@ -17,6 +17,46 @@ const MAX_TEXTAREA_HEIGHT = 80;
  */
 type DictationState = 'idle' | 'recording' | 'transcribing';
 
+/**
+ * A failed transcription, with the server's machine-readable reason.
+ *
+ * `POST /api/ai-chat/transcribe` answers 503 with `{ message, code, settingsPath }` where `code`
+ * is an `AiSpeechErrorCode` (`AI_SPEECH_NOT_CONFIGURED` / `AI_SPEECH_KEY_REJECTED` /
+ * `AI_SPEECH_FAILED`). The panel's `onTranscribe` throws this so the input can render a
+ * translated, actionable message with a link to the AI Providers page; a plain `Error` (network,
+ * old server) keeps the message-only path.
+ */
+export class DictationError extends Error {
+	override readonly name = 'DictationError';
+	/** `AiSpeechErrorCode` string, when the server sent one. */
+	readonly code?: string;
+	/** Where the problem is fixed (`/pages/settings/ai`), when the server sent it. */
+	readonly settingsPath?: string;
+	/** HTTP status of the failed response. */
+	readonly status?: number;
+
+	constructor(message: string, details: { code?: string; settingsPath?: string; status?: number } = {}) {
+		super(message);
+		Object.setPrototypeOf(this, new.target.prototype);
+		this.code = details.code;
+		this.settingsPath = details.settingsPath;
+		this.status = details.status;
+	}
+}
+
+/** What the dictation error block renders: a translated line, and optionally a settings action. */
+interface DictationErrorView {
+	message: string;
+	/** Present when the fix lives on the AI Providers page AND this user may open it. */
+	settingsPath?: string;
+}
+
+/** Codes the server sends for dictation failures (mirrors `AiSpeechErrorCode` in @gauzy/contracts). */
+const SPEECH_NOT_CONFIGURED = 'AI_SPEECH_NOT_CONFIGURED';
+const SPEECH_KEY_REJECTED = 'AI_SPEECH_KEY_REJECTED';
+/** Fallback path when the server sent a code but no path (older server build). */
+const DEFAULT_AI_SETTINGS_PATH = '/pages/settings/ai';
+
 export interface ChatInputProps {
 	value: string;
 	/** True while a response is being generated (submit disabled, stop shown). */
@@ -39,6 +79,15 @@ export interface ChatInputProps {
 	 * failing on click: a control that cannot work should not be offered.
 	 */
 	onTranscribe?: (audio: Blob) => Promise<string>;
+	/**
+	 * Open the AI Providers settings page (`settingsPath`, default `/pages/settings/ai`).
+	 *
+	 * Supplied ONLY when the user may actually go there (`AI_CHAT_SETTINGS`): with it, a dictation
+	 * failure caused by configuration shows an "Open AI Providers" action; without it, the message
+	 * tells the user to ask an administrator. A link that bounces to the settings index is worse
+	 * than no link.
+	 */
+	onOpenAiSettings?: (settingsPath?: string) => void;
 	/**
 	 * Upload a file the user picked and attach it to this conversation.
 	 *
@@ -101,6 +150,7 @@ export function ChatInput({
 	onStop,
 	onEscape,
 	onTranscribe,
+	onOpenAiSettings,
 	onAttachFile,
 	onAttachFromDocuments,
 	isAttaching = false,
@@ -114,7 +164,67 @@ export function ChatInput({
 	const [dictation, setDictation] = useState<DictationState>('idle');
 	const [elapsed, setElapsed] = useState(0);
 	const [autoSend, setAutoSend] = useState(false);
-	const [dictationError, setDictationError] = useState<string | null>(null);
+	const [dictationError, setDictationError] = useState<DictationErrorView | null>(null);
+	/** Latest settings opener, for the recorder's callbacks (attached once, at take start). */
+	const onOpenAiSettingsRef = useRef(onOpenAiSettings);
+	onOpenAiSettingsRef.current = onOpenAiSettings;
+
+	/**
+	 * Turn a transcription failure into what the error block shows.
+	 *
+	 * Per server code: "not configured" and "key rejected" name the fix and — when this user may
+	 * open it — carry the settings link; a plain failure relays the server's own message, which
+	 * already says what the provider reported. Anything that is not a {@link DictationError} keeps
+	 * the generic fallback.
+	 */
+	const describeDictationError = useCallback(
+		(error: unknown): DictationErrorView => {
+			if (!(error instanceof DictationError)) {
+				return {
+					message:
+						error instanceof Error && error.message
+							? error.message
+							: t('AI_ASSISTANT.DICTATION_FAILED', 'Could not transcribe the recording.')
+				};
+			}
+			const canOpen = typeof onOpenAiSettingsRef.current === 'function';
+			const settingsPath = error.settingsPath || DEFAULT_AI_SETTINGS_PATH;
+			if (error.code === SPEECH_NOT_CONFIGURED) {
+				return canOpen
+					? {
+							message: t(
+								'AI_ASSISTANT.DICTATION_NOT_CONFIGURED',
+								'Dictation needs a voice provider. Add one on the AI Providers settings page.'
+							),
+							settingsPath
+						}
+					: {
+							message: t(
+								'AI_ASSISTANT.DICTATION_ASK_ADMIN',
+								'Dictation needs a voice provider — ask an administrator to add one in Settings → AI Providers.'
+							)
+						};
+			}
+			if (error.code === SPEECH_KEY_REJECTED) {
+				return canOpen
+					? {
+							message: t(
+								'AI_ASSISTANT.DICTATION_KEY_REJECTED',
+								'The voice provider rejected its API key. Update it on the AI Providers settings page.'
+							),
+							settingsPath
+						}
+					: {
+							message: t(
+								'AI_ASSISTANT.DICTATION_KEY_REJECTED_ASK_ADMIN',
+								'The voice provider rejected its API key — ask an administrator to update it in Settings → AI Providers.'
+							)
+						};
+			}
+			return { message: error.message || t('AI_ASSISTANT.DICTATION_FAILED', 'Could not transcribe the recording.') };
+		},
+		[t]
+	);
 
 	const recorderRef = useRef<MediaRecorder | null>(null);
 	const chunksRef = useRef<BlobPart[]>([]);
@@ -265,11 +375,7 @@ export function ChatInput({
 					})
 					.catch((error: unknown) => {
 						if (session !== sessionRef.current) return;
-						setDictationError(
-							error instanceof Error
-								? error.message
-								: t('AI_ASSISTANT.DICTATION_FAILED', 'Could not transcribe the recording.')
-						);
+						setDictationError(describeDictationError(error));
 					})
 					.finally(() => {
 						if (session === sessionRef.current) setDictation('idle');
@@ -285,17 +391,18 @@ export function ChatInput({
 		} catch (error: unknown) {
 			releaseRecorder();
 			setDictation('idle');
-			setDictationError(
-				error instanceof DOMException && (error.name === 'NotAllowedError' || error.name === 'SecurityError')
-					? t('AI_ASSISTANT.MIC_DENIED', 'Microphone access was denied.')
-					: t('AI_ASSISTANT.MIC_UNAVAILABLE', 'No microphone is available.')
-			);
+			setDictationError({
+				message:
+					error instanceof DOMException && (error.name === 'NotAllowedError' || error.name === 'SecurityError')
+						? t('AI_ASSISTANT.MIC_DENIED', 'Microphone access was denied.')
+						: t('AI_ASSISTANT.MIC_UNAVAILABLE', 'No microphone is available.')
+			});
 		} finally {
 			startingRef.current = false;
 		}
 		// Deliberately narrow: everything the async callbacks need is read through a ref, so the
 		// identity of this callback does not have to change when a prop does.
-	}, [onTranscribe, dictation, releaseRecorder, t]);
+	}, [onTranscribe, dictation, releaseRecorder, t, describeDictationError]);
 
 	// A conversation switch abandons the take, for the same reason a collapse does: the words were
 	// meant for the chat that is no longer open.
@@ -556,7 +663,35 @@ export function ChatInput({
 						color: chatTheme.red
 					}}
 				>
-					<span style={{ flex: 1 }}>{dictationError}</span>
+					<span style={{ flex: 1 }}>
+						{dictationError.message}
+						{/* The fix lives on the AI Providers page and this user may open it: say so with a
+						    link rather than a sentence that names a page they then have to find. Only
+						    rendered when the panel supplied the opener (i.e. the user has AI_CHAT_SETTINGS). */}
+						{dictationError.settingsPath && onOpenAiSettings && (
+							<>
+								{' '}
+								<button
+									type="button"
+									onClick={() => {
+										onOpenAiSettings(dictationError.settingsPath);
+										setDictationError(null);
+									}}
+									style={{
+										border: 'none',
+										background: 'transparent',
+										color: chatTheme.accent,
+										cursor: 'pointer',
+										padding: 0,
+										font: 'inherit',
+										textDecoration: 'underline'
+									}}
+								>
+									{t('AI_ASSISTANT.DICTATION_OPEN_SETTINGS', 'Open AI Providers')}
+								</button>
+							</>
+						)}
+					</span>
 					{/* Otherwise it sits above the composer until the next take, which the user may
 					    reasonably not want to start. */}
 					<button

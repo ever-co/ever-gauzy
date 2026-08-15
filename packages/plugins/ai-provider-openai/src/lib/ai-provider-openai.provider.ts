@@ -3,12 +3,14 @@ import {
 	IAiChatModelList,
 	IAiChatProviderDefinition,
 	IAiProviderCredentials,
+	IAiTranscribeOptions,
 	createCatalogueCache,
 	fetchCatalogueJson,
 	importEsm,
 	keyedCatalogue,
 	mergeCatalogue,
-	prettifyModelId
+	prettifyModelId,
+	transcribeViaOpenAiCompatible
 } from '@gauzy/plugin-ai-chat';
 
 /** Stable provider id used by the registry, the UI and BYOK credentials. */
@@ -53,65 +55,8 @@ const NON_CHAT_PATTERNS = [
 	/-instruct(-|$)/
 ];
 
-/** Speech model for dictation. Cheaper and faster than whisper-1, and the current default. */
-const TRANSCRIBE_MODEL = 'gpt-4o-mini-transcribe';
-
-/**
- * Upstream budget for a transcription.
- *
- * Longer than a catalogue fetch on purpose: a minute of speech takes real time to process, and the
- * user is watching a spinner they started deliberately rather than a background refresh.
- */
-const TRANSCRIBE_TIMEOUT_MS = 60_000;
-
 /** Model catalogue cache, keyed per credential: model access is account-specific on OpenAI. */
 const catalogueCache = createCatalogueCache<IAiChatModel[]>();
-
-/**
- * Upper bound on the upstream error body read for a diagnostic message.
- *
- * Far more than any real OpenAI error needs, and small enough that a custom base URL answering with
- * an arbitrarily large body cannot make this process buffer it: `response.text()` reads EVERYTHING
- * before a display-side `slice` ever runs, so the bound has to be applied while reading.
- */
-const MAX_ERROR_DETAIL_BYTES = 2048;
-
-/** Read at most `maxBytes` of a response body, then cancel the rest of the stream. */
-const readBounded = async (response: globalThis.Response, maxBytes: number): Promise<string> => {
-	const reader = response.body?.getReader();
-	if (!reader) return '';
-	const chunks: Uint8Array[] = [];
-	let total = 0;
-	try {
-		while (total < maxBytes) {
-			const { done, value } = await reader.read();
-			if (done) break;
-			chunks.push(value);
-			total += value.byteLength;
-		}
-	} catch {
-		/* a broken error-body stream must not mask the error being reported */
-	} finally {
-		reader.cancel().catch(() => undefined);
-	}
-	const merged = new Uint8Array(total);
-	let offset = 0;
-	for (const chunk of chunks) {
-		merged.set(chunk, offset);
-		offset += chunk.byteLength;
-	}
-	return new TextDecoder().decode(merged.subarray(0, maxBytes)).trim();
-};
-
-/**
- * Strip the credential in use and anything key-shaped from text bound for the user.
- *
- * Both patterns matter: OpenAI keys are `sk-…`, but a custom base URL (Azure, a proxy) issues keys
- * with no recognizable prefix — only redacting by shape would relay exactly the secret this exists
- * to protect. Display-truncated at the end so the redaction cannot be sliced through mid-token.
- */
-const redactSecret = (text: string, apiKey: string): string =>
-	(apiKey ? text.split(apiKey).join('[redacted]') : text).replace(/sk-[A-Za-z0-9_-]+/g, 'sk-***').slice(0, 300).trim();
 
 /**
  * The OpenAI models this API key can address, minus the families that are not chat models.
@@ -141,99 +86,58 @@ const listCatalogue = async (credentials: IAiProviderCredentials | null): Promis
 		}
 	});
 
+/** Default API base for chat-adjacent REST calls (transcription). */
+const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
+
 /**
- * Container extension for the multipart filename, derived from the MIME type the browser recorded.
+ * Speech-to-text models for dictation, in the order the settings picker shows them.
  *
- * `/v1/audio/transcriptions` decides the container from the filename EXTENSION, so a generic name is
- * rejected with "Invalid file format" even when the bytes are fine. `webm` is the fallback: it is
- * what `MediaRecorder` produces by default everywhere except Safari.
+ * `gpt-4o-mini-transcribe` is the default: cheaper and faster than whisper-1 with better accuracy.
+ * `whisper-1` stays selectable — it is the one model that Azure/proxy endpoints most reliably
+ * implement, and the only one accepting `response_format: 'text'` (which this plugin never sends).
  */
-const resolveAudioExtension = (mimeType: string): string => {
-	// `audio/mpeg` is MP3, not MP4 — lumping it in with `mp4` named MP3 bytes `dictation.mp4`, and the
-	// extension is exactly what OpenAI trusts to identify the container. MediaRecorder never produces
-	// audio/mpeg, which is why this survived: it only bites when a caller feeds a pre-recorded file.
-	// wav/flac/m4a are covered for the same caller class — every container OpenAI accepts that a MIME
-	// type can name. What remains falling to `.webm` (e.g. raw `audio/aac`) has no extension in
-	// OpenAI's accepted set at all, so no mapping could save it.
-	if (mimeType.includes('mp4')) {
-		return 'mp4';
-	}
-	if (mimeType.includes('mpeg')) {
-		return 'mp3';
-	}
-	if (mimeType.includes('ogg')) {
-		return 'ogg';
-	}
-	if (mimeType.includes('wav')) {
-		return 'wav';
-	}
-	if (mimeType.includes('flac')) {
-		return 'flac';
-	}
-	if (mimeType.includes('m4a')) {
-		// audio/m4a and audio/x-m4a
-		return 'm4a';
-	}
-	return 'webm';
-};
+const SPEECH_MODELS: IAiChatModel[] = [
+	{ id: 'gpt-4o-mini-transcribe', label: 'GPT-4o mini Transcribe', providerId: PROVIDER_ID },
+	{ id: 'gpt-4o-transcribe', label: 'GPT-4o Transcribe', providerId: PROVIDER_ID },
+	{ id: 'whisper-1', label: 'Whisper v2 (whisper-1)', providerId: PROVIDER_ID }
+];
+
+/** Speech model used when the tenant has not chosen one. */
+const DEFAULT_SPEECH_MODEL = 'gpt-4o-mini-transcribe';
 
 /**
  * Speech-to-text for the chat's dictation control.
  *
  * `/v1/audio/transcriptions` is multipart, and the filename EXTENSION is what OpenAI uses to decide
  * the container — a generic name is rejected with "Invalid file format" even when the bytes are
- * fine — so it is derived from the MIME type the browser actually recorded
- * (see {@link resolveAudioExtension}).
+ * fine — so it is derived from the MIME type the browser actually recorded. That, the bounded and
+ * redacted error read and the status classification all live in the shared
+ * `transcribeViaOpenAiCompatible` helper of `@gauzy/plugin-ai-chat`.
  *
  * A custom base URL is honoured here, unlike the model catalogue: the caller explicitly configured
  * that endpoint as their OpenAI, and this is a request they asked for rather than a background
  * fetch, so there is no credential going anywhere the user did not choose.
+ *
+ * No `response_format`: the `gpt-4o-*-transcribe` models accept ONLY `json`, which is the default.
+ * Asking for `text` — which whisper-1 does support — is rejected outright, so every dictation would
+ * have failed.
  */
 const transcribeAudio = async (
 	audio: Buffer,
 	mimeType: string,
-	credentials: IAiProviderCredentials
-): Promise<string> => {
-	const extension = resolveAudioExtension(mimeType);
-	const form = new FormData();
-	form.append('file', new Blob([new Uint8Array(audio)], { type: mimeType }), `dictation.${extension}`);
-	form.append('model', TRANSCRIBE_MODEL);
-	// No `response_format`: this model accepts ONLY `json`, which is the default. Asking for `text`
-	// — which whisper-1 does support — is rejected outright, so every dictation would have failed.
-
-	const base = credentials.baseUrl?.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
-	const response = await fetch(`${base}/audio/transcriptions`, {
-		method: 'POST',
-		headers: { authorization: `Bearer ${credentials.apiKey}` },
-		body: form,
-		signal: AbortSignal.timeout(TRANSCRIBE_TIMEOUT_MS)
+	credentials: IAiProviderCredentials,
+	options?: IAiTranscribeOptions
+): Promise<string> =>
+	transcribeViaOpenAiCompatible({
+		baseUrl: credentials.baseUrl || DEFAULT_BASE_URL,
+		apiKey: credentials.apiKey,
+		audio,
+		mimeType,
+		model: options?.model || DEFAULT_SPEECH_MODEL,
+		language: options?.language,
+		providerLabel: 'OpenAI',
+		providerId: PROVIDER_ID
 	});
-	if (!response.ok) {
-		// The bare status code was reaching the user as "check your API key" for EVERY failure class,
-		// including quota and bad audio. Classify by status so the message is actionable. The status
-		// NUMBER only — statusText is upstream-controlled prose, and a custom base URL means upstream
-		// is whatever the tenant configured, so it gets no free ride into a user-visible message.
-		const credentialFailure = response.status === 401 || response.status === 403;
-		const reason = credentialFailure
-			? 'the API key was rejected'
-			: response.status === 429
-			? 'the rate or quota limit was hit'
-			: response.status === 400
-			? 'the audio was rejected (unsupported or empty recording)'
-			: `HTTP ${response.status}`;
-		// The response body is genuinely diagnostic for format/limit errors ("Invalid file format"),
-		// so it is relayed — but NEVER on a credential failure, whose body echoes the API key back
-		// ("Incorrect API key provided: sk-…"). Redacted of both key-shaped tokens AND the exact key
-		// in use (custom endpoints issue keys with no sk- prefix), and read BOUNDED: `.text()` would
-		// buffer however much the upstream cares to send before the display truncation ever ran.
-		const detail = credentialFailure
-			? ''
-			: redactSecret(await readBounded(response, MAX_ERROR_DETAIL_BYTES), credentials.apiKey);
-		throw new Error(`OpenAI transcription failed: ${reason}${detail ? ` — ${detail}` : ''}`);
-	}
-	const body = (await response.json()) as { text?: string };
-	return (body.text ?? '').trim();
-};
 
 /**
  * OpenAI (GPT) provider definition for the AI chat engine.
@@ -251,6 +155,7 @@ export const openAiProviderDefinition: IAiChatProviderDefinition = {
 	defaultModel: 'gpt-5.5',
 	listModels: listCatalogue,
 	transcribe: transcribeAudio,
+	speech: { models: SPEECH_MODELS, defaultModel: DEFAULT_SPEECH_MODEL },
 	order: 50,
 	websiteUrl: 'https://openai.com',
 	apiKeysUrl: 'https://platform.openai.com/api-keys',
