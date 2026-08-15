@@ -1,15 +1,8 @@
-import {
-	Injectable,
-	NestInterceptor,
-	ExecutionContext,
-	CallHandler,
-	HttpException,
-	HttpStatus,
-	BadRequestException
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { instanceToPlain } from 'class-transformer';
+import { toSafeHttpException } from '../core/interceptors/safe-http-exception';
 
 @Injectable()
 export class PublicTransformInterceptor implements NestInterceptor {
@@ -24,25 +17,11 @@ export class PublicTransformInterceptor implements NestInterceptor {
 	intercept(ctx: ExecutionContext, next: CallHandler): Observable<any> {
 		return next.handle().pipe(
 			map((data) => instanceToPlain(data)),
-			catchError((error: any) => {
-				// If it's a BadRequestException, return a new instance of BadRequestException
-				if (error instanceof BadRequestException) {
-					throw new BadRequestException(error.getResponse());
-				}
-				// Every other HTTP exception is re-thrown AS IS. Re-wrapping it as
-				// `new HttpException(error.message, error.status)` used to flatten a structured
-				// response body (e.g. the AI dictation 503 `{ message, code, settingsPath }`) down to
-				// `{ statusCode, message }`, so clients could never branch on anything but text.
-				if (error instanceof HttpException) {
-					throw error;
-				}
-				// A non-HTTP error (TypeORM, a plain Error, a thrown object). It must NOT become
-				// `new HttpException(message, undefined)`: with an undefined status Express kept the
-				// default 200 and the client received `{ message }` as a SUCCESSFUL response — the
-				// documents editor, for one, then opened an id-less "Untitled" page. Honour a numeric
-				// `status` if the error carries one, else it is a server error.
-				const status = Number.isInteger(error?.status) ? error.status : HttpStatus.INTERNAL_SERVER_ERROR;
-				throw new HttpException(error?.message ?? 'Internal server error', status);
+			// One rule for every error that escapes a controller — see `toSafeHttpException`:
+			// BadRequest bodies intact, other HTTP exceptions keep their STRUCTURED body minus
+			// driver/transport internals, non-HTTP errors become a real 5xx (never a 200).
+			catchError((error: unknown) => {
+				throw toSafeHttpException(error);
 			})
 		);
 	}

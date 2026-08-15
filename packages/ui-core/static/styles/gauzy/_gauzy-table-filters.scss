@@ -109,14 +109,15 @@ angular2-smart-table.ga-filters-collapsed thead tr.angular2-smart-filters {
         // ng-select absolutely positions the search field and pins it `top: 5px`
         // for its own 36px trigger (default theme). `top: auto` = its static
         // position, which — as the sole item of a centred flex box — IS the
-        // middle line; `padding-left` matches the value box inset so typed text
-        // and placeholder share an x. `!important` against the default theme's
+        // middle line; the start inset matches the value box inset so typed text
+        // and placeholder share an x (logical properties — the row must mirror in
+        // RTL like the rest of this block). `!important` against the default theme's
         // `.ng-select-single … .ng-input { top: 5px; padding-left: 10px }`, which
         // loads AFTER this sheet.
         .ng-input {
           top: auto !important;
-          padding-left: 0 !important;
-          padding-right: 2rem !important;
+          padding-inline-start: 0 !important;
+          padding-inline-end: 2rem !important;
 
           > input {
             // Trigger metrics, not the bare-input metrics above.

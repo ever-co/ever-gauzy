@@ -313,7 +313,13 @@ export class AiChatSettingsComponent implements OnInit {
 		// The saved-credential rows have no counterpart on the verdict: the
 		// service never calls `/credentials`, so this page is the only source for
 		// "a credential row exists", not a second opinion on the same question.
-		const credentialCount = this.credentialsByProvider().size;
+		// …and only rows of CHAT-capable providers count here: a tenant whose only saved
+		// credential is a voice-only provider (Speaches, Deepgram, …) has configured dictation,
+		// not chat, and must not be told its "saved credentials cannot be used".
+		const providersById = new Map(this.providers().map((provider) => [provider.id, provider]));
+		const credentialCount = [...this.credentialsByProvider().keys()].filter(
+			(providerId) => providersById.get(providerId)?.chatCapable !== false
+		).length;
 		// `unreachable` is exempt from the "nothing configured yet, stay quiet"
 		// gate below. In that state the service's call FAILED, so it reports
 		// `configuredProviders: 0` meaning "unknown", not "none" — and a tenant
@@ -406,6 +412,9 @@ export class AiChatSettingsComponent implements OnInit {
 			if (providerId) {
 				this.selectedProviderId.set(providerId);
 				this.view.set('config');
+				// The two exclusive "default" controls are page-wide: an UNSAVED toggle made in one
+				// provider's config must not leak into the next one's — start from what is saved.
+				this.syncExclusiveControls();
 				// Only this view needs the catalogue, and only for this one provider.
 				this.loadModels(providerId);
 			} else if (params.get('add') !== null) {
@@ -1094,10 +1103,12 @@ export class AiChatSettingsComponent implements OnInit {
 			baseUrl: value.baseUrl?.trim() || undefined,
 			enabled: value.enabled,
 			isDefault: this.defaultProviderControl.value === provider.id,
-			defaultModel: defaultModel || undefined,
+			// `null`, not `undefined`, when cleared: JSON drops `undefined`, so "back to the provider
+			// default" could never be persisted over a previously saved model.
+			defaultModel: defaultModel || null,
 			// Voice: only meaningful for speech-capable providers, but harmless (false / unset) otherwise.
 			isVoiceDefault: provider.speechCapable && this.voiceDefaultControl.value === provider.id,
-			speechModel: provider.speechCapable && speechModel ? speechModel : undefined,
+			speechModel: provider.speechCapable ? speechModel || null : undefined,
 			organizationId: this.store.organizationId ?? undefined
 		};
 
@@ -1238,6 +1249,11 @@ export class AiChatSettingsComponent implements OnInit {
 			})
 		);
 
+		this.syncExclusiveControls();
+	}
+
+	/** Points the two page-wide exclusive controls at whatever the SAVED credentials say. */
+	private syncExclusiveControls(): void {
 		const credentials = [...this.credentialsByProvider().values()];
 		const defaultCredential = credentials.find((credential) => credential.isDefault);
 		this.defaultProviderControl.setValue(defaultCredential?.providerId ?? null, { emitEvent: false });

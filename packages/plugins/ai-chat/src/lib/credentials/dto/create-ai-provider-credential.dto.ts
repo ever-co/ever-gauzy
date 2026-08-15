@@ -53,11 +53,15 @@ export class CreateAiProviderCredentialDTO extends TenantOrganizationBaseDTO imp
 	@IsBoolean({ message: 'Is default must be a boolean' })
 	isDefault?: boolean;
 
-	@ApiPropertyOptional({ type: () => String, description: 'Preferred default model id (e.g. claude-sonnet-5)' })
-	@IsOptional()
+	@ApiPropertyOptional({
+		type: () => String,
+		nullable: true,
+		description: 'Preferred default model id (e.g. claude-sonnet-5); null clears the stored model'
+	})
+	@IsOptional() // `null` (= clear) passes: IsOptional skips the validators below for null/undefined
 	@IsString({ message: 'Default model must be a string' })
 	@Length(1, 255, { message: 'Default model must be between 1 and 255 characters' })
-	defaultModel?: string;
+	defaultModel?: string | null;
 
 	@ApiPropertyOptional({
 		type: () => Boolean,
@@ -68,9 +72,13 @@ export class CreateAiProviderCredentialDTO extends TenantOrganizationBaseDTO imp
 	@IsBoolean({ message: 'Is voice default must be a boolean' })
 	isVoiceDefault?: boolean;
 
-	@ApiPropertyOptional({ type: () => String, description: 'Preferred speech-to-text model id (e.g. whisper-1)' })
-	@IsOptional()
+	@ApiPropertyOptional({
+		type: () => String,
+		nullable: true,
+		description: 'Preferred speech-to-text model id (e.g. whisper-1); null clears the stored model'
+	})
+	@IsOptional() // `null` (= clear) passes: IsOptional skips the validators below for null/undefined
 	@IsString({ message: 'Speech model must be a string' })
 	@Length(1, 255, { message: 'Speech model must be between 1 and 255 characters' })
-	speechModel?: string;
+	speechModel?: string | null;
 }

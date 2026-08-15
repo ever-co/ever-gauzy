@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { PermissionsEnum, PreferredUiEnum } from '@gauzy/contracts';
 import { Store, TenantUiPreferencesService, ToastrService } from '@gauzy/ui-core/core';
 
@@ -25,8 +26,15 @@ export class GeneralSettingComponent implements OnInit {
 	public readonly preferredUi = this.uiPreferences.preferredUi;
 	public readonly loading = signal(true);
 	public readonly saving = signal(false);
+	/** The role permissions as a signal, so `canEdit` re-evaluates once they (re)load. */
+	private readonly rolePermissions = toSignal(this.store.userRolePermissions$, { initialValue: null });
 	/** Only tenant administrators may change the preference; everyone else sees it read-only. */
-	public readonly canEdit = computed(() => this.store.hasPermission(PermissionsEnum.TENANT_SETTING));
+	public readonly canEdit = computed(() => {
+		// Read the permissions signal so a hard reload straight onto this page — where the
+		// permissions arrive AFTER the first render — flips the switch to editable.
+		this.rolePermissions();
+		return this.store.hasPermission(PermissionsEnum.TENANT_SETTING);
+	});
 
 	async ngOnInit(): Promise<void> {
 		try {

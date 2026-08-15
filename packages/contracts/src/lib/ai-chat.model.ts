@@ -236,8 +236,8 @@ export interface IAiProviderCredential extends IBasePerTenantAndOrganizationEnti
 	baseUrl?: string;
 	/** Whether this credential is active. */
 	enabled: boolean;
-	/** Preferred default model for this provider (overrides provider default). */
-	defaultModel?: string;
+	/** Preferred default model for this provider (overrides provider default); `null` clears it. */
+	defaultModel?: string | null;
 	/** Whether this provider is the tenant's default for chat. */
 	isDefault?: boolean;
 	/**
@@ -246,8 +246,8 @@ export interface IAiProviderCredential extends IBasePerTenantAndOrganizationEnti
 	 * local whisper server. At most one credential per tenant has `isVoiceDefault = true`.
 	 */
 	isVoiceDefault?: boolean;
-	/** Preferred speech-to-text model for this provider (overrides the provider's default). */
-	speechModel?: string;
+	/** Preferred speech-to-text model for this provider (overrides the provider's default); `null` clears it. */
+	speechModel?: string | null;
 }
 
 export interface IAiProviderCredentialFindInput extends IBasePerTenantAndOrganizationEntityModel {

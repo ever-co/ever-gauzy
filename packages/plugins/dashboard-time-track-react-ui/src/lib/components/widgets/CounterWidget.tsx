@@ -33,7 +33,7 @@ export function CounterWidget({ title, value, loading, total, counterValue, colo
 				</div>
 				<div className="h1">{value}</div>
 				<div className="gz-rtt-counter-container">
-					<CounterPoint total={total ?? 0} value={counterValue} color={color} progress={progress} />
+					<CounterPoint total={total} value={counterValue} color={color} progress={progress} />
 				</div>
 			</nb-card-body>
 			<Spinner active={loading} status="primary" size="giant" />

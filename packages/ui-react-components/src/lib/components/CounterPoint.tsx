@@ -65,8 +65,14 @@ export function counterPointBackground(color: string): string {
  * CounterPoint — React port of `<gauzy-counter-point>`: a strip of up to 24 pill-shaped dots
  * (10px high, 3px apart) or, with `progress`, a 10px Nebular progress bar.
  */
-export function CounterPoint({ total = 0, value = 0, color = '', progress = false, className, style }: CounterPointProps) {
-	const points = useMemo(() => (progress ? [] : computeCounterPoints(total, value, color)), [progress, total, value, color]);
+export function CounterPoint({ total, value = 0, color = '', progress = false, className, style }: CounterPointProps) {
+	// An UNKNOWN capacity (`total` undefined — the employees/projects count not loaded yet, or a
+	// user without the permission to read it) paints no dots at all, exactly like the Angular
+	// `gauzy-counter-point` (`for (i < undefined)` iterates zero times); `0` means "a day".
+	const points = useMemo(
+		() => (progress || total === undefined ? [] : computeCounterPoints(total, value, color)),
+		[progress, total, value, color]
+	);
 
 	if (progress) {
 		return (

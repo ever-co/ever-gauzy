@@ -487,7 +487,11 @@ export class AiChatService {
 		if (tenantCredential && (tenantCredential.apiKey || keyOptional)) {
 			return {
 				apiKey: tenantCredential.apiKey ?? '',
-				baseUrl: tenantCredential.baseUrl ?? definition.defaultBaseUrl ?? undefined,
+				// Only an EXPLICIT base URL travels in the credentials. Every provider falls back to its
+				// own default address itself, and `keyedCatalogue` treats any base URL as a custom
+				// endpoint — injecting the default here would make the vendor catalogues (Groq,
+				// Mistral) permanently 'curated'.
+				baseUrl: tenantCredential.baseUrl ?? undefined,
 				source: 'tenant'
 			};
 		}
@@ -497,7 +501,7 @@ export class AiChatService {
 			if (apiKey) {
 				return {
 					apiKey,
-					baseUrl: envBaseUrl ?? definition.defaultBaseUrl ?? undefined,
+					baseUrl: envBaseUrl ?? undefined,
 					source: 'environment'
 				};
 			}
@@ -507,7 +511,7 @@ export class AiChatService {
 			if (apiKey) {
 				return {
 					apiKey,
-					baseUrl: envBaseUrl ?? definition.defaultBaseUrl ?? undefined,
+					baseUrl: envBaseUrl ?? undefined,
 					source: 'platform'
 				};
 			}
