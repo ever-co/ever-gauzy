@@ -9,6 +9,7 @@
         "codesign",
         "codesigning",
         "CSPRNG",
+        "LASTEXITCODE",
         "keychains",
         "NXDOMAIN",
         "pipefail",
