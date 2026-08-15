@@ -34,22 +34,24 @@ yarn add @gauzy/ui-react
 
 ### `ReactHostDirective`
 
-Renders a React component synchronously inside any Angular template.
+Renders a React component synchronously inside any Angular template. Selector: **`[gaReactHost]`**.
 
 ```html
 <!-- host element receives the React tree -->
-<div [reactHost]="MyReactComponent" [props]="myProps"></div>
+<div [gaReactHost]="MyReactComponent" [props]="myProps"></div>
 
 <!-- with extra context values -->
-<div [reactHost]="MyReactComponent" [props]="myProps" [context]="{ theme: 'dark' }"></div>
+<div [gaReactHost]="MyReactComponent" [props]="myProps" [context]="{ theme: 'dark' }"></div>
 ```
+
+Build the `props` object **once** (e.g. in `ngOnInit`), not inline in the template — the directive re-renders the React root whenever the `props` / `context` reference changes, so a fresh object literal per change-detection pass re-renders on every tick.
 
 ### `LazyReactHostDirective`
 
-Lazy-loads a React component via dynamic `import()` for code-splitting.
+Lazy-loads a React component via dynamic `import()` for code-splitting. Selector: **`[gaReactLazyHost]`**.
 
 ```html
-<div [reactLazyHost]="loadKanban" [props]="kanbanProps"></div>
+<div [gaReactLazyHost]="loadKanban" [props]="kanbanProps"></div>
 ```
 
 ```ts
