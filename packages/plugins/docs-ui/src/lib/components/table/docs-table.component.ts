@@ -1,4 +1,14 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import {
+	Component,
+	EventEmitter,
+	HostListener,
+	Input,
+	OnChanges,
+	OnDestroy,
+	OnInit,
+	Output,
+	SimpleChanges
+} from '@angular/core';
 import { NbMenuService } from '@nebular/theme';
 import { Cell, IColumns, LocalDataSource, Settings } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -49,7 +59,15 @@ const ROW_MENU_TAG_PREFIX = 'gz-docs-row-actions-';
 	styleUrls: ['./docs-table.component.scss'],
 	standalone: false
 })
-export class DocsTableComponent extends TranslationBaseComponent implements OnInit, OnChanges {
+export class DocsTableComponent extends TranslationBaseComponent implements OnInit, OnChanges, OnDestroy {
+	/**
+	 * How long a single click waits to see whether it is really the first half of a double click.
+	 * Comfortably inside the platform double-click threshold, and short enough that opening the detail
+	 * panel still feels immediate.
+	 */
+	private static readonly DOUBLE_CLICK_GRACE_MS = 250;
+	private pendingRowOpen: ReturnType<typeof setTimeout> | null = null;
+
 	@Input() rows: IDocument[] = [];
 	@Input() loading = false;
 	/** Renders selection checkboxes (DOCS_MANAGE — plus DOCS_REVIEW on the review queue). */
@@ -213,34 +231,30 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	/**
 	 * Single-click row open (`01-ux-spec.md` §4.1): folders drill in, everything else opens the detail
 	 * panel. Handled on the container for the reason above — the grid's own output is not delivered in
-	 * multi-select mode — resolving the row from DOM position exactly as `onRowDoubleClick` does.
+	 * multi-select mode.
 	 */
 	onRowClick(event: MouseEvent): void {
 		const target = event.target as HTMLElement | null;
 		// The multi-select cell selects; it must never also open. Interactive controls (the row kebab,
-		// the status Retry button) own their own click.
+		// the status Retry button, the sortable column headers' anchors) own their own click.
 		if (target?.closest?.('.angular2-smart-action-multiple-select, button, a, input, nb-checkbox')) return;
-		const data = this.resolveRowFrom(event);
-		if (!data) return;
-		if (data.kind === DocumentKindEnum.FOLDER) {
-			this.folderOpened.emit(data);
-		} else {
-			this.rowClicked.emit(data);
-		}
-	}
-
-	/**
-	 * `angular2-smart-table` exposes no click/dblclick output carrying the row, so the row is resolved
-	 * from the DOM position of the clicked `<tr>` within the rendered body; `this.rows` is exactly what
-	 * was handed to the data source, in order, so the index maps 1:1. Anything unresolvable returns
-	 * undefined (never guessed).
-	 */
-	private resolveRowFrom(event: MouseEvent): IDocument | undefined {
-		const row = (event.target as HTMLElement)?.closest?.('tr');
-		const body = row?.parentElement;
-		if (!row || !body) return undefined;
-		const index = Array.prototype.indexOf.call(body.children, row);
-		return index >= 0 ? this.rows?.[index] : undefined;
+		const index = this.resolveRowIndex(event);
+		if (index === undefined) return;
+		// A double click delivers two `click` events BEFORE `dblclick`, so acting immediately would open
+		// the detail panel on the way to the editor/preview — and drill a folder TWICE, since both
+		// handlers emit `folderOpened`. Defer past the double-click window; `onRowDoubleClick` cancels.
+		this.cancelPendingRowOpen();
+		this.pendingRowOpen = setTimeout(() => {
+			this.pendingRowOpen = null;
+			void this.resolveRowAt(index).then((data) => {
+				if (!data) return;
+				if (data.kind === DocumentKindEnum.FOLDER) {
+					this.folderOpened.emit(data);
+				} else {
+					this.rowClicked.emit(data);
+				}
+			});
+		}, DocsTableComponent.DOUBLE_CLICK_GRACE_MS);
 	}
 
 	/**
@@ -248,18 +262,64 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	 * page editor, file preview.
 	 */
 	onRowDoubleClick(event: MouseEvent): void {
-		const data = this.resolveRowFrom(event);
-		if (!data) return;
-		switch (data.kind) {
-			case DocumentKindEnum.FOLDER:
-				this.folderOpened.emit(data);
-				break;
-			case DocumentKindEnum.PAGE:
-				this.editorRequested.emit(data);
-				break;
-			default:
-				this.previewRequested.emit(data);
+		this.cancelPendingRowOpen();
+		const index = this.resolveRowIndex(event);
+		if (index === undefined) return;
+		void this.resolveRowAt(index).then((data) => {
+			if (!data) return;
+			switch (data.kind) {
+				case DocumentKindEnum.FOLDER:
+					this.folderOpened.emit(data);
+					break;
+				case DocumentKindEnum.PAGE:
+					this.editorRequested.emit(data);
+					break;
+				default:
+					this.previewRequested.emit(data);
+			}
+		});
+	}
+
+	/**
+	 * DOM index of the clicked DATA row, or undefined when the click was not on one.
+	 *
+	 * `angular2-smart-table` exposes no click/dblclick output carrying the row, so position is all we
+	 * have. Restricted to `<tbody>` on purpose: the header and filter rows are `<tr>`s too, and a click
+	 * on a column header's padding (outside its sort anchor) would otherwise resolve to index 0 and
+	 * open the first document. Expanded detail rows are skipped so they cannot shift the mapping.
+	 */
+	private resolveRowIndex(event: MouseEvent): number | undefined {
+		const row = (event.target as HTMLElement)?.closest?.('tr');
+		const body = row?.parentElement;
+		if (!row || !body || body.tagName !== 'TBODY') return undefined;
+		const dataRows = Array.from(body.children).filter(
+			(el) => el.tagName === 'TR' && !el.classList.contains('angular2-smart-row-detail')
+		);
+		const index = dataRows.indexOf(row);
+		return index >= 0 ? index : undefined;
+	}
+
+	/**
+	 * Resolves a rendered row index to its document.
+	 *
+	 * Indexed against what the grid actually RENDERS, not the `rows` input: `LocalDataSource` applies
+	 * its own sort and paging, so after a sort the DOM order no longer matches the array it was loaded
+	 * from and an index into `rows` would open a different document than the one clicked.
+	 */
+	private async resolveRowAt(index: number): Promise<IDocument | undefined> {
+		const rendered = (await this.source.getElements().catch(() => [] as IDocument[])) as IDocument[];
+		return rendered?.[index] ?? this.rows?.[index];
+	}
+
+	private cancelPendingRowOpen(): void {
+		if (this.pendingRowOpen) {
+			clearTimeout(this.pendingRowOpen);
+			this.pendingRowOpen = null;
 		}
+	}
+
+	ngOnDestroy(): void {
+		this.cancelPendingRowOpen();
 	}
 
 	// ─── Row actions (`01-ux-spec.md` §4.1 column 9) ─────────────
