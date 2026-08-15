@@ -1,6 +1,14 @@
 // Forward themes so files importing this also get nb-theme() etc.
 @forward 'themes';
 @use 'themes' as *;
+// `themes` above is a BARE url: there is no `gauzy/_themes.scss`, so Sass falls through to the
+// build's load paths and takes the first match. Targets that put an app's own styles dir ahead of
+// `packages/ui-core/static/styles` (e.g. `gauzy-api-server`, `desktop`) therefore bind it to the
+// legacy per-app `themes.scss` fork, which predates the theme maps and does NOT forward them —
+// so `$gauzy-density` below is silently out of scope and the build fails with "Undefined variable".
+// Pull the maps in by an EXPLICIT relative url, which no load path can shadow. Same idiom as
+// `material/_material-dark.scss`. Imports only Sass variables, so this emits no CSS.
+@use '../gauzy-theme-maps' as *;
 @use 'sass:list';
 @use 'sass:map';
 @use 'rich-text-editor' as *;
