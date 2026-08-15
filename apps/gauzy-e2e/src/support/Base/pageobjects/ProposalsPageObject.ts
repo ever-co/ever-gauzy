@@ -21,7 +21,11 @@ export const ProposalsPage = {
 	// ngxPermissionsOnly="ORG_PROPOSALS_VIEW" rather than in the EDIT block. The old
 	// `button.action.primary:has-text("Details")` matches ZERO elements — absent, not hidden. Keeping
 	// the historical key name so the page-object/step names stay stable.
-	detailsButtonCss: '.gauzy-button-container button.action.secondary:has-text("View")',
+	// No text match: `action secondary` occurs exactly ONCE in proposal.component.html (the View
+	// button), so the class pair alone identifies it and the selector cannot be broken by a language
+	// change — unlike a `:has-text("View")` qualifier, which this suite's language-switching scenarios
+	// would invalidate.
+	detailsButtonCss: '.gauzy-button-container button.action.secondary',
 	// On the proposal DETAILS page the Edit button lives in nb-card-header (NOT .gauzy-button-container),
 	// so the old .gauzy-button-container-scoped selector never matched there.
 	editProposalButtonCss: 'button.action.primary:has-text("Edit")',

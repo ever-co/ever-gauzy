@@ -223,7 +223,11 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	 * action also opened the detail panel. Both go away by making this handler do one thing.
 	 */
 	onUserRowSelect(event: { data?: IDocument | null; selected?: IDocument[] }): void {
-		if (event?.selected) {
+		// Only a selectable table has a selection to report. `createRowSelectionEvent` ALWAYS attaches
+		// `selected`, and in single-select mode (which is what `selectable: false` configures) a plain
+		// row-body click emits it — so without this gate, opening a row on a table that renders no
+		// checkboxes would still drive the parent's bulk-selection state.
+		if (this.selectable && event?.selected) {
 			this.selectionChanged.emit(event.selected.map((row) => row.id as ID));
 		}
 	}
@@ -233,11 +237,11 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	 * panel. Handled on the container for the reason above — the grid's own output is not delivered in
 	 * multi-select mode.
 	 */
-	onRowClick(event: MouseEvent): void {
-		const target = event.target as HTMLElement | null;
-		// The multi-select cell selects; it must never also open. Interactive controls (the row kebab,
-		// the status Retry button, the sortable column headers' anchors) own their own click.
-		if (target?.closest?.('.angular2-smart-action-multiple-select, button, a, input, nb-checkbox')) return;
+	protected onRowClick(event: MouseEvent): void {
+		if (this.isControlEvent(event)) return;
+		// The second click of a double click must not schedule its own open — `detail` is the click
+		// count, so this leaves exactly one pending action for `onRowDoubleClick` to cancel.
+		if (event.detail > 1) return;
 		const index = this.resolveRowIndex(event);
 		if (index === undefined) return;
 		// A double click delivers two `click` events BEFORE `dblclick`, so acting immediately would open
@@ -263,6 +267,10 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	 */
 	onRowDoubleClick(event: MouseEvent): void {
 		this.cancelPendingRowOpen();
+		// Child controls stop `click` propagation but not `dblclick`, so this handler sees bubbled
+		// double clicks from the kebab, the Retry button and the select checkbox. Same guard as the
+		// single-click path, or double-clicking any of them would open the row behind it.
+		if (this.isControlEvent(event)) return;
 		const index = this.resolveRowIndex(event);
 		if (index === undefined) return;
 		void this.resolveRowAt(index).then((data) => {
@@ -278,6 +286,16 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 					this.previewRequested.emit(data);
 			}
 		});
+	}
+
+	/**
+	 * True when the event came from a control that owns its own behaviour: the multi-select cell (which
+	 * selects, and must never also open), the row kebab, the status Retry button, and the sortable
+	 * column headers' anchors.
+	 */
+	private isControlEvent(event: MouseEvent): boolean {
+		const target = event.target as HTMLElement | null;
+		return !!target?.closest?.('.angular2-smart-action-multiple-select, button, a, input, nb-checkbox');
 	}
 
 	/**
