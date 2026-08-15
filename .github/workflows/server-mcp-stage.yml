@@ -406,6 +406,35 @@ jobs:
         shell: bash
         run: mkdir -p dist/packages
 
+      # macOS signing: build the keychain ourselves instead of letting electron-builder do it.
+      # app-builder-lib passes the p12 password to `security set-key-partition-list -k`, which
+      # expects the KEYCHAIN password — fatal on the current runner image, and still unfixed in
+      # the latest release. With CSC_LINK unset, electron-builder skips its own keychain code and
+      # uses CSC_KEYCHAIN (macPackager.js:25-48), so this sidesteps the bug without patching deps.
+      - name: Import Apple signing certificate into a keychain
+        env:
+          CSC_LINK_BASE64: ${{ secrets.CSC_LINK_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/ever-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 32)"
+          CERT="$RUNNER_TEMP/ever-signing-cert.p12"
+          printf '%s' "$CSC_LINK_BASE64" | base64 --decode > "$CERT"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$CERT" -k "$KEYCHAIN" -P "$CSC_KEY_PASSWORD" \
+            -T /usr/bin/codesign -T /usr/bin/productbuild -T /usr/bin/security
+          # The KEYCHAIN password here — this is the exact call app-builder-lib gets wrong.
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | xargs)
+          rm -f "$CERT"
+          # Fail loudly here rather than silently shipping an unsigned app later.
+          security find-identity -v -p codesigning "$KEYCHAIN" | tee /tmp/identities.txt
+          grep -q "Developer ID Application" /tmp/identities.txt
+
       - name: Build Server
         run: 'yarn build:gauzy-mcp-server:mac:release'
         env:
@@ -424,7 +453,9 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_APP_PASSWORD: ${{ secrets.APPLE_ID_APP_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          CSC_LINK: ${{ secrets.CSC_LINK_BASE64 }}
+          # CSC_LINK deliberately NOT set: that is what makes electron-builder build its own
+          # (broken) keychain. Point it at the one imported above instead.
+          CSC_KEYCHAIN: ${{ runner.temp }}/ever-signing.keychain-db
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           APPLE_API_KEY: /tmp/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
@@ -671,7 +702,27 @@ jobs:
       - name: Install Visual Studio 2022 Build Tools (VCTools with ARM64)
         shell: powershell
         run: |
-          choco install -y visualstudio2022buildtools --execution-timeout=21600 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --includeRecommended --passive --norestart"
+          # The runner image normally ships VS with the VC ARM64 toolset. Only reach for
+          # Chocolatey if it is genuinely missing — community.chocolatey.org returning 504
+          # has failed this job before ("Chocolatey installed 0/0 packages"), and installing
+          # something already present costs ~6 min for nothing.
+          $ErrorActionPreference = "Continue"
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $have = $false
+          if (Test-Path $vswhere) {
+            $found = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.ARM64 -property installationPath 2>$null
+            if ($found) { $have = $true; Write-Host "VC ARM64 toolset already present: $found" }
+          }
+          if (-not $have) {
+            Write-Host "VC ARM64 toolset not found - installing via Chocolatey"
+            choco install -y visualstudio2022buildtools --execution-timeout=21600 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --includeRecommended --passive --norestart"
+            if ($LASTEXITCODE -ne 0) {
+              # Do not fail the job on a Chocolatey feed outage; the next step (msvc-dev-cmd)
+              # will either find a usable toolchain or fail with an unambiguous message.
+              Write-Warning "Chocolatey install failed (exit $LASTEXITCODE) - continuing; the MSVC setup step will report definitively."
+            }
+          }
+          exit 0
 
       - name: Configure node-gyp to use VS 2022
         shell: powershell
@@ -727,11 +778,12 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.servermcp(false))
         env:
-          # Windows signing config must be visible to the BUMP step: this script writes build.win.azureSignOptions into package.json, which electron-builder reads later.
-          WINDOWS_PUBLISHER_NAME: ${{ secrets.WINDOWS_PUBLISHER_NAME }}
-          AZURE_CERT_PROFILE_NAME: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
-          AZURE_CODE_SIGNING_ACCOUNT: ${{ vars.AZURE_CODE_SIGNING_ACCOUNT || 'ever' }}
-          AZURE_CODE_SIGNING_ENDPOINT: ${{ vars.AZURE_CODE_SIGNING_ENDPOINT || 'https://eus.codesigning.azure.net/' }}
+          # Windows signing is deliberately NOT configured for ARM64. Azure Trusted Signing
+          # ships no ARM64 tooling (Microsoft.Trusted.Signing.Client 1.0.95 contains only
+          # bin/x64 and bin/x86), so Invoke-TrustedSigning loads the x64 dlib and fails with
+          # "SignTool failed with exit code 3", taking the whole build down. Without
+          # WINDOWS_PUBLISHER_NAME the bump script emits no signer, so ARM64 builds
+          # unsigned and succeeds; electron-updater verification stays off for it. x64 signs.
           GAUZY_RELEASE_TAG: ${{ needs.check-release-tag.outputs.tag }}
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
           DESKTOP_MCP_SERVER_APP_NAME: 'gauzy-mcp-server'
