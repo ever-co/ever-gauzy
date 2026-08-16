@@ -311,8 +311,15 @@ jobs:
             sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
             mv -f .npmrc.scrubbed .npmrc
           fi
-          rm -f .npmrc.bak .npmrc.scrubbed
-          echo "Registry credentials scrubbed from .npmrc."
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
+          # Hand the workspace back the way git has it. The untracked .yarnrc and the yarn.lock
+          # rewritten to the internal VIP would otherwise survive on a clean: false runner and be
+          # inherited by a job from ANOTHER workflow that has no Configure Registry step to reset
+          # them. Best-effort on purpose: this is cleanup after the build, so a failure here must
+          # not redden a green release - unlike the reset in Configure Registry, where the
+          # registry decision depends on it and a failure therefore has to stop the step.
+          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+          echo "Registry credentials scrubbed and workspace registry config restored."
 
   release-linux-arm64:
     needs: check-release-tag
@@ -538,8 +545,15 @@ jobs:
             sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
             mv -f .npmrc.scrubbed .npmrc
           fi
-          rm -f .npmrc.bak .npmrc.scrubbed
-          echo "Registry credentials scrubbed from .npmrc."
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
+          # Hand the workspace back the way git has it. The untracked .yarnrc and the yarn.lock
+          # rewritten to the internal VIP would otherwise survive on a clean: false runner and be
+          # inherited by a job from ANOTHER workflow that has no Configure Registry step to reset
+          # them. Best-effort on purpose: this is cleanup after the build, so a failure here must
+          # not redden a green release - unlike the reset in Configure Registry, where the
+          # registry decision depends on it and a failure therefore has to stop the step.
+          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+          echo "Registry credentials scrubbed and workspace registry config restored."
 
   release-mac:
     needs: check-release-tag
@@ -791,8 +805,15 @@ jobs:
             sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
             mv -f .npmrc.scrubbed .npmrc
           fi
-          rm -f .npmrc.bak .npmrc.scrubbed
-          echo "Registry credentials scrubbed from .npmrc."
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
+          # Hand the workspace back the way git has it. The untracked .yarnrc and the yarn.lock
+          # rewritten to the internal VIP would otherwise survive on a clean: false runner and be
+          # inherited by a job from ANOTHER workflow that has no Configure Registry step to reset
+          # them. Best-effort on purpose: this is cleanup after the build, so a failure here must
+          # not redden a green release - unlike the reset in Configure Registry, where the
+          # registry decision depends on it and a failure therefore has to stop the step.
+          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+          echo "Registry credentials scrubbed and workspace registry config restored."
 
   release-windows:
     needs: check-release-tag
@@ -1092,8 +1113,15 @@ jobs:
             sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
             mv -f .npmrc.scrubbed .npmrc
           fi
-          rm -f .npmrc.bak .npmrc.scrubbed
-          echo "Registry credentials scrubbed from .npmrc."
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
+          # Hand the workspace back the way git has it. The untracked .yarnrc and the yarn.lock
+          # rewritten to the internal VIP would otherwise survive on a clean: false runner and be
+          # inherited by a job from ANOTHER workflow that has no Configure Registry step to reset
+          # them. Best-effort on purpose: this is cleanup after the build, so a failure here must
+          # not redden a green release - unlike the reset in Configure Registry, where the
+          # registry decision depends on it and a failure therefore has to stop the step.
+          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+          echo "Registry credentials scrubbed and workspace registry config restored."
 
   release-windows-arm64:
     needs: check-release-tag
@@ -1426,5 +1454,12 @@ jobs:
             sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
             mv -f .npmrc.scrubbed .npmrc
           fi
-          rm -f .npmrc.bak .npmrc.scrubbed
-          echo "Registry credentials scrubbed from .npmrc."
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
+          # Hand the workspace back the way git has it. The untracked .yarnrc and the yarn.lock
+          # rewritten to the internal VIP would otherwise survive on a clean: false runner and be
+          # inherited by a job from ANOTHER workflow that has no Configure Registry step to reset
+          # them. Best-effort on purpose: this is cleanup after the build, so a failure here must
+          # not redden a green release - unlike the reset in Configure Registry, where the
+          # registry decision depends on it and a failure therefore has to stop the step.
+          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+          echo "Registry credentials scrubbed and workspace registry config restored."
