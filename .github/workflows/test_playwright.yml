@@ -40,9 +40,9 @@ concurrency:
 env:
   # The dependency tree travels between jobs as this one file. Deliberately a workspace-relative
   # name: `runner.temp` is not available to workflow-level `env` (only the github/vars/inputs
-  # contexts are), and a relative path means the same string works for `tar` in a `run` step, for
-  # `actions/cache`, and for upload/download-artifact. It sits at the workspace ROOT, so it is never
-  # inside any of the `node_modules` directories being archived.
+  # contexts are), and a relative path means the same string works both for `tar` in a `run` step and
+  # for upload/download-artifact. It sits at the workspace ROOT, so it is never inside any of the
+  # `node_modules` directories being archived.
   NODE_MODULES_ARCHIVE: e2e-node-modules.tar.zst
 
 jobs:
@@ -52,34 +52,19 @@ jobs:
   deps:
     name: Install dependencies
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
-    # Cold path (cache miss) is the whole budget: bootstrap alone has been measured at 88 min and
-    # once at 3 h 28 on these runners, plus the cache save of a ~9 GB tree. Warm path is a no-op
-    # (~2 min). Nothing else runs here, so an eviction costs only the install.
+    # `yarn bootstrap` is the whole budget here: measured at 88 min, 3 h 20 m and 3 h 46 m on these
+    # runners. This job exists so that cost is paid ONCE per run — everything downstream unpacks the
+    # archive it publishes. Nothing else runs here, so an evicted pod costs only the install.
     timeout-minutes: 240
-    outputs:
-      # Single source of truth for the cache key — every downstream job restores with this exact
-      # value, so a key change can never silently split the cache.
-      node-modules-key: ${{ steps.cache-key.outputs.value }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Compute node_modules cache key
-        id: cache-key
-        shell: bash
-        run: echo "value=${{ runner.os }}-${{ runner.arch }}-e2e-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}" >> "$GITHUB_OUTPUT"
-
-      - name: Restore node_modules archive cache
-        id: cache
-        uses: actions/cache/restore@v5
-        with:
-          # ONE compressed archive, not the exploded tree. See the archive step below for why.
-          path: ${{ env.NODE_MODULES_ARCHIVE }}
-          key: ${{ steps.cache-key.outputs.value }}
+      # NO actions/cache here, deliberately — see the archive step below. The budget is full of
+      # caches that other workflows genuinely need, and writing this one would evict them.
 
       - name: Install Packages & Bootstrap
-        if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         # Retry once: run 30330950619 died here after 9 min. A transient registry/FS hiccup on
         # these container runners is common and the second attempt reuses whatever yarn already
@@ -89,20 +74,25 @@ jobs:
             || { echo "::warning::yarn bootstrap failed — retry 1"; yarn bootstrap; }
 
       - name: Archive node_modules
-        if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
-        # Pack the whole dependency tree into a SINGLE compressed file.
+        # Pack the whole dependency tree into a SINGLE compressed file and hand it to the other jobs
+        # as an ARTIFACT rather than a cache.
         #
-        # This used to cache the exploded tree (~9 GB, ~900k files) directly, against a 10 GB
-        # repository budget that `build.yml` already fills with a 4.66 GB setup-node yarn cache PER
-        # REF. Measured, not assumed:
+        # This used to cache the exploded tree (~9 GB, ~900k files) against a 10 GB repository
+        # budget. Measured, not assumed:
         #   - ACROSS runs it never survived. deps paid a cold bootstrap every time — 3 h 20 m on run
         #     31848093657, 3 h 46 m on 31889575135.
         #   - WITHIN a run it was a coin flip. On 31848093657 all four shards hit it; on 31889575135
-        #     the build job hit it and shard 2 missed an hour later and started its own bootstrap —
-        #     exactly the cost the deps/build/e2e split exists to pay only once.
-        # An artifact removes the coin flip (see the upload step); a single ~3 GB file instead of a
-        # 9 GB tree also gives the cross-run cache a chance it never had.
+        #     the build job hit it and shard 2 missed an hour later, started its own bootstrap, and
+        #     was killed at the 120-minute job timeout 1 h 58 m in. All four shards died that way and
+        #     the 12 h 34 m run produced ZERO test results.
+        #
+        # And this job no longer writes a cache AT ALL. After pruning duplicates the budget holds
+        # 9.33 GB of caches that other workflows genuinely need — `build.yml`'s 4.66 GB yarn cache
+        # (the PR gate, five jobs, every pull request) and the 4.64 GB macOS desktop-build cache.
+        # Storing even a ~3 GB archive would evict one of them, making the PR gate slower to speed up
+        # a suite that runs on develop pushes. That is a bad trade, so deps pays the bootstrap and
+        # the artifact makes sure nothing downstream pays it again.
         #
         # zstd on one file also beats the cache action's per-file handling of a huge tree in both
         # directions. `--warning=no-file-changed` because yarn's own daemon can touch files while we
@@ -137,16 +127,6 @@ jobs:
             echo "::error::archive is only $size bytes — the dependency tree cannot be that small"
             exit 1
           fi
-
-      - name: Save node_modules archive cache
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v5
-        # Explicit save (not the combined actions/cache post-step) so a FAILED bootstrap can never
-        # publish a half-installed tree: this step only runs when every step above succeeded.
-        # Best-effort — the artifact below, not this, is what the downstream jobs rely on.
-        with:
-          path: ${{ env.NODE_MODULES_ARCHIVE }}
-          key: ${{ steps.cache-key.outputs.value }}
 
       - name: Upload node_modules archive
         uses: actions/upload-artifact@v4
