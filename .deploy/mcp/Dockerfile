@@ -84,7 +84,6 @@ ARG MCP_WS_SESSION_COOKIE_NAME
 ARG MCP_WS_TRUSTED_PROXIES
 ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
-ARG VERDACCIO_TOKEN
 
 FROM node:24.16.0-alpine3.23 AS dependencies
 
@@ -113,9 +112,14 @@ COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
-ARG VERDACCIO_TOKEN
+# VERDACCIO_TOKEN arrives as a BuildKit secret, never as an ARG: a build-arg is recorded in the
+# image config blob, so `docker history` on this PUBLIC package exposed it. Registry rewrite,
+# install and .npmrc/.yarnrc cleanup all happen in ONE RUN so the credential never persists in a
+# layer either - a later `rm` only whiteouts it. Same shape as .deploy/api/Dockerfile.
 ARG VERDACCIO_REGISTRY=""
-RUN if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
+    VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
@@ -128,14 +132,11 @@ RUN if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_RE
     echo 'registry "https://packages.ever.co/"' >> .yarnrc && \
     sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
-    fi
-
-RUN yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts \
-    && yarn postinstall.manual \
-    && yarn cache clean
-
-# Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
-RUN rm -f .npmrc .yarnrc
+    fi && \
+    yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts && \
+    yarn postinstall.manual && \
+    yarn cache clean && \
+    rm -f .npmrc .yarnrc
 
 COPY --chown=node:node apps/mcp ./apps/mcp
 COPY --chown=node:node packages/mcp-server ./packages/mcp-server/
@@ -196,9 +197,14 @@ RUN ln -s . dist
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
-ARG VERDACCIO_TOKEN
+# VERDACCIO_TOKEN arrives as a BuildKit secret, never as an ARG: a build-arg is recorded in the
+# image config blob, so `docker history` on this PUBLIC package exposed it. Registry rewrite,
+# install and .npmrc/.yarnrc cleanup all happen in ONE RUN so the credential never persists in a
+# layer either - a later `rm` only whiteouts it. Same shape as .deploy/api/Dockerfile.
 ARG VERDACCIO_REGISTRY=""
-RUN if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
+    VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
@@ -211,14 +217,11 @@ RUN if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_RE
     echo 'registry "https://packages.ever.co/"' >> .yarnrc && \
     sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
-    fi
-
-RUN yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts --production \
-    && yarn postinstall.manual \
-    && yarn cache clean
-
-# Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
-RUN rm -f .npmrc .yarnrc
+    fi && \
+    yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts --production && \
+    yarn postinstall.manual && \
+    yarn cache clean && \
+    rm -f .npmrc .yarnrc
 
 # PROD
 FROM proddependencies AS production
