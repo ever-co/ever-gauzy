@@ -16,6 +16,12 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
+# Least-privilege scope for the automatic GITHUB_TOKEN.
+# This workflow publishes its release assets with the separate `secrets.GH_TOKEN` PAT,
+# which this block does not affect, so the automatic token only needs to read the repo.
+permissions:
+  contents: read
+
 jobs:
   check-release-tag:
     # Only build when the promoted commit carries a release tag (the version stamped into the
