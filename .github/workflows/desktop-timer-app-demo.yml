@@ -400,22 +400,25 @@ jobs:
           # cannot be READ, and [ -f ] answers false for both "missing" and "cannot stat", so a
           # bare existence test cannot tell an absent file from an unreachable one.
           cred_state="undetermined"
-          if [ -e .npmrc ]; then
+          if [ -e .npmrc ] || [ -L .npmrc ]; then
             grep -q '_authToken=' .npmrc
             case "$?" in
               0) cred_state="present" ;;
               1) cred_state="absent" ;;
               *) cred_state="undetermined" ;;
             esac
-          elif [ -r . ]; then
-            # The directory is readable and there is genuinely no .npmrc, so there is no token.
+          elif [ -r . ] && [ -x . ]; then
+            # The directory is both readable AND searchable and neither a file nor a symlink named
+            # .npmrc exists, so the absence is proven rather than merely unobservable. Without the
+            # -x test a stat could fail in a directory that still answers -r, and without the -L
+            # test above a dangling symlink would read as "missing" while its target held a token.
             cred_state="absent"
           fi
           # Artifacts that can also carry the token: .npmrc.bak is written by older revisions of
           # this workflow, and a surviving .npmrc.scrubbed means the mv above did not complete.
           # Present-but-clean is only clutter; present-and-carrying-a-token (or unreadable) is not.
           for stray in .npmrc.bak .npmrc.scrubbed; do
-            if [ -e "$stray" ]; then
+            if [ -e "$stray" ] || [ -L "$stray" ]; then
               grep -q '_authToken=' "$stray"
               if [ "$?" -ne 1 ]; then
                 cred_state="present in $stray"
