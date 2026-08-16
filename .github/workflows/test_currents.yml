@@ -7,6 +7,11 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
+# Least-privilege scope for the automatic GITHUB_TOKEN.
+# This workflow only builds/tests/deploys from a checkout — read access is sufficient.
+permissions:
+  contents: read
+
 jobs:
   prepare:
     runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}

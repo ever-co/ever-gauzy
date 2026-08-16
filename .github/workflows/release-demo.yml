@@ -6,6 +6,12 @@ on:
       - develop
       - temp
 
+# Least-privilege scope for the automatic GITHUB_TOKEN.
+# `contents: write` is required: this workflow pushes a version tag and creates the
+# GitHub release that the downstream image/desktop builds key off.
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ${{ matrix.os }}
