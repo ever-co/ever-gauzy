@@ -92,6 +92,30 @@ describe('ui-preferences.util', () => {
 			expect(() => sanitizeUiPreferencesPatch({ constructor: { a: 1 } })).toThrow(/Illegal/);
 			expect(() => sanitizeUiPreferencesPatch({ aiChat: JSON.parse('{"__proto__":1}') })).toThrow(/Illegal/);
 		});
+
+		it('rejects prototype accessor keys inside arrays', () => {
+			expect(() =>
+				sanitizeUiPreferencesPatch({ aiChat: { pinned: [JSON.parse('{"__proto__":{"x":1}}')] } })
+			).toThrow(/Illegal/);
+		});
+
+		it('bounds the nesting depth for objects AND arrays (400, not a stack overflow)', () => {
+			// 8 nested containers below the feature key are fine …
+			const okObjects = { aiChat: { a: { b: { c: { d: { e: { f: { g: { h: 1 } } } } } } } } };
+			expect(() => sanitizeUiPreferencesPatch(okObjects)).not.toThrow();
+			// … a deeply nested array payload is rejected with the same bounded-depth error.
+			const deepArrays = { aiChat: { list: JSON.parse('['.repeat(200) + ']'.repeat(200)) } };
+			expect(() => sanitizeUiPreferencesPatch(deepArrays)).toThrow(/nested too deeply/);
+			// A small nested-array chain that could recurse without bound: 5000 levels fits the size cap.
+			const stackBuster = { aiChat: { list: JSON.parse('['.repeat(5000) + ']'.repeat(5000)) } };
+			expect(() => sanitizeUiPreferencesPatch(stackBuster)).toThrow(/nested too deeply/);
+			// Deep object nesting is bounded too.
+			let deep: Record<string, unknown> = { leaf: 1 };
+			for (let i = 0; i < 20; i++) {
+				deep = { next: deep };
+			}
+			expect(() => sanitizeUiPreferencesPatch({ aiChat: deep })).toThrow(/nested too deeply/);
+		});
 	});
 
 	describe('assertUiPreferencesSize', () => {

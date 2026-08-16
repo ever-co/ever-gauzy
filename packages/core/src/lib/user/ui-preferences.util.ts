@@ -64,8 +64,22 @@ export function sanitizeUiPreferencesPatch(patch: unknown): IUserUiPreferencesUp
 	return clean as IUserUiPreferencesUpdateInput;
 }
 
-/** Arrays are walked too: an object nested inside an array is still an object we will store. */
+/** Deepest container (object OR array) level a feature value may have below the feature key. */
+const MAX_NESTING_DEPTH = 8;
+
+function assertDepth(feature: string, depth: number): void {
+	if (depth > MAX_NESTING_DEPTH) {
+		throw new Error(`Feature "${feature}" is nested too deeply`);
+	}
+}
+
+/**
+ * Arrays are walked too: an object nested inside an array is still an object we will store —
+ * and every array level counts towards the depth bound, so a `[[[[…]]]]` payload is rejected
+ * with a 400 instead of exhausting the call stack.
+ */
 function sanitizeNested(item: unknown, feature: string, depth: number): unknown {
+	assertDepth(feature, depth);
 	if (Array.isArray(item)) {
 		return item.map((element) => sanitizeNested(element, feature, depth + 1));
 	}
@@ -78,9 +92,7 @@ function sanitizeNested(item: unknown, feature: string, depth: number): unknown 
  * from where a later deep merge could pick it up. Returns a fresh copy (own enumerable keys only).
  */
 function assertNoForbiddenKeys(value: Record<string, unknown>, feature: string, depth = 0): Record<string, unknown> {
-	if (depth > 8) {
-		throw new Error(`Feature "${feature}" is nested too deeply`);
-	}
+	assertDepth(feature, depth);
 	const copy: Record<string, unknown> = {};
 	for (const [key, item] of Object.entries(value)) {
 		if (FORBIDDEN_KEYS.has(key)) {

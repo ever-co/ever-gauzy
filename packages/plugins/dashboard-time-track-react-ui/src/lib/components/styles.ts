@@ -163,8 +163,10 @@ export const TIME_TRACKING_STYLES = `
 .gz-rtt .gz-rtt-swiper-button:disabled { opacity: 0.4; cursor: default; }
 .gz-rtt .gz-rtt-carousel { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none; }
 .gz-rtt .gz-rtt-carousel::-webkit-scrollbar { display: none; }
-.gz-rtt .gz-rtt-carousel-track { display: flex; gap: 16px; }
+/* `--gz-rtt-slide-gap` is the single source for the cell gap: the track renders it, the slide
+   width formula subtracts it, and the arrow buttons read it (ScreenshotCarousel.tsx). */
 .gz-rtt .gz-rtt-carousel { --gz-rtt-slides: 3; --gz-rtt-slide-gap: 16px; }
+.gz-rtt .gz-rtt-carousel-track { display: flex; gap: var(--gz-rtt-slide-gap); }
 /* Slide width follows slidesPerView (a CSS var the component sets) but never drops below the
    screenshot card's own minimum: on a narrow canvas fewer slides show and the track scrolls,
    instead of three boxes shrinking under the cards and overlapping. */
