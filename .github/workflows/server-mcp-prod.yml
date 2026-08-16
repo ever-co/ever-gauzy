@@ -161,15 +161,111 @@ jobs:
       - name: Configure Registry
         shell: bash
         run: |
-          if [ -n "${{ secrets.VERDACCIO_TOKEN }}" ]; then
-            echo "//packages.ever.co/:_authToken=${{ secrets.VERDACCIO_TOKEN }}" >> .npmrc
-            echo "registry=https://packages.ever.co/" >> .npmrc
-            echo "always-auth=true" >> .npmrc
-            echo 'registry "https://packages.ever.co/"' >> .yarnrc
-            sed -i.bak 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
-            sed -i.bak 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
-            rm -f yarn.lock.bak
+          # Registry selection is CONDITIONAL on where this job runs.
+          #
+          # The public Cloudflare-fronted route https://packages.ever.co intermittently TRUNCATES
+          # large tarballs mid-stream. Measured 2026-08-16 on
+          # @rspack/binding-win32-arm64-msvc@1.7.6: 9,525,323 bytes from packages.ever.co against
+          # 14,590,565 bytes (byte-exact) from BOTH the internal VIP and npmjs. The route sustains
+          # only ~280 KB/s, and a single release-windows-arm64 job logged 12 "unexpected end of
+          # file" errors against it.
+          #
+          # The truncation is UNDETECTABLE by the client: Cloudflare always sends
+          # "Accept-Encoding: gzip" to the origin, Verdaccio then re-gzips the already-gzipped
+          # .tgz, which drops Content-Length in favour of chunked encoding. A cut stream is
+          # therefore not a short read but a complete-looking HTTP 200 whose body fails gunzip,
+          # and Range requests are ignored so there is no resume and no length cross-check.
+          #
+          # Jobs in this repo run on a MIX of runners:
+          #   in-network - [self-hosted, Windows, X64] and the ever-k8s ARC pools
+          #   external   - windows-11-arm, ubicloud-*-arm, cirruslabs macOS, ubuntu-latest
+          # Only in-network runners can reach the VIP, and the internal cache buys an external
+          # runner nothing while adding a failure mode. The choice is therefore made by PROBING
+          # the VIP rather than by hardcoding a runner list, because release-linux runs on
+          # "vars.RUNNER_LINUX_APPS_X64 or ubuntu-latest" and so is not statically known.
+          #
+          # NO-REMOVAL RULE: the packages.ever.co path below is GATED, not deleted. Set the
+          # repo/org variable VERDACCIO_FORCE_PUBLIC=true to bring it back.
+
+          # Start from a known state. The self-hosted Windows jobs check out with clean: false and
+          # their cleanup step removes only dist/ and node_modules/, so registry edits from a
+          # PREVIOUS run can still be on disk. .yarnrc in particular is untracked and un-ignored,
+          # so nothing restores it: a stale "registry" line from an earlier run would silently
+          # win over this run's decision. This reset is NOT best-effort -- if we cannot establish
+          # a known starting state we must not go on to pick a registry, because the install would
+          # then quietly run against whatever the last job left behind.
+          rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten
+          if ! git checkout -- .npmrc yarn.lock; then
+            echo "::error title=Could not reset registry configuration::git checkout -- .npmrc yarn.lock failed on this workspace, so the previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
+            exit 1
           fi
+
+          REGISTRY=""
+          if [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
+            # Evaluated BEFORE the probe so the override actually overrides: an operator setting
+            # this wants the public route even when the VIP is up (e.g. the internal cache is
+            # serving bad data). Gating it on a failed probe would make the flag a no-op.
+            REGISTRY="https://packages.ever.co/"
+            echo "::warning title=Verdaccio public route in use::VERDACCIO_FORCE_PUBLIC=true - installing through packages.ever.co, which is known to truncate large tarballs mid-stream."
+            echo "//packages.ever.co/:_authToken=$VERDACCIO_TOKEN" >> .npmrc
+            echo "always-auth=true" >> .npmrc
+          else
+            if [ "$VERDACCIO_FORCE_PUBLIC" = "true" ]; then
+              echo "::warning title=VERDACCIO_FORCE_PUBLIC set without a token::VERDACCIO_TOKEN is empty, so packages.ever.co cannot be used; probing the internal VIP instead."
+            fi
+            # Retry only where the VIP is expected to answer. An external runner can never reach
+            # it, so a second attempt would just add dead time to every release job.
+            if [ "$EXPECT_VIP" = "true" ]; then ATTEMPTS=2; else ATTEMPTS=1; fi
+            if [ -n "$VERDACCIO_REGISTRY" ]; then
+              attempt=1
+              while [ "$attempt" -le "$ATTEMPTS" ]; do
+                if curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
+                  REGISTRY="${VERDACCIO_REGISTRY%/}/"
+                  echo "Verdaccio VIP is reachable (attempt $attempt) - using the internal npm cache."
+                  break
+                fi
+                attempt=$((attempt + 1))
+                if [ "$attempt" -le "$ATTEMPTS" ]; then sleep 3; fi
+              done
+            fi
+            if [ -z "$REGISTRY" ] && [ -z "$VERDACCIO_REGISTRY" ]; then
+              echo "No internal Verdaccio registry is configured (VERDACCIO_REGISTRY is empty) - resolving from the public npm registry."
+            elif [ -z "$REGISTRY" ]; then
+              echo "Verdaccio VIP did not answer - resolving from the public npm registry."
+              # An EXTERNAL runner not reaching the VIP is the designed outcome and stays quiet.
+              # An IN-NETWORK runner means the internal cache is silently unavailable (this fleet
+              # has a recurring MetalLB speaker flap that presents exactly this way), so surface
+              # it. Deliberately a warning, not a failure: a cache blip must never redden a
+              # release pipeline that npmjs can serve correctly.
+              if [ "$EXPECT_VIP" = "true" ]; then
+                echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
+              fi
+            fi
+          fi
+          if [ -n "$REGISTRY" ]; then
+            echo "registry=$REGISTRY" >> .npmrc
+            echo "registry \"$REGISTRY\"" >> .yarnrc
+            # One pass, no -i: an -i.bak backup survives on a clean: false runner if the step
+            # fails between the rewrite and its cleanup, and bare -i is not portable to the BSD
+            # sed on the macOS runners. The temp file is only ever the finished rewrite.
+            sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
+                -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
+            mv -f yarn.lock.rewritten yarn.lock
+          fi
+          echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
+        env:
+          VERDACCIO_REGISTRY: ${{ vars.VERDACCIO_REGISTRY }}
+          VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
+          VERDACCIO_FORCE_PUBLIC: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # true for the IN-NETWORK runners: the 18 [self-hosted, Windows, X64] jobs, plus any
+          # ever-k8s-* ARC pool reached through a runner variable (release-linux takes its os from
+          # vars.RUNNER_LINUX_APPS_X64, which may point at one). The ever-k8s disjunct is a no-op in
+          # workflows whose matrix cannot yield that label - it is kept so all 66 copies stay
+          # byte-identical and a future ARC matrix entry gets the retry and warning automatically.
+          # ubicloud and cirruslabs runners also report RUNNER_ENVIRONMENT=self-hosted, so that
+          # variable cannot be used as the discriminator without firing false warnings on the
+          # external jobs.
+          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
@@ -213,6 +309,95 @@ jobs:
           NX_NO_CLOUD: true
           NX_DAEMON: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
+
+      - name: Scrub registry credentials
+        if: always()
+        shell: bash
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
+          set +e
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
+
+          # Prove the credential is gone, starting from "undetermined" rather than "absent" so no
+          # inconclusive result can pass. Two ways to be inconclusive: grep exits 2 when a file
+          # cannot be READ, and [ -f ] answers false for both "missing" and "cannot stat", so a
+          # bare existence test cannot tell an absent file from an unreachable one.
+          cred_state="undetermined"
+          if [ -e .npmrc ] || [ -L .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          elif [ -r . ] && [ -x . ]; then
+            # The directory is both readable AND searchable and neither a file nor a symlink named
+            # .npmrc exists, so the absence is proven rather than merely unobservable. Without the
+            # -x test a stat could fail in a directory that still answers -r, and without the -L
+            # test above a dangling symlink would read as "missing" while its target held a token.
+            cred_state="absent"
+          fi
+          # Artifacts that can also carry the token: .npmrc.bak is written by older revisions of
+          # this workflow, and a surviving .npmrc.scrubbed means the mv above did not complete.
+          # Present-but-clean is only clutter; present-and-carrying-a-token (or unreadable) is not.
+          for stray in .npmrc.bak .npmrc.scrubbed; do
+            if [ -e "$stray" ] || [ -L "$stray" ]; then
+              grep -q '_authToken=' "$stray"
+              if [ "$?" -ne 1 ]; then
+                cred_state="present in $stray"
+              fi
+            fi
+          done
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::Auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
 
   release-linux-arm64:
     needs: check-release-tag
@@ -291,15 +476,111 @@ jobs:
       - name: Configure Registry
         shell: bash
         run: |
-          if [ -n "${{ secrets.VERDACCIO_TOKEN }}" ]; then
-            echo "//packages.ever.co/:_authToken=${{ secrets.VERDACCIO_TOKEN }}" >> .npmrc
-            echo "registry=https://packages.ever.co/" >> .npmrc
-            echo "always-auth=true" >> .npmrc
-            echo 'registry "https://packages.ever.co/"' >> .yarnrc
-            sed -i.bak 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
-            sed -i.bak 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
-            rm -f yarn.lock.bak
+          # Registry selection is CONDITIONAL on where this job runs.
+          #
+          # The public Cloudflare-fronted route https://packages.ever.co intermittently TRUNCATES
+          # large tarballs mid-stream. Measured 2026-08-16 on
+          # @rspack/binding-win32-arm64-msvc@1.7.6: 9,525,323 bytes from packages.ever.co against
+          # 14,590,565 bytes (byte-exact) from BOTH the internal VIP and npmjs. The route sustains
+          # only ~280 KB/s, and a single release-windows-arm64 job logged 12 "unexpected end of
+          # file" errors against it.
+          #
+          # The truncation is UNDETECTABLE by the client: Cloudflare always sends
+          # "Accept-Encoding: gzip" to the origin, Verdaccio then re-gzips the already-gzipped
+          # .tgz, which drops Content-Length in favour of chunked encoding. A cut stream is
+          # therefore not a short read but a complete-looking HTTP 200 whose body fails gunzip,
+          # and Range requests are ignored so there is no resume and no length cross-check.
+          #
+          # Jobs in this repo run on a MIX of runners:
+          #   in-network - [self-hosted, Windows, X64] and the ever-k8s ARC pools
+          #   external   - windows-11-arm, ubicloud-*-arm, cirruslabs macOS, ubuntu-latest
+          # Only in-network runners can reach the VIP, and the internal cache buys an external
+          # runner nothing while adding a failure mode. The choice is therefore made by PROBING
+          # the VIP rather than by hardcoding a runner list, because release-linux runs on
+          # "vars.RUNNER_LINUX_APPS_X64 or ubuntu-latest" and so is not statically known.
+          #
+          # NO-REMOVAL RULE: the packages.ever.co path below is GATED, not deleted. Set the
+          # repo/org variable VERDACCIO_FORCE_PUBLIC=true to bring it back.
+
+          # Start from a known state. The self-hosted Windows jobs check out with clean: false and
+          # their cleanup step removes only dist/ and node_modules/, so registry edits from a
+          # PREVIOUS run can still be on disk. .yarnrc in particular is untracked and un-ignored,
+          # so nothing restores it: a stale "registry" line from an earlier run would silently
+          # win over this run's decision. This reset is NOT best-effort -- if we cannot establish
+          # a known starting state we must not go on to pick a registry, because the install would
+          # then quietly run against whatever the last job left behind.
+          rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten
+          if ! git checkout -- .npmrc yarn.lock; then
+            echo "::error title=Could not reset registry configuration::git checkout -- .npmrc yarn.lock failed on this workspace, so the previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
+            exit 1
           fi
+
+          REGISTRY=""
+          if [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
+            # Evaluated BEFORE the probe so the override actually overrides: an operator setting
+            # this wants the public route even when the VIP is up (e.g. the internal cache is
+            # serving bad data). Gating it on a failed probe would make the flag a no-op.
+            REGISTRY="https://packages.ever.co/"
+            echo "::warning title=Verdaccio public route in use::VERDACCIO_FORCE_PUBLIC=true - installing through packages.ever.co, which is known to truncate large tarballs mid-stream."
+            echo "//packages.ever.co/:_authToken=$VERDACCIO_TOKEN" >> .npmrc
+            echo "always-auth=true" >> .npmrc
+          else
+            if [ "$VERDACCIO_FORCE_PUBLIC" = "true" ]; then
+              echo "::warning title=VERDACCIO_FORCE_PUBLIC set without a token::VERDACCIO_TOKEN is empty, so packages.ever.co cannot be used; probing the internal VIP instead."
+            fi
+            # Retry only where the VIP is expected to answer. An external runner can never reach
+            # it, so a second attempt would just add dead time to every release job.
+            if [ "$EXPECT_VIP" = "true" ]; then ATTEMPTS=2; else ATTEMPTS=1; fi
+            if [ -n "$VERDACCIO_REGISTRY" ]; then
+              attempt=1
+              while [ "$attempt" -le "$ATTEMPTS" ]; do
+                if curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
+                  REGISTRY="${VERDACCIO_REGISTRY%/}/"
+                  echo "Verdaccio VIP is reachable (attempt $attempt) - using the internal npm cache."
+                  break
+                fi
+                attempt=$((attempt + 1))
+                if [ "$attempt" -le "$ATTEMPTS" ]; then sleep 3; fi
+              done
+            fi
+            if [ -z "$REGISTRY" ] && [ -z "$VERDACCIO_REGISTRY" ]; then
+              echo "No internal Verdaccio registry is configured (VERDACCIO_REGISTRY is empty) - resolving from the public npm registry."
+            elif [ -z "$REGISTRY" ]; then
+              echo "Verdaccio VIP did not answer - resolving from the public npm registry."
+              # An EXTERNAL runner not reaching the VIP is the designed outcome and stays quiet.
+              # An IN-NETWORK runner means the internal cache is silently unavailable (this fleet
+              # has a recurring MetalLB speaker flap that presents exactly this way), so surface
+              # it. Deliberately a warning, not a failure: a cache blip must never redden a
+              # release pipeline that npmjs can serve correctly.
+              if [ "$EXPECT_VIP" = "true" ]; then
+                echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
+              fi
+            fi
+          fi
+          if [ -n "$REGISTRY" ]; then
+            echo "registry=$REGISTRY" >> .npmrc
+            echo "registry \"$REGISTRY\"" >> .yarnrc
+            # One pass, no -i: an -i.bak backup survives on a clean: false runner if the step
+            # fails between the rewrite and its cleanup, and bare -i is not portable to the BSD
+            # sed on the macOS runners. The temp file is only ever the finished rewrite.
+            sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
+                -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
+            mv -f yarn.lock.rewritten yarn.lock
+          fi
+          echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
+        env:
+          VERDACCIO_REGISTRY: ${{ vars.VERDACCIO_REGISTRY }}
+          VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
+          VERDACCIO_FORCE_PUBLIC: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # true for the IN-NETWORK runners: the 18 [self-hosted, Windows, X64] jobs, plus any
+          # ever-k8s-* ARC pool reached through a runner variable (release-linux takes its os from
+          # vars.RUNNER_LINUX_APPS_X64, which may point at one). The ever-k8s disjunct is a no-op in
+          # workflows whose matrix cannot yield that label - it is kept so all 66 copies stay
+          # byte-identical and a future ARC matrix entry gets the retry and warning automatically.
+          # ubicloud and cirruslabs runners also report RUNNER_ENVIRONMENT=self-hosted, so that
+          # variable cannot be used as the discriminator without firing false warnings on the
+          # external jobs.
+          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
@@ -345,6 +626,95 @@ jobs:
           NX_DAEMON: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
           SNAPCRAFT_BUILD_ENVIRONMENT: host
+
+      - name: Scrub registry credentials
+        if: always()
+        shell: bash
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
+          set +e
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
+
+          # Prove the credential is gone, starting from "undetermined" rather than "absent" so no
+          # inconclusive result can pass. Two ways to be inconclusive: grep exits 2 when a file
+          # cannot be READ, and [ -f ] answers false for both "missing" and "cannot stat", so a
+          # bare existence test cannot tell an absent file from an unreachable one.
+          cred_state="undetermined"
+          if [ -e .npmrc ] || [ -L .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          elif [ -r . ] && [ -x . ]; then
+            # The directory is both readable AND searchable and neither a file nor a symlink named
+            # .npmrc exists, so the absence is proven rather than merely unobservable. Without the
+            # -x test a stat could fail in a directory that still answers -r, and without the -L
+            # test above a dangling symlink would read as "missing" while its target held a token.
+            cred_state="absent"
+          fi
+          # Artifacts that can also carry the token: .npmrc.bak is written by older revisions of
+          # this workflow, and a surviving .npmrc.scrubbed means the mv above did not complete.
+          # Present-but-clean is only clutter; present-and-carrying-a-token (or unreadable) is not.
+          for stray in .npmrc.bak .npmrc.scrubbed; do
+            if [ -e "$stray" ] || [ -L "$stray" ]; then
+              grep -q '_authToken=' "$stray"
+              if [ "$?" -ne 1 ]; then
+                cred_state="present in $stray"
+              fi
+            fi
+          done
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::Auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
 
   release-mac:
     needs: check-release-tag
@@ -392,15 +762,111 @@ jobs:
       - name: Configure Registry
         shell: bash
         run: |
-          if [ -n "${{ secrets.VERDACCIO_TOKEN }}" ]; then
-            echo "//packages.ever.co/:_authToken=${{ secrets.VERDACCIO_TOKEN }}" >> .npmrc
-            echo "registry=https://packages.ever.co/" >> .npmrc
-            echo "always-auth=true" >> .npmrc
-            echo 'registry "https://packages.ever.co/"' >> .yarnrc
-            sed -i.bak 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
-            sed -i.bak 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
-            rm -f yarn.lock.bak
+          # Registry selection is CONDITIONAL on where this job runs.
+          #
+          # The public Cloudflare-fronted route https://packages.ever.co intermittently TRUNCATES
+          # large tarballs mid-stream. Measured 2026-08-16 on
+          # @rspack/binding-win32-arm64-msvc@1.7.6: 9,525,323 bytes from packages.ever.co against
+          # 14,590,565 bytes (byte-exact) from BOTH the internal VIP and npmjs. The route sustains
+          # only ~280 KB/s, and a single release-windows-arm64 job logged 12 "unexpected end of
+          # file" errors against it.
+          #
+          # The truncation is UNDETECTABLE by the client: Cloudflare always sends
+          # "Accept-Encoding: gzip" to the origin, Verdaccio then re-gzips the already-gzipped
+          # .tgz, which drops Content-Length in favour of chunked encoding. A cut stream is
+          # therefore not a short read but a complete-looking HTTP 200 whose body fails gunzip,
+          # and Range requests are ignored so there is no resume and no length cross-check.
+          #
+          # Jobs in this repo run on a MIX of runners:
+          #   in-network - [self-hosted, Windows, X64] and the ever-k8s ARC pools
+          #   external   - windows-11-arm, ubicloud-*-arm, cirruslabs macOS, ubuntu-latest
+          # Only in-network runners can reach the VIP, and the internal cache buys an external
+          # runner nothing while adding a failure mode. The choice is therefore made by PROBING
+          # the VIP rather than by hardcoding a runner list, because release-linux runs on
+          # "vars.RUNNER_LINUX_APPS_X64 or ubuntu-latest" and so is not statically known.
+          #
+          # NO-REMOVAL RULE: the packages.ever.co path below is GATED, not deleted. Set the
+          # repo/org variable VERDACCIO_FORCE_PUBLIC=true to bring it back.
+
+          # Start from a known state. The self-hosted Windows jobs check out with clean: false and
+          # their cleanup step removes only dist/ and node_modules/, so registry edits from a
+          # PREVIOUS run can still be on disk. .yarnrc in particular is untracked and un-ignored,
+          # so nothing restores it: a stale "registry" line from an earlier run would silently
+          # win over this run's decision. This reset is NOT best-effort -- if we cannot establish
+          # a known starting state we must not go on to pick a registry, because the install would
+          # then quietly run against whatever the last job left behind.
+          rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten
+          if ! git checkout -- .npmrc yarn.lock; then
+            echo "::error title=Could not reset registry configuration::git checkout -- .npmrc yarn.lock failed on this workspace, so the previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
+            exit 1
           fi
+
+          REGISTRY=""
+          if [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
+            # Evaluated BEFORE the probe so the override actually overrides: an operator setting
+            # this wants the public route even when the VIP is up (e.g. the internal cache is
+            # serving bad data). Gating it on a failed probe would make the flag a no-op.
+            REGISTRY="https://packages.ever.co/"
+            echo "::warning title=Verdaccio public route in use::VERDACCIO_FORCE_PUBLIC=true - installing through packages.ever.co, which is known to truncate large tarballs mid-stream."
+            echo "//packages.ever.co/:_authToken=$VERDACCIO_TOKEN" >> .npmrc
+            echo "always-auth=true" >> .npmrc
+          else
+            if [ "$VERDACCIO_FORCE_PUBLIC" = "true" ]; then
+              echo "::warning title=VERDACCIO_FORCE_PUBLIC set without a token::VERDACCIO_TOKEN is empty, so packages.ever.co cannot be used; probing the internal VIP instead."
+            fi
+            # Retry only where the VIP is expected to answer. An external runner can never reach
+            # it, so a second attempt would just add dead time to every release job.
+            if [ "$EXPECT_VIP" = "true" ]; then ATTEMPTS=2; else ATTEMPTS=1; fi
+            if [ -n "$VERDACCIO_REGISTRY" ]; then
+              attempt=1
+              while [ "$attempt" -le "$ATTEMPTS" ]; do
+                if curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
+                  REGISTRY="${VERDACCIO_REGISTRY%/}/"
+                  echo "Verdaccio VIP is reachable (attempt $attempt) - using the internal npm cache."
+                  break
+                fi
+                attempt=$((attempt + 1))
+                if [ "$attempt" -le "$ATTEMPTS" ]; then sleep 3; fi
+              done
+            fi
+            if [ -z "$REGISTRY" ] && [ -z "$VERDACCIO_REGISTRY" ]; then
+              echo "No internal Verdaccio registry is configured (VERDACCIO_REGISTRY is empty) - resolving from the public npm registry."
+            elif [ -z "$REGISTRY" ]; then
+              echo "Verdaccio VIP did not answer - resolving from the public npm registry."
+              # An EXTERNAL runner not reaching the VIP is the designed outcome and stays quiet.
+              # An IN-NETWORK runner means the internal cache is silently unavailable (this fleet
+              # has a recurring MetalLB speaker flap that presents exactly this way), so surface
+              # it. Deliberately a warning, not a failure: a cache blip must never redden a
+              # release pipeline that npmjs can serve correctly.
+              if [ "$EXPECT_VIP" = "true" ]; then
+                echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
+              fi
+            fi
+          fi
+          if [ -n "$REGISTRY" ]; then
+            echo "registry=$REGISTRY" >> .npmrc
+            echo "registry \"$REGISTRY\"" >> .yarnrc
+            # One pass, no -i: an -i.bak backup survives on a clean: false runner if the step
+            # fails between the rewrite and its cleanup, and bare -i is not portable to the BSD
+            # sed on the macOS runners. The temp file is only ever the finished rewrite.
+            sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
+                -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
+            mv -f yarn.lock.rewritten yarn.lock
+          fi
+          echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
+        env:
+          VERDACCIO_REGISTRY: ${{ vars.VERDACCIO_REGISTRY }}
+          VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
+          VERDACCIO_FORCE_PUBLIC: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # true for the IN-NETWORK runners: the 18 [self-hosted, Windows, X64] jobs, plus any
+          # ever-k8s-* ARC pool reached through a runner variable (release-linux takes its os from
+          # vars.RUNNER_LINUX_APPS_X64, which may point at one). The ever-k8s disjunct is a no-op in
+          # workflows whose matrix cannot yield that label - it is kept so all 66 copies stay
+          # byte-identical and a future ARC matrix entry gets the retry and warning automatically.
+          # ubicloud and cirruslabs runners also report RUNNER_ENVIRONMENT=self-hosted, so that
+          # variable cannot be used as the discriminator without firing false warnings on the
+          # external jobs.
+          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
@@ -456,6 +922,95 @@ jobs:
           APPLE_API_KEY: /tmp/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+
+      - name: Scrub registry credentials
+        if: always()
+        shell: bash
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
+          set +e
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
+
+          # Prove the credential is gone, starting from "undetermined" rather than "absent" so no
+          # inconclusive result can pass. Two ways to be inconclusive: grep exits 2 when a file
+          # cannot be READ, and [ -f ] answers false for both "missing" and "cannot stat", so a
+          # bare existence test cannot tell an absent file from an unreachable one.
+          cred_state="undetermined"
+          if [ -e .npmrc ] || [ -L .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          elif [ -r . ] && [ -x . ]; then
+            # The directory is both readable AND searchable and neither a file nor a symlink named
+            # .npmrc exists, so the absence is proven rather than merely unobservable. Without the
+            # -x test a stat could fail in a directory that still answers -r, and without the -L
+            # test above a dangling symlink would read as "missing" while its target held a token.
+            cred_state="absent"
+          fi
+          # Artifacts that can also carry the token: .npmrc.bak is written by older revisions of
+          # this workflow, and a surviving .npmrc.scrubbed means the mv above did not complete.
+          # Present-but-clean is only clutter; present-and-carrying-a-token (or unreadable) is not.
+          for stray in .npmrc.bak .npmrc.scrubbed; do
+            if [ -e "$stray" ] || [ -L "$stray" ]; then
+              grep -q '_authToken=' "$stray"
+              if [ "$?" -ne 1 ]; then
+                cred_state="present in $stray"
+              fi
+            fi
+          done
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::Auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
 
   release-windows:
     needs: check-release-tag
@@ -524,15 +1079,111 @@ jobs:
       - name: Configure Registry
         shell: bash
         run: |
-          if [ -n "${{ secrets.VERDACCIO_TOKEN }}" ]; then
-            echo "//packages.ever.co/:_authToken=${{ secrets.VERDACCIO_TOKEN }}" >> .npmrc
-            echo "registry=https://packages.ever.co/" >> .npmrc
-            echo "always-auth=true" >> .npmrc
-            echo 'registry "https://packages.ever.co/"' >> .yarnrc
-            sed -i.bak 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
-            sed -i.bak 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
-            rm -f yarn.lock.bak
+          # Registry selection is CONDITIONAL on where this job runs.
+          #
+          # The public Cloudflare-fronted route https://packages.ever.co intermittently TRUNCATES
+          # large tarballs mid-stream. Measured 2026-08-16 on
+          # @rspack/binding-win32-arm64-msvc@1.7.6: 9,525,323 bytes from packages.ever.co against
+          # 14,590,565 bytes (byte-exact) from BOTH the internal VIP and npmjs. The route sustains
+          # only ~280 KB/s, and a single release-windows-arm64 job logged 12 "unexpected end of
+          # file" errors against it.
+          #
+          # The truncation is UNDETECTABLE by the client: Cloudflare always sends
+          # "Accept-Encoding: gzip" to the origin, Verdaccio then re-gzips the already-gzipped
+          # .tgz, which drops Content-Length in favour of chunked encoding. A cut stream is
+          # therefore not a short read but a complete-looking HTTP 200 whose body fails gunzip,
+          # and Range requests are ignored so there is no resume and no length cross-check.
+          #
+          # Jobs in this repo run on a MIX of runners:
+          #   in-network - [self-hosted, Windows, X64] and the ever-k8s ARC pools
+          #   external   - windows-11-arm, ubicloud-*-arm, cirruslabs macOS, ubuntu-latest
+          # Only in-network runners can reach the VIP, and the internal cache buys an external
+          # runner nothing while adding a failure mode. The choice is therefore made by PROBING
+          # the VIP rather than by hardcoding a runner list, because release-linux runs on
+          # "vars.RUNNER_LINUX_APPS_X64 or ubuntu-latest" and so is not statically known.
+          #
+          # NO-REMOVAL RULE: the packages.ever.co path below is GATED, not deleted. Set the
+          # repo/org variable VERDACCIO_FORCE_PUBLIC=true to bring it back.
+
+          # Start from a known state. The self-hosted Windows jobs check out with clean: false and
+          # their cleanup step removes only dist/ and node_modules/, so registry edits from a
+          # PREVIOUS run can still be on disk. .yarnrc in particular is untracked and un-ignored,
+          # so nothing restores it: a stale "registry" line from an earlier run would silently
+          # win over this run's decision. This reset is NOT best-effort -- if we cannot establish
+          # a known starting state we must not go on to pick a registry, because the install would
+          # then quietly run against whatever the last job left behind.
+          rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten
+          if ! git checkout -- .npmrc yarn.lock; then
+            echo "::error title=Could not reset registry configuration::git checkout -- .npmrc yarn.lock failed on this workspace, so the previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
+            exit 1
           fi
+
+          REGISTRY=""
+          if [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
+            # Evaluated BEFORE the probe so the override actually overrides: an operator setting
+            # this wants the public route even when the VIP is up (e.g. the internal cache is
+            # serving bad data). Gating it on a failed probe would make the flag a no-op.
+            REGISTRY="https://packages.ever.co/"
+            echo "::warning title=Verdaccio public route in use::VERDACCIO_FORCE_PUBLIC=true - installing through packages.ever.co, which is known to truncate large tarballs mid-stream."
+            echo "//packages.ever.co/:_authToken=$VERDACCIO_TOKEN" >> .npmrc
+            echo "always-auth=true" >> .npmrc
+          else
+            if [ "$VERDACCIO_FORCE_PUBLIC" = "true" ]; then
+              echo "::warning title=VERDACCIO_FORCE_PUBLIC set without a token::VERDACCIO_TOKEN is empty, so packages.ever.co cannot be used; probing the internal VIP instead."
+            fi
+            # Retry only where the VIP is expected to answer. An external runner can never reach
+            # it, so a second attempt would just add dead time to every release job.
+            if [ "$EXPECT_VIP" = "true" ]; then ATTEMPTS=2; else ATTEMPTS=1; fi
+            if [ -n "$VERDACCIO_REGISTRY" ]; then
+              attempt=1
+              while [ "$attempt" -le "$ATTEMPTS" ]; do
+                if curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
+                  REGISTRY="${VERDACCIO_REGISTRY%/}/"
+                  echo "Verdaccio VIP is reachable (attempt $attempt) - using the internal npm cache."
+                  break
+                fi
+                attempt=$((attempt + 1))
+                if [ "$attempt" -le "$ATTEMPTS" ]; then sleep 3; fi
+              done
+            fi
+            if [ -z "$REGISTRY" ] && [ -z "$VERDACCIO_REGISTRY" ]; then
+              echo "No internal Verdaccio registry is configured (VERDACCIO_REGISTRY is empty) - resolving from the public npm registry."
+            elif [ -z "$REGISTRY" ]; then
+              echo "Verdaccio VIP did not answer - resolving from the public npm registry."
+              # An EXTERNAL runner not reaching the VIP is the designed outcome and stays quiet.
+              # An IN-NETWORK runner means the internal cache is silently unavailable (this fleet
+              # has a recurring MetalLB speaker flap that presents exactly this way), so surface
+              # it. Deliberately a warning, not a failure: a cache blip must never redden a
+              # release pipeline that npmjs can serve correctly.
+              if [ "$EXPECT_VIP" = "true" ]; then
+                echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
+              fi
+            fi
+          fi
+          if [ -n "$REGISTRY" ]; then
+            echo "registry=$REGISTRY" >> .npmrc
+            echo "registry \"$REGISTRY\"" >> .yarnrc
+            # One pass, no -i: an -i.bak backup survives on a clean: false runner if the step
+            # fails between the rewrite and its cleanup, and bare -i is not portable to the BSD
+            # sed on the macOS runners. The temp file is only ever the finished rewrite.
+            sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
+                -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
+            mv -f yarn.lock.rewritten yarn.lock
+          fi
+          echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
+        env:
+          VERDACCIO_REGISTRY: ${{ vars.VERDACCIO_REGISTRY }}
+          VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
+          VERDACCIO_FORCE_PUBLIC: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # true for the IN-NETWORK runners: the 18 [self-hosted, Windows, X64] jobs, plus any
+          # ever-k8s-* ARC pool reached through a runner variable (release-linux takes its os from
+          # vars.RUNNER_LINUX_APPS_X64, which may point at one). The ever-k8s disjunct is a no-op in
+          # workflows whose matrix cannot yield that label - it is kept so all 66 copies stay
+          # byte-identical and a future ARC matrix entry gets the retry and warning automatically.
+          # ubicloud and cirruslabs runners also report RUNNER_ENVIRONMENT=self-hosted, so that
+          # variable cannot be used as the discriminator without firing false warnings on the
+          # external jobs.
+          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
@@ -620,6 +1271,95 @@ jobs:
           NX_PLUGIN_NO_TIMEOUTS: true
           NX_DAEMON: false
 
+      - name: Scrub registry credentials
+        if: always()
+        shell: bash
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
+          set +e
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
+
+          # Prove the credential is gone, starting from "undetermined" rather than "absent" so no
+          # inconclusive result can pass. Two ways to be inconclusive: grep exits 2 when a file
+          # cannot be READ, and [ -f ] answers false for both "missing" and "cannot stat", so a
+          # bare existence test cannot tell an absent file from an unreachable one.
+          cred_state="undetermined"
+          if [ -e .npmrc ] || [ -L .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          elif [ -r . ] && [ -x . ]; then
+            # The directory is both readable AND searchable and neither a file nor a symlink named
+            # .npmrc exists, so the absence is proven rather than merely unobservable. Without the
+            # -x test a stat could fail in a directory that still answers -r, and without the -L
+            # test above a dangling symlink would read as "missing" while its target held a token.
+            cred_state="absent"
+          fi
+          # Artifacts that can also carry the token: .npmrc.bak is written by older revisions of
+          # this workflow, and a surviving .npmrc.scrubbed means the mv above did not complete.
+          # Present-but-clean is only clutter; present-and-carrying-a-token (or unreadable) is not.
+          for stray in .npmrc.bak .npmrc.scrubbed; do
+            if [ -e "$stray" ] || [ -L "$stray" ]; then
+              grep -q '_authToken=' "$stray"
+              if [ "$?" -ne 1 ]; then
+                cred_state="present in $stray"
+              fi
+            fi
+          done
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::Auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
+
   release-windows-arm64:
     needs: check-release-tag
     runs-on: ${{ matrix.os }}
@@ -704,15 +1444,111 @@ jobs:
       - name: Configure Registry
         shell: bash
         run: |
-          if [ -n "${{ secrets.VERDACCIO_TOKEN }}" ]; then
-            echo "//packages.ever.co/:_authToken=${{ secrets.VERDACCIO_TOKEN }}" >> .npmrc
-            echo "registry=https://packages.ever.co/" >> .npmrc
-            echo "always-auth=true" >> .npmrc
-            echo 'registry "https://packages.ever.co/"' >> .yarnrc
-            sed -i.bak 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock
-            sed -i.bak 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock
-            rm -f yarn.lock.bak
+          # Registry selection is CONDITIONAL on where this job runs.
+          #
+          # The public Cloudflare-fronted route https://packages.ever.co intermittently TRUNCATES
+          # large tarballs mid-stream. Measured 2026-08-16 on
+          # @rspack/binding-win32-arm64-msvc@1.7.6: 9,525,323 bytes from packages.ever.co against
+          # 14,590,565 bytes (byte-exact) from BOTH the internal VIP and npmjs. The route sustains
+          # only ~280 KB/s, and a single release-windows-arm64 job logged 12 "unexpected end of
+          # file" errors against it.
+          #
+          # The truncation is UNDETECTABLE by the client: Cloudflare always sends
+          # "Accept-Encoding: gzip" to the origin, Verdaccio then re-gzips the already-gzipped
+          # .tgz, which drops Content-Length in favour of chunked encoding. A cut stream is
+          # therefore not a short read but a complete-looking HTTP 200 whose body fails gunzip,
+          # and Range requests are ignored so there is no resume and no length cross-check.
+          #
+          # Jobs in this repo run on a MIX of runners:
+          #   in-network - [self-hosted, Windows, X64] and the ever-k8s ARC pools
+          #   external   - windows-11-arm, ubicloud-*-arm, cirruslabs macOS, ubuntu-latest
+          # Only in-network runners can reach the VIP, and the internal cache buys an external
+          # runner nothing while adding a failure mode. The choice is therefore made by PROBING
+          # the VIP rather than by hardcoding a runner list, because release-linux runs on
+          # "vars.RUNNER_LINUX_APPS_X64 or ubuntu-latest" and so is not statically known.
+          #
+          # NO-REMOVAL RULE: the packages.ever.co path below is GATED, not deleted. Set the
+          # repo/org variable VERDACCIO_FORCE_PUBLIC=true to bring it back.
+
+          # Start from a known state. The self-hosted Windows jobs check out with clean: false and
+          # their cleanup step removes only dist/ and node_modules/, so registry edits from a
+          # PREVIOUS run can still be on disk. .yarnrc in particular is untracked and un-ignored,
+          # so nothing restores it: a stale "registry" line from an earlier run would silently
+          # win over this run's decision. This reset is NOT best-effort -- if we cannot establish
+          # a known starting state we must not go on to pick a registry, because the install would
+          # then quietly run against whatever the last job left behind.
+          rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten
+          if ! git checkout -- .npmrc yarn.lock; then
+            echo "::error title=Could not reset registry configuration::git checkout -- .npmrc yarn.lock failed on this workspace, so the previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
+            exit 1
           fi
+
+          REGISTRY=""
+          if [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
+            # Evaluated BEFORE the probe so the override actually overrides: an operator setting
+            # this wants the public route even when the VIP is up (e.g. the internal cache is
+            # serving bad data). Gating it on a failed probe would make the flag a no-op.
+            REGISTRY="https://packages.ever.co/"
+            echo "::warning title=Verdaccio public route in use::VERDACCIO_FORCE_PUBLIC=true - installing through packages.ever.co, which is known to truncate large tarballs mid-stream."
+            echo "//packages.ever.co/:_authToken=$VERDACCIO_TOKEN" >> .npmrc
+            echo "always-auth=true" >> .npmrc
+          else
+            if [ "$VERDACCIO_FORCE_PUBLIC" = "true" ]; then
+              echo "::warning title=VERDACCIO_FORCE_PUBLIC set without a token::VERDACCIO_TOKEN is empty, so packages.ever.co cannot be used; probing the internal VIP instead."
+            fi
+            # Retry only where the VIP is expected to answer. An external runner can never reach
+            # it, so a second attempt would just add dead time to every release job.
+            if [ "$EXPECT_VIP" = "true" ]; then ATTEMPTS=2; else ATTEMPTS=1; fi
+            if [ -n "$VERDACCIO_REGISTRY" ]; then
+              attempt=1
+              while [ "$attempt" -le "$ATTEMPTS" ]; do
+                if curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
+                  REGISTRY="${VERDACCIO_REGISTRY%/}/"
+                  echo "Verdaccio VIP is reachable (attempt $attempt) - using the internal npm cache."
+                  break
+                fi
+                attempt=$((attempt + 1))
+                if [ "$attempt" -le "$ATTEMPTS" ]; then sleep 3; fi
+              done
+            fi
+            if [ -z "$REGISTRY" ] && [ -z "$VERDACCIO_REGISTRY" ]; then
+              echo "No internal Verdaccio registry is configured (VERDACCIO_REGISTRY is empty) - resolving from the public npm registry."
+            elif [ -z "$REGISTRY" ]; then
+              echo "Verdaccio VIP did not answer - resolving from the public npm registry."
+              # An EXTERNAL runner not reaching the VIP is the designed outcome and stays quiet.
+              # An IN-NETWORK runner means the internal cache is silently unavailable (this fleet
+              # has a recurring MetalLB speaker flap that presents exactly this way), so surface
+              # it. Deliberately a warning, not a failure: a cache blip must never redden a
+              # release pipeline that npmjs can serve correctly.
+              if [ "$EXPECT_VIP" = "true" ]; then
+                echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
+              fi
+            fi
+          fi
+          if [ -n "$REGISTRY" ]; then
+            echo "registry=$REGISTRY" >> .npmrc
+            echo "registry \"$REGISTRY\"" >> .yarnrc
+            # One pass, no -i: an -i.bak backup survives on a clean: false runner if the step
+            # fails between the rewrite and its cleanup, and bare -i is not portable to the BSD
+            # sed on the macOS runners. The temp file is only ever the finished rewrite.
+            sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
+                -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
+            mv -f yarn.lock.rewritten yarn.lock
+          fi
+          echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
+        env:
+          VERDACCIO_REGISTRY: ${{ vars.VERDACCIO_REGISTRY }}
+          VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
+          VERDACCIO_FORCE_PUBLIC: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # true for the IN-NETWORK runners: the 18 [self-hosted, Windows, X64] jobs, plus any
+          # ever-k8s-* ARC pool reached through a runner variable (release-linux takes its os from
+          # vars.RUNNER_LINUX_APPS_X64, which may point at one). The ever-k8s disjunct is a no-op in
+          # workflows whose matrix cannot yield that label - it is kept so all 66 copies stay
+          # byte-identical and a future ARC matrix entry gets the retry and warning automatically.
+          # ubicloud and cirruslabs runners also report RUNNER_ENVIRONMENT=self-hosted, so that
+          # variable cannot be used as the discriminator without firing false warnings on the
+          # external jobs.
+          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
@@ -795,3 +1631,92 @@ jobs:
           NX_NO_CLOUD: true
           NX_PLUGIN_NO_TIMEOUTS: true
           NX_DAEMON: false
+
+      - name: Scrub registry credentials
+        if: always()
+        shell: bash
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
+          set +e
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
+
+          # Prove the credential is gone, starting from "undetermined" rather than "absent" so no
+          # inconclusive result can pass. Two ways to be inconclusive: grep exits 2 when a file
+          # cannot be READ, and [ -f ] answers false for both "missing" and "cannot stat", so a
+          # bare existence test cannot tell an absent file from an unreachable one.
+          cred_state="undetermined"
+          if [ -e .npmrc ] || [ -L .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          elif [ -r . ] && [ -x . ]; then
+            # The directory is both readable AND searchable and neither a file nor a symlink named
+            # .npmrc exists, so the absence is proven rather than merely unobservable. Without the
+            # -x test a stat could fail in a directory that still answers -r, and without the -L
+            # test above a dangling symlink would read as "missing" while its target held a token.
+            cred_state="absent"
+          fi
+          # Artifacts that can also carry the token: .npmrc.bak is written by older revisions of
+          # this workflow, and a surviving .npmrc.scrubbed means the mv above did not complete.
+          # Present-but-clean is only clutter; present-and-carrying-a-token (or unreadable) is not.
+          for stray in .npmrc.bak .npmrc.scrubbed; do
+            if [ -e "$stray" ] || [ -L "$stray" ]; then
+              grep -q '_authToken=' "$stray"
+              if [ "$?" -ne 1 ]; then
+                cred_state="present in $stray"
+              fi
+            fi
+          done
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::Auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
