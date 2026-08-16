@@ -28,7 +28,7 @@ name: External Uptime Monitor
 
 # Domain vocabulary and curl `-w` field names used throughout this file. `.cspell.json` runs
 # with `strict: true` on every PR to develop, so without this the Cspell check goes red.
-# cspell:ignore homelab ttfb blackhole redirs namelookup appconnect starttransfer esac
+# cspell:ignore homelab ttfb blackhole redirs namelookup appconnect starttransfer esac selftest
 
 on:
   schedule:
@@ -372,9 +372,9 @@ jobs:
               echo "::error::Could not read alert issue #${NUM}. The outage is already visible there, so skipping the comment rather than risking a duplicate."
               exit 1
             fi
-            # No pipe in a decision. Under `pipefail` a SIGPIPE'd producer can make an already-
-            # MATCHED grep report failure, which would post a redundant comment on every run of a
-            # steady outage — defeating the de-duplication exactly when it matters most.
+            # No pipe in a decision. Under `pipefail`, a producer killed by SIGPIPE can make an
+            # already-MATCHED grep report failure, which would post a redundant comment on every
+            # run of a steady outage — defeating the de-duplication exactly when it matters most.
             if grep -q "uptime-fingerprint: ${FINGERPRINT}" <<< "${LAST}"; then
               echo "State unchanged (fingerprint ${FINGERPRINT}) — not commenting, to avoid issue spam."
             else
