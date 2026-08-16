@@ -37,6 +37,14 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
+env:
+  # The dependency tree travels between jobs as this one file. Deliberately a workspace-relative
+  # name: `runner.temp` is not available to workflow-level `env` (only the github/vars/inputs
+  # contexts are), and a relative path means the same string works for `tar` in a `run` step, for
+  # `actions/cache`, and for upload/download-artifact. It sits at the workspace ROOT, so it is never
+  # inside any of the `node_modules` directories being archived.
+  NODE_MODULES_ARCHIVE: e2e-node-modules.tar.zst
+
 jobs:
   # ---------------------------------------------------------------------------------------------
   # 1) deps — pay `yarn bootstrap` ONCE per lockfile and hand node_modules to every other job.
@@ -62,20 +70,12 @@ jobs:
         shell: bash
         run: echo "value=${{ runner.os }}-${{ runner.arch }}-e2e-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}" >> "$GITHUB_OUTPUT"
 
-      - name: Restore node_modules cache
+      - name: Restore node_modules archive cache
         id: cache
         uses: actions/cache/restore@v5
         with:
-          # yarn workspaces hoist to the root, but package.json `nohoist` (@angular*, @ngtools,
-          # @types/jasmine*) keeps per-workspace copies — cache those too or the restored tree is
-          # incomplete and Angular builds fail. Exact key only, never restore-keys: a partially
-          # matching node_modules is worse than no node_modules.
-          path: |
-            node_modules
-            apps/*/node_modules
-            packages/*/node_modules
-            packages/plugins/*/node_modules
-            tools/node_modules
+          # ONE compressed archive, not the exploded tree. See the archive step below for why.
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ steps.cache-key.outputs.value }}
 
       - name: Install Packages & Bootstrap
@@ -88,19 +88,77 @@ jobs:
           yarn bootstrap \
             || { echo "::warning::yarn bootstrap failed — retry 1"; yarn bootstrap; }
 
-      - name: Save node_modules cache
+      - name: Archive node_modules
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        # Pack the whole dependency tree into a SINGLE compressed file.
+        #
+        # This used to cache the exploded tree (~9 GB, ~900k files) directly, against a 10 GB
+        # repository budget that `build.yml` already fills with a 4.66 GB setup-node yarn cache PER
+        # REF. Measured, not assumed:
+        #   - ACROSS runs it never survived. deps paid a cold bootstrap every time — 3 h 20 m on run
+        #     31848093657, 3 h 46 m on 31889575135.
+        #   - WITHIN a run it was a coin flip. On 31848093657 all four shards hit it; on 31889575135
+        #     the build job hit it and shard 2 missed an hour later and started its own bootstrap —
+        #     exactly the cost the deps/build/e2e split exists to pay only once.
+        # An artifact removes the coin flip (see the upload step); a single ~3 GB file instead of a
+        # 9 GB tree also gives the cross-run cache a chance it never had.
+        #
+        # zstd on one file also beats the cache action's per-file handling of a huge tree in both
+        # directions. `--warning=no-file-changed` because yarn's own daemon can touch files while we
+        # read them; `|| [ $? -eq 1 ]` accepts tar's "file changed as we read it" (exit 1) but still
+        # fails on a real error (exit 2).
+        run: |
+          set -o pipefail
+          PATHS=()
+          for p in node_modules apps/*/node_modules packages/*/node_modules \
+                   packages/plugins/*/node_modules tools/node_modules; do
+            [ -d "$p" ] && PATHS+=("$p")
+          done
+          if [ ${#PATHS[@]} -eq 0 ]; then
+            echo "::error::bootstrap produced no node_modules directories"; exit 1
+          fi
+          echo "archiving ${#PATHS[@]} directories"
+          if command -v zstd >/dev/null 2>&1; then
+            COMPRESS="zstd -3 -T0"
+          else
+            echo "::warning::zstd unavailable — falling back to gzip (larger archive, slower)"
+            COMPRESS="gzip -3"
+          fi
+          tar --warning=no-file-changed --use-compress-program="$COMPRESS" \
+              -cf "$NODE_MODULES_ARCHIVE" "${PATHS[@]}" || [ $? -eq 1 ]
+          ls -lh "$NODE_MODULES_ARCHIVE"
+          # Tolerating tar's exit 1 means a TRUNCATED archive could be published, and every
+          # downstream job would then fall back to its own multi-hour bootstrap. A cheap size floor
+          # catches the gross case; a full `tar -t` would re-read every byte for little extra.
+          size=$(stat -c%s "$NODE_MODULES_ARCHIVE")
+          echo "archive bytes: $size"
+          if [ "$size" -lt 104857600 ]; then
+            echo "::error::archive is only $size bytes — the dependency tree cannot be that small"
+            exit 1
+          fi
+
+      - name: Save node_modules archive cache
         if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
         # Explicit save (not the combined actions/cache post-step) so a FAILED bootstrap can never
         # publish a half-installed tree: this step only runs when every step above succeeded.
+        # Best-effort — the artifact below, not this, is what the downstream jobs rely on.
         with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            packages/*/node_modules
-            packages/plugins/*/node_modules
-            tools/node_modules
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ steps.cache-key.outputs.value }}
+
+      - name: Upload node_modules archive
+        uses: actions/upload-artifact@v4
+        # The GUARANTEED handoff. An artifact is scoped to this run and cannot be evicted mid-run by
+        # another workflow's cache write, which is what left shard 2 of run 31889575135 doing its own
+        # 3-hour bootstrap an hour after deps had published the tree.
+        with:
+          name: e2e-node-modules
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          retention-days: 1
+          compression-level: 0 # already zstd/gzip compressed; re-zipping only burns CPU
+          if-no-files-found: error
 
   # ---------------------------------------------------------------------------------------------
   # 2) build — compile the API bundle and the static web bundle. No tests run here.
@@ -118,26 +176,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Restore node_modules cache
-        id: cache
-        uses: actions/cache/restore@v5
+      - name: Download node_modules archive
+        id: archive
+        uses: actions/download-artifact@v4
+        # From THIS run, so it cannot have been evicted by another workflow's cache write.
+        continue-on-error: true
         with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            packages/*/node_modules
-            packages/plugins/*/node_modules
-            tools/node_modules
-          key: ${{ needs.deps.outputs.node-modules-key }}
+          name: e2e-node-modules
 
-      - name: Install Packages & Bootstrap (cache fallback)
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Unpack node_modules
+        id: unpack
+        if: steps.archive.outcome == 'success'
         shell: bash
-        # Safety net only — `deps` just populated this key. A miss here means the Actions cache
-        # service is not usable from these runners, which is worth shouting about because every
-        # job then pays the full install again.
         run: |
-          echo "::warning::node_modules cache miss — falling back to a full bootstrap (1-3 h on these runners)."
+          tar -xf "$NODE_MODULES_ARCHIVE"
+          rm -f "$NODE_MODULES_ARCHIVE"
+          test -d node_modules
+
+      - name: Install Packages & Bootstrap (fallback)
+        if: steps.unpack.outcome != 'success'
+        shell: bash
+        # Safety net only — `deps` just published the archive. Reaching this means the artifact was
+        # unavailable or corrupt, which is worth shouting about because this job then pays the full
+        # install again.
+        run: |
+          echo "::warning::node_modules archive unavailable — falling back to a full bootstrap (1-3 h on these runners)."
           yarn bootstrap \
             || { echo "::warning::yarn bootstrap failed — retry 1"; yarn bootstrap; }
 
@@ -326,25 +389,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Restore node_modules cache
-        id: cache
-        uses: actions/cache/restore@v5
+      - name: Download node_modules archive
+        id: archive
+        uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            packages/*/node_modules
-            packages/plugins/*/node_modules
-            tools/node_modules
-          key: ${{ needs.deps.outputs.node-modules-key }}
+          name: e2e-node-modules
 
-      - name: Install Packages & Bootstrap (cache fallback)
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Unpack node_modules
+        id: unpack
+        if: steps.archive.outcome == 'success'
+        shell: bash
+        run: |
+          tar -xf "$NODE_MODULES_ARCHIVE"
+          rm -f "$NODE_MODULES_ARCHIVE"
+          test -d node_modules
+
+      - name: Install Packages & Bootstrap (fallback)
+        if: steps.unpack.outcome != 'success'
         shell: bash
         # node_modules is still needed at runtime here: the API bundle keeps third-party deps
         # external, and Playwright/playwright-bdd run from it.
         run: |
-          echo "::warning::node_modules cache miss — falling back to a full bootstrap (1-3 h on these runners)."
+          echo "::warning::node_modules archive unavailable — falling back to a full bootstrap (1-3 h on these runners)."
           yarn bootstrap \
             || { echo "::warning::yarn bootstrap failed — retry 1"; yarn bootstrap; }
 
