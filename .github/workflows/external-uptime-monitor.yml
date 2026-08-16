@@ -26,6 +26,10 @@ name: External Uptime Monitor
 #  unlimited. This costs $0. If the repo ever goes private, reduce the cron to hourly.
 # =====================================================================================
 
+# Domain vocabulary and curl `-w` field names used throughout this file. `.cspell.json` runs
+# with `strict: true` on every PR to develop, so without this the Cspell check goes red.
+# cspell:ignore homelab ttfb blackhole redirs namelookup appconnect starttransfer esac
+
 on:
   schedule:
     # Every 15 minutes. Free on public repos. GitHub's scheduler is best-effort and can
@@ -38,6 +42,16 @@ on:
         description: 'Probe the endpoints but never open, comment on, or close the alert issue'
         type: boolean
         default: false
+      test_target_url:
+        # Without this, every route into the alerting code is closed off in advance: pull_request
+        # forces alerting off, dry_run forces it off, and a manual run against a HEALTHY production
+        # takes the recovery branch and exits early. That leaves `gh issue create` / `comment` /
+        # `close` executing for the first time in their lives DURING a real incident — a monitor
+        # whose alert delivery has only ever been assumed. This input lets a human rehearse the
+        # full open → comment → close cycle on demand.
+        description: 'Rehearsal only: add an extra CRITICAL target that is expected to FAIL (e.g. https://httpstat.us/503) to exercise the real alert open/comment/close path. This WILL open a real issue.'
+        type: string
+        default: ''
 
   # Self-test: whenever THIS file changes, run it on the pull request so the YAML is proven
   # to parse and the probes are proven to work before it is merged. Alerting is force-disabled
@@ -106,7 +120,10 @@ jobs:
       - name: Record runner public egress IP
         id: egress
         run: |
-          set -uo pipefail
+          # GitHub invokes every `run:` step as `/usr/bin/bash -e {0}`, so -e is ALREADY on and a bare
+          # `set -uo pipefail` cannot turn it off. Spelled out so nobody assumes otherwise: anything
+          # here that is allowed to fail must carry its own `|| true` / `if !` guard.
+          set -euo pipefail
           # Knowing WHERE the probe observed from is what separates "production is down"
           # from "this particular network path is broken".
           IP=""
@@ -121,7 +138,10 @@ jobs:
       - name: Probe endpoints
         id: probe
         run: |
-          set -uo pipefail
+          # GitHub invokes every `run:` step as `/usr/bin/bash -e {0}`, so -e is ALREADY on and a bare
+          # `set -uo pipefail` cannot turn it off. Spelled out so nobody assumes otherwise: anything
+          # here that is allowed to fail must carry its own `|| true` / `if !` guard.
+          set -euo pipefail
 
           # id | severity | url | body-regex (empty = no body assertion)
           #
@@ -130,13 +150,28 @@ jobs:
           #                      stage is WIP by fleet policy and brief downtime is expected;
           #                      letting it flap would keep the alert issue permanently open
           #                      and mask a real production outage.
+          # `prod-web` is half the CRITICAL surface, so it must not pass on a bare 2xx: nginx will
+          # answer 200 for a wrong-image deploy, a different app on the hostname, or a default
+          # page. `<ga-app` is the Angular root selector, verified present in the live index.html.
+          # Be honest about what this buys: it closes "the content served is not the Gauzy app",
+          # NOT "the app boots in a browser" — the selector is in index.html whether or not the JS
+          # bundle loads. It also cannot detect a bad route: this is an SPA, so a bogus path
+          # correctly returns the same shell (measured: /bogus-xyz-9931 -> 200, identical bytes).
           TARGETS=(
-            'prod-web|critical|https://app.gauzy.co/|'
+            'prod-web|critical|https://app.gauzy.co/|<ga-app'
             'prod-api|critical|https://api.gauzy.co/api/health|"status"[[:space:]]*:[[:space:]]*"ok"'
             'marketing|warn|https://gauzy.co/|'
             'stage-web|warn|https://stage.gauzy.co/|'
             'stage-api|warn|https://apistage.gauzy.co/api/health|"status"[[:space:]]*:[[:space:]]*"ok"'
           )
+
+          # Rehearsal target from workflow_dispatch, so the alert path can be exercised on demand
+          # instead of debuting during a real incident. Appended last so it can never displace or
+          # reorder a real target.
+          if [ -n "${TEST_TARGET_URL}" ]; then
+            TARGETS+=("selftest|critical|${TEST_TARGET_URL}|")
+            echo "::warning::Rehearsal target added: ${TEST_TARGET_URL} — if it fails, this run WILL open a real ${ALERT_LABEL} issue."
+          fi
 
           REPORT="${RUNNER_TEMP}/report.md"
           : > "$REPORT"
@@ -253,11 +288,16 @@ jobs:
           echo "failed_critical='${FAILED_CRITICAL}' failed_warn='${FAILED_WARN}' fp=${FP}"
         env:
           EGRESS_IP: ${{ steps.egress.outputs.ip }}
+          # Empty on every trigger except a manual rehearsal run. Declared here so `set -u` sees it.
+          TEST_TARGET_URL: ${{ github.event.inputs.test_target_url }}
 
       - name: Ensure alert label exists
         if: steps.mode.outputs.alerting == 'on'
         run: |
-          set -uo pipefail
+          # GitHub invokes every `run:` step as `/usr/bin/bash -e {0}`, so -e is ALREADY on and a bare
+          # `set -uo pipefail` cannot turn it off. Spelled out so nobody assumes otherwise: anything
+          # here that is allowed to fail must carry its own `|| true` / `if !` guard.
+          set -euo pipefail
           gh label create "${ALERT_LABEL}" \
             --color B60205 \
             --description 'Automated external uptime probe alert' \
@@ -332,7 +372,10 @@ jobs:
               echo "::error::Could not read alert issue #${NUM}. The outage is already visible there, so skipping the comment rather than risking a duplicate."
               exit 1
             fi
-            if printf '%s' "${LAST}" | grep -q "uptime-fingerprint: ${FINGERPRINT}"; then
+            # No pipe in a decision. Under `pipefail` a SIGPIPE'd producer can make an already-
+            # MATCHED grep report failure, which would post a redundant comment on every run of a
+            # steady outage — defeating the de-duplication exactly when it matters most.
+            if grep -q "uptime-fingerprint: ${FINGERPRINT}" <<< "${LAST}"; then
               echo "State unchanged (fingerprint ${FINGERPRINT}) — not commenting, to avoid issue spam."
             else
               echo "State changed — adding one comment."
@@ -376,7 +419,13 @@ jobs:
             echo "<!-- uptime-fingerprint: recovered-${FINGERPRINT} -->"
           } > "$BODY"
 
-          gh issue comment "${NUM}" --repo "${GITHUB_REPOSITORY}" --body-file "$BODY"
+          # Never let a failed recovery comment block the close. Under `set -e` a transient
+          # secondary-rate-limit on the comment would abort this step BEFORE the close below,
+          # leaving a stale "production is down" issue open on a recovered service — exactly the
+          # outcome the comment above says this step exists to prevent. Warn, then close anyway.
+          gh issue comment "${NUM}" --repo "${GITHUB_REPOSITORY}" --body-file "$BODY" \
+            || echo "::warning::Recovery comment on #${NUM} failed; closing the issue regardless."
+          # The close itself stays fatal under -e — that one must never fail silently.
           gh issue close "${NUM}" --repo "${GITHUB_REPOSITORY}" --reason completed
 
       - name: Fail the run if a critical endpoint is down
@@ -386,3 +435,11 @@ jobs:
           exit 1
         env:
           FAILED_CRITICAL: ${{ steps.probe.outputs.failed_critical }}
+
+      - name: Report that the probe itself broke
+        # A custom `if:` is implicitly combined with success(), so if the probe step dies every step
+        # above is skipped: the run goes red with no alert issue and no explanation, and "the probe
+        # broke" becomes indistinguishable from "production is down". Say so explicitly.
+        if: failure() && steps.probe.outcome == 'failure'
+        run: |
+          echo "::error::The probe step itself failed — this run is NOT evidence about production. Investigate the runner/tooling, not the endpoints."
