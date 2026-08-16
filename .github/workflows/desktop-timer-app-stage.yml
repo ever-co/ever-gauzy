@@ -222,11 +222,13 @@ jobs:
                   break
                 fi
                 attempt=$((attempt + 1))
-                [ "$attempt" -le "$ATTEMPTS" ] && sleep 3
+                if [ "$attempt" -le "$ATTEMPTS" ]; then sleep 3; fi
               done
             fi
-            if [ -z "$REGISTRY" ]; then
-              echo "Verdaccio VIP is not in use - resolving from the public npm registry."
+            if [ -z "$REGISTRY" ] && [ -z "$VERDACCIO_REGISTRY" ]; then
+              echo "No internal Verdaccio registry is configured (VERDACCIO_REGISTRY is empty) - resolving from the public npm registry."
+            elif [ -z "$REGISTRY" ]; then
+              echo "Verdaccio VIP did not answer - resolving from the public npm registry."
               # An EXTERNAL runner not reaching the VIP is the designed outcome and stays quiet.
               # An IN-NETWORK runner means the internal cache is silently unavailable (this fleet
               # has a recurring MetalLB speaker flap that presents exactly this way), so surface
@@ -252,29 +254,13 @@ jobs:
           # true only for the 18 [self-hosted, Windows, X64] jobs. ubicloud and cirruslabs
           # runners also report RUNNER_ENVIRONMENT=self-hosted, so that variable cannot be used
           # as the discriminator here without firing false warnings on 24 external jobs.
-          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') }}
+          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
       - name: Run Postinstall Manually
         run: 'yarn postinstall.manual'
-
-      - name: Scrub registry credentials
-        if: always()
-        shell: bash
-        run: |
-          # The auth token must not outlive the job. These runners check out with clean: false and
-          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
-          # //packages.ever.co/:_authToken=... would sit on disk until the NEXT job's Configure
-          # Registry step resets it - readable by anything scheduled on this runner in between.
-          # Only the credential lines go; the registry= line stays so any later step still
-          # resolves from the same place. Runs on failure too, which is when it would linger.
-          if [ -f .npmrc ]; then
-            sed -i.bak -e '/_authToken=/d' -e '/always-auth=/d' .npmrc
-            rm -f .npmrc.bak
-          fi
-          echo "Registry credentials scrubbed from .npmrc."
 
       - name: Bump version desktop timer app
         uses: actions/github-script@v8
@@ -312,6 +298,29 @@ jobs:
           NX_NO_CLOUD: true
           NX_DAEMON: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
+
+      - name: Scrub registry credentials
+        if: always()
+        shell: bash
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
+            mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed
+          echo "Registry credentials scrubbed from .npmrc."
 
   release-linux-arm64:
     needs: check-release-tag
@@ -447,11 +456,13 @@ jobs:
                   break
                 fi
                 attempt=$((attempt + 1))
-                [ "$attempt" -le "$ATTEMPTS" ] && sleep 3
+                if [ "$attempt" -le "$ATTEMPTS" ]; then sleep 3; fi
               done
             fi
-            if [ -z "$REGISTRY" ]; then
-              echo "Verdaccio VIP is not in use - resolving from the public npm registry."
+            if [ -z "$REGISTRY" ] && [ -z "$VERDACCIO_REGISTRY" ]; then
+              echo "No internal Verdaccio registry is configured (VERDACCIO_REGISTRY is empty) - resolving from the public npm registry."
+            elif [ -z "$REGISTRY" ]; then
+              echo "Verdaccio VIP did not answer - resolving from the public npm registry."
               # An EXTERNAL runner not reaching the VIP is the designed outcome and stays quiet.
               # An IN-NETWORK runner means the internal cache is silently unavailable (this fleet
               # has a recurring MetalLB speaker flap that presents exactly this way), so surface
@@ -477,29 +488,13 @@ jobs:
           # true only for the 18 [self-hosted, Windows, X64] jobs. ubicloud and cirruslabs
           # runners also report RUNNER_ENVIRONMENT=self-hosted, so that variable cannot be used
           # as the discriminator here without firing false warnings on 24 external jobs.
-          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') }}
+          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
       - name: Run Postinstall Manually
         run: 'yarn postinstall.manual'
-
-      - name: Scrub registry credentials
-        if: always()
-        shell: bash
-        run: |
-          # The auth token must not outlive the job. These runners check out with clean: false and
-          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
-          # //packages.ever.co/:_authToken=... would sit on disk until the NEXT job's Configure
-          # Registry step resets it - readable by anything scheduled on this runner in between.
-          # Only the credential lines go; the registry= line stays so any later step still
-          # resolves from the same place. Runs on failure too, which is when it would linger.
-          if [ -f .npmrc ]; then
-            sed -i.bak -e '/_authToken=/d' -e '/always-auth=/d' .npmrc
-            rm -f .npmrc.bak
-          fi
-          echo "Registry credentials scrubbed from .npmrc."
 
       - name: Bump version desktop timer app
         uses: actions/github-script@v8
@@ -539,6 +534,29 @@ jobs:
           NX_DAEMON: false
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
           SNAPCRAFT_BUILD_ENVIRONMENT: host
+
+      - name: Scrub registry credentials
+        if: always()
+        shell: bash
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
+            mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed
+          echo "Registry credentials scrubbed from .npmrc."
 
   release-mac:
     needs: check-release-tag
@@ -650,11 +668,13 @@ jobs:
                   break
                 fi
                 attempt=$((attempt + 1))
-                [ "$attempt" -le "$ATTEMPTS" ] && sleep 3
+                if [ "$attempt" -le "$ATTEMPTS" ]; then sleep 3; fi
               done
             fi
-            if [ -z "$REGISTRY" ]; then
-              echo "Verdaccio VIP is not in use - resolving from the public npm registry."
+            if [ -z "$REGISTRY" ] && [ -z "$VERDACCIO_REGISTRY" ]; then
+              echo "No internal Verdaccio registry is configured (VERDACCIO_REGISTRY is empty) - resolving from the public npm registry."
+            elif [ -z "$REGISTRY" ]; then
+              echo "Verdaccio VIP did not answer - resolving from the public npm registry."
               # An EXTERNAL runner not reaching the VIP is the designed outcome and stays quiet.
               # An IN-NETWORK runner means the internal cache is silently unavailable (this fleet
               # has a recurring MetalLB speaker flap that presents exactly this way), so surface
@@ -680,29 +700,13 @@ jobs:
           # true only for the 18 [self-hosted, Windows, X64] jobs. ubicloud and cirruslabs
           # runners also report RUNNER_ENVIRONMENT=self-hosted, so that variable cannot be used
           # as the discriminator here without firing false warnings on 24 external jobs.
-          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') }}
+          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
       - name: Run Postinstall Manually
         run: 'yarn postinstall.manual'
-
-      - name: Scrub registry credentials
-        if: always()
-        shell: bash
-        run: |
-          # The auth token must not outlive the job. These runners check out with clean: false and
-          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
-          # //packages.ever.co/:_authToken=... would sit on disk until the NEXT job's Configure
-          # Registry step resets it - readable by anything scheduled on this runner in between.
-          # Only the credential lines go; the registry= line stays so any later step still
-          # resolves from the same place. Runs on failure too, which is when it would linger.
-          if [ -f .npmrc ]; then
-            sed -i.bak -e '/_authToken=/d' -e '/always-auth=/d' .npmrc
-            rm -f .npmrc.bak
-          fi
-          echo "Registry credentials scrubbed from .npmrc."
 
       - name: Bump version desktop timer app
         uses: actions/github-script@v8
@@ -783,6 +787,29 @@ jobs:
           APPLE_API_KEY: /tmp/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+
+      - name: Scrub registry credentials
+        if: always()
+        shell: bash
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
+            mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed
+          echo "Registry credentials scrubbed from .npmrc."
 
   release-windows:
     needs: check-release-tag
@@ -915,11 +942,13 @@ jobs:
                   break
                 fi
                 attempt=$((attempt + 1))
-                [ "$attempt" -le "$ATTEMPTS" ] && sleep 3
+                if [ "$attempt" -le "$ATTEMPTS" ]; then sleep 3; fi
               done
             fi
-            if [ -z "$REGISTRY" ]; then
-              echo "Verdaccio VIP is not in use - resolving from the public npm registry."
+            if [ -z "$REGISTRY" ] && [ -z "$VERDACCIO_REGISTRY" ]; then
+              echo "No internal Verdaccio registry is configured (VERDACCIO_REGISTRY is empty) - resolving from the public npm registry."
+            elif [ -z "$REGISTRY" ]; then
+              echo "Verdaccio VIP did not answer - resolving from the public npm registry."
               # An EXTERNAL runner not reaching the VIP is the designed outcome and stays quiet.
               # An IN-NETWORK runner means the internal cache is silently unavailable (this fleet
               # has a recurring MetalLB speaker flap that presents exactly this way), so surface
@@ -945,29 +974,13 @@ jobs:
           # true only for the 18 [self-hosted, Windows, X64] jobs. ubicloud and cirruslabs
           # runners also report RUNNER_ENVIRONMENT=self-hosted, so that variable cannot be used
           # as the discriminator here without firing false warnings on 24 external jobs.
-          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') }}
+          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
       - name: Run Postinstall Manually
         run: 'yarn postinstall.manual'
-
-      - name: Scrub registry credentials
-        if: always()
-        shell: bash
-        run: |
-          # The auth token must not outlive the job. These runners check out with clean: false and
-          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
-          # //packages.ever.co/:_authToken=... would sit on disk until the NEXT job's Configure
-          # Registry step resets it - readable by anything scheduled on this runner in between.
-          # Only the credential lines go; the registry= line stays so any later step still
-          # resolves from the same place. Runs on failure too, which is when it would linger.
-          if [ -f .npmrc ]; then
-            sed -i.bak -e '/_authToken=/d' -e '/always-auth=/d' .npmrc
-            rm -f .npmrc.bak
-          fi
-          echo "Registry credentials scrubbed from .npmrc."
 
       - name: Bump version desktop timer app
         uses: actions/github-script@v8
@@ -1079,6 +1092,29 @@ jobs:
           # failures. Matches the e2e workflow's proven setting on the same box.
           NX_ISOLATE_PLUGINS: false
           NX_DAEMON: false
+
+      - name: Scrub registry credentials
+        if: always()
+        shell: bash
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
+            mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed
+          echo "Registry credentials scrubbed from .npmrc."
 
   release-windows-arm64:
     needs: check-release-tag
@@ -1248,11 +1284,13 @@ jobs:
                   break
                 fi
                 attempt=$((attempt + 1))
-                [ "$attempt" -le "$ATTEMPTS" ] && sleep 3
+                if [ "$attempt" -le "$ATTEMPTS" ]; then sleep 3; fi
               done
             fi
-            if [ -z "$REGISTRY" ]; then
-              echo "Verdaccio VIP is not in use - resolving from the public npm registry."
+            if [ -z "$REGISTRY" ] && [ -z "$VERDACCIO_REGISTRY" ]; then
+              echo "No internal Verdaccio registry is configured (VERDACCIO_REGISTRY is empty) - resolving from the public npm registry."
+            elif [ -z "$REGISTRY" ]; then
+              echo "Verdaccio VIP did not answer - resolving from the public npm registry."
               # An EXTERNAL runner not reaching the VIP is the designed outcome and stays quiet.
               # An IN-NETWORK runner means the internal cache is silently unavailable (this fleet
               # has a recurring MetalLB speaker flap that presents exactly this way), so surface
@@ -1278,29 +1316,13 @@ jobs:
           # true only for the 18 [self-hosted, Windows, X64] jobs. ubicloud and cirruslabs
           # runners also report RUNNER_ENVIRONMENT=self-hosted, so that variable cannot be used
           # as the discriminator here without firing false warnings on 24 external jobs.
-          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') }}
+          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
       - name: Run Postinstall Manually
         run: 'yarn postinstall.manual'
-
-      - name: Scrub registry credentials
-        if: always()
-        shell: bash
-        run: |
-          # The auth token must not outlive the job. These runners check out with clean: false and
-          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
-          # //packages.ever.co/:_authToken=... would sit on disk until the NEXT job's Configure
-          # Registry step resets it - readable by anything scheduled on this runner in between.
-          # Only the credential lines go; the registry= line stays so any later step still
-          # resolves from the same place. Runs on failure too, which is when it would linger.
-          if [ -f .npmrc ]; then
-            sed -i.bak -e '/_authToken=/d' -e '/always-auth=/d' .npmrc
-            rm -f .npmrc.bak
-          fi
-          echo "Registry credentials scrubbed from .npmrc."
 
       - name: Bump version desktop timer app
         uses: actions/github-script@v8
@@ -1408,3 +1430,26 @@ jobs:
           # failures. Matches the e2e workflow's proven setting on the same box.
           NX_ISOLATE_PLUGINS: false
           NX_DAEMON: false
+
+      - name: Scrub registry credentials
+        if: always()
+        shell: bash
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
+            mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed
+          echo "Registry credentials scrubbed from .npmrc."
