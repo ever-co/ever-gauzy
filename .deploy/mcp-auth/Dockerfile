@@ -36,7 +36,6 @@ ARG DB_SYNCHRONIZE
 ARG MCP_TRUSTED_PROXIES
 ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
-ARG VERDACCIO_TOKEN
 
 
 FROM node:24.16.0-alpine3.23 AS dependencies
@@ -67,6 +66,11 @@ COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node packages/scheduler/package.json ./packages/scheduler/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
+
+# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them.
+# Without this, patch-package prints "No patch files found" and the typeorm v1 compat patch is
+# never applied. (typeorm is installed here because packages/core/package.json is copied above.)
+COPY --chown=node:node patches ./patches
 
 # VERDACCIO_TOKEN arrives as a BuildKit secret, never as an ARG: a build-arg is recorded in the
 # image config blob, so `docker history` on this PUBLIC package exposed it. Registry rewrite,
@@ -154,6 +158,10 @@ RUN ln -s . dist
 
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
+
+# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them
+# (see note in the dependencies stage above).
+COPY --chown=node:node patches ./patches
 
 # VERDACCIO_TOKEN arrives as a BuildKit secret, never as an ARG: a build-arg is recorded in the
 # image config blob, so `docker history` on this PUBLIC package exposed it. Registry rewrite,
