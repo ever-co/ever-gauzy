@@ -68,9 +68,14 @@ COPY --chown=node:node packages/scheduler/package.json ./packages/scheduler/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
-ARG VERDACCIO_TOKEN
+# VERDACCIO_TOKEN arrives as a BuildKit secret, never as an ARG: a build-arg is recorded in the
+# image config blob, so `docker history` on this PUBLIC package exposed it. Registry rewrite,
+# install and .npmrc/.yarnrc cleanup all happen in ONE RUN so the credential never persists in a
+# layer either - a later `rm` only whiteouts it. Same shape as .deploy/api/Dockerfile.
 ARG VERDACCIO_REGISTRY=""
-RUN if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
+    VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
@@ -83,18 +88,11 @@ RUN if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_RE
     echo 'registry "https://packages.ever.co/"' >> .yarnrc && \
     sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
-    fi
-
-# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them.
-# Without this, patch-package prints "No patch files found" and the typeorm v1 compat patch is
-# never applied. (typeorm is installed here because packages/core/package.json is copied above.)
-COPY --chown=node:node patches ./patches
-RUN yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts \
-    && yarn postinstall.manual \
-    && yarn cache clean
-
-# Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
-RUN rm -f .npmrc .yarnrc
+    fi && \
+    yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts && \
+    yarn postinstall.manual && \
+    yarn cache clean && \
+    rm -f .npmrc .yarnrc
 
 COPY --chown=node:node apps/mcp-auth ./apps/mcp-auth
 COPY --chown=node:node packages/auth ./packages/auth/
@@ -157,9 +155,14 @@ RUN ln -s . dist
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
-ARG VERDACCIO_TOKEN
+# VERDACCIO_TOKEN arrives as a BuildKit secret, never as an ARG: a build-arg is recorded in the
+# image config blob, so `docker history` on this PUBLIC package exposed it. Registry rewrite,
+# install and .npmrc/.yarnrc cleanup all happen in ONE RUN so the credential never persists in a
+# layer either - a later `rm` only whiteouts it. Same shape as .deploy/api/Dockerfile.
 ARG VERDACCIO_REGISTRY=""
-RUN if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
+    VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
@@ -172,17 +175,11 @@ RUN if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_RE
     echo 'registry "https://packages.ever.co/"' >> .yarnrc && \
     sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
-    fi
-
-# Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them
-# (see note in the dependencies stage above).
-COPY --chown=node:node patches ./patches
-RUN yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts --production \
-    && yarn postinstall.manual \
-    && yarn cache clean
-
-# Remove .npmrc and .yarnrc so the auth token is not copied to downstream stages
-RUN rm -f .npmrc .yarnrc
+    fi && \
+    yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts --production && \
+    yarn postinstall.manual && \
+    yarn cache clean && \
+    rm -f .npmrc .yarnrc
 
 # PROD
 FROM proddependencies AS production
