@@ -193,31 +193,35 @@ jobs:
           # the VIP rather than by hardcoding a runner list, because release-linux runs on
           # "vars.RUNNER_LINUX_APPS_X64 or ubuntu-latest" and so is not statically known.
           #
-          # When nothing is written here the repo's committed .npmrc applies
-          # (registry=https://registry.yarnpkg.com/) and yarn.lock's own resolved URLs are used,
-          # i.e. external runners resolve straight from the public npm registry.
-          #
           # NO-REMOVAL RULE: the packages.ever.co path below is GATED, not deleted. Set the
           # repo/org variable VERDACCIO_FORCE_PUBLIC=true to bring it back.
+
+          # Start from a known state. The self-hosted Windows jobs check out with clean: false and
+          # their cleanup step removes only dist/ and node_modules/, so registry edits from a
+          # PREVIOUS run can still be on disk. .yarnrc in particular is untracked and un-ignored,
+          # so nothing restores it: a stale "registry" line from an earlier run would silently
+          # win over this run's decision and point the install at a registry we just rejected.
+          rm -f .yarnrc .npmrc.bak yarn.lock.bak
+          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+
+          # Two attempts: a single transient miss (this fleet has a recurring MetalLB speaker
+          # flap) should not demote an in-network runner to the public registry for a whole build.
           REGISTRY=""
-          if [ -n "$VERDACCIO_REGISTRY" ] && curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
-            REGISTRY="${VERDACCIO_REGISTRY%/}/"
-            echo "Verdaccio VIP is reachable - using the internal npm cache."
-          elif [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
+          if [ -n "$VERDACCIO_REGISTRY" ]; then
+            for attempt in 1 2; do
+              if curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
+                REGISTRY="${VERDACCIO_REGISTRY%/}/"
+                echo "Verdaccio VIP is reachable (attempt $attempt) - using the internal npm cache."
+                break
+              fi
+              [ "$attempt" = "1" ] && sleep 3
+            done
+          fi
+          if [ -z "$REGISTRY" ] && [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
             REGISTRY="https://packages.ever.co/"
             echo "::warning title=Verdaccio public route in use::VERDACCIO_FORCE_PUBLIC=true - installing through packages.ever.co, which is known to truncate large tarballs mid-stream."
             echo "//packages.ever.co/:_authToken=$VERDACCIO_TOKEN" >> .npmrc
             echo "always-auth=true" >> .npmrc
-          else
-            echo "Verdaccio VIP is not reachable from this runner - resolving from the public npm registry."
-            # An EXTERNAL runner failing the probe is the designed outcome and stays quiet. An
-            # IN-NETWORK runner failing it means the internal cache is silently unavailable
-            # (this fleet has a recurring MetalLB speaker flap that presents exactly this way),
-            # so surface it on the run summary. Deliberately a warning, not a failure: a cache
-            # blip must never redden a release pipeline that npmjs can serve correctly.
-            if [ "$EXPECT_VIP" = "true" ]; then
-              echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
-            fi
           fi
           if [ -n "$REGISTRY" ]; then
             echo "registry=$REGISTRY" >> .npmrc
@@ -225,6 +229,19 @@ jobs:
             sed -i.bak "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" yarn.lock
             sed -i.bak "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock
             rm -f yarn.lock.bak
+          elif [ "$VERDACCIO_FORCE_PUBLIC" = "true" ]; then
+            # Asked for the public route but no token to authenticate with: say so, rather than
+            # blaming the VIP for a path we never even probed for.
+            echo "::warning title=VERDACCIO_FORCE_PUBLIC set without a token::VERDACCIO_TOKEN is empty, so packages.ever.co cannot be used; resolving from the public npm registry instead."
+          else
+            echo "Verdaccio VIP is not reachable from this runner - resolving from the public npm registry."
+            # An EXTERNAL runner failing the probe is the designed outcome and stays quiet. An
+            # IN-NETWORK runner failing it means the internal cache is silently unavailable, so
+            # surface it on the run summary. Deliberately a warning, not a failure: a cache blip
+            # must never redden a release pipeline that npmjs can serve correctly.
+            if [ "$EXPECT_VIP" = "true" ]; then
+              echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
+            fi
           fi
           echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
         env:
@@ -420,31 +437,35 @@ jobs:
           # the VIP rather than by hardcoding a runner list, because release-linux runs on
           # "vars.RUNNER_LINUX_APPS_X64 or ubuntu-latest" and so is not statically known.
           #
-          # When nothing is written here the repo's committed .npmrc applies
-          # (registry=https://registry.yarnpkg.com/) and yarn.lock's own resolved URLs are used,
-          # i.e. external runners resolve straight from the public npm registry.
-          #
           # NO-REMOVAL RULE: the packages.ever.co path below is GATED, not deleted. Set the
           # repo/org variable VERDACCIO_FORCE_PUBLIC=true to bring it back.
+
+          # Start from a known state. The self-hosted Windows jobs check out with clean: false and
+          # their cleanup step removes only dist/ and node_modules/, so registry edits from a
+          # PREVIOUS run can still be on disk. .yarnrc in particular is untracked and un-ignored,
+          # so nothing restores it: a stale "registry" line from an earlier run would silently
+          # win over this run's decision and point the install at a registry we just rejected.
+          rm -f .yarnrc .npmrc.bak yarn.lock.bak
+          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+
+          # Two attempts: a single transient miss (this fleet has a recurring MetalLB speaker
+          # flap) should not demote an in-network runner to the public registry for a whole build.
           REGISTRY=""
-          if [ -n "$VERDACCIO_REGISTRY" ] && curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
-            REGISTRY="${VERDACCIO_REGISTRY%/}/"
-            echo "Verdaccio VIP is reachable - using the internal npm cache."
-          elif [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
+          if [ -n "$VERDACCIO_REGISTRY" ]; then
+            for attempt in 1 2; do
+              if curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
+                REGISTRY="${VERDACCIO_REGISTRY%/}/"
+                echo "Verdaccio VIP is reachable (attempt $attempt) - using the internal npm cache."
+                break
+              fi
+              [ "$attempt" = "1" ] && sleep 3
+            done
+          fi
+          if [ -z "$REGISTRY" ] && [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
             REGISTRY="https://packages.ever.co/"
             echo "::warning title=Verdaccio public route in use::VERDACCIO_FORCE_PUBLIC=true - installing through packages.ever.co, which is known to truncate large tarballs mid-stream."
             echo "//packages.ever.co/:_authToken=$VERDACCIO_TOKEN" >> .npmrc
             echo "always-auth=true" >> .npmrc
-          else
-            echo "Verdaccio VIP is not reachable from this runner - resolving from the public npm registry."
-            # An EXTERNAL runner failing the probe is the designed outcome and stays quiet. An
-            # IN-NETWORK runner failing it means the internal cache is silently unavailable
-            # (this fleet has a recurring MetalLB speaker flap that presents exactly this way),
-            # so surface it on the run summary. Deliberately a warning, not a failure: a cache
-            # blip must never redden a release pipeline that npmjs can serve correctly.
-            if [ "$EXPECT_VIP" = "true" ]; then
-              echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
-            fi
           fi
           if [ -n "$REGISTRY" ]; then
             echo "registry=$REGISTRY" >> .npmrc
@@ -452,6 +473,19 @@ jobs:
             sed -i.bak "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" yarn.lock
             sed -i.bak "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock
             rm -f yarn.lock.bak
+          elif [ "$VERDACCIO_FORCE_PUBLIC" = "true" ]; then
+            # Asked for the public route but no token to authenticate with: say so, rather than
+            # blaming the VIP for a path we never even probed for.
+            echo "::warning title=VERDACCIO_FORCE_PUBLIC set without a token::VERDACCIO_TOKEN is empty, so packages.ever.co cannot be used; resolving from the public npm registry instead."
+          else
+            echo "Verdaccio VIP is not reachable from this runner - resolving from the public npm registry."
+            # An EXTERNAL runner failing the probe is the designed outcome and stays quiet. An
+            # IN-NETWORK runner failing it means the internal cache is silently unavailable, so
+            # surface it on the run summary. Deliberately a warning, not a failure: a cache blip
+            # must never redden a release pipeline that npmjs can serve correctly.
+            if [ "$EXPECT_VIP" = "true" ]; then
+              echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
+            fi
           fi
           echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
         env:
@@ -611,31 +645,35 @@ jobs:
           # the VIP rather than by hardcoding a runner list, because release-linux runs on
           # "vars.RUNNER_LINUX_APPS_X64 or ubuntu-latest" and so is not statically known.
           #
-          # When nothing is written here the repo's committed .npmrc applies
-          # (registry=https://registry.yarnpkg.com/) and yarn.lock's own resolved URLs are used,
-          # i.e. external runners resolve straight from the public npm registry.
-          #
           # NO-REMOVAL RULE: the packages.ever.co path below is GATED, not deleted. Set the
           # repo/org variable VERDACCIO_FORCE_PUBLIC=true to bring it back.
+
+          # Start from a known state. The self-hosted Windows jobs check out with clean: false and
+          # their cleanup step removes only dist/ and node_modules/, so registry edits from a
+          # PREVIOUS run can still be on disk. .yarnrc in particular is untracked and un-ignored,
+          # so nothing restores it: a stale "registry" line from an earlier run would silently
+          # win over this run's decision and point the install at a registry we just rejected.
+          rm -f .yarnrc .npmrc.bak yarn.lock.bak
+          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+
+          # Two attempts: a single transient miss (this fleet has a recurring MetalLB speaker
+          # flap) should not demote an in-network runner to the public registry for a whole build.
           REGISTRY=""
-          if [ -n "$VERDACCIO_REGISTRY" ] && curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
-            REGISTRY="${VERDACCIO_REGISTRY%/}/"
-            echo "Verdaccio VIP is reachable - using the internal npm cache."
-          elif [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
+          if [ -n "$VERDACCIO_REGISTRY" ]; then
+            for attempt in 1 2; do
+              if curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
+                REGISTRY="${VERDACCIO_REGISTRY%/}/"
+                echo "Verdaccio VIP is reachable (attempt $attempt) - using the internal npm cache."
+                break
+              fi
+              [ "$attempt" = "1" ] && sleep 3
+            done
+          fi
+          if [ -z "$REGISTRY" ] && [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
             REGISTRY="https://packages.ever.co/"
             echo "::warning title=Verdaccio public route in use::VERDACCIO_FORCE_PUBLIC=true - installing through packages.ever.co, which is known to truncate large tarballs mid-stream."
             echo "//packages.ever.co/:_authToken=$VERDACCIO_TOKEN" >> .npmrc
             echo "always-auth=true" >> .npmrc
-          else
-            echo "Verdaccio VIP is not reachable from this runner - resolving from the public npm registry."
-            # An EXTERNAL runner failing the probe is the designed outcome and stays quiet. An
-            # IN-NETWORK runner failing it means the internal cache is silently unavailable
-            # (this fleet has a recurring MetalLB speaker flap that presents exactly this way),
-            # so surface it on the run summary. Deliberately a warning, not a failure: a cache
-            # blip must never redden a release pipeline that npmjs can serve correctly.
-            if [ "$EXPECT_VIP" = "true" ]; then
-              echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
-            fi
           fi
           if [ -n "$REGISTRY" ]; then
             echo "registry=$REGISTRY" >> .npmrc
@@ -643,6 +681,19 @@ jobs:
             sed -i.bak "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" yarn.lock
             sed -i.bak "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock
             rm -f yarn.lock.bak
+          elif [ "$VERDACCIO_FORCE_PUBLIC" = "true" ]; then
+            # Asked for the public route but no token to authenticate with: say so, rather than
+            # blaming the VIP for a path we never even probed for.
+            echo "::warning title=VERDACCIO_FORCE_PUBLIC set without a token::VERDACCIO_TOKEN is empty, so packages.ever.co cannot be used; resolving from the public npm registry instead."
+          else
+            echo "Verdaccio VIP is not reachable from this runner - resolving from the public npm registry."
+            # An EXTERNAL runner failing the probe is the designed outcome and stays quiet. An
+            # IN-NETWORK runner failing it means the internal cache is silently unavailable, so
+            # surface it on the run summary. Deliberately a warning, not a failure: a cache blip
+            # must never redden a release pipeline that npmjs can serve correctly.
+            if [ "$EXPECT_VIP" = "true" ]; then
+              echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
+            fi
           fi
           echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
         env:
@@ -831,31 +882,35 @@ jobs:
           # the VIP rather than by hardcoding a runner list, because release-linux runs on
           # "vars.RUNNER_LINUX_APPS_X64 or ubuntu-latest" and so is not statically known.
           #
-          # When nothing is written here the repo's committed .npmrc applies
-          # (registry=https://registry.yarnpkg.com/) and yarn.lock's own resolved URLs are used,
-          # i.e. external runners resolve straight from the public npm registry.
-          #
           # NO-REMOVAL RULE: the packages.ever.co path below is GATED, not deleted. Set the
           # repo/org variable VERDACCIO_FORCE_PUBLIC=true to bring it back.
+
+          # Start from a known state. The self-hosted Windows jobs check out with clean: false and
+          # their cleanup step removes only dist/ and node_modules/, so registry edits from a
+          # PREVIOUS run can still be on disk. .yarnrc in particular is untracked and un-ignored,
+          # so nothing restores it: a stale "registry" line from an earlier run would silently
+          # win over this run's decision and point the install at a registry we just rejected.
+          rm -f .yarnrc .npmrc.bak yarn.lock.bak
+          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+
+          # Two attempts: a single transient miss (this fleet has a recurring MetalLB speaker
+          # flap) should not demote an in-network runner to the public registry for a whole build.
           REGISTRY=""
-          if [ -n "$VERDACCIO_REGISTRY" ] && curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
-            REGISTRY="${VERDACCIO_REGISTRY%/}/"
-            echo "Verdaccio VIP is reachable - using the internal npm cache."
-          elif [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
+          if [ -n "$VERDACCIO_REGISTRY" ]; then
+            for attempt in 1 2; do
+              if curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
+                REGISTRY="${VERDACCIO_REGISTRY%/}/"
+                echo "Verdaccio VIP is reachable (attempt $attempt) - using the internal npm cache."
+                break
+              fi
+              [ "$attempt" = "1" ] && sleep 3
+            done
+          fi
+          if [ -z "$REGISTRY" ] && [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
             REGISTRY="https://packages.ever.co/"
             echo "::warning title=Verdaccio public route in use::VERDACCIO_FORCE_PUBLIC=true - installing through packages.ever.co, which is known to truncate large tarballs mid-stream."
             echo "//packages.ever.co/:_authToken=$VERDACCIO_TOKEN" >> .npmrc
             echo "always-auth=true" >> .npmrc
-          else
-            echo "Verdaccio VIP is not reachable from this runner - resolving from the public npm registry."
-            # An EXTERNAL runner failing the probe is the designed outcome and stays quiet. An
-            # IN-NETWORK runner failing it means the internal cache is silently unavailable
-            # (this fleet has a recurring MetalLB speaker flap that presents exactly this way),
-            # so surface it on the run summary. Deliberately a warning, not a failure: a cache
-            # blip must never redden a release pipeline that npmjs can serve correctly.
-            if [ "$EXPECT_VIP" = "true" ]; then
-              echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
-            fi
           fi
           if [ -n "$REGISTRY" ]; then
             echo "registry=$REGISTRY" >> .npmrc
@@ -863,6 +918,19 @@ jobs:
             sed -i.bak "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" yarn.lock
             sed -i.bak "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock
             rm -f yarn.lock.bak
+          elif [ "$VERDACCIO_FORCE_PUBLIC" = "true" ]; then
+            # Asked for the public route but no token to authenticate with: say so, rather than
+            # blaming the VIP for a path we never even probed for.
+            echo "::warning title=VERDACCIO_FORCE_PUBLIC set without a token::VERDACCIO_TOKEN is empty, so packages.ever.co cannot be used; resolving from the public npm registry instead."
+          else
+            echo "Verdaccio VIP is not reachable from this runner - resolving from the public npm registry."
+            # An EXTERNAL runner failing the probe is the designed outcome and stays quiet. An
+            # IN-NETWORK runner failing it means the internal cache is silently unavailable, so
+            # surface it on the run summary. Deliberately a warning, not a failure: a cache blip
+            # must never redden a release pipeline that npmjs can serve correctly.
+            if [ "$EXPECT_VIP" = "true" ]; then
+              echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
+            fi
           fi
           echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
         env:
@@ -1103,31 +1171,35 @@ jobs:
           # the VIP rather than by hardcoding a runner list, because release-linux runs on
           # "vars.RUNNER_LINUX_APPS_X64 or ubuntu-latest" and so is not statically known.
           #
-          # When nothing is written here the repo's committed .npmrc applies
-          # (registry=https://registry.yarnpkg.com/) and yarn.lock's own resolved URLs are used,
-          # i.e. external runners resolve straight from the public npm registry.
-          #
           # NO-REMOVAL RULE: the packages.ever.co path below is GATED, not deleted. Set the
           # repo/org variable VERDACCIO_FORCE_PUBLIC=true to bring it back.
+
+          # Start from a known state. The self-hosted Windows jobs check out with clean: false and
+          # their cleanup step removes only dist/ and node_modules/, so registry edits from a
+          # PREVIOUS run can still be on disk. .yarnrc in particular is untracked and un-ignored,
+          # so nothing restores it: a stale "registry" line from an earlier run would silently
+          # win over this run's decision and point the install at a registry we just rejected.
+          rm -f .yarnrc .npmrc.bak yarn.lock.bak
+          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+
+          # Two attempts: a single transient miss (this fleet has a recurring MetalLB speaker
+          # flap) should not demote an in-network runner to the public registry for a whole build.
           REGISTRY=""
-          if [ -n "$VERDACCIO_REGISTRY" ] && curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
-            REGISTRY="${VERDACCIO_REGISTRY%/}/"
-            echo "Verdaccio VIP is reachable - using the internal npm cache."
-          elif [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
+          if [ -n "$VERDACCIO_REGISTRY" ]; then
+            for attempt in 1 2; do
+              if curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
+                REGISTRY="${VERDACCIO_REGISTRY%/}/"
+                echo "Verdaccio VIP is reachable (attempt $attempt) - using the internal npm cache."
+                break
+              fi
+              [ "$attempt" = "1" ] && sleep 3
+            done
+          fi
+          if [ -z "$REGISTRY" ] && [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
             REGISTRY="https://packages.ever.co/"
             echo "::warning title=Verdaccio public route in use::VERDACCIO_FORCE_PUBLIC=true - installing through packages.ever.co, which is known to truncate large tarballs mid-stream."
             echo "//packages.ever.co/:_authToken=$VERDACCIO_TOKEN" >> .npmrc
             echo "always-auth=true" >> .npmrc
-          else
-            echo "Verdaccio VIP is not reachable from this runner - resolving from the public npm registry."
-            # An EXTERNAL runner failing the probe is the designed outcome and stays quiet. An
-            # IN-NETWORK runner failing it means the internal cache is silently unavailable
-            # (this fleet has a recurring MetalLB speaker flap that presents exactly this way),
-            # so surface it on the run summary. Deliberately a warning, not a failure: a cache
-            # blip must never redden a release pipeline that npmjs can serve correctly.
-            if [ "$EXPECT_VIP" = "true" ]; then
-              echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
-            fi
           fi
           if [ -n "$REGISTRY" ]; then
             echo "registry=$REGISTRY" >> .npmrc
@@ -1135,6 +1207,19 @@ jobs:
             sed -i.bak "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" yarn.lock
             sed -i.bak "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock
             rm -f yarn.lock.bak
+          elif [ "$VERDACCIO_FORCE_PUBLIC" = "true" ]; then
+            # Asked for the public route but no token to authenticate with: say so, rather than
+            # blaming the VIP for a path we never even probed for.
+            echo "::warning title=VERDACCIO_FORCE_PUBLIC set without a token::VERDACCIO_TOKEN is empty, so packages.ever.co cannot be used; resolving from the public npm registry instead."
+          else
+            echo "Verdaccio VIP is not reachable from this runner - resolving from the public npm registry."
+            # An EXTERNAL runner failing the probe is the designed outcome and stays quiet. An
+            # IN-NETWORK runner failing it means the internal cache is silently unavailable, so
+            # surface it on the run summary. Deliberately a warning, not a failure: a cache blip
+            # must never redden a release pipeline that npmjs can serve correctly.
+            if [ "$EXPECT_VIP" = "true" ]; then
+              echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
+            fi
           fi
           echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
         env:
