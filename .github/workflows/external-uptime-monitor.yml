@@ -29,6 +29,7 @@ name: External Uptime Monitor
 # Domain vocabulary and curl `-w` field names used throughout this file. `.cspell.json` runs
 # with `strict: true` on every PR to develop, so without this the Cspell check goes red.
 # cspell:ignore homelab ttfb blackhole redirs namelookup appconnect starttransfer esac selftest
+# cspell:ignore SIGPIPE
 
 on:
   schedule:
