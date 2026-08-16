@@ -147,6 +147,7 @@ RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
 	sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
 	sed -i "s|https://registry.npmjs.org|${VERDACCIO_REGISTRY%/}|g" yarn.lock; \
 	elif [ -n "$VERDACCIO_TOKEN" ]; then \
+	echo "Verdaccio VIP unreachable - falling back to the public packages.ever.co route (known to truncate large tarballs mid-stream)." && \
 	echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
 	echo "registry=https://packages.ever.co/" >> .npmrc && \
 	echo "always-auth=true" >> .npmrc && \

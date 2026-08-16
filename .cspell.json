@@ -6,6 +6,11 @@
         "GHSA-[A-Za-z0-9-]+"
     ],
     "words": [
+        "ENOENT",
+        "gzipped",
+        "gzips",
+        "npmjs",
+        "rspack",
         "dlib",
         "codesign",
         "codesigning",
