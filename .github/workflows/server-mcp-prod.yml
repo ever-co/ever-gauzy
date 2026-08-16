@@ -194,7 +194,7 @@ jobs:
           # win over this run's decision. This reset is NOT best-effort -- if we cannot establish
           # a known starting state we must not go on to pick a registry, because the install would
           # then quietly run against whatever the last job left behind.
-          rm -f .yarnrc .npmrc.bak yarn.lock.bak
+          rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten
           if ! git checkout -- .npmrc yarn.lock; then
             echo "::error title=Could not reset registry configuration::git checkout -- .npmrc yarn.lock failed on this workspace, so the previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
             exit 1
@@ -245,9 +245,12 @@ jobs:
           if [ -n "$REGISTRY" ]; then
             echo "registry=$REGISTRY" >> .npmrc
             echo "registry \"$REGISTRY\"" >> .yarnrc
-            sed -i.bak "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" yarn.lock
-            sed -i.bak "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock
-            rm -f yarn.lock.bak
+            # One pass, no -i: an -i.bak backup survives on a clean: false runner if the step
+            # fails between the rewrite and its cleanup, and bare -i is not portable to the BSD
+            # sed on the macOS runners. The temp file is only ever the finished rewrite.
+            sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
+                -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
+            mv -f yarn.lock.rewritten yarn.lock
           fi
           echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
         env:
@@ -337,7 +340,7 @@ jobs:
           if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
             sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
           fi
-          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
           # Do not just assume it worked - a silent failure here leaves a live token on a reused
           # runner, so say so loudly instead.
           if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
@@ -456,7 +459,7 @@ jobs:
           # win over this run's decision. This reset is NOT best-effort -- if we cannot establish
           # a known starting state we must not go on to pick a registry, because the install would
           # then quietly run against whatever the last job left behind.
-          rm -f .yarnrc .npmrc.bak yarn.lock.bak
+          rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten
           if ! git checkout -- .npmrc yarn.lock; then
             echo "::error title=Could not reset registry configuration::git checkout -- .npmrc yarn.lock failed on this workspace, so the previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
             exit 1
@@ -507,9 +510,12 @@ jobs:
           if [ -n "$REGISTRY" ]; then
             echo "registry=$REGISTRY" >> .npmrc
             echo "registry \"$REGISTRY\"" >> .yarnrc
-            sed -i.bak "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" yarn.lock
-            sed -i.bak "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock
-            rm -f yarn.lock.bak
+            # One pass, no -i: an -i.bak backup survives on a clean: false runner if the step
+            # fails between the rewrite and its cleanup, and bare -i is not portable to the BSD
+            # sed on the macOS runners. The temp file is only ever the finished rewrite.
+            sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
+                -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
+            mv -f yarn.lock.rewritten yarn.lock
           fi
           echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
         env:
@@ -601,7 +607,7 @@ jobs:
           if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
             sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
           fi
-          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
           # Do not just assume it worked - a silent failure here leaves a live token on a reused
           # runner, so say so loudly instead.
           if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
@@ -689,7 +695,7 @@ jobs:
           # win over this run's decision. This reset is NOT best-effort -- if we cannot establish
           # a known starting state we must not go on to pick a registry, because the install would
           # then quietly run against whatever the last job left behind.
-          rm -f .yarnrc .npmrc.bak yarn.lock.bak
+          rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten
           if ! git checkout -- .npmrc yarn.lock; then
             echo "::error title=Could not reset registry configuration::git checkout -- .npmrc yarn.lock failed on this workspace, so the previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
             exit 1
@@ -740,9 +746,12 @@ jobs:
           if [ -n "$REGISTRY" ]; then
             echo "registry=$REGISTRY" >> .npmrc
             echo "registry \"$REGISTRY\"" >> .yarnrc
-            sed -i.bak "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" yarn.lock
-            sed -i.bak "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock
-            rm -f yarn.lock.bak
+            # One pass, no -i: an -i.bak backup survives on a clean: false runner if the step
+            # fails between the rewrite and its cleanup, and bare -i is not portable to the BSD
+            # sed on the macOS runners. The temp file is only ever the finished rewrite.
+            sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
+                -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
+            mv -f yarn.lock.rewritten yarn.lock
           fi
           echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
         env:
@@ -844,7 +853,7 @@ jobs:
           if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
             sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
           fi
-          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
           # Do not just assume it worked - a silent failure here leaves a live token on a reused
           # runner, so say so loudly instead.
           if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
@@ -953,7 +962,7 @@ jobs:
           # win over this run's decision. This reset is NOT best-effort -- if we cannot establish
           # a known starting state we must not go on to pick a registry, because the install would
           # then quietly run against whatever the last job left behind.
-          rm -f .yarnrc .npmrc.bak yarn.lock.bak
+          rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten
           if ! git checkout -- .npmrc yarn.lock; then
             echo "::error title=Could not reset registry configuration::git checkout -- .npmrc yarn.lock failed on this workspace, so the previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
             exit 1
@@ -1004,9 +1013,12 @@ jobs:
           if [ -n "$REGISTRY" ]; then
             echo "registry=$REGISTRY" >> .npmrc
             echo "registry \"$REGISTRY\"" >> .yarnrc
-            sed -i.bak "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" yarn.lock
-            sed -i.bak "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock
-            rm -f yarn.lock.bak
+            # One pass, no -i: an -i.bak backup survives on a clean: false runner if the step
+            # fails between the rewrite and its cleanup, and bare -i is not portable to the BSD
+            # sed on the macOS runners. The temp file is only ever the finished rewrite.
+            sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
+                -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
+            mv -f yarn.lock.rewritten yarn.lock
           fi
           echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
         env:
@@ -1139,7 +1151,7 @@ jobs:
           if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
             sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
           fi
-          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
           # Do not just assume it worked - a silent failure here leaves a live token on a reused
           # runner, so say so loudly instead.
           if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
@@ -1265,7 +1277,7 @@ jobs:
           # win over this run's decision. This reset is NOT best-effort -- if we cannot establish
           # a known starting state we must not go on to pick a registry, because the install would
           # then quietly run against whatever the last job left behind.
-          rm -f .yarnrc .npmrc.bak yarn.lock.bak
+          rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten
           if ! git checkout -- .npmrc yarn.lock; then
             echo "::error title=Could not reset registry configuration::git checkout -- .npmrc yarn.lock failed on this workspace, so the previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
             exit 1
@@ -1316,9 +1328,12 @@ jobs:
           if [ -n "$REGISTRY" ]; then
             echo "registry=$REGISTRY" >> .npmrc
             echo "registry \"$REGISTRY\"" >> .yarnrc
-            sed -i.bak "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" yarn.lock
-            sed -i.bak "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock
-            rm -f yarn.lock.bak
+            # One pass, no -i: an -i.bak backup survives on a clean: false runner if the step
+            # fails between the rewrite and its cleanup, and bare -i is not portable to the BSD
+            # sed on the macOS runners. The temp file is only ever the finished rewrite.
+            sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
+                -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
+            mv -f yarn.lock.rewritten yarn.lock
           fi
           echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
         env:
@@ -1447,7 +1462,7 @@ jobs:
           if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
             sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
           fi
-          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
           # Do not just assume it worked - a silent failure here leaves a live token on a reused
           # runner, so say so loudly instead.
           if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
