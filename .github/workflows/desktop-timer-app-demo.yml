@@ -395,18 +395,35 @@ jobs:
           fi
           rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
 
-          # Prove the credential is gone. Fail closed: statuses other than 1 mean "could not tell".
-          cred_state="absent"
-          if [ -f .npmrc ]; then
+          # Prove the credential is gone, starting from "undetermined" rather than "absent" so no
+          # inconclusive result can pass. Two ways to be inconclusive: grep exits 2 when a file
+          # cannot be READ, and [ -f ] answers false for both "missing" and "cannot stat", so a
+          # bare existence test cannot tell an absent file from an unreachable one.
+          cred_state="undetermined"
+          if [ -e .npmrc ]; then
             grep -q '_authToken=' .npmrc
             case "$?" in
               0) cred_state="present" ;;
               1) cred_state="absent" ;;
               *) cred_state="undetermined" ;;
             esac
+          elif [ -r . ]; then
+            # The directory is readable and there is genuinely no .npmrc, so there is no token.
+            cred_state="absent"
           fi
+          # Artifacts that can also carry the token: .npmrc.bak is written by older revisions of
+          # this workflow, and a surviving .npmrc.scrubbed means the mv above did not complete.
+          # Present-but-clean is only clutter; present-and-carrying-a-token (or unreadable) is not.
+          for stray in .npmrc.bak .npmrc.scrubbed; do
+            if [ -e "$stray" ]; then
+              grep -q '_authToken=' "$stray"
+              if [ "$?" -ne 1 ]; then
+                cred_state="present in $stray"
+              fi
+            fi
+          done
           if [ "$cred_state" != "absent" ]; then
-            echo "::error title=Registry credential may still be present::.npmrc auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
+            echo "::error title=Registry credential may still be present::Auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
             exit 1
           fi
 
