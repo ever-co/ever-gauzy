@@ -52,6 +52,7 @@ jobs:
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             DEMO=false
             NX_BRANCH=${{ github.ref_name }}
             GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
@@ -153,6 +154,7 @@ jobs:
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             DEMO=false
             NX_BRANCH=${{ github.ref_name }}
             GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
@@ -256,6 +258,7 @@ jobs:
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             DEMO=false
             NX_BRANCH=${{ github.ref_name }}
             GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}

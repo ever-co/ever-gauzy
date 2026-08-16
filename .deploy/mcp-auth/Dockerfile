@@ -70,7 +70,7 @@ COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 ARG VERDACCIO_TOKEN
 ARG VERDACCIO_REGISTRY=""
-RUN if [ -n "$VERDACCIO_REGISTRY" ]; then \
+RUN if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
@@ -158,7 +158,7 @@ COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 ARG VERDACCIO_TOKEN
 ARG VERDACCIO_REGISTRY=""
-RUN if [ -n "$VERDACCIO_REGISTRY" ]; then \
+RUN if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
