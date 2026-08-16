@@ -251,9 +251,14 @@ jobs:
           VERDACCIO_REGISTRY: ${{ vars.VERDACCIO_REGISTRY }}
           VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
           VERDACCIO_FORCE_PUBLIC: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
-          # true only for the 18 [self-hosted, Windows, X64] jobs. ubicloud and cirruslabs
-          # runners also report RUNNER_ENVIRONMENT=self-hosted, so that variable cannot be used
-          # as the discriminator here without firing false warnings on 24 external jobs.
+          # true for the IN-NETWORK runners: the 18 [self-hosted, Windows, X64] jobs, plus any
+          # ever-k8s-* ARC pool reached through a runner variable (release-linux takes its os from
+          # vars.RUNNER_LINUX_APPS_X64, which may point at one). The ever-k8s disjunct is a no-op in
+          # workflows whose matrix cannot yield that label - it is kept so all 66 copies stay
+          # byte-identical and a future ARC matrix entry gets the retry and warning automatically.
+          # ubicloud and cirruslabs runners also report RUNNER_ENVIRONMENT=self-hosted, so that
+          # variable cannot be used as the discriminator without firing false warnings on the
+          # external jobs.
           EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
@@ -347,18 +352,27 @@ jobs:
           #
           # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
           # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
-          if [ -f .npmrc ]; then
-            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
-            mv -f .npmrc.scrubbed .npmrc
+          # Failures here are non-fatal BY DESIGN. Under `set -e` a failing sed or mv would abort
+          # this step before the token was removed - the exact outcome the step exists to prevent -
+          # so nothing is allowed to short-circuit it. The build is already finished and nothing
+          # downstream reads the result, so a cleanup failure must not redden a green release.
+          set +e
+          # Restoring from git removes the credential in one operation and also undoes the
+          # yarn.lock rewrite and the untracked .yarnrc, which would otherwise survive on a
+          # clean: false runner and be inherited by a job from ANOTHER workflow that has no
+          # Configure Registry step to reset them.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Belt and braces for a workspace where the restore could not run at all.
+          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
           fi
           rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
-          # Hand the workspace back the way git has it. The untracked .yarnrc and the yarn.lock
-          # rewritten to the internal VIP would otherwise survive on a clean: false runner and be
-          # inherited by a job from ANOTHER workflow that has no Configure Registry step to reset
-          # them. Best-effort on purpose: this is cleanup after the build, so a failure here must
-          # not redden a green release - unlike the reset in Configure Registry, where the
-          # registry decision depends on it and a failure therefore has to stop the step.
-          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+          # Do not just assume it worked - a silent failure here leaves a live token on a reused
+          # runner, so say so loudly instead.
+          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
+            echo "::error title=Registry credential could not be removed::.npmrc still contains an auth token after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
           echo "Registry credentials scrubbed and workspace registry config restored."
 
   release-linux-arm64:
@@ -524,9 +538,14 @@ jobs:
           VERDACCIO_REGISTRY: ${{ vars.VERDACCIO_REGISTRY }}
           VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
           VERDACCIO_FORCE_PUBLIC: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
-          # true only for the 18 [self-hosted, Windows, X64] jobs. ubicloud and cirruslabs
-          # runners also report RUNNER_ENVIRONMENT=self-hosted, so that variable cannot be used
-          # as the discriminator here without firing false warnings on 24 external jobs.
+          # true for the IN-NETWORK runners: the 18 [self-hosted, Windows, X64] jobs, plus any
+          # ever-k8s-* ARC pool reached through a runner variable (release-linux takes its os from
+          # vars.RUNNER_LINUX_APPS_X64, which may point at one). The ever-k8s disjunct is a no-op in
+          # workflows whose matrix cannot yield that label - it is kept so all 66 copies stay
+          # byte-identical and a future ARC matrix entry gets the retry and warning automatically.
+          # ubicloud and cirruslabs runners also report RUNNER_ENVIRONMENT=self-hosted, so that
+          # variable cannot be used as the discriminator without firing false warnings on the
+          # external jobs.
           EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
@@ -624,18 +643,27 @@ jobs:
           #
           # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
           # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
-          if [ -f .npmrc ]; then
-            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
-            mv -f .npmrc.scrubbed .npmrc
+          # Failures here are non-fatal BY DESIGN. Under `set -e` a failing sed or mv would abort
+          # this step before the token was removed - the exact outcome the step exists to prevent -
+          # so nothing is allowed to short-circuit it. The build is already finished and nothing
+          # downstream reads the result, so a cleanup failure must not redden a green release.
+          set +e
+          # Restoring from git removes the credential in one operation and also undoes the
+          # yarn.lock rewrite and the untracked .yarnrc, which would otherwise survive on a
+          # clean: false runner and be inherited by a job from ANOTHER workflow that has no
+          # Configure Registry step to reset them.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Belt and braces for a workspace where the restore could not run at all.
+          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
           fi
           rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
-          # Hand the workspace back the way git has it. The untracked .yarnrc and the yarn.lock
-          # rewritten to the internal VIP would otherwise survive on a clean: false runner and be
-          # inherited by a job from ANOTHER workflow that has no Configure Registry step to reset
-          # them. Best-effort on purpose: this is cleanup after the build, so a failure here must
-          # not redden a green release - unlike the reset in Configure Registry, where the
-          # registry decision depends on it and a failure therefore has to stop the step.
-          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+          # Do not just assume it worked - a silent failure here leaves a live token on a reused
+          # runner, so say so loudly instead.
+          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
+            echo "::error title=Registry credential could not be removed::.npmrc still contains an auth token after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
           echo "Registry credentials scrubbed and workspace registry config restored."
 
   release-mac:
@@ -777,9 +805,14 @@ jobs:
           VERDACCIO_REGISTRY: ${{ vars.VERDACCIO_REGISTRY }}
           VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
           VERDACCIO_FORCE_PUBLIC: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
-          # true only for the 18 [self-hosted, Windows, X64] jobs. ubicloud and cirruslabs
-          # runners also report RUNNER_ENVIRONMENT=self-hosted, so that variable cannot be used
-          # as the discriminator here without firing false warnings on 24 external jobs.
+          # true for the IN-NETWORK runners: the 18 [self-hosted, Windows, X64] jobs, plus any
+          # ever-k8s-* ARC pool reached through a runner variable (release-linux takes its os from
+          # vars.RUNNER_LINUX_APPS_X64, which may point at one). The ever-k8s disjunct is a no-op in
+          # workflows whose matrix cannot yield that label - it is kept so all 66 copies stay
+          # byte-identical and a future ARC matrix entry gets the retry and warning automatically.
+          # ubicloud and cirruslabs runners also report RUNNER_ENVIRONMENT=self-hosted, so that
+          # variable cannot be used as the discriminator without firing false warnings on the
+          # external jobs.
           EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
@@ -916,18 +949,27 @@ jobs:
           #
           # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
           # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
-          if [ -f .npmrc ]; then
-            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
-            mv -f .npmrc.scrubbed .npmrc
+          # Failures here are non-fatal BY DESIGN. Under `set -e` a failing sed or mv would abort
+          # this step before the token was removed - the exact outcome the step exists to prevent -
+          # so nothing is allowed to short-circuit it. The build is already finished and nothing
+          # downstream reads the result, so a cleanup failure must not redden a green release.
+          set +e
+          # Restoring from git removes the credential in one operation and also undoes the
+          # yarn.lock rewrite and the untracked .yarnrc, which would otherwise survive on a
+          # clean: false runner and be inherited by a job from ANOTHER workflow that has no
+          # Configure Registry step to reset them.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Belt and braces for a workspace where the restore could not run at all.
+          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
           fi
           rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
-          # Hand the workspace back the way git has it. The untracked .yarnrc and the yarn.lock
-          # rewritten to the internal VIP would otherwise survive on a clean: false runner and be
-          # inherited by a job from ANOTHER workflow that has no Configure Registry step to reset
-          # them. Best-effort on purpose: this is cleanup after the build, so a failure here must
-          # not redden a green release - unlike the reset in Configure Registry, where the
-          # registry decision depends on it and a failure therefore has to stop the step.
-          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+          # Do not just assume it worked - a silent failure here leaves a live token on a reused
+          # runner, so say so loudly instead.
+          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
+            echo "::error title=Registry credential could not be removed::.npmrc still contains an auth token after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
           echo "Registry credentials scrubbed and workspace registry config restored."
 
   release-windows:
@@ -1090,9 +1132,14 @@ jobs:
           VERDACCIO_REGISTRY: ${{ vars.VERDACCIO_REGISTRY }}
           VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
           VERDACCIO_FORCE_PUBLIC: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
-          # true only for the 18 [self-hosted, Windows, X64] jobs. ubicloud and cirruslabs
-          # runners also report RUNNER_ENVIRONMENT=self-hosted, so that variable cannot be used
-          # as the discriminator here without firing false warnings on 24 external jobs.
+          # true for the IN-NETWORK runners: the 18 [self-hosted, Windows, X64] jobs, plus any
+          # ever-k8s-* ARC pool reached through a runner variable (release-linux takes its os from
+          # vars.RUNNER_LINUX_APPS_X64, which may point at one). The ever-k8s disjunct is a no-op in
+          # workflows whose matrix cannot yield that label - it is kept so all 66 copies stay
+          # byte-identical and a future ARC matrix entry gets the retry and warning automatically.
+          # ubicloud and cirruslabs runners also report RUNNER_ENVIRONMENT=self-hosted, so that
+          # variable cannot be used as the discriminator without firing false warnings on the
+          # external jobs.
           EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
@@ -1260,18 +1307,27 @@ jobs:
           #
           # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
           # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
-          if [ -f .npmrc ]; then
-            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
-            mv -f .npmrc.scrubbed .npmrc
+          # Failures here are non-fatal BY DESIGN. Under `set -e` a failing sed or mv would abort
+          # this step before the token was removed - the exact outcome the step exists to prevent -
+          # so nothing is allowed to short-circuit it. The build is already finished and nothing
+          # downstream reads the result, so a cleanup failure must not redden a green release.
+          set +e
+          # Restoring from git removes the credential in one operation and also undoes the
+          # yarn.lock rewrite and the untracked .yarnrc, which would otherwise survive on a
+          # clean: false runner and be inherited by a job from ANOTHER workflow that has no
+          # Configure Registry step to reset them.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Belt and braces for a workspace where the restore could not run at all.
+          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
           fi
           rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
-          # Hand the workspace back the way git has it. The untracked .yarnrc and the yarn.lock
-          # rewritten to the internal VIP would otherwise survive on a clean: false runner and be
-          # inherited by a job from ANOTHER workflow that has no Configure Registry step to reset
-          # them. Best-effort on purpose: this is cleanup after the build, so a failure here must
-          # not redden a green release - unlike the reset in Configure Registry, where the
-          # registry decision depends on it and a failure therefore has to stop the step.
-          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+          # Do not just assume it worked - a silent failure here leaves a live token on a reused
+          # runner, so say so loudly instead.
+          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
+            echo "::error title=Registry credential could not be removed::.npmrc still contains an auth token after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
           echo "Registry credentials scrubbed and workspace registry config restored."
 
   release-windows-arm64:
@@ -1471,9 +1527,14 @@ jobs:
           VERDACCIO_REGISTRY: ${{ vars.VERDACCIO_REGISTRY }}
           VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
           VERDACCIO_FORCE_PUBLIC: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
-          # true only for the 18 [self-hosted, Windows, X64] jobs. ubicloud and cirruslabs
-          # runners also report RUNNER_ENVIRONMENT=self-hosted, so that variable cannot be used
-          # as the discriminator here without firing false warnings on 24 external jobs.
+          # true for the IN-NETWORK runners: the 18 [self-hosted, Windows, X64] jobs, plus any
+          # ever-k8s-* ARC pool reached through a runner variable (release-linux takes its os from
+          # vars.RUNNER_LINUX_APPS_X64, which may point at one). The ever-k8s disjunct is a no-op in
+          # workflows whose matrix cannot yield that label - it is kept so all 66 copies stay
+          # byte-identical and a future ARC matrix entry gets the retry and warning automatically.
+          # ubicloud and cirruslabs runners also report RUNNER_ENVIRONMENT=self-hosted, so that
+          # variable cannot be used as the discriminator without firing false warnings on the
+          # external jobs.
           EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
@@ -1637,16 +1698,25 @@ jobs:
           #
           # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
           # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
-          if [ -f .npmrc ]; then
-            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed
-            mv -f .npmrc.scrubbed .npmrc
+          # Failures here are non-fatal BY DESIGN. Under `set -e` a failing sed or mv would abort
+          # this step before the token was removed - the exact outcome the step exists to prevent -
+          # so nothing is allowed to short-circuit it. The build is already finished and nothing
+          # downstream reads the result, so a cleanup failure must not redden a green release.
+          set +e
+          # Restoring from git removes the credential in one operation and also undoes the
+          # yarn.lock rewrite and the untracked .yarnrc, which would otherwise survive on a
+          # clean: false runner and be inherited by a job from ANOTHER workflow that has no
+          # Configure Registry step to reset them.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Belt and braces for a workspace where the restore could not run at all.
+          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
           fi
           rm -f .npmrc.bak .npmrc.scrubbed .yarnrc
-          # Hand the workspace back the way git has it. The untracked .yarnrc and the yarn.lock
-          # rewritten to the internal VIP would otherwise survive on a clean: false runner and be
-          # inherited by a job from ANOTHER workflow that has no Configure Registry step to reset
-          # them. Best-effort on purpose: this is cleanup after the build, so a failure here must
-          # not redden a green release - unlike the reset in Configure Registry, where the
-          # registry decision depends on it and a failure therefore has to stop the step.
-          git checkout -- .npmrc yarn.lock 2>/dev/null || true
+          # Do not just assume it worked - a silent failure here leaves a live token on a reused
+          # runner, so say so loudly instead.
+          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
+            echo "::error title=Registry credential could not be removed::.npmrc still contains an auth token after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
           echo "Registry credentials scrubbed and workspace registry config restored."
