@@ -326,28 +326,58 @@ jobs:
           #
           # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
           # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
-          # Failures here are non-fatal BY DESIGN. Under `set -e` a failing sed or mv would abort
-          # this step before the token was removed - the exact outcome the step exists to prevent -
-          # so nothing is allowed to short-circuit it. The build is already finished and nothing
-          # downstream reads the result, so a cleanup failure must not redden a green release.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
           set +e
-          # Restoring from git removes the credential in one operation and also undoes the
-          # yarn.lock rewrite and the untracked .yarnrc, which would otherwise survive on a
-          # clean: false runner and be inherited by a job from ANOTHER workflow that has no
-          # Configure Registry step to reset them.
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
           git checkout -- .npmrc yarn.lock 2>/dev/null
-          # Belt and braces for a workspace where the restore could not run at all.
-          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
-            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
           fi
           rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
-          # Do not just assume it worked - a silent failure here leaves a live token on a reused
-          # runner, so say so loudly instead.
-          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
-            echo "::error title=Registry credential could not be removed::.npmrc still contains an auth token after cleanup on ${RUNNER_NAME:-this runner}."
+
+          # Prove the credential is gone. Fail closed: statuses other than 1 mean "could not tell".
+          cred_state="absent"
+          if [ -f .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          fi
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::.npmrc auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
             exit 1
           fi
-          echo "Registry credentials scrubbed and workspace registry config restored."
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
 
   release-linux-arm64:
     needs: check-release-tag
@@ -593,28 +623,58 @@ jobs:
           #
           # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
           # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
-          # Failures here are non-fatal BY DESIGN. Under `set -e` a failing sed or mv would abort
-          # this step before the token was removed - the exact outcome the step exists to prevent -
-          # so nothing is allowed to short-circuit it. The build is already finished and nothing
-          # downstream reads the result, so a cleanup failure must not redden a green release.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
           set +e
-          # Restoring from git removes the credential in one operation and also undoes the
-          # yarn.lock rewrite and the untracked .yarnrc, which would otherwise survive on a
-          # clean: false runner and be inherited by a job from ANOTHER workflow that has no
-          # Configure Registry step to reset them.
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
           git checkout -- .npmrc yarn.lock 2>/dev/null
-          # Belt and braces for a workspace where the restore could not run at all.
-          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
-            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
           fi
           rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
-          # Do not just assume it worked - a silent failure here leaves a live token on a reused
-          # runner, so say so loudly instead.
-          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
-            echo "::error title=Registry credential could not be removed::.npmrc still contains an auth token after cleanup on ${RUNNER_NAME:-this runner}."
+
+          # Prove the credential is gone. Fail closed: statuses other than 1 mean "could not tell".
+          cred_state="absent"
+          if [ -f .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          fi
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::.npmrc auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
             exit 1
           fi
-          echo "Registry credentials scrubbed and workspace registry config restored."
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
 
   release-mac:
     needs: check-release-tag
@@ -839,28 +899,58 @@ jobs:
           #
           # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
           # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
-          # Failures here are non-fatal BY DESIGN. Under `set -e` a failing sed or mv would abort
-          # this step before the token was removed - the exact outcome the step exists to prevent -
-          # so nothing is allowed to short-circuit it. The build is already finished and nothing
-          # downstream reads the result, so a cleanup failure must not redden a green release.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
           set +e
-          # Restoring from git removes the credential in one operation and also undoes the
-          # yarn.lock rewrite and the untracked .yarnrc, which would otherwise survive on a
-          # clean: false runner and be inherited by a job from ANOTHER workflow that has no
-          # Configure Registry step to reset them.
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
           git checkout -- .npmrc yarn.lock 2>/dev/null
-          # Belt and braces for a workspace where the restore could not run at all.
-          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
-            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
           fi
           rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
-          # Do not just assume it worked - a silent failure here leaves a live token on a reused
-          # runner, so say so loudly instead.
-          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
-            echo "::error title=Registry credential could not be removed::.npmrc still contains an auth token after cleanup on ${RUNNER_NAME:-this runner}."
+
+          # Prove the credential is gone. Fail closed: statuses other than 1 mean "could not tell".
+          cred_state="absent"
+          if [ -f .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          fi
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::.npmrc auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
             exit 1
           fi
-          echo "Registry credentials scrubbed and workspace registry config restored."
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
 
   release-windows:
     needs: check-release-tag
@@ -1137,28 +1227,58 @@ jobs:
           #
           # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
           # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
-          # Failures here are non-fatal BY DESIGN. Under `set -e` a failing sed or mv would abort
-          # this step before the token was removed - the exact outcome the step exists to prevent -
-          # so nothing is allowed to short-circuit it. The build is already finished and nothing
-          # downstream reads the result, so a cleanup failure must not redden a green release.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
           set +e
-          # Restoring from git removes the credential in one operation and also undoes the
-          # yarn.lock rewrite and the untracked .yarnrc, which would otherwise survive on a
-          # clean: false runner and be inherited by a job from ANOTHER workflow that has no
-          # Configure Registry step to reset them.
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
           git checkout -- .npmrc yarn.lock 2>/dev/null
-          # Belt and braces for a workspace where the restore could not run at all.
-          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
-            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
           fi
           rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
-          # Do not just assume it worked - a silent failure here leaves a live token on a reused
-          # runner, so say so loudly instead.
-          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
-            echo "::error title=Registry credential could not be removed::.npmrc still contains an auth token after cleanup on ${RUNNER_NAME:-this runner}."
+
+          # Prove the credential is gone. Fail closed: statuses other than 1 mean "could not tell".
+          cred_state="absent"
+          if [ -f .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          fi
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::.npmrc auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
             exit 1
           fi
-          echo "Registry credentials scrubbed and workspace registry config restored."
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
 
   release-windows-arm64:
     needs: check-release-tag
@@ -1448,25 +1568,55 @@ jobs:
           #
           # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
           # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
-          # Failures here are non-fatal BY DESIGN. Under `set -e` a failing sed or mv would abort
-          # this step before the token was removed - the exact outcome the step exists to prevent -
-          # so nothing is allowed to short-circuit it. The build is already finished and nothing
-          # downstream reads the result, so a cleanup failure must not redden a green release.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
           set +e
-          # Restoring from git removes the credential in one operation and also undoes the
-          # yarn.lock rewrite and the untracked .yarnrc, which would otherwise survive on a
-          # clean: false runner and be inherited by a job from ANOTHER workflow that has no
-          # Configure Registry step to reset them.
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
           git checkout -- .npmrc yarn.lock 2>/dev/null
-          # Belt and braces for a workspace where the restore could not run at all.
-          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
-            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed && mv -f .npmrc.scrubbed .npmrc
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
           fi
           rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
-          # Do not just assume it worked - a silent failure here leaves a live token on a reused
-          # runner, so say so loudly instead.
-          if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
-            echo "::error title=Registry credential could not be removed::.npmrc still contains an auth token after cleanup on ${RUNNER_NAME:-this runner}."
+
+          # Prove the credential is gone. Fail closed: statuses other than 1 mean "could not tell".
+          cred_state="absent"
+          if [ -f .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          fi
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::.npmrc auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
             exit 1
           fi
-          echo "Registry credentials scrubbed and workspace registry config restored."
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
