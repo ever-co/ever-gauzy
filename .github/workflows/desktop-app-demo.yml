@@ -156,113 +156,17 @@ jobs:
           "PYTHON=$py"            | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Configure Registry
-        shell: bash
-        run: |
-          # Registry selection is CONDITIONAL on where this job runs.
-          #
-          # The public Cloudflare-fronted route https://packages.ever.co intermittently TRUNCATES
-          # large tarballs mid-stream. Measured 2026-08-16 on
-          # @rspack/binding-win32-arm64-msvc@1.7.6: 9,525,323 bytes from packages.ever.co against
-          # 14,590,565 bytes (byte-exact) from BOTH the internal VIP and npmjs. The route sustains
-          # only ~280 KB/s, and a single release-windows-arm64 job logged 12 "unexpected end of
-          # file" errors against it.
-          #
-          # The truncation is UNDETECTABLE by the client: Cloudflare always sends
-          # "Accept-Encoding: gzip" to the origin, Verdaccio then re-gzips the already-gzipped
-          # .tgz, which drops Content-Length in favour of chunked encoding. A cut stream is
-          # therefore not a short read but a complete-looking HTTP 200 whose body fails gunzip,
-          # and Range requests are ignored so there is no resume and no length cross-check.
-          #
-          # Jobs in this repo run on a MIX of runners:
-          #   in-network - [self-hosted, Windows, X64] and the ever-k8s ARC pools
-          #   external   - windows-11-arm, ubicloud-*-arm, cirruslabs macOS, ubuntu-latest
-          # Only in-network runners can reach the VIP, and the internal cache buys an external
-          # runner nothing while adding a failure mode. The choice is therefore made by PROBING
-          # the VIP rather than by hardcoding a runner list, because release-linux runs on
-          # "vars.RUNNER_LINUX_APPS_X64 or ubuntu-latest" and so is not statically known.
-          #
-          # NO-REMOVAL RULE: the packages.ever.co path below is GATED, not deleted. Set the
-          # repo/org variable VERDACCIO_FORCE_PUBLIC=true to bring it back.
-
-          # Start from a known state. The self-hosted Windows jobs check out with clean: false and
-          # their cleanup step removes only dist/ and node_modules/, so registry edits from a
-          # PREVIOUS run can still be on disk. .yarnrc in particular is untracked and un-ignored,
-          # so nothing restores it: a stale "registry" line from an earlier run would silently
-          # win over this run's decision. This reset is NOT best-effort -- if we cannot establish
-          # a known starting state we must not go on to pick a registry, because the install would
-          # then quietly run against whatever the last job left behind.
-          rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten
-          if ! git checkout -- .npmrc yarn.lock; then
-            echo "::error title=Could not reset registry configuration::git checkout -- .npmrc yarn.lock failed on this workspace, so the previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
-            exit 1
-          fi
-
-          REGISTRY=""
-          if [ "$VERDACCIO_FORCE_PUBLIC" = "true" ] && [ -n "$VERDACCIO_TOKEN" ]; then
-            # Evaluated BEFORE the probe so the override actually overrides: an operator setting
-            # this wants the public route even when the VIP is up (e.g. the internal cache is
-            # serving bad data). Gating it on a failed probe would make the flag a no-op.
-            REGISTRY="https://packages.ever.co/"
-            echo "::warning title=Verdaccio public route in use::VERDACCIO_FORCE_PUBLIC=true - installing through packages.ever.co, which is known to truncate large tarballs mid-stream."
-            echo "//packages.ever.co/:_authToken=$VERDACCIO_TOKEN" >> .npmrc
-            echo "always-auth=true" >> .npmrc
-          else
-            if [ "$VERDACCIO_FORCE_PUBLIC" = "true" ]; then
-              echo "::warning title=VERDACCIO_FORCE_PUBLIC set without a token::VERDACCIO_TOKEN is empty, so packages.ever.co cannot be used; probing the internal VIP instead."
-            fi
-            # Retry only where the VIP is expected to answer. An external runner can never reach
-            # it, so a second attempt would just add dead time to every release job.
-            if [ "$EXPECT_VIP" = "true" ]; then ATTEMPTS=2; else ATTEMPTS=1; fi
-            if [ -n "$VERDACCIO_REGISTRY" ]; then
-              attempt=1
-              while [ "$attempt" -le "$ATTEMPTS" ]; do
-                if curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then
-                  REGISTRY="${VERDACCIO_REGISTRY%/}/"
-                  echo "Verdaccio VIP is reachable (attempt $attempt) - using the internal npm cache."
-                  break
-                fi
-                attempt=$((attempt + 1))
-                if [ "$attempt" -le "$ATTEMPTS" ]; then sleep 3; fi
-              done
-            fi
-            if [ -z "$REGISTRY" ] && [ -z "$VERDACCIO_REGISTRY" ]; then
-              echo "No internal Verdaccio registry is configured (VERDACCIO_REGISTRY is empty) - resolving from the public npm registry."
-            elif [ -z "$REGISTRY" ]; then
-              echo "Verdaccio VIP did not answer - resolving from the public npm registry."
-              # An EXTERNAL runner not reaching the VIP is the designed outcome and stays quiet.
-              # An IN-NETWORK runner means the internal cache is silently unavailable (this fleet
-              # has a recurring MetalLB speaker flap that presents exactly this way), so surface
-              # it. Deliberately a warning, not a failure: a cache blip must never redden a
-              # release pipeline that npmjs can serve correctly.
-              if [ "$EXPECT_VIP" = "true" ]; then
-                echo "::warning title=Verdaccio VIP unreachable from an in-network runner::${RUNNER_NAME:-unknown} fell back to the public npm registry; the internal cache was expected to be reachable here."
-              fi
-            fi
-          fi
-          if [ -n "$REGISTRY" ]; then
-            echo "registry=$REGISTRY" >> .npmrc
-            echo "registry \"$REGISTRY\"" >> .yarnrc
-            # One pass, no -i: an -i.bak backup survives on a clean: false runner if the step
-            # fails between the rewrite and its cleanup, and bare -i is not portable to the BSD
-            # sed on the macOS runners. The temp file is only ever the finished rewrite.
-            sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
-                -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
-            mv -f yarn.lock.rewritten yarn.lock
-          fi
-          echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
-        env:
-          VERDACCIO_REGISTRY: ${{ vars.VERDACCIO_REGISTRY }}
-          VERDACCIO_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
-          VERDACCIO_FORCE_PUBLIC: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
-          # true for the IN-NETWORK runners: the 18 [self-hosted, Windows, X64] jobs, plus any
-          # ever-k8s-* ARC pool reached through a runner variable (release-linux takes its os from
-          # vars.RUNNER_LINUX_APPS_X64, which may point at one). The ever-k8s disjunct is a no-op in
-          # workflows whose matrix cannot yield that label - it is kept so all 66 copies stay
-          # byte-identical and a future ARC matrix entry gets the retry and warning automatically.
-          # ubicloud and cirruslabs runners also report RUNNER_ENVIRONMENT=self-hosted, so that
-          # variable cannot be used as the discriminator without firing false warnings on the
-          # external jobs.
-          EXPECT_VIP: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
+        uses: ./.github/actions/configure-registry
+        with:
+          verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
+          verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
+          force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # in-network runners: the self-hosted Windows boxes, plus any ever-k8s-* ARC pool a runner
+          # variable may select (release-linux takes its os from vars.RUNNER_LINUX_APPS_X64). Keep the
+          # ever-k8s disjunct even where a matrix cannot currently emit that label - it costs nothing,
+          # keeps all 66 call sites identical, and means a future ARC matrix entry inherits the VIP
+          # retry and the in-network warning instead of silently losing them.
+          expect-vip: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
@@ -366,6 +270,11 @@ jobs:
       - name: Scrub registry credentials
         if: always()
         shell: bash
+        # DELIBERATELY INLINE, not a composite action. A local action is resolved from the
+        # workspace, so a failed checkout means it cannot load and this step errors instead of
+        # running. 30 of these jobs check out with `clean: false`, where the previous run's
+        # workspace - and any live _authToken in it - survives; that is the exact case this step
+        # exists to cover. Configure Registry is a composite action because it genuinely needs the checkout.
         run: |
           # The auth token must not outlive the job. These runners check out with clean: false and
           # clean only dist/ and node_modules/, so a workspace .npmrc carrying
