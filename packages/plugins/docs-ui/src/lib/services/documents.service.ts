@@ -542,10 +542,22 @@ export class DocumentsService {
 
 	// ─── Categories ──────────────────────────────────────────────
 
-	/** Category catalog (each item carries `documentCount`). Unwraps the pagination envelope. */
+	/**
+	 * Category catalog (each item carries `documentCount`). Unwraps the pagination envelope.
+	 *
+	 * The scope goes inside `where`, like the list trio, for two reasons that both bite: the route
+	 * types its query as `BaseQueryDTO`, whose `where` is `@IsNotEmpty()`, so sending nothing at all
+	 * answered EVERY call with `400 {"message":["where should not be empty"]}` — and because every
+	 * caller wraps this in `catchError(() => of([]))`, the catalog just came back silently empty
+	 * instead of erroring. And `whitelist: true` strips a top-level `organizationId`, while
+	 * `DocumentCategoryService.getCategories()` reads `params.organizationId ?? params.where
+	 * .organizationId` — so `where` is also the only place the scope survives the pipe.
+	 */
 	getCategories(): Observable<IDocumentCategory[]> {
 		return this.http
-			.get<IPagination<IDocumentCategory>>(`${this.API_URL}/categories`)
+			.get<IPagination<IDocumentCategory>>(`${this.API_URL}/categories`, {
+				params: toParams({ where: this.organizationScope() })
+			})
 			.pipe(map((result) => result?.items ?? []));
 	}
 
