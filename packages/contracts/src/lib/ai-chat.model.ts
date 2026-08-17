@@ -15,7 +15,57 @@ export enum AiProviderEnum {
 	VERCEL_GATEWAY = 'vercel-gateway',
 	GAUZY_AI = 'gauzy-ai',
 	GEMINI = 'gemini',
-	GROK = 'grok'
+	GROK = 'grok',
+	/** Groq cloud — OpenAI-compatible chat + Whisper speech-to-text. */
+	GROQ = 'groq',
+	/** Mistral AI — OpenAI-compatible chat + Voxtral speech-to-text. */
+	MISTRAL = 'mistral',
+	/** Deepgram — speech-to-text only (Nova models). */
+	DEEPGRAM = 'deepgram',
+	/** ElevenLabs — speech-to-text only (Scribe). */
+	ELEVENLABS = 'elevenlabs',
+	/** Speaches (faster-whisper-server) — LOCAL speech-to-text server. */
+	SPEACHES = 'speaches',
+	/** LocalAI — LOCAL OpenAI-compatible chat + whisper speech-to-text. */
+	LOCALAI = 'localai',
+	/** whisper.cpp `whisper-server` — LOCAL speech-to-text. */
+	WHISPER_CPP = 'whisper-cpp',
+	/** Any self-hosted OpenAI-compatible endpoint (vLLM, LM Studio, Ollama, LiteLLM …). */
+	OPENAI_COMPATIBLE = 'openai-compatible'
+}
+
+/**
+ * Machine-readable reasons a dictation (`POST /api/ai-chat/transcribe`) request fails with 503.
+ *
+ * Shared by the API (which puts them in the error body) and the chat client (which maps them to a
+ * translated, actionable message with a deep link to the AI Providers settings page).
+ */
+export enum AiSpeechErrorCode {
+	/** No speech-capable provider has usable credentials for this tenant. */
+	NOT_CONFIGURED = 'AI_SPEECH_NOT_CONFIGURED',
+	/** A speech provider rejected the credential (HTTP 401/403). */
+	KEY_REJECTED = 'AI_SPEECH_KEY_REJECTED',
+	/** Every attempted speech provider failed for another reason. */
+	FAILED = 'AI_SPEECH_FAILED'
+}
+
+/** Route of the AI Providers settings page, deep-linked from speech errors. */
+export const AI_CHAT_SETTINGS_PATH = '/pages/settings/ai';
+
+/**
+ * Body of a failed dictation response (HTTP 503) — an OBJECT rather than a bare string so old
+ * clients still find a readable `message` while new ones branch on `code`.
+ */
+export interface IAiSpeechErrorBody {
+	/** Human-readable explanation (kept for clients that only know `message`). */
+	message: string;
+	code: AiSpeechErrorCode;
+	/** Where the problem is fixed (`/pages/settings/ai`). */
+	settingsPath: string;
+	/** HTTP status Nest adds to exception bodies. */
+	statusCode?: number;
+	/** Provider ids that were tried, when any were. */
+	attemptedProviders?: string[];
 }
 
 /**
@@ -120,6 +170,26 @@ export interface IAiChatProvider {
 	connectType?: AiProviderConnectType;
 	/** Authorization page for the Connect flow (client appends callback/PKCE params). */
 	connectAuthorizeUrl?: string;
+	/**
+	 * Whether the provider can transcribe speech (implements the `transcribe` hook), so it can be
+	 * chosen as the tenant's voice (dictation) provider.
+	 */
+	speechCapable: boolean;
+	/** Speech-to-text models a tenant may pick for dictation (speech-capable providers only). */
+	speechModels?: IAiChatModel[];
+	/** The speech model used when the tenant has not chosen one. */
+	defaultSpeechModel?: string;
+	/**
+	 * Whether a credential for this provider needs an API key. Local servers (Speaches, LocalAI,
+	 * whisper.cpp, a self-hosted OpenAI-compatible endpoint) usually run without one.
+	 */
+	requiresApiKey: boolean;
+	/** True for providers that run on the user's own infrastructure (shown with a "Local" chip). */
+	local?: boolean;
+	/** Base URL the provider talks to when the tenant sets none (local servers advertise theirs). */
+	defaultBaseUrl?: string;
+	/** True when the provider is unusable without a tenant-supplied base URL (generic gateways). */
+	requiresBaseUrl?: boolean;
 }
 
 /**
@@ -140,6 +210,16 @@ export interface IAiChatConfig {
 	defaultProvider?: string;
 	/** Default model id used when the client does not request one. */
 	defaultModel?: string;
+	/**
+	 * The tenant's chosen voice (dictation) provider id — the credential flagged `isVoiceDefault`.
+	 * Absent when the tenant has not pinned one; dictation then walks the speech-capable providers.
+	 */
+	defaultVoiceProvider?: string;
+	/**
+	 * Whether at least one speech-capable provider has usable credentials (including local servers
+	 * that need no key), i.e. whether dictation can work for this tenant right now.
+	 */
+	speechConfigured: boolean;
 }
 
 /**
@@ -156,10 +236,18 @@ export interface IAiProviderCredential extends IBasePerTenantAndOrganizationEnti
 	baseUrl?: string;
 	/** Whether this credential is active. */
 	enabled: boolean;
-	/** Preferred default model for this provider (overrides provider default). */
-	defaultModel?: string;
+	/** Preferred default model for this provider (overrides provider default); `null` clears it. */
+	defaultModel?: string | null;
 	/** Whether this provider is the tenant's default for chat. */
 	isDefault?: boolean;
+	/**
+	 * Whether this provider is the tenant's default for VOICE (dictation / speech-to-text).
+	 * Independent of {@link isDefault}: a tenant may chat through Anthropic and dictate through a
+	 * local whisper server. At most one credential per tenant has `isVoiceDefault = true`.
+	 */
+	isVoiceDefault?: boolean;
+	/** Preferred speech-to-text model for this provider (overrides the provider's default); `null` clears it. */
+	speechModel?: string | null;
 }
 
 export interface IAiProviderCredentialFindInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -168,8 +256,11 @@ export interface IAiProviderCredentialFindInput extends IBasePerTenantAndOrganiz
 }
 
 export interface IAiProviderCredentialCreateInput extends Omit<IAiProviderCredential, 'apiKey'> {
-	/** Secret API key — required when creating a credential. */
-	apiKey: string;
+	/**
+	 * Secret API key. Required when creating a credential for a provider that needs one; optional
+	 * for local / self-hosted providers that advertise `requiresApiKey: false`.
+	 */
+	apiKey?: string;
 }
 
 export interface IAiProviderCredentialUpdateInput extends Partial<IAiProviderCredentialCreateInput> {}

@@ -12,7 +12,6 @@ import { AiChatReactUiPlugin } from '@gauzy/plugin-ai-chat-react-ui';
 import { DashboardTimeTrackAngularUiPlugin } from '@gauzy/plugin-dashboard-time-track-angular-ui';
 import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
 import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
-import { environment } from '@gauzy/ui-config';
 
 /**
  * Application UI configuration.
@@ -90,8 +89,10 @@ export const uiPluginConfig: PluginUiConfig = {
 			]
 		}),
 
-		// React UI Plugin (demo only)
-		...(environment.DEMO ? [DashboardTimeTrackReactUiPlugin] : []),
+		// React Time Tracking Dashboard Plugin — the React flavour of the tab above. Both
+		// register the same `/pages/dashboard/time-tracking` path behind `preferredUiCanMatch`
+		// guards; the tenant's Settings → General "Preferred UI" choice decides which renders.
+		DashboardTimeTrackReactUiPlugin,
 
 		// AI Chat — enabled in all builds; visibility is gated at runtime by the
 		// AI_CHAT_ACCESS permission and the backend configuration (/api/ai-chat/config).

@@ -146,7 +146,11 @@ export class AiChatController {
 	@ApiResponse({ status: 400, description: 'No audio uploaded.' })
 	// multer's LIMIT_FILE_SIZE surfaces as PayloadTooLargeException via transformException.
 	@ApiResponse({ status: 413, description: 'Recording exceeds the 25 MB limit.' })
-	@ApiResponse({ status: 503, description: 'No provider available to transcribe.' })
+	@ApiResponse({
+		status: 503,
+		description:
+			'No provider available to transcribe, or every attempt failed. Body: `{ message, code, settingsPath }` where `code` is an `AiSpeechErrorCode`.'
+	})
 	@Permissions(PermissionsEnum.AI_CHAT_ACCESS)
 	@Post('/transcribe')
 	@UseInterceptors(
@@ -166,8 +170,19 @@ export class AiChatController {
 			limits: { fileSize: MAX_AUDIO_BYTES }
 		})
 	)
-	async transcribe(@UploadedFile() file: { buffer: Buffer; mimetype: string }): Promise<{ text: string }> {
-		const text = await this.aiChatService.transcribe(file?.buffer, file?.mimetype ?? 'audio/webm');
+	async transcribe(
+		@UploadedFile() file: { buffer: Buffer; mimetype: string },
+		@Body() body?: { language?: string }
+	): Promise<{ text: string }> {
+		// Optional language hint (ISO-639-1 / BCP-47), sanitized to the tag grammar: it travels into a
+		// provider request as a form field, so anything else is dropped rather than forwarded.
+		const language =
+			typeof body?.language === 'string' && /^[a-z]{2,3}(-[a-z0-9]{2,8})*$/i.test(body.language)
+				? body.language
+				: undefined;
+		const text = await this.aiChatService.transcribe(file?.buffer, file?.mimetype ?? 'audio/webm', {
+			...(language ? { language } : {})
+		});
 		return { text };
 	}
 

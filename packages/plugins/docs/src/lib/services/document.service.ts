@@ -30,6 +30,7 @@ import {
 	MentionService,
 	RequestContext,
 	TenantAwareCrudService,
+	parseFindOptionsRelations,
 	prepareSQLQuery as p,
 	sanitizeRichHtml
 } from '@gauzy/core';
@@ -267,9 +268,11 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		// tenant, by contrast, is ALWAYS the request context's — never client input.
 		const organizationId = this.resolveOrganizationId(options);
 
+		// TypeORM ≥ 1.0 rejects the string-array `relations` form outright ("String-array
+		// "relations" syntax has been removed") — convert the allowlisted names to the object form.
 		const document = await this.typeOrmRepository.findOne({
 			where: { id, tenantId, organizationId },
-			...(options.relations?.length ? { relations: options.relations } : {}),
+			...(options.relations?.length ? { relations: parseFindOptionsRelations(options.relations) } : {}),
 			...(options.withDeleted ? { withDeleted: true } : {})
 		} as FindOneOptions<Document>);
 		if (!document) {

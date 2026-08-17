@@ -4129,6 +4129,11 @@
 		"DONE": "Done",
 		"DISMISS": "Dismiss",
 		"DICTATION_FAILED": "Could not transcribe the recording.",
+		"DICTATION_NOT_CONFIGURED": "Dictation needs a voice provider. Add one on the AI Providers settings page.",
+		"DICTATION_ASK_ADMIN": "Dictation needs a voice provider — ask an administrator to add one in Settings → AI Providers.",
+		"DICTATION_KEY_REJECTED": "The voice provider rejected its API key. Update it on the AI Providers settings page.",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "The voice provider rejected its API key — ask an administrator to update it in Settings → AI Providers.",
+		"DICTATION_OPEN_SETTINGS": "Open AI Providers",
 		"MIC_DENIED": "Microphone access was denied.",
 		"MIC_UNAVAILABLE": "No microphone is available.",
 		"OPEN": "Open AI Assistant",
@@ -5683,6 +5688,19 @@
 		}
 	},
 	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "User interface",
+			"DESCRIPTION": "Choose which interface everyone in this tenant uses for pages that are available in both flavours.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (default)",
+				"REACT": "React (new)"
+			},
+			"HINT": "Applies to the whole tenant, on every device. Today the Time Tracking dashboard is available in both interfaces; more pages will follow.",
+			"READ_ONLY": "Only tenant administrators can change this setting.",
+			"SAVING": "Saving…",
+			"SAVED": "Interface preference saved",
+			"SAVE_ERROR": "The interface preference could not be saved."
+		},
 		"POSTHOG": {
 			"HEADER": "PostHog Analytics",
 			"ENABLED": "Enable PostHog",

@@ -17,7 +17,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
-import { ID, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IPagination, IUser, IUserUiPreferences, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
 import { UUIDValidationPipe, ParseJsonPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -29,6 +29,7 @@ import { FactoryResetService } from './factory-reset/factory-reset.service';
 import {
 	UpdatePreferredLanguageDTO,
 	UpdatePreferredComponentLayoutDTO,
+	UpdateUserUiPreferencesDTO,
 	CreateUserDTO,
 	UpdateUserDTO,
 	FindMeQueryDTO
@@ -115,6 +116,27 @@ export class UserController extends CrudController<User> {
 		@Body() entity: UpdatePreferredComponentLayoutDTO
 	): Promise<IUser | UpdateResult> {
 		return await this._userService.updatePreferredComponentLayout(entity.preferredComponentLayout);
+	}
+
+	/**
+	 * UPDATE the current user's per-feature UI preferences (shallow merge per feature key).
+	 *
+	 * Deliberately NOT `whitelist: true`: the body is keyed by feature (`aiChat`, ...) and future
+	 * features add their own keys without a DTO change; unknown keys are validated structurally
+	 * by the service (plain object or null, size-capped, no prototype keys).
+	 *
+	 * @param entity - Feature-keyed patch.
+	 * @returns The merged preferences as stored.
+	 */
+	@ApiOperation({ summary: "Update the current user's UI preferences (per-feature shallow merge)." })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Merged UI preferences' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid patch' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(TenantPermissionGuard)
+	@Put('/ui-preferences')
+	@UseValidationPipe({ transform: true })
+	async updateUiPreferences(@Body() entity: UpdateUserUiPreferencesDTO): Promise<IUserUiPreferences> {
+		return await this._userService.updateUiPreferences(entity);
 	}
 
 	/**

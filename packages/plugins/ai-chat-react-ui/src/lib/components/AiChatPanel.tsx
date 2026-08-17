@@ -15,13 +15,19 @@ import {
 } from 'ai';
 import { useInjector } from '@gauzy/ui-react';
 import { AgentPageBridgeService, ChatSidebarService, Store } from '@gauzy/ui-core/core';
-import { AI_CHAT_RATE_LIMIT_CODE, PermissionsEnum, type IAiChatRateLimitEnvelope } from '@gauzy/contracts';
+import {
+	AI_CHAT_RATE_LIMIT_CODE,
+	AI_CHAT_SETTINGS_PATH,
+	PermissionsEnum,
+	type IAiChatRateLimitEnvelope,
+	type IAiSpeechErrorBody
+} from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
 import { executeClientTool, isClientTool } from '../chat-client-tools';
 import { useAngularSignal } from '../use-angular-signal';
 import { useChatTranslate } from '../use-chat-translate';
 import { ChatMessageList } from './ChatMessageList';
-import { ChatInput } from './ChatInput';
+import { ChatInput, DictationError } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
 import { DocsAttachPicker } from './DocsAttachPicker';
@@ -138,6 +144,10 @@ export function AiChatPanel() {
 	 *
 	 * `FormData` deliberately WITHOUT a Content-Type header: the browser has to set it, because only
 	 * it knows the multipart boundary. Setting it by hand produces a body the server cannot parse.
+	 *
+	 * A failure throws a {@link DictationError} carrying the server's `code` and `settingsPath` (a
+	 * 503 body is `{ message, code, settingsPath }`), so the input can render an actionable,
+	 * translated message with a link to the AI Providers page instead of the raw server sentence.
 	 */
 	const transcribeAudio = useCallback(
 		async (audio: Blob): Promise<string> => {
@@ -150,17 +160,43 @@ export function AiChatPanel() {
 			});
 			if (!response.ok) {
 				// The server's message names the actual problem — no speech-capable provider, a
-				// rejected key — so it is worth more to the user than a status code.
-				const detail = await response
+				// rejected key — so it is worth more to the user than a status code; the code is what
+				// lets the UI say WHERE to fix it.
+				const body = await response
 					.json()
-					.then((body: { message?: string }) => body?.message)
-					.catch(() => undefined);
-				throw new Error(detail || `Transcription failed (HTTP ${response.status})`);
+					.then((parsed: Partial<IAiSpeechErrorBody> | null) => parsed ?? {})
+					.catch(() => ({}) as Partial<IAiSpeechErrorBody>);
+				const message =
+					typeof body.message === 'string' && body.message.trim()
+						? body.message
+						: `Transcription failed (HTTP ${response.status})`;
+				throw new DictationError(message, {
+					code: typeof body.code === 'string' ? body.code : undefined,
+					settingsPath: typeof body.settingsPath === 'string' ? body.settingsPath : undefined,
+					status: response.status
+				});
 			}
 			const body = (await response.json()) as { text?: string };
 			return body.text ?? '';
 		},
 		[authHeaders]
+	);
+
+	/**
+	 * Open the AI Providers settings page from a dictation error, when this user may.
+	 *
+	 * Passed to the input as `onOpenAiSettings` ONLY when the user holds `AI_CHAT_SETTINGS` — the
+	 * input then shows an "Open AI Providers" action; without it, the message tells the user to ask
+	 * an administrator instead of offering a link that would bounce them to the settings index.
+	 */
+	const openAiSettings = useCallback(
+		(settingsPath?: string) => {
+			void injector
+				.get(AgentPageBridgeService)
+				.openPage(settingsPath || AI_CHAT_SETTINGS_PATH)
+				.catch(() => undefined);
+		},
+		[injector]
 	);
 
 	const transport = useMemo(
@@ -1101,6 +1137,7 @@ export function AiChatPanel() {
 					onStop={() => void stop()}
 					onEscape={isDetachedView ? undefined : handleCollapse}
 					onTranscribe={transcribeAudio}
+					onOpenAiSettings={canOpenAiSettings() ? openAiSettings : undefined}
 					onAttachFile={handleAttachFile}
 					onAttachFromDocuments={() => {
 						setAttachmentError(null);

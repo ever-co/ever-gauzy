@@ -88,7 +88,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 560px;
+    // Was a fixed 560px: wider than the layout column can be with the AI chat
+    // expanded. Same look at full width, shrinkable below it.
+    width: min(560px, 100%);
+    min-width: 0;
     @include nb-ltr(padding-left, 30px);
     @include nb-rtl(padding-right, 30px);
   }
