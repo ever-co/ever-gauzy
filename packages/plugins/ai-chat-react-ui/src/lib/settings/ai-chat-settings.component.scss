@@ -5,6 +5,7 @@
 .ai-chat-settings {
 	.page-header {
 		display: flex;
+		flex-wrap: wrap; // beside an expanded chat the actions drop under the title instead of overflowing
 		align-items: flex-start;
 		justify-content: space-between;
 		gap: 1rem;
@@ -25,12 +26,15 @@
 		}
 
 		// "+ Add AI Provider" and "+ Add AI Voice Provider" side by side; wraps on narrow cards.
+		// No `flex-shrink: 0` here — it pinned the pair at its full width (≈360px), so on a
+		// canvas narrowed by the expanded chat the whole page scrolled horizontally instead
+		// of the buttons wrapping onto a second line.
 		.header-actions {
 			display: flex;
 			flex-wrap: wrap;
 			gap: 0.5rem;
 			justify-content: flex-end;
-			flex-shrink: 0;
+			min-width: 0;
 		}
 	}
 
@@ -379,6 +383,11 @@
 	.provider-rows {
 		display: flex;
 		flex-direction: column;
+		// The grid's column minimums (~30rem + gaps + actions) exceed a card that sits beside
+		// the expanded chat; scroll the LIST inside its card (like every data table) rather
+		// than letting it push the whole canvas into horizontal scroll.
+		min-width: 0;
+		overflow-x: auto;
 
 		.row-head,
 		.row {
