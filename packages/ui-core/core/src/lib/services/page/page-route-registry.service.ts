@@ -224,9 +224,17 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 			const route: Route = {
 				path: config.path, // Add path property
 				pathMatch: config.path ? 'prefix' : 'full', // Set pathMatch property
-				data: config.data || {}, // Add data property if it exists
-				canActivate: config.canActivate || [] // Add canActivate property if it exists
+				data: config.data || {} // Add data property if it exists
 			};
+
+			// Guards are attached ONLY when present. An empty `canActivate: []` is still a truthy
+			// value, and Angular's dev-mode `validateConfig` rejects ANY guard on a redirect route
+			// (`redirectTo and canActivate cannot be used together`, NG04014) — which is thrown
+			// while the lazy parent config loads and blanks the whole app in `nx serve` and in
+			// development-configuration bundles such as demo.gauzy.co.
+			if (config.canActivate?.length) {
+				route.canActivate = config.canActivate;
+			}
 
 			// `canMatch` decides whether this registration takes part in matching at all — it is
 			// what lets two flavours of one page share a path, so it must reach the router.
