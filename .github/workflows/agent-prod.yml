@@ -179,7 +179,11 @@ jobs:
           verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
           verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
           force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
-          # in-network runners: the self-hosted Windows boxes and any ever-k8s-* ARC pool
+          # in-network runners: the self-hosted Windows boxes, plus any ever-k8s-* ARC pool a runner
+          # variable may select (release-linux takes its os from vars.RUNNER_LINUX_APPS_X64). Keep the
+          # ever-k8s disjunct even where a matrix cannot currently emit that label - it costs nothing,
+          # keeps all 66 call sites identical, and means a future ARC matrix entry inherits the VIP
+          # retry and the in-network warning instead of silently losing them.
           expect-vip: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
@@ -227,7 +231,97 @@ jobs:
 
       - name: Scrub registry credentials
         if: always()
-        uses: ./.github/actions/scrub-registry-credentials
+        shell: bash
+        # DELIBERATELY INLINE, not a composite action. A local action is resolved from the
+        # workspace, so a failed checkout means it cannot load and this step errors instead of
+        # running. 30 of these jobs check out with `clean: false`, where the previous run's
+        # workspace - and any live _authToken in it - survives; that is the exact case this step
+        # exists to cover. Configure Registry is a composite action because it genuinely needs the checkout.
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
+          set +e
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
+
+          # Prove the credential is gone, starting from "undetermined" rather than "absent" so no
+          # inconclusive result can pass. Two ways to be inconclusive: grep exits 2 when a file
+          # cannot be READ, and [ -f ] answers false for both "missing" and "cannot stat", so a
+          # bare existence test cannot tell an absent file from an unreachable one.
+          cred_state="undetermined"
+          if [ -e .npmrc ] || [ -L .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          elif [ -r . ] && [ -x . ]; then
+            # The directory is both readable AND searchable and neither a file nor a symlink named
+            # .npmrc exists, so the absence is proven rather than merely unobservable. Without the
+            # -x test a stat could fail in a directory that still answers -r, and without the -L
+            # test above a dangling symlink would read as "missing" while its target held a token.
+            cred_state="absent"
+          fi
+          # Artifacts that can also carry the token: .npmrc.bak is written by older revisions of
+          # this workflow, and a surviving .npmrc.scrubbed means the mv above did not complete.
+          # Present-but-clean is only clutter; present-and-carrying-a-token (or unreadable) is not.
+          for stray in .npmrc.bak .npmrc.scrubbed; do
+            if [ -e "$stray" ] || [ -L "$stray" ]; then
+              grep -q '_authToken=' "$stray"
+              if [ "$?" -ne 1 ]; then
+                cred_state="present in $stray"
+              fi
+            fi
+          done
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::Auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
   release-linux-arm64:
     needs: check-release-tag
     runs-on: ${{ matrix.os }}
@@ -317,7 +411,11 @@ jobs:
           verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
           verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
           force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
-          # in-network runners: the self-hosted Windows boxes and any ever-k8s-* ARC pool
+          # in-network runners: the self-hosted Windows boxes, plus any ever-k8s-* ARC pool a runner
+          # variable may select (release-linux takes its os from vars.RUNNER_LINUX_APPS_X64). Keep the
+          # ever-k8s disjunct even where a matrix cannot currently emit that label - it costs nothing,
+          # keeps all 66 call sites identical, and means a future ARC matrix entry inherits the VIP
+          # retry and the in-network warning instead of silently losing them.
           expect-vip: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
@@ -367,7 +465,97 @@ jobs:
 
       - name: Scrub registry credentials
         if: always()
-        uses: ./.github/actions/scrub-registry-credentials
+        shell: bash
+        # DELIBERATELY INLINE, not a composite action. A local action is resolved from the
+        # workspace, so a failed checkout means it cannot load and this step errors instead of
+        # running. 30 of these jobs check out with `clean: false`, where the previous run's
+        # workspace - and any live _authToken in it - survives; that is the exact case this step
+        # exists to cover. Configure Registry is a composite action because it genuinely needs the checkout.
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
+          set +e
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
+
+          # Prove the credential is gone, starting from "undetermined" rather than "absent" so no
+          # inconclusive result can pass. Two ways to be inconclusive: grep exits 2 when a file
+          # cannot be READ, and [ -f ] answers false for both "missing" and "cannot stat", so a
+          # bare existence test cannot tell an absent file from an unreachable one.
+          cred_state="undetermined"
+          if [ -e .npmrc ] || [ -L .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          elif [ -r . ] && [ -x . ]; then
+            # The directory is both readable AND searchable and neither a file nor a symlink named
+            # .npmrc exists, so the absence is proven rather than merely unobservable. Without the
+            # -x test a stat could fail in a directory that still answers -r, and without the -L
+            # test above a dangling symlink would read as "missing" while its target held a token.
+            cred_state="absent"
+          fi
+          # Artifacts that can also carry the token: .npmrc.bak is written by older revisions of
+          # this workflow, and a surviving .npmrc.scrubbed means the mv above did not complete.
+          # Present-but-clean is only clutter; present-and-carrying-a-token (or unreadable) is not.
+          for stray in .npmrc.bak .npmrc.scrubbed; do
+            if [ -e "$stray" ] || [ -L "$stray" ]; then
+              grep -q '_authToken=' "$stray"
+              if [ "$?" -ne 1 ]; then
+                cred_state="present in $stray"
+              fi
+            fi
+          done
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::Auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
   release-mac:
     needs: check-release-tag
     runs-on: ${{ matrix.os }}
@@ -417,7 +605,11 @@ jobs:
           verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
           verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
           force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
-          # in-network runners: the self-hosted Windows boxes and any ever-k8s-* ARC pool
+          # in-network runners: the self-hosted Windows boxes, plus any ever-k8s-* ARC pool a runner
+          # variable may select (release-linux takes its os from vars.RUNNER_LINUX_APPS_X64). Keep the
+          # ever-k8s disjunct even where a matrix cannot currently emit that label - it costs nothing,
+          # keeps all 66 call sites identical, and means a future ARC matrix entry inherits the VIP
+          # retry and the in-network warning instead of silently losing them.
           expect-vip: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
@@ -477,7 +669,97 @@ jobs:
 
       - name: Scrub registry credentials
         if: always()
-        uses: ./.github/actions/scrub-registry-credentials
+        shell: bash
+        # DELIBERATELY INLINE, not a composite action. A local action is resolved from the
+        # workspace, so a failed checkout means it cannot load and this step errors instead of
+        # running. 30 of these jobs check out with `clean: false`, where the previous run's
+        # workspace - and any live _authToken in it - survives; that is the exact case this step
+        # exists to cover. Configure Registry is a composite action because it genuinely needs the checkout.
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
+          set +e
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
+
+          # Prove the credential is gone, starting from "undetermined" rather than "absent" so no
+          # inconclusive result can pass. Two ways to be inconclusive: grep exits 2 when a file
+          # cannot be READ, and [ -f ] answers false for both "missing" and "cannot stat", so a
+          # bare existence test cannot tell an absent file from an unreachable one.
+          cred_state="undetermined"
+          if [ -e .npmrc ] || [ -L .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          elif [ -r . ] && [ -x . ]; then
+            # The directory is both readable AND searchable and neither a file nor a symlink named
+            # .npmrc exists, so the absence is proven rather than merely unobservable. Without the
+            # -x test a stat could fail in a directory that still answers -r, and without the -L
+            # test above a dangling symlink would read as "missing" while its target held a token.
+            cred_state="absent"
+          fi
+          # Artifacts that can also carry the token: .npmrc.bak is written by older revisions of
+          # this workflow, and a surviving .npmrc.scrubbed means the mv above did not complete.
+          # Present-but-clean is only clutter; present-and-carrying-a-token (or unreadable) is not.
+          for stray in .npmrc.bak .npmrc.scrubbed; do
+            if [ -e "$stray" ] || [ -L "$stray" ]; then
+              grep -q '_authToken=' "$stray"
+              if [ "$?" -ne 1 ]; then
+                cred_state="present in $stray"
+              fi
+            fi
+          done
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::Auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
   release-windows:
     needs: check-release-tag
     runs-on: ${{ matrix.os }}
@@ -548,7 +830,11 @@ jobs:
           verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
           verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
           force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
-          # in-network runners: the self-hosted Windows boxes and any ever-k8s-* ARC pool
+          # in-network runners: the self-hosted Windows boxes, plus any ever-k8s-* ARC pool a runner
+          # variable may select (release-linux takes its os from vars.RUNNER_LINUX_APPS_X64). Keep the
+          # ever-k8s disjunct even where a matrix cannot currently emit that label - it costs nothing,
+          # keeps all 66 call sites identical, and means a future ARC matrix entry inherits the VIP
+          # retry and the in-network warning instead of silently losing them.
           expect-vip: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
@@ -639,7 +925,97 @@ jobs:
 
       - name: Scrub registry credentials
         if: always()
-        uses: ./.github/actions/scrub-registry-credentials
+        shell: bash
+        # DELIBERATELY INLINE, not a composite action. A local action is resolved from the
+        # workspace, so a failed checkout means it cannot load and this step errors instead of
+        # running. 30 of these jobs check out with `clean: false`, where the previous run's
+        # workspace - and any live _authToken in it - survives; that is the exact case this step
+        # exists to cover. Configure Registry is a composite action because it genuinely needs the checkout.
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
+          set +e
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
+
+          # Prove the credential is gone, starting from "undetermined" rather than "absent" so no
+          # inconclusive result can pass. Two ways to be inconclusive: grep exits 2 when a file
+          # cannot be READ, and [ -f ] answers false for both "missing" and "cannot stat", so a
+          # bare existence test cannot tell an absent file from an unreachable one.
+          cred_state="undetermined"
+          if [ -e .npmrc ] || [ -L .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          elif [ -r . ] && [ -x . ]; then
+            # The directory is both readable AND searchable and neither a file nor a symlink named
+            # .npmrc exists, so the absence is proven rather than merely unobservable. Without the
+            # -x test a stat could fail in a directory that still answers -r, and without the -L
+            # test above a dangling symlink would read as "missing" while its target held a token.
+            cred_state="absent"
+          fi
+          # Artifacts that can also carry the token: .npmrc.bak is written by older revisions of
+          # this workflow, and a surviving .npmrc.scrubbed means the mv above did not complete.
+          # Present-but-clean is only clutter; present-and-carrying-a-token (or unreadable) is not.
+          for stray in .npmrc.bak .npmrc.scrubbed; do
+            if [ -e "$stray" ] || [ -L "$stray" ]; then
+              grep -q '_authToken=' "$stray"
+              if [ "$?" -ne 1 ]; then
+                cred_state="present in $stray"
+              fi
+            fi
+          done
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::Auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
   release-windows-arm64:
     needs: check-release-tag
     runs-on: ${{ matrix.os }}
@@ -727,7 +1103,11 @@ jobs:
           verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
           verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
           force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
-          # in-network runners: the self-hosted Windows boxes and any ever-k8s-* ARC pool
+          # in-network runners: the self-hosted Windows boxes, plus any ever-k8s-* ARC pool a runner
+          # variable may select (release-linux takes its os from vars.RUNNER_LINUX_APPS_X64). Keep the
+          # ever-k8s disjunct even where a matrix cannot currently emit that label - it costs nothing,
+          # keeps all 66 call sites identical, and means a future ARC matrix entry inherits the VIP
+          # retry and the in-network warning instead of silently losing them.
           expect-vip: ${{ contains(matrix.os, 'self-hosted') || contains(matrix.os, 'ever-k8s') }}
 
       - name: Install Yarn dependencies
@@ -814,4 +1194,94 @@ jobs:
 
       - name: Scrub registry credentials
         if: always()
-        uses: ./.github/actions/scrub-registry-credentials
+        shell: bash
+        # DELIBERATELY INLINE, not a composite action. A local action is resolved from the
+        # workspace, so a failed checkout means it cannot load and this step errors instead of
+        # running. 30 of these jobs check out with `clean: false`, where the previous run's
+        # workspace - and any live _authToken in it - survives; that is the exact case this step
+        # exists to cover. Configure Registry is a composite action because it genuinely needs the checkout.
+        run: |
+          # The auth token must not outlive the job. These runners check out with clean: false and
+          # clean only dist/ and node_modules/, so a workspace .npmrc carrying
+          # //packages.ever.co/:_authToken=... would sit on disk after the job ends - readable by
+          # anything scheduled on this runner before the next Configure Registry step resets it.
+          #
+          # This is deliberately the LAST step of the job: the build steps above run
+          # postinstall.electron / electron-builder install-app-deps, which resolve dependencies,
+          # so the credential has to survive until they are done. Only the credential lines go;
+          # the registry= line stays. Runs on failure too, which is when it would linger.
+          #
+          # No 'sed -i.bak': the backup would itself hold the token if this step were interrupted.
+          # The temp file only ever holds the SCRUBBED content, so a partial run leaks nothing.
+          # Cleanup policy, precisely:
+          #   * individual cleanup ATTEMPTS are best-effort. Under `set -e` a failing sed or mv
+          #     would abort this step before the token was removed - the exact outcome the step
+          #     exists to prevent - so nothing is allowed to short-circuit it.
+          #   * the POSTCONDITION is not best-effort. A surviving CREDENTIAL fails the step, because
+          #     handing a live token to the next job on a reused clean: false runner is worse than a
+          #     red build. Leftover registry STATE (a stale .yarnrc, a yarn.lock still rewritten to
+          #     the VIP) only warns: it is a correctness nuisance for an unrelated workflow, not a
+          #     secret, and the next Configure Registry step resets it anyway.
+          # Anything that cannot be DETERMINED counts as dirty, so an unreadable file is never
+          # mistaken for a clean one (grep exits 2 on a read error, which is not "no token").
+          set +e
+
+          # Restoring the tracked files from git is the primary mechanism: it reverts the whole
+          # file, so the credential, the appended registry= line and the yarn.lock rewrite all go
+          # in one operation.
+          git checkout -- .npmrc yarn.lock 2>/dev/null
+          # Fallback for a workspace where git cannot run at all.
+          if [ -f .npmrc ]; then
+            sed -e '/_authToken=/d' -e '/always-auth=/d' .npmrc > .npmrc.scrubbed 2>/dev/null && mv -f .npmrc.scrubbed .npmrc
+          fi
+          rm -f .npmrc.bak .npmrc.scrubbed .yarnrc yarn.lock.bak yarn.lock.rewritten
+
+          # Prove the credential is gone, starting from "undetermined" rather than "absent" so no
+          # inconclusive result can pass. Two ways to be inconclusive: grep exits 2 when a file
+          # cannot be READ, and [ -f ] answers false for both "missing" and "cannot stat", so a
+          # bare existence test cannot tell an absent file from an unreachable one.
+          cred_state="undetermined"
+          if [ -e .npmrc ] || [ -L .npmrc ]; then
+            grep -q '_authToken=' .npmrc
+            case "$?" in
+              0) cred_state="present" ;;
+              1) cred_state="absent" ;;
+              *) cred_state="undetermined" ;;
+            esac
+          elif [ -r . ] && [ -x . ]; then
+            # The directory is both readable AND searchable and neither a file nor a symlink named
+            # .npmrc exists, so the absence is proven rather than merely unobservable. Without the
+            # -x test a stat could fail in a directory that still answers -r, and without the -L
+            # test above a dangling symlink would read as "missing" while its target held a token.
+            cred_state="absent"
+          fi
+          # Artifacts that can also carry the token: .npmrc.bak is written by older revisions of
+          # this workflow, and a surviving .npmrc.scrubbed means the mv above did not complete.
+          # Present-but-clean is only clutter; present-and-carrying-a-token (or unreadable) is not.
+          for stray in .npmrc.bak .npmrc.scrubbed; do
+            if [ -e "$stray" ] || [ -L "$stray" ]; then
+              grep -q '_authToken=' "$stray"
+              if [ "$?" -ne 1 ]; then
+                cred_state="present in $stray"
+              fi
+            fi
+          done
+          if [ "$cred_state" != "absent" ]; then
+            echo "::error title=Registry credential may still be present::Auth token is $cred_state after cleanup on ${RUNNER_NAME:-this runner}."
+            exit 1
+          fi
+
+          # Report - but do not fail on - leftover registry state.
+          leftover=""
+          [ -e .yarnrc ] && leftover="$leftover .yarnrc"
+          git diff --quiet -- .npmrc yarn.lock 2>/dev/null
+          case "$?" in
+            0) ;;
+            1) leftover="$leftover .npmrc/yarn.lock(modified)" ;;
+            *) leftover="$leftover .npmrc/yarn.lock(unverifiable)" ;;
+          esac
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Registry state left behind::Cleanup could not fully restore:$leftover on ${RUNNER_NAME:-this runner}. The next Configure Registry step resets it, but a job from another workflow could inherit it first."
+          else
+            echo "Registry credential removed; .npmrc, .yarnrc and yarn.lock restored to HEAD."
+          fi
