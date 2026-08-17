@@ -112,12 +112,13 @@ COPY --chown=node:node patches ./patches
 ARG VERDACCIO_REGISTRY=""
 RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
-    if [ -n "$VERDACCIO_REGISTRY" ]; then \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
     sed -i "s|https://registry.npmjs.org|${VERDACCIO_REGISTRY%/}|g" yarn.lock; \
     elif [ -n "$VERDACCIO_TOKEN" ]; then \
+    echo "Internal Verdaccio VIP not in use (VERDACCIO_REGISTRY unset, or its probe failed) - installing through the public packages.ever.co route, which is known to truncate large tarballs mid-stream." && \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
     echo "registry=https://packages.ever.co/" >> .npmrc && \
     echo "always-auth=true" >> .npmrc && \
@@ -213,12 +214,13 @@ COPY --chown=node:node patches ./patches
 ARG VERDACCIO_REGISTRY=""
 RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
-    if [ -n "$VERDACCIO_REGISTRY" ]; then \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
     sed -i "s|https://registry.npmjs.org|${VERDACCIO_REGISTRY%/}|g" yarn.lock; \
     elif [ -n "$VERDACCIO_TOKEN" ]; then \
+    echo "Internal Verdaccio VIP not in use (VERDACCIO_REGISTRY unset, or its probe failed) - installing through the public packages.ever.co route, which is known to truncate large tarballs mid-stream." && \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
     echo "registry=https://packages.ever.co/" >> .npmrc && \
     echo "always-auth=true" >> .npmrc && \

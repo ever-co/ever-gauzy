@@ -30,6 +30,13 @@ concurrency:
   group: gauzy-docker-build-${{ github.workflow }}
   cancel-in-progress: false
 
+# Least-privilege scope for the automatic GITHUB_TOKEN.
+# `packages: write` is required: these jobs log in to ghcr.io with GITHUB_TOKEN and push
+# image tags + the :buildcache layer cache. Everything else stays read-only.
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   gauzy-api:
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
