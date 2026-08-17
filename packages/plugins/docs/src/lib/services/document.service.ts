@@ -30,6 +30,7 @@ import {
 	MentionService,
 	RequestContext,
 	TenantAwareCrudService,
+	parseFindOptionsRelations,
 	prepareSQLQuery as p,
 	sanitizeRichHtml
 } from '@gauzy/core';
@@ -269,7 +270,17 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 
 		const document = await this.typeOrmRepository.findOne({
 			where: { id, tenantId, organizationId },
-			...(options.relations?.length ? { relations: options.relations } : {}),
+			// TypeORM v1 REMOVED the legacy `string[]` form of `relations` and throws on it. The throw
+			// is a plain Error, not an HttpException, so `TransformInterceptor` rewraps it as
+			// `new HttpException(message, undefined)` — and an undefined status leaves Express at its
+			// default. The client therefore receives **HTTP 200** whose body is
+			// `{"message":"String-array \"relations\" syntax has been removed…"}`, which looks like a
+			// successful read. Every `GET /documents/:id` carrying relations has been answering that:
+			// the detail panel rendered an empty document (`DOCS.KIND.undefined`) and the page editor
+			// opened with a blank title, because `{message}` is truthy and has no `name`.
+			// `parseFindOptionsRelations` is the conversion that replaced patches/typeorm+1.0.0.patch
+			// when it was removed in #9793 — the docs plugin was written afterwards and never adopted it.
+			...(options.relations?.length ? { relations: parseFindOptionsRelations(options.relations) } : {}),
 			...(options.withDeleted ? { withDeleted: true } : {})
 		} as FindOneOptions<Document>);
 		if (!document) {

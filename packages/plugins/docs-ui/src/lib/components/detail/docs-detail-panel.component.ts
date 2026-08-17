@@ -171,6 +171,15 @@ export class DocsDetailPanelComponent extends TranslationBaseComponent implement
 				firstValueFrom(this.documentsService.getLinks(this.documentId).pipe(catchError(() => of([])))),
 				firstValueFrom(this.documentsService.getCategories().pipe(catchError(() => of([]))))
 			]);
+			// A 200 is not proof of a document. `TransformInterceptor` serializes any non-Nest server
+			// error as a 200 carrying `{ message }`, and assigning that straight through built the
+			// whole panel around an error object — empty name, `DOCS.KIND.undefined`,
+			// `DOCS.SOURCE.undefined` — with no error state and no retry, because `*ngIf="document as
+			// doc"` only asks whether it is truthy. Treat a payload without an `id` as a failed read
+			// and fall into the existing catch, which is what the user-visible error state is for.
+			if (!document?.id) {
+				throw new Error(`Documents API returned no document for ${this.documentId}`);
+			}
 			this.document = document;
 			this.links = links ?? [];
 			this.categories = categories ?? [];

@@ -284,7 +284,15 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			this.knownBlockIds = [];
 		}
 		try {
-			this.document = await firstValueFrom(this.documentsService.getById(id, ['categories', 'tags']));
+			const loaded = await firstValueFrom(this.documentsService.getById(id, ['categories', 'tags']));
+			// A 200 does NOT prove a document came back: `TransformInterceptor` serializes non-Nest
+			// failures as `200 { message }`, which is truthy and has no `name`, so the editor used to
+			// open fully chromed with a blank title and silently overwrite the real one on the next
+			// save. Route any non-document payload to the error banner below instead.
+			if (!loaded?.id) {
+				throw new Error(`Documents API returned no document for ${id}`);
+			}
+			this.document = loaded;
 			this.titleDraft = this.document?.name ?? '';
 			this.iconDraft = this.document?.icon ?? '';
 			await this.loadBreadcrumbs();
