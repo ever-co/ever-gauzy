@@ -5,6 +5,11 @@ on:
     branches:
       - droplets
 
+# Least-privilege scope for the automatic GITHUB_TOKEN.
+# This workflow only builds/tests/deploys from a checkout — read access is sufficient.
+permissions:
+  contents: read
+
 jobs:
   deploy:
     if: ${{ vars.DO_ENABLED == 'true' }}
