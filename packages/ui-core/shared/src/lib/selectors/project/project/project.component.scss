@@ -9,22 +9,37 @@
 	}
 
 	ng-select {
-		// Mirrors the team selector: a flex row for logo + name, no `height: 100%`
-		// (the parent is auto-height, so it never resolved to anything), and no
-		// per-selector text inset — the trigger owns both, so all four header
-		// selectors line up with each other.
+		// The label template is a flex row so the avatar and the name share one
+		// vertical centre. `gap` — not a margin on the image — is the single source
+		// of the spacing, so a logo-less entity starts its name on exactly the same
+		// x as the placeholder it replaces, and the trigger matches the option rows
+		// in the panel it opens (see `.gauzy-entity-select` in `styles/_overrides.scss`).
 		.selector-template {
 			display: flex;
 			align-items: center;
+			gap: 0.375rem;
+			// A flex item's automatic minimum size is its content, so the name could
+			// otherwise push the pill wider than the header has room for instead of
+			// truncating.
+			min-width: 0;
+
+			span {
+				overflow: hidden;
+				white-space: nowrap;
+				text-overflow: ellipsis;
+			}
 		}
 
+		// One avatar size across the team / project / employee triggers, matching
+		// the 18px used by their option rows. The `width`/`height` ATTRIBUTES in the
+		// templates only reserve space before the image loads; this is what the
+		// rendered size actually resolves to.
 		img {
-			margin-right: 5px;
-			border-radius: nb-theme(button-rectangle-border-radius);
+			flex: none;
+			width: 1.125rem;
+			height: 1.125rem;
+			border-radius: var(--gauzy-radius-sm, 6px);
+			object-fit: cover;
 		}
 	}
-}
-
-img {
-	object-fit: cover;
 }
