@@ -11,7 +11,7 @@
       <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
         <nb-card-body>
           <ga-single-statistic
-            [color]="'var(--color-info-default)'"
+            [color]="'var(--gauzy-action-info-text)'"
             [title]="'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate"
 						[value]="
 							aggregatedEmployeeStatistics?.total?.income || 0
@@ -24,7 +24,7 @@
       <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
         <nb-card-body>
           <ga-single-statistic
-            [color]="'var(--color-danger-default)'"
+            [color]="'var(--gauzy-action-danger-text)'"
             [title]="'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate"
 						[value]="
 							aggregatedEmployeeStatistics?.total?.expense || 0
@@ -36,11 +36,19 @@
       </nb-card>
       <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
         <nb-card-body>
+          <!--
+            Profit is the row's bottom line, so it is the one figure set in the
+            page's own text colour: income (info) and bonus (the highlight
+            style's success) already spend two of the accents, and a third would
+            have left the row four coloured numbers with no hierarchy between
+            them. Below zero it goes red, which is the one case where the colour
+            is carrying information rather than decorating.
+          -->
           <ga-single-statistic
 						[color]="
 							aggregatedEmployeeStatistics?.total?.profit >= 0
-								? 'var(--color-warning-default)'
-								: '#ff7b00'
+								? 'var(--gauzy-text-color-1)'
+								: 'var(--gauzy-action-danger-text)'
 						"
             [title]="'DASHBOARD_PAGE.TITLE.PROFIT' | translate"
 						[value]="
@@ -55,7 +63,7 @@
         <nb-card [nbSpinner]="isLoading" nbSpinnerStatus="primary">
           <nb-card-body>
             <ga-single-statistic
-              [color]="'#089c17'"
+              [color]="'var(--gauzy-action-success-text)'"
               [title]="'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate"
 						[value]="
 							aggregatedEmployeeStatistics?.total?.bonus || 0
