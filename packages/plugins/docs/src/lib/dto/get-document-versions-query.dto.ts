@@ -1,7 +1,5 @@
-import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { Transform, TransformFnParams } from 'class-transformer';
-import { IsOptional, Max, Min } from 'class-validator';
-import { TenantOrganizationBaseDTO } from '@gauzy/core';
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger';
+import { BaseQueryDTO, TenantOrganizationBaseDTO } from '@gauzy/core';
 
 /**
  * Query params for `GET /documents/:id/versions`.
@@ -18,26 +16,15 @@ import { TenantOrganizationBaseDTO } from '@gauzy/core';
  * path, and `DocumentVersionService.getVersions()` builds its own `where` from that document,
  * consuming only `take`/`skip` from here.
  *
- * Pagination is kept with the same shape and bounds as the core `PaginationQueryDTO` — `whitelist:
- * true` strips unknown properties, so omitting these would silently discard a caller's paging. The
- * optional organization comes from a partial `TenantOrganizationBaseDTO`, matching
- * {@link DocumentScopeQueryDTO} on the sibling detail routes, which keeps the platform's
- * `@IsOrganizationBelongsToUser()` ownership check; when omitted the service falls back to the
- * request context.
+ * So the paging half is PICKED off `BaseQueryDTO` rather than restated: same decorators, same
+ * bounds, one definition — re-declaring `take`/`skip` here would drift from core the moment either
+ * changed. `whitelist: true` strips properties the DTO does not declare, so dropping them entirely
+ * would silently discard a caller's paging instead. The optional organization comes from a partial
+ * `TenantOrganizationBaseDTO`, matching {@link DocumentScopeQueryDTO} on the sibling detail routes,
+ * which keeps the platform's `@IsOrganizationBelongsToUser()` ownership check; when omitted the
+ * service falls back to the request context.
  */
-export class GetDocumentVersionsQueryDTO extends PartialType(TenantOrganizationBaseDTO) {
-	/** Limit (paginated) — max number of snapshots to take. */
-	@ApiPropertyOptional({ type: () => 'number', minimum: 0, maximum: 100 })
-	@IsOptional()
-	@Min(0)
-	@Max(100)
-	@Transform((params: TransformFnParams) => Number.parseInt(params.value, 10))
-	readonly take?: number;
-
-	/** Offset (paginated) — where from snapshots should be taken. */
-	@ApiPropertyOptional({ type: () => 'number', minimum: 0 })
-	@IsOptional()
-	@Min(0)
-	@Transform((params: TransformFnParams) => Number.parseInt(params.value, 10))
-	readonly skip?: number;
-}
+export class GetDocumentVersionsQueryDTO extends IntersectionType(
+	PickType(BaseQueryDTO, ['take', 'skip'] as const),
+	PartialType(TenantOrganizationBaseDTO)
+) {}
