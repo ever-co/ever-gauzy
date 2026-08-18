@@ -1,6 +1,22 @@
 @use '@nebular/theme/styles/global/breakpoints' as *;
 @use 'themes' as *;
 
+// ── The header band's own type step ─────────────────────────────────────────
+// One step BELOW the shared control text (`select-medium-text-font-size`,
+// 0.8125rem / 13px). The band is chrome that frames the page, not part of it:
+// at the same size as the page's own controls it competes with the content it
+// is supposed to be labelling. Declared once here because the band's text comes
+// from four unrelated widgets — ng-select triggers, a bare `<input>` in the date
+// pill, the timer readout, an `nbButton` — none of which share a token.
+$header-text-size: 0.75rem; // 12px
+
+// And ONE colour for all of it. The date-range field already resolved
+// `gauzy-text-color-2` (a muted grey: rgba(255, 255, 255, 0.5) on the dark
+// themes, rgba(126, 126, 143, 1) on the light ones) while everything beside it
+// sat on `text-basic-color` — pure white in the dark themes, which is the
+// brightest thing on the screen spent on a filter chip. The fallback covers the
+// two material themes, which never registered the gauzy token set.
+$header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
 
 @include nb-install-component() {
   width: 100%;
@@ -23,14 +39,40 @@
 
   .main-header {
     display: flex;
-    // The band holds nothing but the action cluster now that the breadcrumb
-    // trail moved into the page: park it on the trailing edge directly instead
-    // of relying on `space-between` against an empty left-hand spacer.
+    align-items: center;
+    // Everything in the band is parked on the trailing edge, and `.header-lead`
+    // below buys itself back to the leading edge with an auto margin. That is
+    // deliberately NOT `space-between`: this element also hosts the extra-actions
+    // sheet and the web time tracker, so the number of in-flow children is not
+    // fixed and a distribution rule would re-space the band whenever one of them
+    // appears. An auto margin on one child is unaffected by the others.
     justify-content: flex-end;
     width: 100%;
     background-color: transparent;
     .show-large-down {
       display: none;
+    }
+
+    // The quick-actions slot: hard against the leading edge of the band, and
+    // never a shrink target — the button's label is short and fixed, so it has
+    // nothing useful to give up when the selector cluster runs out of room (the
+    // cluster has its own scroller for that).
+    .header-lead {
+      display: flex;
+      align-items: center;
+      flex: none;
+      @include nb-ltr(margin-right, auto);
+      @include nb-rtl(margin-left, auto);
+
+      // The leading inset lives on the button's wrapper, not on `.header-lead`
+      // itself, so that below the `lg` breakpoint — where `.show-large-up` hides
+      // the button — the slot collapses to nothing instead of leaving a padded
+      // empty box against the band's edge. 1.5rem mirrors the trailing inset on
+      // `:host .actions`, so the band is inset by the same amount on both sides.
+      nb-action {
+        @include nb-ltr(padding-left, 1.5rem);
+        @include nb-rtl(padding-right, 1.5rem);
+      }
     }
 
     .logo-container {
@@ -69,18 +111,12 @@
     nb-action {
       height: auto;
       display: flex;
-      align-content: center;
-      margin-right: 0.625rem;
-      @include nb-ltr(margin-right, 0.625rem);
-      @include nb-rtl(margin-left, 0.625rem);
+      align-items: center;
+      margin: 0;
 
       .header-selector {
         width: auto !important;
       }
-    }
-
-    nb-actions.size-small nb-action {
-      padding: 0.5625rem;
     }
 
     // The date-range picker's dropdown (.md-drppicker) is NOT a CDK overlay:
@@ -102,6 +138,7 @@
     .header-container {
       display: flex;
       align-items: center;
+      gap: 0.75rem;
       width: auto;
       // 🛑 A flex item defaults to `min-width: auto`, so without this it can never shrink below
       // its content width. The parent uses `justify-content: flex-end`, so the excess overflows
@@ -332,12 +369,11 @@
 }
 
 :host .actions {
-  margin: 0.625rem;
-  padding: 0.625rem;
-  border-radius: nb-theme(button-rectangle-border-radius);
-  background-color: nb-theme(gauzy-card-2);
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem;
+  padding: 0;
   @include nb-ltr(margin-right, 1.5rem);
   @include nb-rtl(margin-left, 1.5rem);
 }
