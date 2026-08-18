@@ -27,12 +27,21 @@
 	min-height: 0;
 }
 
+// The tab bar's row height. ONE number, because two unrelated things are laid
+// out against it: the tab links themselves, and the actions cluster that is
+// centred on their line (both below). `route-tabset-tab-padding` cannot serve as
+// that number — it is a shorthand, so nothing here can read its block half.
+$tab-height: 2.5rem;
+
 .dashboard-container {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 	min-height: 0;
 	overflow-y: auto;
+	// Positioning context for the actions cluster that floats onto the tab bar
+	// when there is no chips row to hold it (see the last rule in this block).
+	position: relative;
 	// Horizontal overflow belongs to individual widgets, never to the page
 	overflow-x: hidden;
 
@@ -42,6 +51,46 @@
 	> ga-dashboard-switcher,
 	> gz-dynamic-tabs {
 		flex: 0 0 auto;
+	}
+
+	/*
+	 * ── The ⋮ menu rides on the tab bar ──────────────────────────────────────
+	 *
+	 * `ga-dashboard-switcher` renders its chips row only once there is more than
+	 * one dashboard to switch between (see its template). Until then the row is
+	 * left holding a single 2rem icon button, and it still costs a full band
+	 * between the page header and the tabs — 40px of otherwise empty width whose
+	 * entire content is one glyph in the far corner.
+	 *
+	 * In that state the switcher is taken out of flow and centred on the tab
+	 * bar's own line, which is where a bar-level menu belongs anyway. The tabs
+	 * keep a matching inline-end inset so a long tab list scrolls or wraps before
+	 * it can reach the button.
+	 *
+	 * Scoped by `:has(.chips-area)` rather than by a flag on the component: with
+	 * chips present the row carries real content — and, since a custom dashboard
+	 * can only be SELECTED when one exists, that is also the only state in which
+	 * the Edit / Save / Cancel buttons join the ⋮ menu. Those need the full-width
+	 * row and keep it.
+	 */
+	> ga-dashboard-switcher:not(:has(.chips-area)) {
+		position: absolute;
+		top: 0;
+		inset-inline-end: 0;
+		z-index: 2;
+		display: flex;
+		align-items: center;
+		height: $tab-height;
+
+		.dashboard-switcher {
+			padding-block: 0;
+		}
+	}
+
+	> ga-dashboard-switcher:not(:has(.chips-area)) + gz-dynamic-tabs {
+		// 2rem of button + the switcher's own inline padding, rounded up so the
+		// last tab never sits under the menu.
+		padding-inline-end: 3rem;
 	}
 }
 
@@ -66,167 +115,55 @@
 	}
 }
 
-.header {
-  padding: 30px;
+/*
+ * ── The tab bar ──────────────────────────────────────────────────────────────
+ *
+ * Everything about how a tab LOOKS (type step, muted vs. primary colour, the
+ * active tab's fill and its top corners) is settled once for the whole app in
+ * `styles/gauzy/_gauzy-overrides.scss`. What is left here is what belongs to
+ * THIS bar: its row height, and the fact that a tab title is a label rather
+ * than a shouted word.
+ */
+:host ::ng-deep gz-dynamic-tabs nb-route-tabset .route-tab .tab-link {
+	// Nebular sizes a tab from `route-tabset-tab-padding` alone, so the row
+	// height was 2 x 0.75rem + a 1rem line = 2.75rem, and the horizontal 1.25rem
+	// inset put 20px either side of every label. The height is stated directly
+	// instead (the link is already `display: flex; align-items: center` from
+	// `tab-link-typography`) so ONE number answers for the bar and for the
+	// actions cluster that is centred on it below.
+	min-height: $tab-height;
+	padding-block: 0;
+	padding-inline: 0.875rem;
+	// Nebular leaves the link an `inline-block`, so it sits on the row's text
+	// baseline and the line box reserves descender space above it: the bar
+	// measured 2px taller than the tab it holds, and the actions cluster centred
+	// on `$tab-height` came out a pixel high against it. Aligning to the top of
+	// the line box makes the bar exactly as tall as a tab, which is what the
+	// variable claims.
+	display: inline-flex;
+	align-items: center;
+	vertical-align: top;
+	// The icon and its label are one unit; Nebular leaves them touching.
+	gap: 0.5rem;
 
-  .header-container {
-    display: flex;
-    justify-content: space-between;
+	nb-icon {
+		// Nebular gives a route tab's icon no size of its own, so it fell back to
+		// the `nb-icon` default (1.5rem) and out-weighed the 0.875rem label
+		// beside it. An `em` keeps the pair proportional if the type step moves.
+		font-size: 1.15em;
+		height: 1.15em;
+		width: 1.15em;
+	}
 
-    .employee-info,
-    .org-info {
-      display: flex;
+	// Tab titles come from translation keys, which are free to be lower-cased;
+	// Nebular upper-cases them. A sentence-cased label reads as a name rather
+	// than as a shouted one, and matches every other label in the page frame.
+	.tab-text {
+		display: inline-block;
+		text-transform: initial;
 
-      .employee-image,
-      .org-image {
-        max-width: 70px;
-        max-height: 70px;
-        border-radius: 13px;
-        margin-right: 24px;
-        margin-left: 24px;
-      }
-    }
-
-    .employee-details,
-    .org-details {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-
-      .employee-name,
-      .org-name {
-        font-weight: bold;
-        font-size: 18px;
-      }
-
-      .employee-position,
-      .org-position {
-        font-size: 14px;
-      }
-    }
-  }
-}
-
-.open {
-  cursor: pointer;
-}
-
-.body {
-  padding: 36px;
-  display: flex;
-  justify-content: space-between;
-
-  .half-content {
-    width: 49%;
-  }
-
-  .info-block {
-    &:hover {
-      box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
-      transform: translateY(-1px);
-    }
-
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    width: 100%;
-    height: 84px;
-    border-radius: 4px;
-    padding: 29px;
-    // #f6f9fc / #333333 were a hard-coded light-blue tile with dark text on the
-    // landing route. They must move together or the tile becomes unreadable.
-    background-color: var(--gauzy-card-2);
-    cursor: pointer;
-    .info-text,
-    .info-value {
-      display: flex;
-      font-size: 18px;
-      color: var(--text-basic-color);
-
-      // Four literal status colours here resolved to two meanings: green for
-      // "profit up" / "income", orange-yellow for "profit down" / "expense".
-      // They were two slightly different greens and two slightly different
-      // yellows, none of which changed per theme. Mapped onto the status
-      // tokens, which do.
-      .profit-positive-color {
-        color: nb-theme(color-success-default);
-      }
-
-      .profit-negative-color {
-        color: nb-theme(color-warning-default);
-      }
-
-      .expense-color {
-        color: nb-theme(color-warning-default);
-      }
-
-      .income-color {
-        color: nb-theme(color-success-default);
-      }
-    }
-
-    .info-text {
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .info-value {
-      flex-direction: row;
-      align-items: center;
-
-      span {
-        font-size: 24px;
-        margin-right: 12px;
-      }
-    }
-  }
-
-  .bonus {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    width: 100%;
-
-    .bonus-value {
-      margin-right: 39px;
-
-      :first-child {
-        text-align: right;
-        font-size: 16px;
-        margin-bottom: 15px;
-        margin-right: 3px;
-      }
-
-      :last-child {
-        font-size: 46px;
-        font-weight: bold;
-        color: nb-theme(color-info-default);
-      }
-
-      .negative-bonus-color {
-        color: red;
-      }
-    }
-
-    .bonus-disclaimer {
-      margin-top: 15px;
-      margin-right: 39px;
-      font-size: 0.7rem;
-      width: 215px;
-    }
-  }
-}
-
-::ng-deep nb-route-tabset .route-tab .tab-link {
-  border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-  svg {
-    fill: nb-theme(text-primary-color);
-  }
-  span {
-    display: inline-block;
-    text-transform: initial;
-    &:first-letter {
-      text-transform: uppercase;
-    }
-  }
+		&:first-letter {
+			text-transform: uppercase;
+		}
+	}
 }
