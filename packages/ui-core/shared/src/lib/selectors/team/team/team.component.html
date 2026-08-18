@@ -34,7 +34,11 @@
 				<!-- No `ml-1`: the option row is a flex row now and its `gap` owns the
 				     spacing, so a margin here would only ever indent the teams that
 				     happen to carry a logo. -->
-				<span [title]="item?.name">{{ item.name }}</span>
+<!-- No `title` here: an appended panel is `max-width: max-content` (see
+				     `_overrides.scss`), so an option row is never narrower than its own
+				     label and can never be truncated — a tooltip could only ever repeat
+				     text that is already fully on screen. -->
+				<span>{{ item.name }}</span>
 			</ng-template>
 			<ng-template ng-label-tmp let-item="item">
 				<div class="selector-template" [title]="item?.name">

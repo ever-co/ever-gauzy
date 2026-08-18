@@ -61,11 +61,18 @@
 			<img [src]="item.imageUrl" width="40" height="40" alt="" />
 			}
 			<!-- Wrapped rather than a bare text node, for the same reason as the
-			     employee picker: a flex row can only ellipsis an element. -->
-			<span [title]="item?.name">{{ item.name }}</span>
+			     employee picker: a flex row can only ellipsis an element. No
+			     `title`: an appended panel is `max-width: max-content`, so an
+			     option row can never be truncated and a tooltip would only repeat
+			     the label verbatim. -->
+			<span>{{ item.name }}</span>
 		</ng-template>
 		<ng-template ng-label-tmp let-item="item">
-			<div class="selector-template" [title]="item?.name">
+			<!-- No `title`, unlike the team / project / employee triggers: those
+			     render a `getShortenedName()` form, so their tooltip supplies text
+			     the chip does NOT show. This one renders the raw `item.name`, so a
+			     tooltip repeated the value being read — the same string twice. -->
+			<div class="selector-template">
 				@if (item.imageUrl) {
 				<img height="25" width="25" [src]="item.imageUrl" alt="" />
 				}
