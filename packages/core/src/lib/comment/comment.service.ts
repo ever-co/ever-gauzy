@@ -48,13 +48,20 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		try {
 			// Retrieve context-specific IDs.
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-			const employeeId = RequestContext.currentEmployeeId() ?? input.employeeId;
+			// The author is the caller's own employee. RequestContext.currentEmployeeId() is deliberately
+			// null for CHANGE_SELECTED_EMPLOYEE holders, so fall back to the JWT user's employee before the
+			// body value; a caller with no employee identity at all posts an author-less comment (as before).
+			const employeeId =
+				RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId ?? input.employeeId;
 			const { mentionEmployeeIds = [], organizationId, ...data } = input;
 
-			// Validate that the employee exists.
-			const employee = await this._employeeService.findOneByIdString(employeeId);
-			if (!employee) {
-				throw new NotFoundException(`Employee with id ${employeeId} not found`);
+			// Validate that the employee exists (only a real id can be looked up — an empty one used to
+			// match an arbitrary employee and pass vacuously).
+			if (employeeId) {
+				const employee = await this._employeeService.findOneByIdString(employeeId);
+				if (!employee) {
+					throw new NotFoundException(`Employee with id ${employeeId} not found`);
+				}
 			}
 
 			// Create the comment.
@@ -119,10 +126,12 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			const employeeId = RequestContext.currentEmployeeId();
 			const { mentionEmployeeIds = [] } = input;
 
-			// Find the comment for the current employee with the given id.
+			// Find the comment for the current employee with the given id. Callers holding
+			// CHANGE_SELECTED_EMPLOYEE (currentEmployeeId() is null for them) may edit any comment of the
+			// tenant — spelled out here; a null key was previously just dropped from the query.
 			const comment = await this.findOneByWhereOptions({
 				id,
-				employeeId
+				...(employeeId ? { employeeId } : {})
 			});
 
 			if (!comment) {

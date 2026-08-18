@@ -33,6 +33,7 @@ import {
 	parseTypeORMFindToMikroOrm
 } from './../../core/utils';
 import { parseTypeORMFindCountOptions } from './utils';
+import { assertCriteriaHasPredicate } from './criteria.helper';
 import {
 	ICountByOptions,
 	ICountOptions,
@@ -248,6 +249,12 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 */
 	public async findOneOrFailByIdString(id: string, options?: IFindOneOptions<T>): Promise<ITryRequest<T>> {
 		try {
+			// A lookup "by id" with no id must not become a lookup for ANY row: TypeORM omits an
+			// undefined where value (and used to omit null), so `where: { id }` degraded to
+			// `SELECT ... LIMIT 1` and returned an arbitrary record (GHSA-44pv-34gx-q9p4 class).
+			if (!id) {
+				throw new NotFoundException(`The requested record was not found`);
+			}
 			let record: T;
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
@@ -368,6 +375,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneByIdString(id: ID, options?: IFindOneOptions<T>): Promise<T> {
+		// See findOneOrFailByIdString: an empty id must fail closed, never match an arbitrary row.
+		if (!id) {
+			throw new NotFoundException(`The requested record was not found`);
+		}
 		let record: T;
 
 		switch (this.ormType) {
@@ -611,6 +622,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 */
 	public async update(id: IUpdateCriteria<T>, partialEntity: QueryDeepPartialEntity<T>): Promise<UpdateResult | T> {
 		try {
+			assertCriteriaHasPredicate(id, 'update');
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					let where: MikroFilterQuery<T>;
@@ -645,6 +657,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 */
 	public async delete(criteria: string | number | FindOptionsWhere<T>): Promise<DeleteResult> {
 		try {
+			assertCriteriaHasPredicate(criteria, 'delete');
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					// Determine the appropriate filter for MikroORM based on the criteria type
@@ -712,6 +725,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 */
 	public async softDelete(criteria: string | number | FindOptionsWhere<T>): Promise<UpdateResult | T> {
 		try {
+			assertCriteriaHasPredicate(criteria, 'softDelete');
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					// Determine the appropriate filter for MikroORM based on the criteria type

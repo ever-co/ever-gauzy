@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { IsNull } from 'typeorm';
 import { ID, IEmployeeSetting, IEmployeeSettingCreateInput, IEmployeeSettingUpdateInput } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
@@ -31,10 +32,19 @@ export class EmployeeSettingService extends TenantAwareCrudService<EmployeeSetti
 
 			const { entity, entityId, organizationId } = input;
 
-			// Check if a setting already exists for current employee and for the same entity
+			// Check if a setting already exists for current employee and for the same entity. A setting
+			// that is not bound to an entity has entity/entityId NULL — match exactly that (a null used to
+			// be dropped from the query, so the de-duplication hit an unrelated setting of the employee
+			// and overwrote it).
 			try {
 				const employeeSetting = await this.findOneByOptions({
-					where: { entity, entityId, employeeId, organizationId, tenantId }
+					where: {
+						entity: entity ?? IsNull(),
+						entityId: entityId ?? IsNull(),
+						employeeId,
+						...(organizationId ? { organizationId } : {}),
+						tenantId
+					}
 				});
 
 				if (employeeSetting) {

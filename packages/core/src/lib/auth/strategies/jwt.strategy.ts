@@ -38,6 +38,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 				this.logger.debug(`Validate JWT payload for user: ${payload?.id}`);
 			}
 
+			// An access token identifies its user by `id` (or `thirdPartyId`). Other JWTs are signed
+			// with the same JWT_SECRET but carry no such claim (invite, estimate, team-join,
+			// appointment, magic-code tokens); a lookup by an undefined id used to fall through to
+			// the FIRST user in the table, so such a token authenticated as that user. Reject them here.
+			if (!id && !thirdPartyId) {
+				return done(new UnauthorizedException('unauthorized'), false);
+			}
+
 			// We use this to also attach the user object to the request context.
 			const user: IUser = await this._authService.getAuthenticatedUser(id, thirdPartyId);
 

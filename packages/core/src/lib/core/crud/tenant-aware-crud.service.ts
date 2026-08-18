@@ -8,6 +8,7 @@ import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-ba
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
 import { CrudService } from './crud.service';
+import { assertCriteriaHasPredicate } from './criteria.helper';
 import { ICrudService, IPartialEntity } from './icrud.service';
 import { ITryRequest } from './try-request';
 
@@ -527,6 +528,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			if (options?.where) {
 				where = { ...where, ...options.where };
 			}
+
+			// The caller's criteria must select rows on its own BEFORE tenant scoping is merged in:
+			// `delete({ employeeId: undefined })` would otherwise pass CrudService's guard on the strength
+			// of the injected tenantId alone and delete every row of the tenant.
+			assertCriteriaHasPredicate(where, 'delete');
 
 			const user = RequestContext.currentUser();
 

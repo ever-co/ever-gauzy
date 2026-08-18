@@ -12,6 +12,7 @@ import {
 	IBroadcastCreateInput,
 	IBroadcastUpdateInput,
 	ID,
+	IEmployee,
 	IPagination,
 	NotificationActionTypeEnum,
 	RolesEnum
@@ -55,13 +56,19 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		try {
 			// Retrieve context-specific IDs
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+			// null for CHANGE_SELECTED_EMPLOYEE holders and non-employee users: such publishers create
+			// publisher-less broadcasts (the long-standing behavior). Only validate a real employee id —
+			// a lookup by an empty id must not (and no longer can) pass on the strength of an arbitrary row.
 			const employeeId = RequestContext.currentEmployeeId();
 			const { organizationId, ...data } = input;
 
 			// Validate that the employee exists
-			const employee = await this._employeeService.findOneByIdString(employeeId);
-			if (!employee) {
-				throw new NotFoundException(`Employee with id ${employeeId} not found`);
+			let employee: IEmployee | undefined;
+			if (employeeId) {
+				employee = await this._employeeService.findOneByIdString(employeeId);
+				if (!employee) {
+					throw new NotFoundException(`Employee with id ${employeeId} not found`);
+				}
 			}
 
 			// Create the broadcast with publishedAt defaulting to now if not provided
@@ -110,10 +117,13 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 			const tenantId = RequestContext.currentTenantId();
 			const employeeId = RequestContext.currentEmployeeId();
 
-			// Find the broadcast for the current employee with the given id
+			// Find the broadcast for the current employee with the given id. The employee restriction
+			// only applies to callers that HAVE an employee identity here: for CHANGE_SELECTED_EMPLOYEE
+			// holders currentEmployeeId() is null and they may edit any broadcast of the tenant (spelled
+			// out — a null key was previously just dropped from the query).
 			const originalBroadcast = await this.findOneByWhereOptions({
 				id,
-				employeeId
+				...(employeeId ? { employeeId } : {})
 			});
 
 			if (!originalBroadcast) {
@@ -334,14 +344,16 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 			// Load the entity with its members/employees relation
 			const repository = this.dataSource.getRepository(entity);
 
+			// Only include organizationId for non-Organization entities, and only when one is known —
+			// currentOrganizationId() is null for tokens without an organization claim.
+			const scopeOrganizationId = organizationId || RequestContext.currentOrganizationId();
 			const entityWithMembers = await repository.findOne({
 				where: {
 					id: entityId,
 					tenantId,
-					// Only include organizationId for non-Organization entities
-					...(entity !== BaseEntityEnum.Organization && {
-						organizationId: organizationId || RequestContext.currentOrganizationId()
-					})
+					...(entity !== BaseEntityEnum.Organization && scopeOrganizationId
+						? { organizationId: scopeOrganizationId }
+						: {})
 				},
 				relations: parseFindOptionsRelations([relationName])
 			});

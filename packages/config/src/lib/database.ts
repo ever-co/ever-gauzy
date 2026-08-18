@@ -9,7 +9,13 @@ import { DataSourceOptions } from 'typeorm';
 import { KnexModuleOptions } from 'nest-knexjs';
 import * as path from 'path';
 import * as chalk from 'chalk';
-import { DatabaseTypeEnum, getLoggingMikroOptions, getLoggingOptions, getTlsOptions } from './database-helpers';
+import {
+	DatabaseTypeEnum,
+	getLoggingMikroOptions,
+	getLoggingOptions,
+	getTlsOptions,
+	TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR
+} from './database-helpers';
 
 /**
  * Type representing the ORM types.
@@ -116,8 +122,8 @@ switch (dbType) {
 		// TypeORM DB Config (MySQL)
 		const typeOrmMySqlOptions: DataSourceOptions = {
 			type: dbType,
-			// TypeORM 1.0 throws on null/undefined in where by default; restore 0.3 'ignore' behavior.
-			invalidWhereValuesBehavior: { null: 'ignore', undefined: 'ignore' },
+			// null -> IS NULL, undefined -> key omitted. Never 'ignore' for null (GHSA-44pv-34gx-q9p4); see database-helpers.ts.
+			invalidWhereValuesBehavior: TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR,
 			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
 			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 3306,
@@ -213,8 +219,8 @@ switch (dbType) {
 		// TypeORM DB Config (PostgreSQL)
 		const typeOrmPostgresOptions: DataSourceOptions = {
 			type: dbType,
-			// TypeORM 1.0 throws on null/undefined in where by default; restore 0.3 'ignore' behavior.
-			invalidWhereValuesBehavior: { null: 'ignore', undefined: 'ignore' },
+			// null -> IS NULL, undefined -> key omitted. Never 'ignore' for null (GHSA-44pv-34gx-q9p4); see database-helpers.ts.
+			invalidWhereValuesBehavior: TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR,
 			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
 			port: process.env.DB_PORT ? Number.parseInt(process.env.DB_PORT, 10) : 5432,
@@ -312,8 +318,8 @@ switch (dbType) {
 		// TypeORM DB Config (Better-SQLite3)
 		const typeOrmBetterSqliteConfig: DataSourceOptions = {
 			type: DatabaseTypeEnum.betterSqlite3,
-			// TypeORM 1.0 throws on null/undefined in where by default; restore 0.3 'ignore' behavior.
-			invalidWhereValuesBehavior: { null: 'ignore', undefined: 'ignore' },
+			// null -> IS NULL, undefined -> key omitted. Never 'ignore' for null (GHSA-44pv-34gx-q9p4); see database-helpers.ts.
+			invalidWhereValuesBehavior: TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR,
 			database: sqlitePath,
 			logging: 'all',
 			logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log

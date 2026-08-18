@@ -1,5 +1,5 @@
 import { EventBus } from '@nestjs/cqrs';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import {
 	ActionTypeEnum,
@@ -697,6 +697,16 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		try {
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const { organizationId, addedProjectIds = [], removedProjectIds = [], member } = input;
+
+			// The member id comes from the request body and keys the raw-repository DELETE below: an
+			// empty value used to be dropped from the criteria, removing EVERY member of the listed
+			// projects. Fail closed.
+			if (!member?.id) {
+				throw new BadRequestException('member.id is required');
+			}
+			if (!tenantId) {
+				throw new BadRequestException('Tenant context is required');
+			}
 
 			// Handle adding projects
 			if (addedProjectIds.length > 0) {

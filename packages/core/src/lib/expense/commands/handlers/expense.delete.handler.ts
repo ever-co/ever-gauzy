@@ -2,12 +2,11 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { isNotEmpty } from '@gauzy/utils';
-import { ID, PermissionsEnum } from '@gauzy/contracts';
+import { ID } from '@gauzy/contracts';
 import { ExpenseService } from '../../expense.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { EmployeeStatisticsService } from '../../../employee-statistics';
 import { ExpenseDeleteCommand } from '../expense.delete.command';
-import { RequestContext } from './../../../core/context';
 
 @CommandHandler(ExpenseDeleteCommand)
 export class ExpenseDeleteHandler implements ICommandHandler<ExpenseDeleteCommand> {
@@ -55,13 +54,12 @@ export class ExpenseDeleteHandler implements ICommandHandler<ExpenseDeleteComman
 	 * @returns Promise<DeleteResult> - The result of the delete operation
 	 */
 	public async deleteExpense(expenseId: ID): Promise<DeleteResult> {
-		const query = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-			? { id: expenseId }
-			: {
-					id: expenseId,
-					employeeId: RequestContext.currentEmployeeId(),
-					tenantId: RequestContext.currentTenantId()
-			  };
+		// Tenant scoping and the "own records only" restriction for callers without
+		// CHANGE_SELECTED_EMPLOYEE are injected by TenantAwareCrudService.delete(). Spelling
+		// `employeeId: RequestContext.currentEmployeeId()` out here was redundant — and, because that
+		// helper is null for callers without an employee record, put a null into the criteria (which
+		// TypeORM used to drop silently). Keep the criteria to the id.
+		const query = { id: expenseId };
 
 		try {
 			return await this.expenseService.delete(query);

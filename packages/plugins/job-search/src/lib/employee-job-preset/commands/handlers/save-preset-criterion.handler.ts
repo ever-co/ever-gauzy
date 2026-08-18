@@ -1,4 +1,5 @@
 import { IMatchingCriterions, PermissionsEnum } from '@gauzy/contracts';
+import { NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { RequestContext, TypeOrmEmployeeRepository } from '@gauzy/core';
 import { JobPresetUpworkJobSearchCriterion } from '../../job-preset-upwork-job-search-criterion.entity';
@@ -27,9 +28,16 @@ export class SavePresetCriterionHandler implements ICommandHandler<SavePresetCri
 			input.employeeId = RequestContext.currentEmployeeId();
 		}
 
-		// Set organizationId if not provided in the input
+		// Set organizationId if not provided in the input (raw repository: scope to the tenant, and
+		// only ever look an employee up by a real id).
 		if (!input.organizationId && input.employeeId) {
-			const employee = await this.typeOrmEmployeeRepository.findOneBy({ id: input.employeeId });
+			const employee = await this.typeOrmEmployeeRepository.findOneBy({
+				id: input.employeeId,
+				tenantId: input.tenantId
+			});
+			if (!employee) {
+				throw new NotFoundException(`Employee with id ${input.employeeId} not found`);
+			}
 			input.organizationId = employee.organizationId;
 		}
 

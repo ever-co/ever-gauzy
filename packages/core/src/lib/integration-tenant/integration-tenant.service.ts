@@ -160,11 +160,14 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 		integrationId: ID;
 		entityType: IntegrationEntity;
 	}): Promise<IIntegrationTenant> {
+		// Callers may run outside a request (event-bus subscribers such as the AI screenshot analysis);
+		// only pin the tenant when one is known — the organization + integration ids already scope the
+		// lookup, and a null tenantId must not enter the where.
 		const tenantId = RequestContext.currentTenantId();
 
 		return await super.findOneByOptions({
 			where: {
-				tenantId,
+				...(tenantId ? { tenantId } : {}),
 				organizationId,
 				integrationId,
 				isActive: true,

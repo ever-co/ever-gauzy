@@ -514,6 +514,13 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		employeeId: ID
 	): Promise<boolean> {
 		try {
+			// No employee identity, no team membership — same answer the batch path
+			// (getEmployeeTeamIds / canViewOrganizationStrategicInitiativeSync) gives. An empty
+			// employeeId used to be dropped from the membership query, turning the check into
+			// "any active member exists in a linked team".
+			if (!employeeId) {
+				return false;
+			}
 			// Load the organization strategic initiative with its projects and their teams
 			const organizationStrategicInitiativeWithProjects = await this.findOneByOptions({
 				where: { id: organizationStrategicInitiative.id },

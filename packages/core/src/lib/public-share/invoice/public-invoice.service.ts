@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { FindOptionsWhere, IsNull, UpdateResult } from 'typeorm';
 import { verify } from 'jsonwebtoken';
 import { IInvoice, IInvoiceUpdateInput } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
@@ -119,9 +119,17 @@ export class PublicInvoiceService {
 	async updateInvoice(params: IInvoice, entity: IInvoiceUpdateInput): Promise<IInvoice | UpdateResult> {
 		try {
 			const decoded = verify(params.token as string, environment.JWT_SECRET) as any;
+			// Only an estimate-email token (estimate-email.service.ts) carries `invoiceId`; other
+			// JWT_SECRET-signed tokens do not. Without this check a missing `invoiceId` was dropped from
+			// the where and `findOneByOrFail` matched an ARBITRARY invoice of that organization/tenant,
+			// which was then updated with the caller's body. The token must also name the invoice in the URL.
+			const invoiceId = decoded?.invoiceId;
+			if (!invoiceId || !decoded?.tenantId || invoiceId !== params.id) {
+				throw new ForbiddenException('Invalid estimate token');
+			}
 			const invoice = await this.typeOrmInvoiceRepository.findOneByOrFail({
-				id: decoded.invoiceId,
-				organizationId: decoded.organizationId,
+				id: invoiceId,
+				organizationId: decoded.organizationId ?? IsNull(),
 				tenantId: decoded.tenantId
 			});
 			return await this.typeOrmInvoiceRepository.update(invoice.id, entity);

@@ -28,6 +28,11 @@ export class UpdateEmployeeJobSearchStatusHandler implements ICommandHandler<Upd
 			// Filter by current employee ID if the permission is not present
 			employeeId = RequestContext.currentEmployeeId();
 		}
+		// Never query with an empty id: `where: { id: null }` used to drop the predicate and resolve
+		// to an arbitrary employee of the tenant.
+		if (!employeeId) {
+			throw new BadRequestException('Employee context is required to update the job search status.');
+		}
 
 		// Find the employee by ID
 		const employee = await this.employeeService.findOneByIdString(employeeId, {

@@ -271,6 +271,12 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExists(id: string): Promise<boolean> {
+		// An empty id must never reach the repository: `findOneBy({ id: undefined })` drops the predicate
+		// and returns the FIRST user row (see getIfExists) — for the JWT strategy that meant any token
+		// signed with JWT_SECRET but carrying no `id` claim authenticated as that user.
+		if (!id) {
+			return false;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return !!(await this.mikroOrmRepository.findOne({ id } as any));
@@ -287,6 +293,9 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
+		if (!thirdPartyId) {
+			return false;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return !!(await this.mikroOrmRepository.findOne({ thirdPartyId } as any));
@@ -299,10 +308,20 @@ export class UserService extends TenantAwareCrudService<User> {
 
 	/**
 	 * Retrieves a user with the given ID if it exists.
+	 *
+	 * The id MUST be present. TypeORM silently omits an `undefined` (and, before
+	 * TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR, a `null`) where value, so `findOneBy({ id: undefined })`
+	 * became `SELECT ... LIMIT 1` and returned an arbitrary user — the JWT strategy authenticated any
+	 * JWT_SECRET-signed token that had no `id` claim (invite / estimate / team-join / appointment /
+	 * magic-code tokens) as the first user in the table.
+	 *
 	 * @param {string} id - The ID of the user to retrieve.
 	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
 	 */
 	async getIfExists(id: string): Promise<User | undefined> {
+		if (!id) {
+			return undefined;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmUserRepository.findOne({ id });
@@ -320,6 +339,9 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
 	 */
 	async getIfExistsThirdParty(thirdPartyId: string): Promise<User | undefined> {
+		if (!thirdPartyId) {
+			return undefined;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmUserRepository.findOne({ thirdPartyId });

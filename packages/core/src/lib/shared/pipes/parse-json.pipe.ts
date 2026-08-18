@@ -16,9 +16,38 @@ export interface ParseJsonPipeOptions {
 	errorHttpStatusCode?: ErrorHttpStatusCode;
 	exceptionFactory?: (error: string) => any;
 }
+
+/**
+ * Drops object properties whose value is `null`, recursively (array elements are recursed into but
+ * never removed). Rebuilt with `Object.fromEntries`, which defines own data properties and so cannot
+ * be used to reach `__proto__`.
+ *
+ * Why: this pipe feeds client-supplied `?data={ findInput, relations, ... }` filter objects straight
+ * into TypeORM `where` clauses. At this ingress a JSON `null` has only ever meant "not filtered on
+ * this key" (TypeORM 0.3 skipped it, and the clients were written against that). TypeORM is now
+ * configured to translate `null` into `IS NULL` — the fail-closed choice for server code, which spells
+ * `IS NULL` out with the explicit `IsNull()` operator — so the client's meaning is preserved here by
+ * removing the key before the value ever reaches a query. See TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR
+ * in @gauzy/config (GHSA-44pv-34gx-q9p4).
+ */
+export function omitNullValues<T>(value: T): T {
+	if (Array.isArray(value)) {
+		return value.map((item) => omitNullValues(item)) as unknown as T;
+	}
+	if (value !== null && typeof value === 'object') {
+		return Object.fromEntries(
+			Object.entries(value as Record<string, unknown>)
+				.filter(([, v]) => v !== null)
+				.map(([k, v]) => [k, omitNullValues(v)])
+		) as T;
+	}
+	return value;
+}
+
 /**
  * JSON Parse Pipe
- * Validates UUID passed in request parameters.
+ * Parses a JSON-encoded query parameter (e.g. `?data={...}`) into an object. `null` property values
+ * are dropped (see {@link omitNullValues}).
  */
 @Injectable()
 export class ParseJsonPipe implements PipeTransform<string> {
@@ -59,7 +88,7 @@ export class ParseJsonPipe implements PipeTransform<string> {
 
 		if (isJson) {
 			try {
-				return JSON.parse(value);
+				return omitNullValues(JSON.parse(value));
 			} catch (e) {
 				console.log('Json Parser Error:', e);
 			}

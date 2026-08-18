@@ -76,6 +76,12 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 		try {
 			const tenantId = RequestContext.currentTenantId() || entity.tenantId;
 			const organizationId = entity.organizationId;
+			// The body is not DTO-validated: an empty organizationId would scope the delete / employee
+			// lookups below to nothing (null -> IS NULL) and then re-create the policy as a duplicate;
+			// previously it was silently dropped instead. Require it.
+			if (!organizationId) {
+				throw new HttpException('organizationId is required', HttpStatus.BAD_REQUEST);
+			}
 
 			// Delete the policy
 			await this.delete({

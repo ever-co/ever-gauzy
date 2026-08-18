@@ -174,8 +174,10 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 
 		try {
 			// Search for existing Organization Sprint
+			// projectId is optional in the update body (PartialType makes it nullable): only filter on it
+			// when the client sent one — sprint.projectId is NOT NULL, so a null (now IS NULL) would never match.
 			const organizationSprint = await super.findOneByIdString(id, {
-				where: { organizationId, tenantId, projectId },
+				where: { organizationId, tenantId, ...(projectId ? { projectId } : {}) },
 				relations: { project: true, members: true, modules: true }
 			});
 
