@@ -15,10 +15,10 @@ name: Playwright Tests
 #   run 30330950619  bootstrap failed after 9 min
 #
 # So the split follows the cost: `yarn bootstrap` (8.9 GB / ~900k files) is isolated in its own
-# job and published to the Actions cache, the two compile steps run in a second job, and the test
-# jobs compile NOTHING — they download the prebuilt bundles, boot them and run one shard each.
-# An evicted pod now costs a single phase, and a re-run of a failed job reuses the cached
-# node_modules + the uploaded bundles instead of redoing everything.
+# job and published as a compressed ARTIFACT, the two compile steps run in a second job, and the
+# test jobs compile NOTHING — they unpack that artifact, download the prebuilt bundles, boot them
+# and run one shard each. An evicted pod now costs a single phase, and a re-run of a failed job
+# reuses the published node_modules + bundles instead of redoing everything.
 on:
   # Run the e2e suite ONLY when code lands on develop (merge/push). Deliberately NOT on pull_request or
   # any other branch: the suite is long and shared-DB flaky, so it's gated to the integration
@@ -176,47 +176,11 @@ jobs:
         with:
           name: e2e-node-modules
 
-      - name: Unpack node_modules
-        id: unpack
-        if: steps.archive.outcome == 'success'
-        # MUST stay `continue-on-error`. A step `if:` with no status-check function is implicitly
-        # ANDed with `success()`, so a HARD failure here would skip the bootstrap fallback below and
-        # kill the job outright — worse than the cache miss this whole change replaces. With this,
-        # the step's outcome is 'failure' while its conclusion is 'success', so the job continues and
-        # the fallback's `outcome != 'success'` fires.
-        continue-on-error: true
+      - name: Restore node_modules
         shell: bash
-        run: |
-          # Explicit decompression rather than tar's magic-byte auto-detect: GNU tar shells out to an
-          # external `zstd`, so auto-detect needs tar >= 1.31 AND zstd on the EXTRACTING runner. Try
-          # each compressor in turn so a mismatch degrades instead of failing.
-          if zstd -dc "$NODE_MODULES_ARCHIVE" 2>/dev/null | tar -xf -; then
-            echo "extracted (zstd)"
-          elif gzip -dc "$NODE_MODULES_ARCHIVE" 2>/dev/null | tar -xf -; then
-            echo "extracted (gzip)"
-          elif tar -xf "$NODE_MODULES_ARCHIVE"; then
-            echo "extracted (tar auto-detect)"
-          else
-            echo "::warning::could not extract $NODE_MODULES_ARCHIVE"
-            exit 1
-          fi
-          rm -f "$NODE_MODULES_ARCHIVE"
-          test -d node_modules
-
-      - name: Install Packages & Bootstrap (fallback)
-        if: steps.unpack.outcome != 'success'
-        shell: bash
-        # Safety net only — `deps` just published the archive. Reaching this means the artifact was
-        # unavailable or corrupt, which is worth shouting about because this job then pays the full
-        # install again.
-        run: |
-          echo "::warning::node_modules archive unavailable — falling back to a full bootstrap (1-3 h on these runners)."
-          # Clear any partial extraction first: a half-written tree can still carry a
-          # `node_modules/.yarn-integrity` that convinces yarn everything is already installed.
-          rm -rf "$NODE_MODULES_ARCHIVE" node_modules apps/*/node_modules packages/*/node_modules \
-                 packages/plugins/*/node_modules tools/node_modules
-          yarn bootstrap \
-            || { echo "::warning::yarn bootstrap failed — retry 1"; yarn bootstrap; }
+        # Unpacks the archive `deps` published, or bootstraps if it is unavailable. One step, and one
+        # copy shared with the other consumer — see the script for why it is not two.
+        run: .github/scripts/restore-node-modules.sh
 
       - name: Size the Node heap to this container
         shell: bash
@@ -410,46 +374,11 @@ jobs:
         with:
           name: e2e-node-modules
 
-      - name: Unpack node_modules
-        id: unpack
-        if: steps.archive.outcome == 'success'
-        # MUST stay `continue-on-error`. A step `if:` with no status-check function is implicitly
-        # ANDed with `success()`, so a HARD failure here would skip the bootstrap fallback below and
-        # kill the job outright — worse than the cache miss this whole change replaces. With this,
-        # the step's outcome is 'failure' while its conclusion is 'success', so the job continues and
-        # the fallback's `outcome != 'success'` fires.
-        continue-on-error: true
+      - name: Restore node_modules
         shell: bash
-        run: |
-          # Explicit decompression rather than tar's magic-byte auto-detect: GNU tar shells out to an
-          # external `zstd`, so auto-detect needs tar >= 1.31 AND zstd on the EXTRACTING runner. Try
-          # each compressor in turn so a mismatch degrades instead of failing.
-          if zstd -dc "$NODE_MODULES_ARCHIVE" 2>/dev/null | tar -xf -; then
-            echo "extracted (zstd)"
-          elif gzip -dc "$NODE_MODULES_ARCHIVE" 2>/dev/null | tar -xf -; then
-            echo "extracted (gzip)"
-          elif tar -xf "$NODE_MODULES_ARCHIVE"; then
-            echo "extracted (tar auto-detect)"
-          else
-            echo "::warning::could not extract $NODE_MODULES_ARCHIVE"
-            exit 1
-          fi
-          rm -f "$NODE_MODULES_ARCHIVE"
-          test -d node_modules
-
-      - name: Install Packages & Bootstrap (fallback)
-        if: steps.unpack.outcome != 'success'
-        shell: bash
-        # node_modules is still needed at runtime here: the API bundle keeps third-party deps
-        # external, and Playwright/playwright-bdd run from it.
-        run: |
-          echo "::warning::node_modules archive unavailable — falling back to a full bootstrap (1-3 h on these runners)."
-          # Clear any partial extraction first: a half-written tree can still carry a
-          # `node_modules/.yarn-integrity` that convinces yarn everything is already installed.
-          rm -rf "$NODE_MODULES_ARCHIVE" node_modules apps/*/node_modules packages/*/node_modules \
-                 packages/plugins/*/node_modules tools/node_modules
-          yarn bootstrap \
-            || { echo "::warning::yarn bootstrap failed — retry 1"; yarn bootstrap; }
+        # Unpacks the archive `deps` published, or bootstraps if it is unavailable. One step, and one
+        # copy shared with the other consumer — see the script for why it is not two.
+        run: .github/scripts/restore-node-modules.sh
 
       - name: Install forever package
         shell: bash

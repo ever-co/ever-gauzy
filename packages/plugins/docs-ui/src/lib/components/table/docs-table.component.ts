@@ -262,6 +262,29 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	}
 
 	/**
+	 * Keyboard equivalent of `onRowClick`. The grid renders plain `<tr>`s with no interactive role, so
+	 * a pointer-only open left the detail panel unreachable without a mouse; Enter/Space on anything
+	 * focusable inside a row (its kebab aside, which owns its own keys) now opens that row.
+	 */
+	protected onRowKeydown(event: KeyboardEvent): void {
+		if (event.key !== 'Enter' && event.key !== ' ') return;
+		if (this.isControlEvent(event)) return;
+		const index = this.resolveRowIndex(event);
+		if (index === undefined) return;
+		// Space would otherwise scroll the table out from under the panel that is about to open.
+		event.preventDefault();
+		this.cancelPendingRowOpen();
+		void this.resolveRowAt(index).then((data) => {
+			if (!data) return;
+			if (data.kind === DocumentKindEnum.FOLDER) {
+				this.folderOpened.emit(data);
+			} else {
+				this.rowClicked.emit(data);
+			}
+		});
+	}
+
+	/**
 	 * Per-kind default open on double click (`01-ux-spec.md` §4.1) — folder drill,
 	 * page editor, file preview.
 	 */
@@ -293,7 +316,7 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	 * selects, and must never also open), the row kebab, the status Retry button, and the sortable
 	 * column headers' anchors.
 	 */
-	private isControlEvent(event: MouseEvent): boolean {
+	private isControlEvent(event: Event): boolean {
 		const target = event.target as HTMLElement | null;
 		return !!target?.closest?.('.angular2-smart-action-multiple-select, button, a, input, nb-checkbox');
 	}
@@ -306,10 +329,10 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	 * on a column header's padding (outside its sort anchor) would otherwise resolve to index 0 and
 	 * open the first document. Expanded detail rows are skipped so they cannot shift the mapping.
 	 */
-	private resolveRowIndex(event: MouseEvent): number | undefined {
+	private resolveRowIndex(event: Event): number | undefined {
 		const row = (event.target as HTMLElement)?.closest?.('tr');
 		const body = row?.parentElement;
-		if (!row || !body || body.tagName !== 'TBODY') return undefined;
+		if (!row || body?.tagName !== 'TBODY') return undefined;
 		const dataRows = Array.from(body.children).filter(
 			(el) => el.tagName === 'TR' && !el.classList.contains('angular2-smart-row-detail')
 		);
