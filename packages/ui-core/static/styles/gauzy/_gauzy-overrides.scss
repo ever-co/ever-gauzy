@@ -647,25 +647,13 @@ $default-box-shadow: $control-hairline;
   nb-tabset .tabset .tab.active a.tab-link {
     @include tab-link-typography(nb-theme(tabset-tab-text-font-size), 600);
     border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-    color: var(--text-primary-color);
-
-    nb-icon {
-      svg {
-        fill: var(--text-primary-color);
-      }
-    }
+    @include tab-link-colour(var(--text-primary-color));
   }
 
   nb-route-tabset .route-tabset .route-tab.active a.tab-link {
     @include tab-link-typography(nb-theme(route-tabset-tab-text-font-size), 600);
     border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-    color: var(--text-primary-color);
-
-    nb-icon {
-      svg {
-        fill: var(--text-primary-color);
-      }
-    }
+    @include tab-link-colour(var(--text-primary-color));
   }
 
   nb-tabset .tabset .tab a.tab-link {
@@ -704,10 +692,4 @@ $default-box-shadow: $control-hairline;
 // selected by the caller; this mixin only says what a tab link's colour is.
 @mixin tab-link-colour($colour) {
   color: $colour;
-
-  nb-icon {
-    svg {
-      fill: $colour;
-    }
-  }
 }
