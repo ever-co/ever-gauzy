@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
@@ -542,6 +542,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				...this.findConditionsWithTenantByUser(user)
 			});
 		} catch (err) {
+			// A malformed criteria (no predicate) is the caller's error, not a missing record.
+			if (err instanceof BadRequestException) {
+				throw err;
+			}
 			console.error('Error during delete operation:', err);
 			throw new NotFoundException(`The record was not found`, err);
 		}

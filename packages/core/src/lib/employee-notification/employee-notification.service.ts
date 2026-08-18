@@ -106,11 +106,19 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 				return { success: true, count: 0 };
 			}
 			const tenantId = RequestContext.currentTenantId();
-			const criteria = { isRead: false, isArchived: false, receiverEmployeeId, ...(tenantId ? { tenantId } : {}) };
+			if (!tenantId) {
+				// The raw UPDATE below is not tenant-scoped by itself; never run it without a tenant.
+				return { success: true, count: 0 };
+			}
+			const criteria = { isRead: false, isArchived: false, receiverEmployeeId, tenantId };
 
 			// Nothing unread is a successful no-op, not an error (TenantAwareCrudService.update() first
-			// looks the criteria up and raises NotFound when no row matches).
-			const { record: unread } = await this.findOneOrFailByWhereOptions(criteria);
+			// looks the criteria up and raises NotFound when no row matches). Any OTHER lookup failure
+			// is a real error and must not be reported as a successful no-op.
+			const { success, record: unread, error: lookupError } = await this.findOneOrFailByWhereOptions(criteria);
+			if (!success && !(lookupError instanceof NotFoundException)) {
+				throw lookupError;
+			}
 			if (!unread) {
 				return { success: true, count: 0 };
 			}

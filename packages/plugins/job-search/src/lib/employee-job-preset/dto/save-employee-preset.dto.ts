@@ -6,14 +6,17 @@ import { TenantOrganizationBaseDTO } from '@gauzy/core';
 /**
  * POST /job-preset/employee body.
  *
- * `employeeId` MUST be a real UUID: the handler deletes the employee's existing search criteria by
- * `{ employeeId }`, and a missing / null value used to be dropped from the SQL, turning that into an
- * unfiltered DELETE across every tenant (GHSA-44pv-34gx-q9p4 class).
+ * `employeeId`, when sent, MUST be a real UUID: the handler deletes the employee's existing search
+ * criteria by `{ employeeId }`, and a null value used to be dropped from the SQL, turning that into an
+ * unfiltered DELETE across every tenant (GHSA-44pv-34gx-q9p4 class). Callers without
+ * CHANGE_SELECTED_EMPLOYEE may omit it — the handler pins their own employee and fails closed when
+ * there is none.
  */
 export class SaveEmployeePresetDTO extends TenantOrganizationBaseDTO implements IEmployeePresetInput {
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@IsUUID()
-	readonly employeeId: ID;
+	readonly employeeId?: ID;
 
 	@ApiProperty({ type: () => Array, isArray: true })
 	@IsArray()

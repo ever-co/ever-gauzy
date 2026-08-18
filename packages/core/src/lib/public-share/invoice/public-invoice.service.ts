@@ -134,6 +134,9 @@ export class PublicInvoiceService {
 			});
 			return await this.typeOrmInvoiceRepository.update(invoice.id, entity);
 		} catch (error) {
+			if (error instanceof ForbiddenException) {
+				throw error;
+			}
 			throw new BadRequestException(error);
 		}
 	}

@@ -15,6 +15,9 @@ describe('assertCriteriaHasPredicate', () => {
 		['empty string', ''],
 		['an object whose only value is undefined', { employeeId: undefined }],
 		['an object whose values are all undefined', { employeeId: undefined, organizationId: undefined }],
+		['a nested relation criteria whose leaves are all undefined', { employee: { id: undefined } }],
+		['a nested embedded criteria with an empty object', { members: {} }],
+		['an OR-array whose branches carry no predicate', [{ id: undefined }, { employee: { id: undefined } }]],
 		['an empty object', {}]
 	])('rejects %s', (_label, criteria) => {
 		expect(() => assertCriteriaHasPredicate(criteria, 'delete')).toThrow(BadRequestException);
@@ -27,6 +30,8 @@ describe('assertCriteriaHasPredicate', () => {
 		['a null value (a real IS NULL predicate)', { organizationId: null }],
 		['a find operator', { id: In(['a', 'b']) }],
 		['an IsNull() operator', { deletedAt: IsNull() }],
+		['a nested relation criteria with a real leaf', { employee: { id: 'emp' }, organizationId: undefined }],
+		['an OR-array with one usable branch', [{ id: undefined }, { employeeId: 'emp' }]],
 		['an array of ids', ['a', 'b']]
 	])('accepts %s', (_label, criteria) => {
 		expect(() => assertCriteriaHasPredicate(criteria, 'delete')).not.toThrow();

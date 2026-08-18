@@ -382,8 +382,9 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	): boolean {
 		const { visibilityScope, stewardId } = organizationStrategicInitiative;
 
-		// Steward can always view
-		if (stewardId === employeeId) {
+		// Steward can always view — only when there IS a steward and a caller identity (both may be
+		// null: an unassigned initiative viewed by a non-employee user must not match on null === null).
+		if (stewardId && employeeId && stewardId === employeeId) {
 			return true;
 		}
 
@@ -451,8 +452,9 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	): Promise<boolean> {
 		const { visibilityScope, stewardId } = organizationStrategicInitiative;
 
-		// Steward and creator can always view
-		if (stewardId === employeeId) {
+		// Steward and creator can always view — only when there IS a steward and a caller identity
+		// (an unassigned initiative viewed by a non-employee user must not match on null === null).
+		if (stewardId && employeeId && stewardId === employeeId) {
 			return true;
 		}
 

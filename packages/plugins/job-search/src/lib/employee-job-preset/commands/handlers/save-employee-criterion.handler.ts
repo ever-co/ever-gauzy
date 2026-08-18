@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { GauzyAIService } from '@gauzy/plugin-integration-ai';
 import { IMatchingCriterions, PermissionsEnum } from '@gauzy/contracts';
@@ -36,25 +36,26 @@ export class SaveEmployeeCriterionHandler implements ICommandHandler<SaveEmploye
 			throw new BadRequestException('employeeId is required');
 		}
 		const { tenantId } = input;
+		if (!tenantId) {
+			throw new ForbiddenException('Tenant context is required');
+		}
 
-		// Set organizationId if not provided in the input
+		// The employee must exist IN THIS TENANT before anything is persisted for them (raw repository —
+		// scope explicitly). Its organization fills a missing organizationId.
+		const employee = await this.typeOrmEmployeeRepository.findOne({
+			where: { id: input.employeeId, tenantId },
+			relations: { user: true, organization: true }
+		});
+		if (!employee) {
+			throw new NotFoundException(`Employee with id ${input.employeeId} not found`);
+		}
 		if (!input.organizationId) {
-			const employee = await this.typeOrmEmployeeRepository.findOneBy({ id: input.employeeId, tenantId });
-			if (!employee) {
-				throw new NotFoundException(`Employee with id ${input.employeeId} not found`);
-			}
 			input.organizationId = employee.organizationId;
 		}
 
 		// Create criteria
 		const creation = new EmployeeUpworkJobsSearchCriterion(input);
 		await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.save(creation);
-
-		// Find employee by ID
-		const employee = await this.typeOrmEmployeeRepository.findOne({
-			where: { id: input.employeeId, tenantId },
-			relations: { user: true, organization: true }
-		});
 
 		// Find criteria for the employee
 		const criteria = await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.findBy({

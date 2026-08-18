@@ -42,7 +42,8 @@ export class EmployeeSettingService extends TenantAwareCrudService<EmployeeSetti
 						entity: entity ?? IsNull(),
 						entityId: entityId ?? IsNull(),
 						employeeId,
-						...(organizationId ? { organizationId } : {}),
+						// null -> IS NULL (an organization-less setting), undefined -> not filtered
+						organizationId,
 						tenantId
 					}
 				});

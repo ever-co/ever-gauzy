@@ -60,7 +60,11 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 
 			// Check if a matching reaction already exists (non-throwing lookup: findOneByWhereOptions
 			// raises NotFound when there is none, which turned every FIRST reaction into a 400).
-			const { record: reaction } = await this.findOneOrFailByWhereOptions(whereOptions);
+			const { success, record: reaction, error: lookupError } = await this.findOneOrFailByWhereOptions(whereOptions);
+			if (!success && !(lookupError instanceof NotFoundException)) {
+				// Anything but "no such reaction" is a real failure — do not fall through to a duplicate create.
+				throw lookupError;
+			}
 
 			// If a matching reaction exists, delete (toggle off) the reaction
 			if (reaction) {

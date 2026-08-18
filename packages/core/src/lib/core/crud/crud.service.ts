@@ -621,8 +621,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async update(id: IUpdateCriteria<T>, partialEntity: QueryDeepPartialEntity<T>): Promise<UpdateResult | T> {
+		// Outside the try: a malformed criteria is a 400 of its own, not a wrapped DB error.
+		assertCriteriaHasPredicate(id, 'update');
 		try {
-			assertCriteriaHasPredicate(id, 'update');
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					let where: MikroFilterQuery<T>;
@@ -656,8 +657,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns {Promise<DeleteResult>} - Result indicating the number of affected records.
 	 */
 	public async delete(criteria: string | number | FindOptionsWhere<T>): Promise<DeleteResult> {
+		// Outside the try: a malformed criteria is a 400 of its own, not a wrapped not-found.
+		assertCriteriaHasPredicate(criteria, 'delete');
 		try {
-			assertCriteriaHasPredicate(criteria, 'delete');
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					// Determine the appropriate filter for MikroORM based on the criteria type
@@ -724,8 +726,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns {Promise<UpdateResult | DeleteResult>} - Result indicating success or failure.
 	 */
 	public async softDelete(criteria: string | number | FindOptionsWhere<T>): Promise<UpdateResult | T> {
+		// Outside the try: a malformed criteria is a 400 of its own, not a wrapped not-found.
+		assertCriteriaHasPredicate(criteria, 'softDelete');
 		try {
-			assertCriteriaHasPredicate(criteria, 'softDelete');
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					// Determine the appropriate filter for MikroORM based on the criteria type

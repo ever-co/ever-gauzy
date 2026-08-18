@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, FindManyOptions, FindOptionsWhere, In, UpdateResult } from 'typeorm';
 import {
@@ -15,6 +15,7 @@ import {
 	IEmployee,
 	IPagination,
 	NotificationActionTypeEnum,
+	PermissionsEnum,
 	RolesEnum
 } from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
@@ -116,14 +117,18 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const employeeId = RequestContext.currentEmployeeId();
+			const canChangeSelectedEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 
-			// Find the broadcast for the current employee with the given id. The employee restriction
-			// only applies to callers that HAVE an employee identity here: for CHANGE_SELECTED_EMPLOYEE
-			// holders currentEmployeeId() is null and they may edit any broadcast of the tenant (spelled
-			// out — a null key was previously just dropped from the query).
+			// Find the broadcast for the current employee with the given id. Callers holding
+			// CHANGE_SELECTED_EMPLOYEE may edit any broadcast of the tenant; everyone else must be the
+			// publisher — and therefore must have an employee identity (a null key was previously just
+			// dropped from the query, which let employee-less callers edit anything).
+			if (!canChangeSelectedEmployee && !employeeId) {
+				throw new ForbiddenException(`You don't have permission to update this broadcast`);
+			}
 			const originalBroadcast = await this.findOneByWhereOptions({
 				id,
-				...(employeeId ? { employeeId } : {})
+				...(canChangeSelectedEmployee ? {} : { employeeId })
 			});
 
 			if (!originalBroadcast) {
@@ -154,6 +159,9 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 
 			return updatedBroadcast;
 		} catch (error) {
+			if (error instanceof ForbiddenException) {
+				throw error;
+			}
 			console.log(`Error while updating broadcast: ${error.message}`, error);
 			throw new BadRequestException('Broadcast update failed', error);
 		}

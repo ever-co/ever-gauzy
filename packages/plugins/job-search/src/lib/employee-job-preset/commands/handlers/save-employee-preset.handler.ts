@@ -56,22 +56,26 @@ export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePr
 			throw new NotFoundException(`Employee with id ${employeeId} not found`);
 		}
 
-		// Find the job preset with related criteria
-		const jobPreset = await this._typeOrmJobPresetRepository.findOne({
-			where: { id: In(input.jobPresetIds), tenantId },
+		// Find ALL requested job presets with their criteria — in this tenant. Every requested id must
+		// resolve, or a foreign / unknown preset id would be stored on the employee anyway.
+		const jobPresetIds = [...new Set(input.jobPresetIds)];
+		const jobPresets = await this._typeOrmJobPresetRepository.find({
+			where: { id: In(jobPresetIds), tenantId },
 			relations: { jobPresetCriterions: true }
 		});
-		if (!jobPreset) {
+		if (jobPresets.length !== jobPresetIds.length) {
 			throw new NotFoundException('Job preset not found');
 		}
 
-		// Map job preset criteria to employee criterions
-		const employeeCriterions = jobPreset.jobPresetCriterions.map(
-			(item) => new EmployeeUpworkJobsSearchCriterion({ ...item, employeeId })
+		// Map every preset's criteria to employee criterions
+		const employeeCriterions = jobPresets.flatMap((jobPreset) =>
+			(jobPreset.jobPresetCriterions ?? []).map(
+				(item) => new EmployeeUpworkJobsSearchCriterion({ ...item, employeeId })
+			)
 		);
 
-		// Update employee custom fields with job presets
-		employee.customFields['jobPresets'] = input.jobPresetIds.map((id) => new JobPreset({ id }));
+		// Update employee custom fields with the (verified) job presets
+		employee.customFields['jobPresets'] = jobPresets.map(({ id }) => new JobPreset({ id }));
 		await this._typeOrmEmployeeRepository.save(employee);
 
 		// Delete existing employee job search criteria — for THIS employee of THIS tenant only.

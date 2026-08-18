@@ -60,7 +60,8 @@ export function globalAccountingTemplateMikroWhere({
  * not pass one the key is left `undefined` and (under `invalidWhereValuesBehavior.undefined:
  * 'ignore'`) omitted, matching any organization inside the tenant — the long-standing behavior.
  * A `null` organizationId is deliberately normalised to `undefined` here so a client sending
- * `organizationId: null` keeps meaning "any organization" rather than `IS NULL`.
+ * `organizationId: null` keeps meaning "any organization" rather than `IS NULL`; any other value —
+ * including an empty string — stays a predicate.
  */
 export function tenantAccountingTemplateWhere({
 	languageCode,
@@ -72,6 +73,6 @@ export function tenantAccountingTemplateWhere({
 		languageCode,
 		templateType,
 		tenantId,
-		...(organizationId ? { organizationId } : {})
+		...(organizationId !== null && organizationId !== undefined ? { organizationId } : {})
 	} as FindOptionsWhere<IAccountingTemplate>;
 }

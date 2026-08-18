@@ -1,5 +1,6 @@
 import {
 	ArgumentMetadata,
+	BadRequestException,
 	HttpStatus,
 	Injectable,
 	Optional,
@@ -30,15 +31,23 @@ export interface ParseJsonPipeOptions {
  * removing the key before the value ever reaches a query. See TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR
  * in @gauzy/config (GHSA-44pv-34gx-q9p4).
  */
-export function omitNullValues<T>(value: T): T {
+/** Maximum nesting depth accepted for a `?data=` JSON query object. */
+export const MAX_QUERY_JSON_DEPTH = 32;
+
+export function omitNullValues<T>(value: T, depth = 0): T {
+	// A filter object is a handful of levels deep at most; refuse pathological nesting instead of
+	// letting a crafted payload exhaust the stack (which would surface as a swallowed parse error).
+	if (depth > MAX_QUERY_JSON_DEPTH) {
+		throw new BadRequestException('Query JSON is nested too deeply');
+	}
 	if (Array.isArray(value)) {
-		return value.map((item) => omitNullValues(item)) as unknown as T;
+		return value.map((item) => omitNullValues(item, depth + 1)) as unknown as T;
 	}
 	if (value !== null && typeof value === 'object') {
 		return Object.fromEntries(
 			Object.entries(value as Record<string, unknown>)
 				.filter(([, v]) => v !== null)
-				.map(([k, v]) => [k, omitNullValues(v)])
+				.map(([k, v]) => [k, omitNullValues(v, depth + 1)])
 		) as T;
 	}
 	return value;
@@ -87,11 +96,16 @@ export class ParseJsonPipe implements PipeTransform<string> {
 		const isJson = isJSON(value);
 
 		if (isJson) {
+			let parsed: unknown;
 			try {
-				return omitNullValues(JSON.parse(value));
+				parsed = JSON.parse(value);
 			} catch (e) {
 				console.log('Json Parser Error:', e);
+				return {};
 			}
+			// Outside the parse try: a sanitizer failure (e.g. excessive nesting) is the caller's error
+			// and must surface as a 400, not be swallowed as "invalid JSON" and turned into {}.
+			return omitNullValues(parsed);
 		} else if (this.throwInvalidError) {
 			throw this.exceptionFactory(
 				'Validation failed (JSON string is expected)'

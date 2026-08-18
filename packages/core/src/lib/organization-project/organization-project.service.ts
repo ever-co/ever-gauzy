@@ -707,6 +707,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			if (!tenantId) {
 				throw new BadRequestException('Tenant context is required');
 			}
+			if (!organizationId) {
+				throw new BadRequestException('organizationId is required');
+			}
 
 			// Handle adding projects
 			if (addedProjectIds.length > 0) {
@@ -745,6 +748,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				await this.typeOrmOrganizationProjectEmployeeRepository.delete({
 					organizationProjectId: In(removedProjectIds),
 					employeeId: member.id,
+					organizationId,
 					tenantId
 				});
 			}

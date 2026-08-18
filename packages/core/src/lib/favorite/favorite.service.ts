@@ -136,6 +136,9 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 				: { where: { tenantId: RequestContext.currentTenantId() } };
 			return await super.delete(id, deleteOptions);
 		} catch (error) {
+			if (error instanceof ForbiddenException) {
+				throw error;
+			}
 			throw new BadRequestException(error);
 		}
 	}
