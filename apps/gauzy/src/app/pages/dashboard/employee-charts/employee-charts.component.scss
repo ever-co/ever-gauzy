@@ -2,11 +2,20 @@
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+
 	label {
 		margin: 0;
 	}
-	margin-bottom: 20px;
-	gap: 0.6rem
+}
+
+// The control's own label. It names a picker, so it is a form label rather than
+// a run of body copy set at the same size as the page's content.
+.chart-select-label {
+	font-size: var(--text-label-font-size, 0.75rem);
+	font-weight: 500;
+	color: var(--gauzy-text-color-2);
 }
 .chart-wrap {
 	display: flex;
@@ -16,8 +25,8 @@
 }
 .select-charts {
 	cursor: pointer;
-	font-size: 0.875rem;
-	min-width: 150px;
+	font-size: var(--text-button-medium-font-size, 0.8125rem);
+	min-width: 9.5rem;
 	width: fit-content;
 }
 .chart-option {

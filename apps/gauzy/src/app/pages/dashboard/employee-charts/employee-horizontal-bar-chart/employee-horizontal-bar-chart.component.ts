@@ -12,6 +12,7 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store, months } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
+import { IEmployeeChartPalette, resolveEmployeeChartPalette } from '../employee-chart-palette';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,9 +34,16 @@ import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
     styles: [
         `
 			:host {
+				/*
+				 * A 500x500 square, on a chart that does not maintain its aspect
+				 * ratio, inside a column whose width the page decides. It never
+				 * filled the column it sits in, and 500px of height for three bars
+				 * is most of a screen. The box tracks its column now and states
+				 * only the height it needs.
+				 */
 				.chart {
-					width: 500px;
-					height: 500px;
+					width: 100%;
+					height: 20rem;
 					display: block;
 				}
 				.title {
@@ -56,6 +64,9 @@ export class EmployeeHorizontalBarChartComponent
 	public chartType: ChartType = 'bar';
 	public chartOptions: ChartConfiguration['options'];
 	public data: ChartConfiguration['data'];
+
+	/** Series colours for the active theme; see `employee-chart-palette.ts`. */
+	private palette: IEmployeeChartPalette = resolveEmployeeChartPalette({} as NbJSThemeOptions);
 
 	public organization: IOrganization;
 	public labels: string[] = [];
@@ -136,8 +147,8 @@ export class EmployeeHorizontalBarChartComponent
 	 * @param config - The configuration options for the Chart, including theme variables.
 	 */
 	private _initializeChart(config: NbJSThemeOptions) {
-		// Step 1: Extract chartjs configuration from theme variables
-		const chartJs: any = config.variables.chartjs;
+		// Step 1: Resolve the series, tick and grid colours for the active theme
+		this.palette = resolveEmployeeChartPalette(config);
 
 		// Step 2: Set the overall chart options
 		this.chartOptions = {
@@ -155,7 +166,7 @@ export class EmployeeHorizontalBarChartComponent
 				legend: {
 					position: 'top',
 					labels: {
-						color: chartJs.textColor,
+						color: this.palette.textColor,
 						usePointStyle: false
 					}
 				},
@@ -172,20 +183,23 @@ export class EmployeeHorizontalBarChartComponent
 				x: {
 					grid: {
 						display: true,
-						color: chartJs.axisLineColor
+						color: this.palette.axisLineColor
 					},
 					ticks: {
-						color: chartJs.textColo
+						// Was `chartJs.textColo` — a typo, so the x-axis labels fell
+						// back to Chart.js's own dark grey on every theme, including
+						// the four dark ones.
+						color: this.palette.textColor
 					}
 				},
 				// Configure y-axis scale
 				y: {
 					grid: {
 						display: true,
-						color: chartJs.axisLineColor
+						color: this.palette.axisLineColor
 					},
 					ticks: {
-						color: chartJs.textColor
+						color: this.palette.textColor
 					}
 				}
 			}
@@ -201,20 +215,21 @@ export class EmployeeHorizontalBarChartComponent
 
 	/**
 	 * Determines the colors for bonus values.
-	 * Negative values are represented in red, positive values in blue.
+	 * Negative values take the theme's danger colour, positive ones its info colour.
 	 * @returns An array of color codes.
 	 */
 	private getBonusColors(): string[] {
-		return this.statistics.bonus.map((val) => (val < 0 ? 'red' : '#0091ff'));
+		return this.statistics.bonus.map((val) => (val < 0 ? this.palette.negativeBonus : this.palette.bonus));
 	}
 
 	/**
 	 * Determines the colors for profit values.
-	 * Negative values are represented in orange, positive values in green.
+	 * Negative values take the theme's light danger colour, positive ones its
+	 * light success colour — a step away from the revenue series beside them.
 	 * @returns An array of color codes.
 	 */
 	private getProfitColors(): string[] {
-		return this.statistics.profit.map((val) => (val < 0 ? '#ff7b00' : '#66de0b'));
+		return this.statistics.profit.map((val) => (val < 0 ? this.palette.negativeProfit : this.palette.profit));
 	}
 
 	/**
@@ -250,12 +265,12 @@ export class EmployeeHorizontalBarChartComponent
 			datasets: [
 				{
 					label: `${this.getTranslation('DASHBOARD_PAGE.CHARTS.REVENUE')}: ${income}`,
-					backgroundColor: '#089c17', // Background color for the revenue dataset
+					backgroundColor: this.palette.revenue, // Background color for the revenue dataset
 					data: this.statistics.income // Data values for the revenue dataset
 				},
 				{
 					label: `${this.getTranslation('DASHBOARD_PAGE.CHARTS.EXPENSES')}: ${expense}`,
-					backgroundColor: '#dbc300', // Background color for the expenses dataset
+					backgroundColor: this.palette.expenses, // Background color for the expenses dataset
 					data: this.statistics.expense // Data values for the expenses dataset
 				},
 				{

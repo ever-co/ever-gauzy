@@ -2,24 +2,28 @@
   <label class="chart-select-label">
     {{ 'DASHBOARD_PAGE.CHARTS.CHART_TYPE' | translate }}
   </label>
+  <!--
+    Was `filled status="success"` — a saturated green block for a control that
+    picks a chart shape. It is a plain form control, so it is styled like one.
+  -->
   <nb-select
     placeholder="Chart"
     class="select-charts"
-    filled
-    status="success"
+    outline
+    status="basic"
     [(selected)]="selectedChart"
-    size="tiny"
+    size="small"
     >
     <nb-option [value]="EmployeeChartEnum.BAR">
-      <img width="auto" height="24" style="margin-right: 10px" src="assets/images/others/bar-chart.svg" />
+      <img width="auto" height="16" style="margin-right: 8px" src="assets/images/others/bar-chart.svg" />
       {{ 'DASHBOARD_PAGE.CHARTS.BAR' | translate }}
     </nb-option>
     <nb-option [value]="EmployeeChartEnum.DOUGHNUT">
-      <img width="auto" height="24" style="margin-right: 10px" src="assets/images/others/doughnut.svg" />
+      <img width="auto" height="16" style="margin-right: 8px" src="assets/images/others/doughnut.svg" />
       {{ 'DASHBOARD_PAGE.CHARTS.DOUGHNUT' | translate }}
     </nb-option>
     <nb-option [value]="EmployeeChartEnum.STACKED_BAR">
-      <img width="auto" height="24" style="margin-right: 10px" src="assets/images/others/stacked-bar-chart.svg" />
+      <img width="auto" height="16" style="margin-right: 8px" src="assets/images/others/stacked-bar-chart.svg" />
       {{ 'DASHBOARD_PAGE.CHARTS.STACKED_BAR' | translate }}
     </nb-option>
   </nb-select>

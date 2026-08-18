@@ -5,6 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IMonthAggregatedEmployeeStatistics } from '@gauzy/contracts';
 import { monthNames } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { resolveEmployeeChartPalette } from '../employee-chart-palette';
 
 @UntilDestroy()
 @Component({
@@ -20,7 +21,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 		}
 		@if (!noData) {
 		  <canvas
-		    style="height: 500px; width: 500px;"
+		    style="height: 20rem; width: 100%;"
 		    baseChart
 		    [type]="'bar'"
 		    [data]="data"
@@ -64,9 +65,15 @@ export class EmployeeStackedBarChartComponent extends TranslationBaseComponent i
 			.getJsTheme()
 			.pipe(untilDestroyed(this))
 			.subscribe((config) => {
-				const chartjs: any = config.variables.chartjs;
-				const bonusColors = this.bonusStatistics.map((val) => (val < 0 ? 'red' : '#0091ff'));
-				const profitColors = this.profitStatistics.map((val) => (val < 0 ? '#ff7b00' : '#66de0b'));
+				// Series, tick and grid colours for the active theme, rather than the
+				// six hex literals these three charts used to repeat between them.
+				const palette = resolveEmployeeChartPalette(config);
+				const bonusColors = this.bonusStatistics.map((val) =>
+					val < 0 ? palette.negativeBonus : palette.bonus
+				);
+				const profitColors = this.profitStatistics.map((val) =>
+					val < 0 ? palette.negativeProfit : palette.profit
+				);
 				this.data = {
 					labels: this.labels,
 					datasets: [
@@ -76,7 +83,7 @@ export class EmployeeStackedBarChartComponent extends TranslationBaseComponent i
 										Math.round(+this.expenseStatistics * this.proportion * 100) / 100
 								  }`
 								: this.getTranslation('DASHBOARD_PAGE.CHARTS.EXPENSES'),
-							backgroundColor: '#dbc300',
+							backgroundColor: palette.expenses,
 							data: this.expenseStatistics
 						},
 						{
@@ -120,7 +127,7 @@ export class EmployeeStackedBarChartComponent extends TranslationBaseComponent i
 						onClick: (e) => e.stopPropagation(),
 						position: 'right',
 						labels: {
-							fontColor: chartjs.textColor
+							fontColor: palette.textColor
 						}
 					},
 					tooltips: this.selectedDate
