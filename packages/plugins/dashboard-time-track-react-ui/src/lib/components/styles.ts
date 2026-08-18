@@ -33,7 +33,14 @@ export const TIME_TRACKING_STYLES = `
 .gz-rtt .gz-rtt-custom-card-body-inner-list .gz-rtt-custom-card-button { display: flex; justify-content: flex-end; margin: 1rem 15px 0 15px; }
 .gz-rtt .gz-rtt-font-weight-bold { font-weight: 600; color: var(--gauzy-text-color-2); }
 .gz-rtt .gz-rtt-project-name { color: var(--gauzy-text-color-1); font-size: 14px; font-weight: 600; }
-.gz-rtt .gz-rtt-hour-label { display: flex; justify-content: space-between; }
+/* Angular has TWO different .hour-label rules that never meet because of view encapsulation:
+   the dashboard's own (time-tracking.component.scss) is a flex space-between ROW for the
+   avatar line above each carousel, while the screenshot card's (screenshots-item.component.scss)
+   is font-only and its time span + date caption STACK. In this single stylesheet the flex
+   version leaked into the card and squeezed the date ("Tuesday, August 18, 2026") into a
+   47px, 3-line column spilling past the card edge. The row layout lives on
+   .gz-rtt-avatar-row; inside the card the class carries only the type. */
+.gz-rtt .gz-rtt-shot .gz-rtt-hour-label { font-size: 14px; font-weight: 400; line-height: 11px; letter-spacing: 0em; text-align: left; }
 .gz-rtt .gz-rtt-button-container { display: flex; gap: 1rem; }
 .gz-rtt .gz-rtt-text-center { text-align: center; }
 .gz-rtt .gz-rtt-text-left { text-align: left; }
