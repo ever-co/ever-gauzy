@@ -699,6 +699,34 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
       object-fit: cover;
     }
 
+    // The icon that stands in for a missing photo (currently the employee
+    // picker; see its template for why `avatar-default.svg` counts as missing).
+    // Identical box to the `<img>` above so a panel that mixes photos and icons
+    // still reads as one column of avatars — a bare glyph at a different size
+    // would break the name column it sits beside.
+    //
+    // Restated here rather than shared with the component stylesheet because
+    // these rows are in the body-appended panel: the component's own rules stop
+    // at its host, so they reach the trigger's copy of this slot and nothing
+    // else.
+    .ng-dropdown-panel-items .avatar-fallback {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.125rem;
+      height: 1.125rem;
+      border-radius: var(--gauzy-radius-sm, 6px);
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+      color: var(--gauzy-text-color-2, var(--text-hint-color));
+      font-size: 0.75rem;
+
+      svg {
+        width: 1em;
+        height: 1em;
+      }
+    }
+
     // The label takes the rest of the row and truncates there. `min-width: 0`
     // is what actually allows it: a flex item's automatic minimum size is its
     // content, so without this the row would grow past the panel instead.
