@@ -50,6 +50,29 @@ describe('PageRouteRegistryService — navigation-target contract', () => {
 		expect(route.loadComponent).toBe(loadComponent);
 	});
 
+	it('emits NO guard keys on a redirect route (Angular rejects redirectTo + canActivate, even `[]`)', () => {
+		// demo.gauzy.co 2026-08-17: `canActivate: []` is truthy, and the dev-mode router
+		// validator throws NG04014 "redirectTo and canActivate cannot be used together" while the
+		// lazy parent config loads — a blank app for every user of a development-configuration
+		// bundle. Guards must be attached only when there is at least one.
+		register({ path: 'dashboard-time-track', redirectTo: '/pages/dashboard/time-tracking', route: { pathMatch: 'full' } });
+
+		const [route] = service.getPageLocationRoutes(PAGE_SECTIONS_LOCATION);
+		expect(route.redirectTo).toBe('/pages/dashboard/time-tracking');
+		expect(route.pathMatch).toBe('full');
+		expect('canActivate' in route).toBe(false);
+		expect('canMatch' in route).toBe(false);
+	});
+
+	it('still attaches canActivate / canMatch when the registration provides them', () => {
+		const guard = () => true;
+		register({ path: 'jobs', component: class {} as never, canActivate: [guard], canMatch: [guard] });
+
+		const [route] = service.getPageLocationRoutes(PAGE_SECTIONS_LOCATION);
+		expect(route.canActivate).toEqual([guard]);
+		expect(route.canMatch).toEqual([guard]);
+	});
+
 	it('lets a component-ish target take precedence over redirectTo in the else-chain', () => {
 		const component = class {};
 		register({ path: 'jobs', component: component as never, redirectTo: 'unused' });

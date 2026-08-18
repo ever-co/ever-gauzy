@@ -11,11 +11,14 @@
        show every selector. -->
   <div class="header-container">
     @if (createQuickActionsMenu?.length > 0) {
+      <!-- .create-action: pinned to the band's leading edge (margin-inline-end: auto
+           in header.component.scss) so it always sits right after the sidebar,
+           even on pages that hide every selector. -->
       <nb-action
         size="small"
         [class.left]="position === 'normal'"
         [class.right]="position === 'inverse'"
-        class="show-large-up"
+        class="show-large-up create-action"
         >
         <button type="button" nbButton class="button create" status="primary" size="small" (click)="openQuickActions()">
           + {{ 'BUTTONS.CREATE' | translate }}

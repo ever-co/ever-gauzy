@@ -6,7 +6,13 @@ import { AiProviderConnectType, IAiChatModel } from '@gauzy/contracts';
  * Sourced from the tenant's BYOK settings or server environment variables.
  */
 export interface IAiProviderCredentials {
-	/** Secret API key. */
+	/**
+	 * Secret API key.
+	 *
+	 * Empty string for providers that declare `requiresApiKey: false` (local servers such as
+	 * Speaches, LocalAI or whisper.cpp) when the tenant configured none — implementations must then
+	 * omit the `Authorization` header rather than send `Bearer `.
+	 */
 	apiKey: string;
 	/** Optional custom base URL (self-hosted / proxy endpoints). */
 	baseUrl?: string;
@@ -37,6 +43,26 @@ export interface IAiChatModelList {
 	source: 'live' | 'curated';
 	/** Set when `'live'` models came from a cache whose refresh failed. */
 	stale?: boolean;
+}
+
+/**
+ * Per-request preferences for {@link IAiChatProviderDefinition.transcribe}.
+ */
+export interface IAiTranscribeOptions {
+	/** Speech model id (one of `speech.models`); the provider's `speech.defaultModel` when unset. */
+	model?: string;
+	/** Optional language hint (ISO-639-1 such as `en`, or a BCP-47 tag). Unset = auto-detect. */
+	language?: string;
+}
+
+/**
+ * Speech-to-text catalogue advertised by a provider that implements `transcribe`.
+ */
+export interface IAiSpeechCatalogue {
+	/** Speech models a tenant may pick for dictation. */
+	models: IAiChatModel[];
+	/** Model used when the tenant has not chosen one. */
+	defaultModel: string;
 }
 
 /**
@@ -108,14 +134,53 @@ export interface IAiChatProviderDefinition {
 	 *
 	 * Optional: providers without a speech model leave it unset and the endpoint falls through to
 	 * the next configured provider that has one, so dictation works as long as ANY of the tenant's
-	 * providers can transcribe — the user should not have to know which.
+	 * providers can transcribe — the user should not have to know which. The tenant can pin one
+	 * ("voice default"); it is tried first.
 	 *
 	 * @param audio Raw recorded bytes as received from the browser's MediaRecorder.
 	 * @param mimeType The container the browser produced (`audio/webm;codecs=opus`, `audio/mp4`, …).
 	 * @param credentials Resolved credentials for this provider.
+	 * @param options Tenant preferences: the speech `model` (from {@link speech}) and an optional
+	 *                BCP-47 / ISO-639-1 `language` hint. Both optional; implementations fall back to
+	 *                their `speech.defaultModel` / auto-detection.
 	 * @returns The transcript. An empty string is a valid answer for silence.
 	 */
-	transcribe?(audio: Buffer, mimeType: string, credentials: IAiProviderCredentials): Promise<string>;
+	transcribe?(
+		audio: Buffer,
+		mimeType: string,
+		credentials: IAiProviderCredentials,
+		options?: IAiTranscribeOptions
+	): Promise<string>;
+	/**
+	 * Speech-to-text catalogue: the models a tenant may pick for dictation and the one used when
+	 * none is chosen. Only meaningful together with {@link transcribe}; a provider that transcribes
+	 * with a single fixed model still declares it here so the settings page can show it.
+	 */
+	readonly speech?: IAiSpeechCatalogue;
+	/**
+	 * Whether credentials for this provider need an API key. Defaults to `true`.
+	 *
+	 * Local servers (Speaches, LocalAI, whisper.cpp, a self-hosted OpenAI-compatible endpoint) set
+	 * `false`: a tenant credential may then be saved with only a base URL, and the credential
+	 * resolver treats the provider as configured with an empty key. Implementations MUST omit the
+	 * `Authorization` header when the key is empty.
+	 */
+	readonly requiresApiKey?: boolean;
+	/**
+	 * True for providers that run on the operator's / tenant's own infrastructure rather than a
+	 * vendor cloud. Display-only ("Local" chip in the settings catalogue).
+	 */
+	readonly local?: boolean;
+	/**
+	 * Base URL used when neither the tenant credential nor `baseUrlEnvVar` provides one. Local
+	 * servers advertise their conventional address here so the settings form can prefill it.
+	 */
+	readonly defaultBaseUrl?: string;
+	/**
+	 * True when the provider cannot work without a tenant-supplied base URL — a generic
+	 * OpenAI-compatible gateway has no vendor host to default to.
+	 */
+	readonly requiresBaseUrl?: boolean;
 	/** Display ordering (ascending) in provider lists/catalogs. Unset sorts last. */
 	readonly order?: number;
 	/**

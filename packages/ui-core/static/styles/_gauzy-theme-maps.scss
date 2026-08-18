@@ -36,6 +36,16 @@ $gauzy-density: (
 	gauzy-page-title-font-weight: 600,
 	gauzy-page-title-line-height: 1.75rem,
 	gauzy-page-title-letter-spacing: -0.01em,
+	// The reference box every item on the page title LINE is centred in — the
+	// heading itself and the action block beside it (`.ga-page-header` in
+	// `_overrides.scss`). It is the tallest control that line hosts: a small
+	// filled `[nbButton]` (1rem line + 2 × 0.375rem padding + 2 × 1px border =
+	// 1.875rem) inside the `.visible-slot` pill of `ngx-gauzy-button-action`
+	// (+ 2 × 2px) = 2.125rem. Taller than the 1.75rem title line, so the title
+	// centres inside it; anything shorter (an `.action` button, the action
+	// strip) centres too. A page that puts a medium button here overshoots the
+	// box and is off-axis by half the difference — use `size="small"` on the line.
+	gauzy-page-title-row-height: 2.125rem,
 	// Menus / sidebar
 	menu-item-padding: 0.5rem 0.75rem,
 	menu-text-font-size: 0.8125rem,

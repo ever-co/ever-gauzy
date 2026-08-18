@@ -285,12 +285,10 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 		}
 		try {
 			const loaded = await firstValueFrom(this.documentsService.getById(id, ['categories', 'tags']));
-			// A 200 does NOT prove a document came back: `TransformInterceptor` serializes non-Nest
-			// failures as `200 { message }`, which is truthy and has no `name`, so the editor used to
-			// open fully chromed with a blank title and silently overwrite the real one on the next
-			// save. Route any non-document payload to the error banner below instead.
+			// A 200 whose body is not a document (an API-side error serialised as `{ message }`)
+			// must NOT become an "Untitled" editor whose every save PUTs to `/documents/undefined`.
 			if (!loaded?.id) {
-				throw new Error(`Documents API returned no document for ${id}`);
+				throw new Error(`Document ${id} could not be loaded: response carries no id`);
 			}
 			this.document = loaded;
 			this.titleDraft = this.document?.name ?? '';
@@ -302,6 +300,14 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 			// console so the actual cause stays diagnosable instead of masquerading as a bundle
 			// failure.
 			console.error('Document load failed', error);
+			// When SWITCHING documents the route already points at the NEW id: never leave the
+			// previous document behind as `this.document`, or the chrome actions (rename, lock,
+			// archive…) would hit it. A failed same-id reload (Retry, a move) keeps what is loaded.
+			if (switching) {
+				this.document = null;
+				this.titleDraft = '';
+				this.iconDraft = '';
+			}
 			this.loadError = true;
 		} finally {
 			this.loading = false;

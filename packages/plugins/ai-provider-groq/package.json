@@ -1,0 +1,62 @@
+{
+	"name": "@gauzy/plugin-ai-provider-groq",
+	"version": "0.1.0",
+	"description": "Ever Gauzy AI Chat provider plugin — registers Groq (OpenAI-compatible chat + Whisper speech-to-text) with the @gauzy/plugin-ai-chat provider registry",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/ai-provider-groq"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-ai-provider-groq",
+		"lib:build:prod": "yarn nx build plugin-ai-provider-groq",
+		"lib:watch": "yarn nx build plugin-ai-provider-groq --watch"
+	},
+	"dependencies": {
+		"@ai-sdk/openai-compatible": "^3.0.14",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/plugin-ai-chat": "^0.1.0",
+		"chalk": "^4.1.0",
+		"tslib": "^2.6.2"
+	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"typescript": "^5.9.3"
+	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.14",
+		"@nestjs/core": "^11.1.14"
+	},
+	"keywords": [
+		"Ever Gauzy",
+		"plugin",
+		"AI",
+		"chat",
+		"AI provider",
+		"Vercel AI SDK",
+		"NestJS",
+		"Groq",
+		"Whisper",
+		"speech-to-text"
+	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}

@@ -27,7 +27,11 @@ nb-card-body {
   }
 
   .location {
-    width: 945px;
+    // Its full-width look up to 945px, but never wider than the column it is
+    // in — this is a page form (no dialog), so it shares the canvas with the AI
+    // chat column and a fixed 945px overflowed it.
+    width: min(945px, 100%);
+    min-width: 0;
   }
 
   .leaflet {

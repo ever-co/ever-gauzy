@@ -93,6 +93,14 @@ COPY --chown=node:node packages/plugins/ai-provider-vercel-gateway/package.json 
 COPY --chown=node:node packages/plugins/ai-provider-gauzy-ai/package.json ./packages/plugins/ai-provider-gauzy-ai/
 COPY --chown=node:node packages/plugins/ai-provider-gemini/package.json ./packages/plugins/ai-provider-gemini/
 COPY --chown=node:node packages/plugins/ai-provider-grok/package.json ./packages/plugins/ai-provider-grok/
+COPY --chown=node:node packages/plugins/ai-provider-groq/package.json ./packages/plugins/ai-provider-groq/
+COPY --chown=node:node packages/plugins/ai-provider-mistral/package.json ./packages/plugins/ai-provider-mistral/
+COPY --chown=node:node packages/plugins/ai-provider-deepgram/package.json ./packages/plugins/ai-provider-deepgram/
+COPY --chown=node:node packages/plugins/ai-provider-elevenlabs/package.json ./packages/plugins/ai-provider-elevenlabs/
+COPY --chown=node:node packages/plugins/ai-provider-speaches/package.json ./packages/plugins/ai-provider-speaches/
+COPY --chown=node:node packages/plugins/ai-provider-localai/package.json ./packages/plugins/ai-provider-localai/
+COPY --chown=node:node packages/plugins/ai-provider-whisper-cpp/package.json ./packages/plugins/ai-provider-whisper-cpp/
+COPY --chown=node:node packages/plugins/ai-provider-openai-compatible/package.json ./packages/plugins/ai-provider-openai-compatible/
 COPY --chown=node:node packages/plugins/docs/package.json ./packages/plugins/docs/
 
 # We do not build Wakatime plugin here, because it is used in Desktop Apps for now
@@ -112,12 +120,13 @@ COPY --chown=node:node patches ./patches
 ARG VERDACCIO_REGISTRY=""
 RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
-    if [ -n "$VERDACCIO_REGISTRY" ]; then \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
     sed -i "s|https://registry.npmjs.org|${VERDACCIO_REGISTRY%/}|g" yarn.lock; \
     elif [ -n "$VERDACCIO_TOKEN" ]; then \
+    echo "Internal Verdaccio VIP not in use (VERDACCIO_REGISTRY unset, or its probe failed) - installing through the public packages.ever.co route, which is known to truncate large tarballs mid-stream." && \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
     echo "registry=https://packages.ever.co/" >> .npmrc && \
     echo "always-auth=true" >> .npmrc && \
@@ -197,6 +206,14 @@ COPY --chown=node:node packages/plugins/ai-provider-vercel-gateway/package.json 
 COPY --chown=node:node packages/plugins/ai-provider-gauzy-ai/package.json ./packages/plugins/ai-provider-gauzy-ai/
 COPY --chown=node:node packages/plugins/ai-provider-gemini/package.json ./packages/plugins/ai-provider-gemini/
 COPY --chown=node:node packages/plugins/ai-provider-grok/package.json ./packages/plugins/ai-provider-grok/
+COPY --chown=node:node packages/plugins/ai-provider-groq/package.json ./packages/plugins/ai-provider-groq/
+COPY --chown=node:node packages/plugins/ai-provider-mistral/package.json ./packages/plugins/ai-provider-mistral/
+COPY --chown=node:node packages/plugins/ai-provider-deepgram/package.json ./packages/plugins/ai-provider-deepgram/
+COPY --chown=node:node packages/plugins/ai-provider-elevenlabs/package.json ./packages/plugins/ai-provider-elevenlabs/
+COPY --chown=node:node packages/plugins/ai-provider-speaches/package.json ./packages/plugins/ai-provider-speaches/
+COPY --chown=node:node packages/plugins/ai-provider-localai/package.json ./packages/plugins/ai-provider-localai/
+COPY --chown=node:node packages/plugins/ai-provider-whisper-cpp/package.json ./packages/plugins/ai-provider-whisper-cpp/
+COPY --chown=node:node packages/plugins/ai-provider-openai-compatible/package.json ./packages/plugins/ai-provider-openai-compatible/
 COPY --chown=node:node packages/plugins/docs/package.json ./packages/plugins/docs/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
@@ -213,12 +230,13 @@ COPY --chown=node:node patches ./patches
 ARG VERDACCIO_REGISTRY=""
 RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
-    if [ -n "$VERDACCIO_REGISTRY" ]; then \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
     sed -i "s|https://registry.npmjs.org|${VERDACCIO_REGISTRY%/}|g" yarn.lock; \
     elif [ -n "$VERDACCIO_TOKEN" ]; then \
+    echo "Internal Verdaccio VIP not in use (VERDACCIO_REGISTRY unset, or its probe failed) - installing through the public packages.ever.co route, which is known to truncate large tarballs mid-stream." && \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
     echo "registry=https://packages.ever.co/" >> .npmrc && \
     echo "always-auth=true" >> .npmrc && \
@@ -380,6 +398,14 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/plugins/ai-provider-gauzy-ai/node_modules ./node_modules/@gauzy/plugin-ai-provider-gauzy-ai/ && \
     cp -r /mnt/packages/plugins/ai-provider-gemini/node_modules ./node_modules/@gauzy/plugin-ai-provider-gemini/ && \
     cp -r /mnt/packages/plugins/ai-provider-grok/node_modules ./node_modules/@gauzy/plugin-ai-provider-grok/ && \
+    cp -r /mnt/packages/plugins/ai-provider-groq/node_modules ./node_modules/@gauzy/plugin-ai-provider-groq/ && \
+    cp -r /mnt/packages/plugins/ai-provider-mistral/node_modules ./node_modules/@gauzy/plugin-ai-provider-mistral/ && \
+    cp -r /mnt/packages/plugins/ai-provider-deepgram/node_modules ./node_modules/@gauzy/plugin-ai-provider-deepgram/ && \
+    cp -r /mnt/packages/plugins/ai-provider-elevenlabs/node_modules ./node_modules/@gauzy/plugin-ai-provider-elevenlabs/ && \
+    cp -r /mnt/packages/plugins/ai-provider-speaches/node_modules ./node_modules/@gauzy/plugin-ai-provider-speaches/ && \
+    cp -r /mnt/packages/plugins/ai-provider-localai/node_modules ./node_modules/@gauzy/plugin-ai-provider-localai/ && \
+    cp -r /mnt/packages/plugins/ai-provider-whisper-cpp/node_modules ./node_modules/@gauzy/plugin-ai-provider-whisper-cpp/ && \
+    cp -r /mnt/packages/plugins/ai-provider-openai-compatible/node_modules ./node_modules/@gauzy/plugin-ai-provider-openai-compatible/ && \
     cp -r /mnt/packages/plugins/docs/node_modules ./node_modules/@gauzy/plugin-docs/
 
 RUN mkdir /import && chown node:node /import && touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \

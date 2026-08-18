@@ -9,7 +9,10 @@
     flex-direction: column;
     height: 100%;
     width: 100%;
-    min-width: 400px;
+    // Was `min-width: 400px`: a floor that propagated up to the video detail
+    // page's side tabs and overflowed a layout column narrowed by the AI chat.
+    // The list is a column of cards; it reads at any width its host gives it.
+    min-width: 0;
   }
 }
 
