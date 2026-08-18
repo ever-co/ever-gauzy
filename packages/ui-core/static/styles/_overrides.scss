@@ -631,6 +631,100 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     }
   }
 
+  // ── Entity pickers: team / project / employee / organization ─────────────
+  //
+  // The four header-band selectors (and every other instance of the same four
+  // components) tag their trigger with `class="gauzy-entity-select"`. ng-select
+  // copies the trigger's class ATTRIBUTE onto the panel it appends to <body>
+  // (`[class]="appendToValue ? (ngClass() ? ngClass() : classes) : null"` in its
+  // own template, where `classes` is the host `class` attribute read once at
+  // construction), so that class is the ONLY handle a stylesheet has on these
+  // particular panels — they live outside the component tree, so no
+  // component-scoped rule and no `::ng-deep` can reach them.
+  //
+  // Why these rows are not just folded into the generic `.ng-option` rules
+  // above: those are shared with every dropdown in the app, and plenty of them
+  // render multi-line option templates (a task with its description, a tag row
+  // with a colour swatch and a count). Turning `.ng-option` into a single flex
+  // LINE globally would collapse those. The four entity pickers all render the
+  // same shape — one small avatar, one name — so they can be tightened as a set.
+  .ng-dropdown-panel.gauzy-entity-select {
+    .ng-dropdown-panel-items {
+      // Tighter than the shared 4px: these rows are compact, so the container
+      // inset that keeps the row radius off the panel edge can be too.
+      padding: 3px;
+    }
+
+    .ng-dropdown-panel-items .ng-option {
+      // ng-select ships `display: block`, so the avatar and the name were two
+      // inline boxes sharing a text baseline: a 20px image sat below the
+      // optical centre of a 13px label, and the space between them came from
+      // whatever whitespace the template happened to emit (an `ml-1` here, a
+      // literal newline there). One flex row with one `gap` makes every row in
+      // all four pickers align and space identically.
+      //
+      // `!important` on `display` because ng-select's own component styles are
+      // injected after this sheet and win the tie on their own; on `padding`
+      // because the shared `.ng-option` rule above is itself `!important`.
+      display: flex !important;
+      align-items: center;
+      gap: 0.5rem;
+      // Vertically tighter than the shared overlay row (6px/10px): the avatar
+      // already sets the row height, so the block inset only has to keep one
+      // row off the next. 30px rows instead of 36px — roughly one extra name
+      // visible per panel-height without anything feeling cramped.
+      padding: 0.3125rem 0.5rem !important;
+      // NORMAL, not the menu token's 500. Twenty team names all at medium
+      // weight is a wall with no hierarchy; the selected row below is what
+      // steps up, and it can only read as "stepped up" if its neighbours have
+      // not already spent the weight.
+      font-weight: 400;
+      // Keeps a logo-less row the same height as the one above it, so a list
+      // that mixes teams with and without a logo does not jitter.
+      min-height: 1.75rem;
+    }
+
+    // ONE avatar size for all four pickers. The templates ask for 20px, the
+    // organization one for 40px, and the shared panel rule then forced 24px on
+    // all of them — so no two pickers agreed. 18px is the size that sits inside
+    // a 30px row with the label still on the optical centre.
+    .ng-dropdown-panel-items img {
+      flex: none;
+      width: 1.125rem;
+      height: 1.125rem;
+      // The same flat-chrome radius the rows themselves use. Round-cropped
+      // avatars (the generated initial badges) supply their own circle in the
+      // image, so this only affects real square logos.
+      border-radius: var(--gauzy-radius-sm, 6px);
+      object-fit: cover;
+    }
+
+    // The label takes the rest of the row and truncates there. `min-width: 0`
+    // is what actually allows it: a flex item's automatic minimum size is its
+    // content, so without this the row would grow past the panel instead.
+    .ng-dropdown-panel-items .ng-option > span,
+    .ng-dropdown-panel-items .ng-option .ng-option-label {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    // Selected row: medium weight against the normal-weight list, on the same
+    // neutral/brand tint the shared rule already gives it. 600 there is a step
+    // too far once the rest of the list is at 400 — the row stopped reading as
+    // "current" and started reading as a heading.
+    .ng-dropdown-panel-items .ng-option.ng-option-selected,
+    .ng-dropdown-panel-items .ng-option.ng-option-selected:hover,
+    // ng-select's own theme puts the 600 on the LABEL rather than the row
+    // (`.ng-option-selected .ng-option-label`), which is the element the
+    // default option template renders when a picker is not `shortened`.
+    .ng-dropdown-panel-items .ng-option.ng-option-selected .ng-option-label {
+      font-weight: 500;
+    }
+  }
+
   .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-input > input {
     color: var(--gauzy-text-color-1);
   }
