@@ -1,22 +1,41 @@
 @use 'gauzy/_gauzy-cards' as *;
 
+/*
+ * The identity strip under the page title: who the figures below are for, and
+ * the two headline numbers about them.
+ *
+ * It used to be sized like a profile header — a 70px portrait with 24px either
+ * side of it, an 18px bold name and a 24px bold salary — on a page whose own
+ * title is 20px. The strip is a CAPTION for the blocks under it, so nothing in
+ * it out-ranks the page title any more.
+ */
 .header {
 	background-color: unset;
 	.header-container {
 		display: flex;
 		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+		flex-wrap: wrap;
 
 		.employee-info,
 		.org-info {
 			display: flex;
+			align-items: center;
+			gap: 0.625rem;
+			min-width: 0;
 
 			.employee-image,
 			.org-image {
-				max-width: 70px;
-				max-height: 70px;
-				border-radius: 13px;
-				margin-right: 24px;
-				margin-left: 24px;
+				width: 2.25rem;
+				height: 2.25rem;
+				border-radius: var(--gauzy-radius-sm);
+				object-fit: cover;
+				// The gap on the row places these now; the 24px inset on BOTH
+				// sides also pushed the avatar away from the card edge it is
+				// meant to line up with.
+				margin-right: 0;
+				margin-left: 0;
 			}
 		}
 
@@ -25,27 +44,45 @@
 			display: flex;
 			flex-direction: column;
 			justify-content: center;
+			gap: 0.125rem;
+			min-width: 0;
 
 			.employee-name,
 			.org-name {
-				font-weight: bold;
-				font-size: 18px;
+				display: flex;
+				align-items: center;
+				gap: 0.25rem;
+				font-weight: 600;
+				font-size: nb-theme(text-subtitle-font-size);
+				line-height: 1.25rem;
 			}
 
 			.employee-position,
 			.org-position {
-				font-size: 14px;
+				font-size: nb-theme(text-caption-font-size);
+				line-height: 1rem;
+				color: var(--gauzy-text-color-2);
 			}
 
 			.edit-icon {
 				cursor: pointer;
+				height: 0.875rem;
+				width: 0.875rem;
+				color: var(--gauzy-text-color-2);
 			}
 		}
 
+		// Salary and average bonus. Two figures on the trailing edge, so they
+		// are set as a pair rather than one shouting over the other.
+		.employee-details {
+			font-size: nb-theme(gauzy-table-font-size);
+			color: var(--gauzy-text-color-2);
+		}
+
 		.employee-salary {
-			font-size: 24px;
-			font-weight: bold;
-			color: nb-theme(color-info-default);
+			font-size: nb-theme(text-heading-6-font-size);
+			font-weight: 600;
+			color: var(--gauzy-action-info-text);
 		}
 	}
 }
@@ -55,14 +92,20 @@
 }
 
 .body {
-	display: flex;
-	justify-content: space-between;
+	// Was two 49%-wide flex children with the remaining 2% spread between them,
+	// so the gutter changed with the viewport and neither column could shrink
+	// below its content. Two equal tracks and one gap, and `minmax(0, ...)` so a
+	// long currency string wraps inside its column.
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+	align-items: start;
 
 	.half-content {
-		width: 49%;
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
+		min-width: 0;
 		ga-info-block {
 			border-radius: var(--border-radius);
 		}
@@ -72,36 +115,52 @@
 		flex-direction: column;
 		align-items: flex-end;
 		width: 100%;
+		// The blocks above this are a list with its own row gap; the total is
+		// the line that closes it.
+		margin-top: 0.5rem;
 
 		.bonus-value {
-			margin-right: 39px;
+			// The 39px inset was answering for a card padding that is no longer
+			// there — the column's own edge is what these line up with.
+			margin-right: 0;
 			display: flex;
 			flex-direction: column;
 			align-items: flex-end;
+			gap: 0.25rem;
 
 			:first-child {
 				text-align: right;
-				font-size: 12px;
-				margin-bottom: 15px;
-				margin-right: 3px;
+				font-size: nb-theme(text-caption-font-size);
+				line-height: 1rem;
+				color: var(--gauzy-text-color-2);
+				margin-bottom: 0;
+				margin-right: 0;
 			}
 
+			// The bonus total. It is the page's one display figure, so it takes
+			// the same step as every other display figure in the dashboard (the
+			// `.h1` counters, the Accounting KPIs) rather than the 36px/bold it
+			// used to hold on its own.
 			:last-child {
-				font-size: 36px;
-				font-weight: bold;
-				color: nb-theme(color-info-default);
+				font-size: nb-theme(text-heading-4-font-size);
+				font-weight: 500;
+				line-height: 2rem;
+				color: var(--gauzy-action-info-text);
 			}
 
 			.negative-bonus-color {
-				color: nb-theme(color-danger-default);
+				color: var(--gauzy-action-danger-text);
 			}
 		}
 
 		.bonus-disclaimer {
-			margin-top: 15px;
-			margin-right: 39px;
-			font-size: 0.7rem;
-			width: 215px;
+			margin-top: 0.5rem;
+			margin-right: 0;
+			font-size: nb-theme(text-caption-font-size);
+			line-height: 1rem;
+			color: var(--gauzy-text-color-2);
+			max-width: 16rem;
+			text-align: right;
 		}
 	}
 }
