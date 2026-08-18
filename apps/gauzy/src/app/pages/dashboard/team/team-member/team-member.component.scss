@@ -1,3 +1,14 @@
+@use 'gauzy/_gauzy-status-chip' as *;
+
+/*
+ * One person's row in a team panel: a presence dot, their avatar and name, what
+ * they are working on, and how far along it is.
+ *
+ * It is a LIST ROW, and it used to be built like a card — a 1rem box around a
+ * 17px presence dot, with the duration and the activity chip set at 14px/600.
+ * Sixteen of those is what a team panel was. Everything below sizes the row off
+ * the same data-table metrics the rest of the app uses for a line of record.
+ */
 nb-card {
   background-color: var(--gauzy-card-1);
 
@@ -5,55 +16,84 @@ nb-card {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-	  padding: 1rem;
+    padding: 0.4375rem 0.625rem;
+    font-size: nb-theme(gauzy-table-font-size);
+    line-height: nb-theme(gauzy-table-line-height);
   }
 
+  // Bootstrap's default gutter is 15px per side, which on a column this narrow
+  // is most of the column. Half of it, so "Not worked" fits on its line instead
+  // of wrapping the row to two.
+  .row {
+    margin-inline: -0.375rem;
+
+    > [class^='col'],
+    > [class*=' col'] {
+      padding-inline: 0.375rem;
+      min-width: 0;
+    }
+  }
+
+  // The classic (team-panel) layout puts the presence dot and the avatar in
+  // Bootstrap columns that this row lays out itself, so their gutters are dead
+  // space — 30px of it between a 8px dot and the avatar it belongs to. The row's
+  // own `gap` is what separates them.
   .user-container {
     display: flex;
-    gap: .5rem;
+    gap: 0.5rem;
     align-items: center;
-	  .col-3, .col-9{
-		  width: fit-content;
-	  }
+    min-width: 0;
+    .col-3,
+    .col-9 {
+      width: fit-content;
+      padding-inline: 0;
+    }
   }
 
+  // Presence. It marks a row; it is not a control, so it is the size of a
+  // bullet rather than of a button. The three states were `green` / `red` /
+  // `orange` — CSS keywords, so the same three fully saturated colours on all
+  // eight themes, and none of them the ones the app uses for those meanings.
   .dot-container {
-    width: 17px;
-    height: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.625rem;
+    height: 0.625rem;
+    flex: 0 0 auto;
   }
 
   .dot {
-    width: 16px;
-    height: 16px;
+    width: 0.5rem;
+    height: 0.5rem;
     border-radius: 50%;
-    background-color: orange;
+    background-color: nb-theme(color-warning-default);
 
     &.online {
-      background-color: green;
+      background-color: nb-theme(color-success-default);
     }
 
     &.offline {
-      background-color: red;
+      background-color: nb-theme(color-danger-default);
     }
   }
 }
 
+// The bar is one line of the row, so it is a line's worth of height. 10px is
+// the size a progress bar gets when it IS the content.
 ::ng-deep nb-progress-bar.size-tiny .progress-container {
-	height: 10px;
+  height: 0.375rem;
 }
 
 .text-right {
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--gauzy-text-color-2);
 }
 
 :host {
-  nb-badge{
-      position: relative;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 2px 4px;
-      border-radius: calc(var(--border-radius) / 2);
-  }
+  // The activity percentage. It annotates the row it sits in, so it reads as a
+  // chip rather than as a saturated block — see the mixin.
+  @include gauzy-status-chip();
 }

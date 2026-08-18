@@ -1,24 +1,40 @@
+@use 'themes' as *;
+
+/*
+ * The strip of team chips above a selected team's member list. Each one is the
+ * same "name, figure, gauge" tile the KPI row uses (see
+ * `../all-team/all-team.component.scss`), so it is set to the same metrics —
+ * they sit one above the other on screen and used to be two different sizes.
+ */
 .team-name {
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 16px;
+  font-size: nb-theme(text-label-font-size);
+  font-weight: 500;
+  line-height: 1rem;
   letter-spacing: -0.009em;
   color: var(--gauzy-text-color-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 nb-card {
-  padding: 8px 12px 8px 15px;
+  padding: 0.625rem 0.75rem 0.75rem;
   background-color: var(--gauzy-card-1);
-  min-width: 242px;
+  min-width: 11rem;
 }
 
 .team-header {
-	padding: 0;
-	margin-bottom: 15px;
+  padding: 0;
+  // Was 15px, which put the name further from its own figure than two
+  // neighbouring cards are from each other.
+  margin-bottom: 0.25rem;
 }
 
+// The gauge belongs to the figure above it, so it spans the card rather than
+// stopping at an arbitrary 71% of it.
 .counter-container {
-  width: 71%;
+  width: 100%;
+  margin-top: 0.5rem;
 }
 
 .team-container {
@@ -26,15 +42,23 @@ nb-card {
   flex-direction: column;
   padding: 0;
 
+  // `<div class="h1">3</div><div>/12</div>` — a display figure and the total it
+  // is out of. The total is context, not a second figure.
+  .d-flex.align-items-center {
+    align-items: baseline !important;
+    gap: 0.125rem;
+    color: var(--gauzy-text-color-2);
+    font-size: nb-theme(gauzy-table-font-size);
+  }
+
   .team-member {
     display: flex;
     gap: 0.25rem;
     flex-direction: column;
-    font-size: 16px;
+    font-size: nb-theme(text-label-font-size);
     font-weight: 400;
-    line-height: 16px;
+    line-height: 1rem;
     letter-spacing: -0.009em;
     color: var(--gauzy-text-color-2);
   }
 }
-

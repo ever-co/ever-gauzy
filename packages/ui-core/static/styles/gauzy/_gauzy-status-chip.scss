@@ -1,0 +1,74 @@
+// Forward themes so files importing this also get nb-theme() etc.
+@forward 'themes';
+@use 'themes' as *;
+
+// ── Status chips (`nb-badge` used as an inline label) ────────────────────────
+//
+// `nb-badge` is a NOTIFICATION marker: Nebular positions it absolutely over the
+// corner of whatever it is nested in, and paints it as a saturated block of
+// `badge-<status>-background-color` under white text — which is the right thing
+// for a count riding on an avatar.
+//
+// Several dashboard panels use it as something else: an inline chip that labels
+// a value ("Working now 3", an activity percentage). Those sit IN the flow, next
+// to body copy, and there can be three of them per row — so a 14px/600 label on
+// a fully saturated fill is the loudest thing on the page, three times over,
+// for information that is secondary to the row it annotates.
+//
+// This mixin restates them as chips: the status is carried by a tinted surface
+// and coloured text (the same `gauzy-action-*` accents the app's status buttons
+// use, which are contrast-tuned per canvas and therefore legible on the light
+// and the dark themes alike) instead of by a solid block.
+//
+// Include it inside the component that renders the badges; the rules are scoped
+// to `nb-badge` so they cannot reach a badge being used as an actual marker
+// somewhere else.
+@mixin gauzy-status-chip() {
+  nb-badge {
+    // Back into the flow. Nebular's own rule is `position: absolute`, which is
+    // what pins a marker to a corner.
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    font-size: nb-theme(gauzy-table-chip-font-size);
+    font-weight: 600;
+    line-height: nb-theme(gauzy-table-chip-line-height);
+    padding: nb-theme(gauzy-table-chip-padding-y) nb-theme(gauzy-table-chip-padding-x);
+    border-radius: nb-theme(gauzy-radius-sm);
+    white-space: nowrap;
+
+    // `nb-badge` stamps its own status onto the host element (`class.status-*`),
+    // so each reading is selected here rather than passed in by the caller.
+    &.status-success {
+      color: var(--gauzy-action-success-text);
+      background-color: var(--gauzy-action-success-tint);
+      box-shadow: inset 0 0 0 1px var(--gauzy-action-success-border);
+    }
+
+    &.status-warning {
+      color: var(--gauzy-action-warning-text);
+      background-color: var(--gauzy-action-warning-tint);
+      box-shadow: inset 0 0 0 1px var(--gauzy-action-warning-border);
+    }
+
+    &.status-danger {
+      color: var(--gauzy-action-danger-text);
+      background-color: var(--gauzy-action-danger-tint);
+      box-shadow: inset 0 0 0 1px var(--gauzy-action-danger-border);
+    }
+
+    &.status-info {
+      color: var(--gauzy-action-info-text);
+      background-color: var(--gauzy-action-info-tint);
+      box-shadow: inset 0 0 0 1px var(--gauzy-action-info-border);
+    }
+
+    &.status-basic,
+    &.status-primary,
+    &.status-control {
+      color: var(--gauzy-text-color-1);
+      background-color: var(--gauzy-hover-tint);
+      box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+    }
+  }
+}

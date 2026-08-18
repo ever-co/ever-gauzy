@@ -1,105 +1,156 @@
+@use 'gauzy/_gauzy-status-chip' as *;
+
 .masonry {
-	-webkit-column-count: 2;
-	-moz-column-count: 2;
-	column-count: 2;
-	-webkit-column-gap: 1rem;
-	-moz-column-gap: 1rem;
-	column-gap: 1rem;
+  -webkit-column-count: 2;
+  -moz-column-count: 2;
+  column-count: 2;
+  -webkit-column-gap: 0.75rem;
+  -moz-column-gap: 0.75rem;
+  column-gap: 0.75rem;
 
+  width: 100%;
 
-	overflow-y: auto;
-	width: 100%;
-	padding-right: 0.5rem;
-
-	nb-card {
-		width: 100%;
-		display: inline-flex;
-		margin-bottom: 1rem;
-	}
+  nb-card {
+    width: 100%;
+    display: inline-flex;
+    margin-bottom: 0.75rem;
+  }
 }
 
 @media only screen and (max-width: 1200px) {
-	.masonry {
-		-moz-column-count: 1;
-		-webkit-column-count: 1;
-		column-count: 1;
-	}
+  .masonry {
+    -moz-column-count: 1;
+    -webkit-column-count: 1;
+    column-count: 1;
+  }
 }
 
 @media only screen and (min-width: 1201px) {
-	.grid-container {
-		-moz-column-count: 2;
-		-webkit-column-count: 2;
-		column-count: 2;
-	}
+  .grid-container {
+    -moz-column-count: 2;
+    -webkit-column-count: 2;
+    column-count: 2;
+  }
 }
 
 .legend-container {
-	display: flex;
-	gap: 1rem;
-	flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
 }
 
 .legend {
-	
-		nb-badge{
-			position: relative;
-			font-size: 14px;
-			font-weight: 600;
-			padding: 2px 4px;
-			border-radius: calc(var(--border-radius) / 2);
-		}
-	  
+  @include gauzy-status-chip();
 }
 
+// The KPI row.
+//
+// It was a wrapping flex row of 242px-wide cards, so on a wide screen four of
+// them ended two hundred pixels short of the panel's trailing edge, and on a
+// narrow one the fourth dropped to a line of its own. Equal tracks fill the row
+// at any width and `auto-fit` collapses the ones nothing lands in - the same
+// treatment the Accounting KPI row is on.
 .widgets-container {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
-	flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
 
-	.title {
-		font-size: 16px;
-		font-weight: 400;
-		line-height: 16px;
-		letter-spacing: -0.009em;
-		color: var(--gauzy-text-color-2);
-	}
+  // The KPI's NAME. It labels the figure under it, so it sits on the label step
+  // and stays muted; at 16px it was larger than the page's body copy and
+  // competed with the figure it introduces.
+  .title {
+    font-size: nb-theme(text-label-font-size);
+    font-weight: 500;
+    line-height: 1rem;
+    letter-spacing: -0.009em;
+    color: var(--gauzy-text-color-2);
+  }
 
-	nb-card {
-		padding: 8px 12px 8px 15px;
-		background-color: var(--gauzy-card-1);
-		min-width: 242px;
-	}
+  nb-card {
+    padding: 0.625rem 0.75rem 0.75rem;
+    background-color: var(--gauzy-card-1);
+    min-width: 0;
+  }
 
-	nb-card-header {
-		padding: 0;
-		margin-bottom: 15px;
-	}
+  nb-card-header {
+    padding: 0;
+    margin-bottom: 0.25rem;
+  }
 
-	.counter-container {
-		width: 71%;
-	}
+  // The counter strip is the figure's own gauge, so it spans the card rather
+  // than stopping at an arbitrary 71% of it.
+  .counter-container {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
 
-	nb-card-body {
-		display: flex;
-		flex-direction: column;
-		padding: 0;
-	}
+  nb-card-body {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
 
-
+  .d-flex.align-items-center {
+    align-items: baseline !important;
+    gap: 0.125rem;
+    color: var(--gauzy-text-color-2);
+    font-size: nb-theme(gauzy-table-font-size);
+  }
 }
 
+// No height: the KPI row and the team panels grow to their content and the
+// dashboard page scrolls past them. The `calc(100vh - 19.7rem)` that used to be
+// here was a hand-counted guess at the page chrome - the same guess the rest of
+// the dashboard has already dropped - and it was both clipping the panel list
+// and giving it a scrollbar of its own inside the page's.
 .main-card-container {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-	width: 100%;
-	height: calc(100vh - 19.7rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
 }
 
-nb-card-body, nb-card-header {
-	padding: 1rem;
+nb-card-body,
+nb-card-header {
+  padding: 0.75rem;
+}
+
+// A team panel's header: the count, the team name under it, the three status
+// chips, and the button that opens the team. They belong on one line, aligned
+// to its top, and the name is the panel's title rather than a run of body copy.
+.masonry nb-card-header {
+  align-items: flex-start;
+  gap: 0.75rem;
+
+  > div:first-child {
+    min-width: 0;
+
+    // The team's NAME. It is the only thing identifying the panel, so unlike
+    // the caption under a KPI figure it keeps the full text colour.
+    > span {
+      display: block;
+      font-size: nb-theme(gauzy-table-font-size);
+      font-weight: 600;
+      line-height: 1.125rem;
+      color: var(--gauzy-text-color-1);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .d-flex.align-items-center {
+    align-items: baseline !important;
+    gap: 0.125rem;
+    color: var(--gauzy-text-color-2);
+    font-size: nb-theme(gauzy-table-font-size);
+  }
+
+  .legend-container {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
 }
 
 .custom-legend {
@@ -107,6 +158,6 @@ nb-card-body, nb-card-header {
   gap: 4px;
 }
 
-.main-card{
+.main-card {
   min-width: 500px;
 }
