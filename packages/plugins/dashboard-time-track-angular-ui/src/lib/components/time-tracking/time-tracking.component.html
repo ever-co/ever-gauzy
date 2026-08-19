@@ -1,38 +1,46 @@
 <nb-card class="card">
+	<!--
+		ONE header row, not two.
+
+		The header used to be two Bootstrap `.row`s stacked on top of each other:
+		the title and the timezone / manage-widgets pair on the first, the auto-
+		refresh toggle and the Refresh button alone on the second. Both rows were
+		right-aligned with `ml-auto` and spaced with a mix of `mb-4`, `mb-2`,
+		`mr-3 ml-3` and an empty `<div class="mr-2">` spacer, so the band was ~5rem
+		tall and no two controls sat on the same baseline.
+
+		Every one of those controls does the same kind of thing — it scopes or
+		refreshes the numbers below — so they belong in a single actions cluster on
+		the title's line. The cluster wraps under the title when the viewport cannot
+		hold both, which is what makes the band responsive instead of overflowing.
+	-->
 	<nb-card-header class="card-header">
-		<div class="row">
-			<div class="col-auto">
-				<h4>
+		<div class="page-header">
+			<!--
+				The title keeps a block of its own: `ngx-header-title` moves the
+				breadcrumb trail out of the <h4> and parks it as the heading's next
+				sibling, so the heading needs a parent that is not the actions row.
+			-->
+			<div class="page-header__main">
+				<h4 class="page-header__title">
 					<ngx-header-title>
 						{{ headerTitle }}
 						{{ 'TIMESHEET.TIME_TRACKING' | translate }}
 					</ngx-header-title>
 				</h4>
 			</div>
-			<div class="mb-4 ml-auto col-auto d-flex align-items-center">
-				<ga-timezone-filter
-					(timeFormatChange)="timeFormatChanged($event)"
-					(timeZoneChange)="timeZoneChanged($event)"
-				></ga-timezone-filter>
-				<div class="mr-2"></div>
-				<button
-					class="manage-widget"
-					status="basic"
-					size="small"
-					nbPopoverPlacement="bottom"
-					[nbPopover]="widgetManager"
-					nbPopoverTrigger="click"
-					nbButton
-				>
-					{{ 'BUTTONS.MANAGE_WIDGET' | translate }}
-					<nb-icon icon="more-vertical-outline"></nb-icon>
-				</button>
-			</div>
-		</div>
-		<div class="row">
-			<div class="mb-2 ml-auto col-auto d-flex align-items-center">
+			<!--
+				Order is the grouping: the two REFRESH controls (the auto-refresh
+				switch and the manual button it disables) belong together, and the
+				two POPOVER chips — the timezone/format picker and the widget
+				manager — belong together at the end of the row. The timezone chip
+				used to open the cluster, which put the two things that behave
+				identically (click, a panel of check-marked rows drops down) at
+				opposite ends of it.
+			-->
+			<div class="page-header__actions">
 				<nb-toggle
-					class="custom-toggle mr-3 ml-3"
+					class="custom-toggle"
 					size="small"
 					[(ngModel)]="autoRefresh"
 					(checkedChange)="setAutoRefresh($event)"
@@ -46,10 +54,29 @@
 					nbButton
 					outline
 					status="basic"
+					class="refresh-button"
+					[nbTooltip]="'BUTTONS.REFRESH' | translate"
 					(click)="logs$.next(true)"
 				>
 					<nb-icon icon="sync-outline"></nb-icon>
-					{{ 'BUTTONS.REFRESH' | translate }}
+					<span class="action-label">{{ 'BUTTONS.REFRESH' | translate }}</span>
+				</button>
+				<ga-timezone-filter
+					(timeFormatChange)="timeFormatChanged($event)"
+					(timeZoneChange)="timeZoneChanged($event)"
+				></ga-timezone-filter>
+				<button
+					class="manage-widget"
+					status="basic"
+					size="small"
+					nbPopoverPlacement="bottom"
+					[nbPopover]="widgetManager"
+					nbPopoverTrigger="click"
+					[nbTooltip]="'BUTTONS.MANAGE_WIDGET' | translate"
+					nbButton
+				>
+					<span class="action-label">{{ 'BUTTONS.MANAGE_WIDGET' | translate }}</span>
+					<nb-icon icon="more-vertical-outline"></nb-icon>
 				</button>
 			</div>
 		</div>
@@ -67,14 +94,22 @@
 	</nb-card-body>
 </nb-card>
 
-<!-- widgets -->
+<!--
+	widgets
+
+	`div.title` is NOT just a class name here: `WidgetComponent.ngAfterViewInit`
+	reads its `innerText` to name the widget in the drag / settings menus, so the
+	element and its text stay exactly where they are. The tooltip is bound from
+	`titleMapper(position)`, which is the same key table the "Manage widgets"
+	popover reads — so a truncated label and its tooltip can never disagree.
+-->
 <ng-template gaWidgetTemplate>
 	@if (!hideEmployeeBlock) {
 		<ng-container *ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
 			<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 				<nb-card-body>
 					<div class="header-widget">
-						<div class="title">
+						<div class="title" [nbTooltip]="titleMapper(0) | translate">
 							{{ 'TIMESHEET.MEMBERS_WORKED' | translate }}
 						</div>
 					</div>
@@ -99,7 +134,7 @@
 		<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 			<nb-card-body>
 				<div class="header-widget">
-					<div class="title">
+					<div class="title" [nbTooltip]="titleMapper(1) | translate">
 						{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}
 					</div>
 				</div>
@@ -122,7 +157,7 @@
 	<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-body>
 			<div class="header-widget">
-				<div class="title">
+				<div class="title" [nbTooltip]="titleMapper(2) | translate">
 					{{ 'TIMESHEET.TODAY_ACTIVITY' | translate }}
 				</div>
 			</div>
@@ -138,7 +173,7 @@
 	<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-body>
 			<div class="header-widget">
-				<div class="title">
+				<div class="title" [nbTooltip]="titleMapper(3) | translate">
 					{{ 'TIMESHEET.WORKED_TODAY' | translate }}
 				</div>
 			</div>
@@ -160,7 +195,7 @@
 	<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-body>
 			<div class="header-widget">
-				<div class="title">
+				<div class="title" [nbTooltip]="titleMapper(4) | translate">
 					@switch (selectedPeriod) {
 						@case (RangePeriod.PERIOD) {
 							{{ 'TIMESHEET.WORKED_OVER_PERIOD' | translate }}
@@ -195,7 +230,7 @@
 	<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-body>
 			<div class="header-widget">
-				<div class="title">
+				<div class="title" [nbTooltip]="titleMapper(5) | translate">
 					@switch (selectedPeriod) {
 						@case (RangePeriod.PERIOD) {
 							{{ 'TIMESHEET.ACTIVITY_OVER_PERIOD' | translate }}
@@ -217,17 +252,41 @@
 	</nb-card>
 </ng-template>
 
-<!-- Windows -->
+<!--
+	Windows
+
+	Every panel below is built to the same shape, so six of them read as one
+	system rather than six one-offs:
+
+	  <nb-card-header class="window-header">      title … panel action
+	  <nb-card-body class="window-body">          one list of equal rows
+	  <div class="window-empty">                  the "nothing here" line
+
+	The panel action (View All / View Report) used to sit in a row of its OWN at
+	the top of the body — a full row of empty space above every list, pushing the
+	first record down by ~3.5rem. In the header it is where a panel action belongs,
+	and the header reserves inline-end room for the ⋮ menu that `ga-window`
+	positions absolutely over that corner.
+
+	The empty states move INSIDE an `nb-card-body` for the same reason: four of the
+	six rendered theirs as a bare `<div>` directly under `<nb-card>`, so a panel
+	with no data had no body padding and a different background from the same panel
+	with data.
+-->
 <ng-template gaWindowTemplate>
 	<nb-card [nbSpinner]="timeSlotLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
-		<nb-card-header>{{ 'TIMESHEET.RECENT_ACTIVITIES' | translate }}</nb-card-header>
-		<nb-card-body class="custom-card-body-inner">
+		<nb-card-header class="window-header">
+			<span class="window-header__title" [nbTooltip]="'TIMESHEET.RECENT_ACTIVITIES' | translate">
+				{{ 'TIMESHEET.RECENT_ACTIVITIES' | translate }}
+			</span>
+		</nb-card-header>
+		<nb-card-body class="custom-card-body-inner window-body">
 			@if (timeSlotEmployees?.length > 0) {
 				@for (employee of timeSlotEmployees; track employee.id) {
 					<div class="row">
 						@if (employee?.timeSlots?.length > 0) {
 							<div class="col">
-								<div class="hour-label mb-3">
+								<div class="hour-label">
 									<ng-template [ngxPermissionsOnly]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
 										<ngx-avatar
 											class="avatar-dashboard activity"
@@ -240,7 +299,6 @@
 											[employee]="employee"
 										></ngx-avatar>
 									</ng-template>
-									<div></div>
 									<div class="button-container">
 										<div class="swiper-button-container">
 											<div class="swiper-button" (click)="slidePrev(swiperRef)">
@@ -270,7 +328,7 @@
 									<swiper-container
 										#swiperRef
 										slides-per-view="3"
-										space-between="16"
+										space-between="8"
 										slides-per-group="3"
 										loop="false"
 										navigation="true"
@@ -296,7 +354,7 @@
 					</div>
 				}
 			} @else if (!timeSlotLoading) {
-				<div class="text-center">
+				<div class="window-empty">
 					@switch (selectedPeriod) {
 						@case (RangePeriod.DAY) {
 							{{ 'TIMESHEET.NO_SCREENSHOT_DAY' | translate }}
@@ -316,30 +374,45 @@
 
 <ng-template gaWindowTemplate>
 	<nb-card [nbSpinner]="manualTimeLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
-		<nb-card-header class="nb-card-header">
-			{{ 'TIMESHEET.MANUAL_TIME' | translate }}
+		<nb-card-header class="window-header">
+			<span class="window-header__title" [nbTooltip]="'TIMESHEET.MANUAL_TIME' | translate">
+				{{ 'TIMESHEET.MANUAL_TIME' | translate }}
+			</span>
+			@if (manualTimes?.length > 0) {
+				<button
+					nbButton
+					status="primary"
+					outline
+					size="small"
+					class="window-header__action"
+					(click)="redirectToManualTimeReport()"
+				>
+					{{ 'BUTTONS.VIEW_REPORT' | translate }}
+				</button>
+			}
 		</nb-card-header>
 		@if (manualTimes?.length > 0) {
-			<nb-card-body class="custom-card-body-inner-list">
-				<div class="custom-card-button">
-					<button nbButton status="primary" outline size="small" (click)="redirectToManualTimeReport()">
-						{{ 'BUTTONS.VIEW_REPORT' | translate }}
-					</button>
-				</div>
-				<nb-list>
-					<nb-list-item>
+			<nb-card-body class="custom-card-body-inner-list window-body">
+				<nb-list class="data-list">
+					<nb-list-item class="data-list__head">
 						<div class="w-100">
-							<div class="row py-2 font-weight-bold">
-								<div class="col-sm-3">
+							<div class="row font-weight-bold">
+								<div class="col-sm-3 cell cell--clip" [nbTooltip]="'TIMESHEET.MEMBER' | translate">
 									{{ 'TIMESHEET.MEMBER' | translate }}
 								</div>
-								<div class="col">
+								<div class="col cell cell--clip" [nbTooltip]="'TIMESHEET.PROJECT' | translate">
 									{{ 'TIMESHEET.PROJECT' | translate }}
 								</div>
-								<div class="col">
+								<div
+									class="col cell cell--figure cell--clip"
+									[nbTooltip]="'TIMESHEET.DURATION' | translate"
+								>
 									{{ 'TIMESHEET.DURATION' | translate }}
 								</div>
-								<div class="col">
+								<div
+									class="col cell cell--figure cell--clip"
+									[nbTooltip]="'TIMESHEET.DATE' | translate"
+								>
 									{{ 'TIMESHEET.DATE' | translate }}
 								</div>
 							</div>
@@ -348,8 +421,8 @@
 					@for (manualTime of manualTimes; track manualTime.id) {
 						<nb-list-item>
 							<div class="w-100">
-								<div class="row">
-									<div class="col-sm-3">
+								<div class="row align-items-center">
+									<div class="col-sm-3 cell">
 										<ngx-avatar
 											[name]="manualTime?.user?.name"
 											[src]="manualTime?.user?.imageUrl"
@@ -359,13 +432,23 @@
 											class="avatar-dashboard"
 										></ngx-avatar>
 									</div>
-									<div class="col project-name">
+									<div
+										class="col cell project-name"
+										[nbTooltip]="manualTime?.project?.name"
+										[nbTooltipDisabled]="!manualTime?.project?.name"
+									>
 										{{ manualTime?.project?.name }}
 									</div>
-									<div class="col">
+									<div
+										class="col cell cell--figure cell--clip"
+										[nbTooltip]="manualTime.duration | durationFormat"
+									>
 										{{ manualTime.duration | durationFormat }}
 									</div>
-									<div class="col">
+									<div
+										class="col cell cell--figure cell--clip"
+										[nbTooltip]="manualTime.startedAt | dateFormat"
+									>
 										{{ manualTime.startedAt | dateFormat }}
 									</div>
 								</div>
@@ -375,48 +458,63 @@
 				</nb-list>
 			</nb-card-body>
 		} @else if (!manualTimeLoading) {
-			<div class="text-center p-3">
-				@switch (selectedPeriod) {
-					@case (RangePeriod.DAY) {
-						{{ 'TIMESHEET.NO_MANUAL_TIME_DAY' | translate }}
+			<nb-card-body class="custom-card-body-inner-list window-body">
+				<div class="window-empty">
+					@switch (selectedPeriod) {
+						@case (RangePeriod.DAY) {
+							{{ 'TIMESHEET.NO_MANUAL_TIME_DAY' | translate }}
+						}
+						@case (RangePeriod.WEEK) {
+							{{ 'TIMESHEET.NO_MANUAL_TIME_WEEK' | translate }}
+						}
+						@case (RangePeriod.PERIOD) {
+							{{ 'TIMESHEET.NO_MANUAL_TIME_PERIOD' | translate }}
+						}
 					}
-					@case (RangePeriod.WEEK) {
-						{{ 'TIMESHEET.NO_MANUAL_TIME_WEEK' | translate }}
-					}
-					@case (RangePeriod.PERIOD) {
-						{{ 'TIMESHEET.NO_MANUAL_TIME_PERIOD' | translate }}
-					}
-				}
-			</div>
+				</div>
+			</nb-card-body>
 		}
 	</nb-card>
 </ng-template>
 
 <ng-template gaWindowTemplate>
 	<nb-card [nbSpinner]="tasksLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
-		<nb-card-header class="nb-card-header">
-			{{ 'TIMESHEET.TASKS' | translate }}
+		<nb-card-header class="window-header">
+			<span class="window-header__title" [nbTooltip]="'TIMESHEET.TASKS' | translate">
+				{{ 'TIMESHEET.TASKS' | translate }}
+			</span>
+			@if (tasks?.length > 0) {
+				<button
+					size="small"
+					nbButton
+					status="primary"
+					outline
+					class="window-header__action"
+					(click)="redirectToTask()"
+				>
+					{{ 'BUTTONS.VIEW_ALL' | translate }}
+				</button>
+			}
 		</nb-card-header>
 		@if (tasks?.length > 0) {
-			<nb-card-body class="custom-card-body-inner-list">
-				<div class="custom-card-button">
-					<button size="small" nbButton status="primary" outline (click)="redirectToTask()">
-						{{ 'BUTTONS.VIEW_ALL' | translate }}
-					</button>
-				</div>
-				<nb-list>
+			<nb-card-body class="custom-card-body-inner-list window-body">
+				<nb-list class="data-list">
 					@for (task of tasks; track task.id) {
 						<nb-list-item>
 							<div class="w-100">
 								<div class="row align-items-center">
-									<div class="col-5 project-name text-left">
+									<div
+										class="col-5 cell project-name"
+										[nbTooltip]="task.title"
+										[nbTooltipDisabled]="!task.title"
+									>
 										{{ task.title }}
 									</div>
-									<div class="col-4 text-center">
-										<div class="d-flex align-items-center">
-											{{ task.durationPercentage }}%
+									<div class="col-4 cell">
+										<div class="progress-cell">
+											<span class="progress-cell__value">{{ task.durationPercentage }}%</span>
 											<nb-progress-bar
-												class="mb-1 ml-3 mr-3 w-100 custom-progress"
+												class="custom-progress"
 												[value]="task.durationPercentage"
 												[status]="progressStatus(task.durationPercentage)"
 												[displayValue]="true"
@@ -425,7 +523,7 @@
 											</nb-progress-bar>
 										</div>
 									</div>
-									<div class="col text-right">
+									<div class="col cell cell--numeric">
 										{{ task.duration | durationFormat }}
 									</div>
 								</div>
@@ -435,41 +533,51 @@
 				</nb-list>
 			</nb-card-body>
 		} @else if (!tasksLoading) {
-			<div class="text-center p-3">
-				@switch (selectedPeriod) {
-					@case (RangePeriod.DAY) {
-						{{ 'TIMESHEET.NO_TASK_ACTIVITY_DAY' | translate }}
+			<nb-card-body class="custom-card-body-inner-list window-body">
+				<div class="window-empty">
+					@switch (selectedPeriod) {
+						@case (RangePeriod.DAY) {
+							{{ 'TIMESHEET.NO_TASK_ACTIVITY_DAY' | translate }}
+						}
+						@case (RangePeriod.WEEK) {
+							{{ 'TIMESHEET.NO_TASK_ACTIVITY_WEEK' | translate }}
+						}
+						@case (RangePeriod.PERIOD) {
+							{{ 'TIMESHEET.NO_TASK_ACTIVITY_PERIOD' | translate }}
+						}
 					}
-					@case (RangePeriod.WEEK) {
-						{{ 'TIMESHEET.NO_TASK_ACTIVITY_WEEK' | translate }}
-					}
-					@case (RangePeriod.PERIOD) {
-						{{ 'TIMESHEET.NO_TASK_ACTIVITY_PERIOD' | translate }}
-					}
-				}
-			</div>
+				</div>
+			</nb-card-body>
 		}
 	</nb-card>
 </ng-template>
 
 <ng-template gaWindowTemplate>
 	<nb-card [nbSpinner]="projectsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
-		<nb-card-header>{{ 'TIMESHEET.PROJECTS' | translate }}</nb-card-header>
+		<nb-card-header class="window-header">
+			<span class="window-header__title" [nbTooltip]="'TIMESHEET.PROJECTS' | translate">
+				{{ 'TIMESHEET.PROJECTS' | translate }}
+			</span>
+		</nb-card-header>
 		@if (projects?.length > 0) {
-			<nb-card-body class="custom-card-body-inner-list">
-				<nb-list>
+			<nb-card-body class="custom-card-body-inner-list window-body">
+				<nb-list class="data-list">
 					@for (project of projects; track project.id) {
 						<nb-list-item>
 							<div class="w-100">
 								<div class="row align-items-center">
-									<div class="col-5 project-name text-left">
+									<div
+										class="col-5 cell project-name"
+										[nbTooltip]="project.name"
+										[nbTooltipDisabled]="!project.name"
+									>
 										{{ project.name }}
 									</div>
-									<div class="col-4 text-center">
-										<div class="d-flex align-items-center">
-											{{ project.durationPercentage }}%
+									<div class="col-4 cell">
+										<div class="progress-cell">
+											<span class="progress-cell__value">{{ project.durationPercentage }}%</span>
 											<nb-progress-bar
-												class="mb-1 ml-3 mr-3 w-100 custom-progress"
+												class="custom-progress"
 												[value]="project.durationPercentage"
 												[status]="progressStatus(project.durationPercentage)"
 												[displayValue]="true"
@@ -478,7 +586,7 @@
 											</nb-progress-bar>
 										</div>
 									</div>
-									<div class="col text-right">
+									<div class="col cell cell--numeric">
 										{{ project.duration | durationFormat }}
 									</div>
 								</div>
@@ -488,34 +596,47 @@
 				</nb-list>
 			</nb-card-body>
 		} @else if (!projectsLoading) {
-			<div class="text-center p-3">
-				@switch (selectedPeriod) {
-					@case (RangePeriod.DAY) {
-						{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_DAY' | translate }}
+			<nb-card-body class="custom-card-body-inner-list window-body">
+				<div class="window-empty">
+					@switch (selectedPeriod) {
+						@case (RangePeriod.DAY) {
+							{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_DAY' | translate }}
+						}
+						@case (RangePeriod.WEEK) {
+							{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_WEEK' | translate }}
+						}
+						@case (RangePeriod.PERIOD) {
+							{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_PERIOD' | translate }}
+						}
 					}
-					@case (RangePeriod.WEEK) {
-						{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_WEEK' | translate }}
-					}
-					@case (RangePeriod.PERIOD) {
-						{{ 'TIMESHEET.NO_PROJECT_ACTIVITY_PERIOD' | translate }}
-					}
-				}
-			</div>
+				</div>
+			</nb-card-body>
 		}
 	</nb-card>
 </ng-template>
 
 <ng-template gaWindowTemplate>
 	<nb-card [nbSpinner]="activitiesLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
-		<nb-card-header class="nb-card-header">{{ 'TIMESHEET.APPS_URLS' | translate }} </nb-card-header>
+		<nb-card-header class="window-header">
+			<span class="window-header__title" [nbTooltip]="'TIMESHEET.APPS_URLS' | translate">
+				{{ 'TIMESHEET.APPS_URLS' | translate }}
+			</span>
+			@if (activities?.length > 0) {
+				<button
+					nbButton
+					status="primary"
+					size="small"
+					outline
+					class="window-header__action"
+					(click)="redirectToAppUrlReport()"
+				>
+					{{ 'BUTTONS.VIEW_REPORT' | translate }}
+				</button>
+			}
+		</nb-card-header>
 		@if (activities?.length > 0) {
-			<nb-card-body class="custom-card-body-inner-list">
-				<div class="custom-card-button">
-					<button nbButton status="primary" size="small" outline (click)="redirectToAppUrlReport()">
-						{{ 'BUTTONS.VIEW_REPORT' | translate }}
-					</button>
-				</div>
-				<nb-list>
+			<nb-card-body class="custom-card-body-inner-list window-body">
+				<nb-list class="data-list">
 					@for (activity of activities; track activity) {
 						<nb-list-item>
 							<div class="w-100">
@@ -530,19 +651,21 @@
 				</nb-list>
 			</nb-card-body>
 		} @else if (!activitiesLoading) {
-			<div class="text-center p-3">
-				@switch (selectedPeriod) {
-					@case (RangePeriod.DAY) {
-						{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_DAY' | translate }}
+			<nb-card-body class="custom-card-body-inner-list window-body">
+				<div class="window-empty">
+					@switch (selectedPeriod) {
+						@case (RangePeriod.DAY) {
+							{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_DAY' | translate }}
+						}
+						@case (RangePeriod.WEEK) {
+							{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_WEEK' | translate }}
+						}
+						@case (RangePeriod.PERIOD) {
+							{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_PERIOD' | translate }}
+						}
 					}
-					@case (RangePeriod.WEEK) {
-						{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_WEEK' | translate }}
-					}
-					@case (RangePeriod.PERIOD) {
-						{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_PERIOD' | translate }}
-					}
-				}
-			</div>
+				</div>
+			</nb-card-body>
 		}
 	</nb-card>
 </ng-template>
@@ -555,21 +678,25 @@
 		nbSpinnerStatus="primary"
 		*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
 	>
-		<nb-card-header>{{ 'TIMESHEET.MEMBERS' | translate }}</nb-card-header>
-		<nb-card-body class="custom-card-body-inner-list">
+		<nb-card-header class="window-header">
+			<span class="window-header__title" [nbTooltip]="'TIMESHEET.MEMBERS' | translate">
+				{{ 'TIMESHEET.MEMBERS' | translate }}
+			</span>
+		</nb-card-header>
+		<nb-card-body class="custom-card-body-inner-list window-body">
 			@if (members?.length > 0) {
 				<div class="list">
-					<nb-list>
-						<nb-list-item>
+					<nb-list class="data-list">
+						<nb-list-item class="data-list__head">
 							<div class="w-100">
 								<div class="row font-weight-bold">
-									<div class="col-3">
+									<div class="col-3 cell">
 										{{ 'TIMESHEET.MEMBER_INFO' | translate }}
 									</div>
-									<div class="col-3 text-center">
+									<div class="col-3 cell cell--centered">
 										{{ 'TIMESHEET.TODAY' | translate }}
 									</div>
-									<div class="col text-left">
+									<div class="col cell cell--centered">
 										{{
 											(selectedPeriod === RangePeriod.PERIOD
 												? 'TIMESHEET.OVER_PERIOD'
@@ -583,8 +710,8 @@
 						@for (member of members; track member.id) {
 							<nb-list-item>
 								<div class="w-100">
-									<div class="row">
-										<div class="col-3">
+									<div class="row align-items-center">
+										<div class="col-3 cell">
 											<ngx-avatar
 												[name]="member?.user?.name"
 												[src]="member?.user?.imageUrl"
@@ -594,7 +721,7 @@
 												class="avatar-dashboard"
 											></ngx-avatar>
 										</div>
-										<div class="col-3 text-center">
+										<div class="col-3 cell cell--centered">
 											<div class="activity">
 												<div class="duration">
 													{{ member?.todayTime?.duration || 0 | durationFormat }}
@@ -607,9 +734,9 @@
 												</div>
 											</div>
 										</div>
-										<div class="col text-center">
-											<div [class.d-flex]="!isMoreThanWeek()">
-												<div class="activity text-center">
+										<div class="col cell cell--centered">
+											<div [class.d-flex]="!isMoreThanWeek()" class="period-cell">
+												<div class="activity">
 													<div class="duration">
 														{{ member?.weekTime?.duration || 0 | durationFormat }}
 													</div>
@@ -639,7 +766,7 @@
 					</nb-list>
 				</div>
 			} @else if (!memberLoading) {
-				<div class="text-center">
+				<div class="window-empty">
 					@switch (selectedPeriod) {
 						@case (RangePeriod.DAY) {
 							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_DAY' | translate }}
@@ -670,7 +797,7 @@
 			@for (widget of widgets; track widget.position) {
 				<div (click)="updateWidgetVisibility(widget)" class="title">
 					<i [style.visibility]="widget.hide ? 'hidden' : 'visible'" class="fas fa-check"></i>
-					<div>
+					<div class="title__label" [nbTooltip]="titleMapper(widget.position) | translate">
 						{{ titleMapper(widget.position) | translate }}
 					</div>
 				</div>
@@ -687,7 +814,7 @@
 			@for (window of windows; track window.position) {
 				<div (click)="updateWindowVisibility(window)" class="title">
 					<i [style.visibility]="window.hide ? 'hidden' : 'visible'" class="fas fa-check"></i>
-					<div>
+					<div class="title__label" [nbTooltip]="titleMapper(window.position, false) | translate">
 						{{ titleMapper(window.position, false) | translate }}
 					</div>
 				</div>
