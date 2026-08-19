@@ -17,15 +17,13 @@
 			tag="menu-sidebar"
 			(stateChange)="onStateChange($event)"
 		>
-			<div class="custom-box">
-				<!-- Rail edge controls: the collapse toggle and the assistant.
-				     Both are mounted on the sidebar's OUTER EDGE, straddling the
-				     divider between the rail and the canvas — the toggle level with
-				     the brand row at the top, the assistant at the rail's vertical
-				     middle. That is where the reference rail puts them, and it is
-				     why they are absolutely positioned siblings of the rows rather
-				     than flex children of one: a flex child cannot leave the box of
-				     the row that lays it out.
+			<div class="custom-box" [class.compacted]="!isExpanded()">
+				<!-- The assistant launcher, centred on the rail's OUTER EDGE at its
+				     vertical middle — absolutely positioned rather than laid out in a
+				     row, because a flex child cannot leave the box of the row that
+				     lays it out. (The collapse toggle is the same kind of control but
+				     belongs to the brand row, so it lives inside `.custom-row.logo`
+				     further down and is centred vertically in THAT box.)
 
 				     Plain buttons, not `nbButton`. `[nbButton].appearance-ghost.size-small`
 				     sets `padding: 0.4375rem 0.875rem` at specificity (0,3,0), which
@@ -34,35 +32,6 @@
 				     single Nebular button declaration (fill, border, radius, colour
 				     and hover are all overridden), so dropping the directive removes
 				     the conflict instead of escalating it. -->
-				<button
-					class="rail-edge-button rail-toggle"
-					type="button"
-					(click)="toggle()"
-					[title]="(isExpanded() ? 'HEADER.COLLAPSE_SIDEBAR' : 'HEADER.EXPAND_SIDEBAR') | translate"
-					[attr.aria-label]="
-						(isExpanded() ? 'HEADER.COLLAPSE_SIDEBAR' : 'HEADER.EXPAND_SIDEBAR') | translate
-					"
-					[attr.aria-expanded]="isExpanded()"
-				>
-					<svg
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						aria-hidden="true"
-						focusable="false"
-					>
-						<rect width="18" height="18" x="3" y="3" rx="2" />
-						<path d="M9 3v18" />
-						<!-- The caret flips instead of the whole icon being swapped: a
-						     control-flow block here would put the branch's contents in an
-						     embedded view whose namespace is not obviously SVG, and a
-						     `path` created outside the SVG namespace renders nothing. -->
-						<path [attr.d]="isExpanded() ? 'm16 15-3-3 3-3' : 'm14 9 3 3-3 3'" />
-					</svg>
-				</button>
 
 				<!-- Visible whenever the chat is available but collapsed, so the agent
 				     is always one click away. This is the ONLY entry point (the header
@@ -97,6 +66,36 @@
 				}
 
 				<div class="custom-row logo">
+					<button
+						class="rail-edge-button rail-toggle"
+						type="button"
+						(click)="toggle()"
+						[title]="(isExpanded() ? 'HEADER.COLLAPSE_SIDEBAR' : 'HEADER.EXPAND_SIDEBAR') | translate"
+						[attr.aria-label]="
+							(isExpanded() ? 'HEADER.COLLAPSE_SIDEBAR' : 'HEADER.EXPAND_SIDEBAR') | translate
+						"
+						[attr.aria-expanded]="isExpanded()"
+					>
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+							focusable="false"
+						>
+							<rect width="18" height="18" x="3" y="3" rx="2" />
+							<path d="M9 3v18" />
+							<!-- The caret flips instead of the whole icon being swapped: a
+							     control-flow block here would put the branch's contents in an
+							     embedded view whose namespace is not obviously SVG, and a
+							     `path` created outside the SVG namespace renders nothing. -->
+							<path [attr.d]="isExpanded() ? 'm16 15-3-3 3-3' : 'm14 9 3 3-3 3'" />
+						</svg>
+					</button>
+
 					<div
 						class="logo-container"
 						[class.not-collapsed]="!isCollapse() && isExpanded()"
