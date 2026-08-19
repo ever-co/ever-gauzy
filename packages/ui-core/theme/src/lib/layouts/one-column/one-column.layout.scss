@@ -37,17 +37,6 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
     cursor: pointer;
   }
 
-  .user-container {
-    margin-top: auto;
-    border-top: 1px solid nb-theme(divider-color);
-    padding-top: 0.65rem;
-    padding-bottom: 0.65rem;
-    margin-left: -1.25rem;
-    margin-right: -1.25rem;
-    padding-left: 8px;
-    z-index: 2;
-  }
-
   .menu-sidebar-rtl {
     order: 2 !important;
   }
@@ -190,43 +179,43 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
     z-index: 1042;
   }
 
-  div.chevron {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    justify-content: flex-end;
-    margin-bottom: 0.625rem;
-    button {
-      height: 1.625rem;
-      width: 1.625rem;
-      padding: 0;
-      margin: 0 0.5rem;
-    }
-    &.collapsed {
-      justify-content: center;
-    }
-  }
-  .toggle-layout {
+  // ── Sidebar footer: the account row ────────────────────────────────────────
+  //
+  // ChatGPT's shape: the identity sits on a single flat row pinned to the foot
+  // of the rail. The row itself lives in gauzy-user (see user.component.scss);
+  // this is the frame around it.
+  // The rail toggle is NOT here — it lives on the brand row at the top.
+  .sidebar-footer {
     width: 100%;
     display: flex;
-  }
-
-  .toggle-layout.row {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-end;
-  }
-
-  .toggle-layout.column {
-    flex-direction: column;
     align-items: center;
-  }
+    margin-top: auto;
+    padding: 0.5rem 0.75rem;
+    // No rule above it: the reference rail separates the account row from the
+    // nav list with whitespace alone, and a hairline here read as the bottom
+    // edge of a panel rather than as the top of a menu entry.
+    // The presence dot rings itself in the surface it sits on — in the rail that
+    // is the sidebar colour, not the popup's `background-basic-color-1`.
+    --gz-user-surface: #{nb-theme(gauzy-sidebar-background-2)};
 
-  .custom-row.user {
-    display: flex;
-    align-items: flex-end;
-    padding: 0 1.5rem;
-    margin-bottom: 0.625rem;
+    gauzy-user {
+      // Takes the full row and SHRINKS; `min-width: 0` is what lets the name and
+      // e-mail ellipsis rather than force the row wider than the rail.
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    // Compacted rail: just the centred avatar, on the narrower gutter the rest
+    // of the rail uses.
+    &.compacted {
+      justify-content: center;
+      padding-left: 0.25rem;
+      padding-right: 0.25rem;
+
+      gauzy-user {
+        flex: 0 0 auto;
+      }
+    }
   }
 }
 nb-sidebar[tag='user-workspace'] {
@@ -250,54 +239,33 @@ nb-sidebar[tag='menu-sidebar'] {
 }
 
 .logo-container {
-  // One stable single row: [tenant switcher (shrinks)] [AI btn].
+  // One stable single row: the tenant switcher, and nothing else.
   // Nothing may wrap, overlap, or change the row's footprint between the
   // closed and open states of the switcher.
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
   gap: 0.25rem;
-  max-width: nb-theme(sidebar-width);
-  width: nb-theme(sidebar-width);
+  // Sized by the RAIL it sits in, never by a token of its own.
+  //
+  // This used to be a hard `width: sidebar-width` (16rem) that only the
+  // `.compacted` class narrowed to 3.5rem. That made the row's width depend on
+  // the class and Nebular's sidebar state agreeing — and they cannot be relied
+  // on to: `.compacted` is driven by `isExpanded()`, which is only ever set
+  // from `(stateChange)`, so until Nebular emits that event even once (first
+  // paint, and any state Nebular enters on its own, e.g. a compacting
+  // breakpoint) a 16rem row is laid out inside a 3.5rem rail. The row's
+  // trailing children — the assistant launcher and the rail toggle — were then
+  // drawn OUTSIDE the sidebar. A percentage has nothing to disagree with.
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   min-height: 3.25rem;
   padding: 0.75rem;
   overflow: hidden;
-  // Assistant launcher: a small icon-only button on the brand row, immediately
-  // right of the workspace switcher and centered against it — the placement
-  // ever.works uses. It must not read as a second, competing control, so it
-  // borrows the switcher header's own hover fill (background-basic-color-3 in
-  // gauzy-logo.component.scss) and the row's hint color, and only picks up the
-  // primary color on hover.
-  button.ai-agent-launch {
-    flex: 0 0 auto;
-    // A 1.625rem square: Nebular's `size="small"` padding would push the icon
-    // out of a box this narrow, so center it with flex instead of padding.
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 1.625rem;
-    width: 1.625rem;
-    min-width: 1.625rem;
-    margin: 0;
-    border: none;
-    background-color: transparent;
-    border-radius: nb-theme(border-radius);
-    color: nb-theme(text-hint-color);
-    transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
-
-    i {
-      font-size: 0.875rem;
-      line-height: 1;
-    }
-
-    &:hover {
-      background-color: nb-theme(background-basic-color-3);
-      color: nb-theme(color-primary-default);
-    }
-  }
-  // The tenant switcher takes the remaining row width and SHRINKS
-  // (min-width: 0) instead of pushing the buttons or wrapping.
+  // The tenant switcher owns the whole row and SHRINKS (min-width: 0) rather
+  // than widening it. The toggle and the assistant are NOT in this row — they
+  // are mounted on the rail's outer edge; see `.rail-edge-button` below.
   ngx-gauzy-logo {
     flex: 1 1 auto;
     min-width: 0;
@@ -311,14 +279,15 @@ nb-sidebar[tag='menu-sidebar'] {
     box-sizing: border-box;
 
     nb-accordion-item-header.principal {
-      // tenant avatar/name and the (absolutely positioned) chevron share the
-      // header without overlap: reserve the chevron's space on the right
       display: flex;
       align-items: center;
       min-width: 0;
       overflow: hidden;
       position: relative;
-      padding-right: 2.25rem;
+      // No right-hand gutter any more. Nebular's chevron was absolutely
+      // positioned, so the header had to reserve 2.25rem for it; the caret that
+      // replaced it (`.switch-indicator`, see gauzy-logo.component.html) is a
+      // normal flex child of `.tenant` and takes its own space.
 
       .tenant {
         flex: 1 1 auto;
@@ -331,19 +300,13 @@ nb-sidebar[tag='menu-sidebar'] {
     padding: 0.75rem 0.5rem;
   }
   &.compacted {
-    width: nb-theme(sidebar-width-compact);
-    // The compacted rail is too narrow for [avatar][button] side by side, so the
-    // row becomes a centered column instead. The launcher used to be hidden here
-    // and the header chat toggle stood in for it; that toggle no longer exists
-    // (see header.component.html), so hiding it would leave no way to open the
-    // assistant from a collapsed sidebar. It stacks UNDER the avatar, so the
-    // avatar itself keeps its position when the sidebar collapses or expands.
-    flex-direction: column;
+    // Just the tenant avatar, centred in the rail. No `width` override: the rule
+    // above is already `width: 100%` of whatever the rail happens to be.
     justify-content: center;
-    align-items: center;
-    gap: 0.375rem;
-    // The `flex: 1 1 auto` above is meant for the horizontal row; in a column it
-    // would let the switcher stretch vertically away from the launcher.
+    // The 0.75rem inline padding above would leave a 2rem content box in a
+    // 3.5rem rail, which crowds the 1.75rem avatar against both edges.
+    padding: 0.5rem 0.25rem;
+
     ngx-gauzy-logo {
       flex: 0 0 auto;
     }
@@ -351,17 +314,37 @@ nb-sidebar[tag='menu-sidebar'] {
       box-shadow: none;
       width: 1.75rem;
       height: auto;
-      .tenant,
+
+      // Only the tenant AVATAR survives the narrow rail — the name and the
+      // switch caret have nowhere to go.
+      //
+      // This used to hide `.tenant` wholesale and let Nebular's absolutely
+      // positioned chevron stand in as the entire switcher. That chevron is now
+      // suppressed (see gauzy-logo.component.scss), so hiding the avatar too
+      // would leave the compacted rail with no workspace switcher at all.
+      .description,
+      .switch-indicator,
       nb-accordion-item-body {
         display: none;
       }
+
+      .tenant {
+        justify-content: center;
+
+        img {
+          margin-right: 0;
+        }
+      }
+
       nb-accordion-item-header {
-        padding: 0.75rem 0;
+        // 0.25rem, not the 0.75rem this used to carry. `.principal` is a hard
+        // 42px box (min- and max-height, gauzy-logo.component.scss) and
+        // box-sizing is border-box, so 0.75rem top and bottom left an 18px
+        // content box to hold a 28px avatar: the workspace logo was squeezed
+        // against the row's own edges.
+        padding: 0.25rem 0;
         &.principal {
           box-shadow: unset;
-        }
-        nb-icon {
-          left: 0rem;
         }
       }
     }
@@ -470,11 +453,110 @@ nb-sidebar[tag='menu-sidebar'] {
   display: flex;
   flex-flow: column;
   height: 100%;
+  // Positioning context for `.rail-edge-button`. It has to be THIS element and
+  // not a row: the edge controls are anchored to the rail's full height (the
+  // assistant sits at its vertical middle), and nothing between here and the
+  // sidebar host clips overflow while the rail is expanded or compacted — only
+  // Nebular's `collapsed` state (width 0) sets `overflow: hidden`, and this app
+  // never enters it, because `toggle()` calls `sidebarService.toggle(true, ...)`
+  // which alternates expanded and compacted.
+  position: relative;
+}
+
+// ── Rail edge controls ──────────────────────────────────────────────────────
+//
+// The collapse toggle and the assistant launcher, mounted ON the divider between
+// the rail and the canvas rather than inside either — the toggle level with the
+// brand row, the assistant at the rail's vertical middle. Centred on the edge (a
+// negative inset of half their width), so they belong to neither column and
+// never compete with the nav icons for the rail's 3.5rem.
+.rail-edge-button {
+  position: absolute;
+  // Has to clear the fixed header band (1040), which starts exactly at the
+  // rail's trailing edge and would otherwise paint over the toggle, and the chat
+  // panel (1039). CDK overlays are 1050 and still win, so dropdowns, tooltips
+  // and modals are unaffected.
+  z-index: 1041;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  appearance: none;
+  padding: 0;
+  margin: 0;
+  height: 1.75rem;
+  width: 1.75rem;
+  min-width: 1.75rem;
+  border: none;
+  cursor: pointer;
+  // A UA line-height on an icon-only button adds descender space under the glyph
+  // and stops the box from being square.
+  line-height: 0;
+  color: nb-theme(text-hint-color);
+  // The rail's own surface, not `transparent`: the button straddles two
+  // backgrounds, and on the light themes those differ, so a see-through chip
+  // would be half one colour and half the other.
+  background-color: nb-theme(gauzy-sidebar-background-2);
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+
+  // Inline stroke icons (lucide geometry), the same weight as the switcher caret
+  // and the nav icons, rather than a font glyph.
+  svg {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover {
+    color: nb-theme(text-basic-color);
+    background-color: nb-theme(background-basic-color-3);
+  }
+
+  // Outset, not inset: the button is only 1.75rem across and an inset ring would
+  // land on top of the glyph.
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: 1px;
+  }
+}
+
+// Level with the middle of the 3.25rem brand row, so it reads as the workspace
+// name's control even though it sits outside the rail.
+.rail-edge-button.rail-toggle {
+  top: 0.75rem;
+  border-radius: var(--gauzy-radius-sm, 6px);
+  @include nb-ltr(right, -0.875rem);
+  @include nb-rtl(left, -0.875rem);
+}
+
+// The rail's vertical middle — far from both the brand row and the account row,
+// so it cannot collide with either at any rail height.
+.rail-edge-button.ai-agent-launch {
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  // A ring, unlike the toggle: a round chip on the divider is what marks this as
+  // an entry point into a different surface rather than a control over this one.
+  border: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  @include nb-ltr(right, -0.875rem);
+  @include nb-rtl(left, -0.875rem);
+
+  &:hover {
+    border-color: nb-theme(color-primary-default);
+    color: nb-theme(color-primary-default);
+  }
 }
 
 .custom-box .custom-row.logo {
-  flex: 0 1 auto;
-  align-self: center;
+  flex: 0 0 auto;
+  // Stretched to the rail, NOT `align-self: center`. Centering sizes the row to
+  // its own content, so a brand row wider than the rail overflowed it
+  // symmetrically — half of it hanging outside the sidebar on each side.
+  // Stretching is also what lets `width: 100%` on `.logo-container` resolve
+  // against the rail rather than against the row's content width.
+  align-self: stretch;
+  min-width: 0;
+  // Backstop: whatever the brand row's contents do, they stay inside the rail.
+  overflow: hidden;
 }
 
 .custom-box .custom-row.menu {
@@ -483,9 +565,6 @@ nb-sidebar[tag='menu-sidebar'] {
   padding: 0 0.75rem;
 }
 
-.custom-box .custom-row.button {
-  flex: 0 1 auto;
-}
 :host ::ng-deep nb-layout .layout .layout-container nb-sidebar.settings-sidebar.expanded .main-container-fixed {
   @include nb-ltr(right, 20px);
   @include nb-rtl(left, 20px);
