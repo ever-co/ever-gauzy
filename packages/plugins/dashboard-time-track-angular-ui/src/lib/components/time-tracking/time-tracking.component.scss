@@ -1,5 +1,8 @@
 @use 'gauzy/_gauzy-cards' as *;
 @use './swiper' as swiper;
+$panel-gap: 1rem;
+$panel-padding: 0.75rem;
+$action-gap: 0.5rem;
 
 :host {
   background-color: rgba(50, 50, 50, 0.02);
@@ -16,48 +19,271 @@
 
   // Include Swiper styles from separate file (doesn't need ng-deep for Custom Elements in template)
   @include swiper.swiper-styles();
+}
 
-  nb-card.member-list {
-    nb-card-body {
-      padding: 8px;
-      .list {
-        max-height: 65vh;
-        overflow-y: auto;
-      }
-    }
-  }
+/*
+ * ── The page header ──────────────────────────────────────────────────────────
+ *
+ * One line: the page title, then every control that scopes or refreshes the
+ * numbers below it. See the note on the template for what this replaced.
+ *
+ * `flex-wrap` is the whole responsive story — the actions cluster drops under
+ * the title when the two no longer fit, and the cluster wraps internally after
+ * that, so the header degrades a control at a time instead of overflowing.
+ */
+:host .page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: $panel-gap;
+  row-gap: $action-gap;
+  width: 100%;
 
-  .nb-card-header {
+  // `ngx-header-title` relocates the breadcrumb trail to sit right after the
+  // <h4>, inside this block, and marks the block `ga-page-title-row` so it is
+  // allowed to wrap. Basis zero keeps a long title (or a wide trail) from
+  // reporting a full-row hypothetical size and pushing the actions onto a line
+  // of their own — the title wraps inside its own block instead.
+  &__main {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
     align-items: center;
+    flex: 1 1 0%;
+    min-width: 0;
   }
 
-  .card-header {
-    background-color: unset;
+  // The heading carries no margin of its own: the header row's `row-gap` is
+  // what separates it from anything that wraps under it. Bootstrap's `h4`
+  // bottom margin was adding a 16th pixel that only ever showed up as a
+  // lopsided header.
+  &__title {
+    margin: 0;
+    min-width: 0;
   }
 
-  .button-container {
+  &__actions {
     display: flex;
-    gap: 1rem;
-  }
-
-  [nbButton].appearance-outline.status-primary {
-    background-color: unset;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 15px;
-    letter-spacing: 0em;
-    border-color: var(--gauzy-background-transparent);
-    color: var(--button-outline-primary-text-color);
-    border-width: 2px;
-    padding: 4px 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $action-gap;
+    // Shrinkable, so a narrow viewport squeezes the cluster (which wraps inside
+    // itself) rather than overflowing the card.
+    flex: 0 1 auto;
   }
 }
 
+/*
+ * Every control in that cluster is the same height and the same type step.
+ *
+ * They come from four unrelated widgets — a popover button in
+ * `ga-timezone-filter`, an `nb-toggle`, and two `nbButton`s — none of which
+ * derives a common size, so each used to land on whatever its own internals
+ * produced: the Refresh button was a full-size control next to a 12px popover
+ * button next to a toggle sitting on its own text baseline.
+ */
+:host .page-header__actions {
+  --tt-control-height: #{nb-theme(gauzy-header-control-height)};
+
+  /*
+	 * ── One chip, three times ──────────────────────────────────────────────────
+	 *
+	 * Size, type AND chrome. The three controls used to draw their own edges from
+	 * whatever Nebular appearance each was given — `outline status="basic"` on
+	 * Refresh, `filled status="basic"` on the other two — and both of those
+	 * resolve to `text-basic-color` / a basic border, i.e. pure white and a white
+	 * hairline on the dark canvas. Against a near-black band that is the
+	 * brightest thing in the page frame, on controls that are chrome.
+	 *
+	 * This is the SAME treatment the header band's own selector pills carry (see
+	 * `header.component.scss`): the card fill, one translucent-neutral ring drawn
+	 * as an inset shadow so it costs no layout, the small control radius, and the
+	 * band's one muted text colour. A neutral at low alpha darkens a light
+	 * surface and lightens a dark one, so a single value works on all 8 themes.
+	 */
+  ga-timezone-filter ::ng-deep .popover-button[nbButton],
+  .refresh-button[nbButton],
+  .manage-widget[nbButton] {
+    height: var(--tt-control-height);
+    min-width: 0;
+    padding-block: 0;
+    padding-inline: 0.625rem;
+    font-size: nb-theme(text-label-font-size);
+    font-weight: 500;
+    line-height: 1rem;
+    // A control label never wraps to a second line inside a 2rem box.
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+
+    color: var(--gauzy-text-color-2);
+    background-color: var(--gauzy-card-1);
+    // The ring, not a border: `border` on an `nbButton` fights the appearance
+    // classes for the same property and changes the box, while an inset shadow
+    // is drawn inside the 2rem the row is built on.
+    border: none;
+    box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+    border-radius: nb-theme(gauzy-radius-sm);
+    // Colour and edge only — never `all`, which would animate the timezone
+    // chip's width as the selected zone name changes length.
+    transition:
+      background-color 0.15s ease,
+      box-shadow 0.15s ease,
+      color 0.15s ease;
+
+    &:hover:not([disabled]) {
+      background-color: var(--gauzy-hover-tint);
+      color: var(--gauzy-text-color-1);
+    }
+
+    // Nebular states the disabled look at (0,4,0) — below the specificity these
+    // rules need to out-rank its enabled one, so the disabled Refresh button
+    // has to be described here or it would come back looking active.
+    &[disabled] {
+      background-color: transparent;
+      box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+      color: var(--gauzy-text-color-2);
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+  }
+
+  // Nebular sizes a button icon from the button's own text step; at the label
+  // step that leaves a 12px glyph, which is smaller than the letters beside it.
+  ga-timezone-filter ::ng-deep .popover-button[nbButton] nb-icon,
+  .refresh-button[nbButton] nb-icon,
+  .manage-widget[nbButton] nb-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    flex: 0 0 auto;
+  }
+
+  // The toggle is a label + a switch, not a control box, so it is aligned to the
+  // buttons' centre line rather than given their height.
+  .custom-toggle {
+    display: inline-flex;
+    align-items: center;
+    height: var(--tt-control-height);
+
+    ::ng-deep {
+      .toggle-label {
+        margin-bottom: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+      }
+
+      span.text {
+        // Was `text-primary-color` — the accent, on a control that is OFF as
+        // often as it is on. A toggle's label names the setting; the switch is
+        // what says whether it is on.
+        color: var(--gauzy-text-color-2);
+        font-size: nb-theme(text-label-font-size);
+        font-weight: 500;
+        line-height: 1rem;
+        white-space: nowrap;
+        padding: 0;
+      }
+    }
+  }
+}
+
+/*
+ * Under 36rem Nebular hides the dashboard tab labels and leaves icon-only tabs
+ * (see `.route-tab.responsive` in its own theme). A header cluster of four
+ * labelled controls is the next thing to run out of room, so the two button
+ * labels drop at the same breakpoint and the buttons fall back to their glyphs —
+ * each one keeps its `nbTooltip`, so nothing becomes unidentifiable.
+ */
+@media screen and (max-width: 36rem) {
+  :host .page-header__actions {
+    .refresh-button .action-label,
+    .manage-widget .action-label {
+      display: none;
+    }
+
+    .refresh-button[nbButton],
+    .manage-widget[nbButton] {
+      padding-inline: 0.5rem;
+      gap: 0;
+    }
+  }
+}
+
+// The line above one employee's screenshot strip: who they are on the left, the
+// strip's controls on the right.
 .hour-label {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: $panel-gap;
+  flex-wrap: wrap;
+  // Was `mb-3` in the template — the gap belongs to the strip it opens, not to
+  // a utility class dropped on one of six panels.
+  margin-bottom: $panel-padding;
+
+  // `ngx-avatar` is built for a table cell: `:host-context(.avatar-dashboard)`
+  // gives the host `width: 100%` — with `.inner-wrapper` and `.names-wrapper`
+  // following it — because that is what makes a COLUMN of names line up. As a
+  // flex item on THIS row the full width claimed the whole line, so
+  // `space-between` had nothing left to push apart and the ‹ › steppers and
+  // "View All" wrapped onto a second line under the name instead of sitting
+  // opposite it.
+  //
+  // `width` and `flex-basis` both, because either one alone still resolves to
+  // the full line: an `auto` basis defers to `width`, and a `100%` width with a
+  // content basis wins at used-value time.
+  ngx-avatar {
+    width: auto;
+    flex: 0 1 auto;
+    min-width: 0;
+
+    // The three nested `width: 100%`s that make up that column treatment
+    // (`.avatar-wrapper`, `.inner-wrapper`, `.names-wrapper`) all have to go,
+    // not just the outermost one: a percentage width inside a shrink-to-fit
+    // flex item resolves against a containing block that is itself being sized
+    // from its content, and what came out was a chip narrower than its own text
+    // — the "Last worked: …" date was cut off mid-digit while there was still
+    // half a row of free space beside it.
+    ::ng-deep {
+      .avatar-wrapper,
+      .inner-wrapper,
+      .names-wrapper {
+        width: auto;
+        min-width: 0;
+      }
+
+      // …and the ellipsis, so that a genuinely tight row degrades legibly.
+      // `.names-wrapper` already carries `text-overflow`, but that only reaches
+      // its OWN inline content: the name is an inline `<a>` and the caption a
+      // nested `<div>`, so both were clipped by the wrapper's `overflow: hidden`
+      // without ever showing a `…`. Each one has to own the property.
+      .link-text,
+      .caption {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      // The date is the supporting half of the chip, so it is the half that
+      // gives way first rather than pushing the strip's controls around.
+      .caption {
+        max-width: 16rem;
+      }
+    }
+  }
+}
+
+.button-container {
+  display: flex;
+  align-items: center;
+  gap: $action-gap;
+  flex: 0 0 auto;
 }
 
 .link-text {
@@ -67,24 +293,22 @@
   font-size: small;
 }
 
+// The seven-bar week sparkline beside a member's weekly total. It is a GLYPH
+// next to a figure, so it is sized against the row it sits in rather than left
+// at the 30px slab that made the members panel the tallest thing on the page.
 .member-weekly-activity-graph {
   display: flex;
   align-items: flex-end;
-  margin-left: 15px;
-  min-height: 30px;
+  gap: 2px;
+  margin-inline-start: 0.625rem;
+  height: 1.25rem;
 
   .bar-graph-entry {
-    width: 7px;
-    margin-right: 3px;
-    background-color: #0095ff;
-    min-height: 1px;
+    width: 4px;
+    border-radius: 1px;
+    background-color: var(--color-info-default);
+    min-height: 2px;
   }
-}
-
-nb-badge {
-  position: unset;
-  display: table;
-  margin: 10px auto 0;
 }
 
 .filter {
@@ -143,61 +367,624 @@ nb-badge {
     }
   }
 
-  ::ng-deep {
-    .toggle-label {
-      margin-bottom: 0;
-    }
-  }
-
-  .custom-toggle {
-    ::ng-deep {
-      span.text {
-        color: nb-theme(text-primary-color);
-      }
-    }
-  }
-
   .card-body {
     background-color: var(--gauzy-card-2);
   }
-
-  .project-name {
-    color: var(--gauzy-text-color-1);
-    font-size: 14px;
-    font-weight: 600;
-  }
 }
 
-.custom-card-body-inner-list {
-  padding: 0 9px;
-  overflow: unset;
-  .custom-card-button {
-    display: flex;
-    justify-content: flex-end;
-    margin: 1rem 15px 0 15px;
-  }
-}
-
-.font-weight-bold {
-  font-weight: 600;
-  color: var(--gauzy-text-color-2);
-}
-nb-card-header {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 16px;
-  letter-spacing: -0.009em;
-  color: var(--gauzy-text-color-2);
-}
-.custom-container {
-  display: grid;
-  -webkit-box-align: center;
+/*
+ * ── A panel ("window") ───────────────────────────────────────────────────────
+ *
+ * Header, list, empty state. The six panels differed in every one of those:
+ * three headers were plain `nb-card-header`s and three carried a `.nb-card-header`
+ * class that made them flex rows; the action button lived in the body on some
+ * and nowhere on others; four empty states rendered outside `nb-card-body`
+ * altogether, so a panel with no data had no padding and a different background
+ * from the same panel with data.
+ */
+:host .window-header {
+  display: flex;
   align-items: center;
-  -webkit-box-pack: start;
-  justify-content: start;
-  column-gap: 1rem;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  justify-content: space-between;
+  gap: $action-gap;
+  padding-block: $panel-padding;
+  padding-inline-start: $panel-padding;
+  // `ga-window` positions the ⋮ menu absolutely over this corner (1rem from the
+  // trailing edge, 11px wide), so the header keeps its own inline-end room
+  // rather than letting a long title or the panel action run underneath it.
+  padding-inline-end: 2.25rem;
+
+  // A panel title labels a block; it is not the page's title, so it stays one
+  // step below body copy and muted. It was 14px/600 on `nb-card-header`, which
+  // put six panel names at the same weight as the page name above them.
+  &__title {
+    font-size: nb-theme(text-subtitle-2-font-size);
+    font-weight: 600;
+    line-height: 1.125rem;
+    letter-spacing: -0.009em;
+    color: var(--gauzy-text-color-2);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__action {
+    flex: 0 0 auto;
+  }
+}
+
+:host .window-body {
+  padding: 0 $panel-padding $panel-padding;
+  overflow: unset;
+}
+
+// The top of that padding is left off on purpose for the five LIST panels: each
+// of them opens on `.data-list__head`, a tinted band that is meant to sit flush
+// under the card header, because a header row belongs to the header it follows
+// and a gap above it would leave the band floating.
+//
+// Recent Activities has no such band. Its first element is an employee's avatar,
+// which was touching the card header's underside, so it takes the same padding
+// the other three sides already have.
+:host .custom-card-body-inner {
+  padding-top: $panel-padding;
+}
+
+// Recent Activities is the one panel whose body is not a list — it is a
+// per-employee strip of screenshots laid out on a Bootstrap `.row`, which bleeds
+// 15px past its container on each side and insets its columns by the same 15px.
+// Against a 12px panel padding that put the avatar 3px outside the panel and its
+// screenshots 15px in from everything else on the page.
+:host .custom-card-body-inner > .row {
+  margin-inline: 0;
+
+  > .col {
+    padding-inline: 0;
+  }
+
+  // One employee's strip to the next. The carousel ends in a row of pagination
+  // bullets sitting 2px below its slides, and with no separation the next
+  // employee's name started about 10px under those bullets — close enough that
+  // the dots read as belonging to the name below them rather than to the strip
+  // above.
+  + .row {
+    margin-top: $panel-gap;
+  }
+}
+
+/*
+ * ── A screenshot card ────────────────────────────────────────────────────────
+ *
+ * `ngx-screenshots-item` is shared with the Screenshots REPORT page and the
+ * gallery, where a card is the page's subject and can afford to be one. Here
+ * three of them sit inside a half-width panel, next to a KPI strip and five
+ * other panels, so what the report draws as a standalone object has to read as
+ * a thumbnail. Everything below is scoped to this page for that reason — the
+ * report keeps the card it was drawn for.
+ */
+:host ngx-screenshots-item ::ng-deep {
+  // The card's edge. `--gauzy-shadow` resolves to a light 1px ring on the dark
+  // canvas, which put a near-white outline around every thumbnail — nine of
+  // them in the panel, and the brightest thing in it. A hairline in the theme's
+  // own border colour says "card" once, quietly; the hover lift is what
+  // responds to the pointer.
+  .card {
+    box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+    background-color: var(--gauzy-card-1);
+    // The report sizes a card between 189px and 270px. In the carousel the
+    // slide already decides the width (three per view), and the cap left the
+    // last card short of the panel edge.
+    min-width: 0;
+    max-width: none;
+
+    &:hover {
+      box-shadow:
+        inset 0 0 0 1px var(--gauzy-border-default-color),
+        0 8px 20px -12px rgba(0, 0, 0, 0.45);
+    }
+
+    // The danger edge is the ONE case that still draws a real border: it is a
+    // status, not chrome, and it has to out-rank the hairline above.
+    &.danger-bordered {
+      box-shadow: none;
+    }
+  }
+
+  // The activity gauge, at the page's own 5px — the same bar as the KPI
+  // counters, the task rows and the app/url rows. It was pinned to 10px by the
+  // component's own `!important`-free `.size-tiny` rule, which made the widest
+  // and heaviest bar on the page the one inside a 130px thumbnail.
+  nb-progress-bar.size-tiny .progress-container {
+    height: 5px;
+  }
+
+  /*
+	 * ── When the screenshot will not load ──────────────────────────────────────
+	 *
+	 * `ImgDirective` swaps a broken `<img>` for `assets/images/default.svg` and
+	 * marks it `.default-image`. That asset is a `#ccc` photo-stack drawn at
+	 * 512px square, and the card renders it `object-fit: contain` into the full
+	 * 130px picture box — so a slot with no reachable screenshot came out as a
+	 * near-white icon filling the card, three across, brighter than anything else
+	 * in the panel and reading as a rendering fault rather than as "no preview".
+	 *
+	 * It is a PLACEHOLDER, so it is sized and toned like one: a glyph in the
+	 * middle of the box it stands in for. Nothing about which image is chosen
+	 * changes — this is only what the fallback looks like once the directive has
+	 * already chosen it.
+	 */
+  .image-container {
+    // The surface the placeholder sits on. The component paints it
+    // `rgba(0, 0, 0, 0.1)`, which over a near-black panel is indistinguishable
+    // from the panel itself — so the icon read as floating in the card rather
+    // than as filling a picture slot. A neutral at low alpha lightens the dark
+    // canvas and darkens the light ones, so the slot is visible on both.
+    background-color: var(--gauzy-hover-tint) !important;
+  }
+
+  // Sized by PADDING rather than by width/height, so nothing about the box
+  // changes: the image keeps the component's `width: 100%` / `height: 130px` /
+  // `object-fit: contain`, and shrinking its content box is what scales the
+  // drawing down — `contain` then re-centres it in the box for free.
+  .image-container img.default-image {
+    box-sizing: border-box !important;
+    padding: 2.5rem !important;
+    // The asset is a flat `#ccc` with no theme awareness of its own. At a third
+    // it lands near the muted text tone on the dark themes and stays a visible
+    // outline on the light ones.
+    opacity: 0.35 !important;
+  }
+
+  // ── The caption under the thumbnail ────────────────────────────────────────
+  //
+  // Was `p-3` (16px) around a block whose own parts were spaced by `mb-4` /
+  // `mt-1` / `mt-2` utilities — 24px between the timestamp and the bar inside a
+  // card 130px of which is the picture. And the type ran backwards: the range
+  // that names the slot was 12px while the "35% of 05 Minutes" note under it
+  // was 14px, so the note out-ranked its own subject.
+  .slot-info {
+    padding: $panel-padding !important;
+
+    .time-span {
+      margin-top: 0 !important;
+      margin-bottom: 0.5rem !important;
+    }
+
+    // The slot's own name: the one line in the card that is at full text
+    // colour.
+    //
+    // The size is what fixes the clipping. "04:00:00 AM - 04:10:00 AM" is 25
+    // characters that `white-space: nowrap` refuses to break, and three cards to
+    // a half-width panel leaves each one about 195px of text width — at 13px the
+    // range measured wider than that and was cut off mid-glyph, with no ellipsis
+    // to say so, on whichever card sat at the panel's trailing edge. At the
+    // header step it fits with room to spare, and `tabular-nums` keeps the two
+    // clock times the same width so the dash stays put between them.
+    //
+    // The ellipsis is the backstop for the narrow end of the range (a 1280px
+    // screen, or a 24-hour locale that spells the range out longer): a range cut
+    // to "03:40:00 AM - 03:50:00 …" reads as truncated, which a range cut to
+    // "03:50:00 A" does not. The date it belongs to is spelled out in full on
+    // the line directly below either way.
+    .inline-time-span {
+      font-size: nb-theme(gauzy-table-header-font-size);
+      font-weight: 600;
+      line-height: 1.125rem;
+      color: var(--gauzy-text-color-1);
+      font-variant-numeric: tabular-nums;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      // Restated, not inherited: the component sets it on this element and the
+      // ellipsis only works alongside it.
+      white-space: nowrap;
+    }
+
+    .caption {
+      margin-top: 0.125rem !important;
+      line-height: 1rem;
+      // Same treatment for the date under it — at three cards to a panel a
+      // long-form date is the next thing to run past the card's edge.
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    // The percentage note. A caption about the bar above it, so it sits below
+    // the bar's own weight rather than above it.
+    .activity-count {
+      margin-top: 0.375rem !important;
+      font-size: nb-theme(gauzy-table-header-font-size);
+      line-height: 1rem;
+      color: var(--gauzy-text-color-2);
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  // ── The buttons over the picture ───────────────────────────────────────────
+  //
+  // The overlay is only there on hover, which is exactly why it was never
+  // tidied: a flat 70 % black wash with `justify-content: space-around`, so
+  // "View screen" and "View info" floated at arbitrary heights over a picture
+  // that had gone almost solid black behind them.
+  //
+  // A gradient keeps the screenshot legible under its own controls, and the two
+  // buttons become a centred stack, sized like every other small action here.
+  //
+  // `!important` on the three properties the component itself states: its rules
+  // are written as `:host .activity .image-container .hover`, which carries
+  // THREE emulated-encapsulation attributes on top of its three classes. Nothing
+  // reachable from outside that component gets near it — an override would have
+  // to repeat a class three times to out-weigh the attributes alone — so the
+  // flag is the honest way to say "this page wants a different overlay", rather
+  // than a selector nobody can read. Everything else here is uncontested.
+  .image-container .hover {
+    padding: 0.5rem !important;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.82) 0%,
+      rgba(0, 0, 0, 0.45) 55%,
+      rgba(0, 0, 0, 0.2) 100%
+    ) !important;
+  }
+
+  .image-container .view-button {
+    // Was `space-around`, which spread two buttons over the picture's whole
+    // height and left them at different distances from it depending on how many
+    // there were (the "View screen" button only renders when the slot HAS a
+    // screenshot).
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.375rem;
+
+    button[nbButton] {
+      height: 1.75rem;
+      padding: 0 0.625rem;
+      border-radius: nb-theme(gauzy-radius-sm);
+      justify-content: center;
+      // `mr-1` in the template offset the first button by 4px, which put the
+      // two on different centre lines once they became a stack.
+      margin: 0 !important;
+    }
+  }
+
+  // The delete / info pair in the overlay's top corner. Square icon buttons, so
+  // they annotate the picture instead of sitting on it as two text-sized slabs.
+  .image-container .hover .actions {
+    gap: 0.375rem;
+
+    button[nbButton] {
+      width: 1.5rem;
+      height: 1.5rem;
+      padding: 0;
+      border-radius: nb-theme(gauzy-radius-sm);
+      margin: 0 !important;
+
+      // `ml-auto` on the delete button is what pins the pair to the trailing
+      // corner; it is a Bootstrap utility on the element, so it is restored
+      // after the reset above.
+      &.ml-auto {
+        margin-inline-start: auto !important;
+      }
+
+      nb-icon {
+        font-size: 0.875rem;
+        width: 0.875rem;
+        height: 0.875rem;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// "No manual time for the week", "No screenshot for the day", … Same block in
+// all six panels: centred, muted, and tall enough that an empty panel is still
+// recognisably a panel rather than a collapsed strip.
+:host .window-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 5rem;
+  padding: $panel-padding;
+  font-size: nb-theme(gauzy-table-font-size);
+  line-height: nb-theme(gauzy-table-line-height);
+  color: var(--gauzy-text-color-2);
+}
+
+/*
+ * ── The lists ────────────────────────────────────────────────────────────────
+ *
+ * Every panel body is a table built out of `nb-list-item`s and Bootstrap grid
+ * divs. Nebular gives a list item a full `card-padding` box (1rem) and a
+ * hairline under every row, which made a six-record panel about 400px tall; the
+ * `gauzy-table-*` tokens below are what every real data table in the app is
+ * sized from, so a record row here costs the same as a record row there.
+ */
+:host .data-list {
+  // ── The record row's own height ────────────────────────────────────────────
+  //
+  // Deliberately NOT `gauzy-table-cell-padding-y`. That token (0.375rem) is cut
+  // for a dense data GRID — a screen whose whole job is to show as many rows as
+  // will fit, with a filter row and pagination around it. These panels are the
+  // opposite: five or six rows summarising a week, sitting beside a KPI strip,
+  // and at grid density a task row came out 32px tall with its text nearly
+  // touching the hairline above and below it.
+  //
+  // 0.875rem block gives a 48px row — one 20px line of text with a little more
+  // than a line's worth of air around it, which is the proportion a summary list
+  // wants and the one a dense grid deliberately gives up. The inline inset stays
+  // on the table token, because that one is about lining columns up, and it
+  // still does.
+  --tt-row-padding-block: 0.875rem;
+
+  &::ng-deep nb-list-item {
+    padding: var(--tt-row-padding-block) nb-theme(gauzy-table-cell-padding-x);
+    font-size: nb-theme(gauzy-table-font-size);
+    line-height: nb-theme(gauzy-table-line-height);
+    color: var(--gauzy-text-color-1);
+    // A hairline BETWEEN records, not under the last one — a trailing rule
+    // reads as a cut-off list.
+    border-bottom: 1px solid var(--gauzy-border-default-color);
+    transition: background-color 0.15s ease-in-out;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background-color: var(--gauzy-hover-tint);
+    }
+  }
+
+  // The column names. Distinct through weight and colour rather than through a
+  // height of its own, the same way the data tables do it — and it takes no
+  // hover, because a header is not a record.
+  &::ng-deep nb-list-item.data-list__head {
+    padding: nb-theme(gauzy-table-header-padding-y) nb-theme(gauzy-table-header-padding-x);
+    font-size: nb-theme(gauzy-table-header-font-size);
+    line-height: nb-theme(gauzy-table-header-line-height);
+    background-color: nb-theme(gauzy-card-3);
+    border-radius: nb-theme(gauzy-radius-sm);
+    border-bottom: none;
+    margin-bottom: 2px;
+
+    &:hover {
+      background-color: nb-theme(gauzy-card-3);
+    }
+  }
+
+  // Bootstrap's `.row` bleeds 15px past its container on each side through
+  // negative margins, and its columns carry a matching 15px inset. Inside a
+  // panel that is a second padding box on top of the list item's own, and it is
+  // what made the columns of two neighbouring panels fail to line up.
+  ::ng-deep .row {
+    margin-inline: 0;
+    align-items: center;
+    row-gap: 0.25rem;
+  }
+}
+
+// One cell. `min-width: 0` is the load-bearing part: a Bootstrap column is a
+// flex item with `min-width: auto`, so a long project name would push its
+// column wider instead of truncating inside it, and the row overflowed the
+// panel rather than clipping the name.
+:host .cell {
+  min-width: 0;
+  padding-inline: 0.375rem;
+  color: var(--gauzy-text-color-1);
+
+  &--centered {
+    text-align: center;
+  }
+
+  // A cell whose content is plain text: one line, clipped to an ellipsis, with
+  // the full value on the `nbTooltip` the template binds.
+  //
+  // Applied per cell rather than to `.cell` itself, because the same class also
+  // wraps an avatar and a progress bar — both of which are flex boxes that need
+  // to overflow their own way, and `white-space: nowrap` on the avatar column
+  // would stop the name from ever truncating inside its own chip.
+  //
+  // It earns its keep long before the column is genuinely too narrow: "Monday,
+  // August 17, 2026" in the Manual Time date column is already wider than a
+  // quarter of a half-width panel on a 1366px screen, which is where the row
+  // used to start pushing its own columns out of alignment.
+  &--clip {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // Durations and dates. Tabular figures so the digits line up column-wise
+  // between rows, which is the whole point of putting them in a column.
+  &--figure,
+  &--numeric {
+    font-variant-numeric: tabular-nums;
+    color: var(--gauzy-text-color-2);
+  }
+
+  &--numeric {
+    text-align: end;
+  }
+}
+
+// Column headings inside a list. Was `font-weight: 600` on a Bootstrap utility
+// class, which also applied to whatever else happened to carry it.
+:host .font-weight-bold {
+  font-weight: 600;
+  color: var(--gauzy-text-color-2);
+  text-transform: none;
+}
+
+// The name column of a record — a project, a task. It is the row's subject, so
+// it is the one cell at full text colour, and it truncates with the full value
+// on its tooltip.
+:host .project-name {
+  color: var(--gauzy-text-color-1);
+  font-size: nb-theme(gauzy-table-font-size);
+  font-weight: 500;
+  line-height: nb-theme(gauzy-table-line-height);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// The percentage + bar pair in the Tasks and Projects panels. It was a `d-flex`
+// with the spacing spelled out in `mb-1 ml-3 mr-3` utilities on the bar itself,
+// which left the figure and its bar 16px apart and the bar 1px off the row's
+// centre line.
+:host .progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+
+  &__value {
+    flex: 0 0 auto;
+    font-variant-numeric: tabular-nums;
+    font-size: nb-theme(gauzy-table-header-font-size);
+    color: var(--gauzy-text-color-2);
+    min-width: 2.25rem;
+    text-align: end;
+  }
+
+  nb-progress-bar {
+    flex: 1 1 auto;
+    min-width: 0;
+    // The bar is centred in the row by the flex line; the 4px it used to carry
+    // pushed it off that line.
+    margin: 0;
+  }
+}
+
+// The Apps & URLs rows come from the shared `ngx-activity-item`, which already
+// puts its title behind an `nbTooltip` but lets it wrap. One line per record,
+// truncated, so this panel's rows are the same height as every other panel's.
+:host ngx-activity-item.tracking-progress ::ng-deep {
+  .col.no-child,
+  .col.child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    // 14px/600 is what the component draws on the Activity REPORT page, where
+    // the app name is the row's whole subject. In this panel it sat beside the
+    // Tasks and Projects panels, whose names are 13px/500 — three lists of the
+    // same shape in one column, one of them a step louder than the other two.
+    font-size: nb-theme(gauzy-table-font-size);
+    font-weight: 500;
+    line-height: nb-theme(gauzy-table-line-height);
+  }
+
+  // The percentage figure, matching the one the Tasks and Projects rows put in
+  // front of their bars. 90px is a report-page column width; here it left a
+  // 50px hole between a four-character number and its own bar.
+  .percentage-col {
+    width: auto;
+    min-width: 2.75rem;
+    font-size: nb-theme(gauzy-table-header-font-size);
+    font-variant-numeric: tabular-nums;
+    color: var(--gauzy-text-color-2);
+    text-align: end;
+  }
+
+  .row {
+    margin-inline: 0;
+  }
+}
+
+/*
+ * ── The members panel ────────────────────────────────────────────────────────
+ *
+ * Two figures per member (today, and the week or the period) each with a
+ * percentage under it. The percentage was an `nb-badge` laid out with
+ * `display: table; margin: 10px auto 0` — a 10px gap between a figure and its
+ * own percentage, i.e. further than the gap between two members' rows.
+ */
+:host nb-card.member-list {
+  // The one list whose cells are already two lines tall — a duration with its
+  // percentage chip under it, twice. The block padding that gives a ONE-line row
+  // its proportions would make this one 72px, so it keeps the tighter value:
+  // what the taller rows elsewhere are buying is air around a single line, and
+  // there is no single line here to buy it for.
+  .data-list {
+    --tt-row-padding-block: 0.625rem;
+  }
+
+  // The one panel that can run to dozens of records, so it is the one panel that
+  // scrolls inside itself. Everything else on the page grows and lets the
+  // dashboard column scroll (see the `card_overrides` note above).
+  .list {
+    max-height: 65vh;
+    overflow-y: auto;
+    // Room for the scrollbar, so the last column does not sit under it.
+    padding-inline-end: 0.25rem;
+  }
+}
+
+:host .activity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: nb-theme(gauzy-table-chip-block-gap);
+  min-width: 0;
+
+  .duration {
+    font-variant-numeric: tabular-nums;
+    font-size: nb-theme(gauzy-table-font-size);
+    line-height: nb-theme(gauzy-table-line-height);
+    color: var(--gauzy-text-color-1);
+    white-space: nowrap;
+  }
+
+  .activity-percentage {
+    display: flex;
+  }
+}
+
+// The week/period cell holds the figure pair and, for a week-or-shorter range,
+// the sparkline beside it. Centred as a unit so the column reads as one thing.
+:host .period-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+// A percentage badge is a CHIP in a table cell, so it is sized by the chip
+// tokens rather than left at Nebular's absolutely-positioned corner badge.
+:host nb-badge {
+  position: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  height: nb-theme(gauzy-table-badge-height);
+  padding: nb-theme(gauzy-table-chip-padding-y) nb-theme(gauzy-table-chip-padding-x);
+  font-size: nb-theme(gauzy-table-chip-font-size);
+  line-height: nb-theme(gauzy-table-chip-line-height);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border-radius: nb-theme(gauzy-radius-sm);
+}
+
+// ── Panel action buttons ─────────────────────────────────────────────────────
+// View All / View Report in a panel header, and the per-employee View All in
+// Recent Activities. One size for all of them.
+:host [nbButton].appearance-outline.status-primary {
+  background-color: unset;
+  font-size: nb-theme(text-label-font-size);
+  font-weight: 500;
+  line-height: 1rem;
+  letter-spacing: 0em;
+  border-color: var(--gauzy-background-transparent);
+  color: var(--button-outline-primary-text-color);
+  border-width: 1px;
+  height: 1.75rem;
+  padding: 0 0.625rem;
+  white-space: nowrap;
 }
 
 .custom-card-body-inner,
@@ -205,20 +992,65 @@ nb-card-header {
   background-color: nb-theme(gauzy-card-2);
 }
 
-nb-card-body > .header-widget {
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 16px;
+// ── A KPI widget ─────────────────────────────────────────────────────────────
+// Label, figure, gauge. The label was 16px/400 with a 15px trailing margin —
+// body size for a name, and further from its own figure than two neighbouring
+// cards sat from each other. On the label step it ranks below the figure, which
+// is what a KPI card is for.
+:host nb-card-body > .header-widget {
+  font-size: nb-theme(text-label-font-size);
+  font-weight: 500;
+  line-height: 1rem;
   letter-spacing: -0.009em;
   color: var(--gauzy-text-color-2);
-  margin-bottom: 15px;
+  margin-bottom: 0.375rem;
+  min-width: 0;
+
   nb-icon {
     font-size: 11px;
   }
+
+  // A widget is 230–314px wide and "Activity over the period" does not fit in
+  // the narrow end of that. One line, ellipsis, full text on the tooltip the
+  // template binds — and NOT a change of element: `WidgetComponent` reads this
+  // div's `innerText` to name the widget in its settings menu.
+  .title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    // Leaves the widget's own ⋮ menu (absolutely positioned at 12px from the
+    // trailing edge, 11px wide) room to sit on the label's line.
+    padding-inline-end: 1.25rem;
+  }
 }
 
-.counter-container {
-  width: 71%;
+// The figure. Its size and colour are settled once for every counter in the app
+// by the `.h1` rule in `styles/_overrides.scss`; what belongs here is that it
+// has no margin of its own — Bootstrap's `.h1` carries 0.5rem, which landed on
+// top of the gauge's own offset below and put the two 16px apart inside a card
+// whose whole content is three stacked lines.
+:host .h1 {
+  margin-bottom: 0;
+}
+
+// The gauge under the figure. `71%` was an arbitrary fraction that left a ragged
+// right edge on a row of otherwise identical cards.
+:host .counter-container {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+// A KPI card's own box. `ga-widget` gives it `8px 12px 8px 15px` — asymmetric on
+// both axes, so the label sat 3px further from the trailing edge than from the
+// leading one, and the card was tighter above than a panel is. Scoped to this
+// page: the same widget component also hosts the custom-dashboard canvas, which
+// sizes its cards from the canvas grid.
+//
+// Through `#widget` — the id `ga-widget` puts on its wrapper — because the rule
+// it has to out-rank is `[dir=ltr] [_nghost-x] nb-card-body`, i.e. (0,2,1), and
+// nothing built out of this component's own class names reaches that.
+:host ::ng-deep ga-widget #widget nb-card-body {
+  padding: $panel-padding;
 }
 
 .manage-widget {
@@ -248,20 +1080,24 @@ nb-card-body > .header-widget {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 14px;
-  gap: 21px;
+  padding: $panel-padding;
+  gap: $panel-padding;
   min-width: 219px;
+  // A popover is an overlay, not a page: it stays as wide as its longest label
+  // up to a cap, and truncates past it rather than growing over the page.
+  max-width: 17rem;
   .category {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 14px;
+    gap: 0.5rem;
     width: 100%;
     .view {
       font-size: 10px;
       font-weight: 600;
       line-height: 12px;
       letter-spacing: 0em;
+      text-transform: uppercase;
       color: rgba(126, 126, 143, 0.5);
       align-items: center;
       display: flex;
@@ -270,20 +1106,41 @@ nb-card-body > .header-widget {
       width: 100%;
     }
     .title {
-      font-size: 12px;
+      font-size: nb-theme(text-label-font-size);
       font-weight: 400;
-      line-height: 15px;
+      line-height: 1rem;
       letter-spacing: 0em;
       color: var(--gauzy-text-color-2);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 0.5rem;
       cursor: pointer;
       width: 100%;
+      min-width: 0;
+      padding: 0.25rem 0.375rem;
+      border-radius: nb-theme(gauzy-radius-sm);
+      transition: background-color 0.15s ease-in-out;
+
+      &:hover {
+        background-color: var(--gauzy-hover-tint);
+        color: var(--gauzy-text-color-1);
+      }
+      i {
+        flex: 0 0 0.75rem;
+        font-size: 0.6875rem;
+        text-align: center;
+      }
+
+      &__label {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     }
   }
   .line {
-    border-bottom: 0.5px solid rgba(126, 126, 143, 0.25);
+    border-bottom: 1px solid var(--gauzy-border-default-color);
     width: 100%;
   }
 }
@@ -294,14 +1151,45 @@ nb-card-body > .header-widget {
 :host .container {
   max-width: unset;
   border-radius: 0 0 $default-radius $default-radius;
-  @include nb-ltr(padding, 0 0.5rem 0 0);
-  @include nb-rtl(padding, 0 0 0 0.5rem);
+  padding: 0;
+}
+
+/*
+ * ── The KPI row and the panel columns start on the same edge ─────────────────
+ *
+ * `ga-widget-layout` bleeds its row 0.5rem past its container (a negative margin
+ * on `.grid-boundary`, cancelled by a 0.5rem margin on each widget) while
+ * `ga-window-layout` does not, so the counters started half a rem to the left of
+ * the panels underneath them and the two blocks read as unaligned.
+ *
+ * Stated as a `gap` instead: the widgets keep their widths, their order and
+ * their drop targets — only the spacing moves from margins onto the row itself,
+ * which puts the first counter on the panels' edge and makes the distance
+ * between two counters the SAME `$panel-gap` as the distance between two panels.
+ */
+:host ::ng-deep ga-widget-layout {
+  display: block;
+  // The band between the counters and the panels below them.
+  margin-bottom: $panel-gap;
+
+  .grid-boundary {
+    margin: 0;
+    gap: $panel-gap;
+  }
+
+  ga-widget #widget {
+    margin: 0;
+  }
 }
 
 :host .card-body {
-  @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
-  @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+  padding: $panel-gap;
   border-radius: 0 0 $default-radius $default-radius;
   // Was a `!important` viewport calc; see the `card_overrides` note above.
   height: auto !important;
+}
+
+:host .card-header {
+  background-color: unset;
+  padding: $panel-gap $panel-gap 0.75rem;
 }
