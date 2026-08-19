@@ -827,10 +827,17 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
   // step above this. Every page that restated the old 24px has therefore had
   // that rule DELETED rather than left to lose a specificity race it wins.
   //
-  // h6 is deliberately excluded: at 1rem it already sits BELOW this step and
-  // is what templates reach for when a card header carries a SUB-heading
-  // (the file-storage provider blocks, the dashboard team panels). Pulling it
-  // up would make those louder rather than quieter.
+  // h6 stays OUT of that list: it is what templates reach for when a card
+  // header carries a SUB-heading (the file-storage provider blocks, the
+  // dashboard team panels), and pulling it onto the title step would make
+  // those louder rather than quieter.
+  //
+  // It does need a step of its own now. h6 used to sit below the title by
+  // SIZE alone; with the title at 1rem the two match, and Nebular's h6 is 700
+  // against the title's 600 — so a sub-heading would have out-weighed the page
+  // name beside it. Stated here rather than as another theme token: nothing
+  // outside a card header needs it, and it is only ever read against the title
+  // directly above it.
   nb-card-header {
     h1,
     h2,
@@ -840,6 +847,13 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
       font-size: nb-theme(gauzy-page-title-font-size);
       font-weight: nb-theme(gauzy-page-title-font-weight);
       line-height: nb-theme(gauzy-page-title-line-height);
+      letter-spacing: nb-theme(gauzy-page-title-letter-spacing);
+    }
+
+    h6 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      line-height: 1.25rem;
       letter-spacing: nb-theme(gauzy-page-title-letter-spacing);
     }
   }
