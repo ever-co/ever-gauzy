@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
@@ -8,6 +8,7 @@ import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-ba
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
 import { CrudService } from './crud.service';
+import { assertCriteriaHasPredicate } from './criteria.helper';
 import { ICrudService, IPartialEntity } from './icrud.service';
 import { ITryRequest } from './try-request';
 
@@ -603,6 +604,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				where = { ...where, ...options.where };
 			}
 
+			// The caller's criteria must select rows on its own BEFORE tenant scoping is merged in:
+			// `delete({ employeeId: undefined })` would otherwise pass CrudService's guard on the strength
+			// of the injected tenantId alone and delete every row of the tenant.
+			assertCriteriaHasPredicate(where, 'delete');
+
 			const user = RequestContext.currentUser();
 
 			// Proceed with the delete operation using the merged criteria
@@ -611,6 +617,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				...this.findConditionsWithTenantByUser(user)
 			});
 		} catch (err) {
+			// A malformed criteria (no predicate) is the caller's error, not a missing record.
+			if (err instanceof BadRequestException) {
+				throw err;
+			}
 			console.error('Error during delete operation:', err);
 			throw new NotFoundException(`The record was not found`, err);
 		}

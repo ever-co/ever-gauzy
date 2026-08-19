@@ -24,8 +24,10 @@ export class IntegrationSettingGetManyHandler implements ICommandHandler<Integra
 		// Get the current tenant ID from the RequestContext
 		const tenantId = RequestContext.currentTenantId();
 
-		// Append the tenant ID to the 'where' clause if it's an object
-		if (input.where instanceof Object) {
+		// Append the tenant ID to the 'where' clause if it's an object AND there is a request tenant.
+		// Webhook callers (GitHub Probot installation.deleted) run without a request context and look
+		// settings up by installation id across tenants; a null tenantId must not enter the where.
+		if (input.where instanceof Object && tenantId) {
 			input.where = Object.assign(input.where, { tenantId });
 		}
 

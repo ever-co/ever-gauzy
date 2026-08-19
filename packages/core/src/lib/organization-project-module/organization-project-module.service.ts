@@ -144,7 +144,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
 
 		try {
-			const { memberIds, managerIds, organizationId, tasks = [] } = entity;
+			const { memberIds, managerIds, tasks = [] } = entity;
 
 			// Retrieve existing module
 			const existingProjectModule = await this.findOneByIdString(id, {
@@ -154,6 +154,11 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			if (!existingProjectModule) {
 				throw new BadRequestException('Module not found');
 			}
+
+			// The member lookups below are scoped by organization: use the module's own organization
+			// when the (partial) update body does not carry one, never a null (a null used to be
+			// dropped from the where and let employees of any organization of the tenant be added).
+			const organizationId = entity.organizationId ?? existingProjectModule.organizationId;
 
 			// Update members and managers if applicable
 			if (Array.isArray(memberIds) || Array.isArray(managerIds)) {

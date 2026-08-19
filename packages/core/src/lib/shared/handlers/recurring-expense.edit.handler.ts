@@ -236,6 +236,12 @@ export abstract class RecurringExpenseEditHandler<
 		currentStartYear: number,
 		currentStartMonth: number
 	) {
+		// An expense without a parent has no siblings. Never query with an empty parent id: it used to
+		// be dropped from the where, so EVERY expense of the tenant in the window counted as a sibling
+		// — and reduceConflict() deletes what this returns.
+		if (!parentRecurringExpenseId) {
+			return { items: [] as T[], total: 0 };
+		}
 		const lastDayOfMonth = getLastDayOfMonth(
 			currentStartYear,
 			currentStartMonth
@@ -273,6 +279,10 @@ export abstract class RecurringExpenseEditHandler<
 		year: number,
 		month: number
 	) {
+		// See findAllExpensesInBetween: no parent, no siblings, no conflict.
+		if (!parentRecurringExpenseId) {
+			return undefined;
+		}
 		const lastDayOfMonth = getLastDayOfMonth(year, month);
 		const inputStartDate = new Date(year, month, lastDayOfMonth);
 		const inputEndDate = new Date(year, month, 1);

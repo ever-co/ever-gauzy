@@ -18,7 +18,11 @@ export class IntegrationSettingGetHandler implements ICommandHandler<Integration
 		const { input } = command;
 		const tenantId = RequestContext.currentTenantId();
 
-		if (input.where instanceof Object) {
+		// Scope to the request's tenant when there is one. Webhook callers (e.g. the GitHub Probot
+		// hooks) run without a request context: their lookup is keyed on the installation id and is
+		// legitimately cross-tenant, so a null tenantId must not be written into the where (it used to
+		// be dropped by TypeORM; now null means IS NULL and would match nothing).
+		if (input.where instanceof Object && tenantId) {
 			input.where = Object.assign(input.where, { tenantId });
 		}
 

@@ -26,8 +26,14 @@ export class ReportOrganizationService extends TenantAwareCrudService<ReportOrga
      * @returns The updated or newly created report menu entry.
      */
     async updateReportMenu(input: UpdateReportMenuInput): Promise<ReportOrganization> {
+        const { reportId, organizationId } = input;
+        // The body is not DTO-validated: both keys must be present, or the lookup below (an empty
+        // key used to be dropped from the where) would pick an arbitrary row of the tenant to mutate.
+        // Checked outside the try: its catch deliberately falls back to "create".
+        if (!reportId || !organizationId) {
+            throw new BadRequestException('reportId and organizationId are required');
+        }
         try {
-            const { reportId, organizationId } = input;
             const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
             let reportOrganization = await this.findOneByWhereOptions({
