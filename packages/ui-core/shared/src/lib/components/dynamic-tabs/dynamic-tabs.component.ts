@@ -1,9 +1,11 @@
 import {
+	AfterViewInit,
 	Component,
 	OnInit,
 	Input,
 	OnDestroy,
 	ChangeDetectorRef,
+	ElementRef,
 	ViewContainerRef,
 	Type,
 	TemplateRef,
@@ -26,7 +28,7 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 	providers: [],
 	standalone: false
 })
-export class DynamicTabsComponent implements OnInit, OnDestroy {
+export class DynamicTabsComponent implements OnInit, AfterViewInit, OnDestroy {
 	public tabs: CustomNbRouteTab[] = []; // Define the structure of tabs according to your needs
 	public reload$ = new Subject<boolean>(); // Subject to trigger reload of tabs
 
@@ -53,8 +55,21 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 		return tabs.every((tab) => tab.tabsetType === 'route');
 	}
 
+	/**
+	 * The rendered tab links, in the same order as `tabs`.
+	 *
+	 * Scoped with `:scope >` all the way down rather than as a descendant search:
+	 * a route tabset renders the ROUTED PAGE inside its own host, so a plain
+	 * `.tab-link` lookup would also pick up any tab bar that page happens to
+	 * carry, and the index-to-title mapping below would then name the wrong tabs.
+	 */
+	private static readonly TAB_LINK_SELECTOR =
+		':scope > nb-route-tabset > .route-tabset > .route-tab > .tab-link, ' +
+		':scope > nb-tabset > .tabset > .tab > .tab-link';
+
 	constructor(
 		private readonly _cdr: ChangeDetectorRef,
+		private readonly _elementRef: ElementRef<HTMLElement>,
 		private readonly _translateService: TranslateService,
 		private readonly _pageTabRegistryService: PageTabRegistryService,
 		readonly _i18n: I18nService
@@ -68,6 +83,7 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 
 	ngAfterViewInit(): void {
 		this._loadTabsContent(); // Load the tab content for each tab in the tabset
+		this._describeTabs(); // Name each rendered tab link, for the tooltip
 	}
 
 	/**
@@ -76,10 +92,44 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	private _setupReloadTabsListener(): void {
 		this.reload$
 			.pipe(
-				tap(() => this._initializeTabs()),
+				tap(() => {
+					this._initializeTabs();
+					// Titles are re-translated on a language change, so the
+					// tooltips have to follow them.
+					this._describeTabs();
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Puts each tab's full title on its link as a native `title` attribute.
+	 *
+	 * A tab bar has no room to negotiate: Nebular hides the label of a
+	 * `responsive` tab entirely below 36rem (`.route-tab.responsive` in its own
+	 * theme), which leaves an icon with nothing to identify it, and above that
+	 * breakpoint a long label is clipped to an ellipsis by the stylesheet that
+	 * owns the strip. Either way the name the user needs is the one that is not
+	 * on screen, so it is carried on the element itself.
+	 *
+	 * The attribute is written to the DOM rather than bound in the template
+	 * because the markup belongs to Nebular — `nb-route-tabset` renders the
+	 * links from its own `tabs` input and offers no hook for one.
+	 */
+	private _describeTabs(): void {
+		const links = this._elementRef.nativeElement.querySelectorAll<HTMLElement>(
+			DynamicTabsComponent.TAB_LINK_SELECTOR
+		);
+
+		links.forEach((link: HTMLElement, index: number) => {
+			const title = this.tabs[index]?.title;
+			if (title) {
+				link.setAttribute('title', title);
+			} else {
+				link.removeAttribute('title');
+			}
+		});
 	}
 
 	/**
