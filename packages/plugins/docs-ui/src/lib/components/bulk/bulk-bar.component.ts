@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
@@ -23,11 +23,19 @@ import { RejectDialogComponent } from '../../dialogs/reject-dialog.component';
 import { DocumentsService } from '../../services/documents.service';
 import { DOCS_PERMISSIONS } from '../../docs-permission-groups';
 
+/** The one popover the bar may have open at a time. */
+export type DocumentBulkPanel = 'tags' | 'more';
+
 /**
- * Sticky bulk bar shown while the selection is non-empty. Actions map 1:1 to
- * `POST /documents/bulk` (≤ 200 ids). The result toast summarizes
+ * Floating bulk action bar, shown while the selection is non-empty. Actions map
+ * 1:1 to `POST /documents/bulk` (≤ 200 ids). The result toast summarizes
  * succeeded/failed; the expandable panel lists up to 10 per-id errors with a
  * "Copy full report" action for the complete list.
+ *
+ * The bar is ONE row of actions, not a stack of labelled sections: everything
+ * that needs an argument (tags) or is used rarely (knowledge) lives behind a
+ * popover the row opens, so the toolbar's height never depends on how many
+ * permissions the viewer holds.
  */
 @Component({
 	selector: 'gz-docs-bulk-bar',
@@ -63,6 +71,12 @@ export class BulkBarComponent extends TranslationBaseComponent {
 	 */
 	public tags: ITag[] = [];
 
+	/**
+	 * Which popover is open, if any — the tag tray or the overflow menu. Only one
+	 * at a time, so opening either closes the other with no extra bookkeeping.
+	 */
+	public openPanel: DocumentBulkPanel | null = null;
+
 	public readonly permissions = PermissionsEnum;
 	public readonly maxIds = DOCS_BULK_MAX_IDS;
 	public readonly maxInlineErrors = DOCS_BULK_MAX_INLINE_ERRORS;
@@ -88,13 +102,36 @@ export class BulkBarComponent extends TranslationBaseComponent {
 		return this.errors.slice(0, this.maxInlineErrors);
 	}
 
+	/** Add/remove tags act on the picker's selection, so both are inert while it is empty. */
+	get hasTagSelection(): boolean {
+		return this.selectedTagIds().length > 0;
+	}
+
+	togglePanel(panel: DocumentBulkPanel): void {
+		this.openPanel = this.openPanel === panel ? null : panel;
+	}
+
+	closePanel(): void {
+		this.openPanel = null;
+	}
+
+	/** Esc closes the open popover before anything else on the page reacts to it. */
+	@HostListener('document:keydown.escape')
+	onEscape(): void {
+		this.closePanel();
+	}
+
 	clear(): void {
 		this.errors = [];
+		this.openPanel = null;
 		this.cleared.emit();
 	}
 
 	async run(action: DocumentBulkAction, extra: Partial<Parameters<DocumentsService['bulk']>[0]> = {}): Promise<void> {
 		if (this.busy || !this.count || this.overLimit) return;
+		// An action always dismisses the popover that offered it — leaving the tray
+		// open over the result toast is what made the old panel feel unfinished.
+		this.openPanel = null;
 		this.busy = true;
 		this.errors = [];
 		try {
@@ -122,6 +159,7 @@ export class BulkBarComponent extends TranslationBaseComponent {
 
 	/** Bulk reject: optional reason via the shared reject dialog (same `reason` field as single). */
 	async reject(): Promise<void> {
+		this.openPanel = null;
 		const result: { reason?: string } | null = await firstValueFrom(
 			this.dialogService.open(RejectDialogComponent).onClose
 		);
@@ -130,6 +168,7 @@ export class BulkBarComponent extends TranslationBaseComponent {
 	}
 
 	async move(): Promise<void> {
+		this.openPanel = null;
 		const moved = await firstValueFrom(
 			this.dialogService.open(MoveDialogComponent, { context: { documentIds: this.selectedIds } }).onClose
 		);
@@ -142,6 +181,7 @@ export class BulkBarComponent extends TranslationBaseComponent {
 	 * (`null`) skips the call.
 	 */
 	async setCategories(): Promise<void> {
+		this.openPanel = null;
 		const categoryIds: ID[] | null = await firstValueFrom(
 			this.dialogService.open(BulkCategoriesDialogComponent).onClose
 		);

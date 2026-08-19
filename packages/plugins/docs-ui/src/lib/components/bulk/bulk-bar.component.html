@@ -1,80 +1,253 @@
-<div class="docs-bulk-bar" *ngIf="count > 0" [attr.aria-label]="'DOCS.A11Y.SELECTION_STATUS' | translate">
-	<span class="docs-bulk-count">{{ 'DOCS.BULK.SELECTED' | translate : { count: count } }}</span>
-	<span class="docs-bulk-limit" *ngIf="overLimit">{{ 'DOCS.BULK.LIMIT_REACHED' | translate : { max: maxIds } }}</span>
+<!--
+	Bulk action bar.
 
-	<ng-container *ngIf="reviewMode; else manageActions">
-		<ng-template [ngxPermissionsOnly]="docsPermissions.review">
-			<button nbButton size="tiny" status="success" [disabled]="busy" (click)="run('REVIEW_APPROVE')">
-				{{ 'DOCS.BULK.APPROVE' | translate }}
-			</button>
-			<button nbButton size="tiny" status="danger" appearance="outline" [disabled]="busy" (click)="reject()">
-				{{ 'DOCS.BULK.REJECT' | translate }}
-			</button>
-		</ng-template>
-	</ng-container>
+	One floating toolbar, not a four-section panel. The previous version stacked a
+	labelled section per permission group — Organize, Tags, AI knowledge, Danger
+	zone — each with its own caption, hairline and button row, plus a tag picker
+	rendered inline. With every permission granted that is a half-viewport-tall
+	form pinned over the list you are selecting from, and its height changed with
+	the viewer's role.
 
-	<ng-template #manageActions>
-		<ng-template [ngxPermissionsOnly]="docsPermissions.manage">
-			<button nbButton size="tiny" [disabled]="busy" (click)="run('ARCHIVE')">
-				{{ 'DOCS.BULK.ARCHIVE' | translate }}
-			</button>
-			<button nbButton size="tiny" [disabled]="busy" (click)="run('UNARCHIVE')">
-				{{ 'DOCS.BULK.RESTORE' | translate }}
-			</button>
-			<button nbButton size="tiny" [disabled]="busy" (click)="move()">
-				{{ 'DOCS.BULK.MOVE' | translate }}
-			</button>
-			<!-- Set categories: a REPLACE, so it goes through a dialog that says so -->
-			<button nbButton size="tiny" [disabled]="busy" (click)="setCategories()">
-				{{ 'DOCS.BULK.CATEGORIES' | translate }}
-			</button>
-			<span class="docs-bulk-tags">
-				<ga-tags-color-input
-					class="docs-bulk-tags-picker"
-					[multiple]="true"
-					[isOrgLevel]="true"
-					[selectedTags]="tags"
-					(selectedTagsEvent)="tags = $event"
-				></ga-tags-color-input>
-				<button nbButton size="tiny" [disabled]="busy" (click)="addTags()">
-					{{ 'DOCS.BULK.TAGS_ADD' | translate }}
-				</button>
-				<button nbButton size="tiny" [disabled]="busy" (click)="removeTags()">
-					{{ 'DOCS.BULK.TAGS_REMOVE' | translate }}
-				</button>
-			</span>
-			<ng-template [ngxPermissionsOnly]="docsPermissions.aiImport">
-				<button nbButton size="tiny" [disabled]="busy" (click)="run('KNOWLEDGE_IMPORT')">
-					{{ 'DOCS.BULK.KNOWLEDGE_IMPORT' | translate }}
-				</button>
-				<button nbButton size="tiny" [disabled]="busy" (click)="run('KNOWLEDGE_EXCLUDE')">
-					{{ 'DOCS.BULK.KNOWLEDGE_EXCLUDE' | translate }}
-				</button>
-			</ng-template>
-			<ng-template [ngxPermissionsOnly]="docsPermissions.delete">
-				<button nbButton size="tiny" status="danger" appearance="outline" [disabled]="busy" (click)="run('DELETE')">
-					{{ 'DOCS.BULK.DELETE' | translate }}
-				</button>
-			</ng-template>
-		</ng-template>
-	</ng-template>
+	The shape below is the one every product uses for this job: a single row that
+	states what is selected, offers the frequent actions inline, and puts anything
+	needing an argument (tags) or used rarely (knowledge) behind a popover that
+	opens above it. The destructive action sits alone past a divider, and the row
+	ends with the dismiss.
+-->
+<ng-container *ngIf="count > 0">
+	<!-- Click-away target for the popovers. Transparent and behind the bar, so it
+	     never darkens the list — the bar is a toolbar, not a modal. -->
+	<div class="docs-bulk-scrim" *ngIf="openPanel" (click)="closePanel()"></div>
 
-	<button nbButton ghost size="tiny" (click)="clear()">{{ 'DOCS.BULK.CLEAR' | translate }}</button>
-</div>
-
-<!-- Per-id error panel -->
-<div class="docs-bulk-errors" *ngIf="errors.length">
-	<button nbButton ghost size="tiny" (click)="errorsExpanded = !errorsExpanded">
-		<nb-icon [icon]="errorsExpanded ? 'chevron-up-outline' : 'chevron-down-outline'"></nb-icon>
-		{{ 'DOCS.BULK.RESULT_ERRORS_TITLE' | translate }} ({{ errors.length }})
-	</button>
-	<ng-container *ngIf="errorsExpanded">
-		<div class="docs-bulk-error-row" *ngFor="let error of inlineErrors">
-			<code>{{ error.id }}</code>
-			<span>{{ error.code }}</span>
+	<div class="docs-bulk" [nbSpinner]="busy" nbSpinnerStatus="primary" [attr.aria-label]="'DOCS.A11Y.SELECTION_STATUS' | translate">
+		<!-- Over the endpoint's 200-id ceiling. Above the row rather than inside it:
+		     it is advisory copy about the whole selection, not another action. -->
+		<div class="docs-bulk-notice" *ngIf="overLimit" role="status">
+			<nb-icon icon="alert-circle-outline"></nb-icon>
+			<span>{{ 'DOCS.BULK.LIMIT_REACHED' | translate : { max: maxIds } }}</span>
 		</div>
-		<button nbButton ghost size="tiny" (click)="copyReport()">
-			{{ 'DOCS.BULK.COPY_REPORT' | translate }}
-		</button>
-	</ng-container>
+
+		<div class="docs-bulk-bar">
+			<!-- What you are acting on, first and unshrinking. -->
+			<div class="docs-bulk-count">
+				<nb-icon icon="checkmark-square-2-outline"></nb-icon>
+				<span>{{ 'DOCS.BULK.SELECTED' | translate : { count: count } }}</span>
+			</div>
+
+			<span class="docs-bulk-divider" aria-hidden="true"></span>
+
+			<div class="docs-bulk-actions">
+				<ng-container *ngIf="reviewMode; else manageActions">
+					<ng-template [ngxPermissionsOnly]="docsPermissions.review">
+						<button nbButton size="small" status="success" [disabled]="busy" (click)="run('REVIEW_APPROVE')">
+							<nb-icon icon="checkmark-outline"></nb-icon>
+							{{ 'DOCS.BULK.APPROVE' | translate }}
+						</button>
+						<button
+							nbButton
+							ghost
+							size="small"
+							status="danger"
+							class="docs-bulk-action"
+							[disabled]="busy"
+							(click)="reject()"
+						>
+							<nb-icon icon="close-outline"></nb-icon>
+							{{ 'DOCS.BULK.REJECT' | translate }}
+						</button>
+					</ng-template>
+				</ng-container>
+
+				<ng-template #manageActions>
+					<ng-template [ngxPermissionsOnly]="docsPermissions.manage">
+						<button nbButton ghost size="small" class="docs-bulk-action" [disabled]="busy" (click)="run('ARCHIVE')">
+							<nb-icon icon="archive-outline"></nb-icon>
+							{{ 'DOCS.BULK.ARCHIVE' | translate }}
+						</button>
+						<button nbButton ghost size="small" class="docs-bulk-action" [disabled]="busy" (click)="run('UNARCHIVE')">
+							<nb-icon icon="undo-outline"></nb-icon>
+							{{ 'DOCS.BULK.RESTORE' | translate }}
+						</button>
+						<button nbButton ghost size="small" class="docs-bulk-action" [disabled]="busy" (click)="move()">
+							<nb-icon icon="corner-up-right-outline"></nb-icon>
+							{{ 'DOCS.BULK.MOVE' | translate }}
+						</button>
+						<!-- Set categories: a REPLACE, so it goes through a dialog that says so -->
+						<button
+							nbButton
+							ghost
+							size="small"
+							class="docs-bulk-action"
+							[disabled]="busy"
+							[nbTooltip]="'DOCS.BULK.SET_CATEGORIES_HINT' | translate"
+							(click)="setCategories()"
+						>
+							<nb-icon icon="grid-outline"></nb-icon>
+							{{ 'DOCS.BULK.CATEGORIES' | translate }}
+						</button>
+
+						<!-- Tags need an argument, so the trigger opens a tray rather than
+						     leaving a picker parked in the toolbar. -->
+						<div class="docs-bulk-anchor">
+							<button
+								nbButton
+								ghost
+								size="small"
+								class="docs-bulk-action"
+								[class.docs-bulk-action--open]="openPanel === 'tags'"
+								[disabled]="busy"
+								aria-haspopup="dialog"
+								[attr.aria-expanded]="openPanel === 'tags'"
+								(click)="togglePanel('tags')"
+							>
+								<nb-icon icon="pricetags-outline"></nb-icon>
+								{{ 'DOCS.BULK.SECTION_TAGS' | translate }}
+								<nb-icon class="docs-bulk-caret" icon="chevron-up-outline"></nb-icon>
+							</button>
+
+							<div class="docs-bulk-popover docs-bulk-popover--tags" *ngIf="openPanel === 'tags'" role="dialog">
+								<h6 class="docs-bulk-popover-title">{{ 'DOCS.BULK.SECTION_TAGS' | translate }}</h6>
+								<!-- `label` defaults to TRUE on `ga-tags-color-input`, which printed a
+								     second "Tags" caption under this heading — the same reason the
+								     detail panel and the filter bar both pass `false`. -->
+								<ga-tags-color-input
+									class="docs-bulk-tags-picker"
+									[multiple]="true"
+									[isOrgLevel]="true"
+									[label]="false"
+									[selectedTags]="tags"
+									(selectedTagsEvent)="tags = $event"
+								></ga-tags-color-input>
+								<div class="docs-bulk-popover-actions">
+									<button nbButton size="small" status="primary" [disabled]="busy || !hasTagSelection" (click)="addTags()">
+										{{ 'DOCS.BULK.TAGS_ADD' | translate }}
+									</button>
+									<button nbButton ghost size="small" [disabled]="busy || !hasTagSelection" (click)="removeTags()">
+										{{ 'DOCS.BULK.TAGS_REMOVE' | translate }}
+									</button>
+								</div>
+							</div>
+						</div>
+
+						<!-- Overflow: the knowledge pair. Two rarely-used actions with the
+						     longest labels in the set, which is exactly what a menu is for. -->
+						<ng-template [ngxPermissionsOnly]="docsPermissions.aiImport">
+							<div class="docs-bulk-anchor">
+								<button
+									nbButton
+									ghost
+									size="small"
+									class="docs-bulk-action"
+									[class.docs-bulk-action--open]="openPanel === 'more'"
+									[disabled]="busy"
+									aria-haspopup="menu"
+									[attr.aria-expanded]="openPanel === 'more'"
+									[nbTooltip]="'DOCS.BULK.SECTION_KNOWLEDGE' | translate"
+									[attr.aria-label]="'DOCS.BULK.SECTION_KNOWLEDGE' | translate"
+									(click)="togglePanel('more')"
+								>
+									<nb-icon icon="more-horizontal-outline"></nb-icon>
+								</button>
+
+								<div
+									class="docs-bulk-popover docs-bulk-popover--menu"
+									*ngIf="openPanel === 'more'"
+									role="menu"
+								>
+									<h6 class="docs-bulk-popover-title">{{ 'DOCS.BULK.SECTION_KNOWLEDGE' | translate }}</h6>
+									<button
+										type="button"
+										role="menuitem"
+										class="docs-bulk-menu-item"
+										[disabled]="busy"
+										(click)="run('KNOWLEDGE_IMPORT')"
+									>
+										<nb-icon icon="cloud-upload-outline"></nb-icon>
+										{{ 'DOCS.BULK.KNOWLEDGE_IMPORT' | translate }}
+									</button>
+									<button
+										type="button"
+										role="menuitem"
+										class="docs-bulk-menu-item"
+										[disabled]="busy"
+										(click)="run('KNOWLEDGE_EXCLUDE')"
+									>
+										<nb-icon icon="slash-outline"></nb-icon>
+										{{ 'DOCS.BULK.KNOWLEDGE_EXCLUDE' | translate }}
+									</button>
+								</div>
+							</div>
+						</ng-template>
+
+						<!-- The one action that does not come back. Past a divider, on its
+						     own, in the danger colour — not a peer of "Archive". -->
+						<ng-template [ngxPermissionsOnly]="docsPermissions.delete">
+							<span class="docs-bulk-divider" aria-hidden="true"></span>
+							<button
+								nbButton
+								ghost
+								size="small"
+								status="danger"
+								class="docs-bulk-action docs-bulk-action--danger"
+								[disabled]="busy"
+								(click)="run('DELETE')"
+							>
+								<nb-icon icon="trash-2-outline"></nb-icon>
+								{{ 'DOCS.BULK.DELETE' | translate }}
+							</button>
+						</ng-template>
+					</ng-template>
+				</ng-template>
+			</div>
+
+			<span class="docs-bulk-divider" aria-hidden="true"></span>
+
+			<!-- Icon-only, so the label is carried by the tooltip and the accessible name. -->
+			<button
+				nbButton
+				ghost
+				size="small"
+				class="docs-bulk-close"
+				[nbTooltip]="'DOCS.BULK.CLEAR' | translate"
+				[attr.aria-label]="'DOCS.BULK.CLEAR' | translate"
+				(click)="clear()"
+			>
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+	</div>
+</ng-container>
+
+<!--
+	Per-id error panel. A sibling of the bar on purpose: a destructive action
+	drops the selection, which unmounts the bar — the report of what FAILED has to
+	outlive it. It carries the toolbar's chrome so the two read as one surface.
+-->
+<div class="docs-bulk-errors" *ngIf="errors.length">
+	<button
+		class="docs-bulk-errors-head"
+		type="button"
+		[attr.aria-expanded]="errorsExpanded"
+		(click)="errorsExpanded = !errorsExpanded"
+	>
+		<nb-icon class="docs-bulk-errors-icon" icon="alert-triangle-outline"></nb-icon>
+		<span class="docs-bulk-errors-title">{{ 'DOCS.BULK.RESULT_ERRORS_TITLE' | translate }}</span>
+		<span class="docs-bulk-errors-count">{{ errors.length }}</span>
+		<nb-icon [icon]="errorsExpanded ? 'chevron-up-outline' : 'chevron-down-outline'"></nb-icon>
+	</button>
+
+	<div class="docs-bulk-errors-body" *ngIf="errorsExpanded">
+		<dl class="docs-bulk-error-list">
+			<ng-container *ngFor="let error of inlineErrors">
+				<dt><code>{{ error.id }}</code></dt>
+				<dd>{{ error.code }}</dd>
+			</ng-container>
+		</dl>
+		<div class="docs-bulk-popover-actions">
+			<button nbButton ghost size="small" (click)="copyReport()">
+				<nb-icon icon="clipboard-outline"></nb-icon>
+				{{ 'DOCS.BULK.COPY_REPORT' | translate }}
+			</button>
+		</div>
+	</div>
 </div>
