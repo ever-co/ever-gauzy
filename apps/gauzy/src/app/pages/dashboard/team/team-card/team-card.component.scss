@@ -17,10 +17,26 @@
   white-space: nowrap;
 }
 
+// The tile is one item of the strip that holds it (see `../team.component.scss`),
+// which lays the row out itself: the host has to be a box for that to have
+// anything to work with, and the card has to fill the box, or the tile the strip
+// stretched to the tallest of the row is a short surface sitting in a taller
+// hole — visible as soon as one is selected and takes the tinted background.
+:host {
+  display: block;
+}
+
 nb-card {
-  padding: 0.625rem 0.75rem 0.75rem;
+  height: 100%;
+  // The page's card inset. Restated rather than shared because this is a
+  // separate component stylesheet — keep it in step with `$card-inset-block` /
+  // `$card-inset-inline` in `../all-team/all-team.component.scss`, which is the
+  // tile these sit directly under on the other Teams view.
+  padding: 1.125rem 1.5rem;
   background-color: var(--gauzy-card-1);
-  min-width: 11rem;
+  // 9.5rem of content plus the inset either side — the same floor, and the same
+  // reasoning, as the KPI tiles' grid minimum.
+  min-width: 12.5rem;
 }
 
 .team-header {
