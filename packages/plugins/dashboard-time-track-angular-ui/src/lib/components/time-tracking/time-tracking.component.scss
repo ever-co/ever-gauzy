@@ -3,6 +3,11 @@
 $panel-gap: 1rem;
 $panel-padding: 0.75rem;
 $action-gap: 0.5rem;
+// Narrowest an Overview card may get before the row drops to fewer columns.
+$widget-min-width: 13.75rem;
+$widget-min-width-sm: 9.5rem;
+// Width the page title claims before the action strip is wrapped below it.
+$header-title-basis: 18rem;
 
 :host {
   background-color: rgba(50, 50, 50, 0.02);
@@ -34,13 +39,27 @@ $action-gap: 0.5rem;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    flex: 1 1 0%;
+    // A REAL basis, not `1 1 0%`.
+    //
+    // From a zero basis this block never reports a size the row can wrap on, so
+    // the action strip always won the line and the title took whatever was left
+    // — around 60px on a narrow card, which stacked the page title one fragment
+    // per line and clipped the breadcrumb trail parked underneath it. With a
+    // basis the flex line wraps as soon as the title cannot sit beside the
+    // actions, and the title gets the full width instead of a sliver of it.
+    // `min-width: 0` still lets it shrink below that basis once it is on a line
+    // of its own.
+    flex: 1 1 $header-title-basis;
     min-width: 0;
   }
 
   &__title {
     margin: 0;
     min-width: 0;
+    // Wrap between words; break inside one only when that word cannot fit on a
+    // line by itself.
+    word-break: normal;
+    overflow-wrap: break-word;
   }
 
   &__actions {
@@ -50,6 +69,10 @@ $action-gap: 0.5rem;
     justify-content: flex-end;
     gap: $action-gap;
     flex: 0 1 auto;
+    // Keeps the strip at the end of the row once it wraps onto a line of its
+    // own, where `space-between` would otherwise lay it out at the start. An
+    // auto margin rather than an alignment, so it holds in RTL too.
+    margin-inline-start: auto;
   }
 }
 
@@ -141,6 +164,16 @@ $action-gap: 0.5rem;
     .manage-widget[nbButton] {
       padding-inline: 0.5rem;
       gap: 0;
+    }
+
+    // "AKDT: America - Yakutat / 12 hour" is ~300px of nowrap label — nearly a
+    // phone's whole width for one control. Clipped, it still shows the zone
+    // abbreviation, and the popover carries the full name anyway.
+    ga-timezone-filter ::ng-deep .popover-button[nbButton] > div {
+      max-width: 9rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 }
@@ -513,6 +546,30 @@ $action-gap: 0.5rem;
   }
 }
 
+:host .cell ngx-avatar ::ng-deep {
+  .inner-wrapper {
+    min-width: 0;
+  }
+
+  // Without this the 32px thumbnail is the first thing flexbox shrinks, so the
+  // avatar squashed to an oval before the name ever started to ellipsize.
+  .image-outer-wrapper,
+  .image-container {
+    flex: 0 0 auto;
+  }
+
+  .names-wrapper {
+    min-width: 0;
+  }
+
+  .link-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
 :host .font-weight-bold {
   font-weight: 600;
   color: var(--gauzy-text-color-2);
@@ -551,29 +608,95 @@ $action-gap: 0.5rem;
   }
 }
 
+// Apps & URLs rows.
+//
+// `ngx-activity-item` is shared with the reports, where it is laid out on
+// `col-sm-*`. Below 576px those columns each go full width, so this was the one
+// window that stacked its title, its bar and its duration onto three lines
+// while every other window kept its shape. The basis values below hold the same
+// title / progress / duration split as Projects and Tasks at every width, and
+// the duration cell is given the `.cell--numeric` treatment those two windows
+// use so all three time columns read as one column.
 :host ngx-activity-item.tracking-progress ::ng-deep {
+  .row {
+    margin-inline: 0;
+  }
+
+  .clickable {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .clickable > [class*='col-sm-'] {
+    flex: 0 0 auto;
+    min-width: 0;
+    padding-inline: 0.375rem;
+  }
+
+  // Title — matches `.col-5` in Projects / Tasks.
+  .clickable > .col-sm-5 {
+    flex-basis: 41.6667%;
+    max-width: 41.6667%;
+  }
+
+  // Percentage + bar — matches `.col-4`.
+  .clickable > .col-sm-5 + .col-sm-5 {
+    flex-basis: 33.3333%;
+    max-width: 33.3333%;
+  }
+
+  // Duration — matches `.col.cell.cell--numeric`.
+  .clickable > .col-sm-2 {
+    flex: 1 1 auto;
+    max-width: none;
+    text-align: end;
+    font-size: nb-theme(gauzy-table-font-size);
+    line-height: nb-theme(gauzy-table-line-height);
+    font-variant-numeric: tabular-nums;
+    color: var(--gauzy-text-color-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .col.no-child,
   .col.child {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     min-width: 0;
+    padding-inline: 0;
     font-size: nb-theme(gauzy-table-font-size);
     font-weight: 500;
     line-height: nb-theme(gauzy-table-line-height);
   }
 
+  // The inner value + bar pair, rebuilt on `.progress-cell`'s metrics.
+  .clickable > .col-sm-5 + .col-sm-5 > .row {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+
+    > .col {
+      padding-inline: 0;
+      min-width: 0;
+    }
+  }
+
   .percentage-col {
+    flex: 0 0 auto;
     width: auto;
-    min-width: 2.75rem;
+    min-width: 2.25rem;
+    padding-inline: 0;
     font-size: nb-theme(gauzy-table-header-font-size);
     font-variant-numeric: tabular-nums;
     color: var(--gauzy-text-color-2);
     text-align: end;
   }
 
-  .row {
-    margin-inline: 0;
+  // Bootstrap's `.mb-1` is `!important`, so this has to out-specify it.
+  nb-progress-bar.mb-1 {
+    margin: 0 !important;
   }
 }
 
@@ -674,14 +797,25 @@ $action-gap: 0.5rem;
 
 :host .h1 {
   margin-bottom: 0;
+  font-variant-numeric: tabular-nums;
+  // A long duration used to wrap onto a second line and push that one card
+  // taller than the rest of the row.
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 :host .counter-container {
   width: 100%;
-  margin-top: 0.5rem;
+  // `auto`, not a fixed margin: the counter is pushed to the bottom of the card
+  // so the bars line up across the row no matter how tall the text above is.
+  margin-top: auto;
+  padding-top: 0.5rem;
 }
 
 :host ::ng-deep ga-widget #widget nb-card-body {
+  display: flex;
+  flex-direction: column;
   padding: $panel-padding;
 }
 
@@ -784,16 +918,54 @@ $action-gap: 0.5rem;
   padding: 0;
 }
 
+// The Overview row.
+//
+// `ga-widget` writes an inline pixel width onto each card, interpolated from
+// `window.innerWidth` by a polynomial that runs once at creation and is never
+// recomputed on resize. Those widths do not divide the row evenly, so the cards
+// sat ragged, and on a narrow viewport they overflowed instead of reflowing.
+// The grid tracks below own the width instead — `!important` is what it takes
+// to outrank that inline style — and `auto-fit` reflows on the *container*, so
+// this stays right whether the sidebar is open or collapsed.
 :host ::ng-deep ga-widget-layout {
   display: block;
   margin-bottom: $panel-gap;
 
   .grid-boundary {
-    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax($widget-min-width, 1fr));
+    align-items: stretch;
     gap: $panel-gap;
+    margin: 0;
+  }
+
+  .grid-boundary > * {
+    min-width: 0;
+  }
+
+  // A widget switched off in "Manage widgets" (or hidden by permissions) empties
+  // `ga-widget` but leaves its drop-list wrapper in the DOM; without this the
+  // wrapper holds an empty column open in the middle of the row.
+  .grid-boundary > *:has(> ga-widget:empty) {
+    display: none;
+  }
+
+  ga-widget {
+    display: block;
+    min-width: 0;
+    height: 100%;
   }
 
   ga-widget #widget {
+    width: 100% !important;
+    min-width: 0;
+    max-width: none;
+    height: 100%;
+    margin: 0;
+  }
+
+  ga-widget nb-card {
+    height: 100%;
     margin: 0;
   }
 }
@@ -808,4 +980,103 @@ $action-gap: 0.5rem;
 :host .card-header {
   background-color: unset;
   padding: $panel-gap $panel-gap 0.75rem;
+}
+
+// ---------------------------------------------------------------------------
+// Narrow layouts.
+//
+// Every window is a bootstrap row sized in percentages, so the columns keep
+// their proportions as the card narrows — what actually breaks the design is
+// the chrome around them: padding measured for a half-width desktop column, and
+// a handful of fixed-size ornaments. Trim those instead of restacking the rows,
+// so each header cell stays above the data it labels.
+// ---------------------------------------------------------------------------
+@media screen and (max-width: 48rem) {
+  :host .card-body {
+    padding: 0.75rem;
+  }
+
+  :host .window-header {
+    padding-block: 0.625rem;
+    padding-inline-start: 0.625rem;
+    padding-inline-end: 2rem;
+  }
+
+  :host .window-body {
+    padding: 0 0.5rem 0.5rem;
+  }
+
+  :host .data-list {
+    --tt-row-padding-block: 0.625rem;
+
+    &::ng-deep nb-list-item,
+    &::ng-deep nb-list-item.data-list__head {
+      padding-inline: 0.375rem;
+    }
+  }
+
+  :host .cell {
+    padding-inline: 0.25rem;
+  }
+
+  :host .progress-cell {
+    gap: 0.375rem;
+
+    &__value {
+      min-width: 2rem;
+    }
+  }
+
+  :host ngx-activity-item.tracking-progress ::ng-deep {
+    .clickable > [class*='col-sm-'] {
+      padding-inline: 0.25rem;
+    }
+
+    .clickable > .col-sm-5 + .col-sm-5 > .row {
+      gap: 0.375rem;
+    }
+
+    .percentage-col {
+      min-width: 2rem;
+    }
+  }
+
+  // The Members row carries the most per cell — an avatar, two durations and two
+  // badges. The weekly sparkline is decoration beside all of that, and it is
+  // what tips the row into wrapping, so it is the first thing to go.
+  :host .member-weekly-activity-graph {
+    display: none;
+  }
+
+  :host nb-card.member-list .list {
+    max-height: 55vh;
+  }
+
+  :host .hour-label {
+    gap: 0.5rem;
+
+    ngx-avatar ::ng-deep .caption {
+      max-width: 10rem;
+    }
+  }
+}
+
+@media screen and (max-width: 36rem) {
+  :host ::ng-deep ga-widget-layout .grid-boundary {
+    grid-template-columns: repeat(auto-fit, minmax($widget-min-width-sm, 1fr));
+    gap: 0.75rem;
+  }
+
+  :host .h1 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  :host .card-body {
+    padding: 0.75rem;
+  }
+
+  :host .card-header {
+    padding: 0.75rem 0.75rem 0.5rem;
+  }
 }

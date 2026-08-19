@@ -274,6 +274,7 @@
 										loop="false"
 										navigation="true"
 										[pagination]="{ clickable: true }"
+										[breakpoints]="screenshotBreakpoints"
 										class="m-swiper"
 									>
 										@for (timeSlot of employee.timeSlots; track timeSlot.id) {
@@ -338,7 +339,7 @@
 					<nb-list-item class="data-list__head">
 						<div class="w-100">
 							<div class="row font-weight-bold">
-								<div class="col-sm-3 cell cell--clip" [nbTooltip]="'TIMESHEET.MEMBER' | translate">
+								<div class="col-3 cell cell--clip" [nbTooltip]="'TIMESHEET.MEMBER' | translate">
 									{{ 'TIMESHEET.MEMBER' | translate }}
 								</div>
 								<div class="col cell cell--clip" [nbTooltip]="'TIMESHEET.PROJECT' | translate">
@@ -363,7 +364,7 @@
 						<nb-list-item>
 							<div class="w-100">
 								<div class="row align-items-center">
-									<div class="col-sm-3 cell">
+									<div class="col-3 cell">
 										<ngx-avatar
 											[name]="manualTime?.user?.name"
 											[src]="manualTime?.user?.imageUrl"

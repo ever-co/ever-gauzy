@@ -1,7 +1,17 @@
 @use '@nebular/theme/styles/global/breakpoints' as *;
 @use 'themes' as *;
 
-$header-text-size: 0.75rem;
+// The action cluster is chrome, not a form, so its text runs a step below the
+// app's 0.8125rem control size.
+$header-text-size: 0.6875rem;
+
+// ONE width for every selector pill in the cluster, in the same spirit as
+// `gauzy-header-control-height` next door: the pills used to size to their
+// contents between 9rem and 13.5rem, so the whole row re-laid itself every
+// time a different organization or project was picked. A fixed box truncates
+// instead: each selector clips its own trigger to an ellipsis and puts the
+// untruncated text on its `title`.
+$header-control-width: 9.5rem;
 
 $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
 
@@ -265,13 +275,34 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
 
 .date-range-selector {
   ::ng-deep {
+    // The component ships a 16px right margin for standalone use. In here the
+    // `.actions` row already spaces the cluster with its own `gap`, and the two
+    // stacked into a hole after the date pill.
+    .custom-input {
+      margin-right: 0;
+    }
+
     .custom-input input {
       font-size: $header-text-size;
       color: $header-text-color;
     }
 
+    // The component's own 190px / 103px were measured against the 13px text it
+    // ships with. The widest value this control can hold is
+    // `DD.MM.YYYY - DD.MM.YYYY` (23 characters), which fits these boxes at the
+    // band's smaller size with room to spare — so the field still shows the
+    // whole range, it just stops reserving space for text that is not there.
+    .custom-input input.double-range {
+      width: 145px;
+    }
+
+    .custom-input input.single-range {
+      width: 76px;
+    }
+
     i {
       color: $header-text-color;
+      font-size: 10px;
     }
   }
 }
@@ -320,6 +351,8 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
     .ng-select {
       font-size: $header-text-size;
     }
+    // Truncation itself lives with each selector, not here — the label template
+    // that overflows is theirs, and they are used outside this band too.
     .ng-select .ng-select-container .ng-value {
       color: $header-text-color;
       font-weight: 500;
@@ -381,12 +414,26 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
   }
 }
 
-.project-selector,
-.team-selector,
-.employee-selector,
-.organization-selector {
-  min-width: 9rem;
-  max-width: 13.5rem;
+// Nested under `.actions` on purpose, and NOT shared with the `.extra-actions`
+// overflow panel — that panel wants the wide 300–500px pills it already
+// declares, and it sits outside `.actions`, so the two never meet.
+.actions {
+  .project-selector,
+  .team-selector,
+  .employee-selector,
+  .organization-selector {
+    // A fixed width, carried by the min/max pair rather than `width`, because
+    // `.main-header nb-action .header-selector` above pins `width: auto` with
+    // `!important` and would win outright.
+    //
+    // The extra `.actions` step is what makes this land: `ga-project-selector`
+    // and `ga-team-selector` each declare `:host { min-width: 200px }` for the
+    // forms they also appear in, which ties with a bare class selector on
+    // specificity — and a `min-width` that survives beats any `max-width`, so
+    // those two would have stayed 200px wide while the other two shrank.
+    min-width: $header-control-width;
+    max-width: $header-control-width;
+  }
 }
 
 :host .actions {

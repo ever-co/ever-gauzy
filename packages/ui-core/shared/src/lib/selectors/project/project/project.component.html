@@ -34,7 +34,7 @@
           @if (item.imageUrl) {
             <img [src]="item.imageUrl" width="20" height="20" alt="" />
           }
-          <span>{{ getShortenedName(item?.name) }}</span>
+          <span>{{ item?.name }}</span>
         </div>
       </ng-template>
     }

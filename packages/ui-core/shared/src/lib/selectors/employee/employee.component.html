@@ -29,7 +29,7 @@
       } @else if (item.id) {
         <nb-icon class="avatar-fallback" icon="person-outline"></nb-icon>
       }
-      <span>{{ getShortenedName(item.firstName, item.lastName) }}</span>
+      <span>{{ getFullName(item) }}</span>
     </div>
   </ng-template>
 </ng-select>

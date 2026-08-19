@@ -25,8 +25,27 @@ ng-select {
   }
 }
 
-::ng-deep .organization {
-  &.close {
-    opacity: 1;
-  }
+// ── Trigger truncation ──────────────────────────────────────────────────────
+// The label template renders the WHOLE name and lets the box clip it, with the
+// untruncated text on the trigger's `title` — the header band sizes this pill
+// to the cluster, not to its contents, so a long organization name has to
+// truncate somewhere.
+//
+// `min-width: 0` is the part that does the work. `.ng-value` is a flex child of
+// `.ng-value-container`, so it defaults to `min-width: auto` and refuses to
+// shrink below its own text — `text-overflow` never gets a chance to fire. The
+// rule needs `::ng-deep` because ng-select renders its container with
+// `ViewEncapsulation.None`, so those elements carry no `_ngcontent` of ours.
+//
+// `.ng-value-container` needs the same escape hatch one level up, for exactly
+// the same reason.
+:host ::ng-deep .ng-select .ng-select-container .ng-value-container {
+  min-width: 0;
+}
+:host ::ng-deep .ng-select .ng-select-container .ng-value,
+:host ::ng-deep .ng-select .ng-select-container .ng-placeholder {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
