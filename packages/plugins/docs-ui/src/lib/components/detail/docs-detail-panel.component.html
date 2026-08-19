@@ -245,14 +245,19 @@
 			<dl class="docs-detail-meta">
 				<ng-container *ngIf="doc.kind === kindEnum.FILE">
 					<dt>{{ 'DOCS.DETAIL.MIME' | translate }}</dt>
-					<dd>{{ doc.mimeType || '—' }}</dd>
+					<!-- A MIME type is long, single-token and unbreakable
+					     ("application/vnd.openxmlformats-…"): held to one line it
+					     truncates, and the tooltip carries the full value. -->
+					<dd class="docs-detail-meta-ellipsis" [nbTooltip]="doc.mimeType || ''" nbTooltipStatus="basic">
+						{{ doc.mimeType || '—' }}
+					</dd>
 					<dt>{{ 'DOCS.TABLE.COLUMNS.SIZE' | translate }}</dt>
-					<dd>{{ humanizeSize(doc.fileSize) }}</dd>
+					<dd class="docs-detail-meta-ellipsis">{{ humanizeSize(doc.fileSize) }}</dd>
 				</ng-container>
 				<dt>{{ 'DOCS.TABLE.COLUMNS.SOURCE' | translate }}</dt>
-				<dd>{{ 'DOCS.SOURCE.' + doc.source | translate }}</dd>
+				<dd class="docs-detail-meta-ellipsis">{{ 'DOCS.SOURCE.' + doc.source | translate }}</dd>
 				<dt>{{ 'DOCS.VISIBILITY.LABEL' | translate }}</dt>
-				<dd>{{ 'DOCS.VISIBILITY.' + doc.visibility | translate }}</dd>
+				<dd class="docs-detail-meta-ellipsis">{{ 'DOCS.VISIBILITY.' + doc.visibility | translate }}</dd>
 				<!-- Created / Updated carry the person as well as the moment (spec 01 §8.4).
 				     The name is appended only when the relation actually came back — an
 				     "unknown" placeholder reads like a real attribution. -->
@@ -279,7 +284,13 @@
 					</button>
 					<ng-container *ngFor="let crumb of location">
 						<span class="docs-detail-crumb-sep">/</span>
-						<button type="button" class="docs-detail-crumb" (click)="openLocation(crumb.id)">
+						<button
+							type="button"
+							class="docs-detail-crumb"
+							[nbTooltip]="crumb.name"
+							nbTooltipStatus="basic"
+							(click)="openLocation(crumb.id)"
+						>
 							{{ crumb.name }}
 						</button>
 					</ng-container>
@@ -302,9 +313,14 @@
 					<nb-option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</nb-option>
 				</nb-select>
 				<h6>{{ 'DOCS.DETAIL.TAGS' | translate }}</h6>
+				<!-- `label` defaults to TRUE on `ga-tags-color-input`, so the control
+				     printed its own "Tags" caption underneath this section heading —
+				     two titles for one field. The filter bar already passes `false`
+				     for the same reason; the heading above is the label here. -->
 				<ga-tags-color-input
 					[multiple]="true"
 					[isOrgLevel]="true"
+					[label]="false"
 					[selectedTags]="doc.tags || []"
 					(selectedTagsEvent)="onTagsChange($event)"
 				></ga-tags-color-input>
@@ -384,12 +400,16 @@
 					*ngIf="hasLinkRoute(link); else linkPlain"
 					type="button"
 					class="docs-detail-link-open"
+					[nbTooltip]="linkLabel(link)"
+					nbTooltipStatus="basic"
 					(click)="openLink(link)"
 				>
 					{{ linkLabel(link) }}
 				</button>
 				<ng-template #linkPlain>
-					<span class="docs-detail-link-label">{{ linkLabel(link) }}</span>
+					<span class="docs-detail-link-label" [nbTooltip]="linkLabel(link)" nbTooltipStatus="basic">{{
+						linkLabel(link)
+					}}</span>
 				</ng-template>
 				<ng-container *ngxPermissionsOnly="docsPermissions.update">
 					<button

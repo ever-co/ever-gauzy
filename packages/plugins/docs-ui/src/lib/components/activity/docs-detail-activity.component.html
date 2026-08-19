@@ -15,7 +15,12 @@
 	<ol class="docs-activity-list" *ngIf="entries.length">
 		<li class="docs-activity-entry" *ngFor="let entry of entries; trackBy: trackEntry">
 			<div class="docs-activity-head">
-				<span class="docs-activity-actor">{{ actorLabel(entry) }}</span>
+				<!-- Actor and value are capped in width (see the stylesheet) so one long
+				     name or one long free-text value cannot turn a timeline row into a
+				     paragraph; the tooltip carries what the ellipsis hides. -->
+				<span class="docs-activity-actor" [nbTooltip]="actorLabel(entry)" nbTooltipStatus="basic">{{
+					actorLabel(entry)
+				}}</span>
 				<span class="docs-activity-action">{{ actionLabel(entry) }}</span>
 				<span class="docs-activity-date">{{ entry.createdAt | date : 'medium' }}</span>
 			</div>
@@ -23,9 +28,19 @@
 				<li *ngFor="let change of entry.changes; trackBy: trackChange">
 					<span class="docs-activity-field">{{ fieldLabel(change) }}</span>
 					<ng-container *ngIf="hasValues(change)">
-						<span class="docs-activity-value">{{ valueLabel(change, change.previous) }}</span>
+						<span
+							class="docs-activity-value"
+							[nbTooltip]="valueLabel(change, change.previous)"
+							nbTooltipStatus="basic"
+							>{{ valueLabel(change, change.previous) }}</span
+						>
 						<nb-icon icon="arrow-forward-outline"></nb-icon>
-						<span class="docs-activity-value">{{ valueLabel(change, change.next) }}</span>
+						<span
+							class="docs-activity-value"
+							[nbTooltip]="valueLabel(change, change.next)"
+							nbTooltipStatus="basic"
+							>{{ valueLabel(change, change.next) }}</span
+						>
 					</ng-container>
 				</li>
 			</ul>
