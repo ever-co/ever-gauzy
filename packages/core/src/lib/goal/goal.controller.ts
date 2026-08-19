@@ -5,6 +5,7 @@ import {
 	Post,
 	Body,
 	HttpCode,
+	NotFoundException,
 	Put,
 	Param,
 	UseGuards,
@@ -72,6 +73,14 @@ export class GoalController extends CrudController<Goal> {
 	@Put(':id')
 	@UseValidationPipe({ transform: true })
 	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateGoalDTO): Promise<IGoal> {
+		// This is an update-through-create, so an id that matches nothing would be INSERTed as a new
+		// row — and fail on a NOT NULL column, answering 400 with the raw SQL in the body. Assert the
+		// row exists in the caller's tenant first (findOneByIdString resolves to null, it does not throw).
+		const existing = await this.goalService.findOneByIdString(id);
+		if (!existing) {
+			throw new NotFoundException(`Goal with id "${id}" was not found`);
+		}
+
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		//
