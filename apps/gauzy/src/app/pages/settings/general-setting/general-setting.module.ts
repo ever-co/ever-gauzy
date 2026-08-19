@@ -7,6 +7,7 @@ import {
 	NbCardModule,
 	NbIconModule,
 	NbInputModule,
+	NbRadioModule,
 	NbRouteTabsetModule,
 	NbSpinnerModule,
 	NbToggleModule
@@ -25,6 +26,7 @@ import { GeneralSettingComponent } from './general-setting.component';
 		NbCardModule,
 		NbIconModule,
 		NbInputModule,
+		NbRadioModule,
 		NbRouteTabsetModule,
 		NbSpinnerModule,
 		NbToggleModule,

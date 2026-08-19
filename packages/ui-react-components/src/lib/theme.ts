@@ -1,4 +1,11 @@
 // ─── Design tokens matching Nebular / NbCard aesthetic ────────────────────────
+/**
+ * Hardcoded LIGHT-theme values.
+ *
+ * @deprecated Use {@link themeTokens} from `./themeTokens` for anything rendered inside the Gauzy
+ * shell — those are CSS custom-property references that follow the active (light/dark/…) theme.
+ * This object is kept only so existing `Card`/`WidgetCard`/`Progress` consumers keep working.
+ */
 export const theme = {
 	textPrimary: '#222b45',
 	textSecondary: '#8f9bb3',

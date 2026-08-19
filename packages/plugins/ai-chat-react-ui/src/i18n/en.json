@@ -23,9 +23,13 @@
 		"PLATFORM_NOTICE": "You are using the shared free tier — no API key of your own is configured. Free models are rate limited and the limit is shared with everyone else using it. Connect your own account or enter an API key below for uninterrupted access and the full model list.",
 		"BADGE": {
 			"TENANT_KEY": "Tenant key",
+			"TENANT_URL": "Tenant server",
 			"SERVER_ENV": "Server environment",
 			"PLATFORM_FREE": "Free tier",
-			"NOT_CONFIGURED": "Not configured"
+			"NOT_CONFIGURED": "Not configured",
+			"CHAT": "Chat",
+			"SPEECH": "Speech-to-text",
+			"LOCAL": "Local"
 		},
 		"FORM": {
 			"API_KEY": "API key",
@@ -51,14 +55,39 @@
 			"MODELS_NOT_CHAT_CAPABLE": "Chat through this provider is not available yet — pick another provider to chat. A key saved here takes effect once support ships.",
 			"ENABLED": "Enabled",
 			"USE_AS_DEFAULT": "Use as default provider",
-			"GET_KEY": "Get API key"
+			"GET_KEY": "Get API key",
+			"API_KEY_LABEL_OPTIONAL": "API key (optional)",
+			"API_KEY_OPTIONAL": "Optional — this server usually runs without an API key. Leave it blank unless yours is behind an authenticating proxy.",
+			"BASE_URL_REQUIRED_LABEL": "Base URL",
+			"BASE_URL_REQUIRED": "A base URL is required for this provider — enter the address of your server.",
+			"BASE_URL_GATEWAY_HINT": "The address of your OpenAI-compatible server or gateway, e.g. http://localhost:11434/v1 (Ollama), http://localhost:1234/v1 (LM Studio), http://localhost:8000/v1 (vLLM).",
+			"BASE_URL_LOCAL_HINT": "The address of your local server. The usual default is prefilled — change it if your server listens elsewhere.",
+			"SPEECH_MODEL": "Speech model (dictation)",
+			"SPEECH_MODEL_NONE": "Provider default",
+			"SPEECH_MODEL_CUSTOM": "Custom speech model…",
+			"SPEECH_MODEL_HINT": "The speech-to-text model used when this provider transcribes dictation in the AI chat.",
+			"CUSTOM_SPEECH_MODEL_PLACEHOLDER": "Enter a speech model id (e.g. whisper-1)",
+			"USE_AS_VOICE_DEFAULT": "Use as default voice provider (dictation)",
+			"USE_AS_VOICE_DEFAULT_HINT": "Dictation in the AI chat tries this provider first. Without a default, the first configured provider that can transcribe is used.",
+			"VOICE_ONLY_NOTICE": "This provider transcribes speech for dictation only — it has no chat models. Choose another provider for chat."
 		},
 		"ACTIONS": {
 			"SAVE": "Save",
 			"DELETE": "Delete",
 			"ADD_PROVIDER": "Add AI Provider",
+			"ADD_VOICE_PROVIDER": "Add AI Voice Provider",
 			"BACK": "Back",
 			"CONFIGURE": "Configure"
+		},
+		"VOICE": {
+			"TITLE": "Voice (dictation)",
+			"DESCRIPTION": "Providers that can transcribe speech for dictation in the AI chat. The default is tried first; the others are fallbacks.",
+			"MODEL": "Speech model",
+			"DEFAULT": "Default voice",
+			"FALLBACK": "Fallback",
+			"EMPTY": "No voice provider yet — dictation in the AI chat is off.",
+			"EMPTY_HINT": "Add a provider that supports speech-to-text: OpenAI, Groq, Mistral, Deepgram, ElevenLabs — or a local server (Speaches, LocalAI, whisper.cpp) that needs no API key.",
+			"ADD": "Add a voice provider"
 		},
 		"DELETE_CONFIRM": {
 			"TITLE": "Delete credential",
@@ -82,11 +111,14 @@
 			"DEFAULT": "Default",
 			"VIA_ENV": "Managed via server environment",
 			"EMPTY_TITLE": "No AI providers yet",
-			"EMPTY_PROVIDERS": "Gauzy AI · OpenRouter · Vercel AI Gateway · Anthropic · OpenAI · Gemini · Grok"
+			"EMPTY_PROVIDERS": "Gauzy AI · OpenRouter · Vercel AI Gateway · Anthropic · OpenAI · Gemini · Grok · Groq · Mistral · LocalAI · OpenAI-compatible — voice: Deepgram · ElevenLabs · Speaches · whisper.cpp"
 		},
 		"CATALOG": {
 			"TITLE": "Add AI Provider",
 			"DESCRIPTION": "Choose a provider to connect or configure with your own API key.",
+			"VOICE_TITLE": "Add AI Voice Provider",
+			"VOICE_DESCRIPTION": "Choose a provider that can transcribe speech for dictation in the AI chat — a cloud service with your own API key, or a local server running on your own hardware (no key needed).",
+			"NO_VOICE_PROVIDERS": "No speech-capable AI provider is registered on this server.",
 			"SUPPORTS_CONNECT": "Connect"
 		},
 		"CONNECT": {

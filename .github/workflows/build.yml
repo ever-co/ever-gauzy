@@ -55,7 +55,12 @@ jobs:
   build-monorepo-root:
     name: build-monorepo-root
     runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
-    timeout-minutes: 120
+    # 180 to match build-libs / build-api / build-web / build-desktop. This job had 120 while all
+    # four siblings had 180, despite being the ONLY one on the 4-core pool (RUNNER_LINUX_X64_4) —
+    # the smallest runner had the shortest budget. It consequently timed out at exactly 2h00m on
+    # both PR #9993 (run 31946461738) and PR #9995 (run 31961280325), which surfaces as a
+    # "cancelled" job rather than an obvious timeout.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
 

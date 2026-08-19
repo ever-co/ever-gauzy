@@ -44,9 +44,23 @@
 				}
 			}
 
-			& :nth-child(2) {
-				overflow-x: unset !important;
-			}
+		}
+
+		// The library wraps its <table> in `<div style="overflow-x: auto">`. Added
+		// for #7631 (sticky table header): a scroll container is what a
+		// `position: sticky` thead sticks TO, so with that wrapper live the header
+		// stuck to a box that never scrolls vertically and rode away with the rows.
+		// The sticky rules live only inside `.table-scroll-container` /
+		// `.grid-scroll-container` (styles/_overrides.scss), and THOSE boxes already
+		// scroll on both axes (`overflow-y: auto` computes x to `auto`), so the
+		// wrapper is neutralised only there — the container is the one scroll
+		// port for the sticky head AND for a table wider than the card. A
+		// smart-table rendered anywhere else keeps the library's own horizontal
+		// scroll wrapper, which used to be switched off app-wide by this rule and
+		// left a wide table nothing to scroll in but the whole page.
+		.table-scroll-container angular2-smart-table > div,
+		.grid-scroll-container angular2-smart-table > div {
+			overflow-x: unset !important;
 		}
 	}
 }

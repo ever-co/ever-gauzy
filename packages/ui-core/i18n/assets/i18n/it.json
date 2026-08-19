@@ -1156,6 +1156,21 @@
 		"START_SERVER": "Avvia il server",
 		"STOP_SERVER": "Arresta il server"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Interfaccia utente",
+			"DESCRIPTION": "Scegli quale interfaccia usano tutti gli utenti di questo tenant per le pagine disponibili in entrambe le versioni.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (predefinito)",
+				"REACT": "React (nuovo)"
+			},
+			"HINT": "Si applica a tutto il tenant, su ogni dispositivo. Oggi la dashboard di monitoraggio del tempo è disponibile in entrambe le interfacce; seguiranno altre pagine.",
+			"READ_ONLY": "Solo gli amministratori del tenant possono modificare questa impostazione.",
+			"SAVING": "Salvataggio…",
+			"SAVED": "Preferenza dell'interfaccia salvata",
+			"SAVE_ERROR": "Impossibile salvare la preferenza dell'interfaccia."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Temi",
 		"LIGHT": "Luce",
@@ -3663,6 +3678,12 @@
 		"STOP": "Interrompi la generazione",
 		"ERROR": "Si è verificato un errore.",
 		"RETRY": "Riprova",
+		"DICTATION_FAILED": "Impossibile trascrivere la registrazione.",
+		"DICTATION_NOT_CONFIGURED": "La dettatura richiede un provider vocale. Aggiungine uno nella pagina impostazioni «Provider IA».",
+		"DICTATION_ASK_ADMIN": "La dettatura richiede un provider vocale: chiedi a un amministratore di aggiungerne uno in Impostazioni → Provider IA.",
+		"DICTATION_KEY_REJECTED": "Il provider vocale ha rifiutato la sua chiave API. Aggiornala nella pagina impostazioni «Provider IA».",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Il provider vocale ha rifiutato la sua chiave API: chiedi a un amministratore di aggiornarla in Impostazioni → Provider IA.",
+		"DICTATION_OPEN_SETTINGS": "Apri Provider IA",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."

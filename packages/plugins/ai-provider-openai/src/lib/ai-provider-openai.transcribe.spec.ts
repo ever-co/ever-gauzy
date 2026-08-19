@@ -72,6 +72,31 @@ describe('openAiProviderDefinition.transcribe', () => {
 		expect(options.method).toBe('POST');
 		expect((options.headers as Record<string, string>).authorization).toBe('Bearer sk-test-transcribe');
 		expect(form.get('model')).toBe('gpt-4o-mini-transcribe');
+		// No language hint unless the caller passes one: an empty `language` field is rejected.
+		expect(form.has('language')).toBe(false);
+	});
+
+	it('honours the tenant-chosen speech model and language hint', async () => {
+		// The speech model used to be a hardcoded constant; the settings page now lets a tenant pick
+		// one per provider and the engine passes it through `options.model`.
+		const fetchMock = capture({ text: 'bonjour' });
+		await openAiProviderDefinition.transcribe!(Buffer.from('fake-audio-bytes'), 'audio/webm', credentials(), {
+			model: 'whisper-1',
+			language: 'fr'
+		});
+
+		const { form } = requestOf(fetchMock);
+		expect(form.get('model')).toBe('whisper-1');
+		expect(form.get('language')).toBe('fr');
+	});
+
+	it('advertises its speech catalogue with the default model first', () => {
+		expect(openAiProviderDefinition.speech?.defaultModel).toBe('gpt-4o-mini-transcribe');
+		expect(openAiProviderDefinition.speech?.models.map((model) => model.id)).toEqual([
+			'gpt-4o-mini-transcribe',
+			'gpt-4o-transcribe',
+			'whisper-1'
+		]);
 	});
 
 	it.each([

@@ -9,6 +9,7 @@ export * from './document-settings.dto';
 export * from './document-share.dto';
 export * from './document-tag-reference';
 export * from './duplicate-document.dto';
+export * from './get-document-versions-query.dto';
 export * from './get-documents-query.dto';
 export * from './knowledge-reindex.dto';
 export * from './knowledge-search.dto';

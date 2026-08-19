@@ -8,6 +8,7 @@ import { JoinColumn, RelationId, JoinTable } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	IUser,
 	IRole,
@@ -21,7 +22,8 @@ import {
 	ISocialAccount,
 	IOrganizationTeam,
 	IOrganization,
-	ID
+	ID,
+	IUserUiPreferences
 } from '@gauzy/contracts';
 import {
 	ImageAsset,
@@ -143,6 +145,20 @@ export class User extends TenantBaseEntity implements IUser {
 		enum: ComponentLayoutStyleEnum
 	})
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
+
+	/**
+	 * Per-user, per-feature UI state (e.g. `{ aiChat: { expanded, position, width, maximized } }`).
+	 *
+	 * Same exposure as the other preference columns (`preferredLanguage`,
+	 * `preferredComponentLayout`): returned by `GET /user/me`, written only through
+	 * `PUT /user/ui-preferences` (shallow merge per feature key). Same driver-aware
+	 * column as `EmployeeSetting.data`: jsonb (postgres) / json (mysql) / text (sqlite,
+	 * where `UserSubscriber` + `UserService.updateUiPreferences` (de)serialize it).
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	uiPreferences?: IUserUiPreferences;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

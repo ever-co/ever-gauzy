@@ -2,7 +2,13 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	Injectable,
+	NotFoundException,
+	UnauthorizedException
+} from '@nestjs/common';
 import {
 	InsertResult,
 	SelectQueryBuilder,
@@ -22,11 +28,14 @@ import {
 	IEmployee,
 	IFindMeUser,
 	IUser,
+	IUserUiPreferences,
+	IUserUiPreferencesUpdateInput,
 	LanguagesEnum,
 	PermissionsEnum,
 	RolesEnum,
 	UserStats
 } from '@gauzy/contracts';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
@@ -38,6 +47,7 @@ import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
 import { validateUserDeletion } from './default-protected-users';
+import { assertUiPreferencesSize, mergeUiPreferences, sanitizeUiPreferencesPatch } from './ui-preferences.util';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import {
 	emailVerificationClaimWhere,
@@ -496,6 +506,54 @@ export class UserService extends TenantAwareCrudService<User> {
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
 		}
+	}
+
+	/**
+	 * Merges a per-feature patch into the current user's stored UI preferences and persists it.
+	 *
+	 * SHALLOW merge per top-level feature key: each key present in `patch` replaces that feature's
+	 * whole object (`null` removes it); other features stay untouched, so independent features
+	 * never clobber each other. Only the CURRENT user (`RequestContext.currentUserId()`) can be
+	 * written — the endpoint carries no id on purpose.
+	 *
+	 * @param patch - Feature-keyed objects to replace (see `IUserUiPreferencesUpdateInput`).
+	 * @returns The merged preferences object as now stored.
+	 * @throws BadRequestException on structurally invalid input or an oversized blob.
+	 * @throws NotFoundException when the current user row cannot be read.
+	 */
+	async updateUiPreferences(patch: IUserUiPreferencesUpdateInput): Promise<IUserUiPreferences> {
+		const userId = RequestContext.currentUserId();
+
+		let clean: IUserUiPreferencesUpdateInput;
+		try {
+			clean = sanitizeUiPreferencesPatch(patch);
+		} catch (error) {
+			throw new BadRequestException(error?.message ?? 'Invalid uiPreferences patch');
+		}
+
+		let user: IUser;
+		try {
+			// TenantAwareCrudService scopes the lookup to the caller's tenant.
+			user = await this.findOneByIdString(userId);
+		} catch (err) {
+			throw new NotFoundException(`The record was not found`, err);
+		}
+
+		const merged = mergeUiPreferences(user.uiPreferences, clean);
+		try {
+			assertUiPreferencesSize(merged);
+		} catch (error) {
+			throw new BadRequestException(error?.message);
+		}
+
+		// `repository.update()` bypasses entity subscribers, so the SQLite text column must be
+		// serialized here (same rule as `ActivityLogService.create`). Postgres/MySQL drivers
+		// serialize json/jsonb columns themselves.
+		const value =
+			isSqlite() || isBetterSqlite3() ? (JSON.stringify(merged) as unknown as IUserUiPreferences) : merged;
+		await this.update(userId, { uiPreferences: value } as any);
+
+		return merged;
 	}
 
 	/**

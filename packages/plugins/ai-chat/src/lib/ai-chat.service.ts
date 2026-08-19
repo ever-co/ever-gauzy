@@ -1,11 +1,20 @@
 import { Injectable, Logger, ServiceUnavailableException, BadRequestException } from '@nestjs/common';
 import type { Response } from 'express';
 import type { UIMessage, LanguageModel } from 'ai';
-import { IAiChatConfig, IAiChatModel, IAiChatModelCatalogue, IAiChatProvider } from '@gauzy/contracts';
+import {
+	AI_CHAT_SETTINGS_PATH,
+	AiSpeechErrorCode,
+	IAiChatConfig,
+	IAiChatModel,
+	IAiChatModelCatalogue,
+	IAiChatProvider,
+	IAiSpeechErrorBody
+} from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { loadAiSdk } from './esm-loader';
 import { AiProviderRegistry } from './provider-registry';
 import { IAiChatProviderDefinition, IAiProviderCredentials } from './provider.types';
+import { isSpeechProviderError } from './speech/speech-provider-error';
 import { buildSystemPrompt } from './system-prompt';
 import { GauzyApiClient } from './tools/gauzy-api-client';
 import { buildGauzyTools, GAUZY_TOOLS_REQUIRING_APPROVAL } from './tools/gauzy-tools';
@@ -270,9 +279,18 @@ export class AiChatService {
 	async getConfig(): Promise<IAiChatConfig> {
 		const definitions = AiProviderRegistry.list();
 		const providers: IAiChatProvider[] = [];
+		// Speech-capable providers whose credentials resolve — what `speechConfigured` reports. Kept
+		// separate from `configured`, which is the CHAT verdict: an STT-only provider (Deepgram, a local
+		// whisper server) is `chatCapable: false` and so never "configured" for chat, yet is exactly
+		// what makes dictation work.
+		const speechReady: string[] = [];
 
 		for (const definition of definitions) {
 			const credentials = await this.resolveCredentials(definition);
+			const speechCapable = typeof definition.transcribe === 'function';
+			if (speechCapable && credentials) {
+				speechReady.push(definition.id);
+			}
 			// Narrow the advertised models SERVER-side when the shared free key is in play, so the
 			// settings chips, the default-model select and the playground selector all follow with no
 			// frontend change — and so the UI never offers a model resolveModel would then reject.
@@ -295,13 +313,25 @@ export class AiChatService {
 				...(definition.apiKeysUrl ? { apiKeysUrl: definition.apiKeysUrl } : {}),
 				...(definition.connect
 					? { connectType: definition.connect.type, connectAuthorizeUrl: definition.connect.authorizeUrl }
-					: {})
+					: {}),
+				// Voice / speech-to-text surface. `speechCapable` is derived from the hook's presence, so
+				// a provider cannot advertise speech it does not implement.
+				speechCapable,
+				...(speechCapable && definition.speech?.models?.length ? { speechModels: definition.speech.models } : {}),
+				...(speechCapable && definition.speech?.defaultModel
+					? { defaultSpeechModel: definition.speech.defaultModel }
+					: {}),
+				requiresApiKey: definition.requiresApiKey !== false,
+				...(definition.local ? { local: true } : {}),
+				...(definition.defaultBaseUrl ? { defaultBaseUrl: definition.defaultBaseUrl } : {}),
+				...(definition.requiresBaseUrl ? { requiresBaseUrl: true } : {})
 			});
 		}
 
 		const globallyDisabled = process.env.GAUZY_AI_CHAT_ENABLED === 'false';
 		const configured = providers.filter((provider) => provider.configured);
 		const defaults = await this.resolveDefaultProvider(configured.map((p) => p.id));
+		const voiceDefault = await this.resolveVoiceDefault(speechReady);
 
 		// Report WHICH gate is closed: the chat is hidden client-side when this is
 		// false, and without a reason the user cannot tell "nobody configured a
@@ -317,7 +347,9 @@ export class AiChatService {
 			enabled: !globallyDisabled && configured.length > 0,
 			...(disabledReason ? { disabledReason } : {}),
 			providers,
-			...(defaults ?? {})
+			...(defaults ?? {}),
+			speechConfigured: speechReady.length > 0,
+			...(voiceDefault ? { defaultVoiceProvider: voiceDefault.providerId } : {})
 		};
 	}
 
@@ -447,20 +479,29 @@ export class AiChatService {
 	 * env var keeps unrestricted access, and a tenant that brings its own key always wins outright.
 	 */
 	private async resolveCredentials(definition: IAiChatProviderDefinition): Promise<IAiProviderCredentials | null> {
+		const keyOptional = definition.requiresApiKey === false;
 		const tenantCredential = await this.getTenantCredential(definition.id);
-		if (tenantCredential?.apiKey) {
+		// A key-less tenant row only counts for providers that run without one — the credential service
+		// already returns `null` for a key-less row of any other provider, so `apiKey === ''` here IS
+		// the local-server case.
+		if (tenantCredential && (tenantCredential.apiKey || keyOptional)) {
 			return {
-				apiKey: tenantCredential.apiKey,
+				apiKey: tenantCredential.apiKey ?? '',
+				// Only an EXPLICIT base URL travels in the credentials. Every provider falls back to its
+				// own default address itself, and `keyedCatalogue` treats any base URL as a custom
+				// endpoint — injecting the default here would make the vendor catalogues (Groq,
+				// Mistral) permanently 'curated'.
 				baseUrl: tenantCredential.baseUrl ?? undefined,
 				source: 'tenant'
 			};
 		}
+		const envBaseUrl = definition.baseUrlEnvVar ? process.env[definition.baseUrlEnvVar] : undefined;
 		for (const envVar of definition.apiKeyEnvVars) {
 			const apiKey = process.env[envVar];
 			if (apiKey) {
 				return {
 					apiKey,
-					baseUrl: definition.baseUrlEnvVar ? process.env[definition.baseUrlEnvVar] : undefined,
+					baseUrl: envBaseUrl ?? undefined,
 					source: 'environment'
 				};
 			}
@@ -470,10 +511,18 @@ export class AiChatService {
 			if (apiKey) {
 				return {
 					apiKey,
-					baseUrl: definition.baseUrlEnvVar ? process.env[definition.baseUrlEnvVar] : undefined,
+					baseUrl: envBaseUrl ?? undefined,
 					source: 'platform'
 				};
 			}
+		}
+		// A local server is "configured" the moment the operator points at it — a base URL in the
+		// environment is the whole credential. Providers with a conventional default address
+		// (Speaches, LocalAI, whisper.cpp) are NOT auto-configured from that default alone: the tenant
+		// or operator has to opt in, or every install would advertise dictation through a server that
+		// is not running.
+		if (keyOptional && envBaseUrl) {
+			return { apiKey: '', baseUrl: envBaseUrl, source: 'environment' };
 		}
 		return null;
 	}
@@ -541,17 +590,29 @@ export class AiChatService {
 	/**
 	 * Transcribe recorded speech for the chat's dictation control.
 	 *
-	 * Tries every registered provider that CAN transcribe, in display order, and uses the first one
-	 * the tenant actually has a credential for. Dictation is a property of the workspace, not of the
-	 * chat model: a tenant whose chat runs on Anthropic (no speech model) should still be able to
-	 * dictate if they also have an OpenAI key, without being told to go and change their chat
-	 * provider.
+	 * Order of attempts:
+	 *
+	 * 1. the tenant's VOICE DEFAULT (the credential flagged `isVoiceDefault`), when that provider can
+	 *    transcribe and its credentials resolve;
+	 * 2. then every other registered provider that CAN transcribe, in display order, using the first
+	 *    one the tenant actually has a credential for.
+	 *
+	 * Dictation is a property of the workspace, not of the chat model: a tenant whose chat runs on
+	 * Anthropic (no speech model) should still be able to dictate if they also have an OpenAI key or a
+	 * local whisper server, without being told to go and change their chat provider. The pinned voice
+	 * default is what lets a tenant say "always this one" (mirrors the operator-pinned transcription
+	 * provider with capable-fallback model of ever-works).
+	 *
+	 * Failures throw a 503 whose body is an OBJECT — `{ message, code, settingsPath }` — so the chat
+	 * client can render an actionable, translated message with a link to the AI Providers page, while
+	 * old clients still find a readable `message`.
 	 *
 	 * @param audio Bytes as recorded by the browser.
 	 * @param mimeType Container the browser produced.
+	 * @param options Optional language hint forwarded to the provider.
 	 * @returns The transcript, which may legitimately be empty for silence.
 	 */
-	async transcribe(audio: Buffer, mimeType: string): Promise<string> {
+	async transcribe(audio: Buffer, mimeType: string, options?: { language?: string }): Promise<string> {
 		if (!audio?.length) {
 			throw new BadRequestException('No audio was uploaded.');
 		}
@@ -573,21 +634,49 @@ export class AiChatService {
 			.sort((a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER));
 
 		if (!capable.length) {
-			throw new ServiceUnavailableException('No AI provider on this server can transcribe speech.');
+			throw this.speechUnavailable(
+				AiSpeechErrorCode.NOT_CONFIGURED,
+				'No AI provider on this server can transcribe speech — install a speech-capable provider plugin.'
+			);
 		}
+
+		// The voice default goes FIRST; the rest keep their display order.
+		const voiceDefault = await this.resolveVoiceDefault(capable.map((definition) => definition.id));
+		const ordered = voiceDefault
+			? [
+					...capable.filter((definition) => definition.id === voiceDefault.providerId),
+					...capable.filter((definition) => definition.id !== voiceDefault.providerId)
+				]
+			: capable;
 
 		// One entry per attempted provider: every attempt either returns out of the function or pushes
 		// its failure here, so `failures` doubles as the "was anything attempted" signal at the throw.
 		const failures: string[] = [];
-		for (const definition of capable) {
+		const attempted: string[] = [];
+		let keyRejected = false;
+		for (const definition of ordered) {
 			const credentials = await this.resolveCredentials(definition);
 			if (!credentials) continue;
+			attempted.push(definition.id);
+			// The tenant's speech model for THIS provider (from its credential row), else the provider's
+			// own default. Passed through even when unset so a hook can rely on the options object.
+			const tenantCredential = await this.getTenantCredential(definition.id);
+			const model = tenantCredential?.speechModel || definition.speech?.defaultModel;
 			try {
-				return await definition.transcribe(audio, mimeType, credentials);
+				return await definition.transcribe(audio, mimeType, credentials, {
+					...(model ? { model } : {}),
+					...(options?.language ? { language: options.language } : {})
+				});
 			} catch (error) {
 				// Try the next provider rather than failing the whole dictation on one bad key.
 				const message = error instanceof Error ? error.message : String(error);
 				this.logger.warn(`[ai-chat] Transcription via '${definition.id}' failed: ${message}`);
+				// Typed classification from the shared speech helper — no regex over prose. A provider
+				// hook that throws a plain Error is simply "failed"; it never gets to look like a key
+				// problem by accident.
+				if (isSpeechProviderError(error) && error.kind === 'key-rejected') {
+					keyRejected = true;
+				}
 				// Boundary defense for the user-visible join below: an empty Error message or a thrown
 				// non-Error ('[object Object]') would otherwise put a blank or noise where the old text
 				// at least named the provider — so fall back to naming it, and bound the length here
@@ -597,17 +686,62 @@ export class AiChatService {
 			}
 		}
 
-		// The chat panel shows this message verbatim, so it must not over-diagnose. The old text
-		// appended "Check the provider's API key" to EVERY failure — a quota hit, a rejected
-		// recording and a provider outage all read as a credential problem. Relay what the provider
-		// hook actually reported (providers classify by status and never echo a response body), and
-		// point at Settings only when the failure is credential-shaped.
-		const keyProblem = failures.some((failure) => /api key/i.test(failure));
-		throw new ServiceUnavailableException(
-			failures.length
-				? `${failures.join('; ')}${keyProblem ? ' Update the key in Settings → AI Providers.' : ''}`
-				: 'Add an API key for a provider that supports speech (e.g. OpenAI) to dictate messages.'
+		if (!failures.length) {
+			// Nothing was even attempted: no speech-capable provider has credentials for this tenant.
+			throw this.speechUnavailable(
+				AiSpeechErrorCode.NOT_CONFIGURED,
+				`Dictation needs a voice provider. Add one (${capable
+					.slice(0, 4)
+					.map((definition) => definition.label)
+					.join(', ')}${capable.length > 4 ? ', …' : ''}) on the AI Providers settings page.`
+			);
+		}
+
+		// The chat panel shows this message verbatim, so it must not over-diagnose. Relay what the
+		// provider hook actually reported (providers classify by status and never echo a response
+		// body), and point at Settings only when a provider actually rejected the credential.
+		const detail = failures.join('; ').replace(/[.\s]+$/, '');
+		throw this.speechUnavailable(
+			keyRejected ? AiSpeechErrorCode.KEY_REJECTED : AiSpeechErrorCode.FAILED,
+			`${detail}.${keyRejected ? ' Update the key on the AI Providers settings page.' : ''}`,
+			attempted
 		);
+	}
+
+	/**
+	 * Build the 503 thrown by {@link transcribe}: a structured body the client can branch on, with a
+	 * human-readable `message` for clients that only read that.
+	 */
+	private speechUnavailable(
+		code: AiSpeechErrorCode,
+		message: string,
+		attemptedProviders?: string[]
+	): ServiceUnavailableException {
+		const body: IAiSpeechErrorBody = {
+			message,
+			code,
+			settingsPath: AI_CHAT_SETTINGS_PATH,
+			...(attemptedProviders?.length ? { attemptedProviders } : {})
+		};
+		return new ServiceUnavailableException(body);
+	}
+
+	/**
+	 * The tenant's pinned voice (dictation) provider, if it is among `capableIds`.
+	 *
+	 * @param capableIds Provider ids eligible right now (speech-capable, and — for `/config` —
+	 *                   with resolvable credentials).
+	 */
+	private async resolveVoiceDefault(capableIds: string[]): Promise<{ providerId: string; speechModel?: string } | null> {
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) return null;
+		try {
+			const voiceDefault = await this.credentialService.getTenantVoiceDefault(tenantId);
+			return voiceDefault && capableIds.includes(voiceDefault.providerId) ? voiceDefault : null;
+		} catch (error) {
+			this.logger.warn(`Failed to read tenant voice default: ${error instanceof Error ? error.message : error}`);
+			return null;
+		}
 	}
 
 	/**
