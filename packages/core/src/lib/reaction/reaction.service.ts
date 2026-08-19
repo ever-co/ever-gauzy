@@ -29,8 +29,15 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 		try {
 			// Extract the tenantId from the input data or the current request context
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-			// Extract the employeeId from the request context
-			const employeeId = RequestContext.currentEmployeeId();
+			// The reacting employee is the caller's OWN employee record. currentEmployeeId() is
+			// deliberately null for CHANGE_SELECTED_EMPLOYEE holders, so read the identity off the JWT
+			// user as well; without any employee identity there is nobody to react as (update() and
+			// delete() below already enforce this). A null here used to be dropped from the toggle
+			// criteria, matching — and deleting — every other employee's identical reaction.
+			const employeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
+			if (!employeeId) {
+				throw new BadRequestException('Employee ID not found in context');
+			}
 			// Destructure additional properties from input
 			const { entity, entityId, emoji, organizationId } = input;
 
@@ -51,8 +58,13 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 				organizationId
 			};
 
-			// Check if a matching reaction already exists
-			const reaction = await this.findOneByWhereOptions(whereOptions);
+			// Check if a matching reaction already exists (non-throwing lookup: findOneByWhereOptions
+			// raises NotFound when there is none, which turned every FIRST reaction into a 400).
+			const { success, record: reaction, error: lookupError } = await this.findOneOrFailByWhereOptions(whereOptions);
+			if (!success && !(lookupError instanceof NotFoundException)) {
+				// Anything but "no such reaction" is a real failure — do not fall through to a duplicate create.
+				throw lookupError;
+			}
 
 			// If a matching reaction exists, delete (toggle off) the reaction
 			if (reaction) {
