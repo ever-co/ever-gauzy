@@ -38,7 +38,9 @@
   .team-list {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    // Matches the panel lists: the rows carry their own bottom inset and
+    // hairline, so this is only the space above each one.
+    gap: 0.625rem;
     width: 100%;
   }
 
@@ -49,7 +51,17 @@
   // The column headings above the member list. They name the columns of what
   // is, in every other part of the app, a data table — so they take that
   // table's heading metrics rather than a card's.
+  // The column headings above the member list. Now that a member row is a row
+  // rather than a card, the heading is a table header rather than a card of its
+  // own: no surface, no edge, just the labels over the columns they name.
   .team-header-list {
+    nb-card,
+    nb-card-body {
+      background-color: transparent;
+      box-shadow: none;
+      border: none;
+    }
+
     nb-card-body {
       font-size: nb-theme(gauzy-table-header-font-size);
       font-weight: 600;
@@ -88,11 +100,17 @@
 
     nb-card-body {
       background-color: var(--gauzy-card-2);
-      padding: 0.75rem;
-
-      &.card-body-content {
-        padding-right: 0.5rem;
-      }
+      // The page card's own inset, the same pair the panels inside it use (see
+      // `$card-inset-*` in `all-team/all-team.component.scss`).
+      //
+      // `.card-body-content` used to cut the trailing side to 0.5rem, to leave
+      // room for a scrollbar that ran down this card. It does not any more —
+      // the dashboard page owns the single scrollport now (see `:host` at the
+      // top of this file) — so all that override did was make the inset 8px
+      // narrower on the right than on the left, which on a page whose content
+      // is a column of full-width rows is plainly visible. Both sides are the
+      // one number.
+      padding: 1.125rem 1.5rem;
 
       .team-selected {
         height: 100%;
@@ -101,13 +119,37 @@
         gap: 0.75rem;
       }
 
+      /*
+       * The strip of team tiles above the member list.
+       *
+       * Two things were wrong with it. `overflow-x: auto` makes the BLOCK
+       * axis a scrollport as well — the spec computes the other axis to
+       * `auto` as soon as one of them is not `visible` — so the strip was
+       * clipping its own tiles at the top: the first pixel row of each
+       * card, which is where its border and the top of its radius are,
+       * had nowhere to be drawn. And a tile was a shrinkable flex item, so
+       * on a team list long enough to need the scroll the tiles were
+       * squeezed narrower than the `min-width: 11rem` of the card inside
+       * them and their content spilled out instead of the strip scrolling.
+       *
+       * The block padding is the room the tiles' edges need (the strip
+       * scrolls horizontally, so this space stays put), and a tile is
+       * pinned to its own width: the strip scrolls, the tiles do not
+       * shrink. Horizontal scrolling is the page's own thin scrollbar,
+       * set once for everything in `styles/_overrides.scss`.
+       */
       .team-card {
         display: flex;
         flex-wrap: nowrap;
         overflow-x: auto;
+        overscroll-behavior-x: contain;
         gap: 0.75rem;
         width: 100%;
-        padding-bottom: 0.5rem;
+        padding-block: 0.25rem 0.5rem;
+
+        > gauzy-team-card {
+          flex: 0 0 auto;
+        }
       }
     }
   }
@@ -117,4 +159,20 @@
   display: flex;
   gap: 0.5rem;
   align-items: center;
+
+  // Held to the height of the line it sits on rather than Nebular's 2rem tap
+  // target, which made the page title start a third of an inch lower than the
+  // breadcrumb under it.
+  button[nbButton] {
+    padding: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    min-width: 0;
+
+    nb-icon {
+      font-size: 1.25rem;
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
 }
