@@ -89,7 +89,19 @@ export function DashboardTimeTrackReactUiPage() {
 
 			{/* Widgets */}
 			<CardContent>
-				<div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', width: '100%' }}>
+				{/*
+				 * Equal tracks rather than a wrapping flex row of min-width cards:
+				 * the row filled at six widgets and left a card-sized hole at five.
+				 * Same treatment as the KPI rows on the Angular tabs.
+				 */}
+				<div
+					style={{
+						display: 'grid',
+						gridTemplateColumns: 'repeat(auto-fit, minmax(11rem, 1fr))',
+						gap: '0.75rem',
+						width: '100%'
+					}}
+				>
 					{showMembersWorked && !hasEmployee && (
 						<MembersWorkedWidget count={counts?.employeesCount ?? 0} />
 					)}
