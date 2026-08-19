@@ -72,8 +72,10 @@ export class EmailTemplateRenderService {
 			});
 
 			if (!!isValidSmtp) {
-				query['organizationId'] = locals.organizationId;
-				query['tenantId'] = locals.tenantId;
+				// Same NULL handling as the SMTP lookup above: a missing organization / tenant selects
+				// the tenant-wide / global row, never "any organization's" template.
+				query['organizationId'] = isEmpty(locals.organizationId) ? IsNull() : locals.organizationId;
+				query['tenantId'] = isEmpty(locals.tenantId) ? IsNull() : locals.tenantId;
 
 				emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy(query);
 			}

@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, In } from 'typeorm';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { DeleteResult, FindOptionsWhere, In, IsNull } from 'typeorm';
 import { BaseEntityEnum, ID, IFavorite, IFavoriteCreateInput, IPagination, RolesEnum } from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
@@ -72,11 +72,13 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 				}
 			}
 
-			// Check for existing favorite with the same parameters
+			// Check for existing favorite with the same parameters. An organization-level favorite has
+			// NO employee: pin that with IsNull() so the de-duplication matches only organization-level
+			// rows and never silently returns some other employee's favorite for the same entity.
 			const findOptions: FindOptionsWhere<Favorite> = {
 				tenantId,
 				organizationId,
-				employeeId,
+				employeeId: employeeId ?? IsNull(),
 				entity: entityName,
 				entityId
 			};
@@ -115,7 +117,15 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 	async delete(id: ID): Promise<DeleteResult> {
 		try {
 			if (!this.hasAdminRole()) {
-				const employeeId = RequestContext.currentEmployeeId();
+				// "Current employee" means the caller's OWN employee record. RequestContext.currentEmployeeId()
+				// is deliberately null for CHANGE_SELECTED_EMPLOYEE holders (e.g. managers), which used to
+				// drop the employee predicate and let them delete anyone's favorite by id — and would now
+				// (null -> IS NULL) stop them deleting even their own. Read the identity off the JWT user
+				// instead, and fail closed when the caller has no employee identity at all.
+				const employeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
+				if (!employeeId) {
+					throw new ForbiddenException('Only the owning employee (or an admin) can delete a favorite.');
+				}
 				return await super.delete(id, {
 					where: { employeeId }
 				});
@@ -126,6 +136,9 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 				: { where: { tenantId: RequestContext.currentTenantId() } };
 			return await super.delete(id, deleteOptions);
 		} catch (error) {
+			if (error instanceof ForbiddenException) {
+				throw error;
+			}
 			throw new BadRequestException(error);
 		}
 	}

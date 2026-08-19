@@ -186,8 +186,12 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			// Check if user has permission to change the selected employee
 			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				try {
-					// Retrieve the current employee ID
+					// Retrieve the current employee ID — the manager check below needs one (an empty id
+					// used to be dropped from the where, degrading it to "the team has any manager").
 					const employeeId = RequestContext.currentEmployeeId();
+					if (!employeeId) {
+						throw new ForbiddenException('You do not have sufficient permissions to perform this action.');
+					}
 
 					// Verify if the employee has a manager role in the organization and team
 					await this.findOneByWhereOptions({

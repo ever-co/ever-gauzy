@@ -189,14 +189,14 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 							expiredAt: MoreThanOrEqual(new Date()),
 							status: IsNull()
 						});
-						qb.andWhere([
-							{
-								code
-							},
-							{
-								token
-							}
-						]);
+						// Only OR together the credentials that were actually supplied. The DTO validates code
+						// or token, not both, so the other may arrive as null: as an OR arm that would now read
+						// `token IS NULL` and widen a security-sensitive lookup instead of being dropped.
+						const credentials = [...(code ? [{ code }] : []), ...(token ? [{ token }] : [])];
+						if (credentials.length === 0) {
+							throw new BadRequestException('A confirmation code or token is required');
+						}
+						qb.andWhere(credentials);
 					});
 					record = await query.getOneOrFail();
 					break;

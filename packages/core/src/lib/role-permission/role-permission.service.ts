@@ -154,9 +154,13 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				tenantId: currentTenantId
 			});
 
-			let { roleId } = partialEntity;
-			if (partialEntity['role'] instanceof Role) {
-				roleId = partialEntity['role']['id'];
+			// The target role may arrive as `roleId` or as a plain `role` object (the role object in the DTO is never a
+			// Role instance after class-transformer). Resolve it fail-closed: an undefined id used to be
+			// dropped from the lookup and returned the FIRST role of the tenant, whose name is what the
+			// SUPER_ADMIN / ADMIN checks below inspect.
+			const roleId = partialEntity.roleId ?? partialEntity['role']?.['id'];
+			if (!roleId) {
+				throw new BadRequestException('roleId is required');
 			}
 			/**
 			 * User try to create permission for below role
@@ -220,9 +224,13 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				tenantId: currentTenantId
 			});
 
-			let { roleId } = partialEntity;
-			if (partialEntity['role'] instanceof Role) {
-				roleId = partialEntity['role']['id'];
+			// The target role may arrive as `roleId` or as a plain `role` object (the role object in the DTO is never a
+			// Role instance after class-transformer). Resolve it fail-closed: an undefined id used to be
+			// dropped from the lookup and returned the FIRST role of the tenant, whose name is what the
+			// SUPER_ADMIN / ADMIN checks below inspect.
+			const roleId = partialEntity.roleId ?? partialEntity['role']?.['id'];
+			if (!roleId) {
+				throw new BadRequestException('roleId is required');
 			}
 			/**
 			 * User try to update permission for below role

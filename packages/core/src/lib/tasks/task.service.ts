@@ -1386,7 +1386,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				...(types.length && { issueType: In(types) }),
 				...(minStartDate && maxStartDate && { startDate: Between(minStartDate, maxStartDate) }),
 				...(minDueDate && maxDueDate && { dueDate: Between(minDueDate, maxDueDate) }),
-				organizationId: taskView.organizationId || organizationId,
+				// Only scope by organization when one is known: the view's organizationId is a nullable
+				// column and the stored query params may carry null (a null used to be dropped silently).
+				...(taskView.organizationId || organizationId
+					? { organizationId: taskView.organizationId || organizationId }
+					: {}),
 				tenantId
 			};
 
