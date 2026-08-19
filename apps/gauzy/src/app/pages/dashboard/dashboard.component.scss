@@ -21,39 +21,67 @@
  * the container simply fills the layout column and scrolls whatever it holds.
  */
 :host {
-	display: block;
-	height: 100%;
-	// Shrink with the layout column instead of forcing it open
-	min-height: 0;
+  display: block;
+  height: 100%;
+  // Shrink with the layout column instead of forcing it open
+  min-height: 0;
 }
 
 // The tab bar's row height. ONE number, because two unrelated things are laid
 // out against it: the tab links themselves, and the actions cluster that is
 // centred on their line (both below). `route-tabset-tab-padding` cannot serve as
 // that number — it is a shorthand, so nothing here can read its block half.
-$tab-height: 2.5rem;
+$tab-height: 2.25rem;
+
+// The inset a tab link keeps from the end of the strip. It is the SAME number on
+// both sides: the first tab's leading padding is what sets the strip's left
+// margin for content, and the ⋮ menu is what sits on the right one — so the glyph
+// in the menu lines up on the strip's own grid rather than floating past its end.
+$tab-inline-inset: 0.75rem;
+
+// The ⋮ button is 2rem square with a 1rem glyph centred in it, so half a rem of
+// it is empty on each side. Backing the button out by that much puts its GLYPH
+// on the inset above rather than its box.
+$tab-actions-inset: $tab-inline-inset - 0.5rem;
+
+// How far a tab may be squeezed before the strip starts scrolling instead.
+//
+// Every dashboard tab is wider than this at its natural size, so on a roomy
+// viewport the floor never binds. It is what turns "the tabs overflow the page"
+// into two graceful stages: first they shrink and their labels truncate, and
+// only once they are down to this width does the strip scroll sideways — rather
+// than shrinking to nothing, or running off the edge of a page that clips
+// horizontal overflow.
+$tab-min-width: 5rem;
 
 .dashboard-container {
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-	min-height: 0;
-	overflow-y: auto;
-	// Positioning context for the actions cluster that floats onto the tab bar
-	// when there is no chips row to hold it (see the last rule in this block).
-	position: relative;
-	// Horizontal overflow belongs to individual widgets, never to the page
-	overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  // NOT the scroll surface. The tab strip has to stay put while its page moves,
+  // so the scrollport is pushed down onto the routed page itself (see the
+  // `router-outlet ~ *` rule at the end of this file); scrolling here would take
+  // the strip with it.
+  overflow: hidden;
+  // Positioning context for the actions cluster that floats onto the tab bar
+  // when there is no chips row to hold it (see the last rule in this block).
+  position: relative;
 
-	// The chips row and the tabs (which host the routed page) keep their natural
-	// height and the container scrolls past them — no flex child may be squeezed
-	// back into the viewport, or we are right back to a clipped widget grid.
-	> ga-dashboard-switcher,
-	> gz-dynamic-tabs {
-		flex: 0 0 auto;
-	}
+  // The chips row keeps its natural height; the tabs take the rest of the
+  // column, because the page inside them is what scrolls now.
+  > ga-dashboard-switcher {
+    flex: 0 0 auto;
+  }
 
-	/*
+  > gz-dynamic-tabs {
+    flex: 1 1 auto;
+    // A flex item will not shrink below its content unless told to, and the
+    // content here is a whole dashboard page.
+    min-height: 0;
+  }
+
+  /*
 	 * ── The ⋮ menu rides on the tab bar ──────────────────────────────────────
 	 *
 	 * `ga-dashboard-switcher` renders its chips row only once there is more than
@@ -73,25 +101,32 @@ $tab-height: 2.5rem;
 	 * the Edit / Save / Cancel buttons join the ⋮ menu. Those need the full-width
 	 * row and keep it.
 	 */
-	> ga-dashboard-switcher:not(:has(.chips-area)) {
-		position: absolute;
-		top: 0;
-		inset-inline-end: 0;
-		z-index: 2;
-		display: flex;
-		align-items: center;
-		height: $tab-height;
+  > ga-dashboard-switcher:not(:has(.chips-area)) {
+    position: absolute;
+    top: 0;
+    inset-inline-end: $tab-actions-inset;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    height: $tab-height;
 
-		.dashboard-switcher {
-			padding-block: 0;
-		}
-	}
+    // The switcher's own padding is what the full-width chips row needs; here
+    // it is the only thing between the button and the edge of the strip, and it
+    // pushed the glyph 8px further out than the tab inset above.
+    .dashboard-switcher {
+      padding: 0;
+    }
+  }
 
-	> ga-dashboard-switcher:not(:has(.chips-area)) + gz-dynamic-tabs {
-		// 2rem of button + the switcher's own inline padding, rounded up so the
-		// last tab never sits under the menu.
-		padding-inline-end: 3rem;
-	}
+  // The room the tabs leave for that button, stated on the STRIP rather than on
+  // the tabset host. On the host it shortened the strip itself — the bar, its
+  // rule and its fill all stopped 48px early — and the button then sat in the
+  // gap beyond the end of the bar, which is what read as "much to the right".
+  // As padding on the `<ul>` the bar keeps running the full width of the page
+  // and the button sits inside it, on the tab row, like a last item.
+  > ga-dashboard-switcher:not(:has(.chips-area)) + gz-dynamic-tabs ::ng-deep .route-tabset {
+    padding-inline-end: calc(2rem + #{$tab-inline-inset});
+  }
 }
 
 /*
@@ -109,10 +144,10 @@ $tab-height: 2.5rem;
  * no-op and the empty tab band survived.
  */
 :host ::ng-deep gz-dynamic-tabs.hidden {
-	> nb-route-tabset > .route-tabset,
-	> nb-tabset > .tabset {
-		display: none;
-	}
+  > nb-route-tabset > .route-tabset,
+  > nb-tabset > .tabset {
+    display: none;
+  }
 }
 
 /*
@@ -125,45 +160,165 @@ $tab-height: 2.5rem;
  * than a shouted word.
  */
 :host ::ng-deep gz-dynamic-tabs nb-route-tabset .route-tab .tab-link {
-	// Nebular sizes a tab from `route-tabset-tab-padding` alone, so the row
-	// height was 2 x 0.75rem + a 1rem line = 2.75rem, and the horizontal 1.25rem
-	// inset put 20px either side of every label. The height is stated directly
-	// instead (the link is already `display: flex; align-items: center` from
-	// `tab-link-typography`) so ONE number answers for the bar and for the
-	// actions cluster that is centred on it below.
-	min-height: $tab-height;
-	padding-block: 0;
-	padding-inline: 0.875rem;
-	// Nebular leaves the link an `inline-block`, so it sits on the row's text
-	// baseline and the line box reserves descender space above it: the bar
-	// measured 2px taller than the tab it holds, and the actions cluster centred
-	// on `$tab-height` came out a pixel high against it. Aligning to the top of
-	// the line box makes the bar exactly as tall as a tab, which is what the
-	// variable claims.
-	display: inline-flex;
-	align-items: center;
-	vertical-align: top;
-	// The icon and its label are one unit; Nebular leaves them touching.
-	gap: 0.5rem;
+  // Nebular sizes a tab from `route-tabset-tab-padding` alone, so the row height
+  // was 2 x 0.75rem + a 1rem line = 2.75rem, and the horizontal 1.25rem inset
+  // put 20px either side of every label. The height is stated directly instead —
+  // the link is centred by the `:root` rule in
+  // `styles/gauzy/_gauzy-overrides.scss`, which is what finally gets the flex
+  // centring past Nebular's own component style — so ONE number answers for the
+  // strip and for the actions cluster centred on it above. At 2.25rem the block
+  // inset works out to 10px either side of the label.
+  min-height: $tab-height;
+  padding-block: 0;
+  padding-inline: $tab-inline-inset;
+  // The strip frames the page rather than being part of it, so its labels sit
+  // below the 0.875rem control text — the same reasoning as the selector chips
+  // in the header band above it, one step further down because a tab title is
+  // navigation rather than content.
+  font-size: 0.75rem;
+  // Nebular leaves the link an `inline-block` participating in the strip's line
+  // box, which reserves descender space above it: the strip measured 2px taller
+  // than the tab it holds, and the actions cluster centred on `$tab-height` came
+  // out a pixel high against it. Aligning to the top of the line box makes the
+  // strip exactly as tall as a tab, which is what the variable claims.
+  vertical-align: top;
+  // The icon and its label are ONE object, so they are closer to each other
+  // than either is to the next tab (12px of inline padding either side). This
+  // is now the only thing setting that distance: Nebular's own `margin-left` on
+  // the label is zeroed in `styles/gauzy/_gauzy-overrides.scss`, where it used
+  // to land on top of this and make the pair read as two.
+  gap: 0.375rem;
+  // A shrinking tab has to be allowed to shrink INSIDE, or its label just
+  // overflows the link box (a flex item's `min-width` is `auto` by default,
+  // i.e. its content). This is what lets the ellipsis below ever appear.
+  min-width: 0;
+  max-width: 100%;
 
-	nb-icon {
-		// Nebular gives a route tab's icon no size of its own, so it fell back to
-		// the `nb-icon` default (1.5rem) and out-weighed the 0.875rem label
-		// beside it. An `em` keeps the pair proportional if the type step moves.
-		font-size: 1.15em;
-		height: 1.15em;
-		width: 1.15em;
-	}
+  nb-icon {
+    // Nebular gives a route tab's icon no size of its own, so it fell back to
+    // the `nb-icon` default (1.5rem) and out-weighed the label beside it. An
+    // `em` keeps the pair proportional if the type step moves — but the box
+    // is `1em` of the icon's OWN size, not another `1.25em`, or the two
+    // multiply into a 20px glyph.
+    font-size: 1.25em;
+    height: 1em;
+    width: 1em;
+    flex: 0 0 auto;
+    // Nebular spaces the icon from its label with a margin of its own, which
+    // lands on top of the row's `gap` and put 26px between the two.
+    margin: 0;
+  }
 
-	// Tab titles come from translation keys, which are free to be lower-cased;
-	// Nebular upper-cases them. A sentence-cased label reads as a name rather
-	// than as a shouted one, and matches every other label in the page frame.
-	.tab-text {
-		display: inline-block;
-		text-transform: initial;
+  // Tab titles come from translation keys, which are free to be lower-cased;
+  // Nebular upper-cases them. A sentence-cased label reads as a name rather
+  // than as a shouted one, and matches every other label in the page frame.
+  .tab-text {
+    display: inline-block;
+    text-transform: initial;
+    // One line, clipped to an ellipsis. `DynamicTabsComponent` puts the full
+    // title on the link as a `title` attribute, so the name is always one hover
+    // away — which is also what covers the icon-only state Nebular drops a
+    // `responsive` tab into below 36rem.
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
-		&:first-letter {
-			text-transform: uppercase;
-		}
-	}
+    &:first-letter {
+      text-transform: uppercase;
+    }
+  }
+}
+
+/*
+ * ── The strip when the tabs no longer fit ────────────────────────────────────
+ *
+ * The dashboard tab list is open-ended: the standard tabs are joined by whatever
+ * the plugins register, and a user-built dashboard adds its own. Nebular lays
+ * the `<ul>` out as a `nowrap` flex row and leaves it at that, so past a certain
+ * count the tabs ran straight off the trailing edge — and the page clips
+ * horizontal overflow (see the note at the top of this file), so the last tabs
+ * were not merely off-screen, they were unreachable.
+ *
+ * Two stages instead. The tabs shrink first, truncating their labels (above);
+ * once they are down to `$tab-min-width` the strip itself scrolls. `nowrap` is
+ * restated rather than assumed, because a wrapping strip would change the
+ * bar's height and the ⋮ menu is centred on a single `$tab-height` line.
+ */
+:host ::ng-deep gz-dynamic-tabs nb-route-tabset .route-tabset {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  // A horizontal scrollport would otherwise be free to scroll vertically too,
+  // and the active tab's top corners would clip against it.
+  overflow-y: hidden;
+  // The bar is 36px tall; a scrollbar drawn inside it would take a fifth of that
+  // and sit across the tabs. The strip is dragged / swiped, or the tabs are
+  // reached with the keyboard, both of which still work.
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    height: 0;
+    width: 0;
+  }
+
+  .route-tab {
+    flex: 0 1 auto;
+    // Nebular pulls each tab 1px down so the active one covers the strip's
+    // bottom divider. This theme sets `route-tabset-divider-width: 0` — there is
+    // no divider to cover — and inside the scrollport above that overhanging
+    // pixel would simply be clipped off the active tab's fill. Zeroed, the strip
+    // is exactly `$tab-height` tall, which is what the ⋮ menu is centred on.
+    margin-bottom: 0;
+
+    // Shrinkable, but not below the floor — that is what hands the overflow to
+    // the scrollport above rather than squeezing five tabs into an ellipsis
+    // each.
+    //
+    // Only while the tabs still HAVE labels: below 36rem Nebular hides the
+    // label of a `responsive` tab outright, and a floor written for a label
+    // would then reserve 5rem for a 1rem glyph.
+    @media screen and (min-width: 36.0625rem) {
+      min-width: $tab-min-width;
+    }
+  }
+}
+
+:host ::ng-deep gz-dynamic-tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  > nb-route-tabset {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
+    > .route-tabset {
+      flex: 0 0 auto;
+    }
+
+    // The outlet is an anchor for the routed view, never a box of its own.
+    > router-outlet {
+      display: none;
+    }
+
+    > router-outlet ~ * {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    // The routed page opens with a card of its own, and inside a tabset that
+    // card IS the page: it fills the whole area under the strip, so its rounded
+    // corners had nothing to round against — they only cut the surface away
+    // from the tabs sitting on top of it. Squared, the strip and the page below
+    // it read as one sheet. Only the OUTERMOST card is squared; the panels and
+    // widgets nested inside it keep the shared radius.
+    > router-outlet ~ * > nb-card {
+      border-radius: 0;
+    }
+  }
 }
