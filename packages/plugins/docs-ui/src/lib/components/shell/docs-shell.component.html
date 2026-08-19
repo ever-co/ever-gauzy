@@ -1,12 +1,22 @@
 <div class="docs-shell">
 	<aside class="docs-tree-column" [class.collapsed]="treeCollapsed" [attr.aria-label]="'DOCS.A11Y.TREE_LABEL' | translate">
+		<!-- Rail header. The label is presentational: collapsed, the rail was a
+		     2.25rem strip holding a single unlabelled chevron with no indication
+		     of what it opens. `aria-hidden` because the <aside> already carries
+		     the region's accessible name (`DOCS.A11Y.TREE_LABEL`, above) and the
+		     toggle carries its own. -->
 		<div class="docs-tree-column-header">
+			<span class="docs-tree-column-title" *ngIf="!treeCollapsed" aria-hidden="true">
+				{{ 'DOCS.TREE.ALL_DOCUMENTS' | translate }}
+			</span>
 			<button
 				nbButton
 				ghost
 				size="tiny"
+				class="docs-tree-column-toggle"
 				(click)="toggleTree()"
 				[nbTooltip]="(treeCollapsed ? 'DOCS.TREE.EXPAND_SIDEBAR' : 'DOCS.TREE.COLLAPSE_SIDEBAR') | translate"
+				[attr.aria-label]="(treeCollapsed ? 'DOCS.TREE.EXPAND_SIDEBAR' : 'DOCS.TREE.COLLAPSE_SIDEBAR') | translate"
 			>
 				<nb-icon [icon]="treeCollapsed ? 'chevron-right-outline' : 'chevron-left-outline'"></nb-icon>
 			</button>
