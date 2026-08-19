@@ -30,9 +30,13 @@
  * contact-mutation.component.scss). Two bars, neither sized from anything real.
  *
  * Now the body keeps the height the frame hands it and owns the only scrollbar;
- * everything inside the wizard grows with its content. Horizontal overflow stays
- * hidden — a form column that briefly measures a pixel wide at a narrow viewport
- * must not add a second bar along the bottom.
+ * everything inside the wizard grows with its content. Horizontal overflow
+ * SCROLLS rather than clips: `hidden` here is what cut off the fourth step of the
+ * stepper header ("Members") whenever the header ran wider than the card — the
+ * step boxes could not shrink at the time (see the stepper override in
+ * styles/gauzy/_gauzy-overrides.scss). They can now, so a bar along the bottom
+ * only ever appears for content that genuinely does not fit, and that content
+ * is reachable instead of gone.
  *
  * The selector matches the `nb-card nb-card-body` shape of the `nb-card-overrides`
  * mixin so it out-ranks the `overflow` that mixin sets — deliberately, rather
@@ -40,7 +44,7 @@
  */
 :host nb-card nb-card-body.mutation {
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
 
   // The body is a flex column (@shared/_pg-card). The wizard sizes the scroll
   // content, so it must never be shrunk back to fit the box it is scrolling in.

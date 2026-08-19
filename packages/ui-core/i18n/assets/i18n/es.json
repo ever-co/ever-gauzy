@@ -1158,6 +1158,21 @@
 		"START_SERVER": "Iniciar servidor",
 		"STOP_SERVER": "Detener servidor."
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Interfaz de usuario",
+			"DESCRIPTION": "Elija qué interfaz usan todos los usuarios de este inquilino para las páginas disponibles en ambas variantes.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (predeterminado)",
+				"REACT": "React (nuevo)"
+			},
+			"HINT": "Se aplica a todo el inquilino, en todos los dispositivos. Hoy el panel de seguimiento de tiempo está disponible en ambas interfaces; seguirán más páginas.",
+			"READ_ONLY": "Solo los administradores del inquilino pueden cambiar esta configuración.",
+			"SAVING": "Guardando…",
+			"SAVED": "Preferencia de interfaz guardada",
+			"SAVE_ERROR": "No se pudo guardar la preferencia de interfaz."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Temas",
 		"LIGHT": "Luz",
@@ -3667,6 +3682,12 @@
 		"STOP": "Detener la generación",
 		"ERROR": "Algo salió mal.",
 		"RETRY": "Reintentar",
+		"DICTATION_FAILED": "No se pudo transcribir la grabación.",
+		"DICTATION_NOT_CONFIGURED": "El dictado necesita un proveedor de voz. Añade uno en la página de ajustes «Proveedores de IA».",
+		"DICTATION_ASK_ADMIN": "El dictado necesita un proveedor de voz: pide a un administrador que añada uno en Ajustes → Proveedores de IA.",
+		"DICTATION_KEY_REJECTED": "El proveedor de voz rechazó su clave de API. Actualízala en la página de ajustes «Proveedores de IA».",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "El proveedor de voz rechazó su clave de API: pide a un administrador que la actualice en Ajustes → Proveedores de IA.",
+		"DICTATION_OPEN_SETTINGS": "Abrir Proveedores de IA",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."

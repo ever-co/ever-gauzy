@@ -4,7 +4,6 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FeatureFlag } from '@gauzy/common';
 import { FeatureEnum, ID, IDocument, IDocumentVersion, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
-	BaseQueryDTO,
 	FeatureFlagGuard,
 	PermissionGuard,
 	Permissions,
@@ -13,7 +12,7 @@ import {
 	UUIDValidationPipe
 } from '@gauzy/core';
 import { RestoreDocumentVersionCommand } from '../commands/restore-document-version.command';
-import { DocumentVersion } from '../entities/document-version.entity';
+import { GetDocumentVersionsQueryDTO } from '../dto/get-document-versions-query.dto';
 import { GetDocumentVersionQuery } from '../queries/get-document-version.query';
 import { GetDocumentVersionsQuery } from '../queries/get-document-versions.query';
 
@@ -34,7 +33,10 @@ export class DocumentVersionController {
 	@Get('/:id/versions')
 	public async findAll(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: BaseQueryDTO<DocumentVersion>
+		// NOT BaseQueryDTO: its inherited `where` is @IsNotEmpty(), so this route 400'd
+		// ("where should not be empty") on every call before the handler ran — and nothing here reads
+		// `where` anyway. See GetDocumentVersionsQueryDTO.
+		@Query() params: GetDocumentVersionsQueryDTO
 	): Promise<IPagination<IDocumentVersion>> {
 		return this.queryBus.execute(new GetDocumentVersionsQuery(id, params));
 	}

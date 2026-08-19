@@ -1156,6 +1156,21 @@
 		"START_SERVER": "Start de server",
 		"STOP_SERVER": "Stop server"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "Gebruikersinterface",
+			"DESCRIPTION": "Kies welke interface iedereen in deze tenant gebruikt voor pagina's die in beide varianten beschikbaar zijn.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (standaard)",
+				"REACT": "React (nieuw)"
+			},
+			"HINT": "Geldt voor de hele tenant, op elk apparaat. Vandaag is het tijdregistratie-dashboard in beide interfaces beschikbaar; meer pagina's volgen.",
+			"READ_ONLY": "Alleen tenantbeheerders kunnen deze instelling wijzigen.",
+			"SAVING": "Opslaan…",
+			"SAVED": "Interfacevoorkeur opgeslagen",
+			"SAVE_ERROR": "De interfacevoorkeur kon niet worden opgeslagen."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "Thema's",
 		"LIGHT": "Licht",
@@ -3665,6 +3680,12 @@
 		"STOP": "Genereren stoppen",
 		"ERROR": "Er is iets misgegaan.",
 		"RETRY": "Opnieuw proberen",
+		"DICTATION_FAILED": "De opname kon niet worden getranscribeerd.",
+		"DICTATION_NOT_CONFIGURED": "Dicteren vereist een spraakprovider. Voeg er een toe op de instellingenpagina 'AI-providers'.",
+		"DICTATION_ASK_ADMIN": "Dicteren vereist een spraakprovider — vraag een beheerder er een toe te voegen onder Instellingen → AI-providers.",
+		"DICTATION_KEY_REJECTED": "De spraakprovider heeft de API-sleutel geweigerd. Werk deze bij op de instellingenpagina 'AI-providers'.",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "De spraakprovider heeft de API-sleutel geweigerd — vraag een beheerder deze bij te werken onder Instellingen → AI-providers.",
+		"DICTATION_OPEN_SETTINGS": "AI-providers openen",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."

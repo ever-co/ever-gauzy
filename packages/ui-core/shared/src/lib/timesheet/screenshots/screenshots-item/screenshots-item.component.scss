@@ -1,4 +1,9 @@
-@forward 'report';
+// `@use`, not `@forward`: forwarding only re-exports the module to OUR importers, it does
+// not bring `nb-theme()` into this file — every nb-theme() below was emitted as invalid CSS and
+// dropped by the browser since the Angular 19 upgrade (no card radius/background, no danger
+// border for not-work-related slots, no progress-track colour). The React port of this card
+// (dashboard-time-track-react-ui) renders these values, so this restores parity.
+@use 'report' as *;
 
 :host {
   ::ng-deep {
@@ -9,7 +14,7 @@
   }
   .card {
     border-radius: nb-theme(border-radius);
-    background: var(gauzy-sidebar-background-4);
+    background: var(--gauzy-sidebar-background-4);
     box-shadow: var(--gauzy-shadow);
     min-width: 189px;
     max-width: 270px;

@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/ui-react-components",
 	"version": "0.1.0",
-	"description": "Reusable React UI components (StatCard, ProgressBar, ProjectDots) and design tokens for Gauzy dashboards.",
+	"description": "Reusable React UI components (Card, CounterPoint, ProgressBar, Badge, Avatar, Spinner, Popover) and theme-adaptive design tokens for Gauzy dashboards.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",

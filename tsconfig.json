@@ -30,6 +30,16 @@
 			"@gauzy/plugin-ai-provider-gauzy-ai": ["./packages/plugins/ai-provider-gauzy-ai/src/index.ts"],
 			"@gauzy/plugin-ai-provider-gemini": ["./packages/plugins/ai-provider-gemini/src/index.ts"],
 			"@gauzy/plugin-ai-provider-grok": ["./packages/plugins/ai-provider-grok/src/index.ts"],
+			"@gauzy/plugin-ai-provider-groq": ["./packages/plugins/ai-provider-groq/src/index.ts"],
+			"@gauzy/plugin-ai-provider-mistral": ["./packages/plugins/ai-provider-mistral/src/index.ts"],
+			"@gauzy/plugin-ai-provider-deepgram": ["./packages/plugins/ai-provider-deepgram/src/index.ts"],
+			"@gauzy/plugin-ai-provider-elevenlabs": ["./packages/plugins/ai-provider-elevenlabs/src/index.ts"],
+			"@gauzy/plugin-ai-provider-speaches": ["./packages/plugins/ai-provider-speaches/src/index.ts"],
+			"@gauzy/plugin-ai-provider-localai": ["./packages/plugins/ai-provider-localai/src/index.ts"],
+			"@gauzy/plugin-ai-provider-whisper-cpp": ["./packages/plugins/ai-provider-whisper-cpp/src/index.ts"],
+			"@gauzy/plugin-ai-provider-openai-compatible": [
+				"./packages/plugins/ai-provider-openai-compatible/src/index.ts"
+			],
 			"@gauzy/plugin-changelog": ["./packages/plugins/changelog/src/index.ts"],
 			"@gauzy/plugin-docs": ["./packages/plugins/docs/src/index.ts"],
 			"@gauzy/plugin-docs-ui": ["./packages/plugins/docs-ui/src/index.ts"],

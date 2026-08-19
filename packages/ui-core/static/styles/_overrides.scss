@@ -271,6 +271,30 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     flex-direction: column;
     min-height: 0;
 
+    // ── The WIDTH half of the same story ──────────────────────────────────
+    // Nebular already lets the column shrink (`flex: 1 0; min-width: 0`), and
+    // the AI chat column takes up to 860px of the row when it is expanded, so
+    // the canvas can get narrower than the page it holds. Nothing used to say
+    // what happens then: the column's overflow was `visible`, so a card that
+    // could not shrink ran out past the column, past `.columns` and `.content`,
+    // and the only box that could scroll it was the whole-page
+    // `.scrollable-container` above — which slides the page under the FIXED
+    // nav sidebar and header band. A horizontal scrollbar you cannot use, on a
+    // page that looks simply cut off.
+    //
+    // So the column itself is the scroll port: what does not fit scrolls INSIDE
+    // the canvas, beside the sidebars and under the header band, and the
+    // vertical frame above stays exactly what it is (the column is already
+    // height-bounded, so a page that fits sees no scrollbar at all; one that
+    // is taller than the column now scrolls here rather than at the page
+    // level, i.e. above the footer instead of under it). `overflow-x` alone
+    // is spelled out, but CSS pairs the two axes: a non-`visible` x forces y
+    // to `auto` as well, which is the intended result. `overscroll-behavior`
+    // keeps a trackpad swipe past the end of the canvas from turning into a
+    // browser back/forward navigation.
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+
     // The outlet is an anchor for the routed view, never a box of its own.
     > router-outlet {
       display: none;
@@ -279,13 +303,22 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     > router-outlet + * {
       flex: 1 1 auto;
       min-height: 0;
+      // The routed page is the column's only real child, stretched to the
+      // column's width; `min-width: 0` here plus on the card chain below is the
+      // width counterpart of the `min-height: 0` release above, so a page that
+      // CAN shrink (a wrapping form, a table inside its own scroll container)
+      // does so instead of asking the column to scroll.
+      min-width: 0;
+      max-width: 100%;
     }
 
     nb-card {
       min-height: 0;
+      min-width: 0;
 
       > nb-card-body {
         min-height: 0;
+        min-width: 0;
       }
     }
   }
@@ -399,18 +432,19 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
   angular2-smart-table table {
     border-collapse: separate !important;
 
-    // Filter-row controls track the table density: they are the tallest thing
-    // in the filter row, so their height IS that row's height.
+    // Filter-row controls: COLOUR only. Every metric of these widgets (height,
+    // line-height, padding, the flex centring of the ng-select trigger) has ONE
+    // home, `gauzy/_gauzy-table-filters.scss`, which reads the same
+    // `--gauzy-table-control-height` token. This block used to restate the
+    // height and a 16px placeholder line box, and disagreed with a second copy
+    // (1.875rem) in that file — two sources of truth for one row.
     .angular2-smart-filter input {
-      height: var(--gauzy-table-control-height, 1.75rem);
       background-color: var(--gauzy-sidebar-background-3) !important;
       border: none !important;
     }
 
     .angular2-smart-filter .ng-select .ng-select-container {
       background-color: var(--gauzy-sidebar-background-3) !important;
-      height: var(--gauzy-table-control-height, 1.75rem);
-      min-height: auto;
 
       input {
         background-color: transparent !important;
@@ -418,9 +452,7 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     }
 
     .angular2-smart-filter .ng-select .ng-select-container .ng-value-container .ng-placeholder {
-      font-size: 13px;
       font-weight: 400;
-      line-height: 16px;
       letter-spacing: 0em;
       color: var(--input-basic-placeholder-text-color);
     }
@@ -1003,8 +1035,64 @@ nb-card-header.ga-page-header {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: wrap;
-  align-items: center;
+  // TOP-anchored, not centred — see "One vertical axis" below.
+  align-items: flex-start;
   column-gap: 1rem;
+
+  // ── One vertical axis for everything on the title line ───────────────────
+  //
+  // The title block is TWO lines tall once `ngx-header-title` has parked the
+  // breadcrumb trail under the heading (`.ga-page-title-trail`, a full-basis,
+  // last-ordered item of the wrapping title row). With `align-items: center` on
+  // this header, the action row (`+ Add`, the Edit/Delete strip, the grid-vs-list
+  // selector) was centred on that two-line block, while a secondary button that
+  // shares the title ROW (Users' "Manage Invites", Time-off's settings cog,
+  // Expenses' "Manage Categories") was centred on the first line only — two
+  // centring contexts, ~13px apart, on what reads as one toolbar. Two smaller
+  // things widened the split: the heading kept Bootstrap's 0.5rem
+  // `margin-bottom` inside its flex box (so the title glyphs sat ~4px above the
+  // line's centre), and page stylesheets that forward `gauzy/_gauzy-table` give
+  // every `button` a 5px margin, which inflated the buttons' line by 10px on some
+  // pages and not others.
+  //
+  // So both sides are anchored to the TOP of the header and centre their content
+  // in the same reference box, `gauzy-page-title-row-height` (see
+  // `_gauzy-theme-maps.scss`: the tallest control this line hosts, a small filled
+  // button inside the `.visible-slot` pill): the heading pads its line box out
+  // to that height, and the action block is a flex box of that min-height. Same
+  // top edge, same box, same centre — the axis is shared by construction, and
+  // the trail on the heading's second line no longer takes part in it.
+  // Two ways to reach the heading: the title block's own child (the common
+  // shape), and the heading's direct parent as stamped by `relocateTrail`
+  // (`.ga-page-title-row`) — which is a NESTED div on pages such as Employees
+  // that wrap the heading and a secondary button in `.card-header-title` blocks
+  // of their own.
+  > .ga-page-header-main > :is(h1, h2, h3, h4, h5, h6),
+  .ga-page-title-row > :is(h1, h2, h3, h4, h5, h6) {
+    // Symmetric block padding rather than `display: flex` + `min-height`: it
+    // centres the 1.75rem title line in the reference box without turning the
+    // heading's inline content (`ngx-header-title`, a qualifier span, an icon)
+    // into flex items, and a title that wraps to two lines stays centred too.
+    // The literals are only the CSS-var fallbacks (same convention as the
+    // table density block above); the values live in the theme maps.
+    padding-block: calc(
+      (var(--gauzy-page-title-row-height, 2.125rem) - var(--gauzy-page-title-line-height, 1.75rem)) / 2
+    );
+    // Bootstrap reboot's `margin-bottom: 0.5rem` — the trail below carries its
+    // own `margin-top`, so the heading's box is its line box plus that padding
+    // and nothing else.
+    margin-block: 0;
+  }
+
+  // Block margins only: the horizontal 5px from `_gauzy-table.scss` is the
+  // spacing between neighbouring buttons and stays. Vertically it made a
+  // button's box taller than the button, on the pages that happen to forward
+  // that partial, which is why the two halves of a toolbar could never share a
+  // reference box across pages.
+  > .ga-page-header-main button,
+  > .ga-page-header-actions button {
+    margin-block: 0;
+  }
 
   // Whatever else the page stacked under the title stays stacked: a full basis
   // keeps each remaining child (a filter strip, a table's column headings) on a
@@ -1069,7 +1157,22 @@ nb-card-header.ga-page-header {
     // Beats Bootstrap's `align-self-end`, which several pages use to right-align
     // this block while the header was still a column. Along a row that same
     // declaration would drop the buttons to the bottom of the title block.
-    align-self: center !important;
+    // TOP, not centre: see "One vertical axis" above — the block is centred on
+    // the title LINE through the shared reference box below, not on the whole
+    // (title + trail) block.
+    align-self: flex-start !important;
+
+    // The same reference box the heading uses, so the buttons and the title
+    // glyphs share one centre; a secondary button a page renders in this block
+    // (Expenses' "Manage Categories" next to `+ Add`) is centred here too.
+    // `display: flex` also beats Bootstrap's `d-flex` no-ops on the pages that
+    // give this block `align-self-end d-flex align-items-center`.
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    column-gap: 0.5rem;
+    min-height: var(--gauzy-page-title-row-height, 2.125rem);
 
     // `ngx-gauzy-button-action` pads itself for a standalone row; on the title's
     // line the title block already sets the height, and that padding IS the band

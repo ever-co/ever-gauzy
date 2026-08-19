@@ -1,27 +1,41 @@
 import { PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, IPluginI18nService, PluginRouteInput } from '@gauzy/plugin-ui';
-import { DASHBOARD_TIME_TRACK_ROUTE, DASHBOARD_TIME_TRACK_PATH } from './dashboard-time-track-react-ui.routes';
+import {
+	DASHBOARD_TIME_TRACK_PATH,
+	DASHBOARD_TIME_TRACK_ROUTE,
+	LEGACY_DASHBOARD_TIME_TRACK_REDIRECT_ROUTE
+} from './dashboard-time-track-react-ui.routes';
 import en from '../i18n/en.json';
 
 /**
- * React UI Plugin Definition.
+ * React UI Plugin Definition — the React flavour of the Time Tracking dashboard.
  *
- * Registers the Time Tracking stat widgets (Members worked, Projects worked,
- * Today's Activity, Worked today, Worked this week, Weekly Activity) as a
- * single React extension on the Time Tracking dashboard. Data is fetched live
- * from TimesheetStatisticsService via the Angular injector bridge.
+ * Renders the SAME dashboard as `@gauzy/plugin-dashboard-time-track-angular-ui` — title with
+ * period prefix and breadcrumb, timezone / time-format selector, "Manage widgets" popover with
+ * Undo, Auto Refresh + Refresh, the six counter widgets (Members worked, Projects worked, Today's
+ * Activity, Worked today, Worked this week, Weekly Activity) and the six windows (Recent
+ * Activities with the screenshot carousel and gallery, Manual Time, Tasks, Projects, Apps & URLs,
+ * Members), each with its ⋮ Collapse / Expand / Move / Delete menu and drag & drop reordering —
+ * built with React 19 through the `@gauzy/ui-react` bridge. Data, layout persistence
+ * (`Store.widgets` / `Store.windows`), permissions, dialogs and navigation reuse the Angular
+ * services via the injector, so a tenant can flip between the two flavours (Settings → General →
+ * "Preferred UI") without losing state.
  *
- * Uses `defineDeclarativePlugin` — no Angular NgModule or manual service
- * injection required. Routes and tabs are registered automatically at
- * bootstrap via the services provided to `PluginUiModule.init()`.
+ * Uses `defineDeclarativePlugin` — no Angular NgModule or manual service injection required.
+ * Routes and tabs are registered automatically at bootstrap via the services provided to
+ * `PluginUiModule.init()`.
  *
- * ## Features Demonstrated
+ * ## Features
  *
  * - **Versioning**: `version: '0.1.0'` — enables compatibility checks
- * - **Namespace Isolation**: `translationNamespace: 'REACT_UI'` — prevents i18n key collisions
- * - **Settings**: Dashboard widget visibility toggles with auto-generated UI
- * - **Type-Safe Events**: `DashboardRefreshedEvent` / `WidgetVisibilityChangedEvent` in `dashboard-time-track-react-ui.events.ts`
- * - **Permissions**: Tab visibility gated by `ADMIN_DASHBOARD_VIEW` + `TIME_TRACKING_DASHBOARD`
+ * - **i18n**: the global `TIMESHEET.*` / `BUTTONS.*` keys of the Angular tab (all 14 locales);
+ *   the `REACT_UI` namespace only carries the one string that has no global key ("Undo")
+ * - **Type-Safe Events**: `DashboardRefreshedEvent` (every counts refresh) /
+ *   `WidgetVisibilityChangedEvent` (Manage-widgets toggles) in `dashboard-time-track-react-ui.events.ts`
+ * - **Permissions**: Tab visibility gated by `ADMIN_DASHBOARD_VIEW` + `TIME_TRACKING_DASHBOARD`;
+ *   the Members widget/window and the avatar/"View All" bits by `CHANGE_SELECTED_EMPLOYEE`
+ * - **Preferred UI**: the route carries `preferredUiCanMatch(PreferredUiEnum.REACT)`, so it only
+ *   matches when the tenant selected the React flavour; the tab is shared with the Angular plugin
  *
  * ## Usage
  *
@@ -42,88 +56,30 @@ export const DashboardTimeTrackReactUiPlugin = defineDeclarativePlugin('dashboar
 	location: 'page-sections',
 
 	// ── Routes ───────────────────────────────────────────────────
-	routes: [DASHBOARD_TIME_TRACK_ROUTE as PluginRouteInput],
+	routes: [DASHBOARD_TIME_TRACK_ROUTE as PluginRouteInput, LEGACY_DASHBOARD_TIME_TRACK_REDIRECT_ROUTE as PluginRouteInput],
 
 	// ── Namespace-isolated translations ──────────────────────────
-	// All keys are auto-wrapped under 'REACT_UI' to avoid collisions.
-	// Use: instant('REACT_UI.DASHBOARD_PAGE.TABS.REACT_TIME_TRACKING')
-	// or via NamespacedTranslateHelper: instant('DASHBOARD_PAGE.TABS.REACT_TIME_TRACKING')
+	// The dashboard itself uses the global `TIMESHEET.*` / `BUTTONS.*` keys (same as the Angular
+	// tab). This bundle only carries strings that have no global key, wrapped under 'REACT_UI'
+	// (English falls back for every other language, see `applyPluginTranslations`).
 	translationNamespace: 'REACT_UI',
 	translations: { en },
 
-	// ── Plugin Settings (auto-generated UI) ──────────────────────
-	settings: {
-		title: 'React Dashboard Widgets',
-		description: 'Configure which widgets are visible on the React Time Tracking dashboard.',
-		category: 'dashboard',
-		fields: [
-			{
-				key: 'showMembersWorked',
-				type: 'boolean',
-				label: 'Show Members Worked',
-				defaultValue: true,
-				order: 1
-			},
-			{
-				key: 'showProjectsWorked',
-				type: 'boolean',
-				label: 'Show Projects Worked',
-				defaultValue: true,
-				order: 2
-			},
-			{
-				key: 'showTodayActivity',
-				type: 'boolean',
-				label: 'Show Today Activity',
-				defaultValue: true,
-				order: 3
-			},
-			{
-				key: 'showWorkedToday',
-				type: 'boolean',
-				label: 'Show Worked Today',
-				defaultValue: true,
-				order: 4
-			},
-			{
-				key: 'showWorkedThisWeek',
-				type: 'boolean',
-				label: 'Show Worked This Week',
-				defaultValue: true,
-				order: 5
-			},
-			{
-				key: 'showWeeklyActivity',
-				type: 'boolean',
-				label: 'Show Weekly Activity',
-				defaultValue: true,
-				order: 6
-			},
-			{
-				key: 'refreshInterval',
-				type: 'number',
-				label: 'Auto-refresh interval (seconds)',
-				description: 'How often to refresh dashboard data. Set to 0 to disable.',
-				defaultValue: 300,
-				validation: { min: 0, max: 3600 },
-				order: 7
-			}
-		]
-	},
-
 	// ── Dashboard Tab ────────────────────────────────────────────
+	// Same `tabId`, title, icon, order and path as the Angular flavour: the tab registry
+	// upserts by `tabId`, so both plugins contribute ONE "Time Tracking" tab, and the route
+	// registrations behind it (`preferredUiCanMatch`) pick the flavour the tenant selected.
 	tabs: [
 		{
 			tabsetId: 'dashboard-page',
-			tabId: 'react-time-tracking',
+			tabId: 'time-tracking',
 			tabsetType: 'route',
 			path: `/pages/dashboard/${DASHBOARD_TIME_TRACK_PATH}`,
-			tabTitle: (_i18n: IPluginI18nService) =>
-				_i18n.getTranslation('REACT_UI.DASHBOARD_PAGE.TABS.REACT_TIME_TRACKING'),
-			tabIcon: 'code-outline',
+			tabTitle: (_i18n: IPluginI18nService) => _i18n.getTranslation('TIMESHEET.TIME_TRACKING'),
+			tabIcon: 'clock-outline',
 			responsive: true,
 			activeLinkOptions: { exact: false },
-			order: 4,
+			order: 3,
 			permissions: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKING_DASHBOARD]
 		}
 	]

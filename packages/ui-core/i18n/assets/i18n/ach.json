@@ -1062,6 +1062,21 @@
 		"FOCUS": "crwdns11138:0crwdne11138:0",
 		"APPLICATIONS": "crwdns11140:0crwdne11140:0"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "User interface",
+			"DESCRIPTION": "Choose which interface everyone in this tenant uses for pages that are available in both flavours.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (default)",
+				"REACT": "React (new)"
+			},
+			"HINT": "Applies to the whole tenant, on every device. Today the Time Tracking dashboard is available in both interfaces; more pages will follow.",
+			"READ_ONLY": "Only tenant administrators can change this setting.",
+			"SAVING": "Saving…",
+			"SAVED": "Interface preference saved",
+			"SAVE_ERROR": "The interface preference could not be saved."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "crwdns2106:0crwdne2106:0",
 		"LIGHT": "crwdns2108:0crwdne2108:0",
@@ -3383,6 +3398,12 @@
 		"STOP": "Cung tyeko",
 		"ERROR": "Gin mo pe otimme maber.",
 		"RETRY": "Tem doki",
+		"DICTATION_FAILED": "Could not transcribe the recording.",
+		"DICTATION_NOT_CONFIGURED": "Dictation needs a voice provider. Add one on the AI Providers settings page.",
+		"DICTATION_ASK_ADMIN": "Dictation needs a voice provider — ask an administrator to add one in Settings → AI Providers.",
+		"DICTATION_KEY_REJECTED": "The voice provider rejected its API key. Update it on the AI Providers settings page.",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "The voice provider rejected its API key — ask an administrator to update it in Settings → AI Providers.",
+		"DICTATION_OPEN_SETTINGS": "Open AI Providers",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
 		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."

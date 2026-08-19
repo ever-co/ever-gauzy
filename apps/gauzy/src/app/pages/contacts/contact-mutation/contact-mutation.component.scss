@@ -89,8 +89,14 @@
 // Bootstrap's `.container` caps the field column and centres it; inside the
 // step's flex row it also has to be allowed to shrink, or the photo column
 // squeezes it into an overflow at narrow widths.
+//
+// The basis is a real minimum rather than `auto`: `.container` is `width: 100%`,
+// which as an auto basis would claim the whole row and drop the fields under
+// the photo the moment the row is allowed to wrap. From 20rem the two columns
+// stay side by side until the canvas (the AI chat column can take up to 860px
+// of it) is genuinely too narrow, and only then does the form wrap below.
 .fields {
-  flex: 1 1 auto;
+  flex: 1 1 20rem;
   min-width: 0;
 
   // Bootstrap's 1rem field gap was set against a 16px label; the density pass put
@@ -210,6 +216,42 @@
     width: 100%;
   }
 
+  /*
+   * Step bodies shrink with the canvas.
+   *
+   * The wizard is an inline page card, so it is as wide as the layout column —
+   * which loses up to 860px to the expanded AI chat. Step 1's photo/fields row
+   * may wrap (`flex-wrap` in the template; the fields' minimum is set on
+   * `.fields` above), and the fixed Bootstrap splits of steps 2 and 4
+   * (`col-5`/`col-7` around the map, `col-6`/`col-6` around the member list) are
+   * turned into "at least this wide, else wrap": the grow factors keep the 5:7
+   * proportion whenever both fit on one line. Scoped to the bare grid columns
+   * of `.fields > .row` — step 1's `form-group col-*` field pairs keep their
+   * percentages, which shrink with the row on their own.
+   */
+  .contact-columns {
+    row-gap: 1rem;
+  }
+
+  .contact-container {
+    flex: 0 0 auto;
+  }
+
+  .fields > .row > .col-5:not(.form-group) {
+    flex: 5 1 18rem;
+    max-width: 100%;
+  }
+
+  .fields > .row > .col-7:not(.form-group) {
+    flex: 7 1 22rem;
+    max-width: 100%;
+  }
+
+  .fields > .row > .col-6:not(.form-group) {
+    flex: 1 1 16rem;
+    max-width: 100%;
+  }
+
   ::ng-deep ngx-image-uploader input {
     height: 100% !important;
   }
@@ -231,8 +273,14 @@
     border-bottom: 1px solid nb-theme(divider-color);
   }
 
+  // Chip and name side by side. Nebular stacks them (`flex-direction: column`
+  // for a horizontal stepper) and centres the name UNDER a 2rem-wide step, so
+  // it overflows the step box; the width, the shrinkability and the ellipsis on
+  // the label are now the global stepper override's job
+  // (styles/gauzy/_gauzy-overrides.scss) — this only picks the row layout.
   ::ng-deep nb-stepper.horizontal > .header .step {
     display: flex;
+    flex-direction: row;
     align-items: center;
     justify-content: flex-start;
     gap: 0.5rem;
@@ -245,7 +293,6 @@
     font-weight: 400;
     line-height: 1.25rem;
     letter-spacing: normal;
-    white-space: nowrap;
     color: nb-theme(text-hint-color);
     margin: 0;
     padding: 0;

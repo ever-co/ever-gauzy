@@ -61,11 +61,15 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
     // Docked to the right of the canvas: Menu | Canvas | Chat.
     // .layout (the content column) has default order 0, so order 2 places
     // the host after it (same trick as .menu-sidebar-rtl).
-    // (No per-dock border override: the panel carries a hairline on BOTH
-    // vertical edges unconditionally — see the .scrollable frame below —
-    // which also makes RTL correct for free.)
     &.chat-sidebar-end {
       order: 2 !important;
+
+      // Docked at the end the canvas is on the panel's START side: move the single
+      // canvas-seam hairline there (the viewport edge needs none).
+      ::ng-deep .main-container .scrollable {
+        border-inline-end: 0;
+        border-inline-start: 1px solid #{$chat-hairline};
+      }
     }
 
     &.expanded {
@@ -150,14 +154,14 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
         // transparent, and an overlay using them lets the conversation bleed through.
         --gz-chat-surface: #{nb-theme(gauzy-sidebar-background-2)};
         color: nb-theme(text-basic-color);
-        // A hairline FRAME on every edge that ever meets another surface:
-        // left (nav rail in the start dock), right (canvas — or the viewport
-        // edge in the end dock, harmless), top (the chat/header seam). No
-        // bottom — that edge is the viewport's. The frame is unconditional,
-        // so dock flips and RTL need no per-side overrides.
-        border-right: 1px solid #{$chat-hairline};
-        border-left: 1px solid #{$chat-hairline};
-        border-top: 1px solid #{$chat-hairline};
+        // ONE hairline, on the edge that meets the CANVAS. The chat's other seams are drawn by
+        // the surfaces around it so every line is single-width and continuous (see the
+        // "chrome hairlines" block at the end of this file): the top by the header band's
+        // bottom edge (which also runs on across the canvas), the nav-menu side by the menu
+        // sidebar's trailing edge (which runs the full viewport height, band included).
+        // Logical property, so RTL and the end dock (`.chat-sidebar-end` flips it below) both
+        // land on the canvas side.
+        border-inline-end: 1px solid #{$chat-hairline};
       }
     }
   }
@@ -294,6 +298,23 @@ nb-sidebar[tag='menu-sidebar'] {
         min-width: 0;
         overflow: hidden;
       }
+    }
+  }
+  // Expanded rail only (the compact rail below keeps its own geometry): Nebular
+  // absolutely positions the accordion chevron (`.expansion-indicator`) at
+  // `right: 1rem`, which pinned it to the switcher's far edge — with the
+  // switcher no longer stretched that edge IS the name's edge, but the header
+  // used to reserve `padding-right: 2.25rem` for it. Putting the chevron back
+  // IN FLOW makes it follow the name at a fixed 0.125rem, and the small
+  // trailing padding + the row `gap` (0.25rem) is all that separates it from
+  // the launcher.
+  &:not(.compacted) ::ng-deep .accordion.workspace nb-accordion-item-header.principal {
+    padding-inline-end: 0.25rem;
+
+    .expansion-indicator {
+      position: static;
+      flex: 0 0 auto;
+      margin-inline-start: 0.125rem;
     }
   }
   &.not-collapsed {
@@ -607,6 +628,33 @@ nb-sidebar[tag='menu-sidebar'] {
   max-width: none;
   margin-left: 0;
   margin-right: 0;
+}
+
+// ── Chrome hairlines ────────────────────────────────────────────────────────
+//
+// The seams between the app-shell surfaces are drawn as ONE continuous hairline family, the same
+// translucent grey the chat panel and the overlays use (`$chat-hairline`), so it reads in all 8
+// themes:
+//   • header band ⟂ chat + canvas — the band's BOTTOM edge, from the nav menu to the viewport
+//     edge (the band already spans both columns, so one border is one uninterrupted line);
+//   • nav menu ⟂ everything to its right — the menu sidebar's TRAILING edge, full viewport
+//     height (band, chat and canvas alike), so the vertical line the chat used to start under
+//     the band now runs all the way up beside it and stays when the chat is collapsed;
+//   • chat ⟂ canvas — the panel's own canvas-side border (see the `.scrollable` frame above);
+//   • footer — the footer's TOP edge across the canvas column, with the copyright row centred
+//     vertically in the band (Nebular's own `footer-divider-*` is `none` in the Gauzy themes).
+// Each seam is drawn by exactly ONE surface, never both neighbours, so no line ever doubles up.
+:host ::ng-deep nb-layout .layout nb-layout-header.fixed nav {
+  border-bottom: 1px solid #{$chat-hairline};
+}
+:host ::ng-deep nb-layout .layout .layout-container nb-sidebar[tag='menu-sidebar'] .main-container-fixed {
+  border-inline-end: 1px solid #{$chat-hairline};
+}
+:host ::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #{$chat-hairline};
+  box-shadow: none;
 }
 
 // INERT today: in this Nebular version the footer's `fixed` attribute is a no-op — the footer is

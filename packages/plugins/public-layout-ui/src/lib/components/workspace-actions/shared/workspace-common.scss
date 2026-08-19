@@ -2,7 +2,10 @@
 @use '@shared/reusable' as *;
 
 .login-container {
-  width: 765px;
+  // Centred at its 765px design width, but never wider than the column it is
+  // rendered in — a fixed width overflowed the canvas wherever that is narrower
+  // (the layout column next to the expanded AI chat, a small viewport).
+  width: min(765px, 100%);
   position: relative;
   display: flex;
   justify-content: center;

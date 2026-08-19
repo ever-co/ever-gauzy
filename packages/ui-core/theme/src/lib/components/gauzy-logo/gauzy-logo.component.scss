@@ -36,7 +36,14 @@
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
-        width: fit-content;
+        // `auto`, not `fit-content`: the switcher is now sized to its content
+        // in the sidebar's brand row (one-column.layout.scss) and only shrinks
+        // when the rail is too narrow for `[avatar] name ⌄ 🤖`. A `fit-content`
+        // box never gets narrower than its nowrap text, so under pressure the
+        // name was CLIPPED by the parent instead of ellipsized; `auto` follows
+        // the shrinking `.description` (min-width: 0) and the ellipsis kicks in.
+        // Unpressured, both resolve to the same width (text, capped below).
+        width: auto;
         max-width: 150px;
         font-size: 0.8125rem;
         font-weight: 600;
