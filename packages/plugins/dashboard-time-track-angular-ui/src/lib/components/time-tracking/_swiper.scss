@@ -2,25 +2,49 @@
 // This file contains all Swiper-related styles
 
 @mixin swiper-styles() {
-  // Custom navigation button container and styles
+  // ── Custom navigation buttons ──────────────────────────────────────────────
+  //
+  // These sit on the same line as the "View All" button, so they are the same
+  // control: one height (1.75rem, the panel action button's), one radius, one
+  // hairline. They used to be `padding: 2px 7.5px` boxes with a 2px accent
+  // border and `height: fit-content` — taller or shorter than their neighbour
+  // depending on the glyph's own line box, and the only 2px border on the page.
+  //
+  // Square, because a chevron has no reading direction to pad for: the two of
+  // them read as a pair of steppers rather than as two tiny text buttons.
   .swiper-button-container {
     display: flex;
-    gap: 4px;
+    align-items: center;
+    gap: 0.25rem;
 
     .swiper-button {
-      padding: 2px 7.5px;
-      border: 2px solid var(--gauzy-background-transparent);
-      color: var(--text-primary-color);
-      border-radius: var(--button-rectangle-border-radius);
+      width: 1.75rem;
+      height: 1.75rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      // The ring, so the button costs exactly its 28px and nothing is nudged by
+      // a border box.
+      box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+      background-color: var(--gauzy-card-1);
+      color: var(--gauzy-text-color-2);
+      border-radius: var(--gauzy-radius-sm);
       cursor: pointer;
-      height: fit-content;
+      user-select: none;
+      transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
 
       i {
-        font-weight: 900;
+        // Was `font-weight: 900`, which is what made a chevron read as a heavy
+        // arrowhead. It is a direction, not an emphasis.
+        font-weight: 600;
+        font-size: 0.875rem;
+        line-height: 1;
       }
-
       &:hover {
-        opacity: 0.8;
+        background-color: var(--gauzy-hover-tint);
+        color: var(--gauzy-text-color-1);
       }
     }
   }
