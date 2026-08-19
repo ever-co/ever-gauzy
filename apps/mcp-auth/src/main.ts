@@ -7,6 +7,7 @@
 
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { DatabaseErrorFilter } from '@gauzy/core';
 import { AppModule } from './app.module';
 import { McpOAuthService } from './mcp-oauth/mcp-oauth.service';
 
@@ -18,6 +19,10 @@ async function bootstrap() {
 		const app = await NestFactory.create(AppModule, {
 			bodyParser: false // Disable NestJS body parser to let Express handle it
 		});
+
+		// This app builds its own Nest instance rather than going through @gauzy/core's bootstrap(),
+		// so the filter that keeps database internals out of responses has to be registered here too.
+		app.useGlobalFilters(new DatabaseErrorFilter());
 
 		// Get Express instance to configure trust proxy
 		const expressApp = app.getHttpAdapter().getInstance();

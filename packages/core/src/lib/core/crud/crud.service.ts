@@ -34,6 +34,7 @@ import {
 } from './../../core/utils';
 import { parseTypeORMFindCountOptions } from './utils';
 import { assertCriteriaHasPredicate } from './criteria.helper';
+import { toClientSafeError } from '../errors/database-error';
 import {
 	ICountByOptions,
 	ICountOptions,
@@ -229,7 +230,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			return { items, total };
 		} catch (error) {
 			console.log(error);
-			throw new BadRequestException(error);
+			throw new BadRequestException(toClientSafeError(error));
 		}
 	}
 
@@ -524,7 +525,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			}
 		} catch (error) {
 			console.error('Error in crud service create method:', error);
-			throw new BadRequestException(error);
+			throw new BadRequestException(toClientSafeError(error));
 		}
 	}
 
@@ -559,7 +560,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			}
 		} catch (error) {
 			console.error('Error in crud service createMany method:', error);
-			throw new BadRequestException(error);
+			throw new BadRequestException(toClientSafeError(error));
 		}
 	}
 
@@ -582,7 +583,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			}
 		} catch (error) {
 			console.error('Error in crud service save method:', error);
-			throw new BadRequestException(error);
+			throw new BadRequestException(toClientSafeError(error));
 		}
 	}
 
@@ -606,7 +607,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			}
 		} catch (error) {
 			console.error('Error in crud service saveMany method:', error);
-			throw new BadRequestException(error);
+			throw new BadRequestException(toClientSafeError(error));
 		}
 	}
 
@@ -644,7 +645,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
-			throw new BadRequestException(error);
+			throw new BadRequestException(toClientSafeError(error));
 		}
 	}
 
