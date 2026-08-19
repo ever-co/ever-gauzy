@@ -25,9 +25,6 @@ $gauzy-density: (
 	// The ONE step every card title resolves to, whether it comes from the
 	// shared `ngx-header-title` or from a heading a template dropped straight
 	// into an `nb-card-header`. A page heading only has to out-rank body copy;
-	// at the h4 step (1.5rem/700) it read as an oversized breadcrumb path, and
-	// even at 1.25rem it still competed with the page underneath it. Two steps
-	// further down the weight is what ranks the title, not the size.
 	//
 	// Kept as its own token rather than reusing `text-heading-5-*`: those
 	// describe what an <h5> is worth ANYWHERE, while this describes a role,

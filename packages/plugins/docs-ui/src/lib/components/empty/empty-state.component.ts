@@ -80,14 +80,10 @@ export type DocsEmptyVariant = 'first-run' | 'empty-folder' | 'no-results' | 're
 				flex-direction: column;
 				align-items: center;
 				gap: 0.5rem;
-				/* The host already reserves a min-height, so the state does not
-				   need 3rem of its own padding on top of it. */
 				padding: 2rem 1.25rem;
 				text-align: center;
 				color: var(--docs-text-muted, var(--text-hint-color));
 			}
-			/* One step under the page title, and muted rather than white: an
-			   empty state is an explanation, not a headline. */
 			.docs-empty h6 {
 				margin: 0;
 				font-size: var(--docs-body-size, 0.8125rem);
@@ -119,8 +115,6 @@ export type DocsEmptyVariant = 'first-run' | 'empty-folder' | 'no-results' | 're
 				gap: 0.375rem;
 				margin-top: 0.25rem;
 			}
-			/* Every variant offers between one and three buttons, in different
-			   appearances — one height and one padding keeps them a set. */
 			.docs-empty button[nbButton] {
 				display: inline-flex;
 				align-items: center;

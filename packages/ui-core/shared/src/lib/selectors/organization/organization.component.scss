@@ -3,11 +3,6 @@
 ng-select {
   // No `height: 100%` — the parent box is auto-height, so it always resolved to
   // `auto`; the trigger centres its own content now (see `ng-select-overrides`).
-  //
-  // `gap` rather than margins on the image, matching the team / project /
-  // employee triggers beside it in the header band: this control hides its own
-  // label while closed, so a margin-based gap was padding a logo against
-  // nothing.
   .selector-template {
     display: flex;
     align-items: center;
@@ -21,11 +16,6 @@ ng-select {
     }
   }
 
-  // Same 18px avatar and same flat-chrome radius as its neighbours. The old
-  // `--gauzy-shadow` here is a black drop shadow — invisible on the near-black
-  // header band and a smudge on a light one — and `button-rectangle-border-radius`
-  // is the BUTTON step, which left this one logo rounded differently from every
-  // other avatar in the cluster.
   img {
     flex: none;
     width: 1.125rem;
@@ -39,18 +29,4 @@ ng-select {
   &.close {
     opacity: 1;
   }
-  // The closed state used to `display: none` the organization NAME, leaving a
-  // bare logo and a chevron — the one control in the header band that made you
-  // recognise an avatar to know what it was set to, and unreadable outright for
-  // the organizations that have no logo at all. The name is the value of this
-  // control, so it is shown like every other selector's value; it ellipsises at
-  // the chip's `max-width` (see `.organization-selector` in
-  // `header.component.scss`) and carries the full text in its tooltip.
-  //
-  // The text inset and the chevron's alignment belong to the trigger
-  // (`ng-select-overrides` / `_overrides.scss`). This block used to zero the
-  // inset — leaving the organization name on a different x from the selectors
-  // beside it — and align the arrow wrapper on `baseline`, which on a
-  // zero-height wrapper dropped the chevron ~4px below centre, far enough for
-  // the container's `overflow: hidden` to clip it.
 }

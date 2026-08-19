@@ -15,9 +15,6 @@
 		margin: 0;
 	}
 
-	// One geometry for every affordance in a thread — reply, resolve, edit and
-	// delete come from four separate `*ngIf` gates and used to land on four
-	// slightly different boxes.
 	button[nbButton] {
 		display: inline-flex;
 		align-items: center;
@@ -79,8 +76,6 @@
 	gap: 0.375rem;
 	flex-wrap: wrap;
 
-	// A display name is user data with no length limit — it truncates rather
-	// than pushing the timestamp onto a line of its own.
 	.gz-comment-author {
 		max-width: 12rem;
 		overflow: hidden;
@@ -110,11 +105,6 @@
 	}
 }
 
-/*
- * 🛑 `nb-badge` is `position: absolute` by design (it pins a counter to a corner
- * of a positioned parent). The "Resolved" pill uses it INLINE in the comment
- * header, so it is reset to a normal box on the hub's shared pill geometry.
- */
 .gz-comment-head ::ng-deep nb-badge {
 	position: static;
 	display: inline-flex;

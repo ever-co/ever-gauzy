@@ -34,10 +34,6 @@ import { IDocumentFacetBucket } from '../../models/docs-api.model';
 	`,
 	styles: [
 		`
-			/* Fills its grid track in the filter band (the host used to be an
-			   inline-block with a 9rem floor, which is what stopped the fields
-			   from lining up in columns) and still collapses cleanly when a host
-			   lays it out inline. */
 			:host {
 				display: block;
 				width: 100%;

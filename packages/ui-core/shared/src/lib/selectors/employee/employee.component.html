@@ -1,7 +1,3 @@
-<!-- `class` is STATIC on purpose: ng-select copies the trigger's class ATTRIBUTE
-     (read once, at construction) onto the panel it appends to <body>, and that
-     class is the only handle a stylesheet has on that panel. See the
-     `.gauzy-entity-select` block in `styles/_overrides.scss`. -->
 <ng-select
   #select
   [addTag]="(hasEditEmployee$ | async) && addTag ? createNew : null"
@@ -19,38 +15,15 @@
   class="employee gauzy-entity-select"
   >
   <ng-template ng-option-tmp let-item="item" let-index="index">
-    <!-- `avatar-default.svg` is NOT a photo: it is the seeded placeholder the API
-         hands back for every employee who never uploaded one (13 of the default
-         employees carry it — see `core/src/lib/employee/default-employees.ts`,
-         and `getUserDummyImage` fills the same role for accounts created since).
-         It is a 1024x1024 grey `#888` silhouette with a lot of internal padding,
-         so at avatar size it renders as a small muddy blob that ignores the
-         theme entirely. Treating it as "no picture" and drawing a real icon in
-         its place is what makes these rows read as people. -->
     @if (item.imageUrl && !item.imageUrl.includes('avatar-default')) {
       <img [src]="item.imageUrl" width="20" height="20" alt="" />
     } @else if (item.id) {
-      <!-- Guarded on `item.id`: the synthetic "All Employees" / "No Employee"
-           rows are the only items with a null id, and they are not people — an
-           avatar slot on "All Employees" would claim there is a face behind the
-           row that clears the filter.
-
-           `person-outline` must exist in `evaToTablerIcons` (`ui-core/icons`),
-           which is what this app registers UNDER the name 'eva': it is a Tabler
-           pack, not the real Eva set, so an Eva name that is missing from that
-           map renders nothing at all. The outline variant, because `person` in
-           that map is a FILLED glyph and reads heavy at avatar size. -->
       <nb-icon class="avatar-fallback" icon="person-outline"></nb-icon>
     }
-    <!-- Wrapped rather than a bare text node: the option row is a flex row, and
-         only an element can be given the ellipsis treatment when a name is
-         longer than the panel. -->
     <span [title]="getFullName(item)">{{ getShortenedName(item.firstName, item.lastName, 42) }}</span>
   </ng-template>
   <ng-template ng-label-tmp let-item="item">
     <div class="selector-template" [title]="getFullName(item)">
-      <!-- Same placeholder test as the option rows above, so the chip and the
-           list it opens never disagree about whether someone has a photo. -->
       @if (item.imageUrl && !item.imageUrl.includes('avatar-default')) {
         <img height="20" width="20" [src]="item.imageUrl" alt="" />
       } @else if (item.id) {

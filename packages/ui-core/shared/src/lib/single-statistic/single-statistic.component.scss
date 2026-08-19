@@ -6,30 +6,15 @@
 		flex-direction: column;
 	}
 
-	// The KPI's NAME: a label, so it sits on the label step of the type scale
-	// rather than at body size, and stays muted so the figure below is what the
-	// eye lands on.
 	.title {
 		font-size: nb-theme(text-label-font-size);
 		font-weight: 500;
 		line-height: 1rem;
 		letter-spacing: -0.009em;
 		color: nb-theme(gauzy-text-color-2);
-		// Was 20px, which put the label and its own figure further apart than
-		// two neighbouring KPI cards.
 		margin-bottom: 0.375rem;
 	}
 
-	// The figure. 36px/44px was the largest type in an app whose body copy is
-	// 14px and whose top heading step is 1.5rem — two steps above anything the
-	// scale defines, and four of these side by side read as a billboard rather
-	// than as a stat row. This is the same step (and the same reasoning) as the
-	// `.h1` display figure in `styles/_overrides.scss`, which is what every
-	// OTHER dashboard counter on the page already uses.
-	//
-	// The trailing 20px goes with it: the card body's own padding is what
-	// separates the figure from the card edge, and the two stacked meant a KPI
-	// card carried 40px of internal margin on top of that padding.
 	.content {
 		font-size: nb-theme(text-heading-4-font-size);
 		font-weight: 400;
@@ -40,14 +25,7 @@
 	}
 
 	.block-amount {
-		// `color-success-default` is a FILL colour — a bright green meant to sit
-		// under white text. As 1.5rem type on a white card it lands around 1.8:1.
-		// The action accent is the same green tuned for text, and it carries a
-		// separate value per canvas so it stays legible on the dark themes too.
 		color: var(--gauzy-action-success-text);
-		// One step of emphasis over its siblings, not two: at 1.5rem a semibold
-		// figure among regular ones reads as a different size, not as a
-		// highlight.
 		font-weight: 500;
 	}
 }

@@ -3,21 +3,6 @@
   min-width: 0;
 }
 .docs-table {
-  /*
-   * ── Compact density, scoped to this grid ────────────────────────────────
-   * The grid's geometry is driven ENTIRELY by the `--gauzy-table-*` custom
-   * properties that `_overrides.scss` reads
-   * (`:root angular2-smart-table table tr td { font-size: var(--gauzy-table-font-size, …) }`
-   * and friends). Custom properties inherit and are resolved against each
-   * cell, so redefining them on this panel re-densifies the whole grid at
-   * once — header, cells, filter row, chips and status pills together —
-   * without touching the global rules and without moving any other table in
-   * the app.
-   *
-   * Two steps down from the platform default across the board: 11px cell text
-   * on a 16px line, half the cell padding, a 10px uppercase header, and pills
-   * sized to fit INSIDE that line box instead of setting it.
-   */
   --gauzy-table-font-size: 0.6875rem;
   --gauzy-table-line-height: 1rem;
   --gauzy-table-cell-padding-y: 0.1875rem;
@@ -35,19 +20,9 @@
   --gauzy-table-chip-padding-x: 0.3125rem;
   --gauzy-table-chip-gap: 0.125rem;
   --gauzy-table-chip-block-gap: 0.1875rem;
-  // The people list and the name cell's leading slot size themselves off these,
-  // so the row's tallest boxes come down with the text rather than holding the
-  // old height on their own.
   --gauzy-people-avatar-size: 1rem;
   --gauzy-people-font-size: 0.6875rem;
 
-  /*
-   * Width of the `Updated` cell's single line (see `cells/updated-cell.component.ts`).
-   * It is a token rather than a literal because the column is the first thing
-   * that has to give when the grid narrows: the cell truncates to whatever this
-   * says and the tooltip keeps the full timestamp reachable, so the column can
-   * step down without the row ever gaining a second line.
-   */
   --docs-updated-cell-width: 9.5rem;
 
   min-height: 12rem;
@@ -93,8 +68,6 @@
   }
 
   tbody tr.angular2-smart-row:not(.angular2-smart-row-detail) {
-    // The library paints a translucent grey on EVERY row; a hairline between
-    // rows scans better and keeps the panel one colour.
     background: transparent;
     border-bottom: 1px solid var(--docs-hairline, rgba(126, 126, 143, 0.18));
 
@@ -160,8 +133,6 @@
       width: 5.5rem;
     }
 
-    // Follows the cell token (plus the two cell paddings), so the header and the
-    // line underneath it narrow together.
     &.updatedAt {
       width: calc(var(--docs-updated-cell-width, 9.5rem) + 0.875rem);
       white-space: nowrap;
@@ -176,21 +147,15 @@
     min-width: 0;
   }
 
-  // Nothing inside a cell may set the row height: the line box is the tallest
-  // thing in a row, and every inline control is fitted into it.
   td nb-icon {
     font-size: 0.8125rem;
   }
 
-  // The name column is the row's anchor, so it keeps the weight — but not a
-  // second font size on top of it.
   td .docs-name-text {
     font-size: inherit;
     font-weight: 500;
   }
 
-  // The leading thumbnail/icon slot follows the row down; at its old 1.5rem it
-  // was the tallest box in the line and held the old row height on its own.
   td .docs-name-lead {
     width: 1.125rem;
     height: 1.125rem;
@@ -201,8 +166,6 @@
     line-height: inherit;
   }
 
-  // The row kebab is the one control with its own padding; without this it
-  // alone keeps the pre-density row height.
   td .docs-row-actions {
     height: 1.25rem;
     min-height: 1.25rem;
@@ -232,12 +195,6 @@
   }
 }
 
-/*
- * ── Responsive `Updated` column ─────────────────────────────────────────────
- * Three steps down, one per breakpoint the hub already uses. Only the token
- * moves: the cell re-truncates itself and its tooltip is unchanged, so no
- * information is lost at any width.
- */
 @media (max-width: 1399px) {
   .docs-table {
     --docs-updated-cell-width: 8rem;

@@ -245,9 +245,6 @@
 			<dl class="docs-detail-meta">
 				<ng-container *ngIf="doc.kind === kindEnum.FILE">
 					<dt>{{ 'DOCS.DETAIL.MIME' | translate }}</dt>
-					<!-- A MIME type is long, single-token and unbreakable
-					     ("application/vnd.openxmlformats-…"): held to one line it
-					     truncates, and the tooltip carries the full value. -->
 					<dd class="docs-detail-meta-ellipsis" [nbTooltip]="doc.mimeType || ''" nbTooltipStatus="basic">
 						{{ doc.mimeType || '—' }}
 					</dd>
@@ -313,10 +310,6 @@
 					<nb-option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</nb-option>
 				</nb-select>
 				<h6>{{ 'DOCS.DETAIL.TAGS' | translate }}</h6>
-				<!-- `label` defaults to TRUE on `ga-tags-color-input`, so the control
-				     printed its own "Tags" caption underneath this section heading —
-				     two titles for one field. The filter bar already passes `false`
-				     for the same reason; the heading above is the label here. -->
 				<ga-tags-color-input
 					[multiple]="true"
 					[isOrgLevel]="true"

@@ -138,7 +138,6 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 	 * @param config - The configuration options for the Chart, including theme variables.
 	 */
 	private _initializeChart(config: NbJSThemeOptions) {
-		// Resolve the slice and label colours for the active theme
 		this.palette = resolveEmployeeChartPalette(config);
 
 		// Step 2: Set the overall chart options

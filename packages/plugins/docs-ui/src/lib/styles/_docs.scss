@@ -1,27 +1,3 @@
 // Shared plugin styles for @gauzy/plugin-docs-ui.
-//
-// ⚠️ NOT COMPILED. Nothing in this library (or in the app's global
-// `styles.scss`) `@use`s this partial — the hub's design tokens live on
-// `.docs-shell` in `components/shell/docs-shell.component.scss` instead, where
-// they cascade into every child component of the hub without needing a shared
-// Sass import in each stylesheet (custom properties ignore view encapsulation).
-//
-// Kept as the plugin's style REFERENCE: the vocabulary below is what the
-// component stylesheets implement, and the token names are the ones declared on
-// `.docs-shell`.
-//
-//   --docs-radius / --docs-radius-lg   control-and-row radius, panel radius
-//   --docs-surface / --docs-hairline   panel fill and its 1px ring
-//   --docs-hover / --docs-active       neutral interaction tints
-//   --docs-control-height(-sm)         one height per control band
-//   --docs-title/body/meta/label-size  the four type steps the hub uses
-//   --docs-text / --docs-text-muted    body and secondary text
-//   --docs-detail-width                detail-panel column width
-//
-// Badge palette semantics (referenced by the badge cell components):
 // processing → color-info, ready → color-success, failed → color-danger,
 // indexed → color-primary, review-pending → color-warning.
-//
-// Chips and badges share ONE geometry across the hub — the table's chip/badge
-// density tokens (`gauzy-table-badge-height`, `gauzy-table-chip-*`) plus
-// `--docs-radius`; see `components/table/cells/*.component.ts`.

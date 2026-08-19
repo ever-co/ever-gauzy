@@ -93,11 +93,6 @@ $inset: 1rem;
           line-height: 1.35;
           color: var(--gauzy-text-color-2);
         }
-        // Was `rgba(50, 50, 50, 0.03)` — 3% black. Over `--gauzy-card-1` that
-        // is a faint grey on the light themes and effectively nothing on the
-        // near-black ones, so an integration row gave no hover feedback at all
-        // in dark. `--gauzy-hover-tint` is the shared translucent neutral: it
-        // darkens a light surface and lightens a dark one.
         &:hover {
           background: var(--gauzy-hover-tint);
         }

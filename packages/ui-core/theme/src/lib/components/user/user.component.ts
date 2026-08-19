@@ -30,9 +30,8 @@ export class UserComponent implements OnInit {
 	}
 
 	/**
-	 * Initials to stand in for a missing avatar: the first letter of the first
-	 * and last name parts, or the first letter of the email when there is no
-	 * name at all.
+	 * Initials to stand in for a missing avatar: the first letter of the first and
+	 * last name parts, or of the email when there is no name.
 	 */
 	initials(user: IUser): string {
 		const parts = (user?.name ?? '').trim().split(/\s+/).filter(Boolean);

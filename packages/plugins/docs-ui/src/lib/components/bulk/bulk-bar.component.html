@@ -1,34 +1,13 @@
-<!--
-	Bulk action bar.
-
-	One floating toolbar, not a four-section panel. The previous version stacked a
-	labelled section per permission group — Organize, Tags, AI knowledge, Danger
-	zone — each with its own caption, hairline and button row, plus a tag picker
-	rendered inline. With every permission granted that is a half-viewport-tall
-	form pinned over the list you are selecting from, and its height changed with
-	the viewer's role.
-
-	The shape below is the one every product uses for this job: a single row that
-	states what is selected, offers the frequent actions inline, and puts anything
-	needing an argument (tags) or used rarely (knowledge) behind a popover that
-	opens above it. The destructive action sits alone past a divider, and the row
-	ends with the dismiss.
--->
 <ng-container *ngIf="count > 0">
-	<!-- Click-away target for the popovers. Transparent and behind the bar, so it
-	     never darkens the list — the bar is a toolbar, not a modal. -->
 	<div class="docs-bulk-scrim" *ngIf="openPanel" (click)="closePanel()"></div>
 
 	<div class="docs-bulk" [nbSpinner]="busy" nbSpinnerStatus="primary" [attr.aria-label]="'DOCS.A11Y.SELECTION_STATUS' | translate">
-		<!-- Over the endpoint's 200-id ceiling. Above the row rather than inside it:
-		     it is advisory copy about the whole selection, not another action. -->
 		<div class="docs-bulk-notice" *ngIf="overLimit" role="status">
 			<nb-icon icon="alert-circle-outline"></nb-icon>
 			<span>{{ 'DOCS.BULK.LIMIT_REACHED' | translate : { max: maxIds } }}</span>
 		</div>
 
 		<div class="docs-bulk-bar">
-			<!-- What you are acting on, first and unshrinking. -->
 			<div class="docs-bulk-count">
 				<nb-icon icon="checkmark-square-2-outline"></nb-icon>
 				<span>{{ 'DOCS.BULK.SELECTED' | translate : { count: count } }}</span>
@@ -72,7 +51,6 @@
 							<nb-icon icon="corner-up-right-outline"></nb-icon>
 							{{ 'DOCS.BULK.MOVE' | translate }}
 						</button>
-						<!-- Set categories: a REPLACE, so it goes through a dialog that says so -->
 						<button
 							nbButton
 							ghost
@@ -86,8 +64,6 @@
 							{{ 'DOCS.BULK.CATEGORIES' | translate }}
 						</button>
 
-						<!-- Tags need an argument, so the trigger opens a tray rather than
-						     leaving a picker parked in the toolbar. -->
 						<div class="docs-bulk-anchor">
 							<button
 								nbButton
@@ -107,9 +83,6 @@
 
 							<div class="docs-bulk-popover docs-bulk-popover--tags" *ngIf="openPanel === 'tags'" role="dialog">
 								<h6 class="docs-bulk-popover-title">{{ 'DOCS.BULK.SECTION_TAGS' | translate }}</h6>
-								<!-- `label` defaults to TRUE on `ga-tags-color-input`, which printed a
-								     second "Tags" caption under this heading — the same reason the
-								     detail panel and the filter bar both pass `false`. -->
 								<ga-tags-color-input
 									class="docs-bulk-tags-picker"
 									[multiple]="true"
@@ -129,8 +102,6 @@
 							</div>
 						</div>
 
-						<!-- Overflow: the knowledge pair. Two rarely-used actions with the
-						     longest labels in the set, which is exactly what a menu is for. -->
 						<ng-template [ngxPermissionsOnly]="docsPermissions.aiImport">
 							<div class="docs-bulk-anchor">
 								<button
@@ -179,8 +150,6 @@
 							</div>
 						</ng-template>
 
-						<!-- The one action that does not come back. Past a divider, on its
-						     own, in the danger colour — not a peer of "Archive". -->
 						<ng-template [ngxPermissionsOnly]="docsPermissions.delete">
 							<span class="docs-bulk-divider" aria-hidden="true"></span>
 							<button
@@ -202,7 +171,6 @@
 
 			<span class="docs-bulk-divider" aria-hidden="true"></span>
 
-			<!-- Icon-only, so the label is carried by the tooltip and the accessible name. -->
 			<button
 				nbButton
 				ghost
@@ -218,11 +186,6 @@
 	</div>
 </ng-container>
 
-<!--
-	Per-id error panel. A sibling of the bar on purpose: a destructive action
-	drops the selection, which unmounts the bar — the report of what FAILED has to
-	outlive it. It carries the toolbar's chrome so the two read as one surface.
--->
 <div class="docs-bulk-errors" *ngIf="errors.length">
 	<button
 		class="docs-bulk-errors-head"

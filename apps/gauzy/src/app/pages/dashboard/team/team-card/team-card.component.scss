@@ -1,11 +1,5 @@
 @use 'themes' as *;
 
-/*
- * The strip of team chips above a selected team's member list. Each one is the
- * same "name, figure, gauge" tile the KPI row uses (see
- * `../all-team/all-team.component.scss`), so it is set to the same metrics —
- * they sit one above the other on screen and used to be two different sizes.
- */
 .team-name {
   font-size: nb-theme(text-label-font-size);
   font-weight: 500;
@@ -17,37 +11,22 @@
   white-space: nowrap;
 }
 
-// The tile is one item of the strip that holds it (see `../team.component.scss`),
-// which lays the row out itself: the host has to be a box for that to have
-// anything to work with, and the card has to fill the box, or the tile the strip
-// stretched to the tallest of the row is a short surface sitting in a taller
-// hole — visible as soon as one is selected and takes the tinted background.
 :host {
   display: block;
 }
 
 nb-card {
   height: 100%;
-  // The page's card inset. Restated rather than shared because this is a
-  // separate component stylesheet — keep it in step with `$card-inset-block` /
-  // `$card-inset-inline` in `../all-team/all-team.component.scss`, which is the
-  // tile these sit directly under on the other Teams view.
   padding: 1.125rem 1.5rem;
   background-color: var(--gauzy-card-1);
-  // 9.5rem of content plus the inset either side — the same floor, and the same
-  // reasoning, as the KPI tiles' grid minimum.
   min-width: 12.5rem;
 }
 
 .team-header {
   padding: 0;
-  // Was 15px, which put the name further from its own figure than two
-  // neighbouring cards are from each other.
   margin-bottom: 0.25rem;
 }
 
-// The gauge belongs to the figure above it, so it spans the card rather than
-// stopping at an arbitrary 71% of it.
 .counter-container {
   width: 100%;
   margin-top: 0.5rem;
@@ -58,8 +37,6 @@ nb-card {
   flex-direction: column;
   padding: 0;
 
-  // `<div class="h1">3</div><div>/12</div>` — a display figure and the total it
-  // is out of. The total is context, not a second figure.
   .d-flex.align-items-center {
     align-items: baseline !important;
     gap: 0.125rem;

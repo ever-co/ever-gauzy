@@ -4,9 +4,6 @@
 	min-width: 0;
 }
 
-// The trigger sits on the filter band's action line, so it shares that line's
-// height (the band's own token, not a literal) and the truncation every other
-// label there gets.
 .docs-saved-views > button[nbButton] {
 	display: inline-flex;
 	align-items: center;
@@ -28,24 +25,12 @@
 	}
 }
 
-/*
- * FIXED, and positioned entirely from the component: `top`/`left`/`bottom`,
- * `width` and `max-height` all arrive as inline styles measured off the trigger
- * (see `saved-views.component.ts`). Absolute positioning made this box part of
- * `.docs-content`'s overflow, and since that container is `overflow-y: auto` the
- * other axis resolves to `auto` too — so opening the panel scrolled the page
- * sideways. Nothing here may set those five properties, or it would fight the
- * measurement; the rules below are chrome only.
- */
 .docs-saved-views-panel {
 	position: fixed;
 	z-index: 1010;
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
-	// Fallbacks only — the inline width always wins. They keep the panel usable
-	// in the one frame before the first measurement, rather than letting it
-	// shrink to the width of its longest view name.
 	min-width: 16rem;
 	max-width: calc(100vw - 1rem);
 	padding: 0.625rem;
@@ -79,7 +64,6 @@
 		}
 	}
 
-	// Icon-only row affordances are squares on the same height as the rows.
 	.docs-saved-views-item button[nbButton] {
 		flex: 0 0 auto;
 		width: var(--docs-control-height-sm, 1.75rem);
@@ -115,9 +99,6 @@
 	}
 }
 
-// One scroller per popover: the PANEL scrolls (its max-height is the room the
-// trigger actually has), so the list must not cap itself as well — nested
-// scroll areas make a short list unreachable inside a short panel.
 .docs-saved-views-list {
 	list-style: none;
 	margin: 0;

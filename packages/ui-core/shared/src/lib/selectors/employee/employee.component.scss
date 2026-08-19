@@ -1,18 +1,10 @@
 @use 'var' as *;
 
 ng-select {
-	// The label template is a flex row so the avatar and the name share one
-	// vertical centre. `gap` — not a margin on the image — is the single source
-	// of the spacing, so a logo-less entity starts its name on exactly the same
-	// x as the placeholder it replaces, and the trigger matches the option rows
-	// in the panel it opens (see `.gauzy-entity-select` in `styles/_overrides.scss`).
 	.selector-template {
 		display: flex;
 		align-items: center;
 		gap: 0.375rem;
-		// A flex item's automatic minimum size is its content, so the name could
-		// otherwise push the pill wider than the header has room for instead of
-		// truncating.
 		min-width: 0;
 
 		span {
@@ -22,10 +14,6 @@ ng-select {
 		}
 	}
 
-	// One avatar size across the team / project / employee triggers, matching
-	// the 18px used by their option rows. The `width`/`height` ATTRIBUTES in the
-	// templates only reserve space before the image loads; this is what the
-	// rendered size actually resolves to.
 	img {
 		flex: none;
 		width: 1.125rem;
@@ -34,15 +22,6 @@ ng-select {
 		object-fit: cover;
 	}
 
-	// The avatar slot when the employee has no real photo: the same 18px box the
-	// `<img>` occupies, on the same radius, so a list that mixes photos and icons
-	// keeps one column of avatars and one column of names. A tinted box with a
-	// muted glyph rather than a bare icon — a floating glyph next to a name reads
-	// as a status marker, a filled slot reads as "this is where the face goes".
-	//
-	// `nb-icon` is `display: inline-block` by default and its eva `<svg>` carries
-	// its own intrinsic size, so both are set explicitly (the same pattern the
-	// shared overlay rows use for their menu icons).
 	.avatar-fallback {
 		flex: none;
 		display: flex;
@@ -64,5 +43,3 @@ ng-select {
 
 // The `.ng-value-container` inset used to be zeroed here, which is what left the
 // employee selector's text on a different x from the team and project ones next
-// to it. The trigger now carries one shared inset (`ng-select-overrides`), and the
-// header band narrows it for its own pills (`header.component.scss`).

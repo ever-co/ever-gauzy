@@ -45,11 +45,6 @@ import { sanitizeMediaUrl } from '../../../editor/read-only/safe-url.util';
 	`,
 	styles: [
 		`
-			/* A block-level flex line, not an inline one: an inline box
-			   shrink-wraps its content, so the name could never be the thing
-			   that truncates — the column just grew instead. Filling the cell
-			   makes the name give way first, which is what the tooltip on the
-			   row exists to cover. */
 			.docs-name-cell {
 				display: flex;
 				align-items: center;
@@ -81,8 +76,6 @@ import { sanitizeMediaUrl } from '../../../editor/read-only/safe-url.util';
 				white-space: nowrap;
 				color: var(--docs-text, var(--text-basic-color));
 			}
-			/* The trailing markers never shrink — they are the row's state, and a
-			   half-clipped lock icon says nothing. */
 			.docs-name-cell nb-icon,
 			.docs-name-version {
 				flex: 0 0 auto;
@@ -96,12 +89,6 @@ import { sanitizeMediaUrl } from '../../../editor/read-only/safe-url.util';
 				font-variant-numeric: tabular-nums;
 				color: var(--docs-text-muted, var(--text-hint-color));
 			}
-			/* 🛑 nb-badge is position:absolute (top 0 / right 0) by design — it is
-			   built to pin a counter to a corner of a positioned parent. Used
-			   INLINE, as a state pill in a row, it detaches from the flex line
-			   and parks itself in the corner of whatever ancestor happens to be
-			   positioned. Reset to a normal inline box carrying the same
-			   geometry as the docs-badge pills beside it. */
 			.docs-name-cell ::ng-deep nb-badge {
 				position: static;
 				display: inline-flex;

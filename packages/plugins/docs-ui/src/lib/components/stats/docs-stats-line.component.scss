@@ -1,12 +1,3 @@
-/*
- * A summary LINE, not a card grid. The strip used to be six `nb-card`s wrapping
- * `ga-single-statistic`, whose figure sits on the `text-heading-4` step — so the
- * counters were the largest type on a page built around a 12px table, and they
- * cost roughly 80px of vertical space before the first result.
- *
- * Same numbers, same colours, one line: a muted label, the figure beside it,
- * and a hairline between pairs.
- */
 .docs-stats-line {
   display: flex;
   align-items: center;
@@ -28,8 +19,6 @@
   color: var(--docs-text-muted, var(--text-hint-color));
   white-space: nowrap;
 
-  // A colon reads as "label: value" without costing a character in every
-  // translation string.
   &::after {
     content: ':';
   }
@@ -37,7 +26,6 @@
 
 .docs-stat-value {
   font-weight: 600;
-  // Tabular figures so the counters do not shift width as they tick.
   font-variant-numeric: tabular-nums;
   color: var(--docs-text, var(--text-basic-color));
   white-space: nowrap;

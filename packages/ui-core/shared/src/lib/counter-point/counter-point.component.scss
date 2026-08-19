@@ -1,8 +1,5 @@
 @use 'themes' as *;
 
-// One segment of the strip. It is a GAUGE under a figure, not an object in its
-// own right, so it is a rule's worth of height rather than the 10px slab that
-// made a row of them the heaviest thing in a KPI card.
 :host .point{
     width: 100%;
     height: 6px;
@@ -10,10 +7,6 @@
     @include nb-ltr(margin-right, 3px);
     @include nb-rtl(margin-left, 3px);
 
-    // The segments still to be filled. They were painted with the DANGER
-    // background — the unreached part of a gauge is not a failure, and on the
-    // dark themes that token is a heavy near-black block. A neutral tint reads
-    // as the track it is, on every theme.
     &.basic {
         background-color: var(--gauzy-hover-tint) !important;
     }
@@ -27,20 +20,9 @@
     justify-content: space-between;
 }
 
-// `::ng-deep` with NOTHING in front of it is not scoped to this component: Angular
-// strips the `[_ngcontent]` attribute from every compound in the selector, so this
-// block was emitting a GLOBAL `nb-progress-bar .progress-container { height: 10px
-// !important }` from a component that happens to be on the page. Any progress bar
-// anywhere in the app was pinned to 10px, `!important`, and nothing short of
-// another `!important` could size one — which is why several components carry
-// their own `height: … !important` for a value they should just be able to state.
-//
-// `:host` in front keeps the reach the rule actually needs: the bar in THIS
-// component's own template, below.
 :host ::ng-deep {
     nb-progress-bar{
         .progress-container {
-            // The bar variant of the same gauge, so the same height.
             height: 6px;
         }
     }

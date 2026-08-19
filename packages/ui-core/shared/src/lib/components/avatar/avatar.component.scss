@@ -53,19 +53,6 @@
       object-fit: cover;
       border-radius: var(--border-radius) !important;
     }
-    // Presence, on the portrait it belongs to.
-    //
-    // It used to be a 10px disc in `#4caf50` / `#f44336` inside a `#ebebeb`
-    // ring: three fixed hex values, so the same three on all eight themes —
-    // the pale ring in particular was drawn for a white page and read as a
-    // bright halo on every dark one. It also sat at the TOP corner, over the
-    // face, rather than at the bottom where a presence marker goes.
-    //
-    // Same signal, stated in the theme's own terms: the ring is the surface
-    // the avatar is on, so the disc reads as cut out of the portrait, and it
-    // is small enough to annotate the picture instead of covering it. Being
-    // AWAY or signed out is not an error, so it is the page's muted tone
-    // rather than the danger fill.
     .status-indicator {
       position: absolute;
       width: 8px;

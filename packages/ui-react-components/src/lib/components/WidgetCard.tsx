@@ -42,13 +42,6 @@ export function WidgetCard({ label, value, loading = false, children }: WidgetCa
 					</span>
 				</div>
 
-				{/*
-				 * The figure. 1.875rem/700 was two steps above anything the app's
-				 * type scale defines and a full weight above the same figure on the
-				 * Angular Time Tracking tab beside it — six of them side by side
-				 * read as a billboard. `text-heading-4` is where every other counter
-				 * on the dashboard sits.
-				 */}
 				<div
 					style={{
 						fontSize: '1.5rem',

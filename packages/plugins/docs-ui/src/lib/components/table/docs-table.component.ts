@@ -482,10 +482,6 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 				isFilterable: false,
 				valuePrepareFunction: (value: number) => this.humanizeSize(value)
 			},
-			// A rendered cell rather than `type: 'text'`: the locale timestamp is
-			// longer than the column, and a text cell can only wrap it — which set
-			// the height of the whole row. The cell truncates to one line and hands
-			// the full value to a tooltip.
 			updatedAt: {
 				title: this.getTranslation(DOCS_TABLE_COLUMN_TITLE_KEYS['updatedAt']),
 				type: 'custom',

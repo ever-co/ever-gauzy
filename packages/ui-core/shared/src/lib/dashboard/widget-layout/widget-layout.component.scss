@@ -1,12 +1,5 @@
 .grid-boundary {
   display: flex;
-  // Each widget carries its own resized width (`ga-widget` writes it inline, up
-  // to the 314px cap in its stylesheet), so a row of five is about 1535px —
-  // more than the dashboard column has at 1600px. Without wrapping they simply
-  // ran off the trailing edge, and the page clips horizontal overflow, so the
-  // last counter was cut in half with no way to reach it. Wrapping is the only
-  // thing that changes: the widgets keep their widths, their order and their
-  // drop targets.
   flex-wrap: wrap;
   margin: 0 -0.5rem;
 

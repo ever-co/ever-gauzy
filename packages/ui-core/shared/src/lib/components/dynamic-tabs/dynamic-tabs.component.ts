@@ -57,11 +57,6 @@ export class DynamicTabsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	/**
 	 * The rendered tab links, in the same order as `tabs`.
-	 *
-	 * Scoped with `:scope >` all the way down rather than as a descendant search:
-	 * a route tabset renders the ROUTED PAGE inside its own host, so a plain
-	 * `.tab-link` lookup would also pick up any tab bar that page happens to
-	 * carry, and the index-to-title mapping below would then name the wrong tabs.
 	 */
 	private static readonly TAB_LINK_SELECTOR =
 		':scope > nb-route-tabset > .route-tabset > .route-tab > .tab-link, ' +
@@ -83,7 +78,7 @@ export class DynamicTabsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	ngAfterViewInit(): void {
 		this._loadTabsContent(); // Load the tab content for each tab in the tabset
-		this._describeTabs(); // Name each rendered tab link, for the tooltip
+		this._describeTabs();
 	}
 
 	/**
@@ -94,8 +89,6 @@ export class DynamicTabsComponent implements OnInit, AfterViewInit, OnDestroy {
 			.pipe(
 				tap(() => {
 					this._initializeTabs();
-					// Titles are re-translated on a language change, so the
-					// tooltips have to follow them.
 					this._describeTabs();
 				}),
 				untilDestroyed(this)
@@ -105,17 +98,6 @@ export class DynamicTabsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	/**
 	 * Puts each tab's full title on its link as a native `title` attribute.
-	 *
-	 * A tab bar has no room to negotiate: Nebular hides the label of a
-	 * `responsive` tab entirely below 36rem (`.route-tab.responsive` in its own
-	 * theme), which leaves an icon with nothing to identify it, and above that
-	 * breakpoint a long label is clipped to an ellipsis by the stylesheet that
-	 * owns the strip. Either way the name the user needs is the one that is not
-	 * on screen, so it is carried on the element itself.
-	 *
-	 * The attribute is written to the DOM rather than bound in the template
-	 * because the markup belongs to Nebular — `nb-route-tabset` renders the
-	 * links from its own `tabs` input and offers no hook for one.
 	 */
 	private _describeTabs(): void {
 		const links = this._elementRef.nativeElement.querySelectorAll<HTMLElement>(

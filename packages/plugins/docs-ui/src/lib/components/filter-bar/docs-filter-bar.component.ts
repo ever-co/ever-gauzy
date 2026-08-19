@@ -35,12 +35,6 @@ export class DocsFilterBarComponent extends TranslationBaseComponent {
 	@Input() urlParams: Params = {};
 	/**
 	 * Counts behind the preset chips, which are rendered on this band's first row.
-	 *
-	 * The chips used to be a sibling of the filter bar on the browse page, one row
-	 * above it. They are the coarsest filter on the page, so they belong on the
-	 * same control — and only inside it can they share a line with the search
-	 * field. The ACTIVE preset is not a second input: `value.preset` already
-	 * carries it, and a separate binding could disagree with the filter state.
 	 */
 	@Input() presetCounts: DocsPresetCounts | null = null;
 	@Output() filterChange = new EventEmitter<Partial<DocsFilterState>>();

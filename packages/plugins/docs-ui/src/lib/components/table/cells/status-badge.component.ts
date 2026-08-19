@@ -26,10 +26,6 @@ import { DOCS_PERMISSIONS } from '../../../docs-permission-groups';
 	`,
 	styles: [
 		`
-			/* One badge geometry shared with the knowledge badge and the detail
-			   panel: the table's badge height token, the theme's control radius,
-			   and a single line box — a status pill must cost a row no more than
-			   the text beside it. */
 			.docs-badge {
 				display: inline-flex;
 				align-items: center;

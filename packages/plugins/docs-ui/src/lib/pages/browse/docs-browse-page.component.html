@@ -96,9 +96,6 @@
 		*ngIf="!isFlat(query.filter$ | async)"
 		[attr.aria-label]="'DOCS.A11Y.BREADCRUMB' | translate"
 	>
-		<!-- The label is its own element on purpose: the button is a flex box (so its
-		     content centres on the crumb's own height), and `text-overflow` never
-		     applies to a flex container's anonymous text — it needs a real box. -->
 		<button nbButton ghost size="tiny" [disabled]="!breadcrumb.length" (click)="onDrillIn(null)">
 			<span class="docs-crumb-label">{{ 'DOCS.CARDS.BREADCRUMB_ROOT' | translate }}</span>
 		</button>
@@ -126,10 +123,6 @@
 	     filter-relative numbers); hides itself when the endpoint is unavailable. -->
 	<gz-docs-stats-line #statsLine></gz-docs-stats-line>
 
-	<!-- Control band. The preset chips are no longer a sibling row here: they are
-	     the coarsest filter on the page, so they render INSIDE the filter bar, on
-	     its first row beside the search field. The wrapper is presentational only
-	     — it is what makes the band read as one bordered surface. -->
 	<div class="docs-browse-toolbar">
 		<gz-docs-filter-bar
 			[facets]="query.facets$ | async"

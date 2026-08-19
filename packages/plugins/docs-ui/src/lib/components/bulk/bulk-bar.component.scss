@@ -1,37 +1,10 @@
 :host {
 	display: block;
 	min-width: 0;
-	// The bar is `position: sticky` inside this host; without an explicit stacking
-	// context the popovers it opens can land under a sibling that has one.
 	position: relative;
 	z-index: 20;
 }
 
-/*
- * ── The bulk action bar ─────────────────────────────────────────────────────
- *
- * A floating toolbar, sticky at the bottom of the list, sized by its content and
- * centred over it — the shape this job has in every product that has it.
- *
- * ── Why it is no longer a panel ─────────────────────────────────────────────
- * The previous version restated the detail panel: a sticky title line, an
- * advisory notice, and one labelled section per permission group (Organize /
- * Tags / AI knowledge / Danger zone), each with a caption, a hairline and a
- * button row, plus the tag picker rendered inline. Three problems, all of them
- * structural rather than cosmetic:
- *
- *   · height was a function of the viewer's ROLE — with every permission granted
- *     it hit its own `max-height: 50vh` and began to scroll INSIDE itself, over
- *     the list it was acting on;
- *   · a picker parked permanently in the bar reads as a form you must fill in,
- *     not as an action you may take;
- *   · captioned sections give five equal-weight groups where the user has one
- *     question — "what do I do with these twelve rows?"
- *
- * So: one row. Frequent actions inline as ghost buttons, anything needing an
- * argument or used rarely behind a popover, the irreversible one alone past a
- * divider, the dismiss last. Height is now constant at every permission set.
- */
 .docs-bulk {
 	--docs-bulk-height: 2rem;
 
@@ -43,8 +16,6 @@
 	align-items: center;
 	gap: 0.375rem;
 	min-width: 0;
-	// The toolbar sizes to its content and centres; it does not span the list, so
-	// what is under it stays readable either side.
 	width: 100%;
 	pointer-events: none;
 
@@ -64,8 +35,6 @@
 	padding: 0.3125rem 0.375rem 0.3125rem 0.625rem;
 	border-radius: var(--docs-radius-lg, 0.5rem);
 	background: var(--docs-surface, var(--background-basic-color-1));
-	// A hairline ring plus a real lift: this surface genuinely floats over the
-	// rows, and the ring is what keeps its edge legible against a light list.
 	box-shadow: inset 0 0 0 1px var(--docs-hairline, rgba(126, 126, 143, 0.18)),
 		0 0.5rem 1.5rem rgba(15, 18, 34, 0.16), 0 0.125rem 0.375rem rgba(15, 18, 34, 0.08);
 	font-size: var(--docs-body-size, 0.75rem);
@@ -73,8 +42,6 @@
 	color: var(--docs-text, var(--text-basic-color));
 }
 
-// What is selected — the sentence the toolbar exists to answer, so it leads and
-// never shrinks.
 .docs-bulk-count {
 	display: inline-flex;
 	align-items: center;
@@ -92,7 +59,6 @@
 	}
 }
 
-// Hairline rules between the three bands of the row: identity · actions · exit.
 .docs-bulk-divider {
 	flex: 0 0 auto;
 	width: 1px;
@@ -109,19 +75,12 @@
 	min-width: 0;
 }
 
-// The popover anchor. `position: relative` only — the trigger inside it keeps the
-// row's own geometry.
 .docs-bulk-anchor {
 	position: relative;
 	display: inline-flex;
 	flex: 0 0 auto;
 }
 
-/*
- * ── One button geometry ─────────────────────────────────────────────────────
- * Every action in the row comes from a different permission gate and used to
- * land on a different height. One rule, keyed on the bar, sets the lot.
- */
 .docs-bulk-bar button[nbButton],
 .docs-bulk-popover button[nbButton],
 .docs-bulk-errors button[nbButton] {
@@ -143,16 +102,6 @@
 	}
 }
 
-/*
- * A ghost action in the row reads as a label until you reach for it; the open
- * trigger stays lit while its popover is up, so trigger and popover read as one
- * object.
- *
- * SPECIFICITY: nested under `:host` on purpose. Nebular paints a ghost button
- * through `[nbButton].appearance-ghost.status-basic` — three tokens — which a
- * plain `.docs-bulk-action[nbButton]` (two) loses to, so the colour and the
- * hover fill below simply never landed until the host took them past it.
- */
 :host .docs-bulk-bar .docs-bulk-action[nbButton] {
 	color: var(--docs-text, var(--text-basic-color));
 
@@ -170,9 +119,6 @@
 	}
 }
 
-// Delete keeps the danger colour Nebular's `status="danger"` gives it; only the
-// hover fill is restated, so the row's one irreversible action is the only thing
-// on the bar that tints red when you reach for it.
 :host .docs-bulk-bar .docs-bulk-action--danger[nbButton] {
 	color: var(--color-danger-default);
 
@@ -189,15 +135,11 @@
 	}
 }
 
-// The caret points at where the tray opens — upwards, because the bar is docked
-// to the bottom of the list.
 .docs-bulk-caret {
 	font-size: 0.75rem !important;
 	opacity: 0.6;
 }
 
-// The dismiss is a square: its width is its box, so the glyph centres with no
-// padding at all.
 .docs-bulk-close[nbButton] {
 	flex: 0 0 auto;
 	width: var(--docs-bulk-height, 2rem);
@@ -207,19 +149,6 @@
 	}
 }
 
-/*
- * SPECIFICITY: padding lives in its own block because Nebular declares it as
- * `[nbButton].appearance-<a>.size-<s> { padding: … }` — three class tokens —
- * which a plain `.docs-bulk-bar button[nbButton]` (two) never outranked. So every
- * button kept the size step's own block padding while this stylesheet pinned a
- * height on top of it, and the label stopped sitting on the button's centre line.
- * `:host` costs nothing at render time and takes the selector past Nebular's
- * without an `!important`.
- *
- * The icon-ONLY buttons match a five-token Nebular rule
- * (`icon-button-<appearance>-<size>-padding`), so they are restated separately,
- * last, at a weight above that one.
- */
 :host {
 	.docs-bulk-bar button[nbButton],
 	.docs-bulk-popover button[nbButton],
@@ -235,11 +164,6 @@
 	}
 }
 
-/*
- * ── Advisory notice ─────────────────────────────────────────────────────────
- * The 200-id ceiling, above the row: it is a statement about the selection, not
- * a fourth thing to click.
- */
 .docs-bulk-notice {
 	display: flex;
 	align-items: center;
@@ -257,18 +181,10 @@
 	}
 }
 
-/*
- * ── Popovers ────────────────────────────────────────────────────────────────
- * The tag tray and the overflow menu. Both open UPWARDS from their trigger,
- * because the bar is docked to the bottom of the viewport, and both carry the
- * bar's own chrome so they read as an extension of it rather than as a dialog.
- */
 .docs-bulk-scrim {
 	position: fixed;
 	inset: 0;
 	z-index: 1;
-	// Deliberately invisible: this is a click-away target for a toolbar popover,
-	// not a modal backdrop — dimming the list would overstate what is happening.
 	background: transparent;
 }
 
@@ -288,8 +204,6 @@
 	box-shadow: inset 0 0 0 1px var(--docs-hairline, rgba(126, 126, 143, 0.18)),
 		0 0.5rem 1.5rem rgba(15, 18, 34, 0.16), 0 0.125rem 0.375rem rgba(15, 18, 34, 0.08);
 
-	// The overflow menu hangs off the trailing edge of its trigger — it sits at
-	// the end of the row, where a leading-aligned panel would run off the bar.
 	&--menu {
 		inset-inline-start: auto;
 		inset-inline-end: 0;
@@ -319,8 +233,6 @@
 	gap: 0.375rem;
 }
 
-// A menu row: full width, leading-aligned, the shape of every menu item in the
-// product — not a button pretending to be one.
 .docs-bulk-menu-item {
 	display: flex;
 	align-items: center;
@@ -353,20 +265,12 @@
 	}
 }
 
-// The platform tag picker has no intrinsic width; inside the tray it must be
-// told to fill it rather than to size itself off its chips.
 .docs-bulk-tags-picker {
 	display: block;
 	width: 100%;
 	min-width: 0;
 }
 
-/*
- * ng-select's own theme is a light-mode container (near-white fill, #ccc
- * border), which is what made this control the one box here that did not follow
- * the theme. Same restatement the detail panel applies to its own pickers, so
- * the two read as one control.
- */
 .docs-bulk-popover ::ng-deep {
 	.ng-select .ng-select-container {
 		min-height: var(--docs-control-height-sm, 1.75rem);
@@ -383,15 +287,6 @@
 		gap: 0.1875rem;
 	}
 
-	/*
-	 * 🛑 The padding reset is what puts the placeholder on the control's centre
-	 * line. In MULTIPLE mode ng-select makes `.ng-placeholder` `position:
-	 * absolute` and its theme ships `top: 5px; padding-bottom: 5px` — geometry
-	 * tuned for its own 36px control. The global `ng-select-text-alignment()`
-	 * unsets the `top`, handing the element back to the flex container's centred
-	 * static position, but the bottom padding survives: the box being centred is
-	 * then 5px taller than its text, so the text sits high in the field.
-	 */
 	.ng-select .ng-placeholder {
 		padding: 0;
 		color: var(--docs-text-muted, var(--text-hint-color));
@@ -404,8 +299,6 @@
 		color: var(--docs-text-muted, var(--text-hint-color));
 	}
 
-	// One chip geometry, matching the pills the rest of the hub uses. The tag's
-	// own colour stays — that is the point of a tag — only the box changes.
 	.ng-value .tag-color.tag-label {
 		position: static;
 		display: inline-flex;
@@ -431,13 +324,6 @@
 	}
 }
 
-/*
- * ── Failure report ──────────────────────────────────────────────────────────
- * A sibling of the bar, not a section inside it: a destructive action drops the
- * selection and unmounts the bar, and the list of what FAILED has to outlive
- * that. It therefore carries the chrome itself, so the two surfaces still read
- * as one object.
- */
 .docs-bulk-errors {
 	margin-top: 0.5rem;
 	border: 1px solid var(--color-danger-transparent-300, rgba(255, 61, 113, 0.24));
@@ -447,8 +333,6 @@
 	overflow: hidden;
 }
 
-// The whole title line is the disclosure control — a 24px chevron was a small
-// target for the one thing this panel does.
 .docs-bulk-errors-head {
 	display: flex;
 	align-items: center;
@@ -482,8 +366,6 @@
 		color: var(--color-danger-default);
 	}
 
-	// The failure count as the hub's pill, so it reads as a badge rather than as
-	// a number that happens to follow the caption.
 	.docs-bulk-errors-count {
 		flex: 0 0 auto;
 		display: inline-flex;
@@ -507,11 +389,6 @@
 	padding: 0.5rem;
 }
 
-/*
- * The same two-track grid the detail panel's metadata uses, with a CAPPED first
- * column: the ids are one length and the codes are not, so an `auto` track
- * restarted the codes at a different x-position on every row.
- */
 .docs-bulk-error-list {
 	display: grid;
 	grid-template-columns: minmax(6rem, 14rem) minmax(0, 1fr);
@@ -540,14 +417,6 @@
 	}
 }
 
-/*
- * ── Narrow widths ───────────────────────────────────────────────────────────
- * Nothing is re-laid-out: the row is a wrapping flex line that centres, so it
- * becomes two or three centred lines on its own. The labels deliberately STAY —
- * collapsing them to icons would leave five unlabelled glyphs, four of which
- * ("Archive", "Unarchive", "Move", "Set categories") have no glyph a user can
- * be expected to read, and tooltips do not exist on touch.
- */
 @media (max-width: 575px) {
 	.docs-bulk {
 		bottom: 0.5rem;
@@ -557,8 +426,6 @@
 		padding-inline: 0.5rem 0.375rem;
 	}
 
-	// A divider inside a wrapped row can land at the start of a line, where it
-	// reads as a stray tick; the actions carry their own separation by then.
 	.docs-bulk-divider {
 		display: none;
 	}

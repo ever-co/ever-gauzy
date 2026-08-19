@@ -1,16 +1,6 @@
-<!--
-	Org-global counters, rendered as a single line of `Label value` pairs rather
-	than as a row of KPI cards. Six cards carrying a 1.5rem figure each was the
-	loudest thing on a page whose actual content is a 12px table — this is a
-	summary line, so it reads as one.
-
-	The data is unchanged: same `tiles`, same order, same colours, same spinner.
--->
 <div class="docs-stats-line" *ngIf="visible" role="group" [attr.aria-label]="'DOCS.STATS.ARIA' | translate">
 	<span class="docs-stat" *ngFor="let tile of tiles; trackBy: trackByLabel">
 		<span class="docs-stat-label">{{ tile.labelKey | translate }}</span>
-		<!-- Storage renders "used / quota", so the value can outgrow its slot; the
-		     tooltip carries it in full. -->
 		<span
 			class="docs-stat-value"
 			[style.color]="tile.color || null"

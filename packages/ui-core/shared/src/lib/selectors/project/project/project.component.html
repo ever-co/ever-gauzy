@@ -4,10 +4,6 @@
 
 <!-- Single Select -->
 @if (!multiple) {
-  <!-- `class` is STATIC on purpose: ng-select copies the trigger's class ATTRIBUTE
-       (read once, at construction) onto the panel it appends to <body>, and that
-       class is the only handle a stylesheet has on that panel. See the
-       `.gauzy-entity-select` block in `styles/_overrides.scss`. -->
   <ng-select
     #select
     class="gauzy-entity-select"
@@ -31,10 +27,6 @@
         @if (item.imageUrl) {
           <img [src]="item.imageUrl" width="20" height="20" alt="" />
         }
-<!-- No `title` here: an appended panel is `max-width: max-content` (see
-             `_overrides.scss`), so an option row is never narrower than its own
-             label and can never be truncated — a tooltip could only ever repeat
-             text that is already fully on screen. -->
         <span>{{ item?.name }}</span>
       </ng-template>
       <ng-template ng-label-tmp let-item="item">

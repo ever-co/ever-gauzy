@@ -1,34 +1,13 @@
-/*
- * Document detail panel — the `?id=` surface of the hub. It shares the browse
- * page's tokens (declared on `.docs-shell`), so a heading, a pill or a hairline
- * here is the same object it is in the list; the literals are only fallbacks
- * for a theme that never registered the platform token.
- */
 :host {
 	display: block;
 	min-width: 0;
 }
 
-/*
- * ── Compact density, scoped to the panel ────────────────────────────────────
- * The panel is a ~26rem column carrying ten sections of secondary detail —
- * summary, metadata, taxonomy, toggles, links, comments and an activity log.
- * At the page's own type scale that column reads as a second page competing
- * with the list beside it.
- *
- * Every rule in this stylesheet (and in the two child components rendered
- * inside it, `gz-docs-detail-comments` and `gz-docs-detail-activity`) reads its
- * size from the `--docs-*` tokens, and custom properties inherit — so ONE block
- * here steps the whole panel down without a per-rule edit and without touching
- * the browse list, which keeps the full scale.
- */
 .docs-detail {
 	--docs-page-padding: 1rem;
 	--docs-body-size: 0.75rem;
 	--docs-meta-size: 0.6875rem;
 	--docs-label-size: 0.625rem;
-	// The panel's pills are sized here rather than inheriting the browse table's
-	// badge tokens, so the two surfaces can be densified independently.
 	--gauzy-table-badge-height: 1.125rem;
 	--gauzy-table-chip-font-size: 0.625rem;
 	--gauzy-table-chip-padding-x: 0.3125rem;
@@ -57,10 +36,6 @@
 	}
 }
 
-// ── Header ───────────────────────────────────────────────────────────────────
-// Sticky: the panel scrolls independently of the list, and the document you are
-// looking at should not scroll out of its own panel. It paints the panel
-// surface so the content passing underneath never shows through.
 .docs-detail-header {
 	position: sticky;
 	top: 0;
@@ -133,14 +108,6 @@
 	}
 }
 
-/*
- * 🛑 `nb-badge` is `position: absolute` (`top: 0; right: 0`) by design — it is
- * built to pin a counter to the corner of a positioned parent. Used INLINE, as
- * the state pills in this panel are, it leaves the flex line and parks itself in
- * the corner of whichever ancestor happens to be positioned. Reset to a normal
- * inline box carrying the same geometry as the `.docs-badge` pills it sits
- * beside, so the whole row reads as one set.
- */
 .docs-detail ::ng-deep nb-badge {
 	position: static;
 	display: inline-flex;
@@ -157,7 +124,6 @@
 	transform: none;
 }
 
-// ── Notices ──────────────────────────────────────────────────────────────────
 .docs-duplicate-notice {
 	display: flex;
 	align-items: center;
@@ -178,8 +144,6 @@
 	border-radius: var(--docs-radius, 0.375rem);
 	padding: 0.625rem 0.75rem;
 	background: var(--color-warning-transparent-100, rgba(255, 170, 0, 0.08));
-	// A ring rather than a border: no extra layout box, same hairline weight the
-	// rest of the hub uses.
 	box-shadow: inset 0 0 0 1px var(--color-warning-default);
 
 	.docs-review-banner-head {
@@ -214,10 +178,6 @@
 	}
 }
 
-// ── Action strip ─────────────────────────────────────────────────────────────
-// Up to a dozen permission-gated buttons land here, in any combination. One
-// height and one padding for all of them is what keeps the strip a strip
-// instead of a ragged pile of differently-sized chips.
 .docs-detail-actions {
 	display: flex;
 	gap: 0.375rem;
@@ -243,9 +203,6 @@
 	}
 }
 
-// ── Sections ─────────────────────────────────────────────────────────────────
-// A hairline between sections replaces the wall of headings the panel used to
-// read as: the label says what a block is, the rule says where it ends.
 .docs-detail-section {
 	display: flex;
 	flex-direction: column;
@@ -265,8 +222,6 @@
 		color: var(--docs-text-muted, var(--text-hint-color));
 	}
 
-	// A second heading inside one section (Categories then Tags) needs air above
-	// it, but must not read as the start of a new section.
 	h6 + * + h6 {
 		margin-top: 0.5rem;
 	}
@@ -281,7 +236,6 @@
 		margin: 0;
 	}
 
-	// Inline affordance inside a section label (regenerate summary, add link).
 	h6 button[nbButton] {
 		height: 1.25rem;
 		min-height: 1.25rem;
@@ -307,10 +261,6 @@
 	}
 }
 
-// ── Metadata ─────────────────────────────────────────────────────────────────
-// A two-track grid with a CAPPED label column: the labels are short and the
-// values are not, so letting `auto` size the first track started every row of
-// values at a different x-position as the content changed.
 .docs-detail-meta {
 	display: grid;
 	grid-template-columns: minmax(4.5rem, 6.5rem) minmax(0, 1fr);
@@ -332,8 +282,6 @@
 		overflow-wrap: anywhere;
 	}
 
-	// Single-line values (mime type, size, source) truncate rather than wrapping
-	// the row; the full string is carried by the tooltip on the same element.
 	dd.docs-detail-meta-ellipsis {
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -374,7 +322,6 @@
 	}
 }
 
-// ── Toggles ──────────────────────────────────────────────────────────────────
 .docs-detail-toggle {
 	display: flex;
 	flex-direction: column;
@@ -415,7 +362,6 @@
 	}
 }
 
-// ── Linked records ───────────────────────────────────────────────────────────
 .docs-detail-link {
 	display: flex;
 	align-items: center;
@@ -469,7 +415,6 @@
 	}
 }
 
-// ── AI summary extras ────────────────────────────────────────────────────────
 .docs-confidence {
 	font-size: var(--docs-meta-size, 0.75rem);
 	color: var(--docs-text-muted, var(--text-hint-color));
@@ -495,8 +440,6 @@
 		height: var(--gauzy-table-badge-height, 1.25rem);
 		padding: 0 var(--gauzy-table-chip-padding-x, 0.375rem);
 		border: 1px dashed var(--border-basic-color-4);
-		// Same radius as every other pill in the hub — a 0.75rem stadium on a
-		// 20px box was the one chip shape that did not match its neighbours.
 		border-radius: var(--docs-radius, 0.375rem);
 		background: transparent;
 		color: var(--docs-text-muted, var(--text-hint-color));
@@ -532,8 +475,6 @@
 	}
 }
 
-// On a phone the panel IS the canvas: the metadata label column stops earning
-// its width, so the pairs stack instead of squeezing the values.
 @media (max-width: 480px) {
 	.docs-detail-meta {
 		grid-template-columns: minmax(0, 1fr);
@@ -545,20 +486,6 @@
 	}
 }
 
-/*
- * ── Taxonomy editors ────────────────────────────────────────────────────────
- * The categories `nb-select` and the tag picker are full-size platform controls
- * dropped into a 26rem column of 12px copy. The tag picker in particular renders
- * each selection as an `nb-badge` carrying BOTH `.tag-color` (a 1rem square
- * swatch with 10px side margins — that class is meant for the dropdown ROWS) and
- * `.tag-label` (a 2rem stadium pill), which is what made the field twice the
- * height of everything around it.
- *
- * `background-color` and the hairline are restated from the hub's tokens because
- * ng-select's own theme (`@ng-select/.../default.theme.css`, a global stylesheet)
- * paints a light-mode container: a near-white fill with a #ccc border, which is
- * the "colours do not match in dark mode" of this panel.
- */
 .docs-detail ::ng-deep {
 	.ng-select .ng-select-container,
 	nb-select .select-button {
@@ -586,8 +513,6 @@
 		color: var(--docs-text-muted, var(--text-hint-color));
 	}
 
-	// One chip geometry, matching the pills the rest of the panel uses. The tag's
-	// own colour stays — that is the point of a tag — only the box changes.
 	.ng-value .tag-color.tag-label {
 		position: static;
 		display: inline-flex;

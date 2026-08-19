@@ -1,7 +1,5 @@
 <div class="docs-filter-bar">
-	<!-- ── Row 1 — presets, search, scope ─────────────────────────────────── -->
 	<div class="docs-filter-row docs-filter-row--primary">
-		<!-- The coarse filter: it toggles the whole result set, so it leads the band. -->
 		<gz-docs-preset-chips
 			class="docs-filter-presets"
 			[counts]="presetCounts"
@@ -13,9 +11,6 @@
 			<label class="docs-filter-label docs-filter-label--hidden" for="docs-filter-search">{{
 				'DOCS.FILTERS.SEARCH_LABEL' | translate
 			}}</label>
-			<!-- The magnifier is INSIDE the field (an overlay on its leading padding),
-			     not a sibling floating to its left: as a flex item it sat outside the
-			     input's box and read as a stray icon between the label and the control. -->
 			<span class="docs-filter-search-input">
 				<nb-icon icon="search-outline"></nb-icon>
 				<input
@@ -47,7 +42,6 @@
 		</div>
 	</div>
 
-	<!-- ── Row 2 — Kind · Status · Knowledge ──────────────────────────────── -->
 	<div class="docs-filter-row docs-filter-row--facets">
 		<div class="docs-filter-field">
 			<label class="docs-filter-label">{{ 'DOCS.FILTERS.KIND' | translate }}</label>
@@ -83,7 +77,6 @@
 		</div>
 	</div>
 
-	<!-- ── Row 3 — Source · Category · Tag ────────────────────────────────── -->
 	<div class="docs-filter-row docs-filter-row--facets">
 		<div class="docs-filter-field">
 			<label class="docs-filter-label">{{ 'DOCS.FILTERS.SOURCE' | translate }}</label>
@@ -121,7 +114,6 @@
 		</div>
 	</div>
 
-	<!-- ── Row 4 — Created · Updated · Saved views · Clear all ─────────────── -->
 	<div class="docs-filter-row docs-filter-row--meta">
 		<div class="docs-filter-field">
 			<label class="docs-filter-label" for="docs-filter-created-range">{{
@@ -185,9 +177,6 @@
 			<nb-rangepicker #updatedRange (rangeChange)="onUpdatedRange($event)"></nb-rangepicker>
 		</div>
 
-		<!-- Saved views (device-local, UX spec §5) + clear all. Page actions rather
-		     than facets, so they close the row instead of taking a labelled column
-		     of their own; they align to the CONTROL line, not to the labels above it. -->
 		<div class="docs-filter-field docs-filter-field--actions">
 			<gz-docs-saved-views [params]="urlParams" (applyView)="applyView.emit($event)"></gz-docs-saved-views>
 

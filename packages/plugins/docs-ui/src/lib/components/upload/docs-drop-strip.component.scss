@@ -7,9 +7,6 @@
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
-	// Slimmer than a hero dropzone on purpose: this strip is a persistent
-	// affordance above the list, not the page's main event, and at its old
-	// height it cost the table a full row of vertical space.
 	padding: 0.5rem 0.875rem;
 	min-height: 3rem;
 	border: 1px dashed var(--docs-hairline, rgba(126, 126, 143, 0.35));
@@ -62,9 +59,6 @@
 	color: inherit;
 }
 
-// The accepted-formats line is reference detail, not a headline: one line, and
-// it truncates rather than wrapping the strip to double height on a narrow
-// canvas. The full sentence stays in the element's own text for assistive tech.
 .docs-drop-strip-hint {
 	flex: 1 1 auto;
 	min-width: 0;

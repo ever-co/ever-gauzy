@@ -9,10 +9,6 @@
        title (ngx-header-title): the header band is already dense with
        selectors, and the trail was being squeezed to nothing on pages that
        show every selector. -->
-  <!-- The quick-actions button is anchored to the LEADING edge of the band and
-       kept OUT of .header-container: that container is the horizontal scroller
-       for the selector cluster, so a button inside it scrolls away with the
-       selectors the moment the band runs out of room. -->
   @if (createQuickActionsMenu?.length > 0) {
     <div class="header-lead">
       <nb-action

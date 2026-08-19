@@ -4,25 +4,10 @@
 // the completion dot loses both its ring and its fill on every theme.
 @use 'gauzy/_gauzy-cards' as *;
 
-// The three panels are bounded on purpose: "Today" pages its task list in with
-// `infiniteScroll [scrollWindow]="false"`, which needs a scrollport of its own
-// to fire against, and the two panels beside it scroll the same way. So this
-// page keeps a viewport-derived height where the rest of the dashboard grows
-// freely.
-//
-// The constant is what the page frame costs above the panels: the fixed header,
-// the content column's top padding, the tab strip and the card header (page
-// title + breadcrumb trail). Measured against the scrollport the strip now
-// leaves behind, which is what it has to fit inside — an estimate 1rem short
-// showed up immediately as a 14px scrollbar on a page that fits.
 $height: calc(100vh - 18.75rem);
 $gap: 0.75rem;
 
 .main {
-  // Was three percentage widths that added up to 110%, so the columns were only
-  // ever as wide as flex-shrink happened to leave them and the ratio between
-  // them moved with the viewport. Equal tracks, and `minmax(0, ...)` so a long
-  // task title wraps inside its column instead of widening it.
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: $gap;
@@ -38,9 +23,6 @@ $gap: 0.75rem;
   }
   .today {
     height: $height;
-    // "Add todo" - the row that closes the list. It is an action, so it reads
-    // like one: a single quiet row with a small leading glyph, rather than a
-    // 12px/600 label boxed away from the list by a 14px inset only it carried.
     .more {
       font-size: nb-theme(text-caption-font-size);
       font-weight: 500;
@@ -64,8 +46,6 @@ $gap: 0.75rem;
 
       i {
         font-size: 0.625rem;
-        // Was a 2px ring around an 11px glyph with 5px/5.5px of padding - a
-        // button-sized box in a row that is not a button.
         border: 1px solid var(--gauzy-border-default-color);
         color: var(--gauzy-text-color-2);
         border-radius: var(--gauzy-radius-sm);
@@ -75,16 +55,11 @@ $gap: 0.75rem;
     }
     .card.todo {
       display: flex;
-      // The marker belongs to the line of text beside it, not to the gap
-      // between the columns - `$gap` is a LAYOUT measure, and using it here put
-      // 16px between a 10px dot and its own label.
       gap: 0.625rem;
       align-items: flex-start;
       flex-direction: row;
       padding: 0.5rem 0.625rem;
       border: unset;
-      // Was `--gauzy-shadow`: a drop shadow under every item of a scrolling
-      // list reads as a stack of cards. One hairline says "row" instead.
       box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
       background-color: var(--gauzy-card-1);
       border-radius: var(--gauzy-radius-sm);
@@ -95,10 +70,6 @@ $gap: 0.75rem;
         // accent, spelled out rather than resolved, so it stayed the same purple
         // on every theme including the ones whose primary is not purple.
         border: 1px solid nb-theme(color-primary-default);
-        // Sized directly rather than inflated by padding, and offset by the
-        // difference between its own box and the cap height of the line it
-        // marks, so the marker sits ON the row's first line of text instead of
-        // on its baseline.
         flex: 0 0 auto;
         width: 0.625rem;
         height: 0.625rem;
@@ -108,10 +79,6 @@ $gap: 0.75rem;
           background-color: nb-theme(color-primary-default);
         }
       }
-      // The task's state, printed above its title - an eyebrow, so it is the
-      // quietest thing in the row. It used to be the same size and weight as
-      // the title with 8px under it, which made every item read as two lines of
-      // equal standing separated by a gap.
       .status {
         color: var(--gauzy-text-color-2);
         font-size: nb-theme(text-caption-font-size);
@@ -149,15 +116,11 @@ $gap: 0.75rem;
       width: 100%;
     }
     nb-card {
-      // Was `calc(50% - 0.5rem)` against a 1rem gap - half a gap short, so the
-      // two stacked panels overflowed their column. Tracks the gap now,
-      // whatever it is.
       height: calc(50% - #{$gap} / 2);
     }
     .card.assigned {
       padding: 0.5rem 0.625rem;
       background-color: transparent;
-      // A 2px ring is a button's edge, not a list row's.
       border: 1px solid var(--gauzy-border-default-color);
       border-radius: var(--gauzy-radius-sm);
     }
@@ -168,12 +131,7 @@ $gap: 0.75rem;
   nb-card {
     background-color: var(--gauzy-card-1);
     margin: 0;
-    // Was a 20px drop shadow. These are panels inside a page that is already a
-    // card, so they take the same hairline every other surface in the app has
-    // rather than floating above it.
     box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
-    // A panel title labels its block; it is not the page's title, so it sits a
-    // step below body copy and stays muted.
     nb-card-header {
       color: var(--gauzy-text-color-2);
       font-size: nb-theme(text-subtitle-2-font-size);
@@ -185,22 +143,12 @@ $gap: 0.75rem;
       background-color: var(--gauzy-sidebar-background-2);
       border-radius: 0 0 var(--border-radius) var(--border-radius);
       padding: 0.75rem 0.875rem;
-      // The body is a column: an optional action button, then the list, which
-      // takes whatever is left. This replaces a `max-height: calc(100% - 104px)`
-      // (and a `- 55px` sibling) that hand-counted the button and the padding
-      // above the list - numbers that stopped being true the moment either
-      // changed, and that a panel WITHOUT the button paid anyway.
       display: flex;
       flex-direction: column;
       gap: 0.625rem;
       min-height: 0;
 
       [nbButton].appearance-outline.status-primary {
-        // Sized by the app's own button tokens now. The block that used to be
-        // here restated all of them - a 2px edge in
-        // `--gauzy-background-transparent` (i.e. no visible edge at all), a
-        // 12px/600 label and a 4px/10px box - which is why these read as a
-        // different, older control than every other small outline button.
         align-self: flex-start;
       }
 

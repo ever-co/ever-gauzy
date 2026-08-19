@@ -1,23 +1,8 @@
 @use 'themes' as *;
 
-/*
- * One money line on the HR dashboard: a label (with an optional explanation of
- * how the figure is worked out), and the figure itself.
- *
- * It is a ROW in a stack of rows, and it used to be built like a hero card —
- * 18px label, 20px figure, a 46px box with 29/32px of side padding and 20px
- * under it, all on a hard-coded `#f6f9fc`. Eight of those is what the tab was.
- */
 .info-block-wrapper {
-  // Was a literal `#f6f9fc` — a pale blue that stayed pale blue on the four
-  // dark themes, where it is the brightest surface on the page.
   background-color: var(--gauzy-card-1);
-  // A stack of rows, so the gap between two of them is a list gap, not a card
-  // gap. (`hr-info-card` in the widget library zeroes this when the block is
-  // alone in a widget; that rule keys off the wrapper class, which is unchanged.)
   margin-bottom: 0.5rem;
-  // Was `--gauzy-shadow`: a drop shadow under every row of a list reads as a
-  // stack of floating cards. One hairline says "row".
   box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
   border-radius: var(--gauzy-radius-sm);
 
@@ -53,8 +38,6 @@
       gap: 0.125rem;
     }
 
-    // The figure. One step up from its label — enough to lead the row without
-    // becoming a display number, since a dozen of these stack on one screen.
     .info-value {
       flex-direction: row;
       align-items: center;
@@ -68,8 +51,6 @@
         white-space: nowrap;
       }
 
-      // The "open records history" affordance: a link, so it is quiet until the
-      // row is hovered.
       nb-icon {
         flex: 0 0 auto;
         height: 0.875rem;
@@ -78,25 +59,18 @@
       }
     }
 
-    // How the figure is calculated. Supporting text, so it is muted as well as
-    // small — at 10px in the FULL text colour it read as a second label.
     .meta-text {
       font-size: nb-theme(text-caption-font-size);
       line-height: 1rem;
       color: var(--gauzy-text-color-2);
     }
 
-    // The row the others add up to (Profit). It is the one that should stand
-    // out, and it does it with a tint of the surface it sits on rather than the
-    // literal `#e8e8e8` it used to paint in every theme.
     &--highlight {
       background: var(--gauzy-active-tint);
       font-weight: 600;
     }
   }
 
-  // A row nested inside an expanded accordion row: indented under its parent
-  // and closer to it than two top-level rows are to each other.
   &--list-item {
     margin-bottom: 0.375rem;
     .info-block {

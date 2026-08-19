@@ -31,11 +31,6 @@ export type DocumentBulkPanel = 'tags' | 'more';
  * 1:1 to `POST /documents/bulk` (≤ 200 ids). The result toast summarizes
  * succeeded/failed; the expandable panel lists up to 10 per-id errors with a
  * "Copy full report" action for the complete list.
- *
- * The bar is ONE row of actions, not a stack of labelled sections: everything
- * that needs an argument (tags) or is used rarely (knowledge) lives behind a
- * popover the row opens, so the toolbar's height never depends on how many
- * permissions the viewer holds.
  */
 @Component({
 	selector: 'gz-docs-bulk-bar',
@@ -71,10 +66,7 @@ export class BulkBarComponent extends TranslationBaseComponent {
 	 */
 	public tags: ITag[] = [];
 
-	/**
-	 * Which popover is open, if any — the tag tray or the overflow menu. Only one
-	 * at a time, so opening either closes the other with no extra bookkeeping.
-	 */
+	/** Which popover is open, if any. Only one at a time. */
 	public openPanel: DocumentBulkPanel | null = null;
 
 	public readonly permissions = PermissionsEnum;
@@ -102,7 +94,7 @@ export class BulkBarComponent extends TranslationBaseComponent {
 		return this.errors.slice(0, this.maxInlineErrors);
 	}
 
-	/** Add/remove tags act on the picker's selection, so both are inert while it is empty. */
+	/** Add/remove tags act on the picker's selection. */
 	get hasTagSelection(): boolean {
 		return this.selectedTagIds().length > 0;
 	}
@@ -115,7 +107,7 @@ export class BulkBarComponent extends TranslationBaseComponent {
 		this.openPanel = null;
 	}
 
-	/** Esc closes the open popover before anything else on the page reacts to it. */
+	/** Esc closes the open popover. */
 	@HostListener('document:keydown.escape')
 	onEscape(): void {
 		this.closePanel();
@@ -129,8 +121,6 @@ export class BulkBarComponent extends TranslationBaseComponent {
 
 	async run(action: DocumentBulkAction, extra: Partial<Parameters<DocumentsService['bulk']>[0]> = {}): Promise<void> {
 		if (this.busy || !this.count || this.overLimit) return;
-		// An action always dismisses the popover that offered it — leaving the tray
-		// open over the result toast is what made the old panel feel unfinished.
 		this.openPanel = null;
 		this.busy = true;
 		this.errors = [];

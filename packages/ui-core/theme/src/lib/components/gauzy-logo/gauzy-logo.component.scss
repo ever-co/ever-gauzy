@@ -26,8 +26,6 @@
 
     .description {
       min-width: 0;
-      // Eats the row's slack so `.switch-indicator` after it lands on the
-      // TRAILING edge of the switcher rather than hugging the workspace name.
       flex: 1 1 auto;
       // `.text` below adds a 10px side margin meant for the old two-line block.
       margin: 0;
@@ -70,19 +68,10 @@
 // The switcher is a logo + name + chevron, not a text input: the chevron used to
 // sit in its own bordered 1.75rem box, which together with the ring on the header
 // (below) drew a form control around something you cannot type into.
-//
-// Nebular's chevron is now suppressed entirely in favour of the in-flow
-// `.switch-indicator` SVG in the template. Two reasons: Nebular draws a single
-// down-caret, where a two-way caret is what actually reads as "switch to another
-// workspace"; and its icon is absolutely positioned, so the header had to
-// reserve a fixed gutter for it (`padding-right` in one-column.layout.scss) that
-// the compacted rail then had to undo.
 nb-accordion-item-header ::ng-deep nb-icon {
   display: none;
 }
 
-// Trailing switcher affordance. `flex: 0 0 auto` so it never gets squeezed by a
-// long workspace name — the name ellipsises instead.
 .switch-indicator {
   flex: 0 0 auto;
   width: 1rem;

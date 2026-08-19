@@ -90,17 +90,6 @@
             </div>
             <span>{{ team?.name }}</span>
           </div>
-          <!--
-            The three counts. The LABEL and the VALUE were one string inside one
-            badge, so the whole thing had to take the status colour and the status
-            fill — three saturated blocks per panel header, most of whose area was
-            the word "Working". Split, the label is ordinary muted text and only
-            the number it introduces is coloured, which is the part the colour was
-            ever about. Same expressions, same statuses.
-
-            The colon belongs to the label, so the pair reads as one phrase —
-            "Working now: 0" — rather than as two words and a loose figure.
-          -->
           <div class="legend-container">
             <div class="legend">
               <span class="legend-label">{{ 'DASHBOARD_PAGE.CHARTS.WORKING_NOW' | translate }}:</span>
@@ -119,11 +108,6 @@
             </div>
           </div>
           <div>
-            <!--
-              Opening the team is the panel's own action, not a call to action:
-              `ghost` drops the fill and the outline that made a 32px square the
-              highest-contrast object in the header, and leaves the arrow.
-            -->
             <button (click)="onSelectTeam(team)" nbButton ghost size="small" status="primary">
               <nb-icon icon="arrow-forward-outline"></nb-icon>
             </button>

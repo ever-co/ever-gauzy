@@ -28,10 +28,6 @@ import { IDocument, ITag } from '@gauzy/contracts';
 				max-width: 100%;
 				min-width: 0;
 			}
-			/* One chip geometry for categories and tags alike: the table's chip
-			   density tokens, and the theme's control radius rather than a 1rem
-			   stadium pill — a pill on a 17px box reads as a different design
-			   language from the buttons and selects around it. */
 			.docs-chip {
 				display: inline-flex;
 				align-items: center;

@@ -1,12 +1,6 @@
 import { theme } from '../theme';
 
-/**
- * These dots count projects; they do not identify them, so the five different
- * oranges they used to cycle through (`#ffaa00`, `#ff6b35`, `#ffcc02`,
- * `#ff8c00`, `#ffd700` — hard-coded, and therefore the same five on every
- * theme) were carrying no information at all. One accent, repeated, says the
- * same thing and matches the counter strip on the Angular tab beside it.
- */
+/** The dots count projects rather than identify them, so one accent is repeated. */
 const DEFAULT_COLORS = [theme.accent];
 
 export interface ColorDotsProps {

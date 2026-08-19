@@ -1,21 +1,8 @@
 @use '@nebular/theme/styles/global/breakpoints' as *;
 @use 'themes' as *;
 
-// ── The header band's own type step ─────────────────────────────────────────
-// One step BELOW the shared control text (`select-medium-text-font-size`,
-// 0.8125rem / 13px). The band is chrome that frames the page, not part of it:
-// at the same size as the page's own controls it competes with the content it
-// is supposed to be labelling. Declared once here because the band's text comes
-// from four unrelated widgets — ng-select triggers, a bare `<input>` in the date
-// pill, the timer readout, an `nbButton` — none of which share a token.
-$header-text-size: 0.75rem; // 12px
+$header-text-size: 0.75rem;
 
-// And ONE colour for all of it. The date-range field already resolved
-// `gauzy-text-color-2` (a muted grey: rgba(255, 255, 255, 0.5) on the dark
-// themes, rgba(126, 126, 143, 1) on the light ones) while everything beside it
-// sat on `text-basic-color` — pure white in the dark themes, which is the
-// brightest thing on the screen spent on a filter chip. The fallback covers the
-// two material themes, which never registered the gauzy token set.
 $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
 
 @include nb-install-component() {
@@ -40,12 +27,6 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
   .main-header {
     display: flex;
     align-items: center;
-    // Everything in the band is parked on the trailing edge, and `.header-lead`
-    // below buys itself back to the leading edge with an auto margin. That is
-    // deliberately NOT `space-between`: this element also hosts the extra-actions
-    // sheet and the web time tracker, so the number of in-flow children is not
-    // fixed and a distribution rule would re-space the band whenever one of them
-    // appears. An auto margin on one child is unaffected by the others.
     justify-content: flex-end;
     width: 100%;
     background-color: transparent;
@@ -53,10 +34,6 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
       display: none;
     }
 
-    // The quick-actions slot: hard against the leading edge of the band, and
-    // never a shrink target — the button's label is short and fixed, so it has
-    // nothing useful to give up when the selector cluster runs out of room (the
-    // cluster has its own scroller for that).
     .header-lead {
       display: flex;
       align-items: center;
@@ -64,11 +41,6 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
       @include nb-ltr(margin-right, auto);
       @include nb-rtl(margin-left, auto);
 
-      // The leading inset lives on the button's wrapper, not on `.header-lead`
-      // itself, so that below the `lg` breakpoint — where `.show-large-up` hides
-      // the button — the slot collapses to nothing instead of leaving a padded
-      // empty box against the band's edge. 1.5rem mirrors the trailing inset on
-      // `:host .actions`, so the band is inset by the same amount on both sides.
       nb-action {
         @include nb-ltr(padding-left, 1.5rem);
         @include nb-rtl(padding-right, 1.5rem);
@@ -79,7 +51,6 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
       display: flex;
       align-items: center;
       justify-content: space-between;
-      //width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
       max-width: nb-theme(sidebar-width);
       width: nb-theme(sidebar-width);
       margin-left: nb-theme(sidebar-width-compact);
@@ -141,12 +112,6 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
       gap: 0.75rem;
       width: auto;
       // 🛑 A flex item defaults to `min-width: auto`, so without this it can never shrink below
-      // its content width. The parent uses `justify-content: flex-end`, so the excess overflows
-      // to the LEFT — out of the header band entirely and underneath anything docked beside it.
-      // Opening the AI chat panel narrows this band from ~1219px to 896px, and the "+ Create"
-      // button and the team selector ended up rendering under the panel (measured at x=317 and
-      // x=425 while the band itself started at x=640). They were still in the DOM and still
-      // "visible" to the accessibility tree — just covered.
       //
       // `min-width: 0` lets the row shrink, `max-width: 100%` keeps it inside the band, and
       // `overflow-x: auto` keeps every control reachable when space genuinely runs out instead of
@@ -261,8 +226,6 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  // The band's step and colour, same as the selector chips and the date pill.
-  // The elapsed time is a readout, not a headline.
   font-size: $header-text-size;
   color: $header-text-color;
   nb-icon {
@@ -293,12 +256,6 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
 // so it takes the theme purple (`color-primary-500`) with Nebular's own
 // hover/focus/active states. It used to force a hardcoded salmon (#f56d58)
 // here, which no theme token knew about.
-//
-// Its LABEL is the one piece of band text that is deliberately left at full
-// contrast: `$header-text-color` is a muted grey meant to sit on the band's own
-// surface, and putting it on a filled purple button would drop the label to
-// roughly 2:1 against its own fill. A filled button carries its contrast on the
-// fill, so only the size step applies here.
 .button.create {
   &[nbButton].appearance-filled {
     border-width: 0;
@@ -306,13 +263,6 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
   }
 }
 
-// ── The rest of the band's text ────────────────────────────────────────────
-// The date-range control is a bare `<input>` wrapped in a pill, so it shares no
-// token with the ng-select triggers beside it and had pinned its own 13px /
-// `gauzy-text-color-2` pair. That colour is the one this file now standardises
-// on; the size comes down a step with everything else. Scoped to the header's
-// own instance — `ngx-date-range-picker` is also used inside reports pages,
-// where it IS page content and keeps the full control step.
 .date-range-selector {
   ::ng-deep {
     .custom-input input {
@@ -320,17 +270,12 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
       color: $header-text-color;
     }
 
-    // The calendar glyph that opens the picker: same muted colour as the text
-    // it sits beside, instead of `gauzy-text-color-1` (pure white on the dark
-    // themes).
     i {
       color: $header-text-color;
     }
   }
 }
 
-// The trailing icon actions (overflow toggle, sidebar actions). Nebular sizes
-// these from `header-text-*`, which is the page-content step.
 :host .actions nb-action > nb-icon {
   font-size: 1rem;
   color: $header-text-color;
@@ -345,13 +290,6 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
   // carry the same 1px hairline ring as every other control — the old
   // `--gauzy-shadow` is a black drop shadow, which on the near-black header band
   // left these pills with no visible edge at all.
-  //
-  // The organization picker is in this group rather than styled apart. It used
-  // to be the exception — no ring, no fill — on the grounds that a bare logo and
-  // a chevron is not a text field. That reasoning went away when it started
-  // showing the organization NAME: it is now the same shape of control as the
-  // three beside it, and leaving it chromeless made the last item in the row
-  // read as an unrelated widget that had lost its box.
   ::ng-deep {
     .ng-select.ng-select-opened.ng-select-bottom > .ng-select-container {
       border-radius: var(--gauzy-radius-sm) !important;
@@ -369,40 +307,16 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
       box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
       border-radius: var(--gauzy-radius-sm) !important;
       background-color: var(--gauzy-card-1);
-      // Colour-and-edge only. `all` would also animate the pill's width as the
-      // selected name changes length, which reads as the header twitching.
       transition:
         background-color 0.15s ease,
         box-shadow 0.15s ease;
     }
 
-    // ── Text inset ─────────────────────────────────────────────────────────
-    // `ng-select-overrides()` gives every trigger in the app a 1rem inline
-    // inset, because in a FORM an ng-select has to start its text on the same x
-    // as the `nb-select` beside it. The header band is chrome, not a form: at
-    // 2rem tall, 16px of padding either side of a 13px label is a pill that is
-    // mostly padding, and four of them in a row is what pushed the cluster into
-    // its horizontal scrollbar. 10px matches the option rows in the panel these
-    // pills open, so the label does not jump sideways when the panel appears.
-    //
-    // `!important`, and it wins only because the `.team-selector` host class
-    // adds a specificity step: the rule it overrides is itself `!important`.
     .ng-select .ng-select-container .ng-value-container {
       padding-inline-start: 0.625rem !important;
-      // Lets the label truncate at the chip's `max-width` instead of pushing
-      // the chip wider: a flex item's automatic minimum size is its content,
-      // so `overflow: hidden` on the value alone would never get a chance to
-      // apply.
       min-width: 0;
     }
 
-    // ── Type ───────────────────────────────────────────────────────────────
-    // The band's own step and the band's one muted colour (see the two
-    // variables at the top of this file). Value and placeholder are the same
-    // size AND the same colour; the only thing separating "a filter is set"
-    // from "showing everything" is weight. That is the whole hierarchy this
-    // control needs, and it is what keeps a chip from being the brightest,
-    // largest thing on a page it is only supposed to be filtering.
     .ng-select {
       font-size: $header-text-size;
     }
@@ -415,25 +329,6 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
       font-weight: 400;
     }
 
-    // ── States ─────────────────────────────────────────────────────────────
-    // Two steps, both quiet: the hairline firms up from the resting
-    // `--gauzy-overlay-border-color` to the `--gauzy-active-tint` used for a
-    // current row everywhere else, and a translucent tint is composited over
-    // the pill's own fill. The band already sits on its own surface, so an
-    // opaque fill here would read as a second, competing container.
-    //
-    // The tint arrives as a `linear-gradient` rather than a `background-color`
-    // because it has to LAYER: `--gauzy-hover-tint` is a low-alpha neutral, so
-    // painting it over `--gauzy-card-1` darkens a light theme and lightens a
-    // dark one from one declaration. Setting it as the background-color instead
-    // would replace the pill's fill with a near-transparent colour and let the
-    // header band show through — and `--gauzy-card-2`, the obvious alternative,
-    // is `rgba(16, 16, 20, 0.3)` in `gauzy-dark`, i.e. indistinguishable from
-    // the surface it would sit on.
-    //
-    // `!important` on the shadow because `ng-select-overrides()` re-asserts the
-    // resting hairline on `:hover`, on `.ng-select-focused` and on the opened
-    // trigger, all with `!important`.
     .ng-select:not(.ng-select-disabled):hover .ng-select-container,
     .ng-select.ng-select-focused .ng-select-container,
     .ng-select.ng-select-opened .ng-select-container,
@@ -448,8 +343,6 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
       );
     }
 
-    // Open is one step past hover, so an open pill stays legible as "this is the
-    // one whose panel you are looking at" even while the pointer is over it.
     .ng-select.ng-select-opened .ng-select-container,
     .ng-select.ng-select-opened > .ng-select-container:hover {
       background-image: linear-gradient(
@@ -458,32 +351,17 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
       );
     }
 
-    // ── Trailing glyphs: clear (×) and chevron (⌄) ─────────────────────────
-    // `.ng-select-container` is a flex row of [value container][clear][arrow],
-    // and none of those carried any inline separation — the library's only
-    // spacing was 5px of padding INSIDE the arrow's own 25px box, which moves
-    // the glyph within its box without ever opening a gap in front of it. So a
-    // long label ran straight into the × and the × straight into the chevron.
-    //
-    // One `margin-inline-start` on each wrapper opens both gaps at once and
-    // stays correct whether the × is present or not: with a value it reads
-    // `label ⟷ × ⟷ ⌄`, without one `label ⟷ ⌄`.
     .ng-select .ng-clear-wrapper,
     .ng-select .ng-arrow-wrapper {
       margin-inline-start: 0.5rem;
     }
 
-    // The arrow's box is sized by its trailing inset rather than by the
-    // library's fixed 25px, so the chevron ends the same 10px from the pill's
-    // edge as the label starts from it.
     .ng-select .ng-arrow-wrapper {
       width: auto;
       padding-inline-start: 0;
       padding-inline-end: 0.625rem;
     }
 
-    // Muted until the control is engaged, so a row of four pills reads as one
-    // quiet cluster rather than four arrows.
     .ng-select .ng-arrow {
       font-size: 9px;
       color: nb-theme(text-hint-color);
@@ -493,9 +371,6 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
       color: nb-theme(text-basic-color);
     }
 
-    // The clear (×) affordance is the same weight of glyph as the chevron, and
-    // it appears only on a pill that HAS a value — so it must not out-shout the
-    // value it clears.
     .ng-select .ng-clear-wrapper {
       color: nb-theme(text-hint-color);
       width: 0.875rem;
@@ -510,18 +385,6 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
 .team-selector,
 .employee-selector,
 .organization-selector {
-  // Was a flat 12.5rem (200px). Three of those plus the organization picker and
-  // the date range is most of the band spent on controls that are usually
-  // showing a two-word placeholder — and the components' own `:host` already
-  // asks for 200px, which is the right size for the same selector standing in a
-  // FORM. In the header they are filter chips, so they get a floor that fits
-  // "All Employees" comfortably and a ceiling that keeps one long team name
-  // from crowding out its neighbours; the label ellipsises at the ceiling
-  // (`.selector-template span` in each selector's stylesheet).
-  //
-  // The panel is unaffected: ng-select pins it to `min-width: <trigger>` and
-  // this file's sibling rule in `_overrides.scss` lets it grow to `max-content`,
-  // so a narrower chip still opens a list wide enough to read.
   min-width: 9rem;
   max-width: 13.5rem;
 }

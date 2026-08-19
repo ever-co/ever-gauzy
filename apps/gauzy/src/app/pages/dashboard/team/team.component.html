@@ -3,11 +3,6 @@
 		<h4 class="header-title">
 			<div>
 				@if (selectedTeam?.isSelected) {
-				<!--
-					The mirror of the arrow that opened the team, so it is the same
-					control: `ghost` rather than `outline`, since a filled, outlined
-					square in front of the page title outweighed the title.
-				-->
 				<button (click)="reset()" nbButton ghost size="small" status="primary">
 					<nb-icon icon="arrow-back-outline"></nb-icon>
 				</button>
@@ -39,12 +34,6 @@
 							<div class="row w-100">
 								<div class="col-3">
 									<div class="row">
-										<!--
-											"Status" named the presence column, which is gone: the
-											marker is on the portrait now, where it needs no heading
-											of its own. The name takes the full width so the heading
-											still starts where the names do.
-										-->
 										<div class="col-12">
 											{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
 										</div>

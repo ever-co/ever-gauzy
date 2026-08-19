@@ -2,11 +2,7 @@ import { theme } from '../theme';
 
 export interface ProgressProps {
 	percent: number;
-	/**
-	 * Fill colour. Defaults to the theme's own accent — the two callers used to
-	 * pass `theme.red` and `theme.blue`, which put two unrelated saturated hues
-	 * on two bars that measure the same kind of thing.
-	 */
+	/** Fill colour. Defaults to the theme's accent. */
 	color?: string;
 }
 
@@ -16,8 +12,6 @@ export function Progress({ percent, color = theme.accent }: ProgressProps) {
 			style={{
 				width: '100%',
 				height: '4px',
-				// A neutral track, so the bar reads as one object rather than as two
-				// colours meeting.
 				background: theme.tint,
 				borderRadius: '2px',
 				overflow: 'hidden'

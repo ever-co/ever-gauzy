@@ -1,41 +1,8 @@
 @use 'themes' as *;
 
-// ── The inset a card keeps around its content ────────────────────────────────
-//
-// ONE pair of numbers for the page. The KPI tiles and the team panels are
-// stacked directly on top of each other, so anything that differs between them
-// reads as a mistake rather than as a distinction — and the tiles on the team
-// DETAILS page are the same object again (`../team-card/team-card.component.scss`
-// restates these two values, since it is a separate component stylesheet).
-//
-// Wider across than down, and now by a third: a card is wider than it is tall,
-// so equal padding on it looks tight at the sides long before it looks tight
-// above and below. Two steps above the other dashboard
-// panels (see `../../project-management/project-management-details/...`), which
-// is deliberate — those are small panels packed several to a row, while these
-// are the page's own surfaces and the list inside a team panel is long enough
-// that the frame has to be clearly wider than the space between its rows.
-// The block half stayed where it was through the last widening, so the pair is
-// no longer one number and its neighbour: it is a py and a px, stated as two,
-// and every card on both Teams views is set from them and nothing else.
 $card-inset-block: 1.125rem;
 $card-inset-inline: 1.5rem;
 
-// The panel list.
-//
-// It asked for a fixed TWO columns and then swapped to one under a
-// `max-width: 1200px` media query — and a media query measures the VIEWPORT,
-// which is not the width this list is laid out in: the sidebar is expandable,
-// so at the same 1300px window the panels are either 620px or 500px wide and
-// the query cannot tell the two apart. The header of a panel carries a figure,
-// a name, three counts and a button, so the narrow case is exactly where the
-// counts wrapped and the names were cut.
-//
-// `columns: <width> auto` is the same layout stated as a MINIMUM instead of a
-// count: the browser fits as many columns of at least 30rem as the list's own
-// box can hold, so it is two on a normal page, three on a wide one, and one as
-// soon as the space really is that narrow — with or without the sidebar, and
-// with no number here that has to be kept in step with the page frame.
 .masonry {
   columns: 30rem auto;
   column-gap: 0.75rem;
@@ -43,10 +10,6 @@ $card-inset-inline: 1.5rem;
 
   nb-card {
     width: 100%;
-    // `inline-flex` + `width: 100%` is what keeps a panel whole: a block-level
-    // child of a multi-column container is free to be split across the column
-    // break, mid-list. `break-inside` says the same thing directly, for the
-    // engines that honour it.
     display: inline-flex;
     break-inside: avoid;
     margin-bottom: 0.75rem;
@@ -60,14 +23,6 @@ $card-inset-inline: 1.5rem;
   flex-wrap: wrap;
 }
 
-// One count: a label and the number it introduces.
-//
-// The colour belongs to the NUMBER. "Working now" is the same three words on
-// every panel and reads the same whatever it says, so it is set as the muted
-// caption it is; the figure beside it is the reading, and it is the only part
-// that carries the status hue. Nothing here is filled or edged — three tinted
-// blocks per header, on a row that also holds a figure, a title and a button,
-// were what made the panel busy.
 .legend {
   display: inline-flex;
   align-items: baseline;
@@ -81,12 +36,6 @@ $card-inset-inline: 1.5rem;
     color: var(--gauzy-text-color-2);
   }
 
-  // `nb-badge` is a NOTIFICATION marker: Nebular positions it absolutely over
-  // the corner of its host and paints it as a solid block of
-  // `badge-<status>-background-color` under white text. Used inline as a value
-  // it needs to be back in the flow and to carry its status as the TEXT colour
-  // - the `gauzy-action-*` accents, which unlike the badge fills are tuned for
-  // contrast against the page on both the light and the dark themes.
   nb-badge {
     position: relative;
     display: inline-block;
@@ -113,10 +62,6 @@ $card-inset-inline: 1.5rem;
   }
 }
 
-// Opening a team is the panel's own action rather than the page's, so the
-// button is a glyph on the header line: `ghost` in the template drops the fill
-// and the outline, and this holds it to the size of the row it sits on instead
-// of Nebular's 2rem tap target.
 .masonry nb-card-header button[nbButton] {
   padding: 0;
   width: 1.5rem;
@@ -130,25 +75,11 @@ $card-inset-inline: 1.5rem;
   }
 }
 
-// The KPI row.
-//
-// It was a wrapping flex row of 242px-wide cards, so on a wide screen four of
-// them ended two hundred pixels short of the panel's trailing edge, and on a
-// narrow one the fourth dropped to a line of its own. Equal tracks fill the row
-// at any width and `auto-fit` collapses the ones nothing lands in - the same
-// treatment the Accounting KPI row is on.
 .widgets-container {
   display: grid;
-  // 9.5rem of CONTENT plus the tile's own inline inset. The minimum was 11rem
-  // back when that inset was 0.75rem a side; left at 11rem, each widening of
-  // the padding would have come out of the figure and its gauge rather than
-  // out of the grid.
   grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
   gap: 0.75rem;
 
-  // The KPI's NAME. It labels the figure under it, so it sits on the label step
-  // and stays muted; at 16px it was larger than the page's body copy and
-  // competed with the figure it introduces.
   .title {
     font-size: nb-theme(text-label-font-size);
     font-weight: 500;
@@ -158,10 +89,6 @@ $card-inset-inline: 1.5rem;
   }
 
   nb-card {
-    // The page's card inset (see `$card-inset-*` above). A KPI tile carries its
-    // header and body padding on the CARD, because the two rows inside it are
-    // one object — a name over a figure over its gauge — and an inset between
-    // them would read as two.
     padding: $card-inset-block $card-inset-inline;
     background-color: var(--gauzy-card-1);
     min-width: 0;
@@ -172,8 +99,6 @@ $card-inset-inline: 1.5rem;
     margin-bottom: 0.25rem;
   }
 
-  // The counter strip is the figure's own gauge, so it spans the card rather
-  // than stopping at an arbitrary 71% of it.
   .counter-container {
     width: 100%;
     margin-top: 0.5rem;
@@ -193,11 +118,6 @@ $card-inset-inline: 1.5rem;
   }
 }
 
-// No height: the KPI row and the team panels grow to their content and the
-// dashboard page scrolls past them. The `calc(100vh - 19.7rem)` that used to be
-// here was a hand-counted guess at the page chrome - the same guess the rest of
-// the dashboard has already dropped - and it was both clipping the panel list
-// and giving it a scrollbar of its own inside the page's.
 .main-card-container {
   display: flex;
   flex-direction: column;
@@ -205,16 +125,6 @@ $card-inset-inline: 1.5rem;
   width: 100%;
 }
 
-// The team panels' own inset.
-//
-// It was a flat 0.75rem on all four sides — the smallest step on the scale, and
-// the same one the rows INSIDE the panel use to separate themselves from each
-// other, so the list ran almost into the panel's edge and a panel had no more
-// air around its content than its content had around itself. A card's frame
-// should be the widest inset in it.
-//
-// The header's bottom is zeroed by `pb-0` in the template, so the space between
-// the panel's title row and its first member is the body's top padding alone.
 nb-card-header {
   padding: $card-inset-block $card-inset-inline 0.75rem;
 }
@@ -226,9 +136,6 @@ nb-card-body {
   gap: 0.625rem;
 }
 
-// A team panel's header: the count, the team name under it, the three status
-// chips, and the button that opens the team. They belong on one line, aligned
-// to its top, and the name is the panel's title rather than a run of body copy.
 .masonry nb-card-header {
   align-items: flex-start;
   gap: 0.75rem;
@@ -236,8 +143,6 @@ nb-card-body {
   > div:first-child {
     min-width: 0;
 
-    // The team's NAME. It is the only thing identifying the panel, so unlike
-    // the caption under a KPI figure it keeps the full text colour.
     > span {
       display: block;
       font-size: nb-theme(gauzy-table-font-size);
@@ -257,23 +162,11 @@ nb-card-body {
     font-size: nb-theme(gauzy-table-font-size);
   }
 
-  // The counts and the button that opens the team share ONE line.
-  //
-  // The header is `align-items: flex-start`, because the block on the left is
-  // two lines tall (the figure, then the team name) and the counts belong
-  // beside its FIRST line. Left at that, though, each of the two trailing
-  // items simply started at the top of its own box: the counts are a 1rem
-  // line of text and the button is a 1.5rem square, so the arrow sat a
-  // quarter of a line below the words it follows. Both are given the
-  // button's height and centred in it, which is what puts them on the same
-  // line as each other and on the figure's.
   .legend-container {
     flex: 1 1 auto;
     justify-content: flex-end;
     align-items: center;
     min-height: 1.5rem;
-    // Only if the header is too narrow to hold all three; then they wrap as a
-    // block rather than as three lines pressed together.
     row-gap: 0.25rem;
   }
 

@@ -324,13 +324,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 
 	/**
-	 * GET Full Name — the untruncated counterpart of `getShortenedName`, for the
-	 * `title` tooltip on a label that has been cut short (by the truncate pipe
-	 * above, by the chip's `max-width`, or by both).
-	 *
-	 * `fullName` is preferred where the API supplied one, but it is empty on the
-	 * synthetic "All Employees" / "No Employee" entries, which carry their label
-	 * in `firstName` — hence the fallback rather than a straight read.
+	 * GET Full Name — the untruncated counterpart of `getShortenedName`.
 	 *
 	 * @param employee
 	 * @returns the employee's complete display name

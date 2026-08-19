@@ -36,14 +36,6 @@
       </nb-card>
       <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
         <nb-card-body>
-          <!--
-            Profit is the row's bottom line, so it is the one figure set in the
-            page's own text colour: income (info) and bonus (the highlight
-            style's success) already spend two of the accents, and a third would
-            have left the row four coloured numbers with no hierarchy between
-            them. Below zero it goes red, which is the one case where the colour
-            is carrying information rather than decorating.
-          -->
           <ga-single-statistic
 						[color]="
 							aggregatedEmployeeStatistics?.total?.profit >= 0

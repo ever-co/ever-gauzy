@@ -1,8 +1,3 @@
-<!-- The account row. ONE flat, full-width row — avatar, then the name over the
-     email — that only lights up on hover, the shape ChatGPT uses at the foot of
-     its sidebar. `showIdentity` is off in the compacted rail, which leaves just
-     the centred avatar; the name then moves to the native tooltip so the rail
-     stays readable. -->
 @if (user$ | async; as user) {
 	<div
 		class="user-container"
@@ -19,7 +14,6 @@
 			@if (user?.imageUrl) {
 				<img [src]="user.imageUrl" [alt]="user?.name" />
 			} @else {
-				<!-- No avatar on file: initials, rather than a broken image icon. -->
 				<span class="initials">{{ initials(user) }}</span>
 			}
 			<span class="presence" [class.online]="online$ | async" [class.offline]="!(online$ | async)"></span>

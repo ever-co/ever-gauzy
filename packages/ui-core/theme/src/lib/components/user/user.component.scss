@@ -1,22 +1,7 @@
 @use 'themes' as *;
 
-// The account row at the foot of the nav rail, and the same row repeated inside
-// the account popup.
-//
-// Shape borrowed from ChatGPT's sidebar footer: ONE flat, full-width row that
-// carries the identity — avatar, name, e-mail beneath it — with no border, no
-// resting fill and no shadow. It only lights up on hover, so it reads as a menu
-// entry rather than as a control competing with the nav items above it.
-//
-// Both surfaces this row sits on are opaque (`gauzy-sidebar-background-2` in the
-// rail, `background-basic-color-1` in the popup), so the hover tint and the
-// presence dot's ring are the two things that must follow the host. The tint is
-// alpha-neutral and works on both; the ring reads `--gz-user-surface`, which the
-// layout sets to the sidebar colour — see one-column.layout.scss.
 $row-hover-bg: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 $row-surface: var(--gz-user-surface, #{nb-theme(background-basic-color-1)});
-// Deliberately small — the reference rail's avatar is barely wider than the nav
-// icons above it, and it identifies the row rather than announcing it.
 $avatar-size: 1.5rem;
 
 :host {
@@ -32,8 +17,6 @@ $avatar-size: 1.5rem;
 	padding: 0.375rem;
 	border-radius: var(--gauzy-radius-sm, 6px);
 	cursor: pointer;
-	// Colour only — transitioning `all` would animate the radius and make the
-	// row look like it is inflating on hover.
 	transition: background-color 0.12s ease-in-out;
 
 	&:hover,
@@ -46,10 +29,6 @@ $avatar-size: 1.5rem;
 		outline-offset: -2px;
 	}
 
-	// Expanded rail / popup: the row owns the full width and the identity column
-	// takes whatever the avatar leaves. The 0.75rem inline padding is the nav
-	// rows' own `menu-item-padding` inline half, so the avatar lands on the same
-	// column as the icons above it and the hover tint starts on the same edge.
 	&.with-identity {
 		width: 100%;
 		padding: 0.375rem 0.75rem;
@@ -65,9 +44,6 @@ $avatar-size: 1.5rem;
 		height: #{$avatar-size};
 		border-radius: 50%;
 		overflow: visible;
-		// No ring. This carried an inset hairline (and before that a 3px primary
-		// one), which at this size read as a border drawn around the photo rather
-		// than as part of it — the reference avatar has nothing around it.
 
 		img {
 			width: 100%;
@@ -76,7 +52,6 @@ $avatar-size: 1.5rem;
 			object-fit: cover;
 		}
 
-		// Avatar fallback.
 		.initials {
 			display: flex;
 			align-items: center;
@@ -93,20 +68,10 @@ $avatar-size: 1.5rem;
 			user-select: none;
 		}
 
-		// Presence dot, ringed in the host surface so it reads as sitting on top
-		// of the avatar rather than as a notch cut out of it.
 		.presence {
-			// Suppressed by the host in the nav rail (`--gz-user-presence: none`
-			// in one-column.layout.scss) and drawn in the account popup, where the
-			// row is not competing with a column of bare icons.
 			display: var(--gz-user-presence, block);
 			position: absolute;
 			top: 0;
-			// Plain `right`, not `nb-ltr(right, 0)`: `nb-ltr` compiles to
-			// `[dir=ltr] &`, and nothing in this app sets `dir` on the document,
-			// so the LTR half of such a pair never matches and the dot fell back
-			// to the avatar's leading edge. `[dir=rtl]` IS set when the direction
-			// service flips, so only that side needs a guarded selector.
 			right: 0;
 
 			@include nb-rtl() {
@@ -132,8 +97,6 @@ $avatar-size: 1.5rem;
 	.identity-container {
 		display: flex;
 		flex-direction: column;
-		// `min-width: 0` is what actually lets the two lines ellipsis inside a
-		// flex row — without it the column refuses to shrink below its text.
 		min-width: 0;
 		flex: 1 1 auto;
 		line-height: 1.25;
@@ -147,8 +110,6 @@ $avatar-size: 1.5rem;
 
 		.name {
 			color: nb-theme(text-basic-color);
-			// The nav rows' own type scale — the account row is the last entry in
-			// that list, not a different kind of thing.
 			font-size: nb-theme(menu-text-font-size);
 			font-weight: 600;
 		}

@@ -3,26 +3,13 @@
   min-width: 0;
 }
 
-/*
- * ── The band ────────────────────────────────────────────────────────────────
- * Four stacked rows (see the template header for what is on each). The row is
- * the unit here, not the field: every control on a row shares one height, one
- * radius and one label step, so the band reads as a form rather than as a strip
- * of loose pills.
- */
 .docs-filter-bar {
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
   min-width: 0;
 
-  // The one height every control in the band shares. The full control step
-  // (not the compact one): a facet is a control you open and read chips out of,
-  // and at the small step the chips had to be smaller than the placeholder that
-  // named the field.
   --docs-filter-control-height: var(--docs-control-height, 2rem);
-  // Facet columns never narrower than this — below it a placeholder such as
-  // "Knowledge" is already truncated when the field is still empty.
   --docs-filter-column-min: 7.5rem;
 }
 
@@ -31,12 +18,6 @@
   min-width: 0;
 }
 
-/*
- * Row 1 — presets · search · scope.
- *
- * Flex, not grid: the three are different KINDS of control (a chip group, a text
- * field, a switch), and only the search field should absorb the leftover width.
- */
 .docs-filter-row--primary {
   display: flex;
   flex-wrap: wrap;
@@ -49,26 +30,12 @@
   min-width: 0;
 }
 
-/*
- * Rows 2 and 3 — the six facets, three to a row.
- *
- * A grid, so the columns are the same in both rows and at every label length: as
- * a wrapping flex line the fields re-flowed on the width of whatever was in
- * them, which moved a field to a different column each time a selection changed.
- */
 .docs-filter-row--facets {
   display: grid;
   grid-template-columns: repeat(3, minmax(var(--docs-filter-column-min, 7.5rem), 1fr));
   gap: 0.5rem 0.75rem;
 }
 
-/*
- * Row 4 — the two date ranges plus the page actions.
- *
- * The actions take an `auto` track rather than a fourth equal column: they are
- * two buttons sized by their own labels, and stretching them to a date field's
- * width made them the widest objects on the row.
- */
 .docs-filter-row--meta {
   display: grid;
   grid-template-columns:
@@ -85,15 +52,6 @@
   gap: 0.25rem;
   min-width: 0;
 
-  // A facet fills the column it was given. ng-select and the tag picker are
-  // both shrink-to-fit by default, which is what left the band ending
-  // two-thirds of the way across with empty space after it.
-  //
-  // 🛑 `nb-form-field` (the two date fields) is NOT in this list. It ships as
-  // `display: flex; align-items: center` and lays its `nbSuffix` button out as
-  // a flex child — forcing it to `block` drops the calendar affordance out of
-  // the field and onto a line of its own, which also made the row taller than
-  // the actions beside it. It takes its width from `.docs-filter-range-field`.
   > gz-docs-facet-multiselect,
   > ga-tags-color-input,
   > .docs-filter-search-input {
@@ -103,23 +61,15 @@
   }
 }
 
-// The range pickers render their calendar into an overlay and ship an EMPTY
-// host (`template: ''`), so the element is only an anchor for the `[nbDatepicker]`
-// reference. Left visible it is still a flex item, and the column's `gap` then
-// adds a few pixels under each date field — enough to drop the two of them out
-// of line with the Saved views / Clear all pair beside them.
 .docs-filter-field > nb-rangepicker {
   display: none;
 }
 
-// Search is the primary control on its row: it takes whatever the chips and the
-// switch leave, and never shrinks below a width you can read a query in.
 .docs-filter-field--search {
   flex: 1 1 18rem;
   min-width: 12rem;
 }
 
-// The scope switch must never be the thing that shrinks — its label is fixed.
 .docs-filter-scope {
   flex: 0 0 auto;
   display: flex;
@@ -133,8 +83,6 @@
   }
 }
 
-// The page actions ride the control line of the row, not the label line above
-// it, which is what `align-items: end` on the grid buys them.
 .docs-filter-field--actions {
   flex-direction: row;
   align-items: center;
@@ -142,14 +90,6 @@
   min-width: 0;
 }
 
-/*
- * ── Labels ──────────────────────────────────────────────────────────────────
- * Visible again, and deliberately: a facet names itself through its PLACEHOLDER,
- * which is the one thing that disappears the moment you select something — so
- * the six selects were anonymous in exactly the state where knowing which is
- * which matters. The caption is the panel's label step, so it reads as a form
- * caption rather than as a second row of content.
- */
 .docs-filter-label {
   display: block;
   min-width: 0;
@@ -162,13 +102,6 @@
   text-overflow: ellipsis;
 }
 
-/*
- * Visually hidden, NOT removed: the clip-rect pattern keeps the caption in the
- * accessibility tree — and keeps its `for`/`id` pairing meaningful — while
- * taking it out of the visual band. `display: none` would drop it from the tree
- * and leave the label pointing at nothing. Used for search, whose magnifier and
- * placeholder already name it and which shares its row with the chips.
- */
 .docs-filter-label--hidden {
   position: absolute;
   width: 1px;
@@ -181,14 +114,11 @@
   border: 0;
 }
 
-// ── Search field ────────────────────────────────────────────────────────────
 .docs-filter-search-input {
   position: relative;
   display: block;
   min-width: 0;
 
-  // Overlay, not a flex item: the field keeps its full box and the glyph sits
-  // in its leading padding, the way every other search field in the app reads.
   nb-icon {
     position: absolute;
     inset-inline-start: 0.5rem;
@@ -206,14 +136,6 @@
   }
 }
 
-/*
- * ── One control geometry ────────────────────────────────────────────────────
- * `text-inputs-overrides()` floors every bare `input` to $default-height and
- * `nb-select-overrides()` floors the select container the same way (both global,
- * ui-core/_gauzy-overrides.scss). Neither floor is `!important`, so these
- * scoped, higher-specificity pins to the band token win without touching the
- * global rules — the same recipe the page header's selectors use.
- */
 .docs-filter-bar {
   input[nbInput] {
     height: var(--docs-filter-control-height);
@@ -232,7 +154,6 @@
     font-size: var(--docs-body-size, 0.8125rem);
   }
 
-  // The suffix button must not stretch the date fields past the row height.
   ::ng-deep .docs-filter-range-field button[nbSuffix] {
     height: var(--docs-filter-control-height);
     min-height: var(--docs-filter-control-height);
@@ -247,7 +168,6 @@
 
 .docs-filter-range {
   width: 100%;
-  // Room for the single suffix affordance (calendar / clear).
   padding-inline-end: 2rem;
   text-overflow: ellipsis;
 }
@@ -258,7 +178,6 @@
   min-width: 0;
 }
 
-// Saved views / Clear all sit on the control line and share its height.
 .docs-filter-field--actions button[nbButton] {
   display: inline-flex;
   align-items: center;
@@ -276,19 +195,7 @@
   }
 }
 
-/*
- * ── Selected values ─────────────────────────────────────────────────────────
- * ng-select's stock multi-value is a bordered box carrying a separate `×` cell
- * with its own border — three rectangles per selection. Restated as the one chip
- * the rest of the product uses for a selected value: the primary fill, the hub's
- * control radius, a truncating label, and the clear affordance folded into the
- * same box.
- */
 .docs-filter-bar ::ng-deep .ng-select.ng-select-multiple .ng-select-container .ng-value-container {
-  // Chips WRAP onto a second line instead of running out of the control: the
-  // container is a flex row that ng-select leaves at `nowrap`, so a third
-  // selection used to push the first one out of view with no way to see it.
-  // The control is pinned by `min-height`, not `height`, so it grows with them.
   flex-wrap: wrap;
   align-content: center;
   padding-block: 0.1875rem;
@@ -320,8 +227,6 @@
     white-space: nowrap;
   }
 
-  // The clear affordance shares the chip's box instead of being a second
-  // bordered cell glued to its leading edge.
   .ng-value-icon {
     order: 1;
     padding: 0 0.3125rem 0 0;
@@ -335,23 +240,6 @@
     }
   }
 
-  /*
-   * The placeholder is what names the field inside the control, under the
-   * caption above it, so it carries the caption's colour rather than the
-   * fainter input-placeholder grey ng-select ships.
-   *
-   * 🛑 The padding reset is what puts it on the control's centre line. In
-   * MULTIPLE mode ng-select's own component sheet makes `.ng-placeholder`
-   * `position: absolute`, and its default theme then ships
-   * `top: 5px; padding-bottom: 5px; padding-left: 3px` — geometry tuned for its
-   * own 36px control. The global `ng-select-text-alignment()` already unsets the
-   * `top`, which hands the element back to the flex container's static position
-   * (centred, because the container is `align-items: center`) — but the 5px of
-   * BOTTOM padding survives, so the box that gets centred is 5px taller than its
-   * text and every facet label sat ~2.5px above the middle of its field. Zero the
-   * padding and pin the line box to the chip height, and the placeholder, the
-   * chips that replace it, and the caret all share one centre line.
-   */
   .ng-placeholder {
     padding: 0;
     color: var(--docs-text-muted, var(--text-hint-color));
@@ -360,7 +248,6 @@
   }
 }
 
-// Single-value facets and the clear/arrow affordances, kept on the same scale.
 .docs-filter-bar ::ng-deep .ng-select {
   .ng-value-container .ng-input > input {
     font-size: var(--docs-body-size, 0.8125rem);
@@ -372,15 +259,6 @@
   }
 }
 
-/*
- * ── Tag chips ───────────────────────────────────────────────────────────────
- * The tag picker is the platform's `ga-tags-color-input`, which renders each
- * selection as an `nb-badge` carrying BOTH `.tag-color` (a 1rem square swatch
- * meant for the dropdown rows) and `.tag-label` (a 2rem stadium pill) — a 16px
- * box with 20px of margin inside a filter field. Restated to the same chip the
- * facets use, minus the fill: a tag chip carries the tag's OWN colour, which is
- * the point of it.
- */
 .docs-filter-tags ::ng-deep .ng-value .tag-color.tag-label {
   position: static;
   display: inline-flex;
@@ -413,28 +291,17 @@
   }
 }
 
-/*
- * ── Responsive ──────────────────────────────────────────────────────────────
- * The band steps 3 → 2 columns and stops there: two facets side by side is the
- * narrowest arrangement in which a caption and its control still fit on one
- * line, and a single column would push the four rows of this band past the
- * height of the results they filter.
- */
 @media (max-width: 1199px) {
   .docs-filter-row--facets {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  // The chips take the whole line once the row can no longer hold all three
-  // controls: they are the only one of the three that wraps gracefully.
   .docs-filter-presets {
     flex: 1 1 100%;
   }
 }
 
 @media (max-width: 991px) {
-  // The actions leave the date row and take a line of their own — an `auto`
-  // track beside two shrinking date fields ends up wider than both of them.
   .docs-filter-row--meta {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -450,8 +317,6 @@
     --docs-filter-column-min: 0;
   }
 
-  // The switch drops under the input rather than halving the width of the one
-  // control on this band you actually have to type into.
   .docs-filter-field--search {
     flex: 1 1 100%;
     min-width: 0;

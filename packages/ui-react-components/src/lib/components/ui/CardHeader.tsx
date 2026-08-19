@@ -21,8 +21,6 @@ export function CardHeader({ children, style, className }: CardHeaderProps) {
 				display: 'flex',
 				flexDirection: 'column',
 				gap: '0.375rem',
-				// Matches `card-header-padding` / `card-padding` in the shared theme
-				// maps, so the React panel is inset like every Angular one.
 				padding: '0.875rem 1rem',
 				borderBottom: `1px solid ${theme.border}`,
 				fontFamily: theme.font,

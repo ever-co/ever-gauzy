@@ -65,8 +65,6 @@ export class EmployeeStackedBarChartComponent extends TranslationBaseComponent i
 			.getJsTheme()
 			.pipe(untilDestroyed(this))
 			.subscribe((config) => {
-				// Series, tick and grid colours for the active theme, rather than the
-				// six hex literals these three charts used to repeat between them.
 				const palette = resolveEmployeeChartPalette(config);
 				const bonusColors = this.bonusStatistics.map((val) =>
 					val < 0 ? palette.negativeBonus : palette.bonus

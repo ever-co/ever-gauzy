@@ -13,7 +13,7 @@ const PANEL_WIDTH_PX = 288;
 const VIEWPORT_MARGIN_PX = 8;
 /** Gap between the trigger and the panel it opens. */
 const TRIGGER_GAP_PX = 6;
-/** Below this much room underneath the trigger, the panel opens upwards instead. */
+/** Below this much room underneath the trigger, the panel opens upwards. */
 const MIN_PANEL_HEIGHT_PX = 200;
 
 /**
@@ -24,15 +24,10 @@ const MIN_PANEL_HEIGHT_PX = 200;
  * rename, delete — and emits the query-param patch the browse page merges into
  * the URL, keeping §5.1's "URL is the single source of truth" contract intact.
  *
- * ── Why the panel positions itself in script ────────────────────────────────
- * It used to be an absolutely positioned box inside the filter band. The band
- * lives inside `.docs-content`, which is `overflow-y: auto` — and a box that is
- * clipped on one axis is `auto` on the other, so every pixel the panel stuck out
- * past the band added a HORIZONTAL scrollbar to the whole page. The panel is now
- * `position: fixed` and measured off the trigger on open (and on any scroll or
- * resize while open): it takes part in no ancestor's overflow, it is clamped
- * into the viewport on both axes, and it flips above the trigger when the room
- * below it runs out.
+ * The panel is `position: fixed` and measured off the trigger on open (and on
+ * any scroll or resize while open), so it takes part in no ancestor's overflow,
+ * stays clamped into the viewport and flips above the trigger when the room
+ * below runs out.
  */
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -57,17 +52,13 @@ export class SavedViewsComponent extends TranslationBaseComponent implements OnI
 	public renamingId: string | null = null;
 	public renameDraft = '';
 
-	/** Resolved `position: fixed` box for the panel — see the class doc. */
+	/** Resolved `position: fixed` box for the panel. */
 	public panelStyle: Record<string, string> = {};
 
 	public readonly nameMaxLength = DOCS_SAVED_VIEW_NAME_MAX;
 	public readonly limit = DOCS_SAVED_VIEWS_LIMIT;
 
-	/**
-	 * Scroll does not bubble, so a listener on `window` never hears the hub's own
-	 * scroll container. This one is registered in the CAPTURE phase, which is the
-	 * only way to see a scroll from any ancestor of the trigger.
-	 */
+	/** Registered in the capture phase: scroll does not bubble to `window`. */
 	private readonly onAnyScroll = () => this.reposition();
 
 	constructor(
@@ -102,13 +93,11 @@ export class SavedViewsComponent extends TranslationBaseComponent implements OnI
 		}
 	}
 
-	/** Any click that lands outside this control closes the panel. */
+	/** An outside click closes the panel. */
 	@HostListener('document:click', ['$event'])
 	onDocumentClick(event: Event): void {
 		if (!this.open) return;
 		const target = event.target as Node | null;
-		// The panel is a child of the host in the DOM (only its POSITIONING is
-		// detached), so a single containment test covers the trigger and the panel.
 		if (target && this.host.nativeElement.contains(target)) return;
 		this.open = false;
 	}
@@ -130,8 +119,6 @@ export class SavedViewsComponent extends TranslationBaseComponent implements OnI
 		const viewportHeight = window.innerHeight;
 
 		const width = Math.min(PANEL_WIDTH_PX, viewportWidth - VIEWPORT_MARGIN_PX * 2);
-		// Trailing-aligned with the trigger — it sits at the end of the filter band —
-		// then clamped so neither edge can leave the viewport.
 		const left = Math.min(
 			Math.max(VIEWPORT_MARGIN_PX, rect.right - width),
 			viewportWidth - width - VIEWPORT_MARGIN_PX
@@ -147,7 +134,6 @@ export class SavedViewsComponent extends TranslationBaseComponent implements OnI
 			...(flipUp
 				? { bottom: `${viewportHeight - rect.top + TRIGGER_GAP_PX}px` }
 				: { top: `${rect.bottom + TRIGGER_GAP_PX}px` }),
-			// The list inside scrolls; the panel itself never grows past its room.
 			maxHeight: `${Math.max(MIN_PANEL_HEIGHT_PX, flipUp ? roomAbove : roomBelow)}px`
 		};
 	}

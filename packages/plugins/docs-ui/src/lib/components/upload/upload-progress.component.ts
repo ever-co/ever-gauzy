@@ -62,8 +62,6 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 				display: block;
 				min-width: 0;
 			}
-			/* Ring + surface: the same panel chrome the table, the cards and the
-			   stats tiles carry, instead of Nebular's default card border. */
 			.docs-upload-progress {
 				margin: 0;
 				border: 0;
@@ -156,9 +154,6 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 				margin: 0;
 				font-size: 0.875rem;
 			}
-			/* Below the sm breakpoint the three tracks stop fitting: the progress
-			   bar and the state line drop under the file name instead of
-			   crushing it. */
 			@media (max-width: 575px) {
 				.docs-upload-row {
 					grid-template-columns: minmax(0, 1fr) auto;

@@ -1,26 +1,11 @@
 @use 'gauzy/_gauzy-cards' as *;
 
-// The KPI row.
-//
-// `auto-fill` keeps EMPTY tracks: at 1600px the 20rem floor fits four of them,
-// so with four KPIs the row filled — but drop the bonus card (an organization
-// with no bonus type has three) and the row still reserved a fourth column,
-// leaving a card-sized hole. `auto-fit` collapses the tracks nothing lands in,
-// so three cards share the row instead of three-plus-a-gap. The floor comes
-// down with the figure it has to hold (see `ga-single-statistic`), which is
-// also what lets four cards stay on one row on a 1280px screen.
 .organization-employee-header {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: 0.75rem;
 }
 
-// The employee breakdown grows with its rows and the dashboard page scrolls
-// past it — the same contract the card itself is on (see `card_overrides`
-// below). It used to be pinned to `100vh` minus a hand-counted 14rem of chrome
-// and scroll internally, which is the second scrollbar the page is built to
-// avoid, and the estimate stopped matching the moment the KPI row or the chart
-// changed height.
 :host .table-scrollable {
   @include nb-ltr(padding-right, 0.5rem);
   @include nb-rtl(padding-left, 0.5rem);
@@ -29,21 +14,11 @@
 .cash-flow-report {
   margin: 0.75rem 0 0;
 
-  // `ngx-line-chart` is 400px tall by design — it was written for the report
-  // pages, where the chart IS the page. Here it is one panel among a KPI row
-  // and an employee breakdown, and at its natural height it pushed both of
-  // those out of the first screen. Scoped to this panel so the report pages
-  // keep the size they were drawn for.
   ::ng-deep ngx-line-chart .chart {
     height: 17rem;
   }
 }
 
-// The employee breakdown is a TABLE built out of divs, so it is sized like one:
-// the metrics below are the same ones `$gauzy-density` gives every real data
-// table in the app (`gauzy-table-*` in `styles/_gauzy-theme-maps.scss`), rather
-// than the 15px/20px card padding it used to carry — that made every employee
-// row 60px tall and turned a six-row breakdown into a full screen.
 :host .setting-block {
   &:hover {
     box-shadow: unset;
@@ -60,13 +35,9 @@
     color: var(--gauzy-text-color-2) !important;
     background: nb-theme(gauzy-card-3) !important;
     padding: nb-theme(gauzy-table-header-padding-y) nb-theme(gauzy-table-header-padding-x);
-    // A header is not a row: it carries the column names, not a record, so it
-    // has no card edge of its own.
     box-shadow: none;
   }
 
-  // Was `--gauzy-shadow`: a drop shadow under every one of N rows reads as a
-  // stack of cards rather than as a list. A hairline says the same thing once.
   box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
   border-radius: $default-radius;
   margin-bottom: 4px;
@@ -119,10 +90,6 @@
     @include nb-rtl(padding-left, 0.5rem);
   }
 
-  // Panel titles INSIDE the page card (the KPI names, "Cash Flow"). They label
-  // a block, they are not the page's own title, so they stay a step below body
-  // copy and muted — the global `nb-card-header h1..h5` page-title rule does
-  // not reach them because none of them is a heading element.
   nb-card-header {
     font-size: nb-theme(text-subtitle-2-font-size);
     font-weight: 600;
@@ -132,8 +99,6 @@
     padding-bottom: 0;
   }
 
-  // The KPI tiles carry a figure and nothing else, so the card's own 1rem box
-  // is more than the content needs on the block axis.
   .organization-employee-header nb-card-body {
     padding: 0.75rem 1rem 0.875rem;
   }
@@ -166,12 +131,6 @@
     }
   }
 }
-// `edit-organization.component.scss` is loaded ahead of this file (see the
-// component's `styleUrls`) and gives `.body-header` a 35px bottom margin — a
-// number from a settings page whose header sits above a form, not above a KPI
-// row. Here it is the gap between the page title and the first panel, and at
-// 35px it was the largest gap on the page. One rem matches the gap BETWEEN the
-// panels, so the header reads as part of the same rhythm.
 .body-header {
   display: flex;
   flex-direction: column;

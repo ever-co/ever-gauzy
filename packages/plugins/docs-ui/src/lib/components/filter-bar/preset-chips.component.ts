@@ -41,23 +41,15 @@ interface IPresetChip {
 				gap: 0.375rem;
 				flex-wrap: wrap;
 			}
-			/* One geometry for all four chips: a Nebular tiny button sizes itself
-			   from its own label, so "All (14)" and "Not in AI knowledge (9)"
-			   used to sit on two different heights and baselines. */
 			.docs-presets button[nbButton] {
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
 				gap: 0.25rem;
-				/* The band's own control height when rendered inside the filter
-				   bar (its first row), the compact step anywhere else — the chips
-				   share a line with the search field and must match its box. */
 				height: var(--docs-filter-control-height, var(--docs-control-height-sm, 1.75rem));
 				min-height: var(--docs-filter-control-height, var(--docs-control-height-sm, 1.75rem));
 				padding-inline: 0.5625rem;
 				border-radius: var(--docs-radius, 0.375rem);
-				/* The band's meta step: the chips share their row with the search
-				   field, so they must not be the heaviest text on that line. */
 				font-size: var(--docs-meta-size, 0.75rem);
 				font-weight: 500;
 				line-height: 1;

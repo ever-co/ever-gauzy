@@ -1,26 +1,6 @@
 <nb-card class="card">
-	<!--
-		ONE header row, not two.
-
-		The header used to be two Bootstrap `.row`s stacked on top of each other:
-		the title and the timezone / manage-widgets pair on the first, the auto-
-		refresh toggle and the Refresh button alone on the second. Both rows were
-		right-aligned with `ml-auto` and spaced with a mix of `mb-4`, `mb-2`,
-		`mr-3 ml-3` and an empty `<div class="mr-2">` spacer, so the band was ~5rem
-		tall and no two controls sat on the same baseline.
-
-		Every one of those controls does the same kind of thing — it scopes or
-		refreshes the numbers below — so they belong in a single actions cluster on
-		the title's line. The cluster wraps under the title when the viewport cannot
-		hold both, which is what makes the band responsive instead of overflowing.
-	-->
 	<nb-card-header class="card-header">
 		<div class="page-header">
-			<!--
-				The title keeps a block of its own: `ngx-header-title` moves the
-				breadcrumb trail out of the <h4> and parks it as the heading's next
-				sibling, so the heading needs a parent that is not the actions row.
-			-->
 			<div class="page-header__main">
 				<h4 class="page-header__title">
 					<ngx-header-title>
@@ -29,15 +9,6 @@
 					</ngx-header-title>
 				</h4>
 			</div>
-			<!--
-				Order is the grouping: the two REFRESH controls (the auto-refresh
-				switch and the manual button it disables) belong together, and the
-				two POPOVER chips — the timezone/format picker and the widget
-				manager — belong together at the end of the row. The timezone chip
-				used to open the cluster, which put the two things that behave
-				identically (click, a panel of check-marked rows drops down) at
-				opposite ends of it.
-			-->
 			<div class="page-header__actions">
 				<nb-toggle
 					class="custom-toggle"
@@ -94,15 +65,6 @@
 	</nb-card-body>
 </nb-card>
 
-<!--
-	widgets
-
-	`div.title` is NOT just a class name here: `WidgetComponent.ngAfterViewInit`
-	reads its `innerText` to name the widget in the drag / settings menus, so the
-	element and its text stay exactly where they are. The tooltip is bound from
-	`titleMapper(position)`, which is the same key table the "Manage widgets"
-	popover reads — so a truncated label and its tooltip can never disagree.
--->
 <ng-template gaWidgetTemplate>
 	@if (!hideEmployeeBlock) {
 		<ng-container *ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
@@ -252,27 +214,6 @@
 	</nb-card>
 </ng-template>
 
-<!--
-	Windows
-
-	Every panel below is built to the same shape, so six of them read as one
-	system rather than six one-offs:
-
-	  <nb-card-header class="window-header">      title … panel action
-	  <nb-card-body class="window-body">          one list of equal rows
-	  <div class="window-empty">                  the "nothing here" line
-
-	The panel action (View All / View Report) used to sit in a row of its OWN at
-	the top of the body — a full row of empty space above every list, pushing the
-	first record down by ~3.5rem. In the header it is where a panel action belongs,
-	and the header reserves inline-end room for the ⋮ menu that `ga-window`
-	positions absolutely over that corner.
-
-	The empty states move INSIDE an `nb-card-body` for the same reason: four of the
-	six rendered theirs as a bare `<div>` directly under `<nb-card>`, so a panel
-	with no data had no body padding and a different background from the same panel
-	with data.
--->
 <ng-template gaWindowTemplate>
 	<nb-card [nbSpinner]="timeSlotLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-header class="window-header">

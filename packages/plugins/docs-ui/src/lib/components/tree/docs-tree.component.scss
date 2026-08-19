@@ -1,20 +1,8 @@
-/*
- * Hub sidebar. Rows use the platform's flat-chrome vocabulary — the small
- * radius plus the neutral hover tint that the main menu, the breadcrumb links
- * and the overlay menus all share — so the tree reads as navigation rather than
- * as a list of links with its own styling.
- */
 :host {
 	display: block;
 	min-width: 0;
 }
 
-/*
- * The rail runs one step tighter than the page it sits beside: it is chrome,
- * and a 15rem column of 13px rows with 1.75rem hit boxes reads as a second
- * content area. The tokens are redefined locally so every rule below (and the
- * tree library's own rows, styled at the bottom) steps down together.
- */
 .docs-tree {
 	--docs-body-size: 0.75rem;
 	--docs-meta-size: 0.6875rem;
@@ -152,8 +140,6 @@
 		color: var(--docs-text-muted, var(--text-hint-color));
 	}
 
-	// The kebab keeps its slot at the trailing edge whether or not it is shown,
-	// so revealing it on hover never reflows the row it belongs to.
 	.docs-tree-node-menu {
 		flex: 0 0 auto;
 		margin-inline-start: auto;
@@ -174,21 +160,12 @@
 	}
 }
 
-// ── Library-owned rows ──────────────────────────────────────────────────────
-// `@ali-hm/angular-tree-component` ships its own stylesheet (loaded globally
-// from `angular.json`) whose defaults are a 20px indent, a 2px radius, a
-// `#beebff` active fill and a base64 PNG caret. All four are from a different
-// design language — and the PNG caret is a dark glyph, i.e. invisible on the
-// dark themes. Restated here in the hub's own vocabulary.
 :host ::ng-deep {
 	tree-node-content {
 		display: block;
 		min-width: 0;
 	}
 
-	// The row and its toggle share one line box; the library's default anchors
-	// the toggle to the TOP of a row, which reads as misaligned the moment a
-	// row carries an icon.
 	.node-wrapper {
 		align-items: center;
 		gap: 0.125rem;
@@ -223,8 +200,6 @@
 		background: var(--docs-hover, rgba(126, 126, 143, 0.12));
 	}
 
-	// Indent guide. The library indents children with plain padding, so beyond
-	// two levels there was nothing tying a child back to its parent.
 	.tree-children {
 		position: relative;
 		padding-inline-start: 0.75rem;
@@ -241,10 +216,6 @@
 		padding: 0;
 	}
 
-	// A CSS caret instead of the library's base64 PNG: it takes the theme's
-	// text colour, so it is legible on the light AND the dark palettes. The
-	// library's own `transform: rotate(90deg)` on the expanded state still
-	// applies and turns this one down.
 	.toggle-children {
 		top: 0;
 		width: 0;
@@ -261,8 +232,6 @@
 		padding: 0;
 	}
 
-	// Drag-and-drop feedback in the hub's own accent rather than the library's
-	// mint green.
 	.node-drop-slot.is-dragging-over {
 		height: 0.25rem;
 		border: 0;
