@@ -1,24 +1,44 @@
-@use 'gauzy/_gauzy-status-chip' as *;
+@use 'themes' as *;
 
 /*
- * One person's row in a team panel: a presence dot, their avatar and name, what
- * they are working on, and how far along it is.
+ * ── One member, one row ──────────────────────────────────────────────────────
  *
- * It is a LIST ROW, and it used to be built like a card — a 1rem box around a
- * 17px presence dot, with the duration and the activity chip set at 14px/600.
- * Sixteen of those is what a team panel was. Everything below sizes the row off
- * the same data-table metrics the rest of the app uses for a line of record.
+ * A member line is a ROW IN A LIST, and it used to be a card: its own surface,
+ * its own radius, its own edge — sixteen of them stacked inside a panel that is
+ * itself a card inside a card. On top of that it carried three independent
+ * colour systems for what is really one person's status: a 16px presence disc in
+ * `green` / `red` / `orange`, a progress bar that changed hue with the activity
+ * band, and a filled status chip for the percentage.
+ *
+ * It is now what a member list looks like everywhere else in this category of
+ * product: no card, one hairline closing each row, one accent on the bar, and
+ * everything else in the page's two text colours. The avatar is the only thing
+ * that grew — it is the row's anchor, and at 20px it was smaller than the text
+ * beside it.
  */
+:host {
+  display: block;
+}
+
 nb-card {
-  background-color: var(--gauzy-card-1);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
 
   nb-card-body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.4375rem 0.625rem;
+    // Only a bottom inset: the space above a row is the list's own gap, so
+    // stating it here as well would double it.
+    padding: 0 0 0.625rem;
+    border-bottom: 1px solid var(--gauzy-border-default-color);
+    background: transparent;
     font-size: nb-theme(gauzy-table-font-size);
     line-height: nb-theme(gauzy-table-line-height);
+    color: var(--gauzy-text-color-2);
   }
 
   // Bootstrap's default gutter is 15px per side, which on a column this narrow
@@ -34,55 +54,246 @@ nb-card {
     }
   }
 
-  // The classic (team-panel) layout puts the presence dot and the avatar in
+  // The classic (team-panel) layout puts the presence marker and the avatar in
   // Bootstrap columns that this row lays out itself, so their gutters are dead
-  // space — 30px of it between a 8px dot and the avatar it belongs to. The row's
-  // own `gap` is what separates them.
+  // space — 30px of it between the marker and the avatar it belongs to. The
+  // row's own `gap` is what separates them.
   .user-container {
     display: flex;
     gap: 0.5rem;
     align-items: center;
     min-width: 0;
+
     .col-3,
     .col-9 {
-      width: fit-content;
+      width: auto;
+      max-width: none;
       padding-inline: 0;
     }
-  }
 
-  // Presence. It marks a row; it is not a control, so it is the size of a
-  // bullet rather than of a button. The three states were `green` / `red` /
-  // `orange` — CSS keywords, so the same three fully saturated colours on all
-  // eight themes, and none of them the ones the app uses for those meanings.
-  .dot-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 0.625rem;
-    height: 0.625rem;
-    flex: 0 0 auto;
-  }
-
-  .dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background-color: nb-theme(color-warning-default);
-
-    &.online {
-      background-color: nb-theme(color-success-default);
+    // The portrait is a fixed 24px square; the name takes everything left of
+    // the column. Held at `flex: 0 0 auto` — the state this rule used to set
+    // for BOTH columns — the name box was sized to the name, so a long one
+    // pushed the row wide instead of the box ever being told how much room it
+    // actually has, and `text-overflow` was measuring against nothing.
+    .col-3 {
+      flex: 0 0 auto;
     }
 
-    &.offline {
-      background-color: nb-theme(color-danger-default);
+    .col-9 {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+  }
+
+  /*
+   * ── The classic row's two halves ────────────────────────────────────────
+   *
+   * `col-5` / `col-7` is a FRACTION of whatever the panel happens to be, and
+   * a panel is one column of a list that is two or three columns wide. Five
+   * twelfths of that is the portrait plus about a first name — so every name
+   * past that was cut to an ellipsis, while the meter beside it held seven
+   * twelfths, most of it a bar that reads the same at any length.
+   *
+   * Stated the other way round: the meter cluster asks for a size and is free
+   * to give it back, and the PERSON takes everything that is left. Inside the
+   * cluster the same rule again — the duration is sized to its own text, so
+   * "Not worked" is never the thing that gets shortened, and the bar absorbs
+   * the slack. A name is now only ever shortened when it genuinely does not
+   * fit the panel.
+   *
+   * Matched by `:has(.user-container)` because that wrapper is what the
+   * template swaps in for `isClassic`; the details-page layout keeps its
+   * Bootstrap columns, which are what line its rows up with the table heading
+   * above them (see `../team.component.html`).
+   */
+  .row:has(.user-container) {
+    flex-wrap: nowrap;
+    align-items: center;
+
+    > .col-5 {
+      flex: 1 1 auto;
+      width: auto;
+      max-width: none;
+      min-width: 0;
+    }
+
+    // A preferred width rather than a share: about enough for a bar, a
+    // duration and the activity figure, and shrinkable to the width of the
+    // last two when the panel is narrow.
+    > .col-7 {
+      flex: 0 1 15rem;
+      width: auto;
+      max-width: none;
+      min-width: 0;
+
+      > .row {
+        flex-wrap: nowrap;
+
+        // The bar. The only thing here with no natural size, so it is the one
+        // that gives and takes.
+        > .col-7 {
+          flex: 1 1 auto;
+          width: auto;
+          max-width: none;
+          min-width: 2.5rem;
+        }
+
+        // The duration and the activity figure, each as wide as it reads.
+        > .col-3,
+        > .col-4,
+        > .col-1 {
+          flex: 0 0 auto;
+          width: auto;
+          max-width: none;
+        }
+      }
+    }
+  }
+
+  // Presence lives ON the portrait, not beside it.
+  //
+  // The row carried two of them: this free-standing disc in the leading column,
+  // and `ngx-avatar`'s own indicator pinned to the corner of the picture. Two
+  // markers for one person, and the free-standing one cost a column of its own
+  // at the head of every row — so the name started 30px in from the edge of a
+  // panel it was supposed to line up with.
+  //
+  // The marker on the avatar is the one that stays (see `avatar.component.scss`,
+  // where it is now drawn in the theme's colours). The element is hidden rather
+  // than removed from the template: the bindings that drive it are untouched, so
+  // nothing about how the row is built changes.
+  .dot-column {
+    display: none;
+  }
+}
+
+// The row that closes the list has nothing under it to be separated from.
+:host(:last-child) nb-card nb-card-body {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/*
+ * ── The avatar and the name ──────────────────────────────────────────────────
+ *
+ * The avatar is the row's anchor and the only thing in it that grows: the shared
+ * `avatar-dashboard` treatment draws it at 20px, smaller than the text printed
+ * beside it, and it is now also the thing carrying the presence marker.
+ *
+ * The name comes the other way. 14px/600 in the full text colour is a HEADING —
+ * on the dark themes, sixteen lines of white bold — for what is one cell of one
+ * row; the panel read as a list of titles rather than as a list of people. It
+ * keeps a little more weight than the duration beside it so the eye still lands
+ * on it first, and nothing more.
+ *
+ * `.avatar-dashboard` is doubled because the rules being replaced are written
+ * `:host-context(.avatar-dashboard) .link-text`, which compiles to four class
+ * selectors; the extra one is what lets a plain descendant rule reach them. The
+ * colour needs `!important` for the same reason the original does.
+ */
+:host ::ng-deep ngx-avatar.avatar-dashboard.avatar-dashboard {
+  // The portrait itself needs one more doubled class than the box around it:
+  // the rule it replaces is `… .image-container[_ngcontent] img[_ngcontent]`,
+  // which counts the encapsulation attribute on both compounds.
+  // 24px. The portrait anchors the row, so it is the largest thing in it — but
+  // it is still one cell of one line, and at 28px it was taller than the two
+  // lines of text (name, duration) it sits between and made the list read as
+  // widely spaced. 24px is a whole line box, which is exactly as much as a row
+  // this dense has to give it.
+  .image-container.image-container {
+    width: 1.5rem;
+
+    img {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+
+  .link-text {
+    font-size: nb-theme(gauzy-table-font-size);
+    font-weight: 500;
+    line-height: 1.125rem;
+    color: var(--gauzy-text-color-2) !important;
+
+    &:hover {
+      color: var(--gauzy-text-color-1) !important;
     }
   }
 }
 
-// The bar is one line of the row, so it is a line's worth of height. 10px is
-// the size a progress bar gets when it IS the content.
-::ng-deep nb-progress-bar.size-tiny .progress-container {
-  height: 0.375rem;
+/*
+ * The bar is ONE line of the row, so it is a line's worth of height — and one
+ * colour. Nebular repaints it per `status`, which on this row meant the bar
+ * changed hue with the activity band while the chip beside it changed hue for
+ * the same reason: two channels saying one thing, in six colours between them.
+ * The track and the fill are the app's own neutral and accent instead.
+ *
+ * The height only takes effect now that `counter-point.component.scss` has
+ * stopped emitting a GLOBAL `nb-progress-bar .progress-container { height: 10px
+ * !important }` from an unscoped `::ng-deep` block — that rule was pinning every
+ * bar in the app, this one included, and no plain declaration could move it.
+ */
+:host ::ng-deep nb-progress-bar.size-tiny {
+  .progress-container {
+    height: 0.25rem;
+    border-radius: 0.125rem;
+    background-color: var(--gauzy-hover-tint);
+  }
+
+  // Doubled class to out-rank Nebular's own `nb-progress-bar.status-x
+  // .progress-value` component rule, which carries its encapsulation
+  // attributes and so weighs more than a plain descendant selector here.
+  .progress-container .progress-value.progress-value {
+    border-radius: 0.125rem;
+    background-color: var(--color-primary-default);
+  }
+}
+
+/*
+ * ── The same row on the team DETAILS page ────────────────────────────────────
+ *
+ * The detail layout asks `ngx-avatar` for its `report-table` treatment, which
+ * wraps the portrait and the name in a tinted pill: the right thing inside a
+ * data table, where it marks the one cell you can click. Down a column of
+ * sixteen it is sixteen filled pills in the theme's primary tint, and the same
+ * person renders two different ways depending on which of the two Teams views
+ * you are looking at.
+ *
+ * Stripped back to the panel's treatment — the surface goes, the name is a name
+ * — so the two views agree. Scoped to this component, so report tables
+ * elsewhere keep the pill they are designed around.
+ */
+:host ::ng-deep ngx-avatar.report-table.report-table {
+  .inner-wrapper {
+    padding: 0;
+    background-color: transparent;
+  }
+
+  // 24px. The portrait anchors the row, so it is the largest thing in it — but
+  // it is still one cell of one line, and at 28px it was taller than the two
+  // lines of text (name, duration) it sits between and made the list read as
+  // widely spaced. 24px is a whole line box, which is exactly as much as a row
+  // this dense has to give it.
+  .image-container.image-container {
+    width: 1.5rem;
+
+    img {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+
+  .link-text {
+    font-size: nb-theme(gauzy-table-font-size);
+    font-weight: 500;
+    line-height: 1.125rem;
+    color: var(--gauzy-text-color-2) !important;
+
+    &:hover {
+      color: var(--gauzy-text-color-1) !important;
+    }
+  }
 }
 
 .text-right {
@@ -92,8 +303,21 @@ nb-card {
   color: var(--gauzy-text-color-2);
 }
 
-:host {
-  // The activity percentage. It annotates the row it sits in, so it reads as a
-  // chip rather than as a saturated block — see the mixin.
-  @include gauzy-status-chip();
+/*
+ * The activity percentage. It annotates the row, and the bar to its left already
+ * carries the same reading — so it is set as text rather than as a third filled
+ * object competing with the name and the duration.
+ */
+:host ::ng-deep nb-badge {
+  position: relative;
+  display: inline-block;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  font-size: nb-theme(text-caption-font-size);
+  font-weight: 500;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+  white-space: nowrap;
 }
