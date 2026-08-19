@@ -1,5 +1,6 @@
 <div class="docs-saved-views">
 	<button
+		#trigger
 		nbButton
 		ghost
 		size="small"
@@ -14,7 +15,10 @@
 		<nb-icon [icon]="open ? 'chevron-up-outline' : 'chevron-down-outline'" size="tiny"></nb-icon>
 	</button>
 
-	<div class="docs-saved-views-panel" *ngIf="open" role="menu">
+	<!-- Fixed-positioned and measured off the trigger (see the component doc): as
+	     an absolutely positioned box it widened the hub's scroll container and put
+	     a horizontal scrollbar under the whole page every time it opened. -->
+	<div class="docs-saved-views-panel" *ngIf="open" role="menu" [ngStyle]="panelStyle">
 		<!-- Save current view -->
 		<div class="docs-saved-views-save">
 			<input

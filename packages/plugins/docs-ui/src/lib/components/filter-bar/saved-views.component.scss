@@ -1,25 +1,96 @@
 .docs-saved-views {
 	position: relative;
 	display: inline-block;
+	min-width: 0;
 }
 
+// The trigger sits on the filter band's action line, so it shares that line's
+// height (the band's own token, not a literal) and the truncation every other
+// label there gets.
+.docs-saved-views > button[nbButton] {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	max-width: 12rem;
+	height: var(--docs-filter-control-height, var(--docs-control-height-sm, 1.75rem));
+	min-height: var(--docs-filter-control-height, var(--docs-control-height-sm, 1.75rem));
+	padding-inline: 0.5rem;
+	border-radius: var(--docs-radius, 0.375rem);
+	font-size: var(--docs-meta-size, 0.75rem);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+
+	nb-icon {
+		flex: 0 0 auto;
+		margin: 0;
+		font-size: 0.875rem;
+	}
+}
+
+/*
+ * FIXED, and positioned entirely from the component: `top`/`left`/`bottom`,
+ * `width` and `max-height` all arrive as inline styles measured off the trigger
+ * (see `saved-views.component.ts`). Absolute positioning made this box part of
+ * `.docs-content`'s overflow, and since that container is `overflow-y: auto` the
+ * other axis resolves to `auto` too — so opening the panel scrolled the page
+ * sideways. Nothing here may set those five properties, or it would fight the
+ * measurement; the rules below are chrome only.
+ */
 .docs-saved-views-panel {
-	position: absolute;
+	position: fixed;
 	z-index: 1010;
-	top: calc(100% + 0.25rem);
-	left: 0;
-	min-width: 18rem;
-	max-width: 24rem;
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+	// Fallbacks only — the inline width always wins. They keep the panel usable
+	// in the one frame before the first measurement, rather than letting it
+	// shrink to the width of its longest view name.
+	min-width: 16rem;
+	max-width: calc(100vw - 1rem);
 	padding: 0.625rem;
-	border: 1px solid var(--divider-color);
-	border-radius: var(--border-radius);
-	background: var(--background-basic-color-1);
-	box-shadow: var(--shadow);
+	border: 0;
+	border-radius: var(--docs-radius-lg, 0.5rem);
+	background: var(--docs-surface, var(--background-basic-color-1));
+	box-shadow: inset 0 0 0 1px var(--docs-hairline, rgba(126, 126, 143, 0.18)), var(--shadow);
+	font-size: var(--docs-body-size, 0.8125rem);
 
 	hr {
 		margin: 0.625rem 0;
 		border: 0;
-		border-top: 1px solid var(--divider-color);
+		border-top: 1px solid var(--docs-hairline, rgba(126, 126, 143, 0.18));
+	}
+
+	button[nbButton] {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.25rem;
+		height: var(--docs-control-height-sm, 1.75rem);
+		min-height: var(--docs-control-height-sm, 1.75rem);
+		padding-inline: 0.5rem;
+		border-radius: var(--docs-radius, 0.375rem);
+		font-size: var(--docs-meta-size, 0.75rem);
+		white-space: nowrap;
+
+		nb-icon {
+			margin: 0;
+			font-size: 0.875rem;
+		}
+	}
+
+	// Icon-only row affordances are squares on the same height as the rows.
+	.docs-saved-views-item button[nbButton] {
+		flex: 0 0 auto;
+		width: var(--docs-control-height-sm, 1.75rem);
+		padding-inline: 0;
+	}
+
+	input[nbInput] {
+		height: var(--docs-control-height-sm, 1.75rem);
+		min-height: var(--docs-control-height-sm, 1.75rem);
+		border-radius: var(--docs-radius, 0.375rem);
+		font-size: var(--docs-meta-size, 0.75rem);
 	}
 }
 
@@ -36,20 +107,21 @@
 
 .docs-saved-views-hint {
 	margin: 0.375rem 0 0;
-	font-size: 0.6875rem;
-	color: var(--text-hint-color);
+	font-size: var(--docs-label-size, 0.6875rem);
+	color: var(--docs-text-muted, var(--text-hint-color));
 
 	&.warn {
 		color: var(--text-warning-color);
 	}
 }
 
+// One scroller per popover: the PANEL scrolls (its max-height is the room the
+// trigger actually has), so the list must not cap itself as well — nested
+// scroll areas make a short list unreachable inside a short panel.
 .docs-saved-views-list {
 	list-style: none;
 	margin: 0;
 	padding: 0;
-	max-height: 16rem;
-	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
 	gap: 0.125rem;
@@ -58,7 +130,7 @@
 .docs-saved-views-item {
 	display: flex;
 	align-items: center;
-	gap: 0.25rem;
+	gap: 0.125rem;
 
 	input {
 		flex: 1 1 auto;
@@ -72,23 +144,29 @@
 	display: flex;
 	align-items: center;
 	gap: 0.375rem;
-	padding: 0.3125rem 0.5rem;
+	min-height: var(--docs-control-height-sm, 1.75rem);
+	padding: 0.25rem 0.5rem;
 	border: 0;
-	border-radius: var(--border-radius);
+	border-radius: var(--docs-radius, 0.375rem);
 	background: transparent;
 	color: inherit;
-	font-size: 0.8125rem;
+	font-size: var(--docs-body-size, 0.8125rem);
 	text-align: left;
 	cursor: pointer;
 
+	nb-icon {
+		flex: 0 0 auto;
+	}
+
 	span {
+		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
 	&:hover {
-		background: var(--background-basic-color-2);
+		background: var(--docs-hover, rgba(126, 126, 143, 0.12));
 	}
 
 	&.active {
