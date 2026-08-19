@@ -6,6 +6,9 @@
         "GHSA-[A-Za-z0-9-]+"
     ],
     "words": [
+        "zstd",
+        "testid",
+        "sharded",
         "esac",
         "POSTCONDITION",
         "ENOENT",

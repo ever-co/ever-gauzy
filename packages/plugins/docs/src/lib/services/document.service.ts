@@ -272,6 +272,10 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		// "relations" syntax has been removed") — convert the allowlisted names to the object form.
 		const document = await this.typeOrmRepository.findOne({
 			where: { id, tenantId, organizationId },
+			// It surfaced as a SUCCESS, which is why it went unnoticed: the throw is a plain Error, not an
+			// HttpException, so `TransformInterceptor` rewrapped it as `new HttpException(message, undefined)`
+			// and the undefined status left Express at 200 — the detail panel rendered an empty document and
+			// the page editor opened with a blank title, because `{message}` is truthy and has no `name`.
 			...(options.relations?.length ? { relations: parseFindOptionsRelations(options.relations) } : {}),
 			...(options.withDeleted ? { withDeleted: true } : {})
 		} as FindOneOptions<Document>);

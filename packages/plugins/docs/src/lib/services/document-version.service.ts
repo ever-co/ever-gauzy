@@ -97,7 +97,13 @@ export class DocumentVersionService extends TenantAwareCrudService<DocumentVersi
 	 * @param params Pagination params.
 	 * @returns Paginated version list projections.
 	 */
-	async getVersions(document: Document, params: BaseQueryDTO<DocumentVersion>): Promise<IPagination<DocumentVersion>> {
+	async getVersions(
+		document: Document,
+		// Only the paging half is consumed — the `where` is built below from the scoped document, so
+		// this deliberately does not ask for a full `BaseQueryDTO` (whose `where` is `@IsNotEmpty()`
+		// and made the route 400 on every call).
+		params: Pick<BaseQueryDTO<DocumentVersion>, 'take' | 'skip'>
+	): Promise<IPagination<DocumentVersion>> {
 		return this.findAll({
 			select: {
 				id: true,

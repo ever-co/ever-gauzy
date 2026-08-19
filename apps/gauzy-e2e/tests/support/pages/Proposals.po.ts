@@ -218,13 +218,28 @@ export const selectTableRow = async (index) => {
 	await page.waitForTimeout(1500);
 	const row = page.locator(ProposalsPage.selectTableRowCss).nth(index);
 	const details = page.locator(ProposalsPage.detailsButtonCss).first();
+
+	// Fast-fail BEFORE the poll loop. `isEnabled()` auto-waits for ATTACHED against actionTimeout
+	// (24s, playwright.config.ts), so against a selector that matches NOTHING the loop below costs
+	// 4 x 8 x 24s ≈ 13 minutes — far past the 240s test budget. The run is killed mid-poll, so the
+	// only frame reported is a pending waitForTimeout and the message reads "Target page, context or
+	// browser has been closed": the real cause (a stale selector) never surfaces. Prove the button
+	// exists first, cheaply, and say so in the error.
+	await details.waitFor({ state: 'attached', timeout: 10_000 }).catch(() => {
+		throw new Error(
+			`Proposals toolbar button not found: ${ProposalsPage.detailsButtonCss} (page: ${page.url()}). ` +
+				`The row-select toolbar is rendered but this control is absent — the selector is stale.`
+		);
+	});
+
 	for (let i = 0; i < 4; i++) {
 		await row.click({ force: true }).catch(() => {});
 		// isEnabled() reads the live disabled state via a Playwright locator (supports :has-text); poll
 		// briefly so the toolbar binding (disableButton) has time to flip after the row-select event.
+		// The explicit 1s bound keeps a probe a probe — without it each call inherits actionTimeout.
 		let enabled = false;
 		for (let j = 0; j < 8; j++) {
-			if (await details.isEnabled().catch(() => false)) {
+			if (await details.isEnabled({ timeout: 1_000 }).catch(() => false)) {
 				enabled = true;
 				break;
 			}
@@ -233,7 +248,7 @@ export const selectTableRow = async (index) => {
 		if (enabled) break;
 		await page.waitForTimeout(800);
 	}
-	await details.waitFor({ state: 'visible' }).catch(() => {});
+	await details.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
 };
 
 export const detailsButtonVisible = async () => {
