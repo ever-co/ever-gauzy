@@ -34,13 +34,19 @@ import { IDocumentFacetBucket } from '../../models/docs-api.model';
 	`,
 	styles: [
 		`
+			/* Fills its grid track in the filter band (the host used to be an
+			   inline-block with a 9rem floor, which is what stopped the fields
+			   from lining up in columns) and still collapses cleanly when a host
+			   lays it out inline. */
 			:host {
-				display: inline-block;
-				min-width: 9rem;
+				display: block;
+				width: 100%;
+				min-width: 0;
 			}
 			.docs-facet-count {
-				color: var(--text-hint-color);
+				color: var(--docs-text-muted, var(--text-hint-color));
 				margin-left: 0.25rem;
+				font-variant-numeric: tabular-nums;
 			}
 		`
 	],
