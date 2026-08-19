@@ -21,6 +21,8 @@ export function Card({ children, variant = 'default', style, className }: CardPr
 			style={{
 				background: variant === 'accent' ? theme.bgCard2 : theme.bg,
 				borderRadius: theme.radius,
+				// A hairline, not a drop shadow — the same edge every surface in the
+				// Angular tabs draws (`theme.shadow` resolves to `none` now).
 				boxShadow: variant === 'accent' ? theme.shadowLight : theme.shadow,
 				border: `1px solid ${theme.border}`,
 				fontFamily: theme.font,
