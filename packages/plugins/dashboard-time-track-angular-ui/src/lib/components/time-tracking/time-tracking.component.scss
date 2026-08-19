@@ -305,3 +305,20 @@ nb-card-body > .header-widget {
   // Was a `!important` viewport calc; see the `card_overrides` note above.
   height: auto !important;
 }
+
+// Recent Activities carousel: three across while they fit, never narrower than the
+// screenshot card's own `min-width` (189px, screenshots-item.component.scss). Swiper
+// reads these widths because the container runs with `slides-per-view="auto"`; below
+// ~600px it simply shows fewer slides and scrolls, instead of squeezing every card
+// past the edge of its slide (overlapping thumbnails + collided time/date text).
+.m-swiper {
+  display: block;
+  width: 100%;
+  min-width: 0;
+
+  swiper-slide {
+    display: block;
+    width: max(calc((100% - 2 * 16px) / 3), 189px);
+    height: auto;
+  }
+}

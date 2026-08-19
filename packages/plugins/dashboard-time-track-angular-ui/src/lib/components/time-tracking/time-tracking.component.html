@@ -267,11 +267,22 @@
 									</div>
 								</div>
 								<div>
+									<!--
+										`slides-per-view="auto"` + a slide width in the stylesheet, NOT a
+										hard-coded three-up: the screenshot card has its own
+										`min-width: 189px`, so once the window is narrower than ~600px
+										(e.g. beside the expanded AI chat) three slices are narrower than
+										the card and every card overflows its slide — the thumbnails and
+										the time/date block below them visibly collide. The stylesheet
+										keeps three across while they fit and falls back to 189px slides
+										that scroll. `slides-per-group-auto` makes the arrows advance by
+										however many are actually visible.
+									-->
 									<swiper-container
 										#swiperRef
-										slides-per-view="3"
+										slides-per-view="auto"
 										space-between="16"
-										slides-per-group="3"
+										slides-per-group-auto="true"
 										loop="false"
 										navigation="true"
 										[pagination]="{ clickable: true }"
