@@ -26,8 +26,18 @@ const SOURCE_ICONS: Record<DocumentSourceEnum, string> = {
 				display: inline-flex;
 				align-items: center;
 				gap: 0.25rem;
-				font-size: 0.75rem;
-				color: var(--text-hint-color);
+				max-width: 100%;
+				height: var(--gauzy-table-badge-height, 1.25rem);
+				font-size: var(--docs-meta-size, 0.75rem);
+				line-height: 1;
+				color: var(--docs-text-muted, var(--text-hint-color));
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.docs-source nb-icon {
+				flex: 0 0 auto;
+				font-size: 0.875rem;
 			}
 		`
 	],

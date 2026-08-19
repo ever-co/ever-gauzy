@@ -26,18 +26,29 @@ import { DOCS_PERMISSIONS } from '../../../docs-permission-groups';
 	`,
 	styles: [
 		`
+			/* One badge geometry shared with the knowledge badge and the detail
+			   panel: the table's badge height token, the theme's control radius,
+			   and a single line box — a status pill must cost a row no more than
+			   the text beside it. */
 			.docs-badge {
 				display: inline-flex;
 				align-items: center;
 				gap: 0.25rem;
-				font-size: 0.75rem;
-				border-radius: 1rem;
-				padding: 0.125rem 0.5rem;
-				background: var(--background-basic-color-2);
+				max-width: 100%;
+				height: var(--gauzy-table-badge-height, 1.25rem);
+				padding: 0 var(--gauzy-table-chip-padding-x, 0.375rem);
+				border-radius: var(--docs-radius, 0.375rem);
+				font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
+				line-height: 1;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				background: var(--docs-surface-sunken, var(--background-basic-color-2));
 			}
 			.docs-badge-dot {
-				width: 0.5rem;
-				height: 0.5rem;
+				flex: 0 0 auto;
+				width: 0.375rem;
+				height: 0.375rem;
 				border-radius: 50%;
 				background: currentColor;
 			}
@@ -59,7 +70,12 @@ import { DOCS_PERMISSIONS } from '../../../docs-permission-groups';
 				}
 			}
 			.docs-badge-retry {
-				margin-left: 0.25rem;
+				margin-left: 0.125rem;
+				font-weight: 600;
+				text-decoration: underline;
+			}
+			.docs-badge nb-icon {
+				font-size: 0.75rem;
 			}
 		`
 	],

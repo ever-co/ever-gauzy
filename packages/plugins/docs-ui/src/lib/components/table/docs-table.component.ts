@@ -43,6 +43,7 @@ import { NameCellComponent } from './cells/name-cell.component';
 import { SourceBadgeComponent } from './cells/source-badge.component';
 import { StatusBadgeComponent } from './cells/status-badge.component';
 import { TagChipsComponent } from './cells/tag-chips.component';
+import { UpdatedCellComponent } from './cells/updated-cell.component';
 
 /** Nebular menu-tag prefix for the per-row kebab; the suffix is the document id. */
 const ROW_MENU_TAG_PREFIX = 'gz-docs-row-actions-';
@@ -481,12 +482,20 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 				isFilterable: false,
 				valuePrepareFunction: (value: number) => this.humanizeSize(value)
 			},
+			// A rendered cell rather than `type: 'text'`: the locale timestamp is
+			// longer than the column, and a text cell can only wrap it — which set
+			// the height of the whole row. The cell truncates to one line and hands
+			// the full value to a tooltip.
 			updatedAt: {
 				title: this.getTranslation(DOCS_TABLE_COLUMN_TITLE_KEYS['updatedAt']),
-				type: 'text',
+				type: 'custom',
 				isSortable: true,
 				isFilterable: false,
-				valuePrepareFunction: (value: string | Date) => (value ? new Date(value).toLocaleString() : '')
+				renderComponent: UpdatedCellComponent,
+				componentInitFunction: (instance: UpdatedCellComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getValue() as string;
+				}
 			},
 			// Column 9 (`01-ux-spec.md` §4.1): the row kebab, carrying the same action
 			// set as the tree context menu plus Details and (FILE) Preview. It is

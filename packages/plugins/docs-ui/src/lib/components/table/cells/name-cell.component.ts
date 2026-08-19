@@ -45,11 +45,18 @@ import { sanitizeMediaUrl } from '../../../editor/read-only/safe-url.util';
 	`,
 	styles: [
 		`
+			/* A block-level flex line, not an inline one: an inline box
+			   shrink-wraps its content, so the name could never be the thing
+			   that truncates — the column just grew instead. Filling the cell
+			   makes the name give way first, which is what the tooltip on the
+			   row exists to cover. */
 			.docs-name-cell {
-				display: inline-flex;
+				display: flex;
 				align-items: center;
 				gap: 0.375rem;
+				width: 100%;
 				max-width: 100%;
+				min-width: 0;
 			}
 			.docs-name-lead {
 				display: inline-flex;
@@ -63,17 +70,50 @@ import { sanitizeMediaUrl } from '../../../editor/read-only/safe-url.util';
 				width: 100%;
 				height: 100%;
 				object-fit: cover;
-				border-radius: 0.1875rem;
+				border-radius: var(--docs-radius, 0.375rem);
 				background: var(--background-basic-color-2);
 			}
 			.docs-name-text {
+				flex: 0 1 auto;
+				min-width: 0;
 				overflow: hidden;
 				text-overflow: ellipsis;
 				white-space: nowrap;
+				color: var(--docs-text, var(--text-basic-color));
+			}
+			/* The trailing markers never shrink — they are the row's state, and a
+			   half-clipped lock icon says nothing. */
+			.docs-name-cell nb-icon,
+			.docs-name-version {
+				flex: 0 0 auto;
+			}
+			.docs-name-cell nb-icon {
+				font-size: 0.875rem;
+				color: var(--docs-text-muted, var(--text-hint-color));
 			}
 			.docs-name-version {
-				font-size: 0.6875rem;
-				color: var(--text-hint-color);
+				font-size: var(--docs-label-size, 0.6875rem);
+				font-variant-numeric: tabular-nums;
+				color: var(--docs-text-muted, var(--text-hint-color));
+			}
+			/* 🛑 nb-badge is position:absolute (top 0 / right 0) by design — it is
+			   built to pin a counter to a corner of a positioned parent. Used
+			   INLINE, as a state pill in a row, it detaches from the flex line
+			   and parks itself in the corner of whatever ancestor happens to be
+			   positioned. Reset to a normal inline box carrying the same
+			   geometry as the docs-badge pills beside it. */
+			.docs-name-cell ::ng-deep nb-badge {
+				position: static;
+				display: inline-flex;
+				align-items: center;
+				flex: 0 0 auto;
+				height: var(--gauzy-table-badge-height, 1.25rem);
+				padding: 0 var(--gauzy-table-chip-padding-x, 0.375rem);
+				border-radius: var(--docs-radius, 0.375rem);
+				font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
+				line-height: 1;
+				white-space: nowrap;
+				transform: none;
 			}
 		`
 	],

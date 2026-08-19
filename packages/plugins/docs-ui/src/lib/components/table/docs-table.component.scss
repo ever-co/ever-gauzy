@@ -1,23 +1,257 @@
+:host {
+  display: block;
+  min-width: 0;
+}
 .docs-table {
-	min-height: 12rem;
+  /*
+   * ── Compact density, scoped to this grid ────────────────────────────────
+   * The grid's geometry is driven ENTIRELY by the `--gauzy-table-*` custom
+   * properties that `_overrides.scss` reads
+   * (`:root angular2-smart-table table tr td { font-size: var(--gauzy-table-font-size, …) }`
+   * and friends). Custom properties inherit and are resolved against each
+   * cell, so redefining them on this panel re-densifies the whole grid at
+   * once — header, cells, filter row, chips and status pills together —
+   * without touching the global rules and without moving any other table in
+   * the app.
+   *
+   * Two steps down from the platform default across the board: 11px cell text
+   * on a 16px line, half the cell padding, a 10px uppercase header, and pills
+   * sized to fit INSIDE that line box instead of setting it.
+   */
+  --gauzy-table-font-size: 0.6875rem;
+  --gauzy-table-line-height: 1rem;
+  --gauzy-table-cell-padding-y: 0.1875rem;
+  --gauzy-table-cell-padding-x: 0.4375rem;
+  --gauzy-table-header-font-size: 0.625rem;
+  --gauzy-table-header-line-height: 0.8125rem;
+  --gauzy-table-header-padding-y: 0.3125rem;
+  --gauzy-table-header-padding-x: 0.4375rem;
+  --gauzy-table-filter-padding-y: 0.1875rem;
+  --gauzy-table-control-height: 1.5rem;
+  --gauzy-table-badge-height: 1rem;
+  --gauzy-table-chip-font-size: 0.625rem;
+  --gauzy-table-chip-line-height: 0.75rem;
+  --gauzy-table-chip-padding-y: 0;
+  --gauzy-table-chip-padding-x: 0.3125rem;
+  --gauzy-table-chip-gap: 0.125rem;
+  --gauzy-table-chip-block-gap: 0.1875rem;
+  // The people list and the name cell's leading slot size themselves off these,
+  // so the row's tallest boxes come down with the text rather than holding the
+  // old height on their own.
+  --gauzy-people-avatar-size: 1rem;
+  --gauzy-people-font-size: 0.6875rem;
 
-	::ng-deep table {
-		width: 100%;
-	}
+  /*
+   * Width of the `Updated` cell's single line (see `cells/updated-cell.component.ts`).
+   * It is a token rather than a literal because the column is the first thing
+   * that has to give when the grid narrows: the cell truncates to whatever this
+   * says and the tooltip keeps the full timestamp reachable, so the column can
+   * step down without the row ever gaining a second line.
+   */
+  --docs-updated-cell-width: 9.5rem;
+
+  min-height: 12rem;
+  border-radius: var(--docs-radius-lg, 0.5rem);
+  background: var(--docs-surface, var(--background-basic-color-1));
+  box-shadow: inset 0 0 0 1px var(--docs-hairline, rgba(126, 126, 143, 0.18));
+  overflow: hidden;
+
+  ::ng-deep table {
+    width: 100%;
+    border-collapse: collapse;
+  }
 }
 
 .docs-table-toolbar {
-	display: flex;
-	justify-content: flex-end;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.25rem 0.375rem 0;
+
+  .docs-column-chooser-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--docs-control-height-sm, 1.75rem);
+    height: var(--docs-control-height-sm, 1.75rem);
+    padding: 0;
+    border-radius: var(--docs-radius, 0.375rem);
+
+    nb-icon {
+      margin: 0;
+      font-size: 1rem;
+    }
+  }
+}
+
+.docs-table ::ng-deep {
+  tr.angular2-smart-titles > th {
+    border-bottom: 1px solid var(--docs-hairline, rgba(126, 126, 143, 0.18));
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  tbody tr.angular2-smart-row:not(.angular2-smart-row-detail) {
+    // The library paints a translucent grey on EVERY row; a hairline between
+    // rows scans better and keeps the panel one colour.
+    background: transparent;
+    border-bottom: 1px solid var(--docs-hairline, rgba(126, 126, 143, 0.18));
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    &:hover {
+      background: var(--docs-hover, rgba(126, 126, 143, 0.12)) !important;
+    }
+
+    > td {
+      vertical-align: middle;
+    }
+    > td:last-child {
+      width: 3rem;
+      text-align: right;
+      white-space: nowrap;
+    }
+  }
+
+  tr.angular2-smart-titles > th:not(.angular2-smart-th),
+  td.angular2-smart-action-multiple-select {
+    width: 2.5rem;
+    min-width: 2.5rem;
+    padding-inline: 0.5rem;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  tr.angular2-smart-titles > th input[type='checkbox'],
+  td.angular2-smart-action-multiple-select input[type='checkbox'] {
+    display: inline-block;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin: 0;
+    vertical-align: middle;
+    accent-color: var(--color-primary-default);
+    cursor: pointer;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  th.angular2-smart-th {
+    &.name {
+      width: 26%;
+      min-width: 11rem;
+    }
+
+    &.categories,
+    &.tags {
+      width: 12%;
+    }
+
+    &.status,
+    &.knowledge,
+    &.source {
+      width: 9%;
+    }
+
+    &.fileSize {
+      width: 5.5rem;
+    }
+
+    // Follows the cell token (plus the two cell paddings), so the header and the
+    // line underneath it narrow together.
+    &.updatedAt {
+      width: calc(var(--docs-updated-cell-width, 9.5rem) + 0.875rem);
+      white-space: nowrap;
+    }
+
+    &.actions {
+      width: 3rem;
+    }
+  }
+
+  td {
+    min-width: 0;
+  }
+
+  // Nothing inside a cell may set the row height: the line box is the tallest
+  // thing in a row, and every inline control is fitted into it.
+  td nb-icon {
+    font-size: 0.8125rem;
+  }
+
+  // The name column is the row's anchor, so it keeps the weight — but not a
+  // second font size on top of it.
+  td .docs-name-text {
+    font-size: inherit;
+    font-weight: 500;
+  }
+
+  // The leading thumbnail/icon slot follows the row down; at its old 1.5rem it
+  // was the tallest box in the line and held the old row height on its own.
+  td .docs-name-lead {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  td a,
+  td button {
+    line-height: inherit;
+  }
+
+  // The row kebab is the one control with its own padding; without this it
+  // alone keeps the pre-density row height.
+  td .docs-row-actions {
+    height: 1.25rem;
+    min-height: 1.25rem;
+    width: 1.5rem;
+    padding: 0;
+  }
 }
 
 .docs-column-chooser {
-	margin: 0;
-	min-width: 12rem;
+  margin: 0;
+  min-width: 13rem;
+  max-width: 18rem;
 
-	nb-card-body {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
+  nb-card-header {
+    font-size: var(--docs-label-size, 0.6875rem);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--docs-text-muted, var(--text-hint-color));
+  }
+
+  nb-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    font-size: var(--docs-body-size, 0.8125rem);
+  }
+}
+
+/*
+ * ── Responsive `Updated` column ─────────────────────────────────────────────
+ * Three steps down, one per breakpoint the hub already uses. Only the token
+ * moves: the cell re-truncates itself and its tooltip is unchanged, so no
+ * information is lost at any width.
+ */
+@media (max-width: 1399px) {
+  .docs-table {
+    --docs-updated-cell-width: 8rem;
+  }
+}
+
+@media (max-width: 1199px) {
+  .docs-table {
+    --docs-updated-cell-width: 6.5rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .docs-table {
+    --docs-updated-cell-width: 5.25rem;
+  }
 }
