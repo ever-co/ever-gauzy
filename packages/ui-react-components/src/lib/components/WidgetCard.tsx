@@ -16,20 +16,22 @@ export interface WidgetCardProps {
  */
 export function WidgetCard({ label, value, loading = false, children }: WidgetCardProps) {
 	return (
-		<Card style={{ minWidth: '140px', flex: '1 1 0' }}>
+		<Card style={{ minWidth: '11rem', flex: '1 1 0' }}>
 			<CardContent
 				style={{
 					display: 'flex',
 					flexDirection: 'column',
-					gap: '0.375rem'
+					gap: '0.375rem',
+					padding: '0.75rem 1rem 0.875rem'
 				}}
 			>
 				<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-					<span style={{ fontSize: '0.8125rem', color: theme.textSecondary, fontWeight: 400 }}>{label}</span>
+					{/* The KPI's NAME: a label, so it sits on the label step and stays muted. */}
+					<span style={{ fontSize: '0.75rem', color: theme.textSecondary, fontWeight: 500 }}>{label}</span>
 					<span
 						style={{
-							color: theme.textHint,
-							fontSize: '1.1rem',
+							color: theme.textSecondary,
+							fontSize: '1rem',
 							lineHeight: 1,
 							paddingLeft: '0.5rem',
 							cursor: 'default',
@@ -40,14 +42,20 @@ export function WidgetCard({ label, value, loading = false, children }: WidgetCa
 					</span>
 				</div>
 
+				{/*
+				 * The figure. 1.875rem/700 was two steps above anything the app's
+				 * type scale defines and a full weight above the same figure on the
+				 * Angular Time Tracking tab beside it — six of them side by side
+				 * read as a billboard. `text-heading-4` is where every other counter
+				 * on the dashboard sits.
+				 */}
 				<div
 					style={{
-						fontSize: '1.875rem',
-						fontWeight: 700,
-						color: loading ? theme.textHint : theme.textPrimary,
-						lineHeight: 1.1,
-						letterSpacing: '-0.02em',
-						minHeight: '2.2rem'
+						fontSize: '1.5rem',
+						fontWeight: 400,
+						color: loading ? theme.textSecondary : theme.textPrimary,
+						lineHeight: '2rem',
+						minHeight: '2rem'
 					}}
 				>
 					{loading ? '\u2014' : value}
