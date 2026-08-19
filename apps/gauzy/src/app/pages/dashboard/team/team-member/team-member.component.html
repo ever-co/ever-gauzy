@@ -3,7 +3,13 @@
 		<div class="row w-100">
 			<div [class]="isClassic ? 'col-5' : 'col-3'">
 				<div [class]="isClassic ? 'user-container' : 'row'">
-					<div class="col-3">
+					<!--
+						The presence column. Its marker now lives on the portrait itself
+						(see the component's stylesheet), so the column is hidden rather
+						than deleted: the bindings that drive the state are left exactly
+						as they were.
+					-->
+					<div class="col-3 dot-column">
 						<div class="dot-container">
 							<div
 								[class.online]="member?.isRunningTimer"
@@ -12,7 +18,7 @@
 							></div>
 						</div>
 					</div>
-					<div class="col-9">
+					<div [class]="isClassic ? 'col-9' : 'col-12'">
 						<ngx-avatar
 							[class]="isClassic ? 'avatar-dashboard' : 'report-table'"
 							[id]="member?.employee?.id"
