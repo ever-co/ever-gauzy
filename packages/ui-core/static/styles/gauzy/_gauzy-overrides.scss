@@ -644,6 +644,53 @@ $default-box-shadow: $control-hairline;
 // that would add 8px to every tab bar in the app, and this pass is allowed to
 // change type sizes, not the boxes around them.
 @mixin nb-tabset-overrides() {
+  // ── A tab link is a CENTRED row ────────────────────────────────────────────
+  //
+  // `tab-link-typography` below asks for `display: flex; align-items: center`,
+  // and on a route tabset it never got it. Nebular's own component stylesheet
+  // ships
+  //
+  //     .route-tabset[_ngcontent-x] .route-tab[_ngcontent-x] a[_ngcontent-x]
+  //         { display: inline-block }
+  //
+  // which is (0,5,1) — two classes plus three encapsulation attributes —
+  // against the (0,3,2) every rule in this file weighs. So the property was
+  // silently dropped, `align-items` had nothing to act on, and a tab's icon and
+  // label sat on the strip's TEXT BASELINE at the top of a box whose height
+  // comes from `route-tabset-tab-padding`. On the dashboard bar that left the
+  // labels 12px above the centre line of everything else on the row, which is
+  // what made the tab strip and the ⋮ menu beside it read as two different
+  // lines.
+  //
+  // The doubled class is the cheapest way past (0,5,1) without an `!important`
+  // on a layout property, and `:root` supplies the fifth simple selector so the
+  // rule reads as "one step above Nebular's own" rather than as a class written
+  // out three times. `justify-content` restores what `text-align: center` in
+  // `tab-link-typography` stops doing once the link is a flex container.
+  :root nb-route-tabset .route-tabset .route-tab a.tab-link.tab-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // ── …and its icon sits ONE gap from its label, not two ─────────────────────
+  //
+  // Now that the link is a flex row, the gap between the icon and the text is
+  // the row's own `gap`. Nebular still adds its own on top of it, from
+  //
+  //     [dir="ltr"] [_nghost-x] .tab-link[_ngcontent-x]
+  //         nb-icon[_ngcontent-x] + span[_ngcontent-x] { margin-left: .5rem }
+  //
+  // so the pair measured 16px apart while the stylesheet asked for 8. That
+  // selector is (0,6,2) — the direction attribute, the host, the two class
+  // names and three encapsulation attributes — so it takes two doubled classes
+  // to get past it, the same trick and for the same reason as the rule above.
+  // With the margin gone the spacing is stated in exactly one place, and the
+  // page that owns the strip can set it.
+  :root nb-route-tabset .route-tabset .route-tab.route-tab a.tab-link.tab-link nb-icon + .tab-text {
+    margin-inline-start: 0;
+  }
+
   nb-tabset .tabset .tab.active a.tab-link {
     @include tab-link-typography(nb-theme(tabset-tab-text-font-size), 600);
     border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
