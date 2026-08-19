@@ -169,10 +169,7 @@ export class PaymentController extends CrudController<Payment> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdatePaymentDTO): Promise<IPayment> {
 		try {
-			return await this.paymentService.create({
-				id,
-				...entity
-			});
+			return await this.paymentService.create({ ...entity, id });
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

@@ -94,6 +94,59 @@ export const videoUploadFileFilter = createUploadFileFilter(ALLOWED_VIDEO_MIME_T
 /** Multer `fileFilter` accepting only audio files. */
 export const audioUploadFileFilter = createUploadFileFilter(ALLOWED_AUDIO_MIME_TYPES, ALLOWED_AUDIO_EXTENSIONS);
 
+/** MIME types browsers/clients send for a ZIP archive. */
+export const ALLOWED_ARCHIVE_MIME_TYPES = [
+	'application/zip',
+	'application/x-zip-compressed',
+	'application/x-zip',
+	'multipart/x-zip',
+	'application/octet-stream'
+] as const;
+
+/** Extensions accepted by the archive (import) endpoints. */
+export const ALLOWED_ARCHIVE_EXTENSIONS = ['.zip'] as const;
+
+/** Multer `fileFilter` accepting only ZIP archives (the data-import format). */
+export const archiveUploadFileFilter = createUploadFileFilter(ALLOWED_ARCHIVE_MIME_TYPES, ALLOWED_ARCHIVE_EXTENSIONS);
+
+/**
+ * Extensions that are script-capable when served by extension yet have no legitimate use on the
+ * open-ended DOCUMENT upload endpoints (chat attachments, knowledge ingestion): those endpoints must
+ * accept `.html`/`.xml` (they are ingested), so an allowlist is impossible there and this is the
+ * backstop for the rest. `/public` additionally serves every asset with `nosniff` + a `sandbox` CSP.
+ */
+export const SCRIPT_CAPABLE_NON_DOCUMENT_EXTENSIONS = [
+	'.svg',
+	'.svgz',
+	'.xhtml',
+	'.xht',
+	'.mhtml',
+	'.mht',
+	'.xsl',
+	'.xslt',
+	'.shtml',
+	'.shtm',
+	'.hta',
+	'.js',
+	'.mjs',
+	'.vbs',
+	'.wsf'
+] as const;
+
+/**
+ * Multer `fileFilter` for open-ended document uploads: refuses {@link SCRIPT_CAPABLE_NON_DOCUMENT_EXTENSIONS}
+ * and accepts everything else. Callers still store the bytes behind `/public`'s `sandbox` CSP.
+ */
+export function documentUploadFileFilter(_req: unknown, file: { originalname?: string }, callback: MulterFileFilterCallback): void {
+	const name = String(file?.originalname ?? '').toLowerCase();
+	const dot = name.lastIndexOf('.');
+	const extension = dot >= 0 ? name.slice(dot) : '';
+	if ((SCRIPT_CAPABLE_NON_DOCUMENT_EXTENSIONS as readonly string[]).includes(extension)) {
+		return callback(new BadRequestException(`Files of type "${extension}" are not allowed`), false);
+	}
+	return callback(null, true);
+}
+
 /**
  * Detects whether the given file content is markup (SVG / XML / HTML / XHTML).
  *

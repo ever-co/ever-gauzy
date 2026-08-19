@@ -61,10 +61,7 @@ export class OrganizationVendorController extends CrudController<OrganizationVen
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() body: OrganizationVendor
 	): Promise<IOrganizationVendor> {
-		return this.organizationVendorService.create({
-			id,
-			...body
-		});
+		return this.organizationVendorService.create({ ...body, id });
 	}
 
 	/**

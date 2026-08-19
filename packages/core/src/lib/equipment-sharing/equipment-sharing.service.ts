@@ -167,8 +167,10 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			// Use parent's tenant-scoped delete instead of direct repository access
 			await super.delete(id);
 
-			// Save the new equipment sharing data with tenant scoping
-			const equipmentSharing = await this.save(input);
+			// Save the new equipment sharing data with tenant scoping, under the SAME id: the body is not
+			// guaranteed to carry one, and a delete-then-insert without it replaced the record with a stub
+			// (approve/refuse goes through here).
+			const equipmentSharing = await this.save({ ...input, id });
 
 			// Return the newly saved record
 			return equipmentSharing;
@@ -189,12 +191,17 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 */
 	async delete(id: ID): Promise<DeleteResult> {
 		try {
-			// Execute both deletion operations concurrently.
-			// Use parent's tenant-scoped delete instead of direct repository access
-			const [equipmentSharing] = await Promise.all([
-				super.delete(id),
-				this.typeOrmRequestApprovalRepository.delete({ requestId: id })
-			]);
+			// The equipment-sharing delete is tenant-scoped (parent); the approval-row delete runs on a RAW
+			// repository, so it must be tenant-scoped explicitly and only run once the sharing row was
+			// really ours — otherwise a foreign UUID deleted another tenant's request_approval row.
+			const tenantId = RequestContext.currentTenantId();
+			const equipmentSharing = await super.delete(id);
+			if (equipmentSharing?.affected) {
+				await this.typeOrmRequestApprovalRepository.delete({
+					requestId: id,
+					...(tenantId ? { tenantId } : {})
+				});
+			}
 
 			// Return the result from the equipment sharing deletion.
 			return equipmentSharing;

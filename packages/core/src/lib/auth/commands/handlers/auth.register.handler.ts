@@ -30,29 +30,44 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
 		const { input, languageCode } = command;
 		let targetRoleName: string | null = null;
 
-		if (input.user?.roleId) {
+		// The target role may arrive as `roleId` or as a `role` object; resolve BOTH from the DATABASE.
+		// A client-supplied `role.name` must never feed the SUPER_ADMIN gate below (a role object with
+		// only an id, or a spoofed name, used to skip it), and checking only the first of the two is not
+		// enough either: the `role` RELATION wins over the flat `roleId` when the row is persisted
+		// (AuthService.register pins roleId = role.id), so a body pairing a harmless `roleId` with a
+		// privileged `role: { id }` would be validated as the harmless one and registered as the
+		// privileged one.
+		const targetRoleIds = [input.user?.roleId, input.user?.role?.id].filter((roleId) => !!roleId);
+		if (input.user?.role && !targetRoleIds.length) {
+			throw new BadRequestException('The specified role does not reference a valid role.');
+		}
+
+		if (targetRoleIds.length) {
 			// Get tenant id from request context
 			const tenantId = RequestContext.currentTenantId();
 
-			// Resolve role entity to get the name
-			try {
-				const whereCondition = {
-					id: input.user.roleId,
-					...(tenantId ? { tenantId } : {})
-				};
+			for (const targetRoleId of targetRoleIds) {
+				// Resolve role entity to get the name
+				try {
+					const whereCondition = {
+						id: targetRoleId,
+						...(tenantId ? { tenantId } : {})
+					};
 
-				const role: IRole =
-					getORMType() === MultiORMEnum.MikroORM
-						? await this.mikroOrmRoleRepository.findOneOrFail(whereCondition)
-						: await this.typeOrmRoleRepository.findOneByOrFail(whereCondition);
+					const role: IRole =
+						getORMType() === MultiORMEnum.MikroORM
+							? await this.mikroOrmRoleRepository.findOneOrFail(whereCondition)
+							: await this.typeOrmRoleRepository.findOneByOrFail(whereCondition);
 
-				targetRoleName = role.name;
-			} catch {
-				throw new BadRequestException('The specified roleId does not reference a valid role.');
+					// The strictest of the candidates decides: if ANY of them is SUPER_ADMIN, the creator
+					// check below must run.
+					if (role.name === RolesEnum.SUPER_ADMIN || !targetRoleName) {
+						targetRoleName = role.name;
+					}
+				} catch {
+					throw new BadRequestException('The specified roleId does not reference a valid role.');
+				}
 			}
-		} else if (input.user?.role?.name) {
-			// Role name provided directly via role object
-			targetRoleName = input.user.role.name;
 		}
 
 		// Check if the target role is SUPER_ADMIN and require 'createdByUserId' for verification

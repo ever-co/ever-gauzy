@@ -56,6 +56,9 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 			// would let an invitee accept with `user.roleId` of any role (e.g. SUPER_ADMIN).
 			input['user']['role'] = role;
 			input['user']['roleId'] = role.id;
+			// The account is created for the INVITED address (the one the token/code was validated
+			// against) — never for a different, auto-verified address supplied in the body.
+			input['user']['email'] = invite.email;
 			input['inviteId'] = inviteId;
 
 			// Invite accept for employee, candidate & user

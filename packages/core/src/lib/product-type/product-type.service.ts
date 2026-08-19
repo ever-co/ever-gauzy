@@ -41,8 +41,14 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	async updateProductType(id: ID, entity: ProductType): Promise<ProductType> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
+			// Persist under the verified path id, never a body-supplied one (save() with an existing PK
+			// updates THAT row — with a foreign id, another tenant's).
+			entity.id = id;
 
 			if (this.ormType === MultiORMEnum.TypeORM) {
+				// The transactional manager below is raw: TenantAwareCrudService's create/save guards do not
+				// run, so the ownership check has to be explicit here.
+				await this.assertNotForeignRow({ id } as any, tenantId);
 				return await this.typeOrmRepository.manager.transaction(async (transactionalEntityManager) => {
 					// 1. Ensure delete is scoped to the current tenant
 					await transactionalEntityManager.delete(ProductType, {
@@ -50,16 +56,19 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 						...(isNotEmpty(tenantId) ? { tenantId } : {})
 					});
 
-					// 2. Ensure the entity injected has the correct tenantId before reproduction
-					if (isNotEmpty(tenantId)) {
-						entity.tenantId = tenantId;
-					}
-
-					return await transactionalEntityManager.save(entity);
+					// 2. Save with an EXPLICIT entity target and a plain payload. The route validates with
+					// `transform: true`, so `entity` is a ProductTypeDTO instance; EntityManager.save()
+					// resolves metadata from the constructor and threw EntityMetadataNotFoundError for it —
+					// rolling the transaction back and turning every update into a 400.
+					return await transactionalEntityManager.save(ProductType, {
+						...entity,
+						id,
+						...(isNotEmpty(tenantId) ? { tenantId } : {})
+					});
 				});
 			}
 			await super.delete(id);
-			return await this.save(entity);
+			return await this.save({ ...entity, id });
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

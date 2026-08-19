@@ -11,7 +11,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
-import { HubstaffService } from './hubstaff.service';
+import { HubstaffService, IHubstaffAccessTokenResponse } from './hubstaff.service';
 
 @ApiTags('Hubstaff Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -37,12 +37,12 @@ export class HubstaffController {
 	 * Refresh Hubstaff token by integration ID
 	 *
 	 * @param integrationId The ID of the integration
-	 * @returns The refreshed Hubstaff token
+	 * @returns The refreshed Hubstaff access token (the refresh token itself stays server-side)
 	 */
 	@Get('/refresh-token/:integrationId')
 	async refreshHubstaffTokenByIntegration(
 		@Param('integrationId', UUIDValidationPipe) integrationId: ID
-	): Promise<string> {
+	): Promise<IHubstaffAccessTokenResponse> {
 		return await this._hubstaffService.refreshToken(integrationId);
 	}
 

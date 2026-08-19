@@ -27,8 +27,9 @@ export class EquipmentSharingUpdateHandler implements ICommandHandler<EquipmentS
 			this._requestApprovalService.delete({ requestId: id })
 		]);
 
-		// Save the updated Equipment Sharing record.
-		const equipmentSharing = await this._equipmentSharingService.create(input);
+		// Save the updated Equipment Sharing record under the path id (a body-supplied id must not
+		// retarget the write; the raw body is not DTO-validated).
+		const equipmentSharing = await this._equipmentSharingService.create({ ...input, id });
 
 		// Create a new request approval record for the updated equipment sharing.
 		await this._requestApprovalService.create({

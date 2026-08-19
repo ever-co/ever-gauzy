@@ -38,7 +38,9 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 	async updateProductCategory(id: ID, entity: ProductCategory): Promise<ProductCategory> {
 		try {
 			await super.delete(id);
-			return this.save(entity);
+			// Persist under the verified path id, never a body-supplied one (save() with an existing PK
+			// updates THAT row).
+			return this.save({ ...entity, id });
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

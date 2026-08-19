@@ -64,6 +64,17 @@ import {
 } from '@gauzy/core';
 import { HUBSTAFF_AUTHORIZATION_URL } from './hubstaff.config';
 
+/**
+ * What the refresh endpoint returns to the client: the short-lived access token only. The refresh
+ * token is a long-lived credential and never leaves the server (GHSA-3rqg-gpm9-gx84 class).
+ */
+export interface IHubstaffAccessTokenResponse {
+	access_token: string;
+	token_type?: string;
+	expires_in?: number;
+	scope?: string;
+}
+
 @Injectable()
 export class HubstaffService {
 	constructor(
@@ -109,7 +120,7 @@ export class HubstaffService {
 	 * @param integrationId The ID of the integration.
 	 * @returns The new tokens.
 	 */
-	async refreshToken(integrationId: ID) {
+	async refreshToken(integrationId: ID): Promise<IHubstaffAccessTokenResponse> {
 		const settings = await this._integrationSettingService.find({
 			where: {
 				integration: { id: integrationId },
@@ -163,7 +174,10 @@ export class HubstaffService {
 			}) as DeepPartial<IIntegrationSetting>;
 
 			await this._integrationSettingService.create(settingsDto);
-			return tokens;
+			// The client only needs the (short-lived) access token to keep calling the API; the refresh
+			// token is a long-lived credential and stays server-side (GHSA-3rqg-gpm9-gx84 class).
+			const { access_token, token_type, expires_in, scope } = tokens ?? {};
+			return { access_token, token_type, expires_in, scope };
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

@@ -130,11 +130,13 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 
 	async updateTimeOffByAdmin(id: string, timeOffRequest: ITimeOffCreateInput) {
 		try {
-			// Verify the record belongs to the current tenant before updating
+			// Verify the record belongs to the current tenant before updating, and make the verified id
+			// the one that is saved: the body is not DTO-validated, so a body id spread after the path id
+			// used to retarget the save (TypeORM save() with an existing PK is an UPDATE of that row).
 			await this.findOneByIdString(id);
 			return await this.save({
-				id,
-				...timeOffRequest
+				...timeOffRequest,
+				id
 			});
 		} catch (error) {
 			throw new BadRequestException(error);

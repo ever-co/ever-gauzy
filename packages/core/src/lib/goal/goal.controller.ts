@@ -75,10 +75,7 @@ export class GoalController extends CrudController<Goal> {
 		try {
 			//We are using create here because create calls the method save()
 			//We need save() to save ManyToMany relations
-			return await this.goalService.create({
-				id,
-				...entity
-			});
+			return await this.goalService.create({ ...entity, id });
 		} catch (error) {
 			console.log(error);
 			return;

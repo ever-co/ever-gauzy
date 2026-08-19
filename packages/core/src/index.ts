@@ -4,6 +4,8 @@
 export { bootstrap, registerPluginConfig } from './lib/bootstrap';
 export * from './lib/core';
 export {
+	ALLOWED_ARCHIVE_EXTENSIONS,
+	ALLOWED_ARCHIVE_MIME_TYPES,
 	ALLOWED_AUDIO_EXTENSIONS,
 	ALLOWED_AUDIO_MIME_TYPES,
 	ALLOWED_IMAGE_EXTENSIONS,
@@ -11,13 +13,16 @@ export {
 	ALLOWED_VIDEO_EXTENSIONS,
 	ALLOWED_VIDEO_MIME_TYPES,
 	BLOCKED_UPLOAD_EXTENSIONS,
+	SCRIPT_CAPABLE_NON_DOCUMENT_EXTENSIONS,
 	FileStorage,
 	FileStorageFactory,
 	MARKUP_SCAN_MAX_BYTES,
 	UploadedFileStorage,
+	archiveUploadFileFilter,
 	assertNotMarkupContent,
 	audioUploadFileFilter,
 	createUploadFileFilter,
+	documentUploadFileFilter,
 	imageUploadFileFilter,
 	isMarkupContent,
 	shouldScanForMarkup,

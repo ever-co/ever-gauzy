@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
-import { DataSource, FindOneOptions, Repository } from "typeorm";
+import { DataSource, FindOneOptions, Repository, UpdateResult } from "typeorm";
 
 import { BaseEntityEnum, ID, ISharedEntityCreateInput, IShareRule } from "@gauzy/contracts";
 import { RequestContext } from "../core/context";
@@ -8,7 +8,13 @@ import { TenantAwareCrudService } from "../core/crud";
 import { MikroOrmSharedEntityRepository } from "./repository/mikro-orm-shared-entity.repository";
 import { TypeOrmSharedEntityRepository } from "./repository/type-orm-shared-entity.repository";
 import { SharedEntity } from "./shared-entity.entity";
-import { buildSharedEntityRelations, buildSharedEntitySelect, filterSharedEntity, generateSharedEntityToken } from "./shared-entity.helper";
+import {
+    assertShareRulesAreSafe,
+    buildSharedEntityRelations,
+    buildSharedEntitySelect,
+    filterSharedEntity,
+    generateSharedEntityToken
+} from "./shared-entity.helper";
 
 @Injectable()
 export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
@@ -38,6 +44,8 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
             // share-link pointing at another tenant's record by its id (cross-tenant IDOR -
             // GHSA-gpg5-qwjc-8hqh / GHSA-cx2q-xmh2-pc38).
             const targetRepository = this.resolveRepository(input.entity);
+            // Only real, tenant-scoped relations, to a bounded depth (see assertShareRulesAreSafe).
+            assertShareRulesAreSafe(targetRepository.metadata, this.parseShareRules(input.shareRules));
             const owned = await targetRepository.findOne({
                 where: this.buildScopedWhere(targetRepository, input.entityId, tenantId, organizationId)
             });
@@ -84,10 +92,13 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
                 throw new NotFoundException('Shared entity not found');
             }
 
-            const shareRules = sharedEntity.shareRules as IShareRule;
+            const shareRules = this.parseShareRules(sharedEntity.shareRules);
 
             // Get the repository for the shared entity
             const repository = this.resolveRepository(sharedEntity.entity);
+            // Re-validated at resolution time too: rules stored before this guard existed (or edited
+            // through another path) must not be able to traverse out of the tenant.
+            assertShareRulesAreSafe(repository.metadata, shareRules);
 
             // Construct the find options for the shared entity.
             // Scope the lookup to the share's OWN tenant/organization so a token issued by tenant A can
@@ -108,8 +119,11 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
                 throw new NotFoundException('Entity not found');
             }
 
-            // Return the entity
-            return filterSharedEntity(entity, shareRules);
+            // Return the entity, dropping any joined row outside the share's own scope
+            return filterSharedEntity(entity, shareRules, {
+                tenantId: sharedEntity.tenantId,
+                organizationId: sharedEntity.organizationId
+            });
         } catch (error) {
             throw new NotFoundException(`Failed to get shared entity by token: ${error?.message || error}`);
         }
@@ -134,7 +148,7 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
     ): FindOneOptions<any> {
         return {
             where: this.buildScopedWhere(repository, entityId, tenantId, organizationId),
-            select: buildSharedEntitySelect(rules),
+            select: buildSharedEntitySelect(rules, repository.metadata),
             relations: buildSharedEntityRelations(rules)
         }
     }
@@ -161,19 +175,66 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
     ): Record<string, any> {
         const where: Record<string, any> = { id: entityId };
         const hasTenantColumn = !!repository.metadata.findColumnWithPropertyName('tenantId');
-        // Fail closed: if the target entity IS tenant-scoped (has a tenantId column) but we have no
-        // tenantId to scope by, refuse rather than fall back to an `id`-only lookup that would bypass
-        // tenant isolation on the public token route (GHSA-gpg5-qwjc-8hqh / GHSA-cx2q-xmh2-pc38).
-        if (hasTenantColumn) {
-            if (!tenantId) {
-                throw new ForbiddenException('Cannot resolve a tenant-scoped entity without a tenant context');
-            }
-            where['tenantId'] = tenantId;
+        // Global (tenant-less) entity types — Tenant, Language, Currency, ... — are NOT shareable:
+        // there is no tenant column to scope them by, so the lookup would be id-only and their inverse
+        // relations reach into every tenant (GHSA-gpg5-qwjc-8hqh / GHSA-cx2q-xmh2-pc38).
+        if (!hasTenantColumn) {
+            throw new ForbiddenException(`Entity "${repository.metadata.name}" is not tenant-scoped and cannot be shared`);
         }
+        // Fail closed: a tenant-scoped entity without a tenant to scope by must not fall back to an
+        // `id`-only lookup on the public token route.
+        if (!tenantId) {
+            throw new ForbiddenException('Cannot resolve a tenant-scoped entity without a tenant context');
+        }
+        where['tenantId'] = tenantId;
         if (organizationId && repository.metadata.findColumnWithPropertyName('organizationId')) {
             where['organizationId'] = organizationId;
         }
         return where;
+    }
+
+    /**
+     * Updates a share. The target (entity/entityId) and the token are pinned at creation and never
+     * client-editable; when the rules change they are re-validated against the target's metadata.
+     *
+     * @param id - The shared entity id.
+     * @param input - The update payload.
+     * @returns The updated shared entity.
+     */
+    public async update(id: string, input: Partial<SharedEntity>): Promise<SharedEntity | UpdateResult> {
+        const {
+            id: _id,
+            entity: _entity,
+            entityId: _entityId,
+            token: _token,
+            tenant: _tenant,
+            tenantId: _tenantId,
+            organization: _organization,
+            organizationId: _organizationId,
+            ...safeInput
+        } = (input ?? {}) as any;
+        if (safeInput.shareRules !== undefined) {
+            const existing = await this.findOneByIdString(id);
+            const targetRepository = this.resolveRepository(existing.entity);
+            assertShareRulesAreSafe(targetRepository.metadata, this.parseShareRules(safeInput.shareRules));
+        }
+        return await super.update(id, safeInput);
+    }
+
+    /**
+     * shareRules is stored as JSON(B) on Postgres/MySQL and as text on SQLite; normalise to an object.
+     *
+     * @param shareRules - The stored or submitted rules.
+     */
+    private parseShareRules(shareRules: IShareRule | string): IShareRule {
+        if (typeof shareRules === 'string') {
+            try {
+                return JSON.parse(shareRules) as IShareRule;
+            } catch {
+                throw new BadRequestException('shareRules must be valid JSON');
+            }
+        }
+        return shareRules as IShareRule;
     }
 
     /**
