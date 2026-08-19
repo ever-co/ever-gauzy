@@ -12,8 +12,17 @@
 	<nb-icon icon="cloud-upload-outline"></nb-icon>
 	<div class="docs-drop-strip-copy">
 		<span class="docs-drop-strip-title">{{ 'DOCS.UPLOAD.DROP_STRIP_TITLE' | translate }}</span>
-		<span class="docs-drop-strip-hint">{{
-			'DOCS.UPLOAD.DROP_STRIP_HINT' | translate: { formats: formats, max: maxFileSize, files: maxFiles }
-		}}</span>
+		<!-- The formats/limits line is held to ONE line and truncates on a narrow
+		     canvas, so the tooltip repeats it in full. Same expression on both
+		     bindings on purpose — `translate` is a pure pipe, so the second call
+		     costs nothing once the parameters are unchanged. -->
+		<span
+			class="docs-drop-strip-hint"
+			[nbTooltip]="'DOCS.UPLOAD.DROP_STRIP_HINT' | translate: { formats: formats, max: maxFileSize, files: maxFiles }"
+			nbTooltipStatus="basic"
+			>{{
+				'DOCS.UPLOAD.DROP_STRIP_HINT' | translate: { formats: formats, max: maxFileSize, files: maxFiles }
+			}}</span
+		>
 	</div>
 </div>

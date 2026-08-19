@@ -1,18 +1,6 @@
 :host {
 	display: block;
-}
-
-.docs-cards-breadcrumb {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 0.125rem;
-	margin-bottom: 0.75rem;
-
-	.docs-crumb-sep {
-		font-size: 0.875rem;
-		color: var(--text-hint-color);
-	}
+	min-width: 0;
 }
 
 .docs-cards-flat-hint {
@@ -21,12 +9,19 @@
 	gap: 0.375rem;
 	margin-bottom: 0.75rem;
 	padding: 0.375rem 0.625rem;
-	border-radius: var(--border-radius);
-	background: var(--background-basic-color-2);
-	color: var(--text-hint-color);
-	font-size: 0.8125rem;
+	border-radius: var(--docs-radius, 0.375rem);
+	background: var(--docs-surface-sunken, var(--background-basic-color-2));
+	color: var(--docs-text-muted, var(--text-hint-color));
+	font-size: var(--docs-meta-size, 0.75rem);
+
+	nb-icon {
+		flex: 0 0 auto;
+		font-size: 0.875rem;
+	}
 }
 
+// `auto-fill` + a min track: the tiles keep ONE width per row at every canvas
+// size, which is what the wrapping flex row could not promise.
 .docs-cards-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
@@ -37,27 +32,39 @@
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
+	min-width: 0;
 	padding: 0.75rem;
-	border: 1px solid var(--divider-color);
-	border-radius: var(--border-radius);
-	background: var(--background-basic-color-1);
+	border: 0;
+	// Ring + surface, the same chrome the table panel and the stats tiles carry,
+	// so switching layout changes the arrangement and nothing else.
+	border-radius: var(--docs-radius-lg, 0.5rem);
+	background: var(--docs-surface, var(--background-basic-color-1));
+	box-shadow: inset 0 0 0 1px var(--docs-hairline, rgba(126, 126, 143, 0.18));
+	color: var(--docs-text, var(--text-basic-color));
 	cursor: pointer;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	transition: box-shadow 0.15s ease, background-color 0.15s ease;
 
 	&:hover,
 	&:focus-visible {
-		border-color: var(--color-primary-default);
-		box-shadow: var(--shadow);
+		box-shadow: inset 0 0 0 1px var(--color-primary-default);
+		background: var(--docs-hover, var(--gauzy-card-2));
 		outline: none;
 	}
 
 	&.active {
-		border-color: var(--color-primary-default);
+		box-shadow: inset 0 0 0 2px var(--color-primary-default);
 	}
 
 	&.archived {
 		opacity: 0.6;
 	}
+}
+
+// A folder tile carries no preview, so it would otherwise be half the height of
+// the document tiles beside it in the same grid row.
+.docs-card-folder {
+	justify-content: space-between;
+	min-height: 5.5rem;
 }
 
 // Preview tile of a document card. The height is FIXED and the tile always renders — a
@@ -70,8 +77,8 @@
 	justify-content: center;
 	height: 6.25rem;
 	overflow: hidden;
-	border-radius: var(--border-radius);
-	background: var(--background-basic-color-2);
+	border-radius: var(--docs-radius, 0.375rem);
+	background: var(--docs-surface-sunken, var(--background-basic-color-2));
 
 	.docs-card-thumb-image {
 		width: 100%;
@@ -80,31 +87,38 @@
 	}
 
 	.docs-card-emoji {
-		font-size: 2rem;
+		font-size: 1.75rem;
 		line-height: 1;
 	}
 
 	nb-icon {
-		font-size: 2rem;
-		color: var(--text-hint-color);
+		font-size: 1.75rem;
+		color: var(--docs-text-muted, var(--text-hint-color));
 	}
 }
 
 .docs-card-head {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: 0.375rem;
 	min-width: 0;
 
 	.docs-card-emoji {
-		font-size: 1.125rem;
+		flex: 0 0 auto;
+		font-size: 1rem;
 		line-height: 1;
+	}
+
+	> nb-icon {
+		flex: 0 0 auto;
+		font-size: 1rem;
 	}
 
 	.docs-card-name {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		font-size: var(--docs-body-size, 0.8125rem);
 		font-weight: 600;
 		flex: 1 1 auto;
 		min-width: 0;
@@ -112,9 +126,20 @@
 
 	// Default-open affordance: revealed on hover/focus, always present for a11y.
 	.docs-card-open {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		flex: 0 0 auto;
-		opacity: 0;
+		width: 1.5rem;
+		height: 1.5rem;
 		padding: 0;
+		border-radius: var(--docs-radius, 0.375rem);
+		opacity: 0;
+
+		nb-icon {
+			margin: 0;
+			font-size: 0.875rem;
+		}
 	}
 }
 
@@ -123,28 +148,75 @@
 	opacity: 1;
 }
 
+// Pointer-only reveal hides the affordance from touch users entirely, so on a
+// coarse pointer it is simply always visible.
+@media (hover: none) {
+	.docs-card .docs-card-open {
+		opacity: 1;
+	}
+}
+
 .docs-card-badges {
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
 	gap: 0.25rem;
-	min-height: 1.25rem;
+	min-height: var(--gauzy-table-badge-height, 1.25rem);
+}
+
+/*
+ * 🛑 `nb-badge` is `position: absolute` by design (it pins a counter to a corner
+ * of a positioned parent). The review pill below uses it INLINE, so it is reset
+ * to a normal box carrying the `.docs-badge` geometry of the pills beside it.
+ */
+.docs-card-badges ::ng-deep nb-badge {
+	position: static;
+	display: inline-flex;
+	align-items: center;
+	height: var(--gauzy-table-badge-height, 1.25rem);
+	padding: 0 var(--gauzy-table-chip-padding-x, 0.375rem);
+	border-radius: var(--docs-radius, 0.375rem);
+	font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
+	line-height: 1;
+	white-space: nowrap;
+	transform: none;
 }
 
 .docs-card-chips {
 	min-height: 1rem;
+	min-width: 0;
 }
 
 .docs-card-footer {
 	display: flex;
+	align-items: center;
 	justify-content: space-between;
+	gap: 0.5rem;
 	margin-top: auto;
-	font-size: 0.75rem;
-	color: var(--text-hint-color);
+	font-size: var(--docs-meta-size, 0.75rem);
+	color: var(--docs-text-muted, var(--text-hint-color));
+
+	span {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
 }
 
 .docs-cards-more {
 	display: flex;
 	justify-content: center;
 	margin-top: 1rem;
+}
+
+@media (max-width: 575px) {
+	.docs-cards-grid {
+		grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+		gap: 0.625rem;
+	}
+
+	.docs-card-thumb {
+		height: 5rem;
+	}
 }

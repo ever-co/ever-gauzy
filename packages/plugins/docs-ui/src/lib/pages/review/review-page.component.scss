@@ -1,52 +1,186 @@
+/*
+ * Review queue. Deliberately built from the SAME tokens as the browse page
+ * (declared on `.docs-shell`) — it is a sibling route of the hub, and it used
+ * to be the one screen with its own heading size, its own padding and its own
+ * row chrome.
+ */
 .docs-review {
 	display: flex;
 	flex-direction: column;
-	gap: 0.75rem;
-	padding: 1rem;
+	gap: var(--docs-section-gap, 1rem);
+	padding: var(--docs-page-padding, 1.25rem);
+	color: var(--docs-text, var(--text-basic-color));
 }
 
 .docs-review-header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	gap: 0.75rem;
+	min-height: var(--gauzy-page-title-row-height, 2.125rem);
 
 	h4 {
+		flex: 1 1 auto;
+		min-width: 0;
 		margin: 0;
+		// The page-title role step, the same one the browse heading resolves to.
+		font-size: var(--docs-title-size, 1rem);
+		font-weight: var(--docs-title-weight, 600);
+		line-height: var(--gauzy-page-title-line-height, 1.5rem);
+		letter-spacing: var(--gauzy-page-title-letter-spacing, -0.01em);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
+
+	button[nbButton] {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: 0 0 auto;
+		width: var(--docs-control-height, 2rem);
+		height: var(--docs-control-height, 2rem);
+		padding: 0;
+		border-radius: var(--docs-radius, 0.375rem);
+
+		nb-icon {
+			margin: 0;
+			font-size: 1rem;
+		}
+	}
+}
+
+// The list is a panel, like the browse table and the cards grid.
+.docs-review-list {
+	border-radius: var(--docs-radius-lg, 0.5rem);
+	background: var(--docs-surface, var(--background-basic-color-1));
+	box-shadow: inset 0 0 0 1px var(--docs-hairline, rgba(126, 126, 143, 0.18));
+	overflow: hidden;
 }
 
 .docs-review-row {
 	display: grid;
-	grid-template-columns: auto minmax(0, 2fr) auto auto minmax(0, 1fr) auto auto;
+	grid-template-columns: 2.5rem minmax(0, 2fr) auto auto minmax(0, 1fr) auto auto;
 	align-items: center;
-	gap: 0.75rem;
-	padding: 0.5rem 0.25rem;
-	border-bottom: 1px solid var(--divider-color);
+	gap: 0.5rem 0.75rem;
+	padding: 0.5rem 0.75rem;
+	border-bottom: 1px solid var(--docs-hairline, rgba(126, 126, 143, 0.18));
+	font-size: var(--docs-body-size, 0.8125rem);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	// The checkbox track matches the browse table's selection column, so the two
+	// lists start on the same x-position.
+	> nb-checkbox {
+		justify-self: center;
+	}
 
 	.docs-review-name {
 		min-width: 0;
 	}
 
 	.docs-review-date {
-		font-size: 0.75rem;
-		color: var(--text-hint-color);
+		font-size: var(--docs-meta-size, 0.75rem);
+		color: var(--docs-text-muted, var(--text-hint-color));
 		white-space: nowrap;
 	}
 
 	.docs-review-actions {
 		display: inline-flex;
-		gap: 0.375rem;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	button[nbButton] {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		height: var(--docs-control-height-sm, 1.75rem);
+		min-height: var(--docs-control-height-sm, 1.75rem);
+		padding-inline: 0.5rem;
+		border-radius: var(--docs-radius, 0.375rem);
+		font-size: var(--docs-meta-size, 0.75rem);
+		white-space: nowrap;
+
+		nb-icon {
+			margin: 0;
+			font-size: 0.875rem;
+		}
+	}
+
+	// Icon-only affordances (details, preview) are squares on that height.
+	.docs-review-actions button[nbButton]:has(nb-icon:only-child) {
+		width: var(--docs-control-height-sm, 1.75rem);
+		padding-inline: 0;
 	}
 }
 
-.docs-review-row.docs-review-row-head {
-	grid-template-columns: auto minmax(0, 1fr);
-	font-size: 0.75rem;
-	color: var(--text-hint-color);
-	text-transform: uppercase;
-	border-bottom-width: 2px;
+.docs-review-row:not(.docs-review-row-head):hover {
+	background: var(--docs-hover, rgba(126, 126, 143, 0.12));
 }
 
+/*
+ * 🛑 `nb-badge` is `position: absolute` by design (it pins a counter to a corner
+ * of a positioned parent). The reason pill below uses it INLINE, so it is reset
+ * to a normal box carrying the geometry of the badges beside it.
+ */
+.docs-review-row ::ng-deep nb-badge {
+	position: static;
+	display: inline-flex;
+	align-items: center;
+	max-width: 100%;
+	height: var(--gauzy-table-badge-height, 1.25rem);
+	padding: 0 var(--gauzy-table-chip-padding-x, 0.375rem);
+	border-radius: var(--docs-radius, 0.375rem);
+	font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
+	line-height: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	transform: none;
+}
+
+.docs-review-row.docs-review-row-head {
+	grid-template-columns: 2.5rem minmax(0, 1fr);
+	font-size: var(--docs-label-size, 0.6875rem);
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--docs-text-muted, var(--text-hint-color));
+	text-transform: uppercase;
+	border-bottom-color: var(--docs-hairline, rgba(126, 126, 143, 0.18));
+}
+
+// Block, not a centring context — `[nbSpinner]` injects its overlay as a child
+// of this element (same reasoning as the browse page's empty host).
 .docs-review-empty-host {
-	min-height: 10rem;
+	display: block;
+	min-height: 12rem;
+	border-radius: var(--docs-radius-lg, 0.5rem);
+	background: var(--docs-surface, var(--background-basic-color-1));
+	box-shadow: inset 0 0 0 1px var(--docs-hairline, rgba(126, 126, 143, 0.18));
+}
+
+// ── Narrow canvas ────────────────────────────────────────────────────────────
+// Seven tracks cannot survive a tablet, let alone a phone: the row becomes a
+// wrapping stack whose checkbox and name keep the first line and whose badges,
+// date and actions flow underneath.
+@media (max-width: 991px) {
+	.docs-review-row {
+		grid-template-columns: 2.5rem minmax(0, 1fr);
+
+		.docs-review-actions {
+			grid-column: 1 / -1;
+			justify-content: flex-end;
+			flex-wrap: wrap;
+		}
+
+		> gz-docs-source-badge,
+		> gz-docs-category-chips,
+		> .docs-review-date,
+		> nb-badge {
+			grid-column: 2 / -1;
+		}
+	}
 }

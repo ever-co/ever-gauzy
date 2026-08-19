@@ -71,29 +71,66 @@ export type DocsEmptyVariant = 'first-run' | 'empty-folder' | 'no-results' | 're
 	`,
 	styles: [
 		`
+			:host {
+				display: block;
+				width: 100%;
+			}
 			.docs-empty {
 				display: flex;
 				flex-direction: column;
 				align-items: center;
 				gap: 0.5rem;
-				padding: 3rem 1rem;
+				/* The host already reserves a min-height, so the state does not
+				   need 3rem of its own padding on top of it. */
+				padding: 2rem 1.25rem;
 				text-align: center;
-				color: var(--text-hint-color);
+				color: var(--docs-text-muted, var(--text-hint-color));
+			}
+			/* One step under the page title, and muted rather than white: an
+			   empty state is an explanation, not a headline. */
+			.docs-empty h6 {
+				margin: 0;
+				font-size: var(--docs-body-size, 0.8125rem);
+				font-weight: 600;
+				color: var(--docs-text, var(--text-basic-color));
+			}
+			.docs-empty p {
+				margin: 0;
+				max-width: 26rem;
+				font-size: var(--docs-meta-size, 0.75rem);
 			}
 			.docs-empty-icon {
-				font-size: 2.5rem;
+				font-size: 2rem;
+				color: var(--docs-text-muted, var(--text-hint-color));
+				opacity: 0.75;
 			}
 			.docs-empty-icon.success {
 				color: var(--color-success-default);
+				opacity: 1;
 			}
 			.docs-empty-icon.danger {
 				color: var(--color-danger-default);
+				opacity: 1;
 			}
 			.docs-empty-actions {
 				display: flex;
 				flex-wrap: wrap;
 				justify-content: center;
-				gap: 0.5rem;
+				gap: 0.375rem;
+				margin-top: 0.25rem;
+			}
+			/* Every variant offers between one and three buttons, in different
+			   appearances — one height and one padding keeps them a set. */
+			.docs-empty button[nbButton] {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.375rem;
+				height: var(--docs-control-height, 2rem);
+				min-height: var(--docs-control-height, 2rem);
+				padding-inline: 0.75rem;
+				border-radius: var(--docs-radius, 0.375rem);
+				font-size: var(--docs-body-size, 0.8125rem);
+				font-weight: 500;
 			}
 		`
 	],
