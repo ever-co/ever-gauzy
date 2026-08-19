@@ -56,11 +56,14 @@ export function assertShareRulesAreSafe(metadata: EntityMetadata, rules: IShareR
     if (!Array.isArray(rules.fields)) {
         throw new BadRequestException('shareRules.fields must be an array');
     }
-    if (isEmpty(rules.relations)) {
+    if (rules.relations === undefined || rules.relations === null) {
         return;
     }
-    if (typeof rules.relations !== 'object') {
+    if (typeof rules.relations !== 'object' || Array.isArray(rules.relations)) {
         throw new BadRequestException('shareRules.relations must be an object');
+    }
+    if (!Object.keys(rules.relations).length) {
+        return;
     }
     if (depth >= SHARED_ENTITY_MAX_RELATION_DEPTH) {
         throw new BadRequestException(
@@ -68,6 +71,14 @@ export function assertShareRulesAreSafe(metadata: EntityMetadata, rules: IShareR
         );
     }
     for (const [relationName, subRules] of Object.entries(rules.relations)) {
+        // A `null`/non-object sub-rule is not a harmless leaf: `buildSharedEntityRelations` turns it
+        // into `relation: true`, which loads the WHOLE related row (and its own eager relations) with
+        // no field allow-list and no further validation of what that hop reaches.
+        if (!subRules || typeof subRules !== 'object' || Array.isArray(subRules)) {
+            throw new BadRequestException(
+                `shareRules.relations["${relationName}"] must be an object with a "fields" array`
+            );
+        }
         const relation = metadata.findRelationWithPropertyPath(relationName);
         if (!relation) {
             throw new BadRequestException(`Unknown relation "${relationName}" on ${metadata.name}`);
@@ -80,7 +91,7 @@ export function assertShareRulesAreSafe(metadata: EntityMetadata, rules: IShareR
                 `Relation "${relationName}" (${target.name}) is not tenant-scoped and cannot be shared`
             );
         }
-        assertShareRulesAreSafe(target, (subRules ?? { fields: [] }) as IShareRule, depth + 1);
+        assertShareRulesAreSafe(target, subRules as IShareRule, depth + 1);
     }
 }
 
@@ -111,6 +122,12 @@ export function buildSharedEntitySelect(rules: IShareRule, metadata?: EntityMeta
     if (isNotEmpty(rules.relations)) {
         for (const [relation, subRules] of Object.entries(rules.relations)) {
             const target = metadata?.findRelationWithPropertyPath(relation)?.inverseEntityMetadata;
+            // Fail CLOSED when a hop cannot be resolved: an unresolved target means `tenantId` is not
+            // added to the nested select, and a joined row without a `tenantId` cannot be scope-checked
+            // afterwards — on the @Public() token route that silently returns other tenants' rows.
+            if (metadata && !target) {
+                throw new BadRequestException(`Unknown relation "${relation}" on ${metadata.name}`);
+            }
             select[relation] = buildSharedEntitySelect(subRules as IShareRule, target);
         }
     }
@@ -140,22 +157,35 @@ export function buildSharedEntityRelations(rules: IShareRule): FindOptionsRelati
 }
 
 /**
- * Whether a joined row belongs to the share's scope. Rows that carry a tenantId must match the
- * share's tenant; rows that carry an organizationId must match the share's organization when the
- * share has one. Rows without those columns cannot be judged and are kept (the relation validator
- * already refuses hops into tenant-less entities).
+ * Whether a joined row belongs to the share's scope.
+ *
+ * Fails CLOSED: when the relation's target entity is known to have a `tenantId` column, a row that
+ * does not present a matching value is dropped — including a row where the column was never
+ * selected. "Cannot judge" must not mean "allow" on the @Public() token route: an unselected
+ * `tenantId` used to make every joined row look in-scope.
+ *
+ * @param row - The joined row to judge.
+ * @param scope - The share's tenant/organization.
+ * @param metadata - Metadata of the row's entity, when it could be resolved.
  */
-function isWithinScope(row: any, scope?: ISharedEntityScope): boolean {
+function isWithinScope(row: any, scope?: ISharedEntityScope, metadata?: EntityMetadata): boolean {
     if (!scope || !row || typeof row !== 'object') return true;
-    if ('tenantId' in row && row.tenantId && String(row.tenantId) !== String(scope.tenantId)) return false;
-    if (
-        scope.organizationId &&
-        'organizationId' in row &&
-        row.organizationId &&
-        String(row.organizationId) !== String(scope.organizationId)
-    ) {
+
+    const targetIsTenantScoped = metadata ? !!metadata.findColumnWithPropertyPath('tenantId') : 'tenantId' in row;
+    if (targetIsTenantScoped && String(row.tenantId ?? '') !== String(scope.tenantId)) {
         return false;
     }
+
+    if (scope.organizationId) {
+        const targetIsOrgScoped = metadata
+            ? !!metadata.findColumnWithPropertyPath('organizationId')
+            : 'organizationId' in row;
+        // An org-scoped row must match; a row whose organizationId is null is tenant-global and kept.
+        if (targetIsOrgScoped && row.organizationId && String(row.organizationId) !== String(scope.organizationId)) {
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -165,9 +195,16 @@ function isWithinScope(row: any, scope?: ISharedEntityScope): boolean {
  * @param entity - The entity to filter.
  * @param rules - The share rules for the shared entity.
  * @param scope - The share's tenant/organization; joined rows outside it are dropped.
+ * @param metadata - Metadata of the entity the rules apply to; used to decide, per hop, whether a
+ * joined row is REQUIRED to carry a matching `tenantId` (see {@link isWithinScope}).
  * @returns The filtered entity.
  */
-export function filterSharedEntity(entity: any, rules: IShareRule, scope?: ISharedEntityScope): any {
+export function filterSharedEntity(
+    entity: any,
+    rules: IShareRule,
+    scope?: ISharedEntityScope,
+    metadata?: EntityMetadata
+): any {
     const result: any = {};
 
     for (const field of rules.fields) {
@@ -179,12 +216,14 @@ export function filterSharedEntity(entity: any, rules: IShareRule, scope?: IShar
         for (const [relation, subRules] of Object.entries(rules.relations)) {
             if (!entity[relation]) continue;
 
+            const target = metadata?.findRelationWithPropertyPath(relation)?.inverseEntityMetadata;
+
             if (Array.isArray(entity[relation])) {
                 result[relation] = entity[relation]
-                    .filter((item: any) => isWithinScope(item, scope))
-                    .map((item: any) => filterSharedEntity(item, subRules as IShareRule, scope));
-            } else if (isWithinScope(entity[relation], scope)) {
-                result[relation] = filterSharedEntity(entity[relation], subRules as IShareRule, scope);
+                    .filter((item: any) => isWithinScope(item, scope, target))
+                    .map((item: any) => filterSharedEntity(item, subRules as IShareRule, scope, target));
+            } else if (isWithinScope(entity[relation], scope, target)) {
+                result[relation] = filterSharedEntity(entity[relation], subRules as IShareRule, scope, target);
             }
         }
     }

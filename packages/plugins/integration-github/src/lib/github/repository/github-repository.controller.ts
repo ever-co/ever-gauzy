@@ -1,9 +1,15 @@
-import { Body, Controller, Param, Post, Put } from '@nestjs/common';
-import { ID, IIntegrationMapSyncRepository, IOrganizationGithubRepository } from '@gauzy/contracts';
-import { UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
+import { Body, Controller, NotFoundException, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { ID, IIntegrationMapSyncRepository, IOrganizationGithubRepository, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
 import { GithubRepositoryService } from './github-repository.service';
 import { UpdateGithubRepositoryDTO } from './dto';
 
+// Mirrors every sibling GitHub controller. Without TenantPermissionGuard the global AuthGuard does
+// not require a tenant in the request context, and a tenant-less request slips past the
+// cross-tenant upsert guard in TenantAwareCrudService.create() (which cannot judge ownership with
+// no tenant to compare against).
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integration/github/repository')
 export class GitHubRepositoryController {
 	constructor(private readonly _githubRepositoryService: GithubRepositoryService) {}
@@ -31,8 +37,13 @@ export class GitHubRepositoryController {
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() input: UpdateGithubRepositoryDTO
 	): Promise<IOrganizationGithubRepository> {
-		// Ensure that a GitHub repository with the provided identifier exists.
-		await this._githubRepositoryService.findOneByIdString(id);
+		// Ensure that a GitHub repository with the provided identifier exists IN THE CALLER'S TENANT.
+		// `findOneByIdString` resolves to null rather than throwing, so the result has to be asserted —
+		// otherwise an unknown id falls through to `create()` and INSERTs a new row.
+		const existing = await this._githubRepositoryService.findOneByIdString(id);
+		if (!existing) {
+			throw new NotFoundException(`GitHub repository with id "${id}" was not found`);
+		}
 
 		// Attempt to update the GitHub repository using the provided data.
 		return await this._githubRepositoryService.create({

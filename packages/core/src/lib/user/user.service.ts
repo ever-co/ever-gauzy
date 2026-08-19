@@ -384,7 +384,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	async updateProfile(id: ID | number, entity: User): Promise<IUser> {
 		// The path id is authoritative. Every check below authorizes THIS id, and save() persists the
-		// entity's id — a body `id` (the update DTO is not whitelisted) must never retarget the write to
+		// entity's id — a body `id` (the update DTO is not whitelisted) must never re-point the write to
 		// another user (e.g. overwrite the SUPER_ADMIN's password hash from a PROFILE_EDIT account).
 		entity.id = id as ID;
 

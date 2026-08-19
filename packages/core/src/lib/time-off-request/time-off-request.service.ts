@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, HttpException, NotFoundException } from '@nestjs/common';
 import { Between, Brackets, Like, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
@@ -132,13 +132,25 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		try {
 			// Verify the record belongs to the current tenant before updating, and make the verified id
 			// the one that is saved: the body is not DTO-validated, so a body id spread after the path id
-			// used to retarget the save (TypeORM save() with an existing PK is an UPDATE of that row).
-			await this.findOneByIdString(id);
+			// used to re-point the save (TypeORM save() with an existing PK is an UPDATE of that row).
+			//
+			// The lookup RESULT is asserted: `findOneByIdString` resolves to null rather than throwing
+			// when nothing matches the tenant-scoped conditions, so discarding it would let an unknown
+			// id fall through to `save()` and INSERT a brand-new row under the caller's tenant.
+			const existing = await this.findOneByIdString(id);
+			if (!existing) {
+				throw new NotFoundException(`Time off request with id "${id}" was not found`);
+			}
 			return await this.save({
 				...timeOffRequest,
 				id
 			});
 		} catch (error) {
+			// Preserve intentional HTTP exceptions (the 404 above, and the ForbiddenException that
+			// `save()` raises for a cross-tenant row) instead of flattening them to 400.
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new BadRequestException(error);
 		}
 	}

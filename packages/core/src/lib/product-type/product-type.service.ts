@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpException, NotFoundException } from '@nestjs/common';
 import { ID, IPagination, IProductTypeTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
@@ -41,9 +41,26 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	async updateProductType(id: ID, entity: ProductType): Promise<ProductType> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			// Persist under the verified path id, never a body-supplied one (save() with an existing PK
-			// updates THAT row — with a foreign id, another tenant's).
-			entity.id = id;
+
+			// The update is a delete-then-recreate, and `translations` cascades on delete. Load the
+			// current row (tenant-scoped, translations are eager) so the payload can be rebuilt under the
+			// VERIFIED path id — never a body-supplied one, since a recreate with a foreign id would
+			// write into another tenant's row — and so omitting `translations` does not erase them.
+			const existing = await this.findOneByIdString(id);
+			if (!existing) {
+				throw new NotFoundException(`Product type with id "${id}" was not found`);
+			}
+
+			const payload = {
+				...entity,
+				id,
+				...(isNotEmpty(tenantId) ? { tenantId } : {}),
+				// A translation row is deleted with its parent, so the carried-over copies must be NEW
+				// rows: keeping their old ids would make TypeORM issue an UPDATE that matches nothing.
+				translations: isNotEmpty(entity?.translations)
+					? entity.translations
+					: (existing.translations ?? []).map(({ id: _translationId, ...translation }: any) => translation)
+			};
 
 			if (this.ormType === MultiORMEnum.TypeORM) {
 				// The transactional manager below is raw: TenantAwareCrudService's create/save guards do not
@@ -60,16 +77,16 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 					// `transform: true`, so `entity` is a ProductTypeDTO instance; EntityManager.save()
 					// resolves metadata from the constructor and threw EntityMetadataNotFoundError for it —
 					// rolling the transaction back and turning every update into a 400.
-					return await transactionalEntityManager.save(ProductType, {
-						...entity,
-						id,
-						...(isNotEmpty(tenantId) ? { tenantId } : {})
-					});
+					return await transactionalEntityManager.save(ProductType, payload);
 				});
 			}
 			await super.delete(id);
-			return await this.save({ ...entity, id });
+			return await this.save(payload);
 		} catch (err) {
+			// Preserve intentional HTTP exceptions (404 above, ForbiddenException from the ownership guard)
+			if (err instanceof HttpException) {
+				throw err;
+			}
 			throw new BadRequestException(err);
 		}
 	}

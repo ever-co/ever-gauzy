@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
-import { DataSource, FindOneOptions, Repository, UpdateResult } from "typeorm";
+import { DataSource, FindOneOptions, FindOptionsWhere, Repository, UpdateResult } from "typeorm";
 
 import { BaseEntityEnum, ID, ISharedEntityCreateInput, IShareRule } from "@gauzy/contracts";
 import { RequestContext } from "../core/context";
@@ -119,11 +119,17 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
                 throw new NotFoundException('Entity not found');
             }
 
-            // Return the entity, dropping any joined row outside the share's own scope
-            return filterSharedEntity(entity, shareRules, {
-                tenantId: sharedEntity.tenantId,
-                organizationId: sharedEntity.organizationId
-            });
+            // Return the entity, dropping any joined row outside the share's own scope. The target
+            // metadata is passed so each hop knows whether a `tenantId` is REQUIRED (fail closed).
+            return filterSharedEntity(
+                entity,
+                shareRules,
+                {
+                    tenantId: sharedEntity.tenantId,
+                    organizationId: sharedEntity.organizationId
+                },
+                repository.metadata
+            );
         } catch (error) {
             throw new NotFoundException(`Failed to get shared entity by token: ${error?.message || error}`);
         }
@@ -201,7 +207,10 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
      * @param input - The update payload.
      * @returns The updated shared entity.
      */
-    public async update(id: string, input: Partial<SharedEntity>): Promise<SharedEntity | UpdateResult> {
+    public async update(
+        id: ID | number | FindOptionsWhere<SharedEntity>,
+        input: Partial<SharedEntity>
+    ): Promise<SharedEntity | UpdateResult> {
         const {
             id: _id,
             entity: _entity,
@@ -214,11 +223,20 @@ export class SharedEntityService extends TenantAwareCrudService<SharedEntity> {
             ...safeInput
         } = (input ?? {}) as any;
         if (safeInput.shareRules !== undefined) {
-            const existing = await this.findOneByIdString(id);
+            // The inherited signature accepts an object criterion too; resolving it through
+            // `findOneByIdString` would build `{ id: <object> }` and silently match nothing, so the
+            // rules would go unvalidated. Branch on the criterion type instead.
+            const existing =
+                typeof id === 'object' && id !== null
+                    ? await this.findOneByWhereOptions(id)
+                    : await this.findOneByIdString(id as ID);
+            if (!existing) {
+                throw new NotFoundException('Shared entity not found');
+            }
             const targetRepository = this.resolveRepository(existing.entity);
             assertShareRulesAreSafe(targetRepository.metadata, this.parseShareRules(safeInput.shareRules));
         }
-        return await super.update(id, safeInput);
+        return await super.update(id as any, safeInput);
     }
 
     /**

@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { IRole, IUser, RolesEnum } from '@gauzy/contracts';
+import { IRole, IUser, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { AuthRegisterCommand } from '../auth.register.command';
 import { AuthService } from '../../auth.service';
 import { getORMType, MultiORMEnum } from '../../../core/utils';
@@ -70,21 +70,37 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
 			}
 		}
 
-		// Check if the target role is SUPER_ADMIN and require 'createdByUserId' for verification
+		// Check if the target role is SUPER_ADMIN — only an AUTHENTICATED super admin may create one.
 		if (targetRoleName === RolesEnum.SUPER_ADMIN) {
-			if (!input.createdByUserId) {
-				throw new BadRequestException('Missing createdByUserId for SUPER_ADMIN registration.');
-			}
+			// `/auth/register` is a public route, and `createdByUserId` is a BODY field: checking only
+			// that the referenced user is a super admin authorized nobody — any anonymous caller could
+			// name a known super admin's id and register itself as SUPER_ADMIN. The creator must be the
+			// authenticated caller, and the caller must hold SUPER_ADMIN_EDIT.
+			const currentUserId = RequestContext.currentUserId();
 
-			const createdByUserId = input.createdByUserId;
-
-			// Fetch role details of the creator
-			const { role } = await this.userService.findOneByIdString(createdByUserId, { relations: { role: true } });
-
-			// Verify if the creator's role is SUPER_ADMIN
-			if (role.name !== RolesEnum.SUPER_ADMIN) {
+			if (!currentUserId) {
 				throw new UnauthorizedException('Only SUPER_ADMIN can register other SUPER_ADMIN users.');
 			}
+
+			// The UI sends the logged-in user's id here; anything else is an attempt to borrow identity.
+			if (input.createdByUserId && String(input.createdByUserId) !== String(currentUserId)) {
+				throw new UnauthorizedException('createdByUserId must reference the authenticated user.');
+			}
+
+			if (!RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
+				throw new UnauthorizedException('Only SUPER_ADMIN can register other SUPER_ADMIN users.');
+			}
+
+			// Fetch role details of the creator (the authenticated caller — never a body-supplied id)
+			const creator = await this.userService.findOneByIdString(currentUserId, { relations: { role: true } });
+
+			// Verify if the creator's role is SUPER_ADMIN
+			if (creator?.role?.name !== RolesEnum.SUPER_ADMIN) {
+				throw new UnauthorizedException('Only SUPER_ADMIN can register other SUPER_ADMIN users.');
+			}
+
+			// Pin the recorded creator to the caller so the persisted column cannot be spoofed either.
+			input.createdByUserId = currentUserId;
 		}
 
 		// Register the user using the AuthService

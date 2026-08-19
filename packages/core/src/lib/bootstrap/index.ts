@@ -196,9 +196,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 				// served from API. Overridable because a deployment may legitimately serve its API and web
 				// app from two DIFFERENT sites (e.g. *.onrender.com, a public suffix), where 'same-site'
 				// would block every API-served image.
-				policy:
-					(process.env.CORP_POLICY as 'same-site' | 'cross-origin' | 'same-origin') ??
-					(isProduction ? 'same-site' : 'cross-origin')
+				policy: resolveCorpPolicy(process.env.CORP_POLICY, isProduction)
 			},
     		crossOriginEmbedderPolicy: isProduction // strict in production, relaxed in dev/stage for Electron/desktop
 		})
@@ -283,6 +281,37 @@ function handleUncaughtException(error: Error) {
  */
 function handleUnhandledRejection(reason: any, promise: Promise<any>) {
 	console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+}
+
+/** The only Cross-Origin-Resource-Policy values helmet accepts. */
+const CORP_POLICIES = ['same-origin', 'same-site', 'cross-origin'] as const;
+
+export type CorpPolicy = (typeof CORP_POLICIES)[number];
+
+/**
+ * Resolves the Cross-Origin-Resource-Policy from the environment, falling back to the per-environment
+ * default. The value is VALIDATED rather than asserted: helmet throws while initialising on an
+ * unknown policy, so a typo in `CORP_POLICY` would stop the API from starting at all.
+ *
+ * @param value - The raw `CORP_POLICY` environment value.
+ * @param isProduction - Whether the API runs in production.
+ * @returns A policy helmet accepts.
+ */
+export function resolveCorpPolicy(value: string | undefined, isProduction: boolean): CorpPolicy {
+	const fallback: CorpPolicy = isProduction ? 'same-site' : 'cross-origin';
+	const normalized = value?.trim().toLowerCase();
+
+	if (!normalized) {
+		return fallback;
+	}
+	if ((CORP_POLICIES as readonly string[]).includes(normalized)) {
+		return normalized as CorpPolicy;
+	}
+
+	console.warn(
+		`⚠️ Ignoring invalid CORP_POLICY "${value}" — expected one of ${CORP_POLICIES.join(', ')}. Using "${fallback}".`
+	);
+	return fallback;
 }
 
 /**

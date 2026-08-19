@@ -37,7 +37,9 @@ export class HubstaffController {
 	 * Refresh Hubstaff token by integration ID
 	 *
 	 * @param integrationId The ID of the integration
-	 * @returns The refreshed Hubstaff access token (the refresh token itself stays server-side)
+	 * @returns An object carrying the refreshed `access_token` and its optional metadata
+	 * (`token_type`, `expires_in`, `scope`). The refresh token itself is rotated server-side and is
+	 * deliberately NOT part of the response.
 	 */
 	@Get('/refresh-token/:integrationId')
 	async refreshHubstaffTokenByIntegration(

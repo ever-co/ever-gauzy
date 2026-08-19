@@ -161,12 +161,22 @@ export class HubstaffService {
 				})
 				.pipe(map((response: AxiosResponse<any>) => response.data));
 			const tokens = await lastValueFrom(tokens$);
+
+			// Validate BEFORE persisting: a malformed upstream payload would otherwise overwrite the
+			// stored credentials with `undefined` and return a response that does not satisfy
+			// IHubstaffAccessTokenResponse, leaving the integration silently unauthenticated.
+			if (typeof tokens?.access_token !== 'string' || !tokens.access_token.trim()) {
+				throw new BadRequestException('Hubstaff did not return a valid access token');
+			}
+
 			const settingsDto = settings.map((setting) => {
 				if (setting.settingsName === 'access_token') {
 					setting.settingsValue = tokens.access_token;
 				}
 
-				if (setting.settingsName === 'refresh_token') {
+				if (setting.settingsName === 'refresh_token' && typeof tokens.refresh_token === 'string') {
+					// Only rotate the stored refresh token when the provider actually returned one —
+					// Hubstaff omits it on some responses, and blanking it would break every later refresh.
 					setting.settingsValue = tokens.refresh_token;
 				}
 

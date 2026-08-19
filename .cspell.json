@@ -6,6 +6,8 @@
         "GHSA-[A-Za-z0-9-]+"
     ],
     "words": [
+        "onrender",
+        "shtm",
         "esac",
         "POSTCONDITION",
         "ENOENT",

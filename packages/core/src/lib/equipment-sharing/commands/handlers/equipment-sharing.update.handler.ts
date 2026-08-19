@@ -28,7 +28,7 @@ export class EquipmentSharingUpdateHandler implements ICommandHandler<EquipmentS
 		]);
 
 		// Save the updated Equipment Sharing record under the path id (a body-supplied id must not
-		// retarget the write; the raw body is not DTO-validated).
+		// re-point the write at another row; the raw body is not DTO-validated).
 		const equipmentSharing = await this._equipmentSharingService.create({ ...input, id });
 
 		// Create a new request approval record for the updated equipment sharing.

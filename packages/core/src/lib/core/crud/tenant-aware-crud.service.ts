@@ -405,7 +405,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		}
 		// Fail CLOSED on a tenant-less row too: on the update-through-create endpoints this guard is the
 		// only ownership check, so a row with a NULL tenantId (legacy / global / written without a
-		// request context) must not be overwritable — and re-tenantable — by a tenant user.
+		// request context) must not be overwritten — and claimed — by a tenant user.
 		if (existing && String(existingTenantId ?? '') !== String(tenantId)) {
 			throw new ForbiddenException('The record belongs to another tenant');
 		}
