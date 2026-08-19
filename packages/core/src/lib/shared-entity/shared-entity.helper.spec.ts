@@ -50,8 +50,17 @@ const GRAPH: Record<string, IFakeEntity> = {
 		relations: { employees: 'Employee', featureOrganizations: 'FeatureOrganization' }
 	},
 	Employee: { name: 'Employee', columns: ['id', 'billRateValue', 'tenantId', 'organizationId'] },
-	// A GLOBAL (tenant-less) entity — the pivot point of the original advisory.
-	FeatureOrganization: { name: 'FeatureOrganization', columns: ['id', 'featureId'] }
+	// Tenant-scoped itself (the real FeatureOrganization extends TenantOrganizationBaseEntity) — the
+	// pivot in the advisory is the SECOND hop, into the global entity behind it.
+	FeatureOrganization: {
+		name: 'FeatureOrganization',
+		columns: ['id', 'featureId', 'tenantId', 'organizationId'],
+		relations: { feature: 'Feature' }
+	},
+	// A GLOBAL (tenant-less) entity — Feature/Tenant/Language/Report/Currency are the real ones, and
+	// where `Organization.featureOrganizations -> feature -> featureOrganizations -> tenant -> ...`
+	// escaped the tenant.
+	Feature: { name: 'Feature', columns: ['id', 'code', 'name'] }
 };
 
 const ORGANIZATION = () => metadataFor('Organization', GRAPH);
@@ -67,8 +76,17 @@ describe('assertShareRulesAreSafe', () => {
 		expect(() => assertShareRulesAreSafe(ORGANIZATION(), { fields: [], relations: {} } as IShareRule)).not.toThrow();
 	});
 
-	it('refuses a hop into a tenant-less entity (the original pivot)', () => {
+	it('allows a first hop that is itself tenant-scoped', () => {
 		const rules = { fields: ['name'], relations: { featureOrganizations: { fields: ['featureId'] } } } as IShareRule;
+		expect(() => assertShareRulesAreSafe(ORGANIZATION(), rules)).not.toThrow();
+	});
+
+	it('refuses the SECOND hop into a tenant-less entity (the original pivot)', () => {
+		// Organization -> featureOrganizations (tenant-scoped, fine) -> feature (GLOBAL, the escape).
+		const rules = {
+			fields: ['name'],
+			relations: { featureOrganizations: { fields: ['featureId'], relations: { feature: { fields: ['code'] } } } }
+		} as unknown as IShareRule;
 		expect(() => assertShareRulesAreSafe(ORGANIZATION(), rules)).toThrow(ForbiddenException);
 	});
 
