@@ -29,6 +29,23 @@ export class UserComponent implements OnInit {
 		);
 	}
 
+	/**
+	 * Initials to stand in for a missing avatar: the first letter of the first
+	 * and last name parts, or the first letter of the email when there is no
+	 * name at all.
+	 */
+	initials(user: IUser): string {
+		const parts = (user?.name ?? '').trim().split(/\s+/).filter(Boolean);
+
+		if (parts.length) {
+			const first = parts[0].charAt(0);
+			const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : '';
+			return (first + last).toUpperCase();
+		}
+
+		return (user?.email ?? '?').charAt(0).toUpperCase();
+	}
+
 	onClicked() {
 		this.clicked.emit();
 	}

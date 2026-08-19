@@ -1,41 +1,150 @@
 @use 'themes' as *;
 
+// The account row at the foot of the nav rail, and the same row repeated inside
+// the account popup.
+//
+// Shape borrowed from ChatGPT's sidebar footer: ONE flat, full-width row that
+// carries the identity — avatar, name, e-mail beneath it — with no border, no
+// resting fill and no shadow. It only lights up on hover, so it reads as a menu
+// entry rather than as a control competing with the nav items above it.
+//
+// Both surfaces this row sits on are opaque (`gauzy-sidebar-background-2` in the
+// rail, `background-basic-color-1` in the popup), so the hover tint and the
+// presence dot's ring are the two things that must follow the host. The tint is
+// alpha-neutral and works on both; the ring reads `--gz-user-surface`, which the
+// layout sets to the sidebar colour — see one-column.layout.scss.
+$row-hover-bg: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+$row-surface: var(--gz-user-surface, #{nb-theme(background-basic-color-1)});
+// 2rem, matching the reference rail: the avatar there is visibly the anchor of
+// the row and reads a size larger than the nav icons above it, where 1.75rem
+// made it just another icon with text beside it.
+$avatar-size: 2rem;
+
+:host {
+	display: block;
+	min-width: 0;
+}
+
 .user-container {
 	display: flex;
 	align-items: center;
+	gap: 0.625rem;
+	min-width: 0;
+	padding: 0.375rem;
+	border-radius: var(--gauzy-radius-sm, 6px);
 	cursor: pointer;
-	gap: 10px;
+	// Colour only — transitioning `all` would animate the radius and make the
+	// row look like it is inflating on hover.
+	transition: background-color 0.12s ease-in-out;
+
+	&:hover,
+	&:focus-visible {
+		background-color: #{$row-hover-bg};
+	}
+
+	&:focus-visible {
+		outline: 2px solid nb-theme(color-primary-default);
+		outline-offset: -2px;
+	}
+
+	// Expanded rail / popup: the row owns the full width and the identity column
+	// takes whatever the avatar leaves. The 0.75rem inline padding is the nav
+	// rows' own `menu-item-padding` inline half, so the avatar lands on the same
+	// column as the icons above it and the hover tint starts on the same edge.
+	&.with-identity {
+		width: 100%;
+		padding: 0.375rem 0.75rem;
+	}
+
 	.img-container {
-		border: 3px solid nb-theme(text-primary-color);
-		border-radius: 32px;
 		position: relative;
+		flex: 0 0 auto;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: #{$avatar-size};
+		height: #{$avatar-size};
+		border-radius: 50%;
+		overflow: visible;
+		// A hairline, not the 3px primary ring this used to carry: at 28px that
+		// ring was heavier than the avatar inside it.
+		box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+
 		img {
-			width: 28px;
-			height: 28px;
-			border-radius: 32px;
-		} > div {
+			width: 100%;
+			height: 100%;
+			border-radius: 50%;
+			object-fit: cover;
+		}
+
+		// Avatar fallback.
+		.initials {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 100%;
+			height: 100%;
+			border-radius: 50%;
+			background-color: nb-theme(color-primary-transparent-default);
+			color: nb-theme(text-primary-color);
+			font-size: 0.75rem;
+			font-weight: 600;
+			line-height: 1;
+			letter-spacing: 0.02em;
+			user-select: none;
+		}
+
+		// Presence dot, ringed in the host surface so it reads as sitting on top
+		// of the avatar rather than as a notch cut out of it.
+		.presence {
 			position: absolute;
-			width: 10px;
-			height: 10px;
-			border-radius: 8px;
-			border: 2px solid #ebebeb;
-			right: 0;
 			top: 0;
+			@include nb-ltr(right, 0);
+			@include nb-rtl(left, 0);
+			width: 0.5rem;
+			height: 0.5rem;
+			border-radius: 50%;
+			border: 2px solid #{$row-surface};
+			box-sizing: content-box;
 		}
+
 		.online {
-			background-color: #00D060;
+			background-color: nb-theme(color-success-default);
 		}
+
 		.offline {
-			background-color: #ff0000;
+			background-color: nb-theme(text-hint-color);
 		}
 	}
-  	.identity-container {
-    	width: 100%;
+
+	.identity-container {
+		display: flex;
+		flex-direction: column;
+		// `min-width: 0` is what actually lets the two lines ellipsis inside a
+		// flex row — without it the column refuses to shrink below its text.
+		min-width: 0;
+		flex: 1 1 auto;
+		line-height: 1.25;
+
+		.name,
 		.email {
-			color: nb-theme(text-primary-color);
-			width: 100%;
 			overflow: hidden;
 			text-overflow: ellipsis;
+			white-space: nowrap;
 		}
-  	}
+
+		.name {
+			color: nb-theme(text-basic-color);
+			// The nav rows' own type scale — the account row is the last entry in
+			// that list, not a different kind of thing.
+			font-size: nb-theme(menu-text-font-size);
+			font-weight: 600;
+		}
+
+		.email {
+			color: nb-theme(text-hint-color);
+			font-size: 0.75rem;
+			font-weight: 400;
+		}
+	}
 }
