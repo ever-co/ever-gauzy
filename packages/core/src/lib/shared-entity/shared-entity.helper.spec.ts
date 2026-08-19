@@ -19,7 +19,7 @@ import {
  *   `buildSharedEntityRelations` turns it into `relation: true` — the whole related row, its eager
  *   relations included, with no field allow-list and no further validation of what that hop reaches;
  * - an unresolved relation left `tenantId` out of the nested select, and the scope filter only
- *   compared when `row.tenantId` was truthy — so an unjudgeable row was KEPT (fail open);
+ *   compared when `row.tenantId` was truthy — so a row it could not judge was KEPT (fail open);
  * - and the depth bound has to hold for the nested rules too, not just the root.
  */
 
@@ -136,7 +136,7 @@ describe('buildSharedEntitySelect', () => {
 
 	it('fails CLOSED when a relation cannot be resolved against the metadata', () => {
 		// An unresolved hop means no `tenantId` in the nested select — and a row without `tenantId`
-		// cannot be scope-checked. Building the query at all would return unjudgeable rows.
+		// cannot be scope-checked. Building the query at all would return rows that cannot be judged.
 		const rules = { fields: [], relations: { ghost: { fields: [] } } } as unknown as IShareRule;
 		expect(() => buildSharedEntitySelect(rules, ORGANIZATION())).toThrow(BadRequestException);
 	});
@@ -153,7 +153,7 @@ describe('filterSharedEntity', () => {
 		employees: [
 			{ id: 'e1', billRateValue: 10, tenantId: 'tenant-A', organizationId: 'org-1' },
 			{ id: 'e2', billRateValue: 20, tenantId: 'tenant-B', organizationId: 'org-9' }, // another tenant
-			{ id: 'e3', billRateValue: 30 } // scope columns MISSING — unjudgeable
+			{ id: 'e3', billRateValue: 30 } // scope columns MISSING — cannot be judged
 		]
 	});
 
@@ -168,7 +168,7 @@ describe('filterSharedEntity', () => {
 		expect(result.employees).not.toContainEqual({ billRateValue: 30 });
 	});
 
-	it('CONTROL: without the metadata the unjudgeable row is kept — the pre-fix fail-open', () => {
+	it('CONTROL: without the metadata the row that cannot be judged is kept — the pre-fix fail-open', () => {
 		// Same data, same scope, no metadata: `'tenantId' in row` is false for e3, so it survives.
 		const result = filterSharedEntity(entity(), RULES, SCOPE);
 		expect(result.employees).toEqual([{ billRateValue: 10 }, { billRateValue: 30 }]);

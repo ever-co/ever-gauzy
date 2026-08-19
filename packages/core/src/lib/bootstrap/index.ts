@@ -290,7 +290,7 @@ export type CorpPolicy = (typeof CORP_POLICIES)[number];
 
 /**
  * Resolves the Cross-Origin-Resource-Policy from the environment, falling back to the per-environment
- * default. The value is VALIDATED rather than asserted: helmet throws while initialising on an
+ * default. The value is VALIDATED rather than asserted: helmet throws while initializing on an
  * unknown policy, so a typo in `CORP_POLICY` would stop the API from starting at all.
  *
  * @param value - The raw `CORP_POLICY` environment value.

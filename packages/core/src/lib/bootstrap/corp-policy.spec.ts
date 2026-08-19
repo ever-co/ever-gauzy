@@ -5,7 +5,7 @@ import { resolveCorpPolicy } from './index';
  * `NODE_ENV=production` compose default (GHSA-chm8-2ggf-pgjq residual).
  *
  * Two failure modes this guards:
- * - helmet THROWS while initialising on an unknown policy string, so a typo in `CORP_POLICY` would
+ * - helmet THROWS while initializing on an unknown policy string, so a typo in `CORP_POLICY` would
  *   stop the API from booting at all — the old `as` cast asserted the type without checking it;
  * - the production default must stay `same-site` (so app.gauzy.co can embed API-served assets while
  *   third-party origins cannot), while a deployment that serves API and web app from two different
@@ -30,7 +30,7 @@ describe('resolveCorpPolicy', () => {
 	it('falls back to the environment default on an invalid value instead of letting helmet throw', () => {
 		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
 		try {
-			expect(resolveCorpPolicy('crossorigin', true)).toBe('same-site');
+			expect(resolveCorpPolicy('cross_origin', true)).toBe('same-site');
 			expect(resolveCorpPolicy('anything-else', false)).toBe('cross-origin');
 			expect(warn).toHaveBeenCalled();
 		} finally {
