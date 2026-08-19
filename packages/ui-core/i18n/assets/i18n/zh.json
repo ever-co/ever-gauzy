@@ -3637,7 +3637,9 @@
 		"SELECT_AN_ORGANIZATION": "组织",
 		"SELECT_PROJECT": "项目",
 		"SELECT_TEAM": "团队",
-		"AI_CHAT": "AI 聊天"
+		"AI_CHAT": "AI 聊天",
+		"COLLAPSE_SIDEBAR": "收起侧边栏",
+		"EXPAND_SIDEBAR": "展开侧边栏"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI 助手",

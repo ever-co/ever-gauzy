@@ -3695,7 +3695,9 @@
 		"SELECT_AN_ORGANIZATION": "Организация",
 		"SELECT_PROJECT": "Проект",
 		"SELECT_TEAM": "Отбор",
-		"AI_CHAT": "AI чат"
+		"AI_CHAT": "AI чат",
+		"COLLAPSE_SIDEBAR": "Свиване на страничната лента",
+		"EXPAND_SIDEBAR": "Разгъване на страничната лента"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI асистент",

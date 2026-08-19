@@ -4099,7 +4099,9 @@
 		"SELECT_AN_ORGANIZATION": "Organization",
 		"SELECT_PROJECT": "Project",
 		"SELECT_TEAM": "Team",
-		"AI_CHAT": "AI Chat"
+		"AI_CHAT": "AI Chat",
+		"COLLAPSE_SIDEBAR": "Collapse sidebar",
+		"EXPAND_SIDEBAR": "Expand sidebar"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI Assistant",

@@ -3355,7 +3355,9 @@
 		"SELECT_A_DATE": "crwdns2641:0crwdne2641:0",
 		"SELECT_AN_ORGANIZATION": "crwdns2643:0crwdne2643:0",
 		"SELECT_PROJECT": "crwdns8704:0crwdne8704:0",
-		"AI_CHAT": "Lok ki AI"
+		"AI_CHAT": "Lok ki AI",
+		"COLLAPSE_SIDEBAR": "Kan bar ma i nget",
+		"EXPAND_SIDEBAR": "Yab bar ma i nget"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Lakony me AI",
