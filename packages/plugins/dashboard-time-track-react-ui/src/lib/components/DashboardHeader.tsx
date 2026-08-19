@@ -62,14 +62,19 @@ export function DashboardHeader({ filters, autoRefresh, onAutoRefreshChange, onR
 				}}
 			>
 				<div>
+					{/*
+					 * The page title. Same step as `gauzy-page-title-*`, which is what
+					 * `ngx-header-title` resolves on every Angular tab, so a tab
+					 * switch does not change the size of the heading.
+					 */}
 					<h4 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600, color: theme.textPrimary }}>
 						{title}
 					</h4>
 					{dateRangeText && (
 						<span
 							style={{
-								fontSize: '0.8125rem',
-								color: theme.textHint,
+								fontSize: '0.75rem',
+								color: theme.textSecondary,
 								marginTop: '0.25rem',
 								display: 'block'
 							}}
@@ -82,13 +87,20 @@ export function DashboardHeader({ filters, autoRefresh, onAutoRefreshChange, onR
 				{/* Controls */}
 				<div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
 					{/* Auto Refresh toggle */}
+					{/*
+					 * Auto-refresh. The label used to turn blue when the box was
+					 * ticked, which made a checked control read like a link; the box
+					 * itself already carries that state. The accent is the theme's
+					 * own, so it matches the toggle on the Angular tab rather than
+					 * the browser's default blue.
+					 */}
 					<label
 						style={{
 							display: 'flex',
 							alignItems: 'center',
 							gap: '0.375rem',
 							fontSize: '0.8125rem',
-							color: autoRefresh ? theme.blue : theme.textHint,
+							color: theme.textSecondary,
 							cursor: 'pointer',
 							userSelect: 'none'
 						}}
@@ -97,12 +109,17 @@ export function DashboardHeader({ filters, autoRefresh, onAutoRefreshChange, onR
 							type="checkbox"
 							checked={autoRefresh}
 							onChange={(e) => onAutoRefreshChange(e.target.checked)}
-							style={{ accentColor: theme.blue, width: 16, height: 16, cursor: 'pointer' }}
+							style={{ accentColor: theme.accent, width: 14, height: 14, cursor: 'pointer' }}
 						/>
 						Auto Refresh
 					</label>
 
 					{/* Refresh button */}
+					{/*
+					 * The manual refresh. Sized and edged like the app's own small
+					 * outline buttons, and it says it is unavailable while
+					 * auto-refresh is on instead of looking identical either way.
+					 */}
 					<button
 						type="button"
 						disabled={autoRefresh}
@@ -111,13 +128,16 @@ export function DashboardHeader({ filters, autoRefresh, onAutoRefreshChange, onR
 							display: 'inline-flex',
 							alignItems: 'center',
 							gap: '0.375rem',
-							padding: '0.375rem 0.75rem',
+							padding: '0.3125rem 0.625rem',
 							fontSize: '0.8125rem',
+							fontWeight: 500,
+							lineHeight: '1rem',
 							border: `1px solid ${theme.border}`,
-							borderRadius: '0.25rem',
+							borderRadius: theme.radiusSm,
 							background: 'transparent',
-							color: theme.textPrimary,
-							cursor: 'pointer',
+							color: autoRefresh ? theme.textSecondary : theme.textPrimary,
+							opacity: autoRefresh ? 0.6 : 1,
+							cursor: autoRefresh ? 'default' : 'pointer',
 							fontFamily: theme.font
 						}}
 					>
