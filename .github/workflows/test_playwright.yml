@@ -20,11 +20,13 @@ name: Playwright Tests
 # and run one shard each. An evicted pod now costs a single phase, and a re-run of a failed job
 # reuses the published node_modules + bundles instead of redoing everything.
 on:
-  # Run the e2e suite ONLY when code lands on develop (merge/push). Deliberately NOT on pull_request or
-  # any other branch: the suite is long and shared-DB flaky, so it's gated to the integration
-  # branch. Use the manual "Run workflow" button (workflow_dispatch) to run it on demand from any ref.
+  # Run the e2e suite ONLY when code lands on STAGE. Deliberately NOT on pull_request, and NOT on
+  # develop: the suite is long (hours) and shared-DB flaky, and running it on every develop push spent
+  # that cost on code that was not yet a release candidate. Contributors run it locally before
+  # pushing; this is the last gate before production, so that is where it belongs.
+  # Use the manual "Run workflow" button (workflow_dispatch) to run it on demand from any ref.
   push:
-    branches: [develop]
+    branches: [stage]
   workflow_dispatch:
 
 # Least-privilege GITHUB_TOKEN, granted PER JOB rather than workflow-wide: only `cleanup` needs to
@@ -98,7 +100,7 @@ jobs:
         # 9.33 GB of caches that other workflows genuinely need — `build.yml`'s 4.66 GB yarn cache
         # (the PR gate, five jobs, every pull request) and the 4.64 GB macOS desktop-build cache.
         # Storing even a ~3 GB archive would evict one of them, making the PR gate slower to speed up
-        # a suite that runs on develop pushes. That is a bad trade, so deps pays the bootstrap and
+        # a suite that runs only on stage pushes. That is a bad trade, so deps pays the bootstrap and
         # the artifact makes sure nothing downstream pays it again.
         #
         # zstd on one file also beats the cache action's per-file handling of a huge tree in both
@@ -531,12 +533,13 @@ jobs:
           # One report per shard — download all four to triage a full run.
           name: playwright-report-shard-${{ matrix.shard }}
           path: apps/gauzy-e2e/playwright-report
-          # 7, not 14: four of these per run against a quota that has to hold the ~2.87 GB dependency
-          # archive at the same time. At 14 days they had grown to 3.72 GB across 100 copies, and the
-          # sum tipped the org's Actions storage over — which stopped NEW reports uploading, i.e. the
-          # accumulated diagnostics evicted the diagnostic you actually needed. A week is still far
-          # longer than any triage here has taken.
-          retention-days: 7
+          # 1 day, matching every other artifact here. Four of these per run share the org's Actions
+          # storage with the ~2.87 GB dependency archive; at 14 days they had grown to 3.72 GB across
+          # 100 copies and tipped the quota over, which stops NEW reports uploading — the accumulated
+          # diagnostics evict the diagnostic you actually need, exactly when a run has gone red.
+          # Download the report while triaging (`gh run download <id> -n playwright-report-shard-N`);
+          # a re-run regenerates it.
+          retention-days: 1
 
   # ---------------------------------------------------------------------------------------------
   # 4) cleanup — delete the dependency artifact as soon as nothing needs it again.
