@@ -164,7 +164,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 						public_id = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}`;
 					}
 
-					// Neutralise the DELIVERED format too, not just the object name.
+					// Neutralize the DELIVERED format too, not just the object name.
 					//
 					// `format` comes from the client's filename, and Cloudinary publishes the asset
 					// under it — so an upload whose public_id was mapped to `.bin` was still served as
