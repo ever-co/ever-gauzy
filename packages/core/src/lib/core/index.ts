@@ -1,4 +1,5 @@
 export * from './crud';
+export * from './errors';
 export * from './core.module';
 export * from './utils';
 export * from './context';

@@ -36,7 +36,16 @@ const MAX_DEPTH = 4;
  */
 export function toSafeHttpException(error: unknown): HttpException {
 	if (error instanceof BadRequestException) {
-		return new BadRequestException(error.getResponse());
+		const response = error.getResponse();
+		if (typeof response !== 'object' || response === null) {
+			return error;
+		}
+		// This branch used to return the body VERBATIM, to keep class-validator's `message: [...]`
+		// array intact. But `CrudService` throws `new BadRequestException(queryFailedError)` — also a
+		// BadRequestException — so every failed database write skipped the scrub below and answered
+		// with the driver's `query`, `parameters` and `driverError`. `sanitizeErrorBody` preserves
+		// arrays, so the validation contract survives the sanitization it was carved out of.
+		return new BadRequestException(sanitizeErrorBody(response) as Record<string, unknown>);
 	}
 	if (error instanceof HttpException) {
 		const response = error.getResponse();

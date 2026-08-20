@@ -44,6 +44,7 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, defineConfig, environment } from '@gauzy/config';
 import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
 import { MultiORMEnum, getORMType } from '../core/utils';
+import { DatabaseErrorFilter } from '../core/errors';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
@@ -205,6 +206,15 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Set the global prefix for routes
 	const globalPrefix = 'api';
 	app.setGlobalPrefix(globalPrefix);
+
+	// Never let database internals reach a client. Many services re-throw a caught ORM error as
+	// `new BadRequestException(error)`, and Nest serializes that object's enumerable properties —
+	// which on a TypeORM QueryFailedError are exactly `query`, `parameters` and `driverError`. This
+	// filter replaces such a payload with a safe message and leaves every other response untouched.
+	// The adapter MUST be passed: BaseExceptionFilter resolves it through @Optional() @Inject(),
+	// which only runs under DI. Constructed with `new`, it would have none, and super.catch() would
+	// throw while handling every ordinary HttpException.
+	app.useGlobalFilters(new DatabaseErrorFilter(app.getHttpAdapter()));
 
 	// Get the AppService
 	const appService = app.select(AppModule).get(AppService);
