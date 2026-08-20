@@ -176,7 +176,14 @@ export function isDatabaseErrorPayload(value: unknown): boolean {
  * one without a mapped message simply gets the generic text.
  */
 const DRIVER_CODE_SHAPES: ReadonlyArray<RegExp> = [
-	/^[0-9][0-9A-Z]{4}$/, // postgres SQLSTATE — five chars, leading digit (23505, 42P01, 22P02, 08006)
+	// postgres SQLSTATE — five chars of [0-9A-Z] that contain AT LEAST ONE DIGIT.
+	//
+	// A leading digit is wrong: P0001 (raise_exception, what every PL/pgSQL RAISE produces), XX000
+	// (internal_error), F0000 and HV000 are all valid and all letter-led. But the obvious widening
+	// to /^[0-9A-Z]{5}$/ matches any five-letter upper-case word — ADMIN, LOGIN, TOKEN, EMPTY —
+	// which would classify an ordinary application error code as a database error and replace its
+	// message. Every real SQLSTATE carries a digit; those words do not.
+	/^(?=.*[0-9])[0-9A-Z]{5}$/,
 	/^SQLITE_[A-Z0-9_]+$/, // better-sqlite3 / sqlite3
 	/^ER_[A-Z0-9_]+$/ // mysql / mariadb
 ];
@@ -251,7 +258,16 @@ function maskQuotedLiterals(message: unknown): unknown {
 	if (typeof message !== 'string') {
 		return message;
 	}
-	return message.replace(/'[^']*'/g, "'<redacted>'");
+	return (
+		message
+			// MySQL: `Duplicate entry 'alice@example.com' for key 'user.email'`. `''` is SQL's escape
+			// for a literal quote, so it is consumed as part of the same literal rather than ending it.
+			.replace(/'(?:[^']|'')*'/g, "'<redacted>'")
+			// Postgres puts a REJECTED VALUE in double quotes after a colon
+			// (`invalid input syntax for type uuid: "not-a-uuid"`), while a double-quoted identifier
+			// elsewhere is a constraint/column name and is worth keeping for diagnosis.
+			.replace(/:\s*"[^"]*"/g, ': "<redacted>"')
+	);
 }
 
 /**
