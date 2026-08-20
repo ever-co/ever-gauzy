@@ -6,27 +6,19 @@ on:
       - stage
 
 concurrency:
-  # One group PER WORKFLOW, not one shared across all six non-prod image builds.
+  # One group PER WORKFLOW (never a group shared across the six non-prod image builds:
+  # that shared `gauzy-docker-build` group did not queue them, it STARVED them — GitHub
+  # keeps exactly one pending run per group, so an unrelated workflow's run cancelled
+  # whichever run was waiting, and environments silently kept serving their old image).
   #
-  # The shared `gauzy-docker-build` group did not queue them — it starved them. GitHub
-  # keeps exactly ONE pending run per group, so every newly queued run cancels the run
-  # already waiting, whatever workflow it came from. A single push to develop fires three
-  # of these, a push to stage another three; five of every six were cancelled before they
-  # started. Environments then silently kept serving their previous image, which is how
-  # stage sat on an image five PRs old while its branch looked merged and green.
-  #
-  # Keyed by workflow so the useful part survives: a newer push still supersedes this
-  # workflow's own older pending run, and `cancel-in-progress: false` still never kills a
-  # build that is already running. What it no longer does is let an unrelated image build
-  # cancel this one.
-  #
-  # The cost is that these can once again overlap. That was the original worry — ~6-8
-  # parallel installs against one registry VIP — but an image that never builds is a worse
-  # failure than a slow one, and this is the only lever Actions offers: there is no way to
-  # ask for a queue deeper than one. The prod (master) workflows are still not in any
-  # shared group.
-  group: gauzy-docker-build-${{ github.workflow }}
-  cancel-in-progress: false
+  # Within this workflow the newest commit wins, matching the prod image builds. The
+  # trade-off is deliberate: an intermediate version tag can end up without an image,
+  # which is inert here because demo/stage deploy from `:latest` and only the release
+  # that actually ships needs its own tagged image. The alternative — letting a
+  # superseded build run for three hours on a fleet where one install takes 2-3 h —
+  # delays the image that IS wanted by exactly that long.
+  group: gauzy-docker-build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 # Least-privilege scope for the automatic GITHUB_TOKEN.
 # `packages: write` is required: these jobs log in to ghcr.io with GITHUB_TOKEN and push
