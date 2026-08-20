@@ -82,7 +82,10 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 				});
 			}
 			await super.delete(id);
-			return await this.save(payload);
+			// NOT `save()`: on MikroORM that is `upsert()`, which does not cascade relations, so the
+			// rebuilt `translations` were silently dropped and the row came back with none. `create()`
+			// goes through persistAndFlush, which does cascade.
+			return await this.create(payload);
 		} catch (err) {
 			// Preserve intentional HTTP exceptions (404 above, ForbiddenException from the ownership guard)
 			if (err instanceof HttpException) {
