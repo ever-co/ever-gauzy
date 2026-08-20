@@ -441,6 +441,22 @@ nb-sidebar[tag='menu-sidebar'] {
     overflow: visible;
   }
 
+  // …but that `.scrollable` must still be BOUNDED by the 100vh shell above it.
+  // Nebular gives it `flex: 1` inside the fixed 100vh `.main-container-fixed`,
+  // and a flex item's automatic minimum size is its CONTENT whenever overflow
+  // is `visible` — which the rule above just made it, so the box grew to fit
+  // the open submenus instead of staying 100vh. `.custom-box` is `height: 100%`
+  // of it and grew with it, so the nav simply ran off the bottom of the screen
+  // and nothing ever overflowed anything: no scroll port, no scrollbar.
+  // `min-height: 0` pins it back to the shell's height without re-clipping the
+  // rail-edge buttons, and the overflow then lands where it belongs — on
+  // `.custom-row.menu`, the only row that should scroll (the logo row and the
+  // user footer stay put).
+  nb-layout .layout .layout-container nb-sidebar[tag='menu-sidebar'] .main-container > .scrollable,
+  nb-layout .layout .layout-container nb-sidebar[tag='menu-sidebar'] .main-container-fixed > .scrollable {
+    min-height: 0;
+  }
+
   // While the AI chat is maximized the canvas SHRINKS to zero width instead
   // of being covered or display:none'd — the page stays alive and restoring
   // simply gives the space back. (All nb-sidebars are projected before the
@@ -552,12 +568,38 @@ nb-sidebar[tag='menu-sidebar'] {
 
 .custom-box .custom-row.menu {
   flex: 1 1 auto;
-  overflow-y: overlay;
+  // Same automatic-minimum-size trap one level down: without this the row grows
+  // to its content (all the expanded submenus) and the scroll never starts here.
+  min-height: 0;
+  // `overflow-y: overlay` is dead: Blink now just aliases it to `auto`, and every
+  // other engine drops the declaration as invalid — which left Firefox and Safari
+  // at `visible`, i.e. with no scroll port at all.
+  overflow-y: auto;
+  // A non-`visible` y would compute x to `auto` too; the rows never need to scroll
+  // sideways, so say so rather than risk a stray horizontal bar in the narrow rail.
+  overflow-x: hidden;
+  // The menu is its own scroll port — a trackpad swipe past either end must not
+  // chain up to the page or into a browser back/forward gesture.
+  overscroll-behavior-y: contain;
   padding: 0 0.75rem;
+
+  // NO local scrollbar styling on purpose. The nav menu is one scroll port among
+  // several in the shell, and it has to look like the rest of them — same width,
+  // same thumb colour, same transparent track. That look is the GLOBAL rule in
+  // `_overrides.scss` (`*::-webkit-scrollbar*` plus `scrollbar-color` for
+  // Firefox), painted from `--gauzy-scrollbar` per theme. Anything set here —
+  // even a wider gutter — makes this bar the odd one out, so the fix above is
+  // purely structural: give the column a real scroll port and let the shared
+  // scrollbar style land on it.
 }
 
+// Icon rail. The column keeps a gutter here too — with `padding: 0` a row's
+// hover/active tint spanned the full 3.5rem and read as a band cutting across
+// the rail rather than as a target under the glyph. 0.5rem on each side leaves
+// a 2.5rem-wide row, which is still a comfortable pointer target and lines the
+// tint up with the rounded rows of the expanded sidebar.
 .custom-box.compacted .custom-row.menu {
-  padding: 0;
+  padding: 0 0.5rem;
 }
 
 :host ::ng-deep nb-layout .layout .layout-container nb-sidebar.settings-sidebar.expanded .main-container-fixed {
