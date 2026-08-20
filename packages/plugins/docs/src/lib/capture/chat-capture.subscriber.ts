@@ -140,6 +140,19 @@ export class ChatCaptureSubscriber implements OnModuleInit, OnModuleDestroy {
 			const sniff = sniffFile(buffer, fileName, payload.file.mimetype);
 			if (!sniff.ok) {
 				this.logger.warn(`Chat attachment '${fileName.slice(0, 40)}' rejected: ${sniff.code}`);
+				// Nothing will ever reference a REJECTED object: remove it instead of leaving an orphan
+				// (best effort — the rejection stands either way). Only when the bytes were actually READ:
+				// LocalProvider.getFile swallows fs errors and returns undefined, and a transient read
+				// failure must not destroy a valid attachment. A zero-length Buffer is a successful read
+				// of an empty file (which sniffFile rejects) — that one IS ours to clean up, so the test
+				// is "is it a Buffer", not "is it non-empty".
+				if (Buffer.isBuffer(buffer)) {
+					try {
+						await provider.deleteFile(payload.file.key);
+					} catch (error) {
+						this.logger.warn(`Could not remove rejected chat attachment '${payload.file.key}': ${error?.message ?? error}`);
+					}
+				}
 				return null;
 			}
 

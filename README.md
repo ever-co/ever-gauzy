@@ -203,7 +203,7 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 #### Production
 
--   Edit `.env.compose` (if needed) to use your custom settings, e.g. DB type.
+-   Edit `.env.compose`: you **must** set `JWT_SECRET`, `JWT_REFRESH_TOKEN_SECRET`, `JWT_VERIFICATION_TOKEN_SECRET` and `EXPRESS_SESSION_SECRET` to strong, unique values (e.g. `openssl rand -hex 64`). The API refuses to start on the shipped blank/default secrets — shared defaults let anyone forge authentication tokens and sessions. Adjust any other settings (e.g. DB type) there too.
 -   Run `docker-compose up -d`, if you want to run the platform in minimal production configuration using our prebuilt Docker images. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
 
 Note: we recommend using Kubernetes for production workloads instead of Docker Compose!

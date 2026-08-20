@@ -26,7 +26,8 @@ import {
 	RequestContext,
 	TenantPermissionGuard,
 	UseValidationPipe,
-	UUIDValidationPipe
+	UUIDValidationPipe,
+	toSafeStorageExtension
 } from '@gauzy/core';
 import { docsRateLimit, getDocsConfig } from '../docs.config';
 import { DOCS_UPLOAD_MAX_FILES } from '../docs.constants';
@@ -36,15 +37,6 @@ import { ReplaceDocumentFileCommand } from '../commands/replace-document-file.co
 import { ReprocessDocumentCommand } from '../commands/reprocess-document.command';
 import { UploadDocumentsCommand } from '../commands/upload-documents.command';
 import { DocumentUploadService } from '../services/document-upload.service';
-
-/**
- * Object-name extensions that a static file server would happily render in the browser. The
- * canonical type is kept on `document.mimeType` (and in `metadata.upload.canonicalExtension`),
- * so the stored object can safely carry a neutral extension instead — that keeps the LOCAL
- * provider's unauthenticated `/public/` path from becoming a same-origin XSS sink for an
- * uploaded `.html` file. Bytes are always served through `/documents/:id/raw`.
- */
-const RENDERABLE_KEY_EXTENSIONS = new Set(['html', 'htm', 'xhtml', 'xml', 'svg', 'svgz', 'js', 'mjs', 'css']);
 
 /**
  * Builds the per-request storage engine of the upload endpoint. Keys land under the
@@ -62,14 +54,10 @@ const documentsStorage = (ctx: ExecutionContext) => {
 		dest: () => path.join('documents', tenantId, organizationId),
 		prefix: 'documents',
 		filename: (_file: any, extension: string) => {
-			const safeExtension = String(extension ?? '')
-				.toLowerCase()
-				.replace(/[^a-z0-9]/g, '');
-			if (!safeExtension) {
+			const storedExtension = toSafeStorageExtension(extension);
+			if (!storedExtension) {
 				return `${uuid()}`;
 			}
-			// Never let a browser-renderable extension onto the stored object name.
-			const storedExtension = RENDERABLE_KEY_EXTENSIONS.has(safeExtension) ? 'bin' : safeExtension;
 			return `${uuid()}.${storedExtension}`;
 		}
 	});
