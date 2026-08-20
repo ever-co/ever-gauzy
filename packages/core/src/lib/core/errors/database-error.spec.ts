@@ -518,3 +518,60 @@ describe('driver message signatures', () => {
 		expect(safeMessageForDatabaseText('Cannot add or update a child row: ER_NO_REFERENCED_ROW_2')).toBeDefined();
 	});
 });
+
+describe('review-pass regressions', () => {
+	it('recognizes letter-leading PostgreSQL SQLSTATEs', () => {
+		// P0001 is what every PL/pgSQL RAISE produces; XX000 is internal_error.
+		for (const code of ['P0001', 'XX000', 'F0000', 'HV000', '23505', '42P01']) {
+			expect(looksLikeDriverCode(code)).toBe(true);
+		}
+	});
+
+	it('does not mistake a five-letter word for a SQLSTATE', () => {
+		// The obvious widening to /^[0-9A-Z]{5}$/ matches these; every real SQLSTATE has a digit.
+		for (const code of ['ADMIN', 'LOGIN', 'TOKEN', 'EMPTY', 'VALID']) {
+			expect(looksLikeDriverCode(code)).toBe(false);
+		}
+	});
+
+	it('sanitizes an unmapped driver error rather than returning its message', () => {
+		// toSafeHttpException used to hand this to sanitizeErrorBody, which collapses an Error to its
+		// `.message` and drops the code — so `42P01` became the bare string `relation "user" does not
+		// exist`, which matches no message signature and reached the client naming a real table.
+		const { toSafeHttpException } = require('../interceptors/safe-http-exception');
+		const failure: any = new QueryFailedError('SELECT * FROM "user"', ['secret-value'], {
+			code: '42P01'
+		} as any);
+		failure.message = 'relation "user" does not exist';
+
+		const safe = toSafeHttpException(new BadRequestException(failure));
+		const serialized = JSON.stringify(safe.getResponse());
+
+		expect(safe.getStatus()).toBe(400);
+		expect(serialized).not.toContain('relation');
+		expect(serialized).not.toContain('secret-value');
+		expect(serialized).not.toContain('SELECT');
+	});
+});
+
+describe('log masking of value-bearing quotes', () => {
+	const withMessage = (message: string) =>
+		Object.assign(new QueryFailedError('SELECT 1', [], { code: '22P02' } as any), { message });
+
+	it('masks a postgres rejected value, which follows a colon', () => {
+		const out = JSON.stringify(redactDatabaseError(withMessage('invalid input syntax for type uuid: "not-a-uuid"')));
+		expect(out).not.toContain('not-a-uuid');
+	});
+
+	it('keeps a double-quoted constraint identifier, which is diagnostic', () => {
+		const out = JSON.stringify(
+			redactDatabaseError(withMessage('duplicate key value violates unique constraint "user_email_key"'))
+		);
+		expect(out).toContain('user_email_key');
+	});
+
+	it("handles SQL's doubled-quote escape without splitting the literal", () => {
+		const out = JSON.stringify(redactDatabaseError(withMessage("Duplicate entry 'O''Brien' for key 'user.name'")));
+		expect(out).not.toContain('Brien');
+	});
+});
