@@ -5,9 +5,17 @@ on:
     branches:
       - stage
 
+concurrency:
+  # One release per ref at a time, newest wins. Safe to cancel because the tag is no
+  # longer pushed by a separate earlier step: `dry_run` makes the version calculation
+  # side-effect free, and the release action then creates the tag AND the release in a
+  # single API call, so an interrupted run leaves nothing behind to clean up.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # Least-privilege scope for the automatic GITHUB_TOKEN.
-# `contents: write` is required: this workflow pushes a version tag and creates the
-# GitHub release that the downstream image/desktop builds key off.
+# `contents: write` is required: the release action creates the version tag together with
+# the GitHub release that the downstream image/desktop builds key off.
 permissions:
   contents: write
 
@@ -24,15 +32,20 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v5
 
-      - name: Bump version and push tag
+      # Calculate ONLY — `dry_run` means no tag is pushed here. The release step below
+      # creates the tag together with the release, so there is never a window in which a
+      # tag exists without its release (a cancelled run used to strand one forever: the
+      # next run computes the NEXT version and never backfills the orphan).
+      - name: Calculate the next version (no tag pushed)
         uses: mathieudutour/github-tag-action@v6.1
         id: tag_version
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          dry_run: true
           release_branches: master,main,develop,stage
           pre_release_branches: something_to_possible_use_later
 
-      - name: Create a GitHub release
+      - name: Create the tag and the GitHub release (one call)
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
@@ -40,5 +53,7 @@ jobs:
           prerelease: true
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ steps.tag_version.outputs.new_tag }}
+          # Create the tag as part of this call, pinned to the commit that was built.
+          commit: ${{ github.sha }}
           name: ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
