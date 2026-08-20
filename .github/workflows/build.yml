@@ -89,10 +89,13 @@ jobs:
         id: cache
         uses: actions/cache/restore@v4
         with:
-          # lookup-only: on a HIT this job does nothing with the archive — every step below is gated
-          # on `cache-hit != 'true'` — so downloading ~2.9 GB would be pure serial latency in front of
-          # four jobs that are waiting on it. The output it sets is all this job needs.
-          lookup-only: true
+          # NOT lookup-only. It was, and that made every warm run fail: on a cache HIT the archive
+          # is never written to disk, so `Archive node_modules` is skipped along with the other
+          # producer steps, and the UNGUARDED `Upload node_modules archive` below then trips its
+          # `if-no-files-found: error`. The cold run that first writes the key passes; the NEXT run,
+          # the one the cache exists for, is the one that breaks - the worst place to put a failure.
+          # Downloading ~2.9 GB here costs a few minutes against the ~90-minute install it replaces,
+          # and it is what guarantees the run-scoped artifact handoff below actually has a file.
           path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
