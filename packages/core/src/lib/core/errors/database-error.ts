@@ -99,14 +99,18 @@ const DATABASE_MESSAGE_SIGNATURES: ReadonlyArray<[RegExp, string]> = [
 	[/numeric field overflow/i, 'A value in this request is out of range.'],
 	// Anything still carrying a raw statement or a driver code is replaced wholesale.
 	//
-	// CASE-SENSITIVE, and it must look like an actual statement. The earlier version of this pattern
-	// was `/\b(SELECT|INSERT INTO|UPDATE|DELETE FROM)\b\s+["'`\w]/i`, and measured against the 382
-	// distinct hand-written exception messages in this repo it rewrote FOURTEEN of them — including
-	// "Please select valid Date, start time and end time", "Failed to update the password" and
-	// "Update data is required". Drivers emit SQL keywords in upper case; English prose does not.
-	[/\b(?:SELECT\s+[\s\S]+\s+FROM|INSERT\s+INTO|UPDATE\s+\S+\s+SET|DELETE\s+FROM)\s+["'`\w]/, GENERIC_DATABASE_ERROR_MESSAGE],
-	[/\bSQLITE_[A-Z_]+\b/, GENERIC_DATABASE_ERROR_MESSAGE],
-	[/\bER_[A-Z_]{3,}\b/, GENERIC_DATABASE_ERROR_MESSAGE],
+	// It must look like an ACTUAL STATEMENT — that requirement is what makes this safe, not the
+	// casing. The earlier version was `/\b(SELECT|INSERT INTO|UPDATE|DELETE FROM)\b\s+["'`\w]/i` with
+	// no structural requirement, and measured against the 382 distinct hand-written exception
+	// messages in this repo it rewrote FOURTEEN of them — "Please select valid Date, start time and
+	// end time", "Failed to update the password", "Update data is required". With the FROM/INTO/SET
+	// clause required, both the case-sensitive and case-insensitive forms score 0 false positives
+	// across all 382, so the insensitive one is used: it also catches lower-cased driver output.
+	[/\b(?:SELECT\s+[\s\S]+\s+FROM|INSERT\s+INTO|UPDATE\s+\S+\s+SET|DELETE\s+FROM)\s+["'`\w]/i, GENERIC_DATABASE_ERROR_MESSAGE],
+	[/\bSQLITE_[A-Z0-9_]+\b/, GENERIC_DATABASE_ERROR_MESSAGE],
+	// Digits allowed: `ER_NO_REFERENCED_ROW_2` did not match `[A-Z_]{3,}` at all, because the trailing
+	// `_2` leaves no word boundary for `\b` to land on.
+	[/\bER_[A-Z0-9_]{3,}\b/, GENERIC_DATABASE_ERROR_MESSAGE],
 	[/\bQueryFailedError\b/, GENERIC_DATABASE_ERROR_MESSAGE]
 ];
 
@@ -156,10 +160,35 @@ export function isDatabaseErrorPayload(value: unknown): boolean {
 		}
 	}
 
-	// A bare driver error — `{ code, message }` with a code we recognise and no other structure —
-	// still has to be caught, or it is serialized straight into the response.
-	const code = resolveDriverCode(value);
-	return !!code && DATABASE_ERROR_MESSAGES.has(code);
+	// A bare driver error — `{ code, message }` with no other structure — still has to be caught, or
+	// it is serialized straight into the response. Matching on the code's SHAPE, not on whether we
+	// happen to have a friendly message for it: an unmapped code is still a database error.
+	return looksLikeDriverCode(resolveDriverCode(value));
+}
+
+/**
+ * Shapes of driver error codes, so an UNKNOWN code is still recognised as coming from a database.
+ *
+ * Only translating codes we have a message for is not enough: `42P01` (undefined_table),
+ * `SQLITE_BUSY` and `ER_LOCK_DEADLOCK` are unmistakably driver output, and treating them as
+ * ordinary errors lets their messages — `relation "user" does not exist` — reach the client.
+ * Recognition and translation are separate jobs: anything matching here is a database error, and
+ * one without a mapped message simply gets the generic text.
+ */
+const DRIVER_CODE_SHAPES: ReadonlyArray<RegExp> = [
+	/^[0-9][0-9A-Z]{4}$/, // postgres SQLSTATE — five chars, leading digit (23505, 42P01, 22P02)
+	/^SQLITE_[A-Z0-9_]+$/, // better-sqlite3 / sqlite3
+	/^ER_[A-Z0-9_]+$/, // mysql / mariadb
+	/^ELIFECYCLE$|^ECONNREFUSED$|^ETIMEDOUT$|^ENOTFOUND$/ // connection-level failures surfaced by drivers
+];
+
+/**
+ * Whether a value looks like a database driver's error code.
+ *
+ * @param code - The candidate code.
+ */
+export function looksLikeDriverCode(code: unknown): boolean {
+	return typeof code === 'string' && DRIVER_CODE_SHAPES.some((shape) => shape.test(code));
 }
 
 /**
@@ -210,6 +239,18 @@ export function safeErrorMessage(error: unknown): string {
 }
 
 /**
+ * Masks single-quoted literals in driver text, which is where MySQL puts the offending value.
+ *
+ * @param message - The driver message.
+ */
+function maskQuotedLiterals(message: unknown): unknown {
+	if (typeof message !== 'string') {
+		return message;
+	}
+	return message.replace(/'[^']*'/g, "'<redacted>'");
+}
+
+/**
  * A view of a caught error that is safe to write to the application log.
  *
  * The response is sanitized, but stdout usually ships to a retained log store, and a
@@ -228,7 +269,11 @@ export function redactDatabaseError(error: unknown): unknown {
 	const source = error as Record<string, unknown>;
 	const redacted: Record<string, unknown> = {
 		name: (error as Error)?.name,
-		message: (error as Error)?.message,
+		// The driver message is kept because it names the constraint — but MySQL writes the REJECTED
+		// VALUE into it (`Duplicate entry 'alice@example.com' for key 'user.email'`), and logs are
+		// usually shipped to a retained store. Single-quoted literals are masked; double-quoted
+		// identifiers (postgres constraint/column names) are diagnostic, not user data, and stay.
+		message: maskQuotedLiterals((error as Error)?.message),
 		code: resolveDriverCode(error)
 	};
 

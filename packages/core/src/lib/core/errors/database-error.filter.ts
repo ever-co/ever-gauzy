@@ -31,6 +31,9 @@ import {
  */
 @Catch(HttpException)
 export class DatabaseErrorFilter extends BaseExceptionFilter {
+	/** How deep the nested-payload scrub walks before giving up (driver errors can hold cycles). */
+	private static readonly MAX_SANITIZE_DEPTH = 6;
+
 	private readonly logger = new Logger(DatabaseErrorFilter.name);
 
 	/**
@@ -72,7 +75,10 @@ export class DatabaseErrorFilter extends BaseExceptionFilter {
 		const isDriverErrorItself = isDatabaseErrorPayload(payload);
 		const body =
 			!isDriverErrorItself && payload && typeof payload === 'object'
-				? { ...this.withoutNestedDatabaseFields(payload as Record<string, unknown>), message: safeMessage }
+				? {
+						...(this.withoutNestedDatabaseFields(payload) as Record<string, unknown>),
+						message: safeMessage
+					}
 				: {
 						statusCode: status,
 						message: safeMessage,
@@ -86,21 +92,41 @@ export class DatabaseErrorFilter extends BaseExceptionFilter {
 	}
 
 	/**
-	 * Drops any nested value that is itself a driver error.
+	 * Drops any nested value that is itself a driver error, at ANY depth.
 	 *
 	 * The spread branch preserves the caller's own body structure, but a handler that throws
-	 * `{ message: error?.message, error }` puts the whole driver object one level down — sanitizing
-	 * `message` while copying `error` verbatim would leak `query`/`parameters` regardless.
+	 * `{ message: error?.message, error }` puts the whole driver object one level down — and
+	 * `{ error: { cause: queryFailure } }` puts it two down. Removing only direct children left
+	 * `error.cause.query` and its bound parameters in the response.
 	 *
-	 * @param payload - The response body being rebuilt.
+	 * Depth is bounded and visited objects are tracked, because a driver error can hold a reference
+	 * back to the connection: an unbounded walk would recurse forever inside an exception filter.
+	 *
+	 * @param value - The value being rebuilt.
+	 * @param seen - Objects already visited on this path (cycle guard).
+	 * @param depth - Current depth.
 	 */
-	private withoutNestedDatabaseFields(payload: Record<string, unknown>): Record<string, unknown> {
+	private withoutNestedDatabaseFields(value: unknown, seen = new WeakSet<object>(), depth = 0): unknown {
+		if (!value || typeof value !== 'object' || depth > DatabaseErrorFilter.MAX_SANITIZE_DEPTH) {
+			return value;
+		}
+		if (seen.has(value as object)) {
+			return undefined;
+		}
+		seen.add(value as object);
+
+		if (Array.isArray(value)) {
+			return value
+				.filter((item) => !isDatabaseErrorPayload(item))
+				.map((item) => this.withoutNestedDatabaseFields(item, seen, depth + 1));
+		}
+
 		const cleaned: Record<string, unknown> = {};
-		for (const [key, value] of Object.entries(payload)) {
-			if (isDatabaseErrorPayload(value)) {
+		for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+			if (isDatabaseErrorPayload(item)) {
 				continue;
 			}
-			cleaned[key] = value;
+			cleaned[key] = this.withoutNestedDatabaseFields(item, seen, depth + 1);
 		}
 		return cleaned;
 	}
@@ -112,11 +138,50 @@ export class DatabaseErrorFilter extends BaseExceptionFilter {
 	 */
 	private describeForLog(payload: unknown): string | undefined {
 		try {
-			return JSON.stringify(redactDatabaseError(payload));
+			return JSON.stringify(this.redactForLog(payload));
 		} catch {
 			// Circular reference (a driver error can hold the connection) — the stack is the fallback.
 			return undefined;
 		}
+	}
+
+	/**
+	 * Recursively redacts a payload for logging.
+	 *
+	 * `redactDatabaseError` only handles the case where the payload IS the driver error. A driver
+	 * error arriving as a message STRING, or wrapped one or more levels down, would otherwise be
+	 * written to the log with its bound values intact — and logs are usually retained far longer
+	 * than a response.
+	 *
+	 * @param value - The value being logged.
+	 * @param seen - Objects already visited (cycle guard).
+	 * @param depth - Current depth.
+	 */
+	private redactForLog(value: unknown, seen = new WeakSet<object>(), depth = 0): unknown {
+		if (isDatabaseErrorPayload(value)) {
+			return redactDatabaseError(value);
+		}
+		if (typeof value === 'string') {
+			// Driver text arriving as a plain message still names constraints and, on MySQL, values.
+			return safeMessageForDatabaseText(value) ?? value;
+		}
+		if (!value || typeof value !== 'object' || depth > DatabaseErrorFilter.MAX_SANITIZE_DEPTH) {
+			return value;
+		}
+		if (seen.has(value as object)) {
+			return '[circular]';
+		}
+		seen.add(value as object);
+
+		if (Array.isArray(value)) {
+			return value.map((item) => this.redactForLog(item, seen, depth + 1));
+		}
+
+		const redacted: Record<string, unknown> = {};
+		for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+			redacted[key] = this.redactForLog(item, seen, depth + 1);
+		}
+		return redacted;
 	}
 
 	/**

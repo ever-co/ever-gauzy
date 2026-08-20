@@ -7,6 +7,7 @@ import {
 	ServiceUnavailableException
 } from '@nestjs/common';
 import { sanitizeErrorBody, toSafeHttpException } from './safe-http-exception';
+import { QueryFailedError } from 'typeorm';
 
 describe('toSafeHttpException', () => {
 	it('re-issues a BadRequestException with its own (array) body', () => {
@@ -79,5 +80,43 @@ describe('sanitizeErrorBody', () => {
 		expect(sanitizeErrorBody([1, new Error('e')])).toEqual([1, 'e']);
 		const deep = { a: { b: { c: { d: { e: 1 } } } } };
 		expect(sanitizeErrorBody(deep)).toEqual({ a: { b: { c: {} } } });
+	});
+});
+
+describe('BadRequestException carve-out (the reason the leak was reachable)', () => {
+	const queryFailure = () =>
+		new QueryFailedError('INSERT INTO "goal"("name") VALUES ($1)', ['secret-value'], { code: '23505' } as any);
+
+	it('scrubs a driver error thrown as a BadRequestException', () => {
+		// CrudService throws exactly this shape. The branch used to return the body verbatim to keep
+		// validation arrays intact, which meant every failed write answered with the statement text.
+		const safe = toSafeHttpException(new BadRequestException(queryFailure()));
+		const serialized = JSON.stringify(safe.getResponse());
+
+		expect(safe.getStatus()).toBe(400);
+		expect(serialized).not.toContain('query');
+		expect(serialized).not.toContain('parameters');
+		expect(serialized).not.toContain('secret-value');
+		expect(serialized).not.toContain('INSERT INTO');
+	});
+
+	it('still keeps the class-validator message array — what the carve-out existed to protect', () => {
+		const validation = new BadRequestException({
+			statusCode: 400,
+			message: ['name must be a string', 'email must be an email'],
+			error: 'Bad Request'
+		});
+		const safe = toSafeHttpException(validation);
+
+		expect(safe.getResponse()).toEqual({
+			statusCode: 400,
+			message: ['name must be a string', 'email must be an email'],
+			error: 'Bad Request'
+		});
+	});
+
+	it('leaves a plain string BadRequestException body alone', () => {
+		const deliberate = new BadRequestException('Time off request was not found');
+		expect(toSafeHttpException(deliberate).getResponse()).toEqual(deliberate.getResponse());
 	});
 });

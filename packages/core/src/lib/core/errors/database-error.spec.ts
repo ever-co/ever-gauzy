@@ -4,8 +4,10 @@ import {
 	describeDatabaseError,
 	GENERIC_DATABASE_ERROR_MESSAGE,
 	isDatabaseErrorPayload,
+	looksLikeDriverCode,
 	redactDatabaseError,
 	safeErrorMessage,
+	safeMessageForDatabaseText,
 	toClientSafeError
 } from './database-error';
 import { DatabaseErrorFilter } from './database-error.filter';
@@ -308,6 +310,54 @@ describe('DatabaseErrorFilter', () => {
 		expect(captured.body.message).toBe('A record with these values already exists.');
 	});
 
+	it('removes a driver error nested TWO levels down, not just direct children', () => {
+		// `{ error: { cause: queryFailure } }` — a one-level scrub left error.cause.query and its
+		// bound parameters in the rebuilt body.
+		filter.catch(
+			new BadRequestException({
+				statusCode: 400,
+				message: 'duplicate key value violates unique constraint "x"',
+				error: { cause: queryFailure({ code: '23505' }), note: 'kept' }
+			}) as any,
+			host()
+		);
+
+		const serialized = JSON.stringify(captured.body);
+		expect(serialized).not.toContain('secret-value');
+		expect(serialized).not.toContain('INSERT INTO');
+		expect(serialized).not.toContain('parameters');
+		// the caller's own non-database data is preserved
+		expect(serialized).toContain('kept');
+	});
+
+	it('removes a driver error nested inside an array', () => {
+		filter.catch(
+			new BadRequestException({
+				statusCode: 400,
+				message: 'duplicate key value violates unique constraint "x"',
+				details: [{ ok: true }, queryFailure({ code: '23505' })]
+			}) as any,
+			host()
+		);
+
+		expect(JSON.stringify(captured.body)).not.toContain('secret-value');
+	});
+
+	it('sanitizes an UNMAPPED driver code — recognition and translation are separate', () => {
+		// 42P01 (undefined_table), SQLITE_BUSY and ER_LOCK_DEADLOCK have no friendly message, but
+		// they are unmistakably driver output and their messages name real tables.
+		for (const [code, message] of [
+			['42P01', 'relation "user" does not exist'],
+			['SQLITE_BUSY', 'database is locked'],
+			['ER_LOCK_DEADLOCK', 'Deadlock found when trying to get lock on `user`']
+		]) {
+			captured = {};
+			filter.catch(new BadRequestException({ code, message }) as any, host());
+			expect(captured.body.message).toBe(GENERIC_DATABASE_ERROR_MESSAGE);
+			expect(JSON.stringify(captured.body)).not.toContain('user');
+		}
+	});
+
 	it('survives a payload with a circular reference instead of throwing inside the filter', () => {
 		// A driver error can hold a reference back to the connection. A throw in an exception filter
 		// aborts the response, so the logging path must not serialize blindly.
@@ -392,5 +442,66 @@ describe('redactDatabaseError', () => {
 	it('passes a non-database error straight through', () => {
 		const plain = new Error('nope');
 		expect(redactDatabaseError(plain)).toBe(plain);
+	});
+});
+
+describe('looksLikeDriverCode', () => {
+	it.each([
+		['23505'], // postgres unique_violation
+		['42P01'], // postgres undefined_table
+		['22P02'], // postgres invalid_text_representation
+		['SQLITE_BUSY'],
+		['SQLITE_CONSTRAINT_UNIQUE'],
+		['ER_LOCK_DEADLOCK'],
+		['ER_DUP_ENTRY']
+	])('recognises %s as a driver code even when it has no mapped message', (code) => {
+		expect(looksLikeDriverCode(code)).toBe(true);
+	});
+
+	it.each([['NOT_FOUND'], ['FORBIDDEN'], ['E_VALIDATION'], ['400'], ['abcde'], [''], [undefined], [42]])(
+		'does not mistake %p for a driver code',
+		(code) => {
+			expect(looksLikeDriverCode(code)).toBe(false);
+		}
+	);
+});
+
+describe('logging redaction (logs outlive responses)', () => {
+	const queryFailureWithValue = () =>
+		Object.assign(
+			new QueryFailedError('INSERT INTO `user`(`email`) VALUES (?)', ['alice@example.com'], {
+				code: 'ER_DUP_ENTRY'
+			} as any),
+			{ message: "Duplicate entry 'alice@example.com' for key 'user.email'" }
+		);
+
+	it('masks the rejected value MySQL embeds in the driver message', () => {
+		const serialized = JSON.stringify(redactDatabaseError(queryFailureWithValue()));
+
+		expect(serialized).not.toContain('alice@example.com');
+		// the constraint is still identifiable for diagnosis
+		expect(serialized).toContain('redacted');
+		expect(serialized).toContain('ER_DUP_ENTRY');
+	});
+
+	it('keeps double-quoted identifiers, which name constraints rather than user data', () => {
+		const pgError = Object.assign(new QueryFailedError('INSERT INTO "user" ...', [], { code: '23505' } as any), {
+			message: 'duplicate key value violates unique constraint "user_email_key"'
+		});
+		expect(JSON.stringify(redactDatabaseError(pgError))).toContain('user_email_key');
+	});
+});
+
+describe('driver message signatures', () => {
+	it('catches a lower-cased statement (the structural requirement is what keeps this safe)', () => {
+		expect(safeMessageForDatabaseText('failed: insert into "user" ("email") values ($1)')).toBe(
+			GENERIC_DATABASE_ERROR_MESSAGE
+		);
+	});
+
+	it('catches ER_ codes that carry digits', () => {
+		// `ER_NO_REFERENCED_ROW_2` did not match `\bER_[A-Z_]{3,}\b` at all — the trailing `_2` left
+		// no word boundary.
+		expect(safeMessageForDatabaseText('Cannot add or update a child row: ER_NO_REFERENCED_ROW_2')).toBeDefined();
 	});
 });
