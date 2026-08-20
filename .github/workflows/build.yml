@@ -15,9 +15,17 @@ name: Build
 #      check ~install+~20min after push instead of at the end of the longest job. Treat a
 #      pending/cancelled `build-libs`/`build-web` as a red: NEVER merge on yellow — the PR
 #      concurrency group cancels superseded runs, so "no failure" often just means "never ran".
-#   2. The `needs: build-monorepo-root` edges are gone: that job produces nothing the others
-#      consume (each re-installs from scratch), so the edge only added its full ~90 minutes as
-#      serial latency in front of every build.
+#   2. The `needs: build-monorepo-root` edges are BACK, because that job now produces something the
+#      others consume. They were removed when it produced nothing and the edge was pure serial
+#      latency; five jobs then each ran their own `yarn install` of the same tree CONCURRENTLY and
+#      fought each other for I/O. Measured on run 32358690732, same commit: build-api installed in
+#      1h49m and passed, build-libs and build-web took 2h40m and were KILLED at the 180-minute
+#      ceiling with their build steps never started. build-monorepo-root now installs once and
+#      publishes the tree; the other four restore it in minutes. On the warm path (~most PRs) they
+#      report EARLIER than before, because the install in front of them is a cache lookup.
+#      They carry `if: !cancelled()` so a dead producer still yields a real red — a `needs:` edge
+#      alone would SKIP them, and a skipped required check does not block a merge, which is the same
+#      "never ran" hazard as (1).
 # The dev-config "Build packages" pre-step was removed from build-api/build-web: the app builds
 # rebuild their dependency libraries themselves (Nx `dependsOn: ^build`, production config), and
 # the strict library verdict lives in `build-libs`.
@@ -57,13 +65,15 @@ permissions:
 jobs:
   build-monorepo-root:
     name: build-monorepo-root
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
-    # 180 to match build-libs / build-api / build-web / build-desktop. This job had 120 while all
-    # four siblings had 180, despite being the ONLY one on the 4-core pool (RUNNER_LINUX_X64_4) —
-    # the smallest runner had the shortest budget. It consequently timed out at exactly 2h00m on
-    # both PR #9993 (run 31946461738) and PR #9995 (run 31961280325), which surfaces as a
-    # "cancelled" job rather than an obvious timeout.
-    timeout-minutes: 180
+    # Moved off the 4-core pool: this is no longer one of five equals, it is the SERIAL CRITICAL PATH
+    # for the whole gate, and both halves of its work (yarn install, zstd -T0) scale with cores.
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    # 360, not 180. This job now carries the install for the ENTIRE gate, alone, and a cold install
+    # here has no yarn tarball cache behind it: test_playwright.yml's equivalent deps job measured the
+    # same work at 88 min, 3h20m and 3h46m. At 180 a cold miss would time out, and because the four
+    # build jobs `needs:` this one, that single timeout would take the whole gate with it. The ceiling
+    # costs nothing on the warm path, which is a lookup and an exit.
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
 
@@ -75,8 +85,12 @@ jobs:
         id: cache
         uses: actions/cache/restore@v4
         with:
+          # lookup-only: on a HIT this job does nothing with the archive — every step below is gated
+          # on `cache-hit != 'true'` — so downloading ~2.9 GB would be pure serial latency in front of
+          # four jobs that are waiting on it. The output it sets is all this job needs.
+          lookup-only: true
           path: ${{ env.NODE_MODULES_ARCHIVE }}
-          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -97,7 +111,7 @@ jobs:
         # Explicit save so a FAILED install can never publish a half-built tree.
         with:
           path: ${{ env.NODE_MODULES_ARCHIVE }}
-          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
   # The strict library verdict, as its own early-reporting check: this is the task set whose
   # per-library `strictTemplates` tsconfigs catch template type errors (the class that broke the
@@ -106,6 +120,11 @@ jobs:
   build-libs:
     name: build-libs
     needs: build-monorepo-root
+    # `needs:` alone would make a producer failure SKIP this job, and a skipped required check does
+    # not block a merge — the exact "no failure just means never ran" trap this file's header warns
+    # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
+    # fails loudly and this reports a real red instead of vanishing.
+    if: ${{ !cancelled() }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -118,8 +137,12 @@ jobs:
       - name: Restore node_modules archive
         uses: actions/cache/restore@v4
         with:
+          # The producer succeeded, so the entry exists: a miss here is an infrastructure fault (an
+          # eviction mid-run), not a normal path. Fail loudly in seconds rather than letting four jobs
+          # each fall into a multi-hour install and re-create the contention this change removes.
+          fail-on-cache-miss: true
           path: ${{ env.NODE_MODULES_ARCHIVE }}
-          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
       - name: Restore node_modules
         shell: bash
@@ -133,6 +156,11 @@ jobs:
   build-api:
     name: build-api
     needs: build-monorepo-root
+    # `needs:` alone would make a producer failure SKIP this job, and a skipped required check does
+    # not block a merge — the exact "no failure just means never ran" trap this file's header warns
+    # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
+    # fails loudly and this reports a real red instead of vanishing.
+    if: ${{ !cancelled() }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -145,8 +173,12 @@ jobs:
       - name: Restore node_modules archive
         uses: actions/cache/restore@v4
         with:
+          # The producer succeeded, so the entry exists: a miss here is an infrastructure fault (an
+          # eviction mid-run), not a normal path. Fail loudly in seconds rather than letting four jobs
+          # each fall into a multi-hour install and re-create the contention this change removes.
+          fail-on-cache-miss: true
           path: ${{ env.NODE_MODULES_ARCHIVE }}
-          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
       - name: Restore node_modules
         shell: bash
@@ -160,6 +192,11 @@ jobs:
   build-web:
     name: build-web
     needs: build-monorepo-root
+    # `needs:` alone would make a producer failure SKIP this job, and a skipped required check does
+    # not block a merge — the exact "no failure just means never ran" trap this file's header warns
+    # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
+    # fails loudly and this reports a real red instead of vanishing.
+    if: ${{ !cancelled() }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -172,8 +209,12 @@ jobs:
       - name: Restore node_modules archive
         uses: actions/cache/restore@v4
         with:
+          # The producer succeeded, so the entry exists: a miss here is an infrastructure fault (an
+          # eviction mid-run), not a normal path. Fail loudly in seconds rather than letting four jobs
+          # each fall into a multi-hour install and re-create the contention this change removes.
+          fail-on-cache-miss: true
           path: ${{ env.NODE_MODULES_ARCHIVE }}
-          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
       - name: Restore node_modules
         shell: bash
@@ -187,8 +228,16 @@ jobs:
   build-desktop:
     name: build-desktop
     needs: build-monorepo-root
-    # Matches the CircleCI branch filter: desktop was never built on ordinary PR branches.
-    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/stage' || github.ref == 'refs/heads/master'
+    # `needs:` alone would make a producer failure SKIP this job, and a skipped required check does
+    # not block a merge — the exact "no failure just means never ran" trap this file's header warns
+    # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
+    # fails loudly and this reports a real red instead of vanishing.
+    # The second half matches the CircleCI branch filter: desktop was never built on ordinary PR
+    # branches. Both conditions live in ONE expression — two `if:` keys is a duplicate mapping key and
+    # the file will not parse.
+    if: >-
+      ${{ !cancelled() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/stage' ||
+      github.ref == 'refs/heads/master') }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -207,8 +256,12 @@ jobs:
       - name: Restore node_modules archive
         uses: actions/cache/restore@v4
         with:
+          # The producer succeeded, so the entry exists: a miss here is an infrastructure fault (an
+          # eviction mid-run), not a normal path. Fail loudly in seconds rather than letting four jobs
+          # each fall into a multi-hour install and re-create the contention this change removes.
+          fail-on-cache-miss: true
           path: ${{ env.NODE_MODULES_ARCHIVE }}
-          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
       - name: Restore node_modules
         shell: bash
