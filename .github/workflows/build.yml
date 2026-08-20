@@ -108,10 +108,31 @@ jobs:
       - name: Save node_modules archive
         if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
-        # Explicit save so a FAILED install can never publish a half-built tree.
+        continue-on-error: true
+        # Explicit save so a FAILED install can never publish a half-built tree. BEST EFFORT, and only
+        # a CROSS-run optimisation — see the upload below for why it cannot be the handoff.
         with:
           path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
+
+      - name: Upload node_modules archive
+        uses: actions/upload-artifact@v7
+        # THE HANDOFF. The cache above cannot be relied on for it: an Actions cache is a REPOSITORY
+        # resource on a 10 GB budget, so a build on any other ref can evict this entry between the
+        # save and the consumer's restore. That is not hypothetical — it happened on the first run of
+        # this design (run 32377379196): the producer logged "Cache saved with key: …2b58b651…",
+        # build-libs asked for the byte-identical key 32 seconds later and got "Failed to restore
+        # cache entry", because three 4.66 GB setup-node yarn caches written by develop, stage and
+        # PR #10014 had pushed the repo to 14.03 GB and LRU took the newest entry.
+        # An artifact is scoped to THIS RUN and no other workflow can evict it. The cleanup job
+        # deletes it when the run ends, so it costs storage only while the run needs it.
+        with:
+          name: build-node-modules
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          retention-days: 1
+          compression-level: 0 # already zstd-compressed
+          if-no-files-found: error
+          overwrite: true
 
   # The strict library verdict, as its own early-reporting check: this is the task set whose
   # per-library `strictTemplates` tsconfigs catch template type errors (the class that broke the
@@ -134,13 +155,19 @@ jobs:
         with:
           node-version: 24
 
-      - name: Restore node_modules archive
-        uses: actions/cache/restore@v4
+      - name: Download node_modules archive
+        uses: actions/download-artifact@v8
+        # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
+        continue-on-error: true
         with:
-          # The producer succeeded, so the entry exists: a miss here is an infrastructure fault (an
-          # eviction mid-run), not a normal path. Fail loudly in seconds rather than letting four jobs
-          # each fall into a multi-hour install and re-create the contention this change removes.
-          fail-on-cache-miss: true
+          name: build-node-modules
+
+      - name: Restore node_modules archive (cache fallback)
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          # Only reached if the artifact was unavailable. Deliberately NOT fail-on-cache-miss: the
+          # cache is best effort here, and the script below still has the install fallback.
           path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
@@ -170,13 +197,19 @@ jobs:
         with:
           node-version: 24
 
-      - name: Restore node_modules archive
-        uses: actions/cache/restore@v4
+      - name: Download node_modules archive
+        uses: actions/download-artifact@v8
+        # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
+        continue-on-error: true
         with:
-          # The producer succeeded, so the entry exists: a miss here is an infrastructure fault (an
-          # eviction mid-run), not a normal path. Fail loudly in seconds rather than letting four jobs
-          # each fall into a multi-hour install and re-create the contention this change removes.
-          fail-on-cache-miss: true
+          name: build-node-modules
+
+      - name: Restore node_modules archive (cache fallback)
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          # Only reached if the artifact was unavailable. Deliberately NOT fail-on-cache-miss: the
+          # cache is best effort here, and the script below still has the install fallback.
           path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
@@ -206,13 +239,19 @@ jobs:
         with:
           node-version: 24
 
-      - name: Restore node_modules archive
-        uses: actions/cache/restore@v4
+      - name: Download node_modules archive
+        uses: actions/download-artifact@v8
+        # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
+        continue-on-error: true
         with:
-          # The producer succeeded, so the entry exists: a miss here is an infrastructure fault (an
-          # eviction mid-run), not a normal path. Fail loudly in seconds rather than letting four jobs
-          # each fall into a multi-hour install and re-create the contention this change removes.
-          fail-on-cache-miss: true
+          name: build-node-modules
+
+      - name: Restore node_modules archive (cache fallback)
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          # Only reached if the artifact was unavailable. Deliberately NOT fail-on-cache-miss: the
+          # cache is best effort here, and the script below still has the install fallback.
           path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
@@ -253,13 +292,19 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential icnsutils graphicsmagick binutils libappindicator3-1 || true
 
-      - name: Restore node_modules archive
-        uses: actions/cache/restore@v4
+      - name: Download node_modules archive
+        uses: actions/download-artifact@v8
+        # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
+        continue-on-error: true
         with:
-          # The producer succeeded, so the entry exists: a miss here is an infrastructure fault (an
-          # eviction mid-run), not a normal path. Fail loudly in seconds rather than letting four jobs
-          # each fall into a multi-hour install and re-create the contention this change removes.
-          fail-on-cache-miss: true
+          name: build-node-modules
+
+      - name: Restore node_modules archive (cache fallback)
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          # Only reached if the artifact was unavailable. Deliberately NOT fail-on-cache-miss: the
+          # cache is best effort here, and the script below still has the install fallback.
           path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
@@ -271,3 +316,34 @@ jobs:
 
       - name: Build desktop
         run: yarn build:desktop
+
+  # ---------------------------------------------------------------------------------------------
+  # cleanup — the dependency archive exists only to cross job boundaries; delete it when the run ends.
+  # ---------------------------------------------------------------------------------------------
+  cleanup:
+    name: Delete node_modules artifact
+    needs: [build-monorepo-root, build-libs, build-api, build-web, build-desktop]
+    # `always()`: the archive is just as useless after a failed build, and leaving ~2.9 GB behind on
+    # red runs is exactly how the org's Actions storage quota filled and stopped artifact uploads.
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write # deletes this run's node_modules artifact
+    steps:
+      - name: Delete build-node-modules
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts"             --jq '.artifacts[] | select(.name=="build-node-modules") | .id')
+          if [ -z "$ids" ]; then echo "nothing to delete"; exit 0; fi
+          for id in $ids; do
+            if gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" >/dev/null 2>&1; then
+              echo "deleted artifact $id"
+            else
+              echo "::warning::could not delete artifact $id — already gone?"
+            fi
+          done
