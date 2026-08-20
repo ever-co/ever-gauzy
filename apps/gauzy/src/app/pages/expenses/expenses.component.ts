@@ -388,9 +388,18 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 			const { id: organizationId } = this.organization;
 			const { employee } = expense;
 
+			// `expense` is the dialog's RAW form value, so it still carries the `employee` CONTROL — which is
+			// the ALL_EMPLOYEES_SELECTED sentinel (`{ id: null, firstName: 'All Employees', ... }`) whenever no
+			// concrete employee was picked (ga-employee-selector unshifts that option and `defaultSelected`
+			// emits it). CreateExpenseDTO validates that object through EmployeeFeatureDTO, so shipping it
+			// makes the POST 400 with "This employee (...) does not belong to the specified organization".
+			// Only the RESOLVED `employeeId` belongs on the wire — exactly what IncomeComponent.addIncome does.
+			const payload = { ...expense };
+			delete payload.employee;
+
 			// Create the expense using the expense service
 			await this.expenseService.create({
-				...expense,
+				...payload,
 				valueDate: moment(expense.valueDate).startOf('day').toDate(),
 				employeeId: employee ? employee.id : null,
 				organizationId,
