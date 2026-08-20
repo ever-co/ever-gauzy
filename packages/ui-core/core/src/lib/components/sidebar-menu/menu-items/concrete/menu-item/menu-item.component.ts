@@ -1,7 +1,13 @@
-import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { Router } from '@angular/router';
-import { NbAccordionModule, NbSidebarService, NbTooltipModule } from '@nebular/theme';
+import {
+	NbAccordionModule,
+	NbPopoverDirective,
+	NbPopoverModule,
+	NbSidebarService,
+	NbTooltipModule
+} from '@nebular/theme';
 import { merge } from 'rxjs';
 import { filter, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -26,6 +32,7 @@ const MENU_SIDEBAR_TAG = 'menu-sidebar';
 	imports: [
 		CommonModule,
 		NbAccordionModule,
+		NbPopoverModule,
 		NbTooltipModule,
 		NgxPermissionsModule,
 		TooltipDirective,
@@ -108,8 +115,23 @@ export class MenuItemComponent implements OnInit {
 		this._selectedChildren = value;
 	}
 
+	/**
+	 * The hover flyout that lists this entry's sub-links while the sidebar is collapsed to the icon
+	 * rail. It only exists on the rail header (see the template), so it is undefined otherwise.
+	 */
+	@ViewChild(NbPopoverDirective) private readonly _railFlyout: NbPopoverDirective;
+
 	@Output() public collapsedChange: EventEmitter<any> = new EventEmitter();
 	@Output() public selectedChange: EventEmitter<any> = new EventEmitter();
+
+	/**
+	 * Whether this entry owns a sub-menu.
+	 *
+	 * @return {boolean} True when the item has at least one child entry.
+	 */
+	public get hasChildren(): boolean {
+		return !!this.item?.children?.length;
+	}
 
 	ngOnInit(): void {
 		// Get the user data from the store
@@ -196,6 +218,19 @@ export class MenuItemComponent implements OnInit {
 
 		// Manually detect changes using ChangeDetectorRef
 		this._cdr.detectChanges();
+	}
+
+	/**
+	 * Dismiss the rail flyout.
+	 *
+	 * Bound to a CLICK on the flyout's row list rather than to `focusItemChange`: a child row also
+	 * emits that event from its own `ngOnInit`/`NavigationEnd` handler, so hiding on it would close
+	 * the panel the moment it opened on any entry that owns the current route.
+	 */
+	public closeRailFlyout(): void {
+		if (this._railFlyout?.isShown) {
+			this._railFlyout.hide();
+		}
 	}
 
 	/**

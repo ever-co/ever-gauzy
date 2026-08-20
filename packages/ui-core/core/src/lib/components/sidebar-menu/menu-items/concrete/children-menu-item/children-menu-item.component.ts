@@ -67,6 +67,12 @@ export class ChildrenMenuItemComponent implements OnInit {
 	}
 
 	/**
+	 * Suppresses the row's own tooltip. Set by the rail flyout, where the label is already fully
+	 * visible and a tooltip repeating it would just stack a second overlay on top of the panel.
+	 */
+	@Input() tooltipDisabled = false;
+
+	/**
 	 * Indicates whether the mouse is hovering over the menu item.
 	 */
 	private _mouseHover: boolean;

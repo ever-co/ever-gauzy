@@ -1,6 +1,24 @@
 <nb-accordion *ngxPermissionsOnly="item?.data?.permissionKeys" [class]="item?.class" [class.closed]="!state">
 	<nb-accordion-item [collapsed]="collapse" (collapsedChange)="onCollapse($event)" [class.opened]="selected">
-		@if (!state) {
+		<!-- Collapsed rail. The two variants are SIBLING blocks, never an @if nested in an @if:
+		     nb-accordion-item projects by selector only (`select="nb-accordion-item-header"`, no
+		     catch-all slot), and Angular can infer the slot for a control-flow block only when the
+		     block's single root node is the element itself. Wrapping these in an outer @if makes
+		     that root a container instead, the header matches no slot, and the whole row — icon
+		     included — is dropped. -->
+		@if (!state && hasChildren) {
+		<nb-accordion-item-header
+			[nbPopover]="railFlyout"
+			nbPopoverTrigger="hover"
+			nbPopoverPlacement="end-bottom"
+			[nbPopoverOffset]="16"
+			nbPopoverClass="gz-rail-flyout"
+			[class.collapsed]="onCollapse"
+			(click)="redirectTo()"
+		>
+			<i [class]="item?.icon"></i>
+		</nb-accordion-item-header>
+		} @if (!state && !hasChildren) {
 		<nb-accordion-item-header
 			[gaTooltip]="item?.title"
 			[icon]="item?.icon"
@@ -8,13 +26,6 @@
 			(click)="redirectTo()"
 		>
 			<i [class]="item?.icon"></i>
-			@if (state) {
-			<span>
-				<a [href]="getExternalUrl(item?.link)" onclick="return false;">
-					{{ item?.title }}
-				</a>
-			</span>
-			}
 		</nb-accordion-item-header>
 		} @if (state) {
 		<nb-accordion-item-header
@@ -24,15 +35,13 @@
 			(click)="redirectTo()"
 		>
 			<i [class]="item?.icon"></i>
-			@if (state) {
 			<span>
 				<a [href]="getExternalUrl(item?.link)" onclick="return false;">
 					{{ item?.title }}
 				</a>
 			</span>
-			}
 		</nb-accordion-item-header>
-		} @if (item?.children?.length > 0) {
+		} @if (hasChildren) {
 		<nb-accordion-item-body [class.item-collapsed]="!state">
 			@for (subItem of item.children; track subItem?.title) {
 			<div>
@@ -52,3 +61,24 @@
 		}
 	</nb-accordion-item>
 </nb-accordion>
+
+<ng-template #railFlyout>
+	<div class="rail-flyout">
+		<div class="rail-flyout-title">{{ item?.title }}</div>
+		<div class="rail-flyout-items" (click)="closeRailFlyout()">
+			@for (subItem of item?.children; track subItem?.title) {
+			@if (!subItem?.hidden) {
+			<ga-children-menu-item
+				class="rail-flyout-row"
+				[item]="subItem"
+				[parent]="item"
+				[collapse]="true"
+				[tooltipDisabled]="true"
+				[selected]="subItem === selectedChildren && selected"
+				(focusItemChange)="focusOn($event)"
+			></ga-children-menu-item>
+			}
+			}
+		</div>
+	</div>
+</ng-template>
