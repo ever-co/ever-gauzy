@@ -27,6 +27,14 @@ export class EquipmentSharingUpdateHandler implements ICommandHandler<EquipmentS
 		// recreated as a brand-new row.
 		const existing = await this._equipmentSharingService.findOneByIdString(id);
 
+		// A pinned organizationId protects the ROW; it says nothing about what the row POINTS AT. The
+		// body's equipmentId / equipmentSharingPolicyId are persisted verbatim by the recreate below,
+		// and their foreign keys only prove the rows exist — not that they belong here.
+		await this._equipmentSharingService.assertReferencesAreInScope(input, {
+			tenantId: existing.tenantId,
+			organizationId: existing.organizationId
+		});
+
 		// Delete the existing Equipment Sharing record and its associated Request Approval concurrently.
 		await Promise.all([
 			this._equipmentSharingService.delete(id),
