@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpException } from '@nestjs/common';
 import { ID, IPagination, IProductCategoryTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { ProductCategory } from './product-category.entity';
@@ -37,11 +37,20 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 	 */
 	async updateProductCategory(id: ID, entity: ProductCategory): Promise<ProductCategory> {
 		try {
+			// This is a delete-then-recreate, so an id matching nothing in the caller's tenant would
+			// leave `delete` affecting zero rows and `save` INSERTING a brand-new category at that
+			// arbitrary URL id. `findOneByIdString` is tenant-scoped and THROWS NotFoundException, so
+			// the recreate can only ever replace a row that was already ours.
+			await this.findOneByIdString(id);
 			await super.delete(id);
 			// Persist under the verified path id, never a body-supplied one (save() with an existing PK
 			// updates THAT row).
 			return this.save({ ...entity, id });
 		} catch (err) {
+			// Preserve the 404 above instead of flattening it to a 400.
+			if (err instanceof HttpException) {
+				throw err;
+			}
 			throw new BadRequestException(err);
 		}
 	}

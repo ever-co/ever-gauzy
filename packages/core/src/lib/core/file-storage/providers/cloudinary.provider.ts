@@ -14,6 +14,7 @@ import { isNotEmpty, trimIfNotEmpty } from '@gauzy/utils';
 import { Logger } from '@nestjs/common';
 import { Provider } from './provider';
 import { RequestContext } from './../../../core/context';
+import { toSafeStorageExtension } from '../helpers/upload-security';
 
 // Retrieve Cloudinary configuration from the environment
 const { cloudinary } = environment;
@@ -163,11 +164,20 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 						public_id = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}`;
 					}
 
+					// Neutralise the DELIVERED format too, not just the object name.
+					//
+					// `format` comes from the client's filename, and Cloudinary publishes the asset
+					// under it — so an upload whose public_id was mapped to `.bin` was still served as
+					// an active `.html`/`.svg` resource from the CDN, which is the sink the stored-name
+					// mapping exists to close (GHSA-p334-cm7f-php5). An empty result means "no usable
+					// extension"; Cloudinary must then infer it rather than receive an empty string.
+					const safeFormat = toSafeStorageExtension(format) || undefined;
+
 					// Return Cloudinary parameters
 					return {
 						public_id,
 						folder,
-						format
+						format: safeFormat
 					};
 				}
 			});

@@ -872,17 +872,26 @@ export class UserService extends TenantAwareCrudService<User> {
 			return undefined;
 		}
 		const tenantId = RequestContext.currentTenantId();
+
+		// Fail CLOSED with no tenant context. `...(tenantId ? { tenantId } : {})` would drop the
+		// predicate entirely and resolve roles across every tenant in the database — the caller then
+		// gets a name for a role it has no claim to, and the SUPER_ADMIN gate reads as satisfied.
+		// An unresolved name makes `assertRoleAssignmentAllowed` throw, which is the safe outcome.
+		if (!tenantId) {
+			return undefined;
+		}
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const role = await this.mikroOrmRepository
 					.getEntityManager()
-					.findOne('Role', { id: roleId, ...(tenantId ? { tenantId } : {}) } as any);
+					.findOne('Role', { id: roleId, tenantId } as any);
 				return (role as any)?.name;
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
 				const role = await this.typeOrmRepository.manager.findOne('Role', {
-					where: { id: roleId, ...(tenantId ? { tenantId } : {}) } as any
+					where: { id: roleId, tenantId } as any
 				});
 				return (role as any)?.name;
 			}

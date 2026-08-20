@@ -39,14 +39,6 @@ import { UploadDocumentsCommand } from '../commands/upload-documents.command';
 import { DocumentUploadService } from '../services/document-upload.service';
 
 /**
- * Object-name extensions that a static file server would happily render in the browser. The
- * canonical type is kept on `document.mimeType` (and in `metadata.upload.canonicalExtension`),
- * so the stored object can safely carry a neutral extension instead — that keeps the LOCAL
- * provider's unauthenticated `/public/` path from becoming a same-origin XSS sink for an
- * uploaded `.html` file. Bytes are always served through `/documents/:id/raw`.
- */
-
-/**
  * Builds the per-request storage engine of the upload endpoint. Keys land under the
  * `documents/<tenantId>/<organizationId>/` prefix with a server-generated
  * `<uuid>.<ext>` object name — the client filename never enters the key.

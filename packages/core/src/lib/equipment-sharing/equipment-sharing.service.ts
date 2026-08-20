@@ -196,11 +196,12 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			// really ours — otherwise a foreign UUID deleted another tenant's request_approval row.
 			const tenantId = RequestContext.currentTenantId();
 			const equipmentSharing = await super.delete(id);
-			if (equipmentSharing?.affected) {
-				await this.typeOrmRequestApprovalRepository.delete({
-					requestId: id,
-					...(tenantId ? { tenantId } : {})
-				});
+			// Fail CLOSED without a tenant: `...(tenantId ? { tenantId } : {})` would leave
+			// `{ requestId: id }` alone on a RAW repository, deleting any tenant's approval row that
+			// happens to carry this UUID. With no tenant to scope by, the approval row is left for a
+			// context that can prove ownership rather than deleted blind.
+			if (equipmentSharing?.affected && tenantId) {
+				await this.typeOrmRequestApprovalRepository.delete({ requestId: id, tenantId });
 			}
 
 			// Return the result from the equipment sharing deletion.
