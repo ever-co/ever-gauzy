@@ -163,6 +163,7 @@ jobs:
           node-version: 24
 
       - name: Download node_modules archive
+        id: artifact
         uses: actions/download-artifact@v8
         # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
         continue-on-error: true
@@ -170,6 +171,12 @@ jobs:
           name: build-node-modules
 
       - name: Restore node_modules archive (cache fallback)
+        # Gated, because it was NOT before and the comment below claimed otherwise. With no `if:`
+        # this ran even on a successful artifact download, and since the producer saves the same
+        # key each cold run the lookup HITS - so every consumer pulled the same ~2.9 GB twice.
+        # Measured on run 32418672320: artifact download 1015s/1028s/1102s, then this step still
+        # running past 209s on top. ~17 min of pure waste per consumer, ~68 min per run.
+        if: steps.artifact.outcome != 'success'
         uses: actions/cache/restore@v4
         continue-on-error: true
         with:
@@ -205,6 +212,7 @@ jobs:
           node-version: 24
 
       - name: Download node_modules archive
+        id: artifact
         uses: actions/download-artifact@v8
         # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
         continue-on-error: true
@@ -212,6 +220,12 @@ jobs:
           name: build-node-modules
 
       - name: Restore node_modules archive (cache fallback)
+        # Gated, because it was NOT before and the comment below claimed otherwise. With no `if:`
+        # this ran even on a successful artifact download, and since the producer saves the same
+        # key each cold run the lookup HITS - so every consumer pulled the same ~2.9 GB twice.
+        # Measured on run 32418672320: artifact download 1015s/1028s/1102s, then this step still
+        # running past 209s on top. ~17 min of pure waste per consumer, ~68 min per run.
+        if: steps.artifact.outcome != 'success'
         uses: actions/cache/restore@v4
         continue-on-error: true
         with:
@@ -247,6 +261,7 @@ jobs:
           node-version: 24
 
       - name: Download node_modules archive
+        id: artifact
         uses: actions/download-artifact@v8
         # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
         continue-on-error: true
@@ -254,6 +269,12 @@ jobs:
           name: build-node-modules
 
       - name: Restore node_modules archive (cache fallback)
+        # Gated, because it was NOT before and the comment below claimed otherwise. With no `if:`
+        # this ran even on a successful artifact download, and since the producer saves the same
+        # key each cold run the lookup HITS - so every consumer pulled the same ~2.9 GB twice.
+        # Measured on run 32418672320: artifact download 1015s/1028s/1102s, then this step still
+        # running past 209s on top. ~17 min of pure waste per consumer, ~68 min per run.
+        if: steps.artifact.outcome != 'success'
         uses: actions/cache/restore@v4
         continue-on-error: true
         with:
@@ -300,6 +321,7 @@ jobs:
             build-essential icnsutils graphicsmagick binutils libappindicator3-1 || true
 
       - name: Download node_modules archive
+        id: artifact
         uses: actions/download-artifact@v8
         # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
         continue-on-error: true
@@ -307,6 +329,12 @@ jobs:
           name: build-node-modules
 
       - name: Restore node_modules archive (cache fallback)
+        # Gated, because it was NOT before and the comment below claimed otherwise. With no `if:`
+        # this ran even on a successful artifact download, and since the producer saves the same
+        # key each cold run the lookup HITS - so every consumer pulled the same ~2.9 GB twice.
+        # Measured on run 32418672320: artifact download 1015s/1028s/1102s, then this step still
+        # running past 209s on top. ~17 min of pure waste per consumer, ~68 min per run.
+        if: steps.artifact.outcome != 'success'
         uses: actions/cache/restore@v4
         continue-on-error: true
         with:
