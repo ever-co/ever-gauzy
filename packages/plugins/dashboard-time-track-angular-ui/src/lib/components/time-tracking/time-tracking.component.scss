@@ -1080,3 +1080,12 @@ $header-title-basis: 18rem;
     padding: 0.75rem 0.75rem 0.5rem;
   }
 }
+
+// Recent Activities carousel: the slide width itself lives in `_swiper.scss` (that
+// mixin is included under `:host`, so a rule here could never outrank it). This only
+// keeps the container able to shrink inside a narrow window.
+.m-swiper {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
