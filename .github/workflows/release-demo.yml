@@ -7,12 +7,20 @@ on:
       - temp
 
 concurrency:
-  # One release per ref at a time, newest wins. Safe to cancel because the tag is no
-  # longer pushed by a separate earlier step: `dry_run` makes the version calculation
-  # side-effect free, and the release action then creates the tag AND the release in a
-  # single API call, so an interrupted run leaves nothing behind to clean up.
+  # Serialize releases on a ref, but NEVER cancel one: this job takes about a minute, so
+  # superseding it saves nothing — and cancelling it silently breaks the delivery chain.
+  # The image build is wired to this workflow with
+  #   workflow_run: types: [completed]   +   if: workflow_run.conclusion == 'success'
+  # so a CANCELLED release makes its image build SKIP. If that happens to the last release
+  # of a burst, no image is published for the new code at all and the environment keeps
+  # serving the previous image until somebody pushes again (demo sat a day behind exactly
+  # this way on 2026-08-20).
+  #
+  # Superseding still happens where the time actually goes: `build.yml` and the image
+  # builds cancel their own older runs, so a burst of merges still produces exactly ONE
+  # full compile and ONE published image — the newest.
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 # Least-privilege scope for the automatic GITHUB_TOKEN.
 # `contents: write` is required: the release action creates the version tag together with
