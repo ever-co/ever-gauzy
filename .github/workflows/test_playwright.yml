@@ -32,6 +32,7 @@ on:
 # (Same-run artifact upload/download authenticates with the Actions runtime token, not this one.)
 permissions:
   contents: read
+  actions: write # the cleanup job deletes this run's node_modules artifact
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -527,3 +528,39 @@ jobs:
           name: playwright-report-shard-${{ matrix.shard }}
           path: apps/gauzy-e2e/playwright-report
           retention-days: 14
+
+  # ---------------------------------------------------------------------------------------------
+  # 4) cleanup — delete the dependency artifact as soon as nothing needs it again.
+  # ---------------------------------------------------------------------------------------------
+  cleanup:
+    name: Delete node_modules artifact
+    needs: [deps, build, e2e-playwright]
+    # `always()`: the tree is just as useless after a failed shard, and leaving ~3 GB behind on a red
+    # run is how the quota filled in the first place.
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Delete e2e-node-modules
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # Self-hosted runners provide COMPUTE, not storage: upload-artifact always ships to GitHub's
+        # own storage and bills the org's Actions quota, so a ~3 GB tree per run accumulates until
+        # "Artifact storage quota has been hit" — which is exactly what stopped the Playwright REPORTS
+        # uploading on run 32285142151, blinding the diagnosis on a red run. Retention is already the
+        # 1-day minimum; the only real fix is deleting it the moment the last consumer is done.
+        run: |
+          set -euo pipefail
+          ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts"             --jq '.artifacts[] | select(.name=="e2e-node-modules") | .id')
+          if [ -z "$ids" ]; then
+            echo "no e2e-node-modules artifact on this run"; exit 0
+          fi
+          for id in $ids; do
+            if gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" >/dev/null 2>&1; then
+              echo "deleted artifact $id"
+            else
+              echo "::warning::could not delete artifact $id — already gone?"
+            fi
+          done
