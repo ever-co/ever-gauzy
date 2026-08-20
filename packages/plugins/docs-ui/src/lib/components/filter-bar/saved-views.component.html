@@ -55,6 +55,8 @@
 				<!-- Inline rename -->
 				<ng-container *ngIf="renamingId === view.id; else viewRow">
 					<!-- Only one row can be in rename mode at a time, so the id stays unique. -->
+					<!-- Esc stops here: the component also closes the whole panel on a
+					     document-level Esc, so the rename would take the panel with it. -->
 					<input
 						nbInput
 						fieldSize="tiny"
@@ -64,7 +66,6 @@
 						[attr.aria-label]="'DOCS.SAVED_VIEWS.RENAME' | translate"
 						[(ngModel)]="renameDraft"
 						(keydown.enter)="commitRename(view)"
-						<!-- Stop here: the component also closes the whole panel on a document-level Esc. -->
 						(keydown.escape)="cancelRename(); $event.stopPropagation()"
 					/>
 					<button nbButton ghost size="tiny" type="button" (click)="commitRename(view)">
