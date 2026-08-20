@@ -40,7 +40,7 @@ describe('QueryFailedError serialization (the reason this exists)', () => {
 });
 
 describe('isDatabaseErrorPayload', () => {
-	it('recognises a driver error by shape, not by class', () => {
+	it('recognizes a driver error by shape, not by class', () => {
 		expect(isDatabaseErrorPayload(queryFailure())).toBe(true);
 		// driver-only keys are conclusive on their own
 		expect(isDatabaseErrorPayload({ driverError: {} })).toBe(true);
@@ -50,7 +50,7 @@ describe('isDatabaseErrorPayload', () => {
 		expect(isDatabaseErrorPayload({ sql: 'SELECT 1', code: 'ER_DUP_ENTRY' })).toBe(true);
 	});
 
-	it('recognises the real driver shapes', () => {
+	it('recognizes the real driver shapes', () => {
 		// mysql2
 		expect(
 			isDatabaseErrorPayload({
@@ -97,7 +97,7 @@ describe('isDatabaseErrorPayload', () => {
 		expect(isDatabaseErrorPayload(new Suspicious())).toBe(false);
 	});
 
-	it('still catches a bare driver error carrying only a recognised code', () => {
+	it('still catches a bare driver error carrying only a recognized code', () => {
 		expect(isDatabaseErrorPayload({ code: '23505', message: 'duplicate key' })).toBe(true);
 		expect(isDatabaseErrorPayload({ code: 'SQLITE_CONSTRAINT_FOREIGNKEY' })).toBe(true);
 	});
@@ -454,7 +454,7 @@ describe('looksLikeDriverCode', () => {
 		['SQLITE_CONSTRAINT_UNIQUE'],
 		['ER_LOCK_DEADLOCK'],
 		['ER_DUP_ENTRY']
-	])('recognises %s as a driver code even when it has no mapped message', (code) => {
+	])('recognizes %s as a driver code even when it has no mapped message', (code) => {
 		expect(looksLikeDriverCode(code)).toBe(true);
 	});
 

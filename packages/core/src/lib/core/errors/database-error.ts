@@ -167,7 +167,7 @@ export function isDatabaseErrorPayload(value: unknown): boolean {
 }
 
 /**
- * Shapes of driver error codes, so an UNKNOWN code is still recognised as coming from a database.
+ * Shapes of driver error codes, so an UNKNOWN code is still recognized as coming from a database.
  *
  * Only translating codes we have a message for is not enough: `42P01` (undefined_table),
  * `SQLITE_BUSY` and `ER_LOCK_DEADLOCK` are unmistakably driver output, and treating them as
@@ -207,7 +207,7 @@ function resolveDriverCode(error: unknown): string | undefined {
 }
 
 /**
- * The client-safe message for a database error: specific where the driver code is recognised,
+ * The client-safe message for a database error: specific where the driver code is recognized,
  * generic otherwise. Never derived from the driver's own message text, which embeds column names,
  * constraint names and sometimes the offending value.
  *
