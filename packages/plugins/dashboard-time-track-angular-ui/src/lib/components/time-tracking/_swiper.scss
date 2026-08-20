@@ -44,7 +44,14 @@
     }
 
     swiper-slide {
-      width: 100%;
+      // Three across while they fit, but NEVER narrower than the screenshot card's
+      // own `min-width` (189px, screenshots-item.component.scss): beside the expanded
+      // AI chat the window is ~550px, so a third of it is 173px and every card
+      // overflowed its slide — smeared thumbnails and collided time/date text.
+      // `slides-per-view="auto"` on the container makes Swiper read this width, so
+      // below ~600px it simply shows fewer slides and scrolls. `16px` is the
+      // `space-between` Swiper writes as each slide's margin.
+      width: max(calc((100% - 2 * 16px) / 3), 189px);
       height: 100%;
       padding-bottom: 1rem;
       display: block;
