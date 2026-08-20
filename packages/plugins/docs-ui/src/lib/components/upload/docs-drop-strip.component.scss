@@ -80,6 +80,10 @@
 	}
 
 	.docs-drop-strip-hint {
+		// The base rule makes this a flex child that shrinks and ellipsises; `width: 100%`
+		// alone re-inflated it to the full row and pushed the actions out of view.
 		width: 100%;
+		min-width: 0;
+		white-space: normal;
 	}
 }

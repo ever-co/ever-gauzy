@@ -16,7 +16,15 @@
 	font-size: var(--docs-meta-size, 0.75rem);
 	white-space: nowrap;
 	overflow: hidden;
-	text-overflow: ellipsis;
+
+	// `text-overflow` needs a block box with the overflow — on the flex container itself
+	// it never applies, so a long view name was cut without an ellipsis.
+	.docs-saved-views-trigger-label {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
 
 	nb-icon {
 		flex: 0 0 auto;

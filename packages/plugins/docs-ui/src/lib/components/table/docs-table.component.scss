@@ -110,6 +110,13 @@
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
+
+    // Keyboard users still need to see where they are: the reset above is `!important`,
+    // so the ring has to be as well to win it back.
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-default) !important;
+      outline-offset: 2px;
+    }
   }
 
   th.angular2-smart-th {

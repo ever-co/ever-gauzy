@@ -11,7 +11,7 @@
 		(click)="toggle()"
 	>
 		<nb-icon icon="bookmark-outline"></nb-icon>
-		{{ activeLabel }}
+		<span class="docs-saved-views-trigger-label">{{ activeLabel }}</span>
 		<nb-icon [icon]="open ? 'chevron-up-outline' : 'chevron-down-outline'" size="tiny"></nb-icon>
 	</button>
 
@@ -64,7 +64,8 @@
 						[attr.aria-label]="'DOCS.SAVED_VIEWS.RENAME' | translate"
 						[(ngModel)]="renameDraft"
 						(keydown.enter)="commitRename(view)"
-						(keydown.escape)="cancelRename()"
+						<!-- Stop here: the component also closes the whole panel on a document-level Esc. -->
+						(keydown.escape)="cancelRename(); $event.stopPropagation()"
 					/>
 					<button nbButton ghost size="tiny" type="button" (click)="commitRename(view)">
 						<nb-icon icon="checkmark-outline"></nb-icon>

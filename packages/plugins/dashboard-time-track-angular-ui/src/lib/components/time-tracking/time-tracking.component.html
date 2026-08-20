@@ -18,6 +18,8 @@
 				>
 					{{ 'BUTTONS.AUTO_REFRESH' | translate }}
 				</nb-toggle>
+				<!-- `.action-label` is display:none at <=36rem, so these buttons render
+				     icon-only there and need an explicit accessible name. -->
 				<button
 					[disabled]="autoRefresh"
 					size="small"
@@ -27,6 +29,7 @@
 					status="basic"
 					class="refresh-button"
 					[nbTooltip]="'BUTTONS.REFRESH' | translate"
+					[attr.aria-label]="'BUTTONS.REFRESH' | translate"
 					(click)="logs$.next(true)"
 				>
 					<nb-icon icon="sync-outline"></nb-icon>
@@ -44,6 +47,8 @@
 					[nbPopover]="widgetManager"
 					nbPopoverTrigger="click"
 					[nbTooltip]="'BUTTONS.MANAGE_WIDGET' | translate"
+					[attr.aria-label]="'BUTTONS.MANAGE_WIDGET' | translate"
+					type="button"
 					nbButton
 				>
 					<span class="action-label">{{ 'BUTTONS.MANAGE_WIDGET' | translate }}</span>
@@ -279,13 +284,12 @@
 									-->
 									<swiper-container
 										#swiperRef
-										slides-per-view="3"
+										slides-per-view="auto"
 										space-between="8"
-										slides-per-group="3"
+										slides-per-group-auto="true"
 										loop="false"
 										navigation="true"
 										[pagination]="{ clickable: true }"
-										[breakpoints]="screenshotBreakpoints"
 										class="m-swiper"
 									>
 										@for (timeSlot of employee.timeSlots; track timeSlot.id) {

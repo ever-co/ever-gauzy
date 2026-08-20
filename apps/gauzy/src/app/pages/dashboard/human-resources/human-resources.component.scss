@@ -43,6 +43,9 @@
 				font-weight: 600;
 				font-size: nb-theme(text-subtitle-font-size);
 				line-height: 1.25rem;
+				// `.employee-details` now also styles the muted meta row, so the name has to
+				// state its own colour instead of inheriting the hint colour from it.
+				color: nb-theme(text-basic-color);
 			}
 
 			.employee-position,

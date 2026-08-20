@@ -60,8 +60,8 @@
       // overflowed its slide — smeared thumbnails and collided time/date text.
       // `slides-per-view="auto"` on the container makes Swiper read this width, so
       // below ~600px it simply shows fewer slides and scrolls. `16px` is the
-      // `space-between` Swiper writes as each slide's margin.
-      width: max(calc((100% - 2 * 16px) / 3), 189px);
+      // `space-between` (8px) Swiper writes as each slide's margin.
+      width: max(calc((100% - 2 * 8px) / 3), 189px);
       height: 100%;
       padding-bottom: 1rem;
       display: block;

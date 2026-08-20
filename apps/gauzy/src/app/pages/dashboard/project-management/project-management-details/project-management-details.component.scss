@@ -4,7 +4,11 @@
 // the completion dot loses both its ring and its fill on every theme.
 @use 'gauzy/_gauzy-cards' as *;
 
-$height: calc(100vh - 2rem);
+// The grid sits INSIDE the page card, under the header band, the page title and the
+// card header — `100vh - 2rem` ignored all of that and pushed the columns past the
+// viewport. `$default-card-height` is the shared "viewport minus page+card chrome"
+// token every other full-height page uses.
+$height: $default-card-height;
 $gap: 1rem;
 
 .main {

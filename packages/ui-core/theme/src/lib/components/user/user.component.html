@@ -8,7 +8,8 @@
 		tabindex="0"
 		(click)="onClicked()"
 		(keydown.enter)="onClicked()"
-		(keydown.space)="onClicked()"
+		<!-- Space scrolls the page on a div; the role="button" contract is to activate instead. -->
+		(keydown.space)="$event.preventDefault(); onClicked()"
 	>
 		<div class="img-container">
 			@if (user?.imageUrl) {

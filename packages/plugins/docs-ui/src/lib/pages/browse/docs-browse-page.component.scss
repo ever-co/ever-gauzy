@@ -156,8 +156,11 @@
     opacity: 0.7;
   }
 
+  // `button[nbButton] &[disabled]` above is (0,2,1) and paints the CURRENT crumb in the
+  // normal text colour; a restricted crumb is disabled too, so it needs at least the same
+  // specificity to keep its muted italic treatment.
   .docs-crumb-restricted,
-  .docs-crumb-restricted[disabled] {
+  button[nbButton].docs-crumb-restricted[disabled] {
     font-style: italic;
     color: var(--docs-text-muted, var(--text-hint-color));
   }

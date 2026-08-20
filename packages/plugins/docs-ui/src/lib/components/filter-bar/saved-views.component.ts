@@ -127,6 +127,11 @@ export class SavedViewsComponent extends TranslationBaseComponent implements OnI
 		const roomBelow = viewportHeight - rect.bottom - TRIGGER_GAP_PX - VIEWPORT_MARGIN_PX;
 		const roomAbove = rect.top - TRIGGER_GAP_PX - VIEWPORT_MARGIN_PX;
 		const flipUp = roomBelow < MIN_PANEL_HEIGHT_PX && roomAbove > roomBelow;
+		// The room on the side we actually chose. `MIN_PANEL_HEIGHT_PX` is the FLIP
+		// threshold, not a layout minimum: using it as a floor for `max-height` made the
+		// panel taller than the viewport when neither side had 200px (short window, or a
+		// trigger near the middle) — the panel scrolls internally instead.
+		const room = Math.max(0, flipUp ? roomAbove : roomBelow);
 
 		this.panelStyle = {
 			width: `${width}px`,
@@ -134,7 +139,7 @@ export class SavedViewsComponent extends TranslationBaseComponent implements OnI
 			...(flipUp
 				? { bottom: `${viewportHeight - rect.top + TRIGGER_GAP_PX}px` }
 				: { top: `${rect.bottom + TRIGGER_GAP_PX}px` }),
-			maxHeight: `${Math.max(MIN_PANEL_HEIGHT_PX, flipUp ? roomAbove : roomBelow)}px`
+			maxHeight: `${room}px`
 		};
 	}
 

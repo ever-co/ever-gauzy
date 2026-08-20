@@ -158,9 +158,17 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 				.docs-upload-row {
 					grid-template-columns: minmax(0, 1fr) auto;
 				}
+				/* Pin both cells explicitly: with only the full-width span on the
+				   progress/state child, sparse auto-placement pushed the actions onto a
+				   THIRD row (dismiss/retry detached from the file name they belong to). */
+				.docs-upload-row .docs-upload-actions {
+					grid-column: 2;
+					grid-row: 1;
+				}
 				.docs-upload-row nb-progress-bar,
 				.docs-upload-row .docs-upload-state {
 					grid-column: 1 / -1;
+					grid-row: 2;
 				}
 			}
 		`
