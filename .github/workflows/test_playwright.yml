@@ -531,7 +531,12 @@ jobs:
           # One report per shard — download all four to triage a full run.
           name: playwright-report-shard-${{ matrix.shard }}
           path: apps/gauzy-e2e/playwright-report
-          retention-days: 14
+          # 7, not 14: four of these per run against a quota that has to hold the ~2.87 GB dependency
+          # archive at the same time. At 14 days they had grown to 3.72 GB across 100 copies, and the
+          # sum tipped the org's Actions storage over — which stopped NEW reports uploading, i.e. the
+          # accumulated diagnostics evicted the diagnostic you actually needed. A week is still far
+          # longer than any triage here has taken.
+          retention-days: 7
 
   # ---------------------------------------------------------------------------------------------
   # 4) cleanup — delete the dependency artifact as soon as nothing needs it again.
