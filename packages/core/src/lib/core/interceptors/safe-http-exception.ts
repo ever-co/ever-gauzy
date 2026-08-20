@@ -1,4 +1,5 @@
 import { BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
+import { describeDatabaseError, isDatabaseErrorPayload } from '../errors/database-error';
 
 /**
  * Body keys that never belong in an HTTP response: driver / transport internals that carry SQL
@@ -40,6 +41,14 @@ export function toSafeHttpException(error: unknown): HttpException {
 		if (typeof response !== 'object' || response === null) {
 			return error;
 		}
+		// Classify BEFORE sanitizing. `sanitizeErrorBody` collapses any `Error` to its `.message` and
+		// drops every other field — including the driver `code`. For a QueryFailedError that turns
+		// `{ code: '42P01', query, parameters }` into the bare string `relation "user" does not exist`:
+		// the SQL and parameters are gone, but the driver's own text (and the table it names) is now
+		// the response, and no message signature matches that phrasing. Describe it by code instead.
+		if (isDatabaseErrorPayload(response)) {
+			return new BadRequestException(describeDatabaseError(response));
+		}
 		// This branch used to return the body VERBATIM, to keep class-validator's `message: [...]`
 		// array intact. But `CrudService` throws `new BadRequestException(queryFailedError)` — also a
 		// BadRequestException — so every failed database write skipped the scrub below and answered
@@ -51,6 +60,10 @@ export function toSafeHttpException(error: unknown): HttpException {
 		const response = error.getResponse();
 		if (typeof response !== 'object' || response === null) {
 			return error;
+		}
+		// Same reasoning as the BadRequestException branch above.
+		if (isDatabaseErrorPayload(response)) {
+			return new HttpException(describeDatabaseError(response), error.getStatus());
 		}
 		const safe = sanitizeErrorBody(response) as Record<string, unknown>;
 		// Nothing to scrub (the common case) → the ORIGINAL instance, subclass and all.

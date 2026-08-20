@@ -107,8 +107,14 @@ export class DatabaseErrorFilter extends BaseExceptionFilter {
 	 * @param depth - Current depth.
 	 */
 	private withoutNestedDatabaseFields(value: unknown, seen = new WeakSet<object>(), depth = 0): unknown {
-		if (!value || typeof value !== 'object' || depth > DatabaseErrorFilter.MAX_SANITIZE_DEPTH) {
+		if (!value || typeof value !== 'object') {
 			return value;
+		}
+		// Fail CLOSED at the limit. Returning the subtree unexamined would hand back exactly the
+		// `query`/`parameters` this walk exists to remove, for any payload that buries the driver
+		// error deeper than the bound.
+		if (depth > DatabaseErrorFilter.MAX_SANITIZE_DEPTH) {
+			return undefined;
 		}
 		if (seen.has(value as object)) {
 			return undefined;
@@ -165,8 +171,12 @@ export class DatabaseErrorFilter extends BaseExceptionFilter {
 			// Driver text arriving as a plain message still names constraints and, on MySQL, values.
 			return safeMessageForDatabaseText(value) ?? value;
 		}
-		if (!value || typeof value !== 'object' || depth > DatabaseErrorFilter.MAX_SANITIZE_DEPTH) {
+		if (!value || typeof value !== 'object') {
 			return value;
+		}
+		// Same reasoning as the response walk: past the bound, drop rather than copy.
+		if (depth > DatabaseErrorFilter.MAX_SANITIZE_DEPTH) {
+			return '[depth-limited]';
 		}
 		if (seen.has(value as object)) {
 			return '[circular]';
