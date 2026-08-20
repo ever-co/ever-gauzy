@@ -94,6 +94,59 @@ export const videoUploadFileFilter = createUploadFileFilter(ALLOWED_VIDEO_MIME_T
 /** Multer `fileFilter` accepting only audio files. */
 export const audioUploadFileFilter = createUploadFileFilter(ALLOWED_AUDIO_MIME_TYPES, ALLOWED_AUDIO_EXTENSIONS);
 
+/** MIME types browsers/clients send for a ZIP archive. */
+export const ALLOWED_ARCHIVE_MIME_TYPES = [
+	'application/zip',
+	'application/x-zip-compressed',
+	'application/x-zip',
+	'multipart/x-zip',
+	'application/octet-stream'
+] as const;
+
+/** Extensions accepted by the archive (import) endpoints. */
+export const ALLOWED_ARCHIVE_EXTENSIONS = ['.zip'] as const;
+
+/** Multer `fileFilter` accepting only ZIP archives (the data-import format). */
+export const archiveUploadFileFilter = createUploadFileFilter(ALLOWED_ARCHIVE_MIME_TYPES, ALLOWED_ARCHIVE_EXTENSIONS);
+
+/**
+ * Extensions that are script-capable when served by extension yet have no legitimate use on the
+ * open-ended DOCUMENT upload endpoints (chat attachments, knowledge ingestion): those endpoints must
+ * accept `.html`/`.xml` (they are ingested), so an allowlist is impossible there and this is the
+ * backstop for the rest. `/public` additionally serves every asset with `nosniff` + a `sandbox` CSP.
+ */
+export const SCRIPT_CAPABLE_NON_DOCUMENT_EXTENSIONS = [
+	'.svg',
+	'.svgz',
+	'.xhtml',
+	'.xht',
+	'.mhtml',
+	'.mht',
+	'.xsl',
+	'.xslt',
+	'.shtml',
+	'.shtm',
+	'.hta',
+	'.js',
+	'.mjs',
+	'.vbs',
+	'.wsf'
+] as const;
+
+/**
+ * Multer `fileFilter` for open-ended document uploads: refuses {@link SCRIPT_CAPABLE_NON_DOCUMENT_EXTENSIONS}
+ * and accepts everything else. Callers still store the bytes behind `/public`'s `sandbox` CSP.
+ */
+export function documentUploadFileFilter(_req: unknown, file: { originalname?: string }, callback: MulterFileFilterCallback): void {
+	const name = String(file?.originalname ?? '').toLowerCase();
+	const dot = name.lastIndexOf('.');
+	const extension = dot >= 0 ? name.slice(dot) : '';
+	if ((SCRIPT_CAPABLE_NON_DOCUMENT_EXTENSIONS as readonly string[]).includes(extension)) {
+		return callback(new BadRequestException(`Files of type "${extension}" are not allowed`), false);
+	}
+	return callback(null, true);
+}
+
 /**
  * Detects whether the given file content is markup (SVG / XML / HTML / XHTML).
  *
@@ -193,4 +246,47 @@ export function assertNotMarkupContent(content: Buffer | string): void {
 	if (isMarkupContent(content)) {
 		throw new BadRequestException('Unsupported file content: markup/script files are not allowed');
 	}
+}
+
+/**
+ * Extensions that a browser will happily execute or render inline when the object is fetched from a
+ * provider's unauthenticated `/public/` path — which would turn an upload endpoint into a
+ * same-origin XSS sink (GHSA-p334-cm7f-php5).
+ *
+ * This is about the STORED OBJECT NAME, not what the user may upload: the real content type is kept
+ * on the record and the bytes are served through an authenticated route, so mapping the stored
+ * extension to `bin` costs the client nothing. Sniffing is unaffected — it reads the ORIGINAL
+ * filename, not the storage key.
+ */
+export const RENDERABLE_KEY_EXTENSIONS: ReadonlySet<string> = new Set([
+	'html',
+	'htm',
+	'xhtml',
+	'xml',
+	'svg',
+	'svgz',
+	'js',
+	'mjs',
+	'css'
+]);
+
+/**
+ * The extension to use in a storage key, given a client-supplied one.
+ *
+ * Shared by every provider-backed upload endpoint on purpose: this policy was duplicated in the
+ * Documents and AI-chat controllers, so hardening one left the other exposed.
+ *
+ * @param extension - The extension taken from the uploaded filename.
+ * @returns A lower-case alphanumeric extension, or '' when there is nothing usable.
+ */
+export function toSafeStorageExtension(extension: string | undefined | null): string {
+	const safeExtension = String(extension ?? '')
+		.toLowerCase()
+		.replace(/[^a-z0-9]/g, '');
+
+	if (!safeExtension) {
+		return '';
+	}
+
+	return RENDERABLE_KEY_EXTENSIONS.has(safeExtension) ? 'bin' : safeExtension;
 }

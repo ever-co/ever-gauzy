@@ -3637,7 +3637,9 @@
 		"SELECT_AN_ORGANIZATION": "مؤسسة",
 		"SELECT_PROJECT": "مشروع",
 		"SELECT_TEAM": "فريق",
-		"AI_CHAT": "دردشة الذكاء الاصطناعي"
+		"AI_CHAT": "دردشة الذكاء الاصطناعي",
+		"COLLAPSE_SIDEBAR": "طي الشريط الجانبي",
+		"EXPAND_SIDEBAR": "توسيع الشريط الجانبي"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "مساعد الذكاء الاصطناعي",

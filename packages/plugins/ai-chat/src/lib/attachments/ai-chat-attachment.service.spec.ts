@@ -1,12 +1,15 @@
 // `@gauzy/core` pulls the whole bootstrap graph; only `RequestContext` is on the path under
 // test, so it is stubbed AT THE MODULE BOUNDARY — hoisted above the imports.
+const deleteFile = jest.fn(async () => undefined);
 jest.mock('@gauzy/core', () => ({
 	RequestContext: {
 		currentTenantId: jest.fn(() => 'tenant-1'),
 		currentOrganizationId: jest.fn(() => 'org-1'),
 		currentUserId: jest.fn(() => 'user-1'),
 		currentRequest: jest.fn(() => ({ headers: {} }))
-	}
+	},
+	// The service discards a rejected upload through the active provider.
+	FileStorage: jest.fn().mockImplementation(() => ({ getProvider: () => ({ deleteFile }) }))
 }));
 
 import { BadRequestException } from '@nestjs/common';
@@ -97,12 +100,36 @@ describe('AiChatAttachmentService', () => {
 	 * Without a scope the consumer would have to GUESS which organization the file belongs to,
 	 * which is how an attachment lands in the wrong workspace. Refusing is the only safe answer.
 	 */
-	it('refuses an attachment it cannot attribute to an organization', async () => {
+	it('refuses an attachment it cannot attribute to an organization — and removes the stored bytes', async () => {
 		requestContext.currentOrganizationId.mockReturnValue(null);
 		requestContext.currentRequest.mockReturnValue({ headers: {} });
+		deleteFile.mockClear();
 
 		await expect(service.save(uploaded())).rejects.toBeInstanceOf(BadRequestException);
 		expect(publish).not.toHaveBeenCalled();
+		// multer already wrote the object before the service ran: it must not be left orphaned.
+		expect(deleteFile).toHaveBeenCalledWith('ai-chat/tenant-1/org-1/abc.pdf');
+	});
+
+	it('still rejects (with the scope error) when the orphan cleanup itself fails', async () => {
+		requestContext.currentOrganizationId.mockReturnValue(null);
+		requestContext.currentRequest.mockReturnValue({ headers: {} });
+		deleteFile.mockRejectedValueOnce(new Error('disk gone'));
+
+		await expect(service.save(uploaded())).rejects.toBeInstanceOf(BadRequestException);
+	});
+
+	/**
+	 * On the default LOCAL provider Nest's plain @UploadedFile() hands over multer's diskStorage
+	 * object, which has no `key` (only core's @UploadedFileStorage() maps it through the provider,
+	 * which derives `key` from `path`). The controller now uses that decorator; this pins the
+	 * contract the service relies on: a mapped file HAS a key and is accepted.
+	 */
+	it('accepts a provider-mapped LOCAL file (key derived from path)', async () => {
+		const result = await service.save(
+			uploaded({ path: '/srv/public/ai-chat/tenant-1/org-1/abc.pdf', key: 'ai-chat/tenant-1/org-1/abc.pdf' })
+		);
+		expect(result.key).toBe('ai-chat/tenant-1/org-1/abc.pdf');
 	});
 
 	it('rejects a request with no uploaded file', async () => {

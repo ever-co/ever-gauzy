@@ -40,8 +40,14 @@ export const DOCS_BROWSE_SHORTCUT_SKIP_SELECTOR = [
  * one of these before acting on a shortcut. Deliberately narrow: `nbTooltip`
  * also renders into the overlay container, and a hovered tooltip must not
  * disable the whole keyboard map.
+ *
+ * `.docs-bulk-popover` is the bulk bar's Tags / More panel. It renders inline
+ * (not in the overlay container) and does not move focus, so without it `Esc`
+ * would both close the popover AND clear the whole selection — the bulk bar
+ * closes its own panel on `Esc` and the page must leave that keystroke alone.
  */
-export const DOCS_BROWSE_OVERLAY_SELECTOR = 'nb-dialog-container, nb-context-menu';
+export const DOCS_BROWSE_OVERLAY_SELECTOR =
+	'nb-dialog-container, nb-context-menu, .docs-bulk-popover';
 
 /**
  * DOM id of the free-text search box, as rendered by

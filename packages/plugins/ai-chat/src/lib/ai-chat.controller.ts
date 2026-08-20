@@ -30,7 +30,10 @@ import {
 	PermissionGuard,
 	Permissions,
 	RequestContext,
-	TenantPermissionGuard
+	TenantPermissionGuard,
+	UploadedFileStorage,
+	documentUploadFileFilter,
+	toSafeStorageExtension
 } from '@gauzy/core';
 import { AiChatService, MAX_AUDIO_BYTES } from './ai-chat.service';
 import {
@@ -38,6 +41,12 @@ import {
 	IAiChatAttachmentResult,
 	MAX_ATTACHMENT_BYTES
 } from './attachments/ai-chat-attachment.service';
+
+/**
+ * Object-name extensions a static file server would render in the browser (mirrors the Documents
+ * upload endpoint). The stored object carries a neutral extension instead; the client keeps the
+ * real type via `mimeType`.
+ */
 
 /**
  * Per-request storage engine of the attachment endpoint.
@@ -57,10 +66,14 @@ const attachmentsStorage = (ctx: ExecutionContext) => {
 		dest: () => path.join('ai-chat', tenantId, organizationId),
 		prefix: 'ai-chat',
 		filename: (_file: any, extension: string) => {
-			const safeExtension = String(extension ?? '')
-				.toLowerCase()
-				.replace(/[^a-z0-9]/g, '');
-			return safeExtension ? `${randomUUID()}.${safeExtension}` : `${randomUUID()}`;
+			const storedExtension = toSafeStorageExtension(extension);
+			if (!storedExtension) {
+				return `${randomUUID()}`;
+			}
+			// Never let a browser-renderable extension onto the stored object name — same rule as the
+			// Documents upload endpoint (the LOCAL provider serves /public/<key> with a Content-Type
+			// derived from the extension; the canonical type travels in the attachment's mimeType).
+			return `${randomUUID()}.${storedExtension}`;
 		}
 	});
 };
@@ -210,13 +223,21 @@ export class AiChatController {
 	@UseInterceptors(
 		LazyFileInterceptor('file', {
 			storage: (ctx: ExecutionContext) => attachmentsStorage(ctx),
+			// Documents of (almost) any type are ingested here, so no allowlist — but script-capable
+			// non-document types (.svg, .xhtml, .mhtml, .hta, .js, ...) have no business being stored
+			// under /public with the client's extension.
+			fileFilter: documentUploadFileFilter,
 			// The same constant the service's cap derives from, declared here so an oversized
 			// upload is rejected by multer BEFORE the provider stores any of it.
 			limits: { fileSize: MAX_ATTACHMENT_BYTES }
 		})
 	)
 	async attach(
-		@UploadedFile() file: IUploadedFile,
+		// Core's decorator maps the multer object through the ACTIVE provider (mapUploadedFile), which
+		// is what fills `key` (LOCAL derives it from `path`; S3-family providers set it themselves).
+		// Nest's plain @UploadedFile() hands the raw diskStorage object over, which has no `key` — so
+		// on the default LOCAL provider every attachment answered 400 after the bytes were written.
+		@UploadedFileStorage() file: IUploadedFile,
 		@Body() body: { conversationId?: string }
 	): Promise<IAiChatAttachmentResult> {
 		return this.attachmentService.save(file, body?.conversationId);

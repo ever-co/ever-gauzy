@@ -3648,7 +3648,9 @@
 		"SELECT_AN_ORGANIZATION": "Organisation",
 		"SELECT_PROJECT": "Projekt",
 		"SELECT_TEAM": "Team",
-		"AI_CHAT": "KI-Chat"
+		"AI_CHAT": "KI-Chat",
+		"COLLAPSE_SIDEBAR": "Seitenleiste einklappen",
+		"EXPAND_SIDEBAR": "Seitenleiste ausklappen"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "KI-Assistent",

@@ -55,10 +55,7 @@ export class OrganizationEmploymentTypeController extends CrudController<Organiz
 		@Body() entity: OrganizationEmploymentType
 	): Promise<IOrganizationEmploymentType> {
 		try {
-			return this.organizationEmploymentTypeService.create({
-				id,
-				...entity
-			});
+			return this.organizationEmploymentTypeService.create({ ...entity, id });
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

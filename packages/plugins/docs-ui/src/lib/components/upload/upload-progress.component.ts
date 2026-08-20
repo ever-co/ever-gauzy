@@ -58,13 +58,31 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 	`,
 	styles: [
 		`
+			:host {
+				display: block;
+				min-width: 0;
+			}
 			.docs-upload-progress {
-				margin-bottom: 1rem;
+				margin: 0;
+				border: 0;
+				border-radius: var(--docs-radius-lg, 0.5rem);
+				background: var(--docs-surface, var(--background-basic-color-1));
+				box-shadow: inset 0 0 0 1px var(--docs-hairline, rgba(126, 126, 143, 0.18));
 			}
 			.docs-upload-header {
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
+				gap: 0.5rem;
+				padding: 0.5rem 0.75rem;
+				font-size: var(--docs-label-size, 0.6875rem);
+				font-weight: 600;
+				letter-spacing: 0.02em;
+				text-transform: uppercase;
+				color: var(--docs-text-muted, var(--text-hint-color));
+			}
+			.docs-upload-progress nb-card-body {
+				padding: 0.25rem 0.75rem 0.5rem;
 			}
 			.docs-upload-row {
 				display: grid;
@@ -72,6 +90,7 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 				align-items: center;
 				gap: 0.75rem;
 				padding: 0.25rem 0;
+				font-size: var(--docs-body-size, 0.8125rem);
 			}
 			.docs-upload-meta {
 				display: flex;
@@ -80,20 +99,33 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 				min-width: 0;
 			}
 			.docs-upload-name {
+				min-width: 0;
 				overflow: hidden;
 				text-overflow: ellipsis;
 				white-space: nowrap;
 			}
 			.docs-upload-size {
-				color: var(--text-hint-color);
-				font-size: 0.75rem;
+				flex: 0 0 auto;
+				color: var(--docs-text-muted, var(--text-hint-color));
+				font-size: var(--docs-meta-size, 0.75rem);
+				font-variant-numeric: tabular-nums;
 			}
 			.docs-upload-duplicate {
 				display: inline-flex;
 				align-items: center;
 				gap: 0.25rem;
+				min-width: 0;
 				color: var(--color-warning-default);
-				font-size: 0.75rem;
+				font-size: var(--docs-meta-size, 0.75rem);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.docs-upload-state {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.25rem;
+				font-size: var(--docs-meta-size, 0.75rem);
 				white-space: nowrap;
 			}
 			.docs-upload-state.done {
@@ -104,7 +136,40 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 			}
 			.docs-upload-actions {
 				display: inline-flex;
+				align-items: center;
+				justify-content: flex-end;
+				gap: 0.125rem;
+			}
+			.docs-upload-progress button[nbButton] {
+				display: inline-flex;
+				align-items: center;
 				gap: 0.25rem;
+				height: 1.5rem;
+				min-height: 1.5rem;
+				padding-inline: 0.375rem;
+				border-radius: var(--docs-radius, 0.375rem);
+				font-size: var(--docs-meta-size, 0.75rem);
+			}
+			.docs-upload-progress button[nbButton] nb-icon {
+				margin: 0;
+				font-size: 0.875rem;
+			}
+			@media (max-width: 575px) {
+				.docs-upload-row {
+					grid-template-columns: minmax(0, 1fr) auto;
+				}
+				/* Pin both cells explicitly: with only the full-width span on the
+				   progress/state child, sparse auto-placement pushed the actions onto a
+				   THIRD row (dismiss/retry detached from the file name they belong to). */
+				.docs-upload-row .docs-upload-actions {
+					grid-column: 2;
+					grid-row: 1;
+				}
+				.docs-upload-row nb-progress-bar,
+				.docs-upload-row .docs-upload-state {
+					grid-column: 1 / -1;
+					grid-row: 2;
+				}
 			}
 		`
 	],

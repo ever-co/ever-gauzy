@@ -35,12 +35,14 @@ import { IDocumentFacetBucket } from '../../models/docs-api.model';
 	styles: [
 		`
 			:host {
-				display: inline-block;
-				min-width: 9rem;
+				display: block;
+				width: 100%;
+				min-width: 0;
 			}
 			.docs-facet-count {
-				color: var(--text-hint-color);
+				color: var(--docs-text-muted, var(--text-hint-color));
 				margin-left: 0.25rem;
+				font-variant-numeric: tabular-nums;
 			}
 		`
 	],

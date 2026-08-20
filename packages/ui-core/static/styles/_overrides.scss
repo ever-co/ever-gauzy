@@ -663,6 +663,62 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     }
   }
 
+  .ng-dropdown-panel.gauzy-entity-select {
+    .ng-dropdown-panel-items {
+      padding: 3px;
+    }
+
+    .ng-dropdown-panel-items .ng-option {
+      display: flex !important;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3125rem 0.5rem !important;
+      font-weight: 400;
+      min-height: 1.75rem;
+    }
+
+    .ng-dropdown-panel-items img {
+      flex: none;
+      width: 1.125rem;
+      height: 1.125rem;
+      border-radius: var(--gauzy-radius-sm, 6px);
+      object-fit: cover;
+    }
+
+    .ng-dropdown-panel-items .avatar-fallback {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.125rem;
+      height: 1.125rem;
+      border-radius: var(--gauzy-radius-sm, 6px);
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+      color: var(--gauzy-text-color-2, var(--text-hint-color));
+      font-size: 0.75rem;
+
+      svg {
+        width: 1em;
+        height: 1em;
+      }
+    }
+
+    .ng-dropdown-panel-items .ng-option > span,
+    .ng-dropdown-panel-items .ng-option .ng-option-label {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .ng-dropdown-panel-items .ng-option.ng-option-selected,
+    .ng-dropdown-panel-items .ng-option.ng-option-selected:hover,
+    .ng-dropdown-panel-items .ng-option.ng-option-selected .ng-option-label {
+      font-weight: 500;
+    }
+  }
+
   .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-input > input {
     color: var(--gauzy-text-color-1);
   }
@@ -737,10 +793,6 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
   // step above this. Every page that restated the old 24px has therefore had
   // that rule DELETED rather than left to lose a specificity race it wins.
   //
-  // h6 is deliberately excluded: at 1rem it already sits BELOW this step and
-  // is what templates reach for when a card header carries a SUB-heading
-  // (the file-storage provider blocks, the dashboard team panels). Pulling it
-  // up would make those louder rather than quieter.
   nb-card-header {
     h1,
     h2,
@@ -750,6 +802,13 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
       font-size: nb-theme(gauzy-page-title-font-size);
       font-weight: nb-theme(gauzy-page-title-font-weight);
       line-height: nb-theme(gauzy-page-title-line-height);
+      letter-spacing: nb-theme(gauzy-page-title-letter-spacing);
+    }
+
+    h6 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      line-height: 1.25rem;
       letter-spacing: nb-theme(gauzy-page-title-letter-spacing);
     }
   }

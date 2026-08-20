@@ -1,83 +1,281 @@
 .docs-browse {
-	position: relative;
-	display: flex;
-	flex-direction: column;
-	gap: 0.75rem;
-	padding: 1rem;
-	min-height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--docs-section-gap, 1rem);
+  padding: var(--docs-page-padding, 1.25rem);
+  min-height: 100%;
+  color: var(--docs-text, var(--text-basic-color));
 }
 
 .docs-drop-overlay {
-	position: absolute;
-	inset: 0;
-	z-index: 20;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	border: 2px dashed var(--color-primary-default);
-	border-radius: 0.5rem;
-	background: var(--color-primary-transparent-100, rgba(51, 102, 255, 0.08));
-	color: var(--color-primary-default);
-	font-weight: 600;
-	pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 2px dashed var(--color-primary-default);
+  border-radius: var(--docs-radius-lg, 0.5rem);
+  background: var(--color-primary-transparent-100, rgba(51, 102, 255, 0.08));
+  color: var(--color-primary-default);
+  font-size: var(--docs-body-size, 0.8125rem);
+  font-weight: 600;
+  pointer-events: none;
 
-	nb-icon {
-		font-size: 2.5rem;
-	}
+  nb-icon {
+    font-size: 2.25rem;
+  }
 }
 
 .docs-browse-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.75rem;
-	flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
+  min-height: 2rem;
 
-	.docs-browse-title {
-		margin: 0;
-	}
+  .docs-browse-title {
+    flex: 1 1 12rem;
+    min-width: 0;
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: var(--docs-title-weight, 600);
+    line-height: 1.375rem;
+    letter-spacing: var(--gauzy-page-title-letter-spacing, -0.01em);
+    color: var(--docs-text, var(--text-basic-color));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-	.docs-browse-actions {
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-	}
+  .docs-browse-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
 }
 
-/* Location breadcrumb — page-level so it survives the table layout and an empty
-   folder (it used to be rendered by `gz-docs-cards`, hence the shared crumb rules). */
-.docs-browse-breadcrumb {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 0.125rem;
+.docs-browse-actions button[nbButton] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  height: var(--docs-control-height-sm, 1.75rem);
+  min-height: var(--docs-control-height-sm, 1.75rem);
+  font-size: var(--docs-meta-size, 0.75rem);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
 
-	.docs-crumb-sep {
-		font-size: 0.875rem;
-		color: var(--text-hint-color);
-	}
-
-	/* A redacted ancestor is a placeholder, not a name — render it as hint text so it
-	   reads as "something you cannot see" rather than a folder called "Restricted". */
-	.docs-crumb-restricted {
-		font-style: italic;
-		color: var(--text-hint-color);
-	}
+  nb-icon {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1;
+  }
 }
 
 .docs-view-toggle {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.125rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  button[nbButton] {
+    width: var(--docs-control-height-sm, 1.75rem);
+  }
+}
+
+.docs-browse {
+  .docs-browse-actions button[nbButton],
+  .docs-browse-breadcrumb button[nbButton] {
+    padding-block: 0;
+  }
+
+  .docs-browse-actions button[nbButton] {
+    padding-inline: 0.5625rem;
+  }
+
+  .docs-browse-breadcrumb button[nbButton] {
+    padding-inline: 0.375rem;
+  }
+
+  .docs-browse-actions button[nbButton].icon-start.icon-end {
+    padding-block: 0;
+    padding-inline: 0.5625rem;
+  }
+
+  .docs-view-toggle button[nbButton].icon-start.icon-end {
+    padding: 0;
+  }
+}
+
+.docs-browse-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.125rem;
+  margin-top: -0.25rem;
+  font-size: var(--docs-meta-size, 0.75rem);
+
+  button[nbButton] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 1.5rem;
+    min-height: 1.5rem;
+    max-width: 14rem;
+    border-radius: var(--docs-radius, 0.375rem);
+    font-size: var(--docs-meta-size, 0.75rem);
+    font-weight: 500;
+    line-height: 1;
+    color: var(--docs-text-muted, var(--text-hint-color));
+
+    .docs-crumb-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &[disabled] {
+      color: var(--docs-text, var(--text-basic-color));
+      opacity: 1;
+    }
+  }
+
+  .docs-crumb-sep {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.875rem;
+    color: var(--docs-text-muted, var(--text-hint-color));
+    opacity: 0.7;
+  }
+
+  // `button[nbButton] &[disabled]` above is (0,2,1) and paints the CURRENT crumb in the
+  // normal text colour; a restricted crumb is disabled too, so it needs at least the same
+  // specificity to keep its muted italic treatment.
+  .docs-crumb-restricted,
+  button[nbButton].docs-crumb-restricted[disabled] {
+    font-style: italic;
+    color: var(--docs-text-muted, var(--text-hint-color));
+  }
+}
+
+.docs-browse-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
 }
 
 .pagination-container {
-	display: flex;
-	justify-content: flex-end;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .docs-empty-host {
-	min-height: 12rem;
+  display: block;
+  min-height: 14rem;
+  border-radius: var(--docs-radius-lg, 0.5rem);
+  background: var(--docs-surface, var(--background-basic-color-1));
+  box-shadow: inset 0 0 0 1px var(--docs-hairline, rgba(126, 126, 143, 0.18));
+}
+
+@media (max-width: 767px) {
+  .docs-browse-header {
+    align-items: flex-start;
+
+    .docs-browse-actions {
+      width: 100%;
+    }
+  }
+
+  .docs-browse-actions button[nbButton] {
+    flex: 0 1 auto;
+  }
+
+  .docs-browse-toolbar {
+    padding: 0.625rem;
+  }
+
+  .pagination-container {
+    justify-content: center;
+  }
+}
+
+.docs-browse .pagination-container ::ng-deep ga-pagination {
+  nav {
+    margin-top: 0 !important;
+    gap: 0.75rem;
+  }
+
+  .pagination {
+    gap: 0.125rem;
+    font-size: var(--docs-meta-size, 0.75rem);
+  }
+
+  li {
+    a,
+    span {
+      margin: 0;
+    }
+
+    span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: var(--docs-control-height-sm, 1.75rem);
+      height: var(--docs-control-height-sm, 1.75rem);
+      padding: 0 0.375rem;
+      font-size: var(--docs-meta-size, 0.75rem);
+      line-height: 1;
+      border-radius: var(--docs-radius, 0.375rem);
+    }
+
+    span.icon {
+      padding: 0;
+      background: var(--docs-hover, rgba(126, 126, 143, 0.12));
+      box-shadow: none;
+
+      nb-icon {
+        font-size: 0.875rem;
+      }
+    }
+
+    &:hover span.icon {
+      background: var(--docs-active, rgba(126, 126, 143, 0.2));
+    }
+
+    &.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    &.active span {
+      background: var(--docs-active, rgba(126, 126, 143, 0.2));
+      color: var(--docs-text, var(--text-basic-color));
+      font-weight: 600;
+    }
+  }
+
+  > nav > div {
+    gap: 0.5rem;
+    font-size: var(--docs-meta-size, 0.75rem);
+    color: var(--docs-text-muted, var(--text-hint-color));
+  }
+
+  nb-select .select-button {
+    min-width: 4rem;
+    height: var(--docs-control-height-sm, 1.75rem);
+    padding: 0 0.5rem;
+    border-radius: var(--docs-radius, 0.375rem);
+    font-size: var(--docs-meta-size, 0.75rem);
+  }
 }

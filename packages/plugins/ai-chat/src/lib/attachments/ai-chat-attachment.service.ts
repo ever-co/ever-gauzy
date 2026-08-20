@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ID, UploadedFile } from '@gauzy/contracts';
-import { EventBus, RequestContext } from '@gauzy/core';
+import { EventBus, FileStorage, RequestContext } from '@gauzy/core';
 import { AiChatAttachmentSavedEvent } from './ai-chat-attachment.event';
 
 /**
@@ -61,7 +61,9 @@ export class AiChatAttachmentService {
 		const organizationId = this.resolveOrganizationId();
 		if (!tenantId || !organizationId) {
 			// Without a scope the attachment cannot be attributed to anything, and a consumer
-			// would have to guess — which is how a file ends up in the wrong organization.
+			// would have to guess — which is how a file ends up in the wrong organization. The bytes
+			// are already in storage (multer ran first): remove them rather than leave an orphan.
+			await this.discardStoredFile(file.key);
 			throw new BadRequestException(
 				'An organization is required to attach a file — send the `Organization-Id` header.'
 			);
@@ -98,6 +100,22 @@ export class AiChatAttachmentService {
 			...(file.mimetype ? { mimeType: file.mimetype } : {}),
 			...(file.size !== undefined ? { size: file.size } : {})
 		};
+	}
+
+	/**
+	 * Removes a stored object that will not be recorded (rejected upload). Best effort: a failure
+	 * to delete must not mask the rejection the caller is about to see.
+	 *
+	 * @param key The storage key of the object.
+	 */
+	private async discardStoredFile(key: string): Promise<void> {
+		try {
+			await new FileStorage().getProvider().deleteFile(key);
+		} catch (error) {
+			this.logger.warn(
+				`Could not remove rejected attachment '${key}': ${error instanceof Error ? error.message : error}`
+			);
+		}
 	}
 
 	/**

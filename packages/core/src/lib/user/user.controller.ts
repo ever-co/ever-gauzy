@@ -247,7 +247,7 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@HttpCode(HttpStatus.CREATED)
 	@Post('/')
-	@UseValidationPipe()
+	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateUserDTO): Promise<IUser> {
 		return await this._commandBus.execute(new UserCreateCommand(entity));
 	}
@@ -263,12 +263,9 @@ export class UserController extends CrudController<User> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
 	@Put('/:id')
-	@UseValidationPipe({ transform: true })
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateUserDTO): Promise<IUser> {
-		return await this._userService.updateProfile(id, {
-			id,
-			...entity
-		});
+		return await this._userService.updateProfile(id, { ...entity, id });
 	}
 
 	/**

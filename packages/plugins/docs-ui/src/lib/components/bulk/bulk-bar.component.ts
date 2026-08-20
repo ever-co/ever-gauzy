@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
@@ -23,9 +23,12 @@ import { RejectDialogComponent } from '../../dialogs/reject-dialog.component';
 import { DocumentsService } from '../../services/documents.service';
 import { DOCS_PERMISSIONS } from '../../docs-permission-groups';
 
+/** The one popover the bar may have open at a time. */
+export type DocumentBulkPanel = 'tags' | 'more';
+
 /**
- * Sticky bulk bar shown while the selection is non-empty. Actions map 1:1 to
- * `POST /documents/bulk` (≤ 200 ids). The result toast summarizes
+ * Floating bulk action bar, shown while the selection is non-empty. Actions map
+ * 1:1 to `POST /documents/bulk` (≤ 200 ids). The result toast summarizes
  * succeeded/failed; the expandable panel lists up to 10 per-id errors with a
  * "Copy full report" action for the complete list.
  */
@@ -35,7 +38,7 @@ import { DOCS_PERMISSIONS } from '../../docs-permission-groups';
 	styleUrls: ['./bulk-bar.component.scss'],
 	standalone: false
 })
-export class BulkBarComponent extends TranslationBaseComponent {
+export class BulkBarComponent extends TranslationBaseComponent implements OnChanges {
 	/**
 	 * Stable permission arrays for the template's `*ngxPermissionsOnly` gates.
 	 * 🛑 Never inline `[permissions.X]` in a binding — a fresh array each change-detection cycle
@@ -63,6 +66,9 @@ export class BulkBarComponent extends TranslationBaseComponent {
 	 */
 	public tags: ITag[] = [];
 
+	/** Which popover is open, if any. Only one at a time. */
+	public openPanel: DocumentBulkPanel | null = null;
+
 	public readonly permissions = PermissionsEnum;
 	public readonly maxIds = DOCS_BULK_MAX_IDS;
 	public readonly maxInlineErrors = DOCS_BULK_MAX_INLINE_ERRORS;
@@ -74,6 +80,21 @@ export class BulkBarComponent extends TranslationBaseComponent {
 		private readonly dialogService: NbDialogService
 	) {
 		super(translateService);
+	}
+
+	/**
+	 * The bar hides itself with `*ngIf="count > 0"` INSIDE its own template, so an
+	 * emptied selection does not destroy the component — without this reset the open
+	 * popover, the picked tags and the previous errors would all come back with the
+	 * next selection.
+	 */
+	ngOnChanges(changes: SimpleChanges): void {
+		if (changes['selectedIds'] && !this.count) {
+			this.openPanel = null;
+			this.tags = [];
+			this.errors = [];
+			this.errorsExpanded = false;
+		}
 	}
 
 	get count(): number {
@@ -88,13 +109,34 @@ export class BulkBarComponent extends TranslationBaseComponent {
 		return this.errors.slice(0, this.maxInlineErrors);
 	}
 
+	/** Add/remove tags act on the picker's selection. */
+	get hasTagSelection(): boolean {
+		return this.selectedTagIds().length > 0;
+	}
+
+	togglePanel(panel: DocumentBulkPanel): void {
+		this.openPanel = this.openPanel === panel ? null : panel;
+	}
+
+	closePanel(): void {
+		this.openPanel = null;
+	}
+
+	/** Esc closes the open popover. */
+	@HostListener('document:keydown.escape')
+	onEscape(): void {
+		this.closePanel();
+	}
+
 	clear(): void {
 		this.errors = [];
+		this.openPanel = null;
 		this.cleared.emit();
 	}
 
 	async run(action: DocumentBulkAction, extra: Partial<Parameters<DocumentsService['bulk']>[0]> = {}): Promise<void> {
 		if (this.busy || !this.count || this.overLimit) return;
+		this.openPanel = null;
 		this.busy = true;
 		this.errors = [];
 		try {
@@ -122,6 +164,7 @@ export class BulkBarComponent extends TranslationBaseComponent {
 
 	/** Bulk reject: optional reason via the shared reject dialog (same `reason` field as single). */
 	async reject(): Promise<void> {
+		this.openPanel = null;
 		const result: { reason?: string } | null = await firstValueFrom(
 			this.dialogService.open(RejectDialogComponent).onClose
 		);
@@ -130,8 +173,15 @@ export class BulkBarComponent extends TranslationBaseComponent {
 	}
 
 	async move(): Promise<void> {
+		// Same gate as `run()`: a busy bar, an empty selection or one past `maxIds`
+		// must not reach the dialog, and the dialog gets the same capped id list the
+		// bulk endpoint would accept.
+		if (this.busy || !this.count || this.overLimit) return;
+		this.openPanel = null;
 		const moved = await firstValueFrom(
-			this.dialogService.open(MoveDialogComponent, { context: { documentIds: this.selectedIds } }).onClose
+			this.dialogService.open(MoveDialogComponent, {
+				context: { documentIds: this.selectedIds.slice(0, this.maxIds) }
+			}).onClose
 		);
 		if (moved) this.completed.emit({ destructive: true });
 	}
@@ -142,6 +192,7 @@ export class BulkBarComponent extends TranslationBaseComponent {
 	 * (`null`) skips the call.
 	 */
 	async setCategories(): Promise<void> {
+		this.openPanel = null;
 		const categoryIds: ID[] | null = await firstValueFrom(
 			this.dialogService.open(BulkCategoriesDialogComponent).onClose
 		);
