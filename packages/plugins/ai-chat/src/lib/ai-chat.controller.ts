@@ -32,7 +32,8 @@ import {
 	RequestContext,
 	TenantPermissionGuard,
 	UploadedFileStorage,
-	documentUploadFileFilter
+	documentUploadFileFilter,
+	toSafeStorageExtension
 } from '@gauzy/core';
 import { AiChatService, MAX_AUDIO_BYTES } from './ai-chat.service';
 import {
@@ -46,7 +47,6 @@ import {
  * upload endpoint). The stored object carries a neutral extension instead; the client keeps the
  * real type via `mimeType`.
  */
-const RENDERABLE_KEY_EXTENSIONS = new Set(['html', 'htm', 'xhtml', 'xml', 'svg', 'svgz', 'js', 'mjs', 'css']);
 
 /**
  * Per-request storage engine of the attachment endpoint.
@@ -66,16 +66,13 @@ const attachmentsStorage = (ctx: ExecutionContext) => {
 		dest: () => path.join('ai-chat', tenantId, organizationId),
 		prefix: 'ai-chat',
 		filename: (_file: any, extension: string) => {
-			const safeExtension = String(extension ?? '')
-				.toLowerCase()
-				.replace(/[^a-z0-9]/g, '');
-			if (!safeExtension) {
+			const storedExtension = toSafeStorageExtension(extension);
+			if (!storedExtension) {
 				return `${randomUUID()}`;
 			}
 			// Never let a browser-renderable extension onto the stored object name — same rule as the
 			// Documents upload endpoint (the LOCAL provider serves /public/<key> with a Content-Type
 			// derived from the extension; the canonical type travels in the attachment's mimeType).
-			const storedExtension = RENDERABLE_KEY_EXTENSIONS.has(safeExtension) ? 'bin' : safeExtension;
 			return `${randomUUID()}.${storedExtension}`;
 		}
 	});

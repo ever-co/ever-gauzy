@@ -247,3 +247,46 @@ export function assertNotMarkupContent(content: Buffer | string): void {
 		throw new BadRequestException('Unsupported file content: markup/script files are not allowed');
 	}
 }
+
+/**
+ * Extensions that a browser will happily execute or render inline when the object is fetched from a
+ * provider's unauthenticated `/public/` path — which would turn an upload endpoint into a
+ * same-origin XSS sink (GHSA-p334-cm7f-php5).
+ *
+ * This is about the STORED OBJECT NAME, not what the user may upload: the real content type is kept
+ * on the record and the bytes are served through an authenticated route, so mapping the stored
+ * extension to `bin` costs the client nothing. Sniffing is unaffected — it reads the ORIGINAL
+ * filename, not the storage key.
+ */
+export const RENDERABLE_KEY_EXTENSIONS: ReadonlySet<string> = new Set([
+	'html',
+	'htm',
+	'xhtml',
+	'xml',
+	'svg',
+	'svgz',
+	'js',
+	'mjs',
+	'css'
+]);
+
+/**
+ * The extension to use in a storage key, given a client-supplied one.
+ *
+ * Shared by every provider-backed upload endpoint on purpose: this policy was duplicated in the
+ * Documents and AI-chat controllers, so hardening one left the other exposed.
+ *
+ * @param extension - The extension taken from the uploaded filename.
+ * @returns A lower-case alphanumeric extension, or '' when there is nothing usable.
+ */
+export function toSafeStorageExtension(extension: string | undefined | null): string {
+	const safeExtension = String(extension ?? '')
+		.toLowerCase()
+		.replace(/[^a-z0-9]/g, '');
+
+	if (!safeExtension) {
+		return '';
+	}
+
+	return RENDERABLE_KEY_EXTENSIONS.has(safeExtension) ? 'bin' : safeExtension;
+}

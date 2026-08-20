@@ -26,7 +26,9 @@ export {
 	imageUploadFileFilter,
 	isMarkupContent,
 	shouldScanForMarkup,
-	videoUploadFileFilter
+	videoUploadFileFilter,
+	RENDERABLE_KEY_EXTENSIONS,
+	toSafeStorageExtension
 } from './lib/core/file-storage';
 export { LazyFileInterceptor } from './lib/core/interceptors';
 export * from './lib/core/seeds';

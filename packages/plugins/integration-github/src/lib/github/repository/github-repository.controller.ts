@@ -38,12 +38,9 @@ export class GitHubRepositoryController {
 		@Body() input: UpdateGithubRepositoryDTO
 	): Promise<IOrganizationGithubRepository> {
 		// Ensure that a GitHub repository with the provided identifier exists IN THE CALLER'S TENANT.
-		// `findOneByIdString` resolves to null rather than throwing, so the result has to be asserted —
-		// otherwise an unknown id falls through to `create()` and INSERTs a new row.
-		const existing = await this._githubRepositoryService.findOneByIdString(id);
-		if (!existing) {
-			throw new NotFoundException(`GitHub repository with id "${id}" was not found`);
-		}
+		// `findOneByIdString` throws NotFoundException when it matches nothing, so this call is the
+		// check; an unknown or foreign id never reaches `create()`.
+		await this._githubRepositoryService.findOneByIdString(id);
 
 		// Attempt to update the GitHub repository using the provided data.
 		return await this._githubRepositoryService.create({

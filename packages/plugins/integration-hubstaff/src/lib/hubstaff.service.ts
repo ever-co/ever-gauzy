@@ -174,7 +174,7 @@ export class HubstaffService {
 					setting.settingsValue = tokens.access_token;
 				}
 
-				if (setting.settingsName === 'refresh_token' && typeof tokens.refresh_token === 'string') {
+				if (setting.settingsName === 'refresh_token' && typeof tokens.refresh_token === 'string' && tokens.refresh_token.trim()) {
 					// Only rotate the stored refresh token when the provider actually returned one —
 					// Hubstaff omits it on some responses, and blanking it would break every later refresh.
 					setting.settingsValue = tokens.refresh_token;

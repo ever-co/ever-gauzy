@@ -49,7 +49,15 @@ const GRAPH: Record<string, IFakeEntity> = {
 		columns: ['id', 'name', 'tenantId', 'organizationId'],
 		relations: { employees: 'Employee', featureOrganizations: 'FeatureOrganization' }
 	},
-	Employee: { name: 'Employee', columns: ['id', 'billRateValue', 'tenantId', 'organizationId'] },
+	Employee: {
+		name: 'Employee',
+		columns: ['id', 'billRateValue', 'tenantId', 'organizationId'],
+		relations: { user: 'User' }
+	},
+	// Every hop below is tenant-scoped and RESOLVABLE, so a depth test using them can only fail on
+	// the depth bound — not on the unknown-relation check that runs first.
+	User: { name: 'User', columns: ['id', 'email', 'tenantId'], relations: { role: 'Role' } },
+	Role: { name: 'Role', columns: ['id', 'name', 'tenantId'] },
 	// Tenant-scoped itself (the real FeatureOrganization extends TenantOrganizationBaseEntity) — the
 	// pivot in the advisory is the SECOND hop, into the global entity behind it.
 	FeatureOrganization: {
@@ -104,12 +112,28 @@ describe('assertShareRulesAreSafe', () => {
 	);
 
 	it(`bounds the nesting at ${SHARED_ENTITY_MAX_RELATION_DEPTH} hops`, () => {
-		// Organization -> employees -> (would need a 3rd hop)
+		// Organization -> employees -> user -> role. Every hop EXISTS and is tenant-scoped, so the
+		// only thing that can reject this is the depth bound itself. (An earlier version of this test
+		// used a made-up relation name, which tripped the unknown-relation check first — the depth
+		// guard could have been deleted entirely and the test would still have passed.)
 		const deep = {
 			fields: [],
-			relations: { employees: { fields: [], relations: { anything: { fields: [] } } } }
+			relations: {
+				employees: { fields: [], relations: { user: { fields: [], relations: { role: { fields: [] } } } } }
+			}
 		} as unknown as IShareRule;
-		expect(() => assertShareRulesAreSafe(ORGANIZATION(), deep)).toThrow(BadRequestException);
+
+		expect(() => assertShareRulesAreSafe(ORGANIZATION(), deep)).toThrow(
+			/may not be nested deeper than 2 levels/
+		);
+	});
+
+	it('allows nesting exactly AT the bound', () => {
+		const atLimit = {
+			fields: [],
+			relations: { employees: { fields: [], relations: { user: { fields: ['email'] } } } }
+		} as unknown as IShareRule;
+		expect(() => assertShareRulesAreSafe(ORGANIZATION(), atLimit)).not.toThrow();
 	});
 
 	it('refuses a non-object / array relations map', () => {

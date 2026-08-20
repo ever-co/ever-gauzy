@@ -389,7 +389,14 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		let existingTenantId: ID | null | undefined;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				existing = await this.mikroOrmRepository.findOne({ id } as any, { fields: ['id', 'tenantId'] as any });
+				// `filters: false` matters: MikroORM applies the soft-delete filter by default, so a
+				// foreign row that was soft-deleted would be invisible here — the guard would pass and
+				// the upsert would claim it. The TypeORM branch uses `withDeleted: true` for the same
+				// reason.
+				existing = await this.mikroOrmRepository.findOne({ id } as any, {
+					fields: ['id', 'tenantId'] as any,
+					filters: false
+				});
 				existingTenantId = (existing as any)?.tenantId;
 				break;
 			}
@@ -423,7 +430,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		let existing: any[];
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				existing = await this.mikroOrmRepository.find({ id: { $in: ids } } as any, { fields: ['id', 'tenantId'] as any });
+				existing = await this.mikroOrmRepository.find({ id: { $in: ids } } as any, {
+					fields: ['id', 'tenantId'] as any,
+					filters: false
+				});
 				break;
 			case MultiORMEnum.TypeORM:
 			default:

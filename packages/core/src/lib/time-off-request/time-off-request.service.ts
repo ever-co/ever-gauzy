@@ -134,13 +134,10 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			// the one that is saved: the body is not DTO-validated, so a body id spread after the path id
 			// used to re-point the save (TypeORM save() with an existing PK is an UPDATE of that row).
 			//
-			// The lookup RESULT is asserted: `findOneByIdString` resolves to null rather than throwing
-			// when nothing matches the tenant-scoped conditions, so discarding it would let an unknown
-			// id fall through to `save()` and INSERT a brand-new row under the caller's tenant.
-			const existing = await this.findOneByIdString(id);
-			if (!existing) {
-				throw new NotFoundException(`Time off request with id "${id}" was not found`);
-			}
+			// `findOneByIdString` THROWS NotFoundException when nothing matches the tenant-scoped
+			// conditions, so this call is the check — an id belonging to another tenant, or to no row
+			// at all, never reaches `save()` (where it would INSERT under the caller's tenant).
+			await this.findOneByIdString(id);
 			return await this.save({
 				...timeOffRequest,
 				id

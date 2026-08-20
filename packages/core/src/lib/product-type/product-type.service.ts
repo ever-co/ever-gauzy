@@ -46,10 +46,8 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 			// current row (tenant-scoped, translations are eager) so the payload can be rebuilt under the
 			// VERIFIED path id — never a body-supplied one, since a recreate with a foreign id would
 			// write into another tenant's row — and so omitting `translations` does not erase them.
+			// Throws NotFoundException when the row is not in the caller's tenant.
 			const existing = await this.findOneByIdString(id);
-			if (!existing) {
-				throw new NotFoundException(`Product type with id "${id}" was not found`);
-			}
 
 			const payload = {
 				...entity,
@@ -57,8 +55,11 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 				...(isNotEmpty(tenantId) ? { tenantId } : {}),
 				// A translation row is deleted with its parent, so the carried-over copies must be NEW
 				// rows: keeping their old ids would make TypeORM issue an UPDATE that matches nothing.
-				translations: isNotEmpty(entity?.translations)
-					? entity.translations
+				// `undefined`, not `isNotEmpty`: an explicit `translations: []` means "remove them", and
+				// treating it as omitted would make the list impossible to clear.
+				translations:
+					entity?.translations !== undefined && entity?.translations !== null
+						? entity.translations
 					: (existing.translations ?? []).map(({ id: _translationId, ...translation }: any) => translation)
 			};
 

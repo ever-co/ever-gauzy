@@ -1,5 +1,5 @@
 import { ApiPropertyOptional, IntersectionType, PartialType, PickType } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 import { IUserUpdateInput } from '@gauzy/contracts';
 import { User } from '../user.entity';
 import { CreateUserDTO } from './create-user.dto';
@@ -29,6 +29,10 @@ class UpdateUserCredentialsDTO {
 	@IsOptional()
 	@IsString()
 	@IsNotEmpty()
+	// Same floor as registration (`RegisterUserDTO` uses MinLength(8)). Without it this route was the
+	// one way into the system to set a one-character password: `updateProfile` hashes whatever it is
+	// given, so the weak value is stored just as happily as a strong one.
+	@MinLength(8, { message: 'Password should be at least 8 characters long.' })
 	readonly hash?: string;
 }
 
