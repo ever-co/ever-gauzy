@@ -34,13 +34,14 @@ function UserAttachmentChips({
 		alignItems: 'center',
 		gap: 4,
 		maxWidth: '100%',
-		padding: '2px 8px',
+		padding: '3px 8px',
 		borderRadius: 999,
-		border: '1px solid rgba(255, 255, 255, 0.35)',
-		backgroundColor: 'rgba(255, 255, 255, 0.15)',
+		border: '1px solid rgba(255, 255, 255, 0.28)',
+		backgroundColor: 'rgba(255, 255, 255, 0.14)',
 		color: 'inherit',
-		fontSize: chatTheme.fontSizeSmall,
-		lineHeight: 1.4,
+		fontSize: chatTheme.fontSizeMessage,
+		fontWeight: chatTheme.fontWeightMedium,
+		lineHeight: 1.5,
 		overflow: 'hidden',
 		textOverflow: 'ellipsis',
 		whiteSpace: 'nowrap'
@@ -52,7 +53,14 @@ function UserAttachmentChips({
 					<button
 						key={`${attachment.documentId}-${chipIndex}`}
 						type="button"
-						style={{ ...chipStyle, cursor: 'pointer', font: 'inherit', fontSize: chatTheme.fontSizeSmall }}
+						className="gz-ai-chat-user-chip"
+						style={{
+							...chipStyle,
+							cursor: 'pointer',
+							font: 'inherit',
+							fontSize: chatTheme.fontSizeMessage,
+							fontWeight: chatTheme.fontWeightMedium
+						}}
 						title={attachment.name}
 						aria-label={t('AI_ASSISTANT.ATTACH_OPEN', 'Open attached document') + `: ${attachment.name}`}
 						onClick={() =>
@@ -121,15 +129,20 @@ export function ChatMessageItem({
 	};
 
 	const bubbleStyle: CSSProperties = {
-		maxWidth: '90%',
-		padding: '8px 12px',
+		maxWidth: isUser ? '88%' : '96%',
+		minWidth: 0,
+		padding: isUser ? '7px 11px' : '8px 11px',
 		borderRadius: isUser
-			? `${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} 4px ${chatTheme.bubbleRadius}`
-			: `${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} 4px`,
+			? `${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadiusTight} ${chatTheme.bubbleRadius}`
+			: `${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadiusTight}`,
 		backgroundColor: isUser ? chatTheme.userBubbleBg : chatTheme.assistantBubbleBg,
+		// The assistant bubble is a quiet surface, so a hairline is what gives it an edge
+		// against the panel; the user bubble already has its own fill.
+		border: isUser ? '1px solid transparent' : `1px solid ${chatTheme.borderSoft}`,
 		color: isUser ? chatTheme.userBubbleText : chatTheme.assistantBubbleText,
-		fontSize: chatTheme.fontSizeBase,
-		lineHeight: 1.5,
+		fontSize: chatTheme.fontSizeMessage,
+		lineHeight: chatTheme.lineHeightMessage,
+		letterSpacing: '0.01em',
 		wordBreak: 'break-word'
 	};
 
