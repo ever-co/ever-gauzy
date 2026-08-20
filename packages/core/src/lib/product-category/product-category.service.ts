@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, HttpException } from '@nestjs/common';
 import { ID, IPagination, IProductCategoryTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
+import { MultiORMEnum } from './../core/utils';
 import { ProductCategory } from './product-category.entity';
 import { TypeOrmProductCategoryRepository } from './repository/type-orm-product-category.repository';
 import { MikroOrmProductCategoryRepository } from './repository/mikro-orm-product-category.repository';
@@ -45,7 +46,14 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 			await super.delete(id);
 			// Persist under the verified path id, never a body-supplied one (save() with an existing PK
 			// updates THAT row).
-			return this.save({ ...entity, id });
+			//
+			// MikroORM only: `save()` is `upsert()` there, which does NOT cascade relations, so a
+			// translatable entity came back with its translations dropped. `create()` goes through
+			// persistAndFlush, which does cascade. The TypeORM path keeps `save()` unchanged — its
+			// behaviour is already correct and this is not the place to alter it.
+			return this.ormType === MultiORMEnum.MikroORM
+				? await this.create({ ...entity, id })
+				: await this.save({ ...entity, id });
 		} catch (err) {
 			// Preserve the 404 above instead of flattening it to a 400.
 			if (err instanceof HttpException) {
