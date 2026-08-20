@@ -1,4 +1,6 @@
 @if (user$ | async; as user) {
+	<!-- Space scrolls the page on a div; the role="button" contract is to activate instead,
+	     hence the preventDefault() on the Space handler below. -->
 	<div
 		class="user-container"
 		[class.with-identity]="showIdentity"
@@ -8,7 +10,6 @@
 		tabindex="0"
 		(click)="onClicked()"
 		(keydown.enter)="onClicked()"
-		<!-- Space scrolls the page on a div; the role="button" contract is to activate instead. -->
 		(keydown.space)="$event.preventDefault(); onClicked()"
 	>
 		<div class="img-container">
