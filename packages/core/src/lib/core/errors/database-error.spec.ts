@@ -458,8 +458,21 @@ describe('looksLikeDriverCode', () => {
 		expect(looksLikeDriverCode(code)).toBe(true);
 	});
 
-	it.each([['NOT_FOUND'], ['FORBIDDEN'], ['E_VALIDATION'], ['400'], ['abcde'], [''], [undefined], [42]])(
-		'does not mistake %p for a driver code',
+	it.each([
+		['ECONNREFUSED'],
+		['ETIMEDOUT'],
+		['ENOTFOUND'],
+		['ELIFECYCLE'],
+		['NOT_FOUND'],
+		['FORBIDDEN'],
+		['E_VALIDATION'],
+		['400'],
+		['abcde'],
+		[''],
+		[undefined],
+		[42]
+	])(
+		'does not mistake %p for a driver code (network codes come from any HTTP client)',
 		(code) => {
 			expect(looksLikeDriverCode(code)).toBe(false);
 		}

@@ -176,11 +176,15 @@ export function isDatabaseErrorPayload(value: unknown): boolean {
  * one without a mapped message simply gets the generic text.
  */
 const DRIVER_CODE_SHAPES: ReadonlyArray<RegExp> = [
-	/^[0-9][0-9A-Z]{4}$/, // postgres SQLSTATE — five chars, leading digit (23505, 42P01, 22P02)
+	/^[0-9][0-9A-Z]{4}$/, // postgres SQLSTATE — five chars, leading digit (23505, 42P01, 22P02, 08006)
 	/^SQLITE_[A-Z0-9_]+$/, // better-sqlite3 / sqlite3
-	/^ER_[A-Z0-9_]+$/, // mysql / mariadb
-	/^ELIFECYCLE$|^ECONNREFUSED$|^ETIMEDOUT$|^ENOTFOUND$/ // connection-level failures surfaced by drivers
+	/^ER_[A-Z0-9_]+$/ // mysql / mariadb
 ];
+
+// Deliberately NOT here: ECONNREFUSED / ETIMEDOUT / ENOTFOUND. They look database-adjacent, but any
+// HTTP client emits them — an integration whose upstream is down would have its message replaced by
+// the generic database text, which is both wrong and unhelpful. A database connection failure still
+// gets caught, either by its SQLSTATE (postgres uses the 08xxx class) or by the payload shape.
 
 /**
  * Whether a value looks like a database driver's error code.
