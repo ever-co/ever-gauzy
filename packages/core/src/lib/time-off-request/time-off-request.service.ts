@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ConflictException, HttpException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, HttpException } from '@nestjs/common';
 import { Between, Brackets, Like, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {

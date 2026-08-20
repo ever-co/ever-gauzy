@@ -5,7 +5,6 @@ import {
 	Post,
 	Body,
 	HttpCode,
-	NotFoundException,
 	Put,
 	Param,
 	UseGuards,

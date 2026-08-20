@@ -1,7 +1,5 @@
-import { ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IUser, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
-import { RequestContext } from '../../../core/context';
+import { IUser } from '@gauzy/contracts';
 import { UserCreateCommand } from '../user.create.command';
 import { UserService } from '../../user.service';
 
