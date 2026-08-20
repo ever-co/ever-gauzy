@@ -34,6 +34,7 @@ import {
 } from './../../core/utils';
 import { parseTypeORMFindCountOptions } from './utils';
 import { assertCriteriaHasPredicate } from './criteria.helper';
+import { redactDatabaseError, safeErrorMessage, toClientSafeError } from '../errors/database-error';
 import {
 	ICountByOptions,
 	ICountOptions,
@@ -228,8 +229,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 
 			return { items, total };
 		} catch (error) {
-			console.log(error);
-			throw new BadRequestException(error);
+			console.log(redactDatabaseError(error));
+			throw new BadRequestException(toClientSafeError(error));
 		}
 	}
 
@@ -514,7 +515,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 						await this.mikroOrmRepository.persistAndFlush(newEntity); // This will also persist the relations
 						return this.serialize(newEntity);
 					} catch (error) {
-						console.error('Error during mikro orm create crud transaction:', error);
+						console.error('Error during mikro orm create crud transaction:', redactDatabaseError(error));
 					}
 				case MultiORMEnum.TypeORM:
 					const newEntity = this.typeOrmRepository.create(partialEntity as DeepPartial<T>);
@@ -523,8 +524,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
-			console.error('Error in crud service create method:', error);
-			throw new BadRequestException(error);
+			console.error('Error in crud service create method:', redactDatabaseError(error));
+			throw new BadRequestException(toClientSafeError(error));
 		}
 	}
 
@@ -558,8 +559,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
-			console.error('Error in crud service createMany method:', error);
-			throw new BadRequestException(error);
+			console.error('Error in crud service createMany method:', redactDatabaseError(error));
+			throw new BadRequestException(toClientSafeError(error));
 		}
 	}
 
@@ -581,8 +582,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
-			console.error('Error in crud service save method:', error);
-			throw new BadRequestException(error);
+			console.error('Error in crud service save method:', redactDatabaseError(error));
+			throw new BadRequestException(toClientSafeError(error));
 		}
 	}
 
@@ -605,8 +606,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
-			console.error('Error in crud service saveMany method:', error);
-			throw new BadRequestException(error);
+			console.error('Error in crud service saveMany method:', redactDatabaseError(error));
+			throw new BadRequestException(toClientSafeError(error));
 		}
 	}
 
@@ -644,7 +645,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
-			throw new BadRequestException(error);
+			throw new BadRequestException(toClientSafeError(error));
 		}
 	}
 
@@ -682,7 +683,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
-			throw new NotFoundException(`The record was not found`, error);
+			throw new NotFoundException(`The record was not found`, safeErrorMessage(error));
 		}
 	}
 
@@ -712,7 +713,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
-			throw new NotFoundException(`The records were not found`, error);
+			throw new NotFoundException(`The records were not found`, safeErrorMessage(error));
 		}
 	}
 
@@ -755,7 +756,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Soft delete not implemented for ORM type: ${this.ormType}`);
 			}
 		} catch (error) {
-			throw new NotFoundException(`The record was not found or could not be soft-deleted`, error);
+			throw new NotFoundException(`The record was not found or could not be soft-deleted`, safeErrorMessage(error));
 		}
 	}
 
@@ -798,7 +799,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			}
 		} catch (error) {
 			// If any error occurs, rethrow it as a NotFoundException with additional context.
-			throw new NotFoundException(`An error occurred during soft removal: ${error.message}`, error);
+			throw new NotFoundException(`An error occurred during soft removal: ${safeErrorMessage(error)}`);
 		}
 	}
 
@@ -849,7 +850,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			}
 		} catch (error) {
 			// If any error occurs, rethrow it as a NotFoundException with additional context.
-			throw new NotFoundException(`An error occurred during restoring entity: ${error.message}`);
+			throw new NotFoundException(`An error occurred during restoring entity: ${safeErrorMessage(error)}`);
 		}
 	}
 
