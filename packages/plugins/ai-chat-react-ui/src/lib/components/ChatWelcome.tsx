@@ -21,25 +21,28 @@ export function ChatWelcome({ translate: t = passthroughChatTranslate }: ChatWel
 		flexDirection: 'column',
 		alignItems: 'center',
 		justifyContent: 'center',
-		padding: '20px 12px',
+		padding: '24px 20px',
 		textAlign: 'center',
-		gap: 10
+		gap: 12
 	};
 
 	const iconContainerStyle: CSSProperties = {
-		width: 44,
-		height: 44,
+		width: 46,
+		height: 46,
 		borderRadius: '50%',
 		backgroundColor: chatTheme.accentLight,
+		border: `1px solid ${chatTheme.borderSoft}`,
 		display: 'flex',
 		alignItems: 'center',
 		justifyContent: 'center',
-		color: chatTheme.accent
+		color: chatTheme.accent,
+		marginBottom: 2
 	};
 
 	const titleStyle: CSSProperties = {
 		fontSize: chatTheme.fontSizeLarge,
-		fontWeight: 600,
+		fontWeight: chatTheme.fontWeightSemibold,
+		letterSpacing: '-0.005em',
 		color: chatTheme.textPrimary,
 		margin: 0
 	};
@@ -48,7 +51,8 @@ export function ChatWelcome({ translate: t = passthroughChatTranslate }: ChatWel
 		fontSize: chatTheme.fontSizeSmall,
 		color: chatTheme.textSecondary,
 		margin: 0,
-		lineHeight: 1.5
+		maxWidth: 260,
+		lineHeight: 1.65
 	};
 
 	return (

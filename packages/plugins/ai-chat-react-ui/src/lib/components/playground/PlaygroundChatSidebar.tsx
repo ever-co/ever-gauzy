@@ -5,6 +5,7 @@ import { useInjector } from '@gauzy/ui-react';
 import { Store } from '@gauzy/ui-core/core';
 import { environment } from '@gauzy/ui-config';
 import { playgroundTheme as t } from '../../playground-theme';
+import { chatMarkdownCss } from '../../chat-markdown-css';
 import { PlaygroundChatPanel } from './PlaygroundChatPanel';
 
 /**
@@ -96,6 +97,8 @@ export function PlaygroundChatSidebar() {
 					0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
 					40% { transform: scale(1); opacity: 1; }
 				}
+
+				${chatMarkdownCss}
 			`}</style>
 
 			<div style={headerStyle}>
