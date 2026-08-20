@@ -42,6 +42,30 @@ $menu-row-radius: var(--gauzy-radius-sm, 0.375rem);
 // undefined in the material-* themes.
 $menu-row-color: var(--gauzy-text-color-2, var(--text-hint-color));
 
+// Row weights. Deliberately NOT `menu-text-font-weight` (500) and not the 600
+// the active row used to carry: a sidebar is chrome, and at this size on a muted
+// colour those two steps read as semi-bold everywhere, which is what made the
+// nav look heavier than the page it frames. 400 at rest / 500 for the current
+// entry keeps exactly one step of contrast between them, and both are real
+// Inter cuts (the font is loaded at 100..900, so nothing rounds up).
+// The shared token is left alone on purpose — it is also what overlay menus,
+// ng-select rows and the settings menu resolve.
+$menu-row-weight: 400;
+$menu-row-active-weight: 500;
+
+// 14px for every label in the nav — deliberately NOT `menu-text-font-size`
+// (0.8125rem / 13px), which is the app's shared CONTROL text size and is also
+// what overlay menus, ng-select rows and the settings menu resolve. The sidebar
+// is read at a glance and from a distance; the shared token stays where it is.
+$menu-row-font-size: 0.875rem;
+
+// Row padding, one step tighter than the shared `menu-item-padding`
+// (0.5rem 0.75rem). The bigger label would otherwise push a row from 36px to
+// 38px and the nav would grow taller for no gain — trimming the box back keeps
+// the row at 2rem, so the sidebar holds MORE entries than before at a larger
+// size rather than fewer.
+$menu-row-padding: 0.375rem 0.625rem;
+
 // Fixed icon column so labels line up whatever glyph an entry uses.
 $menu-icon-column: 1rem;
 
@@ -49,15 +73,15 @@ $menu-icon-column: 1rem;
 // the indicator at `right: 1rem`, so the gutter has to clear 1rem + the icon.
 $menu-chevron-gutter: 2rem;
 
-// The inline half of `menu-item-padding` (0.5rem 0.75rem). Needed as a literal
-// wherever the chevron gutter is given back, because a CSS custom property
-// cannot be destructured into its longhand properties.
-// KEEP IN SYNC with `menu-item-padding` in packages/ui-core/static/styles/themes.scss.
-$menu-row-inline-padding: 0.75rem;
+// The inline half of `$menu-row-padding`. Needed as a separate literal wherever
+// only one side is given back, because a shorthand cannot be destructured into
+// its longhand properties.
+// KEEP IN SYNC with the inline half of `$menu-row-padding` above.
+$menu-row-inline-padding: 0.625rem;
 
 // Child rows sit one step in from the parent row's icon column:
-// 0.75rem (row padding) + 0.75rem (step).
-$menu-child-indent: 1.5rem;
+// 0.625rem (row padding) + 0.625rem (step).
+$menu-child-indent: 1.25rem;
 
 :host {
   position: relative;
@@ -83,7 +107,7 @@ $menu-child-indent: 1.5rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: nb-theme(menu-item-padding);
+    padding: $menu-row-padding;
     // Keep the label clear of the absolutely positioned chevron. Logical
     // property rather than nb-ltr/nb-rtl: it flips with the inherited
     // `direction` and does not depend on a [dir] attribute being present.
@@ -92,22 +116,34 @@ $menu-child-indent: 1.5rem;
     // Nebular draws a 1px divider above/below every header; flat rows have none.
     border-width: 0;
     color: $menu-row-color;
-    font-size: nb-theme(menu-text-font-size);
-    font-weight: nb-theme(menu-text-font-weight);
+    font-size: $menu-row-font-size;
+    font-weight: $menu-row-weight;
     line-height: 1.25rem;
     letter-spacing: 0;
+    // Sub-pixel rendering thickens light text on a dark sidebar; grayscale
+    // antialiasing is the other half of "less heavy" and costs nothing.
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     transition:
       background-color 0.12s ease-in-out,
       color 0.12s ease-in-out;
 
     // Icons inherit the row colour (muted at rest, brightening with the label)
     // and sit in a fixed width column so every label starts at the same x.
+    //
+    // Font Awesome only ships one cut per glyph, so an icon has no weight axis
+    // to turn down — the lever is INK. A step off both the size and the opacity
+    // lets a solid glyph sit at the same optical weight as the 400 label beside
+    // it instead of out-inking it; both come back to full on hover/active,
+    // where the label brightens too.
     > i {
       flex: 0 0 auto;
       width: $menu-icon-column;
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
       text-align: center;
       color: inherit;
+      opacity: 0.85;
+      transition: opacity 0.12s ease-in-out;
     }
 
     // Label: never wraps, never pushes the chevron — it truncates.
@@ -132,6 +168,10 @@ $menu-child-indent: 1.5rem;
   nb-accordion-item-header:hover {
     background-color: $menu-row-hover-background;
     color: nb-theme(text-basic-color);
+
+    > i {
+      opacity: 1;
+    }
   }
 
   // Nebular makes the header focusable (tabindex="0") but paints nothing on
@@ -142,6 +182,10 @@ $menu-child-indent: 1.5rem;
     color: nb-theme(text-basic-color);
     outline: 2px solid nb-theme(color-primary-default);
     outline-offset: -2px;
+
+    > i {
+      opacity: 1;
+    }
   }
 
   // Chevron: muted and sized to the row (nb-icon defaults to 1.25rem, which
@@ -177,7 +221,11 @@ $menu-child-indent: 1.5rem;
   nb-accordion-item.opened > nb-accordion-item-header {
     background-color: $menu-row-active-background;
     color: nb-theme(text-basic-color);
-    font-weight: 600;
+    font-weight: $menu-row-active-weight;
+
+    > i {
+      opacity: 1;
+    }
   }
 
   // ...but when the entry has children the fill belongs to the selected CHILD
@@ -211,14 +259,23 @@ $menu-child-indent: 1.5rem;
   // ── Icon rail ─────────────────────────────────────────────────────────────
   // `.closed` mirrors the sidebar's collapsed state: one centred glyph per row,
   // no label and no chevron (there is no width to spare for either).
+  //
+  // The rail is 3.5rem wide and the menu column gives back 0.5rem on each side
+  // (one-column.layout.scss), so a row is a 2.5rem-wide, 2.25rem-tall target
+  // with the tint centred under the glyph instead of a full-bleed band.
   nb-accordion.closed {
     nb-accordion-item-header {
       justify-content: center;
-      // The chevron is hidden here, so give its gutter back to the glyph.
-      padding-inline-end: $menu-row-inline-padding;
+      // The glyph is the only thing in the row, so the inline padding is the
+      // chevron gutter's as well — it all goes back to centring the icon.
+      padding-inline: 0;
+      min-height: 2rem;
 
       > i {
         margin-right: unset;
+        // A rail glyph is the only thing carrying the entry, so it runs at the
+        // expanded sidebar's icon size rather than the smaller in-row step.
+        font-size: 0.875rem;
       }
 
       // No room for the chevron in the rail.
@@ -267,11 +324,13 @@ $menu-child-indent: 1.5rem;
   justify-content: flex-start;
   border-radius: $menu-row-radius;
   color: $menu-row-color;
-  font-size: nb-theme(menu-text-font-size);
-  font-weight: nb-theme(menu-text-font-weight);
+  font-size: $menu-row-font-size;
+  font-weight: $menu-row-weight;
   line-height: 1.25rem;
   letter-spacing: 0;
   cursor: pointer;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   transition:
     background-color 0.12s ease-in-out,
     color 0.12s ease-in-out;
@@ -281,6 +340,10 @@ $menu-child-indent: 1.5rem;
   &:hover {
     background-color: $menu-row-hover-background;
     color: nb-theme(text-basic-color);
+
+    i {
+      opacity: 1;
+    }
   }
 
   // Same treatment as an active top level row — see the contrast note there for
@@ -288,7 +351,11 @@ $menu-child-indent: 1.5rem;
   &.selected {
     background-color: $menu-row-active-background;
     color: nb-theme(text-basic-color);
-    font-weight: 600;
+    font-weight: $menu-row-active-weight;
+
+    i {
+      opacity: 1;
+    }
   }
 
   // Icon rail: no indent, glyph centred, label hidden by the template.
@@ -320,15 +387,17 @@ $menu-child-indent: 1.5rem;
   gap: 0.5rem;
   flex: 1 1 auto;
   min-width: 0;
-  padding: nb-theme(menu-item-padding);
+  padding: $menu-row-padding;
   padding-inline-start: $menu-child-indent;
 
   i {
     flex: 0 0 auto;
     width: $menu-icon-column;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     text-align: center;
     color: inherit;
+    opacity: 0.85;
+    transition: opacity 0.12s ease-in-out;
   }
 
   span {
@@ -337,4 +406,77 @@ $menu-child-indent: 1.5rem;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
+}
+
+// Icon rail: the glyph is the whole row, so it keeps the full 0.875rem step —
+// same reasoning as the rail header above.
+:host .sub-item.custom .info i {
+  font-size: 0.875rem;
+}
+
+// A flyout row is a panel row, not a sidebar row: the parent's icon column no
+// longer sits to its left, so the child indent that lines the two up in the
+// expanded sidebar would just be dead space inside the panel.
+:host(.rail-flyout-row) .info {
+  padding-inline-start: $menu-row-inline-padding;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Rail flyout — the sub-link panel that opens beside an icon while the sidebar
+// is collapsed. In the rail an entry shows nothing but a glyph, so its
+// sub-links were reachable only by first expanding the accordion INSIDE a
+// 3.5rem column, where every child is another unlabelled glyph. Hovering the
+// icon now offers the same list with its labels, one pointer move away.
+//
+// It renders through `nbPopover` (`.cdk-overlay-container`, above the sidebar's
+// z-index) rather than as an absolutely positioned child, because the menu
+// column is a scroll container: an in-flow panel would be clipped at the rail's
+// edge. The container chrome — hairline, shadow, radius, surface — comes from
+// the shared `nb-popover` rules in `static/styles/_overlays.scss`, so this panel
+// is the same surface as every other menu overlay in the app; only its inner
+// metrics live here.
+//
+// These selectors are deliberately NOT nested under `:host`: the template is
+// rendered into the overlay container, outside this component's element, so a
+// `:host`-prefixed rule would never match it. Angular's emulated encapsulation
+// still scopes them by the `_ngcontent` attribute it stamps on the template's
+// own elements.
+// ─────────────────────────────────────────────────────────────────────────────
+.rail-flyout {
+  display: flex;
+  flex-direction: column;
+  // Wide enough for a real label, capped so a long one ellipsizes instead of
+  // stretching the panel across the canvas.
+  min-width: 11rem;
+  max-width: 17rem;
+  // A section with many children stays inside the viewport and scrolls.
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  // The container padding of every other overlay menu in the app, so the first
+  // and last row's hover tint clears the panel's rounded corners.
+  padding: 0.25rem;
+}
+
+// Which section this is — in the rail the parent row has no label of its own,
+// so without this the panel is a list of links from nowhere. Same treatment as
+// the group captions in the overlay menus, but at 10px: it is a caption over
+// the list, and the wider the gap to the 14px rows under it, the more clearly
+// it reads as a label rather than as the first entry.
+.rail-flyout-title {
+  padding: 0.375rem $menu-row-inline-padding 0.25rem;
+  color: nb-theme(text-hint-color);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rail-flyout-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
 }
