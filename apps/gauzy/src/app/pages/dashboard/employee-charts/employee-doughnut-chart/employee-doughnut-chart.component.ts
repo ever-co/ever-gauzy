@@ -12,6 +12,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
 import { Store } from '@gauzy/ui-core/core';
+import { IEmployeeChartPalette, resolveEmployeeChartPalette } from '../employee-chart-palette';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -20,7 +21,7 @@ import { Store } from '@gauzy/ui-core/core';
 		@if (employeeStatistics.length) {
 		  <!-- <span>{{ displayDate }}</span> -->
 		  <canvas
-		    style="height: 500px; width: 500px;"
+		    style="height: 20rem; width: 100%;"
 		    baseChart
 		    [data]="data"
 		    [options]="chartOptions"
@@ -53,6 +54,9 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 	public chartType: ChartType = 'doughnut';
 	public chartOptions: ChartConfiguration['options'];
 	public data: ChartConfiguration['data'];
+
+	/** Slice colours for the active theme; see `employee-chart-palette.ts`. */
+	private palette: IEmployeeChartPalette = resolveEmployeeChartPalette({} as NbJSThemeOptions);
 
 	public organization: IOrganization;
 	public labels: string[] = [];
@@ -134,8 +138,7 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 	 * @param config - The configuration options for the Chart, including theme variables.
 	 */
 	private _initializeChart(config: NbJSThemeOptions) {
-		// Step 1: Extract chartjs configuration from theme variables
-		const chartJs: any = config.variables.chartjs;
+		this.palette = resolveEmployeeChartPalette(config);
 
 		// Step 2: Set the overall chart options
 		this.chartOptions = {
@@ -153,7 +156,7 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 				legend: {
 					position: 'top',
 					labels: {
-						color: chartJs.textColor,
+						color: this.palette.textColor,
 						usePointStyle: false
 					}
 				},
@@ -215,7 +218,12 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 						this.statistics.bonus,
 						this.statistics.profit
 					],
-					backgroundColor: ['#089c17', '#dbc300', '#66de0b', '#0091ff'],
+					backgroundColor: [
+						this.palette.revenue,
+						this.palette.expenses,
+						this.palette.bonus,
+						this.palette.profit
+					],
 					hoverBorderColor: 'rgba(0, 0, 0, 0)',
 					borderWidth: 1
 				}

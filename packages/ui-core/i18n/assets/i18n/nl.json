@@ -3652,7 +3652,9 @@
 		"SELECT_AN_ORGANIZATION": "Organisatie",
 		"SELECT_PROJECT": "Project",
 		"SELECT_TEAM": "Team",
-		"AI_CHAT": "AI-chat"
+		"AI_CHAT": "AI-chat",
+		"COLLAPSE_SIDEBAR": "Zijbalk inklappen",
+		"EXPAND_SIDEBAR": "Zijbalk uitklappen"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI-assistent",

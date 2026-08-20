@@ -12,8 +12,13 @@
 	<nb-icon icon="cloud-upload-outline"></nb-icon>
 	<div class="docs-drop-strip-copy">
 		<span class="docs-drop-strip-title">{{ 'DOCS.UPLOAD.DROP_STRIP_TITLE' | translate }}</span>
-		<span class="docs-drop-strip-hint">{{
-			'DOCS.UPLOAD.DROP_STRIP_HINT' | translate: { formats: formats, max: maxFileSize, files: maxFiles }
-		}}</span>
+		<span
+			class="docs-drop-strip-hint"
+			[nbTooltip]="'DOCS.UPLOAD.DROP_STRIP_HINT' | translate: { formats: formats, max: maxFileSize, files: maxFiles }"
+			nbTooltipStatus="basic"
+			>{{
+				'DOCS.UPLOAD.DROP_STRIP_HINT' | translate: { formats: formats, max: maxFileSize, files: maxFiles }
+			}}</span
+		>
 	</div>
 </div>

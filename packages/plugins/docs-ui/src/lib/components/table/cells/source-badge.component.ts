@@ -17,7 +17,7 @@ const SOURCE_ICONS: Record<DocumentSourceEnum, string> = {
 	template: `
 		<span class="docs-source" *ngIf="source">
 			<nb-icon [icon]="icon" size="tiny"></nb-icon>
-			{{ 'DOCS.SOURCE.' + source | translate }}
+			<span class="docs-source__label">{{ 'DOCS.SOURCE.' + source | translate }}</span>
 		</span>
 	`,
 	styles: [
@@ -26,8 +26,25 @@ const SOURCE_ICONS: Record<DocumentSourceEnum, string> = {
 				display: inline-flex;
 				align-items: center;
 				gap: 0.25rem;
-				font-size: 0.75rem;
-				color: var(--text-hint-color);
+				max-width: 100%;
+				height: var(--gauzy-table-badge-height, 1.25rem);
+				font-size: var(--docs-meta-size, 0.75rem);
+				line-height: 1;
+				color: var(--docs-text-muted, var(--text-hint-color));
+				white-space: nowrap;
+				overflow: hidden;
+			}
+			/* text-overflow is ignored on the flex container itself - the label needs
+			   its own block box for the ellipsis to appear. */
+			.docs-source__label {
+				min-width: 0;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.docs-source nb-icon {
+				flex: 0 0 auto;
+				font-size: 0.875rem;
 			}
 		`
 	],

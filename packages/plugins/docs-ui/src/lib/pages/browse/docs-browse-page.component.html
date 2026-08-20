@@ -97,7 +97,7 @@
 		[attr.aria-label]="'DOCS.A11Y.BREADCRUMB' | translate"
 	>
 		<button nbButton ghost size="tiny" [disabled]="!breadcrumb.length" (click)="onDrillIn(null)">
-			{{ 'DOCS.CARDS.BREADCRUMB_ROOT' | translate }}
+			<span class="docs-crumb-label">{{ 'DOCS.CARDS.BREADCRUMB_ROOT' | translate }}</span>
 		</button>
 		<ng-container *ngFor="let crumb of breadcrumb; let last = last">
 			<nb-icon icon="chevron-right-outline" class="docs-crumb-sep"></nb-icon>
@@ -109,9 +109,12 @@
 				size="tiny"
 				[disabled]="last || crumb.restricted || !crumb.id"
 				[class.docs-crumb-restricted]="crumb.restricted"
+				[nbTooltip]="crumb.restricted ? ('DOCS.BREADCRUMB.RESTRICTED' | translate) : crumb.name"
 				(click)="onCrumbClick(crumb)"
 			>
-				{{ crumb.restricted ? ('DOCS.BREADCRUMB.RESTRICTED' | translate) : crumb.name }}
+				<span class="docs-crumb-label">
+					{{ crumb.restricted ? ('DOCS.BREADCRUMB.RESTRICTED' | translate) : crumb.name }}
+				</span>
 			</button>
 		</ng-container>
 	</nav>
@@ -120,23 +123,19 @@
 	     filter-relative numbers); hides itself when the endpoint is unavailable. -->
 	<gz-docs-stats-line #statsLine></gz-docs-stats-line>
 
-	<!-- Preset chips -->
-	<gz-docs-preset-chips
-		[counts]="query.presetCounts$ | async"
-		[active]="(query.filter$ | async)?.preset"
-		(presetToggled)="onPresetToggled($event)"
-	></gz-docs-preset-chips>
-
-	<!-- Filter bar -->
-	<gz-docs-filter-bar
-		[facets]="query.facets$ | async"
-		[value]="query.filter$ | async"
-		[urlParams]="urlParams"
-		(filterChange)="onFilterChange($event)"
-		(searchChange)="onSearchChange($event)"
-		(clearAll)="onClearAll()"
-		(applyView)="onApplySavedView($event)"
-	></gz-docs-filter-bar>
+	<div class="docs-browse-toolbar">
+		<gz-docs-filter-bar
+			[facets]="query.facets$ | async"
+			[value]="query.filter$ | async"
+			[urlParams]="urlParams"
+			[presetCounts]="query.presetCounts$ | async"
+			(filterChange)="onFilterChange($event)"
+			(searchChange)="onSearchChange($event)"
+			(clearAll)="onClearAll()"
+			(applyView)="onApplySavedView($event)"
+			(presetToggled)="onPresetToggled($event)"
+		></gz-docs-filter-bar>
+	</div>
 
 	<!-- Always-visible drop strip. VISUAL-ONLY: the page-root gzDocsUploadDropzone
 	     owns every drop (a second directive instance would double-fire); the strip

@@ -46,10 +46,12 @@ import { sanitizeMediaUrl } from '../../../editor/read-only/safe-url.util';
 	styles: [
 		`
 			.docs-name-cell {
-				display: inline-flex;
+				display: flex;
 				align-items: center;
 				gap: 0.375rem;
+				width: 100%;
 				max-width: 100%;
+				min-width: 0;
 			}
 			.docs-name-lead {
 				display: inline-flex;
@@ -63,17 +65,42 @@ import { sanitizeMediaUrl } from '../../../editor/read-only/safe-url.util';
 				width: 100%;
 				height: 100%;
 				object-fit: cover;
-				border-radius: 0.1875rem;
+				border-radius: var(--docs-radius, 0.375rem);
 				background: var(--background-basic-color-2);
 			}
 			.docs-name-text {
+				flex: 0 1 auto;
+				min-width: 0;
 				overflow: hidden;
 				text-overflow: ellipsis;
 				white-space: nowrap;
+				color: var(--docs-text, var(--text-basic-color));
+			}
+			.docs-name-cell nb-icon,
+			.docs-name-version {
+				flex: 0 0 auto;
+			}
+			.docs-name-cell nb-icon {
+				font-size: 0.875rem;
+				color: var(--docs-text-muted, var(--text-hint-color));
 			}
 			.docs-name-version {
-				font-size: 0.6875rem;
-				color: var(--text-hint-color);
+				font-size: var(--docs-label-size, 0.6875rem);
+				font-variant-numeric: tabular-nums;
+				color: var(--docs-text-muted, var(--text-hint-color));
+			}
+			.docs-name-cell ::ng-deep nb-badge {
+				position: static;
+				display: inline-flex;
+				align-items: center;
+				flex: 0 0 auto;
+				height: var(--gauzy-table-badge-height, 1.25rem);
+				padding: 0 var(--gauzy-table-chip-padding-x, 0.375rem);
+				border-radius: var(--docs-radius, 0.375rem);
+				font-size: var(--gauzy-table-chip-font-size, 0.6875rem);
+				line-height: 1;
+				white-space: nowrap;
+				transform: none;
 			}
 		`
 	],

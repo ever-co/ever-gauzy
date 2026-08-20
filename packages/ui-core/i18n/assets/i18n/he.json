@@ -3675,7 +3675,9 @@
 		"SELECT_AN_ORGANIZATION": "Organization",
 		"SELECT_PROJECT": "Project",
 		"SELECT_TEAM": "קבוצה",
-		"AI_CHAT": "צ'אט AI"
+		"AI_CHAT": "צ'אט AI",
+		"COLLAPSE_SIDEBAR": "כווץ את סרגל הצד",
+		"EXPAND_SIDEBAR": "הרחב את סרגל הצד"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "עוזר AI",
