@@ -22,8 +22,8 @@ export interface MarkdownContentProps {
  */
 export const MarkdownContent = memo(function MarkdownContent({ content, isStreaming }: MarkdownContentProps) {
 	const style: CSSProperties = {
-		fontSize: chatTheme.fontSizeBase,
-		lineHeight: 1.6,
+		fontSize: chatTheme.fontSizeMessage,
+		lineHeight: chatTheme.lineHeightMessage,
 		color: 'inherit',
 		wordBreak: 'break-word'
 	};
