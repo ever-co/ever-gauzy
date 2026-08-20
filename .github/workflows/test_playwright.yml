@@ -27,12 +27,10 @@ on:
     branches: [develop]
   workflow_dispatch:
 
-# Least-privilege GITHUB_TOKEN (CodeQL: a workflow should limit the token's permissions). These jobs
-# only check out code and run tests against a locally-started stack — they need no write scopes.
-# (Same-run artifact upload/download authenticates with the Actions runtime token, not this one.)
-permissions:
-  contents: read
-  actions: write # the cleanup job deletes this run's node_modules artifact
+# Least-privilege GITHUB_TOKEN, granted PER JOB rather than workflow-wide: only `cleanup` needs to
+# delete an artifact, so only `cleanup` gets `actions: write`. The test jobs check out code and run
+# against a locally-started stack, so they need no write scopes at all. (Same-run artifact
+# upload/download authenticates with the Actions runtime token, not this one.)
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -52,6 +50,8 @@ jobs:
   # ---------------------------------------------------------------------------------------------
   deps:
     name: Install dependencies
+    permissions:
+      contents: read
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     # `yarn bootstrap` is the whole budget here: measured at 88 min, 3 h 20 m and 3 h 46 m on these
     # runners. This job exists so that cost is paid ONCE per run — everything downstream unpacks the
@@ -158,6 +158,8 @@ jobs:
   # ---------------------------------------------------------------------------------------------
   build:
     name: Build API + Web
+    permissions:
+      contents: read
     needs: deps
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     # Observed: build:package:all 7-13 min, web build >47 min (it never finished before the pod
@@ -346,6 +348,8 @@ jobs:
   # ---------------------------------------------------------------------------------------------
   e2e-playwright:
     name: e2e (shard ${{ matrix.shard }})
+    permissions:
+      contents: read
     needs: [deps, build]
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     # Fixed cost per shard is ~25 min (cache restore + artifact download + browser install + the
@@ -534,6 +538,9 @@ jobs:
   # ---------------------------------------------------------------------------------------------
   cleanup:
     name: Delete node_modules artifact
+    permissions:
+      contents: read
+      actions: write # deletes this run's node_modules artifact
     needs: [deps, build, e2e-playwright]
     # `always()`: the tree is just as useless after a failed shard, and leaving ~3 GB behind on a red
     # run is how the quota filled in the first place.
