@@ -30,7 +30,20 @@ export class EmployeeBelongsToOrganizationConstraint implements ValidatorConstra
 	async validate(value: ID | IEmployee, args: ValidationArguments): Promise<boolean> {
 		if (isEmpty(value)) return true;
 
-		const employeeId: string = typeof value === 'string' ? value : value.id;
+		const employeeId: string = typeof value === 'string' ? value : value?.id;
+
+		// The UI ships an ALL_EMPLOYEES_SELECTED sentinel (`{ id: null, firstName: 'All Employees', ... }`)
+		// whenever no concrete employee is picked, so `value` can be a NON-empty object carrying an EMPTY
+		// id — the `isEmpty(value)` early-out above does not catch that shape. There is no employee to
+		// validate in that case: the record is organization-level and `employeeId` is legitimately null.
+		// Never issue the lookup with an empty id — `findOneByOrFail({ id: null, ... })` used to have its
+		// `id` predicate silently dropped and matched the FIRST employee of the organization (the exact
+		// widening GHSA-44pv-34gx-q9p4 closed); it now compiles to `id IS NULL`, finds nothing, and
+		// rejects a perfectly legal org-level record with a 400.
+		if (isEmpty(employeeId)) {
+			return true;
+		}
+
 		const object = args.object as { organizationId?: string; organization?: { id: string } };
 
 		const organizationId = object.organizationId || object.organization?.id;

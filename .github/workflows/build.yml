@@ -15,9 +15,17 @@ name: Build
 #      check ~install+~20min after push instead of at the end of the longest job. Treat a
 #      pending/cancelled `build-libs`/`build-web` as a red: NEVER merge on yellow — the PR
 #      concurrency group cancels superseded runs, so "no failure" often just means "never ran".
-#   2. The `needs: build-monorepo-root` edges are gone: that job produces nothing the others
-#      consume (each re-installs from scratch), so the edge only added its full ~90 minutes as
-#      serial latency in front of every build.
+#   2. The `needs: build-monorepo-root` edges are BACK, because that job now produces something the
+#      others consume. They were removed when it produced nothing and the edge was pure serial
+#      latency; five jobs then each ran their own `yarn install` of the same tree CONCURRENTLY and
+#      fought each other for I/O. Measured on run 32358690732, same commit: build-api installed in
+#      1h49m and passed, build-libs and build-web took 2h40m and were KILLED at the 180-minute
+#      ceiling with their build steps never started. build-monorepo-root now installs once and
+#      publishes the tree; the other four restore it in minutes. On the warm path (~most PRs) they
+#      report EARLIER than before, because the install in front of them is a cache lookup.
+#      They carry `if: !cancelled()` so a dead producer still yields a real red — a `needs:` edge
+#      alone would SKIP them, and a skipped required check does not block a merge, which is the same
+#      "never ran" hazard as (1).
 # The dev-config "Build packages" pre-step was removed from build-api/build-web: the app builds
 # rebuild their dependency libraries themselves (Nx `dependsOn: ^build`, production config), and
 # the strict library verdict lives in `build-libs`.
@@ -49,6 +57,9 @@ env:
   # Nx Cloud is disabled for this org; without this `nx run-many` hard-fails with
   # "Nx Cloud: Workspace is unable to be authorized. Exiting run."
   NX_NO_CLOUD: true
+  # The dependency tree travels between jobs as this one compressed file. Workspace-relative so the
+  # same string works for `tar` in a run step and for actions/cache.
+  NODE_MODULES_ARCHIVE: node-modules.tar.zst
 
 # Least-privilege scope for the automatic GITHUB_TOKEN.
 # This workflow only builds/tests/deploys from a checkout — read access is sufficient.
@@ -58,26 +69,74 @@ permissions:
 jobs:
   build-monorepo-root:
     name: build-monorepo-root
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
-    # 180 to match build-libs / build-api / build-web / build-desktop. This job had 120 while all
-    # four siblings had 180, despite being the ONLY one on the 4-core pool (RUNNER_LINUX_X64_4) —
-    # the smallest runner had the shortest budget. It consequently timed out at exactly 2h00m on
-    # both PR #9993 (run 31946461738) and PR #9995 (run 31961280325), which surfaces as a
-    # "cancelled" job rather than an obvious timeout.
-    timeout-minutes: 180
+    # Moved off the 4-core pool: this is no longer one of five equals, it is the SERIAL CRITICAL PATH
+    # for the whole gate, and both halves of its work (yarn install, zstd -T0) scale with cores.
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    # 360, not 180. This job now carries the install for the ENTIRE gate, alone, and a cold install
+    # here has no yarn tarball cache behind it: test_playwright.yml's equivalent deps job measured the
+    # same work at 88 min, 3h20m and 3h46m. At 180 a cold miss would time out, and because the four
+    # build jobs `needs:` this one, that single timeout would take the whole gate with it. The ceiling
+    # costs nothing on the warm path, which is a lookup and an exit.
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
+
+      - name: Restore node_modules archive
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          # lookup-only: on a HIT this job does nothing with the archive — every step below is gated
+          # on `cache-hit != 'true'` — so downloading ~2.9 GB would be pure serial latency in front of
+          # four jobs that are waiting on it. The output it sets is all this job needs.
+          lookup-only: true
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
       - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
 
       - name: Run postinstall manually
+        if: steps.cache.outputs.cache-hit != 'true'
         run: yarn postinstall.manual
+
+      - name: Archive node_modules
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: .github/scripts/archive-node-modules.sh
+
+      - name: Save node_modules archive
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        continue-on-error: true
+        # Explicit save so a FAILED install can never publish a half-built tree. BEST EFFORT, and only
+        # a CROSS-run optimization — see the upload below for why it cannot be the handoff.
+        with:
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
+
+      - name: Upload node_modules archive
+        uses: actions/upload-artifact@v7
+        # THE HANDOFF. The cache above cannot be relied on for it: an Actions cache is a REPOSITORY
+        # resource on a 10 GB budget, so a build on any other ref can evict this entry between the
+        # save and the consumer's restore. That is not hypothetical — it happened on the first run of
+        # this design (run 32377379196): the producer logged "Cache saved with key: …2b58b651…",
+        # build-libs asked for the byte-identical key 32 seconds later and got "Failed to restore
+        # cache entry", because three 4.66 GB setup-node yarn caches written by develop, stage and
+        # PR #10014 had pushed the repo to 14.03 GB and LRU took the newest entry.
+        # An artifact is scoped to THIS RUN and no other workflow can evict it. The cleanup job
+        # deletes it when the run ends, so it costs storage only while the run needs it.
+        with:
+          name: build-node-modules
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          retention-days: 1
+          compression-level: 0 # already zstd-compressed
+          if-no-files-found: error
+          overwrite: true
 
   # The strict library verdict, as its own early-reporting check: this is the task set whose
   # per-library `strictTemplates` tsconfigs catch template type errors (the class that broke the
@@ -85,6 +144,12 @@ jobs:
   # as install + the 71 library builds finish.
   build-libs:
     name: build-libs
+    needs: build-monorepo-root
+    # `needs:` alone would make a producer failure SKIP this job, and a skipped required check does
+    # not block a merge — the exact "no failure just means never ran" trap this file's header warns
+    # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
+    # fails loudly and this reports a real red instead of vanishing.
+    if: ${{ !cancelled() }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -93,19 +158,40 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
 
-      - name: Install dependencies
-        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+      - name: Download node_modules archive
+        uses: actions/download-artifact@v8
+        # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
+        continue-on-error: true
+        with:
+          name: build-node-modules
 
-      - name: Run postinstall manually
-        run: yarn postinstall.manual
+      - name: Restore node_modules archive (cache fallback)
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          # Only reached if the artifact was unavailable. Deliberately NOT fail-on-cache-miss: the
+          # cache is best effort here, and the script below still has the install fallback.
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
+
+      - name: Restore node_modules
+        shell: bash
+        # Unpacks the tree build-monorepo-root published, or installs from scratch if the cache is
+        # unavailable. One step, so there is no `if:` on a previous step's outcome to get wrong.
+        run: .github/scripts/restore-node-modules.sh
 
       - name: Build packages
         run: yarn build:package:all
 
   build-api:
     name: build-api
+    needs: build-monorepo-root
+    # `needs:` alone would make a producer failure SKIP this job, and a skipped required check does
+    # not block a merge — the exact "no failure just means never ran" trap this file's header warns
+    # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
+    # fails loudly and this reports a real red instead of vanishing.
+    if: ${{ !cancelled() }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -114,19 +200,40 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
 
-      - name: Install dependencies
-        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+      - name: Download node_modules archive
+        uses: actions/download-artifact@v8
+        # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
+        continue-on-error: true
+        with:
+          name: build-node-modules
 
-      - name: Run postinstall manually
-        run: yarn postinstall.manual
+      - name: Restore node_modules archive (cache fallback)
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          # Only reached if the artifact was unavailable. Deliberately NOT fail-on-cache-miss: the
+          # cache is best effort here, and the script below still has the install fallback.
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
+
+      - name: Restore node_modules
+        shell: bash
+        # Unpacks the tree build-monorepo-root published, or installs from scratch if the cache is
+        # unavailable. One step, so there is no `if:` on a previous step's outcome to get wrong.
+        run: .github/scripts/restore-node-modules.sh
 
       - name: Build API
         run: yarn build:api:prod:ci
 
   build-web:
     name: build-web
+    needs: build-monorepo-root
+    # `needs:` alone would make a producer failure SKIP this job, and a skipped required check does
+    # not block a merge — the exact "no failure just means never ran" trap this file's header warns
+    # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
+    # fails loudly and this reports a real red instead of vanishing.
+    if: ${{ !cancelled() }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -135,21 +242,45 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
 
-      - name: Install dependencies
-        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+      - name: Download node_modules archive
+        uses: actions/download-artifact@v8
+        # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
+        continue-on-error: true
+        with:
+          name: build-node-modules
 
-      - name: Run postinstall manually
-        run: yarn postinstall.manual
+      - name: Restore node_modules archive (cache fallback)
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          # Only reached if the artifact was unavailable. Deliberately NOT fail-on-cache-miss: the
+          # cache is best effort here, and the script below still has the install fallback.
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
+
+      - name: Restore node_modules
+        shell: bash
+        # Unpacks the tree build-monorepo-root published, or installs from scratch if the cache is
+        # unavailable. One step, so there is no `if:` on a previous step's outcome to get wrong.
+        run: .github/scripts/restore-node-modules.sh
 
       - name: Build web
         run: yarn build:gauzy:prod:ci
 
   build-desktop:
     name: build-desktop
-    # Matches the CircleCI branch filter: desktop was never built on ordinary PR branches.
-    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/stage' || github.ref == 'refs/heads/master'
+    needs: build-monorepo-root
+    # `needs:` alone would make a producer failure SKIP this job, and a skipped required check does
+    # not block a merge — the exact "no failure just means never ran" trap this file's header warns
+    # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
+    # fails loudly and this reports a real red instead of vanishing.
+    # The second half matches the CircleCI branch filter: desktop was never built on ordinary PR
+    # branches. Both conditions live in ONE expression — two `if:` keys is a duplicate mapping key and
+    # the file will not parse.
+    if: >-
+      ${{ !cancelled() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/stage' ||
+      github.ref == 'refs/heads/master') }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -158,7 +289,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
 
       - name: Install system dependencies for Electron
         run: |
@@ -166,11 +296,58 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential icnsutils graphicsmagick binutils libappindicator3-1 || true
 
-      - name: Install dependencies
-        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+      - name: Download node_modules archive
+        uses: actions/download-artifact@v8
+        # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
+        continue-on-error: true
+        with:
+          name: build-node-modules
 
-      - name: Run postinstall manually
-        run: yarn postinstall.manual
+      - name: Restore node_modules archive (cache fallback)
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          # Only reached if the artifact was unavailable. Deliberately NOT fail-on-cache-miss: the
+          # cache is best effort here, and the script below still has the install fallback.
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
+
+      - name: Restore node_modules
+        shell: bash
+        # Unpacks the tree build-monorepo-root published, or installs from scratch if the cache is
+        # unavailable. One step, so there is no `if:` on a previous step's outcome to get wrong.
+        run: .github/scripts/restore-node-modules.sh
 
       - name: Build desktop
         run: yarn build:desktop
+
+  # ---------------------------------------------------------------------------------------------
+  # cleanup — the dependency archive exists only to cross job boundaries; delete it when the run ends.
+  # ---------------------------------------------------------------------------------------------
+  cleanup:
+    name: Delete node_modules artifact
+    needs: [build-monorepo-root, build-libs, build-api, build-web, build-desktop]
+    # `always()`: the archive is just as useless after a failed build, and leaving ~2.9 GB behind on
+    # red runs is exactly how the org's Actions storage quota filled and stopped artifact uploads.
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write # deletes this run's node_modules artifact
+    steps:
+      - name: Delete build-node-modules
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts"             --jq '.artifacts[] | select(.name=="build-node-modules") | .id')
+          if [ -z "$ids" ]; then echo "nothing to delete"; exit 0; fi
+          for id in $ids; do
+            if gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" >/dev/null 2>&1; then
+              echo "deleted artifact $id"
+            else
+              echo "::warning::could not delete artifact $id — already gone?"
+            fi
+          done

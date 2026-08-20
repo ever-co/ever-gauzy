@@ -62,6 +62,7 @@
 		"seed:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn nx build api -c production && yarn run config:prod && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/seed.ts",
 		"clean": "rimraf dist coverage",
 		"bootstrap": "yarn install --ignore-scripts && yarn postinstall.manual",
+		"bootstrap:ci": "yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual",
 		"clean:cache": "yarn rimraf .cache .angular",
 		"clean:nx": "yarn rimraf dist tmp && yarn nx reset",
 		"clean:all": "yarn clean:cache && yarn clean:nx",
