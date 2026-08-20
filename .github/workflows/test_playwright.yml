@@ -96,46 +96,8 @@ jobs:
         #     was killed at the 120-minute job timeout 1 h 58 m in. All four shards died that way and
         #     the 12 h 34 m run produced ZERO test results.
         #
-        # And this job no longer writes a cache AT ALL. After pruning duplicates the budget holds
-        # 9.33 GB of caches that other workflows genuinely need — `build.yml`'s 4.66 GB yarn cache
-        # (the PR gate, five jobs, every pull request) and the 4.64 GB macOS desktop-build cache.
-        # Storing even a ~3 GB archive would evict one of them, making the PR gate slower to speed up
-        # a suite that runs only on stage pushes. That is a bad trade, so deps pays the bootstrap and
-        # the artifact makes sure nothing downstream pays it again.
-        #
-        # zstd on one file also beats the cache action's per-file handling of a huge tree in both
-        # directions. `--warning=no-file-changed` because yarn's own daemon can touch files while we
-        # read them; `|| [ $? -eq 1 ]` accepts tar's "file changed as we read it" (exit 1) but still
-        # fails on a real error (exit 2).
-        run: |
-          set -o pipefail
-          PATHS=()
-          for p in node_modules apps/*/node_modules packages/*/node_modules \
-                   packages/plugins/*/node_modules tools/node_modules; do
-            [ -d "$p" ] && PATHS+=("$p")
-          done
-          if [ ${#PATHS[@]} -eq 0 ]; then
-            echo "::error::bootstrap produced no node_modules directories"; exit 1
-          fi
-          echo "archiving ${#PATHS[@]} directories"
-          if command -v zstd >/dev/null 2>&1; then
-            COMPRESS="zstd -3 -T0"
-          else
-            echo "::warning::zstd unavailable — falling back to gzip (larger archive, slower)"
-            COMPRESS="gzip -3"
-          fi
-          tar --warning=no-file-changed --use-compress-program="$COMPRESS" \
-              -cf "$NODE_MODULES_ARCHIVE" "${PATHS[@]}" || [ $? -eq 1 ]
-          ls -lh "$NODE_MODULES_ARCHIVE"
-          # Tolerating tar's exit 1 means a TRUNCATED archive could be published, and every
-          # downstream job would then fall back to its own multi-hour bootstrap. A cheap size floor
-          # catches the gross case; a full `tar -t` would re-read every byte for little extra.
-          size=$(stat -c%s "$NODE_MODULES_ARCHIVE")
-          echo "archive bytes: $size"
-          if [ "$size" -lt 104857600 ]; then
-            echo "::error::archive is only $size bytes — the dependency tree cannot be that small"
-            exit 1
-          fi
+        # Shares its implementation with build.yml — see the script.
+        run: .github/scripts/archive-node-modules.sh
 
       - name: Upload node_modules archive
         uses: actions/upload-artifact@v7

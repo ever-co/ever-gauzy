@@ -45,6 +45,9 @@ env:
   # Nx Cloud is disabled for this org; without this `nx run-many` hard-fails with
   # "Nx Cloud: Workspace is unable to be authorized. Exiting run."
   NX_NO_CLOUD: true
+  # The dependency tree travels between jobs as this one compressed file. Workspace-relative so the
+  # same string works for `tar` in a run step and for actions/cache.
+  NODE_MODULES_ARCHIVE: node-modules.tar.zst
 
 # Least-privilege scope for the automatic GITHUB_TOKEN.
 # This workflow only builds/tests/deploys from a checkout — read access is sufficient.
@@ -67,13 +70,34 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
+
+      - name: Restore node_modules archive
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}
 
       - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
 
       - name: Run postinstall manually
+        if: steps.cache.outputs.cache-hit != 'true'
         run: yarn postinstall.manual
+
+      - name: Archive node_modules
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: .github/scripts/archive-node-modules.sh
+
+      - name: Save node_modules archive
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        # Explicit save so a FAILED install can never publish a half-built tree.
+        with:
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}
 
   # The strict library verdict, as its own early-reporting check: this is the task set whose
   # per-library `strictTemplates` tsconfigs catch template type errors (the class that broke the
@@ -81,6 +105,7 @@ jobs:
   # as install + the 71 library builds finish.
   build-libs:
     name: build-libs
+    needs: build-monorepo-root
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -89,19 +114,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
 
-      - name: Install dependencies
-        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+      - name: Restore node_modules archive
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}
 
-      - name: Run postinstall manually
-        run: yarn postinstall.manual
+      - name: Restore node_modules
+        shell: bash
+        # Unpacks the tree build-monorepo-root published, or installs from scratch if the cache is
+        # unavailable. One step, so there is no `if:` on a previous step's outcome to get wrong.
+        run: .github/scripts/restore-node-modules.sh
 
       - name: Build packages
         run: yarn build:package:all
 
   build-api:
     name: build-api
+    needs: build-monorepo-root
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -110,19 +141,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
 
-      - name: Install dependencies
-        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+      - name: Restore node_modules archive
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}
 
-      - name: Run postinstall manually
-        run: yarn postinstall.manual
+      - name: Restore node_modules
+        shell: bash
+        # Unpacks the tree build-monorepo-root published, or installs from scratch if the cache is
+        # unavailable. One step, so there is no `if:` on a previous step's outcome to get wrong.
+        run: .github/scripts/restore-node-modules.sh
 
       - name: Build API
         run: yarn build:api:prod:ci
 
   build-web:
     name: build-web
+    needs: build-monorepo-root
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -131,19 +168,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
 
-      - name: Install dependencies
-        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+      - name: Restore node_modules archive
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}
 
-      - name: Run postinstall manually
-        run: yarn postinstall.manual
+      - name: Restore node_modules
+        shell: bash
+        # Unpacks the tree build-monorepo-root published, or installs from scratch if the cache is
+        # unavailable. One step, so there is no `if:` on a previous step's outcome to get wrong.
+        run: .github/scripts/restore-node-modules.sh
 
       - name: Build web
         run: yarn build:gauzy:prod:ci
 
   build-desktop:
     name: build-desktop
+    needs: build-monorepo-root
     # Matches the CircleCI branch filter: desktop was never built on ordinary PR branches.
     if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/stage' || github.ref == 'refs/heads/master'
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
@@ -154,7 +197,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
 
       - name: Install system dependencies for Electron
         run: |
@@ -162,11 +204,17 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential icnsutils graphicsmagick binutils libappindicator3-1 || true
 
-      - name: Install dependencies
-        run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+      - name: Restore node_modules archive
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'patches/**', '.scripts/postinstall.js') }}
 
-      - name: Run postinstall manually
-        run: yarn postinstall.manual
+      - name: Restore node_modules
+        shell: bash
+        # Unpacks the tree build-monorepo-root published, or installs from scratch if the cache is
+        # unavailable. One step, so there is no `if:` on a previous step's outcome to get wrong.
+        run: .github/scripts/restore-node-modules.sh
 
       - name: Build desktop
         run: yarn build:desktop
