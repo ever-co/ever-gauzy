@@ -171,10 +171,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		@Body() input: IAccountingTemplateUpdateInput
 	): Promise<IAccountingTemplate> {
 		try {
-			await this.accountingTemplateService.create({
-				id,
-				...input
-			});
+			await this.accountingTemplateService.create({ ...input, id });
 			return await this.findById(id);
 		} catch (error) {
 			throw new BadRequestException();

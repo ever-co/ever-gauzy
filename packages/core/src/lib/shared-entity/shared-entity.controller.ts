@@ -75,7 +75,7 @@ export class SharedEntityController extends CrudController<SharedEntity> {
     })
     @HttpCode(HttpStatus.CREATED)
     @Post()
-    @UseValidationPipe()
+    @UseValidationPipe({ whitelist: true })
     async create(@Body() entity: CreateSharedEntityDTO): Promise<SharedEntity> {
         return await this.commandBus.execute(new SharedEntityCreateCommand(entity));
     }
@@ -94,7 +94,7 @@ export class SharedEntityController extends CrudController<SharedEntity> {
     })
     @HttpCode(HttpStatus.OK)
     @Put(':id')
-    @UseValidationPipe()
+    @UseValidationPipe({ whitelist: true })
     async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateSharedEntityDTO): Promise<SharedEntity> {
         return await this.commandBus.execute(new SharedEntityUpdateCommand(id, entity));
     }

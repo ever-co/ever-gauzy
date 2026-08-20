@@ -78,7 +78,10 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 		// Reset `isDefault` to false on all templates matching these fields
 		const { organizationId, tenantId, employeeId } = proposalTemplate;
 
-		// Update the isDefault property on all templates matching these fields
+		// Update the isDefault property on all templates matching these fields. organizationId is a
+		// nullable column: for an organization-less template the null means `organizationId IS NULL` on
+		// both ORMs (TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR), i.e. only its organization-less siblings are
+		// reset — the null used to be dropped and reset the employee's templates in every organization.
 		await super.update({ organizationId, tenantId, employeeId }, { isDefault: false });
 
 		// Save and return the updated template

@@ -1,12 +1,17 @@
 <div class="docs-shell">
 	<aside class="docs-tree-column" [class.collapsed]="treeCollapsed" [attr.aria-label]="'DOCS.A11Y.TREE_LABEL' | translate">
 		<div class="docs-tree-column-header">
+			<span class="docs-tree-column-title" *ngIf="!treeCollapsed" aria-hidden="true">
+				{{ 'DOCS.TREE.ALL_DOCUMENTS' | translate }}
+			</span>
 			<button
 				nbButton
 				ghost
 				size="tiny"
+				class="docs-tree-column-toggle"
 				(click)="toggleTree()"
 				[nbTooltip]="(treeCollapsed ? 'DOCS.TREE.EXPAND_SIDEBAR' : 'DOCS.TREE.COLLAPSE_SIDEBAR') | translate"
+				[attr.aria-label]="(treeCollapsed ? 'DOCS.TREE.EXPAND_SIDEBAR' : 'DOCS.TREE.COLLAPSE_SIDEBAR') | translate"
 			>
 				<nb-icon [icon]="treeCollapsed ? 'chevron-right-outline' : 'chevron-left-outline'"></nb-icon>
 			</button>

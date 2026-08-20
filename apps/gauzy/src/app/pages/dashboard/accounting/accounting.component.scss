@@ -2,19 +2,21 @@
 
 .organization-employee-header {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
 }
 
 :host .table-scrollable {
-  height: calc($default-card-height - 14rem);
-  overflow: auto;
   @include nb-ltr(padding-right, 0.5rem);
   @include nb-rtl(padding-left, 0.5rem);
 }
 
 .cash-flow-report {
-  margin: 1rem 0;
+  margin: 0.75rem 0 0;
+
+  ::ng-deep ngx-line-chart .chart {
+    height: 17rem;
+  }
 }
 
 :host .setting-block {
@@ -26,18 +28,22 @@
   &.sub-header {
     @include nb-ltr(margin-right, 0.5rem);
     @include nb-rtl(margin-left, 0.5rem);
-    font-size: 12px;
+    font-size: nb-theme(gauzy-table-header-font-size);
     font-weight: 600;
-    line-height: 15px;
+    line-height: nb-theme(gauzy-table-header-line-height);
     letter-spacing: 0em;
     color: var(--gauzy-text-color-2) !important;
     background: nb-theme(gauzy-card-3) !important;
+    padding: nb-theme(gauzy-table-header-padding-y) nb-theme(gauzy-table-header-padding-x);
+    box-shadow: none;
   }
 
-  box-shadow: var(--gauzy-shadow);
+  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
   border-radius: $default-radius;
   margin-bottom: 4px;
-  padding: 15px 20px;
+  padding: nb-theme(gauzy-table-cell-padding-y) nb-theme(gauzy-table-cell-padding-x);
+  font-size: nb-theme(gauzy-table-font-size);
+  line-height: nb-theme(gauzy-table-line-height);
   background: nb-theme(gauzy-card-1) !important;
 
   .block-content {
@@ -85,12 +91,16 @@
   }
 
   nb-card-header {
-    font-size: 14px;
+    font-size: nb-theme(text-subtitle-2-font-size);
     font-weight: 600;
-    line-height: 16px;
+    line-height: 1rem;
     letter-spacing: -0.009em;
     color: var(--gauzy-text-color-2);
     padding-bottom: 0;
+  }
+
+  .organization-employee-header nb-card-body {
+    padding: 0.75rem 1rem 0.875rem;
   }
 
   // `unset, auto`: the dashboard page owns the single scrollbar now (see
@@ -121,9 +131,10 @@
     }
   }
 }
-.body-header{
+.body-header {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
+  margin-bottom: 1rem;
 }

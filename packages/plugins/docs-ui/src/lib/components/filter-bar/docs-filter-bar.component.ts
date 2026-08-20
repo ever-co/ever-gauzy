@@ -10,9 +10,10 @@ import {
 	ITag
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { DocsPresetCounts } from '../../+state/documents.store';
 import { DOCS_CONTENT_SEARCH_MIN_CHARS } from '../../docs.constants';
 import { IDocumentFacetBucket, IDocumentFacets } from '../../models/docs-api.model';
-import { DocsFilterState, foldStatusFacetBuckets } from '../../models/docs-filter.model';
+import { DocsFilterState, DocsPresetId, foldStatusFacetBuckets } from '../../models/docs-filter.model';
 
 /**
  * Filter bar: multi-select facet dropdowns (with live counts), the create-capable
@@ -32,11 +33,17 @@ export class DocsFilterBarComponent extends TranslationBaseComponent {
 	@Input() value: DocsFilterState | null = null;
 	/** Live URL query params — what the saved-views control captures and compares against. */
 	@Input() urlParams: Params = {};
+	/**
+	 * Counts behind the preset chips, which are rendered on this band's first row.
+	 */
+	@Input() presetCounts: DocsPresetCounts | null = null;
 	@Output() filterChange = new EventEmitter<Partial<DocsFilterState>>();
 	@Output() searchChange = new EventEmitter<string>();
 	@Output() clearAll = new EventEmitter<void>();
 	/** A saved view was applied — payload is the query-param merge patch. */
 	@Output() applyView = new EventEmitter<Params>();
+	/** Re-emitted from the preset chips on this band's first row. */
+	@Output() presetToggled = new EventEmitter<DocsPresetId | undefined>();
 
 	/** Interpolated into `DOCS.FILTERS.SEARCH_CONTENT_DISABLED` so the hint can never quote a stale number. */
 	public readonly contentSearchMinChars = DOCS_CONTENT_SEARCH_MIN_CHARS;
@@ -195,6 +202,10 @@ export class DocsFilterBarComponent extends TranslationBaseComponent {
 	clearUpdatedRange(input: HTMLInputElement): void {
 		input.value = '';
 		this.onUpdatedRange({});
+	}
+
+	onPresetToggled(preset: DocsPresetId | undefined): void {
+		this.presetToggled.emit(preset);
 	}
 
 	onClearAll(): void {

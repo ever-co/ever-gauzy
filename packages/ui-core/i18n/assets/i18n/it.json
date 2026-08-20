@@ -3652,7 +3652,9 @@
 		"SELECT_AN_ORGANIZATION": "Organizzazione",
 		"SELECT_PROJECT": "Progetto",
 		"SELECT_TEAM": "Squadra",
-		"AI_CHAT": "Chat IA"
+		"AI_CHAT": "Chat IA",
+		"COLLAPSE_SIDEBAR": "Comprimi la barra laterale",
+		"EXPAND_SIDEBAR": "Espandi la barra laterale"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Assistente IA",

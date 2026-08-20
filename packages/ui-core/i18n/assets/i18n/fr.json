@@ -3646,7 +3646,9 @@
 		"SELECT_AN_ORGANIZATION": "Organisation",
 		"SELECT_PROJECT": "Projet",
 		"SELECT_TEAM": "Équipe",
-		"AI_CHAT": "Chat IA"
+		"AI_CHAT": "Chat IA",
+		"COLLAPSE_SIDEBAR": "Réduire la barre latérale",
+		"EXPAND_SIDEBAR": "Développer la barre latérale"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Assistant IA",

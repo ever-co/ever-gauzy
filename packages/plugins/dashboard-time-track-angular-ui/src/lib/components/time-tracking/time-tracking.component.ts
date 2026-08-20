@@ -122,6 +122,15 @@ export class TimeTrackingComponent
 	public readonly PermissionsEnum = PermissionsEnum;
 	public readonly RangePeriod = RangePeriod;
 
+	/**
+	 * Slides per view for the recent-activities carousel, by viewport width.
+	 *
+	 * The base `slides-per-view="3"` on the element is a desktop figure: at phone
+	 * width it cut each screenshot down to roughly 90px, which is not a legible
+	 * thumbnail. Swiper measures against the window, and the windows column is
+	 * already single-column below 1200px, so these thresholds track how much room
+	 * the card actually has.
+	 */
 	public employeeIds: string[] = [];
 	public projectIds: string[] = [];
 	public teamIds: string[] = [];

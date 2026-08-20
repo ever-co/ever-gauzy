@@ -57,10 +57,7 @@ export class OrganizationPositionController extends CrudController<OrganizationP
 		@Body() body: UpdateOrganizationPositionDTO
 	): Promise<IOrganizationPosition> {
 		try {
-			return this.organizationPositionService.create({
-				id,
-				...body
-			});
+			return this.organizationPositionService.create({ ...body, id });
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

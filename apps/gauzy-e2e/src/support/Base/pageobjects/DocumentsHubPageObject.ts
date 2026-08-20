@@ -89,7 +89,8 @@ export const DocumentsHubPage = {
 	filterBarCss: 'gz-docs-filter-bar',
 	// The free-text search box. Scoped to `.docs-filter-search` because the facet row also renders
 	// text inputs (the two `nb-rangepicker` fields). Debounces 500 ms (DOCS_SEARCH_DEBOUNCE_MS).
-	searchInputCss: 'gz-docs-filter-bar .docs-filter-search input[type="text"]',
+	// The filter bar's wrapper class was restyled away; the input keeps its stable id.
+	searchInputCss: 'gz-docs-filter-bar #docs-filter-search',
 	searchContentToggleCss: 'gz-docs-filter-bar .docs-filter-search nb-toggle',
 	// No call site yet, but the class it used to hang off (`.docs-filter-facets`) no longer exists
 	// anywhere in docs-ui — the clear-all button now lives in the filter bar's actions field. Corrected

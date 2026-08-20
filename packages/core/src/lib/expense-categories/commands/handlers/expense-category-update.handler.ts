@@ -16,10 +16,7 @@ export class ExpenseCategoryUpdateHandler
 	) {
 		const { id, input } = command;
 		try {
-			return await this._expenseCategoryService.create({
-				id,
-				...input
-			});
+			return await this._expenseCategoryService.create({ ...input, id });
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

@@ -49,6 +49,7 @@ import { User } from './user.entity';
 import { validateUserDeletion } from './default-protected-users';
 import { assertUiPreferencesSize, mergeUiPreferences, sanitizeUiPreferencesPatch } from './ui-preferences.util';
 import { PasswordHashService } from '../password-hash/password-hash.service';
+import { assertRoleAssignmentAllowed } from './role-assignment.helper';
 import {
 	emailVerificationClaimWhere,
 	emailVerificationClaimWhereMikroOrm,
@@ -271,6 +272,12 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExists(id: string): Promise<boolean> {
+		// An empty id must never reach the repository: `findOneBy({ id: undefined })` drops the predicate
+		// and returns the FIRST user row (see getIfExists) — for the JWT strategy that meant any token
+		// signed with JWT_SECRET but carrying no `id` claim authenticated as that user.
+		if (!id) {
+			return false;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return !!(await this.mikroOrmRepository.findOne({ id } as any));
@@ -287,6 +294,9 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
+		if (!thirdPartyId) {
+			return false;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return !!(await this.mikroOrmRepository.findOne({ thirdPartyId } as any));
@@ -299,10 +309,20 @@ export class UserService extends TenantAwareCrudService<User> {
 
 	/**
 	 * Retrieves a user with the given ID if it exists.
+	 *
+	 * The id MUST be present. TypeORM silently omits an `undefined` (and, before
+	 * TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR, a `null`) where value, so `findOneBy({ id: undefined })`
+	 * became `SELECT ... LIMIT 1` and returned an arbitrary user — the JWT strategy authenticated any
+	 * JWT_SECRET-signed token that had no `id` claim (invite / estimate / team-join / appointment /
+	 * magic-code tokens) as the first user in the table.
+	 *
 	 * @param {string} id - The ID of the user to retrieve.
 	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
 	 */
 	async getIfExists(id: string): Promise<User | undefined> {
+		if (!id) {
+			return undefined;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmUserRepository.findOne({ id });
@@ -320,6 +340,9 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
 	 */
 	async getIfExistsThirdParty(thirdPartyId: string): Promise<User | undefined> {
+		if (!thirdPartyId) {
+			return undefined;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmUserRepository.findOne({ thirdPartyId });
@@ -382,6 +405,11 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @throws ForbiddenException if the user lacks the required permissions or attempts unauthorized updates.
 	 */
 	async updateProfile(id: ID | number, entity: User): Promise<IUser> {
+		// The path id is authoritative. Every check below authorizes THIS id, and save() persists the
+		// entity's id — a body `id` (the update DTO is not whitelisted) must never re-point the write to
+		// another user (e.g. overwrite the SUPER_ADMIN's password hash from a PROFILE_EDIT account).
+		entity.id = id as ID;
+
 		// Retrieve the current user's role ID from the RequestContext
 		const currentRoleId = RequestContext.currentRoleId();
 		const currentUserId = RequestContext.currentUserId();
@@ -432,6 +460,11 @@ export class UserService extends TenantAwareCrudService<User> {
 				if (requestedRoleIds.some((roleId) => String(roleId) !== String(currentRoleId))) {
 					throw new ForbiddenException();
 				}
+			} else {
+				// Updating SOMEONE ELSE: granting SUPER_ADMIN is reserved to callers who may edit super
+				// admins (the same boundary the register handler and invite creation enforce). The role is
+				// resolved from the database — never from a client-supplied role name.
+				await this.assertCanAssignRoles([entity.role?.id, entity.roleId]);
 			}
 
 			// Update password hash if provided
@@ -808,6 +841,61 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	private async getPasswordHash(password: string): Promise<string> {
 		return this._passwordHashService.hash(password);
+	}
+
+	/**
+	 * Refuses a payload that assigns a role the caller may not grant.
+	 *
+	 * @param roleIds Every role identifier in the payload — both the flat `roleId` and `role.id`.
+	 * @throws BadRequestException When an id does not resolve inside the caller's tenant.
+	 * @throws ForbiddenException When SUPER_ADMIN is requested without `SUPER_ADMIN_EDIT`.
+	 */
+	public async assertCanAssignRoles(roleIds: Array<ID | undefined>): Promise<void> {
+		// EVERY candidate is checked, not just the first: the entity carries both a `role` relation and a
+		// flat `roleId` column, and the RELATION wins when the row is persisted — so a body sending a
+		// harmless `roleId` next to a privileged `role: { id }` must not validate the harmless one.
+		const candidates = roleIds.filter((roleId) => isNotEmpty(roleId)) as ID[];
+		const canEditSuperAdmin = RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT);
+		for (const roleId of candidates) {
+			assertRoleAssignmentAllowed(await this.resolveRoleName(roleId), canEditSuperAdmin);
+		}
+	}
+
+	/**
+	 * Resolves the name of a role of the caller's tenant from the database (by entity name, to avoid
+	 * a role -> user -> role import cycle). Returns undefined for an unknown / foreign role.
+	 *
+	 * @param roleId The role id to resolve.
+	 */
+	public async resolveRoleName(roleId: ID): Promise<string | undefined> {
+		if (!roleId) {
+			return undefined;
+		}
+		const tenantId = RequestContext.currentTenantId();
+
+		// Fail CLOSED with no tenant context. `...(tenantId ? { tenantId } : {})` would drop the
+		// predicate entirely and resolve roles across every tenant in the database — the caller then
+		// gets a name for a role it has no claim to, and the SUPER_ADMIN gate reads as satisfied.
+		// An unresolved name makes `assertRoleAssignmentAllowed` throw, which is the safe outcome.
+		if (!tenantId) {
+			return undefined;
+		}
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const role = await this.mikroOrmRepository
+					.getEntityManager()
+					.findOne('Role', { id: roleId, tenantId } as any);
+				return (role as any)?.name;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const role = await this.typeOrmRepository.manager.findOne('Role', {
+					where: { id: roleId, tenantId } as any
+				});
+				return (role as any)?.name;
+			}
+		}
 	}
 
 	/**

@@ -134,9 +134,6 @@ export class EventTypeController extends CrudController<EventType> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: EventType): Promise<IEventType> {
-		return this.eventTypeService.create({
-			id,
-			...entity
-		});
+		return this.eventTypeService.create({ ...entity, id });
 	}
 }

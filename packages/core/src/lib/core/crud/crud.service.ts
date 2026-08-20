@@ -33,6 +33,7 @@ import {
 	parseTypeORMFindToMikroOrm
 } from './../../core/utils';
 import { parseTypeORMFindCountOptions } from './utils';
+import { assertCriteriaHasPredicate } from './criteria.helper';
 import {
 	ICountByOptions,
 	ICountOptions,
@@ -248,6 +249,12 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 */
 	public async findOneOrFailByIdString(id: string, options?: IFindOneOptions<T>): Promise<ITryRequest<T>> {
 		try {
+			// A lookup "by id" with no id must not become a lookup for ANY row: TypeORM omits an
+			// undefined where value (and used to omit null), so `where: { id }` degraded to
+			// `SELECT ... LIMIT 1` and returned an arbitrary record (GHSA-44pv-34gx-q9p4 class).
+			if (!id) {
+				throw new NotFoundException(`The requested record was not found`);
+			}
 			let record: T;
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
@@ -368,6 +375,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneByIdString(id: ID, options?: IFindOneOptions<T>): Promise<T> {
+		// See findOneOrFailByIdString: an empty id must fail closed, never match an arbitrary row.
+		if (!id) {
+			throw new NotFoundException(`The requested record was not found`);
+		}
 		let record: T;
 
 		switch (this.ormType) {
@@ -610,6 +621,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async update(id: IUpdateCriteria<T>, partialEntity: QueryDeepPartialEntity<T>): Promise<UpdateResult | T> {
+		// Outside the try: a malformed criteria is a 400 of its own, not a wrapped DB error.
+		assertCriteriaHasPredicate(id, 'update');
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
@@ -644,6 +657,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns {Promise<DeleteResult>} - Result indicating the number of affected records.
 	 */
 	public async delete(criteria: string | number | FindOptionsWhere<T>): Promise<DeleteResult> {
+		// Outside the try: a malformed criteria is a 400 of its own, not a wrapped not-found.
+		assertCriteriaHasPredicate(criteria, 'delete');
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
@@ -711,6 +726,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns {Promise<UpdateResult | DeleteResult>} - Result indicating success or failure.
 	 */
 	public async softDelete(criteria: string | number | FindOptionsWhere<T>): Promise<UpdateResult | T> {
+		// Outside the try: a malformed criteria is a 400 of its own, not a wrapped not-found.
+		assertCriteriaHasPredicate(criteria, 'softDelete');
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
