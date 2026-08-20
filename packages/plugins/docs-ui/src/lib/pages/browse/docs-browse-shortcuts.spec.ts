@@ -5,7 +5,7 @@
  * without instantiating `DocsBrowsePageComponent`, which reaches the
  * `@gauzy/ui-core/shared` barrel through its base class.
  */
-import { docsBrowseShortcutOf } from './docs-browse-shortcuts';
+import { DOCS_BROWSE_OVERLAY_SELECTOR, docsBrowseShortcutOf } from './docs-browse-shortcuts';
 
 /**
  * Minimal `KeyboardEvent` stand-in. jsdom's real constructor cannot be given an
@@ -92,5 +92,18 @@ describe('docsBrowseShortcutOf', () => {
 
 	it('declines a missing event rather than throwing', () => {
 		expect(docsBrowseShortcutOf(undefined as unknown as KeyboardEvent)).toBeNull();
+	});
+
+	describe('open-overlay selector', () => {
+		// The page skips EVERY shortcut while one of these is on screen. The bulk
+		// bar's popover has to be in the list: it closes itself on `Esc`, and the
+		// page's own `Esc` (clear the whole selection) must not run on the same
+		// keystroke. See `components/bulk/bulk-bar.component.html`.
+		it.each([['a Nebular dialog', 'nb-dialog-container'], ['a context menu', 'nb-context-menu'], ['the bulk bar popover', '.docs-bulk-popover']])(
+			'covers %s',
+			(_label, selector) => {
+				expect(DOCS_BROWSE_OVERLAY_SELECTOR).toContain(selector);
+			}
+		);
 	});
 });

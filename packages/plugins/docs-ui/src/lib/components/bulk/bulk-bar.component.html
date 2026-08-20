@@ -1,5 +1,9 @@
 <ng-container *ngIf="count > 0">
-	<div class="docs-bulk-scrim" *ngIf="openPanel" (click)="closePanel()"></div>
+	<!-- Decorative click-catcher: `Esc` (the component's document listener) is the
+	     keyboard equivalent, and the popover itself is reachable from the button
+	     that opened it — so the scrim is hidden from assistive tech rather than
+	     given a fake role. -->
+	<div class="docs-bulk-scrim" *ngIf="openPanel" aria-hidden="true" (click)="closePanel()" (keyup.escape)="closePanel()"></div>
 
 	<div class="docs-bulk" [nbSpinner]="busy" nbSpinnerStatus="primary" [attr.aria-label]="'DOCS.A11Y.SELECTION_STATUS' | translate">
 		<div class="docs-bulk-notice" *ngIf="overLimit" role="status">
@@ -81,7 +85,12 @@
 								<nb-icon class="docs-bulk-caret" icon="chevron-up-outline"></nb-icon>
 							</button>
 
-							<div class="docs-bulk-popover docs-bulk-popover--tags" *ngIf="openPanel === 'tags'" role="dialog">
+							<div
+								class="docs-bulk-popover docs-bulk-popover--tags"
+								*ngIf="openPanel === 'tags'"
+								role="dialog"
+								[attr.aria-label]="'DOCS.BULK.SECTION_TAGS' | translate"
+							>
 								<h6 class="docs-bulk-popover-title">{{ 'DOCS.BULK.SECTION_TAGS' | translate }}</h6>
 								<ga-tags-color-input
 									class="docs-bulk-tags-picker"
@@ -111,7 +120,7 @@
 									class="docs-bulk-action"
 									[class.docs-bulk-action--open]="openPanel === 'more'"
 									[disabled]="busy"
-									aria-haspopup="menu"
+									aria-haspopup="dialog"
 									[attr.aria-expanded]="openPanel === 'more'"
 									[nbTooltip]="'DOCS.BULK.SECTION_KNOWLEDGE' | translate"
 									[attr.aria-label]="'DOCS.BULK.SECTION_KNOWLEDGE' | translate"
@@ -123,12 +132,12 @@
 								<div
 									class="docs-bulk-popover docs-bulk-popover--menu"
 									*ngIf="openPanel === 'more'"
-									role="menu"
+									role="dialog"
+									[attr.aria-label]="'DOCS.BULK.SECTION_KNOWLEDGE' | translate"
 								>
 									<h6 class="docs-bulk-popover-title">{{ 'DOCS.BULK.SECTION_KNOWLEDGE' | translate }}</h6>
 									<button
 										type="button"
-										role="menuitem"
 										class="docs-bulk-menu-item"
 										[disabled]="busy"
 										(click)="run('KNOWLEDGE_IMPORT')"
@@ -138,7 +147,6 @@
 									</button>
 									<button
 										type="button"
-										role="menuitem"
 										class="docs-bulk-menu-item"
 										[disabled]="busy"
 										(click)="run('KNOWLEDGE_EXCLUDE')"

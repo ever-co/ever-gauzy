@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
@@ -38,7 +38,7 @@ export type DocumentBulkPanel = 'tags' | 'more';
 	styleUrls: ['./bulk-bar.component.scss'],
 	standalone: false
 })
-export class BulkBarComponent extends TranslationBaseComponent {
+export class BulkBarComponent extends TranslationBaseComponent implements OnChanges {
 	/**
 	 * Stable permission arrays for the template's `*ngxPermissionsOnly` gates.
 	 * 🛑 Never inline `[permissions.X]` in a binding — a fresh array each change-detection cycle
@@ -80,6 +80,21 @@ export class BulkBarComponent extends TranslationBaseComponent {
 		private readonly dialogService: NbDialogService
 	) {
 		super(translateService);
+	}
+
+	/**
+	 * The bar hides itself with `*ngIf="count > 0"` INSIDE its own template, so an
+	 * emptied selection does not destroy the component — without this reset the open
+	 * popover, the picked tags and the previous errors would all come back with the
+	 * next selection.
+	 */
+	ngOnChanges(changes: SimpleChanges): void {
+		if (changes['selectedIds'] && !this.count) {
+			this.openPanel = null;
+			this.tags = [];
+			this.errors = [];
+			this.errorsExpanded = false;
+		}
 	}
 
 	get count(): number {
@@ -158,9 +173,15 @@ export class BulkBarComponent extends TranslationBaseComponent {
 	}
 
 	async move(): Promise<void> {
+		// Same gate as `run()`: a busy bar, an empty selection or one past `maxIds`
+		// must not reach the dialog, and the dialog gets the same capped id list the
+		// bulk endpoint would accept.
+		if (this.busy || !this.count || this.overLimit) return;
 		this.openPanel = null;
 		const moved = await firstValueFrom(
-			this.dialogService.open(MoveDialogComponent, { context: { documentIds: this.selectedIds } }).onClose
+			this.dialogService.open(MoveDialogComponent, {
+				context: { documentIds: this.selectedIds.slice(0, this.maxIds) }
+			}).onClose
 		);
 		if (moved) this.completed.emit({ destructive: true });
 	}
