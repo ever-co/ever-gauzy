@@ -32,10 +32,14 @@ on:
 
 # Unique to this workflow and ref. Deliberately NOT a group shared with other workflows: a shared
 # group serializes unrelated builds and silently cancels them (see the image-build starvation
-# incident). Superseded PR runs are cancelled; pushes to the long-lived branches are not.
+# incident). Within this workflow+ref, only the newest commit is built.
 concurrency:
   group: build-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # Was `github.event_name == 'pull_request'`, which left branch pushes uncancelled:
+  # four merges to develop in an hour meant four full 3-h compiles of commits that were
+  # already superseded. This job only compiles — nothing outside the run depends on a
+  # half-finished one — so the newest commit always wins.
+  cancel-in-progress: true
 
 env:
   # Mirrors the CircleCI `defaults` block. The `ng:*` scripts already set the heap themselves via
