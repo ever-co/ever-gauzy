@@ -1,9 +1,11 @@
-import { ArgumentsHost, BadRequestException, ConflictException, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, BadRequestException, ConflictException, HttpException, HttpStatus } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 import {
 	describeDatabaseError,
 	GENERIC_DATABASE_ERROR_MESSAGE,
 	isDatabaseErrorPayload,
+	redactDatabaseError,
+	safeErrorMessage,
 	toClientSafeError
 } from './database-error';
 import { DatabaseErrorFilter } from './database-error.filter';
@@ -38,9 +40,30 @@ describe('QueryFailedError serialization (the reason this exists)', () => {
 describe('isDatabaseErrorPayload', () => {
 	it('recognises a driver error by shape, not by class', () => {
 		expect(isDatabaseErrorPayload(queryFailure())).toBe(true);
-		expect(isDatabaseErrorPayload({ query: 'SELECT 1', parameters: [] })).toBe(true);
-		expect(isDatabaseErrorPayload({ sql: 'SELECT 1' })).toBe(true);
+		// driver-only keys are conclusive on their own
 		expect(isDatabaseErrorPayload({ driverError: {} })).toBe(true);
+		expect(isDatabaseErrorPayload({ sqlMessage: 'Duplicate entry' })).toBe(true);
+		// a statement string is only conclusive alongside bound parameters or a driver code
+		expect(isDatabaseErrorPayload({ query: 'SELECT 1', parameters: [] })).toBe(true);
+		expect(isDatabaseErrorPayload({ sql: 'SELECT 1', code: 'ER_DUP_ENTRY' })).toBe(true);
+	});
+
+	it('recognises the real driver shapes', () => {
+		// mysql2
+		expect(
+			isDatabaseErrorPayload({
+				code: 'ER_DUP_ENTRY',
+				errno: 1062,
+				sqlMessage: "Duplicate entry 'x' for key 'user.email'",
+				sql: 'INSERT INTO `user` …'
+			})
+		).toBe(true);
+		// better-sqlite3
+		expect(isDatabaseErrorPayload({ code: 'SQLITE_CONSTRAINT_UNIQUE', message: 'UNIQUE constraint failed' })).toBe(
+			true
+		);
+		// pg
+		expect(isDatabaseErrorPayload({ code: '23505', severity: 'ERROR', constraint: 'user_email_key' })).toBe(true);
 	});
 
 	it('leaves ordinary payloads alone', () => {
@@ -50,6 +73,31 @@ describe('isDatabaseErrorPayload', () => {
 		expect(isDatabaseErrorPayload({ statusCode: 400, message: 'nope', error: 'Bad Request' })).toBe(false);
 		// class-validator's shape must survive — the UI renders these
 		expect(isDatabaseErrorPayload({ statusCode: 400, message: ['name must be a string'] })).toBe(false);
+	});
+
+	it('does not condemn a body just because it has a generically-named field', () => {
+		// This decides whether a body is replaced WHOLESALE, so the keys have to be driver-only.
+		// `parameter` is an ordinary English word a real handler may well use.
+		expect(isDatabaseErrorPayload({ statusCode: 400, message: 'Missing filter', parameter: 'since' })).toBe(false);
+		expect(isDatabaseErrorPayload({ message: 'Saved', query: '' })).toBe(false);
+		expect(isDatabaseErrorPayload({ message: 'Search failed', query: 'annual leave' })).toBe(false);
+	});
+
+	it('ignores INHERITED look-alike members, checking own properties only', () => {
+		class Suspicious {
+			get query() {
+				return 'SELECT 1';
+			}
+			get parameters() {
+				return [];
+			}
+		}
+		expect(isDatabaseErrorPayload(new Suspicious())).toBe(false);
+	});
+
+	it('still catches a bare driver error carrying only a recognised code', () => {
+		expect(isDatabaseErrorPayload({ code: '23505', message: 'duplicate key' })).toBe(true);
+		expect(isDatabaseErrorPayload({ code: 'SQLITE_CONSTRAINT_FOREIGNKEY' })).toBe(true);
 	});
 });
 
@@ -210,11 +258,77 @@ describe('DatabaseErrorFilter', () => {
 		// `new HttpException('msg', 404).getResponse()` returns a STRING, not an object, and Nest's own
 		// handler wraps it as `{ statusCode, message }`. A filter that replies with the raw payload
 		// would answer a bare JSON string instead — silently changing every such response in the app.
-		const { HttpException } = require('@nestjs/common');
 		filter.catch(new HttpException('resource is gone', 404), host());
 
 		expect(captured.status).toBe(404);
 		expect(captured.body).toEqual({ statusCode: 404, message: 'resource is gone' });
+	});
+
+	it('THE REGRESSION THAT SHIPPED: real hand-written messages are never rewritten', () => {
+		// The first version of the raw-SQL signature was case-INSENSITIVE. Measured against the 382
+		// distinct hand-written exception messages in this repo it rewrote FOURTEEN of them into the
+		// generic string. These are the real ones, verbatim.
+		const realMessages = [
+			'Please select valid Date, start time and end time',
+			'Cannot downgrade to the same plan. Please select a different plan.',
+			'Failed to update the password.',
+			'Failed to update employee profile.',
+			'Update data is required',
+			'Plugin update input is required',
+			'You cannot update timesheet status without providing IDs',
+			'You do not have permission to update this active task.',
+			'Employee context is required to update the job search status.',
+			'Make.com team ID is not configured. Please select a team first.'
+		];
+
+		for (const message of realMessages) {
+			captured = {};
+			const deliberate = new BadRequestException(message);
+			filter.catch(deliberate, host());
+			expect(captured.body).toEqual(deliberate.getResponse());
+		}
+	});
+
+	it('drops a nested driver error instead of copying it into the body', () => {
+		// A handler that throws `{ message: error?.message, error }` puts the whole driver object one
+		// level down; sanitizing only `message` would still ship query/parameters.
+		filter.catch(
+			new BadRequestException({
+				statusCode: 400,
+				message: 'duplicate key value violates unique constraint "user_email_key"',
+				error: queryFailure({ code: '23505' })
+			}) as any,
+			host()
+		);
+
+		const serialized = JSON.stringify(captured.body);
+		expect(serialized).not.toContain('secret-value');
+		expect(serialized).not.toContain('INSERT INTO');
+		expect(serialized).not.toContain('parameters');
+		expect(captured.body.message).toBe('A record with these values already exists.');
+	});
+
+	it('survives a payload with a circular reference instead of throwing inside the filter', () => {
+		// A driver error can hold a reference back to the connection. A throw in an exception filter
+		// aborts the response, so the logging path must not serialize blindly.
+		const circular: any = queryFailure({ code: '23505' });
+		circular.driverError.self = circular;
+
+		expect(() => filter.catch(new BadRequestException(circular) as any, host())).not.toThrow();
+		expect(captured.status).toBe(400);
+		expect(JSON.stringify(captured.body)).not.toContain('INSERT INTO');
+	});
+
+	it('an array message keeps its array shape (class-validator contract)', () => {
+		// safeMessageForDatabaseText only accepts strings, so an array passes through. Pinned so a
+		// later change cannot silently turn a list into a string for the same status code.
+		const validation = new BadRequestException({
+			statusCode: 400,
+			message: ['duplicate key value violates unique constraint "x"'],
+			error: 'Bad Request'
+		});
+		filter.catch(validation, host());
+		expect(Array.isArray(captured.body.message)).toBe(true);
 	});
 
 	it('does not disturb class-validator responses', () => {
@@ -226,5 +340,57 @@ describe('DatabaseErrorFilter', () => {
 		filter.catch(validation, host());
 
 		expect(captured.body.message).toEqual(['name must be a string', 'email must be an email']);
+	});
+});
+
+describe('registration contract', () => {
+	it('REQUIRES an HTTP adapter — constructing without one breaks every ordinary error', () => {
+		// BaseExceptionFilter resolves its adapter through @Optional() @Inject(), which only runs under
+		// DI. Built with `new` and no argument it has none, and the inherited super.catch() path throws
+		// while handling ordinary HttpExceptions — turning validation/auth/not-found into 500s.
+		// Both registration sites therefore pass app.getHttpAdapter(); this pins that requirement.
+		const withoutAdapter = new DatabaseErrorFilter();
+		const host = {
+			getArgByIndex: () => ({}),
+			switchToHttp: () => ({ getRequest: () => ({}), getResponse: () => ({}) })
+		} as unknown as ArgumentsHost;
+
+		expect(() => withoutAdapter.catch(new BadRequestException('a plain message'), host)).toThrow(TypeError);
+	});
+});
+
+describe('safeErrorMessage', () => {
+	it('describes a database error by its code', () => {
+		expect(safeErrorMessage(queryFailure({ code: '23503' }))).toBe(
+			'A related record referenced by this request does not exist.'
+		);
+	});
+
+	it('keeps a non-database error message — not every failure is a constraint violation', () => {
+		expect(safeErrorMessage(new Error('Entity was not found'))).toBe('Entity was not found');
+	});
+
+	it('still sanitizes driver text arriving as a plain message', () => {
+		expect(safeErrorMessage(new Error('value too long for type character varying(255)'))).toBe(
+			'A value in this request is too long.'
+		);
+	});
+});
+
+describe('redactDatabaseError', () => {
+	it('keeps the diagnostics but drops the bound values', () => {
+		const redacted = redactDatabaseError(queryFailure({ code: '23505' })) as any;
+		const serialized = JSON.stringify(redacted);
+
+		expect(serialized).not.toContain('secret-value');
+		expect(redacted.parameters).toMatch(/redacted/);
+		// the parts that make it diagnosable survive
+		expect(redacted.code).toBe('23505');
+		expect(redacted.query).toContain('INSERT INTO');
+	});
+
+	it('passes a non-database error straight through', () => {
+		const plain = new Error('nope');
+		expect(redactDatabaseError(plain)).toBe(plain);
 	});
 });

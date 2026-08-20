@@ -22,7 +22,7 @@ async function bootstrap() {
 
 		// This app builds its own Nest instance rather than going through @gauzy/core's bootstrap(),
 		// so the filter that keeps database internals out of responses has to be registered here too.
-		app.useGlobalFilters(new DatabaseErrorFilter());
+		app.useGlobalFilters(new DatabaseErrorFilter(app.getHttpAdapter()));
 
 		// Get Express instance to configure trust proxy
 		const expressApp = app.getHttpAdapter().getInstance();

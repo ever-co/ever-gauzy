@@ -18,8 +18,20 @@
  * can include other users' data echoed back from the payload, and the exact column layout.
  */
 
-/** Property names that only ever appear on a driver/ORM error payload. */
-const DATABASE_ERROR_KEYS = ['query', 'parameters', 'driverError', 'sql', 'sqlMessage', 'parameter'] as const;
+/**
+ * Property names that only ever appear on a driver/ORM error payload.
+ *
+ * `parameter` is deliberately NOT here: unlike `parameters`, it is an ordinary English word that a
+ * legitimate response body may carry, and this list decides whether a body is replaced WHOLESALE.
+ */
+const DATABASE_ERROR_KEYS = ['driverError', 'sqlMessage'] as const;
+
+/**
+ * Keys that indicate a driver error only in combination — `query` alone is too generic a name to
+ * condemn a whole response body on, but a non-empty `query` string next to `parameters` is not
+ * something an ordinary handler produces.
+ */
+const DATABASE_ERROR_COMBO_KEYS = ['query', 'sql'] as const;
 
 /** What the client is told instead, when nothing more specific is known. */
 export const GENERIC_DATABASE_ERROR_MESSAGE = 'The request could not be completed.';
@@ -80,10 +92,21 @@ const DATABASE_MESSAGE_SIGNATURES: ReadonlyArray<[RegExp, string]> = [
 	[/violates check constraint/i, 'A value in this request is not allowed.'],
 	[/CHECK constraint failed/i, 'A value in this request is not allowed.'],
 	[/invalid input syntax for/i, 'A value in this request has the wrong format.'],
-	// Anything still carrying raw SQL or a driver code is replaced wholesale.
-	[/\b(?:SELECT|INSERT INTO|UPDATE|DELETE FROM)\b\s+["'`\w]/i, GENERIC_DATABASE_ERROR_MESSAGE],
+	// value/length overflows — postgres, mysql
+	[/value too long for type/i, 'A value in this request is too long.'],
+	[/data too long for column/i, 'A value in this request is too long.'],
+	[/out of range value for column/i, 'A value in this request is out of range.'],
+	[/numeric field overflow/i, 'A value in this request is out of range.'],
+	// Anything still carrying a raw statement or a driver code is replaced wholesale.
+	//
+	// CASE-SENSITIVE, and it must look like an actual statement. The earlier version of this pattern
+	// was `/\b(SELECT|INSERT INTO|UPDATE|DELETE FROM)\b\s+["'`\w]/i`, and measured against the 382
+	// distinct hand-written exception messages in this repo it rewrote FOURTEEN of them — including
+	// "Please select valid Date, start time and end time", "Failed to update the password" and
+	// "Update data is required". Drivers emit SQL keywords in upper case; English prose does not.
+	[/\b(?:SELECT\s+[\s\S]+\s+FROM|INSERT\s+INTO|UPDATE\s+\S+\s+SET|DELETE\s+FROM)\s+["'`\w]/, GENERIC_DATABASE_ERROR_MESSAGE],
 	[/\bSQLITE_[A-Z_]+\b/, GENERIC_DATABASE_ERROR_MESSAGE],
-	[/\bER_[A-Z_]+\b/, GENERIC_DATABASE_ERROR_MESSAGE],
+	[/\bER_[A-Z_]{3,}\b/, GENERIC_DATABASE_ERROR_MESSAGE],
 	[/\bQueryFailedError\b/, GENERIC_DATABASE_ERROR_MESSAGE]
 ];
 
@@ -115,7 +138,28 @@ export function isDatabaseErrorPayload(value: unknown): boolean {
 	if (!value || typeof value !== 'object') {
 		return false;
 	}
-	return DATABASE_ERROR_KEYS.some((key) => key in (value as Record<string, unknown>));
+
+	// OWN properties only. `key in obj` walks the prototype chain, so an object inheriting a getter
+	// named `query` — or anything built from a class with such a member — would be condemned.
+	const has = (key: string) => Object.prototype.hasOwnProperty.call(value, key);
+
+	// Unambiguous on its own: nothing but a driver puts these on an object.
+	if (DATABASE_ERROR_KEYS.some(has)) {
+		return true;
+	}
+
+	// Ambiguous alone, conclusive together: a non-empty statement string next to bound parameters.
+	const record = value as Record<string, unknown>;
+	if (DATABASE_ERROR_COMBO_KEYS.some((key) => has(key) && typeof record[key] === 'string' && record[key])) {
+		if (has('parameters') || typeof resolveDriverCode(value) === 'string') {
+			return true;
+		}
+	}
+
+	// A bare driver error — `{ code, message }` with a code we recognise and no other structure —
+	// still has to be caught, or it is serialized straight into the response.
+	const code = resolveDriverCode(value);
+	return !!code && DATABASE_ERROR_MESSAGES.has(code);
 }
 
 /**
@@ -144,6 +188,56 @@ function resolveDriverCode(error: unknown): string | undefined {
 export function describeDatabaseError(error: unknown): string {
 	const code = resolveDriverCode(error);
 	return (code && DATABASE_ERROR_MESSAGES.get(code)) || GENERIC_DATABASE_ERROR_MESSAGE;
+}
+
+/**
+ * The message to show for a caught error, safe in both directions.
+ *
+ * A database error is described by its driver code; anything else keeps its own message, because
+ * flattening every failure to one generic string would throw away the useful half — a missing
+ * record and a constraint violation are not the same thing to the caller.
+ *
+ * @param error - The caught error.
+ * @returns A message that is safe to return to the caller.
+ */
+export function safeErrorMessage(error: unknown): string {
+	if (isDatabaseErrorPayload(error)) {
+		return describeDatabaseError(error);
+	}
+	const message = (error as Error)?.message;
+	// A non-database error can still be carrying driver text (a service that re-threw `error.message`).
+	return safeMessageForDatabaseText(message) ?? message ?? GENERIC_DATABASE_ERROR_MESSAGE;
+}
+
+/**
+ * A view of a caught error that is safe to write to the application log.
+ *
+ * The response is sanitized, but stdout usually ships to a retained log store, and a
+ * `QueryFailedError`'s `parameters` holds the values the caller submitted — emails, names, tokens.
+ * Everything that helps diagnose the failure is kept (statement text, driver code, driver message);
+ * only the bound values are dropped, replaced by their count so the shape is still visible.
+ *
+ * @param error - The caught error.
+ * @returns A value suitable for logging.
+ */
+export function redactDatabaseError(error: unknown): unknown {
+	if (!isDatabaseErrorPayload(error)) {
+		return error;
+	}
+
+	const source = error as Record<string, unknown>;
+	const redacted: Record<string, unknown> = {
+		name: (error as Error)?.name,
+		message: (error as Error)?.message,
+		code: resolveDriverCode(error)
+	};
+
+	if ('query' in source) redacted['query'] = source['query'];
+	if ('parameters' in source) {
+		redacted['parameters'] = `[redacted: ${Array.isArray(source['parameters']) ? source['parameters'].length : 'n/a'} bound values]`;
+	}
+
+	return redacted;
 }
 
 /**

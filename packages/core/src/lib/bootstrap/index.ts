@@ -206,7 +206,10 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// `new BadRequestException(error)`, and Nest serializes that object's enumerable properties —
 	// which on a TypeORM QueryFailedError are exactly `query`, `parameters` and `driverError`. This
 	// filter replaces such a payload with a safe message and leaves every other response untouched.
-	app.useGlobalFilters(new DatabaseErrorFilter());
+	// The adapter MUST be passed: BaseExceptionFilter resolves it through @Optional() @Inject(),
+	// which only runs under DI. Constructed with `new`, it would have none, and super.catch() would
+	// throw while handling every ordinary HttpException.
+	app.useGlobalFilters(new DatabaseErrorFilter(app.getHttpAdapter()));
 
 	// Get the AppService
 	const appService = app.select(AppModule).get(AppService);

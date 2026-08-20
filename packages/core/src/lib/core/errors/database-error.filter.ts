@@ -1,6 +1,11 @@
 import { ArgumentsHost, Catch, HttpException, Logger } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
-import { describeDatabaseError, isDatabaseErrorPayload, safeMessageForDatabaseText } from './database-error';
+import {
+	describeDatabaseError,
+	isDatabaseErrorPayload,
+	redactDatabaseError,
+	safeMessageForDatabaseText
+} from './database-error';
 
 /**
  * Keeps database internals out of HTTP responses.
@@ -45,10 +50,17 @@ export class DatabaseErrorFilter extends BaseExceptionFilter {
 		const status = exception.getStatus();
 		const request = host.switchToHttp().getRequest();
 
-		// The full error, with its stack, stays server-side where it is actually useful.
+		// Log the error itself, not `exception.stack`. The stack belongs to the HttpException that
+		// WRAPPED the driver error and points at the throw site — it carries none of the driver's
+		// message, code or constraint, which is the part worth having. `redactDatabaseError` keeps all
+		// of that and drops only the bound values (caller-submitted emails, names, tokens), since logs
+		// are usually shipped to a retained store.
+		//
+		// Nothing here may throw: a driver payload can hold a circular reference back to the
+		// connection, and an exception raised inside an exception filter aborts the response.
 		this.logger.error(
 			`Database error on ${request?.method ?? ''} ${request?.url ?? ''}`,
-			exception.stack ?? JSON.stringify(payload)
+			this.describeForLog(payload) ?? exception.stack
 		);
 
 		// Rebuild the body around the safe message.
@@ -60,7 +72,7 @@ export class DatabaseErrorFilter extends BaseExceptionFilter {
 		const isDriverErrorItself = isDatabaseErrorPayload(payload);
 		const body =
 			!isDriverErrorItself && payload && typeof payload === 'object'
-				? { ...(payload as Record<string, unknown>), message: safeMessage }
+				? { ...this.withoutNestedDatabaseFields(payload as Record<string, unknown>), message: safeMessage }
 				: {
 						statusCode: status,
 						message: safeMessage,
@@ -71,6 +83,40 @@ export class DatabaseErrorFilter extends BaseExceptionFilter {
 					};
 
 		super.catch(new HttpException(body, status), host);
+	}
+
+	/**
+	 * Drops any nested value that is itself a driver error.
+	 *
+	 * The spread branch preserves the caller's own body structure, but a handler that throws
+	 * `{ message: error?.message, error }` puts the whole driver object one level down — sanitizing
+	 * `message` while copying `error` verbatim would leak `query`/`parameters` regardless.
+	 *
+	 * @param payload - The response body being rebuilt.
+	 */
+	private withoutNestedDatabaseFields(payload: Record<string, unknown>): Record<string, unknown> {
+		const cleaned: Record<string, unknown> = {};
+		for (const [key, value] of Object.entries(payload)) {
+			if (isDatabaseErrorPayload(value)) {
+				continue;
+			}
+			cleaned[key] = value;
+		}
+		return cleaned;
+	}
+
+	/**
+	 * A loggable description of the payload that cannot throw.
+	 *
+	 * @param payload - The exception's response payload.
+	 */
+	private describeForLog(payload: unknown): string | undefined {
+		try {
+			return JSON.stringify(redactDatabaseError(payload));
+		} catch {
+			// Circular reference (a driver error can hold the connection) — the stack is the fallback.
+			return undefined;
+		}
 	}
 
 	/**
