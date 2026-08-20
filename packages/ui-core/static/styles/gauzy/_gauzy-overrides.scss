@@ -675,28 +675,26 @@ $default-box-shadow: $control-hairline;
 // that would add 8px to every tab bar in the app, and this pass is allowed to
 // change type sizes, not the boxes around them.
 @mixin nb-tabset-overrides() {
+  :root nb-route-tabset .route-tabset .route-tab a.tab-link.tab-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  :root nb-route-tabset .route-tabset .route-tab.route-tab a.tab-link.tab-link nb-icon + .tab-text {
+    margin-inline-start: 0;
+  }
+
   nb-tabset .tabset .tab.active a.tab-link {
     @include tab-link-typography(nb-theme(tabset-tab-text-font-size), 600);
     border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-    color: var(--text-primary-color);
-
-    nb-icon {
-      svg {
-        fill: var(--text-primary-color);
-      }
-    }
+    @include tab-link-colour(var(--text-primary-color));
   }
 
   nb-route-tabset .route-tabset .route-tab.active a.tab-link {
     @include tab-link-typography(nb-theme(route-tabset-tab-text-font-size), 600);
     border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-    color: var(--text-primary-color);
-
-    nb-icon {
-      svg {
-        fill: var(--text-primary-color);
-      }
-    }
+    @include tab-link-colour(var(--text-primary-color));
   }
 
   nb-tabset .tabset .tab a.tab-link {
@@ -735,10 +733,4 @@ $default-box-shadow: $control-hairline;
 // selected by the caller; this mixin only says what a tab link's colour is.
 @mixin tab-link-colour($colour) {
   color: $colour;
-
-  nb-icon {
-    svg {
-      fill: $colour;
-    }
-  }
 }

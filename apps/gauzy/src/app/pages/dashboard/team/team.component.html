@@ -1,9 +1,9 @@
 <nb-card>
-	<nb-card-header class="mb-3">
+	<nb-card-header>
 		<h4 class="header-title">
 			<div>
 				@if (selectedTeam?.isSelected) {
-				<button (click)="reset()" nbButton outline size="small" status="primary">
+				<button (click)="reset()" nbButton ghost size="small" status="primary">
 					<nb-icon icon="arrow-back-outline"></nb-icon>
 				</button>
 				}
@@ -34,10 +34,7 @@
 							<div class="row w-100">
 								<div class="col-3">
 									<div class="row">
-										<div class="col-3">
-											{{ 'TIMESHEET.STATUS' | translate }}
-										</div>
-										<div class="col-9">
+										<div class="col-12">
 											{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
 										</div>
 									</div>

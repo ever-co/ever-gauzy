@@ -324,6 +324,16 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 
 	/**
+	 * GET Full Name — the untruncated counterpart of `getShortenedName`.
+	 *
+	 * @param employee
+	 * @returns the employee's complete display name
+	 */
+	getFullName(employee: ISelectedEmployee): string {
+		return (employee?.fullName || [employee?.firstName, employee?.lastName].filter(Boolean).join(' ')).trim();
+	}
+
+	/**
 	 * Handles the selection of an employee based on certain conditions
 	 */
 	private onSelectEmployee() {

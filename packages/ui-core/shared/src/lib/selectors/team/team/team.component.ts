@@ -12,7 +12,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { combineLatest, from, map, Observable, of, Subject, switchMap } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlingService,
 	NavigationService,
@@ -21,7 +21,6 @@ import {
 	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { TruncatePipe } from '../../../pipes';
 import { ALL_TEAM_SELECTED } from './default-team';
 
 @UntilDestroy({ checkProperties: true })
@@ -192,7 +191,6 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 		private readonly _toastrService: ToastrService,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _organizationTeamStore: OrganizationTeamStore,
-		private readonly _truncatePipe: TruncatePipe,
 		private readonly _navigationService: NavigationService
 	) {}
 
@@ -495,35 +493,6 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	 */
 	isClearable(): boolean {
 		return this.selectedTeam !== ALL_TEAM_SELECTED;
-	}
-
-	/**
-	 * Returns a shortened version of the name, with truncation applied to both first and last names.
-	 *
-	 * @param {string} name - The full name to be shortened.
-	 * @param {number} [limit=20] - The maximum character limit for the shortened name.
-	 * @returns {string | undefined} - The shortened name, or undefined if the name is empty.
-	 */
-	getShortenedName(name: string, limit = 20): string | undefined {
-		if (isEmpty(name)) {
-			return;
-		}
-
-		const chunks = name.split(/\s+/);
-		const firstName = chunks.shift();
-		const lastName = chunks.join(' ');
-
-		// If both first and last names exist, truncate both
-		if (firstName && lastName) {
-			return (
-				this._truncatePipe.transform(firstName, Math.floor(limit / 2), false, '') +
-				' ' +
-				this._truncatePipe.transform(lastName, Math.floor(limit / 2), false, '.')
-			);
-		}
-
-		// Fallback to truncating either firstName or lastName if available
-		return this._truncatePipe.transform(firstName || lastName, limit) || '[error: bad name]';
 	}
 
 	/**

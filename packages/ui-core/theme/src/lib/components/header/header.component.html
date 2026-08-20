@@ -9,22 +9,21 @@
        title (ngx-header-title): the header band is already dense with
        selectors, and the trail was being squeezed to nothing on pages that
        show every selector. -->
-  <div class="header-container">
-    @if (createQuickActionsMenu?.length > 0) {
-      <!-- .create-action: pinned to the band's leading edge (margin-inline-end: auto
-           in header.component.scss) so it always sits right after the sidebar,
-           even on pages that hide every selector. -->
+  @if (createQuickActionsMenu?.length > 0) {
+    <div class="header-lead">
       <nb-action
         size="small"
         [class.left]="position === 'normal'"
         [class.right]="position === 'inverse'"
-        class="show-large-up create-action"
+        class="show-large-up"
         >
         <button type="button" nbButton class="button create" status="primary" size="small" (click)="openQuickActions()">
           + {{ 'BUTTONS.CREATE' | translate }}
         </button>
       </nb-action>
-    }
+    </div>
+  }
+  <div class="header-container">
     <div class="actions" size="small" [class.left]="position === 'normal'" [class.right]="position === 'inverse'">
       @if (showTeamsSelector && !showExtraActions && selectorsVisibility?.team) {
         <nb-action

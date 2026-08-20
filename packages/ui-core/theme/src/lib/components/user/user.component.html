@@ -1,12 +1,29 @@
-<div class="user-container" (click)="onClicked()">
-	<div class="img-container">
-		<img [src]="(user$ | async)?.imageUrl" [alt]="(user$ | async)?.name" />
-		<div [class.online]="online$ | async" [class.offline]="!(online$ | async)"></div>
-	</div>
-	@if (showIdentity) {
-		<div class="identity-container">
-			<div class="name">{{ (user$ | async)?.name }}</div>
-			<div class="email">{{ (user$ | async)?.email }}</div>
+@if (user$ | async; as user) {
+	<div
+		class="user-container"
+		[class.with-identity]="showIdentity"
+		[attr.title]="showIdentity ? null : user?.name"
+		[attr.aria-label]="user?.name"
+		role="button"
+		tabindex="0"
+		(click)="onClicked()"
+		(keydown.enter)="onClicked()"
+		<!-- Space scrolls the page on a div; the role="button" contract is to activate instead. -->
+		(keydown.space)="$event.preventDefault(); onClicked()"
+	>
+		<div class="img-container">
+			@if (user?.imageUrl) {
+				<img [src]="user.imageUrl" [alt]="user?.name" />
+			} @else {
+				<span class="initials">{{ initials(user) }}</span>
+			}
+			<span class="presence" [class.online]="online$ | async" [class.offline]="!(online$ | async)"></span>
 		</div>
-	}
-</div>
+		@if (showIdentity) {
+			<div class="identity-container">
+				<div class="name">{{ user?.name }}</div>
+				<div class="email">{{ user?.email }}</div>
+			</div>
+		}
+	</div>
+}

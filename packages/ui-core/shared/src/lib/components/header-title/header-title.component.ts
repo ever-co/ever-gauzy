@@ -37,17 +37,17 @@ import { Store } from '@gauzy/ui-core/core';
 			 * on.
 			 */
 			:host {
-				font-size: var(--gauzy-page-title-font-size, 1.25rem);
+				font-size: var(--gauzy-page-title-font-size, 1rem);
 				font-weight: var(--gauzy-page-title-font-weight, 600);
-				line-height: var(--gauzy-page-title-line-height, 1.75rem);
+				line-height: var(--gauzy-page-title-line-height, 1.5rem);
 				letter-spacing: var(--gauzy-page-title-letter-spacing, -0.01em);
 				text-align: left;
 			}
 			.name,
 			.org-name {
-				font-size: var(--gauzy-page-title-font-size, 1.25rem);
+				font-size: var(--gauzy-page-title-font-size, 1rem);
 				font-weight: 400;
-				line-height: var(--gauzy-page-title-line-height, 1.75rem);
+				line-height: var(--gauzy-page-title-line-height, 1.5rem);
 				letter-spacing: var(--gauzy-page-title-letter-spacing, -0.01em);
 				text-align: left;
 				color: var(--text-hint-color);

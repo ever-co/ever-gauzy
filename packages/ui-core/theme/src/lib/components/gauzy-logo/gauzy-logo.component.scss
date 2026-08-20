@@ -26,6 +26,7 @@
 
     .description {
       min-width: 0;
+      flex: 1 1 auto;
       // `.text` below adds a 10px side margin meant for the old two-line block.
       margin: 0;
 
@@ -68,9 +69,14 @@
 // sit in its own bordered 1.75rem box, which together with the ring on the header
 // (below) drew a form control around something you cannot type into.
 nb-accordion-item-header ::ng-deep nb-icon {
-  border: none;
-  width: 1.75rem;
-  height: 1.75rem;
+  display: none;
+}
+
+.switch-indicator {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  margin-left: 0.25rem;
   color: nb-theme(text-hint-color);
 }
 

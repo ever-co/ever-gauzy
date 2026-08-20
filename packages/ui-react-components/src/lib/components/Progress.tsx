@@ -2,16 +2,17 @@ import { theme } from '../theme';
 
 export interface ProgressProps {
 	percent: number;
-	color: string;
+	/** Fill colour. Defaults to the theme's accent. */
+	color?: string;
 }
 
-export function Progress({ percent, color }: ProgressProps) {
+export function Progress({ percent, color = theme.accent }: ProgressProps) {
 	return (
 		<div
 			style={{
 				width: '100%',
 				height: '4px',
-				background: theme.border,
+				background: theme.tint,
 				borderRadius: '2px',
 				overflow: 'hidden'
 			}}

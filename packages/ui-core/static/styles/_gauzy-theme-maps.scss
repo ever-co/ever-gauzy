@@ -25,16 +25,15 @@ $gauzy-density: (
 	// The ONE step every card title resolves to, whether it comes from the
 	// shared `ngx-header-title` or from a heading a template dropped straight
 	// into an `nb-card-header`. A page heading only has to out-rank body copy;
-	// at the h4 step (1.5rem/700) it read as an oversized breadcrumb path.
 	//
 	// Kept as its own token rather than reusing `text-heading-5-*`: those
 	// describe what an <h5> is worth ANYWHERE, while this describes a role,
 	// and the rules that consume it deliberately apply to h1..h5 alike. Every
 	// theme key is emitted as a CSS custom property, so the component that
 	// owns the shared title can read the same value from its inline styles.
-	gauzy-page-title-font-size: 1.25rem,
+	gauzy-page-title-font-size: 1rem,
 	gauzy-page-title-font-weight: 600,
-	gauzy-page-title-line-height: 1.75rem,
+	gauzy-page-title-line-height: 1.5rem,
 	gauzy-page-title-letter-spacing: -0.01em,
 	// The reference box every item on the page title LINE is centred in — the
 	// heading itself and the action block beside it (`.ga-page-header` in
@@ -101,8 +100,9 @@ $gauzy-density: (
 	// full-size control, which the pill then has to wrap.
 	//
 	// Deliberately shorter than the full-size control height that floor
-	// resolves to: the header band is chrome, not a form.
-	gauzy-header-control-height: 2rem,
+	// resolves to: the header band is chrome, not a form. 1.75rem still clears
+	// the cluster's 0.6875rem text and its 1.125rem avatars.
+	gauzy-header-control-height: 1.75rem,
 	// ── Data tables (angular2-smart-table) ─────────────────────────────────
 	// The library ships its own emulated component CSS and nothing in this repo
 	// used to contest it:

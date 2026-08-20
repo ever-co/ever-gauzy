@@ -1,40 +1,51 @@
 @use 'var' as *;
 
-$radius: nb-theme(button-rectangle-border-radius);
-
 ng-select {
   // No `height: 100%` — the parent box is auto-height, so it always resolved to
   // `auto`; the trigger centres its own content now (see `ng-select-overrides`).
   .selector-template {
     display: flex;
     align-items: center;
+    gap: 0.375rem;
+    min-width: 0;
+
+    span {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
   }
+
   img {
-    margin-right: 0.25rem;
-    margin-left: 0.25rem;
-    height: 20px;
-    width: 20px;
-    box-shadow: var(--gauzy-shadow);
+    flex: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: var(--gauzy-radius-sm, 6px);
     object-fit: cover;
-    border-radius: $radius;
   }
 }
 
-::ng-deep .organization {
-  &.close {
-    opacity: 1;
-  }
-  &.ng-select {
-    // The text inset and the chevron's alignment belong to the trigger now
-    // (`ng-select-overrides` / `_overrides.scss`). This block used to zero the
-    // inset — leaving the organization name on a different x from the selectors
-    // beside it — and align the arrow wrapper on `baseline`, which on a
-    // zero-height wrapper dropped the chevron ~4px below centre, far enough for
-    // the container's `overflow: hidden` to clip it.
-    &.close.ng-select .ng-select-container .ng-value-container {
-      span {
-        display: none;
-      }
-    }
-  }
+// ── Trigger truncation ──────────────────────────────────────────────────────
+// The label template renders the WHOLE name and lets the box clip it, with the
+// untruncated text on the trigger's `title` — the header band sizes this pill
+// to the cluster, not to its contents, so a long organization name has to
+// truncate somewhere.
+//
+// `min-width: 0` is the part that does the work. `.ng-value` is a flex child of
+// `.ng-value-container`, so it defaults to `min-width: auto` and refuses to
+// shrink below its own text — `text-overflow` never gets a chance to fire. The
+// rule needs `::ng-deep` because ng-select renders its container with
+// `ViewEncapsulation.None`, so those elements carry no `_ngcontent` of ours.
+//
+// `.ng-value-container` needs the same escape hatch one level up, for exactly
+// the same reason.
+:host ::ng-deep .ng-select .ng-select-container .ng-value-container {
+  min-width: 0;
+}
+:host ::ng-deep .ng-select .ng-select-container .ng-value,
+:host ::ng-deep .ng-select .ng-select-container .ng-placeholder {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
