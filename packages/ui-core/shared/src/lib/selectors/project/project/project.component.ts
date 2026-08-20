@@ -57,6 +57,32 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	@Input() shortened: boolean = false;
 
 	/**
+	 * Extra class(es) for the DROPDOWN PANEL, not for this component.
+	 *
+	 * `appendTo="body"` moves the panel out of this component's DOM, so the only handle a
+	 * stylesheet has on it is the class ng-select copies across when it appends it:
+	 *
+	 *   [class]="appendToValue ? (ngClass() ? ngClass() : classes) : null"
+	 *
+	 * `classes` there is the element's STATIC class attribute, captured once via
+	 * `HostAttributeToken('class')` — a `[class.x]` binding never reaches the panel. Setting
+	 * `ngClass` REPLACES that fallback, which is why `panelClass` rebuilds the base classes
+	 * rather than adding to them.
+	 *
+	 * The header passes `header-entity-select` so its panels can be set in the header band's
+	 * text; see `.ng-dropdown-panel.header-entity-select` in `_overrides.scss`.
+	 */
+	@Input() dropdownClass: string;
+
+	/**
+	 * The class list ng-select puts on its appended panel. `null` leaves ng-select on its
+	 * own fallback, i.e. exactly the static `class` attribute.
+	 */
+	get panelClass(): string | null {
+		return this.dropdownClass ? `gauzy-entity-select ${this.dropdownClass}` : null;
+	}
+
+	/**
 	 * Determines whether the component is disabled and non-interactive.
 	 * When set to `true`, user interactions (like clicking or selecting) are disabled.
 	 *

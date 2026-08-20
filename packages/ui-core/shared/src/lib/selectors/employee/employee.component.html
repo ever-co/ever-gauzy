@@ -13,6 +13,7 @@
   bindName="firstName"
   appendTo="body"
   class="employee gauzy-entity-select"
+  [ngClass]="panelClass"
   >
   <ng-template ng-option-tmp let-item="item" let-index="index">
     @if (item.imageUrl && !item.imageUrl.includes('avatar-default')) {
