@@ -20,6 +20,7 @@
 		"gzipped",
 		"gzips",
 		"npmjs",
+		"yarnpkg",
 		"rspack",
 		"dlib",
 		"codesign",
