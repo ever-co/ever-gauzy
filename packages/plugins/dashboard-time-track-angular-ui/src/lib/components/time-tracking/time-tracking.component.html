@@ -350,7 +350,7 @@
 		</nb-card-header>
 		@if (manualTimes?.length > 0) {
 			<nb-card-body class="custom-card-body-inner-list window-body">
-				<nb-list class="data-list">
+				<nb-list class="data-list manual-time-list">
 					<nb-list-item class="data-list__head">
 						<div class="w-100">
 							<div class="row font-weight-bold">
@@ -518,7 +518,7 @@
 		</nb-card-header>
 		@if (projects?.length > 0) {
 			<nb-card-body class="custom-card-body-inner-list window-body">
-				<nb-list class="data-list">
+				<nb-list class="data-list projects-list">
 					@for (project of projects; track project.id) {
 						<nb-list-item>
 							<div class="w-100">
@@ -593,7 +593,7 @@
 		</nb-card-header>
 		@if (activities?.length > 0) {
 			<nb-card-body class="custom-card-body-inner-list window-body">
-				<nb-list class="data-list">
+				<nb-list class="data-list apps-urls-list">
 					@for (activity of activities; track activity) {
 						<nb-list-item>
 							<div class="w-100">
