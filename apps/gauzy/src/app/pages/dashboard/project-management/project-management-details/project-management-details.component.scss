@@ -4,20 +4,30 @@
 // the completion dot loses both its ring and its fill on every theme.
 @use 'gauzy/_gauzy-cards' as *;
 
-// The grid sits INSIDE the page card, under the header band, the page title and the
-// card header — `100vh - 2rem` ignored all of that and pushed the columns past the
-// viewport. `$default-card-height` is the shared "viewport minus page+card chrome"
-// token every other full-height page uses.
-$height: $default-card-height;
+// The grid fills the available page card; the parent owns overflow when the
+// dashboard panels contain more content than the available height.
 $gap: 1rem;
+
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
 
 .main {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: $gap;
+  height: auto;
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.375rem;
 
   .inbox {
-    height: $height;
+    height: 100%;
     .soon {
       display: flex;
       justify-content: center;
@@ -26,7 +36,7 @@ $gap: 1rem;
     }
   }
   .today {
-    height: $height;
+    height: 100%;
     .more {
       font-size: nb-theme(text-caption-font-size);
       font-weight: 500;
@@ -105,8 +115,9 @@ $gap: 1rem;
     display: flex;
     flex-direction: column;
     gap: $gap;
-    height: $height;
+    height: auto;
     min-width: 0;
+    min-height: 0;
     .card.project {
       display: flex;
       gap: 0.625rem;
@@ -120,7 +131,9 @@ $gap: 1rem;
       width: 100%;
     }
     nb-card {
-      height: calc(50% - #{$gap} / 2);
+      height: auto;
+      min-height: 0;
+      flex: 0 0 auto;
     }
     .card.assigned {
       padding: 0.5rem 0.625rem;
@@ -135,6 +148,13 @@ $gap: 1rem;
       line-height: 1rem;
       letter-spacing: 0em;
     }
+  }
+}
+
+:host ::ng-deep .last-column .projects .card.project ngx-project {
+  .name,
+  .member {
+    font-size: 12px;
   }
 }
 
@@ -161,6 +181,12 @@ $gap: 1rem;
 
       [nbButton].appearance-outline.status-primary {
         align-self: flex-start;
+        height: 2rem;
+        min-height: 2rem;
+        padding-block: 0.375rem;
+        padding-inline: 0.625rem;
+        font-size: 12px;
+        line-height: 1rem;
       }
 
       .card-body-content {
@@ -175,8 +201,18 @@ $gap: 1rem;
         flex-direction: column;
         gap: 0.5rem;
       }
+
     }
   }
+
+  // Four rows: 4 x 40px row height plus three 8px gaps.
+  nb-card.today nb-card-body .card-body-content,
+  nb-card.projects nb-card-body .card-body-content,
+  nb-card.recently nb-card-body .card-body-content {
+    max-height: 11.5rem !important;
+    flex: 0 1 auto;
+  }
+
   ::ng-deep {
     ngx-no-data-message {
       height: 100%;
