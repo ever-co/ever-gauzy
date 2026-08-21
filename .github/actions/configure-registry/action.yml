@@ -78,13 +78,13 @@ runs:
         # win over this run's decision. This reset is NOT best-effort -- if we cannot establish
         # a known starting state we must not go on to pick a registry, because the install would
         # then quietly run against whatever the last job left behind.
-        rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten
+        rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten package-lock.json.rewritten
         # Reset per-path, not as one pathspec list. `git checkout -- a b` exits 1 when EITHER path is
         # untracked, so the original form hard-failed on every pnpm repo (no .npmrc, no yarn.lock) and
         # turned 'this repo has no cache configured' into 'this repo's CI is red'. Tracked files are
         # restored; untracked leftovers from a previous run on a clean:false runner are removed.
         reset_failed=""
-        for f in .npmrc yarn.lock; do
+        for f in .npmrc yarn.lock package-lock.json; do
           # Exit status matters: 0 = tracked, 1 = genuinely absent, anything else (128 = git
           # metadata unavailable) means we CANNOT tell. Treating every nonzero as absent would
           # delete the files and continue, which is exactly the unknown-state hazard this reset
@@ -152,8 +152,24 @@ runs:
           # One pass, no -i: an -i.bak backup survives on a clean: false runner if the step
           # fails between the rewrite and its cleanup, and bare -i is not portable to the BSD
           # sed on the macOS runners. The temp file is only ever the finished rewrite.
-          sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
-              -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
-          mv -f yarn.lock.rewritten yarn.lock
+          #
+          # BOTH rewrites are gated on the lockfile existing. This action is consumed cross-repo
+          # (pnpm and npm repos included): a pnpm repo has NO root yarn.lock, and under the
+          # composite `bash -eo pipefail` shell an unguarded `sed missing-file` exits 2 and kills
+          # the job the moment the VIP answers - config-only is all a pnpm repo needs, because
+          # pnpm-lock.yaml stores no registry host. yarn/npm lockfiles DO store the resolved
+          # tarball host, so where those files exist the rewrite is load-bearing: without it the
+          # install follows the lockfile's npmjs URLs and the registry config is a measured no-op.
+          if [ -f yarn.lock ]; then
+            sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
+                -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
+            mv -f yarn.lock.rewritten yarn.lock
+          fi
+          # npm follows package-lock.json's `resolved` URLs the same way (integrity hashes are
+          # host-independent sha512 sums, so `npm ci` still verifies every tarball byte-for-byte).
+          if [ -f package-lock.json ]; then
+            sed -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" package-lock.json > package-lock.json.rewritten
+            mv -f package-lock.json.rewritten package-lock.json
+          fi
         fi
         echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
