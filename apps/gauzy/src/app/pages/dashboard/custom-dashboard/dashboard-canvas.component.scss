@@ -9,18 +9,18 @@
 .dashboard-canvas {
 	display: grid;
 	grid-template-columns: repeat(12, minmax(0, 1fr));
-	grid-auto-rows: 80px;
+	grid-auto-rows: minmax(72px, auto);
 	gap: 1rem;
-	// Keeps the drop target usable while the canvas is (nearly) empty
-	min-height: 320px;
-	padding: 0.25rem;
-	border-radius: nb-theme(border-radius);
+	// Keeps the drop target usable while the canvas is (nearly) empty.
+	min-height: 20rem;
+	padding: 0;
+	border-radius: var(--border-radius);
 	transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 
 	&.editing {
 		// Tint the arrangeable area so the drop target is obvious while editing
-		background-color: nb-theme(background-basic-color-2);
-		box-shadow: inset 0 0 0 1px nb-theme(border-basic-color-3);
+		background-color: var(--gauzy-card-2);
+		box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
 	}
 }
 
@@ -28,7 +28,7 @@
 	position: relative;
 	min-width: 0;
 	min-height: 0;
-	border-radius: nb-theme(border-radius);
+	border-radius: var(--border-radius);
 
 	// The widget fills its grid cell
 	> ga-dashboard-widget-host {
@@ -59,9 +59,9 @@
 		width: 14px;
 		padding: 0;
 		border: none;
-		border-radius: nb-theme(border-radius) 0 0 nb-theme(border-radius);
-		background-color: nb-theme(color-primary-transparent-200);
-		color: nb-theme(color-primary-default);
+		border-radius: var(--border-radius) 0 0 var(--border-radius);
+		background-color: var(--color-primary-transparent-200);
+		color: var(--color-primary-default);
 		cursor: grab;
 		opacity: 0;
 		transition: opacity 0.15s ease-in-out;
@@ -88,9 +88,9 @@
 .canvas-drop-placeholder {
 	height: 100%;
 	width: 100%;
-	border: 2px dashed nb-theme(color-primary-default);
-	border-radius: nb-theme(border-radius);
-	background-color: nb-theme(color-primary-transparent-100);
+	border: 2px dashed var(--color-primary-default);
+	border-radius: var(--border-radius);
+	background-color: var(--color-primary-transparent-100);
 }
 
 .canvas-empty {
@@ -103,23 +103,23 @@
 	gap: 0.5rem;
 	padding: 2rem 1rem;
 	text-align: center;
-	border: 2px dashed nb-theme(border-basic-color-4);
-	border-radius: nb-theme(border-radius);
-	background-color: nb-theme(background-basic-color-2);
-	color: nb-theme(text-hint-color);
+	border: 2px dashed var(--gauzy-border-default-color);
+	border-radius: var(--border-radius);
+	background-color: var(--gauzy-card-2);
+	color: var(--gauzy-text-color-2);
 
 	&__icon {
 		font-size: 32px;
 		height: 32px;
 		width: 32px;
-		color: nb-theme(text-hint-color);
+		color: var(--gauzy-text-color-2);
 	}
 
 	&__title {
 		margin: 0;
 		font-size: 1rem;
 		font-weight: 600;
-		color: nb-theme(text-basic-color);
+		color: var(--gauzy-text-color-1);
 	}
 
 	&__hint {
@@ -137,7 +137,7 @@
  */
 .cdk-drag-preview {
 	border-radius: nb-theme(border-radius);
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+	box-shadow: var(--gauzy-shadow);
 	opacity: 0.9;
 }
 
@@ -149,5 +149,5 @@
 // Highlight the canvas while a palette item hovers over it
 .dashboard-canvas.cdk-drop-list-receiving,
 .dashboard-canvas.cdk-drop-list-dragging {
-	box-shadow: inset 0 0 0 2px nb-theme(color-primary-default);
+	box-shadow: inset 0 0 0 2px var(--color-primary-default);
 }
