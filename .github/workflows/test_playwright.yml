@@ -73,6 +73,31 @@ jobs:
       # NO actions/cache here, deliberately — see the archive step below. The budget is full of
       # caches that other workflows genuinely need, and writing this one would evict them.
 
+      # Point yarn at the internal Verdaccio VIP before the heaviest install in the fleet. This
+      # job is self-documented at 88 min, 3h20m and 3h46m, and every byte of it currently crosses
+      # the WAN to the public registry: the repo .npmrc pins registry.yarnpkg.com and nothing here
+      # overrode it.
+      #
+      # The action appends to .npmrc/.yarnrc AND rewrites the resolved URLs in yarn.lock. The
+      # rewrite is the load-bearing half: yarn v1 fetches the URL recorded in the lockfile and
+      # ignores the registry setting, so a config-only change here would be a measurable no-op.
+      # Verified separately that this does NOT break --frozen-lockfile: yarn compares package.json
+      # patterns against lockfile entries, and the resolved host is not part of that comparison.
+      #
+      # The action probes the VIP and falls back to the public registry, so a MetalLB speaker flap
+      # costs a slow install rather than a red build. Safe to place here: unlike build.yml, this
+      # workflow deliberately has NO actions/cache, so rewriting yarn.lock cannot move a cache key.
+      - name: Configure Registry
+        uses: ./.github/actions/configure-registry
+        with:
+          verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
+          verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
+          force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # NOT contains(matrix.os, ...) as the app workflows use: this workflow defines no
+          # matrix.os (its only matrix key is shard), so that expression collapses to false and
+          # silently disables the in-network VIP retry and its warning. Derive it from the runner
+          # variable this job actually uses instead.
+          expect-vip: ${{ vars.RUNNER_LINUX_X64_8 != '' }}
       - name: Install Packages & Bootstrap
         shell: bash
         # Retry once: run 30330950619 died here after 9 min. A transient registry/FS hiccup on
