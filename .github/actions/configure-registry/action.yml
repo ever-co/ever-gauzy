@@ -89,8 +89,12 @@ runs:
           # metadata unavailable) means we CANNOT tell. Treating every nonzero as absent would
           # delete the files and continue, which is exactly the unknown-state hazard this reset
           # exists to prevent - so only 1 is trusted, and everything else fails closed.
-          git ls-files --error-unmatch "$f" >/dev/null 2>&1
-          tracked=$?
+          # The capture is guarded with || because this composite step runs under `bash -e`:
+          # a bare failing `git ls-files` exits the whole script before tracked=$? runs, which
+          # killed the step at ~95ms with no output on every repo whose .npmrc is untracked
+          # (measured: ever-co/ever-apps-website run 32502549575, 2026-08-21).
+          tracked=0
+          git ls-files --error-unmatch "$f" >/dev/null 2>&1 || tracked=$?
           if [ "$tracked" -eq 0 ]; then
             git checkout -- "$f" || reset_failed="$reset_failed $f"
           elif [ "$tracked" -eq 1 ]; then
