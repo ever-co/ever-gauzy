@@ -89,8 +89,15 @@ runs:
           # metadata unavailable) means we CANNOT tell. Treating every nonzero as absent would
           # delete the files and continue, which is exactly the unknown-state hazard this reset
           # exists to prevent - so only 1 is trusted, and everything else fails closed.
-          git ls-files --error-unmatch "$f" >/dev/null 2>&1
-          tracked=$?
+          # The probe MUST sit in an `if` guard: composite bash runs with -e, so the bare
+          # `git ls-files ...; tracked=$?` form never reaches the assignment on any repo
+          # where $f is untracked - the step dies with exit 1 and no output at all
+          # (measured on the first pnpm consumer repo of this action, 2026-08-21).
+          if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+            tracked=0
+          else
+            tracked=$?
+          fi
           if [ "$tracked" -eq 0 ]; then
             git checkout -- "$f" || reset_failed="$reset_failed $f"
           elif [ "$tracked" -eq 1 ]; then
