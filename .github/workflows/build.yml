@@ -89,10 +89,13 @@ jobs:
         id: cache
         uses: actions/cache/restore@v4
         with:
-          # lookup-only: on a HIT this job does nothing with the archive — every step below is gated
-          # on `cache-hit != 'true'` — so downloading ~2.9 GB would be pure serial latency in front of
-          # four jobs that are waiting on it. The output it sets is all this job needs.
-          lookup-only: true
+          # NOT lookup-only. It was, and that made every warm run fail: on a cache HIT the archive
+          # is never written to disk, so `Archive node_modules` is skipped along with the other
+          # producer steps, and the UNGUARDED `Upload node_modules archive` below then trips its
+          # `if-no-files-found: error`. The cold run that first writes the key passes; the NEXT run,
+          # the one the cache exists for, is the one that breaks - the worst place to put a failure.
+          # Downloading ~2.9 GB here costs a few minutes against the ~90-minute install it replaces,
+          # and it is what guarantees the run-scoped artifact handoff below actually has a file.
           path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
@@ -160,6 +163,7 @@ jobs:
           node-version: 24
 
       - name: Download node_modules archive
+        id: artifact
         uses: actions/download-artifact@v8
         # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
         continue-on-error: true
@@ -167,6 +171,12 @@ jobs:
           name: build-node-modules
 
       - name: Restore node_modules archive (cache fallback)
+        # Gated, because it was NOT before and the comment below claimed otherwise. With no `if:`
+        # this ran even on a successful artifact download, and since the producer saves the same
+        # key each cold run the lookup HITS - so every consumer pulled the same ~2.9 GB twice.
+        # Measured on run 32418672320: artifact download 1015s/1028s/1102s, then this step still
+        # running past 209s on top. ~17 min of pure waste per consumer, ~68 min per run.
+        if: steps.artifact.outcome != 'success'
         uses: actions/cache/restore@v4
         continue-on-error: true
         with:
@@ -202,6 +212,7 @@ jobs:
           node-version: 24
 
       - name: Download node_modules archive
+        id: artifact
         uses: actions/download-artifact@v8
         # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
         continue-on-error: true
@@ -209,6 +220,12 @@ jobs:
           name: build-node-modules
 
       - name: Restore node_modules archive (cache fallback)
+        # Gated, because it was NOT before and the comment below claimed otherwise. With no `if:`
+        # this ran even on a successful artifact download, and since the producer saves the same
+        # key each cold run the lookup HITS - so every consumer pulled the same ~2.9 GB twice.
+        # Measured on run 32418672320: artifact download 1015s/1028s/1102s, then this step still
+        # running past 209s on top. ~17 min of pure waste per consumer, ~68 min per run.
+        if: steps.artifact.outcome != 'success'
         uses: actions/cache/restore@v4
         continue-on-error: true
         with:
@@ -244,6 +261,7 @@ jobs:
           node-version: 24
 
       - name: Download node_modules archive
+        id: artifact
         uses: actions/download-artifact@v8
         # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
         continue-on-error: true
@@ -251,6 +269,12 @@ jobs:
           name: build-node-modules
 
       - name: Restore node_modules archive (cache fallback)
+        # Gated, because it was NOT before and the comment below claimed otherwise. With no `if:`
+        # this ran even on a successful artifact download, and since the producer saves the same
+        # key each cold run the lookup HITS - so every consumer pulled the same ~2.9 GB twice.
+        # Measured on run 32418672320: artifact download 1015s/1028s/1102s, then this step still
+        # running past 209s on top. ~17 min of pure waste per consumer, ~68 min per run.
+        if: steps.artifact.outcome != 'success'
         uses: actions/cache/restore@v4
         continue-on-error: true
         with:
@@ -297,6 +321,7 @@ jobs:
             build-essential icnsutils graphicsmagick binutils libappindicator3-1 || true
 
       - name: Download node_modules archive
+        id: artifact
         uses: actions/download-artifact@v8
         # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
         continue-on-error: true
@@ -304,6 +329,12 @@ jobs:
           name: build-node-modules
 
       - name: Restore node_modules archive (cache fallback)
+        # Gated, because it was NOT before and the comment below claimed otherwise. With no `if:`
+        # this ran even on a successful artifact download, and since the producer saves the same
+        # key each cold run the lookup HITS - so every consumer pulled the same ~2.9 GB twice.
+        # Measured on run 32418672320: artifact download 1015s/1028s/1102s, then this step still
+        # running past 209s on top. ~17 min of pure waste per consumer, ~68 min per run.
+        if: steps.artifact.outcome != 'success'
         uses: actions/cache/restore@v4
         continue-on-error: true
         with:
