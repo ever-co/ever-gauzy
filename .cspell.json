@@ -20,6 +20,8 @@
 		"gzipped",
 		"gzips",
 		"npmjs",
+		"unmatch",
+		"pathspec",
 		"yarnpkg",
 		"rspack",
 		"dlib",
