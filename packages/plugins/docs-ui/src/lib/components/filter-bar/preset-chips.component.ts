@@ -46,11 +46,11 @@ interface IPresetChip {
 				align-items: center;
 				justify-content: center;
 				gap: 0.25rem;
-				height: var(--docs-filter-control-height, var(--docs-control-height-sm, 1.75rem));
-				min-height: var(--docs-filter-control-height, var(--docs-control-height-sm, 1.75rem));
-				padding-inline: 0.5625rem;
+				height: 1.5rem !important;
+				min-height: 1.5rem !important;
+				padding-inline: 0.375rem !important;
 				border-radius: var(--docs-radius, 0.375rem);
-				font-size: var(--docs-meta-size, 0.75rem);
+				font-size: 0.6875rem !important;
 				font-weight: 500;
 				line-height: 1;
 				white-space: nowrap;
