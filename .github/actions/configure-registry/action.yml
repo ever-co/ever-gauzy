@@ -157,7 +157,7 @@ runs:
           # (pnpm and npm repos included): a pnpm repo has NO root yarn.lock, and under the
           # composite `bash -eo pipefail` shell an unguarded `sed missing-file` exits 2 and kills
           # the job the moment the VIP answers - config-only is all a pnpm repo needs, because
-          # pnpm-lock.yaml stores no registry host. yarn/npm lockfiles DO store the resolved
+          # pnpm-lock.yaml stores no registry host. yarn/npm lock files DO store the resolved
           # tarball host, so where those files exist the rewrite is load-bearing: without it the
           # install follows the lockfile's npmjs URLs and the registry config is a measured no-op.
           if [ -f yarn.lock ]; then
