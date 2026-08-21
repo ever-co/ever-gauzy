@@ -32,4 +32,8 @@ echo "::warning::node_modules archive unavailable — falling back to a full boo
 # `node_modules/.yarn-integrity` that convinces yarn everything is already installed.
 rm -rf "$ARCHIVE" node_modules apps/*/node_modules packages/*/node_modules \
 	packages/plugins/*/node_modules tools/node_modules
-yarn bootstrap || { echo "::warning::yarn bootstrap failed — retry 1"; yarn bootstrap; }
+# `bootstrap:ci`, not `bootstrap`: the developer-facing script drops --frozen-lockfile (so a
+# package.json/lockfile disagreement would be silently rewritten and reported green, while the
+# Docker image builds that DO install frozen fail later) and --network-timeout (yarn 1 defaults to
+# 30s per request, and this is the degraded path on a pool already documented as slow).
+yarn bootstrap:ci || { echo "::warning::bootstrap failed — retry 1"; yarn bootstrap:ci; }
