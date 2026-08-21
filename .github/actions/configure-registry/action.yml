@@ -156,8 +156,14 @@ runs:
           # One pass, no -i: an -i.bak backup survives on a clean: false runner if the step
           # fails between the rewrite and its cleanup, and bare -i is not portable to the BSD
           # sed on the macOS runners. The temp file is only ever the finished rewrite.
-          sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
-              -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
-          mv -f yarn.lock.rewritten yarn.lock
+          # Guarded on the file existing: pnpm repos have no yarn.lock (pnpm-lock.yaml stores
+          # no registry host, so the .npmrc line above is the whole redirect there) and the
+          # unguarded sed died under bash -e with "sed: can't read yarn.lock" (measured:
+          # ever-works/ever-works-website run 32503441946, 2026-08-21).
+          if [ -f yarn.lock ]; then
+            sed -e "s|https://registry.yarnpkg.com|${REGISTRY%/}|g" \
+                -e "s|https://registry.npmjs.org|${REGISTRY%/}|g" yarn.lock > yarn.lock.rewritten
+            mv -f yarn.lock.rewritten yarn.lock
+          fi
         fi
         echo "Using npm registry: ${REGISTRY:-https://registry.yarnpkg.com/ (repo default)}"
