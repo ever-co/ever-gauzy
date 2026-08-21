@@ -85,10 +85,18 @@ runs:
         # restored; untracked leftovers from a previous run on a clean:false runner are removed.
         reset_failed=""
         for f in .npmrc yarn.lock; do
-          if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+          # Exit status matters: 0 = tracked, 1 = genuinely absent, anything else (128 = git
+          # metadata unavailable) means we CANNOT tell. Treating every nonzero as absent would
+          # delete the files and continue, which is exactly the unknown-state hazard this reset
+          # exists to prevent - so only 1 is trusted, and everything else fails closed.
+          git ls-files --error-unmatch "$f" >/dev/null 2>&1
+          tracked=$?
+          if [ "$tracked" -eq 0 ]; then
             git checkout -- "$f" || reset_failed="$reset_failed $f"
-          else
+          elif [ "$tracked" -eq 1 ]; then
             rm -f "$f"
+          else
+            reset_failed="$reset_failed $f(git-exit-$tracked)"
           fi
         done
         if [ -n "$reset_failed" ]; then
