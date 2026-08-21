@@ -441,6 +441,19 @@ nb-sidebar[tag='menu-sidebar'] {
     overflow: visible;
   }
 
+  // `overflow: visible` above also strips `.scrollable` of its scroll-container
+  // status, which flips its flex automatic minimum size (`min-height: auto`)
+  // from 0 to CONTENT-based — Nebular's `.scrollable { flex: 1 }` then grows
+  // past its 100vh container whenever the nav list is long (an expanded
+  // submenu is enough at 720px), pushing `.sidebar-footer` — the user block
+  // and the app's ONLY logout entry point — below the fold with no scrollable
+  // ancestor left to bring it back. `min-height: 0` pins the rail to its
+  // container; `.custom-row.menu` owns the nav list's scrolling (see below).
+  nb-layout .layout .layout-container nb-sidebar[tag='menu-sidebar'] .main-container > .scrollable,
+  nb-layout .layout .layout-container nb-sidebar[tag='menu-sidebar'] .main-container-fixed > .scrollable {
+    min-height: 0;
+  }
+
   // While the AI chat is maximized the canvas SHRINKS to zero width instead
   // of being covered or display:none'd — the page stays alive and restoring
   // simply gives the space back. (All nb-sidebars are projected before the
@@ -552,7 +565,14 @@ nb-sidebar[tag='menu-sidebar'] {
 
 .custom-box .custom-row.menu {
   flex: 1 1 auto;
-  overflow-y: overlay;
+  // The flex automatic minimum (`min-height: auto`) would size this row to the
+  // FULL nav list and defeat the overflow below — 0 lets the row shrink so the
+  // list scrolls inside it and `.sidebar-footer` stays on-screen.
+  min-height: 0;
+  // `auto`, not the deprecated `overlay`: Chromium computes `overlay` as
+  // `auto` anyway, and Firefox drops the declaration entirely — leaving the
+  // row `overflow: visible` and the rail unscrollable.
+  overflow-y: auto;
   padding: 0 0.75rem;
 }
 
