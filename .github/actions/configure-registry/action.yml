@@ -13,7 +13,10 @@ description: >-
 
 inputs:
   verdaccio-registry:
-    description: Internal Verdaccio VIP, normally ${{ vars.VERDACCIO_REGISTRY }}. Empty disables the probe.
+    # NOTE: no GitHub expression syntax in this field. GitHub evaluates action metadata, and `vars` is
+    # not a valid context there - an expression here makes every CROSS-REPO use fail at 'Set up job' with
+    # TemplateValidationException: Unrecognized named-value: 'vars'. Name the variable in prose instead.
+    description: Internal Verdaccio VIP, normally the org variable VERDACCIO_REGISTRY. Empty disables the probe.
     required: false
     default: ''
   verdaccio-token:
@@ -76,8 +79,20 @@ runs:
         # a known starting state we must not go on to pick a registry, because the install would
         # then quietly run against whatever the last job left behind.
         rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten
-        if ! git checkout -- .npmrc yarn.lock; then
-          echo "::error title=Could not reset registry configuration::git checkout -- .npmrc yarn.lock failed on this workspace, so the previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
+        # Reset per-path, not as one pathspec list. `git checkout -- a b` exits 1 when EITHER path is
+        # untracked, so the original form hard-failed on every pnpm repo (no .npmrc, no yarn.lock) and
+        # turned 'this repo has no cache configured' into 'this repo's CI is red'. Tracked files are
+        # restored; untracked leftovers from a previous run on a clean:false runner are removed.
+        reset_failed=""
+        for f in .npmrc yarn.lock; do
+          if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+            git checkout -- "$f" || reset_failed="$reset_failed $f"
+          else
+            rm -f "$f"
+          fi
+        done
+        if [ -n "$reset_failed" ]; then
+          echo "::error title=Could not reset registry configuration::git checkout -- failed for:$reset_failed. The previous run's registry settings may still be in place. Refusing to select a registry from an unknown state."
           exit 1
         fi
 
