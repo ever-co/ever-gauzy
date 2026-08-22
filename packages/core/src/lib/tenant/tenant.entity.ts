@@ -25,6 +25,18 @@ export class Tenant extends BaseEntity implements ITenant {
 	logo?: string;
 
 	/**
+	 * Stripe customer this tenant bills through, on hosted deployments.
+	 *
+	 * Indexed because the billing endpoints and the Stripe webhook both look a tenant up by it.
+	 * Null on every self-hosted install — nothing in the platform requires it to be set.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	stripeCustomerId?: string;
+
+	/**
 	 * Standard work hours per day for the tenant.
 	 */
 	@ApiPropertyOptional({
