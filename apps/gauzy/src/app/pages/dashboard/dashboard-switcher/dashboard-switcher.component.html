@@ -65,15 +65,16 @@
 	<div class="actions-area">
 		@if (selected()) {
 			@if (editing()) {
-				<button nbButton status="success" size="small" type="button" (click)="saveLayout()">
+				<button nbButton status="success" size="tiny" class="switcher-action" type="button" (click)="saveLayout()">
 					<nb-icon icon="save-outline"></nb-icon>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
-				<button nbButton status="basic" size="small" type="button" (click)="cancelEditing()">
+				<button nbButton status="basic" size="tiny" class="switcher-action" type="button" (click)="cancelEditing()">
+					<nb-icon icon="close-outline"></nb-icon>
 					{{ 'BUTTONS.CANCEL' | translate }}
 				</button>
 			} @else {
-				<button nbButton status="basic" size="small" type="button" (click)="editDashboard()">
+				<button nbButton status="basic" size="tiny" class="switcher-action" type="button" (click)="editDashboard()">
 					<nb-icon icon="edit-outline"></nb-icon>
 					{{ 'DASHBOARD_PAGE.CUSTOM.EDIT_DASHBOARD' | translate }}
 				</button>
@@ -82,9 +83,10 @@
 		<button
 			nbButton
 			ghost
-			size="small"
+			size="tiny"
 			type="button"
 			class="more-button"
+			aria-label="Dashboard actions"
 			[nbPopover]="dashboardActions"
 			nbPopoverPlacement="bottom"
 			nbPopoverTrigger="click"

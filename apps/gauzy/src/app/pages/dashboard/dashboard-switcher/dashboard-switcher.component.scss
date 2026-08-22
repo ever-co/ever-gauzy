@@ -19,6 +19,7 @@
 
 		.scroll-button {
 			flex: 0 0 auto;
+			padding-inline: 4px;
 		}
 
 		.chips-scroll {
@@ -66,12 +67,13 @@
 			 * light and dark alike.
 			 */
 			.chip {
+				position: relative;
 				flex: 0 0 auto;
 				display: inline-flex;
 				align-items: center;
 				gap: 0.25rem;
-				border: 1px solid var(--border-basic-color-4);
-				border-radius: var(--border-radius);
+				border: 1px dotted var(--border-basic-color-4);
+				border-radius: calc(var(--border-radius) * 0.75);
 				background-color: var(--card-background-color);
 				color: var(--text-basic-color);
 				// Same footprint as the custom-dashboard tab chips one row below
@@ -80,12 +82,21 @@
 				padding: 0.3125rem 0.75rem;
 				font-family: inherit;
 				font-size: 0.75rem;
-				font-weight: 600;
+				font-weight: 400;
 				line-height: 1.25;
 				cursor: pointer;
 				white-space: nowrap;
 				transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out,
 					color 0.15s ease-in-out;
+
+				&:not(:last-child)::after {
+					position: absolute;
+					top: 50%;
+					inset-inline-end: -8px;
+					width: 8px;
+					border-top: 1px dotted var(--gauzy-border-default-color);
+					content: '';
+				}
 
 				&:hover {
 					background-color: var(--background-basic-color-2);
@@ -113,10 +124,10 @@
 				 * "current".
 				 */
 				&.active {
+					border-style: solid;
 					border-color: var(--color-primary-default);
 					box-shadow: inset 0 0 0 1px var(--color-primary-default);
 					background-color: color-mix(in srgb, var(--color-primary-default) 16%, transparent);
-					font-weight: 700;
 
 					&:hover {
 						background-color: color-mix(in srgb, var(--color-primary-default) 24%, transparent);
@@ -181,6 +192,26 @@
 		gap: 8px;
 		margin-left: auto;
 		flex: 0 0 auto;
+
+		.switcher-action {
+			min-height: 1.75rem;
+			padding-inline: 0.625rem;
+			font-size: 0.75rem;
+			font-weight: 400;
+			line-height: 1;
+
+			nb-icon {
+				font-size: 0.875rem;
+				height: 0.875rem;
+				width: 0.875rem;
+			}
+		}
+
+		.more-button {
+			min-height: 1.75rem;
+			min-width: 1.75rem;
+			padding: 0;
+		}
 	}
 }
 
@@ -206,10 +237,11 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		padding: 6px 10px;
-		border-radius: 6px;
-		font-size: 13px;
-		line-height: 1.25rem;
+		padding: 5px 8px;
+		border-radius: calc(var(--border-radius) * 0.75);
+		font-size: 12px;
+		font-weight: 400;
+		line-height: 1.125rem;
 		color: var(--text-basic-color);
 		cursor: pointer;
 		// native <button> resets (keyboard-accessible menu items)
