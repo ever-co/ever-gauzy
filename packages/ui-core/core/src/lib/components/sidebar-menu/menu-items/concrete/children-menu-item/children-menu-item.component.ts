@@ -73,6 +73,17 @@ export class ChildrenMenuItemComponent implements OnInit {
 	@Input() tooltipDisabled = false;
 
 	/**
+	 * Whether this row keeps the parent's focus state in step with the URL.
+	 *
+	 * Cleared by the rail flyout, whose rows are a SECOND copy of items that are already on screen:
+	 * nb-accordion-item-body only animates its height, so the copy it projects stays mounted while
+	 * the flyout is up. With both copies subscribed, one navigation ran the same match twice and
+	 * emitted the same focus event twice. The body's copy outlives the panel, so it keeps the job;
+	 * an explicit click still emits from whichever copy was clicked.
+	 */
+	@Input() trackActiveRoute = true;
+
+	/**
 	 * Indicates whether the mouse is hovering over the menu item.
 	 */
 	private _mouseHover: boolean;
@@ -84,6 +95,10 @@ export class ChildrenMenuItemComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
+		if (!this.trackActiveRoute) {
+			return;
+		}
+
 		// Log and check the current URL
 		this.checkUrl(this.router.url);
 
