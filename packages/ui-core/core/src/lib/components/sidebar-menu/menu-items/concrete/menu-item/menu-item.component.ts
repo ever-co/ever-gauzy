@@ -365,8 +365,8 @@ export class MenuItemComponent implements OnInit {
 		this.jitsuTrackClick();
 
 		// Redirect to the specified URL
-		if (!this.item.children && this.item.link) {
-			// If the item doesn't have children, navigate to its link
+		if (!this.hasChildren && this.item.link) {
+			// Leaf row (including a parent whose children are all filtered out): navigate to its link
 			this._router.navigateByUrl(this.item.link);
 		}
 		if (this.item.home && this.item.url) {
