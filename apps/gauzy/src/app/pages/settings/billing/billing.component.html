@@ -11,6 +11,14 @@
 			<p>{{ 'SETTINGS_MENU.BILLING_NOT_CONFIGURED' | translate }}</p>
 		</div>
 
+		<!-- A failed request is not an empty account; say so rather than implying "no subscription". -->
+		<div class="load-failed" *ngIf="billingEnabled && loadFailed && !loading">
+			<p>{{ 'SETTINGS_MENU.BILLING_LOAD_FAILED' | translate }}</p>
+			<button nbButton size="small" status="basic" (click)="load()">
+				{{ 'SETTINGS_MENU.BILLING_RETRY' | translate }}
+			</button>
+		</div>
+
 		<ng-container *ngIf="billingEnabled">
 			<!-- Current subscription -->
 			<section class="billing-section">
@@ -23,14 +31,8 @@
 					</div>
 					<div class="summary-row">
 						<span class="label">{{ 'SETTINGS_MENU.BILLING_STATUS' | translate }}</span>
-						<span class="value">
-							<nb-badge
-								[status]="subscription.status === 'active' || subscription.status === 'trialing' ? 'success' : 'warning'"
-								[text]="subscription.status"
-								position="top right"
-							></nb-badge>
-							<span class="status-text">{{ subscription.status }}</span>
-						</span>
+						<!-- One rendering only: nb-badge draws its own [text], so an adjacent span repeated it. -->
+						<span class="value status-text">{{ subscription.status }}</span>
 					</div>
 					<div class="summary-row">
 						<span class="label">{{ 'SETTINGS_MENU.BILLING_PRICE' | translate }}</span>

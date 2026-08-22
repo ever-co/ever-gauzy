@@ -122,6 +122,17 @@ table.invoices {
 	color: nb-theme(text-hint-color);
 }
 
+.load-failed {
+	margin-bottom: 1.5rem;
+	padding: 0.75rem 1rem;
+	border-radius: nb-theme(border-radius);
+	background-color: nb-theme(color-danger-transparent-100);
+
+	p {
+		margin: 0 0 0.5rem;
+	}
+}
+
 .empty-state {
 	padding: 2rem 0;
 	text-align: center;

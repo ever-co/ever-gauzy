@@ -12,6 +12,30 @@ import { Injectable, Logger } from '@nestjs/common';
  * The whole thing is inert unless STRIPE_SECRET_KEY is set — see `isBillingEnforced()`.
  */
 
+/**
+ * Raised when the lookup gives up on its own budget rather than because Stripe failed.
+ *
+ * A distinct type so it reads correctly in logs: this is us stopping, not Stripe erroring.
+ */
+class BudgetExceededError extends Error {
+	constructor(reason: string) {
+		super(`Entitlement lookup abandoned: ${reason}. Treating the result as unknown.`);
+		this.name = 'BudgetExceededError';
+	}
+}
+
+/** Strip the query string; it carries the registrant's email address. */
+function redactPath(path: string): string {
+	const q = path.indexOf('?');
+	return q === -1 ? path : `${path.slice(0, q)}?<redacted>`;
+}
+
+/** An error's message with any stray email address masked, for safe logging. */
+function describe(error: unknown): string {
+	const message = error instanceof Error ? error.message : String(error);
+	return message.replace(/[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+/g, '<redacted-email>');
+}
+
 /** Subscription statuses that entitle the holder to finish registering. */
 const ENTITLING_STATUSES = new Set(['active', 'trialing', 'past_due']);
 
@@ -50,13 +74,62 @@ export class StripeSubscriptionService {
 	private readonly logger = new Logger(StripeSubscriptionService.name);
 
 	/**
+	 * The Stripe key this deployment may actually use, or undefined if it must not bill at all.
+	 *
 	 * Read straight from the process environment rather than `@gauzy/config`, because the *absence*
 	 * of this value is the feature switch: nothing else in the platform should have to know that
 	 * billing exists, and a fork with no Stripe account must behave exactly as it does today.
+	 *
+	 * Two refusals are enforced here rather than left to deployment discipline, because the cost of
+	 * getting either wrong is charging somebody real money from an environment that should not:
+	 *
+	 *  - **A demo deployment never bills.** `DEMO=true` disables billing outright, even if a key is
+	 *    present. demo.gauzy.co resets daily and is handed round freely; nothing there should reach a
+	 *    payment provider.
+	 *  - **A live key needs a second, deliberate opt-in.** `sk_live_` is honoured only when
+	 *    `STRIPE_LIVE_MODE=true` is also set. Copying a production secret bundle onto staging is an
+	 *    ordinary mistake; silently taking real payments from stage.gauzy.co because of it is not an
+	 *    ordinary consequence. Staging uses a `sk_test_` key and needs no opt-in.
 	 */
 	private get secretKey(): string | undefined {
 		const key = process.env.STRIPE_SECRET_KEY?.trim();
-		return key ? key : undefined;
+		if (!key) return undefined;
+
+		if (process.env.DEMO === 'true') {
+			this.warnOnce(
+				'demo',
+				'STRIPE_SECRET_KEY is set on a DEMO deployment. Billing is disabled: demo environments must never reach Stripe.'
+			);
+			return undefined;
+		}
+
+		if (key.startsWith('sk_live_') && process.env.STRIPE_LIVE_MODE !== 'true') {
+			this.warnOnce(
+				'live',
+				'A LIVE Stripe key is configured but STRIPE_LIVE_MODE is not "true". Billing is disabled rather than ' +
+					'charging real cards from an environment that has not explicitly opted in. Use a sk_test_ key here, ' +
+					'or set STRIPE_LIVE_MODE=true if this really is production.'
+			);
+			return undefined;
+		}
+
+		return key;
+	}
+
+	/** Which Stripe mode this deployment is operating in — surfaced so the UI can say so. */
+	get mode(): 'live' | 'test' | 'disabled' {
+		const key = this.secretKey;
+		if (!key) return 'disabled';
+		return key.startsWith('sk_live_') ? 'live' : 'test';
+	}
+
+	private readonly warned = new Set<string>();
+
+	/** Loud, but once per reason — this is read on every request that touches billing. */
+	private warnOnce(reason: string, message: string): void {
+		if (this.warned.has(reason)) return;
+		this.warned.add(reason);
+		this.logger.error(message);
 	}
 
 	/**
@@ -85,9 +158,7 @@ export class StripeSubscriptionService {
 			return customerId ? EntitlementResult.ENTITLED : EntitlementResult.NOT_ENTITLED;
 		} catch (error) {
 			this.logger.error(
-				`Could not determine Stripe entitlement for a registration attempt; allowing it through. ${
-					error instanceof Error ? error.message : error
-				}`
+				`Could not determine Stripe entitlement for a registration attempt; allowing it through. ${describe(error)}`
 			);
 			return EntitlementResult.UNKNOWN;
 		}
@@ -110,9 +181,7 @@ export class StripeSubscriptionService {
 			return await this.findEntitlingCustomerId(email);
 		} catch (error) {
 			this.logger.error(
-				`Could not resolve a Stripe customer for a new tenant; it will need linking later. ${
-					error instanceof Error ? error.message : error
-				}`
+				`Could not resolve a Stripe customer for a new tenant; it will need linking later. ${describe(error)}`
 			);
 			return null;
 		}
@@ -143,7 +212,6 @@ export class StripeSubscriptionService {
 		if (!typed) return null;
 
 		const deadline = Date.now() + OVERALL_DEADLINE_MS;
-
 		// Both spellings, because Stripe matches the stored address exactly. De-duplicated so the
 		// common all-lowercase case still costs one request.
 		const spellings = [...new Set([typed, typed.toLowerCase()])];
@@ -160,23 +228,11 @@ export class StripeSubscriptionService {
 				if (seen.has(customer.id)) continue;
 				seen.add(customer.id);
 
-				if (++examined > MAX_CUSTOMERS_EXAMINED || Date.now() > deadline) {
-					// Rather than keep a signup waiting, give up and let the caller treat this as
-					// UNKNOWN — which lets the registration through. Someone with this many Stripe
-					// customers is not the case this gate is defending against.
-					throw new Error(
-						`Entitlement lookup exceeded its budget after ${examined} customer(s); treating as unknown.`
-					);
+				if (++examined > MAX_CUSTOMERS_EXAMINED) {
+					throw new BudgetExceededError(`examined ${examined} customers sharing one address`);
 				}
-
-				for await (const subscription of this.paginate<{ id: string; status: string }>(
-					key,
-					`/subscriptions?customer=${encodeURIComponent(customer.id)}&status=all`,
-					deadline
-				)) {
-					if (ENTITLING_STATUSES.has(subscription.status)) {
-						return customer.id;
-					}
+				if (await this.hasEntitlingSubscription(key, customer.id, deadline)) {
+					return customer.id;
 				}
 			}
 		}
@@ -184,11 +240,28 @@ export class StripeSubscriptionService {
 		return null;
 	}
 
+	/** Whether this customer holds any subscription in an entitling status. */
+	private async hasEntitlingSubscription(key: string, customerId: string, deadline: number): Promise<boolean> {
+		for await (const subscription of this.paginate<{ id: string; status: string }>(
+			key,
+			`/subscriptions?customer=${encodeURIComponent(customerId)}&status=all`,
+			deadline
+		)) {
+			if (ENTITLING_STATUSES.has(subscription.status)) return true;
+		}
+		return false;
+	}
+
 	/**
-	 * Walk every page of a Stripe list endpoint, stopping at `deadline`.
+	 * Walk every page of a Stripe list endpoint.
 	 *
 	 * Reading only the first page is the failure that matters here: it turns "your subscription is on
 	 * page two" into "you have no subscription", and refuses a paying customer.
+	 *
+	 * Running out of time **throws** rather than ending the iteration quietly. Returning early would
+	 * be indistinguishable from a genuinely exhausted list, and the caller would read it as "this
+	 * person has nothing" — reintroducing exactly the wrong answer the pagination exists to prevent.
+	 * As a thrown error it becomes UNKNOWN instead, which lets the registration through.
 	 */
 	private async *paginate<T extends { id?: string }>(
 		key: string,
@@ -199,7 +272,9 @@ export class StripeSubscriptionService {
 		const separator = path.includes('?') ? '&' : '?';
 
 		for (;;) {
-			if (Date.now() > deadline) return;
+			if (Date.now() > deadline) {
+				throw new BudgetExceededError('the entitlement lookup ran out of time mid-pagination');
+			}
 
 			const page = await this.request<{ data: T[]; has_more?: boolean }>(
 				key,
@@ -231,8 +306,11 @@ export class StripeSubscriptionService {
 			});
 
 			if (!response.ok) {
-				const body = await response.text().catch(() => '');
-				throw new Error(`Stripe GET ${path} -> ${response.status} ${body.slice(0, 200)}`);
+				// Deliberately neither the query string nor Stripe's body: the path carries
+				// `?email=<registrant>`, and Stripe echoes the offending parameters back in its error
+				// message. Logging either would put an address someone typed into a signup form into
+				// the application log. The endpoint and status are enough to debug with.
+				throw new Error(`Stripe GET ${redactPath(path)} -> ${response.status}`);
 			}
 
 			return (await response.json()) as T;

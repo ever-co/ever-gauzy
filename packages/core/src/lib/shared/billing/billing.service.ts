@@ -1,4 +1,12 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	GatewayTimeoutException,
+	Injectable,
+	Logger,
+	NotFoundException,
+	ServiceUnavailableException,
+	UnauthorizedException
+} from '@nestjs/common';
 import { StripeSubscriptionService } from './stripe-subscription.service';
 
 /**
@@ -82,6 +90,11 @@ export class BillingService {
 		return this.stripeSubscriptionService.isBillingEnforced();
 	}
 
+	/** Which Stripe account this deployment talks to: live, test, or none at all. */
+	get mode(): 'live' | 'test' | 'disabled' {
+		return this.stripeSubscriptionService.mode;
+	}
+
 	/**
 	 * The tenant's current subscription, or null when it has never had one.
 	 *
@@ -139,7 +152,21 @@ export class BillingService {
 	 * downgrade credits it — surprising the customer with a bespoke proration rule is worse than
 	 * following the behaviour their invoice will explain.
 	 */
-	async changePlan(stripeCustomerId: string, lookupKey: string): Promise<BillingSubscription> {
+	async changePlan(
+		stripeCustomerId: string,
+		lookupKey: string,
+		productKey: string,
+		hosting = 'cloud'
+	): Promise<BillingSubscription> {
+		// The catalog is shared by every Ever product, so a lookup key from another one is perfectly
+		// valid in Stripe and would otherwise be accepted here — moving a Gauzy tenant onto, say,
+		// Ever Demand's pricing. `listPlans` already narrows what the UI offers; this refuses anything
+		// outside that set regardless of what the client sends.
+		const allowedPrefix = `ever_${productKey}_${hosting}_`;
+		if (!lookupKey.startsWith(allowedPrefix)) {
+			throw new BadRequestException('That plan is not available for this product.');
+		}
+
 		const subscription = await this.requireSubscriptionObject(stripeCustomerId);
 
 		const { data: prices } = await this.get<{ data: StripePriceObject[] }>(
@@ -166,9 +193,7 @@ export class BillingService {
 				// A pending cancellation would otherwise survive the switch and quietly kill the new plan.
 				cancel_at_period_end: 'false'
 			},
-			// Keyed on the target plan: a retry of the same switch collapses, while a later switch to a
-			// different plan is a different key and goes through.
-			`change:${subscription.id}:${price.id}`
+			idempotencyKey('change', subscription, price.id)
 		);
 
 		return this.toSubscription(updated);
@@ -180,7 +205,7 @@ export class BillingService {
 		const updated = await this.post<StripeSubscriptionObject>(
 			`/subscriptions/${subscription.id}`,
 			{ cancel_at_period_end: 'true' },
-			`cancel:${subscription.id}`
+			idempotencyKey('cancel', subscription)
 		);
 		return this.toSubscription(updated);
 	}
@@ -191,7 +216,7 @@ export class BillingService {
 		const updated = await this.post<StripeSubscriptionObject>(
 			`/subscriptions/${subscription.id}`,
 			{ cancel_at_period_end: 'false' },
-			`resume:${subscription.id}`
+			idempotencyKey('resume', subscription)
 		);
 		return this.toSubscription(updated);
 	}
@@ -390,18 +415,67 @@ export class BillingService {
 				signal: controller.signal
 			});
 
-			const json = await response.json();
+			// A proxy or gateway in front of Stripe can answer with HTML, so parsing is not assumed.
+			const raw = await response.text();
+			let json: any;
+			try {
+				json = raw ? JSON.parse(raw) : {};
+			} catch {
+				this.logger.error(`Stripe ${method} ${path} -> ${response.status}: non-JSON response`);
+				throw new ServiceUnavailableException('Billing is temporarily unavailable.');
+			}
+
 			if (!response.ok) {
 				const message = json?.error?.message ?? `Stripe ${method} ${path} failed`;
 				this.logger.error(`Stripe ${method} ${path} -> ${response.status}: ${message}`);
-				// Stripe's message is safe to surface: it describes the request, not the account.
-				throw new BadRequestException(message);
+				throw stripeStatusToException(response.status, message);
 			}
 			return json as T;
+		} catch (error) {
+			// An aborted fetch is our timeout firing, not a client mistake; without this it surfaces
+			// as an unhandled AbortError and the caller sees a 500.
+			if (error instanceof Error && error.name === 'AbortError') {
+				this.logger.error(`Stripe ${method} ${path} timed out`);
+				throw new GatewayTimeoutException('Billing did not respond in time. Please try again.');
+			}
+			throw error;
 		} finally {
 			clearTimeout(timer);
 		}
 	}
+}
+
+/**
+ * Map a Stripe HTTP status onto an accurate one of ours.
+ *
+ * Everything used to become a 400, which told the caller they had made a mistake even when the real
+ * cause was our expired key, our rate limit, or Stripe being down — and a 400 invites the client to
+ * "fix" a request that was never wrong, rather than retry.
+ */
+function stripeStatusToException(status: number, message: string): Error {
+	if (status === 401 || status === 403) {
+		// Our credentials, not the caller's problem — never echo Stripe's wording to them.
+		return new UnauthorizedException('Billing is not correctly configured on this deployment.');
+	}
+	if (status === 404) return new NotFoundException(message);
+	if (status === 429) return new ServiceUnavailableException('Billing is busy. Please try again shortly.');
+	if (status >= 500) return new ServiceUnavailableException('Billing is temporarily unavailable.');
+	return new BadRequestException(message);
+}
+
+/**
+ * A key that collapses a *retry* but never a genuine second request.
+ *
+ * Keying purely on the operation and subscription looked right, but cancel -> resume -> cancel is a
+ * real sequence a customer can perform, and inside Stripe's idempotency retention window the second
+ * cancel would have replayed the first response instead of acting. Mixing in the subscription's
+ * current state means each of those is a distinct key, while an immediate retry — where nothing has
+ * changed yet — reuses the same one.
+ */
+function idempotencyKey(operation: string, subscription: StripeSubscriptionObject, extra?: string): string {
+	const state = `${subscription.status}:${subscription.cancel_at_period_end ? 'pending-cancel' : 'live'}`;
+	const currentPrice = subscription.items?.data?.[0]?.price?.id ?? 'none';
+	return [operation, subscription.id, state, currentPrice, extra].filter(Boolean).join(':');
 }
 
 /** Statuses that represent a subscription the customer still has. */

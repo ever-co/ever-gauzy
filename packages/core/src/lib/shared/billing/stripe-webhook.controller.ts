@@ -59,10 +59,20 @@ export class StripeWebhookController {
 			throw new ForbiddenException('Malformed webhook payload.');
 		}
 
-		await this.apply(event);
+		// Always 200 once the signature is good — which means the handler's own failures must be
+		// swallowed here, not propagated. Stripe retries on any non-2xx, so a bug in apply() would
+		// otherwise turn into a retry storm, and a dropped event we can replay from the Dashboard is
+		// the cheaper failure.
+		try {
+			await this.apply(event);
+		} catch (error) {
+			this.logger.error(
+				`Failed to apply Stripe webhook ${event.type}; acknowledging anyway. ${
+					error instanceof Error ? error.message : error
+				}`
+			);
+		}
 
-		// Always 200 once the signature is good. Stripe retries on any other status, and a retry
-		// storm caused by our own bug is worse than a dropped event we can replay from the Dashboard.
 		return { received: true };
 	}
 
@@ -76,21 +86,41 @@ export class StripeWebhookController {
 		if (!LINKING_EVENTS.has(event.type)) return;
 
 		const object = event.data?.object ?? {};
-		const customerId = typeof object.customer === 'string' ? object.customer : undefined;
+		// `customer` is an id string normally, but an expanded object when the event was created with
+		// expansion — take the id either way rather than silently ignoring the expanded form.
+		const customerId =
+			typeof object.customer === 'string' ? object.customer : object.customer?.id;
 		const email = object.customer_email ?? object.customer_details?.email;
 
 		if (!customerId || !email) return;
 
 		// Tenant has no `users` relation, so the tenant is reached through the user that owns the
 		// email rather than by joining from the other side.
-		const user = await this.typeOrmUserRepository
+		// Deliberately not `.catch(() => null)`: a transient database error would then be
+		// indistinguishable from "nobody has this address", and the event would be acknowledged as
+		// handled when nothing happened. Letting it throw sends it to the handler above, which logs
+		// it — and the event stays replayable from the Stripe dashboard.
+		const users = await this.typeOrmUserRepository
 			.createQueryBuilder('user')
 			.select(['user.id', 'user.tenantId'])
-			.where('LOWER(user.email) = LOWER(:email)', { email })
+			.where('LOWER(user.email) = LOWER(:email)', { email: email.toLowerCase() })
 			.andWhere('user.tenantId IS NOT NULL')
-			.getOne()
-			.catch(() => null);
+			.limit(2)
+			.getMany();
 
+		// One address can exist in more than one tenant. Picking arbitrarily would attach a Stripe
+		// customer to whichever row the database happened to return first, so this declines instead
+		// and leaves the link to be made deliberately.
+		if (users.length !== 1) {
+			if (users.length > 1) {
+				this.logger.warn(
+					`Stripe ${event.type} matched ${users.length} tenants for one address; not linking automatically.`
+				);
+			}
+			return;
+		}
+
+		const user = users[0];
 		if (!user?.tenantId) return;
 
 		// Only fill a gap; never repoint a tenant that already has a customer. Overwriting that link

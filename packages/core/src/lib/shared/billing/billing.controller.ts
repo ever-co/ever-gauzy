@@ -53,8 +53,10 @@ export class BillingController {
 	@ApiOperation({ summary: 'Whether billing is configured on this deployment' })
 	@ApiResponse({ status: HttpStatus.OK })
 	@Get('/config')
-	async config(): Promise<{ enabled: boolean }> {
-		return { enabled: this.billingService.isBillingEnforced() };
+	async config(): Promise<{ enabled: boolean; mode: 'live' | 'test' | 'disabled' }> {
+		// `mode` is deliberately visible: a staging environment showing "test" is how an operator
+		// confirms at a glance that it is not wired to the live Stripe account.
+		return { enabled: this.billingService.isBillingEnforced(), mode: this.billingService.mode };
 	}
 
 	@ApiOperation({ summary: "The tenant's current subscription" })
@@ -90,7 +92,7 @@ export class BillingController {
 		if (!lookupKey) {
 			throw new BadRequestException('A plan must be supplied.');
 		}
-		return this.billingService.changePlan(customerId, lookupKey);
+		return this.billingService.changePlan(customerId, lookupKey, EVER_PRODUCT_KEY);
 	}
 
 	@ApiOperation({ summary: 'Cancel at the end of the current period' })

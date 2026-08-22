@@ -12,6 +12,18 @@ import {
 	IBillingSubscription
 } from './billing.service';
 
+const ZERO_DECIMAL_CURRENCIES = new Set([
+	'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA',
+	'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF'
+]);
+
+const INTERVAL_SUFFIX: Record<string, string> = {
+	day: '/day',
+	week: '/wk',
+	month: '/mo',
+	year: '/yr'
+};
+
 /**
  * The tenant's billing page.
  *
@@ -35,6 +47,8 @@ export class BillingComponent extends TranslationBaseComponent implements OnInit
 	public loading = true;
 	/** Set while a mutation is in flight, to keep the action buttons from being double-fired. */
 	public working = false;
+	/** True when any part of the last load failed, so the page can say so instead of implying "empty". */
+	public loadFailed = false;
 
 	public subscription: IBillingSubscription | null = null;
 	public plans: IBillingPlan[] = [];
@@ -80,6 +94,7 @@ export class BillingComponent extends TranslationBaseComponent implements OnInit
 	 */
 	async load(): Promise<void> {
 		this.loading = true;
+		this.loadFailed = false;
 		try {
 			const [subscription, plans, invoices, paymentMethod] = await Promise.all([
 				this.safe(() => firstValueFrom(this.billingService.getSubscription()), null),
@@ -156,29 +171,41 @@ export class BillingComponent extends TranslationBaseComponent implements OnInit
 		}
 	}
 
-	/** Minor units to a display string, e.g. 2500 + 'usd' -> "$25.00". */
+	/**
+	 * Minor units to a display string, e.g. 2500 + 'usd' -> "$25.00".
+	 *
+	 * Not every currency divides by 100. Stripe stores zero-decimal currencies (JPY, KRW and friends)
+	 * in whole units, so dividing those by 100 would show a price a hundred times too small — the
+	 * kind of error nobody reports because it looks like a bargain.
+	 */
 	formatAmount(amount: number, currency: string): string {
+		const code = (currency || 'usd').toUpperCase();
+		const value = (amount ?? 0) / (ZERO_DECIMAL_CURRENCIES.has(code) ? 1 : 100);
 		try {
-			return new Intl.NumberFormat(undefined, {
-				style: 'currency',
-				currency: (currency || 'usd').toUpperCase()
-			}).format((amount ?? 0) / 100);
+			return new Intl.NumberFormat(undefined, { style: 'currency', currency: code }).format(value);
 		} catch {
-			return `${((amount ?? 0) / 100).toFixed(2)} ${(currency || '').toUpperCase()}`;
+			return `${value.toFixed(ZERO_DECIMAL_CURRENCIES.has(code) ? 0 : 2)} ${code}`;
 		}
 	}
 
-	/** "/mo", "/yr", or nothing for a one-off. */
+	/** "/mo", "/yr", "/wk", "/day", or nothing for a one-off. */
 	intervalSuffix(interval: string): string {
-		if (interval === 'month') return '/mo';
-		if (interval === 'year') return '/yr';
-		return '';
+		return INTERVAL_SUFFIX[interval] ?? '';
 	}
 
+	/**
+	 * Run one load, keeping the page usable if it fails.
+	 *
+	 * The calls are settled independently so a tenant with no subscription still gets a working page —
+	 * but a *failed* call is not the same as an empty one. Without recording it, an API outage would
+	 * render as a confident "this account has no subscription", which is worse than saying nothing.
+	 */
 	private async safe<T>(run: () => Promise<T>, fallback: T): Promise<T> {
 		try {
 			return await run();
-		} catch {
+		} catch (error) {
+			this.loadFailed = true;
+			this.errorHandlingService.handleError(error);
 			return fallback;
 		}
 	}
