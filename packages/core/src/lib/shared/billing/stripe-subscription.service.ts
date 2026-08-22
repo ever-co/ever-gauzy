@@ -188,6 +188,34 @@ export class StripeSubscriptionService {
 	}
 
 	/**
+	 * The email Stripe holds for a customer, or null.
+	 *
+	 * Needed because most events identify the customer by id alone. A Subscription object carries no
+	 * email field whatsoever — verified against a real `customer.subscription.created` payload — so a
+	 * receiver that reads `customer_email` off the event finds nothing and silently does nothing.
+	 * Only `checkout.session.completed` includes the address inline.
+	 *
+	 * Returns null rather than throwing: this resolves a link, and failing to resolve one must never
+	 * escalate into failing the operation that triggered it.
+	 */
+	async getCustomerEmail(customerId: string): Promise<string | null> {
+		const key = this.secretKey;
+		if (!key || !customerId?.trim()) return null;
+
+		try {
+			const customer = await this.request<{ email?: string | null; deleted?: boolean }>(
+				key,
+				`/customers/${encodeURIComponent(customerId.trim())}`
+			);
+			// A deleted customer comes back as `{ deleted: true }` with no email.
+			return customer?.email?.trim() || null;
+		} catch (error) {
+			this.logger.error(`Could not resolve the email for a Stripe customer. ${describe(error)}`);
+			return null;
+		}
+	}
+
+	/**
 	 * Shared lookup: the first customer sharing this email that holds an entitling subscription.
 	 *
 	 * Throws on transport or API failure so each caller can decide what that means for it.

@@ -90,9 +90,18 @@ export class StripeWebhookController {
 		// expansion — take the id either way rather than silently ignoring the expanded form.
 		const customerId =
 			typeof object.customer === 'string' ? object.customer : object.customer?.id;
-		const email = object.customer_email ?? object.customer_details?.email;
+		if (!customerId) return;
 
-		if (!customerId || !email) return;
+		// Only `checkout.session.completed` carries the address inline. A Subscription object has no
+		// email field at all, so reading it off the event alone would make `customer.subscription.created`
+		// a permanent no-op — precisely the portal- and Dashboard-created subscriptions this receiver
+		// exists to catch. Fall back to asking Stripe, which costs one request on that path only.
+		const email =
+			object.customer_email ??
+			object.customer_details?.email ??
+			(await this.stripeSubscriptionService.getCustomerEmail(customerId));
+
+		if (!email) return;
 
 		// Tenant has no `users` relation, so the tenant is reached through the user that owns the
 		// email rather than by joining from the other side.
