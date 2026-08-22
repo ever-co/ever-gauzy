@@ -19,6 +19,7 @@ import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.reposi
 import { TypeOrmTenantRepository } from './repository/type-orm-tenant.repository';
 import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
 import { Tenant } from './tenant.entity';
+import { StripeSubscriptionService } from '../shared/billing/stripe-subscription.service';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
@@ -30,7 +31,8 @@ export class TenantService extends CrudService<Tenant> {
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
 		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		readonly commandBus: CommandBus,
-		readonly configService: ConfigService
+		readonly configService: ConfigService,
+		readonly stripeSubscriptionService: StripeSubscriptionService
 	) {
 		super(typeOrmTenantRepository, mikroOrmTenantRepository);
 	}
@@ -43,11 +45,39 @@ export class TenantService extends CrudService<Tenant> {
 	 * @param user User to be associated with the tenant.
 	 * @returns The created ITenant entity.
 	 */
+	/**
+	 * Records which Stripe customer a freshly created tenant bills through.
+	 *
+	 * This is the one moment where the buyer's email is the only link between the account they just
+	 * paid for and the tenant they are creating. Resolving it here and storing the id means every
+	 * later billing call is keyed on something stable: an email can be changed, and Stripe permits
+	 * several customers to share one, so it cannot identify a billing account on its own.
+	 *
+	 * Best-effort by design. On a self-hosted install there is no Stripe key and this returns
+	 * immediately; if Stripe is unreachable the tenant is still created and simply has no link yet.
+	 * Onboarding must never fail because a payments provider had a bad minute.
+	 */
+	private async linkStripeCustomer(tenant: ITenant, user: IUser): Promise<void> {
+		if (!this.stripeSubscriptionService.isBillingEnforced()) return;
+		if (!user?.email || !tenant?.id) return;
+
+		const stripeCustomerId = await this.stripeSubscriptionService.findCustomerIdForEmail(user.email);
+		if (!stripeCustomerId) return;
+
+		await this.typeOrmTenantRepository.update(tenant.id, { stripeCustomerId });
+		tenant.stripeCustomerId = stripeCustomerId;
+	}
+
 	public async onboardTenant(entity: ITenantCreateInput, user: IUser): Promise<ITenant> {
 		console.time('On Boarding Tenant');
 
 		// Creates and saves a tenant entity from the given details.
 		const tenant = await this.create(entity);
+
+		// Record which Stripe customer this tenant bills through, while the buyer's email is still the
+		// only thing tying the two together. From here on the stored id is authoritative — see
+		// linkStripeCustomer() for why the email is never consulted again.
+		await this.linkStripeCustomer(tenant, user);
 
 		// Create Role/Permissions to relative tenants.
 		await this.commandBus.execute(new TenantRoleBulkCreateCommand([tenant]));

@@ -59,36 +59,11 @@ export class StripeSubscriptionService {
 	 * a bad minute is a far worse failure than briefly admitting someone who slipped past.
 	 */
 	async getEntitlement(email: string): Promise<EntitlementResult> {
-		const key = this.secretKey;
-		if (!key) return EntitlementResult.ENTITLED; // billing off: nothing to check
-
-		const normalized = email?.trim().toLowerCase();
-		if (!normalized) return EntitlementResult.NOT_ENTITLED;
+		if (!this.secretKey) return EntitlementResult.ENTITLED; // billing off: nothing to check
 
 		try {
-			const customers = await this.request<{ data: Array<{ id: string }> }>(
-				key,
-				`/customers?email=${encodeURIComponent(normalized)}&limit=100`
-			);
-
-			if (!customers.data?.length) {
-				return EntitlementResult.NOT_ENTITLED;
-			}
-
-			// Stripe allows several customers to share an email, so every one of them has to be
-			// checked before concluding the person has nothing.
-			for (const customer of customers.data) {
-				const subscriptions = await this.request<{ data: Array<{ status: string }> }>(
-					key,
-					`/subscriptions?customer=${encodeURIComponent(customer.id)}&status=all&limit=100`
-				);
-
-				if (subscriptions.data?.some((s) => ENTITLING_STATUSES.has(s.status))) {
-					return EntitlementResult.ENTITLED;
-				}
-			}
-
-			return EntitlementResult.NOT_ENTITLED;
+			const customerId = await this.findEntitlingCustomerId(email);
+			return customerId ? EntitlementResult.ENTITLED : EntitlementResult.NOT_ENTITLED;
 		} catch (error) {
 			this.logger.error(
 				`Could not determine Stripe entitlement for a registration attempt; allowing it through. ${
@@ -97,6 +72,64 @@ export class StripeSubscriptionService {
 			);
 			return EntitlementResult.UNKNOWN;
 		}
+	}
+
+	/**
+	 * The Stripe customer behind an entitling subscription for `email`, or null.
+	 *
+	 * Used when a tenant is first created, to record the link between that tenant and its billing
+	 * account. From then on the stored id is authoritative and the email is never consulted again —
+	 * an email can be changed, and Stripe permits several customers to share one.
+	 *
+	 * Returns null rather than throwing when Stripe is unreachable: failing to record the link must
+	 * not fail the onboarding around it.
+	 */
+	async findCustomerIdForEmail(email: string): Promise<string | null> {
+		if (!this.secretKey) return null;
+
+		try {
+			return await this.findEntitlingCustomerId(email);
+		} catch (error) {
+			this.logger.error(
+				`Could not resolve a Stripe customer for a new tenant; it will need linking later. ${
+					error instanceof Error ? error.message : error
+				}`
+			);
+			return null;
+		}
+	}
+
+	/**
+	 * Shared lookup: the first customer sharing this email that holds an entitling subscription.
+	 *
+	 * Throws on transport or API failure so each caller can decide what that means for it.
+	 */
+	private async findEntitlingCustomerId(email: string): Promise<string | null> {
+		const key = this.secretKey;
+		if (!key) return null;
+
+		const normalized = email?.trim().toLowerCase();
+		if (!normalized) return null;
+
+		const customers = await this.request<{ data: Array<{ id: string }> }>(
+			key,
+			`/customers?email=${encodeURIComponent(normalized)}&limit=100`
+		);
+
+		// Stripe allows several customers to share an email, so every one of them has to be checked
+		// before concluding the person has nothing.
+		for (const customer of customers.data ?? []) {
+			const subscriptions = await this.request<{ data: Array<{ status: string }> }>(
+				key,
+				`/subscriptions?customer=${encodeURIComponent(customer.id)}&status=all&limit=100`
+			);
+
+			if (subscriptions.data?.some((s) => ENTITLING_STATUSES.has(s.status))) {
+				return customer.id;
+			}
+		}
+
+		return null;
 	}
 
 	/**

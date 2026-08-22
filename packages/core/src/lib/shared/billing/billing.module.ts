@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TenantModule } from '../../tenant/tenant.module';
+import { UserModule } from '../../user/user.module';
 import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
 import { StripeSubscriptionService } from './stripe-subscription.service';
+import { StripeWebhookController } from './stripe-webhook.controller';
 
 /**
  * In-product billing pages, plus the hand-off to Stripe's customer portal.
@@ -13,8 +15,8 @@ import { StripeSubscriptionService } from './stripe-subscription.service';
  * error-prone than conditionally wiring a module at boot.
  */
 @Module({
-	imports: [RolePermissionModule, TenantModule],
-	controllers: [BillingController],
+	imports: [RolePermissionModule, TenantModule, UserModule],
+	controllers: [BillingController, StripeWebhookController],
 	providers: [BillingService, StripeSubscriptionService],
 	exports: [BillingService, StripeSubscriptionService]
 })
