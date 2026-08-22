@@ -99,6 +99,23 @@ jobs:
           path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
+      # Route the install through the internal Verdaccio cache. Placed AFTER the cache restore on
+      # purpose: this action rewrites yarn.lock's resolved URLs, and hashFiles() in a cache key
+      # evaluates at step runtime - configuring the registry before the restore would move the key
+      # and bifurcate the cache namespace by VIP reachability (the reason #10025 skipped this file).
+      # Measured cost of NOT having it here: the bootstrap fallback pulled from the public registry
+      # and blew through the 180-minute job ceiling twice on stage run 32513912629.
+      - name: Configure Registry
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: ever-co/ever-gauzy/.github/actions/configure-registry@aa4ee19926fabcf820aa1294385a76aec6bdb548
+        with:
+          verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
+          verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
+          force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # Not contains(matrix.os, ...): these jobs define no matrix.os, so that expression is
+          # always false and would silently disable the in-network VIP retry and warning.
+          expect-vip: ${{ vars.RUNNER_LINUX_X64_8 != '' }}
+
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
@@ -120,7 +137,10 @@ jobs:
         # a CROSS-run optimization — see the upload below for why it cannot be the handoff.
         with:
           path: ${{ env.NODE_MODULES_ARCHIVE }}
-          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
+          # Pinned to the key the RESTORE computed, not re-derived: Configure Registry rewrites
+          # yarn.lock after the restore, and hashFiles() here evaluates at save time - re-deriving
+          # would write the archive under a different key than the next run looks up.
+          key: ${{ steps.cache.outputs.cache-primary-key }}
 
       - name: Upload node_modules archive
         uses: actions/upload-artifact@v7
@@ -185,6 +205,22 @@ jobs:
           path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
+      # Route the install through the internal Verdaccio cache. Placed AFTER the cache restore on
+      # purpose: this action rewrites yarn.lock's resolved URLs, and hashFiles() in a cache key
+      # evaluates at step runtime - configuring the registry before the restore would move the key
+      # and bifurcate the cache namespace by VIP reachability (the reason #10025 skipped this file).
+      # Measured cost of NOT having it here: the bootstrap fallback pulled from the public registry
+      # and blew through the 180-minute job ceiling twice on stage run 32513912629.
+      - name: Configure Registry
+        uses: ever-co/ever-gauzy/.github/actions/configure-registry@aa4ee19926fabcf820aa1294385a76aec6bdb548
+        with:
+          verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
+          verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
+          force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # Not contains(matrix.os, ...): these jobs define no matrix.os, so that expression is
+          # always false and would silently disable the in-network VIP retry and warning.
+          expect-vip: ${{ vars.RUNNER_LINUX_X64_8 != '' }}
+
       - name: Restore node_modules
         shell: bash
         # Unpacks the tree build-monorepo-root published, or installs from scratch if the cache is
@@ -234,6 +270,22 @@ jobs:
           path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
+      # Route the install through the internal Verdaccio cache. Placed AFTER the cache restore on
+      # purpose: this action rewrites yarn.lock's resolved URLs, and hashFiles() in a cache key
+      # evaluates at step runtime - configuring the registry before the restore would move the key
+      # and bifurcate the cache namespace by VIP reachability (the reason #10025 skipped this file).
+      # Measured cost of NOT having it here: the bootstrap fallback pulled from the public registry
+      # and blew through the 180-minute job ceiling twice on stage run 32513912629.
+      - name: Configure Registry
+        uses: ever-co/ever-gauzy/.github/actions/configure-registry@aa4ee19926fabcf820aa1294385a76aec6bdb548
+        with:
+          verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
+          verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
+          force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # Not contains(matrix.os, ...): these jobs define no matrix.os, so that expression is
+          # always false and would silently disable the in-network VIP retry and warning.
+          expect-vip: ${{ vars.RUNNER_LINUX_X64_8 != '' }}
+
       - name: Restore node_modules
         shell: bash
         # Unpacks the tree build-monorepo-root published, or installs from scratch if the cache is
@@ -282,6 +334,22 @@ jobs:
           # cache is best effort here, and the script below still has the install fallback.
           path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
+
+      # Route the install through the internal Verdaccio cache. Placed AFTER the cache restore on
+      # purpose: this action rewrites yarn.lock's resolved URLs, and hashFiles() in a cache key
+      # evaluates at step runtime - configuring the registry before the restore would move the key
+      # and bifurcate the cache namespace by VIP reachability (the reason #10025 skipped this file).
+      # Measured cost of NOT having it here: the bootstrap fallback pulled from the public registry
+      # and blew through the 180-minute job ceiling twice on stage run 32513912629.
+      - name: Configure Registry
+        uses: ever-co/ever-gauzy/.github/actions/configure-registry@aa4ee19926fabcf820aa1294385a76aec6bdb548
+        with:
+          verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
+          verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
+          force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # Not contains(matrix.os, ...): these jobs define no matrix.os, so that expression is
+          # always false and would silently disable the in-network VIP retry and warning.
+          expect-vip: ${{ vars.RUNNER_LINUX_X64_8 != '' }}
 
       - name: Restore node_modules
         shell: bash
@@ -342,6 +410,22 @@ jobs:
           # cache is best effort here, and the script below still has the install fallback.
           path: ${{ env.NODE_MODULES_ARCHIVE }}
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
+
+      # Route the install through the internal Verdaccio cache. Placed AFTER the cache restore on
+      # purpose: this action rewrites yarn.lock's resolved URLs, and hashFiles() in a cache key
+      # evaluates at step runtime - configuring the registry before the restore would move the key
+      # and bifurcate the cache namespace by VIP reachability (the reason #10025 skipped this file).
+      # Measured cost of NOT having it here: the bootstrap fallback pulled from the public registry
+      # and blew through the 180-minute job ceiling twice on stage run 32513912629.
+      - name: Configure Registry
+        uses: ever-co/ever-gauzy/.github/actions/configure-registry@aa4ee19926fabcf820aa1294385a76aec6bdb548
+        with:
+          verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
+          verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
+          force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          # Not contains(matrix.os, ...): these jobs define no matrix.os, so that expression is
+          # always false and would silently disable the in-network VIP retry and warning.
+          expect-vip: ${{ vars.RUNNER_LINUX_X64_8 != '' }}
 
       - name: Restore node_modules
         shell: bash
