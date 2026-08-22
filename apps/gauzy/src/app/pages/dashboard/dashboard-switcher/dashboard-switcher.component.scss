@@ -122,7 +122,7 @@
 				 * pair across the 8 themes (worst: gauzy-dark 2.57, material-dark
 				 * 2.75) — under 4.5:1 for 12px text everywhere but material-light.
 				 * Inheriting `--text-basic-color` from the base rule gives 7.1–14.6:1
-				 * in every theme, and the border + ring + wash + weight already say
+				 * in every theme, and the border + ring + wash already say
 				 * "current".
 				 */
         &.active {
