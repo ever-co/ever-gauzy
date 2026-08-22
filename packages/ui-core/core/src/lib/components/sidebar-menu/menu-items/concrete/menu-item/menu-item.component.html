@@ -5,9 +5,18 @@
 		     catch-all slot), and Angular can infer the slot for a control-flow block only when the
 		     block's single root node is the element itself. Wrapping these in an outer @if makes
 		     that root a container instead, the header matches no slot, and the whole row — icon
-		     included — is dropped. -->
+		     included — is dropped. Nothing else may join them inside a block either — a comment is
+		     a second root node, which costs the header its slot just as surely.
+
+		     A rail row is a bare glyph, so its title has to be spoken by `aria-label`; and the
+		     child-bearing variant hides its sub-links behind a HOVER popover, so the keyboard needs
+		     its own way in: focus shows the same panel, Escape dismisses it, and Enter/Space expand
+		     the sidebar so the child rows land in the tab order (an overlay parked at the end of the
+		     document never does). -->
 		@if (!state && hasChildren) {
 		<nb-accordion-item-header
+			role="button"
+			[attr.aria-label]="item?.title"
 			[nbPopover]="railFlyout"
 			nbPopoverTrigger="hover"
 			nbPopoverPlacement="end-bottom"
@@ -15,11 +24,17 @@
 			nbPopoverClass="gz-rail-flyout"
 			[class.collapsed]="onCollapse"
 			(click)="redirectTo()"
+			(focus)="showRailFlyout()"
+			(blur)="closeRailFlyout()"
+			(keydown.enter)="expandRailSubmenu($event)"
+			(keydown.space)="expandRailSubmenu($event)"
+			(keydown.escape)="closeRailFlyout()"
 		>
 			<i [class]="item?.icon"></i>
 		</nb-accordion-item-header>
 		} @if (!state && !hasChildren) {
 		<nb-accordion-item-header
+			[attr.aria-label]="item?.title"
 			[gaTooltip]="item?.title"
 			[icon]="item?.icon"
 			[class.collapsed]="onCollapse"
@@ -43,9 +58,8 @@
 		</nb-accordion-item-header>
 		} @if (hasChildren) {
 		<nb-accordion-item-body [class.item-collapsed]="!state">
-			@for (subItem of item.children; track subItem?.title) {
+			@for (subItem of visibleChildren; track subItem?.title) {
 			<div>
-				@if (!item?.hidden) {
 				<ga-children-menu-item
 					[id]="subItem?.id"
 					[item]="subItem"
@@ -54,7 +68,6 @@
 					[selected]="subItem === selectedChildren && selected"
 					(focusItemChange)="focusOn($event)"
 				></ga-children-menu-item>
-				}
 			</div>
 			}
 		</nb-accordion-item-body>
@@ -66,8 +79,7 @@
 	<div class="rail-flyout">
 		<div class="rail-flyout-title">{{ item?.title }}</div>
 		<div class="rail-flyout-items" (click)="closeRailFlyout()">
-			@for (subItem of item?.children; track subItem?.title) {
-			@if (!subItem?.hidden) {
+			@for (subItem of visibleChildren; track subItem?.title) {
 			<ga-children-menu-item
 				class="rail-flyout-row"
 				[item]="subItem"
@@ -77,7 +89,6 @@
 				[selected]="subItem === selectedChildren && selected"
 				(focusItemChange)="focusOn($event)"
 			></ga-children-menu-item>
-			}
 			}
 		</div>
 	</div>

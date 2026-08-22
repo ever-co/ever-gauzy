@@ -11,7 +11,7 @@ import {
 import { merge } from 'rxjs';
 import { filter, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NgxPermissionsModule } from 'ngx-permissions';
+import { NgxPermissionsModule, NgxPermissionsObject, NgxPermissionsService } from 'ngx-permissions';
 import { IUser } from '@gauzy/contracts';
 import { IMenuItem, IMenuItemFocusChangeEvent } from '../../interface/menu-item.interface';
 import { Store } from '../../../../../services/store/store.service';
@@ -46,6 +46,7 @@ export class MenuItemComponent implements OnInit {
 	private readonly _location = inject(Location);
 	private readonly _jitsuService = inject(JitsuService);
 	private readonly _store = inject(Store);
+	private readonly _permissionsService = inject(NgxPermissionsService);
 
 	private _user: IUser;
 
@@ -124,13 +125,46 @@ export class MenuItemComponent implements OnInit {
 	@Output() public collapsedChange: EventEmitter<any> = new EventEmitter();
 	@Output() public selectedChange: EventEmitter<any> = new EventEmitter();
 
+	/** Last list handed out by `visibleChildren`, kept so the reference only changes with the list. */
+	private _visibleChildren: IMenuItem[] = [];
+
 	/**
-	 * Whether this entry owns a sub-menu.
+	 * The child entries that actually reach the screen.
 	 *
-	 * @return {boolean} True when the item has at least one child entry.
+	 * Both the accordion body and the rail flyout render from this, and `hasChildren` is derived
+	 * from it, so the sub-menu is only ever offered when there is something in it: a parent whose
+	 * children are all hidden or all barred by permissions used to open an EMPTY flyout.
+	 *
+	 * Computed on read rather than cached at `item` set time because neither trigger is an input
+	 * change: NavMenuBuilderService splices and pushes into the SAME `children` array when reports
+	 * or organization items come and go, and permissions arrive later still (pages.component loads
+	 * them from `userRolePermissions$`). The array itself is only swapped when its contents differ,
+	 * which keeps the template's binding identity stable across change-detection passes.
+	 *
+	 * @return {IMenuItem[]} The children that pass the same visibility and permission filtering as
+	 * the rendered rows.
+	 */
+	public get visibleChildren(): IMenuItem[] {
+		const children = (this.item?.children ?? []) as IMenuItem[];
+		const permissions = this._permissionsService.getPermissions();
+		const next = children.filter((child: IMenuItem) => !child?.hidden && this.isAuthorized(child, permissions));
+
+		const changed =
+			next.length !== this._visibleChildren.length ||
+			next.some((child: IMenuItem, index: number) => child !== this._visibleChildren[index]);
+		if (changed) {
+			this._visibleChildren = next;
+		}
+		return this._visibleChildren;
+	}
+
+	/**
+	 * Whether this entry owns a sub-menu worth opening.
+	 *
+	 * @return {boolean} True when the item has at least one child entry that renders.
 	 */
 	public get hasChildren(): boolean {
-		return !!this.item?.children?.length;
+		return this.visibleChildren.length > 0;
 	}
 
 	ngOnInit(): void {
@@ -234,6 +268,38 @@ export class MenuItemComponent implements OnInit {
 	}
 
 	/**
+	 * Reveal the rail flyout without a pointer.
+	 *
+	 * The popover's own trigger is `hover`, which leaves a keyboard user with no way to see what a
+	 * rail icon stands for; `show()` is independent of the trigger, so focusing the row opens the
+	 * same panel the mouse gets. It is dismissed again on blur and on Escape.
+	 */
+	public showRailFlyout(): void {
+		if (this._railFlyout && !this._railFlyout.isShown) {
+			this._railFlyout.show();
+		}
+	}
+
+	/**
+	 * Open this entry's sub-menu from the collapsed rail via the keyboard.
+	 *
+	 * The flyout itself is a dead end for keyboard navigation — it lives in an overlay at the end of
+	 * the document, so Tab never walks into it from the rail. Expanding the sidebar instead puts the
+	 * child rows in the accordion body, right after this header in the DOM and in the tab order, so
+	 * the routes are reachable. Nebular's own `keydown.enter`/`keydown.space` host listener opens the
+	 * accordion item alongside this, which is what brings that body into view.
+	 */
+	public expandRailSubmenu(event?: Event): void {
+		// Space would otherwise scroll the layout out from under the row that was just activated.
+		event?.preventDefault();
+
+		// The panel is anchored to a rail-width row that is about to grow; drop it rather than let it
+		// hang over the expanded sidebar.
+		this.closeRailFlyout();
+		this._sidebarService.expand(MENU_SIDEBAR_TAG);
+	}
+
+	/**
 	 * Track a click event using Jitsu analytics.
 	 */
 	public async jitsuTrackClick(): Promise<void> {
@@ -318,6 +384,25 @@ export class MenuItemComponent implements OnInit {
 			console.warn('Error preparing external URL:', url, error);
 			return '';
 		}
+	}
+
+	/**
+	 * Mirror of `*ngxPermissionsOnly` for a single item, evaluated synchronously.
+	 *
+	 * The directive authorizes when the list is empty and otherwise when ANY listed permission is
+	 * held; permissions here are loaded plainly (`loadPermissions(permissions)` in pages.component),
+	 * with no validation functions and no roles, so presence in the store is the whole test.
+	 *
+	 * @param item The menu item to test.
+	 * @param permissions The permission store snapshot to test against.
+	 * @return {boolean} True when the item would be rendered by `*ngxPermissionsOnly`.
+	 */
+	private isAuthorized(item: IMenuItem, permissions: NgxPermissionsObject): boolean {
+		const permissionKeys = item?.data?.permissionKeys;
+		if (!permissionKeys?.length) {
+			return true;
+		}
+		return permissionKeys.some((key: string) => !!permissions[key]);
 	}
 
 	/**
