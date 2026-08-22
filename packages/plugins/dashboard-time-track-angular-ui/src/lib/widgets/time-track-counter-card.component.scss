@@ -2,14 +2,19 @@
 
 // No card chrome here on purpose: `ga-dashboard-widget-host` already renders the
 // `nb-card`, its header and the body padding. This component only fills that body,
-	justify-content: flex-start;
 :host {
 	display: flex;
 	flex-direction: column;
-	justify-content: center;
+	justify-content: flex-start;
 	height: 100%;
 	width: 100%;
 	min-width: 0;
+	overflow: hidden;
+	font-size: 12px;
+	line-height: 15px;
+}
+
+.counter-value {
 	margin-bottom: 0;
 	font-variant-numeric: tabular-nums;
 	overflow: hidden;
@@ -17,21 +22,17 @@
 	white-space: nowrap;
 }
 
-.counter-value {
+.counter-container {
 	width: 100%;
 	margin-top: auto;
 	padding-top: 0.5rem;
 }
 
-.counter-container {
-	width: 71%;
-}
-	font-size: 12px;
-	line-height: 15px;
 .counter-caption {
 	margin-top: 0.375rem;
 	color: nb-theme(text-hint-color);
-	font-size: nb-theme(text-caption-font-size);
+	font-size: 12px;
+	line-height: 15px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
