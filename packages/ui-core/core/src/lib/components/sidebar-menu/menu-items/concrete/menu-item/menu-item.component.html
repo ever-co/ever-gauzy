@@ -12,11 +12,17 @@
 		     child-bearing variant hides its sub-links behind a HOVER popover, so the keyboard needs
 		     its own way in: focus shows the same panel, Escape dismisses it, and Enter/Space expand
 		     the sidebar so the child rows land in the tab order (an overlay parked at the end of the
-		     document never does). -->
+		     document never does).
+
+		     The panel's state rides on `aria-controls`, present only while it is actually up, NOT on
+		     `aria-expanded`: nb-accordion-item-header host-binds that one to the ACCORDION's expanded
+		     state, and a second binding here would either be overridden or, worse, win and lie about
+		     the accordion. `aria-controls` names the live panel without touching it. -->
 		@if (!state && hasChildren) {
 		<nb-accordion-item-header
 			role="button"
 			[attr.aria-label]="item?.title"
+			[attr.aria-controls]="isRailFlyoutShown ? railFlyoutId : null"
 			[nbPopover]="railFlyout"
 			nbPopoverTrigger="hover"
 			nbPopoverPlacement="end-bottom"
@@ -76,9 +82,14 @@
 </nb-accordion>
 
 <ng-template #railFlyout>
-	<div class="rail-flyout">
+	<div class="rail-flyout" [id]="railFlyoutId" role="group" [attr.aria-label]="item?.title">
 		<div class="rail-flyout-title">{{ item?.title }}</div>
-		<div class="rail-flyout-items" (click)="closeRailFlyout()">
+		<!-- `mousedown` is swallowed so the press never moves focus off the rail header: the panel is
+		     dismissed on that header's `blur`, and blur fires on mousedown — BEFORE the click — so a
+		     pointer user who had focused the icon would watch the overlay disappear out from under the
+		     press, taking the row's click handler with it. Preventing the default keeps focus put; the
+		     click still lands, and the row list closes the panel itself once it has. -->
+		<div class="rail-flyout-items" (mousedown)="$event.preventDefault()" (click)="closeRailFlyout()">
 			@for (subItem of visibleChildren; track subItem?.title) {
 			<ga-children-menu-item
 				class="rail-flyout-row"

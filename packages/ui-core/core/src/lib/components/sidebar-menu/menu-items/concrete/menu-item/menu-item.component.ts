@@ -23,6 +23,9 @@ import { ChildrenMenuItemComponent } from '../children-menu-item/children-menu-i
 /** Tag of the Nebular sidebar this menu renders into (see one-column.layout.html). */
 const MENU_SIDEBAR_TAG = 'menu-sidebar';
 
+/** Source of the per-instance ids that tie a rail header to the flyout it opens. */
+let railFlyoutSequence = 0;
+
 @UntilDestroy()
 @Component({
 	selector: 'ga-menu-item',
@@ -121,6 +124,29 @@ export class MenuItemComponent implements OnInit {
 	 * rail. It only exists on the rail header (see the template), so it is undefined otherwise.
 	 */
 	@ViewChild(NbPopoverDirective) private readonly _railFlyout: NbPopoverDirective;
+
+	/**
+	 * Id of this instance's flyout panel, referenced by the rail header's `aria-controls`.
+	 *
+	 * Menu items are rendered many-to-a-page, so the id has to be unique per component rather than
+	 * derived from the item — two entries could share a title, and `item` is not guaranteed to carry
+	 * an id at all.
+	 */
+	public readonly railFlyoutId = `gz-rail-flyout-${railFlyoutSequence++}`;
+
+	/**
+	 * Whether the rail flyout is on screen right now.
+	 *
+	 * Read straight off the popover rather than mirrored into a field of our own: the panel is
+	 * dismissed by paths this component never sees — the hover trigger's own mouseleave, a click
+	 * outside — and a cached flag would keep claiming a panel that is already gone. The template
+	 * only spends it on `aria-controls`, which must not name an element that is not in the document.
+	 *
+	 * @return {boolean} True while the popover is shown.
+	 */
+	public get isRailFlyoutShown(): boolean {
+		return !!this._railFlyout?.isShown;
+	}
 
 	@Output() public collapsedChange: EventEmitter<any> = new EventEmitter();
 	@Output() public selectedChange: EventEmitter<any> = new EventEmitter();
