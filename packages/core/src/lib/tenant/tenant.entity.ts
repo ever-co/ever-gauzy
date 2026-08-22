@@ -32,9 +32,9 @@ export class Tenant extends BaseEntity implements ITenant {
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	// Named to match the migration. Left unnamed, TypeORM derives a hashed name
-	// (IDX_de6d48cd996dd6536edea355e9) that does not match the one the migration creates, and the
-	// schema comparison then wants to add a second index over the same column.
+	// Named to match the migration. Left unnamed, TypeORM derives a hashed name of its own, which
+	// will not match the one the migration creates — and the schema comparison then wants to add a
+	// second index over the same column.
 	@ColumnIndex('IDX_tenant_stripe_customer_id')
 	@MultiORMColumn({ nullable: true })
 	stripeCustomerId?: string;
