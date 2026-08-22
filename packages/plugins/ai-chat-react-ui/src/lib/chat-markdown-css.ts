@@ -85,12 +85,12 @@ export const chatMarkdownCss = `
 		}
 
 		${MD} ul,
-		${MD} ol { margin: 0 0 0.9em; padding-left: 1.4em; }
-		${MD} li { margin: 0 0 0.35em; }
+		${MD} ol { margin: 0 0 0.25em; padding-left: 1.4em; }
+		${MD} li { margin: 0; }
 		${MD} li > ul,
-		${MD} li > ol { margin: 0.35em 0 0; }
+		${MD} li > ol { margin: 0.1em 0 0; }
 		${MD} li::marker { color: ${chatTheme.textHint}; }
-		${MD} li > p { margin: 0 0 0.35em; }
+		${MD} li > p { margin: 0; }
 		${MD} li input[type='checkbox'] {
 			margin: 0 0.45em 0 0;
 			accent-color: ${chatTheme.accent};
