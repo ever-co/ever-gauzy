@@ -8,18 +8,6 @@ import { EntitlementResult, StripeSubscriptionService } from '../billing/stripe-
 const CHECKOUT_URL = process.env.EVER_CHECKOUT_URL?.trim() || 'https://ever.co/checkout';
 
 /**
- * A deliberately loose shape check — not validation.
- *
- * Its only job is to decide whether looking this string up in Stripe could possibly be meaningful.
- * Whether the address is acceptable is `CreateUserDTO`'s decision, and it makes it a moment later
- * with a far better message.
- */
-function looksLikeEmail(value: string): boolean {
-	const trimmed = value.trim();
-	return trimmed.length > 2 && trimmed.length <= 254 && /^[^\s@]+@[^\s@.]+\.[^\s@]+$/.test(trimmed);
-}
-
-/**
  * Requires the registering email to hold a Stripe subscription.
  *
  * This exists because signup on the hosted deployments now begins at checkout: the visitor picks a
@@ -46,11 +34,21 @@ export class SubscriptionRequiredGuard implements CanActivate {
 		const request = context.switchToHttp().getRequest();
 		const email: unknown = request.body?.user?.email;
 
-		// Anything that is not a plausible address is left to DTO validation. Guards run before
-		// validation pipes in Nest, so without this check a typo like "alice@" would be looked up in
-		// Stripe, found missing, and reported as "a subscription is required" — replacing a precise
-		// validation message with a misleading one, and spending a Stripe call to do it.
-		if (typeof email !== 'string' || !looksLikeEmail(email)) {
+		// Only a missing or non-string value is waved through, and only because there is then nothing
+		// to look up — `CreateUserDTO` rejects it a moment later, so no account can result.
+		//
+		// This deliberately does NOT screen the value against an "is it plausibly an address" pattern
+		// first. A previous version did, and returned true when the pattern failed, which turned any
+		// disagreement between that pattern and `@IsEmail()` into a way past the paywall: a quoted
+		// local part such as `"john doe"@example.com` is rejected by a naive pattern and accepted by
+		// the validator, so it skipped the entitlement check entirely and registered for free. A gate
+		// must not be more permissive than the validator standing behind it, and the only way to
+		// guarantee that is to not second-guess it.
+		//
+		// The cost is that a typo like "alice@" now spends one Stripe lookup and is reported as
+		// needing a subscription rather than as malformed. A slightly worse message on a typo is a
+		// fair price for a paywall that cannot be stepped around.
+		if (typeof email !== 'string' || !email.trim()) {
 			return true;
 		}
 

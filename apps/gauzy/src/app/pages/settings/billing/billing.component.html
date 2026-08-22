@@ -134,7 +134,7 @@
 								<td>{{ invoice.createdAt | date: 'mediumDate' }}</td>
 								<td>{{ invoice.number || '—' }}</td>
 								<td>{{ invoice.status || '—' }}</td>
-								<td class="amount">{{ formatAmount(invoice.amountPaid, invoice.currency) }}</td>
+								<td class="amount">{{ formatAmount(invoiceAmount(invoice), invoice.currency) }}</td>
 								<td>
 									<a
 										*ngIf="invoice.hostedInvoiceUrl"

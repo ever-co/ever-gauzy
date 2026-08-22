@@ -111,7 +111,7 @@ export class StripeWebhookController {
 		// it — and the event can still be replayed from the Stripe dashboard.
 		const users = await this.typeOrmUserRepository
 			.createQueryBuilder('user')
-			.select(['user.id', 'user.tenantId'])
+			.select(['user.id', 'user.tenantId', 'user.emailVerifiedAt'])
 			.where('LOWER(user.email) = LOWER(:email)', { email: email.toLowerCase() })
 			.andWhere('user.tenantId IS NOT NULL')
 			.limit(2)
@@ -131,6 +131,17 @@ export class StripeWebhookController {
 
 		const user = users[0];
 		if (!user?.tenantId) return;
+
+		// The address in this event is whatever the payer typed at checkout, and email is not unique in
+		// this platform, so matching on it alone would let someone who registered under a paying
+		// customer's address receive that customer's Stripe account. Requiring the matched user to have
+		// confirmed the address closes that, on the same reasoning as the onboarding path — an attacker
+		// can type a victim's address but cannot read their mail. An unverified match is left alone; the
+		// link is made later, once the address is confirmed.
+		if (!user.emailVerifiedAt) {
+			this.logger.log(`Stripe ${event.type} matched an unverified address; not linking automatically.`);
+			return;
+		}
 
 		// Only fill a gap; never repoint a tenant that already has a customer. Overwriting that link
 		// from a webhook would let a stray event move a tenant's billing onto another account.

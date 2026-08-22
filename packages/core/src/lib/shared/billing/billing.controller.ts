@@ -12,6 +12,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RequestContext } from '../../core/context';
 import { TypeOrmTenantRepository } from '../../tenant/repository/type-orm-tenant.repository';
+import { TenantService } from '../../tenant/tenant.service';
 import { Roles } from '../decorators';
 import { RoleGuard } from '../guards';
 import {
@@ -43,7 +44,8 @@ import {
 export class BillingController {
 	constructor(
 		private readonly billingService: BillingService,
-		private readonly typeOrmTenantRepository: TypeOrmTenantRepository
+		private readonly typeOrmTenantRepository: TypeOrmTenantRepository,
+		private readonly tenantService: TenantService
 	) {}
 
 	/**
@@ -181,10 +183,16 @@ export class BillingController {
 		});
 
 		const customerId = tenant?.stripeCustomerId?.trim();
-		if (!customerId) {
-			throw new NotFoundException('This account is not linked to a billing customer.');
-		}
-		return customerId;
+		if (customerId) return customerId;
+
+		// No link yet. That is the normal state for someone who has just bought: onboarding refuses to
+		// make the link until the buyer has confirmed their email address, because an unconfirmed
+		// address is not evidence of who they are. Once they have confirmed it, this resolves the link
+		// on their first visit here.
+		const linked = await this.tenantService.ensureStripeCustomerLink(tenantId, RequestContext.currentUserId());
+		if (linked) return linked;
+
+		throw new NotFoundException('This account is not linked to a billing customer.');
 	}
 
 	/**

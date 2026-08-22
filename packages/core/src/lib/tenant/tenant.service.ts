@@ -119,18 +119,95 @@ export class TenantService extends CrudService<Tenant> {
 	 * immediately; if Stripe is unreachable the tenant is still created and simply has no link yet.
 	 * Onboarding must never fail because a payments provider had a bad minute.
 	 */
-	private async linkStripeCustomer(tenant: ITenant, user: IUser): Promise<void> {
-		if (!this.stripeSubscriptionService.isBillingEnforced()) return;
-		if (!user?.email || !tenant?.id) return;
+	async linkStripeCustomer(tenant: ITenant, user: IUser): Promise<string | null> {
+		if (!this.stripeSubscriptionService.isBillingEnforced()) return null;
+		if (!user?.email || !tenant?.id) return null;
+
+		// An address is only evidence of who someone is once they have proved they receive mail at it,
+		// and until then this link must not be made.
+		//
+		// The attack it prevents: email is NOT unique in this platform — `login()` deliberately loads
+		// every user with a given address and tries the password against each, to support one person
+		// holding accounts in several tenants. So an attacker who knows that alice@corp.com has paid
+		// can register a second account under that same address, satisfy the registration paywall with
+		// Alice's subscription, create their own tenant, and — without this check — have Alice's Stripe
+		// customer written onto it. From there every /billing route resolves to Alice's account: her
+		// invoices and card details are readable, her plan can be changed (charging her card a
+		// proration immediately), her subscription can be cancelled, and a full Stripe customer-portal
+		// session can be opened against it. Nothing in Alice's own product would show that it happened.
+		//
+		// Verification is the cheap and decisive answer, because the one thing the attacker cannot do
+		// is read Alice's mail. A genuine buyer is simply linked slightly later — see
+		// `ensureStripeCustomerLink`, which completes the link on their first visit to the billing page
+		// once they have confirmed the address.
+		if (!user.emailVerifiedAt) {
+			return null;
+		}
 
 		const stripeCustomerId = await this.stripeSubscriptionService.findCustomerIdForEmail(user.email);
-		if (!stripeCustomerId) return;
+		if (!stripeCustomerId) return null;
+
+		// Second line of defence, independent of the first: never adopt a customer that some other
+		// tenant already bills through. Two tenants pointing at one Stripe customer is never something
+		// we want, however it came about.
+		const claimedBy = await this.typeOrmTenantRepository.findOne({
+			where: { stripeCustomerId },
+			select: { id: true }
+		});
+		if (claimedBy && claimedBy.id !== tenant.id) {
+			console.warn(
+				`Refusing to link tenant ${tenant.id} to a Stripe customer already held by tenant ${claimedBy.id}.`
+			);
+			return null;
+		}
 
 		// Through CrudService rather than the TypeORM repository directly: this class is multi-ORM, and
 		// writing straight to typeOrmTenantRepository would silently do nothing on a deployment running
 		// DB_ORM=mikro-orm, leaving the tenant unlinked with no error to notice.
 		await this.update(tenant.id, { stripeCustomerId } as Partial<Tenant>);
 		tenant.stripeCustomerId = stripeCustomerId;
+		return stripeCustomerId;
+	}
+
+	/**
+	 * Complete a tenant's Stripe link on demand, for a tenant that has none yet.
+	 *
+	 * Onboarding cannot always make the link, because at that moment the buyer has usually not yet
+	 * confirmed their email — the verification message has only just been sent. Rather than lower the
+	 * bar there, the link is simply made later: the first time someone opens the billing page after
+	 * confirming their address, this resolves it.
+	 *
+	 * Returns the customer id if a link now exists, or null. Never throws — a tenant with no link is a
+	 * normal state that the caller reports as "not linked", not an error.
+	 */
+	async ensureStripeCustomerLink(tenantId: string, userId: string): Promise<string | null> {
+		if (!this.stripeSubscriptionService.isBillingEnforced()) return null;
+		if (!tenantId || !userId) return null;
+
+		try {
+			const [tenant, user] = await Promise.all([
+				this.typeOrmTenantRepository.findOne({
+					where: { id: tenantId },
+					select: { id: true, stripeCustomerId: true }
+				}),
+				this.typeOrmUserRepository.findOne({
+					where: { id: userId },
+					select: { id: true, email: true, emailVerifiedAt: true, tenantId: true }
+				})
+			]);
+
+			if (!tenant || !user) return null;
+			if (tenant.stripeCustomerId?.trim()) return tenant.stripeCustomerId.trim();
+
+			// The caller must belong to the tenant being linked. RequestContext already scopes the
+			// request, but this method takes both ids, so it verifies rather than assumes.
+			if (user.tenantId !== tenantId) return null;
+
+			return await this.linkStripeCustomer(tenant as ITenant, user as IUser);
+		} catch (error) {
+			console.warn('Could not resolve a Stripe customer for this tenant:', (error as Error)?.message);
+			return null;
+		}
 	}
 
 	/**

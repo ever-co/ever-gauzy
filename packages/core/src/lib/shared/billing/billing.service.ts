@@ -64,6 +64,8 @@ export interface BillingInvoice {
 	number: string | null;
 	status: string | null;
 	amountPaid: number;
+	/** What the invoice asks for. Differs from amountPaid whenever it is unpaid, open, or failed. */
+	amountDue: number;
 	currency: string;
 	createdAt: string;
 	hostedInvoiceUrl: string | null;
@@ -193,7 +195,7 @@ export class BillingService {
 				// A pending cancellation would otherwise survive the switch and quietly kill the new plan.
 				cancel_at_period_end: 'false'
 			},
-			idempotencyKey('change', subscription, price.id)
+			planChangeIdempotencyKey(subscription, price.id)
 		);
 
 		return this.toSubscription(updated);
@@ -204,8 +206,10 @@ export class BillingService {
 		const subscription = await this.requireSubscriptionObject(stripeCustomerId);
 		const updated = await this.post<StripeSubscriptionObject>(
 			`/subscriptions/${subscription.id}`,
-			{ cancel_at_period_end: 'true' },
-			idempotencyKey('cancel', subscription)
+			// No idempotency key: setting this flag twice produces the same state as setting it once,
+			// and a derived key here reproduced itself across cancel -> resume -> cancel, so Stripe
+			// replayed the first response and the cancellation silently never happened.
+			{ cancel_at_period_end: 'true' }
 		);
 		return this.toSubscription(updated);
 	}
@@ -215,8 +219,8 @@ export class BillingService {
 		const subscription = await this.requireSubscriptionObject(stripeCustomerId);
 		const updated = await this.post<StripeSubscriptionObject>(
 			`/subscriptions/${subscription.id}`,
-			{ cancel_at_period_end: 'false' },
-			idempotencyKey('resume', subscription)
+			// Naturally idempotent, for the same reason as cancelSubscription above.
+			{ cancel_at_period_end: 'false' }
 		);
 		return this.toSubscription(updated);
 	}
@@ -232,6 +236,9 @@ export class BillingService {
 			number: invoice.number ?? null,
 			status: invoice.status ?? null,
 			amountPaid: invoice.amount_paid ?? 0,
+			// An unpaid or failed invoice has amount_paid = 0, so a table showing only that renders the
+			// row as $0.00 — exactly the invoices someone is looking for when something has gone wrong.
+			amountDue: invoice.amount_due ?? invoice.amount_paid ?? 0,
 			currency: invoice.currency,
 			createdAt: new Date((invoice.created ?? 0) * 1000).toISOString(),
 			hostedInvoiceUrl: invoice.hosted_invoice_url ?? null,
@@ -298,7 +305,16 @@ export class BillingService {
 		const live = subscriptions.filter((s) => LIVE_STATUSES.has(s.status));
 		if (!live.length) return null;
 
-		live.sort((a, b) => (b.created ?? 0) - (a.created ?? 0));
+		// Established subscriptions outrank `incomplete` ones before recency is considered. An
+		// `incomplete` subscription is an attempt whose first payment never succeeded — abandoning a
+		// checkout leaves one behind — and because it is newer than the subscription the customer
+		// actually holds, sorting on `created` alone would surface the failed attempt as "your plan".
+		// Cancel and change-plan would then act on the wrong object entirely, leaving the real
+		// subscription untouched while reporting success.
+		live.sort((a, b) => {
+			const rank = (s: StripeSubscriptionObject) => (s.status === 'incomplete' ? 1 : 0);
+			return rank(a) - rank(b) || (b.created ?? 0) - (a.created ?? 0);
+		});
 		return live[0];
 	}
 
@@ -394,9 +410,16 @@ export class BillingService {
 		form?: Record<string, string>,
 		idempotencyKey?: string
 	): Promise<T> {
-		const key = process.env.STRIPE_SECRET_KEY?.trim();
-		if (!key) {
-			// Reached only if a caller skipped the isBillingEnforced() check.
+		// Through the subscription service rather than the environment, so this path cannot route
+		// around the rules that live there. Reading STRIPE_SECRET_KEY directly here meant the demo
+		// refusal and the live-mode opt-in applied to the registration gate but not to the billing
+		// endpoints — a demo deployment with a key present would still have reached Stripe, and an
+		// un-opted-in live key would still have moved real money, from the one surface that cancels
+		// subscriptions and charges prorations.
+		let key: string;
+		try {
+			key = this.stripeSubscriptionService.requireKey();
+		} catch {
 			throw new BadRequestException('Billing is not configured on this deployment.');
 		}
 
@@ -464,18 +487,43 @@ function stripeStatusToException(status: number, message: string): Error {
 }
 
 /**
- * A key that collapses a *retry* but never a genuine second request.
+ * How long two identical plan changes are treated as one intent.
  *
- * Keying purely on the operation and subscription looked right, but cancel -> resume -> cancel is a
- * real sequence a customer can perform, and inside Stripe's idempotency retention window the second
- * cancel would have replayed the first response instead of acting. Mixing in the subscription's
- * current state means each of those is a distinct key, while an immediate retry — where nothing has
- * changed yet — reuses the same one.
+ * Long enough to absorb a double-click and a transport-level retry, short enough to be irrelevant to
+ * anything a person does deliberately.
  */
-function idempotencyKey(operation: string, subscription: StripeSubscriptionObject, extra?: string): string {
-	const state = `${subscription.status}:${subscription.cancel_at_period_end ? 'pending-cancel' : 'live'}`;
+const IDEMPOTENCY_WINDOW_MS = 60 * 1000;
+
+/**
+ * A key for a plan change that collapses a duplicate but never a genuine second change.
+ *
+ * Only `changePlan` gets one. Cancel and resume set `cancel_at_period_end` to a fixed value, so
+ * applying either twice lands on exactly the state one application would produce; there is nothing
+ * for an idempotency key to protect, and — as an earlier version of this code proved — a *derived*
+ * key on those operations can only cause harm. That version mixed in the subscription's current
+ * state, on the reasoning that cancel -> resume -> cancel would then yield three distinct keys. It
+ * does not: the state is read *before* the call, and a resume restores exactly the state that
+ * preceded the first cancel, so the second cancel reproduced the first one's key and body. Stripe
+ * replayed the stored response without touching the subscription, the API reported
+ * `cancelAtPeriodEnd: true`, and the customer was charged at the period boundary for a subscription
+ * the product had told them was cancelled. Removing the key removes the failure outright.
+ *
+ * A plan change genuinely must not repeat, because each application raises a proration invoice. The
+ * key therefore mixes in `latest_invoice`, which advances every time a proration is actually
+ * charged. That is what makes an A -> B -> A -> B sequence four distinct keys where a state
+ * fingerprint would have produced two: the invoice id after the second change is not the invoice id
+ * after the first, so the fourth change cannot replay the first. The time window then covers the
+ * remaining case the invoice id cannot — two concurrent duplicates of the *same* change, which race
+ * past the already-on-that-plan check before either has been applied.
+ */
+function planChangeIdempotencyKey(subscription: StripeSubscriptionObject, targetPriceId: string): string {
+	const window = Math.floor(Date.now() / IDEMPOTENCY_WINDOW_MS);
 	const currentPrice = subscription.items?.data?.[0]?.price?.id ?? 'none';
-	return [operation, subscription.id, state, currentPrice, extra].filter(Boolean).join(':');
+	const latestInvoice =
+		typeof subscription.latest_invoice === 'string'
+			? subscription.latest_invoice
+			: subscription.latest_invoice?.id ?? 'none';
+	return ['change', subscription.id, currentPrice, targetPriceId, latestInvoice, String(window)].join(':');
 }
 
 /** Statuses that represent a subscription the customer still has. */
@@ -520,6 +568,8 @@ interface StripeSubscriptionObject {
 	current_period_end?: number | null;
 	cancel_at_period_end?: boolean;
 	items?: { data?: Array<{ id: string; price?: StripePriceObject }> };
+	/** Advances whenever a proration is actually charged; used to separate repeated plan changes. */
+	latest_invoice?: string | { id?: string } | null;
 }
 
 interface StripeInvoiceObject {
@@ -527,6 +577,7 @@ interface StripeInvoiceObject {
 	number?: string | null;
 	status?: string | null;
 	amount_paid?: number;
+	amount_due?: number;
 	currency: string;
 	created?: number;
 	hosted_invoice_url?: string | null;

@@ -41,6 +41,7 @@ export interface IBillingInvoice {
 	number: string | null;
 	status: string | null;
 	amountPaid: number;
+	amountDue: number;
 	currency: string;
 	createdAt: string;
 	hostedInvoiceUrl: string | null;

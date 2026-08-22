@@ -36,6 +36,16 @@ function describe(error: unknown): string {
 	return message.replace(/[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+/g, '<redacted-email>');
 }
 
+/**
+ * Secret credentials that spend real money.
+ *
+ * Stripe issues two families: standard keys (`sk_live_`) and **restricted** keys (`rk_live_`). A
+ * restricted key is exactly what an operator would sensibly provision for an integration like this
+ * one, so matching only `sk_live_` would wave the more security-conscious choice straight past the
+ * opt-in below and label it "test" in the UI.
+ */
+const LIVE_KEY_PREFIX = /^(sk|rk)_live_/;
+
 /** Subscription statuses that entitle the holder to finish registering. */
 const ENTITLING_STATUSES = new Set(['active', 'trialing', 'past_due']);
 
@@ -86,10 +96,11 @@ export class StripeSubscriptionService {
 	 *  - **A demo deployment never bills.** `DEMO=true` disables billing outright, even if a key is
 	 *    present. demo.gauzy.co resets daily and is handed round freely; nothing there should reach a
 	 *    payment provider.
-	 *  - **A live key needs a second, deliberate opt-in.** `sk_live_` is honoured only when
+	 *  - **A live key needs a second, deliberate opt-in.** Any live credential — `sk_live_` *or* the
+	 *    restricted `rk_live_` an operator might reasonably prefer — is honoured only when
 	 *    `STRIPE_LIVE_MODE=true` is also set. Copying a production secret bundle onto staging is an
 	 *    ordinary mistake; silently taking real payments from stage.gauzy.co because of it is not an
-	 *    ordinary consequence. Staging uses a `sk_test_` key and needs no opt-in.
+	 *    ordinary consequence. Staging uses a test key and needs no opt-in.
 	 */
 	private get secretKey(): string | undefined {
 		const key = process.env.STRIPE_SECRET_KEY?.trim();
@@ -103,11 +114,11 @@ export class StripeSubscriptionService {
 			return undefined;
 		}
 
-		if (key.startsWith('sk_live_') && process.env.STRIPE_LIVE_MODE !== 'true') {
+		if (LIVE_KEY_PREFIX.test(key) && process.env.STRIPE_LIVE_MODE !== 'true') {
 			this.warnOnce(
 				'live',
 				'A LIVE Stripe key is configured but STRIPE_LIVE_MODE is not "true". Billing is disabled rather than ' +
-					'charging real cards from an environment that has not explicitly opted in. Use a sk_test_ key here, ' +
+					'charging real cards from an environment that has not explicitly opted in. Use a test key here, ' +
 					'or set STRIPE_LIVE_MODE=true if this really is production.'
 			);
 			return undefined;
@@ -116,11 +127,27 @@ export class StripeSubscriptionService {
 		return key;
 	}
 
+	/**
+	 * The key any Stripe call must use, or throws if this deployment must not bill.
+	 *
+	 * Exists so that nothing reads `process.env.STRIPE_SECRET_KEY` for itself. Every refusal encoded
+	 * above — demo deployments, and live keys without an explicit opt-in — is only worth anything if
+	 * it is the single way a credential can be obtained; a second service reading the environment
+	 * directly silently reinstates exactly the behaviour those rules exist to prevent.
+	 */
+	requireKey(): string {
+		const key = this.secretKey;
+		if (!key) {
+			throw new Error('Billing is not configured on this deployment.');
+		}
+		return key;
+	}
+
 	/** Which Stripe mode this deployment is operating in — surfaced so the UI can say so. */
 	get mode(): 'live' | 'test' | 'disabled' {
 		const key = this.secretKey;
 		if (!key) return 'disabled';
-		return key.startsWith('sk_live_') ? 'live' : 'test';
+		return LIVE_KEY_PREFIX.test(key) ? 'live' : 'test';
 	}
 
 	private readonly warned = new Set<string>();

@@ -188,6 +188,17 @@ export class BillingComponent extends TranslationBaseComponent implements OnInit
 		}
 	}
 
+	/**
+	 * What to show in an invoice's Amount column.
+	 *
+	 * A paid invoice is worth what was paid; an unpaid, open or failed one has amountPaid = 0, and
+	 * showing that renders the row as $0.00 — which is precisely the invoice someone came looking for
+	 * when a payment has gone wrong.
+	 */
+	invoiceAmount(invoice: IBillingInvoice): number {
+		return invoice.status === 'paid' ? invoice.amountPaid : invoice.amountDue ?? invoice.amountPaid;
+	}
+
 	/** "/mo", "/yr", "/wk", "/day", or nothing for a one-off. */
 	intervalSuffix(interval: string): string {
 		return INTERVAL_SUFFIX[interval] ?? '';
@@ -204,6 +215,13 @@ export class BillingComponent extends TranslationBaseComponent implements OnInit
 		try {
 			return await run();
 		} catch (error) {
+			// A 404 here is an answer, not a failure: this tenant has no Stripe customer linked yet, or
+			// no subscription. Every endpoint on the page reports it, so treating it as an error meant
+			// opening the page fired three or four identical "Not Found" toasts at someone whose account
+			// is simply new. The empty state already says this clearly.
+			if ((error as { status?: number })?.status === 404) {
+				return fallback;
+			}
 			this.loadFailed = true;
 			this.errorHandlingService.handleError(error);
 			return fallback;
