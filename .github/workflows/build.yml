@@ -358,9 +358,16 @@ jobs:
   cleanup:
     name: Delete node_modules artifact
     needs: [build-monorepo-root, build-libs, build-api, build-web, build-desktop]
-    # `always()`: the archive is just as useless after a failed build, and leaving ~2.9 GB behind on
-    # red runs is exactly how the org's Actions storage quota filled and stopped artifact uploads.
-    if: always()
+    # Delete only when nothing failed. This used to be a bare `always()` (rationale then: red-run
+    # leftovers once filled the org's Actions storage quota and stopped uploads) - but the artifact
+    # is this run's ONLY dependency handoff, so deleting it on a red run breaks "Re-run failed
+    # jobs": every rerun consumer falls into the 1-3h bootstrap fallback. Measured on stage run
+    # 32513912629 (2026-08-21): a seconds-long DNS blip failed one restore, cleanup deleted the
+    # artifact, and the rerun cost build-libs 178m and pushed build-api into the 180m ceiling.
+    # The quota concern is now bounded instead of ignored: red Build runs are rare since the gate
+    # rework, and retention-days: 1 ages a kept artifact out within a day regardless.
+    # `skipped` (build-desktop on PR runs) still allows deletion - only failure/cancelled block it.
+    if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
