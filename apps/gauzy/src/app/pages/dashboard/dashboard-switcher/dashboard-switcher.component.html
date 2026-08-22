@@ -7,14 +7,7 @@
 	@if (hasMultipleDashboards()) {
 		<div class="chips-area">
 			@if (canScroll) {
-				<button
-					nbButton
-					ghost
-					size="tiny"
-					class="scroll-button"
-					type="button"
-					(click)="scroll(-1)"
-				>
+				<button nbButton ghost size="tiny" class="scroll-button" type="button" (click)="scroll(-1)">
 					<nb-icon icon="chevron-left-outline"></nb-icon>
 				</button>
 			}
@@ -28,7 +21,11 @@
 				>
 					{{ 'DASHBOARD_PAGE.CUSTOM.STANDARD' | translate }}
 					@if (!hasDefaultCustom()) {
-						<nb-icon class="default-icon" icon="star" [nbTooltip]="'DASHBOARD_PAGE.CUSTOM.IS_DEFAULT' | translate"></nb-icon>
+						<nb-icon
+							class="default-icon"
+							icon="star"
+							[nbTooltip]="'DASHBOARD_PAGE.CUSTOM.IS_DEFAULT' | translate"
+						></nb-icon>
 					}
 				</button>
 				@for (dashboard of dashboards(); track dashboard.id) {
@@ -41,20 +38,17 @@
 					>
 						{{ dashboard.name }}
 						@if (dashboard.isDefault) {
-							<nb-icon class="default-icon" icon="star" [nbTooltip]="'DASHBOARD_PAGE.CUSTOM.IS_DEFAULT' | translate"></nb-icon>
+							<nb-icon
+								class="default-icon"
+								icon="star"
+								[nbTooltip]="'DASHBOARD_PAGE.CUSTOM.IS_DEFAULT' | translate"
+							></nb-icon>
 						}
 					</button>
 				}
 			</div>
 			@if (canScroll) {
-				<button
-					nbButton
-					ghost
-					size="tiny"
-					class="scroll-button"
-					type="button"
-					(click)="scroll(1)"
-				>
+				<button nbButton ghost size="tiny" class="scroll-button" type="button" (click)="scroll(1)">
 					<nb-icon icon="chevron-right-outline"></nb-icon>
 				</button>
 			}
@@ -65,16 +59,37 @@
 	<div class="actions-area">
 		@if (selected()) {
 			@if (editing()) {
-				<button nbButton status="success" size="tiny" class="switcher-action" type="button" (click)="saveLayout()">
+				<button
+					nbButton
+					status="success"
+					size="tiny"
+					class="switcher-action"
+					type="button"
+					(click)="saveLayout()"
+				>
 					<nb-icon icon="save-outline"></nb-icon>
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
-				<button nbButton status="basic" size="tiny" class="switcher-action" type="button" (click)="cancelEditing()">
+				<button
+					nbButton
+					status="basic"
+					size="tiny"
+					class="switcher-action"
+					type="button"
+					(click)="cancelEditing()"
+				>
 					<nb-icon icon="close-outline"></nb-icon>
 					{{ 'BUTTONS.CANCEL' | translate }}
 				</button>
 			} @else {
-				<button nbButton status="basic" size="tiny" class="switcher-action" type="button" (click)="editDashboard()">
+				<button
+					nbButton
+					status="basic"
+					size="tiny"
+					class="switcher-action"
+					type="button"
+					(click)="editDashboard()"
+				>
 					<nb-icon icon="edit-outline"></nb-icon>
 					{{ 'DASHBOARD_PAGE.CUSTOM.EDIT_DASHBOARD' | translate }}
 				</button>
