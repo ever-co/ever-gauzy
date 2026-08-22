@@ -56,8 +56,11 @@ export function DocsCitationChips({ data, onOpen, translate }: DocsCitationChips
 	};
 
 	const labelStyle: CSSProperties = {
-		fontSize: chatTheme.fontSizeSmall,
-		color: chatTheme.textSecondary,
+		fontSize: chatTheme.fontSizeMessage,
+		fontWeight: chatTheme.fontWeightMedium,
+		letterSpacing: '0.02em',
+		textTransform: 'uppercase',
+		color: chatTheme.textHint,
 		marginRight: 2
 	};
 
@@ -71,8 +74,9 @@ export function DocsCitationChips({ data, onOpen, translate }: DocsCitationChips
 		border: `1px solid ${chatTheme.border}`,
 		backgroundColor: chatTheme.surface,
 		color: chatTheme.textPrimary,
-		fontSize: chatTheme.fontSizeSmall,
-		lineHeight: 1.4,
+		fontSize: chatTheme.fontSizeMessage,
+		fontWeight: chatTheme.fontWeightMedium,
+		lineHeight: 1.5,
 		cursor: onOpen ? 'pointer' : 'default',
 		textAlign: 'left',
 		overflow: 'hidden',

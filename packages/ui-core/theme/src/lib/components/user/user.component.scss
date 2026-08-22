@@ -5,119 +5,119 @@ $row-surface: var(--gz-user-surface, #{nb-theme(background-basic-color-1)});
 $avatar-size: 1.5rem;
 
 :host {
-	display: block;
-	min-width: 0;
+  display: block;
+  min-width: 0;
 }
 
 .user-container {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	min-width: 0;
-	padding: 0.375rem;
-	border-radius: var(--gauzy-radius-sm, 6px);
-	cursor: pointer;
-	transition: background-color 0.12s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.375rem;
+  border-radius: var(--gauzy-radius-sm, 6px);
+  cursor: pointer;
+  transition: background-color 0.12s ease-in-out;
 
-	&:hover,
-	&:focus-visible {
-		background-color: #{$row-hover-bg};
-	}
+  &:hover,
+  &:focus-visible {
+    background-color: #{$row-hover-bg};
+  }
 
-	&:focus-visible {
-		outline: 2px solid nb-theme(color-primary-default);
-		outline-offset: -2px;
-	}
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: -2px;
+  }
 
-	&.with-identity {
-		width: 100%;
-		padding: 0.375rem 0.75rem;
-	}
+  &.with-identity {
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+  }
 
-	.img-container {
-		position: relative;
-		flex: 0 0 auto;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: #{$avatar-size};
-		height: #{$avatar-size};
-		border-radius: 50%;
-		overflow: visible;
+  .img-container {
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: #{$avatar-size};
+    height: #{$avatar-size};
+    border-radius: 50%;
+    overflow: visible;
 
-		img {
-			width: 100%;
-			height: 100%;
-			border-radius: 50%;
-			object-fit: cover;
-		}
+    img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
 
-		.initials {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			width: 100%;
-			height: 100%;
-			border-radius: 50%;
-			background-color: nb-theme(color-primary-transparent-default);
-			color: nb-theme(text-primary-color);
-			font-size: 0.625rem;
-			font-weight: 600;
-			line-height: 1;
-			letter-spacing: 0.02em;
-			user-select: none;
-		}
+    .initials {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background-color: nb-theme(color-primary-transparent-default);
+      color: nb-theme(text-primary-color);
+      font-size: 0.5rem;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      user-select: none;
+    }
 
-		.presence {
-			display: var(--gz-user-presence, block);
-			position: absolute;
-			top: 0;
-			right: 0;
+    .presence {
+      display: var(--gz-user-presence, block);
+      position: absolute;
+      top: 0;
+      right: 0;
 
-			@include nb-rtl() {
-				right: auto;
-				left: 0;
-			}
-			width: 0.4375rem;
-			height: 0.4375rem;
-			border-radius: 50%;
-			border: 2px solid #{$row-surface};
-			box-sizing: content-box;
-		}
+      @include nb-rtl() {
+        right: auto;
+        left: 0;
+      }
+      width: 0.4375rem;
+      height: 0.4375rem;
+      border-radius: 50%;
+      border: 2px solid #{$row-surface};
+      box-sizing: content-box;
+    }
 
-		.online {
-			background-color: nb-theme(color-success-default);
-		}
+    .online {
+      background-color: nb-theme(color-success-default);
+    }
 
-		.offline {
-			background-color: nb-theme(text-hint-color);
-		}
-	}
+    .offline {
+      background-color: nb-theme(text-hint-color);
+    }
+  }
 
-	.identity-container {
-		display: flex;
-		flex-direction: column;
-		min-width: 0;
-		flex: 1 1 auto;
-		line-height: 1.25;
+  .identity-container {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1 1 auto;
+    line-height: 1.25;
 
-		.name,
-		.email {
-			overflow: hidden;
-			text-overflow: ellipsis;
-			white-space: nowrap;
-		}
+    .name,
+    .email {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
-		.name {
-			color: nb-theme(text-basic-color);
-			font-size: nb-theme(menu-text-font-size);
-			font-weight: 600;
-		}
+    .name {
+      color: nb-theme(text-basic-color);
+      font-size: 0.75rem;
+      font-weight: 400;
+    }
 
-		.email {
-			color: nb-theme(text-hint-color);
-			font-size: 0.75rem;
-			font-weight: 400;
-		}
-	}
+    .email {
+      color: nb-theme(text-hint-color);
+      font-size: 0.625rem;
+      font-weight: 400;
+    }
+  }
 }

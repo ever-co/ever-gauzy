@@ -43,10 +43,10 @@ export function ChatMessageList({
 		flex: 1,
 		overflowY: 'auto',
 		overflowX: 'hidden',
-		padding: '10px',
+		padding: '14px 12px 12px',
 		display: 'flex',
 		flexDirection: 'column',
-		gap: 8,
+		gap: 10,
 		// Wide streamed content must never stretch the panel's flex column.
 		minWidth: 0
 	};
@@ -55,7 +55,7 @@ export function ChatMessageList({
 	const isStreaming = status === 'streaming';
 
 	return (
-		<div ref={scrollRef} style={containerStyle}>
+		<div ref={scrollRef} style={containerStyle} className="gz-ai-chat-scroll">
 			{messages.map((message) => (
 				<ChatMessageItem
 					key={message.id}
@@ -78,11 +78,12 @@ export function ChatMessageList({
 function TypingIndicator() {
 	const bubbleStyle: CSSProperties = {
 		backgroundColor: chatTheme.assistantBubbleBg,
-		borderRadius: `${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} 4px`,
-		padding: '10px 14px',
+		border: `1px solid ${chatTheme.borderSoft}`,
+		borderRadius: `${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadius} ${chatTheme.bubbleRadiusTight}`,
+		padding: '9px 13px',
 		display: 'inline-flex',
 		alignItems: 'center',
-		gap: 4,
+		gap: 5,
 		animation: 'fadeIn 0.2s ease'
 	};
 

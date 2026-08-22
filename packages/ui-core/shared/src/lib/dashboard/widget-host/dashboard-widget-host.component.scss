@@ -11,13 +11,14 @@
   flex-direction: column;
   height: 100%;
   margin: 0;
-  background-color: nb-theme(gauzy-card-1);
-  border-radius: nb-theme(border-radius);
+  background-color: var(--background-basic-color-1);
+  box-shadow: 0 6px 20px 0 rgb(0 0 0 / 5%);
+  border-radius: var(--border-radius);
   overflow: hidden;
 
   &.is-editing {
     // Make the frame legible while widgets are being arranged.
-    border: 1px dashed nb-theme(border-basic-color-4);
+    border: 1px dashed var(--gauzy-border-default-color);
   }
 
   &.is-hidden {
@@ -29,8 +30,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid nb-theme(border-basic-color-3);
+  padding: 0.75rem 0.75rem;
+  background-color: transparent;
 }
 
 .widget-title {
@@ -39,17 +40,18 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: nb-theme(text-subtitle-2-font-size);
-  font-weight: nb-theme(text-subtitle-2-font-weight);
-  color: nb-theme(gauzy-text-color-1);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
 }
 
 .widget-badge {
   flex: 0 0 auto;
   padding: 0 0.375rem;
   border-radius: nb-theme(border-radius);
-  background-color: nb-theme(background-basic-color-3);
-  color: nb-theme(text-hint-color);
+  background-color: var(--gauzy-card-2);
+  color: var(--gauzy-text-color-2);
   font-size: nb-theme(text-caption-2-font-size);
   line-height: 1.4;
   text-transform: uppercase;
@@ -63,8 +65,26 @@
 .widget-body {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 0.75rem;
+  padding: 0 0.75rem 0.75rem;
   overflow: auto;
+}
+
+// Counter widgets use the compact card-body composition from the standard
+// Time Tracking dashboard; list widgets keep the regular header spacing.
+.widget-card:has(gz-time-track-counter-card) {
+  .widget-header {
+    padding: 0.75rem 0.75rem 0;
+  }
+
+  .widget-title {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1rem;
+  }
+
+  .widget-body {
+    padding: 0 0.75rem 0.75rem;
+  }
 }
 
 /* ---------- Loading skeleton ---------- */

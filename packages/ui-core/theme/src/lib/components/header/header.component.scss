@@ -2,8 +2,13 @@
 @use 'themes' as *;
 
 // The action cluster is chrome, not a form, so its text runs a step below the
-// app's 0.8125rem control size.
-$header-text-size: 0.6875rem;
+// app's 0.8125rem control size. Resolved from the theme rather than typed here,
+// because the dropdown PANELS have to land on the same size and they are
+// appended to `body`, where this stylesheet cannot reach them — see
+// `.ng-dropdown-panel.header-entity-select` in `_overrides.scss`. A `var()`
+// rather than `nb-theme()`: half of this file sits outside
+// `nb-install-component()`, where the Sass function is not available.
+$header-text-size: var(--gauzy-header-text-size, 0.6875rem);
 
 // ONE width for every selector pill in the cluster, in the same spirit as
 // `gauzy-header-control-height` next door: the pills used to size to their
@@ -17,20 +22,45 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
 
 @include nb-install-component() {
   width: 100%;
+  // The demo banner is an advisory notice, not a call to action, so it reads as
+  // a tinted informational strip rather than the solid primary bar it used to
+  // be: a full-saturation band above the header made the demo build look like
+  // it was permanently in an error state. Everything is resolved from the
+  // primary TRANSPARENT ramp so the tint composites over whatever the active
+  // theme paints behind it, light or dark, instead of being a fixed colour.
   .notification-header {
-    background-color: var(--color-primary-600);
-    text-align: center;
-    font-weight: 300;
-    margin: 0;
-    padding: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    flex-wrap: wrap;
     width: 100%;
+    margin: 0;
+    padding: 0.375rem 1rem;
     position: relative;
-    color: var(--text-control-color);
+    background-color: var(--color-primary-transparent-100);
+    border-bottom: 1px solid var(--color-primary-transparent-300);
+    text-align: center;
+    font-size: $header-text-size;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    color: var(--text-hint-color);
+
     a {
-      color: rgb(236, 236, 236);
+      color: var(--text-primary-color);
+      font-weight: 600;
+      text-decoration: none;
+      // Underline only on hover: a permanently underlined link in a strip this
+      // thin turns the whole band into a rule.
+      border-bottom: 1px solid transparent;
+      transition: color 0.15s ease-in-out, border-color 0.15s ease-in-out;
     }
-    a:hover {
-      color: rgb(226, 226, 226);
+
+    a:hover,
+    a:focus-visible {
+      color: var(--text-primary-hover-color);
+      border-bottom-color: currentColor;
     }
   }
 
@@ -355,7 +385,7 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
     // that overflows is theirs, and they are used outside this band too.
     .ng-select .ng-select-container .ng-value {
       color: $header-text-color;
-      font-weight: 500;
+      font-weight: 400;
     }
     .ng-select .ng-select-container .ng-placeholder {
       color: $header-text-color;
@@ -420,8 +450,7 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
 .actions {
   .project-selector,
   .team-selector,
-  .employee-selector,
-  .organization-selector {
+  .employee-selector {
     // A fixed width, carried by the min/max pair rather than `width`, because
     // `.main-header nb-action .header-selector` above pins `width: auto` with
     // `!important` and would win outright.
@@ -444,4 +473,44 @@ $header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
   padding: 0;
   @include nb-ltr(margin-right, 1.5rem);
   @include nb-rtl(margin-left, 1.5rem);
+}
+
+.actions {
+  .organization-selector {
+    min-width: auto;
+    max-width: none;
+
+    ::ng-deep {
+      .ng-select .ng-select-container .selector-template:has(img) span {
+        display: none;
+      }
+      .ng-select .ng-select-container,
+      .ng-select.ng-select-single .ng-select-container {
+        background-color: transparent;
+        box-shadow: none;
+        min-width: 0;
+        padding-inline: 0.5rem;
+      }
+      .ng-select:not(.ng-select-disabled):hover .ng-select-container,
+      .ng-select.ng-select-focused .ng-select-container,
+      .ng-select.ng-select-opened .ng-select-container,
+      .ng-select.ng-select-opened > .ng-select-container:hover {
+        box-shadow: none !important;
+      }
+
+      .ng-select .ng-select-container .ng-value-container {
+        padding-inline-start: 0 !important;
+      }
+
+      .ng-select .ng-arrow-wrapper {
+        margin-inline-start: 0.25rem;
+        padding-inline-end: 0;
+      }
+
+      .ng-select .ng-select-container .selector-template img {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+    }
+  }
 }
