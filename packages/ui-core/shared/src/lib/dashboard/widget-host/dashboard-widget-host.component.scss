@@ -69,6 +69,24 @@
   overflow: auto;
 }
 
+// Counter widgets use the compact card-body composition from the standard
+// Time Tracking dashboard; list widgets keep the regular header spacing.
+.widget-card:has(gz-time-track-counter-card) {
+  .widget-header {
+    padding: 0.75rem 0.75rem 0;
+  }
+
+  .widget-title {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1rem;
+  }
+
+  .widget-body {
+    padding: 0 0.75rem 0.75rem;
+  }
+}
+
 /* ---------- Loading skeleton ---------- */
 
 .widget-skeleton {
