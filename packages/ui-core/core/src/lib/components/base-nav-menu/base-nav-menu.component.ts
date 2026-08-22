@@ -1135,6 +1135,17 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						}
 					},
 					{
+						id: 'settings-billing',
+						title: 'Billing',
+						icon: 'fas fa-credit-card',
+						link: '/pages/settings/billing',
+						data: {
+							translationKey: 'MENU.BILLING',
+							// Tenant-wide, and only meaningful to whoever owns the account.
+							permissionKeys: [PermissionsEnum.TENANT_SETTING]
+						}
+					},
+					{
 						id: 'settings-file-storage',
 						title: 'File storage',
 						icon: 'fas fa-database',
