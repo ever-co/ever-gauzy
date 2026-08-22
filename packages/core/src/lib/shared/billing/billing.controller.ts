@@ -1,5 +1,6 @@
 import { RolesEnum } from '@gauzy/contracts';
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Get,
@@ -83,9 +84,11 @@ export class BillingController {
 	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	async changePlan(@Body() body: { lookupKey?: string }): Promise<BillingSubscription> {
 		const customerId = await this.requireCustomerId();
+		// 400, not 404: this controller uses 404 to mean "billing is not configured on this
+		// deployment", and reusing it for a missing field would make the two indistinguishable.
 		const lookupKey = body?.lookupKey?.trim();
 		if (!lookupKey) {
-			throw new NotFoundException('A plan must be supplied.');
+			throw new BadRequestException('A plan must be supplied.');
 		}
 		return this.billingService.changePlan(customerId, lookupKey);
 	}
@@ -182,18 +185,30 @@ export class BillingController {
 		return customerId;
 	}
 
-	/** Only same-origin return URLs; anything else falls back to the configured web app root. */
+	/**
+	 * Only same-origin return URLs.
+	 *
+	 * There is no hardcoded fallback on purpose. Defaulting to `https://app.gauzy.co` would send a
+	 * self-hosted operator's own users to a domain that operator does not control — so if
+	 * `CLIENT_BASE_URL` is not configured, this refuses rather than guesses.
+	 */
 	private safeReturnUrl(candidate?: string): string {
 		const base = (process.env.CLIENT_BASE_URL || '').trim();
-		if (!candidate) return base || 'https://app.gauzy.co';
-
-		try {
-			const url = new URL(candidate);
-			if (base && url.origin === new URL(base).origin) return url.toString();
-		} catch {
-			// Not a URL at all — fall through to the safe default.
+		if (!base) {
+			throw new BadRequestException(
+				'CLIENT_BASE_URL is not configured, so there is no safe address to return you to after billing.'
+			);
 		}
-		return base || 'https://app.gauzy.co';
+
+		if (candidate) {
+			try {
+				const url = new URL(candidate);
+				if (url.origin === new URL(base).origin) return url.toString();
+			} catch {
+				// Not a URL at all — fall through to the configured root.
+			}
+		}
+		return base;
 	}
 }
 

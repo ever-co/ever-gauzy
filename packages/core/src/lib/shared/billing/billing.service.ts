@@ -17,6 +17,12 @@ import { StripeSubscriptionService } from './stripe-subscription.service';
  * controller hides the whole surface when Stripe is not configured.
  */
 
+/**
+ * Stripe supports `day`, `week`, `month` and `year`. Collapsing everything non-yearly to `month`
+ * would show a weekly plan as monthly — wrong about the customer's own billing period.
+ */
+export type BillingInterval = 'day' | 'week' | 'month' | 'year' | 'one_time';
+
 export interface BillingPlan {
 	/** `ever_<product>_<hosting>_<tier>_<interval>` — stable across price replacements. */
 	lookupKey: string;
@@ -24,7 +30,7 @@ export interface BillingPlan {
 	productName: string;
 	amount: number;
 	currency: string;
-	interval: 'month' | 'year' | 'one_time';
+	interval: BillingInterval;
 	tier?: string;
 	hosting?: string;
 	product?: string;
@@ -37,7 +43,7 @@ export interface BillingSubscription {
 	lookupKey?: string;
 	amount: number;
 	currency: string;
-	interval: 'month' | 'year' | 'one_time';
+	interval: BillingInterval;
 	/** ISO timestamps, or null where Stripe does not supply one. */
 	trialEndsAt: string | null;
 	renewsAt: string | null;
@@ -83,18 +89,8 @@ export class BillingService {
 	 * subscription" rather than show a corpse.
 	 */
 	async getSubscription(stripeCustomerId: string): Promise<BillingSubscription | null> {
-		// `data.items.data.price.product` is five levels deep and Stripe expands at most four, so the
-		// product name is resolved separately in toSubscription().
-		const { data } = await this.get<{ data: StripeSubscriptionObject[] }>(
-			`/subscriptions?customer=${encodeURIComponent(stripeCustomerId)}&status=all&limit=100`
-		);
-
-		const live = (data ?? []).filter((s) => LIVE_STATUSES.has(s.status));
-		if (!live.length) return null;
-
-		// Newest first, so a resubscribe wins over the subscription it replaced.
-		live.sort((a, b) => (b.created ?? 0) - (a.created ?? 0));
-		return this.toSubscription(live[0]);
+		const current = await this.findCurrentSubscription(stripeCustomerId);
+		return current ? this.toSubscription(current) : null;
 	}
 
 	/**
@@ -105,14 +101,35 @@ export class BillingService {
 	 */
 	async listPlans(productKey: string, hosting = 'cloud'): Promise<BillingPlan[]> {
 		const prefix = `ever_${productKey}_${hosting}_`;
-		const { data } = await this.get<{ data: StripePriceObject[] }>(
-			`/prices?active=true&limit=100&expand[]=data.product`
-		);
 
-		return (data ?? [])
+		// Paged, not truncated. One page holds 100 prices and the shared account already carries 40
+		// across four products; the moment another product lands, a first-page-only read would start
+		// dropping real plans out of the switcher with no error to notice.
+		const prices = await this.listAll<StripePriceObject>('/prices?active=true&expand[]=data.product');
+
+		return prices
 			.filter((price) => price.lookup_key?.startsWith(prefix))
 			.map((price) => this.toPlan(price))
 			.sort((a, b) => a.amount - b.amount);
+	}
+
+	/** Walk every page of a Stripe list endpoint. */
+	private async listAll<T extends { id?: string }>(path: string): Promise<T[]> {
+		const separator = path.includes('?') ? '&' : '?';
+		const items: T[] = [];
+		let startingAfter: string | undefined;
+
+		for (;;) {
+			const page = await this.get<{ data: T[]; has_more?: boolean }>(
+				`${path}${separator}limit=100${startingAfter ? `&starting_after=${startingAfter}` : ''}`
+			);
+			const rows = page.data ?? [];
+			items.push(...rows);
+
+			const last = rows[rows.length - 1];
+			if (!page.has_more || !last?.id) return items;
+			startingAfter = last.id;
+		}
 	}
 
 	/**
@@ -141,12 +158,18 @@ export class BillingService {
 			throw new BadRequestException('The subscription is already on that plan.');
 		}
 
-		const updated = await this.post<StripeSubscriptionObject>(`/subscriptions/${subscription.id}`, {
-			'items[0][id]': item.id,
-			'items[0][price]': price.id,
-			// A pending cancellation would otherwise survive the switch and quietly kill the new plan.
-			cancel_at_period_end: 'false'
-		});
+		const updated = await this.post<StripeSubscriptionObject>(
+			`/subscriptions/${subscription.id}`,
+			{
+				'items[0][id]': item.id,
+				'items[0][price]': price.id,
+				// A pending cancellation would otherwise survive the switch and quietly kill the new plan.
+				cancel_at_period_end: 'false'
+			},
+			// Keyed on the target plan: a retry of the same switch collapses, while a later switch to a
+			// different plan is a different key and goes through.
+			`change:${subscription.id}:${price.id}`
+		);
 
 		return this.toSubscription(updated);
 	}
@@ -154,18 +177,22 @@ export class BillingService {
 	/** Schedule cancellation for the end of the paid period — never an immediate cut-off. */
 	async cancelSubscription(stripeCustomerId: string): Promise<BillingSubscription> {
 		const subscription = await this.requireSubscriptionObject(stripeCustomerId);
-		const updated = await this.post<StripeSubscriptionObject>(`/subscriptions/${subscription.id}`, {
-			cancel_at_period_end: 'true'
-		});
+		const updated = await this.post<StripeSubscriptionObject>(
+			`/subscriptions/${subscription.id}`,
+			{ cancel_at_period_end: 'true' },
+			`cancel:${subscription.id}`
+		);
 		return this.toSubscription(updated);
 	}
 
 	/** Undo a pending cancellation while the period is still running. */
 	async resumeSubscription(stripeCustomerId: string): Promise<BillingSubscription> {
 		const subscription = await this.requireSubscriptionObject(stripeCustomerId);
-		const updated = await this.post<StripeSubscriptionObject>(`/subscriptions/${subscription.id}`, {
-			cancel_at_period_end: 'false'
-		});
+		const updated = await this.post<StripeSubscriptionObject>(
+			`/subscriptions/${subscription.id}`,
+			{ cancel_at_period_end: 'false' },
+			`resume:${subscription.id}`
+		);
 		return this.toSubscription(updated);
 	}
 
@@ -230,17 +257,32 @@ export class BillingService {
 
 	/* ------------------------------------------------------------------ internals */
 
-	private async requireSubscriptionObject(stripeCustomerId: string): Promise<StripeSubscriptionObject> {
-		const { data } = await this.get<{ data: StripeSubscriptionObject[] }>(
-			`/subscriptions?customer=${encodeURIComponent(stripeCustomerId)}&status=all&limit=100`
+	/**
+	 * The subscription the billing page is about: the newest one still alive, so a resubscribe wins
+	 * over the subscription it replaced. Dead ones are excluded — the page should say "no
+	 * subscription" rather than show a corpse.
+	 *
+	 * `data.items.data.price.product` is five levels deep and Stripe expands at most four, so the
+	 * product name is resolved separately in toSubscription().
+	 */
+	private async findCurrentSubscription(stripeCustomerId: string): Promise<StripeSubscriptionObject | null> {
+		const subscriptions = await this.listAll<StripeSubscriptionObject>(
+			`/subscriptions?customer=${encodeURIComponent(stripeCustomerId)}&status=all`
 		);
 
-		const live = (data ?? []).filter((s) => LIVE_STATUSES.has(s.status));
-		if (!live.length) {
-			throw new NotFoundException('This account has no active subscription.');
-		}
+		const live = subscriptions.filter((s) => LIVE_STATUSES.has(s.status));
+		if (!live.length) return null;
+
 		live.sort((a, b) => (b.created ?? 0) - (a.created ?? 0));
 		return live[0];
+	}
+
+	private async requireSubscriptionObject(stripeCustomerId: string): Promise<StripeSubscriptionObject> {
+		const current = await this.findCurrentSubscription(stripeCustomerId);
+		if (!current) {
+			throw new NotFoundException('This account has no active subscription.');
+		}
+		return current;
 	}
 
 	private async toSubscription(subscription: StripeSubscriptionObject): Promise<BillingSubscription> {
@@ -254,7 +296,7 @@ export class BillingService {
 			lookupKey: price?.lookup_key ?? undefined,
 			amount: price?.unit_amount ?? 0,
 			currency: price?.currency ?? 'usd',
-			interval: price?.recurring?.interval === 'year' ? 'year' : price?.recurring ? 'month' : 'one_time',
+			interval: toInterval(price),
 			trialEndsAt: toIso(subscription.trial_end),
 			renewsAt: toIso(subscription.current_period_end),
 			cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end)
@@ -301,7 +343,7 @@ export class BillingService {
 			productName: product?.name ?? (price.lookup_key as string),
 			amount: price.unit_amount ?? 0,
 			currency: price.currency,
-			interval: price.recurring?.interval === 'year' ? 'year' : price.recurring ? 'month' : 'one_time',
+			interval: toInterval(price),
 			tier: metadata.ever_tier,
 			hosting: metadata.ever_hosting,
 			product: metadata.ever_product
@@ -312,11 +354,21 @@ export class BillingService {
 		return this.request<T>('GET', path);
 	}
 
-	private post<T>(path: string, form: Record<string, string>): Promise<T> {
-		return this.request<T>('POST', path, form);
+	/**
+	 * `idempotencyKey` makes a retried POST safe. Without it, a network blip on a plan change can
+	 * leave the caller unsure whether the switch happened, and a retry would apply it twice — with a
+	 * proration invoice each time. Stripe replays the original response instead when the key repeats.
+	 */
+	private post<T>(path: string, form: Record<string, string>, idempotencyKey?: string): Promise<T> {
+		return this.request<T>('POST', path, form, idempotencyKey);
 	}
 
-	private async request<T>(method: 'GET' | 'POST', path: string, form?: Record<string, string>): Promise<T> {
+	private async request<T>(
+		method: 'GET' | 'POST',
+		path: string,
+		form?: Record<string, string>,
+		idempotencyKey?: string
+	): Promise<T> {
 		const key = process.env.STRIPE_SECRET_KEY?.trim();
 		if (!key) {
 			// Reached only if a caller skipped the isBillingEnforced() check.
@@ -331,7 +383,8 @@ export class BillingService {
 				headers: {
 					Authorization: `Bearer ${key}`,
 					'Stripe-Version': '2025-02-24.acacia',
-					...(form ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {})
+					...(form ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}),
+					...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {})
 				},
 				body: form ? new URLSearchParams(form).toString() : undefined,
 				signal: controller.signal
@@ -353,6 +406,15 @@ export class BillingService {
 
 /** Statuses that represent a subscription the customer still has. */
 const LIVE_STATUSES = new Set(['active', 'trialing', 'past_due', 'unpaid', 'incomplete']);
+
+/** Stripe's recurring interval, or `one_time` for a price with no `recurring` block. */
+function toInterval(price?: StripePriceObject): BillingInterval {
+	const interval = price?.recurring?.interval;
+	if (interval === 'day' || interval === 'week' || interval === 'month' || interval === 'year') {
+		return interval;
+	}
+	return price?.recurring ? 'month' : 'one_time';
+}
 
 function toIso(seconds?: number | null): string | null {
 	return seconds ? new Date(seconds * 1000).toISOString() : null;
