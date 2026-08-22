@@ -355,6 +355,10 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
       overflow: hidden; // dashboard panels already scroll internally
     }
 
+    .layout .layout-container .content .columns nb-layout-column {
+      padding-top: 12px;
+    }
+
     // Same reasoning one level down: the dashboard page must shrink WITH the
     // column rather than grow the layout, because its panels scroll internally.
     .layout .layout-container .content .columns nb-layout-column > router-outlet + * {
