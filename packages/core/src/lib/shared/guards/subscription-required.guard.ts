@@ -34,8 +34,8 @@ export class SubscriptionRequiredGuard implements CanActivate {
 		const request = context.switchToHttp().getRequest();
 		const email: unknown = request.body?.user?.email;
 
-		// A missing or malformed email is the DTO's problem, not this guard's. Refusing here would
-		// replace a precise validation message with a misleading "go and subscribe".
+		// A missing or malformed email is left to DTO validation rather than handled here. Refusing at
+		// this point would replace a precise validation message with a misleading "go and subscribe".
 		if (typeof email !== 'string' || !email.trim()) {
 			return true;
 		}
