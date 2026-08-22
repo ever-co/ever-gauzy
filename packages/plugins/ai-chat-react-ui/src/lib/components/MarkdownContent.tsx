@@ -13,7 +13,7 @@ type MarkdownListItemProps = Record<string, unknown> & {
 	children?: ReactNode;
 };
 
-function MarkdownListItem({ className, children, ...props }: MarkdownListItemProps) {
+function MarkdownListItem({ className, children, node: _node, ...props }: MarkdownListItemProps) {
 	const listItemClassName = className
 		?.split(/\s+/)
 		.filter((className) => className !== 'py-1')
