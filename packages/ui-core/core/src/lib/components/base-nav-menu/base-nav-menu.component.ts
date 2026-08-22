@@ -1139,6 +1139,10 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						title: 'Billing',
 						icon: 'fas fa-credit-card',
 						link: '/pages/settings/billing',
+						// Absent entirely unless this deployment actually does billing. A self-hosted install
+						// configures no Stripe key, and an entry that leads only to a "not configured" card is
+						// still a visible change to people who never asked for billing.
+						hidden: !this._store.billingEnabled,
 						data: {
 							translationKey: 'MENU.BILLING',
 							// Tenant-wide, and only meaningful to whoever owns the account.
