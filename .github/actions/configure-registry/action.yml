@@ -73,18 +73,25 @@ runs:
 
         # Start from a known state. The self-hosted Windows jobs check out with clean: false and
         # their cleanup step removes only dist/ and node_modules/, so registry edits from a
-        # PREVIOUS run can still be on disk. .yarnrc in particular is untracked and un-ignored,
-        # so nothing restores it: a stale "registry" line from an earlier run would silently
-        # win over this run's decision. This reset is NOT best-effort -- if we cannot establish
+        # PREVIOUS run can still be on disk: a stale "registry" line from an earlier run would
+        # silently win over this run's decision.
+        #
+        # .yarnrc goes through the per-path loop below rather than the rm -f list. It is untracked
+        # in ever-gauzy, but ever-co/ever-teams TRACKS it and pins the yarn binary there
+        # (yarn-path ".yarn/releases/yarn-1.22.22.cjs"). Deleting it outright dropped that pin, so
+        # `yarn install --frozen-lockfile` ran against whatever yarn the runner resolved. The loop
+        # restores it when tracked and still removes it when it is a stale untracked leftover.
+        #
+        # This reset is NOT best-effort -- if we cannot establish
         # a known starting state we must not go on to pick a registry, because the install would
         # then quietly run against whatever the last job left behind.
-        rm -f .yarnrc .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten package-lock.json.rewritten
+        rm -f .npmrc.bak .npmrc.scrubbed yarn.lock.bak yarn.lock.rewritten package-lock.json.rewritten
         # Reset per-path, not as one pathspec list. `git checkout -- a b` exits 1 when EITHER path is
         # untracked, so the original form hard-failed on every pnpm repo (no .npmrc, no yarn.lock) and
         # turned 'this repo has no cache configured' into 'this repo's CI is red'. Tracked files are
         # restored; untracked leftovers from a previous run on a clean:false runner are removed.
         reset_failed=""
-        for f in .npmrc yarn.lock package-lock.json; do
+        for f in .npmrc .yarnrc yarn.lock package-lock.json; do
           # Exit status matters: 0 = tracked, 1 = genuinely absent, anything else (128 = git
           # metadata unavailable) means we CANNOT tell. Treating every nonzero as absent would
           # delete the files and continue, which is exactly the unknown-state hazard this reset
