@@ -108,7 +108,7 @@ export class StripeWebhookController {
 		// Deliberately not `.catch(() => null)`: a transient database error would then be
 		// indistinguishable from "nobody has this address", and the event would be acknowledged as
 		// handled when nothing happened. Letting it throw sends it to the handler above, which logs
-		// it — and the event stays replayable from the Stripe dashboard.
+		// it — and the event can still be replayed from the Stripe dashboard.
 		const users = await this.typeOrmUserRepository
 			.createQueryBuilder('user')
 			.select(['user.id', 'user.tenantId'])
