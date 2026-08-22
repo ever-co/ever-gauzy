@@ -221,12 +221,22 @@ export const chatMarkdownCss = `
 		${MD} blockquote p { color: inherit; }
 		${MD} blockquote > :last-child { margin-bottom: 0; }
 
-		${MD} [data-streamdown='table-wrapper'] { max-width: 100%; min-width: 0; }
+		/* The scroll lives on the WRAPPER, never on the table: border-collapse only
+		   applies to table/inline-table boxes, so a \`display: block\` table silently
+		   drops it and every cell draws its own border — 2px doubled gridlines
+		   between neighbours. The table keeps its table box and stays inside a
+		   scroller instead. A table may exceed \`max-width\` when its min-content
+		   width does, which is exactly when the wrapper starts scrolling; anything
+		   narrower wraps to fit as before. */
+		${MD} [data-streamdown='table-wrapper'] {
+			max-width: 100%;
+			min-width: 0;
+			overflow-x: auto;
+		}
 		${MD} table {
-			display: block;
+			display: table;
 			max-width: 100%;
 			width: fit-content;
-			overflow-x: auto;
 			border-collapse: collapse;
 			margin: 0 0 0.95em;
 			font-size: 0.95em;
