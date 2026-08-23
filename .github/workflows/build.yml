@@ -85,6 +85,9 @@ jobs:
         with:
           node-version: 24
 
+      - name: Test native rebuild setup
+        run: yarn test:postinstall
+
       - name: Restore node_modules archive
         id: cache
         uses: actions/cache/restore@v4
