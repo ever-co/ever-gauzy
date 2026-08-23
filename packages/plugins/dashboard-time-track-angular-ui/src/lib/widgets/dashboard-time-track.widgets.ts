@@ -28,11 +28,11 @@ export const TIME_TRACKING_WIDGET_IDS = {
 } as const;
 
 /**
- * Every counter is a quarter-row tile by default (12-column grid → four per row),
- * matching the legacy Time Tracking widget strip.
+ * Every counter is a compact single-row tile by default (12-column grid → four
+ * per row), matching the legacy Time Tracking widget strip.
  */
-const COUNTER_DEFAULT_SIZE = { w: 3, h: 2 };
-const COUNTER_MIN_SIZE = { w: 3, h: 2 };
+const COUNTER_DEFAULT_SIZE = { w: 3, h: 1 };
+const COUNTER_MIN_SIZE = { w: 3, h: 1 };
 const COUNTER_MAX_SIZE = { w: 12, h: 4 };
 
 /** Widths a counter still reads well at. */

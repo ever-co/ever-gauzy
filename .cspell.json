@@ -1169,6 +1169,8 @@
 		"פעולה",
 		"ציוד",
 		"שנוצר",
+		"AKDT",
+		"antialiasing",
 		"btts",
 		"codestral",
 		"cuda",
@@ -1176,6 +1178,7 @@
 		"deepgram",
 		"distil",
 		"elevenlabs",
+		"ellipsize",
 		"ellipsized",
 		"ellipsizes",
 		"ggml",
@@ -1184,6 +1187,7 @@
 		"huggingface",
 		"Kolkata",
 		"localai",
+		"Menlo",
 		"neighbouring",
 		"neighbours",
 		"neutralised",
@@ -1193,6 +1197,7 @@
 		"rerank",
 		"serialises",
 		"shrinkability",
+		"sparkline",
 		"speaches",
 		"stablediffusion",
 		"Systran",
@@ -1201,7 +1206,8 @@
 		"unticking",
 		"unticks",
 		"voxtral",
-		"webui"
+		"webui",
+		"Yakutat"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

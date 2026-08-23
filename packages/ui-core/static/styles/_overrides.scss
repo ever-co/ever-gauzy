@@ -3,6 +3,7 @@
 @forward 'var';
 @use './themes' as *;
 @use 'var' as *;
+@use '@nebular/theme/styles/global/breakpoints' as *;
 
 /* Apply style on scrollbar for Firefox */
 * {
@@ -354,6 +355,10 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
       overflow: hidden; // dashboard panels already scroll internally
     }
 
+    .layout .layout-container .content .columns nb-layout-column {
+      padding-top: 12px;
+    }
+
     // Same reasoning one level down: the dashboard page must shrink WITH the
     // column rather than grow the layout, because its panels scroll internally.
     .layout .layout-container .content .columns nb-layout-column > router-outlet + * {
@@ -661,6 +666,42 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
       border-color: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18)) !important;
       padding: 0.375rem 0.625rem !important;
     }
+  }
+
+  // The header band's four selectors are the same components used in forms and
+  // dialogs all over the app, so their panel cannot be styled by the shared
+  // `gauzy-entity-select` block below: a form's trigger is a full-size control,
+  // and shrinking ITS options to header size would break the pairing rather
+  // than complete it.
+  //
+  // `header-entity-select` is the marker the header passes down (`dropdownClass`
+  // on each selector), which ng-select copies onto the appended panel. It means
+  // exactly one thing: this panel belongs to a trigger in the header band, so
+  // its rows are set in the band's text rather than the app's menu text.
+  //
+  // The row COLOUR is deliberately not copied. The trigger is chrome and takes
+  // the muted `--gauzy-text-color-2`; a panel is a list someone reads and picks
+  // from, so its rows keep the full-contrast `text-basic-color` the block above
+  // gives them (and the same note as `_overlays.scss` applies — a muted label on
+  // a tinted row lands near 2.7:1 in the dark themes).
+  .ng-dropdown-panel.header-entity-select {
+    .ng-dropdown-panel-items .ng-option,
+    .ng-dropdown-panel-items .ng-option .ng-option-label,
+    .ng-dropdown-panel-items .ng-option > span {
+      font-size: nb-theme(gauzy-header-text-size);
+      line-height: 1.125rem;
+    }
+
+    // The panel's own header/footer slots are part of the same list. The
+    // 'no items found' and add-tag rows are NOT listed: ng-select renders both
+    // as `.ng-option`, so the rule above already has them.
+    .ng-dropdown-header,
+    .ng-dropdown-footer {
+      font-size: nb-theme(gauzy-header-text-size);
+    }
+
+    // Row geometry is deliberately left to the block below, which sizes every
+    // entity-select row the same way. Only the text changes here.
   }
 
   .ng-dropdown-panel.gauzy-entity-select {
@@ -1456,6 +1497,44 @@ angular2-smart-table {
     width: auto !important;
     right: 1rem !important;
     max-width: max-content;
+  }
+}
+
+// ── ...except the header's organization panel, which opens LEFTWARDS ─────────
+//
+// The rule above anchors an appended panel on ng-select's inline `left` (its
+// trigger) and lets it run to 1rem from the right edge of the screen. That
+// works for a panel with room to its right. The organization control is the
+// last one in the header cluster and is now only as wide as its logo, so it
+// has almost no room there: the panel had a few dozen pixels to open into and
+// squeezed every option into it.
+//
+// So this one drops the trigger anchor and takes the opposite one — `left:
+// auto` + `right`, which is the same "open towards the middle of the screen"
+// treatment a right-hand app menu gets. The panel is sized by its options
+// (`max-content`), floored so a one-word organization name still reads as a
+// menu, and capped so a long one cannot run off the left edge.
+//
+// `right` is measured from the viewport, not from the trigger, because CSS
+// cannot know where the trigger's right edge is — what follows the selector in
+// the header (the timer, the sidebar actions) is conditional. 1.5rem is the
+// `.actions` row's own right margin, so the panel lines up with the edge of the
+// header cluster.
+//
+// Scoped to `min-width: xl` — the complement of the `media-breakpoint-down(lg)`
+// rule that hides `.show-large-up` — because that is exactly the range in which
+// the header's copy of the selector is the one on screen. Below it the header
+// copy is hidden and the `.extra-actions` overflow panel owns a full-width copy
+// instead, which has all the room it needs and keeps the default anchoring.
+@include media-breakpoint-up(xl) {
+  html:not([dir='rtl']) > body > ng-dropdown-panel.ng-dropdown-panel.organization-entity-select {
+    left: auto !important;
+    right: 1.5rem !important;
+    width: max-content !important;
+    // Overrides the inline `min-width`, which ng-select sets to the trigger's
+    // width — that is the logo-sized pill now, not a menu.
+    min-width: 14rem !important;
+    max-width: min(24rem, calc(100vw - 3rem));
   }
 }
 

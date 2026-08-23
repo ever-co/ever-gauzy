@@ -57,10 +57,26 @@
 
 		Nothing replaces them: `isOpen` still drives `searchable` and `addTag`, and a
 		stylesheet that wants the open state has ng-select's own `.ng-select-opened`.
+
+		Two classes ride on the element below purely so they reach the DROPDOWN PANEL.
+		With `appendTo` set, ng-select puts them there itself:
+
+		  [class]="appendToValue ? (ngClass() ? ngClass() : classes) : null"
+
+		and that copy is the only handle a stylesheet has on an appended panel — every one
+		of them is otherwise just `.ng-dropdown-panel`. `classes` is read once through
+		`HostAttributeToken('class')`, so it has to be a STATIC attribute; a `[class.x]`
+		binding never reaches the panel. `[ngClass]` REPLACES that fallback rather than
+		adding to it, which is why `panelClass` rebuilds both names.
+
+		`organization-entity-select` lets `_overrides.scss` right-align THIS panel: the
+		header's organization control sits too close to the right edge of the screen for a
+		left-anchored panel.
 	-->
 	<ng-select
 		#select
-		class="gauzy-entity-select"
+		class="gauzy-entity-select organization-entity-select"
+		[ngClass]="panelClass"
 		[addTag]="(hasEditOrganization$ | async) && addTag && isOpen ? createNew : null"
 		[searchable]="isOpen"
 		[clearable]="false"

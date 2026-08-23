@@ -22,6 +22,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { ALL_PROJECT_SELECTED } from './default-project';
+import { entitySelectPanelClass } from '../../entity-select-panel-class';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -55,6 +56,22 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 * @default false
 	 */
 	@Input() shortened: boolean = false;
+
+	/**
+	 * Extra class(es) for the DROPDOWN PANEL, not for this component.
+	 *
+	 * The header passes `header-entity-select` so its panels can be set in the header band's
+	 * text; see `.ng-dropdown-panel.header-entity-select` in `_overrides.scss`.
+	 */
+	@Input() dropdownClass: string;
+
+	/**
+	 * The class list ng-select puts on its appended panel. See `entitySelectPanelClass()` for
+	 * why an appended panel needs the whole list rebuilt rather than added to.
+	 */
+	get panelClass(): string | null {
+		return entitySelectPanelClass(this.dropdownClass);
+	}
 
 	/**
 	 * Determines whether the component is disabled and non-interactive.

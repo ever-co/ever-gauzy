@@ -33,8 +33,10 @@
 				[disabled]="contentSearchDisabled && value?.searchIn !== 'content'"
 				(checkedChange)="onSearchScopeToggle($event)"
 				[nbTooltip]="
-					(contentSearchDisabled ? 'DOCS.FILTERS.SEARCH_CONTENT_DISABLED' : 'DOCS.FILTERS.SEARCH_CONTENT_HINT')
-						| translate: { min: contentSearchMinChars }
+					(contentSearchDisabled
+						? 'DOCS.FILTERS.SEARCH_CONTENT_DISABLED'
+						: 'DOCS.FILTERS.SEARCH_CONTENT_HINT'
+					) | translate: { min: contentSearchMinChars }
 				"
 			>
 				{{ 'DOCS.FILTERS.SEARCH_CONTENT' | translate }}
@@ -138,7 +140,9 @@
 					nbButton
 					ghost
 					size="small"
-					[attr.aria-label]="(hasCreatedRange ? 'DOCS.FILTERS.CLEAR_RANGE' : 'DOCS.FILTERS.OPEN_CALENDAR') | translate"
+					[attr.aria-label]="
+						(hasCreatedRange ? 'DOCS.FILTERS.CLEAR_RANGE' : 'DOCS.FILTERS.OPEN_CALENDAR') | translate
+					"
 					(click)="hasCreatedRange ? clearCreatedRange(createdInput) : createdInput.focus()"
 				>
 					<nb-icon [icon]="hasCreatedRange ? 'close-outline' : 'calendar-outline'"></nb-icon>
@@ -168,7 +172,9 @@
 					nbButton
 					ghost
 					size="small"
-					[attr.aria-label]="(hasUpdatedRange ? 'DOCS.FILTERS.CLEAR_RANGE' : 'DOCS.FILTERS.OPEN_CALENDAR') | translate"
+					[attr.aria-label]="
+						(hasUpdatedRange ? 'DOCS.FILTERS.CLEAR_RANGE' : 'DOCS.FILTERS.OPEN_CALENDAR') | translate
+					"
 					(click)="hasUpdatedRange ? clearUpdatedRange(updatedInput) : updatedInput.focus()"
 				>
 					<nb-icon [icon]="hasUpdatedRange ? 'close-outline' : 'calendar-outline'"></nb-icon>

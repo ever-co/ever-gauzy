@@ -168,7 +168,7 @@
 
 .docs-filter-range {
   width: 100%;
-  padding-inline-end: 2rem;
+  padding: 0.375rem 2rem 0.375rem 0.625rem !important;
   text-overflow: ellipsis;
 }
 
@@ -176,17 +176,29 @@
   display: block;
   width: 100%;
   min-width: 0;
+
+  ::ng-deep .tag-label {
+    font-size: 0.75rem !important;
+    line-height: 1rem;
+    padding: 0.125rem 0.5rem;
+  }
+
+  ::ng-deep .tag-color {
+    width: 0.75rem;
+    height: 0.75rem;
+    margin-inline: 0.5rem;
+  }
 }
 
 .docs-filter-field--actions button[nbButton] {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  height: var(--docs-filter-control-height);
-  min-height: var(--docs-filter-control-height);
-  padding-inline: 0.625rem;
+  height: 1.5rem !important;
+  min-height: 1.5rem !important;
+  padding-inline: 0.375rem !important;
   border-radius: var(--docs-radius, 0.375rem);
-  font-size: var(--docs-meta-size, 0.75rem);
+  font-size: 0.6875rem !important;
   white-space: nowrap;
 
   nb-icon {

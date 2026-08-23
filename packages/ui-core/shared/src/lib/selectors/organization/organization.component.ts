@@ -14,6 +14,7 @@ import {
 	ToastrService,
 	UsersOrganizationsService
 } from '@gauzy/ui-core/core';
+import { entitySelectPanelClass } from '../entity-select-panel-class';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,6 +35,22 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	 * @property addTag - Whether adding new tags is allowed (default: true).
 	 */
 	@Input() addTag: boolean = true;
+
+	/**
+	 * Extra class(es) for the DROPDOWN PANEL, not for this component.
+	 *
+	 * The header passes `header-entity-select` so its panels can be set in the header band's
+	 * text; see `.ng-dropdown-panel.header-entity-select` in `_overrides.scss`.
+	 */
+	@Input() dropdownClass: string;
+
+	/**
+	 * The class list ng-select puts on its appended panel. See `entitySelectPanelClass()` for
+	 * why an appended panel needs the whole list rebuilt rather than added to.
+	 */
+	get panelClass(): string | null {
+		return entitySelectPanelClass(this.dropdownClass, 'organization-entity-select');
+	}
 
 	constructor(
 		private readonly _router: Router,

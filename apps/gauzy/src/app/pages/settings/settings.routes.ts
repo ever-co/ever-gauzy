@@ -38,6 +38,12 @@ export function createSettingsRoutes(_pageRouteRegistryService: PageRouteRegistr
 						import('./general-setting/general-setting.module').then((m) => m.GeneralSettingModule)
 				},
 				{
+					// Billing is deliberately unguarded by a permission: the API answers 404 when the
+					// deployment has no Stripe key, and the page renders an explanatory card instead.
+					path: 'billing',
+					loadChildren: () => import('./billing/billing.module').then((m) => m.BillingModule)
+				},
+				{
 					path: 'features',
 					loadChildren: () => import('./feature/feature.module').then((m) => m.FeatureModule)
 				},
