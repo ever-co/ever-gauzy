@@ -51,9 +51,10 @@ export class TenantService extends CrudService<Tenant> {
 		// Creates and saves a tenant entity from the given details.
 		const tenant = await this.create(entity);
 
-		// Record which Stripe customer this tenant bills through, while the buyer's email is still the
-		// only thing tying the two together. From here on the stored id is authoritative — see
-		// linkStripeCustomer() for why the email is never consulted again.
+		// Record which Stripe customer this tenant bills through, if that is already safe to determine.
+		// Usually it is not at this point — the link needs a confirmed email address and the buyer has
+		// only just been sent the confirmation — so this commonly does nothing and the link is made on
+		// their first visit to the billing page instead. See linkStripeCustomer() for why.
 		await this.linkStripeCustomer(tenant, user);
 
 		// Create Role/Permissions to relative tenants.
@@ -108,12 +109,16 @@ export class TenantService extends CrudService<Tenant> {
 	}
 
 	/**
-	 * Records which Stripe customer a freshly created tenant bills through.
+	 * Records which Stripe customer a tenant bills through, when that can be established safely.
 	 *
-	 * This is the one moment where the buyer's email is the only link between the account they just
-	 * paid for and the tenant they are creating. Resolving it here and storing the id means every
-	 * later billing call is keyed on something stable: an email can be changed, and Stripe permits
-	 * several customers to share one, so it cannot identify a billing account on its own.
+	 * Storing the id — rather than looking the buyer up by email on every call — is what keys later
+	 * billing on something stable: an address can be changed, and Stripe permits several customers to
+	 * share one, so an email cannot identify a billing account on its own.
+	 *
+	 * Establishing the link at all requires a **verified** address; see the reasoning inline. At
+	 * onboarding that is usually not yet true, since the confirmation mail has only just gone out, so
+	 * most genuine buyers are linked slightly later by `ensureStripeCustomerLink()` instead. Returns
+	 * the customer id when a link now exists, or null.
 	 *
 	 * Best-effort by design. On a self-hosted install there is no Stripe key and this returns
 	 * immediately; if Stripe is unreachable the tenant is still created and simply has no link yet.
