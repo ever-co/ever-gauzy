@@ -147,7 +147,7 @@ export class TenantService extends CrudService<Tenant> {
 		const stripeCustomerId = await this.stripeSubscriptionService.findCustomerIdForEmail(user.email);
 		if (!stripeCustomerId) return null;
 
-		// Second line of defence, independent of the first: never adopt a customer that some other
+		// Second line of defense, independent of the first: never adopt a customer that some other
 		// tenant already bills through. Two tenants pointing at one Stripe customer is never something
 		// we want, however it came about.
 		const claimedBy = await this.typeOrmTenantRepository.findOne({
