@@ -13,7 +13,14 @@ import { PasswordResetModule } from '../password-reset/password-reset.module';
 import { RefreshTokenModule } from '../refresh-token/refresh-token.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RoleModule } from '../role/role.module';
-import { StripeSubscriptionService } from '../shared/billing';
+// Deep path, not the '../shared/billing' barrel. The barrel re-exports BillingModule, which
+// imports TenantModule, which imports this module — so importing the barrel here closes a
+// require cycle (billing.module -> tenant.module -> auth.module -> billing/index ->
+// billing.module). TenantModule is then still mid-evaluation when BillingModule's @Module()
+// decorator runs, and its imports array gets `undefined` where TenantModule should be, which
+// Nest rejects at boot on every deployment — including self-hosted installs that never
+// configure Stripe. tenant.module.ts imports this service by the deep path for the same reason.
+import { StripeSubscriptionService } from '../shared/billing/stripe-subscription.service';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { UserModule } from '../user/user.module';
