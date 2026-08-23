@@ -143,6 +143,23 @@ export class StripeWebhookController {
 			return;
 		}
 
+		// Never adopt a Stripe customer that another tenant already bills through. The write below
+		// guards the *target* tenant from being repointed, but says nothing about the customer: two
+		// tenants could end up sharing one billing account, and whichever opened /billing would be
+		// looking at the other's invoices, card and subscription. The onboarding path has refused
+		// this since it was written; the webhook reaches the same column and had no equivalent.
+		const claimedBy = await this.typeOrmTenantRepository.findOne({
+			where: { stripeCustomerId: customerId },
+			select: { id: true }
+		});
+		if (claimedBy && claimedBy.id !== user.tenantId) {
+			this.logger.warn(
+				`Stripe ${event.type} would link tenant ${user.tenantId} to a customer already held by ` +
+					`tenant ${claimedBy.id}; declining.`
+			);
+			return;
+		}
+
 		// Only fill a gap; never repoint a tenant that already has a customer. Overwriting that link
 		// from a webhook would let a stray event move a tenant's billing onto another account.
 		const updated = await this.typeOrmTenantRepository.update(
