@@ -13,6 +13,7 @@ import { PasswordResetModule } from '../password-reset/password-reset.module';
 import { RefreshTokenModule } from '../refresh-token/refresh-token.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RoleModule } from '../role/role.module';
+import { StripeSubscriptionService } from '../shared/billing';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { UserModule } from '../user/user.module';
@@ -27,7 +28,14 @@ import { TermsAcceptanceModule } from '../terms-acceptance/terms-acceptance.modu
 import { JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 
 // Core service providers for handling authentication and related functionalities
-const providers = [AuthService, EmailConfirmationService, UserOrganizationService];
+const providers = [
+	AuthService,
+	EmailConfirmationService,
+	UserOrganizationService,
+	// Backs SubscriptionRequiredGuard on the register route. Inert unless STRIPE_SECRET_KEY is set,
+	// so self-hosted installs are unaffected by its presence here.
+	StripeSubscriptionService
+];
 
 // Authentication strategies for token validation and management
 const strategies = [JwtStrategy, JwtRefreshTokenStrategy];

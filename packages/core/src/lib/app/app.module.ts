@@ -166,6 +166,7 @@ import { OAuthClientModule } from '../auth/oauth-client/oauth-client.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { BillingModule } from '../shared/billing';
 import { ThrottlerBehindProxyGuard } from '../throttler/throttler-behind-proxy.guard';
 import { TimeOffPolicyModule } from '../time-off-policy/time-off-policy.module';
 import { TimeOffRequestModule } from '../time-off-request/time-off-request.module';
@@ -445,6 +446,9 @@ if (environment.THROTTLE_ENABLED) {
 		RolePermissionModule,
 		TenantModule,
 		TenantSettingModule,
+		// In-product billing pages. Every route inside 404s unless STRIPE_SECRET_KEY is set, so a
+		// self-hosted install carries the module but exposes no billing surface.
+		BillingModule,
 		TagModule,
 		TagTypeModule,
 		SkillModule,

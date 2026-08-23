@@ -15,6 +15,14 @@ export interface ITenant extends IBaseEntityModel, IRelationalImageAsset {
 	name?: string;
 	logo?: string;
 	standardWorkHoursPerDay?: number;
+	/**
+	 * Stripe customer this tenant bills through, on hosted deployments.
+	 *
+	 * Stored rather than looked up by email on each request: an email address is mutable and is not
+	 * unique across Stripe customers, whereas this id is both stable and unambiguous. Null on every
+	 * self-hosted install and on any tenant created before billing was configured.
+	 */
+	stripeCustomerId?: string;
 	organizations?: IOrganization[];
 	rolePermissions?: IRolePermission[];
 	featureOrganizations?: IFeatureOrganization[];
