@@ -1,162 +1,159 @@
 @use 'themes' as *;
-@use 'gauzy/_gauzy-dialogs' as *;
+@use '@shared/panel' as *;
+
+// Quick Settings, opened by the gear action in the header. The container box —
+// radius, hairline, elevation, surface — is drawn by the nb-sidebar this renders
+// into (`.settings-sidebar.expanded .main-container-fixed` in
+// one-column.layout.scss); everything here is rhythm, type and the way the
+// embedded selector widgets are made to agree with each other.
+//
+// What this replaces: a 16px heading, `nb-list` rows at the page's 14px with a
+// 5%-black divider under each, four ghost buttons for the support links, and a
+// pile of dead rules (`.settings-row`, `.switcher`, `.title-uppercase`,
+// `.language-select`) left over from a settings PAGE this panel never was.
 
 @include nb-install-component() {
-  h6 {
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    font-size: 1rem;
-  }
-
-  nb-select, ngx-language-selector {
-    width: 12.5rem;
-  }
-
-  nb-select ::ng-deep {
-    .select-button {
-      text-overflow: inherit;
-      padding-left: 0.5rem !important;
-    }
-  }
-
-  nb-list{
-    overflow-y: overlay;
-  }
-
-  p {
-    color: nb-theme(text-primary-color);
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 16px;
-    letter-spacing: 0em;
-    text-align: left;
-	padding: 0 1rem;
-  }
-
-  .cancel{
-	  align-self: flex-end;
-	  cursor: pointer;
-  }
-
-  .header{
-	  display: flex;
-	  flex-direction: column;
-	  align-items: flex-start;
-  }
-
-  nb-list-item{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid rgba(50, 50, 50, 0.05);
-    &:last-child{
-      border-bottom: unset;
-    }
-    .theme{
-      width: 100%;
-    }
-  }
-
-  // Support / help entries, moved here from the speech-bubble header menu.
-  // A left aligned stack of ghost rows, so they read as menu items instead of
-  // four buttons competing with the primary Settings action below them.
-  .support-links {
+  .quick-settings-panel {
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: 0.125rem;
+    padding: $panel-pad;
+    box-sizing: border-box;
+    font-family: nb-theme(font-family-primary);
+    font-size: $panel-text-row;
+    line-height: 1.4;
+    color: nb-theme(text-basic-color);
+  }
 
-    .support-link {
+  .panel-header {
+    @include gauzy-panel-header();
+    // The sidebar's `.scrollable` is the scroll port (the panel is
+    // `height: auto` under a `max-height`), so the title bar holds its
+    // place by sticking to the top of it.
+    position: sticky;
+    top: calc(-1 * #{$panel-pad});
+    z-index: 1;
+    background-color: nb-theme(background-basic-color-1);
+  }
+
+  .panel-title {
+    @include gauzy-panel-title();
+  }
+
+  .panel-close {
+    @include gauzy-panel-close();
+  }
+
+  .panel-divider {
+    @include gauzy-panel-divider();
+  }
+
+  .panel-overline {
+    @include gauzy-panel-overline();
+  }
+
+  .panel-section {
+    display: flex;
+    flex-direction: column;
+    gap: $panel-gap;
+  }
+
+  // A row that hosts a control. The label comes from the embedded component's
+  // own template, so the row only owns the box; `.theme` is the widget inside.
+  .control-row {
+    @include gauzy-panel-control-row();
+    // The widgets lay out their own label/control pair edge to edge.
+    padding-inline: 0;
+
+    .theme {
       width: 100%;
-      justify-content: flex-start;
-      padding: 0.375rem 0.5rem;
-      text-align: left;
-      text-transform: none;
+    }
+  }
+
+  // Support / help entries: flat rows, not the four ghost buttons they were —
+  // those competed with the primary Settings action underneath them.
+  .panel-row {
+    @include gauzy-panel-row();
+    font-family: inherit;
+  }
+
+  .panel-actions {
+    margin-top: 0.5rem;
+    padding: 0 $panel-gutter;
+
+    [nbButton] {
+      font-size: $panel-text-row;
+      gap: 0.375rem;
 
       nb-icon {
-        @include nb-ltr(margin-right, 0.5rem);
-        @include nb-rtl(margin-left, 0.5rem);
+        font-size: 0.875rem;
+        width: 0.875rem;
+        height: 0.875rem;
       }
     }
   }
 
-  .settings-row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;
+  // ── Embedded widgets ─────────────────────────────────────────────────────
+  // The theme switch, theme picker, language picker and layout picker are
+  // shared components (the auth pages and the desktop app render them too), so
+  // their own stylesheets stay as they are and the panel's reading of them
+  // lives here. Each had pinned its own trigger — 120px / 129px wide, a 2px
+  // grey border, a 2rem box — so four controls in one column lined up on four
+  // different edges. One extra class of specificity is enough to win: those
+  // rules are `[_nghost-x] nb-select.appearance-outline .select-button`, and
+  // these are the same thing under `.quick-settings-panel`.
+  .quick-settings-panel ::ng-deep {
+    // The label half of every widget's own `.theme-container` row. (The theme
+    // picker is not in this list: it renders only here, so it is styled on the
+    // panel scale in its own stylesheet rather than being overridden.)
+    .theme-container,
+    .switch-container {
+      font-size: $panel-text-row;
+      font-weight: 400;
+      line-height: 1rem;
+      color: nb-theme(text-basic-color);
+      gap: 0.75rem;
+      flex-wrap: nowrap;
+    }
 
-    width: 100%;
-    margin: 0 0 1rem;
+    .preferred-layout nb-icon {
+      font-size: 0.75rem;
+      width: 0.75rem;
+      height: 0.75rem;
+      color: nb-theme(text-hint-color);
+    }
 
-    a {
-      text-decoration: none;
-      font-size: 2.25rem;
+    nb-select.appearance-outline .select-button {
+      // The same width as the theme picker's trigger below, so the four
+      // preference rows share one right edge.
+      width: 8.75rem;
+      min-width: 8.75rem;
+      height: 1.75rem;
+      min-height: 1.75rem;
+      padding: 0 0.5rem;
+      // A 1px hairline, the same line weight as every other control and as
+      // the panel's own edge — not the 2px 50%-grey each widget had pinned.
+      border: 0;
+      box-shadow: inset 0 0 0 1px #{$panel-hairline};
+      border-radius: $panel-row-radius;
+      background-color: transparent;
+      font-size: $panel-text-row;
+      font-weight: 400;
+      color: nb-theme(text-basic-color);
+    }
 
-      color: #a4abb3;
+    nb-select.appearance-outline.status-basic .select-button.placeholder {
+      font-size: $panel-text-row;
+      color: nb-theme(text-basic-color);
+    }
 
-      &.selected {
-        color: #40dc7e;
-      }
-
-      @include nb-for-theme(cosmic) {
-        &.selected {
-          color: #3dcc6d;
-        }
-      }
+    // The layout picker's tiny "Reset layout" escape hatch, tucked under its
+    // select. A text-weight control, so it reads as secondary to the row.
+    .reset-layout {
+      font-size: $panel-text-label;
+      padding: 0.1875rem 0.375rem;
+      min-width: 0;
+      border-color: transparent;
+      color: nb-theme(text-hint-color);
     }
   }
-
-  .settings {
-    margin-bottom: 1em;
-  }
-
-  .switcher {
-    margin-bottom: 1rem;
-
-    ::ng-deep ngx-switcher {
-      .switch-label span {
-        font-size: 1em;
-        font-weight: normal;
-      }
-
-      .switch {
-        height: 1.5em;
-        width: 3em;
-
-        .slider::before {
-          height: 1.5em;
-          width: 1.5em;
-        }
-
-        input:checked + .slider::before {
-          @include nb-ltr(transform, translateX(1.5rem) !important);
-          @include nb-rtl(transform, translateX(-1.5rem) !important);
-        }
-      }
-
-      @include nb-for-theme(cosmic) {
-        // .switch .slider {
-        // background-color: nb-theme(color-bg);
-        // }
-      }
-    }
-  }
-
-  .title-uppercase {
-    text-transform: uppercase;
-
-    .settings-row select {
-      max-height: 40px;
-      padding: 0;
-      padding-left: 10px;
-      font-size: 0.9rem;
-    }
-  }
-
-  .language-select {
-    margin-right: 65px;
-  }
-
-  @include input-appearance(2rem, var(--gauzy-sidebar-background-4));
 }
