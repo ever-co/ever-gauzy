@@ -56,10 +56,16 @@
     font-weight: 600;
   }
 
-  &.disabled-row {
-    pointer-events: none;
+  &:disabled {
+    cursor: default;
     opacity: 0.5;
   }
+}
+
+.status-control {
+  display: flex;
+  flex-direction: column;
+  min-height: 1.5rem;
 }
 
 .control-row {

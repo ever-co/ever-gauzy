@@ -1,4 +1,4 @@
-<div gauzyOutside (clickOutside)="onClickOutside($event)" class="account-panel" [nbSpinner]="isSubmit$ | async">
+<div gauzyOutside (clickOutside)="onClickOutside($event)" class="account-panel">
 	<header class="panel-header">
 		<gauzy-user showIdentity="true" [user$]="user$" (clicked)="onClick()"></gauzy-user>
 		<button type="button" class="panel-close" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="onClick()">
@@ -9,19 +9,21 @@
 	<div class="panel-section">
 		<span class="panel-overline">{{ 'USER_MENU.ACCOUNT' | translate }}</span>
 
-		@if (employee$ | async) {
-			<button type="button" class="panel-row" [class.disabled-row]="isSubmit$ | async" (click)="onChangeStatus()">
-				<nb-icon icon="moon-outline"></nb-icon>
-				<span
-					[innerHTML]="
-						((employee$ | async)?.isAway
-							? 'USER_MENU.SET_YOURSELF_AS_ACTIVE'
-							: 'USER_MENU.SET_YOURSELF_AS_AWAY'
-						) | translate
-					"
-				></span>
-			</button>
-		}
+		<div class="status-control" [nbSpinner]="isSubmit$ | async" nbSpinnerSize="tiny">
+			@if (employee$ | async) {
+				<button type="button" class="panel-row" [disabled]="isSubmit$ | async" (click)="onChangeStatus()">
+					<nb-icon icon="moon-outline"></nb-icon>
+					<span
+						[innerHTML]="
+							((employee$ | async)?.isAway
+								? 'USER_MENU.SET_YOURSELF_AS_ACTIVE'
+								: 'USER_MENU.SET_YOURSELF_AS_AWAY'
+							) | translate
+						"
+					></span>
+				</button>
+			}
+		</div>
 		<a class="panel-row" routerLink="/pages/auth/profile" (click)="onClick()">
 			<nb-icon icon="person-outline"></nb-icon>
 			<span>{{ 'USER_MENU.PROFILE' | translate }}</span>
@@ -64,9 +66,9 @@
 	<footer class="panel-footer">
 		<span class="download-label">{{ 'USER_MENU.DOWNLOAD_APPS' | translate }}</span>
 		<span class="download-icons">
-			@for (app of downloadApps; track app) {
-				<a target="_blank" [href]="app.link" rel="noopener">
-					<i [class]="app.icon"></i>
+			@for (app of downloadApps; track app.label) {
+				<a target="_blank" [href]="app.link" rel="noopener" [attr.aria-label]="app.label | translate">
+					<i [class]="app.icon" aria-hidden="true"></i>
 				</a>
 			}
 		</span>

@@ -40,26 +40,35 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 		this.clickedInOverlay = target instanceof Element && !!target.closest('.cdk-overlay-container');
 	}
 
+	/**
+	 * Each entry carries a `label` translation key because the anchors render an
+	 * icon only — without it a screen reader announces five identical links.
+	 */
 	public downloadApps = [
 		{
 			link: environment.DESKTOP_APP_DOWNLOAD_LINK_APPLE,
-			icon: 'fab fa-apple'
+			icon: 'fab fa-apple',
+			label: 'USER_MENU.DOWNLOAD_MACOS'
 		},
 		{
 			link: environment.DESKTOP_APP_DOWNLOAD_LINK_WINDOWS,
-			icon: 'fa-brands fa-windows'
+			icon: 'fa-brands fa-windows',
+			label: 'USER_MENU.DOWNLOAD_WINDOWS'
 		},
 		{
 			link: environment.DESKTOP_APP_DOWNLOAD_LINK_LINUX,
-			icon: 'fa-brands fa-linux'
+			icon: 'fa-brands fa-linux',
+			label: 'USER_MENU.DOWNLOAD_LINUX'
 		},
 		{
 			link: environment.MOBILE_APP_DOWNLOAD_LINK,
-			icon: 'fas fa-mobile'
+			icon: 'fas fa-mobile',
+			label: 'USER_MENU.DOWNLOAD_MOBILE'
 		},
 		{
 			link: environment.EXTENSION_DOWNLOAD_LINK,
-			icon: 'fa-brands fa-chrome'
+			icon: 'fa-brands fa-chrome',
+			label: 'USER_MENU.DOWNLOAD_BROWSER_EXTENSION'
 		}
 	];
 
@@ -82,9 +91,18 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 				filter(({ employee }) => !!employee),
 				tap(async (user: IUser) => {
 					this._isSubmit$.next(true);
-					const employee = await firstValueFrom(this._employeeService.getEmployeeById(user?.employee?.id));
-					this._employee$.next(employee);
-					this._isSubmit$.next(false);
+					try {
+						const employee = await firstValueFrom(
+							this._employeeService.getEmployeeById(user?.employee?.id)
+						);
+						this._employee$.next(employee);
+					} catch (error) {
+						this._errorHandler.handleError(error);
+					} finally {
+						// Always release the loading state, otherwise a failed load leaves
+						// the status control stuck behind a spinner for the whole session.
+						this._isSubmit$.next(false);
+					}
 				}),
 
 				untilDestroyed(this)
@@ -107,11 +125,13 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 	}
 
 	public async onChangeStatus(): Promise<void> {
+		// Guard against a second activation while a request is already in flight:
+		// the disabled attribute covers pointer and keyboard, this covers the rest.
+		if (!this.employee || this._isSubmit$.getValue()) {
+			return;
+		}
+		this._isSubmit$.next(true);
 		try {
-			if (!this.employee) {
-				return;
-			}
-			this._isSubmit$.next(true);
 			const { id, isAway, tenantId, organizationId } = this.employee;
 			const payload: IEmployeeUpdateInput = {
 				isAway: !isAway,
@@ -122,8 +142,9 @@ export class UserMenuComponent implements OnInit, OnDestroy {
 			this._employee$.next({ ...this.employee, ...payload });
 		} catch (error) {
 			this._errorHandler.handleError(error);
+		} finally {
+			this._isSubmit$.next(false);
 		}
-		this._isSubmit$.next(false);
 	}
 
 	public get employee(): IEmployee {
