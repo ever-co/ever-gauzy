@@ -64,7 +64,6 @@
 
 .control-row {
   @include gauzy-panel-control-row();
-  padding-inline: 0;
 
   .theme {
     width: 100%;
