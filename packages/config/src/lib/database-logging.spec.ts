@@ -25,6 +25,7 @@ const loggingCases = [
 	{ name: 'false', value: 'false', expected: false },
 	{ name: 'all', value: 'all', expected: 'all' },
 	{ name: 'query', value: 'query', expected: ['query', 'error'] },
+	{ name: 'error', value: 'error', expected: ['error'] },
 	{ name: 'invalid', value: 'verbose', expected: ['error'] }
 ] as const;
 
