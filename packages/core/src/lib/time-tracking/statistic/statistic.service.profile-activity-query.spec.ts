@@ -282,9 +282,12 @@ describe('StatisticService profile activity query orchestration', () => {
 
 describe('StatisticService TypeORM profile activity query shape', () => {
 	it.each([
-		[DatabaseTypeEnum.mysql, 'TIMESTAMPDIFF(MICROSECOND'],
-		[DatabaseTypeEnum.sqlite, 'julianday(time_log.stoppedAt)'],
-		[DatabaseTypeEnum.betterSqlite3, 'julianday(time_log.stoppedAt)']
+		[
+			DatabaseTypeEnum.mysql,
+			'TIMESTAMPDIFF(MICROSECOND, time_log.startedAt, COALESCE(time_log.stoppedAt, :profileNow))'
+		],
+		[DatabaseTypeEnum.sqlite, 'julianday(COALESCE(time_log.stoppedAt, :profileNow))'],
+		[DatabaseTypeEnum.betterSqlite3, 'julianday(COALESCE(time_log.stoppedAt, :profileNow))']
 	])('uses one bounded %s daily aggregate with %s duration arithmetic', async (dialect, durationSql) => {
 		const fixture = createService({ orm: MultiORMEnum.TypeORM, dialect, typeOrmRows: aggregateRows });
 
@@ -307,7 +310,8 @@ describe('StatisticService TypeORM profile activity query shape', () => {
 		expect(fixture.typeOrmBuilder.groupBy).toHaveBeenCalledWith('1');
 		expect(fixture.typeOrmBuilder.setParameter).toHaveBeenCalledWith('profileDayEnd0', '2026-08-01 22:00:00.000');
 		expect(fixture.typeOrmBuilder.setParameter).toHaveBeenCalledWith('profileDayLabel0', '2026-08-01');
-		expect(fixture.typeOrmBuilder.setParameter).toHaveBeenCalledTimes(4);
+		expect(fixture.typeOrmBuilder.setParameter).toHaveBeenCalledWith('profileNow', expect.any(String));
+		expect(fixture.typeOrmBuilder.setParameter).toHaveBeenCalledTimes(5);
 		expect(fixture.typeOrmBuilder.getRawMany).toHaveBeenCalledTimes(1);
 		expectNoRelationOrHydrationCalls(fixture.typeOrmBuilder);
 	});
@@ -327,11 +331,15 @@ describe('StatisticService TypeORM profile activity query shape', () => {
 
 		await fixture.service.getProfileActivity(annualRequest);
 
-		const bucketParameterCount = fixture.typeOrmBuilder.setParameter.mock.calls.length;
+		const bucketParameterCount = fixture.typeOrmBuilder.setParameter.mock.calls.filter(([name]) =>
+			String(name).startsWith('profileDay')
+		).length;
+		const queryParameterCount = fixture.typeOrmBuilder.setParameter.mock.calls.length - bucketParameterCount;
 		const sharedPredicateParameterCount = Object.keys(typeOrmParameters(fixture.typeOrmBuilder)).length;
 		expect(bucketParameterCount).toBe(366 * 2);
-		expect(bucketParameterCount + sharedPredicateParameterCount).toBe(737);
-		expect(bucketParameterCount + sharedPredicateParameterCount).toBeLessThan(999);
+		expect(queryParameterCount).toBe(1);
+		expect(bucketParameterCount + queryParameterCount + sharedPredicateParameterCount).toBe(740);
+		expect(bucketParameterCount + queryParameterCount + sharedPredicateParameterCount).toBeLessThan(999);
 		expect(fixture.typeOrmBuilder.groupBy).toHaveBeenCalledWith('1');
 		expect(fixture.typeOrmBuilder.getRawMany).toHaveBeenCalledTimes(1);
 	});
@@ -352,7 +360,9 @@ describe('StatisticService TypeORM profile activity query shape', () => {
 			"TO_CHAR((time_log.startedAt AT TIME ZONE 'UTC') AT TIME ZONE :profileTimeZone, 'YYYY-MM-DD')";
 		expect(fixture.typeOrmBuilder.select).toHaveBeenCalledWith(expectedDateExpression, 'date');
 		expect(fixture.typeOrmBuilder.groupBy).toHaveBeenCalledWith(expectedDateExpression);
-		expect(sql).toContain('SUM(EXTRACT(EPOCH FROM (time_log.stoppedAt - time_log.startedAt)))');
+		expect(sql).toContain(
+			"SUM(EXTRACT(EPOCH FROM (COALESCE(time_log.stoppedAt, (CAST(:profileNow AS timestamptz) AT TIME ZONE 'UTC')) - time_log.startedAt)))"
+		);
 		expect(sql).toContain("time_log.startedAt >= (CAST(:profileStart AS timestamptz) AT TIME ZONE 'UTC')");
 		expect(sql).toContain("time_log.startedAt < (CAST(:profileEnd AS timestamptz) AT TIME ZONE 'UTC')");
 		expect(parameters).toMatchObject({
@@ -422,7 +432,7 @@ describe('StatisticService TypeORM profile activity query shape', () => {
 		}
 	);
 
-	it('binds every shared predicate, excludes invalid durations, and never filters by team', async () => {
+	it('applies the exact legacy activityLevel 0..100 to slot-overall 0..600 conversion and includes running duration', async () => {
 		const fixture = createService({
 			orm: MultiORMEnum.TypeORM,
 			dialect: DatabaseTypeEnum.betterSqlite3
@@ -434,8 +444,14 @@ describe('StatisticService TypeORM profile activity query shape', () => {
 		expect(sql).toContain('time_log.tenantId = :profileTenantId');
 		expect(sql).toContain('time_log.organizationId = :profileOrganizationId');
 		expect(sql).toContain('time_log.employeeId = :profileEmployeeId');
-		expect(sql).toContain('time_log.stoppedAt IS NOT NULL');
-		expect(sql).toContain('time_log.stoppedAt > time_log.startedAt');
+		expect(sql).toContain('EXISTS (SELECT 1 FROM "time_slot_time_logs"');
+		expect(sql).toContain('"profile_time_slot"."overall" BETWEEN :profileActivityStart AND :profileActivityEnd');
+		expect(sql).toContain('"profile_time_slot"."deletedAt" IS NULL');
+		expect(sql).toContain('COALESCE(time_log.stoppedAt, :profileNow) > time_log.startedAt');
+		expect(typeOrmParameters(fixture.typeOrmBuilder)).toMatchObject({
+			profileActivityStart: 0,
+			profileActivityEnd: 600
+		});
 		expect(sql).not.toContain('organizationTeamId');
 		expect(sql).not.toContain(TEAM_ID);
 	});
@@ -479,9 +495,14 @@ describe('StatisticService MikroORM/Knex profile activity query shape', () => {
 	});
 
 	it.each([
-		[DatabaseTypeEnum.mysql, 'TIMESTAMPDIFF(MICROSECOND', '2026-07-31 22:00:00.000', '2026-08-02 22:00:00.000'],
-		[DatabaseTypeEnum.sqlite, 'SUM((?? - ??) / 1000.0)', 1785535200000, 1785708000000],
-		[DatabaseTypeEnum.betterSqlite3, 'SUM((?? - ??) / 1000.0)', 1785535200000, 1785708000000]
+		[
+			DatabaseTypeEnum.mysql,
+			'TIMESTAMPDIFF(MICROSECOND, ??, COALESCE(??, ?))',
+			'2026-07-31 22:00:00.000',
+			'2026-08-02 22:00:00.000'
+		],
+		[DatabaseTypeEnum.sqlite, 'SUM((COALESCE(??, ?) - ??) / 1000.0)', 1785535200000, 1785708000000],
+		[DatabaseTypeEnum.betterSqlite3, 'SUM((COALESCE(??, ?) - ??) / 1000.0)', 1785535200000, 1785708000000]
 	])(
 		'uses one bounded %s daily aggregate with %s duration arithmetic',
 		async (dialect, durationSql, expectedStart, expectedEnd) => {
@@ -536,7 +557,9 @@ describe('StatisticService MikroORM/Knex profile activity query shape', () => {
 		]);
 		expect(fixture.knex.raw).toHaveBeenCalledWith(expect.stringMatching(/pg_timezone_names/i), ['Europe/Madrid']);
 		expect(fixture.builder.groupByRaw).toHaveBeenCalledWith('1');
-		expect(sql).toContain('SUM(EXTRACT(EPOCH FROM (?? - ??))) AS ??');
+		expect(sql).toContain(
+			"SUM(EXTRACT(EPOCH FROM (COALESCE(??, (CAST(? AS timestamptz) AT TIME ZONE 'UTC')) - ??))) AS ??"
+		);
 		expect(sql).toContain("?? >= (CAST(? AS timestamptz) AT TIME ZONE 'UTC')");
 		expect(sql).toContain("?? < (CAST(? AS timestamptz) AT TIME ZONE 'UTC')");
 		expect(bindings).toEqual(
@@ -584,7 +607,7 @@ describe('StatisticService MikroORM/Knex profile activity query shape', () => {
 		}
 	);
 
-	it('binds every shared predicate, explicitly excludes deleted rows, and never filters by team', async () => {
+	it('applies the exact legacy activityLevel 0..100 to slot-overall 0..600 conversion for Knex', async () => {
 		const fixture = createService({
 			orm: MultiORMEnum.MikroORM,
 			dialect: DatabaseTypeEnum.betterSqlite3
@@ -599,8 +622,26 @@ describe('StatisticService MikroORM/Knex profile activity query shape', () => {
 				['?? = ?', ['time_log.organizationId', ORGANIZATION_ID]],
 				['?? = ?', ['time_log.employeeId', EMPLOYEE_ID]],
 				['?? IS NULL', ['time_log.deletedAt']],
-				['?? IS NOT NULL', ['time_log.stoppedAt']],
-				['?? > ??', ['time_log.stoppedAt', 'time_log.startedAt']]
+				['COALESCE(??, ?) > ??', ['time_log.stoppedAt', expect.any(Number), 'time_log.startedAt']],
+				[
+					'EXISTS (SELECT 1 FROM ?? INNER JOIN ?? ON ?? = ?? WHERE ?? = ?? AND ?? = ? AND ?? = ? AND ?? BETWEEN ? AND ? AND ?? IS NULL)',
+					[
+						'time_slot_time_logs',
+						'time_slot',
+						'time_slot.id',
+						'time_slot_time_logs.timeSlotId',
+						'time_slot_time_logs.timeLogId',
+						'time_log.id',
+						'time_slot.tenantId',
+						TENANT_ID,
+						'time_slot.organizationId',
+						ORGANIZATION_ID,
+						'time_slot.overall',
+						0,
+						600,
+						'time_slot.deletedAt'
+					]
+				]
 			])
 		);
 		expect(knexBindings(fixture)).not.toContain('time_log.organizationTeamId');

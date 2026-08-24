@@ -107,6 +107,19 @@ type FixtureTimeLog = {
 	deletedAt: Date | null;
 };
 
+type FixtureTimeSlot = {
+	id: string;
+	tenantId: string;
+	organizationId: string;
+	overall: number;
+	deletedAt: Date | null;
+};
+
+type FixtureTimeSlotTimeLog = {
+	timeSlotId: string;
+	timeLogId: string;
+};
+
 type ExplainRow = {
 	id: number;
 	parent: number;
@@ -137,6 +150,28 @@ const TimeLogSchema = new EntitySchema<FixtureTimeLog>({
 		name,
 		columns: [column]
 	}))
+});
+
+const TimeSlotSchema = new EntitySchema<FixtureTimeSlot>({
+	name: 'ProfileActivityQueryPlanTimeSlot',
+	tableName: 'time_slot',
+	columns: {
+		id: { primary: true, type: 'varchar' },
+		tenantId: { type: 'varchar' },
+		organizationId: { type: 'varchar' },
+		overall: { type: Number },
+		deletedAt: { type: Date, nullable: true, deleteDate: true }
+	}
+});
+
+const TimeSlotTimeLogSchema = new EntitySchema<FixtureTimeSlotTimeLog>({
+	name: 'ProfileActivityQueryPlanTimeSlotTimeLog',
+	tableName: 'time_slot_time_logs',
+	columns: {
+		timeSlotId: { primary: true, type: 'varchar' },
+		timeLogId: { primary: true, type: 'varchar' }
+	},
+	indices: [{ name: 'IDX_profile_activity_time_log_link', columns: ['timeLogId'] }]
 });
 
 class QueryPlanStatisticService extends StatisticService {
@@ -322,6 +357,24 @@ async function seedFixture(repository: Repository<FixtureTimeLog>): Promise<void
 	for (let offset = 0; offset < rows.length; offset += 250) {
 		await repository.insert(rows.slice(offset, offset + 250));
 	}
+
+	const dataSource = repository.manager.connection;
+	const matchingRows = rows.slice(0, 100);
+	await dataSource.getRepository(TimeSlotSchema).insert(
+		matchingRows.map((row, index) => ({
+			id: `profile-slot-${index.toString().padStart(5, '0')}`,
+			tenantId: TENANT_ID,
+			organizationId: ORGANIZATION_ID,
+			overall: (index % 101) * 6,
+			deletedAt: null
+		}))
+	);
+	await dataSource.getRepository(TimeSlotTimeLogSchema).insert(
+		matchingRows.map((row, index) => ({
+			timeSlotId: `profile-slot-${index.toString().padStart(5, '0')}`,
+			timeLogId: row.id
+		}))
+	);
 }
 
 async function explainQuery(dataSource: DataSource, sql: string, parameters: unknown[]): Promise<ExplainRow[]> {
@@ -404,7 +457,7 @@ describe('profile activity production query plan evidence', () => {
 		const dataSource = new DataSource({
 			type: 'better-sqlite3',
 			database: ':memory:',
-			entities: [TimeLogSchema],
+			entities: [TimeLogSchema, TimeSlotSchema, TimeSlotTimeLogSchema],
 			synchronize: true
 		});
 
@@ -421,20 +474,25 @@ describe('profile activity production query plan evidence', () => {
 
 			expect(sql).not.toMatch(/organizationTeamId/i);
 			expect(sql).not.toContain(TEAM_ID);
-			expect(parameters).toHaveLength(65);
+			expect(parameters).toHaveLength(69);
 			expect(parameters.slice(0, 4)).toEqual([
 				'2026-01-02 00:00:00.000',
 				'2026-01-01',
 				'2026-01-03 00:00:00.000',
 				'2026-01-02'
 			]);
-			expect(parameters.slice(-5)).toEqual([
-				TENANT_ID,
-				ORGANIZATION_ID,
-				EMPLOYEE_ID,
-				'2026-01-01 00:00:00.000',
-				'2026-01-31 00:00:00.000'
-			]);
+			expect(parameters).toEqual(
+				expect.arrayContaining([
+					TENANT_ID,
+					ORGANIZATION_ID,
+					EMPLOYEE_ID,
+					'2026-01-01 00:00:00.000',
+					'2026-01-31 00:00:00.000'
+				])
+			);
+			expect(sql).toMatch(/\bEXISTS\b/i);
+			expect(sql).toMatch(/time_slot_time_logs/i);
+			expect(sql).toMatch(/overall[^\n]*BETWEEN 0 AND 600/i);
 
 			const initialIndexes = (await dataSource.query('PRAGMA index_list("time_log")')) as Array<{
 				name: string;

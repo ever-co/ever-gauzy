@@ -122,6 +122,19 @@ type FixtureTimeLog = {
 	deletedAt: Date | null;
 };
 
+type FixtureTimeSlot = {
+	id: string;
+	tenantId: string;
+	organizationId: string;
+	overall: number;
+	deletedAt: Date | null;
+};
+
+type FixtureTimeSlotTimeLog = {
+	timeSlotId: string;
+	timeLogId: string;
+};
+
 type VerifierMetrics = {
 	ok: boolean;
 	errorCode?: string;
@@ -171,6 +184,28 @@ const TimeLogSchema = new EntitySchema<FixtureTimeLog>({
 		stoppedAt: { type: Date, nullable: true },
 		deletedAt: { type: Date, nullable: true, deleteDate: true }
 	}
+});
+
+const TimeSlotSchema = new EntitySchema<FixtureTimeSlot>({
+	name: 'ProfileActivityHttpConcurrencyTimeSlot',
+	tableName: 'time_slot',
+	columns: {
+		id: { primary: true, type: 'varchar' },
+		tenantId: { type: 'varchar' },
+		organizationId: { type: 'varchar' },
+		overall: { type: Number },
+		deletedAt: { type: Date, nullable: true, deleteDate: true }
+	}
+});
+
+const TimeSlotTimeLogSchema = new EntitySchema<FixtureTimeSlotTimeLog>({
+	name: 'ProfileActivityHttpConcurrencyTimeSlotTimeLog',
+	tableName: 'time_slot_time_logs',
+	columns: {
+		timeSlotId: { primary: true, type: 'varchar' },
+		timeLogId: { primary: true, type: 'varchar' }
+	},
+	indices: [{ columns: ['timeLogId'] }]
 });
 
 class HttpConcurrencyStatisticService extends StatisticService {
@@ -244,6 +279,22 @@ function createFixtureRows(): FixtureTimeLog[] {
 			deletedAt: null
 		}
 	];
+}
+
+async function seedTimeSlots(dataSource: DataSource): Promise<void> {
+	const timeLogIds = ['http-matching-first', 'http-matching-second'];
+	await dataSource.getRepository(TimeSlotSchema).insert(
+		timeLogIds.map((timeLogId, index) => ({
+			id: `slot-${timeLogId}`,
+			tenantId: TENANT_ID,
+			organizationId: ORGANIZATION_ID,
+			overall: index * 600,
+			deletedAt: null
+		}))
+	);
+	await dataSource
+		.getRepository(TimeSlotTimeLogSchema)
+		.insert(timeLogIds.map((timeLogId) => ({ timeSlotId: `slot-${timeLogId}`, timeLogId })));
 }
 
 function profileQueryPath(): string {
@@ -398,7 +449,7 @@ describe('profile activity loopback HTTP concurrency evidence', () => {
 		const dataSource = new DataSource({
 			type: 'better-sqlite3',
 			database: ':memory:',
-			entities: [TimeLogSchema],
+			entities: [TimeLogSchema, TimeSlotSchema, TimeSlotTimeLogSchema],
 			synchronize: true,
 			logging: ['query'],
 			logger: {
@@ -417,6 +468,7 @@ describe('profile activity loopback HTTP concurrency evidence', () => {
 			await dataSource.initialize();
 			const repository = dataSource.getRepository(TimeLogSchema);
 			await repository.insert(createFixtureRows());
+			await seedTimeSlots(dataSource);
 			const service = new HttpConcurrencyStatisticService(repository);
 			await expect(service.getProfileActivity(request)).resolves.toEqual(expectedResponse);
 			const getProfileActivity = jest.spyOn(service, 'getProfileActivity');
@@ -553,7 +605,7 @@ describe('profile activity loopback HTTP concurrency evidence', () => {
 			}
 			const selects = capturedQueries.filter((sql) => /^\s*SELECT\b/i.test(sql));
 			expect(selects).toHaveLength(32);
-			expect(selects.every((sql) => !/\bJOIN\b/i.test(sql))).toBe(true);
+			expect(selects.every((sql) => /\bEXISTS\b/i.test(sql))).toBe(true);
 			console.info(`PROFILE_ACTIVITY_HTTP_METRICS ${JSON.stringify(metrics)}`);
 		} finally {
 			capture = false;
