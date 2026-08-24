@@ -1,9 +1,6 @@
 <section class="whats-new-panel">
 	<header class="panel-header">
 		<h3 class="panel-title">{{ 'CHANGELOG_MENU.HEADER' | translate }}</h3>
-		<!-- A real button, not the bare glyph this used to be: that was a ~12px
-		     hit area, absolutely positioned over the first entry, and unreachable
-		     from the keyboard. -->
 		<button
 			type="button"
 			class="panel-close"
@@ -16,7 +13,7 @@
 
 	<div class="panel-body">
 		@for (item of items$ | async; track item.id) {
-			<ngx-changelog-entry [entry]="item" />
+			<ngx-changelog-entry class="compact" [entry]="item" />
 		}
 	</div>
 </section>
