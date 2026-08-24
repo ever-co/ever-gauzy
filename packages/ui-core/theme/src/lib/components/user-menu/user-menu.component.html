@@ -1,89 +1,105 @@
-<div gauzyOutside (clickOutside)="onClickOutside($event)" class="main-menu">
-	<div [nbSpinner]="isSubmit$ | async" class="left-menu">
-		<!-- TODO: Implement commented features -->
-		<!-- <div underConstruction class="sub-menu">
-    <span><i class="far fa-smile"></i>
-  {{ 'USER_MENU.STATUS' | translate }}</span>
+<div gauzyOutside (clickOutside)="onClickOutside($event)" class="account-panel" [nbSpinner]="isSubmit$ | async">
+	<!-- Identity first, the way every account menu opens: who you are signed in
+	     as, then what you can do about it. It used to be tucked into the bottom
+	     of the left half of a two-column box. -->
+	<header class="panel-header">
+		<gauzy-user showIdentity="true" [user$]="user$" (clicked)="onClick()"></gauzy-user>
+		<button type="button" class="panel-close" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="onClick()">
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</header>
+
+	<div class="panel-section">
+		<span class="panel-overline">{{ 'USER_MENU.ACCOUNT' | translate }}</span>
+
+		@if (employee$ | async) {
+			<button type="button" class="panel-row" [class.disabled-row]="isSubmit$ | async" (click)="onChangeStatus()">
+				<nb-icon icon="moon-outline"></nb-icon>
+				<!-- The label carries a <strong> in every locale, hence innerHTML. -->
+				<span
+					[innerHTML]="
+						((employee$ | async)?.isAway
+							? 'USER_MENU.SET_YOURSELF_AS_ACTIVE'
+							: 'USER_MENU.SET_YOURSELF_AS_AWAY'
+						) | translate
+					"
+				></span>
+			</button>
+		}
+		<a class="panel-row" routerLink="/pages/auth/profile" (click)="onClick()">
+			<nb-icon icon="person-outline"></nb-icon>
+			<span>{{ 'USER_MENU.PROFILE' | translate }}</span>
+		</a>
+	</div>
+
+	<div class="panel-divider"></div>
+
+	<div class="panel-section">
+		<span class="panel-overline">{{ 'USER_MENU.PREFERENCES' | translate }}</span>
+
+		<div class="control-row">
+			<gauzy-switch-theme class="theme"></gauzy-switch-theme>
+		</div>
+		<div class="control-row">
+			<ngx-theme-selector-container class="theme"></ngx-theme-selector-container>
+		</div>
+		<div class="control-row">
+			<ngx-theme-language-selector class="theme"></ngx-theme-language-selector>
+		</div>
+	</div>
+
+	<div class="panel-divider"></div>
+
+	<div class="panel-section">
+		<a class="panel-row" target="_blank" rel="noopener" [href]="platFormWebSiteUrl" (click)="onClick()">
+			<nb-icon icon="question-mark-circle-outline"></nb-icon>
+			<span>{{ 'USER_MENU.HELP' | translate }}</span>
+		</a>
+		<button type="button" class="panel-row" underConstruction>
+			<nb-icon icon="keypad-outline"></nb-icon>
+			<span>{{ 'USER_MENU.HOTKEYS' | translate }}</span>
+		</button>
+		<a class="panel-row" routerLink="/auth/logout">
+			<nb-icon icon="log-out-outline"></nb-icon>
+			<span>{{ 'USER_MENU.SIGN_OUT' | translate }}</span>
+		</a>
+	</div>
+
+	<footer class="panel-footer">
+		<span class="download-label">{{ 'USER_MENU.DOWNLOAD_APPS' | translate }}</span>
+		<span class="download-icons">
+			@for (app of downloadApps; track app) {
+				<a target="_blank" [href]="app.link" rel="noopener">
+					<i [class]="app.icon"></i>
+				</a>
+			}
+		</span>
+	</footer>
+</div>
+
+<!-- TODO: Implement commented features. Kept from the previous markup so the
+     intent is not lost; the styles that went with it (`.sub-menu`, `.status`,
+     `.notifications`, `.button`) were dropped with the two-column layout and
+     have to come back as panel rows if these are ever built.
+
+<div underConstruction class="sub-menu">
+  <span><i class="far fa-smile"></i>{{ 'USER_MENU.STATUS' | translate }}</span>
   <div class="status">
-    <div class="button selected">
-      {{ 'USER_MENU.AVAILABLE' | translate }}
-    </div>
-    <div class="button">
-      {{ 'USER_MENU.UNAVAILABLE' | translate }}
-    </div>
+    <div class="button selected">{{ 'USER_MENU.AVAILABLE' | translate }}</div>
+    <div class="button">{{ 'USER_MENU.UNAVAILABLE' | translate }}</div>
   </div>
 </div>
 <div underConstruction class="sub-menu">
   <span>{{ 'USER_MENU.PAUSE_NOTIFICATIONS' | translate }}</span>
   <div class="notifications">
-    <div class="button">
-      {{ 'USER_MENU.FOR_1_HOUR' | translate }}
-    </div>
-    <div class="button">
-      {{ 'USER_MENU.FOR_2_HOURS' | translate }}
-    </div>
-    <div class="button selected">
-      {{ 'USER_MENU.UNTIL_TOMORROW' | translate }}
-    </div>
+    <div class="button">{{ 'USER_MENU.FOR_1_HOUR' | translate }}</div>
+    <div class="button">{{ 'USER_MENU.FOR_2_HOURS' | translate }}</div>
+    <div class="button selected">{{ 'USER_MENU.UNTIL_TOMORROW' | translate }}</div>
     <div class="button">{{ 'USER_MENU.CUSTOM' | translate }}</div>
     <div class="button">
       <i class="far fa-calendar"></i>
       {{ 'USER_MENU.SET_AS_NOTIFICATION_SCHEDULE' | translate }}
     </div>
   </div>
-</div> -->
-		<div class="links">
-			@if (employee$ | async) {
-			<p
-				[class.disabled-table]="isSubmit$ | async"
-				class="link"
-				[innerHTML]="
-					((employee$ | async)?.isAway
-						? 'USER_MENU.SET_YOURSELF_AS_ACTIVE'
-						: 'USER_MENU.SET_YOURSELF_AS_AWAY'
-					) | translate
-				"
-				(click)="onChangeStatus()"
-			></p>
-			}
-			<p class="link" routerLink="/pages/auth/profile">
-				{{ 'USER_MENU.PROFILE' | translate }}
-			</p>
-			<p class="link" routerLink="/auth/logout">
-				{{ 'USER_MENU.SIGN_OUT' | translate }}
-			</p>
-		</div>
-		<div class="sub-user-menu">
-			<gauzy-user showIdentity="true" [user$]="user$" (clicked)="onClick()"></gauzy-user>
-		</div>
-	</div>
-
-	<div class="right-menu">
-		<span><i (click)="onClick()" class="fas fa-times"></i></span>
-		<div class="download-apps-content">
-			<span class="download-apps-label">Download Apps:</span>
-			<span class="download-apps-icons">
-				@for (app of downloadApps; track app) {
-				<a target="_blank" [href]="app.link" rel="noopener">
-					<i [class]="app.icon"></i>
-				</a>
-				}
-			</span>
-		</div>
-		<p>
-			<a target="_blank" href="{{ platFormWebSiteUrl }}">{{ 'USER_MENU.HELP' | translate }}</a>
-		</p>
-		<p class="link" underConstruction>
-			{{ 'USER_MENU.HOTKEYS' | translate }}
-		</p>
-		<p>
-			<ngx-theme-language-selector class="theme"></ngx-theme-language-selector>
-		</p>
-		<p>
-			<gauzy-switch-theme class="theme"></gauzy-switch-theme>
-		</p>
-		<p>
-			<ngx-theme-selector-container class="theme"></ngx-theme-selector-container>
-		</p>
-	</div>
 </div>
+-->
